@@ -39,10 +39,10 @@ func (c *Collateralize) Exec_Feed(payload *pty.CollateralizeFeed, tx *types.Tran
 	return actiondb.CollateralizeFeed(payload)
 }
 
-// Exec_Close Action
-func (c *Collateralize) Exec_Close(payload *pty.CollateralizeClose, tx *types.Transaction, index int) (*types.Receipt, error) {
+// Exec_Retrieve Action
+func (c *Collateralize) Exec_Retrieve(payload *pty.CollateralizeRetrieve, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewCollateralizeAction(c, tx, index)
-	return actiondb.CollateralizeClose(payload)
+	return actiondb.CollateralizeRetrieve(payload)
 }
 
 // Exec_Close Action

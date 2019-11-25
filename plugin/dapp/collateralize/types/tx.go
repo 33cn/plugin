@@ -39,9 +39,10 @@ type CollateralizeFeedTx struct {
 	Fee       int64  `json:"fee"`
 }
 
-// CollateralizeCloseTx for construction
-type CollateralizeCloseTx struct {
+// CollateralizeRetrieveTx for construction
+type CollateralizeRetrieveTx struct {
 	CollateralizeID string `json:"collateralizeId"`
+	Balance   int64 `json:"Balance"`
 	Fee       int64  `json:"fee"`
 }
 

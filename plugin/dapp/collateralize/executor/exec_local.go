@@ -14,7 +14,7 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 	set := &types.LocalDBSet{}
 	for _, item := range receipt.Logs {
 		if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeBorrow || item.Ty == pty.TyLogCollateralizeAppend ||
-			item.Ty == pty.TyLogCollateralizeRepay || item.Ty == pty.TyLogCollateralizeFeed || item.Ty == pty.TyLogCollateralizeClose {
+			item.Ty == pty.TyLogCollateralizeRepay || item.Ty == pty.TyLogCollateralizeFeed || item.Ty == pty.TyLogCollateralizeRetrieve {
 			var collateralizeLog pty.ReceiptCollateralize
 			err := types.Decode(item.Log, &collateralizeLog)
 			if err != nil {
@@ -59,10 +59,12 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 				//		collateralizeLog.RecordId, collateralizeLog.Index)...)
 				//}
 				break
-			case pty.TyLogCollateralizeClose:
-				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
-				//set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
+			case pty.TyLogCollateralizeRetrieve:
+				if collateralizeLog.Status == pty.CollateralizeStatusClose {
+					set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
+					set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
+					//set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
+				}
 				break
 			}
 		}
@@ -95,8 +97,8 @@ func (c *Collateralize) ExecLocal_Feed(payload *pty.CollateralizeFeed, tx *types
 	return c.execLocal(tx, receiptData)
 }
 
-// ExecLocal_Close Action
-func (c *Collateralize) ExecLocal_Close(payload *pty.CollateralizeClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+// ExecLocal_Retrieve Action
+func (c *Collateralize) ExecLocal_Retrieve(payload *pty.CollateralizeRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(tx, receiptData)
 }
 

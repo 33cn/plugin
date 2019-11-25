@@ -51,13 +51,13 @@ message AssetPriceRecord {
 // action
 message CollateralizeAction {
     oneof value {
-        CollateralizeCreate    create = 1; //创建一期借贷
-        CollateralizeBorrow    borrow = 2; //借贷
-        CollateralizeRepay     repay  = 3; //清算
-        CollateralizeAppend    append = 4; //追加
-        CollateralizeFeed      feed   = 5; //喂价
-        CollateralizeClose     close  = 6; //关闭
-        CollateralizeManage    manage = 7; //全局配置
+        CollateralizeCreate    create   = 1; //创建一期借贷
+        CollateralizeBorrow    borrow   = 2; //借贷
+        CollateralizeRepay     repay    = 3; //清算
+        CollateralizeAppend    append   = 4; //追加
+        CollateralizeFeed      feed     = 5; //喂价
+        CollateralizeRetrieve  retrieve = 6; //收回
+        CollateralizeManage    manage   = 7; //全局配置
     }
     int32 ty = 10;
 }
@@ -105,9 +105,10 @@ message CollateralizeFeed {
     repeated int64 volume = 3; //成交量
 }
 
-// 放贷关闭
-message CollateralizeClose {
+// 收回
+message CollateralizeRetrieve {
     string collateralizeId = 1; //借贷期数ID
+    int64  balance         = 2; //收回金额
 }
 
 // exec_local 放贷信息

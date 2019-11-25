@@ -13,7 +13,7 @@ func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.R
 	set := &types.LocalDBSet{}
 	for _, item := range receiptData.Logs {
 		if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeBorrow || item.Ty == pty.TyLogCollateralizeAppend ||
-			item.Ty == pty.TyLogCollateralizeRepay || item.Ty == pty.TyLogCollateralizeFeed || item.Ty == pty.TyLogCollateralizeClose {
+			item.Ty == pty.TyLogCollateralizeRepay || item.Ty == pty.TyLogCollateralizeFeed || item.Ty == pty.TyLogCollateralizeRetrieve {
 			var collateralizeLog pty.ReceiptCollateralize
 			err := types.Decode(item.Log, &collateralizeLog)
 			if err != nil {
@@ -57,12 +57,14 @@ func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.R
 				//	set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
 				//}
 				break
-			case pty.TyLogCollateralizeClose:
-				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.addCollateralizeStatus(pty.CollateralizeStatusCreated, collateralizeLog.CollateralizeId,
-					collateralizeLog.PreIndex)...)
-				//set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId,
-				//	collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
+			case pty.TyLogCollateralizeRetrieve:
+				if collateralizeLog.Status == pty.CollateralizeStatusClose {
+					set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
+					set.KV = append(set.KV, c.addCollateralizeStatus(pty.CollateralizeStatusCreated, collateralizeLog.CollateralizeId,
+						collateralizeLog.PreIndex)...)
+					//set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId,
+					//	collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
+				}
 				break
 			}
 		}
@@ -96,8 +98,8 @@ func (c *Collateralize) ExecDelLocal_Feed(payload *pty.CollateralizeFeed, tx *ty
 	return c.execDelLocal(tx, receiptData)
 }
 
-// ExecDelLocal_Close Action
-func (c *Collateralize) ExecDelLocal_Close(payload *pty.CollateralizeClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+// ExecDelLocal_Retrieve Action
+func (c *Collateralize) ExecDelLocal_Retrieve(payload *pty.CollateralizeRetrieve, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execDelLocal(tx, receiptData)
 }
 

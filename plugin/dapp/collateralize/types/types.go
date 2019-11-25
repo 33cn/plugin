@@ -11,7 +11,7 @@ const (
 	CollateralizeActionRepay
 	CollateralizeActionAppend
 	CollateralizeActionFeed
-	CollateralizeActionClose
+	CollateralizeActionRetrieve
 	CollateralizeActionManage
 
 	//log for Collateralize
@@ -20,7 +20,7 @@ const (
 	TyLogCollateralizeRepay     = 733
 	TyLogCollateralizeAppend    = 734
 	TyLogCollateralizeFeed      = 735
-	TyLogCollateralizeClose     = 736
+	TyLogCollateralizeRetrieve  = 736
 )
 
 // Collateralize name

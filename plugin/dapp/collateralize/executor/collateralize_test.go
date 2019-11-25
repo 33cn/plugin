@@ -528,11 +528,12 @@ func TestCollateralize(t *testing.T) {
 	assert.NotNil(t, res)
 
 
-	// collateralize close
-	p11 := &pkt.CollateralizeCloseTx{
+	// collateralize retrieve
+	p11 := &pkt.CollateralizeRetrieveTx{
 		CollateralizeID: common.ToHex(collateralizeID),
+		Balance:100,
 	}
-	createTx, err = pkt.CreateRawCollateralizeCloseTx(env.cfg, p11)
+	createTx, err = pkt.CreateRawCollateralizeRetrieveTx(env.cfg, p11)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -558,7 +559,7 @@ func TestCollateralize(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 	// query collateralize by status
-	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status:2}))
+	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status:1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 }

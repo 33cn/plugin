@@ -24,7 +24,7 @@ func CollateralizeCmd() *cobra.Command {
 		CollateralizeAppendRawTxCmd(),
 		CollateralizeRepayRawTxCmd(),
 		CollateralizePriceFeedRawTxCmd(),
-		CollateralizeCloseRawTxCmd(),
+		CollateralizeRetrieveRawTxCmd(),
 		CollateralizeManageRawTxCmd(),
 		CollateralizeQueryCmd(),
 	)
@@ -233,22 +233,24 @@ func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
 }
 
 // CollateralizeCloseRawTxCmd 生成开始交易命令行
-func CollateralizeCloseRawTxCmd() *cobra.Command {
+func CollateralizeRetrieveRawTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "close",
-		Short: "close a collateralize",
-		Run:   CollateralizeClose,
+		Use:   "retrieve",
+		Short: "retrieve balance",
+		Run:   CollateralizeRetrieve,
 	}
-	addCollateralizeCloseFlags(cmd)
+	addCollateralizeRetrieveFlags(cmd)
 	return cmd
 }
 
-func addCollateralizeCloseFlags(cmd *cobra.Command) {
+func addCollateralizeRetrieveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("collateralizeID", "g", "", "collateralize ID")
 	cmd.MarkFlagRequired("collateralizeID")
+	cmd.Flags().StringP("balance", "b", "", "retrieve balance")
+	cmd.MarkFlagRequired("balance")
 }
 
-func CollateralizeClose(cmd *cobra.Command, args []string) {
+func CollateralizeRetrieve(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
 	if cfg == nil {
@@ -257,11 +259,12 @@ func CollateralizeClose(cmd *cobra.Command, args []string) {
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
+	balance, _ := cmd.Flags().GetInt64("balance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
-		ActionName: "CollateralizeClose",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\"}", collateralizeID)),
+		ActionName: "CollateralizeRetrieve",
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"balance\": %d}", collateralizeID, balance)),
 	}
 
 	var res string

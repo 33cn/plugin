@@ -57,7 +57,7 @@ func (collateralize *CollateralizeType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogCollateralizeRepay:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRepay"},
 		TyLogCollateralizeAppend:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeAppend"},
 		TyLogCollateralizeFeed:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeFeed"},
-		TyLogCollateralizeClose:  {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeClose"},
+		TyLogCollateralizeRetrieve:  {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRetrieve"},
 	}
 }
 
@@ -111,14 +111,14 @@ func (collateralize CollateralizeType) CreateTx(action string, message json.RawM
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawCollateralizeFeedTx(cfg, &param)
-	} else if action == "CollateralizeClose" {
-		var param CollateralizeCloseTx
+	} else if action == "CollateralizeRetrive" {
+		var param CollateralizeRetrieveTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
 			llog.Error("CreateTx", "Error", err)
 			return nil, types.ErrInvalidParam
 		}
-		return CreateRawCollateralizeCloseTx(cfg, &param)
+		return CreateRawCollateralizeRetrieveTx(cfg, &param)
 	} else if action == "CollateralizeManage" {
 		var param CollateralizeManageTx
 		err := json.Unmarshal(message, &param)
@@ -135,13 +135,13 @@ func (collateralize CollateralizeType) CreateTx(action string, message json.RawM
 // GetTypeMap method
 func (collateralize CollateralizeType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Create": CollateralizeActionCreate,
-		"Borrow": CollateralizeActionBorrow,
-		"Repay":  CollateralizeActionRepay,
-		"Append": CollateralizeActionAppend,
-		"Feed":   CollateralizeActionFeed,
-		"Close":  CollateralizeActionClose,
-		"Manage": CollateralizeActionManage,
+		"Create":    CollateralizeActionCreate,
+		"Borrow":    CollateralizeActionBorrow,
+		"Repay":     CollateralizeActionRepay,
+		"Append":    CollateralizeActionAppend,
+		"Feed":      CollateralizeActionFeed,
+		"Retrieve":  CollateralizeActionRetrieve,
+		"Manage":    CollateralizeActionManage,
 	}
 }
 
@@ -290,19 +290,20 @@ func CreateRawCollateralizeFeedTx(cfg *types.Chain33Config, parm *CollateralizeF
 	return tx, nil
 }
 
-// CreateRawCollateralizeCloseTx method
-func CreateRawCollateralizeCloseTx(cfg *types.Chain33Config, parm *CollateralizeCloseTx) (*types.Transaction, error) {
+// CreateRawCollateralizeRetrieveTx method
+func CreateRawCollateralizeRetrieveTx(cfg *types.Chain33Config, parm *CollateralizeRetrieveTx) (*types.Transaction, error) {
 	if parm == nil {
 		llog.Error("CreateRawCollateralizeCloseTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
 
-	v := &CollateralizeClose{
+	v := &CollateralizeRetrieve{
 		CollateralizeId: parm.CollateralizeID,
+		Balance: parm.Balance,
 	}
 	close := &CollateralizeAction{
-		Ty:    CollateralizeActionClose,
-		Value: &CollateralizeAction_Close{v},
+		Ty:    CollateralizeActionRetrieve,
+		Value: &CollateralizeAction_Retrieve{v},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(cfg.ExecName(CollateralizeX)),
