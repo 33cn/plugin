@@ -224,7 +224,7 @@ func (m *multiDldClient) tryMultiServerDownload() {
 
 func (i *inventory) getFirstBlock(d *downloadJob) *types.ParaTxDetail {
 	if i.isSaveDb {
-		block, err := d.getBlockFromDb(i.start)
+		block, err := d.mDldCli.paraClient.getMainBlockFromDb(i.start)
 		if err != nil {
 			panic(err)
 		}
@@ -238,7 +238,7 @@ func (i *inventory) getLastBlock(d *downloadJob) *types.ParaTxDetail {
 		return nil
 	}
 	if i.isSaveDb {
-		block, err := d.getBlockFromDb(i.end)
+		block, err := d.mDldCli.paraClient.getMainBlockFromDb(i.end)
 		if err != nil {
 			panic(err)
 		}
@@ -257,7 +257,7 @@ func (m *multiDldClient) processDoneJobs(ch chan *downloadJob) {
 
 func (d *downloadJob) resetInv(i *inventory) {
 	if i.isSaveDb {
-		d.rmvBatchMainBlocks(i)
+		d.mDldCli.paraClient.rmvBatchMainBlocks(i.start, i.curHeight)
 	}
 	i.curHeight = i.start
 	i.txs.Items = nil
@@ -268,7 +268,7 @@ func (d *downloadJob) process() {
 	for _, inv := range d.invs {
 		if inv.isSaveDb {
 			for i := inv.start; i <= inv.end; i++ {
-				block, err := d.getBlockFromDb(i)
+				block, err := d.mDldCli.paraClient.getMainBlockFromDb(i)
 				if err != nil {
 					panic(err)
 				}
@@ -292,7 +292,7 @@ func (d *downloadJob) process() {
 
 func (d *downloadJob) getPreVerifyBlock(inv *inventory) (*types.ParaTxDetail, error) {
 	if inv.isSaveDb {
-		lastBlock, err := d.getBlockFromDb(inv.curHeight - 1)
+		lastBlock, err := d.mDldCli.paraClient.getMainBlockFromDb(inv.curHeight - 1)
 		if err != nil {
 			return nil, err
 		}
@@ -326,64 +326,6 @@ func (d *downloadJob) verifyDownloadBlock(inv *inventory, blocks *types.ParaTxDe
 		}
 	}
 	return nil
-}
-
-func (d *downloadJob) saveMainBlock(height int64, block *types.ParaTxDetail) error {
-	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	key := calcTitleMainHeightKey(cfg.GetTitle(), height)
-	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
-	set.KV = append(set.KV, kv)
-
-	return d.mDldCli.paraClient.setLocalDb(set)
-}
-
-func (d *downloadJob) saveBatchMainBlocks(txs *types.ParaTxDetails) error {
-	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	for _, block := range txs.Items {
-		key := calcTitleMainHeightKey(cfg.GetTitle(), block.Header.Height)
-		kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
-		set.KV = append(set.KV, kv)
-	}
-
-	return d.mDldCli.paraClient.setLocalDb(set)
-}
-
-func (d *downloadJob) rmvBatchMainBlocks(inv *inventory) error {
-	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	for i := inv.start; i < inv.curHeight; i++ {
-		key := calcTitleMainHeightKey(cfg.GetTitle(), i)
-		kv := &types.KeyValue{Key: key, Value: nil}
-		set.KV = append(set.KV, kv)
-	}
-
-	return d.mDldCli.paraClient.setLocalDb(set)
-}
-
-func (d *downloadJob) getBlockFromDb(height int64) (*types.ParaTxDetail, error) {
-	cfg := d.mDldCli.paraClient.GetAPI().GetConfig()
-	key := calcTitleMainHeightKey(cfg.GetTitle(), height)
-	set := &types.LocalDBGet{Keys: [][]byte{key}}
-
-	value, err := d.mDldCli.paraClient.getLocalDb(set, len(set.Keys))
-	if err != nil {
-		return nil, err
-	}
-	if len(value) == 0 || value[0] == nil {
-		return nil, types.ErrNotFound
-	}
-
-	var tx types.ParaTxDetail
-	err = types.Decode(value[0], &tx)
-	if err != nil {
-		return nil, err
-	}
-	return &tx, nil
 }
 
 func (d *downloadJob) checkInv(lastRetry, pre *types.ParaTxDetail, inv *inventory) error {
@@ -515,7 +457,7 @@ func (d *downloadJob) getInvBlocks(inv *inventory, connPool chan *connectCli) {
 
 		//save  之前save到db，后面区块全部save到db
 		if inv.isSaveDb {
-			d.saveBatchMainBlocks(txs)
+			d.mDldCli.paraClient.saveBatchMainBlocks(txs)
 		} else {
 			inv.txs.Items = append(inv.txs.Items, txs.Items...)
 		}
@@ -528,7 +470,7 @@ func (d *downloadJob) getInvBlocks(inv *inventory, connPool chan *connectCli) {
 			return
 		}
 		if !inv.isSaveDb && types.Size(inv.txs) > maxBlockSize {
-			d.saveBatchMainBlocks(inv.txs)
+			d.mDldCli.paraClient.saveBatchMainBlocks(inv.txs)
 			inv.txs.Items = nil
 			inv.isSaveDb = true
 		}

@@ -21,20 +21,8 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
-	set.KV = append(set.KV, kv)
-
-	//两个key原子操作
-	key = calcTitleLastHeightKey(cfg.GetTitle())
-	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
+func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
+	return client.alignLocalBlock2ChainBlock(genesis)
 }
 
 func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
@@ -53,80 +41,6 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 		return err
 	}
 	return err
-}
-
-func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
-	return client.alignLocalBlock2ChainBlock(genesis)
-}
-
-func (client *client) delLocalBlock(height int64) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	kv := &types.KeyValue{Key: key, Value: nil}
-	set.KV = append(set.KV, kv)
-
-	//两个key原子操作
-	key = calcTitleLastHeightKey(cfg.GetTitle())
-	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height - 1})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
-}
-
-// localblock 设置到当前高度，当前高度后面block会被新的区块覆盖
-func (client *client) removeLocalBlocks(curHeight int64) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	key := calcTitleLastHeightKey(cfg.GetTitle())
-	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: curHeight})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
-}
-
-func (client *client) getLastLocalHeight() (int64, error) {
-	cfg := client.GetAPI().GetConfig()
-	key := calcTitleLastHeightKey(cfg.GetTitle())
-	set := &types.LocalDBGet{Keys: [][]byte{key}}
-	value, err := client.getLocalDb(set, len(set.Keys))
-	if err != nil {
-		return -1, err
-	}
-	if len(value) == 0 || value[0] == nil {
-		return -1, types.ErrNotFound
-	}
-
-	height := &types.Int64{}
-	err = types.Decode(value[0], height)
-	if err != nil {
-		return -1, err
-	}
-	return height.Data, nil
-
-}
-
-func (client *client) getLocalBlockByHeight(height int64) (*pt.ParaLocalDbBlock, error) {
-	cfg := client.GetAPI().GetConfig()
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	set := &types.LocalDBGet{Keys: [][]byte{key}}
-
-	value, err := client.getLocalDb(set, len(set.Keys))
-	if err != nil {
-		return nil, err
-	}
-	if len(value) == 0 || value[0] == nil {
-		return nil, types.ErrNotFound
-	}
-
-	var block pt.ParaLocalDbBlock
-	err = types.Decode(value[0], &block)
-	if err != nil {
-		return nil, err
-	}
-	return &block, nil
-
 }
 
 func (client *client) getLocalBlockSeq(height int64) (int64, []byte, error) {
