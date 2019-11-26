@@ -8,53 +8,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"errors"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 )
-
-func (client *client) setLocalDb(set *types.LocalDBSet) error {
-	//如果追赶上主链了，则落盘
-	if client.isCaughtUp() {
-		set.Txid = 1
-		client.blockSyncClient.handleLocalCaughtUpMsg()
-	}
-
-	msg := client.GetQueueClient().NewMessage("blockchain", types.EventSetValueByKey, set)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		return err
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return err
-	}
-	if resp.GetData().(*types.Reply).IsOk {
-		return nil
-	}
-	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
-}
-
-func (client *client) getLocalDb(set *types.LocalDBGet, count int) ([][]byte, error) {
-	msg := client.GetQueueClient().NewMessage("blockchain", types.EventGetValueByKey, set)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	reply := resp.GetData().(*types.LocalReplyValue)
-	if len(reply.Values) != count {
-		plog.Error("Parachain getLocalDb count not match", "expert", count, "real", len(reply.Values))
-		return nil, types.ErrInvalidParam
-	}
-
-	return reply.Values, nil
-}
 
 func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 	//from blockchain db
@@ -68,6 +25,16 @@ func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 		return nil, types.ErrInvalidParam
 	}
 	return blockDetails.Items[0].Block, nil
+}
+
+func (client *client) GetBlockHeaders(req *types.ReqBlocks) (*types.Headers, error) {
+	//from blockchain db
+	headers, err := client.grpcClient.GetHeaders(context.Background(), req)
+	if err != nil {
+		plog.Error("paracommitmsg get node status block count fail")
+		return nil, err
+	}
+	return headers, nil
 }
 
 // 获取当前平行链block对应主链seq，hash信息
@@ -168,4 +135,31 @@ func (client *client) QueryTxOnMainByHash(hash []byte) (*types.TransactionDetail
 	}
 
 	return detail, nil
+}
+
+func (client *client) GetParaHeightsByTitle(req *types.ReqHeightByTitle) (*types.ReplyHeightByTitle, error) {
+	//from blockchain db
+	heights, err := client.grpcClient.LoadParaTxByTitle(context.Background(), req)
+	if err != nil {
+		plog.Error("paracommitmsg get node status block count fail")
+		return nil, err
+	}
+
+	return heights, nil
+}
+
+func (client *client) GetParaTxByHeight(req *types.ReqParaTxByHeight) (*types.ParaTxDetails, error) {
+	//from blockchain db
+	blocks, err := client.grpcClient.GetParaTxByHeight(context.Background(), req)
+	if err != nil {
+		plog.Error("GetParaTxByHeight get node status block count fail")
+		return nil, err
+	}
+
+	if len(req.Items) != len(blocks.Items) {
+		plog.Error("GetParaTxByHeight get block tx count fail", "req", len(req.Items), "rsp", len(blocks.Items))
+		return nil, types.ErrInvalidParam
+	}
+
+	return blocks, nil
 }
