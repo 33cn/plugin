@@ -36,6 +36,7 @@ var (
 	quit               bool
 	isPrunedMavl       bool                       // 是否是被裁剪过的 mavl
 	delPrunedMavlState int32 = delPrunedMavlStart // Upgrade时候删除pruned mavl的状态
+	isCompactDelMavl   bool                       // 是否对删除mavl后压缩
 )
 
 const (
@@ -149,6 +150,11 @@ func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Mo
 	if err == nil {
 		isDelMavlData = true
 	}
+	// 查询是否已经压缩过
+	_, err = bs.GetDB().Get(genCompactDelMavlKey(mvccPrefix))
+	if err == nil {
+		isCompactDelMavl = true
+	}
 	// 查询是否是删除裁剪版mavl
 	isPrunedMavl = isPrunedMavlDB(bs.GetDB())
 	// 读取fork高度
@@ -204,11 +210,6 @@ func (kvmMavls *KVmMavlStore) Set(datas *types.StoreSet, sync bool) ([]byte, err
 
 	if err == nil {
 		kvmMavls.cache.Add(string(hash), datas.Height)
-	}
-	// 删除Mavl数据
-	if datas.Height > delMavlDataHeight && !isDelMavlData && !isDelMavling() {
-		wg.Add(1)
-		go DelMavl(kvmMavls.GetDB())
 	}
 	return hash, err
 }
@@ -272,6 +273,10 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 		mavl.ReleaseGlobalMem()
 		wg.Add(1)
 		go DelMavl(kvmMavls.GetDB())
+	}
+	// 对删除的mavl进行压缩
+	if isDelMavlData && !isCompactDelMavl && !isDelMavling() {
+		go CompactDelMavl(kvmMavls.GetDB())
 	}
 	return hash, err
 }
@@ -507,6 +512,24 @@ func isDelMavling() bool {
 
 func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
+}
+
+func CompactDelMavl(db dbm.DB) {
+	setDelMavl(delMavlStateStart)
+	defer setDelMavl(delMavlStateEnd)
+	// 开始进行压缩处理
+	kmlog.Info("start Compact db")
+	err := db.CompactRange(nil, nil)
+	if err == nil {
+		db.Set(genCompactDelMavlKey(mvccPrefix), []byte(""))
+		isCompactDelMavl = true
+	}
+	kmlog.Info("end Compact db", "error", err)
+}
+
+func genCompactDelMavlKey(prefix []byte) []byte {
+	key := "--compactDelMavl--"
+	return []byte(fmt.Sprintf("%s%s", string(prefix), key))
 }
 
 func isNeedDelPrunedMavl() bool {
