@@ -25,4 +25,5 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/trade"      //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/unfreeze"   //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"    //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/storage"    //auto gen
 )
