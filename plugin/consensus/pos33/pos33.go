@@ -1,76 +1,56 @@
 package pos33
 
 import (
-	"bytes"
 	"errors"
-	"math/rand"
+	"fmt"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/ed25519"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
-	ced25519 "github.com/33cn/chain33/system/crypto/ed25519"
+	driver "github.com/33cn/chain33/system/dapp"
 	ct "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
-	// "github.com/33cn/chain33/util"
 )
-
-const rootSeed = "YCC-ROOT"
-const pos33MinFee = 1e7
-
-// RootPrivKey is the root private key for ycc
-var RootPrivKey crypto.PrivKey
-
-// RootAddr is the root account address for ycc
-var RootAddr string
-
-var myCrypto crypto.Crypto
-
-func genKeyFromSeed(seed []byte) (crypto.PrivKey, error) {
-	_, priv, err := ed25519.GenerateKey(bytes.NewReader(crypto.Sha256(seed)))
-	if err != nil {
-		return nil, err
-	}
-	return ced25519.PrivKeyEd25519(*priv), nil
-}
-
-func init() {
-	drivers.Reg("pos33", New)
-	cpt, err := crypto.New("ed25519")
-	if err != nil {
-		panic(err)
-	}
-	myCrypto = cpt
-	priv, err := genKeyFromSeed([]byte(rootSeed))
-	if err != nil {
-		panic(err)
-	}
-	RootPrivKey = priv
-	RootAddr = address.PubKeyToAddress(RootPrivKey.PubKey().Bytes()).String()
-	rand.Seed(time.Now().Unix())
-}
 
 // Client is the pos33 consensus client
 type Client struct {
 	*drivers.BaseClient
 	conf *subConfig
 	n    *node
-	priv crypto.PrivKey
+
+	tickLock   sync.Mutex
+	ticketsMap map[string]*pt.Ticket
+	privLock   sync.Mutex
+	privmap    map[string]crypto.PrivKey
+}
+
+// Tx is ...
+type Tx = types.Transaction
+
+type genesisTicket struct {
+	MinerAddr  string `json:"minerAddr"`
+	ReturnAddr string `json:"returnAddr"`
+	Count      int32  `json:"count"`
 }
 
 type subConfig struct {
-	Pos33SecretSeed    string `json:"Pos33SecretSeed,omitempty"`
-	Pos33ListenAddr    string `json:"Pos33ListenAddr,omitempty"`
-	Pos33AdvertiseAddr string `json:"Pos33AdvertiseAddr,omitempty"`
-	Pos33BootPeerAddr  string `json:"Pos33BootPeerAddr,omitempty"`
-	Pos33MaxTxs        int64  `json:"Pos33MaxTxs,omitempty"`
-	Pos33BlockTime     int64  `json:"Pos33BlockTime,omitempty"`
-	Pos33BlockTimeout  int64  `json:"Pos33BlockTimeout,omitempty"`
-	Pos33MinFee        int64  `json:"Pos33MinFee,omitempty"`
+	Genesis          []*genesisTicket `json:"genesis"`
+	GenesisBlockTime int64            `json:"genesisBlockTime"`
+	ListenAddr       string           `json:"Pos33ListenAddr,omitempty"`
+	AdvertiseAddr    string           `json:"Pos33AdvertiseAddr,omitempty"`
+	BootPeerAddr     string           `json:"Pos33BootPeerAddr,omitempty"`
+	MaxTxs           int64            `json:"Pos33MaxTxs,omitempty"`
+	BlockTime        int64            `json:"Pos33BlockTime,omitempty"`
+	BlockTimeout     int64            `json:"Pos33BlockTimeout,omitempty"`
+	MinFee           int64            `json:"Pos33MinFee,omitempty"`
+	Price            int64            `json:"Pos33MinFee,omitempty"`
+	NodeAddr         string           `json:"nodeAddr,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -84,7 +64,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	n := newNode(&subcfg)
 	client := &Client{BaseClient: c, n: n, conf: &subcfg}
 	client.n.Client = client
-	client.Cfg.Genesis = RootAddr
 	c.SetChild(client)
 	return client
 }
@@ -104,7 +83,7 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 	}
 
 	ch := make(chan []*Tx, 1)
-	go func() { ch <- client.RequestTx(int(client.conf.Pos33MaxTxs), nil) }()
+	go func() { ch <- client.RequestTx(int(client.conf.MaxTxs), nil) }()
 	select {
 	case <-time.After(time.Millisecond * 300):
 	case ts := <-ch:
@@ -113,7 +92,7 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 
 	bt := time.Now().Unix()
 	return &types.Block{
-		ParentHash: lastBlock.Hash(),
+		ParentHash: lastBlock.Hash(client.GetAPI().GetConfig()),
 		Height:     lastBlock.Height + 1,
 		Txs:        txs,
 		TxHash:     merkle.CalcMerkleRoot(txs),
@@ -127,46 +106,107 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *Client) allWeight(height int64) int {
-	k := []byte(pt.KeyPos33AllWeight)
-	v, err := client.Get(k)
+	msg, err := client.GetAPI().Query(pt.TicketX, "Pos33AllTicketCount", &pt.Pos33AllTicketCount{Height: height})
 	if err != nil {
-		plog.Error(err.Error())
+		plog.Info("Pos33AllTicketCount error", "error", err)
 		return 0
 	}
-	var allw pt.Pos33AllWeight
-	err = types.Decode(v, &allw)
-	if err != nil {
-		plog.Error(err.Error())
-		return 0
-	}
-	w := allw.AllWeight
-	for h, nw := range allw.NewWeight {
-		if h+pt.Pos33SortitionSize*2-h%pt.Pos33SortitionSize < height {
-			w += nw
-		}
-	}
-
-	return int(w)
+	return int(msg.(*pt.ReplyPos33AllTicketCount).Count)
 }
 
-func (client *Client) getWeight(addr string, height int64) int {
-	v, err := client.Get([]byte(pt.KeyPos33WeightPrefix + addr))
+func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
 	if err != nil {
-		plog.Info("getWeight error", "error", err.Error())
-		return 0
+		return nil, err
 	}
-	var w pt.Pos33Weight
-	err = types.Decode(v, &w)
-	if err != nil {
-		plog.Error("getWeight error", "error", err.Error())
-		return 0
+	return cr.PrivKeyFromBytes(privkey)
+}
+
+func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
+	list := make(map[string]crypto.PrivKey)
+	for _, priv := range privs {
+		addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+		list[addr] = priv
 	}
-	allw := int64(0)
-	for h, nw := range w.Weights {
-		if h < pt.Pos33SortitionSize || h+pt.Pos33SortitionSize*2-h%pt.Pos33SortitionSize <= height {
-			allw += nw
+	return list
+}
+
+func (client *Client) setTicket(tlist *pt.ReplyTicketList, privmap map[string]crypto.PrivKey) {
+	client.ticketsMap = make(map[string]*pt.Ticket)
+	if tlist == nil || privmap == nil {
+		client.ticketsMap = nil
+		client.privmap = nil
+		return
+	}
+	for _, ticket := range tlist.Tickets {
+		client.tickLock.Lock()
+		client.ticketsMap[ticket.GetTicketId()] = ticket
+		client.tickLock.Unlock()
+		_, ok := privmap[ticket.MinerAddress]
+		if !ok {
+			delete(privmap, ticket.MinerAddress)
 		}
 	}
+
+	client.privLock.Lock()
+	client.privmap = privmap
+	client.privLock.Unlock()
+	plog.Debug("setTicket", "n", len(tlist.GetTickets()))
+}
+
+func (client *Client) flushTicket() error {
+	//list accounts
+	tickets, privs, err := client.getTickets()
+	if err == types.ErrWalletIsLocked || err == pt.ErrNoTicket {
+		plog.Error("flushTicket error", "err", err.Error())
+		client.setTicket(nil, nil)
+		return nil
+	}
+	if err != nil {
+		plog.Error("flushTicket error", "err", err)
+		return err
+	}
+	privMap := getPrivMap(privs)
+	client.setTicket(&pt.ReplyTicketList{Tickets: tickets}, privMap)
+	return nil
+}
+
+func (client *Client) getTickets() ([]*pt.Ticket, []crypto.PrivKey, error) {
+	resp, err := client.GetAPI().ExecWalletFunc("pos33", "WalletGetTickets", &types.ReqNil{})
+	if err != nil {
+		return nil, nil, err
+	}
+	reply := resp.(*pt.ReplyWalletTickets)
+	var keys []crypto.PrivKey
+	for i := 0; i < len(reply.Privkeys); i++ {
+		priv, err := client.privFromBytes(reply.Privkeys[i])
+		if err != nil {
+			return nil, nil, err
+		}
+		keys = append(keys, priv)
+	}
+	plog.Info("getTickets", "ticket n", len(reply.Tickets), "nkey", len(keys))
+	return reply.Tickets, keys, nil
+}
+
+func (client *Client) getAllWeight(height int64) int {
+	preH := height - height%pt.Pos33SortitionSize
+	if preH == height {
+		preH -= pt.Pos33SortitionSize
+	}
+	key := []byte(pt.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+	v, err := client.Get(key)
+	if err != nil {
+		plog.Error(err.Error())
+		return 0
+	}
+
+	allw, err := strconv.Atoi(string(v))
+	if err != nil {
+		plog.Error(err.Error())
+		return 0
+	}
+
 	return int(allw)
 }
 
@@ -176,16 +216,30 @@ func (client *Client) AddBlock(b *types.Block) error {
 	return nil
 }
 
+func (client *Client) nodeID() string {
+	return client.conf.NodeAddr
+}
+
+func (client *Client) miningOK() bool {
+	if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
+		plog.Info("createblock.ismining is disable or client is caughtup is false")
+		return false
+	}
+	ok := false
+	client.tickLock.Lock()
+	if len(client.ticketsMap) == 0 {
+		plog.Info("your ticket count is 0, you MUST buy some ticket to start mining")
+	} else {
+		ok = true
+	}
+	client.tickLock.Unlock()
+	return ok
+}
+
 // CreateBlock will start run
 func (client *Client) CreateBlock() {
 	for {
-		if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
-			plog.Info("createblock.ismining is disable or client is caughtup is false")
-			time.Sleep(time.Second)
-			continue
-		}
-		if client.getWeight(client.n.addr, client.GetCurrentHeight()) == 0 {
-			plog.Info("if do consensus, must deposit 1,000,000 YCC")
+		if !client.miningOK() {
 			time.Sleep(time.Second)
 			continue
 		}
@@ -194,15 +248,74 @@ func (client *Client) CreateBlock() {
 	client.n.runLoop()
 }
 
-// CreateGenesisTx used generate the first txs
+//316190000 coins
+func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count int32, height int64) (ret []*types.Transaction) {
+	//给hotkey 10000 个币，作为miner的手续费
+	tx1 := types.Transaction{}
+	tx1.Execer = []byte("coins")
+	tx1.To = minerAddr
+	g := &ct.CoinsAction_Genesis{}
+	g.Genesis = &types.AssetsGenesis{Amount: pt.GetTicketMinerParam(cfg, height).TicketPrice}
+	tx1.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
+	ret = append(ret, &tx1)
+
+	// 发行并抵押
+	tx2 := types.Transaction{}
+	tx2.Execer = []byte("coins")
+	tx2.To = driver.ExecAddress(pt.TicketX)
+	g = &ct.CoinsAction_Genesis{}
+	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * pt.GetTicketMinerParam(cfg, height).TicketPrice, ReturnAddress: returnAddr}
+	tx2.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
+	ret = append(ret, &tx2)
+
+	// 冻结资金并开启挖矿
+	tx3 := types.Transaction{}
+	tx3.Execer = []byte(pt.TicketX)
+	tx3.To = driver.ExecAddress(pt.TicketX)
+	gticket := &pt.TicketAction_Genesis{}
+	gticket.Genesis = &pt.TicketGenesis{MinerAddress: minerAddr, ReturnAddress: returnAddr, Count: count}
+	tx3.Payload = types.Encode(&pt.TicketAction{Value: gticket, Ty: pt.TicketActionGenesis})
+	ret = append(ret, &tx3)
+	return ret
+}
+
+// CreateGenesisTx ticket create genesis tx
 func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
+	// 预先发行maxcoin 到 genesis 账户
+	tx0 := types.Transaction{}
+	tx0.Execer = []byte("coins")
+	tx0.To = client.Cfg.Genesis
+	g := &ct.CoinsAction_Genesis{}
+	g.Genesis = &types.AssetsGenesis{Amount: types.MaxCoin}
+	tx0.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
+	ret = append(ret, &tx0)
+
+	// 初始化挖矿
+	cfg := client.GetAPI().GetConfig()
+	for _, genesis := range client.conf.Genesis {
+		tx1 := createTicket(cfg, genesis.MinerAddr, genesis.ReturnAddr, genesis.Count, 0)
+		ret = append(ret, tx1...)
+	}
+	return ret
+}
+
+// CreateGenesisTx1 used generate the first txs
+/*
+func (client *Client) CreateGenesisTx1() (ret []*types.Transaction) {
 	// the 1st tx for issue 10,000,000,000 YCC
-	act0 := &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: types.Coin * 100 * 1e8}}
+	act := &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: types.MaxCoin, ReturnAddress: client.conf.GenesisAddr}}
 	tx := &types.Transaction{
 		Execer:  []byte("coins"),
-		To:      RootAddr,
-		Payload: types.Encode(&ct.CoinsAction{Value: act0, Ty: ct.CoinsActionGenesis}),
+		To:      client.conf.GenesisAddr, //address.GetExecAddress("pos33").String(),
+		Payload: types.Encode(&ct.CoinsAction{Value: act, Ty: ct.CoinsActionGenesis}),
 	}
+	ret = append(ret, tx)
+
+	tx = &types.Transaction{}
+	tx.Execer = []byte("coins")
+	tx.To = address.GetExecAddress("pos33").String()
+	act = &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: 1001 * client.conf.Price, ReturnAddress: client.conf.GenesisAddr}}
+	tx.Payload = types.Encode(&ct.CoinsAction{Value: act, Ty: ct.CoinsActionGenesis})
 	ret = append(ret, tx)
 
 	// the 2th tx for the genesis accout frozon margin,
@@ -210,12 +323,16 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	tx = &types.Transaction{}
 	tx.Execer = []byte("pos33")
 	tx.To = address.GetExecAddress("pos33").String()
-	dact := &pt.Pos33DepositAction{W: 1000}
-	tx.Payload = types.Encode(&pt.Pos33Action{Value: &pt.Pos33Action_Deposit{Deposit: dact}, Ty: int32(pt.Pos33ActionDeposit)})
+	dact := &pt.TicketOpen{W: 1000}
+	tx.Payload = types.Encode(&pt.TicketAction{Value: &pt.TicketAction_Topen{: dact}, Ty: int32(pt.Pos33ActionDeposit)})
 	tx.Sign(types.ED25519, RootPrivKey)
+	if !tx.CheckSign() {
+		panic("tx check error")
+	}
 	ret = append(ret, tx)
 	return
 }
+*/
 
 // write block to chain
 func (client *Client) setBlock(b *types.Block) error {
@@ -236,18 +353,17 @@ func (client *Client) setBlock(b *types.Block) error {
 	return nil
 }
 
-func getBlockReword(b *types.Block) (*pt.Pos33MinerAction, error) {
+func getMiner(b *types.Block) (*pt.Pos33Miner, error) {
 	if b == nil {
 		return nil, errors.New("b is nil")
 	}
 	tx := b.Txs[0]
-	var pact pt.Pos33Action
+	var pact pt.Pos33Miner
 	err := types.Decode(tx.Payload, &pact)
 	if err != nil {
 		return nil, err
 	}
-	act := pact.GetMiner()
-	return act, nil
+	return &pact, nil
 }
 
 // Get used search block store db

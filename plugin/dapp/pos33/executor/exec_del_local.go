@@ -6,30 +6,61 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
-// ExecDelLocal_Deposit for rollback deposit
-func (p *Pos33) ExecDelLocal_Deposit(act *pt.Pos33DepositAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return p.deposit(-int(act.W), tx)
+func (t *Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	for _, item := range receiptData.Logs {
+		//这三个是ticket 的log
+		if item.Ty == ty.TyLogNewTicket || item.Ty == ty.TyLogMinerTicket || item.Ty == ty.TyLogCloseTicket {
+			var ticketlog ty.ReceiptTicket
+			err := types.Decode(item.Log, &ticketlog)
+			if err != nil {
+				panic(err) //数据错误了，已经被修改了
+			}
+			kv := t.delTicket(&ticketlog)
+			dbSet.KV = append(dbSet.KV, kv...)
+		} else if item.Ty == ty.TyLogTicketBind {
+			var ticketlog ty.ReceiptTicketBind
+			err := types.Decode(item.Log, &ticketlog)
+			if err != nil {
+				panic(err) //数据错误了，已经被修改了
+			}
+			kv := t.delTicketBind(&ticketlog)
+			dbSet.KV = append(dbSet.KV, kv...)
+		}
+		// save all ticket count
+		if item.Ty == ty.TyLogNewTicket {
+			t.saveAllTicketCount(false)
+		} else if item.Ty == ty.TyLogCloseTicket {
+			t.saveAllTicketCount(true)
+		}
+	}
+	return dbSet, nil
 }
 
-// ExecDelLocal_Withdraw for rollback withdraw
-func (p *Pos33) ExecDelLocal_Withdraw(act *pt.Pos33WithdrawAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return p.deposit(int(act.W), tx)
+// ExecDelLocal_Genesis exec del local genesis
+func (t *Ticket) ExecDelLocal_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return t.execDelLocal(receiptData)
 }
 
-// ExecDelLocal_Delegate for rollback delegate
-func (p *Pos33) ExecDelLocal_Delegate(act *pt.Pos33DelegateAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+// ExecDelLocal_Topen exec del local open
+func (t *Ticket) ExecDelLocal_Topen(payload *ty.TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return t.execDelLocal(receiptData)
 }
 
-// ExecDelLocal_Reword for rollback reword
-func (p *Pos33) ExecDelLocal_Miner(act *pt.Pos33MinerAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+// ExecDelLocal_Tbind exec del local bind
+func (t *Ticket) ExecDelLocal_Tbind(payload *ty.TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return t.execDelLocal(receiptData)
 }
 
-// ExecDelLocal_Punish for rollback punish
-func (p *Pos33) ExecDelLocal_Punish(act *pt.Pos33PunishAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+// ExecDelLocal_Tclose exec del local close
+func (t *Ticket) ExecDelLocal_Tclose(payload *ty.TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return t.execDelLocal(receiptData)
+}
+
+// ExecDelLocal_Miner exec del local miner
+func (t *Ticket) ExecDelLocal_Miner(payload *ty.TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return t.execDelLocal(receiptData)
 }
