@@ -9,7 +9,7 @@ import (
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
-	tickettypes "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	tickettypes "github.com/33cn/plugin/plugin/dapp/pos3/types"
 )
 
 const (

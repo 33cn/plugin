@@ -6,13 +6,13 @@ package ticket
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
-	"github.com/33cn/plugin/plugin/dapp/ticket/commands"
-	"github.com/33cn/plugin/plugin/dapp/ticket/executor"
-	"github.com/33cn/plugin/plugin/dapp/ticket/rpc"
-	"github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/plugin/plugin/dapp/pos3/commands"
+	"github.com/33cn/plugin/plugin/dapp/pos3/executor"
+	"github.com/33cn/plugin/plugin/dapp/pos3/rpc"
+	"github.com/33cn/plugin/plugin/dapp/pos3/types"
 
 	// init wallet
-	_ "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
+	_ "github.com/33cn/plugin/plugin/dapp/pos3/wallet"
 )
 
 func init() {

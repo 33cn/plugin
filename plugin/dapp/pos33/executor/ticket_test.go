@@ -11,14 +11,14 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/chain33/util/testnode"
-	"github.com/33cn/plugin/plugin/dapp/ticket/executor"
-	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/33cn/plugin/plugin/dapp/pos3/executor"
+	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
 	_ "github.com/33cn/plugin/plugin/consensus/init"
-	_ "github.com/33cn/plugin/plugin/dapp/ticket"
+	_ "github.com/33cn/plugin/plugin/dapp/pos3"
 )
 
 var mock33 *testnode.Chain33Mock

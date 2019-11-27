@@ -16,7 +16,7 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
-	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/net/context"

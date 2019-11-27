@@ -6,7 +6,7 @@ package wallet
 
 import (
 	"github.com/33cn/chain33/types"
-	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
 )
 
 // On_CloseTickets close ticket

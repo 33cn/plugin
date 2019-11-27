@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/util/testnode"
-	ty "github.com/33cn/plugin/plugin/dapp/ticket/types"
-	ticketwallet "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
+	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
+	ticketwallet "github.com/33cn/plugin/plugin/dapp/pos3/wallet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
