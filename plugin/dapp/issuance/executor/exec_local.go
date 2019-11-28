@@ -83,3 +83,8 @@ func (c *Issuance) ExecLocal_Feed(payload *pty.IssuanceFeed, tx *types.Transacti
 func (c *Issuance) ExecLocal_Close(payload *pty.IssuanceClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(tx, receiptData)
 }
+
+// ExecLocal_Manage Action
+func (c *Issuance) ExecLocal_Manage(payload *pty.IssuanceManage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return c.execLocal(tx, receiptData)
+}

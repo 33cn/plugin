@@ -25,13 +25,13 @@ type Issuance struct {
 	IssuanceId             string        `protobuf:"bytes,1,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
 	TotalBalance           int64         `protobuf:"varint,2,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	DebtCeiling            int64         `protobuf:"varint,3,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio       float32       `protobuf:"fixed32,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	LiquidationRatio       float64       `protobuf:"fixed64,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
 	CollateralValue        int64         `protobuf:"varint,5,opt,name=collateralValue,proto3" json:"collateralValue,omitempty"`
 	DebtValue              int64         `protobuf:"varint,6,opt,name=debtValue,proto3" json:"debtValue,omitempty"`
 	DebtRecords            []*DebtRecord `protobuf:"bytes,7,rep,name=debtRecords,proto3" json:"debtRecords,omitempty"`
 	InvalidRecords         []*DebtRecord `protobuf:"bytes,8,rep,name=invalidRecords,proto3" json:"invalidRecords,omitempty"`
 	Status                 int32         `protobuf:"varint,9,opt,name=status,proto3" json:"status,omitempty"`
-	LatestLiquidationPrice float32       `protobuf:"fixed32,10,opt,name=latestLiquidationPrice,proto3" json:"latestLiquidationPrice,omitempty"`
+	LatestLiquidationPrice float64       `protobuf:"fixed64,10,opt,name=latestLiquidationPrice,proto3" json:"latestLiquidationPrice,omitempty"`
 	Period                 int64         `protobuf:"varint,11,opt,name=period,proto3" json:"period,omitempty"`
 	LatestExpireTime       int64         `protobuf:"varint,12,opt,name=latestExpireTime,proto3" json:"latestExpireTime,omitempty"`
 	CreateTime             int64         `protobuf:"varint,13,opt,name=createTime,proto3" json:"createTime,omitempty"`
@@ -90,7 +90,7 @@ func (m *Issuance) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *Issuance) GetLiquidationRatio() float32 {
+func (m *Issuance) GetLiquidationRatio() float64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
@@ -132,7 +132,7 @@ func (m *Issuance) GetStatus() int32 {
 	return 0
 }
 
-func (m *Issuance) GetLatestLiquidationPrice() float32 {
+func (m *Issuance) GetLatestLiquidationPrice() float64 {
 	if m != nil {
 		return m.LatestLiquidationPrice
 	}
@@ -193,9 +193,9 @@ type DebtRecord struct {
 	AccountAddr          string   `protobuf:"bytes,1,opt,name=accountAddr,proto3" json:"accountAddr,omitempty"`
 	StartTime            int64    `protobuf:"varint,2,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	CollateralValue      int64    `protobuf:"varint,3,opt,name=collateralValue,proto3" json:"collateralValue,omitempty"`
-	CollateralPrice      float32  `protobuf:"fixed32,4,opt,name=collateralPrice,proto3" json:"collateralPrice,omitempty"`
+	CollateralPrice      float64  `protobuf:"fixed64,4,opt,name=collateralPrice,proto3" json:"collateralPrice,omitempty"`
 	DebtValue            int64    `protobuf:"varint,5,opt,name=debtValue,proto3" json:"debtValue,omitempty"`
-	LiquidationPrice     float32  `protobuf:"fixed32,6,opt,name=liquidationPrice,proto3" json:"liquidationPrice,omitempty"`
+	LiquidationPrice     float64  `protobuf:"fixed64,6,opt,name=liquidationPrice,proto3" json:"liquidationPrice,omitempty"`
 	Status               int32    `protobuf:"varint,7,opt,name=status,proto3" json:"status,omitempty"`
 	LiquidateTime        int64    `protobuf:"varint,8,opt,name=liquidateTime,proto3" json:"liquidateTime,omitempty"`
 	ExpireTime           int64    `protobuf:"varint,9,opt,name=expireTime,proto3" json:"expireTime,omitempty"`
@@ -255,7 +255,7 @@ func (m *DebtRecord) GetCollateralValue() int64 {
 	return 0
 }
 
-func (m *DebtRecord) GetCollateralPrice() float32 {
+func (m *DebtRecord) GetCollateralPrice() float64 {
 	if m != nil {
 		return m.CollateralPrice
 	}
@@ -269,7 +269,7 @@ func (m *DebtRecord) GetDebtValue() int64 {
 	return 0
 }
 
-func (m *DebtRecord) GetLiquidationPrice() float32 {
+func (m *DebtRecord) GetLiquidationPrice() float64 {
 	if m != nil {
 		return m.LiquidationPrice
 	}
@@ -335,7 +335,7 @@ func (m *DebtRecord) GetPreIndex() int64 {
 // 资产价格记录
 type IssuanceAssetPriceRecord struct {
 	RecordTime           int64    `protobuf:"varint,1,opt,name=recordTime,proto3" json:"recordTime,omitempty"`
-	BtyPrice             float32  `protobuf:"fixed32,2,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
+	BtyPrice             float64  `protobuf:"fixed64,2,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -373,7 +373,7 @@ func (m *IssuanceAssetPriceRecord) GetRecordTime() int64 {
 	return 0
 }
 
-func (m *IssuanceAssetPriceRecord) GetBtyPrice() float32 {
+func (m *IssuanceAssetPriceRecord) GetBtyPrice() float64 {
 	if m != nil {
 		return m.BtyPrice
 	}
@@ -572,7 +572,7 @@ func (m *IssuanceManage) GetSuperAddrs() []string {
 type IssuanceCreate struct {
 	TotalBalance         int64    `protobuf:"varint,1,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	DebtCeiling          int64    `protobuf:"varint,2,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio     float32  `protobuf:"fixed32,3,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	LiquidationRatio     float64  `protobuf:"fixed64,3,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
 	Period               int64    `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -618,7 +618,7 @@ func (m *IssuanceCreate) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *IssuanceCreate) GetLiquidationRatio() float32 {
+func (m *IssuanceCreate) GetLiquidationRatio() float64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
@@ -731,7 +731,7 @@ func (m *IssuanceRepay) GetDebtId() string {
 // 喂价
 type IssuanceFeed struct {
 	CollType             int32     `protobuf:"varint,1,opt,name=collType,proto3" json:"collType,omitempty"`
-	Price                []float32 `protobuf:"fixed32,2,rep,packed,name=price,proto3" json:"price,omitempty"`
+	Price                []float64 `protobuf:"fixed64,2,rep,packed,name=price,proto3" json:"price,omitempty"`
 	Volume               []int64   `protobuf:"varint,3,rep,packed,name=volume,proto3" json:"volume,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
@@ -770,7 +770,7 @@ func (m *IssuanceFeed) GetCollType() int32 {
 	return 0
 }
 
-func (m *IssuanceFeed) GetPrice() []float32 {
+func (m *IssuanceFeed) GetPrice() []float64 {
 	if m != nil {
 		return m.Price
 	}
@@ -834,7 +834,7 @@ type ReceiptIssuance struct {
 	Index                int64    `protobuf:"varint,6,opt,name=index,proto3" json:"index,omitempty"`
 	PreIndex             int64    `protobuf:"varint,7,opt,name=preIndex,proto3" json:"preIndex,omitempty"`
 	RecordTime           int64    `protobuf:"varint,8,opt,name=recordTime,proto3" json:"recordTime,omitempty"`
-	BtyPrice             float32  `protobuf:"fixed32,9,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
+	BtyPrice             float64  `protobuf:"fixed64,9,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -921,7 +921,7 @@ func (m *ReceiptIssuance) GetRecordTime() int64 {
 	return 0
 }
 
-func (m *ReceiptIssuance) GetBtyPrice() float32 {
+func (m *ReceiptIssuance) GetBtyPrice() float64 {
 	if m != nil {
 		return m.BtyPrice
 	}
@@ -1077,7 +1077,7 @@ type RepIssuanceCurrentInfo struct {
 	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	TotalBalance         int64    `protobuf:"varint,2,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	DebtCeiling          int64    `protobuf:"varint,3,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio     float32  `protobuf:"fixed32,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	LiquidationRatio     float64  `protobuf:"fixed64,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
 	Balance              int64    `protobuf:"varint,5,opt,name=balance,proto3" json:"balance,omitempty"`
 	CollateralValue      int64    `protobuf:"varint,6,opt,name=collateralValue,proto3" json:"collateralValue,omitempty"`
 	DebtValue            int64    `protobuf:"varint,7,opt,name=debtValue,proto3" json:"debtValue,omitempty"`
@@ -1135,7 +1135,7 @@ func (m *RepIssuanceCurrentInfo) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *RepIssuanceCurrentInfo) GetLiquidationRatio() float32 {
+func (m *RepIssuanceCurrentInfo) GetLiquidationRatio() float64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
@@ -1602,7 +1602,7 @@ func (m *RepIssuanceDebtInfo) GetRecord() *DebtRecord {
 
 // 返回最新抵押物价格
 type RepIssuancePrice struct {
-	Price                float32  `protobuf:"fixed32,1,opt,name=price,proto3" json:"price,omitempty"`
+	Price                float64  `protobuf:"fixed64,1,opt,name=price,proto3" json:"price,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1633,7 +1633,7 @@ func (m *RepIssuancePrice) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RepIssuancePrice proto.InternalMessageInfo
 
-func (m *RepIssuancePrice) GetPrice() float32 {
+func (m *RepIssuancePrice) GetPrice() float64 {
 	if m != nil {
 		return m.Price
 	}
@@ -1683,7 +1683,7 @@ var fileDescriptor_7110f4228953d675 = []byte{
 	0x2c, 0xcc, 0x85, 0x7d, 0x91, 0x08, 0x3f, 0x9e, 0xfb, 0x31, 0x5a, 0x1c, 0x73, 0x6a, 0xcc, 0x2c,
 	0xaf, 0x66, 0x63, 0x53, 0x18, 0x87, 0xfc, 0x56, 0x5c, 0xf1, 0x28, 0x8e, 0x96, 0x6f, 0x1d, 0x8b,
 	0x5c, 0xaa, 0x26, 0xf6, 0x09, 0x1c, 0xc5, 0xd1, 0xbb, 0x55, 0x14, 0xfa, 0x22, 0x4a, 0x96, 0x1e,
-	0xfe, 0x75, 0x7a, 0x53, 0x63, 0x66, 0x7a, 0x2d, 0x3b, 0x9b, 0xc1, 0x61, 0x90, 0xc4, 0xb1, 0x2f,
+	0xfe, 0x75, 0x7a, 0x53, 0x63, 0x66, 0x78, 0x2d, 0x3b, 0x9b, 0xc1, 0x61, 0x90, 0xc4, 0xb1, 0x2f,
 	0x78, 0xe6, 0xc7, 0x6f, 0xfc, 0x78, 0xc5, 0x1d, 0x9b, 0x22, 0x36, 0xcd, 0xec, 0x43, 0x18, 0x61,
 	0x12, 0xe9, 0xd3, 0x27, 0x1f, 0x6d, 0x60, 0x17, 0xb2, 0x2a, 0x8f, 0x07, 0x49, 0x16, 0xe6, 0xce,
 	0x60, 0x6a, 0xcd, 0xc6, 0xe7, 0x4f, 0x4e, 0xa9, 0x07, 0xa7, 0xd7, 0xe5, 0x8e, 0x57, 0xf5, 0x62,
@@ -1718,7 +1718,7 @@ var fileDescriptor_7110f4228953d675 = []byte{
 	0xad, 0x0d, 0x8a, 0xaf, 0x95, 0xae, 0x57, 0x55, 0x3a, 0xf7, 0x1a, 0xf6, 0xab, 0xb8, 0x6d, 0x7d,
 	0xab, 0x8e, 0x55, 0x1f, 0x54, 0x3d, 0xaa, 0x29, 0xdf, 0xc3, 0x41, 0x0d, 0xd1, 0xad, 0x61, 0xf4,
 	0xfd, 0x31, 0xab, 0xf7, 0xc7, 0xfd, 0x45, 0x97, 0x83, 0x68, 0x23, 0x93, 0x51, 0x40, 0x5e, 0xaf,
-	0x53, 0xd9, 0x24, 0xdb, 0x2b, 0xd7, 0x58, 0x4a, 0xaa, 0x28, 0x6e, 0xcd, 0x4c, 0x4f, 0x2e, 0x30,
+	0x53, 0xd9, 0x24, 0xdb, 0x2b, 0xd7, 0x58, 0x4a, 0xaa, 0x28, 0x6e, 0xcd, 0x0c, 0x4f, 0x2e, 0x30,
 	0xf2, 0x43, 0x12, 0xaf, 0xee, 0x51, 0xaa, 0x2c, 0x3c, 0xa8, 0x5c, 0xb9, 0x67, 0xba, 0x44, 0xe2,
 	0xc6, 0xb6, 0x12, 0xdd, 0xdf, 0x4d, 0x38, 0xf4, 0x78, 0xc0, 0xa3, 0x54, 0xec, 0xfc, 0x92, 0x37,
 	0x04, 0xd7, 0x6c, 0x0b, 0xae, 0x3e, 0xb8, 0xd5, 0x14, 0x0e, 0x25, 0x66, 0xbd, 0x9a, 0x98, 0xd5,
@@ -1741,5 +1741,5 @@ var fileDescriptor_7110f4228953d675 = []byte{
 	0xde, 0xd2, 0x57, 0x35, 0x54, 0xd0, 0x63, 0x97, 0x9b, 0xba, 0xf1, 0x25, 0xf9, 0x06, 0xc3, 0xa5,
 	0xad, 0x70, 0x2f, 0xa1, 0x2f, 0x13, 0xaa, 0x59, 0xa7, 0xa3, 0x22, 0xe5, 0xe0, 0xce, 0x90, 0xac,
 	0x65, 0x04, 0x39, 0x73, 0x96, 0x6f, 0x8e, 0x41, 0x77, 0x52, 0x2e, 0x6e, 0xfb, 0xf4, 0xbf, 0xdf,
-	0xc5, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x9c, 0x86, 0x5d, 0xb7, 0x0d, 0x0e, 0x00, 0x00,
+	0xc5, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xa1, 0x37, 0xc2, 0xe4, 0x0d, 0x0e, 0x00, 0x00,
 }

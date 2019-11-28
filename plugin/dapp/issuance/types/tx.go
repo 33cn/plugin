@@ -6,17 +6,17 @@ package types
 
 // IssuanceCreateTx for construction
 type IssuanceCreateTx struct {
-	DebtCeiling         int64 `json:"debtCeiling"`
-	LiquidationRatio    float32 `json:"liquidationRatio"`
+	DebtCeiling         float64 `json:"debtCeiling"`
+	LiquidationRatio    float64 `json:"liquidationRatio"`
 	Period              int64 `json:"period"`
-	TotalBalance        int64 `json:"totalBalance"`
+	TotalBalance        float64 `json:"totalBalance"`
 	Fee                 int64  `json:"fee"`
 }
 
 // IssuanceDebtTx for construction
 type IssuanceDebtTx struct {
 	IssuanceID string `json:"issuanceId"`
-	Value    int64  `json:"value"`
+	Value    float64  `json:"value"`
 	Fee       int64  `json:"fee"`
 }
 
@@ -29,7 +29,7 @@ type IssuanceRepayTx struct {
 
 // IssuanceFeedTx for construction
 type IssuanceFeedTx struct {
-	Price     []float32  `json:"price"`
+	Price     []float64  `json:"price"`
 	Volume    []int64  `json:"volume"`
 	Fee       int64  `json:"fee"`
 }

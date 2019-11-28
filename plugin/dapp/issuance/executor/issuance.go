@@ -144,7 +144,7 @@ func (c *Issuance) deleteIssuanceRecordStatus(status int32, index int64) (kvs []
 	return kvs
 }
 
-func (c *Issuance) addIssuancePriceRecord(recordTime int64, price float32) (kvs []*types.KeyValue) {
+func (c *Issuance) addIssuancePriceRecord(recordTime int64, price float64) (kvs []*types.KeyValue) {
 	key := calcIssuancePriceKey(string(recordTime))
 
 	record := &pty.IssuanceAssetPriceRecord{

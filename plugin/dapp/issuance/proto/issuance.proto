@@ -7,13 +7,13 @@ message Issuance {
     string      issuanceId              = 1; //发行ID,一期发行对应一个ID
     int64       totalBalance            = 2; //当期发行的总金额(ccny)
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio        = 4; //清算比例
+    double      liquidationRatio        = 4; //清算比例
     int64       collateralValue         = 5; //抵押物总数量(bty)
     int64       debtValue               = 6; //产生的ccny数量
     repeated DebtRecord debtRecords     = 7; //大户抵押记录
     repeated DebtRecord invalidRecords  = 8; //大户抵押记录
     int32       status                  = 9; //当期发行的状态，是否关闭
-    float       latestLiquidationPrice  = 10;//最高清算价格
+    double       latestLiquidationPrice  = 10;//最高清算价格
     int64       period                  = 11;//发行最大期限
     int64       latestExpireTime        = 12;//最近超期时间
     int64       createTime              = 13;//创建时间
@@ -28,9 +28,9 @@ message DebtRecord {
     string      accountAddr          = 1; //抵押人地址
     int64       startTime            = 2; //抵押时间
     int64       collateralValue      = 3; //抵押物价值(bty)
-    float       collateralPrice      = 4; //抵押物价格
+    double      collateralPrice      = 4; //抵押物价格
     int64       debtValue            = 5; //债务价值(ccny)
-    float       liquidationPrice     = 6; //抵押物清算价格
+    double      liquidationPrice     = 6; //抵押物清算价格
     int32       status               = 7; //抵押状态，是否被清算
     int64       liquidateTime        = 8; //清算时间
     int64       expireTime           = 9; //超时清算时间
@@ -44,7 +44,7 @@ message DebtRecord {
 // 资产价格记录
 message IssuanceAssetPriceRecord {
     int64      recordTime      = 1; //价格记录时间
-    float      btyPrice        = 2; //bty价格
+    double     btyPrice        = 2; //bty价格
 }
 
 // action
@@ -68,7 +68,7 @@ message IssuanceManage {
 message IssuanceCreate {
     int64   totalBalance       = 1; //发行总金额
     int64   debtCeiling        = 2; //单用户可借出的限额(ccny)
-    float   liquidationRatio   = 3; //清算比例
+    double  liquidationRatio   = 3; //清算比例
     int64   period             = 4; //发行最大期限
 }
 
@@ -86,9 +86,9 @@ message IssuanceRepay {
 
 // 喂价
 message IssuanceFeed {
-    int32        collType = 1; //抵押物价格类型(1，bty，2，btc，3，eth...)
-    repeated float price  = 2; //喂价
-    repeated int64 volume = 3; //成交量
+    int32         collType = 1; //抵押物价格类型(1，bty，2，btc，3，eth...)
+    repeated double price  = 2; //喂价
+    repeated int64  volume = 3; //成交量
 }
 
 // 借贷关闭
@@ -106,7 +106,7 @@ message ReceiptIssuance {
     int64       index           = 6;
     int64       preIndex        = 7;
     int64       recordTime      = 8; //价格记录时间
-    float       btyPrice        = 9; //bty价格
+    double      btyPrice        = 9; //bty价格
 }
 
 // exec_local 抵押记录信息
@@ -132,7 +132,7 @@ message RepIssuanceCurrentInfo {
     int32       status                  = 1; //当期发行的状态，是否关闭
     int64       totalBalance            = 2; //当期发行总金额(ccny)
     int64       debtCeiling             = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio        = 4; //清算比例
+    double      liquidationRatio        = 4; //清算比例
     int64       balance                 = 5; //剩余可借贷金额(ccny)
     int64       collateralValue         = 6; //抵押物总数量(bty)
     int64       debtValue               = 7; //产生的ccny数量
@@ -195,5 +195,5 @@ message RepIssuanceDebtInfo {
 
 // 返回最新抵押物价格
 message RepIssuancePrice {
-    float price = 1; //当前抵押物最新价格
+    double price = 1; //当前抵押物最新价格
 }

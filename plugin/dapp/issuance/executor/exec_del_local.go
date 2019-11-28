@@ -82,3 +82,8 @@ func (c *Issuance) ExecDelLocal_Feed(payload *pty.IssuanceFeed, tx *types.Transa
 func (c *Issuance) ExecDelLocal_Close(payload *pty.IssuanceClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execDelLocal(tx, receiptData)
 }
+
+// ExecDelLocal_Manage Action
+func (c *Issuance) ExecDelLocal_Manage(payload *pty.IssuanceManage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return c.execDelLocal(tx, receiptData)
+}

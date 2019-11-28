@@ -43,11 +43,11 @@ func IssuanceCreateRawTxCmd() *cobra.Command {
 }
 
 func addIssuanceCreateFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("balance", "b", 0, "balance")
+	cmd.Flags().Float64P("balance", "b", 0, "balance")
 	cmd.MarkFlagRequired("balance")
-	cmd.Flags().Uint64P("debtCeiling", "d", 0, "debtCeiling")
+	cmd.Flags().Float64P("debtCeiling", "d", 0, "debtCeiling")
 	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
-	cmd.Flags().Uint64P("period", "p", 0, "period")
+	cmd.Flags().Float32P("period", "p", 0, "period")
 }
 
 func IssuanceCreate(cmd *cobra.Command, args []string) {
@@ -58,15 +58,15 @@ func IssuanceCreate(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	balance, _ := cmd.Flags().GetUint64("balance")
-	debtCeiling, _ := cmd.Flags().GetUint64("debtCeiling")
+	balance, _ := cmd.Flags().GetFloat64("balance")
+	debtCeiling, _ := cmd.Flags().GetFloat64("debtCeiling")
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
 	period, _ := cmd.Flags().GetUint64("period")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceCreate",
-		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%d, \"debtCeiling\":%d, \"liquidationRatio\":%f, \"period\":%d}",
+		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%f, \"debtCeiling\":%f, \"liquidationRatio\":%f, \"period\":%d}",
 			balance, debtCeiling, liquidationRatio, period)),
 	}
 
@@ -89,7 +89,7 @@ func IssuanceDebtRawTxCmd() *cobra.Command {
 func addIssuanceDebtFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("issuanceID", "g", "", "issuance ID")
 	cmd.MarkFlagRequired("issuanceID")
-	cmd.Flags().Uint64P("value", "v", 0, "value")
+	cmd.Flags().Float64P("value", "v", 0, "value")
 	cmd.MarkFlagRequired("value")
 }
 
@@ -102,12 +102,12 @@ func IssuanceDebt(cmd *cobra.Command, args []string) {
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	issuanceID, _ := cmd.Flags().GetString("issuanceID")
-	value, _ := cmd.Flags().GetUint64("value")
+	value, _ := cmd.Flags().GetFloat64("value")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceDebt",
-		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":\"%s\",\"value\":%d}", issuanceID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"issuanceID\":\"%s\",\"value\":%f}", issuanceID, value)),
 	}
 
 	var res string

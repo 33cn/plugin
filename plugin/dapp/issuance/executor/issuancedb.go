@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
 	tokenE "github.com/33cn/plugin/plugin/dapp/token/executor"
+	"math"
 )
 
 // List control
@@ -25,7 +26,7 @@ const (
 
 const (
 	Coin                      = types.Coin      // 1e8
-	DefaultDebtCeiling        = 100000           // 默认借贷限额
+	DefaultDebtCeiling        = 100000 * Coin          // 默认借贷限额
 	DefaultLiquidationRatio   = 0.25             // 默认质押比
 	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
 	PriceWarningRate          = 1.3             // 价格提前预警率
@@ -289,8 +290,8 @@ func (action *Action) GetIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-func getLatestLiquidationPrice(issu *pty.Issuance) float32 {
-	var latest float32
+func getLatestLiquidationPrice(issu *pty.Issuance) float64 {
+	var latest float64
 	for _, collRecord := range issu.DebtRecords {
 		if collRecord.LiquidationPrice > latest {
 			latest = collRecord.LiquidationPrice
@@ -385,7 +386,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	}
 
 	// 检查ccny余额
-	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance*Coin, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
 		return nil, types.ErrInsufficientBalance
 	}
 
@@ -398,7 +399,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	}
 
 	// 冻结ccny
-	receipt, err = action.tokenAccount.ExecFrozen(action.fromaddr, action.execaddr, create.TotalBalance*Coin)
+	receipt, err = action.tokenAccount.ExecFrozen(action.fromaddr, action.execaddr, create.TotalBalance)
 	if err != nil {
 		clog.Error("IssuanceCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", create.TotalBalance)
 		return nil, err
@@ -445,20 +446,19 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 }
 
 // 根据最近抵押物价格计算需要冻结的BTY数量
-func getBtyNumToFrozen(value int64, price float32, ratio float32) (int64,error) {
+func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64,error) {
 	if price == 0 {
 		clog.Error("Bty price should greate to 0")
 		return 0, pty.ErrPriceInvalid
 	}
 
-    btyValue := float32(value)/ratio
-    btyNum := int64(btyValue/price) + 1
-
-    return btyNum, nil
+	valueReal := float64(value)/1e8
+	btyValue := valueReal/(price * ratio)
+	return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
 }
 
 // 获取最近抵押物价格
-func getLatestPrice(db dbm.KV) (float32, error) {
+func getLatestPrice(db dbm.KV) (float64, error) {
 	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
@@ -558,13 +558,13 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	}
 
 	// 检查抵押物账户余额
-	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen*Coin, 0) {
+	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen, 0) {
 		clog.Error("IssuanceDebt.CheckExecAccountBalance", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "btyFrozen", btyFrozen, "err", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
 
 	// 抵押物转账
-	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, btyFrozen*Coin)
+	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, btyFrozen)
 	if err != nil {
 		clog.Error("IssuanceDebt.ExecTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", btyFrozen)
 		return nil, err
@@ -573,7 +573,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物冻结
-	receipt, err = action.coinsAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, btyFrozen*Coin)
+	receipt, err = action.coinsAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, btyFrozen)
 	if err != nil {
 		clog.Error("IssuanceDebt.Frozen", "addr", issu.IssuerAddr, "execaddr", action.execaddr, "amount", btyFrozen)
 		return nil, err
@@ -582,7 +582,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	kv = append(kv, receipt.KV...)
 
 	// 借出ccny
-	receipt, err = action.tokenAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value*Coin)
+	receipt, err = action.tokenAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debt.Value)
 	if err != nil {
 		clog.Error("IssuanceDebt.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debt.Value)
 		return nil, err
@@ -663,13 +663,13 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	}
 
 	// 检查
-	if !action.CheckExecTokenAccount(action.fromaddr, debtRecord.DebtValue*Coin, false) {
+	if !action.CheckExecTokenAccount(action.fromaddr, debtRecord.DebtValue, false) {
 		clog.Error("IssuanceRepay", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrInsufficientBalance)
 		return nil, types.ErrNoBalance
 	}
 
 	// ccny转移
-	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, debtRecord.DebtValue*Coin)
+	receipt, err = action.tokenAccount.ExecTransfer(action.fromaddr, issu.IssuerAddr, action.execaddr, debtRecord.DebtValue)
 	if err != nil {
 		clog.Error("IssuanceRepay.ExecTokenTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.DebtValue)
 		return nil, err
@@ -678,7 +678,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	kv = append(kv, receipt.KV...)
 
 	// 冻结ccny
-	receipt, err = action.tokenAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, debtRecord.DebtValue*Coin)
+	receipt, err = action.tokenAccount.ExecFrozen(issu.IssuerAddr, action.execaddr, debtRecord.DebtValue)
 	if err != nil {
 		clog.Error("IssuanceCreate.Frozen", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.DebtValue)
 		return nil, err
@@ -687,7 +687,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	kv = append(kv, receipt.KV...)
 
 	// 抵押物归还
-	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debtRecord.CollateralValue*Coin)
+	receipt, err = action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, action.fromaddr, action.execaddr, debtRecord.CollateralValue)
 	if err != nil {
 		clog.Error("IssuanceRepay.ExecTransferFrozen", "addr", issu.IssuerAddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue)
 		return nil, err
@@ -720,7 +720,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 }
 
 // 系统清算
-func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*types.Receipt, error) {
+func (action *Action) systemLiquidation(issu *pty.Issuance, price float64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
@@ -743,7 +743,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float32) (*typ
 			}
 
 			// 抵押物转移
-			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue*Coin)
+			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
 			if err != nil {
 				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
 				continue
@@ -801,7 +801,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			}
 
 			// 抵押物转移
-			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue*Coin)
+			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
 			if err != nil {
 				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
 				continue
@@ -840,8 +840,8 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 }
 
 // 价格计算策略
-func pricePolicy(feed *pty.IssuanceFeed) float32 {
-	var totalPrice float32
+func pricePolicy(feed *pty.IssuanceFeed) float64 {
+	var totalPrice float64
 	var totalVolume int64
 	for _, volume := range feed.Volume {
 		totalVolume += volume
@@ -852,7 +852,7 @@ func pricePolicy(feed *pty.IssuanceFeed) float32 {
 		return 0
 	}
 	for i, price := range feed.Price {
-		totalPrice += price * float32(float64(feed.Volume[i])/float64(totalVolume))
+		totalPrice += price * (float64(feed.Volume[i])/float64(totalVolume))
 	}
 
 	return totalPrice
@@ -955,9 +955,9 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 	}
 
 	// 解冻ccny
-	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance*Coin)
+	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance)
 	if err != nil {
-		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.TotalBalance)
+		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.Balance, "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)

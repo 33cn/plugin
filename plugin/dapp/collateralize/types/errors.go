@@ -9,7 +9,6 @@ import "errors"
 // Errors for lottery
 var (
 	ErrRiskParam                      = errors.New("ErrRiskParam")
-	ErrCollateralizeRepeatHash        = errors.New("ErrCollateralizeRepeatHash")
 	ErrCollateralizeStatus            = errors.New("ErrCollateralizeStatus")
 	ErrCollateralizeExceedDebtCeiling = errors.New("ErrCollateralizeExceedDebtCeiling")
 	ErrPriceInvalid                   = errors.New("ErrPriceInvalid")

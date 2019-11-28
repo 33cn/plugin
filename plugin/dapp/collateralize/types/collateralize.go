@@ -6,6 +6,7 @@ package types
 
 import (
 	"encoding/json"
+	"math"
 	"reflect"
 
 	"github.com/33cn/chain33/common/address"
@@ -111,7 +112,7 @@ func (collateralize CollateralizeType) CreateTx(action string, message json.RawM
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawCollateralizeFeedTx(cfg, &param)
-	} else if action == "CollateralizeRetrive" {
+	} else if action == "CollateralizeRetrieve" {
 		var param CollateralizeRetrieveTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -153,7 +154,7 @@ func CreateRawCollateralizeCreateTx(cfg *types.Chain33Config, parm *Collateraliz
 	}
 
 	v := &CollateralizeCreate{
-		TotalBalance:  parm.TotalBalance,
+		TotalBalance:  int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}
 	create := &CollateralizeAction{
 		Ty:    CollateralizeActionCreate,
@@ -182,7 +183,7 @@ func CreateRawCollateralizeBorrowTx(cfg *types.Chain33Config, parm *Collateraliz
 
 	v := &CollateralizeBorrow{
 		CollateralizeId: parm.CollateralizeID,
-		Value:    parm.Value,
+		Value:   int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	borrow := &CollateralizeAction{
 		Ty:    CollateralizeActionBorrow,
@@ -241,7 +242,7 @@ func CreateRawCollateralizeAppendTx(cfg *types.Chain33Config, parm *Collateraliz
 	v := &CollateralizeAppend{
 		CollateralizeId: parm.CollateralizeID,
 		RecordId:parm.RecordID,
-		CollateralValue: parm.Value,
+		CollateralValue: int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	append := &CollateralizeAction{
 		Ty:    CollateralizeActionAppend,
@@ -299,7 +300,7 @@ func CreateRawCollateralizeRetrieveTx(cfg *types.Chain33Config, parm *Collateral
 
 	v := &CollateralizeRetrieve{
 		CollateralizeId: parm.CollateralizeID,
-		Balance: parm.Balance,
+		Balance: int64(math.Trunc((parm.Balance+0.0000001)*1e4)) * 1e4,
 	}
 	close := &CollateralizeAction{
 		Ty:    CollateralizeActionRetrieve,
@@ -328,11 +329,11 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 	}
 
 	v := &CollateralizeManage{
-		DebtCeiling:          parm.DebtCeiling,
+		DebtCeiling:          int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
 		LiquidationRatio:     parm.LiquidationRatio,
 		StabilityFeeRatio:    parm.StabilityFeeRatio,
 		Period:               parm.Period,
-		CollTotalBalance:     parm.CollTotalBalance,
+		TotalBalance:         int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}
 
 	manage := &CollateralizeAction{

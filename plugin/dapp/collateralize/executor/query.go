@@ -144,7 +144,7 @@ func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecor
 		clog.Debug("Query_CollateralizeByStatus", "get collateralize record error", err)
 	}
 
-	collBalance := config.CollTotalBalance
+	balance := config.TotalBalance
 	for _, id := range collIDRecords {
 		coll, err := queryCollateralizeByID(c.GetStateDB(), id)
 		if err != nil {
@@ -152,15 +152,15 @@ func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecor
 			return nil, err
 		}
 
-		collBalance -= coll.TotalBalance
+		balance -= coll.TotalBalance
 	}
 	ret := &pty.RepCollateralizeConfig{
-		CollTotalBalance:config.CollTotalBalance,
+		TotalBalance:config.TotalBalance,
 		DebtCeiling: config.DebtCeiling,
 		LiquidationRatio: config.LiquidationRatio,
 		StabilityFeeRatio: config.StabilityFeeRatio,
 		Period: config.Period,
-		CollBalance: collBalance,
+		Balance: balance,
 		CurrentTime: config.CurrentTime,
 	}
 

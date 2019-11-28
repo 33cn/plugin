@@ -44,7 +44,7 @@ func CollateralizeCreateRawTxCmd() *cobra.Command {
 }
 
 func addCollateralizeCreateFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("balance", "b", 0, "balance")
+	cmd.Flags().Float64P("balance", "b", 0, "balance")
 	cmd.MarkFlagRequired("balance")
 }
 
@@ -56,12 +56,12 @@ func CollateralizeCreate(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	balance, _ := cmd.Flags().GetUint64("balance")
+	balance, _ := cmd.Flags().GetFloat64("balance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeCreate",
-		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%d}", balance)),
+		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%f}", balance)),
 	}
 
 	var res string
@@ -83,7 +83,7 @@ func CollateralizeBorrowRawTxCmd() *cobra.Command {
 func addCollateralizeBorrowFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("collateralizeID", "g", "", "collateralize ID")
 	cmd.MarkFlagRequired("collateralizeID")
-	cmd.Flags().Uint64P("value", "v", 0, "value")
+	cmd.Flags().Float64P("value", "v", 0, "value")
 	cmd.MarkFlagRequired("value")
 }
 
@@ -96,12 +96,12 @@ func CollateralizeBorrow(cmd *cobra.Command, args []string) {
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
-	value, _ := cmd.Flags().GetUint64("value")
+	value, _ := cmd.Flags().GetFloat64("value")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeBorrow",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"value\":%d}", collateralizeID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"value\":%f}", collateralizeID, value)),
 	}
 
 	var res string
@@ -125,7 +125,7 @@ func addCollateralizeAppendFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("collateralizeID")
 	cmd.Flags().StringP("recordID", "r", "", "recordID")
 	cmd.MarkFlagRequired("recordID")
-	cmd.Flags().Uint64P("value", "v", 0, "value")
+	cmd.Flags().Float64P("value", "v", 0, "value")
 	cmd.MarkFlagRequired("value")
 }
 
@@ -139,12 +139,12 @@ func CollateralizeAppend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	recordID, _ := cmd.Flags().GetString("recordID")
-	value, _ := cmd.Flags().GetUint64("value")
+	value, _ := cmd.Flags().GetFloat64("value")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeAppend",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"recordID\":\"%s\", \"value\":%d}", collateralizeID, recordID, value)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"recordID\":\"%s\", \"value\":%f}", collateralizeID, recordID, value)),
 	}
 
 	var res string
@@ -204,7 +204,7 @@ func CollateralizePriceFeedRawTxCmd() *cobra.Command {
 }
 
 func addCollateralizePriceFeedFlags(cmd *cobra.Command) {
-	cmd.Flags().Float32P("price", "p", 0, "price")
+	cmd.Flags().Float64P("price", "p", 0, "price")
 	cmd.MarkFlagRequired("price")
 	cmd.Flags().Uint64P("volume", "v", 0, "volume")
 	cmd.MarkFlagRequired("volume")
@@ -246,7 +246,7 @@ func CollateralizeRetrieveRawTxCmd() *cobra.Command {
 func addCollateralizeRetrieveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("collateralizeID", "g", "", "collateralize ID")
 	cmd.MarkFlagRequired("collateralizeID")
-	cmd.Flags().StringP("balance", "b", "", "retrieve balance")
+	cmd.Flags().Float64P("balance", "b", 0, "retrieve balance")
 	cmd.MarkFlagRequired("balance")
 }
 
@@ -259,12 +259,12 @@ func CollateralizeRetrieve(cmd *cobra.Command, args []string) {
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
-	balance, _ := cmd.Flags().GetInt64("balance")
+	balance, _ := cmd.Flags().GetFloat64("balance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeRetrieve",
-		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"balance\": %d}", collateralizeID, balance)),
+		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"balance\": %f}", collateralizeID, balance)),
 	}
 
 	var res string
@@ -284,11 +284,11 @@ func CollateralizeManageRawTxCmd() *cobra.Command {
 }
 
 func addCollateralizeManageFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("debtCeiling", "d", 0, "debtCeiling")
-	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
-	cmd.Flags().Float32P("stabilityFeeRatio", "s", 0, "stabilityFeeRatio")
+	cmd.Flags().Float64P("debtCeiling", "d", 0, "debtCeiling")
+	cmd.Flags().Float64P("liquidationRatio", "l", 0, "liquidationRatio")
+	cmd.Flags().Float64P("stabilityFeeRatio", "s", 0, "stabilityFeeRatio")
 	cmd.Flags().Uint64P("period", "p", 0, "period")
-	cmd.Flags().Uint64P("totalBalance", "t", 0, "totalBalance")
+	cmd.Flags().Float64P("totalBalance", "t", 0, "totalBalance")
 }
 
 func CollateralizeManage(cmd *cobra.Command, args []string) {
@@ -299,16 +299,16 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	debtCeiling, _ := cmd.Flags().GetUint64("debtCeiling")
+	debtCeiling, _ := cmd.Flags().GetFloat32("debtCeiling")
 	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
 	stabilityFeeRatio, _ := cmd.Flags().GetFloat32("stabilityFeeRatio")
 	period, _ := cmd.Flags().GetUint64("period")
-	totalBalance, _ := cmd.Flags().GetUint64("totalBalance")
+	totalBalance, _ := cmd.Flags().GetFloat32("totalBalance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
-		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%d, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%d}",
+		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%f, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%f}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period, totalBalance)),
 	}
 

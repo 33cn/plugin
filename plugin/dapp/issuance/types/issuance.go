@@ -6,6 +6,7 @@ package types
 
 import (
 	"encoding/json"
+	"math"
 	"reflect"
 
 	"github.com/33cn/chain33/common/address"
@@ -143,8 +144,8 @@ func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx)
 	}
 
 	v := &IssuanceCreate{
-		TotalBalance:  parm.TotalBalance,
-		DebtCeiling:   parm.DebtCeiling,
+		TotalBalance:  int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
+		DebtCeiling:   int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
 		LiquidationRatio: parm.LiquidationRatio,
 		Period: parm.Period,
 	}
@@ -175,7 +176,7 @@ func CreateRawIssuanceDebtTx(cfg *types.Chain33Config, parm *IssuanceDebtTx) (*t
 
 	v := &IssuanceDebt{
 		IssuanceId: parm.IssuanceID,
-		Value:    parm.Value,
+		Value:   int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	debt := &IssuanceAction{
 		Ty:    IssuanceActionDebt,

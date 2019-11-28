@@ -93,6 +93,11 @@ func initEnv() *execEnv {
 		Frozen:  0,
 		Addr:    string(Nodes[1]),
 	}
+	accountBToken := types.Account{
+		Balance: types.Coin/10,
+		Frozen:  0,
+		Addr:    string(Nodes[1]),
+	}
 	accountC := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -117,6 +122,8 @@ func initEnv() *execEnv {
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 	manageKeySet("issuance-price-feed", accountB.Addr, stateDB)
+	tokenAccB,_ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
+	tokenAccB.SaveExecAccount(execAddr, &accountBToken)
 
 	accC := account.NewCoinsAccount(cfg)
 	accC.SetDB(stateDB)
@@ -584,12 +591,3 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
-
-//func TestSlice(t *testing.T) {
-//	var a []int
-//	a = append(a, 1)
-//	fmt.Println(a)
-//
-//	a = append(a[:0], a[1:]...)
-//	fmt.Println(a)
-//}

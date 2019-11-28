@@ -7,14 +7,14 @@ message Collateralize {
     string      collateralizeId          = 1; //放贷ID,一期放贷对应一个ID
     int64       totalBalance             = 2; //当期放贷的总金额(ccny)
     int64       debtCeiling              = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio         = 4; //清算比例
-    float       stabilityFeeRatio        = 5; //稳定费率
+    double      liquidationRatio         = 4; //清算比例
+    double      stabilityFeeRatio        = 5; //稳定费率
     string      createAddr               = 6; //创建人地址
     int64       balance                  = 7; //放贷剩余金额(ccny)
     repeated BorrowRecord borrowRecords  = 8; //借贷记录
     repeated BorrowRecord InvalidRecords = 9; //失效的借贷记录
     int32       status                   = 10;//当期借贷的状态，是否关闭
-    float       latestLiquidationPrice   = 11;//最高清算价格
+    double      latestLiquidationPrice   = 11;//最高清算价格
     int64       period                   = 12;//借贷最大期限
     int64       latestExpireTime         = 13;//最近超期时间
     int64       index                    = 14;//当前索引
@@ -27,9 +27,9 @@ message BorrowRecord {
     string      accountAddr          = 1; //借贷人地址
     int64       startTime            = 2; //借贷时间
     int64       collateralValue      = 3; //抵押物价值(bty)
-    float       collateralPrice      = 4; //抵押物价格
+    double      collateralPrice      = 4; //抵押物价格
     int64       debtValue            = 5; //债务价值(ccny)
-    float       liquidationPrice     = 6; //抵押物清算价格
+    double      liquidationPrice     = 6; //抵押物清算价格
     int32       status               = 7; //抵押状态，是否被清算
     int64       liquidateTime        = 8; //清算时间
     int64       expireTime           = 9; //超时清算时间
@@ -43,9 +43,9 @@ message BorrowRecord {
 // 资产价格记录
 message AssetPriceRecord {
     int64      recordTime      = 1; //价格记录时间
-    float      btyPrice        = 2; //bty价格
-    float      btcPrice        = 3; //btc价格
-    float      ethPrice        = 4; //eth价格
+    double     btyPrice        = 2; //bty价格
+    double     btcPrice        = 3; //btc价格
+    double     ethPrice        = 4; //eth价格
 }
 
 // action
@@ -63,12 +63,12 @@ message CollateralizeAction {
 }
 
 message CollateralizeManage {
-    int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
-    float liquidationRatio   = 2; //清算比例
-    float stabilityFeeRatio  = 3; //稳定费
-    int64 period             = 4; //合约期限
-    int64 collTotalBalance   = 5; //放贷总量
-    int64 currentTime        = 6; //设置时间
+    int64  debtCeiling        = 1; //单用户可借出的限额(ccny)
+    double liquidationRatio   = 2; //清算比例
+    double stabilityFeeRatio  = 3; //稳定费
+    int64  period             = 4; //合约期限
+    int64  totalBalance       = 5; //放贷总量
+    int64  currentTime        = 6; //设置时间
 }
 
 message CollateralizeAddr {
@@ -81,8 +81,8 @@ message CollateralizeCreate {
 
 // 质押借出
 message CollateralizeBorrow {
-    string collateralizeId = 1; //借贷期数ID
-    int64  value           = 2; //借贷价值(ccny)
+    string  collateralizeId = 1; //借贷期数ID
+    int64   value           = 2; //借贷价值(ccny)
 }
 
 // 质押清算
@@ -93,22 +93,22 @@ message CollateralizeRepay {
 
 // 追加抵押物
 message CollateralizeAppend {
-    string collateralizeId = 1; //借贷期数ID
-    string recordId        = 2; //借贷ID
-    int64  collateralValue = 3; //追加价值(bty)
+    string  collateralizeId = 1; //借贷期数ID
+    string  recordId        = 2; //借贷ID
+    int64   collateralValue = 3; //追加价值(bty)
 }
 
 // 喂价
 message CollateralizeFeed {
-    int32        collType = 1; //抵押物价格类型(1，bty，2，btc，3，eth...)
-    repeated float price  = 2; //喂价
-    repeated int64 volume = 3; //成交量
+    int32         collType = 1; //抵押物价格类型(1，bty，2，btc，3，eth...)
+    repeated double price  = 2; //喂价
+    repeated int64  volume = 3; //成交量
 }
 
 // 收回
 message CollateralizeRetrieve {
-    string collateralizeId = 1; //借贷期数ID
-    int64  balance         = 2; //收回金额
+    string  collateralizeId = 1; //借贷期数ID
+    int64   balance         = 2; //收回金额
 }
 
 // exec_local 放贷信息
@@ -147,8 +147,8 @@ message RepCollateralizeCurrentInfo {
     int32       status                   = 1;//当期借贷的状态，是否关闭
     int64       totalBalance             = 2; //当期可借贷的总金额(ccny)
     int64       debtCeiling              = 3; //单用户可借出的限额(ccny)
-    float       liquidationRatio         = 4; //清算比例
-    float       stabilityFeeRatio        = 5; //稳定费
+    double      liquidationRatio         = 4; //清算比例
+    double      stabilityFeeRatio        = 5; //稳定费
     string      createAddr               = 6; //创建人地址
     int64       balance                  = 7; //剩余可借贷金额(ccny)
     int64       period                   = 8; //合约期限
@@ -218,16 +218,16 @@ message RepCollateralizeRecord {
 
 // 返回放贷配置
 message RepCollateralizeConfig {
-    int64 debtCeiling        = 1; //单用户可借出的限额(ccny)
-    float liquidationRatio   = 2; //清算比例
-    float stabilityFeeRatio  = 3; //稳定费
-    int64 period             = 4; //合约期限
-    int64 collTotalBalance   = 5; //放贷总量
-    int64 collBalance        = 6; //剩余放贷额度
-    int64 currentTime        = 7; //设置时间
+    int64  debtCeiling        = 1; //单用户可借出的限额(ccny)
+    double liquidationRatio   = 2; //清算比例
+    double stabilityFeeRatio  = 3; //稳定费
+    int64  period             = 4; //合约期限
+    int64  totalBalance       = 5; //放贷总量
+    int64  balance            = 6; //剩余放贷额度
+    int64  currentTime        = 7; //设置时间
 }
 
 // 返回最新抵押物价格
 message RepCollateralizePrice {
-    float price = 1; //当前抵押物最新价格
+    double price = 1; //当前抵押物最新价格
 }
