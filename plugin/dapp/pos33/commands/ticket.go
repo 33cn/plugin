@@ -13,7 +13,7 @@ import (
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
-	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	"github.com/spf13/cobra"
 )
 

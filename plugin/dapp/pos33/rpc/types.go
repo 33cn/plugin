@@ -6,7 +6,7 @@ package rpc
 
 import (
 	"github.com/33cn/chain33/rpc/types"
-	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
 // Jrpc json rpc type

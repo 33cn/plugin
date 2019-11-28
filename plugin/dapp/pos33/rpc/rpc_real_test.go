@@ -13,7 +13,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 	_ "github.com/33cn/plugin/plugin"
-	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	"github.com/stretchr/testify/assert"
 )
 

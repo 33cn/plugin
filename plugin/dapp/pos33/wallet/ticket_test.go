@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	wcom "github.com/33cn/chain33/wallet/common"
-	ty "github.com/33cn/plugin/plugin/dapp/pos3/types"
+	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
