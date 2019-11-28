@@ -5,7 +5,6 @@ import (
 	storagetypes "github.com/33cn/plugin/plugin/dapp/storage/types"
 )
 
-
 //从statedb 读取原始数据
 func (s *storage) Query_QueryStorage(in *storagetypes.QueryStorage) (types.Message, error) {
 	return QueryStorage(s.GetStateDB(), in)
