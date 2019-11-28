@@ -14,28 +14,31 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyUnknowAction = iota + 100
+	TyUnknowAction = iota
 	TyContentStorageAction
 	TyHashStorageAction
 	TyLinkStorageAction
 	TyEncryptStorageAction
-	TyEncryShareStorageAction
+	TyEncryptShareStorageAction
 
-	NameContentStorageAction    = "ContentStorage"
-	NameHashStorageAction       = "HashStorage"
-	NameLinkStorageAction       = "LinkStorage"
-	NameEncryptStorageAction    = "EncryptStorage"
-	NameEncryShareStorageAction = "EncryShareStorage"
+	NameContentStorageAction      = "ContentStorage"
+	NameHashStorageAction         = "HashStorage"
+	NameLinkStorageAction         = "LinkStorage"
+	NameEncryptStorageAction      = "EncryptStorage"
+	NameEncryptShareStorageAction = "EncryptShareStorage"
+
+	FuncNameQueryStorage      = "QueryStorage"
+	FuncNameBatchQueryStorage = "BatchQueryStorage"
 )
 
 // log类型id值
 const (
-	TyUnknownLog = iota + 100
+	TyUnknownLog = iota
 	TyContentStorageLog
 	TyHashStorageLog
 	TyLinkStorageLog
 	TyEncryptStorageLog
-	TyEncryShareStorageLog
+	TyEncryptShareStorageLog
 )
 
 var (
@@ -43,11 +46,11 @@ var (
 	StorageX = "storage"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameContentStorageAction:    TyContentStorageAction,
-		NameHashStorageAction:       TyHashStorageAction,
-		NameLinkStorageAction:       TyLinkStorageAction,
-		NameEncryptStorageAction:    TyEncryptStorageAction,
-		NameEncryShareStorageAction: TyEncryShareStorageAction,
+		NameContentStorageAction:      TyContentStorageAction,
+		NameHashStorageAction:         TyHashStorageAction,
+		NameLinkStorageAction:         TyLinkStorageAction,
+		NameEncryptStorageAction:      TyEncryptStorageAction,
+		NameEncryptShareStorageAction: TyEncryptShareStorageAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{

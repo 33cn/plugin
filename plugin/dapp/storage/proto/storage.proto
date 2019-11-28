@@ -61,7 +61,7 @@ message EncryptContentOnlyNotaryStorage {
     bytes nonce = 2;
 }
 
-// 分享隐私存证模型
+// 分享隐私存证模型,需要完备的sdk或者相应的密钥库支持
 message EncryptShareNotaryStorage {
     //存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
     bytes contentHash   = 1;
