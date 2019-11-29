@@ -1,8 +1,6 @@
 package types
 
 import (
-	//"encoding/json"
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
 
@@ -56,7 +54,7 @@ var (
 	logMap = map[int64]*types.LogInfo{
 		//LogID:	{Ty: reflect.TypeOf(LogStruct), Name: LogName},
 	}
-	tlog = log.New("module", "storage.types")
+	//tlog = log.New("module", "storage.types")
 )
 
 // init defines a register function
@@ -77,28 +75,28 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(StorageX, NewType(cfg))
 }
 
-type storageType struct {
+type StorageType struct {
 	types.ExecTypeBase
 }
 
-func NewType(cfg *types.Chain33Config) *storageType {
-	c := &storageType{}
+func NewType(cfg *types.Chain33Config) *StorageType {
+	c := &StorageType{}
 	c.SetChild(c)
 	c.SetConfig(cfg)
 	return c
 }
 
 // GetPayload 获取合约action结构
-func (s *storageType) GetPayload() types.Message {
+func (s *StorageType) GetPayload() types.Message {
 	return &StorageAction{}
 }
 
 // GeTypeMap 获取合约action的id和name信息
-func (s *storageType) GetTypeMap() map[string]int32 {
+func (s *StorageType) GetTypeMap() map[string]int32 {
 	return actionMap
 }
 
 // GetLogMap 获取合约log相关信息
-func (s *storageType) GetLogMap() map[int64]*types.LogInfo {
+func (s *StorageType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }

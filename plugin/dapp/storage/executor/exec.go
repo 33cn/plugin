@@ -12,25 +12,25 @@ import (
 
 func (s *storage) Exec_ContentStorage(payload *storagetypes.ContentOnlyNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newStorageAction(s, tx, index)
-	return action.storage(&storagetypes.Storage{Value: &storagetypes.Storage_ContentStorage{ContentStorage: payload}})
+	return action.ContentStorage(&storagetypes.Storage{Value: &storagetypes.Storage_ContentStorage{ContentStorage: payload}})
 }
 
 func (s *storage) Exec_HashStorage(payload *storagetypes.HashOnlyNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newStorageAction(s, tx, index)
-	return action.storage(&storagetypes.Storage{Value: &storagetypes.Storage_HashStorage{HashStorage: payload}})
+	return action.HashStorage(&storagetypes.Storage{Value: &storagetypes.Storage_HashStorage{HashStorage: payload}})
 }
 
 func (s *storage) Exec_LinkStorage(payload *storagetypes.LinkNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newStorageAction(s, tx, index)
-	return action.storage(&storagetypes.Storage{Value: &storagetypes.Storage_LinkStorage{LinkStorage: payload}})
+	return action.LinkStorage(&storagetypes.Storage{Value: &storagetypes.Storage_LinkStorage{LinkStorage: payload}})
 }
 
 func (s *storage) Exec_EncryptStorage(payload *storagetypes.EncryptNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newStorageAction(s, tx, index)
-	return action.storage(&storagetypes.Storage{Value: &storagetypes.Storage_EncryptStorage{EncryptStorage: payload}})
+	return action.EncryptStorage(&storagetypes.Storage{Value: &storagetypes.Storage_EncryptStorage{EncryptStorage: payload}})
 }
 
 func (s *storage) Exec_EncryptShareStorage(payload *storagetypes.EncryptShareNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newStorageAction(s, tx, index)
-	return action.storage(&storagetypes.Storage{Value: &storagetypes.Storage_EncryptShareStorage{EncryptShareStorage: payload}})
+	return action.EncryptShareStorage(&storagetypes.Storage{Value: &storagetypes.Storage_EncryptShareStorage{EncryptShareStorage: payload}})
 }

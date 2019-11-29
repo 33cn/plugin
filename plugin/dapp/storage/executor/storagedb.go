@@ -30,15 +30,47 @@ func (s *StorageAction) GetKVSet(payload proto.Message) (kvset []*types.KeyValue
 	return kvset
 }
 
-//TODO 这里得数据是否存储到状态数据库中？
-func (s *StorageAction) storage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) ContentStorage(payload proto.Message) (*types.Receipt, error) {
 	//TODO 这里可以加具体得文本内容限制，超过指定大小的数据不容许写到状态数据库中
 	var logs []*types.ReceiptLog
+	log := &types.ReceiptLog{Ty: storagetypes.TyContentStorageLog}
+	logs = append(logs, log)
 	kv := s.GetKVSet(payload)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
-
+func (s *StorageAction) HashStorage(payload proto.Message) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	log := &types.ReceiptLog{Ty: storagetypes.TyHashStorageLog}
+	logs = append(logs, log)
+	kv := s.GetKVSet(payload)
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	return receipt, nil
+}
+func (s *StorageAction) LinkStorage(payload proto.Message) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	log := &types.ReceiptLog{Ty: storagetypes.TyLinkStorageLog}
+	logs = append(logs, log)
+	kv := s.GetKVSet(payload)
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	return receipt, nil
+}
+func (s *StorageAction) EncryptStorage(payload proto.Message) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	log := &types.ReceiptLog{Ty: storagetypes.TyEncryptStorageLog}
+	logs = append(logs, log)
+	kv := s.GetKVSet(payload)
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	return receipt, nil
+}
+func (s *StorageAction) EncryptShareStorage(payload proto.Message) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	log := &types.ReceiptLog{Ty: storagetypes.TyEncryptShareStorageLog}
+	logs = append(logs, log)
+	kv := s.GetKVSet(payload)
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	return receipt, nil
+}
 func QueryStorageByTxHash(db dbm.KV, txhash string) (*storagetypes.Storage, error) {
 	data, err := db.Get(Key(txhash))
 	if err != nil {
