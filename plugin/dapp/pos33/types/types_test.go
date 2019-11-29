@@ -17,14 +17,14 @@ func init() {
 	InitExecutor(nil)
 }
 
-func TestDecodeLogNewTicket(t *testing.T) {
-	var logTmp = &ReceiptTicket{}
+func TestDecodeLogNewPos33Ticket(t *testing.T) {
+	var logTmp = &ReceiptPos33Ticket{}
 
 	dec := types.Encode(logTmp)
 
 	strdec := hex.EncodeToString(dec)
 	rlog := &rpctypes.ReceiptLog{
-		Ty:  TyLogNewTicket,
+		Ty:  TyLogNewPos33Ticket,
 		Log: "0x" + strdec,
 	}
 
@@ -38,17 +38,17 @@ func TestDecodeLogNewTicket(t *testing.T) {
 	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "LogNewTicket", result.Logs[0].TyName)
+	assert.Equal(t, "LogNewPos33Ticket", result.Logs[0].TyName)
 }
 
-func TestDecodeLogCloseTicket(t *testing.T) {
-	var logTmp = &ReceiptTicket{}
+func TestDecodeLogClosePos33Ticket(t *testing.T) {
+	var logTmp = &ReceiptPos33Ticket{}
 
 	dec := types.Encode(logTmp)
 
 	strdec := hex.EncodeToString(dec)
 	rlog := &rpctypes.ReceiptLog{
-		Ty:  TyLogCloseTicket,
+		Ty:  TyLogClosePos33Ticket,
 		Log: "0x" + strdec,
 	}
 
@@ -62,17 +62,17 @@ func TestDecodeLogCloseTicket(t *testing.T) {
 	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "LogCloseTicket", result.Logs[0].TyName)
+	assert.Equal(t, "LogClosePos33Ticket", result.Logs[0].TyName)
 }
 
-func TestDecodeLogMinerTicket(t *testing.T) {
-	var logTmp = &ReceiptTicket{}
+func TestDecodeLogMinerPos33Ticket(t *testing.T) {
+	var logTmp = &ReceiptPos33Ticket{}
 
 	dec := types.Encode(logTmp)
 
 	strdec := hex.EncodeToString(dec)
 	rlog := &rpctypes.ReceiptLog{
-		Ty:  TyLogMinerTicket,
+		Ty:  TyLogMinerPos33Ticket,
 		Log: "0x" + strdec,
 	}
 
@@ -86,17 +86,17 @@ func TestDecodeLogMinerTicket(t *testing.T) {
 	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "LogMinerTicket", result.Logs[0].TyName)
+	assert.Equal(t, "LogMinerPos33Ticket", result.Logs[0].TyName)
 }
 
-func TestDecodeLogTicketBind(t *testing.T) {
-	var logTmp = &ReceiptTicketBind{}
+func TestDecodeLogPos33TicketBind(t *testing.T) {
+	var logTmp = &ReceiptPos33TicketBind{}
 
 	dec := types.Encode(logTmp)
 
 	strdec := hex.EncodeToString(dec)
 	rlog := &rpctypes.ReceiptLog{
-		Ty:  TyLogTicketBind,
+		Ty:  TyLogPos33TicketBind,
 		Log: "0x" + strdec,
 	}
 
@@ -110,11 +110,11 @@ func TestDecodeLogTicketBind(t *testing.T) {
 	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, "LogTicketBind", result.Logs[0].TyName)
+	assert.Equal(t, "LogPos33TicketBind", result.Logs[0].TyName)
 }
 
 func TestProtoNewEncodeOldDecode(t *testing.T) {
-	tnew := &TicketMiner{
+	tnew := &Pos33TicketMiner{
 		Bits:     1,
 		Reward:   1,
 		TicketId: "id",
@@ -122,7 +122,7 @@ func TestProtoNewEncodeOldDecode(t *testing.T) {
 		PrivHash: []byte("hash"),
 	}
 	data := types.Encode(tnew)
-	told := &TicketMinerOld{}
+	told := &Pos33TicketMinerOld{}
 	err := types.Decode(data, told)
 	assert.Nil(t, err)
 	assert.Equal(t, told.Bits, uint32(1))

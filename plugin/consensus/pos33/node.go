@@ -90,14 +90,14 @@ func (n *node) genMinerTx(height int64, round int, strHash string) (*types.Trans
 
 	sort := n.ips[height+1]
 
-	data, err := proto.Marshal(&pt.TicketAction{
-		Value: &pt.TicketAction_Pminer{
+	data, err := proto.Marshal(&pt.Pos33TicketAction{
+		Value: &pt.Pos33TicketAction_Pminer{
 			Pminer: &pt.Pos33Miner{
 				Votes: vs,
 				Sort:  sort,
 			},
 		},
-		Ty: pt.TicketActionMiner,
+		Ty: pt.Pos33TicketActionMiner,
 	})
 
 	if err != nil {
@@ -105,13 +105,13 @@ func (n *node) genMinerTx(height int64, round int, strHash string) (*types.Trans
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte(pt.TicketX),
-		To:      driver.ExecAddress(pt.TicketX),
+		Execer:  []byte(pt.Pos33TicketX),
+		To:      driver.ExecAddress(pt.Pos33TicketX),
 		Payload: data,
 		Nonce:   rand.Int63(),
 		Expire:  time.Now().Unix() + 10,
 	}
-	priv := n.privmap[n.ticketsMap[sort.Input.TicketID].MinerAddress]
+	priv := n.privmap[n.ticketsMap[sort.Input.TicketId].MinerAddress]
 	tx.Sign(types.SECP256K1, priv)
 	return tx, len(vs), nil
 }
@@ -431,7 +431,7 @@ func (n *node) handleSortitionMsg(m *pt.Pos33SortitionMsg) {
 	if n.cps[height][round] == nil {
 		n.cps[height][round] = make(map[string]*pt.Pos33SortitionMsg)
 	}
-	n.cps[height][round][m.Input.TicketID] = m
+	n.cps[height][round][m.Input.TicketId] = m
 }
 
 func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
@@ -618,7 +618,7 @@ func (n *node) vote(height int64, round int) {
 	var vs []*pt.Pos33VoteMsg
 	for _, s := range ivs {
 		v := &pt.Pos33VoteMsg{Sort: s, BlockHash: vb.Hash(n.GetAPI().GetConfig())}
-		t := n.ticketsMap[s.Input.TicketID]
+		t := n.ticketsMap[s.Input.TicketId]
 		priv := n.privmap[t.MinerAddress]
 		v.Sign(priv)
 		vs = append(vs, v)

@@ -9,58 +9,58 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
-func (t *Ticket) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	for _, item := range receiptData.Logs {
 		//这三个是ticket 的log
-		if item.Ty == ty.TyLogNewTicket || item.Ty == ty.TyLogMinerTicket || item.Ty == ty.TyLogCloseTicket {
-			var ticketlog ty.ReceiptTicket
+		if item.Ty == ty.TyLogNewPos33Ticket || item.Ty == ty.TyLogMinerPos33Ticket || item.Ty == ty.TyLogClosePos33Ticket {
+			var ticketlog ty.ReceiptPos33Ticket
 			err := types.Decode(item.Log, &ticketlog)
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveTicket(&ticketlog)
+			kv := t.savePos33Ticket(&ticketlog)
 			dbSet.KV = append(dbSet.KV, kv...)
-		} else if item.Ty == ty.TyLogTicketBind {
-			var ticketlog ty.ReceiptTicketBind
+		} else if item.Ty == ty.TyLogPos33TicketBind {
+			var ticketlog ty.ReceiptPos33TicketBind
 			err := types.Decode(item.Log, &ticketlog)
 			if err != nil {
 				panic(err) //数据错误了，已经被修改了
 			}
-			kv := t.saveTicketBind(&ticketlog)
+			kv := t.savePos33TicketBind(&ticketlog)
 			dbSet.KV = append(dbSet.KV, kv...)
 		}
 		// save all ticket count
-		if item.Ty == ty.TyLogNewTicket {
-			t.saveAllTicketCount(true)
-		} else if item.Ty == ty.TyLogCloseTicket {
-			t.saveAllTicketCount(false)
+		if item.Ty == ty.TyLogNewPos33Ticket {
+			t.saveAllPos33TicketCount(true)
+		} else if item.Ty == ty.TyLogClosePos33Ticket {
+			t.saveAllPos33TicketCount(false)
 		}
 	}
 	return dbSet, nil
 }
 
 // ExecLocal_Genesis exec local genesis
-func (t *Ticket) ExecLocal_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Genesis(payload *ty.Pos33TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
 // ExecLocal_Topen exec local open
-func (t *Ticket) ExecLocal_Topen(payload *ty.TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Topen(payload *ty.Pos33TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
 // ExecLocal_Tbind exec local bind
-func (t *Ticket) ExecLocal_Tbind(payload *ty.TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Tbind(payload *ty.Pos33TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
 // ExecLocal_Tclose exec local close
-func (t *Ticket) ExecLocal_Tclose(payload *ty.TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Tclose(payload *ty.Pos33TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
 
 // ExecLocal_Miner exec local miner
-func (t *Ticket) ExecLocal_Miner(payload *ty.TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Miner(payload *ty.Pos33TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }

@@ -9,34 +9,34 @@ import (
 	ty "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
-// On_CloseTickets close ticket
-func (policy *ticketPolicy) On_CloseTickets(req *ty.TicketClose) (types.Message, error) {
+// On_ClosePos33Tickets close ticket
+func (policy *ticketPolicy) On_ClosePos33Tickets(req *ty.Pos33TicketClose) (types.Message, error) {
 	operater := policy.getWalletOperate()
-	reply, err := policy.forceCloseTicket(operater.GetBlockHeight()+1, req.MinerAddress)
+	reply, err := policy.forceClosePos33Ticket(operater.GetBlockHeight()+1, req.MinerAddress)
 	if err != nil {
-		bizlog.Error("onCloseTickets", "forceCloseTicket error", err.Error())
+		bizlog.Error("onClosePos33Tickets", "forceClosePos33Ticket error", err.Error())
 	} else {
 		go func() {
 			if len(reply.Hashes) > 0 {
 				operater.WaitTxs(reply.Hashes)
-				FlushTicket(policy.getAPI())
+				FlushPos33Ticket(policy.getAPI())
 			}
 		}()
 	}
 	return reply, err
 }
 
-// On_WalletGetTickets get ticket
-func (policy *ticketPolicy) On_WalletGetTickets(req *types.ReqNil) (types.Message, error) {
-	tickets, privs, err := policy.getTicketsByStatus(1)
-	tks := &ty.ReplyWalletTickets{Tickets: tickets, Privkeys: privs}
+// On_WalletGetPos33Tickets get ticket
+func (policy *ticketPolicy) On_WalletGetPos33Tickets(req *types.ReqNil) (types.Message, error) {
+	tickets, privs, err := policy.getPos33TicketsByStatus(1)
+	tks := &ty.ReplyWalletPos33Tickets{Tickets: tickets, Privkeys: privs}
 	return tks, err
 }
 
 // On_WalletAutoMiner auto mine
-func (policy *ticketPolicy) On_WalletAutoMiner(req *ty.MinerFlag) (types.Message, error) {
+func (policy *ticketPolicy) On_WalletAutoMiner(req *ty.Pos33MinerFlag) (types.Message, error) {
 	policy.store.SetAutoMinerFlag(req.Flag)
 	policy.setAutoMining(req.Flag)
-	FlushTicket(policy.getAPI())
+	FlushPos33Ticket(policy.getAPI())
 	return &types.Reply{IsOk: true}, nil
 }

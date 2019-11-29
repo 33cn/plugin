@@ -50,7 +50,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 
 	//var addrs = make([]string, 1)
 	//addrs = append(addrs, "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt")
-	var in = &ty.ReqBindMiner{
+	var in = &ty.ReqBindPos33Miner{
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		Amount:       10000 * types.Coin,
@@ -60,26 +60,26 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func testGetTicketCountOK(t *testing.T) {
+func testGetPos33TicketCountOK(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	api := &mocks.QueueProtocolAPI{}
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	g := newGrpc(api)
-	api.On("QueryConsensusFunc", "ticket", "GetTicketCount", mock.Anything).Return(&types.Int64{}, nil)
-	data, err := g.GetTicketCount(context.Background(), nil)
+	api.On("QueryConsensusFunc", "ticket", "GetPos33TicketCount", mock.Anything).Return(&types.Int64{}, nil)
+	data, err := g.GetPos33TicketCount(context.Background(), nil)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Equal(t, data, &types.Int64{})
 }
 
-func TestGetTicketCount(t *testing.T) {
-	//testGetTicketCountReject(t)
-	testGetTicketCountOK(t)
+func TestGetPos33TicketCount(t *testing.T) {
+	//testGetPos33TicketCountReject(t)
+	testGetPos33TicketCountOK(t)
 }
 
 func testSetAutoMiningOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	g := newGrpc(api)
-	in := &ty.MinerFlag{}
+	in := &ty.Pos33MinerFlag{}
 	api.On("ExecWalletFunc", "ticket", "WalletAutoMiner", in).Return(&types.Reply{}, nil)
 	data, err := g.SetAutoMining(context.Background(), in)
 	assert.Nil(t, err, "the error should be nil")
@@ -92,19 +92,19 @@ func TestSetAutoMining(t *testing.T) {
 	testSetAutoMiningOK(t)
 }
 
-func testCloseTicketsOK(t *testing.T) {
+func testClosePos33TicketsOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	g := newGrpc(api)
-	var in = &ty.TicketClose{}
-	api.On("ExecWalletFunc", "ticket", "CloseTickets", in).Return(&types.ReplyHashes{}, nil)
-	data, err := g.CloseTickets(context.Background(), in)
+	var in = &ty.Pos33TicketClose{}
+	api.On("ExecWalletFunc", "ticket", "ClosePos33Tickets", in).Return(&types.ReplyHashes{}, nil)
+	data, err := g.ClosePos33Tickets(context.Background(), in)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Equal(t, data, &types.ReplyHashes{})
 }
 
-func TestCloseTickets(t *testing.T) {
-	//testCloseTicketsReject(t)
-	testCloseTicketsOK(t)
+func TestClosePos33Tickets(t *testing.T) {
+	//testClosePos33TicketsReject(t)
+	testClosePos33TicketsOK(t)
 }
 
 func TestJrpc_SetAutoMining(t *testing.T) {
@@ -112,21 +112,21 @@ func TestJrpc_SetAutoMining(t *testing.T) {
 	j := newJrpc(api)
 	var mingResult rpctypes.Reply
 	api.On("ExecWalletFunc", mock.Anything, mock.Anything, mock.Anything).Return(&types.Reply{IsOk: true, Msg: []byte("yes")}, nil)
-	err := j.SetAutoMining(&ty.MinerFlag{}, &mingResult)
+	err := j.SetAutoMining(&ty.Pos33MinerFlag{}, &mingResult)
 	assert.Nil(t, err)
 	assert.True(t, mingResult.IsOk, "SetAutoMining")
 }
 
-func TestJrpc_GetTicketCount(t *testing.T) {
+func TestJrpc_GetPos33TicketCount(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	j := newJrpc(api)
 
 	var ticketResult int64
 	var expectRet = &types.Int64{Data: 100}
 	api.On("QueryConsensusFunc", mock.Anything, mock.Anything, mock.Anything).Return(expectRet, nil)
-	err := j.GetTicketCount(&types.ReqNil{}, &ticketResult)
+	err := j.GetPos33TicketCount(&types.ReqNil{}, &ticketResult)
 	assert.Nil(t, err)
-	assert.Equal(t, expectRet.GetData(), ticketResult, "GetTicketCount")
+	assert.Equal(t, expectRet.GetData(), ticketResult, "GetPos33TicketCount")
 }
 
 func TestRPC_CallTestNode(t *testing.T) {
@@ -168,7 +168,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, ret.GetIsOk(), isSnyc)
 
-	flag := &ty.MinerFlag{Flag: 1}
+	flag := &ty.Pos33MinerFlag{Flag: 1}
 	//调用ticket.AutoMiner
 	api.On("ExecWalletFunc", "ticket", "WalletAutoMiner", flag).Return(&types.Reply{IsOk: true}, nil)
 	var res rpctypes.Reply
@@ -188,7 +188,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, true, issync.IsOk)
 
-	client2 := ty.NewTicketClient(c)
+	client2 := ty.NewPos33TicketClient(c)
 	r, err := client2.SetAutoMining(ctx, flag)
 	assert.Nil(t, err)
 	assert.Equal(t, r.IsOk, true)
@@ -263,7 +263,7 @@ ForkLocalDBAccess=0
 ForkBase58AddressCheck=1800000
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
-ForkTicketFundAddrV1=-1
+ForkPos33TicketFundAddrV1=-1
 [fork.sub.coins]
 Enable=0
 

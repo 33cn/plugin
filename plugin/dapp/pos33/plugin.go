@@ -17,10 +17,10 @@ import (
 
 func init() {
 	pluginmgr.Register(&pluginmgr.PluginBase{
-		Name:     types.TicketX,
+		Name:     types.Pos33TicketX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      commands.TicketCmd,
+		Cmd:      commands.Pos33TicketCmd,
 		RPC:      rpc.Init,
 	})
 }

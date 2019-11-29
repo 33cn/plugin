@@ -36,29 +36,29 @@ ticket_SetAutoMining() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_GetTicketCount() {
-    resp=$(curl -ksd '{"method":"ticket.GetTicketCount","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ticket_GetPos33TicketCount() {
+    resp=$(curl -ksd '{"method":"ticket.GetPos33TicketCount","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result > 0)' <<<"$resp")
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_CloseTickets() {
+ticket_ClosePos33Tickets() {
     addr=$1
-    resp=$(curl -ksd '{"method":"ticket.CloseTickets","params":[{"minerAddress":"'"$addr"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"method":"ticket.ClosePos33Tickets","params":[{"minerAddress":"'"$addr"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not)' <<<"$resp")
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_TicketInfos() {
+ticket_Pos33TicketInfos() {
     tid=$1
     minerAddr=$2
     returnAddr=$3
     execer="ticket"
-    funcName="TicketInfos"
+    funcName="Pos33TicketInfos"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"ticketIds":["'"$tid"'"]}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'")' <<<"$resp")
     [[ $ok == true ]]
@@ -66,12 +66,12 @@ ticket_TicketInfos() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_TicketList() {
+ticket_Pos33TicketList() {
     minerAddr=$1
     returnAddr=$2
     status=$3
     execer="ticket"
-    funcName="TicketList"
+    funcName="Pos33TicketList"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"addr":"'"$minerAddr"'", "status":'"$status"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')' <<<"$resp")
     [[ $ok == true ]]
@@ -134,22 +134,22 @@ function run_testcases() {
     chain33_applyCoins "${minerAddr2}" 1000000000 "${MAIN_HTTP}"
 
     ticket_SetAutoMining 0
-    ticket_GetTicketCount
-    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
-    ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
+    ticket_GetPos33TicketCount
+    ticket_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
+    ticket_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
     ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
     ticket_MinerAddress "${returnAddr2}" "${minerAddr2}"
     ticket_MinerSourceList "${minerAddr2}" "${returnAddr2}"
     #关闭
-    ticket_CloseTickets "${minerAddr1}"
+    ticket_ClosePos33Tickets "${minerAddr1}"
 
     chain33_LastBlockhash "${MAIN_HTTP}"
     ticket_RandNumHash "${LAST_BLOCK_HASH}" 5
 }
 
 function main() {
-    chain33_RpcTestBegin Ticket
+    chain33_RpcTestBegin Pos33Ticket
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
@@ -160,7 +160,7 @@ function main() {
         run_testcases
     fi
 
-    chain33_RpcTestRst Ticket "$CASE_ERR"
+    chain33_RpcTestRst Pos33Ticket "$CASE_ERR"
 }
 
 chain33_debug_function main "$1"

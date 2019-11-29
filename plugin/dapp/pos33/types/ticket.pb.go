@@ -53,7 +53,7 @@ func (Pos33Msg_Ty) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{2, 0}
 }
 
-type Ticket struct {
+type Pos33Ticket struct {
 	TicketId string `protobuf:"bytes,1,opt,name=ticketId,proto3" json:"ticketId,omitempty"`
 	// 0 -> 未成熟 1 -> 可挖矿 2 -> 已挖成功 3-> 已关闭
 	Status int32 `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
@@ -75,88 +75,88 @@ type Ticket struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Ticket) Reset()         { *m = Ticket{} }
-func (m *Ticket) String() string { return proto.CompactTextString(m) }
-func (*Ticket) ProtoMessage()    {}
-func (*Ticket) Descriptor() ([]byte, []int) {
+func (m *Pos33Ticket) Reset()         { *m = Pos33Ticket{} }
+func (m *Pos33Ticket) String() string { return proto.CompactTextString(m) }
+func (*Pos33Ticket) ProtoMessage()    {}
+func (*Pos33Ticket) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{0}
 }
 
-func (m *Ticket) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Ticket.Unmarshal(m, b)
+func (m *Pos33Ticket) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33Ticket.Unmarshal(m, b)
 }
-func (m *Ticket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Ticket.Marshal(b, m, deterministic)
+func (m *Pos33Ticket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33Ticket.Marshal(b, m, deterministic)
 }
-func (m *Ticket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Ticket.Merge(m, src)
+func (m *Pos33Ticket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33Ticket.Merge(m, src)
 }
-func (m *Ticket) XXX_Size() int {
-	return xxx_messageInfo_Ticket.Size(m)
+func (m *Pos33Ticket) XXX_Size() int {
+	return xxx_messageInfo_Pos33Ticket.Size(m)
 }
-func (m *Ticket) XXX_DiscardUnknown() {
-	xxx_messageInfo_Ticket.DiscardUnknown(m)
+func (m *Pos33Ticket) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33Ticket.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Ticket proto.InternalMessageInfo
+var xxx_messageInfo_Pos33Ticket proto.InternalMessageInfo
 
-func (m *Ticket) GetTicketId() string {
+func (m *Pos33Ticket) GetTicketId() string {
 	if m != nil {
 		return m.TicketId
 	}
 	return ""
 }
 
-func (m *Ticket) GetStatus() int32 {
+func (m *Pos33Ticket) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *Ticket) GetIsGenesis() bool {
+func (m *Pos33Ticket) GetIsGenesis() bool {
 	if m != nil {
 		return m.IsGenesis
 	}
 	return false
 }
 
-func (m *Ticket) GetCreateTime() int64 {
+func (m *Pos33Ticket) GetCreateTime() int64 {
 	if m != nil {
 		return m.CreateTime
 	}
 	return 0
 }
 
-func (m *Ticket) GetMinerTime() int64 {
+func (m *Pos33Ticket) GetMinerTime() int64 {
 	if m != nil {
 		return m.MinerTime
 	}
 	return 0
 }
 
-func (m *Ticket) GetMinerValue() int64 {
+func (m *Pos33Ticket) GetMinerValue() int64 {
 	if m != nil {
 		return m.MinerValue
 	}
 	return 0
 }
 
-func (m *Ticket) GetMinerAddress() string {
+func (m *Pos33Ticket) GetMinerAddress() string {
 	if m != nil {
 		return m.MinerAddress
 	}
 	return ""
 }
 
-func (m *Ticket) GetReturnAddress() string {
+func (m *Pos33Ticket) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
 	return ""
 }
 
-func (m *Ticket) GetPrice() int64 {
+func (m *Pos33Ticket) GetPrice() int64 {
 	if m != nil {
 		return m.Price
 	}
@@ -164,136 +164,136 @@ func (m *Ticket) GetPrice() int64 {
 }
 
 // message for execs.ticket
-type TicketAction struct {
+type Pos33TicketAction struct {
 	// Types that are valid to be assigned to Value:
-	//	*TicketAction_Tbind
-	//	*TicketAction_Topen
-	//	*TicketAction_Genesis
-	//	*TicketAction_Tclose
-	//	*TicketAction_Miner
-	//	*TicketAction_Pminer
-	Value                isTicketAction_Value `protobuf_oneof:"value"`
-	Ty                   int32                `protobuf:"varint,10,opt,name=ty,proto3" json:"ty,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	//	*Pos33TicketAction_Tbind
+	//	*Pos33TicketAction_Topen
+	//	*Pos33TicketAction_Genesis
+	//	*Pos33TicketAction_Tclose
+	//	*Pos33TicketAction_Miner
+	//	*Pos33TicketAction_Pminer
+	Value                isPos33TicketAction_Value `protobuf_oneof:"value"`
+	Ty                   int32                     `protobuf:"varint,10,opt,name=ty,proto3" json:"ty,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
 }
 
-func (m *TicketAction) Reset()         { *m = TicketAction{} }
-func (m *TicketAction) String() string { return proto.CompactTextString(m) }
-func (*TicketAction) ProtoMessage()    {}
-func (*TicketAction) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketAction) Reset()         { *m = Pos33TicketAction{} }
+func (m *Pos33TicketAction) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketAction) ProtoMessage()    {}
+func (*Pos33TicketAction) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{1}
 }
 
-func (m *TicketAction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketAction.Unmarshal(m, b)
+func (m *Pos33TicketAction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketAction.Unmarshal(m, b)
 }
-func (m *TicketAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketAction.Marshal(b, m, deterministic)
+func (m *Pos33TicketAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketAction.Marshal(b, m, deterministic)
 }
-func (m *TicketAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketAction.Merge(m, src)
+func (m *Pos33TicketAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketAction.Merge(m, src)
 }
-func (m *TicketAction) XXX_Size() int {
-	return xxx_messageInfo_TicketAction.Size(m)
+func (m *Pos33TicketAction) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketAction.Size(m)
 }
-func (m *TicketAction) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketAction.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TicketAction proto.InternalMessageInfo
-
-type isTicketAction_Value interface {
-	isTicketAction_Value()
+func (m *Pos33TicketAction) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketAction.DiscardUnknown(m)
 }
 
-type TicketAction_Tbind struct {
-	Tbind *TicketBind `protobuf:"bytes,5,opt,name=tbind,proto3,oneof"`
+var xxx_messageInfo_Pos33TicketAction proto.InternalMessageInfo
+
+type isPos33TicketAction_Value interface {
+	isPos33TicketAction_Value()
 }
 
-type TicketAction_Topen struct {
-	Topen *TicketOpen `protobuf:"bytes,1,opt,name=topen,proto3,oneof"`
+type Pos33TicketAction_Tbind struct {
+	Tbind *Pos33TicketBind `protobuf:"bytes,5,opt,name=tbind,proto3,oneof"`
 }
 
-type TicketAction_Genesis struct {
-	Genesis *TicketGenesis `protobuf:"bytes,2,opt,name=genesis,proto3,oneof"`
+type Pos33TicketAction_Topen struct {
+	Topen *Pos33TicketOpen `protobuf:"bytes,1,opt,name=topen,proto3,oneof"`
 }
 
-type TicketAction_Tclose struct {
-	Tclose *TicketClose `protobuf:"bytes,3,opt,name=tclose,proto3,oneof"`
+type Pos33TicketAction_Genesis struct {
+	Genesis *Pos33TicketGenesis `protobuf:"bytes,2,opt,name=genesis,proto3,oneof"`
 }
 
-type TicketAction_Miner struct {
-	Miner *TicketMiner `protobuf:"bytes,4,opt,name=miner,proto3,oneof"`
+type Pos33TicketAction_Tclose struct {
+	Tclose *Pos33TicketClose `protobuf:"bytes,3,opt,name=tclose,proto3,oneof"`
 }
 
-type TicketAction_Pminer struct {
+type Pos33TicketAction_Miner struct {
+	Miner *Pos33TicketMiner `protobuf:"bytes,4,opt,name=miner,proto3,oneof"`
+}
+
+type Pos33TicketAction_Pminer struct {
 	Pminer *Pos33Miner `protobuf:"bytes,6,opt,name=pminer,proto3,oneof"`
 }
 
-func (*TicketAction_Tbind) isTicketAction_Value() {}
+func (*Pos33TicketAction_Tbind) isPos33TicketAction_Value() {}
 
-func (*TicketAction_Topen) isTicketAction_Value() {}
+func (*Pos33TicketAction_Topen) isPos33TicketAction_Value() {}
 
-func (*TicketAction_Genesis) isTicketAction_Value() {}
+func (*Pos33TicketAction_Genesis) isPos33TicketAction_Value() {}
 
-func (*TicketAction_Tclose) isTicketAction_Value() {}
+func (*Pos33TicketAction_Tclose) isPos33TicketAction_Value() {}
 
-func (*TicketAction_Miner) isTicketAction_Value() {}
+func (*Pos33TicketAction_Miner) isPos33TicketAction_Value() {}
 
-func (*TicketAction_Pminer) isTicketAction_Value() {}
+func (*Pos33TicketAction_Pminer) isPos33TicketAction_Value() {}
 
-func (m *TicketAction) GetValue() isTicketAction_Value {
+func (m *Pos33TicketAction) GetValue() isPos33TicketAction_Value {
 	if m != nil {
 		return m.Value
 	}
 	return nil
 }
 
-func (m *TicketAction) GetTbind() *TicketBind {
-	if x, ok := m.GetValue().(*TicketAction_Tbind); ok {
+func (m *Pos33TicketAction) GetTbind() *Pos33TicketBind {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Tbind); ok {
 		return x.Tbind
 	}
 	return nil
 }
 
-func (m *TicketAction) GetTopen() *TicketOpen {
-	if x, ok := m.GetValue().(*TicketAction_Topen); ok {
+func (m *Pos33TicketAction) GetTopen() *Pos33TicketOpen {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Topen); ok {
 		return x.Topen
 	}
 	return nil
 }
 
-func (m *TicketAction) GetGenesis() *TicketGenesis {
-	if x, ok := m.GetValue().(*TicketAction_Genesis); ok {
+func (m *Pos33TicketAction) GetGenesis() *Pos33TicketGenesis {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Genesis); ok {
 		return x.Genesis
 	}
 	return nil
 }
 
-func (m *TicketAction) GetTclose() *TicketClose {
-	if x, ok := m.GetValue().(*TicketAction_Tclose); ok {
+func (m *Pos33TicketAction) GetTclose() *Pos33TicketClose {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Tclose); ok {
 		return x.Tclose
 	}
 	return nil
 }
 
-func (m *TicketAction) GetMiner() *TicketMiner {
-	if x, ok := m.GetValue().(*TicketAction_Miner); ok {
+func (m *Pos33TicketAction) GetMiner() *Pos33TicketMiner {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Miner); ok {
 		return x.Miner
 	}
 	return nil
 }
 
-func (m *TicketAction) GetPminer() *Pos33Miner {
-	if x, ok := m.GetValue().(*TicketAction_Pminer); ok {
+func (m *Pos33TicketAction) GetPminer() *Pos33Miner {
+	if x, ok := m.GetValue().(*Pos33TicketAction_Pminer); ok {
 		return x.Pminer
 	}
 	return nil
 }
 
-func (m *TicketAction) GetTy() int32 {
+func (m *Pos33TicketAction) GetTy() int32 {
 	if m != nil {
 		return m.Ty
 	}
@@ -301,14 +301,14 @@ func (m *TicketAction) GetTy() int32 {
 }
 
 // XXX_OneofWrappers is for the internal use of the proto package.
-func (*TicketAction) XXX_OneofWrappers() []interface{} {
+func (*Pos33TicketAction) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
-		(*TicketAction_Tbind)(nil),
-		(*TicketAction_Topen)(nil),
-		(*TicketAction_Genesis)(nil),
-		(*TicketAction_Tclose)(nil),
-		(*TicketAction_Miner)(nil),
-		(*TicketAction_Pminer)(nil),
+		(*Pos33TicketAction_Tbind)(nil),
+		(*Pos33TicketAction_Topen)(nil),
+		(*Pos33TicketAction_Genesis)(nil),
+		(*Pos33TicketAction_Tclose)(nil),
+		(*Pos33TicketAction_Miner)(nil),
+		(*Pos33TicketAction_Pminer)(nil),
 	}
 }
 
@@ -361,7 +361,7 @@ func (m *Pos33Msg) GetTy() Pos33Msg_Ty {
 
 type Pos33VrfInputMsg struct {
 	Seed                 []byte   `protobuf:"bytes,3,opt,name=seed,proto3" json:"seed,omitempty"`
-	TicketID             string   `protobuf:"bytes,4,opt,name=ticketID,proto3" json:"ticketID,omitempty"`
+	TicketId             string   `protobuf:"bytes,4,opt,name=ticketId,proto3" json:"ticketId,omitempty"`
 	Height               int64    `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
 	Step                 int32    `protobuf:"varint,6,opt,name=step,proto3" json:"step,omitempty"`
 	Round                int32    `protobuf:"varint,7,opt,name=round,proto3" json:"round,omitempty"`
@@ -402,9 +402,9 @@ func (m *Pos33VrfInputMsg) GetSeed() []byte {
 	return nil
 }
 
-func (m *Pos33VrfInputMsg) GetTicketID() string {
+func (m *Pos33VrfInputMsg) GetTicketId() string {
 	if m != nil {
-		return m.TicketID
+		return m.TicketId
 	}
 	return ""
 }
@@ -681,7 +681,7 @@ func (m *Pos33Miner) GetSort() *Pos33SortitionMsg {
 	return nil
 }
 
-type TicketMiner struct {
+type Pos33TicketMiner struct {
 	Bits     uint32 `protobuf:"varint,1,opt,name=bits,proto3" json:"bits,omitempty"`
 	Reward   int64  `protobuf:"varint,2,opt,name=reward,proto3" json:"reward,omitempty"`
 	TicketId string `protobuf:"bytes,3,opt,name=ticketId,proto3" json:"ticketId,omitempty"`
@@ -697,81 +697,81 @@ type TicketMiner struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketMiner) Reset()         { *m = TicketMiner{} }
-func (m *TicketMiner) String() string { return proto.CompactTextString(m) }
-func (*TicketMiner) ProtoMessage()    {}
-func (*TicketMiner) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketMiner) Reset()         { *m = Pos33TicketMiner{} }
+func (m *Pos33TicketMiner) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketMiner) ProtoMessage()    {}
+func (*Pos33TicketMiner) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{9}
 }
 
-func (m *TicketMiner) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketMiner.Unmarshal(m, b)
+func (m *Pos33TicketMiner) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketMiner.Unmarshal(m, b)
 }
-func (m *TicketMiner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketMiner.Marshal(b, m, deterministic)
+func (m *Pos33TicketMiner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketMiner.Marshal(b, m, deterministic)
 }
-func (m *TicketMiner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketMiner.Merge(m, src)
+func (m *Pos33TicketMiner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketMiner.Merge(m, src)
 }
-func (m *TicketMiner) XXX_Size() int {
-	return xxx_messageInfo_TicketMiner.Size(m)
+func (m *Pos33TicketMiner) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketMiner.Size(m)
 }
-func (m *TicketMiner) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketMiner.DiscardUnknown(m)
+func (m *Pos33TicketMiner) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketMiner.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketMiner proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketMiner proto.InternalMessageInfo
 
-func (m *TicketMiner) GetBits() uint32 {
+func (m *Pos33TicketMiner) GetBits() uint32 {
 	if m != nil {
 		return m.Bits
 	}
 	return 0
 }
 
-func (m *TicketMiner) GetReward() int64 {
+func (m *Pos33TicketMiner) GetReward() int64 {
 	if m != nil {
 		return m.Reward
 	}
 	return 0
 }
 
-func (m *TicketMiner) GetTicketId() string {
+func (m *Pos33TicketMiner) GetTicketId() string {
 	if m != nil {
 		return m.TicketId
 	}
 	return ""
 }
 
-func (m *TicketMiner) GetModify() []byte {
+func (m *Pos33TicketMiner) GetModify() []byte {
 	if m != nil {
 		return m.Modify
 	}
 	return nil
 }
 
-func (m *TicketMiner) GetPrivHash() []byte {
+func (m *Pos33TicketMiner) GetPrivHash() []byte {
 	if m != nil {
 		return m.PrivHash
 	}
 	return nil
 }
 
-func (m *TicketMiner) GetVrfHash() []byte {
+func (m *Pos33TicketMiner) GetVrfHash() []byte {
 	if m != nil {
 		return m.VrfHash
 	}
 	return nil
 }
 
-func (m *TicketMiner) GetVrfProof() []byte {
+func (m *Pos33TicketMiner) GetVrfProof() []byte {
 	if m != nil {
 		return m.VrfProof
 	}
 	return nil
 }
 
-type TicketMinerOld struct {
+type Pos33TicketMinerOld struct {
 	Bits                 uint32   `protobuf:"varint,1,opt,name=bits,proto3" json:"bits,omitempty"`
 	Reward               int64    `protobuf:"varint,2,opt,name=reward,proto3" json:"reward,omitempty"`
 	TicketId             string   `protobuf:"bytes,3,opt,name=ticketId,proto3" json:"ticketId,omitempty"`
@@ -781,60 +781,60 @@ type TicketMinerOld struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketMinerOld) Reset()         { *m = TicketMinerOld{} }
-func (m *TicketMinerOld) String() string { return proto.CompactTextString(m) }
-func (*TicketMinerOld) ProtoMessage()    {}
-func (*TicketMinerOld) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketMinerOld) Reset()         { *m = Pos33TicketMinerOld{} }
+func (m *Pos33TicketMinerOld) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketMinerOld) ProtoMessage()    {}
+func (*Pos33TicketMinerOld) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{10}
 }
 
-func (m *TicketMinerOld) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketMinerOld.Unmarshal(m, b)
+func (m *Pos33TicketMinerOld) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketMinerOld.Unmarshal(m, b)
 }
-func (m *TicketMinerOld) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketMinerOld.Marshal(b, m, deterministic)
+func (m *Pos33TicketMinerOld) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketMinerOld.Marshal(b, m, deterministic)
 }
-func (m *TicketMinerOld) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketMinerOld.Merge(m, src)
+func (m *Pos33TicketMinerOld) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketMinerOld.Merge(m, src)
 }
-func (m *TicketMinerOld) XXX_Size() int {
-	return xxx_messageInfo_TicketMinerOld.Size(m)
+func (m *Pos33TicketMinerOld) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketMinerOld.Size(m)
 }
-func (m *TicketMinerOld) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketMinerOld.DiscardUnknown(m)
+func (m *Pos33TicketMinerOld) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketMinerOld.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketMinerOld proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketMinerOld proto.InternalMessageInfo
 
-func (m *TicketMinerOld) GetBits() uint32 {
+func (m *Pos33TicketMinerOld) GetBits() uint32 {
 	if m != nil {
 		return m.Bits
 	}
 	return 0
 }
 
-func (m *TicketMinerOld) GetReward() int64 {
+func (m *Pos33TicketMinerOld) GetReward() int64 {
 	if m != nil {
 		return m.Reward
 	}
 	return 0
 }
 
-func (m *TicketMinerOld) GetTicketId() string {
+func (m *Pos33TicketMinerOld) GetTicketId() string {
 	if m != nil {
 		return m.TicketId
 	}
 	return ""
 }
 
-func (m *TicketMinerOld) GetModify() []byte {
+func (m *Pos33TicketMinerOld) GetModify() []byte {
 	if m != nil {
 		return m.Modify
 	}
 	return nil
 }
 
-type MinerFlag struct {
+type Pos33MinerFlag struct {
 	Flag                 int32    `protobuf:"varint,1,opt,name=flag,proto3" json:"flag,omitempty"`
 	Reserve              int64    `protobuf:"varint,2,opt,name=reserve,proto3" json:"reserve,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -842,46 +842,46 @@ type MinerFlag struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MinerFlag) Reset()         { *m = MinerFlag{} }
-func (m *MinerFlag) String() string { return proto.CompactTextString(m) }
-func (*MinerFlag) ProtoMessage()    {}
-func (*MinerFlag) Descriptor() ([]byte, []int) {
+func (m *Pos33MinerFlag) Reset()         { *m = Pos33MinerFlag{} }
+func (m *Pos33MinerFlag) String() string { return proto.CompactTextString(m) }
+func (*Pos33MinerFlag) ProtoMessage()    {}
+func (*Pos33MinerFlag) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{11}
 }
 
-func (m *MinerFlag) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MinerFlag.Unmarshal(m, b)
+func (m *Pos33MinerFlag) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33MinerFlag.Unmarshal(m, b)
 }
-func (m *MinerFlag) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MinerFlag.Marshal(b, m, deterministic)
+func (m *Pos33MinerFlag) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33MinerFlag.Marshal(b, m, deterministic)
 }
-func (m *MinerFlag) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MinerFlag.Merge(m, src)
+func (m *Pos33MinerFlag) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33MinerFlag.Merge(m, src)
 }
-func (m *MinerFlag) XXX_Size() int {
-	return xxx_messageInfo_MinerFlag.Size(m)
+func (m *Pos33MinerFlag) XXX_Size() int {
+	return xxx_messageInfo_Pos33MinerFlag.Size(m)
 }
-func (m *MinerFlag) XXX_DiscardUnknown() {
-	xxx_messageInfo_MinerFlag.DiscardUnknown(m)
+func (m *Pos33MinerFlag) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33MinerFlag.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MinerFlag proto.InternalMessageInfo
+var xxx_messageInfo_Pos33MinerFlag proto.InternalMessageInfo
 
-func (m *MinerFlag) GetFlag() int32 {
+func (m *Pos33MinerFlag) GetFlag() int32 {
 	if m != nil {
 		return m.Flag
 	}
 	return 0
 }
 
-func (m *MinerFlag) GetReserve() int64 {
+func (m *Pos33MinerFlag) GetReserve() int64 {
 	if m != nil {
 		return m.Reserve
 	}
 	return 0
 }
 
-type TicketBind struct {
+type Pos33TicketBind struct {
 	MinerAddress         string   `protobuf:"bytes,1,opt,name=minerAddress,proto3" json:"minerAddress,omitempty"`
 	ReturnAddress        string   `protobuf:"bytes,2,opt,name=returnAddress,proto3" json:"returnAddress,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -889,46 +889,46 @@ type TicketBind struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketBind) Reset()         { *m = TicketBind{} }
-func (m *TicketBind) String() string { return proto.CompactTextString(m) }
-func (*TicketBind) ProtoMessage()    {}
-func (*TicketBind) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketBind) Reset()         { *m = Pos33TicketBind{} }
+func (m *Pos33TicketBind) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketBind) ProtoMessage()    {}
+func (*Pos33TicketBind) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{12}
 }
 
-func (m *TicketBind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketBind.Unmarshal(m, b)
+func (m *Pos33TicketBind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketBind.Unmarshal(m, b)
 }
-func (m *TicketBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketBind.Marshal(b, m, deterministic)
+func (m *Pos33TicketBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketBind.Marshal(b, m, deterministic)
 }
-func (m *TicketBind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketBind.Merge(m, src)
+func (m *Pos33TicketBind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketBind.Merge(m, src)
 }
-func (m *TicketBind) XXX_Size() int {
-	return xxx_messageInfo_TicketBind.Size(m)
+func (m *Pos33TicketBind) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketBind.Size(m)
 }
-func (m *TicketBind) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketBind.DiscardUnknown(m)
+func (m *Pos33TicketBind) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketBind.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketBind proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketBind proto.InternalMessageInfo
 
-func (m *TicketBind) GetMinerAddress() string {
+func (m *Pos33TicketBind) GetMinerAddress() string {
 	if m != nil {
 		return m.MinerAddress
 	}
 	return ""
 }
 
-func (m *TicketBind) GetReturnAddress() string {
+func (m *Pos33TicketBind) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
 	return ""
 }
 
-type TicketOpen struct {
+type Pos33TicketOpen struct {
 	//用户挖矿的ticket 地址
 	MinerAddress string `protobuf:"bytes,1,opt,name=minerAddress,proto3" json:"minerAddress,omitempty"`
 	//购买ticket的数目
@@ -944,67 +944,67 @@ type TicketOpen struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketOpen) Reset()         { *m = TicketOpen{} }
-func (m *TicketOpen) String() string { return proto.CompactTextString(m) }
-func (*TicketOpen) ProtoMessage()    {}
-func (*TicketOpen) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketOpen) Reset()         { *m = Pos33TicketOpen{} }
+func (m *Pos33TicketOpen) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketOpen) ProtoMessage()    {}
+func (*Pos33TicketOpen) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{13}
 }
 
-func (m *TicketOpen) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketOpen.Unmarshal(m, b)
+func (m *Pos33TicketOpen) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketOpen.Unmarshal(m, b)
 }
-func (m *TicketOpen) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketOpen.Marshal(b, m, deterministic)
+func (m *Pos33TicketOpen) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketOpen.Marshal(b, m, deterministic)
 }
-func (m *TicketOpen) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketOpen.Merge(m, src)
+func (m *Pos33TicketOpen) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketOpen.Merge(m, src)
 }
-func (m *TicketOpen) XXX_Size() int {
-	return xxx_messageInfo_TicketOpen.Size(m)
+func (m *Pos33TicketOpen) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketOpen.Size(m)
 }
-func (m *TicketOpen) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketOpen.DiscardUnknown(m)
+func (m *Pos33TicketOpen) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketOpen.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketOpen proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketOpen proto.InternalMessageInfo
 
-func (m *TicketOpen) GetMinerAddress() string {
+func (m *Pos33TicketOpen) GetMinerAddress() string {
 	if m != nil {
 		return m.MinerAddress
 	}
 	return ""
 }
 
-func (m *TicketOpen) GetCount() int32 {
+func (m *Pos33TicketOpen) GetCount() int32 {
 	if m != nil {
 		return m.Count
 	}
 	return 0
 }
 
-func (m *TicketOpen) GetReturnAddress() string {
+func (m *Pos33TicketOpen) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
 	return ""
 }
 
-func (m *TicketOpen) GetRandSeed() int64 {
+func (m *Pos33TicketOpen) GetRandSeed() int64 {
 	if m != nil {
 		return m.RandSeed
 	}
 	return 0
 }
 
-func (m *TicketOpen) GetPubHashes() [][]byte {
+func (m *Pos33TicketOpen) GetPubHashes() [][]byte {
 	if m != nil {
 		return m.PubHashes
 	}
 	return nil
 }
 
-type TicketGenesis struct {
+type Pos33TicketGenesis struct {
 	MinerAddress         string   `protobuf:"bytes,1,opt,name=minerAddress,proto3" json:"minerAddress,omitempty"`
 	ReturnAddress        string   `protobuf:"bytes,2,opt,name=returnAddress,proto3" json:"returnAddress,omitempty"`
 	Count                int32    `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
@@ -1013,53 +1013,53 @@ type TicketGenesis struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketGenesis) Reset()         { *m = TicketGenesis{} }
-func (m *TicketGenesis) String() string { return proto.CompactTextString(m) }
-func (*TicketGenesis) ProtoMessage()    {}
-func (*TicketGenesis) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketGenesis) Reset()         { *m = Pos33TicketGenesis{} }
+func (m *Pos33TicketGenesis) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketGenesis) ProtoMessage()    {}
+func (*Pos33TicketGenesis) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{14}
 }
 
-func (m *TicketGenesis) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketGenesis.Unmarshal(m, b)
+func (m *Pos33TicketGenesis) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketGenesis.Unmarshal(m, b)
 }
-func (m *TicketGenesis) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketGenesis.Marshal(b, m, deterministic)
+func (m *Pos33TicketGenesis) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketGenesis.Marshal(b, m, deterministic)
 }
-func (m *TicketGenesis) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketGenesis.Merge(m, src)
+func (m *Pos33TicketGenesis) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketGenesis.Merge(m, src)
 }
-func (m *TicketGenesis) XXX_Size() int {
-	return xxx_messageInfo_TicketGenesis.Size(m)
+func (m *Pos33TicketGenesis) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketGenesis.Size(m)
 }
-func (m *TicketGenesis) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketGenesis.DiscardUnknown(m)
+func (m *Pos33TicketGenesis) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketGenesis.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketGenesis proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketGenesis proto.InternalMessageInfo
 
-func (m *TicketGenesis) GetMinerAddress() string {
+func (m *Pos33TicketGenesis) GetMinerAddress() string {
 	if m != nil {
 		return m.MinerAddress
 	}
 	return ""
 }
 
-func (m *TicketGenesis) GetReturnAddress() string {
+func (m *Pos33TicketGenesis) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
 	return ""
 }
 
-func (m *TicketGenesis) GetCount() int32 {
+func (m *Pos33TicketGenesis) GetCount() int32 {
 	if m != nil {
 		return m.Count
 	}
 	return 0
 }
 
-type TicketClose struct {
+type Pos33TicketClose struct {
 	TicketId             []string `protobuf:"bytes,1,rep,name=ticketId,proto3" json:"ticketId,omitempty"`
 	MinerAddress         string   `protobuf:"bytes,2,opt,name=minerAddress,proto3" json:"minerAddress,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1067,46 +1067,46 @@ type TicketClose struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketClose) Reset()         { *m = TicketClose{} }
-func (m *TicketClose) String() string { return proto.CompactTextString(m) }
-func (*TicketClose) ProtoMessage()    {}
-func (*TicketClose) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketClose) Reset()         { *m = Pos33TicketClose{} }
+func (m *Pos33TicketClose) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketClose) ProtoMessage()    {}
+func (*Pos33TicketClose) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{15}
 }
 
-func (m *TicketClose) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketClose.Unmarshal(m, b)
+func (m *Pos33TicketClose) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketClose.Unmarshal(m, b)
 }
-func (m *TicketClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketClose.Marshal(b, m, deterministic)
+func (m *Pos33TicketClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketClose.Marshal(b, m, deterministic)
 }
-func (m *TicketClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketClose.Merge(m, src)
+func (m *Pos33TicketClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketClose.Merge(m, src)
 }
-func (m *TicketClose) XXX_Size() int {
-	return xxx_messageInfo_TicketClose.Size(m)
+func (m *Pos33TicketClose) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketClose.Size(m)
 }
-func (m *TicketClose) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketClose.DiscardUnknown(m)
+func (m *Pos33TicketClose) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketClose.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketClose proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketClose proto.InternalMessageInfo
 
-func (m *TicketClose) GetTicketId() []string {
+func (m *Pos33TicketClose) GetTicketId() []string {
 	if m != nil {
 		return m.TicketId
 	}
 	return nil
 }
 
-func (m *TicketClose) GetMinerAddress() string {
+func (m *Pos33TicketClose) GetMinerAddress() string {
 	if m != nil {
 		return m.MinerAddress
 	}
 	return ""
 }
 
-type TicketList struct {
+type Pos33TicketList struct {
 	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	Status               int32    `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1114,249 +1114,249 @@ type TicketList struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketList) Reset()         { *m = TicketList{} }
-func (m *TicketList) String() string { return proto.CompactTextString(m) }
-func (*TicketList) ProtoMessage()    {}
-func (*TicketList) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketList) Reset()         { *m = Pos33TicketList{} }
+func (m *Pos33TicketList) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketList) ProtoMessage()    {}
+func (*Pos33TicketList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{16}
 }
 
-func (m *TicketList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketList.Unmarshal(m, b)
+func (m *Pos33TicketList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketList.Unmarshal(m, b)
 }
-func (m *TicketList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketList.Marshal(b, m, deterministic)
+func (m *Pos33TicketList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketList.Marshal(b, m, deterministic)
 }
-func (m *TicketList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketList.Merge(m, src)
+func (m *Pos33TicketList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketList.Merge(m, src)
 }
-func (m *TicketList) XXX_Size() int {
-	return xxx_messageInfo_TicketList.Size(m)
+func (m *Pos33TicketList) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketList.Size(m)
 }
-func (m *TicketList) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketList.DiscardUnknown(m)
+func (m *Pos33TicketList) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketList proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketList proto.InternalMessageInfo
 
-func (m *TicketList) GetAddr() string {
+func (m *Pos33TicketList) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
 	return ""
 }
 
-func (m *TicketList) GetStatus() int32 {
+func (m *Pos33TicketList) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-type Pos33AllTicketCount struct {
+type Pos33AllPos33TicketCount struct {
 	Height               int64    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Pos33AllTicketCount) Reset()         { *m = Pos33AllTicketCount{} }
-func (m *Pos33AllTicketCount) String() string { return proto.CompactTextString(m) }
-func (*Pos33AllTicketCount) ProtoMessage()    {}
-func (*Pos33AllTicketCount) Descriptor() ([]byte, []int) {
+func (m *Pos33AllPos33TicketCount) Reset()         { *m = Pos33AllPos33TicketCount{} }
+func (m *Pos33AllPos33TicketCount) String() string { return proto.CompactTextString(m) }
+func (*Pos33AllPos33TicketCount) ProtoMessage()    {}
+func (*Pos33AllPos33TicketCount) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{17}
 }
 
-func (m *Pos33AllTicketCount) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pos33AllTicketCount.Unmarshal(m, b)
+func (m *Pos33AllPos33TicketCount) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33AllPos33TicketCount.Unmarshal(m, b)
 }
-func (m *Pos33AllTicketCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pos33AllTicketCount.Marshal(b, m, deterministic)
+func (m *Pos33AllPos33TicketCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33AllPos33TicketCount.Marshal(b, m, deterministic)
 }
-func (m *Pos33AllTicketCount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pos33AllTicketCount.Merge(m, src)
+func (m *Pos33AllPos33TicketCount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33AllPos33TicketCount.Merge(m, src)
 }
-func (m *Pos33AllTicketCount) XXX_Size() int {
-	return xxx_messageInfo_Pos33AllTicketCount.Size(m)
+func (m *Pos33AllPos33TicketCount) XXX_Size() int {
+	return xxx_messageInfo_Pos33AllPos33TicketCount.Size(m)
 }
-func (m *Pos33AllTicketCount) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pos33AllTicketCount.DiscardUnknown(m)
+func (m *Pos33AllPos33TicketCount) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33AllPos33TicketCount.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Pos33AllTicketCount proto.InternalMessageInfo
+var xxx_messageInfo_Pos33AllPos33TicketCount proto.InternalMessageInfo
 
-func (m *Pos33AllTicketCount) GetHeight() int64 {
+func (m *Pos33AllPos33TicketCount) GetHeight() int64 {
 	if m != nil {
 		return m.Height
 	}
 	return 0
 }
 
-type ReplyPos33AllTicketCount struct {
+type ReplyPos33AllPos33TicketCount struct {
 	Count                int64    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReplyPos33AllTicketCount) Reset()         { *m = ReplyPos33AllTicketCount{} }
-func (m *ReplyPos33AllTicketCount) String() string { return proto.CompactTextString(m) }
-func (*ReplyPos33AllTicketCount) ProtoMessage()    {}
-func (*ReplyPos33AllTicketCount) Descriptor() ([]byte, []int) {
+func (m *ReplyPos33AllPos33TicketCount) Reset()         { *m = ReplyPos33AllPos33TicketCount{} }
+func (m *ReplyPos33AllPos33TicketCount) String() string { return proto.CompactTextString(m) }
+func (*ReplyPos33AllPos33TicketCount) ProtoMessage()    {}
+func (*ReplyPos33AllPos33TicketCount) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{18}
 }
 
-func (m *ReplyPos33AllTicketCount) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyPos33AllTicketCount.Unmarshal(m, b)
+func (m *ReplyPos33AllPos33TicketCount) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyPos33AllPos33TicketCount.Unmarshal(m, b)
 }
-func (m *ReplyPos33AllTicketCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyPos33AllTicketCount.Marshal(b, m, deterministic)
+func (m *ReplyPos33AllPos33TicketCount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyPos33AllPos33TicketCount.Marshal(b, m, deterministic)
 }
-func (m *ReplyPos33AllTicketCount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPos33AllTicketCount.Merge(m, src)
+func (m *ReplyPos33AllPos33TicketCount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPos33AllPos33TicketCount.Merge(m, src)
 }
-func (m *ReplyPos33AllTicketCount) XXX_Size() int {
-	return xxx_messageInfo_ReplyPos33AllTicketCount.Size(m)
+func (m *ReplyPos33AllPos33TicketCount) XXX_Size() int {
+	return xxx_messageInfo_ReplyPos33AllPos33TicketCount.Size(m)
 }
-func (m *ReplyPos33AllTicketCount) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyPos33AllTicketCount.DiscardUnknown(m)
+func (m *ReplyPos33AllPos33TicketCount) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyPos33AllPos33TicketCount.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReplyPos33AllTicketCount proto.InternalMessageInfo
+var xxx_messageInfo_ReplyPos33AllPos33TicketCount proto.InternalMessageInfo
 
-func (m *ReplyPos33AllTicketCount) GetCount() int64 {
+func (m *ReplyPos33AllPos33TicketCount) GetCount() int64 {
 	if m != nil {
 		return m.Count
 	}
 	return 0
 }
 
-type TicketInfos struct {
+type Pos33TicketInfos struct {
 	TicketIds            []string `protobuf:"bytes,1,rep,name=ticketIds,proto3" json:"ticketIds,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TicketInfos) Reset()         { *m = TicketInfos{} }
-func (m *TicketInfos) String() string { return proto.CompactTextString(m) }
-func (*TicketInfos) ProtoMessage()    {}
-func (*TicketInfos) Descriptor() ([]byte, []int) {
+func (m *Pos33TicketInfos) Reset()         { *m = Pos33TicketInfos{} }
+func (m *Pos33TicketInfos) String() string { return proto.CompactTextString(m) }
+func (*Pos33TicketInfos) ProtoMessage()    {}
+func (*Pos33TicketInfos) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{19}
 }
 
-func (m *TicketInfos) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TicketInfos.Unmarshal(m, b)
+func (m *Pos33TicketInfos) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Pos33TicketInfos.Unmarshal(m, b)
 }
-func (m *TicketInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TicketInfos.Marshal(b, m, deterministic)
+func (m *Pos33TicketInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Pos33TicketInfos.Marshal(b, m, deterministic)
 }
-func (m *TicketInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TicketInfos.Merge(m, src)
+func (m *Pos33TicketInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Pos33TicketInfos.Merge(m, src)
 }
-func (m *TicketInfos) XXX_Size() int {
-	return xxx_messageInfo_TicketInfos.Size(m)
+func (m *Pos33TicketInfos) XXX_Size() int {
+	return xxx_messageInfo_Pos33TicketInfos.Size(m)
 }
-func (m *TicketInfos) XXX_DiscardUnknown() {
-	xxx_messageInfo_TicketInfos.DiscardUnknown(m)
+func (m *Pos33TicketInfos) XXX_DiscardUnknown() {
+	xxx_messageInfo_Pos33TicketInfos.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TicketInfos proto.InternalMessageInfo
+var xxx_messageInfo_Pos33TicketInfos proto.InternalMessageInfo
 
-func (m *TicketInfos) GetTicketIds() []string {
+func (m *Pos33TicketInfos) GetTicketIds() []string {
 	if m != nil {
 		return m.TicketIds
 	}
 	return nil
 }
 
-type ReplyTicketList struct {
-	Tickets              []*Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+type ReplyPos33TicketList struct {
+	Tickets              []*Pos33Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *ReplyTicketList) Reset()         { *m = ReplyTicketList{} }
-func (m *ReplyTicketList) String() string { return proto.CompactTextString(m) }
-func (*ReplyTicketList) ProtoMessage()    {}
-func (*ReplyTicketList) Descriptor() ([]byte, []int) {
+func (m *ReplyPos33TicketList) Reset()         { *m = ReplyPos33TicketList{} }
+func (m *ReplyPos33TicketList) String() string { return proto.CompactTextString(m) }
+func (*ReplyPos33TicketList) ProtoMessage()    {}
+func (*ReplyPos33TicketList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{20}
 }
 
-func (m *ReplyTicketList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyTicketList.Unmarshal(m, b)
+func (m *ReplyPos33TicketList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyPos33TicketList.Unmarshal(m, b)
 }
-func (m *ReplyTicketList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyTicketList.Marshal(b, m, deterministic)
+func (m *ReplyPos33TicketList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyPos33TicketList.Marshal(b, m, deterministic)
 }
-func (m *ReplyTicketList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTicketList.Merge(m, src)
+func (m *ReplyPos33TicketList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPos33TicketList.Merge(m, src)
 }
-func (m *ReplyTicketList) XXX_Size() int {
-	return xxx_messageInfo_ReplyTicketList.Size(m)
+func (m *ReplyPos33TicketList) XXX_Size() int {
+	return xxx_messageInfo_ReplyPos33TicketList.Size(m)
 }
-func (m *ReplyTicketList) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyTicketList.DiscardUnknown(m)
+func (m *ReplyPos33TicketList) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyPos33TicketList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReplyTicketList proto.InternalMessageInfo
+var xxx_messageInfo_ReplyPos33TicketList proto.InternalMessageInfo
 
-func (m *ReplyTicketList) GetTickets() []*Ticket {
+func (m *ReplyPos33TicketList) GetTickets() []*Pos33Ticket {
 	if m != nil {
 		return m.Tickets
 	}
 	return nil
 }
 
-type ReplyWalletTickets struct {
-	Tickets              []*Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
-	Privkeys             [][]byte  `protobuf:"bytes,2,rep,name=privkeys,proto3" json:"privkeys,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+type ReplyWalletPos33Tickets struct {
+	Tickets              []*Pos33Ticket `protobuf:"bytes,1,rep,name=tickets,proto3" json:"tickets,omitempty"`
+	Privkeys             [][]byte       `protobuf:"bytes,2,rep,name=privkeys,proto3" json:"privkeys,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func (m *ReplyWalletTickets) Reset()         { *m = ReplyWalletTickets{} }
-func (m *ReplyWalletTickets) String() string { return proto.CompactTextString(m) }
-func (*ReplyWalletTickets) ProtoMessage()    {}
-func (*ReplyWalletTickets) Descriptor() ([]byte, []int) {
+func (m *ReplyWalletPos33Tickets) Reset()         { *m = ReplyWalletPos33Tickets{} }
+func (m *ReplyWalletPos33Tickets) String() string { return proto.CompactTextString(m) }
+func (*ReplyWalletPos33Tickets) ProtoMessage()    {}
+func (*ReplyWalletPos33Tickets) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{21}
 }
 
-func (m *ReplyWalletTickets) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyWalletTickets.Unmarshal(m, b)
+func (m *ReplyWalletPos33Tickets) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyWalletPos33Tickets.Unmarshal(m, b)
 }
-func (m *ReplyWalletTickets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyWalletTickets.Marshal(b, m, deterministic)
+func (m *ReplyWalletPos33Tickets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyWalletPos33Tickets.Marshal(b, m, deterministic)
 }
-func (m *ReplyWalletTickets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyWalletTickets.Merge(m, src)
+func (m *ReplyWalletPos33Tickets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyWalletPos33Tickets.Merge(m, src)
 }
-func (m *ReplyWalletTickets) XXX_Size() int {
-	return xxx_messageInfo_ReplyWalletTickets.Size(m)
+func (m *ReplyWalletPos33Tickets) XXX_Size() int {
+	return xxx_messageInfo_ReplyWalletPos33Tickets.Size(m)
 }
-func (m *ReplyWalletTickets) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyWalletTickets.DiscardUnknown(m)
+func (m *ReplyWalletPos33Tickets) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyWalletPos33Tickets.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReplyWalletTickets proto.InternalMessageInfo
+var xxx_messageInfo_ReplyWalletPos33Tickets proto.InternalMessageInfo
 
-func (m *ReplyWalletTickets) GetTickets() []*Ticket {
+func (m *ReplyWalletPos33Tickets) GetTickets() []*Pos33Ticket {
 	if m != nil {
 		return m.Tickets
 	}
 	return nil
 }
 
-func (m *ReplyWalletTickets) GetPrivkeys() [][]byte {
+func (m *ReplyWalletPos33Tickets) GetPrivkeys() [][]byte {
 	if m != nil {
 		return m.Privkeys
 	}
 	return nil
 }
 
-type ReceiptTicket struct {
+type ReceiptPos33Ticket struct {
 	TicketId             string   `protobuf:"bytes,1,opt,name=ticketId,proto3" json:"ticketId,omitempty"`
 	Status               int32    `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
 	PrevStatus           int32    `protobuf:"varint,3,opt,name=prevStatus,proto3" json:"prevStatus,omitempty"`
@@ -1366,60 +1366,60 @@ type ReceiptTicket struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReceiptTicket) Reset()         { *m = ReceiptTicket{} }
-func (m *ReceiptTicket) String() string { return proto.CompactTextString(m) }
-func (*ReceiptTicket) ProtoMessage()    {}
-func (*ReceiptTicket) Descriptor() ([]byte, []int) {
+func (m *ReceiptPos33Ticket) Reset()         { *m = ReceiptPos33Ticket{} }
+func (m *ReceiptPos33Ticket) String() string { return proto.CompactTextString(m) }
+func (*ReceiptPos33Ticket) ProtoMessage()    {}
+func (*ReceiptPos33Ticket) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{22}
 }
 
-func (m *ReceiptTicket) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptTicket.Unmarshal(m, b)
+func (m *ReceiptPos33Ticket) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptPos33Ticket.Unmarshal(m, b)
 }
-func (m *ReceiptTicket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptTicket.Marshal(b, m, deterministic)
+func (m *ReceiptPos33Ticket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptPos33Ticket.Marshal(b, m, deterministic)
 }
-func (m *ReceiptTicket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTicket.Merge(m, src)
+func (m *ReceiptPos33Ticket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptPos33Ticket.Merge(m, src)
 }
-func (m *ReceiptTicket) XXX_Size() int {
-	return xxx_messageInfo_ReceiptTicket.Size(m)
+func (m *ReceiptPos33Ticket) XXX_Size() int {
+	return xxx_messageInfo_ReceiptPos33Ticket.Size(m)
 }
-func (m *ReceiptTicket) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptTicket.DiscardUnknown(m)
+func (m *ReceiptPos33Ticket) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptPos33Ticket.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReceiptTicket proto.InternalMessageInfo
+var xxx_messageInfo_ReceiptPos33Ticket proto.InternalMessageInfo
 
-func (m *ReceiptTicket) GetTicketId() string {
+func (m *ReceiptPos33Ticket) GetTicketId() string {
 	if m != nil {
 		return m.TicketId
 	}
 	return ""
 }
 
-func (m *ReceiptTicket) GetStatus() int32 {
+func (m *ReceiptPos33Ticket) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *ReceiptTicket) GetPrevStatus() int32 {
+func (m *ReceiptPos33Ticket) GetPrevStatus() int32 {
 	if m != nil {
 		return m.PrevStatus
 	}
 	return 0
 }
 
-func (m *ReceiptTicket) GetAddr() string {
+func (m *ReceiptPos33Ticket) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
 	return ""
 }
 
-type ReceiptTicketBind struct {
+type ReceiptPos33TicketBind struct {
 	OldMinerAddress      string   `protobuf:"bytes,1,opt,name=oldMinerAddress,proto3" json:"oldMinerAddress,omitempty"`
 	NewMinerAddress      string   `protobuf:"bytes,2,opt,name=newMinerAddress,proto3" json:"newMinerAddress,omitempty"`
 	ReturnAddress        string   `protobuf:"bytes,3,opt,name=returnAddress,proto3" json:"returnAddress,omitempty"`
@@ -1428,53 +1428,53 @@ type ReceiptTicketBind struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReceiptTicketBind) Reset()         { *m = ReceiptTicketBind{} }
-func (m *ReceiptTicketBind) String() string { return proto.CompactTextString(m) }
-func (*ReceiptTicketBind) ProtoMessage()    {}
-func (*ReceiptTicketBind) Descriptor() ([]byte, []int) {
+func (m *ReceiptPos33TicketBind) Reset()         { *m = ReceiptPos33TicketBind{} }
+func (m *ReceiptPos33TicketBind) String() string { return proto.CompactTextString(m) }
+func (*ReceiptPos33TicketBind) ProtoMessage()    {}
+func (*ReceiptPos33TicketBind) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{23}
 }
 
-func (m *ReceiptTicketBind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptTicketBind.Unmarshal(m, b)
+func (m *ReceiptPos33TicketBind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptPos33TicketBind.Unmarshal(m, b)
 }
-func (m *ReceiptTicketBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptTicketBind.Marshal(b, m, deterministic)
+func (m *ReceiptPos33TicketBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptPos33TicketBind.Marshal(b, m, deterministic)
 }
-func (m *ReceiptTicketBind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTicketBind.Merge(m, src)
+func (m *ReceiptPos33TicketBind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptPos33TicketBind.Merge(m, src)
 }
-func (m *ReceiptTicketBind) XXX_Size() int {
-	return xxx_messageInfo_ReceiptTicketBind.Size(m)
+func (m *ReceiptPos33TicketBind) XXX_Size() int {
+	return xxx_messageInfo_ReceiptPos33TicketBind.Size(m)
 }
-func (m *ReceiptTicketBind) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptTicketBind.DiscardUnknown(m)
+func (m *ReceiptPos33TicketBind) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptPos33TicketBind.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReceiptTicketBind proto.InternalMessageInfo
+var xxx_messageInfo_ReceiptPos33TicketBind proto.InternalMessageInfo
 
-func (m *ReceiptTicketBind) GetOldMinerAddress() string {
+func (m *ReceiptPos33TicketBind) GetOldMinerAddress() string {
 	if m != nil {
 		return m.OldMinerAddress
 	}
 	return ""
 }
 
-func (m *ReceiptTicketBind) GetNewMinerAddress() string {
+func (m *ReceiptPos33TicketBind) GetNewMinerAddress() string {
 	if m != nil {
 		return m.NewMinerAddress
 	}
 	return ""
 }
 
-func (m *ReceiptTicketBind) GetReturnAddress() string {
+func (m *ReceiptPos33TicketBind) GetReturnAddress() string {
 	if m != nil {
 		return m.ReturnAddress
 	}
 	return ""
 }
 
-type ReqBindMiner struct {
+type ReqBindPos33Miner struct {
 	BindAddr             string   `protobuf:"bytes,1,opt,name=bindAddr,proto3" json:"bindAddr,omitempty"`
 	OriginAddr           string   `protobuf:"bytes,2,opt,name=originAddr,proto3" json:"originAddr,omitempty"`
 	Amount               int64    `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
@@ -1484,92 +1484,92 @@ type ReqBindMiner struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqBindMiner) Reset()         { *m = ReqBindMiner{} }
-func (m *ReqBindMiner) String() string { return proto.CompactTextString(m) }
-func (*ReqBindMiner) ProtoMessage()    {}
-func (*ReqBindMiner) Descriptor() ([]byte, []int) {
+func (m *ReqBindPos33Miner) Reset()         { *m = ReqBindPos33Miner{} }
+func (m *ReqBindPos33Miner) String() string { return proto.CompactTextString(m) }
+func (*ReqBindPos33Miner) ProtoMessage()    {}
+func (*ReqBindPos33Miner) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{24}
 }
 
-func (m *ReqBindMiner) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqBindMiner.Unmarshal(m, b)
+func (m *ReqBindPos33Miner) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqBindPos33Miner.Unmarshal(m, b)
 }
-func (m *ReqBindMiner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqBindMiner.Marshal(b, m, deterministic)
+func (m *ReqBindPos33Miner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqBindPos33Miner.Marshal(b, m, deterministic)
 }
-func (m *ReqBindMiner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqBindMiner.Merge(m, src)
+func (m *ReqBindPos33Miner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqBindPos33Miner.Merge(m, src)
 }
-func (m *ReqBindMiner) XXX_Size() int {
-	return xxx_messageInfo_ReqBindMiner.Size(m)
+func (m *ReqBindPos33Miner) XXX_Size() int {
+	return xxx_messageInfo_ReqBindPos33Miner.Size(m)
 }
-func (m *ReqBindMiner) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqBindMiner.DiscardUnknown(m)
+func (m *ReqBindPos33Miner) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqBindPos33Miner.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReqBindMiner proto.InternalMessageInfo
+var xxx_messageInfo_ReqBindPos33Miner proto.InternalMessageInfo
 
-func (m *ReqBindMiner) GetBindAddr() string {
+func (m *ReqBindPos33Miner) GetBindAddr() string {
 	if m != nil {
 		return m.BindAddr
 	}
 	return ""
 }
 
-func (m *ReqBindMiner) GetOriginAddr() string {
+func (m *ReqBindPos33Miner) GetOriginAddr() string {
 	if m != nil {
 		return m.OriginAddr
 	}
 	return ""
 }
 
-func (m *ReqBindMiner) GetAmount() int64 {
+func (m *ReqBindPos33Miner) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *ReqBindMiner) GetCheckBalance() bool {
+func (m *ReqBindPos33Miner) GetCheckBalance() bool {
 	if m != nil {
 		return m.CheckBalance
 	}
 	return false
 }
 
-type ReplyBindMiner struct {
+type ReplyBindPos33Miner struct {
 	TxHex                string   `protobuf:"bytes,1,opt,name=txHex,proto3" json:"txHex,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReplyBindMiner) Reset()         { *m = ReplyBindMiner{} }
-func (m *ReplyBindMiner) String() string { return proto.CompactTextString(m) }
-func (*ReplyBindMiner) ProtoMessage()    {}
-func (*ReplyBindMiner) Descriptor() ([]byte, []int) {
+func (m *ReplyBindPos33Miner) Reset()         { *m = ReplyBindPos33Miner{} }
+func (m *ReplyBindPos33Miner) String() string { return proto.CompactTextString(m) }
+func (*ReplyBindPos33Miner) ProtoMessage()    {}
+func (*ReplyBindPos33Miner) Descriptor() ([]byte, []int) {
 	return fileDescriptor_98a6c21780e82d22, []int{25}
 }
 
-func (m *ReplyBindMiner) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReplyBindMiner.Unmarshal(m, b)
+func (m *ReplyBindPos33Miner) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReplyBindPos33Miner.Unmarshal(m, b)
 }
-func (m *ReplyBindMiner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReplyBindMiner.Marshal(b, m, deterministic)
+func (m *ReplyBindPos33Miner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReplyBindPos33Miner.Marshal(b, m, deterministic)
 }
-func (m *ReplyBindMiner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyBindMiner.Merge(m, src)
+func (m *ReplyBindPos33Miner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyBindPos33Miner.Merge(m, src)
 }
-func (m *ReplyBindMiner) XXX_Size() int {
-	return xxx_messageInfo_ReplyBindMiner.Size(m)
+func (m *ReplyBindPos33Miner) XXX_Size() int {
+	return xxx_messageInfo_ReplyBindPos33Miner.Size(m)
 }
-func (m *ReplyBindMiner) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReplyBindMiner.DiscardUnknown(m)
+func (m *ReplyBindPos33Miner) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReplyBindPos33Miner.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReplyBindMiner proto.InternalMessageInfo
+var xxx_messageInfo_ReplyBindPos33Miner proto.InternalMessageInfo
 
-func (m *ReplyBindMiner) GetTxHex() string {
+func (m *ReplyBindPos33Miner) GetTxHex() string {
 	if m != nil {
 		return m.TxHex
 	}
@@ -1578,8 +1578,8 @@ func (m *ReplyBindMiner) GetTxHex() string {
 
 func init() {
 	proto.RegisterEnum("types.Pos33Msg_Ty", Pos33Msg_Ty_name, Pos33Msg_Ty_value)
-	proto.RegisterType((*Ticket)(nil), "types.Ticket")
-	proto.RegisterType((*TicketAction)(nil), "types.TicketAction")
+	proto.RegisterType((*Pos33Ticket)(nil), "types.Pos33Ticket")
+	proto.RegisterType((*Pos33TicketAction)(nil), "types.Pos33TicketAction")
 	proto.RegisterType((*Pos33Msg)(nil), "types.Pos33Msg")
 	proto.RegisterType((*Pos33VrfInputMsg)(nil), "types.Pos33VrfInputMsg")
 	proto.RegisterType((*Pos33SortitionMsg)(nil), "types.Pos33SortitionMsg")
@@ -1587,107 +1587,107 @@ func init() {
 	proto.RegisterType((*Pos33VoteMsg)(nil), "types.Pos33VoteMsg")
 	proto.RegisterType((*Pos33Votes)(nil), "types.Pos33Votes")
 	proto.RegisterType((*Pos33Miner)(nil), "types.Pos33Miner")
-	proto.RegisterType((*TicketMiner)(nil), "types.TicketMiner")
-	proto.RegisterType((*TicketMinerOld)(nil), "types.TicketMinerOld")
-	proto.RegisterType((*MinerFlag)(nil), "types.MinerFlag")
-	proto.RegisterType((*TicketBind)(nil), "types.TicketBind")
-	proto.RegisterType((*TicketOpen)(nil), "types.TicketOpen")
-	proto.RegisterType((*TicketGenesis)(nil), "types.TicketGenesis")
-	proto.RegisterType((*TicketClose)(nil), "types.TicketClose")
-	proto.RegisterType((*TicketList)(nil), "types.TicketList")
-	proto.RegisterType((*Pos33AllTicketCount)(nil), "types.Pos33AllTicketCount")
-	proto.RegisterType((*ReplyPos33AllTicketCount)(nil), "types.ReplyPos33AllTicketCount")
-	proto.RegisterType((*TicketInfos)(nil), "types.TicketInfos")
-	proto.RegisterType((*ReplyTicketList)(nil), "types.ReplyTicketList")
-	proto.RegisterType((*ReplyWalletTickets)(nil), "types.ReplyWalletTickets")
-	proto.RegisterType((*ReceiptTicket)(nil), "types.ReceiptTicket")
-	proto.RegisterType((*ReceiptTicketBind)(nil), "types.ReceiptTicketBind")
-	proto.RegisterType((*ReqBindMiner)(nil), "types.ReqBindMiner")
-	proto.RegisterType((*ReplyBindMiner)(nil), "types.ReplyBindMiner")
+	proto.RegisterType((*Pos33TicketMiner)(nil), "types.Pos33TicketMiner")
+	proto.RegisterType((*Pos33TicketMinerOld)(nil), "types.Pos33TicketMinerOld")
+	proto.RegisterType((*Pos33MinerFlag)(nil), "types.Pos33MinerFlag")
+	proto.RegisterType((*Pos33TicketBind)(nil), "types.Pos33TicketBind")
+	proto.RegisterType((*Pos33TicketOpen)(nil), "types.Pos33TicketOpen")
+	proto.RegisterType((*Pos33TicketGenesis)(nil), "types.Pos33TicketGenesis")
+	proto.RegisterType((*Pos33TicketClose)(nil), "types.Pos33TicketClose")
+	proto.RegisterType((*Pos33TicketList)(nil), "types.Pos33TicketList")
+	proto.RegisterType((*Pos33AllPos33TicketCount)(nil), "types.Pos33AllPos33TicketCount")
+	proto.RegisterType((*ReplyPos33AllPos33TicketCount)(nil), "types.ReplyPos33AllPos33TicketCount")
+	proto.RegisterType((*Pos33TicketInfos)(nil), "types.Pos33TicketInfos")
+	proto.RegisterType((*ReplyPos33TicketList)(nil), "types.ReplyPos33TicketList")
+	proto.RegisterType((*ReplyWalletPos33Tickets)(nil), "types.ReplyWalletPos33Tickets")
+	proto.RegisterType((*ReceiptPos33Ticket)(nil), "types.ReceiptPos33Ticket")
+	proto.RegisterType((*ReceiptPos33TicketBind)(nil), "types.ReceiptPos33TicketBind")
+	proto.RegisterType((*ReqBindPos33Miner)(nil), "types.ReqBindPos33Miner")
+	proto.RegisterType((*ReplyBindPos33Miner)(nil), "types.ReplyBindPos33Miner")
 }
 
 func init() { proto.RegisterFile("ticket.proto", fileDescriptor_98a6c21780e82d22) }
 
 var fileDescriptor_98a6c21780e82d22 = []byte{
-	// 1234 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0xcf, 0x6f, 0x1c, 0xb5,
-	0x17, 0xdf, 0x99, 0xc9, 0x6c, 0x36, 0x2f, 0xbb, 0x69, 0xe2, 0xe6, 0xfb, 0x65, 0x58, 0x41, 0x15,
-	0x19, 0x04, 0x81, 0xb6, 0xa1, 0x4d, 0x11, 0x02, 0x2e, 0x28, 0x69, 0x45, 0x13, 0x89, 0xd0, 0xca,
-	0x89, 0x82, 0x7a, 0x40, 0x68, 0x76, 0xc6, 0xbb, 0xb1, 0x32, 0x99, 0x19, 0x6c, 0xef, 0xb6, 0x7b,
-	0xe2, 0x82, 0xb8, 0x71, 0xe7, 0x2f, 0xe0, 0xc6, 0x95, 0x2b, 0xff, 0x1a, 0xf2, 0xb3, 0xe7, 0xc7,
-	0x66, 0x2b, 0x14, 0x04, 0x9c, 0x76, 0xde, 0xf3, 0xe7, 0xd9, 0xef, 0xf3, 0xf1, 0xf3, 0xb3, 0x17,
-	0xfa, 0x5a, 0x24, 0x97, 0x5c, 0xef, 0x95, 0xb2, 0xd0, 0x05, 0x09, 0xf5, 0xbc, 0xe4, 0x6a, 0xd8,
-	0x4f, 0x8a, 0xab, 0xab, 0x22, 0xb7, 0xce, 0xe1, 0x96, 0x96, 0x71, 0xae, 0xe2, 0x44, 0x8b, 0xda,
-	0xb5, 0x39, 0xca, 0x8a, 0xe4, 0x32, 0xb9, 0x88, 0x85, 0xf3, 0xd0, 0x5f, 0x7c, 0xe8, 0x9e, 0xe1,
-	0x54, 0x64, 0x08, 0x3d, 0x3b, 0xe9, 0x71, 0x1a, 0x79, 0x3b, 0xde, 0xee, 0x1a, 0xab, 0x6d, 0xf2,
-	0x7f, 0xe8, 0x2a, 0x1d, 0xeb, 0xa9, 0x8a, 0xfc, 0x1d, 0x6f, 0x37, 0x64, 0xce, 0x22, 0x6f, 0xc1,
-	0x9a, 0x50, 0x4f, 0x79, 0xce, 0x95, 0x50, 0x51, 0xb0, 0xe3, 0xed, 0xf6, 0x58, 0xe3, 0x20, 0x77,
-	0x00, 0x12, 0xc9, 0x63, 0xcd, 0xcf, 0xc4, 0x15, 0x8f, 0x56, 0x76, 0xbc, 0xdd, 0x80, 0xb5, 0x3c,
-	0x26, 0xfa, 0x4a, 0xe4, 0x5c, 0xe2, 0x70, 0x88, 0xc3, 0x8d, 0xc3, 0x44, 0xa3, 0x71, 0x1e, 0x67,
-	0x53, 0x1e, 0xf5, 0x6c, 0x74, 0xe3, 0x21, 0x14, 0xfa, 0x68, 0x1d, 0xa4, 0xa9, 0xe4, 0x4a, 0x45,
-	0x5d, 0xcc, 0x79, 0xc1, 0x47, 0xde, 0x85, 0x81, 0xe4, 0x7a, 0x2a, 0xf3, 0x0a, 0xb4, 0x8a, 0xa0,
-	0x45, 0x27, 0xd9, 0x86, 0xb0, 0x94, 0x22, 0xe1, 0xd1, 0x1a, 0x2e, 0x62, 0x0d, 0xfa, 0xbb, 0x0f,
-	0x7d, 0x2b, 0xcd, 0x01, 0x6a, 0x48, 0x3e, 0x80, 0x50, 0x8f, 0x44, 0x9e, 0x62, 0xaa, 0xeb, 0xfb,
-	0x5b, 0x7b, 0xa8, 0xfa, 0x9e, 0xc5, 0x1c, 0x8a, 0x3c, 0x3d, 0xea, 0x30, 0x8b, 0x40, 0x68, 0x51,
-	0xf2, 0x1c, 0x85, 0xbc, 0x0e, 0x7d, 0x56, 0xf2, 0x1c, 0xa1, 0x06, 0x41, 0x1e, 0xc0, 0xea, 0xc4,
-	0x09, 0xe8, 0x23, 0x78, 0x7b, 0x01, 0xec, 0xb4, 0x3c, 0xea, 0xb0, 0x0a, 0x46, 0xee, 0x41, 0x57,
-	0x27, 0x59, 0xa1, 0x38, 0x2a, 0xbe, 0xbe, 0x4f, 0x16, 0x02, 0x1e, 0x9b, 0x91, 0xa3, 0x0e, 0x73,
-	0x18, 0xf2, 0x21, 0x84, 0x28, 0x09, 0xea, 0x7f, 0x1d, 0x7c, 0x62, 0x46, 0x4c, 0x2e, 0x08, 0x21,
-	0x77, 0xa1, 0x5b, 0x5a, 0x70, 0x77, 0x21, 0xef, 0xe7, 0x85, 0x7a, 0xf4, 0xa8, 0xc2, 0x3a, 0x08,
-	0xd9, 0x00, 0x5f, 0xcf, 0x23, 0xc0, 0x7a, 0xf0, 0xf5, 0xfc, 0x70, 0x15, 0xc2, 0x99, 0xd9, 0x18,
-	0xfa, 0x2d, 0xf4, 0x6c, 0x80, 0x9a, 0x10, 0x02, 0x2b, 0x69, 0xac, 0x63, 0xd4, 0xa1, 0xcf, 0xf0,
-	0x9b, 0x50, 0x0c, 0x34, 0x64, 0x37, 0xea, 0x74, 0xaa, 0x80, 0xbd, 0xb3, 0xb9, 0x99, 0x8c, 0xbe,
-	0x09, 0xfe, 0xd9, 0x9c, 0x84, 0xe0, 0x1d, 0x6e, 0x76, 0xcc, 0xcf, 0xf9, 0xa6, 0x67, 0x7e, 0x4e,
-	0x37, 0x7d, 0xfa, 0xa3, 0x07, 0x9b, 0x08, 0x3f, 0x97, 0xe3, 0xe3, 0xbc, 0x9c, 0x6a, 0xb7, 0x8e,
-	0xe2, 0x3c, 0x45, 0x45, 0xfa, 0x0c, 0xbf, 0x5b, 0x05, 0xfd, 0x04, 0xc9, 0x37, 0x05, 0xfd, 0xc4,
-	0x14, 0xf4, 0x05, 0x17, 0x93, 0x0b, 0xed, 0xea, 0xce, 0x59, 0x38, 0x8f, 0xe6, 0x25, 0xf2, 0x0f,
-	0x19, 0x7e, 0x9b, 0xf2, 0x90, 0xc5, 0x34, 0x4f, 0xb1, 0x78, 0x42, 0x66, 0x0d, 0x93, 0xc6, 0x16,
-	0xa6, 0x71, 0x5a, 0x48, 0x2d, 0x4c, 0x81, 0xb8, 0x3c, 0x2e, 0x62, 0x75, 0x51, 0xf1, 0x35, 0xdf,
-	0x66, 0xad, 0x72, 0x3a, 0xba, 0xe4, 0x96, 0x73, 0x9f, 0x39, 0xcb, 0x96, 0x5d, 0x51, 0x8c, 0x5d,
-	0xd2, 0xd6, 0x20, 0xf7, 0x21, 0x14, 0x86, 0x95, 0xdb, 0xaf, 0x37, 0xda, 0x02, 0xb5, 0x18, 0x33,
-	0x8b, 0xa2, 0x2f, 0x60, 0x80, 0x43, 0x87, 0xe6, 0x64, 0x9b, 0x0c, 0xee, 0xc1, 0x8a, 0x2a, 0xa4,
-	0x76, 0x95, 0x17, 0xb5, 0xc3, 0xdb, 0x99, 0x32, 0x44, 0x91, 0x21, 0x78, 0x23, 0x57, 0x77, 0x7d,
-	0x07, 0xc5, 0x99, 0x98, 0x37, 0xa2, 0x3f, 0x40, 0xdf, 0xae, 0x5a, 0x68, 0xfe, 0xf7, 0x67, 0x7e,
-	0x1b, 0x00, 0xbb, 0xcd, 0x77, 0xa8, 0x87, 0x65, 0xbe, 0x86, 0x9e, 0x23, 0x23, 0x0a, 0x85, 0x40,
-	0x89, 0x89, 0x23, 0xb9, 0xe9, 0xe6, 0x3a, 0x15, 0x93, 0x3c, 0xd6, 0x53, 0xc9, 0x99, 0x19, 0xa4,
-	0x0f, 0x01, 0xea, 0x04, 0x14, 0x79, 0x07, 0xfc, 0x99, 0x8a, 0xbc, 0x9d, 0x60, 0x77, 0x7d, 0xff,
-	0xf6, 0x82, 0x2a, 0x36, 0x3f, 0xe6, 0xcf, 0x14, 0xe5, 0x2e, 0x04, 0x8b, 0xd5, 0x1c, 0xc3, 0x99,
-	0x89, 0xfd, 0xab, 0x28, 0x8b, 0xa8, 0xc9, 0xf9, 0x37, 0x21, 0x47, 0xff, 0xf0, 0x60, 0xbd, 0x75,
-	0x82, 0xcc, 0xb6, 0x8f, 0x84, 0x56, 0x28, 0xcd, 0x80, 0xe1, 0xb7, 0xd9, 0x76, 0xc9, 0x5f, 0xc6,
-	0x32, 0xc5, 0x39, 0x03, 0xe6, 0xac, 0x85, 0x3e, 0x1b, 0x2c, 0xf7, 0xd9, 0xab, 0x22, 0x15, 0xe3,
-	0x39, 0x0a, 0xd3, 0x67, 0xce, 0x32, 0x31, 0xa5, 0x14, 0x33, 0xa3, 0x1c, 0x16, 0x6c, 0x9f, 0xd5,
-	0x36, 0x89, 0x60, 0x75, 0x26, 0xc7, 0x38, 0xd4, 0xc5, 0xa1, 0xca, 0x34, 0x51, 0x33, 0x39, 0x7e,
-	0x8e, 0x35, 0xb6, 0x6a, 0xa3, 0x2a, 0x9b, 0x96, 0xb0, 0xd1, 0x22, 0xf0, 0x2c, 0x4b, 0xff, 0x6b,
-	0x0e, 0xf4, 0x33, 0x58, 0xc3, 0xb5, 0xbe, 0xcc, 0x62, 0x3c, 0x27, 0xe3, 0x2c, 0x9e, 0xe0, 0x62,
-	0x21, 0xc3, 0x6f, 0x43, 0x44, 0x72, 0xc5, 0xe5, 0x8c, 0xbb, 0xd5, 0x2a, 0x93, 0x9e, 0x03, 0x34,
-	0x5d, 0x76, 0xa9, 0xf1, 0x7b, 0x37, 0x69, 0xfc, 0xfe, 0x6b, 0x1a, 0x3f, 0xfd, 0xd5, 0xab, 0x26,
-	0x36, 0x3d, 0xf9, 0x46, 0x13, 0x6f, 0x43, 0x98, 0x14, 0xd3, 0x5c, 0xbb, 0x8b, 0xd0, 0x1a, 0xcb,
-	0xcb, 0x05, 0xaf, 0xbb, 0x67, 0x86, 0xd0, 0x93, 0x71, 0x9e, 0x9e, 0x9a, 0x46, 0x65, 0x6f, 0xc3,
-	0xda, 0x36, 0x77, 0x61, 0x39, 0x1d, 0x99, 0x6d, 0xe3, 0x2a, 0x0a, 0x77, 0x02, 0x73, 0x5a, 0x6a,
-	0x07, 0x2d, 0x60, 0xb0, 0x70, 0x1d, 0xfc, 0x7b, 0x1a, 0x34, 0x84, 0x82, 0x16, 0x21, 0x7a, 0x52,
-	0xd5, 0x37, 0x5e, 0x27, 0xd7, 0xde, 0x06, 0xc1, 0xc2, 0x7e, 0x5f, 0x4f, 0xc5, 0x5f, 0x4e, 0x85,
-	0x7e, 0x5a, 0xe9, 0xfc, 0x95, 0x50, 0xd8, 0x64, 0xe3, 0x34, 0x95, 0x2e, 0x69, 0xfc, 0x6e, 0xbd,
-	0x30, 0x82, 0xf6, 0x0b, 0x83, 0xde, 0x87, 0xdb, 0x78, 0x08, 0x0f, 0xb2, 0xcc, 0x25, 0x84, 0x82,
-	0x37, 0xfd, 0xdb, 0x6b, 0xf7, 0x6f, 0xfa, 0x00, 0x22, 0xc6, 0xcb, 0x6c, 0xfe, 0xba, 0x98, 0x9a,
-	0xa9, 0x0d, 0x71, 0x4c, 0xef, 0x56, 0x4c, 0x8f, 0xf3, 0x71, 0x81, 0x2f, 0x9a, 0x8a, 0x99, 0x72,
-	0x54, 0x1b, 0x07, 0xfd, 0x1c, 0x6e, 0xe1, 0xf4, 0x2d, 0x32, 0xef, 0xc3, 0xaa, 0x1d, 0xaf, 0xba,
-	0xcc, 0x60, 0xe1, 0x86, 0x65, 0xd5, 0x28, 0x7d, 0x01, 0x04, 0x63, 0xbf, 0x89, 0xb3, 0x8c, 0x6b,
-	0x3b, 0xaa, 0x6e, 0x1c, 0x5e, 0xb5, 0x80, 0x4b, 0x3e, 0x37, 0x12, 0x07, 0x55, 0x0b, 0x30, 0x36,
-	0x7d, 0x09, 0x03, 0xc6, 0x13, 0x2e, 0x4a, 0xfd, 0x0f, 0xde, 0x72, 0x77, 0x00, 0x4a, 0xc9, 0x67,
-	0xa7, 0xed, 0x5d, 0x68, 0x79, 0xea, 0x5d, 0x5b, 0x69, 0x76, 0x8d, 0xfe, 0xec, 0xc1, 0xd6, 0xc2,
-	0xca, 0x78, 0x40, 0x77, 0xe1, 0x56, 0x91, 0xa5, 0x27, 0xcb, 0xf5, 0x79, 0xdd, 0x6d, 0x90, 0x39,
-	0x7f, 0x79, 0xb2, 0x5c, 0x3e, 0xd7, 0xdd, 0x37, 0x3b, 0x61, 0xf4, 0x27, 0x0f, 0xfa, 0x8c, 0x7f,
-	0x6f, 0xb2, 0xb0, 0x8d, 0x79, 0x08, 0x3d, 0xf3, 0x20, 0x3b, 0x68, 0xca, 0xad, 0xb6, 0x0d, 0xe1,
-	0x42, 0x8a, 0x89, 0xc0, 0x68, 0xb7, 0x6e, 0xcb, 0x63, 0x84, 0x8a, 0xaf, 0xea, 0xa3, 0x11, 0x30,
-	0x67, 0x99, 0x82, 0x4f, 0x2e, 0x78, 0x72, 0x79, 0x18, 0x67, 0x71, 0x9e, 0xd8, 0x87, 0x6d, 0x8f,
-	0x2d, 0xf8, 0xe8, 0x7b, 0xb0, 0x81, 0x9b, 0xdd, 0x64, 0xb2, 0x0d, 0xa1, 0x7e, 0x75, 0xc4, 0x5f,
-	0xb9, 0x34, 0xac, 0xb1, 0xff, 0x9b, 0x07, 0x5d, 0xbb, 0x33, 0xe4, 0x0b, 0xb8, 0xf5, 0x18, 0xdf,
-	0xc6, 0x4d, 0x4c, 0x75, 0x61, 0xb5, 0x29, 0x0d, 0xff, 0x57, 0x3b, 0xdb, 0xf3, 0xd3, 0x0e, 0xf9,
-	0x08, 0x36, 0x9e, 0x56, 0x85, 0x65, 0x2b, 0x7e, 0xd0, 0xc4, 0x7f, 0x2d, 0xb2, 0x61, 0x75, 0xc3,
-	0x1f, 0xe7, 0xfa, 0x93, 0x8f, 0x69, 0x87, 0x3c, 0x84, 0xc1, 0x29, 0xd7, 0x07, 0x53, 0x5d, 0x9c,
-	0x88, 0x5c, 0xe4, 0x13, 0x52, 0xdd, 0xc3, 0x75, 0x9f, 0xae, 0x43, 0x70, 0x31, 0xda, 0x19, 0x75,
-	0xf1, 0x6f, 0xc3, 0xa3, 0x3f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x7f, 0xb9, 0x4d, 0x1d, 0x80, 0x0c,
-	0x00, 0x00,
+	// 1239 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x57, 0x5f, 0x6f, 0xdc, 0x44,
+	0x10, 0x3f, 0xdb, 0xf1, 0xe5, 0x32, 0xb9, 0xb4, 0xc9, 0x26, 0xb4, 0xee, 0x89, 0x56, 0xd1, 0xc2,
+	0x43, 0x50, 0x4b, 0xa0, 0xe9, 0x9f, 0x37, 0x90, 0x92, 0x22, 0x9a, 0x48, 0x84, 0x56, 0x9b, 0xa8,
+	0x08, 0x21, 0x84, 0x7c, 0xf6, 0xde, 0x65, 0x15, 0x9f, 0x6d, 0xbc, 0x7b, 0xd7, 0x9e, 0x84, 0xc4,
+	0x0b, 0x6f, 0xbc, 0xf1, 0xce, 0x27, 0xe0, 0x6b, 0x20, 0x3e, 0x01, 0x1f, 0x08, 0xed, 0xec, 0xda,
+	0x67, 0x9f, 0x03, 0x4a, 0x05, 0x3c, 0x9d, 0x67, 0x76, 0x7e, 0xb3, 0xf3, 0xe7, 0xb7, 0x3b, 0x7b,
+	0xd0, 0x57, 0x22, 0xba, 0xe4, 0x6a, 0x3f, 0x2f, 0x32, 0x95, 0x11, 0x5f, 0xcd, 0x73, 0x2e, 0x07,
+	0xfd, 0x28, 0x9b, 0x4c, 0xb2, 0xd4, 0x28, 0x07, 0x5b, 0xaa, 0x08, 0x53, 0x19, 0x46, 0x4a, 0x54,
+	0xaa, 0xcd, 0x61, 0x92, 0x45, 0x97, 0xd1, 0x45, 0x28, 0xac, 0x86, 0xfe, 0xea, 0xc2, 0xfa, 0xcb,
+	0x4c, 0x3e, 0x7a, 0x74, 0x8e, 0xfe, 0xc8, 0x00, 0x7a, 0xc6, 0xf3, 0x49, 0x1c, 0x38, 0xbb, 0xce,
+	0xde, 0x1a, 0xab, 0x64, 0x72, 0x0b, 0xba, 0x52, 0x85, 0x6a, 0x2a, 0x03, 0x77, 0xd7, 0xd9, 0xf3,
+	0x99, 0x95, 0xc8, 0xbb, 0xb0, 0x26, 0xe4, 0x73, 0x9e, 0x72, 0x29, 0x64, 0xe0, 0xed, 0x3a, 0x7b,
+	0x3d, 0xb6, 0x50, 0x90, 0x7b, 0x00, 0x51, 0xc1, 0x43, 0xc5, 0xcf, 0xc5, 0x84, 0x07, 0x2b, 0xbb,
+	0xce, 0x9e, 0xc7, 0x6a, 0x1a, 0x8d, 0x9e, 0x88, 0x94, 0x17, 0xb8, 0xec, 0xe3, 0xf2, 0x42, 0xa1,
+	0xd1, 0x28, 0xbc, 0x0a, 0x93, 0x29, 0x0f, 0x7a, 0x06, 0xbd, 0xd0, 0x10, 0x0a, 0x7d, 0x94, 0x0e,
+	0xe3, 0xb8, 0xe0, 0x52, 0x06, 0x5d, 0x8c, 0xb9, 0xa1, 0x23, 0xef, 0xc3, 0x46, 0xc1, 0xd5, 0xb4,
+	0x48, 0x4b, 0xa3, 0x55, 0x34, 0x6a, 0x2a, 0xc9, 0x0e, 0xf8, 0x79, 0x21, 0x22, 0x1e, 0xac, 0xe1,
+	0x26, 0x46, 0xa0, 0x7f, 0xba, 0xb0, 0x55, 0xab, 0xcf, 0x21, 0x56, 0x93, 0xec, 0x83, 0xaf, 0x86,
+	0x22, 0x8d, 0x31, 0xde, 0xf5, 0x83, 0x5b, 0xfb, 0x58, 0xff, 0xfd, 0x9a, 0xe1, 0x91, 0x48, 0xe3,
+	0xe3, 0x0e, 0x33, 0x66, 0x68, 0x9f, 0xe5, 0x3c, 0xc5, 0x92, 0x5e, 0x69, 0xff, 0x22, 0xe7, 0x29,
+	0xda, 0x6b, 0x33, 0xf2, 0x04, 0x56, 0xc7, 0xb6, 0x9e, 0x2e, 0x22, 0xee, 0xb4, 0x11, 0xb6, 0xbe,
+	0xc7, 0x1d, 0x56, 0xda, 0x92, 0x87, 0xd0, 0x55, 0x51, 0x92, 0x49, 0x8e, 0x5d, 0x58, 0x3f, 0xb8,
+	0xdd, 0x46, 0x3d, 0xd3, 0xcb, 0xc7, 0x1d, 0x66, 0x0d, 0xc9, 0x47, 0xe0, 0x63, 0xad, 0xb0, 0x31,
+	0x57, 0x22, 0x4e, 0xf5, 0xb2, 0x0e, 0x0d, 0xed, 0xc8, 0x7d, 0xe8, 0xe6, 0x06, 0xd1, 0x45, 0xc4,
+	0x56, 0x1d, 0x51, 0xda, 0x5a, 0x13, 0x72, 0x03, 0x5c, 0x35, 0x0f, 0x00, 0xd9, 0xe2, 0xaa, 0xf9,
+	0xd1, 0x2a, 0xf8, 0x33, 0xdd, 0x36, 0xfa, 0x2d, 0xf4, 0x0c, 0x40, 0x8e, 0x09, 0x81, 0x95, 0x38,
+	0x54, 0x21, 0xd6, 0xa6, 0xcf, 0xf0, 0x9b, 0x50, 0x04, 0xea, 0xdc, 0x6f, 0x1c, 0x90, 0xc6, 0x0e,
+	0x72, 0xbc, 0x7f, 0x3e, 0xd7, 0xce, 0xe8, 0x1d, 0x70, 0xcf, 0xe7, 0xc4, 0x07, 0xe7, 0x68, 0xb3,
+	0xa3, 0x7f, 0x5e, 0x6d, 0x3a, 0xfa, 0xe7, 0x6c, 0xd3, 0xa5, 0x3f, 0x39, 0xb0, 0x89, 0xe6, 0xaf,
+	0x8a, 0xd1, 0x49, 0x9a, 0x4f, 0x95, 0xdd, 0x47, 0x72, 0x1e, 0x63, 0x6d, 0xfa, 0x0c, 0xbf, 0x1b,
+	0x74, 0x5f, 0x69, 0xd3, 0xfd, 0x82, 0x8b, 0xf1, 0x85, 0xb2, 0xac, 0xb4, 0x12, 0xfa, 0x51, 0x3c,
+	0xc7, 0xfc, 0x7d, 0x86, 0xdf, 0x9a, 0x3c, 0x45, 0x36, 0x4d, 0x63, 0xa4, 0x96, 0xcf, 0x8c, 0xa0,
+	0xc3, 0x30, 0xe4, 0x39, 0xcb, 0x0a, 0x25, 0x34, 0x73, 0x6c, 0x1c, 0x17, 0xa1, 0xbc, 0x28, 0xf3,
+	0xd5, 0xdf, 0x7a, 0xaf, 0x7c, 0x3a, 0xbc, 0xe4, 0x26, 0xe7, 0x3e, 0xb3, 0x92, 0x21, 0x65, 0x96,
+	0x8d, 0x6c, 0xd0, 0x46, 0x20, 0x1f, 0x82, 0x2f, 0x74, 0x56, 0x57, 0x35, 0xad, 0x96, 0x31, 0x33,
+	0x56, 0xf4, 0x6b, 0xd8, 0xc0, 0xa5, 0x23, 0x7d, 0xf8, 0x75, 0x04, 0x0f, 0x60, 0x45, 0x66, 0x85,
+	0xb2, 0x6c, 0x0c, 0xea, 0xf0, 0x7a, 0xa4, 0x0c, 0xad, 0xc8, 0x00, 0x9c, 0xa1, 0xa5, 0x61, 0xdf,
+	0x9a, 0xa2, 0x27, 0xe6, 0x0c, 0xe9, 0x8f, 0xd0, 0x37, 0xbb, 0x66, 0x8a, 0xbf, 0xbd, 0xe7, 0xbb,
+	0x00, 0x78, 0x21, 0x7d, 0x87, 0xf5, 0x30, 0x99, 0xaf, 0xa1, 0xe6, 0x58, 0x17, 0x85, 0x82, 0x27,
+	0xc5, 0xd8, 0x26, 0xb9, 0x69, 0x7d, 0x9d, 0x89, 0x71, 0x1a, 0xaa, 0x69, 0xc1, 0x99, 0x5e, 0xa4,
+	0x0f, 0x01, 0xaa, 0x00, 0x24, 0x79, 0x0f, 0xdc, 0x99, 0x0c, 0x9c, 0x5d, 0x6f, 0x6f, 0xfd, 0x60,
+	0xbb, 0x51, 0x15, 0x13, 0x1f, 0x73, 0x67, 0x92, 0x72, 0x0b, 0x41, 0xb2, 0x92, 0x0f, 0xc0, 0x9f,
+	0x69, 0xec, 0x3f, 0xa1, 0x8c, 0x45, 0x95, 0x9c, 0x7b, 0x9d, 0xe4, 0xe8, 0xef, 0x25, 0x07, 0x6b,
+	0xc7, 0x48, 0xf7, 0x7e, 0x28, 0x94, 0xc4, 0xfa, 0x6c, 0x30, 0xfc, 0xd6, 0xbd, 0x2f, 0xf8, 0xeb,
+	0xb0, 0x88, 0xd1, 0xb1, 0xc7, 0xac, 0xd4, 0xe0, 0xa6, 0xd7, 0xe6, 0xe6, 0x24, 0x8b, 0xc5, 0x68,
+	0x8e, 0xd5, 0xe9, 0x33, 0x2b, 0x69, 0x4c, 0x5e, 0x88, 0x99, 0x2e, 0x1f, 0xb2, 0xb6, 0xcf, 0x2a,
+	0x99, 0x04, 0xb0, 0x3a, 0x2b, 0x46, 0xb8, 0xd4, 0xc5, 0xa5, 0x52, 0xd4, 0xa8, 0x59, 0x31, 0x7a,
+	0x89, 0x44, 0x5b, 0x35, 0xa8, 0x52, 0xa6, 0x53, 0xd8, 0x5e, 0xce, 0xe2, 0x45, 0x12, 0xff, 0xdf,
+	0x89, 0xd0, 0x4f, 0xe1, 0xc6, 0xa2, 0x49, 0x9f, 0x27, 0x21, 0x1e, 0x9b, 0x51, 0x12, 0x8e, 0x71,
+	0x47, 0x9f, 0xe1, 0xb7, 0x4e, 0xa9, 0xe0, 0x92, 0x17, 0x33, 0x6e, 0xb7, 0x2c, 0x45, 0xfa, 0x0d,
+	0xdc, 0x5c, 0xba, 0x8d, 0x5b, 0xa3, 0xc2, 0xb9, 0xce, 0xa8, 0x70, 0xaf, 0x18, 0x15, 0xf4, 0x37,
+	0xa7, 0xe1, 0x5d, 0xdf, 0xdd, 0xd7, 0xf2, 0xbe, 0x03, 0x7e, 0x94, 0x4d, 0x53, 0x65, 0xe7, 0xa7,
+	0x11, 0xda, 0x7b, 0x7a, 0x57, 0x8d, 0xa7, 0x01, 0xf4, 0x8a, 0x30, 0x8d, 0xcf, 0xf4, 0x0d, 0x66,
+	0x86, 0x68, 0x25, 0xeb, 0x11, 0x9a, 0x4f, 0x87, 0xba, 0x95, 0x5c, 0x06, 0xfe, 0xae, 0xa7, 0x8f,
+	0x51, 0xa5, 0xa0, 0x0a, 0x48, 0x7b, 0x6c, 0xfc, 0x77, 0xd5, 0x58, 0x64, 0xe5, 0xd5, 0xb2, 0xa2,
+	0xac, 0xc1, 0x7e, 0x1c, 0x3b, 0x4b, 0x8f, 0x0b, 0xaf, 0x41, 0x84, 0xe5, 0x78, 0xdc, 0x76, 0x3c,
+	0xf4, 0x93, 0x46, 0xd9, 0xbf, 0x10, 0x12, 0x2f, 0xe3, 0x30, 0x8e, 0x0b, 0x1b, 0x3e, 0x7e, 0xd7,
+	0xde, 0x29, 0x5e, 0xfd, 0x9d, 0x42, 0x0f, 0x20, 0x40, 0xf8, 0x61, 0x92, 0xd4, 0x43, 0xc3, 0x26,
+	0x2c, 0x2e, 0x7b, 0xa7, 0x7e, 0xd9, 0xd3, 0x27, 0x70, 0x97, 0xf1, 0x3c, 0x99, 0xff, 0x2d, 0xb0,
+	0xca, 0xde, 0xe0, 0x6c, 0xf6, 0x1f, 0x37, 0xb2, 0x3f, 0x49, 0x47, 0x19, 0x3e, 0x93, 0xca, 0x6c,
+	0xa5, 0x4d, 0x7f, 0xa1, 0xa0, 0x9f, 0xc1, 0xce, 0x62, 0xa3, 0x5a, 0x82, 0x0f, 0x60, 0xd5, 0x18,
+	0x95, 0x37, 0x14, 0x69, 0x8f, 0x68, 0x56, 0x9a, 0xd0, 0x08, 0x6e, 0xa3, 0x97, 0xaf, 0xc2, 0x24,
+	0xe1, 0xaa, 0x66, 0x22, 0xdf, 0xce, 0x51, 0x79, 0x91, 0x5c, 0xf2, 0xb9, 0x6e, 0x85, 0x57, 0x5e,
+	0x24, 0x5a, 0xa6, 0x3f, 0x00, 0x61, 0x3c, 0xe2, 0x22, 0x57, 0xff, 0xf6, 0xe5, 0x78, 0x0f, 0x20,
+	0x2f, 0xf8, 0xec, 0xac, 0xde, 0xad, 0x9a, 0xa6, 0xea, 0xee, 0xca, 0xa2, 0xbb, 0xf4, 0x17, 0x07,
+	0x6e, 0xb5, 0xb7, 0xc7, 0x13, 0xbe, 0x07, 0x37, 0xb3, 0x24, 0x3e, 0x6d, 0xd3, 0x7a, 0x59, 0xad,
+	0x2d, 0x53, 0xfe, 0xfa, 0xb4, 0x4d, 0xb8, 0x65, 0xf5, 0xf5, 0x4e, 0x27, 0xfd, 0xd9, 0x81, 0x2d,
+	0xc6, 0xbf, 0xd7, 0x51, 0xd4, 0x66, 0xcb, 0x00, 0x7a, 0xfa, 0xf9, 0x77, 0xb8, 0x20, 0x68, 0x25,
+	0xeb, 0xd4, 0xb3, 0x42, 0x8c, 0x05, 0xba, 0xb0, 0x9b, 0xd7, 0x34, 0xba, 0x64, 0xe1, 0xa4, 0x3a,
+	0x56, 0x1e, 0xb3, 0x92, 0x3e, 0x27, 0xd1, 0x05, 0x8f, 0x2e, 0x8f, 0xc2, 0x24, 0x4c, 0x23, 0xf3,
+	0xa0, 0xee, 0xb1, 0x86, 0x8e, 0xde, 0x87, 0x6d, 0x64, 0xc1, 0x52, 0x38, 0x3b, 0xe0, 0xab, 0x37,
+	0xc7, 0xfc, 0x8d, 0x8d, 0xc5, 0x08, 0x07, 0x7f, 0x38, 0xb0, 0x9e, 0xd7, 0xfa, 0x78, 0x02, 0x37,
+	0x9f, 0xe1, 0xeb, 0x5c, 0xa3, 0x0d, 0xb0, 0x1c, 0x75, 0xad, 0x0c, 0x07, 0x83, 0x6a, 0xa5, 0xb5,
+	0x1d, 0xed, 0x90, 0xc7, 0xb0, 0xfd, 0xbc, 0xc1, 0x42, 0x73, 0x64, 0x36, 0x16, 0xee, 0xbe, 0x14,
+	0xc9, 0xa0, 0x7c, 0x54, 0x9c, 0xa4, 0xea, 0xe9, 0x63, 0xda, 0x21, 0x4f, 0x61, 0xe3, 0x8c, 0xab,
+	0xc3, 0xa9, 0xca, 0x4e, 0x45, 0x2a, 0xd2, 0x31, 0x79, 0xa7, 0xf5, 0xc4, 0xd4, 0x03, 0xa1, 0xc2,
+	0xe1, 0xde, 0xb4, 0x33, 0xec, 0xe2, 0x3f, 0x9a, 0x47, 0x7f, 0x05, 0x00, 0x00, 0xff, 0xff, 0xe4,
+	0xa0, 0x36, 0xf3, 0x1b, 0x0d, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1698,152 +1698,152 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// TicketClient is the client API for Ticket service.
+// Pos33TicketClient is the client API for Pos33Ticket service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type TicketClient interface {
+type Pos33TicketClient interface {
 	//创建绑定挖矿
-	CreateBindMiner(ctx context.Context, in *ReqBindMiner, opts ...grpc.CallOption) (*ReplyBindMiner, error)
+	CreateBindMiner(ctx context.Context, in *ReqBindPos33Miner, opts ...grpc.CallOption) (*ReplyBindPos33Miner, error)
 	//查询钱包票数
-	GetTicketCount(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.Int64, error)
+	GetPos33TicketCount(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.Int64, error)
 	// Miner
 	//设置自动挖矿
-	SetAutoMining(ctx context.Context, in *MinerFlag, opts ...grpc.CallOption) (*types.Reply, error)
+	SetAutoMining(ctx context.Context, in *Pos33MinerFlag, opts ...grpc.CallOption) (*types.Reply, error)
 }
 
-type ticketClient struct {
+type pos33TicketClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewTicketClient(cc *grpc.ClientConn) TicketClient {
-	return &ticketClient{cc}
+func NewPos33TicketClient(cc *grpc.ClientConn) Pos33TicketClient {
+	return &pos33TicketClient{cc}
 }
 
-func (c *ticketClient) CreateBindMiner(ctx context.Context, in *ReqBindMiner, opts ...grpc.CallOption) (*ReplyBindMiner, error) {
-	out := new(ReplyBindMiner)
-	err := c.cc.Invoke(ctx, "/types.ticket/CreateBindMiner", in, out, opts...)
+func (c *pos33TicketClient) CreateBindMiner(ctx context.Context, in *ReqBindPos33Miner, opts ...grpc.CallOption) (*ReplyBindPos33Miner, error) {
+	out := new(ReplyBindPos33Miner)
+	err := c.cc.Invoke(ctx, "/types.pos33Ticket/CreateBindMiner", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ticketClient) GetTicketCount(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.Int64, error) {
+func (c *pos33TicketClient) GetPos33TicketCount(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.Int64, error) {
 	out := new(types.Int64)
-	err := c.cc.Invoke(ctx, "/types.ticket/GetTicketCount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/types.pos33Ticket/GetPos33TicketCount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ticketClient) SetAutoMining(ctx context.Context, in *MinerFlag, opts ...grpc.CallOption) (*types.Reply, error) {
+func (c *pos33TicketClient) SetAutoMining(ctx context.Context, in *Pos33MinerFlag, opts ...grpc.CallOption) (*types.Reply, error) {
 	out := new(types.Reply)
-	err := c.cc.Invoke(ctx, "/types.ticket/SetAutoMining", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/types.pos33Ticket/SetAutoMining", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TicketServer is the server API for Ticket service.
-type TicketServer interface {
+// Pos33TicketServer is the server API for Pos33Ticket service.
+type Pos33TicketServer interface {
 	//创建绑定挖矿
-	CreateBindMiner(context.Context, *ReqBindMiner) (*ReplyBindMiner, error)
+	CreateBindMiner(context.Context, *ReqBindPos33Miner) (*ReplyBindPos33Miner, error)
 	//查询钱包票数
-	GetTicketCount(context.Context, *types.ReqNil) (*types.Int64, error)
+	GetPos33TicketCount(context.Context, *types.ReqNil) (*types.Int64, error)
 	// Miner
 	//设置自动挖矿
-	SetAutoMining(context.Context, *MinerFlag) (*types.Reply, error)
+	SetAutoMining(context.Context, *Pos33MinerFlag) (*types.Reply, error)
 }
 
-// UnimplementedTicketServer can be embedded to have forward compatible implementations.
-type UnimplementedTicketServer struct {
+// UnimplementedPos33TicketServer can be embedded to have forward compatible implementations.
+type UnimplementedPos33TicketServer struct {
 }
 
-func (*UnimplementedTicketServer) CreateBindMiner(ctx context.Context, req *ReqBindMiner) (*ReplyBindMiner, error) {
+func (*UnimplementedPos33TicketServer) CreateBindMiner(ctx context.Context, req *ReqBindPos33Miner) (*ReplyBindPos33Miner, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBindMiner not implemented")
 }
-func (*UnimplementedTicketServer) GetTicketCount(ctx context.Context, req *types.ReqNil) (*types.Int64, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTicketCount not implemented")
+func (*UnimplementedPos33TicketServer) GetPos33TicketCount(ctx context.Context, req *types.ReqNil) (*types.Int64, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPos33TicketCount not implemented")
 }
-func (*UnimplementedTicketServer) SetAutoMining(ctx context.Context, req *MinerFlag) (*types.Reply, error) {
+func (*UnimplementedPos33TicketServer) SetAutoMining(ctx context.Context, req *Pos33MinerFlag) (*types.Reply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetAutoMining not implemented")
 }
 
-func RegisterTicketServer(s *grpc.Server, srv TicketServer) {
-	s.RegisterService(&_Ticket_serviceDesc, srv)
+func RegisterPos33TicketServer(s *grpc.Server, srv Pos33TicketServer) {
+	s.RegisterService(&_Pos33Ticket_serviceDesc, srv)
 }
 
-func _Ticket_CreateBindMiner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqBindMiner)
+func _Pos33Ticket_CreateBindMiner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqBindPos33Miner)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TicketServer).CreateBindMiner(ctx, in)
+		return srv.(Pos33TicketServer).CreateBindMiner(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/types.ticket/CreateBindMiner",
+		FullMethod: "/types.pos33Ticket/CreateBindMiner",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TicketServer).CreateBindMiner(ctx, req.(*ReqBindMiner))
+		return srv.(Pos33TicketServer).CreateBindMiner(ctx, req.(*ReqBindPos33Miner))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ticket_GetTicketCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Pos33Ticket_GetPos33TicketCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(types.ReqNil)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TicketServer).GetTicketCount(ctx, in)
+		return srv.(Pos33TicketServer).GetPos33TicketCount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/types.ticket/GetTicketCount",
+		FullMethod: "/types.pos33Ticket/GetPos33TicketCount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TicketServer).GetTicketCount(ctx, req.(*types.ReqNil))
+		return srv.(Pos33TicketServer).GetPos33TicketCount(ctx, req.(*types.ReqNil))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ticket_SetAutoMining_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MinerFlag)
+func _Pos33Ticket_SetAutoMining_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Pos33MinerFlag)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TicketServer).SetAutoMining(ctx, in)
+		return srv.(Pos33TicketServer).SetAutoMining(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/types.ticket/SetAutoMining",
+		FullMethod: "/types.pos33Ticket/SetAutoMining",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TicketServer).SetAutoMining(ctx, req.(*MinerFlag))
+		return srv.(Pos33TicketServer).SetAutoMining(ctx, req.(*Pos33MinerFlag))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Ticket_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.ticket",
-	HandlerType: (*TicketServer)(nil),
+var _Pos33Ticket_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.pos33Ticket",
+	HandlerType: (*Pos33TicketServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateBindMiner",
-			Handler:    _Ticket_CreateBindMiner_Handler,
+			Handler:    _Pos33Ticket_CreateBindMiner_Handler,
 		},
 		{
-			MethodName: "GetTicketCount",
-			Handler:    _Ticket_GetTicketCount_Handler,
+			MethodName: "GetPos33TicketCount",
+			Handler:    _Pos33Ticket_GetPos33TicketCount_Handler,
 		},
 		{
 			MethodName: "SetAutoMining",
-			Handler:    _Ticket_SetAutoMining_Handler,
+			Handler:    _Pos33Ticket_SetAutoMining_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

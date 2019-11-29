@@ -17,17 +17,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TicketCmd ticket command type
-func TicketCmd() *cobra.Command {
+// Pos33TicketCmd ticket command type
+func Pos33TicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ticket",
-		Short: "Ticket management",
+		Short: "Pos33Ticket management",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
 		BindMinerCmd(),
-		CountTicketCmd(),
-		CloseTicketCmd(),
+		CountPos33TicketCmd(),
+		ClosePos33TicketCmd(),
 		GetColdAddrByMinerCmd(),
 	)
 
@@ -63,13 +63,13 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	//a, _ := common.FromHex(key)
 	//privKey, _ := c.PrivKeyFromBytes(a)
 	//originAddr := account.PubKeyToAddress(privKey.PubKey().Bytes()).String()
-	ta := &ty.TicketAction{}
-	tBind := &ty.TicketBind{
+	ta := &ty.Pos33TicketAction{}
+	tBind := &ty.Pos33TicketBind{
 		MinerAddress:  bindAddr,
 		ReturnAddress: originAddr,
 	}
-	ta.Value = &ty.TicketAction_Tbind{Tbind: tBind}
-	ta.Ty = ty.TicketActionBind
+	ta.Value = &ty.Pos33TicketAction_Tbind{Tbind: tBind}
+	ta.Ty = ty.Pos33TicketActionBind
 
 	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ta))
 	if err != nil {
@@ -80,29 +80,29 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	fmt.Println(hex.EncodeToString(txHex))
 }
 
-// CountTicketCmd get ticket count
-func CountTicketCmd() *cobra.Command {
+// CountPos33TicketCmd get ticket count
+func CountPos33TicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
 		Short: "Get ticket count",
-		Run:   countTicket,
+		Run:   countPos33Ticket,
 	}
 	return cmd
 }
 
-func countTicket(cmd *cobra.Command, args []string) {
+func countPos33Ticket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res int64
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetTicketCount", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetPos33TicketCount", nil, &res)
 	ctx.Run()
 }
 
-// CloseTicketCmd close all accessible tickets
-func CloseTicketCmd() *cobra.Command {
+// ClosePos33TicketCmd close all accessible tickets
+func ClosePos33TicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "close",
 		Short: "Close tickets",
-		Run:   closeTicket,
+		Run:   closePos33Ticket,
 	}
 	addCloseBindAddr(cmd)
 	return cmd
@@ -112,7 +112,7 @@ func addCloseBindAddr(cmd *cobra.Command) {
 	cmd.Flags().StringP("miner_addr", "m", "", "miner address (optional)")
 }
 
-func closeTicket(cmd *cobra.Command, args []string) {
+func closePos33Ticket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	bindAddr, _ := cmd.Flags().GetString("miner_addr")
 	status, err := getWalletStatus(rpcLaddr)
@@ -127,7 +127,7 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	tClose := &ty.TicketClose{
+	tClose := &ty.Pos33TicketClose{
 		MinerAddress: bindAddr,
 	}
 
@@ -137,7 +137,7 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	err = rpc.Call("ticket.CloseTickets", tClose, &res)
+	err = rpc.Call("ticket.ClosePos33Tickets", tClose, &res)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

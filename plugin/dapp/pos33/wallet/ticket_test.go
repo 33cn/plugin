@@ -29,7 +29,7 @@ const (
 	sendhash = "sendhash"
 )
 
-func TestForceCloseTicketList(t *testing.T) {
+func TestForceClosePos33TicketList(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
@@ -40,18 +40,18 @@ func TestForceCloseTicketList(t *testing.T) {
 	wallet.api = qapi
 
 	ticket.walletOperate = wallet
-	t1 := &ty.Ticket{Status: 1, IsGenesis: false}
-	t2 := &ty.Ticket{Status: 2, IsGenesis: false}
-	t3 := &ty.Ticket{Status: 3, IsGenesis: false}
-	tlist := []*ty.Ticket{t1, t2, t3}
+	t1 := &ty.Pos33Ticket{Status: 1, IsGenesis: false}
+	t2 := &ty.Pos33Ticket{Status: 2, IsGenesis: false}
+	t3 := &ty.Pos33Ticket{Status: 3, IsGenesis: false}
+	tlist := []*ty.Pos33Ticket{t1, t2, t3}
 
-	r1, r2 := ticket.forceCloseTicketList(0, nil, tlist)
+	r1, r2 := ticket.forceClosePos33TicketList(0, nil, tlist)
 	assert.Equal(t, []byte(sendhash), r1)
 	assert.Nil(t, r2)
 
 }
 
-func TestCloseTicketsByAddr(t *testing.T) {
+func TestClosePos33TicketsByAddr(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
@@ -69,20 +69,20 @@ func TestCloseTicketsByAddr(t *testing.T) {
 	wallet.api = qapi
 	ticket.walletOperate = wallet
 
-	t1 := &ty.Ticket{Status: 1, IsGenesis: false}
-	t2 := &ty.Ticket{Status: 2, IsGenesis: false}
-	t3 := &ty.Ticket{Status: 3, IsGenesis: false}
+	t1 := &ty.Pos33Ticket{Status: 1, IsGenesis: false}
+	t2 := &ty.Pos33Ticket{Status: 2, IsGenesis: false}
+	t3 := &ty.Pos33Ticket{Status: 3, IsGenesis: false}
 
-	tlist := &ty.ReplyTicketList{Tickets: []*ty.Ticket{t1, t2, t3}}
-	qapi.On("Query", ty.TicketX, "TicketList", mock.Anything).Return(tlist, nil)
+	tlist := &ty.ReplyPos33TicketList{Pos33Tickets: []*ty.Pos33Ticket{t1, t2, t3}}
+	qapi.On("Query", ty.Pos33TicketX, "Pos33TicketList", mock.Anything).Return(tlist, nil)
 
-	r1, r2 := ticket.closeTicketsByAddr(0, priKey)
+	r1, r2 := ticket.closePos33TicketsByAddr(0, priKey)
 	assert.Equal(t, []byte(sendhash), r1)
 	assert.Nil(t, r2)
 
 }
 
-func TestBuyTicketOne(t *testing.T) {
+func TestBuyPos33TicketOne(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
@@ -98,14 +98,14 @@ func TestBuyTicketOne(t *testing.T) {
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
-	hash, r1, r2 := ticket.buyTicketOne(0, priKey)
+	hash, r1, r2 := ticket.buyPos33TicketOne(0, priKey)
 	assert.Equal(t, []byte(sendhash), hash)
 	assert.Equal(t, 10, r1)
 	assert.Nil(t, r2)
 
 }
 
-func TestBuyMinerAddrTicketOne(t *testing.T) {
+func TestBuyMinerAddrPos33TicketOne(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
 
@@ -126,9 +126,9 @@ func TestBuyMinerAddrTicketOne(t *testing.T) {
 	ticket.walletOperate = wallet
 
 	tlist := &types.ReplyStrings{Datas: []string{"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"}}
-	qapi.On("Query", ty.TicketX, "MinerSourceList", mock.Anything).Return(tlist, nil)
+	qapi.On("Query", ty.Pos33TicketX, "MinerSourceList", mock.Anything).Return(tlist, nil)
 
-	hashs, r2, r3 := ticket.buyMinerAddrTicketOne(0, priKey)
+	hashs, r2, r3 := ticket.buyMinerAddrPos33TicketOne(0, priKey)
 	assert.Equal(t, [][]byte{[]byte(sendhash)}, hashs)
 	assert.Equal(t, 10, r2)
 	assert.Nil(t, r3)

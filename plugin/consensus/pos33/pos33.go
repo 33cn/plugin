@@ -24,7 +24,7 @@ type Client struct {
 	n    *node
 
 	tickLock   sync.Mutex
-	ticketsMap map[string]*pt.Ticket
+	ticketsMap map[string]*pt.Pos33Ticket
 	privLock   sync.Mutex
 	privmap    map[string]crypto.PrivKey
 }
@@ -104,12 +104,12 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *Client) allWeight(height int64) int {
-	msg, err := client.GetAPI().Query(pt.TicketX, "Pos33AllTicketCount", &pt.Pos33AllTicketCount{Height: height})
+	msg, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33AllTicketCount", &pt.Pos33AllPos33TicketCount{Height: height})
 	if err != nil {
 		plog.Info("Pos33AllTicketCount error", "error", err)
 		return 0
 	}
-	return int(msg.(*pt.ReplyPos33AllTicketCount).Count)
+	return int(msg.(*pt.ReplyPos33AllPos33TicketCount).Count)
 }
 
 func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
@@ -129,8 +129,8 @@ func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
 	return list
 }
 
-func (client *Client) setTicket(tlist *pt.ReplyTicketList, privmap map[string]crypto.PrivKey) {
-	client.ticketsMap = make(map[string]*pt.Ticket)
+func (client *Client) setTicket(tlist *pt.ReplyPos33TicketList, privmap map[string]crypto.PrivKey) {
+	client.ticketsMap = make(map[string]*pt.Pos33Ticket)
 	if tlist == nil || privmap == nil {
 		client.ticketsMap = nil
 		client.privmap = nil
@@ -155,7 +155,7 @@ func (client *Client) setTicket(tlist *pt.ReplyTicketList, privmap map[string]cr
 func (client *Client) flushTicket() error {
 	//list accounts
 	tickets, privs, err := client.getTickets()
-	if err == types.ErrWalletIsLocked || err == pt.ErrNoTicket {
+	if err == types.ErrWalletIsLocked || err == pt.ErrNoPos33Ticket {
 		plog.Error("flushTicket error", "err", err.Error())
 		client.setTicket(nil, nil)
 		return nil
@@ -165,16 +165,16 @@ func (client *Client) flushTicket() error {
 		return err
 	}
 	privMap := getPrivMap(privs)
-	client.setTicket(&pt.ReplyTicketList{Tickets: tickets}, privMap)
+	client.setTicket(&pt.ReplyPos33TicketList{Tickets: tickets}, privMap)
 	return nil
 }
 
-func (client *Client) getTickets() ([]*pt.Ticket, []crypto.PrivKey, error) {
+func (client *Client) getTickets() ([]*pt.Pos33Ticket, []crypto.PrivKey, error) {
 	resp, err := client.GetAPI().ExecWalletFunc("pos33", "WalletGetTickets", &types.ReqNil{})
 	if err != nil {
 		return nil, nil, err
 	}
-	reply := resp.(*pt.ReplyWalletTickets)
+	reply := resp.(*pt.ReplyWalletPos33Tickets)
 	var keys []crypto.PrivKey
 	for i := 0; i < len(reply.Privkeys); i++ {
 		priv, err := client.privFromBytes(reply.Privkeys[i])
@@ -192,7 +192,7 @@ func (client *Client) getAllWeight(height int64) int {
 	if preH == height {
 		preH -= pt.Pos33SortitionSize
 	}
-	key := []byte(pt.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+	key := []byte(pt.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", preH))
 	v, err := client.Get(key)
 	if err != nil {
 		plog.Error(err.Error())
@@ -253,26 +253,26 @@ func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count 
 	tx1.Execer = []byte("coins")
 	tx1.To = minerAddr
 	g := &ct.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: pt.GetTicketMinerParam(cfg, height).TicketPrice}
+	g.Genesis = &types.AssetsGenesis{Amount: pt.GetPos33TicketMinerParam(cfg, height).Pos33TicketPrice}
 	tx1.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
 	ret = append(ret, &tx1)
 
 	// 发行并抵押
 	tx2 := types.Transaction{}
 	tx2.Execer = []byte("coins")
-	tx2.To = driver.ExecAddress(pt.TicketX)
+	tx2.To = driver.ExecAddress(pt.Pos33TicketX)
 	g = &ct.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * pt.GetTicketMinerParam(cfg, height).TicketPrice, ReturnAddress: returnAddr}
+	g.Genesis = &types.AssetsGenesis{Amount: int64(count) * pt.GetPos33TicketMinerParam(cfg, height).Pos33TicketPrice, ReturnAddress: returnAddr}
 	tx2.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
 	ret = append(ret, &tx2)
 
 	// 冻结资金并开启挖矿
 	tx3 := types.Transaction{}
-	tx3.Execer = []byte(pt.TicketX)
-	tx3.To = driver.ExecAddress(pt.TicketX)
-	gticket := &pt.TicketAction_Genesis{}
-	gticket.Genesis = &pt.TicketGenesis{MinerAddress: minerAddr, ReturnAddress: returnAddr, Count: count}
-	tx3.Payload = types.Encode(&pt.TicketAction{Value: gticket, Ty: pt.TicketActionGenesis})
+	tx3.Execer = []byte(pt.Pos33TicketX)
+	tx3.To = driver.ExecAddress(pt.Pos33TicketX)
+	gticket := &pt.Pos33TicketAction_Genesis{}
+	gticket.Genesis = &pt.Pos33TicketGenesis{MinerAddress: minerAddr, ReturnAddress: returnAddr, Count: count}
+	tx3.Payload = types.Encode(&pt.Pos33TicketAction{Value: gticket, Ty: pt.Pos33TicketActionGenesis})
 	ret = append(ret, &tx3)
 	return ret
 }

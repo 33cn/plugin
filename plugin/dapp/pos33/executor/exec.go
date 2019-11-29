@@ -10,39 +10,39 @@ import (
 )
 
 // Exec_Genesis exec genesis
-func (t *Ticket) Exec_Genesis(payload *ty.TicketGenesis, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Genesis(payload *ty.Pos33TicketGenesis, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Count <= 0 {
-		return nil, ty.ErrTicketCount
+		return nil, ty.ErrPos33TicketCount
 	}
 	actiondb := NewAction(t, tx)
 	return actiondb.GenesisInit(payload)
 }
 
 // Exec_Topen exec open
-func (t *Ticket) Exec_Topen(payload *ty.TicketOpen, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Topen(payload *ty.Pos33TicketOpen, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload.Count <= 0 {
 		tlog.Error("topen ", "value", payload)
-		return nil, ty.ErrTicketCount
+		return nil, ty.ErrPos33TicketCount
 	}
 	actiondb := NewAction(t, tx)
-	return actiondb.TicketOpen(payload)
+	return actiondb.Pos33TicketOpen(payload)
 }
 
 // Exec_Tbind exec bind
-func (t *Ticket) Exec_Tbind(payload *ty.TicketBind, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Tbind(payload *ty.Pos33TicketBind, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(t, tx)
-	return actiondb.TicketBind(payload)
+	return actiondb.Pos33TicketBind(payload)
 }
 
 // Exec_Tclose exec close
-func (t *Ticket) Exec_Tclose(payload *ty.TicketClose, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Tclose(payload *ty.Pos33TicketClose, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(t, tx)
-	return actiondb.TicketClose(payload)
+	return actiondb.Pos33TicketClose(payload)
 }
 
 //Exec_Miner exec miner
-func (t *Ticket) Exec_Miner(payload *ty.Pos33Miner, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Miner(payload *ty.Pos33Miner, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(t, tx)
-	//return actiondb.TicketMiner(payload, index)
+	//return actiondb.Pos33TicketMiner(payload, index)
 	return actiondb.Pos33Miner(payload, index)
 }

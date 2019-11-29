@@ -110,7 +110,7 @@ targetTimespan = 720
 targetTimePerBlock = 1
 
 
-[mver.consensus.ForkTicketFundAddrV1]
+[mver.consensus.ForkPos33TicketFundAddrV1]
 fundKeyAddr = "1Ji3W12KGScCM7C2p8bg635sNkayDM8MGY"
 
 [consensus.sub.solo]
@@ -221,10 +221,10 @@ ForkBlockCheck=-1 #fork 6.2
 ForkBase58AddressCheck=-1 #fork6.2
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
-ForkTicketFundAddrV1=-1 #fork6.3
+ForkPos33TicketFundAddrV1=-1 #fork6.3
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]
 Enable=0
 ForkTicketId = 1600000
-ForkTicketVrf = 2070000
+ForkPos33TicketVrf = 2070000

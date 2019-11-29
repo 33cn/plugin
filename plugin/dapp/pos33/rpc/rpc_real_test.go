@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTicket(t *testing.T) {
+func TestNewPos33Ticket(t *testing.T) {
 	//选票(可以用hotwallet 关闭选票)
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.GetModuleConfig().Consensus.Name = "ticket"
@@ -25,8 +25,8 @@ func TestNewTicket(t *testing.T) {
 	mocker.Listen()
 	defer mocker.Close()
 
-	in := &ty.TicketClose{MinerAddress: mocker.GetHotAddress()}
+	in := &ty.Pos33TicketClose{MinerAddress: mocker.GetHotAddress()}
 	var res rpctypes.ReplyHashes
-	err := mocker.GetJSONC().Call("ticket.CloseTickets", in, &res)
+	err := mocker.GetJSONC().Call("ticket.ClosePos33Tickets", in, &res)
 	assert.Nil(t, err)
 }

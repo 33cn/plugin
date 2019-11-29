@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	mock33.Close()
 }
 
-func TestTicketPrice(t *testing.T) {
+func TestPos33TicketPrice(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	//test price
 	ti := &executor.DB{}
@@ -44,17 +44,17 @@ func TestTicketPrice(t *testing.T) {
 func TestCheckFork(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	assert.Equal(t, int64(1), cfg.GetFork("ForkChainParamV2"))
-	p1 := ty.GetTicketMinerParam(cfg, 0)
-	assert.Equal(t, 10000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(cfg, 1)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(cfg, 2)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
-	p1 = ty.GetTicketMinerParam(cfg, 3)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
+	p1 := ty.GetPos33TicketMinerParam(cfg, 0)
+	assert.Equal(t, 10000*types.Coin, p1.Pos33TicketPrice)
+	p1 = ty.GetPos33TicketMinerParam(cfg, 1)
+	assert.Equal(t, 3000*types.Coin, p1.Pos33TicketPrice)
+	p1 = ty.GetPos33TicketMinerParam(cfg, 2)
+	assert.Equal(t, 3000*types.Coin, p1.Pos33TicketPrice)
+	p1 = ty.GetPos33TicketMinerParam(cfg, 3)
+	assert.Equal(t, 3000*types.Coin, p1.Pos33TicketPrice)
 }
 
-func TestTicket(t *testing.T) {
+func TestPos33Ticket(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	reply, err := mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
@@ -110,8 +110,8 @@ func TestTicket(t *testing.T) {
 			if tx.ActionName == "topen" && tx.Receipt.Ty == 2 {
 				hastopen = true
 				fmt.Println(tx)
-				list := ticketList(t, mock33, &ty.TicketList{Addr: tx.Fromaddr, Status: 1})
-				for _, ti := range list.GetTickets() {
+				list := ticketList(t, mock33, &ty.Pos33TicketList{Addr: tx.Fromaddr, Status: 1})
+				for _, ti := range list.GetPos33Tickets() {
 					if strings.Contains(ti.TicketId, hex.EncodeToString(tx.Txhash)) {
 						assert.Equal(t, 3000*types.Coin, ti.Price)
 					}
@@ -127,7 +127,7 @@ func TestTicket(t *testing.T) {
 
 func createBindMiner(t *testing.T, cfg *types.Chain33Config, m, r string, priv crypto.PrivKey) *types.Transaction {
 	ety := types.LoadExecutorType("ticket")
-	tx, err := ety.Create("Tbind", &ty.TicketBind{MinerAddress: m, ReturnAddress: r})
+	tx, err := ety.Create("Tbind", &ty.Pos33TicketBind{MinerAddress: m, ReturnAddress: r})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, "ticket", tx)
 	assert.Nil(t, err)
@@ -135,8 +135,8 @@ func createBindMiner(t *testing.T, cfg *types.Chain33Config, m, r string, priv c
 	return tx
 }
 
-func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req proto.Message) *ty.ReplyTicketList {
-	data, err := mock33.GetAPI().Query("ticket", "TicketList", req)
+func ticketList(t *testing.T, mock33 *testnode.Chain33Mock, req proto.Message) *ty.ReplyPos33TicketList {
+	data, err := mock33.GetAPI().Query("ticket", "Pos33TicketList", req)
 	assert.Nil(t, err)
-	return data.(*ty.ReplyTicketList)
+	return data.(*ty.ReplyPos33TicketList)
 }

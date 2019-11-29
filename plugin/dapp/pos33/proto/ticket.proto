@@ -5,7 +5,7 @@ import "common.proto";
 import "transaction.proto";
 import "blockchain.proto";
 
-message Ticket {
+message Pos33Ticket {
     string ticketId = 1;
     // 0 -> 未成熟 1 -> 可挖矿 2 -> 已挖成功 3-> 已关闭
     int32 status = 2;
@@ -25,14 +25,14 @@ message Ticket {
 }
 
 // message for execs.ticket
-message TicketAction {
+message Pos33TicketAction {
     oneof value {
-        TicketBind    tbind   = 5;
-        TicketOpen    topen   = 1;
-        TicketGenesis genesis = 2;
-        TicketClose   tclose  = 3;
-        TicketMiner   miner   = 4;
-        Pos33Miner    pminer  = 6;
+        Pos33TicketBind    tbind   = 5;
+        Pos33TicketOpen    topen   = 1;
+        Pos33TicketGenesis genesis = 2;
+        Pos33TicketClose   tclose  = 3;
+        Pos33TicketMiner   miner   = 4;
+        Pos33Miner         pminer  = 6;
     }
     int32 ty = 10;
 }
@@ -49,7 +49,7 @@ message Pos33Msg {
 
 message Pos33VrfInputMsg {
     bytes  seed     = 3;
-    string ticketID = 4;
+    string ticketId = 4;
     int64  height   = 5;
     int32  step     = 6;
     int32  round    = 7;
@@ -97,7 +97,7 @@ message Pos33Miner {
     Pos33SortitionMsg     sort  = 2;
 }
 
-message TicketMiner {
+message Pos33TicketMiner {
     uint32 bits     = 1;
     int64  reward   = 2;
     string ticketId = 3;
@@ -110,24 +110,24 @@ message TicketMiner {
     bytes vrfProof = 7;
 }
 
-message TicketMinerOld {
+message Pos33TicketMinerOld {
     uint32 bits     = 1;
     int64  reward   = 2;
     string ticketId = 3;
     bytes  modify   = 4;
 }
 
-message MinerFlag {
+message Pos33MinerFlag {
     int32 flag    = 1;
     int64 reserve = 2;
 }
 
-message TicketBind {
+message Pos33TicketBind {
     string minerAddress  = 1;
     string returnAddress = 2;
 }
 
-message TicketOpen {
+message Pos33TicketOpen {
     //用户挖矿的ticket 地址
     string minerAddress = 1;
     //购买ticket的数目
@@ -140,73 +140,73 @@ message TicketOpen {
     repeated bytes pubHashes = 5;
 }
 
-message TicketGenesis {
+message Pos33TicketGenesis {
     string minerAddress  = 1;
     string returnAddress = 2;
     int32  count         = 3;
 }
 
-message TicketClose {
+message Pos33TicketClose {
     repeated string ticketId     = 1;
     string          minerAddress = 2;
 }
 
-message TicketList {
+message Pos33TicketList {
     string addr   = 1;
     int32  status = 3;
 }
 
-message Pos33AllTicketCount {
+message Pos33AllPos33TicketCount {
     int64 height = 1;
 }
 
-message ReplyPos33AllTicketCount {
+message ReplyPos33AllPos33TicketCount {
     int64 count = 1;
 }
 
-message TicketInfos {
+message Pos33TicketInfos {
     repeated string ticketIds = 1;
 }
 
-message ReplyTicketList {
-    repeated Ticket tickets = 1;
+message ReplyPos33TicketList {
+    repeated Pos33Ticket tickets = 1;
 }
 
-message ReplyWalletTickets {
-    repeated Ticket tickets  = 1;
-    repeated bytes  privkeys = 2;
+message ReplyWalletPos33Tickets {
+    repeated Pos33Ticket tickets  = 1;
+    repeated bytes       privkeys = 2;
 }
 
-message ReceiptTicket {
+message ReceiptPos33Ticket {
     string ticketId   = 1;
     int32  status     = 2;
     int32  prevStatus = 3;
     string addr       = 4;
 }
 
-message ReceiptTicketBind {
+message ReceiptPos33TicketBind {
     string oldMinerAddress = 1;
     string newMinerAddress = 2;
     string returnAddress   = 3;
 }
 
-message ReqBindMiner {
+message ReqBindPos33Miner {
     string bindAddr     = 1;
     string originAddr   = 2;
     int64  amount       = 3;
     bool   checkBalance = 4;
 }
 
-message ReplyBindMiner {
+message ReplyBindPos33Miner {
     string txHex = 1;
 }
 
-service ticket {
+service pos33Ticket {
     //创建绑定挖矿
-    rpc CreateBindMiner(ReqBindMiner) returns (ReplyBindMiner) {}
+    rpc CreateBindMiner(ReqBindPos33Miner) returns (ReplyBindPos33Miner) {}
     //查询钱包票数
-    rpc GetTicketCount(types.ReqNil) returns (Int64) {}
+    rpc GetPos33TicketCount(types.ReqNil) returns (Int64) {}
     // Miner
     //设置自动挖矿
-    rpc SetAutoMining(MinerFlag) returns (Reply) {}
+    rpc SetAutoMining(Pos33MinerFlag) returns (Reply) {}
 }

@@ -19,7 +19,7 @@ const (
 )
 
 // GetRandNum for ticket executor
-func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
+func (ticket *Pos33Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
 	tlog.Debug("GetRandNum", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
 
 	if blockNum < minBlockNum {
@@ -66,8 +66,8 @@ func (ticket *Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Messag
 	return &types.ReplyHash{Hash: modify}, nil
 }
 
-func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickettypes.TicketAction, error) {
-	var txActions []*tickettypes.TicketAction
+func (ticket *Pos33Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickettypes.Pos33TicketAction, error) {
+	var txActions []*tickettypes.Pos33TicketAction
 	var reqHashes types.ReqHashes
 	currHash := blockHash
 	tlog.Debug("getTxActions", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
@@ -110,19 +110,19 @@ func (ticket *Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickett
 	return txActions, nil
 }
 
-func (ticket *Ticket) getMinerTx(current *types.Block) (*tickettypes.TicketAction, error) {
+func (ticket *Pos33Ticket) getMinerTx(current *types.Block) (*tickettypes.Pos33TicketAction, error) {
 	//检查第一个笔交易的execs, 以及执行状态
 	if len(current.Txs) == 0 {
 		return nil, types.ErrEmptyTx
 	}
 	baseTx := current.Txs[0]
 	//判断交易类型和执行情况
-	var ticketAction tickettypes.TicketAction
+	var ticketAction tickettypes.Pos33TicketAction
 	err := types.Decode(baseTx.GetPayload(), &ticketAction)
 	if err != nil {
 		return nil, err
 	}
-	if ticketAction.GetTy() != tickettypes.TicketActionMiner {
+	if ticketAction.GetTy() != tickettypes.Pos33TicketActionMiner {
 		return nil, types.ErrCoinBaseTxType
 	}
 	//判断交易执行是否OK

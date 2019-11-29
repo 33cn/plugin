@@ -29,8 +29,8 @@ func TestJRPCChannel(t *testing.T) {
 	testCases := []struct {
 		fn func(*testing.T, *jsonclient.JSONClient) error
 	}{
-		{fn: testCountTicketCmd},
-		{fn: testCloseTicketCmd},
+		{fn: testCountPos33TicketCmd},
+		{fn: testClosePos33TicketCmd},
 		{fn: testGetColdAddrByMinerCmd},
 	}
 	for index, testCase := range testCases {
@@ -46,14 +46,14 @@ func TestJRPCChannel(t *testing.T) {
 	}
 }
 
-func testCountTicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testCountPos33TicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var res int64
-	return jrpc.Call("ticket.GetTicketCount", nil, &res)
+	return jrpc.Call("ticket.GetPos33TicketCount", nil, &res)
 }
 
-func testCloseTicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
+func testClosePos33TicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var res types.ReplyHashes
-	return jrpc.Call("ticket.CloseTickets", nil, &res)
+	return jrpc.Call("ticket.ClosePos33Tickets", nil, &res)
 }
 
 func testGetColdAddrByMinerCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {

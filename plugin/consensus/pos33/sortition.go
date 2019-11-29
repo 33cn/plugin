@@ -42,7 +42,7 @@ func (client *Client) sort(seed []byte, height int64, round, step int) []*pt.Pos
 	var minHash []byte
 	index := 0
 	for tid, t := range client.ticketsMap {
-		inputMsg := &pt.Pos33VrfInputMsg{Seed: seed, Height: height, Round: int32(round), Step: int32(step), TicketID: tid}
+		inputMsg := &pt.Pos33VrfInputMsg{Seed: seed, Height: height, Round: int32(round), Step: int32(step), TicketId: tid}
 		priv := client.privmap[t.MinerAddress]
 		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
 		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
@@ -109,15 +109,15 @@ func (client *Client) verifySort(height int64, step int, seed []byte, m *pt.Pos3
 	allw := client.allWeight(height)
 	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
 
-	resp, err := client.GetAPI().Query(pt.TicketX, "TicketInfos", &pt.TicketInfos{TicketIds: []string{m.Input.GetTicketID()}})
+	resp, err := client.GetAPI().Query(pt.Pos33TicketX, "TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
 	if err != nil {
 		return err
 	}
-	reply := resp.(*pt.ReplyTicketList)
+	reply := resp.(*pt.ReplyPos33TicketList)
 
 	ok := false
 	for _, t := range reply.Tickets {
-		if t.TicketId == m.Input.TicketID {
+		if t.TicketId == m.Input.TicketId {
 			ok = true
 			break
 		}
@@ -126,7 +126,7 @@ func (client *Client) verifySort(height int64, step int, seed []byte, m *pt.Pos3
 		return fmt.Errorf("ticketID error")
 	}
 
-	im := &pt.Pos33VrfInputMsg{TicketID: m.Input.TicketID, Seed: seed, Height: height, Round: m.Input.GetRound(), Step: int32(step)}
+	im := &pt.Pos33VrfInputMsg{TicketId: m.Input.TicketId, Seed: seed, Height: height, Round: m.Input.GetRound(), Step: int32(step)}
 	input := types.Encode(im)
 	err = vrfVerify(m.Pubkey, input, m.Proof, m.Hash)
 	if err != nil {
