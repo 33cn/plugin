@@ -121,9 +121,11 @@ func (action *Action) GetCreateReceiptLog(collateralize *pty.Collateralize) *typ
 
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
+	c.PreStatus = collateralize.PreStatus
 	c.Status = collateralize.Status
 	c.CreateAddr = action.fromaddr
 	c.Index = collateralize.Index
+	c.PreIndex = collateralize.PreIndex
 
 	log.Log = types.Encode(c)
 
@@ -205,14 +207,14 @@ func (action *Action) GetFeedReceiptLog(collateralize *pty.Collateralize, record
 }
 
 // GetCloseReceiptLog generate logs for Collateralize close action
-func (action *Action) GetCloseReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
+func (action *Action) GetRetrieveReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeRetrieve
 
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
 	c.Status = collateralize.Status
-	c.PreStatus = pty.CollateralizeStatusCreated
+	c.PreStatus = collateralize.PreStatus
 	c.CreateAddr = action.fromaddr
 	c.PreIndex = collateralize.PreIndex
 	c.Index = collateralize.Index
@@ -462,6 +464,9 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 		coll.Collateralize = *collateralize
 		coll.TotalBalance += create.TotalBalance
 		coll.Balance += create.TotalBalance
+		coll.PreIndex = coll.Index
+		coll.PreStatus = coll.Status
+		coll.Index = action.GetIndex()
 	}
 	clog.Debug("CollateralizeCreate created", "CollateralizeID", collateralizeID, "TotalBalance", create.TotalBalance)
 
@@ -1146,7 +1151,7 @@ func (action *Action) CollateralizeRetrieve(retrieve *pty.CollateralizeRetrieve)
 	// 收回金额不能大于待放出金额
 	if retrieve.Balance > collateralize.Balance {
 		clog.Error("CollateralizeRetrieve", "CollateralizeId", retrieve.CollateralizeId, "error", "balance error", "retrieve balance", retrieve.Balance, "available balance", collateralize.Balance)
-		return nil, pty.ErrPermissionDeny
+		return nil, types.ErrAmount
 	}
 	
 	// 解冻ccny
@@ -1163,15 +1168,16 @@ func (action *Action) CollateralizeRetrieve(retrieve *pty.CollateralizeRetrieve)
 	coll := &CollateralizeDB{*collateralize}
 	coll.TotalBalance -= retrieve.Balance
 	coll.Balance -= retrieve.Balance
+	coll.PreStatus = coll.Status
 	if coll.TotalBalance == 0 {
-		coll.PreIndex = coll.Index
-		coll.Index = action.GetIndex()
 		coll.Status = pty.CollateralizeStatusClose
 	}
+	coll.PreIndex = coll.Index
+	coll.Index = action.GetIndex()
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
-	receiptLog := action.GetCloseReceiptLog(&coll.Collateralize)
+	receiptLog := action.GetRetrieveReceiptLog(&coll.Collateralize)
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil

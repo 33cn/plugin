@@ -24,6 +24,8 @@ func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.R
 			case pty.TyLogCollateralizeCreate:
 				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
 				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.Index)...)
+				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId, collateralizeLog.PreIndex)...)
+				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
 				break
 			case pty.TyLogCollateralizeBorrow:
 				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.Index)...)
@@ -58,13 +60,10 @@ func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.R
 				//}
 				break
 			case pty.TyLogCollateralizeRetrieve:
-				if collateralizeLog.Status == pty.CollateralizeStatusClose {
-					set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-					set.KV = append(set.KV, c.addCollateralizeStatus(pty.CollateralizeStatusCreated, collateralizeLog.CollateralizeId,
-						collateralizeLog.PreIndex)...)
-					//set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId,
-					//	collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
-				}
+				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
+				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.Index)...)
+				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId, collateralizeLog.PreIndex)...)
+				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
 				break
 			}
 		}

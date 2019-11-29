@@ -20,6 +20,7 @@ message Collateralize {
     int64       index                    = 14;//当前索引
     int64       preIndex                 = 15;//上一个索引
     int64       collBalance              = 16;//抵押bty
+    int32       preStatus                = 17;//上一个状态
 }
 
 // 借出记录

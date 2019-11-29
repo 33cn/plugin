@@ -23,6 +23,8 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 
 			switch item.Ty {
 			case pty.TyLogCollateralizeCreate:
+				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
+				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
 				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
 				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.Status, collateralizeLog.Index)...)
 				break
@@ -60,11 +62,10 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 				//}
 				break
 			case pty.TyLogCollateralizeRetrieve:
-				if collateralizeLog.Status == pty.CollateralizeStatusClose {
-					set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
-					set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
-					//set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
-				}
+				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
+				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
+				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
+				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.Status, collateralizeLog.Index)...)
 				break
 			}
 		}
