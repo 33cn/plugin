@@ -140,8 +140,7 @@ func TestOrace(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	var txhash string
-	txhash = common.ToHex(tx.Hash())
+	txhash := common.ToHex(tx.Hash())
 	t.Log("txhash:", txhash)
 	//根据hash查询存储得明文内容
 	msg, err := exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
@@ -325,14 +324,3 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
-
-//// golang中标准对称加密库测试
-//func TestCryptoDES(t *testing.T){
-//	key := []byte("123456")
-//	result,err
-//   des.NewCipher()
-//}
-//// golang中AES加密库测试
-//func TestCryptoAES(t *testing.T){
-//
-//}
