@@ -17,6 +17,11 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
+func init() {
+	drivers.Reg("pos33", New)
+	drivers.QueryData.Register("pos33", &Client{})
+}
+
 // Client is the pos33 consensus client
 type Client struct {
 	*drivers.BaseClient

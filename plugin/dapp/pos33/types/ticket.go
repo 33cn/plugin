@@ -149,7 +149,7 @@ type Pos33TicketMinerParam struct {
 
 // GetPos33TicketMinerParam 获取ticket miner config params
 func GetPos33TicketMinerParam(cfg *types.Chain33Config, height int64) *Pos33TicketMinerParam {
-	conf := types.Conf(cfg, "mver.consensus.ticket")
+	conf := types.Conf(cfg, "mver.consensus.pos33")
 	c := &Pos33TicketMinerParam{}
 	c.CoinDevFund = conf.MGInt("coinDevFund", height) * types.Coin
 	c.CoinReward = conf.MGInt("coinReward", height) * types.Coin
@@ -165,7 +165,7 @@ func GetPos33TicketMinerParam(cfg *types.Chain33Config, height int64) *Pos33Tick
 }
 
 // Pos33AllPos33TicketCountKeyPrefix for query all ticket count
-const Pos33AllPos33TicketCountKeyPrefix = "LODB-ticket-all:"
+const Pos33AllPos33TicketCountKeyPrefix = "LODB-pos33-all:"
 
 const (
 	// Pos33MinDeposit 抵押的最小单位

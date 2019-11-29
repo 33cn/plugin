@@ -176,27 +176,27 @@ func (t *Pos33Ticket) delPos33Ticket(ticketlog *ty.ReceiptPos33Ticket) (kvs []*t
 }
 
 func calcPos33TicketKey(addr string, ticketID string, status int32) []byte {
-	key := fmt.Sprintf("LODB-ticket-tl:%s:%d:%s", addr, status, ticketID)
+	key := fmt.Sprintf("LODB-pos33-tl:%s:%d:%s", addr, status, ticketID)
 	return []byte(key)
 }
 
 func calcBindReturnKey(returnAddress string) []byte {
-	key := fmt.Sprintf("LODB-ticket-bind:%s", returnAddress)
+	key := fmt.Sprintf("LODB-pos33-bind:%s", returnAddress)
 	return []byte(key)
 }
 
 func calcBindMinerKey(minerAddress string, returnAddress string) []byte {
-	key := fmt.Sprintf("LODB-ticket-miner:%s:%s", minerAddress, returnAddress)
+	key := fmt.Sprintf("LODB-pos33-miner:%s:%s", minerAddress, returnAddress)
 	return []byte(key)
 }
 
 func calcBindMinerKeyPrefix(minerAddress string) []byte {
-	key := fmt.Sprintf("LODB-ticket-miner:%s", minerAddress)
+	key := fmt.Sprintf("LODB-pos33-miner:%s", minerAddress)
 	return []byte(key)
 }
 
 func calcPos33TicketPrefix(addr string, status int32) []byte {
-	key := fmt.Sprintf("LODB-ticket-tl:%s:%d", addr, status)
+	key := fmt.Sprintf("LODB-pos33-tl:%s:%d", addr, status)
 	return []byte(key)
 }
 
