@@ -175,7 +175,7 @@ func NewIssuanceAction(c *Issuance, tx *types.Transaction, index int) *Action {
 	cfg := c.GetAPI().GetConfig()
 	tokenDb, err := account.NewAccountDB(cfg, tokenE.GetName(), pty.CCNYTokenName, c.GetStateDB())
 	if err != nil {
-		clog.Error("NewIssuanceAction", "Get Account DB error", "err", err)
+		clog.Error("NewIssuanceAction", "Get Account DB error", "error", err)
 		return nil
 	}
 
@@ -385,6 +385,16 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 		return nil, pty.ErrPermissionDeny
 	}
 
+	// 参数检查
+	if create.GetTotalBalance() <= 0 {
+		clog.Error("IssuanceCreate", "addr", action.fromaddr, "execaddr", action.execaddr, "total balance", create.GetTotalBalance(), "error", types.ErrAmount)
+		return  nil, types.ErrAmount
+	}
+    if create.DebtCeiling < 0 || create.LiquidationRatio < 0 || create.Period < 0 {
+		clog.Error("IssuanceCreate", "addr", action.fromaddr, "execaddr", action.execaddr, "error", types.ErrInvalidParam)
+		return  nil, types.ErrInvalidParam
+	}
+
 	// 检查ccny余额
 	if !action.CheckExecTokenAccount(action.fromaddr, create.TotalBalance, false) {
 		return nil, types.ErrInsufficientBalance
@@ -512,13 +522,13 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	// 查找对应的借贷ID
 	issuance, err := queryIssuanceByID(action.db, debt.IssuanceId)
 	if err != nil {
-		clog.Error("IssuanceDebt", "IssuanceId", debt.IssuanceId, "err", err)
+		clog.Error("IssuanceDebt", "IssuanceId", debt.IssuanceId, "error", err)
 		return nil, err
 	}
 
 	// 状态检查
 	if issuance.Status == pty.IssuanceStatusClose {
-		clog.Error("IssuanceDebt", "CollID", issuance.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "status", issuance.Status, "err", pty.ErrIssuanceStatus)
+		clog.Error("IssuanceDebt", "CollID", issuance.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "status", issuance.Status, "error", pty.ErrIssuanceStatus)
 		return nil, pty.ErrIssuanceStatus
 	}
 
@@ -526,19 +536,19 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 
 	// 借贷金额检查
 	if debt.GetValue() <= 0 {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "err", types.ErrInvalidParam)
+		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "error", types.ErrInvalidParam)
 		return  nil, types.ErrInvalidParam
 	}
 
 	// 借贷金额不超过个人限额
 	if debt.GetValue() > issu.DebtCeiling {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "err", pty.ErrIssuanceExceedDebtCeiling)
+		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "error", pty.ErrIssuanceExceedDebtCeiling)
 		return nil, pty.ErrIssuanceExceedDebtCeiling
 	}
 
 	// 借贷金额不超过当前可借贷金额
 	if debt.GetValue() > issu.Balance {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "err", pty.ErrIssuanceLowBalance)
+		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "error", pty.ErrIssuanceLowBalance)
 		return nil, pty.ErrIssuanceLowBalance
 	}
 	clog.Debug("IssuanceDebt", "value", debt.GetValue())
@@ -546,20 +556,20 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	// 获取抵押物价格
 	lastPrice, err := getLatestPrice(action.db)
 	if err != nil {
-		clog.Error("IssuanceDebt.getLatestPrice", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("IssuanceDebt.getLatestPrice", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", err)
 		return nil, err
 	}
 
 	// 根据价格和需要借贷的金额，计算需要质押的抵押物数量
 	btyFrozen, err := getBtyNumToFrozen(debt.Value, lastPrice, issu.LiquidationRatio)
 	if err != nil {
-		clog.Error("IssuanceDebt.getBtyNumToFrozen", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", err)
+		clog.Error("IssuanceDebt.getBtyNumToFrozen", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", err)
 		return nil, err
 	}
 
 	// 检查抵押物账户余额
 	if !action.CheckExecAccountBalance(action.fromaddr, btyFrozen, 0) {
-		clog.Error("IssuanceDebt.CheckExecAccountBalance", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "btyFrozen", btyFrozen, "err", types.ErrNoBalance)
+		clog.Error("IssuanceDebt.CheckExecAccountBalance", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "btyFrozen", btyFrozen, "error", types.ErrNoBalance)
 		return nil, types.ErrNoBalance
 	}
 
@@ -634,7 +644,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	// 找到相应的借贷
 	issuance, err := queryIssuanceByID(action.db, repay.IssuanceId)
 	if err != nil {
-		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "err", err)
+		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "error", err)
 		return nil, err
 	}
 
@@ -642,7 +652,7 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 
 	// 状态检查
 	if issu.Status != pty.IssuanceStatusCreated {
-		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", "status error", "Status", issu.Status)
+		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", "status error", "Status", issu.Status)
 		return nil, pty.ErrIssuanceStatus
 	}
 
@@ -658,13 +668,13 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 	}
 
 	if debtRecord == nil {
-		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", "Can not find debt record")
+		clog.Error("IssuanceRepay", "CollID", repay.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", "Can not find debt record")
 		return nil, pty.ErrRecordNotExist
 	}
 
 	// 检查
 	if !action.CheckExecTokenAccount(action.fromaddr, debtRecord.DebtValue, false) {
-		clog.Error("IssuanceRepay", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", types.ErrInsufficientBalance)
+		clog.Error("IssuanceRepay", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", types.ErrInsufficientBalance)
 		return nil, types.ErrNoBalance
 	}
 
@@ -745,7 +755,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float64) (*typ
 			// 抵押物转移
 			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
 			if err != nil {
-				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
+				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "error", err)
 				continue
 			}
 			logs = append(logs, receipt.Logs...)
@@ -803,7 +813,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			// 抵押物转移
 			receipt, err := action.coinsAccount.ExecTransferFrozen(issu.IssuerAddr, getGuarantorAddr, action.execaddr, debtRecord.CollateralValue)
 			if err != nil {
-				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "err", err)
+				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", debtRecord.CollateralValue, "error", err)
 				continue
 			}
 			logs = append(logs, receipt.Logs...)
@@ -876,7 +886,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 
 	price := pricePolicy(feed)
 	if price <= 0 {
-		clog.Error("IssuancePriceFeed", "price", price, "err", pty.ErrPriceInvalid)
+		clog.Error("IssuancePriceFeed", "price", price, "error", pty.ErrPriceInvalid)
 		return nil, pty.ErrPriceInvalid
 	}
 
@@ -938,7 +948,7 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 
 	issuance, err := queryIssuanceByID(action.db, close.IssuanceId)
 	if err != nil {
-		clog.Error("IssuanceClose", "IssuanceId", close.IssuanceId, "err", err)
+		clog.Error("IssuanceClose", "IssuanceId", close.IssuanceId, "error", err)
 		return nil, err
 	}
 
@@ -949,7 +959,7 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 
 	for _, debtRecord := range issuance.DebtRecords {
 		if debtRecord.Status != pty.IssuanceUserStatusClose {
-			clog.Error("IssuanceClose", "IssuanceId", close.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "err", pty.ErrIssuanceRecordNotEmpty)
+			clog.Error("IssuanceClose", "IssuanceId", close.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", pty.ErrIssuanceRecordNotEmpty)
 			return nil, pty.ErrIssuanceRecordNotEmpty
 		}
 	}
@@ -957,7 +967,7 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 	// 解冻ccny
 	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance)
 	if err != nil {
-		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.Balance, "err", err)
+		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.Balance, "error", err)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)

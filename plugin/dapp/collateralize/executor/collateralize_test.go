@@ -151,6 +151,7 @@ func TestCollateralize(t *testing.T) {
 	p3.LiquidationRatio = 0.25
 	p3.DebtCeiling = 100
 	p3.StabilityFeeRatio = 0.0001
+	p3.TotalBalance = 10000
 	createTx, err := pkt.CreateRawCollateralizeManageTx(env.cfg, p3)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)

@@ -299,11 +299,11 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	debtCeiling, _ := cmd.Flags().GetFloat32("debtCeiling")
-	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
-	stabilityFeeRatio, _ := cmd.Flags().GetFloat32("stabilityFeeRatio")
+	debtCeiling, _ := cmd.Flags().GetFloat64("debtCeiling")
+	liquidationRatio, _ := cmd.Flags().GetFloat64("liquidationRatio")
+	stabilityFeeRatio, _ := cmd.Flags().GetFloat64("stabilityFeeRatio")
 	period, _ := cmd.Flags().GetUint64("period")
-	totalBalance, _ := cmd.Flags().GetFloat32("totalBalance")
+	totalBalance, _ := cmd.Flags().GetFloat64("totalBalance")
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
