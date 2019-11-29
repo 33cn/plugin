@@ -1,13 +1,14 @@
 package executor
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
-	"math/rand"
-	"testing"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"

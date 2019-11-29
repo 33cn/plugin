@@ -12,6 +12,7 @@ var (
 	//KeyPrefixLocalDB local db的key必须前缀
 	KeyPrefixLocalDB = "LODB-storage-"
 )
+
 // Key Storage to save key
 func Key(txHash string) (key []byte) {
 	key = append(key, []byte(KeyPrefixStateDB)...)
