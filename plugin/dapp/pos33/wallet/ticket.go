@@ -25,7 +25,7 @@ import (
 
 var (
 	minerAddrWhiteList = make(map[string]bool)
-	bizlog             = log15.New("module", "wallet.ticket")
+	bizlog             = log15.New("module", "wallet.pos33")
 )
 
 func init() {

@@ -1,7 +1,6 @@
 package pos33
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -49,7 +48,6 @@ type subConfig struct {
 	BlockTime        int64            `json:"Pos33BlockTime,omitempty"`
 	BlockTimeout     int64            `json:"Pos33BlockTimeout,omitempty"`
 	MinFee           int64            `json:"Pos33MinFee,omitempty"`
-	Price            int64            `json:"Pos33MinFee,omitempty"`
 	NodeAddr         string           `json:"nodeAddr,omitempty"`
 }
 
@@ -79,7 +77,7 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction, height int64) (*types.Block, error) {
 	if lastBlock.Height+1 != height {
 		plog.Error("newBlock height error", "lastHeight", lastBlock.Height, "height", height)
-		return nil, errors.New("the last block too low")
+		return nil, fmt.Errorf("the last block too low")
 	}
 
 	ch := make(chan []*Tx, 1)
@@ -355,7 +353,7 @@ func (client *Client) setBlock(b *types.Block) error {
 
 func getMiner(b *types.Block) (*pt.Pos33Miner, error) {
 	if b == nil {
-		return nil, errors.New("b is nil")
+		return nil, fmt.Errorf("b is nil")
 	}
 	tx := b.Txs[0]
 	var pact pt.Pos33Miner
@@ -403,5 +401,5 @@ func (client *Client) sendTx(tx *types.Transaction) error {
 		return nil
 	}
 	plog.Info("sendTx error:", "error", string(r.Msg))
-	return errors.New(string(r.Msg))
+	return fmt.Errorf(string(r.Msg))
 }

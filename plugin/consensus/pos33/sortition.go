@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -95,7 +94,7 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 	}
 	plog.Debug("vrf verify", "ProofToHash", fmt.Sprintf("(%x, %x): %x", input, proof, vrfHash), "hash", hex.EncodeToString(hash))
 	if !bytes.Equal(vrfHash[:], hash) {
-		plog.Error("vrfVerify", "err", errors.New("invalid VRF hash"))
+		plog.Error("vrfVerify", "err", fmt.Errorf("invalid VRF hash"))
 		return pt.ErrVrfVerify
 	}
 	return nil
@@ -124,7 +123,7 @@ func (client *Client) verifySort(height int64, step int, seed []byte, m *pt.Pos3
 		}
 	}
 	if !ok {
-		return errors.New("ticketID error")
+		return fmt.Errorf("ticketID error")
 	}
 
 	im := &pt.Pos33VrfInputMsg{TicketID: m.Input.TicketID, Seed: seed, Height: height, Round: m.Input.GetRound(), Step: int32(step)}

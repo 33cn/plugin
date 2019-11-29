@@ -67,8 +67,8 @@ func init() {
 
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
-	cfg.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
-	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
+	//cfg.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
+	//cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
 }
 
 func InitExecutor(cfg *types.Chain33Config) {

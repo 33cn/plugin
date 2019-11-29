@@ -2,7 +2,6 @@ package pos33
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -222,7 +221,7 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 		return nil
 	}
 	if len(b.Txs) == 0 {
-		return errors.New("nil block error")
+		return fmt.Errorf("nil block error")
 	}
 
 	act, err := getMiner(b)
@@ -237,19 +236,19 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 	// check votes
 	for _, v := range act.Votes {
 		if !v.Verify() {
-			return errors.New("vote signature error")
+			return fmt.Errorf("vote signature error")
 		}
 		m := v.Sort
 		// check height, height of vote is the pre-block height
 		if m.Input.Height != height {
-			return errors.New("height error")
+			return fmt.Errorf("height error")
 		}
 
 		// check round, all round of vote must be same
 		if round == -1 {
 			round = int(m.Input.Round)
 		} else if round != int(m.Input.Round) {
-			return errors.New("round error")
+			return fmt.Errorf("round error")
 		}
 
 		// check vrf
@@ -336,11 +335,18 @@ func (n *node) sortition(b *types.Block, round int) {
 
 func (n *node) handleVote(vm *pt.Pos33VoteMsg) error {
 	if !vm.Verify() {
-		return errors.New("votemsg verify false")
+		return fmt.Errorf("votemsg verify false")
+	}
+	if vm.Sort == nil && vm.Sort.Input == nil {
+		return fmt.Errorf("votemsg error")
 	}
 	height := vm.Sort.Input.Height
 	if vm == nil || height <= n.lastBlock.Height {
 		return fmt.Errorf("votemsg too late height = %d", height)
+	}
+
+	if string(vm.Sig.Pubkey) != string(vm.Sort.Pubkey) {
+		return fmt.Errorf("pubkey error")
 	}
 
 	a := addr(vm.Sig)
@@ -368,7 +374,7 @@ func (n *node) handleVote(vm *pt.Pos33VoteMsg) error {
 	vs := n.cvs[height][round][string(vm.BlockHash)]
 	for _, v := range vs {
 		if v.Equal(vm) {
-			return errors.New("votemsg repeated")
+			return fmt.Errorf("votemsg repeated")
 		}
 	}
 	vs = append(vs, vm)
