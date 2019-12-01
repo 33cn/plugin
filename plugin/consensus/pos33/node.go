@@ -4,14 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"math/rand"
 	"sort"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
-	driver "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	"github.com/golang/protobuf/proto"
@@ -89,8 +87,12 @@ func (n *node) genMinerTx(height int64, round int, strHash string) (*types.Trans
 	plog.Info("genRewordTx", "height", height, "vsw", len(vs))
 
 	sort := n.ips[height+1]
+	if sort == nil {
+		panic("go here")
+		return nil, 0, fmt.Errorf("xxxxxx")
+	}
 
-	data, err := proto.Marshal(&pt.Pos33TicketAction{
+	act := &pt.Pos33TicketAction{
 		Value: &pt.Pos33TicketAction_Pminer{
 			Pminer: &pt.Pos33Miner{
 				Votes: vs,
@@ -98,19 +100,14 @@ func (n *node) genMinerTx(height int64, round int, strHash string) (*types.Trans
 			},
 		},
 		Ty: pt.Pos33TicketActionMiner,
-	})
+	}
 
+	cfg := n.GetAPI().GetConfig()
+	tx, err := types.CreateFormatTx(cfg, "pos33", types.Encode(act))
 	if err != nil {
-		panic(err)
+		return nil, 0, err
 	}
 
-	tx := &types.Transaction{
-		Execer:  []byte(pt.Pos33TicketX),
-		To:      driver.ExecAddress(pt.Pos33TicketX),
-		Payload: data,
-		Nonce:   rand.Int63(),
-		Expire:  time.Now().Unix() + 10,
-	}
 	priv := n.privmap[n.ticketsMap[sort.Input.TicketId].MinerAddress]
 	tx.Sign(types.SECP256K1, priv)
 	return tx, len(vs), nil
@@ -263,6 +260,9 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 
 func (n *node) getMinerSeed(height int64) ([]byte, error) {
 	startHeight := height - height%pt.Pos33SortitionSize
+	if startHeight == height {
+		startHeight -= pt.Pos33SortitionSize
+	}
 	b, err := n.RequestBlock(startHeight)
 	if err != nil {
 		plog.Info("should't go here. do nothing")
@@ -356,7 +356,7 @@ func (n *node) handleVote(vm *pt.Pos33VoteMsg) error {
 	if err != nil {
 		return err
 	}
-	err = n.verifySort(height, 2, seed, vm.Sort)
+	err = n.verifySort(height, 1, seed, vm.Sort)
 	if err != nil {
 		return err
 	}
@@ -500,6 +500,7 @@ func reseTm(tm *time.Timer, d time.Duration) {
 }
 
 func (n *node) firstSortition(firtstBlock *types.Block) {
+	plog.Info("firstSortition")
 	n.sortition(nil, 0)
 }
 
@@ -520,7 +521,7 @@ func (n *node) runLoop() {
 	ch := make(chan int64, 1)
 
 	if lb.Height == 0 {
-		n.firstSortition(lb)
+		//n.firstSortition(lb)
 		time.AfterFunc(time.Second, func() { n.addBlock(lb) })
 	}
 	round := 0

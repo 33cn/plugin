@@ -20,13 +20,13 @@ import (
 func TestNewPos33Ticket(t *testing.T) {
 	//选票(可以用hotwallet 关闭选票)
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 	mocker := testnode.NewWithConfig(cfg, nil)
 	mocker.Listen()
 	defer mocker.Close()
 
 	in := &ty.Pos33TicketClose{MinerAddress: mocker.GetHotAddress()}
 	var res rpctypes.ReplyHashes
-	err := mocker.GetJSONC().Call("ticket.ClosePos33Tickets", in, &res)
+	err := mocker.GetJSONC().Call("pos33.ClosePos33Tickets", in, &res)
 	assert.Nil(t, err)
 }

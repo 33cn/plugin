@@ -129,7 +129,7 @@ func (ticket *Pos33TicketType) GetTypeMap() map[string]int32 {
 		"Topen":   Pos33TicketActionOpen,
 		"Tbind":   Pos33TicketActionBind,
 		"Tclose":  Pos33TicketActionClose,
-		"Miner":   Pos33TicketActionMiner,
+		"Pminer":  Pos33TicketActionMiner,
 	}
 }
 

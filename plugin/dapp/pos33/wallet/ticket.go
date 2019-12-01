@@ -279,7 +279,7 @@ func (policy *ticketPolicy) OnDeleteBlockFinish(block *types.BlockDetail) {
 func FlushPos33Ticket(api client.QueueProtocolAPI) {
 	bizlog.Info("wallet FLUSH TICKET")
 	api.Notify("consensus", types.EventConsensusQuery, &types.ChainExecutor{
-		Driver:   "ticket",
+		Driver:   "pos33",
 		FuncName: "FlushPos33Ticket",
 		Param:    types.Encode(&types.ReqNil{}),
 	})
@@ -562,7 +562,7 @@ func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	toaddr := address.ExecAddress(ty.Pos33TicketX)
 	//如果acc2 的余额足够，那题withdraw 部分钱做手续费
 	if (acc1.Balance < (types.Coin / 2)) && (acc2.Balance > types.Coin) {
-		_, err := operater.SendToAddress(priv, toaddr, -types.Coin, "ticket->coins", false, "")
+		_, err := operater.SendToAddress(priv, toaddr, -types.Coin, "pos33->coins", false, "")
 		if err != nil {
 			return err
 		}
@@ -650,7 +650,7 @@ func (policy *ticketPolicy) buyPos33TicketOne(height int64, priv crypto.PrivKey)
 			var hash *types.ReplyHash
 			if amount > 0 {
 				bizlog.Info("buyPos33TicketOne.send", "toaddr", toaddr, "amount", amount)
-				hash, err = policy.walletOperate.SendToAddress(priv, toaddr, amount, "coins->ticket", false, "")
+				hash, err = policy.walletOperate.SendToAddress(priv, toaddr, amount, "coins->pos33", false, "")
 
 				if err != nil {
 					return nil, 0, err
@@ -866,11 +866,14 @@ func (policy *ticketPolicy) autoMining() {
 			lastHeight = height
 			bizlog.Info("BEG miningPos33Ticket")
 			if policy.isAutoMining() {
-				n1, err := policy.closePos33Ticket(lastHeight + 1)
-				if err != nil {
-					bizlog.Error("closePos33Ticket", "err", err)
-				}
-				err = policy.processFees()
+				/*
+					n1, err := policy.closePos33Ticket(lastHeight + 1)
+					if err != nil {
+						bizlog.Error("closePos33Ticket", "err", err)
+					}
+				*/
+				n1 := 0
+				err := policy.processFees()
 				if err != nil {
 					bizlog.Error("processFees", "err", err)
 				}

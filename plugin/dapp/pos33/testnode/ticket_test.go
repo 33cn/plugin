@@ -23,7 +23,7 @@ func TestWalletPos33Ticket(t *testing.T) {
 	t.Log("Begin wallet ticket test")
 
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 	mock33 := testnode.NewWithConfig(cfg, nil)
 	defer mock33.Close()
 	err := mock33.WaitHeight(0)

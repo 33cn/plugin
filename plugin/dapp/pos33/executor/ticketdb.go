@@ -337,31 +337,34 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 
 	// bp reward
 	bpReward := vr * int64(sumw)
-	tid := miner.Sort.Input.TicketId
-	t, err := readPos33Ticket(action.db, tid)
-	if err != nil {
-		return nil, err
-	}
+	if bpReward > 0 {
+		tid := miner.Sort.Input.TicketId
+		t, err := readPos33Ticket(action.db, tid)
+		if err != nil {
+			return nil, err
+		}
 
-	receipt1, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, bpReward)
-	if err != nil {
-		tlog.Error("Pos33TicketMiner.ExecDepositFrozen error", "bp", t.ReturnAddress, "execaddr", action.execaddr)
-		return nil, err
-	}
-	kvs = append(kvs, receipt1.GetKV()...)
-	logs = append(logs, receipt1.GetLogs()...)
+		receipt1, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, bpReward)
+		if err != nil {
+			tlog.Error("Pos33TicketMiner.ExecDepositFrozen error", "error", err, "bp", t.ReturnAddress, "value", bpReward)
+			return nil, err
+		}
+		kvs = append(kvs, receipt1.GetKV()...)
+		logs = append(logs, receipt1.GetLogs()...)
 
-	t.MinerValue += bpReward
-	prevStatus := t.Status
-	t.Status = 1
-	db := &DB{*t, prevStatus}
-	db.Save(action.db)
-	logs = append(logs, db.GetReceiptLog())
-	kvs = append(kvs, db.GetKVSet()...)
+		t.MinerValue += bpReward
+		prevStatus := t.Status
+		t.Status = 1
+		db := &DB{*t, prevStatus}
+		db.Save(action.db)
+		logs = append(logs, db.GetReceiptLog())
+		kvs = append(kvs, db.GetKVSet()...)
+	}
 
 	// fund reward
 	fundReward := ty.Pos33BlockReward - ty.Pos33VoteReward*int64(sumw)*2
 	var receipt2 *types.Receipt
+	var err error
 	if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
 		// issue coins to exec addr
 		addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)

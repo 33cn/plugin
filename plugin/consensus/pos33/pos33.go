@@ -46,14 +46,13 @@ type genesisTicket struct {
 type subConfig struct {
 	Genesis          []*genesisTicket `json:"genesis"`
 	GenesisBlockTime int64            `json:"genesisBlockTime"`
-	ListenAddr       string           `json:"Pos33ListenAddr,omitempty"`
-	AdvertiseAddr    string           `json:"Pos33AdvertiseAddr,omitempty"`
-	BootPeerAddr     string           `json:"Pos33BootPeerAddr,omitempty"`
-	MaxTxs           int64            `json:"Pos33MaxTxs,omitempty"`
-	BlockTime        int64            `json:"Pos33BlockTime,omitempty"`
-	BlockTimeout     int64            `json:"Pos33BlockTimeout,omitempty"`
-	MinFee           int64            `json:"Pos33MinFee,omitempty"`
-	NodeAddr         string           `json:"nodeAddr,omitempty"`
+	ListenAddr       string           `json:"ListenAddr,omitempty"`
+	AdvertiseAddr    string           `json:"AdvertiseAddr,omitempty"`
+	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
+	//MaxTxs           int64            `json:"Pos33MaxTxs,omitempty"`
+	BlockTime    int64  `json:"BlockTime,omitempty"`
+	BlockTimeout int64  `json:"BlockTimeout,omitempty"`
+	NodeID       string `json:"nodeID,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -63,6 +62,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
+	plog.Info("subcfg", "cfg", string(sub))
 
 	n := newNode(&subcfg)
 	client := &Client{BaseClient: c, n: n, conf: &subcfg}
@@ -85,8 +85,9 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 		return nil, fmt.Errorf("the last block too low")
 	}
 
+	cfg := client.GetAPI().GetConfig()
 	ch := make(chan []*Tx, 1)
-	go func() { ch <- client.RequestTx(int(client.conf.MaxTxs), nil) }()
+	go func() { ch <- client.RequestTx(int(cfg.GetP(height).MaxTxNumber), nil) }()
 	select {
 	case <-time.After(time.Millisecond * 300):
 	case ts := <-ch:
@@ -109,9 +110,9 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *Client) allWeight(height int64) int {
-	msg, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33AllTicketCount", &pt.Pos33AllPos33TicketCount{Height: height})
+	msg, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33AllPos33TicketCount", &pt.Pos33AllPos33TicketCount{Height: height})
 	if err != nil {
-		plog.Info("Pos33AllTicketCount error", "error", err)
+		plog.Info("Pos33AllPos33TicketCount error", "error", err)
 		return 0
 	}
 	return int(msg.(*pt.ReplyPos33AllPos33TicketCount).Count)
@@ -175,7 +176,7 @@ func (client *Client) flushTicket() error {
 }
 
 func (client *Client) getTickets() ([]*pt.Pos33Ticket, []crypto.PrivKey, error) {
-	resp, err := client.GetAPI().ExecWalletFunc("pos33", "WalletGetTickets", &types.ReqNil{})
+	resp, err := client.GetAPI().ExecWalletFunc("pos33", "WalletGetPos33Tickets", &types.ReqNil{})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -220,7 +221,7 @@ func (client *Client) AddBlock(b *types.Block) error {
 }
 
 func (client *Client) nodeID() string {
-	return client.conf.NodeAddr
+	return client.conf.NodeID
 }
 
 func (client *Client) miningOK() bool {
@@ -242,6 +243,7 @@ func (client *Client) miningOK() bool {
 // CreateBlock will start run
 func (client *Client) CreateBlock() {
 	for {
+		client.flushTicket()
 		if !client.miningOK() {
 			time.Sleep(time.Second)
 			continue
@@ -280,6 +282,28 @@ func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count 
 	tx3.Payload = types.Encode(&pt.Pos33TicketAction{Value: gticket, Ty: pt.Pos33TicketActionGenesis})
 	ret = append(ret, &tx3)
 	return ret
+}
+
+func (client *Client) getTicketCount() int64 {
+	client.tickLock.Lock()
+	defer client.tickLock.Unlock()
+	return int64(len(client.ticketsMap))
+}
+
+// Query_GetTicketCount ticket query ticket count function
+func (client *Client) Query_GetPos33TicketCount(req *types.ReqNil) (types.Message, error) {
+	var ret types.Int64
+	ret.Data = client.getTicketCount()
+	return &ret, nil
+}
+
+// Query_FlushTicket ticket query flush ticket function
+func (client *Client) Query_FlushPos33Ticket(req *types.ReqNil) (types.Message, error) {
+	err := client.flushTicket()
+	if err != nil {
+		return nil, err
+	}
+	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }
 
 // CreateGenesisTx ticket create genesis tx

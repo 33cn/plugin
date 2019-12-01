@@ -35,7 +35,7 @@ func TestDecodeLogNewPos33Ticket(t *testing.T) {
 		Ty:   5,
 		Logs: logs,
 	}
-	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
+	result, err := rpctypes.DecodeLog([]byte("pos33"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "LogNewPos33Ticket", result.Logs[0].TyName)
@@ -59,7 +59,7 @@ func TestDecodeLogClosePos33Ticket(t *testing.T) {
 		Ty:   5,
 		Logs: logs,
 	}
-	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
+	result, err := rpctypes.DecodeLog([]byte("pos33"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "LogClosePos33Ticket", result.Logs[0].TyName)
@@ -83,7 +83,7 @@ func TestDecodeLogMinerPos33Ticket(t *testing.T) {
 		Ty:   5,
 		Logs: logs,
 	}
-	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
+	result, err := rpctypes.DecodeLog([]byte("pos33"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "LogMinerPos33Ticket", result.Logs[0].TyName)
@@ -107,7 +107,7 @@ func TestDecodeLogPos33TicketBind(t *testing.T) {
 		Ty:   5,
 		Logs: logs,
 	}
-	result, err := rpctypes.DecodeLog([]byte("ticket"), data)
+	result, err := rpctypes.DecodeLog([]byte("pos33"), data)
 	assert.Nil(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "LogPos33TicketBind", result.Logs[0].TyName)

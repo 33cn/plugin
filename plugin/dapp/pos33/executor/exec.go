@@ -41,7 +41,7 @@ func (t *Pos33Ticket) Exec_Tclose(payload *ty.Pos33TicketClose, tx *types.Transa
 }
 
 //Exec_Miner exec miner
-func (t *Pos33Ticket) Exec_Miner(payload *ty.Pos33Miner, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (t *Pos33Ticket) Exec_Pminer(payload *ty.Pos33Miner, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(t, tx)
 	//return actiondb.Pos33TicketMiner(payload, index)
 	return actiondb.Pos33Miner(payload, index)

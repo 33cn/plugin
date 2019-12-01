@@ -109,7 +109,7 @@ func (client *Client) verifySort(height int64, step int, seed []byte, m *pt.Pos3
 	allw := client.allWeight(height)
 	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
 
-	resp, err := client.GetAPI().Query(pt.Pos33TicketX, "TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
+	resp, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
 	if err != nil {
 		return err
 	}

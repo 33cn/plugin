@@ -19,7 +19,7 @@ import (
 
 func TestJRPCChannel(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 	mocker := testnode.NewWithConfig(cfg, nil)
 	mocker.Listen()
 	defer mocker.Close()
@@ -48,19 +48,19 @@ func TestJRPCChannel(t *testing.T) {
 
 func testCountPos33TicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var res int64
-	return jrpc.Call("ticket.GetPos33TicketCount", nil, &res)
+	return jrpc.Call("pos33.GetPos33TicketCount", nil, &res)
 }
 
 func testClosePos33TicketCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var res types.ReplyHashes
-	return jrpc.Call("ticket.ClosePos33Tickets", nil, &res)
+	return jrpc.Call("pos33.ClosePos33Tickets", nil, &res)
 }
 
 func testGetColdAddrByMinerCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var rep interface{}
 	var params rpctypes.Query4Jrpc
 	req := &types.ReqString{}
-	params.Execer = "ticket"
+	params.Execer = "pos33"
 	params.FuncName = "MinerSourceList"
 	params.Payload = types.MustPBToJSON(req)
 	rep = &types.ReplyStrings{}

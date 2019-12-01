@@ -20,7 +20,7 @@ import (
 // Pos33TicketCmd ticket command type
 func Pos33TicketCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ticket",
+		Use:   "pos33.ticket",
 		Short: "Pos33Ticket management",
 		Args:  cobra.MinimumNArgs(1),
 	}
@@ -71,7 +71,7 @@ func bindMiner(cmd *cobra.Command, args []string) {
 	ta.Value = &ty.Pos33TicketAction_Tbind{Tbind: tBind}
 	ta.Ty = ty.Pos33TicketActionBind
 
-	tx, err := types.CreateFormatTx(cfg, "ticket", types.Encode(ta))
+	tx, err := types.CreateFormatTx(cfg, ty.Pos33TicketX, types.Encode(ta))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -137,7 +137,7 @@ func closePos33Ticket(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	err = rpc.Call("ticket.ClosePos33Tickets", tClose, &res)
+	err = rpc.Call("pos33.ClosePos33Tickets", tClose, &res)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -195,7 +195,7 @@ func coldAddressOfMiner(cmd *cobra.Command, args []string) {
 		Data: addr,
 	}
 	var params rpctypes.Query4Jrpc
-	params.Execer = "ticket"
+	params.Execer = "pos33"
 	params.FuncName = "MinerSourceList"
 	params.Payload = types.MustPBToJSON(reqaddr)
 

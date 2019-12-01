@@ -119,7 +119,7 @@ func (t *Pos33Ticket) getAllPos33TicketCount(height int64) (int, error) {
 	count := 0
 	value, err := t.GetLocalDB().Get(key)
 	if err != nil {
-		clog.Info("savePos33TicketCount error", "error", err)
+		clog.Info("getAllPos33TicketCount error", "error", err, "key", string(key))
 		return 0, err
 	}
 
@@ -130,17 +130,20 @@ func (t *Pos33Ticket) getAllPos33TicketCount(height int64) (int, error) {
 	return count, nil
 }
 
-func (t *Pos33Ticket) saveAllPos33TicketCount(openOrClose bool) (kvs []*types.KeyValue) {
+func (t *Pos33Ticket) saveAllPos33TicketCount(n int) (kvs []*types.KeyValue) {
+	if n == 0 {
+		return nil
+	}
 	height := t.GetHeight()
+	count := 0
 	preH := height - height%ty.Pos33SortitionSize
 	if preH == height {
 		preH -= ty.Pos33SortitionSize
 	}
 	key := []byte(ty.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", preH))
-	count := 0
 	value, err := t.GetLocalDB().Get(key)
 	if err != nil {
-		clog.Info("savePos33TicketCount error", "error", err)
+		clog.Info("saveAllPos33TicketCount error", "error", err, "key", string(key))
 	} else {
 		count, err = strconv.Atoi(string(value))
 		if err != nil {
@@ -149,11 +152,7 @@ func (t *Pos33Ticket) saveAllPos33TicketCount(openOrClose bool) (kvs []*types.Ke
 	}
 	nxtH := preH + ty.Pos33SortitionSize
 	key = []byte(ty.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", nxtH))
-	if openOrClose {
-		count++
-	} else {
-		count--
-	}
+	count += n
 	return []*types.KeyValue{&types.KeyValue{Key: key, Value: []byte(fmt.Sprintf("%d", count))}}
 }
 
@@ -216,7 +215,7 @@ func delticket(addr string, ticketID string, status int32) *types.KeyValue {
 
 // IsFriend check is fri
 func (t *Pos33Ticket) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
-	clog.Error("ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
+	clog.Error("pos33.ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
 	//不允许平行链
 	return false
 }

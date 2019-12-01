@@ -31,7 +31,7 @@ const (
 
 func TestForceClosePos33TicketList(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	wallet := new(walletOperateMock)
@@ -53,7 +53,7 @@ func TestForceClosePos33TicketList(t *testing.T) {
 
 func TestClosePos33TicketsByAddr(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
@@ -73,7 +73,7 @@ func TestClosePos33TicketsByAddr(t *testing.T) {
 	t2 := &ty.Pos33Ticket{Status: 2, IsGenesis: false}
 	t3 := &ty.Pos33Ticket{Status: 3, IsGenesis: false}
 
-	tlist := &ty.ReplyPos33TicketList{Pos33Tickets: []*ty.Pos33Ticket{t1, t2, t3}}
+	tlist := &ty.ReplyPos33TicketList{Tickets: []*ty.Pos33Ticket{t1, t2, t3}}
 	qapi.On("Query", ty.Pos33TicketX, "Pos33TicketList", mock.Anything).Return(tlist, nil)
 
 	r1, r2 := ticket.closePos33TicketsByAddr(0, priKey)
@@ -84,7 +84,7 @@ func TestClosePos33TicketsByAddr(t *testing.T) {
 
 func TestBuyPos33TicketOne(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 
 	ticket := &ticketPolicy{mtx: &sync.Mutex{}}
 	wallet := new(walletOperateMock)
@@ -107,7 +107,7 @@ func TestBuyPos33TicketOne(t *testing.T) {
 
 func TestBuyMinerAddrPos33TicketOne(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)

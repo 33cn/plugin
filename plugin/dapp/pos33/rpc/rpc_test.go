@@ -38,7 +38,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
-	client.Init("ticket", nil, nil, nil)
+	client.Init("pos33", nil, nil, nil)
 	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
 	api.On("GetLastHeader").Return(head, nil).Times(4)
 
@@ -65,7 +65,7 @@ func testGetPos33TicketCountOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	g := newGrpc(api)
-	api.On("QueryConsensusFunc", "ticket", "GetPos33TicketCount", mock.Anything).Return(&types.Int64{}, nil)
+	api.On("QueryConsensusFunc", "pos33", "GetPos33TicketCount", mock.Anything).Return(&types.Int64{}, nil)
 	data, err := g.GetPos33TicketCount(context.Background(), nil)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Equal(t, data, &types.Int64{})
@@ -80,7 +80,7 @@ func testSetAutoMiningOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	g := newGrpc(api)
 	in := &ty.Pos33MinerFlag{}
-	api.On("ExecWalletFunc", "ticket", "WalletAutoMiner", in).Return(&types.Reply{}, nil)
+	api.On("ExecWalletFunc", "pos33", "WalletAutoMiner", in).Return(&types.Reply{}, nil)
 	data, err := g.SetAutoMining(context.Background(), in)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Equal(t, data, &types.Reply{})
@@ -96,7 +96,7 @@ func testClosePos33TicketsOK(t *testing.T) {
 	api := &mocks.QueueProtocolAPI{}
 	g := newGrpc(api)
 	var in = &ty.Pos33TicketClose{}
-	api.On("ExecWalletFunc", "ticket", "ClosePos33Tickets", in).Return(&types.ReplyHashes{}, nil)
+	api.On("ExecWalletFunc", "pos33", "ClosePos33Tickets", in).Return(&types.ReplyHashes{}, nil)
 	data, err := g.ClosePos33Tickets(context.Background(), in)
 	assert.Nil(t, err, "the error should be nil")
 	assert.Equal(t, data, &types.ReplyHashes{})
@@ -132,7 +132,7 @@ func TestJrpc_GetPos33TicketCount(t *testing.T) {
 func TestRPC_CallTestNode(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	// 测试环境下，默认配置的共识为solo，需要修改
-	cfg.GetModuleConfig().Consensus.Name = "ticket"
+	cfg.GetModuleConfig().Consensus.Name = "pos33"
 
 	api := new(mocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
@@ -142,7 +142,7 @@ func TestRPC_CallTestNode(t *testing.T) {
 		mock.AssertExpectationsForObjects(t, api)
 	}()
 	g := newGrpc(api)
-	g.Init("ticket", mock33.GetRPC(), newJrpc(api), g)
+	g.Init("pos33", mock33.GetRPC(), newJrpc(api), g)
 	time.Sleep(time.Millisecond)
 	mock33.Listen()
 	time.Sleep(time.Millisecond)
@@ -170,9 +170,9 @@ func TestRPC_CallTestNode(t *testing.T) {
 
 	flag := &ty.Pos33MinerFlag{Flag: 1}
 	//调用ticket.AutoMiner
-	api.On("ExecWalletFunc", "ticket", "WalletAutoMiner", flag).Return(&types.Reply{IsOk: true}, nil)
+	api.On("ExecWalletFunc", "pos33", "WalletAutoMiner", flag).Return(&types.Reply{IsOk: true}, nil)
 	var res rpctypes.Reply
-	err = jsonClient.Call("ticket.SetAutoMining", flag, &res)
+	err = jsonClient.Call("pos33.SetAutoMining", flag, &res)
 	assert.Nil(t, err)
 	assert.Equal(t, res.IsOk, true)
 
@@ -223,7 +223,7 @@ powLimitBits = "0x1f00ffff"
 maxTxNumber = 10000
 
 
-[mver.consensus.ticket]
+[mver.consensus.pos33]
 coinReward = 18
 coinDevFund = 12
 ticketPrice = 10000
@@ -235,10 +235,10 @@ ticketMinerWaitTime = 2
 targetTimespan = 2304
 targetTimePerBlock = 16
 
-[mver.consensus.ticket.ForkChainParamV1]
+[mver.consensus.pos33.ForkChainParamV1]
 ticketPrice = 3000
 
-[mver.consensus.ticket.ForkChainParamV2]
+[mver.consensus.pos33.ForkChainParamV2]
 ticketPrice = 6000
 
 [fork.system]

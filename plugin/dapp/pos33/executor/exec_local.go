@@ -11,6 +11,7 @@ import (
 
 func (t *Pos33Ticket) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
+	n := 0
 	for _, item := range receiptData.Logs {
 		//这三个是ticket 的log
 		if item.Ty == ty.TyLogNewPos33Ticket || item.Ty == ty.TyLogMinerPos33Ticket || item.Ty == ty.TyLogClosePos33Ticket {
@@ -32,11 +33,13 @@ func (t *Pos33Ticket) execLocal(receiptData *types.ReceiptData) (*types.LocalDBS
 		}
 		// save all ticket count
 		if item.Ty == ty.TyLogNewPos33Ticket {
-			t.saveAllPos33TicketCount(true)
+			n++
 		} else if item.Ty == ty.TyLogClosePos33Ticket {
-			t.saveAllPos33TicketCount(false)
+			n--
 		}
 	}
+	kv := t.saveAllPos33TicketCount(n)
+	dbSet.KV = append(dbSet.KV, kv...)
 	return dbSet, nil
 }
 
@@ -61,6 +64,6 @@ func (t *Pos33Ticket) ExecLocal_Tclose(payload *ty.Pos33TicketClose, tx *types.T
 }
 
 // ExecLocal_Miner exec local miner
-func (t *Pos33Ticket) ExecLocal_Miner(payload *ty.Pos33TicketMiner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecLocal_Pminer(payload *ty.Pos33Miner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return t.execLocal(receiptData)
 }
