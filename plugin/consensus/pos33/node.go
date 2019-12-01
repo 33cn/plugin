@@ -304,11 +304,13 @@ func (n *node) reSortition(height int64, round int) {
 func (n *node) sortition(b *types.Block, round int) {
 	seed := zeroHash[:]
 	startHeight := int64(0)
+	plog.Info("sortition", "height", b.Height, "round", round)
 	if b != nil {
 		act, err := getMiner(b)
 		if err != nil {
 			plog.Error("getBlockReword err", "error", err, "height", b.Height)
 		} else {
+			plog.Info("sortition", "act", act.Sort)
 			seed = act.Sort.Hash
 			startHeight = b.Height
 		}
@@ -501,7 +503,7 @@ func reseTm(tm *time.Timer, d time.Duration) {
 
 func (n *node) firstSortition(firtstBlock *types.Block) {
 	plog.Info("firstSortition")
-	n.sortition(nil, 0)
+	n.sortition(firtstBlock, 0)
 }
 
 func (n *node) runLoop() {

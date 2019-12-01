@@ -385,12 +385,12 @@ func getMiner(b *types.Block) (*pt.Pos33Miner, error) {
 		return nil, fmt.Errorf("b is nil")
 	}
 	tx := b.Txs[0]
-	var pact pt.Pos33Miner
+	var pact pt.Pos33TicketAction
 	err := types.Decode(tx.Payload, &pact)
 	if err != nil {
 		return nil, err
 	}
-	return &pact, nil
+	return pact.GetPminer(), nil
 }
 
 // Get used search block store db
