@@ -277,6 +277,20 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 	// 对删除的mavl进行压缩
 	if isDelMavlData && !isCompactDelMavl && !isDelMavling() {
 		go CompactDelMavl(kvmMavls.GetDB())
+		if datas.Height > delMavlDataHeight && datas.Height < delMavlDataHeight * 2 {
+			// 出于对区块链安全的角度阻塞执行区块压缩之发生在固定高度区间内
+			count := 0
+			for {
+				if quit || isCompactDelMavl {
+					break
+				}
+				if count%100 == 0 {
+					kmlog.Info("block compact db", "count time s", count)
+				}
+				count++
+				time.Sleep(time.Second)
+			}
+		}
 	}
 	return hash, err
 }
@@ -518,13 +532,13 @@ func CompactDelMavl(db dbm.DB) {
 	setDelMavl(delMavlStateStart)
 	defer setDelMavl(delMavlStateEnd)
 	// 开始进行压缩处理
-	kmlog.Info("start Compact db")
+	kmlog.Info("start compact db")
 	err := db.CompactRange(nil, nil)
 	if err == nil {
 		db.Set(genCompactDelMavlKey(mvccPrefix), []byte(""))
 		isCompactDelMavl = true
 	}
-	kmlog.Info("end Compact db", "error", err)
+	kmlog.Info("end compact db", "error", err)
 }
 
 func genCompactDelMavlKey(prefix []byte) []byte {
