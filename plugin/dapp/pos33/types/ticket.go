@@ -164,8 +164,8 @@ func GetPos33TicketMinerParam(cfg *types.Chain33Config, height int64) *Pos33Tick
 	return c
 }
 
-// Pos33AllPos33TicketCountKeyPrefix for query all ticket count
-const Pos33AllPos33TicketCountKeyPrefix = "LODB-pos33-all:"
+// Pos33AllTicketCountKeyPrefix for query all ticket count
+const Pos33AllTicketCountKeyPrefix = "LODB-pos33-all:"
 
 const (
 	// Pos33MinDeposit 抵押的最小单位
@@ -177,9 +177,9 @@ const (
 	// Pos33VoteReward 每个区块的奖励
 	Pos33VoteReward = types.Coin / 2
 	// Pos33ProposerSize 候选区块Proposer数量
-	Pos33ProposerSize = 7
+	Pos33ProposerSize = 10
 	// Pos33VoterSize  候选区块Voter数量
-	Pos33VoterSize = 10
+	Pos33VoterSize = 15
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址
@@ -238,3 +238,12 @@ func (m Sorts) Less(i, j int) bool {
 	return string(m[i].Hash) < string(m[j].Hash)
 }
 func (m Sorts) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
+
+// Votes for sort
+type Votes []*Pos33VoteMsg
+
+func (v Votes) Len() int { return len(v) }
+func (v Votes) Less(i, j int) bool {
+	return string(v[i].Sort.Hash) < string(v[i].Sort.Hash)
+}
+func (v Votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }

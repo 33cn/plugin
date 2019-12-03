@@ -14,8 +14,8 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
-// persent of allw online
-const onlinePersentOfAllW = 1. - 0.33
+// persent of online of voters
+const diffValue = 1.
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256
@@ -29,14 +29,16 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 6. 签名是为了校验, 必须是自己私钥生成的
 // 7. 最后对Hashs排序，作为委员会打包顺序的依据
 
-func (client *Client) sort(seed []byte, height int64, round, step int) []*pt.Pos33SortitionMsg {
+func (client *Client) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortitionMsg {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
-	allw := client.allWeight(height)
-	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
+	//allw := client.allWeight(height)
+	diff := float64(size) / (float64(allw) * diffValue)
+
+	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
 
 	var msgs []*pt.Pos33SortitionMsg
 	var minHash []byte
@@ -77,6 +79,10 @@ func (client *Client) sort(seed []byte, height int64, round, step int) []*pt.Pos
 		return []*pt.Pos33SortitionMsg{msgs[index]}
 	}
 	sort.Sort(pt.Sorts(msgs))
+	c := pt.Pos33VoterSize*2/3 + 1
+	if len(msgs) > c {
+		return msgs[:c]
+	}
 	return msgs
 }
 
@@ -100,14 +106,15 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 	return nil
 }
 
-func (client *Client) verifySort(height int64, step int, seed []byte, m *pt.Pos33SortitionMsg) error {
+func (client *Client) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortitionMsg) error {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
-	allw := client.allWeight(height)
-	diff := float64(size) / (float64(allw) * onlinePersentOfAllW)
+	diff := float64(size) / (float64(allw) * diffValue)
+
+	plog.Debug("verify sortition", "height", height, "round", m.Input.Round, "step", step, "seed", hexs(seed), "allw", allw)
 
 	resp, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
 	if err != nil {

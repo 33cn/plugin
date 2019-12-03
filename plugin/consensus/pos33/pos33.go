@@ -2,7 +2,6 @@ package pos33
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -112,7 +111,7 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 func (client *Client) allWeight(height int64) int {
 	msg, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33AllPos33TicketCount", &pt.Pos33AllPos33TicketCount{Height: height})
 	if err != nil {
-		plog.Info("Pos33AllPos33TicketCount error", "error", err)
+		plog.Info("query Pos33AllPos33TicketCount error", "error", err)
 		return 0
 	}
 	return int(msg.(*pt.ReplyPos33AllPos33TicketCount).Count)
@@ -193,12 +192,13 @@ func (client *Client) getTickets() ([]*pt.Pos33Ticket, []crypto.PrivKey, error) 
 	return reply.Tickets, keys, nil
 }
 
+/*
 func (client *Client) getAllWeight(height int64) int {
 	preH := height - height%pt.Pos33SortitionSize
 	if preH == height {
 		preH -= pt.Pos33SortitionSize
 	}
-	key := []byte(pt.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+	key := []byte(pt.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
 	v, err := client.Get(key)
 	if err != nil {
 		plog.Error(err.Error())
@@ -213,6 +213,7 @@ func (client *Client) getAllWeight(height int64) int {
 
 	return int(allw)
 }
+*/
 
 // AddBlock notice driver a new block incoming
 func (client *Client) AddBlock(b *types.Block) error {

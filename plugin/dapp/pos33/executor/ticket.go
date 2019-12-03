@@ -115,18 +115,20 @@ func (t *Pos33Ticket) getAllPos33TicketCount(height int64) (int, error) {
 	if preH == height {
 		preH -= ty.Pos33SortitionSize
 	}
-	key := []byte(ty.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+	key := []byte(ty.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
 	count := 0
 	value, err := t.GetLocalDB().Get(key)
 	if err != nil {
-		clog.Info("getAllPos33TicketCount error", "error", err, "key", string(key))
+		clog.Error("getAllPos33TicketCount error", "error", err, "key", string(key))
 		return 0, err
 	}
 
 	count, err = strconv.Atoi(string(value))
 	if err != nil {
+		clog.Error("getAllPos33TicketCount error", "error", err, "key", string(key))
 		return 0, err
 	}
+	clog.Info("getAllPos33TicketCount", "key", string(key), "count", count)
 	return count, nil
 }
 
@@ -134,25 +136,50 @@ func (t *Pos33Ticket) saveAllPos33TicketCount(n int) (kvs []*types.KeyValue) {
 	if n == 0 {
 		return nil
 	}
+	return t.updateAllPos33TicketCount(n)
+}
+
+func (t *Pos33Ticket) chechAndUpdateTicketCount() (kvs []*types.KeyValue) {
 	height := t.GetHeight()
-	count := 0
+	if height%ty.Pos33SortitionSize == 0 {
+		return t.updateAllPos33TicketCount(0)
+	}
+	return nil
+}
+
+func (t *Pos33Ticket) updateAllPos33TicketCount(n int) (kvs []*types.KeyValue) {
+	height := t.GetHeight()
 	preH := height - height%ty.Pos33SortitionSize
 	if preH == height {
 		preH -= ty.Pos33SortitionSize
 	}
-	key := []byte(ty.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+
+	count := 0
+	nxtH := preH + ty.Pos33SortitionSize
+	key := []byte(ty.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", nxtH))
 	value, err := t.GetLocalDB().Get(key)
 	if err != nil {
-		clog.Info("saveAllPos33TicketCount error", "error", err, "key", string(key))
-	} else {
-		count, err = strconv.Atoi(string(value))
-		if err != nil {
-			panic(err)
+		if err != types.ErrNotFound {
+			tlog.Error("GetLocalDB error", "err", err)
+			return
 		}
+		key = []byte(ty.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
+		value, err = t.GetLocalDB().Get(key)
+		if err != nil {
+			tlog.Info("GetLocalDB error", "err", err)
+		} else {
+			count, err = strconv.Atoi(string(value))
+			if err != nil {
+				panic(err)
+			}
+		}
+	} else if n == 0 {
+		return
 	}
-	nxtH := preH + ty.Pos33SortitionSize
-	key = []byte(ty.Pos33AllPos33TicketCountKeyPrefix + fmt.Sprintf("%d", nxtH))
+
 	count += n
+	key = []byte(ty.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", nxtH))
+	clog.Info("saveAllPos33TicketCount", "key", string(key), "count", count, "new", n)
 	return []*types.KeyValue{&types.KeyValue{Key: key, Value: []byte(fmt.Sprintf("%d", count))}}
 }
 
