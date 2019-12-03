@@ -25,7 +25,7 @@ func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
 	return client.alignLocalBlock2ChainBlock(genesis)
 }
 
-func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
+func getNewBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) *pt.ParaLocalDbBlock {
 	var newblock pt.ParaLocalDbBlock
 
 	newblock.Height = lastBlock.Height + 1
@@ -33,10 +33,13 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 	newblock.MainHeight = mainBlock.Header.Height
 	newblock.ParentMainHash = lastBlock.MainHash
 	newblock.BlockTime = mainBlock.Header.BlockTime
-
 	newblock.Txs = txs
 
-	err := client.addLocalBlock(newblock.Height, &newblock)
+	return &newblock
+}
+
+func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
+	err := client.addLocalBlock(getNewBlock(lastBlock, txs, mainBlock))
 	if err != nil {
 		return err
 	}
@@ -67,11 +70,12 @@ func (client *client) alignLocalBlock2ChainBlock(chainBlock *types.Block) error 
 		BlockTime:  chainBlock.BlockTime,
 	}
 
-	return client.addLocalBlock(localBlock.Height, localBlock)
+	return client.addLocalBlock(localBlock)
 
 }
 
-//如果localdb里面没有信息，就从chain block返回，至少有创世区块，然后进入循环匹配切换场景
+//如果localBlock被删除了，就从chain block获取，如果block能获取到，但远程seq获取不到，则返回当前块主链hash和错误的seq=0,
+//然后请求交易校验不过会进入循环匹配切换场景
 func (client *client) getLastLocalBlockSeq() (int64, []byte, error) {
 	height, err := client.getLastLocalHeight()
 	if err == nil {
@@ -237,7 +241,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if !client.subCfg.FetchFilterParaTxsClose && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+		if lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
 			return client.subCfg.BatchFetchBlockCount - 1, nil
 		}
 		return 0, nil
@@ -353,11 +357,7 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 }
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	if !client.subCfg.FetchFilterParaTxsClose {
-		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
-	}
-
-	return client.requestTxsFromBlock(currSeq, preMainBlockHash)
+	return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 }
 
 func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []byte, err error) (int64, []byte, error) {
@@ -414,7 +414,6 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 		plog.Info("Create empty block", "newHeight", lastBlock.Height+1)
 	}
 	return true, client.createLocalBlock(lastBlock, txs, mainBlock)
-
 }
 
 func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
@@ -435,10 +434,70 @@ func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
 	return nil
 }
 
+func (client *client) procLocalAddBlock(mainBlock *types.ParaTxDetail, lastBlock *pt.ParaLocalDbBlock) *pt.ParaLocalDbBlock {
+	cfg := client.GetAPI().GetConfig()
+	curMainHeight := mainBlock.Header.Height
+
+	emptyInterval := client.getEmptyInterval(lastBlock)
+
+	txs := paraexec.FilterTxsForPara(cfg, mainBlock)
+
+	plog.Debug("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
+		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", curMainHeight,
+		"curMainHash", common.ToHex(mainBlock.Header.Hash), "emptyIntval", emptyInterval, "seqTy", mainBlock.Type)
+
+	if mainBlock.Type != types.AddBlock {
+		panic("para chain quick sync,not addBlock type")
+
+	}
+	//AddAct
+	if len(txs) == 0 {
+		if curMainHeight-lastBlock.MainHeight < emptyInterval {
+			return nil
+		}
+		plog.Debug("Create empty block", "newHeight", lastBlock.Height+1)
+	}
+	return getNewBlock(lastBlock, txs, mainBlock)
+
+}
+
+//只同步只有AddType的block，比如在当前高度１w高度前的主链blocks，默认没有分叉，只获取addType类型的，如果有分叉，也会在后面常规同步时候纠正过来
+func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error {
+	var blocks []*pt.ParaLocalDbBlock
+	lastBlock, err := client.getLastLocalBlock()
+	if err != nil {
+		plog.Error("procLocalAddBlocks getLastLocalBlock", "err", err)
+		return err
+	}
+
+	for _, main := range mainBlocks.Items {
+		b := client.procLocalAddBlock(main, lastBlock)
+		if b == nil {
+			continue
+		}
+		lastBlock = b
+		blocks = append(blocks, b)
+	}
+	err = client.saveBatchLocalBlocks(blocks)
+	if err != nil {
+		plog.Error("procLocalAddBlocks saveBatchLocalBlocks", "err", err)
+		panic(err)
+	}
+	plog.Info("procLocalAddBlocks.saveLocalBlocks", "start", blocks[0].Height, "end", blocks[len(blocks)-1].Height)
+	client.blockSyncClient.handleLocalChangedMsg()
+	return nil
+}
+
 func (client *client) CreateBlock() {
 	defer client.wg.Done()
 
-	client.multiDldCli.tryMultiServerDownload()
+	if client.subCfg.JumpDownloadOpen {
+		client.jumpDldCli.tryJumpDownload()
+	}
+
+	if client.subCfg.MultiDownloadOpen {
+		client.multiDldCli.tryMultiServerDownload()
+	}
 
 	lastSeq, lastSeqMainHash, err := client.getLastLocalBlockSeq()
 	if err != nil {

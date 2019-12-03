@@ -159,10 +159,6 @@ func (m *multiDldClient) getConns(inv *inventory) error {
 
 //缺省不打开，因为有些节点下载时间不稳定，容易超时出错，后面看怎么优化
 func (m *multiDldClient) tryMultiServerDownload() {
-	if !m.paraClient.subCfg.MultiDownloadOpen {
-		return
-	}
-
 	curMainHeight, err := m.paraClient.GetLastHeightOnMainChain()
 	if err != nil {
 		plog.Error("tryMultiServerDownload getMain height", "err", err.Error())
@@ -280,7 +276,7 @@ func (d *downloadJob) process() {
 			d.mDldCli.paraClient.blockSyncClient.handleLocalChangedMsg()
 		} else {
 			//block需要严格顺序执行，数据库错误，panic 重新来过
-			err := d.mDldCli.paraClient.procLocalBlocks(inv.txs)
+			err := d.mDldCli.paraClient.procLocalAddBlocks(inv.txs)
 			if err != nil {
 				panic(err)
 			}
