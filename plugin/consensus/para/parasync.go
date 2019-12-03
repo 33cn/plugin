@@ -39,6 +39,8 @@ type blockSyncClient struct {
 	isSyncCaughtUpAtom int32
 	//isDownloadCaughtUpAtom  下载是否已经追赶上
 	isDownloadCaughtUpAtom int32
+	//isSyncFirstCaughtUp 系统启动后download 层和sync层第一次都追赶上的设置，后面如果因为回滚或节点切换不同步，则不考虑
+	isSyncFirstCaughtUp bool
 }
 
 //nextActionType 定义每一轮可执行操作
@@ -471,7 +473,13 @@ func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
 func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) error {
 	//共识模块不执行block，统一由blockchain模块执行block并做去重的处理，返回执行后的blockdetail
 	blockDetail := &types.BlockDetail{Block: paraBlock}
-	paraBlockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail, IsSync: client.downloadHasCaughtUp()}
+	//database刷盘设置，默认不刷盘，提高执行速度，系统启动后download 层和sync层第一次都追赶上设置为刷盘，后面如果有回滚或节点切换不同步，则不再改变，减少数据库损坏风险
+	if !client.isSyncFirstCaughtUp && client.downloadHasCaughtUp() && client.syncHasCaughtUp() {
+		client.isSyncFirstCaughtUp = true
+		plog.Info("Para sync - SyncFirstCaughtUp", "Height", paraBlock.Height)
+	}
+
+	paraBlockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail, IsSync: client.isSyncFirstCaughtUp}
 	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, paraBlockDetail)
 	err := client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
