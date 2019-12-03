@@ -277,7 +277,7 @@ func (kvmMavls *KVmMavlStore) MemSet(datas *types.StoreSet, sync bool) ([]byte, 
 	// 对删除的mavl进行压缩
 	if isDelMavlData && !isCompactDelMavl && !isDelMavling() {
 		go CompactDelMavl(kvmMavls.GetDB())
-		if datas.Height > delMavlDataHeight && datas.Height < delMavlDataHeight * 2 {
+		if datas.Height > delMavlDataHeight && datas.Height < delMavlDataHeight*2 {
 			// 出于对区块链安全的角度阻塞执行区块压缩之发生在固定高度区间内
 			count := 0
 			for {
