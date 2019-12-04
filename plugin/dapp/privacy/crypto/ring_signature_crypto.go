@@ -137,6 +137,10 @@ func (privkey *RingSignPrivateKey) Equals(other crypto.PrivKey) bool {
 	return false
 }
 
+func (privkey *RingSignPrivateKey) Decrypt(in []byte) ([]byte, error) {
+	return in, nil
+}
+
 // RingSignPublicKey 环签名中对于crypto.PubKey接口实现
 type RingSignPublicKey struct {
 	key [publicKeyLen]byte
@@ -193,6 +197,10 @@ func (pubkey *RingSignPublicKey) Equals(other crypto.PubKey) bool {
 		return bytes.Equal(pubkey.key[:], otherPubKey.key[:])
 	}
 	return false
+}
+
+func (pubkey *RingSignPublicKey) Encrypt(in []byte) ([]byte, error) {
+	return in, nil
 }
 
 // RingSignED25519 对应crypto.Crypto的接口实现

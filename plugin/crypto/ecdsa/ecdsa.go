@@ -119,6 +119,10 @@ func (privKey PrivKeyECDSA) String() string {
 	return fmt.Sprintf("PrivKeyECDSA{*****}")
 }
 
+func (privKey PrivKeyECDSA) Decrypt(in []byte) ([]byte, error) {
+	return in, nil
+}
+
 // PubKeyECDSA PubKey
 // prefixed with 0x02 or 0x03, depending on the y-cord.
 type PubKeyECDSA [publicKeyECDSALength]byte
@@ -176,6 +180,10 @@ func (pubKey PubKeyECDSA) Equals(other crypto.PubKey) bool {
 		return bytes.Equal(pubKey[:], otherSecp[:])
 	}
 	return false
+}
+
+func (pubKey PubKeyECDSA) Encrypt(in []byte) ([]byte, error) {
+	return in, nil
 }
 
 type signatureECDSA struct {

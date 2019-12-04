@@ -7,8 +7,11 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/crypto/symcipher"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
@@ -431,4 +434,108 @@ func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, e
 // Query_ListSelfStages 批量查询
 func (p *Paracross) Query_ListSelfStages(in *pt.ReqQuerySelfStages) (types.Message, error) {
 	return p.listSelfStages(in)
+}
+
+func (p *Paracross) Query_GetNodeGroupPubKey(in *pt.ReqParaNodeAddrPubKey) (types.Message, error) {
+	if in == nil || in.GetTitle() == "" {
+		return nil, types.ErrInvalidParam
+	}
+	clog.Debug("Query_GetNodeGroupPubKey", "coming a node public key query request for:", in.Title)
+	paraNodeAddrPubKey, err := p.getNodeGroupPubKey(in.Title)
+	if nil != err {
+		return nil, errors.Wrapf(err,"Failed to get from local db due to:", err.Error())
+	}
+
+	var resp pt.RespParaNodeAddrPubKey
+	for addr, pubkey := range paraNodeAddrPubKey.Addr2Pubkey {
+		addrAndPubKey := &pt.AddrAndPubKey{
+			Addr:addr,
+			Pubkey:common.ToHex(pubkey),
+		}
+		resp.AddrAndPubKey = append(resp.AddrAndPubKey, addrAndPubKey)
+	}
+	clog.Debug("Query_GetNodeGroupPubKey", "Get node public key response as:", resp)
+	return &resp, nil
+}
+
+//Query_ConvertTx2Privacy:将平行链交易转化为隐私交易
+func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.Message, error) {
+	if nil == types.ErrInvalidParam || 0 == len(in.Data){
+		return nil, types.ErrInvalidParam
+	}
+	txByteData, err := common.FromHex(in.Data)
+	if err != nil {
+		return nil, errors.New("Failed to do FromHex for data")
+	}
+	var tx types.Transaction
+	err = types.Decode(txByteData, &tx)
+	if err != nil {
+		return nil, errors.New("Failed to decode tx")
+	}
+
+	title, isPara := types.GetParaExecTitleName(string(tx.Execer))
+	if !isPara {
+		return nil, errors.New("Only tx for para-chain can be made as privacy!")
+	}
+	//var respParaNodeAddrPubKey pt.RespParaNodeAddrPubKey
+	paraNodeAddrPubKey, err := p.getNodeGroupPubKey(title)
+	if nil != err || 0 == len(paraNodeAddrPubKey.Addr2Pubkey) {
+		return nil, errors.New("Failed to GetNodeGroupPubKey")
+	}
+	sk, err := symcipher.GenerateSymKey()
+	if nil != err {
+		return nil, errors.New("Failed to generate symmetric Key")
+	}
+	//需要对签过名的交易进行对称加密
+	cipheredTx, err := symcipher.EncryptSymmetric(sk, txByteData)
+	if nil != err {
+		return nil, errors.New("Failed to cipher data by symmetric Key")
+	}
+	//将明文交易内容填充到隐私交易的数据载荷中
+	privacyTxPayload := &types.PrivacyTxPayload{
+		CipheredTx:cipheredTx,
+		AddrSymKey:make(map[string][]byte),
+	}
+
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		return nil, errors.New("Failed to new crypto driver")
+	}
+
+	for addr, pubKey := range paraNodeAddrPubKey.Addr2Pubkey {
+		pubKey, err := cr.PubKeyFromBytes(pubKey)
+		if nil != err {
+			return nil, errors.New("Failed to PubKeyFromBytes")
+		}
+
+		skCiphered, err := pubKey.Encrypt(sk)
+		if nil != err {
+			return nil, errors.New("Failed to encrypt symmetric key by pubkey")
+		}
+		privacyTxPayload.AddrSymKey[addr] = skCiphered
+	}
+
+	newPrivacyTx := &types.Transaction{
+		Execer:[]byte(title + types.PrivacyTx4Para),
+		Payload:types.Encode(privacyTxPayload),
+		To:address.ExecAddress(title + types.PrivacyTx4Para),
+	}
+
+	reply := types.ReplyString{Data:hex.EncodeToString(types.Encode(newPrivacyTx))}
+	return &reply, nil
+}
+
+func (p *Paracross) getNodeGroupPubKey(title string) (*pt.ParaNodeAddrPubKey, error) {
+	localDB := p.GetLocalDB()
+	var paraNodeAddrPubKey pt.ParaNodeAddrPubKey
+	key := calcParaSuperNodePubKey(title)
+	nodePubKey, err := localDB.Get(key)
+	if nil != err {
+		clog.Error("getNodeGroupPubKey", "failed get info from local db with key:", string(key))
+		return nil, errors.Wrapf(err,"Failed to get from local db due to:", err.Error())
+	}
+	if err := types.Decode(nodePubKey, &paraNodeAddrPubKey); nil != err {
+		return nil, err
+	}
+	return &paraNodeAddrPubKey, nil
 }

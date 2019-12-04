@@ -41,6 +41,8 @@ func ParcCmd() *cobra.Command {
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
+		GetNodeGroupPubKeysCmd(),
+		CreatePrivacyTx4ParaCmd(),
 	)
 	return cmd
 }
@@ -1079,4 +1081,64 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	var res pt.ReplyQuerySelfStages
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListSelfStages", params, &res)
 	ctx.Run()
+}
+
+func GetNodeGroupPubKeysCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pubkeys",
+		Short: "show node group's public keys",
+		Run:   getNodeGroupPubKeys,
+	}
+	return cmd
+}
+
+func getNodeGroupPubKeys(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	parameter := pt.ReqParaNodeAddrPubKey{
+		Title:paraName,
+	}
+	var reply pt.RespParaNodeAddrPubKey
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupPubKey", parameter, &reply)
+	ctx.SetResultCb(showPublicKeys)
+	if _, err := ctx.RunResult(); nil != err {
+		fmt.Println("Show Node's Group Public Keys failed due to:", err.Error())
+	}
+}
+
+func showPublicKeys(arg interface{}) (interface{}, error) {
+	res := *arg.(*pt.RespParaNodeAddrPubKey)
+	for _, info := range res.AddrAndPubKey {
+		fmt.Println("addr:", info.Addr, "public key:", info.Pubkey)
+	}
+	return nil, nil
+}
+
+// CreatePrivacyTx4ParaCmd: Create PrivacyTx for Para
+func CreatePrivacyTx4ParaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "privacy",
+		Short: "convert tx to privacy specified for para-chain",
+		Run:   convertPrivacyTx4Para,
+	}
+	addConvertPrivacyTx4ParaFlags(cmd)
+	return cmd
+}
+
+func addConvertPrivacyTx4ParaFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("data", "d", "", "raw transaction data")
+	cmd.MarkFlagRequired("data")
+}
+
+func convertPrivacyTx4Para(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	data, _ := cmd.Flags().GetString("data")
+	paraName := pt.ReqConverTx2Privacy{
+		Data:data,
+	}
+
+	var replyString types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ConvertTx2Privacy", paraName, &replyString)
+	ctx.RunResult()
+	fmt.Println(replyString.Data)
 }

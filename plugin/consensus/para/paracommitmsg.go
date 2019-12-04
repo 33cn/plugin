@@ -22,7 +22,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
-	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 )
@@ -409,12 +408,12 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 func (client *commitMsgClient) getExecName(commitHeight int64) string {
 	cfg := client.paraClient.GetAPI().GetConfig()
 	if cfg.IsDappFork(commitHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
-		return paracross.GetExecName(cfg)
+		return pt.GetExecName(cfg)
 	}
 
 	execName := pt.ParaX
 	if client.isSelfConsEnable(commitHeight) {
-		execName = paracross.GetExecName(cfg)
+		execName = pt.GetExecName(cfg)
 	}
 	return execName
 
@@ -425,7 +424,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	cfg := client.paraClient.GetAPI().GetConfig()
 	for _, status := range notifications {
 		execName := client.getExecName(status.Height)
-		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
+		tx, err := pt.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 		if err != nil {
 			plog.Error("para get commit tx", "block height", status.Height)
 			return nil, 0, err
@@ -443,7 +442,7 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
 	cfg := client.paraClient.GetAPI().GetConfig()
 	execName := client.getExecName(status.Height)
-	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
+	tx, err := pt.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
 	if err != nil {
 		plog.Error("para get commit tx", "block height", status.Height)
 		return nil, err
@@ -547,7 +546,7 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	keys := &types.LocalDBGet{}
 	cfg := client.paraClient.GetAPI().GetConfig()
 	for i := 0; i < int(count); i++ {
-		key := paracross.CalcMinerHeightKey(cfg.GetTitle(), req.Start+int64(i))
+		key := pt.CalcMinerHeightKey(cfg.GetTitle(), req.Start+int64(i))
 		keys.Keys = append(keys.Keys, key)
 	}
 
@@ -594,7 +593,7 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 			return nil, errors.New("paracommitmsg wrong block result")
 		}
 		nodeList[block.Block.Height].BlockHash = block.Block.Hash(cfg)
-		if !paracross.IsParaForkHeight(cfg, nodeList[block.Block.Height].MainBlockHeight, paracross.ForkLoopCheckCommitTxDone) {
+		if !pt.IsParaForkHeight(cfg, nodeList[block.Block.Height].MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 			nodeList[block.Block.Height].StateHash = block.Block.StateHash
 		}
 	}
