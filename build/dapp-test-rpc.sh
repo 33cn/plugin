@@ -10,17 +10,18 @@ function dapp_test_rpc() {
     if [ -d dapptest ]; then
         cp "$DAPP_TEST_COMMON" dapptest/
         cd dapptest || return
-        rm -f "retries.log"
         rm -f "jobs.log"
+        rm -rf "outdir"
 
         dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
-        parallel -k --joblog ./jobs.log 'echo tried {} >>./retries.log; ./{}/"'"${RPC_TESTFILE}"'" "'"$ip"'"' ::: "$dapps"
+        parallel -k --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         local ret=$?
-        # retries 3 times if one dapp fail
-        echo "============ # retried dapps log: ============="
-        cat ./retries.log
+        if [ $ret -ne 0 ]; then
+            wrongdapps=$(awk '{print $7,$9 }' jobs.log | grep -a 1 | awk -F '/' '{print $2}')
+            parallel -k 'cat ./outdir/1/{}/stderr; cat ./outdir/1/{}/stdout' ::: "$wrongdapps"
+        fi
         echo "============ # check dapps test log: ============="
         cat ./jobs.log
         set -e

@@ -293,36 +293,26 @@ function paracross_ListNodeStatus() {
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
 para_test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
 
-function paracross_testTxGroup() {
-    local para_ip=$1
+function paracross_txgroupex() {
+    local amount_transfer=$1
+    local amount_trade=$2
+    local para_ip=$3
 
-    ispara=$(echo '"'"${para_ip}"'"' | jq '.|contains("8901")')
-    echo "ipara=$ispara"
-    local paracross_addr=""
-    local main_ip=${para_ip//8901/8801}
-
-    paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' "${main_ip}" | jq -r ".result")
-    echo "paracross_addr=$paracross_addr"
-
-    #execer
     local paracross_execer_name="user.p.para.paracross"
     local trade_exec_name="user.p.para.trade"
-    local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
-    local amount_trade=100000000
-    local amount_transfer=800000000
-    chain33_ImportPrivkey "${para_test_prikey}" "${para_test_addr}" "paracross-transfer6" "${main_ip}"
-
-    # tx fee + transfer 10 coins
-    chain33_applyCoins "${para_test_addr}" 1000000000 "${main_ip}"
-    chain33_QueryBalance "${para_test_addr}" "$main_ip"
-
-    #deposit 8 coins to paracross
-    chain33_SendToAddress "${para_test_addr}" "$paracross_addr" "$amount_transfer" "${main_ip}"
-    chain33_QueryExecBalance "${para_test_addr}" "paracross" "${main_ip}"
 
     #  资产从主链转移到平行链
-    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
-    #curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"user.p.para.paracross","actionName":"ParacrossAssetTransfer","payload":{"execName":"user.p.para.paracross","to":"1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU","amount":100000000}}]}' http://172.20.0.5:8901
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]'
+    echo "$req"
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    # echo "$resp"
+    err=$(jq '(.error)' <<<"$resp")
+    if [ "$err" != null ]; then
+        echo "$resp"
+        exit 1
+    fi
+    tx_hash_asset=$(jq -r ".result" <<<"$resp")
+    #    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
 
     #  资产从平行链转移到平行链合约
     req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"TransferToExec","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"${trade_exec_addr}"'","amount":'${amount_trade}', "cointoken":"coins.bty"}}]'
@@ -348,25 +338,117 @@ function paracross_testTxGroup() {
 
     #sign 1
     tx_sign=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$para_test_prikey"'","txHex":"'"$tx_hash_group"'","index":2,"expire":"120s"}]}' "${para_ip}" | jq -r ".result")
-    #curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8","txHex":"0a10757365722e702e706172612e6e6f6e6512126e6f2d6665652d7472616e73616374696f6e1a6e080112210320bbac09528e19c55b0f89cb37ab265e7e856b1a8c388780322dbbfd194b52ba1a473045022100fe7763b2fa5b42eddccf1a3434cb6d6bb60a5c5c32e5498219e99be01bb94ad302201ecb9931a2bb4e1b0d49ec50ee552a774c1db8a1eb9b2dff47e4b931625e3af220e0a71230a89780b2a5b187990a3a2231466a58697076505142754e6f7a4133506150724b6846703854343166717141707640034a8c050a8e020a10757365722e702e706172612e6e6f6e6512126e6f2d6665652d7472616e73616374696f6e1a6e080112210320bbac09528e19c55b0f89cb37ab265e7e856b1a8c388780322dbbfd194b52ba1a473045022100fe7763b2fa5b42eddccf1a3434cb6d6bb60a5c5c32e5498219e99be01bb94ad302201ecb9931a2bb4e1b0d49ec50ee552a774c1db8a1eb9b2dff47e4b931625e3af220e0a71230a89780b2a5b187990a3a2231466a58697076505142754e6f7a4133506150724b6846703854343166717141707640034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef55208522000f2e5970b5b1854da143f4f3e91bf7eb87d1d62869ef08a2ce3b109994ec3650abb010a15757365722e702e706172612e7061726163726f7373122e10904e22291080c2d72f2222314d41754538515362626563683362564b4b324a504a4a7859784e745439356f535530d195faf7d3a1ec9a4c3a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a71696940034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef5520852208fb7939bf2701e5af9cef05da33020be682e10c84fde9bd8d24765031fad530b0aba010a15757365722e702e706172612e7061726163726f7373124f1004424b0a09636f696e732e6274791080ade2042215757365722e702e706172612e7061726163726f73732a2231326269686a7a626159576a637044696979395375415765714e6b735164694e313330a8c984ebb2bb90a5613a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a71696940034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef55208522000f2e5970b5b1854da143f4f3e91bf7eb87d1d62869ef08a2ce3b109994ec365","index":2,"expire":"120s"}]}' http://172.20.0.5:8901
     #sign 2
     tx_sign2=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"'"$para_test_prikey"'","txHex":"'"$tx_sign"'","index":3,"expire":"120s"}]}' "${para_ip}" | jq -r ".result")
-    #curl -ksd '{"method":"Chain33.SignRawTx","params":[{"privkey":"0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8","txHex":"0a10757365722e702e706172612e6e6f6e6512126e6f2d6665652d7472616e73616374696f6e1a6e080112210320bbac09528e19c55b0f89cb37ab265e7e856b1a8c388780322dbbfd194b52ba1a473045022100fe7763b2fa5b42eddccf1a3434cb6d6bb60a5c5c32e5498219e99be01bb94ad302201ecb9931a2bb4e1b0d49ec50ee552a774c1db8a1eb9b2dff47e4b931625e3af220e0a71230a89780b2a5b187990a3a2231466a58697076505142754e6f7a4133506150724b6846703854343166717141707640034afc050a8e020a10757365722e702e706172612e6e6f6e6512126e6f2d6665652d7472616e73616374696f6e1a6e080112210320bbac09528e19c55b0f89cb37ab265e7e856b1a8c388780322dbbfd194b52ba1a473045022100fe7763b2fa5b42eddccf1a3434cb6d6bb60a5c5c32e5498219e99be01bb94ad302201ecb9931a2bb4e1b0d49ec50ee552a774c1db8a1eb9b2dff47e4b931625e3af220e0a71230a89780b2a5b187990a3a2231466a58697076505142754e6f7a4133506150724b6846703854343166717141707640034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef55208522000f2e5970b5b1854da143f4f3e91bf7eb87d1d62869ef08a2ce3b109994ec3650aab020a15757365722e702e706172612e7061726163726f7373122e10904e22291080c2d72f2222314d41754538515362626563683362564b4b324a504a4a7859784e745439356f53551a6e0801122103589ebf581958aeb8a72ff517f823c878aee16139ecbf0001a4611e9c004fecdf1a473045022100da5ad2bdc6e1e43a01d32c44f116e5d0bf96aa4c16debad49381ea5d11a49835022055a510460df9b63f8f585393d6603abf1388fac0e122b53ef3533f242287915730d195faf7d3a1ec9a4c3a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a71696940034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef5520852208fb7939bf2701e5af9cef05da33020be682e10c84fde9bd8d24765031fad530b0aba010a15757365722e702e706172612e7061726163726f7373124f1004424b0a09636f696e732e6274791080ade2042215757365722e702e706172612e7061726163726f73732a2231326269686a7a626159576a637044696979395375415765714e6b735164694e313330a8c984ebb2bb90a5613a223139574a4a7639366e4b4155347348465771476d7371666a786433376a617a71696940034a2054ba4451fb8f226dd54b52ec086f4eaa4990d66876899b1badec8ce96ef55208522000f2e5970b5b1854da143f4f3e91bf7eb87d1d62869ef08a2ce3b109994ec365","index":3,"expire":"120s"}]}' http://172.20.0.5:8901
 
     #send
     chain33_SendTx "${tx_sign2}" "${para_ip}"
-    #tx_rst=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"token":"BTY","data":"${tx_sign2}"}]'}  "${para_ip}" | jq -r ".result" )
 
-    local transfer_expect="700000000"
+}
+
+//测试平行链交易组跨链失败,主链自动恢复原值
+function paracross_testTxGroupFail() {
+    local para_ip=$1
+
+    ispara=$(echo '"'"${para_ip}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    local paracross_addr=""
+    local main_ip=${para_ip//8901/8801}
+
+    paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' "${main_ip}" | jq -r ".result")
+    echo "paracross_addr=$paracross_addr"
+
+    #execer
+
+    local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
+    //测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
+    local amount_trade=800000000
+    local amount_transfer=100000000
+    local amount_left=500000000
+
+    left_exec_val=$(paracross_QueryMainBalance "${para_test_addr}")
+    if [ "${left_exec_val}" != $amount_left ]; then
+        echo "paracross_testTxGroupFail left main paracross failed, get=$left_exec_val,expec=$amount_left"
+        exit 1
+    fi
+
+    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}"
+
+    local count=0
+    local times=100
+    local paracross_execer_name="user.p.para.paracross"
+    local trade_exec_name="user.p.para.trade"
+    local transfer_expect="200000000"
+    local exec_expect="100000000"
+    while true; do
+        transfer_val=$(paracross_QueryParaBalance "${para_test_addr}" "$paracross_execer_name")
+        transfer_exec_val=$(paracross_QueryParaBalance "${para_test_addr}" "$trade_exec_name")
+        left_exec_val=$(paracross_QueryMainBalance "${para_test_addr}")
+        if [ "${left_exec_val}" != $amount_left ] || [ "${transfer_val}" != $transfer_expect ] || [ "${transfer_exec_val}" != $exec_expect ]; then
+            echo "trans=${transfer_val}-expect=${transfer_expect},trader=${transfer_exec_val}-expect=${exec_expect},left=${left_exec_val}-expect=${amount_left}"
+            chain33_BlockWait 2 ${UNIT_HTTP}
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "para_cross_transfer_testfail failed"
+                exit 1
+            fi
+            echo "paracross_testTxGroupFail left main paracross failed, get=$left_exec_val,expec=$amount_left"
+        else
+            count=$((count + 1))
+            break
+        fi
+    done
+    [ "$count" -eq 1 ]
+    local rst=$?
+    echo_rst "$FUNCNAME" "$rst"
+}
+
+function paracross_testTxGroup() {
+    local para_ip=$1
+
+    ispara=$(echo '"'"${para_ip}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    local paracross_addr=""
+    local main_ip=${para_ip//8901/8801}
+
+    paracross_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"paracross"}]}' "${main_ip}" | jq -r ".result")
+    echo "paracross_addr=$paracross_addr"
+
+    #execer
+    local paracross_execer_name="user.p.para.paracross"
+    local trade_exec_name="user.p.para.trade"
+    local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
+    local amount_trade=100000000
+    local amount_deposit=800000000
+    local amount_transfer=300000000
+    local amount_left=500000000
+    chain33_ImportPrivkey "${para_test_prikey}" "${para_test_addr}" "paracross-transfer6" "${main_ip}"
+
+    # tx fee + transfer 10 coins
+    chain33_applyCoins "${para_test_addr}" 1000000000 "${main_ip}"
+    chain33_QueryBalance "${para_test_addr}" "$main_ip"
+
+    #deposit 8 coins to paracross
+    chain33_SendToAddress "${para_test_addr}" "$paracross_addr" "$amount_deposit" "${main_ip}"
+    chain33_QueryExecBalance "${para_test_addr}" "paracross" "${main_ip}"
+
+    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}"
+
+    local transfer_expect="200000000"
     local exec_expect="100000000"
     transfer_val=$(paracross_QueryParaBalance "${para_test_addr}" "$paracross_execer_name")
     transfer_exec_val=$(paracross_QueryParaBalance "${para_test_addr}" "$trade_exec_name")
+    left_exec_val=$(paracross_QueryMainBalance "${para_test_addr}")
     if [ "${transfer_val}" != $transfer_expect ]; then
         echo "paracross_testTxGroup trasfer failed, get=$transfer_val,expec=$transfer_expect"
         exit 1
     fi
     if [ "${transfer_exec_val}" != $exec_expect ]; then
         echo "paracross_testTxGroup toexec failed, get=$transfer_exec_val,expec=$exec_expect"
+        exit 1
+    fi
+    if [ "${left_exec_val}" != $amount_left ]; then
+        echo "paracross_testTxGroup left main paracross failed, get=$left_exec_val,expec=$amount_left"
         exit 1
     fi
 
@@ -396,6 +478,10 @@ paracross_testSelfConsensStages() {
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     id=$(jq -r ".result.stageInfo[0].id" <<<"$resp")
+    if [ -z "$id" ]; then
+        echo "paracross stage apply id null"
+        exit 1
+    fi
 
     echo "vote id"
     KS_PRI="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
@@ -405,9 +491,12 @@ paracross_testSelfConsensStages() {
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
+    echo "send vote 1"
     chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}"
-    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}"
-    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}"
+    echo "send vote 2"
+    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    echo "send vote 3"
+    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
 
     echo "query status"
     req='"method":"paracross.ListSelfStages","params":[{"status":3,"count":1}]'
@@ -446,6 +535,7 @@ function run_testcases() {
     paracross_ListNodeStatus
     paracross_Transfer_Withdraw
     paracross_testTxGroup "$UNIT_HTTP"
+    paracross_testTxGroupFail "$UNIT_HTTP"
     paracross_testSelfConsensStages "$UNIT_HTTP"
 }
 

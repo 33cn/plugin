@@ -124,8 +124,8 @@ func TestChannelClient_GetAssetTxResult(t *testing.T) {
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	client := newGrpc(api)
 	client.Init("paracross", nil, nil, nil)
-	req := &types.ReqHash{}
-	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
+	req := &types.ReqString{}
+	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAssetRsp{}, nil)
 	_, err := client.GetAssetTxResult(context.Background(), req)
 	assert.Nil(t, err)
 }
@@ -135,9 +135,9 @@ func TestJrpc_GetAssetTxResult(t *testing.T) {
 	api := new(mocks.QueueProtocolAPI)
 	api.On("GetConfig", mock.Anything).Return(cfg, nil)
 	j := newJrpc(api)
-	req := &types.ReqHash{}
+	req := &types.ReqString{}
 	var result interface{}
-	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAsset{}, nil)
+	api.On("Query", pt.GetExecName(cfg), "GetAssetTxResult", req).Return(&pt.ParacrossAssetRsp{}, nil)
 	err := j.GetAssetTxResult(req, &result)
 	assert.Nil(t, err)
 }
