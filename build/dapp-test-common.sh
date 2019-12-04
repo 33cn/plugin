@@ -3,6 +3,8 @@
 RAW_TX_HASH=""
 LAST_BLOCK_HASH=""
 CASE_ERR=""
+HTTP_RESP=""
+RAW_RESP=""
 
 #color
 RED='\033[1;31m'
@@ -16,9 +18,21 @@ echo_rst() {
         echo -e "${GRE}$1 not support${NOC}"
     else
         echo -e "${RED}$1 fail${NOC}"
+        echo -e "${RED}$3 ${NOC}"
         CASE_ERR="err"
         echo $CASE_ERR
     fi
+}
+
+http_req() {
+  #  echo "#$4 request: $1"
+    HTTP_RESP=$(curl -ksd "$1" "$2")
+    RAW_RESP=$(jq -r "$5" <<<"$HTTP_RESP")
+  #  echo "#response: $HTTP_RESP"
+    ok=$(echo "$HTTP_RESP" | jq -r "$3")
+    [ "$ok" == true ]
+    rst=$?
+    echo_rst "$4" "$rst" "$HTTP_RESP"
 }
 
 chain33_BlockWait() {

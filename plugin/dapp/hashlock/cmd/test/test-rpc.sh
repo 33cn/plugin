@@ -14,15 +14,19 @@ source ../dapp-test-common.sh
 hashlock_lock() {
 
     local secret=$1
-    echo "========== # hashlock lock tx begin =========="
+  #  echo "========== # hashlock lock tx begin =========="
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"hashlock","actionName":"HashlockLock", "payload":{"secret":"'"${secret}"'","amount":1000000000, "time":75,"toAddr":"'"${addr_B}"'", "returnAddr":"'"${addr_A}"'","fee":100000000}}]}' ${MAIN_HTTP} | jq -r ".result")
 
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+  #  data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+  #  ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+  #  [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
+
+    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+	resok='(.result.txs[0].execer != "")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     chain33_SignRawTx "$tx" "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
@@ -38,11 +42,15 @@ hashlock_send() {
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"hashlock","actionName":"HashlockSend", "payload":{"secret":"'"${secret}"'","fee":100000000}}]}' ${MAIN_HTTP} | jq -r ".result")
 
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+ #   data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+ #   ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+ #   [ "$ok" == true ]
+ #   echo_rst "$FUNCNAME" "$?"
+
+    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+	resok='(.result.txs[0].execer != "")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     chain33_SignRawTx "$tx" "0xb76a398c3901dfe5c7335525da88fda4df24c11ad11af4332f00c0953cc2910f" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
@@ -57,11 +65,15 @@ hashlock_unlock() {
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"hashlock","actionName":"HashlockUnlock", "payload":{"secret":"'"${secret}"'","fee":100000000}}]}' ${MAIN_HTTP} | jq -r ".result")
 
-    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+ #   data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+ #   ok=$(jq '(.execer != "")' <<<"$data")
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+ #   [ "$ok" == true ]
+ #   echo_rst "$FUNCNAME" "$?"
+
+    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
+	resok='(.result.txs[0].execer != "")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     chain33_SignRawTx "$tx" "0x1089b7f980fc467f029b7ae301249b36e3b582c911b1af1a24616c83b3563dcb" ${MAIN_HTTP}
     #echo "txHash ${txhash}"
@@ -129,10 +141,8 @@ function run_test() {
     hashlock_send "abc"
     chain33_QueryBalance "$addr_B" "${MAIN_HTTP}"
     hashlock_unlock "abc"
-
     hashlock_lock "aef"
     chain33_QueryBalance "$addr_A" "${MAIN_HTTP}"
-
     sleep 5
     hashlock_unlock "aef"
     chain33_BlockWait 1 ${MAIN_HTTP}
@@ -142,8 +152,8 @@ function run_test() {
 function main() {
     MAIN_HTTP="$1"
     chain33_RpcTestBegin hashlock
-    echo "ip=$MAIN_HTTP"
 
+    echo "ip=$MAIN_HTTP"
     init
     run_test
 

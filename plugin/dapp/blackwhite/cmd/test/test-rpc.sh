@@ -31,32 +31,43 @@ init() {
 
 chain33_NewAccount() {
     label=$1
-    result=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.acc.addr")
-    [ "$result" != "" ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    glAddr=$result
-    echo "$glAddr"
+  #  result=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.acc.addr")
+ #   [ "$result" != "" ]
+  #  rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+ #   glAddr=$result
+  #  echo "$glAddr"
+
+    req='{"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}'
+    http_req "$req" ${MAIN_HTTP} '(.result.acc.addr != "")' "$FUNCNAME"
 }
 
 chain33_SendTransaction() {
     rawTx=$1
     addr=$2
     #签名交易
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+   # resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+  #  ok=$(echo "${resp}" | jq -r ".error")
+  #  [ "$ok" == null ]
+  #  rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
 
-    signTx=$(echo "${resp}" | jq -r ".result")
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
+
+  #  signTx=$(echo "${resp}" | jq -r ".result")
+  #  resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+  #  ok=$(echo "${resp}" | jq -r ".error")
+  #  [ "$ok" == null ]
+  #  rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #返回交易
-    gResp=$(jq -r ".result" <<<"$resp")
+    gResp=$(jq -r ".result" <<<"$HTTP_RESP")
     echo "tx hash is $gResp"
     chain33_QueryTx "$gResp" "${MAIN_HTTP}"
 }
@@ -64,13 +75,17 @@ chain33_SendTransaction() {
 blackwhite_BlackwhiteCreateTx() {
     #创建交易
     addr=$1
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(echo "${resp}" | jq -r ".error")
+ #   [ "$ok" == null ]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
+    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
     chain33_SendTransaction "${rawTx}" "${addr}"
     gID="${gResp}"
     echo "gameID $gID"

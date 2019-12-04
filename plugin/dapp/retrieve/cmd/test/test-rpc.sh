@@ -67,11 +67,13 @@ retrieve_Backup() {
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
     local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+    http_req "$reqDecode" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+  #  data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+  #  ok=$(jq '(.execer != "")' <<<"$data")
+
+  #  [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "$retrieve2_key" ${MAIN_HTTP}
     echo "========== # retrieve backup end =========="
@@ -86,11 +88,13 @@ retrieve_Prepare() {
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
     local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+    http_req "$reqDecode" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+   # data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+   # ok=$(jq '(.execer != "")' <<<"$data")
+
+  #  [ "$ok" == true ]
+   # echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
     echo "========== # retrieve prepare end =========="
@@ -105,11 +109,13 @@ retrieve_Perform() {
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
     local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+    http_req "$reqDecode" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+  #  data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+  #  ok=$(jq '(.execer != "")' <<<"$data")
+
+ #   [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
     echo "========== # retrieve perform end =========="
@@ -124,11 +130,13 @@ retrieve_Perform_Token() {
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
     local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+    http_req "$reqDecode" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+  #  data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+  #  ok=$(jq '(.execer != "")' <<<"$data")
+
+  #  [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "$retrieve1_key" ${MAIN_HTTP}
     echo "========== # retrieve perform end =========="
@@ -143,11 +151,13 @@ retrieve_Cancel() {
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
 
     local reqDecode='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
-    ok=$(jq '(.execer != "")' <<<"$data")
+    http_req "$reqDecode" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+ #   data=$(curl -ksd "$reqDecode" ${MAIN_HTTP} | jq -r ".result.txs[0]")
+ #   ok=$(jq '(.execer != "")' <<<"$data")
+
+ #   [ "$ok" == true ]
+ #   echo_rst "$FUNCNAME" "$?"
 
     chain33_SignRawTx "$tx" "$retrieve2_key" ${MAIN_HTTP}
     echo "========== # retrieve cancel end =========="
@@ -161,11 +171,13 @@ retrieve_QueryResult() {
     local status=$1
 
     local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'"}}]}'
-    data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.status == '"$status"')' <<<"$data")
+    http_req "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+  #  data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
+  #  ok=$(jq '(.status == '"$status"')' <<<"$data")
+
+  #  [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
     echo "========== # retrieve query result end =========="
 }
 
@@ -175,11 +187,13 @@ retrieve_QueryAssetResult() {
     local status=$1
 
     local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'","assetExec":"token", "assetSymbol":"'"$symbol"'"}}]}'
-    data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    ok=$(jq '(.status == '"$status"')' <<<"$data")
+    http_req "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    echo_rst "$FUNCNAME" "$?"
+   # data=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
+   # ok=$(jq '(.status == '"$status"')' <<<"$data")
+
+  #  [ "$ok" == true ]
+  #  echo_rst "$FUNCNAME" "$?"
     echo "========== # retrieve query result end =========="
 }
 

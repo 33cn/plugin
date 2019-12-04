@@ -74,14 +74,18 @@ init() {
 lottery_LotteryCreate() {
     #创建交易
     priv=$1
-    resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
-    "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate",
+ #   "payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(echo "${resp}" | jq -r ".error")
+#    [[ $ok == null ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate","payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}'
+	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
+    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
 
     gID="${RAW_TX_HASH}"
@@ -94,71 +98,91 @@ lottery_LotteryBuy() {
     amount=$2
     number=$3
     way=$4
-    resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy",
-    "payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy",
+ #   "payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(echo "${resp}" | jq -r ".error")
+ #   [[ $ok == null ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy","payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}'
+	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
+    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryDraw() {
     #创建交易
     priv=$1
-    resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
-    "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw",
+ #   "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(echo "${resp}" | jq -r ".error")
+  #  [[ $ok == null ]]
+  #  rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
+	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
+    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryClose() {
     #创建交易
     priv=$1
-    resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
-    "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose",
+ #   "payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(echo "${resp}" | jq -r ".error")
+ #   [[ $ok == null ]]
+  #  rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
+	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
+    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
     chain33_SignRawTx "${rawTx}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_GetLotteryNormalInfo() {
     gameID=$1
     addr=$2
-    execer="lottery"
-    funcName="GetLotteryNormalInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   execer="lottery"
+ #   funcName="GetLotteryNormalInfo"
+ #   resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryNormalInfo","payload":{"lotteryId":"'"$gameID"'"}}]}'
+	resok='(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryCurrentInfo() {
     gameID=$1
     status=$2
     amount=$3
-    execer="lottery"
-    funcName="GetLotteryCurrentInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   execer="lottery"
+ #   funcName="GetLotteryCurrentInfo"
+ #   resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)' <<<"$resp")
+ #   [[ $ok == true ]]
+  #  rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryCurrentInfo","payload":{"lotteryId":"'"$gameID"'"}}]}'
+	resok='(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     if [[ $status == 3 ]]; then
-        luckyNumber=$(echo "${resp}" | jq -r ".result.luckyNumber")
+        luckyNumber=$(echo "${HTTP_RESP}" | jq -r ".result.luckyNumber")
         echo -e "######\\n  luckyNumber is $luckyNumber  \\n######"
     fi
 }
@@ -166,39 +190,51 @@ lottery_GetLotteryCurrentInfo() {
 lottery_GetLotteryPurchaseAddr() {
     gameID=$1
     count=$2
-    execer="lottery"
-    funcName="GetLotteryPurchaseAddr"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.address | length == '"$count"')' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+  #  execer="lottery"
+  #  funcName="GetLotteryPurchaseAddr"
+  #  resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+  #  ok=$(jq '(.error|not) and (.result.address | length == '"$count"')' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryPurchaseAddr","payload":{"lotteryId":"'"$gameID"'"}}]}'
+	resok='(.error|not) and (.result.address | length == '"$count"')'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryLuckyNumber() {
     gameID=$1
     count=$2
     lucky=$3
-    execer="lottery"
-    funcName="GetLotteryHistoryLuckyNumber"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   execer="lottery"
+ #   funcName="GetLotteryHistoryLuckyNumber"
+ #   resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+#    echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryLuckyNumber","payload":{"lotteryId":"'"$gameID"'"}}]}'
+	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryRoundLuckyNumber() {
     gameID=$1
     round=$2
     lucky=$3
-    execer="lottery"
-    funcName="GetLotteryRoundLuckyNumber"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "round":['"$round"']}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+  #  execer="lottery"
+  #  funcName="GetLotteryRoundLuckyNumber"
+  #  resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "round":['"$round"']}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+  #  ok=$(jq '(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")' <<<"$resp")
+  #  [[ $ok == true ]]
+  #  rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryRoundLuckyNumber","payload":{"lotteryId":"'"$gameID"'", "round":['"$round"']}}]}'
+	resok='(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryBuyInfo() {
@@ -206,13 +242,17 @@ lottery_GetLotteryHistoryBuyInfo() {
     addr=$2
     count=$3
     number=$4
-    execer="lottery"
-    funcName="GetLotteryHistoryBuyInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   execer="lottery"
+  #  funcName="GetLotteryHistoryBuyInfo"
+#    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
+ #   [[ $ok == true ]]
+  #  rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryBuyInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}'
+	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryBuyRoundInfo() {
@@ -221,13 +261,17 @@ lottery_GetLotteryBuyRoundInfo() {
     round=$3
     count=$4
     number=$5
-    execer="lottery"
-    funcName="GetLotteryBuyRoundInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   execer="lottery"
+ #   funcName="GetLotteryBuyRoundInfo"
+ #   resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryBuyRoundInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}'
+	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryGainInfo() {
@@ -235,13 +279,17 @@ lottery_GetLotteryHistoryGainInfo() {
     addr=$2
     count=$3
     amount=$4
-    execer="lottery"
-    funcName="GetLotteryHistoryGainInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+  #  execer="lottery"
+ #   funcName="GetLotteryHistoryGainInfo"
+  #  resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryGainInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}'
+	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryRoundGainInfo() {
@@ -249,13 +297,17 @@ lottery_GetLotteryRoundGainInfo() {
     addr=$2
     round=$3
     amount=$4
-    execer="lottery"
-    funcName="GetLotteryRoundGainInfo"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+  #  execer="lottery"
+ #   funcName="GetLotteryRoundGainInfo"
+ #   resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+ #   ok=$(jq '(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)' <<<"$resp")
+ #   [[ $ok == true ]]
+ #   rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryRoundGainInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}'
+	resok='(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_testcases() {

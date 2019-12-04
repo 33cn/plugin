@@ -201,30 +201,34 @@ function paracross_Transfer_Withdraw() {
 }
 
 function paracross_IsSync() {
-    local ok
+  #  local ok
 
     if [ "$IS_PARA" == "true" ]; then
-        ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+        req='{"method":"paracross.IsSync","params":[]}'
+     #   ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
     else
-        ok=$(curl -ksd '{"method":"Chain33.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+      #  ok=$(curl -ksd '{"method":"Chain33.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+        req='{"method":"Chain33.IsSync","params":[]}'
     fi
+    http_req "$req" ${UNIT_HTTP} '.result' "$FUNCNAME"
 
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+  #  [ "$ok" == true ]
+  #  local rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_ListTitles() {
-
-    local resp
-    local ok
+  #  local resp
+ #   local ok
     local main_ip=${UNIT_HTTP//8901/8801}
-    resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}' ${main_ip})
-    echo "$resp"
-    ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}' ${main_ip})
+#    echo "$resp"
+ #   ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
+#    [ "$ok" == true ]
+ #   local rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    http_req '{"method":"paracross.ListTitles","params":[]}' ${main_ip} '(.error|not) and (.result| [has("titles"),true])' "$FUNCNAME"
 }
 
 function paracross_GetHeight() {
@@ -232,61 +236,71 @@ function paracross_GetHeight() {
     local ok
 
     if [ "$IS_PARA" == "true" ]; then
-        resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
+     #   resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
         #echo $resp
-        ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
-        [ "$ok" == true ]
-        local rst=$?
-        echo_rst "$FUNCNAME" "$rst"
+     #   ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
+      #  [ "$ok" == true ]
+      #  local rst=$?
+     #   echo_rst "$FUNCNAME" "$rst"
+
+        http_req '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
     fi
 }
 
 function paracross_GetNodeGroupAddrs() {
-    local resp
-    local ok
+ #   local resp
+ #   local ok
 
-    resp=$(curl -ksd '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
+ #   resp=$(curl -ksd '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
     #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
+ #   [ "$ok" == true ]
+ #   local rst=$?
+ #   echo_rst "$FUNCNAME" "$rst"
+
+    http_req '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "$FUNCNAME"
 }
 
 function paracross_GetNodeGroupStatus() {
-    local resp
-    local ok
+ #   local resp
+ #   local ok
 
-    resp=$(curl -ksd '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
+  #  resp=$(curl -ksd '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
     #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+ #   ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+ #   [ "$ok" == true ]
+ #   local rst=$?
+  #  echo_rst "$FUNCNAME" "$rst"
+
+    http_req '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeGroupStatus() {
-    local resp
-    local ok
+ #   local resp
+ #   local ok
 
-    resp=$(curl -ksd '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP})
+#    resp=$(curl -ksd '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP})
     #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+#    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+#    [ "$ok" == true ]
+#    local rst=$?
+#    echo_rst "$FUNCNAME" "$rst"
+
+    http_req '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeStatus() {
-    local resp
-    local ok
+ #   local resp
+ #   local ok
 
-    resp=$(curl -ksd '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP})
+#    resp=$(curl -ksd '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP})
     #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+#    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
+ #   [ "$ok" == true ]
+#    local rst=$?
+#    echo_rst "$FUNCNAME" "$rst"
+
+    http_req '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 #main chain import pri key
