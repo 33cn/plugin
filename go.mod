@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/33cn/chain33 v0.0.0-20191113065720-35a79536c298
 	github.com/BurntSushi/toml v0.3.1
+	github.com/NebulousLabs/Sia v1.3.7
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d // indirect

@@ -31,6 +31,8 @@ type Client struct {
 	ticketsMap map[string]*pt.Pos33Ticket
 	privLock   sync.Mutex
 	privmap    map[string]crypto.PrivKey
+
+	tcMap map[int64]int
 }
 
 // Tx is ...
@@ -64,7 +66,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	plog.Info("subcfg", "cfg", string(sub))
 
 	n := newNode(&subcfg)
-	client := &Client{BaseClient: c, n: n, conf: &subcfg}
+	client := &Client{BaseClient: c, n: n, conf: &subcfg, tcMap: make(map[int64]int)}
 	client.n.Client = client
 	c.SetChild(client)
 	return client
@@ -109,12 +111,26 @@ func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail
 }
 
 func (client *Client) allWeight(height int64) int {
+	preH := height - height%pt.Pos33SortitionSize
+	if preH == height {
+		preH -= pt.Pos33SortitionSize
+	}
+	tc, ok := client.tcMap[preH]
+	if ok {
+		return tc
+	}
+	if height%pt.Pos33SortitionSize == 0 {
+		client.tcMap = make(map[int64]int)
+	}
+
 	msg, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33AllPos33TicketCount", &pt.Pos33AllPos33TicketCount{Height: height})
 	if err != nil {
 		plog.Info("query Pos33AllPos33TicketCount error", "error", err)
 		return 0
 	}
-	return int(msg.(*pt.ReplyPos33AllPos33TicketCount).Count)
+	tc = int(msg.(*pt.ReplyPos33AllPos33TicketCount).Count)
+	client.tcMap[preH] = tc
+	return tc
 }
 
 func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
