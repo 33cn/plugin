@@ -87,6 +87,24 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 	return assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
 }
 
+func (a *action) assetTransferRollback(transfer *types.AssetsTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	isPara := cfg.IsPara()
+	//主链处理分支
+	if !isPara {
+		accDB, err := createAccount(cfg, a.db, transfer.Cointoken)
+		if err != nil {
+			return nil, errors.Wrap(err, "assetTransferToken call account.NewAccountDB failed")
+		}
+		execAddr := address.ExecAddress(pt.ParaX)
+		fromAcc := address.ExecAddress(string(transferTx.Execer))
+		clog.Debug("paracross.AssetTransferRbk ", "execer", string(transferTx.Execer),
+			"transfer.txHash", hex.EncodeToString(transferTx.Hash()), "curTx", hex.EncodeToString(a.tx.Hash()))
+		return accDB.ExecTransfer(fromAcc, transferTx.From(), execAddr, transfer.Amount)
+	}
+	return nil, nil
+}
+
 func createAccount(cfg *types.Chain33Config, db db.KV, symbol string) (*account.DB, error) {
 	var accDB *account.DB
 	var err error
