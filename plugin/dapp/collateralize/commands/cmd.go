@@ -218,7 +218,7 @@ func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	price, _ := cmd.Flags().GetFloat32("price")
+	price, _ := cmd.Flags().GetFloat64("price")
 	volume, _ := cmd.Flags().GetUint64("volume")
 
 	params := &rpctypes.CreateTxIn{

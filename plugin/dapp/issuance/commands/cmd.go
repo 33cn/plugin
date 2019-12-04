@@ -46,8 +46,8 @@ func addIssuanceCreateFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("balance", "b", 0, "balance")
 	cmd.MarkFlagRequired("balance")
 	cmd.Flags().Float64P("debtCeiling", "d", 0, "debtCeiling")
-	cmd.Flags().Float32P("liquidationRatio", "l", 0, "liquidationRatio")
-	cmd.Flags().Float32P("period", "p", 0, "period")
+	cmd.Flags().Float64P("liquidationRatio", "l", 0, "liquidationRatio")
+	cmd.Flags().Uint64P("period", "p", 0, "period")
 }
 
 func IssuanceCreate(cmd *cobra.Command, args []string) {
@@ -60,7 +60,7 @@ func IssuanceCreate(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	balance, _ := cmd.Flags().GetFloat64("balance")
 	debtCeiling, _ := cmd.Flags().GetFloat64("debtCeiling")
-	liquidationRatio, _ := cmd.Flags().GetFloat32("liquidationRatio")
+	liquidationRatio, _ := cmd.Flags().GetFloat64("liquidationRatio")
 	period, _ := cmd.Flags().GetUint64("period")
 
 	params := &rpctypes.CreateTxIn{
@@ -167,7 +167,7 @@ func IssuancePriceFeedRawTxCmd() *cobra.Command {
 }
 
 func addIssuancePriceFeedFlags(cmd *cobra.Command) {
-	cmd.Flags().Float32P("price", "p", 0, "price")
+	cmd.Flags().Float64P("price", "p", 0, "price")
 	cmd.MarkFlagRequired("price")
 	cmd.Flags().Uint64P("volume", "v", 0, "volume")
 	cmd.MarkFlagRequired("volume")
@@ -181,7 +181,7 @@ func IssuancePriceFeed(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	price, _ := cmd.Flags().GetFloat32("price")
+	price, _ := cmd.Flags().GetFloat64("price")
 	volume, _ := cmd.Flags().GetUint64("volume")
 
 	params := &rpctypes.CreateTxIn{

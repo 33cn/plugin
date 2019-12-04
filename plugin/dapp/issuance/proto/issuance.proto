@@ -13,7 +13,7 @@ message Issuance {
     repeated DebtRecord debtRecords     = 7; //大户抵押记录
     repeated DebtRecord invalidRecords  = 8; //大户抵押记录
     int32       status                  = 9; //当期发行的状态，是否关闭
-    double       latestLiquidationPrice  = 10;//最高清算价格
+    double      latestLiquidationPrice  = 10;//最高清算价格
     int64       period                  = 11;//发行最大期限
     int64       latestExpireTime        = 12;//最近超期时间
     int64       createTime              = 13;//创建时间
