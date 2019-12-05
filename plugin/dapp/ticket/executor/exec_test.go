@@ -45,7 +45,6 @@ var (
 		[]byte("1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"),
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
-	//chain33TestCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 )
 
 func Test_Exec_Bind_Unbind(t *testing.T) {
