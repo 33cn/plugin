@@ -231,7 +231,7 @@ func (client *blockSyncClient) syncBlocksIfNeed() (bool, error) {
 		if err == nil {
 			isSyncCaughtUp := lastBlock.Height+1 == lastLocalHeight
 			client.setSyncCaughtUp(isSyncCaughtUp)
-			if client.paraClient.authAccount != "" {
+			if client.paraClient.commitMsgClient.authAccount != "" {
 				client.printDebugInfo("Para sync - add block commit", "isSyncCaughtUp", isSyncCaughtUp)
 				client.paraClient.commitMsgClient.updateChainHeightNotify(lastBlock.Height+1, false)
 			}
@@ -250,7 +250,7 @@ func (client *blockSyncClient) syncBlocksIfNeed() (bool, error) {
 		//通知发送层
 		if err == nil {
 			client.setSyncCaughtUp(false)
-			if client.paraClient.authAccount != "" {
+			if client.paraClient.commitMsgClient.authAccount != "" {
 				client.printDebugInfo("Para sync - rollback block commit", "isSyncCaughtUp", false)
 				client.paraClient.commitMsgClient.updateChainHeightNotify(lastBlock.Height-1, true)
 			}
@@ -384,7 +384,7 @@ func (client *blockSyncClient) addMinerTx(preStateHash []byte, block *types.Bloc
 		return err
 	}
 
-	tx.Sign(types.SECP256K1, client.paraClient.privateKey)
+	tx.Sign(types.SECP256K1, client.paraClient.minerPrivateKey)
 	block.Txs = append([]*types.Transaction{tx}, block.Txs...)
 
 	return nil

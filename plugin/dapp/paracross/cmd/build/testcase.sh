@@ -336,11 +336,11 @@ function para_cross_transfer_withdraw() {
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
-    hash=$(${CLI} send para asset_transfer --ptitle user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send para asset_transfer --paraName user.p.para. -a 1.4 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${PARA_CLI}" "${hash}"
 
-    hash2=$(${CLI} send para asset_withdraw --ptitle user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash2=$(${CLI} send para asset_withdraw --paraName user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
 
     local times=200
     while true; do
@@ -426,12 +426,12 @@ function para_cross_transfer_withdraw_for_token() {
     query_tx "${MAIN_CLI}" "${hash}"
 
     echo "=========== # 2.transfer asset to para chain ============="
-    hash=$(${CLI} send para asset_transfer --ptitle user.p.para. -s FZM -a 220 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${CLI} send para asset_transfer --paraName user.p.para. -s FZM -a 220 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
     query_tx "${MAIN_CLI}" "${hash}"
 
     echo "=========== # 3.asset_withdraw from parachain ============="
-    ${CLI} send para asset_withdraw --ptitle user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
+    ${CLI} send para asset_withdraw --paraName user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 
     local times=100
     while true; do

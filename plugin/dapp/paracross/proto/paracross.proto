@@ -328,6 +328,7 @@ message ReceiptParacrossDone {
     repeated bytes crossTxHashs  = 12;
     bytes    mainBlockHash       = 13;
     int64    mainBlockHeight     = 14;
+    int64    chainExecHeight     = 15;
 }
 
 message ReceiptParacrossRecord {
@@ -356,6 +357,8 @@ message RespParacrossDone {
     string stateHash      = 6;
     uint32 txCounts       = 7;
     string txResult       = 8;
+    //commitDone chainHeight
+    int64  chainExecHeight= 9;
 }
 
 message RespParacrossTitles {

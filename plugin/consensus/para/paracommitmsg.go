@@ -53,6 +53,7 @@ type commitMsgClient struct {
 	consensHeight        int64
 	consensDoneHeight    int64
 	selfConsensError     int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
+	authAccount          string
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
@@ -76,7 +77,7 @@ func (client *commitMsgClient) handler() {
 	client.paraClient.wg.Add(1)
 	go client.getMainConsensusInfo()
 
-	if client.paraClient.authAccount != "" {
+	if client.authAccount != "" {
 		client.paraClient.wg.Add(1)
 		client.sendMsgCh = make(chan *types.Transaction, 1)
 		go client.sendCommitMsg()
@@ -275,7 +276,7 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 	if err != nil {
 		return
 	}
-	authExist := strings.Contains(nodes, client.paraClient.authAccount)
+	authExist := strings.Contains(nodes, client.authAccount)
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -361,7 +362,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	for i, msg := range sendingMsgs {
 		plog.Debug("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
 			"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
-			"from", client.paraClient.authAccount)
+			"from", client.authAccount)
 	}
 
 	return signTx, count
@@ -678,7 +679,7 @@ out:
 				isSync = true
 			}
 
-			if client.paraClient.authAccount != "" {
+			if client.authAccount != "" {
 				client.GetProperFeeRate()
 			}
 
@@ -836,7 +837,7 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 }
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
-	if status == nil || client.paraClient.authAccount == "" {
+	if status == nil || client.authAccount == "" {
 		return
 	}
 	if !status.IsWalletLock && client.privateKey == nil {
@@ -858,7 +859,7 @@ func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 }
 
 func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
-	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil {
+	if acc == nil || client.authAccount == "" || client.authAccount != acc.Addr || client.privateKey != nil {
 		return
 	}
 	err := client.fetchPriKey()
@@ -872,7 +873,7 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 }
 
 func (client *commitMsgClient) fetchPriKey() error {
-	req := &types.ReqString{Data: client.paraClient.authAccount}
+	req := &types.ReqString{Data: client.authAccount}
 
 	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
 	err := client.paraClient.GetQueueClient().Send(msg, true)

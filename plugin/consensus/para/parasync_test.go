@@ -66,7 +66,7 @@ func createParaTestInstance(t *testing.T, q queue.Queue) *client {
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
-	para.privateKey = priKey
+	para.minerPrivateKey = priKey
 
 	//实例化BlockSyncClient
 	para.blockSyncClient = &blockSyncClient{
