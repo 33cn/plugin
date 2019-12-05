@@ -80,6 +80,11 @@ func (n *node) genMinerTx(height int64, round int, strHash string) (*types.Trans
 
 	plog.Info("genRewordTx", "height", height, "vsw", len(vs))
 	if height > 0 && len(vs)*3 <= pt.Pos33VoterSize*2 {
+		_, ok := n.cbs[height][strHash]
+		if !ok {
+			n.cbs[height][strHash] = n.lastBlock
+			n.vote(height, round)
+		}
 		return nil, 0, fmt.Errorf("NOT enouph votes")
 	}
 
@@ -569,10 +574,7 @@ func (n *node) runLoop() {
 	n.etm = time.NewTimer(time.Hour)
 	ch := make(chan int64, 1)
 
-	if lb.Height == 0 {
-		//n.firstSortition(lb)
-		time.AfterFunc(time.Second, func() { n.addBlock(lb) })
-	}
+	time.AfterFunc(time.Second, func() { n.addBlock(lb) })
 	round := 0
 
 	for {

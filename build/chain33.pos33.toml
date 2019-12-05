@@ -1,5 +1,5 @@
 Title="chain33"
-coinSymbol="ycc"
+coinSymbol="YCC"
 TestNet=true
 FixTime=false
 version="6.3.0"
@@ -48,7 +48,7 @@ enable=true
 isSeed=true
 serverStart=true
 innerSeedEnable=false
-useGithub=true
+useGithub=false
 innerBounds=300
 msgCacheSize=10240
 driver="leveldb"
@@ -89,10 +89,6 @@ minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["pos33"]
-listenAddr="0.0.0.0:10901"
-advertiseAddr=""
-bootPeerAddr=""
-nodeID="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -137,6 +133,11 @@ targetTimePerBlock=16
 
 [consensus.sub.pos33]
 genesisBlockTime=1514533394
+listenAddr="0.0.0.0:10901"
+advertiseAddr=""
+bootPeerAddr=""
+nodeID="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+
 [[consensus.sub.pos33.genesis]]
 minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 returnAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"

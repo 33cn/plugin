@@ -91,11 +91,11 @@ type gossip struct {
 func ipPort(addr string) (string, int) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
-		plog.Crit(err.Error())
+		panic(err)
 	}
 	iport, err := strconv.Atoi(port)
 	if err != nil {
-		plog.Crit(err.Error())
+		panic(err)
 	}
 	return host, iport
 }
