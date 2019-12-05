@@ -87,6 +87,13 @@ function para_import_wallet() {
     ./$CHAIN33_CLI --rpc_laddr "http://localhost:$port" wallet status
 }
 
+function para_unlock_wallet() {
+    for ((i = 0; i < ${#authPort[@]}; i++)); do
+        echo "=========== # para unlock wallet ${authPort[$i]}============="
+        ./$CHAIN33_CLI --rpc_laddr "http://localhost:${authPort[$i]}" wallet unlock -p 1314fuzamei -t 0
+    done
+
+}
 function start() {
     echo "=========== # docker-compose ps ============="
     docker-compose ps
@@ -175,6 +182,7 @@ EOF
     volumes:
       - "../storage/parachain$i/paradatadir:/root/paradatadir"
       - "../storage/parachain$i/logs:/root/logs"
+      - "../storage/parachain$i/parawallet:/root/parawallet"
 EOF
     done
 
@@ -258,6 +266,10 @@ function main() {
 
     if [ "$1" == "wallet" ]; then
         para_set_wallet
+    fi
+
+    if [ "$1" == "miner" ]; then
+        para_unlock_wallet
     fi
 
     echo "===============================parachain startup end========================================================="

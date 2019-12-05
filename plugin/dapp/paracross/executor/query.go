@@ -380,12 +380,13 @@ func loadLocalTitle(db dbm.KV, title string, height int64) (types.Message, error
 	}
 
 	return &pt.RespParacrossDone{
-		TotalNodes:     st.TotalNodes,
-		TotalCommit:    st.TotalCommit,
-		MostSameCommit: st.MostSameCommit,
-		Title:          st.Title,
-		Height:         st.Height,
-		TxResult:       hex.EncodeToString(st.TxResult),
+		TotalNodes:      st.TotalNodes,
+		TotalCommit:     st.TotalCommit,
+		MostSameCommit:  st.MostSameCommit,
+		Title:           st.Title,
+		Height:          st.Height,
+		ChainExecHeight: st.ChainExecHeight,
+		TxResult:        hex.EncodeToString(st.TxResult),
 	}, nil
 }
 

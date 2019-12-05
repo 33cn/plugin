@@ -42,6 +42,7 @@ func ParcCmd() *cobra.Command {
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
+		GetConsensDoneInfoCmd(),
 	)
 	return cmd
 }
@@ -65,9 +66,6 @@ func addCreateAssetTransferFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
-
-	cmd.Flags().StringP("ptitle", "", "", "the title of para chain, like `user.p.guodun.`")
-	cmd.MarkFlagRequired("ptitle")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
 }
@@ -98,9 +96,6 @@ func addCreateAssetWithdrawFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("ptitle", "", "", "the title of para chain, like `user.p.guodun.`")
-	cmd.MarkFlagRequired("ptitle")
-
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
 	cmd.MarkFlagRequired("to")
 
@@ -117,7 +112,7 @@ func createAssetWithdraw(cmd *cobra.Command, args []string) {
 }
 
 func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
-	title, _ := cmd.Flags().GetString("title")
+	title, _ := cmd.Flags().GetString("paraName")
 	cfg := types.GetCliSysParam(title)
 
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -130,12 +125,11 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	note, _ := cmd.Flags().GetString("note")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	ptitle, _ := cmd.Flags().GetString("ptitle")
-	if !strings.HasPrefix(ptitle, "user.p") {
-		fmt.Fprintln(os.Stderr, "ptitle is not right, title format like `user.p.guodun.`")
+	if !strings.HasPrefix(title, "user.p") {
+		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
 		return "", types.ErrInvalidParam
 	}
-	execName := ptitle + pt.ParaX
+	execName := title + pt.ParaX
 
 	param := types.CreateTx{
 		To:          toAddr,
@@ -269,7 +263,10 @@ func createNodeJoinTx(cmd *cobra.Command, args []string) {
 	opAddr, _ := cmd.Flags().GetString("addr")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 	paraName, _ := cmd.Flags().GetString("paraName")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 1, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -304,7 +301,10 @@ func createNodeVoteTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, Value: val}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -337,7 +337,10 @@ func addNodeQuitFlags(cmd *cobra.Command) {
 func createNodeQuitTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	opAddr, _ := cmd.Flags().GetString("addr")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -370,7 +373,10 @@ func addNodeCancelFlags(cmd *cobra.Command) {
 func createNodeCancelTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -655,6 +661,11 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	addrs, _ := cmd.Flags().GetString("addrs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -691,6 +702,11 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -722,7 +738,10 @@ func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 3, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -754,7 +773,10 @@ func addNodeGroupModifyCmdFlags(cmd *cobra.Command) {
 func nodeGroupModify(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	coins, _ := cmd.Flags().GetFloat64("coins")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 4, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -1109,4 +1131,35 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	var res pt.ReplyQuerySelfStages
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListSelfStages", params, &res)
 	ctx.Run()
+}
+
+func addConsensDoneCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
+	cmd.MarkFlagRequired("height")
+
+}
+
+func consensDoneInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	height, _ := cmd.Flags().GetInt64("height")
+
+	params := pt.ReqParacrossTitleHeight{
+		Title:  paraName,
+		Height: height,
+	}
+	var res pt.RespParacrossDone
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetDoneTitleHeight", params, &res)
+	ctx.Run()
+}
+
+// GetConsensDoneInfoCmd get para chain done height consens info
+func GetConsensDoneInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "consens_done",
+		Short: "Get para chain done height consensus info",
+		Run:   consensDoneInfo,
+	}
+	addConsensDoneCmdFlags(cmd)
+	return cmd
 }

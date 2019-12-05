@@ -58,8 +58,7 @@ type client struct {
 	commitMsgClient *commitMsgClient
 	blockSyncClient *blockSyncClient
 	multiDldCli     *multiDldClient
-	authAccount     string
-	privateKey      crypto.PrivKey
+	minerPrivateKey crypto.PrivKey
 	wg              sync.WaitGroup
 	subCfg          *subConfig
 	isClosed        int32
@@ -138,15 +137,15 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	para := &client{
-		BaseClient:  c,
-		authAccount: subcfg.AuthAccount,
-		privateKey:  priKey,
-		subCfg:      &subcfg,
-		quitCreate:  make(chan struct{}),
+		BaseClient:      c,
+		minerPrivateKey: priKey,
+		subCfg:          &subcfg,
+		quitCreate:      make(chan struct{}),
 	}
 
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:           para,
+		authAccount:          subcfg.AuthAccount,
 		waitMainBlocks:       waitBlocks4CommitMsg,
 		waitConsensStopTimes: waitConsensStopTimes,
 		consensHeight:        -2,

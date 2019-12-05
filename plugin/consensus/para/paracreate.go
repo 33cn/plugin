@@ -561,7 +561,7 @@ out:
 				count = int64(len(paraTxs.Items))
 			}
 			//如果超过１个block，则认为当前正在追赶，暂不处理
-			if client.authAccount != "" && len(paraTxs.Items) == 1 {
+			if client.commitMsgClient.authAccount != "" && len(paraTxs.Items) == 1 {
 				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0].TxDetails)
 			}
 
