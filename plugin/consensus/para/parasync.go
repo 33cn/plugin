@@ -485,18 +485,18 @@ func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) e
 		return err
 	}
 	client.paraClient.SetCurrentBlock(blockdetail.Block)
+
+	_, err = client.paraClient.GetQueueClient().Wait(msg)
+	if err != nil {
+		return err
+	}
 	return nil
-	//resp, err := client.paraClient.GetQueueClient().Wait(msg)
-	//if err != nil {
-	//	return err
-	//}
-	//
+
 	//respBlockDetail := resp.GetData().(*types.BlockDetail)
 	//if respBlockDetail == nil {
 	//	return errors.New("para sync - block detail is nil")
 	//}
 	//client.paraClient.SetCurrentBlock(respBlockDetail.Block)
-
 }
 
 //获取同步状态
