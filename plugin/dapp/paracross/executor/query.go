@@ -502,8 +502,8 @@ func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.M
 		return nil, errors.New("Failed to new crypto driver")
 	}
 
-	for addr, pubKey := range paraNodeAddrPubKey.Addr2Pubkey {
-		pubKey, err := cr.PubKeyFromBytes(pubKey)
+	for addr, pubKeySlice := range paraNodeAddrPubKey.Addr2Pubkey {
+		pubKey, err := cr.PubKeyFromBytes(pubKeySlice)
 		if nil != err {
 			return nil, errors.New("Failed to PubKeyFromBytes")
 		}
@@ -513,6 +513,10 @@ func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.M
 			return nil, errors.New("Failed to encrypt symmetric key by pubkey")
 		}
 		privacyTxPayload.AddrSymKey[addr] = skCiphered
+		///////////////debug code begin////////////////////
+		clog.Debug("Query_ConvertTx2Privacy", "cipher sk with addr:", addr,
+			"public key:", common.ToHex(pubKeySlice))
+		///////////////debug code end////////////////////
 	}
 
 	newPrivacyTx := &types.Transaction{

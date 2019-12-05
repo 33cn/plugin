@@ -467,12 +467,12 @@ func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
 func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) error {
 	addrAndPrivKey := &util.AddrAndPrivKey{
 		Addr:client.paraClient.authAccount,
-		PrivKey:client.paraClient.privateKey,
+		PrivKey:client.paraClient.commitMsgClient.privateKey,
 	}
 	isSync := client.downloadHasCaughtUp()
 	blockdetail, _, err := util.ExecBlock(client.paraClient.GetQueueClient(), prev, paraBlock, false, isSync, true, addrAndPrivKey)
 	if nil != err {
-		plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err)
+		plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
 		return err
 	}
 	paraChainBlockDetail := types.ParaChainBlockDetail{
