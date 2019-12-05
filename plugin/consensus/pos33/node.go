@@ -121,15 +121,13 @@ func (n *node) diff(w int) uint32 {
 func (n *node) makeBlock(height int64, round int, bp string) error {
 	pm, ok := n.ips[height]
 	if !ok {
-		err := fmt.Errorf("makeBlock: I'm not Proposer height=%d, round=%d", height, round)
-		plog.Error("makeBlock error", "err", err)
-		return err
+		plog.Info("makeBlock I'm not Proposer", "height", height, "round", round)
+		return nil
 	}
 	minerAddr := address.PubKeyToAddr(pm.Pubkey)
 	if minerAddr != bp {
-		err := fmt.Errorf("I'm not Bp %d, %d", height, round)
-		plog.Error("makeBlock error", "err", err)
-		return err
+		plog.Info("makeBlock I'm not Bp", "height", height, "round", round)
+		return nil
 	}
 
 	tx, w, err := n.genMinerTx(height, round, bp)
@@ -151,7 +149,7 @@ func (n *node) makeBlock(height int64, round int, bp string) error {
 }
 
 func (n *node) addBlock(b *types.Block) {
-	if !n.IsCaughtUp() {
+	if !n.miningOK() {
 		return
 	}
 	plog.Info("node.addBlock", "height", b.Height, "hash", hexs(b.HashOld()))

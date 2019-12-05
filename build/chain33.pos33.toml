@@ -43,6 +43,7 @@ enableTxQuickIndex=true
 enableReExecLocal=true
 
 [p2p]
+port=13081
 seeds=[]
 enable=true
 isSeed=true
@@ -90,6 +91,27 @@ genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["pos33"]
 
+[consensus.sub.pos33]
+genesisBlockTime=1514533394
+listenAddr="0.0.0.0:10901"
+advertiseAddr=""
+bootPeerAddr=""
+nodeID="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+
+[[consensus.sub.pos33.genesis]]
+minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+returnAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+count=15
+
+#[[consensus.sub.pos33.genesis]]
+#minerAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+#returnAddr="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+#count=10
+
+#[[consensus.sub.pos33.genesis]]
+#minerAddr="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+#returnAddr="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
+#count=10
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
 powLimitBits="0x1f00ffff"
@@ -130,28 +152,6 @@ targetTimePerBlock=16
 #targetTimespan=720
 #targetTimePerBlock=5
 #ticketPrice = 3000
-
-[consensus.sub.pos33]
-genesisBlockTime=1514533394
-listenAddr="0.0.0.0:10901"
-advertiseAddr=""
-bootPeerAddr=""
-nodeID="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-
-[[consensus.sub.pos33.genesis]]
-minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-returnAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-count=15
-
-#[[consensus.sub.pos33.genesis]]
-#minerAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-#returnAddr="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
-#count=10
-
-#[[consensus.sub.pos33.genesis]]
-#minerAddr="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
-#returnAddr="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
-#count=10
 
 [store]
 name="kvmvccmavl"
