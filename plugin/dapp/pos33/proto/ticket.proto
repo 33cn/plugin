@@ -3,7 +3,6 @@ package types;
 
 import "common.proto";
 import "transaction.proto";
-import "blockchain.proto";
 
 message Pos33Ticket {
     string ticketId = 1;
@@ -40,9 +39,8 @@ message Pos33TicketAction {
 message Pos33Msg {
     bytes data = 1;
     enum Ty {
-        B = 0; // block msg
-        V = 1; // vote msg
-        S = 2; // sortition msg
+        V = 0; // vote msg
+        S = 1; // sortition msg
     }
     Ty ty = 2;
 }
@@ -75,17 +73,18 @@ message Pos33ElectMsg {
     int32      round  = 7;
     Signature  sig    = 4;
 }
-*/
 
 message Pos33BlockMsg {
     Pos33SortitionMsg sort = 1;
     Block             b    = 2;
 }
+*/
 
 message Pos33VoteMsg {
-    Pos33SortitionMsg sort       = 1;
-    bytes             block_hash = 2;
-    Signature         sig        = 4;
+    Pos33SortitionMsg sort = 1;
+    // bytes             block_hash = 2;
+    string    bp  = 3;
+    Signature sig = 4;
 }
 
 message Pos33Votes {
