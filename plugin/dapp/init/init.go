@@ -20,6 +20,7 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/privacy"    //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/relay"      //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/retrieve"   //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/storage"    //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/ticket"     //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/token"      //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/trade"      //auto gen

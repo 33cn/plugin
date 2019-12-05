@@ -118,20 +118,20 @@ func (c *channelClient) GetDoneTitleHeight(ctx context.Context, req *pt.ReqParac
 	return nil, types.ErrDecode
 }
 
-func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqHash) (*pt.ParacrossAsset, error) {
+func (c *channelClient) GetAssetTxResult(ctx context.Context, req *types.ReqString) (*pt.ParacrossAssetRsp, error) {
 	cfg := c.GetConfig()
 	data, err := c.Query(pt.GetExecName(cfg), "GetAssetTxResult", req)
 	if err != nil {
 		return nil, err
 	}
-	if resp, ok := data.(*pt.ParacrossAsset); ok {
+	if resp, ok := data.(*pt.ParacrossAssetRsp); ok {
 		return resp, nil
 	}
 	return nil, types.ErrDecode
 }
 
 // GetAssetTxResult get asset tx result
-func (c *Jrpc) GetAssetTxResult(req *types.ReqHash, result *interface{}) error {
+func (c *Jrpc) GetAssetTxResult(req *types.ReqString, result *interface{}) error {
 	if req == nil {
 		return types.ErrInvalidParam
 	}

@@ -221,11 +221,15 @@ func (p *Paracross) Query_GetDoneTitleHeight(in *pt.ReqParacrossTitleHeight) (ty
 }
 
 // Query_GetAssetTxResult query get asset tx reseult
-func (p *Paracross) Query_GetAssetTxResult(in *types.ReqHash) (types.Message, error) {
-	if in == nil {
+func (p *Paracross) Query_GetAssetTxResult(in *types.ReqString) (types.Message, error) {
+	if in == nil || in.Data == "" {
 		return nil, types.ErrInvalidParam
 	}
-	return p.paracrossGetAssetTxResult(in.Hash)
+	hash, err := common.FromHex(in.Data)
+	if err != nil {
+		return nil, errors.Wrap(err, "fromHex")
+	}
+	return p.paracrossGetAssetTxResult(hash)
 }
 
 // Query_GetMainBlockHash query get mainblockHash by tx
@@ -299,7 +303,7 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			MostSameCommit: st.MostSameCommit,
 			Title:          st.Title,
 			Height:         st.Height,
-			TxResult:       hex.EncodeToString(st.TxResult),
+			TxResult:       string(st.TxResult),
 		}
 
 		resp.Titles = append(resp.Titles, rst)
@@ -403,13 +407,34 @@ func (p *Paracross) paracrossGetAssetTxResult(hash []byte) (types.Message, error
 		return nil, err
 	}
 
-	var result pt.ParacrossAsset
-	err = types.Decode(value, &result)
+	var rst pt.ParacrossAsset
+	err = types.Decode(value, &rst)
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	rsp := &pt.ParacrossAssetRsp{
+		From:             rst.From,
+		To:               rst.To,
+		Amount:           rst.Amount,
+		Exec:             rst.Exec,
+		Symbol:           rst.Symbol,
+		Height:           rst.Height,
+		CommitDoneHeight: rst.CommitDoneHeight,
+		ParaHeight:       rst.ParaHeight,
+	}
+
+	rsp.TxHash = common.ToHex(rst.TxHash)
+	rsp.IsWithdraw = "false"
+	if rst.IsWithdraw {
+		rsp.IsWithdraw = "true"
+	}
+	rsp.Success = "false"
+	if rst.Success {
+		rsp.Success = "true"
+	}
+
+	return rsp, nil
 }
 
 //Query_GetSelfConsStages get self consensus stages configed
