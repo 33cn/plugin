@@ -8,6 +8,8 @@ ISSU_ID=""
 DEBT_ID=""
 COLL_ID=""
 BORROW_ID=""
+issuance_addr=""
+collateralize_addr=""
 SystemManager="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 TokenSuperManager="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
 TokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
@@ -26,7 +28,7 @@ source ../dapp-test-common.sh
 
 issuance_Create() {
     echo "========== # issuance create begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"issuance","actionName":"IssuanceCreate","payload":{"debtCeiling":"1000.1", "totalBalance":"10000.1"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"issuance","actionName":"IssuanceCreate","payload":{"debtCeiling":1000.1, "totalBalance":10000.1}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
@@ -83,7 +85,7 @@ issuance_Feed() {
 
 issuance_Debt() {
     echo "========== # issuance debt begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"issuance","actionName":"Continue","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"issuance","actionName":"IssuanceDebt","payload":{"issuanceId":"'"${ISSU_ID}"'", "value":10}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
@@ -143,7 +145,7 @@ issuance_Close() {
 
 collateralize_Manage() {
     echo "========== # collateralize manage begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeManage","payload":{"debtCeiling":"1000.1", "totalBalance":"10000.1"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeManage","payload":{"debtCeiling":1000.1, "totalBalance":10000.1}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
@@ -163,7 +165,7 @@ collateralize_Manage() {
 
 collateralize_Create() {
     echo "========== # collateralize create begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeCreate","payload":{"debtCeiling":"1000.1", "totalBalance":"10000.1"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeCreate","payload":{"debtCeiling":1000.1, "totalBalance":10000.1}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
@@ -206,7 +208,7 @@ collateralize_Feed() {
 
 collateralize_Borrow() {
     echo "========== # collateralize borrow begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeBorrow","payload":{"collateralizeId":"'"${COLL_ID}"'", "value":100.1}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"collateralize","actionName":"CollateralizeBorrow","payload":{"collateralizeId":"'"${COLL_ID}"'", "value":10.1}}]}' ${MAIN_HTTP} | jq -r ".result")
 
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
@@ -313,6 +315,9 @@ init() {
 
         chain33_applyCoins "${CollateralizeAddr}" 12000000000 "${main_ip}"
         chain33_QueryBalance "${CollateralizeAddr}" "$main_ip"
+
+        chain33_applyCoins "${TokenAddr}" 12000000000 "${main_ip}"
+        chain33_QueryBalance "${TokenAddr}" "$main_ip"
     else
         # tx fee
         chain33_applyCoins ${IssuanceAddr1} 1000000000 "${main_ip}"
@@ -326,6 +331,9 @@ init() {
 
         chain33_applyCoins "${CollateralizeAddr}" 1000000000 "${main_ip}"
         chain33_QueryBalance "${CollateralizeAddr}" "$main_ip"
+
+        chain33_applyCoins "${TokenAddr}" 1000000000 "${main_ip}"
+        chain33_QueryBalance "${TokenAddr}" "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
         #para chain import pri key
@@ -391,7 +399,7 @@ manage() {
 #
 #    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
 #    echo "========== # issuance add issuance-guarantor end =========="
-    chain33_BlockWait 1 ${MAIN_HTTP}
+#    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 token() {
@@ -421,7 +429,7 @@ token() {
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     echo "========== # issuance add token precreate begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateRawTokenPreCreateTx","params":[{"name": "ccny", "symbol": "CCNY", "total": 100000000, "price": 1, "category": 1,"owner":"'${TokenAddr}'"}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"token.CreateRawTokenPreCreateTx","params":[{"name": "ccny", "symbol": "CCNY", "total": 10000000000000000, "price": 0, "category": 1,"owner":"'${TokenAddr}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
@@ -433,7 +441,7 @@ token() {
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     echo "========== # issuance add token finish begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateRawTokenFinishTx","params":[{"symbol": "CCNY", "owner":"'${TokenAddr}'"}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"token.CreateRawTokenFinishTx","params":[{"symbol": "CCNY", "owner":"'${TokenAddr}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
@@ -445,7 +453,7 @@ token() {
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     echo "========== # issuance add token transfer begin =========="
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "100000", "note": "", "to": "'"${IssuanceAddr1}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${IssuanceAddr1}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
@@ -454,7 +462,16 @@ token() {
 
     chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
 
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "1000", "note": "", "to": "'"${CollateralizeAddr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${IssuanceAddr3}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "100000000000", "note": "", "to": "'"${CollateralizeAddr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
     ok=$(jq '(.execer != "")' <<<"$data")
 
@@ -463,6 +480,36 @@ token() {
 
     chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token transfer end =========="
+    chain33_BlockWait 1 ${MAIN_HTTP}
+
+    echo "========== # issuance add token transfer to issuance begin =========="
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${issuance_addr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignRawTx "${tx}" "${IssuancePriv1}" "${MAIN_HTTP}"
+
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${collateralize_addr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignRawTx "${tx}" "${IssuancePriv3}" "${MAIN_HTTP}"
+
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "100000000000", "note": "", "to": "'"${collateralize_addr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignRawTx "${tx}" "${CollateralizePriv}" "${MAIN_HTTP}"
+    echo "========== # issuance add token transfer to issuance end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
@@ -481,9 +528,9 @@ function issuance_test() {
 }
 
 function collateralize_test() {
-    collateralize_Create
-
     collateralize_Manage
+
+    collateralize_Create
 
     collateralize_Feed
 
@@ -503,6 +550,7 @@ function main() {
 
     init
     manage
+    token
     issuance_test
     collateralize_test
 
