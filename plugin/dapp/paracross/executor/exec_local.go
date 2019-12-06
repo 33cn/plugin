@@ -30,7 +30,6 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
-			g.ChainExecHeight = e.GetHeight()
 
 			key := calcLocalTitleKey(g.Title)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})

@@ -112,7 +112,8 @@ func createAssetWithdraw(cmd *cobra.Command, args []string) {
 }
 
 func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
-	title, _ := cmd.Flags().GetString("paraName")
+	title, _ := cmd.Flags().GetString("title")
+	//这里cfg除了里面FormatTx需要外，没其他作用，平行链执行器需要的参数已经填好了，这里title就是默认空就可以，支持主链构建平行链交易
 	cfg := types.GetCliSysParam(title)
 
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -125,11 +126,12 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	note, _ := cmd.Flags().GetString("note")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	if !strings.HasPrefix(title, "user.p") {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	if !strings.HasPrefix(paraName, "user.p") {
 		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
 		return "", types.ErrInvalidParam
 	}
-	execName := title + pt.ParaX
+	execName := paraName + pt.ParaX
 
 	param := types.CreateTx{
 		To:          toAddr,

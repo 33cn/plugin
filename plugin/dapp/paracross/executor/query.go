@@ -295,12 +295,13 @@ func listLocalTitles(db dbm.KVDB) (types.Message, error) {
 			panic(err)
 		}
 		rst := &pt.RespParacrossDone{
-			TotalNodes:     st.TotalNodes,
-			TotalCommit:    st.TotalCommit,
-			MostSameCommit: st.MostSameCommit,
-			Title:          st.Title,
-			Height:         st.Height,
-			TxResult:       string(st.TxResult),
+			TotalNodes:      st.TotalNodes,
+			TotalCommit:     st.TotalCommit,
+			MostSameCommit:  st.MostSameCommit,
+			Title:           st.Title,
+			Height:          st.Height,
+			ChainExecHeight: st.ChainExecHeight,
+			TxResult:        string(st.TxResult),
 		}
 
 		resp.Titles = append(resp.Titles, rst)
