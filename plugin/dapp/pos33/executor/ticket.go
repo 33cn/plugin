@@ -173,8 +173,14 @@ func (t *Pos33Ticket) updateAllPos33TicketCount(n int) (kvs []*types.KeyValue) {
 				panic(err)
 			}
 		}
-	} else if n == 0 {
-		return
+	} else {
+		if n == 0 {
+			return
+		}
+		count, err = strconv.Atoi(string(value))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	count += n

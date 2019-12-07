@@ -141,6 +141,18 @@ func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
 	return cr.PrivKeyFromBytes(privkey)
 }
 
+func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
+	client.privLock.Lock()
+	defer client.privLock.Unlock()
+	return client.privmap[mineAddr]
+}
+
+func (client *Client) getTicket(tid string) *pt.Pos33Ticket {
+	client.tickLock.Lock()
+	defer client.tickLock.Unlock()
+	return client.ticketsMap[tid]
+}
+
 func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
 	list := make(map[string]crypto.PrivKey)
 	for _, priv := range privs {

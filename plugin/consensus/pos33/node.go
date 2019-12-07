@@ -22,9 +22,9 @@ type node struct {
 	gss *gossip
 
 	// I'm candidate proposer in these blocks
-	ips map[int64]*pt.Pos33SortitionMsg
+	ips map[int64]map[int]*pt.Pos33SortitionMsg
 	// I'm candidate verifer in these blocks
-	ivs map[int64][]*pt.Pos33SortitionMsg
+	ivs map[int64]map[int][]*pt.Pos33SortitionMsg
 	// receive candidate proposers
 	cps map[int64]map[int]map[string]*pt.Pos33SortitionMsg
 	// receive candidate verifers
@@ -41,8 +41,8 @@ type node struct {
 // New create pos33 consensus client
 func newNode(conf *subConfig) *node {
 	n := &node{
-		ips: make(map[int64]*pt.Pos33SortitionMsg),
-		ivs: make(map[int64][]*pt.Pos33SortitionMsg),
+		ips: make(map[int64]map[int]*pt.Pos33SortitionMsg),
+		ivs: make(map[int64]map[int][]*pt.Pos33SortitionMsg),
 		cps: make(map[int64]map[int]map[string]*pt.Pos33SortitionMsg),
 		cvs: make(map[int64]map[int]map[string][]*pt.Pos33VoteMsg),
 		cbs: make(map[int64]map[string]*types.Block),
@@ -75,7 +75,7 @@ func (n *node) getNotNullBlock(height int64) (*types.Block, error) {
 	return nil, nil
 }
 
-func (n *node) genMinerTx(height int64, round int, bp string) (*types.Transaction, int, error) {
+func (n *node) genMinerTx(height int64, round int, bp string, sm *pt.Pos33SortitionMsg) (*types.Transaction, int, error) {
 	vs := n.cvs[height][round][bp]
 
 	plog.Info("genRewordTx", "height", height, "vsw", len(vs))
@@ -88,12 +88,11 @@ func (n *node) genMinerTx(height int64, round int, bp string) (*types.Transactio
 		vs = vs[:pt.Pos33VoterSize]
 	}
 
-	sort := n.ips[height]
 	act := &pt.Pos33TicketAction{
 		Value: &pt.Pos33TicketAction_Pminer{
 			Pminer: &pt.Pos33Miner{
 				Votes: vs,
-				Sort:  sort,
+				Sort:  sm,
 			},
 		},
 		Ty: pt.Pos33TicketActionMiner,
@@ -105,7 +104,14 @@ func (n *node) genMinerTx(height int64, round int, bp string) (*types.Transactio
 		return nil, 0, err
 	}
 
-	priv := n.privmap[n.ticketsMap[sort.Input.TicketId].MinerAddress]
+	t := n.getTicket(sm.Input.TicketId)
+	if t == nil {
+		return nil, 0, fmt.Errorf("my ticket is gone tid=%s", sm.Input.TicketId)
+	}
+	priv := n.getPriv(t.MinerAddress)
+	if priv == nil {
+		return nil, 0, fmt.Errorf("my minerAddr is gone mineraddr=%s", t.MinerAddress)
+	}
 	tx.Sign(types.SECP256K1, priv)
 	return tx, len(vs), nil
 }
@@ -118,34 +124,63 @@ func (n *node) diff(w int) uint32 {
 	return difficulty.BigToCompact(newDiff)
 }
 
-func (n *node) makeBlock(height int64, round int, bp string) error {
-	pm, ok := n.ips[height]
+func (n *node) myVotes(height int64, round int) []*pt.Pos33SortitionMsg {
+	mp, ok := n.ivs[height]
 	if !ok {
-		plog.Info("makeBlock I'm not Proposer", "height", height, "round", round)
-		return nil
-	}
-	minerAddr := address.PubKeyToAddr(pm.Pubkey)
-	if minerAddr != bp {
-		plog.Info("makeBlock I'm not Bp", "height", height, "round", round)
 		return nil
 	}
 
-	tx, w, err := n.genMinerTx(height, round, bp)
+	vs, ok := mp[round]
+	if !ok {
+		return nil
+	}
+
+	return vs
+}
+
+func (n *node) mySort(height int64, round int) *pt.Pos33SortitionMsg {
+	mp, ok := n.ips[height]
+	if !ok {
+		return nil
+	}
+
+	sort, ok := mp[round]
+	if !ok {
+		return nil
+	}
+
+	return sort
+}
+
+func (n *node) makeBlock(height int64, round int, bp string) {
+	sort := n.mySort(height, round)
+	if sort == nil {
+		plog.Info("makeBlock I'm not Proposer", "height", height, "round", round)
+		return
+	}
+
+	minerAddr := address.PubKeyToAddr(sort.Pubkey)
+	if minerAddr != bp {
+		plog.Info("makeBlock I'm not Bp", "height", height, "round", round)
+		return
+	}
+
+	tx, w, err := n.genMinerTx(height, round, bp, sort)
 	if err != nil {
 		plog.Error("genRewordTx error", "err", err.Error(), "height", height, "round", round, "bp", bp)
-		return err
+		return
 	}
 
 	nb, err := n.newBlock(n.lastBlock, []*Tx{tx}, height)
 	if err != nil {
 		plog.Error("makeBlock error", "height", height, "round", round, "error", err.Error())
-		return err
+		return
 	}
 
 	nb.Difficulty = n.diff(w)
 
-	plog.Info("@@@@@@@ I make a block: ", "height", height, "hash", hexs(nb.HashOld()), "txCount", len(nb.Txs), "diff", nb.Difficulty)
-	return n.setBlock(nb)
+	plog.Info("@@@@@@@ I make a block: ", "height", height, "round", round, "hash", hexs(nb.HashOld()), "txCount", len(nb.Txs), "diff", nb.Difficulty)
+	n.setBlock(nb)
 }
 
 func (n *node) addBlock(b *types.Block) {
@@ -250,7 +285,7 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 			return fmt.Errorf("height error")
 		}
 
-		// check round, all round of vote must be same
+		// check round, all round of votes must be same
 		if round != m.Input.Round {
 			return fmt.Errorf("round error")
 		}
@@ -304,9 +339,17 @@ func (n *node) reSortition(height int64, round int) {
 		}
 		plog.Info("node.reSortition", "height", height, "round", round, "step", s, "weight", len(sms))
 		if s == 0 {
-			n.ips[height] = sms[0]
+			mp := n.ips[height]
+			if mp == nil {
+				n.ips[height] = make(map[int]*pt.Pos33SortitionMsg)
+			}
+			n.ips[height][round] = sms[0]
 		} else {
-			n.ivs[height] = sms
+			mp := n.ivs[height]
+			if mp == nil {
+				n.ivs[height] = make(map[int][]*pt.Pos33SortitionMsg)
+			}
+			n.ivs[height][round] = sms
 		}
 	}
 }
@@ -337,9 +380,17 @@ func (n *node) sortition(b *types.Block, round int) {
 			}
 			plog.Info("node.sortition", "height", height, "weight", len(sms))
 			if s == 0 {
-				n.ips[height] = sms[0]
+				mp := n.ips[height]
+				if mp == nil {
+					n.ips[height] = make(map[int]*pt.Pos33SortitionMsg)
+				}
+				n.ips[height][round] = sms[0]
 			} else {
-				n.ivs[height] = sms
+				mp := n.ivs[height]
+				if mp == nil {
+					n.ivs[height] = make(map[int][]*pt.Pos33SortitionMsg)
+				}
+				n.ivs[height][round] = sms
 			}
 		}
 	}
@@ -390,9 +441,12 @@ func (n *node) handleVote(vm *pt.Pos33VoteMsg, height int64, round, allw int, bp
 	}
 
 	vs := n.cvs[height][round][vm.Bp]
-	for _, v := range vs {
+	for i, v := range vs {
 		if v.Equal(vm) {
-			return fmt.Errorf("votemsg repeated")
+			// delete previous
+			vs[i] = vs[len(vs)-1]
+			vs = vs[:len(vs)-1]
+			break
 		}
 	}
 	vs = append(vs, vm)
@@ -418,6 +472,8 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes) {
 	round := int(vm.Sort.Input.Round)
 	bp := vm.Bp
 
+	// plog.Info("handleVotesMsg", "height", height, "round", round, "bp", bp, "voter", addr(vm.GetSig()))
+
 	if n.voteOkHeight >= height {
 		return
 	}
@@ -429,22 +485,28 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes) {
 			return
 		}
 	}
+	plog.Info("handleVotesMsg", "height", height, "round", round, "bp", bp, "voter", addr(vm.GetSig()), "votes", len(n.cvs[height][round][bp]))
 	if len(n.cvs[height][round][bp])*3 > pt.Pos33VoterSize*2 {
 		plog.Info("@@@ set block 2f+1 @@@", "height", height, "bp", bp)
-
-		//n.setBlock(b)
+		n.voteOkHeight = height
 		n.makeBlock(height, round, bp)
 	}
-
 }
 
-func (n *node) handleSortitionMsg(m *pt.Pos33SortitionMsg) {
+func (n *node) handleSortitionMsg(m *pt.Pos33SortitionMsg, ht int64, rd int) {
+	if m.Input == nil {
+		plog.Error("handleSortitionMsg error, input msg is nil")
+		return
+	}
 	height := m.Input.Height
-	plog.Info("handleElectMsg", "height", height)
+	if n.voteOkHeight >= height {
+		plog.Info("SortitionMsg too late", "height", height)
+		return
+	}
 	seed, err := n.getMinerSeed(height)
 	n.verifySort(height, 0, n.allWeight(height), seed, m)
 	if err != nil {
-		plog.Info("check rand error:", "error", err.Error())
+		plog.Error("handleSortitionMsg error", "error", err.Error())
 		return
 	}
 	if n.cps[height] == nil {
@@ -454,10 +516,18 @@ func (n *node) handleSortitionMsg(m *pt.Pos33SortitionMsg) {
 	if n.cps[height][round] == nil {
 		n.cps[height][round] = make(map[string]*pt.Pos33SortitionMsg)
 	}
+	oldBp := n.bp(height, round)
 	n.cps[height][round][m.Input.TicketId] = m
+	bp := address.PubKeyToAddr(m.GetPubkey())
+	plog.Info("handleSortitionMsg", "height", height, "round", round, "sorter", bp, "size", len(n.cps[height][round]))
+
+	if height == ht && round < rd && oldBp != bp {
+		plog.Info("!!! revote !!!", "height", height, "round", round, "newBp", bp)
+		n.vote(height, round)
+	}
 }
 
-func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
+func (n *node) handlePos33Msg(pm *pt.Pos33Msg, height int64, round int) bool {
 	if pm == nil {
 		return false
 	}
@@ -469,7 +539,7 @@ func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
 			plog.Error(err.Error())
 			return false
 		}
-		n.handleSortitionMsg(&m)
+		n.handleSortitionMsg(&m, height, round)
 	case pt.Pos33Msg_V:
 		var vt pt.Pos33Votes
 		err := types.Decode(pm.Data, &vt)
@@ -537,6 +607,7 @@ func (n *node) runLoop() {
 
 	time.AfterFunc(time.Second, func() { n.addBlock(lb) })
 	round := 0
+	myheight := int64(0)
 
 	for {
 		if !n.miningOK() {
@@ -545,9 +616,10 @@ func (n *node) runLoop() {
 		}
 		select {
 		case msg := <-msgch:
-			n.handlePos33Msg(msg)
+			n.handlePos33Msg(msg, myheight, round)
 		case height := <-ch:
 			if height == n.lastBlock.Height+1 {
+				myheight = height
 				round++
 				plog.Info("vote timeout: ", "height", height, "round", round)
 				n.reSortition(height, round)
@@ -596,32 +668,46 @@ func hexs(b []byte) string {
 	return s[:16]
 }
 
-func (n *node) vote(height int64, round int) {
-	ivs, ok := n.ivs[height]
-	if !ok {
-		plog.Info("I'm not verifer", "height", height)
-		return
-	}
-
+func (n *node) bp(height int64, round int) string {
 	var pss []*pt.Pos33SortitionMsg
 	for _, s := range n.cps[height][round] {
 		pss = append(pss, s)
 	}
 	if len(pss) == 0 {
-		plog.Info("no block maker", "height", height, "round", round)
-		return
+		return ""
 	}
-	plog.Info("vote len(pss)", "height", height, "round", round, "len(pss)", len(pss))
 
 	sort.Sort(pt.Sorts(pss))
 	bp := address.PubKeyToAddress(pss[0].Pubkey).String()
 
+	return bp
+}
+
+func (n *node) vote(height int64, round int) {
+	ss := n.myVotes(height, round)
+	if ss == nil {
+		plog.Info("I'm not verifer", "height", height)
+		return
+	}
+	bp := n.bp(height, round)
+	if bp == "" {
+		return
+	}
+
 	plog.Info("vote bp", "height", height, "round", round, "bp", bp)
 	var vs []*pt.Pos33VoteMsg
-	for _, s := range ivs {
+	for _, s := range ss {
 		v := &pt.Pos33VoteMsg{Sort: s, Bp: bp}
-		t := n.ticketsMap[s.Input.TicketId]
-		priv := n.privmap[t.MinerAddress]
+		t := n.getTicket(s.Input.TicketId)
+		if t == nil {
+			plog.Error("vote error: my ticket is gone", "ticketID", s.Input.TicketId)
+			return
+		}
+		priv := n.getPriv(t.MinerAddress)
+		if priv == nil {
+			plog.Error("vote error: my miner address is gone", "mineaddr", t.MinerAddress)
+			return
+		}
 		v.Sign(priv)
 		vs = append(vs, v)
 	}
@@ -632,13 +718,13 @@ func (n *node) vote(height int64, round int) {
 
 func (n *node) elect(height int64, round int) {
 	n.etm = time.NewTimer(time.Millisecond * 1000)
-	pm, ok := n.ips[height]
-	if !ok {
+	sm := n.mySort(height, round)
+	if sm == nil {
 		plog.Info("elect: I'm not Proposer", "height", height, "round", round)
 		return
 	}
-	n.handleSortitionMsg(pm)
-	n.gss.gossip(marshalSortMsg(pm))
+	n.handleSortitionMsg(sm, height, round)
+	n.gss.gossip(marshalSortMsg(sm))
 }
 
 func marshalSortMsg(m *pt.Pos33SortitionMsg) []byte {

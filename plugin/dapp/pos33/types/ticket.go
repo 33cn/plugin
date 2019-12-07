@@ -197,9 +197,9 @@ func (v *Pos33VoteMsg) Verify() bool {
 
 // Equal is ...
 func (v *Pos33VoteMsg) Equal(other *Pos33VoteMsg) bool {
-	h1 := crypto.Sha256(types.Encode(v))
-	h2 := crypto.Sha256(types.Encode(other))
-	return string(h1) == string(h2)
+	return v.Sort.Input.Height == other.Sort.Input.Height &&
+		v.Sort.Input.Round == other.Sort.Input.Round &&
+		v.Sort.Input.TicketId == other.Sort.Input.TicketId
 }
 
 // Sign is sign vote msg
