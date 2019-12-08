@@ -32,10 +32,9 @@ type node struct {
 	// receive candidate blocks
 	cbs map[int64]map[string]*types.Block
 
-	voteOkHeight int64
-	lastBlock    *types.Block
-	bch          chan *types.Block
-	etm          *time.Timer
+	lastBlock *types.Block
+	bch       chan *types.Block
+	etm       *time.Timer
 }
 
 // New create pos33 consensus client
@@ -414,10 +413,6 @@ func (n *node) handleVote(vm *pt.Pos33VoteMsg, height int64, round, allw int, bp
 		return fmt.Errorf("vote Bp is NOT consistent")
 	}
 
-	if vm == nil || height <= n.lastBlock.Height {
-		return fmt.Errorf("votemsg too late height = %d", height)
-	}
-
 	if string(vm.Sig.Pubkey) != string(vm.Sort.Pubkey) {
 		return fmt.Errorf("vote pubkey is NOT consistent")
 	}
@@ -474,9 +469,11 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes) {
 
 	// plog.Info("handleVotesMsg", "height", height, "round", round, "bp", bp, "voter", addr(vm.GetSig()))
 
-	if n.voteOkHeight >= height {
+	if vm == nil || height <= n.lastBlock.Height {
+		plog.Info("handleVoteMsg vote too late", "height", height, "round", round)
 		return
 	}
+
 	allw := n.allWeight(height)
 	for _, vm := range vms.Vs {
 		err := n.handleVote(vm, height, round, allw, bp)
@@ -488,7 +485,6 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes) {
 	plog.Info("handleVotesMsg", "height", height, "round", round, "bp", bp, "voter", addr(vm.GetSig()), "votes", len(n.cvs[height][round][bp]))
 	if len(n.cvs[height][round][bp])*3 > pt.Pos33VoterSize*2 {
 		plog.Info("@@@ set block 2f+1 @@@", "height", height, "bp", bp)
-		n.voteOkHeight = height
 		n.makeBlock(height, round, bp)
 	}
 }
@@ -499,7 +495,7 @@ func (n *node) handleSortitionMsg(m *pt.Pos33SortitionMsg, ht int64, rd int) {
 		return
 	}
 	height := m.Input.Height
-	if n.voteOkHeight >= height {
+	if n.lastBlock != nil && n.lastBlock.Height >= height {
 		plog.Info("SortitionMsg too late", "height", height)
 		return
 	}
@@ -644,7 +640,7 @@ func (n *node) runLoop() {
 				ch <- height
 			})
 		case b := <-n.bch: // new block add to chain
-			if b.Height < n.voteOkHeight {
+			if n.lastBlock != nil && b.Height < n.lastBlock.Height {
 				break
 			}
 			if b.Height%pt.Pos33SortitionSize == 0 {
