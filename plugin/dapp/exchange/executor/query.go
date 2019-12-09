@@ -16,9 +16,6 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
-	if !CheckPrice(in.Price) {
-		return nil, et.ErrAssetPrice
-	}
 
 	if !CheckOp(in.Op) {
 		return nil, et.ErrAssetOp
