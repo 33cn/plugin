@@ -23,19 +23,9 @@ oracle_AddPublisher() {
 }
 
 oracle_publish_transaction() {
- #   req='"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":1747814996,"content":"test","introduction":"test"}}]'
-    #echo "#request: $req"
- #   resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
- #   echo "#response: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":1747814996,"content":"test","introduction":"test"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
     eventId="${txhash}"
     echo "eventId $eventId"
 }
@@ -43,74 +33,33 @@ oracle_publish_transaction() {
 oracle_prePublishResult_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPrePublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"0:1"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    #echo "#request: $req"
-#    resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
- #   echo "#response: $resp"
-#    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
-#    echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_eventAbort_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventAbort","payload":{"eventID":"'"$event_id"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    #echo "#request: $req"
- #   resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
- #   echo "#response: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_resultAbort_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultAbort","payload":{"eventID":"'"$event_id"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    #echo "#request: $req"
- #   resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
-  #  echo "#response: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_publishResult_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"1:1"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    #echo "#request: $req"
- #   resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
- #   echo "#response: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${oracle_publisher_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_QueryOraclesByID() {
     event_id=$1
- #   local req='"method":"Chain33.Query", "params":[{"execer":"oracle","funcName":"QueryOraclesByIDs","payload":{"eventID":["'"$event_id"'"]}}]'
-    #echo "#request: $req"
-  #  resp=$(curl -ksd "{$req}" ${MAIN_HTTP})
- #   echo "#response: $resp"
- #   ok=$(jq '(.error|not) and (.result.status[0] | [has("eventID", "status", "type", "subType", "source"),true] | unique | length == 1)' <<<"$resp")
-  #  [ "$ok" == true ]
- #   rst=$?
- #   echo_rst "$FUNCNAME" "$rst"
-
     req='{"method":"Chain33.Query", "params":[{"execer":"oracle","funcName":"QueryOraclesByIDs","payload":{"eventID":["'"$event_id"'"]}}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result.status[0] | [has("eventID", "status", "type", "subType", "source"),true] | unique | length == 1)' "$FUNCNAME"
 }
@@ -149,14 +98,12 @@ function run_test() {
 }
 
 function main() {
-
+    chain33_RpcTestBegin oracle
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
-    chain33_RpcTestBegin oracle
     run_test
-
     chain33_RpcTestRst oracle "$CASE_ERR"
 }
 
-main "$1"
+chain33_debug_function main "$1"

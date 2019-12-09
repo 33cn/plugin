@@ -47,16 +47,9 @@ function evm_createContract() {
 }
 
 function evm_addressCheck() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    bContract=$(echo "${res}" | jq -r ".result.contract")
-    contractAddr=$(echo "${res}" | jq -r ".result.contractAddr")
-    if [ "${bContract}" == "true" ] && [ "${contractAddr}" == "${evm_contractAddr}" ]; then
-        echo_rst "evm address check" 0
-    else
-        echo_rst "evm address check" 1
-    fi
-
-    return
+    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}'
+    resok='(.result.contract == true ) and (.result.contractAddr == "'"${evm_contractAddr}"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 function evm_callContract() {
     op=$1
@@ -81,14 +74,8 @@ function evm_callContract() {
 }
 
 function evm_abiGet() {
-    abiInfo=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    res=$(echo "${abiInfo}" | jq -r ".result" | jq -r 'has("abi")')
-    if [ "${res}" == "true" ]; then
-        echo_rst "CallContract queryExecRes" 0
-    else
-        echo_rst "CallContract queryExecRes" 1
-    fi
-    return
+    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}'
+    http_req "$req" ${MAIN_HTTP} "(.result.abi != null)" "$FUNCNAME"
 }
 
 function evm_transfer() {
@@ -111,16 +98,9 @@ function evm_transfer() {
 
 function evm_getBalance() {
     expectBalance=$1
-    echo "This is evm get balance test."
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    balance=$(echo "${res}" | jq -r ".result[0].balance")
-    addr=$(echo "${res}" | jq -r ".result[0].addr")
-
-    if [ "${balance}" == "${expectBalance}" ] && [ "${addr}" == "${evm_creatorAddr}" ]; then
-        echo_rst "evm getBalance" 0
-    else
-        echo_rst "evm getBalance" 1
-    fi
+    req='{"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}'
+    resok='(.result[0].balance == '$expectBalance') and (.result[0].addr == "'"$evm_creatorAddr"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function evm_withDraw() {
@@ -243,14 +223,12 @@ function run_test() {
 
 function main() {
     chain33_RpcTestBegin evm
-
     local ip=$1
     MAIN_HTTP=$ip
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_test "$MAIN_HTTP"
-
     chain33_RpcTestRst evm "$CASE_ERR"
 }
 

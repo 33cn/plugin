@@ -40,74 +40,34 @@ function init() {
 }
 
 function configJSCreator() {
- #   req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[{"execer":"'${manager_name}'","actionName":"Modify","payload":{"key":"js-creator","op":"add", "value" : "'${beneficiary}'"}}]}'
- #   echo "#request: $req"
- #   resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
-    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${manager_name}'","actionName":"Modify","payload":{"key":"js-creator","op":"add", "value" : "'${beneficiary}'"}}]}'
-	resok='(.error|not) and (.result != "")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
-
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${super_manager}" "${MAIN_HTTP}"
+    req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${manager_name}'","actionName":"Modify","payload":{"key":"js-creator","op":"add","value":"'${beneficiary}'"}}]}'
+	resok='(.error|not) and (.result != null)'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${super_manager}" "${MAIN_HTTP}"
 }
 
 function createJSContract() {
- #   req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[{"execer":"'${exec_name}'","actionName":"Create","payload":{"name":"'${game}'","code":"'${jsCode}'"}}]}'
- #   echo "#request: $req"
- #   resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${exec_name}'","actionName":"Create","payload":{"name":"'${game}'","code":"'${jsCode}'"}}]}'
-	resok='(.error|not) and (.result != "")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
-
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${beneficiary_key}" "${MAIN_HTTP}"
+	resok='(.error|not) and (.result != null)'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function callJS() {
-    #the_exec=
- #   req='{"jsonrpc": "2.0", "method" :  "Chain33.CreateTransaction" , "params":[{"execer":"'${user_game}'","actionName":"Call","payload":{"name":"'${game}'","funcname":"hello", "args" : "{}"}}]}'
-    # echo "#request: $req"
- #   resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
-  #  [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${user_game}'","actionName":"Call","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
-	resok='(.error|not) and (.result != "")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
-
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${beneficiary_key}" "${MAIN_HTTP}"
+	resok='(.error|not) and (.result != null)'
+	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function queryJS() {
- #   req='{"jsonrpc": "2.0", "method" :  "Chain33.Query" , "params":[{"execer":"'${user_game}'","funcName":"Query","payload":{"name":"'${game}'","funcname":"hello", "args" : "{}"}}]}'
-    # echo "#request: $req"
-  #  resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.Query","params":[{"execer":"'${user_game}'","funcName":"Query","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
-	resok='(.error|not) and (.result != "")'
+	resok='(.error|not) and (.result != null)'
 	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_testcases() {
     configJSCreator
-
     createJSContract
     callJS
     queryJS
@@ -115,13 +75,11 @@ function run_testcases() {
 
 function rpc_test() {
     chain33_RpcTestBegin js
-
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_testcases
-
     chain33_RpcTestRst js "$CASE_ERR"
 }
 

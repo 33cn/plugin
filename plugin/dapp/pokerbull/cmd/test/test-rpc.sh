@@ -10,109 +10,39 @@ GAME_ID=""
 source ../dapp-test-common.sh
 
 pokerbull_PlayRawTx() {
-    echo "========== # pokerbull play tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Play","payload":{"gameId":"pokerbull-abc", "value":"1000000000", "round":1}}]}' ${MAIN_HTTP} | jq -r ".result")
-
- #   data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
- #   ok=$(jq '(.execer != "")' <<<"$data")
-
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
-    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
-
-    chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
-    echo "========== # pokerbull play tx end =========="
-
-    chain33_BlockWait 1 ${MAIN_HTTP}
+    chain33_DecodeRawTransactionTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 pokerbull_QuitRawTx() {
-    echo "========== # pokerbull quit tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Quit","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-
-  #  data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-  #  ok=$(jq '(.execer != "")' <<<"$data")
-
-  #  [ "$ok" == true ]
-  #  echo_rst "$FUNCNAME" "$?"
-    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
-
-    chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
-    echo "========== # pokerbull quit tx end =========="
-
-    chain33_BlockWait 1 "${MAIN_HTTP}"
+    chain33_DecodeRawTransactionTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 pokerbull_ContinueRawTx() {
-    echo "========== # pokerbull continue tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Continue","payload":{"gameId":"'$GAME_ID'"}}]}' ${MAIN_HTTP} | jq -r ".result")
-
-  #  data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-  #  ok=$(jq '(.execer != "")' <<<"$data")
-
-  #  [ "$ok" == true ]
-  #  echo_rst "$FUNCNAME" "$?"
-    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
-
-    chain33_SignRawTx "$tx" "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" ${MAIN_HTTP}
-    echo "========== # pokerbull continue tx end =========="
-
-    chain33_BlockWait 1 "${MAIN_HTTP}"
+    chain33_DecodeRawTransactionTx "$tx" "0xa26038cbdd9e6fbfb85f2c3d032254755e75252b9edccbecc16d9ba117d96705" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 pokerbull_StartRawTx() {
-    echo "========== # pokerbull start tx begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"pokerbull","actionName":"Start","payload":{"value":"1000000000", "playerNum":"2"}}]}' ${MAIN_HTTP} | jq -r ".result")
-
-  #  data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
- #   ok=$(jq '(.execer != "")' <<<"$data")
-
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.txs[0].execer != "")' "$FUNCNAME"
-
+    http_req "$req" ${MAIN_HTTP} '(.result.txs[0].execer != null)' "$FUNCNAME"
     chain33_SignRawTx "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP}
     GAME_ID=$RAW_TX_HASH
-    echo "========== # pokerbull start tx end =========="
-
     chain33_BlockWait 1 "${MAIN_HTTP}"
 }
 
 pokerbull_QueryResult() {
-    echo "========== # pokerbull query result begin =========="
-  #  local req='"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]'
-  #  data=$(curl -ksd "{$req}" ${MAIN_HTTP} | jq -r ".result")
-
-   # ok=$(jq '(.game.gameId == "'"$GAME_ID"'")' <<<"$data")
-
-  #  [ "$ok" == true ]
-  #  echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByID","payload":{"gameId":"'$GAME_ID'"}}]}'
     resok='(.result.game.gameId == "'"$GAME_ID"'")'
     http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
-  #  data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4"}}]}' ${MAIN_HTTP} | jq -r ".result")
-  #  [ "$data" != null ]
-  #  echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByAddr","payload":{"addr":"14VkqML8YTRK4o15Cf97CQhpbnRUa6sJY4"}}]}'
     http_req "$req" ${MAIN_HTTP} '(.result != null)' "$FUNCNAME"
 
-  #  data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}' ${MAIN_HTTP} | jq -r ".result")
- #   [ "$data" != null ]
- #   echo_rst "$FUNCNAME" "$?"
-
     req='{"method":"Chain33.Query","params":[{"execer":"pokerbull","funcName":"QueryGameByStatus","payload":{"status":"3"}}]}'
     http_req "$req" ${MAIN_HTTP} '(.result != null)' "$FUNCNAME"
-
-    echo "========== # pokerbull query result end =========="
 }
 
 init() {
@@ -185,7 +115,6 @@ function main() {
 
     init
     run_test
-
     chain33_RpcTestRst pokerbull "$CASE_ERR"
 }
 

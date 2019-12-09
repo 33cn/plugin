@@ -25,14 +25,23 @@ echo_rst() {
 }
 
 http_req() {
+  #  echo "request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
   #  echo "#$4 request: $1"
     HTTP_RESP=$(curl -ksd "$1" "$2")
     RAW_RESP=$(jq -r "$5" <<<"$HTTP_RESP")
-  #  echo "#response: $HTTP_RESP"
+  #  echo "#response: $HTTP_RESP" "$RAW_RESP"
     ok=$(echo "$HTTP_RESP" | jq -r "$3")
     [ "$ok" == true ]
     rst=$?
     echo_rst "$4" "$rst" "$HTTP_RESP"
+}
+
+chain33_DecodeRawTransactionTx() {
+    # txHex="$1" priKey="$2" MAIN_HTTP="$3" FUNCNAME="$4"
+    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$1"'"}]}'
+    http_req "$req" $3 '(.result.txs[0].execer != "")' "$4"
+    chain33_SignRawTx "$1" "$2" $3
+    chain33_BlockWait 1 $3
 }
 
 chain33_BlockWait() {

@@ -15,32 +15,39 @@ execName="token"
 txHash=""
 
 #color
-RED='\033[1;31m'
-GRE='\033[1;32m'
-NOC='\033[0m'
+#RED='\033[1;31m'
+#GRE='\033[1;32m'
+#NOC='\033[0m'
 
 # $2=0 means true, other false
-function echo_rst() {
-    if [ "$2" -eq 0 ]; then
-        echo -e "${GRE}$1 ok${NOC}"
-    else
-        echo -e "${RED}$1 fail${NOC}"
-        CASE_ERR="FAIL"
-    fi
-}
+#function echo_rst() {
+#    if [ "$2" -eq 0 ]; then
+#        echo -e "${GRE}$1 ok${NOC}"
+#    else
+#        echo -e "${RED}$1 fail${NOC}"
+#        CASE_ERR="FAIL"
+#    fi
+#}
 
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
 function queryTransaction() {
     validator=$1
     expectRes=$2
-    echo "txhash=${txHash}"
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
+  #  echo "txhash=${RAW_TX_HASH}"
+    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${RAW_TX_HASH}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
     if [ "${res}" != "${expectRes}" ]; then
         return 1
     else
         return 0
     fi
+}
+
+function signRawTxAndQuery() {
+    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
+  #  txHash=$RAW_TX_HASH
+    queryTransaction ".error | not" "true"
+    echo_rst "$1 queryExecRes" "$?"
 }
 
 function init() {
@@ -96,25 +103,16 @@ function updateConfig() {
         echo_rst "update config create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "update config queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
+
 function token_preCreate() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.CreateRawTokenPreCreateTx","params":[{"name": "yinhebib", "symbol": "'"${tokenSymbol}"'", "total": 100000000000, "price": 100, "category": 1,"owner":"'${tokenAddr}'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
     if [ "${unsignedTx}" == "" ]; then
         echo_rst "token preCreate create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token preCreate queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function token_getPreCreated() {
@@ -132,21 +130,12 @@ function token_finish() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token finish queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function token_getFinishCreated() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":1,"tokens":[],"symbolOnly":false}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.tokens" | grep "symbol")
-
-    if [ "${res}" != "" ]; then
-        echo_rst "token get finishCreated create tx" 0
-    else
-        echo_rst "token get finishCreated create tx" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":1,"tokens":[],"symbolOnly":false}}]}'
+    http_req "$req" ${MAIN_HTTP} "(.result.tokens[0].symbol != null)" "$FUNCNAME"
 }
 
 function token_assets() {
@@ -166,8 +155,8 @@ function token_assets() {
     else
         echo_rst "token get assets tx" 1
     fi
-
 }
+
 function token_balance() {
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'${tokenAddr}'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${execName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
 
@@ -193,11 +182,7 @@ function token_burn() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token burn queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function token_mint() {
@@ -207,11 +192,7 @@ function token_mint() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token mint queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 function token_transfer() {
     unsignedTx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer": "'"${execName}"'","actionName":"Transfer","payload": {"cointoken":"'"${tokenSymbol}"'", "amount": "1000000000", "note": "", "to": "'"${recvAddr}"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
@@ -220,11 +201,7 @@ function token_transfer() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token transfer queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function token_sendExec() {
@@ -234,11 +211,7 @@ function token_sendExec() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token sendExec queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function token_withdraw() {
@@ -248,16 +221,12 @@ function token_withdraw() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    txHash=$RAW_TX_HASH
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token withdraw queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME"
 }
 
 function run_test() {
     local ip=$1
-    set -x
+#    set -x
     token_preCreate
     token_getPreCreated
 
@@ -271,19 +240,17 @@ function run_test() {
     token_sendExec
     token_assets
     token_withdraw
-    set +x
+ #   set +x
 }
 
 function main() {
-    local ip=$1
     chain33_RpcTestBegin token
-
+    local ip=$1
     MAIN_HTTP=$ip
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_test "$ip"
-
     chain33_RpcTestRst token "$CASE_ERR"
 }
 

@@ -11,12 +11,6 @@ function run_testcases() {
     echo "run_testcases"
 }
 
-function debug_function() {
-    set -x
-    eval "$@"
-    set +x
-}
-
 function rpc_test() {
     chain33_RpcTestBegin autonomy
 
@@ -30,4 +24,4 @@ function rpc_test() {
 
 }
 
-debug_function rpc_test "$1"
+chain33_debug_function rpc_test "$1"

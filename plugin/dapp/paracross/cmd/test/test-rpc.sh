@@ -9,12 +9,7 @@ IS_PARA=false
 source ../dapp-test-common.sh
 
 paracross_GetBlock2MainInfo() {
-    local height
-
-    height=$(curl -ksd '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} | jq -r ".result.items[1].height")
-    [ "$height" -eq 2 ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    http_req '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} "(.result.items[1].height == 2)" "$FUNCNAME"
 }
 
 function paracross_SignAndSend() {
@@ -22,7 +17,6 @@ function paracross_SignAndSend() {
     local sendedTx
 
     signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'"$1"',"privkey":"'"$2"'","txHex":"'"$3"'"}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "signedTx:$signedTx"
     sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP} | jq -r ".result")
     echo "sendedTx:$sendedTx"
 }
@@ -63,7 +57,6 @@ function paracross_QueryMainBalance() {
 }
 
 function paracross_Transfer_Withdraw_Inner() {
-
     # 计数器，资产转移操作和取钱操作都成功才算成功，也就是 counter == 2
     local count=0
     #fromAddr  跨链资产转移地址
@@ -201,33 +194,16 @@ function paracross_Transfer_Withdraw() {
 }
 
 function paracross_IsSync() {
-  #  local ok
-
     if [ "$IS_PARA" == "true" ]; then
         req='{"method":"paracross.IsSync","params":[]}'
-     #   ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
     else
-      #  ok=$(curl -ksd '{"method":"Chain33.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
         req='{"method":"Chain33.IsSync","params":[]}'
     fi
     http_req "$req" ${UNIT_HTTP} '.result' "$FUNCNAME"
-
-  #  [ "$ok" == true ]
-  #  local rst=$?
-  #  echo_rst "$FUNCNAME" "$rst"
 }
 
 function paracross_ListTitles() {
-  #  local resp
- #   local ok
     local main_ip=${UNIT_HTTP//8901/8801}
- #   resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}' ${main_ip})
-#    echo "$resp"
- #   ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
-#    [ "$ok" == true ]
- #   local rst=$?
- #   echo_rst "$FUNCNAME" "$rst"
-
     http_req '{"method":"paracross.ListTitles","params":[]}' ${main_ip} '(.error|not) and (.result| [has("titles"),true])' "$FUNCNAME"
 }
 
@@ -236,70 +212,23 @@ function paracross_GetHeight() {
     local ok
 
     if [ "$IS_PARA" == "true" ]; then
-     #   resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
-        #echo $resp
-     #   ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
-      #  [ "$ok" == true ]
-      #  local rst=$?
-     #   echo_rst "$FUNCNAME" "$rst"
-
         http_req '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
     fi
 }
 
 function paracross_GetNodeGroupAddrs() {
- #   local resp
- #   local ok
-
- #   resp=$(curl -ksd '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
-    #echo $resp
- #   ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
- #   [ "$ok" == true ]
- #   local rst=$?
- #   echo_rst "$FUNCNAME" "$rst"
-
     http_req '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "$FUNCNAME"
 }
 
 function paracross_GetNodeGroupStatus() {
- #   local resp
- #   local ok
-
-  #  resp=$(curl -ksd '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
-    #echo $resp
- #   ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
- #   [ "$ok" == true ]
- #   local rst=$?
-  #  echo_rst "$FUNCNAME" "$rst"
-
     http_req '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeGroupStatus() {
- #   local resp
- #   local ok
-
-#    resp=$(curl -ksd '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP})
-    #echo $resp
-#    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-#    [ "$ok" == true ]
-#    local rst=$?
-#    echo_rst "$FUNCNAME" "$rst"
-
     http_req '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeStatus() {
- #   local resp
- #   local ok
-
-#    resp=$(curl -ksd '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP})
-    #echo $resp
-#    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
- #   [ "$ok" == true ]
-#    local rst=$?
-#    echo_rst "$FUNCNAME" "$rst"
-
     http_req '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
@@ -360,7 +289,7 @@ function paracross_txgroupex() {
 
 }
 
-//测试平行链交易组跨链失败,主链自动恢复原值
+#测试平行链交易组跨链失败,主链自动恢复原值
 function paracross_testTxGroupFail() {
     local para_ip=$1
 
@@ -375,7 +304,7 @@ function paracross_testTxGroupFail() {
     #execer
 
     local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
-    //测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
+    #测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
     local amount_trade=800000000
     local amount_transfer=100000000
     local amount_left=500000000

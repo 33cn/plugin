@@ -31,64 +31,35 @@ init() {
 
 chain33_NewAccount() {
     label=$1
-  #  result=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.acc.addr")
- #   [ "$result" != "" ]
-  #  rst=$?
- #   echo_rst "$FUNCNAME" "$rst"
- #   glAddr=$result
-  #  echo "$glAddr"
-
     req='{"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.acc.addr != "")' "$FUNCNAME"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result.acc.addr|length > 0)' "$FUNCNAME" ".result.acc.addr"
+    glAddr=$RAW_RESP
 }
 
 chain33_SendTransaction() {
     rawTx=$1
     addr=$2
     #签名交易
-   # resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-  #  ok=$(echo "${resp}" | jq -r ".error")
-  #  [ "$ok" == null ]
-  #  rst=$?
-  #  echo_rst "$FUNCNAME" "$rst"
-
     req='{"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
-
-
-  #  signTx=$(echo "${resp}" | jq -r ".result")
-  #  resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-  #  ok=$(echo "${resp}" | jq -r ".error")
-  #  [ "$ok" == null ]
-  #  rst=$?
-  #  echo_rst "$FUNCNAME" "$rst"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "Chain33.SignRawTx" ".result"
+    signTx=$RAW_RESP
 
     req='{"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
+    gResp=$RAW_RESP
     #返回交易
-    gResp=$(jq -r ".result" <<<"$HTTP_RESP")
-    echo "tx hash is $gResp"
-    chain33_QueryTx "$gResp" "${MAIN_HTTP}"
+    chain33_QueryTx "$RAW_RESP" "${MAIN_HTTP}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
     #创建交易
     addr=$1
- #   resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
- #   ok=$(echo "${resp}" | jq -r ".error")
- #   [ "$ok" == null ]
- #   rst=$?
- #   echo_rst "$FUNCNAME" "$rst"
-
     req='{"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
-
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    rawTx=$(echo "${HTTP_RESP}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "$RAW_RESP" "${addr}"
     gID="${gResp}"
-    echo "gameID $gID"
 }
 
 blackwhite_BlackwhitePlayTx() {
@@ -96,70 +67,45 @@ blackwhite_BlackwhitePlayTx() {
     round1=$2
     round2=$3
     round3=$4
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhitePlayTx","params":[{"gameID":"'"$gID"'","amount":100000000,"Fee":1000000,"hashValues":["'"$round1"'","'"$round2"'","'"$round3"'"]}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"blackwhite.BlackwhitePlayTx","params":[{"gameID":"'"$gID"'","amount":100000000,"Fee":1000000,"hashValues":["'"$round1"'","'"$round2"'","'"$round3"'"]}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+
     #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    chain33_SendTransaction "$RAW_RESP" "${addr}"
 }
 
 blackwhite_BlackwhiteShowTx() {
     addr=$1
     sec=$2
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteShowTx","params":[{"gameID":"'"$gID"'","secret":"'"$sec"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result")
-    chain33_SendTransaction "${rawTx}" "${addr}"
+    req='{"method":"blackwhite.BlackwhiteShowTx","params":[{"gameID":"'"$gID"'","secret":"'"$sec"'","Fee":1000000}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+    chain33_SendTransaction "$RAW_RESP" "${addr}"
 }
 
 blackwhite_BlackwhiteTimeoutDoneTx() {
     gameID=$1
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"blackwhite.BlackwhiteTimeoutDoneTx","params":[{"gameID":"'"$gameID"'","Fee":1000000}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [ "$ok" == null ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"blackwhite.BlackwhiteTimeoutDoneTx","params":[{"gameID":"'"$gameID"'","Fee":1000000}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
 }
 
 blackwhite_GetBlackwhiteRoundInfo() {
     gameID=$1
-    execer="blackwhite"
-    funcName="GetBlackwhiteRoundInfo"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.round | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout"),true] | unique | length == 1)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"blackwhite","funcName":"GetBlackwhiteRoundInfo","payload":{"gameID":"'"$gameID"'"}}]}'
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result.round | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout"),true] | unique | length == 1)' "$FUNCNAME"
 }
 
 blackwhite_GetBlackwhiteByStatusAndAddr() {
-    gameID=$1
-    addr=$2
-    execer="blackwhite"
-    funcName="GetBlackwhiteByStatusAndAddr"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"status":5,"address":"'"$addr"'","count":1,"direction":0,"index":-1}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.round[0].createAddr == "'"$addr"'") and (.result.round[0].status == 5) and (.result.round[0] | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout", "winner"),true] | unique | length == 1)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    addr=$1
+    req='{"method":"Chain33.Query","params":[{"execer":"blackwhite","funcName":"GetBlackwhiteByStatusAndAddr","payload":{"status":5,"address":"'"$addr"'","count":1,"direction":0,"index":-1}}]}'
+    resok='(.error|not) and (.result.round[0].createAddr == "'"$addr"'") and (.result.round[0].status == 5) and (.result.round[0] | [has("gameID", "status", "playAmount", "playerCount", "curPlayerCount", "loop", "curShowCount", "timeout", "winner"),true] | unique | length == 1)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 blackwhite_GetBlackwhiteloopResult() {
     gameID=$1
-    execer="blackwhite"
-    funcName="GetBlackwhiteloopResult"
-    resp=$(curl -ksd '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"gameID":"'"$gameID"'","loopSeq":0}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.gameID == "'"$gameID"'") and (.result.results|length >= 1)' <<<"$resp")
-    [ "$ok" == true ]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"blackwhite","funcName":"GetBlackwhiteloopResult","payload":{"gameID":"'"$gameID"'","loopSeq":0}}]}'
+    resok='(.error|not) and (.result.gameID == "'"$gameID"'") and (.result.results|length >= 1)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_testcases() {
@@ -216,9 +162,8 @@ function run_testcases() {
     blackwhite_BlackwhiteTimeoutDoneTx "$gID"
     #查询部分
     blackwhite_GetBlackwhiteRoundInfo "$gID"
-    blackwhite_GetBlackwhiteByStatusAndAddr "$gID" "${gameAddr1}"
+    blackwhite_GetBlackwhiteByStatusAndAddr "${gameAddr1}"
     blackwhite_GetBlackwhiteloopResult "$gID"
-
 }
 
 function main() {
@@ -227,17 +172,8 @@ function main() {
     echo "main_ip=$MAIN_HTTP"
 
     init
-
     run_testcases
-
     chain33_RpcTestRst blackwhite "$CASE_ERR"
-
 }
 
-function debug_function() {
-    set -x
-    eval "$@"
-    set +x
-}
-
-debug_function main "$1"
+chain33_debug_function main "$1"

@@ -10,18 +10,17 @@ txhash=""
 function query_unfreezeID() {
     chain33_BlockWait 1 "$MAIN_HTTP"
 
-    # echo "req=$req"
     local times=10
     while true; do
         req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
         ret=$(curl -ksd "$req" ${MAIN_HTTP})
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
-        echo "====query tx= ${txhash}, return=$ret "
+     #   echo "====query tx= ${txhash}, return=$ret "
         if [ "${tx}" != "${txhash}" ]; then
             chain33_BlockWait 1 "${MAIN_HTTP}"
             times=$((times - 1))
             if [ $times -le 0 ]; then
-                echo "====query tx=$txhash failed"
+                echo -e "${RED}====query tx=$txhash failed${NOC}"
                 echo "req=$req"
                 curl -ksd "$req" ${MAIN_HTTP}
                 exit 1
@@ -31,7 +30,7 @@ function query_unfreezeID() {
             #echo "${unfreeze_id}"
             unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
             uid=${unfreeze_id2%\"}
-            echo "====query tx=$txhash  success"
+            echo -e "${GRE}====query tx=$txhash  success${NOC}"
             break
         fi
     done
@@ -75,96 +74,51 @@ function init() {
 
 function CreateRawUnfreezeCreate() {
     req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"'$symbol'","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
-    # echo "#request: $req"
- #   resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
-#    ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "$owner_key" "${MAIN_HTTP}"
     query_unfreezeID
 }
 
 function CreateRawUnfreezeWithdraw() {
     sleep 10
     req='{"method":"unfreeze.CreateRawUnfreezeWithdraw","params":[{"unfreezeID":"'${uid}'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-    # echo "#request: $req"
-  #  resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "${beneficiary_key}" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-    # echo "#request: $req"
- #   resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
-  #  echo_rst "$FUNCNAME" "$?"
-    rawtx=$(jq -r ".result" <<<"$HTTP_RESP")
-    chain33_SignRawTx "$rawtx" "$owner_key" "${MAIN_HTTP}"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_SignRawTx "$RAW_RESP" "$owner_key" "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
 }
 
 function GetUnfreeze() {
     req='{"method":"unfreeze.GetUnfreeze","params":[{"data":"'${uid}'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-    # echo "#request: $req"
-#    resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
- #   ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
- #   [ "$ok" == true ]
- #   echo_rst "$FUNCNAME" "$?"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME"
 }
 
 function GetUnfreezeWithdraw() {
     req='{"method":"unfreeze.GetUnfreezeWithdraw","params":[{"data":"'${uid}'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != "")' "$FUNCNAME"
-    # echo "#request: $req"
-  #  resp=$(curl -ksd "$req" "${MAIN_HTTP}")
-    # echo "#resp: $resp"
-  #  ok=$(jq '(.error|not) and (.result != "")' <<<"$resp")
-  #  [ "$ok" == true ]
-  #  echo_rst "$FUNCNAME" "$?"
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME"
 }
 
 function run_testcases() {
     CreateRawUnfreezeCreate
-
     CreateRawUnfreezeWithdraw
     GetUnfreeze
     GetUnfreezeWithdraw
-
     CreateRawUnfreezeTerminate
-}
-
-function debug_function() {
-    set -x
-    eval "$@"
-    set +x
 }
 
 function rpc_test() {
     chain33_RpcTestBegin unfreeze
-
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_testcases
-
     chain33_RpcTestRst unfreeze "$CASE_ERR"
 }
 
-debug_function rpc_test "$1"
+chain33_debug_function rpc_test "$1"

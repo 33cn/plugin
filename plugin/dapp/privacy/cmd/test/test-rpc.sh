@@ -51,11 +51,12 @@ function run_test() {
 }
 
 function main() {
+    chain33_RpcTestBegin privacy
     MAIN_HTTP="$1"
     echo "ip=$MAIN_HTTP"
-    chain33_RpcTestBegin privacy
+
     run_test
     chain33_RpcTestRst privacy "$CASE_ERR"
 }
 
-main "$1"
+chain33_debug_function main "$1"

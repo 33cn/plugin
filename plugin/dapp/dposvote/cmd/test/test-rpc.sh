@@ -30,8 +30,7 @@ function main() {
 
     init
     run_test
-
     chain33_RpcTestRst dposvote "$CASE_ERR"
 }
 
-main "$1"
+chain33_debug_function main "$1"
