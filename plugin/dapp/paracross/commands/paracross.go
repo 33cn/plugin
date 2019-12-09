@@ -982,7 +982,7 @@ func paraAssetTransfer(cmd *cobra.Command, args []string) {
 // GetParaAssetTransCmd get para chain asset transfer info
 func GetParaAssetTransCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "asset_tranfer",
+		Use:   "asset_txinfo",
 		Short: "Get para chain cross asset transfer info",
 		Run:   paraAssetTransfer,
 	}
