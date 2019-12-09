@@ -2,12 +2,13 @@ package commands
 
 import (
 	"fmt"
+	"strconv"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/issuance/types"
 	"github.com/spf13/cobra"
-	"strconv"
 )
 
 // IssuanceCmd 斗牛游戏命令行
@@ -66,7 +67,7 @@ func IssuanceCreate(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.IssuanceX),
 		ActionName: "IssuanceCreate",
-		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%f, \"debtCeiling\":%f, \"liquidationRatio\":%f, \"period\":%d}",
+		Payload: []byte(fmt.Sprintf("{\"totalBalance\":%f, \"debtCeiling\":%f, \"liquidationRatio\":%f, \"period\":%d}",
 			balance, debtCeiling, liquidationRatio, period)),
 	}
 
@@ -351,8 +352,8 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 
 			req := &pkt.ReqIssuanceRecordsByAddr{
 				IssuanceId: issuanceID,
-				Status: int32(status),
-				Addr: address,
+				Status:     int32(status),
+				Addr:       address,
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepIssuanceRecords
@@ -363,18 +364,18 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 
 			req := &pkt.ReqIssuanceRecordsByStatus{
 				IssuanceId: issuanceID,
-				Status: int32(status),
+				Status:     int32(status),
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepIssuanceRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
-		} else if debtID != ""{
+		} else if debtID != "" {
 			params.FuncName = "IssuanceRecordByID"
 
 			req := &pkt.ReqIssuanceDebtInfo{
 				IssuanceId: issuanceID,
-				DebtId: debtID,
+				DebtId:     debtID,
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepIssuanceDebtInfo
@@ -394,7 +395,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 	} else if statusStr != "" {
 		params.FuncName = "IssuanceByStatus"
 
-		req := &pkt.ReqIssuanceByStatus{Status:int32(status)}
+		req := &pkt.ReqIssuanceByStatus{Status: int32(status)}
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.RepIssuanceIDs
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

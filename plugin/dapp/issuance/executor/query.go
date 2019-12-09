@@ -10,46 +10,46 @@ import (
 )
 
 func (c *Issuance) Query_IssuanceInfoByID(req *pty.ReqIssuanceInfo) (types.Message, error) {
-	issu,err := queryIssuanceByID(c.GetStateDB(), req.IssuanceId)
+	issu, err := queryIssuanceByID(c.GetStateDB(), req.IssuanceId)
 	if err != nil {
 		clog.Error("Query_IssuanceInfoByID", "id", req.IssuanceId, "error", err)
 		return nil, err
 	}
 
 	return &pty.RepIssuanceCurrentInfo{
-		Status:             issu.Status,
-		TotalBalance:       issu.TotalBalance,
-		DebtCeiling:        issu.DebtCeiling,
-		LiquidationRatio:   issu.LiquidationRatio,
-		Balance:            issu.Balance,
-		CollateralValue:    issu.CollateralValue,
-		DebtValue:          issu.DebtValue,
-		Period:             issu.Period,
-		IssuId:             issu.IssuanceId,
-		CreateTime:         issu.CreateTime,
+		Status:           issu.Status,
+		TotalBalance:     issu.TotalBalance,
+		DebtCeiling:      issu.DebtCeiling,
+		LiquidationRatio: issu.LiquidationRatio,
+		Balance:          issu.Balance,
+		CollateralValue:  issu.CollateralValue,
+		DebtValue:        issu.DebtValue,
+		Period:           issu.Period,
+		IssuId:           issu.IssuanceId,
+		CreateTime:       issu.CreateTime,
 	}, nil
 }
 
 func (c *Issuance) Query_IssuanceInfoByIDs(req *pty.ReqIssuanceInfos) (types.Message, error) {
 	infos := &pty.RepIssuanceCurrentInfos{}
 	for _, id := range req.IssuanceIds {
-		issu,err := queryIssuanceByID(c.GetStateDB(), id)
+		issu, err := queryIssuanceByID(c.GetStateDB(), id)
 		if err != nil {
 			clog.Error("Query_IssuanceInfoByID", "id", id, "error", err)
 			return nil, err
 		}
 
 		infos.Infos = append(infos.Infos, &pty.RepIssuanceCurrentInfo{
-			Status:             issu.Status,
-			TotalBalance:       issu.TotalBalance,
-			DebtCeiling:        issu.DebtCeiling,
-			LiquidationRatio:   issu.LiquidationRatio,
-			Balance:            issu.Balance,
-			CollateralValue:    issu.CollateralValue,
-			DebtValue:          issu.DebtValue,
-			Period:             issu.Period,
-			IssuId:             issu.IssuanceId,
-			CreateTime:         issu.CreateTime,
+			Status:           issu.Status,
+			TotalBalance:     issu.TotalBalance,
+			DebtCeiling:      issu.DebtCeiling,
+			LiquidationRatio: issu.LiquidationRatio,
+			Balance:          issu.Balance,
+			CollateralValue:  issu.CollateralValue,
+			DebtValue:        issu.DebtValue,
+			Period:           issu.Period,
+			IssuId:           issu.IssuanceId,
+			CreateTime:       issu.CreateTime,
 		})
 	}
 
@@ -91,7 +91,7 @@ func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecordsByAddr
 	if req.Status == 0 {
 		ret.Records = records
 	} else {
-		for _,record := range records {
+		for _, record := range records {
 			if record.Status == req.Status {
 				ret.Records = append(ret.Records, record)
 			}
@@ -120,5 +120,5 @@ func (c *Issuance) Query_IssuancePrice(req *pty.ReqIssuanceRecordsByStatus) (typ
 		return nil, err
 	}
 
-	return &pty.RepIssuancePrice{Price:price}, nil
+	return &pty.RepIssuancePrice{Price: price}, nil
 }

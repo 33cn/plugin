@@ -6,6 +6,8 @@ package executor
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -14,7 +16,6 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/collateralize/types"
 	issuanceE "github.com/33cn/plugin/plugin/dapp/issuance/types"
 	tokenE "github.com/33cn/plugin/plugin/dapp/token/executor"
-	"math"
 )
 
 // List control
@@ -83,18 +84,18 @@ func PriceKey() (key []byte) {
 
 // Action struct
 type Action struct {
-	coinsAccount *account.DB  // bty账户
-	tokenAccount *account.DB  // ccny账户
-	db           dbm.KV
-	localDB      dbm.Lister
-	txhash       []byte
-	fromaddr     string
-	blocktime    int64
-	height       int64
-	execaddr     string
-	difficulty   uint64
-	index        int
-	Collateralize   *Collateralize
+	coinsAccount  *account.DB // bty账户
+	tokenAccount  *account.DB // ccny账户
+	db            dbm.KV
+	localDB       dbm.Lister
+	txhash        []byte
+	fromaddr      string
+	blocktime     int64
+	height        int64
+	execaddr      string
+	difficulty    uint64
+	index         int
+	Collateralize *Collateralize
 }
 
 // NewCollateralizeAction generate New Action
@@ -109,7 +110,7 @@ func NewCollateralizeAction(c *Collateralize, tx *types.Transaction, index int) 
 	}
 
 	return &Action{
-		coinsAccount: c.GetCoinsAccount(), tokenAccount:tokenDb, db: c.GetStateDB(), localDB:c.GetLocalDB(),
+		coinsAccount: c.GetCoinsAccount(), tokenAccount: tokenDb, db: c.GetStateDB(), localDB: c.GetLocalDB(),
 		txhash: hash, fromaddr: fromaddr, blocktime: c.GetBlockTime(), height: c.GetHeight(),
 		execaddr: dapp.ExecAddress(string(tx.Execer)), difficulty: c.GetDifficulty(), index: index, Collateralize: c}
 }
@@ -283,7 +284,7 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	collConfig := &pty.CollateralizeManage{}
 	if manage.StabilityFeeRatio != 0 {
 		collConfig.StabilityFeeRatio = manage.StabilityFeeRatio
-	} else  {
+	} else {
 		collConfig.StabilityFeeRatio = manConfig.StabilityFeeRatio
 	}
 
@@ -335,7 +336,6 @@ func getCollateralizeConfig(db dbm.KV) (*pty.CollateralizeManage, error) {
 	}
 	return &collCfg, nil
 }
-
 
 func isSuperAddr(addr string, db dbm.KV) bool {
 	data, err := db.Get(AddrKey())
@@ -395,25 +395,25 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	// 参数检查
 	if create.GetTotalBalance() <= 0 {
 		clog.Error("CollateralizeCreate", "addr", action.fromaddr, "execaddr", action.execaddr, "total balance", create.GetTotalBalance(), "error", types.ErrAmount)
-		return  nil, types.ErrAmount
+		return nil, types.ErrAmount
 	}
 
 	// 获取借贷配置
 	collcfg, err := getCollateralizeConfig(action.db)
 	if err != nil {
 		clog.Error("CollateralizeCreate.getCollateralizeConfig", "addr", action.fromaddr, "error", err)
-		return  nil, err
+		return nil, err
 	}
 
 	// 判断当前可放贷金额
 	reBalance, err := getCollBalance(collcfg.TotalBalance, action.localDB, action.db)
 	if err != nil {
 		clog.Error("CollateralizeCreate.getCollBalance", "addr", action.fromaddr, "error", err)
-		return  nil, err
+		return nil, err
 	}
 	if reBalance < create.GetTotalBalance() {
 		clog.Error("CollateralizeCreate.getCollBalance", "addr", action.fromaddr, "collBalance", reBalance, "create.balance", create.GetTotalBalance(), "error", pty.ErrCollateralizeLowBalance)
-		return  nil, pty.ErrCollateralizeLowBalance
+		return nil, pty.ErrCollateralizeLowBalance
 	}
 
 	// 检查ccny余额
@@ -482,15 +482,15 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 }
 
 // 根据最近抵押物价格计算需要冻结的BTY数量
-func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64,error) {
+func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error) {
 	if price == 0 {
 		clog.Error("Bty price should greate to 0")
 		return 0, pty.ErrPriceInvalid
 	}
 
-	valueReal := float64(value)/1e8
-	btyValue := valueReal/(price * ratio)
-    return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
+	valueReal := float64(value) / 1e8
+	btyValue := valueReal / (price * ratio)
+	return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
 }
 
 // 计算清算价格
@@ -567,7 +567,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// 借贷金额检查
 	if borrow.GetValue() <= 0 {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "borrow value", borrow.GetValue(), "error", types.ErrInvalidParam)
-		return  nil, types.ErrAmount
+		return nil, types.ErrAmount
 	}
 
 	// 借贷金额不超过个人限额
@@ -703,8 +703,8 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	fee := (float64(borrowRecord.DebtValue)/1e8) * float64(coll.StabilityFeeRatio)
-	realRepay := borrowRecord.DebtValue + int64(math.Trunc((fee+0.0000001)*1e4)) * 1e4
+	fee := (float64(borrowRecord.DebtValue) / 1e8) * float64(coll.StabilityFeeRatio)
+	realRepay := borrowRecord.DebtValue + int64(math.Trunc((fee+0.0000001)*1e4))*1e4
 
 	// 检查
 	if !action.CheckExecTokenAccount(action.fromaddr, realRepay, false) {
@@ -770,7 +770,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	// 参数检查
 	if cAppend.GetCollateralValue() <= 0 {
 		clog.Error("CollateralizeAppend", "addr", action.fromaddr, "execaddr", action.execaddr, "append value", cAppend.GetCollateralValue(), "error", types.ErrAmount)
-		return  nil, types.ErrAmount
+		return nil, types.ErrAmount
 	}
 
 	// 查找对应的借贷ID
@@ -838,7 +838,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	borrowRecord.CollateralValue += cAppend.CollateralValue
 	borrowRecord.CollateralPrice = lastPrice
 	borrowRecord.LiquidationPrice = calcLiquidationPrice(borrowRecord.DebtValue, borrowRecord.CollateralValue)
-	if borrowRecord.LiquidationPrice * PriceWarningRate < lastPrice {
+	if borrowRecord.LiquidationPrice*PriceWarningRate < lastPrice {
 		// 告警解除
 		if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 			borrowRecord.PreStatus = borrowRecord.Status
@@ -927,7 +927,7 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float64) 
 	var kv []*types.KeyValue
 
 	for index, borrowRecord := range coll.BorrowRecords {
-		if borrowRecord.LiquidationPrice * PriceWarningRate < price {
+		if borrowRecord.LiquidationPrice*PriceWarningRate < price {
 			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 				borrowRecord.PreStatus = borrowRecord.Status
 				borrowRecord.Status = pty.CollateralizeUserStatusCreate
@@ -990,7 +990,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 	var kv []*types.KeyValue
 
 	for index, borrowRecord := range coll.BorrowRecords {
-		if borrowRecord.ExpireTime - ExpireWarningTime > action.blocktime {
+		if borrowRecord.ExpireTime-ExpireWarningTime > action.blocktime {
 			continue
 		}
 
@@ -1057,7 +1057,7 @@ func pricePolicy(feed *pty.CollateralizeFeed) float64 {
 	}
 
 	for i, price := range feed.Price {
-		totalPrice += price * (float64(feed.Volume[i])/float64(totalVolume))
+		totalPrice += price * (float64(feed.Volume[i]) / float64(totalVolume))
 	}
 
 	return totalPrice
@@ -1098,7 +1098,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 		}
 
 		// 超时清算判断
-		if coll.LatestExpireTime - ExpireWarningTime <= action.blocktime {
+		if coll.LatestExpireTime-ExpireWarningTime <= action.blocktime {
 			receipt, err := action.expireLiquidation(coll)
 			if err != nil {
 				clog.Error("CollateralizePriceFeed", "Collateralize ID", coll.CollateralizeId, "expire liquidation error", err)
@@ -1153,7 +1153,7 @@ func (action *Action) CollateralizeRetrieve(retrieve *pty.CollateralizeRetrieve)
 		clog.Error("CollateralizeRetrieve", "CollateralizeId", retrieve.CollateralizeId, "error", "balance error", "retrieve balance", retrieve.Balance, "available balance", collateralize.Balance)
 		return nil, types.ErrAmount
 	}
-	
+
 	// 解冻ccny
 	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, retrieve.Balance)
 	if err != nil {
@@ -1248,7 +1248,7 @@ func queryCollateralizeByAddr(localdb dbm.Lister, addr string, status int32, ind
 			clog.Debug("queryCollateralizesByAddr", "decode", err)
 			return nil, err
 		}
-		if  status ==0 || coll.Status == status {
+		if status == 0 || coll.Status == status {
 			ids = append(ids, coll.CollateralizeId)
 		}
 	}

@@ -10,23 +10,23 @@ import (
 )
 
 func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInfo) (types.Message, error) {
-	coll,err := queryCollateralizeByID(c.GetStateDB(), req.CollateralizeId)
+	coll, err := queryCollateralizeByID(c.GetStateDB(), req.CollateralizeId)
 	if err != nil {
 		clog.Error("Query_CollateralizeInfoByID", "id", req.CollateralizeId, "error", err)
 		return nil, err
 	}
 
-	info :=  &pty.RepCollateralizeCurrentInfo{
-		Status:             coll.Status,
-		TotalBalance:       coll.TotalBalance,
-		DebtCeiling:        coll.DebtCeiling,
-		LiquidationRatio:   coll.LiquidationRatio,
-		StabilityFeeRatio:  coll.StabilityFeeRatio,
-		CreateAddr:         coll.CreateAddr,
-		Balance:            coll.Balance,
-		Period:             coll.Period,
-		CollateralizeId:    coll.CollateralizeId,
-		CollBalance:        coll.CollBalance,
+	info := &pty.RepCollateralizeCurrentInfo{
+		Status:            coll.Status,
+		TotalBalance:      coll.TotalBalance,
+		DebtCeiling:       coll.DebtCeiling,
+		LiquidationRatio:  coll.LiquidationRatio,
+		StabilityFeeRatio: coll.StabilityFeeRatio,
+		CreateAddr:        coll.CreateAddr,
+		Balance:           coll.Balance,
+		Period:            coll.Period,
+		CollateralizeId:   coll.CollateralizeId,
+		CollBalance:       coll.CollBalance,
 	}
 	info.BorrowRecords = append(info.BorrowRecords, coll.BorrowRecords...)
 	info.BorrowRecords = append(info.BorrowRecords, coll.InvalidRecords...)
@@ -37,23 +37,23 @@ func (c *Collateralize) Query_CollateralizeInfoByID(req *pty.ReqCollateralizeInf
 func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeInfos) (types.Message, error) {
 	infos := &pty.RepCollateralizeCurrentInfos{}
 	for _, id := range req.CollateralizeIds {
-		coll,err := queryCollateralizeByID(c.GetStateDB(), id)
+		coll, err := queryCollateralizeByID(c.GetStateDB(), id)
 		if err != nil {
 			clog.Error("Query_CollateralizeInfoByID", "id", id, "error", err)
 			return nil, err
 		}
 
-		info :=  &pty.RepCollateralizeCurrentInfo{
-			Status:             coll.Status,
-			TotalBalance:       coll.TotalBalance,
-			DebtCeiling:        coll.DebtCeiling,
-			LiquidationRatio:   coll.LiquidationRatio,
-			StabilityFeeRatio:  coll.StabilityFeeRatio,
-			CreateAddr:         coll.CreateAddr,
-			Balance:            coll.Balance,
-			Period:             coll.Period,
-			CollateralizeId:    coll.CollateralizeId,
-			CollBalance:        coll.CollBalance,
+		info := &pty.RepCollateralizeCurrentInfo{
+			Status:            coll.Status,
+			TotalBalance:      coll.TotalBalance,
+			DebtCeiling:       coll.DebtCeiling,
+			LiquidationRatio:  coll.LiquidationRatio,
+			StabilityFeeRatio: coll.StabilityFeeRatio,
+			CreateAddr:        coll.CreateAddr,
+			Balance:           coll.Balance,
+			Period:            coll.Period,
+			CollateralizeId:   coll.CollateralizeId,
+			CollBalance:       coll.CollBalance,
 		}
 		info.BorrowRecords = append(info.BorrowRecords, coll.BorrowRecords...)
 		info.BorrowRecords = append(info.BorrowRecords, coll.InvalidRecords...)
@@ -111,7 +111,7 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 	if req.Status == 0 {
 		ret.Records = records
 	} else {
-		for _,record := range records {
+		for _, record := range records {
 			if record.Status == req.Status {
 				ret.Records = append(ret.Records, record)
 			}
@@ -146,13 +146,13 @@ func (c *Collateralize) Query_CollateralizeConfig(req *pty.ReqCollateralizeRecor
 	}
 
 	ret := &pty.RepCollateralizeConfig{
-		TotalBalance:config.TotalBalance,
-		DebtCeiling: config.DebtCeiling,
-		LiquidationRatio: config.LiquidationRatio,
+		TotalBalance:      config.TotalBalance,
+		DebtCeiling:       config.DebtCeiling,
+		LiquidationRatio:  config.LiquidationRatio,
 		StabilityFeeRatio: config.StabilityFeeRatio,
-		Period: config.Period,
-		Balance: balance,
-		CurrentTime: config.CurrentTime,
+		Period:            config.Period,
+		Balance:           balance,
+		CurrentTime:       config.CurrentTime,
 	}
 
 	return ret, nil
@@ -165,5 +165,5 @@ func (c *Collateralize) Query_CollateralizePrice(req *pty.ReqCollateralizeRecord
 		return nil, err
 	}
 
-	return &pty.RepCollateralizePrice{Price:price}, nil
+	return &pty.RepCollateralizePrice{Price: price}, nil
 }

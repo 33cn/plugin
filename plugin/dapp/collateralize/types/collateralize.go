@@ -53,12 +53,12 @@ func (collateralize *CollateralizeType) GetName() string {
 // GetLogMap method
 func (collateralize *CollateralizeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogCollateralizeCreate: {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeCreate"},
-		TyLogCollateralizeBorrow:    {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeBorrow"},
-		TyLogCollateralizeRepay:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRepay"},
+		TyLogCollateralizeCreate:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeCreate"},
+		TyLogCollateralizeBorrow:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeBorrow"},
+		TyLogCollateralizeRepay:    {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRepay"},
 		TyLogCollateralizeAppend:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeAppend"},
-		TyLogCollateralizeFeed:   {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeFeed"},
-		TyLogCollateralizeRetrieve:  {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRetrieve"},
+		TyLogCollateralizeFeed:     {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeFeed"},
+		TyLogCollateralizeRetrieve: {Ty: reflect.TypeOf(ReceiptCollateralize{}), Name: "LogCollateralizeRetrieve"},
 	}
 }
 
@@ -136,13 +136,13 @@ func (collateralize CollateralizeType) CreateTx(action string, message json.RawM
 // GetTypeMap method
 func (collateralize CollateralizeType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Create":    CollateralizeActionCreate,
-		"Borrow":    CollateralizeActionBorrow,
-		"Repay":     CollateralizeActionRepay,
-		"Append":    CollateralizeActionAppend,
-		"Feed":      CollateralizeActionFeed,
-		"Retrieve":  CollateralizeActionRetrieve,
-		"Manage":    CollateralizeActionManage,
+		"Create":   CollateralizeActionCreate,
+		"Borrow":   CollateralizeActionBorrow,
+		"Repay":    CollateralizeActionRepay,
+		"Append":   CollateralizeActionAppend,
+		"Feed":     CollateralizeActionFeed,
+		"Retrieve": CollateralizeActionRetrieve,
+		"Manage":   CollateralizeActionManage,
 	}
 }
 
@@ -154,7 +154,7 @@ func CreateRawCollateralizeCreateTx(cfg *types.Chain33Config, parm *Collateraliz
 	}
 
 	v := &CollateralizeCreate{
-		TotalBalance:  int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
+		TotalBalance: int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}
 	create := &CollateralizeAction{
 		Ty:    CollateralizeActionCreate,
@@ -183,7 +183,7 @@ func CreateRawCollateralizeBorrowTx(cfg *types.Chain33Config, parm *Collateraliz
 
 	v := &CollateralizeBorrow{
 		CollateralizeId: parm.CollateralizeID,
-		Value:   int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
+		Value:           int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	borrow := &CollateralizeAction{
 		Ty:    CollateralizeActionBorrow,
@@ -212,7 +212,7 @@ func CreateRawCollateralizeRepayTx(cfg *types.Chain33Config, parm *Collateralize
 
 	v := &CollateralizeRepay{
 		CollateralizeId: parm.CollateralizeID,
-		RecordId:parm.RecordID,
+		RecordId:        parm.RecordID,
 	}
 	repay := &CollateralizeAction{
 		Ty:    CollateralizeActionRepay,
@@ -241,7 +241,7 @@ func CreateRawCollateralizeAppendTx(cfg *types.Chain33Config, parm *Collateraliz
 
 	v := &CollateralizeAppend{
 		CollateralizeId: parm.CollateralizeID,
-		RecordId:parm.RecordID,
+		RecordId:        parm.RecordID,
 		CollateralValue: int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	append := &CollateralizeAction{
@@ -270,7 +270,7 @@ func CreateRawCollateralizeFeedTx(cfg *types.Chain33Config, parm *CollateralizeF
 	}
 
 	v := &CollateralizeFeed{
-		Price: parm.Price,
+		Price:  parm.Price,
 		Volume: parm.Volume,
 	}
 	feed := &CollateralizeAction{
@@ -300,7 +300,7 @@ func CreateRawCollateralizeRetrieveTx(cfg *types.Chain33Config, parm *Collateral
 
 	v := &CollateralizeRetrieve{
 		CollateralizeId: parm.CollateralizeID,
-		Balance: int64(math.Trunc((parm.Balance+0.0000001)*1e4)) * 1e4,
+		Balance:         int64(math.Trunc((parm.Balance+0.0000001)*1e4)) * 1e4,
 	}
 	close := &CollateralizeAction{
 		Ty:    CollateralizeActionRetrieve,
@@ -329,11 +329,11 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 	}
 
 	v := &CollateralizeManage{
-		DebtCeiling:          int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
-		LiquidationRatio:     parm.LiquidationRatio,
-		StabilityFeeRatio:    parm.StabilityFeeRatio,
-		Period:               parm.Period,
-		TotalBalance:         int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
+		DebtCeiling:       int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
+		LiquidationRatio:  parm.LiquidationRatio,
+		StabilityFeeRatio: parm.StabilityFeeRatio,
+		Period:            parm.Period,
+		TotalBalance:      int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}
 
 	manage := &CollateralizeAction{

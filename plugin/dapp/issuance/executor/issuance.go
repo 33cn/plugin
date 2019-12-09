@@ -63,8 +63,8 @@ func (c *Issuance) GetDriverName() string {
 func (c *Issuance) addIssuanceID(index int64, issuanceId string) (kvs []*types.KeyValue) {
 	key := calcIssuanceKey(issuanceId, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuanceId,
-		Index: index,
+		IssuanceId: issuanceId,
+		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -83,8 +83,8 @@ func (c *Issuance) deleteIssuanceID(index int64, issuanceId string) (kvs []*type
 func (c *Issuance) addIssuanceStatus(status int32, index int64, issuanceId string) (kvs []*types.KeyValue) {
 	key := calcIssuanceStatusKey(status, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuanceId,
-		Index: index,
+		IssuanceId: issuanceId,
+		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -103,9 +103,9 @@ func (c *Issuance) deleteIssuanceStatus(status int32, index int64) (kvs []*types
 func (c *Issuance) addIssuanceRecordAddr(accountAddr string, index int64, debtId string, issuanceId string) (kvs []*types.KeyValue) {
 	key := calcIssuanceRecordAddrKey(accountAddr, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuanceId,
-		DebtId: debtId,
-		Index: index,
+		IssuanceId: issuanceId,
+		DebtId:     debtId,
+		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -125,10 +125,10 @@ func (c *Issuance) addIssuanceRecordStatus(recordStatus int32, accountAddr strin
 	key := calcIssuanceRecordStatusKey(recordStatus, index)
 
 	record := &pty.IssuanceRecord{
-		IssuanceId:issuanceId,
-		DebtId: debtId,
-		Addr:  accountAddr,
-		Index: index,
+		IssuanceId: issuanceId,
+		DebtId:     debtId,
+		Addr:       accountAddr,
+		Index:      index,
 	}
 
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -148,8 +148,8 @@ func (c *Issuance) addIssuancePriceRecord(recordTime int64, price float64) (kvs 
 	key := calcIssuancePriceKey(string(recordTime))
 
 	record := &pty.IssuanceAssetPriceRecord{
-		RecordTime:recordTime,
-		BtyPrice:price,
+		RecordTime: recordTime,
+		BtyPrice:   price,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 	kvs = append(kvs, kv)
@@ -159,7 +159,7 @@ func (c *Issuance) addIssuancePriceRecord(recordTime int64, price float64) (kvs 
 func (c *Issuance) deleteIssuancePriceRecord(recordTime int64) (kvs []*types.KeyValue) {
 	key := calcIssuancePriceKey(string(recordTime))
 
-	kv := &types.KeyValue{Key: key, Value:nil}
+	kv := &types.KeyValue{Key: key, Value: nil}
 	kvs = append(kvs, kv)
 	return kvs
 }

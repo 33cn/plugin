@@ -1,9 +1,10 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/client"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/client"
 
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
@@ -40,7 +41,7 @@ var (
 		[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
 		[]byte("12evczYyX9ZKPYvwSEvRkRyTjpSrJuLudg"),
 	}
-	total = 10000 * types.Coin
+	total      = 10000 * types.Coin
 	totalToken = 100000 * types.Coin
 )
 
@@ -94,7 +95,7 @@ func initEnv() *execEnv {
 		Addr:    string(Nodes[1]),
 	}
 	accountBToken := types.Account{
-		Balance: types.Coin/10,
+		Balance: types.Coin / 10,
 		Frozen:  0,
 		Addr:    string(Nodes[1]),
 	}
@@ -115,14 +116,14 @@ func initEnv() *execEnv {
 	accA.SaveExecAccount(execAddr, &accountA)
 	manageKeySet("issuance-manage", accountA.Addr, stateDB)
 	addrKeySet(accountA.Addr, stateDB)
-	tokenAccA,_ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
+	tokenAccA, _ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
 	tokenAccA.SaveExecAccount(execAddr, &accountAToken)
 
 	accB := account.NewCoinsAccount(cfg)
 	accB.SetDB(stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 	manageKeySet("issuance-price-feed", accountB.Addr, stateDB)
-	tokenAccB,_ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
+	tokenAccB, _ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
 	tokenAccB.SaveExecAccount(execAddr, &accountBToken)
 
 	accC := account.NewCoinsAccount(cfg)
@@ -131,14 +132,14 @@ func initEnv() *execEnv {
 	manageKeySet("issuance-guarantor", accountC.Addr, stateDB)
 
 	return &execEnv{
-		blockTime:time.Now().Unix(),
-		blockHeight:cfg.GetDappFork(pkt.CollateralizeX, "Enable"),
-		difficulty:1539918074,
-		kvdb:kvdb,
-		api: api,
-		db: stateDB,
-		execAddr: execAddr,
-		cfg: cfg,
+		blockTime:   time.Now().Unix(),
+		blockHeight: cfg.GetDappFork(pkt.CollateralizeX, "Enable"),
+		difficulty:  1539918074,
+		kvdb:        kvdb,
+		api:         api,
+		db:          stateDB,
+		execAddr:    execAddr,
+		cfg:         cfg,
 	}
 }
 
@@ -185,7 +186,6 @@ func TestCollateralize(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 
-
 	// collateralize create
 	p1 := &pkt.CollateralizeCreateTx{
 		TotalBalance: 1000,
@@ -216,20 +216,19 @@ func TestCollateralize(t *testing.T) {
 	}
 	collateralizeID := createTx.Hash()
 	// query collateralize by id
-	res, err := exec.Query("CollateralizeInfoByID", types.Encode(&pkt.ReqCollateralizeInfo{CollateralizeId: common.ToHex(collateralizeID),}))
+	res, err := exec.Query("CollateralizeInfoByID", types.Encode(&pkt.ReqCollateralizeInfo{CollateralizeId: common.ToHex(collateralizeID)}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query collateralize by status
-	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status:1}))
+	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query collateralizes by ids
 	var collateralizeIDsS []string
 	collateralizeIDsS = append(collateralizeIDsS, common.ToHex(collateralizeID))
-	res, err = exec.Query("CollateralizeInfoByIDs", types.Encode(&pkt.ReqCollateralizeInfos{CollateralizeIds:collateralizeIDsS}))
+	res, err = exec.Query("CollateralizeInfoByIDs", types.Encode(&pkt.ReqCollateralizeInfos{CollateralizeIds: collateralizeIDsS}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// collateralize price
 	p2 := &pkt.CollateralizeFeedTx{}
@@ -265,11 +264,10 @@ func TestCollateralize(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
-
 	// collateralize borrow
 	p4 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value: 100,
+		Value:           100,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p4)
 	if err != nil {
@@ -304,21 +302,20 @@ func TestCollateralize(t *testing.T) {
 	assert.NotNil(t, res)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
-		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId:common.ToHex(collateralizeID), Status:1}))
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query collateralize by addr
 	res, err = exec.Query("CollateralizeRecordByAddr",
-		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId:common.ToHex(collateralizeID),Addr: string(Nodes[1]), Status:1}))
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId: common.ToHex(collateralizeID), Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// collateralize append
 	p5 := &pkt.CollateralizeAppendTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		RecordID:common.ToHex(borrowID),
-		Value: 100,
+		RecordID:        common.ToHex(borrowID),
+		Value:           100,
 	}
 	createTx, err = pkt.CreateRawCollateralizeAppendTx(env.cfg, p5)
 	if err != nil {
@@ -352,20 +349,19 @@ func TestCollateralize(t *testing.T) {
 	assert.NotNil(t, res)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
-		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId:common.ToHex(collateralizeID), Status:1}))
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query collateralize by addr
 	res, err = exec.Query("CollateralizeRecordByAddr",
-		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId:common.ToHex(collateralizeID),Addr: string(Nodes[1]), Status:1}))
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId: common.ToHex(collateralizeID), Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// collateralize repay
 	p6 := &pkt.CollateralizeRepayTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		RecordID: common.ToHex(borrowID),
+		RecordID:        common.ToHex(borrowID),
 	}
 	createTx, err = pkt.CreateRawCollateralizeRepayTx(env.cfg, p6)
 	if err != nil {
@@ -394,20 +390,19 @@ func TestCollateralize(t *testing.T) {
 	}
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
-		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId:common.ToHex(collateralizeID), Status:6}))
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query collateralize by addr
 	res, err = exec.Query("CollateralizeRecordByAddr",
-		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId:common.ToHex(collateralizeID),Addr: string(Nodes[1]), Status:6}))
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId: common.ToHex(collateralizeID), Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// collateralize liquidate
 	p7 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value: 100,
+		Value:           100,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p7)
 	if err != nil {
@@ -465,15 +460,14 @@ func TestCollateralize(t *testing.T) {
 	}
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
-		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId:common.ToHex(collateralizeID), Status:3}))
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// expire liquidate
 	p9 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value: 100,
+		Value:           100,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p9)
 	if err != nil {
@@ -531,15 +525,14 @@ func TestCollateralize(t *testing.T) {
 	}
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
-		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId:common.ToHex(collateralizeID), Status:5}))
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 5}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// collateralize retrieve
 	p11 := &pkt.CollateralizeRetrieveTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Balance:100,
+		Balance:         100,
 	}
 	createTx, err = pkt.CreateRawCollateralizeRetrieveTx(env.cfg, p11)
 	if err != nil {
@@ -567,7 +560,7 @@ func TestCollateralize(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 	// query collateralize by status
-	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status:1}))
+	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 }
