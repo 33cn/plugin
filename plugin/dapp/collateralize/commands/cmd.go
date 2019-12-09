@@ -2,12 +2,13 @@ package commands
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	"strconv"
+
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/collateralize/types"
-	"strconv"
+	"github.com/spf13/cobra"
 )
 
 // CollateralizeCmd 斗牛游戏命令行
@@ -308,7 +309,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     cfg.ExecName(pkt.CollateralizeX),
 		ActionName: "CollateralizeManage",
-		Payload:    []byte(fmt.Sprintf("{\"debtCeiling\":%f, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%f}",
+		Payload: []byte(fmt.Sprintf("{\"debtCeiling\":%f, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%f}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period, totalBalance)),
 	}
 
@@ -416,13 +417,13 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	}
 
 	if collateralizeID != "" {
-		 if address != "" {
+		if address != "" {
 			params.FuncName = "CollateralizeRecordByAddr"
 
 			req := &pkt.ReqCollateralizeRecordByAddr{
 				CollateralizeId: collateralizeID,
-				Status: int32(status),
-				Addr: address,
+				Status:          int32(status),
+				Addr:            address,
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepCollateralizeRecords
@@ -433,18 +434,18 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 
 			req := &pkt.ReqCollateralizeRecordByStatus{
 				CollateralizeId: collateralizeID,
-				Status: int32(status),
+				Status:          int32(status),
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepCollateralizeRecords
 			ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 			ctx.Run()
-		} else if borrowID != ""{
+		} else if borrowID != "" {
 			params.FuncName = "CollateralizeRecordByID"
 
 			req := &pkt.ReqCollateralizeRecord{
 				CollateralizeId: collateralizeID,
-				RecordId: borrowID,
+				RecordId:        borrowID,
 			}
 			params.Payload = types.MustPBToJSON(req)
 			var res pkt.RepCollateralizeRecord
@@ -472,7 +473,7 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	} else if statusStr != "" {
 		params.FuncName = "CollateralizeByStatus"
 
-		req := &pkt.ReqCollateralizeByStatus{Status:int32(status)}
+		req := &pkt.ReqCollateralizeByStatus{Status: int32(status)}
 		params.Payload = types.MustPBToJSON(req)
 		var res pkt.RepCollateralizeIDs
 		ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

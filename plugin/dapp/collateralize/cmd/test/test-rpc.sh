@@ -7,7 +7,7 @@ set -o pipefail
 source ../dapp-test-common.sh
 
 function main() {
-  echo "Collateralize cases has integrated in Issuance test"
+    echo "Collateralize cases has integrated in Issuance test"
 }
 
 chain33_debug_function main "$1"

@@ -15,18 +15,18 @@ const (
 	CollateralizeActionManage
 
 	//log for Collateralize
-	TyLogCollateralizeCreate    = 731
-	TyLogCollateralizeBorrow    = 732
-	TyLogCollateralizeRepay     = 733
-	TyLogCollateralizeAppend    = 734
-	TyLogCollateralizeFeed      = 735
-	TyLogCollateralizeRetrieve  = 736
+	TyLogCollateralizeCreate   = 731
+	TyLogCollateralizeBorrow   = 732
+	TyLogCollateralizeRepay    = 733
+	TyLogCollateralizeAppend   = 734
+	TyLogCollateralizeFeed     = 735
+	TyLogCollateralizeRetrieve = 736
 )
 
 // Collateralize name
 const (
-	CollateralizeX = "collateralize"
-	CCNYTokenName = "CCNY"
+	CollateralizeX                   = "collateralize"
+	CCNYTokenName                    = "CCNY"
 	CollateralizePreLiquidationRatio = 1.1 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 

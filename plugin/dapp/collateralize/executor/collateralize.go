@@ -63,8 +63,8 @@ func (c *Collateralize) GetDriverName() string {
 func (c *Collateralize) addCollateralizeID(collateralizeId string, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeKey(collateralizeId, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizeId,
-		Index: index,
+		CollateralizeId: collateralizeId,
+		Index:           index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -83,8 +83,8 @@ func (c *Collateralize) deleteCollateralizeID(collateralizeId string, index int6
 func (c *Collateralize) addCollateralizeStatus(status int32, collateralizeId string, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeStatusKey(status, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizeId,
-		Index: index,
+		CollateralizeId: collateralizeId,
+		Index:           index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -103,9 +103,9 @@ func (c *Collateralize) deleteCollateralizeStatus(status int32, index int64) (kv
 func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeId string, status int32, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeAddrKey(addr, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizeId,
-		Status:status,
-		Index: index,
+		CollateralizeId: collateralizeId,
+		Status:          status,
+		Index:           index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
 
@@ -125,9 +125,9 @@ func (c *Collateralize) addCollateralizeRecordStatus(recordStatus int32, collate
 	key := calcCollateralizeRecordStatusKey(recordStatus, index)
 
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizeId,
-		RecordId:recordId,
-		Index: index,
+		CollateralizeId: collateralizeId,
+		RecordId:        recordId,
+		Index:           index,
 	}
 
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -147,9 +147,9 @@ func (c *Collateralize) addCollateralizeRecordAddr(recordAddr string, collateral
 	key := calcCollateralizeRecordAddrKey(recordAddr, index)
 
 	record := &pty.CollateralizeRecord{
-		CollateralizeId:collateralizeId,
-		RecordId:recordId,
-		Index: index,
+		CollateralizeId: collateralizeId,
+		RecordId:        recordId,
+		Index:           index,
 	}
 
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}

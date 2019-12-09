@@ -54,8 +54,8 @@ func (issuance *IssuanceType) GetName() string {
 func (issuance *IssuanceType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogIssuanceCreate: {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceCreate"},
-		TyLogIssuanceDebt:    {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceDebt"},
-		TyLogIssuanceRepay:   {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceRepay"},
+		TyLogIssuanceDebt:   {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceDebt"},
+		TyLogIssuanceRepay:  {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceRepay"},
 		TyLogIssuanceFeed:   {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceFeed"},
 		TyLogIssuanceClose:  {Ty: reflect.TypeOf(ReceiptIssuance{}), Name: "LogIssuanceClose"},
 	}
@@ -128,7 +128,7 @@ func (issuance IssuanceType) CreateTx(action string, message json.RawMessage) (*
 func (issuance IssuanceType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
 		"Create": IssuanceActionCreate,
-		"Debt": IssuanceActionDebt,
+		"Debt":   IssuanceActionDebt,
 		"Repay":  IssuanceActionRepay,
 		"Feed":   IssuanceActionFeed,
 		"Close":  IssuanceActionClose,
@@ -144,10 +144,10 @@ func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx)
 	}
 
 	v := &IssuanceCreate{
-		TotalBalance:  int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
-		DebtCeiling:   int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
+		TotalBalance:     int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
+		DebtCeiling:      int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
 		LiquidationRatio: parm.LiquidationRatio,
-		Period: parm.Period,
+		Period:           parm.Period,
 	}
 	create := &IssuanceAction{
 		Ty:    IssuanceActionCreate,
@@ -176,7 +176,7 @@ func CreateRawIssuanceDebtTx(cfg *types.Chain33Config, parm *IssuanceDebtTx) (*t
 
 	v := &IssuanceDebt{
 		IssuanceId: parm.IssuanceID,
-		Value:   int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
+		Value:      int64(math.Trunc((parm.Value+0.0000001)*1e4)) * 1e4,
 	}
 	debt := &IssuanceAction{
 		Ty:    IssuanceActionDebt,
@@ -205,7 +205,7 @@ func CreateRawIssuanceRepayTx(cfg *types.Chain33Config, parm *IssuanceRepayTx) (
 
 	v := &IssuanceRepay{
 		IssuanceId: parm.IssuanceID,
-		DebtId: parm.DebtID,
+		DebtId:     parm.DebtID,
 	}
 	repay := &IssuanceAction{
 		Ty:    IssuanceActionRepay,
@@ -233,7 +233,7 @@ func CreateRawIssuanceFeedTx(cfg *types.Chain33Config, parm *IssuanceFeedTx) (*t
 	}
 
 	v := &IssuanceFeed{
-		Price: parm.Price,
+		Price:  parm.Price,
 		Volume: parm.Volume,
 	}
 	feed := &IssuanceAction{
@@ -290,7 +290,7 @@ func CreateRawIssuanceManageTx(cfg *types.Chain33Config, parm *IssuanceManageTx)
 		return nil, types.ErrInvalidParam
 	}
 
-	v := &IssuanceManage{SuperAddrs:parm.Addr}
+	v := &IssuanceManage{SuperAddrs: parm.Addr}
 
 	manage := &IssuanceAction{
 		Ty:    IssuanceActionManage,

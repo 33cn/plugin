@@ -388,18 +388,18 @@ manage() {
     echo "========== # issuance add issuance-price-feed end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
-#    echo "========== # issuance add issuance-guarantor begin =========="
-#    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key": "issuance-guarantor", "value":"'"${IssuanceAddr3}"'", "op":"add"}}]}' ${MAIN_HTTP} | jq -r ".result")
-#
-#    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
-#    ok=$(jq '(.execer != "")' <<<"$data")
-#
-#    [ "$ok" == true ]
-#    echo_rst "$FUNCNAME" "$?"
-#
-#    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
-#    echo "========== # issuance add issuance-guarantor end =========="
-#    chain33_BlockWait 1 ${MAIN_HTTP}
+    #    echo "========== # issuance add issuance-guarantor begin =========="
+    #    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key": "issuance-guarantor", "value":"'"${IssuanceAddr3}"'", "op":"add"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    #
+    #    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    #    ok=$(jq '(.execer != "")' <<<"$data")
+    #
+    #    [ "$ok" == true ]
+    #    echo_rst "$FUNCNAME" "$?"
+    #
+    #    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
+    #    echo "========== # issuance add issuance-guarantor end =========="
+    #    chain33_BlockWait 1 ${MAIN_HTTP}
 }
 
 token() {

@@ -14,17 +14,17 @@ const (
 	IssuanceActionManage            // 借贷管理
 
 	//log for Issuance
-	TyLogIssuanceCreate    = 741
-	TyLogIssuanceDebt    = 742
-	TyLogIssuanceRepay     = 743
-	TyLogIssuanceFeed      = 745
-	TyLogIssuanceClose     = 756
+	TyLogIssuanceCreate = 741
+	TyLogIssuanceDebt   = 742
+	TyLogIssuanceRepay  = 743
+	TyLogIssuanceFeed   = 745
+	TyLogIssuanceClose  = 756
 )
 
 // Issuance name
 const (
-	IssuanceX = "issuance"
-	CCNYTokenName = "CCNY"
+	IssuanceX                   = "issuance"
+	CCNYTokenName               = "CCNY"
 	IssuancePreLiquidationRatio = 1.1 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 

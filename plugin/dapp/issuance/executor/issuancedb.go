@@ -6,6 +6,8 @@ package executor
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -13,7 +15,6 @@ import (
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
 	tokenE "github.com/33cn/plugin/plugin/dapp/token/executor"
-	"math"
 )
 
 // List control
@@ -25,12 +26,12 @@ const (
 )
 
 const (
-	Coin                      = types.Coin      // 1e8
-	DefaultDebtCeiling        = 100000 * Coin          // 默认借贷限额
-	DefaultLiquidationRatio   = 0.25             // 默认质押比
-	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
-	PriceWarningRate          = 1.3             // 价格提前预警率
-	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
+	Coin                    = types.Coin      // 1e8
+	DefaultDebtCeiling      = 100000 * Coin   // 默认借贷限额
+	DefaultLiquidationRatio = 0.25            // 默认质押比
+	DefaultPeriod           = 3600 * 24 * 365 // 默认合约限期
+	PriceWarningRate        = 1.3             // 价格提前预警率
+	ExpireWarningTime       = 3600 * 24 * 10  // 提前10天超时预警
 )
 
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
@@ -154,8 +155,8 @@ func PriceKey() (key []byte) {
 
 // Action struct
 type Action struct {
-	coinsAccount *account.DB  // bty账户
-	tokenAccount *account.DB  // ccny账户
+	coinsAccount *account.DB // bty账户
+	tokenAccount *account.DB // ccny账户
 	db           dbm.KV
 	localDB      dbm.Lister
 	txhash       []byte
@@ -165,7 +166,7 @@ type Action struct {
 	execaddr     string
 	difficulty   uint64
 	index        int
-	Issuance   *Issuance
+	Issuance     *Issuance
 }
 
 // NewIssuanceAction generate New Action
@@ -180,7 +181,7 @@ func NewIssuanceAction(c *Issuance, tx *types.Transaction, index int) *Action {
 	}
 
 	return &Action{
-		coinsAccount: c.GetCoinsAccount(), tokenAccount:tokenDb, db: c.GetStateDB(), localDB:c.GetLocalDB(),
+		coinsAccount: c.GetCoinsAccount(), tokenAccount: tokenDb, db: c.GetStateDB(), localDB: c.GetLocalDB(),
 		txhash: hash, fromaddr: fromaddr, blocktime: c.GetBlockTime(), height: c.GetHeight(),
 		execaddr: dapp.ExecAddress(string(tx.Execer)), difficulty: c.GetDifficulty(), index: index, Issuance: c}
 }
@@ -339,7 +340,7 @@ func (action *Action) IssuanceManage(manage *pty.IssuanceManage) (*types.Receipt
 
 		value := types.Encode(&item)
 		action.db.Set(AddrKey(), value)
-		kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
+		kv = append(kv, &types.KeyValue{Key: AddrKey(), Value: value})
 	} else {
 		err = types.Decode(data, &item)
 		if err != nil {
@@ -349,7 +350,7 @@ func (action *Action) IssuanceManage(manage *pty.IssuanceManage) (*types.Receipt
 		item.GetArr().Value = append(item.GetArr().Value, manage.SuperAddrs...)
 		value := types.Encode(&item)
 		action.db.Set(AddrKey(), value)
-		kv = append(kv, &types.KeyValue{Key:AddrKey(), Value: value})
+		kv = append(kv, &types.KeyValue{Key: AddrKey(), Value: value})
 	}
 
 	receipt = &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: nil}
@@ -388,11 +389,11 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	// 参数检查
 	if create.GetTotalBalance() <= 0 {
 		clog.Error("IssuanceCreate", "addr", action.fromaddr, "execaddr", action.execaddr, "total balance", create.GetTotalBalance(), "error", types.ErrAmount)
-		return  nil, types.ErrAmount
+		return nil, types.ErrAmount
 	}
-    if create.DebtCeiling < 0 || create.LiquidationRatio < 0 || create.Period < 0 {
+	if create.DebtCeiling < 0 || create.LiquidationRatio < 0 || create.Period < 0 {
 		clog.Error("IssuanceCreate", "addr", action.fromaddr, "execaddr", action.execaddr, "error", types.ErrInvalidParam)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	// 检查ccny余额
@@ -456,14 +457,14 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 }
 
 // 根据最近抵押物价格计算需要冻结的BTY数量
-func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64,error) {
+func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error) {
 	if price == 0 {
 		clog.Error("Bty price should greate to 0")
 		return 0, pty.ErrPriceInvalid
 	}
 
-	valueReal := float64(value)/1e8
-	btyValue := valueReal/(price * ratio)
+	valueReal := float64(value) / 1e8
+	btyValue := valueReal / (price * ratio)
 	return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
 }
 
@@ -537,7 +538,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	// 借贷金额检查
 	if debt.GetValue() <= 0 {
 		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "error", types.ErrInvalidParam)
-		return  nil, types.ErrInvalidParam
+		return nil, types.ErrInvalidParam
 	}
 
 	// 借贷金额不超过个人限额
@@ -735,7 +736,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price float64) (*typ
 	var kv []*types.KeyValue
 
 	for index, debtRecord := range issu.DebtRecords {
-		if debtRecord.LiquidationPrice * PriceWarningRate < price {
+		if debtRecord.LiquidationPrice*PriceWarningRate < price {
 			if debtRecord.Status == pty.IssuanceUserStatusWarning {
 				debtRecord.PreStatus = debtRecord.Status
 				debtRecord.Status = pty.IssuanceUserStatusCreate
@@ -797,7 +798,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 	var kv []*types.KeyValue
 
 	for index, debtRecord := range issu.DebtRecords {
-		if debtRecord.ExpireTime - ExpireWarningTime > action.blocktime {
+		if debtRecord.ExpireTime-ExpireWarningTime > action.blocktime {
 			continue
 		}
 
@@ -862,7 +863,7 @@ func pricePolicy(feed *pty.IssuanceFeed) float64 {
 		return 0
 	}
 	for i, price := range feed.Price {
-		totalPrice += price * (float64(feed.Volume[i])/float64(totalVolume))
+		totalPrice += price * (float64(feed.Volume[i]) / float64(totalVolume))
 	}
 
 	return totalPrice
@@ -903,7 +904,7 @@ func (action *Action) IssuanceFeed(feed *pty.IssuanceFeed) (*types.Receipt, erro
 		}
 
 		// 超时清算判断
-		if issu.LatestExpireTime - ExpireWarningTime <= action.blocktime {
+		if issu.LatestExpireTime-ExpireWarningTime <= action.blocktime {
 			receipt, err := action.expireLiquidation(issu)
 			if err != nil {
 				clog.Error("IssuancePriceFeed", "Issuance ID", issu.IssuanceId, "expire liquidation error", err)

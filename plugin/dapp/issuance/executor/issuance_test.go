@@ -1,9 +1,10 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/client"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/client"
 
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
@@ -40,7 +41,7 @@ var (
 		[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
 		[]byte("12evczYyX9ZKPYvwSEvRkRyTjpSrJuLudg"),
 	}
-	total = 10000 * types.Coin
+	total      = 10000 * types.Coin
 	totalToken = 100000 * types.Coin
 )
 
@@ -96,7 +97,7 @@ func initEnv() *execEnv {
 	accA.SetDB(stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 	manageKeySet("issuance-manage", accountA.Addr, stateDB)
-	tokenAccA,_ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
+	tokenAccA, _ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
 	tokenAccA.SaveExecAccount(execAddr, &accountAToken)
 
 	accB := account.NewCoinsAccount(cfg)
@@ -110,14 +111,14 @@ func initEnv() *execEnv {
 	manageKeySet("issuance-guarantor", accountC.Addr, stateDB)
 
 	return &execEnv{
-		blockTime:time.Now().Unix(),
-		blockHeight:cfg.GetDappFork(pkt.IssuanceX, "Enable"),
-		difficulty:1539918074,
-		kvdb:kvdb,
-		api: api,
-		db: stateDB,
-		execAddr: execAddr,
-		cfg: cfg,
+		blockTime:   time.Now().Unix(),
+		blockHeight: cfg.GetDappFork(pkt.IssuanceX, "Enable"),
+		difficulty:  1539918074,
+		kvdb:        kvdb,
+		api:         api,
+		db:          stateDB,
+		execAddr:    execAddr,
+		cfg:         cfg,
 	}
 }
 
@@ -126,10 +127,10 @@ func TestIssuance(t *testing.T) {
 
 	// issuance create
 	p1 := &pkt.IssuanceCreateTx{
-		TotalBalance: 1000,
-		DebtCeiling: 100,
+		TotalBalance:     1000,
+		DebtCeiling:      100,
 		LiquidationRatio: 0.25,
-		Period: 5,
+		Period:           5,
 	}
 	createTx, err := pkt.CreateRawIssuanceCreateTx(env.cfg, p1)
 	if err != nil {
@@ -163,20 +164,19 @@ func TestIssuance(t *testing.T) {
 	}
 	issuanceID := createTx.Hash()
 	// query issuance by id
-	res, err := exec.Query("IssuanceInfoByID", types.Encode(&pkt.ReqIssuanceInfo{IssuanceId: common.ToHex(issuanceID),}))
+	res, err := exec.Query("IssuanceInfoByID", types.Encode(&pkt.ReqIssuanceInfo{IssuanceId: common.ToHex(issuanceID)}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by status
-	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status:1}))
+	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuances by ids
 	var issuanceIDsS []string
 	issuanceIDsS = append(issuanceIDsS, common.ToHex(issuanceID))
-	res, err = exec.Query("IssuanceInfoByIDs", types.Encode(&pkt.ReqIssuanceInfos{IssuanceIds:issuanceIDsS}))
+	res, err = exec.Query("IssuanceInfoByIDs", types.Encode(&pkt.ReqIssuanceInfos{IssuanceIds: issuanceIDsS}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// issuance price
 	p2 := &pkt.IssuanceFeedTx{}
@@ -212,7 +212,6 @@ func TestIssuance(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
-
 	// issuance manage
 	p3 := &pkt.IssuanceManageTx{}
 	p3.Addr = append(p3.Addr, string(Nodes[1]))
@@ -242,11 +241,10 @@ func TestIssuance(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 
-
 	// issuance debt
 	p4 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
-		Value: 100,
+		Value:      100,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p4)
 	if err != nil {
@@ -281,20 +279,19 @@ func TestIssuance(t *testing.T) {
 	assert.NotNil(t, res)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId:common.ToHex(issuanceID), Status:1}))
+		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by addr
 	res, err = exec.Query("IssuanceRecordsByAddr",
-		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId:common.ToHex(issuanceID),Addr: string(Nodes[1]), Status:1}))
+		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId: common.ToHex(issuanceID), Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// issuance repay
 	p5 := &pkt.IssuanceRepayTx{
 		IssuanceID: common.ToHex(issuanceID),
-		DebtID: common.ToHex(debtID),
+		DebtID:     common.ToHex(debtID),
 	}
 	createTx, err = pkt.CreateRawIssuanceRepayTx(env.cfg, p5)
 	if err != nil {
@@ -323,20 +320,19 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId:common.ToHex(issuanceID), Status:6}))
+		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by addr
 	res, err = exec.Query("IssuanceRecordsByAddr",
-		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId:common.ToHex(issuanceID),Addr: string(Nodes[1]), Status:6}))
+		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId: common.ToHex(issuanceID), Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// issuance liquidate
 	p6 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
-		Value: 100,
+		Value:      100,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p6)
 	if err != nil {
@@ -394,14 +390,14 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId:common.ToHex(issuanceID), Status:3}))
+		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
 	// expire liquidate
 	p8 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
-		Value: 100,
+		Value:      100,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p8)
 	if err != nil {
@@ -459,10 +455,9 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId:common.ToHex(issuanceID), Status:5}))
+		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 5}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-
 
 	// issuance close
 	p10 := &pkt.IssuanceCloseTx{
@@ -494,7 +489,7 @@ func TestIssuance(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 	// query issuance by status
-	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status:2}))
+	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status: 2}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 }
