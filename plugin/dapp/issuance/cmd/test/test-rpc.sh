@@ -344,7 +344,7 @@ init() {
         #1CQMn9B5Rh6s8wtnYEhuQwtVxPjcXSC4qC
         chain33_ImportPrivkey ${IssuancePriv3} ${IssuanceAddr3} "issuance3" "${para_ip}"
         #1BLfkPaAGqSiXyovx3Pm9xUTMHmusLXtLZ
-        chain33_ImportPrivkey ${CollateralizePriv} ${CollateralizeAddr} "coll" "${main_ip}"
+        chain33_ImportPrivkey ${CollateralizePriv} ${CollateralizeAddr} "coll" "${para_ip}"
 
         chain33_applyCoins "${IssuanceAddr3}" 12000000000 "${para_ip}"
         chain33_QueryBalance "${IssuanceAddr3}" "$para_ip"
