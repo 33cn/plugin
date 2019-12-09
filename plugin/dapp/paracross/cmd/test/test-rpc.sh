@@ -487,7 +487,7 @@ paracross_testSelfConsensStages() {
     KS_PRI="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
     JR_PRI="0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
     NL_PRI="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-
+    echo "disable self consensus stage id: $id"
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
@@ -497,6 +497,36 @@ paracross_testSelfConsensStages() {
     chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
     echo "send vote 3"
     chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+
+    #re-enable self consensus
+    newEnableHeight=$(($newHeight + 50))
+    echo "apply stage startHeight=$newEnableHeight"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newEnableHeight"',"enable":1} }}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignRawTx "$rawtx" "$para_test_prikey" "${para_ip}"
+
+    echo "get stage apply id"
+    req='"method":"paracross.ListSelfStages","params":[{"status":1,"count":1}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    echo "$resp"
+    id=$(jq -r ".result.stageInfo[0].id" <<<"$resp")
+    if [ -z "$id" ]; then
+        echo "paracross stage apply id null"
+        exit 1
+    fi
+    ####################################
+    echo "enable self consensus stage id: $id"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    echo "send vote 1"
+    chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}"
+    echo "send vote 2"
+    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    echo "send vote 3"
+    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+    #################################
 
     echo "query status"
     req='"method":"paracross.ListSelfStages","params":[{"status":3,"count":1}]'
@@ -518,9 +548,15 @@ paracross_testSelfConsensStages() {
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok4=$(jq '(.error|not) and (.result.enable==2)' <<<"$resp")
-    echo "1=$ok1,2=$ok2,3=$ok3,4=$ok4"
 
-    [ "$ok1" == true ] && [ "$ok2" == true ] && [ "$ok3" == true ] && [ "$ok4" == true ]
+    req='"method":"paracross.GetSelfConsOneStage","params":[{"data":'"$newEnableHeight"'}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    echo "$resp"
+    ok5=$(jq '(.error|not) and (.result.enable==1)' <<<"$resp")
+
+    echo "1=$ok1,2=$ok2,3=$ok3,4=$ok4,5=$ok5"
+
+    [ "$ok1" == true ] && [ "$ok2" == true ] && [ "$ok3" == true ] && [ "$ok4" == true ] && [ "$ok5" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
