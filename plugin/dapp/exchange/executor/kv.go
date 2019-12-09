@@ -45,14 +45,15 @@ func calcMarketDepthOrderPrefix(left, right *types.Asset, op int32, price float3
 // localdb中存储市场挂单ID
 func calcMarketDepthOrderKey(left, right *types.Asset, op int32, price float32, index int64) []byte {
 	// 设置精度为1e8
-	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d:%018d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float32(1e8)), index)
+	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d:%022d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float32(1e8)), index)
 	return []byte(key)
 }
 
-//最新已经成交的订单，这里状态固定都是完成状态,这个主要给外部使用，可以查询最新得成交信息
+//最新已经成交的订单，这里状态固定都是完成状态,这个主要给外部使用，可以查询最新得成交信息,存在多个情况
+//matchOrderIndex,是匹配order在数组中的index,这里预留4个0000，用来解决同一笔交易中存在key重复得情况，这样设计保证了key得唯一性
 func calcCompletedOrderKey(left, right *types.Asset, index int64) []byte {
 	// 设置精度为1e8
-	key := fmt.Sprintf("%s"+"completed-%s-%s-%d:%018d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), types.Completed, index)
+	key := fmt.Sprintf("%s"+"completed-%s-%s-%d:%022d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), types.Completed, index)
 	return []byte(key)
 }
 func calcCompletedOrderPrefix(left, right *types.Asset) []byte {
@@ -66,7 +67,8 @@ func calcUserOrderIDPrefix(status int32, addr string) []byte {
 	key := fmt.Sprintf("%s"+"addr:%s:%d:", KeyPrefixLocalDB, addr, status)
 	return []byte(key)
 }
+//matchOrderIndex,用来解决同一笔交易中存在key重复得情况，这样设计保证了key得唯一性
 func calcUserOrderIDKey(status int32, addr string, index int64) []byte {
-	key := fmt.Sprintf("%s"+"addr:%s:%d:%018d", KeyPrefixLocalDB, addr, status, index)
+	key := fmt.Sprintf("%s"+"addr:%s:%d:%022d", KeyPrefixLocalDB, addr, status, index)
 	return []byte(key)
 }

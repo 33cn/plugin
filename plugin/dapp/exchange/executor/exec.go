@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/types"
 	exchangetypes "github.com/33cn/plugin/plugin/dapp/exchange/types"
 )
@@ -11,19 +12,16 @@ import (
  */
 
 func (e *exchange) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	var receipt *types.Receipt
-	//implement code
-	return receipt, nil
+	action := NewAction(e, tx, index)
+	return action.LimitOrder(payload)
 }
 
 func (e *exchange) Exec_MarketOrder(payload *exchangetypes.MarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	var receipt *types.Receipt
-	//implement code
-	return receipt, nil
+	//TODO marketOrder
+	return nil, fmt.Errorf("%s", "not support MarketOrder..")
 }
 
 func (e *exchange) Exec_RevokeOrder(payload *exchangetypes.RevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	var receipt *types.Receipt
-	//implement code
-	return receipt, nil
+	action := NewAction(e, tx, index)
+	return action.RevokeOrder(payload)
 }

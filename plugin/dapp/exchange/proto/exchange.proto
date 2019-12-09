@@ -7,7 +7,7 @@ message Exchange {
 message ExchangeAction {
     oneof value {
         LimitOrder limitOrder = 1;
-//        MarketOrder marketOrder = 2;
+        MarketOrder marketOrder = 2;
         RevokeOrder revokeOrder = 3;
     }
     int32 ty = 6;
