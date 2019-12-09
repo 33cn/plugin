@@ -7,7 +7,6 @@ package para
 import (
 	"errors"
 	"fmt"
-	"github.com/33cn/chain33/util"
 	"sync/atomic"
 
 	"github.com/33cn/chain33/common"
@@ -465,38 +464,38 @@ func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
 
 // 向blockchain写区块
 func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) error {
-	addrAndPrivKey := &util.AddrAndPrivKey{
-		Addr:client.paraClient.authAccount,
-		PrivKey:client.paraClient.commitMsgClient.privateKey,
+	//blockdetail, _, err := util.ExecBlock(client.paraClient.GetQueueClient(), prev, paraBlock, false, isSync, true, addrAndPrivKey)
+	//if nil != err {
+	//	plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
+	//	return err
+	//}
+	blockdetail := &types.BlockDetail{
+		Block:paraBlock,
+		PrevStatusHash:prev,
 	}
 	isSync := client.downloadHasCaughtUp()
-	blockdetail, _, err := util.ExecBlock(client.paraClient.GetQueueClient(), prev, paraBlock, false, isSync, true, addrAndPrivKey)
-	if nil != err {
-		plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
-		return err
-	}
 	paraChainBlockDetail := types.ParaChainBlockDetail{
 		Blockdetail:blockdetail,
 		IsSync:isSync,
 	}
 	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, &paraChainBlockDetail)
-	err = client.paraClient.GetQueueClient().Send(msg, true)
+	err := client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
+		plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
 		return err
 	}
 	client.paraClient.SetCurrentBlock(blockdetail.Block)
 
-	_, err = client.paraClient.GetQueueClient().Wait(msg)
+	resp, err := client.paraClient.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
 	}
+	respBlockDetail := resp.GetData().(*types.BlockDetail)
+	if respBlockDetail == nil {
+		return errors.New("para sync - block detail is nil")
+	}
+	client.paraClient.SetCurrentBlock(respBlockDetail.Block)
 	return nil
-
-	//respBlockDetail := resp.GetData().(*types.BlockDetail)
-	//if respBlockDetail == nil {
-	//	return errors.New("para sync - block detail is nil")
-	//}
-	//client.paraClient.SetCurrentBlock(respBlockDetail.Block)
 }
 
 //获取同步状态

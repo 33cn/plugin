@@ -903,6 +903,24 @@ func (client *commitMsgClient) fetchPriKey() error {
 
 	client.privateKey = priKey
 	plog.Info("para commit fetchPriKey success")
+
+	paraAccount := &types.ParaSelfConsensusAccount{
+		SignType:types.SECP256K1,
+		PrivateKey:pk,
+		Address:client.paraClient.authAccount,
+	}
+	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventParaSelfConsensusAccount, paraAccount)
+	err = client.paraClient.GetQueueClient().Send(msg, true)
+	if err != nil {
+		plog.Error("para failed to send ParaSelfConsensusAccount", "err", err.Error())
+		return err
+	}
+	//只为同步
+	_, err = client.paraClient.GetQueueClient().Wait(msg)
+	if err != nil {
+		plog.Error("para failed to send ParaSelfConsensusAccount due to", "err", err.Error())
+		return err
+	}
 	return nil
 }
 
