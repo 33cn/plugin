@@ -195,10 +195,6 @@ function multisig_AccOperateTx() {
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccTxCount","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
 
-    #获取本多重签名账户上的交易数，通过交易交易id获取交易信息 ????
-    req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccTxCount","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
-    chain33_Http "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
-
     #查询多重签名账户信息中
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigTxInfo","payload":{"multiSigAddr":"'"$multisigAccAddr"'","txId":"7"}}]}'
     resok='(.result.txid == "7") and (.result.executed == true) and (.result.multiSigAddr == "'"$multisigAccAddr"'")'
