@@ -77,7 +77,7 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 		}
 	}
 	if exchange.Ty == exchangetypes.TyMarketOrderAction {
-         return types.ErrActionNotSupport
+		return types.ErrActionNotSupport
 	}
 	return nil
 }

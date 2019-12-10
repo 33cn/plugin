@@ -67,6 +67,7 @@ func calcUserOrderIDPrefix(status int32, addr string) []byte {
 	key := fmt.Sprintf("%s"+"addr:%s:%d:", KeyPrefixLocalDB, addr, status)
 	return []byte(key)
 }
+
 //matchOrderIndex,用来解决同一笔交易中存在key重复得情况，这样设计保证了key得唯一性
 func calcUserOrderIDKey(status int32, addr string, index int64) []byte {
 	key := fmt.Sprintf("%s"+"addr:%s:%d:%022d", KeyPrefixLocalDB, addr, status, index)
