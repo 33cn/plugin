@@ -9,13 +9,17 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/33cn/chain33/system/dapp/commands"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +47,7 @@ func ParcCmd() *cobra.Command {
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
 		GetNodeGroupPubKeysCmd(),
-		CreatePrivacyTx4ParaCmd(),
+		privacyCmd(),
 	)
 	return cmd
 }
@@ -1144,10 +1148,20 @@ func showPublicKeys(arg interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-// CreatePrivacyTx4ParaCmd: Create PrivacyTx for Para
-func CreatePrivacyTx4ParaCmd() *cobra.Command {
+func privacyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "privacy",
+		Short: "parachain privacy tx cmd",
+	}
+	cmd.AddCommand(createPrivacyTx4ParaCmd())
+	cmd.AddCommand(showPrivacyTxByHashCmd())
+
+	return cmd
+}
+
+func createPrivacyTx4ParaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
 		Short: "convert tx to privacy specified for para-chain",
 		Run:   convertPrivacyTx4Para,
 	}
@@ -1171,4 +1185,98 @@ func convertPrivacyTx4Para(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ConvertTx2Privacy", paraName, &replyString)
 	ctx.RunResult()
 	fmt.Println(replyString.Data)
+}
+
+func showPrivacyTxByHashCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "show me the privacy tx result",
+		Run:   showPrivacyTx4Para,
+	}
+	addGetTxsByHashesFlags(cmd)
+	return cmd
+}
+
+func addGetTxsByHashesFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("hashes", "s", "", "transaction hash(es), separated by space")
+	cmd.MarkFlagRequired("hashes")
+
+	cmd.Flags().StringP("key", "k", "", "private key")
+	cmd.MarkFlagRequired("key")
+}
+
+func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	hashes, _ := cmd.Flags().GetString("hashes")
+	privateKeyStr, _ := cmd.Flags().GetString("key")
+	hashesArr := strings.Split(hashes, " ")
+	params := rpctypes.ReqPrivacyHashes{
+		Hashes: hashesArr,
+	}
+
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		fmt.Println("Failed to new crypto")
+		return
+	}
+	privateKey, err := common.FromHex(privateKeyStr)
+	if err != nil {
+		fmt.Println("Invalid private key string")
+		return
+	}
+	prikey, err := cr.PrivKeyFromBytes(privateKey)
+	if err != nil {
+		fmt.Println("Invalid private key")
+		return
+	}
+
+	fmt.Println("Begin to get query id")
+	var requestId string
+	paramsQuery := rpctypes.ReqPrivacyTxQueryId{}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestId)
+	ctx.Run()
+	params.RequestId = requestId
+
+	protoReqPrivacyHashes := types.ReqPrivacyHashes{
+		RequestID:requestId,
+	}
+	for _, hash := range params.Hashes {
+		hashByte, _ := common.FromHex(hash)
+		protoReqPrivacyHashes.Hashes = append(protoReqPrivacyHashes.Hashes, hashByte)
+	}
+	data := types.Encode(&protoReqPrivacyHashes)
+	sig := prikey.Sign(data)
+	params.Signature = common.ToHex(sig.Bytes())
+	params.PublicKey = common.ToHex(prikey.PubKey().Bytes())
+
+	fmt.Println("Begin to send GetPrivacyTxByHashes")
+	var res rpctypes.TransactionDetails
+	ctx = jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetPrivacyTxByHashes", params, &res)
+	ctx.SetResultCb(parseQueryTxsByHashesRes)
+	ctx.Run()
+}
+
+func parseQueryTxsByHashesRes(arg interface{}) (interface{}, error) {
+	var result commandtypes.TxDetailsResult
+	for _, v := range arg.(*rpctypes.TransactionDetails).Txs {
+		if v == nil {
+			result.Txs = append(result.Txs, nil)
+			continue
+		}
+		amountResult := strconv.FormatFloat(float64(v.Amount)/float64(types.Coin), 'f', 4, 64)
+		td := commandtypes.TxDetailResult{
+			Tx:         commandtypes.DecodeTransaction(v.Tx),
+			Receipt:    v.Receipt,
+			Proofs:     v.Proofs,
+			Height:     v.Height,
+			Index:      v.Index,
+			Blocktime:  v.Blocktime,
+			Amount:     amountResult,
+			Fromaddr:   v.Fromaddr,
+			ActionName: v.ActionName,
+			Assets:     v.Assets,
+		}
+		result.Txs = append(result.Txs, &td)
+	}
+	return result, nil
 }

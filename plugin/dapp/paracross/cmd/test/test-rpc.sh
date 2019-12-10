@@ -499,6 +499,7 @@ paracross_testSelfConsensStages() {
     chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
 
     #re-enable self consensus
+    sleep 5
     newEnableHeight=$(($newHeight + 50))
     echo "apply stage startHeight=$newEnableHeight"
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newEnableHeight"',"enable":1} }}]'
@@ -521,11 +522,11 @@ paracross_testSelfConsensStages() {
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     echo "send vote 1"
-    chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}"
+    chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}" "112s"
     echo "send vote 2"
-    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "113s"
     echo "send vote 3"
-    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "114s"
     #################################
 
     echo "query status"
