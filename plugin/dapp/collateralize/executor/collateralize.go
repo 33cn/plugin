@@ -54,10 +54,10 @@ func (c *Collateralize) GetDriverName() string {
 	return pty.CollateralizeX
 }
 
-func (c *Collateralize) addCollateralizeID(collateralizeId string, index int64) (kvs []*types.KeyValue) {
-	key := calcCollateralizeKey(collateralizeId, index)
+func (c *Collateralize) addCollateralizeID(collateralizeID string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeKey(collateralizeID, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId: collateralizeId,
+		CollateralizeId: collateralizeID,
 		Index:           index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -66,18 +66,18 @@ func (c *Collateralize) addCollateralizeID(collateralizeId string, index int64) 
 	return kvs
 }
 
-func (c *Collateralize) deleteCollateralizeID(collateralizeId string, index int64) (kvs []*types.KeyValue) {
-	key := calcCollateralizeKey(collateralizeId, index)
+func (c *Collateralize) deleteCollateralizeID(collateralizeID string, index int64) (kvs []*types.KeyValue) {
+	key := calcCollateralizeKey(collateralizeID, index)
 	kv := &types.KeyValue{Key: key, Value: nil}
 
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeStatus(status int32, collateralizeId string, index int64) (kvs []*types.KeyValue) {
+func (c *Collateralize) addCollateralizeStatus(status int32, collateralizeID string, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeStatusKey(status, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId: collateralizeId,
+		CollateralizeId: collateralizeID,
 		Index:           index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -94,10 +94,10 @@ func (c *Collateralize) deleteCollateralizeStatus(status int32, index int64) (kv
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeId string, status int32, index int64) (kvs []*types.KeyValue) {
+func (c *Collateralize) addCollateralizeAddr(addr string, collateralizeID string, status int32, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeAddrKey(addr, index)
 	record := &pty.CollateralizeRecord{
-		CollateralizeId: collateralizeId,
+		CollateralizeId: collateralizeID,
 		Status:          status,
 		Index:           index,
 	}
@@ -115,11 +115,11 @@ func (c *Collateralize) deleteCollateralizeAddr(addr string, index int64) (kvs [
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeRecordStatus(recordStatus int32, collateralizeId string, recordId string, index int64) (kvs []*types.KeyValue) {
+func (c *Collateralize) addCollateralizeRecordStatus(recordStatus int32, collateralizeID string, recordId string, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeRecordStatusKey(recordStatus, index)
 
 	record := &pty.CollateralizeRecord{
-		CollateralizeId: collateralizeId,
+		CollateralizeId: collateralizeID,
 		RecordId:        recordId,
 		Index:           index,
 	}
@@ -137,11 +137,11 @@ func (c *Collateralize) deleteCollateralizeRecordStatus(recordStatus int32, inde
 	return kvs
 }
 
-func (c *Collateralize) addCollateralizeRecordAddr(recordAddr string, collateralizeId string, recordId string, index int64) (kvs []*types.KeyValue) {
+func (c *Collateralize) addCollateralizeRecordAddr(recordAddr string, collateralizeID string, recordId string, index int64) (kvs []*types.KeyValue) {
 	key := calcCollateralizeRecordAddrKey(recordAddr, index)
 
 	record := &pty.CollateralizeRecord{
-		CollateralizeId: collateralizeId,
+		CollateralizeId: collateralizeID,
 		RecordId:        recordId,
 		Index:           index,
 	}
