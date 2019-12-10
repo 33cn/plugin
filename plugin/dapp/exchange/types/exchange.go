@@ -1,7 +1,6 @@
 package types
 
 import (
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
 
@@ -75,7 +74,7 @@ var (
 	logMap = map[int64]*types.LogInfo{
 		//LogID:	{Ty: reflect.TypeOf(LogStruct), Name: LogName},
 	}
-	tlog = log.New("module", "exchange.types")
+	//tlog = log.New("module", "exchange.types")
 )
 
 // init defines a register function
