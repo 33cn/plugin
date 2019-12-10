@@ -15,9 +15,9 @@ message ExchangeAction {
 //限价订单
 message LimitOrder {
     //交易对
-    Asset leftAsset  = 1;
+    asset leftAsset  = 1;
     //交易对
-    Asset rightAsset  = 2;
+    asset rightAsset  = 2;
     //价格
     float price  = 3;
     //总量
@@ -29,9 +29,9 @@ message LimitOrder {
 //市价委托
 message MarketOrder {
     //资产1
-    Asset leftAsset  = 1;
+    asset leftAsset  = 1;
     //资产2
-    Asset rightAsset = 2;
+    asset rightAsset = 2;
     //总量
     int64 amount = 3;
     //操作， 1为买，2为卖
@@ -44,7 +44,7 @@ message RevokeOrder {
     string orderID   = 1;
 }
 //资产类型
-message Asset {
+message asset {
     string execer = 1;
     string symbol = 2;
 }
@@ -85,9 +85,9 @@ message OrderID {
 //查询接口
 message QueryMarketDepth {
     //资产1
-    Asset leftAsset  = 1;
+    asset leftAsset  = 1;
     //资产2
-    Asset rightAsset = 2;
+    asset rightAsset = 2;
     //操作， 1为买，2为卖
     int32 op = 3;
     // 这里用价格作为索引值
@@ -98,9 +98,9 @@ message QueryMarketDepth {
 //市场深度
 message MarketDepth {
     //资产1
-    Asset leftAsset  = 1;
+    asset leftAsset  = 1;
     //资产2
-    Asset rightAsset = 2;
+    asset rightAsset = 2;
     //价格
     float price  = 3;
     //总量
@@ -116,9 +116,9 @@ message MarketDepthList {
 //查询最新得成交信息,外部接口
 message QueryCompletedOrderList {
     //资产1
-    Asset leftAsset  = 1;
+    asset leftAsset  = 1;
     //资产2
-    Asset rightAsset = 2;
+    asset rightAsset = 2;
     // 索引值
     int64 index = 3;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
