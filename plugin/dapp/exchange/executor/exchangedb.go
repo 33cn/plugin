@@ -82,7 +82,7 @@ func CheckOp(op int32) bool {
 }
 
 func CheckCount(count int32) bool {
-	return count > 20
+	return count <= 20 && count >= 0
 }
 
 func CheckDirection(direction int32) bool {
