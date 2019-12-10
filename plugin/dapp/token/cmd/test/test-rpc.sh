@@ -34,7 +34,7 @@ execName="token"
 function queryTransaction() {
     validator=$1
     expectRes=$2
-  #  echo "txhash=${RAW_TX_HASH}"
+    #  echo "txhash=${RAW_TX_HASH}"
     res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${RAW_TX_HASH}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r "${validator}")
     if [ "${res}" != "${expectRes}" ]; then
         return 1
@@ -45,7 +45,7 @@ function queryTransaction() {
 
 function signRawTxAndQuery() {
     chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-  #  txHash=$RAW_TX_HASH
+    #  txHash=$RAW_TX_HASH
     queryTransaction ".error | not" "true"
     echo_rst "$1 queryExecRes" "$?"
 }
@@ -226,7 +226,7 @@ function token_withdraw() {
 
 function run_test() {
     local ip=$1
-#    set -x
+    #    set -x
     token_preCreate
     token_getPreCreated
 
@@ -240,7 +240,7 @@ function run_test() {
     token_sendExec
     token_assets
     token_withdraw
- #   set +x
+    #   set +x
 }
 
 function main() {

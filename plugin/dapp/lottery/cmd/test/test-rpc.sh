@@ -75,7 +75,7 @@ lottery_LotteryCreate() {
     #创建交易
     priv=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryCreate","payload":{"purBlockNum":'"$purNum"',"drawBlockNum":'"$drawNum"', "opRewardRatio":'"$opRatio"',"devRewardRatio":'"$devRatio"',"fee":1000000}}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
     chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
@@ -91,7 +91,7 @@ lottery_LotteryBuy() {
     number=$3
     way=$4
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryBuy","payload":{"lotteryId":"'"$gID"'","amount":'"$amount"',"number":'"$number"',"way":'"$way"',"fee":1000000}}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
     chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
@@ -101,7 +101,7 @@ lottery_LotteryDraw() {
     #创建交易
     priv=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
     chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
@@ -110,7 +110,7 @@ lottery_LotteryClose() {
     #创建交易
     priv=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
+    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
     chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
@@ -119,7 +119,7 @@ lottery_GetLotteryNormalInfo() {
     gameID=$1
     addr=$2
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryNormalInfo","payload":{"lotteryId":"'"$gameID"'"}}]}'
-	resok='(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)'
+    resok='(.error|not) and (.result.purBlockNum == "'"$purNum"'") and (.result.drawBlockNum == "'"$drawNum"'") and (.result.createAddr == "'"$addr"'") and (.result.opRewardRatio == "'"$opRatio"'") and (.result.devRewardRatio == "'"$devRatio"'") and (.result | [has("createHeight"), true] | unique | length == 1)'
     http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
@@ -128,8 +128,8 @@ lottery_GetLotteryCurrentInfo() {
     status=$2
     amount=$3
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryCurrentInfo","payload":{"lotteryId":"'"$gameID"'"}}]}'
-	resok='(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result.luckyNumber"
+    resok='(.error|not) and (.result.status == '"$status"') and (.result.buyAmount == "'"$amount"'") and (.result | [has("lastTransToPurState", "lastTransToDrawState", "totalPurchasedTxNum", "round", "luckyNumber", "lastTransToPurStateOnMain", "lastTransToDrawStateOnMain", "purBlockNum", "drawBlockNum", "missingRecords", "totalAddrNum"), true] | unique | length == 1)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result.luckyNumber"
 
     if [[ $status == 3 ]]; then
         luckyNumber=$RETURN_RESP
@@ -142,8 +142,8 @@ lottery_GetLotteryPurchaseAddr() {
     gameID=$1
     count=$2
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryPurchaseAddr","payload":{"lotteryId":"'"$gameID"'"}}]}'
-	resok='(.error|not) and (.result.address | length == '"$count"')'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.address | length == '"$count"')'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryLuckyNumber() {
@@ -151,8 +151,8 @@ lottery_GetLotteryHistoryLuckyNumber() {
     count=$2
     lucky=$3
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryLuckyNumber","payload":{"lotteryId":"'"$gameID"'"}}]}'
-	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$lucky"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryRoundLuckyNumber() {
@@ -160,8 +160,8 @@ lottery_GetLotteryRoundLuckyNumber() {
     round=$2
     lucky=$3
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryRoundLuckyNumber","payload":{"lotteryId":"'"$gameID"'", "round":['"$round"']}}]}'
-	resok='(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.records | length == 1) and (.result.records[0].number == "'"$lucky"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryBuyInfo() {
@@ -170,8 +170,8 @@ lottery_GetLotteryHistoryBuyInfo() {
     count=$3
     number=$4
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryBuyInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}'
-	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryBuyRoundInfo() {
@@ -181,8 +181,8 @@ lottery_GetLotteryBuyRoundInfo() {
     count=$4
     number=$5
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryBuyRoundInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}'
-	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].number == "'"$number"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryHistoryGainInfo() {
@@ -191,8 +191,8 @@ lottery_GetLotteryHistoryGainInfo() {
     count=$3
     amount=$4
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryHistoryGainInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'"}}]}'
-	resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.records | length == '"$count"') and (.result.records[0].addr == "'"$addr"'") and (.result.records[0].buyAmount == "'"$amount"'")'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 lottery_GetLotteryRoundGainInfo() {
@@ -201,8 +201,8 @@ lottery_GetLotteryRoundGainInfo() {
     round=$3
     amount=$4
     req='{"method":"Chain33.Query","params":[{"execer":"lottery","funcName":"GetLotteryRoundGainInfo","payload":{"lotteryId":"'"$gameID"'", "addr":"'"$addr"'", "round":'"$round"'}}]}'
-	resok='(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result.addr == "'"$addr"'") and (.result.round == "'"$round"'") and (.result.buyAmount == "'"$amount"'") and (.result | [has("fundAmount"), true] | unique | length == 1)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_testcases() {

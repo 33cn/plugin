@@ -78,7 +78,7 @@ function multisig_AccCreateTx() {
 
     #获取创建的多重签名地址
     multisigAccAddr=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccounts","payload":{"start":"0","end":"0"}}]}' ${MAIN_HTTP} | jq -r ".result.address[0]")
- #   echo "multisigAccAddr=$multisigAccAddr"
+    #   echo "multisigAccAddr=$multisigAccAddr"
 
     #多重签名地址查询具体信息
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccountInfo","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'

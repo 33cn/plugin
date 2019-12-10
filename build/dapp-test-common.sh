@@ -24,8 +24,6 @@ echo_rst() {
 }
 
 http_req() {
-  #  echo "request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
-  #  echo "#$4 request: $1"
     local body=$(curl -ksd "$1" "$2")
     RETURN_RESP=$(jq -r "$5" <<<"$body")
     echo "#response: $body" "$RETURN_RESP"

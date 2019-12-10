@@ -62,8 +62,8 @@ function callJS() {
 
 function queryJS() {
     req='{"method":"Chain33.Query","params":[{"execer":"'${user_game}'","funcName":"Query","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
-	resok='(.error|not) and (.result != null)'
-	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    resok='(.error|not) and (.result != null)'
+    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_testcases() {
