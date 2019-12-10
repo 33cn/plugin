@@ -41,29 +41,25 @@ function init() {
 
 function configJSCreator() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${manager_name}'","actionName":"Modify","payload":{"key":"js-creator","op":"add","value":"'${beneficiary}'"}}]}'
-	resok='(.error|not) and (.result != null)'
-	chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+	chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${super_manager}" "${MAIN_HTTP}"
 }
 
 function createJSContract() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${exec_name}'","actionName":"Create","payload":{"name":"'${game}'","code":"'${jsCode}'"}}]}'
-	resok='(.error|not) and (.result != null)'
-	chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+	chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function callJS() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${user_game}'","actionName":"Call","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
-	resok='(.error|not) and (.result != null)'
-	chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result"
+	chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function queryJS() {
     req='{"method":"Chain33.Query","params":[{"execer":"'${user_game}'","funcName":"Query","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
-    resok='(.error|not) and (.result != null)'
-    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME"
 }
 
 function run_testcases() {
