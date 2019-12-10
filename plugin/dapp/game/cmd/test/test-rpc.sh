@@ -19,8 +19,8 @@ source ../dapp-test-common.sh
 function chain33_GetExecAddr() {
     #获取GAME合约地址
     req='{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"$1"'"}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-	GAME_ADDR=$RAW_RESP
+    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    GAME_ADDR=$RAW_RESP
 }
 
 function CreateGameTx() {

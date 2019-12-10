@@ -25,11 +25,11 @@ echo_rst() {
 }
 
 http_req() {
-  #  echo "request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
-  #  echo "#$4 request: $1"
+    #  echo "request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
+    #  echo "#$4 request: $1"
     HTTP_RESP=$(curl -ksd "$1" "$2")
     RAW_RESP=$(jq -r "$5" <<<"$HTTP_RESP")
-  #  echo "#response: $HTTP_RESP" "$RAW_RESP"
+    #  echo "#response: $HTTP_RESP" "$RAW_RESP"
     ok=$(echo "$HTTP_RESP" | jq -r "$3")
     [ "$ok" == true ]
     rst=$?

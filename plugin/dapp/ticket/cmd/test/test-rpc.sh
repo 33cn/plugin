@@ -55,9 +55,9 @@ ticket_TicketList() {
     http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     ticket0=$(echo "${HTTP_RESP}" | jq -r ".result.tickets[0]")
- #   echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
+    #   echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
     ticketId=$(echo "${HTTP_RESP}" | jq -r ".result.tickets[0].ticketId")
- #   echo -e "######\\n  ticketId is $ticketId  \\n######"
+    #   echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
 ticket_MinerAddress() {

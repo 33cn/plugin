@@ -15,7 +15,7 @@ function query_unfreezeID() {
         req='{"method":"Chain33.QueryTransaction","params":[{"hash":"'"$txhash"'"}]}'
         ret=$(curl -ksd "$req" ${MAIN_HTTP})
         tx=$(jq -r ".result.tx.hash" <<<"$ret")
-     #   echo "====query tx= ${txhash}, return=$ret "
+        #   echo "====query tx= ${txhash}, return=$ret "
         if [ "${tx}" != "${txhash}" ]; then
             chain33_BlockWait 1 "${MAIN_HTTP}"
             times=$((times - 1))
