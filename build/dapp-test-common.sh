@@ -24,7 +24,8 @@ echo_rst() {
 }
 
 chain33_Http() {
-    local body=$(curl -ksd "$1" "$2")
+    local body
+    body=$(curl -ksd "$1" "$2")=$(curl -ksd "$1" "$2")
     RETURN_RESP=$(jq -r "$5" <<<"$body")
     echo "#response: $body" "$RETURN_RESP"
     ok=$(echo "$body" | jq -r "$3")
