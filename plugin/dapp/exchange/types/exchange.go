@@ -96,28 +96,28 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ExchangeX, NewType(cfg))
 }
 
-type exchangeType struct {
+type ExchangeType struct {
 	types.ExecTypeBase
 }
 
-func NewType(cfg *types.Chain33Config) *exchangeType {
-	c := &exchangeType{}
+func NewType(cfg *types.Chain33Config) *ExchangeType {
+	c := &ExchangeType{}
 	c.SetChild(c)
 	c.SetConfig(cfg)
 	return c
 }
 
 // GetPayload 获取合约action结构
-func (e *exchangeType) GetPayload() types.Message {
+func (e *ExchangeType) GetPayload() types.Message {
 	return &ExchangeAction{}
 }
 
 // GeTypeMap 获取合约action的id和name信息
-func (e *exchangeType) GetTypeMap() map[string]int32 {
+func (e *ExchangeType) GetTypeMap() map[string]int32 {
 	return actionMap
 }
 
 // GetLogMap 获取合约log相关信息
-func (e *exchangeType) GetLogMap() map[int64]*types.LogInfo {
+func (e *ExchangeType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }

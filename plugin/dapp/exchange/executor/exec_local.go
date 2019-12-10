@@ -229,7 +229,6 @@ func (e *exchange) updateIndex(receipt *exchangetypes.ReceiptExchange) (kvs []*t
 func OpSwap(op int32) int32 {
 	if op == exchangetypes.OpBuy {
 		return exchangetypes.OpSell
-	} else {
-		return exchangetypes.OpBuy
 	}
+	return exchangetypes.OpBuy
 }
