@@ -422,7 +422,7 @@ func TestExchange(t *testing.T) {
 	//订单1的状态应该还是ordered
 	reply = msg.(*et.Order)
 	assert.Equal(t, int32(et.Completed), reply.Status)
-	//根据op查询市场深度
+	//根据op查询市场深度,这时候应该查不到
 	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}))
 	if err != nil {
@@ -430,6 +430,15 @@ func TestExchange(t *testing.T) {
 	}
 	reply1 = msg.(*et.MarketDepthList)
 	t.Log(reply1.List)
+
+	//根据状态和地址查询
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[0])}))
+	if err != nil {
+		t.Error(err)
+	}
+	reply2 = msg.(*et.OrderList)
+	t.Log(reply2)
+	assert.Equal(t, 2, len(reply2.List))
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
