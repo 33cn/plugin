@@ -611,4 +611,3 @@ func deletePrunedMavlData(db dbm.DB, prefix string) (status int) {
 	}
 	return 1 // this  prefix Iterator over
 }
-
