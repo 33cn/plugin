@@ -33,7 +33,7 @@ chain33_NewAccount() {
     label=$1
     req='{"method":"Chain33.NewAccount","params":[{"label":"'"$label"'"}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result.acc.addr|length > 0)' "$FUNCNAME" ".result.acc.addr"
-    glAddr=$RAW_RESP
+    glAddr=$RETURN_RESP
 }
 
 chain33_SendTransaction() {
@@ -42,14 +42,14 @@ chain33_SendTransaction() {
     #签名交易
     req='{"method":"Chain33.SignRawTx","params":[{"addr":"'"$addr"'","txHex":"'"$rawTx"'","expire":"120s","fee":10000000,"index":0}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "Chain33.SignRawTx" ".result"
-    signTx=$RAW_RESP
+    signTx=$RETURN_RESP
 
     req='{"method":"Chain33.SendTransaction","params":[{"data":"'"$signTx"'"}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
-    gResp=$RAW_RESP
+    gResp=$RETURN_RESP
     #返回交易
-    chain33_QueryTx "$RAW_RESP" "${MAIN_HTTP}"
+    chain33_QueryTx "$RETURN_RESP" "${MAIN_HTTP}"
 }
 
 blackwhite_BlackwhiteCreateTx() {
@@ -58,7 +58,7 @@ blackwhite_BlackwhiteCreateTx() {
     req='{"method":"blackwhite.BlackwhiteCreateTx","params":[{"PlayAmount":100000000,"PlayerCount":3,"GameName":"hello","Timeout":600,"Fee":1000000}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    chain33_SendTransaction "$RAW_RESP" "${addr}"
+    chain33_SendTransaction "$RETURN_RESP" "${addr}"
     gID="${gResp}"
 }
 
@@ -71,7 +71,7 @@ blackwhite_BlackwhitePlayTx() {
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
-    chain33_SendTransaction "$RAW_RESP" "${addr}"
+    chain33_SendTransaction "$RETURN_RESP" "${addr}"
 }
 
 blackwhite_BlackwhiteShowTx() {
@@ -79,7 +79,7 @@ blackwhite_BlackwhiteShowTx() {
     sec=$2
     req='{"method":"blackwhite.BlackwhiteShowTx","params":[{"gameID":"'"$gID"'","secret":"'"$sec"'","Fee":1000000}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
-    chain33_SendTransaction "$RAW_RESP" "${addr}"
+    chain33_SendTransaction "$RETURN_RESP" "${addr}"
 }
 
 blackwhite_BlackwhiteTimeoutDoneTx() {

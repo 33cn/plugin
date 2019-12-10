@@ -75,7 +75,7 @@ function trade_createSellTx() {
 function trade_getSellOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrder","payload":{"addr": "'"${tradeAddr}"'","token":["'"${tokenSymbol}"'"]}}]}'
     http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
-    sellID=$(echo "${RAW_RESP}" | jq -r ".result.orders[0].sellID" | awk -F '-' '{print $4}')
+    sellID=$(echo "${RETURN_RESP}" | jq -r ".result.orders[0].sellID" | awk -F '-' '{print $4}')
 }
 
 function trade_createBuyTx() {

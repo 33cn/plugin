@@ -19,7 +19,7 @@ ticket_CreateBindMiner() {
     amount=$4
     req='{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result.txHex"
-    chain33_SignRawTx "$RAW_RESP" "${returnPriv}" ${MAIN_HTTP}
+    chain33_SignRawTx "$RETURN_RESP" "${returnPriv}" ${MAIN_HTTP}
 }
 
 ticket_SetAutoMining() {
@@ -33,6 +33,7 @@ ticket_GetTicketCount() {
 }
 
 ticket_CloseTickets() {
+    addr=$1
     req='{"method":"ticket.CloseTickets","params":[{"minerAddress":"'"$addr"'"}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
 }
@@ -54,10 +55,10 @@ ticket_TicketList() {
     resok='(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')'
     http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
-    ticket0=$(echo "${HTTP_RESP}" | jq -r ".result.tickets[0]")
- #   echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
-    ticketId=$(echo "${HTTP_RESP}" | jq -r ".result.tickets[0].ticketId")
- #   echo -e "######\\n  ticketId is $ticketId  \\n######"
+    ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
+    echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
+    ticketId=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0].ticketId")
+    echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
 ticket_MinerAddress() {

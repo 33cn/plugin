@@ -12,15 +12,6 @@ paracross_GetBlock2MainInfo() {
     http_req '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} "(.result.items[1].height == 2)" "$FUNCNAME"
 }
 
-function paracross_SignAndSend() {
-    local signedTx
-    local sendedTx
-
-    signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'"$1"',"privkey":"'"$2"'","txHex":"'"$3"'"}]}' ${UNIT_HTTP} | jq -r ".result")
-    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP} | jq -r ".result")
-    echo "sendedTx:$sendedTx"
-}
-
 function paracross_QueryParaBalance() {
     local req
     local resp
@@ -208,9 +199,6 @@ function paracross_ListTitles() {
 }
 
 function paracross_GetHeight() {
-    local resp
-    local ok
-
     if [ "$IS_PARA" == "true" ]; then
         http_req '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
     fi

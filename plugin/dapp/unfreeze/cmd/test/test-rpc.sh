@@ -75,7 +75,7 @@ function init() {
 function CreateRawUnfreezeCreate() {
     req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"'$symbol'","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RAW_RESP" "$owner_key" "${MAIN_HTTP}"
+    chain33_SignRawTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
     query_unfreezeID
 }
 
@@ -83,13 +83,13 @@ function CreateRawUnfreezeWithdraw() {
     sleep 10
     req='{"method":"unfreeze.CreateRawUnfreezeWithdraw","params":[{"unfreezeID":"'${uid}'"}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RAW_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
+    chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
     http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RAW_RESP" "$owner_key" "${MAIN_HTTP}"
+    chain33_SignRawTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
 }
 

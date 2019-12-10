@@ -78,7 +78,7 @@ lottery_LotteryCreate() {
 	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
-    chain33_SignRawTx "${RAW_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 
     gID="${RAW_TX_HASH}"
     echo "gameID $gID"
@@ -94,7 +94,7 @@ lottery_LotteryBuy() {
 	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
-    chain33_SignRawTx "${RAW_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryDraw() {
@@ -103,7 +103,7 @@ lottery_LotteryDraw() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
 	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    chain33_SignRawTx "${RAW_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryClose() {
@@ -112,7 +112,7 @@ lottery_LotteryClose() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
 	http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    chain33_SignRawTx "${RAW_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_GetLotteryNormalInfo() {
@@ -132,7 +132,7 @@ lottery_GetLotteryCurrentInfo() {
 	http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME" ".result.luckyNumber"
 
     if [[ $status == 3 ]]; then
-        luckyNumber=$RAW_RESP
+        luckyNumber=$RETURN_RESP
         echo -e "######\\n  luckyNumber is $luckyNumber  \\n######"
     fi
     echo "end"
