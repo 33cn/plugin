@@ -298,7 +298,7 @@ func (client *client) InitBlock() {
 		}
 		tx := client.CreateGenesisTx()
 		newblock.Txs = tx
-		newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+		newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.GetMainHeight(), newblock.Txs)
 		err := client.blockSyncClient.createGenesisBlock(newblock)
 		if err != nil {
 			panic(fmt.Sprintf("para chain create genesis block,err=%s", err.Error()))
