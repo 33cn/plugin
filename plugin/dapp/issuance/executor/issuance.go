@@ -19,12 +19,6 @@ func InitExecType() {
 	ety.InitFuncList(types.ListMethod(&Issuance{}))
 }
 
-type subConfig struct {
-	ParaRemoteGrpcClient string `json:"paraRemoteGrpcClient"`
-}
-
-var cfg subConfig
-
 // Init issuance
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()
@@ -60,10 +54,10 @@ func (c *Issuance) GetDriverName() string {
 	return pty.IssuanceX
 }
 
-func (c *Issuance) addIssuanceID(index int64, issuanceId string) (kvs []*types.KeyValue) {
-	key := calcIssuanceKey(issuanceId, index)
+func (c *Issuance) addIssuanceID(index int64, issuanceID string) (kvs []*types.KeyValue) {
+	key := calcIssuanceKey(issuanceID, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId: issuanceId,
+		IssuanceId: issuanceID,
 		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -72,18 +66,18 @@ func (c *Issuance) addIssuanceID(index int64, issuanceId string) (kvs []*types.K
 	return kvs
 }
 
-func (c *Issuance) deleteIssuanceID(index int64, issuanceId string) (kvs []*types.KeyValue) {
-	key := calcIssuanceKey(issuanceId, index)
+func (c *Issuance) deleteIssuanceID(index int64, issuanceID string) (kvs []*types.KeyValue) {
+	key := calcIssuanceKey(issuanceID, index)
 	kv := &types.KeyValue{Key: key, Value: nil}
 
 	kvs = append(kvs, kv)
 	return kvs
 }
 
-func (c *Issuance) addIssuanceStatus(status int32, index int64, issuanceId string) (kvs []*types.KeyValue) {
+func (c *Issuance) addIssuanceStatus(status int32, index int64, issuanceID string) (kvs []*types.KeyValue) {
 	key := calcIssuanceStatusKey(status, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId: issuanceId,
+		IssuanceId: issuanceID,
 		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -100,11 +94,11 @@ func (c *Issuance) deleteIssuanceStatus(status int32, index int64) (kvs []*types
 	return kvs
 }
 
-func (c *Issuance) addIssuanceRecordAddr(accountAddr string, index int64, debtId string, issuanceId string) (kvs []*types.KeyValue) {
+func (c *Issuance) addIssuanceRecordAddr(accountAddr string, index int64, debtID string, issuanceID string) (kvs []*types.KeyValue) {
 	key := calcIssuanceRecordAddrKey(accountAddr, index)
 	record := &pty.IssuanceRecord{
-		IssuanceId: issuanceId,
-		DebtId:     debtId,
+		IssuanceId: issuanceID,
+		DebtId:     debtID,
 		Index:      index,
 	}
 	kv := &types.KeyValue{Key: key, Value: types.Encode(record)}
@@ -121,12 +115,12 @@ func (c *Issuance) deleteIssuanceRecordAddr(accountAddr string, index int64) (kv
 	return kvs
 }
 
-func (c *Issuance) addIssuanceRecordStatus(recordStatus int32, accountAddr string, index int64, debtId string, issuanceId string) (kvs []*types.KeyValue) {
+func (c *Issuance) addIssuanceRecordStatus(recordStatus int32, accountAddr string, index int64, debtID string, issuanceID string) (kvs []*types.KeyValue) {
 	key := calcIssuanceRecordStatusKey(recordStatus, index)
 
 	record := &pty.IssuanceRecord{
-		IssuanceId: issuanceId,
-		DebtId:     debtId,
+		IssuanceId: issuanceID,
+		DebtId:     debtID,
 		Addr:       accountAddr,
 		Index:      index,
 	}

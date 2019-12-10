@@ -19,12 +19,6 @@ func InitExecType() {
 	ety.InitFuncList(types.ListMethod(&Collateralize{}))
 }
 
-type subConfig struct {
-	ParaRemoteGrpcClient string `json:"paraRemoteGrpcClient"`
-}
-
-var cfg subConfig
-
 // Init collateralize
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	driverName := GetName()

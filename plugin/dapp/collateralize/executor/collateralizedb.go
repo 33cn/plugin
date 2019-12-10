@@ -703,7 +703,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	fee := (float64(borrowRecord.DebtValue) / 1e8) * float64(coll.StabilityFeeRatio)
+	fee := (float64(borrowRecord.DebtValue) / 1e8) * coll.StabilityFeeRatio
 	realRepay := borrowRecord.DebtValue + int64(math.Trunc((fee+0.0000001)*1e4))*1e4
 
 	// 检查

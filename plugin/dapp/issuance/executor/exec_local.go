@@ -24,19 +24,16 @@ func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) 
 			switch item.Ty {
 			case pty.TyLogIssuanceCreate:
 				set.KV = append(set.KV, c.addIssuanceStatus(issuanceLog.Status, issuanceLog.Index, issuanceLog.IssuanceId)...)
-				break
 			case pty.TyLogIssuanceDebt:
 				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
 					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
 				set.KV = append(set.KV, c.addIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.Index, issuanceLog.DebtId,
 					issuanceLog.IssuanceId)...)
-				break
 			case pty.TyLogIssuanceRepay:
 				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
 				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
 					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
 				//set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
-				break
 			case pty.TyLogIssuanceFeed:
 				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
 				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
@@ -48,11 +45,9 @@ func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) 
 				//		issuanceLog.IssuanceId)...)
 				//}
 				set.KV = append(set.KV, c.addIssuancePriceRecord(issuanceLog.RecordTime, issuanceLog.BtyPrice)...)
-				break
 			case pty.TyLogIssuanceClose:
 				set.KV = append(set.KV, c.addIssuanceStatus(issuanceLog.Status, issuanceLog.Index, issuanceLog.IssuanceId)...)
 				set.KV = append(set.KV, c.deleteIssuanceStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
-				break
 			}
 		}
 	}

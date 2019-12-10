@@ -27,13 +27,11 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
 				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId, collateralizeLog.Index)...)
 				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.Status, collateralizeLog.Index)...)
-				break
 			case pty.TyLogCollateralizeBorrow:
 				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId,
 					collateralizeLog.RecordId, collateralizeLog.Index)...)
 				set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
 					collateralizeLog.RecordId, collateralizeLog.Index)...)
-				break
 			case pty.TyLogCollateralizeAppend:
 				if collateralizeLog.Status == pty.CollateralizeUserStatusWarning {
 					set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
@@ -43,13 +41,11 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 					//set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
 					//	collateralizeLog.RecordId, collateralizeLog.Index)...)
 				}
-				break
 			case pty.TyLogCollateralizeRepay:
 				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
 				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId,
 					collateralizeLog.RecordId, collateralizeLog.Index)...)
 				//set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.PreIndex)...)
-				break
 			case pty.TyLogCollateralizeFeed:
 				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
 				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId,
@@ -60,7 +56,6 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 				//	set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
 				//		collateralizeLog.RecordId, collateralizeLog.Index)...)
 				//}
-				break
 			case pty.TyLogCollateralizeRetrieve:
 				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
 				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.PreIndex)...)
