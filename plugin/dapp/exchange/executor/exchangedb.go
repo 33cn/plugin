@@ -2,6 +2,8 @@ package executor
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
@@ -10,7 +12,6 @@ import (
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 	"github.com/gogo/protobuf/proto"
-	"math"
 )
 
 // Action action struct
