@@ -40,7 +40,7 @@ function token_finish() {
 
 function token_balance() {
     req='{"method":"token.GetTokenBalance","params":[{"addresses": ["'"${tradeAddr}"'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${tokenExecName}"'"}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not) and (.result[0].addr == "'"${tradeAddr}"'") and (.result[0].balance == 1000000000000)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not) and (.result[0].addr == "'"${tradeAddr}"'") and (.result[0].balance == 1000000000000)' "$FUNCNAME"
 }
 
 function token_transfer() {
@@ -74,7 +74,7 @@ function trade_createSellTx() {
 
 function trade_getSellOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrder","payload":{"addr": "'"${tradeAddr}"'","token":["'"${tokenSymbol}"'"]}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
     sellID=$(echo "${RETURN_RESP}" | jq -r ".result.orders[0].sellID" | awk -F '-' '{print $4}')
 }
 
@@ -89,32 +89,32 @@ function trade_createBuyTx() {
 
 function trade_getBuyOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrder","payload":{"addr": "'"${tradeBuyerAddr}"'","token":["'"${tokenSymbol}"'"]}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusBuyOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrderWithStatus","payload":{"addr": "'"${tradeBuyerAddr}"'","status":6}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'","status":1}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusSellOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'", "status":1}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusTokenBuyOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenBuyOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":6}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusTokenSellOrder() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenSellOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":1}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_buyLimit() {

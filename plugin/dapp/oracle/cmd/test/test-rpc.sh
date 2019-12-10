@@ -24,7 +24,7 @@ oracle_AddPublisher() {
 
 oracle_publish_transaction() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventPublish","payload":{"type":"football", "subType":"Premier League","time":1747814996,"content":"test","introduction":"test"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
     eventId="${txhash}"
     echo "eventId $eventId"
@@ -33,35 +33,35 @@ oracle_publish_transaction() {
 oracle_prePublishResult_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPrePublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"0:1"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_eventAbort_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"EventAbort","payload":{"eventID":"'"$event_id"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_resultAbort_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultAbort","payload":{"eventID":"'"$event_id"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_publishResult_transaction() {
     event_id=$1
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"oracle","actionName":"ResultPublish","payload":{"eventID":"'"$event_id"'", "source":"sina sport","result":"1:1"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "$RETURN_RESP" "${oracle_publisher_key}" "${MAIN_HTTP}"
 }
 
 oracle_QueryOraclesByID() {
     event_id=$1
     req='{"method":"Chain33.Query", "params":[{"execer":"oracle","funcName":"QueryOraclesByIDs","payload":{"eventID":["'"$event_id"'"]}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result.status[0] | [has("eventID", "status", "type", "subType", "source"),true] | unique | length == 1)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result.status[0] | [has("eventID", "status", "type", "subType", "source"),true] | unique | length == 1)' "$FUNCNAME"
 }
 
 function run_test() {

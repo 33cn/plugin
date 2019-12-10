@@ -93,13 +93,13 @@ retrieve_Cancel() {
 retrieve_QueryResult() {
     local status=$1
     local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
 }
 
 retrieve_QueryAssetResult() {
     local status=$1
     local req='{"method":"Chain33.Query","params":[{"execer":"retrieve","funcName":"GetRetrieveInfo","payload":{"backupAddress":"'$retrieve1'", "defaultAddress":"'$retrieve2'","assetExec":"token", "assetSymbol":"'"$symbol"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.result.status == '"$status"')' "$FUNCNAME"
 }
 
 init() {

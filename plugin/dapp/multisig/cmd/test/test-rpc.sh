@@ -83,11 +83,11 @@ function multisig_AccCreateTx() {
     #多重签名地址查询具体信息
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccountInfo","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
     resok='(.result.createAddr == "'$GenAddr'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAllAddress","payload":{"multiSigAccAddr":"'$GenAddr'"}}]}'
     resok='(.result.address[0] == "'"$multisigAccAddr"'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
     echo "========== # multisig_AccCreateTx ok  =========="
 }
 
@@ -108,7 +108,7 @@ function multisig_TransferInTx() {
     #查询multisigAccAddr地址资产信息
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"'"$multisigAccAddr"'","assets":{"execer":"'$Asset'","symbol":"'$Symbol'"},"isAll":false}}]}'
     resok='(.result.accAssets[0].assets.execer == "'$Asset'") and (.result.accAssets[0].assets.symbol == "'$Symbol'") and (.result.accAssets[0].account.frozen == "4000000000")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
     echo "========== # multisig_TransferInTx end =========="
 
 }
@@ -124,12 +124,12 @@ function multisig_TransferOutTx() {
     #查询AddrB账户在multisig合约下有2000000000
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"1LDGrokrZjo1HtSmSnw8ef3oy5Vm1nctbj","assets":{"execer":"coins","symbol":"'$Symbol'"},"isAll":false}}]}'
     resok='(.result.accAssets[0].assets.execer == "'$Asset'") and (.result.accAssets[0].assets.symbol == "'$Symbol'") and (.result.accAssets[0].account.balance == "2000000000")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     #查询multisigAccAddr地址资产信息，减少了2000000000
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccAssets","payload":{"multiSigAddr":"'"$multisigAccAddr"'","assets":{"execer":"'$Asset'","symbol":"'$Symbol'"},"isAll":false}}]}'
     resok='(.result.accAssets[0].assets.execer == "'$Asset'") and (.result.accAssets[0].assets.symbol == "'$Symbol'") and (.result.accAssets[0].account.frozen == "2000000000")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
     echo "========== # multisig_TransferOutTx end =========="
 }
 
@@ -145,7 +145,7 @@ function multisig_OwnerOperateTx() {
     #查询多重签名账户的信息中有AddrEmultisig_TransferInTx
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccountInfo","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
     resok='(.result.owners[3].ownerAddr == "'$AddrE'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     #删除多重签名账户的信息中owner AddrE
 
@@ -169,7 +169,7 @@ function multisig_OwnerOperateTx() {
     #查询多重签名账户的信息中有AddrE并且weight为30
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccountInfo","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
     resok='(.result.owners[0].ownerAddr == "'$AddrE'") and (.result.owners[0].weight == "30")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function multisig_AccOperateTx() {
@@ -193,16 +193,16 @@ function multisig_AccOperateTx() {
 
     #获取本多重签名账户上的交易数，已经对应的交易信息
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccTxCount","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
 
     #获取本多重签名账户上的交易数，通过交易交易id获取交易信息 ????
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigAccTxCount","payload":{"multiSigAccAddr":"'"$multisigAccAddr"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.result.data != null)' "$FUNCNAME"
 
     #查询多重签名账户信息中
     req='{"method":"Chain33.Query","params":[{"execer":"multisig","funcName":"MultiSigTxInfo","payload":{"multiSigAddr":"'"$multisigAccAddr"'","txId":"7"}}]}'
     resok='(.result.txid == "7") and (.result.executed == true) and (.result.multiSigAddr == "'"$multisigAccAddr"'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function run_test() {

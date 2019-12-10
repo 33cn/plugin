@@ -51,7 +51,7 @@ guess_QueryGameByID() {
     local event_id=$1
     local status=$2
     local req='{"method":"Chain33.Query", "params":[{"execer":"guess","funcName":"QueryGameByID","payload":{"gameID":"'"$event_id"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.result|has("game")) and (.result.game.status == '"$status"')' "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} '(.result|has("game")) and (.result.game.status == '"$status"')' "$FUNCNAME"
 }
 
 init() {

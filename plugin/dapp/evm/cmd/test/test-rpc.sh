@@ -49,7 +49,7 @@ function evm_createContract() {
 function evm_addressCheck() {
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"CheckAddrExists","payload":{"addr":"'${evm_contractAddr}'"}}]}'
     resok='(.result.contract == true ) and (.result.contractAddr == "'"${evm_contractAddr}"'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 function evm_callContract() {
     op=$1
@@ -75,7 +75,7 @@ function evm_callContract() {
 
 function evm_abiGet() {
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"QueryABI","payload":{"address":"'${evm_contractAddr}'"}}]}'
-    http_req "$req" ${MAIN_HTTP} "(.result.abi != null)" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "(.result.abi != null)" "$FUNCNAME"
 }
 
 function evm_transfer() {
@@ -100,7 +100,7 @@ function evm_getBalance() {
     expectBalance=$1
     req='{"method":"Chain33.GetBalance","params":[{"addresses":["'${evm_creatorAddr}'"],"execer":"'${evm_addr}'", "paraName": "'${paraName}'"}]}'
     resok='(.result[0].balance == '$expectBalance') and (.result[0].addr == "'"$evm_creatorAddr"'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function evm_withDraw() {

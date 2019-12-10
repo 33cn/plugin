@@ -19,14 +19,14 @@ source ../dapp-test-common.sh
 function chain33_GetExecAddr() {
     #获取GAME合约地址
     req='{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"$1"'"}]}'
-	http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME"
+	chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME"
 }
 
 function CreateGameTx() {
     local amount=$1
     local hash_value=$2
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"createGame", "payload":{"amount": '"${amount}"',"hashType":"sha256","hashValue":"'"${hash_value}"'"}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     GAME_ID=$RAW_TX_HASH
 
@@ -36,7 +36,7 @@ function CreateGameTx() {
 function MatchGameTx() {
     local gameId=$1
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"matchGame", "payload":{"gameId": "'"${gameId}"'","guess":2}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "MatchGame createRawTx" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "MatchGame createRawTx" ".result"
     chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_B}" "${MAIN_HTTP}"
     echo_rst "MatchGame query_tx" "$?"
 }
@@ -46,7 +46,7 @@ function CloseGameTx() {
     local secret=$2
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]}'
 
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CloseGame createRawTx" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CloseGame createRawTx" ".result"
     chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CloseGame query_tx" "$?"
 }
@@ -55,7 +55,7 @@ function CancleGameTx() {
     local gameId=$1
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]}'
 
-    http_req "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CancleGame createRawTx" ".result"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CancleGame createRawTx" ".result"
     chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CancleGame query_tx" "$?"
 }
@@ -63,7 +63,7 @@ function CancleGameTx() {
 function QueryGameByStatus() {
     local status=$1
     local req='{"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameListByStatusAndAddr","payload":{"status":'"${status}"',"address":""}}]}'
-    http_req "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result.games"
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result.games"
 }
 
 function QueryGameByGameId() {
@@ -71,7 +71,7 @@ function QueryGameByGameId() {
     local status=$2
     local req='{"method":"Chain33.Query","params":[{"execer":"'"${EXECTOR}"'","funcName":"QueryGameById","payload":{"gameId":"'"${gameId}"'"}}]}'
     resok='(.error|not) and (.result.game.status = "'"${status}"'")'
-    http_req "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 function init() {

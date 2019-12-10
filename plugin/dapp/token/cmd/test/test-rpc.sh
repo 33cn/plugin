@@ -135,7 +135,7 @@ function token_finish() {
 
 function token_getFinishCreated() {
     req='{"method":"Chain33.Query","params":[{"execer":"'"${execName}"'","funcName":"GetTokens","payload":{"queryAll":true,"status":1,"tokens":[],"symbolOnly":false}}]}'
-    http_req "$req" ${MAIN_HTTP} "(.result.tokens[0].symbol != null)" "$FUNCNAME"
+    chain33_Http "$req" ${MAIN_HTTP} "(.result.tokens[0].symbol != null)" "$FUNCNAME"
 }
 
 function token_assets() {
