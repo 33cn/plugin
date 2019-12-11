@@ -24,9 +24,10 @@ echo_rst() {
 }
 
 chain33_Http() {
+    #  echo "#$4 request: request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
     local body
-    body=$(curl -ksd "$1" "$2")=$(curl -ksd "$1" "$2")
-    RETURN_RESP=$(jq -r "$5" <<<"$body")
+    body=$(curl -ksd "$1" "$2")
+    RETURN_RESP=$(echo "$body" | jq -r "$5")
     echo "#response: $body" "$RETURN_RESP"
     ok=$(echo "$body" | jq -r "$3")
     [ "$ok" == true ]
@@ -37,7 +38,7 @@ chain33_Http() {
 chain33_DecodeRawTransactionTx() {
     # txHex="$1" priKey="$2" MAIN_HTTP="$3" FUNCNAME="$4"
     req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$1"'"}]}'
-    chain33_Http "$req" "$3" '(.result.txs[0].execer != "")' "$4"
+    chain33_Http "$req" "$3" '(.result.txs[0].execer != null)' "$4"
     chain33_SignRawTx "$1" "$2" "$3"
     chain33_BlockWait 1 "$3"
 }
