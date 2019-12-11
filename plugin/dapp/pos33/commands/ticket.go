@@ -93,7 +93,7 @@ func CountPos33TicketCmd() *cobra.Command {
 func countPos33Ticket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res int64
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetPos33TicketCount", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "pos33.GetPos33TicketCount", nil, &res)
 	ctx.Run()
 }
 

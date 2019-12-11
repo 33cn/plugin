@@ -210,6 +210,21 @@ func (v *Pos33VoteMsg) Sign(priv crypto.PrivKey) {
 	v.Sig = &types.Signature{Ty: types.SECP256K1, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
 }
 
+func (m *Pos33BlockMsg) Sign(priv crypto.PrivKey) {
+	m.Sig = nil
+	b := crypto.Sha256(types.Encode(m))
+	sig := priv.Sign(b)
+	m.Sig = &types.Signature{Ty: types.SECP256K1, Pubkey: priv.PubKey().Bytes(), Signature: sig.Bytes()}
+}
+
+func (m *Pos33BlockMsg) Verify() bool {
+	s := m.Sig
+	m.Sig = nil
+	b := crypto.Sha256(types.Encode(m))
+	m.Sig = s
+	return types.CheckSign(b, "", s)
+}
+
 /*
 // ToString is rands to string
 func (m *Pos33Rands) ToString() string {

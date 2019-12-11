@@ -51,9 +51,11 @@ type subConfig struct {
 	AdvertiseAddr    string           `json:"AdvertiseAddr,omitempty"`
 	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
 	//MaxTxs           int64            `json:"Pos33MaxTxs,omitempty"`
-	BlockTime    int64  `json:"BlockTime,omitempty"`
-	BlockTimeout int64  `json:"BlockTimeout,omitempty"`
-	NodeID       string `json:"nodeID,omitempty"`
+	BlockTime          int64   `json:"BlockTime,omitempty"`
+	BlockTimeout       int64   `json:"BlockTimeout,omitempty"`
+	NodeID             string  `json:"nodeID,omitempty"`
+	DeltaDiff          float64 `json:"deltaDiff,omitempty"`
+	DiffChangeTimespan int64   `json:"diffChangeTimespan,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -145,6 +147,16 @@ func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
 	client.privLock.Lock()
 	defer client.privLock.Unlock()
 	return client.privmap[mineAddr]
+}
+
+func (client *Client) getTicketsMap() map[string]string {
+	client.tickLock.Lock()
+	defer client.tickLock.Unlock()
+	mp := make(map[string]string)
+	for tid, t := range client.ticketsMap {
+		mp[tid] = t.MinerAddress
+	}
+	return mp
 }
 
 func (client *Client) getTicket(tid string) *pt.Pos33Ticket {

@@ -14,8 +14,8 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
-// persent of online of voters
 const diffValue = 1.
+const diffDelta = 0.03
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256
@@ -23,29 +23,24 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 算法依据：
 // 1. 通过签名，然后hash，得出的Hash值是在[0，max]的范围内均匀分布并且随机的, 那么Hash/max实在[1/max, 1]之间均匀分布的
 // 2. 那么从N个选票中抽出M个选票，等价于计算N次Hash, 并且Hash/max < M/N
-// 3. 由于Hash的随机性，可能某次的M太小或者过大，所以需要加以限定，过大则保留部分
-// 4. 如果M太小，需要重新抽签，但是抽签是打包到交易里的，不符合节点利益。
-// 5. 为了避免M过小，那么每次进行R轮计算，这样M大约为之前的R倍。 我们只要累加前几轮的M，大于给定最小值。
-// 6. 签名是为了校验, 必须是自己私钥生成的
-// 7. 最后对Hashs排序，作为委员会打包顺序的依据
 
-func (client *Client) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortitionMsg {
+func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortitionMsg {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
 	//allw := client.allWeight(height)
-	diff := float64(size) / (float64(allw) * diffValue)
+	diff := float64(size) / (float64(allw) * n.diff)
 
 	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
 
 	var msgs []*pt.Pos33SortitionMsg
 	var minHash []byte
 	index := 0
-	for tid, t := range client.ticketsMap {
+	for tid, maddr := range n.getTicketsMap() {
 		inputMsg := &pt.Pos33VrfInputMsg{Seed: seed, Height: height, Round: int32(round), Step: int32(step), TicketId: tid}
-		priv := client.privmap[t.MinerAddress]
+		priv := n.getPriv(maddr)
 		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
 		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
 		input := types.Encode(inputMsg)
@@ -68,7 +63,7 @@ func (client *Client) sort(seed []byte, height int64, round, step, allw int) []*
 		}
 		// 符合，表示抽中了
 
-		m := &pt.Pos33SortitionMsg{Hash: hash, Proof: vrfProof[:], Input: inputMsg, Pubkey: priv.PubKey().Bytes()}
+		m := &pt.Pos33SortitionMsg{Hash: hash, Proof: vrfProof[:], Input: inputMsg, Pubkey: priv.PubKey().Bytes(), Diff: int32(n.diff * 1000)}
 		msgs = append(msgs, m)
 	}
 
@@ -106,17 +101,20 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 	return nil
 }
 
-func (client *Client) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortitionMsg) error {
+func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortitionMsg) error {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
-	diff := float64(size) / (float64(allw) * diffValue)
+	if m == nil || m.Input == nil {
+		return fmt.Errorf("verifySort error: sort msg is nil")
+	}
+	diff := float64(size) / (float64(allw) * float64(m.Diff) / 1000)
 
 	plog.Debug("verify sortition", "height", height, "round", m.Input.Round, "step", step, "seed", hexs(seed), "allw", allw)
 
-	resp, err := client.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
+	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
 	if err != nil {
 		return err
 	}
