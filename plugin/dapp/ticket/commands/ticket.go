@@ -29,6 +29,7 @@ func TicketCmd() *cobra.Command {
 		CountTicketCmd(),
 		CloseTicketCmd(),
 		GetColdAddrByMinerCmd(),
+		listTicketCmd(),
 	)
 
 	return cmd
@@ -94,6 +95,41 @@ func countTicket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res int64
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetTicketCount", nil, &res)
+	ctx.Run()
+}
+
+// listTicketCmd get ticket count
+func listTicketCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "Get ticket id list",
+		Run:   listTicket,
+	}
+	cmd.Flags().StringP("miner_acct", "m", "", "miner address (optional)")
+	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets)")
+	return cmd
+}
+
+func listTicket(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	minerAddr, _ := cmd.Flags().GetString("miner_acct")
+	status, _ := cmd.Flags().GetInt32("status")
+
+	if minerAddr != "" {
+		var params rpctypes.Query4Jrpc
+
+		params.Execer = ty.TicketX
+		params.FuncName = "TicketList"
+		req := ty.TicketList{Addr: minerAddr, Status: status}
+		params.Payload = types.MustPBToJSON(&req)
+		var res ty.ReplyTicketList
+		ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+		return
+	}
+
+	var res []ty.Ticket
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.GetTicketList", nil, &res)
 	ctx.Run()
 }
 

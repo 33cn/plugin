@@ -28,11 +28,13 @@ func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindM
 
 // CreateBindMiner 创建绑定挖矿
 func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
-	err := address.CheckAddress(in.BindAddr)
-	if err != nil {
-		return nil, err
+	if in.BindAddr != "" {
+		err := address.CheckAddress(in.BindAddr)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = address.CheckAddress(in.OriginAddr)
+	err := address.CheckAddress(in.OriginAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -140,4 +142,26 @@ func (c *Jrpc) SetAutoMining(in *ty.MinerFlag, result *rpctypes.Reply) error {
 	reply.Msg = string(resp.GetMsg())
 	*result = reply
 	return nil
+}
+
+// GetTicketList get ticket list info
+func (g *channelClient) GetTicketList(ctx context.Context, in *types.ReqNil) ([]*ty.Ticket, error) {
+	inn := *in
+	data, err := g.ExecWalletFunc(ty.TicketX, "WalletGetTickets", &inn)
+	if err != nil {
+		return nil, err
+	}
+
+	return data.(*ty.ReplyWalletTickets).Tickets, nil
+}
+
+// GetTicketList get ticket list info
+func (c *Jrpc) GetTicketList(in *types.ReqNil, result *interface{}) error {
+	resp, err := c.cli.GetTicketList(context.Background(), &types.ReqNil{})
+	if err != nil {
+		return err
+	}
+	*result = resp
+	return nil
+
 }
