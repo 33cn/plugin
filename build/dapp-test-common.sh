@@ -38,7 +38,7 @@ chain33_Http() {
 chain33_DecodeRawTransactionTx() {
     # txHex="$1" priKey="$2" MAIN_HTTP="$3" FUNCNAME="$4"
     req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$1"'"}]}'
-    chain33_Http "$req" "$3" '(.result.txs[0].execer != null)' "$4"
+    chain33_Http "$req" "$3" '(.result.txs[0].execer != "") and (.result.txs[0].execer != null)' "$4"
     chain33_SignRawTx "$1" "$2" "$3"
     chain33_BlockWait 1 "$3"
 }
