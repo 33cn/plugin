@@ -1230,11 +1230,10 @@ func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	fmt.Println("Begin to get query id")
 	var requestId string
 	paramsQuery := rpctypes.ReqPrivacyTxQueryId{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestId)
-	ctx.Run()
+	ctx.RunResult()
 	params.RequestId = requestId
 
 	protoReqPrivacyHashes := types.ReqPrivacyHashes{
@@ -1249,7 +1248,6 @@ func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
 	params.Signature = common.ToHex(sig.Bytes())
 	params.PublicKey = common.ToHex(prikey.PubKey().Bytes())
 
-	fmt.Println("Begin to send GetPrivacyTxByHashes")
 	var res rpctypes.TransactionDetails
 	ctx = jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetPrivacyTxByHashes", params, &res)
 	ctx.SetResultCb(parseQueryTxsByHashesRes)
