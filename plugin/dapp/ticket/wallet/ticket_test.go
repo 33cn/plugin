@@ -45,11 +45,11 @@ func TestForceCloseTicketList(t *testing.T) {
 	t3 := &ty.Ticket{Status: ty.TicketClosed, IsGenesis: false}
 
 	now := types.Now().Unix()
-	t4 := &ty.Ticket{Status: ty.TicketOpened, IsGenesis: false,CreateTime:now}
-	t5 := &ty.Ticket{Status: ty.TicketMined, IsGenesis: false,CreateTime:now}
-	t6 := &ty.Ticket{Status: ty.TicketMined, IsGenesis: false,MinerTime:now}
+	t4 := &ty.Ticket{Status: ty.TicketOpened, IsGenesis: false, CreateTime: now}
+	t5 := &ty.Ticket{Status: ty.TicketMined, IsGenesis: false, CreateTime: now}
+	t6 := &ty.Ticket{Status: ty.TicketMined, IsGenesis: false, MinerTime: now}
 
-	tlist := []*ty.Ticket{t1, t2, t3,t4, t5, t6}
+	tlist := []*ty.Ticket{t1, t2, t3, t4, t5, t6}
 
 	r1, r2 := ticket.forceCloseTicketList(0, nil, tlist)
 	assert.Equal(t, []byte(sendhash), r1)
