@@ -19,7 +19,7 @@ message LimitOrder {
     //交易对
     asset rightAsset  = 2;
     //价格
-    float price  = 3;
+    double price  = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖
@@ -74,7 +74,7 @@ message Order {
 
 //挂单价
 message OrderPrice {
-    float price  = 1;
+    double price  = 1;
     int64  index = 2;
 }
 //单号
@@ -91,7 +91,7 @@ message QueryMarketDepth {
     //操作， 1为买，2为卖
     int32 op = 3;
     // 这里用价格作为索引值
-    float price  = 4;
+    double price  = 4;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
     int32 count = 5;
 }
@@ -102,7 +102,7 @@ message MarketDepth {
     //资产2
     asset rightAsset = 2;
     //价格
-    float price  = 3;
+    double price  = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖

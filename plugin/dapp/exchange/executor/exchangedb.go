@@ -60,16 +60,16 @@ func (a *Action) OpSwap(op int32) int32 {
 }
 
 //计算实际花费
-func (a *Action) calcActualCost(op int32, amount int64, price float32) int64 {
+func (a *Action) calcActualCost(op int32, amount int64, price float64) int64 {
 	if op == et.OpBuy {
-		return int64(float32(amount) * Truncate(price))
+		return int64(float64(amount) * Truncate(price))
 	}
 	return amount
 }
 
-//price 精度允许范围小数点后面7位数,0<price<1e8
-func CheckPrice(price float32) bool {
-	if (Truncate(price) >= 1e8) || (Truncate(price)*float32(1e8) <= 0) {
+//price 精度允许范围小数点后面8位数,0<price<1e8
+func CheckPrice(price float64) bool {
+	if (Truncate(price) >= 1e8) || (Truncate(price)*float64(1e8) < 1) {
 		return false
 	}
 	return true
@@ -138,7 +138,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	}
 	//先检查账户余额
 	if payload.GetOp() == et.OpBuy {
-		amount := int64(float32(payload.GetAmount()) * Truncate(payload.GetPrice()))
+		amount := int64(float64(payload.GetAmount()) * Truncate(payload.GetPrice()))
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if rightAccount.Balance < amount {
 			elog.Error("LimitOrder.BalanceCheck", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", amount, "err", et.ErrAssetBalance.Error())
@@ -445,7 +445,7 @@ func findOrderByOrderID(statedb dbm.KV, orderID string) (*et.Order, error) {
 	return &order, nil
 }
 
-func findOrderIDListByPrice(localdb dbm.Lister, left, right *et.Asset, price float32, op, direction int32, index int64) ([]*et.OrderID, error) {
+func findOrderIDListByPrice(localdb dbm.Lister, left, right *et.Asset, price float64, op, direction int32, index int64) ([]*et.OrderID, error) {
 	prefix := calcMarketDepthOrderPrefix(left, right, op, price)
 	key := calcMarketDepthOrderKey(left, right, op, price, index)
 	var values [][]byte
@@ -490,7 +490,7 @@ func Direction(op int32) int32 {
 }
 
 //这里price当作索引来用，首次查询不需要填值
-func QueryMarketDepth(localdb dbm.Lister, left, right *et.Asset, op int32, price float32, count int32) (types.Message, error) {
+func QueryMarketDepth(localdb dbm.Lister, left, right *et.Asset, op int32, price float64, count int32) (types.Message, error) {
 	prefix := calcMarketDepthPrefix(left, right, op)
 	key := calcMarketDepthKey(left, right, op, price)
 	var values [][]byte
@@ -592,6 +592,6 @@ func QueryOrderList(localdb dbm.Lister, statedb dbm.KV, addr string, status, cou
 }
 
 //截取小数点后7位
-func Truncate(price float32) float32 {
-	return float32(math.Trunc(float64(1e8)*float64(price)) / float64(1e8))
+func Truncate(price float64) float64 {
+	return math.Trunc(float64(1e8)*float64(price)) / float64(1e8)
 }
