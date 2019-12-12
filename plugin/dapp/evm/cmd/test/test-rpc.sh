@@ -10,7 +10,6 @@ evm_contractAddr=""
 evm_addr=""
 txHash=""
 
-
 function evm_createContract() {
     validator=$1
     expectRes=$2
