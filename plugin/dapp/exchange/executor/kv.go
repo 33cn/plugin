@@ -30,22 +30,22 @@ func calcMarketDepthPrefix(left, right *types.Asset, op int32) []byte {
 }
 
 //市场深度
-func calcMarketDepthKey(left, right *types.Asset, op int32, price float32) []byte {
+func calcMarketDepthKey(left, right *types.Asset, op int32, price float64) []byte {
 	// 设置精度为1e8
-	key := fmt.Sprintf("%s"+"depth-%s-%s-%d:%016d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float32(1e8)))
+	key := fmt.Sprintf("%s"+"depth-%s-%s-%d:%016d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float64(1e8)))
 	return []byte(key)
 }
 
-func calcMarketDepthOrderPrefix(left, right *types.Asset, op int32, price float32) []byte {
+func calcMarketDepthOrderPrefix(left, right *types.Asset, op int32, price float64) []byte {
 	// 设置精度为1e8
-	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float32(1e8)))
+	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float64(1e8)))
 	return []byte(key)
 }
 
 // localdb中存储市场挂单ID
-func calcMarketDepthOrderKey(left, right *types.Asset, op int32, price float32, index int64) []byte {
+func calcMarketDepthOrderKey(left, right *types.Asset, op int32, price float64, index int64) []byte {
 	// 设置精度为1e8
-	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d:%022d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float32(1e8)), index)
+	key := fmt.Sprintf("%s"+"order-%s-%s-%d:%016d:%022d", KeyPrefixLocalDB, left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float64(1e8)), index)
 	return []byte(key)
 }
 

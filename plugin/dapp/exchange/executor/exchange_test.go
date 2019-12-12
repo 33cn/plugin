@@ -463,14 +463,19 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 }
 
 func TestTruncate(t *testing.T) {
-	a := float32(1.00000212000000000001)
-	b := float32(0.34567)
-	c := float32(1234)
+	a := float64(1.00000212000000000001)
+	b := float64(0.34567)
+	c := float64(1234567)
 	t.Log(Truncate(a))
 	t.Log(Truncate(b))
 	t.Log(Truncate(c))
+	t.Log(float64(1.00000212000000000001))
+	t.Logf("%f", Truncate(float64(1e8)))
+	t.Log(Truncate(float64(1e-8)))
 }
 
 func TestCheckPrice(t *testing.T) {
-	t.Log(CheckPrice(0.25))
+	t.Log(CheckPrice(Truncate(float64(1e8))))
+	t.Log(CheckPrice(Truncate(float64(1e-8))))
+	t.Log(CheckPrice(Truncate(float64(1e-9))))
 }
