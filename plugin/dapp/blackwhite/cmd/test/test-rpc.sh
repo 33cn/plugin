@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set +e
 set -o pipefail
 
 MAIN_HTTP=""
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 gID=""
@@ -111,14 +108,10 @@ blackwhite_GetBlackwhiteloopResult() {
 function run_testcases() {
     #密钥
     sect1="123"
-    #结果base64.StdEncoding.EncodeToString(common.Sha256([]byte("0"+secret+black)))
-    # black == "1" white := "0"
-    #black0="O3LD8NyaeeSCc8xDfvBoacTrQlrY91FHT9ceEOXgs18="
     black1="6vm6gJ2wvEIxC8Yc6r/N6lIU5OZk633YMnIfwcZBD0o="
     black2="6FXx5aeDSCaq1UrhLO8u0H31Hl8TpvzxuHrgGo9WeFk="
     white0="DrNPzA68XiGimZE/igx70kTPJxnIJnVf8NCGnb7XoYU="
     white1="SB5Pnf6Umf2Wba0dqyNOezq5FEqTd22WPVYAhSA6Lxs="
-    #white2="OiexKDzIlS1CKr3KBNWEY1k5uXzDI/ou6Dd+x0ByQCM="
 
     #先创建账户地址
     chain33_NewAccount "label188"

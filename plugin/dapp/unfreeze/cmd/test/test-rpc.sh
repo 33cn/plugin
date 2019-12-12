@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
@@ -27,7 +24,6 @@ function query_unfreezeID() {
             fi
         else
             unfreeze_id=$(jq '(.result.receipt.logs['"$uid_index"'].log.current.unfreezeID)' <<<"$ret")
-            #echo "${unfreeze_id}"
             unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
             uid=${unfreeze_id2%\"}
             echo -e "${GRE}====query tx=$txhash  success${NOC}"
@@ -75,7 +71,7 @@ function init() {
 function CreateRawUnfreezeCreate() {
     req='{"jsonrpc": "2.0", "method" :  "unfreeze.CreateRawUnfreezeCreate" , "params":[{"startTime":10000,"assetExec":"coins","assetSymbol":"'$symbol'","totalCount":400000000,"beneficiary":"'$beneficiary'","means":"FixAmount","fixAmount": {"period":10,"amount":1000000}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
     query_unfreezeID
 }
 
@@ -83,13 +79,13 @@ function CreateRawUnfreezeWithdraw() {
     sleep 10
     req='{"method":"unfreeze.CreateRawUnfreezeWithdraw","params":[{"unfreezeID":"'${uid}'"}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function CreateRawUnfreezeTerminate() {
     req='{"method":"unfreeze.CreateRawUnfreezeTerminate","params":[{"unfreezeID":"'${uid}'"}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "$owner_key" "${MAIN_HTTP}"
     chain33_BlockWait 2 "${MAIN_HTTP}"
 }
 

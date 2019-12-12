@@ -1,18 +1,11 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
-
-#eventId=""
-#txhash=""
 
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')

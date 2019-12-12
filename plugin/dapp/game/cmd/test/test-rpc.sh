@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
-# set -e
 set -o pipefail
 
 MAIN_HTTP=""
@@ -12,8 +10,6 @@ PRIVA_A="0xfa21dc33a6144c546537580d28d894355d1e9af7292be175808b0f5737c30849"
 PRIVA_B="0x213286d352b01fd740b6eaeb78a4fd316d743dd51d2f12c6789977430a41e0c7"
 
 EXECTOR=""
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 function chain33_GetExecAddr() {
@@ -27,7 +23,7 @@ function CreateGameTx() {
     local hash_value=$2
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"createGame", "payload":{"amount": '"${amount}"',"hashType":"sha256","hashValue":"'"${hash_value}"'"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     GAME_ID=$RAW_TX_HASH
 
     echo_rst "CreateGame query_tx" "$?"
@@ -37,7 +33,7 @@ function MatchGameTx() {
     local gameId=$1
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"matchGame", "payload":{"gameId": "'"${gameId}"'","guess":2}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "MatchGame createRawTx" ".result"
-    chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_B}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${PRIVA_B}" "${MAIN_HTTP}"
     echo_rst "MatchGame query_tx" "$?"
 }
 
@@ -47,7 +43,7 @@ function CloseGameTx() {
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"closeGame", "payload":{"gameId": "'"${gameId}"'","secret":"'"${secret}"'","result":1}}]}'
 
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CloseGame createRawTx" ".result"
-    chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CloseGame query_tx" "$?"
 }
 
@@ -56,7 +52,7 @@ function CancleGameTx() {
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"cancelGame", "payload":{"gameId": "'"${gameId}"'"}}]}'
 
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "CancleGame createRawTx" ".result"
-    chain33_SignRawTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${PRIVA_A}" "${MAIN_HTTP}"
     echo_rst "CancleGame query_tx" "$?"
 }
 

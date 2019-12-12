@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 
-CASE_ERR=""
 UNIT_HTTP=""
 IS_PARA=false
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 paracross_GetBlock2MainInfo() {
@@ -64,8 +61,6 @@ function paracross_Transfer_Withdraw_Inner() {
     local amount_should=27000
     #withdraw_should 应取款金额
     local withdraw_should=13000
-    #fee 交易费
-    #local fee=1000000
     #平行链转移前余额
     local para_balance_before
     #平行链转移后余额
@@ -92,9 +87,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #2  存钱到合约地址
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'"$paracross_addr"'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
-    ##echo "tx:$tx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #1. 查询资产转移前余额状态
     para_balance_before=$(paracross_QueryParaBalance "$from_addr" "paracross")
@@ -104,9 +97,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #3  资产从主链转移到平行链
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "rawTx:$rawTx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #4 查询转移后余额状态
     local times=100
@@ -127,7 +118,6 @@ function paracross_Transfer_Withdraw_Inner() {
                 exit 1
             fi
         else
-            #echo "para_cross_transfer_withdraw success"
             count=$((count + 1))
             break
         fi
@@ -135,9 +125,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #5 取钱
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "rawTx:$rawTx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #6 查询取钱后余额状态
     local times=100
@@ -149,7 +137,6 @@ function paracross_Transfer_Withdraw_Inner() {
         #实际取钱金额
         para_withdraw_real=$((para_balance_after - para_balance_withdraw_after))
         main_withdraw_real=$((main_balance_withdraw_after - main_balance_after))
-        #echo $withdraw_real
         if [ "$withdraw_should" != "$para_withdraw_real" ] || [ "$withdraw_should" != "$main_withdraw_real" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
@@ -158,7 +145,6 @@ function paracross_Transfer_Withdraw_Inner() {
                 exit 1
             fi
         else
-            #echo "para_cross_transfer_withdraw success"
             count=$((count + 1))
             break
         fi
@@ -181,7 +167,6 @@ function paracross_Transfer_Withdraw() {
     local execer_name="user.p.para.paracross"
 
     paracross_Transfer_Withdraw_Inner "$from_addr" "$privkey" "$paracross_addr" "$execer_name"
-
 }
 
 function paracross_IsSync() {
@@ -220,7 +205,6 @@ function paracross_ListNodeStatus() {
     chain33_Http '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
-#main chain import pri key
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
 para_test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
 
@@ -243,7 +227,6 @@ function paracross_txgroupex() {
         exit 1
     fi
     tx_hash_asset=$(jq -r ".result" <<<"$resp")
-    #    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
 
     #  资产从平行链转移到平行链合约
     req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"TransferToExec","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"${trade_exec_addr}"'","amount":'${amount_trade}', "cointoken":"coins.bty"}}]'
@@ -274,7 +257,6 @@ function paracross_txgroupex() {
 
     #send
     chain33_SendTx "${tx_sign2}" "${para_ip}"
-
 }
 
 #测试平行链交易组跨链失败,主链自动恢复原值
@@ -290,7 +272,6 @@ function paracross_testTxGroupFail() {
     echo "paracross_addr=$paracross_addr"
 
     #execer
-
     local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
     #测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
     local amount_trade=800000000
@@ -402,7 +383,7 @@ paracross_testSelfConsensStages() {
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
-    chain33_SignRawTx "$rawtx" "$para_test_prikey" "${para_ip}"
+    chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
 
     echo "get stage apply id"
     req='"method":"paracross.ListSelfStages","params":[{"status":1,"count":1}]'
@@ -423,11 +404,11 @@ paracross_testSelfConsensStages() {
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     echo "send vote 1"
-    chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}"
+    chain33_SignAndSendTx "$rawtx" "$KS_PRI" "${para_ip}"
     echo "send vote 2"
-    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    chain33_SignAndSendTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
     echo "send vote 3"
-    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+    chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
 
     echo "query status"
     req='"method":"paracross.ListSelfStages","params":[{"status":3,"count":1}]'

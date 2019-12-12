@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 ticketId=""
@@ -19,7 +17,7 @@ ticket_CreateBindMiner() {
     amount=$4
     req='{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result.txHex"
-    chain33_SignRawTx "$RETURN_RESP" "${returnPriv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$RETURN_RESP" "${returnPriv}" ${MAIN_HTTP}
 }
 
 ticket_SetAutoMining() {

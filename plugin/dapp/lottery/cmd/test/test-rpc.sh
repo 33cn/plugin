@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 lottery_addCreator_unsignedTx="0a066d616e616765123c0a3a0a0f6c6f74746572792d63726561746f721222313271796f6361794e46374c7636433971573461767873324537553431664b5366761a0361646420a08d0630c788b8f7ccbadbc0703a223151344e687572654a784b4e4266373164323642394a336642516f5163666d657a32"
@@ -29,18 +26,15 @@ init() {
 
     if [[ $ispara == true ]]; then
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SignRawTx "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_priv}" ${MAIN_HTTP}
+        chain33_SignAndSendTx "${lottery_addCreator_unsignedTx_para}" "${lottery_creator_priv}" ${MAIN_HTTP}
     else
         lottExecAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"lottery"}]}' ${MAIN_HTTP} | jq -r ".result")
-        chain33_SignRawTx "${lottery_addCreator_unsignedTx}" "${lottery_creator_priv}" ${MAIN_HTTP}
+        chain33_SignAndSendTx "${lottery_addCreator_unsignedTx}" "${lottery_creator_priv}" ${MAIN_HTTP}
     fi
     echo "lottExecAddr=$lottExecAddr"
 
     local main_ip=${MAIN_HTTP//8901/8801}
-    #main chain import pri key
-    #1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF
     chain33_ImportPrivkey "0x8223b757a5d0f91b12e7af3b9666ca33be47fe63e1502987b0537089aaf90bc1" "1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF" "lottery1" "${main_ip}"
-    #1UWE6NfXPR7eNAjYgT4HMERp7cMMi486E
     chain33_ImportPrivkey "0xbfccb96690e0a1f89748b321f85b03e14bda0cb3d5d19f255ff0b9b0ffb624b3" "1UWE6NfXPR7eNAjYgT4HMERp7cMMi486E" "lottery2" "$main_ip"
 
     local ACCOUNT_A="1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF"
@@ -53,14 +47,12 @@ init() {
         chain33_applyCoins "$ACCOUNT_B" 12000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
 
         chain33_applyCoins "$ACCOUNT_B" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "0x8223b757a5d0f91b12e7af3b9666ca33be47fe63e1502987b0537089aaf90bc1" "1FLh9wBS2rat1mUS4G95hRpJt6yHYy5nHF" "lottery1" "$para_ip"
         chain33_ImportPrivkey "0xbfccb96690e0a1f89748b321f85b03e14bda0cb3d5d19f255ff0b9b0ffb624b3" "1UWE6NfXPR7eNAjYgT4HMERp7cMMi486E" "lottery2" "$para_ip"
 
@@ -78,7 +70,7 @@ lottery_LotteryCreate() {
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
-    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 
     gID="${RAW_TX_HASH}"
     echo "gameID $gID"
@@ -94,7 +86,7 @@ lottery_LotteryBuy() {
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
 
     #发送交易
-    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryDraw() {
@@ -103,7 +95,7 @@ lottery_LotteryDraw() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryDraw","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_LotteryClose() {
@@ -112,7 +104,7 @@ lottery_LotteryClose() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"lottery","actionName":"LotteryClose","payload":{"lotteryId":"'"$gID"'","fee":1000000}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result"
     #发送交易
-    chain33_SignRawTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "${RETURN_RESP}" "${priv}" ${MAIN_HTTP}
 }
 
 lottery_GetLotteryNormalInfo() {

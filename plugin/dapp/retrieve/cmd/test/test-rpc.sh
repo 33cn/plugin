@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 # TODO
@@ -19,7 +17,7 @@ function updateConfig() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 }
 
 function token_preCreate() {
@@ -29,7 +27,7 @@ function token_preCreate() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 }
 
 function token_finish() {
@@ -39,7 +37,7 @@ function token_finish() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
 }
 
 function token_sendExec() {
@@ -49,7 +47,7 @@ function token_sendExec() {
         return
     fi
 
-    chain33_SignRawTx "${unsignedTx}" "$3" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${unsignedTx}" "$3" "${MAIN_HTTP}"
 }
 
 function createToken() {
@@ -63,31 +61,31 @@ function createToken() {
 retrieve_Backup() {
     local req='{"method":"retrieve.CreateRawRetrieveBackupTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'","delayPeriod": 61}]}'
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    chain33_DecodeRawTransactionTx "$tx" "$retrieve2_key" ${MAIN_HTTP} "$FUNCNAME"
+    chain33_SignAndSendTxWait "$tx" "$retrieve2_key" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 retrieve_Prepare() {
     local req='{"method":"retrieve.CreateRawRetrievePrepareTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    chain33_DecodeRawTransactionTx "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
+    chain33_SignAndSendTxWait "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 retrieve_Perform() {
     local req='{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    chain33_DecodeRawTransactionTx "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
+    chain33_SignAndSendTxWait "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 retrieve_Perform_Token() {
     local req='{"method":"retrieve.CreateRawRetrievePerformTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'","assets": [{"exec":"token","symbol":"'"$symbol"'"}] }]}'
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    chain33_DecodeRawTransactionTx "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
+    chain33_SignAndSendTxWait "$tx" "$retrieve1_key" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 retrieve_Cancel() {
     local req='{"method":"retrieve.CreateRawRetrieveCancelTx","params":[{"backupAddr":"'$retrieve1'","defaultAddr":"'$retrieve2'"}]}'
     tx=$(curl -ksd "$req" ${MAIN_HTTP} | jq -r ".result")
-    chain33_DecodeRawTransactionTx "$tx" "$retrieve2_key" ${MAIN_HTTP} "$FUNCNAME"
+    chain33_SignAndSendTxWait "$tx" "$retrieve2_key" ${MAIN_HTTP} "$FUNCNAME"
 }
 
 retrieve_QueryResult() {
@@ -126,7 +124,6 @@ init() {
     chain33_applyCoins "${retrieve2}" 10000000000 "${MAIN_HTTP}"
 
     if [ "$ispara" == true ]; then
-        # for fee
         local main_ip=${MAIN_HTTP//8901/8801}
         chain33_applyCoins "${retrieve1}" 1000000000 "${main_ip}"
         chain33_applyCoins "${retrieve2}" 1000000000 "${main_ip}"

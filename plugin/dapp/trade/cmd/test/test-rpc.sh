@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
 trade_addr=""
 tradeAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 tradeBuyerAddr="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
@@ -169,7 +165,7 @@ function queryTransaction() {
 }
 
 function signRawTxAndQuery() {
-    chain33_SignRawTx "${unsignedTx}" "$2" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${unsignedTx}" "$2" "${MAIN_HTTP}"
     queryTransaction ".error | not" "true"
     echo_rst "$1 queryExecRes" "$?"
 }
@@ -193,8 +189,6 @@ function init() {
     fi
 
     local main_ip=${MAIN_HTTP//8901/8801}
-    #main chain import pri key
-    #1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg
     chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "${main_ip}"
 
     local ACCOUNT_A="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
@@ -203,12 +197,10 @@ function init() {
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "$para_ip"
 
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"

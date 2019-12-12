@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
 set -e
 set -o pipefail
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""

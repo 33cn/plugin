@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
@@ -12,11 +9,6 @@ function init() {
     beneficiary_key=0xf146df80206194c81e0b3171db6aa40c7ad6182a24560698d4871d4dc75223ce
     beneficiary=1DwHQp8S7RS9krQTyrqePxRyvaLcuoQGks
     chain33_applyCoins "${beneficiary}" 10000000000 "${MAIN_HTTP}"
-    #paracross_get_money 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
-    #//beneficiary=12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
-    #beneficiary_key=0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
-    #owner=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    #owner_key=CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944
     echo "ipara=$ispara"
     manager_name="manage"
     exec_name="jsvm"
@@ -42,19 +34,19 @@ function init() {
 function configJSCreator() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${manager_name}'","actionName":"Modify","payload":{"key":"js-creator","op":"add","value":"'${beneficiary}'"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "${super_manager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "${super_manager}" "${MAIN_HTTP}"
 }
 
 function createJSContract() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${exec_name}'","actionName":"Create","payload":{"name":"'${game}'","code":"'${jsCode}'"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function callJS() {
     req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'${user_game}'","actionName":"Call","payload":{"name":"'${game}'","funcname":"hello","args":"{}"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignRawTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "$RETURN_RESP" "${beneficiary_key}" "${MAIN_HTTP}"
 }
 
 function queryJS() {

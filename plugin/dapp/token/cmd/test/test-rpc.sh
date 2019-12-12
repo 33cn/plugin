@@ -1,33 +1,13 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2128
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
 tokenAddr="1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 recvAddr="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
 superManager="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
 tokenSymbol="ABCDE"
 token_addr=""
 execName="token"
-#txHash=""
-
-#color
-#RED='\033[1;31m'
-#GRE='\033[1;32m'
-#NOC='\033[0m'
-
-# $2=0 means true, other false
-#function echo_rst() {
-#    if [ "$2" -eq 0 ]; then
-#        echo -e "${GRE}$1 ok${NOC}"
-#    else
-#        echo -e "${RED}$1 fail${NOC}"
-#        CASE_ERR="FAIL"
-#    fi
-#}
 
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）
@@ -44,8 +24,7 @@ function queryTransaction() {
 }
 
 function signRawTxAndQuery() {
-    chain33_SignRawTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
-    #  txHash=$RAW_TX_HASH
+    chain33_SignAndSendTx "${unsignedTx}" "${superManager}" "${MAIN_HTTP}"
     queryTransaction ".error | not" "true"
     echo_rst "$1 queryExecRes" "$?"
 }
@@ -56,8 +35,6 @@ function init() {
     chain33_ImportPrivkey "${superManager}" "${tokenAddr}" "tokenAddr" "${MAIN_HTTP}"
 
     local main_ip=${MAIN_HTTP//8901/8801}
-    #main chain import pri key
-    #1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq
     chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "${main_ip}"
 
     local ACCOUNT_A="1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq"
@@ -66,12 +43,10 @@ function init() {
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "0x882c963ce2afbedc2353cb417492aa9e889becd878a10f2529fc9e6c3b756128" "1CLrYLNhHfCfMUV7mtdqhbMSF6vGmtTvzq" "token1" "$para_ip"
 
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
@@ -181,7 +156,6 @@ function token_burn() {
         echo_rst "token burn create tx" 1
         return
     fi
-
     signRawTxAndQuery "$FUNCNAME"
 }
 
@@ -191,7 +165,6 @@ function token_mint() {
         echo_rst "token mint create tx" 1
         return
     fi
-
     signRawTxAndQuery "$FUNCNAME"
 }
 function token_transfer() {
@@ -200,7 +173,6 @@ function token_transfer() {
         echo_rst "token transfer create tx" 1
         return
     fi
-
     signRawTxAndQuery "$FUNCNAME"
 }
 
@@ -210,7 +182,6 @@ function token_sendExec() {
         echo_rst "token sendExec create tx" 1
         return
     fi
-
     signRawTxAndQuery "$FUNCNAME"
 }
 
@@ -220,13 +191,11 @@ function token_withdraw() {
         echo_rst "token withdraw create tx" 1
         return
     fi
-
     signRawTxAndQuery "$FUNCNAME"
 }
 
 function run_test() {
     local ip=$1
-    #    set -x
     token_preCreate
     token_getPreCreated
 
@@ -240,7 +209,6 @@ function run_test() {
     token_sendExec
     token_assets
     token_withdraw
-    #   set +x
 }
 
 function main() {
