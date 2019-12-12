@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 
 UNIT_HTTP=""
 IS_PARA=false

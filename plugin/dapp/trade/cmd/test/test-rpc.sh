@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""

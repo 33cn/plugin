@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 set -o pipefail
 
 MAIN_HTTP=""
@@ -99,14 +101,12 @@ function init() {
         chain33_applyCoins "$ACCOUNT_B" 12000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
 
         chain33_applyCoins "$ACCOUNT_B" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_B}" "$main_ip"
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "$PRIVA_A" "16Z3haNPQd9wrnFDw19rtpbgnN2xynNT9f" "game1" "$para_ip"
         chain33_ImportPrivkey "$PRIVA_B" "16GXRfd9xj3XYMDti4y4ht7uzwoh55gZEc" "game2" "$para_ip"
 

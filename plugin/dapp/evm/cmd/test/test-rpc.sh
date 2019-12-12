@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
@@ -154,12 +156,10 @@ function init() {
         chain33_applyCoins "$from" 12000000000 "${main_ip}"
         chain33_QueryBalance "${from}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$from" 1000000000 "${main_ip}"
         chain33_QueryBalance "${from}" "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "0x4947ce3c4b845cfed59be2edf47320546116a3ff3af5715a7df094d116039b89" "1PTXh2EZ8aRUzpuoDRASV19K86Kx3qQiPt" "evm" "$para_ip"
 
         chain33_applyCoins "$from" 12000000000 "${para_ip}"
