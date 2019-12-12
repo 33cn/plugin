@@ -341,7 +341,7 @@ func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte
 
 func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	cfg := client.GetAPI().GetConfig()
-	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count-1, Title: cfg.GetTitle()}
+	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count - 1, Title: cfg.GetTitle()}
 	details, err := client.GetParaTxByTitle(req)
 	if err != nil {
 		return nil, err
@@ -354,7 +354,7 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 		return nil, err
 	}
 	//至少应该返回１个
-	if len(details.Items) == 0{
+	if len(details.Items) == 0 {
 		plog.Error("requestFilterParaTxs ret nil", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, types.ErrNotFound
 	}
