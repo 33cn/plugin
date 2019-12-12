@@ -591,7 +591,7 @@ func QueryOrderList(localdb dbm.Lister, statedb dbm.KV, addr string, status, cou
 	return &orderList, nil
 }
 
-//截取小数点后7位
+//截取小数点后8位
 func Truncate(price float64) float64 {
-	return math.Trunc(float64(1e8)*float64(price)) / float64(1e8)
+	return math.Trunc(float64(1e8)*price) / float64(1e8)
 }
