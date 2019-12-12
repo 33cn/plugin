@@ -13,11 +13,11 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"bytes"
-
 	"sync"
 
 	"strconv"
+
+	"bytes"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -200,30 +200,6 @@ func (client *commitMsgClient) sendCommitTx() {
 
 }
 
-func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[string]bool, addType int64) bool {
-	//验证通过
-	if verifyTxs[string(curTx.Hash())] {
-		client.setCurrentTx(nil)
-		return true
-	}
-	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
-	if addType != types.AddBlock {
-		if client.checkTxCommitTimes > 0 {
-			client.checkTxCommitTimes--
-		}
-		return false
-	}
-
-	client.checkTxCommitTimes++
-	if client.checkTxCommitTimes >= client.waitMainBlocks {
-		client.checkTxCommitTimes = 0
-		client.resetSendEnv()
-		return true
-	}
-	return false
-
-}
-
 func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) bool {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
@@ -233,33 +209,56 @@ func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) b
 		return false
 	}
 
-	//使用map　比每个交易hash byte比较效率应该会高些
-	txMap := make(map[string]bool)
-	//committx是平行链交易
-	if types.IsParaExecName(string(curTx.Execer)) {
-		for _, tx := range block.TxDetails {
-			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
-				txMap[string(tx.Tx.Hash())] = true
+	//只处理AddType block,回滚的不处理
+	if block.Type == types.AddBlock {
+		//使用map　比每个交易hash byte比较效率应该会高些
+		txMap := make(map[string]bool)
+		//committx是平行链交易
+		if types.IsParaExecName(string(curTx.Execer)) {
+			for _, tx := range block.TxDetails {
+				if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
+					txMap[string(tx.Tx.Hash())] = true
+				}
+			}
+		} else {
+			// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
+			//如果正在追赶，则暂时不去主链查找，减少耗时
+			if !client.paraClient.isCaughtUp() {
+				return false
+			}
+			receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
+			if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
+				txMap[string(curTx.Hash())] = true
 			}
 		}
-	} else {
-		// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
-		//如果正在追赶，则暂时不去主链查找，减少耗时
-		if !client.paraClient.isCaughtUp() {
-			return false
-		}
-		receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
-		if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
-			txMap[string(curTx.Hash())] = true
+
+		//验证通过
+		if txMap[string(curTx.Hash())] {
+			client.setCurrentTx(nil)
+			return true
 		}
 	}
 
-	//如果没找到且当前正在追赶，则不计数，如果找到了，即便当前在追赶，也立即处理
-	if !txMap[string(curTx.Hash())] && !client.paraClient.isCaughtUp() {
+	return client.reSendCommitTx(block.Type)
+}
+
+func (client *commitMsgClient) reSendCommitTx(addType int64) bool {
+	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
+	if addType != types.AddBlock {
+		if client.checkTxCommitTimes > 0 {
+			client.checkTxCommitTimes--
+		}
 		return false
 	}
 
-	return client.verifyTx(curTx, txMap, block.Type)
+	client.checkTxCommitTimes++
+	if client.checkTxCommitTimes < client.waitMainBlocks {
+		return false
+	}
+
+	client.checkTxCommitTimes = 0
+	client.resetSendEnv()
+	return true
 }
 
 //如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
