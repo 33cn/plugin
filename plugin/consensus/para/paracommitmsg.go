@@ -31,7 +31,7 @@ const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
 
-	waitBlocks4CommitMsg int32  = 3
+	waitBlocks4CommitMsg int32  = 5 //commit msg共识发送后等待几个块没确认则重发
 	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
@@ -42,7 +42,7 @@ type paraSelfConsEnable struct {
 
 type commitMsgClient struct {
 	paraClient           *client
-	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
+	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
 	resetCh              chan interface{}
 	sendMsgCh            chan *types.Transaction
@@ -130,8 +130,8 @@ func (client *commitMsgClient) resetNotify() {
 }
 
 //新的区块产生，检查是否有commitTx正在发送入口
-func (client *commitMsgClient) commitTxCheckNotify(txs []*types.TxDetail) {
-	if client.checkCommitTxSuccess(txs) {
+func (client *commitMsgClient) commitTxCheckNotify(block *types.ParaTxDetail) {
+	if client.checkCommitTxSuccess(block) {
 		client.sendCommitTx()
 	}
 }
@@ -200,10 +200,18 @@ func (client *commitMsgClient) sendCommitTx() {
 
 }
 
-func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[string]bool) bool {
+func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[string]bool, addType int64) bool {
+	//验证通过
 	if verifyTxs[string(curTx.Hash())] {
 		client.setCurrentTx(nil)
 		return true
+	}
+	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
+	if addType != types.AddBlock{
+		if client.checkTxCommitTimes > 0{
+			client.checkTxCommitTimes--
+		}
+		return false
 	}
 
 	client.checkTxCommitTimes++
@@ -216,7 +224,7 @@ func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[
 
 }
 
-func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool {
+func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) bool {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
@@ -225,10 +233,11 @@ func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool 
 		return false
 	}
 
+	//使用map　比每个交易hash byte比较效率应该会高些
 	txMap := make(map[string]bool)
 	//committx是平行链交易
 	if types.IsParaExecName(string(curTx.Execer)) {
-		for _, tx := range txs {
+		for _, tx := range block.TxDetails {
 			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
 				txMap[string(tx.Tx.Hash())] = true
 			}
@@ -250,7 +259,7 @@ func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool 
 		return false
 	}
 
-	return client.verifyTx(curTx, txMap)
+	return client.verifyTx(curTx, txMap,block.Type)
 }
 
 //如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
