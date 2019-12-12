@@ -31,7 +31,7 @@ const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
 
-	waitBlocks4CommitMsg int32  = 5 //commit msg共识发送后等待几个块没确认则重发
+	waitBlocks4CommitMsg int32  = 5  //commit msg共识发送后等待几个块没确认则重发
 	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
@@ -207,8 +207,8 @@ func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[
 		return true
 	}
 	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
-	if addType != types.AddBlock{
-		if client.checkTxCommitTimes > 0{
+	if addType != types.AddBlock {
+		if client.checkTxCommitTimes > 0 {
 			client.checkTxCommitTimes--
 		}
 		return false
@@ -259,7 +259,7 @@ func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) b
 		return false
 	}
 
-	return client.verifyTx(curTx, txMap,block.Type)
+	return client.verifyTx(curTx, txMap, block.Type)
 }
 
 //如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
