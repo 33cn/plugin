@@ -244,11 +244,11 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		if lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
 			return client.subCfg.BatchFetchBlockCount - 1, nil
 		}
-		return 0, nil
+		return 1, nil
 	}
 
 	if lastSeq == currSeq {
-		return 0, nil
+		return 1, nil
 	}
 
 	// lastSeq = currSeq -1
@@ -341,7 +341,7 @@ func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte
 
 func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	cfg := client.GetAPI().GetConfig()
-	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count, Title: cfg.GetTitle()}
+	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count-1, Title: cfg.GetTitle()}
 	details, err := client.GetParaTxByTitle(req)
 	if err != nil {
 		return nil, err
@@ -350,9 +350,15 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 	details = validMainBlocks(details)
 	err = verifyMainBlocks(preMainBlockHash, details)
 	if err != nil {
-		plog.Error("requestTxsOnlyPara", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		plog.Error("requestFilterParaTxs", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, err
 	}
+	//至少应该返回１个
+	if len(details.Items) == 0{
+		plog.Error("requestFilterParaTxs ret nil", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		return nil, types.ErrNotFound
+	}
+
 	return details, nil
 }
 
@@ -533,9 +539,9 @@ out:
 				plog.Debug("para CreateBlock count not match", "count", count, "items", len(paraTxs.Items))
 				count = int64(len(paraTxs.Items))
 			}
-			//如果超过１个block，则认为当前正在追赶，暂不处理
-			if client.commitMsgClient.authAccount != "" && len(paraTxs.Items) == 1 {
-				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0].TxDetails)
+			//如果当前正在追赶，暂不处理
+			if client.commitMsgClient.authAccount != "" && client.isCaughtUp() && len(paraTxs.Items) > 0{
+				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0])
 			}
 
 			err = client.procLocalBlocks(paraTxs)
