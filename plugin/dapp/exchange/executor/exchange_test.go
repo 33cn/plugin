@@ -87,7 +87,7 @@ func TestExchange(t *testing.T) {
 	accC1, _ := account.NewAccountDB(cfg, "paracross", "token.CCNY", stateDB)
 	accC1.SaveExecAccount(execAddr, &accountC)
 
-	accD1, _ := account.NewAccountDB(cfg, "token", "para", stateDB)
+	accD1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
 	accD1.SaveExecAccount(execAddr, &accountD)
 
 	env := execEnv{
@@ -439,6 +439,94 @@ func TestExchange(t *testing.T) {
 	reply2 = msg.(*et.OrderList)
 	t.Log(reply2)
 	assert.Equal(t, 2, len(reply2.List))
+
+
+
+	//低于市场价得卖单测试
+	// orderlimit  bty:CCNY
+	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 5 * types.Coin, Op: et.OpBuy})
+	assert.Nil(t, err)
+	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
+	assert.Nil(t, err)
+	tx, err = signTx(tx, PrivKeyD)
+	assert.Nil(t, err)
+	err = e.CheckTx(tx, 1)
+	assert.Nil(t, err)
+	env.blockHeight = env.blockHeight + 1
+	env.blockTime = env.blockTime + 20
+	env.difficulty = env.difficulty + 1
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err = exec.Exec(tx, int(1))
+	if err != nil {
+		t.Error(err)
+	}
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(tx, receiptData, int(1))
+	if err != nil {
+		t.Error(err)
+	}
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+	orderID6 := common.ToHex(tx.Hash())
+	//根据订单号，查询订单详情
+	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
+	if err != nil {
+		t.Error(err)
+	}
+    t.Log(msg)
+
+	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 3, Amount: 10 * types.Coin, Op: et.OpSell})
+	assert.Nil(t, err)
+	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
+	assert.Nil(t, err)
+	tx, err = signTx(tx, PrivKeyC)
+	assert.Nil(t, err)
+	err = e.CheckTx(tx, 1)
+	assert.Nil(t, err)
+	env.blockHeight = env.blockHeight + 1
+	env.blockTime = env.blockTime + 20
+	env.difficulty = env.difficulty + 1
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err = exec.Exec(tx, int(1))
+	if err != nil {
+		t.Error(err)
+	}
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(tx, receiptData, int(1))
+	if err != nil {
+		t.Error(err)
+	}
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+	orderID7 := common.ToHex(tx.Hash())
+	//根据订单号，查询订单详情
+
+	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	reply = msg.(*et.Order)
+	acc = accD1.LoadExecAccount(string(Nodes[2]), execAddr)
+	t.Log(acc)
+	//assert.Equal(t, int32(et.Completed), reply.Status)
+	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID7}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	reply = msg.(*et.Order)
+	assert.Equal(t, int32(et.Ordered), reply.Status)
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {

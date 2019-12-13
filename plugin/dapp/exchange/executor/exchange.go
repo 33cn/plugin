@@ -69,7 +69,7 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 		if !CheckPrice(price) {
 			return exchangetypes.ErrAssetPrice
 		}
-		if !types.CheckAmount(amount) {
+		if !CheckAmount(amount) {
 			return exchangetypes.ErrAssetAmount
 		}
 		if !CheckOp(op) {
@@ -80,6 +80,11 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 		return types.ErrActionNotSupport
 	}
 	return nil
+}
+
+//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+func (e *exchange) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
 }
 
 // GetPayloadValue get payload value

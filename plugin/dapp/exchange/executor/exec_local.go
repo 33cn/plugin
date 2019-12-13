@@ -103,11 +103,11 @@ func (e *exchange) updateIndex(receipt *exchangetypes.ReceiptExchange) (kvs []*t
 
 		if len(receipt.MatchOrders) > 0 {
 			//撮合交易更新
-			var balance int64
+			cache :=make(map[float64]int64)
 			for i, matchOrder := range receipt.MatchOrders {
 				if matchOrder.Status == exchangetypes.Completed {
 					// 删除原有状态orderID
-					kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthOrderKey(left, right, matchOrder.GetLimitOrder().Op, price, matchOrder.Index), Value: nil})
+					kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthOrderKey(left, right, matchOrder.GetLimitOrder().Op, matchOrder.GetLimitOrder().Price, matchOrder.Index), Value: nil})
 					//删除原有状态orderID
 					kvs = append(kvs, &types.KeyValue{Key: calcUserOrderIDKey(exchangetypes.Ordered, matchOrder.Addr, matchOrder.Index), Value: nil})
 					//更新状态为已完成,索引index,改为当前的index
@@ -115,28 +115,25 @@ func (e *exchange) updateIndex(receipt *exchangetypes.ReceiptExchange) (kvs []*t
 					//calcCompletedOrderKey
 					kvs = append(kvs, &types.KeyValue{Key: calcCompletedOrderKey(left, right, index+int64(i+1)), Value: types.Encode(&exchangetypes.OrderID{ID: matchOrder.OrderID, Index: index + int64(i+1)})})
 				}
-				if matchOrder.Status == exchangetypes.Ordered {
-					//只需统一更改市场深度状态，其他不需要处理
-					balance = balance + matchOrder.Balance
-				}
+				executed :=cache[matchOrder.GetLimitOrder().Price]
+				executed=executed+matchOrder.Executed
+				cache[matchOrder.GetLimitOrder().Price]=executed
 			}
 			//更改匹配市场深度
-			var matchDepth exchangetypes.MarketDepth
-			err = findObject(e.GetLocalDB(), calcMarketDepthKey(left, right, OpSwap(op), price), &matchDepth)
-			if err == types.ErrNotFound {
-				matchDepth.Price = price
-				matchDepth.LeftAsset = left
-				matchDepth.RightAsset = right
-				matchDepth.Op = OpSwap(op)
-				matchDepth.Amount = balance
-			} else {
-				matchDepth.Amount = matchDepth.Amount - receipt.Order.Executed
-			}
-			//marketDepth
-			kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: types.Encode(&matchDepth)})
-			if matchDepth.Amount == 0 {
-				//删除
-				kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: nil})
+			for pr,executed :=range cache{
+				var matchDepth exchangetypes.MarketDepth
+				err = findObject(e.GetLocalDB(), calcMarketDepthKey(left, right, OpSwap(op), pr), &matchDepth)
+				if err == types.ErrNotFound {
+				   continue
+				} else {
+					matchDepth.Amount = matchDepth.Amount - executed
+				}
+				//marketDepth
+				kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: types.Encode(&matchDepth)})
+				if matchDepth.Amount <= 0 {
+					//删除
+					kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: nil})
+				}
 			}
 		}
 		return
@@ -155,9 +152,9 @@ func (e *exchange) updateIndex(receipt *exchangetypes.ReceiptExchange) (kvs []*t
 		//calcCompletedOrderKey
 		kvs = append(kvs, &types.KeyValue{Key: calcCompletedOrderKey(left, right, index), Value: types.Encode(&exchangetypes.OrderID{ID: oderID, Index: index})})
 
+		cache :=make(map[float64]int64)
 		if len(receipt.MatchOrders) > 0 {
 			//撮合交易更新
-			var balance int64
 			for i, matchOrder := range receipt.MatchOrders {
 				if matchOrder.Status == exchangetypes.Completed {
 					// 删除原有状态orderID
@@ -170,28 +167,25 @@ func (e *exchange) updateIndex(receipt *exchangetypes.ReceiptExchange) (kvs []*t
 					kvs = append(kvs, &types.KeyValue{Key: calcCompletedOrderKey(left, right, index+int64(i+1)), Value: types.Encode(&exchangetypes.OrderID{ID: matchOrder.OrderID, Index: index + int64(i+1)})})
 
 				}
-				if matchOrder.Status == exchangetypes.Ordered {
-					//只需统一更改市场深度状态，其他不需要处理
-					balance = balance + matchOrder.Balance
-				}
+				executed :=cache[matchOrder.GetLimitOrder().Price]
+				executed=executed+matchOrder.Executed
+				cache[matchOrder.GetLimitOrder().Price]=executed
 			}
 			//更改match市场深度
-			var matchDepth exchangetypes.MarketDepth
-			err := findObject(e.GetLocalDB(), calcMarketDepthKey(left, right, OpSwap(op), price), &matchDepth)
-			if err == types.ErrNotFound {
-				matchDepth.Price = price
-				matchDepth.LeftAsset = left
-				matchDepth.RightAsset = right
-				matchDepth.Op = OpSwap(op)
-				matchDepth.Amount = balance
-			} else {
-				matchDepth.Amount = matchDepth.Amount - receipt.Order.Executed
-			}
-			//marketDepth
-			kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: types.Encode(&matchDepth)})
-			if matchDepth.Amount == 0 {
-				//删除
-				kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: nil})
+			for pr,executed :=range cache{
+				var matchDepth exchangetypes.MarketDepth
+				err := findObject(e.GetLocalDB(), calcMarketDepthKey(left, right, OpSwap(op), pr), &matchDepth)
+				if err == types.ErrNotFound {
+					continue
+				} else {
+					matchDepth.Amount = matchDepth.Amount - executed
+				}
+				//marketDepth
+				kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: types.Encode(&matchDepth)})
+				if matchDepth.Amount <= 0 {
+					//删除
+					kvs = append(kvs, &types.KeyValue{Key: calcMarketDepthKey(left, right, OpSwap(op), price), Value: nil})
+				}
 			}
 		}
 		return
