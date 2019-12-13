@@ -85,6 +85,14 @@ func CheckCount(count int32) bool {
 	return count <= 20 && count >= 0
 }
 
+//最小交易1e8
+func CheckAmount(amount int64) bool {
+	if amount < types.Coin || amount >= types.MaxCoin {
+		return false
+	}
+	return true
+}
+
 func CheckDirection(direction int32) bool {
 	if direction == et.ListASC || direction == et.ListDESC {
 		return true
@@ -117,7 +125,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	if !CheckExchangeAsset(leftAsset, rightAsset) {
 		return nil, et.ErrAsset
 	}
-	if !types.CheckAmount(payload.GetAmount()) {
+	if !CheckAmount(payload.GetAmount()) {
 		return nil, et.ErrAssetAmount
 	}
 	if !CheckPrice(payload.GetPrice()) {
@@ -236,10 +244,17 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 }
 
 //撮合交易逻辑方法
+// 规则：
+//1.买单高于市场价，按价格由低往高撮合。
+//2.卖单低于市场价，按价格由高往低进行撮合。
+//3.价格相同按先进先出的原则进行撮合
+//4.买家获利得原则
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var index int64
+	var price float64
+	var count int
 
 	or := &et.Order{
 		OrderID:    common.ToHex(a.txhash),
@@ -257,41 +272,145 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		Index: a.GetIndex(),
 	}
 
-	//按先进先出的原则进行撮合
 	//单笔交易最多撮合100笔历史订单,最大可撮合得深度，系统得自我防护
-	for i := 0; i < 20; i++ {
-		orderIDs, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), payload.GetPrice(), a.OpSwap(payload.Op), et.ListASC, index)
+	for {
+		if count > et.MaxCount {
+			break
+		}
+		marketDepthList, err := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), price, et.Count)
 		if err == types.ErrNotFound {
 			break
 		}
-		if err != nil {
-			return nil, err
-		}
-		for _, orderID := range orderIDs {
-			matchorder, err := findOrderByOrderID(a.statedb, orderID.ID)
-			if err != nil {
-				elog.Warn("matchLimitOrder.findOrderByOrderID", "order", "err", err.Error())
+		for _, marketDepth := range marketDepthList.List {
+			if count > et.MaxCount {
+				break
+			}
+			// 卖单价大于买单价
+			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
 				continue
 			}
-			//同地址不能交易
-			if matchorder.Addr == a.fromaddr {
+			// 买单价小于卖单价
+			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
 				continue
 			}
-			//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
-			if matchorder.GetBalance() >= or.GetBalance() {
+			orderIDs, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, index)
+			if err == types.ErrNotFound {
+				continue
+			}
+			for _, orderID := range orderIDs {
+				matchorder, err := findOrderByOrderID(a.statedb, orderID.ID)
+				if err != nil {
+					elog.Warn("matchLimitOrder.findOrderByOrderID", "order", "err", err.Error())
+					continue
+				}
+				//同地址不能交易
+				if matchorder.Addr == a.fromaddr {
+					continue
+				}
+				//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
+				if matchorder.GetBalance() >= or.GetBalance() {
+					if payload.Op == et.OpSell {
+						//转移冻结资产
+						receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.Price))
+						if err != nil {
+							elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.Price), "err", err.Error())
+							return nil, err
+						}
+						logs = append(logs, receipt.Logs...)
+						kvs = append(kvs, receipt.KV...)
+
+						//解冻多余资金
+						if payload.Price < matchorder.GetLimitOrder().Price {
+							receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price))
+							if err != nil {
+								elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price), "err", err.Error())
+								return nil, err
+							}
+							logs = append(logs, receipt.Logs...)
+							kvs = append(kvs, receipt.KV...)
+						}
+						//将达成交易的相应资产结算
+						receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, or.GetBalance(), payload.Price))
+						if err != nil {
+							elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, or.GetBalance(), payload.Price), "err", err.Error())
+							return nil, err
+						}
+						logs = append(logs, receipt.Logs...)
+						kvs = append(kvs, receipt.KV...)
+					}
+					if payload.Op == et.OpBuy {
+						//转移冻结资产
+						receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price))
+						if err != nil {
+							elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price), "err", err.Error())
+							return nil, err
+						}
+						logs = append(logs, receipt.Logs...)
+						kvs = append(kvs, receipt.KV...)
+						//将达成交易的相应资产结算
+						receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, or.GetBalance(), matchorder.GetLimitOrder().Price))
+						if err != nil {
+							elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, or.GetBalance(), matchorder.GetLimitOrder().Price), "err", err.Error())
+							return nil, err
+						}
+						logs = append(logs, receipt.Logs...)
+						kvs = append(kvs, receipt.KV...)
+					}
+
+					// match receiptorder,涉及赋值先手顺序，代码顺序不可变
+					matchorder.Status = func(a, b int64) int32 {
+						if a > b {
+							return et.Ordered
+						}
+						return et.Completed
+					}(matchorder.GetBalance(), or.GetBalance())
+					matchorder.Balance = matchorder.GetBalance() - or.GetBalance()
+					//记录本次成交得量
+					matchorder.Executed = or.GetBalance()
+
+					a.updateStateDBCache(matchorder)
+					kvs = append(kvs, a.GetKVSet(matchorder)...)
+
+					or.Executed = or.Executed + or.GetBalance()
+					or.Status = et.Completed
+					or.Balance = 0
+					//update receipt order
+					re.Order = or
+					re.MatchOrders = append(re.MatchOrders, matchorder)
+
+					a.updateStateDBCache(or)
+					kvs = append(kvs, a.GetKVSet(or)...)
+					//statedb 更新
+					receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
+					logs = append(logs, receiptlog)
+					receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+					return receipts, nil
+				}
 				if payload.Op == et.OpSell {
 					//转移冻结资产
-					receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.GetPrice()))
+					receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.Price))
 					if err != nil {
-						elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.GetPrice()), "err", err.Error())
+						elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.Price), "err", err.Error())
 						return nil, err
 					}
 					logs = append(logs, receipt.Logs...)
 					kvs = append(kvs, receipt.KV...)
+
+					//解冻成交部分 多余资金
+					if payload.Price < matchorder.GetLimitOrder().Price {
+						receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price))
+						if err != nil {
+							elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price), "err", err.Error())
+							return nil, err
+						}
+						logs = append(logs, receipt.Logs...)
+						kvs = append(kvs, receipt.KV...)
+					}
+
 					//将达成交易的相应资产结算
-					receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, or.GetBalance(), payload.GetPrice()))
+					receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.Price))
 					if err != nil {
-						elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, or.GetBalance(), payload.GetPrice()), "err", err.Error())
+						elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.Price), "err", err.Error())
 						return nil, err
 					}
 					logs = append(logs, receipt.Logs...)
@@ -299,86 +418,22 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 				}
 				if payload.Op == et.OpBuy {
 					//转移冻结资产
-					receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.GetPrice()))
+					receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price))
 					if err != nil {
-						elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.GetPrice()), "err", err.Error())
+						elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price), "err", err.Error())
 						return nil, err
 					}
 					logs = append(logs, receipt.Logs...)
 					kvs = append(kvs, receipt.KV...)
 					//将达成交易的相应资产结算
-					receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, or.GetBalance(), payload.GetPrice()))
+					receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price))
 					if err != nil {
-						elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, or.GetBalance(), payload.GetPrice()), "err", err.Error())
+						elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price), "err", err.Error())
 						return nil, err
 					}
 					logs = append(logs, receipt.Logs...)
 					kvs = append(kvs, receipt.KV...)
 				}
-
-				// match receiptorder,涉及赋值先手顺序，代码顺序不可变
-				matchorder.Status = func(a, b int64) int32 {
-					if a > b {
-						return et.Ordered
-					}
-					return et.Completed
-				}(matchorder.GetBalance(), or.GetBalance())
-				matchorder.Balance = matchorder.GetBalance() - or.GetBalance()
-				matchorder.Executed = matchorder.Executed + or.GetBalance()
-
-				a.updateStateDBCache(matchorder)
-				kvs = append(kvs, a.GetKVSet(matchorder)...)
-
-				or.Executed = or.Executed + or.GetBalance()
-				or.Status = et.Completed
-				or.Balance = 0
-				//update receipt order
-				re.Order = or
-				re.MatchOrders = append(re.MatchOrders, matchorder)
-
-				a.updateStateDBCache(or)
-				kvs = append(kvs, a.GetKVSet(or)...)
-				//statedb 更新
-				receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
-				logs = append(logs, receiptlog)
-				receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-				return receipts, nil
-			}
-			if payload.Op == et.OpSell {
-				//转移冻结资产
-				receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.GetPrice()))
-				if err != nil {
-					elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.GetPrice()), "err", err.Error())
-					return nil, err
-				}
-				logs = append(logs, receipt.Logs...)
-				kvs = append(kvs, receipt.KV...)
-				//将达成交易的相应资产结算
-				receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.GetPrice()))
-				if err != nil {
-					elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.GetPrice()), "err", err.Error())
-					return nil, err
-				}
-				logs = append(logs, receipt.Logs...)
-				kvs = append(kvs, receipt.KV...)
-			}
-			if payload.Op == et.OpBuy {
-				//转移冻结资产
-				receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.GetPrice()))
-				if err != nil {
-					elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "execaddr", a.execaddr, "amount", a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.GetPrice()), "err", err.Error())
-					return nil, err
-				}
-				logs = append(logs, receipt.Logs...)
-				kvs = append(kvs, receipt.KV...)
-				//将达成交易的相应资产结算
-				receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.GetPrice()))
-				if err != nil {
-					elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", a.calcActualCost(payload.Op, matchorder.GetBalance(), payload.GetPrice()), "err", err.Error())
-					return nil, err
-				}
-				logs = append(logs, receipt.Logs...)
-				kvs = append(kvs, receipt.KV...)
 
 				//涉及赋值先后顺序，不可颠倒
 				or.Balance = or.Balance - matchorder.Balance
@@ -387,7 +442,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 				a.updateStateDBCache(or)
 
 				// match receiptorder
-				matchorder.Executed = matchorder.Executed + matchorder.GetBalance()
+				matchorder.Executed = matchorder.Balance
 				matchorder.Status = et.Completed
 				matchorder.Balance = 0
 				a.updateStateDBCache(matchorder)
@@ -395,13 +450,21 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 
 				re.Order = or
 				re.MatchOrders = append(re.MatchOrders, matchorder)
+				//撮合深度计数
+				count = count + 1
 			}
+			//查询数据不满足5条说明没有了,跳出循环
+			if len(orderIDs) < int(et.Count) {
+				break
+			}
+			index = orderIDs[len(orderIDs)-1].Index
 		}
+
 		//查询数据不满足5条说明没有了,跳出循环
-		if len(orderIDs) < int(et.Count) {
+		if len(marketDepthList.List) < int(et.Count) {
 			break
 		}
-		index = orderIDs[len(orderIDs)-1].Index
+		price = marketDepthList.List[len(marketDepthList.List)-1].Price
 	}
 
 	//冻结剩余未成交的资金
@@ -490,7 +553,7 @@ func Direction(op int32) int32 {
 }
 
 //这里price当作索引来用，首次查询不需要填值
-func QueryMarketDepth(localdb dbm.Lister, left, right *et.Asset, op int32, price float64, count int32) (types.Message, error) {
+func QueryMarketDepth(localdb dbm.Lister, left, right *et.Asset, op int32, price float64, count int32) (*et.MarketDepthList, error) {
 	prefix := calcMarketDepthPrefix(left, right, op)
 	key := calcMarketDepthKey(left, right, op, price)
 	var values [][]byte
@@ -548,6 +611,8 @@ func QueryCompletedOrderList(localdb dbm.Lister, statedb dbm.KV, left, right *et
 		}
 		//替换索引index
 		order.Index = orderID.Index
+		//替换已经成交得量
+		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 	}
 
@@ -586,6 +651,8 @@ func QueryOrderList(localdb dbm.Lister, statedb dbm.KV, addr string, status, cou
 		}
 		//替换索引index
 		order.Index = orderID.Index
+		//替换已经成交得量
+		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 	}
 	return &orderList, nil
