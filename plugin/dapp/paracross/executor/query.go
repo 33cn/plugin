@@ -7,6 +7,7 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/symcipher"
 
@@ -468,14 +469,14 @@ func (p *Paracross) Query_GetNodeGroupPubKey(in *pt.ReqParaNodeAddrPubKey) (type
 	clog.Debug("Query_GetNodeGroupPubKey", "coming a node public key query request for:", in.Title)
 	paraNodeAddrPubKey, err := p.getNodeGroupPubKey(in.Title)
 	if nil != err {
-		return nil, errors.Wrapf(err,"Failed to get from local db due to:", err.Error())
+		return nil, errors.Wrapf(err, "Failed to get from local db due to:%s", err.Error())
 	}
 
 	var resp pt.RespParaNodeAddrPubKey
 	for addr, pubkey := range paraNodeAddrPubKey.Addr2Pubkey {
 		addrAndPubKey := &pt.AddrAndPubKey{
-			Addr:addr,
-			Pubkey:common.ToHex(pubkey),
+			Addr:   addr,
+			Pubkey: common.ToHex(pubkey),
 		}
 		resp.AddrAndPubKey = append(resp.AddrAndPubKey, addrAndPubKey)
 	}
@@ -485,7 +486,7 @@ func (p *Paracross) Query_GetNodeGroupPubKey(in *pt.ReqParaNodeAddrPubKey) (type
 
 //Query_ConvertTx2Privacy:将平行链交易转化为隐私交易
 func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.Message, error) {
-	if nil == types.ErrInvalidParam || 0 == len(in.Data){
+	if nil == types.ErrInvalidParam || 0 == len(in.Data) {
 		return nil, types.ErrInvalidParam
 	}
 	txByteData, err := common.FromHex(in.Data)
@@ -500,7 +501,7 @@ func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.M
 
 	title, isPara := types.GetParaExecTitleName(string(tx.Execer))
 	if !isPara {
-		return nil, errors.New("Only tx for para-chain can be made as privacy!")
+		return nil, errors.New("only tx for para-chain can be made as privacy")
 	}
 	//var respParaNodeAddrPubKey pt.RespParaNodeAddrPubKey
 	paraNodeAddrPubKey, err := p.getNodeGroupPubKey(title)
@@ -518,8 +519,8 @@ func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.M
 	}
 	//将明文交易内容填充到隐私交易的数据载荷中
 	privacyTxPayload := &types.PrivacyTxPayload{
-		CipheredTx:cipheredTx,
-		AddrSymKey:make(map[string][]byte),
+		CipheredTx: cipheredTx,
+		AddrSymKey: make(map[string][]byte),
 	}
 
 	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
@@ -545,12 +546,12 @@ func (p *Paracross) Query_ConvertTx2Privacy(in *pt.ReqConverTx2Privacy) (types.M
 	}
 
 	newPrivacyTx := &types.Transaction{
-		Execer:[]byte(title + types.PrivacyTx4Para),
-		Payload:types.Encode(privacyTxPayload),
-		To:address.ExecAddress(title + types.PrivacyTx4Para),
+		Execer:  []byte(title + types.PrivacyTx4Para),
+		Payload: types.Encode(privacyTxPayload),
+		To:      address.ExecAddress(title + types.PrivacyTx4Para),
 	}
 
-	reply := types.ReplyString{Data:hex.EncodeToString(types.Encode(newPrivacyTx))}
+	reply := types.ReplyString{Data: hex.EncodeToString(types.Encode(newPrivacyTx))}
 	return &reply, nil
 }
 
@@ -561,7 +562,7 @@ func (p *Paracross) getNodeGroupPubKey(title string) (*pt.ParaNodeAddrPubKey, er
 	nodePubKey, err := localDB.Get(key)
 	if nil != err {
 		clog.Error("getNodeGroupPubKey", "failed get info from local db with key:", string(key))
-		return nil, errors.Wrapf(err,"Failed to get from local db due to:", err.Error())
+		return nil, errors.Wrapf(err, "Failed to get from local db due to:%s", err.Error())
 	}
 	if err := types.Decode(nodePubKey, &paraNodeAddrPubKey); nil != err {
 		return nil, err

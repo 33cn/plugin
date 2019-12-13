@@ -500,7 +500,7 @@ paracross_testSelfConsensStages() {
 
     #re-enable self consensus
     sleep 5
-    newEnableHeight=$(($newHeight + 50))
+    newEnableHeight=$((newHeight + 50))
     echo "apply stage startHeight=$newEnableHeight"
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newEnableHeight"',"enable":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")

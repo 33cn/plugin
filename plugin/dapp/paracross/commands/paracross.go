@@ -12,14 +12,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
-	"github.com/33cn/chain33/system/dapp/commands"
-	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/system/dapp/commands"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
 )
 
@@ -1130,7 +1130,7 @@ func getNodeGroupPubKeys(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	parameter := pt.ReqParaNodeAddrPubKey{
-		Title:paraName,
+		Title: paraName,
 	}
 	var reply pt.RespParaNodeAddrPubKey
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupPubKey", parameter, &reply)
@@ -1178,7 +1178,7 @@ func convertPrivacyTx4Para(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	data, _ := cmd.Flags().GetString("data")
 	paraName := pt.ReqConverTx2Privacy{
-		Data:data,
+		Data: data,
 	}
 
 	var replyString types.ReplyString
@@ -1230,14 +1230,14 @@ func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var requestId string
-	paramsQuery := rpctypes.ReqPrivacyTxQueryId{}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestId)
+	var requestID string
+	paramsQuery := rpctypes.ReqPrivacyTxQueryID{}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestID)
 	ctx.RunResult()
-	params.RequestId = requestId
+	params.RequestID = requestID
 
 	protoReqPrivacyHashes := types.ReqPrivacyHashes{
-		RequestID:requestId,
+		RequestID: requestID,
 	}
 	for _, hash := range params.Hashes {
 		hashByte, _ := common.FromHex(hash)

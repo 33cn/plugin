@@ -470,13 +470,13 @@ func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) e
 	//	return err
 	//}
 	blockdetail := &types.BlockDetail{
-		Block:paraBlock,
-		PrevStatusHash:prev,
+		Block:          paraBlock,
+		PrevStatusHash: prev,
 	}
 	isSync := client.downloadHasCaughtUp()
 	paraChainBlockDetail := types.ParaChainBlockDetail{
-		Blockdetail:blockdetail,
-		IsSync:isSync,
+		Blockdetail: blockdetail,
+		IsSync:      isSync,
 	}
 	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, &paraChainBlockDetail)
 	err := client.paraClient.GetQueueClient().Send(msg, true)

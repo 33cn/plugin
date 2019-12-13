@@ -36,7 +36,7 @@ var (
 	paraSelfConsensStages        string
 	paraSelfConsensStageIDPrefix string
 
-	localParaSuperNodePubKey       string
+	localParaSuperNodePubKey string
 )
 
 func setPrefix() {
@@ -112,7 +112,7 @@ func calcParaSelfConsensStageIDKey(hash string) string {
 
 func calcParaSuperNodePubKey(title string) []byte {
 	//如果title结尾不包含“.”，则在结尾处增加该字符
-	if "." != string(title[len(title) -1]) {
+	if "." != string(title[len(title)-1]) {
 		title += "."
 	}
 	return []byte(fmt.Sprintf(localParaSuperNodePubKey+"%s", title))

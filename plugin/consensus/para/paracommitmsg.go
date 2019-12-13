@@ -905,9 +905,9 @@ func (client *commitMsgClient) fetchPriKey() error {
 	plog.Info("para commit fetchPriKey success")
 
 	paraAccount := &types.ParaSelfConsensusAccount{
-		SignType:types.SECP256K1,
-		PrivateKey:pk,
-		Address:client.paraClient.authAccount,
+		SignType:   types.SECP256K1,
+		PrivateKey: pk,
+		Address:    client.paraClient.authAccount,
 	}
 	msg = client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventParaSelfConsensusAccount, paraAccount)
 	err = client.paraClient.GetQueueClient().Send(msg, true)
