@@ -144,8 +144,7 @@ func NewAction(t *Pos33Ticket, tx *types.Transaction) *Action {
 // GenesisInit init genesis
 func (action *Action) GenesisInit(genesis *ty.Pos33TicketGenesis) (*types.Receipt, error) {
 	chain33Cfg := action.api.GetConfig()
-	prefix := common.ToHex(action.txhash)
-	prefix = genesis.MinerAddress + ":" + prefix + ":"
+	prefix := fmt.Sprintf("%s:%d:", genesis.MinerAddress, action.height)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, action.height)
@@ -232,8 +231,7 @@ func (action *Action) Pos33TicketBind(tbind *ty.Pos33TicketBind) (*types.Receipt
 // Pos33TicketOpen ticket open
 func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt, error) {
 	chain33Cfg := action.api.GetConfig()
-	prefix := common.ToHex(action.txhash)
-	prefix = topen.MinerAddress + ":" + prefix + ":"
+	prefix := fmt.Sprintf("%s:%d:", topen.MinerAddress, action.height)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	//addr from
@@ -250,13 +248,15 @@ func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt
 	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, action.height)
 	for i := 0; i < int(topen.Count); i++ {
 		id := prefix + fmt.Sprintf("%010d", i)
-		//add pubHash
-		if chain33Cfg.IsDappFork(action.height, ty.Pos33TicketX, "ForkTicketId") {
-			if len(topen.PubHashes) == 0 {
-				return nil, ty.ErrOpenPos33TicketPubHash
+		/*
+			//add pubHash
+			if chain33Cfg.IsDappFork(action.height, ty.Pos33TicketX, "ForkTicketId") {
+				if len(topen.PubHashes) == 0 {
+					return nil, ty.ErrOpenPos33TicketPubHash
+				}
+				id = id + ":" + fmt.Sprintf("%x:%d", topen.PubHashes[i], topen.RandSeed)
 			}
-			id = id + ":" + fmt.Sprintf("%x:%d", topen.PubHashes[i], topen.RandSeed)
-		}
+		*/
 		t := NewDB(chain33Cfg, id, topen.MinerAddress, topen.ReturnAddress, action.blocktime, action.height, cfg.Pos33TicketPrice, false)
 
 		//冻结子账户资金
@@ -270,6 +270,7 @@ func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt
 		kv = append(kv, t.GetKVSet()...)
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
+		tlog.Info("pos33.ticket open", "tid", id)
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil

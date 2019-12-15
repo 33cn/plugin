@@ -110,7 +110,7 @@ func (policy *ticketPolicy) Init(walletBiz wcom.WalletOperate, sub []byte) {
 	}
 	policy.cfg = &subcfg
 	policy.initMinerWhiteList(walletBiz.GetConfig())
-	wait := 2 * time.Minute
+	wait := 10 * time.Second
 	if subcfg.MinerWaitTime != "" {
 		d, err := time.ParseDuration(subcfg.MinerWaitTime)
 		if err == nil {

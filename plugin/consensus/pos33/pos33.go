@@ -2,9 +2,12 @@ package pos33
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
@@ -45,17 +48,17 @@ type genesisTicket struct {
 }
 
 type subConfig struct {
-	Genesis          []*genesisTicket `json:"genesis"`
-	GenesisBlockTime int64            `json:"genesisBlockTime"`
-	ListenAddr       string           `json:"ListenAddr,omitempty"`
-	AdvertiseAddr    string           `json:"AdvertiseAddr,omitempty"`
-	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
-	//MaxTxs           int64            `json:"Pos33MaxTxs,omitempty"`
-	BlockTime          int64   `json:"BlockTime,omitempty"`
-	BlockTimeout       int64   `json:"BlockTimeout,omitempty"`
-	NodeID             string  `json:"nodeID,omitempty"`
-	DeltaDiff          float64 `json:"deltaDiff,omitempty"`
-	DiffChangeTimespan int64   `json:"diffChangeTimespan,omitempty"`
+	Genesis            []*genesisTicket `json:"genesis"`
+	GenesisBlockTime   int64            `json:"genesisBlockTime"`
+	ListenAddr         string           `json:"ListenAddr,omitempty"`
+	AdvertiseAddr      string           `json:"AdvertiseAddr,omitempty"`
+	BootPeerAddr       string           `json:"BootPeerAddr,omitempty"`
+	BlockTime          int64            `json:"BlockTime,omitempty"`
+	BlockTimeout       int64            `json:"BlockTimeout,omitempty"`
+	NodeID             string           `json:"nodeID,omitempty"`
+	DeltaDiff          float64          `json:"deltaDiff,omitempty"`
+	DiffChangeTimespan int64            `json:"diffChangeTimespan,omitempty"`
+	SingleNode         bool             `json:"singleNode,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -149,11 +152,24 @@ func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
 	return client.privmap[mineAddr]
 }
 
-func (client *Client) getTicketsMap() map[string]string {
+func getTicketHeight(tid string) int64 {
+	ss := strings.Split(tid, ":")
+	height, _ := strconv.Atoi(ss[1])
+	h := int64(height)
+	if h == 0 {
+		return 0
+	}
+	return h - h%pt.Pos33SortitionSize + pt.Pos33SortitionSize
+}
+
+func (client *Client) getTicketsMap(height int64) map[string]string {
 	client.tickLock.Lock()
 	defer client.tickLock.Unlock()
 	mp := make(map[string]string)
 	for tid, t := range client.ticketsMap {
+		if getTicketHeight(tid) > height {
+			continue
+		}
 		mp[tid] = t.MinerAddress
 	}
 	return mp
@@ -409,7 +425,7 @@ func (client *Client) setBlock(b *types.Block) error {
 		return nil
 	}
 
-	plog.Info("setBlock", "height", b.Height, "txCount", len(b.Txs))
+	plog.Info("setBlock", "height", b.Height, "txCount", len(b.Txs), "hash", common.ToHex(b.Hash(client.GetAPI().GetConfig())))
 	lastBlock, err := client.RequestBlock(b.Height - 1)
 	if err != nil {
 		return err

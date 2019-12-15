@@ -38,7 +38,7 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 	var msgs []*pt.Pos33SortitionMsg
 	var minHash []byte
 	index := 0
-	for tid, maddr := range n.getTicketsMap() {
+	for tid, maddr := range n.getTicketsMap(height) {
 		inputMsg := &pt.Pos33VrfInputMsg{Seed: seed, Height: height, Round: int32(round), Step: int32(step), TicketId: tid}
 		priv := n.getPriv(maddr)
 		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
@@ -110,7 +110,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 	if m == nil || m.Input == nil {
 		return fmt.Errorf("verifySort error: sort msg is nil")
 	}
-	diff := float64(size) / (float64(allw) * float64(m.Diff) / 1000)
+	diff := float64(size) / (float64(allw) * n.diff) //float64(n.diff) / 1000)
 
 	plog.Debug("verify sortition", "height", height, "round", m.Input.Round, "step", step, "seed", hexs(seed), "allw", allw)
 
@@ -122,7 +122,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 
 	ok := false
 	for _, t := range reply.Tickets {
-		if t.TicketId == m.Input.TicketId {
+		if t.TicketId == m.Input.TicketId && getTicketHeight(t.TicketId) <= height {
 			ok = true
 			break
 		}
