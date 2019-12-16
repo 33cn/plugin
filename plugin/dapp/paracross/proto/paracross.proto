@@ -424,10 +424,5 @@ message ParaLocalDbBlockInfo {
 }
 
 service paracross {
-    rpc GetTitle(ReqString) returns (ParacrossConsensusStatus) {}
-    rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
-    rpc GetDoneTitleHeight(ReqParacrossTitleHeight) returns (RespParacrossDone) {}
-    rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ParacrossHeightStatusRsp) {}
-    rpc GetAssetTxResult(ReqString) returns (ParacrossAssetRsp) {}
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }

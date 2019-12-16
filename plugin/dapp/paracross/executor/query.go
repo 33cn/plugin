@@ -28,6 +28,10 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	}
 	stat, err := p.paracrossGetStateTitleHeight(in.Title, in.Height)
 	if err != nil {
 		clog.Error("paracross.GetTitleHeight", "title", title, "height", in.Height, "err", err.Error())
@@ -63,13 +67,20 @@ func (p *Paracross) Query_GetTitleByHash(in *pt.ReqParacrossTitleHash) (types.Me
 
 //Query_GetNodeGroupAddrs get node group addrs
 func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.GetTitle() == "" {
+	if in == nil {
 		return nil, types.ErrInvalidParam
+	}
+
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
 	}
 
 	ret, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 	var nodes []string
 	for k := range ret {
@@ -83,9 +94,16 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 
 //Query_GetNodeAddrInfo get specific node addr info
 func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Title == "" || in.Addr == "" {
+	if in == nil || in.Addr == "" {
 		return nil, types.ErrInvalidParam
 	}
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+
 	stat, err := getNodeAddr(p.GetStateDB(), in.Title, in.Addr)
 	if err != nil {
 		return nil, err
@@ -94,7 +112,7 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	if err != nil {
 		return nil, err
 	}
-	cfg := p.GetAPI().GetConfig()
+
 	if pt.IsParaForkHeight(cfg, mainHeight, pt.ForkLoopCheckCommitTxDone) {
 		stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
 		stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
@@ -117,14 +135,21 @@ func (p *Paracross) getMainHeight() (int64, error) {
 
 //Query_GetNodeIDInfo get specific node addr info
 func (p *Paracross) Query_GetNodeIDInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Title == "" || in.Id == "" {
+	if in == nil || in.Id == "" {
 		return nil, types.ErrInvalidParam
 	}
+
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
+	}
+
 	mainHeight, err := p.getMainHeight()
 	if err != nil {
 		return nil, err
 	}
-	cfg := p.GetAPI().GetConfig()
 	stat, err := getNodeIDWithFork(cfg, p.GetStateDB(), in.Title, mainHeight, in.Id)
 	if err != nil {
 		return nil, err
@@ -213,6 +238,10 @@ func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
 func (p *Paracross) Query_GetDoneTitleHeight(in *pt.ReqParacrossTitleHeight) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
+	}
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
 	}
 	return p.paracrossGetTitleHeight(in.Title, in.Height)
 }
@@ -458,4 +487,61 @@ func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, e
 // Query_ListSelfStages 批量查询
 func (p *Paracross) Query_ListSelfStages(in *pt.ReqQuerySelfStages) (types.Message, error) {
 	return p.listSelfStages(in)
+}
+
+func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
+	ret := &pt.ParaBlock2MainInfo{}
+	details, err := p.GetAPI().GetBlocks(req)
+	if err != nil {
+		return nil, err
+	}
+	cfg := p.GetAPI().GetConfig()
+	for _, item := range details.Items {
+		data := &pt.ParaBlock2MainMap{
+			Height:     item.Block.Height,
+			BlockHash:  common.ToHex(item.Block.Hash(cfg)),
+			MainHeight: item.Block.MainHeight,
+			MainHash:   common.ToHex(item.Block.MainHash),
+		}
+		ret.Items = append(ret.Items, data)
+	}
+
+	return ret, nil
+}
+
+func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
+	cfg := p.GetAPI().GetConfig()
+	if req == nil || req.Data == "" {
+		if !cfg.IsPara() {
+			return nil, errors.Wrap(types.ErrInvalidParam, "req invalid")
+		}
+	}
+	reqTitle := req.Data
+	if cfg.IsPara() {
+		reqTitle = cfg.GetTitle()
+	}
+	res, err := p.paracrossGetHeight(reqTitle)
+	if err != nil {
+		return nil, errors.Wrapf(err, "title:%s", reqTitle)
+	}
+
+	header, err := p.GetAPI().GetLastHeader()
+	if err != nil {
+		return nil, errors.Wrap(err, "GetLastHeader")
+	}
+	chainHeight := header.Height
+
+	if resp, ok := res.(*pt.ParacrossStatus); ok {
+		// 如果主链上查询平行链的高度，chain height应该是平行链的高度而不是主链高度， 平行链的真实高度需要在平行链侧查询
+		if !cfg.IsPara() {
+			chainHeight = resp.Height
+		}
+		return &pt.ParacrossConsensusStatus{
+			Title:            resp.Title,
+			ChainHeight:      chainHeight,
+			ConsensHeight:    resp.Height,
+			ConsensBlockHash: common.ToHex(resp.BlockHash),
+		}, nil
+	}
+	return nil, types.ErrDecode
 }
