@@ -55,10 +55,9 @@ const (
 	ListSeek = int32(2)
 )
 
-
 const (
 	//单次list还回条数
-	Count    = int32(5)
+	Count = int32(5)
 	//系统最大撮合深度
 	MaxCount = 100
 )
