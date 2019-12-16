@@ -8,7 +8,7 @@ IS_PARA=false
 source ../dapp-test-common.sh
 
 paracross_GetBlock2MainInfo() {
-    chain33_Http '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} "(.result.items[1].height == 2)" "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName": "GetBlock2MainInfo", "payload" : {"start":1,"end":3}}]}' ${UNIT_HTTP} '(.result.items[1].height == "2")' "$FUNCNAME"
 }
 
 function paracross_QueryParaBalance() {
@@ -182,29 +182,29 @@ function paracross_IsSync() {
 
 function paracross_ListTitles() {
     local main_ip=${UNIT_HTTP//8901/8801}
-    chain33_Http '{"method":"paracross.ListTitles","params":[]}' ${main_ip} '(.error|not) and (.result| [has("titles"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName": "ListTitles", "payload" : {}}]}' ${main_ip} '(.error|not) and (.result| [has("titles"),true])' "$FUNCNAME"
 }
 
 function paracross_GetHeight() {
     if [ "$IS_PARA" == "true" ]; then
-        chain33_Http '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
+        chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName": "GetHeight", "payload" : {}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
     fi
 }
 
 function paracross_GetNodeGroupAddrs() {
-    chain33_Http '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeGroupAddrs","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "$FUNCNAME"
 }
 
 function paracross_GetNodeGroupStatus() {
-    chain33_Http '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeGroupStatus","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeGroupStatus() {
-    chain33_Http '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeGroupStatus","payload":{"title":"user.p.para.","status":2}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeStatus() {
-    chain33_Http '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeStatusInfo","payload":{"title":"user.p.para.","status":4}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
@@ -372,7 +372,7 @@ function paracross_testTxGroup() {
 
 paracross_testSelfConsensStages() {
     local para_ip=$1
-    req='"method":"paracross.GetHeight","params":[]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName": "GetHeight", "payload" : {}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     err=$(jq '(.error)' <<<"$resp")
     if [ "$err" != null ]; then
@@ -388,7 +388,7 @@ paracross_testSelfConsensStages() {
     chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
 
     echo "get stage apply id"
-    req='"method":"paracross.ListSelfStages","params":[{"status":1,"count":1}]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSelfStages","payload":{"status":1,"count":1}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     id=$(jq -r ".result.stageInfo[0].id" <<<"$resp")
@@ -413,22 +413,22 @@ paracross_testSelfConsensStages() {
     chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
 
     echo "query status"
-    req='"method":"paracross.ListSelfStages","params":[{"status":3,"count":1}]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSelfStages","payload":{"status":3,"count":1}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok1=$(jq '(.error|not) and (.result| [has("id"),true])' <<<"$resp")
 
-    req='"method":"paracross.GetSelfConsStages","params":[]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSelfConsStages","payload":{}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok2=$(jq '(.error|not) and (.result| [has("startHeight"),true])' <<<"$resp")
 
-    req='"method":"paracross.GetSelfConsOneStage","params":[{"data":1000}]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSelfConsOneStage","payload":{"data":1000}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok3=$(jq '(.error|not) and (.result.enable==1)' <<<"$resp")
 
-    req='"method":"paracross.GetSelfConsOneStage","params":[{"data":'"$newHeight"'}]'
+    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSelfConsOneStage","payload":{"data":'"$newHeight"'}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok4=$(jq '(.error|not) and (.result.enable==2)' <<<"$resp")
