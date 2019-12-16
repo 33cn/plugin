@@ -403,6 +403,7 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	}
 	//挖矿固定难度
 	newBlock.Difficulty = cfg.GetP(0).PowLimitBits
+
 	//需要首先对交易进行排序然后再计算TxHash
 	if cfg.IsFork(newBlock.GetMainHeight(), "ForkRootHash") {
 		newBlock.Txs = types.TransactionSort(newBlock.Txs)
