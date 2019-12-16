@@ -9,7 +9,6 @@ CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
 export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
-export PLUGIN_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/plugin)
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
