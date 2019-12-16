@@ -1,20 +1,12 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
-
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-#txhash=""
 
 function run_testcases() {
     echo "run_testcases"
-}
-
-function debug_function() {
-    set -x
-    eval "$@"
-    set +x
 }
 
 function rpc_test() {
@@ -30,4 +22,4 @@ function rpc_test() {
 
 }
 
-debug_function rpc_test "$1"
+chain33_debug_function rpc_test "$1"

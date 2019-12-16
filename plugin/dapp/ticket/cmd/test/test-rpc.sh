@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+# shellcheck source=/dev/null
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 ticketId=""
@@ -17,107 +17,71 @@ ticket_CreateBindMiner() {
     returnAddr=$2
     returnPriv=$3
     amount=$4
-    resp=$(curl -ksd '{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(echo "${resp}" | jq -r ".error")
-    [[ $ok == null ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-    #发送交易
-    rawTx=$(echo "${resp}" | jq -r ".result.txHex")
-    chain33_SignRawTx "${rawTx}" "${returnPriv}" ${MAIN_HTTP}
+    req='{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME" ".result.txHex"
+    chain33_SignAndSendTx "$RETURN_RESP" "${returnPriv}" ${MAIN_HTTP}
 }
 
 ticket_SetAutoMining() {
     flag=$1
-    resp=$(curl -ksd '{"method":"ticket.SetAutoMining","params":[{"flag":'"$flag"'}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.isOK == true)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"ticket.SetAutoMining","params":[{"flag":'"$flag"'}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result.isOK == true)' "$FUNCNAME"
 }
 
 ticket_GetTicketCount() {
-    resp=$(curl -ksd '{"method":"ticket.GetTicketCount","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result > 0)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"ticket.GetTicketCount","params":[{}]}' ${MAIN_HTTP} '(.error|not) and (.result > 0)' "$FUNCNAME"
 }
 
 ticket_CloseTickets() {
     addr=$1
-    resp=$(curl -ksd '{"method":"ticket.CloseTickets","params":[{"minerAddress":"'"$addr"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not)' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"ticket.CloseTickets","params":[{"minerAddress":"'"$addr"'"}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not)' "$FUNCNAME"
 }
 
 ticket_TicketInfos() {
     tid=$1
     minerAddr=$2
     returnAddr=$3
-    execer="ticket"
-    funcName="TicketInfos"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"ticketIds":["'"$tid"'"]}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"ticket","funcName":"TicketInfos","payload":{"ticketIds":["'"$tid"'"]}}]}'
+    resok='(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'")'
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 ticket_TicketList() {
     minerAddr=$1
     returnAddr=$2
     status=$3
-    execer="ticket"
-    funcName="TicketList"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"addr":"'"$minerAddr"'", "status":'"$status"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"ticket","funcName":"TicketList","payload":{"addr":"'"$minerAddr"'", "status":'"$status"'}}]}'
+    resok='(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')'
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
-    ticket0=$(echo "${resp}" | jq -r ".result.tickets[0]")
+    ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
     echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
-    ticketId=$(echo "${resp}" | jq -r ".result.tickets[0].ticketId")
+    ticketId=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0].ticketId")
     echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
 ticket_MinerAddress() {
     returnAddr=$1
     minerAddr=$2
-    execer="ticket"
-    funcName="MinerAddress"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"data":"'"$returnAddr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.data == "'"$minerAddr"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"ticket","funcName":"MinerAddress","payload":{"data":"'"$returnAddr"'"}}]}'
+    resok='(.error|not) and (.result.data == "'"$minerAddr"'")'
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 ticket_MinerSourceList() {
     minerAddr=$1
     returnAddr=$2
-    execer="ticket"
-    funcName="MinerSourceList"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"data":"'"$minerAddr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.datas | length > 0) and (.result.datas[0] == "'"$returnAddr"'")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"ticket","funcName":"MinerSourceList","payload":{"data":"'"$minerAddr"'"}}]}'
+    resok='(.error|not) and (.result.datas | length > 0) and (.result.datas[0] == "'"$returnAddr"'")'
+    chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 
 ticket_RandNumHash() {
     hash=$1
     blockNum=$2
-    execer="ticket"
-    funcName="RandNumHash"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"hash":"'"$hash"'", "blockNum":'"$blockNum"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.hash != "")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    req='{"method":"Chain33.Query","params":[{"execer":"ticket","funcName":"RandNumHash","payload":{"hash":"'"$hash"'", "blockNum":'"$blockNum"'}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result.hash != null)' "$FUNCNAME"
 }
 
 function run_testcases() {
