@@ -540,7 +540,7 @@ out:
 				count = int64(len(paraTxs.Items))
 			}
 			//如果当前正在追赶，暂不处理
-			if client.commitMsgClient.authAccount != "" && client.isCaughtUp() && len(paraTxs.Items) > 0{
+			if client.commitMsgClient.authAccount != "" && client.isCaughtUp() && len(paraTxs.Items) > 0 {
 				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0])
 			}
 
