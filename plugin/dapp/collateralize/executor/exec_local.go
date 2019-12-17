@@ -13,7 +13,7 @@ import (
 func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	for _, item := range receipt.Logs {
-		if item.Ty >= pty.TyLogCollateralizeCreate &&  item.Ty <= pty.TyLogCollateralizeRetrieve {
+		if item.Ty >= pty.TyLogCollateralizeCreate && item.Ty <= pty.TyLogCollateralizeRetrieve {
 			var collateralizeLog pty.ReceiptCollateralize
 			err := types.Decode(item.Log, &collateralizeLog)
 			if err != nil {
@@ -23,7 +23,7 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 			if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeRetrieve {
 				collTable := pty.NewCollateralizeTable(c.GetLocalDB())
 				err = collTable.Replace(&pty.ReceiptCollateralize{CollateralizeId: collateralizeLog.CollateralizeId, Status: collateralizeLog.Status,
-					AccountAddr:collateralizeLog.AccountAddr})
+					AccountAddr: collateralizeLog.AccountAddr})
 				if err != nil {
 					return nil, err
 				}
