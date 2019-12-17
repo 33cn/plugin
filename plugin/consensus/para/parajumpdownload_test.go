@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/types"
+	typesmocks "github.com/33cn/chain33/types/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGetHeightsArry(t *testing.T) {
@@ -48,4 +50,36 @@ func TestGetHeightsArry(t *testing.T) {
 	s, e = getStartEndHeight(0, 100, hh, 3)
 	assert.Equal(t, h8.Height+1, s)
 	assert.Equal(t, int64(100), e)
+}
+
+func TestFetchHeightListBlocks(t *testing.T) {
+	para := &client{}
+	grpcClient := &typesmocks.Chain33Client{}
+	para.grpcClient = grpcClient
+	jump := &jumpDldClient{paraClient: para}
+
+	b1 := &types.ParaTxDetail{Header: &types.Header{Height: 1}}
+	b2 := &types.ParaTxDetail{Header: &types.Header{Height: 2}}
+	b3 := &types.ParaTxDetail{Header: &types.Header{Height: 3}}
+	b4 := &types.ParaTxDetail{Header: &types.Header{Height: 4}}
+	b5 := &types.ParaTxDetail{Header: &types.Header{Height: 5}}
+	b6 := &types.ParaTxDetail{Header: &types.Header{Height: 6}}
+	b7 := &types.ParaTxDetail{Header: &types.Header{Height: 7}}
+	b8 := &types.ParaTxDetail{Header: &types.Header{Height: 8}}
+	b9 := &types.ParaTxDetail{Header: &types.Header{Height: 9}}
+	blocks1 := &types.ParaTxDetails{Items: []*types.ParaTxDetail{b1, b2, b3}}
+	blocks2 := &types.ParaTxDetails{Items: []*types.ParaTxDetail{b4, b5, b6, b7}}
+	blocks3 := &types.ParaTxDetails{Items: []*types.ParaTxDetail{b8, b9}}
+	grpcClient.On("GetParaTxByHeight", mock.Anything, mock.Anything).Return(blocks1, nil).Once()
+	grpcClient.On("GetParaTxByHeight", mock.Anything, mock.Anything).Return(blocks2, nil).Once()
+	grpcClient.On("GetParaTxByHeight", mock.Anything, mock.Anything).Return(blocks3, nil).Once()
+
+	allBlocks := &types.ParaTxDetails{}
+	allBlocks.Items = append(allBlocks.Items, blocks1.Items...)
+	allBlocks.Items = append(allBlocks.Items, blocks2.Items...)
+	allBlocks.Items = append(allBlocks.Items, blocks3.Items...)
+	hlist := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	blocks, err := jump.fetchHeightListBlocks(hlist, "title")
+	assert.NoError(t, err)
+	assert.Equal(t, allBlocks.Items, blocks.Items)
 }

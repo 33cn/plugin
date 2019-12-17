@@ -156,10 +156,10 @@ func (client *client) GetParaTxByHeight(req *types.ReqParaTxByHeight) (*types.Pa
 		return nil, err
 	}
 
-	if len(req.Items) != len(blocks.Items) {
-		plog.Error("GetParaTxByHeight get block tx count fail", "req", len(req.Items), "rsp", len(blocks.Items))
+	//可以小于等于，不能大于
+	if len(blocks.Items) > len(req.Items) {
+		plog.Error("GetParaTxByHeight get blocks more than req")
 		return nil, types.ErrInvalidParam
 	}
-
 	return blocks, nil
 }

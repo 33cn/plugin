@@ -408,9 +408,9 @@ paracross_testSelfConsensStages() {
     echo "send vote 1"
     chain33_SignAndSendTx "$rawtx" "$KS_PRI" "${para_ip}"
     echo "send vote 2"
-    chain33_SignAndSendTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    chain33_SignAndSendTx "$rawtx" "$JR_PRI" "${para_ip}" "130s"
     echo "send vote 3"
-    chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+    chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "140s"
 
     echo "query status"
     req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSelfStages","payload":{"status":3,"count":1}}]'

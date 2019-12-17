@@ -125,7 +125,6 @@ func (j *jumpDldClient) getParaHeights(startHeight, endHeight int64) ([]*types.B
 			return nil, errors.New("verify fail or main thread cancel")
 		}
 	}
-	return heightList, nil
 }
 
 //把不连续的平行链区块高度按offset分成二维数组，方便后面处理
@@ -162,7 +161,7 @@ func (j *jumpDldClient) verifyTxMerkleRoot(tx *types.ParaTxDetail, headMap map[i
 	for _, t := range tx.TxDetails {
 		verifyTxs = append(verifyTxs, t.Tx)
 	}
-	verifyTxRoot := merkle.CalcMerkleRoot(verifyTxs)
+	verifyTxRoot := merkle.CalcMerkleRoot(j.paraClient.GetAPI().GetConfig(), tx.Header.Height, verifyTxs)
 	if !bytes.Equal(verifyTxRoot, tx.ChildHash) {
 		plog.Error("jumpDldClient.verifyTxMerkelHash", "height", tx.Header.Height,
 			"calcHash", common.ToHex(verifyTxRoot), "rcvHash", common.ToHex(tx.ChildHash))
@@ -230,6 +229,31 @@ func (j *jumpDldClient) processTxJobs(ch chan *paraTxBlocksJob) {
 	}
 }
 
+//按高度list请求平行链区块，服务器有可能返回少于请求高度，少于时候需要继续请求
+func (j *jumpDldClient) fetchHeightListBlocks(hlist []int64, title string) (*types.ParaTxDetails, error) {
+	index := 0
+	retBlocks := &types.ParaTxDetails{}
+	for {
+		list := hlist[index:]
+		req := &types.ReqParaTxByHeight{Items: list, Title: title}
+		blocks, err := j.paraClient.GetParaTxByHeight(req)
+		if err != nil {
+			plog.Error("jumpDld.getParaTxs fetchHeightListBlocks", "start", list[0], "end", list[len(list)-1], "title", title)
+			return nil, err
+		}
+		retBlocks.Items = append(retBlocks.Items, blocks.Items...)
+		index += len(blocks.Items)
+		if index == len(hlist) {
+			return retBlocks, nil
+		}
+		//从逻辑上应该不会有大于场景出现
+		if index > len(hlist) {
+			plog.Error("jumpDld.getParaTxs fetchHeightListBlocks len", "index", index, "len", len(hlist), "start", list[0], "end", list[len(list)-1], "title", title)
+			return nil, err
+		}
+	}
+}
+
 func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*types.BlockInfo, ch chan *paraTxBlocksJob) error {
 	title := j.paraClient.GetAPI().GetConfig().GetTitle()
 	heightsArr := getHeightsArry(heights, int(types.MaxBlockCountPerTime))
@@ -239,8 +263,8 @@ func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*type
 		for _, h := range single {
 			hlist = append(hlist, h.Height)
 		}
-		req := &types.ReqParaTxByHeight{Items: hlist, Title: title}
-		blocks, err := j.paraClient.GetParaTxByHeight(req)
+
+		blocks, err := j.fetchHeightListBlocks(hlist, title)
 		if err != nil {
 			plog.Error("jumpDld.getParaTxs getParaTx", "start", hlist[0], "end", hlist[len(hlist)-1], "title", title)
 			return err

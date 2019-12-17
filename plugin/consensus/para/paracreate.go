@@ -242,7 +242,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
 		if lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
-			return client.subCfg.BatchFetchBlockCount - 1, nil
+			return client.subCfg.BatchFetchBlockCount, nil
 		}
 		return 1, nil
 	}
