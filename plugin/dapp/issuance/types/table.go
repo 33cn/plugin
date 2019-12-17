@@ -67,9 +67,7 @@ var optRecord = &table.Option{
 	Index:   []string{"status", "addr"},
 }
 
-/*
-大户发行记录表
- */
+// NewRecordTable 大户发行记录表
 func NewRecordTable(kvdb db.KV) *table.Table {
 	rowmeta := NewRecordRow()
 	table, err := table.NewTable(rowmeta, kvdb, optRecord)
@@ -110,7 +108,7 @@ func (tx *IssuanceRecordRow) Get(key string) ([]byte, error) {
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
 	} else if key == "addr" {
-	    return []byte(fmt.Sprintf("%s", tx.AccountAddr)), nil
+	    return []byte(tx.AccountAddr), nil
 	}
 	return nil, types.ErrNotFound
 }
