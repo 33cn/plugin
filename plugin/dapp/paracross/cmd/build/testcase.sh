@@ -361,6 +361,23 @@ function para_cross_transfer_withdraw() {
             break
         fi
     done
+
+    echo "check asset transfer tx=$hash"
+    res=$(${CLI} para asset_txinfo -s "${hash}")
+    echo "$res"
+    succ=$(jq -r ".success" <<<"$res")
+    if [ "${succ}" != "true" ]; then
+        echo "para asset transfer tx report fail"
+        exit 1
+    fi
+    echo "check asset withdraw tx=$hash2"
+    res=$(${CLI} para asset_txinfo -s "${hash2}")
+    echo "$res"
+    succ=$(jq -r ".success" <<<"$res")
+    if [ "${succ}" != "true" ]; then
+        echo "para asset withdraw tx report fail"
+        exit 1
+    fi
 }
 
 function token_create_on_mainChain() {
