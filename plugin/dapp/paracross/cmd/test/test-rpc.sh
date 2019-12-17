@@ -1,30 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+# shellcheck source=/dev/null
 
-CASE_ERR=""
 UNIT_HTTP=""
 IS_PARA=false
 
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 paracross_GetBlock2MainInfo() {
-    local height
-
-    height=$(curl -ksd '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} | jq -r ".result.items[1].height")
-    [ "$height" -eq 2 ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
-
-function paracross_SignAndSend() {
-    local signedTx
-    local sendedTx
-
-    signedTx=$(curl -ksd '{"method":"Chain33.SignRawTx","params":[{"expire":"120s","fee":'"$1"',"privkey":"'"$2"'","txHex":"'"$3"'"}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "signedTx:$signedTx"
-    sendedTx=$(curl -ksd '{"method":"Chain33.SendTransaction","params":[{"data":"'"$signedTx"'"}]}' ${UNIT_HTTP} | jq -r ".result")
-    echo "sendedTx:$sendedTx"
+    chain33_Http '{"method":"paracross.GetBlock2MainInfo","params":[{"start":1,"end":3}]}' ${UNIT_HTTP} "(.result.items[1].height == 2)" "$FUNCNAME"
 }
 
 function paracross_QueryParaBalance() {
@@ -63,7 +47,6 @@ function paracross_QueryMainBalance() {
 }
 
 function paracross_Transfer_Withdraw_Inner() {
-
     # 计数器，资产转移操作和取钱操作都成功才算成功，也就是 counter == 2
     local count=0
     #fromAddr  跨链资产转移地址
@@ -80,8 +63,6 @@ function paracross_Transfer_Withdraw_Inner() {
     local amount_should=27000
     #withdraw_should 应取款金额
     local withdraw_should=13000
-    #fee 交易费
-    #local fee=1000000
     #平行链转移前余额
     local para_balance_before
     #平行链转移后余额
@@ -108,9 +89,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #2  存钱到合约地址
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateRawTransaction","params":[{"to":"'"$paracross_addr"'","amount":'$amount_save'}]}' ${UNIT_HTTP} | jq -r ".result")
-    ##echo "tx:$tx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #1. 查询资产转移前余额状态
     para_balance_before=$(paracross_QueryParaBalance "$from_addr" "paracross")
@@ -120,9 +99,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #3  资产从主链转移到平行链
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$amount_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "rawTx:$rawTx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #4 查询转移后余额状态
     local times=100
@@ -143,7 +120,6 @@ function paracross_Transfer_Withdraw_Inner() {
                 exit 1
             fi
         else
-            #echo "para_cross_transfer_withdraw success"
             count=$((count + 1))
             break
         fi
@@ -151,9 +127,7 @@ function paracross_Transfer_Withdraw_Inner() {
 
     #5 取钱
     tx_hash=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"$execer_name"'","actionName":"ParacrossAssetWithdraw","payload":{"IsWithdraw":true,"execName":"'"$execer_name"'","to":"'"$from_addr"'","amount":'$withdraw_should'}}]}' ${UNIT_HTTP} | jq -r ".result")
-    #echo "rawTx:$rawTx"
-    chain33_SignRawTx "$tx_hash" "$privkey" ${UNIT_HTTP}
-    #paracross_SignAndSend $fee "$privkey" "$tx_hash"
+    chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #6 查询取钱后余额状态
     local times=100
@@ -165,7 +139,6 @@ function paracross_Transfer_Withdraw_Inner() {
         #实际取钱金额
         para_withdraw_real=$((para_balance_after - para_balance_withdraw_after))
         main_withdraw_real=$((main_balance_withdraw_after - main_balance_after))
-        #echo $withdraw_real
         if [ "$withdraw_should" != "$para_withdraw_real" ] || [ "$withdraw_should" != "$main_withdraw_real" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
@@ -174,7 +147,6 @@ function paracross_Transfer_Withdraw_Inner() {
                 exit 1
             fi
         else
-            #echo "para_cross_transfer_withdraw success"
             count=$((count + 1))
             break
         fi
@@ -197,99 +169,44 @@ function paracross_Transfer_Withdraw() {
     local execer_name="user.p.para.paracross"
 
     paracross_Transfer_Withdraw_Inner "$from_addr" "$privkey" "$paracross_addr" "$execer_name"
-
 }
 
 function paracross_IsSync() {
-    local ok
-
     if [ "$IS_PARA" == "true" ]; then
-        ok=$(curl -ksd '{"method":"paracross.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+        req='{"method":"paracross.IsSync","params":[]}'
     else
-        ok=$(curl -ksd '{"method":"Chain33.IsSync","params":[]}' ${UNIT_HTTP} | jq -r ".result")
+        req='{"method":"Chain33.IsSync","params":[]}'
     fi
-
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http "$req" ${UNIT_HTTP} '.result' "$FUNCNAME"
 }
 
 function paracross_ListTitles() {
-
-    local resp
-    local ok
     local main_ip=${UNIT_HTTP//8901/8801}
-    resp=$(curl -ksd '{"method":"paracross.ListTitles","params":[]}' ${main_ip})
-    echo "$resp"
-    ok=$(jq '(.error|not) and (.result| [has("titles"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"paracross.ListTitles","params":[]}' ${main_ip} '(.error|not) and (.result| [has("titles"),true])' "$FUNCNAME"
 }
 
 function paracross_GetHeight() {
-    local resp
-    local ok
-
     if [ "$IS_PARA" == "true" ]; then
-        resp=$(curl -ksd '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP})
-        #echo $resp
-        ok=$(jq '(.error|not) and (.result| [has("consensHeight"),true])' <<<"$resp")
-        [ "$ok" == true ]
-        local rst=$?
-        echo_rst "$FUNCNAME" "$rst"
+        chain33_Http '{"method":"paracross.GetHeight","params":[]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("consensHeight"),true])' "$FUNCNAME"
     fi
 }
 
 function paracross_GetNodeGroupAddrs() {
-    local resp
-    local ok
-
-    resp=$(curl -ksd '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
-    #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("key","value"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"paracross.GetNodeGroupAddrs","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "$FUNCNAME"
 }
 
 function paracross_GetNodeGroupStatus() {
-    local resp
-    local ok
-
-    resp=$(curl -ksd '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP})
-    #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"paracross.GetNodeGroupStatus","params":[{"title":"user.p.para."}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeGroupStatus() {
-    local resp
-    local ok
-
-    resp=$(curl -ksd '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP})
-    #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"paracross.ListNodeGroupStatus","params":[{"title":"user.p.para.","status":2}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 function paracross_ListNodeStatus() {
-    local resp
-    local ok
-
-    resp=$(curl -ksd '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP})
-    #echo $resp
-    ok=$(jq '(.error|not) and (.result| [has("status"),true])' <<<"$resp")
-    [ "$ok" == true ]
-    local rst=$?
-    echo_rst "$FUNCNAME" "$rst"
+    chain33_Http '{"method":"paracross.ListNodeStatus","params":[{"title":"user.p.para.","status":4}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
-#main chain import pri key
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
 para_test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
 
@@ -312,7 +229,6 @@ function paracross_txgroupex() {
         exit 1
     fi
     tx_hash_asset=$(jq -r ".result" <<<"$resp")
-    #    tx_hash_asset=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]}' "${para_ip}" | jq -r ".result")
 
     #  资产从平行链转移到平行链合约
     req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"TransferToExec","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"${trade_exec_addr}"'","amount":'${amount_trade}', "cointoken":"coins.bty"}}]'
@@ -343,10 +259,9 @@ function paracross_txgroupex() {
 
     #send
     chain33_SendTx "${tx_sign2}" "${para_ip}"
-
 }
 
-//测试平行链交易组跨链失败,主链自动恢复原值
+#测试平行链交易组跨链失败,主链自动恢复原值
 function paracross_testTxGroupFail() {
     local para_ip=$1
 
@@ -359,9 +274,8 @@ function paracross_testTxGroupFail() {
     echo "paracross_addr=$paracross_addr"
 
     #execer
-
     local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
-    //测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
+    #测试跨链过去１个,交易组转账８个失败的场景,主链应该还保持原来的
     local amount_trade=800000000
     local amount_transfer=100000000
     local amount_left=500000000
@@ -471,7 +385,7 @@ paracross_testSelfConsensStages() {
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
-    chain33_SignRawTx "$rawtx" "$para_test_prikey" "${para_ip}"
+    chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
 
     echo "get stage apply id"
     req='"method":"paracross.ListSelfStages","params":[{"status":1,"count":1}]'
@@ -487,16 +401,47 @@ paracross_testSelfConsensStages() {
     KS_PRI="0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
     JR_PRI="0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
     NL_PRI="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
-
+    echo "disable self consensus stage id: $id"
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     echo "send vote 1"
-    chain33_SignRawTx "$rawtx" "$KS_PRI" "${para_ip}"
+    chain33_SignAndSendTx "$rawtx" "$KS_PRI" "${para_ip}"
     echo "send vote 2"
-    chain33_SignRawTx "$rawtx" "$JR_PRI" "${para_ip}" "110s"
+    chain33_SignAndSendTx "$rawtx" "$JR_PRI" "${para_ip}" "121s"
     echo "send vote 3"
-    chain33_SignRawTx "$rawtx" "$NL_PRI" "${para_ip}" "111s"
+    chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "122s"
+
+    #re-enable self consensus
+    sleep 5
+    newEnableHeight=$((newHeight + 50))
+    echo "apply stage startHeight=$newEnableHeight"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newEnableHeight"',"enable":1} }}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
+
+    echo "get stage apply id"
+    req='"method":"paracross.ListSelfStages","params":[{"status":1,"count":1}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    echo "$resp"
+    id=$(jq -r ".result.stageInfo[0].id" <<<"$resp")
+    if [ -z "$id" ]; then
+        echo "paracross stage apply id null"
+        exit 1
+    fi
+    ####################################
+    echo "enable self consensus stage id: $id"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    echo "send vote 1"
+    chain33_SignAndSendTx "$rawtx" "$KS_PRI" "${para_ip}" "123s"
+    echo "send vote 2"
+    chain33_SignAndSendTx "$rawtx" "$JR_PRI" "${para_ip}" "124s"
+    echo "send vote 3"
+    chain33_SignAndSendTx "$rawtx" "$NL_PRI" "${para_ip}" "125s"
+    #################################
 
     echo "query status"
     req='"method":"paracross.ListSelfStages","params":[{"status":3,"count":1}]'
@@ -518,9 +463,15 @@ paracross_testSelfConsensStages() {
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
     ok4=$(jq '(.error|not) and (.result.enable==2)' <<<"$resp")
-    echo "1=$ok1,2=$ok2,3=$ok3,4=$ok4"
 
-    [ "$ok1" == true ] && [ "$ok2" == true ] && [ "$ok3" == true ] && [ "$ok4" == true ]
+    req='"method":"paracross.GetSelfConsOneStage","params":[{"data":'"$newEnableHeight"'}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    echo "$resp"
+    ok5=$(jq '(.error|not) and (.result.enable==1)' <<<"$resp")
+
+    echo "1=$ok1,2=$ok2,3=$ok3,4=$ok4,5=$ok5"
+
+    [ "$ok1" == true ] && [ "$ok2" == true ] && [ "$ok3" == true ] && [ "$ok4" == true ] && [ "$ok5" == true ]
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }

@@ -6,7 +6,6 @@ package executor
 
 import (
 	"bytes"
-
 	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
@@ -19,8 +18,10 @@ import (
 func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	cfg := e.GetAPI().GetConfig()
+	validCommit := false
 	for _, log := range receiptData.Logs {
 		if log.Ty == pt.TyLogParacrossCommit {
+			validCommit = true
 			var g pt.ReceiptParacrossCommit
 			types.Decode(log.Log, &g)
 
@@ -28,6 +29,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 			r.TxHash = common.ToHex(tx.Hash())
 			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		} else if log.Ty == pt.TyLogParacrossCommitDone {
+			validCommit = true
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
 
@@ -45,6 +47,7 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 			}
 
 		} else if log.Ty == pt.TyLogParacrossCommitRecord {
+			validCommit = true
 			var g pt.ReceiptParacrossRecord
 			types.Decode(log.Log, &g)
 
@@ -53,7 +56,48 @@ func (e *Paracross) ExecLocal_Commit(payload *pt.ParacrossCommitAction, tx *type
 			set.KV = append(set.KV, &types.KeyValue{Key: calcLocalTxKey(g.Status.Title, g.Status.Height, tx.From()), Value: types.Encode(&r)})
 		}
 	}
+	if validCommit {
+		clog.Debug("ExecLocal_Commit", "adding a public key for title:", payload.Status.Title,
+			"addr:", tx.From(), "public key:", common.ToHex(tx.Signature.Pubkey))
+
+		e.setNodePubkey(payload.Status.Title, tx.From(), tx.Signature.Pubkey, &set)
+
+		clog.Debug("ExecLocal_Commit", "adding a public key with key:", string(set.KV[len(set.KV)-1].Key))
+	}
+
 	return &set, nil
+}
+
+//在此处收集超级节点的公钥
+func (e *Paracross) setNodePubkey(title, addr string, pubKey []byte, set *types.LocalDBSet) error {
+	localDB := e.GetLocalDB()
+	var paraNodeAddrPubKey pt.ParaNodeAddrPubKey
+	key := calcParaSuperNodePubKey(title)
+	clog.Debug("setNodePubkey", "key:", string(key))
+	nodePubKey, error := localDB.Get(key)
+	if nil != error {
+		paraNodeAddrPubKey.Addr2Pubkey = make(map[string][]byte)
+		paraNodeAddrPubKey.Addr2Pubkey[addr] = pubKey
+		set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&paraNodeAddrPubKey)})
+		clog.Debug("setNodePubkey", "Set for the 1st time with key:", string(set.KV[len(set.KV)-1].Key))
+		return nil
+	}
+	//如果存在时，不用确认是否解码成功，也不用确认该地址对应的公钥是否进行保存，
+	if err := types.Decode(nodePubKey, &paraNodeAddrPubKey); nil != err {
+		clog.Error("setNodePubkey", "Failed to decode due to :", err.Error())
+		paraNodeAddrPubKey.Addr2Pubkey = make(map[string][]byte)
+		paraNodeAddrPubKey.Addr2Pubkey[addr] = pubKey
+		set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&paraNodeAddrPubKey)})
+		return nil
+	}
+	if _, ok := paraNodeAddrPubKey.Addr2Pubkey[addr]; ok {
+		return nil
+	}
+
+	paraNodeAddrPubKey.Addr2Pubkey[addr] = pubKey
+	set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&paraNodeAddrPubKey)})
+	clog.Debug("setNodePubkey", "Succeed to add public key for:", string(set.KV[len(set.KV)-1].Key))
+	return nil
 }
 
 //ExecLocal_NodeConfig node config add process
@@ -83,6 +127,7 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 			}
 			key := calcLocalNodeTitleDone(g.Title, g.TargetAddr)
 			set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&g)})
+
 		} else if log.Ty == pt.TyLogParacrossCommitDone {
 			var g pt.ReceiptParacrossDone
 			types.Decode(log.Log, &g)
@@ -99,7 +144,39 @@ func (e *Paracross) ExecLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *typ
 				}
 				set.KV = append(set.KV, r.KV...)
 			}
+		} else if pt.TyLogParaNodeGroupAddrsUpdate == log.Ty {
+			var receiptConfig types.ReceiptConfig
+			if err := types.Decode(log.Log, &receiptConfig); nil != err {
+				return nil, err
+			}
+			prev, current := receiptConfig.Prev, receiptConfig.Current
+			prevNodes := prev.GetArr()
+			currentNodes := current.GetArr()
+			//只处理减少的情况
+			if len(prevNodes.Value) > len(currentNodes.Value) {
+				localDB := e.GetLocalDB()
+				var paraNodeAddrPubKey pt.ParaNodeAddrPubKey
+				key := calcParaSuperNodePubKey(payload.Title)
+				nodePubKey, err := localDB.Get(key)
+				if nil != err {
+					clog.Error("ExecLocal_NodeConfig", "failed get info from local db with key:", string(key))
+					continue
+				}
+				if err := types.Decode(nodePubKey, &paraNodeAddrPubKey); nil != err {
+					return nil, err
+				}
 
+				paraNodeAddrPubKeyNew := pt.ParaNodeAddrPubKey{
+					Addr2Pubkey: make(map[string][]byte),
+				}
+				//遍历当前所有的配置节点，获取相应的公钥填充到新的公钥信息列表中
+				for _, node := range currentNodes.Value {
+					if pubkey, exist := paraNodeAddrPubKey.Addr2Pubkey[node]; exist {
+						paraNodeAddrPubKeyNew.Addr2Pubkey[node] = pubkey
+					}
+				}
+				set.KV = append(set.KV, &types.KeyValue{Key: key, Value: types.Encode(&paraNodeAddrPubKeyNew)})
+			}
 		}
 	}
 	return &set, nil

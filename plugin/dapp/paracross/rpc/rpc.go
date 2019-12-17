@@ -441,3 +441,49 @@ func (c *Jrpc) ListSelfStages(req *pt.ReqQuerySelfStages, result *interface{}) e
 	*result = data
 	return err
 }
+
+func (c *channelClient) GetNodeGroupPubKey(ctx context.Context, req *pt.ReqParaNodeAddrPubKey) (*pt.RespParaNodeAddrPubKey, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "GetNodeGroupPubKey", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*pt.RespParaNodeAddrPubKey); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListSelfStages get paracross self consensus stage list
+func (c *Jrpc) GetNodeGroupPubKey(req *pt.ReqParaNodeAddrPubKey, result *interface{}) error {
+	data, err := c.cli.GetNodeGroupPubKey(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}
+
+func (c *channelClient) ConvertTx2Privacy(ctx context.Context, req *pt.ReqConverTx2Privacy) (*types.ReplyString, error) {
+	cfg := c.GetConfig()
+	r := *req
+	data, err := c.Query(pt.GetExecName(cfg), "ConvertTx2Privacy", &r)
+	if err != nil {
+		return nil, err
+	}
+	if resp, ok := data.(*types.ReplyString); ok {
+		return resp, nil
+	}
+	return nil, types.ErrDecode
+}
+
+// ListSelfStages get paracross self consensus stage list
+func (c *Jrpc) ConvertTx2Privacy(req *pt.ReqConverTx2Privacy, result *interface{}) error {
+	data, err := c.cli.ConvertTx2Privacy(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return err
+}

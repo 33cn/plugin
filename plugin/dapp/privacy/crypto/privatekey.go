@@ -74,3 +74,7 @@ func (privKey PrivKeyPrivacy) Equals(other crypto.PrivKey) bool {
 	}
 	return false
 }
+
+func (privKey PrivKeyPrivacy) Decrypt(in []byte) ([]byte, error) {
+	return in, nil
+}

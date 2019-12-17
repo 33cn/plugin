@@ -32,6 +32,10 @@ func (*pubKeyMock) Equals(crypto.PubKey) bool {
 	return true
 }
 
+func (*pubKeyMock) Encrypt(in []byte) ([]byte, error) {
+	return in, nil
+}
+
 type signatureMock struct {
 }
 
@@ -74,6 +78,10 @@ func (mock *privKeyMock) PubKey() crypto.PubKey {
 
 func (mock *privKeyMock) Equals(crypto.PrivKey) bool {
 	return true
+}
+
+func (mock *privKeyMock) Decrypt(in []byte) ([]byte, error) {
+	return in, nil
 }
 
 func init() {

@@ -403,7 +403,12 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	}
 	//挖矿固定难度
 	newBlock.Difficulty = cfg.GetP(0).PowLimitBits
-	newBlock.TxHash = merkle.CalcMerkleRoot(newBlock.Txs)
+
+	//需要首先对交易进行排序然后再计算TxHash
+	if cfg.IsFork(newBlock.GetMainHeight(), "ForkRootHash") {
+		newBlock.Txs = types.TransactionSort(newBlock.Txs)
+	}
+	newBlock.TxHash = merkle.CalcMerkleRoot(cfg, newBlock.GetMainHeight(), newBlock.Txs)
 	newBlock.BlockTime = localBlock.BlockTime
 	newBlock.MainHash = localBlock.MainHash
 	newBlock.MainHeight = localBlock.MainHeight
@@ -464,27 +469,37 @@ func (client *blockSyncClient) rollbackBlock(block *types.Block) error {
 
 // 向blockchain写区块
 func (client *blockSyncClient) writeBlock(prev []byte, paraBlock *types.Block) error {
-	//共识模块不执行block，统一由blockchain模块执行block并做去重的处理，返回执行后的blockdetail
-	blockDetail := &types.BlockDetail{Block: paraBlock}
-	paraBlockDetail := &types.ParaChainBlockDetail{Blockdetail: blockDetail, IsSync: client.downloadHasCaughtUp()}
-	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, paraBlockDetail)
+	//blockdetail, _, err := util.ExecBlock(client.paraClient.GetQueueClient(), prev, paraBlock, false, isSync, true, addrAndPrivKey)
+	//if nil != err {
+	//	plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
+	//	return err
+	//}
+	blockdetail := &types.BlockDetail{
+		Block:          paraBlock,
+		PrevStatusHash: prev,
+	}
+	isSync := client.downloadHasCaughtUp()
+	paraChainBlockDetail := types.ParaChainBlockDetail{
+		Blockdetail: blockdetail,
+		IsSync:      isSync,
+	}
+	msg := client.paraClient.GetQueueClient().NewMessage("blockchain", types.EventAddParaChainBlockDetail, &paraChainBlockDetail)
 	err := client.paraClient.GetQueueClient().Send(msg, true)
 	if err != nil {
+		plog.Error("writeBlock", "Failed to do util.ExecBlock due to:", err, "height:", paraBlock.Height)
 		return err
 	}
+	client.paraClient.SetCurrentBlock(blockdetail.Block)
 
 	resp, err := client.paraClient.GetQueueClient().Wait(msg)
 	if err != nil {
 		return err
 	}
-
 	respBlockDetail := resp.GetData().(*types.BlockDetail)
 	if respBlockDetail == nil {
 		return errors.New("para sync - block detail is nil")
 	}
-
 	client.paraClient.SetCurrentBlock(respBlockDetail.Block)
-
 	return nil
 }
 

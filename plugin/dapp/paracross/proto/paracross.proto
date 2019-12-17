@@ -16,8 +16,6 @@ message ParacrossStatusDetails {
 message ParacrossStatusBlockDetails {
     repeated bytes blockHashs     = 1;
     repeated bytes txResults      = 2;
-
-
 }
 
 message ParacrossHeightStatus {
@@ -125,6 +123,26 @@ message ParaNodeGroupConfig {
     int64  coinsFrozen          = 5;
 }
 
+message ReqParaNodeAddrPubKey {
+    string title = 1;
+}
+
+message ParaNodeAddrPubKey {
+    map<string, bytes> addr2pubkey = 1;
+}
+
+message AddrAndPubKey {
+    string addr = 1;
+    string pubkey = 2;
+}
+
+message RespParaNodeAddrPubKey {
+    repeated AddrAndPubKey addrAndPubKey = 1;
+}
+
+message ReqConverTx2Privacy {
+    string data = 1;
+}
 
 message ParaNodeGroupStatus {
     string id                   = 1;
@@ -150,7 +168,6 @@ message ReqParacrossNodeInfo {
     string id     = 2;
     string addr   = 3;
     int32  status = 4;
-
 }
 
 message RespParacrossNodeAddrs {
@@ -295,8 +312,6 @@ message ParacrossAction {
         ParaNodeAddrConfig    nodeConfig     = 9;
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
-
-
     }
     int32 ty = 2;
 }

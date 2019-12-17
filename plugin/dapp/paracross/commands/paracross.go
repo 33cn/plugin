@@ -9,11 +9,15 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/system/dapp/commands"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
@@ -42,6 +46,8 @@ func ParcCmd() *cobra.Command {
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
+		GetNodeGroupPubKeysCmd(),
+		privacyCmd(),
 	)
 	return cmd
 }
@@ -1109,4 +1115,166 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	var res pt.ReplyQuerySelfStages
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListSelfStages", params, &res)
 	ctx.Run()
+}
+
+func GetNodeGroupPubKeysCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pubkeys",
+		Short: "show node group's public keys",
+		Run:   getNodeGroupPubKeys,
+	}
+	return cmd
+}
+
+func getNodeGroupPubKeys(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	parameter := pt.ReqParaNodeAddrPubKey{
+		Title: paraName,
+	}
+	var reply pt.RespParaNodeAddrPubKey
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupPubKey", parameter, &reply)
+	ctx.SetResultCb(showPublicKeys)
+	if _, err := ctx.RunResult(); nil != err {
+		fmt.Println("Show Node's Group Public Keys failed due to:", err.Error())
+	}
+}
+
+func showPublicKeys(arg interface{}) (interface{}, error) {
+	res := *arg.(*pt.RespParaNodeAddrPubKey)
+	for _, info := range res.AddrAndPubKey {
+		fmt.Println("addr:", info.Addr, "public key:", info.Pubkey)
+	}
+	return nil, nil
+}
+
+func privacyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "privacy",
+		Short: "parachain privacy tx cmd",
+	}
+	cmd.AddCommand(createPrivacyTx4ParaCmd())
+	cmd.AddCommand(showPrivacyTxByHashCmd())
+
+	return cmd
+}
+
+func createPrivacyTx4ParaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "convert tx to privacy specified for para-chain",
+		Run:   convertPrivacyTx4Para,
+	}
+	addConvertPrivacyTx4ParaFlags(cmd)
+	return cmd
+}
+
+func addConvertPrivacyTx4ParaFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("data", "d", "", "raw transaction data")
+	cmd.MarkFlagRequired("data")
+}
+
+func convertPrivacyTx4Para(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	data, _ := cmd.Flags().GetString("data")
+	paraName := pt.ReqConverTx2Privacy{
+		Data: data,
+	}
+
+	var replyString types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ConvertTx2Privacy", paraName, &replyString)
+	ctx.RunResult()
+	fmt.Println(replyString.Data)
+}
+
+func showPrivacyTxByHashCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "show me the privacy tx result",
+		Run:   showPrivacyTx4Para,
+	}
+	addGetTxsByHashesFlags(cmd)
+	return cmd
+}
+
+func addGetTxsByHashesFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("hashes", "s", "", "transaction hash(es), separated by space")
+	cmd.MarkFlagRequired("hashes")
+
+	cmd.Flags().StringP("key", "k", "", "private key")
+	cmd.MarkFlagRequired("key")
+}
+
+func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	hashes, _ := cmd.Flags().GetString("hashes")
+	privateKeyStr, _ := cmd.Flags().GetString("key")
+	hashesArr := strings.Split(hashes, " ")
+	params := rpctypes.ReqPrivacyHashes{
+		Hashes: hashesArr,
+	}
+
+	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		fmt.Println("Failed to new crypto")
+		return
+	}
+	privateKey, err := common.FromHex(privateKeyStr)
+	if err != nil {
+		fmt.Println("Invalid private key string")
+		return
+	}
+	prikey, err := cr.PrivKeyFromBytes(privateKey)
+	if err != nil {
+		fmt.Println("Invalid private key")
+		return
+	}
+
+	var requestID string
+	paramsQuery := rpctypes.ReqPrivacyTxQueryID{}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestID)
+	ctx.RunResult()
+	params.RequestID = requestID
+
+	protoReqPrivacyHashes := types.ReqPrivacyHashes{
+		RequestID: requestID,
+	}
+	for _, hash := range params.Hashes {
+		hashByte, _ := common.FromHex(hash)
+		protoReqPrivacyHashes.Hashes = append(protoReqPrivacyHashes.Hashes, hashByte)
+	}
+	data := types.Encode(&protoReqPrivacyHashes)
+	sig := prikey.Sign(data)
+	params.Signature = common.ToHex(sig.Bytes())
+	params.PublicKey = common.ToHex(prikey.PubKey().Bytes())
+
+	var res rpctypes.TransactionDetails
+	ctx = jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetPrivacyTxByHashes", params, &res)
+	ctx.SetResultCb(parseQueryTxsByHashesRes)
+	ctx.Run()
+}
+
+func parseQueryTxsByHashesRes(arg interface{}) (interface{}, error) {
+	var result commandtypes.TxDetailsResult
+	for _, v := range arg.(*rpctypes.TransactionDetails).Txs {
+		if v == nil {
+			result.Txs = append(result.Txs, nil)
+			continue
+		}
+		amountResult := strconv.FormatFloat(float64(v.Amount)/float64(types.Coin), 'f', 4, 64)
+		td := commandtypes.TxDetailResult{
+			Tx:         commandtypes.DecodeTransaction(v.Tx),
+			Receipt:    v.Receipt,
+			Proofs:     v.Proofs,
+			Height:     v.Height,
+			Index:      v.Index,
+			Blocktime:  v.Blocktime,
+			Amount:     amountResult,
+			Fromaddr:   v.Fromaddr,
+			ActionName: v.ActionName,
+			Assets:     v.Assets,
+		}
+		result.Txs = append(result.Txs, &td)
+	}
+	return result, nil
 }

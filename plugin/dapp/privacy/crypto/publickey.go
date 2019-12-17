@@ -115,3 +115,7 @@ func (pubKey PubKeyPrivacy) Equals(other crypto.PubKey) bool {
 	}
 	return false
 }
+
+func (pubKey PubKeyPrivacy) Encrypt(in []byte) ([]byte, error) {
+	return in, nil
+}

@@ -210,7 +210,8 @@ ForkBase58AddressCheck=0
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
 ForkTicketFundAddrV1=-1 #fork6.3
-
+#主链和平行链都使用同一个fork高度
+ForkRootHash= 4500000
 [fork.sub.coins]
 Enable=0
 

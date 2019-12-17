@@ -35,6 +35,8 @@ var (
 
 	paraSelfConsensStages        string
 	paraSelfConsensStageIDPrefix string
+
+	localParaSuperNodePubKey string
 )
 
 func setPrefix() {
@@ -60,6 +62,7 @@ func setPrefix() {
 
 	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
+	localParaSuperNodePubKey = "LODB-paracross-nodegroupPublicKey-"
 }
 
 func calcTitleKey(t string) []byte {
@@ -105,6 +108,14 @@ func calcParaSelfConsStagesKey() []byte {
 
 func calcParaSelfConsensStageIDKey(hash string) string {
 	return fmt.Sprintf(paraSelfConsensStageIDPrefix+"%s", hash)
+}
+
+func calcParaSuperNodePubKey(title string) []byte {
+	//如果title结尾不包含“.”，则在结尾处增加该字符
+	if "." != string(title[len(title)-1]) {
+		title += "."
+	}
+	return []byte(fmt.Sprintf(localParaSuperNodePubKey+"%s", title))
 }
 
 func getParaNodeIDSuffix(id string) string {
