@@ -350,7 +350,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 		if address != "" {
 			params.FuncName = "IssuanceRecordsByAddr"
 
-			req := &pkt.ReqIssuanceRecordsByAddr{
+			req := &pkt.ReqIssuanceRecords{
 				IssuanceId: issuanceID,
 				Status:     int32(status),
 				Addr:       address,
@@ -362,7 +362,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 		} else if statusStr != "" {
 			params.FuncName = "IssuanceRecordsByStatus"
 
-			req := &pkt.ReqIssuanceRecordsByStatus{
+			req := &pkt.ReqIssuanceRecords{
 				IssuanceId: issuanceID,
 				Status:     int32(status),
 			}
@@ -373,7 +373,7 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 		} else if debtID != "" {
 			params.FuncName = "IssuanceRecordByID"
 
-			req := &pkt.ReqIssuanceDebtInfo{
+			req := &pkt.ReqIssuanceRecords{
 				IssuanceId: issuanceID,
 				DebtId:     debtID,
 			}

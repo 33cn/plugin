@@ -18,7 +18,7 @@ const (
 	TyLogIssuanceDebt   = 742
 	TyLogIssuanceRepay  = 743
 	TyLogIssuanceFeed   = 745
-	TyLogIssuanceClose  = 756
+	TyLogIssuanceClose  = 746
 )
 
 // Issuance name

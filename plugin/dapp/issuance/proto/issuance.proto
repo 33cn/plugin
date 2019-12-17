@@ -19,8 +19,6 @@ message Issuance {
     int64       createTime              = 13;//创建时间
     int64       balance                 = 14;//剩余可发行ccny
     string      issuerAddr              = 15;//发行地址
-    int64       index                   = 16;//当前索引
-    int64       preIndex                = 17;//上级索引
 }
 
 // 抵押记录
@@ -37,8 +35,6 @@ message DebtRecord {
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
     string      debtId               = 11;//借贷id
     string      issuId               = 12;//发行id
-    int64       index                = 13;//当前索引
-    int64       preIndex             = 14;//上级索引
 }
 
 // 资产价格记录
@@ -102,24 +98,17 @@ message ReceiptIssuance {
     string      accountAddr     = 2;
     string      debtId          = 3;
     int32       status          = 4;
-    int32       preStatus       = 5;
-    int64       index           = 6;
-    int64       preIndex        = 7;
-    int64       recordTime      = 8; //价格记录时间
-    double      btyPrice        = 9; //bty价格
 }
 
-// exec_local 抵押记录信息
-message IssuanceRecord {
+// exec_local issuid记录信息
+message ReceiptIssuanceID {
     string issuanceId   = 1;
-    string addr         = 2;
-    string debtId       = 3;
-    int64  index        = 4;
+    int32 status        = 2;
 }
 
 // exec_local 抵押记录信息列表
 message IssuanceRecords {
-    repeated IssuanceRecord records = 1;
+    repeated ReceiptIssuance records = 1;
 }
 
 // 根据ID查询发行信息
@@ -154,7 +143,7 @@ message RepIssuanceCurrentInfos {
 // 根据发行状态查询
 message ReqIssuanceByStatus {
     int32 status = 1;
-    int64 index  = 2;
+    string issuanceId = 2;
 }
 
 // 返回发行ID列表
@@ -163,29 +152,16 @@ message RepIssuanceIDs {
 }
 
 // 根据用户地址查询抵押记录
-message ReqIssuanceRecordsByAddr {
+message ReqIssuanceRecords {
     string issuanceId = 1;
     string addr       = 2;
     int32 status      = 3;
-    int64 index       = 4;
-}
-
-// 根据状态查询抵押记录
-message ReqIssuanceRecordsByStatus {
-    string issuanceId = 1;
-    int32 status      = 2;
-    int64 index       = 3;
+    string debtId     = 4;
 }
 
 // 返回记录列表
 message RepIssuanceRecords {
     repeated DebtRecord records = 1;
-}
-
-// 精确查找抵押记录
-message ReqIssuanceDebtInfo {
-    string issuanceId = 1;
-    string debtId     = 2;
 }
 
 // 返回记录

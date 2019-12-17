@@ -66,7 +66,7 @@ func (c *Collateralize) Query_CollateralizeInfoByIDs(req *pty.ReqCollateralizeIn
 
 func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByStatus) (types.Message, error) {
 	ids := &pty.RepCollateralizeIDs{}
-	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), req.Status, req.Index)
+	collIDRecords, err := queryCollateralizeByStatus(c.GetLocalDB(), req.Status, req.CollID)
 	if err != nil {
 		clog.Error("Query_CollateralizeByStatus", "get collateralize record error", err)
 		return nil, err
@@ -78,7 +78,7 @@ func (c *Collateralize) Query_CollateralizeByStatus(req *pty.ReqCollateralizeByS
 
 func (c *Collateralize) Query_CollateralizeByAddr(req *pty.ReqCollateralizeByAddr) (types.Message, error) {
 	ids := &pty.RepCollateralizeIDs{}
-	collIDRecords, err := queryCollateralizeByAddr(c.GetLocalDB(), req.Addr, req.Status, req.Index)
+	collIDRecords, err := queryCollateralizeByAddr(c.GetLocalDB(), req.Addr, req.Status, req.CollID)
 	if err != nil {
 		clog.Error("Query_CollateralizeByAddr", "get collateralize record error", err)
 		return nil, err
@@ -102,7 +102,7 @@ func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeR
 
 func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecords{}
-	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Index)
+	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.CollateralizeId, req.RecordId)
 	if err != nil {
 		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
 		return nil, err
@@ -122,7 +122,7 @@ func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateraliz
 
 func (c *Collateralize) Query_CollateralizeRecordByStatus(req *pty.ReqCollateralizeRecordByStatus) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecords{}
-	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.Index)
+	records, err := queryCollateralizeRecordByStatus(c.GetStateDB(), c.GetLocalDB(), req.Status, req.CollateralizeId, req.RecordId)
 	if err != nil {
 		clog.Error("Query_CollateralizeRecordByStatus", "get collateralize record error", err)
 		return nil, err

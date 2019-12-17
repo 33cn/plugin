@@ -5,9 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-
 	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 )
 
@@ -20,7 +18,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // 发行信息
 type Issuance struct {
@@ -39,8 +37,6 @@ type Issuance struct {
 	CreateTime             int64         `protobuf:"varint,13,opt,name=createTime,proto3" json:"createTime,omitempty"`
 	Balance                int64         `protobuf:"varint,14,opt,name=balance,proto3" json:"balance,omitempty"`
 	IssuerAddr             string        `protobuf:"bytes,15,opt,name=issuerAddr,proto3" json:"issuerAddr,omitempty"`
-	Index                  int64         `protobuf:"varint,16,opt,name=index,proto3" json:"index,omitempty"`
-	PreIndex               int64         `protobuf:"varint,17,opt,name=preIndex,proto3" json:"preIndex,omitempty"`
 	XXX_NoUnkeyedLiteral   struct{}      `json:"-"`
 	XXX_unrecognized       []byte        `json:"-"`
 	XXX_sizecache          int32         `json:"-"`
@@ -50,16 +46,17 @@ func (m *Issuance) Reset()         { *m = Issuance{} }
 func (m *Issuance) String() string { return proto.CompactTextString(m) }
 func (*Issuance) ProtoMessage()    {}
 func (*Issuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{0}
+	return fileDescriptor_7110f4228953d675, []int{0}
 }
+
 func (m *Issuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Issuance.Unmarshal(m, b)
 }
 func (m *Issuance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Issuance.Marshal(b, m, deterministic)
 }
-func (dst *Issuance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Issuance.Merge(dst, src)
+func (m *Issuance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issuance.Merge(m, src)
 }
 func (m *Issuance) XXX_Size() int {
 	return xxx_messageInfo_Issuance.Size(m)
@@ -175,20 +172,6 @@ func (m *Issuance) GetIssuerAddr() string {
 	return ""
 }
 
-func (m *Issuance) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-func (m *Issuance) GetPreIndex() int64 {
-	if m != nil {
-		return m.PreIndex
-	}
-	return 0
-}
-
 // 抵押记录
 type DebtRecord struct {
 	AccountAddr          string   `protobuf:"bytes,1,opt,name=accountAddr,proto3" json:"accountAddr,omitempty"`
@@ -203,8 +186,6 @@ type DebtRecord struct {
 	PreStatus            int32    `protobuf:"varint,10,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
 	DebtId               string   `protobuf:"bytes,11,opt,name=debtId,proto3" json:"debtId,omitempty"`
 	IssuId               string   `protobuf:"bytes,12,opt,name=issuId,proto3" json:"issuId,omitempty"`
-	Index                int64    `protobuf:"varint,13,opt,name=index,proto3" json:"index,omitempty"`
-	PreIndex             int64    `protobuf:"varint,14,opt,name=preIndex,proto3" json:"preIndex,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -214,16 +195,17 @@ func (m *DebtRecord) Reset()         { *m = DebtRecord{} }
 func (m *DebtRecord) String() string { return proto.CompactTextString(m) }
 func (*DebtRecord) ProtoMessage()    {}
 func (*DebtRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{1}
+	return fileDescriptor_7110f4228953d675, []int{1}
 }
+
 func (m *DebtRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DebtRecord.Unmarshal(m, b)
 }
 func (m *DebtRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DebtRecord.Marshal(b, m, deterministic)
 }
-func (dst *DebtRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DebtRecord.Merge(dst, src)
+func (m *DebtRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DebtRecord.Merge(m, src)
 }
 func (m *DebtRecord) XXX_Size() int {
 	return xxx_messageInfo_DebtRecord.Size(m)
@@ -318,20 +300,6 @@ func (m *DebtRecord) GetIssuId() string {
 	return ""
 }
 
-func (m *DebtRecord) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-func (m *DebtRecord) GetPreIndex() int64 {
-	if m != nil {
-		return m.PreIndex
-	}
-	return 0
-}
-
 // 资产价格记录
 type IssuanceAssetPriceRecord struct {
 	RecordTime           int64    `protobuf:"varint,1,opt,name=recordTime,proto3" json:"recordTime,omitempty"`
@@ -345,16 +313,17 @@ func (m *IssuanceAssetPriceRecord) Reset()         { *m = IssuanceAssetPriceReco
 func (m *IssuanceAssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAssetPriceRecord) ProtoMessage()    {}
 func (*IssuanceAssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{2}
+	return fileDescriptor_7110f4228953d675, []int{2}
 }
+
 func (m *IssuanceAssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Unmarshal(m, b)
 }
 func (m *IssuanceAssetPriceRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceAssetPriceRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceAssetPriceRecord.Merge(dst, src)
+func (m *IssuanceAssetPriceRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceAssetPriceRecord.Merge(m, src)
 }
 func (m *IssuanceAssetPriceRecord) XXX_Size() int {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Size(m)
@@ -399,16 +368,17 @@ func (m *IssuanceAction) Reset()         { *m = IssuanceAction{} }
 func (m *IssuanceAction) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAction) ProtoMessage()    {}
 func (*IssuanceAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{3}
+	return fileDescriptor_7110f4228953d675, []int{3}
 }
+
 func (m *IssuanceAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAction.Unmarshal(m, b)
 }
 func (m *IssuanceAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceAction.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceAction.Merge(dst, src)
+func (m *IssuanceAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceAction.Merge(m, src)
 }
 func (m *IssuanceAction) XXX_Size() int {
 	return xxx_messageInfo_IssuanceAction.Size(m)
@@ -515,9 +485,9 @@ func (m *IssuanceAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*IssuanceAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _IssuanceAction_OneofMarshaler, _IssuanceAction_OneofUnmarshaler, _IssuanceAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*IssuanceAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*IssuanceAction_Create)(nil),
 		(*IssuanceAction_Debt)(nil),
 		(*IssuanceAction_Repay)(nil),
@@ -525,144 +495,6 @@ func (*IssuanceAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer
 		(*IssuanceAction_Close)(nil),
 		(*IssuanceAction_Manage)(nil),
 	}
-}
-
-func _IssuanceAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*IssuanceAction)
-	// value
-	switch x := m.Value.(type) {
-	case *IssuanceAction_Create:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Create); err != nil {
-			return err
-		}
-	case *IssuanceAction_Debt:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Debt); err != nil {
-			return err
-		}
-	case *IssuanceAction_Repay:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Repay); err != nil {
-			return err
-		}
-	case *IssuanceAction_Feed:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Feed); err != nil {
-			return err
-		}
-	case *IssuanceAction_Close:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Close); err != nil {
-			return err
-		}
-	case *IssuanceAction_Manage:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Manage); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("IssuanceAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _IssuanceAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*IssuanceAction)
-	switch tag {
-	case 1: // value.create
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceCreate)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Create{msg}
-		return true, err
-	case 2: // value.debt
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceDebt)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Debt{msg}
-		return true, err
-	case 3: // value.repay
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceRepay)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Repay{msg}
-		return true, err
-	case 4: // value.feed
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceFeed)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Feed{msg}
-		return true, err
-	case 5: // value.close
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceClose)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Close{msg}
-		return true, err
-	case 6: // value.manage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(IssuanceManage)
-		err := b.DecodeMessage(msg)
-		m.Value = &IssuanceAction_Manage{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _IssuanceAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*IssuanceAction)
-	// value
-	switch x := m.Value.(type) {
-	case *IssuanceAction_Create:
-		s := proto.Size(x.Create)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *IssuanceAction_Debt:
-		s := proto.Size(x.Debt)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *IssuanceAction_Repay:
-		s := proto.Size(x.Repay)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *IssuanceAction_Feed:
-		s := proto.Size(x.Feed)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *IssuanceAction_Close:
-		s := proto.Size(x.Close)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *IssuanceAction_Manage:
-		s := proto.Size(x.Manage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type IssuanceManage struct {
@@ -676,16 +508,17 @@ func (m *IssuanceManage) Reset()         { *m = IssuanceManage{} }
 func (m *IssuanceManage) String() string { return proto.CompactTextString(m) }
 func (*IssuanceManage) ProtoMessage()    {}
 func (*IssuanceManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{4}
+	return fileDescriptor_7110f4228953d675, []int{4}
 }
+
 func (m *IssuanceManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceManage.Unmarshal(m, b)
 }
 func (m *IssuanceManage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceManage.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceManage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceManage.Merge(dst, src)
+func (m *IssuanceManage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceManage.Merge(m, src)
 }
 func (m *IssuanceManage) XXX_Size() int {
 	return xxx_messageInfo_IssuanceManage.Size(m)
@@ -718,16 +551,17 @@ func (m *IssuanceCreate) Reset()         { *m = IssuanceCreate{} }
 func (m *IssuanceCreate) String() string { return proto.CompactTextString(m) }
 func (*IssuanceCreate) ProtoMessage()    {}
 func (*IssuanceCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{5}
+	return fileDescriptor_7110f4228953d675, []int{5}
 }
+
 func (m *IssuanceCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceCreate.Unmarshal(m, b)
 }
 func (m *IssuanceCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceCreate.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceCreate.Merge(dst, src)
+func (m *IssuanceCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceCreate.Merge(m, src)
 }
 func (m *IssuanceCreate) XXX_Size() int {
 	return xxx_messageInfo_IssuanceCreate.Size(m)
@@ -779,16 +613,17 @@ func (m *IssuanceDebt) Reset()         { *m = IssuanceDebt{} }
 func (m *IssuanceDebt) String() string { return proto.CompactTextString(m) }
 func (*IssuanceDebt) ProtoMessage()    {}
 func (*IssuanceDebt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{6}
+	return fileDescriptor_7110f4228953d675, []int{6}
 }
+
 func (m *IssuanceDebt) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceDebt.Unmarshal(m, b)
 }
 func (m *IssuanceDebt) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceDebt.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceDebt) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceDebt.Merge(dst, src)
+func (m *IssuanceDebt) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceDebt.Merge(m, src)
 }
 func (m *IssuanceDebt) XXX_Size() int {
 	return xxx_messageInfo_IssuanceDebt.Size(m)
@@ -826,16 +661,17 @@ func (m *IssuanceRepay) Reset()         { *m = IssuanceRepay{} }
 func (m *IssuanceRepay) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRepay) ProtoMessage()    {}
 func (*IssuanceRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{7}
+	return fileDescriptor_7110f4228953d675, []int{7}
 }
+
 func (m *IssuanceRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRepay.Unmarshal(m, b)
 }
 func (m *IssuanceRepay) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceRepay.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceRepay) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceRepay.Merge(dst, src)
+func (m *IssuanceRepay) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceRepay.Merge(m, src)
 }
 func (m *IssuanceRepay) XXX_Size() int {
 	return xxx_messageInfo_IssuanceRepay.Size(m)
@@ -874,16 +710,17 @@ func (m *IssuanceFeed) Reset()         { *m = IssuanceFeed{} }
 func (m *IssuanceFeed) String() string { return proto.CompactTextString(m) }
 func (*IssuanceFeed) ProtoMessage()    {}
 func (*IssuanceFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{8}
+	return fileDescriptor_7110f4228953d675, []int{8}
 }
+
 func (m *IssuanceFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceFeed.Unmarshal(m, b)
 }
 func (m *IssuanceFeed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceFeed.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceFeed) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceFeed.Merge(dst, src)
+func (m *IssuanceFeed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceFeed.Merge(m, src)
 }
 func (m *IssuanceFeed) XXX_Size() int {
 	return xxx_messageInfo_IssuanceFeed.Size(m)
@@ -927,16 +764,17 @@ func (m *IssuanceClose) Reset()         { *m = IssuanceClose{} }
 func (m *IssuanceClose) String() string { return proto.CompactTextString(m) }
 func (*IssuanceClose) ProtoMessage()    {}
 func (*IssuanceClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{9}
+	return fileDescriptor_7110f4228953d675, []int{9}
 }
+
 func (m *IssuanceClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceClose.Unmarshal(m, b)
 }
 func (m *IssuanceClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceClose.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceClose.Merge(dst, src)
+func (m *IssuanceClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceClose.Merge(m, src)
 }
 func (m *IssuanceClose) XXX_Size() int {
 	return xxx_messageInfo_IssuanceClose.Size(m)
@@ -960,11 +798,6 @@ type ReceiptIssuance struct {
 	AccountAddr          string   `protobuf:"bytes,2,opt,name=accountAddr,proto3" json:"accountAddr,omitempty"`
 	DebtId               string   `protobuf:"bytes,3,opt,name=debtId,proto3" json:"debtId,omitempty"`
 	Status               int32    `protobuf:"varint,4,opt,name=status,proto3" json:"status,omitempty"`
-	PreStatus            int32    `protobuf:"varint,5,opt,name=preStatus,proto3" json:"preStatus,omitempty"`
-	Index                int64    `protobuf:"varint,6,opt,name=index,proto3" json:"index,omitempty"`
-	PreIndex             int64    `protobuf:"varint,7,opt,name=preIndex,proto3" json:"preIndex,omitempty"`
-	RecordTime           int64    `protobuf:"varint,8,opt,name=recordTime,proto3" json:"recordTime,omitempty"`
-	BtyPrice             float64  `protobuf:"fixed64,9,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -974,16 +807,17 @@ func (m *ReceiptIssuance) Reset()         { *m = ReceiptIssuance{} }
 func (m *ReceiptIssuance) String() string { return proto.CompactTextString(m) }
 func (*ReceiptIssuance) ProtoMessage()    {}
 func (*ReceiptIssuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{10}
+	return fileDescriptor_7110f4228953d675, []int{10}
 }
+
 func (m *ReceiptIssuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptIssuance.Unmarshal(m, b)
 }
 func (m *ReceiptIssuance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptIssuance.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptIssuance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptIssuance.Merge(dst, src)
+func (m *ReceiptIssuance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptIssuance.Merge(m, src)
 }
 func (m *ReceiptIssuance) XXX_Size() int {
 	return xxx_messageInfo_ReceiptIssuance.Size(m)
@@ -1022,126 +856,77 @@ func (m *ReceiptIssuance) GetStatus() int32 {
 	return 0
 }
 
-func (m *ReceiptIssuance) GetPreStatus() int32 {
-	if m != nil {
-		return m.PreStatus
-	}
-	return 0
-}
-
-func (m *ReceiptIssuance) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-func (m *ReceiptIssuance) GetPreIndex() int64 {
-	if m != nil {
-		return m.PreIndex
-	}
-	return 0
-}
-
-func (m *ReceiptIssuance) GetRecordTime() int64 {
-	if m != nil {
-		return m.RecordTime
-	}
-	return 0
-}
-
-func (m *ReceiptIssuance) GetBtyPrice() float64 {
-	if m != nil {
-		return m.BtyPrice
-	}
-	return 0
-}
-
-// exec_local 抵押记录信息
-type IssuanceRecord struct {
+// exec_local issuid记录信息
+type ReceiptIssuanceID struct {
 	IssuanceId           string   `protobuf:"bytes,1,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
-	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	DebtId               string   `protobuf:"bytes,3,opt,name=debtId,proto3" json:"debtId,omitempty"`
-	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	Status               int32    `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *IssuanceRecord) Reset()         { *m = IssuanceRecord{} }
-func (m *IssuanceRecord) String() string { return proto.CompactTextString(m) }
-func (*IssuanceRecord) ProtoMessage()    {}
-func (*IssuanceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{11}
-}
-func (m *IssuanceRecord) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_IssuanceRecord.Unmarshal(m, b)
-}
-func (m *IssuanceRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_IssuanceRecord.Marshal(b, m, deterministic)
-}
-func (dst *IssuanceRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceRecord.Merge(dst, src)
-}
-func (m *IssuanceRecord) XXX_Size() int {
-	return xxx_messageInfo_IssuanceRecord.Size(m)
-}
-func (m *IssuanceRecord) XXX_DiscardUnknown() {
-	xxx_messageInfo_IssuanceRecord.DiscardUnknown(m)
+func (m *ReceiptIssuanceID) Reset()         { *m = ReceiptIssuanceID{} }
+func (m *ReceiptIssuanceID) String() string { return proto.CompactTextString(m) }
+func (*ReceiptIssuanceID) ProtoMessage()    {}
+func (*ReceiptIssuanceID) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7110f4228953d675, []int{11}
 }
 
-var xxx_messageInfo_IssuanceRecord proto.InternalMessageInfo
+func (m *ReceiptIssuanceID) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptIssuanceID.Unmarshal(m, b)
+}
+func (m *ReceiptIssuanceID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptIssuanceID.Marshal(b, m, deterministic)
+}
+func (m *ReceiptIssuanceID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptIssuanceID.Merge(m, src)
+}
+func (m *ReceiptIssuanceID) XXX_Size() int {
+	return xxx_messageInfo_ReceiptIssuanceID.Size(m)
+}
+func (m *ReceiptIssuanceID) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptIssuanceID.DiscardUnknown(m)
+}
 
-func (m *IssuanceRecord) GetIssuanceId() string {
+var xxx_messageInfo_ReceiptIssuanceID proto.InternalMessageInfo
+
+func (m *ReceiptIssuanceID) GetIssuanceId() string {
 	if m != nil {
 		return m.IssuanceId
 	}
 	return ""
 }
 
-func (m *IssuanceRecord) GetAddr() string {
+func (m *ReceiptIssuanceID) GetStatus() int32 {
 	if m != nil {
-		return m.Addr
-	}
-	return ""
-}
-
-func (m *IssuanceRecord) GetDebtId() string {
-	if m != nil {
-		return m.DebtId
-	}
-	return ""
-}
-
-func (m *IssuanceRecord) GetIndex() int64 {
-	if m != nil {
-		return m.Index
+		return m.Status
 	}
 	return 0
 }
 
 // exec_local 抵押记录信息列表
 type IssuanceRecords struct {
-	Records              []*IssuanceRecord `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Records              []*ReceiptIssuance `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *IssuanceRecords) Reset()         { *m = IssuanceRecords{} }
 func (m *IssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRecords) ProtoMessage()    {}
 func (*IssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{12}
+	return fileDescriptor_7110f4228953d675, []int{12}
 }
+
 func (m *IssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRecords.Unmarshal(m, b)
 }
 func (m *IssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceRecords.Marshal(b, m, deterministic)
 }
-func (dst *IssuanceRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceRecords.Merge(dst, src)
+func (m *IssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceRecords.Merge(m, src)
 }
 func (m *IssuanceRecords) XXX_Size() int {
 	return xxx_messageInfo_IssuanceRecords.Size(m)
@@ -1152,7 +937,7 @@ func (m *IssuanceRecords) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_IssuanceRecords proto.InternalMessageInfo
 
-func (m *IssuanceRecords) GetRecords() []*IssuanceRecord {
+func (m *IssuanceRecords) GetRecords() []*ReceiptIssuance {
 	if m != nil {
 		return m.Records
 	}
@@ -1171,16 +956,17 @@ func (m *ReqIssuanceInfo) Reset()         { *m = ReqIssuanceInfo{} }
 func (m *ReqIssuanceInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfo) ProtoMessage()    {}
 func (*ReqIssuanceInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{13}
+	return fileDescriptor_7110f4228953d675, []int{13}
 }
+
 func (m *ReqIssuanceInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfo.Unmarshal(m, b)
 }
 func (m *ReqIssuanceInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqIssuanceInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceInfo.Merge(dst, src)
+func (m *ReqIssuanceInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceInfo.Merge(m, src)
 }
 func (m *ReqIssuanceInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceInfo.Size(m)
@@ -1219,16 +1005,17 @@ func (m *RepIssuanceCurrentInfo) Reset()         { *m = RepIssuanceCurrentInfo{}
 func (m *RepIssuanceCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfo) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{14}
+	return fileDescriptor_7110f4228953d675, []int{14}
 }
+
 func (m *RepIssuanceCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Unmarshal(m, b)
 }
 func (m *RepIssuanceCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuanceCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceCurrentInfo.Merge(dst, src)
+func (m *RepIssuanceCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceCurrentInfo.Merge(m, src)
 }
 func (m *RepIssuanceCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Size(m)
@@ -1321,16 +1108,17 @@ func (m *ReqIssuanceInfos) Reset()         { *m = ReqIssuanceInfos{} }
 func (m *ReqIssuanceInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfos) ProtoMessage()    {}
 func (*ReqIssuanceInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{15}
+	return fileDescriptor_7110f4228953d675, []int{15}
 }
+
 func (m *ReqIssuanceInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfos.Unmarshal(m, b)
 }
 func (m *ReqIssuanceInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceInfos.Marshal(b, m, deterministic)
 }
-func (dst *ReqIssuanceInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceInfos.Merge(dst, src)
+func (m *ReqIssuanceInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceInfos.Merge(m, src)
 }
 func (m *ReqIssuanceInfos) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceInfos.Size(m)
@@ -1360,16 +1148,17 @@ func (m *RepIssuanceCurrentInfos) Reset()         { *m = RepIssuanceCurrentInfos
 func (m *RepIssuanceCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfos) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{16}
+	return fileDescriptor_7110f4228953d675, []int{16}
 }
+
 func (m *RepIssuanceCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Unmarshal(m, b)
 }
 func (m *RepIssuanceCurrentInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuanceCurrentInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceCurrentInfos.Merge(dst, src)
+func (m *RepIssuanceCurrentInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceCurrentInfos.Merge(m, src)
 }
 func (m *RepIssuanceCurrentInfos) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Size(m)
@@ -1390,7 +1179,7 @@ func (m *RepIssuanceCurrentInfos) GetInfos() []*RepIssuanceCurrentInfo {
 // 根据发行状态查询
 type ReqIssuanceByStatus struct {
 	Status               int32    `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Index                int64    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	IssuanceId           string   `protobuf:"bytes,2,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1400,16 +1189,17 @@ func (m *ReqIssuanceByStatus) Reset()         { *m = ReqIssuanceByStatus{} }
 func (m *ReqIssuanceByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceByStatus) ProtoMessage()    {}
 func (*ReqIssuanceByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{17}
+	return fileDescriptor_7110f4228953d675, []int{17}
 }
+
 func (m *ReqIssuanceByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceByStatus.Unmarshal(m, b)
 }
 func (m *ReqIssuanceByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceByStatus.Marshal(b, m, deterministic)
 }
-func (dst *ReqIssuanceByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceByStatus.Merge(dst, src)
+func (m *ReqIssuanceByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceByStatus.Merge(m, src)
 }
 func (m *ReqIssuanceByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceByStatus.Size(m)
@@ -1427,11 +1217,11 @@ func (m *ReqIssuanceByStatus) GetStatus() int32 {
 	return 0
 }
 
-func (m *ReqIssuanceByStatus) GetIndex() int64 {
+func (m *ReqIssuanceByStatus) GetIssuanceId() string {
 	if m != nil {
-		return m.Index
+		return m.IssuanceId
 	}
-	return 0
+	return ""
 }
 
 // 返回发行ID列表
@@ -1446,16 +1236,17 @@ func (m *RepIssuanceIDs) Reset()         { *m = RepIssuanceIDs{} }
 func (m *RepIssuanceIDs) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceIDs) ProtoMessage()    {}
 func (*RepIssuanceIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{18}
+	return fileDescriptor_7110f4228953d675, []int{18}
 }
+
 func (m *RepIssuanceIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceIDs.Unmarshal(m, b)
 }
 func (m *RepIssuanceIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceIDs.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuanceIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceIDs.Merge(dst, src)
+func (m *RepIssuanceIDs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceIDs.Merge(m, src)
 }
 func (m *RepIssuanceIDs) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceIDs.Size(m)
@@ -1474,121 +1265,67 @@ func (m *RepIssuanceIDs) GetIDs() []string {
 }
 
 // 根据用户地址查询抵押记录
-type ReqIssuanceRecordsByAddr struct {
+type ReqIssuanceRecords struct {
 	IssuanceId           string   `protobuf:"bytes,1,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
 	Addr                 string   `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
 	Status               int32    `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
-	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	DebtId               string   `protobuf:"bytes,4,opt,name=debtId,proto3" json:"debtId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReqIssuanceRecordsByAddr) Reset()         { *m = ReqIssuanceRecordsByAddr{} }
-func (m *ReqIssuanceRecordsByAddr) String() string { return proto.CompactTextString(m) }
-func (*ReqIssuanceRecordsByAddr) ProtoMessage()    {}
-func (*ReqIssuanceRecordsByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{19}
-}
-func (m *ReqIssuanceRecordsByAddr) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqIssuanceRecordsByAddr.Unmarshal(m, b)
-}
-func (m *ReqIssuanceRecordsByAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqIssuanceRecordsByAddr.Marshal(b, m, deterministic)
-}
-func (dst *ReqIssuanceRecordsByAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceRecordsByAddr.Merge(dst, src)
-}
-func (m *ReqIssuanceRecordsByAddr) XXX_Size() int {
-	return xxx_messageInfo_ReqIssuanceRecordsByAddr.Size(m)
-}
-func (m *ReqIssuanceRecordsByAddr) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqIssuanceRecordsByAddr.DiscardUnknown(m)
+func (m *ReqIssuanceRecords) Reset()         { *m = ReqIssuanceRecords{} }
+func (m *ReqIssuanceRecords) String() string { return proto.CompactTextString(m) }
+func (*ReqIssuanceRecords) ProtoMessage()    {}
+func (*ReqIssuanceRecords) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7110f4228953d675, []int{19}
 }
 
-var xxx_messageInfo_ReqIssuanceRecordsByAddr proto.InternalMessageInfo
+func (m *ReqIssuanceRecords) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqIssuanceRecords.Unmarshal(m, b)
+}
+func (m *ReqIssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqIssuanceRecords.Marshal(b, m, deterministic)
+}
+func (m *ReqIssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceRecords.Merge(m, src)
+}
+func (m *ReqIssuanceRecords) XXX_Size() int {
+	return xxx_messageInfo_ReqIssuanceRecords.Size(m)
+}
+func (m *ReqIssuanceRecords) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqIssuanceRecords.DiscardUnknown(m)
+}
 
-func (m *ReqIssuanceRecordsByAddr) GetIssuanceId() string {
+var xxx_messageInfo_ReqIssuanceRecords proto.InternalMessageInfo
+
+func (m *ReqIssuanceRecords) GetIssuanceId() string {
 	if m != nil {
 		return m.IssuanceId
 	}
 	return ""
 }
 
-func (m *ReqIssuanceRecordsByAddr) GetAddr() string {
+func (m *ReqIssuanceRecords) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
 	return ""
 }
 
-func (m *ReqIssuanceRecordsByAddr) GetStatus() int32 {
+func (m *ReqIssuanceRecords) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *ReqIssuanceRecordsByAddr) GetIndex() int64 {
+func (m *ReqIssuanceRecords) GetDebtId() string {
 	if m != nil {
-		return m.Index
-	}
-	return 0
-}
-
-// 根据状态查询抵押记录
-type ReqIssuanceRecordsByStatus struct {
-	IssuanceId           string   `protobuf:"bytes,1,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
-	Status               int32    `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
-	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ReqIssuanceRecordsByStatus) Reset()         { *m = ReqIssuanceRecordsByStatus{} }
-func (m *ReqIssuanceRecordsByStatus) String() string { return proto.CompactTextString(m) }
-func (*ReqIssuanceRecordsByStatus) ProtoMessage()    {}
-func (*ReqIssuanceRecordsByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{20}
-}
-func (m *ReqIssuanceRecordsByStatus) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqIssuanceRecordsByStatus.Unmarshal(m, b)
-}
-func (m *ReqIssuanceRecordsByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqIssuanceRecordsByStatus.Marshal(b, m, deterministic)
-}
-func (dst *ReqIssuanceRecordsByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceRecordsByStatus.Merge(dst, src)
-}
-func (m *ReqIssuanceRecordsByStatus) XXX_Size() int {
-	return xxx_messageInfo_ReqIssuanceRecordsByStatus.Size(m)
-}
-func (m *ReqIssuanceRecordsByStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqIssuanceRecordsByStatus.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqIssuanceRecordsByStatus proto.InternalMessageInfo
-
-func (m *ReqIssuanceRecordsByStatus) GetIssuanceId() string {
-	if m != nil {
-		return m.IssuanceId
+		return m.DebtId
 	}
 	return ""
-}
-
-func (m *ReqIssuanceRecordsByStatus) GetStatus() int32 {
-	if m != nil {
-		return m.Status
-	}
-	return 0
-}
-
-func (m *ReqIssuanceRecordsByStatus) GetIndex() int64 {
-	if m != nil {
-		return m.Index
-	}
-	return 0
 }
 
 // 返回记录列表
@@ -1603,16 +1340,17 @@ func (m *RepIssuanceRecords) Reset()         { *m = RepIssuanceRecords{} }
 func (m *RepIssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceRecords) ProtoMessage()    {}
 func (*RepIssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{21}
+	return fileDescriptor_7110f4228953d675, []int{20}
 }
+
 func (m *RepIssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceRecords.Unmarshal(m, b)
 }
 func (m *RepIssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceRecords.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuanceRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceRecords.Merge(dst, src)
+func (m *RepIssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceRecords.Merge(m, src)
 }
 func (m *RepIssuanceRecords) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceRecords.Size(m)
@@ -1630,53 +1368,6 @@ func (m *RepIssuanceRecords) GetRecords() []*DebtRecord {
 	return nil
 }
 
-// 精确查找抵押记录
-type ReqIssuanceDebtInfo struct {
-	IssuanceId           string   `protobuf:"bytes,1,opt,name=issuanceId,proto3" json:"issuanceId,omitempty"`
-	DebtId               string   `protobuf:"bytes,2,opt,name=debtId,proto3" json:"debtId,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ReqIssuanceDebtInfo) Reset()         { *m = ReqIssuanceDebtInfo{} }
-func (m *ReqIssuanceDebtInfo) String() string { return proto.CompactTextString(m) }
-func (*ReqIssuanceDebtInfo) ProtoMessage()    {}
-func (*ReqIssuanceDebtInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{22}
-}
-func (m *ReqIssuanceDebtInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReqIssuanceDebtInfo.Unmarshal(m, b)
-}
-func (m *ReqIssuanceDebtInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReqIssuanceDebtInfo.Marshal(b, m, deterministic)
-}
-func (dst *ReqIssuanceDebtInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceDebtInfo.Merge(dst, src)
-}
-func (m *ReqIssuanceDebtInfo) XXX_Size() int {
-	return xxx_messageInfo_ReqIssuanceDebtInfo.Size(m)
-}
-func (m *ReqIssuanceDebtInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReqIssuanceDebtInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ReqIssuanceDebtInfo proto.InternalMessageInfo
-
-func (m *ReqIssuanceDebtInfo) GetIssuanceId() string {
-	if m != nil {
-		return m.IssuanceId
-	}
-	return ""
-}
-
-func (m *ReqIssuanceDebtInfo) GetDebtId() string {
-	if m != nil {
-		return m.DebtId
-	}
-	return ""
-}
-
 // 返回记录
 type RepIssuanceDebtInfo struct {
 	Record               *DebtRecord `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
@@ -1689,16 +1380,17 @@ func (m *RepIssuanceDebtInfo) Reset()         { *m = RepIssuanceDebtInfo{} }
 func (m *RepIssuanceDebtInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceDebtInfo) ProtoMessage()    {}
 func (*RepIssuanceDebtInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{23}
+	return fileDescriptor_7110f4228953d675, []int{21}
 }
+
 func (m *RepIssuanceDebtInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Unmarshal(m, b)
 }
 func (m *RepIssuanceDebtInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuanceDebtInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceDebtInfo.Merge(dst, src)
+func (m *RepIssuanceDebtInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceDebtInfo.Merge(m, src)
 }
 func (m *RepIssuanceDebtInfo) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Size(m)
@@ -1728,16 +1420,17 @@ func (m *RepIssuancePrice) Reset()         { *m = RepIssuancePrice{} }
 func (m *RepIssuancePrice) String() string { return proto.CompactTextString(m) }
 func (*RepIssuancePrice) ProtoMessage()    {}
 func (*RepIssuancePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_c7d54cbbda1bfbd2, []int{24}
+	return fileDescriptor_7110f4228953d675, []int{22}
 }
+
 func (m *RepIssuancePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuancePrice.Unmarshal(m, b)
 }
 func (m *RepIssuancePrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuancePrice.Marshal(b, m, deterministic)
 }
-func (dst *RepIssuancePrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuancePrice.Merge(dst, src)
+func (m *RepIssuancePrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuancePrice.Merge(m, src)
 }
 func (m *RepIssuancePrice) XXX_Size() int {
 	return xxx_messageInfo_RepIssuancePrice.Size(m)
@@ -1767,7 +1460,7 @@ func init() {
 	proto.RegisterType((*IssuanceFeed)(nil), "types.IssuanceFeed")
 	proto.RegisterType((*IssuanceClose)(nil), "types.IssuanceClose")
 	proto.RegisterType((*ReceiptIssuance)(nil), "types.ReceiptIssuance")
-	proto.RegisterType((*IssuanceRecord)(nil), "types.IssuanceRecord")
+	proto.RegisterType((*ReceiptIssuanceID)(nil), "types.ReceiptIssuanceID")
 	proto.RegisterType((*IssuanceRecords)(nil), "types.IssuanceRecords")
 	proto.RegisterType((*ReqIssuanceInfo)(nil), "types.ReqIssuanceInfo")
 	proto.RegisterType((*RepIssuanceCurrentInfo)(nil), "types.RepIssuanceCurrentInfo")
@@ -1775,86 +1468,79 @@ func init() {
 	proto.RegisterType((*RepIssuanceCurrentInfos)(nil), "types.RepIssuanceCurrentInfos")
 	proto.RegisterType((*ReqIssuanceByStatus)(nil), "types.ReqIssuanceByStatus")
 	proto.RegisterType((*RepIssuanceIDs)(nil), "types.RepIssuanceIDs")
-	proto.RegisterType((*ReqIssuanceRecordsByAddr)(nil), "types.ReqIssuanceRecordsByAddr")
-	proto.RegisterType((*ReqIssuanceRecordsByStatus)(nil), "types.ReqIssuanceRecordsByStatus")
+	proto.RegisterType((*ReqIssuanceRecords)(nil), "types.ReqIssuanceRecords")
 	proto.RegisterType((*RepIssuanceRecords)(nil), "types.RepIssuanceRecords")
-	proto.RegisterType((*ReqIssuanceDebtInfo)(nil), "types.ReqIssuanceDebtInfo")
 	proto.RegisterType((*RepIssuanceDebtInfo)(nil), "types.RepIssuanceDebtInfo")
 	proto.RegisterType((*RepIssuancePrice)(nil), "types.RepIssuancePrice")
 }
 
-func init() { proto.RegisterFile("issuance.proto", fileDescriptor_issuance_c7d54cbbda1bfbd2) }
+func init() { proto.RegisterFile("issuance.proto", fileDescriptor_7110f4228953d675) }
 
-var fileDescriptor_issuance_c7d54cbbda1bfbd2 = []byte{
-	// 1119 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xcd, 0x6e, 0xe4, 0x44,
-	0x10, 0x8e, 0xed, 0xf1, 0xfc, 0xd4, 0x24, 0x93, 0x6c, 0x6f, 0x36, 0x58, 0x2b, 0x58, 0x8d, 0x2c,
-	0x0e, 0xb3, 0x80, 0x12, 0x48, 0x10, 0x12, 0x37, 0x32, 0x09, 0x90, 0x91, 0x58, 0x84, 0xcc, 0x6a,
-	0xc5, 0xd5, 0xb1, 0x3b, 0x2b, 0x23, 0x67, 0xec, 0xb5, 0x7b, 0xa2, 0x1d, 0x89, 0x77, 0xe0, 0xce,
-	0xbb, 0x70, 0xe7, 0x01, 0x78, 0x14, 0x1e, 0x00, 0x55, 0x75, 0xdb, 0xed, 0xbf, 0xc9, 0x8c, 0x38,
-	0x70, 0x89, 0xa6, 0xab, 0xcb, 0x55, 0xd5, 0xf5, 0x7d, 0xfd, 0x75, 0x05, 0x26, 0x51, 0x9e, 0xaf,
-	0xfc, 0x65, 0xc0, 0x4f, 0xd3, 0x2c, 0x11, 0x09, 0xb3, 0xc5, 0x3a, 0xe5, 0xb9, 0xfb, 0x4f, 0x0f,
-	0x86, 0x0b, 0xb5, 0xc3, 0x5e, 0x00, 0x14, 0x5e, 0x8b, 0xd0, 0x31, 0xa6, 0xc6, 0x6c, 0xe4, 0x55,
-	0x2c, 0xcc, 0x85, 0x7d, 0x91, 0x08, 0x3f, 0x9e, 0xfb, 0x31, 0x5a, 0x1c, 0x73, 0x6a, 0xcc, 0x2c,
-	0xaf, 0x66, 0x63, 0x53, 0x18, 0x87, 0xfc, 0x56, 0x5c, 0xf1, 0x28, 0x8e, 0x96, 0x6f, 0x1d, 0x8b,
-	0x5c, 0xaa, 0x26, 0xf6, 0x09, 0x1c, 0xc5, 0xd1, 0xbb, 0x55, 0x14, 0xfa, 0x22, 0x4a, 0x96, 0x1e,
-	0xfe, 0x75, 0x7a, 0x53, 0x63, 0x66, 0x78, 0x2d, 0x3b, 0x9b, 0xc1, 0x61, 0x90, 0xc4, 0xb1, 0x2f,
-	0x78, 0xe6, 0xc7, 0x6f, 0xfc, 0x78, 0xc5, 0x1d, 0x9b, 0x22, 0x36, 0xcd, 0xec, 0x43, 0x18, 0x61,
-	0x12, 0xe9, 0xd3, 0x27, 0x1f, 0x6d, 0x60, 0x17, 0xb2, 0x2a, 0x8f, 0x07, 0x49, 0x16, 0xe6, 0xce,
-	0x60, 0x6a, 0xcd, 0xc6, 0xe7, 0x4f, 0x4e, 0xa9, 0x07, 0xa7, 0xd7, 0xe5, 0x8e, 0x57, 0xf5, 0x62,
-	0x5f, 0xc3, 0x24, 0x5a, 0x3e, 0xf8, 0x71, 0x14, 0x16, 0xdf, 0x0d, 0x37, 0x7d, 0xd7, 0x70, 0x64,
-	0x27, 0xd0, 0xcf, 0x85, 0x2f, 0x56, 0xb9, 0x33, 0x9a, 0x1a, 0x33, 0xdb, 0x53, 0x2b, 0xf6, 0x15,
-	0x9c, 0x60, 0xd5, 0xb9, 0xf8, 0x41, 0x9f, 0xf4, 0xa7, 0x2c, 0x0a, 0xb8, 0x03, 0xd4, 0x81, 0x0d,
-	0xbb, 0x18, 0x2f, 0xe5, 0x59, 0x94, 0x84, 0xce, 0x98, 0x8e, 0xa6, 0x56, 0xd4, 0x4b, 0xfa, 0xe2,
-	0xdb, 0xf7, 0x69, 0x94, 0xf1, 0xd7, 0xd1, 0x3d, 0x77, 0xf6, 0xc9, 0xa3, 0x65, 0x47, 0x74, 0x83,
-	0x8c, 0xfb, 0x42, 0x7a, 0x1d, 0x90, 0x57, 0xc5, 0xc2, 0x1c, 0x18, 0xdc, 0x2a, 0x60, 0x27, 0xb4,
-	0x59, 0x2c, 0x0b, 0x5e, 0xf0, 0xec, 0x32, 0x0c, 0x33, 0xe7, 0x50, 0xf3, 0x42, 0x5a, 0xd8, 0x31,
-	0xd8, 0xd1, 0x32, 0xe4, 0xef, 0x9d, 0x23, 0xfa, 0x4e, 0x2e, 0xd8, 0x73, 0x18, 0xa6, 0x19, 0x5f,
-	0xd0, 0xc6, 0x13, 0xda, 0x28, 0xd7, 0xee, 0x5f, 0x16, 0x80, 0x6e, 0x1f, 0x92, 0xc6, 0x0f, 0x82,
-	0x64, 0xb5, 0x14, 0x94, 0x41, 0x32, 0xaf, 0x6a, 0x42, 0x78, 0x73, 0xe1, 0x67, 0x82, 0x6a, 0x97,
-	0xbc, 0xd3, 0x86, 0x2e, 0x9a, 0x58, 0xdd, 0x34, 0xa9, 0x79, 0xca, 0xce, 0x4b, 0xee, 0x35, 0xcd,
-	0x75, 0x42, 0xd9, 0x4d, 0x42, 0xd5, 0x49, 0x2c, 0x03, 0xf5, 0x5b, 0x24, 0x2e, 0xc1, 0x53, 0x64,
-	0x18, 0xd4, 0xc8, 0xf0, 0x31, 0x1c, 0x14, 0xbe, 0x12, 0x93, 0x21, 0x65, 0xa9, 0x1b, 0xb1, 0xf9,
-	0x5c, 0x83, 0x3b, 0x92, 0xb0, 0x69, 0x0b, 0xd6, 0x99, 0x66, 0xfc, 0x67, 0x99, 0x00, 0x28, 0x81,
-	0x36, 0x60, 0x6e, 0x2c, 0x7a, 0x21, 0x89, 0x33, 0xf2, 0xd4, 0x0a, 0xed, 0x08, 0xe0, 0x22, 0x24,
-	0xba, 0x8c, 0x3c, 0xb5, 0xd2, 0x50, 0x1e, 0x6c, 0x82, 0x72, 0xd2, 0x80, 0xf2, 0x0d, 0x38, 0x85,
-	0x80, 0x5c, 0xe6, 0x39, 0x17, 0x74, 0x66, 0x85, 0xeb, 0x0b, 0x80, 0x8c, 0x7e, 0x51, 0xed, 0x86,
-	0xac, 0x5d, 0x5b, 0x30, 0xee, 0xad, 0x58, 0xcb, 0xee, 0x99, 0xd4, 0xbd, 0x72, 0xed, 0xfe, 0x69,
-	0xc2, 0xa4, 0x0c, 0x1c, 0x60, 0x37, 0xd9, 0x19, 0xf4, 0x25, 0x5f, 0x29, 0xd4, 0xf8, 0xfc, 0x99,
-	0xba, 0x88, 0x85, 0xdb, 0x15, 0x6d, 0xde, 0xec, 0x79, 0xca, 0x8d, 0xbd, 0x84, 0x1e, 0x9e, 0x97,
-	0x62, 0x8f, 0xcf, 0x9f, 0x36, 0xdc, 0x91, 0x80, 0x37, 0x7b, 0x1e, 0xb9, 0xb0, 0xcf, 0xc0, 0xce,
-	0x78, 0xea, 0xaf, 0x89, 0x38, 0xe3, 0xf3, 0xe3, 0x86, 0xaf, 0x87, 0x7b, 0x37, 0x7b, 0x9e, 0x74,
-	0xc2, 0xc0, 0x77, 0x9c, 0x87, 0xc4, 0x9d, 0x76, 0xe0, 0xef, 0x38, 0x0f, 0x31, 0x30, 0xba, 0x60,
-	0xe0, 0x20, 0x4e, 0x72, 0xc9, 0xa1, 0x76, 0xe0, 0x2b, 0xdc, 0xc3, 0xc0, 0xe4, 0x84, 0x47, 0xbc,
-	0xf7, 0x97, 0xfe, 0x5b, 0xc9, 0xa6, 0xf6, 0x11, 0x5f, 0xd1, 0x26, 0x1e, 0x51, 0xba, 0xb1, 0x09,
-	0x98, 0x62, 0xad, 0x70, 0x37, 0xc5, 0x7a, 0x3e, 0x00, 0xfb, 0x01, 0x19, 0xea, 0x7e, 0xae, 0xdb,
-	0x27, 0x3f, 0x42, 0x34, 0xf2, 0x55, 0x2a, 0xef, 0x6c, 0xee, 0x18, 0x53, 0x0b, 0xaf, 0xb1, 0xb6,
-	0xb8, 0x7f, 0x18, 0xfa, 0x13, 0xd9, 0xca, 0x96, 0xe2, 0x1b, 0xdb, 0x15, 0xdf, 0xdc, 0x4d, 0xf1,
-	0xad, 0x0d, 0x8a, 0xaf, 0x95, 0xae, 0x57, 0x55, 0x3a, 0xf7, 0x1a, 0xf6, 0xab, 0xb8, 0x6d, 0x7d,
-	0xab, 0x8e, 0x55, 0x1f, 0x54, 0x3d, 0xaa, 0x29, 0xdf, 0xc3, 0x41, 0x0d, 0xd1, 0xad, 0x61, 0xf4,
-	0xfd, 0x31, 0xab, 0xf7, 0xc7, 0xfd, 0x45, 0x97, 0x83, 0x68, 0x23, 0x93, 0x51, 0x40, 0x5e, 0xaf,
-	0x53, 0xd9, 0x24, 0xdb, 0x2b, 0xd7, 0x58, 0x4a, 0xaa, 0x28, 0x6e, 0xcd, 0x0c, 0x4f, 0x2e, 0x30,
-	0xf2, 0x43, 0x12, 0xaf, 0xee, 0x51, 0xaa, 0x2c, 0x3c, 0xa8, 0x5c, 0xb9, 0x67, 0xba, 0x44, 0xe2,
-	0xc6, 0xb6, 0x12, 0xdd, 0xdf, 0x4d, 0x38, 0xf4, 0x78, 0xc0, 0xa3, 0x54, 0xec, 0xfc, 0x92, 0x37,
-	0x04, 0xd7, 0x6c, 0x0b, 0xae, 0x3e, 0xb8, 0xd5, 0x14, 0x0e, 0x25, 0x66, 0xbd, 0x9a, 0x98, 0xd5,
-	0x64, 0xc8, 0x6e, 0xca, 0x50, 0x29, 0x2b, 0xfd, 0x4d, 0xb2, 0x32, 0xa8, 0xcb, 0x4a, 0x43, 0x3a,
-	0x86, 0x8f, 0x4a, 0xc7, 0xa8, 0x21, 0x1d, 0x99, 0xe6, 0xb1, 0x16, 0xa2, 0x47, 0xfb, 0xc1, 0xa0,
-	0xe7, 0xeb, 0x46, 0xd0, 0xef, 0x8d, 0x1d, 0x28, 0xcf, 0xd2, 0xab, 0x9c, 0xc5, 0x9d, 0xc3, 0x61,
-	0x3d, 0x67, 0xce, 0xce, 0x60, 0x90, 0xa9, 0xc1, 0xc1, 0xa0, 0xc1, 0xe1, 0x59, 0x4b, 0x54, 0x68,
-	0x78, 0x28, 0xbc, 0xdc, 0x2f, 0x10, 0xc8, 0x77, 0xc5, 0xee, 0x62, 0x79, 0x97, 0x6c, 0x05, 0xff,
-	0x6f, 0x13, 0x4e, 0x3c, 0x9e, 0x96, 0x8c, 0x59, 0x65, 0x19, 0x5f, 0x0a, 0xfa, 0x54, 0x23, 0x65,
-	0xd4, 0x90, 0xfa, 0xff, 0xa7, 0xb8, 0xca, 0x64, 0x61, 0xd7, 0x27, 0x8b, 0x8e, 0x87, 0xbb, 0xbf,
-	0xc3, 0x7c, 0x37, 0x68, 0x3e, 0xc7, 0x5a, 0x35, 0x86, 0xb5, 0xf9, 0x48, 0x3f, 0x73, 0xa3, 0xda,
-	0x33, 0x57, 0x9f, 0x85, 0xa0, 0x39, 0x0b, 0xb9, 0x5f, 0xc2, 0x51, 0x03, 0x89, 0x1c, 0x7b, 0xa2,
-	0x1b, 0x5f, 0xe8, 0x67, 0xd5, 0xe4, 0xfe, 0x08, 0x1f, 0x74, 0x63, 0x91, 0xb3, 0x0b, 0x24, 0xcd,
-	0x5d, 0x52, 0x30, 0xe1, 0x23, 0xc5, 0x84, 0x6e, 0x77, 0x4f, 0xfa, 0xba, 0x57, 0xf0, 0xb4, 0x52,
-	0xc5, 0x7c, 0xad, 0xdf, 0xf4, 0x4e, 0x60, 0x4b, 0x62, 0x9a, 0x55, 0x62, 0xba, 0x30, 0xa9, 0x64,
-	0x59, 0x5c, 0xe7, 0xec, 0x08, 0xac, 0xc5, 0x75, 0x71, 0x00, 0xfc, 0xe9, 0xfe, 0x06, 0x4e, 0x25,
-	0x91, 0xe2, 0xef, 0x7c, 0x4d, 0x42, 0xf0, 0x1f, 0xaf, 0x8e, 0xaa, 0xd0, 0xea, 0xae, 0xb0, 0x76,
-	0x75, 0x7e, 0x85, 0xe7, 0x5d, 0xd9, 0xd5, 0x69, 0x77, 0x50, 0x68, 0x95, 0xcb, 0xec, 0xce, 0x65,
-	0x55, 0x73, 0x5d, 0x02, 0xab, 0x74, 0xa3, 0xb8, 0xa9, 0x9f, 0x36, 0x6f, 0x6a, 0xc7, 0x88, 0x5f,
-	0xde, 0xd2, 0x57, 0x35, 0x54, 0xd0, 0x63, 0x97, 0x9b, 0xba, 0xf1, 0x25, 0xf9, 0x06, 0xc3, 0xa5,
-	0xad, 0x70, 0x2f, 0xa1, 0x2f, 0x13, 0xaa, 0x59, 0xa7, 0xa3, 0x22, 0xe5, 0xe0, 0xce, 0x90, 0xac,
-	0x65, 0x04, 0x39, 0x73, 0x96, 0x6f, 0x8e, 0x41, 0x77, 0x52, 0x2e, 0x6e, 0xfb, 0xf4, 0xbf, 0xdf,
-	0xc5, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xa1, 0x37, 0xc2, 0xe4, 0x0d, 0x0e, 0x00, 0x00,
+var fileDescriptor_7110f4228953d675 = []byte{
+	// 1031 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xcd, 0x6e, 0xdb, 0x46,
+	0x10, 0x36, 0x49, 0x51, 0xb2, 0x46, 0xb6, 0xec, 0x6c, 0x52, 0x97, 0x28, 0xda, 0x40, 0x58, 0xf4,
+	0xa0, 0xb4, 0x85, 0x93, 0xda, 0x45, 0x81, 0xde, 0x6a, 0x5b, 0x6d, 0x2d, 0xb4, 0x29, 0x8a, 0x6d,
+	0x10, 0xf4, 0x4a, 0x93, 0x9b, 0x80, 0x00, 0x2d, 0x32, 0xe4, 0xca, 0x88, 0xce, 0x7d, 0x87, 0x1e,
+	0xfa, 0x2e, 0xbd, 0xf4, 0x19, 0xfa, 0x40, 0xc5, 0xcc, 0x2e, 0xb9, 0xfc, 0x91, 0x21, 0x9f, 0x72,
+	0x31, 0xb4, 0xb3, 0xdf, 0xce, 0xce, 0xce, 0xf7, 0xcd, 0x0c, 0x0d, 0xd3, 0xa4, 0x2c, 0xd7, 0xe1,
+	0x2a, 0x92, 0xa7, 0x79, 0x91, 0xa9, 0x8c, 0xf9, 0x6a, 0x93, 0xcb, 0x92, 0xff, 0x3b, 0x80, 0xfd,
+	0xa5, 0xd9, 0x61, 0x4f, 0x01, 0x2a, 0xd4, 0x32, 0x0e, 0x9c, 0x99, 0x33, 0x1f, 0x8b, 0x86, 0x85,
+	0x71, 0x38, 0x50, 0x99, 0x0a, 0xd3, 0xcb, 0x30, 0x45, 0x4b, 0xe0, 0xce, 0x9c, 0xb9, 0x27, 0x5a,
+	0x36, 0x36, 0x83, 0x49, 0x2c, 0x6f, 0xd4, 0x95, 0x4c, 0xd2, 0x64, 0xf5, 0x36, 0xf0, 0x08, 0xd2,
+	0x34, 0xb1, 0x2f, 0xe0, 0x38, 0x4d, 0xde, 0xad, 0x93, 0x38, 0x54, 0x49, 0xb6, 0x12, 0xf8, 0x37,
+	0x18, 0xcc, 0x9c, 0xb9, 0x23, 0x7a, 0x76, 0x36, 0x87, 0xa3, 0x28, 0x4b, 0xd3, 0x50, 0xc9, 0x22,
+	0x4c, 0x5f, 0x87, 0xe9, 0x5a, 0x06, 0x3e, 0x79, 0xec, 0x9a, 0xd9, 0xa7, 0x30, 0xc6, 0x4b, 0x34,
+	0x66, 0x48, 0x18, 0x6b, 0x60, 0xe7, 0x3a, 0x2a, 0x21, 0xa3, 0xac, 0x88, 0xcb, 0x60, 0x34, 0xf3,
+	0xe6, 0x93, 0xb3, 0x47, 0xa7, 0x94, 0x83, 0xd3, 0x45, 0xbd, 0x23, 0x9a, 0x28, 0xf6, 0x1d, 0x4c,
+	0x93, 0xd5, 0x5d, 0x98, 0x26, 0x71, 0x75, 0x6e, 0xff, 0xbe, 0x73, 0x1d, 0x20, 0x3b, 0x81, 0x61,
+	0xa9, 0x42, 0xb5, 0x2e, 0x83, 0xf1, 0xcc, 0x99, 0xfb, 0xc2, 0xac, 0xd8, 0xb7, 0x70, 0x82, 0x51,
+	0x97, 0xea, 0x17, 0xfb, 0xd2, 0xdf, 0x8a, 0x24, 0x92, 0x01, 0x50, 0x06, 0xee, 0xd9, 0x45, 0x7f,
+	0xb9, 0x2c, 0x92, 0x2c, 0x0e, 0x26, 0xf4, 0x34, 0xb3, 0xa2, 0x5c, 0xd2, 0x89, 0x1f, 0xde, 0xe7,
+	0x49, 0x21, 0x5f, 0x25, 0xb7, 0x32, 0x38, 0x20, 0x44, 0xcf, 0x8e, 0xec, 0x46, 0x85, 0x0c, 0x95,
+	0x46, 0x1d, 0x12, 0xaa, 0x61, 0x61, 0x01, 0x8c, 0x6e, 0x0c, 0xb1, 0x53, 0xda, 0xac, 0x96, 0x95,
+	0x2e, 0x64, 0x71, 0x11, 0xc7, 0x45, 0x70, 0x64, 0x75, 0xa1, 0x2d, 0xfc, 0x2f, 0x0f, 0xc0, 0x26,
+	0x03, 0x25, 0x10, 0x46, 0x51, 0xb6, 0x5e, 0x29, 0xc2, 0x6b, 0x1d, 0x35, 0x4d, 0x48, 0x56, 0xa9,
+	0xc2, 0x42, 0x51, 0x24, 0x5a, 0x45, 0xd6, 0xb0, 0x8d, 0x74, 0x6f, 0x3b, 0xe9, 0x2d, 0xa4, 0xce,
+	0xa3, 0x56, 0x52, 0xd7, 0xdc, 0x96, 0x87, 0xdf, 0x95, 0x47, 0x5b, 0x92, 0xda, 0xd1, 0xb0, 0x27,
+	0xc9, 0x9a, 0x0a, 0x43, 0xed, 0xa8, 0x45, 0xed, 0xe7, 0x70, 0x58, 0x61, 0x75, 0x86, 0xf7, 0xe9,
+	0x96, 0xb6, 0x11, 0x53, 0x29, 0x2d, 0x55, 0x63, 0x4d, 0x82, 0xb5, 0x60, 0x9c, 0x79, 0x21, 0x7f,
+	0xd7, 0x17, 0x00, 0x5d, 0x60, 0x0d, 0x78, 0x37, 0x06, 0xbd, 0xd4, 0x32, 0x18, 0x0b, 0xb3, 0x42,
+	0x3b, 0xd2, 0xb1, 0x8c, 0x89, 0xfc, 0xb1, 0x30, 0x2b, 0xfe, 0x1a, 0x82, 0xaa, 0xb8, 0x2f, 0xca,
+	0x52, 0x2a, 0x7a, 0x81, 0x61, 0xe9, 0x29, 0x40, 0x41, 0xbf, 0x28, 0x12, 0x47, 0x47, 0x62, 0x2d,
+	0xec, 0x13, 0xd8, 0xbf, 0x51, 0x1b, 0x9d, 0x0b, 0x97, 0x72, 0x51, 0xaf, 0xf9, 0x3f, 0x2e, 0x4c,
+	0x6b, 0xc7, 0x11, 0xe6, 0x86, 0x3d, 0x87, 0xa1, 0xd6, 0x12, 0xb9, 0x9a, 0x9c, 0x7d, 0x64, 0x8a,
+	0xa4, 0x82, 0x5d, 0xd1, 0xe6, 0xf5, 0x9e, 0x30, 0x30, 0xf6, 0x0c, 0x06, 0x18, 0x3d, 0xf9, 0x9e,
+	0x9c, 0x3d, 0xee, 0xc0, 0x51, 0x4e, 0xd7, 0x7b, 0x82, 0x20, 0xec, 0x2b, 0xf0, 0x0b, 0x99, 0x87,
+	0x1b, 0x92, 0xc1, 0xe4, 0xec, 0x49, 0x07, 0x2b, 0x70, 0xef, 0x7a, 0x4f, 0x68, 0x10, 0x3a, 0x7e,
+	0x23, 0x65, 0x4c, 0x4a, 0xe8, 0x3b, 0xfe, 0x51, 0xca, 0x18, 0x1d, 0x23, 0x04, 0x1d, 0x47, 0x69,
+	0x56, 0x6a, 0x45, 0xf4, 0x1d, 0x5f, 0xe1, 0x1e, 0x3a, 0x26, 0x10, 0x3e, 0xf1, 0x36, 0x5c, 0x85,
+	0x6f, 0xb5, 0x36, 0xfa, 0x4f, 0x7c, 0x49, 0x9b, 0xf8, 0x44, 0x0d, 0x63, 0x53, 0x70, 0xd5, 0xc6,
+	0xb0, 0xe8, 0xaa, 0xcd, 0xe5, 0x08, 0xfc, 0x3b, 0xd4, 0x1b, 0x7f, 0x61, 0xd3, 0xa7, 0x0f, 0x21,
+	0x1b, 0xe5, 0x3a, 0xd7, 0xf5, 0x54, 0x06, 0xce, 0xcc, 0xc3, 0x12, 0xb3, 0x16, 0xfe, 0xb7, 0x63,
+	0x8f, 0xe8, 0x54, 0xf6, 0xba, 0xb1, 0xb3, 0xbb, 0x1b, 0xbb, 0x0f, 0xeb, 0xc6, 0xde, 0x3d, 0xdd,
+	0xd8, 0x76, 0xa1, 0x41, 0xb3, 0x0b, 0xf1, 0x05, 0x1c, 0x34, 0x79, 0xdb, 0x39, 0x47, 0x9e, 0x98,
+	0x3c, 0x98, 0x78, 0x4c, 0x52, 0x7e, 0x82, 0xc3, 0x16, 0xa3, 0x3b, 0xdd, 0xd8, 0x6a, 0x70, 0x9b,
+	0xd5, 0xc0, 0xff, 0xb0, 0xe1, 0x20, 0xdb, 0xa8, 0x64, 0x6c, 0x07, 0xaf, 0x36, 0xb9, 0x4e, 0x92,
+	0x2f, 0xea, 0x35, 0x86, 0x92, 0x1b, 0x89, 0x7b, 0x73, 0x47, 0xe8, 0x05, 0x7a, 0xbe, 0xcb, 0xd2,
+	0xf5, 0x2d, 0x36, 0x1e, 0x0f, 0x1f, 0xaa, 0x57, 0xfc, 0xb9, 0x0d, 0x91, 0xb4, 0xb1, 0x2b, 0x44,
+	0xfe, 0xa7, 0x03, 0x47, 0x42, 0x46, 0x32, 0xc9, 0xd5, 0x83, 0xa7, 0x6c, 0xa7, 0x7d, 0xba, 0xfd,
+	0xf6, 0x69, 0x1f, 0xee, 0x75, 0xdb, 0x80, 0x69, 0x4d, 0x83, 0x66, 0x6b, 0xe2, 0x3f, 0xc3, 0xa3,
+	0x4e, 0x10, 0xcb, 0xc5, 0x43, 0xb2, 0x6b, 0x9c, 0xb9, 0x2d, 0x67, 0x57, 0x70, 0x64, 0x69, 0xd2,
+	0xd3, 0xee, 0x05, 0x8c, 0x0a, 0x33, 0x21, 0x1d, 0x9a, 0x90, 0x27, 0xa6, 0x32, 0x3a, 0xb7, 0x8a,
+	0x0a, 0xc6, 0xbf, 0xc6, 0xb4, 0xbc, 0xab, 0xa3, 0x59, 0xbd, 0xc9, 0x76, 0xa6, 0xf2, 0x3f, 0x17,
+	0x4e, 0x84, 0xcc, 0xeb, 0xfc, 0xaf, 0x8b, 0x42, 0xae, 0x14, 0x1d, 0xb5, 0xa1, 0x3a, 0xad, 0x96,
+	0xfc, 0xe1, 0xbf, 0x57, 0x1a, 0x33, 0xd4, 0x6f, 0xcf, 0xd0, 0x2d, 0x43, 0x6d, 0xf8, 0x80, 0x2f,
+	0x99, 0x51, 0x77, 0x54, 0xd9, 0x1a, 0xdc, 0x6f, 0x7d, 0x09, 0xd8, 0x11, 0x30, 0x6e, 0x8e, 0x80,
+	0xce, 0xd4, 0x87, 0xee, 0xd4, 0xe7, 0xdf, 0xc0, 0x71, 0x87, 0x89, 0x12, 0x73, 0x62, 0x13, 0x5f,
+	0x75, 0xa3, 0xa6, 0x89, 0xff, 0x0a, 0x1f, 0x6f, 0xe7, 0xa2, 0x64, 0xe7, 0xe0, 0x27, 0xf8, 0xc3,
+	0x48, 0xe1, 0xb3, 0x5a, 0x0a, 0xdb, 0xe0, 0x42, 0x63, 0xf9, 0x4b, 0x78, 0xdc, 0x88, 0xe2, 0x72,
+	0x63, 0xe7, 0xdd, 0x56, 0x62, 0xdb, 0x5a, 0x71, 0x7b, 0x5a, 0xe1, 0x30, 0x6d, 0xdc, 0xb7, 0x5c,
+	0x94, 0xec, 0x18, 0xbc, 0xe5, 0xa2, 0x7a, 0x0a, 0xfe, 0xe4, 0xef, 0x81, 0x35, 0xae, 0xac, 0xa4,
+	0xbc, 0xab, 0x2a, 0x18, 0x0c, 0x42, 0x5b, 0x95, 0xf4, 0xbb, 0x11, 0xa5, 0xd7, 0x8a, 0xd2, 0x96,
+	0xe9, 0xa0, 0xd5, 0x9f, 0x2e, 0xf0, 0xe6, 0xbc, 0x7b, 0xf3, 0x97, 0xdd, 0x22, 0xda, 0xf2, 0x99,
+	0x59, 0xd7, 0xcf, 0xf7, 0x98, 0xaf, 0xbc, 0xd9, 0x74, 0xa9, 0x10, 0x9e, 0xc1, 0x50, 0x23, 0xcc,
+	0x10, 0xde, 0xe2, 0xc2, 0x00, 0xf8, 0x1c, 0x79, 0xaf, 0x3d, 0xe8, 0x4f, 0x9b, 0xba, 0x19, 0x3a,
+	0x24, 0x6f, 0xbd, 0xb8, 0x19, 0xd2, 0x3f, 0x0c, 0xe7, 0xff, 0x07, 0x00, 0x00, 0xff, 0xff, 0x7f,
+	0x53, 0x25, 0x23, 0x42, 0x0c, 0x00, 0x00,
 }

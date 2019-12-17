@@ -10,60 +10,13 @@ import (
 )
 
 func (c *Collateralize) execDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
-	set := &types.LocalDBSet{}
-	for _, item := range receiptData.Logs {
-		if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeBorrow || item.Ty == pty.TyLogCollateralizeAppend ||
-			item.Ty == pty.TyLogCollateralizeRepay || item.Ty == pty.TyLogCollateralizeFeed || item.Ty == pty.TyLogCollateralizeRetrieve {
-			var collateralizeLog pty.ReceiptCollateralize
-			err := types.Decode(item.Log, &collateralizeLog)
-			if err != nil {
-				return nil, err
-			}
-
-			switch item.Ty {
-			case pty.TyLogCollateralizeCreate:
-				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId, collateralizeLog.PreIndex)...)
-				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
-			case pty.TyLogCollateralizeBorrow:
-				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
-			case pty.TyLogCollateralizeAppend:
-				if collateralizeLog.Status == pty.CollateralizeUserStatusWarning {
-					set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId,
-						collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-					set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-					//set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
-					//	collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-					//set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
-				}
-			case pty.TyLogCollateralizeRepay:
-				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId,
-					collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				//set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
-				//	collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-			case pty.TyLogCollateralizeFeed:
-				set.KV = append(set.KV, c.addCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.CollateralizeId,
-					collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-				set.KV = append(set.KV, c.deleteCollateralizeRecordStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				//set.KV = append(set.KV, c.addCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.CollateralizeId,
-				//	collateralizeLog.RecordId, collateralizeLog.PreIndex)...)
-				//// 如果没有被清算，需要把地址索引更新
-				//if collateralizeLog.Status == pty.CollateralizeUserStatusWarning || collateralizeLog.Status == pty.CollateralizeUserStatusExpire {
-				//	set.KV = append(set.KV, c.deleteCollateralizeRecordAddr(collateralizeLog.AccountAddr, collateralizeLog.Index)...)
-				//}
-			case pty.TyLogCollateralizeRetrieve:
-				set.KV = append(set.KV, c.deleteCollateralizeStatus(collateralizeLog.Status, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.deleteCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.Index)...)
-				set.KV = append(set.KV, c.addCollateralizeStatus(collateralizeLog.PreStatus, collateralizeLog.CollateralizeId, collateralizeLog.PreIndex)...)
-				set.KV = append(set.KV, c.addCollateralizeAddr(collateralizeLog.CreateAddr, collateralizeLog.CollateralizeId, collateralizeLog.PreStatus, collateralizeLog.PreIndex)...)
-			}
-		}
+	kvs, err := c.DelRollbackKV(tx, tx.Execer)
+	if err != nil {
+		return nil, err
 	}
-	return set, nil
-
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = append(dbSet.KV, kvs...)
+	return dbSet, nil
 }
 
 // ExecDelLocal_Create Action

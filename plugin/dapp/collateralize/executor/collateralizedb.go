@@ -5,7 +5,7 @@
 package executor
 
 import (
-	"fmt"
+	"github.com/33cn/chain33/common/db/table"
 	"math"
 
 	"github.com/33cn/chain33/account"
@@ -87,7 +87,7 @@ type Action struct {
 	coinsAccount  *account.DB // bty账户
 	tokenAccount  *account.DB // ccny账户
 	db            dbm.KV
-	localDB       dbm.Lister
+	localDB       dbm.KVDB
 	txhash        []byte
 	fromaddr      string
 	blocktime     int64
@@ -122,11 +122,8 @@ func (action *Action) GetCreateReceiptLog(collateralize *pty.Collateralize) *typ
 
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
-	c.PreStatus = collateralize.PreStatus
 	c.Status = collateralize.Status
-	c.CreateAddr = action.fromaddr
-	c.Index = collateralize.Index
-	c.PreIndex = collateralize.PreIndex
+	c.AccountAddr = action.fromaddr
 
 	log.Log = types.Encode(c)
 
@@ -143,7 +140,6 @@ func (action *Action) GetBorrowReceiptLog(collateralize *pty.Collateralize, reco
 	c.AccountAddr = action.fromaddr
 	c.RecordId = record.RecordId
 	c.Status = record.Status
-	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -160,9 +156,6 @@ func (action *Action) GetRepayReceiptLog(collateralize *pty.Collateralize, recor
 	c.AccountAddr = action.fromaddr
 	c.RecordId = record.RecordId
 	c.Status = record.Status
-	c.PreStatus = record.PreStatus
-	c.PreIndex = record.PreIndex
-	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -179,9 +172,6 @@ func (action *Action) GetAppendReceiptLog(collateralize *pty.Collateralize, reco
 	c.AccountAddr = action.fromaddr
 	c.RecordId = record.RecordId
 	c.Status = record.Status
-	c.PreStatus = record.PreStatus
-	c.PreIndex = record.PreIndex
-	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -198,9 +188,6 @@ func (action *Action) GetFeedReceiptLog(collateralize *pty.Collateralize, record
 	c.AccountAddr = record.AccountAddr
 	c.RecordId = record.RecordId
 	c.Status = record.Status
-	c.PreStatus = record.PreStatus
-	c.PreIndex = record.PreIndex
-	c.Index = record.Index
 
 	log.Log = types.Encode(c)
 
@@ -215,10 +202,7 @@ func (action *Action) GetRetrieveReceiptLog(collateralize *pty.Collateralize) *t
 	c := &pty.ReceiptCollateralize{}
 	c.CollateralizeId = collateralize.CollateralizeId
 	c.Status = collateralize.Status
-	c.PreStatus = collateralize.PreStatus
-	c.CreateAddr = action.fromaddr
-	c.PreIndex = collateralize.PreIndex
-	c.Index = collateralize.Index
+	c.AccountAddr = action.fromaddr
 
 	log.Log = types.Encode(c)
 
@@ -361,8 +345,8 @@ func isSuperAddr(addr string, db dbm.KV) bool {
 }
 
 // 获取可放贷金额
-func getCollBalance(totalBalance int64, localdb dbm.Lister, db dbm.KV) (int64, error) {
-	collIDRecords, err := queryCollateralizeByStatus(localdb, pty.CollateralizeStatusCreated, 0)
+func getCollBalance(totalBalance int64, localdb dbm.KVDB, db dbm.KV) (int64, error) {
+	collIDRecords, err := queryCollateralizeByStatus(localdb, pty.CollateralizeStatusCreated, "")
 	if err != nil {
 		clog.Debug("Query_CollateralizeByStatus", "get collateralize record error", err)
 	}
@@ -423,7 +407,7 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 	}
 
 	// 根据地址查找ID
-	collateralizeIDs, err := queryCollateralizeByAddr(action.localDB, action.fromaddr, pty.CollateralizeStatusCreated, 0)
+	collateralizeIDs, err := queryCollateralizeByAddr(action.localDB, action.fromaddr, pty.CollateralizeStatusCreated, "")
 	if err != nil && err != types.ErrNotFound {
 		clog.Error("CollateralizeCreate.queryCollateralizeByAddr", "addr", action.fromaddr, "error", err)
 		return nil, err
@@ -453,7 +437,6 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 		coll.Balance = create.TotalBalance
 		coll.CreateAddr = action.fromaddr
 		coll.Status = pty.CollateralizeActionCreate
-		coll.Index = action.GetIndex()
 		coll.CollBalance = 0
 	} else {
 		collateralize, err := queryCollateralizeByID(action.db, collateralizeIDs[0])
@@ -464,9 +447,7 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 		coll.Collateralize = *collateralize
 		coll.TotalBalance += create.TotalBalance
 		coll.Balance += create.TotalBalance
-		coll.PreIndex = coll.Index
 		coll.PreStatus = coll.Status
-		coll.Index = action.GetIndex()
 	}
 	clog.Debug("CollateralizeCreate created", "CollateralizeID", collateralizeID, "TotalBalance", create.TotalBalance)
 
@@ -497,7 +478,7 @@ func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error)
 // value:借出ccny数量， colValue:抵押物数量， price:抵押物价格
 func calcLiquidationPrice(value int64, colValue int64) float64 {
 	liquidationRation := float64(value) / float64(colValue)
-	liquidationPrice := liquidationRation * pty.CollateralizePreLiquidationRatio
+	liquidationPrice := math.Trunc(liquidationRation * pty.CollateralizePreLiquidationRatio * 1e4)/1e4
 
 	return liquidationPrice
 }
@@ -639,10 +620,9 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	borrowRecord.StartTime = action.blocktime
 	borrowRecord.CollateralPrice = lastPrice
 	borrowRecord.DebtValue = borrow.GetValue()
-	borrowRecord.LiquidationPrice = coll.LiquidationRatio * lastPrice * pty.CollateralizePreLiquidationRatio
+	borrowRecord.LiquidationPrice = math.Trunc(coll.LiquidationRatio * lastPrice * pty.CollateralizePreLiquidationRatio * 1e4)/1e4
 	borrowRecord.Status = pty.CollateralizeUserStatusCreate
 	borrowRecord.ExpireTime = action.blocktime + coll.Period
-	borrowRecord.Index = action.GetIndex()
 
 	// 记录当前借贷的最高自动清算价格
 	if coll.LatestLiquidationPrice < borrowRecord.LiquidationPrice {
@@ -742,8 +722,6 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	// 借贷记录关闭
 	borrowRecord.PreStatus = borrowRecord.Status
 	borrowRecord.Status = pty.CollateralizeUserStatusClose
-	borrowRecord.PreIndex = borrowRecord.Index
-	borrowRecord.Index = action.GetIndex()
 
 	// 保存
 	coll.Balance += borrowRecord.DebtValue
@@ -843,8 +821,6 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 		if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeStatusCreated
-			borrowRecord.PreIndex = borrowRecord.Index
-			borrowRecord.Index = action.GetIndex()
 		}
 	}
 
@@ -957,16 +933,12 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price float64) 
 			borrowRecord.LiquidateTime = action.blocktime
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusSystemLiquidate
-			borrowRecord.PreIndex = borrowRecord.Index
-			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 			coll.CollBalance -= borrowRecord.CollateralValue
 		} else {
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusWarning
-			borrowRecord.PreIndex = borrowRecord.Index
-			borrowRecord.Index = action.GetIndex()
 		}
 
 		log := action.GetFeedReceiptLog(coll, borrowRecord)
@@ -1016,14 +988,10 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			borrowRecord.LiquidateTime = action.blocktime
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusExpireLiquidate
-			borrowRecord.PreIndex = borrowRecord.Index
-			borrowRecord.Index = action.GetIndex()
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 			coll.CollBalance -= borrowRecord.CollateralValue
 		} else {
-			borrowRecord.PreIndex = borrowRecord.Index
-			borrowRecord.Index = action.GetIndex()
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusExpire
 		}
@@ -1085,7 +1053,7 @@ func (action *Action) CollateralizeFeed(feed *pty.CollateralizeFeed) (*types.Rec
 		return nil, pty.ErrPriceInvalid
 	}
 
-	ids, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated, 0)
+	ids, err := queryCollateralizeByStatus(action.localDB, pty.CollateralizeStatusCreated, "")
 	if err != nil {
 		clog.Debug("CollateralizePriceFeed", "get collateralize record error", err)
 	}
@@ -1172,8 +1140,6 @@ func (action *Action) CollateralizeRetrieve(retrieve *pty.CollateralizeRetrieve)
 	if coll.TotalBalance == 0 {
 		coll.Status = pty.CollateralizeStatusClose
 	}
-	coll.PreIndex = coll.Index
-	coll.Index = action.GetIndex()
 	coll.Save(action.db)
 	kv = append(kv, coll.GetKVSet()...)
 
@@ -1200,57 +1166,61 @@ func queryCollateralizeByID(db dbm.KV, collateralizeID string) (*pty.Collaterali
 	return &coll, nil
 }
 
-func queryCollateralizeByStatus(localdb dbm.Lister, status int32, index int64) ([]string, error) {
-	var data [][]byte
-	var err error
-	if index != 0 {
-		data, err = localdb.List(calcCollateralizeStatusPrefix(status), calcCollateralizeStatusKey(status, index), DefultCount, ListDESC)
-	} else {
-		data, err = localdb.List(calcCollateralizeStatusPrefix(status), nil, DefultCount, ListDESC)
+func queryCollateralizeByStatus(localdb dbm.KVDB, status int32, collID string) ([]string, error) {
+	query := pty.NewCollateralizeTable(localdb).GetQuery(localdb)
+	var primary []byte
+	if len(collID) > 0 {
+		primary = []byte(collID)
 	}
+
+	var data = &pty.ReceiptCollateralize{
+		CollateralizeId:collID,
+		Status:status,
+	}
+	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
 	if err != nil {
-		clog.Debug("queryCollateralizesByStatus", "error", err)
+		clog.Debug("queryCollateralizeByStatus.List", "error", err)
 		return nil, err
 	}
 
 	var ids []string
-	var coll pty.CollateralizeRecord
-	for _, collBytes := range data {
-		err = types.Decode(collBytes, &coll)
-		if err != nil {
-			clog.Debug("queryCollateralizesByStatus", "decode", err)
-			return nil, err
-		}
-		ids = append(ids, coll.CollateralizeId)
+	for _, row := range rows {
+		ids = append(ids, string(row.Primary))
 	}
 
 	return ids, nil
 }
 
-func queryCollateralizeByAddr(localdb dbm.Lister, addr string, status int32, index int64) ([]string, error) {
-	var data [][]byte
-	var err error
-	if index != 0 {
-		data, err = localdb.List(calcCollateralizeAddrPrefix(addr), calcCollateralizeAddrKey(addr, index), DefultCount, ListDESC)
-	} else {
-		data, err = localdb.List(calcCollateralizeAddrPrefix(addr), nil, DefultCount, ListDESC)
-	}
-	if err != nil {
-		clog.Debug("queryCollateralizesByAddr", "error", err)
-		return nil, err
+func queryCollateralizeByAddr(localdb dbm.KVDB, addr string, status int32, collID string) ([]string, error) {
+	query := pty.NewCollateralizeTable(localdb).GetQuery(localdb)
+	var primary []byte
+	if len(collID) > 0 {
+		primary = []byte(collID)
 	}
 
-	var ids []string
-	var coll pty.CollateralizeRecord
-	for _, collBytes := range data {
-		err = types.Decode(collBytes, &coll)
+	var data = &pty.ReceiptCollateralize{
+		CollateralizeId:collID,
+		Status:status,
+		AccountAddr:addr,
+	}
+	var rows []*table.Row
+	var err error
+	if status == 0 {
+		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
 		if err != nil {
-			clog.Debug("queryCollateralizesByAddr", "decode", err)
+			clog.Debug("queryCollateralizeByAddr.List", "index", "addr", "error", err)
 			return nil, err
 		}
-		if status == 0 || coll.Status == status {
-			ids = append(ids, coll.CollateralizeId)
+	} else {
+		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeByAddr.List", "index", "addr_status", "error", err)
+			return nil, err
 		}
+	}
+	var ids []string
+	for _, row := range rows {
+		ids = append(ids, string(row.Primary))
 	}
 
 	return ids, nil
@@ -1260,7 +1230,7 @@ func queryCollateralizeByAddr(localdb dbm.Lister, addr string, status int32, ind
 func queryCollateralizeRecordByID(db dbm.KV, collateralizeID string, recordID string) (*pty.BorrowRecord, error) {
 	coll, err := queryCollateralizeByID(db, collateralizeID)
 	if err != nil {
-		clog.Error("queryIssuanceRecordByID", "error", err)
+		clog.Debug("queryCollateralizeRecordByID", "error", err)
 		return nil, err
 	}
 
@@ -1279,32 +1249,40 @@ func queryCollateralizeRecordByID(db dbm.KV, collateralizeID string, recordID st
 	return nil, types.ErrNotFound
 }
 
-func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string, index int64) ([]*pty.BorrowRecord, error) {
-	var data [][]byte
-	var err error
-	if index != 0 {
-		data, err = localdb.List(calcCollateralizeRecordAddrPrefix(addr), calcCollateralizeRecordAddrKey(addr, index), DefultCount, ListDESC)
-	} else {
-		data, err = localdb.List(calcCollateralizeRecordAddrPrefix(addr), nil, DefultCount, ListDESC)
+func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, collID string, recordID string) ([]*pty.BorrowRecord, error) {
+	query := pty.NewRecordTable(localdb).GetQuery(localdb)
+	var primary []byte
+	if len(recordID) > 0 {
+		primary = []byte(recordID)
 	}
-	if err != nil {
-		clog.Debug("queryCollateralizeRecordByAddr", "error", err)
-		return nil, err
+
+	var data = &pty.ReceiptCollateralize{
+		AccountAddr:addr,
+		CollateralizeId:collID,
+	}
+
+	var rows []*table.Row
+	var err error
+	if len(collID) == 0 {
+		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
+			return nil, err
+		}
+	} else {
+		rows, err = query.List("id_addr", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "id_addr", "error", err)
+			return nil, err
+		}
 	}
 
 	var records []*pty.BorrowRecord
-	var coll pty.CollateralizeRecord
-	for _, collBytes := range data {
-		err = types.Decode(collBytes, &coll)
+	for _, row := range rows {
+		record, err := queryCollateralizeRecordByID(db, row.Data.(*pty.ReceiptCollateralize).CollateralizeId, row.Data.(*pty.ReceiptCollateralize).RecordId)
 		if err != nil {
-			clog.Debug("queryCollateralizeRecordByAddr", "decode", err)
-			return nil, err
-		}
-
-		record, err := queryCollateralizeRecordByID(db, coll.CollateralizeId, coll.RecordId)
-		if err != nil {
-			clog.Error("queryIssuanceRecordsByStatus", "decode", err)
-			return nil, err
+			clog.Debug("queryCollateralizeRecordByAddr.queryCollateralizeRecordByID", "error", err)
+			continue
 		}
 		records = append(records, record)
 	}
@@ -1312,38 +1290,39 @@ func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.Lister, addr string, 
 	return records, nil
 }
 
-func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.Lister, status int32, index int64) ([]*pty.BorrowRecord, error) {
-	var statusKey string
-	if status == 0 {
-		statusKey = ""
-	} else {
-		statusKey = fmt.Sprintf("%d", status)
+func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.KVDB, status int32, collID string, recordID string) ([]*pty.BorrowRecord, error) {
+	query := pty.NewRecordTable(localdb).GetQuery(localdb)
+	var primary []byte
+	if len(recordID) > 0 {
+		primary = []byte(recordID)
 	}
 
-	var data [][]byte
-	var err error
-	if index != 0 {
-		data, err = localdb.List(calcCollateralizeRecordStatusPrefix(statusKey), calcCollateralizeRecordStatusKey(status, index), DefultCount, ListDESC)
-	} else {
-		data, err = localdb.List(calcCollateralizeRecordStatusPrefix(statusKey), nil, DefultCount, ListDESC)
+	var data = &pty.ReceiptCollateralize{
+		Status:status,
+		CollateralizeId:collID,
 	}
-	if err != nil {
-		clog.Debug("queryCollateralizeRecordByStatus", "error", err)
-		return nil, err
+
+	var rows []*table.Row
+	var err error
+	if len(collID) == 0 {
+		rows, err = query.List("status", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByStatus.List", "index", "status", "error", err)
+			return nil, err
+		}
+	} else {
+		rows, err = query.List("id_status", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByStatus.List", "index", "id_status", "error", err)
+			return nil, err
+		}
 	}
 
 	var records []*pty.BorrowRecord
-	var coll pty.CollateralizeRecord
-	for _, collBytes := range data {
-		err = types.Decode(collBytes, &coll)
+	for _, row := range rows {
+		record, err := queryCollateralizeRecordByID(db, row.Data.(*pty.ReceiptCollateralize).CollateralizeId, row.Data.(*pty.ReceiptCollateralize).RecordId)
 		if err != nil {
-			clog.Debug("queryCollateralizesByStatus", "decode", err)
-			continue
-		}
-
-		record, err := queryCollateralizeRecordByID(db, coll.CollateralizeId, coll.RecordId)
-		if err != nil {
-			clog.Error("queryIssuanceRecordsByStatus", "decode", err)
+			clog.Debug("queryCollateralizeRecordByStatus.queryCollateralizeRecordByID", "error", err)
 			continue
 		}
 		records = append(records, record)

@@ -13,44 +13,41 @@ import (
 func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	for _, item := range receipt.Logs {
-		if item.Ty == pty.TyLogIssuanceCreate || item.Ty == pty.TyLogIssuanceDebt || item.Ty == pty.TyLogIssuanceRepay ||
-			item.Ty == pty.TyLogIssuanceFeed || item.Ty == pty.TyLogIssuanceClose {
+		if item.Ty >= pty.TyLogIssuanceCreate && item.Ty <= pty.TyLogIssuanceClose {
 			var issuanceLog pty.ReceiptIssuance
 			err := types.Decode(item.Log, &issuanceLog)
 			if err != nil {
 				return nil, err
 			}
 
-			switch item.Ty {
-			case pty.TyLogIssuanceCreate:
-				set.KV = append(set.KV, c.addIssuanceStatus(issuanceLog.Status, issuanceLog.Index, issuanceLog.IssuanceId)...)
-			case pty.TyLogIssuanceDebt:
-				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
-					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
-				set.KV = append(set.KV, c.addIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.Index, issuanceLog.DebtId,
-					issuanceLog.IssuanceId)...)
-			case pty.TyLogIssuanceRepay:
-				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
-				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
-					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
-				//set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
-			case pty.TyLogIssuanceFeed:
-				set.KV = append(set.KV, c.deleteIssuanceRecordStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
-				set.KV = append(set.KV, c.addIssuanceRecordStatus(issuanceLog.Status, issuanceLog.AccountAddr, issuanceLog.Index,
-					issuanceLog.DebtId, issuanceLog.IssuanceId)...)
-				//set.KV = append(set.KV, c.deleteIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.PreIndex)...)
-				//// 如果没有被清算，需要把地址索引更新
-				//if issuanceLog.Status == pty.IssuanceUserStatusWarning || issuanceLog.Status == pty.IssuanceUserStatusExpire {
-				//	set.KV = append(set.KV, c.addIssuanceRecordAddr(issuanceLog.AccountAddr, issuanceLog.Index, issuanceLog.DebtId,
-				//		issuanceLog.IssuanceId)...)
-				//}
-				set.KV = append(set.KV, c.addIssuancePriceRecord(issuanceLog.RecordTime, issuanceLog.BtyPrice)...)
-			case pty.TyLogIssuanceClose:
-				set.KV = append(set.KV, c.addIssuanceStatus(issuanceLog.Status, issuanceLog.Index, issuanceLog.IssuanceId)...)
-				set.KV = append(set.KV, c.deleteIssuanceStatus(issuanceLog.PreStatus, issuanceLog.PreIndex)...)
+			if item.Ty == pty.TyLogIssuanceCreate || item.Ty == pty.TyLogIssuanceClose {
+				IDtable := pty.NewIssuanceTable(c.GetLocalDB())
+				err = IDtable.Replace(&pty.ReceiptIssuanceID{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status})
+				if err != nil {
+					return nil, err
+				}
+				kvs, err := IDtable.Save()
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, kvs...)
+			} else {
+				recordTable := pty.NewRecordTable(c.GetLocalDB())
+				err = recordTable.Replace(&pty.ReceiptIssuance{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status,
+					DebtId: issuanceLog.DebtId, AccountAddr: issuanceLog.AccountAddr})
+				if err != nil {
+					return nil, err
+				}
+				kvs, err := recordTable.Save()
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, kvs...)
 			}
 		}
 	}
+
+	set.KV = c.AddRollbackKV(tx, []byte(pty.IssuanceX), set.KV)
 	return set, nil
 }
 

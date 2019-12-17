@@ -274,17 +274,17 @@ func TestIssuance(t *testing.T) {
 	debtID := createTx.Hash()
 	// query issuance by id
 	res, err = exec.Query("IssuanceRecordByID",
-		types.Encode(&pkt.ReqIssuanceDebtInfo{IssuanceId: common.ToHex(issuanceID), DebtId: common.ToHex(debtID)}))
+		types.Encode(&pkt.ReqIssuanceRecords{IssuanceId: common.ToHex(issuanceID), DebtId: common.ToHex(debtID)}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 1}))
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by addr
 	res, err = exec.Query("IssuanceRecordsByAddr",
-		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId: common.ToHex(issuanceID), Addr: string(Nodes[1]), Status: 1}))
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1])}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -320,12 +320,12 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 6}))
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	// query issuance by addr
 	res, err = exec.Query("IssuanceRecordsByAddr",
-		types.Encode(&pkt.ReqIssuanceRecordsByAddr{IssuanceId: common.ToHex(issuanceID), Addr: string(Nodes[1]), Status: 6}))
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1])}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -390,7 +390,7 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 3}))
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -455,7 +455,7 @@ func TestIssuance(t *testing.T) {
 	}
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecordsByStatus{IssuanceId: common.ToHex(issuanceID), Status: 5}))
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 5}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 

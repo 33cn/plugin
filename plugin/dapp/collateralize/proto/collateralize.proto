@@ -17,10 +17,8 @@ message Collateralize {
     double      latestLiquidationPrice   = 11;//最高清算价格
     int64       period                   = 12;//借贷最大期限
     int64       latestExpireTime         = 13;//最近超期时间
-    int64       index                    = 14;//当前索引
-    int64       preIndex                 = 15;//上一个索引
-    int64       collBalance              = 16;//抵押bty
-    int32       preStatus                = 17;//上一个状态
+    int64       collBalance              = 14;//抵押bty
+    int32       preStatus                = 15;//上一个状态
 }
 
 // 借出记录
@@ -37,8 +35,6 @@ message BorrowRecord {
     int32       preStatus            = 10;//上一次抵押状态，用于告警恢复
     string      recordId             = 11;//借贷id，标识一次借出记录
     string      collateralizeId      = 12;//放贷id
-    int64       index                = 13;//当前索引
-    int64       preIndex             = 14;//上级索引
 }
 
 // 资产价格记录
@@ -115,27 +111,14 @@ message CollateralizeRetrieve {
 // exec_local 放贷信息
 message ReceiptCollateralize {
     string      collateralizeId    = 1;
-    string      createAddr         = 2;
     string      accountAddr        = 3;
     string      recordId           = 4;
     int32       status             = 5;
-    int32       PreStatus          = 6;
-    int64       index              = 7;
-    int64       preIndex           = 8;
  }
-
-// exec_local 放贷记录信息
-message CollateralizeRecord {
-    string collateralizeId = 1;
-    string addr            = 2;
-    string recordId        = 3;
-    int32  status          = 4;
-    int64  index           = 5;
-}
 
 // exec_local 放贷记录信息列表
 message CollateralizeRecords {
-    repeated CollateralizeRecord records = 1;
+    repeated ReceiptCollateralize records = 1;
 }
 
 // 根据ID查询一期放贷信息
@@ -171,14 +154,14 @@ message RepCollateralizeCurrentInfos {
 // 根据放贷状态查询
 message ReqCollateralizeByStatus {
     int32 status = 1;
-    int64  index = 2;
+    string collID = 2;
 }
 
 // 根据用户地址查询
 message ReqCollateralizeByAddr {
     string addr  = 1;
     int32 status = 2;
-    int64  index = 3;
+    string collID = 3;
 }
 
 // 返回放贷ID列表
@@ -191,14 +174,14 @@ message ReqCollateralizeRecordByAddr {
     string collateralizeId = 1;
     string addr            = 2;
     int32 status           = 3;
-    int64  index           = 4;
+    string recordId        = 4;
 }
 
 // 根据状态和借贷ID混合查询具体借贷记录
 message ReqCollateralizeRecordByStatus {
     string collateralizeId = 1;
     int32  status          = 2;
-    int64  index           = 3;
+    string recordId        = 3;
 }
 
 // 返回借贷记录
