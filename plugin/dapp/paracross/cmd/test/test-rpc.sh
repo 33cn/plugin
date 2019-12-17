@@ -177,7 +177,7 @@ function paracross_IsSync() {
     else
         req='{"method":"Chain33.IsSync","params":[]}'
     fi
-    chain33_Http "$req" ${UNIT_HTTP} '.result' "$FUNCNAME"
+    chain33_Http "$req" ${UNIT_HTTP} '(.error|not)' "$FUNCNAME"
 }
 
 function paracross_ListTitles() {
