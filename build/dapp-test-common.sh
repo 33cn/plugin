@@ -3,6 +3,7 @@
 RAW_TX_HASH=""
 LAST_BLOCK_HASH=""
 CASE_ERR=""
+RETURN_RESP=""
 
 #color
 RED='\033[1;31m'
@@ -16,9 +17,30 @@ echo_rst() {
         echo -e "${GRE}$1 not support${NOC}"
     else
         echo -e "${RED}$1 fail${NOC}"
+        echo -e "${RED}$3 ${NOC}"
         CASE_ERR="err"
         echo $CASE_ERR
     fi
+}
+
+chain33_Http() {
+    #  echo "#$4 request: request="$1" MAIN_HTTP="$2" js="$3" FUNCNAME="$4" response="$5""
+    local body
+    body=$(curl -ksd "$1" "$2")
+    RETURN_RESP=$(echo "$body" | jq -r "$5")
+    echo "#response: $body" "$RETURN_RESP"
+    ok=$(echo "$body" | jq -r "$3")
+    [ "$ok" == true ]
+    rst=$?
+    echo_rst "$4" "$rst" "$body"
+}
+
+chain33_SignAndSendTxWait() {
+    # txHex="$1" priKey="$2" MAIN_HTTP="$3" FUNCNAME="$4"
+    req='{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$1"'"}]}'
+    chain33_Http "$req" "$3" '(.result.txs[0].execer != "") and (.result.txs[0].execer != null)' "$4"
+    chain33_SignAndSendTx "$1" "$2" "$3"
+    chain33_BlockWait 1 "$3"
 }
 
 chain33_BlockWait() {
@@ -112,7 +134,7 @@ chain33_ImportPrivkey() {
     [ "$ok" == true ]
 }
 
-chain33_SignRawTx() {
+chain33_SignAndSendTx() {
     local txHex="$1"
     local priKey="$2"
     local MAIN_HTTP=$3

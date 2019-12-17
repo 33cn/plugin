@@ -601,6 +601,24 @@ func TestDelMavlData(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestCompactDelMavl(t *testing.T) {
+	dir, err := ioutil.TempDir("", "example")
+	assert.Nil(t, err)
+	defer os.RemoveAll(dir) // clean up
+	os.RemoveAll(dir)       //删除已存在目录
+	storeCfg := newStoreCfg(dir)
+	store := New(storeCfg, nil, nil).(*KVmMavlStore)
+	assert.NotNil(t, store)
+
+	db := store.GetDB()
+	for i := 0; i < 100; i++ {
+		db.Set([]byte(GetRandomString(MaxKeylenth)), []byte(fmt.Sprintf("v%d", i)))
+	}
+	CompactDelMavl(db)
+	_, err = db.Get(genCompactDelMavlKey(mvccPrefix))
+	assert.NoError(t, err)
+}
+
 func TestPruning(t *testing.T) {
 	dir, err := ioutil.TempDir("", "example")
 	assert.Nil(t, err)
