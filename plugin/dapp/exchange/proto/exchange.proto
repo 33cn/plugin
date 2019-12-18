@@ -41,7 +41,7 @@ message MarketOrder {
 //撤回订单
 message RevokeOrder {
     //订单号
-    string orderID   = 1;
+    int64 orderID   = 1;
 }
 //资产类型
 message asset {
@@ -51,7 +51,7 @@ message asset {
 
 //订单信息
 message Order {
-    string orderID   = 1;
+    int64 orderID   = 1;
     oneof value {
         LimitOrder limitOrder = 2;
         MarketOrder marketOrder = 3;
@@ -72,16 +72,6 @@ message Order {
     int64 index = 10;
 }
 
-//挂单价
-message OrderPrice {
-    double price  = 1;
-    int64  index = 2;
-}
-//单号
-message OrderID {
-    string ID   = 1;
-    int64  index = 2;
-}
 //查询接口
 message QueryMarketDepth {
     //资产1
@@ -91,7 +81,7 @@ message QueryMarketDepth {
     //操作， 1为买，2为卖
     int32 op = 3;
     // 这里用价格作为索引值
-    double price  = 4;
+    string primaryKey  = 4;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
     int32 count = 5;
 }
@@ -111,6 +101,7 @@ message MarketDepth {
 //查询接口返回的市场深度列表
 message MarketDepthList {
     repeated MarketDepth list = 1;
+    string primaryKey = 2;
 }
 
 //查询最新得成交信息,外部接口
@@ -120,7 +111,7 @@ message QueryCompletedOrderList {
     //资产2
     asset rightAsset = 2;
     // 索引值
-    int64 index = 3;
+    string primaryKey = 3;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
     int32 count = 4;
     // 0降序，1升序，默认降序
@@ -129,7 +120,7 @@ message QueryCompletedOrderList {
 
 //根据orderID去查询订单信息
 message QueryOrder {
-    string orderID   = 1;
+    int64 orderID   = 1;
 }
 //根据地址，状态查询用户自己的挂单信息
 message QueryOrderList {
@@ -137,8 +128,8 @@ message QueryOrderList {
     int32 status = 1;
     //用户地址信息，必填
     string address = 2;
-    // 索引值
-    int64 index = 3;
+    // 主键索引
+    string primaryKey = 3;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
     int32 count = 4;
     // 0降序，1升序，默认降序
@@ -147,6 +138,7 @@ message QueryOrderList {
 //订单列表
 message OrderList {
     repeated Order list = 1;
+    string primaryKey = 2;
 }
 
 

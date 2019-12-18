@@ -20,7 +20,7 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 	if !CheckOp(in.Op) {
 		return nil, et.ErrAssetOp
 	}
-	return QueryMarketDepth(s.GetLocalDB(), in.LeftAsset, in.RightAsset, in.Op, in.Price, in.Count)
+	return QueryMarketDepth(s.GetLocalDB(), in.LeftAsset, in.RightAsset, in.Op, in.PrimaryKey, in.Count)
 }
 
 //查询已经完成得订单
@@ -35,15 +35,15 @@ func (s *exchange) Query_QueryCompletedOrderList(in *et.QueryCompletedOrderList)
 	if !CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
-	return QueryCompletedOrderList(s.GetLocalDB(), s.GetStateDB(), in.LeftAsset, in.RightAsset, in.Index, in.Count, in.Direction)
+	return QueryCompletedOrderList(s.GetLocalDB(),  in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
 }
 
 //根据orderID查询订单信息
 func (s *exchange) Query_QueryOrder(in *et.QueryOrder) (types.Message, error) {
-	if in.OrderID == "" {
+	if in.OrderID == 0 {
 		return nil, et.ErrOrderID
 	}
-	return findOrderByOrderID(s.GetStateDB(), in.OrderID)
+	return findOrderByOrderID(s.GetStateDB(), s.GetLocalDB(), in.OrderID)
 }
 
 //根据订单状态，查询订单信息（这里面包含所有交易对）
@@ -62,5 +62,5 @@ func (s *exchange) Query_QueryOrderList(in *et.QueryOrderList) (types.Message, e
 	if in.Address == "" {
 		return nil, et.ErrAddr
 	}
-	return QueryOrderList(s.GetLocalDB(), s.GetStateDB(), in.Address, in.Status, in.Count, in.Direction, in.Index)
+	return QueryOrderList(s.GetLocalDB(), s.GetStateDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
 }

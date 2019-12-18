@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/33cn/chain33/types"
+	"reflect"
 )
 
 /*
@@ -73,7 +74,9 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		//LogID:	{Ty: reflect.TypeOf(LogStruct), Name: LogName},
+		TyLimitOrderLog:	{Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:	{Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:	{Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
 	}
 	//tlog = log.New("module", "exchange.types")
 )
