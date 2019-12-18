@@ -11,7 +11,6 @@ import (
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
-	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/queue"
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 	"github.com/stretchr/testify/assert"
@@ -62,9 +61,11 @@ func TestExchange(t *testing.T) {
 		Frozen:  0,
 		Addr:    string(Nodes[3]),
 	}
+	dir, ldb, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, ldb)
 	execAddr := address.ExecAddress(et.ExchangeX)
-	stateDB, _ := dbm.NewGoMemDB("1", "2", 5000)
-	_, _, kvdb := util.CreateTestDB()
+	//stateDB, _ := dbm.NewGoMemDB("1", "2", 5000)
+	_, stateDB, kvdb := util.CreateTestDB()
 
 	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
@@ -104,6 +105,7 @@ func TestExchange(t *testing.T) {
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
 	tx, err = signTx(tx, PrivKeyA)
+	t.Log(tx)
 	assert.Nil(t, err)
 	exec := newExchange()
 	e := exec.(*exchange)
@@ -134,9 +136,19 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID1 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	assert.Equal(t, types.ExecOk, int(receipt.Ty))
+	//根据地址状态查看订单,最新得订单号永远是在list[0],第一位
+	msg, err := exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	reply2 := msg.(*et.OrderList)
+	orderID1 := reply2.List[0].OrderID
 	//根据订单号，查询订单详情
-	msg, err := exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
+	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -157,16 +169,6 @@ func TestExchange(t *testing.T) {
 
 	reply1 := msg.(*et.MarketDepthList)
 	assert.Equal(t, 10*types.Coin, reply1.List[0].GetAmount())
-
-	//根据状态和地址查询
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply2 := msg.(*et.OrderList)
-	assert.Equal(t, orderID1, reply2.List[0].OrderID)
 
 	// orderlimit  bty:CCNY 卖bty
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -197,7 +199,17 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID2 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	assert.Equal(t, types.ExecOk, int(receipt.Ty))
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList := msg.(*et.OrderList)
+	orderID2 := orderList.List[0].OrderID
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
 	if err != nil {
@@ -266,6 +278,8 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
 	if err != nil {
@@ -314,7 +328,17 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID3 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	assert.Equal(t, types.ExecOk, int(receipt.Ty))
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID3 := orderList.List[0].OrderID
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID3}))
 	if err != nil {
 		t.Error(err)
@@ -352,7 +376,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID4 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID4 := orderList.List[0].OrderID
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID4}))
 	if err != nil {
@@ -412,8 +445,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID5 := common.ToHex(tx.Hash())
-
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID5 := orderList.List[0].OrderID
+	//
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID5}))
 	if err != nil {
@@ -426,13 +467,11 @@ func TestExchange(t *testing.T) {
 	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}))
 	if err != nil {
-		t.Error(err)
+		assert.Equal(t, types.ErrNotFound, err)
 	}
-	reply1 = msg.(*et.MarketDepthList)
-	t.Log(reply1.List)
 
-	//根据状态和地址查询
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[0])}))
+	////根据状态和地址查询
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -476,7 +515,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID6 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID6 := orderList.List[0].OrderID
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
 	if err != nil {
@@ -513,9 +561,18 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID7 := common.ToHex(tx.Hash())
-	//根据订单号，查询订单详情
 
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID7 := orderList.List[0].OrderID
+	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
 	if err != nil {
 		t.Error(err)
@@ -535,7 +592,6 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, 85*types.Coin, acc.Balance)
 	acc = accC.LoadExecAccount(string(Nodes[2]), execAddr)
 	t.Log(acc)
-
 	// orderlimit  bty:CCNY ,先挂卖单，然后高于市场价格买入, 买家获利原则
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -567,7 +623,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID8 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID8 := orderList.List[0].OrderID
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 5, Amount: 5 * types.Coin, Op: et.OpSell})
@@ -598,7 +663,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID9 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID9 := orderList.List[0].OrderID
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4.5, Amount: 15 * types.Coin, Op: et.OpBuy})
 	assert.Nil(t, err)
@@ -627,7 +701,16 @@ func TestExchange(t *testing.T) {
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
-	orderID10 := common.ToHex(tx.Hash())
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	//根据地址状态查看订单
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(msg)
+	orderList = msg.(*et.OrderList)
+	orderID10 := orderList.List[0].OrderID
 	//根据订单号，查询订单详情
 	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID7}))
 	if err != nil {
@@ -702,4 +785,20 @@ func TestCheckPrice(t *testing.T) {
 	t.Log(CheckPrice(Truncate(float64(1e8))))
 	t.Log(CheckPrice(Truncate(float64(1e-8))))
 	t.Log(CheckPrice(Truncate(float64(1e-9))))
+}
+
+func TestRawMeta(t *testing.T) {
+	CompletedOrderRow := NewCompletedOrderRow()
+	t.Log(CompletedOrderRow.Get("index"))
+	MarketDepthRow := NewMarketDepthRow()
+	t.Log(MarketDepthRow.Get("price"))
+	marketOrderRow := NewOrderRow()
+	t.Log(marketOrderRow.Get("orderID"))
+	UserOrderRow := NewUserOrderRow()
+	t.Log(UserOrderRow.Get("index"))
+}
+
+func TestKV(t *testing.T) {
+	a := &types.KeyValue{Key: []byte("1111111"), Value: nil}
+	t.Log(a.Key, a.Value)
 }
