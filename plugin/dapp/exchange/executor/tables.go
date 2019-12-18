@@ -34,6 +34,7 @@ var opt_exchange_depth = &table.Option{
 	Primary: "price",
 	Index:   nil,
 }
+
 //重新设计表，list查询全部在订单信息localdb查询中
 var opt_exchange_order = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
@@ -56,7 +57,6 @@ var opt_exchange_completed = &table.Option{
 	Primary: "index",
 	Index:   nil,
 }
-
 
 //NewTable 新建表
 func NewMarketDepthTable(kvdb db.KV) *table.Table {
@@ -121,8 +121,8 @@ func (r *OrderRow) SetPayload(data types.Message) error {
 //Get 按照indexName 查询 indexValue
 func (r *OrderRow) Get(key string) ([]byte, error) {
 	if key == "orderID" {
-		return []byte(fmt.Sprintf("%022d",r.OrderID)), nil
-	}else if key == "market_order"{
+		return []byte(fmt.Sprintf("%022d", r.OrderID)), nil
+	} else if key == "market_order" {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", r.GetLimitOrder().LeftAsset.GetSymbol(), r.GetLimitOrder().RightAsset.GetSymbol(), r.GetLimitOrder().Op, int64(Truncate(r.GetLimitOrder().Price*float64(1e8))))), nil
 	}
 	return nil, types.ErrNotFound
@@ -154,7 +154,7 @@ func (r *UserOrderRow) SetPayload(data types.Message) error {
 
 //Get 按照indexName 查询 indexValue
 func (r *UserOrderRow) Get(key string) ([]byte, error) {
-    if key == "index" {
+	if key == "index" {
 		return []byte(fmt.Sprintf("%s:%d:%022d", r.Addr, r.Status, r.Index)), nil
 	}
 	return nil, types.ErrNotFound
@@ -168,7 +168,6 @@ type CompletedOrderRow struct {
 func NewCompletedOrderRow() *CompletedOrderRow {
 	return &CompletedOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
-
 
 func (m *CompletedOrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
