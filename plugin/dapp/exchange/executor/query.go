@@ -35,7 +35,7 @@ func (s *exchange) Query_QueryCompletedOrderList(in *et.QueryCompletedOrderList)
 	if !CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
-	return QueryCompletedOrderList(s.GetLocalDB(),  in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
+	return QueryCompletedOrderList(s.GetLocalDB(), in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
 }
 
 //根据orderID查询订单信息
