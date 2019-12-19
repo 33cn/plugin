@@ -27,7 +27,7 @@ func TestGetHeightsArry(t *testing.T) {
 
 	heights := []*types.BlockInfo{h0, h1, h2, h3, h4, h5, h6, h7, h8, h9}
 
-	hh := getHeightsArry(heights, 3)
+	hh := splitHeights2Rows(heights, 3)
 	h11 := []*types.BlockInfo{h0, h1, h2}
 	h12 := []*types.BlockInfo{h3, h4, h5}
 	h13 := []*types.BlockInfo{h6, h7, h8}
@@ -35,19 +35,19 @@ func TestGetHeightsArry(t *testing.T) {
 	expect := [][]*types.BlockInfo{h11, h12, h13, h14}
 	assert.Equal(t, expect, hh)
 
-	s, e := getStartEndHeight(0, 100, hh, 0)
+	s, e := getHeaderStartEndRange(0, 100, hh, 0)
 	assert.Equal(t, int64(0), s)
 	assert.Equal(t, h2.Height, e)
 
-	s, e = getStartEndHeight(0, 100, hh, 1)
+	s, e = getHeaderStartEndRange(0, 100, hh, 1)
 	assert.Equal(t, h2.Height+1, s)
 	assert.Equal(t, h5.Height, e)
 
-	s, e = getStartEndHeight(0, 100, hh, 2)
+	s, e = getHeaderStartEndRange(0, 100, hh, 2)
 	assert.Equal(t, h5.Height+1, s)
 	assert.Equal(t, h8.Height, e)
 
-	s, e = getStartEndHeight(0, 100, hh, 3)
+	s, e = getHeaderStartEndRange(0, 100, hh, 3)
 	assert.Equal(t, h8.Height+1, s)
 	assert.Equal(t, int64(100), e)
 }
