@@ -289,14 +289,30 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, int32(et.Revoked), reply.Status)
 	t.Log(reply)
 	//根据op查询市场深度
+	//查看bty,CCNY买市场深度,查不到买单深度
 	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
+	assert.Equal(t, types.ErrNotFound, err)
+
+	//根据原有状态去查看买单是否被改变
+	//ordered状态应该查不到数据
+	_, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
+	assert.Equal(t, types.ErrNotFound, err)
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Revoked, Address: string(Nodes[0])}))
+	//reovked状态肯定有数据
+	if err != nil {
+		t.Log(err)
+	}
+	t.Log(msg)
+	assert.Equal(t, orderID1, msg.(*et.OrderList).List[0].OrderID)
+	//根据订单号，查询订单详情
+	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
 	if err != nil {
 		t.Error(err)
 	}
-	reply1 = msg.(*et.MarketDepthList)
-	t.Log(reply1.GetList())
-	t.Log(len(reply1.GetList()))
+	t.Log(msg.(*et.Order))
+	assert.Equal(t, int32(et.Revoked), msg.(*et.Order).Status)
+	assert.Equal(t, 5*types.Coin, msg.(*et.Order).GetBalance())
 
 	//反向测试
 	// orderlimit  bty:CCNY 卖bty
@@ -530,7 +546,13 @@ func TestExchange(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	//查看bty,CCNY买市场深度
+	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
 	t.Log(msg)
+	if err != nil {
+		assert.Equal(t, types.ErrNotFound, err)
+	}
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 3, Amount: 10 * types.Coin, Op: et.OpSell})
@@ -564,6 +586,27 @@ func TestExchange(t *testing.T) {
 
 	//save to database
 	util.SaveKVList(stateDB, set.KV)
+
+	//查看订单6的状态是否正确
+	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[3])}))
+	if err != nil {
+		t.Error(err)
+	}
+	orderList = msg.(*et.OrderList)
+	t.Log(orderList.List[0])
+	assert.Equal(t, orderID6, orderList.List[0].OrderID)
+	//检查原有ordered状态得订单数据是否正确被删除
+	_, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
+	assert.Equal(t, types.ErrNotFound, err)
+
+	//查看bty,CCNY买市场深度
+	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
+	t.Log(msg)
+	if err != nil {
+		assert.Equal(t, types.ErrNotFound, err)
+	}
+
 	//根据地址状态查看订单
 	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
 	if err != nil {

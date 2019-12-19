@@ -280,14 +280,18 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 		depth, err := queryMarketDepth(e.GetLocalDB(), left, right, op, price)
 		if err == nil {
 			//marketDepth
-			marketDepth.Amount = depth.Amount - receipt.GetOrder().Balance
+			marketDepth.Price = price
+			marketDepth.LeftAsset = left
+			marketDepth.RightAsset = right
+			marketDepth.Op = op
+			marketDepth.Amount = depth.Amount - order.Balance
 			err = marketTable.Replace(&marketDepth)
 			if err != nil {
 				elog.Error("updateIndex", "marketTable.Replace", err.Error())
 				return nil
 			}
 		}
-		if marketDepth.Amount == 0 {
+		if marketDepth.Amount <= 0 {
 			//删除
 			err = marketTable.DelRow(&marketDepth)
 			if err != nil {
