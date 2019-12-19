@@ -17,11 +17,11 @@ func (client *client) GetBlockByHeight(height int64) (*types.Block, error) {
 	//from blockchain db
 	blockDetails, err := client.GetAPI().GetBlocks(&types.ReqBlocks{Start: height, End: height})
 	if err != nil {
-		plog.Error("paracommitmsg get node status block count fail")
+		plog.Error("GetBlockByHeight fail", "err", err)
 		return nil, err
 	}
 	if 1 != int64(len(blockDetails.Items)) {
-		plog.Error("paracommitmsg get node status block count fail")
+		plog.Error("GetBlockByHeight count fail", "len", len(blockDetails.Items))
 		return nil, types.ErrInvalidParam
 	}
 	return blockDetails.Items[0].Block, nil
@@ -31,8 +31,15 @@ func (client *client) GetBlockHeaders(req *types.ReqBlocks) (*types.Headers, err
 	//from blockchain db
 	headers, err := client.grpcClient.GetHeaders(context.Background(), req)
 	if err != nil {
-		plog.Error("paracommitmsg get node status block count fail")
+		plog.Error("GetBlockHeaders fail", "err", err)
 		return nil, err
+	}
+
+	count := req.End - req.Start + 1
+	if int64(len(headers.Items)) != count {
+		plog.Error("GetBlockHeaders", "start", req.Start, "end", req.End, "reals", headers.Items[0].Height, "reale", headers.Items[len(headers.Items)-1].Height,
+			"len", len(headers.Items), "count", count)
+		return nil, types.ErrBlockHeightNoMatch
 	}
 	return headers, nil
 }
@@ -55,7 +62,7 @@ func (client *client) getLastBlockMainInfo() (int64, *types.Block, error) {
 func (client *client) getLastBlockInfo() (*types.Block, error) {
 	lastBlock, err := client.RequestLastBlock()
 	if err != nil {
-		plog.Error("Parachain RequestLastBlock fail", "err", err)
+		plog.Error("Parachain getLastBlockInfo fail", "err", err)
 		return nil, err
 	}
 
@@ -141,7 +148,7 @@ func (client *client) GetParaHeightsByTitle(req *types.ReqHeightByTitle) (*types
 	//from blockchain db
 	heights, err := client.grpcClient.LoadParaTxByTitle(context.Background(), req)
 	if err != nil {
-		plog.Error("paracommitmsg get node status block count fail")
+		plog.Error("GetParaHeightsByTitle fail", "err", err)
 		return nil, err
 	}
 
