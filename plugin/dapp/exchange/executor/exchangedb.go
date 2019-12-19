@@ -6,10 +6,8 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
-
-	//"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
-	. "github.com/33cn/chain33/common/db/table"
+	tab "github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
@@ -172,7 +170,6 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
-	elog.Info("RevokeOrder====", "order", order.Balance)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +385,6 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 						return receipts, nil
 					}
 					if payload.Op == et.OpSell {
-						elog.Info("matchLimitOrder.findOrderByOrderID========", "order", matchorder)
 						//转移冻结资产
 						receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.Price))
 						if err != nil {
@@ -419,7 +415,6 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 						kvs = append(kvs, receipt.KV...)
 					}
 					if payload.Op == et.OpBuy {
-						elog.Info("matchLimitOrder.findOrderByOrderID++++++", "order", matchorder)
 						//转移冻结资产
 						receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price))
 						if err != nil {
@@ -501,7 +496,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 //根据订单号查询，分为两步，优先去localdb中查询，如没有则再去状态数据库中查询
 // 1.挂单中得订单信会根据orderID在localdb中存储
 // 2.订单撤销，或者成交后，根据orderID在localdb中存储得数据会被删除，这时只能到状态数据库中查询
-func findOrderByOrderID(statedb dbm.KV, localdb dbm.KVDB, orderID int64) (*et.Order, error) {
+func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Order, error) {
 	table := NewMarketOrderTable(localdb)
 	primaryKey := []byte(fmt.Sprintf("%022d", orderID))
 	row, err := table.GetData(primaryKey)
@@ -523,17 +518,16 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KVDB, orderID int64) (*et.Or
 
 }
 
-func findOrderIDListByPrice(localdb dbm.KVDB, left, right *et.Asset, price float64, op, direction int32, primaryKey string) (*et.OrderList, error) {
+func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price float64, op, direction int32, primaryKey string) (*et.OrderList, error) {
 	table := NewMarketOrderTable(localdb)
-	query := table.GetQuery(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price*float64(1e8)))))
 
-	var rows []*Row
+	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = query.ListIndex("market_order", prefix, nil, et.Count, direction)
+		rows, err = table.ListIndex("market_order", prefix, nil, et.Count, direction)
 	} else {
-		rows, err = query.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
+		rows, err = table.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
 	}
 	if err != nil {
 		elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
@@ -562,19 +556,18 @@ func Direction(op int32) int32 {
 }
 
 //这里primaryKey当作主键索引来用，首次查询不需要填值
-func QueryMarketDepth(localdb dbm.KVDB, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
+func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
-	query := table.GetQuery(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), op))
 	if count == 0 {
 		count = et.Count
 	}
-	var rows []*Row
+	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = query.ListIndex("price", prefix, nil, count, Direction(op))
+		rows, err = table.ListIndex("price", prefix, nil, count, Direction(op))
 	} else {
-		rows, err = query.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
+		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
 	}
 	if err != nil {
 		elog.Error("QueryMarketDepth.", "left", left, "right", right, "err", err.Error())
@@ -593,19 +586,18 @@ func QueryMarketDepth(localdb dbm.KVDB, left, right *et.Asset, op int32, primary
 }
 
 //QueryCompletedOrderList
-func QueryCompletedOrderList(localdb dbm.KVDB, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
+func QueryCompletedOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
 	table := NewCompletedOrderTable(localdb)
-	query := table.GetQuery(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s", left.Symbol, right.Symbol))
 	if count == 0 {
 		count = et.Count
 	}
-	var rows []*Row
+	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = query.ListIndex("index", prefix, nil, count, direction)
+		rows, err = table.ListIndex("index", prefix, nil, count, direction)
 	} else {
-		rows, err = query.ListIndex("index", prefix, []byte(primaryKey), count, direction)
+		rows, err = table.ListIndex("index", prefix, []byte(primaryKey), count, direction)
 	}
 	if err != nil {
 		elog.Error("QueryCompletedOrderList.", "left", left, "right", right, "err", err.Error())
@@ -627,19 +619,18 @@ func QueryCompletedOrderList(localdb dbm.KVDB, left, right *et.Asset, primaryKey
 }
 
 //QueryOrderList,默认展示最新的
-func QueryOrderList(localdb dbm.KVDB, statedb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
+func QueryOrderList(localdb dbm.KV, statedb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
 	table := NewUserOrderTable(localdb)
-	query := table.GetQuery(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%d", addr, status))
 	if count == 0 {
 		count = et.Count
 	}
-	var rows []*Row
+	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = query.ListIndex("index", prefix, nil, count, direction)
+		rows, err = table.ListIndex("index", prefix, nil, count, direction)
 	} else {
-		rows, err = query.ListIndex("index", prefix, []byte(primaryKey), count, direction)
+		rows, err = table.ListIndex("index", prefix, []byte(primaryKey), count, direction)
 	}
 	if err != nil {
 		elog.Error("QueryOrderList.", "addr", addr, "err", err.Error())
@@ -659,7 +650,7 @@ func QueryOrderList(localdb dbm.KVDB, statedb dbm.KV, addr string, status, count
 	return &orderList, nil
 }
 
-func queryMarketDepth(localdb dbm.KVDB, left, right *et.Asset, op int32, price float64) (*et.MarketDepth, error) {
+func queryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, price float64) (*et.MarketDepth, error) {
 	table := NewMarketDepthTable(localdb)
 	primaryKey := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, int64(Truncate(price)*float64(1e8))))
 	row, err := table.GetData(primaryKey)
