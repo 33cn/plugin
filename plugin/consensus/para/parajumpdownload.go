@@ -245,8 +245,30 @@ func (j *jumpDldClient) getHeaders(start, end int64) (*types.ParaTxDetails, erro
 	return paraTxHeaders, nil
 }
 
+func (j *jumpDldClient) procParaTxHeaders(startHeight, endHeight int64, paraBlocks map[int64]*types.ParaTxDetail, jobCh chan *paraTxBlocksJob) error {
+	for s := startHeight; s <= endHeight; s += types.MaxBlockCountPerTime {
+		end := s + types.MaxBlockCountPerTime - 1
+		if end > endHeight {
+			end = endHeight
+		}
+		headers, err := j.getHeaders(s, end)
+		if err != nil {
+			plog.Error("jumpDld.getParaTxs headers", "start", startHeight, "end", endHeight, "err", err)
+			return err
+		}
+		//每1000个header同步一次，这样可以更快更小粒度的使同步层获取区块执行
+		job := &paraTxBlocksJob{start: s, end: end, paraTxBlocks: paraBlocks, headers: headers}
+		jobCh <- job
+
+		if atomic.LoadInt32(&j.downFail) != 0 || j.paraClient.isCancel() {
+			return errors.New("verify fail or main thread cancel")
+		}
+	}
+	return nil
+}
+
 //每1000header执行一次比全部获取出来更有效率，可以和同步层更好并行处理，节约时间，1000paraTxBlocks花时间很少，相比headers获取，串行获取时间可以忽略
-func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*types.BlockInfo, ch chan *paraTxBlocksJob) error {
+func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*types.BlockInfo, jobCh chan *paraTxBlocksJob) error {
 	title := j.paraClient.GetAPI().GetConfig().GetTitle()
 	heightsRows := splitHeights2Rows(heights, int(types.MaxBlockCountPerTime))
 
@@ -259,23 +281,9 @@ func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*type
 		//根据1000个paraTxBlocks的头尾高度获取header的头尾高度，header的高度要包含paraTxBlocks高度
 		headerStart, headerEnd := getHeaderStartEndRange(startHeight, endHeight, heightsRows, i)
 		plog.Debug("paraJumpDownload.getHeaders", "headerStart", headerStart, "headerEnd", headerEnd, "i", i)
-		for s := headerStart; s <= headerEnd; s += types.MaxBlockCountPerTime {
-			end := s + types.MaxBlockCountPerTime - 1
-			if end > headerEnd {
-				end = headerEnd
-			}
-			headers, err := j.getHeaders(s, end)
-			if err != nil {
-				plog.Error("jumpDld.getParaTxs headers", "start", headerStart, "end", headerEnd, "title", title, "err", err)
-				return err
-			}
-			//每1000个header同步一次，这样可以更快更小粒度的使同步层获取区块执行
-			job := &paraTxBlocksJob{start: s, end: end, paraTxBlocks: paraBlocks, headers: headers}
-			ch <- job
-
-			if atomic.LoadInt32(&j.downFail) != 0 || j.paraClient.isCancel() {
-				return errors.New("verify fail or main thread cancel")
-			}
+		err = j.procParaTxHeaders(headerStart, headerEnd, paraBlocks, jobCh)
+		if err != nil {
+			return err
 		}
 
 		if atomic.LoadInt32(&j.downFail) != 0 || j.paraClient.isCancel() {
