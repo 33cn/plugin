@@ -240,8 +240,8 @@ func TestExchange(t *testing.T) {
 	//市场深度应该改变
 	assert.Equal(t, 5*types.Coin, reply1.List[0].GetAmount())
 
-	//QueryCompletedOrderList
-	msg, err = exec.Query(et.FuncNameQueryCompletedOrderList, types.Encode(&et.QueryCompletedOrderList{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	//QueryHistoryOrderList
+	msg, err = exec.Query(et.FuncNameQueryHistoryOrderList, types.Encode(&et.QueryHistoryOrderList{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}}))
 	if err != nil {
 		t.Error(err)
@@ -831,14 +831,12 @@ func TestCheckPrice(t *testing.T) {
 }
 
 func TestRawMeta(t *testing.T) {
-	CompletedOrderRow := NewCompletedOrderRow()
-	t.Log(CompletedOrderRow.Get("index"))
+	HistoryOrderRow := NewHistoryOrderRow()
+	t.Log(HistoryOrderRow.Get("index"))
 	MarketDepthRow := NewMarketDepthRow()
 	t.Log(MarketDepthRow.Get("price"))
 	marketOrderRow := NewOrderRow()
 	t.Log(marketOrderRow.Get("orderID"))
-	UserOrderRow := NewUserOrderRow()
-	t.Log(UserOrderRow.Get("index"))
 }
 
 func TestKV(t *testing.T) {

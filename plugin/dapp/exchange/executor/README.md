@@ -11,7 +11,7 @@
 查询方法名称|功能
 -----|----
 QueryMarketDepth|获取指定交易资产的市场深度
-QueryCompletedOrderList|实时获取指定交易对最新的成交信息
+QueryHistoryOrderList|实时获取指定交易对已经成交的订单信息
 QueryOrder|根据orderID订单号查询具体的订单信息
 QueryOrderList|根据用户地址和订单状态（ordered,completed,revoked)，实时地获取相应相应的订单详情
 

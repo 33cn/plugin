@@ -66,16 +66,14 @@ func (e *exchange) ExecLocal_RevokeOrder(payload *ety.RevokeOrder, tx *types.Tra
 
 //设置自动回滚
 func (e *exchange) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
-
 	dbSet := &types.LocalDBSet{}
 	dbSet.KV = e.AddRollbackKV(tx, tx.Execer, kv)
 	return dbSet
 }
 
 func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyValue) {
-	completedTable := NewCompletedOrderTable(e.GetLocalDB())
+	historyTable := NewHistoryOrderTable(e.GetLocalDB())
 	marketTable := NewMarketDepthTable(e.GetLocalDB())
-	userTable := NewUserOrderTable(e.GetLocalDB())
 	orderTable := NewMarketOrderTable(e.GetLocalDB())
 	switch receipt.Order.Status {
 	case ety.Ordered:
@@ -111,30 +109,26 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 			elog.Error("updateIndex", "orderTable.Replace", err.Error())
 			return nil
 		}
-		err = userTable.Replace(order)
-		if err != nil {
-			return nil
-		}
 		if len(receipt.MatchOrders) > 0 {
 			//撮合交易更新
 			cache := make(map[float64]int64)
 			for i, matchOrder := range receipt.MatchOrders {
 				if matchOrder.Status == ety.Completed {
 					// 删除原有状态orderID
+					matchOrder.Status = ety.Ordered
 					err = orderTable.DelRow(matchOrder)
 					if err != nil {
 						elog.Error("updateIndex", "orderTable.DelRow", err.Error())
 						return nil
 					}
-					//删除原有状态orderID
-					matchOrder.Status = ety.Ordered
-					userTable.DelRow(matchOrder)
-					//更新状态为已完成,索引index,改为当前的index
+					//索引index,改为当前的index
 					matchOrder.Status = ety.Completed
 					matchOrder.Index = index + int64(i+1)
-					userTable.Replace(matchOrder)
-					//calcCompletedOrderKey
-					completedTable.Replace(matchOrder)
+					err = historyTable.Replace(matchOrder)
+					if err != nil {
+						elog.Error("updateIndex", "historyTable.Replace", err.Error())
+						return nil
+					}
 				}
 				if matchOrder.Status == ety.Ordered {
 					//更新数据
@@ -183,14 +177,9 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 		right := receipt.GetOrder().GetLimitOrder().GetRightAsset()
 		op := receipt.GetOrder().GetLimitOrder().GetOp()
 		index := receipt.GetIndex()
-		err := userTable.Replace(receipt.GetOrder())
+		err := historyTable.Replace(receipt.GetOrder())
 		if err != nil {
-			elog.Error("updateIndex", "userTable.Replace", err.Error())
-			return nil
-		}
-		err = completedTable.Replace(receipt.Order)
-		if err != nil {
-			elog.Error("updateIndex", "completedTable.Replace", err.Error())
+			elog.Error("updateIndex", "historyTable.Replace", err.Error())
 			return nil
 		}
 		cache := make(map[float64]int64)
@@ -199,30 +188,18 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 			for i, matchOrder := range receipt.MatchOrders {
 				if matchOrder.Status == ety.Completed {
 					// 删除原有状态orderID
+					matchOrder.Status = ety.Ordered
 					err = orderTable.DelRow(matchOrder)
 					if err != nil {
 						elog.Error("updateIndex", "orderTable.DelRow", err.Error())
 						return nil
 					}
-					//删除原有状态orderID
-					matchOrder.Status = ety.Ordered
-					err = userTable.DelRow(matchOrder)
-					if err != nil {
-						elog.Error("updateIndex", "userTable.DelRow", err.Error())
-						return nil
-					}
-					//更新状态为已完成,更新索引
+					//索引index,改为当前的index
 					matchOrder.Status = ety.Completed
 					matchOrder.Index = index + int64(i+1)
-					err = userTable.Replace(matchOrder)
+					err = historyTable.Replace(matchOrder)
 					if err != nil {
-						elog.Error("updateIndex", "userTable.Replace", err.Error())
-						return nil
-					}
-					//calcCompletedOrderKey
-					err = completedTable.Replace(matchOrder)
-					if err != nil {
-						elog.Error("updateIndex", "completedTable.Replace", err.Error())
+						elog.Error("updateIndex", "historyTable.Replace", err.Error())
 						return nil
 					}
 				}
@@ -299,25 +276,19 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 				return nil
 			}
 		}
-		// 删除原有状态orderID
+		//删除原有状态orderID
+		order.Status = ety.Ordered
 		err = orderTable.DelRow(order)
 		if err != nil {
 			elog.Error("updateIndex", "orderTable.DelRow", err.Error())
 			return nil
 		}
-		//删除原有状态orderID
-		order.Status = ety.Ordered
-		err = userTable.DelRow(order)
-		if err != nil {
-			elog.Error("updateIndex", "userTable.DelRow", err.Error())
-			return nil
-		}
 		order.Status = ety.Revoked
 		order.Index = index
 		//添加撤销的订单
-		err = userTable.Replace(order)
+		err = historyTable.Replace(order)
 		if err != nil {
-			elog.Error("updateIndex", "userTable.Replace", err.Error())
+			elog.Error("updateIndex", "historyTable.Replace", err.Error())
 			return nil
 		}
 	}
@@ -328,21 +299,15 @@ func (e *exchange) updateIndex(receipt *ety.ReceiptExchange) (kvs []*types.KeyVa
 		return nil
 	}
 	kvs = append(kvs, kv...)
-	kv, err = userTable.Save()
-	if err != nil {
-		elog.Error("updateIndex", "userTable.Save", err.Error())
-		return nil
-	}
-	kvs = append(kvs, kv...)
 	kv, err = orderTable.Save()
 	if err != nil {
 		elog.Error("updateIndex", "orderTable.Save", err.Error())
 		return nil
 	}
 	kvs = append(kvs, kv...)
-	kv, err = completedTable.Save()
+	kv, err = historyTable.Save()
 	if err != nil {
-		elog.Error("updateIndex", "completedTable.Save", err.Error())
+		elog.Error("updateIndex", "historyTable.Save", err.Error())
 		return nil
 	}
 	kvs = append(kvs, kv...)

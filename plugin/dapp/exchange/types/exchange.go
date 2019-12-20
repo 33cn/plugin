@@ -23,10 +23,10 @@ const (
 	NameMarketOrderAction = "MarketOrder"
 	NameRevokeOrderAction = "RevokeOrder"
 
-	FuncNameQueryMarketDepth        = "QueryMarketDepth"
-	FuncNameQueryCompletedOrderList = "QueryCompletedOrderList"
-	FuncNameQueryOrder              = "QueryOrder"
-	FuncNameQueryOrderList          = "QueryOrderList"
+	FuncNameQueryMarketDepth      = "QueryMarketDepth"
+	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
+	FuncNameQueryOrder            = "QueryOrder"
+	FuncNameQueryOrderList        = "QueryOrderList"
 )
 
 // log类型id值
