@@ -624,7 +624,7 @@ HERE:
 			return &orderList, nil
 		}
 	}
-	if len(orderList.List) == 0 && len(rows) == int(count) {
+	if len(orderList.List) != int(count) && len(rows) == int(count) {
 		primaryKey = string(rows[len(rows)-1].Primary)
 		goto HERE
 	}
