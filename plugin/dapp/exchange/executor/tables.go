@@ -40,14 +40,14 @@ var opt_exchange_order = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "order",
 	Primary: "orderID",
-	Index:   []string{"market_order","addr_status"},
+	Index:   []string{"market_order", "addr_status"},
 }
 
 var opt_exchange_history = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "history",
 	Primary: "index",
-	Index:   []string{"name","addr_status"},
+	Index:   []string{"name", "addr_status"},
 }
 
 //NewTable 新建表
@@ -68,7 +68,6 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	}
 	return table
 }
-
 
 func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewHistoryOrderRow()
@@ -109,7 +108,7 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%022d", r.OrderID)), nil
 	} else if key == "market_order" {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", r.GetLimitOrder().LeftAsset.GetSymbol(), r.GetLimitOrder().RightAsset.GetSymbol(), r.GetLimitOrder().Op, int64(Truncate(r.GetLimitOrder().Price*float64(1e8))))), nil
-	} else if key == "addr_status"{
+	} else if key == "addr_status" {
 		return []byte(fmt.Sprintf("%s:%d", r.Addr, r.Status)), nil
 	}
 	return nil, types.ErrNotFound
@@ -141,9 +140,9 @@ func (m *HistoryOrderRow) SetPayload(data types.Message) error {
 func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	if key == "index" {
 		return []byte(fmt.Sprintf("%022d", m.Index)), nil
-	}else if key == "name"{
+	} else if key == "name" {
 		return []byte(fmt.Sprintf("%s:%s", m.GetLimitOrder().LeftAsset.GetSymbol(), m.GetLimitOrder().RightAsset.GetSymbol())), nil
-	} else if key == "addr_status"{
+	} else if key == "addr_status" {
 		return []byte(fmt.Sprintf("%s:%d", m.Addr, m.Status)), nil
 	}
 	return nil, types.ErrNotFound
