@@ -595,17 +595,20 @@ func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey str
 	}
 	var rows []*tab.Row
 	var err error
+	var orderList et.OrderList
+HERE:
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
 		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
 	} else {
 		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
 	}
-	if err != nil {
+	if err != nil && err != types.ErrNotFound {
 		elog.Error("QueryCompletedOrderList.", "left", left, "right", right, "err", err.Error())
 		return nil, err
 	}
-
-	var orderList et.OrderList
+	if err == types.ErrNotFound {
+		return &orderList, nil
+	}
 	for _, row := range rows {
 		order := row.Data.(*et.Order)
 		//因为这张表里面记录了 completed,revoked 两种状态的订单，所以需要过滤
@@ -615,10 +618,15 @@ func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey str
 		//替换已经成交得量
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
+		if len(orderList.List) == int(count) {
+			//设置主键索引
+			orderList.PrimaryKey = string(row.Primary)
+			return &orderList, nil
+		}
 	}
-	//设置主键索引
-	if len(rows) == int(count) {
-		orderList.PrimaryKey = string(rows[len(rows)-1].Primary)
+	if len(orderList.List) == 0 && len(rows) == int(count) {
+		primaryKey = string(rows[len(rows)-1].Primary)
+		goto HERE
 	}
 	return &orderList, nil
 }
