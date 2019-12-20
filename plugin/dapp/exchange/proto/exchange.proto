@@ -105,7 +105,7 @@ message MarketDepthList {
 }
 
 //查询最新得成交信息,外部接口
-message QueryCompletedOrderList {
+message QueryHistoryOrderList {
     //资产1
     asset leftAsset  = 1;
     //资产2

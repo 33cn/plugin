@@ -24,7 +24,7 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 }
 
 //查询已经完成得订单
-func (s *exchange) Query_QueryCompletedOrderList(in *et.QueryCompletedOrderList) (types.Message, error) {
+func (s *exchange) Query_QueryHistoryOrderList(in *et.QueryHistoryOrderList) (types.Message, error) {
 	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
@@ -35,7 +35,7 @@ func (s *exchange) Query_QueryCompletedOrderList(in *et.QueryCompletedOrderList)
 	if !CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
-	return QueryCompletedOrderList(s.GetLocalDB(), in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
+	return QueryHistoryOrderList(s.GetLocalDB(), in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
 }
 
 //根据orderID查询订单信息

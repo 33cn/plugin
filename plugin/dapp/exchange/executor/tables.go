@@ -40,22 +40,14 @@ var opt_exchange_order = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "order",
 	Primary: "orderID",
-	Index:   []string{"market_order"},
+	Index:   []string{"market_order","addr_status"},
 }
 
-//根据地址和状态,index是实时在变化,要有先后顺序
-var opt_exchange_user_order = &table.Option{
+var opt_exchange_history = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
-	Name:    "UserOrder",
+	Name:    "history",
 	Primary: "index",
-	Index:   nil,
-}
-
-var opt_exchange_completed = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "completed",
-	Primary: "index",
-	Index:   nil,
+	Index:   []string{"name","addr_status"},
 }
 
 //NewTable 新建表
@@ -77,17 +69,10 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-func NewUserOrderTable(kvdb db.KV) *table.Table {
-	rowmeta := NewUserOrderRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_user_order)
-	if err != nil {
-		panic(err)
-	}
-	return table
-}
-func NewCompletedOrderTable(kvdb db.KV) *table.Table {
-	rowmeta := NewCompletedOrderRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_completed)
+
+func NewHistoryOrderTable(kvdb db.KV) *table.Table {
+	rowmeta := NewHistoryOrderRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_history)
 	if err != nil {
 		panic(err)
 	}
@@ -124,57 +109,27 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%022d", r.OrderID)), nil
 	} else if key == "market_order" {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", r.GetLimitOrder().LeftAsset.GetSymbol(), r.GetLimitOrder().RightAsset.GetSymbol(), r.GetLimitOrder().Op, int64(Truncate(r.GetLimitOrder().Price*float64(1e8))))), nil
+	} else if key == "addr_status"{
+		return []byte(fmt.Sprintf("%s:%d", r.Addr, r.Status)), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-//UserOrderRow table meta 结构
-type UserOrderRow struct {
+//HistoryOrderRow table meta 结构
+type HistoryOrderRow struct {
 	*ety.Order
 }
 
-//NewOrderRow 新建一个meta 结构
-func NewUserOrderRow() *UserOrderRow {
-	return &UserOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
+func NewHistoryOrderRow() *HistoryOrderRow {
+	return &HistoryOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
 
-//CreateRow
-func (r *UserOrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.Order{}}
-}
-
-//SetPayload 设置数据
-func (r *UserOrderRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.Order); ok {
-		r.Order = txdata
-		return nil
-	}
-	return types.ErrTypeAsset
-}
-
-//Get 按照indexName 查询 indexValue
-func (r *UserOrderRow) Get(key string) ([]byte, error) {
-	if key == "index" {
-		return []byte(fmt.Sprintf("%s:%d:%022d", r.Addr, r.Status, r.Index)), nil
-	}
-	return nil, types.ErrNotFound
-}
-
-//CompletedOrderRow table meta 结构
-type CompletedOrderRow struct {
-	*ety.Order
-}
-
-func NewCompletedOrderRow() *CompletedOrderRow {
-	return &CompletedOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
-}
-
-func (m *CompletedOrderRow) CreateRow() *table.Row {
+func (m *HistoryOrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
 
 //SetPayload 设置数据
-func (m *CompletedOrderRow) SetPayload(data types.Message) error {
+func (m *HistoryOrderRow) SetPayload(data types.Message) error {
 	if txdata, ok := data.(*ety.Order); ok {
 		m.Order = txdata
 		return nil
@@ -183,9 +138,13 @@ func (m *CompletedOrderRow) SetPayload(data types.Message) error {
 }
 
 //Get 按照indexName 查询 indexValue
-func (m *CompletedOrderRow) Get(key string) ([]byte, error) {
+func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	if key == "index" {
-		return []byte(fmt.Sprintf("%s:%s:%022d", m.GetLimitOrder().LeftAsset.GetSymbol(), m.GetLimitOrder().RightAsset.GetSymbol(), m.Index)), nil
+		return []byte(fmt.Sprintf("%022d", m.Index)), nil
+	}else if key == "name"{
+		return []byte(fmt.Sprintf("%s:%s", m.GetLimitOrder().LeftAsset.GetSymbol(), m.GetLimitOrder().RightAsset.GetSymbol())), nil
+	} else if key == "addr_status"{
+		return []byte(fmt.Sprintf("%s:%d", m.Addr, m.Status)), nil
 	}
 	return nil, types.ErrNotFound
 }

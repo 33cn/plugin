@@ -585,19 +585,20 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 	return &list, nil
 }
 
-//QueryCompletedOrderList
-func QueryCompletedOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
-	table := NewCompletedOrderTable(localdb)
+//QueryHistoryOrderList
+func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
+	table := NewHistoryOrderTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s", left.Symbol, right.Symbol))
+	indexName := "name"
 	if count == 0 {
 		count = et.Count
 	}
 	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = table.ListIndex("index", prefix, nil, count, direction)
+		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
 	} else {
-		rows, err = table.ListIndex("index", prefix, []byte(primaryKey), count, direction)
+		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
 	}
 	if err != nil {
 		elog.Error("QueryCompletedOrderList.", "left", left, "right", right, "err", err.Error())
@@ -607,6 +608,10 @@ func QueryCompletedOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey s
 	var orderList et.OrderList
 	for _, row := range rows {
 		order := row.Data.(*et.Order)
+		//因为这张表里面记录了 completed,revoked 两种状态的订单，所以需要过滤
+		if order.Status == et.Revoked {
+			continue
+		}
 		//替换已经成交得量
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
@@ -620,17 +625,23 @@ func QueryCompletedOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey s
 
 //QueryOrderList,默认展示最新的
 func QueryOrderList(localdb dbm.KV, statedb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
-	table := NewUserOrderTable(localdb)
+	var table *tab.Table
+	if status == et.Completed || status == et.Revoked {
+		table = NewHistoryOrderTable(localdb)
+	} else {
+		table = NewMarketOrderTable(localdb)
+	}
 	prefix := []byte(fmt.Sprintf("%s:%d", addr, status))
+	indexName := "addr_status"
 	if count == 0 {
 		count = et.Count
 	}
 	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = table.ListIndex("index", prefix, nil, count, direction)
+		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
 	} else {
-		rows, err = table.ListIndex("index", prefix, []byte(primaryKey), count, direction)
+		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
 	}
 	if err != nil {
 		elog.Error("QueryOrderList.", "addr", addr, "err", err.Error())
