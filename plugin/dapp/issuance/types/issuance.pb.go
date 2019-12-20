@@ -5,7 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+
 	proto "github.com/golang/protobuf/proto"
+
 	math "math"
 )
 
@@ -18,7 +20,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // 发行信息
 type Issuance struct {
@@ -46,17 +48,16 @@ func (m *Issuance) Reset()         { *m = Issuance{} }
 func (m *Issuance) String() string { return proto.CompactTextString(m) }
 func (*Issuance) ProtoMessage()    {}
 func (*Issuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{0}
+	return fileDescriptor_issuance_40720e0041940428, []int{0}
 }
-
 func (m *Issuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Issuance.Unmarshal(m, b)
 }
 func (m *Issuance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Issuance.Marshal(b, m, deterministic)
 }
-func (m *Issuance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Issuance.Merge(m, src)
+func (dst *Issuance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Issuance.Merge(dst, src)
 }
 func (m *Issuance) XXX_Size() int {
 	return xxx_messageInfo_Issuance.Size(m)
@@ -195,17 +196,16 @@ func (m *DebtRecord) Reset()         { *m = DebtRecord{} }
 func (m *DebtRecord) String() string { return proto.CompactTextString(m) }
 func (*DebtRecord) ProtoMessage()    {}
 func (*DebtRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{1}
+	return fileDescriptor_issuance_40720e0041940428, []int{1}
 }
-
 func (m *DebtRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DebtRecord.Unmarshal(m, b)
 }
 func (m *DebtRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DebtRecord.Marshal(b, m, deterministic)
 }
-func (m *DebtRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DebtRecord.Merge(m, src)
+func (dst *DebtRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DebtRecord.Merge(dst, src)
 }
 func (m *DebtRecord) XXX_Size() int {
 	return xxx_messageInfo_DebtRecord.Size(m)
@@ -313,17 +313,16 @@ func (m *IssuanceAssetPriceRecord) Reset()         { *m = IssuanceAssetPriceReco
 func (m *IssuanceAssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAssetPriceRecord) ProtoMessage()    {}
 func (*IssuanceAssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{2}
+	return fileDescriptor_issuance_40720e0041940428, []int{2}
 }
-
 func (m *IssuanceAssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Unmarshal(m, b)
 }
 func (m *IssuanceAssetPriceRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Marshal(b, m, deterministic)
 }
-func (m *IssuanceAssetPriceRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceAssetPriceRecord.Merge(m, src)
+func (dst *IssuanceAssetPriceRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceAssetPriceRecord.Merge(dst, src)
 }
 func (m *IssuanceAssetPriceRecord) XXX_Size() int {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Size(m)
@@ -368,17 +367,16 @@ func (m *IssuanceAction) Reset()         { *m = IssuanceAction{} }
 func (m *IssuanceAction) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAction) ProtoMessage()    {}
 func (*IssuanceAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{3}
+	return fileDescriptor_issuance_40720e0041940428, []int{3}
 }
-
 func (m *IssuanceAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAction.Unmarshal(m, b)
 }
 func (m *IssuanceAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceAction.Marshal(b, m, deterministic)
 }
-func (m *IssuanceAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceAction.Merge(m, src)
+func (dst *IssuanceAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceAction.Merge(dst, src)
 }
 func (m *IssuanceAction) XXX_Size() int {
 	return xxx_messageInfo_IssuanceAction.Size(m)
@@ -485,9 +483,9 @@ func (m *IssuanceAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*IssuanceAction) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*IssuanceAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _IssuanceAction_OneofMarshaler, _IssuanceAction_OneofUnmarshaler, _IssuanceAction_OneofSizer, []interface{}{
 		(*IssuanceAction_Create)(nil),
 		(*IssuanceAction_Debt)(nil),
 		(*IssuanceAction_Repay)(nil),
@@ -495,6 +493,144 @@ func (*IssuanceAction) XXX_OneofWrappers() []interface{} {
 		(*IssuanceAction_Close)(nil),
 		(*IssuanceAction_Manage)(nil),
 	}
+}
+
+func _IssuanceAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*IssuanceAction)
+	// value
+	switch x := m.Value.(type) {
+	case *IssuanceAction_Create:
+		b.EncodeVarint(1<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Create); err != nil {
+			return err
+		}
+	case *IssuanceAction_Debt:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Debt); err != nil {
+			return err
+		}
+	case *IssuanceAction_Repay:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Repay); err != nil {
+			return err
+		}
+	case *IssuanceAction_Feed:
+		b.EncodeVarint(4<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Feed); err != nil {
+			return err
+		}
+	case *IssuanceAction_Close:
+		b.EncodeVarint(5<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Close); err != nil {
+			return err
+		}
+	case *IssuanceAction_Manage:
+		b.EncodeVarint(6<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Manage); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("IssuanceAction.Value has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _IssuanceAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*IssuanceAction)
+	switch tag {
+	case 1: // value.create
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceCreate)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Create{msg}
+		return true, err
+	case 2: // value.debt
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceDebt)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Debt{msg}
+		return true, err
+	case 3: // value.repay
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceRepay)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Repay{msg}
+		return true, err
+	case 4: // value.feed
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceFeed)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Feed{msg}
+		return true, err
+	case 5: // value.close
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceClose)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Close{msg}
+		return true, err
+	case 6: // value.manage
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(IssuanceManage)
+		err := b.DecodeMessage(msg)
+		m.Value = &IssuanceAction_Manage{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _IssuanceAction_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*IssuanceAction)
+	// value
+	switch x := m.Value.(type) {
+	case *IssuanceAction_Create:
+		s := proto.Size(x.Create)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *IssuanceAction_Debt:
+		s := proto.Size(x.Debt)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *IssuanceAction_Repay:
+		s := proto.Size(x.Repay)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *IssuanceAction_Feed:
+		s := proto.Size(x.Feed)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *IssuanceAction_Close:
+		s := proto.Size(x.Close)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *IssuanceAction_Manage:
+		s := proto.Size(x.Manage)
+		n += 1 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
 }
 
 type IssuanceManage struct {
@@ -508,17 +644,16 @@ func (m *IssuanceManage) Reset()         { *m = IssuanceManage{} }
 func (m *IssuanceManage) String() string { return proto.CompactTextString(m) }
 func (*IssuanceManage) ProtoMessage()    {}
 func (*IssuanceManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{4}
+	return fileDescriptor_issuance_40720e0041940428, []int{4}
 }
-
 func (m *IssuanceManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceManage.Unmarshal(m, b)
 }
 func (m *IssuanceManage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceManage.Marshal(b, m, deterministic)
 }
-func (m *IssuanceManage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceManage.Merge(m, src)
+func (dst *IssuanceManage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceManage.Merge(dst, src)
 }
 func (m *IssuanceManage) XXX_Size() int {
 	return xxx_messageInfo_IssuanceManage.Size(m)
@@ -551,17 +686,16 @@ func (m *IssuanceCreate) Reset()         { *m = IssuanceCreate{} }
 func (m *IssuanceCreate) String() string { return proto.CompactTextString(m) }
 func (*IssuanceCreate) ProtoMessage()    {}
 func (*IssuanceCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{5}
+	return fileDescriptor_issuance_40720e0041940428, []int{5}
 }
-
 func (m *IssuanceCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceCreate.Unmarshal(m, b)
 }
 func (m *IssuanceCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceCreate.Marshal(b, m, deterministic)
 }
-func (m *IssuanceCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceCreate.Merge(m, src)
+func (dst *IssuanceCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceCreate.Merge(dst, src)
 }
 func (m *IssuanceCreate) XXX_Size() int {
 	return xxx_messageInfo_IssuanceCreate.Size(m)
@@ -613,17 +747,16 @@ func (m *IssuanceDebt) Reset()         { *m = IssuanceDebt{} }
 func (m *IssuanceDebt) String() string { return proto.CompactTextString(m) }
 func (*IssuanceDebt) ProtoMessage()    {}
 func (*IssuanceDebt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{6}
+	return fileDescriptor_issuance_40720e0041940428, []int{6}
 }
-
 func (m *IssuanceDebt) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceDebt.Unmarshal(m, b)
 }
 func (m *IssuanceDebt) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceDebt.Marshal(b, m, deterministic)
 }
-func (m *IssuanceDebt) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceDebt.Merge(m, src)
+func (dst *IssuanceDebt) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceDebt.Merge(dst, src)
 }
 func (m *IssuanceDebt) XXX_Size() int {
 	return xxx_messageInfo_IssuanceDebt.Size(m)
@@ -661,17 +794,16 @@ func (m *IssuanceRepay) Reset()         { *m = IssuanceRepay{} }
 func (m *IssuanceRepay) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRepay) ProtoMessage()    {}
 func (*IssuanceRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{7}
+	return fileDescriptor_issuance_40720e0041940428, []int{7}
 }
-
 func (m *IssuanceRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRepay.Unmarshal(m, b)
 }
 func (m *IssuanceRepay) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceRepay.Marshal(b, m, deterministic)
 }
-func (m *IssuanceRepay) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceRepay.Merge(m, src)
+func (dst *IssuanceRepay) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceRepay.Merge(dst, src)
 }
 func (m *IssuanceRepay) XXX_Size() int {
 	return xxx_messageInfo_IssuanceRepay.Size(m)
@@ -710,17 +842,16 @@ func (m *IssuanceFeed) Reset()         { *m = IssuanceFeed{} }
 func (m *IssuanceFeed) String() string { return proto.CompactTextString(m) }
 func (*IssuanceFeed) ProtoMessage()    {}
 func (*IssuanceFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{8}
+	return fileDescriptor_issuance_40720e0041940428, []int{8}
 }
-
 func (m *IssuanceFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceFeed.Unmarshal(m, b)
 }
 func (m *IssuanceFeed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceFeed.Marshal(b, m, deterministic)
 }
-func (m *IssuanceFeed) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceFeed.Merge(m, src)
+func (dst *IssuanceFeed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceFeed.Merge(dst, src)
 }
 func (m *IssuanceFeed) XXX_Size() int {
 	return xxx_messageInfo_IssuanceFeed.Size(m)
@@ -764,17 +895,16 @@ func (m *IssuanceClose) Reset()         { *m = IssuanceClose{} }
 func (m *IssuanceClose) String() string { return proto.CompactTextString(m) }
 func (*IssuanceClose) ProtoMessage()    {}
 func (*IssuanceClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{9}
+	return fileDescriptor_issuance_40720e0041940428, []int{9}
 }
-
 func (m *IssuanceClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceClose.Unmarshal(m, b)
 }
 func (m *IssuanceClose) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceClose.Marshal(b, m, deterministic)
 }
-func (m *IssuanceClose) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceClose.Merge(m, src)
+func (dst *IssuanceClose) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceClose.Merge(dst, src)
 }
 func (m *IssuanceClose) XXX_Size() int {
 	return xxx_messageInfo_IssuanceClose.Size(m)
@@ -807,17 +937,16 @@ func (m *ReceiptIssuance) Reset()         { *m = ReceiptIssuance{} }
 func (m *ReceiptIssuance) String() string { return proto.CompactTextString(m) }
 func (*ReceiptIssuance) ProtoMessage()    {}
 func (*ReceiptIssuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{10}
+	return fileDescriptor_issuance_40720e0041940428, []int{10}
 }
-
 func (m *ReceiptIssuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptIssuance.Unmarshal(m, b)
 }
 func (m *ReceiptIssuance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptIssuance.Marshal(b, m, deterministic)
 }
-func (m *ReceiptIssuance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptIssuance.Merge(m, src)
+func (dst *ReceiptIssuance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptIssuance.Merge(dst, src)
 }
 func (m *ReceiptIssuance) XXX_Size() int {
 	return xxx_messageInfo_ReceiptIssuance.Size(m)
@@ -869,17 +998,16 @@ func (m *ReceiptIssuanceID) Reset()         { *m = ReceiptIssuanceID{} }
 func (m *ReceiptIssuanceID) String() string { return proto.CompactTextString(m) }
 func (*ReceiptIssuanceID) ProtoMessage()    {}
 func (*ReceiptIssuanceID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{11}
+	return fileDescriptor_issuance_40720e0041940428, []int{11}
 }
-
 func (m *ReceiptIssuanceID) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptIssuanceID.Unmarshal(m, b)
 }
 func (m *ReceiptIssuanceID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptIssuanceID.Marshal(b, m, deterministic)
 }
-func (m *ReceiptIssuanceID) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptIssuanceID.Merge(m, src)
+func (dst *ReceiptIssuanceID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptIssuanceID.Merge(dst, src)
 }
 func (m *ReceiptIssuanceID) XXX_Size() int {
 	return xxx_messageInfo_ReceiptIssuanceID.Size(m)
@@ -916,17 +1044,16 @@ func (m *IssuanceRecords) Reset()         { *m = IssuanceRecords{} }
 func (m *IssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRecords) ProtoMessage()    {}
 func (*IssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{12}
+	return fileDescriptor_issuance_40720e0041940428, []int{12}
 }
-
 func (m *IssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRecords.Unmarshal(m, b)
 }
 func (m *IssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_IssuanceRecords.Marshal(b, m, deterministic)
 }
-func (m *IssuanceRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_IssuanceRecords.Merge(m, src)
+func (dst *IssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IssuanceRecords.Merge(dst, src)
 }
 func (m *IssuanceRecords) XXX_Size() int {
 	return xxx_messageInfo_IssuanceRecords.Size(m)
@@ -956,17 +1083,16 @@ func (m *ReqIssuanceInfo) Reset()         { *m = ReqIssuanceInfo{} }
 func (m *ReqIssuanceInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfo) ProtoMessage()    {}
 func (*ReqIssuanceInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{13}
+	return fileDescriptor_issuance_40720e0041940428, []int{13}
 }
-
 func (m *ReqIssuanceInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfo.Unmarshal(m, b)
 }
 func (m *ReqIssuanceInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceInfo.Marshal(b, m, deterministic)
 }
-func (m *ReqIssuanceInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceInfo.Merge(m, src)
+func (dst *ReqIssuanceInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceInfo.Merge(dst, src)
 }
 func (m *ReqIssuanceInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceInfo.Size(m)
@@ -1005,17 +1131,16 @@ func (m *RepIssuanceCurrentInfo) Reset()         { *m = RepIssuanceCurrentInfo{}
 func (m *RepIssuanceCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfo) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{14}
+	return fileDescriptor_issuance_40720e0041940428, []int{14}
 }
-
 func (m *RepIssuanceCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Unmarshal(m, b)
 }
 func (m *RepIssuanceCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Marshal(b, m, deterministic)
 }
-func (m *RepIssuanceCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceCurrentInfo.Merge(m, src)
+func (dst *RepIssuanceCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceCurrentInfo.Merge(dst, src)
 }
 func (m *RepIssuanceCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Size(m)
@@ -1108,17 +1233,16 @@ func (m *ReqIssuanceInfos) Reset()         { *m = ReqIssuanceInfos{} }
 func (m *ReqIssuanceInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfos) ProtoMessage()    {}
 func (*ReqIssuanceInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{15}
+	return fileDescriptor_issuance_40720e0041940428, []int{15}
 }
-
 func (m *ReqIssuanceInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfos.Unmarshal(m, b)
 }
 func (m *ReqIssuanceInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceInfos.Marshal(b, m, deterministic)
 }
-func (m *ReqIssuanceInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceInfos.Merge(m, src)
+func (dst *ReqIssuanceInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceInfos.Merge(dst, src)
 }
 func (m *ReqIssuanceInfos) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceInfos.Size(m)
@@ -1148,17 +1272,16 @@ func (m *RepIssuanceCurrentInfos) Reset()         { *m = RepIssuanceCurrentInfos
 func (m *RepIssuanceCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfos) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{16}
+	return fileDescriptor_issuance_40720e0041940428, []int{16}
 }
-
 func (m *RepIssuanceCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Unmarshal(m, b)
 }
 func (m *RepIssuanceCurrentInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Marshal(b, m, deterministic)
 }
-func (m *RepIssuanceCurrentInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceCurrentInfos.Merge(m, src)
+func (dst *RepIssuanceCurrentInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceCurrentInfos.Merge(dst, src)
 }
 func (m *RepIssuanceCurrentInfos) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Size(m)
@@ -1189,17 +1312,16 @@ func (m *ReqIssuanceByStatus) Reset()         { *m = ReqIssuanceByStatus{} }
 func (m *ReqIssuanceByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceByStatus) ProtoMessage()    {}
 func (*ReqIssuanceByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{17}
+	return fileDescriptor_issuance_40720e0041940428, []int{17}
 }
-
 func (m *ReqIssuanceByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceByStatus.Unmarshal(m, b)
 }
 func (m *ReqIssuanceByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceByStatus.Marshal(b, m, deterministic)
 }
-func (m *ReqIssuanceByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceByStatus.Merge(m, src)
+func (dst *ReqIssuanceByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceByStatus.Merge(dst, src)
 }
 func (m *ReqIssuanceByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceByStatus.Size(m)
@@ -1236,17 +1358,16 @@ func (m *RepIssuanceIDs) Reset()         { *m = RepIssuanceIDs{} }
 func (m *RepIssuanceIDs) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceIDs) ProtoMessage()    {}
 func (*RepIssuanceIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{18}
+	return fileDescriptor_issuance_40720e0041940428, []int{18}
 }
-
 func (m *RepIssuanceIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceIDs.Unmarshal(m, b)
 }
 func (m *RepIssuanceIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceIDs.Marshal(b, m, deterministic)
 }
-func (m *RepIssuanceIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceIDs.Merge(m, src)
+func (dst *RepIssuanceIDs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceIDs.Merge(dst, src)
 }
 func (m *RepIssuanceIDs) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceIDs.Size(m)
@@ -1279,17 +1400,16 @@ func (m *ReqIssuanceRecords) Reset()         { *m = ReqIssuanceRecords{} }
 func (m *ReqIssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceRecords) ProtoMessage()    {}
 func (*ReqIssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{19}
+	return fileDescriptor_issuance_40720e0041940428, []int{19}
 }
-
 func (m *ReqIssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceRecords.Unmarshal(m, b)
 }
 func (m *ReqIssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqIssuanceRecords.Marshal(b, m, deterministic)
 }
-func (m *ReqIssuanceRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqIssuanceRecords.Merge(m, src)
+func (dst *ReqIssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqIssuanceRecords.Merge(dst, src)
 }
 func (m *ReqIssuanceRecords) XXX_Size() int {
 	return xxx_messageInfo_ReqIssuanceRecords.Size(m)
@@ -1340,17 +1460,16 @@ func (m *RepIssuanceRecords) Reset()         { *m = RepIssuanceRecords{} }
 func (m *RepIssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceRecords) ProtoMessage()    {}
 func (*RepIssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{20}
+	return fileDescriptor_issuance_40720e0041940428, []int{20}
 }
-
 func (m *RepIssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceRecords.Unmarshal(m, b)
 }
 func (m *RepIssuanceRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceRecords.Marshal(b, m, deterministic)
 }
-func (m *RepIssuanceRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceRecords.Merge(m, src)
+func (dst *RepIssuanceRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceRecords.Merge(dst, src)
 }
 func (m *RepIssuanceRecords) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceRecords.Size(m)
@@ -1380,17 +1499,16 @@ func (m *RepIssuanceDebtInfo) Reset()         { *m = RepIssuanceDebtInfo{} }
 func (m *RepIssuanceDebtInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceDebtInfo) ProtoMessage()    {}
 func (*RepIssuanceDebtInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{21}
+	return fileDescriptor_issuance_40720e0041940428, []int{21}
 }
-
 func (m *RepIssuanceDebtInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Unmarshal(m, b)
 }
 func (m *RepIssuanceDebtInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Marshal(b, m, deterministic)
 }
-func (m *RepIssuanceDebtInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuanceDebtInfo.Merge(m, src)
+func (dst *RepIssuanceDebtInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuanceDebtInfo.Merge(dst, src)
 }
 func (m *RepIssuanceDebtInfo) XXX_Size() int {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Size(m)
@@ -1420,17 +1538,16 @@ func (m *RepIssuancePrice) Reset()         { *m = RepIssuancePrice{} }
 func (m *RepIssuancePrice) String() string { return proto.CompactTextString(m) }
 func (*RepIssuancePrice) ProtoMessage()    {}
 func (*RepIssuancePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_7110f4228953d675, []int{22}
+	return fileDescriptor_issuance_40720e0041940428, []int{22}
 }
-
 func (m *RepIssuancePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuancePrice.Unmarshal(m, b)
 }
 func (m *RepIssuancePrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepIssuancePrice.Marshal(b, m, deterministic)
 }
-func (m *RepIssuancePrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepIssuancePrice.Merge(m, src)
+func (dst *RepIssuancePrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepIssuancePrice.Merge(dst, src)
 }
 func (m *RepIssuancePrice) XXX_Size() int {
 	return xxx_messageInfo_RepIssuancePrice.Size(m)
@@ -1474,9 +1591,9 @@ func init() {
 	proto.RegisterType((*RepIssuancePrice)(nil), "types.RepIssuancePrice")
 }
 
-func init() { proto.RegisterFile("issuance.proto", fileDescriptor_7110f4228953d675) }
+func init() { proto.RegisterFile("issuance.proto", fileDescriptor_issuance_40720e0041940428) }
 
-var fileDescriptor_7110f4228953d675 = []byte{
+var fileDescriptor_issuance_40720e0041940428 = []byte{
 	// 1031 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xcd, 0x6e, 0xdb, 0x46,
 	0x10, 0x36, 0x49, 0x51, 0xb2, 0x46, 0xb6, 0xec, 0x6c, 0x52, 0x97, 0x28, 0xda, 0x40, 0x58, 0xf4,

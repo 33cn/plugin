@@ -584,7 +584,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	debtRecord.StartTime = action.blocktime
 	debtRecord.CollateralPrice = lastPrice
 	debtRecord.DebtValue = debt.Value
-	debtRecord.LiquidationPrice = math.Trunc(issu.LiquidationRatio * lastPrice * pty.IssuancePreLiquidationRatio * 1e4)/1e4
+	debtRecord.LiquidationPrice = math.Trunc(issu.LiquidationRatio*lastPrice*pty.IssuancePreLiquidationRatio*1e4) / 1e4
 	debtRecord.Status = pty.IssuanceUserStatusCreate
 	debtRecord.ExpireTime = action.blocktime + issu.Period
 
@@ -972,8 +972,8 @@ func queryIssuanceByStatus(localdb dbm.KVDB, status int32, issuanceID string) ([
 	}
 
 	var data = &pty.ReceiptIssuanceID{
-		IssuanceId:issuanceID,
-		Status:status,
+		IssuanceId: issuanceID,
+		Status:     status,
 	}
 	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
 	if err != nil {
@@ -990,7 +990,7 @@ func queryIssuanceByStatus(localdb dbm.KVDB, status int32, issuanceID string) ([
 }
 
 // 精确查找发行记录
-func queryIssuanceRecordByID(db dbm.KV, issuanceID string, debtID string, ) (*pty.DebtRecord, error) {
+func queryIssuanceRecordByID(db dbm.KV, issuanceID string, debtID string) (*pty.DebtRecord, error) {
 	issu, err := queryIssuanceByID(db, issuanceID)
 	if err != nil {
 		clog.Error("queryIssuanceRecordByID", "error", err)
@@ -1021,7 +1021,7 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.KVDB, status int32, deb
 	}
 
 	var data = &pty.ReceiptIssuance{
-		Status:status,
+		Status: status,
 	}
 	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
 	if err != nil {

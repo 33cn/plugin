@@ -5,8 +5,9 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/common/db/table"
 	"math"
+
+	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -478,7 +479,7 @@ func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error)
 // value:借出ccny数量， colValue:抵押物数量， price:抵押物价格
 func calcLiquidationPrice(value int64, colValue int64) float64 {
 	liquidationRation := float64(value) / float64(colValue)
-	liquidationPrice := math.Trunc(liquidationRation * pty.CollateralizePreLiquidationRatio * 1e4)/1e4
+	liquidationPrice := math.Trunc(liquidationRation*pty.CollateralizePreLiquidationRatio*1e4) / 1e4
 
 	return liquidationPrice
 }
@@ -620,7 +621,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	borrowRecord.StartTime = action.blocktime
 	borrowRecord.CollateralPrice = lastPrice
 	borrowRecord.DebtValue = borrow.GetValue()
-	borrowRecord.LiquidationPrice = math.Trunc(coll.LiquidationRatio * lastPrice * pty.CollateralizePreLiquidationRatio * 1e4)/1e4
+	borrowRecord.LiquidationPrice = math.Trunc(coll.LiquidationRatio*lastPrice*pty.CollateralizePreLiquidationRatio*1e4) / 1e4
 	borrowRecord.Status = pty.CollateralizeUserStatusCreate
 	borrowRecord.ExpireTime = action.blocktime + coll.Period
 
@@ -1174,8 +1175,8 @@ func queryCollateralizeByStatus(localdb dbm.KVDB, status int32, collID string) (
 	}
 
 	var data = &pty.ReceiptCollateralize{
-		CollateralizeId:collID,
-		Status:status,
+		CollateralizeId: collID,
+		Status:          status,
 	}
 	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
 	if err != nil {
@@ -1199,9 +1200,9 @@ func queryCollateralizeByAddr(localdb dbm.KVDB, addr string, status int32, collI
 	}
 
 	var data = &pty.ReceiptCollateralize{
-		CollateralizeId:collID,
-		Status:status,
-		AccountAddr:addr,
+		CollateralizeId: collID,
+		Status:          status,
+		AccountAddr:     addr,
 	}
 	var rows []*table.Row
 	var err error
@@ -1257,8 +1258,8 @@ func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, co
 	}
 
 	var data = &pty.ReceiptCollateralize{
-		AccountAddr:addr,
-		CollateralizeId:collID,
+		AccountAddr:     addr,
+		CollateralizeId: collID,
 	}
 
 	var rows []*table.Row
@@ -1298,8 +1299,8 @@ func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.KVDB, status int32,
 	}
 
 	var data = &pty.ReceiptCollateralize{
-		Status:status,
-		CollateralizeId:collID,
+		Status:          status,
+		CollateralizeId: collID,
 	}
 
 	var rows []*table.Row

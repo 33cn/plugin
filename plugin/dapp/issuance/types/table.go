@@ -108,7 +108,7 @@ func (tx *IssuanceRecordRow) Get(key string) ([]byte, error) {
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
 	} else if key == "addr" {
-	    return []byte(tx.AccountAddr), nil
+		return []byte(tx.AccountAddr), nil
 	}
 	return nil, types.ErrNotFound
 }
