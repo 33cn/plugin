@@ -2,8 +2,10 @@ package pos33
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/memberlist"
@@ -98,6 +100,70 @@ func ipPort(addr string) (string, int) {
 		panic(err)
 	}
 	return host, iport
+}
+
+type transport struct {
+	*memberlist.NetTransport
+	tcpmap map[string]net.Conn
+	ch     chan net.Conn
+}
+
+// See Transport.
+func (t *transport) StreamCh() <-chan net.Conn {
+	return t.ch
+}
+
+func (t *transport) handleConns() {
+	for c := range t.NetTransport.StreamCh() {
+		a := c.RemoteAddr().String()
+		plog.Info("recv new connetion", "addr", a)
+		t.tcpmap[a] = c
+		t.ch <- c
+	}
+}
+
+func (t *transport) DialTimeout(addr string, timeout time.Duration) (net.Conn, error) {
+	c, ok := t.tcpmap[addr]
+	if !ok {
+		cc, err := t.NetTransport.DialTimeout(addr, timeout)
+		if err == nil {
+			t.tcpmap[addr] = cc
+			plog.Info("dial new connetion:", "addr", addr)
+			t.ch <- cc
+		}
+		return cc, err
+	}
+	return c, nil
+}
+
+func newNt(conf *memberlist.Config) *transport {
+	nc := &memberlist.NetTransportConfig{
+		BindAddrs: []string{conf.BindAddr},
+		BindPort:  conf.BindPort,
+	}
+	makeNetRetry := func(limit int) (*memberlist.NetTransport, error) {
+		var err error
+		for try := 0; try < limit; try++ {
+			var nt *memberlist.NetTransport
+			if nt, err = memberlist.NewNetTransport(nc); err == nil {
+				return nt, nil
+			}
+			if strings.Contains(err.Error(), "address already in use") {
+				continue
+			}
+		}
+
+		return nil, fmt.Errorf("failed to obtain an address: %v", err)
+	}
+	nt, err := makeNetRetry(3)
+	if err != nil {
+		panic(err)
+	}
+	mynt := &transport{NetTransport: nt, tcpmap: make(map[string]net.Conn), ch: make(chan net.Conn, 1)}
+	conf.Transport = mynt
+	go mynt.handleConns()
+
+	return mynt
 }
 
 func createGossip(conf *memberlist.Config, publicKey, seedAddr string) *gossip {
@@ -224,12 +290,6 @@ func (g *gossip) broadcastUDP(msg []byte) {
 
 func (g *gossip) gossip(msg []byte) {
 	g.tcpCh <- msg
-	/*
-		g.broadcasts.QueueBroadcast(&broadcast{
-			msg:    msg,
-			notify: nil,
-		})
-	*/
 }
 
 func (g *gossip) send(public string, msg []byte) error {

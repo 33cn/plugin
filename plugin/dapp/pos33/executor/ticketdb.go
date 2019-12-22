@@ -144,7 +144,7 @@ func NewAction(t *Pos33Ticket, tx *types.Transaction) *Action {
 // GenesisInit init genesis
 func (action *Action) GenesisInit(genesis *ty.Pos33TicketGenesis) (*types.Receipt, error) {
 	chain33Cfg := action.api.GetConfig()
-	prefix := fmt.Sprintf("%s:%d:", genesis.MinerAddress, action.height)
+	prefix := fmt.Sprintf("%s:%d:", genesis.MinerAddress[:8], action.height)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, action.height)
@@ -231,7 +231,7 @@ func (action *Action) Pos33TicketBind(tbind *ty.Pos33TicketBind) (*types.Receipt
 // Pos33TicketOpen ticket open
 func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt, error) {
 	chain33Cfg := action.api.GetConfig()
-	prefix := fmt.Sprintf("%s:%d:", topen.MinerAddress, action.height)
+	prefix := fmt.Sprintf("%s:%d:", topen.MinerAddress[:8], action.height)
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	//addr from

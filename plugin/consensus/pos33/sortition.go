@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -31,7 +32,7 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 		size = pt.Pos33ProposerSize
 	}
 	//allw := client.allWeight(height)
-	diff := float64(size) / (float64(allw) * n.diff)
+	diff := float64(size) / float64(allw)
 
 	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
 
@@ -62,8 +63,13 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 			index = len(msgs)
 		}
 		// 符合，表示抽中了
-
-		m := &pt.Pos33SortitionMsg{Hash: hash, Proof: vrfProof[:], Input: inputMsg, Pubkey: priv.PubKey().Bytes(), Diff: int32(n.diff * 1000)}
+		m := &pt.Pos33SortitionMsg{
+			Hash:   hash,
+			Proof:  vrfProof[:],
+			Input:  inputMsg,
+			Pubkey: priv.PubKey().Bytes(),
+			Diff:   int32(allw),
+		}
 		msgs = append(msgs, m)
 	}
 
@@ -101,6 +107,8 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 	return nil
 }
 
+var errDiff = errors.New("diff error")
+
 func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortitionMsg) error {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
@@ -110,7 +118,10 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 	if m == nil || m.Input == nil {
 		return fmt.Errorf("verifySort error: sort msg is nil")
 	}
-	diff := float64(size) / (float64(allw) * n.diff) //float64(n.diff) / 1000)
+	if allw != int(m.Diff) {
+		return fmt.Errorf("verifySort error: allw=%d != m.Diff=%d", allw, m.Diff)
+	}
+	diff := float64(size) / float64(m.Diff)
 
 	plog.Debug("verify sortition", "height", height, "round", m.Input.Round, "step", step, "seed", hexs(seed), "allw", allw)
 
@@ -141,7 +152,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 	y := big.NewInt(0).SetBytes(m.Hash)
 	z := big.NewFloat(0).SetInt(y)
 	if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
-		return fmt.Errorf("diff error")
+		return errDiff
 	}
 
 	return nil

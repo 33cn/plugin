@@ -302,7 +302,7 @@ func (client *Client) CreateBlock() {
 	for {
 		client.flushTicket()
 		if !client.miningOK() {
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond * 500)
 			continue
 		}
 		break
