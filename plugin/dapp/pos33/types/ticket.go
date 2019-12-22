@@ -177,7 +177,7 @@ const (
 	// Pos33VoteReward 每个区块的奖励
 	Pos33VoteReward = types.Coin / 2
 	// Pos33ProposerSize 候选区块Proposer数量
-	Pos33ProposerSize = 3
+	Pos33ProposerSize = 5
 	// Pos33VoterSize  候选区块Voter数量
 	Pos33VoterSize = 15
 	// Pos33DepositPeriod 抵押周期

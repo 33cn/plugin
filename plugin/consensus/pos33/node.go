@@ -269,17 +269,28 @@ func (n *node) addBlock(b *types.Block) {
 	if !n.miningOK() {
 		return
 	}
-	plog.Info("node.addBlock", "height", b.Height, "hash", common.ToHex(b.Hash(n.GetAPI().GetConfig())))
 
 	if b.Height < 0 && n.lastBlock() != nil && b.Height <= n.lastBlock().Height {
 		plog.Info("addBlock nil", "height", b.Height)
 		return
 	}
 
-	select {
-	case n.bch <- b:
-	case <-n.bch:
-		n.bch <- b
+	fn := func(nb *types.Block) {
+		select {
+		case n.bch <- nb:
+		case <-n.bch:
+			n.bch <- nb
+		}
+	}
+
+	t := b.BlockTime - n.lastBlock().BlockTime
+	plog.Info("node.addBlock", "height", b.Height, "delta", t, "hash", common.ToHex(b.Hash(n.GetAPI().GetConfig())))
+	if t < 1 {
+		time.AfterFunc(time.Millisecond*500, func() {
+			fn(b)
+		})
+	} else {
+		fn(b)
 	}
 }
 
@@ -346,6 +357,9 @@ func sumR(r int) int {
 
 func (n *node) checkBlock(b, pb *types.Block) error {
 	plog.Info("node.checkBlock", "height", b.Height, "pbheight", pb.Height)
+	if b.Height <= pb.Height {
+		return fmt.Errorf("")
+	}
 	if b.Height < 2 {
 		return nil
 	}
@@ -714,7 +728,7 @@ func (n *node) handleBlockMsg(bm *pt.Pos33BlockMsg, myself bool) {
 			return
 		}
 		plog.Info("handleBlockMsg", "height", b.Height, "maker", addr(bm.Sig))
-		err := n.checkBlock(b, n.GetCurrentBlock())
+		err := n.checkBlock(b, lb)
 		if err != nil {
 			plog.Error("handleBlockMsg err: checkBlock error", "err", err, "height", b.Height)
 			return
@@ -863,7 +877,7 @@ func (n *node) runLoop() {
 	if blockTimeout < time.Millisecond*500 || blockTimeout > time.Millisecond*30000 {
 		blockTimeout = time.Millisecond * 1000
 	}
-	baseST := blockTimeout
+	baseST := blockTimeout * 2 / 3
 	deltaST := blockTimeout / 3
 	var rs []int
 	plog.Info("@@@@@@@@ pos33 node runing.......", "last block height", lb.Height, "baseST", baseST)
@@ -923,8 +937,8 @@ func changeBaseST(rs []int, b *types.Block, baseST, deltaST, bt time.Duration) (
 		baseST += deltaST
 	} else {
 		baseST -= deltaST
-		if baseST < bt {
-			baseST = bt
+		if baseST < bt*2/3 {
+			baseST = bt * 2 / 3
 		}
 	}
 	return baseST, rs
