@@ -179,7 +179,9 @@ const (
 	// Pos33ProposerSize 候选区块Proposer数量
 	Pos33ProposerSize = 5
 	// Pos33VoterSize  候选区块Voter数量
-	Pos33VoterSize = 15
+	Pos33VoterSize = 150
+	// Pos33MustVotes 必须达到的票数
+	Pos33MustVotes = 110 //15*2/3 + 1
 	// Pos33DepositPeriod 抵押周期
 	Pos33DepositPeriod = 40320
 	// Pos33FundKeyAddr ycc开发基金地址
@@ -197,9 +199,10 @@ func (v *Pos33VoteMsg) Verify() bool {
 
 // Equal is ...
 func (v *Pos33VoteMsg) Equal(other *Pos33VoteMsg) bool {
-	return v.Sort.Input.Height == other.Sort.Input.Height &&
-		v.Sort.Input.Round == other.Sort.Input.Round &&
-		v.Sort.Input.TicketId == other.Sort.Input.TicketId
+	return v.Sort.Proof.Input.Height == other.Sort.Proof.Input.Height &&
+		v.Sort.Proof.Input.Round == other.Sort.Proof.Input.Round &&
+		v.Sort.SortHash.Tid == other.Sort.SortHash.Tid &&
+		v.Tid == other.Tid
 }
 
 // Sign is sign vote msg
@@ -246,11 +249,11 @@ func (act *Pos33Miner) ToString() string {
 }
 
 // Sorts is for sort []*Pos33SortitionMsg
-type Sorts []*Pos33SortitionMsg
+type Sorts []*Pos33SortMsg
 
 func (m Sorts) Len() int { return len(m) }
 func (m Sorts) Less(i, j int) bool {
-	return string(m[i].Hash) < string(m[j].Hash)
+	return string(m[i].SortHash.Hash) < string(m[j].SortHash.Hash)
 }
 func (m Sorts) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
 
@@ -259,6 +262,6 @@ type Votes []*Pos33VoteMsg
 
 func (v Votes) Len() int { return len(v) }
 func (v Votes) Less(i, j int) bool {
-	return string(v[i].Sort.Hash) < string(v[i].Sort.Hash)
+	return string(v[i].Sort.SortHash.Hash) < string(v[i].Sort.SortHash.Hash)
 }
 func (v Votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }

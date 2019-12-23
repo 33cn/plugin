@@ -48,17 +48,13 @@ type genesisTicket struct {
 }
 
 type subConfig struct {
-	Genesis            []*genesisTicket `json:"genesis"`
-	GenesisBlockTime   int64            `json:"genesisBlockTime"`
-	ListenAddr         string           `json:"ListenAddr,omitempty"`
-	AdvertiseAddr      string           `json:"AdvertiseAddr,omitempty"`
-	BootPeerAddr       string           `json:"BootPeerAddr,omitempty"`
-	BlockTime          int64            `json:"BlockTime,omitempty"`
-	BlockTimeout       int64            `json:"BlockTimeout,omitempty"`
-	NodeID             string           `json:"nodeID,omitempty"`
-	DeltaDiff          float64          `json:"deltaDiff,omitempty"`
-	DiffChangeTimespan int64            `json:"diffChangeTimespan,omitempty"`
-	SingleNode         bool             `json:"singleNode,omitempty"`
+	Genesis          []*genesisTicket `json:"genesis"`
+	GenesisBlockTime int64            `json:"genesisBlockTime"`
+	ListenAddr       string           `json:"ListenAddr,omitempty"`
+	AdvertiseAddr    string           `json:"AdvertiseAddr,omitempty"`
+	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
+	BlockTimeout     int64            `json:"BlockTimeout,omitempty"`
+	SingleNode       bool             `json:"singleNode,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -149,7 +145,12 @@ func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
 func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
 	client.privLock.Lock()
 	defer client.privLock.Unlock()
-	return client.privmap[mineAddr]
+	//return client.privmap[mineAddr]
+	for _, p := range client.privmap {
+		// ONLY one privKey for minning !!!
+		return p
+	}
+	panic("go here")
 }
 
 func getTicketHeight(tid string) int64 {
@@ -278,7 +279,7 @@ func (client *Client) AddBlock(b *types.Block) error {
 }
 
 func (client *Client) nodeID() string {
-	return client.conf.NodeID
+	return address.PubKeyToAddr(client.getPriv("").PubKey().Bytes())
 }
 
 func (client *Client) miningOK() bool {

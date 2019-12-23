@@ -9,6 +9,8 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/common/crypto"
 	vrf "github.com/33cn/chain33/common/vrf/secp256k1"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
@@ -25,7 +27,16 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 1. 通过签名，然后hash，得出的Hash值是在[0，max]的范围内均匀分布并且随机的, 那么Hash/max实在[1/max, 1]之间均匀分布的
 // 2. 那么从N个选票中抽出M个选票，等价于计算N次Hash, 并且Hash/max < M/N
 
-func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortitionMsg {
+func calcuVrfHash(input *pt.VrfInput, priv crypto.PrivKey) ([]byte, []byte) {
+	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
+	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
+	in := types.Encode(input)
+	vrfHash, vrfProof := vrfPriv.Evaluate(in)
+	hash := vrfHash[:]
+	return hash, vrfProof
+}
+
+func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortMsg {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
@@ -35,18 +46,22 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 	diff := float64(size) / float64(allw)
 
 	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
+	priv := n.getPriv("")
+	input := &pt.VrfInput{Seed: seed, Height: height, Round: int32(round), Step: int32(step)}
+	vrfHash, vrfProof := calcuVrfHash(input, priv)
+	proof := &pt.HashProof{
+		Input:    input,
+		VrfHash:  vrfHash,
+		VrfProof: vrfProof,
+		Pubkey:   priv.PubKey().Bytes(),
+	}
 
-	var msgs []*pt.Pos33SortitionMsg
+	var msgs []*pt.Pos33SortMsg
 	var minHash []byte
 	index := 0
-	for tid, maddr := range n.getTicketsMap(height) {
-		inputMsg := &pt.Pos33VrfInputMsg{Seed: seed, Height: height, Round: int32(round), Step: int32(step), TicketId: tid}
-		priv := n.getPriv(maddr)
-		privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
-		vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
-		input := types.Encode(inputMsg)
-		vrfHash, vrfProof := vrfPriv.Evaluate(input)
-		hash := vrfHash[:]
+	for tid := range n.getTicketsMap(height) {
+		data := fmt.Sprintf("%x+%s", vrfHash, tid)
+		hash := hash2([]byte(data))
 
 		// 转为big.Float计算，比较难度diff
 		y := big.NewInt(0).SetBytes(hash)
@@ -63,12 +78,9 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 			index = len(msgs)
 		}
 		// 符合，表示抽中了
-		m := &pt.Pos33SortitionMsg{
-			Hash:   hash,
-			Proof:  vrfProof[:],
-			Input:  inputMsg,
-			Pubkey: priv.PubKey().Bytes(),
-			Diff:   int32(allw),
+		m := &pt.Pos33SortMsg{
+			SortHash: &pt.SortHash{Hash: hash, Tid: tid},
+			Proof:    proof,
 		}
 		msgs = append(msgs, m)
 	}
@@ -77,13 +89,13 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 		return nil
 	}
 	if step == 0 {
-		return []*pt.Pos33SortitionMsg{msgs[index]}
+		return []*pt.Pos33SortMsg{msgs[index]}
 	}
 	sort.Sort(pt.Sorts(msgs))
-	c := pt.Pos33VoterSize*2/3 + 1
-	if len(msgs) > c {
-		return msgs[:c]
-	}
+	// c := pt.Pos33VoterSize
+	// if len(msgs) > c {
+	// 	return msgs[:c]
+	// }
 	return msgs
 }
 
@@ -109,23 +121,19 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 
 var errDiff = errors.New("diff error")
 
-func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortitionMsg) error {
+func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortMsg) error {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
-	if m == nil || m.Input == nil {
+	if m == nil || m.Proof == nil || m.SortHash == nil || m.Proof.Input == nil {
 		return fmt.Errorf("verifySort error: sort msg is nil")
 	}
-	if allw != int(m.Diff) {
-		return fmt.Errorf("verifySort error: allw=%d != m.Diff=%d", allw, m.Diff)
-	}
-	diff := float64(size) / float64(m.Diff)
 
-	plog.Debug("verify sortition", "height", height, "round", m.Input.Round, "step", step, "seed", hexs(seed), "allw", allw)
+	diff := float64(size) / float64(allw)
 
-	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.Input.GetTicketId()}})
+	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.SortHash.Tid}})
 	if err != nil {
 		return err
 	}
@@ -133,8 +141,10 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 
 	ok := false
 	for _, t := range reply.Tickets {
-		if t.TicketId == m.Input.TicketId && getTicketHeight(t.TicketId) <= height {
-			ok = true
+		if t.TicketId == m.SortHash.Tid && getTicketHeight(t.TicketId) <= height {
+			if t.MinerAddress == address.PubKeyToAddr(m.Proof.Pubkey) {
+				ok = true
+			}
 			break
 		}
 	}
@@ -142,20 +152,29 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 		return fmt.Errorf("ticketID error")
 	}
 
-	im := &pt.Pos33VrfInputMsg{TicketId: m.Input.TicketId, Seed: seed, Height: height, Round: m.Input.GetRound(), Step: int32(step)}
-	input := types.Encode(im)
-	err = vrfVerify(m.Pubkey, input, m.Proof, m.Hash)
+	input := &pt.VrfInput{Seed: seed, Height: height, Round: m.Proof.Input.Round, Step: int32(step)}
+	in := types.Encode(input)
+	err = vrfVerify(m.Proof.Pubkey, in, m.Proof.VrfProof, m.Proof.VrfHash)
 	if err != nil {
 		return err
 	}
+	data := fmt.Sprintf("%x+%s", m.Proof.VrfHash, m.SortHash.Tid)
+	hash := hash2([]byte(data))
+	if string(hash) != string(m.SortHash.Hash) {
+		return fmt.Errorf("sort hash error")
+	}
 
-	y := big.NewInt(0).SetBytes(m.Hash)
+	y := big.NewInt(0).SetBytes(hash)
 	z := big.NewFloat(0).SetInt(y)
 	if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 		return errDiff
 	}
 
 	return nil
+}
+
+func hash2(data []byte) []byte {
+	return crypto.Sha256(crypto.Sha256(data))
 }
 
 func min(a, b int) int {

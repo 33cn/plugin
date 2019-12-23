@@ -47,32 +47,39 @@ message Pos33Msg {
     Ty ty = 2;
 }
 
-message Pos33VrfInputMsg {
-    bytes  seed     = 3;
-    string ticketId = 4;
-    int64  height   = 5;
-    int32  step     = 6;
-    int32  round    = 7;
+message SortHash {
+    string tid  = 1;
+    bytes  hash = 2;
 }
 
-message Pos33SortitionMsg {
-    bytes            hash   = 1;
-    bytes            pubkey = 2;
-    bytes            proof  = 3;
-    int32            diff   = 5;
-    Pos33VrfInputMsg input  = 4;
+message VrfInput {
+    int64 height = 1;
+    int32 round  = 2;
+    int32 step   = 3;
+    bytes seed   = 4;
+}
+
+message HashProof {
+    VrfInput input     = 1;
+    bytes    vrf_hash  = 5;
+    bytes    vrf_proof = 6;
+    bytes    pubkey    = 7;
+}
+
+message Pos33SortMsg {
+    SortHash  sort_hash = 1;
+    HashProof proof     = 2;
 }
 
 message Pos33BlockMsg {
     Block     b   = 1;
-    Signature sig = 3;
+    Signature sig = 2;
 }
 
 message Pos33VoteMsg {
-    Pos33SortitionMsg sort = 1;
-    string            tid  = 2;
-    // string    bp  = 3;
-    Signature sig = 4;
+    Pos33SortMsg sort = 1;
+    string       tid  = 2;
+    Signature    sig  = 3;
 }
 
 message Pos33Votes {
@@ -81,7 +88,7 @@ message Pos33Votes {
 
 message Pos33Miner {
     repeated Pos33VoteMsg votes = 1;
-    Pos33SortitionMsg     sort  = 2;
+    Pos33SortMsg          sort  = 2;
 }
 
 message Pos33TicketMiner {

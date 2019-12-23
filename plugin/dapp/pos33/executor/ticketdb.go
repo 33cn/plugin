@@ -315,7 +315,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	// reward voters
 	for _, v := range miner.Votes {
 		r := v.Sort
-		tid := r.Input.TicketId
+		tid := r.SortHash.Tid
 		t, err := readPos33Ticket(action.db, tid)
 		if err != nil {
 			return nil, err
@@ -343,7 +343,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	// bp reward
 	bpReward := vr * int64(sumw)
 	if bpReward > 0 {
-		tid := miner.Sort.Input.TicketId
+		tid := miner.Sort.SortHash.Tid
 		t, err := readPos33Ticket(action.db, tid)
 		if err != nil {
 			return nil, err
