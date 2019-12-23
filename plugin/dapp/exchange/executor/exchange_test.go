@@ -105,7 +105,7 @@ func TestExchange(t *testing.T) {
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
 	tx, err = signTx(tx, PrivKeyA)
-	t.Log(tx)
+	//t.Log(tx)
 	assert.Nil(t, err)
 	exec := newExchange()
 	e := exec.(*exchange)
@@ -317,7 +317,7 @@ func TestExchange(t *testing.T) {
 	//反向测试
 	// orderlimit  bty:CCNY 卖bty
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 0.5, Amount: 10 * types.Coin, Op: et.OpSell})
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -365,7 +365,7 @@ func TestExchange(t *testing.T) {
 	t.Log(reply)
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 0.5, Amount: 10 * types.Coin, Op: et.OpSell})
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -434,7 +434,7 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, orderID4, reply2.List[0].OrderID)
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 0.5, Amount: 20 * types.Coin, Op: et.OpBuy})
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 20 * types.Coin, Op: et.OpBuy})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -504,7 +504,7 @@ func TestExchange(t *testing.T) {
 
 	// orderlimit  bty:CCNY ,先挂买单，然后低于市场价格卖出
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 5 * types.Coin, Op: et.OpBuy})
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpBuy})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -555,7 +555,7 @@ func TestExchange(t *testing.T) {
 	}
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 3, Amount: 10 * types.Coin, Op: et.OpSell})
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 300000000, Amount: 10 * types.Coin, Op: et.OpSell})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -638,7 +638,7 @@ func TestExchange(t *testing.T) {
 	// orderlimit  bty:CCNY ,先挂卖单，然后高于市场价格买入, 买家获利原则
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 5 * types.Coin, Op: et.OpSell})
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpSell})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -678,7 +678,7 @@ func TestExchange(t *testing.T) {
 	orderID8 := orderList.List[0].OrderID
 
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 5, Amount: 5 * types.Coin, Op: et.OpSell})
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 500000000, Amount: 5 * types.Coin, Op: et.OpSell})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -717,7 +717,7 @@ func TestExchange(t *testing.T) {
 	orderList = msg.(*et.OrderList)
 	orderID9 := orderList.List[0].OrderID
 	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4.5, Amount: 15 * types.Coin, Op: et.OpBuy})
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 450000000, Amount: 15 * types.Coin, Op: et.OpBuy})
 	assert.Nil(t, err)
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	assert.Nil(t, err)
@@ -812,22 +812,11 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	return tx, nil
 }
 
-func TestTruncate(t *testing.T) {
-	a := float64(1.00000212000000000001)
-	b := float64(0.34567)
-	c := float64(1234567)
-	t.Log(Truncate(a))
-	t.Log(Truncate(b))
-	t.Log(Truncate(c))
-	t.Log(float64(1.00000212000000000001))
-	t.Logf("%f", Truncate(float64(1e8)))
-	t.Log(Truncate(float64(1e-8)))
-}
-
 func TestCheckPrice(t *testing.T) {
-	t.Log(CheckPrice(Truncate(float64(1e8))))
-	t.Log(CheckPrice(Truncate(float64(1e-8))))
-	t.Log(CheckPrice(Truncate(float64(1e-9))))
+	t.Log(CheckPrice(1e8))
+	t.Log(CheckPrice(-1))
+	t.Log(CheckPrice(1e17))
+	t.Log(CheckPrice(0))
 }
 
 func TestRawMeta(t *testing.T) {
@@ -842,4 +831,10 @@ func TestRawMeta(t *testing.T) {
 func TestKV(t *testing.T) {
 	a := &types.KeyValue{Key: []byte("1111111"), Value: nil}
 	t.Log(a.Key, a.Value)
+}
+
+func TestSafeMul(t *testing.T) {
+	t.Log(SafeMul(1e8, 1e7))
+	t.Log(SafeMul(1e10, 1e16))
+	t.Log(SafeMul(1e7, 1e6))
 }

@@ -10,9 +10,6 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 	if !CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
-	if in.Count == 0 {
-		in.Count = 10
-	}
 	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
@@ -28,7 +25,7 @@ func (s *exchange) Query_QueryHistoryOrderList(in *et.QueryHistoryOrderList) (ty
 	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
-	if in.Count > 20 {
+	if !CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
 
@@ -62,5 +59,5 @@ func (s *exchange) Query_QueryOrderList(in *et.QueryOrderList) (types.Message, e
 	if in.Address == "" {
 		return nil, et.ErrAddr
 	}
-	return QueryOrderList(s.GetLocalDB(), s.GetStateDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
+	return QueryOrderList(s.GetLocalDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
 }
