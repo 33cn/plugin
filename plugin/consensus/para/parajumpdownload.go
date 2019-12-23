@@ -29,14 +29,14 @@ type jumpDldClient struct {
 }
 
 //校验按高度获取的block hash和前一步对应高度的blockhash比对
-func verifyBlockHahs(heights []*types.BlockInfo, blocks []*types.ParaTxDetail) error {
+func verifyBlockHash(heights []*types.BlockInfo, blocks []*types.ParaTxDetail) error {
 	heightMap := make(map[int64][]byte)
 	for _, h := range heights {
 		heightMap[h.Height] = h.Hash
 	}
 	for _, b := range blocks {
 		if !bytes.Equal(heightMap[b.Header.Height], b.Header.Hash) {
-			plog.Error("jumpDld.verifyBlockHahs", "height", b.Header.Height,
+			plog.Error("jumpDld.verifyBlockHash", "height", b.Header.Height,
 				"heightsHash", common.ToHex(heightMap[b.Header.Height]), "tx", b.Header.Hash)
 			return types.ErrBlockHashNoMatch
 		}
@@ -217,7 +217,7 @@ func (j *jumpDldClient) getParaTxsBlocks(blocksList []*types.BlockInfo, title st
 		return nil, err
 	}
 
-	err = verifyBlockHahs(blocksList, blocks.Items)
+	err = verifyBlockHash(blocksList, blocks.Items)
 	if err != nil {
 		plog.Error("jumpDld.getParaTxsBlocks verifyTx", "start", hlist[0], "end", hlist[len(hlist)-1], "title", title)
 		return nil, err
@@ -234,10 +234,10 @@ func (j *jumpDldClient) getHeaders(start, end int64) (*types.ParaTxDetails, erro
 	blocks := &types.ReqBlocks{Start: start, End: end}
 	headers, err := j.paraClient.GetBlockHeaders(blocks)
 	if err != nil {
-		plog.Error("paraJumpDownload.getHeaders", "start", start, "end", end, "error", err)
+		plog.Error("jumpDld.getHeaders", "start", start, "end", end, "error", err)
 		return nil, err
 	}
-	plog.Debug("paraJumpDownload.getHeaders", "start", start, "end", end)
+	plog.Debug("jumpDld.getHeaders", "start", start, "end", end)
 	paraTxHeaders := &types.ParaTxDetails{}
 	for _, header := range headers.Items {
 		paraTxHeaders.Items = append(paraTxHeaders.Items, &types.ParaTxDetail{Type: types.AddBlock, Header: header})
@@ -253,7 +253,7 @@ func (j *jumpDldClient) procParaTxHeaders(startHeight, endHeight int64, paraBloc
 		}
 		headers, err := j.getHeaders(s, end)
 		if err != nil {
-			plog.Error("jumpDld.getParaTxs headers", "start", startHeight, "end", endHeight, "err", err)
+			plog.Error("jumpDld.procParaTxHeaders", "start", startHeight, "end", endHeight, "err", err)
 			return err
 		}
 		//每1000个header同步一次，这样可以更快更小粒度的使同步层获取区块执行
@@ -280,7 +280,7 @@ func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*type
 		}
 		//根据1000个paraTxBlocks的头尾高度获取header的头尾高度，header的高度要包含paraTxBlocks高度
 		headerStart, headerEnd := getHeaderStartEndRange(startHeight, endHeight, heightsRows, i)
-		plog.Debug("paraJumpDownload.getHeaders", "headerStart", headerStart, "headerEnd", headerEnd, "i", i)
+		plog.Debug("jumpDld.getParaTxs", "headerStart", headerStart, "headerEnd", headerEnd, "i", i)
 		err = j.procParaTxHeaders(headerStart, headerEnd, paraBlocks, jobCh)
 		if err != nil {
 			return err
