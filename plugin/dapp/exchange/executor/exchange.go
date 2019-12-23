@@ -60,7 +60,7 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 		limitOrder := exchange.GetLimitOrder()
 		left := limitOrder.GetLeftAsset()
 		right := limitOrder.GetRightAsset()
-		price := Truncate(limitOrder.GetPrice())
+		price := limitOrder.GetPrice()
 		amount := limitOrder.GetAmount()
 		op := limitOrder.GetOp()
 		if !CheckExchangeAsset(left, right) {

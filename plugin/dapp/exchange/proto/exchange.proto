@@ -19,7 +19,7 @@ message LimitOrder {
     //交易对
     asset rightAsset  = 2;
     //价格
-    double price  = 3;
+    int64 price  = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖
@@ -60,16 +60,18 @@ message Order {
     int32 ty = 4;
     //已经成交的数量
     int64 executed = 5;
+    //成交均价
+    int64 AVG_price = 6;
     //余额
-    int64  balance = 6;
+    int64  balance = 7;
     //状态,0 挂单中ordered， 1 完成completed， 2撤回 revoked
-    int32 status = 7;
+    int32 status = 8;
     //用户地址
-    string addr = 8;
+    string addr = 9;
     //更新时间
-    int64 updateTime = 9;
+    int64 updateTime = 10;
     //索引
-    int64 index = 10;
+    int64 index = 11;
 }
 
 //查询接口
@@ -92,7 +94,7 @@ message MarketDepth {
     //资产2
     asset rightAsset = 2;
     //价格
-    double price  = 3;
+    int64 price  = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖
