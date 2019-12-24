@@ -47,7 +47,7 @@ para:
 vet:
 	@go vet ${PKG_LIST_VET}
 
-autotest: setchain33 ## build autotest binary
+autotest: ## build autotest binary
 	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
 	@if [ -n "$(dapp)" ]; then \
 	        rm -rf build/autotest/local \
