@@ -8,7 +8,6 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
 PKG_LIST_VET := ./...
@@ -20,7 +19,8 @@ proj := "build"
 .PHONY: default dep all build release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
 
 default: depends build
-
+setchain33:
+	export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
@@ -42,7 +42,7 @@ para:
 vet:
 	@go vet ${PKG_LIST_VET}
 
-autotest: ## build autotest binary
+autotest: setchain33 ## build autotest binary
 	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
 	@if [ -n "$(dapp)" ]; then \
 	        rm -rf build/autotest/local \
@@ -154,7 +154,6 @@ clean: ## Remove previous build
 proto:protobuf
 
 protobuf: ## Generate protbuf file of types package
-#	@cd ${CHAIN33_PATH}/types/proto && ./create_protobuf.sh && cd ../..
 	@find ./plugin/dapp -maxdepth 2 -type d  -name proto -exec make -C {} \;
 
 depends: ## Generate depends file of types package
