@@ -334,8 +334,8 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 
 	v := &CollateralizeManage{
 		DebtCeiling:       int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
-		LiquidationRatio:  int64(math.Trunc((parm.LiquidationRatio+0.0000001)*1e4)),
-		StabilityFeeRatio: int64(math.Trunc((parm.StabilityFeeRatio+0.0000001)*1e4)),
+		LiquidationRatio:  int64(math.Trunc((parm.LiquidationRatio + 0.0000001) * 1e4)),
+		StabilityFeeRatio: int64(math.Trunc((parm.StabilityFeeRatio + 0.0000001) * 1e4)),
 		Period:            parm.Period,
 		TotalBalance:      int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}
