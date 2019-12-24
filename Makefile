@@ -19,8 +19,13 @@ proj := "build"
 .PHONY: default dep all build release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
 
 default: depends build
-setchain33:
-	export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+
+build: CHAIN33_PATH := $(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+build_ci: CHAIN33_PATH := $(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+autotest: CHAIN33_PATH := $(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+autotest_ci: CHAIN33_PATH := $(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+autotest_tick: CHAIN33_PATH := $(shell go list  -f {{.Dir}} github.com/33cn/chain33)
+
 build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
