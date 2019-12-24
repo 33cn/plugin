@@ -47,4 +47,10 @@ build/parawallet/
 build/sendstock
 build/sendstock.toml
 build/*.csv
+plugin/consensus/dpos/genesis.json
+plugin/consensus/dpos/priv_validator.json
+plugin/consensus/pbft/wallet/
+plugin/dapp/dposvote/commands/chain33.test.toml
+plugin/dapp/dposvote/commands/genesis.json
+plugin/dapp/dposvote/commands/priv_validator.json
 
