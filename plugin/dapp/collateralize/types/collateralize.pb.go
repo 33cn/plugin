@@ -5,9 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-
 	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 )
 
@@ -20,21 +18,21 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // 放贷信息
 type Collateralize struct {
 	CollateralizeId        string          `protobuf:"bytes,1,opt,name=collateralizeId,proto3" json:"collateralizeId,omitempty"`
 	TotalBalance           int64           `protobuf:"varint,2,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	DebtCeiling            int64           `protobuf:"varint,3,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio       float64         `protobuf:"fixed64,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
-	StabilityFeeRatio      float64         `protobuf:"fixed64,5,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
+	LiquidationRatio       int64           `protobuf:"varint,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	StabilityFeeRatio      int64           `protobuf:"varint,5,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
 	CreateAddr             string          `protobuf:"bytes,6,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	Balance                int64           `protobuf:"varint,7,opt,name=balance,proto3" json:"balance,omitempty"`
 	BorrowRecords          []*BorrowRecord `protobuf:"bytes,8,rep,name=borrowRecords,proto3" json:"borrowRecords,omitempty"`
 	InvalidRecords         []*BorrowRecord `protobuf:"bytes,9,rep,name=InvalidRecords,proto3" json:"InvalidRecords,omitempty"`
 	Status                 int32           `protobuf:"varint,10,opt,name=status,proto3" json:"status,omitempty"`
-	LatestLiquidationPrice float64         `protobuf:"fixed64,11,opt,name=latestLiquidationPrice,proto3" json:"latestLiquidationPrice,omitempty"`
+	LatestLiquidationPrice int64           `protobuf:"varint,11,opt,name=latestLiquidationPrice,proto3" json:"latestLiquidationPrice,omitempty"`
 	Period                 int64           `protobuf:"varint,12,opt,name=period,proto3" json:"period,omitempty"`
 	LatestExpireTime       int64           `protobuf:"varint,13,opt,name=latestExpireTime,proto3" json:"latestExpireTime,omitempty"`
 	CollBalance            int64           `protobuf:"varint,14,opt,name=collBalance,proto3" json:"collBalance,omitempty"`
@@ -48,16 +46,17 @@ func (m *Collateralize) Reset()         { *m = Collateralize{} }
 func (m *Collateralize) String() string { return proto.CompactTextString(m) }
 func (*Collateralize) ProtoMessage()    {}
 func (*Collateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{0}
+	return fileDescriptor_a988fb4a61381972, []int{0}
 }
+
 func (m *Collateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Collateralize.Unmarshal(m, b)
 }
 func (m *Collateralize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Collateralize.Marshal(b, m, deterministic)
 }
-func (dst *Collateralize) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Collateralize.Merge(dst, src)
+func (m *Collateralize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Collateralize.Merge(m, src)
 }
 func (m *Collateralize) XXX_Size() int {
 	return xxx_messageInfo_Collateralize.Size(m)
@@ -89,14 +88,14 @@ func (m *Collateralize) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *Collateralize) GetLiquidationRatio() float64 {
+func (m *Collateralize) GetLiquidationRatio() int64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
 	return 0
 }
 
-func (m *Collateralize) GetStabilityFeeRatio() float64 {
+func (m *Collateralize) GetStabilityFeeRatio() int64 {
 	if m != nil {
 		return m.StabilityFeeRatio
 	}
@@ -138,7 +137,7 @@ func (m *Collateralize) GetStatus() int32 {
 	return 0
 }
 
-func (m *Collateralize) GetLatestLiquidationPrice() float64 {
+func (m *Collateralize) GetLatestLiquidationPrice() int64 {
 	if m != nil {
 		return m.LatestLiquidationPrice
 	}
@@ -178,9 +177,9 @@ type BorrowRecord struct {
 	AccountAddr          string   `protobuf:"bytes,1,opt,name=accountAddr,proto3" json:"accountAddr,omitempty"`
 	StartTime            int64    `protobuf:"varint,2,opt,name=startTime,proto3" json:"startTime,omitempty"`
 	CollateralValue      int64    `protobuf:"varint,3,opt,name=collateralValue,proto3" json:"collateralValue,omitempty"`
-	CollateralPrice      float64  `protobuf:"fixed64,4,opt,name=collateralPrice,proto3" json:"collateralPrice,omitempty"`
+	CollateralPrice      int64    `protobuf:"varint,4,opt,name=collateralPrice,proto3" json:"collateralPrice,omitempty"`
 	DebtValue            int64    `protobuf:"varint,5,opt,name=debtValue,proto3" json:"debtValue,omitempty"`
-	LiquidationPrice     float64  `protobuf:"fixed64,6,opt,name=liquidationPrice,proto3" json:"liquidationPrice,omitempty"`
+	LiquidationPrice     int64    `protobuf:"varint,6,opt,name=liquidationPrice,proto3" json:"liquidationPrice,omitempty"`
 	Status               int32    `protobuf:"varint,7,opt,name=status,proto3" json:"status,omitempty"`
 	LiquidateTime        int64    `protobuf:"varint,8,opt,name=liquidateTime,proto3" json:"liquidateTime,omitempty"`
 	ExpireTime           int64    `protobuf:"varint,9,opt,name=expireTime,proto3" json:"expireTime,omitempty"`
@@ -196,16 +195,17 @@ func (m *BorrowRecord) Reset()         { *m = BorrowRecord{} }
 func (m *BorrowRecord) String() string { return proto.CompactTextString(m) }
 func (*BorrowRecord) ProtoMessage()    {}
 func (*BorrowRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{1}
+	return fileDescriptor_a988fb4a61381972, []int{1}
 }
+
 func (m *BorrowRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BorrowRecord.Unmarshal(m, b)
 }
 func (m *BorrowRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BorrowRecord.Marshal(b, m, deterministic)
 }
-func (dst *BorrowRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BorrowRecord.Merge(dst, src)
+func (m *BorrowRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BorrowRecord.Merge(m, src)
 }
 func (m *BorrowRecord) XXX_Size() int {
 	return xxx_messageInfo_BorrowRecord.Size(m)
@@ -237,7 +237,7 @@ func (m *BorrowRecord) GetCollateralValue() int64 {
 	return 0
 }
 
-func (m *BorrowRecord) GetCollateralPrice() float64 {
+func (m *BorrowRecord) GetCollateralPrice() int64 {
 	if m != nil {
 		return m.CollateralPrice
 	}
@@ -251,7 +251,7 @@ func (m *BorrowRecord) GetDebtValue() int64 {
 	return 0
 }
 
-func (m *BorrowRecord) GetLiquidationPrice() float64 {
+func (m *BorrowRecord) GetLiquidationPrice() int64 {
 	if m != nil {
 		return m.LiquidationPrice
 	}
@@ -303,9 +303,9 @@ func (m *BorrowRecord) GetCollateralizeId() string {
 // 资产价格记录
 type AssetPriceRecord struct {
 	RecordTime           int64    `protobuf:"varint,1,opt,name=recordTime,proto3" json:"recordTime,omitempty"`
-	BtyPrice             float64  `protobuf:"fixed64,2,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
-	BtcPrice             float64  `protobuf:"fixed64,3,opt,name=btcPrice,proto3" json:"btcPrice,omitempty"`
-	EthPrice             float64  `protobuf:"fixed64,4,opt,name=ethPrice,proto3" json:"ethPrice,omitempty"`
+	BtyPrice             int64    `protobuf:"varint,2,opt,name=btyPrice,proto3" json:"btyPrice,omitempty"`
+	BtcPrice             int64    `protobuf:"varint,3,opt,name=btcPrice,proto3" json:"btcPrice,omitempty"`
+	EthPrice             int64    `protobuf:"varint,4,opt,name=ethPrice,proto3" json:"ethPrice,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -315,16 +315,17 @@ func (m *AssetPriceRecord) Reset()         { *m = AssetPriceRecord{} }
 func (m *AssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*AssetPriceRecord) ProtoMessage()    {}
 func (*AssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{2}
+	return fileDescriptor_a988fb4a61381972, []int{2}
 }
+
 func (m *AssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AssetPriceRecord.Unmarshal(m, b)
 }
 func (m *AssetPriceRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AssetPriceRecord.Marshal(b, m, deterministic)
 }
-func (dst *AssetPriceRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetPriceRecord.Merge(dst, src)
+func (m *AssetPriceRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AssetPriceRecord.Merge(m, src)
 }
 func (m *AssetPriceRecord) XXX_Size() int {
 	return xxx_messageInfo_AssetPriceRecord.Size(m)
@@ -342,21 +343,21 @@ func (m *AssetPriceRecord) GetRecordTime() int64 {
 	return 0
 }
 
-func (m *AssetPriceRecord) GetBtyPrice() float64 {
+func (m *AssetPriceRecord) GetBtyPrice() int64 {
 	if m != nil {
 		return m.BtyPrice
 	}
 	return 0
 }
 
-func (m *AssetPriceRecord) GetBtcPrice() float64 {
+func (m *AssetPriceRecord) GetBtcPrice() int64 {
 	if m != nil {
 		return m.BtcPrice
 	}
 	return 0
 }
 
-func (m *AssetPriceRecord) GetEthPrice() float64 {
+func (m *AssetPriceRecord) GetEthPrice() int64 {
 	if m != nil {
 		return m.EthPrice
 	}
@@ -384,16 +385,17 @@ func (m *CollateralizeAction) Reset()         { *m = CollateralizeAction{} }
 func (m *CollateralizeAction) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAction) ProtoMessage()    {}
 func (*CollateralizeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{3}
+	return fileDescriptor_a988fb4a61381972, []int{3}
 }
+
 func (m *CollateralizeAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAction.Unmarshal(m, b)
 }
 func (m *CollateralizeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAction.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAction.Merge(dst, src)
+func (m *CollateralizeAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAction.Merge(m, src)
 }
 func (m *CollateralizeAction) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAction.Size(m)
@@ -513,9 +515,9 @@ func (m *CollateralizeAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*CollateralizeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _CollateralizeAction_OneofMarshaler, _CollateralizeAction_OneofUnmarshaler, _CollateralizeAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*CollateralizeAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*CollateralizeAction_Create)(nil),
 		(*CollateralizeAction_Borrow)(nil),
 		(*CollateralizeAction_Repay)(nil),
@@ -526,166 +528,10 @@ func (*CollateralizeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.B
 	}
 }
 
-func _CollateralizeAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*CollateralizeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CollateralizeAction_Create:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Create); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Borrow:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Borrow); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Repay:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Repay); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Append:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Append); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Feed:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Feed); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Retrieve:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Retrieve); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Manage:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Manage); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("CollateralizeAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _CollateralizeAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*CollateralizeAction)
-	switch tag {
-	case 1: // value.create
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeCreate)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Create{msg}
-		return true, err
-	case 2: // value.borrow
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeBorrow)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Borrow{msg}
-		return true, err
-	case 3: // value.repay
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeRepay)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Repay{msg}
-		return true, err
-	case 4: // value.append
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeAppend)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Append{msg}
-		return true, err
-	case 5: // value.feed
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeFeed)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Feed{msg}
-		return true, err
-	case 6: // value.retrieve
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeRetrieve)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Retrieve{msg}
-		return true, err
-	case 7: // value.manage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeManage)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Manage{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _CollateralizeAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*CollateralizeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CollateralizeAction_Create:
-		s := proto.Size(x.Create)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Borrow:
-		s := proto.Size(x.Borrow)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Repay:
-		s := proto.Size(x.Repay)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Append:
-		s := proto.Size(x.Append)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Feed:
-		s := proto.Size(x.Feed)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Retrieve:
-		s := proto.Size(x.Retrieve)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Manage:
-		s := proto.Size(x.Manage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
-}
-
 type CollateralizeManage struct {
 	DebtCeiling          int64    `protobuf:"varint,1,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio     float64  `protobuf:"fixed64,2,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
-	StabilityFeeRatio    float64  `protobuf:"fixed64,3,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
+	LiquidationRatio     int64    `protobuf:"varint,2,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	StabilityFeeRatio    int64    `protobuf:"varint,3,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
 	Period               int64    `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
 	TotalBalance         int64    `protobuf:"varint,5,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	CurrentTime          int64    `protobuf:"varint,6,opt,name=currentTime,proto3" json:"currentTime,omitempty"`
@@ -698,16 +544,17 @@ func (m *CollateralizeManage) Reset()         { *m = CollateralizeManage{} }
 func (m *CollateralizeManage) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeManage) ProtoMessage()    {}
 func (*CollateralizeManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{4}
+	return fileDescriptor_a988fb4a61381972, []int{4}
 }
+
 func (m *CollateralizeManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeManage.Unmarshal(m, b)
 }
 func (m *CollateralizeManage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeManage.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeManage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeManage.Merge(dst, src)
+func (m *CollateralizeManage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeManage.Merge(m, src)
 }
 func (m *CollateralizeManage) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeManage.Size(m)
@@ -725,14 +572,14 @@ func (m *CollateralizeManage) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *CollateralizeManage) GetLiquidationRatio() float64 {
+func (m *CollateralizeManage) GetLiquidationRatio() int64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
 	return 0
 }
 
-func (m *CollateralizeManage) GetStabilityFeeRatio() float64 {
+func (m *CollateralizeManage) GetStabilityFeeRatio() int64 {
 	if m != nil {
 		return m.StabilityFeeRatio
 	}
@@ -771,16 +618,17 @@ func (m *CollateralizeAddr) Reset()         { *m = CollateralizeAddr{} }
 func (m *CollateralizeAddr) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAddr) ProtoMessage()    {}
 func (*CollateralizeAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{5}
+	return fileDescriptor_a988fb4a61381972, []int{5}
 }
+
 func (m *CollateralizeAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAddr.Unmarshal(m, b)
 }
 func (m *CollateralizeAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAddr.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAddr.Merge(dst, src)
+func (m *CollateralizeAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAddr.Merge(m, src)
 }
 func (m *CollateralizeAddr) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAddr.Size(m)
@@ -810,16 +658,17 @@ func (m *CollateralizeCreate) Reset()         { *m = CollateralizeCreate{} }
 func (m *CollateralizeCreate) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeCreate) ProtoMessage()    {}
 func (*CollateralizeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{6}
+	return fileDescriptor_a988fb4a61381972, []int{6}
 }
+
 func (m *CollateralizeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeCreate.Unmarshal(m, b)
 }
 func (m *CollateralizeCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeCreate.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeCreate.Merge(dst, src)
+func (m *CollateralizeCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeCreate.Merge(m, src)
 }
 func (m *CollateralizeCreate) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeCreate.Size(m)
@@ -850,16 +699,17 @@ func (m *CollateralizeBorrow) Reset()         { *m = CollateralizeBorrow{} }
 func (m *CollateralizeBorrow) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeBorrow) ProtoMessage()    {}
 func (*CollateralizeBorrow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{7}
+	return fileDescriptor_a988fb4a61381972, []int{7}
 }
+
 func (m *CollateralizeBorrow) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeBorrow.Unmarshal(m, b)
 }
 func (m *CollateralizeBorrow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeBorrow.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeBorrow) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeBorrow.Merge(dst, src)
+func (m *CollateralizeBorrow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeBorrow.Merge(m, src)
 }
 func (m *CollateralizeBorrow) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeBorrow.Size(m)
@@ -897,16 +747,17 @@ func (m *CollateralizeRepay) Reset()         { *m = CollateralizeRepay{} }
 func (m *CollateralizeRepay) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRepay) ProtoMessage()    {}
 func (*CollateralizeRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{8}
+	return fileDescriptor_a988fb4a61381972, []int{8}
 }
+
 func (m *CollateralizeRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRepay.Unmarshal(m, b)
 }
 func (m *CollateralizeRepay) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRepay.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRepay) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRepay.Merge(dst, src)
+func (m *CollateralizeRepay) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRepay.Merge(m, src)
 }
 func (m *CollateralizeRepay) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRepay.Size(m)
@@ -945,16 +796,17 @@ func (m *CollateralizeAppend) Reset()         { *m = CollateralizeAppend{} }
 func (m *CollateralizeAppend) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAppend) ProtoMessage()    {}
 func (*CollateralizeAppend) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{9}
+	return fileDescriptor_a988fb4a61381972, []int{9}
 }
+
 func (m *CollateralizeAppend) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAppend.Unmarshal(m, b)
 }
 func (m *CollateralizeAppend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAppend.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAppend) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAppend.Merge(dst, src)
+func (m *CollateralizeAppend) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAppend.Merge(m, src)
 }
 func (m *CollateralizeAppend) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAppend.Size(m)
@@ -988,28 +840,29 @@ func (m *CollateralizeAppend) GetCollateralValue() int64 {
 
 // 喂价
 type CollateralizeFeed struct {
-	CollType             int32     `protobuf:"varint,1,opt,name=collType,proto3" json:"collType,omitempty"`
-	Price                []float64 `protobuf:"fixed64,2,rep,packed,name=price,proto3" json:"price,omitempty"`
-	Volume               []int64   `protobuf:"varint,3,rep,packed,name=volume,proto3" json:"volume,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+	CollType             int32    `protobuf:"varint,1,opt,name=collType,proto3" json:"collType,omitempty"`
+	Price                []int64  `protobuf:"varint,2,rep,packed,name=price,proto3" json:"price,omitempty"`
+	Volume               []int64  `protobuf:"varint,3,rep,packed,name=volume,proto3" json:"volume,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *CollateralizeFeed) Reset()         { *m = CollateralizeFeed{} }
 func (m *CollateralizeFeed) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeFeed) ProtoMessage()    {}
 func (*CollateralizeFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{10}
+	return fileDescriptor_a988fb4a61381972, []int{10}
 }
+
 func (m *CollateralizeFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeFeed.Unmarshal(m, b)
 }
 func (m *CollateralizeFeed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeFeed.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeFeed) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeFeed.Merge(dst, src)
+func (m *CollateralizeFeed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeFeed.Merge(m, src)
 }
 func (m *CollateralizeFeed) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeFeed.Size(m)
@@ -1027,7 +880,7 @@ func (m *CollateralizeFeed) GetCollType() int32 {
 	return 0
 }
 
-func (m *CollateralizeFeed) GetPrice() []float64 {
+func (m *CollateralizeFeed) GetPrice() []int64 {
 	if m != nil {
 		return m.Price
 	}
@@ -1054,16 +907,17 @@ func (m *CollateralizeRetrieve) Reset()         { *m = CollateralizeRetrieve{} }
 func (m *CollateralizeRetrieve) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRetrieve) ProtoMessage()    {}
 func (*CollateralizeRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{11}
+	return fileDescriptor_a988fb4a61381972, []int{11}
 }
+
 func (m *CollateralizeRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRetrieve.Unmarshal(m, b)
 }
 func (m *CollateralizeRetrieve) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRetrieve.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRetrieve) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRetrieve.Merge(dst, src)
+func (m *CollateralizeRetrieve) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRetrieve.Merge(m, src)
 }
 func (m *CollateralizeRetrieve) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRetrieve.Size(m)
@@ -1103,16 +957,17 @@ func (m *ReceiptCollateralize) Reset()         { *m = ReceiptCollateralize{} }
 func (m *ReceiptCollateralize) String() string { return proto.CompactTextString(m) }
 func (*ReceiptCollateralize) ProtoMessage()    {}
 func (*ReceiptCollateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{12}
+	return fileDescriptor_a988fb4a61381972, []int{12}
 }
+
 func (m *ReceiptCollateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptCollateralize.Unmarshal(m, b)
 }
 func (m *ReceiptCollateralize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptCollateralize.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptCollateralize) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptCollateralize.Merge(dst, src)
+func (m *ReceiptCollateralize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptCollateralize.Merge(m, src)
 }
 func (m *ReceiptCollateralize) XXX_Size() int {
 	return xxx_messageInfo_ReceiptCollateralize.Size(m)
@@ -1163,16 +1018,17 @@ func (m *CollateralizeRecords) Reset()         { *m = CollateralizeRecords{} }
 func (m *CollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRecords) ProtoMessage()    {}
 func (*CollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{13}
+	return fileDescriptor_a988fb4a61381972, []int{13}
 }
+
 func (m *CollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRecords.Unmarshal(m, b)
 }
 func (m *CollateralizeRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRecords.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRecords.Merge(dst, src)
+func (m *CollateralizeRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRecords.Merge(m, src)
 }
 func (m *CollateralizeRecords) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRecords.Size(m)
@@ -1202,16 +1058,17 @@ func (m *ReqCollateralizeInfo) Reset()         { *m = ReqCollateralizeInfo{} }
 func (m *ReqCollateralizeInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfo) ProtoMessage()    {}
 func (*ReqCollateralizeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{14}
+	return fileDescriptor_a988fb4a61381972, []int{14}
 }
+
 func (m *ReqCollateralizeInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfo.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeInfo.Merge(dst, src)
+func (m *ReqCollateralizeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeInfo.Merge(m, src)
 }
 func (m *ReqCollateralizeInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeInfo.Size(m)
@@ -1234,8 +1091,8 @@ type RepCollateralizeCurrentInfo struct {
 	Status               int32           `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	TotalBalance         int64           `protobuf:"varint,2,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	DebtCeiling          int64           `protobuf:"varint,3,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio     float64         `protobuf:"fixed64,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
-	StabilityFeeRatio    float64         `protobuf:"fixed64,5,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
+	LiquidationRatio     int64           `protobuf:"varint,4,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	StabilityFeeRatio    int64           `protobuf:"varint,5,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
 	CreateAddr           string          `protobuf:"bytes,6,opt,name=createAddr,proto3" json:"createAddr,omitempty"`
 	Balance              int64           `protobuf:"varint,7,opt,name=balance,proto3" json:"balance,omitempty"`
 	Period               int64           `protobuf:"varint,8,opt,name=period,proto3" json:"period,omitempty"`
@@ -1251,16 +1108,17 @@ func (m *RepCollateralizeCurrentInfo) Reset()         { *m = RepCollateralizeCur
 func (m *RepCollateralizeCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfo) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{15}
+	return fileDescriptor_a988fb4a61381972, []int{15}
 }
+
 func (m *RepCollateralizeCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Unmarshal(m, b)
 }
 func (m *RepCollateralizeCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeCurrentInfo.Merge(dst, src)
+func (m *RepCollateralizeCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeCurrentInfo.Merge(m, src)
 }
 func (m *RepCollateralizeCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Size(m)
@@ -1292,14 +1150,14 @@ func (m *RepCollateralizeCurrentInfo) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *RepCollateralizeCurrentInfo) GetLiquidationRatio() float64 {
+func (m *RepCollateralizeCurrentInfo) GetLiquidationRatio() int64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
 	return 0
 }
 
-func (m *RepCollateralizeCurrentInfo) GetStabilityFeeRatio() float64 {
+func (m *RepCollateralizeCurrentInfo) GetStabilityFeeRatio() int64 {
 	if m != nil {
 		return m.StabilityFeeRatio
 	}
@@ -1360,16 +1218,17 @@ func (m *ReqCollateralizeInfos) Reset()         { *m = ReqCollateralizeInfos{} }
 func (m *ReqCollateralizeInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfos) ProtoMessage()    {}
 func (*ReqCollateralizeInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{16}
+	return fileDescriptor_a988fb4a61381972, []int{16}
 }
+
 func (m *ReqCollateralizeInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfos.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeInfos.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeInfos.Merge(dst, src)
+func (m *ReqCollateralizeInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeInfos.Merge(m, src)
 }
 func (m *ReqCollateralizeInfos) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeInfos.Size(m)
@@ -1399,16 +1258,17 @@ func (m *RepCollateralizeCurrentInfos) Reset()         { *m = RepCollateralizeCu
 func (m *RepCollateralizeCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfos) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{17}
+	return fileDescriptor_a988fb4a61381972, []int{17}
 }
+
 func (m *RepCollateralizeCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Unmarshal(m, b)
 }
 func (m *RepCollateralizeCurrentInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeCurrentInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeCurrentInfos.Merge(dst, src)
+func (m *RepCollateralizeCurrentInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeCurrentInfos.Merge(m, src)
 }
 func (m *RepCollateralizeCurrentInfos) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Size(m)
@@ -1439,16 +1299,17 @@ func (m *ReqCollateralizeByStatus) Reset()         { *m = ReqCollateralizeByStat
 func (m *ReqCollateralizeByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{18}
+	return fileDescriptor_a988fb4a61381972, []int{18}
 }
+
 func (m *ReqCollateralizeByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeByStatus.Merge(dst, src)
+func (m *ReqCollateralizeByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeByStatus.Merge(m, src)
 }
 func (m *ReqCollateralizeByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Size(m)
@@ -1487,16 +1348,17 @@ func (m *ReqCollateralizeByAddr) Reset()         { *m = ReqCollateralizeByAddr{}
 func (m *ReqCollateralizeByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{19}
+	return fileDescriptor_a988fb4a61381972, []int{19}
 }
+
 func (m *ReqCollateralizeByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeByAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeByAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeByAddr.Merge(dst, src)
+func (m *ReqCollateralizeByAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeByAddr.Merge(m, src)
 }
 func (m *ReqCollateralizeByAddr) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Size(m)
@@ -1540,16 +1402,17 @@ func (m *RepCollateralizeIDs) Reset()         { *m = RepCollateralizeIDs{} }
 func (m *RepCollateralizeIDs) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeIDs) ProtoMessage()    {}
 func (*RepCollateralizeIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{20}
+	return fileDescriptor_a988fb4a61381972, []int{20}
 }
+
 func (m *RepCollateralizeIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeIDs.Unmarshal(m, b)
 }
 func (m *RepCollateralizeIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeIDs.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeIDs.Merge(dst, src)
+func (m *RepCollateralizeIDs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeIDs.Merge(m, src)
 }
 func (m *RepCollateralizeIDs) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeIDs.Size(m)
@@ -1582,16 +1445,17 @@ func (m *ReqCollateralizeRecordByAddr) Reset()         { *m = ReqCollateralizeRe
 func (m *ReqCollateralizeRecordByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{21}
+	return fileDescriptor_a988fb4a61381972, []int{21}
 }
+
 func (m *ReqCollateralizeRecordByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecordByAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecordByAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecordByAddr.Merge(dst, src)
+func (m *ReqCollateralizeRecordByAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecordByAddr.Merge(m, src)
 }
 func (m *ReqCollateralizeRecordByAddr) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Size(m)
@@ -1644,16 +1508,17 @@ func (m *ReqCollateralizeRecordByStatus) Reset()         { *m = ReqCollateralize
 func (m *ReqCollateralizeRecordByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{22}
+	return fileDescriptor_a988fb4a61381972, []int{22}
 }
+
 func (m *ReqCollateralizeRecordByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecordByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecordByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecordByStatus.Merge(dst, src)
+func (m *ReqCollateralizeRecordByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecordByStatus.Merge(m, src)
 }
 func (m *ReqCollateralizeRecordByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Size(m)
@@ -1697,16 +1562,17 @@ func (m *RepCollateralizeRecords) Reset()         { *m = RepCollateralizeRecords
 func (m *RepCollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecords) ProtoMessage()    {}
 func (*RepCollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{23}
+	return fileDescriptor_a988fb4a61381972, []int{23}
 }
+
 func (m *RepCollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecords.Unmarshal(m, b)
 }
 func (m *RepCollateralizeRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeRecords.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeRecords.Merge(dst, src)
+func (m *RepCollateralizeRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeRecords.Merge(m, src)
 }
 func (m *RepCollateralizeRecords) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeRecords.Size(m)
@@ -1737,16 +1603,17 @@ func (m *ReqCollateralizeRecord) Reset()         { *m = ReqCollateralizeRecord{}
 func (m *ReqCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecord) ProtoMessage()    {}
 func (*ReqCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{24}
+	return fileDescriptor_a988fb4a61381972, []int{24}
 }
+
 func (m *ReqCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecord.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecord.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecord.Merge(dst, src)
+func (m *ReqCollateralizeRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecord.Merge(m, src)
 }
 func (m *ReqCollateralizeRecord) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecord.Size(m)
@@ -1783,16 +1650,17 @@ func (m *RepCollateralizeRecord) Reset()         { *m = RepCollateralizeRecord{}
 func (m *RepCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecord) ProtoMessage()    {}
 func (*RepCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{25}
+	return fileDescriptor_a988fb4a61381972, []int{25}
 }
+
 func (m *RepCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecord.Unmarshal(m, b)
 }
 func (m *RepCollateralizeRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeRecord.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeRecord.Merge(dst, src)
+func (m *RepCollateralizeRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeRecord.Merge(m, src)
 }
 func (m *RepCollateralizeRecord) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeRecord.Size(m)
@@ -1813,8 +1681,8 @@ func (m *RepCollateralizeRecord) GetRecord() *BorrowRecord {
 // 返回放贷配置
 type RepCollateralizeConfig struct {
 	DebtCeiling          int64    `protobuf:"varint,1,opt,name=debtCeiling,proto3" json:"debtCeiling,omitempty"`
-	LiquidationRatio     float64  `protobuf:"fixed64,2,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
-	StabilityFeeRatio    float64  `protobuf:"fixed64,3,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
+	LiquidationRatio     int64    `protobuf:"varint,2,opt,name=liquidationRatio,proto3" json:"liquidationRatio,omitempty"`
+	StabilityFeeRatio    int64    `protobuf:"varint,3,opt,name=stabilityFeeRatio,proto3" json:"stabilityFeeRatio,omitempty"`
 	Period               int64    `protobuf:"varint,4,opt,name=period,proto3" json:"period,omitempty"`
 	TotalBalance         int64    `protobuf:"varint,5,opt,name=totalBalance,proto3" json:"totalBalance,omitempty"`
 	Balance              int64    `protobuf:"varint,6,opt,name=balance,proto3" json:"balance,omitempty"`
@@ -1828,16 +1696,17 @@ func (m *RepCollateralizeConfig) Reset()         { *m = RepCollateralizeConfig{}
 func (m *RepCollateralizeConfig) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeConfig) ProtoMessage()    {}
 func (*RepCollateralizeConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{26}
+	return fileDescriptor_a988fb4a61381972, []int{26}
 }
+
 func (m *RepCollateralizeConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeConfig.Unmarshal(m, b)
 }
 func (m *RepCollateralizeConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeConfig.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeConfig.Merge(dst, src)
+func (m *RepCollateralizeConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeConfig.Merge(m, src)
 }
 func (m *RepCollateralizeConfig) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeConfig.Size(m)
@@ -1855,14 +1724,14 @@ func (m *RepCollateralizeConfig) GetDebtCeiling() int64 {
 	return 0
 }
 
-func (m *RepCollateralizeConfig) GetLiquidationRatio() float64 {
+func (m *RepCollateralizeConfig) GetLiquidationRatio() int64 {
 	if m != nil {
 		return m.LiquidationRatio
 	}
 	return 0
 }
 
-func (m *RepCollateralizeConfig) GetStabilityFeeRatio() float64 {
+func (m *RepCollateralizeConfig) GetStabilityFeeRatio() int64 {
 	if m != nil {
 		return m.StabilityFeeRatio
 	}
@@ -1899,7 +1768,7 @@ func (m *RepCollateralizeConfig) GetCurrentTime() int64 {
 
 // 返回最新抵押物价格
 type RepCollateralizePrice struct {
-	Price                float64  `protobuf:"fixed64,1,opt,name=price,proto3" json:"price,omitempty"`
+	Price                int64    `protobuf:"varint,1,opt,name=price,proto3" json:"price,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -1909,16 +1778,17 @@ func (m *RepCollateralizePrice) Reset()         { *m = RepCollateralizePrice{} }
 func (m *RepCollateralizePrice) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizePrice) ProtoMessage()    {}
 func (*RepCollateralizePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_8df09badc6e8384c, []int{27}
+	return fileDescriptor_a988fb4a61381972, []int{27}
 }
+
 func (m *RepCollateralizePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizePrice.Unmarshal(m, b)
 }
 func (m *RepCollateralizePrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizePrice.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizePrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizePrice.Merge(dst, src)
+func (m *RepCollateralizePrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizePrice.Merge(m, src)
 }
 func (m *RepCollateralizePrice) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizePrice.Size(m)
@@ -1929,7 +1799,7 @@ func (m *RepCollateralizePrice) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_RepCollateralizePrice proto.InternalMessageInfo
 
-func (m *RepCollateralizePrice) GetPrice() float64 {
+func (m *RepCollateralizePrice) GetPrice() int64 {
 	if m != nil {
 		return m.Price
 	}
@@ -1967,84 +1837,83 @@ func init() {
 	proto.RegisterType((*RepCollateralizePrice)(nil), "types.RepCollateralizePrice")
 }
 
-func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_collateralize_8df09badc6e8384c) }
+func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_a988fb4a61381972) }
 
-var fileDescriptor_collateralize_8df09badc6e8384c = []byte{
-	// 1203 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_a988fb4a61381972 = []byte{
+	// 1197 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x58, 0x4d, 0x6f, 0xe4, 0x44,
 	0x13, 0x8e, 0xc7, 0xf3, 0x91, 0xa9, 0x49, 0xb2, 0xd9, 0x4e, 0x36, 0xaf, 0xdf, 0xdd, 0x28, 0x1a,
-	0xb5, 0x90, 0x18, 0x01, 0x1b, 0x89, 0x2c, 0x20, 0x16, 0x2e, 0xe4, 0x63, 0x57, 0x19, 0xc4, 0x4a,
-	0xc8, 0x2c, 0x08, 0xf1, 0x25, 0x79, 0xec, 0x4e, 0xb0, 0xe4, 0x8c, 0x1d, 0xbb, 0x27, 0x30, 0x1c,
-	0xb8, 0xc1, 0x89, 0x03, 0x27, 0xfe, 0x01, 0x57, 0xfe, 0x12, 0x3f, 0x81, 0xbf, 0x80, 0xaa, 0xbb,
-	0xfd, 0xd1, 0x6d, 0x7b, 0x35, 0x41, 0x7b, 0x81, 0x4b, 0xe4, 0xae, 0x7e, 0xba, 0xfa, 0xe9, 0xaa,
-	0xea, 0xa7, 0x2b, 0x03, 0x3b, 0x7e, 0x1c, 0x45, 0x1e, 0x67, 0xa9, 0x17, 0x85, 0x3f, 0xb0, 0xc3,
-	0x24, 0x8d, 0x79, 0x4c, 0x7a, 0x7c, 0x99, 0xb0, 0x8c, 0xfe, 0xd9, 0x85, 0xcd, 0xd3, 0xea, 0x34,
-	0x99, 0xc0, 0x1d, 0x0d, 0x3f, 0x0d, 0x1c, 0x6b, 0x6c, 0x4d, 0x86, 0xae, 0x69, 0x26, 0x14, 0x36,
-	0x78, 0xcc, 0xbd, 0xe8, 0xc4, 0x8b, 0xbc, 0xb9, 0xcf, 0x9c, 0xce, 0xd8, 0x9a, 0xd8, 0xae, 0x66,
-	0x23, 0x63, 0x18, 0x05, 0x6c, 0xc6, 0x4f, 0x59, 0x18, 0x85, 0xf3, 0x4b, 0xc7, 0x16, 0x90, 0xaa,
-	0x89, 0xbc, 0x06, 0xdb, 0x51, 0x78, 0xbd, 0x08, 0x03, 0x8f, 0x87, 0xf1, 0xdc, 0xc5, 0xbf, 0x4e,
-	0x77, 0x6c, 0x4d, 0x2c, 0xb7, 0x66, 0x27, 0x6f, 0xc0, 0xdd, 0x8c, 0x7b, 0xb3, 0x30, 0x0a, 0xf9,
-	0xf2, 0x29, 0x63, 0x12, 0xdc, 0x13, 0xe0, 0xfa, 0x04, 0x39, 0x00, 0xf0, 0x53, 0xe6, 0x71, 0x76,
-	0x1c, 0x04, 0xa9, 0xd3, 0x17, 0x87, 0xa8, 0x58, 0x88, 0x03, 0x83, 0x99, 0xa2, 0x3e, 0x10, 0xbc,
-	0xf2, 0x21, 0x79, 0x0c, 0x9b, 0xb3, 0x38, 0x4d, 0xe3, 0xef, 0x5c, 0xe6, 0xc7, 0x69, 0x90, 0x39,
-	0xeb, 0x63, 0x7b, 0x32, 0x3a, 0xda, 0x39, 0x14, 0x41, 0x3b, 0x3c, 0xa9, 0xcc, 0xb9, 0x3a, 0x92,
-	0xbc, 0x0f, 0x5b, 0xd3, 0xf9, 0x8d, 0x17, 0x85, 0x41, 0xbe, 0x76, 0xd8, 0xbe, 0xd6, 0x80, 0x92,
-	0x3d, 0xe8, 0x67, 0xdc, 0xe3, 0x8b, 0xcc, 0x81, 0xb1, 0x35, 0xe9, 0xb9, 0x6a, 0x44, 0xde, 0x81,
-	0x3d, 0x8c, 0x7c, 0xc6, 0x3f, 0x2a, 0x23, 0xf2, 0x71, 0x1a, 0xfa, 0xcc, 0x19, 0x89, 0xc3, 0xb7,
-	0xcc, 0xa2, 0xbf, 0x84, 0xa5, 0x61, 0x1c, 0x38, 0x1b, 0xe2, 0x80, 0x6a, 0x24, 0x62, 0x2e, 0x56,
-	0x3c, 0xf9, 0x3e, 0x09, 0x53, 0xf6, 0x3c, 0xbc, 0x62, 0xce, 0xa6, 0x40, 0xd4, 0xec, 0x98, 0x41,
-	0x4c, 0x7c, 0x9e, 0xe4, 0x2d, 0x99, 0xc1, 0x8a, 0x89, 0xec, 0xc3, 0x30, 0x49, 0xd9, 0x27, 0x92,
-	0xf8, 0x1d, 0x41, 0xbc, 0x34, 0xd0, 0x3f, 0x6c, 0xd8, 0xa8, 0x1e, 0x1a, 0x1d, 0x7a, 0xbe, 0x1f,
-	0x2f, 0xe6, 0x5c, 0xe4, 0x45, 0x16, 0x57, 0xd5, 0x84, 0x0e, 0x33, 0xee, 0xa5, 0x5c, 0xf0, 0x92,
-	0x55, 0x55, 0x1a, 0xf4, 0x02, 0xfd, 0xcc, 0x8b, 0x16, 0x4c, 0x95, 0x95, 0x69, 0xd6, 0x91, 0x32,
-	0x5e, 0xb2, 0xb2, 0x4c, 0x33, 0xee, 0x88, 0x35, 0x29, 0xbd, 0xf5, 0xe4, 0x8e, 0x85, 0xc1, 0x28,
-	0x51, 0xe9, 0xa8, 0x5f, 0x2b, 0xd1, 0x22, 0xe4, 0x2a, 0x85, 0x03, 0x2d, 0x85, 0xaf, 0xc0, 0x66,
-	0x8e, 0x95, 0xf1, 0x5e, 0x17, 0xbb, 0xe8, 0x46, 0x2c, 0x59, 0x56, 0xa6, 0x64, 0x28, 0x20, 0x15,
-	0x8b, 0x1e, 0x6a, 0x30, 0x42, 0x4d, 0xee, 0xc3, 0x7a, 0x2a, 0x62, 0x3c, 0x0d, 0x44, 0x61, 0x0c,
-	0xdd, 0x62, 0xdc, 0x74, 0xad, 0x37, 0x1a, 0xaf, 0x35, 0xfd, 0xd9, 0x82, 0xed, 0xe3, 0x2c, 0x63,
-	0x5c, 0x1c, 0x48, 0x25, 0xed, 0x00, 0x40, 0xba, 0x12, 0xc4, 0x2c, 0x49, 0xac, 0xb4, 0xe0, 0xd6,
-	0x33, 0xbe, 0x94, 0xa1, 0xe9, 0x88, 0xd0, 0x14, 0x63, 0x39, 0xe7, 0xcb, 0x39, 0x3b, 0x9f, 0xf3,
-	0x8b, 0x39, 0xc6, 0xbf, 0xad, 0xe6, 0xa6, 0x18, 0xd3, 0xdf, 0x6d, 0xd8, 0xd1, 0xb4, 0xe9, 0xd8,
-	0xc7, 0x38, 0x93, 0xb7, 0xa0, 0x2f, 0x6f, 0xb1, 0xe0, 0x31, 0x3a, 0xba, 0xaf, 0xae, 0x96, 0x86,
-	0x3d, 0x15, 0x88, 0xf3, 0x35, 0x57, 0x61, 0x71, 0x95, 0xbc, 0xa9, 0x82, 0x5f, 0xcb, 0x2a, 0x59,
-	0xa8, 0xb8, 0x4a, 0x62, 0xc9, 0x9b, 0xd0, 0x4b, 0x59, 0xe2, 0x2d, 0x05, 0xf1, 0xd1, 0xd1, 0xff,
-	0x9b, 0x16, 0xb9, 0x08, 0x38, 0x5f, 0x73, 0x25, 0x12, 0x37, 0xf2, 0x92, 0x84, 0xcd, 0x03, 0x71,
-	0xa0, 0x96, 0x8d, 0x8e, 0x05, 0x02, 0x37, 0x92, 0x58, 0x72, 0x08, 0xdd, 0x0b, 0xc6, 0x02, 0x51,
-	0x7c, 0xa3, 0x23, 0xa7, 0x69, 0xcd, 0x53, 0xc6, 0x70, 0x85, 0xc0, 0x91, 0xf7, 0x30, 0xd7, 0x3c,
-	0x0d, 0xd9, 0x8d, 0xac, 0xc5, 0xd1, 0xd1, 0x7e, 0x33, 0x37, 0x89, 0x39, 0x5f, 0x73, 0x0b, 0x3c,
-	0x32, 0xbc, 0xf2, 0xe6, 0xde, 0xa5, 0xd4, 0xbd, 0x16, 0x86, 0xcf, 0x04, 0x02, 0x19, 0x4a, 0x2c,
-	0xd9, 0x82, 0x0e, 0x5f, 0xaa, 0xa2, 0xeb, 0xf0, 0xe5, 0xc9, 0x00, 0x7a, 0x37, 0x78, 0x3d, 0xe8,
-	0x5f, 0x96, 0x91, 0x27, 0xb9, 0xd4, 0xd4, 0x7e, 0x6b, 0x35, 0xed, 0xef, 0xdc, 0x46, 0xfb, 0xed,
-	0x36, 0xed, 0x2f, 0x95, 0xaf, 0xab, 0x29, 0x9f, 0xf9, 0x66, 0xf5, 0x9a, 0xdf, 0x2c, 0x7f, 0x91,
-	0xa6, 0x6c, 0x2e, 0x05, 0xa8, 0xaf, 0x14, 0xaf, 0x34, 0xd1, 0x47, 0x70, 0x57, 0xcf, 0x26, 0xaa,
-	0xd6, 0x01, 0x40, 0xb6, 0x48, 0x58, 0x8a, 0x83, 0xcc, 0xb1, 0xc6, 0x36, 0x3e, 0x37, 0xa5, 0x85,
-	0x3e, 0x36, 0xa2, 0x24, 0x2b, 0xb4, 0xc6, 0xc8, 0xaa, 0x33, 0xa2, 0x9f, 0x1a, 0x4b, 0x65, 0x99,
-	0xde, 0xe2, 0xa9, 0xde, 0x55, 0xb9, 0x52, 0x6a, 0xaa, 0x12, 0xf7, 0x05, 0x90, 0x7a, 0x21, 0xdf,
-	0xc2, 0x6b, 0x55, 0x6f, 0x3a, 0xba, 0xde, 0xd0, 0x9f, 0xcc, 0xa2, 0x90, 0x15, 0xff, 0x72, 0xbc,
-	0xaf, 0xfe, 0x06, 0xd0, 0xaf, 0x8d, 0x54, 0xe1, 0x25, 0x42, 0xd7, 0x88, 0x7b, 0xbe, 0x4c, 0x64,
-	0xbc, 0x7b, 0x6e, 0x31, 0xc6, 0x50, 0x25, 0x4a, 0xc6, 0xec, 0x89, 0xe5, 0xca, 0x01, 0xd6, 0xd3,
-	0x4d, 0x1c, 0x2d, 0xae, 0x70, 0x1f, 0x1b, 0xeb, 0x49, 0x8e, 0xe8, 0x97, 0x70, 0xaf, 0xf1, 0xbe,
-	0xdd, 0xe2, 0x9c, 0x95, 0x36, 0xa4, 0xa3, 0xb5, 0x21, 0xf4, 0x37, 0x0b, 0x76, 0x5d, 0xe6, 0xb3,
-	0x30, 0xe1, 0xff, 0xb4, 0x47, 0x33, 0x1e, 0x5b, 0xbb, 0xfe, 0xd8, 0x56, 0xc3, 0xdc, 0x35, 0xc2,
-	0x5c, 0x3e, 0x66, 0xbd, 0xea, 0x63, 0x46, 0x9f, 0xc1, 0xae, 0x71, 0x6a, 0xd9, 0xbf, 0xbc, 0x0d,
-	0x83, 0x54, 0x75, 0x3d, 0x96, 0xe8, 0x7a, 0x1e, 0x28, 0x65, 0x69, 0x3a, 0x85, 0x9b, 0x63, 0xe9,
-	0x07, 0x78, 0xcc, 0x6b, 0x6d, 0x72, 0x3a, 0xbf, 0x88, 0x57, 0x3f, 0x26, 0x36, 0x19, 0x0f, 0x5c,
-	0x96, 0xe8, 0xf7, 0x4b, 0x5e, 0x58, 0xe1, 0xa9, 0x3c, 0x88, 0xa5, 0xbd, 0xca, 0xff, 0xdd, 0x16,
-	0xb6, 0x14, 0xc0, 0x75, 0x4d, 0x00, 0x1b, 0x62, 0x3a, 0x6c, 0x2d, 0x9d, 0x6a, 0xe3, 0x07, 0xf5,
-	0xc6, 0xaf, 0xd6, 0x26, 0x8f, 0x56, 0x6d, 0x93, 0xe9, 0x29, 0xdc, 0x6b, 0x4a, 0x79, 0x86, 0xb1,
-	0x34, 0x88, 0xe4, 0x5a, 0x5a, 0xb3, 0xd3, 0xcf, 0x61, 0xff, 0x05, 0x49, 0xcf, 0xc8, 0xbb, 0xd0,
-	0x0b, 0xf1, 0x43, 0x15, 0x23, 0x2d, 0x8a, 0xb1, 0x75, 0x8d, 0x2b, 0x17, 0xd0, 0x0f, 0xc1, 0x31,
-	0xe9, 0x9d, 0x2c, 0x55, 0x97, 0xd5, 0x56, 0x4b, 0x7b, 0xd0, 0x47, 0x86, 0xd3, 0x33, 0xa5, 0x56,
-	0x6a, 0x44, 0xbf, 0x82, 0xbd, 0xba, 0x2f, 0x91, 0x3d, 0x02, 0x5d, 0xaf, 0x6c, 0x81, 0xc5, 0x77,
-	0xc5, 0x7b, 0xa7, 0xc5, 0xbb, 0xad, 0x79, 0x7f, 0x15, 0x76, 0xcc, 0xf3, 0x4c, 0xcf, 0x32, 0xb2,
-	0x0d, 0xf6, 0xf4, 0x2c, 0x8f, 0x1c, 0x7e, 0xd2, 0x5f, 0x2d, 0x8c, 0xd6, 0x75, 0xc3, 0xbd, 0x55,
-	0x6c, 0x56, 0x17, 0x95, 0x9c, 0x77, 0xa7, 0x91, 0xb7, 0xad, 0xf1, 0x7e, 0x81, 0xbc, 0xd0, 0x1f,
-	0xe1, 0xa0, 0x8d, 0x91, 0x8a, 0xf5, 0xea, 0x9c, 0xda, 0xe2, 0x56, 0xdd, 0xdf, 0x36, 0xf6, 0x3f,
-	0x87, 0xff, 0x99, 0xb1, 0xcb, 0x95, 0xec, 0xa1, 0xa9, 0x64, 0x8d, 0x45, 0x5d, 0x28, 0xd8, 0x37,
-	0xf5, 0x1c, 0xab, 0xc6, 0xf9, 0xe5, 0xbc, 0xa6, 0x4f, 0xd0, 0x7f, 0x13, 0x53, 0xf2, 0x3a, 0xf4,
-	0x25, 0x4a, 0x35, 0xc3, 0x8d, 0x3c, 0x15, 0x84, 0xfe, 0xd2, 0xa9, 0xfb, 0x39, 0x8d, 0xe7, 0x17,
-	0xe1, 0xe5, 0xbf, 0xb6, 0x59, 0xab, 0x28, 0x60, 0x5f, 0x57, 0x40, 0xa3, 0x8d, 0x1b, 0xd4, 0xdb,
-	0xb8, 0x87, 0x28, 0x42, 0x7a, 0x34, 0xe4, 0x7f, 0x25, 0x45, 0x0f, 0x60, 0x09, 0xca, 0x72, 0x30,
-	0xeb, 0x8b, 0x5f, 0x4e, 0x1e, 0xfd, 0x1d, 0x00, 0x00, 0xff, 0xff, 0xf5, 0xbb, 0xef, 0x9f, 0x50,
-	0x11, 0x00, 0x00,
+	0xb5, 0x90, 0x88, 0x80, 0x8d, 0x44, 0x16, 0x10, 0x0b, 0x17, 0x92, 0xc9, 0xae, 0x32, 0x88, 0x95,
+	0x90, 0x59, 0x10, 0xe2, 0x4b, 0xf2, 0xd8, 0x9d, 0x60, 0xc9, 0x19, 0x3b, 0x76, 0x4f, 0x60, 0x38,
+	0x70, 0x83, 0x13, 0x07, 0x4e, 0xfc, 0x03, 0xae, 0xfc, 0x25, 0x7e, 0x02, 0x7f, 0x01, 0x75, 0x57,
+	0xfb, 0xa3, 0xdb, 0xf6, 0x6a, 0x82, 0xf6, 0x02, 0x97, 0xd5, 0x74, 0xf5, 0x53, 0xe5, 0xea, 0xa7,
+	0xaa, 0x9f, 0xae, 0x0d, 0xec, 0xf8, 0x71, 0x14, 0x79, 0x9c, 0xa5, 0x5e, 0x14, 0xfe, 0xc0, 0x8e,
+	0x92, 0x34, 0xe6, 0x31, 0xe9, 0xf1, 0x65, 0xc2, 0x32, 0xfa, 0x67, 0x17, 0x36, 0x27, 0xd5, 0x6d,
+	0x72, 0x08, 0x77, 0x34, 0xfc, 0x34, 0x70, 0xac, 0xb1, 0x75, 0x38, 0x74, 0x4d, 0x33, 0xa1, 0xb0,
+	0xc1, 0x63, 0xee, 0x45, 0xa7, 0x5e, 0xe4, 0xcd, 0x7d, 0xe6, 0x74, 0xc6, 0xd6, 0xa1, 0xed, 0x6a,
+	0x36, 0x32, 0x86, 0x51, 0xc0, 0x66, 0x7c, 0xc2, 0xc2, 0x28, 0x9c, 0x5f, 0x3a, 0xb6, 0x84, 0x54,
+	0x4d, 0xe4, 0x35, 0xd8, 0x8e, 0xc2, 0xeb, 0x45, 0x18, 0x78, 0x3c, 0x8c, 0xe7, 0xae, 0xf8, 0xd7,
+	0xe9, 0x4a, 0x58, 0xcd, 0x4e, 0xde, 0x80, 0xbb, 0x19, 0xf7, 0x66, 0x61, 0x14, 0xf2, 0xe5, 0x53,
+	0xc6, 0x10, 0xdc, 0x93, 0xe0, 0xfa, 0x06, 0x39, 0x00, 0xf0, 0x53, 0xe6, 0x71, 0x76, 0x12, 0x04,
+	0xa9, 0xd3, 0x97, 0x87, 0xa8, 0x58, 0x88, 0x03, 0x83, 0x99, 0x4a, 0x7d, 0x20, 0x63, 0xe4, 0x4b,
+	0xf2, 0x18, 0x36, 0x67, 0x71, 0x9a, 0xc6, 0xdf, 0xb9, 0xcc, 0x8f, 0xd3, 0x20, 0x73, 0xd6, 0xc7,
+	0xf6, 0xe1, 0xe8, 0x78, 0xe7, 0x48, 0x92, 0x76, 0x74, 0x5a, 0xd9, 0x73, 0x75, 0x24, 0x79, 0x1f,
+	0xb6, 0xa6, 0xf3, 0x1b, 0x2f, 0x0a, 0x83, 0xdc, 0x77, 0xd8, 0xee, 0x6b, 0x40, 0xc9, 0x1e, 0xf4,
+	0x33, 0xee, 0xf1, 0x45, 0xe6, 0xc0, 0xd8, 0x3a, 0xec, 0xb9, 0x6a, 0x45, 0xde, 0x81, 0x3d, 0xc1,
+	0x7c, 0xc6, 0x3f, 0x2a, 0x19, 0xf9, 0x38, 0x0d, 0x7d, 0xe6, 0x8c, 0x64, 0xe2, 0x2d, 0xbb, 0x22,
+	0x5e, 0xc2, 0xd2, 0x30, 0x0e, 0x9c, 0x0d, 0x89, 0x53, 0x2b, 0xc9, 0xb9, 0xf4, 0x78, 0xf2, 0x7d,
+	0x12, 0xa6, 0xec, 0x79, 0x78, 0xc5, 0x9c, 0x4d, 0xc5, 0xb9, 0x61, 0x17, 0x15, 0x14, 0x85, 0xcf,
+	0x8b, 0xbc, 0x85, 0x15, 0xac, 0x98, 0xc8, 0x3e, 0x0c, 0x93, 0x94, 0x7d, 0x82, 0x89, 0xdf, 0x91,
+	0x89, 0x97, 0x06, 0xfa, 0x87, 0x0d, 0x1b, 0xd5, 0x43, 0x8b, 0x80, 0x9e, 0xef, 0xc7, 0x8b, 0x39,
+	0x97, 0x75, 0xc1, 0xe6, 0xaa, 0x9a, 0x44, 0xc0, 0x8c, 0x7b, 0x29, 0x97, 0x79, 0x61, 0x57, 0x95,
+	0x06, 0xbd, 0x41, 0x3f, 0xf3, 0xa2, 0x05, 0x53, 0x6d, 0x65, 0x9a, 0x75, 0x24, 0xf2, 0xd5, 0x35,
+	0x91, 0x48, 0xd4, 0x3e, 0x0c, 0x45, 0x4f, 0x62, 0x34, 0x6c, 0xa8, 0xd2, 0x60, 0xb4, 0x28, 0x06,
+	0xea, 0xd7, 0x5a, 0xb4, 0xa0, 0x5c, 0x95, 0x70, 0xa0, 0x95, 0xf0, 0x15, 0xd8, 0xcc, 0xb1, 0xc8,
+	0xf7, 0xba, 0x0c, 0xa0, 0x1b, 0x45, 0xcb, 0xb2, 0xb2, 0x24, 0x43, 0x09, 0xa9, 0x58, 0x74, 0xaa,
+	0xc1, 0xa0, 0x9a, 0xdc, 0x87, 0xf5, 0x54, 0x72, 0x3c, 0x0d, 0x64, 0x63, 0x0c, 0xdd, 0x62, 0xdd,
+	0x74, 0xad, 0x37, 0x1a, 0xaf, 0x35, 0xfd, 0xd9, 0x82, 0xed, 0x93, 0x2c, 0x63, 0x5c, 0x1e, 0x48,
+	0x15, 0xed, 0x00, 0x00, 0x43, 0xc9, 0xc4, 0x2c, 0x4c, 0xac, 0xb4, 0x88, 0x4f, 0xcf, 0xf8, 0x12,
+	0xa9, 0xc1, 0x8a, 0x15, 0x6b, 0xdc, 0xf3, 0x71, 0xcf, 0xce, 0xf7, 0xfc, 0x62, 0x8f, 0xf1, 0x6f,
+	0xab, 0xb5, 0x29, 0xd6, 0xf4, 0x77, 0x1b, 0x76, 0x34, 0x6d, 0x3a, 0xf1, 0x05, 0xcf, 0xe4, 0x2d,
+	0xe8, 0xe3, 0x2d, 0x96, 0x79, 0x8c, 0x8e, 0xef, 0xab, 0xab, 0xa5, 0x61, 0x27, 0x12, 0x71, 0xbe,
+	0xe6, 0x2a, 0xac, 0xf0, 0xc2, 0x9b, 0x2a, 0xf3, 0x6b, 0xf1, 0xc2, 0x46, 0x15, 0x5e, 0x88, 0x25,
+	0x6f, 0x42, 0x2f, 0x65, 0x89, 0xb7, 0x94, 0x89, 0x8f, 0x8e, 0xff, 0xdf, 0xe4, 0xe4, 0x0a, 0xc0,
+	0xf9, 0x9a, 0x8b, 0x48, 0xf1, 0x21, 0x2f, 0x49, 0xd8, 0x3c, 0x90, 0x07, 0x6a, 0xf9, 0xd0, 0x89,
+	0x44, 0x88, 0x0f, 0x21, 0x96, 0x1c, 0x41, 0xf7, 0x82, 0xb1, 0x40, 0x36, 0xdf, 0xe8, 0xd8, 0x69,
+	0xf2, 0x79, 0xca, 0x98, 0xf0, 0x90, 0x38, 0xf2, 0x9e, 0xa8, 0x35, 0x4f, 0x43, 0x76, 0x83, 0xbd,
+	0x38, 0x3a, 0xde, 0x6f, 0xce, 0x0d, 0x31, 0xe7, 0x6b, 0x6e, 0x81, 0x17, 0x19, 0x5e, 0x79, 0x73,
+	0xef, 0x12, 0x75, 0xaf, 0x25, 0xc3, 0x67, 0x12, 0x21, 0x32, 0x44, 0x2c, 0xd9, 0x82, 0x0e, 0x5f,
+	0xaa, 0xa6, 0xeb, 0xf0, 0xe5, 0xe9, 0x00, 0x7a, 0x37, 0xe2, 0x7a, 0xd0, 0xbf, 0x2c, 0xa3, 0x4e,
+	0xe8, 0x6a, 0x6a, 0xbf, 0xb5, 0x9a, 0xf6, 0x77, 0x6e, 0xa3, 0xfd, 0x76, 0x9b, 0xf6, 0x97, 0xca,
+	0xd7, 0xd5, 0x94, 0xcf, 0x7c, 0xb3, 0x7a, 0xcd, 0x6f, 0x96, 0xbf, 0x48, 0x53, 0x36, 0x47, 0x01,
+	0xea, 0x2b, 0xc5, 0x2b, 0x4d, 0xf4, 0x11, 0xdc, 0xd5, 0xab, 0x29, 0x54, 0xeb, 0x00, 0x20, 0x5b,
+	0x24, 0x2c, 0x15, 0x8b, 0xcc, 0xb1, 0xc6, 0xb6, 0x78, 0x6e, 0x4a, 0x0b, 0x7d, 0x6c, 0xb0, 0x84,
+	0x1d, 0x5a, 0xcb, 0xc8, 0xaa, 0x67, 0x44, 0x3f, 0x35, 0x5c, 0xb1, 0x4d, 0x6f, 0xf1, 0x54, 0xef,
+	0xaa, 0x5a, 0x29, 0x76, 0x55, 0xe1, 0xbe, 0x00, 0x52, 0x6f, 0xe4, 0x5b, 0x44, 0xad, 0xea, 0x4d,
+	0x47, 0xd7, 0x1b, 0xfa, 0x93, 0xd9, 0x14, 0xd8, 0xf1, 0x2f, 0x27, 0xfa, 0xea, 0x6f, 0x00, 0xfd,
+	0xda, 0x28, 0x95, 0xb8, 0x44, 0x22, 0xb4, 0xc0, 0x3d, 0x5f, 0x26, 0xc8, 0x77, 0xcf, 0x2d, 0xd6,
+	0x82, 0xaa, 0x44, 0xc9, 0x98, 0x2d, 0xa8, 0x4a, 0x72, 0x59, 0xbf, 0x89, 0xa3, 0xc5, 0x95, 0xf8,
+	0x8e, 0x30, 0xab, 0x15, 0xfd, 0x12, 0xee, 0x35, 0xde, 0xb7, 0x5b, 0x9c, 0xb3, 0x32, 0x86, 0x74,
+	0xb4, 0x31, 0x84, 0xfe, 0x66, 0xc1, 0xae, 0xcb, 0x7c, 0x16, 0x26, 0xfc, 0x9f, 0xce, 0x68, 0xc6,
+	0x63, 0x6b, 0xd7, 0x1f, 0xdb, 0x2a, 0xcd, 0x5d, 0x83, 0xe6, 0xf2, 0x31, 0xeb, 0x55, 0x1f, 0x33,
+	0xfa, 0x0c, 0x76, 0x8d, 0x53, 0xe3, 0xfc, 0xf2, 0x36, 0x0c, 0x52, 0x35, 0xf5, 0x58, 0x72, 0xea,
+	0x79, 0xa0, 0x94, 0xa5, 0xe9, 0x14, 0x6e, 0x8e, 0xa5, 0x1f, 0x88, 0x63, 0x5e, 0x6b, 0x9b, 0xd3,
+	0xf9, 0x45, 0xbc, 0xfa, 0x31, 0xc5, 0x90, 0xf1, 0xc0, 0x65, 0x89, 0x7e, 0xbf, 0xf0, 0xc2, 0xca,
+	0x48, 0xe5, 0x41, 0x2c, 0xed, 0x55, 0xfe, 0xef, 0x8e, 0xb0, 0xa5, 0x00, 0xae, 0x6b, 0x02, 0xd8,
+	0xc0, 0xe9, 0xb0, 0xb5, 0x75, 0xaa, 0x83, 0x1f, 0xd4, 0x07, 0xbf, 0xda, 0x98, 0x3c, 0x5a, 0x75,
+	0x4c, 0xa6, 0x13, 0xb8, 0xd7, 0x54, 0xf2, 0x4c, 0x70, 0x69, 0x24, 0x92, 0x6b, 0x69, 0xcd, 0x4e,
+	0x3f, 0x87, 0xfd, 0x17, 0x14, 0x3d, 0x23, 0xef, 0x42, 0x2f, 0x14, 0x3f, 0x54, 0x33, 0xd2, 0xa2,
+	0x19, 0x5b, 0x7d, 0x5c, 0x74, 0xa0, 0x1f, 0x82, 0x63, 0xa6, 0x77, 0xba, 0x54, 0x53, 0x56, 0x5b,
+	0x2f, 0xed, 0x41, 0x5f, 0x64, 0x38, 0x3d, 0x53, 0x6a, 0xa5, 0x56, 0xf4, 0x2b, 0xd8, 0xab, 0xc7,
+	0x92, 0xd5, 0x23, 0xd0, 0xf5, 0xca, 0x11, 0x58, 0xfe, 0xae, 0x44, 0xef, 0xb4, 0x44, 0xb7, 0xb5,
+	0xe8, 0xaf, 0xc2, 0x8e, 0x79, 0x9e, 0xe9, 0x59, 0x46, 0xb6, 0xc1, 0x9e, 0x9e, 0xe5, 0xcc, 0x89,
+	0x9f, 0xf4, 0x57, 0x4b, 0xb0, 0x75, 0xdd, 0x70, 0x6f, 0x55, 0x36, 0xab, 0x8b, 0x4a, 0x9e, 0x77,
+	0xa7, 0x31, 0x6f, 0x5b, 0xcb, 0xfb, 0x05, 0xf2, 0x42, 0x7f, 0x84, 0x83, 0xb6, 0x8c, 0x14, 0xd7,
+	0xab, 0xe7, 0xd4, 0xc6, 0x5b, 0xf5, 0xfb, 0xb6, 0xf1, 0xfd, 0x73, 0xf8, 0x9f, 0xc9, 0x5d, 0xae,
+	0x64, 0x0f, 0x4d, 0x25, 0x6b, 0x6c, 0xea, 0x42, 0xc1, 0xbe, 0xa9, 0xd7, 0x58, 0x0d, 0xce, 0x2f,
+	0xe7, 0x35, 0x7d, 0x22, 0xe2, 0x37, 0x65, 0x4a, 0x5e, 0x87, 0x3e, 0xa2, 0xd4, 0x30, 0xdc, 0x98,
+	0xa7, 0x82, 0xd0, 0x5f, 0x3a, 0xf5, 0x38, 0x93, 0x78, 0x7e, 0x11, 0x5e, 0xfe, 0x6b, 0x87, 0xb5,
+	0x8a, 0x02, 0xf6, 0x75, 0x05, 0x34, 0xc6, 0xb8, 0x41, 0x7d, 0x8c, 0x7b, 0x28, 0x44, 0x48, 0x67,
+	0x03, 0xff, 0x57, 0x52, 0xcc, 0x00, 0x48, 0x03, 0x2e, 0x66, 0x7d, 0xf9, 0x97, 0x93, 0x47, 0x7f,
+	0x07, 0x00, 0x00, 0xff, 0xff, 0x4f, 0x5a, 0x9f, 0x55, 0x50, 0x11, 0x00, 0x00,
 }

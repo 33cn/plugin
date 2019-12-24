@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"math"
-
 	"github.com/33cn/chain33/common/db/table"
 
 	"github.com/33cn/chain33/account"
@@ -30,11 +28,11 @@ const (
 const (
 	Coin                      = types.Coin      // 1e8
 	DefaultDebtCeiling        = 10000 * Coin    // 默认借贷限额
-	DefaultLiquidationRatio   = 0.4             // 默认质押比
-	DefaultStabilityFeeRation = 0.08            // 默认稳定费
+	DefaultLiquidationRatio   = 0.4 * 1e4       // 默认质押比
+	DefaultStabilityFeeRation = 0.08 * 1e4       // 默认稳定费
 	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
 	DefaultTotalBalance       = 0               // 默认放贷总额
-	PriceWarningRate          = 1.3             // 价格提前预警率
+	PriceWarningRate          = 1.3 * 1e4       // 价格提前预警率
 	ExpireWarningTime         = 3600 * 24 * 10  // 提前10天超时预警
 )
 
@@ -215,8 +213,8 @@ func (action *Action) GetIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-func getLatestLiquidationPrice(coll *pty.Collateralize) float64 {
-	var latest float64
+func getLatestLiquidationPrice(coll *pty.Collateralize) int64 {
+	var latest int64
 	for _, collRecord := range coll.BorrowRecords {
 		if collRecord.LiquidationPrice > latest {
 			latest = collRecord.LiquidationPrice
@@ -250,8 +248,8 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	}
 
 	// 配置借贷参数
-	if manage.DebtCeiling < 0 || manage.LiquidationRatio < 0 || manage.LiquidationRatio >= 1 ||
-		manage.StabilityFeeRatio < 0 || manage.StabilityFeeRatio >= 1 {
+	if manage.DebtCeiling < 0 || manage.LiquidationRatio < 0 || manage.LiquidationRatio >= 10000 ||
+		manage.StabilityFeeRatio < 0 || manage.StabilityFeeRatio >= 10000 {
 		return nil, pty.ErrRiskParam
 	}
 
@@ -464,28 +462,24 @@ func (action *Action) CollateralizeCreate(create *pty.CollateralizeCreate) (*typ
 }
 
 // 根据最近抵押物价格计算需要冻结的BTY数量
-func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error) {
+func getBtyNumToFrozen(value int64, price int64, ratio int64) (int64, error) {
 	if price == 0 {
 		clog.Error("Bty price should greate to 0")
 		return 0, pty.ErrPriceInvalid
 	}
 
-	valueReal := float64(value) / 1e8
-	btyValue := valueReal / (price * ratio)
-	return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
+	btyValue := (value * 1e4) / (price * ratio)
+	return btyValue * 1e4, nil
 }
 
 // 计算清算价格
 // value:借出ccny数量， colValue:抵押物数量， price:抵押物价格
-func calcLiquidationPrice(value int64, colValue int64) float64 {
-	liquidationRation := float64(value) / float64(colValue)
-	liquidationPrice := math.Trunc(liquidationRation*pty.CollateralizePreLiquidationRatio*1e4) / 1e4
-
-	return liquidationPrice
+func calcLiquidationPrice(value int64, colValue int64) int64 {
+	return (value *pty.CollateralizePreLiquidationRatio) / colValue
 }
 
 // 获取最近抵押物价格
-func getLatestPrice(db dbm.KV) (float64, error) {
+func getLatestPrice(db dbm.KV) (int64, error) {
 	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
@@ -621,7 +615,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	borrowRecord.StartTime = action.blocktime
 	borrowRecord.CollateralPrice = lastPrice
 	borrowRecord.DebtValue = borrow.GetValue()
-	borrowRecord.LiquidationPrice = math.Trunc(coll.LiquidationRatio*lastPrice*pty.CollateralizePreLiquidationRatio*1e4) / 1e4
+	borrowRecord.LiquidationPrice = (coll.LiquidationRatio*lastPrice*pty.CollateralizePreLiquidationRatio)/1e8
 	borrowRecord.Status = pty.CollateralizeUserStatusCreate
 	borrowRecord.ExpireTime = action.blocktime + coll.Period
 
@@ -684,8 +678,8 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	fee := (float64(borrowRecord.DebtValue) / 1e8) * coll.StabilityFeeRatio
-	realRepay := borrowRecord.DebtValue + int64(math.Trunc((fee+0.0000001)*1e4))*1e4
+	fee := (borrowRecord.DebtValue * coll.StabilityFeeRatio)/1e4
+	realRepay := borrowRecord.DebtValue + fee
 
 	// 检查
 	if !action.CheckExecTokenAccount(action.fromaddr, realRepay, false) {
@@ -899,12 +893,12 @@ func getGuarantorAddr(db dbm.KV) (string, error) {
 }
 
 // 系统清算
-func (action *Action) systemLiquidation(coll *pty.Collateralize, price float64) (*types.Receipt, error) {
+func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
 	for index, borrowRecord := range coll.BorrowRecords {
-		if borrowRecord.LiquidationPrice*PriceWarningRate < price {
+		if (borrowRecord.LiquidationPrice*PriceWarningRate)/1e4 < price {
 			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 				borrowRecord.PreStatus = borrowRecord.Status
 				borrowRecord.Status = pty.CollateralizeUserStatusCreate
@@ -1013,8 +1007,8 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 }
 
 // 价格计算策略
-func pricePolicy(feed *pty.CollateralizeFeed) float64 {
-	var totalPrice float64
+func pricePolicy(feed *pty.CollateralizeFeed) int64 {
+	var totalPrice int64
 	var totalVolume int64
 	for _, volume := range feed.Volume {
 		totalVolume += volume
@@ -1026,7 +1020,7 @@ func pricePolicy(feed *pty.CollateralizeFeed) float64 {
 	}
 
 	for i, price := range feed.Price {
-		totalPrice += price * (float64(feed.Volume[i]) / float64(totalVolume))
+		totalPrice += (price * feed.Volume[i]) / totalVolume
 	}
 
 	return totalPrice

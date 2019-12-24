@@ -270,9 +270,13 @@ func CreateRawCollateralizeFeedTx(cfg *types.Chain33Config, parm *CollateralizeF
 	}
 
 	v := &CollateralizeFeed{
-		Price:  parm.Price,
 		Volume: parm.Volume,
 	}
+
+	for _, r := range parm.Price {
+		v.Price = append(v.Price, int64(math.Trunc(r*1e4)))
+	}
+
 	feed := &CollateralizeAction{
 		Ty:    CollateralizeActionFeed,
 		Value: &CollateralizeAction_Feed{v},
@@ -330,8 +334,8 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 
 	v := &CollateralizeManage{
 		DebtCeiling:       int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
-		LiquidationRatio:  parm.LiquidationRatio,
-		StabilityFeeRatio: parm.StabilityFeeRatio,
+		LiquidationRatio:  int64(math.Trunc((parm.LiquidationRatio+0.0000001)*1e4)),
+		StabilityFeeRatio: int64(math.Trunc((parm.StabilityFeeRatio+0.0000001)*1e4)),
 		Period:            parm.Period,
 		TotalBalance:      int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 	}

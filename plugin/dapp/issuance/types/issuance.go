@@ -146,7 +146,7 @@ func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx)
 	v := &IssuanceCreate{
 		TotalBalance:     int64(math.Trunc((parm.TotalBalance+0.0000001)*1e4)) * 1e4,
 		DebtCeiling:      int64(math.Trunc((parm.DebtCeiling+0.0000001)*1e4)) * 1e4,
-		LiquidationRatio: parm.LiquidationRatio,
+		LiquidationRatio: int64(math.Trunc((parm.LiquidationRatio+0.0000001)*1e4)),
 		Period:           parm.Period,
 	}
 	create := &IssuanceAction{
@@ -233,9 +233,12 @@ func CreateRawIssuanceFeedTx(cfg *types.Chain33Config, parm *IssuanceFeedTx) (*t
 	}
 
 	v := &IssuanceFeed{
-		Price:  parm.Price,
 		Volume: parm.Volume,
 	}
+	for _, r := range parm.Price {
+		v.Price = append(v.Price, int64(math.Trunc(r*1e4)))
+	}
+
 	feed := &IssuanceAction{
 		Ty:    IssuanceActionFeed,
 		Value: &IssuanceAction_Feed{v},

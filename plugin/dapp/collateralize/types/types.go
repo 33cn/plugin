@@ -27,7 +27,7 @@ const (
 const (
 	CollateralizeX                   = "collateralize"
 	CCNYTokenName                    = "CCNY"
-	CollateralizePreLiquidationRatio = 1.1 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
+	CollateralizePreLiquidationRatio = 1.1 * 1e4 //TODO 预清算比例，抵押物价值跌到借出ccny价值110%的时候开始清算
 )
 
 //Collateralize status

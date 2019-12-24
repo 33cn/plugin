@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"math"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -27,9 +25,9 @@ const (
 const (
 	Coin                    = types.Coin      // 1e8
 	DefaultDebtCeiling      = 100000 * Coin   // 默认借贷限额
-	DefaultLiquidationRatio = 0.25            // 默认质押比
+	DefaultLiquidationRatio = 0.25 * 1e4      // 默认质押比
 	DefaultPeriod           = 3600 * 24 * 365 // 默认合约限期
-	PriceWarningRate        = 1.3             // 价格提前预警率
+	PriceWarningRate        = 1.3 * 1e4       // 价格提前预警率
 	ExpireWarningTime       = 3600 * 24 * 10  // 提前10天超时预警
 )
 
@@ -266,8 +264,8 @@ func (action *Action) GetIndex() int64 {
 	return action.height*types.MaxTxsPerBlock + int64(action.index)
 }
 
-func getLatestLiquidationPrice(issu *pty.Issuance) float64 {
-	var latest float64
+func getLatestLiquidationPrice(issu *pty.Issuance) int64 {
+	var latest int64
 	for _, collRecord := range issu.DebtRecords {
 		if collRecord.LiquidationPrice > latest {
 			latest = collRecord.LiquidationPrice
@@ -431,19 +429,18 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 }
 
 // 根据最近抵押物价格计算需要冻结的BTY数量
-func getBtyNumToFrozen(value int64, price float64, ratio float64) (int64, error) {
+func getBtyNumToFrozen(value int64, price int64, ratio int64) (int64, error) {
 	if price == 0 {
 		clog.Error("Bty price should greate to 0")
 		return 0, pty.ErrPriceInvalid
 	}
 
-	valueReal := float64(value) / 1e8
-	btyValue := valueReal / (price * ratio)
-	return int64(math.Trunc((btyValue+0.0000001)*1e4)) * 1e4, nil
+	btyValue := (value * 1e4) / (price * ratio)
+	return btyValue * 1e4, nil
 }
 
 // 获取最近抵押物价格
-func getLatestPrice(db dbm.KV) (float64, error) {
+func getLatestPrice(db dbm.KV) (int64, error) {
 	data, err := db.Get(PriceKey())
 	if err != nil {
 		clog.Error("getLatestPrice", "get", err)
@@ -584,7 +581,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	debtRecord.StartTime = action.blocktime
 	debtRecord.CollateralPrice = lastPrice
 	debtRecord.DebtValue = debt.Value
-	debtRecord.LiquidationPrice = math.Trunc(issu.LiquidationRatio*lastPrice*pty.IssuancePreLiquidationRatio*1e4) / 1e4
+	debtRecord.LiquidationPrice = (issu.LiquidationRatio*lastPrice*pty.IssuancePreLiquidationRatio) / 1e8
 	debtRecord.Status = pty.IssuanceUserStatusCreate
 	debtRecord.ExpireTime = action.blocktime + issu.Period
 
@@ -702,12 +699,12 @@ func (action *Action) IssuanceRepay(repay *pty.IssuanceRepay) (*types.Receipt, e
 }
 
 // 系统清算
-func (action *Action) systemLiquidation(issu *pty.Issuance, price float64) (*types.Receipt, error) {
+func (action *Action) systemLiquidation(issu *pty.Issuance, price int64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
 	for index, debtRecord := range issu.DebtRecords {
-		if debtRecord.LiquidationPrice*PriceWarningRate < price {
+		if (debtRecord.LiquidationPrice*PriceWarningRate)/1e4 < price {
 			if debtRecord.Status == pty.IssuanceUserStatusWarning {
 				debtRecord.PreStatus = debtRecord.Status
 				debtRecord.Status = pty.IssuanceUserStatusCreate
@@ -814,8 +811,8 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 }
 
 // 价格计算策略
-func pricePolicy(feed *pty.IssuanceFeed) float64 {
-	var totalPrice float64
+func pricePolicy(feed *pty.IssuanceFeed) int64 {
+	var totalPrice int64
 	var totalVolume int64
 	for _, volume := range feed.Volume {
 		totalVolume += volume
@@ -826,7 +823,7 @@ func pricePolicy(feed *pty.IssuanceFeed) float64 {
 		return 0
 	}
 	for i, price := range feed.Price {
-		totalPrice += price * (float64(feed.Volume[i]) / float64(totalVolume))
+		totalPrice += (price * feed.Volume[i]) / totalVolume
 	}
 
 	return totalPrice
