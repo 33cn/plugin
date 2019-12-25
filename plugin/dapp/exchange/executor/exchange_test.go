@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/db"
 	"testing"
 
 	"github.com/33cn/chain33/account"
@@ -27,15 +28,16 @@ var (
 	PrivKeyB = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
 	PrivKeyC = "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" // 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
 	PrivKeyD = "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" // 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
-	Nodes    = [][]byte{
-		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
-		[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
-		[]byte("1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"),
-		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
+	Nodes    = []string{
+		"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+		"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+		"1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k",
+		"1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs",
 	}
 )
 
 func TestExchange(t *testing.T) {
+	//环境准备
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(et.ExchangeX, cfg, nil)
@@ -43,29 +45,27 @@ func TestExchange(t *testing.T) {
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
-		Addr:    string(Nodes[0]),
+		Addr:    Nodes[0],
 	}
 	accountB := types.Account{
 		Balance: total,
 		Frozen:  0,
-		Addr:    string(Nodes[1]),
+		Addr:    Nodes[1],
 	}
 
 	accountC := types.Account{
 		Balance: total,
 		Frozen:  0,
-		Addr:    string(Nodes[2]),
+		Addr:    Nodes[2],
 	}
 	accountD := types.Account{
 		Balance: total,
 		Frozen:  0,
-		Addr:    string(Nodes[3]),
+		Addr:    Nodes[3],
 	}
-	dir, ldb, kvdb := util.CreateTestDB()
-	defer util.CloseTestDB(dir, ldb)
+	dir, stateDB, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, stateDB)
 	execAddr := address.ExecAddress(et.ExchangeX)
-	//stateDB, _ := dbm.NewGoMemDB("1", "2", 5000)
-	_, stateDB, kvdb := util.CreateTestDB()
 
 	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
@@ -91,22 +91,417 @@ func TestExchange(t *testing.T) {
 	accD1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
 	accD1.SaveExecAccount(execAddr, &accountD)
 
-	env := execEnv{
+	env := &execEnv{
 		10,
-		cfg.GetDappFork(et.ExchangeX, "Enable"),
+		1,
 		1539918074,
 	}
 
-	// orderlimit  bty:CCNY  买bty
+	/*
+	  买卖单价格相同，测试正常撮合流程，查询功能是否可用
+	 用例说明：
+	   先挂数量是10的买单，然后再挂数量是5的吃单，最后撤销未成交部分的买单
+	*/
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 10 * types.Coin, Op: et.OpBuy}, PrivKeyA, stateDB, kvdb, env)
+	//根据地址状态查看订单,最新得订单号永远是在list[0],第一位
+	orderList, err := Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	assert.Equal(t, nil, err)
+
+	orderID1 := orderList.List[0].OrderID
+	//根据订单号，查询订单详情
+	order, err := Exec_QueryOrder(orderID1, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Ordered), order.Status)
+	assert.Equal(t, 10*types.Coin, order.GetBalance())
+
+	//根据op查询市场深度
+	marketDepthList, err := Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 10*types.Coin, marketDepthList.List[0].GetAmount())
+
+	// 吃半单
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 5 * types.Coin, Op: et.OpSell}, PrivKeyB, stateDB, kvdb, env)
+	//根据地址状态查看订单,最新得订单号永远是在list[0],第一位
+	orderList, err = Exec_QueryOrderList(et.Completed, Nodes[1], "", stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	orderID2 := orderList.List[0].OrderID
+	//查询订单1详情
+	order, err = Exec_QueryOrder(orderID1, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	//订单1的状态应该还是ordered
+	assert.Equal(t, int32(et.Ordered), order.Status)
+	assert.Equal(t, 5*types.Coin, order.Balance)
+
+	//order2状态是completed
+	order, err = Exec_QueryOrder(orderID2, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+	//根据op查询市场深度
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	//市场深度应该改变
+	assert.Equal(t, 5*types.Coin, marketDepthList.List[0].GetAmount())
+
+	//QueryHistoryOrderList
+	orderList, err = Exec_QueryHistoryOrder(&et.QueryHistoryOrderList{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, orderID2, orderList.List[0].OrderID)
+	//撤回未完成的订单
+	Exec_RevokeOrder(t, orderID1, PrivKeyA, stateDB, kvdb, env)
+	//根据订单号，查询订单详情
+	order, err = Exec_QueryOrder(orderID1, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	//订单1的状态应该Revoked
+	assert.Equal(t, int32(et.Revoked), order.Status)
+	assert.Equal(t, 5*types.Coin, order.Balance)
+
+	//根据op查询市场深度
+	//查看bty,CCNY买市场深度,查不到买单深度
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.NotEqual(t, nil, err)
+	//根据原有状态去查看买单是否被改变
+	//原有ordered状态的数据应该被删除
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	assert.Equal(t, types.ErrNotFound, err)
+
+	/*
+		买卖单价格相同，测试正常撮合流程，查询功能是否可用
+		反向测试
+		 用例说明：
+		   先挂数量是10的卖单，然后再挂数量是10的卖单， 再挂数量是5的买单，再挂数量是15的买单
+	*/
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"}, RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
+	//根据地址状态查看订单
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	orderID3 := orderList.List[0].OrderID
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
+	//根据地址状态查看订单
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	orderID4 := orderList.List[0].OrderID
+
+	//根据op查询市场深度
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	//市场深度应该改变
+	assert.Equal(t, 20*types.Coin, marketDepthList.List[0].GetAmount())
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 5 * types.Coin, Op: et.OpBuy}, PrivKeyB, stateDB, kvdb, env)
+	//根据地址状态查看订单
+	orderList, err = Exec_QueryOrderList(et.Completed, Nodes[1], "", stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), orderList.List[1].Status)
+	//同价格按先进先出得原则吃单
+	//查询订单3详情
+	order, err = Exec_QueryOrder(orderID3, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Ordered), order.Status)
+	//订单余额
+	assert.Equal(t, 5*types.Coin, order.Balance)
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 15 * types.Coin, Op: et.OpBuy}, PrivKeyB, stateDB, kvdb, env)
+	//order3,order4挂单全部被吃完
+	order, err = Exec_QueryOrder(orderID3, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+	order, err = Exec_QueryOrder(orderID4, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+	//根据op查询市场深度,这时候应该查不到
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.Equal(t, types.ErrNotFound, err)
+
+	/*
+	 低于市场价的卖单测试 /高于市场价格的买单测试
+	 用例说明：
+	   1.先挂数量是5,价格为4的买单
+	   2.再挂数量是10,价格为3的卖单
+	   3.再挂数量是5,价格为4的卖单
+	   4.再挂数量是5,价格为5的卖单
+	   5.挂数量是15,价格为4.5的买单
+	   6.挂单数量是 5,价格为1的卖单
+	   7.撤回未成交的卖单
+	*/
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpBuy}, PrivKeyD, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[3], "", stateDB, kvdb)
+	orderID6 := orderList.List[0].OrderID
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 300000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	orderID7 := orderList.List[0].OrderID
+
+	//此时订单6应该被吃掉
+	order, err = Exec_QueryOrder(orderID6, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+
+	order, err = Exec_QueryOrder(orderID7, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Ordered), order.Status)
+	//查看账户余额,按卖方价格成交
+	acc := accD1.LoadExecAccount(Nodes[3], execAddr)
+	assert.Equal(t, 85*types.Coin, acc.Balance)
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	orderID8 := orderList.List[0].OrderID
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 500000000, Amount: 5 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	orderID9 := orderList.List[0].OrderID
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 450000000, Amount: 15 * types.Coin, Op: et.OpBuy}, PrivKeyD, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[3], "", stateDB, kvdb)
+	//orderID10 := orderList.List[0].OrderID
+	assert.Equal(t, 5*types.Coin, orderList.List[0].Balance)
+
+	//order7和order8价格在吃单范围内
+	order, err = Exec_QueryOrder(orderID7, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+	order, err = Exec_QueryOrder(orderID8, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Completed), order.Status)
+
+	order, err = Exec_QueryOrder(orderID9, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, int32(et.Ordered), order.Status)
+	assert.Equal(t, 5*types.Coin, order.Balance)
+	//余额检查
+	acc = accD1.LoadExecAccount(Nodes[3], execAddr)
+	// 100-3*10-5*4-4.5*5   = 27.5
+	assert.Equal(t, int64(2750000000), acc.Balance)
+	acc = accC.LoadExecAccount(Nodes[2], execAddr)
+	assert.Equal(t, 80*types.Coin, acc.Balance)
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	orderID10 := orderList.List[0].OrderID
+	assert.Equal(t, int32(et.Ordered), orderList.List[0].Status)
+	assert.Equal(t, 5*types.Coin, orderList.List[0].Balance)
+	//余额检查
+	acc = accD1.LoadExecAccount(Nodes[3], execAddr)
+	// 100-3*10-5*4-1*5   = 45
+	assert.Equal(t, 45*types.Coin, acc.Balance)
+	acc = accC.LoadExecAccount(Nodes[2], execAddr)
+	assert.Equal(t, 70*types.Coin, acc.Balance)
+	//orderID9和order10未成交
+	Exec_RevokeOrder(t, orderID9, PrivKeyC, stateDB, kvdb, env)
+	Exec_RevokeOrder(t, orderID10, PrivKeyC, stateDB, kvdb, env)
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.NotEqual(t, nil, err)
+	acc = accC.LoadExecAccount(Nodes[2], execAddr)
+	assert.Equal(t, 80*types.Coin, acc.Balance)
+}
+
+func TestMatchDepth(t *testing.T) {
+	//环境准备
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	Init(et.ExchangeX, cfg, nil)
+	total := 1000 * types.Coin
+	accountA := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[0],
+	}
+	accountB := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[1],
+	}
+
+	dir, stateDB, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, stateDB)
+	execAddr := address.ExecAddress(et.ExchangeX)
+
+	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accA.SaveExecAccount(execAddr, &accountA)
+
+	accB, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accB.SaveExecAccount(execAddr, &accountB)
+
+	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accA1.SaveExecAccount(execAddr, &accountA)
+
+	accB1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accB1.SaveExecAccount(execAddr, &accountB)
+
+	env := &execEnv{
+		10,
+		1,
+		1539918074,
+	}
+	/*
+	  撮合深度测试：
+	  用例说明:
+	    1.先挂200单，价格为1数量为1的买单
+	    2.然后再挂价格为1,数量为200的卖单
+	    3.相同得地址不能交易,不会撮合
+	    4.不同的地址没有权限进行订单撤销
+	*/
+
+	for i := 0; i < 200; i++ {
+		Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 1 * types.Coin, Op: et.OpBuy}, PrivKeyA, stateDB, kvdb, env)
+	}
+
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 200 * types.Coin, Op: et.OpSell}, PrivKeyB, stateDB, kvdb, env)
+	if et.MaxMatchCount > 200 {
+		return
+	}
+	orderList, err := Exec_QueryOrderList(et.Ordered, Nodes[1], "", stateDB, kvdb)
+	orderID := orderList.List[0].OrderID
+	assert.Equal(t, nil, err)
+	assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, orderList.List[0].Balance)
+	//根据op查询市场深度
+	marketDepthList, err := Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, marketDepthList.List[0].GetAmount())
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, marketDepthList.List[0].GetAmount())
+
+	//根据状态地址查询订单信息
+	//分页查询
+	var count int
+	var primaryKey string
+	for {
+		orderList, err := Exec_QueryOrderList(et.Completed, Nodes[0], primaryKey, stateDB, kvdb)
+		if err != nil {
+			break
+		}
+		count = count + len(orderList.List)
+		if orderList.PrimaryKey == "" {
+			break
+		}
+		primaryKey = orderList.PrimaryKey
+	}
+	assert.Equal(t, et.MaxMatchCount, count)
+
+	//分页查询查看历史订单
+	//根据状态地址查询订单信息
+	count = 0
+	primaryKey = ""
+	for {
+		query := &et.QueryHistoryOrderList{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, PrimaryKey: primaryKey}
+		orderList, err := Exec_QueryHistoryOrder(query, stateDB, kvdb)
+		if err != nil {
+			break
+		}
+		count = count + len(orderList.List)
+		if orderList.PrimaryKey == "" {
+			break
+		}
+		primaryKey = orderList.PrimaryKey
+	}
+	assert.Equal(t, et.MaxMatchCount, count)
+	//相同得地址不能交易,不会撮合
+	err = Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 100 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
+	assert.Equal(t, nil, err)
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, (200-et.MaxMatchCount+100)*types.Coin, marketDepthList.List[0].GetAmount())
+	//不同的地址没有权限进行订单撤销
+	err = Exec_RevokeOrder(t, orderID, PrivKeyA, stateDB, kvdb, env)
+	assert.NotEqual(t, nil, err)
+	err = Exec_RevokeOrder(t, orderID, PrivKeyB, stateDB, kvdb, env)
+	assert.Equal(t, nil, err)
+}
+
+func Exec_LimitOrder(t *testing.T, limitOrder *et.LimitOrder, privKey string, stateDB db.DB, kvdb db.KVDB, env *execEnv) error {
 	ety := types.LoadExecutorType(et.ExchangeX)
-	tx, err := ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 10 * types.Coin, Op: et.OpBuy})
-	assert.Nil(t, err)
+	tx, err := ety.Create("LimitOrder", limitOrder)
+	if err != nil {
+		return err
+	}
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	//t.Log(tx)
-	assert.Nil(t, err)
+	if err != nil {
+		return err
+	}
+	tx, err = signTx(tx, privKey)
+	if err != nil {
+		return err
+	}
+	exec := newExchange()
+	e := exec.(*exchange)
+	err = e.CheckTx(tx, 1)
+	if err != nil {
+		return err
+	}
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	env.blockHeight = env.blockHeight + 1
+	env.blockTime = env.blockTime + 20
+	env.difficulty = env.difficulty + 1
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	receipt, err := exec.Exec(tx, int(1))
+	if err != nil {
+		return err
+	}
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err := exec.ExecLocal(tx, receiptData, int(1))
+	if err != nil {
+		return err
+	}
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+	//save to database
+	util.SaveKVList(stateDB, set.KV)
+	assert.Equal(t, types.ExecOk, int(receipt.Ty))
+	return nil
+}
+
+func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB, kvdb db.KVDB, env *execEnv) error {
+	ety := types.LoadExecutorType(et.ExchangeX)
+	tx, err := ety.Create("RevokeOrder", &et.RevokeOrder{OrderID: orderID})
+	if err != nil {
+		return err
+	}
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
+	if err != nil {
+		return err
+	}
+	tx, err = signTx(tx, privKey)
+	if err != nil {
+		return err
+	}
 	exec := newExchange()
 	e := exec.(*exchange)
 	err = e.CheckTx(tx, 1)
@@ -123,7 +518,7 @@ func TestExchange(t *testing.T) {
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(tx, int(1))
 	if err != nil {
-		t.Error(err)
+		return err
 	}
 	for _, kv := range receipt.KV {
 		stateDB.Set(kv.Key, kv.Value)
@@ -131,7 +526,7 @@ func TestExchange(t *testing.T) {
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err := exec.ExecLocal(tx, receiptData, int(1))
 	if err != nil {
-		t.Error(err)
+		return err
 	}
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
@@ -139,658 +534,76 @@ func TestExchange(t *testing.T) {
 	//save to database
 	util.SaveKVList(stateDB, set.KV)
 	assert.Equal(t, types.ExecOk, int(receipt.Ty))
-	//根据地址状态查看订单,最新得订单号永远是在list[0],第一位
-	msg, err := exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply2 := msg.(*et.OrderList)
-	orderID1 := reply2.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply := msg.(*et.Order)
-	t.Log(reply)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	assert.Equal(t, 10*types.Coin, reply.GetBalance())
-	//查看账户余额
-	acc := accA1.LoadExecAccount(string(Nodes[0]), execAddr)
-	t.Log(acc)
-	//根据op查询市场深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply1 := msg.(*et.MarketDepthList)
-	assert.Equal(t, 10*types.Coin, reply1.List[0].GetAmount())
-
-	// orderlimit  bty:CCNY 卖bty
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 4, Amount: 5 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyB)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	assert.Equal(t, types.ExecOk, int(receipt.Ty))
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList := msg.(*et.OrderList)
-	orderID2 := orderList.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
-	if err != nil {
-		t.Error(err)
-	}
-	//订单1的状态应该还是ordered
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	t.Log(reply)
-
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID2}))
-	if err != nil {
-		t.Error(err)
-	}
-
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Completed), reply.Status)
-	//根据op查询市场深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply1 = msg.(*et.MarketDepthList)
-	t.Log(reply1.List)
-	//市场深度应该改变
-	assert.Equal(t, 5*types.Coin, reply1.List[0].GetAmount())
-
-	//QueryHistoryOrderList
-	msg, err = exec.Query(et.FuncNameQueryHistoryOrderList, types.Encode(&et.QueryHistoryOrderList{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply2 = msg.(*et.OrderList)
-	assert.Equal(t, orderID2, reply2.List[0].OrderID)
-	//撤回之前的订单
-	// orderlimit  bty:CCNY
-	tx, err = ety.Create("RevokeOrder", &et.RevokeOrder{OrderID: orderID1})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Revoked), reply.Status)
-	t.Log(reply)
-	//根据op查询市场深度
-	//查看bty,CCNY买市场深度,查不到买单深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
-	assert.Equal(t, types.ErrNotFound, err)
-
-	//根据原有状态去查看买单是否被改变
-	//ordered状态应该查不到数据
-	_, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	assert.Equal(t, types.ErrNotFound, err)
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Revoked, Address: string(Nodes[0])}))
-	//reovked状态肯定有数据
-	if err != nil {
-		t.Log(err)
-	}
-	t.Log(msg)
-	assert.Equal(t, orderID1, msg.(*et.OrderList).List[0].OrderID)
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID1}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg.(*et.Order))
-	assert.Equal(t, int32(et.Revoked), msg.(*et.Order).Status)
-	assert.Equal(t, 5*types.Coin, msg.(*et.Order).GetBalance())
-
-	//反向测试
-	// orderlimit  bty:CCNY 卖bty
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	assert.Equal(t, types.ExecOk, int(receipt.Ty))
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID3 := orderList.List[0].OrderID
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID3}))
-	if err != nil {
-		t.Error(err)
-	}
-	//订单1的状态应该还是ordered
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	t.Log(reply)
-
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID4 := orderList.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID4}))
-	if err != nil {
-		t.Error(err)
-	}
-	//订单1的状态应该还是ordered
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	t.Log(reply)
-
-	//根据op查询市场深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply1 = msg.(*et.MarketDepthList)
-	t.Log(reply1.List)
-	//市场深度应该改变
-	assert.Equal(t, 20*types.Coin, reply1.List[0].GetAmount())
-	//根据状态和地址查询
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[0])}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply2 = msg.(*et.OrderList)
-	t.Log(reply2)
-	//默认倒序查询
-	assert.Equal(t, orderID3, reply2.List[1].OrderID)
-	assert.Equal(t, orderID4, reply2.List[0].OrderID)
-
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 20 * types.Coin, Op: et.OpBuy})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyB)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID5 := orderList.List[0].OrderID
-	//
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID5}))
-	if err != nil {
-		t.Error(err)
-	}
-	//订单1的状态应该还是ordered
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Completed), reply.Status)
-	//根据op查询市场深度,这时候应该查不到
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Op: et.OpSell}))
-	if err != nil {
-		assert.Equal(t, types.ErrNotFound, err)
-	}
-
-	////根据状态和地址查询
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[1])}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply2 = msg.(*et.OrderList)
-	t.Log(reply2)
-	assert.Equal(t, 2, len(reply2.List))
-
-	//低于市场价得卖单测试
-
-	acc = accD1.LoadExecAccount(string(Nodes[3]), execAddr)
-	t.Log(acc)
-	acc = accC.LoadExecAccount(string(Nodes[2]), execAddr)
-	t.Log(acc)
-
-	// orderlimit  bty:CCNY ,先挂买单，然后低于市场价格卖出
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpBuy})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyD)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID6 := orderList.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
-	if err != nil {
-		t.Error(err)
-	}
-	//查看bty,CCNY买市场深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
-	t.Log(msg)
-	if err != nil {
-		assert.Equal(t, types.ErrNotFound, err)
-	}
-
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 300000000, Amount: 10 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyC)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	t.Log(receiptData.Ty)
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-
-	//查看订单6的状态是否正确
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Completed, Address: string(Nodes[3])}))
-	if err != nil {
-		t.Error(err)
-	}
-	orderList = msg.(*et.OrderList)
-	t.Log(orderList.List[0])
-	assert.Equal(t, orderID6, orderList.List[0].OrderID)
-	//检查原有ordered状态得订单数据是否正确被删除
-	_, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
-	assert.Equal(t, types.ErrNotFound, err)
-
-	//查看bty,CCNY买市场深度
-	msg, err = exec.Query(et.FuncNameQueryMarketDepth, types.Encode(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}))
-	t.Log(msg)
-	if err != nil {
-		assert.Equal(t, types.ErrNotFound, err)
-	}
-
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID7 := orderList.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID6}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Completed), reply.Status)
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID7}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	acc = accD1.LoadExecAccount(string(Nodes[3]), execAddr)
-	t.Log(acc)
-	assert.Equal(t, 85*types.Coin, acc.Balance)
-	acc = accC.LoadExecAccount(string(Nodes[2]), execAddr)
-	t.Log(acc)
-	// orderlimit  bty:CCNY ,先挂卖单，然后高于市场价格买入, 买家获利原则
-
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyC)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	t.Log(receiptData.Ty)
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID8 := orderList.List[0].OrderID
-
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 500000000, Amount: 5 * types.Coin, Op: et.OpSell})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyC)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	t.Log(receiptData.Ty)
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[2])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID9 := orderList.List[0].OrderID
-	tx, err = ety.Create("LimitOrder", &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 450000000, Amount: 15 * types.Coin, Op: et.OpBuy})
-	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyD)
-	assert.Nil(t, err)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	//根据地址状态查看订单
-	msg, err = exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: et.Ordered, Address: string(Nodes[3])}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	orderList = msg.(*et.OrderList)
-	orderID10 := orderList.List[0].OrderID
-	//根据订单号，查询订单详情
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID7}))
-	if err != nil {
-		t.Error(err)
-	}
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Completed), reply.Status)
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID8}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Completed), reply.Status)
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID9}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-	msg, err = exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID10}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply = msg.(*et.Order)
-	assert.Equal(t, int32(et.Ordered), reply.Status)
-
-	acc = accD1.LoadExecAccount(string(Nodes[3]), execAddr)
-	t.Log(acc)
-	acc = accC.LoadExecAccount(string(Nodes[2]), execAddr)
-	assert.Equal(t, 80*types.Coin, acc.Balance)
-	t.Log(acc)
-
+	return nil
 }
 
+func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.DB, kvdb db.KVDB) (*et.OrderList, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newExchange()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据地址状态查看订单
+	msg, err := exec.Query(et.FuncNameQueryOrderList, types.Encode(&et.QueryOrderList{Status: status, Address: addr, PrimaryKey: primaryKey}))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*et.OrderList), nil
+}
+func Exec_QueryOrder(orderID int64, stateDB db.DB, kvdb db.KVDB) (*et.Order, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newExchange()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据orderID查看订单信息
+	msg, err := exec.Query(et.FuncNameQueryOrder, types.Encode(&et.QueryOrder{OrderID: orderID}))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*et.Order), err
+}
+
+func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.DB, kvdb db.KVDB) (*et.MarketDepthList, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newExchange()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据QueryMarketDepth查看市场深度
+	msg, err := exec.Query(et.FuncNameQueryMarketDepth, types.Encode(query))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*et.MarketDepthList), err
+}
+
+func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.DB, kvdb db.KVDB) (*et.OrderList, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newExchange()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据QueryMarketDepth查看市场深度
+	msg, err := exec.Query(et.FuncNameQueryHistoryOrderList, types.Encode(query))
+	return msg.(*et.OrderList), err
+}
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
 	c, err := crypto.New(types.GetSignName("", signType))

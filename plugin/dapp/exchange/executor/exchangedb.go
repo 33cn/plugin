@@ -212,7 +212,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		if err != nil {
 			return nil, err
 		}
-		amount := a.calcActualCost(et.OpBuy, balance, price)
+		amount := a.calcActualCost(et.OpSell, balance, price)
 		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if leftAccount.Frozen < amount {
 			elog.Error("RevokeOrder.BalanceCheck", "addr", a.fromaddr, "execaddr", a.execaddr, "amount", amount, "err", et.ErrAssetBalance.Error())
@@ -276,7 +276,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 	//迭代已有挂单价格
 	for {
 		//当撮合深度大于最大深度时跳出
-		if count > et.MaxMatchCount {
+		if count >= et.MaxMatchCount {
 			break
 		}
 		//获取现有市场挂单价格信息
@@ -285,7 +285,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 			break
 		}
 		for _, marketDepth := range marketDepthList.List {
-			if count > et.MaxMatchCount {
+			if count >= et.MaxMatchCount {
 				break
 			}
 			// 卖单价大于买单价
@@ -298,8 +298,8 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 			}
 			//根据价格进行迭代
 			for {
-				//当撮合深度大于最大深度时跳出
-				if count > et.MaxMatchCount {
+				//当撮合深度大于等于最大深度时跳出
+				if count >= et.MaxMatchCount {
 					break
 				}
 				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
@@ -309,7 +309,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 
 				for _, matchorder := range orderList.List {
 					//当撮合深度大于最大深度时跳出
-					if count > et.MaxMatchCount {
+					if count >= et.MaxMatchCount {
 						break
 					}
 					//同地址不能交易
