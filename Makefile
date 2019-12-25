@@ -43,23 +43,13 @@ vet:
 	@go vet ${PKG_LIST_VET}
 
 autotest: ## build autotest binary
-	@cd build/autotest && bash ./build.sh ${CHAIN33_PATH} && cd ../../
+	@cd build/autotest && bash ./run.sh build && cd ../../
 	@if [ -n "$(dapp)" ]; then \
-	        rm -rf build/autotest/local \
-		&& cp -r $(CHAIN33_PATH)/build/autotest/local $(CHAIN33_PATH)/build/autotest/*.sh build/autotest \
-	    && cd build/autotest && chmod -R 755 local && chmod 755 *.sh && bash ./copy-autotest.sh local \
-	    && cd local && bash ./local-autotest.sh $(dapp) \
-	    && cd ../../../; fi
+	cd build/autotest && bash ./run.sh local $(dapp) && cd ../../; fi
 autotest_ci: autotest ## autotest ci
-	 @rm -rf build/autotest/jerkinsci \
-	&& cp -r $(CHAIN33_PATH)/build/autotest/jerkinsci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
-	cd build/autotest &&chmod -R 755 jerkinsci && chmod 755 *.sh && bash ./copy-autotest.sh jerkinsci/temp$(proj) \
-	&& cd jerkinsci && bash ./jerkins-ci-autotest.sh $(proj) && cd ../../../
+	@cd build/autotest && bash ./run.sh jerkinsci $(proj) && cd ../../
 autotest_tick: autotest ## run with ticket mining
-	@rm -rf build/autotest/gitlabci \
-	&& cp -r $(CHAIN33_PATH)/build/autotest/gitlabci $(CHAIN33_PATH)/build/autotest/*.sh build/autotest/ \
-	&& cd build/autotest &&chmod -R 755 gitlabci && chmod 755 *.sh  && bash ./copy-autotest.sh gitlabci \
-	&& cd gitlabci && bash ./gitlab-ci-autotest.sh build && cd ../../../
+	@cd build/autotest && bash ./run.sh gitlabci build && cd ../../
 
 update: ## version 可以是git tag打的具体版本号,也可以是commit hash, 什么都不填的情况下默认从master分支拉取最新版本
 	@if [ -n "$(version)" ]; then   \
