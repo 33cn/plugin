@@ -24,13 +24,11 @@ fi
 
 function build_auto_test() {
 
-    trap "rm -f ../autotest/main.go" INT TERM EXIT RETURN
+    trap "rm -f ../autotest/main.go" INT TERM EXIT
     local AutoTestMain="${CHAIN33_PATH}/cmd/autotest/main.go"
-    local ImportPlugin='"github.com/33cn/plugin/plugin"'
     cp "${AutoTestMain}" ./
-    sed -i $sedfix "/^package/a import _ ${ImportPlugin}" main.go
+    sed -i $sedfix '/^package/a import _ \"github.com\/33cn\/plugin\/plugin\"' main.go
     go build -v -i -o autotest
-
 }
 
 function copyAutoTestConfig() {
