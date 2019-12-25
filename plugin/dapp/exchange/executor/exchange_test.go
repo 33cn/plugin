@@ -231,8 +231,9 @@ func TestExchange(t *testing.T) {
 	   3.再挂数量是5,价格为4的卖单
 	   4.再挂数量是5,价格为5的卖单
 	   5.挂数量是15,价格为4.5的买单
-	   6.挂单数量是 5,价格为1的卖单
-	   7.撤回未成交的卖单
+	   6.挂单数量是2,价格为1的卖单
+	   7.挂单数量是8,价格为1的卖单
+	   8.撤回未成交的卖单
 	*/
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -292,7 +293,10 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, 80*types.Coin, acc.Balance)
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 2 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
+	orderList, err = Exec_QueryOrderList(et.Completed, Nodes[2], "", stateDB, kvdb)
+	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 8 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
 	orderID10 := orderList.List[0].OrderID
 	assert.Equal(t, int32(et.Ordered), orderList.List[0].Status)
