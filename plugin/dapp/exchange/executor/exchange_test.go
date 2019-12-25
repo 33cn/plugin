@@ -1,8 +1,9 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/common/db"
 	"testing"
+
+	"github.com/33cn/chain33/common/db"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
