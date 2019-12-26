@@ -389,21 +389,11 @@ func CollateralizeQuery(cmd *cobra.Command, args []string) {
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	address, _ := cmd.Flags().GetString("address")
 	statusStr, _ := cmd.Flags().GetString("status")
-	// indexstr, _ := cmd.Flags().GetString("index")
 	collateralizeIDs, _ := cmd.Flags().GetString("collateralizeIDs")
 	borrowID, _ := cmd.Flags().GetString("borrowID")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.CollateralizeX
-	//if indexstr != "" {
-	//	index, err := strconv.ParseInt(indexstr, 10, 64)
-	//	if err != nil {
-	//		fmt.Println(err)
-	//		cmd.Help()
-	//		return
-	//	}
-	//	req.Index = index
-	//}
 
 	var status int64
 	var err error

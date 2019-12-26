@@ -1244,7 +1244,7 @@ func queryCollateralizeRecordByID(db dbm.KV, collateralizeID string, recordID st
 	return nil, types.ErrNotFound
 }
 
-func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, collID string, recordID string) ([]*pty.BorrowRecord, error) {
+func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, status int32, collID string, recordID string) ([]*pty.BorrowRecord, error) {
 	query := pty.NewRecordTable(localdb).GetQuery(localdb)
 	var primary []byte
 	if len(recordID) > 0 {
@@ -1253,21 +1253,28 @@ func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, co
 
 	var data = &pty.ReceiptCollateralize{
 		AccountAddr:     addr,
+		Status:          status,
 		CollateralizeId: collID,
 	}
 
 	var rows []*table.Row
 	var err error
-	if len(collID) == 0 {
-		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
-		if err != nil {
-			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
-			return nil, err
-		}
-	} else {
+	if len(collID) != 0 {
 		rows, err = query.List("id_addr", data, primary, DefultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "id_addr", "error", err)
+			return nil, err
+		}
+	} else if status != 0 {
+		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr_status", "error", err)
+			return nil, err
+		}
+	} else {
+		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
 			return nil, err
 		}
 	}

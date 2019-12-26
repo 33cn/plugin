@@ -64,7 +64,7 @@ var optRecord = &table.Option{
 	Prefix:  "LODB-issuance",
 	Name:    "debt",
 	Primary: "debtid",
-	Index:   []string{"status", "addr"},
+	Index:   []string{"status", "addr", "addr_status"},
 }
 
 // NewRecordTable 大户发行记录表
@@ -109,6 +109,8 @@ func (tx *IssuanceRecordRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
 	} else if key == "addr" {
 		return []byte(tx.AccountAddr), nil
+	} else if key == "addr_status" {
+		return []byte(fmt.Sprintf("%s:%2d", tx.AccountAddr, tx.Status)), nil
 	}
 	return nil, types.ErrNotFound
 }

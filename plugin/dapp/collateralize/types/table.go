@@ -68,7 +68,7 @@ var optRecord = &table.Option{
 	Prefix:  "LODB-collateralize",
 	Name:    "borrow",
 	Primary: "borrowid",
-	Index:   []string{"status", "addr", "id_status", "id_addr"},
+	Index:   []string{"status", "addr", "addr_status", "id_status", "id_addr"},
 }
 
 // NewRecordTable 借贷记录表
@@ -113,6 +113,8 @@ func (tx *CollateralizeRecordRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%2d", tx.Status)), nil
 	} else if key == "addr" {
 		return []byte(tx.AccountAddr), nil
+	} else if key == "addr_status" {
+		return []byte(fmt.Sprintf("%s:%2d", tx.AccountAddr, tx.Status)), nil
 	} else if key == "id_status" {
 		return []byte(fmt.Sprintf("%s:%2d", tx.CollateralizeId, tx.Status)), nil
 	} else if key == "id_addr" {

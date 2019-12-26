@@ -82,7 +82,7 @@ func (c *Issuance) Query_IssuanceRecordByID(req *pty.ReqIssuanceRecords) (types.
 
 func (c *Issuance) Query_IssuanceRecordsByAddr(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	ret := &pty.RepIssuanceRecords{}
-	records, err := queryIssuanceRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.DebtId)
+	records, err := queryIssuanceRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Status, req.DebtId)
 	if err != nil {
 		clog.Error("Query_IssuanceDebtInfoByAddr", "get issuance record error", err)
 		return nil, err

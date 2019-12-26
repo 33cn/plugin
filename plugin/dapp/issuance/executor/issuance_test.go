@@ -287,6 +287,10 @@ func TestIssuance(t *testing.T) {
 		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1])}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	res, err = exec.Query("IssuanceRecordsByAddr",
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
 
 	// issuance repay
 	p5 := &pkt.IssuanceRepayTx{
@@ -326,6 +330,10 @@ func TestIssuance(t *testing.T) {
 	// query issuance by addr
 	res, err = exec.Query("IssuanceRecordsByAddr",
 		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1])}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	res, err = exec.Query("IssuanceRecordsByAddr",
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 

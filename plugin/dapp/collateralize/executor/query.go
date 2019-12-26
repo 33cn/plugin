@@ -102,7 +102,7 @@ func (c *Collateralize) Query_CollateralizeRecordByID(req *pty.ReqCollateralizeR
 
 func (c *Collateralize) Query_CollateralizeRecordByAddr(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
 	ret := &pty.RepCollateralizeRecords{}
-	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.CollateralizeId, req.RecordId)
+	records, err := queryCollateralizeRecordByAddr(c.GetStateDB(), c.GetLocalDB(), req.Addr, req.Status, req.CollateralizeId, req.RecordId)
 	if err != nil {
 		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
 		return nil, err

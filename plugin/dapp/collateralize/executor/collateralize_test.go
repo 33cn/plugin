@@ -310,6 +310,10 @@ func TestCollateralize(t *testing.T) {
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId: common.ToHex(collateralizeID), Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	res, err = exec.Query("CollateralizeRecordByAddr",
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
 
 	// collateralize append
 	p5 := &pkt.CollateralizeAppendTx{
@@ -396,6 +400,10 @@ func TestCollateralize(t *testing.T) {
 	// query collateralize by addr
 	res, err = exec.Query("CollateralizeRecordByAddr",
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{CollateralizeId: common.ToHex(collateralizeID), Addr: string(Nodes[1]), Status: 6}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	res, err = exec.Query("CollateralizeRecordByAddr",
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 

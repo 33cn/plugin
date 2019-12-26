@@ -28,5 +28,6 @@ status|int32|借贷状态（1：已发行 2：价格清算告警 3：价格清�
 ---|---
 status|根据借贷状态查询借贷ID
 addr|根据大户地址查询借贷ID
+addr_status|根据借贷状态和用户地址查询借贷ID
 id_status|根据放贷ID和借贷状态查询借贷ID
 id_addr|根据放贷ID和用户地址查询借贷ID

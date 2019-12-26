@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
@@ -1022,7 +1023,7 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.KVDB, status int32, deb
 	}
 	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
 	if err != nil {
-		clog.Error("queryIssuanceRecordsByStatus", "List", err)
+		clog.Error("queryIssuanceRecordsByStatus.List", "index", "status", "error", err)
 		return nil, err
 	}
 
@@ -1040,7 +1041,7 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.KVDB, status int32, deb
 }
 
 // 根据用户地址查找
-func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, debtID string) ([]*pty.DebtRecord, error) {
+func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, status int32, debtID string) ([]*pty.DebtRecord, error) {
 	query := pty.NewRecordTable(localdb).GetQuery(localdb)
 	var primary []byte
 	if len(debtID) > 0 {
@@ -1049,11 +1050,23 @@ func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, debtID 
 
 	var data = &pty.ReceiptIssuance{
 		AccountAddr: addr,
+		Status:status,
 	}
-	rows, err := query.List("addr", data, primary, DefultCount, ListDESC)
-	if err != nil {
-		clog.Error("queryIssuanceRecordByAddr", "List", err)
-		return nil, err
+
+	var rows []*table.Row
+	var err error
+	if status == 0 {
+		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Error("queryIssuanceRecordByAddr.List", "index", "addr", "error", err)
+			return nil, err
+		}
+	} else {
+		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		if err != nil {
+			clog.Error("queryIssuanceRecordByAddr.List", "index", "addr_status", "error", err)
+			return nil, err
+		}
 	}
 
 	var records []*pty.DebtRecord
