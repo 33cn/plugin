@@ -29,7 +29,7 @@ const (
 	Coin                      = types.Coin      // 1e8
 	DefaultDebtCeiling        = 10000 * Coin    // 默认借贷限额
 	DefaultLiquidationRatio   = 0.4 * 1e4       // 默认质押比
-	DefaultStabilityFeeRation = 0.08 * 1e4       // 默认稳定费
+	DefaultStabilityFeeRation = 0.08 * 1e4      // 默认稳定费
 	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
 	DefaultTotalBalance       = 0               // 默认放贷总额
 	PriceWarningRate          = 1.3 * 1e4       // 价格提前预警率
@@ -475,7 +475,7 @@ func getBtyNumToFrozen(value int64, price int64, ratio int64) (int64, error) {
 // 计算清算价格
 // value:借出ccny数量， colValue:抵押物数量， price:抵押物价格
 func calcLiquidationPrice(value int64, colValue int64) int64 {
-	return (value *pty.CollateralizePreLiquidationRatio) / colValue
+	return (value * pty.CollateralizePreLiquidationRatio) / colValue
 }
 
 // 获取最近抵押物价格
@@ -615,7 +615,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	borrowRecord.StartTime = action.blocktime
 	borrowRecord.CollateralPrice = lastPrice
 	borrowRecord.DebtValue = borrow.GetValue()
-	borrowRecord.LiquidationPrice = (coll.LiquidationRatio*lastPrice*pty.CollateralizePreLiquidationRatio)/1e8
+	borrowRecord.LiquidationPrice = (coll.LiquidationRatio * lastPrice * pty.CollateralizePreLiquidationRatio) / 1e8
 	borrowRecord.Status = pty.CollateralizeUserStatusCreate
 	borrowRecord.ExpireTime = action.blocktime + coll.Period
 
@@ -678,7 +678,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	fee := (borrowRecord.DebtValue * coll.StabilityFeeRatio)/1e4
+	fee := (borrowRecord.DebtValue * coll.StabilityFeeRatio) / 1e4
 	realRepay := borrowRecord.DebtValue + fee
 
 	// 检查

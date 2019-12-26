@@ -582,7 +582,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	debtRecord.StartTime = action.blocktime
 	debtRecord.CollateralPrice = lastPrice
 	debtRecord.DebtValue = debt.Value
-	debtRecord.LiquidationPrice = (issu.LiquidationRatio*lastPrice*pty.IssuancePreLiquidationRatio) / 1e8
+	debtRecord.LiquidationPrice = (issu.LiquidationRatio * lastPrice * pty.IssuancePreLiquidationRatio) / 1e8
 	debtRecord.Status = pty.IssuanceUserStatusCreate
 	debtRecord.ExpireTime = action.blocktime + issu.Period
 
