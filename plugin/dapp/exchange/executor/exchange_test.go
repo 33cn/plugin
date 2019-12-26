@@ -65,7 +65,7 @@ func TestExchange(t *testing.T) {
 		Addr:    Nodes[3],
 	}
 	dir, stateDB, kvdb := util.CreateTestDB()
-	defer util.CloseTestDB(dir, stateDB)
+	//defer util.CloseTestDB(dir, stateDB)
 	execAddr := address.ExecAddress(et.ExchangeX)
 
 	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
@@ -101,7 +101,9 @@ func TestExchange(t *testing.T) {
 	/*
 	  买卖单价格相同，测试正常撮合流程，查询功能是否可用
 	 用例说明：
-	   先挂数量是10的买单，然后再挂数量是5的吃单，最后撤销未成交部分的买单
+	   1.先挂数量是10的买单。
+	   2.然后再挂数量是5的吃单
+	   3.最后撤销未成交部分的买单
 	*/
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -173,10 +175,13 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, types.ErrNotFound, err)
 
 	/*
-		买卖单价格相同，测试正常撮合流程，查询功能是否可用
-		反向测试
-		 用例说明：
-		   先挂数量是10的卖单，然后再挂数量是10的卖单， 再挂数量是5的买单，再挂数量是15的买单
+			买卖单价格相同，测试正常撮合流程，查询功能是否可用
+			反向测试
+			 用例说明：
+			   1.先挂数量是10的卖单。
+		       2.然后再挂数量是10的卖单
+		       3.再挂数量是5的买单
+		       4.再挂数量是15的买单
 	*/
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"}, RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
 	//根据地址状态查看订单
@@ -315,42 +320,38 @@ func TestExchange(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 	acc = accC.LoadExecAccount(Nodes[2], execAddr)
 	assert.Equal(t, 80*types.Coin, acc.Balance)
-}
 
-func TestMatchDepth(t *testing.T) {
-	//环境准备
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("chain33")
-	Init(et.ExchangeX, cfg, nil)
-	total := 1000 * types.Coin
-	accountA := types.Account{
+	//清理环境,重建数据库
+	util.CloseTestDB(dir, stateDB)
+	total = 1000 * types.Coin
+	accountA = types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[0],
 	}
-	accountB := types.Account{
+	accountB = types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[1],
 	}
 
-	dir, stateDB, kvdb := util.CreateTestDB()
+	dir, stateDB, kvdb = util.CreateTestDB()
 	defer util.CloseTestDB(dir, stateDB)
-	execAddr := address.ExecAddress(et.ExchangeX)
+	//execAddr := address.ExecAddress(et.ExchangeX)
 
-	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accA, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
-	accB, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accB, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
-	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accA1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
 	accA1.SaveExecAccount(execAddr, &accountA)
 
-	accB1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accB1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
 	accB1.SaveExecAccount(execAddr, &accountB)
 
-	env := &execEnv{
+	env = &execEnv{
 		10,
 		1,
 		1539918074,
@@ -374,12 +375,12 @@ func TestMatchDepth(t *testing.T) {
 	if et.MaxMatchCount > 200 {
 		return
 	}
-	orderList, err := Exec_QueryOrderList(et.Ordered, Nodes[1], "", stateDB, kvdb)
+	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[1], "", stateDB, kvdb)
 	orderID := orderList.List[0].OrderID
 	assert.Equal(t, nil, err)
 	assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, orderList.List[0].Balance)
 	//根据op查询市场深度
-	marketDepthList, err := Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, marketDepthList.List[0].GetAmount())
@@ -542,7 +543,7 @@ func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB
 	return nil
 }
 
-func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.DB, kvdb db.KVDB) (*et.OrderList, error) {
+func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newExchange()
@@ -559,7 +560,7 @@ func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB d
 	}
 	return msg.(*et.OrderList), nil
 }
-func Exec_QueryOrder(orderID int64, stateDB db.DB, kvdb db.KVDB) (*et.Order, error) {
+func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newExchange()
@@ -577,7 +578,7 @@ func Exec_QueryOrder(orderID int64, stateDB db.DB, kvdb db.KVDB) (*et.Order, err
 	return msg.(*et.Order), err
 }
 
-func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.DB, kvdb db.KVDB) (*et.MarketDepthList, error) {
+func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KVDB) (*et.MarketDepthList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newExchange()
@@ -595,7 +596,7 @@ func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.DB, kvdb db.KV
 	return msg.(*et.MarketDepthList), err
 }
 
-func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.DB, kvdb db.KVDB) (*et.OrderList, error) {
+func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newExchange()
