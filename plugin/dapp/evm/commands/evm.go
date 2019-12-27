@@ -289,7 +289,7 @@ func createContract(cmd *cobra.Command, args []string) {
 func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller, addr, expire, rpcLaddr string, fee uint64) (string, error) {
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(action), Fee: 0, To: addr}
 
-	tx.Fee, _ = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if tx.Fee < int64(fee) {
 		tx.Fee += int64(fee)
 	}
@@ -341,7 +341,7 @@ func createEvmTransferTx(cfg *types.Chain33Config, cmd *cobra.Command, caller, e
 	}
 
 	var err error
-	tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if err != nil {
 		return "", err
 	}

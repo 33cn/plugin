@@ -65,7 +65,7 @@ mainnetJrpcAddr= "http://localhost:8801"
 [mempool]
 name="para"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [consensus]
@@ -131,8 +131,6 @@ signType="secp256k1"
 minerwhitelist=["*"]
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 

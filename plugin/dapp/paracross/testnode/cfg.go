@@ -70,7 +70,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [mempool.sub.para]
@@ -148,8 +148,6 @@ signType="secp256k1"
 minerdisable=true
 
 [exec]
-isFree=true
-minExecFee=100000
 enableStat=false
 
 [exec.sub.relay]

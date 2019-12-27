@@ -63,7 +63,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [consensus]
@@ -149,8 +149,6 @@ minerwhitelist=["*"]
 minerWaitTime="1s"
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
@@ -179,8 +177,8 @@ signType="auth_ecdsa"
 
 [exec.sub.manage]
 superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S", 
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 
+    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 ]
 

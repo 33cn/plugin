@@ -208,12 +208,10 @@ Title="test"
 
 [mempool]
 poolCacheSize=102400
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=100
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 

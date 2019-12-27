@@ -57,7 +57,7 @@ grpcFuncWhitelist=["*"]
 
 [mempool]
 poolCacheSize=10240
-minTxFee=1000000
+minTxFeeRate=0
 
 [consensus]
 name="solo"
@@ -81,8 +81,6 @@ signType="secp256k1"
 minerwhitelist=["*"]
 
 [exec]
-isFree=true
-minExecFee=0
 enableStat=false
 
 [exec.sub.cert]

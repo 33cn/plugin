@@ -167,7 +167,7 @@ func addNode(cmd *cobra.Command, args []string) {
 	value := &vt.ValNodeAction_Node{Node: &vt.ValNode{PubKey: pubkeybyte, Power: power}}
 	action := &vt.ValNodeAction{Value: value, Ty: vt.ValNodeActionUpdate}
 	tx := &types.Transaction{Execer: []byte(vt.ValNodeX), Payload: types.Encode(action), Fee: 0}
-	err = tx.SetRealFee(cfg.GInt("MinFee"))
+	err = tx.SetRealFee(cfg.GetMinTxFeeRate())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return

@@ -53,7 +53,7 @@ verMax=119
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -104,8 +104,6 @@ minerdisable=false
 minerwhitelist=["*"]
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
