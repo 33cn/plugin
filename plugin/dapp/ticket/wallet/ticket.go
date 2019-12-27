@@ -406,13 +406,13 @@ func (policy *ticketPolicy) forceCloseTicketList(height int64, priv crypto.PrivK
 	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
-			if t.Status == 1 && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
+			if t.Status == ty.TicketOpened && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
-			if t.Status == 2 && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
+			if t.Status == ty.TicketMined && now-t.GetCreateTime() < cfg.TicketWithdrawTime {
 				continue
 			}
-			if t.Status == 2 && now-t.GetMinerTime() < cfg.TicketMinerWaitTime {
+			if t.Status == ty.TicketMined && now-t.GetMinerTime() < cfg.TicketMinerWaitTime {
 				continue
 			}
 		}

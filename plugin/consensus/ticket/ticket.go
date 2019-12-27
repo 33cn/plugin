@@ -604,6 +604,12 @@ func (client *Client) Miner(parent, block *types.Block) error {
 	if err != nil {
 		return err
 	}
+	//需要首先对交易进行排序
+	cfg := client.GetAPI().GetConfig()
+	if cfg.IsFork(block.Height, "ForkRootHash") {
+		block.Txs = types.TransactionSort(block.Txs)
+	}
+
 	err = client.WriteBlock(parent.StateHash, block)
 	if err != nil {
 		return err

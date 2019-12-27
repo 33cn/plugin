@@ -747,8 +747,15 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 		tendermintlog.Error("createProposalBlock createBaseTx fail")
 		return nil
 	}
+	cfg := cs.client.GetQueueClient().GetConfig()
+
 	block.Data.Txs[0] = baseTx
-	block.Data.TxHash = merkle.CalcMerkleRoot(block.Data.Txs)
+	//需要首先对交易进行排序然后再计算TxHash
+	if cfg.IsFork(block.Data.Height, "ForkRootHash") {
+		block.Data.Txs = types.TransactionSort(block.Data.Txs)
+	}
+
+	block.Data.TxHash = merkle.CalcMerkleRoot(cfg, block.Data.Height, block.Data.Txs)
 	pblockNew := cs.client.PreExecBlock(block.Data, false)
 	if pblockNew == nil {
 		tendermintlog.Error("createProposalBlock PreExecBlock fail")

@@ -184,7 +184,11 @@ func (client *Client) CreateBlock() {
 			newblock.ParentHash = lastBlock.Hash(cfg)
 			newblock.Height = lastBlock.Height + 1
 			client.AddTxsToBlock(&newblock, txs)
-			newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+			//需要首先对交易进行排序然后再计算TxHash
+			if cfg.IsFork(newblock.Height, "ForkRootHash") {
+				newblock.Txs = types.TransactionSort(newblock.Txs)
+			}
+			newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.Height, newblock.Txs)
 			newblock.BlockTime = types.Now().Unix()
 			if lastBlock.BlockTime >= newblock.BlockTime {
 				newblock.BlockTime = lastBlock.BlockTime + 1

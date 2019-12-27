@@ -181,7 +181,7 @@ func makeRecordReceipt(addr string, commit *pt.ParacrossCommitAction) *types.Rec
 	}
 }
 
-func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight int64, commit *pt.ParacrossNodeStatus,
+func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight, execHeight int64, commit *pt.ParacrossNodeStatus,
 	most, commitCount, totalCount int32) *types.Receipt {
 
 	log := &pt.ReceiptParacrossDone{
@@ -194,6 +194,7 @@ func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight int64, commit *pt.
 		TxResult:        commit.TxResult,
 		MainBlockHeight: commit.MainBlockHeight,
 		MainBlockHash:   commit.MainBlockHash,
+		ChainExecHeight: execHeight,
 	}
 	key := calcTitleKey(commit.Title)
 	status := &pt.ParacrossStatus{
@@ -511,7 +512,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	}
 
 	//add commit done receipt
-	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), nodeStatus, int32(most), int32(commitCount), int32(len(nodes)))
+	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, nodeStatus, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
 	r, err := a.commitTxDoneStep2(nodeStatus, stat, titleStatus)
@@ -696,7 +697,7 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 
 	//add commit done receipt
 	cfg := a.api.GetConfig()
-	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), mostStatus, int32(most), int32(commitCount), int32(len(nodes)))
+	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, mostStatus, int32(most), int32(commitCount), int32(len(nodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
 	r, err := a.commitTxDoneStep2(mostStatus, stat, titleStatus)

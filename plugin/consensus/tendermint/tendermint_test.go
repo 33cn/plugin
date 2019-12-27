@@ -22,7 +22,6 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/mempool"
-	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
@@ -60,14 +59,13 @@ func TestTendermintPerf(t *testing.T) {
 }
 
 func TendermintPerf(t *testing.T) {
-	q, chain, s, mem, exec, cs, p2p := initEnvTendermint()
+	q, chain, s, mem, exec, cs := initEnvTendermint()
 	defer chain.Close()
 	defer mem.Close()
 	defer exec.Close()
 	defer s.Close()
 	defer q.Close()
 	defer cs.Close()
-	defer p2p.Close()
 	err := createConn()
 	for err != nil {
 		err = createConn()
@@ -86,7 +84,7 @@ func TendermintPerf(t *testing.T) {
 	time.Sleep(2 * time.Second)
 }
 
-func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Module, *executor.Executor, queue.Module) {
 	flag.Parse()
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
 	var q = queue.New("channel")
@@ -108,14 +106,11 @@ func initEnvTendermint() (queue.Queue, *blockchain.BlockChain, queue.Module, que
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(chain33Cfg)
-
-	network.SetQueueClient(q.Client())
 
 	rpc.InitCfg(cfg.RPC)
 	gapi := rpc.NewGRpcServer(q.Client(), nil)
 	go gapi.Listen()
-	return q, chain, s, mem, exec, cs, network
+	return q, chain, s, mem, exec, cs
 }
 
 func createConn() error {

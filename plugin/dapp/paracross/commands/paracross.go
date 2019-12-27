@@ -42,6 +42,7 @@ func ParcCmd() *cobra.Command {
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
+		GetConsensDoneInfoCmd(),
 	)
 	return cmd
 }
@@ -65,9 +66,6 @@ func addCreateAssetTransferFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
-
-	cmd.Flags().StringP("ptitle", "", "", "the title of para chain, like `user.p.guodun.`")
-	cmd.MarkFlagRequired("ptitle")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
 }
@@ -98,9 +96,6 @@ func addCreateAssetWithdrawFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("ptitle", "", "", "the title of para chain, like `user.p.guodun.`")
-	cmd.MarkFlagRequired("ptitle")
-
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
 	cmd.MarkFlagRequired("to")
 
@@ -118,6 +113,7 @@ func createAssetWithdraw(cmd *cobra.Command, args []string) {
 
 func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	title, _ := cmd.Flags().GetString("title")
+	//这里cfg除了里面FormatTx需要外，没其他作用，平行链执行器需要的参数已经填好了，这里title就是默认空就可以，支持主链构建平行链交易
 	cfg := types.GetCliSysParam(title)
 
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -130,12 +126,12 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 	note, _ := cmd.Flags().GetString("note")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	ptitle, _ := cmd.Flags().GetString("ptitle")
-	if !strings.HasPrefix(ptitle, "user.p") {
-		fmt.Fprintln(os.Stderr, "ptitle is not right, title format like `user.p.guodun.`")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
 		return "", types.ErrInvalidParam
 	}
-	execName := ptitle + pt.ParaX
+	execName := paraName + pt.ParaX
 
 	param := types.CreateTx{
 		To:          toAddr,
@@ -269,7 +265,10 @@ func createNodeJoinTx(cmd *cobra.Command, args []string) {
 	opAddr, _ := cmd.Flags().GetString("addr")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 	paraName, _ := cmd.Flags().GetString("paraName")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 1, Addr: opAddr, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -304,7 +303,10 @@ func createNodeVoteTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, Value: val}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -337,7 +339,10 @@ func addNodeQuitFlags(cmd *cobra.Command) {
 func createNodeQuitTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	opAddr, _ := cmd.Flags().GetString("addr")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -370,7 +375,10 @@ func addNodeCancelFlags(cmd *cobra.Command) {
 func createNodeCancelTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -416,12 +424,17 @@ func nodeInfo(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	addr, _ := cmd.Flags().GetString("addr")
 
-	params := pt.ReqParacrossNodeInfo{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeAddrInfo"
+	req := pt.ReqParacrossNodeInfo{
 		Title: paraName,
 		Addr:  addr,
 	}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.ParaNodeAddrIdStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeAddrStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -447,12 +460,17 @@ func nodeIDInfo(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 
-	params := pt.ReqParacrossNodeInfo{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeIDInfo"
+	req := pt.ReqParacrossNodeInfo{
 		Title: paraName,
 		Id:    id,
 	}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.ParaNodeIdStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeIDStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -478,12 +496,17 @@ func nodeList(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	status, _ := cmd.Flags().GetInt32("status")
 
-	params := pt.ReqParacrossNodeInfo{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "ListNodeStatusInfo"
+	req := pt.ReqParacrossNodeInfo{
 		Title:  paraName,
 		Status: status,
 	}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.RespParacrossNodeAddrs
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListNodeStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -655,6 +678,11 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	addrs, _ := cmd.Flags().GetString("addrs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -691,6 +719,11 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -722,7 +755,10 @@ func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 3, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -754,7 +790,10 @@ func addNodeGroupModifyCmdFlags(cmd *cobra.Command) {
 func nodeGroupModify(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	coins, _ := cmd.Flags().GetFloat64("coins")
-
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 4, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
@@ -798,8 +837,14 @@ func consusHeight(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetHeight"
+	req := types.ReqString{Data: paraName}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.ParacrossConsensusStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetHeight", &types.ReqString{Data: paraName}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -826,14 +871,18 @@ func blockInfo(cmd *cobra.Command, args []string) {
 	startH, _ := cmd.Flags().GetInt64("start")
 	endH, _ := cmd.Flags().GetInt64("end")
 
-	params := types.ReqBlocks{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetBlock2MainInfo"
+	req := types.ReqBlocks{
 		Start: startH,
 		End:   endH,
 	}
-	var res pt.ParaBlock2MainInfo
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetBlock2MainInfo", params, &res)
-	ctx.Run()
+	params.Payload = types.MustPBToJSON(&req)
 
+	var res pt.ParaBlock2MainInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }
 
 // GetBlockInfoCmd get blocks hash with main chain hash map
@@ -888,12 +937,17 @@ func paraInfo(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	height, _ := cmd.Flags().GetInt64("height")
 
-	params := pt.ReqParacrossTitleHeight{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetTitleHeight"
+	req := pt.ReqParacrossTitleHeight{
 		Title:  paraName,
 		Height: height,
 	}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.ParacrossHeightStatusRsp
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetTitleHeight", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -901,7 +955,7 @@ func paraInfo(cmd *cobra.Command, args []string) {
 func GetParaInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "consens_status",
-		Short: "Get para chain current consensus status",
+		Short: "Get para chain heights' consensus status",
 		Run:   paraInfo,
 	}
 	addParaBodyCmdFlags(cmd)
@@ -922,8 +976,14 @@ func GetParaListCmd() *cobra.Command {
 func paraList(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "ListTitles"
+	req := types.ReqNil{}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.RespParacrossTitles
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListTitles", types.ReqNil{}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -947,18 +1007,23 @@ func paraAssetTransfer(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	hash, _ := cmd.Flags().GetString("hash")
 
-	params := types.ReqString{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetAssetTxResult"
+	req := types.ReqString{
 		Data: hash,
 	}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.ParacrossAssetRsp
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetAssetTxResult", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
 // GetParaAssetTransCmd get para chain asset transfer info
 func GetParaAssetTransCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "asset_tranfer",
+		Use:   "asset_txinfo",
 		Short: "Get para chain cross asset transfer info",
 		Run:   paraAssetTransfer,
 	}
@@ -970,8 +1035,14 @@ func nodeGroup(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeGroupAddrs"
+	req := pt.ReqParacrossNodeInfo{Title: paraName}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res types.ReplyConfig
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupAddrs", pt.ReqParacrossNodeInfo{Title: paraName}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -989,12 +1060,16 @@ func nodeGroupStatus(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 
-	params := pt.ReqParacrossNodeInfo{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeGroupStatus"
+	req := pt.ReqParacrossNodeInfo{
 		Title: paraName,
 	}
+	params.Payload = types.MustPBToJSON(&req)
 
 	var res pt.ParaNodeGroupStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetNodeGroupStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -1018,20 +1093,30 @@ func nodeGroupList(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	status, _ := cmd.Flags().GetInt32("status")
 
-	params := pt.ReqParacrossNodeInfo{
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "ListNodeGroupStatus"
+	req := pt.ReqParacrossNodeInfo{
 		Status: status,
 	}
+	params.Payload = types.MustPBToJSON(&req)
 
 	var res pt.RespParacrossNodeGroups
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListNodeGroupStatus", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
 func stagesInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetSelfConsStages"
+	req := types.ReqNil{}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.SelfConsensStages
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsStages", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -1050,9 +1135,14 @@ func stageOneInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	height, _ := cmd.Flags().GetInt64("height")
 
-	params := types.Int64{Data: height}
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetSelfConsOneStage"
+	req := types.Int64{Data: height}
+	params.Payload = types.MustPBToJSON(&req)
+
 	var res pt.SelfConsensStage
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetSelfConsOneStage", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
 
@@ -1081,7 +1171,7 @@ func QuerySelfStagesCmd() *cobra.Command {
 
 func addShowSelfStagesflags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "q", "", "stage apply ID")
-	cmd.Flags().Uint32P("status", "s", 0, "status")
+	cmd.Flags().Uint32P("status", "s", 0, "status:1:applying,3:closed,4:canceled,5:voting")
 	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
 	cmd.Flags().Int32P("direction", "d", 0, "direction, default is reserve")
 	cmd.Flags().Int64P("height", "t", -1, "height, default is -1")
@@ -1097,7 +1187,15 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	height, _ := cmd.Flags().GetInt64("height")
 	index, _ := cmd.Flags().GetInt32("index")
 
-	params := pt.ReqQuerySelfStages{
+	if id == "" && status == 0 {
+		fmt.Fprintln(os.Stderr, "should fill id or status in")
+		return
+	}
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "ListSelfStages"
+	req := pt.ReqQuerySelfStages{
 		Status:    status,
 		Id:        id,
 		Count:     count,
@@ -1105,8 +1203,45 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 		Height:    height,
 		Index:     index,
 	}
+	params.Payload = types.MustPBToJSON(&req)
 
 	var res pt.ReplyQuerySelfStages
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.ListSelfStages", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
+}
+
+func addConsensDoneCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
+	cmd.MarkFlagRequired("height")
+
+}
+
+func consensDoneInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	height, _ := cmd.Flags().GetInt64("height")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetDoneTitleHeight"
+	req := pt.ReqParacrossTitleHeight{
+		Title:  paraName,
+		Height: height,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res pt.RespParacrossDone
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// GetConsensDoneInfoCmd get para chain done height consens info
+func GetConsensDoneInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "consens_done",
+		Short: "Get para chain done height consensus info",
+		Run:   consensDoneInfo,
+	}
+	addConsensDoneCmdFlags(cmd)
+	return cmd
 }

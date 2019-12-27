@@ -14,3 +14,4 @@ help: ## Display this help screen
 	@printf "[command]\n"
 	@printf "[nodegroup]: create super node group if not create \n"
 	@printf "[wallet]:    set node wallet private key if not set \n"
+	@printf "[miner]:    unlock wallet to miner \n"

@@ -175,7 +175,7 @@ func TestAddMinerTx(t *testing.T) {
 	para := &client{BaseClient: &drivers.BaseClient{}}
 	para.SetAPI(api)
 	para.subCfg = new(subConfig)
-	para.privateKey = priKey
+	para.minerPrivateKey = priKey
 	para.commitMsgClient = new(commitMsgClient)
 	para.commitMsgClient.paraClient = para
 

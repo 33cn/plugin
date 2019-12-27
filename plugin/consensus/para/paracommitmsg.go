@@ -13,11 +13,11 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"bytes"
-
 	"sync"
 
 	"strconv"
+
+	"bytes"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -31,7 +31,7 @@ const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
 
-	waitBlocks4CommitMsg int32  = 3
+	waitBlocks4CommitMsg int32  = 5  //commit msg共识发送后等待几个块没确认则重发
 	waitConsensStopTimes uint32 = 30 //30*10s = 5min
 )
 
@@ -42,7 +42,7 @@ type paraSelfConsEnable struct {
 
 type commitMsgClient struct {
 	paraClient           *client
-	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息，最小是2
+	waitMainBlocks       int32  //等待平行链共识消息在主链上链并成功的块数，超出会重发共识消息
 	waitConsensStopTimes uint32 //共识高度低于完成高度， reset高度重发等待的次数
 	resetCh              chan interface{}
 	sendMsgCh            chan *types.Transaction
@@ -53,6 +53,7 @@ type commitMsgClient struct {
 	consensHeight        int64
 	consensDoneHeight    int64
 	selfConsensError     int32 //自共识比主链共识更高的异常场景，需要等待自共识<=主链共识再发送
+	authAccount          string
 	authAccountIn        bool
 	isRollBack           int32
 	checkTxCommitTimes   int32
@@ -76,7 +77,7 @@ func (client *commitMsgClient) handler() {
 	client.paraClient.wg.Add(1)
 	go client.getMainConsensusInfo()
 
-	if client.paraClient.authAccount != "" {
+	if client.authAccount != "" {
 		client.paraClient.wg.Add(1)
 		client.sendMsgCh = make(chan *types.Transaction, 1)
 		go client.sendCommitMsg()
@@ -129,8 +130,8 @@ func (client *commitMsgClient) resetNotify() {
 }
 
 //新的区块产生，检查是否有commitTx正在发送入口
-func (client *commitMsgClient) commitTxCheckNotify(txs []*types.TxDetail) {
-	if client.checkCommitTxSuccess(txs) {
+func (client *commitMsgClient) commitTxCheckNotify(block *types.ParaTxDetail) {
+	if client.checkCommitTxSuccess(block) {
 		client.sendCommitTx()
 	}
 }
@@ -199,23 +200,7 @@ func (client *commitMsgClient) sendCommitTx() {
 
 }
 
-func (client *commitMsgClient) verifyTx(curTx *types.Transaction, verifyTxs map[string]bool) bool {
-	if verifyTxs[string(curTx.Hash())] {
-		client.setCurrentTx(nil)
-		return true
-	}
-
-	client.checkTxCommitTimes++
-	if client.checkTxCommitTimes >= client.waitMainBlocks {
-		client.checkTxCommitTimes = 0
-		client.resetSendEnv()
-		return true
-	}
-	return false
-
-}
-
-func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool {
+func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) bool {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
@@ -224,32 +209,56 @@ func (client *commitMsgClient) checkCommitTxSuccess(txs []*types.TxDetail) bool 
 		return false
 	}
 
-	txMap := make(map[string]bool)
-	//committx是平行链交易
-	if types.IsParaExecName(string(curTx.Execer)) {
-		for _, tx := range txs {
-			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
-				txMap[string(tx.Tx.Hash())] = true
+	//只处理AddType block,回滚的不处理
+	if block.Type == types.AddBlock {
+		//使用map　比每个交易hash byte比较效率应该会高些
+		txMap := make(map[string]bool)
+		//committx是平行链交易
+		if types.IsParaExecName(string(curTx.Execer)) {
+			for _, tx := range block.TxDetails {
+				if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
+					txMap[string(tx.Tx.Hash())] = true
+				}
+			}
+		} else {
+			// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
+			//如果正在追赶，则暂时不去主链查找，减少耗时
+			if !client.paraClient.isCaughtUp() {
+				return false
+			}
+			receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
+			if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
+				txMap[string(curTx.Hash())] = true
 			}
 		}
-	} else {
-		// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
-		//如果正在追赶，则暂时不去主链查找，减少耗时
-		if !client.paraClient.isCaughtUp() {
-			return false
-		}
-		receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
-		if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
-			txMap[string(curTx.Hash())] = true
+
+		//验证通过
+		if txMap[string(curTx.Hash())] {
+			client.setCurrentTx(nil)
+			return true
 		}
 	}
 
-	//如果没找到且当前正在追赶，则不计数，如果找到了，即便当前在追赶，也立即处理
-	if !txMap[string(curTx.Hash())] && !client.paraClient.isCaughtUp() {
+	return client.reSendCommitTx(block.Type)
+}
+
+func (client *commitMsgClient) reSendCommitTx(addType int64) bool {
+	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
+	if addType != types.AddBlock {
+		if client.checkTxCommitTimes > 0 {
+			client.checkTxCommitTimes--
+		}
 		return false
 	}
 
-	return client.verifyTx(curTx, txMap)
+	client.checkTxCommitTimes++
+	if client.checkTxCommitTimes < client.waitMainBlocks {
+		return false
+	}
+
+	client.checkTxCommitTimes = 0
+	client.resetSendEnv()
+	return true
 }
 
 //如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
@@ -275,7 +284,7 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 	if err != nil {
 		return
 	}
-	authExist := strings.Contains(nodes, client.paraClient.authAccount)
+	authExist := strings.Contains(nodes, client.authAccount)
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -361,7 +370,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	for i, msg := range sendingMsgs {
 		plog.Debug("paracommitmsg sending", "idx", i, "height", msg.Height, "mainheight", msg.MainBlockHeight,
 			"blockhash", common.HashHex(msg.BlockHash), "mainHash", common.HashHex(msg.MainBlockHash),
-			"from", client.paraClient.authAccount)
+			"from", client.authAccount)
 	}
 
 	return signTx, count
@@ -678,7 +687,7 @@ out:
 				isSync = true
 			}
 
-			if client.paraClient.authAccount != "" {
+			if client.authAccount != "" {
 				client.GetProperFeeRate()
 			}
 
@@ -836,7 +845,7 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 }
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
-	if status == nil || client.paraClient.authAccount == "" {
+	if status == nil || client.authAccount == "" {
 		return
 	}
 	if !status.IsWalletLock && client.privateKey == nil {
@@ -858,7 +867,7 @@ func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 }
 
 func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
-	if acc == nil || client.paraClient.authAccount == "" || client.paraClient.authAccount != acc.Addr || client.privateKey != nil {
+	if acc == nil || client.authAccount == "" || client.authAccount != acc.Addr || client.privateKey != nil {
 		return
 	}
 	err := client.fetchPriKey()
@@ -872,7 +881,7 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 }
 
 func (client *commitMsgClient) fetchPriKey() error {
-	req := &types.ReqString{Data: client.paraClient.authAccount}
+	req := &types.ReqString{Data: client.authAccount}
 
 	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
 	err := client.paraClient.GetQueueClient().Send(msg, true)

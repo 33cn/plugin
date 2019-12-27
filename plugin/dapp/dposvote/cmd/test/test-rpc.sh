@@ -1,18 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+# shellcheck source=/dev/null
 set -e
 set -o pipefail
 
 MAIN_HTTP=""
-
-# shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
-
-#eventId=""
-#txhash=""
 
 init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
@@ -30,8 +25,7 @@ function main() {
 
     init
     run_test
-
     chain33_RpcTestRst dposvote "$CASE_ERR"
 }
 
-main "$1"
+chain33_debug_function main "$1"
