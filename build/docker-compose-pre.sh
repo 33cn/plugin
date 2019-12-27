@@ -10,6 +10,8 @@ if [ "$(uname)" == "Darwin" ]; then
     sedfix=".bak"
 fi
 
+cp "$(go list -f "{{.Dir}}" github.com/33cn/chain33)"/build/system-test-rpc.sh ./ && chmod 664 ./system-test-rpc.sh
+
 OP="${1}"
 PROJ="${2}"
 DAPP="${3}"
