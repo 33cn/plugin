@@ -36,7 +36,7 @@ issuance_Create() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     ISSU_ID=$RAW_TX_HASH
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -58,7 +58,7 @@ issuance_Manage() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     echo "========== # issuance manage end =========="
@@ -74,7 +74,7 @@ issuance_Feed() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
 
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"issuance","funcName":"IssuancePrice","payload":{}}]}' ${MAIN_HTTP} | jq -r ".result")
@@ -93,7 +93,7 @@ issuance_Debt() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     DEBT_ID=$RAW_TX_HASH
     chain33_BlockWait 1 "${MAIN_HTTP}"
 
@@ -117,7 +117,7 @@ issuance_Repay() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"issuance","funcName":"IssuanceRecordsByStatus","payload":{"issuanceId": "'"${ISSU_ID}"'", "status": 6}}]}' ${MAIN_HTTP} | jq -r ".result")
     [ "$data" != null ]
@@ -135,7 +135,7 @@ issuance_Close() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"issuance","funcName":"IssuanceByStatus","payload":{"status": 2}}]}' ${MAIN_HTTP} | jq -r ".result")
     [ "$data" != null ]
@@ -153,7 +153,7 @@ collateralize_Manage() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv1}" ${MAIN_HTTP}
     ISSU_ID=$RAW_TX_HASH
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -173,7 +173,7 @@ collateralize_Create() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     COLL_ID=$RAW_TX_HASH
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -197,7 +197,7 @@ collateralize_Feed() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv2}" ${MAIN_HTTP}
     chain33_BlockWait 1 "${MAIN_HTTP}"
 
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"collateralize","funcName":"CollateralizePrice","payload":{}}]}' ${MAIN_HTTP} | jq -r ".result")
@@ -216,7 +216,7 @@ collateralize_Borrow() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
     BORROW_ID=$RAW_TX_HASH
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -240,7 +240,7 @@ collateralize_Append() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
     echo "========== # collateralize append end =========="
 }
@@ -255,7 +255,7 @@ collateralize_Repay() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${CollateralizePriv}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"collateralize","funcName":"CollateralizeRecordByStatus","payload":{"collateralizeId":"'"${COLL_ID}"'", "status":6}}]}' ${MAIN_HTTP} | jq -r ".result")
@@ -273,7 +273,7 @@ collateralize_Retrieve() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" "${IssuancePriv3}" ${MAIN_HTTP}
     chain33_BlockWait 1 ${MAIN_HTTP}
 
     data=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"collateralize","funcName":"CollateralizeRecordByStatus","payload":{"collateralizeId":"'"${COLL_ID}"'", "status":6}}]}' ${MAIN_HTTP} | jq -r ".result")
@@ -371,7 +371,7 @@ manage() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
     echo "========== # issuance add issuance-manage end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -384,7 +384,7 @@ manage() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
+    chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
     echo "========== # issuance add issuance-price-feed end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -397,7 +397,7 @@ manage() {
     #    [ "$ok" == true ]
     #    echo_rst "$FUNCNAME" "$?"
     #
-    #    chain33_SignRawTx "$tx" ${SystemManager} ${MAIN_HTTP}
+    #    chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
     #    echo "========== # issuance add issuance-guarantor end =========="
     #    chain33_BlockWait 1 ${MAIN_HTTP}
 }
@@ -412,7 +412,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token token-blacklist end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -424,7 +424,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token token-finisher end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -436,7 +436,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token precreate end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -448,7 +448,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token finish end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -460,7 +460,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${IssuanceAddr3}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -469,7 +469,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "100000000000", "note": "", "to": "'"${CollateralizeAddr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -478,7 +478,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${TokenSuperManager}" "${MAIN_HTTP}"
     echo "========== # issuance add token transfer end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
@@ -490,7 +490,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${IssuancePriv1}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${IssuancePriv1}" "${MAIN_HTTP}"
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "10000000000000", "note": "", "to": "'"${collateralize_addr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -499,7 +499,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${IssuancePriv3}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${IssuancePriv3}" "${MAIN_HTTP}"
 
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer": "token","actionName":"Transfer","payload": {"cointoken":"CCNY", "amount": "100000000000", "note": "", "to": "'"${collateralize_addr}"'"}}]}' ${MAIN_HTTP} | jq -r ".result")
     data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
@@ -508,7 +508,7 @@ token() {
     [ "$ok" == true ]
     echo_rst "$FUNCNAME" "$?"
 
-    chain33_SignRawTx "${tx}" "${CollateralizePriv}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${tx}" "${CollateralizePriv}" "${MAIN_HTTP}"
     echo "========== # issuance add token transfer to issuance end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 }
