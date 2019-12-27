@@ -12,6 +12,8 @@ set -o pipefail
 # sudo apt-get install parallel
 # ./docker-compose.sh build
 
+CHAIN33_PATH=$(go list  -f {{.Dir}} github.com/33cn/chain33)
+cp "$CHAIN33_PATH"/build/system-test-rpc.sh ./
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
