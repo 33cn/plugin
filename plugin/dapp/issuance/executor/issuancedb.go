@@ -1050,7 +1050,7 @@ func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, status 
 
 	var data = &pty.ReceiptIssuance{
 		AccountAddr: addr,
-		Status:status,
+		Status:      status,
 	}
 
 	var rows []*table.Row
