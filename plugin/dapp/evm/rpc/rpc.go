@@ -33,7 +33,7 @@ func (c *channelClient) Create(ctx context.Context, in evmtypes.EvmContractCreat
 	addr := address.ExecAddress(cfg.ExecName(in.ParaName + "evm"))
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(&action), Fee: 0, To: addr}
 
-	tx.Fee, _ = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if tx.Fee < in.Fee {
 		tx.Fee += in.Fee
 	}
@@ -62,7 +62,7 @@ func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq
 	tx := &types.Transaction{Execer: []byte(in.Exec), Payload: types.Encode(&action), Fee: 0, To: toAddr}
 
 	cfg := c.GetConfig()
-	tx.Fee, _ = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if tx.Fee < feeInt64 {
 		tx.Fee += feeInt64
 	}
@@ -96,7 +96,7 @@ func (c *channelClient) Transfer(ctx context.Context, in evmtypes.EvmContractTra
 	}
 
 	var err error
-	tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if err != nil {
 		return nil, err
 	}

@@ -397,12 +397,12 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 		return tx, nil
 	}
 	cfg := client.paraClient.GetAPI().GetConfig()
-	group, err := types.CreateTxGroup(txsArr.Txs, cfg.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txsArr.Txs, cfg.GetMinTxFeeRate())
 	if err != nil {
 		plog.Error("para CreateTxGroup", "err", err.Error())
 		return nil, err
 	}
-	err = group.Check(cfg, 0, cfg.GInt("MinFee"), cfg.GInt("MaxFee"))
+	err = group.Check(cfg, 0, cfg.GetMinTxFeeRate(), cfg.GetMaxTxFee())
 	if err != nil {
 		plog.Error("para CheckTxGroup", "err", err.Error())
 		return nil, err
