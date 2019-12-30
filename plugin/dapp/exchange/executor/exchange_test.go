@@ -455,7 +455,7 @@ func Exec_LimitOrder(t *testing.T, limitOrder *et.LimitOrder, privKey string, st
 	if err != nil {
 		return err
 	}
-	exec := newExchange()
+	exec := NewExchange()
 	e := exec.(*exchange)
 	err = e.CheckTx(tx, 1)
 	if err != nil {
@@ -508,7 +508,7 @@ func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB
 	if err != nil {
 		return err
 	}
-	exec := newExchange()
+	exec := NewExchange()
 	e := exec.(*exchange)
 	err = e.CheckTx(tx, 1)
 	assert.Nil(t, err)
@@ -546,7 +546,7 @@ func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB
 func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -563,7 +563,7 @@ func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB d
 func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -581,7 +581,7 @@ func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, err
 func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KVDB) (*et.MarketDepthList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -599,7 +599,7 @@ func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KV
 func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)

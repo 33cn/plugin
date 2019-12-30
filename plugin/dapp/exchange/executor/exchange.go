@@ -21,7 +21,7 @@ var driverName = exchangetypes.ExchangeX
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
-	drivers.Register(cfg, GetName(), newExchange, cfg.GetDappFork(driverName, "Enable"))
+	drivers.Register(cfg, GetName(), NewExchange, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }
 
@@ -35,7 +35,7 @@ type exchange struct {
 	drivers.DriverBase
 }
 
-func newExchange() drivers.Driver {
+func NewExchange() drivers.Driver {
 	t := &exchange{}
 	t.SetChild(t)
 	t.SetExecutorType(types.LoadExecutorType(driverName))
@@ -44,7 +44,7 @@ func newExchange() drivers.Driver {
 
 // GetName get driver name
 func GetName() string {
-	return newExchange().GetName()
+	return NewExchange().GetName()
 }
 
 func (e *exchange) GetDriverName() string {
