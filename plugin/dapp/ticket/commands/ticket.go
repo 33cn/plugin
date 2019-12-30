@@ -38,7 +38,7 @@ func TicketCmd() *cobra.Command {
 // BindMinerCmd bind miner
 func BindMinerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bind_miner",
+		Use:   "bind",
 		Short: "Bind private key to miner address",
 		Run:   bindMiner,
 	}
