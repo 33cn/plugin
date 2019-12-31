@@ -314,6 +314,11 @@ func TestCollateralize(t *testing.T) {
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	// query collateralize user balance
+	res, err = exec.Query("CollateralizeUserBalance",
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(100), res.(*pkt.RepCollateralizeUserBalance).Balance)
 
 	// collateralize append
 	p5 := &pkt.CollateralizeAppendTx{
@@ -406,6 +411,11 @@ func TestCollateralize(t *testing.T) {
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	// query collateralize user balance
+	res, err = exec.Query("CollateralizeUserBalance",
+		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), res.(*pkt.RepCollateralizeUserBalance).Balance)
 
 	// collateralize liquidate
 	p7 := &pkt.CollateralizeBorrowTx{

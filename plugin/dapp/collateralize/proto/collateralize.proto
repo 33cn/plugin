@@ -215,3 +215,8 @@ message RepCollateralizeConfig {
 message RepCollateralizePrice {
     int64 price = 1; //当前抵押物最新价格
 }
+
+// 返回用户借贷总额
+message RepCollateralizeUserBalance {
+    int64 balance = 1; //返回用户借贷总额
+}

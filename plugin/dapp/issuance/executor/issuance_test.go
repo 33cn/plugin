@@ -291,6 +291,11 @@ func TestIssuance(t *testing.T) {
 		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	// query issuance user balance
+	res, err = exec.Query("IssuanceUserBalance",
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.Equal(t, 100 * types.Coin, res.(*pkt.RepIssuanceUserBalance).Balance)
 
 	// issuance repay
 	p5 := &pkt.IssuanceRepayTx{
@@ -336,6 +341,11 @@ func TestIssuance(t *testing.T) {
 		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 6}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	// query issuance user balance
+	res, err = exec.Query("IssuanceUserBalance",
+		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 1}))
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), res.(*pkt.RepIssuanceUserBalance).Balance)
 
 	// issuance liquidate
 	p6 := &pkt.IssuanceDebtTx{

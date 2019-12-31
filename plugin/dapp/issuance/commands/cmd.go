@@ -291,6 +291,38 @@ func IssuanceQueryPrice(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func IssuanceQueryUserBalanceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "balance",
+		Short: "Query user balance",
+		Run:   IssuanceQueryUserBalance,
+	}
+	addIssuanceQueryBalanceFlags(cmd)
+	return cmd
+}
+
+func addIssuanceQueryBalanceFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("address", "a", "", "address")
+	cmd.MarkFlagRequired("address")
+}
+
+func IssuanceQueryUserBalance(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("address")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pkt.IssuanceX
+	params.FuncName = "IssuanceUserBalance"
+	req := &pkt.ReqIssuanceRecords{
+		Addr:            addr,
+	}
+	params.Payload = types.MustPBToJSON(req)
+
+	var res pkt.RepIssuanceUserBalance
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
 // IssuanceQueryCmd 查询命令行
 func IssuanceQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -301,6 +333,7 @@ func IssuanceQueryCmd() *cobra.Command {
 	addIssuanceQueryFlags(cmd)
 	cmd.AddCommand(
 		IssuacneQueryPriceCmd(),
+		IssuanceQueryUserBalanceCmd(),
 	)
 	return cmd
 }
@@ -319,21 +352,11 @@ func IssuanceQuery(cmd *cobra.Command, args []string) {
 	issuanceID, _ := cmd.Flags().GetString("issuanceID")
 	address, _ := cmd.Flags().GetString("address")
 	statusStr, _ := cmd.Flags().GetString("status")
-	// indexstr, _ := cmd.Flags().GetString("index")
 	issuanceIDs, _ := cmd.Flags().GetString("issuanceIDs")
 	debtID, _ := cmd.Flags().GetString("debtID")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pkt.IssuanceX
-	//if indexstr != "" {
-	//	index, err := strconv.ParseInt(indexstr, 10, 64)
-	//	if err != nil {
-	//		fmt.Println(err)
-	//		cmd.Help()
-	//		return
-	//	}
-	//	req.Index = index
-	//}
 
 	var status int64
 	var err error

@@ -167,3 +167,13 @@ func (c *Collateralize) Query_CollateralizePrice(req *pty.ReqCollateralizeRecord
 
 	return &pty.RepCollateralizePrice{Price: price}, nil
 }
+
+func (c *Collateralize) Query_CollateralizeUserBalance(req *pty.ReqCollateralizeRecordByAddr) (types.Message, error) {
+	balance, err := queryCollateralizeUserBalance(c.GetStateDB(), c.GetLocalDB(), req.Addr)
+	if err != nil {
+		clog.Error("Query_CollateralizeRecordByAddr", "get collateralize record error", err)
+		return nil, err
+	}
+
+	return &pty.RepCollateralizeUserBalance{Balance:balance}, nil
+}

@@ -360,6 +360,38 @@ func CollateralizeQueryPrice(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func CollateralizeQueryUserBalanceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "balance",
+		Short: "Query user balance",
+		Run:   CollateralizeQueryUserBalance,
+	}
+	addCollateralizeQueryBalanceFlags(cmd)
+	return cmd
+}
+
+func addCollateralizeQueryBalanceFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("address", "a", "", "address")
+	cmd.MarkFlagRequired("address")
+}
+
+func CollateralizeQueryUserBalance(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("address")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pkt.CollateralizeX
+	params.FuncName = "CollateralizeUserBalance"
+	req := &pkt.ReqCollateralizeRecordByAddr{
+		Addr:            addr,
+	}
+	params.Payload = types.MustPBToJSON(req)
+
+	var res pkt.RepCollateralizeUserBalance
+	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
 // CollateralizeQueryCmd 查询命令行
 func CollateralizeQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -371,6 +403,7 @@ func CollateralizeQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CollateralizeQueryCfgCmd(),
 		CollateralizeQueryPriceCmd(),
+		CollateralizeQueryUserBalanceCmd(),
 	)
 	return cmd
 }

@@ -19,7 +19,7 @@ import (
 const (
 	ListDESC    = int32(0)   // list降序
 	ListASC     = int32(1)   // list升序
-	DefultCount = int32(20)  // 默认一次取多少条记录
+	DefaultCount = int32(20)  // 默认一次取多少条记录
 	MaxCount    = int32(100) // 最多取100条
 )
 
@@ -973,7 +973,7 @@ func queryIssuanceByStatus(localdb dbm.KVDB, status int32, issuanceID string) ([
 		IssuanceId: issuanceID,
 		Status:     status,
 	}
-	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
+	rows, err := query.List("status", data, primary, DefaultCount, ListDESC)
 	if err != nil {
 		clog.Error("queryIssuanceByStatus.List", "error", err)
 		return nil, err
@@ -1021,7 +1021,7 @@ func queryIssuanceRecordsByStatus(db dbm.KV, localdb dbm.KVDB, status int32, deb
 	var data = &pty.ReceiptIssuance{
 		Status: status,
 	}
-	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
+	rows, err := query.List("status", data, primary, DefaultCount, ListDESC)
 	if err != nil {
 		clog.Error("queryIssuanceRecordsByStatus.List", "index", "status", "error", err)
 		return nil, err
@@ -1056,13 +1056,13 @@ func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, status 
 	var rows []*table.Row
 	var err error
 	if status == 0 {
-		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Error("queryIssuanceRecordByAddr.List", "index", "addr", "error", err)
 			return nil, err
 		}
 	} else {
-		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Error("queryIssuanceRecordByAddr.List", "index", "addr_status", "error", err)
 			return nil, err
@@ -1080,4 +1080,68 @@ func queryIssuanceRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, status 
 	}
 
 	return records, nil
+}
+
+func queryIssuanceUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr string, status int32) (int64, error) {
+	var totalBalance int64
+	query := pty.NewRecordTable(localdb).GetQuery(localdb)
+	var primary []byte
+	var data = &pty.ReceiptIssuance{
+		AccountAddr:     addr,
+		Status: status,
+	}
+
+	var rows []*table.Row
+	var err error
+
+	for {
+		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryIssuanceRecordByAddr.List", "index", "addr", "error", err)
+			return -1, err
+		}
+
+		for _, row := range rows {
+			record, err := queryIssuanceRecordByID(db, row.Data.(*pty.ReceiptIssuance).IssuanceId, row.Data.(*pty.ReceiptIssuance).DebtId)
+			if err != nil {
+				clog.Debug("queryIssuanceRecordByStatus.queryIssuanceRecordByID", "error", err)
+				continue
+			}
+			totalBalance += record.DebtValue
+		}
+
+		if len(rows) < int(DefaultCount) {
+			break
+		}
+		primary = []byte(rows[DefaultCount-1].Data.(*pty.ReceiptIssuance).DebtId)
+	}
+
+	return totalBalance,nil
+}
+
+func queryIssuanceUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (int64, error) {
+	var totalBalance int64
+
+	balance, err := queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusCreate)
+	if err != nil {
+		clog.Error("queryIssuanceUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+	}
+
+	balance, err = queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusWarning)
+	if err != nil {
+		clog.Error("queryIssuanceUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+	}
+
+	balance, err = queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusExpire)
+	if err != nil {
+		clog.Error("queryIssuanceUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+	}
+
+	return totalBalance, nil
 }

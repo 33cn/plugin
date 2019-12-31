@@ -173,3 +173,8 @@ message RepIssuanceDebtInfo {
 message RepIssuancePrice {
     int64 price = 1; //当前抵押物最新价格
 }
+
+// 返回用户发行总额
+message RepIssuanceUserBalance {
+    int64 balance = 1; //返回用户发行总额
+}

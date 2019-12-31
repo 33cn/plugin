@@ -116,9 +116,19 @@ func (c *Issuance) Query_IssuanceRecordsByStatus(req *pty.ReqIssuanceRecords) (t
 func (c *Issuance) Query_IssuancePrice(req *pty.ReqIssuanceRecords) (types.Message, error) {
 	price, err := getLatestPrice(c.GetStateDB())
 	if err != nil {
-		clog.Error("Query_CollateralizePrice", "error", err)
+		clog.Error("Query_IssuancePrice", "error", err)
 		return nil, err
 	}
 
 	return &pty.RepIssuancePrice{Price: price}, nil
+}
+
+func (c *Issuance) Query_IssuanceUserBalance(req *pty.ReqIssuanceRecords) (types.Message, error) {
+	balance, err := queryIssuanceUserBalance(c.GetStateDB(), c.GetLocalDB(), req.Addr)
+	if err != nil {
+		clog.Error("Query_IssuanceRecordByAddr", "get issuance record error", err)
+		return nil, err
+	}
+
+	return &pty.RepIssuanceUserBalance{Balance:balance}, nil
 }

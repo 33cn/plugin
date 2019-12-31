@@ -21,7 +21,7 @@ import (
 const (
 	ListDESC    = int32(0)   // list降序
 	ListASC     = int32(1)   // list升序
-	DefultCount = int32(20)  // 默认一次取多少条记录
+	DefaultCount = int32(20)  // 默认一次取多少条记录
 	MaxCount    = int32(100) // 最多取100条
 )
 
@@ -1172,7 +1172,7 @@ func queryCollateralizeByStatus(localdb dbm.KVDB, status int32, collID string) (
 		CollateralizeId: collID,
 		Status:          status,
 	}
-	rows, err := query.List("status", data, primary, DefultCount, ListDESC)
+	rows, err := query.List("status", data, primary, DefaultCount, ListDESC)
 	if err != nil {
 		clog.Debug("queryCollateralizeByStatus.List", "error", err)
 		return nil, err
@@ -1201,13 +1201,13 @@ func queryCollateralizeByAddr(localdb dbm.KVDB, addr string, status int32, collI
 	var rows []*table.Row
 	var err error
 	if status == 0 {
-		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeByAddr.List", "index", "addr", "error", err)
 			return nil, err
 		}
 	} else {
-		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeByAddr.List", "index", "addr_status", "error", err)
 			return nil, err
@@ -1260,19 +1260,19 @@ func queryCollateralizeRecordByAddr(db dbm.KV, localdb dbm.KVDB, addr string, st
 	var rows []*table.Row
 	var err error
 	if len(collID) != 0 {
-		rows, err = query.List("id_addr", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("id_addr", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "id_addr", "error", err)
 			return nil, err
 		}
 	} else if status != 0 {
-		rows, err = query.List("addr_status", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr_status", "error", err)
 			return nil, err
 		}
 	} else {
-		rows, err = query.List("addr", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("addr", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
 			return nil, err
@@ -1307,13 +1307,13 @@ func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.KVDB, status int32,
 	var rows []*table.Row
 	var err error
 	if len(collID) == 0 {
-		rows, err = query.List("status", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByStatus.List", "index", "status", "error", err)
 			return nil, err
 		}
 	} else {
-		rows, err = query.List("id_status", data, primary, DefultCount, ListDESC)
+		rows, err = query.List("id_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
 			clog.Debug("queryCollateralizeRecordByStatus.List", "index", "id_status", "error", err)
 			return nil, err
@@ -1331,4 +1331,68 @@ func queryCollateralizeRecordByStatus(db dbm.KV, localdb dbm.KVDB, status int32,
 	}
 
 	return records, nil
+}
+
+func queryCollateralizeUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr string, status int32) (int64, error) {
+	var totalBalance int64
+	query := pty.NewRecordTable(localdb).GetQuery(localdb)
+	var primary []byte
+	var data = &pty.ReceiptCollateralize{
+		AccountAddr:     addr,
+		Status: status,
+	}
+
+	var rows []*table.Row
+	var err error
+
+	for {
+		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
+		if err != nil {
+			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
+			return -1, err
+		}
+
+		for _, row := range rows {
+			record, err := queryCollateralizeRecordByID(db, row.Data.(*pty.ReceiptCollateralize).CollateralizeId, row.Data.(*pty.ReceiptCollateralize).RecordId)
+			if err != nil {
+				clog.Debug("queryCollateralizeRecordByStatus.queryCollateralizeRecordByID", "error", err)
+				continue
+			}
+			totalBalance += record.DebtValue
+		}
+
+		if len(rows) < int(DefaultCount) {
+			break
+		}
+		primary = []byte(rows[DefaultCount-1].Data.(*pty.ReceiptCollateralize).RecordId)
+	}
+
+	return totalBalance,nil
+}
+
+func queryCollateralizeUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (int64, error) {
+	var totalBalance int64
+
+	balance, err := queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusCreate)
+	if err != nil {
+		clog.Error("queryCollateralizeUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+    }
+
+	balance, err = queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusWarning)
+	if err != nil {
+		clog.Error("queryCollateralizeUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+	}
+
+	balance, err = queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusExpire)
+	if err != nil {
+		clog.Error("queryCollateralizeUserBalance", "err", err)
+	} else {
+		totalBalance += balance
+	}
+
+	return totalBalance, nil
 }
