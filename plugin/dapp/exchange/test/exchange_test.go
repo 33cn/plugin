@@ -289,7 +289,7 @@ func testLimitOrder(t *testing.T, req *et.LimitOrder, addr string, privkey strin
 	assert.Nil(t, err)
 	t.Log(accPrev)
 
-	tokenPrev, err := getExcerTokenBalance(addr, "CCNY")
+	tokenPrev, err := getExcerTokenBalance(addr, token)
 	assert.Nil(t, err)
 	t.Log(tokenPrev)
 
@@ -300,7 +300,7 @@ func testLimitOrder(t *testing.T, req *et.LimitOrder, addr string, privkey strin
 	assert.Nil(t, err)
 	t.Log(accAfter)
 
-	tokenAfter, err := getExcerTokenBalance(addr, "CCNY")
+	tokenAfter, err := getExcerTokenBalance(addr, token)
 	assert.Nil(t, err)
 	t.Log(tokenAfter)
 
