@@ -295,7 +295,7 @@ func TestIssuance(t *testing.T) {
 	res, err = exec.Query("IssuanceUserBalance",
 		types.Encode(&pkt.ReqIssuanceRecords{Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
-	assert.Equal(t, 100 * types.Coin, res.(*pkt.RepIssuanceUserBalance).Balance)
+	assert.Equal(t, 100*types.Coin, res.(*pkt.RepIssuanceUserBalance).Balance)
 
 	// issuance repay
 	p5 := &pkt.IssuanceRepayTx{

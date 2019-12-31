@@ -17,10 +17,10 @@ import (
 
 // List control
 const (
-	ListDESC    = int32(0)   // list降序
-	ListASC     = int32(1)   // list升序
+	ListDESC     = int32(0)   // list降序
+	ListASC      = int32(1)   // list升序
 	DefaultCount = int32(20)  // 默认一次取多少条记录
-	MaxCount    = int32(100) // 最多取100条
+	MaxCount     = int32(100) // 最多取100条
 )
 
 const (
@@ -1087,8 +1087,8 @@ func queryIssuanceUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr string, st
 	query := pty.NewRecordTable(localdb).GetQuery(localdb)
 	var primary []byte
 	var data = &pty.ReceiptIssuance{
-		AccountAddr:     addr,
-		Status: status,
+		AccountAddr: addr,
+		Status:      status,
 	}
 
 	var rows []*table.Row
@@ -1116,7 +1116,7 @@ func queryIssuanceUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr string, st
 		primary = []byte(rows[DefaultCount-1].Data.(*pty.ReceiptIssuance).DebtId)
 	}
 
-	return totalBalance,nil
+	return totalBalance, nil
 }
 
 func queryIssuanceUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (int64, error) {

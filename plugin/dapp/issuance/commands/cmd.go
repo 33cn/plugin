@@ -314,7 +314,7 @@ func IssuanceQueryUserBalance(cmd *cobra.Command, args []string) {
 	params.Execer = pkt.IssuanceX
 	params.FuncName = "IssuanceUserBalance"
 	req := &pkt.ReqIssuanceRecords{
-		Addr:            addr,
+		Addr: addr,
 	}
 	params.Payload = types.MustPBToJSON(req)
 
