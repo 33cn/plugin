@@ -168,8 +168,6 @@ func GetPos33TicketMinerParam(cfg *types.Chain33Config, height int64) *Pos33Tick
 const Pos33AllTicketCountKeyPrefix = "LODB-pos33-all:"
 
 const (
-	// Pos33MinDeposit 抵押的最小单位
-	Pos33MinDeposit = types.Coin * 10000
 	// Pos33BlockReward 区块奖励
 	Pos33BlockReward = types.Coin * 15
 	// Pos33SortitionSize 多少区块做一次抽签
@@ -179,13 +177,9 @@ const (
 	// Pos33ProposerSize 候选区块Proposer数量
 	Pos33ProposerSize = 5
 	// Pos33VoterSize  候选区块Voter数量
-	Pos33VoterSize = 150
+	Pos33VoterSize = 15
 	// Pos33MustVotes 必须达到的票数
-	Pos33MustVotes = 110 //15*2/3 + 1
-	// Pos33DepositPeriod 抵押周期
-	Pos33DepositPeriod = 40320
-	// Pos33FundKeyAddr ycc开发基金地址
-	Pos33FundKeyAddr = "1DvAFGqS26Recz22yeoHcovzxN7dUh92ZY"
+	Pos33MustVotes = 11 //15*2/3 + 1
 )
 
 // Verify is verify vote msg

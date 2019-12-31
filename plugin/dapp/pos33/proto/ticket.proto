@@ -71,6 +71,10 @@ message Pos33SortMsg {
     HashProof proof     = 2;
 }
 
+message Pos33Sorts {
+    repeated Pos33SortMsg sorts = 1;
+}
+
 message Pos33BlockMsg {
     Block     b   = 1;
     Signature sig = 2;

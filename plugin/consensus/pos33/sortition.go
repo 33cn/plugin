@@ -36,6 +36,13 @@ func calcuVrfHash(input *pt.VrfInput, priv crypto.PrivKey) ([]byte, []byte) {
 	return hash, vrfProof
 }
 
+func changeDiff(size, round int) int {
+	if round <= 3 {
+		return size
+	}
+	return size + round - 3
+}
+
 func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortMsg {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
@@ -43,7 +50,7 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 		size = pt.Pos33ProposerSize
 	}
 	//allw := client.allWeight(height)
-	diff := float64(size) / float64(allw)
+	diff := float64(changeDiff(size, round)) / float64(allw)
 
 	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
 	priv := n.getPriv("")
@@ -92,10 +99,10 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 		return []*pt.Pos33SortMsg{msgs[index]}
 	}
 	sort.Sort(pt.Sorts(msgs))
-	// c := pt.Pos33VoterSize
-	// if len(msgs) > c {
-	// 	return msgs[:c]
-	// }
+	c := pt.Pos33VoterSize
+	if len(msgs) > c {
+		return msgs[:c]
+	}
 	return msgs
 }
 
@@ -131,7 +138,8 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 		return fmt.Errorf("verifySort error: sort msg is nil")
 	}
 
-	diff := float64(size) / float64(allw)
+	round := m.Proof.Input.Round
+	diff := float64(changeDiff(size, int(round))) / float64(allw)
 
 	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.SortHash.Tid}})
 	if err != nil {
@@ -152,7 +160,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 		return fmt.Errorf("ticketID error")
 	}
 
-	input := &pt.VrfInput{Seed: seed, Height: height, Round: m.Proof.Input.Round, Step: int32(step)}
+	input := &pt.VrfInput{Seed: seed, Height: height, Round: round, Step: int32(step)}
 	in := types.Encode(input)
 	err = vrfVerify(m.Proof.Pubkey, in, m.Proof.VrfProof, m.Proof.VrfHash)
 	if err != nil {

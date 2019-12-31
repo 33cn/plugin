@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
 	"sort"
 	"sync"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/difficulty"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
@@ -179,15 +177,16 @@ func (n *node) minerTx(sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.P
 
 func (n *node) blockDiff(lb *types.Block, w int) uint32 {
 	powLimitBits := n.GetAPI().GetConfig().GetP(lb.Height).PowLimitBits
-	oldTarget := difficulty.CompactToBig(lb.Difficulty)
-	newTarget := new(big.Int).Mul(oldTarget, big.NewInt(int64(w)))
-	newTarget.Div(newTarget, big.NewInt(pt.Pos33MustVotes))
+	return powLimitBits
+	// oldTarget := difficulty.CompactToBig(lb.Difficulty)
+	// newTarget := new(big.Int).Mul(oldTarget, big.NewInt(11)) // pt.Pos33MustVotes))
+	// newTarget.Div(newTarget, big.NewInt(int64(w+1)))
 
-	powLimit := difficulty.CompactToBig(powLimitBits)
-	if newTarget.Cmp(powLimit) > 0 {
-		newTarget.Set(powLimit)
-	}
-	return difficulty.BigToCompact(newTarget)
+	// powLimit := difficulty.CompactToBig(powLimitBits)
+	// if newTarget.Cmp(powLimit) > 0 {
+	// 	newTarget.Set(powLimit)
+	// }
+	// return difficulty.BigToCompact(newTarget)
 }
 
 func (n *node) myVotes(height int64, round int) []*pt.Pos33SortMsg {
@@ -264,7 +263,7 @@ func (n *node) makeBlock(height int64, round int) (*pt.Pos33BlockMsg, error) {
 	}
 
 	nb.Difficulty = n.blockDiff(lb, len(vs))
-	plog.Info("@@@@@@@ I make a block: ", "height", height, "round", round, "ntx", len(nb.Txs), "nvs", len(vs))
+	plog.Info("@@@@@@@ I make a block: ", "height", height, "round", round, "ntx", len(nb.Txs), "nvs", len(vs), "diff", nb.Difficulty)
 	bm := &pt.Pos33BlockMsg{B: nb}
 	bm.Sign(priv)
 	return bm, nil
@@ -291,7 +290,7 @@ func (n *node) addBlock(b *types.Block) {
 	t := b.BlockTime - n.lastBlock().BlockTime
 	plog.Info("node.addBlock", "height", b.Height, "delta", t, "hash", common.ToHex(b.Hash(n.GetAPI().GetConfig())))
 	if t < 1 {
-		time.AfterFunc(time.Millisecond*500, func() {
+		time.AfterFunc(time.Millisecond*300, func() {
 			fn(b)
 		})
 	} else {
@@ -668,12 +667,7 @@ func (n *node) getCacheBlock(height int64, round int, tid string) *types.Block {
 }
 
 func (n *node) allw(height int64, round int) int {
-	all := n.allWeight(height)
-	w := all - all/pt.Pos33VoterSize*round
-	if w < 1 {
-		w = 1
-	}
-	return w
+	return n.allWeight(height)
 }
 
 func (n *node) handleSortitionMsg(m *pt.Pos33SortMsg) {
