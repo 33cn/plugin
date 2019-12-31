@@ -13,7 +13,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 ## get chain33 path
-CHAIN33_PATH=$(go list  -f "{{.Dir}}" github.com/33cn/chain33)
+CHAIN33_PATH=$(go list -f "{{.Dir}}" github.com/33cn/chain33)
 
 function build_auto_test() {
 
