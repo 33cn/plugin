@@ -318,7 +318,7 @@ func TestCollateralize(t *testing.T) {
 	res, err = exec.Query("CollateralizeUserBalance",
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
-	assert.Equal(t, int64(100), res.(*pkt.RepCollateralizeUserBalance).Balance)
+	assert.Equal(t, int64(100)*types.Coin, res.(*pkt.RepCollateralizeUserBalance).Balance)
 
 	// collateralize append
 	p5 := &pkt.CollateralizeAppendTx{
