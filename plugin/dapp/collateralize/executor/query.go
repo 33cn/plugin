@@ -175,5 +175,5 @@ func (c *Collateralize) Query_CollateralizeUserBalance(req *pty.ReqCollateralize
 		return nil, err
 	}
 
-	return &pty.RepCollateralizeUserBalance{Balance:balance}, nil
+	return &pty.RepCollateralizeUserBalance{Balance: balance}, nil
 }

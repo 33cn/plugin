@@ -383,7 +383,7 @@ func CollateralizeQueryUserBalance(cmd *cobra.Command, args []string) {
 	params.Execer = pkt.CollateralizeX
 	params.FuncName = "CollateralizeUserBalance"
 	req := &pkt.ReqCollateralizeRecordByAddr{
-		Addr:            addr,
+		Addr: addr,
 	}
 	params.Payload = types.MustPBToJSON(req)
 

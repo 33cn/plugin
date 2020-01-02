@@ -19,10 +19,10 @@ import (
 
 // List control
 const (
-	ListDESC    = int32(0)   // list降序
-	ListASC     = int32(1)   // list升序
+	ListDESC     = int32(0)   // list降序
+	ListASC      = int32(1)   // list升序
 	DefaultCount = int32(20)  // 默认一次取多少条记录
-	MaxCount    = int32(100) // 最多取100条
+	MaxCount     = int32(100) // 最多取100条
 )
 
 const (
@@ -1338,8 +1338,8 @@ func queryCollateralizeUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr strin
 	query := pty.NewRecordTable(localdb).GetQuery(localdb)
 	var primary []byte
 	var data = &pty.ReceiptCollateralize{
-		AccountAddr:     addr,
-		Status: status,
+		AccountAddr: addr,
+		Status:      status,
 	}
 
 	var rows []*table.Row
@@ -1367,7 +1367,7 @@ func queryCollateralizeUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr strin
 		primary = []byte(rows[DefaultCount-1].Data.(*pty.ReceiptCollateralize).RecordId)
 	}
 
-	return totalBalance,nil
+	return totalBalance, nil
 }
 
 func queryCollateralizeUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (int64, error) {
@@ -1378,7 +1378,7 @@ func queryCollateralizeUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (in
 		clog.Error("queryCollateralizeUserBalance", "err", err)
 	} else {
 		totalBalance += balance
-    }
+	}
 
 	balance, err = queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusWarning)
 	if err != nil {

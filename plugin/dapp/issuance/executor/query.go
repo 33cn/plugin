@@ -130,5 +130,5 @@ func (c *Issuance) Query_IssuanceUserBalance(req *pty.ReqIssuanceRecords) (types
 		return nil, err
 	}
 
-	return &pty.RepIssuanceUserBalance{Balance:balance}, nil
+	return &pty.RepIssuanceUserBalance{Balance: balance}, nil
 }
