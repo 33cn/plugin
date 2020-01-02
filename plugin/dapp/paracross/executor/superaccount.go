@@ -5,9 +5,6 @@
 package executor
 
 import (
-	"bytes"
-	"encoding/gob"
-
 	"strings"
 
 	"strconv"
@@ -18,16 +15,9 @@ import (
 	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
-
-func deepCopy(dst, src interface{}) error {
-	var buf bytes.Buffer
-	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
-		return err
-	}
-	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
-}
 
 func getNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdStatus, error) {
 	key := calcParaNodeAddrKey(title, addr)
@@ -332,12 +322,7 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, stat.Status)
 	}
 
-	var copyStat pt.ParaNodeIdStatus
-	err = deepCopy(&copyStat, stat)
-	if err != nil {
-		clog.Error("nodeaccount.nodeQuit deep copy fail", "copy", copyStat, "stat", stat)
-		return nil, err
-	}
+	copyStat := proto.Clone(stat).(*pt.ParaNodeIdStatus)
 	if stat.Status == pt.ParaApplyJoining {
 		receipt := &types.Receipt{Ty: types.ExecOk}
 		cfg := a.api.GetConfig()
@@ -350,7 +335,7 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		}
 		stat.Status = pt.ParaApplyCanceled
 		stat.Height = a.height
-		r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+		r := makeNodeConfigReceipt(a.fromaddr, config, copyStat, stat)
 		receipt = mergeReceipt(receipt, r)
 		return receipt, nil
 	}
@@ -358,7 +343,7 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	if stat.Status == pt.ParaApplyQuiting {
 		stat.Status = pt.ParaApplyCanceled
 		stat.Height = a.height
-		return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
+		return makeNodeConfigReceipt(a.fromaddr, config, copyStat, stat), nil
 	}
 
 	return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeid %s was quit status:%d", config.Id, stat.Status)
@@ -520,13 +505,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "config id:%s,addr:%s", config.Id, stat.TargetAddr)
 	}
 
-	var copyStat pt.ParaNodeIdStatus
-	err = deepCopy(&copyStat, stat)
-	if err != nil {
-		clog.Error("nodeaccount.nodevOTE deep copy fail", "copy", copyStat, "stat", stat)
-		return nil, err
-	}
-
+	copyStat := proto.Clone(stat).(*pt.ParaNodeIdStatus)
 	if stat.Votes == nil {
 		stat.Votes = &pt.ParaNodeVoteDetail{}
 	}
@@ -557,7 +536,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 
 		//超级用户投yes票，共识停止了一定高度就可以通过，防止当前所有授权节点都忘掉私钥场景
 		if !(superManagerPass && most > 0 && vote == pt.ParaVoteYes) {
-			return makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat), nil
+			return makeNodeConfigReceipt(a.fromaddr, config, copyStat, stat), nil
 		}
 	}
 	clog.Info("paracross.nodeVote  ----pass", "most", most, "pass", vote)
@@ -622,7 +601,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Height = a.height
 		}
 	}
-	r := makeNodeConfigReceipt(a.fromaddr, config, &copyStat, stat)
+	r := makeNodeConfigReceipt(a.fromaddr, config, copyStat, stat)
 	receipt = mergeReceipt(receipt, r)
 
 	receiptDone := makeVoteDoneReceipt(stat, len(nodes), len(stat.Votes.Addrs), most, pt.ParaNodeVoteStr[vote], stat.Status)
