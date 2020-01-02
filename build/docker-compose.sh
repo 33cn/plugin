@@ -132,10 +132,10 @@ function start() {
     ${CLI} block last_header
     ${CLI} net info
 
-    ${CLI} net peer_info
+    ${CLI} net peer
     local count=1000
     while [ $count -gt 0 ]; do
-        peersCount=$(${CLI} net peer_info | jq '.[] | length')
+        peersCount=$(${CLI} net peer | jq '.[] | length')
         if [ "${peersCount}" -ge 2 ]; then
             break
         fi
