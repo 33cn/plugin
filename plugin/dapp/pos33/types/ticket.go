@@ -179,7 +179,7 @@ const (
 	// Pos33VoterSize  候选区块Voter数量
 	Pos33VoterSize = 15
 	// Pos33MustVotes 必须达到的票数
-	Pos33MustVotes = 11 //15*2/3 + 1
+	Pos33MustVotes = 5 //15*2/3 + 1
 )
 
 // Verify is verify vote msg
