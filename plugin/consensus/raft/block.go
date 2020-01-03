@@ -193,8 +193,8 @@ func (client *Client) CreateBlock() {
 			if lastBlock.BlockTime >= newblock.BlockTime {
 				newblock.BlockTime = lastBlock.BlockTime + 1
 			}
-			blockEntry := newblock
-			client.propose(&blockEntry)
+			blockEntry := proto.Clone(&newblock).(*types.Block)
+			client.propose(blockEntry)
 			err := client.WriteBlock(lastBlock.StateHash, &newblock)
 			if err != nil {
 				issleep = true
