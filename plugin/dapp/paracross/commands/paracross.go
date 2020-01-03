@@ -1232,7 +1232,7 @@ func showPrivacyTx4Para(cmd *cobra.Command, args []string) {
 
 	var requestID string
 	paramsQuery := rpctypes.ReqPrivacyTxQueryID{}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryId", paramsQuery, &requestID)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetNewPrivacyTxQueryID", paramsQuery, &requestID)
 	ctx.RunResult()
 	params.RequestID = requestID
 
