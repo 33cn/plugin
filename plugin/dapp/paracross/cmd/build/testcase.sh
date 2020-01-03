@@ -16,6 +16,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # shellcheck source=/dev/null
+source privacy_test.sh
 #source test-rpc.sh
 
 function para_init() {
@@ -928,6 +929,7 @@ function paracross() {
 
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
+        privacy_test
     fi
 
     if [ "${2}" == "forkInit" ]; then
@@ -947,5 +949,4 @@ function paracross() {
     elif [ "${2}" == "fork2CheckRst" ]; then
         checkParaBlockHashfun 30
     fi
-
 }
