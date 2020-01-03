@@ -159,7 +159,7 @@ func (client *Client) CreateBlock() {
 				emptyBlock.TxHash = zeroHash[:]
 				emptyBlock.BlockTime = types.Now().Unix()
 
-				entry := emptyBlock
+				entry := types.Clone(emptyBlock).(*types.Block)
 				client.propose(entry)
 
 				er := client.WriteBlock(block.StateHash, emptyBlock)
@@ -193,7 +193,7 @@ func (client *Client) CreateBlock() {
 			if lastBlock.BlockTime >= newblock.BlockTime {
 				newblock.BlockTime = lastBlock.BlockTime + 1
 			}
-			blockEntry := proto.Clone(&newblock).(*types.Block)
+			blockEntry := types.Clone(&newblock).(*types.Block)
 			client.propose(blockEntry)
 			err := client.WriteBlock(lastBlock.StateHash, &newblock)
 			if err != nil {
