@@ -437,29 +437,253 @@ func TestExchange(t *testing.T) {
 	assert.NotEqual(t, nil, err)
 	err = Exec_RevokeOrder(t, orderID, PrivKeyB, stateDB, kvdb, env)
 	assert.Equal(t, nil, err)
-}
 
-func Exec_LimitOrder(t *testing.T, limitOrder *et.LimitOrder, privKey string, stateDB db.DB, kvdb db.KVDB, env *execEnv) error {
+	//清理环境,重建数据库
+	util.CloseTestDB(dir, stateDB)
+	total = 1000 * types.Coin
+	accountA = types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[0],
+	}
+	accountB = types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[1],
+	}
+
+	dir, stateDB, kvdb = util.CreateTestDB()
+	defer util.CloseTestDB(dir, stateDB)
+	//execAddr := address.ExecAddress(et.ExchangeX)
+
+	accA, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accA.SaveExecAccount(execAddr, &accountA)
+
+	accB, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accB.SaveExecAccount(execAddr, &accountB)
+
+	accA1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accA1.SaveExecAccount(execAddr, &accountA)
+
+	accB1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accB1.SaveExecAccount(execAddr, &accountB)
+
+	env = &execEnv{
+		10,
+		1,
+		1539918074,
+	}
+	/*
+	  //批量测试,同一个区块内出现多笔可以撮合的买卖交易
+	  用例说明:
+	    1.在同一个区块内,出现如下：
+	        10笔买单
+	        20笔卖单
+	        50笔买单
+	        20笔卖单
+	        30笔买单
+	        100笔卖单
+
+	*/
+	tx1, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+	assert.Equal(t, nil, err)
+	tx2, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+	assert.Equal(t, nil, err)
+	err = Exec_Block(t, stateDB, kvdb, env, tx1, tx2)
+	assert.Equal(t, nil, err)
+	var txs []*types.Transaction
+	for i := 0; i < 10; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 20; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 50; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 20; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+	for i := 0; i < 30; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 100; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+	err = Exec_Block(t, stateDB, kvdb, env, txs...)
+	assert.Equal(t, nil, err)
+}
+func TestA(t *testing.T){
+
+	total := 10000 * types.Coin
+	accountA := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[0],
+	}
+	accountB := types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[1],
+	}
+	execAddr := address.ExecAddress(et.ExchangeX)
+	dir, stateDB, kvdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, stateDB)
+	//环境准备
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	Init(et.ExchangeX, cfg, nil)
+	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accA.SaveExecAccount(execAddr, &accountA)
+
+	accB, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accB.SaveExecAccount(execAddr, &accountB)
+
+	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accA1.SaveExecAccount(execAddr, &accountA)
+
+	accB1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accB1.SaveExecAccount(execAddr, &accountB)
+
+	env := &execEnv{
+		10,
+		1,
+		1539918074,
+	}
+	/*
+	  //批量测试,同一个区块内出现多笔可以撮合的买卖交易
+	  用例说明:
+	    1.在同一个区块内,出现如下：
+	        10笔买单
+	        20笔卖单
+	*/
+	tx1, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+	assert.Equal(t, nil, err)
+	tx2, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+	assert.Equal(t, nil, err)
+	err = Exec_Block(t, stateDB, kvdb, env, tx1, tx2)
+	assert.Equal(t, nil, err)
+	var txs []*types.Transaction
+	for i := 0; i < 100; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+	err = Exec_Block(t, stateDB, kvdb, env, txs...)
+	txs = nil
+	for i := 0; i < 2000; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	//for i := 0; i < 50; i++ {
+	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+	//	assert.Equal(t, nil, err)
+	//	txs = append(txs, tx)
+	//}
+	//
+	//for i := 0; i < 20; i++ {
+	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+	//	assert.Equal(t, nil, err)
+	//	txs = append(txs, tx)
+	//}
+	//for i := 0; i < 30; i++ {
+	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+	//	assert.Equal(t, nil, err)
+	//	txs = append(txs, tx)
+	//}
+	//
+	//for i := 0; i < 100; i++ {
+	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+	//	assert.Equal(t, nil, err)
+	//	txs = append(txs, tx)
+	//}
+	err = Exec_Block(t, stateDB, kvdb, env, txs...)
+	assert.Equal(t, nil, err)
+}
+func CreateLimitOrder(limitOrder *et.LimitOrder, privKey string) (tx *types.Transaction, err error) {
 	ety := types.LoadExecutorType(et.ExchangeX)
-	tx, err := ety.Create("LimitOrder", limitOrder)
+	tx, err = ety.Create("LimitOrder", limitOrder)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	tx, err = signTx(tx, privKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	exec := newExchange()
-	e := exec.(*exchange)
-	err = e.CheckTx(tx, 1)
+	return tx, nil
+}
+func CreateRevokeOrder(orderID int64, privKey string) (tx *types.Transaction, err error) {
+	ety := types.LoadExecutorType(et.ExchangeX)
+	tx, err = ety.Create("RevokeOrder", &et.RevokeOrder{OrderID: orderID})
 	if err != nil {
-		return err
+		return nil, err
+	}
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
+	if err != nil {
+		return nil, err
+	}
+	tx, err = signTx(tx, privKey)
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+//模拟区块中交易得执行过程
+func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...*types.Transaction) error {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := NewExchange()
+	e := exec.(*exchange)
+	for index, tx := range txs {
+		err := e.CheckTx(tx, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+
 	}
 	q := queue.New("channel")
 	q.SetConfig(cfg)
@@ -471,82 +695,54 @@ func Exec_LimitOrder(t *testing.T, limitOrder *et.LimitOrder, privKey string, st
 	env.blockTime = env.blockTime + 20
 	env.difficulty = env.difficulty + 1
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(tx, int(1))
-	if err != nil {
-		return err
+	for index, tx := range txs {
+		receipt, err := exec.Exec(tx, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+		for _, kv := range receipt.KV {
+			stateDB.Set(kv.Key, kv.Value)
+		}
+		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+		set, err := exec.ExecLocal(tx, receiptData, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+		for _, kv := range set.KV {
+			t.Log("key:",string(kv.Key))
+			if  kv.Value == nil {
+				t.Log("value:",nil)
+			}
+			kvdb.Set(kv.Key, kv.Value)
+		}
+		//save to database
+		util.SaveKVList(stateDB, set.KV)
+		assert.Equal(t, types.ExecOk, int(receipt.Ty))
 	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		return err
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	assert.Equal(t, types.ExecOk, int(receipt.Ty))
 	return nil
+}
+func Exec_LimitOrder(t *testing.T, limitOrder *et.LimitOrder, privKey string, stateDB db.DB, kvdb db.KVDB, env *execEnv) error {
+	tx, err := CreateLimitOrder(limitOrder, privKey)
+	if err != nil {
+		return err
+	}
+	return Exec_Block(t, stateDB, kvdb, env, tx)
 }
 
 func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB, kvdb db.KVDB, env *execEnv) error {
-	ety := types.LoadExecutorType(et.ExchangeX)
-	tx, err := ety.Create("RevokeOrder", &et.RevokeOrder{OrderID: orderID})
+	tx, err := CreateRevokeOrder(orderID, privKey)
 	if err != nil {
 		return err
 	}
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("chain33")
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
-	if err != nil {
-		return err
-	}
-	tx, err = signTx(tx, privKey)
-	if err != nil {
-		return err
-	}
-	exec := newExchange()
-	e := exec.(*exchange)
-	err = e.CheckTx(tx, 1)
-	assert.Nil(t, err)
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
-	exec.SetAPI(api)
-	exec.SetStateDB(stateDB)
-	exec.SetLocalDB(kvdb)
-	env.blockHeight = env.blockHeight + 1
-	env.blockTime = env.blockTime + 20
-	env.difficulty = env.difficulty + 1
-	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(tx, int(1))
-	if err != nil {
-		return err
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(tx, receiptData, int(1))
-	if err != nil {
-		return err
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	//save to database
-	util.SaveKVList(stateDB, set.KV)
-	assert.Equal(t, types.ExecOk, int(receipt.Ty))
-	return nil
+	return Exec_Block(t, stateDB, kvdb, env, tx)
 }
 
 func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -563,7 +759,7 @@ func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB d
 func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -581,7 +777,7 @@ func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, err
 func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KVDB) (*et.MarketDepthList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
@@ -599,7 +795,7 @@ func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KV
 func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
-	exec := newExchange()
+	exec := NewExchange()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
