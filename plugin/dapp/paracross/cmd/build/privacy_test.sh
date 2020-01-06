@@ -58,10 +58,13 @@ function query_tx() {
 function signAndSendPrivacyTx() {
     local rawtxdata=${1}
     local addr=${2}
+    local signdata
+    local priavacyData
+    local signData2
 
-    local signdata=$(${PARA_CLI} wallet sign -a "${addr}" -d "${rawtxdata}")
-    local priavacyData=$(${PARA_CLI} para privacy create -d "${signdata}")
-    local signData2=$(${PARA_CLI} wallet sign -a "${addr}" -d "${priavacyData}")
+    signdata=$(${PARA_CLI} wallet sign -a "${addr}" -d "${rawtxdata}")
+    priavacyData=$(${PARA_CLI} para privacy create -d "${signdata}")
+    signData2=$(${PARA_CLI} wallet sign -a "${addr}" -d "${priavacyData}")
     txHash=$(${PARA_CLI} wallet send -d "${signData2}")
     query_tx "${PARA_CLI}" "${txHash}"
 }
@@ -69,16 +72,19 @@ function signAndSendPrivacyTx() {
 function signAndSendPrivacyTx2() {
     local rawtxdata=${1}
     local private=${2}
+    local signdata
+    local priavacyData
+    local signData2
 
-    local signdata=$(${PARA_CLI} wallet sign -k "${private}" -d "${rawtxdata}")
-    local priavacyData=$(${PARA_CLI} para privacy create -d "${signdata}")
-    local signData2=$(${PARA_CLI} wallet sign -k "${private}" -d "${priavacyData}")
+    signdata=$(${PARA_CLI} wallet sign -k "${private}" -d "${rawtxdata}")
+    priavacyData=$(${PARA_CLI} para privacy create -d "${signdata}")
+    signData2=$(${PARA_CLI} wallet sign -k "${private}" -d "${priavacyData}")
     txHash=$(${PARA_CLI} wallet send -d "${signData2}")
     query_tx "${PARA_CLI}" "${txHash}"
 }
 
 function show() {
-    ${PARA_CLI} para privacy show -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b -s ${1}
+    ${PARA_CLI} para privacy show -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b -s "${1}"
 }
 
 function echoRed() {
@@ -95,9 +101,9 @@ function init() {
     local amount=${2}
     ${cli} account import_key -k ${KEY_ADDR_A} -l "privacy_test_A"
     ${cli} account import_key -k ${KEY_ADDR_B} -l "privacy_test_B"
-    txHash=$(${cli} send coins transfer -a ${amount} -n test -t ${PRIVACY_ADDR_A} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    txHash=$(${cli} send coins transfer -a "${amount}" -n test -t ${PRIVACY_ADDR_A} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     query_tx "${cli}" "${txHash}"
-    txHash=$(${cli} send coins transfer -a ${amount} -n test -t ${PRIVACY_ADDR_B} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    txHash=$(${cli} send coins transfer -a "${amount}" -n test -t ${PRIVACY_ADDR_B} -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     query_tx "${cli}" "${txHash}"
 
     echoGre "=========== # init end ============="
@@ -107,10 +113,11 @@ function coinsPrivacyTransfer() {
     echoGre "=========== # coins transfer ============="
     rawtxdata=$(${PARA_CLI} coins transfer -a 10 -n test -t "${PRIVACY_ADDR_B}")
     signAndSendPrivacyTx "${rawtxdata}" "${PRIVACY_ADDR_A}"
-    show ${txHash}
+    show "${txHash}"
 
     ${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e coins
-    local balance=$(${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e coins | jq -r '.balance')
+    local balance
+    balance=$(${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e coins | jq -r '.balance')
     if [ "${balance}" != "20.0000" ]; then
         echoRed "wrong, should be 10010.0000"
         exit 1
@@ -131,6 +138,7 @@ function tokenPrivacyTransfer() {
     ${PARA_CLI} token get_finish_created
 
     ${PARA_CLI} token token_balance -a ${PRIVACY_ADDR_A} -e token -s PTC
+    local balance
     balance=$(${PARA_CLI} token token_balance -a ${PRIVACY_ADDR_A} -e token -s PTC | jq -r '.[]|.balance')
     if [ "${balance}" != "100000.0000" ]; then
         echoRed "wrong para token genesis create, should be 100000.0000"
@@ -177,13 +185,14 @@ function tradePrivacyTransfer() {
     echoGre "=========== # 0.trade sell ============="
     rawtxdata=$(${PARA_CLI} trade sell -m 1 -p 0.001 -s PTC -t 100)
     signAndSendPrivacyTx "${rawtxdata}" "${PRIVACY_ADDR_A}"
-    sellID=$(${PARA_CLI} para privacy show -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b -s ${txHash} | jq -r '.txs[0].receipt.logs[1].log.base.sellID' | awk -F '-' '{print $4}')
+    sellID=$(${PARA_CLI} para privacy show -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b -s "${txHash}" | jq -r '.txs[0].receipt.logs[1].log.base.sellID' | awk -F '-' '{print $4}')
     if [ "${sellID}" == "" ]; then
         echoRed "wrong, sellID empty txHash = ${txHash}"
         exit 1
     fi
 
     ${PARA_CLI} token token_balance -a ${PRIVACY_ADDR_A} -s PTC -e trade
+    local frozenBalance
     frozenBalance=$(${PARA_CLI} token token_balance -a ${PRIVACY_ADDR_A} -s PTC -e trade | jq -r '.[0].frozen')
     if [ "${frozenBalance}" != "100.0000" ]; then
         echoRed "para token send exec, should be 100.0000"
@@ -196,14 +205,15 @@ function tradePrivacyTransfer() {
     signAndSendPrivacyTx "${rawtxdata}" "${PRIVACY_ADDR_B}"
 
     ${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e user.p.para.trade
-    local balance=$(${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e user.p.para.trade | jq -r '.balance')
+    local balance
+    balance=$(${PARA_CLI} account balance -a ${PRIVACY_ADDR_B} -e user.p.para.trade | jq -r '.balance')
     if [ "${balance}" != "10.0000" ]; then
         echoRed "wrong, should be 10.0000"
         exit 1
     fi
 
     # 购买指定卖单的token
-    rawtxdata=$(${PARA_CLI} trade buy -c 200 -s ${sellID})
+    rawtxdata=$(${PARA_CLI} trade buy -c 200 -s "${sellID}")
     signAndSendPrivacyTx "${rawtxdata}" "${PRIVACY_ADDR_B}"
 
     ${PARA_CLI} token token_balance -a ${PRIVACY_ADDR_B} -s PTC -e trade
@@ -217,10 +227,12 @@ function tradePrivacyTransfer() {
 }
 
 function privacy_test() {
+echoGre "=========== # privacy test ============="
     init "${CLI}" 5
     init "${PARA_CLI}" 10
 
     coinsPrivacyTransfer
-    tokenPrivacyTransfer
-    tradePrivacyTransfer
+    # tokenPrivacyTransfer
+    # tradePrivacyTransfer
+echoGre "=========== # privacy test end ============="
 }
