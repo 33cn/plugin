@@ -224,4 +224,3 @@ function privacy_test() {
     tokenPrivacyTransfer
     tradePrivacyTransfer
 }
-
