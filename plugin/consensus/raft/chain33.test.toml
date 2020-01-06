@@ -38,7 +38,7 @@ enableTxQuickIndex=true
 seeds=["127.0.0.1:13802"]
 enable=false
 isSeed=false
-serverStart=true
+serverStart=false
 innerSeedEnable=false
 useGithub=false
 innerBounds=300
@@ -80,7 +80,6 @@ poolCacheSize=10240
 # 共识驱动名,支持solo/raft/ticket/tendermint/pbft
 name="raft"
 minerstart=false
-genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -117,14 +116,17 @@ heartbeatTick=1
 # =============== raft共识配置参数 ===========================
 
 [store]
-name="kvdb"
+name="mavl"
 driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
+localdbVersion="1.0.0"
 
-[store.sub.kvdb]
+[store.sub.mavl]
 enableMavlPrefix=false
 enableMVCC=false
+enableMavlPrune=false
+pruneHeight=10000
 
 [wallet]
 minFee=100000
@@ -134,12 +136,14 @@ dbCache=16
 signType="secp256k1"
 
 [wallet.sub.ticket]
-minerdisable=false
+minerdisable=true
 minerwhitelist=["*"]
 minerWaitTime="1s"
 
 
 [exec]
+isFree=false
+minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
