@@ -270,7 +270,7 @@ func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt
 		kv = append(kv, t.GetKVSet()...)
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
-		tlog.Info("pos33.ticket open", "tid", id)
+		// tlog.Info("pos33.ticket open", "tid", id)
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil

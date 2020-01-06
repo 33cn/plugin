@@ -72,7 +72,8 @@ message Pos33SortMsg {
 }
 
 message Pos33Sorts {
-    repeated Pos33SortMsg sorts = 1;
+    Pos33SortMsg          s     = 1;
+    repeated Pos33SortMsg sorts = 2;
 }
 
 message Pos33BlockMsg {

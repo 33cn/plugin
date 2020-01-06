@@ -150,7 +150,7 @@ func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
 		// ONLY one privKey for minning !!!
 		return p
 	}
-	panic("go here")
+	return nil
 }
 
 func getTicketHeight(tid string) int64 {
@@ -283,7 +283,7 @@ func (client *Client) nodeID() string {
 }
 
 func (client *Client) miningOK() bool {
-	if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
+	if !client.IsMining() {
 		plog.Info("createblock.ismining is disable or client is caughtup is false")
 		return false
 	}
@@ -303,7 +303,7 @@ func (client *Client) CreateBlock() {
 	for {
 		client.flushTicket()
 		if !client.miningOK() {
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Second)
 			continue
 		}
 		break
@@ -421,11 +421,6 @@ func (client *Client) CreateGenesisTx1() (ret []*types.Transaction) {
 
 // write block to chain
 func (client *Client) setBlock(b *types.Block) error {
-	if b == nil {
-		plog.Crit("block is nil")
-		return nil
-	}
-
 	plog.Info("setBlock", "height", b.Height, "txCount", len(b.Txs), "hash", common.ToHex(b.Hash(client.GetAPI().GetConfig())))
 	lastBlock, err := client.RequestBlock(b.Height - 1)
 	if err != nil {
@@ -433,6 +428,7 @@ func (client *Client) setBlock(b *types.Block) error {
 	}
 	err = client.WriteBlock(lastBlock.StateHash, b)
 	if err != nil {
+		plog.Error("writeBlock error", "err", err)
 		return err
 	}
 	return nil

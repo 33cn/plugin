@@ -37,10 +37,11 @@ func calcuVrfHash(input *pt.VrfInput, priv crypto.PrivKey) ([]byte, []byte) {
 }
 
 func changeDiff(size, round int) int {
-	if round <= 3 {
-		return size
-	}
-	return size + round - 3
+	// if round <= 3 {
+	// 	return size
+	// }
+	// return size + round - 3
+	return size
 }
 
 func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortMsg {
@@ -190,4 +191,42 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func (n *node) bp(height int64, round int) string {
+	pss := make(map[string]*pt.Pos33SortMsg)
+	for _, s := range n.cps[height][round] {
+		err := n.checkSort(s)
+		if err != nil {
+			plog.Error("checkSort error", "err", err)
+			continue
+		}
+		pss[string(s.SortHash.Hash)] = s
+	}
+	if len(pss) == 0 {
+		return ""
+	}
+
+	lb := n.lastBlock()
+	if lb.Height+1 != height {
+		return ""
+	}
+	lbh := lb.Hash(n.GetAPI().GetConfig())
+
+	var min string
+	var ss *pt.Pos33SortMsg
+	for sh, s := range pss {
+		str := string(crypto.Sha256([]byte(fmt.Sprintf("%x:%x", []byte(sh), lbh))))
+		if min == "" {
+			min = str
+			ss = s
+		} else {
+			if min > str {
+				min = str
+				ss = s
+			}
+		}
+	}
+
+	return ss.SortHash.Tid
 }

@@ -175,11 +175,13 @@ const (
 	// Pos33VoteReward 每个区块的奖励
 	Pos33VoteReward = types.Coin / 2
 	// Pos33ProposerSize 候选区块Proposer数量
-	Pos33ProposerSize = 5
+	Pos33ProposerSize = 7
 	// Pos33VoterSize  候选区块Voter数量
 	Pos33VoterSize = 15
 	// Pos33MustVotes 必须达到的票数
-	Pos33MustVotes = 5 //15*2/3 + 1
+	Pos33MustVotes = 8 //15*2/3 + 1
+	// Pos33MinVotes 必须达到的票数
+	Pos33MinVotes = 5
 )
 
 // Verify is verify vote msg

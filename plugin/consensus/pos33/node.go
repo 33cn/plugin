@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -29,121 +28,64 @@ type node struct {
 	ivs map[int64]map[int][]*pt.Pos33SortMsg
 	// receive candidate proposers
 	cps map[int64]map[int]map[string]*pt.Pos33SortMsg
-	// receive candidate verifers
+	// receive candidate votes
 	cvs map[int64]map[int]map[string][]*pt.Pos33VoteMsg
+	// receive candidate verifers
 	css map[int64]map[int][]*pt.Pos33SortMsg
-	// receive candidate blocks
-	cbs    map[int64]map[int]map[string]*types.Block
-	bsLock sync.Mutex
 
-	bch      chan *types.Block
-	round    int
-	lb       *types.Block
-	unbMap   map[int64][]*pt.Pos33BlockMsg // unchecked block map
-	votedMap map[int64]map[int]bool        // already voted map
-	nevMap   map[int64]map[int]string      // not enough vote map
+	// for new block incoming to add
+	bch chan *types.Block
+	// the last block
+	lb *types.Block
 }
 
 // New create pos33 consensus client
 func newNode(conf *subConfig) *node {
 	n := &node{
-		ips:      make(map[int64]map[int]*pt.Pos33SortMsg),
-		ivs:      make(map[int64]map[int][]*pt.Pos33SortMsg),
-		cps:      make(map[int64]map[int]map[string]*pt.Pos33SortMsg),
-		cvs:      make(map[int64]map[int]map[string][]*pt.Pos33VoteMsg),
-		css:      make(map[int64]map[int][]*pt.Pos33SortMsg),
-		cbs:      make(map[int64]map[int]map[string]*types.Block),
-		bch:      make(chan *types.Block, 1),
-		unbMap:   make(map[int64][]*pt.Pos33BlockMsg),
-		votedMap: make(map[int64]map[int]bool),
-		nevMap:   make(map[int64]map[int]string),
+		ips: make(map[int64]map[int]*pt.Pos33SortMsg),
+		ivs: make(map[int64]map[int][]*pt.Pos33SortMsg),
+		cps: make(map[int64]map[int]map[string]*pt.Pos33SortMsg),
+		cvs: make(map[int64]map[int]map[string][]*pt.Pos33VoteMsg),
+		css: make(map[int64]map[int][]*pt.Pos33SortMsg),
+		bch: make(chan *types.Block, 32),
 	}
 
 	plog.Info("@@@@@@@ node start:", "addr", addr, "conf", conf)
 	return n
 }
 
-func (n *node) setLastBlock(height int64) {
-	b := n.GetCurrentBlock()
-	if b.Height == height {
-		n.lb = b
-		return
-	}
-	b, err := n.RequestBlock(height)
+// func (n *node) setLastBlock(height int64) {
+// 	b := n.GetCurrentBlock()
+// 	if b.Height == height {
+// 		n.lb = b
+// 		return
+// 	}
+// 	b, err := n.RequestBlock(height)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	n.lb = b
+// }
+
+func (n *node) lastBlock() *types.Block {
+	// if n.lb != nil {
+	// 	return n.lb
+	// }
+	b, err := n.RequestLastBlock()
 	if err != nil {
 		panic(err)
 	}
-	n.lb = b
-}
-
-func (n *node) lastBlock() *types.Block {
-	if n.lb != nil {
-		return n.lb
-	}
-	return n.GetCurrentBlock()
-}
-
-func unmarshal(b []byte) (*pt.Pos33Msg, error) {
-	var pm pt.Pos33Msg
-	err := proto.Unmarshal(b, &pm)
-	if err != nil {
-		return nil, err
-	}
-	return &pm, nil
-}
-
-func (n *node) voteLast() {
-	act, err := getMiner(n.lastBlock())
-	if err != nil {
-		return
-	}
-	height := n.lastBlock().Height
-	round := int(act.Sort.Proof.Input.Round)
-	for !n.reSortition(height, round) {
-		time.Sleep(time.Millisecond * 300)
-	}
-	tid := act.Sort.SortHash.Tid
-	n.vote(height, round, tid)
+	return b
 }
 
 var errNotEnoughVotes = errors.New("NOT enough votes for the last block")
 
-func (n *node) getBlockVotes(b *types.Block) ([]*pt.Pos33VoteMsg, error) {
-	height := b.Height
-	if height == 0 {
-		return nil, nil
-	}
-
-	lastAct, err := getMiner(b)
-	if err != nil {
-		return nil, err
-	}
-
-	lround := int(lastAct.GetSort().Proof.Input.Round)
-	ltid := lastAct.GetSort().SortHash.Tid
-	mp, ok := n.nevMap[height]
-	if !ok {
-		mp = make(map[int]string, 1)
-	}
-	n.nevMap[height] = mp
-	if n.cvs[height] == nil || n.cvs[height][lround] == nil {
-		mp[n.round] = ltid
-		return nil, errNotEnoughVotes
-	}
-	vs := n.cvs[height][lround][ltid]
-	if len(vs) < pt.Pos33MustVotes {
-		mp[n.round] = ltid
-		return nil, errNotEnoughVotes
-	}
+func (n *node) minerTx(sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.PrivKey) (*types.Transaction, error) {
+	plog.Info("genRewordTx", "vsw", len(vs))
 	if len(vs) > pt.Pos33VoterSize {
 		sort.Sort(pt.Votes(vs))
 		vs = vs[:pt.Pos33VoterSize]
 	}
-	return vs, nil
-}
-
-func (n *node) minerTx(sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.PrivKey) (*types.Transaction, error) {
-	plog.Info("genRewordTx", "vsw", len(vs))
 	act := &pt.Pos33TicketAction{
 		Value: &pt.Pos33TicketAction_Pminer{
 			Pminer: &pt.Pos33Miner{
@@ -218,44 +160,40 @@ func (n *node) getPrivByTid(tid string) (crypto.PrivKey, error) {
 	return priv, nil
 }
 
-func (n *node) makeBlock(height int64, round int) (*pt.Pos33BlockMsg, error) {
-	lb := n.lastBlock()
-	if height != lb.Height+1 {
-		return nil, fmt.Errorf("lastHeight error")
-	}
-	vs, err := n.getBlockVotes(lb)
-	if err != nil {
-		return nil, err
-	}
+func (n *node) makeBlock(height int64, round int, tid string, vs []*pt.Pos33VoteMsg) error {
 	sort := n.mySort(height, round)
 	if sort == nil {
-		err = fmt.Errorf("I'm not bp")
-		return nil, err
+		err := fmt.Errorf("I'm not bp")
+		return err
 	}
-	if n.getCacheBlock(height, round, sort.SortHash.Tid) != nil {
-		return nil, fmt.Errorf("I have maked height=%d round=%d block", height, round)
+	if sort.SortHash.Tid != tid {
+		err := fmt.Errorf("I'm not bp2")
+		return err
 	}
 
 	priv, err := n.getPrivByTid(sort.SortHash.Tid)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tx, err := n.minerTx(sort, vs, priv)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	lb := n.lastBlock()
 	nb, err := n.newBlock(lb, []*Tx{tx}, height)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	nb.Difficulty = n.blockDiff(lb, len(vs))
 	plog.Info("@@@@@@@ I make a block: ", "height", height, "round", round, "ntx", len(nb.Txs), "nvs", len(vs), "diff", nb.Difficulty)
-	bm := &pt.Pos33BlockMsg{B: nb}
-	bm.Sign(priv)
-	return bm, nil
+	if nb.BlockTime-lb.BlockTime >= 1 {
+		return n.setBlock(nb)
+	}
+	time.AfterFunc(time.Millisecond*500, func() { n.setBlock(nb) })
+	return nil
 }
 
 func (n *node) addBlock(b *types.Block) {
@@ -263,42 +201,34 @@ func (n *node) addBlock(b *types.Block) {
 		return
 	}
 
-	if b.Height < 0 && n.lastBlock() != nil && b.Height <= n.lastBlock().Height {
-		plog.Info("addBlock nil", "height", b.Height)
+	lastHeight := n.lastBlock().Height
+	if b.Height != lastHeight {
+		plog.Error("addBlock height error", "height", b.Height, "lastHeight", lastHeight)
 		return
 	}
 
 	fn := func(nb *types.Block) {
 		select {
 		case n.bch <- nb:
-		case <-n.bch:
+		default:
+			<-n.bch
 			n.bch <- nb
 		}
 	}
 
-	t := b.BlockTime - n.lastBlock().BlockTime
-	plog.Info("node.addBlock", "height", b.Height, "delta", t, "hash", common.ToHex(b.Hash(n.GetAPI().GetConfig())))
-	if t < 1 {
-		time.AfterFunc(time.Millisecond*300, func() {
-			fn(b)
-		})
-	} else {
-		fn(b)
-	}
+	plog.Info("node.addBlock", "height", b.Height, "hash", common.ToHex(b.Hash(n.GetAPI().GetConfig())))
+	fn(b)
 }
 
 func (n *node) clear(height int64) {
-	// clear the caches
-	n.bsLock.Lock()
-	for h := range n.cbs {
-		if h+10 <= height {
-			delete(n.cbs, h)
-		}
-	}
-	n.bsLock.Unlock()
 	for h := range n.cvs {
 		if h+10 <= height {
 			delete(n.cvs, h)
+		}
+	}
+	for h := range n.css {
+		if h+10 <= height {
+			delete(n.css, h)
 		}
 	}
 	for h := range n.cps {
@@ -316,21 +246,6 @@ func (n *node) clear(height int64) {
 			delete(n.ivs, h)
 		}
 	}
-	for h := range n.unbMap {
-		if h+10 <= height {
-			delete(n.unbMap, h)
-		}
-	}
-	for h := range n.nevMap {
-		if h+10 <= height {
-			delete(n.nevMap, h)
-		}
-	}
-	for h := range n.votedMap {
-		if h+10 <= height {
-			delete(n.votedMap, h)
-		}
-	}
 }
 
 func addr(sig *types.Signature) string {
@@ -340,15 +255,8 @@ func addr(sig *types.Signature) string {
 	return address.PubKeyToAddress(sig.Pubkey).String()
 }
 
-func sumR(r int) int {
-	sum := 0
-	for i := 1; i <= r; i++ {
-		sum += i + 1
-	}
-	return sum
-}
-
 func (n *node) checkBlock(b, pb *types.Block) error {
+	plog.Info("node.checkBlock", "height", b.Height, "pbheight", pb.Height)
 	if b.Height <= pb.Height {
 		return fmt.Errorf("")
 	}
@@ -361,8 +269,10 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 	if len(b.Txs) == 0 {
 		return fmt.Errorf("nil block error")
 	}
+	if !n.miningOK() {
+		return nil
+	}
 
-	plog.Info("node.checkBlock", "height", b.Height, "pbheight", pb.Height)
 	act, err := getMiner(b)
 	if err != nil {
 		return err
@@ -371,8 +281,7 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 		return fmt.Errorf("miner tx error")
 	}
 	round := int(act.Sort.Proof.Input.Round)
-	if n.getCacheBlock(b.Height, round, act.Sort.SortHash.Tid) != nil {
-		// already checked
+	if string(act.Sort.Proof.Pubkey) == string(n.getPriv("").PubKey().Bytes()) {
 		return nil
 	}
 
@@ -380,40 +289,23 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 	if err != nil {
 		return err
 	}
-	err = n.verifySort(b.Height, 0, n.allw(b.Height, true), seed, act.GetSort())
+	allw := n.allw(b.Height, true)
+	err = n.verifySort(b.Height, 0, allw, seed, act.GetSort())
 	if err != nil {
 		return err
 	}
 
 	// check votes
-	if len(act.Votes) < pt.Pos33MustVotes {
+	height := b.Height
+	rvs, ok := n.checkVotesEnough(act.Votes, height, round)
+	if len(rvs) >= len(act.Votes) && !ok {
 		return fmt.Errorf("the block NOT enouph vote, height=%d", b.Height)
 	}
 	if len(act.Votes) > pt.Pos33VoterSize {
 		return fmt.Errorf("the block vote too much, height=%d", b.Height)
 	}
-	// vote is last height vote
-	lact, err := getMiner(pb)
-	if err != nil {
-		return err
-	}
-	round = int(lact.Sort.Proof.Input.Round)
-	height := pb.Height
-	tid := lact.Sort.SortHash.Tid
-	allw := n.allw(height, true)
-	seed, err = n.getMinerSeed(height)
-	if err != nil {
-		return err
-	}
+	tid := act.Sort.SortHash.Tid
 	for _, v := range act.Votes {
-		if n.cvs[height] != nil && n.cvs[height][round] != nil {
-			for _, mv := range n.cvs[height][round][tid] {
-				if mv.Sort.SortHash.Tid == v.Sort.SortHash.Tid {
-					continue // already checked
-				}
-			}
-		}
-
 		err = n.checkVote(v, height, round, seed, allw, tid)
 		if err != nil {
 			return err
@@ -424,16 +316,10 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 }
 
 func (n *node) getMinerSort(height int64) (*pt.Pos33SortMsg, error) {
-	/*
-		startHeight := height - height%pt.Pos33SortitionSize
-		if startHeight == height {
-			startHeight -= pt.Pos33SortitionSize
-		}
-	*/
 	startHeight := height - pt.Pos33SortitionSize
 	b, err := n.RequestBlock(startHeight)
 	if err != nil {
-		plog.Info("should't go here. do nothing")
+		plog.Error("RequstBlock error", "err", err, "height", startHeight)
 		return nil, err
 	}
 	if b.Height == 0 {
@@ -536,8 +422,8 @@ func (n *node) sortition(b *types.Block, round int) {
 					n.ivs[height] = make(map[int][]*pt.Pos33SortMsg)
 				}
 				n.ivs[height][round] = sms
-				n.sendVoteSorts(height, 0)
 			}
+			n.sendVoteSorts(height, 0)
 		}
 	}
 }
@@ -629,67 +515,53 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes, myself bool) {
 		}
 		n.addVote(vm, height, round, tid)
 	}
-	plog.Info("handleVotesMsg", "height", height, "round", round, "tid", tid[:16], "voter", addr(vm.GetSig()), "votes", len(n.cvs[height][round][tid]))
-	if n.checkVotesEnough(n.cvs[height][round][tid], height, round) {
-		if height <= n.lastBlock().Height && n.cvs[height] != nil {
-			plog.Info("handleVoteMsg vote too late", "height", height, "round", round)
-			mp, ok := n.nevMap[height]
-			if !ok {
-				return
-			}
-			if mp[round] == tid {
-				n.elect(height+1, n.round)
-			}
+	vs := n.cvs[height][round][tid]
+	plog.Info("handleVotesMsg", "height", height, "round", round, "tid", tid, "voter", addr(vm.GetSig()), "votes", len(vs))
+	rvs, ok := n.checkVotesEnough(vs, height, round)
+	if ok {
+		if height <= n.lastBlock().Height {
+			plog.Info("vote too late")
 			return
 		}
 
-		plog.Info("@@@ set block 2f+1 @@@", "height", height, "tid", tid[:16])
-		if b := n.getCacheBlock(height, round, tid); b != nil {
-			n.setBlock(b)
+		err := n.makeBlock(height, round, tid, rvs)
+		if err != nil {
+			plog.Error("makeBlock error", "err", err)
 		}
 	}
 }
 
-func (n *node) checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
+func (n *node) getSorts(height int64, round int) []*pt.Pos33SortMsg {
 	mp, ok := n.css[height]
 	if !ok {
-		return false
+		return nil
 	}
 	ss, ok := mp[round]
 	if !ok {
-		return false
+		return nil
 	}
-	if len(ss) < pt.Pos33MustVotes {
-		return false
+	return ss
+}
+
+func (n *node) checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) ([]*pt.Pos33VoteMsg, bool) {
+	ss := n.getSorts(height, round)
+	plog.Info("checkVotesEnough", "ss len", len(ss), "vs len", len(vs))
+	if len(ss) < pt.Pos33MinVotes {
+		return nil, false
 	}
-	ss = ss[:pt.Pos33MustVotes]
-	count := 0
+	if len(vs)*3 <= len(ss)*2 {
+		return nil, false
+	}
+	var rvs []*pt.Pos33VoteMsg
 	for _, v := range vs {
-		found := false
 		for _, s := range ss {
 			if string(v.Sort.SortHash.Hash) == string(s.SortHash.Hash) {
-				found = true
+				rvs = append(rvs, v)
 				break
 			}
 		}
-		if found {
-			count++
-		}
 	}
-	return count >= pt.Pos33MustVotes
-}
-
-func (n *node) getCacheBlock(height int64, round int, tid string) *types.Block {
-	n.bsLock.Lock()
-	defer n.bsLock.Unlock()
-
-	if n.cbs[height] != nil && n.cbs[height][round] != nil {
-		b, ok := n.cbs[height][round][tid]
-		if ok {
-			return b
-		}
-	}
-	return nil
+	return rvs, len(rvs)*3 > len(ss)*2
 }
 
 func (n *node) allw(height int64, check bool) int {
@@ -715,26 +587,8 @@ func (n *node) handleSortitionMsg(m *pt.Pos33SortMsg) {
 	if n.cps[height][round] == nil {
 		n.cps[height][round] = make(map[string]*pt.Pos33SortMsg)
 	}
-	oldBp := n.bp(height, round)
 	n.cps[height][round][m.SortHash.Tid] = m
-	bp := n.bp(height, round)
-	plog.Info("handleSortitionMsg", "height", height, "round", round, "sorter", bp[:16], "size", len(n.cps[height][round]))
-
-	// if recv last round block, and is right, then revote?
-	if oldBp != bp {
-		mp, ok := n.votedMap[height]
-		if !ok {
-			return
-		}
-		voted, ok := mp[round]
-		if !ok {
-			return
-		}
-		if voted {
-			plog.Info("!!! revote !!!", "height", height, "round", round, "newBp", bp[:16])
-			n.vote(height, round, bp)
-		}
-	}
+	plog.Info("handleSortitionMsg", "height", height, "round", round, "size", len(n.cps[height][round]))
 }
 
 func (n *node) checkSort(s *pt.Pos33SortMsg) error {
@@ -757,15 +611,29 @@ func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
 	if len(m.Sorts) == 0 {
 		return
 	}
-	plog.Info("handleSortsMsg", "height", m.Sorts[0].Proof.Input.Height)
+	height := m.Sorts[0].Proof.Input.Height
+	plog.Info("handleSortsMsg", "height", height)
+	if n.lastBlock().Height >= height {
+		plog.Info("the sortsmsg height too low!!!", "lastBlockHeight", n.lastBlock().Height)
+		return
+	}
+	if m.S != nil {
+		n.handleSortitionMsg(m.S)
+	}
 	for _, s := range m.Sorts {
-		if !myself {
-			err := n.checkSort(s)
-			if err != nil {
-				plog.Error("checkSort error", "err", err)
-				return
-			}
+		if s == nil || s.Proof == nil || s.Proof.Input == nil || s.SortHash == nil {
+			plog.Error("handleSortsMsg error, input msg is nil")
+			return
 		}
+		/*
+			if !myself {
+				err := n.checkSort(s)
+				if err != nil {
+					plog.Error("checkSort error", "err", err)
+					return
+				}
+			}
+		*/
 		height := s.Proof.Input.Height
 		round := int(s.Proof.Input.Round)
 		if n.css[height] == nil {
@@ -773,69 +641,18 @@ func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
 		}
 		ss := n.css[height][round]
 		ss = append(ss, s)
-		sort.Sort(pt.Sorts(ss))
+		// sort.Sort(pt.Sorts(ss))
 		n.css[height][round] = ss
 	}
 }
 
-func (n *node) handleBlockMsg(bm *pt.Pos33BlockMsg, myself bool) {
-	b := bm.B
-	if !myself {
-		if b == nil {
-			plog.Error("handleBlockMsg error: block is nil")
-			return
-		}
-		lb := n.lastBlock()
-		if lb.Height >= b.Height {
-			plog.Info("handleBlockMsg: block too late", "height", b.Height)
-			return
-		}
-		if b.Height > lb.Height+1 {
-			n.unbMap[b.Height] = append(n.unbMap[b.Height], bm)
-			plog.Info("handleBlockMsg block too high", "height", b.Height, "preHeight", lb.Height)
-			return
-		}
-		if !bm.Verify() {
-			plog.Error("handleBlockMsg error, sig error")
-			return
-		}
-		plog.Info("handleBlockMsg", "height", b.Height, "maker", addr(bm.Sig))
-		err := n.checkBlock(b, lb)
-		if err != nil {
-			plog.Error("handleBlockMsg err: checkBlock error", "err", err, "height", b.Height)
-			return
-		}
-	}
-
-	act, err := getMiner(b)
+func unmarshal(b []byte) (*pt.Pos33Msg, error) {
+	var pm pt.Pos33Msg
+	err := proto.Unmarshal(b, &pm)
 	if err != nil {
-		plog.Error("handleBlockMsg error", "err", err)
-		return
+		return nil, err
 	}
-	n.addBlockCache(b, act)
-	n.handleSortitionMsg(act.GetSort())
-}
-
-func (n *node) addBlockCache(b *types.Block, act *pt.Pos33Miner) {
-	n.bsLock.Lock()
-	defer n.bsLock.Unlock()
-
-	mp, ok := n.cbs[b.Height]
-	if !ok {
-		mp = make(map[int]map[string]*types.Block)
-	}
-
-	round := int(act.Sort.Proof.Input.Round)
-	bmp, ok := n.cbs[b.Height][round]
-	if !ok {
-		bmp = make(map[string]*types.Block)
-	}
-
-	tid := act.Sort.SortHash.Tid
-	plog.Info("handleBlockMsg", "height", b.Height, "round", round, "tid", tid)
-	bmp[tid] = b
-	mp[round] = bmp
-	n.cbs[b.Height] = mp
+	return &pm, nil
 }
 
 func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
@@ -843,14 +660,6 @@ func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
 		return false
 	}
 	switch pm.Ty {
-	case pt.Pos33Msg_B:
-		var m pt.Pos33BlockMsg
-		err := types.Decode(pm.Data, &m)
-		if err != nil {
-			plog.Error(err.Error())
-			return false
-		}
-		n.handleBlockMsg(&m, false)
 	case pt.Pos33Msg_S:
 		var m pt.Pos33Sorts
 		err := types.Decode(pm.Data, &m)
@@ -874,8 +683,8 @@ func (n *node) handlePos33Msg(pm *pt.Pos33Msg) bool {
 	return true
 }
 
-// doGossipMsg multi-goroutine verify pos33 message
-func (n *node) doGossipMsg() chan *pt.Pos33Msg {
+// handleGossipMsg multi-goroutine verify pos33 message
+func (n *node) handleGossipMsg() chan *pt.Pos33Msg {
 	num := 4
 	ch := make(chan *pt.Pos33Msg, num*16)
 	for i := 0; i < num; i++ {
@@ -893,30 +702,6 @@ func (n *node) doGossipMsg() chan *pt.Pos33Msg {
 	return ch
 }
 
-func reseTm(tm *time.Timer, d time.Duration) {
-	if !tm.Stop() {
-		select {
-		case <-tm.C:
-		default:
-		}
-	}
-	tm.Reset(d)
-}
-
-func (n *node) firstSortition(firtstBlock *types.Block) {
-	plog.Info("firstSortition")
-	n.sortition(firtstBlock, 0)
-}
-
-func (n *node) checkUnB(lb *types.Block) {
-	for _, bm := range n.unbMap[lb.Height+1] {
-		if bm != nil {
-			n.handleBlockMsg(bm, false)
-		}
-	}
-	n.unbMap[lb.Height] = nil
-}
-
 func (n *node) runLoop() {
 	lb, err := n.RequestLastBlock()
 	if err != nil {
@@ -926,125 +711,71 @@ func (n *node) runLoop() {
 
 	n.gss = newGossip(n.nodeID(), n.conf.ListenAddr, n.conf.AdvertiseAddr, n.conf.BootPeerAddr)
 	go n.gss.runBroadcast()
-	msgch := n.doGossipMsg()
-
-	etm := time.NewTimer(time.Hour)
-	ch := make(chan int64, 1)
+	msgch := n.handleGossipMsg()
 
 	time.AfterFunc(time.Second, func() {
-		if lb.Height > 0 && n.conf.SingleNode {
-			lastAct, err := getMiner(lb)
-			if err != nil {
-				panic(err)
-			}
-			lround := int(lastAct.Sort.Proof.Input.Round)
-			if n.cvs[lb.Height] == nil || n.cvs[lb.Height][lround] == nil {
-				n.voteLast()
-			}
-		}
 		n.addBlock(lb)
 	})
 
-	blockTimeout := time.Millisecond * time.Duration(n.conf.BlockTimeout)
-	if blockTimeout < time.Millisecond*500 || blockTimeout > time.Millisecond*30000 {
-		blockTimeout = time.Millisecond * 1000
-	}
-	baseST := blockTimeout * 2 / 3
-	deltaST := blockTimeout / 3
-	var rs []int
-	plog.Info("@@@@@@@@ pos33 node runing.......", "last block height", lb.Height, "baseST", baseST)
+	plog.Info("@@@@@@@@ pos33 node runing.......", "last block height", lb.Height)
+	isSync := false
+	syncTick := time.NewTicker(time.Microsecond * 100)
+	etm := time.NewTimer(time.Hour)
+	vtm := time.NewTimer(time.Hour)
+	ch := make(chan int64, 1)
+	// height := int64(0)
+	round := 0
 
 	for {
-		if !n.miningOK() {
-			time.Sleep(time.Second)
-			continue
-		}
 		select {
 		case msg := <-msgch:
 			n.handlePos33Msg(msg)
+		case <-syncTick.C:
+			isSync = n.IsCaughtUp()
+		default:
+		}
+		if !isSync {
+			time.Sleep(time.Millisecond * 10)
+			continue
+		}
+		select {
+		case <-vtm.C:
 		case height := <-ch:
 			if height == n.lastBlock().Height+1 {
-				n.round++
-				plog.Info("@@@ vote timeout: ", "height", height, "round", n.round)
-				n.reSortition(height, n.round)
-				n.elect(height, n.round)
-				etm = time.NewTimer(baseST + deltaST*time.Duration(n.round))
+				round++
+				plog.Info("@@@ vote timeout: ", "height", height, "round", round)
+				n.reSortition(height, round)
+				etm = time.NewTimer(time.Second * 3)
 			}
 		case <-etm.C:
 			height := n.lastBlock().Height + 1
-			plog.Info("elect timeout: ", "height", height)
-			tid := n.bp(height, n.round)
-			n.vote(height, n.round, tid)
-			// du := baseST + deltaST*time.Duration(n.round+1)
+			n.vote(height, round)
+			vtm = time.NewTimer(time.Second * 3)
 			time.AfterFunc(time.Second*3, func() {
 				ch <- height
 			})
 		case b := <-n.bch: // new block add to chain
-			n.setLastBlock(b.Height)
-			n.checkUnB(b)
+			plog.Info("new block added", "height", b.Height)
 			if b.Height%pt.Pos33SortitionSize == 0 {
 				n.flushTicket()
 			}
 			n.sortition(b, 0)
-			baseST, rs = changeBaseST(rs, b, baseST, deltaST, blockTimeout)
-			n.round = 0
-			n.elect(b.Height+1, 0)
+			round = 0
 			n.clear(b.Height - 1)
-			plog.Info("elect timer", "t", baseST)
-			etm = time.NewTimer(baseST)
+			etm = time.NewTimer(time.Millisecond * 10)
+		default:
 		}
 	}
 }
 
 func (n *node) sendVoteSorts(height int64, round int) {
-	mp, ok := n.ivs[height]
-	if !ok {
-		return
-	}
-	ss, ok := mp[round]
-	if !ok {
-		return
-	}
-	if len(ss) == 0 {
-		return
-	}
+	ss := n.myVotes(height, round)
+	s := n.mySort(height, round)
 
-	m := &pt.Pos33Sorts{Sorts: ss}
+	m := &pt.Pos33Sorts{Sorts: ss, S: s}
 	b := marshalSortsMsg(m)
 	n.gss.gossip(b)
 	n.handleSortsMsg(m, true)
-}
-
-func changeBaseST(rs []int, b *types.Block, baseST, deltaST, bt time.Duration) (time.Duration, []int) {
-	rs = append(rs, getBlockRound(b))
-	if len(rs) > pt.Pos33SortitionSize {
-		rs = rs[1:]
-	}
-
-	if b.Height%pt.Pos33SortitionSize != 0 {
-		return baseST, rs
-	}
-
-	if avgRound(rs) > 1 {
-		baseST += deltaST
-	} else {
-		baseST -= deltaST
-		if baseST < bt*2/3 {
-			baseST = bt * 2 / 3
-		}
-	}
-	return baseST, rs
-}
-
-func avgRound(rs []int) int {
-	if len(rs) < pt.Pos33SortitionSize {
-		return 0
-	}
-	sum := 0
-	for _, r := range rs {
-		sum += r
-	}
-	return sum / len(rs)
 }
 
 func hexs(b []byte) string {
@@ -1055,22 +786,10 @@ func hexs(b []byte) string {
 	return s[:16]
 }
 
-func (n *node) bp(height int64, round int) string {
-	var pss []*pt.Pos33SortMsg
-	for _, s := range n.cps[height][round] {
-		pss = append(pss, s)
-	}
-	if len(pss) == 0 {
-		return ""
-	}
-
-	sort.Sort(pt.Sorts(pss))
-
-	return pss[0].SortHash.Tid
-}
-
-func (n *node) vote(height int64, round int, tid string) {
+func (n *node) vote(height int64, round int) {
+	tid := n.bp(height, round)
 	if tid == "" {
+		plog.Info("vote bp is nil")
 		return
 	}
 	ss := n.myVotes(height, round)
@@ -1081,7 +800,7 @@ func (n *node) vote(height int64, round int, tid string) {
 	if len(ss) > pt.Pos33VoterSize {
 		ss = ss[:pt.Pos33VoterSize]
 	}
-	plog.Info("vote bp", "height", height, "round", round, "tid", tid[:16])
+	plog.Info("vote bp", "height", height, "round", round, "tid", tid)
 	var vs []*pt.Pos33VoteMsg
 	for _, s := range ss {
 		v := &pt.Pos33VoteMsg{Sort: s, Tid: tid}
@@ -1101,12 +820,6 @@ func (n *node) vote(height int64, round int, tid string) {
 	v := &pt.Pos33Votes{Vs: vs}
 	n.gss.gossip(marshalVoteMsg(v))
 	n.handleVotesMsg(v, true)
-	mp, ok := n.votedMap[height]
-	if !ok {
-		mp = make(map[int]bool)
-	}
-	mp[round] = true
-	n.votedMap[height] = mp
 }
 
 func getBlockRound(b *types.Block) int {
@@ -1121,30 +834,6 @@ func getBlockRound(b *types.Block) int {
 	return int(act.Sort.Proof.Input.Round)
 }
 
-func (n *node) elect(height int64, round int) error {
-	plog.Info("@@@ elect @@@", "height", height, "round", round)
-	bm, err := n.makeBlock(height, round)
-	if err != nil {
-		plog.Error("make block error", "err", err, "height", height, "round", round)
-		//return err
-		if err != errNotEnoughVotes || round <= 3 {
-			return err
-		}
-		plog.Info("aha, the last block error, we remake it")
-		lb := n.lastBlock()
-		lr := getBlockRound(lb)
-		n.setLastBlock(height - 2)
-		bm, err = n.makeBlock(height-1, lr+1)
-		if err != nil {
-			plog.Error("make block error", "err", err, "height", height, "round", round)
-			return err
-		}
-	}
-	n.gss.gossip(marshalBlockMsg(bm))
-	n.handleBlockMsg(bm, true)
-	return nil
-}
-
 func marshalSortsMsg(m *pt.Pos33Sorts) []byte {
 	pm := &pt.Pos33Msg{
 		Data: types.Encode(m),
@@ -1152,24 +841,6 @@ func marshalSortsMsg(m *pt.Pos33Sorts) []byte {
 	}
 	return types.Encode(pm)
 }
-
-func marshalBlockMsg(m *pt.Pos33BlockMsg) []byte {
-	pm := &pt.Pos33Msg{
-		Data: types.Encode(m),
-		Ty:   pt.Pos33Msg_B,
-	}
-	return types.Encode(pm)
-}
-
-/*
-func marshalSortMsg(m *pt.Pos33SortMsg) []byte {
-	pm := &pt.Pos33Msg{
-		Data: types.Encode(m),
-		Ty:   pt.Pos33Msg_S,
-	}
-	return types.Encode(pm)
-}
-*/
 
 func marshalVoteMsg(v *pt.Pos33Votes) []byte {
 	pm := &pt.Pos33Msg{
