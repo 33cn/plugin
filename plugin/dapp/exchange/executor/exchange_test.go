@@ -530,7 +530,6 @@ func TestExchange(t *testing.T) {
 		assert.Equal(t, nil, err)
 		txs = append(txs, tx)
 	}
-	t.Log(len(txs))
 	err = Exec_Block(t, stateDB, kvdb, env, txs...)
 	assert.Equal(t, nil, err)
 	acc = accB1.LoadExecAccount(Nodes[1], execAddr)
@@ -538,6 +537,141 @@ func TestExchange(t *testing.T) {
 	acc = accA.LoadExecAccount(Nodes[0], execAddr)
 	assert.Equal(t, 860*types.Coin, acc.Balance)
 	assert.Equal(t, 30*types.Coin, acc.Frozen)
+
+	//根据op查询市场深度
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.NotEqual(t, nil, err)
+	//assert.Equal(t, (200-et.MaxMatchCount)*types.Coin, marketDepthList.List[0].GetAmount())
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 30*types.Coin, marketDepthList.List[0].GetAmount())
+
+	//清理环境,重建数据库
+	util.CloseTestDB(dir, stateDB)
+	total = 1000 * types.Coin
+	accountA = types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[0],
+	}
+	accountB = types.Account{
+		Balance: total,
+		Frozen:  0,
+		Addr:    Nodes[1],
+	}
+
+	dir, stateDB, kvdb = util.CreateTestDB()
+	defer util.CloseTestDB(dir, stateDB)
+	//execAddr := address.ExecAddress(et.ExchangeX)
+
+	accA, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accA.SaveExecAccount(execAddr, &accountA)
+
+	accB, _ = account.NewAccountDB(cfg, "coins", "bty", stateDB)
+	accB.SaveExecAccount(execAddr, &accountB)
+
+	accA1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accA1.SaveExecAccount(execAddr, &accountA)
+
+	accB1, _ = account.NewAccountDB(cfg, "token", "CCNY", stateDB)
+	accB1.SaveExecAccount(execAddr, &accountB)
+
+	env = &execEnv{
+		10,
+		1,
+		1539918074,
+	}
+	/*
+			  //批量测试,同个区块内出现多笔可以撮合的买卖交易
+			  用例说明:
+			    1.在同一区块内,出现如下：
+		            100笔卖单
+			        50笔买单
+			        20笔卖单
+			        100笔买单
+	*/
+	acc = accB1.LoadExecAccount(Nodes[1], execAddr)
+	assert.Equal(t, 1000*types.Coin, acc.Balance)
+	acc = accA.LoadExecAccount(Nodes[0], execAddr)
+	assert.Equal(t, 1000*types.Coin, acc.Balance)
+	txs = nil
+	for i := 0; i < 100; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 50; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+
+	for i := 0; i < 20; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+	for i := 0; i < 100; i++ {
+		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
+		assert.Equal(t, nil, err)
+		txs = append(txs, tx)
+	}
+	err = Exec_Block(t, stateDB, kvdb, env, txs...)
+	assert.Equal(t, nil, err)
+	acc = accB1.LoadExecAccount(Nodes[1], execAddr)
+	assert.Equal(t, 850*types.Coin, acc.Balance)
+	assert.Equal(t, 30*types.Coin, acc.Frozen)
+	acc = accA.LoadExecAccount(Nodes[0], execAddr)
+	assert.Equal(t, 880*types.Coin, acc.Balance)
+
+	//根据op查询市场深度
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
+	assert.NotEqual(t, nil, err)
+	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpBuy}, stateDB, kvdb)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 30*types.Coin, marketDepthList.List[0].GetAmount())
+
+	//根据状态地址查询订单信息
+	//分页查询
+	count = 0
+	primaryKey = ""
+	for {
+		orderList, err := Exec_QueryOrderList(et.Completed, Nodes[1], primaryKey, stateDB, kvdb)
+		if err != nil {
+			break
+		}
+		count = count + len(orderList.List)
+		if orderList.PrimaryKey == "" {
+			break
+		}
+		primaryKey = orderList.PrimaryKey
+	}
+	assert.Equal(t, 120, count)
+
+	count = 0
+	primaryKey = ""
+	for {
+		orderList, err := Exec_QueryOrderList(et.Ordered, Nodes[1], primaryKey, stateDB, kvdb)
+		if err != nil {
+			break
+		}
+		count = count + len(orderList.List)
+		if orderList.PrimaryKey == "" {
+			break
+		}
+		primaryKey = orderList.PrimaryKey
+	}
+	assert.Equal(t, 30, count)
+
 }
 
 func CreateLimitOrder(limitOrder *et.LimitOrder, privKey string) (tx *types.Transaction, err error) {
