@@ -481,18 +481,14 @@ func TestExchange(t *testing.T) {
 	        20笔卖单
 	        50笔买单
 	        20笔卖单
-	        30笔买单
+	        50笔买单
 	        100笔卖单
 
 	*/
-	tx1, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
-	assert.Equal(t, nil, err)
-	tx2, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
-	assert.Equal(t, nil, err)
-	err = Exec_Block(t, stateDB, kvdb, env, tx1, tx2)
-	assert.Equal(t, nil, err)
+	acc = accB1.LoadExecAccount(Nodes[1], execAddr)
+	assert.Equal(t, 1000*types.Coin, acc.Balance)
+	acc = accA.LoadExecAccount(Nodes[0], execAddr)
+	assert.Equal(t, 1000*types.Coin, acc.Balance)
 	var txs []*types.Transaction
 	for i := 0; i < 10; i++ {
 		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -521,7 +517,7 @@ func TestExchange(t *testing.T) {
 		assert.Equal(t, nil, err)
 		txs = append(txs, tx)
 	}
-	for i := 0; i < 30; i++ {
+	for i := 0; i < 50; i++ {
 		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
 		assert.Equal(t, nil, err)
@@ -534,106 +530,16 @@ func TestExchange(t *testing.T) {
 		assert.Equal(t, nil, err)
 		txs = append(txs, tx)
 	}
+	t.Log(len(txs))
 	err = Exec_Block(t, stateDB, kvdb, env, txs...)
 	assert.Equal(t, nil, err)
+	acc = accB1.LoadExecAccount(Nodes[1], execAddr)
+	assert.Equal(t, 890*types.Coin, acc.Balance)
+	acc = accA.LoadExecAccount(Nodes[0], execAddr)
+	assert.Equal(t, 860*types.Coin, acc.Balance)
+	assert.Equal(t, 30*types.Coin, acc.Frozen)
 }
-func TestA(t *testing.T){
 
-	total := 10000 * types.Coin
-	accountA := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    Nodes[0],
-	}
-	accountB := types.Account{
-		Balance: total,
-		Frozen:  0,
-		Addr:    Nodes[1],
-	}
-	execAddr := address.ExecAddress(et.ExchangeX)
-	dir, stateDB, kvdb := util.CreateTestDB()
-	defer util.CloseTestDB(dir, stateDB)
-	//环境准备
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("chain33")
-	Init(et.ExchangeX, cfg, nil)
-	accA, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
-	accA.SaveExecAccount(execAddr, &accountA)
-
-	accB, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
-	accB.SaveExecAccount(execAddr, &accountB)
-
-	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
-	accA1.SaveExecAccount(execAddr, &accountA)
-
-	accB1, _ := account.NewAccountDB(cfg, "token", "CCNY", stateDB)
-	accB1.SaveExecAccount(execAddr, &accountB)
-
-	env := &execEnv{
-		10,
-		1,
-		1539918074,
-	}
-	/*
-	  //批量测试,同一个区块内出现多笔可以撮合的买卖交易
-	  用例说明:
-	    1.在同一个区块内,出现如下：
-	        10笔买单
-	        20笔卖单
-	*/
-	tx1, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
-	assert.Equal(t, nil, err)
-	tx2, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
-	assert.Equal(t, nil, err)
-	err = Exec_Block(t, stateDB, kvdb, env, tx1, tx2)
-	assert.Equal(t, nil, err)
-	var txs []*types.Transaction
-	for i := 0; i < 100; i++ {
-		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
-		assert.Equal(t, nil, err)
-		txs = append(txs, tx)
-	}
-	err = Exec_Block(t, stateDB, kvdb, env, txs...)
-	txs = nil
-	for i := 0; i < 2000; i++ {
-		tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-			RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
-		assert.Equal(t, nil, err)
-		txs = append(txs, tx)
-	}
-
-	//for i := 0; i < 50; i++ {
-	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
-	//	assert.Equal(t, nil, err)
-	//	txs = append(txs, tx)
-	//}
-	//
-	//for i := 0; i < 20; i++ {
-	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
-	//	assert.Equal(t, nil, err)
-	//	txs = append(txs, tx)
-	//}
-	//for i := 0; i < 30; i++ {
-	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpBuy}, PrivKeyB)
-	//	assert.Equal(t, nil, err)
-	//	txs = append(txs, tx)
-	//}
-	//
-	//for i := 0; i < 100; i++ {
-	//	tx, err := CreateLimitOrder(&et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-	//		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: types.Coin, Amount: types.Coin, Op: et.OpSell}, PrivKeyA)
-	//	assert.Equal(t, nil, err)
-	//	txs = append(txs, tx)
-	//}
-	err = Exec_Block(t, stateDB, kvdb, env, txs...)
-	assert.Equal(t, nil, err)
-}
 func CreateLimitOrder(limitOrder *et.LimitOrder, privKey string) (tx *types.Transaction, err error) {
 	ety := types.LoadExecutorType(et.ExchangeX)
 	tx, err = ety.Create("LimitOrder", limitOrder)
@@ -711,10 +617,6 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 			return err
 		}
 		for _, kv := range set.KV {
-			t.Log("key:",string(kv.Key))
-			if  kv.Value == nil {
-				t.Log("value:",nil)
-			}
 			kvdb.Set(kv.Key, kv.Value)
 		}
 		//save to database
