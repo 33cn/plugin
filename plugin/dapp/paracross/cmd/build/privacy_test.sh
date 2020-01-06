@@ -227,12 +227,12 @@ function tradePrivacyTransfer() {
 }
 
 function privacy_test() {
-echoGre "=========== # privacy test ============="
+    echoGre "=========== # privacy test ============="
     init "${CLI}" 5
     init "${PARA_CLI}" 10
 
     coinsPrivacyTransfer
     # tokenPrivacyTransfer
     # tradePrivacyTransfer
-echoGre "=========== # privacy test end ============="
+    echoGre "=========== # privacy test end ============="
 }
