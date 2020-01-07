@@ -144,7 +144,7 @@ name="timeline"
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
 # 最小得交易手续费用，这个没有默认值，必填，一般是100000
-minTxFee=100000
+minTxFeeRate=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 # timeline 是默认的先来先进的按时间排序
@@ -152,7 +152,7 @@ maxTxNumPerAccount=10000
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
 # 最小得交易手续费用，这个没有默认值，必填，一般是100000
-minTxFee=100000
+minTxFeeRate=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 # score是分数队列模式(分数=常量a*手续费/交易字节数-常量b*时间*定量c，按分数排队，高的优先，常量a，b和定量c可配置)，按分数来排序
@@ -160,7 +160,7 @@ maxTxNumPerAccount=10000
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
 # 最小得交易手续费用，这个没有默认值，必填，一般是100000
-minTxFee=100000
+minTxFeeRate=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 # 时间占价格比例
@@ -174,7 +174,7 @@ pricePower=1
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
 # 最小得交易手续费用，这个没有默认值，必填，一般是100000
-minTxFee=100000
+minTxFeeRate=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 [consensus]
@@ -256,10 +256,6 @@ minerdisable=false
 # 允许购买ticket挖矿的白名单地址，默认配置“*”，允许所有地址购买
 minerwhitelist=["*"]
 [exec]
-#执行器执行是否免费
-isFree=false
-#执行器执行所需最小费用,低于Mempool和Wallet设置的MinFee,在minExecFee = 0 的情况下，isFree = true才会生效
-minExecFee=100000
 #是否开启stat插件
 enableStat=false
 #是否开启MVCC插件

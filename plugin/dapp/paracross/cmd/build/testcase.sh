@@ -252,13 +252,13 @@ function token_create() {
     echo "${hash}"
     query_tx "${1}" "${hash}"
 
-    ${1} token get_precreated
-    owner=$(${1} token get_precreated | jq -r ".owner")
+    ${1} token precreated
+    owner=$(${1} token precreated | jq -r ".owner")
     if [ "${owner}" != "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" ]; then
         echo "wrong pre create owner"
         exit 1
     fi
-    total=$(${1} token get_precreated | jq -r ".total")
+    total=$(${1} token precreated | jq -r ".total")
     if [ "${total}" != 10000 ]; then
         echo "wrong pre create total"
         exit 1
@@ -269,19 +269,19 @@ function token_create() {
     echo "${hash}"
     query_tx "${1}" "${hash}"
 
-    ${1} token get_finish_created
-    owner=$(${1} token get_finish_created | jq -r ".owner")
+    ${1} token created
+    owner=$(${1} token created | jq -r ".owner")
     if [ "${owner}" != "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" ]; then
         echo "wrong finish created owner"
         exit 1
     fi
-    total=$(${1} token get_finish_created | jq -r ".total")
+    total=$(${1} token created | jq -r ".total")
     if [ "${total}" != 10000 ]; then
         echo "wrong finish created total"
         exit 1
     fi
-    ${1} token token_balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD
-    balance=$(${1} token token_balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD | jq -r '.[]|.balance')
+    ${1} token balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD
+    balance=$(${1} token balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "10000.0000" ]; then
         echo "wrong para token genesis create, should be 10000.0000"
         exit 1
@@ -294,8 +294,8 @@ function token_transfer() {
     echo "${hash}"
     query_tx "${1}" "${hash}"
 
-    ${1} token token_balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD
-    balance=$(${1} token token_balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD | jq -r '.[]|.balance')
+    ${1} token balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD
+    balance=$(${1} token balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "11.0000" ]; then
         echo "wrong para token transfer, should be 11.0000"
         exit 1
@@ -308,8 +308,8 @@ function token_transfer() {
 
     # $ ./build/chain33-cli   exec addr  -e user.p.para.paracross
     # 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii
-    ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
-    balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
+    ${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
+    balance=$(${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "11.0000" ]; then
         echo "wrong para token send exec, should be 11.0000"
         exit 1
@@ -320,8 +320,8 @@ function token_transfer() {
     echo "${hash}"
     query_tx "${1}" "${hash}"
 
-    ${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
-    balance=$(${1} token token_balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
+    ${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
+    balance=$(${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "0.0000" ]; then
         echo "wrong para token withdraw, should be 0.0000"
         exit 1
@@ -398,13 +398,13 @@ function token_create_on_mainChain() {
     echo "MAIN_CLI is:" "${MAIN_CLI}"
     query_tx "${MAIN_CLI}" "${hash}"
 
-    ${CLI} token get_precreated
-    owner=$(${CLI} token get_precreated | jq -r ".owner")
+    ${CLI} token precreated
+    owner=$(${CLI} token precreated | jq -r ".owner")
     if [ "${owner}" != "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" ]; then
         echo "wrong pre create owner"
         exit 1
     fi
-    total=$(${CLI} token get_precreated | jq -r ".total")
+    total=$(${CLI} token precreated | jq -r ".total")
     if [ "${total}" != 10000 ]; then
         echo "wrong pre create total"
         exit 1
@@ -415,19 +415,19 @@ function token_create_on_mainChain() {
     echo "${hash}"
     query_tx "${MAIN_CLI}" "${hash}"
 
-    ${CLI} token get_finish_created
-    owner=$(${CLI} token get_finish_created | jq -r ".owner")
+    ${CLI} token created
+    owner=$(${CLI} token created | jq -r ".owner")
     if [ "${owner}" != "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" ]; then
         echo "wrong finish created owner"
         exit 1
     fi
-    total=$(${CLI} token get_finish_created | jq -r ".total")
+    total=$(${CLI} token created | jq -r ".total")
     if [ "${total}" != 10000 ]; then
         echo "wrong finish created total"
         exit 1
     fi
-    ${CLI} token token_balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM
-    balance=$(${CLI} token token_balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM | jq -r '.[]|.balance')
+    ${CLI} token balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM
+    balance=$(${CLI} token balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e token -s FZM | jq -r '.[]|.balance')
     if [ "${balance}" != "10000.0000" ]; then
         echo "wrong para token genesis create, should be 10000.0000"
         exit 1

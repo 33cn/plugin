@@ -116,7 +116,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 
 [consensus]
 name="tendermint"
@@ -189,8 +189,6 @@ minerdisable=false
 minerwhitelist=["*"]
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]

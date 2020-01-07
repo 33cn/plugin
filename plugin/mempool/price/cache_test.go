@@ -212,7 +212,7 @@ func TestRealNodeMempool(t *testing.T) {
 				//发送交易组
 				tx1 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
 				tx2 := util.CreateCoinsTx(cfg, priv, mock33.GetGenesisAddress(), types.Coin/1000)
-				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, cfg.GInt("MinFee"))
+				txgroup, err := types.CreateTxGroup([]*types.Transaction{tx1, tx2}, cfg.GetMinTxFeeRate())
 				if err != nil {
 					log.Println(err)
 					continue

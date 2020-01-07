@@ -72,7 +72,7 @@ func backupCmd(cmd *cobra.Command, args []string) {
 	defaultAddr, _ := cmd.Flags().GetString("default")
 	delay, _ := cmd.Flags().GetInt64("delay")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee
@@ -133,7 +133,7 @@ func prepareCmd(cmd *cobra.Command, args []string) {
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee
@@ -168,7 +168,7 @@ func performCmd(cmd *cobra.Command, args []string) {
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee
@@ -215,7 +215,7 @@ func cancelCmd(cmd *cobra.Command, args []string) {
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee

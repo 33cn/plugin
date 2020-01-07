@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/exchange/executor"
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	tt "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/gogo/protobuf/proto"
 	"google.golang.org/grpc"
 )
@@ -69,6 +70,45 @@ func (c *GRPCCli) Query(fn string, msg proto.Message) ([]byte, error) {
 		return nil, errors.New(string(r.Msg))
 	}
 	return r.Msg, nil
+}
+
+func (c *GRPCCli) GetExecAccount(addr string, exec string, symbol string) (*types.Account, error) {
+	if exec == "coins" {
+		// bty
+		var addrs []string
+		addrs = append(addrs, addr)
+		params := &types.ReqBalance{
+			Addresses: addrs,
+			Execer:    et.ExchangeX,
+		}
+
+		accs, err := c.client.GetBalance(context.Background(), params)
+		if err != nil {
+			return nil, err
+		}
+		return accs.Acc[0], nil
+	}
+
+	// token: ccny
+	var addrs []string
+	addrs = append(addrs, addr)
+	param := &tt.ReqTokenBalance{
+		Addresses:   addrs,
+		TokenSymbol: symbol,
+		Execer:      et.ExchangeX,
+	}
+	msg, err := c.Query("token.GetAccountTokenBalance", param)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp tt.ReplyAccountTokenAssets
+	err = types.Decode(msg, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.TokenAssets[0].Account, nil
 }
 
 // 发送交易并等待执行结果

@@ -70,7 +70,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="para"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [consensus]
@@ -162,8 +162,6 @@ signType="secp256k1"
 minerdisable=true
 
 [exec]
-isFree=true
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 

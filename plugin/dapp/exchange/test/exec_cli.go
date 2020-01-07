@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -26,6 +27,18 @@ type ExecCli struct {
 	height     int64
 	blockTime  int64
 	difficulty uint64
+	q          queue.Queue
+	cfg        *types.Chain33Config
+	execAddr   string
+
+	accA  *account.DB //exec account
+	accA1 *account.DB //exec token account
+	accB  *account.DB
+	accB1 *account.DB
+	accC  *account.DB
+	accC1 *account.DB
+	accD  *account.DB
+	accD1 *account.DB
 }
 
 var (
@@ -43,25 +56,26 @@ func NewExecCli() *ExecCli {
 
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
+
 	executor.Init(et.ExchangeX, cfg, nil)
-	total := 100 * types.Coin
-	accountA := types.Account{
+	total := 100000000 * types.Coin
+	accountA := &types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[0],
 	}
-	accountB := types.Account{
+	accountB := &types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[1],
 	}
 
-	accountC := types.Account{
+	accountC := &types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[2],
 	}
-	accountD := types.Account{
+	accountD := &types.Account{
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[3],
@@ -70,28 +84,31 @@ func NewExecCli() *ExecCli {
 	execAddr := address.ExecAddress(et.ExchangeX)
 
 	accA, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
-	accA.SaveExecAccount(execAddr, &accountA)
+	accA.SaveExecAccount(execAddr, accountA)
 
 	accB, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
-	accB.SaveExecAccount(execAddr, &accountB)
+	accB.SaveExecAccount(execAddr, accountB)
 
 	accC, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
-	accC.SaveExecAccount(execAddr, &accountC)
+	accC.SaveExecAccount(execAddr, accountC)
 
 	accD, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
-	accD.SaveExecAccount(execAddr, &accountD)
+	accD.SaveExecAccount(execAddr, accountD)
 
 	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
-	accA1.SaveExecAccount(execAddr, &accountA)
+	accA1.SaveExecAccount(execAddr, accountA)
 
-	accB1, _ := account.NewAccountDB(cfg, "paracross", "coins.bty", sdb)
-	accB1.SaveExecAccount(execAddr, &accountB)
+	accB1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
+	accB1.SaveExecAccount(execAddr, accountB)
 
-	accC1, _ := account.NewAccountDB(cfg, "paracross", "token.CCNY", sdb)
-	accC1.SaveExecAccount(execAddr, &accountC)
+	accC1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
+	accC1.SaveExecAccount(execAddr, accountC)
 
 	accD1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
-	accD1.SaveExecAccount(execAddr, &accountD)
+	accD1.SaveExecAccount(execAddr, accountD)
+
+	q := queue.New("channel")
+	q.SetConfig(cfg)
 
 	return &ExecCli{
 		ldb:        ldb,
@@ -99,14 +116,24 @@ func NewExecCli() *ExecCli {
 		height:     1,
 		blockTime:  time.Now().Unix(),
 		difficulty: 1539918074,
+		q:          q,
+		cfg:        cfg,
+		execAddr:   execAddr,
+
+		accA:  accA,
+		accA1: accA1,
+		accB:  accB,
+		accB1: accB1,
+		accC:  accC,
+		accC1: accC1,
+		accD:  accD,
+		accD1: accD1,
 	}
 }
 
 func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLog, error) {
 	var err error
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("chain33")
-	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
+	tx, err = types.FormatTx(c.cfg, et.ExchangeX, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +151,7 @@ func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 	c.height++
 	c.blockTime += 10
 	c.difficulty++
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
+	api, _ := client.New(c.q.Client(), nil)
 	exec.SetAPI(api)
 	exec.SetStateDB(c.sdb)
 	exec.SetLocalDB(c.ldb)
@@ -156,11 +181,7 @@ func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 }
 
 func (c *ExecCli) Query(fn string, msg proto.Message) ([]byte, error) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
-	cfg.SetTitleOnlyForTest("chain33")
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
+	api, _ := client.New(c.q.Client(), nil)
 	exec := executor.NewExchange()
 	exec.SetAPI(api)
 	exec.SetStateDB(c.sdb)
@@ -192,4 +213,22 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
+}
+
+func (c *ExecCli) GetExecAccount(addr string, exec string, symbol string) (*types.Account, error) {
+	//mavl-{coins}-{bty}-exec-{26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp}:{1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP}
+	//mavl-{token}-{ccny}-exec-{26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp}:{1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP}
+	key := []byte(fmt.Sprintf("mavl-%s-%s-exec-%s:%s", exec, symbol, c.execAddr, addr))
+	bytes, err := c.sdb.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	var acc types.Account
+	err = types.Decode(bytes, &acc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &acc, nil
 }
