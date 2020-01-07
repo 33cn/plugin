@@ -635,3 +635,8 @@ func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
 	}
 	return &tmtypes.ValidatorSet{Validators: validators, Proposer: &tmtypes.Validator{}}, nil
 }
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
+}
