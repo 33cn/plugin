@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20200102023641-9864264f67de
+	github.com/33cn/chain33 v0.0.0-20200103093520-2bdc0cea1093
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -17,13 +17,9 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.2.0
 	github.com/hashicorp/golang-lru v0.5.0
-	github.com/json-iterator/go v1.1.7 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
