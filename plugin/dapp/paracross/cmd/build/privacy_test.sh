@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-NODE3=build_chain33_1
+# NODE3=build_chain33_1
 PARA_CLI="docker exec ${NODE3} /root/chain33-para-cli"
 CLI="docker exec ${NODE3} /root/chain33-cli"
 
