@@ -40,6 +40,8 @@ isRecordBlockSequence=true
 isParaChain=false
 enableTxQuickIndex=true
 enableReExecLocal=true
+# 使能精简localdb
+enableReduceLocaldb=true
 
 [p2p]
 seeds=[]

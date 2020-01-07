@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
 
@@ -431,12 +432,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 		receipt = makeCommitReceipt(a.fromaddr, commit, nil, stat)
 	} else {
-		var copyStat pt.ParacrossHeightStatus
-		err = deepCopy(&copyStat, stat)
-		if err != nil {
-			clog.Error("paracross.Commit deep copy fail", "copy", copyStat, "stat", stat)
-			return nil, err
-		}
+		copyStat := proto.Clone(stat).(*pt.ParacrossHeightStatus)
 		// 如有分叉， 同一个节点可能再次提交commit交易
 		found, index := hasCommited(stat.Details.Addrs, a.fromaddr)
 		if found {
@@ -452,7 +448,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			}
 		}
 
-		receipt = makeCommitReceipt(a.fromaddr, commit, &copyStat, stat)
+		receipt = makeCommitReceipt(a.fromaddr, commit, copyStat, stat)
 	}
 	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
 	if cfg.IsDappFork(commit.Status.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {

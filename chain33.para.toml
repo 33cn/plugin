@@ -42,6 +42,8 @@ isParaChain = true
 enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
 enableReExecLocal=true
+# 使能精简localdb
+enableReduceLocaldb=false
 
 [p2p]
 seeds=[]
