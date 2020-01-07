@@ -209,7 +209,7 @@ func (client *Client) CreateBlock() {
 
 // 向raft底层发送block
 func (client *Client) propose(block *types.Block) {
-	client.proposeC <- block
+	client.proposeC <- block.Clone()
 }
 
 // 从receive channel中读leader发来的block
