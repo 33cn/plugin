@@ -819,8 +819,5 @@ func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block)
 	cmpBlockDiff := client.getCurrentTarget(cmpBlock.BlockTime, cmpBlockMiner.TicketId, cmpBlockMiner.Modify, cmpBlockMiner.PrivHash)
 
 	//数字越小难度越大
-	if newBlockDiff.Cmp(cmpBlockDiff) < 0 {
-		return true
-	}
-	return false
+	return newBlockDiff.Cmp(cmpBlockDiff) < 0
 }
