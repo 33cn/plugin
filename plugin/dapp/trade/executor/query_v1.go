@@ -110,18 +110,7 @@ func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, 
 			tradelog.Error("GetOnesSellOrder", "err", err)
 			return nil, err
 		}
-		var replys pty.ReplyTradeOrders
-		cfg := t.GetAPI().GetConfig()
-		for _, row := range rows {
-			o, ok := row.Data.(*pty.LocalOrder)
-			if !ok {
-				tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
-				return nil, types.ErrTypeAsset
-			}
-			reply := fmtReply(cfg, o)
-			replys.Orders = append(replys.Orders, reply)
-		}
-		return &replys, nil
+		return t.toTradeOrders(rows)
 	}
 
 	var replys pty.ReplyTradeOrders
@@ -137,17 +126,11 @@ func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, 
 		if len(rows) == 0 {
 			continue
 		}
-		var replys pty.ReplyTradeOrders
-		cfg := t.GetAPI().GetConfig()
-		for _, row := range rows {
-			o, ok := row.Data.(*pty.LocalOrder)
-			if !ok {
-				tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
-				return nil, types.ErrTypeAsset
-			}
-			reply := fmtReply(cfg, o)
-			replys.Orders = append(replys.Orders, reply)
+		rs, err := t.toTradeOrders(rows)
+		if err != nil {
+			return nil, err
 		}
+		replys.Orders = append(replys.Orders, rs.Orders...)
 
 	}
 	return &replys, nil
