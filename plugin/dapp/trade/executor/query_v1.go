@@ -143,40 +143,7 @@ func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.
 
 // GetOnesBuyOrder by address or address-token
 func (t *trade) GetOnesBuyOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
-	var keys [][]byte
-	if 0 == len(addrTokens.Token) {
-		values, err := t.GetLocalDB().List(calcOnesBuyOrderPrefixAddr(addrTokens.Addr), nil, 0, 0)
-		if err != nil {
-			return nil, err
-		}
-		if len(values) != 0 {
-			tradelog.Debug("trade Query", "get number of buy keys", len(values))
-			keys = append(keys, values...)
-		}
-	} else {
-		for _, token := range addrTokens.Token {
-			values, err := t.GetLocalDB().List(calcOnesBuyOrderPrefixToken(token, addrTokens.Addr), nil, 0, 0)
-			tradelog.Debug("trade Query", "Begin to list addr with token", token, "got values", len(values))
-			if err != nil && err != types.ErrNotFound {
-				return nil, err
-			}
-			if len(values) != 0 {
-				keys = append(keys, values...)
-			}
-		}
-	}
-
-	var replys pty.ReplyTradeOrders
-	for _, key := range keys {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
-			continue
-		}
-		tradelog.Debug("trade Query", "getSellOrderFromID", string(key))
-		replys.Orders = append(replys.Orders, reply)
-	}
-
-	return &replys, nil
+	return t.GetOnesOrder(false, addrTokens)
 }
 
 // 1.5 没找到
