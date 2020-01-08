@@ -17,6 +17,10 @@ func (t *trade) Query_GetTokenSellOrderByStatus(req *pty.ReqTokenSellOrder) (typ
 // GetTokenSellOrderByStatus by status
 // sell & TokenSymbol & status  sort by price
 func (t *trade) GetTokenSellOrderByStatus(req *pty.ReqTokenSellOrder, status int32) (types.Message, error) {
+	return t.GetTokenOrderByStatus(true, req, status)
+}
+
+func (t *trade) GetTokenOrderByStatus(isSell bool, req *pty.ReqTokenSellOrder, status int32) (types.Message, error) {
 	if req.Count <= 0 || (req.Direction != 1 && req.Direction != 0) {
 		return nil, types.ErrInvalidParam
 	}
@@ -31,7 +35,7 @@ func (t *trade) GetTokenSellOrderByStatus(req *pty.ReqTokenSellOrder, status int
 	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
 	order.PriceExec = defaultAssetExec
 
-	order.IsSellOrder = true
+	order.IsSellOrder = isSell
 
 	order.Status = req.Status
 
@@ -66,38 +70,16 @@ func (t *trade) Query_GetTokenBuyOrderByStatus(req *pty.ReqTokenBuyOrder) (types
 // GetTokenBuyOrderByStatus by status
 // buy & TokenSymbol & status buy sort by price
 func (t *trade) GetTokenBuyOrderByStatus(req *pty.ReqTokenBuyOrder, status int32) (types.Message, error) {
-	if req.Count <= 0 || (req.Direction != 1 && req.Direction != 0) {
-		return nil, types.ErrInvalidParam
-	}
-
-	fromKey := []byte("")
-	if len(req.FromKey) != 0 {
-		buy := t.replyReplyBuyOrderfromID([]byte(req.FromKey))
-		if buy == nil {
-			tradelog.Error("GetTokenBuyOrderByStatus", "key not exist", req.FromKey)
-			return nil, types.ErrInvalidParam
-		}
-		fromKey = calcTokensBuyOrderKeyStatus(buy.TokenSymbol, buy.Status,
-			calcPriceOfToken(buy.PricePerBoardlot, buy.AmountPerBoardlot), buy.Owner, buy.Key)
-	}
-	tradelog.Debug("GetTokenBuyOrderByStatus", "fromKey ", fromKey)
-
 	// List Direction 是升序， 买单是要降序， 把高价买的放前面， 在下一页操作时， 显示买价低的。
 	direction := 1 - req.Direction
-	values, err := t.GetLocalDB().List(calcTokensBuyOrderPrefixStatus(req.TokenSymbol, status), fromKey, req.Count, direction)
-	if err != nil {
-		return nil, err
+	req2 := pty.ReqTokenSellOrder{
+		TokenSymbol: req.TokenSymbol,
+		FromKey:     req.FromKey,
+		Count:       req.Count,
+		Direction:   direction,
+		Status:      req.Status,
 	}
-	var replys pty.ReplyTradeOrders
-	for _, key := range values {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
-			continue
-		}
-		tradelog.Debug("trade Query", "getSellOrderFromID", string(key))
-		replys.Orders = append(replys.Orders, reply)
-	}
-	return &replys, nil
+	return t.GetTokenOrderByStatus(false, &req2, status)
 }
 
 // addr part
