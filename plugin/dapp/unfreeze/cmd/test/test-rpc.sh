@@ -25,9 +25,7 @@ function query_unfreezeID() {
                 exit 1
             fi
         else
-            unfreeze_id=$(jq '(.result.receipt.logs['"$uid_index"'].log.current.unfreezeID)' <<<"$ret")
-            unfreeze_id2=${unfreeze_id#\"mavl-unfreeze-}
-            uid=${unfreeze_id2%\"}
+            uid=${tx#0x}
             echo -e "${GRE}====query tx=$txhash  success${NOC}"
             break
         fi
@@ -38,7 +36,6 @@ function init() {
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
     echo "ipara=$ispara"
     exec_name="unfreeze"
-    uid_index=2
     symbol="bty"
 
     beneficiary_key=0xa2ec1c6274723c021daa8792f4d0d52ffa0eff0fd47c9c6c1d1dd618762dc178
@@ -55,7 +52,6 @@ function init() {
 
     if [ "$ispara" == true ]; then
         exec_name="user.p.para."${exec_name}
-        uid_index=1
         symbol="para"
 
         local main_ip=${MAIN_HTTP//8901/8801}
