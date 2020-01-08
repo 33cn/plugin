@@ -33,12 +33,12 @@ sleep 1
 ## config token
 ./chain33-cli send config config_tx -c token-finisher -o add -v 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs
 sleep 1
-./chain33-cli config query_config -k token-finisher
+./chain33-cli config query -k token-finisher
 
 
 ./chain33-cli send config config_tx -c token-blacklist -o add -v BTY -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs
 sleep 1
-./chain33-cli config query_config -k token-blacklist
+./chain33-cli config query -k token-blacklist
 
 ## 10亿
 ./chain33-cli send token precreate -f 0.001 -i "test ccny" -n "ccny" -a 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs -p 0 -s CCNY -t 1000000000 -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs

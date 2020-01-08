@@ -7,7 +7,7 @@ import (
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/plugin/plugin/dapp/exchange/executor"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"

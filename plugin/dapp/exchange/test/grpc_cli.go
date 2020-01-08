@@ -12,7 +12,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/exchange/executor"
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 	tt "github.com/33cn/plugin/plugin/dapp/token/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
