@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
@@ -45,6 +46,10 @@ func (t *trade) GetTokenOrderByStatus(isSell bool, req *pty.ReqTokenSellOrder, s
 		return nil, err
 	}
 
+	return t.toTradeOrders(rows)
+}
+
+func (t *trade) toTradeOrders(rows []*table.Row) (*pty.ReplyTradeOrders, error) {
 	var replys pty.ReplyTradeOrders
 	cfg := t.GetAPI().GetConfig()
 	for _, row := range rows {
@@ -95,37 +100,55 @@ func (t *trade) Query_GetOnesBuyOrder(req *pty.ReqAddrAssets) (types.Message, er
 
 // GetOnesSellOrder by address or address-token
 func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
-	var keys [][]byte
+	var order pty.LocalOrder
+	order.Owner = addrTokens.Addr
+	order.IsSellOrder = true
+
 	if 0 == len(addrTokens.Token) {
-		values, err := t.GetLocalDB().List(calcOnesSellOrderPrefixAddr(addrTokens.Addr), nil, 0, 0)
+		rows, err := listV2(t.GetLocalDB(), "owner_isSell", &order, 0, 0)
 		if err != nil {
+			tradelog.Error("GetOnesSellOrder", "err", err)
 			return nil, err
 		}
-		if len(values) != 0 {
-			tradelog.Debug("trade Query", "get number of sellID", len(values))
-			keys = append(keys, values...)
-		}
-	} else {
-		for _, token := range addrTokens.Token {
-			values, err := t.GetLocalDB().List(calcOnesSellOrderPrefixToken(token, addrTokens.Addr), nil, 0, 0)
-			tradelog.Debug("trade Query", "Begin to list addr with token", token, "got values", len(values))
-			if err != nil && err != types.ErrNotFound {
-				return nil, err
+		var replys pty.ReplyTradeOrders
+		cfg := t.GetAPI().GetConfig()
+		for _, row := range rows {
+			o, ok := row.Data.(*pty.LocalOrder)
+			if !ok {
+				tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
+				return nil, types.ErrTypeAsset
 			}
-			if len(values) != 0 {
-				keys = append(keys, values...)
-			}
+			reply := fmtReply(cfg, o)
+			replys.Orders = append(replys.Orders, reply)
 		}
+		return &replys, nil
 	}
 
 	var replys pty.ReplyTradeOrders
-	for _, key := range keys {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
+	for _, token := range addrTokens.Token {
+		order.AssetSymbol = token
+		order.AssetExec = defaultAssetExec
+		order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
+		order.PriceExec = defaultAssetExec
+		rows, err := listV2(t.GetLocalDB(), "owner_isSell", &order, 0, 0)
+		if err != nil && err != types.ErrNotFound {
+			return nil, err
+		}
+		if len(rows) == 0 {
 			continue
 		}
-		tradelog.Debug("trade Query", "getSellOrderFromID", string(key))
-		replys.Orders = append(replys.Orders, reply)
+		var replys pty.ReplyTradeOrders
+		cfg := t.GetAPI().GetConfig()
+		for _, row := range rows {
+			o, ok := row.Data.(*pty.LocalOrder)
+			if !ok {
+				tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
+				return nil, types.ErrTypeAsset
+			}
+			reply := fmtReply(cfg, o)
+			replys.Orders = append(replys.Orders, reply)
+		}
+
 	}
 	return &replys, nil
 }
