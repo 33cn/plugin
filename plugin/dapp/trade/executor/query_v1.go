@@ -146,64 +146,40 @@ func (t *trade) GetOnesBuyOrder(addrTokens *pty.ReqAddrAssets) (types.Message, e
 	return t.GetOnesOrder(false, addrTokens)
 }
 
-// 1.5 没找到
+// Query_GetOnesBuyOrderWithStatus 1.5 没找到
 // 按 用户状态来 addr-status
 func (t *trade) Query_GetOnesSellOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOnesSellOrdersWithStatus(req)
 }
 
-// 1.2 按 用户状态来 addr-status
+// Query_GetOnesBuyOrderWithStatus 1.2 按 用户状态来 addr-status
 func (t *trade) Query_GetOnesBuyOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOnesBuyOrdersWithStatus(req)
 }
 
-// GetOnesSellOrdersWithStatus by address-status
-func (t *trade) GetOnesSellOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
-	var sellIDs [][]byte
-	values, err := t.GetLocalDB().List(calcOnesSellOrderPrefixStatus(req.Addr, req.Status), nil, 0, 0)
+// GetOnesStatusOrder Get Ones Status Order
+func (t *trade) GetOnesStatusOrder(isSell bool, req *pty.ReqAddrAssets) (types.Message, error) {
+	var order pty.LocalOrder
+	order.Owner = req.Addr
+	order.Status = req.Status
+	order.IsSellOrder = isSell
+
+	rows, err := listV2(t.GetLocalDB(), "owner_isSell_status", &order, 0, 0)
 	if err != nil {
+		tradelog.Error("GetOnesStatusOrder", "err", err)
 		return nil, err
 	}
-	if len(values) != 0 {
-		tradelog.Debug("trade Query", "get number of sellID", len(values))
-		sellIDs = append(sellIDs, values...)
-	}
+	return t.toTradeOrders(rows)
+}
 
-	var replys pty.ReplyTradeOrders
-	for _, key := range sellIDs {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
-			continue
-		}
-		tradelog.Debug("trade Query", "getSellOrderFromID", string(key))
-		replys.Orders = append(replys.Orders, reply)
-	}
-
-	return &replys, nil
+// GetOnesSellOrdersWithStatus by address-status
+func (t *trade) GetOnesSellOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOnesStatusOrder(true, req)
 }
 
 // GetOnesBuyOrdersWithStatus by address-status
 func (t *trade) GetOnesBuyOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
-	var sellIDs [][]byte
-	values, err := t.GetLocalDB().List(calcOnesBuyOrderPrefixStatus(req.Addr, req.Status), nil, 0, 0)
-	if err != nil {
-		return nil, err
-	}
-	if len(values) != 0 {
-		tradelog.Debug("trade Query", "get number of buy keys", len(values))
-		sellIDs = append(sellIDs, values...)
-	}
-	var replys pty.ReplyTradeOrders
-	for _, key := range sellIDs {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
-			continue
-		}
-		tradelog.Debug("trade Query", "getSellOrderFromID", string(key))
-		replys.Orders = append(replys.Orders, reply)
-	}
-
-	return &replys, nil
+	return t.GetOnesStatusOrder(false, req)
 }
 
 // utils
