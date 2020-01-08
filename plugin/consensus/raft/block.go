@@ -270,3 +270,8 @@ func (client *Client) pollingTask() {
 		}
 	}
 }
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
+}

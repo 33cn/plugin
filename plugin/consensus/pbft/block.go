@@ -146,3 +146,8 @@ func (client *Client) readReply() {
 	client.SetCurrentBlock(data.Result.Value)
 
 }
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
+}

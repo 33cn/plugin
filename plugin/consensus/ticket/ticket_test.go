@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	apimocks "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/merkle"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/consensus"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
@@ -103,6 +104,16 @@ func testTicket(t *testing.T) {
 	accounts, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
 	fmt.Println(accounts[0])
+
+	//测试最优节点的选择,难度相同
+	lastBlock := mock33.GetLastBlock()
+	temblock := types.Clone(lastBlock)
+	newblock := temblock.(*types.Block)
+	newblock.GetTxs()[0].Nonce = newblock.GetTxs()[0].Nonce + 1
+	newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.GetHeight(), newblock.GetTxs())
+
+	isbestBlock := util.CmpBestBlock(mock33.GetClient(), newblock, lastBlock.Hash(cfg))
+	assert.Equal(t, isbestBlock, false)
 }
 
 func createBindMiner(cfg *types.Chain33Config, t *testing.T, m, r string, priv crypto.PrivKey) *types.Transaction {
