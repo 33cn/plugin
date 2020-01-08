@@ -100,9 +100,14 @@ func (t *trade) Query_GetOnesBuyOrder(req *pty.ReqAddrAssets) (types.Message, er
 
 // GetOnesSellOrder by address or address-token
 func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOnesOrder(true, addrTokens)
+}
+
+// GetOnesSellOrder by address or address-token
+func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.Message, error) {
 	var order pty.LocalOrder
 	order.Owner = addrTokens.Addr
-	order.IsSellOrder = true
+	order.IsSellOrder = isSell
 
 	if 0 == len(addrTokens.Token) {
 		rows, err := listV2(t.GetLocalDB(), "owner_isSell", &order, 0, 0)
