@@ -9,37 +9,47 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
-// 1.8 根据token 分页显示未完成成交卖单
+// 文档 1.8 根据token 分页显示未完成成交卖单
 func (t *trade) Query_GetTokenSellOrderByStatus(req *pty.ReqTokenSellOrder) (types.Message, error) {
 	return t.GetTokenSellOrderByStatus(req, req.Status)
 }
 
 // GetTokenSellOrderByStatus by status
+// sell & TokenSymbol & status  sort by price
 func (t *trade) GetTokenSellOrderByStatus(req *pty.ReqTokenSellOrder, status int32) (types.Message, error) {
 	if req.Count <= 0 || (req.Direction != 1 && req.Direction != 0) {
 		return nil, types.ErrInvalidParam
 	}
 
-	fromKey := []byte("")
-	if len(req.FromKey) != 0 {
-		sell := t.replyReplySellOrderfromID([]byte(req.FromKey))
-		if sell == nil {
-			tradelog.Error("GetTokenSellOrderByStatus", "key not exist", req.FromKey)
-			return nil, types.ErrInvalidParam
-		}
-		fromKey = calcTokensSellOrderKeyStatus(sell.TokenSymbol, sell.Status,
-			calcPriceOfToken(sell.PricePerBoardlot, sell.AmountPerBoardlot), sell.Owner, sell.Key)
+	var order pty.LocalOrder
+	if len(req.FromKey) > 0 {
+		order.TxIndex = req.FromKey
 	}
-	values, err := t.GetLocalDB().List(calcTokensSellOrderPrefixStatus(req.TokenSymbol, status), fromKey, req.Count, req.Direction)
+
+	order.AssetSymbol = req.TokenSymbol
+	order.AssetExec = defaultAssetExec
+	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
+	order.PriceExec = defaultAssetExec
+
+	order.IsSellOrder = true
+
+	order.Status = req.Status
+
+	rows, err := listV2(t.GetLocalDB(), "asset_isSell_status_price", &order, req.Count, req.Direction)
 	if err != nil {
+		tradelog.Error("GetOnesOrderWithStatus", "err", err)
 		return nil, err
 	}
+
 	var replys pty.ReplyTradeOrders
-	for _, key := range values {
-		reply := t.loadOrderFromKey(key)
-		if reply == nil {
-			continue
+	cfg := t.GetAPI().GetConfig()
+	for _, row := range rows {
+		o, ok := row.Data.(*pty.LocalOrder)
+		if !ok {
+			tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
+			return nil, types.ErrTypeAsset
 		}
+		reply := fmtReply(cfg, o)
 		replys.Orders = append(replys.Orders, reply)
 	}
 	return &replys, nil
@@ -54,6 +64,7 @@ func (t *trade) Query_GetTokenBuyOrderByStatus(req *pty.ReqTokenBuyOrder) (types
 }
 
 // GetTokenBuyOrderByStatus by status
+// buy & TokenSymbol & status buy sort by price
 func (t *trade) GetTokenBuyOrderByStatus(req *pty.ReqTokenBuyOrder, status int32) (types.Message, error) {
 	if req.Count <= 0 || (req.Direction != 1 && req.Direction != 0) {
 		return nil, types.ErrInvalidParam
