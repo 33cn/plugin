@@ -61,7 +61,6 @@ var optV2 = &table.Option{
 		"owner_asset_isSell", // 接口 4
 		"owner_asset_status", // 新需求， 在
 		"owner_isSell",       // 接口 6
-		// "owner_isSell_status",  可能需求， 界面分开显示订单
 		// "owner_isSell_statusPrefix", // 状态可以定制组合, 成交历史需求
 		"owner_status",             // 接口 2
 		"assset_isSell_isFinished", // 用 isFinish, 进行订单是否完成的列表功能
@@ -72,6 +71,8 @@ var optV2 = &table.Option{
 		// https://chain.33.cn/document/105 1.8 sell & asset-price & status, order by price
 		// https://chain.33.cn/document/105 1.3 buy  & asset-price & status, order by price
 		"asset_isSell_status_price",
+		// 1.2 15 按 用户状态来 addr-status buy or sell
+		"owner_isSell_status",
 	},
 }
 
@@ -121,8 +122,8 @@ func (r *OrderV2Row) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%s_%s_%s", r.Owner, r.asset(), r.status())), nil
 	case "owner_isSell":
 		return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isSell())), nil
-	//case "owner_isSell_statusPrefix":
-	//	return []byte(fmt.Sprintf("%s_%d_%s", r.Owner, r.asset(), r.isSell())), nil
+	case "owner_isSell_status":
+		return []byte(fmt.Sprintf("%s_%d_%s", r.Owner, r.isSell(), r.status())), nil
 	case "owner_status":
 		return []byte(fmt.Sprintf("%s_%s", r.Owner, r.status())), nil
 	//case "owner_statusPrefix":
