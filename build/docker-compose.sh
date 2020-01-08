@@ -102,6 +102,10 @@ function base_init() {
     sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
     sed -i $sedfix 's/^paraConsensusStopBlocks=.*/paraConsensusStopBlocks=100/g' chain33.toml
 
+    # blockchain
+    # TODO 剩下evm trade 测试和这个选项有关，在其他pr中解决，不使得这个pr太大
+    sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
+
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
 
