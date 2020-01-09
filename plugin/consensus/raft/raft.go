@@ -6,6 +6,7 @@ package raft
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/etcdserver/stats"
 	"github.com/coreos/etcd/pkg/fileutil"
 	typec "github.com/coreos/etcd/pkg/types"
@@ -24,7 +24,6 @@ import (
 	"github.com/coreos/etcd/snap"
 	"github.com/coreos/etcd/wal"
 	"github.com/coreos/etcd/wal/walpb"
-	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -32,9 +31,10 @@ var (
 )
 
 type raftNode struct {
-	proposeC         <-chan *types.Block
+	client           *Client
+	proposeC         <-chan BlockInfo
 	confChangeC      <-chan raftpb.ConfChange
-	commitC          chan<- *types.Block
+	commitC          chan<- *BlockInfo
 	errorC           chan<- error
 	id               int
 	bootstrapPeers   []string
@@ -65,13 +65,21 @@ type raftNode struct {
 	restartC chan struct{}
 }
 
+type Node struct {
+	*raftNode
+}
+
+func (node *Node) SetClient(client *Client) {
+	node.client = client
+}
+
 // NewRaftNode create raft node
-func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan *types.Block,
-	confChangeC <-chan raftpb.ConfChange) (<-chan *types.Block, <-chan error, <-chan *snap.Snapshotter, <-chan bool) {
+func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan BlockInfo,
+	confChangeC <-chan raftpb.ConfChange) (*Node, <-chan *BlockInfo, <-chan error, <-chan *snap.Snapshotter, <-chan bool) {
 
 	rlog.Info("Enter consensus raft")
 	// commit channel
-	commitC := make(chan *types.Block)
+	commitC := make(chan *BlockInfo)
 	errorC := make(chan error)
 	rc := &raftNode{
 		proposeC:         proposeC,
@@ -94,7 +102,7 @@ func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnl
 	}
 	go rc.startRaft()
 
-	return commitC, errorC, rc.snapshotterReady, rc.validatorC
+	return &Node{rc}, commitC, errorC, rc.snapshotterReady, rc.validatorC
 }
 
 //  启动raft节点
@@ -224,7 +232,7 @@ func (rc *raftNode) serveChannels() {
 				if !ok {
 					rc.proposeC = nil
 				} else {
-					out, err := proto.Marshal(prop)
+					out, err := json.Marshal(prop)
 					if err != nil {
 						rlog.Error(fmt.Sprintf("failed to marshal block:%v ", err.Error()))
 					}
@@ -257,6 +265,10 @@ func (rc *raftNode) serveChannels() {
 		case <-ticker.C:
 			rc.node.Tick()
 		case rd := <-rc.node.Ready():
+			if !rc.checkEntries(rd.Entries) || !rc.checkEntries(rd.CommittedEntries) {
+				rc.stop()
+				return
+			}
 			rc.wal.Save(rd.HardState, rd.Entries)
 			if !raft.IsEmptySnap(rd.Snapshot) {
 				rc.saveSnap(rd.Snapshot)
@@ -281,6 +293,25 @@ func (rc *raftNode) serveChannels() {
 			return
 		}
 	}
+}
+
+func (rc *raftNode) checkEntries(ents []raftpb.Entry) bool {
+	for i := range ents {
+		if ents[i].Type == raftpb.EntryNormal && len(ents[i].Data) != 0 {
+			info := &BlockInfo{}
+			if err := json.Unmarshal(ents[i].Data, info); err != nil {
+				rlog.Error("checkEntries Unmarshal BlockInfo fail", "err", err)
+				return false
+			}
+			if rc.client != nil {
+				if !rc.client.CheckBlockInfo(info) {
+					rlog.Error("checkEntries CheckBlockInfo fail")
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func (rc *raftNode) updateValidator() {
@@ -325,6 +356,7 @@ func (rc *raftNode) updateValidator() {
 
 	}
 }
+
 func (rc *raftNode) Status() raft.Status {
 	rc.stopMu.RLock()
 	defer rc.stopMu.RUnlock()
@@ -383,15 +415,13 @@ func (rc *raftNode) maybeTriggerSnapshot() {
 		return
 	}
 
-	appliedIndex := rc.appliedIndex
-	snapshotIndex := rc.snapshotIndex
-	confState := rc.confState
-	rlog.Info(fmt.Sprintf("start snapshot [applied index: %d | last snapshot index: %d]", appliedIndex, snapshotIndex))
-	ents, err := rc.raftStorage.Entries(appliedIndex, appliedIndex+1, 2)
+	rlog.Info(fmt.Sprintf("start snapshot [applied index: %d | last snapshot index: %d]", rc.appliedIndex, rc.snapshotIndex))
+	data, err := rc.getSnapshot()
 	if err != nil {
-		rlog.Error(fmt.Sprintf("Err happened when get snapshot:%v", err.Error()))
+		rlog.Error("getSnapshot fail", "err", err)
+		panic(err)
 	}
-	snapShot, err := rc.raftStorage.CreateSnapshot(appliedIndex, &confState, ents[0].Data)
+	snapShot, err := rc.raftStorage.CreateSnapshot(rc.appliedIndex, &rc.confState, data)
 	if err != nil {
 		panic(err)
 	}
@@ -400,15 +430,15 @@ func (rc *raftNode) maybeTriggerSnapshot() {
 	}
 
 	compactIndex := uint64(1)
-	if appliedIndex > snapshotCatchUpEntriesN {
-		compactIndex = appliedIndex - snapshotCatchUpEntriesN
+	if rc.appliedIndex > snapshotCatchUpEntriesN {
+		compactIndex = rc.appliedIndex - snapshotCatchUpEntriesN
 	}
 	if err := rc.raftStorage.Compact(compactIndex); err != nil {
 		panic(err)
 	}
 
 	rlog.Info(fmt.Sprintf("compacted log at index %d", compactIndex))
-	rc.snapshotIndex = appliedIndex
+	rc.snapshotIndex = rc.appliedIndex
 }
 
 func (rc *raftNode) publishSnapshot(snapshotToSave raftpb.Snapshot) {
@@ -487,12 +517,13 @@ func (rc *raftNode) publishEntries(ents []raftpb.Entry) bool {
 				break
 			}
 			// 解码
-			block := &types.Block{}
-			if err := proto.Unmarshal(ents[i].Data, block); err != nil {
-				rlog.Error(fmt.Sprintf("failed to unmarshal: %v", err.Error()))
+			info := &BlockInfo{}
+			if err := json.Unmarshal(ents[i].Data, info); err != nil {
+				rlog.Error("Unmarshal BlockInfo fail", "err", err)
+				break
 			}
 			select {
-			case rc.commitC <- block:
+			case rc.commitC <- info:
 			case <-rc.ctx.Done():
 				return false
 			}
