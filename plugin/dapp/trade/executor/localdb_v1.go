@@ -7,33 +7,12 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
+// 生成 key -> id 格式的本地数据库数据， 在下个版本这个文件可以全部删除
+// 由于数据库精简需要保存具体数据
+
 // 将手动生成的local db 的代码和用table 生成的local db的代码分离出来
 // 手动生成的local db, 将不生成任意资产标价的数据， 保留用coins 生成交易的数据， 来兼容为升级的app 应用
 // 希望有全量数据的， 需要调用新的rpc
-
-// sell limit
-func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
-		return nil
-	}
-	status := sellorder.Status
-	var kv []*types.KeyValue
-	kv = saveSellOrderKeyValue(kv, sellorder, status)
-	if pty.TradeOrderStatusSoldOut == status || pty.TradeOrderStatusRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellid", sellorder.SellID)
-		kv = deleteSellOrderKeyValue(kv, sellorder, pty.TradeOrderStatusOnSale)
-	}
-	return kv
-}
-
-func saveSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32) []*types.KeyValue {
-	sellID := []byte(sellorder.SellID)
-	return genSellOrderKeyValue(kv, sellorder, status, sellID)
-}
-
-func deleteSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32) []*types.KeyValue {
-	return genSellOrderKeyValue(kv, sellorder, status, nil)
-}
 
 func genSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32, value []byte) []*types.KeyValue {
 	newkey := calcTokenSellOrderKey(sellorder.TokenSymbol, sellorder.Address, status, sellorder.SellID, sellorder.Height)
@@ -54,16 +33,6 @@ func genSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status
 	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
 
 	return kv
-}
-
-// buy market
-func saveBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-
-	txhash := []byte(receipt.TxHash)
-	return genBuyMarketOrderKeyValue(kv, receipt, status, height, txhash)
 }
 
 func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase,
@@ -103,31 +72,6 @@ func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase
 	return kv
 }
 
-// buy limit
-func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
-		return nil
-	}
-
-	status := buyOrder.Status
-	var kv []*types.KeyValue
-	kv = saveBuyLimitOrderKeyValue(kv, buyOrder, status)
-	if pty.TradeOrderStatusBoughtOut == status || pty.TradeOrderStatusBuyRevoked == status {
-		tradelog.Debug("trade saveBuyLimit ", "remove old status with Buyid", buyOrder.BuyID)
-		kv = deleteBuyLimitKeyValue(kv, buyOrder, pty.TradeOrderStatusOnBuy)
-	}
-	return kv
-}
-
-func saveBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32) []*types.KeyValue {
-	buyID := []byte(buyOrder.BuyID)
-	return genBuyLimitOrderKeyValue(kv, buyOrder, status, buyID)
-}
-
-func deleteBuyLimitKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32) []*types.KeyValue {
-	return genBuyLimitOrderKeyValue(kv, buyOrder, status, nil)
-}
-
 func genBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32, value []byte) []*types.KeyValue {
 	newkey := calcTokenBuyOrderKey(buyOrder.TokenSymbol, buyOrder.Address, status, buyOrder.BuyID, buyOrder.Height)
 	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
@@ -147,60 +91,4 @@ func genBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder,
 	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
 
 	return kv
-}
-
-// sell market
-func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-	txhash := []byte(receipt.TxHash)
-	return genSellMarketOrderKeyValue(kv, receipt, status, height, txhash)
-}
-
-// delete part
-// sell limit
-func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
-		return nil
-	}
-	status := sellorder.Status
-	var kv []*types.KeyValue
-	kv = deleteSellOrderKeyValue(kv, sellorder, status)
-	if pty.TradeOrderStatusSoldOut == status || pty.TradeOrderStatusRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellID", sellorder.SellID)
-		kv = saveSellOrderKeyValue(kv, sellorder, pty.TradeOrderStatusOnSale)
-	}
-	return kv
-}
-
-// buy market
-func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-	return genBuyMarketOrderKeyValue(kv, receipt, status, height, nil)
-}
-
-// buy limit
-func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
-		return nil
-	}
-	status := buyOrder.Status
-	var kv []*types.KeyValue
-	kv = deleteBuyLimitKeyValue(kv, buyOrder, status)
-	if pty.TradeOrderStatusBoughtOut == status || pty.TradeOrderStatusBuyRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellid", buyOrder.BuyID)
-		kv = saveBuyLimitOrderKeyValue(kv, buyOrder, pty.TradeOrderStatusOnBuy)
-	}
-	return kv
-}
-
-// sell market
-func deleteSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-	return genSellMarketOrderKeyValue(kv, receipt, status, height, nil)
 }
