@@ -65,3 +65,15 @@ func TestListAll(t *testing.T) {
 	t.Log(kvs)
 	ldb.Close()
 }
+
+func TestListV2All(t *testing.T) {
+	dir, ldb, tdb := util.CreateTestDB()
+	t.Log(dir, ldb, tdb)
+	odb := NewOrderTableV2(tdb)
+	odb.Add(order1)
+	odb.Add(order2)
+	kvs, err := odb.Save()
+	assert.Nil(t, err)
+	t.Log(kvs)
+	ldb.Close()
+}
