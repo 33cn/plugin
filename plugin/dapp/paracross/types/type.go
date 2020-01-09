@@ -96,6 +96,7 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaAssetWithdraw:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
 		TyLogParaAssetTransfer:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
 		TyLogParaAssetDeposit:          {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParaCrossAssetTransfer:    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
 		TyLogParacrossMiner:            {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
 		TyLogParaNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
 		TyLogParaNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
@@ -112,16 +113,17 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":          ParacrossActionCommit,
-		"Miner":           ParacrossActionMiner,
-		"AssetTransfer":   ParacrossActionAssetTransfer,
-		"AssetWithdraw":   ParacrossActionAssetWithdraw,
-		"Transfer":        ParacrossActionTransfer,
-		"Withdraw":        ParacrossActionWithdraw,
-		"TransferToExec":  ParacrossActionTransferToExec,
-		"NodeConfig":      ParacrossActionNodeConfig,
-		"NodeGroupConfig": ParacrossActionNodeGroupApply,
-		"SelfStageConfig": ParacrossActionSelfStageConfig,
+		"Commit":             ParacrossActionCommit,
+		"Miner":              ParacrossActionMiner,
+		"AssetTransfer":      ParacrossActionAssetTransfer,
+		"AssetWithdraw":      ParacrossActionAssetWithdraw,
+		"Transfer":           ParacrossActionTransfer,
+		"Withdraw":           ParacrossActionWithdraw,
+		"TransferToExec":     ParacrossActionTransferToExec,
+		"CrossAssetTransfer": ParacrossActionCrossAssetTransfer,
+		"NodeConfig":         ParacrossActionNodeConfig,
+		"NodeGroupConfig":    ParacrossActionNodeGroupApply,
+		"SelfStageConfig":    ParacrossActionSelfStageConfig,
 	}
 }
 
@@ -156,6 +158,14 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 		action == "ParacrossTransferToExec" || action == "TransferToExec" {
 
 		return p.CreateRawTransferTx(action, message)
+	} else if action == "CrossAssetTransfer" {
+		var param CrossAssetTransfer
+		err := types.JSONToPB(message, &param)
+		if err != nil {
+			glog.Error("CreateTx.CrossAssetTransfer", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return CreateRawCrossAssetTransferTx(&param)
 	} else if action == "NodeConfig" {
 		var param ParaNodeAddrConfig
 		err := types.JSONToPB(message, &param)

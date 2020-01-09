@@ -46,6 +46,8 @@ const (
 	TyLogParaSelfConsStageConfig   = 665
 	TyLogParaStageVoteDone         = 666
 	TyLogParaStageGroupUpdate      = 667
+	//TyLogParaCrossAssetTransfer 统一的跨链资产转移
+	TyLogParaCrossAssetTransfer = 670
 )
 
 type paracrossCommitTx struct {
@@ -73,9 +75,9 @@ const (
 )
 
 const (
-	// ParacrossActionAssetTransfer paracross asset transfer key
+	// ParacrossActionAssetTransfer mainchain paracross asset transfer key
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
-	// ParacrossActionAssetWithdraw paracross asset withdraw key
+	// ParacrossActionAssetWithdraw mainchain paracross asset withdraw key
 	ParacrossActionAssetWithdraw
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
@@ -83,6 +85,16 @@ const (
 	ParacrossActionNodeGroupApply
 	//ParacrossActionSelfConsensStageConfig apply for self consensus stage config
 	ParacrossActionSelfStageConfig
+	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
+	ParacrossActionCrossAssetTransfer
+)
+
+const (
+	ParacrossNoneTransfer = iota
+	ParacrossMainTransfer
+	ParacrossMainWithdraw
+	ParacrossParaTransfer
+	ParacrossParaWithdraw
 )
 
 // status
@@ -340,6 +352,21 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 	}
 
 	return tx, nil
+}
+
+//CreateRawCrossAssetTransferTx create raw cross asset transfer tx
+func CreateRawCrossAssetTransferTx(apply *CrossAssetTransfer) (*types.Transaction, error) {
+	action := &ParacrossAction{
+		Ty:    ParacrossActionCrossAssetTransfer,
+		Value: &ParacrossAction_CrossAssetTransfer{apply},
+	}
+
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+	}
+
+	return tx, nil
+
 }
 
 //GetDappForkHeight get paracross dapp fork height

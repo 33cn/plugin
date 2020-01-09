@@ -268,6 +268,15 @@ message ParacrossMinerAction {
     bool                isSelfConsensus = 2;
 }
 
+message CrossAssetTransfer {
+    uint32 type         = 1;
+    string assetExec    = 2;
+    string assetSymbol  = 3;
+    int64  amount       = 4;
+    string toAddr       = 5;
+    string note         = 6;
+}
+
 message ParacrossAction {
     oneof value {
         ParacrossCommitAction commit          = 1;
@@ -280,6 +289,7 @@ message ParacrossAction {
         ParaNodeAddrConfig    nodeConfig      = 9;
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
+        CrossAssetTransfer    crossAssetTransfer = 12;
     }
     int32 ty = 2;
 }
@@ -359,10 +369,12 @@ message ParacrossAsset {
     string from       = 1;
     string to         = 2;
     bool   isWithdraw = 3;
-    bytes  txHash     = 4;
+    string txHash     = 4;
     int64  amount     = 5;
     string exec       = 6;
     string symbol     = 7;
+    //跨链类型　0:to para, 1:to main
+    uint32 crossType       = 8;
     // 主链部分
     int64 height = 10;
     // 平行链部分
@@ -371,22 +383,6 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
-message ParacrossAssetRsp {
-    // input
-    string from       = 1;
-    string to         = 2;
-    string isWithdraw = 3;
-    string txHash     = 4;
-    int64  amount     = 5;
-    string exec       = 6;
-    string symbol     = 7;
-    // 主链部分
-    int64 height = 10;
-    // 平行链部分
-    int64  commitDoneHeight = 21;
-    int64  paraHeight       = 22;
-    string success          = 23;
-}
 
 message ParaLocalDbBlock {
     int64    height          = 1;
