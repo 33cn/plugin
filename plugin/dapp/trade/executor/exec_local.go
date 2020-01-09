@@ -36,7 +36,7 @@ func (t *trade) ExecLocal_RevokeBuy(revoke *pty.TradeForRevokeBuy, tx *types.Tra
 
 func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
-	table := NewOrderTable(t.GetLocalDB())
+	table := NewOrderTableV2(t.GetLocalDB())
 	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
 
 	for i := 0; i < len(receipt.Logs); i++ {
