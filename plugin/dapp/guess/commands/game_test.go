@@ -41,6 +41,9 @@ import (
 var (
 	secp crypto.Crypto
 
+	jrpcURL = "127.0.0.1:8803"
+	grpcURL = "127.0.0.1:8804"
+
 	config = `# Title为local，表示此配置文件为本地单节点的配置。此时本地节点所在的链上只有这一个节点，共识模块一般采用solo模式。
 Title="local"
 TestNet=true
@@ -119,9 +122,9 @@ verMix=200
 verMax=200
 [rpc]
 # jrpc绑定地址
-jrpcBindAddr="localhost:8801"
+jrpcBindAddr="localhost:8803"
 # grpc绑定地址
-grpcBindAddr="localhost:8802"
+grpcBindAddr="localhost:8804"
 # 白名单列表，允许访问的IP地址，默认是“*”，允许所有IP访问
 whitelist=["127.0.0.1"]
 # jrpc方法请求白名单，默认是“*”，允许访问所有RPC方法
@@ -476,7 +479,7 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 
 func createConn() error {
 	var err error
-	url := "127.0.0.1:8802"
+	url := grpcURL
 	fmt.Println("grpc url:", url)
 	conn, err = grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
@@ -632,47 +635,47 @@ func testCmd(cmd *cobra.Command) {
 
 	rootCmd.PersistentFlags().String("title", chain33Cfg.GetTitle(), "get title name")
 
-	rootCmd.PersistentFlags().String("rpc_laddr", "http://127.0.0.1:8802", "http url")
+	rootCmd.PersistentFlags().String("rpc_laddr", "http://"+grpcURL, "http url")
 	rootCmd.AddCommand(cmd)
 
-	rootCmd.SetArgs([]string{"guess", "start", "--topic", "WorldCup Final", "--options", "A:France;B:Claodia", "--category", "football", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "start", "--topic", "WorldCup Final", "--options", "A:France;B:Claodia", "--category", "football", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
 	strGameID := "0x20d78aabfa67701f7492261312575614f684b084efa2c13224f1505706c846e8"
 
-	rootCmd.SetArgs([]string{"guess", "bet", "--gameId", strGameID, "--option", "A", "--betsNumber", "500000000", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "bet", "--gameId", strGameID, "--option", "A", "--betsNumber", "500000000", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "stop", "--gameId", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "stop", "--gameId", strGameID, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "abort", "--gameId", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "abort", "--gameId", strGameID, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "publish", "--gameId", strGameID, "--result", "A", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "publish", "--gameId", strGameID, "--result", "A", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "ids", "--gameIDs", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "ids", "--gameIDs", strGameID, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "id", "--gameId", strGameID, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "id", "--gameId", strGameID, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "addr", "--addr", userAAddr, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "addr", "--addr", userAAddr, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "status", "--status", "10", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "status", "--status", "10", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminAddr", "--adminAddr", adminAddr, "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminAddr", "--adminAddr", adminAddr, "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "addrStatus", "--addr", userAAddr, "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "addrStatus", "--addr", userAAddr, "--status", "11", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminStatus", "--adminAddr", adminAddr, "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "adminStatus", "--adminAddr", adminAddr, "--status", "11", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 
-	rootCmd.SetArgs([]string{"guess", "query", "--type", "categoryStatus", "--category", "football", "--status", "11", "--rpc_laddr", "http://127.0.0.1:8801"})
+	rootCmd.SetArgs([]string{"guess", "query", "--type", "categoryStatus", "--category", "football", "--status", "11", "--rpc_laddr", "http://" + jrpcURL})
 	rootCmd.Execute()
 }

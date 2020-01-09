@@ -209,7 +209,7 @@ func (client *Client) CreateBlock() {
 
 // 向raft底层发送block
 func (client *Client) propose(block *types.Block) {
-	client.proposeC <- block
+	client.proposeC <- block.Clone()
 }
 
 // 从receive channel中读leader发来的block
@@ -269,4 +269,9 @@ func (client *Client) pollingTask() {
 			rlog.Debug("Gets the leader node information timeout and triggers the ticker.")
 		}
 	}
+}
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
 }
