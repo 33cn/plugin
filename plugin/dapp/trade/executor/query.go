@@ -81,7 +81,7 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 	if len(req.FromKey) > 0 {
 		order.TxIndex = req.FromKey
 	}
-	rows, err := list(t.GetLocalDB(), "owner_isFinished", &order, req.Count, req.Direction)
+	rows, err := listV2(t.GetLocalDB(), "owner_isFinished", &order, req.Count, req.Direction)
 	if err != nil {
 		tradelog.Error("GetOnesOrderWithStatus", "err", err)
 		return nil, err
@@ -131,7 +131,7 @@ func fmtReply(cfg *types.Chain33Config, order *pty.LocalOrder) *pty.ReplyTradeOr
 }
 
 func (t *trade) GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
-	query := NewOrderTable(t.GetLocalDB())
+	query := NewOrderTableV2(t.GetLocalDB())
 	tradelog.Debug("query GetData dbg", "primary", req.FromKey)
 	row, err := query.GetData([]byte(req.FromKey))
 	if err != nil {
