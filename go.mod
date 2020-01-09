@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20200108042336-2dda2dfb7e0e
+	github.com/33cn/chain33 v0.0.0-20200109024406-6514ff4beb02
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -17,6 +17,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
+	github.com/gogo/protobuf v1.1.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.2.0
 	github.com/hashicorp/golang-lru v0.5.0

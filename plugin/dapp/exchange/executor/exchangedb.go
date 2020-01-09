@@ -587,7 +587,6 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 		rows, err = table.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
 	}
 	if err != nil {
-		elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
 		return nil, err
 	}
 	var orderList et.OrderList
