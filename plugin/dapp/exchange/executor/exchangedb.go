@@ -2,8 +2,9 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/common"
 	"math/big"
+
+	"github.com/33cn/chain33/common"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -368,7 +369,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 	}
 	//更新order状态
 	kvs = append(kvs, a.GetKVSet(or)...)
-	re.Order=or
+	re.Order = or
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -388,7 +389,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			amount := a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), payload.Price)
 			receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 			if err != nil {
-				elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err, "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+				elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err, "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 				return nil, nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -399,7 +400,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 				amount := a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price)
 				receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, amount)
 				if err != nil {
-					elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+					elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 					return nil, nil, err
 				}
 				logs = append(logs, receipt.Logs...)
@@ -426,7 +427,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			amount := a.calcActualCost(matchorder.GetLimitOrder().Op, or.GetBalance(), matchorder.GetLimitOrder().Price)
 			receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 			if err != nil {
-				elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+				elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 				return nil, nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -435,7 +436,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			amount = a.calcActualCost(payload.Op, or.GetBalance(), matchorder.GetLimitOrder().Price)
 			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 			if err != nil {
-				elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID")
+				elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID")
 				return nil, nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -474,7 +475,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount := a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), payload.Price)
 		receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -485,7 +486,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			amount := a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price-payload.Price)
 			receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, amount)
 			if err != nil {
-				elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+				elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 				return nil, nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -511,7 +512,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount := a.calcActualCost(matchorder.GetLimitOrder().Op, matchorder.GetBalance(), matchorder.GetLimitOrder().Price)
 		receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash),"matchOrderID",matchorder.OrderID)
+			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error(), "txhash", common.ToHex(a.txhash), "matchOrderID", matchorder.OrderID)
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
