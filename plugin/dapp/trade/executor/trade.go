@@ -73,6 +73,7 @@ func (t *trade) getSellOrderFromDb(sellID []byte) *pty.SellOrder {
 	return &sellorder
 }
 
+// sell limit
 func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
 
@@ -83,7 +84,7 @@ func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transact
 	} else {
 		t.updateSellLimit(tx, base, sellorder, txIndex, ldb)
 	}
-	return genSaveSellKv(sellorder)
+	return nil
 }
 
 func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, tradedBoardlot int64) []*types.KeyValue {
@@ -93,23 +94,21 @@ func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transa
 	} else {
 		t.rollBackSellLimit(tx, base, sellorder, txIndex, ldb, tradedBoardlot)
 	}
-	return genDeleteSellKv(sellorder)
+	return nil
 }
 
 func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
 	//tradelog.Info("save", "buy", receiptTradeBuy)
 
-	var kv []*types.KeyValue
 	order := t.genBuyMarket(tx, receiptTradeBuy, txIndex)
 	tradelog.Debug("trade BuyMarket save local", "order", order)
 	ldb.Add(order)
-	return saveBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
+	return nil
 }
 
 func (t *trade) deleteBuy(receiptTradeBuy *pty.ReceiptBuyBase, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
 	ldb.Del([]byte(txIndex))
-	return deleteBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
+	return nil
 }
 
 // BuyLimit Local
@@ -134,7 +133,7 @@ func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transa
 		t.updateBuyLimit(tx, buy, buyOrder, txIndex, ldb)
 	}
 
-	return genSaveBuyLimitKv(buyOrder)
+	return nil
 }
 
 func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, traded int64) []*types.KeyValue {
@@ -144,20 +143,18 @@ func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Tran
 	} else {
 		t.rollbackBuyLimit(tx, buy, buyOrder, txIndex, ldb, traded)
 	}
-	return genDeleteBuyLimitKv(buyOrder)
+	return nil
 }
 
 func (t *trade) saveSellMarket(receiptTradeBuy *pty.ReceiptSellBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
 	order := t.genSellMarket(tx, receiptTradeBuy, txIndex)
 	ldb.Add(order)
-	return saveSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
+	return nil
 }
 
 func (t *trade) deleteSellMarket(receiptTradeBuy *pty.ReceiptSellBase, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
 	ldb.Del([]byte(txIndex))
-	return deleteSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
+	return nil
 }
 
 // CheckReceiptExecOk return true to check if receipt ty is ok
