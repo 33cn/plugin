@@ -171,6 +171,7 @@ func NewOrderTable(kvdb dbm.KV) *table.Table {
 	return t
 }
 
+// gen order from tx and receipt
 func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 	sellorder *pty.SellOrder, txIndex string) *pty.LocalOrder {
 
@@ -392,7 +393,7 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		Height:            buy.Height,
 		Key:               calcTokenBuyID(hex.EncodeToString(tx.Hash())),
 		BlockTime:         t.GetBlockTime(),
-		IsSellOrder:       true,
+		IsSellOrder:       false,
 		AssetExec:         buy.AssetExec,
 		IsFinished:        true,
 		PriceExec:         buy.PriceExec,
