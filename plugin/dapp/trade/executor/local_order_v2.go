@@ -161,6 +161,10 @@ func (r *OrderV2Row) isFinished() int {
 }
 
 func (r *OrderV2Row) price() string {
+	// 在计算前缀时，返回空
+	if r.AmountPerBoardlot == 0 {
+		return ""
+	}
 	p := calcPriceOfToken(r.PricePerBoardlot, r.AmountPerBoardlot)
 	return fmt.Sprintf("%018d", p)
 }
@@ -202,7 +206,7 @@ func listV2(db dbm.KVDB, indexName string, data *pty.LocalOrder, count, directio
 		primary = []byte(data.TxIndex)
 	}
 
-	cur := &OrderRow{LocalOrder: data}
+	cur := &OrderV2Row{LocalOrder: data}
 	index, err := cur.Get(indexName)
 	if err != nil {
 		tradelog.Error("query List failed", "key", string(primary), "param", data, "err", err)
