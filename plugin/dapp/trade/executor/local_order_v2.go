@@ -186,7 +186,7 @@ func (r *OrderV2Row) status() string {
 
 // NewOrderTableV2 create order table
 func NewOrderTableV2(kvdb dbm.KV) *table.Table {
-	rowMeta := NewOrderRow()
+	rowMeta := NewOrderV2Row()
 	rowMeta.SetPayload(&pty.LocalOrder{})
 	t, err := table.NewTable(rowMeta, kvdb, optV2)
 	if err != nil {
