@@ -27,13 +27,8 @@ func (t *trade) GetTokenOrderByStatus(isSell bool, req *pty.ReqTokenSellOrder, s
 		order.TxIndex = req.FromKey
 	}
 
-	order.AssetSymbol = req.TokenSymbol
-	order.AssetExec = defaultAssetExec
-	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
-	order.PriceExec = defaultAssetExec
-
+	t.setQueryAsset(&order, req.TokenSymbol)
 	order.IsSellOrder = isSell
-
 	order.Status = req.Status
 
 	rows, err := listV2(t.GetLocalDB(), "asset_isSell_status_price", &order, req.Count, req.Direction)
@@ -51,7 +46,7 @@ func (t *trade) toTradeOrders(rows []*table.Row) (*pty.ReplyTradeOrders, error) 
 	for _, row := range rows {
 		o, ok := row.Data.(*pty.LocalOrder)
 		if !ok {
-			tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
+			tradelog.Error("toTradeOrders", "err", "bad row type")
 			return nil, types.ErrTypeAsset
 		}
 		reply := fmtReply(cfg, o)
@@ -116,10 +111,7 @@ func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.
 
 	var replys pty.ReplyTradeOrders
 	for _, token := range addrTokens.Token {
-		order.AssetSymbol = token
-		order.AssetExec = defaultAssetExec
-		order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
-		order.PriceExec = defaultAssetExec
+		t.setQueryAsset(&order, token)
 		rows, err := listV2(t.GetLocalDB(), "owner_isSell", &order, 0, 0)
 		if err != nil && err != types.ErrNotFound {
 			return nil, err
@@ -176,4 +168,13 @@ func (t *trade) GetOnesSellOrdersWithStatus(req *pty.ReqAddrAssets) (types.Messa
 // GetOnesBuyOrdersWithStatus by address-status
 func (t *trade) GetOnesBuyOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOnesStatusOrder(false, req)
+}
+
+// util
+// 在老版本中，默认查询token相关的订单
+func (t *trade) setQueryAsset(order *pty.LocalOrder, tokenSymbol string) {
+	order.AssetSymbol = tokenSymbol
+	order.AssetExec = defaultAssetExec
+	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
+	order.PriceExec = defaultAssetExec
 }
