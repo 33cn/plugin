@@ -13,15 +13,18 @@ import (
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
 )
 
-// 本地数据重新生成
-// 统一生成：LocalOrder
+// 本地数据版本
+// 1. v0 手动生成
+// 2. v1 用table生成 LocalOrder
+// 3. v2 用table生成 LocalOrderV2 比v1 用更多的索引，支持v0需要的数据索引，即将v2 包含 v0 v1 数据
+//       预期在6.4升级后 v0 格式将不存在
 
 // 过程
-// 1. exec_local 直接生成
+// 1. exec_local 直接生成 ok
 // 2. 原有数据升级：通过调用 exec_local 并 删除老数据
 //    老数据相关的代码和数据相关代码， 可以在下下版本清理，
 
-// 查询
+// 查询 ok
 // 保留接口不变，实现变成读新数据
 
 /*
@@ -44,12 +47,11 @@ var optV2 = &table.Option{
 	Prefix:  "LODB-trade",
 	Name:    "order_v2",
 	Primary: "txIndex",
-	// asset = asset_exec+asset_symbol
-	//
+	// asset 指定交易对 price_exec + price_symbol + asset_exec+asset_symbol
 	// status: 设计为可以同时查询几种的并集 , 存储为前缀， 需要提前设计需要合并的， 用前缀表示
 	//    进行中，  撤销，  部分成交 ， 全部成交，  完成状态统一前缀. 数字和原来不一样
 	//      00     10     11          12         1*
-	// 排序过滤条件： 可以组合，status&isSell 和前缀冲突
+	// 排序特点： 在不用key排序时，需要生成排序用的组合索引， 前面n个索引用来区分前缀， 后一个索引用来排序
 	Index: []string{
 		"key",                 // 内部查询用
 		"asset",               // 按资产统计订单
@@ -68,10 +70,10 @@ var optV2 = &table.Option{
 		"owner_isFinished",
 		// "owner_statusPrefix", // 状态可以定制组合 , 成交历史需求
 		// 增加更多的key， 把老接口的数据的key 也生成，可以去掉老接口的实现
-		// https://chain.33.cn/document/105 1.8 sell & asset-price & status, order by price
-		// https://chain.33.cn/document/105 1.3 buy  & asset-price & status, order by price
+		// https://chain.33.cn/document/105 文档1.8 sell & asset-price & status, order by price
+		// https://chain.33.cn/document/105 文档1.3 buy  & asset-price & status, order by price
 		"asset_isSell_status_price",
-		// 1.2 15 按 用户状态来 addr-status buy or sell
+		// 文档1.2 文档1.5 按 用户状态来 addr-status buy or sell
 		"owner_isSell_status",
 	},
 }
