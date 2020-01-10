@@ -9,13 +9,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// 生成 key -> id 格式的本地数据库数据， 在下个版本这个文件可以全部删除
+const (
+	tradeLocaldbVersioin = "LODB-trade-version"
+)
+
 // 由于数据库精简需要保存具体数据
-
-// 将手动生成的local db 的代码和用table 生成的local db的代码分离出来
-// 手动生成的local db, 将不生成任意资产标价的数据， 保留用coins 生成交易的数据， 来兼容为升级的app 应用
-// 希望有全量数据的， 需要调用新的rpc
-
+// 生成 key -> id 格式的本地数据库数据， 在下个版本这个文件可以全部删除
 // 下个版本可以删除
 const (
 	sellOrderSHTAS = "LODB-trade-sellorder-shtas:"
@@ -31,12 +30,28 @@ const (
 )
 
 // TradeUpdateLocalDBV2 trade 本地数据库升级
+// from 1 to 2
 func TradeUpdateLocalDBV2(localDB dbm.DB, total int) error {
-	err := UpdateLocalDBPart2(localDB, total)
+	toVersion := 2
+	kvdb := dbm.NewKVDB(localDB)
+	version, err := getVersion(kvdb)
+	if err != nil {
+		tradelog.Error("TradeUpdateLocalDBV2 get version", "err", err)
+		return errors.Cause(err)
+	}
+	if version >= toVersion {
+		return nil
+	}
+
+	err = UpdateLocalDBPart2(localDB, total)
 	if err != nil {
 		return err
 	}
-	return UpdateLocalDBPart1(localDB, total)
+	err = UpdateLocalDBPart1(localDB, total)
+	if err != nil {
+		return err
+	}
+	return setVersion(kvdb, toVersion)
 }
 
 // UpdateLocalDBPart1 手动生成KV，需要在原有数据库中删除
@@ -120,31 +135,12 @@ func delOnePrefixLimit(localDB dbm.DB, prefix string, total int) (allDeleted boo
 // 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
 func UpdateLocalDBPart2(localDB dbm.DB, total int) error {
 	kvdb := dbm.NewKVDB(localDB)
-	if getVersion() == 2 {
-		return nil
-	}
-
 	err := upgradeOrder(kvdb, total)
 	if err != nil {
 		return err
 	}
-
-	setVersion(2)
 	return nil
 }
-
-var v = 1
-
-func getVersion() int {
-	return v
-}
-
-func setVersion(v1 int) {
-	v = v1
-}
-
-// TODO trade local version 记录下相关信息
-// version = 1/2
 
 func upgradeOrder(kvdb dbm.KVDB, total int) (err error) {
 	allDeleted := false
@@ -208,4 +204,27 @@ func upgradeOrderLimit(kvdb dbm.KVDB, total int) (allDeleted bool, err error) {
 		return false, errors.Wrap(err, "upgradeOrderLimit kvdb set")
 	}
 	return len(rows) < total, nil
+}
+
+// localdb Version
+func getVersion(kvdb dbm.KV) (int, error) {
+	value, err := kvdb.Get([]byte(tradeLocaldbVersioin))
+	if err != nil && err != types.ErrNotFound {
+		return 1, err
+	}
+	if err == types.ErrNotFound {
+		return 1, nil
+	}
+	var v types.Int32
+	err = types.Decode(value, &v)
+	if err != nil {
+		return 1, err
+	}
+	return int(v.Data), nil
+}
+
+func setVersion(kvdb dbm.KV, version int) error {
+	v := types.Int32{Data: int32(version)}
+	x := types.Encode(&v)
+	return kvdb.Set([]byte(tradeLocaldbVersioin), x)
 }
