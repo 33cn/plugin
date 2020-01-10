@@ -386,12 +386,15 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		matched = matchorder.GetBalance()
 	}
 
+	elog.Info("try match", "activeId", or.OrderID, "passiveId", matchorder.OrderID, "activeAddr", or.Addr, "passiveAddr",
+		matchorder.Addr, "amount", matched, "price", payload.Price)
+
 	if payload.Op == et.OpSell {
 		//转移冻结资产
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, payload.Price)
 		receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err)
+			elog.Error("matchModel.ExecTransferFrozen", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err)
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -401,7 +404,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price-payload.Price)
 			receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, amount)
 			if err != nil {
-				elog.Error("matchLimitOrder.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error())
+				elog.Error("matchModel.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error())
 				return nil, nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -411,7 +414,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount = CalcActualCost(payload.Op, matched, payload.Price)
 		receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			elog.Error("matchModel.ExecTransfer", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -427,7 +430,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price)
 		receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransferFrozen", "addr", matchorder.Addr, "amount", amount, "err", err.Error())
+			elog.Error("matchModel.ExecTransferFrozen2", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -436,7 +439,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price)
 		receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("matchLimitOrder.ExecTransfer", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
 			return nil, nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -465,7 +468,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		matchorder.Executed = matched
 		kvs = append(kvs, a.GetKVSet(matchorder)...)
 
-		or.Executed += matched // TODO why not += ?
+		or.Executed += matched
 		or.Balance = 0
 		kvs = append(kvs, a.GetKVSet(or)...) //or complete
 	} else {

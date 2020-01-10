@@ -90,14 +90,11 @@ func (c *GRPCCli) GetExecAccount(addr string, exec string, symbol string) (*type
 	}
 
 	// token: ccny
-	var addrs []string
-	addrs = append(addrs, addr)
-	param := &tt.ReqTokenBalance{
-		Addresses:   addrs,
-		TokenSymbol: symbol,
-		Execer:      et.ExchangeX,
+	param := &tt.ReqAccountTokenAssets{
+		Address: addr,
+		Execer:  et.ExchangeX,
 	}
-	msg, err := c.Query("token.GetAccountTokenBalance", param)
+	msg, err := c.Query("token.GetAccountTokenAssets", param)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +105,13 @@ func (c *GRPCCli) GetExecAccount(addr string, exec string, symbol string) (*type
 		return nil, err
 	}
 
-	return resp.TokenAssets[0].Account, nil
+	for _, v := range resp.TokenAssets {
+		if v.Symbol == symbol {
+			return v.Account, nil
+		}
+	}
+
+	return nil, types.ErrNotFound
 }
 
 // 发送交易并等待执行结果

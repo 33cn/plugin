@@ -124,39 +124,6 @@ func (t *token) getAccountTokenAssets(req *tokenty.ReqAccountTokenAssets) (types
 	return reply, nil
 }
 
-func (t *token) getAccountTokenBalance(req *tokenty.ReqTokenBalance) (types.Message, error) {
-	var reply = &tokenty.ReplyAccountTokenAssets{}
-	cfg := t.GetAPI().GetConfig()
-	for _, addr := range req.Addresses {
-		assets, err := t.queryTokenAssetsKey(addr)
-		if err != nil {
-			return nil, err
-		}
-		for _, asset := range assets.Datas {
-			if asset != req.TokenSymbol {
-				continue
-			}
-			acc, err := account.NewAccountDB(cfg, t.GetName(), asset, t.GetStateDB())
-			if err != nil {
-				return nil, err
-			}
-			var acc1 *types.Account
-			if req.Execer == t.GetName() {
-				acc1 = acc.LoadAccount(addr)
-			} else if req.Execer != "" {
-				execAddress := address.ExecAddress(req.Execer)
-				acc1 = acc.LoadExecAccount(addr, execAddress)
-			}
-			if acc1 == nil {
-				continue
-			}
-			tokenAsset := &tokenty.TokenAsset{Symbol: asset, Account: acc1}
-			reply.TokenAssets = append(reply.TokenAssets, tokenAsset)
-		}
-	}
-	return reply, nil
-}
-
 func (t *token) getAddrReceiverforTokens(addrTokens *tokenty.ReqAddrTokens) (types.Message, error) {
 	var reply = &tokenty.ReplyAddrRecvForTokens{}
 	db := t.GetLocalDB()

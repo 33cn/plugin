@@ -59,13 +59,6 @@ func (t *token) Query_GetAccountTokenAssets(in *tokenty.ReqAccountTokenAssets) (
 	return t.getAccountTokenAssets(in)
 }
 
-func (t *token) Query_GetAccountTokenBalance(in *tokenty.ReqTokenBalance) (types.Message, error) {
-	if in == nil {
-		return nil, types.ErrInvalidParam
-	}
-	return t.getAccountTokenBalance(in)
-}
-
 // Query_GetTxByToken 获取token相关交易
 func (t *token) Query_GetTxByToken(in *tokenty.ReqTokenTx) (types.Message, error) {
 	if in == nil {

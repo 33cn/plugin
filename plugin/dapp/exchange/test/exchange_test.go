@@ -3,6 +3,8 @@ package test
 import (
 	"testing"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/33cn/plugin/plugin/dapp/exchange/executor"
 
 	"github.com/33cn/chain33/types"
@@ -21,7 +23,7 @@ var (
 	rightAsset = &et.Asset{Symbol: token, Execer: "token"}
 
 	cli     Cli
-	orderId int64
+	orderID int64
 )
 
 func init() {
@@ -39,11 +41,11 @@ func TestOrderList(t *testing.T) {
 	orderList, err := getOrderList(et.Ordered, Nodes[0], "")
 	assert.Nil(t, err)
 	t.Log(orderList)
-	orderId = orderList.List[0].OrderID
+	orderID = orderList.List[0].OrderID
 }
 
 func TestGetOrder(t *testing.T) {
-	order, err := getOrder(orderId)
+	order, err := getOrder(orderID)
 	assert.Nil(t, err)
 	t.Log(order)
 }
@@ -71,7 +73,7 @@ func TestHistoryOrderList(t *testing.T) {
 
 func TestRevokeOrder(t *testing.T) {
 	//A 撤回未完成订单
-	testRevokeLimitOrder(t, orderId, Nodes[0], PrivKeyA)
+	testRevokeLimitOrder(t, orderID, Nodes[0], PrivKeyA)
 }
 
 func TestSample0(t *testing.T) {
@@ -219,8 +221,8 @@ func getOrder(orderID int64) (*et.Order, error) {
 	return &resp, nil
 }
 
-func getMarketDepth(query *et.QueryMarketDepth) (*et.MarketDepthList, error) {
-	msg, err := cli.Query(et.FuncNameQueryMarketDepth, query)
+func getMarketDepth(q proto.Message) (*et.MarketDepthList, error) {
+	msg, err := cli.Query(et.FuncNameQueryMarketDepth, q)
 	if err != nil {
 		return nil, err
 	}
@@ -233,8 +235,8 @@ func getMarketDepth(query *et.QueryMarketDepth) (*et.MarketDepthList, error) {
 	return &resp, nil
 }
 
-func getHistoryOrderList(query *et.QueryHistoryOrderList) (*et.OrderList, error) {
-	msg, err := cli.Query(et.FuncNameQueryHistoryOrderList, query)
+func getHistoryOrderList(q proto.Message) (*et.OrderList, error) {
+	msg, err := cli.Query(et.FuncNameQueryHistoryOrderList, q)
 	if err != nil {
 		return nil, err
 	}

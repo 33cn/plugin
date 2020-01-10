@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-BUILD=$(cd `dirname $0` && cd ../../../../build && pwd)
+BUILD=$(cd "$(dirname "$0")" && cd ../../../../build && pwd)
 echo "$BUILD"
 
-cd $BUILD
+cd $BUILD || return
+
 seed=$(./chain33-cli seed generate -l 0)
-echo $seed
+echo "$seed"
 
 ./chain33-cli seed save -p bty123456 -s "$seed"
 sleep 1
@@ -29,12 +30,10 @@ sleep 1
 #D -- 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
 ./chain33-cli account import_key -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71 -l D
 
-
 ## config token
 ./chain33-cli send config config_tx -c token-finisher -o add -v 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs
 sleep 1
 ./chain33-cli config query -k token-finisher
-
 
 ./chain33-cli send config config_tx -c token-blacklist -o add -v BTY -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs
 sleep 1
@@ -80,4 +79,3 @@ echo "account balance in execer"
 ./chain33-cli send token send_exec -a 200000000 -e exchange -s CCNY -k 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
 echo "token balance in execer"
 ./chain33-cli token balance -e exchange -s CCNY -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
