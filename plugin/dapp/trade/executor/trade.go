@@ -96,8 +96,6 @@ func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transa
 }
 
 func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transaction, txIndex string, ldb *table.Table) {
-	//tradelog.Info("save", "buy", receiptTradeBuy)
-
 	order := t.genBuyMarket(tx, receiptTradeBuy, txIndex)
 	tradelog.Debug("trade BuyMarket save local", "order", order)
 	ldb.Add(order)
