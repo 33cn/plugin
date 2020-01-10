@@ -3,7 +3,7 @@
 BUILD=$(cd "$(dirname "$0")" && cd ../../../../build && pwd)
 echo "$BUILD"
 
-cd $BUILD || return
+cd "$BUILD" || return
 
 seed=$(./chain33-cli seed generate -l 0)
 echo "$seed"
