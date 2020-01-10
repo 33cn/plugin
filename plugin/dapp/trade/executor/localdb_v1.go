@@ -124,6 +124,7 @@ func delOnePrefixLimit(localDB dbm.DB, prefix string, total int) (allDeleted boo
 			tradelog.Error("delOnePrefixLimit delete key not match prefix", "prefix", prefix, "key", string(keys[i]))
 			panic("bug: " + "delOnePrefixLimit delete key not match prefix: " + prefix + " " + string(keys[i]))
 		}
+		tradelog.Debug("delOnePrefixLimit", "KEY", string(keys[i]))
 		batch.Delete(keys[i])
 	}
 	err = batch.Write()
@@ -188,6 +189,7 @@ func upgradeOrderLimit(kvdb dbm.KVDB, total int) (allDeleted bool, err error) {
 
 	kvdb.Begin()
 	for _, kv := range kvs {
+		tradelog.Debug("upgradeOrderLimit", "KEY", string(kv.GetKey()))
 		err = kvdb.Set(kv.GetKey(), kv.GetValue())
 		if err != nil {
 			break
