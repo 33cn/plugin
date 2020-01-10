@@ -112,7 +112,7 @@ func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.
 	var replys pty.ReplyTradeOrders
 	for _, token := range addrTokens.Token {
 		t.setQueryAsset(&order, token)
-		rows, err := listV2(t.GetLocalDB(), "owner_isSell", &order, 0, 0)
+		rows, err := listV2(t.GetLocalDB(), "owner_asset_isSell", &order, 0, 0)
 		if err != nil && err != types.ErrNotFound {
 			return nil, err
 		}
@@ -176,5 +176,5 @@ func (t *trade) setQueryAsset(order *pty.LocalOrder, tokenSymbol string) {
 	order.AssetSymbol = tokenSymbol
 	order.AssetExec = defaultAssetExec
 	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
-	order.PriceExec = defaultAssetExec
+	order.PriceExec = defaultPriceExec
 }
