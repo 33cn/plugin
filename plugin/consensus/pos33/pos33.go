@@ -50,11 +50,8 @@ type genesisTicket struct {
 type subConfig struct {
 	Genesis          []*genesisTicket `json:"genesis"`
 	GenesisBlockTime int64            `json:"genesisBlockTime"`
-	ListenAddr       string           `json:"ListenAddr,omitempty"`
-	AdvertiseAddr    string           `json:"AdvertiseAddr,omitempty"`
+	ListenPort       string           `json:"listenPort,omitempty"`
 	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
-	BlockTimeout     int64            `json:"BlockTimeout,omitempty"`
-	SingleNode       bool             `json:"singleNode,omitempty"`
 }
 
 // New create pos33 consensus client

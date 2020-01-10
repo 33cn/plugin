@@ -61,7 +61,16 @@ func (gd *gossipDelegate) NotifyMsg(b []byte) {
 // the limit. Care should be taken that this method does not block,
 // since doing so would block the entire UDP packet receive loop.
 func (gd *gossipDelegate) GetBroadcasts(overhead, limit int) [][]byte {
-	return nil //gd.gss.broadcasts.GetBroadcasts(overhead, limit)
+	// var sendto [][]byte
+	// for i := 0; i < overhead; i++ {
+	// 	select {
+	// 	case b := <-gd.gss.udpCh:
+	// 		sendto = append(sendto, b)
+	// 	default:
+	// 	}
+	// }
+	// return sendto
+	return nil
 }
 
 // LocalState is used for a TCP Push/Pull. This is sent to
@@ -212,6 +221,7 @@ func newGossip(publicKey, listenAddr, advertiseAddr, bootAddr string) *gossip {
 	addr, port := ipPort(listenAddr)
 	conf.BindAddr = addr
 	conf.BindPort = port
+	conf.GossipInterval = time.Millisecond * 100
 	if advertiseAddr != "" {
 		addr, port = ipPort(advertiseAddr)
 		conf.AdvertiseAddr = addr
@@ -228,7 +238,7 @@ type brInfo struct {
 	msg []byte
 }
 
-func (g *gossip) runBroadcast() {
+func (g *gossip) run() {
 	N := 4
 	tcpCh := make(chan brInfo, N)
 	udpCh := make(chan brInfo, N)
@@ -289,7 +299,8 @@ func (g *gossip) broadcastUDP(msg []byte) {
 }
 
 func (g *gossip) gossip(msg []byte) {
-	g.tcpCh <- msg
+	// g.tcpCh <- msg
+	g.udpCh <- msg
 }
 
 func (g *gossip) send(public string, msg []byte) error {
