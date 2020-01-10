@@ -40,21 +40,6 @@ func (t *trade) GetTokenOrderByStatus(isSell bool, req *pty.ReqTokenSellOrder, s
 	return t.toTradeOrders(rows)
 }
 
-func (t *trade) toTradeOrders(rows []*table.Row) (*pty.ReplyTradeOrders, error) {
-	var replys pty.ReplyTradeOrders
-	cfg := t.GetAPI().GetConfig()
-	for _, row := range rows {
-		o, ok := row.Data.(*pty.LocalOrder)
-		if !ok {
-			tradelog.Error("toTradeOrders", "err", "bad row type")
-			return nil, types.ErrTypeAsset
-		}
-		reply := fmtReply(cfg, o)
-		replys.Orders = append(replys.Orders, reply)
-	}
-	return &replys, nil
-}
-
 // 1.3 根据token 分页显示未完成成交买单
 func (t *trade) Query_GetTokenBuyOrderByStatus(req *pty.ReqTokenBuyOrder) (types.Message, error) {
 	if req.Status == 0 {
@@ -177,4 +162,20 @@ func (t *trade) setQueryAsset(order *pty.LocalOrder, tokenSymbol string) {
 	order.AssetExec = defaultAssetExec
 	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
 	order.PriceExec = defaultPriceExec
+}
+
+// 转换数据结构， 输出前调用
+func (t *trade) toTradeOrders(rows []*table.Row) (*pty.ReplyTradeOrders, error) {
+	var replys pty.ReplyTradeOrders
+	cfg := t.GetAPI().GetConfig()
+	for _, row := range rows {
+		o, ok := row.Data.(*pty.LocalOrder)
+		if !ok {
+			tradelog.Error("toTradeOrders", "err", "bad row type")
+			return nil, types.ErrTypeAsset
+		}
+		reply := fmtReply(cfg, o)
+		replys.Orders = append(replys.Orders, reply)
+	}
+	return &replys, nil
 }
