@@ -86,6 +86,7 @@ func (t *trade) localDelLog(tx *types.Transaction, receipt *types.ReceiptData, i
 		}
 	}
 	newKvs, err := table.Save()
+	debugTableKV(newKvs, "exec_del_local orderV2 kvs")
 	if err != nil {
 		tradelog.Error("trade table.Save failed", "error", err)
 		return nil, err

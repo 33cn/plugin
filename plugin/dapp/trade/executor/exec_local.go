@@ -38,7 +38,6 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 	var set types.LocalDBSet
 	table := NewOrderTableV2(t.GetLocalDB())
 	txIndex := dapp.HeightIndexStr(t.GetHeight(), int64(index))
-
 	for i := 0; i < len(receipt.Logs); i++ {
 		item := receipt.Logs[i]
 		if item.Ty == pty.TyLogTradeSellLimit {
@@ -88,6 +87,7 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 		}
 	}
 	newKvs, err := table.Save()
+	debugTableKV(newKvs, "exec_local orderV2 kvs")
 	if err != nil {
 		tradelog.Error("trade table.Save failed", "error", err)
 		return nil, err
@@ -98,4 +98,11 @@ func (t *trade) localAddLog(tx *types.Transaction, receipt *types.ReceiptData, i
 		t.GetLocalDB().Set(kv.Key, kv.Value)
 	}
 	return &set, nil
+}
+
+func debugTableKV(kvs []*types.KeyValue, msg string) {
+	tradelog.Debug("table save debug:"+msg, "count", len(kvs))
+	for i, kv := range kvs {
+		tradelog.Debug("table save debug:"+msg, "i", i, "key", string(kv.Key), "value", string(kv.Value))
+	}
 }
