@@ -32,6 +32,10 @@ const (
 // TradeUpdateLocalDBV2 trade 本地数据库升级
 // from 1 to 2
 func TradeUpdateLocalDBV2(localDB dbm.DB, total int) error {
+	// 外部不指定， 强制分批执行
+	if total <= 0 {
+		total = 10000
+	}
 	toVersion := 2
 	kvdb := dbm.NewKVDB(localDB)
 	version, err := getVersion(kvdb)
