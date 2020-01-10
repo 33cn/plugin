@@ -43,7 +43,7 @@ func TradeUpdateLocalDBV2(localDB dbm.DB, total int) error {
 		return nil
 	}
 
-	err = UpdateLocalDBPart2(localDB, total)
+	err = UpdateLocalDBPart2(kvdb, total)
 	if err != nil {
 		return err
 	}
@@ -133,13 +133,8 @@ func delOnePrefixLimit(localDB dbm.DB, prefix string, total int) (allDeleted boo
 // UpdateLocalDBPart2 升级order
 // order 从 v1 升级到 v2
 // 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
-func UpdateLocalDBPart2(localDB dbm.DB, total int) error {
-	kvdb := dbm.NewKVDB(localDB)
-	err := upgradeOrder(kvdb, total)
-	if err != nil {
-		return err
-	}
-	return nil
+func UpdateLocalDBPart2(kvdb dbm.KVDB, total int) error {
+	return upgradeOrder(kvdb, total)
 }
 
 func upgradeOrder(kvdb dbm.KVDB, total int) (err error) {
