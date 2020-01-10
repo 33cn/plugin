@@ -18,6 +18,7 @@ func calcTokenBuyID(hash string) string {
 	return buyIDPrefix + hash
 }
 
+// TODO 价格增加编码， 更大的范围 （由于支持自由的交易对）
 // make a number as token's price whether cheap or dear
 // support 1e8 bty pre token or 1/1e8 bty pre token, [1Coins, 1e16Coins]
 // the number in key is used to sort buy orders and pages
