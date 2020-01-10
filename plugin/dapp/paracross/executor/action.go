@@ -757,6 +757,22 @@ func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*t
 		return nil, err
 	}
 
+	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(a.tx.Execer))
+		if err != nil {
+			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+			return nil, err
+		}
+		if act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer {
+			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, tx.Tx)
+			if err != nil {
+				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
+				return nil, err
+			}
+			clog.Debug("paracross.Commit crossAssetTransfer done", "act", act, "txHash", common.ToHex(crossTxHash))
+			return receipt, nil
+		}
+
 	}
 
 	//主链共识后，执行主链资产withdraw, 在支持CrossAssetTransfer之前使用此action
@@ -784,22 +800,6 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 		clog.Crit("paracross.Commit.rollbackCrossTx Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 		return nil, err
 	}
-
-	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(a.tx.Execer))
-		if err != nil {
-			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
-			return nil, err
-		}
-		if act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer {
-			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, tx.Tx)
-			if err != nil {
-				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
-				return nil, err
-			}
-			clog.Debug("paracross.Commit crossAssetTransfer done", "act", act, "txHash", common.ToHex(crossTxHash))
-			return receipt, nil
-		}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
 		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(a.tx.Execer))
