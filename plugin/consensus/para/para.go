@@ -473,3 +473,8 @@ func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (type
 	client.commitMsgClient.onWalletStatus(walletStatus)
 	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
 }
+
+//比较newBlock是不是最优区块
+func (client *client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
+}

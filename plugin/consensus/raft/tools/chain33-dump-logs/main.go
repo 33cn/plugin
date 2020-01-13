@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -18,7 +19,6 @@ import (
 	raftsnap "github.com/coreos/etcd/snap"
 	"github.com/coreos/etcd/wal"
 	"github.com/coreos/etcd/wal/walpb"
-	"github.com/golang/protobuf/proto"
 )
 
 func main() {
@@ -94,12 +94,12 @@ func main() {
 				break
 			}
 			// 解码
-			block := &Block{}
-			if err := proto.Unmarshal(e.Data, block); err != nil {
+			info := &BlockInfo{}
+			if err := json.Unmarshal(e.Data, info); err != nil {
 				log.Printf("failed to unmarshal: %v", err)
 				break
 			}
-			msg = fmt.Sprintf("%s\t BlockHeight:%d", msg, block.Height)
+			msg = fmt.Sprintf("%s\tHeight=%d\tHash=%s", msg, info.Height, info.Hash)
 		case raftpb.EntryConfChange:
 			msg = fmt.Sprintf("%s\tconf", msg)
 			var r raftpb.ConfChange
@@ -133,21 +133,7 @@ func genIDSlice(a []uint64) []types.ID {
 	return ids
 }
 
-// Block struct
-type Block struct {
-	Version    int64  `protobuf:"varint,1,opt,name=version" json:"version,omitempty"`
-	ParentHash []byte `protobuf:"bytes,2,opt,name=parentHash,proto3" json:"parentHash,omitempty"`
-	TxHash     []byte `protobuf:"bytes,3,opt,name=txHash,proto3" json:"txHash,omitempty"`
-	StateHash  []byte `protobuf:"bytes,4,opt,name=stateHash,proto3" json:"stateHash,omitempty"`
-	Height     int64  `protobuf:"varint,5,opt,name=height" json:"height,omitempty"`
-	BlockTime  int64  `protobuf:"varint,6,opt,name=blockTime" json:"blockTime,omitempty"`
-	//Signature  *Signature     `protobuf:"bytes,8,opt,name=signature" json:"signature,omitempty"`
-	//Txs        []*Transaction `protobuf:"bytes,7,rep,name=txs" json:"txs,omitempty"`
+type BlockInfo struct {
+	Height int64  `json:"height"`
+	Hash   string `json:"hash"`
 }
-
-// Reset method
-func (m *Block) Reset()         { *m = Block{} }
-func (m *Block) String() string { return proto.CompactTextString(m) }
-
-// ProtoMessage method
-func (*Block) ProtoMessage() {}
