@@ -79,6 +79,11 @@ func (t *trade) GetOnesSellOrder(addrTokens *pty.ReqAddrAssets) (types.Message, 
 	return t.GetOnesOrder(true, addrTokens)
 }
 
+// GetOnesBuyOrder by address or address-token
+func (t *trade) GetOnesBuyOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOnesOrder(false, addrTokens)
+}
+
 // GetOnesSellOrder by address or address-token
 func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.Message, error) {
 	var order pty.LocalOrder
@@ -114,11 +119,6 @@ func (t *trade) GetOnesOrder(isSell bool, addrTokens *pty.ReqAddrAssets) (types.
 	return &replys, nil
 }
 
-// GetOnesBuyOrder by address or address-token
-func (t *trade) GetOnesBuyOrder(addrTokens *pty.ReqAddrAssets) (types.Message, error) {
-	return t.GetOnesOrder(false, addrTokens)
-}
-
 // Query_GetOnesBuyOrderWithStatus 1.5 没找到
 // 按 用户状态来 addr-status
 func (t *trade) Query_GetOnesSellOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
@@ -128,6 +128,16 @@ func (t *trade) Query_GetOnesSellOrderWithStatus(req *pty.ReqAddrAssets) (types.
 // Query_GetOnesBuyOrderWithStatus 1.2 按 用户状态来 addr-status
 func (t *trade) Query_GetOnesBuyOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
 	return t.GetOnesBuyOrdersWithStatus(req)
+}
+
+// GetOnesSellOrdersWithStatus by address-status
+func (t *trade) GetOnesSellOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOnesStatusOrder(true, req)
+}
+
+// GetOnesBuyOrdersWithStatus by address-status
+func (t *trade) GetOnesBuyOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
+	return t.GetOnesStatusOrder(false, req)
 }
 
 // GetOnesStatusOrder Get Ones Status Order
@@ -143,16 +153,6 @@ func (t *trade) GetOnesStatusOrder(isSell bool, req *pty.ReqAddrAssets) (types.M
 		return nil, err
 	}
 	return t.toTradeOrders(rows)
-}
-
-// GetOnesSellOrdersWithStatus by address-status
-func (t *trade) GetOnesSellOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
-	return t.GetOnesStatusOrder(true, req)
-}
-
-// GetOnesBuyOrdersWithStatus by address-status
-func (t *trade) GetOnesBuyOrdersWithStatus(req *pty.ReqAddrAssets) (types.Message, error) {
-	return t.GetOnesStatusOrder(false, req)
 }
 
 // util
