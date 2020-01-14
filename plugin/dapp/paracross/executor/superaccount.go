@@ -701,7 +701,7 @@ func (a *action) nodeGroupCoinsFrozen(createAddr string, configCoinsFrozen int64
 	conf := types.ConfSub(cfg, pt.ParaX)
 	confCoins := conf.GInt("nodeGroupFrozenCoins")
 	if configCoinsFrozen < confCoins {
-		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "nodeGroupCoinsFrozen apply=%d,conf=%d", configCoinsFrozen, confCoins)
 	}
 	if configCoinsFrozen == 0 {
 		clog.Info("node group apply configCoinsFrozen is 0")

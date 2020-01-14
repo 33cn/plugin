@@ -4,9 +4,11 @@ PARA_CLI="docker exec ${NODE3} /root/chain33-para-cli"
 PARA_CLI2="docker exec ${NODE2} /root/chain33-para-cli"
 PARA_CLI1="docker exec ${NODE1} /root/chain33-para-cli"
 PARA_CLI4="docker exec ${NODE4} /root/chain33-para-cli"
+PARA_CLI5="docker exec ${NODE5} /root/chain33-para-cli --paraName user.p.game."
 MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
+PARANAME_GAME="game"
 PARA_COIN_FROZEN="5.0000"
 MainLoopCheckForkHeight="60"
 
@@ -19,21 +21,25 @@ fi
 #source test-rpc.sh
 
 function para_init() {
-    para_set_toml chain33.para33.toml
-    para_set_toml chain33.para32.toml
-    para_set_toml chain33.para31.toml
-    para_set_toml chain33.para30.toml
+    para_set_toml chain33.para33.toml "$PARANAME"
+    para_set_toml chain33.para32.toml "$PARANAME"
+    para_set_toml chain33.para31.toml "$PARANAME"
+    para_set_toml chain33.para30.toml "$PARANAME"
 
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"/g' chain33.para33.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"/g' chain33.para32.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"/g' chain33.para31.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"/g' chain33.para30.toml
+
+    para_set_toml chain33.para29.toml "$PARANAME_GAME"
+    sed -i $xsedfix 's/^authAccount=.*/authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"/g' chain33.para29.toml
 }
 
 function para_set_toml() {
     cp chain33.para.toml "${1}"
+    local paraname="$2"
 
-    sed -i $xsedfix 's/^Title.*/Title="user.p.'''$PARANAME'''."/g' "${1}"
+    sed -i $xsedfix 's/^Title.*/Title="user.p.'''$paraname'''."/g' "${1}"
     sed -i $xsedfix 's/^# TestNet=.*/TestNet=true/g' "${1}"
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
     sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
@@ -93,6 +99,15 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0xfdf2bbff853ecff2e7b86b2a8b45726c6538ca7d1403dc94e50131ef379bdca0" "othernode1"
     #1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB
     para_import_key "${PARA_CLI}" "0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d" "othernode2"
+
+    #cross_transfer
+    #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    #    para_import_key "${PARA_CLI5}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "genesis"
+    #1KS
+    para_import_wallet "${PARA_CLI5}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
+    #1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu
+    para_import_key "${PARA_CLI5}" "0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1" "cross_transfer"
+
 }
 
 function para_import_wallet() {
@@ -143,6 +158,7 @@ function para_transfer() {
     main_transfer2account "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
     main_transfer2account "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
     main_transfer2account "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+    main_transfer2account "1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu"
     # super node test
     main_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
     main_transfer2account "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
@@ -152,12 +168,16 @@ function para_transfer() {
     main_transfer2account "1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3" 10
     main_transfer2account "1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum" 10
     #relay rpc test
-    para_transfer2account "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
-    para_transfer2account "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    para_transfer2account "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+    para_transfer2account "${PARA_CLI}" "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    para_transfer2account "${PARA_CLI}" "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
+    para_transfer2account "${PARA_CLI}" "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
+    para_transfer2account "${PARA_CLI}" "1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"
+
+    #cross_transfer
+    #0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1
+    para_transfer2account "${PARA_CLI5}" "1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu"
     #rpc test pool addr
-    para_transfer2account "1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx" 500000
+    para_transfer2account "${PARA_CLI}" "1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx" 500000
     block_wait "${CLI}" 2
 
     echo "=========== # main chain send to paracross ============="
@@ -167,8 +187,6 @@ function para_transfer() {
     main_transfer2paracross "0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5" 100
 
     block_wait "${CLI}" 2
-
-    #    para_create_manage_nodegroup
 
     echo "=========== # config token blacklist ============="
     #token precreate
@@ -189,12 +207,12 @@ function main_transfer2account() {
 }
 
 function para_transfer2account() {
-    echo "${1}"
+    echo "${2}"
     local coins=1000
-    if [ "$#" -ge 2 ]; then
-        coins="$2"
+    if [ "$#" -ge 3 ]; then
+        coins="$3"
     fi
-    hash1=$(${PARA_CLI} send coins transfer -a "$coins" -n transfer -t "${1}" -k 0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    hash1=$(${1} send coins transfer -a "$coins" -n transfer -t "${2}" -k 0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash1}"
 }
 
@@ -206,20 +224,6 @@ function main_transfer2paracross() {
     fi
     hash1=$(${CLI} send coins send_exec -a "$coins" -e paracross -k "${1}")
     echo "${hash1}"
-}
-
-function para_create_manage_nodegroup() {
-    echo "=========== # para chain send config ============="
-    para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
-    para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
-    para_configkey "${CLI}" "paracross-nodes-user.p.${PARANAME}." "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
-    para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"
-    para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
-    para_configkey "${PARA_CLI}" "paracross-nodes-user.p.${PARANAME}." "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-    block_wait "${CLI}" 1
 }
 
 function para_configkey() {
@@ -357,15 +361,16 @@ function para_cross_transfer_withdraw() {
     local times=200
     while true; do
         acc=$(${CLI} account balance -e paracross -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq -r ".balance")
-        echo "account balance is ${acc}, expect 9.3 "
-        if [ "${acc}" != "9.3000" ]; then
+        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty | jq -r ".balance")
+        echo "account balance is ${acc}, expect 9.3, para acct balance is ${acc_para},expect 0.7 "
+        if [ "${acc}" != "9.3000" ] || [ "${acc_para}" != "0.7000" ]; then
             block_wait "${CLI}" 2
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "para_cross_transfer_withdraw failed"
                 ${CLI} tx query -s "$hash2"
                 ${PARA_CLI} tx query -s "$hash2"
-                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e user.p.para.paracross --asset_exec paracross --asset_symbol coins.bty
+                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty
                 exit 1
             fi
         else
@@ -465,19 +470,163 @@ function para_cross_transfer_withdraw_for_token() {
     local times=100
     while true; do
         acc=$(${CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol FZM --asset_exec token -e paracross | jq -r ".balance")
-        echo "account balance is ${acc}, expect 224 "
-        if [ "${acc}" != "224.0000" ]; then
+        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol token.FZM --asset_exec paracross -e paracross | jq -r ".balance")
+        echo "account balance is ${acc}, expect 224, para acct balance is ${acc_para}, execpt=109 "
+        if [ "${acc}" != "224.0000" ] || [ "${acc_para}" != "109.0000" ]; then
             block_wait "${CLI}" 2
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "para_cross_transfer_withdraw failed"
-                exit 1
+                #                exit 1
             fi
         else
             echo "para_cross_transfer_withdraw success"
             break
         fi
     done
+}
+
+function para_create_nodegroup_gamechain() {
+    echo "=========== # game para chain create node group test ============="
+    ##apply
+    txhash=$(${CLI} --paraName user.p.game. send para nodegroup apply -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -c 5 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI5}" "${txhash}"
+    id=$txhash
+
+    echo "=========== # game para chain approve node group ============="
+    ##approve
+    txhash=$(${CLI} --paraName user.p.game. send para nodegroup approve -i "$id" -c 5 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI5}" "${txhash}"
+
+    status=$(${PARA_CLI5} para nodegroup status | jq -r ".status")
+    if [ "$status" != 2 ]; then
+        echo "status not approve status=$status"
+        exit 1
+    fi
+
+    ${PARA_CLI5} para nodegroup addrs
+
+}
+
+function para_cross_transfer_from_parachain() {
+    echo "=========== # para cross transfer from parachain test ============="
+
+    balance=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.coins | jq -r ".balance")
+    if [ "${balance}" != "1000.0000" ]; then
+        echo "para account 1BM2xhBk should be 1000, real is $balance"
+        exit 1
+    fi
+
+    hash=$(${PARA_CLI5} send coins send_exec -e user.p.game.paracross -a 300 -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${PARA_CLI5}" "${hash}"
+
+    balance=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.paracross | jq -r ".balance")
+    if [ "${balance}" != "300.0000" ]; then
+        echo "para paracross account 1BM2xhBk should be 300, real is $balance"
+        exit 1
+    fi
+
+    echo "========== #1. user.p.game chain transfer to main chain 300 user.p.game.coins.para, remain=700 ==========="
+    hash=$(${PARA_CLI5} send para cross_transfer -a 300 -s user.p.game.coins.para -d 1 -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${PARA_CLI5}" "${hash}"
+    check_cross_transfer_game_balance "300.0000" "0.0000" "${hash}"
+
+    echo "check asset transfer tx=$hash"
+    res=$(${CLI} para asset_txinfo -s "${hash}")
+    echo "$res"
+    succ=$(jq -r ".success" <<<"$res")
+    if [ "${succ}" != "true" ]; then
+        echo "para asset transfer tx report fail"
+        exit 1
+    fi
+
+    echo "========== #2. main transfer 200 user.p.game.coins.para game chain asset to para chain, main remain=100, parachain=200 ===="
+    hash=$(${CLI} send para transfer_exec -e paracross -a 200 -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 200 -s user.p.game.coins.para -d 0 -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    check_cross_transfer_para_balance "100.0000" "200.0000" "${hash}"
+
+    echo "========== #3. withdraw game chain asset to main chain from para chain 50 user.p.game.coins.para,parachain=150,main=150 ===="
+    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 50 -s user.p.game.coins.para -d 1 -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    check_cross_transfer_para_balance "100.0000" "150.0000" "${hash}"
+
+    echo "withdraw 50 from paracross exec"
+    hash=$(${CLI} send para withdraw -a 50 -e paracross -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
+    if [ "${acc}" != "150.0000" ]; then
+        echo "para_cross_transfer_ withdraw from paracross exec failed, acc=$acc"
+        exit 1
+    fi
+
+    echo "========== #4. withdraw game chain asset to game chain from main chain 50 user.p.game.coins.para,parachain=150,main=100,para=50+700 ======"
+    hash=$(${CLI} --paraName=user.p.game. send para cross_transfer -a 50 -s user.p.game.coins.para -d 0 -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    check_cross_transfer_game_balance "100.0000" "50.0000" "${hash}"
+}
+
+function check_cross_transfer_para_balance() {
+    local times=200
+    while true; do
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
+        acc_para=$(${PARA_CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol paracross.user.p.game.coins.para -e paracross | jq -r ".balance")
+        res=$(${CLI} para asset_txinfo -s "${hash}")
+        echo "$res"
+        succ=$(jq -r ".success" <<<"$res")
+        echo "main account balance is ${acc}, expect $1, para acct balance is ${acc_para},expect $2, cross rst=$succ, expect=true "
+        if [ "${acc}" != "$1" ] || [ "${acc_para}" != "$2" ] || [ "${succ}" != "true" ]; then
+            block_wait "${CLI}" 2
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "para_cross_transfer main chain to para chain failed"
+                ${CLI} tx query -s "$hash"
+                ${PARA_CLI} tx query -s "$hash"
+                exit 1
+            fi
+        else
+            echo "para_cross_transfer main chain to para chain  success"
+            break
+        fi
+    done
+
+}
+
+function check_cross_transfer_game_balance() {
+    local times=200
+    while true; do
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
+        acc_para=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.paracross | jq -r ".balance")
+        res=$(${CLI} para asset_txinfo -s "${hash}")
+        echo "$res"
+        succ=$(jq -r ".success" <<<"$res")
+        echo "main account balance is ${acc}, expect $1, para exec acct balance is ${acc_para},expect $2, cross rst=$succ, expect=true "
+        if [ "${acc}" != "$1" ] || [ "${acc_para}" != "$2" ] || [ "${succ}" != "true" ]; then
+            block_wait "${CLI}" 2
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "para_cross_transfer main chain and game chain failed"
+                ${CLI} tx query -s "$3"
+                ${PARA_CLI5} tx query -s "$3"
+                exit 1
+            fi
+        else
+            echo "para_cross_transfer main chain and game chain  success"
+            break
+        fi
+    done
+
 }
 
 function para_create_nodegroup_test() {
@@ -935,17 +1084,19 @@ function privacy_transfer_test() {
 
 function para_test() {
     echo "=========== # para chain test ============="
-    block_wait2height "${PARA_CLI}" $MainLoopCheckForkHeight "1"
+    #    block_wait2height "${PARA_CLI}" $MainLoopCheckForkHeight "1"
     para_create_nodegroup
     para_nodegroup_behalf_quit_test
-    para_nodemanage_cancel_test
-    para_nodemanage_test
-    para_nodemanage_node_behalf_join
+    para_create_nodegroup_gamechain
+    #    para_nodemanage_cancel_test
+    #    para_nodemanage_test
+    #    para_nodemanage_node_behalf_join
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
     para_cross_transfer_withdraw_for_token
     privacy_transfer_test "${PARA_CLI}"
+    para_cross_transfer_from_parachain
 }
 
 function paracross() {

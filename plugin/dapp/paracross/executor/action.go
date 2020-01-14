@@ -1009,10 +1009,18 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 
 func (a *action) AssetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {
 	clog.Debug("Paracross.Exec", "AssetTransfer", transfer.Cointoken, "transfer", "")
+
+	//rbk fork后　如果没有nodegroup　conf，也不允许跨链
+	if a.api.GetConfig().IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		err := a.isAllowTransfer()
+		if err != nil {
+			return nil, errors.Wrap(err, "AssetTransfer not allow")
+		}
+	}
+
 	receipt, err := a.assetTransfer(transfer)
 	if err != nil {
-		clog.Error("AssetTransfer failed", "err", err)
-		return nil, errors.Cause(err)
+		return nil, errors.Wrap(err, "AssetTransfer failed")
 	}
 	return receipt, nil
 }
@@ -1026,6 +1034,14 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 		}
 	}
 
+	//rbk fork后　如果没有nodegroup　conf，也不允许跨链
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		err := a.isAllowTransfer()
+		if err != nil {
+			return nil, errors.Wrap(err, "AssetTransfer not allow")
+		}
+	}
+
 	isPara := cfg.IsPara()
 	if !isPara {
 		// 需要平行链先执行， 达成共识时，继续执行
@@ -1035,8 +1051,7 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 		"txHash", common.ToHex(a.tx.Hash()), "token name", withdraw.Cointoken)
 	receipt, err := a.assetWithdraw(withdraw, a.tx)
 	if err != nil {
-		clog.Error("AssetWithdraw failed", "err", err)
-		return nil, errors.Cause(err)
+		return nil, errors.Wrap(err, "AssetWithdraw failed")
 	}
 	return receipt, nil
 }
@@ -1046,9 +1061,14 @@ func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rec
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
 
+	err := a.isAllowTransfer()
+	if err != nil {
+		return nil, errors.Wrap(err, "CrossAssetTransfer not Allow")
+	}
+
 	act, err := getCrossAction(transfer, string(a.tx.Execer))
 	if act == pt.ParacrossNoneTransfer {
-		return nil, err
+		return nil, errors.Wrap(err, "CrossAssetTransfer non action")
 	}
 	// 需要平行链先执行， 达成共识时，继续执行
 	if !isPara && (act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer) {
@@ -1056,8 +1076,7 @@ func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rec
 	}
 	receipt, err := a.crossAssetTransfer(transfer, act, a.tx)
 	if err != nil {
-		clog.Error("CrossAssetTransfer failed", "err", err)
-		return nil, err
+		return nil, errors.Wrap(err, "CrossAssetTransfer failed")
 	}
 	return receipt, nil
 }
@@ -1127,6 +1146,21 @@ func getTitleFrom(exec []byte) ([]byte, error) {
 	}
 	// 现在配置是包含 .的， 所有取title 是也把 `.` 取出来
 	return exec[:last+1], nil
+}
+
+func (a *action) isAllowTransfer() error {
+	tit, err := getTitleFrom(a.tx.Execer)
+	if err != nil {
+		return errors.Wrapf(types.ErrInvalidParam, "CrossAssetTransfer, not para chain exec=%s", string(a.tx.Execer))
+	}
+	nodes, err := a.getNodesGroup(string(tit))
+	if err != nil {
+		return errors.Wrapf(err, "CrossAssetTransfer get nodegroup err,title=%s", tit)
+	}
+	if len(nodes) == 0 {
+		return errors.Wrapf(err, "CrossAssetTransfer nodegroup not create,title=%s", tit)
+	}
+	return nil
 }
 
 /*

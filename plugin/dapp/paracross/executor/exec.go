@@ -67,7 +67,7 @@ func (e *Paracross) Exec_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *
 	receipt, err := a.CrossAssetTransfer(payload)
 	if err != nil {
 		clog.Error("Paracross CrossAssetTransfer failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 	return receipt, nil
 }
