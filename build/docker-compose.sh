@@ -131,6 +131,14 @@ function start() {
 
     docker-compose ps
 
+    set +e
+    influxdbcontainer=$(docker ps -a | grep build_influxdb_1)
+    if [ -n "$influxdbcontainer" ]; then
+        echo "create database chain33metrics in docker container build_influxdb_1"
+        docker exec build_influxdb_1 influx -execute 'create database chain33metrics'
+    fi
+    set -e
+
     # query node run status
     check_docker_status
     ${CLI} block last_header
