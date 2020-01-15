@@ -121,6 +121,13 @@ docker-compose-down: ## build docker-compose for chain33 run
 	 fi; \
 	 cd ..
 
+metrics:## build docker-compose for chain33 metrics
+	@cd build && if ! [ -d ci ]; then \
+	 make -C ../ ; \
+	 fi; \
+	 cp chain33* Dockerfile  docker-compose.yml docker-compose-metrics.yml influxdb.conf *.sh ci/paracross/testcase.sh metrics/ && ./docker-compose-pre.sh run $(proj) metrics  && cd ../..
+
+
 fork-test: ## build fork-test for chain33 run
 	@cd build && cp chain33* Dockerfile system-fork-test.sh docker-compose* ci/ && cd ci/ && ./docker-compose-pre.sh forktest $(proj) $(dapp) && cd ../..
 
@@ -135,6 +142,7 @@ clean: ## Remove previous build
 	@rm -rf build/ci
 	@rm -rf build/system-rpc-test.sh
 	@rm -rf tool
+	@cd build/metrics && find * -not -name readme.md | xargs rm -fr && cd ../..
 	@go clean
 
 proto:protobuf
