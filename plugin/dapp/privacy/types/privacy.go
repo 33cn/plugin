@@ -14,41 +14,6 @@ import (
 // PrivacyX privacy executor name
 var PrivacyX = "privacy"
 
-const (
-	// InvalidAction invalid action type
-	InvalidAction = 0
-	//action type for privacy
-
-	// ActionPublic2Privacy public to privacy action type
-	ActionPublic2Privacy = iota + 100
-	// ActionPrivacy2Privacy privacy to privacy action type
-	ActionPrivacy2Privacy
-	// ActionPrivacy2Public privacy to public action type
-	ActionPrivacy2Public
-
-	// log for privacy
-
-	// TyLogPrivacyFee privacy fee log type
-	TyLogPrivacyFee = 500
-	// TyLogPrivacyInput privacy input type
-	TyLogPrivacyInput = 501
-	// TyLogPrivacyOutput privacy output type
-	TyLogPrivacyOutput = 502
-
-	//SignNameOnetimeED25519 privacy name of crypto
-	SignNameOnetimeED25519 = "privacy.onetimeed25519"
-	// SignNameRing signature name ring
-	SignNameRing = "privacy.RingSignatue"
-	// OnetimeED25519 one time ED25519
-	OnetimeED25519 = 4
-	// RingBaseonED25519 ring raseon ED25519
-	RingBaseonED25519 = 5
-	// PrivacyMaxCount max mix utxo cout
-	PrivacyMaxCount = 16
-	// PrivacyTxFee privacy tx fee
-	PrivacyTxFee = types.Coin
-)
-
 // RescanUtxoFlag
 const (
 	UtxoFlagNoScan  int32 = 0

@@ -127,7 +127,7 @@ func createPub2PrivTx(cmd *cobra.Command, args []string) {
 
 	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
-		Type:       types.PrivacyTypePublic2Privacy,
+		ActionType: pty.ActionPublic2Privacy,
 		Amount:     amount,
 		Note:       note,
 		Pubkeypair: pubkeypair,
@@ -192,7 +192,7 @@ func createPriv2PrivTx(cmd *cobra.Command, args []string) {
 
 	params := pty.ReqCreatePrivacyTx{
 		Tokenname:  tokenname,
-		Type:       types.PrivacyTypePrivacy2Privacy,
+		ActionType: pty.ActionPrivacy2Privacy,
 		Amount:     amount,
 		Note:       note,
 		Pubkeypair: pubkeypair,
@@ -258,15 +258,15 @@ func createPriv2PubTx(cmd *cobra.Command, args []string) {
 	}
 
 	params := pty.ReqCreatePrivacyTx{
-		Tokenname: tokenname,
-		Type:      types.PrivacyTypePrivacy2Public,
-		Amount:    amount,
-		Note:      note,
-		From:      from,
-		To:        to,
-		Mixcount:  mixCount,
-		Expire:    expire,
-		AssetExec: assetExec,
+		Tokenname:  tokenname,
+		ActionType: pty.ActionPrivacy2Public,
+		Amount:     amount,
+		Note:       note,
+		From:       from,
+		To:         to,
+		Mixcount:   mixCount,
+		Expire:     expire,
+		AssetExec:  assetExec,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "privacy.CreateRawTransaction", params, nil)
 	ctx.RunWithoutMarshal()

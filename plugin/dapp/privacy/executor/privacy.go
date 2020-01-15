@@ -103,14 +103,14 @@ func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (t
 	tokenName := getUtxoIndexReq.Tokenname
 	currentHeight := p.GetHeight()
 	for _, amount := range getUtxoIndexReq.Amount {
-		utxos, err := p.getUtxosByTokenAndAmount(tokenName, amount, types.UTXOCacheCount)
+		utxos, err := p.getUtxosByTokenAndAmount(tokenName, amount, pty.UTXOCacheCount)
 		if err != nil {
 			return utxoGlobalIndexResp, err
 		}
 
 		index := len(utxos) - 1
 		for ; index >= 0; index-- {
-			if utxos[index].GetHeight()+types.ConfirmedHeight <= currentHeight {
+			if utxos[index].GetHeight()+pty.ConfirmedHeight <= currentHeight {
 				break
 			}
 		}

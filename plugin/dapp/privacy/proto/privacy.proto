@@ -402,10 +402,7 @@ message WalletAccountPrivacy {
 message ReqCreatePrivacyTx {
     string tokenname = 1;
     // 构建交易类型
-    // 1：隐私交易 公开->隐私
-    // 2：隐私交易 隐私->隐私
-    // 3：隐私交易 隐私->公开
-    int32  type   = 2;
+    int32  actionType   = 2;
     int64  amount = 3;
     string note   = 4;
     // 普通交易的发送方

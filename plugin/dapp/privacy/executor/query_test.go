@@ -17,7 +17,7 @@ var (
 		{
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
-				Type:       types.PrivacyTypePublic2Privacy,
+				ActionType: pty.ActionPublic2Privacy,
 				Amount:     types.Coin,
 				Pubkeypair: testPubkeyPairs[0],
 			},

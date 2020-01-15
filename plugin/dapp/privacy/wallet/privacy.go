@@ -318,7 +318,7 @@ func (policy *privacyPolicy) selectUTXO(token, addr string, amount int64) ([]*tx
 		if curBlockHeight < wutxo.height {
 			continue
 		}
-		if curBlockHeight-wutxo.height > types.PrivacyMaturityDegree {
+		if curBlockHeight-wutxo.height > privacytypes.UtxoMaturityDegree {
 			balance += wutxo.outinfo.amount
 			confirmUTXOs = append(confirmUTXOs, wutxo)
 		} else {
@@ -493,12 +493,12 @@ func (policy *privacyPolicy) buildInput(privacykeyParirs *privacy.Privacy, build
 }
 
 func (policy *privacyPolicy) createTransaction(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
-	switch req.Type {
-	case types.PrivacyTypePublic2Privacy:
+	switch req.ActionType {
+	case privacytypes.ActionPublic2Privacy:
 		return policy.createPublic2PrivacyTx(req)
-	case types.PrivacyTypePrivacy2Privacy:
+	case privacytypes.ActionPrivacy2Privacy:
 		return policy.createPrivacy2PrivacyTx(req)
-	case types.PrivacyTypePrivacy2Public:
+	case privacytypes.ActionPrivacy2Public:
 		return policy.createPrivacy2PublicTx(req)
 	}
 	return nil, types.ErrInvalidParam
