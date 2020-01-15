@@ -16,3 +16,6 @@
 4.使用select进行查询，如select * from mesurment
 ```
 
+* 数据的可视化展示可以通过Grafana工具进行展示，只需要访问以下链接：
+  http://build_grafana_1:3000，更多的操作可以参考以下链接中的使用Grafana工具展示部分
+
