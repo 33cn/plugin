@@ -119,9 +119,6 @@ func (mock *testDataMock) initMember() {
 
 func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey) {
 	wallet := mock.wallet
-	wallet.GetMutex().Lock()
-	defer wallet.GetMutex().Unlock()
-
 	ok, err := wallet.CheckWalletStatus()
 	if !ok || err != nil {
 		return

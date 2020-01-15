@@ -10,9 +10,6 @@ import (
 
 //On_MultiSigAddresList 获取owner对应的多重签名地址列表
 func (policy *multisigPolicy) On_MultiSigAddresList(req *types.ReqString) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-
 	//获取本钱包中记录的所有多重签名地址
 	if req.Data == "" {
 		reply, err := policy.store.listOwnerAttrs()
