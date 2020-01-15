@@ -1,0 +1,69 @@
+listen="0.0.0.0:8888"
+logfile="trade.log"
+
+admins = [
+	"b15a4f6c5c1163b5f80715c9bd87d5118ec4b5668cb29f148eeceec61ddeadc2",
+	"3d0bc2c80f36909e5174d643c0f5b43313c0af67a0d455a83d87aaf23a370645"
+]
+
+banks = [
+	"4a246cd2a3f41b2bc1d071d2db159a388cd6f5c3547ea592d401f270073133d7",
+	"9c885ce7664ed3c3675df8e49590c141665d94add5bf72a816a8d8a78bd8fbe5",
+	"363aaa69769101253cf745e63e7e489454fa9dc691ec6c8bc3180eabca4651a3",
+	"9c3b036c590cabfa7370d0f119550abc63892cdb767c3ba7431067cd903f80ba",
+	"e6951ec12a5125285879e74d84ffc07ea2bb62e8b46434abf65f5530bee41ed2",
+	"f56b3baa39bda9bf47e2f6f6337b9efbe5e04f5e6d4549f06649227cc5dc4b34",
+	"9c26a9d04e8c3f5f69324713b2f4988067611b1c24b940955bd9b08f6bbea97a"
+]
+
+[[coins]]
+name = "CNY"
+symbolId = 1
+
+[[coins]]
+name = "BTC"
+symbolId = 2
+
+[[coins]]
+name = "ETH"
+symbolId = 4
+
+[[coins]]
+name = "USDT"
+symbolId = 15
+
+[[exchange]]
+symbol = "BTC_CNY"    # 2<<16 + 1
+priceDigits = 2
+amountDigits = 4
+minFee = 1000000  # 1e-2
+
+[[exchange]]
+symbol = "ETH_CNY"    # 4<<16 + 1
+priceDigits = 2
+amountDigits = 4
+minFee = 1000000  # 1e-2
+
+[[exchange]]
+symbol = "BTC_USDT"   # 2<<16 + 15
+priceDigits = 2
+amountDigits = 4
+minFee = 1000000
+
+[[future]]
+symbol = "BTC_USDT"   # 502<<16 + 15
+priceDigits = 2
+amountDigits = 4
+minFee = 1000000
+
+[[perpetual]]
+symbol = "BTC_USDT"   # 1002<<16 + 15
+priceDigits = 2
+amountDigits = 4
+minFee = 1000000
+
+[[perpetual]]
+symbol = "ETH_USDT"   # 1004<<16 + 15
+priceDigits = 2
+amountDigits = 3
+minFee = 1000000
