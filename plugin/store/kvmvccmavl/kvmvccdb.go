@@ -437,7 +437,7 @@ func (mvccs *KVMVCCStore) GetHashRdm(hash []byte, height int64) ([]byte, error) 
 func (mvccs *KVMVCCStore) GetFirstHashRdm(hash []byte) ([]byte, error) {
 	prefix := append(rdmHashPrefix, hash...)
 	list := dbm.NewListHelper(mvccs.db)
-	values := list.IteratorScanFromFirst(prefix, 1)
+	values := list.IteratorScanFromFirst(prefix, 1, dbm.ListASC)
 	if len(values) == 1 {
 		return values[0], nil
 	}
