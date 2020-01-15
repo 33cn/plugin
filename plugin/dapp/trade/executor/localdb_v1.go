@@ -29,16 +29,21 @@ const (
 	orderASTHK = "LODB-trade-order-asthk:"
 )
 
+// Upgrade 实现升级接口
+func (t *trade) Upgrade() error {
+	localDB := t.GetLocalDB()
+	return TradeUpdateLocalDBV2(localDB, 0)
+}
+
 // TradeUpdateLocalDBV2 trade 本地数据库升级
 // from 1 to 2
-func TradeUpdateLocalDBV2(localDB dbm.DB, total int) error {
+func TradeUpdateLocalDBV2(localDB dbm.KVDB, total int) error {
 	// 外部不指定， 强制分批执行
 	if total <= 0 {
 		total = 10000
 	}
 	toVersion := 2
-	kvdb := dbm.NewKVDB(localDB)
-	version, err := getVersion(kvdb)
+	version, err := getVersion(localDB)
 	if err != nil {
 		tradelog.Error("TradeUpdateLocalDBV2 get version", "err", err)
 		return errors.Cause(err)
@@ -47,15 +52,16 @@ func TradeUpdateLocalDBV2(localDB dbm.DB, total int) error {
 		return nil
 	}
 
-	err = UpdateLocalDBPart2(kvdb, total)
+	err = UpdateLocalDBPart2(localDB, total)
 	if err != nil {
 		return err
 	}
-	err = UpdateLocalDBPart1(localDB, total)
+	// TODO input DB to KVDB
+	err = UpdateLocalDBPart1(nil, total)
 	if err != nil {
 		return err
 	}
-	return setVersion(kvdb, toVersion)
+	return setVersion(localDB, toVersion)
 }
 
 // UpdateLocalDBPart1 手动生成KV，需要在原有数据库中删除
