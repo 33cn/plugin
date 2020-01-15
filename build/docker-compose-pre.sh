@@ -37,12 +37,22 @@ function run_dapp() {
     local test=$2
 
     echo "============ run dapp=$app start ================="
-    rm -rf "${app}"-ci && mkdir -p "${app}"-ci && cp ./"${app}"/* ./"${app}"-ci && echo $?
-    cp -n ./* ./"${app}"-ci/ && echo $?
-    if [ "$app" == "paracross" ]; then
-        cp -r dapptest/ "${app}"-ci/ && echo $?
+    if [ "$app" == "metrics" ]; then
+        cp ./ci/paracross/* ./metrics && echo $?
+        cp -n ./* ./metrics/ && echo $?
+        cp -r ci/dapptest/ metrics/ && echo $?
+        cd metrics && pwd
+        rm docker-compose-paracross.yml
+        mv docker-compose-metrics.yml docker-compose-paracross.yml
+        app="paracross"
+    else
+        rm -rf "${app}"-ci && mkdir -p "${app}"-ci && cp ./"${app}"/* ./"${app}"-ci && echo $?
+        cp -n ./* ./"${app}"-ci/ && echo $?
+        if [ "$app" == "paracross" ]; then
+            cp -r dapptest/ "${app}"-ci/ && echo $?
+        fi
+        cd "${app}"-ci/ && pwd
     fi
-    cd "${app}"-ci/ && pwd
 
     if [ "$test" == "$FORKTESTFILE" ]; then
         sed -i $sedfix 's/^system_coins_file=.*/system_coins_file="..\/system\/coins\/fork-test.sh"/g' system-fork-test.sh
