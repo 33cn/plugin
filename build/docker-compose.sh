@@ -112,6 +112,9 @@ function base_init() {
     #relay genesis
     sed -i $sedfix 's/^genesis="12qyocayNF7.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' chain33.toml
 
+    #autonomy
+    sed -i $sedfix 's/^useBalance=.*/useBalance=true/g' chain33.toml
+    sed -i $sedfix 's/^total="16htvcBNS.*/total="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"/g' chain33.toml
 }
 
 function start() {
@@ -425,6 +428,15 @@ function dapp_test_address() {
 
     #    block_wait "${1}" 1
     tx_wait "${1}" "${hash}"
+
+    #autonomy allocation for rpc test 1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx
+    result=$(${1} account import_key -k 1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482 -l autonomytest | jq ".label")
+    echo "${result}"
+    if [ -z "${result}" ]; then
+        exit 1
+    fi
+    hash=$(${1} send coins transfer -a 6300 -n transfer -t 1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
 }
 
 function base_config() {
