@@ -28,11 +28,13 @@ func bindMiner(cfg *types.Chain33Config, param *ty.ReqBindMiner) (*ty.ReplyBindM
 
 // CreateBindMiner 创建绑定挖矿
 func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner) (*ty.ReplyBindMiner, error) {
-	err := address.CheckAddress(in.BindAddr)
-	if err != nil {
-		return nil, err
+	if in.BindAddr != "" {
+		err := address.CheckAddress(in.BindAddr)
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = address.CheckAddress(in.OriginAddr)
+	err := address.CheckAddress(in.OriginAddr)
 	if err != nil {
 		return nil, err
 	}

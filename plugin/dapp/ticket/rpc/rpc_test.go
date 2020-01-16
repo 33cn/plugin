@@ -58,6 +58,15 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
+
+	var in2 = &ty.ReqBindMiner{
+		BindAddr:     "",
+		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
+		Amount:       10000 * types.Coin,
+		CheckBalance: false,
+	}
+	_, err = client.CreateBindMiner(context.Background(), in2)
+	assert.Nil(t, err)
 }
 
 func testGetTicketCountOK(t *testing.T) {

@@ -3,6 +3,7 @@ package executor_test
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -26,8 +27,9 @@ var mock33 *testnode.Chain33Mock
 func TestMain(m *testing.M) {
 	mock33 = testnode.New("testdata/chain33.cfg.toml", nil)
 	mock33.Listen()
-	m.Run()
+	code := m.Run()
 	mock33.Close()
+	os.Exit(code)
 }
 
 func TestTicketPrice(t *testing.T) {

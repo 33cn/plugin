@@ -116,8 +116,12 @@ chain33_SignRawTx() {
     local txHex="$1"
     local priKey="$2"
     local MAIN_HTTP=$3
+    local expire="120s"
+    if [ -n "$4" ]; then
+        expire=$4
+    fi
 
-    local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"120s"}]'
+    local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"'"$expire"'"}]'
     signedTx=$(curl -ksd "{$req}" "${MAIN_HTTP}" | jq -r ".result")
 
     if [ "$signedTx" != null ]; then

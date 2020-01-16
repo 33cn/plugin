@@ -37,6 +37,7 @@ func ParcCmd() *cobra.Command {
 		paraConfigCmd(),
 		GetParaInfoCmd(),
 		GetParaListCmd(),
+		GetParaAssetTransCmd(),
 		IsSyncCmd(),
 		GetHeightCmd(),
 		GetBlockInfoCmd(),
@@ -933,6 +934,35 @@ func getNodeGroupAddrsCmd() *cobra.Command {
 		Short: "Query super node group's current addrs by title",
 		Run:   nodeGroup,
 	}
+	return cmd
+}
+
+func addParaAssetTranCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("hash", "s", "", "asset transfer tx hash")
+	cmd.MarkFlagRequired("hash")
+
+}
+
+func paraAssetTransfer(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	hash, _ := cmd.Flags().GetString("hash")
+
+	params := types.ReqString{
+		Data: hash,
+	}
+	var res pt.ParacrossAssetRsp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetAssetTxResult", params, &res)
+	ctx.Run()
+}
+
+// GetParaAssetTransCmd get para chain asset transfer info
+func GetParaAssetTransCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "asset_tranfer",
+		Short: "Get para chain cross asset transfer info",
+		Run:   paraAssetTransfer,
+	}
+	addParaAssetTranCmdFlags(cmd)
 	return cmd
 }
 

@@ -385,6 +385,23 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
+message ParacrossAssetRsp {
+    // input
+    string from         = 1;
+    string to           = 2;
+    string   isWithdraw = 3;
+    string  txHash      = 4;
+    int64  amount       = 5;
+    string exec         = 6;
+    string symbol       = 7;
+    // 主链部分
+    int64 height        = 10;
+    // 平行链部分
+    int64 commitDoneHeight = 21;
+    int64 paraHeight       = 22;
+    string  success        = 23;
+}
+
 message ParaLocalDbBlock {
     int64     height         = 1;
     bytes     mainHash       = 2;
@@ -408,6 +425,6 @@ service paracross {
     rpc ListTitles(ReqNil) returns (RespParacrossTitles) {}
     rpc GetDoneTitleHeight(ReqParacrossTitleHeight) returns (RespParacrossDone) {}
     rpc GetTitleHeight(ReqParacrossTitleHeight) returns (ParacrossHeightStatusRsp) {}
-    rpc GetAssetTxResult(ReqHash) returns (ParacrossAsset) {}
+    rpc GetAssetTxResult(ReqString) returns (ParacrossAssetRsp) {}
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }
