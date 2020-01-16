@@ -823,12 +823,12 @@ func TestUpdateCommitBlockHashs(t *testing.T) {
 
 }
 
-func TestValidParaCrossExec(t *testing.T){
+func TestValidParaCrossExec(t *testing.T) {
 	exec := []byte("paracross")
 	valid := types.IsParaExecName(string(exec))
-	assert.Equal(t,false,valid)
+	assert.Equal(t, false, valid)
 
 	exec = []byte("user.p.para.paracross")
 	valid = types.IsParaExecName(string(exec))
-	assert.Equal(t,true,valid)
+	assert.Equal(t, true, valid)
 }

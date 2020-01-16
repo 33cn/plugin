@@ -331,8 +331,6 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 	return tx, nil
 }
 
-
-
 //GetDappForkHeight get paracross dapp fork height
 func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 	var forkHeight int64
