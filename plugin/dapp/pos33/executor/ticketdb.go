@@ -270,8 +270,8 @@ func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt
 		kv = append(kv, t.GetKVSet()...)
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
-		// tlog.Info("pos33.ticket open", "tid", id)
 	}
+	tlog.Info("@@@@@@@ pos33.ticket open", "ntid", topen.Count)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
@@ -310,8 +310,6 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	var kvs []*types.KeyValue
 	var logs []*types.ReceiptLog
 
-	const vr = ty.Pos33VoteReward
-
 	// reward voters
 	for _, v := range miner.Votes {
 		r := v.Sort
@@ -321,7 +319,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 			return nil, err
 		}
 
-		receipt, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, vr)
+		receipt, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, ty.Pos33VoteReward)
 		if err != nil {
 			tlog.Error("Pos33TicketMiner.ExecDepositFrozen error", "voter", t.ReturnAddress, "execaddr", action.execaddr)
 			return nil, err
@@ -330,7 +328,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 		kvs = append(kvs, receipt.GetKV()...)
 		logs = append(logs, receipt.GetLogs()...)
 
-		t.MinerValue += vr
+		t.MinerValue += ty.Pos33VoteReward
 		//tlog.Info("ticket rerward", "height", action.height, "tid", t.TicketId, "minerAddr", t.MinerAddress, "returnAddr", t.ReturnAddress, "reward", vr)
 		prevStatus := t.Status
 		t.Status = 1 // here, Don't change to 2,
@@ -341,7 +339,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	}
 
 	// bp reward
-	bpReward := vr * int64(sumw)
+	bpReward := ty.Pos33BpReward * int64(sumw)
 	if bpReward > 0 {
 		tid := miner.Sort.SortHash.Tid
 		t, err := readPos33Ticket(action.db, tid)
@@ -368,27 +366,26 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	}
 
 	// fund reward
-	fundReward := ty.Pos33BlockReward - ty.Pos33VoteReward*int64(sumw)*2
+	fundReward := ty.Pos33BlockReward - (ty.Pos33VoteReward+ty.Pos33BpReward)*int64(sumw)
 	tlog.Info("fund rerward", "height", action.height, "reward", fundReward)
 	if fundReward > 0 {
 		var receipt2 *types.Receipt
 		var err error
-		if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
-			// issue coins to exec addr
-			addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
-			receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
-			if err != nil {
-				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
-				return nil, err
-			}
-		} else {
-			receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, fundReward)
-			if err != nil {
-				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
-				return nil, err
-			}
+		// if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
+		// 	// issue coins to exec addr
+		// 	addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
+		// 	receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
+		// 	if err != nil {
+		// 		tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
+		// 		return nil, err
+		// 	}
+		// } else {
+		receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, fundReward)
+		if err != nil {
+			tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
+			return nil, err
 		}
-		//tlog.Info("fund rerward", "height", action.height, "reward", fundReward)
+		// }
 		logs = append(logs, receipt2.Logs...)
 		kvs = append(kvs, receipt2.KV...)
 	}

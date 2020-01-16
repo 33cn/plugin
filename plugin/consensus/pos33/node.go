@@ -18,6 +18,11 @@ import (
 
 var plog = log15.New("module", "pos33")
 
+type checkArg struct {
+	b  *types.Block
+	ch chan error
+}
+
 type node struct {
 	*Client
 	gss *gossip2
@@ -235,7 +240,7 @@ func (n *node) clear(height int64) {
 		}
 	}
 	for h := range n.css {
-		if h+10 <= height {
+		if h+20 <= height {
 			delete(n.css, h)
 		}
 	}
@@ -281,6 +286,15 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 		return nil
 	}
 
+	err := n.blockCheck(b)
+	if err != nil {
+		plog.Error("blockCheck error", "err", err, "height", b.Height)
+		return err
+	}
+	return nil
+}
+
+func (n *node) blockCheck(b *types.Block) error {
 	act, err := getMiner(b)
 	if err != nil {
 		return err
@@ -304,13 +318,12 @@ func (n *node) checkBlock(b, pb *types.Block) error {
 	}
 
 	// check votes
-	if len(act.Votes) < pt.Pos33MustVotes {
-		return fmt.Errorf("the block NOT enough vote, height=%d", b.Height)
+	if len(act.Votes) < pt.Pos33MinVotes {
+		return fmt.Errorf("the block less Must vote, height=%d", b.Height)
 	}
 	height := b.Height
-	rvs, ok := n.checkVotesEnough(act.Votes, height, round)
-	if len(rvs) >= len(act.Votes) && !ok {
-		return fmt.Errorf("the block NOT enouph vote, height=%d", b.Height)
+	if !checkVotesEnough(act.Votes, height, round) {
+		return fmt.Errorf("the block NOT enough vote, height=%d", b.Height)
 	}
 	if len(act.Votes) > pt.Pos33VoterSize {
 		return fmt.Errorf("the block vote too much, height=%d", b.Height)
@@ -538,7 +551,7 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes, myself bool) {
 	vs := n.cvs[height][round][tid]
 	plog.Info("handleVotesMsg", "height", height, "round", round, "tid", tid, "voter", addr(vm.GetSig()), "votes", len(vs))
 	rvs, ok := n.checkVotesEnough(vs, height, round)
-	if ok {
+	if ok && checkVotesEnough(rvs, height, round) {
 		err := n.makeBlock(height, round, tid, rvs)
 		if err != nil {
 			plog.Error("makeBlock error", "err", err)
@@ -558,9 +571,34 @@ func (n *node) getSorts(height int64, round int) []*pt.Pos33SortMsg {
 	return ss
 }
 
+type votes pt.Votes
+
+func (v votes) Len() int { return len(v) }
+func (v votes) Less(i, j int) bool {
+	return string(v[i].SortsCount) < string(v[i].SortsCount)
+}
+func (v votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+func checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
+	sort.Sort(votes(vs))
+	if len(vs) < pt.Pos33MinVotes {
+		return false
+	}
+	cvs := vs[:pt.Pos33MinVotes]
+	sum := 0
+	for _, v := range cvs {
+		sum += int(v.SortsCount)
+	}
+	sortsCount := sum / pt.Pos33MinVotes
+	plog.Info("checkVotesEnough", "height", height, "round", round, "len(vs)", len(vs), "sorts count", sortsCount)
+	if len(vs)*3 <= sortsCount*2 {
+		return false
+	}
+	return true
+}
+
 func (n *node) checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) ([]*pt.Pos33VoteMsg, bool) {
 	ss := n.getSorts(height, round)
-	plog.Info("checkVotesEnough", "ss len", len(ss), "vs len", len(vs))
 	if len(ss) < pt.Pos33MustVotes {
 		return nil, false
 	}
@@ -590,14 +628,21 @@ func (n *node) allw(height int64, check bool) int {
 }
 
 func (n *node) handleSortitionMsg(m *pt.Pos33SortMsg) {
+	/*
+		err := n.checkSort(m)
+		if err != nil {
+			plog.Error("checkSort error", "err", err)
+			return
+		}
+	*/
 	if m == nil || m.Proof == nil || m.Proof.Input == nil || m.SortHash == nil {
 		plog.Error("handleSortitionMsg error, input msg is nil")
 		return
 	}
 	height := m.Proof.Input.Height
 	if n.lastBlock().Height >= height {
-		plog.Info("the sortsmsg too late!!!", "lastBlockHeight", n.lastBlock().Height, "height", height)
-		return
+		err := fmt.Errorf("sort msg too late, lbHeight=%d, sortHeight=%d", n.lastBlock().Height, height)
+		plog.Info("handleSort error", "err", err)
 	}
 	if n.cps[height] == nil {
 		n.cps[height] = make(map[int]map[string]*pt.Pos33SortMsg)
@@ -619,11 +664,40 @@ func (n *node) checkSort(s *pt.Pos33SortMsg) error {
 	}
 
 	height := s.Proof.Input.Height
+	if n.lastBlock().Height >= height {
+		return fmt.Errorf("sort msg too late, lbHeight=%d, sortHeight=%d", n.lastBlock().Height, height)
+	}
 	seed, err := n.getMinerSeed(height)
 	if err != nil {
 		return err
 	}
 	return n.verifySort(height, int(s.Proof.Input.Step), n.allw(height, true), seed, s)
+}
+
+func (n *node) checkSorts(height int64, round int) []*pt.Pos33SortMsg {
+	mp, ok := n.css[height]
+	if !ok {
+		return nil
+	}
+	ss, ok := mp[round]
+	if !ok {
+		return nil
+	}
+	var rss []*pt.Pos33SortMsg
+	for _, s := range ss {
+		err := n.checkSort(s)
+		if err != nil {
+			plog.Error("checkSort error", "err", err)
+			continue
+		}
+		rss = append(rss, s)
+	}
+	if len(rss) > pt.Pos33VoterSize {
+		sort.Sort(pt.Sorts(rss))
+		rss = rss[:pt.Pos33VoterSize]
+	}
+	n.css[height][round] = rss
+	return rss
 }
 
 func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
@@ -634,28 +708,25 @@ func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
 		n.handleSortitionMsg(m.S)
 	}
 	for i, s := range m.Sorts {
-		if s == nil || s.Proof == nil || s.Proof.Input == nil || s.SortHash == nil {
-			plog.Error("handleSortsMsg error, input msg is nil")
-			return
-		}
-		/*
-			if !myself {
+		if !myself {
+			/*
 				err := n.checkSort(s)
 				if err != nil {
 					plog.Error("checkSort error", "err", err)
 					return
 				}
+			*/
+			if s == nil || s.Proof == nil || s.Proof.Input == nil || s.SortHash == nil {
+				plog.Error("handleSortsMsg error, input msg is nil")
+				return
 			}
-		*/
+		}
 		height := s.Proof.Input.Height
 		if n.lastBlock().Height >= height {
-			plog.Info("the sortsmsg too late!!!", "lastBlockHeight", n.lastBlock().Height, "height", height)
-			return
+			err := fmt.Errorf("sort msg too late, lbHeight=%d, sortHeight=%d", n.lastBlock().Height, height)
+			plog.Info("handleSort error", "err", err)
 		}
 		round := int(s.Proof.Input.Round)
-		if i == 0 {
-			plog.Info("handleSortsMsg", "height", height, "round", round, "who", address.PubKeyToAddr(s.Proof.Pubkey))
-		}
 		if n.css[height] == nil {
 			n.css[height] = make(map[int][]*pt.Pos33SortMsg)
 		}
@@ -663,6 +734,9 @@ func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
 		ss = append(ss, s)
 		// sort.Sort(pt.Sorts(ss))
 		n.css[height][round] = ss
+		if i == len(m.Sorts)-1 {
+			plog.Info("handleSortsMsg", "height", height, "round", round, "who", address.PubKeyToAddr(s.Proof.Pubkey), "len(css)", len(ss))
+		}
 	}
 }
 
@@ -770,6 +844,7 @@ func (n *node) runLoop() {
 			}
 		case <-etm.C:
 			height := n.lastBlock().Height + 1
+			n.checkSorts(height, round)
 			n.vote(height, round)
 			time.AfterFunc(time.Second*3, func() {
 				ch <- height
@@ -823,7 +898,7 @@ func (n *node) vote(height int64, round int) {
 	plog.Info("vote bp", "height", height, "round", round, "tid", tid)
 	var vs []*pt.Pos33VoteMsg
 	for _, s := range ss {
-		v := &pt.Pos33VoteMsg{Sort: s, Tid: tid}
+		v := &pt.Pos33VoteMsg{Sort: s, Tid: tid, SortsCount: uint32(len(n.css[height][round]))}
 		t := n.getTicket(s.SortHash.Tid)
 		if t == nil {
 			plog.Info("vote error: my ticket is gone", "ticketID", s.SortHash.Tid)

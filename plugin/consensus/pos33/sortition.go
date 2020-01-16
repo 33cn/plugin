@@ -158,7 +158,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 		}
 	}
 	if !ok {
-		return fmt.Errorf("ticketID error")
+		return fmt.Errorf("ticketID error, %s NOT open", m.SortHash.Tid)
 	}
 
 	input := &pt.VrfInput{Seed: seed, Height: height, Round: round, Step: int32(step)}

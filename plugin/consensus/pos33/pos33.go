@@ -86,7 +86,9 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 
 	cfg := client.GetAPI().GetConfig()
 	ch := make(chan []*Tx, 1)
-	go func() { ch <- client.RequestTx(int(cfg.GetP(height).MaxTxNumber), nil) }()
+	maxTxs := int(cfg.GetP(height).MaxTxNumber)
+	maxTxs = 3000
+	go func() { ch <- client.RequestTx(maxTxs, nil) }()
 	select {
 	case <-time.After(time.Millisecond * 300):
 	case ts := <-ch:

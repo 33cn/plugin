@@ -82,9 +82,10 @@ message Pos33BlockMsg {
 }
 
 message Pos33VoteMsg {
-    Pos33SortMsg sort = 1;
-    string       tid  = 2;
-    Signature    sig  = 3;
+    Pos33SortMsg sort        = 1;
+    string       tid         = 2;
+    uint32       sorts_count = 3;
+    Signature    sig         = 4;
 }
 
 message Pos33Votes {

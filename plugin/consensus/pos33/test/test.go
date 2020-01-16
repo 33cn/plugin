@@ -135,11 +135,20 @@ func generateTxs(privs []crypto.PrivKey) chan *Tx {
 
 func sendTx(tx *Tx) {
 	c := gClient
-	err := c.Call("Chain33.SendTransaction", rpctypes.RawParm{Data: hex.EncodeToString(types.Encode(tx))}, nil)
-	if err != nil {
-		_, ok := err.(*json.InvalidUnmarshalError)
-		if !ok {
+	for {
+		err := c.Call("Chain33.SendTransaction", rpctypes.RawParm{Data: hex.EncodeToString(types.Encode(tx))}, nil)
+		if err != nil {
+			_, ok := err.(*json.InvalidUnmarshalError)
+			if ok {
+				break
+			}
+			if err == types.ErrFeeTooLow {
+				log.Println("@@@ rpc error: ", err, tx.From(), tx.Fee)
+				tx.Fee *= 2
+				continue
+			}
 			log.Println("@@@ rpc error: ", err, tx.From())
+			break
 		}
 	}
 }
@@ -202,7 +211,7 @@ func generateInitTxs(n int, privs []crypto.PrivKey, ch chan *Tx, done chan struc
 		default:
 		}
 
-		m := 1000 * types.Coin
+		m := 100000 * types.Coin
 		ch <- newTx(rootKey, m, address.PubKeyToAddress(priv.PubKey().Bytes()).String())
 	}
 	log.Println(n, len(privs))

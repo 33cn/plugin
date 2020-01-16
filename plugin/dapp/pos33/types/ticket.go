@@ -172,8 +172,10 @@ const (
 	Pos33BlockReward = types.Coin * 15
 	// Pos33SortitionSize 多少区块做一次抽签
 	Pos33SortitionSize = 10
-	// Pos33VoteReward 每个区块的奖励
-	Pos33VoteReward = types.Coin / 2
+	// Pos33VoteReward 每ticket区块voter奖励
+	Pos33VoteReward = types.Coin * 7 / 10
+	// Pos33BpReward 每ticket区块bp奖励
+	Pos33BpReward = types.Coin * 2 / 10
 	// Pos33ProposerSize 候选区块Proposer数量
 	Pos33ProposerSize = 7
 	// Pos33VoterSize  候选区块Voter数量
