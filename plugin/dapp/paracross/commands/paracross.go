@@ -596,12 +596,12 @@ func selfConsStage(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpNewApply
+	config.Ty = pt.ParaOpNewApply
 	config.Value = &pt.ParaStageConfig_Stage{Stage: &pt.SelfConsensStage{StartHeight: height, Enable: enable}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 
@@ -635,12 +635,12 @@ func createVoteTx(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpVote
+	config.Ty = pt.ParaOpVote
 	config.Value = &pt.ParaStageConfig_Vote{Vote: &pt.ConfigVoteInfo{Id: id, Value: val}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 
@@ -666,12 +666,12 @@ func stageCancelTx(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpCancel
+	config.Ty = pt.ParaOpCancel
 	config.Value = &pt.ParaStageConfig_Cancel{Cancel: &pt.ConfigCancelInfo{Id: id}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 

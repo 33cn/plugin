@@ -135,16 +135,8 @@ func (p *ParacrossType) GetPayload() types.Message {
 // CreateTx paracross create tx by different action
 func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	cfg := p.GetConfig()
-	if action == "ParacrossCommit" {
-		var param paracrossCommitTx
-		err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-
-		return createRawParacrossCommitTx(cfg, &param)
-	} else if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
+	//保留老的ParacrossAssetTransfer接口，默认的AssetTransfer　也可以
+	if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
 		var param types.CreateTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -152,46 +144,9 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawAssetTransferTx(cfg, &param)
-
-	} else if action == "ParacrossTransfer" || action == "Transfer" ||
-		action == "ParacrossWithdraw" || action == "Withdraw" ||
-		action == "ParacrossTransferToExec" || action == "TransferToExec" {
-
+	} else if action == "Transfer" || action == "Withdraw" || action == "TransferToExec" {
+		//transfer/withdraw/toExec 需要特殊处理主链上的tx.to场景
 		return p.CreateRawTransferTx(action, message)
-	} else if action == "CrossAssetTransfer" {
-		var param CrossAssetTransfer
-		err := types.JSONToPB(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.CrossAssetTransfer", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawCrossAssetTransferTx(&param)
-	} else if action == "NodeConfig" {
-		var param ParaNodeAddrConfig
-		err := types.JSONToPB(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.NodeConfig", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawNodeConfigTx(&param)
-	} else if action == "NodeGroupConfig" {
-		var param ParaNodeGroupConfig
-		err := types.JSONToPB(message, &param)
-		//err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.NodeGroupApply", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawNodeGroupApplyTx(&param)
-	} else if action == "selfConsStageConfig" {
-		var param ParaStageConfig
-		err := types.JSONToPB(message, &param)
-		//err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.selfConsStageConfig", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawSelfConsStageApplyTx(&param)
 	}
-	return nil, types.ErrNotSupport
+	return p.ExecTypeBase.CreateTx(action, message)
 }

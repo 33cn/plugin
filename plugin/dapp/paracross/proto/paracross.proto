@@ -218,7 +218,7 @@ message ConfigCancelInfo {
 message ParaStageConfig {
     string title = 1;
     // 配置类型
-    uint32 op = 2;
+    uint32 ty = 2;
     oneof  value {
         SelfConsensStage stage  = 10;
         ConfigVoteInfo   vote   = 11;
