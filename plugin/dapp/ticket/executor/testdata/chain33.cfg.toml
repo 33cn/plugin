@@ -62,7 +62,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [consensus]
@@ -158,8 +158,6 @@ minerwhitelist=["*"]
 minerWaitTime="1s"
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
@@ -222,6 +220,7 @@ ForkBase58AddressCheck=-1 #fork6.2
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
 ForkTicketFundAddrV1=-1 #fork6.3
+ForkRootHash =1
 [fork.sub.coins]
 Enable=0
 [fork.sub.ticket]

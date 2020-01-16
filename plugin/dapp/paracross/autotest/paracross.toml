@@ -33,7 +33,7 @@ checkItem = ["balance"]
 #send para asset bty
 [[TransferCase]]
 id = "btyParaTrans"
-command = "send para asset_transfer --ptitle user.p.test. -a 0.1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send para asset_transfer --paraName user.p.test. -a 0.1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 #复用coins的transfer用例，此处to地址比较特殊，为平行链paracross合约的地址
 to = "16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR"
@@ -55,7 +55,7 @@ dep = ["tokenFinish"]
 #send para asset token PT
 [[TransferCase]]
 id = "tokenParaTrans"
-command = "send para asset_transfer --ptitle user.p.test. -s PT -a 1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+command = "send para asset_transfer --paraName user.p.test. -s PT -a 1 -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 from = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 #复用coins的transfer用例，此处to地址比较特殊，为平行链paracross合约的地址
 to = "16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR"

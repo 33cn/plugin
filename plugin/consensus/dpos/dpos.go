@@ -465,9 +465,13 @@ func (client *Client) CreateBlock() {
 	newblock.ParentHash = lastBlock.Hash(cfg)
 	newblock.Height = lastBlock.Height + 1
 	client.AddTxsToBlock(&newblock, txs)
-	//
 	newblock.Difficulty = cfg.GetP(0).PowLimitBits
-	newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
+
+	//需要首先对交易进行排序然后再计算TxHash
+	if cfg.IsFork(newblock.Height, "ForkRootHash") {
+		newblock.Txs = types.TransactionSort(newblock.Txs)
+	}
+	newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.Height, newblock.Txs)
 	newblock.BlockTime = client.blockTime
 
 	err := client.WriteBlock(lastBlock.StateHash, &newblock)
@@ -779,4 +783,9 @@ func (client *Client) SetTestFlag() {
 // GetNode return the pointer to Node
 func (client *Client) GetNode() *Node {
 	return client.node
+}
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
 }

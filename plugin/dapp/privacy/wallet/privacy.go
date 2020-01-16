@@ -543,7 +543,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 			ActionType: action.Ty,
 		}),
 	}
-	tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
+	tx.Fee, err = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "calc fee failed", err)
 		return nil, err
@@ -622,7 +622,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
-		tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
+		tx.Fee, err = tx.GetRealFee(cfg.GetMinTxFeeRate())
 		if err != nil {
 			bizlog.Error("createPrivacy2PrivacyTx", "calc fee failed", err)
 			return nil, err
@@ -711,7 +711,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
-		tx.Fee, err = tx.GetRealFee(cfg.GInt("MinFee"))
+		tx.Fee, err = tx.GetRealFee(cfg.GetMinTxFeeRate())
 		if err != nil {
 			bizlog.Error("createPrivacy2PublicTx", "calc fee failed", err)
 			return nil, err

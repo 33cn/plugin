@@ -21,23 +21,11 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-func (client *client) addLocalBlock(height int64, block *pt.ParaLocalDbBlock) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	kv := &types.KeyValue{Key: key, Value: types.Encode(block)}
-	set.KV = append(set.KV, kv)
-
-	//两个key原子操作
-	key = calcTitleLastHeightKey(cfg.GetTitle())
-	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
+func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
+	return client.alignLocalBlock2ChainBlock(genesis)
 }
 
-func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
+func getNewBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) *pt.ParaLocalDbBlock {
 	var newblock pt.ParaLocalDbBlock
 
 	newblock.Height = lastBlock.Height + 1
@@ -45,88 +33,17 @@ func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*ty
 	newblock.MainHeight = mainBlock.Header.Height
 	newblock.ParentMainHash = lastBlock.MainHash
 	newblock.BlockTime = mainBlock.Header.BlockTime
-
 	newblock.Txs = txs
 
-	err := client.addLocalBlock(newblock.Height, &newblock)
+	return &newblock
+}
+
+func (client *client) createLocalBlock(lastBlock *pt.ParaLocalDbBlock, txs []*types.Transaction, mainBlock *types.ParaTxDetail) error {
+	err := client.addLocalBlock(getNewBlock(lastBlock, txs, mainBlock))
 	if err != nil {
 		return err
 	}
 	return err
-}
-
-func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
-	return client.alignLocalBlock2ChainBlock(genesis)
-}
-
-func (client *client) delLocalBlock(height int64) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	kv := &types.KeyValue{Key: key, Value: nil}
-	set.KV = append(set.KV, kv)
-
-	//两个key原子操作
-	key = calcTitleLastHeightKey(cfg.GetTitle())
-	kv = &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: height - 1})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
-}
-
-// localblock 设置到当前高度，当前高度后面block会被新的区块覆盖
-func (client *client) removeLocalBlocks(curHeight int64) error {
-	cfg := client.GetAPI().GetConfig()
-	set := &types.LocalDBSet{}
-
-	key := calcTitleLastHeightKey(cfg.GetTitle())
-	kv := &types.KeyValue{Key: key, Value: types.Encode(&types.Int64{Data: curHeight})}
-	set.KV = append(set.KV, kv)
-
-	return client.setLocalDb(set)
-}
-
-func (client *client) getLastLocalHeight() (int64, error) {
-	cfg := client.GetAPI().GetConfig()
-	key := calcTitleLastHeightKey(cfg.GetTitle())
-	set := &types.LocalDBGet{Keys: [][]byte{key}}
-	value, err := client.getLocalDb(set, len(set.Keys))
-	if err != nil {
-		return -1, err
-	}
-	if len(value) == 0 || value[0] == nil {
-		return -1, types.ErrNotFound
-	}
-
-	height := &types.Int64{}
-	err = types.Decode(value[0], height)
-	if err != nil {
-		return -1, err
-	}
-	return height.Data, nil
-
-}
-
-func (client *client) getLocalBlockByHeight(height int64) (*pt.ParaLocalDbBlock, error) {
-	cfg := client.GetAPI().GetConfig()
-	key := calcTitleHeightKey(cfg.GetTitle(), height)
-	set := &types.LocalDBGet{Keys: [][]byte{key}}
-
-	value, err := client.getLocalDb(set, len(set.Keys))
-	if err != nil {
-		return nil, err
-	}
-	if len(value) == 0 || value[0] == nil {
-		return nil, types.ErrNotFound
-	}
-
-	var block pt.ParaLocalDbBlock
-	err = types.Decode(value[0], &block)
-	if err != nil {
-		return nil, err
-	}
-	return &block, nil
-
 }
 
 func (client *client) getLocalBlockSeq(height int64) (int64, []byte, error) {
@@ -153,11 +70,12 @@ func (client *client) alignLocalBlock2ChainBlock(chainBlock *types.Block) error 
 		BlockTime:  chainBlock.BlockTime,
 	}
 
-	return client.addLocalBlock(localBlock.Height, localBlock)
+	return client.addLocalBlock(localBlock)
 
 }
 
-//如果localdb里面没有信息，就从chain block返回，至少有创世区块，然后进入循环匹配切换场景
+//如果localBlock被删除了，就从chain block获取，如果block能获取到，但远程seq获取不到，则返回当前块主链hash和错误的seq=0,
+//然后请求交易校验不过会进入循环匹配切换场景
 func (client *client) getLastLocalBlockSeq() (int64, []byte, error) {
 	height, err := client.getLastLocalHeight()
 	if err == nil {
@@ -323,14 +241,14 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
 		}
-		if !client.subCfg.FetchFilterParaTxsClose && lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
-			return client.subCfg.BatchFetchBlockCount - 1, nil
+		if lastSeq-currSeq > client.subCfg.BatchFetchBlockCount {
+			return client.subCfg.BatchFetchBlockCount, nil
 		}
-		return 0, nil
+		return 1, nil
 	}
 
 	if lastSeq == currSeq {
-		return 0, nil
+		return 1, nil
 	}
 
 	// lastSeq = currSeq -1
@@ -423,7 +341,7 @@ func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte
 
 func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	cfg := client.GetAPI().GetConfig()
-	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count, Title: cfg.GetTitle()}
+	req := &types.ReqParaTxByTitle{IsSeq: true, Start: currSeq, End: currSeq + count - 1, Title: cfg.GetTitle()}
 	details, err := client.GetParaTxByTitle(req)
 	if err != nil {
 		return nil, err
@@ -432,18 +350,20 @@ func (client *client) requestFilterParaTxs(currSeq int64, count int64, preMainBl
 	details = validMainBlocks(details)
 	err = verifyMainBlocks(preMainBlockHash, details)
 	if err != nil {
-		plog.Error("requestTxsOnlyPara", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		plog.Error("requestFilterParaTxs", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
 		return nil, err
 	}
+	//至少应该返回１个
+	if len(details.Items) == 0 {
+		plog.Error("requestFilterParaTxs ret nil", "curSeq", currSeq, "count", count, "preMainBlockHash", hex.EncodeToString(preMainBlockHash))
+		return nil, types.ErrNotFound
+	}
+
 	return details, nil
 }
 
 func (client *client) RequestTx(currSeq int64, count int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
-	if !client.subCfg.FetchFilterParaTxsClose {
-		return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
-	}
-
-	return client.requestTxsFromBlock(currSeq, preMainBlockHash)
+	return client.requestFilterParaTxs(currSeq, count, preMainBlockHash)
 }
 
 func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []byte, err error) (int64, []byte, error) {
@@ -500,7 +420,6 @@ func (client *client) procLocalBlock(mainBlock *types.ParaTxDetail) (bool, error
 		plog.Info("Create empty block", "newHeight", lastBlock.Height+1)
 	}
 	return true, client.createLocalBlock(lastBlock, txs, mainBlock)
-
 }
 
 func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
@@ -521,10 +440,70 @@ func (client *client) procLocalBlocks(mainBlocks *types.ParaTxDetails) error {
 	return nil
 }
 
+func (client *client) procLocalAddBlock(mainBlock *types.ParaTxDetail, lastBlock *pt.ParaLocalDbBlock) *pt.ParaLocalDbBlock {
+	cfg := client.GetAPI().GetConfig()
+	curMainHeight := mainBlock.Header.Height
+
+	emptyInterval := client.getEmptyInterval(lastBlock)
+
+	txs := paraexec.FilterTxsForPara(cfg, mainBlock)
+
+	plog.Debug("Parachain process block", "lastBlockHeight", lastBlock.Height, "lastBlockMainHeight", lastBlock.MainHeight,
+		"lastBlockMainHash", common.ToHex(lastBlock.MainHash), "currMainHeight", curMainHeight,
+		"curMainHash", common.ToHex(mainBlock.Header.Hash), "emptyIntval", emptyInterval, "seqTy", mainBlock.Type)
+
+	if mainBlock.Type != types.AddBlock {
+		panic("para chain quick sync,not addBlock type")
+
+	}
+	//AddAct
+	if len(txs) == 0 {
+		if curMainHeight-lastBlock.MainHeight < emptyInterval {
+			return nil
+		}
+		plog.Debug("Create empty block", "newHeight", lastBlock.Height+1)
+	}
+	return getNewBlock(lastBlock, txs, mainBlock)
+
+}
+
+//只同步只有AddType的block，比如在当前高度１w高度前的主链blocks，默认没有分叉，只获取addType类型的，如果有分叉，也会在后面常规同步时候纠正过来
+func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error {
+	var blocks []*pt.ParaLocalDbBlock
+	lastBlock, err := client.getLastLocalBlock()
+	if err != nil {
+		plog.Error("procLocalAddBlocks getLastLocalBlock", "err", err)
+		return err
+	}
+
+	for _, main := range mainBlocks.Items {
+		b := client.procLocalAddBlock(main, lastBlock)
+		if b == nil {
+			continue
+		}
+		lastBlock = b
+		blocks = append(blocks, b)
+	}
+	err = client.saveBatchLocalBlocks(blocks)
+	if err != nil {
+		plog.Error("procLocalAddBlocks saveBatchLocalBlocks", "err", err)
+		panic(err)
+	}
+	plog.Info("procLocalAddBlocks.saveLocalBlocks", "start", blocks[0].Height, "end", blocks[len(blocks)-1].Height)
+	client.blockSyncClient.handleLocalChangedMsg()
+	return nil
+}
+
 func (client *client) CreateBlock() {
 	defer client.wg.Done()
 
-	client.multiDldCli.tryMultiServerDownload()
+	if client.subCfg.JumpDownloadOpen {
+		client.jumpDldCli.tryJumpDownload()
+	}
+
+	if client.subCfg.MultiDownloadOpen {
+		client.multiDldCli.tryMultiServerDownload()
+	}
 
 	lastSeq, lastSeqMainHash, err := client.getLastLocalBlockSeq()
 	if err != nil {
@@ -560,9 +539,9 @@ out:
 				plog.Debug("para CreateBlock count not match", "count", count, "items", len(paraTxs.Items))
 				count = int64(len(paraTxs.Items))
 			}
-			//如果超过１个block，则认为当前正在追赶，暂不处理
-			if client.authAccount != "" && len(paraTxs.Items) == 1 {
-				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0].TxDetails)
+			//如果当前正在追赶，暂不处理
+			if client.commitMsgClient.authAccount != "" && client.isCaughtUp() && len(paraTxs.Items) > 0 {
+				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0])
 			}
 
 			err = client.procLocalBlocks(paraTxs)

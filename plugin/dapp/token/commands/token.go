@@ -35,7 +35,7 @@ func TokenCmd() *cobra.Command {
 		CreateTokenTransferCmd(),
 		CreateTokenWithdrawCmd(),
 		GetTokensPreCreatedCmd(),
-		GetTokensFinishCreatedCmd(),
+		GetTokensCreatedCmd(),
 		GetTokenAssetsCmd(),
 		GetTokenBalanceCmd(),
 		CreateRawTokenPreCreateTxCmd(),
@@ -136,7 +136,7 @@ func createTokenWithdraw(cmd *cobra.Command, args []string) {
 // GetTokensPreCreatedCmd get precreated tokens
 func GetTokensPreCreatedCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_precreated",
+		Use:   "precreated",
 		Short: "Get precreated tokens",
 		Run:   getPreCreatedTokens,
 	}
@@ -179,10 +179,10 @@ func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	}
 }
 
-// GetTokensFinishCreatedCmd get finish created tokens
-func GetTokensFinishCreatedCmd() *cobra.Command {
+// GetTokensCreatedCmd get finish created tokens
+func GetTokensCreatedCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_finish_created",
+		Use:   "created",
 		Short: "Get finish created tokens",
 		Run:   getFinishCreatedTokens,
 	}
@@ -229,7 +229,7 @@ func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 // GetTokenAssetsCmd get token assets
 func GetTokenAssetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token_assets",
+		Use:   "assets",
 		Short: "Get token assets",
 		Run:   tokenAssets,
 	}
@@ -287,7 +287,7 @@ func parseTokenAssetsRes(arg interface{}) (interface{}, error) {
 // GetTokenBalanceCmd get token balance
 func GetTokenBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token_balance",
+		Use:   "balance",
 		Short: "Get token balance of one or more addresses",
 		Run:   tokenBalance,
 	}
@@ -544,7 +544,7 @@ func tokenBurn(cmd *cobra.Command, args []string) {
 // GetTokenLogsCmd get logs of token
 func GetTokenLogsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_token_logs",
+		Use:   "logs",
 		Short: "Get logs of token",
 		Run:   getTokenLogs,
 	}
@@ -589,7 +589,7 @@ func getTokenLogsFlags(cmd *cobra.Command) {
 // GetTokenCmd get token
 func GetTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get_token",
+		Use:   "info",
 		Short: "Get token info",
 		Run:   getToken,
 	}

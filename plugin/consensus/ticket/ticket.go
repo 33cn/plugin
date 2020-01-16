@@ -604,6 +604,12 @@ func (client *Client) Miner(parent, block *types.Block) error {
 	if err != nil {
 		return err
 	}
+	//需要首先对交易进行排序
+	cfg := client.GetAPI().GetConfig()
+	if cfg.IsFork(block.Height, "ForkRootHash") {
+		block.Txs = types.TransactionSort(block.Txs)
+	}
+
 	err = client.WriteBlock(parent.StateHash, block)
 	if err != nil {
 		return err
@@ -788,4 +794,30 @@ func getTxHashes(txs []*types.Transaction) (hashes [][]byte) {
 		hashes[i] = txs[i].Hash()
 	}
 	return hashes
+}
+
+//比较newBlock是不是最优区块，目前ticket主要是比较挖矿交易的难度系数
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	cfg := client.GetAPI().GetConfig()
+
+	//newblock挖矿交易的难度系数
+	newBlockTicket, err := client.getMinerTx(newBlock)
+	if err != nil {
+		tlog.Error("CmpBestBlock:getMinerTx", "newBlockHash", common.ToHex(newBlock.Hash(cfg)))
+		return false
+	}
+	newBlockMiner := newBlockTicket.GetMiner()
+	newBlockDiff := client.getCurrentTarget(newBlock.BlockTime, newBlockMiner.TicketId, newBlockMiner.Modify, newBlockMiner.PrivHash)
+
+	//cmpBlock挖矿交易的难度系数
+	cmpBlockTicket, err := client.getMinerTx(cmpBlock)
+	if err != nil {
+		tlog.Error("CmpBestBlock:getMinerTx", "cmpBlockHash", common.ToHex(cmpBlock.Hash(cfg)))
+		return false
+	}
+	cmpBlockMiner := cmpBlockTicket.GetMiner()
+	cmpBlockDiff := client.getCurrentTarget(cmpBlock.BlockTime, cmpBlockMiner.TicketId, cmpBlockMiner.Modify, cmpBlockMiner.PrivHash)
+
+	//数字越小难度越大
+	return newBlockDiff.Cmp(cmpBlockDiff) < 0
 }

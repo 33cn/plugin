@@ -27,7 +27,7 @@ func New(cfg *types.Mempool, sub []byte) queue.Module {
 		subcfg.PoolCacheSize = cfg.PoolCacheSize
 	}
 	if subcfg.ProperFee == 0 {
-		subcfg.ProperFee = cfg.MinTxFee
+		subcfg.ProperFee = cfg.MinTxFeeRate
 	}
 	c.SetQueueCache(NewQueue(subcfg))
 	return c

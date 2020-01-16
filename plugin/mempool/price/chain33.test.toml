@@ -66,7 +66,7 @@ keyFile="key.pem"
 [mempool]
 name="price"
 poolCacheSize=200
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=100
 
 [mempool.sub.timeline]
@@ -161,8 +161,6 @@ signType="secp256k1"
 minerwhitelist=["*"]
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 

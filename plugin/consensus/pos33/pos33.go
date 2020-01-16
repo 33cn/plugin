@@ -97,10 +97,10 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 
 	bt := time.Now().Unix()
 	return &types.Block{
-		ParentHash: lastBlock.Hash(client.GetAPI().GetConfig()),
+		ParentHash: lastBlock.Hash(cfg),
 		Height:     lastBlock.Height + 1,
 		Txs:        txs,
-		TxHash:     merkle.CalcMerkleRoot(txs),
+		TxHash:     merkle.CalcMerkleRoot(cfg, lastBlock.Height, txs),
 		BlockTime:  bt,
 	}, nil
 }
@@ -484,4 +484,9 @@ func (client *Client) sendTx(tx *types.Transaction) error {
 	}
 	plog.Info("sendTx error:", "error", string(r.Msg))
 	return fmt.Errorf(string(r.Msg))
+}
+
+// CmpBestBlock 比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
 }

@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20191113065720-35a79536c298
+	github.com/33cn/chain33 v0.0.0-20200114070319-ef01c7b69d82
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/btcsuite/btcd v0.20.1-beta

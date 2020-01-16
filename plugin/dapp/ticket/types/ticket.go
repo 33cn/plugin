@@ -13,6 +13,18 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+// 0 -> 未成熟 1 -> 可挖矿 2 -> 已挖成功 3-> 已关闭
+const (
+	//TicketInit ticket　init status
+	TicketInit = iota
+	//TicketOpened ticket opened status
+	TicketOpened
+	//TicketMined ticket mined status
+	TicketMined
+	//TicketClosed ticket closed status
+	TicketClosed
+)
+
 const (
 	//log for ticket
 

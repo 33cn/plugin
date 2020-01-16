@@ -51,7 +51,7 @@ func NewDB(cfg *types.Chain33Config, id, minerAddress, returnWallet string, bloc
 	t.MinerAddress = minerAddress
 	t.ReturnAddress = returnWallet
 	t.CreateTime = blocktime
-	t.Status = 1
+	t.Status = ty.TicketOpened
 	t.IsGenesis = isGenesis
 	t.prevstatus = 0
 	//height == 0 的情况下，不去改变 genesis block
@@ -73,11 +73,11 @@ func NewDB(cfg *types.Chain33Config, id, minerAddress, returnWallet string, bloc
 // GetReceiptLog get receipt
 func (t *DB) GetReceiptLog() *types.ReceiptLog {
 	log := &types.ReceiptLog{}
-	if t.Status == 1 {
+	if t.Status == ty.TicketOpened {
 		log.Ty = ty.TyLogNewTicket
-	} else if t.Status == 2 {
+	} else if t.Status == ty.TicketMined {
 		log.Ty = ty.TyLogMinerTicket
-	} else if t.Status == 3 {
+	} else if t.Status == ty.TicketClosed {
 		log.Ty = ty.TyLogCloseTicket
 	}
 	r := &ty.ReceiptTicket{}
@@ -305,7 +305,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 	if err != nil {
 		return nil, err
 	}
-	if ticket.Status != 1 {
+	if ticket.Status != ty.TicketOpened {
 		return nil, types.ErrCoinBaseTicketStatus
 	}
 	cfg := ty.GetTicketMinerParam(chain33Cfg, action.height)
@@ -330,7 +330,7 @@ func (action *Action) TicketMiner(miner *ty.TicketMiner, index int) (*types.Rece
 		}
 	}
 	prevstatus := ticket.Status
-	ticket.Status = 2
+	ticket.Status = ty.TicketMined
 	ticket.MinerValue = miner.Reward
 	if chain33Cfg.IsFork(action.height, "ForkMinerTime") {
 		ticket.MinerTime = action.blocktime
@@ -383,20 +383,20 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 			return nil, err
 		}
 		//ticket 的生成时间超过 2天,可提款
-		if ticket.Status != 2 && ticket.Status != 1 {
+		if ticket.Status != ty.TicketMined && ticket.Status != ty.TicketOpened {
 			tlog.Error("ticket", "id", ticket.GetTicketId(), "status", ticket.GetStatus())
 			return nil, ty.ErrTicketClosed
 		}
 		if !ticket.IsGenesis {
 			//分成两种情况
-			if ticket.Status == 1 && action.blocktime-ticket.GetCreateTime() < cfg.TicketWithdrawTime {
+			if ticket.Status == ty.TicketOpened && action.blocktime-ticket.GetCreateTime() < cfg.TicketWithdrawTime {
 				return nil, ty.ErrTime
 			}
 			//已经挖矿成功了
-			if ticket.Status == 2 && action.blocktime-ticket.GetCreateTime() < cfg.TicketWithdrawTime {
+			if ticket.Status == ty.TicketMined && action.blocktime-ticket.GetCreateTime() < cfg.TicketWithdrawTime {
 				return nil, ty.ErrTime
 			}
-			if ticket.Status == 2 && action.blocktime-ticket.GetMinerTime() < cfg.TicketMinerWaitTime {
+			if ticket.Status == ty.TicketMined && action.blocktime-ticket.GetMinerTime() < cfg.TicketMinerWaitTime {
 				return nil, ty.ErrTime
 			}
 		}
@@ -405,7 +405,7 @@ func (action *Action) TicketClose(tclose *ty.TicketClose) (*types.Receipt, error
 			return nil, types.ErrFromAddr
 		}
 		prevstatus := ticket.Status
-		ticket.Status = 3
+		ticket.Status = ty.TicketClosed
 		tickets[i] = &DB{*ticket, prevstatus}
 	}
 	var logs []*types.ReceiptLog

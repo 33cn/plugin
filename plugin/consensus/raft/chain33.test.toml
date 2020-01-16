@@ -38,7 +38,7 @@ enableTxQuickIndex=true
 seeds=["127.0.0.1:13802"]
 enable=false
 isSeed=false
-serverStart=true
+serverStart=false
 innerSeedEnable=false
 useGithub=false
 innerBounds=300
@@ -61,7 +61,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="timeline"
 poolCacheSize=10240
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=100
 
 [mempool.sub.timeline]
@@ -108,12 +108,14 @@ peersURL="http://127.0.0.1:9021"
 # raft共识用到，指示raft集群中只读节点的IP（只同步日志，不参与raft共识）
 readOnlyPeersURL=""
 addPeersURL=""
-#raft共识用到，默认raft中多少条记录打包一个snapshot(这里为了测试调整小一点）
+#raft中多少条记录打包一个snapshot，默认为10000(这里为了测试调整小一点）
 defaultSnapCount=2
-#raft共识用到，默认raft中写区块时间间隔
+#raft中写区块时间间隔，默认为1秒
 writeBlockSeconds=1
-#raft共识用到，默认raft中leader发送心跳包时间间隔
+#raft中leader发送心跳包时间间隔，默认为1秒
 heartbeatTick=1
+#raft中leader打包空区块的时间间隔，默认为0，表示不打包空区块
+emptyBlockInterval=120
 # =============== raft共识配置参数 ===========================
 
 [store]
@@ -134,14 +136,12 @@ dbCache=16
 signType="secp256k1"
 
 [wallet.sub.ticket]
-minerdisable=false
+minerdisable=true
 minerwhitelist=["*"]
 minerWaitTime="1s"
 
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]

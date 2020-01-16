@@ -102,6 +102,10 @@ function base_init() {
     sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
     sed -i $sedfix 's/^paraConsensusStopBlocks=.*/paraConsensusStopBlocks=100/g' chain33.toml
 
+    # blockchain
+    # TODO 剩下evm trade 测试和这个选项有关，在其他pr中解决，不使得这个pr太大
+    sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
+
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
 
@@ -127,15 +131,23 @@ function start() {
 
     docker-compose ps
 
+    set +e
+    influxdbcontainer=$(docker ps -a | grep build_influxdb_1)
+    if [ -n "$influxdbcontainer" ]; then
+        echo "create database chain33metrics in docker container build_influxdb_1"
+        docker exec build_influxdb_1 influx -execute 'create database chain33metrics'
+    fi
+    set -e
+
     # query node run status
     check_docker_status
     ${CLI} block last_header
     ${CLI} net info
 
-    ${CLI} net peer_info
+    ${CLI} net peer
     local count=1000
     while [ $count -gt 0 ]; do
-        peersCount=$(${CLI} net peer_info | jq '.[] | length')
+        peersCount=$(${CLI} net peer | jq '.[] | length')
         if [ "${peersCount}" -ge 2 ]; then
             break
         fi

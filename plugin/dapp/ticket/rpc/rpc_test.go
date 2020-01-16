@@ -58,6 +58,15 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
 	assert.Nil(t, err)
+
+	var in2 = &ty.ReqBindMiner{
+		BindAddr:     "",
+		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
+		Amount:       10000 * types.Coin,
+		CheckBalance: false,
+	}
+	_, err = client.CreateBindMiner(context.Background(), in2)
+	assert.Nil(t, err)
 }
 
 func testGetTicketCountOK(t *testing.T) {
@@ -199,12 +208,10 @@ Title="test"
 
 [mempool]
 poolCacheSize=102400
-minTxFee=100000
+minTxFeeRate=100000
 maxTxNumPerAccount=100
 
 [exec]
-isFree=false
-minExecFee=100000
 enableStat=false
 enableMVCC=false
 
@@ -264,6 +271,7 @@ ForkBase58AddressCheck=1800000
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
 ForkTicketFundAddrV1=-1
+ForkRootHash=1
 [fork.sub.coins]
 Enable=0
 

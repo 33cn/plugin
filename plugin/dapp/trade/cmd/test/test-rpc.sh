@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
-
 # shellcheck source=/dev/null
 source ../dapp-test-common.sh
 
 MAIN_HTTP=""
-CASE_ERR=""
 trade_addr=""
 tradeAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 tradeBuyerAddr="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
@@ -17,11 +15,7 @@ function updateConfig() {
         echo_rst "update config create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "update config queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function token_preCreate() {
@@ -30,11 +24,7 @@ function token_preCreate() {
         echo_rst "token preCreate create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token preCreate queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function token_finish() {
@@ -43,29 +33,12 @@ function token_finish() {
         echo_rst "token finish create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token finish queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function token_balance() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"token.GetTokenBalance","params":[{"addresses": ["'"${tradeAddr}"'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${tokenExecName}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-
-    if [ "${res}" == "" ]; then
-        echo_rst "token get balance tx" 1
-        return
-    fi
-
-    addr=$(echo "${res}" | jq -r ".result[0].addr")
-    balance=$(echo "${res}" | jq -r ".result[0].balance")
-
-    if [ "${addr}" == "${tradeAddr}" ] && [ "${balance}" -eq 1000000000000 ]; then
-        echo_rst "token get balance tx" 0
-    else
-        echo_rst "token get balance tx" 1
-    fi
+    req='{"method":"token.GetTokenBalance","params":[{"addresses": ["'"${tradeAddr}"'"],"tokenSymbol":"'"${tokenSymbol}"'","execer": "'"${tokenExecName}"'"}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not) and (.result[0].addr == "'"${tradeAddr}"'") and (.result[0].balance == 1000000000000)' "$FUNCNAME"
 }
 
 function token_transfer() {
@@ -75,11 +48,7 @@ function token_transfer() {
         echo_rst "token transfer create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token transfer queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function token_sendExec() {
@@ -89,11 +58,7 @@ function token_sendExec() {
         echo_rst "token sendExec create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "${addr}" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "token sendExec queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "${addr}"
 }
 
 function trade_createSellTx() {
@@ -102,22 +67,13 @@ function trade_createSellTx() {
         echo_rst "trade createSellTx create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade createSellTx queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function trade_getSellOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrder","payload":{"addr": "'"${tradeAddr}"'","token":["'"${tokenSymbol}"'"]}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    result=$(echo "${res}" | jq -r ".error | not")
-    if [ "${result}" == true ]; then
-        sellID=$(echo "${res}" | jq -r ".result.orders[0].sellID" | awk -F '-' '{print $4}')
-        echo_rst "trade getSellOrder" 0
-    else
-        echo_rst "trade getSellOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrder","payload":{"addr": "'"${tradeAddr}"'","token":["'"${tokenSymbol}"'"]}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
+    sellID=$(echo "${RETURN_RESP}" | jq -r ".result.orders[0].sellID" | awk -F '-' '{print $4}')
 }
 
 function trade_createBuyTx() {
@@ -126,66 +82,37 @@ function trade_createBuyTx() {
         echo_rst "trade createBuyTx create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade createBuyTx queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42"
 }
 
 function trade_getBuyOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrder","payload":{"addr": "'"${tradeBuyerAddr}"'","token":["'"${tokenSymbol}"'"]}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getBuyOrder" 0
-    else
-        echo_rst "trade getBuyOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrder","payload":{"addr": "'"${tradeBuyerAddr}"'","token":["'"${tokenSymbol}"'"]}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusBuyOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrderWithStatus","payload":{"addr": "'"${tradeBuyerAddr}"'","status":6}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getStatusBuyOrder" 0
-    else
-        echo_rst "trade getStatusBuyOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesBuyOrderWithStatus","payload":{"addr": "'"${tradeBuyerAddr}"'","status":6}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'","status":1}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getStatusOrder" 0
-    else
-        echo_rst "trade getStatusOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'","status":1}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusSellOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'", "status":1}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getStatusSellOrder" 0
-    else
-        echo_rst "trade getStatusSellOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetOnesSellOrderWithStatus","payload":{"addr": "'"${tradeAddr}"'", "status":1}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusTokenBuyOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenBuyOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":6}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getTokenBuyOrder" 0
-    else
-        echo_rst "trade getTokenBuyOrder" 1
-    fi
-
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenBuyOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":6}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_statusTokenSellOrder() {
-    res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenSellOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":1}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".error | not")
-    if [ "${res}" == true ]; then
-        echo_rst "trade getTokenSellOrder" 0
-    else
-        echo_rst "trade getTokenSellOrder" 1
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"'"${tradeExecName}"'","funcName":"GetTokenSellOrderByStatus","payload":{"tokenSymbol": "'"${tokenSymbol}"'", "count" :1 , "direction": 1,"status":1}}]}'
+    chain33_Http "$req" ${MAIN_HTTP} '(.error | not)' "$FUNCNAME"
 }
 
 function trade_buyLimit() {
@@ -194,11 +121,7 @@ function trade_buyLimit() {
         echo_rst "trade buyLimit create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade buyLimit queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42"
     buyID=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${RAW_TX_HASH}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result.receipt.logs[1].log.base.buyID" | awk -F '-' '{print $4}')
 }
 
@@ -208,11 +131,7 @@ function trade_sellMarket() {
         echo_rst "trade sellMarket create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "${tradeAddr}" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade sellMarket queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "${tradeAddr}"
 }
 
 function trade_revokeBuy() {
@@ -221,11 +140,7 @@ function trade_revokeBuy() {
         echo_rst "trade revokeBuy create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade revokeBuy queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function trade_revoke() {
@@ -234,11 +149,7 @@ function trade_revoke() {
         echo_rst "trade revoke create tx" 1
         return
     fi
-
-    chain33_SignRawTx "${unsignedTx}" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" "${MAIN_HTTP}"
-
-    queryTransaction ".error | not" "true"
-    echo_rst "trade revoke queryExecRes" "$?"
+    signRawTxAndQuery "$FUNCNAME" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 # 查询交易的执行结果
@@ -253,6 +164,12 @@ function queryTransaction() {
     else
         return 0
     fi
+}
+
+function signRawTxAndQuery() {
+    chain33_SignAndSendTx "${unsignedTx}" "$2" "${MAIN_HTTP}"
+    queryTransaction ".error | not" "true"
+    echo_rst "$1 queryExecRes" "$?"
 }
 
 function init() {
@@ -274,8 +191,6 @@ function init() {
     fi
 
     local main_ip=${MAIN_HTTP//8901/8801}
-    #main chain import pri key
-    #1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg
     chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "${main_ip}"
 
     local ACCOUNT_A="1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg"
@@ -284,12 +199,10 @@ function init() {
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
     else
-        # tx fee
         chain33_applyCoins "$ACCOUNT_A" 1000000000 "${main_ip}"
         chain33_QueryBalance "${ACCOUNT_A}" "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
-        #para chain import pri key
         chain33_ImportPrivkey "0xaeef1ad76d43a2056d0dcb57d5bf1ba96471550614ab9e7f611ef9c5ca403f42" "1CvLe1qNaC7tCf5xmfAqJ9UJkMhtmhUKNg" "trade1" "$para_ip"
 
         chain33_applyCoins "$ACCOUNT_A" 12000000000 "${para_ip}"
@@ -333,14 +246,13 @@ function run_test() {
 }
 
 function main() {
-    local ip=$1
     chain33_RpcTestBegin trade
+    local ip=$1
     MAIN_HTTP=$ip
     echo "main_ip=$MAIN_HTTP"
 
     init
     run_test "$MAIN_HTTP"
-
     chain33_RpcTestRst trade "$CASE_ERR"
 }
 

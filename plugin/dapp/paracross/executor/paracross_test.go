@@ -735,11 +735,11 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-	group, err := types.CreateTxGroup(txs, chain33TestCfg.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txs, chain33TestCfg.GetMinTxFeeRate())
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GInt("MinFee"), chain33TestCfg.GInt("MaxFee"))
+	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GetMinTxFeeRate(), chain33TestCfg.GetMaxTxFee())
 	if err != nil {
 		return nil, err
 	}
