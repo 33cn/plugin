@@ -1149,6 +1149,7 @@ func getTitleFrom(exec []byte) ([]byte, error) {
 }
 
 func (a *action) isAllowTransfer() error {
+	//1. 没有配置nodegroup　不允许
 	tit, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
 		return errors.Wrapf(types.ErrInvalidParam, "CrossAssetTransfer, not para chain exec=%s", string(a.tx.Execer))
@@ -1160,6 +1161,11 @@ func (a *action) isAllowTransfer() error {
 	if len(nodes) == 0 {
 		return errors.Wrapf(err, "CrossAssetTransfer nodegroup not create,title=%s", tit)
 	}
+	//2. 非跨链执行器不允许
+	if !types.IsParaExecName(string(a.tx.Execer)) {
+		return errors.Wrapf(types.ErrInvalidParam,"exec=%s,should prefix with user.p.",string(a.tx.Execer))
+	}
+
 	return nil
 }
 

@@ -190,14 +190,6 @@ func CreateRawCommitTx4MainChain(cfg *types.Chain33Config, status *ParacrossNode
 	return createRawCommitTx(cfg, status, name, fee)
 }
 
-func createRawParacrossCommitTx(cfg *types.Chain33Config, parm *paracrossCommitTx) (*types.Transaction, error) {
-	if parm == nil {
-		tlog.Error("createRawParacrossCommitTx", "parm", parm)
-		return nil, types.ErrInvalidParam
-	}
-	return createRawCommitTx(cfg, &parm.Status, cfg.ExecName(ParaX), parm.Fee)
-}
-
 func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
 	v := &ParacrossCommitAction{
 		Status: status,
@@ -248,21 +240,6 @@ func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, 
 	action := &ParacrossAction{
 		Ty:    ParacrossActionNodeGroupApply,
 		Value: &ParacrossAction_NodeGroupConfig{apply},
-	}
-
-	tx := &types.Transaction{
-		Payload: types.Encode(action),
-	}
-
-	return tx, nil
-
-}
-
-//CreateRawSelfConsStageApplyTx create raw tx for self consens stage
-func CreateRawSelfConsStageApplyTx(apply *ParaStageConfig) (*types.Transaction, error) {
-	action := &ParacrossAction{
-		Ty:    ParacrossActionSelfStageConfig,
-		Value: &ParacrossAction_SelfStageConfig{apply},
 	}
 
 	tx := &types.Transaction{
@@ -354,20 +331,7 @@ func (p ParacrossType) CreateRawTransferTx(action string, param json.RawMessage)
 	return tx, nil
 }
 
-//CreateRawCrossAssetTransferTx create raw cross asset transfer tx
-func CreateRawCrossAssetTransferTx(apply *CrossAssetTransfer) (*types.Transaction, error) {
-	action := &ParacrossAction{
-		Ty:    ParacrossActionCrossAssetTransfer,
-		Value: &ParacrossAction_CrossAssetTransfer{apply},
-	}
 
-	tx := &types.Transaction{
-		Payload: types.Encode(action),
-	}
-
-	return tx, nil
-
-}
 
 //GetDappForkHeight get paracross dapp fork height
 func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {

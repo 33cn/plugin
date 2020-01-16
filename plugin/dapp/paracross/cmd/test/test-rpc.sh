@@ -382,7 +382,7 @@ paracross_testSelfConsensStages() {
     chainheight=$(jq '(.result.chainHeight)' <<<"$resp")
     newHeight=$((chainheight + 2000))
     echo "apply stage startHeight=$newHeight"
-    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "SelfStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
@@ -402,7 +402,7 @@ paracross_testSelfConsensStages() {
     JR_PRI="0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
     NL_PRI="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
 
-    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "SelfStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     echo "send vote 1"

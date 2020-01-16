@@ -39,7 +39,7 @@ function para_set_toml() {
     cp chain33.para.toml "${1}"
     local paraname="$2"
 
-    sed -i $xsedfix 's/^Title.*/Title="user.p.'''$paraname'''."/g' "${1}"
+    sed -i $xsedfix 's/^Title.*/Title="user.p.'''"$paraname"'''."/g' "${1}"
     sed -i $xsedfix 's/^# TestNet=.*/TestNet=true/g' "${1}"
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
     sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
@@ -101,9 +101,7 @@ function para_set_wallet() {
     para_import_key "${PARA_CLI}" "0x794443611e7369a57b078881445b93b754cbc9b9b8f526535ab9c6d21d29203d" "othernode2"
 
     #cross_transfer
-    #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
-    #    para_import_key "${PARA_CLI5}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "genesis"
-    #1KS
+    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     para_import_wallet "${PARA_CLI5}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
     #1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu
     para_import_key "${PARA_CLI5}" "0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1" "cross_transfer"
@@ -910,7 +908,7 @@ function para_nodemanage_node_behalf_join() {
     node1_id=$hash
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "32.0000" ]; then
+    if [ "$balance" != "37.0000" ]; then
         echo "1Ka frozen coinfrozen error balance=$balance"
         exit 1
     fi
@@ -928,7 +926,7 @@ function para_nodemanage_node_behalf_join() {
     id=$hash
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "41.0000" ]; then
+    if [ "$balance" != "46.0000" ]; then
         echo "frozen coinfrozen error balance=$balance"
         exit 1
     fi
@@ -979,7 +977,7 @@ function para_nodemanage_node_behalf_join() {
     query_tx "${PARA_CLI}" "${hash}"
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "33.0000" ]; then
+    if [ "$balance" != "38.0000" ]; then
         echo "unfrozen coinfrozen error balance=$balance"
         exit 1
     fi
@@ -1005,7 +1003,7 @@ function para_nodemanage_node_behalf_join() {
     query_tx "${PARA_CLI}" "${hash}"
 
     balance=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    if [ "$balance" != "24.0000" ]; then
+    if [ "$balance" != "29.0000" ]; then
         echo "unfrozen coinfrozen error balance=$balance"
         exit 1
     fi
@@ -1084,7 +1082,6 @@ function privacy_transfer_test() {
 
 function para_test() {
     echo "=========== # para chain test ============="
-    #    block_wait2height "${PARA_CLI}" $MainLoopCheckForkHeight "1"
     para_create_nodegroup
     para_nodegroup_behalf_quit_test
     para_create_nodegroup_gamechain
