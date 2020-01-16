@@ -1163,7 +1163,7 @@ func (a *action) isAllowTransfer() error {
 	}
 	//2. 非跨链执行器不允许
 	if !types.IsParaExecName(string(a.tx.Execer)) {
-		return errors.Wrapf(types.ErrInvalidParam,"exec=%s,should prefix with user.p.",string(a.tx.Execer))
+		return errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 
 	return nil

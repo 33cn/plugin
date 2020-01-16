@@ -991,7 +991,7 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt
 		return nil, pt.ErrInvalidTitle
 	}
 	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
-		return nil,errors.Wrapf(types.ErrInvalidParam,"exec=%s,should prefix with user.p.",string(a.tx.Execer))
+		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 
 	if config.Op == pt.ParacrossNodeGroupApply {
@@ -1032,7 +1032,7 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, pt.ErrInvalidTitle
 	}
 	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
-		return nil,errors.Wrapf(types.ErrInvalidParam,"exec=%s,should prefix with user.p.",string(a.tx.Execer))
+		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 
 	if config.Op == pt.ParaOpNewApply {
