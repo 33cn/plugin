@@ -153,7 +153,7 @@ func (j *jumpDldClient) process(job *paraTxBlocksJob) {
 				return
 			}
 			// 2. 校验交易merkle根和之前读的主链头的交易rootHash
-			if tx.Header.Height >= j.paraClient.subCfg.MainVrfMerkleRootForkHeight {
+			if j.paraClient.GetAPI().GetConfig().IsFork(tx.Header.Height, "ForkRootHash") {
 				err := j.verifyTxMerkleRoot(tx, headMap)
 				if err != nil {
 					atomic.StoreInt32(&j.downFail, 1)

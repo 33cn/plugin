@@ -22,9 +22,8 @@
  1. 为了容易认出， 暂定方案 执行器名字带上另行链title：如 user.p.guodun.paracross， 也就是说需要在主链上能执行这样的交易
 
 关于交易序号的说明
- 1. 由于平行链上加了挖矿交易， 交易列表不再是全部从主链区块中过滤， 原来设计表示平行链区块交易列表执行情况的bitmap， 改为 txHash 对应结果的数组
-    1. 避免对平行链后续变动，主链数平行链的交易序号也要跟着变化
-    1. 但交易大小会变大， 如果接受不了， 再做其他的方案
+ 1. 由于平行链上加了挖矿交易， 交易列表不再是全部从主链区块中过滤
+ 1. 挖矿交易记录的交易结果的bitmap， 再主链根据主链区块高度，重新获取交易，然后找到对应bit　获取执行结果
 
 ## 交易
 
@@ -45,6 +44,27 @@ asset-transfer 分两种， 主链转出， 主链转入
    1. commit 交易共识时执行
    1. 某平行链paracross合约帐号， balance -
    1. 用户主链paracross合约帐号， balance +
+
+cross-transfer 把transfer和withdraw统一为transfer，　通过统一地址符号，内部判断是transfer和withdraw
+统一地址符号：title+执行器+符号
+1. 主链title缺省为空，类似：coins.bty, token.FZM
+1. 平行链符号为: user.p.test.coins.para 或user.p.game.token.FZM
+
+主链转移资产场景： type=0, tx.exec=user.p.test.
+1. 主链本币转移：	symbol:{coins/token}.bty/cny or bty/cny,
+   平行链资产：	paracross-coins.bty
+2. 主链外币转移: 	symbol: user.p.para.coins.ccny,
+   平行链资产:	paracross-paracross.user.p.para.coins.ccny
+3. 平行链本币提回: symbol: user.p.test.coins.ccny
+   平行链资产：	paracross账户coins.ccny资产释放
+平行链转移资产场景：type=1,tx.exec=user.p.test.
+1.　平行链本币转移:	symbol:user.p.test.{coins/token}.ccny
+    主链产生资产:	paracross-user.p.test.{coins}.ccny
+2.  主链外币提取:	symbol: user.p.para.coins.ccny
+    主链恢复外币资产:user.p.test.paracross地址释放user.p.para.coins.ccny
+3.  主链本币提取:	symbol: coins.bty
+    主链恢复本币资产:user.p.test.paracross地址释放coin.bty
+
 
 交易执行代码分为 三个部分
  1. 主链

@@ -16,6 +16,8 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 
+	"strings"
+
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,6 +31,37 @@ var (
 	Account12Q = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 )
+
+// createRawNodeConfigTx create raw tx for node config
+func createRawNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Transaction, error) {
+	action := &pt.ParacrossAction{
+		Ty:    pt.ParacrossActionNodeConfig,
+		Value: &pt.ParacrossAction_NodeConfig{NodeConfig: config},
+	}
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+		Execer:  []byte(config.Title + pt.ParaX),
+	}
+	return tx, nil
+}
+
+//createRawNodeGroupApplyTx create raw tx for node group
+func createRawNodeGroupApplyTx(apply *pt.ParaNodeGroupConfig) (*types.Transaction, error) {
+	apply.Id = strings.Trim(apply.Id, " ")
+
+	action := &pt.ParacrossAction{
+		Ty:    pt.ParacrossActionNodeGroupApply,
+		Value: &pt.ParacrossAction_NodeGroupConfig{NodeGroupConfig: apply},
+	}
+
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+		Execer:  []byte(apply.Title + pt.ParaX),
+	}
+
+	return tx, nil
+
+}
 
 type NodeManageTestSuite struct {
 	suite.Suite
@@ -182,7 +215,7 @@ func voteTest(suite *NodeManageTestSuite, id string, join bool) {
 		Id:    id,
 		Value: pt.ParaVoteYes,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(config)
+	tx, err := createRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	count++
@@ -210,7 +243,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(config)
+	tx, err := createRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -226,7 +259,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 		Id:    g.Current.Id,
 		Op:    pt.ParacrossNodeGroupQuit,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	tx, err = createRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
@@ -242,7 +275,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Addrs: applyAddrs,
 		Op:    pt.ParacrossNodeGroupApply,
 	}
-	tx, err := pt.CreateRawNodeGroupApplyTx(config)
+	tx, err := createRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKeyB, tx)
@@ -258,7 +291,7 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 		Id:    g.Current.Id,
 		Op:    pt.ParacrossNodeGroupApprove,
 	}
-	tx, err = pt.CreateRawNodeGroupApplyTx(config)
+	tx, err = createRawNodeGroupApplyTx(config)
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey12Q, tx)
@@ -273,7 +306,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:    pt.ParaOpNewApply,
 		Addr:  Account14K,
 	}
-	tx, err := pt.CreateRawNodeConfigTx(config)
+	tx, err := createRawNodeConfigTx(config)
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
@@ -293,7 +326,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 		Op:    pt.ParaOpQuit,
 		Addr:  Account14K,
 	}
-	tx, err = pt.CreateRawNodeConfigTx(config)
+	tx, err = createRawNodeConfigTx(config)
 	suite.Nil(err)
 	receipt = nodeCommit(suite, PrivKeyD, tx)
 	checkQuitReceipt(suite, receipt)

@@ -16,9 +16,11 @@ import (
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
+	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	token "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -335,4 +337,82 @@ func createAssetTransferTokenTx(s suite.Suite, privFrom string, to []byte) (*typ
 	}
 
 	return tx, nil
+}
+
+func TestGetCrossAction(t *testing.T) {
+	txExec := "paracross"
+	transfer := &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "coin.bty"}
+	action, err := getCrossAction(transfer, txExec)
+	assert.NotNil(t, err)
+	assert.Equal(t, int64(pt.ParacrossNoneTransfer), action)
+
+	txExec = "user.p.para.paracross"
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossMainTransfer), action)
+
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "user.p.para.coin.bty"}
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossParaWithdraw), action)
+
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "user.p.test.coin.bty"}
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossMainTransfer), action)
+
+	transfer = &pt.CrossAssetTransfer{Type: 1, AssetSymbol: "coin.bty"}
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossMainWithdraw), action)
+
+	transfer = &pt.CrossAssetTransfer{Type: 1, AssetSymbol: "user.p.para.coin.bty"}
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossParaTransfer), action)
+
+	transfer = &pt.CrossAssetTransfer{Type: 1, AssetSymbol: "user.p.test.coin.bty"}
+	action, err = getCrossAction(transfer, txExec)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(pt.ParacrossMainWithdraw), action)
+}
+
+func TestFormatTransfer(t *testing.T) {
+	act := int64(pt.ParacrossMainTransfer)
+	transfer := &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "user.p.coins.bty"}
+	rst := formatTransfer(transfer, act)
+	assert.Equal(t, pt.ParaX, rst.AssetExec)
+
+	act = pt.ParacrossMainWithdraw
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "user.p.coins.bty"}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, pt.ParaX, rst.AssetExec)
+
+	act = pt.ParacrossMainTransfer
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "coins.bty"}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, coins.CoinsX, rst.AssetExec)
+
+	act = pt.ParacrossMainWithdraw
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "coins.bty"}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, coins.CoinsX, rst.AssetExec)
+
+	act = pt.ParacrossMainTransfer
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "fzm"}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, token.TokenX, rst.AssetExec)
+
+	act = pt.ParacrossMainTransfer
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: ""}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, coins.CoinsX, rst.AssetExec)
+	assert.Equal(t, "bty", rst.AssetSymbol)
+
+	act = pt.ParacrossParaTransfer
+	transfer = &pt.CrossAssetTransfer{Type: 0, AssetSymbol: "user.p.coins.para"}
+	rst = formatTransfer(transfer, act)
+	assert.Equal(t, coins.CoinsX, rst.AssetExec)
+	assert.Equal(t, "para", rst.AssetSymbol)
+
 }

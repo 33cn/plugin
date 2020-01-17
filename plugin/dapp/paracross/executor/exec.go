@@ -35,7 +35,7 @@ func (e *Paracross) Exec_AssetTransfer(payload *types.AssetsTransfer, tx *types.
 	receipt, err := a.AssetTransfer(payload)
 	if err != nil {
 		clog.Error("Paracross AssetTransfer failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 	return receipt, nil
 }
@@ -51,7 +51,7 @@ func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.
 	receipt, err := a.AssetWithdraw(payload)
 	if err != nil {
 		clog.Error("ParacrossActionAssetWithdraw failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 	return receipt, nil
 }

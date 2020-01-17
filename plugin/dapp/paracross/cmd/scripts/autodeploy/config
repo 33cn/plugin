@@ -8,8 +8,12 @@ genesisAccount="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 #创世数量
 genesisAmount=100000000
 
+#主链节点的ip
+ParaRemoteGrpcClient="114.55.11.139:1197"
 #从主链哪个高度开始同步区块
 mainStartHeight=4000000
+#fork config
+mainLoopCheckCommitTxDoneForkHeight=3120000
 #平行链授权账户，这里的数量要和下面的authPrikey和authPort保持一致
 authAccount=( "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs")
 #授权账户的私钥,为了导入钱包，自动开启共识挖矿
