@@ -48,6 +48,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 		return err
 	}
 	if version >= toVersion {
+		tradelog.Debug("UpgradeLocalDBV2 not need to upgrade", "current_version", version, "to_version", toVersion)
 		return nil
 	}
 
@@ -99,8 +100,12 @@ func delOnePrefix(localDB dbm.KVDB, prefix string) error {
 	start := []byte(prefix)
 	keys, err := localDB.List(start, nil, 0, dbm.ListASC|dbm.ListKeyOnly)
 	if err != nil {
+		if err == types.ErrNotFound {
+			return nil
+		}
 		return err
 	}
+	tradelog.Debug("delOnePrefix", "len", len(keys), "prefix", prefix)
 	for _, key := range keys {
 		err = localDB.Set(key, nil)
 		if err != nil {
@@ -129,9 +134,10 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 		if err == types.ErrNotFound {
 			return nil
 		}
-		return errors.Wrap(err, "upgradeOrderLimit list from order v1 table")
+		return errors.Wrap(err, "upgradeOrder list from order v1 table")
 	}
 
+	tradelog.Debug("upgradeOrder", "len", len(rows))
 	for _, row := range rows {
 		o1, ok := row.Data.(*pty.LocalOrder)
 		if !ok {
@@ -139,35 +145,32 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 		}
 		err = tab2.Add(o1)
 		if err != nil {
-			return errors.Wrap(err, "upgradeOrderLimit add to order v2 table")
+			return errors.Wrap(err, "upgradeOrder add to order v2 table")
 		}
 		err = tab.Del([]byte(o1.GetKey()))
 		if err != nil {
-			return errors.Wrap(err, "upgradeOrderLimit add to order v2 table")
+			return errors.Wrap(err, "upgradeOrder add to order v2 table")
 		}
 	}
 
 	kvs, err := tab2.Save()
 	if err != nil {
-		return errors.Wrap(err, "upgradeOrderLimit save-add to order v2 table")
+		return errors.Wrap(err, "upgradeOrder save-add to order v2 table")
 	}
 	kvs2, err := tab.Save()
 	if err != nil {
-		return errors.Wrap(err, "upgradeOrderLimit save-del to order v1 table")
+		return errors.Wrap(err, "upgradeOrder save-del to order v1 table")
 	}
 	kvs = append(kvs, kvs2...)
 
 	for _, kv := range kvs {
-		tradelog.Debug("upgradeOrderLimit", "KEY", string(kv.GetKey()))
+		tradelog.Debug("upgradeOrder", "KEY", string(kv.GetKey()))
 		err = kvdb.Set(kv.GetKey(), kv.GetValue())
 		if err != nil {
-			err = errors.Wrap(err, "upgradeOrderLimit sed localdb")
-			break
+			return errors.Wrapf(err, "upgradeOrder set localdb key: %s", string(kv.GetKey()))
 		}
 	}
-	if err != nil {
-		return errors.Wrap(err, "upgradeOrderLimit kvdb set")
-	}
+
 	return nil
 }
 
