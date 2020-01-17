@@ -30,7 +30,7 @@ const (
 // Upgrade 实现升级接口
 func (t *trade) Upgrade() error {
 	localDB := t.GetLocalDB()
-	err := TradeUpdateLocalDBV2(localDB)
+	err := UpgradeLocalDBV2(localDB)
 	if err != nil {
 		tradelog.Error("Upgrade failed", "err", err)
 		return errors.Cause(err)
@@ -38,40 +38,40 @@ func (t *trade) Upgrade() error {
 	return nil
 }
 
-// TradeUpdateLocalDBV2 trade 本地数据库升级
+// UpgradeLocalDBV2 trade 本地数据库升级
 // from 1 to 2
-func TradeUpdateLocalDBV2(localDB dbm.KVDB) error {
+func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 	toVersion := 2
 	version, err := getVersion(localDB)
 	if err != nil {
-		errors.Wrap(err, "TradeUpdateLocalDBV2 get version")
+		errors.Wrap(err, "UpgradeLocalDBV2 get version")
 		return err
 	}
 	if version >= toVersion {
 		return nil
 	}
 
-	err = UpdateLocalDBPart2(localDB)
+	err = UpgradeLocalDBPart2(localDB)
 	if err != nil {
-		errors.Wrap(err, "TradeUpdateLocalDBV2 UpdateLocalDBPart2")
+		errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 		return err
 	}
 
-	err = UpdateLocalDBPart1(localDB)
+	err = UpgradeLocalDBPart1(localDB)
 	if err != nil {
-		errors.Wrap(err, "TradeUpdateLocalDBV2 UpdateLocalDBPart1")
+		errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart1")
 		return err
 	}
 	err = setVersion(localDB, toVersion)
 	if err != nil {
-		errors.Wrap(err, "TradeUpdateLocalDBV2 setVersion")
+		errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
 		return err
 	}
 	return nil
 }
 
-// UpdateLocalDBPart1 手动生成KV，需要在原有数据库中删除
-func UpdateLocalDBPart1(localDB dbm.KVDB) error {
+// UpgradeLocalDBPart1 手动生成KV，需要在原有数据库中删除
+func UpgradeLocalDBPart1(localDB dbm.KVDB) error {
 	prefixes := []string{
 		sellOrderSHTAS,
 		sellOrderASTS,
@@ -111,10 +111,10 @@ func delOnePrefix(localDB dbm.KVDB, prefix string) error {
 	return nil
 }
 
-// UpdateLocalDBPart2 升级order
+// UpgradeLocalDBPart2 升级order
 // order 从 v1 升级到 v2
 // 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
-func UpdateLocalDBPart2(kvdb dbm.KVDB) error {
+func UpgradeLocalDBPart2(kvdb dbm.KVDB) error {
 	return upgradeOrder(kvdb)
 }
 
