@@ -13,7 +13,7 @@ import (
 )
 
 var order1 = &pty.LocalOrder{
-	AssetSymbol:       "A",
+	AssetSymbol:       "bty",
 	Owner:             "O1",
 	AmountPerBoardlot: 1,
 	MinBoardlot:       1,
@@ -28,13 +28,15 @@ var order1 = &pty.LocalOrder{
 	Key:               "B1",
 	BlockTime:         1,
 	IsSellOrder:       false,
-	AssetExec:         "a",
+	AssetExec:         "coins",
 	TxIndex:           dapp.HeightIndexStr(1, 1),
 	IsFinished:        false,
+	PriceExec:         "token",
+	PriceSymbol:       "CCNY",
 }
 
 var order2 = &pty.LocalOrder{
-	AssetSymbol:       "A",
+	AssetSymbol:       "bty",
 	Owner:             "O1",
 	AmountPerBoardlot: 1,
 	MinBoardlot:       1,
@@ -49,9 +51,11 @@ var order2 = &pty.LocalOrder{
 	Key:               "B2",
 	BlockTime:         2,
 	IsSellOrder:       false,
-	AssetExec:         "a",
+	AssetExec:         "coins",
 	TxIndex:           dapp.HeightIndexStr(2, 1),
 	IsFinished:        false,
+	PriceExec:         "token",
+	PriceSymbol:       "CCNY",
 }
 
 func TestListAll(t *testing.T) {
