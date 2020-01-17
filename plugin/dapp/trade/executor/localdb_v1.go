@@ -44,8 +44,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 	toVersion := 2
 	version, err := getVersion(localDB)
 	if err != nil {
-		errors.Wrap(err, "UpgradeLocalDBV2 get version")
-		return err
+		return errors.Wrap(err, "UpgradeLocalDBV2 get version")
 	}
 	if version >= toVersion {
 		tradelog.Debug("UpgradeLocalDBV2 not need to upgrade", "current_version", version, "to_version", toVersion)
@@ -54,19 +53,16 @@ func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 
 	err = UpgradeLocalDBPart2(localDB)
 	if err != nil {
-		errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
-		return err
+		return errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 	}
 
 	err = UpgradeLocalDBPart1(localDB)
 	if err != nil {
-		errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart1")
-		return err
+		return errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart1")
 	}
 	err = setVersion(localDB, toVersion)
 	if err != nil {
-		errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
-		return err
+		return errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
 	}
 	return nil
 }
@@ -88,8 +84,7 @@ func UpgradeLocalDBPart1(localDB dbm.KVDB) error {
 	for _, prefix := range prefixes {
 		err := delOnePrefix(localDB, prefix)
 		if err != nil {
-			errors.Wrapf(err, "UpdateLocalDBPart1 delOnePrefix: %s", prefix)
-			return err
+			return errors.Wrapf(err, "UpdateLocalDBPart1 delOnePrefix: %s", prefix)
 		}
 	}
 	return nil
