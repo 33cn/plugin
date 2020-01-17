@@ -42,6 +42,7 @@ func (t *trade) Upgrade() error {
 // from 1 to 2
 func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 	toVersion := 2
+	tradelog.Info("UpgradeLocalDBV2 upgrade start", "to_version", toVersion)
 	version, err := getVersion(localDB)
 	if err != nil {
 		return errors.Wrap(err, "UpgradeLocalDBV2 get version")
@@ -64,6 +65,8 @@ func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 	if err != nil {
 		return errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
 	}
+
+	tradelog.Info("UpgradeLocalDBV2 upgrade done")
 	return nil
 }
 
@@ -142,9 +145,9 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "upgradeOrder add to order v2 table")
 		}
-		err = tab.Del([]byte(o1.GetKey()))
+		err = tab.Del([]byte(o1.TxIndex))
 		if err != nil {
-			return errors.Wrap(err, "upgradeOrder del from order v1 table")
+			return errors.Wrapf(err, "upgradeOrder del from order v1 table, key: %s", o1.TxIndex)
 		}
 	}
 
