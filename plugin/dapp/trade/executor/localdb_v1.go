@@ -144,7 +144,7 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 		}
 		err = tab.Del([]byte(o1.GetKey()))
 		if err != nil {
-			return errors.Wrap(err, "upgradeOrder add to order v2 table")
+			return errors.Wrap(err, "upgradeOrder del from order v1 table")
 		}
 	}
 
