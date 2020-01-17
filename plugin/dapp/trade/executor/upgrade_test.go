@@ -72,18 +72,3 @@ func Test_Upgrade(t *testing.T) {
 func callUpgradeLocalDBV2(localdb dbm.KVDB) error {
 	return UpgradeLocalDBV2(localdb)
 }
-
-// why panic: Begin not impl
-func callUpgradeLocalDBV2X(localdb dbm.KVDB) error {
-	localdb.Begin()
-	err := UpgradeLocalDBV2(localdb)
-	if err != nil {
-		localdb.Rollback()
-		return err
-	}
-	err = localdb.Commit()
-	if err != nil {
-		panic("commit error")
-	}
-	return nil
-}
