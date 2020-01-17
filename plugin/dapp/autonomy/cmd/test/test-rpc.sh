@@ -7,6 +7,8 @@ MAIN_HTTP=""
 
 EXECTOR=""
 EXECTOR_ADDR=""
+TICKET_EXECTOR=""
+TICKET_ADDR=""
 
 propKey="0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
 propAddr="15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
@@ -85,7 +87,11 @@ boards='
 "'${boardsAddr[19]}'",
 "'${boardsAddr[20]}'"
 '
-
+chain33_para_init() {
+    ip=$1
+    chain33_ImportPrivkey "${votePrKey}" "${voteAddr}" "autonomytest" "${ip}"
+    chain33_SendToAddress "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" "$voteAddr" 630000000000 "${ip}"
+}
 chain33_applyCoinsNOLimit() {
     echo "chain33_getMainChainCoins"
     if [ "$#" -lt 3 ]; then
@@ -101,13 +107,13 @@ chain33_applyCoinsNOLimit() {
 }
 
 handleBoards() {
-    local main_ip=${MAIN_HTTP//8901/8801}
-    chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "${main_ip}"
+    local ip=$1
+    #chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "${main_ip}"
     for ((i = 0; i < ${#boardsPrKey[*]}; i++)); do
       echo "${boardsPrKey[$i]}"
       lab="board_"${i}
-      chain33_ImportPrivkey "${boardsPrKey[$i]}" "${boardsAddr[$i]}" "${lab}" "${main_ip}"
-      chain33_applyCoins "${boardsAddr[$i]}" 100000000 "${main_ip}"
+      chain33_ImportPrivkey "${boardsPrKey[$i]}" "${boardsAddr[$i]}" "${lab}" "${ip}"
+      chain33_applyCoins "${boardsAddr[$i]}" 100000000 "${ip}"
     done
 }
 
@@ -140,7 +146,7 @@ revokeProposalTx() {
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"'"${funcName}"'", "payload":{"proposalID": "'"${ID}"'"}}]}'
     echo "${req}"
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignAndSendTx "${RETURN_RESP}" "${privk}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${propKey}" "${MAIN_HTTP}"
     echo $RAW_TX_HASH
     echo_rst "revoke Proposal $funcName query_tx" "$?"
 }
@@ -151,7 +157,7 @@ terminateProposalTx() {
     local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${EXECTOR}"'", "actionName":"'"${funcName}"'", "payload":{"proposalID": "'"${ID}"'"}}]}'
     echo "${req}"
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
-    chain33_SignAndSendTx "${RETURN_RESP}" "${privk}" "${MAIN_HTTP}"
+    chain33_SignAndSendTx "${RETURN_RESP}" "${propKey}" "${MAIN_HTTP}"
     echo $RAW_TX_HASH
     echo_rst "terminate Proposal $funcName query_tx" "$?"
 }
@@ -201,6 +207,7 @@ testProposalBoard() {
     revokeProposalTx ${proposalID} "RvkPropBoard"
     terminateProposalTx ${proposalID} "TmintPropBoard"
     queryProposal ${proposalID} "GetProposalBoard"
+    listProposal 2 "ListProposalBoard"
 }
 
 proposalRuleTx() {
@@ -254,6 +261,7 @@ testProposalRule() {
     revokeProposalTx ${proposalID} "RvkPropRule"
     terminateProposalTx ${proposalID} "TmintPropRule"
     queryProposal ${proposalID} "GetProposalRule"
+    listProposal 2 "ListProposalRule"
 }
 
 proposalProjectTx() {
@@ -303,6 +311,7 @@ testProposalProject() {
     revokeProposalTx ${proposalID} "RvkPropProject"
     terminateProposalTx ${proposalID} "TmintPropProject"
     queryProposal ${proposalID} "GetProposalProject"
+    listProposal 2 "ListProposalProject"
 }
 
 proposalChangeTx() {
@@ -352,6 +361,7 @@ testProposalChange() {
     revokeProposalTx ${proposalID} "RvkPropChange"
     terminateProposalTx ${proposalID} "TmintPropChange"
     queryProposal ${proposalID} "GetProposalChange"
+    listProposal 2 "ListProposalChange"
 }
 
 init() {
@@ -361,9 +371,13 @@ init() {
     if [ "$ispara" == true ]; then
         EXECTOR_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.autonomy"}]}' ${MAIN_HTTP} | jq -r ".result")
         EXECTOR="user.p.para.autonomy"
+        TICKET_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.ticket"}]}' ${MAIN_HTTP} | jq -r ".result")
+        TICKET_EXECTOR="user.p.para.ticket"
     else
         EXECTOR_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"autonomy"}]}' ${MAIN_HTTP} | jq -r ".result")
         EXECTOR="autonomy"
+        TICKET_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"ticket"}]}' ${MAIN_HTTP} | jq -r ".result")
+        TICKET_EXECTOR="ticket"
     fi
     echo "EXECTOR_ADDR=$EXECTOR_ADDR"
 
@@ -378,27 +392,31 @@ init() {
     else
         chain33_applyCoins "$propAddr" 1000000000 "${main_ip}"
         chain33_QueryBalance "${propAddr}" "$main_ip"
+        #主链投票账户转帐
+        handleBoards "$main_ip"
 
         local para_ip="${MAIN_HTTP}"
         chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "$para_ip"
 
         #平行链中账户转帐
-        chain33_applyCoinsNOLimit "$propAddr" 100000000000 "${para_ip}"
-        chain33_QueryBalance "${propAddr}" "$para_ip"
+        chain33_applyCoinsNOLimit "$propAddr" 100000000000 "$para_ip"
+        chain33_QueryBalance "$propAddr" "$para_ip"
+        chain33_para_init "$para_ip"
     fi
 
     # 往合约中转
-    chain33_SendToAddress "$propAddr" "$EXECTOR_ADDR" 90000000000 "${MAIN_HTTP}"
-    chain33_QueryExecBalance "${propAddr}" "autonomy" "$MAIN_HTTP"
+    chain33_SendToAddress "$propAddr" "$EXECTOR_ADDR" 90000000000 "$MAIN_HTTP"
+    chain33_QueryExecBalance "$propAddr" "$EXECTOR" "$MAIN_HTTP"
 
     # 往ticket合约中转帐
-    chain33_SendToAddress "$voteAddr" "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp" 300100000000 "${MAIN_HTTP}"
-    chain33_QueryExecBalance "$voteAddr" "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp" "$MAIN_HTTP"
+    chain33_SendToAddress "$voteAddr" "$TICKET_ADDR" 300100000000 "$MAIN_HTTP"
+    chain33_QueryExecBalance "$voteAddr" "$TICKET_EXECTOR" "$MAIN_HTTP"
+    # 往投票账户中转帐
+    handleBoards "$MAIN_HTTP"
 }
 
 function run_testcases() {
     echo "run_testcases"
-    handleBoards
     testProposalRule
     testProposalBoard
     testProposalProject
@@ -411,11 +429,11 @@ function rpc_test() {
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
-    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
-    echo "ipara=$ispara"
-    if [ "$ispara" == true ]; then
-        return 0
-    fi
+#    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+#    echo "ipara=$ispara"
+#    if [ "$ispara" == true ]; then
+#        return 0
+#    fi
 
     init
     run_testcases
@@ -427,5 +445,3 @@ function rpc_test() {
 chain33_debug_function rpc_test "$1"
 
 #chain33_debug_function rpc_test  "http://127.0.0.1:8801"
-
-#ImpBoards
