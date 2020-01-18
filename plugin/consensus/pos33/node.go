@@ -575,7 +575,8 @@ type votes pt.Votes
 
 func (v votes) Len() int { return len(v) }
 func (v votes) Less(i, j int) bool {
-	return string(v[i].SortsCount) < string(v[i].SortsCount)
+	// use > for 
+	return string(v[i].SortsCount) > string(v[i].SortsCount)
 }
 func (v votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
 
@@ -590,7 +591,6 @@ func checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
 		sum += int(v.SortsCount)
 	}
 	sortsCount := sum / pt.Pos33MinVotes
-	plog.Info("checkVotesEnough", "height", height, "round", round, "len(vs)", len(vs), "sorts count", sortsCount)
 	if len(vs)*3 <= sortsCount*2 {
 		return false
 	}
