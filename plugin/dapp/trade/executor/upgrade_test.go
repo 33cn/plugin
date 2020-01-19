@@ -45,6 +45,7 @@ func Test_Upgrade(t *testing.T) {
 	tabV1 := NewOrderTable(localdb)
 	tabV1.Add(order1)
 	tabV1.Add(order2)
+	tabV1.Add(order3)
 	kvs, err := tabV1.Save()
 	assert.Nil(t, err)
 	for _, kv := range kvs {
@@ -70,5 +71,5 @@ func Test_Upgrade(t *testing.T) {
 }
 
 func callUpgradeLocalDBV2(localdb dbm.KVDB) error {
-	return UpgradeLocalDBV2(localdb)
+	return UpgradeLocalDBV2(localdb, "bty")
 }
