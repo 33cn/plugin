@@ -30,7 +30,9 @@ const (
 // Upgrade 实现升级接口
 func (t *trade) Upgrade() error {
 	localDB := t.GetLocalDB()
-	err := UpgradeLocalDBV2(localDB)
+	// 获得默认的coins symbol， 更新数据时用
+	coinSymbol := t.GetAPI().GetConfig().GetCoinSymbol()
+	err := UpgradeLocalDBV2(localDB, coinSymbol)
 	if err != nil {
 		tradelog.Error("Upgrade failed", "err", err)
 		return errors.Cause(err)
@@ -40,7 +42,7 @@ func (t *trade) Upgrade() error {
 
 // UpgradeLocalDBV2 trade 本地数据库升级
 // from 1 to 2
-func UpgradeLocalDBV2(localDB dbm.KVDB) error {
+func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) error {
 	toVersion := 2
 	tradelog.Info("UpgradeLocalDBV2 upgrade start", "to_version", toVersion)
 	version, err := getVersion(localDB)
@@ -52,7 +54,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB) error {
 		return nil
 	}
 
-	err = UpgradeLocalDBPart2(localDB)
+	err = UpgradeLocalDBPart2(localDB, coinSymbol)
 	if err != nil {
 		return errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 	}
@@ -117,11 +119,11 @@ func delOnePrefix(localDB dbm.KVDB, prefix string) error {
 // UpgradeLocalDBPart2 升级order
 // order 从 v1 升级到 v2
 // 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
-func UpgradeLocalDBPart2(kvdb dbm.KVDB) error {
-	return upgradeOrder(kvdb)
+func UpgradeLocalDBPart2(kvdb dbm.KVDB, coinSymbol string) error {
+	return upgradeOrder(kvdb, coinSymbol)
 }
 
-func upgradeOrder(kvdb dbm.KVDB) (err error) {
+func upgradeOrder(kvdb dbm.KVDB, coinSymbol string) (err error) {
 	tab2 := NewOrderTableV2(kvdb)
 	tab := NewOrderTable(kvdb)
 	q1 := tab.GetQuery(kvdb)
@@ -141,10 +143,14 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 		if !ok {
 			return errors.Wrap(types.ErrTypeAsset, "decode order v1")
 		}
-		err = tab2.Add(o1)
+
+		o2 := types.Clone(o1).(*pty.LocalOrder)
+		upgradeLocalOrder(o2, coinSymbol)
+		err = tab2.Add(o2)
 		if err != nil {
 			return errors.Wrap(err, "upgradeOrder add to order v2 table")
 		}
+
 		err = tab.Del([]byte(o1.TxIndex))
 		if err != nil {
 			return errors.Wrapf(err, "upgradeOrder del from order v1 table, key: %s", o1.TxIndex)
@@ -170,6 +176,19 @@ func upgradeOrder(kvdb dbm.KVDB) (err error) {
 	}
 
 	return nil
+}
+
+// upgradeLocalOrder 处理两个fork前的升级数据
+// 1. 支持任意资产
+// 2. 支持任意资产定价
+func upgradeLocalOrder(order *pty.LocalOrder, coinSymbol string) {
+	if order.AssetExec == "" {
+		order.AssetExec = defaultAssetExec
+	}
+	if order.PriceExec == "" {
+		order.PriceExec = defaultPriceExec
+		order.PriceSymbol = coinSymbol
+	}
 }
 
 // localdb Version
