@@ -62,8 +62,8 @@ function para_set_toml() {
                                                     "1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",\
 	                                                "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",]/g' "${1}"
     #autonomy
-    sed -i $sedfix 's/^useBalance=.*/useBalance=true/g' "${1}"
-    sed -i $sedfix 's/^total="16htvcBNS.*/total="1EZrEKPPC36SLRoLQBwLDjzcheiLRZJg49"/g' "${1}"
+    sed -i $xsedfix 's/^useBalance=.*/useBalance=true/g' "${1}"
+    sed -i $xsedfix 's/^total="16htvcBNS.*/total="1EZrEKPPC36SLRoLQBwLDjzcheiLRZJg49"/g' "${1}"
 }
 
 function para_set_wallet() {
