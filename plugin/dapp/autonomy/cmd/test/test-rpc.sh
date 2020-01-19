@@ -18,50 +18,50 @@ voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
 proposalID=""
 
 boardsAddr=(
-"1N578zmVzVR7RxLfnp7XAeDmAy499Jw3q2"
-"1DZ1kL9x3rRwz7EZjcLt1kMYu6Zdp3MjGR"
-"1HUYR1Mzb91m3dmsEE1vPrv7BsAHmEtVzM"
-"1JHmVgchSLjszN9LAYa3gds811c4BH2J51"
-"14TDcn95hxHbpySPtxGDK3aY6qDNuk5idg"
-"1EpbYadEAcwbrxuh6Ph2qyJZhMY9F9CCCv"
-"1NqfXb3YotDTPuShgSAhrBH28ETzCrsZx2"
-"138xSezQUi9kynnAZR23kWBwHvDSRX8JDK"
-"18bncBidkwRaUYPaqa9Rc58tWeRT2C5tfL"
-"16z3gEvRGof8cnQRvicV8BdY54fUfnBo8A"
-"1DpzRWk9SYnEvuGrFsJPFvMVRSYRHaCbtU"
-"1JSQbsb1hfB6CLzwzVZZEtai4da8m59obK"
-"12bRYKMsLSbN5upxoSenypWrygVuQh8rM5"
-"1Ew4Cpcfh1u1EeRkYPwVc4PRaSnz4D2eph"
-"156yPWN3eeZ4yPiwHRifu41FmrTVPavXQ5"
-"192YKhdAkFm18KLcGumM8JeDgWrnpSdo93"
-"12kXgBxsKzUmhfX5Mnv9EKRNGjQXhZzDFd"
-"1HmyNGYj2xyMmQDTpcuheLKXKBe5rj3QpQ"
-"1HGPrjc6H7yBzFV5yCbibvnSUGUgdDNQi3"
-"19WGov4b7wLf4f8JHMRDnJsGVNMDzap38w"
-"1HmRa1jAnzJ5SpJRrUWqUki6hx1u33Nbq4"
+    "1N578zmVzVR7RxLfnp7XAeDmAy499Jw3q2"
+    "1DZ1kL9x3rRwz7EZjcLt1kMYu6Zdp3MjGR"
+    "1HUYR1Mzb91m3dmsEE1vPrv7BsAHmEtVzM"
+    "1JHmVgchSLjszN9LAYa3gds811c4BH2J51"
+    "14TDcn95hxHbpySPtxGDK3aY6qDNuk5idg"
+    "1EpbYadEAcwbrxuh6Ph2qyJZhMY9F9CCCv"
+    "1NqfXb3YotDTPuShgSAhrBH28ETzCrsZx2"
+    "138xSezQUi9kynnAZR23kWBwHvDSRX8JDK"
+    "18bncBidkwRaUYPaqa9Rc58tWeRT2C5tfL"
+    "16z3gEvRGof8cnQRvicV8BdY54fUfnBo8A"
+    "1DpzRWk9SYnEvuGrFsJPFvMVRSYRHaCbtU"
+    "1JSQbsb1hfB6CLzwzVZZEtai4da8m59obK"
+    "12bRYKMsLSbN5upxoSenypWrygVuQh8rM5"
+    "1Ew4Cpcfh1u1EeRkYPwVc4PRaSnz4D2eph"
+    "156yPWN3eeZ4yPiwHRifu41FmrTVPavXQ5"
+    "192YKhdAkFm18KLcGumM8JeDgWrnpSdo93"
+    "12kXgBxsKzUmhfX5Mnv9EKRNGjQXhZzDFd"
+    "1HmyNGYj2xyMmQDTpcuheLKXKBe5rj3QpQ"
+    "1HGPrjc6H7yBzFV5yCbibvnSUGUgdDNQi3"
+    "19WGov4b7wLf4f8JHMRDnJsGVNMDzap38w"
+    "1HmRa1jAnzJ5SpJRrUWqUki6hx1u33Nbq4"
 )
 boardsPrKey=(
-"fa54751118c8159ade22c253f85945a4dd2030b1cf2502eaf785d0a4f5ad7e35"
-"da9371ea52f1fc9d72e75dbc9836774895cd0966fd53c83f5e2c92d878903693"
-"ad9731261c40c68fee96f7b846408fa33d1f3dc2a27bdb3694ec8f3aa153a98b"
-"e902d23ad26052cec64e9ed9055853327787b3bf26eb4646a6d6c1bb516f9fcd"
-"b3af59368bcc6779aecb4e7fbf0cc4040f8f8329eb7632d580be4b6d3be15357"
-"fd9284c11707b571e347b8f44c54aae89c0810d410a7c1f9613326358c564a5e"
-"b013948c123986aadc2525bfe9935dd07972e14b250b938153e763f917ada8d3"
-"5641e3aba9ce0660665cd1a816d1b50267b5bc5f337f73e6ceed0cc5ececa7d2"
-"5a7631b7101252d685bf2b4ba2f11a72fb867faeaa545064ce8d0901ffc3cb17"
-"c9d0d2639c0c0f2b275e5bf8a2797122af110316a4e8e1fe03c39693f5028c93"
-"00b4e3ac1365b89d68c8d5b07b3505cd614408b0d9c8c88df564d4e072deb401"
-"aa139d3f16c1785b2a9171d7863bc4ee9d45115cc0fa71a14c43536c933d1659"
-"33f111573a4613477f8291928a9bae012a74fc9858acb22c9c65ecf7844b63f2"
-"44e43dd0f769bb99638b9cc3c7468225ff703f69c17e9c4751d04e45fdc6c4a0"
-"9a75d6c779846fe2ad4a36021fe9d08652ca69ce09ab39ad874d921a5ec41716"
-"f5ca6b2ad545bd4b854871b18c8d37d2fe8c3625e91be86a204c4086f28e8d0f"
-"89504608a03590e5a4d8c1c82b75e908b28f9963587c85b96b628d238d3a4d1a"
-"fa653545ae52403665fb803ef410c4d3d7f74628b6d3f92218968ad496e4f81b"
-"227df96a414e26e85c7d87a12296344e6a731ce73e424ba9845cb305ec963843"
-"64259075bf2e5a74334442f5048ceaf8427f6097e2dac99c0e463785c7768550"
-"3b812d92b5c365d698255f55c3f0dca027c2f89f2409c51a6297bcf3343c11e6"
+    "fa54751118c8159ade22c253f85945a4dd2030b1cf2502eaf785d0a4f5ad7e35"
+    "da9371ea52f1fc9d72e75dbc9836774895cd0966fd53c83f5e2c92d878903693"
+    "ad9731261c40c68fee96f7b846408fa33d1f3dc2a27bdb3694ec8f3aa153a98b"
+    "e902d23ad26052cec64e9ed9055853327787b3bf26eb4646a6d6c1bb516f9fcd"
+    "b3af59368bcc6779aecb4e7fbf0cc4040f8f8329eb7632d580be4b6d3be15357"
+    "fd9284c11707b571e347b8f44c54aae89c0810d410a7c1f9613326358c564a5e"
+    "b013948c123986aadc2525bfe9935dd07972e14b250b938153e763f917ada8d3"
+    "5641e3aba9ce0660665cd1a816d1b50267b5bc5f337f73e6ceed0cc5ececa7d2"
+    "5a7631b7101252d685bf2b4ba2f11a72fb867faeaa545064ce8d0901ffc3cb17"
+    "c9d0d2639c0c0f2b275e5bf8a2797122af110316a4e8e1fe03c39693f5028c93"
+    "00b4e3ac1365b89d68c8d5b07b3505cd614408b0d9c8c88df564d4e072deb401"
+    "aa139d3f16c1785b2a9171d7863bc4ee9d45115cc0fa71a14c43536c933d1659"
+    "33f111573a4613477f8291928a9bae012a74fc9858acb22c9c65ecf7844b63f2"
+    "44e43dd0f769bb99638b9cc3c7468225ff703f69c17e9c4751d04e45fdc6c4a0"
+    "9a75d6c779846fe2ad4a36021fe9d08652ca69ce09ab39ad874d921a5ec41716"
+    "f5ca6b2ad545bd4b854871b18c8d37d2fe8c3625e91be86a204c4086f28e8d0f"
+    "89504608a03590e5a4d8c1c82b75e908b28f9963587c85b96b628d238d3a4d1a"
+    "fa653545ae52403665fb803ef410c4d3d7f74628b6d3f92218968ad496e4f81b"
+    "227df96a414e26e85c7d87a12296344e6a731ce73e424ba9845cb305ec963843"
+    "64259075bf2e5a74334442f5048ceaf8427f6097e2dac99c0e463785c7768550"
+    "3b812d92b5c365d698255f55c3f0dca027c2f89f2409c51a6297bcf3343c11e6"
 )
 
 boards='
@@ -109,10 +109,10 @@ chain33_applyCoinsNOLimit() {
 handleBoards() {
     local ip=$1
     for ((i = 0; i < ${#boardsPrKey[*]}; i++)); do
-      echo "${boardsPrKey[$i]}"
-      lab="board_"${i}
-      chain33_ImportPrivkey "${boardsPrKey[$i]}" "${boardsAddr[$i]}" "${lab}" "${ip}"
-      chain33_applyCoins "${boardsAddr[$i]}" 100000000 "${ip}"
+        echo "${boardsPrKey[$i]}"
+        lab="board_"${i}
+        chain33_ImportPrivkey "${boardsPrKey[$i]}" "${boardsAddr[$i]}" "${lab}" "${ip}"
+        chain33_applyCoins "${boardsAddr[$i]}" 100000000 "${ip}"
     done
 }
 
@@ -297,7 +297,7 @@ testProposalProject() {
     chain33_BlockWait 10 "$HTTP"
     #vote
     for ((i = 0; i < 11; i++)); do
-      voteProjectTx "${proposalID}" "${boardsPrKey[$i]}"
+        voteProjectTx "${proposalID}" "${boardsPrKey[$i]}"
     done
     #query
     queryProposal "${proposalID}" "GetProposalProject"
@@ -347,7 +347,7 @@ testProposalChange() {
     chain33_BlockWait 10 "$HTTP"
     #vote
     for ((i = 0; i < 14; i++)); do
-      voteChangeTx "${proposalID}" "${boardsPrKey[$i]}"
+        voteChangeTx "${proposalID}" "${boardsPrKey[$i]}"
     done
     #query
     queryProposal "${proposalID}" "GetProposalChange"
@@ -379,7 +379,6 @@ init() {
         TICKET_EXECTOR="ticket"
     fi
     echo "EXECTOR_ADDR=$EXECTOR_ADDR"
-
 
     local main_ip=${HTTP//8901/8801}
     chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "${main_ip}"
