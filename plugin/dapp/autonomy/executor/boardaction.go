@@ -457,7 +457,7 @@ func (a *action) batchGetAddressVotes(addrs []string, height int64) (int32, erro
 }
 
 func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
-	account, err := a.getStartHeightVoteAccount(addr, auty.TicketX, height)
+	account, err := a.getStartHeightVoteAccount(addr, ticketName, height)
 	if err != nil {
 		return 0, err
 	}
