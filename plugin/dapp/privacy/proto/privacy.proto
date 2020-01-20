@@ -108,8 +108,9 @@ message ResUTXOPubKeys {
 }
 
 message ReqPrivacyToken {
-    string token  = 1;
-    int64  amount = 2;
+    string assetExec   = 1;
+    string assetSymbol = 2;
+    int64  amount      = 3;
 }
 
 message AmountDetail {
@@ -126,8 +127,9 @@ message replyUTXOsOfAmount {
 }
 
 message ReceiptPrivacyOutput {
-    string   token               = 1;
-    repeated keyOutput keyoutput = 2;
+    string   assetExec           = 1;
+    string   assetSymbol         = 2;
+    repeated keyOutput keyoutput = 3;
 }
 //各种amount额度的UTXO在链上的数量
 message AmountsOfUTXO {
@@ -245,9 +247,10 @@ message UTXOHaveTxHashs {
 }
 
 message ReqUTXOGlobalIndex {
-    string   tokenname    = 1;
-    int32    mixCount     = 2;
-    repeated int64 amount = 3;
+    string   assetExec    = 1;
+    string   assetSymbol  = 2;
+    int32    mixCount     = 3;
+    repeated int64 amount = 4;
 }
 
 message UTXOBasic {
@@ -261,8 +264,6 @@ message UTXOIndex4Amount {
 }
 
 message ResUTXOGlobalIndex {
-    string   tokenname                         = 1;
-    int32    mixCount                          = 2;
     repeated UTXOIndex4Amount utxoIndex4Amount = 3;
 }
 
@@ -402,9 +403,9 @@ message WalletAccountPrivacy {
 message ReqCreatePrivacyTx {
     string tokenname = 1;
     // 构建交易类型
-    int32  actionType   = 2;
-    int64  amount = 3;
-    string note   = 4;
+    int32  actionType = 2;
+    int64  amount     = 3;
+    string note       = 4;
     // 普通交易的发送方
     string from = 5;
     // 普通交易的接收方

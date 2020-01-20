@@ -356,12 +356,16 @@ func showAmountsOfUTXOCmd() *cobra.Command {
 }
 
 func showAmountOfUTXOFlag(cmd *cobra.Command) {
+
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 }
 
 func showAmountOfUTXO(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	reqPrivacyToken := pty.ReqPrivacyToken{Token: types.BTY}
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	reqPrivacyToken := pty.ReqPrivacyToken{AssetExec: exec, AssetSymbol: symbol}
 	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX
 	params.FuncName = "ShowAmountsOfUTXO"
@@ -394,16 +398,20 @@ func showUTXOs4SpecifiedAmountCmd() *cobra.Command {
 func showUTXOs4SpecifiedAmountFlag(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0, "amount")
 	cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 }
 
 func showUTXOs4SpecifiedAmount(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4
-
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
 	reqPrivacyToken := pty.ReqPrivacyToken{
-		Token:  types.BTY,
-		Amount: amountInt64,
+		AssetExec:   exec,
+		AssetSymbol: symbol,
+		Amount:      amountInt64,
 	}
 	var params rpctypes.Query4Jrpc
 	params.Execer = pty.PrivacyX

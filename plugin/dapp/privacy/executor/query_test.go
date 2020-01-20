@@ -61,14 +61,14 @@ func TestPrivacy_Query_ShowAmountsOfUTXO(t *testing.T) {
 		{
 			index: 1,
 			params: &pty.ReqPrivacyToken{
-				Token: "btc",
+				AssetSymbol: "btc",
 			},
 			expectErr: types.ErrNotFound,
 		},
 		{
 			index: 2,
 			params: &pty.ReqPrivacyToken{
-				Token: "bty",
+				AssetSymbol: "bty",
 			},
 			expectReply: &pty.ReplyPrivacyAmounts{
 				AmountDetail: []*pty.AmountDetail{
@@ -79,6 +79,8 @@ func TestPrivacy_Query_ShowAmountsOfUTXO(t *testing.T) {
 	}
 
 	for _, tc := range queryCases {
+		req := tc.params.(*pty.ReqPrivacyToken)
+		req.AssetExec = "coins"
 		tc.funcName = "ShowAmountsOfUTXO"
 	}
 	testQuery(mock, queryCases, t)
@@ -99,21 +101,23 @@ func TestPrivacy_Query_ShowUTXOs4SpecifiedAmount(t *testing.T) {
 		{
 			index: 1,
 			params: &pty.ReqPrivacyToken{
-				Token: "bty",
+				AssetSymbol: "bty",
 			},
 			expectErr: types.ErrNotFound,
 		},
 		{
 			index: 2,
 			params: &pty.ReqPrivacyToken{
-				Token:  "bty",
-				Amount: types.Coin,
+				AssetSymbol: "bty",
+				Amount:      types.Coin,
 			},
 			disableReplyCheck: true,
 		},
 	}
 
 	for _, tc := range queryCases {
+		req := tc.params.(*pty.ReqPrivacyToken)
+		req.AssetExec = "coins"
 		tc.funcName = "ShowUTXOs4SpecifiedAmount"
 	}
 	testQuery(mock, queryCases, t)
@@ -139,9 +143,9 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 		{
 			index: 2,
 			params: &pty.ReqUTXOGlobalIndex{
-				Tokenname: "btc",
-				MixCount:  1,
-				Amount:    []int64{types.Coin},
+				AssetSymbol: "btc",
+				MixCount:    1,
+				Amount:      []int64{types.Coin},
 			},
 			disableReplyCheck: true,
 			expectErr:         types.ErrNotFound,
@@ -149,9 +153,9 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 		{
 			index: 3,
 			params: &pty.ReqUTXOGlobalIndex{
-				Tokenname: "bty",
-				MixCount:  1,
-				Amount:    []int64{types.Coin, types.Coin * 2},
+				AssetSymbol: "bty",
+				MixCount:    1,
+				Amount:      []int64{types.Coin, types.Coin * 2},
 			},
 			disableReplyCheck: true,
 			expectErr:         types.ErrNotFound,
@@ -159,15 +163,19 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 		{
 			index: 4,
 			params: &pty.ReqUTXOGlobalIndex{
-				Tokenname: "bty",
-				MixCount:  1,
-				Amount:    []int64{types.Coin},
+				AssetSymbol: "bty",
+				MixCount:    1,
+				Amount:      []int64{types.Coin},
 			},
 			disableReplyCheck: true,
 		},
 	}
 
 	for _, tc := range queryCases {
+		req := tc.params.(*pty.ReqUTXOGlobalIndex)
+		if req.AssetExec == "" {
+			req.AssetExec = "coins"
+		}
 		tc.funcName = "GetUTXOGlobalIndex"
 	}
 	testQuery(mock, queryCases, t)

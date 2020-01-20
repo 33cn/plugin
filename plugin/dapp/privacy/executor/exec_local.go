@@ -27,12 +27,13 @@ func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transactio
 			panic(err) //数据错误了，已经被修改了
 		}
 
-		token := receiptPrivacyOutput.Token
+		assetExec := receiptPrivacyOutput.GetAssetExec()
+		assetSymbol := receiptPrivacyOutput.GetAssetSymbol()
 		txhashInByte := tx.Hash()
 		txhash := common.ToHex(txhashInByte)
 		for outputIndex, keyOutput := range receiptPrivacyOutput.Keyoutput {
 			//kv1，添加一个具体的UTXO，方便我们可以查询相应token下特定额度下，不同高度时，不同txhash的UTXO
-			key := CalcPrivacyUTXOkeyHeight(token, keyOutput.Amount, p.GetHeight(), txhash, index, outputIndex)
+			key := CalcPrivacyUTXOkeyHeight(assetExec, assetSymbol, keyOutput.Amount, p.GetHeight(), txhash, index, outputIndex)
 			localUTXOItem := &ty.LocalUTXOItem{
 				Height:        p.GetHeight(),
 				Txindex:       int32(index),
@@ -46,7 +47,7 @@ func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transactio
 
 			//kv2，添加各种不同额度的kv记录，能让我们很方便的获知本系统存在的所有不同的额度的UTXO
 			var amountTypes ty.AmountsOfUTXO
-			key2 := CalcprivacyKeyTokenAmountType(token)
+			key2 := CalcprivacyKeyTokenAmountType(assetExec, assetSymbol)
 			value2, err := localDB.Get(key2)
 			//如果该种token不是第一次进行隐私操作
 			if err == nil && value2 != nil {
@@ -78,14 +79,15 @@ func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transactio
 			}
 
 			//kv3,添加存在隐私交易token的类型
+			assetKey := calcExecLocalAssetKey(assetExec, assetSymbol)
 			var tokenNames ty.TokenNamesOfUTXO
 			key3 := CalcprivacyKeyTokenTypes()
 			value3, err := localDB.Get(key3)
 			if err == nil && len(value3) != 0 {
 				err := types.Decode(value3, &tokenNames)
 				if err == nil {
-					if _, ok := tokenNames.TokensMap[token]; !ok {
-						tokenNames.TokensMap[token] = txhash
+					if _, ok := tokenNames.TokensMap[assetKey]; !ok {
+						tokenNames.TokensMap[assetKey] = txhash
 						kv := &types.KeyValue{Key: key3, Value: types.Encode(&tokenNames)}
 						dbSet.KV = append(dbSet.KV, kv)
 						localDB.Set(key3, types.Encode(&tokenNames))
@@ -93,7 +95,7 @@ func (p *privacy) execLocal(receiptData *types.ReceiptData, tx *types.Transactio
 				}
 			} else {
 				tokenNames.TokensMap = make(map[string]string)
-				tokenNames.TokensMap[token] = txhash
+				tokenNames.TokensMap[assetKey] = txhash
 				kv := &types.KeyValue{Key: key3, Value: types.Encode(&tokenNames)}
 				dbSet.KV = append(dbSet.KV, kv)
 				localDB.Set(key3, types.Encode(&tokenNames))

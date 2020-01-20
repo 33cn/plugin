@@ -364,7 +364,7 @@ buildInput 构建隐私交易的输入信息
 func (policy *privacyPolicy) buildInput(privacykeyParirs *privacy.Privacy, buildInfo *buildInputInfo) (*privacytypes.PrivacyInput, []*privacytypes.UTXOBasics, []*privacytypes.RealKeyInput, []*txOutputInfo, error) {
 	operater := policy.getWalletOperate()
 	//挑选满足额度的utxo
-	selectedUtxo, err := policy.selectUTXO(buildInfo.tokenname, buildInfo.sender, buildInfo.amount)
+	selectedUtxo, err := policy.selectUTXO(buildInfo.assetSymbol, buildInfo.sender, buildInfo.amount)
 	if err != nil {
 		bizlog.Error("buildInput", "Failed to selectOutput for amount", buildInfo.amount,
 			"Due to cause", err)
@@ -375,8 +375,9 @@ func (policy *privacyPolicy) buildInput(privacykeyParirs *privacy.Privacy, build
 	})
 
 	reqGetGlobalIndex := privacytypes.ReqUTXOGlobalIndex{
-		Tokenname: buildInfo.tokenname,
-		MixCount:  0,
+		AssetExec:   buildInfo.assetExec,
+		AssetSymbol: buildInfo.assetSymbol,
+		MixCount:    0,
 	}
 
 	if buildInfo.mixcount > 0 {
@@ -562,10 +563,11 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 		utxoBurnedAmount = privacytypes.PrivacyTxFee
 	}
 	buildInfo := &buildInputInfo{
-		tokenname: req.GetTokenname(),
-		sender:    req.GetFrom(),
-		amount:    req.GetAmount() + utxoBurnedAmount,
-		mixcount:  req.GetMixcount(),
+		assetExec:   req.GetAssetExec(),
+		assetSymbol: req.GetTokenname(),
+		sender:      req.GetFrom(),
+		amount:      req.GetAmount() + utxoBurnedAmount,
+		mixcount:    req.GetMixcount(),
 	}
 	privacyInfo, err := policy.getPrivacykeyPair(req.GetFrom())
 	if err != nil {
@@ -652,10 +654,11 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 		utxoBurnedAmount = privacytypes.PrivacyTxFee
 	}
 	buildInfo := &buildInputInfo{
-		tokenname: req.GetTokenname(),
-		sender:    req.GetFrom(),
-		amount:    req.GetAmount() + utxoBurnedAmount,
-		mixcount:  req.GetMixcount(),
+		assetExec:   req.GetAssetExec(),
+		assetSymbol: req.GetTokenname(),
+		sender:      req.GetFrom(),
+		amount:      req.GetAmount() + utxoBurnedAmount,
+		mixcount:    req.GetMixcount(),
 	}
 	privacyInfo, err := policy.getPrivacykeyPair(req.GetFrom())
 	if err != nil {
