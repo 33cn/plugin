@@ -124,19 +124,11 @@ function queryTransaction() {
     else
         res=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.QueryTransaction","params":[{"hash":"'"${txHash}"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
         if [ "${evm_addr}" == "" ]; then
-            if [ "$ispara" == "true" ]; then
-                evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractName")
-            else
-                evm_addr=$(echo "${res}" | jq -r ".result.receipt.logs[1].log.contractName")
-            fi
+            evm_addr="user.evm.${txHash}"
         fi
 
         if [ "${evm_contractAddr}" == "" ]; then
-            if [ "$ispara" == "true" ]; then
-                evm_contractAddr=$(echo "${res}" | jq -r ".result.receipt.logs[0].log.contractAddr")
-            else
-                evm_contractAddr=$(echo "${res}" | jq -r ".result.receipt.logs[1].log.contractAddr")
-            fi
+            evm_contractAddr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'"${evm_addr}"'"}]}' ${MAIN_HTTP} | jq -r ".result")
 
         fi
         return 0

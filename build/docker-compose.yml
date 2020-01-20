@@ -2,25 +2,31 @@ version: '3'
 
 services:
   chain33:
+    container_name: build_chain33_1
     build:
       context: .
 
   chain32:
+    container_name: build_chain32_1
     build:
       context: .
 
   chain31:
+    container_name: build_chain31_1
     build:
       context: .
 
   chain30:
+    container_name: build_chain30_1
     build:
       context: .
 
   chain29:
+    container_name: build_chain29_1
     build:
       context: .
 
   chain28:
+    container_name: build_chain28_1
     build:
       context: .
