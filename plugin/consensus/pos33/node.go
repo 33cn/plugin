@@ -18,10 +18,7 @@ import (
 
 var plog = log15.New("module", "pos33")
 
-type checkArg struct {
-	b  *types.Block
-	ch chan error
-}
+const pos33Topic = "pos33"
 
 type node struct {
 	*Client
@@ -575,7 +572,7 @@ type votes pt.Votes
 
 func (v votes) Len() int { return len(v) }
 func (v votes) Less(i, j int) bool {
-	// use > for 
+	// use > for
 	return string(v[i].SortsCount) > string(v[i].SortsCount)
 }
 func (v votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
@@ -803,7 +800,7 @@ func (n *node) runLoop() {
 		return
 	}
 
-	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, "sorts", "votes")
+	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, pos33Topic)
 	msgch := n.handleGossipMsg()
 	if n.conf.BootPeerAddr != "" {
 		n.gss.bootstrap(n.conf.BootPeerAddr)
@@ -869,7 +866,7 @@ func (n *node) sendSorts(height int64, round int) {
 	s := n.mySort(height, round)
 
 	m := &pt.Pos33Sorts{Sorts: ss, S: s}
-	n.gss.gossip("sorts", marshalSortsMsg(m))
+	n.gss.gossip(pos33Topic, marshalSortsMsg(m))
 	n.handleSortsMsg(m, true)
 }
 
@@ -913,7 +910,7 @@ func (n *node) vote(height int64, round int) {
 		vs = append(vs, v)
 	}
 	v := &pt.Pos33Votes{Vs: vs}
-	n.gss.gossip("votes", marshalVoteMsg(v))
+	n.gss.gossip(pos33Topic, marshalVoteMsg(v))
 	n.handleVotesMsg(v, true)
 }
 

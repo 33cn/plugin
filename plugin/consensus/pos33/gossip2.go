@@ -70,10 +70,15 @@ func newGossip2(priv ccrypto.PrivKey, port string, topics ...string) *gossip2 {
 		panic(err)
 	}
 	h := newHost(ctx, pr, port)
-	ps, err := pubsub.NewFloodSub(ctx, h)
+	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		for range time.NewTicker(time.Minute).C {
+			plog.Info("@@@@@@@ ", "peers", ps.ListPeers(topics[0]))
+		}
+	}()
 	tmap := make(map[string]*pubsub.Topic)
 	for _, t := range topics {
 		topic, err := ps.Join(t)
