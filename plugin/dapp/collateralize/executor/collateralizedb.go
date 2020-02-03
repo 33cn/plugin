@@ -548,7 +548,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 
 	// 借贷金额不超过个人限额
 	userBalance, _ := queryCollateralizeUserBalance(action.db, action.localDB, action.fromaddr)
-	if borrow.GetValue() + userBalance > coll.DebtCeiling {
+	if borrow.GetValue()+userBalance > coll.DebtCeiling {
 		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr,
 			"borrow value", borrow.GetValue(), "current balance", userBalance, "error", pty.ErrCollateralizeExceedDebtCeiling)
 		return nil, pty.ErrCollateralizeExceedDebtCeiling

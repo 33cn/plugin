@@ -515,7 +515,7 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 
 	// 借贷金额不超过个人限额
 	userBalance, _ := queryIssuanceUserBalance(action.db, action.localDB, action.fromaddr)
-	if debt.GetValue() + userBalance > issu.DebtCeiling {
+	if debt.GetValue()+userBalance > issu.DebtCeiling {
 		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr,
 			"debt value", debt.GetValue(), "current balance", userBalance, "error", pty.ErrIssuanceExceedDebtCeiling)
 		return nil, pty.ErrIssuanceExceedDebtCeiling

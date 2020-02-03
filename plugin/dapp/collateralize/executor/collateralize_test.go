@@ -556,7 +556,6 @@ func TestCollateralize(t *testing.T) {
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
 	assert.Nil(t, res)
 
-
 	// expire liquidate
 	p10 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
