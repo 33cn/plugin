@@ -231,7 +231,7 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 		} else {
 			keyPrefix = calcRecvPrivacyTxKey(param.Tokenname, param.Address, "")
 		}
-		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count)
+		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
 		for _, keybyte := range txkeybytes {
 			value, err := store.Get(keybyte)
 			if err != nil {
