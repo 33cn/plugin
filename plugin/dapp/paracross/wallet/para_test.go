@@ -23,13 +23,12 @@ func TestParaQuery(t *testing.T) {
 	var param types.ReqWalletImportPrivkey
 	param.Label = "Importprivkey"
 	param.Privkey = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
-	para.Para.GetAPI().WalletImportprivkey(&param)
+	para.Para.GetAPI().ExecWalletFunc("wallet", "WalletImportPrivkey", &param)
 
 	var param1 types.ReqNewAccount
 	param1.Label = "NewAccount"
-	para.Para.GetAPI().NewAccount(&param1)
-
-	para.Para.GetAPI().WalletLock()
+	para.Para.GetAPI().ExecWalletFunc("wallet", "NewAccount", &param1)
+	para.Para.GetAPI().ExecWalletFunc("wallet", "WalletLock", &types.ReqNil{})
 
 	//通过rpc 发生信息
 	tx := util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")

@@ -70,7 +70,7 @@ func TestMultiSigAccount(t *testing.T) {
 	//导入私钥到钱包
 	for i, priv := range TestPrivkeyHex {
 		privkey := &types.ReqWalletImportPrivkey{Privkey: priv, Label: fmt.Sprintf("heyubin%d", i)}
-		_, err := mocker.GetAPI().WalletImportprivkey(privkey)
+		_, err := mocker.GetAPI().ExecWalletFunc("wallet", "WalletImportPrivkey", privkey)
 		if err != nil {
 			panic(err)
 		}
