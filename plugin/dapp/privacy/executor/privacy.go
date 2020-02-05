@@ -206,7 +206,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "Decode tx.Payload error", err)
-		return err
+		return types.ErrActionNotSupport
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
 	assertExec := action.GetAssertExec()
@@ -214,32 +214,32 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	if token == "" {
 		return types.ErrInvalidParam
 	}
-	if pty.ActionPublic2Privacy == action.Ty {
+	if pty.ActionPublic2Privacy == action.Ty && action.GetPublic2Privacy() != nil {
 		return nil
 	}
 	input := action.GetInput()
-	output := action.GetOutput()
-	if input == nil || output == nil {
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "input", input, "output", output)
-		return nil
+	//无论是私对私还是私对公, input都不能为空
+	if len(input.GetKeyinput()) == 0 {
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr)
+		return pty.ErrNilUtxoInput
 	}
-	//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
-	var amount int64
-	keyinput := input.Keyinput
 
-	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
-		amount = action.GetPrivacy2Public().Amount
+	output := action.GetOutput()
+	//私对私必须有utxo输出
+	if action.GetPrivacy2Privacy() != nil && len(output.GetKeyoutput()) == 0 {
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr)
+		return pty.ErrNilUtxoOutput
 	}
+	// check sign
 	var ringSignature types.RingSignature
 	if err := types.Decode(tx.Signature.Signature, &ringSignature); err != nil {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "Decode tx.Signature.Signature error ", err)
-		return err
+		return pty.ErrRingSign
 	}
 
 	totalInput := int64(0)
-	totalOutput := int64(0)
-	inputCnt := len(keyinput)
-	keyImages := make([][]byte, inputCnt)
+	keyinput := input.GetKeyinput()
+	keyImages := make([][]byte, len(keyinput))
 	keys := make([][]byte, 0)
 	pubkeys := make([][]byte, 0)
 	for i, input := range keyinput {
@@ -273,18 +273,20 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	cfg := p.GetAPI().GetConfig()
 	if !cfg.IsPara() && (assertExec == "" || assertExec == "coins") {
 
-		for _, output := range output.Keyoutput {
-			totalOutput += output.Amount
+		totalOutput := int64(0)
+		for _, output := range output.GetKeyoutput() {
+			totalOutput += output.GetAmount()
 		}
 		if tx.Fee < pty.PrivacyTxFee {
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
+		//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
 		var feeAmount int64
 		if action.Ty == pty.ActionPrivacy2Privacy {
 			feeAmount = totalInput - totalOutput
-		} else {
-			feeAmount = totalInput - totalOutput - amount
+		} else if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
+			feeAmount = totalInput - totalOutput - action.GetPrivacy2Public().Amount
 		}
 
 		if feeAmount < pty.PrivacyTxFee {

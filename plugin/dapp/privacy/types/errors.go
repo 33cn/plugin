@@ -20,4 +20,7 @@ var (
 	ErrOutputIndex           = errors.New("ErrOutputIndex")
 	ErrPubkeysOfUTXO         = errors.New("ErrPubkeysOfUTXO")
 	ErrRecoverUTXO           = errors.New("ErrRecoverUTXO")
+	ErrNilUtxoInput          = errors.New("ErrNilUtxoInput")
+	ErrNilUtxoOutput         = errors.New("ErrNilUtxoOutput")
+	ErrRingSign              = errors.New("ErrRingSign")
 )
