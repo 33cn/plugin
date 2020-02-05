@@ -449,9 +449,80 @@ func TestCollateralize(t *testing.T) {
 	}
 
 	p8 := &pkt.CollateralizeFeedTx{}
-	p8.Price = append(p8.Price, 0.25)
+	p8.Price = append(p8.Price, 0.28)
 	p8.Volume = append(p8.Volume, 100)
 	createTx, err = pkt.CreateRawCollateralizeFeedTx(env.cfg, p8)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.CollateralizeX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+	// query collateralize by status
+	res, err = exec.Query("CollateralizeRecordByStatus",
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 2}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	res, err = exec.Query("CollateralizeRecordByStatus",
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
+	assert.Nil(t, res)
+
+	p81 := &pkt.CollateralizeFeedTx{}
+	p81.Price = append(p81.Price, 0.5)
+	p81.Volume = append(p81.Volume, 100)
+	createTx, err = pkt.CreateRawCollateralizeFeedTx(env.cfg, p81)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.CollateralizeX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+	// query collateralize by status
+	res, err = exec.Query("CollateralizeRecordByStatus",
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	p9 := &pkt.CollateralizeFeedTx{}
+	p9.Price = append(p9.Price, 0.25)
+	p9.Volume = append(p9.Volume, 100)
+	createTx, err = pkt.CreateRawCollateralizeFeedTx(env.cfg, p9)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -481,13 +552,16 @@ func TestCollateralize(t *testing.T) {
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	res, err = exec.Query("CollateralizeRecordByStatus",
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
+	assert.Nil(t, res)
 
 	// expire liquidate
-	p9 := &pkt.CollateralizeBorrowTx{
+	p10 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
 		Value:           100,
 	}
-	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p9)
+	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p10)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -513,10 +587,10 @@ func TestCollateralize(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 
-	p10 := &pkt.CollateralizeFeedTx{}
-	p10.Price = append(p10.Price, 1)
-	p10.Volume = append(p10.Volume, 100)
-	createTx, err = pkt.CreateRawCollateralizeFeedTx(env.cfg, p10)
+	p11 := &pkt.CollateralizeFeedTx{}
+	p11.Price = append(p11.Price, 1)
+	p11.Volume = append(p11.Volume, 100)
+	createTx, err = pkt.CreateRawCollateralizeFeedTx(env.cfg, p11)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -548,11 +622,11 @@ func TestCollateralize(t *testing.T) {
 	assert.NotNil(t, res)
 
 	// collateralize retrieve
-	p11 := &pkt.CollateralizeRetrieveTx{
+	p12 := &pkt.CollateralizeRetrieveTx{
 		CollateralizeID: common.ToHex(collateralizeID),
 		Balance:         100,
 	}
-	createTx, err = pkt.CreateRawCollateralizeRetrieveTx(env.cfg, p11)
+	createTx, err = pkt.CreateRawCollateralizeRetrieveTx(env.cfg, p12)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}

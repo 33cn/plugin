@@ -514,8 +514,10 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 	}
 
 	// 借贷金额不超过个人限额
-	if debt.GetValue() > issu.DebtCeiling {
-		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "debt value", debt.GetValue(), "error", pty.ErrIssuanceExceedDebtCeiling)
+	userBalance, _ := queryIssuanceUserBalance(action.db, action.localDB, action.fromaddr)
+	if debt.GetValue()+userBalance > issu.DebtCeiling {
+		clog.Error("IssuanceDebt", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr,
+			"debt value", debt.GetValue(), "current balance", userBalance, "error", pty.ErrIssuanceExceedDebtCeiling)
 		return nil, pty.ErrIssuanceExceedDebtCeiling
 	}
 
@@ -706,13 +708,17 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price int64) (*types
 
 	for index, debtRecord := range issu.DebtRecords {
 		if (debtRecord.LiquidationPrice*PriceWarningRate)/1e4 < price {
+			// 价格恢复，告警记录恢复
 			if debtRecord.Status == pty.IssuanceUserStatusWarning {
 				debtRecord.PreStatus = debtRecord.Status
 				debtRecord.Status = pty.IssuanceUserStatusCreate
+				log := action.GetFeedReceiptLog(issu, debtRecord)
+				logs = append(logs, log)
 			}
 			continue
 		}
 
+		// 价格低于清算线，记录清算
 		if debtRecord.LiquidationPrice >= price {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
@@ -737,13 +743,21 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price int64) (*types
 			debtRecord.Status = pty.IssuanceUserStatusSystemLiquidate
 			issu.InvalidRecords = append(issu.InvalidRecords, debtRecord)
 			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
-		} else {
-			debtRecord.PreStatus = debtRecord.Status
-			debtRecord.Status = pty.IssuanceUserStatusWarning
+
+			log := action.GetFeedReceiptLog(issu, debtRecord)
+			logs = append(logs, log)
+
+			continue
 		}
 
-		log := action.GetFeedReceiptLog(issu, debtRecord)
-		logs = append(logs, log)
+		// 价格高于清算线，且还不处于告警状态，记录告警
+		if debtRecord.Status != pty.IssuanceUserStatusWarning {
+			debtRecord.PreStatus = debtRecord.Status
+			debtRecord.Status = pty.IssuanceUserStatusWarning
+
+			log := action.GetFeedReceiptLog(issu, debtRecord)
+			logs = append(logs, log)
+		}
 	}
 
 	// 保存
@@ -767,6 +781,7 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			continue
 		}
 
+		// 超过超时时间，记录清算
 		if debtRecord.ExpireTime <= action.blocktime {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
@@ -791,13 +806,19 @@ func (action *Action) expireLiquidation(issu *pty.Issuance) (*types.Receipt, err
 			debtRecord.Status = pty.IssuanceUserStatusExpireLiquidate
 			issu.InvalidRecords = append(issu.InvalidRecords, debtRecord)
 			issu.DebtRecords = append(issu.DebtRecords[:index], issu.DebtRecords[index+1:]...)
-		} else {
-			debtRecord.PreStatus = debtRecord.Status
-			debtRecord.Status = pty.IssuanceUserStatusExpire
+			log := action.GetFeedReceiptLog(issu, debtRecord)
+			logs = append(logs, log)
+
+			continue
 		}
 
-		log := action.GetFeedReceiptLog(issu, debtRecord)
-		logs = append(logs, log)
+		// 还没记录超时告警，记录告警
+		if debtRecord.Status != pty.IssuanceUserStatusExpire {
+			debtRecord.PreStatus = debtRecord.Status
+			debtRecord.Status = pty.IssuanceUserStatusExpire
+			log := action.GetFeedReceiptLog(issu, debtRecord)
+			logs = append(logs, log)
+		}
 	}
 
 	// 保存
@@ -1097,14 +1118,12 @@ func queryIssuanceUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr string, st
 	for {
 		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
-			clog.Debug("queryIssuanceRecordByAddr.List", "index", "addr", "error", err)
 			return -1, err
 		}
 
 		for _, row := range rows {
 			record, err := queryIssuanceRecordByID(db, row.Data.(*pty.ReceiptIssuance).IssuanceId, row.Data.(*pty.ReceiptIssuance).DebtId)
 			if err != nil {
-				clog.Debug("queryIssuanceRecordByStatus.queryIssuanceRecordByID", "error", err)
 				continue
 			}
 			totalBalance += record.DebtValue
@@ -1124,21 +1143,27 @@ func queryIssuanceUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (int64, 
 
 	balance, err := queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusCreate)
 	if err != nil {
-		clog.Error("queryIssuanceUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryIssuanceUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}
 
 	balance, err = queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusWarning)
 	if err != nil {
-		clog.Error("queryIssuanceUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryIssuanceUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}
 
 	balance, err = queryIssuanceUserBalanceStatus(db, localdb, addr, pty.IssuanceUserStatusExpire)
 	if err != nil {
-		clog.Error("queryIssuanceUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryIssuanceUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}
