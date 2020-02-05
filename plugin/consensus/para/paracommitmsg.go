@@ -883,18 +883,8 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 func (client *commitMsgClient) fetchPriKey() error {
 	req := &types.ReqString{Data: client.authAccount}
 
-	msg := client.paraClient.GetQueueClient().NewMessage("wallet", types.EventDumpPrivkey, req)
-	err := client.paraClient.GetQueueClient().Send(msg, true)
-	if err != nil {
-		plog.Error("para commit send msg", "err", err.Error())
-		return err
-	}
-	resp, err := client.paraClient.GetQueueClient().Wait(msg)
-	if err != nil {
-		plog.Error("para commit msg sign to wallet", "err", err.Error())
-		return err
-	}
-	str := resp.GetData().(*types.ReplyString).Data
+	resp, err := client.paraClient.GetAPI().ExecWalletFunc("wallet", "DumpPrivkey", req)
+	str := resp.(*types.ReplyString).Data
 	pk, err := common.FromHex(str)
 	if err != nil && pk == nil {
 		return err
