@@ -34,8 +34,8 @@ func TestRunSuiteRelayLog(t *testing.T) {
 
 func (s *suiteRelayLog) SetupSuite() {
 	order := &ty.RelayOrder{
-		Id:         "123456",
-		CoinTxHash: "aabbccddee",
+		Id:      "123456",
+		XTxHash: "aabbccddee",
 	}
 	s.db = new(mocks.KV)
 
@@ -46,7 +46,7 @@ func (s *suiteRelayLog) TestSave() {
 	kvSet := []*types.KeyValue{}
 	value := types.Encode(&s.log.RelayOrder)
 	keyID := []byte(s.log.Id)
-	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
+	keyCoinTxHash := []byte(calcCoinHash(s.log.XTxHash))
 	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
 	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
@@ -62,7 +62,7 @@ func (s *suiteRelayLog) TestGetKVSet() {
 	kvSet := []*types.KeyValue{}
 	value := types.Encode(&s.log.RelayOrder)
 	keyID := []byte(s.log.Id)
-	keyCoinTxHash := []byte(calcCoinHash(s.log.CoinTxHash))
+	keyCoinTxHash := []byte(calcCoinHash(s.log.XTxHash))
 	kvSet = append(kvSet, &types.KeyValue{Key: keyID, Value: value})
 	kvSet = append(kvSet, &types.KeyValue{Key: keyCoinTxHash, Value: value})
 
@@ -166,11 +166,11 @@ func (s *suiteRelayDB) SetupSuite() {
 
 func (s *suiteRelayDB) TestRelayCreate_1() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderBuy,
-		Coin:      "BTC",
-		Amount:    10 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderBuy,
+		XCoin:           "BTC",
+		XAmount:         10 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	tx := &types.Transaction{}
@@ -193,8 +193,8 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 	s.orderID = log.OrderId
 }
 
@@ -302,11 +302,11 @@ func (s *suiteAccept) setupAccount() {
 
 func (s *suiteAccept) setupRelayCreate() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderBuy,
-		Coin:      "BTC",
-		Amount:    10 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderBuy,
+		XCoin:           "BTC",
+		XAmount:         10 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	tx := &types.Transaction{}
@@ -329,8 +329,8 @@ func (s *suiteAccept) setupRelayCreate() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 
 	s.orderID = log.OrderId
 }
@@ -357,8 +357,8 @@ func (s *suiteAccept) SetupSuite() {
 func (s *suiteAccept) TestRelayAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderID,
-		CoinAddr: "BTC",
+		OrderId: s.orderID,
+		XAddr:   "BTC",
 	}
 
 	tx := &types.Transaction{}
@@ -380,8 +380,8 @@ func (s *suiteAccept) TestRelayAccept() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_locking.String(), log.CurStatus)
 
 }
@@ -452,7 +452,7 @@ func (s *suiteAccept) TestRevokeAccept_3() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_pending.String(), log.CurStatus)
 }
 
@@ -507,11 +507,11 @@ func (s *suiteConfirm) setupAccount() {
 
 func (s *suiteConfirm) setupRelayCreate() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderBuy,
-		Coin:      "BTC",
-		Amount:    10 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderBuy,
+		XCoin:           "BTC",
+		XAmount:         10 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	tx := &types.Transaction{}
@@ -534,8 +534,8 @@ func (s *suiteConfirm) setupRelayCreate() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 
 	s.orderID = log.OrderId
 }
@@ -563,8 +563,8 @@ func (s *suiteConfirm) SetupSuite() {
 func (s *suiteConfirm) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderID,
-		CoinAddr: "BTC",
+		OrderId: s.orderID,
+		XAddr:   "BTC",
 	}
 
 	tx := &types.Transaction{}
@@ -586,8 +586,8 @@ func (s *suiteConfirm) setupAccept() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_locking.String(), log.CurStatus)
 
 }
@@ -637,8 +637,8 @@ func (s *suiteConfirm) TestConfirm_2() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(30), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(30), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_confirming.String(), log.CurStatus)
 
 }
@@ -686,7 +686,7 @@ func (s *suiteConfirm) TestRevokeConfirm_2() {
 	s.Nil(err)
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal(uint64(30), log.CoinHeight)
+	s.Equal(uint64(30), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_pending.String(), log.CurStatus)
 
 }
@@ -742,11 +742,11 @@ func (s *suiteVerify) setupAccount() {
 
 func (s *suiteVerify) setupRelayCreate() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderBuy,
-		Coin:      "BTC",
-		Amount:    0.299 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderBuy,
+		XCoin:           "BTC",
+		XAmount:         0.299 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	tx := &types.Transaction{}
@@ -769,8 +769,8 @@ func (s *suiteVerify) setupRelayCreate() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 
 	s.orderID = log.OrderId
 }
@@ -778,8 +778,8 @@ func (s *suiteVerify) setupRelayCreate() {
 func (s *suiteVerify) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderID,
-		CoinAddr: "BTC",
+		OrderId: s.orderID,
+		XAddr:   "BTC",
 	}
 
 	tx := &types.Transaction{}
@@ -801,8 +801,8 @@ func (s *suiteVerify) setupAccept() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_locking.String(), log.CurStatus)
 
 }
@@ -833,8 +833,8 @@ func (s *suiteVerify) setupConfirm() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(30), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(30), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_confirming.String(), log.CurStatus)
 
 }
@@ -923,8 +923,8 @@ func (s *suiteVerify) TestVerify() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	//s.Equal("200.0000",log.TxAmount)
-	//s.Equal(uint64(30),log.CoinHeight)
+	//s.Equal("200.0000",log.LocalCoinAmount)
+	//s.Equal(uint64(30),log.XHeight)
 	s.Equal(ty.RelayOrderStatus_finished.String(), log.CurStatus)
 
 }
@@ -979,11 +979,11 @@ func (s *suiteVerifyCli) setupAccount() {
 
 func (s *suiteVerifyCli) setupRelayCreate() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderBuy,
-		Coin:      "BTC",
-		Amount:    0.299 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderBuy,
+		XCoin:           "BTC",
+		XAmount:         0.299 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	tx := &types.Transaction{}
@@ -1006,8 +1006,8 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 
 	s.orderID = log.OrderId
 }
@@ -1015,8 +1015,8 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 func (s *suiteVerifyCli) setupAccept() {
 
 	order := &ty.RelayAccept{
-		OrderId:  s.orderID,
-		CoinAddr: "BTC",
+		OrderId: s.orderID,
+		XAddr:   "BTC",
 	}
 
 	tx := &types.Transaction{}
@@ -1038,8 +1038,8 @@ func (s *suiteVerifyCli) setupAccept() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_locking.String(), log.CurStatus)
 
 }
@@ -1070,8 +1070,8 @@ func (s *suiteVerifyCli) setupConfirm() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(30), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(30), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_confirming.String(), log.CurStatus)
 
 }
@@ -1095,48 +1095,6 @@ func (s *suiteVerifyCli) SetupSuite() {
 	s.setupRelayCreate()
 	s.setupAccept()
 	s.setupConfirm()
-}
-
-func (s *suiteVerifyCli) TestVerify() {
-	var head = &ty.BtcHeader{
-		Version:    1,
-		MerkleRoot: "f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766",
-	}
-	headEnc := types.Encode(head)
-	s.kvdb.On("Get", mock.Anything).Return(headEnc, nil).Once()
-
-	order := &ty.RelayVerifyCli{
-		OrderId:    s.orderID,
-		RawTx:      "0100000001c33ebff2a709f13d9f9a7569ab16a32786af7d7e2de09265e41c61d078294ecf010000008a4730440220032d30df5ee6f57fa46cddb5eb8d0d9fe8de6b342d27942ae90a3231e0ba333e02203deee8060fdc70230a7f5b4ad7d7bc3e628cbe219a886b84269eaeb81e26b4fe014104ae31c31bf91278d99b8377a35bbce5b27d9fff15456839e919453fc7b3f721f0ba403ff96c9deeb680e5fd341c0fc3a7b90da4631ee39560639db462e9cb850fffffffff0240420f00000000001976a914b0dcbf97eabf4404e31d952477ce822dadbe7e1088acc060d211000000001976a9146b1281eec25ab4e1e0793ff4e08ab1abb3409cd988ac00000000",
-		TxIndex:    2,
-		MerkBranch: "e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d-ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815",
-		BlockHash:  "000000000003ba27aa200b1cecaad478d2b00432346c3f1f3986da1afd33e506",
-	}
-
-	tx := &types.Transaction{Execer: []byte(ty.RelayX)}
-
-	tx.To = s.addrRelay
-	tx.Sign(types.SECP256K1, privTo)
-
-	s.relay.SetEnv(40, 4000, 1)
-	s.relayDb = newRelayDB(s.relay, tx)
-
-	receipt, err := s.relayDb.verifyCmdTx(order)
-	s.Nil(err)
-
-	acc := s.relay.GetCoinsAccount()
-	account := acc.LoadExecAccount(addrFrom, s.addrRelay)
-	//s.Equal(int64(200*1e8),account.Balance)
-	s.Zero(account.Frozen)
-	account = acc.LoadExecAccount(addrTo, s.addrRelay)
-	s.Equal(int64(400*1e8), account.Balance)
-	s.Zero(account.Frozen)
-
-	var log ty.ReceiptRelayLog
-	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-
-	s.Equal(ty.RelayOrderStatus_finished.String(), log.CurStatus)
-
 }
 
 func TestRunSuiteVerifyCli(t *testing.T) {

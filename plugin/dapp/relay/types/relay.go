@@ -42,12 +42,6 @@ const (
 	RelayOrderSell
 )
 
-// RelayOrderOperation buy or sell operation
-var RelayOrderOperation = map[uint32]string{
-	RelayOrderBuy:  "buy",
-	RelayOrderSell: "sell",
-}
-
 const (
 	// RelayUnlock revoke order
 	RelayUnlock = iota
@@ -171,7 +165,7 @@ func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 	}
 	relay := data.(*RelayAction)
 	if RelayActionCreate == relay.Ty && relay.GetCreate() != nil {
-		return int64(relay.GetCreate().BtyAmount), nil
+		return int64(relay.GetCreate().LocalCoinAmount), nil
 	}
 	return 0, nil
 }

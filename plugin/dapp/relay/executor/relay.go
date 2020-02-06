@@ -133,6 +133,10 @@ func (r *relay) getRelayOrderReply(OrderIDs [][]byte) (types.Message, error) {
 			orderIDGot[string(orderID)] = true
 		}
 	}
+	//get remove mavl-xx- prefix
+	for _, order := range reply.Relayorders {
+		order.Id = getRealTxHashID(order.Id)
+	}
 	return &reply, nil
 }
 
@@ -142,7 +146,7 @@ func insertOrderDescending(toBeInserted *ty.RelayOrder, orders []*ty.RelayOrder)
 	} else {
 		index := len(orders)
 		for i, element := range orders {
-			if toBeInserted.Amount >= element.Amount {
+			if toBeInserted.LocalCoinAmount >= element.LocalCoinAmount {
 				index = i
 				break
 			}

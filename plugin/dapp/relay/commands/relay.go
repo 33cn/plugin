@@ -302,12 +302,12 @@ func parseRelayOrders(res ty.ReplyRelayOrders) {
 		show.OrderID = order.Id
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
-		show.CoinOperation = ty.RelayOrderOperation[order.CoinOperation]
-		show.Amount = strconv.FormatFloat(float64(order.Amount)/float64(types.Coin), 'f', 4, 64)
-		show.Coin = order.Coin
-		show.CoinAddr = order.CoinAddr
-		show.CoinAmount = strconv.FormatFloat(float64(order.CoinAmount)/float64(types.Coin), 'f', 4, 64)
-		show.CoinWaits = order.CoinWaits
+		show.CoinOperation = order.Operation
+		show.Amount = strconv.FormatFloat(float64(order.LocalCoinAmount)/float64(types.Coin), 'f', 4, 64)
+		show.Coin = order.XCoin
+		show.CoinAddr = order.XAddr
+		show.CoinAmount = strconv.FormatFloat(float64(order.XAmount)/float64(types.Coin), 'f', 4, 64)
+		show.CoinWaits = order.XBlockWaits
 		show.CreateTime = order.CreateTime
 		show.AcceptAddr = order.AcceptAddr
 		show.AcceptTime = order.AcceptTime
@@ -388,12 +388,12 @@ func relayOrder(cmd *cobra.Command, args []string) {
 	coinUInt64 := uint64(coinamount * 1e4)
 
 	params := &ty.RelayCreate{
-		Operation: oper,
-		Amount:    coinUInt64 * 1e4,
-		Coin:      coin,
-		Addr:      coinaddr,
-		CoinWaits: coinwait,
-		BtyAmount: btyUInt64 * 1e4,
+		Operation:       oper,
+		XAmount:         coinUInt64 * 1e4,
+		XCoin:           coin,
+		XAddr:           coinaddr,
+		XBlockWaits:     coinwait,
+		LocalCoinAmount: btyUInt64 * 1e4,
 	}
 
 	var res string
@@ -434,9 +434,9 @@ func relayAccept(cmd *cobra.Command, args []string) {
 	}
 
 	params := &ty.RelayAccept{
-		OrderId:   orderID,
-		CoinAddr:  coinaddr,
-		CoinWaits: coinwait,
+		OrderId:     orderID,
+		XAddr:       coinaddr,
+		XBlockWaits: coinwait,
 	}
 	var res string
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "relay.CreateRawRelayAcceptTx", params, &res)

@@ -16,6 +16,8 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
+	token "github.com/33cn/plugin/plugin/dapp/token/types"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -46,8 +48,8 @@ func (r *relayLog) getKVSet() (kvSet []*types.KeyValue) {
 	key := []byte(r.Id)
 	kvSet = append(kvSet, &types.KeyValue{Key: key, Value: value})
 
-	if r.CoinTxHash != "" {
-		key = []byte(calcCoinHash(r.CoinTxHash))
+	if r.XTxHash != "" {
+		key = []byte(calcCoinHash(r.XTxHash))
 		kvSet = append(kvSet, &types.KeyValue{Key: key, Value: value})
 	}
 
@@ -58,23 +60,25 @@ func (r *relayLog) receiptLog(relayLogType int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = relayLogType
 	receipt := &ty.ReceiptRelayLog{
-		OrderId:       r.Id,
-		CurStatus:     r.Status.String(),
-		PreStatus:     r.PreStatus.String(),
-		CreaterAddr:   r.CreaterAddr,
-		TxAmount:      strconv.FormatFloat(float64(r.Amount)/float64(types.Coin), 'f', 4, 64),
-		CoinOperation: ty.RelayOrderOperation[r.CoinOperation],
-		Coin:          r.Coin,
-		CoinAmount:    strconv.FormatFloat(float64(r.CoinAmount)/float64(types.Coin), 'f', 4, 64),
-		CoinAddr:      r.CoinAddr,
-		CoinTxHash:    r.CoinTxHash,
-		CoinWaits:     r.CoinWaits,
-		CreateTime:    r.CreateTime,
-		AcceptAddr:    r.AcceptAddr,
-		AcceptTime:    r.AcceptTime,
-		ConfirmTime:   r.ConfirmTime,
-		FinishTime:    r.FinishTime,
-		CoinHeight:    r.CoinHeight,
+		OrderId:         r.Id,
+		CurStatus:       r.Status.String(),
+		PreStatus:       r.PreStatus.String(),
+		CreaterAddr:     r.CreaterAddr,
+		LocalCoinAmount: strconv.FormatFloat(float64(r.LocalCoinAmount)/float64(types.Coin), 'f', 4, 64),
+		CoinOperation:   r.Operation,
+		XCoin:           r.XCoin,
+		XAmount:         strconv.FormatFloat(float64(r.XAmount)/float64(types.Coin), 'f', 4, 64),
+		XAddr:           r.XAddr,
+		XTxHash:         r.XTxHash,
+		XBlockWaits:     r.XBlockWaits,
+		CreateTime:      r.CreateTime,
+		AcceptAddr:      r.AcceptAddr,
+		AcceptTime:      r.AcceptTime,
+		ConfirmTime:     r.ConfirmTime,
+		FinishTime:      r.FinishTime,
+		XHeight:         r.XHeight,
+		LocalCoinExec:   r.LocalCoinExec,
+		LocalCoinSymbol: r.LocalCoinSymbol,
 	}
 
 	log.Log = types.Encode(receipt)
@@ -102,8 +106,8 @@ func newRelayDB(r *relay, tx *types.Transaction) *relayDB {
 		fromAddr, r.GetBlockTime(), r.GetHeight(), dapp.ExecAddress(string(tx.Execer)), btc, r.GetAPI()}
 }
 
-func (action *relayDB) getOrderByID(orderID []byte) (*ty.RelayOrder, error) {
-	value, err := action.db.Get(orderID)
+func (action *relayDB) getOrderByID(orderID string) (*ty.RelayOrder, error) {
+	value, err := action.db.Get([]byte(calcRelayOrderID(orderID)))
 	if err != nil {
 		return nil, err
 	}
@@ -128,22 +132,39 @@ func (action *relayDB) getOrderByCoinHash(hash []byte) (*ty.RelayOrder, error) {
 	return &order, nil
 }
 
+func (action *relayDB) createAccount(exec, symbol string) (*account.DB, error) {
+	var accDB *account.DB
+	cfg := action.api.GetConfig()
+
+	if symbol == "" {
+		accDB = account.NewCoinsAccount(cfg)
+		accDB.SetDB(action.db)
+		return accDB, nil
+	}
+	if exec == "" {
+		exec = token.TokenX
+	}
+	return account.NewAccountDB(cfg, exec, symbol, action.db)
+}
+
 func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 	var receipt *types.Receipt
 	var err error
-	var coinAddr string
-	var coinWaits uint32
+
+	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "relay create,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
+	}
+
 	if order.Operation == ty.RelayOrderBuy {
-		receipt, err = action.coinsAccount.ExecFrozen(action.fromAddr, action.execAddr, int64(order.BtyAmount))
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
-			relaylog.Error("account.ExecFrozen relay ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", order.BtyAmount)
+			relaylog.Error("account.ExecFrozen relay ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", order.LocalCoinAmount)
 			return nil, err
 		}
 
-		coinAddr = order.Addr
-		coinWaits = order.CoinWaits
 	} else {
-		receipt, err = action.coinsAccount.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("account.ExecFrozen relay ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -153,25 +174,27 @@ func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 	uOrder := &ty.RelayOrder{
-		Id:            calcRelayOrderID(common.ToHex(action.txHash)),
-		Status:        ty.RelayOrderStatus_pending,
-		PreStatus:     ty.RelayOrderStatus_init,
-		Amount:        order.BtyAmount,
-		CreaterAddr:   action.fromAddr,
-		CoinOperation: order.Operation,
-		Coin:          order.Coin,
-		CoinAmount:    order.Amount,
-		CoinAddr:      coinAddr,
-		CoinWaits:     coinWaits,
-		CreateTime:    action.blockTime,
-		Height:        action.height,
+		Id:              calcRelayOrderID(common.ToHex(action.txHash)),
+		Status:          ty.RelayOrderStatus_pending,
+		PreStatus:       ty.RelayOrderStatus_init,
+		Operation:       order.Operation,
+		LocalCoinAmount: order.LocalCoinAmount,
+		CreaterAddr:     action.fromAddr,
+		XCoin:           order.XCoin,
+		XAmount:         order.XAmount,
+		XAddr:           order.XAddr,
+		XBlockWaits:     order.XBlockWaits,
+		CreateTime:      action.blockTime,
+		Height:          action.height,
+		LocalCoinExec:   order.LocalCoinExec,
+		LocalCoinSymbol: order.LocalCoinSymbol,
 	}
 
 	height, err := action.btc.getLastBtcHeadHeight()
 	if err != nil {
 		return nil, err
 	}
-	uOrder.CoinHeight = uint64(height)
+	uOrder.XHeight = uint64(height)
 
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
@@ -193,8 +216,8 @@ func (action *relayDB) checkRevokeOrder(order *ty.RelayOrder) error {
 		return err
 	}
 
-	if nowBtcHeight > 0 && order.CoinHeight > 0 && nowBtcHeight > int64(order.CoinHeight) {
-		subHeight = nowBtcHeight - int64(order.CoinHeight)
+	if nowBtcHeight > 0 && order.XHeight > 0 && nowBtcHeight > int64(order.XHeight) {
+		subHeight = nowBtcHeight - int64(order.XHeight)
 	}
 
 	if order.Status == ty.RelayOrderStatus_locking {
@@ -218,8 +241,7 @@ func (action *relayDB) checkRevokeOrder(order *ty.RelayOrder) error {
 }
 
 func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, error) {
-	orderID := []byte(revoke.OrderId)
-	order, err := action.getOrderByID(orderID)
+	order, err := action.getOrderByID(revoke.OrderId)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -248,22 +270,27 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 		return nil, ty.ErrRelayReturnAddr
 	}
 
+	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "relay revokeCreate,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
+	}
+
 	var receipt *types.Receipt
 	var receiptTransfer *types.Receipt
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receipt, err = action.coinsAccount.ExecActive(order.CreaterAddr, action.execAddr, int64(order.Amount))
+	if order.Operation == ty.RelayOrderBuy {
+		receipt, err = accDb.ExecActive(order.CreaterAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
-			relaylog.Error("revoke create", "addrFrom", order.CreaterAddr, "execAddr", action.execAddr, "amount", order.Amount)
+			relaylog.Error("revoke create", "addrFrom", order.CreaterAddr, "execAddr", action.execAddr, "amount", order.LocalCoinAmount)
 			return nil, err
 		}
 	} else if order.Status != ty.RelayOrderStatus_pending {
-		receipt, err = action.coinsAccount.ExecActive(order.AcceptAddr, action.execAddr, int64(order.Amount))
+		receipt, err = accDb.ExecActive(order.AcceptAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
-			relaylog.Error("revoke create", "addrFrom", order.AcceptAddr, "execAddr", action.execAddr, "amount", order.Amount)
+			relaylog.Error("revoke create", "addrFrom", order.AcceptAddr, "execAddr", action.execAddr, "amount", order.LocalCoinAmount)
 			return nil, err
 		}
 
-		receiptTransfer, err = action.coinsAccount.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("revokeAccept", "from", order.AcceptAddr, "to", order.CreaterAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -296,8 +323,7 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 }
 
 func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
-	orderID := []byte(accept.OrderId)
-	order, err := action.getOrderByID(orderID)
+	order, err := action.getOrderByID(accept.OrderId)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -309,27 +335,31 @@ func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
 		return nil, ty.ErrRelayOrderSoldout
 	}
 
-	var receipt *types.Receipt
+	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "relay accept,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
+	}
 
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receipt, err = action.coinsAccount.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
+	var receipt *types.Receipt
+	if order.Operation == ty.RelayOrderBuy {
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("relay accept frozen fail ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
 		}
 
 	} else {
-		if accept.CoinAddr == "" {
+		if accept.XAddr == "" {
 			relaylog.Error("accept, for sell operation, coinAddr needed")
 			return nil, ty.ErrRelayOrderParamErr
 		}
 
-		order.CoinAddr = accept.CoinAddr
-		order.CoinWaits = accept.CoinWaits
+		order.XAddr = accept.XAddr
+		order.XBlockWaits = accept.XBlockWaits
 
-		receipt, err = action.coinsAccount.ExecFrozen(action.fromAddr, action.execAddr, int64(order.Amount))
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
-			relaylog.Error("relay accept frozen fail", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", order.Amount)
+			relaylog.Error("relay accept frozen fail", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", order.LocalCoinAmount)
 			return nil, err
 		}
 	}
@@ -343,7 +373,7 @@ func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
 	if err != nil {
 		return nil, err
 	}
-	order.CoinHeight = uint64(height)
+	order.XHeight = uint64(height)
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -370,8 +400,7 @@ func (action *relayDB) relayRevoke(revoke *ty.RelayRevoke) (*types.Receipt, erro
 }
 
 func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, error) {
-	orderIDByte := []byte(revoke.OrderId)
-	order, err := action.getOrderByID(orderIDByte)
+	order, err := action.getOrderByID(revoke.OrderId)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -392,19 +421,24 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 		return nil, ty.ErrRelayReturnAddr
 	}
 
+	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "relay revokeAccept,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
+	}
+
 	var receipt *types.Receipt
-	if order.CoinOperation == ty.RelayOrderSell {
-		receipt, err = action.coinsAccount.ExecActive(order.AcceptAddr, action.execAddr, int64(order.Amount))
+	if order.Operation == ty.RelayOrderSell {
+		receipt, err = accDb.ExecActive(order.AcceptAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
-			relaylog.Error("revokeAccept", "addrFrom", order.AcceptAddr, "execAddr", action.execAddr, "amount", order.Amount)
+			relaylog.Error("revokeAccept", "addrFrom", order.AcceptAddr, "execAddr", action.execAddr, "amount", order.LocalCoinAmount)
 			return nil, err
 		}
-		order.CoinAddr = ""
+		order.XAddr = ""
 	}
 
 	var receiptTransfer *types.Receipt
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receiptTransfer, err = action.coinsAccount.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
+	if order.Operation == ty.RelayOrderBuy {
+		receiptTransfer, err = accDb.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("revokeAccept", "from", order.AcceptAddr, "to", order.CreaterAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -435,8 +469,7 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 }
 
 func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, error) {
-	orderID := []byte(confirm.OrderId)
-	order, err := action.getOrderByID(orderID)
+	order, err := action.getOrderByID(confirm.OrderId)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -461,7 +494,7 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 	}
 
 	var confirmAddr string
-	if order.CoinOperation == ty.RelayOrderBuy {
+	if order.Operation == ty.RelayOrderBuy {
 		confirmAddr = order.AcceptAddr
 	} else {
 		confirmAddr = order.CreaterAddr
@@ -473,13 +506,13 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 	order.PreStatus = order.Status
 	order.Status = ty.RelayOrderStatus_confirming
 	order.ConfirmTime = action.blockTime
-	order.CoinTxHash = confirm.TxHash
+	order.XTxHash = confirm.TxHash
 	height, err := action.btc.getLastBtcHeadHeight()
 	if err != nil {
 		relaylog.Error("confirmTx Get Last BTC", "orderid", confirm.OrderId)
 		return nil, err
 	}
-	order.CoinHeight = uint64(height)
+	order.XHeight = uint64(height)
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
@@ -495,8 +528,7 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 }
 
 func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) {
-	orderID := []byte(verify.OrderId)
-	order, err := action.getOrderByID(orderID)
+	order, err := action.getOrderByID(verify.OrderId)
 	if err != nil {
 		return nil, ty.ErrRelayOrderNotExist
 	}
@@ -516,16 +548,21 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 		return nil, err
 	}
 
+	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "relay revokeAccept,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
+	}
+
 	var receipt *types.Receipt
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receipt, err = action.coinsAccount.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(order.Amount))
+	if order.Operation == ty.RelayOrderBuy {
+		receipt, err = accDb.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
 			relaylog.Error("verify buy transfer fail", "error", err.Error())
 			return nil, err
 		}
 
 	} else {
-		receipt, err = action.coinsAccount.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(order.Amount))
+		receipt, err = accDb.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(order.LocalCoinAmount))
 		if err != nil {
 			relaylog.Error("verify sell transfer fail", "error", err.Error())
 			return nil, err
@@ -533,15 +570,15 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 	}
 
 	var receiptTransfer *types.Receipt
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receiptTransfer, err = action.coinsAccount.ExecActive(order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
+	if order.Operation == ty.RelayOrderBuy {
+		receiptTransfer, err = accDb.ExecActive(order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("verify exec active", "from", order.AcceptAddr, "amount", lockBtyAmount)
 			return nil, err
 		}
 
 	} else {
-		receiptTransfer, err = action.coinsAccount.ExecActive(order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecActive(order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
 		if err != nil {
 			relaylog.Error("verify exec active", "from", order.CreaterAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -555,82 +592,6 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 
 	relayLog := newRelayLog(order)
 	orderKV := relayLog.save(action.db)
-
-	var logs []*types.ReceiptLog
-	var kv []*types.KeyValue
-	logs = append(logs, receipt.Logs...)
-	logs = append(logs, receiptTransfer.Logs...)
-	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayFinishTx))
-	kv = append(kv, receipt.KV...)
-	kv = append(kv, receiptTransfer.KV...)
-	kv = append(kv, orderKV...)
-	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
-
-}
-
-//之前用作cli verify, 检查不严格，现在弃用
-func (action *relayDB) verifyCmdTx(verify *ty.RelayVerifyCli) (*types.Receipt, error) {
-	orderID := []byte(verify.OrderId)
-	order, err := action.getOrderByID(orderID)
-	if err != nil {
-		return nil, ty.ErrRelayOrderNotExist
-	}
-
-	if order.Status == ty.RelayOrderStatus_finished {
-		return nil, ty.ErrRelayOrderSoldout
-	}
-	if order.Status == ty.RelayOrderStatus_canceled {
-		return nil, ty.ErrRelayOrderRevoked
-	}
-	if order.Status == ty.RelayOrderStatus_pending || order.Status == ty.RelayOrderStatus_locking {
-		return nil, ty.ErrRelayOrderOnSell
-	}
-
-	var receipt *types.Receipt
-
-	err = action.btc.verifyCmdBtcTx(verify)
-	if err != nil {
-		return nil, err
-	}
-
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receipt, err = action.coinsAccount.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(order.Amount))
-
-	} else {
-		receipt, err = action.coinsAccount.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(order.Amount))
-	}
-
-	if err != nil {
-		relaylog.Error("relay verify tx transfer fail", "error", err.Error())
-		return nil, err
-	}
-
-	var receiptTransfer *types.Receipt
-	if order.CoinOperation == ty.RelayOrderBuy {
-		receiptTransfer, err = action.coinsAccount.ExecActive(order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
-		if err != nil {
-			relaylog.Error("verify exec active", "from", order.AcceptAddr, "amount", lockBtyAmount)
-			return nil, err
-		}
-
-	} else {
-		receiptTransfer, err = action.coinsAccount.ExecActive(order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
-		if err != nil {
-			relaylog.Error("verify exec active", "from", order.CreaterAddr, "amount", lockBtyAmount)
-			return nil, err
-		}
-	}
-
-	order.PreStatus = order.Status
-	order.Status = ty.RelayOrderStatus_finished
-	order.FinishTime = action.blockTime
-
-	relayLog := newRelayLog(order)
-	orderKV := relayLog.save(action.db)
-
-	if err != nil {
-		return nil, err
-	}
 
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue

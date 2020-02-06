@@ -344,7 +344,7 @@ func (r *Relayd) dealOrder() {
 
 	for _, value := range result.GetOrders() {
 		// TODO save db ???
-		tx, err := r.btcClient.GetTransaction(value.CoinTxHash)
+		tx, err := r.btcClient.GetTransaction(value.XTxHash)
 		if err != nil {
 			log.Error("dealOrder", "dealOrder GetTransaction error: ", err)
 			continue
