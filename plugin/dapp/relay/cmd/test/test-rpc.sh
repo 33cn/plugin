@@ -148,7 +148,13 @@ function run_testcases() {
     relay_CreateRawRelaySaveBTCHeadTx
     query_GetBTCHeaderCurHeight
 
-    relay_CreateRawRelayOrderTx "GD"
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    if [ "$ispara" == true ]; then
+        relay_CreateRawRelayOrderTx "GD"
+    else
+        relay_CreateRawRelayOrderTx
+    fi
+
     query_GetSellRelayOrder
     query_GetRelayOrderByStatus "pending"
 
