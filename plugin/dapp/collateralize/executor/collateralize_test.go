@@ -448,6 +448,36 @@ func TestCollateralize(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 
+	p71 := &pkt.CollateralizeBorrowTx{
+		CollateralizeID: common.ToHex(collateralizeID),
+		Value:           100,
+	}
+	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p71)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.CollateralizeX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+
 	p8 := &pkt.CollateralizeFeedTx{}
 	p8.Price = append(p8.Price, 0.28)
 	p8.Volume = append(p8.Volume, 100)

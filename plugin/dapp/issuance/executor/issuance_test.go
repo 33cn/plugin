@@ -97,6 +97,7 @@ func initEnv() *execEnv {
 	accA.SetDB(stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 	manageKeySet("issuance-manage", accountA.Addr, stateDB)
+	manageKeySet("issuance-fund", accountA.Addr, stateDB)
 	tokenAccA, _ := account.NewAccountDB(cfg, tokenE.GetName(), pkt.CCNYTokenName, stateDB)
 	tokenAccA.SaveExecAccount(execAddr, &accountAToken)
 
@@ -353,6 +354,36 @@ func TestIssuance(t *testing.T) {
 		Value:      100,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p6)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+
+	p61 := &pkt.IssuanceDebtTx{
+		IssuanceID: common.ToHex(issuanceID),
+		Value:      100,
+	}
+	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p61)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}

@@ -894,12 +894,24 @@ func getGuarantorAddr(db dbm.KV) (string, error) {
 	return item.GetArr().Value[0], nil
 }
 
+func removeLiquidateRecord(borrowRecords []*pty.BorrowRecord, remove pty.BorrowRecord) []*pty.BorrowRecord {
+	for index, record := range borrowRecords {
+		if record.RecordId == remove.RecordId {
+			borrowRecords = append(borrowRecords[:index], borrowRecords[index+1:]...)
+			break
+		}
+	}
+
+	return borrowRecords
+}
+
 // 系统清算
 func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
+	var removeRecord []*pty.BorrowRecord
 
-	for index, borrowRecord := range coll.BorrowRecords {
+	for _, borrowRecord := range coll.BorrowRecords {
 		if (borrowRecord.LiquidationPrice*PriceWarningRate)/1e4 < price {
 			// 价格恢复，告警记录恢复
 			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
@@ -913,6 +925,9 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 
 		// 价格低于清算线，记录清算
 		if borrowRecord.LiquidationPrice >= price {
+			// 价格低于清算线，记录清算
+			clog.Debug("systemLiquidation", "coll id", borrowRecord.CollateralizeId, "record id", borrowRecord.RecordId, "account", borrowRecord.AccountAddr, "price", price)
+
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
 				if err != nil {
@@ -935,7 +950,7 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusSystemLiquidate
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
-			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
+			removeRecord = append(removeRecord, borrowRecord)
 			coll.CollBalance -= borrowRecord.CollateralValue
 
 			log := action.GetFeedReceiptLog(coll, borrowRecord)
@@ -950,6 +965,11 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 			log := action.GetFeedReceiptLog(coll, borrowRecord)
 			logs = append(logs, log)
 		}
+	}
+
+	// 删除被清算的记录
+	for _, record := range removeRecord {
+		coll.BorrowRecords = removeLiquidateRecord(coll.BorrowRecords, *record)
 	}
 
 	// 保存
@@ -967,18 +987,22 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
+	var removeRecord []*pty.BorrowRecord
 
-	for index, borrowRecord := range coll.BorrowRecords {
+	for _, borrowRecord := range coll.BorrowRecords {
 		if borrowRecord.ExpireTime-ExpireWarningTime > action.blocktime {
 			continue
 		}
 
 		// 超过超时时间，记录清算
 		if borrowRecord.ExpireTime <= action.blocktime {
+			// 价格低于清算线，记录清算
+			clog.Debug("expireLiquidation", "coll id", borrowRecord.CollateralizeId, "record id", borrowRecord.RecordId, "account", borrowRecord.AccountAddr, "time", action.blocktime)
+
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
 				if err != nil {
-					clog.Error("systemLiquidation", "getGuarantorAddr", err)
+					clog.Error("expireLiquidation", "getGuarantorAddr", err)
 					continue
 				}
 			}
@@ -986,7 +1010,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			// 抵押物转移
 			receipt, err := action.coinsAccount.ExecTransferFrozen(coll.CreateAddr, getGuarantorAddr, action.execaddr, borrowRecord.CollateralValue)
 			if err != nil {
-				clog.Error("systemLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", borrowRecord.CollateralValue, "error", err)
+				clog.Error("expireLiquidation", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", borrowRecord.CollateralValue, "error", err)
 				continue
 			}
 			logs = append(logs, receipt.Logs...)
@@ -997,7 +1021,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			borrowRecord.PreStatus = borrowRecord.Status
 			borrowRecord.Status = pty.CollateralizeUserStatusExpireLiquidate
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
-			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
+			removeRecord = append(removeRecord, borrowRecord)
 			coll.CollBalance -= borrowRecord.CollateralValue
 
 			log := action.GetFeedReceiptLog(coll, borrowRecord)
@@ -1012,6 +1036,11 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			log := action.GetFeedReceiptLog(coll, borrowRecord)
 			logs = append(logs, log)
 		}
+	}
+
+	// 删除被清算的记录
+	for _, record := range removeRecord {
+		coll.BorrowRecords = removeLiquidateRecord(coll.BorrowRecords, *record)
 	}
 
 	// 保存
