@@ -148,6 +148,9 @@ function para_transfer() {
     main_transfer2account "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
     main_transfer2account "1Luh4AziYyaC5zP3hUXtXFZS873xAxm6rH" 10
     main_transfer2account "1NNaYHkscJaLJ2wUrFNeh6cQXBS4TrFYeB" 10
+    #relay test
+    main_transfer2account "1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3" 10
+    main_transfer2account "1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum" 10
     #relay rpc test
     para_transfer2account "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     para_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
@@ -290,42 +293,49 @@ function token_create() {
     fi
 }
 
+#1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 also be used in relay rpc_test
 function token_transfer() {
     echo "=========== # 2.token transfer ============="
-    hash=$(${1} send token transfer -a 11 -s GD -t 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    hash=$(${1} send token transfer -a 100 -s GD -t 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    hash2=$(${1} send token transfer -a 100 -s GD -t 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
+    echo "${hash2}"
     query_tx "${1}" "${hash}"
 
-    ${1} token balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD
-    balance=$(${1} token balance -a 1GGF8toZd96wCnfJngTwXZnWCBdWHYYvjw -e token -s GD | jq -r '.[]|.balance')
-    if [ "${balance}" != "11.0000" ]; then
+    ${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e token -s GD
+    balance=$(${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e token -s GD | jq -r '.[]|.balance')
+    balance2=$(${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e token -s GD | jq -r '.[]|.balance')
+    if [ "${balance}" != "100.0000" ] || [ "${balance2}" != "100.0000" ]; then
         echo "wrong para token transfer, should be 11.0000"
         exit 1
     fi
 
     echo "=========== # 3.token send exec ============="
-    hash=$(${1} send token send_exec -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    hash=$(${1} send token send_exec -a 100 -s GD -e relay -k 0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962)
+    hash2=$(${1} send token send_exec -a 100 -s GD -e relay -k ec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4)
     echo "${hash}"
+    echo "${hash2}"
     query_tx "${1}" "${hash}"
 
-    # $ ./build/chain33-cli   exec addr  -e user.p.para.paracross
-    # 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii
-    ${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
-    balance=$(${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
-    if [ "${balance}" != "11.0000" ]; then
-        echo "wrong para token send exec, should be 11.0000"
+    #user.p.para.relay addr
+    # 1464s4B8HbPdUZNR74EBWSH8QLGYgpjr2q
+    ${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e token -s GD
+    balance=$(${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e relay -s GD | jq -r '.[]|.balance')
+    balance2=$(${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e relay -s GD | jq -r '.[]|.balance')
+    if [ "${balance}" != "100.0000" ] || [ "${balance2}" != "100.0000" ]; then
+        echo "wrong para token send exec, should be 100.0000, balance=$balance,balance1=$balance2"
         exit 1
     fi
 
     echo "=========== # 4.token withdraw ============="
-    hash=$(${1} send token withdraw -a 11 -s GD -e paracross -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    hash=$(${1} send token withdraw -a 20 -s GD -e relay -k 0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962)
     echo "${hash}"
     query_tx "${1}" "${hash}"
 
-    ${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD
-    balance=$(${1} token balance -a 19WJJv96nKAU4sHFWqGmsqfjxd37jazqii -e token -s GD | jq -r '.[]|.balance')
-    if [ "${balance}" != "0.0000" ]; then
-        echo "wrong para token withdraw, should be 0.0000"
+    ${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e relay -s GD
+    balance=$(${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e relay -s GD | jq -r '.[]|.balance')
+    if [ "${balance}" != "80.0000" ]; then
+        echo "wrong para token withdraw, should be 80.0000"
         exit 1
     fi
 }

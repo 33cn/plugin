@@ -18,7 +18,9 @@ relay_CreateRawRelaySaveBTCHeadTx_11() {
 }
 
 relay_CreateRawRelayOrderTx() {
-    local req='{"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"xCoin":"BTC","xAmount":299000000,"xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","localCoinAmount":1000000000,"coinWaits":6}]}'
+    localCoinSymbol="$1"
+    localCoinExec="$2"
+    local req='{"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"xCoin":"BTC","xAmount":299000000,"xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","localCoinAmount":1000000000,"localCoinSymbol":"'"$localCoinSymbol"'","localCoinExec":"'"$localCoinExec"'","coinWaits":6}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
@@ -146,7 +148,7 @@ function run_testcases() {
     relay_CreateRawRelaySaveBTCHeadTx
     query_GetBTCHeaderCurHeight
 
-    relay_CreateRawRelayOrderTx
+    relay_CreateRawRelayOrderTx "GD"
     query_GetSellRelayOrder
     query_GetRelayOrderByStatus "pending"
 

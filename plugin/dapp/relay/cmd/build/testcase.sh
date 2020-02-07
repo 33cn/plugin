@@ -103,7 +103,7 @@ function relay_test() {
     echo "=========== # transfer to acct ============="
     hash=$(${1} send coins transfer -a 1200 -t "$sell_addr" -n "transfer to sell" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
-    hash=$(${1} send coins transfer -a 500 -t "$acct_addr" -n "transfer to sell" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${1} send coins transfer -a 600 -t "$acct_addr" -n "transfer to sell" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
     hash=$(${1} send coins transfer -a 200 -t "$buy_addr" -n "transfer to buy" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     echo "${hash}"
@@ -145,7 +145,7 @@ function relay_test() {
     echo "=========== # transfer to relay ============="
     hash=$(${1} send coins transfer -a 1000 -t 1rhRgzbz264eyJu7Ac63wepsm9TsEpwXM -n "transfer to relay" -k "$sell_priv")
     echo "${hash}"
-    hash=$(${1} send coins transfer -a 300 -t 1rhRgzbz264eyJu7Ac63wepsm9TsEpwXM -n "send to relay" -k "$acct_priv")
+    hash=$(${1} send coins transfer -a 500 -t 1rhRgzbz264eyJu7Ac63wepsm9TsEpwXM -n "send to relay" -k "$acct_priv")
     echo "${hash}"
     hash=$(${1} send coins transfer -a 100 -t 1rhRgzbz264eyJu7Ac63wepsm9TsEpwXM -n "send to relay" -k "${buy_priv}")
     echo "${hash}"

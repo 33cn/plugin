@@ -315,6 +315,8 @@ func parseRelayOrders(res ty.ReplyRelayOrders) {
 		show.FinishTime = order.FinishTime
 		show.FinishTxHash = order.FinishTxHash
 		show.Height = order.Height
+		show.LocalCoinExec = order.LocalCoinExec
+		show.LocalCoinSym = order.LocalCoinSymbol
 
 		data, err := json.MarshalIndent(show, "", "    ")
 		if err != nil {
