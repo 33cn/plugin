@@ -159,7 +159,7 @@ func (s *suiteRelay) TestExec_1() {
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 
 	//s.testExecLocal(tx, receipt)
 	//s.testExecDelLocal(tx, receipt)
@@ -319,43 +319,13 @@ func (s *suiteRelay) TestExec_9_QryStatus1() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
+	OrderIds = append(OrderIds, []byte(calcRelayOrderID(s.orderID)))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetRelayOrderByStatus(addrCoins)
 	s.Nil(err)
-	//s.T().Log(msg.String())
+	s.T().Log(msg.String())
 	s.Contains(msg.String(), "status:finished")
 	//s.Equal(ty.RelayOrderStatus_finished,)
-}
-
-func (s *suiteRelay) TestExec_9_QryStatus2() {
-	addrCoins := &ty.ReqRelayAddrCoins{
-		Addr: addrFrom,
-		//Status: ty.RelayOrderStatus_finished,
-		Coins: []string{"BTC"},
-	}
-
-	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
-	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
-	msg, err := s.relay.Query_GetSellRelayOrder(addrCoins)
-	s.Nil(err)
-	s.Contains(msg.String(), "status:finished")
-}
-
-func (s *suiteRelay) TestExec_9_QryStatus3() {
-	addrCoins := &ty.ReqRelayAddrCoins{
-		Addr: addrTo,
-		//Status: ty.RelayOrderStatus_finished,
-		Coins: []string{"BTC"},
-	}
-
-	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
-	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
-	msg, err := s.relay.Query_GetBuyRelayOrder(addrCoins)
-	s.Nil(err)
-	s.Contains(msg.String(), "status:finished")
 }
 
 func (s *suiteRelay) TestExec_9_QryStatus4() {

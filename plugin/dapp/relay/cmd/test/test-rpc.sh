@@ -18,7 +18,7 @@ relay_CreateRawRelaySaveBTCHeadTx_11() {
 }
 
 relay_CreateRawRelayOrderTx() {
-    local req='{"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"coin":"BTC","amount":299000000,"addr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","btyAmount":1000000000,"coinWaits":6}]}'
+    local req='{"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"xCoin":"BTC","xAmount":299000000,"xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","localCoinAmount":1000000000,"coinWaits":6}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
@@ -33,7 +33,7 @@ relay_CreateRawRelayAcceptTx() {
         exit 1
     fi
 
-    local req='{"method":"relay.CreateRawRelayAcceptTx","params":[{"orderId":"'"$id"'","coinAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}]}'
+    local req='{"method":"relay.CreateRawRelayAcceptTx","params":[{"orderId":"'"$id"'","xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0xec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "${MAIN_HTTP}"
 }
@@ -76,7 +76,7 @@ query_GetRelayOrderByStatus() {
 
 query_GetSellRelayOrder() {
     local req='{"method":"Chain33.Query", "params":[{"execer":"relay","funcName":"GetSellRelayOrder","payload":{"addr":"1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3","status":"pending","coins":["BTC"],"pageNumber":0,"pageSize":0}}]}'
-    resok='(.error|not) and (.result.relayorders[0].status == "pending") and (.result.relayorders[0].coinOperation == 0) and (.result.relayorders[0].id != null)'
+    resok='(.error|not) and (.result.relayorders[0].status == "pending") and (.result.relayorders[0].operation == 0) and (.result.relayorders[0].id != null)'
     chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 }
 

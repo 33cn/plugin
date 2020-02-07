@@ -195,7 +195,7 @@ func (s *suiteRelayDB) TestRelayCreate_1() {
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 }
 
 // the test suite function name need sequence so here aUnlock, bCancel
@@ -332,7 +332,7 @@ func (s *suiteAccept) setupRelayCreate() {
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 }
 
 func (s *suiteAccept) SetupSuite() {
@@ -537,7 +537,7 @@ func (s *suiteConfirm) setupRelayCreate() {
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 }
 
 func (s *suiteConfirm) SetupSuite() {
@@ -772,7 +772,7 @@ func (s *suiteVerify) setupRelayCreate() {
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 }
 
 func (s *suiteVerify) setupAccept() {
@@ -1009,7 +1009,7 @@ func (s *suiteVerifyCli) setupRelayCreate() {
 	s.Equal("200.0000", log.LocalCoinAmount)
 	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 }
 
 func (s *suiteVerifyCli) setupAccept() {
