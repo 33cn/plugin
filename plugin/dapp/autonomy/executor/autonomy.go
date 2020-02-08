@@ -22,6 +22,7 @@ var (
 	driverName   = auty.AutonomyX
 	autonomyAddr string
 	subcfg       subConfig
+	ticketName   = auty.TicketX
 )
 
 // Init 重命名执行器名称
@@ -30,6 +31,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 		types.MustDecode(sub, &subcfg)
 	}
 	autonomyAddr = address.ExecAddress(cfg.ExecName(auty.AutonomyX))
+	ticketName = cfg.ExecName(auty.TicketX)
 	drivers.Register(cfg, GetName(), newAutonomy, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 }

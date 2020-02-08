@@ -528,7 +528,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// 查找对应的借贷ID
 	collateralize, err := queryCollateralizeByID(action.db, borrow.CollateralizeId)
 	if err != nil {
-		clog.Error("CollateralizeBorrow", "CollateralizeId", borrow.CollateralizeId, "error", err)
+		clog.Error("CollateralizeBorrow.queryCollateralizeByID", "CollateralizeId", borrow.CollateralizeId, "error", err)
 		return nil, err
 	}
 
@@ -547,8 +547,10 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	}
 
 	// 借贷金额不超过个人限额
-	if borrow.GetValue() > coll.DebtCeiling {
-		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr, "borrow value", borrow.GetValue(), "error", pty.ErrCollateralizeExceedDebtCeiling)
+	userBalance, _ := queryCollateralizeUserBalance(action.db, action.localDB, action.fromaddr)
+	if borrow.GetValue()+userBalance > coll.DebtCeiling {
+		clog.Error("CollateralizeBorrow", "CollID", coll.CollateralizeId, "addr", action.fromaddr, "execaddr", action.execaddr,
+			"borrow value", borrow.GetValue(), "current balance", userBalance, "error", pty.ErrCollateralizeExceedDebtCeiling)
 		return nil, pty.ErrCollateralizeExceedDebtCeiling
 	}
 
@@ -678,7 +680,7 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	}
 
 	// 借贷金额+利息
-	fee := (borrowRecord.DebtValue * coll.StabilityFeeRatio) / 1e4
+	fee := ((borrowRecord.DebtValue * coll.StabilityFeeRatio) / 1e8) * 1e4
 	realRepay := borrowRecord.DebtValue + fee
 
 	// 检查
@@ -899,13 +901,17 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 
 	for index, borrowRecord := range coll.BorrowRecords {
 		if (borrowRecord.LiquidationPrice*PriceWarningRate)/1e4 < price {
+			// 价格恢复，告警记录恢复
 			if borrowRecord.Status == pty.CollateralizeUserStatusWarning {
 				borrowRecord.PreStatus = borrowRecord.Status
 				borrowRecord.Status = pty.CollateralizeUserStatusCreate
+				log := action.GetFeedReceiptLog(coll, borrowRecord)
+				logs = append(logs, log)
 			}
 			continue
 		}
 
+		// 价格低于清算线，记录清算
 		if borrowRecord.LiquidationPrice >= price {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
@@ -931,13 +937,19 @@ func (action *Action) systemLiquidation(coll *pty.Collateralize, price int64) (*
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 			coll.CollBalance -= borrowRecord.CollateralValue
-		} else {
-			borrowRecord.PreStatus = borrowRecord.Status
-			borrowRecord.Status = pty.CollateralizeUserStatusWarning
+
+			log := action.GetFeedReceiptLog(coll, borrowRecord)
+			logs = append(logs, log)
+			continue
 		}
 
-		log := action.GetFeedReceiptLog(coll, borrowRecord)
-		logs = append(logs, log)
+		// 价格高于清算线，且还不处于告警状态，记录告警
+		if borrowRecord.Status != pty.CollateralizeUserStatusWarning {
+			borrowRecord.PreStatus = borrowRecord.Status
+			borrowRecord.Status = pty.CollateralizeUserStatusWarning
+			log := action.GetFeedReceiptLog(coll, borrowRecord)
+			logs = append(logs, log)
+		}
 	}
 
 	// 保存
@@ -961,6 +973,7 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			continue
 		}
 
+		// 超过超时时间，记录清算
 		if borrowRecord.ExpireTime <= action.blocktime {
 			getGuarantorAddr, err := getGuarantorAddr(action.db)
 			if err != nil {
@@ -986,13 +999,19 @@ func (action *Action) expireLiquidation(coll *pty.Collateralize) (*types.Receipt
 			coll.InvalidRecords = append(coll.InvalidRecords, borrowRecord)
 			coll.BorrowRecords = append(coll.BorrowRecords[:index], coll.BorrowRecords[index+1:]...)
 			coll.CollBalance -= borrowRecord.CollateralValue
-		} else {
-			borrowRecord.PreStatus = borrowRecord.Status
-			borrowRecord.Status = pty.CollateralizeUserStatusExpire
+
+			log := action.GetFeedReceiptLog(coll, borrowRecord)
+			logs = append(logs, log)
+			continue
 		}
 
-		log := action.GetFeedReceiptLog(coll, borrowRecord)
-		logs = append(logs, log)
+		// 还没记录超时告警，记录告警
+		if borrowRecord.Status != pty.CollateralizeUserStatusExpire {
+			borrowRecord.PreStatus = borrowRecord.Status
+			borrowRecord.Status = pty.CollateralizeUserStatusExpire
+			log := action.GetFeedReceiptLog(coll, borrowRecord)
+			logs = append(logs, log)
+		}
 	}
 
 	// 保存
@@ -1348,14 +1367,12 @@ func queryCollateralizeUserBalanceStatus(db dbm.KV, localdb dbm.KVDB, addr strin
 	for {
 		rows, err = query.List("addr_status", data, primary, DefaultCount, ListDESC)
 		if err != nil {
-			clog.Debug("queryCollateralizeRecordByAddr.List", "index", "addr", "error", err)
 			return -1, err
 		}
 
 		for _, row := range rows {
 			record, err := queryCollateralizeRecordByID(db, row.Data.(*pty.ReceiptCollateralize).CollateralizeId, row.Data.(*pty.ReceiptCollateralize).RecordId)
 			if err != nil {
-				clog.Debug("queryCollateralizeRecordByStatus.queryCollateralizeRecordByID", "error", err)
 				continue
 			}
 			totalBalance += record.DebtValue
@@ -1375,21 +1392,27 @@ func queryCollateralizeUserBalance(db dbm.KV, localdb dbm.KVDB, addr string) (in
 
 	balance, err := queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusCreate)
 	if err != nil {
-		clog.Error("queryCollateralizeUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryCollateralizeUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}
 
 	balance, err = queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusWarning)
 	if err != nil {
-		clog.Error("queryCollateralizeUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryCollateralizeUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}
 
 	balance, err = queryCollateralizeUserBalanceStatus(db, localdb, addr, pty.CollateralizeUserStatusExpire)
 	if err != nil {
-		clog.Error("queryCollateralizeUserBalance", "err", err)
+		if err != types.ErrNotFound {
+			clog.Error("queryCollateralizeUserBalance", "err", err)
+		}
 	} else {
 		totalBalance += balance
 	}

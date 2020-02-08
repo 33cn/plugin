@@ -1,206 +1,215 @@
 package executor
 
 import (
-	"strconv"
-
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/trade/types"
+	"github.com/pkg/errors"
 )
 
-// 将手动生成的local db 的代码和用table 生成的local db的代码分离出来
-// 手动生成的local db, 将不生成任意资产标价的数据， 保留用coins 生成交易的数据， 来兼容为升级的app 应用
-// 希望有全量数据的， 需要调用新的rpc
+const (
+	tradeLocaldbVersioin = "LODB-trade-version"
+)
 
-// sell limit
-func genSaveSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
-		return nil
-	}
-	status := sellorder.Status
-	var kv []*types.KeyValue
-	kv = saveSellOrderKeyValue(kv, sellorder, status)
-	if pty.TradeOrderStatusSoldOut == status || pty.TradeOrderStatusRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellid", sellorder.SellID)
-		kv = deleteSellOrderKeyValue(kv, sellorder, pty.TradeOrderStatusOnSale)
-	}
-	return kv
-}
+// 由于数据库精简需要保存具体数据
+// 生成 key -> id 格式的本地数据库数据， 在下个版本这个文件可以全部删除
+// 下个版本可以删除
+const (
+	sellOrderSHTAS = "LODB-trade-sellorder-shtas:"
+	sellOrderASTS  = "LODB-trade-sellorder-asts:"
+	sellOrderATSS  = "LODB-trade-sellorder-atss:"
+	sellOrderTSPAS = "LODB-trade-sellorder-tspas:"
+	buyOrderSHTAS  = "LODB-trade-buyorder-shtas:"
+	buyOrderASTS   = "LODB-trade-buyorder-asts:"
+	buyOrderATSS   = "LODB-trade-buyorder-atss:"
+	buyOrderTSPAS  = "LODB-trade-buyorder-tspas:"
+	// Addr-Status-Type-Height-Key
+	orderASTHK = "LODB-trade-order-asthk:"
+)
 
-func saveSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32) []*types.KeyValue {
-	sellID := []byte(sellorder.SellID)
-	return genSellOrderKeyValue(kv, sellorder, status, sellID)
-}
-
-func deleteSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32) []*types.KeyValue {
-	return genSellOrderKeyValue(kv, sellorder, status, nil)
-}
-
-func genSellOrderKeyValue(kv []*types.KeyValue, sellorder *pty.SellOrder, status int32, value []byte) []*types.KeyValue {
-	newkey := calcTokenSellOrderKey(sellorder.TokenSymbol, sellorder.Address, status, sellorder.SellID, sellorder.Height)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesSellOrderKeyStatus(sellorder.TokenSymbol, sellorder.Address, status, sellorder.SellID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesSellOrderKeyToken(sellorder.TokenSymbol, sellorder.Address, status, sellorder.SellID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcTokensSellOrderKeyStatus(sellorder.TokenSymbol, status,
-		calcPriceOfToken(sellorder.PricePerBoardlot, sellorder.AmountPerBoardlot), sellorder.Address, sellorder.SellID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	st, ty := fromStatus(status)
-	newkey = calcOnesOrderKey(sellorder.Address, st, ty, sellorder.Height, sellorder.SellID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	return kv
-}
-
-// buy market
-func saveBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-
-	txhash := []byte(receipt.TxHash)
-	return genBuyMarketOrderKeyValue(kv, receipt, status, height, txhash)
-}
-
-func genBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase,
-	status int32, height int64, value []byte) []*types.KeyValue {
-
-	keyID := receipt.TxHash
-
-	newkey := calcTokenBuyOrderKey(receipt.TokenSymbol, receipt.Owner, status, keyID, height)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesBuyOrderKeyStatus(receipt.TokenSymbol, receipt.Owner, status, keyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesBuyOrderKeyToken(receipt.TokenSymbol, receipt.Owner, status, keyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	priceBoardlot, err := strconv.ParseFloat(receipt.PricePerBoardlot, 64)
+// Upgrade 实现升级接口
+func (t *trade) Upgrade() error {
+	localDB := t.GetLocalDB()
+	// 获得默认的coins symbol， 更新数据时用
+	coinSymbol := t.GetAPI().GetConfig().GetCoinSymbol()
+	err := UpgradeLocalDBV2(localDB, coinSymbol)
 	if err != nil {
-		panic(err)
+		tradelog.Error("Upgrade failed", "err", err)
+		return errors.Cause(err)
 	}
-	priceBoardlotInt64 := int64(priceBoardlot * float64(types.TokenPrecision))
-	AmountPerBoardlot, err := strconv.ParseFloat(receipt.AmountPerBoardlot, 64)
+	return nil
+}
+
+// UpgradeLocalDBV2 trade 本地数据库升级
+// from 1 to 2
+func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) error {
+	toVersion := 2
+	tradelog.Info("UpgradeLocalDBV2 upgrade start", "to_version", toVersion)
+	version, err := getVersion(localDB)
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "UpgradeLocalDBV2 get version")
 	}
-	AmountPerBoardlotInt64 := int64(AmountPerBoardlot * float64(types.Coin))
-	price := calcPriceOfToken(priceBoardlotInt64, AmountPerBoardlotInt64)
-
-	newkey = calcTokensBuyOrderKeyStatus(receipt.TokenSymbol, status,
-		price, receipt.Owner, keyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	st, ty := fromStatus(status)
-	newkey = calcOnesOrderKey(receipt.Owner, st, ty, height, keyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	return kv
-}
-
-// buy limit
-func genSaveBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
+	if version >= toVersion {
+		tradelog.Debug("UpgradeLocalDBV2 not need to upgrade", "current_version", version, "to_version", toVersion)
 		return nil
 	}
 
-	status := buyOrder.Status
-	var kv []*types.KeyValue
-	kv = saveBuyLimitOrderKeyValue(kv, buyOrder, status)
-	if pty.TradeOrderStatusBoughtOut == status || pty.TradeOrderStatusBuyRevoked == status {
-		tradelog.Debug("trade saveBuyLimit ", "remove old status with Buyid", buyOrder.BuyID)
-		kv = deleteBuyLimitKeyValue(kv, buyOrder, pty.TradeOrderStatusOnBuy)
+	err = UpgradeLocalDBPart2(localDB, coinSymbol)
+	if err != nil {
+		return errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 	}
-	return kv
+
+	err = UpgradeLocalDBPart1(localDB)
+	if err != nil {
+		return errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart1")
+	}
+	err = setVersion(localDB, toVersion)
+	if err != nil {
+		return errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
+	}
+
+	tradelog.Info("UpgradeLocalDBV2 upgrade done")
+	return nil
 }
 
-func saveBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32) []*types.KeyValue {
-	buyID := []byte(buyOrder.BuyID)
-	return genBuyLimitOrderKeyValue(kv, buyOrder, status, buyID)
+// UpgradeLocalDBPart1 手动生成KV，需要在原有数据库中删除
+func UpgradeLocalDBPart1(localDB dbm.KVDB) error {
+	prefixes := []string{
+		sellOrderSHTAS,
+		sellOrderASTS,
+		sellOrderATSS,
+		sellOrderTSPAS,
+		buyOrderSHTAS,
+		buyOrderASTS,
+		buyOrderATSS,
+		buyOrderTSPAS,
+		orderASTHK,
+	}
+
+	for _, prefix := range prefixes {
+		err := delOnePrefix(localDB, prefix)
+		if err != nil {
+			return errors.Wrapf(err, "UpdateLocalDBPart1 delOnePrefix: %s", prefix)
+		}
+	}
+	return nil
 }
 
-func deleteBuyLimitKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32) []*types.KeyValue {
-	return genBuyLimitOrderKeyValue(kv, buyOrder, status, nil)
+// delOnePrefix  删除指定前缀的记录
+func delOnePrefix(localDB dbm.KVDB, prefix string) error {
+	start := []byte(prefix)
+	keys, err := localDB.List(start, nil, 0, dbm.ListASC|dbm.ListKeyOnly)
+	if err != nil {
+		if err == types.ErrNotFound {
+			return nil
+		}
+		return err
+	}
+	tradelog.Debug("delOnePrefix", "len", len(keys), "prefix", prefix)
+	for _, key := range keys {
+		err = localDB.Set(key, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func genBuyLimitOrderKeyValue(kv []*types.KeyValue, buyOrder *pty.BuyLimitOrder, status int32, value []byte) []*types.KeyValue {
-	newkey := calcTokenBuyOrderKey(buyOrder.TokenSymbol, buyOrder.Address, status, buyOrder.BuyID, buyOrder.Height)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesBuyOrderKeyStatus(buyOrder.TokenSymbol, buyOrder.Address, status, buyOrder.BuyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcOnesBuyOrderKeyToken(buyOrder.TokenSymbol, buyOrder.Address, status, buyOrder.BuyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	newkey = calcTokensBuyOrderKeyStatus(buyOrder.TokenSymbol, status,
-		calcPriceOfToken(buyOrder.PricePerBoardlot, buyOrder.AmountPerBoardlot), buyOrder.Address, buyOrder.BuyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	st, ty := fromStatus(status)
-	newkey = calcOnesOrderKey(buyOrder.Address, st, ty, buyOrder.Height, buyOrder.BuyID)
-	kv = append(kv, &types.KeyValue{Key: newkey, Value: value})
-
-	return kv
+// UpgradeLocalDBPart2 升级order
+// order 从 v1 升级到 v2
+// 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
+func UpgradeLocalDBPart2(kvdb dbm.KVDB, coinSymbol string) error {
+	return upgradeOrder(kvdb, coinSymbol)
 }
 
-// sell market
-func saveSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
+func upgradeOrder(kvdb dbm.KVDB, coinSymbol string) (err error) {
+	tab2 := NewOrderTableV2(kvdb)
+	tab := NewOrderTable(kvdb)
+	q1 := tab.GetQuery(kvdb)
+
+	var order1 pty.LocalOrder
+	rows, err := q1.List("key", &order1, []byte(""), 0, 0)
+	if err != nil {
+		if err == types.ErrNotFound {
+			return nil
+		}
+		return errors.Wrap(err, "upgradeOrder list from order v1 table")
 	}
-	txhash := []byte(receipt.TxHash)
-	return genSellMarketOrderKeyValue(kv, receipt, status, height, txhash)
+
+	tradelog.Debug("upgradeOrder", "len", len(rows))
+	for _, row := range rows {
+		o1, ok := row.Data.(*pty.LocalOrder)
+		if !ok {
+			return errors.Wrap(types.ErrTypeAsset, "decode order v1")
+		}
+
+		o2 := types.Clone(o1).(*pty.LocalOrder)
+		upgradeLocalOrder(o2, coinSymbol)
+		err = tab2.Add(o2)
+		if err != nil {
+			return errors.Wrap(err, "upgradeOrder add to order v2 table")
+		}
+
+		err = tab.Del([]byte(o1.TxIndex))
+		if err != nil {
+			return errors.Wrapf(err, "upgradeOrder del from order v1 table, key: %s", o1.TxIndex)
+		}
+	}
+
+	kvs, err := tab2.Save()
+	if err != nil {
+		return errors.Wrap(err, "upgradeOrder save-add to order v2 table")
+	}
+	kvs2, err := tab.Save()
+	if err != nil {
+		return errors.Wrap(err, "upgradeOrder save-del to order v1 table")
+	}
+	kvs = append(kvs, kvs2...)
+
+	for _, kv := range kvs {
+		tradelog.Debug("upgradeOrder", "KEY", string(kv.GetKey()))
+		err = kvdb.Set(kv.GetKey(), kv.GetValue())
+		if err != nil {
+			return errors.Wrapf(err, "upgradeOrder set localdb key: %s", string(kv.GetKey()))
+		}
+	}
+
+	return nil
 }
 
-// delete part
-// sell limit
-func genDeleteSellKv(sellorder *pty.SellOrder) []*types.KeyValue {
-	if sellorder.PriceExec != "" && sellorder.PriceExec != defaultPriceExec {
-		return nil
+// upgradeLocalOrder 处理两个fork前的升级数据
+// 1. 支持任意资产
+// 2. 支持任意资产定价
+func upgradeLocalOrder(order *pty.LocalOrder, coinSymbol string) {
+	if order.AssetExec == "" {
+		order.AssetExec = defaultAssetExec
 	}
-	status := sellorder.Status
-	var kv []*types.KeyValue
-	kv = deleteSellOrderKeyValue(kv, sellorder, status)
-	if pty.TradeOrderStatusSoldOut == status || pty.TradeOrderStatusRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellID", sellorder.SellID)
-		kv = saveSellOrderKeyValue(kv, sellorder, pty.TradeOrderStatusOnSale)
+	if order.PriceExec == "" {
+		order.PriceExec = defaultPriceExec
+		order.PriceSymbol = coinSymbol
 	}
-	return kv
 }
 
-// buy market
-func deleteBuyMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptBuyBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
+// localdb Version
+func getVersion(kvdb dbm.KV) (int, error) {
+	value, err := kvdb.Get([]byte(tradeLocaldbVersioin))
+	if err != nil && err != types.ErrNotFound {
+		return 1, err
 	}
-	return genBuyMarketOrderKeyValue(kv, receipt, status, height, nil)
+	if err == types.ErrNotFound {
+		return 1, nil
+	}
+	var v types.Int32
+	err = types.Decode(value, &v)
+	if err != nil {
+		return 1, err
+	}
+	return int(v.Data), nil
 }
 
-// buy limit
-func genDeleteBuyLimitKv(buyOrder *pty.BuyLimitOrder) []*types.KeyValue {
-	if buyOrder.PriceExec != "" && buyOrder.PriceExec != defaultPriceExec {
-		return nil
-	}
-	status := buyOrder.Status
-	var kv []*types.KeyValue
-	kv = deleteBuyLimitKeyValue(kv, buyOrder, status)
-	if pty.TradeOrderStatusBoughtOut == status || pty.TradeOrderStatusBuyRevoked == status {
-		tradelog.Debug("trade saveSell ", "remove old status onsale to soldout or revoked with sellid", buyOrder.BuyID)
-		kv = saveBuyLimitOrderKeyValue(kv, buyOrder, pty.TradeOrderStatusOnBuy)
-	}
-	return kv
-}
-
-// sell market
-func deleteSellMarketOrderKeyValue(kv []*types.KeyValue, receipt *pty.ReceiptSellBase, status int32, height int64) []*types.KeyValue {
-	if receipt.PriceExec != "" && receipt.PriceExec != defaultPriceExec {
-		return nil
-	}
-	return genSellMarketOrderKeyValue(kv, receipt, status, height, nil)
+func setVersion(kvdb dbm.KV, version int) error {
+	v := types.Int32{Data: int32(version)}
+	x := types.Encode(&v)
+	return kvdb.Set([]byte(tradeLocaldbVersioin), x)
 }

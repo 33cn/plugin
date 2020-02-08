@@ -379,9 +379,79 @@ func TestIssuance(t *testing.T) {
 	}
 
 	p7 := &pkt.IssuanceFeedTx{}
-	p7.Price = append(p7.Price, 0.25)
+	p7.Price = append(p7.Price, 0.28)
 	p7.Volume = append(p7.Volume, 100)
 	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p7)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+	// query issuance by status
+	res, err = exec.Query("IssuanceRecordsByStatus",
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 2}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	res, err = exec.Query("IssuanceRecordsByStatus",
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	assert.Nil(t, res)
+
+	p8 := &pkt.IssuanceFeedTx{}
+	p8.Price = append(p8.Price, 0.5)
+	p8.Volume = append(p8.Volume, 100)
+	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p8)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+	// query issuance by status
+	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	p81 := &pkt.IssuanceFeedTx{}
+	p81.Price = append(p81.Price, 0.25)
+	p81.Volume = append(p81.Volume, 100)
+	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p81)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -411,13 +481,16 @@ func TestIssuance(t *testing.T) {
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+	res, err = exec.Query("IssuanceRecordsByStatus",
+		types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	assert.Nil(t, res)
 
 	// expire liquidate
-	p8 := &pkt.IssuanceDebtTx{
+	p9 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
 		Value:      100,
 	}
-	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p8)
+	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p9)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -443,10 +516,10 @@ func TestIssuance(t *testing.T) {
 		env.kvdb.Set(kv.Key, kv.Value)
 	}
 
-	p9 := &pkt.IssuanceFeedTx{}
-	p9.Price = append(p9.Price, 1)
-	p9.Volume = append(p9.Volume, 100)
-	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p9)
+	p10 := &pkt.IssuanceFeedTx{}
+	p10.Price = append(p10.Price, 1)
+	p10.Volume = append(p10.Volume, 100)
+	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p10)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
@@ -478,10 +551,10 @@ func TestIssuance(t *testing.T) {
 	assert.NotNil(t, res)
 
 	// issuance close
-	p10 := &pkt.IssuanceCloseTx{
+	p11 := &pkt.IssuanceCloseTx{
 		IssuanceID: common.ToHex(issuanceID),
 	}
-	createTx, err = pkt.CreateRawIssuanceCloseTx(env.cfg, p10)
+	createTx, err = pkt.CreateRawIssuanceCloseTx(env.cfg, p11)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
