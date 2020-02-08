@@ -33,9 +33,9 @@ func (t *Pos33Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.Local
 		}
 		// save all ticket count
 		if item.Ty == ty.TyLogNewPos33Ticket {
-			n++
-		} else if item.Ty == ty.TyLogClosePos33Ticket {
 			n--
+		} else if item.Ty == ty.TyLogClosePos33Ticket {
+			n++
 		}
 	}
 	kv := t.saveAllPos33TicketCount(n)
@@ -45,25 +45,30 @@ func (t *Pos33Ticket) execDelLocal(receiptData *types.ReceiptData) (*types.Local
 
 // ExecDelLocal_Genesis exec del local genesis
 func (t *Pos33Ticket) ExecDelLocal_Genesis(payload *ty.Pos33TicketGenesis, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	tlog.Info("ExecDelLocal_Genesis", "height", t.GetHeight())
 	return t.execDelLocal(receiptData)
 }
 
 // ExecDelLocal_Topen exec del local open
 func (t *Pos33Ticket) ExecDelLocal_Topen(payload *ty.Pos33TicketOpen, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	tlog.Info("ExecDelLocal_Topen", "height", t.GetHeight())
 	return t.execDelLocal(receiptData)
 }
 
 // ExecDelLocal_Tbind exec del local bind
 func (t *Pos33Ticket) ExecDelLocal_Tbind(payload *ty.Pos33TicketBind, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	tlog.Info("ExecDelLocal_Tbind", "height", t.GetHeight())
 	return t.execDelLocal(receiptData)
 }
 
 // ExecDelLocal_Tclose exec del local close
 func (t *Pos33Ticket) ExecDelLocal_Tclose(payload *ty.Pos33TicketClose, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	tlog.Info("ExecDelLocal_Tclose", "height", t.GetHeight())
 	return t.execDelLocal(receiptData)
 }
 
 // ExecDelLocal_Miner exec del local miner
-func (t *Pos33Ticket) ExecDelLocal_Pminer(payload *ty.Pos33Miner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (t *Pos33Ticket) ExecDelLocal_Miner(payload *ty.Pos33Miner, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	tlog.Info("ExecDelLocal_Miner", "height", t.GetHeight())
 	return t.execDelLocal(receiptData)
 }

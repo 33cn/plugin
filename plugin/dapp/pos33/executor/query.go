@@ -46,9 +46,9 @@ func (ticket *Pos33Ticket) Query_MinerSourceList(param *types.ReqString) (types.
 }
 
 // Query_RandNumHash query randnumhash
-func (ticket *Pos33Ticket) Query_RandNumHash(param *types.ReqRandHash) (types.Message, error) {
-	return ticket.GetRandNum(param.Hash, param.BlockNum)
-}
+// func (ticket *Pos33Ticket) Query_RandNumHash(param *types.ReqRandHash) (types.Message, error) {
+// 	return ticket.GetRandNum(param.Hash, param.BlockNum)
+// }
 
 // Query_Pos33AllPos33TicketCount query all ticket count
 func (ticket *Pos33Ticket) Query_Pos33AllPos33TicketCount(param *pty.Pos33AllPos33TicketCount) (types.Message, error) {

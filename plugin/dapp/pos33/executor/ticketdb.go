@@ -271,7 +271,7 @@ func (action *Action) Pos33TicketOpen(topen *ty.Pos33TicketOpen) (*types.Receipt
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
-	tlog.Info("@@@@@@@ pos33.ticket open", "ntid", topen.Count)
+	tlog.Info("@@@@@@@ pos33.ticket open", "ntid", topen.Count, "height", action.height)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }
@@ -371,21 +371,21 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	if fundReward > 0 {
 		var receipt2 *types.Receipt
 		var err error
-		// if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
-		// 	// issue coins to exec addr
-		// 	addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
-		// 	receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
-		// 	if err != nil {
-		// 		tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
-		// 		return nil, err
-		// 	}
-		// } else {
-		receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, fundReward)
-		if err != nil {
-			tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
-			return nil, err
+		if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
+			// issue coins to exec addr
+			addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
+			receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
+			if err != nil {
+				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
+				return nil, err
+			}
+		} else {
+			receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, fundReward)
+			if err != nil {
+				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
+				return nil, err
+			}
 		}
-		// }
 		logs = append(logs, receipt2.Logs...)
 		kvs = append(kvs, receipt2.KV...)
 	}
@@ -510,9 +510,9 @@ func (action *Action) Pos33TicketClose(tclose *ty.Pos33TicketClose) (*types.Rece
 	var kv []*types.KeyValue
 	for i := 0; i < len(tickets); i++ {
 		t := tickets[i]
-		if t.prevstatus == 1 {
-			t.MinerValue = 0
-		}
+		// if t.prevstatus == 1 {
+		// 	t.MinerValue = 0
+		// }
 		retValue := t.GetRealPrice(chain33Cfg) + t.MinerValue
 		receipt1, err := action.coinsAccount.ExecActive(t.ReturnAddress, action.execaddr, retValue)
 		if err != nil {
@@ -537,6 +537,7 @@ func (action *Action) Pos33TicketClose(tclose *ty.Pos33TicketClose) (*types.Rece
 		}
 		t.Save(action.db)
 	}
+	tlog.Info("@@@@@@@ pos33.ticket close", "ntid", len(tclose.TicketId), "height", action.height)
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
 	return receipt, nil
 }

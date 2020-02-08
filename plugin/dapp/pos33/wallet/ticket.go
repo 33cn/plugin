@@ -893,11 +893,11 @@ func (policy *ticketPolicy) autoMining() {
 					FlushPos33Ticket(policy.getAPI())
 				}
 			} else {
-				n1, err := policy.closePos33Ticket(lastHeight + 1)
-				if err != nil {
-					bizlog.Error("closePos33Ticket", "err", err)
-				}
-				err = policy.processFees()
+				// n1, err := policy.closePos33Ticket(lastHeight + 1)
+				// if err != nil {
+				// 	bizlog.Error("closePos33Ticket", "err", err)
+				// }
+				err := policy.processFees()
 				if err != nil {
 					bizlog.Error("processFees", "err", err)
 				}
@@ -908,9 +908,9 @@ func (policy *ticketPolicy) autoMining() {
 				if len(hashes) > 0 {
 					operater.WaitTxs(hashes)
 				}
-				if n1 > 0 {
-					FlushPos33Ticket(policy.getAPI())
-				}
+				// if n1 > 0 {
+				// 	FlushPos33Ticket(policy.getAPI())
+				// }
 			}
 			bizlog.Info("END miningPos33Ticket")
 		case <-operater.GetWalletDone():

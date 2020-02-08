@@ -31,8 +31,7 @@ message Pos33TicketAction {
         Pos33TicketOpen    topen   = 1;
         Pos33TicketGenesis genesis = 2;
         Pos33TicketClose   tclose  = 3;
-        Pos33TicketMiner   miner   = 4;
-        Pos33Miner         pminer  = 6;
+        Pos33Miner         miner   = 6;
     }
     int32 ty = 10;
 }

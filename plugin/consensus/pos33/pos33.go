@@ -32,7 +32,6 @@ type Client struct {
 
 	tickLock   sync.Mutex
 	ticketsMap map[string]*pt.Pos33Ticket
-	privLock   sync.Mutex
 	privmap    map[string]crypto.PrivKey
 
 	tcMap map[int64]int
@@ -51,7 +50,7 @@ type subConfig struct {
 	Genesis          []*genesisTicket `json:"genesis"`
 	GenesisBlockTime int64            `json:"genesisBlockTime"`
 	ListenPort       string           `json:"listenPort,omitempty"`
-	BootPeerAddr     string           `json:"BootPeerAddr,omitempty"`
+	BootPeers        []string         `json:"BootPeers,omitempty"`
 }
 
 // New create pos33 consensus client
@@ -142,8 +141,8 @@ func (client *Client) privFromBytes(privkey []byte) (crypto.PrivKey, error) {
 }
 
 func (client *Client) getPriv(mineAddr string) crypto.PrivKey {
-	client.privLock.Lock()
-	defer client.privLock.Unlock()
+	client.tickLock.Lock()
+	defer client.tickLock.Unlock()
 	//return client.privmap[mineAddr]
 	for _, p := range client.privmap {
 		// ONLY one privKey for minning !!!
@@ -166,6 +165,7 @@ func (client *Client) getTicketsMap(height int64) map[string]string {
 	client.tickLock.Lock()
 	defer client.tickLock.Unlock()
 	mp := make(map[string]string)
+	// plog.Info("client.ticketsMap", "len", len(client.ticketsMap))
 	for tid, t := range client.ticketsMap {
 		if getTicketHeight(tid) > height {
 			continue
@@ -191,6 +191,8 @@ func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
 }
 
 func (client *Client) setTicket(tlist *pt.ReplyPos33TicketList, privmap map[string]crypto.PrivKey) {
+	client.tickLock.Lock()
+	defer client.tickLock.Unlock()
 	client.ticketsMap = make(map[string]*pt.Pos33Ticket)
 	if tlist == nil || privmap == nil {
 		client.ticketsMap = nil
@@ -198,19 +200,15 @@ func (client *Client) setTicket(tlist *pt.ReplyPos33TicketList, privmap map[stri
 		return
 	}
 	for _, ticket := range tlist.Tickets {
-		client.tickLock.Lock()
 		client.ticketsMap[ticket.GetTicketId()] = ticket
-		client.tickLock.Unlock()
 		_, ok := privmap[ticket.MinerAddress]
 		if !ok {
 			delete(privmap, ticket.MinerAddress)
 		}
 	}
 
-	client.privLock.Lock()
 	client.privmap = privmap
-	client.privLock.Unlock()
-	plog.Debug("setTicket", "n", len(tlist.GetTickets()))
+	plog.Info("setTicket", "n", len(tlist.GetTickets()))
 }
 
 func (client *Client) flushTicket() error {
@@ -370,7 +368,8 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	tx0.Execer = []byte("coins")
 	tx0.To = client.Cfg.Genesis
 	g := &ct.CoinsAction_Genesis{}
-	g.Genesis = &types.AssetsGenesis{Amount: types.MaxCoin}
+	// 发行 100 亿
+	g.Genesis = &types.AssetsGenesis{Amount: types.MaxCoin * 10}
 	tx0.Payload = types.Encode(&ct.CoinsAction{Value: g, Ty: ct.CoinsActionGenesis})
 	ret = append(ret, &tx0)
 
@@ -443,7 +442,7 @@ func getMiner(b *types.Block) (*pt.Pos33Miner, error) {
 	if err != nil {
 		return nil, err
 	}
-	return pact.GetPminer(), nil
+	return pact.GetMiner(), nil
 }
 
 // Get used search block store db

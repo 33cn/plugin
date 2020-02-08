@@ -53,7 +53,6 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 	//allw := client.allWeight(height)
 	diff := float64(changeDiff(size, round)) / float64(allw)
 
-	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw)
 	priv := n.getPriv("")
 	input := &pt.VrfInput{Seed: seed, Height: height, Round: int32(round), Step: int32(step)}
 	vrfHash, vrfProof := calcuVrfHash(input, priv)
@@ -67,7 +66,9 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 	var msgs []*pt.Pos33SortMsg
 	var minHash []byte
 	index := 0
-	for tid := range n.getTicketsMap(height) {
+	tmp := n.getTicketsMap(height)
+	plog.Debug("sortition", "height", height, "round", round, "step", step, "seed", hexs(seed), "allw", allw, "ntid", len(tmp))
+	for tid := range tmp {
 		data := fmt.Sprintf("%x+%s", vrfHash, tid)
 		hash := hash2([]byte(data))
 
@@ -129,6 +130,27 @@ func vrfVerify(pub []byte, input []byte, proof []byte, hash []byte) error {
 
 var errDiff = errors.New("diff error")
 
+func (n *node) queryTid(tid string, height int64) (*pt.Pos33Ticket, error) {
+	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{tid}})
+	if err != nil {
+		return nil, err
+	}
+	reply := resp.(*pt.ReplyPos33TicketList)
+
+	var rt *pt.Pos33Ticket
+	for _, t := range reply.Tickets {
+		if t.TicketId == tid && getTicketHeight(t.TicketId) <= height {
+			rt = t
+			break
+		}
+	}
+	if rt == nil {
+		return nil, fmt.Errorf("ticketID error, %s NOT open", tid)
+	}
+
+	return rt, nil
+}
+
 func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortMsg) error {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
@@ -142,23 +164,12 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 	round := m.Proof.Input.Round
 	diff := float64(changeDiff(size, int(round))) / float64(allw)
 
-	resp, err := n.GetAPI().Query(pt.Pos33TicketX, "Pos33TicketInfos", &pt.Pos33TicketInfos{TicketIds: []string{m.SortHash.Tid}})
+	t, err := n.queryTid(m.SortHash.Tid, height)
 	if err != nil {
 		return err
 	}
-	reply := resp.(*pt.ReplyPos33TicketList)
-
-	ok := false
-	for _, t := range reply.Tickets {
-		if t.TicketId == m.SortHash.Tid && getTicketHeight(t.TicketId) <= height {
-			if t.MinerAddress == address.PubKeyToAddr(m.Proof.Pubkey) {
-				ok = true
-			}
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("ticketID error, %s NOT open", m.SortHash.Tid)
+	if t.MinerAddress != address.PubKeyToAddr(m.Proof.Pubkey) {
+		return fmt.Errorf("ticket %s mineraddress NOT match proof public", m.SortHash.Tid)
 	}
 
 	input := &pt.VrfInput{Seed: seed, Height: height, Round: round, Step: int32(step)}

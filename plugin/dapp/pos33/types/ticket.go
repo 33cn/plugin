@@ -103,19 +103,19 @@ func (ticket *Pos33TicketType) GetLogMap() map[int64]*types.LogInfo {
 	}
 }
 
-// Amount get amount
-func (ticket Pos33TicketType) Amount(tx *types.Transaction) (int64, error) {
-	var action Pos33TicketAction
-	err := types.Decode(tx.GetPayload(), &action)
-	if err != nil {
-		return 0, types.ErrDecode
-	}
-	if action.Ty == Pos33TicketActionMiner && action.GetMiner() != nil {
-		ticketMiner := action.GetMiner()
-		return ticketMiner.Reward, nil
-	}
-	return 0, nil
-}
+// // Amount get amount
+// func (ticket Pos33TicketType) Amount(tx *types.Transaction) (int64, error) {
+// 	var action Pos33TicketAction
+// 	err := types.Decode(tx.GetPayload(), &action)
+// 	if err != nil {
+// 		return 0, types.ErrDecode
+// 	}
+// 	if action.Ty == Pos33TicketActionMiner && action.GetMiner() != nil {
+// 		ticketMiner := action.GetMiner()
+// 		return ticketMiner.Reward, nil
+// 	}
+// 	return 0, nil
+// }
 
 // GetName get name
 func (ticket *Pos33TicketType) GetName() string {
@@ -129,7 +129,7 @@ func (ticket *Pos33TicketType) GetTypeMap() map[string]int32 {
 		"Topen":   Pos33TicketActionOpen,
 		"Tbind":   Pos33TicketActionBind,
 		"Tclose":  Pos33TicketActionClose,
-		"Pminer":  Pos33TicketActionMiner,
+		"Miner":   Pos33TicketActionMiner,
 	}
 }
 

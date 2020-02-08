@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 
@@ -19,52 +17,52 @@ const (
 )
 
 // GetRandNum for ticket executor
-func (ticket *Pos33Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
-	tlog.Debug("GetRandNum", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
+// func (ticket *Pos33Ticket) GetRandNum(blockHash []byte, blockNum int64) (types.Message, error) {
+// 	tlog.Debug("GetRandNum", "blockHash", common.ToHex(blockHash), "blockNum", blockNum)
 
-	if blockNum < minBlockNum {
-		blockNum = minBlockNum
-	} else if blockNum > maxBlockNum {
-		blockNum = maxBlockNum
-	}
+// 	if blockNum < minBlockNum {
+// 		blockNum = minBlockNum
+// 	} else if blockNum > maxBlockNum {
+// 		blockNum = maxBlockNum
+// 	}
 
-	if len(blockHash) == 0 {
-		return nil, types.ErrBlockNotFound
-	}
+// 	if len(blockHash) == 0 {
+// 		return nil, types.ErrBlockNotFound
+// 	}
 
-	txActions, err := ticket.getTxActions(blockHash, blockNum)
-	if err != nil {
-		return nil, err
-	}
-	//如果是genesis block 那么直接返回一个固定值，防止测试的时候出错
-	if txActions == nil && err == nil {
-		modify := common.Sha256([]byte("hello"))
-		return &types.ReplyHash{Hash: modify}, nil
-	}
-	var modifies []byte
-	var bits uint32
-	var ticketIds string
-	var privHashs []byte
-	var vrfHashs []byte
+// 	txActions, err := ticket.getTxActions(blockHash, blockNum)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	//如果是genesis block 那么直接返回一个固定值，防止测试的时候出错
+// 	if txActions == nil && err == nil {
+// 		modify := common.Sha256([]byte("hello"))
+// 		return &types.ReplyHash{Hash: modify}, nil
+// 	}
+// 	var modifies []byte
+// 	var bits uint32
+// 	var ticketIds string
+// 	var privHashs []byte
+// 	var vrfHashs []byte
 
-	for _, ticketAction := range txActions {
-		//tlog.Debug("GetRandNum", "modify", ticketAction.GetMiner().GetModify(), "bits", ticketAction.GetMiner().GetBits(), "ticketId", ticketAction.GetMiner().GetTicketId(), "PrivHash", ticketAction.GetMiner().GetPrivHash())
-		modifies = append(modifies, ticketAction.GetMiner().GetModify()...)
-		bits += ticketAction.GetMiner().GetBits()
-		ticketIds += ticketAction.GetMiner().GetTicketId()
-		privHashs = append(privHashs, ticketAction.GetMiner().GetPrivHash()...)
-		vrfHashs = append(vrfHashs, ticketAction.GetMiner().GetVrfHash()...)
-	}
+// 	for _, ticketAction := range txActions {
+// 		//tlog.Debug("GetRandNum", "modify", ticketAction.GetMiner().GetModify(), "bits", ticketAction.GetMiner().GetBits(), "ticketId", ticketAction.GetMiner().GetTicketId(), "PrivHash", ticketAction.GetMiner().GetPrivHash())
+// 		modifies = append(modifies, ticketAction.GetMiner().GetModify()...)
+// 		bits += ticketAction.GetMiner().GetBits()
+// 		ticketIds += ticketAction.GetMiner().GetTicketId()
+// 		privHashs = append(privHashs, ticketAction.GetMiner().GetPrivHash()...)
+// 		vrfHashs = append(vrfHashs, ticketAction.GetMiner().GetVrfHash()...)
+// 	}
 
-	newmodify := fmt.Sprintf("%s:%s:%d:%s", string(modifies), ticketIds, bits, string(privHashs))
-	if len(vrfHashs) != 0 {
-		newmodify = fmt.Sprintf("%s:%x", newmodify, vrfHashs)
-	}
+// 	newmodify := fmt.Sprintf("%s:%s:%d:%s", string(modifies), ticketIds, bits, string(privHashs))
+// 	if len(vrfHashs) != 0 {
+// 		newmodify = fmt.Sprintf("%s:%x", newmodify, vrfHashs)
+// 	}
 
-	modify := common.Sha256([]byte(newmodify))
+// 	modify := common.Sha256([]byte(newmodify))
 
-	return &types.ReplyHash{Hash: modify}, nil
-}
+// 	return &types.ReplyHash{Hash: modify}, nil
+// }
 
 func (ticket *Pos33Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickettypes.Pos33TicketAction, error) {
 	var txActions []*tickettypes.Pos33TicketAction

@@ -20,6 +20,11 @@ var plog = log15.New("module", "pos33")
 
 const pos33Topic = "pos33"
 
+type slowAddr struct {
+	addr string
+	stop int64
+}
+
 type node struct {
 	*Client
 	gss *gossip2
@@ -35,6 +40,10 @@ type node struct {
 	// receive candidate verifers
 	css map[int64]map[int][]*pt.Pos33SortMsg
 
+	// slowly address
+	slowAddrs map[string]int64
+	tids      map[int64]map[int]string
+
 	// for new block incoming to add
 	bch     chan *types.Block
 	lheight int64
@@ -44,12 +53,14 @@ type node struct {
 // New create pos33 consensus client
 func newNode(conf *subConfig) *node {
 	n := &node{
-		ips: make(map[int64]map[int]*pt.Pos33SortMsg),
-		ivs: make(map[int64]map[int][]*pt.Pos33SortMsg),
-		cps: make(map[int64]map[int]map[string]*pt.Pos33SortMsg),
-		cvs: make(map[int64]map[int]map[string][]*pt.Pos33VoteMsg),
-		css: make(map[int64]map[int][]*pt.Pos33SortMsg),
-		bch: make(chan *types.Block, 32),
+		ips:       make(map[int64]map[int]*pt.Pos33SortMsg),
+		ivs:       make(map[int64]map[int][]*pt.Pos33SortMsg),
+		cps:       make(map[int64]map[int]map[string]*pt.Pos33SortMsg),
+		cvs:       make(map[int64]map[int]map[string][]*pt.Pos33VoteMsg),
+		css:       make(map[int64]map[int][]*pt.Pos33SortMsg),
+		tids:      make(map[int64]map[int]string),
+		slowAddrs: make(map[string]int64),
+		bch:       make(chan *types.Block, 32),
 	}
 
 	plog.Info("@@@@@@@ node start:", "addr", addr, "conf", conf)
@@ -89,8 +100,8 @@ func (n *node) minerTx(sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.P
 		vs = vs[:pt.Pos33VoterSize]
 	}
 	act := &pt.Pos33TicketAction{
-		Value: &pt.Pos33TicketAction_Pminer{
-			Pminer: &pt.Pos33Miner{
+		Value: &pt.Pos33TicketAction_Miner{
+			Miner: &pt.Pos33Miner{
 				Votes: vs,
 				Sort:  sm,
 			},
@@ -163,6 +174,13 @@ func (n *node) getPrivByTid(tid string) (crypto.PrivKey, error) {
 }
 
 func (n *node) makeBlock(height int64, round int, tid string, vs []*pt.Pos33VoteMsg) error {
+	mp, ok := n.tids[height]
+	if !ok {
+		mp = make(map[int]string)
+		n.tids[height] = mp
+	}
+	n.tids[height][round] = tid
+
 	lb := n.lastBlock()
 	if height != lb.Height+1 {
 		return fmt.Errorf("makeBlock height error. lb.Height=%d, height=%d", lb.Height, height)
@@ -254,6 +272,16 @@ func (n *node) clear(height int64) {
 	for h := range n.ivs {
 		if h+10 <= height {
 			delete(n.ivs, h)
+		}
+	}
+	for h := range n.tids {
+		if h < height {
+			delete(n.tids, h)
+		}
+	}
+	for tid, h := range n.slowAddrs {
+		if h < height {
+			delete(n.slowAddrs, tid)
 		}
 	}
 }
@@ -641,6 +669,12 @@ func (n *node) handleSortitionMsg(m *pt.Pos33SortMsg) {
 		err := fmt.Errorf("sort msg too late, lbHeight=%d, sortHeight=%d", n.lastBlock().Height, height)
 		plog.Info("handleSort error", "err", err)
 	}
+	addr := address.PubKeyToAddr(m.Proof.Pubkey)
+	sl, ok := n.slowAddrs[addr]
+	if ok && height <= sl {
+		plog.Info("addr is slow addr", "addr", addr, "height", height, "stop height", sl)
+		return
+	}
 	if n.cps[height] == nil {
 		n.cps[height] = make(map[int]map[string]*pt.Pos33SortMsg)
 	}
@@ -793,6 +827,25 @@ func (n *node) handleGossipMsg() chan *pt.Pos33Msg {
 	return ch
 }
 
+func (n *node) checkTimeout(height int64, round int) {
+	mp, ok := n.tids[height]
+	if !ok {
+		return
+	}
+	tid, ok := mp[round]
+	if !ok {
+		return
+	}
+
+	t, err := n.queryTid(tid, height)
+	if err != nil {
+		plog.Error("query Ticket error", "err", err, "height", height)
+		return
+	}
+	plog.Info("stop slowly address", "height", height, "stop height", height+3600, "address", t.MinerAddress)
+	n.slowAddrs[t.MinerAddress] = height + 3600
+}
+
 func (n *node) runLoop() {
 	lb, err := n.RequestLastBlock()
 	if err != nil {
@@ -802,8 +855,8 @@ func (n *node) runLoop() {
 
 	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, pos33Topic)
 	msgch := n.handleGossipMsg()
-	if n.conf.BootPeerAddr != "" {
-		n.gss.bootstrap(n.conf.BootPeerAddr)
+	if len(n.conf.BootPeers) > 0 {
+		n.gss.bootstrap(n.conf.BootPeers...)
 	}
 
 	time.AfterFunc(time.Second, func() {
@@ -834,6 +887,7 @@ func (n *node) runLoop() {
 		select {
 		case height := <-ch:
 			if height == n.lastBlock().Height+1 {
+				n.checkTimeout(height, round)
 				round++
 				plog.Info("@@@ vote timeout: ", "height", height, "round", round)
 				n.reSortition(height, round)
