@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -114,27 +113,6 @@ func getSellOrderFromID(sellID []byte, db dbm.KV) (*pty.SellOrder, error) {
 		return nil, err
 	}
 	return &sellOrder, nil
-}
-
-func getTx(txHash []byte, db dbm.KV, api client.QueueProtocolAPI) (*types.TxResult, error) {
-	hash, err := common.FromHex(string(txHash))
-	if err != nil {
-		return nil, err
-	}
-	value, err := api.QueryTx(&types.ReqHash{Hash: hash})
-	if err != nil {
-		tradelog.Error("getTx", "Failed to get value from db with getTx", string(txHash))
-		return nil, err
-	}
-	txResult := types.TxResult{
-		Height:      value.Height,
-		Index:       int32(value.Index),
-		Tx:          value.Tx,
-		Receiptdate: value.Receipt,
-		Blocktime:   value.Blocktime,
-		ActionName:  value.ActionName,
-	}
-	return &txResult, nil
 }
 
 func (selldb *sellDB) getKVSet() (kvset []*types.KeyValue) {

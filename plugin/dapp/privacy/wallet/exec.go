@@ -10,8 +10,6 @@ import (
 )
 
 func (policy *privacyPolicy) On_ShowPrivacyAccountSpend(req *privacytypes.ReqPrivBal4AddrToken) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
 	reply, err := policy.showPrivacyAccountsSpend(req)
 	if err != nil {
 		bizlog.Error("showPrivacyAccountsSpend", "err", err.Error())
@@ -20,8 +18,6 @@ func (policy *privacyPolicy) On_ShowPrivacyAccountSpend(req *privacytypes.ReqPri
 }
 
 func (policy *privacyPolicy) On_ShowPrivacyKey(req *types.ReqString) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
 	reply, err := policy.showPrivacyKeyPair(req)
 	if err != nil {
 		bizlog.Error("showPrivacyKeyPair", "err", err.Error())
@@ -30,6 +26,7 @@ func (policy *privacyPolicy) On_ShowPrivacyKey(req *types.ReqString) (types.Mess
 }
 
 func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePrivacyTx) (types.Message, error) {
+
 	ok, err := policy.getWalletOperate().CheckWalletStatus()
 	if !ok {
 		bizlog.Error("createTransaction", "CheckWalletStatus cause error.", err)
@@ -57,8 +54,6 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 		bizlog.Error("createTransaction", "isRescanUtxosFlagScaning cause error.", err)
 		return nil, err
 	}
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
 
 	reply, err := policy.createTransaction(req)
 	if err != nil {
@@ -68,8 +63,6 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 }
 
 func (policy *privacyPolicy) On_ShowPrivacyAccountInfo(req *privacytypes.ReqPrivacyAccount) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
 	reply, err := policy.getPrivacyAccountInfo(req)
 	if err != nil {
 		bizlog.Error("getPrivacyAccountInfo", "err", err.Error())
@@ -78,6 +71,7 @@ func (policy *privacyPolicy) On_ShowPrivacyAccountInfo(req *privacytypes.ReqPriv
 }
 
 func (policy *privacyPolicy) On_PrivacyTransactionList(req *privacytypes.ReqPrivacyTransactionList) (types.Message, error) {
+
 	if req.Direction != 0 && req.Direction != 1 {
 		bizlog.Error("getPrivacyTransactionList", "invalid direction ", req.Direction)
 		return nil, types.ErrInvalidParam
@@ -90,9 +84,6 @@ func (policy *privacyPolicy) On_PrivacyTransactionList(req *privacytypes.ReqPriv
 	}
 	req.SendRecvFlag = sendRecvFlag
 
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
-
 	reply, err := policy.store.getWalletPrivacyTxDetails(req)
 	if err != nil {
 		bizlog.Error("getWalletPrivacyTxDetails", "err", err.Error())
@@ -101,8 +92,7 @@ func (policy *privacyPolicy) On_PrivacyTransactionList(req *privacytypes.ReqPriv
 }
 
 func (policy *privacyPolicy) On_RescanUtxos(req *privacytypes.ReqRescanUtxos) (types.Message, error) {
-	policy.getWalletOperate().GetMutex().Lock()
-	defer policy.getWalletOperate().GetMutex().Unlock()
+
 	reply, err := policy.rescanUTXOs(req)
 	if err != nil {
 		bizlog.Error("rescanUTXOs", "err", err.Error())
@@ -111,9 +101,6 @@ func (policy *privacyPolicy) On_RescanUtxos(req *privacytypes.ReqRescanUtxos) (t
 }
 
 func (policy *privacyPolicy) On_EnablePrivacy(req *privacytypes.ReqEnablePrivacy) (types.Message, error) {
-	operater := policy.getWalletOperate()
-	operater.GetMutex().Lock()
-	defer operater.GetMutex().Unlock()
 	reply, err := policy.enablePrivacy(req)
 	if err != nil {
 		bizlog.Error("enablePrivacy", "err", err.Error())

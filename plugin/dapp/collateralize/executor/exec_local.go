@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/db/table"
 	//"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/collateralize/types"
@@ -12,6 +13,7 @@ import (
 
 func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
+	var collTable, recordTable *table.Table
 	for _, item := range receipt.Logs {
 		if item.Ty >= pty.TyLogCollateralizeCreate && item.Ty <= pty.TyLogCollateralizeRetrieve {
 			var collateralizeLog pty.ReceiptCollateralize
@@ -21,31 +23,37 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 			}
 
 			if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeRetrieve {
-				collTable := pty.NewCollateralizeTable(c.GetLocalDB())
+				collTable = pty.NewCollateralizeTable(c.GetLocalDB())
 				err = collTable.Replace(&pty.ReceiptCollateralize{CollateralizeId: collateralizeLog.CollateralizeId, Status: collateralizeLog.Status,
 					AccountAddr: collateralizeLog.AccountAddr})
 				if err != nil {
 					return nil, err
 				}
-				kvs, err := collTable.Save()
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kvs...)
 			} else {
-				recordTable := pty.NewRecordTable(c.GetLocalDB())
+				recordTable = pty.NewRecordTable(c.GetLocalDB())
 				err = recordTable.Replace(&pty.ReceiptCollateralize{CollateralizeId: collateralizeLog.CollateralizeId, Status: collateralizeLog.Status,
 					RecordId: collateralizeLog.RecordId, AccountAddr: collateralizeLog.AccountAddr})
 				if err != nil {
 					return nil, err
 				}
-				kvs, err := recordTable.Save()
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kvs...)
 			}
 		}
+	}
+
+	if collTable != nil {
+		kvs, err := collTable.Save()
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kvs...)
+	}
+
+	if recordTable != nil {
+		kvs, err := recordTable.Save()
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kvs...)
 	}
 
 	set.KV = c.AddRollbackKV(tx, []byte(pty.CollateralizeX), set.KV)

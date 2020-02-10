@@ -65,15 +65,15 @@ func testTicket(t *testing.T) {
 	//fmt.Println(string(js))
 	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 0})
 	assert.Nil(t, err)
-	status, err := mock33.GetAPI().GetWalletStatus()
+	status, err := mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
-	assert.Equal(t, false, status.IsAutoMining)
+	assert.Equal(t, false, status.(*types.WalletStatus).IsAutoMining)
 	assert.Equal(t, int32(2), detail.Receipt.Ty)
 	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
-	status, err = mock33.GetAPI().GetWalletStatus()
+	status, err = mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
-	assert.Equal(t, true, status.IsAutoMining)
+	assert.Equal(t, true, status.(*types.WalletStatus).IsAutoMining)
 	start := time.Now()
 	height := int64(0)
 	hastclose := false
@@ -84,7 +84,8 @@ func testTicket(t *testing.T) {
 		assert.Nil(t, err)
 		//查询票是否自动close，并且购买了新的票
 		req := &types.ReqWalletTransactionList{Count: 1000}
-		list, err := mock33.GetAPI().WalletTransactionList(req)
+		resp, err := mock33.GetAPI().ExecWalletFunc("wallet", "WalletTransactionList", req)
+		list := resp.(*types.WalletTxDetails)
 		assert.Nil(t, err)
 		for _, tx := range list.TxDetails {
 			if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {

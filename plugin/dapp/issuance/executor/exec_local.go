@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/db/table"
 	//"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
@@ -12,6 +13,7 @@ import (
 
 func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
+	var IDtable, recordTable *table.Table
 	for _, item := range receipt.Logs {
 		if item.Ty >= pty.TyLogIssuanceCreate && item.Ty <= pty.TyLogIssuanceClose {
 			var issuanceLog pty.ReceiptIssuance
@@ -21,30 +23,36 @@ func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) 
 			}
 
 			if item.Ty == pty.TyLogIssuanceCreate || item.Ty == pty.TyLogIssuanceClose {
-				IDtable := pty.NewIssuanceTable(c.GetLocalDB())
+				IDtable = pty.NewIssuanceTable(c.GetLocalDB())
 				err = IDtable.Replace(&pty.ReceiptIssuanceID{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status})
 				if err != nil {
 					return nil, err
 				}
-				kvs, err := IDtable.Save()
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kvs...)
 			} else {
-				recordTable := pty.NewRecordTable(c.GetLocalDB())
+				recordTable = pty.NewRecordTable(c.GetLocalDB())
 				err = recordTable.Replace(&pty.ReceiptIssuance{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status,
 					DebtId: issuanceLog.DebtId, AccountAddr: issuanceLog.AccountAddr})
 				if err != nil {
 					return nil, err
 				}
-				kvs, err := recordTable.Save()
-				if err != nil {
-					return nil, err
-				}
-				set.KV = append(set.KV, kvs...)
 			}
 		}
+	}
+
+	if IDtable != nil {
+		kvs, err := IDtable.Save()
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kvs...)
+	}
+
+	if recordTable != nil {
+		kvs, err := recordTable.Save()
+		if err != nil {
+			return nil, err
+		}
+		set.KV = append(set.KV, kvs...)
 	}
 
 	set.KV = c.AddRollbackKV(tx, []byte(pty.IssuanceX), set.KV)

@@ -1008,8 +1008,6 @@ func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWallet
 
 func (policy *privacyPolicy) checkExpireFTXOOnTimer() {
 	operater := policy.getWalletOperate()
-	operater.GetMutex().Lock()
-	defer operater.GetMutex().Unlock()
 
 	header := operater.GetLastHeader()
 	if header == nil {

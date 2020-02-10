@@ -171,6 +171,7 @@ func NewOrderTable(kvdb dbm.KV) *table.Table {
 	return t
 }
 
+// gen order from tx and receipt
 func (t *trade) genSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBase,
 	sellorder *pty.SellOrder, txIndex string) *pty.LocalOrder {
 
@@ -272,7 +273,6 @@ func parseOrderPriceFloat(s string) int64 {
 }
 
 func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, txIndex string) *pty.LocalOrder {
-
 	order := &pty.LocalOrder{
 		AssetSymbol:       sell.TokenSymbol,
 		TxIndex:           txIndex,
@@ -300,7 +300,6 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 }
 
 func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIndex string) *pty.LocalOrder {
-
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
 		TxIndex:           txIndex,
@@ -375,7 +374,6 @@ func (t *trade) rollbackBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 }
 
 func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIndex string) *pty.LocalOrder {
-
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
 		TxIndex:           txIndex,
@@ -392,7 +390,7 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 		Height:            buy.Height,
 		Key:               calcTokenBuyID(hex.EncodeToString(tx.Hash())),
 		BlockTime:         t.GetBlockTime(),
-		IsSellOrder:       true,
+		IsSellOrder:       false,
 		AssetExec:         buy.AssetExec,
 		IsFinished:        true,
 		PriceExec:         buy.PriceExec,
@@ -400,63 +398,3 @@ func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txI
 	}
 	return order
 }
-
-func list(db dbm.KVDB, indexName string, data *pty.LocalOrder, count, direction int32) ([]*table.Row, error) {
-	query := NewOrderTable(db).GetQuery(db)
-	var primary []byte
-	if len(data.TxIndex) > 0 {
-		primary = []byte(data.TxIndex)
-	}
-
-	cur := &OrderRow{LocalOrder: data}
-	index, err := cur.Get(indexName)
-	if err != nil {
-		tradelog.Error("query List failed", "key", string(primary), "param", data, "err", err)
-		return nil, err
-	}
-	tradelog.Debug("query List dbg", "indexName", indexName, "index", string(index), "primary", primary, "count", count, "direction", direction)
-	rows, err := query.ListIndex(indexName, index, primary, count, direction)
-	if err != nil {
-		tradelog.Error("query List failed", "key", string(primary), "param", data, "err", err)
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, types.ErrNotFound
-	}
-	return rows, nil
-}
-
-/*
-
-
-
-按 资产 查询 ：
-按 资产 & 地址 查询
-按 地址
-
-排序和分类
- 1. 时间顺序   txindex
- 1. 分类， 不同的状态 & 不同的性质： 买/卖
-
-交易 -> 订单 按订单来 (交易和订单是多对多的关系，不适合joinTable)
-
-交易 T1 Create -> T2 part-take -> T3 Revoke
-
-订单左为进行中， 右为完成，
-订单   （C1) | () ->  (C1m) | (C2) -> () | (C2, C1r)
-
-
-查询交易 / 查询订单
-  C ->   C/M -> C/D
-  \
-   \ ->R
-
-
-状态 1, TradeOrderStatusOnSale, 在售
-状态 2： TradeOrderStatusSoldOut，售完
-状态 3： TradeOrderStatusRevoked， 卖单被撤回
-状态 4： TradeOrderStatusExpired， 订单超时(目前不支持订单超时)
-状态 5： TradeOrderStatusOnBuy， 求购
-状态 6： TradeOrderStatusBoughtOut， 购买完成
-状态 7： TradeOrderStatusBuyRevoked， 买单被撤回
-*/
