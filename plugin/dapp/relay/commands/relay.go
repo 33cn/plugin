@@ -36,7 +36,6 @@ func RelayCmd() *cobra.Command {
 		CreateRawRelayAcceptTxCmd(),
 		CreateRawRevokeTxCmd(),
 		CreateRawRelayConfirmTxCmd(),
-		CreateRawRelayBtcHeaderCmd(),
 	)
 
 	return cmd
