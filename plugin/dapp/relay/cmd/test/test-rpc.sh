@@ -5,14 +5,16 @@ source ../dapp-test-common.sh
 
 MAIN_HTTP=""
 
+relay_parallel_exec=""
+
 relay_CreateRawRelaySaveBTCHeadTx() {
-    local req='{"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"BtcHeaders","payload":{"btcHeader":[{"hash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","height":10,"version":536870912,"merkleRoot":"ab91cd4160e1379c337eee6b7a4bdbb7399d70268d86045aba150743c00c90b6","time":1530862108,"nonce":0,"bits":545259519,"previousHash":"604efe53975ab06cad8748fd703ad5bc960e8b752b2aae98f0f871a4a05abfc7","isReset":true}]}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
 
 relay_CreateRawRelaySaveBTCHeadTx_11() {
-    local req='{"method":"relay.CreateRawRelaySaveBTCHeadTx","params":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"BtcHeaders","payload":{"btcHeader":[{"hash":"7b7a4a9b49db5a1162be515d380cd186e98c2bf0bb90f1145485d7c43343fc7c","height":11,"version":536870912,"merkleRoot":"cfa9b66696aea63b7266ffaa1cb4b96c8dd6959eaabf2eb14173f4adaa551f6f","time":1530862108,"nonce":1,"bits":545259519,"previousHash":"5e7d9c599cd040ec2ba53f4dee28028710be8c135e779f65c56feadaae34c3f2","isReset":false}]}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
@@ -20,7 +22,7 @@ relay_CreateRawRelaySaveBTCHeadTx_11() {
 relay_CreateRawRelayOrderTx() {
     localCoinSymbol="$1"
     localCoinExec="$2"
-    local req='{"method":"relay.CreateRawRelayOrderTx","params":[{"operation":0,"xCoin":"BTC","xAmount":299000000,"xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","localCoinAmount":1000000000,"localCoinSymbol":"'"$localCoinSymbol"'","localCoinExec":"'"$localCoinExec"'","coinWaits":6}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"Create","payload":{"operation":0,"xCoin":"BTC","xAmount":299000000,"xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT","localCoinAmount":1000000000,"localCoinSymbol":"'"$localCoinSymbol"'","localCoinExec":"'"$localCoinExec"'","xBlockWaits":6}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
@@ -35,7 +37,7 @@ relay_CreateRawRelayAcceptTx() {
         exit 1
     fi
 
-    local req='{"method":"relay.CreateRawRelayAcceptTx","params":[{"orderId":"'"$id"'","xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"Accept","payload":{"orderId":"'"$id"'","xAddr":"1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0xec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "${MAIN_HTTP}"
 }
@@ -50,7 +52,7 @@ relay_CreateRawRelayRevokeTx() {
         exit 1
     fi
 
-    local req='{"method":"relay.CreateRawRelayRevokeTx","params":[{"orderId":"'"$id"'","target":0,"action":1}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"Revoke","payload":{"orderId":"'"$id"'","target":0,"action":1}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962" "${MAIN_HTTP}"
 }
@@ -65,7 +67,7 @@ relay_CreateRawRelayConfirmTx() {
         exit 1
     fi
 
-    local req='{"method":"relay.CreateRawRelayConfirmTx","params":[{"orderId":"'"$id"'","rawTx":"6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"}]}'
+    local req='{"method":"Chain33.CreateTransaction","params":[{"execer":"'"${relay_parallel_exec}"'","actionName":"ConfirmTx","payload":{"orderId":"'"$id"'","txHash":"6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"}}]}'
     chain33_Http "$req" ${MAIN_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result"
     chain33_SignAndSendTx "$RETURN_RESP" "0xec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4" "${MAIN_HTTP}"
 }
@@ -102,8 +104,10 @@ init() {
     echo "ipara=$ispara"
     local relay_addr=""
     if [ "$ispara" == true ]; then
+        relay_parallel_exec="user.p.para.relay"
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     else
+        relay_parallel_exec="relay"
         relay_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"relay"}]}' ${MAIN_HTTP} | jq -r ".result")
     fi
     echo "relayaddr=$relay_addr"

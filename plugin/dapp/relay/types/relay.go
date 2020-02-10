@@ -5,7 +5,6 @@
 package types
 
 import (
-	"encoding/json"
 	"reflect"
 
 	//log "github.com/33cn/chain33/common/log/log15"
@@ -168,10 +167,4 @@ func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 		return int64(relay.GetCreate().LocalCoinAmount), nil
 	}
 	return 0, nil
-}
-
-// CreateTx relay create tx TODO 暂时不修改实现， 先完成结构的重构
-func (r *RelayType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	var tx *types.Transaction
-	return tx, nil
 }
