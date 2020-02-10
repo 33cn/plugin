@@ -284,6 +284,7 @@ func showPrivacyAccountSpendCmd() *cobra.Command {
 
 func showPrivacyAccountSpendFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.MarkFlagRequired("addr")
 }
@@ -291,10 +292,12 @@ func showPrivacyAccountSpendFlag(cmd *cobra.Command) {
 func showPrivacyAccountSpend(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
+	exec, _ := cmd.Flags().GetString("exec")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	params := pty.ReqPrivBal4AddrToken{
-		Addr:  addr,
-		Token: symbol,
+		Addr:      addr,
+		Token:     symbol,
+		AssetExec: exec,
 	}
 
 	var res pty.UTXOHaveTxHashs
@@ -453,7 +456,7 @@ func showPrivacyAccountInfoCmd() *cobra.Command {
 func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "account address")
 	cmd.MarkFlagRequired("addr")
-
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol, default BTY")
 	cmd.Flags().Int32P("displaymode", "d", 0, "display mode.(0: display collect. 1:display available detail. 2:display frozen detail. 3:display all")
 }
@@ -461,6 +464,7 @@ func showPrivacyAccountInfoFlag(cmd *cobra.Command) {
 func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
+	exec, _ := cmd.Flags().GetString("exec")
 	token, _ := cmd.Flags().GetString("symbol")
 	mode, _ := cmd.Flags().GetInt32("displaymode")
 	if mode < 0 || mode > 3 {
@@ -468,10 +472,11 @@ func showPrivacyAccountInfo(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	params := pty.ReqPPrivacyAccount{
+	params := pty.ReqPrivacyAccount{
 		Addr:        addr,
 		Token:       token,
 		Displaymode: mode,
+		AssetExec:   exec,
 	}
 
 	var res pty.ReplyPrivacyAccount
@@ -546,6 +551,7 @@ func addListPrivacyTxsFlags(cmd *cobra.Command) {
 	//
 	cmd.Flags().Int32P("sendrecv", "", 0, "send or recv flag (0: send, 1: recv), default 0")
 	cmd.Flags().Int32P("count", "c", 10, "number of transactions, default 10")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
 	cmd.Flags().StringP("token", "", types.BTY, "token name.(BTY supported)")
 	cmd.Flags().Int32P("direction", "d", 1, "query direction (0: pre page, 1: next page), valid with seedtxhash param")
 	cmd.Flags().StringP("seedtxhash", "", "", "seed trasnaction hash")
@@ -559,7 +565,9 @@ func listPrivacyTxsFlags(cmd *cobra.Command, args []string) {
 	sendRecvFlag, _ := cmd.Flags().GetInt32("sendrecv")
 	tokenname, _ := cmd.Flags().GetString("token")
 	seedtxhash, _ := cmd.Flags().GetString("seedtxhash")
+	exec, _ := cmd.Flags().GetString("exec")
 	params := pty.ReqPrivacyTransactionList{
+		AssetExec:    exec,
 		Tokenname:    tokenname,
 		SendRecvFlag: sendRecvFlag,
 		Direction:    direction,

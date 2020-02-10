@@ -399,7 +399,7 @@ func Test_PrivacyAccountInfo(t *testing.T) {
 	mock.init()
 
 	testCases := []struct {
-		req       *ty.ReqPPrivacyAccount
+		req       *ty.ReqPrivacyAccount
 		needReply *ty.ReplyPrivacyAccount
 		needError error
 	}{
@@ -407,7 +407,7 @@ func Test_PrivacyAccountInfo(t *testing.T) {
 			needError: types.ErrInvalidParam,
 		},
 		{
-			req: &ty.ReqPPrivacyAccount{
+			req: &ty.ReqPrivacyAccount{
 				Addr:        testAddrs[0],
 				Token:       types.BTY,
 				Displaymode: 0,

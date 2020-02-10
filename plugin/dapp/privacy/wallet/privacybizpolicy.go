@@ -171,6 +171,7 @@ func (policy *privacyPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqS
 }
 
 type buildStoreWalletTxDetailParam struct {
+	assetExec    string
 	tokenname    string
 	block        *types.BlockDetail
 	tx           *types.Transaction

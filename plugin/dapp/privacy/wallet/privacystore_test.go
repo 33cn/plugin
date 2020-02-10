@@ -73,12 +73,12 @@ func testStore_unsetUTXO(t *testing.T) {
 	addr := ""
 	txhash := ""
 	batch := store.NewBatch(true)
-	err := store.unsetUTXO(&addr, &txhash, 0, "", batch)
+	err := store.unsetUTXO("", "", addr, txhash, 0, batch)
 	assert.NotNil(t, err)
 
 	addr = "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 	txhash = "TXHASH"
-	err = store.unsetUTXO(&addr, &txhash, 0, "BTY", batch)
+	err = store.unsetUTXO("coins", "BTY", addr, txhash, 0, batch)
 	assert.NoError(t, err)
 }
 
@@ -174,10 +174,11 @@ func testStore_moveUTXO2FTXO(t *testing.T) {
 
 func testStore_getPrivacyTokenUTXOs(t *testing.T) {
 	store := createStore(t)
-	utxos, err := store.getPrivacyTokenUTXOs("", "")
+	utxos, err := store.getPrivacyTokenUTXOs("", "", "")
 	assert.Nil(t, err)
 	assert.NotNil(t, utxos)
 
+	assetExec := "coins"
 	token := "BTY"
 	addr := "getPrivacyTokenUTXOs"
 
@@ -186,12 +187,12 @@ func testStore_getPrivacyTokenUTXOs(t *testing.T) {
 		bt, err := proto.Marshal(data)
 		assert.NoError(t, err)
 		key := fmt.Sprintf("Key%d", n)
-		err = store.Set(calcUTXOKey4TokenAddr(token, addr, "txhash", n), []byte(key))
+		err = store.Set(calcUTXOKey4TokenAddr(assetExec, token, addr, "txhash", n), []byte(key))
 		assert.NoError(t, err)
 		err = store.Set([]byte(key), bt)
 		assert.NoError(t, err)
 	}
-	utxos, err = store.getPrivacyTokenUTXOs(token, addr)
+	utxos, err = store.getPrivacyTokenUTXOs(assetExec, token, addr)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(utxos.utxos))
 }
@@ -209,27 +210,28 @@ func testStore_getWalletPrivacyTxDetails(t *testing.T) {
 
 func testStore_listFrozenUTXOs(t *testing.T) {
 	store := createStore(t)
+	assetExec := "coins"
 	token := "BTY"
 	addr := "26htvcBNSEA7fZhAdLJphDwQRQJaHpyHTq"
-	txs, err := store.listFrozenUTXOs("", "")
+	txs, err := store.listFrozenUTXOs("", "", "")
 	assert.Nil(t, txs)
 	assert.NotNil(t, err)
-	txs, err = store.listFrozenUTXOs(token, addr)
+	txs, err = store.listFrozenUTXOs(assetExec, token, addr)
 	assert.Nil(t, txs)
 	assert.Nil(t, err)
 	tx := &pt.FTXOsSTXOsInOneTx{Tokenname: "BTY"}
 	bt, err := proto.Marshal(tx)
 	assert.NoError(t, err)
-	err = store.Set(calcKey4FTXOsInTx(token, addr, "TXHASH"), bt)
+	err = store.Set(calcKey4FTXOsInTx(assetExec, token, addr, "TXHASH"), bt)
 	assert.NoError(t, err)
-	txs, err = store.listFrozenUTXOs(token, addr)
+	txs, err = store.listFrozenUTXOs(assetExec, token, addr)
 	assert.Nil(t, txs)
 	assert.NotNil(t, err)
-	err = store.Set(calcKey4FTXOsInTx(token, addr, "TXHASH"), []byte("DataKey"))
+	err = store.Set(calcKey4FTXOsInTx(assetExec, token, addr, "TXHASH"), []byte("DataKey"))
 	assert.NoError(t, err)
 	err = store.Set([]byte("DataKey"), bt)
 	assert.NoError(t, err)
-	txs, err = store.listFrozenUTXOs(token, addr)
+	txs, err = store.listFrozenUTXOs(assetExec, token, addr)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(txs))
 	assert.Equal(t, true, proto.Equal(tx, txs[0]))
@@ -237,27 +239,29 @@ func testStore_listFrozenUTXOs(t *testing.T) {
 
 func testStore_listAvailableUTXOs(t *testing.T) {
 	store := createStore(t)
-	utxos, err := store.listAvailableUTXOs("", "")
+	utxos, err := store.listAvailableUTXOs("", "", "")
 	assert.Nil(t, utxos)
 	assert.Equal(t, err, types.ErrInvalidParam)
 
 	addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTq"
+	assetExec := "coins"
 	token := "BTY"
 	txhash := "123456"
 	utxo := &pt.PrivacyDBStore{
+		AssetExec: assetExec,
 		Tokenname: "BTY",
 	}
-	key := calcUTXOKey4TokenAddr(token, addr, txhash, 0)
+	key := calcUTXOKey4TokenAddr(assetExec, token, addr, txhash, 0)
 	bt, err := proto.Marshal(utxo)
 	assert.NoError(t, err)
 	err = store.Set(key, []byte("AccKey"))
 	assert.NoError(t, err)
-	utxos, err = store.listAvailableUTXOs(token, addr)
+	utxos, err = store.listAvailableUTXOs(assetExec, token, addr)
 	assert.Nil(t, utxos)
 	assert.NotNil(t, err)
 	err = store.Set([]byte("AccKey"), bt)
 	assert.NoError(t, err)
-	utxos, err = store.listAvailableUTXOs(token, addr)
+	utxos, err = store.listAvailableUTXOs(assetExec, token, addr)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(utxos))
 	assert.Equal(t, true, proto.Equal(utxo, utxos[0]))

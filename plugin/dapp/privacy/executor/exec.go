@@ -43,8 +43,8 @@ func (p *privacy) Exec_Public2Privacy(payload *ty.Public2Privacy, tx *types.Tran
 		value := types.Encode(keyOutput)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
-
-	receiptLogs := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput().GetKeyoutput())
+	privacylog.Debug("testkey", "output", payload.GetOutput().Keyoutput)
+	receiptLogs := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput())
 	execlog := &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptLogs)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
@@ -79,7 +79,7 @@ func (p *privacy) Exec_Privacy2Privacy(payload *ty.Privacy2Privacy, tx *types.Tr
 		value := types.Encode(keyOutput)
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
-	receiptLogs := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput().GetKeyoutput())
+	receiptLogs := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput())
 	execlog = &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptLogs)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
@@ -125,7 +125,7 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 		receipt.KV = append(receipt.KV, &types.KeyValue{Key: key, Value: value})
 	}
 
-	receiptLog := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput().GetKeyoutput())
+	receiptLog := p.buildPrivacyReceiptLog(payload.GetAssetExec(), payload.GetTokenname(), payload.GetOutput())
 	execlog = &types.ReceiptLog{Ty: ty.TyLogPrivacyOutput, Log: types.Encode(receiptLog)}
 	receipt.Logs = append(receipt.Logs, execlog)
 
@@ -146,14 +146,14 @@ func (p *privacy) createAccountDB(exec, symbol string) (*account.DB, error) {
 	return account.NewAccountDB(cfg, exec, symbol, p.GetStateDB())
 }
 
-func (p *privacy) buildPrivacyReceiptLog(assetExec, assetSymbol string, output []*ty.KeyOutput) *ty.ReceiptPrivacyOutput {
+func (p *privacy) buildPrivacyReceiptLog(assetExec, assetSymbol string, output *ty.PrivacyOutput) *ty.ReceiptPrivacyOutput {
 	if assetExec == "" {
 		assetExec = "coins"
 	}
 	receipt := &ty.ReceiptPrivacyOutput{
 		AssetExec:   assetExec,
 		AssetSymbol: assetSymbol,
-		Keyoutput:   output,
+		Keyoutput:   output.Keyoutput,
 	}
 
 	return receipt

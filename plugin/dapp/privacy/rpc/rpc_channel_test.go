@@ -72,7 +72,7 @@ func testShowPrivacyKey(t *testing.T, jrpc *jsonclient.JSONClient) error {
 }
 
 func testShowPrivacyAccountInfo(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.ReqPPrivacyAccount{
+	params := pty.ReqPrivacyAccount{
 		Addr:        "1JSRSwp16NvXiTjYBYK9iUQ9wqp3sCxz2p",
 		Token:       types.BTY,
 		Displaymode: 1,

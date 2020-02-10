@@ -208,8 +208,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return types.ErrActionNotSupport
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
-	assertExec := action.GetAssertExec()
-	token := action.GetTokenName()
+	assertExec, token := action.GetAssetExecSymbol()
 	if token == "" {
 		return types.ErrInvalidParam
 	}

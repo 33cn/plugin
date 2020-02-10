@@ -81,7 +81,7 @@ func (t *PrivacyType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogPrivacyFee:    {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogPrivacyFee"},
 		TyLogPrivacyInput:  {Ty: reflect.TypeOf(PrivacyInput{}), Name: "LogPrivacyInput"},
-		TyLogPrivacyOutput: {Ty: reflect.TypeOf(PrivacyOutput{}), Name: "LogPrivacyOutput"},
+		TyLogPrivacyOutput: {Ty: reflect.TypeOf(ReceiptPrivacyOutput{}), Name: "LogPrivacyOutput"},
 	}
 }
 
@@ -168,26 +168,14 @@ func (action *PrivacyAction) GetActionName() string {
 	return "unknow-privacy"
 }
 
-// GetTokenName get action token name
-func (action *PrivacyAction) GetTokenName() string {
+// GetAssetExecSymbol get assert exec and symbol
+func (action *PrivacyAction) GetAssetExecSymbol() (assetExec, assetSymbol string) {
 	if action.GetTy() == ActionPublic2Privacy && action.GetPublic2Privacy() != nil {
-		return action.GetPublic2Privacy().GetTokenname()
+		return action.GetPublic2Privacy().GetAssetExec(), action.GetPublic2Privacy().GetTokenname()
 	} else if action.GetTy() == ActionPrivacy2Privacy && action.GetPrivacy2Privacy() != nil {
-		return action.GetPrivacy2Privacy().GetTokenname()
+		return action.GetPrivacy2Privacy().GetAssetExec(), action.GetPrivacy2Privacy().GetTokenname()
 	} else if action.GetTy() == ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
-		return action.GetPrivacy2Public().GetTokenname()
+		return action.GetPrivacy2Public().GetAssetExec(), action.GetPrivacy2Public().GetTokenname()
 	}
-	return ""
-}
-
-// GetAssertExec get assert exec
-func (action *PrivacyAction) GetAssertExec() string {
-	if action.GetTy() == ActionPublic2Privacy && action.GetPublic2Privacy() != nil {
-		return action.GetPublic2Privacy().GetAssetExec()
-	} else if action.GetTy() == ActionPrivacy2Privacy && action.GetPrivacy2Privacy() != nil {
-		return action.GetPrivacy2Privacy().GetAssetExec()
-	} else if action.GetTy() == ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
-		return action.GetPrivacy2Public().GetAssetExec()
-	}
-	return ""
+	return "", ""
 }
