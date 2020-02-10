@@ -3,13 +3,17 @@
 
 package types
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import types "github.com/33cn/chain33/types"
-
 import (
+	fmt "fmt"
+
+	proto "github.com/golang/protobuf/proto"
+
+	math "math"
+
+	types "github.com/33cn/chain33/types"
+
 	context "golang.org/x/net/context"
+
 	grpc "google.golang.org/grpc"
 )
 
@@ -44,7 +48,7 @@ func (m *PrivacyAction) Reset()         { *m = PrivacyAction{} }
 func (m *PrivacyAction) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction) ProtoMessage()    {}
 func (*PrivacyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{0}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{0}
 }
 func (m *PrivacyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction.Unmarshal(m, b)
@@ -229,7 +233,7 @@ func (m *Public2Privacy) Reset()         { *m = Public2Privacy{} }
 func (m *Public2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy) ProtoMessage()    {}
 func (*Public2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{1}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{1}
 }
 func (m *Public2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy.Unmarshal(m, b)
@@ -300,7 +304,7 @@ func (m *Privacy2Privacy) Reset()         { *m = Privacy2Privacy{} }
 func (m *Privacy2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy) ProtoMessage()    {}
 func (*Privacy2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{2}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{2}
 }
 func (m *Privacy2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy.Unmarshal(m, b)
@@ -379,7 +383,7 @@ func (m *Privacy2Public) Reset()         { *m = Privacy2Public{} }
 func (m *Privacy2Public) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public) ProtoMessage()    {}
 func (*Privacy2Public) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{3}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{3}
 }
 func (m *Privacy2Public) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public.Unmarshal(m, b)
@@ -462,7 +466,7 @@ func (m *UTXOGlobalIndex) Reset()         { *m = UTXOGlobalIndex{} }
 func (m *UTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex) ProtoMessage()    {}
 func (*UTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{4}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{4}
 }
 func (m *UTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex.Unmarshal(m, b)
@@ -510,7 +514,7 @@ func (m *KeyInput) Reset()         { *m = KeyInput{} }
 func (m *KeyInput) String() string { return proto.CompactTextString(m) }
 func (*KeyInput) ProtoMessage()    {}
 func (*KeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{5}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{5}
 }
 func (m *KeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput.Unmarshal(m, b)
@@ -562,7 +566,7 @@ func (m *PrivacyInput) Reset()         { *m = PrivacyInput{} }
 func (m *PrivacyInput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput) ProtoMessage()    {}
 func (*PrivacyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{6}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{6}
 }
 func (m *PrivacyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput.Unmarshal(m, b)
@@ -602,7 +606,7 @@ func (m *KeyOutput) Reset()         { *m = KeyOutput{} }
 func (m *KeyOutput) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput) ProtoMessage()    {}
 func (*KeyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{7}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{7}
 }
 func (m *KeyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput.Unmarshal(m, b)
@@ -648,7 +652,7 @@ func (m *PrivacyOutput) Reset()         { *m = PrivacyOutput{} }
 func (m *PrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput) ProtoMessage()    {}
 func (*PrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{8}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{8}
 }
 func (m *PrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput.Unmarshal(m, b)
@@ -694,7 +698,7 @@ func (m *GroupUTXOGlobalIndex) Reset()         { *m = GroupUTXOGlobalIndex{} }
 func (m *GroupUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOGlobalIndex) ProtoMessage()    {}
 func (*GroupUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{9}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{9}
 }
 func (m *GroupUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Unmarshal(m, b)
@@ -743,7 +747,7 @@ func (m *LocalUTXOItem) Reset()         { *m = LocalUTXOItem{} }
 func (m *LocalUTXOItem) String() string { return proto.CompactTextString(m) }
 func (*LocalUTXOItem) ProtoMessage()    {}
 func (*LocalUTXOItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{10}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{10}
 }
 func (m *LocalUTXOItem) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalUTXOItem.Unmarshal(m, b)
@@ -810,7 +814,7 @@ func (m *ReqUTXOPubKeys) Reset()         { *m = ReqUTXOPubKeys{} }
 func (m *ReqUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOPubKeys) ProtoMessage()    {}
 func (*ReqUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{11}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{11}
 }
 func (m *ReqUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOPubKeys.Unmarshal(m, b)
@@ -856,7 +860,7 @@ func (m *PublicKeyData) Reset()         { *m = PublicKeyData{} }
 func (m *PublicKeyData) String() string { return proto.CompactTextString(m) }
 func (*PublicKeyData) ProtoMessage()    {}
 func (*PublicKeyData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{12}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{12}
 }
 func (m *PublicKeyData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PublicKeyData.Unmarshal(m, b)
@@ -896,7 +900,7 @@ func (m *GroupUTXOPubKey) Reset()         { *m = GroupUTXOPubKey{} }
 func (m *GroupUTXOPubKey) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOPubKey) ProtoMessage()    {}
 func (*GroupUTXOPubKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{13}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{13}
 }
 func (m *GroupUTXOPubKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOPubKey.Unmarshal(m, b)
@@ -941,7 +945,7 @@ func (m *ResUTXOPubKeys) Reset()         { *m = ResUTXOPubKeys{} }
 func (m *ResUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOPubKeys) ProtoMessage()    {}
 func (*ResUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{14}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{14}
 }
 func (m *ResUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOPubKeys.Unmarshal(m, b)
@@ -981,7 +985,7 @@ func (m *ReqPrivacyToken) Reset()         { *m = ReqPrivacyToken{} }
 func (m *ReqPrivacyToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyToken) ProtoMessage()    {}
 func (*ReqPrivacyToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{15}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{15}
 }
 func (m *ReqPrivacyToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyToken.Unmarshal(m, b)
@@ -1034,7 +1038,7 @@ func (m *AmountDetail) Reset()         { *m = AmountDetail{} }
 func (m *AmountDetail) String() string { return proto.CompactTextString(m) }
 func (*AmountDetail) ProtoMessage()    {}
 func (*AmountDetail) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{16}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{16}
 }
 func (m *AmountDetail) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountDetail.Unmarshal(m, b)
@@ -1079,7 +1083,7 @@ func (m *ReplyPrivacyAmounts) Reset()         { *m = ReplyPrivacyAmounts{} }
 func (m *ReplyPrivacyAmounts) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAmounts) ProtoMessage()    {}
 func (*ReplyPrivacyAmounts) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{17}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{17}
 }
 func (m *ReplyPrivacyAmounts) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Unmarshal(m, b)
@@ -1117,7 +1121,7 @@ func (m *ReplyUTXOsOfAmount) Reset()         { *m = ReplyUTXOsOfAmount{} }
 func (m *ReplyUTXOsOfAmount) String() string { return proto.CompactTextString(m) }
 func (*ReplyUTXOsOfAmount) ProtoMessage()    {}
 func (*ReplyUTXOsOfAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{18}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{18}
 }
 func (m *ReplyUTXOsOfAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Unmarshal(m, b)
@@ -1157,7 +1161,7 @@ func (m *ReceiptPrivacyOutput) Reset()         { *m = ReceiptPrivacyOutput{} }
 func (m *ReceiptPrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPrivacyOutput) ProtoMessage()    {}
 func (*ReceiptPrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{19}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{19}
 }
 func (m *ReceiptPrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Unmarshal(m, b)
@@ -1210,7 +1214,7 @@ func (m *AmountsOfUTXO) Reset()         { *m = AmountsOfUTXO{} }
 func (m *AmountsOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*AmountsOfUTXO) ProtoMessage()    {}
 func (*AmountsOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{20}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{20}
 }
 func (m *AmountsOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountsOfUTXO.Unmarshal(m, b)
@@ -1248,7 +1252,7 @@ func (m *TokenNamesOfUTXO) Reset()         { *m = TokenNamesOfUTXO{} }
 func (m *TokenNamesOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*TokenNamesOfUTXO) ProtoMessage()    {}
 func (*TokenNamesOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{21}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{21}
 }
 func (m *TokenNamesOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenNamesOfUTXO.Unmarshal(m, b)
@@ -1288,7 +1292,7 @@ func (m *UTXOGlobalIndex4Print) Reset()         { *m = UTXOGlobalIndex4Print{} }
 func (m *UTXOGlobalIndex4Print) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex4Print) ProtoMessage()    {}
 func (*UTXOGlobalIndex4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{22}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{22}
 }
 func (m *UTXOGlobalIndex4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Unmarshal(m, b)
@@ -1335,7 +1339,7 @@ func (m *KeyInput4Print) Reset()         { *m = KeyInput4Print{} }
 func (m *KeyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyInput4Print) ProtoMessage()    {}
 func (*KeyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{23}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{23}
 }
 func (m *KeyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput4Print.Unmarshal(m, b)
@@ -1388,7 +1392,7 @@ func (m *KeyOutput4Print) Reset()         { *m = KeyOutput4Print{} }
 func (m *KeyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput4Print) ProtoMessage()    {}
 func (*KeyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{24}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{24}
 }
 func (m *KeyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput4Print.Unmarshal(m, b)
@@ -1433,7 +1437,7 @@ func (m *PrivacyInput4Print) Reset()         { *m = PrivacyInput4Print{} }
 func (m *PrivacyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput4Print) ProtoMessage()    {}
 func (*PrivacyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{25}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{25}
 }
 func (m *PrivacyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput4Print.Unmarshal(m, b)
@@ -1472,7 +1476,7 @@ func (m *PrivacyOutput4Print) Reset()         { *m = PrivacyOutput4Print{} }
 func (m *PrivacyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput4Print) ProtoMessage()    {}
 func (*PrivacyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{26}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{26}
 }
 func (m *PrivacyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput4Print.Unmarshal(m, b)
@@ -1520,7 +1524,7 @@ func (m *Public2Privacy4Print) Reset()         { *m = Public2Privacy4Print{} }
 func (m *Public2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy4Print) ProtoMessage()    {}
 func (*Public2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{27}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{27}
 }
 func (m *Public2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy4Print.Unmarshal(m, b)
@@ -1583,7 +1587,7 @@ func (m *Privacy2Privacy4Print) Reset()         { *m = Privacy2Privacy4Print{} }
 func (m *Privacy2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy4Print) ProtoMessage()    {}
 func (*Privacy2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{28}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{28}
 }
 func (m *Privacy2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy4Print.Unmarshal(m, b)
@@ -1653,7 +1657,7 @@ func (m *Privacy2Public4Print) Reset()         { *m = Privacy2Public4Print{} }
 func (m *Privacy2Public4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public4Print) ProtoMessage()    {}
 func (*Privacy2Public4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{29}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{29}
 }
 func (m *Privacy2Public4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public4Print.Unmarshal(m, b)
@@ -1724,7 +1728,7 @@ func (m *PrivacyAction4Print) Reset()         { *m = PrivacyAction4Print{} }
 func (m *PrivacyAction4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction4Print) ProtoMessage()    {}
 func (*PrivacyAction4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{30}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{30}
 }
 func (m *PrivacyAction4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction4Print.Unmarshal(m, b)
@@ -1908,7 +1912,7 @@ func (m *ReplyPrivacyPkPair) Reset()         { *m = ReplyPrivacyPkPair{} }
 func (m *ReplyPrivacyPkPair) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyPkPair) ProtoMessage()    {}
 func (*ReplyPrivacyPkPair) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{31}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{31}
 }
 func (m *ReplyPrivacyPkPair) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Unmarshal(m, b)
@@ -1955,7 +1959,7 @@ func (m *ReqPrivBal4AddrToken) Reset()         { *m = ReqPrivBal4AddrToken{} }
 func (m *ReqPrivBal4AddrToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivBal4AddrToken) ProtoMessage()    {}
 func (*ReqPrivBal4AddrToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{32}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{32}
 }
 func (m *ReqPrivBal4AddrToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Unmarshal(m, b)
@@ -2008,7 +2012,7 @@ func (m *ReplyPrivacyBalance) Reset()         { *m = ReplyPrivacyBalance{} }
 func (m *ReplyPrivacyBalance) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyBalance) ProtoMessage()    {}
 func (*ReplyPrivacyBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{33}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{33}
 }
 func (m *ReplyPrivacyBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyBalance.Unmarshal(m, b)
@@ -2063,7 +2067,7 @@ func (m *PrivacyDBStore) Reset()         { *m = PrivacyDBStore{} }
 func (m *PrivacyDBStore) String() string { return proto.CompactTextString(m) }
 func (*PrivacyDBStore) ProtoMessage()    {}
 func (*PrivacyDBStore) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{34}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{34}
 }
 func (m *PrivacyDBStore) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyDBStore.Unmarshal(m, b)
@@ -2172,7 +2176,7 @@ func (m *UTXO) Reset()         { *m = UTXO{} }
 func (m *UTXO) String() string { return proto.CompactTextString(m) }
 func (*UTXO) ProtoMessage()    {}
 func (*UTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{35}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{35}
 }
 func (m *UTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXO.Unmarshal(m, b)
@@ -2219,7 +2223,7 @@ func (m *UTXOHaveTxHash) Reset()         { *m = UTXOHaveTxHash{} }
 func (m *UTXOHaveTxHash) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHash) ProtoMessage()    {}
 func (*UTXOHaveTxHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{36}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{36}
 }
 func (m *UTXOHaveTxHash) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHash.Unmarshal(m, b)
@@ -2271,7 +2275,7 @@ func (m *UTXOs) Reset()         { *m = UTXOs{} }
 func (m *UTXOs) String() string { return proto.CompactTextString(m) }
 func (*UTXOs) ProtoMessage()    {}
 func (*UTXOs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{37}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{37}
 }
 func (m *UTXOs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOs.Unmarshal(m, b)
@@ -2309,7 +2313,7 @@ func (m *UTXOHaveTxHashs) Reset()         { *m = UTXOHaveTxHashs{} }
 func (m *UTXOHaveTxHashs) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHashs) ProtoMessage()    {}
 func (*UTXOHaveTxHashs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{38}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{38}
 }
 func (m *UTXOHaveTxHashs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHashs.Unmarshal(m, b)
@@ -2350,7 +2354,7 @@ func (m *ReqUTXOGlobalIndex) Reset()         { *m = ReqUTXOGlobalIndex{} }
 func (m *ReqUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOGlobalIndex) ProtoMessage()    {}
 func (*ReqUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{39}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{39}
 }
 func (m *ReqUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Unmarshal(m, b)
@@ -2410,7 +2414,7 @@ func (m *UTXOBasic) Reset()         { *m = UTXOBasic{} }
 func (m *UTXOBasic) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasic) ProtoMessage()    {}
 func (*UTXOBasic) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{40}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{40}
 }
 func (m *UTXOBasic) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasic.Unmarshal(m, b)
@@ -2456,7 +2460,7 @@ func (m *UTXOIndex4Amount) Reset()         { *m = UTXOIndex4Amount{} }
 func (m *UTXOIndex4Amount) String() string { return proto.CompactTextString(m) }
 func (*UTXOIndex4Amount) ProtoMessage()    {}
 func (*UTXOIndex4Amount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{41}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{41}
 }
 func (m *UTXOIndex4Amount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOIndex4Amount.Unmarshal(m, b)
@@ -2501,7 +2505,7 @@ func (m *ResUTXOGlobalIndex) Reset()         { *m = ResUTXOGlobalIndex{} }
 func (m *ResUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOGlobalIndex) ProtoMessage()    {}
 func (*ResUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{42}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{42}
 }
 func (m *ResUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Unmarshal(m, b)
@@ -2545,7 +2549,7 @@ func (m *FTXOsSTXOsInOneTx) Reset()         { *m = FTXOsSTXOsInOneTx{} }
 func (m *FTXOsSTXOsInOneTx) String() string { return proto.CompactTextString(m) }
 func (*FTXOsSTXOsInOneTx) ProtoMessage()    {}
 func (*FTXOsSTXOsInOneTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{43}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{43}
 }
 func (m *FTXOsSTXOsInOneTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Unmarshal(m, b)
@@ -2619,7 +2623,7 @@ func (m *RealKeyInput) Reset()         { *m = RealKeyInput{} }
 func (m *RealKeyInput) String() string { return proto.CompactTextString(m) }
 func (*RealKeyInput) ProtoMessage()    {}
 func (*RealKeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{44}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{44}
 }
 func (m *RealKeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RealKeyInput.Unmarshal(m, b)
@@ -2664,7 +2668,7 @@ func (m *UTXOBasics) Reset()         { *m = UTXOBasics{} }
 func (m *UTXOBasics) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasics) ProtoMessage()    {}
 func (*UTXOBasics) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{45}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{45}
 }
 func (m *UTXOBasics) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasics.Unmarshal(m, b)
@@ -2716,7 +2720,7 @@ func (m *CreateTransactionCache) Reset()         { *m = CreateTransactionCache{}
 func (m *CreateTransactionCache) String() string { return proto.CompactTextString(m) }
 func (*CreateTransactionCache) ProtoMessage()    {}
 func (*CreateTransactionCache) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{46}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{46}
 }
 func (m *CreateTransactionCache) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CreateTransactionCache.Unmarshal(m, b)
@@ -2811,7 +2815,7 @@ func (m *ReqCacheTxList) Reset()         { *m = ReqCacheTxList{} }
 func (m *ReqCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReqCacheTxList) ProtoMessage()    {}
 func (*ReqCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{47}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{47}
 }
 func (m *ReqCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCacheTxList.Unmarshal(m, b)
@@ -2856,7 +2860,7 @@ func (m *ReplyCacheTxList) Reset()         { *m = ReplyCacheTxList{} }
 func (m *ReplyCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReplyCacheTxList) ProtoMessage()    {}
 func (*ReplyCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{48}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{48}
 }
 func (m *ReplyCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyCacheTxList.Unmarshal(m, b)
@@ -2902,7 +2906,7 @@ func (m *ReqPrivacyAccount) Reset()         { *m = ReqPrivacyAccount{} }
 func (m *ReqPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyAccount) ProtoMessage()    {}
 func (*ReqPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{49}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{49}
 }
 func (m *ReqPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyAccount.Unmarshal(m, b)
@@ -2966,7 +2970,7 @@ func (m *ReplyPrivacyAccount) Reset()         { *m = ReplyPrivacyAccount{} }
 func (m *ReplyPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAccount) ProtoMessage()    {}
 func (*ReplyPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{50}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{50}
 }
 func (m *ReplyPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAccount.Unmarshal(m, b)
@@ -3019,7 +3023,7 @@ func (m *ReqCreateCacheTxKey) Reset()         { *m = ReqCreateCacheTxKey{} }
 func (m *ReqCreateCacheTxKey) String() string { return proto.CompactTextString(m) }
 func (*ReqCreateCacheTxKey) ProtoMessage()    {}
 func (*ReqCreateCacheTxKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{51}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{51}
 }
 func (m *ReqCreateCacheTxKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Unmarshal(m, b)
@@ -3074,7 +3078,7 @@ func (m *ReqPrivacyTransactionList) Reset()         { *m = ReqPrivacyTransaction
 func (m *ReqPrivacyTransactionList) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyTransactionList) ProtoMessage()    {}
 func (*ReqPrivacyTransactionList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{52}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{52}
 }
 func (m *ReqPrivacyTransactionList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Unmarshal(m, b)
@@ -3162,7 +3166,7 @@ func (m *ReqRescanUtxos) Reset()         { *m = ReqRescanUtxos{} }
 func (m *ReqRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*ReqRescanUtxos) ProtoMessage()    {}
 func (*ReqRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{53}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{53}
 }
 func (m *ReqRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRescanUtxos.Unmarshal(m, b)
@@ -3208,7 +3212,7 @@ func (m *RepRescanResult) Reset()         { *m = RepRescanResult{} }
 func (m *RepRescanResult) String() string { return proto.CompactTextString(m) }
 func (*RepRescanResult) ProtoMessage()    {}
 func (*RepRescanResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{54}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{54}
 }
 func (m *RepRescanResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanResult.Unmarshal(m, b)
@@ -3254,7 +3258,7 @@ func (m *RepRescanUtxos) Reset()         { *m = RepRescanUtxos{} }
 func (m *RepRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*RepRescanUtxos) ProtoMessage()    {}
 func (*RepRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{55}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{55}
 }
 func (m *RepRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanUtxos.Unmarshal(m, b)
@@ -3299,7 +3303,7 @@ func (m *ReqEnablePrivacy) Reset()         { *m = ReqEnablePrivacy{} }
 func (m *ReqEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*ReqEnablePrivacy) ProtoMessage()    {}
 func (*ReqEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{56}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{56}
 }
 func (m *ReqEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqEnablePrivacy.Unmarshal(m, b)
@@ -3339,7 +3343,7 @@ func (m *PriAddrResult) Reset()         { *m = PriAddrResult{} }
 func (m *PriAddrResult) String() string { return proto.CompactTextString(m) }
 func (*PriAddrResult) ProtoMessage()    {}
 func (*PriAddrResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{57}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{57}
 }
 func (m *PriAddrResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PriAddrResult.Unmarshal(m, b)
@@ -3391,7 +3395,7 @@ func (m *RepEnablePrivacy) Reset()         { *m = RepEnablePrivacy{} }
 func (m *RepEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*RepEnablePrivacy) ProtoMessage()    {}
 func (*RepEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{58}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{58}
 }
 func (m *RepEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepEnablePrivacy.Unmarshal(m, b)
@@ -3432,7 +3436,7 @@ func (m *PrivacySignatureParam) Reset()         { *m = PrivacySignatureParam{} }
 func (m *PrivacySignatureParam) String() string { return proto.CompactTextString(m) }
 func (*PrivacySignatureParam) ProtoMessage()    {}
 func (*PrivacySignatureParam) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{59}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{59}
 }
 func (m *PrivacySignatureParam) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacySignatureParam.Unmarshal(m, b)
@@ -3487,7 +3491,7 @@ func (m *WalletAccountPrivacy) Reset()         { *m = WalletAccountPrivacy{} }
 func (m *WalletAccountPrivacy) String() string { return proto.CompactTextString(m) }
 func (*WalletAccountPrivacy) ProtoMessage()    {}
 func (*WalletAccountPrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{60}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{60}
 }
 func (m *WalletAccountPrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_WalletAccountPrivacy.Unmarshal(m, b)
@@ -3560,7 +3564,7 @@ func (m *ReqCreatePrivacyTx) Reset()         { *m = ReqCreatePrivacyTx{} }
 func (m *ReqCreatePrivacyTx) String() string { return proto.CompactTextString(m) }
 func (*ReqCreatePrivacyTx) ProtoMessage()    {}
 func (*ReqCreatePrivacyTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_6ecd2799f7ad9b76, []int{61}
+	return fileDescriptor_privacy_5816cdb94582b926, []int{61}
 }
 func (m *ReqCreatePrivacyTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreatePrivacyTx.Unmarshal(m, b)
@@ -3898,9 +3902,9 @@ var _Privacy_serviceDesc = grpc.ServiceDesc{
 	Metadata: "privacy.proto",
 }
 
-func init() { proto.RegisterFile("privacy.proto", fileDescriptor_privacy_6ecd2799f7ad9b76) }
+func init() { proto.RegisterFile("privacy.proto", fileDescriptor_privacy_5816cdb94582b926) }
 
-var fileDescriptor_privacy_6ecd2799f7ad9b76 = []byte{
+var fileDescriptor_privacy_5816cdb94582b926 = []byte{
 	// 2329 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x39, 0xcb, 0x6f, 0x1c, 0x49,
 	0xf9, 0xee, 0x79, 0xd8, 0xee, 0xcf, 0x63, 0x7b, 0x52, 0xb1, 0xbd, 0xce, 0x24, 0x8a, 0xfc, 0xab,

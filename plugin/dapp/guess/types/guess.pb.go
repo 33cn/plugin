@@ -65,7 +65,7 @@ func (m *GuessGame) Reset()         { *m = GuessGame{} }
 func (m *GuessGame) String() string { return proto.CompactTextString(m) }
 func (*GuessGame) ProtoMessage()    {}
 func (*GuessGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{0}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{0}
 }
 func (m *GuessGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGame.Unmarshal(m, b)
@@ -280,7 +280,7 @@ func (m *GuessPlayer) Reset()         { *m = GuessPlayer{} }
 func (m *GuessPlayer) String() string { return proto.CompactTextString(m) }
 func (*GuessPlayer) ProtoMessage()    {}
 func (*GuessPlayer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{1}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{1}
 }
 func (m *GuessPlayer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessPlayer.Unmarshal(m, b)
@@ -331,7 +331,7 @@ func (m *GuessBet) Reset()         { *m = GuessBet{} }
 func (m *GuessBet) String() string { return proto.CompactTextString(m) }
 func (*GuessBet) ProtoMessage()    {}
 func (*GuessBet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{2}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{2}
 }
 func (m *GuessBet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessBet.Unmarshal(m, b)
@@ -407,7 +407,7 @@ func (m *GuessBetStat) Reset()         { *m = GuessBetStat{} }
 func (m *GuessBetStat) String() string { return proto.CompactTextString(m) }
 func (*GuessBetStat) ProtoMessage()    {}
 func (*GuessBetStat) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{3}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{3}
 }
 func (m *GuessBetStat) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessBetStat.Unmarshal(m, b)
@@ -462,7 +462,7 @@ func (m *GuessBetStatItem) Reset()         { *m = GuessBetStatItem{} }
 func (m *GuessBetStatItem) String() string { return proto.CompactTextString(m) }
 func (*GuessBetStatItem) ProtoMessage()    {}
 func (*GuessBetStatItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{4}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{4}
 }
 func (m *GuessBetStatItem) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessBetStatItem.Unmarshal(m, b)
@@ -523,7 +523,7 @@ func (m *GuessGameAction) Reset()         { *m = GuessGameAction{} }
 func (m *GuessGameAction) String() string { return proto.CompactTextString(m) }
 func (*GuessGameAction) ProtoMessage()    {}
 func (*GuessGameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{5}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{5}
 }
 func (m *GuessGameAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameAction.Unmarshal(m, b)
@@ -812,7 +812,7 @@ func (m *GuessGameStart) Reset()         { *m = GuessGameStart{} }
 func (m *GuessGameStart) String() string { return proto.CompactTextString(m) }
 func (*GuessGameStart) ProtoMessage()    {}
 func (*GuessGameStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{6}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{6}
 }
 func (m *GuessGameStart) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameStart.Unmarshal(m, b)
@@ -930,7 +930,7 @@ func (m *GuessGameBet) Reset()         { *m = GuessGameBet{} }
 func (m *GuessGameBet) String() string { return proto.CompactTextString(m) }
 func (*GuessGameBet) ProtoMessage()    {}
 func (*GuessGameBet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{7}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{7}
 }
 func (m *GuessGameBet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameBet.Unmarshal(m, b)
@@ -983,7 +983,7 @@ func (m *GuessGameStopBet) Reset()         { *m = GuessGameStopBet{} }
 func (m *GuessGameStopBet) String() string { return proto.CompactTextString(m) }
 func (*GuessGameStopBet) ProtoMessage()    {}
 func (*GuessGameStopBet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{8}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{8}
 }
 func (m *GuessGameStopBet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameStopBet.Unmarshal(m, b)
@@ -1022,7 +1022,7 @@ func (m *GuessGameAbort) Reset()         { *m = GuessGameAbort{} }
 func (m *GuessGameAbort) String() string { return proto.CompactTextString(m) }
 func (*GuessGameAbort) ProtoMessage()    {}
 func (*GuessGameAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{9}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{9}
 }
 func (m *GuessGameAbort) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameAbort.Unmarshal(m, b)
@@ -1062,7 +1062,7 @@ func (m *GuessGamePublish) Reset()         { *m = GuessGamePublish{} }
 func (m *GuessGamePublish) String() string { return proto.CompactTextString(m) }
 func (*GuessGamePublish) ProtoMessage()    {}
 func (*GuessGamePublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{10}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{10}
 }
 func (m *GuessGamePublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGamePublish.Unmarshal(m, b)
@@ -1109,7 +1109,7 @@ func (m *GuessGameQuery) Reset()         { *m = GuessGameQuery{} }
 func (m *GuessGameQuery) String() string { return proto.CompactTextString(m) }
 func (*GuessGameQuery) ProtoMessage()    {}
 func (*GuessGameQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{11}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{11}
 }
 func (m *GuessGameQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameQuery.Unmarshal(m, b)
@@ -1161,7 +1161,7 @@ func (m *QueryGuessGameInfo) Reset()         { *m = QueryGuessGameInfo{} }
 func (m *QueryGuessGameInfo) String() string { return proto.CompactTextString(m) }
 func (*QueryGuessGameInfo) ProtoMessage()    {}
 func (*QueryGuessGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{12}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{12}
 }
 func (m *QueryGuessGameInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGuessGameInfo.Unmarshal(m, b)
@@ -1242,7 +1242,7 @@ func (m *ReplyGuessGameInfo) Reset()         { *m = ReplyGuessGameInfo{} }
 func (m *ReplyGuessGameInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyGuessGameInfo) ProtoMessage()    {}
 func (*ReplyGuessGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{13}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{13}
 }
 func (m *ReplyGuessGameInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyGuessGameInfo.Unmarshal(m, b)
@@ -1281,7 +1281,7 @@ func (m *QueryGuessGameInfos) Reset()         { *m = QueryGuessGameInfos{} }
 func (m *QueryGuessGameInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryGuessGameInfos) ProtoMessage()    {}
 func (*QueryGuessGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{14}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{14}
 }
 func (m *QueryGuessGameInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryGuessGameInfos.Unmarshal(m, b)
@@ -1320,7 +1320,7 @@ func (m *ReplyGuessGameInfos) Reset()         { *m = ReplyGuessGameInfos{} }
 func (m *ReplyGuessGameInfos) String() string { return proto.CompactTextString(m) }
 func (*ReplyGuessGameInfos) ProtoMessage()    {}
 func (*ReplyGuessGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{15}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{15}
 }
 func (m *ReplyGuessGameInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyGuessGameInfos.Unmarshal(m, b)
@@ -1372,7 +1372,7 @@ func (m *ReceiptGuessGame) Reset()         { *m = ReceiptGuessGame{} }
 func (m *ReceiptGuessGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptGuessGame) ProtoMessage()    {}
 func (*ReceiptGuessGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{16}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{16}
 }
 func (m *ReceiptGuessGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptGuessGame.Unmarshal(m, b)
@@ -1507,7 +1507,7 @@ func (m *UserBet) Reset()         { *m = UserBet{} }
 func (m *UserBet) String() string { return proto.CompactTextString(m) }
 func (*UserBet) ProtoMessage()    {}
 func (*UserBet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{17}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{17}
 }
 func (m *UserBet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UserBet.Unmarshal(m, b)
@@ -1593,7 +1593,7 @@ func (m *GuessStartTxReq) Reset()         { *m = GuessStartTxReq{} }
 func (m *GuessStartTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessStartTxReq) ProtoMessage()    {}
 func (*GuessStartTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{18}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{18}
 }
 func (m *GuessStartTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessStartTxReq.Unmarshal(m, b)
@@ -1719,7 +1719,7 @@ func (m *GuessBetTxReq) Reset()         { *m = GuessBetTxReq{} }
 func (m *GuessBetTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessBetTxReq) ProtoMessage()    {}
 func (*GuessBetTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{19}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{19}
 }
 func (m *GuessBetTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessBetTxReq.Unmarshal(m, b)
@@ -1780,7 +1780,7 @@ func (m *GuessStopBetTxReq) Reset()         { *m = GuessStopBetTxReq{} }
 func (m *GuessStopBetTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessStopBetTxReq) ProtoMessage()    {}
 func (*GuessStopBetTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{20}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{20}
 }
 func (m *GuessStopBetTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessStopBetTxReq.Unmarshal(m, b)
@@ -1827,7 +1827,7 @@ func (m *GuessAbortTxReq) Reset()         { *m = GuessAbortTxReq{} }
 func (m *GuessAbortTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessAbortTxReq) ProtoMessage()    {}
 func (*GuessAbortTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{21}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{21}
 }
 func (m *GuessAbortTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessAbortTxReq.Unmarshal(m, b)
@@ -1875,7 +1875,7 @@ func (m *GuessPublishTxReq) Reset()         { *m = GuessPublishTxReq{} }
 func (m *GuessPublishTxReq) String() string { return proto.CompactTextString(m) }
 func (*GuessPublishTxReq) ProtoMessage()    {}
 func (*GuessPublishTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{22}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{22}
 }
 func (m *GuessPublishTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessPublishTxReq.Unmarshal(m, b)
@@ -1929,7 +1929,7 @@ func (m *GuessGameRecord) Reset()         { *m = GuessGameRecord{} }
 func (m *GuessGameRecord) String() string { return proto.CompactTextString(m) }
 func (*GuessGameRecord) ProtoMessage()    {}
 func (*GuessGameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{23}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{23}
 }
 func (m *GuessGameRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameRecord.Unmarshal(m, b)
@@ -1976,7 +1976,7 @@ func (m *GuessGameRecords) Reset()         { *m = GuessGameRecords{} }
 func (m *GuessGameRecords) String() string { return proto.CompactTextString(m) }
 func (*GuessGameRecords) ProtoMessage()    {}
 func (*GuessGameRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_guess_4b019e5c5053844a, []int{24}
+	return fileDescriptor_guess_8eeebf18bc9906dd, []int{24}
 }
 func (m *GuessGameRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GuessGameRecords.Unmarshal(m, b)
@@ -2252,9 +2252,9 @@ var _Guess_serviceDesc = grpc.ServiceDesc{
 	Metadata: "guess.proto",
 }
 
-func init() { proto.RegisterFile("guess.proto", fileDescriptor_guess_4b019e5c5053844a) }
+func init() { proto.RegisterFile("guess.proto", fileDescriptor_guess_8eeebf18bc9906dd) }
 
-var fileDescriptor_guess_4b019e5c5053844a = []byte{
+var fileDescriptor_guess_8eeebf18bc9906dd = []byte{
 	// 1367 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x58, 0xc9, 0x8e, 0xdb, 0x46,
 	0x13, 0x1e, 0x92, 0xa2, 0x96, 0x92, 0x66, 0x46, 0xee, 0xf1, 0xc2, 0x7f, 0x60, 0x18, 0xfa, 0x09,

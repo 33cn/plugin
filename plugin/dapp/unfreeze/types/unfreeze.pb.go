@@ -60,7 +60,7 @@ func (m *Unfreeze) Reset()         { *m = Unfreeze{} }
 func (m *Unfreeze) String() string { return proto.CompactTextString(m) }
 func (*Unfreeze) ProtoMessage()    {}
 func (*Unfreeze) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{0}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{0}
 }
 func (m *Unfreeze) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Unfreeze.Unmarshal(m, b)
@@ -274,7 +274,7 @@ func (m *FixAmount) Reset()         { *m = FixAmount{} }
 func (m *FixAmount) String() string { return proto.CompactTextString(m) }
 func (*FixAmount) ProtoMessage()    {}
 func (*FixAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{1}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{1}
 }
 func (m *FixAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FixAmount.Unmarshal(m, b)
@@ -321,7 +321,7 @@ func (m *LeftProportion) Reset()         { *m = LeftProportion{} }
 func (m *LeftProportion) String() string { return proto.CompactTextString(m) }
 func (*LeftProportion) ProtoMessage()    {}
 func (*LeftProportion) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{2}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{2}
 }
 func (m *LeftProportion) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LeftProportion.Unmarshal(m, b)
@@ -372,7 +372,7 @@ func (m *UnfreezeAction) Reset()         { *m = UnfreezeAction{} }
 func (m *UnfreezeAction) String() string { return proto.CompactTextString(m) }
 func (*UnfreezeAction) ProtoMessage()    {}
 func (*UnfreezeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{3}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{3}
 }
 func (m *UnfreezeAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnfreezeAction.Unmarshal(m, b)
@@ -563,7 +563,7 @@ func (m *UnfreezeCreate) Reset()         { *m = UnfreezeCreate{} }
 func (m *UnfreezeCreate) String() string { return proto.CompactTextString(m) }
 func (*UnfreezeCreate) ProtoMessage()    {}
 func (*UnfreezeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{4}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{4}
 }
 func (m *UnfreezeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnfreezeCreate.Unmarshal(m, b)
@@ -747,7 +747,7 @@ func (m *UnfreezeWithdraw) Reset()         { *m = UnfreezeWithdraw{} }
 func (m *UnfreezeWithdraw) String() string { return proto.CompactTextString(m) }
 func (*UnfreezeWithdraw) ProtoMessage()    {}
 func (*UnfreezeWithdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{5}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{5}
 }
 func (m *UnfreezeWithdraw) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnfreezeWithdraw.Unmarshal(m, b)
@@ -785,7 +785,7 @@ func (m *UnfreezeTerminate) Reset()         { *m = UnfreezeTerminate{} }
 func (m *UnfreezeTerminate) String() string { return proto.CompactTextString(m) }
 func (*UnfreezeTerminate) ProtoMessage()    {}
 func (*UnfreezeTerminate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{6}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{6}
 }
 func (m *UnfreezeTerminate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnfreezeTerminate.Unmarshal(m, b)
@@ -825,7 +825,7 @@ func (m *ReceiptUnfreeze) Reset()         { *m = ReceiptUnfreeze{} }
 func (m *ReceiptUnfreeze) String() string { return proto.CompactTextString(m) }
 func (*ReceiptUnfreeze) ProtoMessage()    {}
 func (*ReceiptUnfreeze) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{7}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{7}
 }
 func (m *ReceiptUnfreeze) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptUnfreeze.Unmarshal(m, b)
@@ -871,7 +871,7 @@ func (m *LocalUnfreeze) Reset()         { *m = LocalUnfreeze{} }
 func (m *LocalUnfreeze) String() string { return proto.CompactTextString(m) }
 func (*LocalUnfreeze) ProtoMessage()    {}
 func (*LocalUnfreeze) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{8}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{8}
 }
 func (m *LocalUnfreeze) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalUnfreeze.Unmarshal(m, b)
@@ -918,7 +918,7 @@ func (m *ReplyQueryUnfreezeWithdraw) Reset()         { *m = ReplyQueryUnfreezeWi
 func (m *ReplyQueryUnfreezeWithdraw) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryUnfreezeWithdraw) ProtoMessage()    {}
 func (*ReplyQueryUnfreezeWithdraw) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{9}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{9}
 }
 func (m *ReplyQueryUnfreezeWithdraw) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryUnfreezeWithdraw.Unmarshal(m, b)
@@ -967,7 +967,7 @@ func (m *ReqUnfreezes) Reset()         { *m = ReqUnfreezes{} }
 func (m *ReqUnfreezes) String() string { return proto.CompactTextString(m) }
 func (*ReqUnfreezes) ProtoMessage()    {}
 func (*ReqUnfreezes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{10}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{10}
 }
 func (m *ReqUnfreezes) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUnfreezes.Unmarshal(m, b)
@@ -1055,7 +1055,7 @@ func (m *ReplyUnfreeze) Reset()         { *m = ReplyUnfreeze{} }
 func (m *ReplyUnfreeze) String() string { return proto.CompactTextString(m) }
 func (*ReplyUnfreeze) ProtoMessage()    {}
 func (*ReplyUnfreeze) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{11}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{11}
 }
 func (m *ReplyUnfreeze) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUnfreeze.Unmarshal(m, b)
@@ -1274,7 +1274,7 @@ func (m *ReplyUnfreezes) Reset()         { *m = ReplyUnfreezes{} }
 func (m *ReplyUnfreezes) String() string { return proto.CompactTextString(m) }
 func (*ReplyUnfreezes) ProtoMessage()    {}
 func (*ReplyUnfreezes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_unfreeze_9bb0d634bd1b97d4, []int{12}
+	return fileDescriptor_unfreeze_d65c23f408fc7d3e, []int{12}
 }
 func (m *ReplyUnfreezes) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUnfreezes.Unmarshal(m, b)
@@ -1422,9 +1422,9 @@ var _Unfreeze_serviceDesc = grpc.ServiceDesc{
 	Metadata: "unfreeze.proto",
 }
 
-func init() { proto.RegisterFile("unfreeze.proto", fileDescriptor_unfreeze_9bb0d634bd1b97d4) }
+func init() { proto.RegisterFile("unfreeze.proto", fileDescriptor_unfreeze_d65c23f408fc7d3e) }
 
-var fileDescriptor_unfreeze_9bb0d634bd1b97d4 = []byte{
+var fileDescriptor_unfreeze_d65c23f408fc7d3e = []byte{
 	// 755 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xcb, 0x6e, 0x13, 0x4b,
 	0x10, 0xf5, 0x78, 0x3c, 0x7e, 0x94, 0x63, 0xc7, 0xb7, 0x6f, 0xee, 0x65, 0x14, 0x21, 0x64, 0x06,

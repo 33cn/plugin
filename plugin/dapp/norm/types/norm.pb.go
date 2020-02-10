@@ -36,7 +36,7 @@ func (m *Norm) Reset()         { *m = Norm{} }
 func (m *Norm) String() string { return proto.CompactTextString(m) }
 func (*Norm) ProtoMessage()    {}
 func (*Norm) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_f2aed6c5a9608057, []int{0}
+	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{0}
 }
 func (m *Norm) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Norm.Unmarshal(m, b)
@@ -98,7 +98,7 @@ func (m *NormAction) Reset()         { *m = NormAction{} }
 func (m *NormAction) String() string { return proto.CompactTextString(m) }
 func (*NormAction) ProtoMessage()    {}
 func (*NormAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_f2aed6c5a9608057, []int{1}
+	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{1}
 }
 func (m *NormAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormAction.Unmarshal(m, b)
@@ -216,7 +216,7 @@ func (m *NormPut) Reset()         { *m = NormPut{} }
 func (m *NormPut) String() string { return proto.CompactTextString(m) }
 func (*NormPut) ProtoMessage()    {}
 func (*NormPut) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_f2aed6c5a9608057, []int{2}
+	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{2}
 }
 func (m *NormPut) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormPut.Unmarshal(m, b)
@@ -261,7 +261,7 @@ func (m *NormGetKey) Reset()         { *m = NormGetKey{} }
 func (m *NormGetKey) String() string { return proto.CompactTextString(m) }
 func (*NormGetKey) ProtoMessage()    {}
 func (*NormGetKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_f2aed6c5a9608057, []int{3}
+	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{3}
 }
 func (m *NormGetKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormGetKey.Unmarshal(m, b)
@@ -295,9 +295,9 @@ func init() {
 	proto.RegisterType((*NormGetKey)(nil), "types.NormGetKey")
 }
 
-func init() { proto.RegisterFile("norm.proto", fileDescriptor_norm_f2aed6c5a9608057) }
+func init() { proto.RegisterFile("norm.proto", fileDescriptor_norm_4c7b2dbe1c6a4afc) }
 
-var fileDescriptor_norm_f2aed6c5a9608057 = []byte{
+var fileDescriptor_norm_4c7b2dbe1c6a4afc = []byte{
 	// 209 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xca, 0xcb, 0x2f, 0xca,
 	0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2d, 0xa9, 0x2c, 0x48, 0x2d, 0x56, 0x4a, 0xe3,
