@@ -10,7 +10,7 @@ import (
 )
 
 type addrAndprivacy struct {
-	 PrivacyKeyPair *privacy.Privacy
+	PrivacyKeyPair *privacy.Privacy
 	Addr           *string
 }
 
