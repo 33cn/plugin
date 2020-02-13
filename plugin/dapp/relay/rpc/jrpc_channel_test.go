@@ -42,11 +42,6 @@ func TestJRPCChannel(t *testing.T) {
 		{fn: testShowOnesAcceptRelayOrdersCmd},
 		{fn: testShowOnesStatusOrdersCmd},
 		{fn: testShowBTCHeadHeightListCmd},
-		{fn: testCreateRawRelayOrderTxCmd},
-		{fn: testCreateRawRelayAcceptTxCmd},
-		{fn: testCreateRawRevokeTxCmd},
-		{fn: testCreateRawRelayConfirmTxCmd},
-		{fn: testCreateRawRelayBtcHeaderCmd},
 		{fn: testGetBTCHeaderCurHeight},
 	}
 	for index, testCase := range testCases {
@@ -103,36 +98,6 @@ func testShowBTCHeadHeightListCmd(t *testing.T, jrpc *jsonclient.JSONClient) err
 	params.Payload = types.MustPBToJSON(req)
 	rep = &pty.ReplyRelayBtcHeadHeightList{}
 	return jrpc.Call("Chain33.Query", params, rep)
-}
-
-func testCreateRawRelayOrderTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.RelayCreate{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelayOrderTx", params, &res)
-}
-
-func testCreateRawRelayAcceptTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.RelayAccept{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelayAcceptTx", params, &res)
-}
-
-func testCreateRawRevokeTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.RelayRevoke{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelayRevokeTx", params, &res)
-}
-
-func testCreateRawRelayConfirmTxCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.RelayConfirmTx{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelayConfirmTx", params, &res)
-}
-
-func testCreateRawRelayBtcHeaderCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
-	params := pty.BtcHeader{}
-	var res string
-	return jrpc.Call("relay.CreateRawRelaySaveBTCHeadTx", params, &res)
 }
 
 func testGetBTCHeaderCurHeight(t *testing.T, jrpc *jsonclient.JSONClient) error {

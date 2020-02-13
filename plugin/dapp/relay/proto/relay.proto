@@ -25,40 +25,44 @@ message RelayAction {
 }
 
 message RelayOrder {
-    string           id            = 1;
-    RelayOrderStatus status        = 2;
-    RelayOrderStatus preStatus     = 3;
-    uint64           amount        = 4;
-    string           createrAddr   = 5;
-    uint32           coinOperation = 6;
-    string           coin          = 7;
-    uint64           coinAmount    = 8;
-    string           coinAddr      = 9;
-    string           coinTxHash    = 10;
-    int64            createTime    = 11;
-    string           acceptAddr    = 12;
-    int64            acceptTime    = 13;
-    int64            confirmTime   = 14;
-    int64            finishTime    = 15;
-    string           finishTxHash  = 16;
-    int64            height        = 17;
-    uint64           coinHeight    = 18;
-    uint32           coinWaits     = 19;
+    string           id             = 1;
+    RelayOrderStatus status         = 2;
+    RelayOrderStatus preStatus      = 3;
+    uint64           localCoinAmount = 4;
+    string           createrAddr    = 5;
+    uint32           operation      = 6;
+    string           xCoin          = 7;
+    uint64           xAmount        = 8;
+    string           xAddr          = 9;
+    string           xTxHash        = 10;
+    int64            createTime     = 11;
+    string           acceptAddr     = 12;
+    int64            acceptTime     = 13;
+    int64            confirmTime    = 14;
+    int64            finishTime     = 15;
+    string           finishTxHash   = 16;
+    int64            height         = 17;
+    uint64           XHeight        = 18;
+    uint32           xBlockWaits    = 19;
+    string           localCoinSymbol = 20;
+    string           localCoinExec  = 21;
 }
 
 message RelayCreate {
-    uint32 operation = 1; // 0: buy, 1: sell
-    string coin      = 2; // outside coin BTC, ETH...
-    uint64 amount    = 3;
-    string addr      = 4;
-    uint64 btyAmount = 5;
-    uint32 coinWaits = 6; // the coin blocks to wait
+    uint32 operation        = 1; // 0: buy, 1: sell
+    string xCoin            = 2; // outside cross coin BTC, ETH...
+    uint64 xAmount          = 3;
+    string xAddr            = 4;
+    uint64 localCoinAmount  = 5;
+    uint32 xBlockWaits      = 6; // the coin blocks to wait
+    string localCoinSymbol  = 7;
+    string localCoinExec    = 8;
 }
 
 message RelayAccept {
-    string orderId   = 1;
-    string coinAddr  = 2; // for sell coin case needed
-    uint32 coinWaits = 3;
+    string orderId      = 1;
+    string xAddr        = 2; // for sell coin case needed
+    uint32 xBlockWaits  = 3;
 }
 
 message RelayRevoke {
@@ -151,24 +155,26 @@ message ReceiptRelayRcvBTCHeaders {
 }
 
 message ReceiptRelayLog {
-    string orderId       = 1;
-    string curStatus     = 2;
-    string preStatus     = 3;
-    string txAmount      = 4;
-    string createrAddr   = 5;
-    string coinOperation = 6;
-    string coin          = 7;
-    string coinAmount    = 8;
-    string coinAddr      = 9;
-    string coinTxHash    = 10;
-    int64  createTime    = 11;
-    string acceptAddr    = 12;
-    int64  acceptTime    = 13;
-    int64  confirmTime   = 14;
-    int64  finishTime    = 15;
-    string finishTxHash  = 16;
-    uint64 coinHeight    = 17;
-    uint32 coinWaits     = 18;
+    string orderId              = 1;
+    string curStatus            = 2;
+    string preStatus            = 3;
+    string localCoinAmount      = 4;
+    string createrAddr          = 5;
+    uint32 coinOperation        = 6;
+    string xCoin                = 7;
+    string xAmount              = 8;
+    string xAddr                = 9;
+    string xTxHash              = 10;
+    int64  createTime           = 11;
+    string acceptAddr           = 12;
+    int64  acceptTime           = 13;
+    int64  confirmTime          = 14;
+    int64  finishTime           = 15;
+    string finishTxHash         = 16;
+    uint64 xHeight              = 17;
+    uint32 xBlockWaits          = 18;
+    string localCoinSymbol      = 19;
+    string localCoinExec        = 20;
 }
 
 message ReqRelayAddrCoins {
