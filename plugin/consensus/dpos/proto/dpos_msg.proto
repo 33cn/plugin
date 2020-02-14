@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package types;
 
-// CycleBoundaryInfo cycle边界信息
+// CycleBoundaryInfo cycle边界信息 
 message CycleBoundaryInfo {
     int64  cycle      = 1;
     int64  stopHeight = 2;
