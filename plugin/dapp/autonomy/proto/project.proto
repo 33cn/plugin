@@ -9,21 +9,21 @@ import "lcommon.proto";
 package types;
 
 message AutonomyProposalProject {
-    ProposalProject  propProject  = 1;
+    ProposalProject propProject = 1;
     // 投票该提案的规则
-    RuleConfig       curRule      = 2;
+    RuleConfig curRule = 2;
     // 投票该提案的董事会成员
-    repeated string  boards       = 3;
+    repeated string boards = 3;
     // 董事会投票结果
-    VoteResult       boardVoteRes = 4;
+    VoteResult boardVoteRes = 4;
     // 公示投票
-    PublicVote       pubVote      = 5;
+    PublicVote pubVote = 5;
     // 状态
-    int32  status        = 6;
-    string address       = 7;
-    int64  height        = 8;
-    int32  index         = 9;
-    string proposalID    = 10;
+    int32  status     = 6;
+    string address    = 7;
+    int64  height     = 8;
+    int32  index      = 9;
+    string proposalID = 10;
 }
 
 message ProposalProject {
@@ -42,7 +42,7 @@ message ProposalProject {
     string amountDetail = 10; // 经费细则
 
     // 支付相关
-    string toAddr       = 11; // 收款地址
+    string toAddr = 11; // 收款地址
 
     // 投票相关
     int64 startBlockHeight    = 12; // 提案开始投票高度
@@ -61,8 +61,8 @@ message VoteProposalProject {
 }
 
 message PubVoteProposalProject {
-    string proposalID = 1;
-    bool   oppose     = 2;
+    string   proposalID        = 1;
+    bool     oppose            = 2;
     repeated string originAddr = 3;
 }
 
@@ -77,8 +77,8 @@ message ReceiptProposalProject {
 }
 
 message LocalProposalProject {
-    AutonomyProposalProject propPrj  = 1;
-    repeated string         comments = 2;
+    AutonomyProposalProject propPrj = 1;
+    repeated string comments        = 2;
 }
 
 // query

@@ -55,7 +55,7 @@ func (m *AutonomyAction) Reset()         { *m = AutonomyAction{} }
 func (m *AutonomyAction) String() string { return proto.CompactTextString(m) }
 func (*AutonomyAction) ProtoMessage()    {}
 func (*AutonomyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_autonomy_a527d25057c6879d, []int{0}
+	return fileDescriptor_autonomy_a0c83c718d92e3be, []int{0}
 }
 func (m *AutonomyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyAction.Unmarshal(m, b)
@@ -741,9 +741,9 @@ func init() {
 	proto.RegisterType((*AutonomyAction)(nil), "types.AutonomyAction")
 }
 
-func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_autonomy_a527d25057c6879d) }
+func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_autonomy_a0c83c718d92e3be) }
 
-var fileDescriptor_autonomy_a527d25057c6879d = []byte{
+var fileDescriptor_autonomy_a0c83c718d92e3be = []byte{
 	// 504 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x94, 0x4d, 0x6f, 0xd3, 0x40,
 	0x10, 0x40, 0xd3, 0x40, 0xfa, 0x31, 0x8e, 0x9d, 0x32, 0x2d, 0x60, 0xc2, 0x57, 0xc5, 0xa9, 0xa7,

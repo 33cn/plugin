@@ -79,13 +79,13 @@ message UnfreezeTerminate {
 
 // receipt
 message ReceiptUnfreeze {
-    Unfreeze prev = 1;
-    Unfreeze current  = 2;
+    Unfreeze prev    = 1;
+    Unfreeze current = 2;
 }
 
 message LocalUnfreeze {
     Unfreeze unfreeze = 1;
-    string txIndex = 2;
+    string   txIndex  = 2;
 }
 
 // query
@@ -95,11 +95,11 @@ message ReplyQueryUnfreezeWithdraw {
 }
 
 message ReqUnfreezes {
-   int32           direction = 1;
-   int32           count     = 2;
-   string          fromKey   = 3;
-   string initiator = 4;
-   string beneficiary = 5;
+    int32  direction   = 1;
+    int32  count       = 2;
+    string fromKey     = 3;
+    string initiator   = 4;
+    string beneficiary = 5;
 }
 
 message ReplyUnfreeze {
@@ -124,8 +124,8 @@ message ReplyUnfreeze {
         FixAmount      fixAmount      = 10;
         LeftProportion leftProportion = 11;
     }
-    bool terminated = 12;
-    string key = 13;
+    bool   terminated = 12;
+    string key        = 13;
 }
 message ReplyUnfreezes {
     repeated ReplyUnfreeze unfreeze = 1;

@@ -9,16 +9,16 @@ import "lcommon.proto";
 package types;
 
 message AutonomyProposalRule {
-    ProposalRule  propRule   = 1;
-    RuleConfig    curRule    = 2;
+    ProposalRule propRule = 1;
+    RuleConfig   curRule  = 2;
     // 全体持票人投票结果
-    VoteResult    voteResult = 3;
+    VoteResult voteResult = 3;
     // 状态
-    int32         status     = 4;
-    string        address    = 5;
-    int64         height     = 6;
-    int32         index      = 7;
-    string        proposalID = 8;
+    int32  status     = 4;
+    string address    = 5;
+    int64  height     = 6;
+    int32  index      = 7;
+    string proposalID = 8;
 }
 
 message ProposalRule {
@@ -28,7 +28,7 @@ message ProposalRule {
     int32 day   = 3;
 
     // 规则可修改项,如果某项不修改则置为-1
-    RuleConfig ruleCfg       = 4;
+    RuleConfig ruleCfg = 4;
     // 投票相关
     int64 startBlockHeight   = 5; // 提案开始投票高度
     int64 endBlockHeight     = 6; // 提案结束投票高度
@@ -40,8 +40,8 @@ message RevokeProposalRule {
 }
 
 message VoteProposalRule {
-    string proposalID = 1;
-    bool   approve    = 2;
+    string   proposalID        = 1;
+    bool     approve           = 2;
     repeated string originAddr = 3;
 }
 
@@ -51,13 +51,13 @@ message TerminateProposalRule {
 
 // receipt
 message ReceiptProposalRule {
-    AutonomyProposalRule prev = 1;
-    AutonomyProposalRule current  = 2;
+    AutonomyProposalRule prev    = 1;
+    AutonomyProposalRule current = 2;
 }
 
 message LocalProposalRule {
     AutonomyProposalRule propRule = 1;
-    repeated string      comments = 2;
+    repeated string comments      = 2;
 }
 
 // query
@@ -76,8 +76,8 @@ message ReplyQueryProposalRule {
 
 // TransferFund action
 message TransferFund {
-    int64   amount = 1;
-    string  note   = 2;
+    int64  amount = 1;
+    string note   = 2;
 }
 
 // Comment action

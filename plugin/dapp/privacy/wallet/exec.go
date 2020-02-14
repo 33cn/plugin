@@ -62,7 +62,7 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 	return reply, err
 }
 
-func (policy *privacyPolicy) On_ShowPrivacyAccountInfo(req *privacytypes.ReqPPrivacyAccount) (types.Message, error) {
+func (policy *privacyPolicy) On_ShowPrivacyAccountInfo(req *privacytypes.ReqPrivacyAccount) (types.Message, error) {
 	reply, err := policy.getPrivacyAccountInfo(req)
 	if err != nil {
 		bizlog.Error("getPrivacyAccountInfo", "err", err.Error())

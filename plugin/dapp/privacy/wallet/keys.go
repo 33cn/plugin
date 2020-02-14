@@ -96,45 +96,37 @@ func calcAddrKey(addr string) []byte {
 }
 
 // calcPrivacyUTXOPrefix4Addr 获取指定地址下可用UTXO信息索引的KEY值前缀
-func calcPrivacyUTXOPrefix4Addr(token, addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-", AvailUTXOs, token, addr))
+func calcPrivacyUTXOPrefix4Addr(assetExec, token, addr string) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-", AvailUTXOs, assetExec, token, addr))
 }
 
 // calcFTXOsKeyPrefix 获取指定地址下由于交易未被确认而让交易使用到的UTXO处于冻结状态信息的KEY值前缀
-func calcFTXOsKeyPrefix(token, addr string) []byte {
-	var prefix string
-	if len(token) > 0 && len(addr) > 0 {
-		prefix = fmt.Sprintf("%s:%s-%s-", FrozenUTXOs, token, addr)
-	} else if len(token) > 0 {
-		prefix = fmt.Sprintf("%s:%s-", FrozenUTXOs, token)
-	} else {
-		prefix = fmt.Sprintf("%s:", FrozenUTXOs)
-	}
-	return []byte(prefix)
+func calcFTXOsKeyPrefix(assetExec, token, addr string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-", FrozenUTXOs, assetExec, token, addr))
 }
 
 // calcSendPrivacyTxKey 计算以指定地址作为发送地址的交易信息索引
 // addr为发送地址
 // key为通过calcTxKey(heightstr)计算出来的值
-func calcSendPrivacyTxKey(tokenname, addr, key string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s", SendPrivacyTx, tokenname, addr, key))
+func calcSendPrivacyTxKey(assetExec, tokenname, addr, key string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", SendPrivacyTx, assetExec, tokenname, addr, key))
 }
 
 // calcRecvPrivacyTxKey 计算以指定地址作为接收地址的交易信息索引
 // addr为接收地址
 // key为通过calcTxKey(heightstr)计算出来的值
-func calcRecvPrivacyTxKey(tokenname, addr, key string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s", RecvPrivacyTx, tokenname, addr, key))
+func calcRecvPrivacyTxKey(assetExec, tokenname, addr, key string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RecvPrivacyTx, assetExec, tokenname, addr, key))
 }
 
 // calcUTXOKey4TokenAddr 计算当前地址可用UTXO的Key健值
-func calcUTXOKey4TokenAddr(token, addr, txhash string, index int) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s-%d", AvailUTXOs, token, addr, txhash, index))
+func calcUTXOKey4TokenAddr(assetExec, token, addr, txhash string, index int) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s-%d", AvailUTXOs, assetExec, token, addr, txhash, index))
 }
 
 // calcKey4FTXOsInTx 交易构建以后,将可用UTXO冻结的健值
-func calcKey4FTXOsInTx(token, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s", FrozenUTXOs, token, addr, txhash))
+func calcKey4FTXOsInTx(assetExec, token, addr, txhash string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", FrozenUTXOs, assetExec, token, addr, txhash))
 }
 
 // calcRescanUtxosFlagKey 新账户导入时扫描区块上该地址相关的UTXO信息
@@ -151,17 +143,17 @@ func calcKey4STXOsInTx(txhash string) []byte {
 }
 
 // calcSTXOTokenAddrTxKey 计算当前地址已花费的UTXO
-func calcSTXOTokenAddrTxKey(token, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-%s", PrivacySTXO, token, addr, txhash))
+func calcSTXOTokenAddrTxKey(assetExec, token, addr, txhash string) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-%s", PrivacySTXO, assetExec, token, addr, txhash))
 }
 
-func calcSTXOPrefix4Addr(token, addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s-%s-", PrivacySTXO, token, addr))
+func calcSTXOPrefix4Addr(assetExec, token, addr string) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%s-", PrivacySTXO, assetExec, token, addr))
 }
 
 // calcRevertSendTxKey 交易因为区块回退而将已经花费的UTXO移动到冻结UTXO队列的健值
-func calcRevertSendTxKey(tokenname, addr, txhash string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s", RevertSendtx, tokenname, addr, txhash))
+func calcRevertSendTxKey(assetExec, tokenname, addr, txhash string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", RevertSendtx, assetExec, tokenname, addr, txhash))
 }
 
 //通过height*100000+index 查询Tx交易信息

@@ -48,7 +48,7 @@ func (m *Issuance) Reset()         { *m = Issuance{} }
 func (m *Issuance) String() string { return proto.CompactTextString(m) }
 func (*Issuance) ProtoMessage()    {}
 func (*Issuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{0}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{0}
 }
 func (m *Issuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Issuance.Unmarshal(m, b)
@@ -196,7 +196,7 @@ func (m *DebtRecord) Reset()         { *m = DebtRecord{} }
 func (m *DebtRecord) String() string { return proto.CompactTextString(m) }
 func (*DebtRecord) ProtoMessage()    {}
 func (*DebtRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{1}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{1}
 }
 func (m *DebtRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DebtRecord.Unmarshal(m, b)
@@ -313,7 +313,7 @@ func (m *IssuanceAssetPriceRecord) Reset()         { *m = IssuanceAssetPriceReco
 func (m *IssuanceAssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAssetPriceRecord) ProtoMessage()    {}
 func (*IssuanceAssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{2}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{2}
 }
 func (m *IssuanceAssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAssetPriceRecord.Unmarshal(m, b)
@@ -367,7 +367,7 @@ func (m *IssuanceAction) Reset()         { *m = IssuanceAction{} }
 func (m *IssuanceAction) String() string { return proto.CompactTextString(m) }
 func (*IssuanceAction) ProtoMessage()    {}
 func (*IssuanceAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{3}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{3}
 }
 func (m *IssuanceAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceAction.Unmarshal(m, b)
@@ -644,7 +644,7 @@ func (m *IssuanceManage) Reset()         { *m = IssuanceManage{} }
 func (m *IssuanceManage) String() string { return proto.CompactTextString(m) }
 func (*IssuanceManage) ProtoMessage()    {}
 func (*IssuanceManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{4}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{4}
 }
 func (m *IssuanceManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceManage.Unmarshal(m, b)
@@ -686,7 +686,7 @@ func (m *IssuanceCreate) Reset()         { *m = IssuanceCreate{} }
 func (m *IssuanceCreate) String() string { return proto.CompactTextString(m) }
 func (*IssuanceCreate) ProtoMessage()    {}
 func (*IssuanceCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{5}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{5}
 }
 func (m *IssuanceCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceCreate.Unmarshal(m, b)
@@ -747,7 +747,7 @@ func (m *IssuanceDebt) Reset()         { *m = IssuanceDebt{} }
 func (m *IssuanceDebt) String() string { return proto.CompactTextString(m) }
 func (*IssuanceDebt) ProtoMessage()    {}
 func (*IssuanceDebt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{6}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{6}
 }
 func (m *IssuanceDebt) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceDebt.Unmarshal(m, b)
@@ -794,7 +794,7 @@ func (m *IssuanceRepay) Reset()         { *m = IssuanceRepay{} }
 func (m *IssuanceRepay) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRepay) ProtoMessage()    {}
 func (*IssuanceRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{7}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{7}
 }
 func (m *IssuanceRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRepay.Unmarshal(m, b)
@@ -842,7 +842,7 @@ func (m *IssuanceFeed) Reset()         { *m = IssuanceFeed{} }
 func (m *IssuanceFeed) String() string { return proto.CompactTextString(m) }
 func (*IssuanceFeed) ProtoMessage()    {}
 func (*IssuanceFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{8}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{8}
 }
 func (m *IssuanceFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceFeed.Unmarshal(m, b)
@@ -895,7 +895,7 @@ func (m *IssuanceClose) Reset()         { *m = IssuanceClose{} }
 func (m *IssuanceClose) String() string { return proto.CompactTextString(m) }
 func (*IssuanceClose) ProtoMessage()    {}
 func (*IssuanceClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{9}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{9}
 }
 func (m *IssuanceClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceClose.Unmarshal(m, b)
@@ -937,7 +937,7 @@ func (m *ReceiptIssuance) Reset()         { *m = ReceiptIssuance{} }
 func (m *ReceiptIssuance) String() string { return proto.CompactTextString(m) }
 func (*ReceiptIssuance) ProtoMessage()    {}
 func (*ReceiptIssuance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{10}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{10}
 }
 func (m *ReceiptIssuance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptIssuance.Unmarshal(m, b)
@@ -998,7 +998,7 @@ func (m *ReceiptIssuanceID) Reset()         { *m = ReceiptIssuanceID{} }
 func (m *ReceiptIssuanceID) String() string { return proto.CompactTextString(m) }
 func (*ReceiptIssuanceID) ProtoMessage()    {}
 func (*ReceiptIssuanceID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{11}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{11}
 }
 func (m *ReceiptIssuanceID) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptIssuanceID.Unmarshal(m, b)
@@ -1044,7 +1044,7 @@ func (m *IssuanceRecords) Reset()         { *m = IssuanceRecords{} }
 func (m *IssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*IssuanceRecords) ProtoMessage()    {}
 func (*IssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{12}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{12}
 }
 func (m *IssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IssuanceRecords.Unmarshal(m, b)
@@ -1083,7 +1083,7 @@ func (m *ReqIssuanceInfo) Reset()         { *m = ReqIssuanceInfo{} }
 func (m *ReqIssuanceInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfo) ProtoMessage()    {}
 func (*ReqIssuanceInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{13}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{13}
 }
 func (m *ReqIssuanceInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfo.Unmarshal(m, b)
@@ -1131,7 +1131,7 @@ func (m *RepIssuanceCurrentInfo) Reset()         { *m = RepIssuanceCurrentInfo{}
 func (m *RepIssuanceCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfo) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{14}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{14}
 }
 func (m *RepIssuanceCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfo.Unmarshal(m, b)
@@ -1233,7 +1233,7 @@ func (m *ReqIssuanceInfos) Reset()         { *m = ReqIssuanceInfos{} }
 func (m *ReqIssuanceInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceInfos) ProtoMessage()    {}
 func (*ReqIssuanceInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{15}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{15}
 }
 func (m *ReqIssuanceInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceInfos.Unmarshal(m, b)
@@ -1272,7 +1272,7 @@ func (m *RepIssuanceCurrentInfos) Reset()         { *m = RepIssuanceCurrentInfos
 func (m *RepIssuanceCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceCurrentInfos) ProtoMessage()    {}
 func (*RepIssuanceCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{16}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{16}
 }
 func (m *RepIssuanceCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceCurrentInfos.Unmarshal(m, b)
@@ -1312,7 +1312,7 @@ func (m *ReqIssuanceByStatus) Reset()         { *m = ReqIssuanceByStatus{} }
 func (m *ReqIssuanceByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceByStatus) ProtoMessage()    {}
 func (*ReqIssuanceByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{17}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{17}
 }
 func (m *ReqIssuanceByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceByStatus.Unmarshal(m, b)
@@ -1358,7 +1358,7 @@ func (m *RepIssuanceIDs) Reset()         { *m = RepIssuanceIDs{} }
 func (m *RepIssuanceIDs) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceIDs) ProtoMessage()    {}
 func (*RepIssuanceIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{18}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{18}
 }
 func (m *RepIssuanceIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceIDs.Unmarshal(m, b)
@@ -1400,7 +1400,7 @@ func (m *ReqIssuanceRecords) Reset()         { *m = ReqIssuanceRecords{} }
 func (m *ReqIssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*ReqIssuanceRecords) ProtoMessage()    {}
 func (*ReqIssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{19}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{19}
 }
 func (m *ReqIssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqIssuanceRecords.Unmarshal(m, b)
@@ -1460,7 +1460,7 @@ func (m *RepIssuanceRecords) Reset()         { *m = RepIssuanceRecords{} }
 func (m *RepIssuanceRecords) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceRecords) ProtoMessage()    {}
 func (*RepIssuanceRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{20}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{20}
 }
 func (m *RepIssuanceRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceRecords.Unmarshal(m, b)
@@ -1499,7 +1499,7 @@ func (m *RepIssuanceDebtInfo) Reset()         { *m = RepIssuanceDebtInfo{} }
 func (m *RepIssuanceDebtInfo) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceDebtInfo) ProtoMessage()    {}
 func (*RepIssuanceDebtInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{21}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{21}
 }
 func (m *RepIssuanceDebtInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceDebtInfo.Unmarshal(m, b)
@@ -1538,7 +1538,7 @@ func (m *RepIssuancePrice) Reset()         { *m = RepIssuancePrice{} }
 func (m *RepIssuancePrice) String() string { return proto.CompactTextString(m) }
 func (*RepIssuancePrice) ProtoMessage()    {}
 func (*RepIssuancePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{22}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{22}
 }
 func (m *RepIssuancePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuancePrice.Unmarshal(m, b)
@@ -1577,7 +1577,7 @@ func (m *RepIssuanceUserBalance) Reset()         { *m = RepIssuanceUserBalance{}
 func (m *RepIssuanceUserBalance) String() string { return proto.CompactTextString(m) }
 func (*RepIssuanceUserBalance) ProtoMessage()    {}
 func (*RepIssuanceUserBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_issuance_4d8bb77ed2bb92a1, []int{23}
+	return fileDescriptor_issuance_c54c3f192e167621, []int{23}
 }
 func (m *RepIssuanceUserBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepIssuanceUserBalance.Unmarshal(m, b)
@@ -1631,9 +1631,9 @@ func init() {
 	proto.RegisterType((*RepIssuanceUserBalance)(nil), "types.RepIssuanceUserBalance")
 }
 
-func init() { proto.RegisterFile("issuance.proto", fileDescriptor_issuance_4d8bb77ed2bb92a1) }
+func init() { proto.RegisterFile("issuance.proto", fileDescriptor_issuance_c54c3f192e167621) }
 
-var fileDescriptor_issuance_4d8bb77ed2bb92a1 = []byte{
+var fileDescriptor_issuance_c54c3f192e167621 = []byte{
 	// 1041 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0x5f, 0x6f, 0xe3, 0x44,
 	0x10, 0xaf, 0xed, 0x38, 0x7f, 0x26, 0x6d, 0xda, 0xdb, 0x3b, 0x8a, 0x85, 0xe0, 0x14, 0xad, 0x78,

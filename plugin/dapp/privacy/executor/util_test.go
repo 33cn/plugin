@@ -237,5 +237,5 @@ type walletMock struct {
 }
 
 func (w *walletMock) GetBlockHeight() int64 {
-	return initHeight + types.PrivacyMaturityDegree
+	return initHeight + pty.UtxoMaturityDegree
 }

@@ -108,8 +108,9 @@ message ResUTXOPubKeys {
 }
 
 message ReqPrivacyToken {
-    string token  = 1;
-    int64  amount = 2;
+    string assetExec   = 1;
+    string assetSymbol = 2;
+    int64  amount      = 3;
 }
 
 message AmountDetail {
@@ -126,8 +127,9 @@ message replyUTXOsOfAmount {
 }
 
 message ReceiptPrivacyOutput {
-    string   token               = 1;
-    repeated keyOutput keyoutput = 2;
+    string   assetExec           = 1;
+    string   assetSymbol         = 2;
+    repeated keyOutput keyoutput = 3;
 }
 //各种amount额度的UTXO在链上的数量
 message AmountsOfUTXO {
@@ -204,8 +206,9 @@ message ReplyPrivacyPkPair {
 }
 
 message ReqPrivBal4AddrToken {
-    string addr  = 1;
-    string token = 2;
+    string addr      = 1;
+    string token     = 2;
+    string assetExec = 3;
 }
 
 message ReplyPrivacyBalance {
@@ -224,6 +227,7 @@ message PrivacyDBStore {
     int64  height           = 8;
     int32  txindex          = 9;
     bytes  blockhash        = 10;
+    string assetExec        = 11;
 }
 
 message UTXO {
@@ -245,9 +249,10 @@ message UTXOHaveTxHashs {
 }
 
 message ReqUTXOGlobalIndex {
-    string   tokenname    = 1;
-    int32    mixCount     = 2;
-    repeated int64 amount = 3;
+    string   assetExec    = 1;
+    string   assetSymbol  = 2;
+    int32    mixCount     = 3;
+    repeated int64 amount = 4;
 }
 
 message UTXOBasic {
@@ -261,8 +266,6 @@ message UTXOIndex4Amount {
 }
 
 message ResUTXOGlobalIndex {
-    string   tokenname                         = 1;
-    int32    mixCount                          = 2;
     repeated UTXOIndex4Amount utxoIndex4Amount = 3;
 }
 
@@ -270,9 +273,10 @@ message FTXOsSTXOsInOneTx {
     string tokenname = 1;
     string sender    = 2;
     // FTXO的超期，设定原则与Transaction.expire一致
-    int64    expire     = 3;
-    string   txhash     = 4;
-    repeated UTXO utxos = 5;
+    int64    expire         = 3;
+    string   txhash         = 4;
+    repeated UTXO utxos     = 5;
+    string        assetExec = 6;
 }
 
 message RealKeyInput {
@@ -313,11 +317,6 @@ message ReplyCacheTxList {
 }
 
 message ReqPrivacyAccount {
-    string tokenname = 1;
-    string addr      = 2;
-}
-
-message ReqPPrivacyAccount {
     string addr  = 1;
     string token = 2;
     // 设定显示的数据类型信息
@@ -325,7 +324,8 @@ message ReqPPrivacyAccount {
     // 1： 显示UTXO明细
     // 2： 显示FTXO明细
     // 3： 全部显示
-    int32 displaymode = 3;
+    int32  displaymode = 3;
+    string assetExec   = 4;
 }
 
 // 请求隐私账户信息的应答
@@ -353,6 +353,7 @@ message ReqPrivacyTransactionList {
     string from         = 5;
     string address      = 6;
     bytes  seedtxhash   = 7;
+    string assetExec    = 8;
 }
 
 message ReqRescanUtxos {
@@ -402,12 +403,9 @@ message WalletAccountPrivacy {
 message ReqCreatePrivacyTx {
     string tokenname = 1;
     // 构建交易类型
-    // 1：隐私交易 公开->隐私
-    // 2：隐私交易 隐私->隐私
-    // 3：隐私交易 隐私->公开
-    int32  type   = 2;
-    int64  amount = 3;
-    string note   = 4;
+    int32  actionType = 2;
+    int64  amount     = 3;
+    string note       = 4;
     // 普通交易的发送方
     string from = 5;
     // 普通交易的接收方

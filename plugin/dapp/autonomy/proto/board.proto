@@ -8,21 +8,20 @@ import "lcommon.proto";
 
 package types;
 
-
 message AutonomyProposalBoard {
-    ProposalBoard  propBoard  = 1;
+    ProposalBoard propBoard = 1;
     // 投票该提案的规则
-    RuleConfig     curRule    = 2;
+    RuleConfig curRule = 2;
     // 投票董事会
-    ActiveBoard    board      = 3;
+    ActiveBoard board = 3;
     // 全体持票人投票结果
-    VoteResult     voteResult = 4;
+    VoteResult voteResult = 4;
     // 状态
-    int32          status     = 5;
-    string         address    = 6;
-    int64          height     = 7;
-    int32          index      = 8;
-    string         proposalID = 9;
+    int32  status     = 5;
+    string address    = 6;
+    int64  height     = 7;
+    int32  index      = 8;
+    string proposalID = 9;
 }
 
 // action
@@ -37,9 +36,9 @@ message ProposalBoard {
     // 提案董事会成员
     repeated string boards = 5;
 
-	// 投票相关
+    // 投票相关
     int64 startBlockHeight   = 6; // 提案开始投票高度
-	int64 endBlockHeight     = 7; // 提案结束投票高度
+    int64 endBlockHeight     = 7; // 提案结束投票高度
     int64 realEndBlockHeight = 8; // 实际提案结束投票高度
 }
 
@@ -48,8 +47,8 @@ message RevokeProposalBoard {
 }
 
 message VoteProposalBoard {
-    string proposalID = 1;
-    bool   approve    = 2;
+    string   proposalID        = 1;
+    bool     approve           = 2;
     repeated string originAddr = 3;
 }
 
@@ -79,5 +78,5 @@ message ReqQueryProposalBoard {
 }
 
 message ReplyQueryProposalBoard {
-    repeated AutonomyProposalBoard  propBoards    = 1;
+    repeated AutonomyProposalBoard propBoards = 1;
 }
