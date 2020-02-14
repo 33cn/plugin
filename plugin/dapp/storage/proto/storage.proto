@@ -89,3 +89,6 @@ message BatchQueryStorage {
 message BatchReplyStorage {
     repeated Storage storages = 1;
 }
+
+message ReceiptStorage {
+}
