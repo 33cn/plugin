@@ -2,8 +2,8 @@ package types
 
 import (
 	"github.com/33cn/chain33/types"
-        
-        "reflect"
+
+	"reflect"
 )
 
 /*
@@ -54,11 +54,11 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-                 TyContentStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}),Name: "LogContentStorage"},
-                 TyHashStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}),Name: "LogHashStorage"},
-                 TyLinkStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}),Name: "LogLinkStorage"},
-                 TyEncryptStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}),Name: "LogEncryptStorage"},
-                 TyEncryptShareStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}),Name: "LogEncryptShareStorage"},
+		TyContentStorageLog:      {Ty: reflect.TypeOf(ReceiptStorage{}), Name: "LogContentStorage"},
+		TyHashStorageLog:         {Ty: reflect.TypeOf(ReceiptStorage{}), Name: "LogHashStorage"},
+		TyLinkStorageLog:         {Ty: reflect.TypeOf(ReceiptStorage{}), Name: "LogLinkStorage"},
+		TyEncryptStorageLog:      {Ty: reflect.TypeOf(ReceiptStorage{}), Name: "LogEncryptStorage"},
+		TyEncryptShareStorageLog: {Ty: reflect.TypeOf(ReceiptStorage{}), Name: "LogEncryptShareStorage"},
 	}
 )
 
