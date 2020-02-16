@@ -297,27 +297,30 @@ function token_create() {
 
 #1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 also be used in relay rpc_test
 function token_transfer() {
-    echo "=========== # 2.token transfer ============="
+    echo "=========== # 1.token transfer ============="
     hash=$(${1} send token transfer -a 100 -s GD -t 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     hash2=$(${1} send token transfer -a 100 -s GD -t 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     echo "${hash}"
     echo "${hash2}"
     query_tx "${1}" "${hash}"
+    query_tx "${1}" "${hash2}"
 
     ${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e token -s GD
     balance=$(${1} token balance -a 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3 -e token -s GD | jq -r '.[]|.balance')
     balance2=$(${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e token -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "100.0000" ] || [ "${balance2}" != "100.0000" ]; then
-        echo "wrong para token transfer, should be 11.0000"
+        echo "wrong para token transfer, should be 100.0000, balance=$balance, balace2=$balance2"
+        ${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e token -s GD
         exit 1
     fi
 
-    echo "=========== # 3.token send exec ============="
+    echo "=========== # 2.token send exec ============="
     hash=$(${1} send token send_exec -a 100 -s GD -e relay -k 0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962)
     hash2=$(${1} send token send_exec -a 100 -s GD -e relay -k ec9162ea5fc2f473ab8240619a0a0f495ba9e9e5d4d9c434b8794a68280236c4)
     echo "${hash}"
     echo "${hash2}"
     query_tx "${1}" "${hash}"
+    query_tx "${1}" "${hash2}"
 
     #user.p.para.relay addr
     # 1464s4B8HbPdUZNR74EBWSH8QLGYgpjr2q
@@ -326,10 +329,11 @@ function token_transfer() {
     balance2=$(${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e relay -s GD | jq -r '.[]|.balance')
     if [ "${balance}" != "100.0000" ] || [ "${balance2}" != "100.0000" ]; then
         echo "wrong para token send exec, should be 100.0000, balance=$balance,balance1=$balance2"
+        ${1} token balance -a 1EZKahMRfoMiKp1BewjWrQWoaJ9kmC4hum -e relay -s GD
         exit 1
     fi
 
-    echo "=========== # 4.token withdraw ============="
+    echo "=========== # 3.token withdraw ============="
     hash=$(${1} send token withdraw -a 20 -s GD -e relay -k 0x22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962)
     echo "${hash}"
     query_tx "${1}" "${hash}"
