@@ -269,12 +269,12 @@ message ParacrossMinerAction {
 }
 
 message CrossAssetTransfer {
-    uint32 type         = 1;
-    string assetExec    = 2;
-    string assetSymbol  = 3;
-    int64  amount       = 4;
-    string toAddr       = 5;
-    string note         = 6;
+    string assetExec    = 1;
+    string assetSymbol  = 2;
+    int64  amount       = 3;
+    //default signed addr
+    string toAddr       = 4;
+    string note         = 5;
 }
 
 message ParacrossAction {

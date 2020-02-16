@@ -85,10 +85,10 @@ const (
 
 const (
 	ParacrossNoneTransfer = iota
-	ParacrossMainTransfer
-	ParacrossMainWithdraw
-	ParacrossParaTransfer
-	ParacrossParaWithdraw
+	ParacrossMainAssetTransfer
+	ParacrossMainAssetWithdraw
+	ParacrossParaAssetTransfer
+	ParacrossParaAssetWithdraw
 )
 
 // status

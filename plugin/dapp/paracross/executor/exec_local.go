@@ -177,7 +177,7 @@ func (e *Paracross) ExecLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer,
 	}
 	//  主链转出和平行链提取记录，
 	//  主链提取和平行链转出在 commit done 时记录
-	if !cfg.IsPara() && (act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer) {
+	if !cfg.IsPara() && (act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer) {
 		return nil, nil
 	}
 	asset, err := e.getCrossAssetTransferInfo(payload, tx)
