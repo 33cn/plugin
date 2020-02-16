@@ -182,7 +182,6 @@ func (a *action) paraAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *
 	return a.execDestroyAsset(withdraw)
 }
 
-
 func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	accDB, err := a.createAccount(cfg, a.db, transfer.AssetExec, transfer.AssetSymbol)
@@ -234,7 +233,6 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 	}
 	return r, nil
 }
-
 
 //主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol-Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
 //平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol-exec-Addr(Alice)，再转移到另一个user.p.bb.平行链，需要先transfer到paracross执行器下
