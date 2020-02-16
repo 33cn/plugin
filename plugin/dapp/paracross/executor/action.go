@@ -763,7 +763,7 @@ func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*t
 			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
 		}
-		if act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer {
+		if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
 			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, tx.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
@@ -808,7 +808,7 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 			return nil, err
 		}
 		//主链共识后，平行链执行出错的主链资产transfer回滚
-		if act == pt.ParacrossMainTransfer {
+		if act == pt.ParacrossMainAssetTransfer {
 			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), tx.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer rbk failed", "error", err, "txHash", common.ToHex(crossTxHash))
@@ -819,7 +819,7 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 			return receipt, nil
 		}
 		//主链共识后，平行链执行出错的平行链资产withdraw回滚
-		if act == pt.ParacrossParaWithdraw {
+		if act == pt.ParacrossParaAssetWithdraw {
 			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), tx.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit rbk paraAssetWithdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
@@ -1066,12 +1066,20 @@ func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rec
 		return nil, errors.Wrap(err, "CrossAssetTransfer not Allow")
 	}
 
+	if len(transfer.AssetExec) == 0 || len(transfer.AssetSymbol) == 0 || transfer.Amount == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "CrossAssetTransfer exec=%s, symbol=%s, amount=%d should not be null",
+			transfer.AssetExec, transfer.AssetSymbol, transfer.Amount)
+	}
+
+	if len(transfer.ToAddr) == 0 {
+		transfer.ToAddr = a.tx.From()
+	}
 	act, err := getCrossAction(transfer, string(a.tx.Execer))
 	if act == pt.ParacrossNoneTransfer {
 		return nil, errors.Wrap(err, "CrossAssetTransfer non action")
 	}
 	// 需要平行链先执行， 达成共识时，继续执行
-	if !isPara && (act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer) {
+	if !isPara && (act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer) {
 		return nil, nil
 	}
 	receipt, err := a.crossAssetTransfer(transfer, act, a.tx)

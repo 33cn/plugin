@@ -45,26 +45,29 @@ asset-transfer 分两种， 主链转出， 主链转入
    1. 某平行链paracross合约帐号， balance -
    1. 用户主链paracross合约帐号， balance +
 
-cross-transfer 把transfer和withdraw统一为transfer，　通过统一地址符号，内部判断是transfer和withdraw
-统一地址符号：title+执行器+符号
-1. 主链title缺省为空，类似：coins.bty, token.FZM
-1. 平行链符号为: user.p.test.coins.para 或user.p.game.token.FZM
+主链<->平行链双向转移 cross-transfer
+>cross-transfer 把transfer和withdraw都统一为transfer,通过执行器名字内部判断是transfer还是withdraw
 
-主链转移资产场景： type=0, tx.exec=user.p.test.
-1. 主链本币转移：	symbol:{coins/token}.bty/cny or bty/cny,
-   平行链资产：	paracross-coins.bty
-2. 主链外币转移: 	symbol: user.p.para.coins.ccny,
-   平行链资产:	paracross-paracross.user.p.para.coins.ccny
-3. 平行链本币提回: symbol: user.p.test.coins.ccny
-   平行链资产：	paracross账户coins.ccny资产释放
-平行链转移资产场景：type=1,tx.exec=user.p.test.
-1.　平行链本币转移:	symbol:user.p.test.{coins/token}.ccny
-    主链产生资产:	paracross-user.p.test.{coins}.ccny
-2.  主链外币提取:	symbol: user.p.para.coins.ccny
-    主链恢复外币资产:user.p.test.paracross地址释放user.p.para.coins.ccny
-3.  主链本币提取:	symbol: coins.bty
-    主链恢复本币资产:user.p.test.paracross地址释放coin.bty
+*资产　=　assetExec + assetSymbol 唯一确定一个资产
+  1. 主链资产：coins+BTY,token+CCNY
+  1. 平行链资产:user.p.test.coins + FZM,
+  1. 其他链转移过来的资产都在paracross执行器下: 主链：paracross　+ user.p.test.coins.FZM，　平行链: user.p.test.paracross + coins.BTY
+  1. 不支持从平行链直接转移到其他平行链，需要先转移到主链，再转移到平行链
+举例:
+````
+				exec                    symbol                              tx.title=user.p.test1   tx.title=user.p.test2
+1. 主链上的资产：
+				coins                   bty                                 transfer                 transfer
+				paracross               user.p.test1.coins.fzm              withdraw                 transfer
 
+2. 平行链上的资产：
+				user.p.test1.coins      fzm                                 transfer                 NAN
+                user.p.test1.paracross  coins.bty                           withdraw                 NAN
+                user.p.test1.paracross  paracross.user.p.test2.coins.cny    withdraw                 NAN
+
+其中user.p.test1.paracross.paracross.user.p.test2.coins.cny资产解释：
+user.p.test1.paracross.是平行链paracross执行器，　paracross.user.p.test2.coins.cny的paracross代表从主链的paracross转移过来的user.p.test2.coins.cny资产
+````
 
 交易执行代码分为 三个部分
  1. 主链

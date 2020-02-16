@@ -142,7 +142,7 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 				return nil, err
 			}
 			//主链共识后，平行链执行出错的主链资产transfer回滚
-			if act == pt.ParacrossMainTransfer || act == pt.ParacrossParaWithdraw {
+			if act == pt.ParacrossMainAssetTransfer || act == pt.ParacrossParaAssetWithdraw {
 				kv, err := c.updateLocalAssetTransfer(paraTx.Tx, paraHeight, success, isDel)
 				if err != nil {
 					return nil, err
@@ -150,7 +150,7 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 				set.KV = append(set.KV, kv)
 			}
 			//主链共识后，平行链执行出错的平行链资产withdraw回滚
-			if act == pt.ParacrossMainWithdraw || act == pt.ParacrossParaTransfer {
+			if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
 				asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), paraTx.Tx)
 				if err != nil {
 					return nil, err

@@ -22,134 +22,152 @@ import (
 
 const SymbolBty = "bty"
 
-//在用户看来，平行链的资产是user.p.test.ccny, 主链资产是coins.bty, 平行链往主链转还是主链往平行链转都是统一的名字
-//如果主链上user.p.test.coins.ccny往user.p.test.平行链转，就是withdraw流程，如果往另一个平行链user.p.para.转，则是转移流程
-//主链转移场景： type=0,tx.exec:user.p.test.
-//1. 主链本币转移：	original exec:coins/token  symbol:{coins/token}.bty/cny or bty/cny,
-//   平行链资产：		paracross-coins.bty
-//2. 主链外币转移: 	original exec:paracross, symbol: user.p.para.coins.ccny,
-//   平行链资产:		paracross-paracross.user.p.para.coins.ccny
-//3. 平行链本币提回: 　original exec:coins, symbol: user.p.test.coins.ccny
-//   平行链资产：		paracross账户coins.ccny资产释放
-//平行链转移场景：type=1,tx.exec:user.p.test.
-//1.　平行链本币转移:	original exec:coins/token, symbol:user.p.test.{coins/token}.ccny
-//    主链产生资产:	paracross-user.p.test.{coins}.ccny
-//2.  主链外币提取:	exec:paracross, symbol: user.p.para.coins.ccny
-//    主链恢复外币资产:	user.p.test.paracross地址释放user.p.para.coins.ccny
-//3.  主链本币提取:	exec:coins/token, symbol: coins.bty
-//    主链恢复本币资产:	user.p.test.paracross地址释放coin.bty
+/*
+资产　=　assetExec + assetSymbol 唯一确定一个资产
+
+				exec              		symbol								tx.title=user.p.test1   tx.title=user.p.test2
+1. 主链上的资产：
+				coins					bty                     	  		transfer                 transfer
+				paracross				user.p.test1.coins.fzm    			withdraw                 transfer
+
+2. 平行链上的资产：
+				user.p.test1.coins		fzm              					transfer                 NAN
+    			user.p.test1.paracross	coins.bty    						withdraw                 NAN
+    			user.p.test1.paracross	paracross.user.p.test2.coins.cny	withdraw                 NAN
+
+其中user.p.test1.paracross.paracross.user.p.test2.coins.cny资产解释：
+user.p.test1.paracross.是平行链paracross执行器，　paracross.user.p.test2.coins.cny的paracross代表从主链的paracross转移过来的user.p.test2.coins.cny资产
+*/
 func getCrossAction(transfer *pt.CrossAssetTransfer, txExecer string) (int64, error) {
 	paraTitle, ok := types.GetParaExecTitleName(txExecer)
 	if !ok {
-		return pt.ParacrossNoneTransfer, errors.Wrapf(types.ErrInvalidParam, "getCrossAction wrong execer:%s", txExecer)
+		return pt.ParacrossNoneTransfer, errors.Wrapf(types.ErrInvalidParam, "asset cross transfer execer:%s should be user.p.xx", txExecer)
+	}
+	//平行链资产和执行器不一致
+	if types.IsParaExecName(transfer.AssetExec) && !strings.Contains(transfer.AssetExec, paraTitle) {
+		return pt.ParacrossNoneTransfer, errors.Wrapf(types.ErrInvalidParam, "asset execer=%s not belong to title=%s", transfer.AssetExec, paraTitle)
 	}
 
-	//主链向平行链转移, 转移主链资产(包括主链本币和平行链转移进来的外币)或平行链资产withdraw
-	if transfer.Type == 0 {
-		// same prefix for paraChain and Symbol
-		if strings.Contains(transfer.AssetSymbol, paraTitle) {
-			return pt.ParacrossParaWithdraw, nil
+	//paracross执行器的资产转移都是withdraw回去，除了主链平行链资产转移到另一个平行链
+	if types.IsParaExecName(transfer.AssetExec) {
+		if strings.Contains(transfer.AssetExec, pt.ParaX) {
+			return pt.ParacrossMainAssetWithdraw, nil
 		}
-		// different paraChain symbol or mainChain symbol -> main asset transfer
-		return pt.ParacrossMainTransfer, nil
+		return pt.ParacrossParaAssetTransfer, nil
 	}
 
-	//从平行链向主链转移，平行链资产转移或者主链资产withdraw
-	//symbol和paraChain　prefix一致，或者symbol没有"."　-> para asset transfer
-	if strings.Contains(transfer.AssetSymbol, paraTitle) {
-		return pt.ParacrossParaTransfer, nil
+	if strings.Contains(transfer.AssetExec, pt.ParaX) && strings.Contains(transfer.AssetSymbol, paraTitle) {
+		return pt.ParacrossParaAssetWithdraw, nil
 	}
-	// different paraChain symbol or mainChain symbol or null symbol -> main asset withdraw
-	return pt.ParacrossMainWithdraw, nil
+	return pt.ParacrossMainAssetTransfer, nil
+
 }
 
-//自动补充修正原生执行器名字
-func formatTransfer(transfer *pt.CrossAssetTransfer, act int64) *pt.CrossAssetTransfer {
+/*
+修正原生执行器名字
+								      	realExec    realSymbol
+coins+bty								coins		bty
+paracross+user.p.test1.coins.bty		coins		bty
+user.p.test1.coins+bty					coins		bty
+user.p.test1.paracross+coins.bty		coins		bty
+注意:
+1. user.p.test1.coins+bty只是对外表示平行链资产，真正执行器也是coins，因为account模型的mavl-coins-bty-　在主链和平行链都一样，平行链模型并不是mavl-user.p.test.coins-bty-
+2. paracross执行器下的资产都是外来资产，在withdraw时候，真正的原生执行器是在symbol里面
+　　a. 销毁资产　mavl-paracross-coins.bty-exec-addr(user)
+　　b. 恢复资产　mavl-coins-bty-exec-addr{paracross}:addr{user}, 在原生coins执行器上恢复资产
+*/
+func amendTransferParam(transfer *pt.CrossAssetTransfer, act int64) (*pt.CrossAssetTransfer, error) {
 	newTransfer := *transfer
-	if act == pt.ParacrossMainTransfer || act == pt.ParacrossMainWithdraw {
-		//转移平行链资产到另一个平行链
-		if strings.Contains(transfer.AssetSymbol, types.ParaKeyX) {
-			newTransfer.AssetExec = pt.ParaX
-			return &newTransfer
-		}
-		//转移资产symbol为bty 或　token.bty场景
-		if len(transfer.AssetSymbol) > 0 {
-			if strings.Contains(transfer.AssetSymbol, ".") {
-				elements := strings.Split(transfer.AssetSymbol, ".")
-				newTransfer.AssetExec = elements[len(elements)-2]
-				newTransfer.AssetSymbol = elements[len(elements)-1]
-				return &newTransfer
-			}
-			//symbol非空时候默认是token发行的
-			newTransfer.AssetExec = token.TokenX
-			return &newTransfer
-		}
-		//assetSymbol 为null　默认是coins.bty
-		newTransfer.AssetExec = coins.CoinsX
-		newTransfer.AssetSymbol = SymbolBty
-		return &newTransfer
-
+	//exec=user.p.test1.coins -> exec=coins
+	if types.IsParaExecName(transfer.AssetExec) {
+		elements := strings.Split(transfer.AssetExec, ".")
+		newTransfer.AssetExec = elements[len(elements)-1]
 	}
 
-	//把user.p.{para}.ccny prefix去掉，保留ccny
-	if act == pt.ParacrossParaTransfer || act == pt.ParacrossParaWithdraw {
+	//paracross　exec's symbol should contain ".", non-paracross exec should not contain "."
+	if newTransfer.AssetExec == pt.ParaX && !strings.Contains(newTransfer.AssetSymbol, ".") {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "paracross exec=%s, the symbol=%s should contain '.'", newTransfer.AssetExec, transfer.AssetSymbol)
+	}
+
+	if newTransfer.AssetExec != pt.ParaX && strings.Contains(newTransfer.AssetSymbol, ".") {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "non-paracross exec=%s, symbol=%s should not contain '.'", newTransfer.AssetExec, transfer.AssetSymbol)
+	}
+
+	if act == pt.ParacrossMainAssetWithdraw {
 		e := strings.Split(transfer.AssetSymbol, ".")
+		if len(e) <= 1 {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "main asset withdraw symbol=%s should be exec.symbol", transfer.AssetSymbol)
+		}
+		newTransfer.AssetExec = e[0]
+		newTransfer.AssetSymbol = strings.Join(e[1:], ".")
+		return &newTransfer, nil
+	}
+
+	//把user.p.{para}.coins.ccny prefix去掉，保留coins.ccny
+	if act == pt.ParacrossParaAssetWithdraw {
+		e := strings.Split(transfer.AssetSymbol, ".")
+		if len(e) <= 1 {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "para asset withdraw symbol=%s should be exec.symbol", transfer.AssetSymbol)
+		}
 		newTransfer.AssetSymbol = e[len(e)-1]
 		newTransfer.AssetExec = e[len(e)-2]
-		//user.p.xx.ccny，没有写coins　执行器,默认是平行链coins执行器
-		if len(e) == 4 {
-			newTransfer.AssetExec = coins.CoinsX
-		}
-		return &newTransfer
+		return &newTransfer, nil
 	}
-	return transfer
+	return &newTransfer, nil
 }
 
 func (a *action) crossAssetTransfer(transfer *pt.CrossAssetTransfer, act int64, actTx *types.Transaction) (*types.Receipt, error) {
-	newTransfer := formatTransfer(transfer, act)
+	newTransfer, err := amendTransferParam(transfer, act)
+	if err != nil {
+		return nil, err
+	}
 	clog.Info("paracross.crossAssetTransfer", "action", act, "newExec", newTransfer.AssetExec, "newSymbol", newTransfer.AssetSymbol,
-		"ori.symbol", transfer.AssetSymbol, "type", transfer.Type, "txHash", common.ToHex(a.tx.Hash()))
+		"ori.exec", transfer.AssetExec, "ori.symbol", transfer.AssetSymbol, "txHash", common.ToHex(a.tx.Hash()))
 	switch act {
-	case pt.ParacrossMainTransfer:
+	case pt.ParacrossMainAssetTransfer:
 		return a.mainAssetTransfer(newTransfer)
-	case pt.ParacrossMainWithdraw:
+	case pt.ParacrossMainAssetWithdraw:
 		return a.mainAssetWithdraw(newTransfer, actTx)
-	case pt.ParacrossParaTransfer:
+	case pt.ParacrossParaAssetTransfer:
 		return a.paraAssetTransfer(newTransfer)
-	case pt.ParacrossParaWithdraw:
+	case pt.ParacrossParaAssetWithdraw:
 		return a.paraAssetWithdraw(newTransfer, actTx)
 	default:
 		return nil, types.ErrNotSupport
 	}
 }
 
+//主链先transfer, 然后平行链create　asset, 如果平行链失败，主链再rollback
 func (a *action) mainAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
-	//主链处理分支
+	//主链处理分支, 先处理
 	if !isPara {
 		return a.execTransfer(transfer)
 	}
 	return a.execCreateAsset(transfer)
 }
 
+//平行链先销毁，　共识后主链再withdraw
 func (a *action) mainAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
-	//主链处理分支
+	//主链处理分支，共识后处理，a.tx是共识交易
 	if !isPara {
 		return a.execWithdraw(withdraw, withdrawTx)
 	}
 	return a.execDestroyAsset(withdraw)
 }
 
+//平行链先转移，　共识后主链create asset
 func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
-	//平行链链处理分支
+	//平行链链处理分支，先处理
 	if isPara {
 		return a.execTransfer(transfer)
 	}
+	//主链共识后处理
 	return a.execCreateAsset(transfer)
 }
 
@@ -157,18 +175,19 @@ func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rece
 func (a *action) paraAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
-	//平行链链处理分支
+	//平行链链处理分支，后处理
 	if isPara {
 		return a.execWithdraw(withdraw, withdrawTx)
 	}
 	return a.execDestroyAsset(withdraw)
 }
 
+
 func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	accDB, err := a.createAccount(cfg, a.db, transfer.AssetExec, transfer.AssetSymbol)
 	if err != nil {
-		return nil, errors.Wrapf(err, "execTransfer.createAccount failed,exec=%s,symbol=%s", transfer.AssetExec, transfer.AssetSymbol)
+		return nil, errors.Wrapf(err, "execTransfer.createAccount,exec=%s,symbol=%s", transfer.AssetExec, transfer.AssetSymbol)
 	}
 
 	//主链上存入toAddr为user.p.xx.paracross地址
@@ -181,19 +200,24 @@ func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, 
 	}
 	fromAcc := accDB.LoadExecAccount(a.fromaddr, execAddr)
 	if fromAcc.Balance < transfer.Amount {
-		return nil, errors.Wrapf(types.ErrNoBalance, "execTransfer,fromBalance=%d", fromAcc.Balance)
+		return nil, errors.Wrapf(types.ErrNoBalance, "execTransfer,acctBalance=%d,assetExec=%s,assetSym=%s", fromAcc.Balance, transfer.AssetExec, transfer.AssetSymbol)
 	}
 
 	clog.Debug("paracross.execTransfer", "execer", string(a.tx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
 		"txHash", hex.EncodeToString(a.tx.Hash()))
-	return accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
+	r, err := accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
+	}
+	return r, nil
 }
 
+//withdraw是共识交易触发的，a.tx是共识交易，　withdrawTx是最初提交的withdraw的tx
 func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	accDB, err := a.createAccount(cfg, a.db, withdraw.AssetExec, withdraw.AssetSymbol)
 	if err != nil {
-		return nil, errors.Wrapf(err, "execWithdraw.createAccount failed,exec=%s,symbol=%s", withdraw.AssetExec, withdraw.AssetSymbol)
+		return nil, errors.Wrapf(err, "execWithdraw.createAccount,exec=%s,symbol=%s", withdraw.AssetExec, withdraw.AssetSymbol)
 	}
 	execAddr := address.ExecAddress(pt.ParaX)
 	fromAddr := address.ExecAddress(string(withdrawTx.Execer))
@@ -204,66 +228,63 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 
 	clog.Debug("Paracross.execWithdraw", "amount", withdraw.Amount, "from", fromAddr,
 		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", hex.EncodeToString(a.tx.Hash()))
-	return accDB.ExecTransfer(fromAddr, withdraw.ToAddr, execAddr, withdraw.Amount)
+	r, err := accDB.ExecTransfer(fromAddr, withdraw.ToAddr, execAddr, withdraw.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "assetWithdraw,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
+	}
+	return r, nil
 }
 
-//平行链向主链transfer,先在平行链处理，共识后再在主链铸造
-//主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol:Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
-//平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol:Addr(Alice)，再转移到user.p.bb.平行链，需要先transfer到paracross执行器下
-//在平行链bb上铸造新币，表示为mavl-paracross-paracross.user.p.aa.token.symbol，第二个paracross代表在主链原生执行器为paracross
-func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+
+//主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol-Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
+//平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol-exec-Addr(Alice)，再转移到另一个user.p.bb.平行链，需要先transfer到paracross执行器下
+//在平行链bb上铸造新币，表示为mavl-paracross-paracross.user.p.aa.token.symbol-exec-Addr(Alice)，第二个paracross代表在主链原生执行器为paracross
+func (a *action) createParaAccount(cross *pt.CrossAssetTransfer) (*account.DB, error) {
 	cfg := a.api.GetConfig()
 	paraTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
-		return nil, errors.Wrapf(err, "execCreateAsset call getTitleFrom failed,exec=%s", string(a.tx.Execer))
+		return nil, errors.Wrapf(err, "createParaAccount call getTitleFrom failed,exec=%s", string(a.tx.Execer))
 	}
 
-	assetExec := transfer.AssetExec
-	assetSymbol := transfer.AssetSymbol
-	if assetSymbol == "" {
-		assetExec = coins.CoinsX
-		assetSymbol = SymbolBty
-	} else if assetExec == "" {
-		assetExec = token.TokenX
-	}
+	assetExec := cross.AssetExec
+	assetSymbol := cross.AssetSymbol
 	if !cfg.IsPara() {
 		assetExec = string(paraTitle) + assetExec
 	}
 	paraAcc, err := NewParaAccount(cfg, string(paraTitle), assetExec, assetSymbol, a.db)
-
+	clog.Debug("createParaAccount", "assetExec", assetExec, "symbol", assetSymbol, "txHash", hex.EncodeToString(a.tx.Hash()))
 	if err != nil {
-		return nil, errors.Wrapf(err, "execCreateAsset call NewParaAccount failed,exec=%s,symbol=%s", assetExec, assetSymbol)
+		return nil, errors.Wrapf(err, "createParaAccount,exec=%s,symbol=%s,title=%s", assetExec, assetSymbol, paraTitle)
 	}
-	clog.Debug("paracross.execCreateAsset", "assetExec", assetExec, "symbol", assetSymbol,
+	return paraAcc, nil
+}
+
+func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+	paraAcc, err := a.createParaAccount(transfer)
+	if err != nil {
+		return nil, errors.Wrapf(err, "createAsset")
+	}
+	clog.Debug("paracross.execCreateAsset", "assetExec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
 		"txHash", hex.EncodeToString(a.tx.Hash()))
-	return assetDepositBalance(paraAcc, transfer.ToAddr, transfer.Amount)
+	r, err := assetDepositBalance(paraAcc, transfer.ToAddr, transfer.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "createParaAsset,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
+	}
+	return r, nil
 }
 
 func (a *action) execDestroyAsset(withdraw *pt.CrossAssetTransfer) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-	paraTitle, err := getTitleFrom(a.tx.Execer)
+	paraAcc, err := a.createParaAccount(withdraw)
 	if err != nil {
-		return nil, errors.Wrapf(err, "execDestroyAsset call getTitleFrom failed=%s", string(a.tx.Execer))
+		return nil, errors.Wrapf(err, "destroyAsset")
 	}
-
-	assetExec := withdraw.AssetExec
-	assetSymbol := withdraw.AssetSymbol
-	if assetSymbol == "" {
-		assetExec = coins.CoinsX
-		assetSymbol = SymbolBty
-	} else if assetExec == "" {
-		assetExec = token.TokenX
-	}
-	if !cfg.IsPara() {
-		assetExec = string(paraTitle) + assetExec
-	}
-	paraAcc, err := NewParaAccount(cfg, string(paraTitle), assetExec, assetSymbol, a.db)
-	if err != nil {
-		return nil, errors.Wrapf(err, "execDestroyAsset call NewParaAccount failed,exec=%s,symbol=%s", assetExec, assetSymbol)
-	}
-	clog.Debug("paracross.execDestroyAsset", "assetExec", assetExec, "symbol", assetSymbol,
+	clog.Debug("paracross.execDestroyAsset", "assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol,
 		"txHash", hex.EncodeToString(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
-	return assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
+	r, err := assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "destroyAsset,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
+	}
+	return r, nil
 }
 
 //旧的接口，只有主链向平行链转移
@@ -274,6 +295,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		Note:        string(transfer.Note),
 		ToAddr:      transfer.To,
 	}
+	adaptNullAssetExec(tr)
 	return a.mainAssetTransfer(tr)
 }
 
@@ -290,15 +312,15 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 	if withdraw.Cointoken != "" {
 		tr.AssetExec = token.TokenX
 	}
+	adaptNullAssetExec(tr)
 	return a.mainAssetWithdraw(tr, withdrawTx)
 }
 
-func (a *action) assetTransferRollback(tr *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
+func (a *action) assetTransferRollback(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
 	//主链处理分支
 	if !isPara {
-		transfer := formatTransfer(tr, pt.ParacrossMainTransfer)
 		accDB, err := a.createAccount(cfg, a.db, transfer.AssetExec, transfer.AssetSymbol)
 		if err != nil {
 			return nil, errors.Wrap(err, "assetTransferRollback.createAccount failed")
@@ -318,15 +340,13 @@ func (a *action) paraAssetWithdrawRollback(wtw *pt.CrossAssetTransfer, withdrawT
 	isPara := cfg.IsPara()
 	//主链处理分支
 	if !isPara {
-		withdraw := formatTransfer(wtw, pt.ParacrossParaWithdraw)
-		paraTitle, err := getTitleFrom(a.tx.Execer)
+		withdraw, err := amendTransferParam(wtw, pt.ParacrossParaAssetWithdraw)
 		if err != nil {
-			return nil, errors.Wrapf(err, "paraAssetWithdrawRollback call getTitleFrom failed=%s", string(a.tx.Execer))
+			return nil, errors.Wrapf(err, "paraAssetWithdrawRollback amend param")
 		}
-		var paraAcc *account.DB
-		paraAcc, err = NewParaAccount(cfg, string(paraTitle), string(paraTitle)+withdraw.AssetExec, withdraw.AssetSymbol, a.db)
+		paraAcc, err := a.createParaAccount(withdraw)
 		if err != nil {
-			return nil, errors.Wrapf(err, "paraAssetWithdrawRollback call NewParaAccount failed,exec=%s,sym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
+			return nil, errors.Wrapf(err, "createAsset")
 		}
 		clog.Debug("paracross.paraAssetWithdrawRollback", "exec", withdraw.AssetExec, "sym", withdraw.AssetSymbol, "txHash", hex.EncodeToString(a.tx.Hash()))
 		return assetDepositBalance(paraAcc, withdrawTx.From(), withdraw.Amount)
@@ -345,4 +365,15 @@ func (a *action) createAccount(cfg *types.Chain33Config, db db.KV, exec, symbol 
 		exec = token.TokenX
 	}
 	return account.NewAccountDB(cfg, exec, symbol, db)
+}
+
+func adaptNullAssetExec(transfer *pt.CrossAssetTransfer) {
+	if transfer.AssetSymbol == "" {
+		transfer.AssetExec = coins.CoinsX
+		transfer.AssetSymbol = SymbolBty
+		return
+	}
+	if transfer.AssetExec == "" {
+		transfer.AssetExec = token.TokenX
+	}
 }

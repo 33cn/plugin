@@ -249,8 +249,11 @@ func CreateRawCrossAssetTransferCmd() *cobra.Command {
 }
 
 func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("type", "d", 0, "transfer type: 0:to paraChain, 1:to mainChain")
-	cmd.MarkFlagRequired("type")
+	cmd.Flags().StringP("exec", "e", "", "exec of asset resident")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol like bty")
+	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("to", "t", "", "transfer to account")
 	cmd.MarkFlagRequired("to")
@@ -260,11 +263,10 @@ func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
-	cmd.Flags().StringP("symbol", "s", "", "default for bty, parachain symbol like user.p.xx.bty")
 }
 
 func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
-	ty, _ := cmd.Flags().GetUint32("type")
+	ty, _ := cmd.Flags().GetString("exec")
 	toAddr, _ := cmd.Flags().GetString("to")
 	note, _ := cmd.Flags().GetString("note")
 	symbol, _ := cmd.Flags().GetString("symbol")
@@ -283,13 +285,8 @@ func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
 	}
 	execName := paraName + pt.ParaX
 
-	if ty > 0 && symbol == "" {
-		fmt.Fprintln(os.Stderr, "transfer to main chain, symbol should not be null")
-		return
-	}
-
 	var config pt.CrossAssetTransfer
-	config.Type = ty
+	config.AssetExec = ty
 	config.AssetSymbol = symbol
 	config.ToAddr = toAddr
 	config.Note = note
