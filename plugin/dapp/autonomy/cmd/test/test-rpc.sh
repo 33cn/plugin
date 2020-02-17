@@ -428,7 +428,14 @@ function rpc_test() {
     echo "main_ip=$HTTP"
 
     init
-    run_testcases
+    ispara=$(echo '"'"${HTTP}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+
+    if [ "$ispara" == true ]; then
+        echo "skip autonomy temporary on parachain"
+    else
+        run_testcases
+    fi
 
     chain33_RpcTestRst autonomy "$CASE_ERR"
 
