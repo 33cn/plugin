@@ -55,7 +55,7 @@ asset-transfer 分两种， 主链转出， 主链转入
   1. 不支持从平行链直接转移到其他平行链，需要先转移到主链，再转移到平行链
   1. 通过资产和交易title就能确定是transfer资产还是收回资产
 举例:
-````
+```
 				exec                    symbol                              tx.title=user.p.test1   tx.title=user.p.test2
 1. 主链上的资产：
 				coins                   bty                                 transfer                 transfer
@@ -68,7 +68,7 @@ asset-transfer 分两种， 主链转出， 主链转入
 
 其中user.p.test1.paracross.paracross.user.p.test2.coins.cny资产解释：
 user.p.test1.paracross.是平行链paracross执行器，　paracross.user.p.test2.coins.cny的paracross代表从主链的paracross转移过来的user.p.test2.coins.cny资产
-````
+```
 
 交易执行代码分为 三个部分
  1. 主链
