@@ -183,18 +183,18 @@ func (n *node) makeBlock(height int64, round int, tid string, vs []*pt.Pos33Vote
 
 	lb := n.lastBlock()
 	if height != lb.Height+1 {
-		return fmt.Errorf("makeBlock height error. lb.Height=%d, height=%d", lb.Height, height)
+		return fmt.Errorf("makeBlock height error")
 	}
 	if n.lheight == height && n.lround == round {
-		return fmt.Errorf("already maked %d:%d", height, round)
+		return fmt.Errorf("makeBlock already maked error")
 	}
 	sort := n.mySort(height, round)
 	if sort == nil {
-		err := fmt.Errorf("I'm not bp")
+		err := fmt.Errorf("makeBlock sort nil error")
 		return err
 	}
 	if sort.SortHash.Tid != tid {
-		err := fmt.Errorf("I'm not bp2")
+		err := fmt.Errorf("makeBlock tid error")
 		return err
 	}
 
@@ -579,7 +579,7 @@ func (n *node) handleVotesMsg(vms *pt.Pos33Votes, myself bool) {
 	if ok && checkVotesEnough(rvs, height, round) {
 		err := n.makeBlock(height, round, tid, rvs)
 		if err != nil {
-			plog.Error("makeBlock error", "err", err)
+			plog.Error("makeBlock error", "err", err, "height", height, "round", round)
 		}
 	}
 }
@@ -876,10 +876,10 @@ func (n *node) runLoop() {
 		case msg := <-msgch:
 			n.handlePos33Msg(msg)
 		case <-syncTick.C:
-			isSync = n.IsCaughtUp()
+			isSync = n.miningOK()
 		default:
 			if !isSync {
-				time.Sleep(time.Millisecond * 500)
+				time.Sleep(time.Millisecond * 1000)
 				continue
 			}
 		}

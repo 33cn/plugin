@@ -246,42 +246,15 @@ func (client *Client) getTickets() ([]*pt.Pos33Ticket, []crypto.PrivKey, error) 
 	return reply.Tickets, keys, nil
 }
 
-/*
-func (client *Client) getAllWeight(height int64) int {
-	preH := height - height%pt.Pos33SortitionSize
-	if preH == height {
-		preH -= pt.Pos33SortitionSize
-	}
-	key := []byte(pt.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", preH))
-	v, err := client.Get(key)
-	if err != nil {
-		plog.Error(err.Error())
-		return 0
-	}
-
-	allw, err := strconv.Atoi(string(v))
-	if err != nil {
-		plog.Error(err.Error())
-		return 0
-	}
-
-	return int(allw)
-}
-*/
-
 // AddBlock notice driver a new block incoming
 func (client *Client) AddBlock(b *types.Block) error {
 	client.n.addBlock(b)
 	return nil
 }
 
-func (client *Client) nodeID() string {
-	return address.PubKeyToAddr(client.getPriv("").PubKey().Bytes())
-}
-
 func (client *Client) miningOK() bool {
-	if !client.IsMining() {
-		plog.Info("createblock.ismining is disable or client is caughtup is false")
+	if !client.IsCaughtUp() {
+		plog.Info("caughtUp false")
 		return false
 	}
 	ok := false
@@ -299,10 +272,24 @@ func (client *Client) miningOK() bool {
 func (client *Client) CreateBlock() {
 	for {
 		client.flushTicket()
-		if !client.miningOK() {
+		if client.IsClosed() {
+			plog.Info("create block stop")
+			break
+		}
+		if !client.IsMining() || !(client.IsCaughtUp() || client.Cfg.ForceMining) {
+			plog.Info("createblock.ismining is disable or client is caughtup is false")
 			time.Sleep(time.Second)
 			continue
 		}
+		if client.getTicketCount() == 0 {
+			plog.Info("createblock.getticketcount = 0")
+			time.Sleep(time.Second)
+			continue
+		}
+		// if !client.miningOK() {
+		// 	time.Sleep(time.Second)
+		// 	continue
+		// }
 		break
 	}
 	client.n.runLoop()

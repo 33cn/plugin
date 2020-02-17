@@ -448,8 +448,6 @@ func (policy *ticketPolicy) getPos33TicketsByStatus(status int32) ([]*ty.Pos33Ti
 	if err != nil {
 		return nil, nil, err
 	}
-	operater.GetMutex().Lock()
-	defer operater.GetMutex().Unlock()
 	ok, err := operater.CheckWalletStatus()
 	if !ok && err != types.ErrOnlyTicketUnLocked {
 		return nil, nil, err

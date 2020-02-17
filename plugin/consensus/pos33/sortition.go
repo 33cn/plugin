@@ -17,8 +17,7 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
-const diffValue = 1.
-const diffDelta = 0.03
+const diffValue = 1.3
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256
@@ -52,6 +51,7 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 	}
 	//allw := client.allWeight(height)
 	diff := float64(changeDiff(size, round)) / float64(allw)
+	diff *= diffValue
 
 	priv := n.getPriv("")
 	input := &pt.VrfInput{Seed: seed, Height: height, Round: int32(round), Step: int32(step)}
@@ -163,6 +163,7 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 
 	round := m.Proof.Input.Round
 	diff := float64(changeDiff(size, int(round))) / float64(allw)
+	diff *= diffValue
 
 	t, err := n.queryTid(m.SortHash.Tid, height)
 	if err != nil {
