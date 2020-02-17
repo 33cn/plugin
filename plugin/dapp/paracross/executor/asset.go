@@ -5,8 +5,6 @@
 package executor
 
 import (
-	"encoding/hex"
-
 	"strings"
 
 	"github.com/33cn/chain33/account"
@@ -203,7 +201,7 @@ func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, 
 	}
 
 	clog.Debug("paracross.execTransfer", "execer", string(a.tx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
-		"txHash", hex.EncodeToString(a.tx.Hash()))
+		"txHash", common.ToHex(a.tx.Hash()))
 	r, err := accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
@@ -226,7 +224,7 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 	}
 
 	clog.Debug("Paracross.execWithdraw", "amount", withdraw.Amount, "from", fromAddr,
-		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", hex.EncodeToString(a.tx.Hash()))
+		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", common.ToHex(a.tx.Hash()))
 	r, err := accDB.ExecTransfer(fromAddr, withdraw.ToAddr, execAddr, withdraw.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "assetWithdraw,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
@@ -250,7 +248,7 @@ func (a *action) createParaAccount(cross *pt.CrossAssetTransfer) (*account.DB, e
 		assetExec = string(paraTitle) + assetExec
 	}
 	paraAcc, err := NewParaAccount(cfg, string(paraTitle), assetExec, assetSymbol, a.db)
-	clog.Debug("createParaAccount", "assetExec", assetExec, "symbol", assetSymbol, "txHash", hex.EncodeToString(a.tx.Hash()))
+	clog.Debug("createParaAccount", "assetExec", assetExec, "symbol", assetSymbol, "txHash", common.ToHex(a.tx.Hash()))
 	if err != nil {
 		return nil, errors.Wrapf(err, "createParaAccount,exec=%s,symbol=%s,title=%s", assetExec, assetSymbol, paraTitle)
 	}
@@ -263,7 +261,8 @@ func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer) (*types.Receip
 		return nil, errors.Wrapf(err, "createAsset")
 	}
 	clog.Debug("paracross.execCreateAsset", "assetExec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
-		"txHash", hex.EncodeToString(a.tx.Hash()))
+		"txHash", common.ToHex(a.tx.Hash()))
+
 	r, err := assetDepositBalance(paraAcc, transfer.ToAddr, transfer.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "createParaAsset,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
@@ -277,7 +276,7 @@ func (a *action) execDestroyAsset(withdraw *pt.CrossAssetTransfer) (*types.Recei
 		return nil, errors.Wrapf(err, "destroyAsset")
 	}
 	clog.Debug("paracross.execDestroyAsset", "assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol,
-		"txHash", hex.EncodeToString(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
+		"txHash", common.ToHex(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
 	r, err := assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "destroyAsset,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
@@ -326,7 +325,7 @@ func (a *action) assetTransferRollback(transfer *pt.CrossAssetTransfer, transfer
 		execAddr := address.ExecAddress(pt.ParaX)
 		fromAcc := address.ExecAddress(string(transferTx.Execer))
 		clog.Debug("paracross.AssetTransferRbk ", "exec", transfer.AssetExec, "sym", transfer.AssetSymbol,
-			"transfer.txHash", hex.EncodeToString(transferTx.Hash()), "curTx", hex.EncodeToString(a.tx.Hash()))
+			"transfer.txHash", common.ToHex(transferTx.Hash()), "curTx", common.ToHex(a.tx.Hash()))
 		return accDB.ExecTransfer(fromAcc, transferTx.From(), execAddr, transfer.Amount)
 	}
 	return nil, nil
@@ -346,7 +345,8 @@ func (a *action) paraAssetWithdrawRollback(wtw *pt.CrossAssetTransfer, withdrawT
 		if err != nil {
 			return nil, errors.Wrapf(err, "createAsset")
 		}
-		clog.Debug("paracross.paraAssetWithdrawRollback", "exec", withdraw.AssetExec, "sym", withdraw.AssetSymbol, "txHash", hex.EncodeToString(a.tx.Hash()))
+		clog.Debug("paracross.paraAssetWithdrawRollback", "exec", withdraw.AssetExec, "sym", withdraw.AssetSymbol,
+			"transfer.txHash", common.ToHex(withdrawTx.Hash()), "curTx", common.ToHex(a.tx.Hash()))
 		return assetDepositBalance(paraAcc, withdrawTx.From(), withdraw.Amount)
 	}
 	return nil, nil
