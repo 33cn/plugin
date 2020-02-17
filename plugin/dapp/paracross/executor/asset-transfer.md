@@ -34,7 +34,7 @@ asset-transfer 分两种， 主链转出， 主链转入
  * 主链
    1. 用户主链paracross合约帐号， balance -
    1. 某平行链paracross合约帐号， balance +
- * 平行链(如果上面步骤失败，， 平行链会过滤掉这个交易)
+ * 平行链(如果上面步骤失败， 平行链会过滤掉这个交易)
    1. 平行链中 用户paracross合约帐号  balance +
 
 主链转入 withdraw
@@ -53,6 +53,7 @@ asset-transfer 分两种， 主链转出， 主链转入
   1. 平行链资产:user.p.test.coins + FZM,
   1. 其他链转移过来的资产都在paracross执行器下: 主链：paracross　+ user.p.test.coins.FZM，　平行链: user.p.test.paracross + coins.BTY
   1. 不支持从平行链直接转移到其他平行链，需要先转移到主链，再转移到平行链
+  1. 通过资产和交易title就能确定是transfer资产还是收回资产
 举例:
 ````
 				exec                    symbol                              tx.title=user.p.test1   tx.title=user.p.test2
@@ -103,3 +104,28 @@ account     主链合约    平行链帐号在主链    用户A在主链       �
               10           3                1              6               2       1           1       主链共识完
 ```
 
+### 主链<->平行链双向转移 cross-transfer　举例
+```
+# Alice 主链转移５coins-bty -> user.p.test. 平行链:
+
+                    coins       paracross:Addr(Alice)   paracross:Addr(user.p.test.paracross)    user.p.test.paracross-coins-bty:Addr(Alice) 
+1 Alice                5
+2 to合约                0　　　　　　　　 5       
+3 cross-transfer       0            5-5=0                   0+5=5                                          0+5=5
+
+# Alice 平行链转移５paracross-coins.bty -> 主链
+4 cross-transfer                    　5                   5-5=0                                       5-5=0
+5 withdraw           　5              0
+
+# Bob 平行链转移5 user.p.test.coins.fzm -> 主链
+                    paracross-user.p.test.coins.fzm:Addr(Bob)    user.p.test.coins.fzm      user.p.test.paracross:Addr(Bob)   user.p.test.paracross:Addr(paracross)
+1 Bob                                                                       5
+2 to paracross合约　　            　　　　　　　　                               0                       5       
+3 cross-transfer                  0+5=5                                                             5-5=0                             0+5=5     
+
+# Bob 主链转移５exec:paracross　symbol:user.p.test.coins.fzm -> 平行链
+4 cross-transfer                  5-5=0                                                             0+5=5                                5-5=0
+5 withdraw                                                                  5                       5-5=0
+
+
+```
