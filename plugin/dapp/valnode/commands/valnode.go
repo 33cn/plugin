@@ -12,8 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -75,24 +73,9 @@ func GetNodeInfoCmd() *cobra.Command {
 
 func getNodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res string
+	var res []*vt.Validator
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "valnode.GetNodeInfo", nil, &res)
-	ctx.SetResultCb(parseNodeInfo)
 	ctx.Run()
-}
-
-func parseNodeInfo(arg interface{}) (interface{}, error) {
-	var result vt.ValidatorSet
-	res := arg.(*string)
-	data, err := hex.DecodeString(*res)
-	if err != nil {
-		return nil, err
-	}
-	err = types.Decode(data, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result.Validators, nil
 }
 
 // GetBlockInfoCmd get block info
@@ -149,8 +132,6 @@ func addNodeFlags(cmd *cobra.Command) {
 func addNode(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	power, _ := cmd.Flags().GetInt64("power")
 
@@ -159,48 +140,16 @@ func addNode(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	privkey, err := getprivkey()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
 	value := &vt.ValNodeAction_Node{Node: &vt.ValNode{PubKey: pubkeybyte, Power: power}}
 	action := &vt.ValNodeAction{Value: value, Ty: vt.ValNodeActionUpdate}
-	tx := &types.Transaction{Execer: []byte(vt.ValNodeX), Payload: types.Encode(action), Fee: 0}
-	err = tx.SetRealFee(cfg.GetMinTxFeeRate())
+	tx := &types.Transaction{Payload: types.Encode(action)}
+	tx, err = types.FormatTx(cfg, vt.ValNodeX, tx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tx.Nonce = random.Int63()
-	tx.To = address.ExecAddress(vt.ValNodeX)
-	tx.Sign(types.SECP256K1, privkey)
-
 	txHex := types.Encode(tx)
-	data := hex.EncodeToString(txHex)
-	params := rpctypes.RawParm{
-		Data: data,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
-	ctx.RunWithoutMarshal()
-}
-
-func getprivkey() (crypto.PrivKey, error) {
-	key := "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	if err != nil {
-		return nil, err
-	}
-	bkey, err := common.FromHex(key)
-	if err != nil {
-		return nil, err
-	}
-	priv, err := cr.PrivKeyFromBytes(bkey)
-	if err != nil {
-		return nil, err
-	}
-	return priv, nil
+	fmt.Println(hex.EncodeToString(txHex))
 }
 
 //CreateCmd to create keyfiles
