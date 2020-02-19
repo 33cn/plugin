@@ -4,8 +4,16 @@
 
 package types
 
-//valnode action
+// ValNodeX define
+const ValNodeX = "valnode"
+
+// valnode action
 const (
 	ValNodeActionUpdate    = 1
 	ValNodeActionBlockInfo = 2
+)
+
+// action name
+const (
+	ActionNodeUpdate = "NodeUpdate"
 )
