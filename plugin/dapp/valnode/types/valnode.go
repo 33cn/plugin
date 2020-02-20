@@ -7,6 +7,7 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/33cn/chain33/common/address"
 
 	log "github.com/33cn/chain33/common/log/log15"
