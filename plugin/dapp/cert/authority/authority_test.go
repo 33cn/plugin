@@ -325,7 +325,7 @@ func TestValidateCerts(t *testing.T) {
 		t.Errorf("init env failed, error:%s", err)
 	}
 
-	prev := types.GInt("MinFee")
+	prev := types.GetMinTxFeeRate()
 	types.SetMinFee(0)
 	defer types.SetMinFee(prev)
 

@@ -32,6 +32,7 @@ func ParcCmd() *cobra.Command {
 		CreateRawTransferCmd(),
 		CreateRawWithdrawCmd(),
 		CreateRawTransferToExecCmd(),
+		CreateRawCrossAssetTransferCmd(),
 		superNodeCmd(),
 		nodeGroupCmd(),
 		paraConfigCmd(),
@@ -234,6 +235,72 @@ func addCreateWithdrawFlags(cmd *cobra.Command) {
 
 func createWithdraw(cmd *cobra.Command, args []string) {
 	commands.CreateAssetWithdraw(cmd, args, pt.ParaX)
+}
+
+// CreateRawCrossAssetTransferCmd create raw cross asset transfer tx
+func CreateRawCrossAssetTransferCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cross_transfer",
+		Short: "Create a cross asset transfer transaction",
+		Run:   createCrossAssetTransfer,
+	}
+	addCreateCrossAssetTransferFlags(cmd)
+	return cmd
+}
+
+func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "exec of asset resident")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol like bty")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("to", "t", "", "transfer to account")
+	cmd.MarkFlagRequired("to")
+
+	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+}
+
+func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
+	ty, _ := cmd.Flags().GetString("exec")
+	toAddr, _ := cmd.Flags().GetString("to")
+	note, _ := cmd.Flags().GetString("note")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+
+	if amount < 0 {
+		fmt.Fprintln(os.Stderr, "amount < 0")
+		return
+	}
+	amountInt64 := int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4
+
+	paraName, _ := cmd.Flags().GetString("paraName")
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	execName := paraName + pt.ParaX
+
+	var config pt.CrossAssetTransfer
+	config.AssetExec = ty
+	config.AssetSymbol = symbol
+	config.ToAddr = toAddr
+	config.Note = note
+	config.Amount = amountInt64
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     execName,
+		ActionName: "CrossAssetTransfer",
+		Payload:    types.MustPBToJSON(&config),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func superNodeCmd() *cobra.Command {
@@ -526,12 +593,12 @@ func selfConsStage(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpNewApply
+	config.Ty = pt.ParaOpNewApply
 	config.Value = &pt.ParaStageConfig_Stage{Stage: &pt.SelfConsensStage{StartHeight: height, Enable: enable}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 
@@ -565,12 +632,12 @@ func createVoteTx(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpVote
+	config.Ty = pt.ParaOpVote
 	config.Value = &pt.ParaStageConfig_Vote{Vote: &pt.ConfigVoteInfo{Id: id, Value: val}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 
@@ -596,12 +663,12 @@ func stageCancelTx(cmd *cobra.Command, args []string) {
 
 	var config pt.ParaStageConfig
 	config.Title = paraName
-	config.Op = pt.ParaOpCancel
+	config.Ty = pt.ParaOpCancel
 	config.Value = &pt.ParaStageConfig_Cancel{Cancel: &pt.ConfigCancelInfo{Id: id}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "selfConsStageConfig",
+		ActionName: "SelfStageConfig",
 		Payload:    types.MustPBToJSON(&config),
 	}
 
@@ -1015,7 +1082,7 @@ func paraAssetTransfer(cmd *cobra.Command, args []string) {
 	}
 	params.Payload = types.MustPBToJSON(&req)
 
-	var res pt.ParacrossAssetRsp
+	var res pt.ParacrossAsset
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

@@ -123,11 +123,11 @@ func (s *suiteRelay) testExecDelLocal(tx *types.Transaction, receipt *types.Rece
 //create sell
 func (s *suiteRelay) TestExec_1() {
 	order := &ty.RelayCreate{
-		Operation: ty.RelayOrderSell,
-		Coin:      "BTC",
-		Amount:    0.299 * 1e8,
-		Addr:      addrBtc,
-		BtyAmount: 200 * 1e8,
+		Operation:       ty.RelayOrderSell,
+		XCoin:           "BTC",
+		XAmount:         0.299 * 1e8,
+		XAddr:           addrBtc,
+		LocalCoinAmount: 200 * 1e8,
 	}
 
 	sell := &ty.RelayAction{
@@ -156,10 +156,10 @@ func (s *suiteRelay) TestExec_1() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(10), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(10), log.XHeight)
 
-	s.orderID = log.OrderId
+	s.orderID = getRealTxHashID(log.OrderId)
 
 	//s.testExecLocal(tx, receipt)
 	//s.testExecDelLocal(tx, receipt)
@@ -169,8 +169,8 @@ func (s *suiteRelay) TestExec_1() {
 //accept
 func (s *suiteRelay) TestExec_2() {
 	order := &ty.RelayAccept{
-		OrderId:  s.orderID,
-		CoinAddr: addrBtc,
+		OrderId: s.orderID,
+		XAddr:   addrBtc,
 	}
 
 	sell := &ty.RelayAction{
@@ -197,8 +197,8 @@ func (s *suiteRelay) TestExec_2() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(20), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(20), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_locking.String(), log.CurStatus)
 
 }
@@ -233,8 +233,8 @@ func (s *suiteRelay) TestExec_3() {
 
 	var log ty.ReceiptRelayLog
 	types.Decode(receipt.Logs[len(receipt.Logs)-1].Log, &log)
-	s.Equal("200.0000", log.TxAmount)
-	s.Equal(uint64(30), log.CoinHeight)
+	s.Equal("200.0000", log.LocalCoinAmount)
+	s.Equal(uint64(30), log.XHeight)
 	s.Equal(ty.RelayOrderStatus_confirming.String(), log.CurStatus)
 
 }
@@ -319,43 +319,13 @@ func (s *suiteRelay) TestExec_9_QryStatus1() {
 	}
 
 	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
+	OrderIds = append(OrderIds, []byte(calcRelayOrderID(s.orderID)))
 	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
 	msg, err := s.relay.Query_GetRelayOrderByStatus(addrCoins)
 	s.Nil(err)
-	//s.T().Log(msg.String())
+	s.T().Log(msg.String())
 	s.Contains(msg.String(), "status:finished")
 	//s.Equal(ty.RelayOrderStatus_finished,)
-}
-
-func (s *suiteRelay) TestExec_9_QryStatus2() {
-	addrCoins := &ty.ReqRelayAddrCoins{
-		Addr: addrFrom,
-		//Status: ty.RelayOrderStatus_finished,
-		Coins: []string{"BTC"},
-	}
-
-	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
-	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
-	msg, err := s.relay.Query_GetSellRelayOrder(addrCoins)
-	s.Nil(err)
-	s.Contains(msg.String(), "status:finished")
-}
-
-func (s *suiteRelay) TestExec_9_QryStatus3() {
-	addrCoins := &ty.ReqRelayAddrCoins{
-		Addr: addrTo,
-		//Status: ty.RelayOrderStatus_finished,
-		Coins: []string{"BTC"},
-	}
-
-	var OrderIds [][]byte
-	OrderIds = append(OrderIds, []byte(s.orderID))
-	s.kvdb.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(OrderIds, nil).Once()
-	msg, err := s.relay.Query_GetBuyRelayOrder(addrCoins)
-	s.Nil(err)
-	s.Contains(msg.String(), "status:finished")
 }
 
 func (s *suiteRelay) TestExec_9_QryStatus4() {

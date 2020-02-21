@@ -42,7 +42,6 @@ func (e *Paracross) Exec_AssetTransfer(payload *types.AssetsTransfer, tx *types.
 
 //Exec_AssetWithdraw asset withdraw exec process
 func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
-	clog.Debug("Paracross.Exec", "withdraw", "")
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
 		clog.Error("ParacrossActionAssetWithdraw", "get tx group failed", err, "hash", hex.EncodeToString(tx.Hash()))
@@ -53,6 +52,22 @@ func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.
 	if err != nil {
 		clog.Error("ParacrossActionAssetWithdraw failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
 		return nil, errors.Cause(err)
+	}
+	return receipt, nil
+}
+
+//Exec_ParaAssetTransfer parallel chain asset transfer exec process
+func (e *Paracross) Exec_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+	_, err := e.checkTxGroup(tx, index)
+	if err != nil {
+		clog.Error("ParacrossActionCrossAssetTransfer", "get tx group failed", err, "hash", hex.EncodeToString(tx.Hash()))
+		return nil, err
+	}
+	a := newAction(e, tx)
+	receipt, err := a.CrossAssetTransfer(payload)
+	if err != nil {
+		clog.Error("Paracross CrossAssetTransfer failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
+		return nil, err
 	}
 	return receipt, nil
 }

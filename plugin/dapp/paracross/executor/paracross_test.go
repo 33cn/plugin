@@ -735,11 +735,11 @@ func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 }
 
 func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transaction, error) {
-	group, err := types.CreateTxGroup(txs, chain33TestCfg.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txs, chain33TestCfg.GetMinTxFeeRate())
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GInt("MinFee"), chain33TestCfg.GInt("MaxFee"))
+	err = group.Check(chain33TestCfg, 0, chain33TestCfg.GetMinTxFeeRate(), chain33TestCfg.GetMaxTxFee())
 	if err != nil {
 		return nil, err
 	}
@@ -821,4 +821,14 @@ func TestUpdateCommitBlockHashs(t *testing.T) {
 	assert.Equal(t, int(2), len(stat.BlockDetails.BlockHashs))
 	assert.Equal(t, commit2.BlockHash, stat.BlockDetails.BlockHashs[1])
 
+}
+
+func TestValidParaCrossExec(t *testing.T) {
+	exec := []byte("paracross")
+	valid := types.IsParaExecName(string(exec))
+	assert.Equal(t, false, valid)
+
+	exec = []byte("user.p.para.paracross")
+	valid = types.IsParaExecName(string(exec))
+	assert.Equal(t, true, valid)
 }

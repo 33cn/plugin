@@ -50,7 +50,7 @@ func (m *PokerBull) Reset()         { *m = PokerBull{} }
 func (m *PokerBull) String() string { return proto.CompactTextString(m) }
 func (*PokerBull) ProtoMessage()    {}
 func (*PokerBull) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{0}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{0}
 }
 func (m *PokerBull) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PokerBull.Unmarshal(m, b)
@@ -205,7 +205,7 @@ func (m *PBHand) Reset()         { *m = PBHand{} }
 func (m *PBHand) String() string { return proto.CompactTextString(m) }
 func (*PBHand) ProtoMessage()    {}
 func (*PBHand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{1}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{1}
 }
 func (m *PBHand) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBHand.Unmarshal(m, b)
@@ -275,7 +275,7 @@ func (m *PBPlayer) Reset()         { *m = PBPlayer{} }
 func (m *PBPlayer) String() string { return proto.CompactTextString(m) }
 func (*PBPlayer) ProtoMessage()    {}
 func (*PBPlayer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{2}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{2}
 }
 func (m *PBPlayer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBPlayer.Unmarshal(m, b)
@@ -339,7 +339,7 @@ func (m *PBResult) Reset()         { *m = PBResult{} }
 func (m *PBResult) String() string { return proto.CompactTextString(m) }
 func (*PBResult) ProtoMessage()    {}
 func (*PBResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{3}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{3}
 }
 func (m *PBResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBResult.Unmarshal(m, b)
@@ -407,7 +407,7 @@ func (m *PBPoker) Reset()         { *m = PBPoker{} }
 func (m *PBPoker) String() string { return proto.CompactTextString(m) }
 func (*PBPoker) ProtoMessage()    {}
 func (*PBPoker) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{4}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{4}
 }
 func (m *PBPoker) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBPoker.Unmarshal(m, b)
@@ -460,7 +460,7 @@ func (m *PBGameAction) Reset()         { *m = PBGameAction{} }
 func (m *PBGameAction) String() string { return proto.CompactTextString(m) }
 func (*PBGameAction) ProtoMessage()    {}
 func (*PBGameAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{5}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{5}
 }
 func (m *PBGameAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameAction.Unmarshal(m, b)
@@ -707,7 +707,7 @@ func (m *PBGameStart) Reset()         { *m = PBGameStart{} }
 func (m *PBGameStart) String() string { return proto.CompactTextString(m) }
 func (*PBGameStart) ProtoMessage()    {}
 func (*PBGameStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{6}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{6}
 }
 func (m *PBGameStart) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameStart.Unmarshal(m, b)
@@ -753,7 +753,7 @@ func (m *PBGameContinue) Reset()         { *m = PBGameContinue{} }
 func (m *PBGameContinue) String() string { return proto.CompactTextString(m) }
 func (*PBGameContinue) ProtoMessage()    {}
 func (*PBGameContinue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{7}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{7}
 }
 func (m *PBGameContinue) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameContinue.Unmarshal(m, b)
@@ -792,7 +792,7 @@ func (m *PBGameQuit) Reset()         { *m = PBGameQuit{} }
 func (m *PBGameQuit) String() string { return proto.CompactTextString(m) }
 func (*PBGameQuit) ProtoMessage()    {}
 func (*PBGameQuit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{8}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{8}
 }
 func (m *PBGameQuit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameQuit.Unmarshal(m, b)
@@ -831,7 +831,7 @@ func (m *PBGameQuery) Reset()         { *m = PBGameQuery{} }
 func (m *PBGameQuery) String() string { return proto.CompactTextString(m) }
 func (*PBGameQuery) ProtoMessage()    {}
 func (*PBGameQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{9}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{9}
 }
 func (m *PBGameQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameQuery.Unmarshal(m, b)
@@ -873,7 +873,7 @@ func (m *PBGamePlay) Reset()         { *m = PBGamePlay{} }
 func (m *PBGamePlay) String() string { return proto.CompactTextString(m) }
 func (*PBGamePlay) ProtoMessage()    {}
 func (*PBGamePlay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{10}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{10}
 }
 func (m *PBGamePlay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGamePlay.Unmarshal(m, b)
@@ -935,7 +935,7 @@ func (m *QueryPBGameListByStatusAndPlayerNum) Reset()         { *m = QueryPBGame
 func (m *QueryPBGameListByStatusAndPlayerNum) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameListByStatusAndPlayerNum) ProtoMessage()    {}
 func (*QueryPBGameListByStatusAndPlayerNum) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{11}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{11}
 }
 func (m *QueryPBGameListByStatusAndPlayerNum) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameListByStatusAndPlayerNum.Unmarshal(m, b)
@@ -990,7 +990,7 @@ func (m *PBGameRecord) Reset()         { *m = PBGameRecord{} }
 func (m *PBGameRecord) String() string { return proto.CompactTextString(m) }
 func (*PBGameRecord) ProtoMessage()    {}
 func (*PBGameRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{12}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{12}
 }
 func (m *PBGameRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameRecord.Unmarshal(m, b)
@@ -1043,7 +1043,7 @@ func (m *PBGameIndexRecord) Reset()         { *m = PBGameIndexRecord{} }
 func (m *PBGameIndexRecord) String() string { return proto.CompactTextString(m) }
 func (*PBGameIndexRecord) ProtoMessage()    {}
 func (*PBGameIndexRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{13}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{13}
 }
 func (m *PBGameIndexRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameIndexRecord.Unmarshal(m, b)
@@ -1088,7 +1088,7 @@ func (m *PBGameRecords) Reset()         { *m = PBGameRecords{} }
 func (m *PBGameRecords) String() string { return proto.CompactTextString(m) }
 func (*PBGameRecords) ProtoMessage()    {}
 func (*PBGameRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{14}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{14}
 }
 func (m *PBGameRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameRecords.Unmarshal(m, b)
@@ -1126,7 +1126,7 @@ func (m *PBGameIndexRecords) Reset()         { *m = PBGameIndexRecords{} }
 func (m *PBGameIndexRecords) String() string { return proto.CompactTextString(m) }
 func (*PBGameIndexRecords) ProtoMessage()    {}
 func (*PBGameIndexRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{15}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{15}
 }
 func (m *PBGameIndexRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBGameIndexRecords.Unmarshal(m, b)
@@ -1167,7 +1167,7 @@ func (m *QueryPBGameInfo) Reset()         { *m = QueryPBGameInfo{} }
 func (m *QueryPBGameInfo) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameInfo) ProtoMessage()    {}
 func (*QueryPBGameInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{16}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{16}
 }
 func (m *QueryPBGameInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameInfo.Unmarshal(m, b)
@@ -1226,7 +1226,7 @@ func (m *ReplyPBGame) Reset()         { *m = ReplyPBGame{} }
 func (m *ReplyPBGame) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGame) ProtoMessage()    {}
 func (*ReplyPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{17}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{17}
 }
 func (m *ReplyPBGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGame.Unmarshal(m, b)
@@ -1264,7 +1264,7 @@ func (m *QueryPBGameInfos) Reset()         { *m = QueryPBGameInfos{} }
 func (m *QueryPBGameInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameInfos) ProtoMessage()    {}
 func (*QueryPBGameInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{18}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{18}
 }
 func (m *QueryPBGameInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameInfos.Unmarshal(m, b)
@@ -1302,7 +1302,7 @@ func (m *ReplyPBGameList) Reset()         { *m = ReplyPBGameList{} }
 func (m *ReplyPBGameList) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGameList) ProtoMessage()    {}
 func (*ReplyPBGameList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{19}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{19}
 }
 func (m *ReplyPBGameList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGameList.Unmarshal(m, b)
@@ -1342,7 +1342,7 @@ func (m *QueryPBGameByRound) Reset()         { *m = QueryPBGameByRound{} }
 func (m *QueryPBGameByRound) String() string { return proto.CompactTextString(m) }
 func (*QueryPBGameByRound) ProtoMessage()    {}
 func (*QueryPBGameByRound) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{20}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{20}
 }
 func (m *QueryPBGameByRound) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryPBGameByRound.Unmarshal(m, b)
@@ -1394,7 +1394,7 @@ func (m *ReplyPBGameByRound) Reset()         { *m = ReplyPBGameByRound{} }
 func (m *ReplyPBGameByRound) String() string { return proto.CompactTextString(m) }
 func (*ReplyPBGameByRound) ProtoMessage()    {}
 func (*ReplyPBGameByRound) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{21}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{21}
 }
 func (m *ReplyPBGameByRound) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPBGameByRound.Unmarshal(m, b)
@@ -1484,7 +1484,7 @@ func (m *ReceiptPBGame) Reset()         { *m = ReceiptPBGame{} }
 func (m *ReceiptPBGame) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPBGame) ProtoMessage()    {}
 func (*ReceiptPBGame) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{22}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{22}
 }
 func (m *ReceiptPBGame) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptPBGame.Unmarshal(m, b)
@@ -1594,7 +1594,7 @@ func (m *PBStartTxReq) Reset()         { *m = PBStartTxReq{} }
 func (m *PBStartTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBStartTxReq) ProtoMessage()    {}
 func (*PBStartTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{23}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{23}
 }
 func (m *PBStartTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBStartTxReq.Unmarshal(m, b)
@@ -1647,7 +1647,7 @@ func (m *PBContinueTxReq) Reset()         { *m = PBContinueTxReq{} }
 func (m *PBContinueTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBContinueTxReq) ProtoMessage()    {}
 func (*PBContinueTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{24}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{24}
 }
 func (m *PBContinueTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBContinueTxReq.Unmarshal(m, b)
@@ -1693,7 +1693,7 @@ func (m *PBQuitTxReq) Reset()         { *m = PBQuitTxReq{} }
 func (m *PBQuitTxReq) String() string { return proto.CompactTextString(m) }
 func (*PBQuitTxReq) ProtoMessage()    {}
 func (*PBQuitTxReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{25}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{25}
 }
 func (m *PBQuitTxReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBQuitTxReq.Unmarshal(m, b)
@@ -1739,7 +1739,7 @@ func (m *PBQueryReq) Reset()         { *m = PBQueryReq{} }
 func (m *PBQueryReq) String() string { return proto.CompactTextString(m) }
 func (*PBQueryReq) ProtoMessage()    {}
 func (*PBQueryReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_pokerbull_5d387ab9a2fc22dd, []int{26}
+	return fileDescriptor_pokerbull_7eb5a75a83e1112b, []int{26}
 }
 func (m *PBQueryReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PBQueryReq.Unmarshal(m, b)
@@ -1803,9 +1803,9 @@ func init() {
 	proto.RegisterType((*PBQueryReq)(nil), "types.PBQueryReq")
 }
 
-func init() { proto.RegisterFile("pokerbull.proto", fileDescriptor_pokerbull_5d387ab9a2fc22dd) }
+func init() { proto.RegisterFile("pokerbull.proto", fileDescriptor_pokerbull_7eb5a75a83e1112b) }
 
-var fileDescriptor_pokerbull_5d387ab9a2fc22dd = []byte{
+var fileDescriptor_pokerbull_7eb5a75a83e1112b = []byte{
 	// 1054 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x17, 0x4b, 0x8f, 0xdb, 0x44,
 	0xb8, 0xb6, 0xe3, 0x3c, 0x3e, 0x77, 0x93, 0xed, 0x00, 0xab, 0x11, 0x42, 0x28, 0x72, 0x97, 0x36,

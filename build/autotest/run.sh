@@ -13,14 +13,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 ## get chain33 path
-CHAIN33_PATH=$(grep -m1 github.com/33cn/chain33 ../../go.mod | grep -o '[^ ]\+$')
-CHAIN33_PATH="${CHAIN33_PATH%/}"
-if [[ -d ../../${CHAIN33_PATH} ]]; then
-    CHAIN33_PATH=../../"$CHAIN33_PATH"
-
-elif [[ ! -d ${CHAIN33_PATH} ]]; then
-    CHAIN33_PATH="${GOPATH}"/pkg/mod/github.com/33cn/chain33@"$CHAIN33_PATH"
-fi
+CHAIN33_PATH=$(go list -f "{{.Dir}}" github.com/33cn/chain33)
 
 function build_auto_test() {
 

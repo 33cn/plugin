@@ -8,12 +8,12 @@ import (
 	"bytes"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -135,14 +135,46 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 				hex.EncodeToString(crossTxHashs[i]))
 			return nil, err
 		}
+		if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+			act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(paraTx.Tx.Execer))
+			if err != nil {
+				clog.Crit("udpateLocalParaTxs getCrossAction failed", "error", err)
+				return nil, err
+			}
+			//主链共识后，平行链执行出错的主链资产transfer回滚
+			if act == pt.ParacrossMainAssetTransfer || act == pt.ParacrossParaAssetWithdraw {
+				kv, err := c.updateLocalAssetTransfer(paraTx.Tx, paraHeight, success, isDel)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, kv)
+			}
+			//主链共识后，平行链执行出错的平行链资产withdraw回滚
+			if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
+				asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), paraTx.Tx)
+				if err != nil {
+					return nil, err
+				}
+				kv, err := c.initLocalAssetTransferDone(paraTx.Tx, asset, paraHeight, success, isDel)
+				if err != nil {
+					return nil, err
+				}
+				set.KV = append(set.KV, kv)
+			}
+		}
+
 		if payload.Ty == pt.ParacrossActionAssetTransfer {
-			kv, err := c.updateLocalAssetTransfer(paraHeight, paraTx.Tx, success, isDel)
+			kv, err := c.updateLocalAssetTransfer(paraTx.Tx, paraHeight, success, isDel)
 			if err != nil {
 				return nil, err
 			}
 			set.KV = append(set.KV, kv)
 		} else if payload.Ty == pt.ParacrossActionAssetWithdraw {
-			kv, err := c.initLocalAssetWithdraw(paraHeight, paraTx.Tx, true, success, isDel)
+			asset, err := c.getAssetTransferInfo(paraTx.Tx, payload.GetAssetWithdraw().Cointoken, true)
+			if err != nil {
+				return nil, err
+			}
+			kv, err := c.initLocalAssetTransferDone(paraTx.Tx, asset, paraHeight, success, isDel)
 			if err != nil {
 				return nil, err
 			}
@@ -153,7 +185,57 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 	return &set, nil
 }
 
-func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
+func (c *Paracross) getAssetTransferInfo(tx *types.Transaction, coinToken string, isWithdraw bool) (*pt.ParacrossAsset, error) {
+	exec := "coins"
+	symbol := types.BTY
+	if coinToken != "" {
+		exec = "token"
+		symbol = coinToken
+	}
+	amount, err := tx.Amount()
+	if err != nil {
+		return nil, err
+	}
+
+	asset := &pt.ParacrossAsset{
+		From:       tx.From(),
+		To:         tx.To,
+		Amount:     amount,
+		IsWithdraw: isWithdraw,
+		TxHash:     common.ToHex(tx.Hash()),
+		Height:     c.GetHeight(),
+		Exec:       exec,
+		Symbol:     symbol,
+	}
+	return asset, nil
+}
+
+func (c *Paracross) getCrossAssetTransferInfo(payload *pt.CrossAssetTransfer, tx *types.Transaction) (*pt.ParacrossAsset, error) {
+	exec := payload.AssetExec
+	symbol := payload.AssetSymbol
+	if payload.AssetSymbol == "" {
+		symbol = types.BTY
+		exec = "coins"
+	}
+
+	amount, err := tx.Amount()
+	if err != nil {
+		return nil, err
+	}
+
+	asset := &pt.ParacrossAsset{
+		From:   tx.From(),
+		To:     tx.To,
+		Amount: amount,
+		TxHash: common.ToHex(tx.Hash()),
+		Height: c.GetHeight(),
+		Exec:   exec,
+		Symbol: symbol,
+	}
+	return asset, nil
+}
+
+func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, isDel bool, asset *pt.ParacrossAsset) (*types.KeyValue, error) {
 	clog.Debug("para execLocal", "tx hash", hex.EncodeToString(tx.Hash()), "action name", log.Lazy{Fn: tx.ActionName})
 	key := calcLocalAssetKey(tx.Hash())
 	if isDel {
@@ -161,97 +243,32 @@ func (c *Paracross) initLocalAssetTransfer(tx *types.Transaction, success, isDel
 		return &types.KeyValue{Key: key, Value: nil}, nil
 	}
 
-	var payload pt.ParacrossAction
-	err := types.Decode(tx.Payload, &payload)
-	if err != nil {
-		return nil, err
-	}
-	if payload.GetAssetTransfer() == nil {
-		return nil, errors.New("GetAssetTransfer is nil")
-	}
-	exec := "coins"
-	symbol := types.BTY
-	if payload.GetAssetTransfer().Cointoken != "" {
-		exec = "token"
-		symbol = payload.GetAssetTransfer().Cointoken
-	}
-
-	var asset pt.ParacrossAsset
-	amount, err := tx.Amount()
-	if err != nil {
-		return nil, err
-	}
-
-	asset = pt.ParacrossAsset{
-		From:       tx.From(),
-		To:         tx.To,
-		Amount:     amount,
-		IsWithdraw: false,
-		TxHash:     tx.Hash(),
-		Height:     c.GetHeight(),
-		Exec:       exec,
-		Symbol:     symbol,
-	}
-
-	err = c.GetLocalDB().Set(key, types.Encode(&asset))
+	err := c.GetLocalDB().Set(key, types.Encode(asset))
 	if err != nil {
 		clog.Error("para execLocal", "set", hex.EncodeToString(tx.Hash()), "failed", err)
 	}
-	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
+	return &types.KeyValue{Key: key, Value: types.Encode(asset)}, nil
 }
 
-func (c *Paracross) initLocalAssetWithdraw(paraHeight int64, tx *types.Transaction, isWithdraw, success, isDel bool) (*types.KeyValue, error) {
+func (c *Paracross) initLocalAssetTransferDone(tx *types.Transaction, asset *pt.ParacrossAsset, paraHeight int64, success, isDel bool) (*types.KeyValue, error) {
 	key := calcLocalAssetKey(tx.Hash())
 	if isDel {
 		c.GetLocalDB().Set(key, nil)
 		return &types.KeyValue{Key: key, Value: nil}, nil
 	}
 
-	var asset pt.ParacrossAsset
-
-	amount, err := tx.Amount()
-	if err != nil {
-		return nil, err
-	}
 	asset.ParaHeight = paraHeight
-
-	var payload pt.ParacrossAction
-	err = types.Decode(tx.Payload, &payload)
-	if err != nil {
-		return nil, err
-	}
-	if payload.GetAssetWithdraw() == nil {
-		return nil, errors.New("GetAssetWithdraw is nil")
-	}
-	exec := "coins"
-	symbol := types.BTY
-	if payload.GetAssetWithdraw().Cointoken != "" {
-		exec = "token"
-		symbol = payload.GetAssetWithdraw().Cointoken
-	}
-
-	asset = pt.ParacrossAsset{
-		From:       tx.From(),
-		To:         tx.To,
-		Amount:     amount,
-		IsWithdraw: isWithdraw,
-		TxHash:     tx.Hash(),
-		Height:     c.GetHeight(),
-		Exec:       exec,
-		Symbol:     symbol,
-	}
-
 	asset.CommitDoneHeight = c.GetHeight()
 	asset.Success = success
 
-	err = c.GetLocalDB().Set(key, types.Encode(&asset))
+	err := c.GetLocalDB().Set(key, types.Encode(asset))
 	if err != nil {
 		clog.Error("para execLocal", "set", "", "failed", err)
 	}
-	return &types.KeyValue{Key: key, Value: types.Encode(&asset)}, nil
+	return &types.KeyValue{Key: key, Value: types.Encode(asset)}, nil
 }
 
-func (c *Paracross) updateLocalAssetTransfer(paraHeight int64, tx *types.Transaction, success, isDel bool) (*types.KeyValue, error) {
+func (c *Paracross) updateLocalAssetTransfer(tx *types.Transaction, paraHeight int64, success, isDel bool) (*types.KeyValue, error) {
 	clog.Debug("para execLocal", "tx hash", hex.EncodeToString(tx.Hash()))
 	key := calcLocalAssetKey(tx.Hash())
 
@@ -314,6 +331,11 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkCommitTx) {
 			if payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig ||
 				payload.Ty == pt.ParacrossActionNodeGroupApply {
+				return nil
+			}
+		}
+		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+			if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
 				return nil
 			}
 		}

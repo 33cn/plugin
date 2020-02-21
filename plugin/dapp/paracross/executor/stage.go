@@ -7,6 +7,7 @@ package executor
 import (
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/golang/protobuf/proto"
 
 	"sort"
 
@@ -125,14 +126,9 @@ func updateStages(db dbm.KV, stage *pt.SelfConsensStage) (*types.Receipt, error)
 		return makeStageGroupReceipt(nil, stages), nil
 	}
 
-	var old pt.SelfConsensStages
-	err = deepCopy(&old, stages)
-	if err != nil {
-		clog.Error("updateStages  deep copy fail", "copy", old, "stat", stages)
-		return nil, err
-	}
+	old := proto.Clone(stages).(*pt.SelfConsensStages)
 	sortStages(stages, stage)
-	return makeStageGroupReceipt(&old, stages), nil
+	return makeStageGroupReceipt(old, stages), nil
 
 }
 
@@ -230,16 +226,10 @@ func (a *action) stageCancel(config *pt.ConfigCancelInfo) (*types.Receipt, error
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "stage config id:%s,status:%d", config.Id, stat.Status)
 	}
 
-	var copyStat pt.SelfConsensStageInfo
-	err = deepCopy(&copyStat, stat)
-	if err != nil {
-		clog.Error("selfConsensQuit  deep copy fail", "copy", copyStat, "stat", stat)
-		return nil, err
-	}
-
+	copyStat := proto.Clone(stat).(*pt.SelfConsensStageInfo)
 	stat.Status = pt.ParaApplyCanceled
 	stat.ExecHeight = a.height
-	return makeStageConfigReceipt(&copyStat, stat), nil
+	return makeStageConfigReceipt(copyStat, stat), nil
 }
 
 func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
@@ -266,12 +256,8 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	var copyStat pt.SelfConsensStageInfo
-	err = deepCopy(&copyStat, stat)
-	if err != nil {
-		clog.Error("selfConsensVote deep copy fail", "copy", copyStat, "stat", stat)
-		return nil, err
-	}
+	copyStat := proto.Clone(stat).(*pt.SelfConsensStageInfo)
+
 	stat.Status = pt.ParaApplyVoting
 	if stat.Votes == nil {
 		stat.Votes = &pt.ParaNodeVoteDetail{}
@@ -289,7 +275,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 	most, vote := getMostVote(stat.Votes)
 	if !isCommitDone(nodes, most) {
-		return makeStageConfigReceipt(&copyStat, stat), nil
+		return makeStageConfigReceipt(copyStat, stat), nil
 	}
 	clog.Info("paracross.stageVote  ----pass", "most", most, "pass", vote)
 
@@ -303,7 +289,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 	}
 	stat.Status = pt.ParaApplyClosed
 	stat.ExecHeight = a.height
-	r := makeStageConfigReceipt(&copyStat, stat)
+	r := makeStageConfigReceipt(copyStat, stat)
 	receipt = mergeReceipt(receipt, r)
 
 	r = makeStageVoteDoneReceipt(stat.Stage, len(nodes), len(stat.Votes.Addrs), most, pt.ParaNodeVoteStr[vote])
@@ -314,16 +300,15 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 //SelfConsensStageConfig support self consens stage config
 func (a *action) SelfStageConfig(config *pt.ParaStageConfig) (*types.Receipt, error) {
-	if config.Op == pt.ParaOpNewApply {
+	if config.Ty == pt.ParaOpNewApply {
 		return a.stageApply(config.GetStage())
 
-	} else if config.Op == pt.ParaOpCancel {
+	} else if config.Ty == pt.ParaOpCancel {
 		return a.stageCancel(config.GetCancel())
 
-	} else if config.Op == pt.ParaOpVote {
+	} else if config.Ty == pt.ParaOpVote {
 		return a.stageVote(config.GetVote())
 	}
-
 	return nil, pt.ErrParaUnSupportNodeOper
 
 }

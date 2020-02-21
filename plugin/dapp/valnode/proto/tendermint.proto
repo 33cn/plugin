@@ -30,9 +30,9 @@ message TendermintCommit {
 }
 
 message TendermintBlockInfo {
-    State            State      = 2;
-    Proposal         Proposal   = 3;
-    TendermintBlock  block      = 4;
+    State           State    = 2;
+    Proposal        Proposal = 3;
+    TendermintBlock block    = 4;
 }
 
 message BlockSize {
@@ -87,7 +87,6 @@ message State {
     bytes           AppHash                          = 12;
 }
 
-
 message TendermintBlockHeader {
     string  chainID         = 1;
     int64   height          = 2;
@@ -105,9 +104,9 @@ message TendermintBlockHeader {
 }
 
 message TendermintBlock {
-    TendermintBlockHeader header       = 1;
-    Block                 data         = 2;
-    TendermintCommit      lastCommit   = 4;
+    TendermintBlockHeader header     = 1;
+    Block                 data       = 2;
+    TendermintCommit      lastCommit = 4;
 }
 
 message Proposal {
@@ -132,7 +131,7 @@ message ValidBlockMsg {
     int64 height    = 1;
     int32 round     = 2;
     bytes blockhash = 3;
-    bool isCommit   = 4;
+    bool  isCommit  = 4;
 }
 
 message ProposalPOLMsg {

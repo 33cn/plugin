@@ -81,23 +81,12 @@ func (t *trade) GetOnesOrderWithStatus(req *pty.ReqAddrAssets) (types.Message, e
 	if len(req.FromKey) > 0 {
 		order.TxIndex = req.FromKey
 	}
-	rows, err := list(t.GetLocalDB(), "owner_isFinished", &order, req.Count, req.Direction)
+	rows, err := listV2(t.GetLocalDB(), "owner_isFinished", &order, req.Count, req.Direction)
 	if err != nil {
 		tradelog.Error("GetOnesOrderWithStatus", "err", err)
 		return nil, err
 	}
-	var replys pty.ReplyTradeOrders
-	cfg := t.GetAPI().GetConfig()
-	for _, row := range rows {
-		o, ok := row.Data.(*pty.LocalOrder)
-		if !ok {
-			tradelog.Error("GetOnesOrderWithStatus", "err", "bad row type")
-			return nil, types.ErrTypeAsset
-		}
-		reply := fmtReply(cfg, o)
-		replys.Orders = append(replys.Orders, reply)
-	}
-	return &replys, nil
+	return t.toTradeOrders(rows)
 }
 
 func fmtReply(cfg *types.Chain33Config, order *pty.LocalOrder) *pty.ReplyTradeOrder {
@@ -131,7 +120,7 @@ func fmtReply(cfg *types.Chain33Config, order *pty.LocalOrder) *pty.ReplyTradeOr
 }
 
 func (t *trade) GetOneOrder(req *pty.ReqAddrAssets) (types.Message, error) {
-	query := NewOrderTable(t.GetLocalDB())
+	query := NewOrderTableV2(t.GetLocalDB())
 	tradelog.Debug("query GetData dbg", "primary", req.FromKey)
 	row, err := query.GetData([]byte(req.FromKey))
 	if err != nil {

@@ -730,6 +730,7 @@ func (action *Action) systemLiquidation(issu *pty.Issuance, price int64) (*types
 			continue
 		}
 
+		// 价格低于清算线，记录清算
 		if debtRecord.LiquidationPrice >= price {
 			// 价格低于清算线，记录清算
 			clog.Debug("systemLiquidation", "issuance id", debtRecord.IssuId, "record id", debtRecord.DebtId, "account", debtRecord.AccountAddr, "price", price)

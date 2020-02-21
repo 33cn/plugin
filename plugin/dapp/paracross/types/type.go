@@ -96,6 +96,7 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaAssetWithdraw:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
 		TyLogParaAssetTransfer:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
 		TyLogParaAssetDeposit:          {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParaCrossAssetTransfer:    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
 		TyLogParacrossMiner:            {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
 		TyLogParaNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
 		TyLogParaNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
@@ -112,16 +113,17 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":          ParacrossActionCommit,
-		"Miner":           ParacrossActionMiner,
-		"AssetTransfer":   ParacrossActionAssetTransfer,
-		"AssetWithdraw":   ParacrossActionAssetWithdraw,
-		"Transfer":        ParacrossActionTransfer,
-		"Withdraw":        ParacrossActionWithdraw,
-		"TransferToExec":  ParacrossActionTransferToExec,
-		"NodeConfig":      ParacrossActionNodeConfig,
-		"NodeGroupConfig": ParacrossActionNodeGroupApply,
-		"SelfStageConfig": ParacrossActionSelfStageConfig,
+		"Commit":             ParacrossActionCommit,
+		"Miner":              ParacrossActionMiner,
+		"AssetTransfer":      ParacrossActionAssetTransfer,
+		"AssetWithdraw":      ParacrossActionAssetWithdraw,
+		"Transfer":           ParacrossActionTransfer,
+		"Withdraw":           ParacrossActionWithdraw,
+		"TransferToExec":     ParacrossActionTransferToExec,
+		"CrossAssetTransfer": ParacrossActionCrossAssetTransfer,
+		"NodeConfig":         ParacrossActionNodeConfig,
+		"NodeGroupConfig":    ParacrossActionNodeGroupApply,
+		"SelfStageConfig":    ParacrossActionSelfStageConfig,
 	}
 }
 
@@ -133,16 +135,8 @@ func (p *ParacrossType) GetPayload() types.Message {
 // CreateTx paracross create tx by different action
 func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	cfg := p.GetConfig()
-	if action == "ParacrossCommit" {
-		var param paracrossCommitTx
-		err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-
-		return createRawParacrossCommitTx(cfg, &param)
-	} else if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
+	//保留老的ParacrossAssetTransfer接口，默认的AssetTransfer　也可以
+	if action == "ParacrossAssetTransfer" || action == "ParacrossAssetWithdraw" {
 		var param types.CreateTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -150,38 +144,9 @@ func (p ParacrossType) CreateTx(action string, message json.RawMessage) (*types.
 			return nil, types.ErrInvalidParam
 		}
 		return CreateRawAssetTransferTx(cfg, &param)
-
-	} else if action == "ParacrossTransfer" || action == "Transfer" ||
-		action == "ParacrossWithdraw" || action == "Withdraw" ||
-		action == "ParacrossTransferToExec" || action == "TransferToExec" {
-
+	} else if action == "Transfer" || action == "Withdraw" || action == "TransferToExec" {
+		//transfer/withdraw/toExec 需要特殊处理主链上的tx.to场景
 		return p.CreateRawTransferTx(action, message)
-	} else if action == "NodeConfig" {
-		var param ParaNodeAddrConfig
-		err := types.JSONToPB(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.NodeConfig", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawNodeConfigTx(&param)
-	} else if action == "NodeGroupConfig" {
-		var param ParaNodeGroupConfig
-		err := types.JSONToPB(message, &param)
-		//err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.NodeGroupApply", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawNodeGroupApplyTx(&param)
-	} else if action == "selfConsStageConfig" {
-		var param ParaStageConfig
-		err := types.JSONToPB(message, &param)
-		//err := json.Unmarshal(message, &param)
-		if err != nil {
-			glog.Error("CreateTx.selfConsStageConfig", "Error", err)
-			return nil, types.ErrInvalidParam
-		}
-		return CreateRawSelfConsStageApplyTx(&param)
 	}
-	return nil, types.ErrNotSupport
+	return p.ExecTypeBase.CreateTx(action, message)
 }

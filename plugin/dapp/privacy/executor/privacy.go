@@ -72,10 +72,10 @@ func (p *privacy) GetDriverName() string {
 	return driverName
 }
 
-func (p *privacy) getUtxosByTokenAndAmount(tokenName string, amount int64, count int32) ([]*pty.LocalUTXOItem, error) {
+func (p *privacy) getUtxosByTokenAndAmount(exec, tokenName string, amount int64, count int32) ([]*pty.LocalUTXOItem, error) {
 	localDB := p.GetLocalDB()
 	var utxos []*pty.LocalUTXOItem
-	prefix := CalcPrivacyUTXOkeyHeightPrefix(tokenName, amount)
+	prefix := CalcPrivacyUTXOkeyHeightPrefix(exec, tokenName, amount)
 	values, err := localDB.List(prefix, nil, count, 0)
 	if err != nil {
 		return utxos, err
@@ -97,25 +97,24 @@ func (p *privacy) getUtxosByTokenAndAmount(tokenName string, amount int64, count
 	return utxos, nil
 }
 
-func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (types.Message, error) {
+func (p *privacy) getGlobalUtxoIndex(req *pty.ReqUTXOGlobalIndex) (types.Message, error) {
 	debugBeginTime := time.Now()
 	utxoGlobalIndexResp := &pty.ResUTXOGlobalIndex{}
-	tokenName := getUtxoIndexReq.Tokenname
 	currentHeight := p.GetHeight()
-	for _, amount := range getUtxoIndexReq.Amount {
-		utxos, err := p.getUtxosByTokenAndAmount(tokenName, amount, types.UTXOCacheCount)
+	for _, amount := range req.GetAmount() {
+		utxos, err := p.getUtxosByTokenAndAmount(req.GetAssetExec(), req.GetAssetSymbol(), amount, pty.UTXOCacheCount)
 		if err != nil {
 			return utxoGlobalIndexResp, err
 		}
 
 		index := len(utxos) - 1
 		for ; index >= 0; index-- {
-			if utxos[index].GetHeight()+types.ConfirmedHeight <= currentHeight {
+			if utxos[index].GetHeight()+pty.ConfirmedHeight <= currentHeight {
 				break
 			}
 		}
 
-		mixCount := getUtxoIndexReq.MixCount
+		mixCount := req.GetMixCount()
 		totalCnt := int32(index + 1)
 		if mixCount > totalCnt {
 			mixCount = totalCnt
@@ -154,7 +153,7 @@ func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (t
 func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
 	querydb := p.GetLocalDB()
 
-	key := CalcprivacyKeyTokenAmountType(reqtoken.Token)
+	key := CalcprivacyKeyTokenAmountType(reqtoken.GetAssetExec(), reqtoken.GetAssetSymbol())
 	replyAmounts := &pty.ReplyPrivacyAmounts{}
 	value, err := querydb.Get(key)
 	if err != nil {
@@ -182,7 +181,7 @@ func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (type
 	querydb := p.GetLocalDB()
 
 	var replyUTXOsOfAmount pty.ReplyUTXOsOfAmount
-	values, err := querydb.List(CalcPrivacyUTXOkeyHeightPrefix(reqtoken.Token, reqtoken.Amount), nil, 0, 0)
+	values, err := querydb.List(CalcPrivacyUTXOkeyHeightPrefix(reqtoken.GetAssetExec(), reqtoken.GetAssetSymbol(), reqtoken.Amount), nil, 0, 0)
 	if err != nil {
 		return &replyUTXOsOfAmount, err
 	}
@@ -206,40 +205,39 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "Decode tx.Payload error", err)
-		return err
+		return types.ErrActionNotSupport
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
-	assertExec := action.GetAssertExec()
-	token := action.GetTokenName()
+	assertExec, token := action.GetAssetExecSymbol()
 	if token == "" {
 		return types.ErrInvalidParam
 	}
-	if pty.ActionPublic2Privacy == action.Ty {
+	if pty.ActionPublic2Privacy == action.Ty && action.GetPublic2Privacy() != nil {
 		return nil
 	}
 	input := action.GetInput()
-	output := action.GetOutput()
-	if input == nil || output == nil {
-		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "input", input, "output", output)
-		return nil
+	//无论是私对私还是私对公, input都不能为空
+	if len(input.GetKeyinput()) == 0 {
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr)
+		return pty.ErrNilUtxoInput
 	}
-	//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
-	var amount int64
-	keyinput := input.Keyinput
 
-	if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
-		amount = action.GetPrivacy2Public().Amount
+	output := action.GetOutput()
+	//私对私必须有utxo输出
+	if action.GetPrivacy2Privacy() != nil && len(output.GetKeyoutput()) == 0 {
+		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr)
+		return pty.ErrNilUtxoOutput
 	}
+	// check sign
 	var ringSignature types.RingSignature
 	if err := types.Decode(tx.Signature.Signature, &ringSignature); err != nil {
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "Decode tx.Signature.Signature error ", err)
-		return err
+		return pty.ErrRingSign
 	}
 
 	totalInput := int64(0)
-	totalOutput := int64(0)
-	inputCnt := len(keyinput)
-	keyImages := make([][]byte, inputCnt)
+	keyinput := input.GetKeyinput()
+	keyImages := make([][]byte, len(keyinput))
 	keys := make([][]byte, 0)
 	pubkeys := make([][]byte, 0)
 	for i, input := range keyinput {
@@ -273,18 +271,20 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	cfg := p.GetAPI().GetConfig()
 	if !cfg.IsPara() && (assertExec == "" || assertExec == "coins") {
 
-		for _, output := range output.Keyoutput {
-			totalOutput += output.Amount
+		totalOutput := int64(0)
+		for _, output := range output.GetKeyoutput() {
+			totalOutput += output.GetAmount()
 		}
 		if tx.Fee < pty.PrivacyTxFee {
 			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
+		//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
 		var feeAmount int64
 		if action.Ty == pty.ActionPrivacy2Privacy {
 			feeAmount = totalInput - totalOutput
-		} else {
-			feeAmount = totalInput - totalOutput - amount
+		} else if action.Ty == pty.ActionPrivacy2Public && action.GetPrivacy2Public() != nil {
+			feeAmount = totalInput - totalOutput - action.GetPrivacy2Public().Amount
 		}
 
 		if feeAmount < pty.PrivacyTxFee {

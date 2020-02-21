@@ -145,7 +145,7 @@ func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx
 
 	//  主链转出记录，
 	//  转入在 commit done 时记录， 因为没有日志里没有当时tx信息
-	r, err := e.initLocalAssetTransfer(tx, true, true)
+	r, err := e.initLocalAssetTransfer(tx, true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +157,18 @@ func (e *Paracross) ExecDelLocal_AssetTransfer(payload *types.AssetsTransfer, tx
 //ExecDelLocal_AssetWithdraw asset withdraw local db process
 func (e *Paracross) ExecDelLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
+}
+
+//ExecDelLocal_AssetTransfer asset transfer del local db process
+func (e *Paracross) ExecDelLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	r, err := e.initLocalAssetTransfer(tx, true, nil)
+	if err != nil {
+		return nil, err
+	}
+	set.KV = append(set.KV, r)
+
+	return &set, nil
 }
 
 //ExecDelLocal_Miner miner tx del local db process

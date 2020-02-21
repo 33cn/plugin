@@ -6,21 +6,18 @@ package raft
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
 	drivers "github.com/33cn/chain33/system/consensus"
 	cty "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/snap"
-	"github.com/golang/protobuf/proto"
-)
-
-var (
-	zeroHash [32]byte
 )
 
 func init() {
@@ -31,18 +28,20 @@ func init() {
 // Client Raft implementation
 type Client struct {
 	*drivers.BaseClient
-	proposeC    chan<- *types.Block
-	commitC     <-chan *types.Block
+	proposeC    chan<- BlockInfo
+	commitC     <-chan *BlockInfo
 	errorC      <-chan error
 	snapshotter *snap.Snapshotter
 	validatorC  <-chan bool
 	ctx         context.Context
 	cancel      context.CancelFunc
 	once        sync.Once
+	blockInfo   *BlockInfo
+	mtx         sync.Mutex
 }
 
 // NewBlockstore create Raft Client
-func NewBlockstore(ctx context.Context, cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- *types.Block, commitC <-chan *types.Block, errorC <-chan error, validatorC <-chan bool, cancel context.CancelFunc) *Client {
+func NewBlockstore(ctx context.Context, cfg *types.Consensus, snapshotter *snap.Snapshotter, proposeC chan<- BlockInfo, commitC <-chan *BlockInfo, errorC <-chan error, validatorC <-chan bool, cancel context.CancelFunc) *Client {
 	c := drivers.NewBaseClient(cfg)
 	client := &Client{BaseClient: c, proposeC: proposeC, snapshotter: snapshotter, validatorC: validatorC, commitC: commitC, errorC: errorC, ctx: ctx, cancel: cancel}
 	c.SetChild(client)
@@ -75,20 +74,23 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 
 // CheckBlock method
 func (client *Client) CheckBlock(parent *types.Block, current *types.BlockDetail) error {
+	cfg := client.GetAPI().GetConfig()
+	if current.Block.Difficulty != cfg.GetP(0).PowLimitBits {
+		return types.ErrBlockHeaderDifficulty
+	}
 	return nil
 }
 
 func (client *Client) getSnapshot() ([]byte, error) {
-	//这里可能导致死锁
-	return proto.Marshal(client.GetCurrentBlock())
+	return json.Marshal(client.GetCurrentInfo())
 }
 
 func (client *Client) recoverFromSnapshot(snapshot []byte) error {
-	var block types.Block
-	if err := proto.Unmarshal(snapshot, &block); err != nil {
+	var info *BlockInfo
+	if err := json.Unmarshal(snapshot, info); err != nil {
 		return err
 	}
-	client.SetCurrentBlock(&block)
+	client.SetCurrentInfo(info)
 	return nil
 }
 
@@ -110,10 +112,8 @@ func (client *Client) Close() {
 
 // CreateBlock method
 func (client *Client) CreateBlock() {
-	issleep := true
 	retry := 0
-	infoflag := 0
-	count := 0
+	count := int64(0)
 	cfg := client.GetAPI().GetConfig()
 	//打包区块前先同步到最大高度
 	for {
@@ -124,62 +124,59 @@ func (client *Client) CreateBlock() {
 		time.Sleep(time.Second)
 		retry++
 		if retry >= 600 {
-			panic("This node encounter problem, exit.")
+			panic("Leader encounter problem, exit.")
 		}
 	}
-	ticker := time.NewTicker(50 * time.Millisecond)
+	curBlock, err := client.RequestLastBlock()
+	if err != nil {
+		rlog.Error("Leader RequestLastBlock fail", "err", err)
+		panic(err)
+	}
+	curInfo := &BlockInfo{
+		Height: curBlock.Height,
+		Hash:   common.ToHex(curBlock.Hash(cfg)),
+	}
+	client.SetCurrentInfo(curInfo)
+
+	ticker := time.NewTicker(time.Duration(writeBlockSeconds) * time.Second)
+	hint := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
+	defer hint.Stop()
 	for {
 		select {
 		case <-client.ctx.Done():
+			return
+		case <-hint.C:
+			rlog.Info("==================This is Leader node=====================")
 		case <-ticker.C:
 			//如果leader节点突然挂了，不是打包节点，需要退出
 			if !mux.Load().(bool) {
-				rlog.Warn("I'm not the validator node anymore, exit.=============================")
+				rlog.Warn("Not the Leader node anymore")
+				return
+			}
+
+			lastBlock, err := client.RequestLastBlock()
+			if err != nil {
+				rlog.Error("Leader RequestLastBlock fail", "err", err)
 				break
 			}
-			infoflag++
-			if infoflag >= 3 {
-				rlog.Info("==================This is Leader node=====================")
-				infoflag = 0
-			}
-			if issleep {
-				time.Sleep(10 * time.Second)
-				count++
+			if client.GetCurrentInfoHeight() != lastBlock.Height {
+				rlog.Info("Leader wait commit blockInfo", "infoHeight", client.GetCurrentInfoHeight(),
+					"blockHeight", lastBlock.Height)
+				break
 			}
 
-			if count >= 12 {
-				rlog.Info("Create an empty block")
-				block := client.GetCurrentBlock()
-				emptyBlock := &types.Block{}
-				emptyBlock.StateHash = block.StateHash
-				emptyBlock.ParentHash = block.Hash(cfg)
-				emptyBlock.Height = block.Height + 1
-				emptyBlock.Txs = nil
-				emptyBlock.TxHash = zeroHash[:]
-				emptyBlock.BlockTime = types.Now().Unix()
-
-				entry := emptyBlock
-				client.propose(entry)
-
-				er := client.WriteBlock(block.StateHash, emptyBlock)
-				if er != nil {
-					rlog.Error(fmt.Sprintf("********************err:%v", er.Error()))
-					continue
-				}
-				client.SetCurrentBlock(emptyBlock)
-				count = 0
-			}
-
-			lastBlock := client.GetCurrentBlock()
 			txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber), nil)
 			if len(txs) == 0 {
-				issleep = true
-				continue
+				count++
+				//not create empty block when emptyBlockInterval is 0
+				if emptyBlockInterval == 0 || count < emptyBlockInterval/writeBlockSeconds {
+					break
+				}
+				//create empty block every no tx in emptyBlockInterval seconds
+				rlog.Info("Leader create empty block")
 			}
-			issleep = false
-			count = 0
-			rlog.Debug("==================start create new block!=====================")
+
 			var newblock types.Block
 			newblock.ParentHash = lastBlock.Hash(cfg)
 			newblock.Height = lastBlock.Height + 1
@@ -189,32 +186,37 @@ func (client *Client) CreateBlock() {
 				newblock.Txs = types.TransactionSort(newblock.Txs)
 			}
 			newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.Height, newblock.Txs)
+			//固定难度
+			newblock.Difficulty = cfg.GetP(0).PowLimitBits
 			newblock.BlockTime = types.Now().Unix()
 			if lastBlock.BlockTime >= newblock.BlockTime {
 				newblock.BlockTime = lastBlock.BlockTime + 1
 			}
-			blockEntry := newblock
-			client.propose(&blockEntry)
-			err := client.WriteBlock(lastBlock.StateHash, &newblock)
+			err = client.WriteBlock(lastBlock.StateHash, &newblock)
 			if err != nil {
-				issleep = true
-				rlog.Error(fmt.Sprintf("********************err:%v", err.Error()))
-				continue
+				rlog.Error("Leader WriteBlock fail", "err", err)
+				break
 			}
-			time.Sleep(time.Second * time.Duration(writeBlockSeconds))
+
+			info := BlockInfo{
+				Height: newblock.Height,
+				Hash:   common.ToHex(newblock.Hash(cfg)),
+			}
+			client.propose(info)
+			count = 0
 		}
 
 	}
 }
 
-// 向raft底层发送block
-func (client *Client) propose(block *types.Block) {
-	client.proposeC <- block
+// 向raft底层发送BlockInfo
+func (client *Client) propose(info BlockInfo) {
+	client.proposeC <- info
 }
 
 // 从receive channel中读leader发来的block
-func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan error) {
-	var data *types.Block
+func (client *Client) readCommits(commitC <-chan *BlockInfo, errorC <-chan error) {
+	var data *BlockInfo
 	var ok bool
 	for {
 		select {
@@ -222,10 +224,8 @@ func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan err
 			if !ok || data == nil {
 				continue
 			}
-			rlog.Debug("===============Get block from commit channel===========")
-			// 在程序刚开始启动的时候有可能存在丢失数据的问题
-			//区块高度统一由base中的相关代码进行变更，防止错误区块出现
-			//client.SetCurrentBlock(data)
+			rlog.Info("Commit blockInfo", "height", data.Height, "blockhash", data.Hash)
+			client.SetCurrentInfo(data)
 
 		case err, ok := <-errorC:
 			if ok {
@@ -239,9 +239,6 @@ func (client *Client) readCommits(commitC <-chan *types.Block, errorC <-chan err
 
 //轮询任务，去检测本机器是否为validator节点，如果是，则执行打包任务
 func (client *Client) pollingTask() {
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
 	for {
 		select {
 		case <-client.ctx.Done():
@@ -252,7 +249,7 @@ func (client *Client) pollingTask() {
 				client.InitBlock()
 			})
 			if ok && !value {
-				rlog.Debug("================I'm not the validator node!=============")
+				rlog.Debug("================I'm not the validator node=============")
 				leader := mux.Load().(bool)
 				if leader {
 					isLeader = false
@@ -265,8 +262,68 @@ func (client *Client) pollingTask() {
 			} else if !ok {
 				break
 			}
-		case <-ticker.C:
-			rlog.Debug("Gets the leader node information timeout and triggers the ticker.")
 		}
 	}
+}
+
+//比较newBlock是不是最优区块
+func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
+	return false
+}
+
+// BlockInfo struct
+type BlockInfo struct {
+	Height int64  `json:"height"`
+	Hash   string `json:"hash"`
+}
+
+// SetCurrentInfo ...
+func (client *Client) SetCurrentInfo(info *BlockInfo) {
+	client.mtx.Lock()
+	defer client.mtx.Unlock()
+	client.blockInfo = info
+}
+
+// GetCurrentInfo ...
+func (client *Client) GetCurrentInfo() *BlockInfo {
+	client.mtx.Lock()
+	defer client.mtx.Unlock()
+	return client.blockInfo
+}
+
+// GetCurrentInfoHeight ...
+func (client *Client) GetCurrentInfoHeight() int64 {
+	client.mtx.Lock()
+	defer client.mtx.Unlock()
+	return client.blockInfo.Height
+}
+
+// CheckBlockInfo check corresponding block
+func (client *Client) CheckBlockInfo(info *BlockInfo) bool {
+	retry := 0
+	factor := 1
+	for {
+		lastBlock, err := client.RequestLastBlock()
+		if err == nil && lastBlock.Height >= info.Height {
+			break
+		}
+		retry++
+		time.Sleep(500 * time.Millisecond)
+		if retry >= 30*factor {
+			rlog.Info(fmt.Sprintf("CheckBlockInfo wait %d seconds", retry/2), "height", info.Height)
+			factor = factor * 2
+		}
+	}
+	block, err := client.RequestBlock(info.Height)
+	if err != nil {
+		rlog.Error("CheckBlockInfo RequestBlock fail", "err", err)
+		return false
+	}
+	cfg := client.GetAPI().GetConfig()
+	if common.ToHex(block.Hash(cfg)) != info.Hash {
+		rlog.Error("CheckBlockInfo hash not equal", "blockHash", common.ToHex(block.Hash(cfg)),
+			"infoHash", info.Hash)
+		return false
+	}
+	return true
 }

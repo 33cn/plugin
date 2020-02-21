@@ -40,21 +40,25 @@ func calcPrivacyKeyImageKey(exec, token string, keyimage []byte) []byte {
 }
 
 //CalcPrivacyUTXOkeyHeight 在本地数据库中设置一条可以找到对应amount的对应的utxo的global index
-func CalcPrivacyUTXOkeyHeight(token string, amount, height int64, txhash string, txindex, outindex int) (key []byte) {
-	return []byte(fmt.Sprintf(privacyUTXOKEYPrefix+"-%s-%d-%d-%s-%d-%d", token, amount, height, txhash, txindex, outindex))
+func CalcPrivacyUTXOkeyHeight(exec, token string, amount, height int64, txhash string, txindex, outindex int) (key []byte) {
+	return []byte(fmt.Sprintf(privacyUTXOKEYPrefix+"-%s-%s-%d-%d-%s-%d-%d", exec, token, amount, height, txhash, txindex, outindex))
 }
 
 // CalcPrivacyUTXOkeyHeightPrefix get privacy utxo key by height and prefix
-func CalcPrivacyUTXOkeyHeightPrefix(token string, amount int64) (key []byte) {
-	return []byte(fmt.Sprintf(privacyUTXOKEYPrefix+"-%s-%d-", token, amount))
+func CalcPrivacyUTXOkeyHeightPrefix(exec, token string, amount int64) (key []byte) {
+	return []byte(fmt.Sprintf(privacyUTXOKEYPrefix+"-%s-%s-%d-", exec, token, amount))
 }
 
 //CalcprivacyKeyTokenAmountType 设置当前系统存在的token的amount的类型，如存在1,3,5,100...等等的类型,
-func CalcprivacyKeyTokenAmountType(token string) (key []byte) {
-	return []byte(fmt.Sprintf(privacyAmountTypePrefix+"-%s-", token))
+func CalcprivacyKeyTokenAmountType(exec, token string) (key []byte) {
+	return []byte(fmt.Sprintf(privacyAmountTypePrefix+"-%s-%s-", exec, token))
 }
 
 // CalcprivacyKeyTokenTypes get privacy token types key
 func CalcprivacyKeyTokenTypes() (key []byte) {
 	return []byte(privacyTokenTypesPrefix)
+}
+
+func calcExecLocalAssetKey(exec, symbol string) string {
+	return exec + "-" + symbol
 }

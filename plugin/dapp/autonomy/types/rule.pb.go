@@ -42,7 +42,7 @@ func (m *AutonomyProposalRule) Reset()         { *m = AutonomyProposalRule{} }
 func (m *AutonomyProposalRule) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalRule) ProtoMessage()    {}
 func (*AutonomyProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{0}
+	return fileDescriptor_rule_02516e679973cfce, []int{0}
 }
 func (m *AutonomyProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalRule.Unmarshal(m, b)
@@ -138,7 +138,7 @@ func (m *ProposalRule) Reset()         { *m = ProposalRule{} }
 func (m *ProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ProposalRule) ProtoMessage()    {}
 func (*ProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{1}
+	return fileDescriptor_rule_02516e679973cfce, []int{1}
 }
 func (m *ProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalRule.Unmarshal(m, b)
@@ -218,7 +218,7 @@ func (m *RevokeProposalRule) Reset()         { *m = RevokeProposalRule{} }
 func (m *RevokeProposalRule) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalRule) ProtoMessage()    {}
 func (*RevokeProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{2}
+	return fileDescriptor_rule_02516e679973cfce, []int{2}
 }
 func (m *RevokeProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalRule.Unmarshal(m, b)
@@ -258,7 +258,7 @@ func (m *VoteProposalRule) Reset()         { *m = VoteProposalRule{} }
 func (m *VoteProposalRule) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalRule) ProtoMessage()    {}
 func (*VoteProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{3}
+	return fileDescriptor_rule_02516e679973cfce, []int{3}
 }
 func (m *VoteProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalRule.Unmarshal(m, b)
@@ -310,7 +310,7 @@ func (m *TerminateProposalRule) Reset()         { *m = TerminateProposalRule{} }
 func (m *TerminateProposalRule) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalRule) ProtoMessage()    {}
 func (*TerminateProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{4}
+	return fileDescriptor_rule_02516e679973cfce, []int{4}
 }
 func (m *TerminateProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalRule.Unmarshal(m, b)
@@ -350,7 +350,7 @@ func (m *ReceiptProposalRule) Reset()         { *m = ReceiptProposalRule{} }
 func (m *ReceiptProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalRule) ProtoMessage()    {}
 func (*ReceiptProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{5}
+	return fileDescriptor_rule_02516e679973cfce, []int{5}
 }
 func (m *ReceiptProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalRule.Unmarshal(m, b)
@@ -396,7 +396,7 @@ func (m *LocalProposalRule) Reset()         { *m = LocalProposalRule{} }
 func (m *LocalProposalRule) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalRule) ProtoMessage()    {}
 func (*LocalProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{6}
+	return fileDescriptor_rule_02516e679973cfce, []int{6}
 }
 func (m *LocalProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalRule.Unmarshal(m, b)
@@ -447,7 +447,7 @@ func (m *ReqQueryProposalRule) Reset()         { *m = ReqQueryProposalRule{} }
 func (m *ReqQueryProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalRule) ProtoMessage()    {}
 func (*ReqQueryProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{7}
+	return fileDescriptor_rule_02516e679973cfce, []int{7}
 }
 func (m *ReqQueryProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalRule.Unmarshal(m, b)
@@ -520,7 +520,7 @@ func (m *ReplyQueryProposalRule) Reset()         { *m = ReplyQueryProposalRule{}
 func (m *ReplyQueryProposalRule) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalRule) ProtoMessage()    {}
 func (*ReplyQueryProposalRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{8}
+	return fileDescriptor_rule_02516e679973cfce, []int{8}
 }
 func (m *ReplyQueryProposalRule) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalRule.Unmarshal(m, b)
@@ -560,7 +560,7 @@ func (m *TransferFund) Reset()         { *m = TransferFund{} }
 func (m *TransferFund) String() string { return proto.CompactTextString(m) }
 func (*TransferFund) ProtoMessage()    {}
 func (*TransferFund) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{9}
+	return fileDescriptor_rule_02516e679973cfce, []int{9}
 }
 func (m *TransferFund) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TransferFund.Unmarshal(m, b)
@@ -608,7 +608,7 @@ func (m *Comment) Reset()         { *m = Comment{} }
 func (m *Comment) String() string { return proto.CompactTextString(m) }
 func (*Comment) ProtoMessage()    {}
 func (*Comment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{10}
+	return fileDescriptor_rule_02516e679973cfce, []int{10}
 }
 func (m *Comment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Comment.Unmarshal(m, b)
@@ -663,7 +663,7 @@ func (m *ReceiptProposalComment) Reset()         { *m = ReceiptProposalComment{}
 func (m *ReceiptProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalComment) ProtoMessage()    {}
 func (*ReceiptProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{11}
+	return fileDescriptor_rule_02516e679973cfce, []int{11}
 }
 func (m *ReceiptProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalComment.Unmarshal(m, b)
@@ -727,7 +727,7 @@ func (m *ReqQueryProposalComment) Reset()         { *m = ReqQueryProposalComment
 func (m *ReqQueryProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalComment) ProtoMessage()    {}
 func (*ReqQueryProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{12}
+	return fileDescriptor_rule_02516e679973cfce, []int{12}
 }
 func (m *ReqQueryProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalComment.Unmarshal(m, b)
@@ -797,7 +797,7 @@ func (m *RelationCmt) Reset()         { *m = RelationCmt{} }
 func (m *RelationCmt) String() string { return proto.CompactTextString(m) }
 func (*RelationCmt) ProtoMessage()    {}
 func (*RelationCmt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{13}
+	return fileDescriptor_rule_02516e679973cfce, []int{13}
 }
 func (m *RelationCmt) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelationCmt.Unmarshal(m, b)
@@ -863,7 +863,7 @@ func (m *ReplyQueryProposalComment) Reset()         { *m = ReplyQueryProposalCom
 func (m *ReplyQueryProposalComment) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalComment) ProtoMessage()    {}
 func (*ReplyQueryProposalComment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rule_2ed9cd03418a949e, []int{14}
+	return fileDescriptor_rule_02516e679973cfce, []int{14}
 }
 func (m *ReplyQueryProposalComment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalComment.Unmarshal(m, b)
@@ -908,9 +908,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalComment)(nil), "types.ReplyQueryProposalComment")
 }
 
-func init() { proto.RegisterFile("rule.proto", fileDescriptor_rule_2ed9cd03418a949e) }
+func init() { proto.RegisterFile("rule.proto", fileDescriptor_rule_02516e679973cfce) }
 
-var fileDescriptor_rule_2ed9cd03418a949e = []byte{
+var fileDescriptor_rule_02516e679973cfce = []byte{
 	// 733 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0x4d, 0x6f, 0xd4, 0x3a,
 	0x14, 0x55, 0x26, 0xc9, 0x7c, 0xdc, 0xf6, 0x55, 0xad, 0xdb, 0xd7, 0x97, 0xd7, 0xf7, 0x84, 0x46,

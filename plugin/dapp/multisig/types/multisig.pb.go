@@ -50,7 +50,7 @@ func (m *MultiSig) Reset()         { *m = MultiSig{} }
 func (m *MultiSig) String() string { return proto.CompactTextString(m) }
 func (*MultiSig) ProtoMessage()    {}
 func (*MultiSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{0}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{0}
 }
 func (m *MultiSig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSig.Unmarshal(m, b)
@@ -124,7 +124,7 @@ func (m *ConfirmedOwner) Reset()         { *m = ConfirmedOwner{} }
 func (m *ConfirmedOwner) String() string { return proto.CompactTextString(m) }
 func (*ConfirmedOwner) ProtoMessage()    {}
 func (*ConfirmedOwner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{1}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{1}
 }
 func (m *ConfirmedOwner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfirmedOwner.Unmarshal(m, b)
@@ -169,7 +169,7 @@ func (m *MultiSigTx) Reset()         { *m = MultiSigTx{} }
 func (m *MultiSigTx) String() string { return proto.CompactTextString(m) }
 func (*MultiSigTx) ProtoMessage()    {}
 func (*MultiSigTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{2}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{2}
 }
 func (m *MultiSigTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigTx.Unmarshal(m, b)
@@ -244,7 +244,7 @@ func (m *Owner) Reset()         { *m = Owner{} }
 func (m *Owner) String() string { return proto.CompactTextString(m) }
 func (*Owner) ProtoMessage()    {}
 func (*Owner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{3}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{3}
 }
 func (m *Owner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Owner.Unmarshal(m, b)
@@ -296,7 +296,7 @@ func (m *DailyLimit) Reset()         { *m = DailyLimit{} }
 func (m *DailyLimit) String() string { return proto.CompactTextString(m) }
 func (*DailyLimit) ProtoMessage()    {}
 func (*DailyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{4}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{4}
 }
 func (m *DailyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DailyLimit.Unmarshal(m, b)
@@ -364,7 +364,7 @@ func (m *SymbolDailyLimit) Reset()         { *m = SymbolDailyLimit{} }
 func (m *SymbolDailyLimit) String() string { return proto.CompactTextString(m) }
 func (*SymbolDailyLimit) ProtoMessage()    {}
 func (*SymbolDailyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{5}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{5}
 }
 func (m *SymbolDailyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SymbolDailyLimit.Unmarshal(m, b)
@@ -425,7 +425,7 @@ func (m *MultiSigAction) Reset()         { *m = MultiSigAction{} }
 func (m *MultiSigAction) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAction) ProtoMessage()    {}
 func (*MultiSigAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{6}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{6}
 }
 func (m *MultiSigAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAction.Unmarshal(m, b)
@@ -705,7 +705,7 @@ func (m *MultiSigAccCreate) Reset()         { *m = MultiSigAccCreate{} }
 func (m *MultiSigAccCreate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAccCreate) ProtoMessage()    {}
 func (*MultiSigAccCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{7}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{7}
 }
 func (m *MultiSigAccCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAccCreate.Unmarshal(m, b)
@@ -762,7 +762,7 @@ func (m *MultiSigOwnerOperate) Reset()         { *m = MultiSigOwnerOperate{} }
 func (m *MultiSigOwnerOperate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigOwnerOperate) ProtoMessage()    {}
 func (*MultiSigOwnerOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{8}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{8}
 }
 func (m *MultiSigOwnerOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigOwnerOperate.Unmarshal(m, b)
@@ -833,7 +833,7 @@ func (m *MultiSigAccOperate) Reset()         { *m = MultiSigAccOperate{} }
 func (m *MultiSigAccOperate) String() string { return proto.CompactTextString(m) }
 func (*MultiSigAccOperate) ProtoMessage()    {}
 func (*MultiSigAccOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{9}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{9}
 }
 func (m *MultiSigAccOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigAccOperate.Unmarshal(m, b)
@@ -900,7 +900,7 @@ func (m *MultiSigExecTransferFrom) Reset()         { *m = MultiSigExecTransferFr
 func (m *MultiSigExecTransferFrom) String() string { return proto.CompactTextString(m) }
 func (*MultiSigExecTransferFrom) ProtoMessage()    {}
 func (*MultiSigExecTransferFrom) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{10}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{10}
 }
 func (m *MultiSigExecTransferFrom) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigExecTransferFrom.Unmarshal(m, b)
@@ -980,7 +980,7 @@ func (m *MultiSigExecTransferTo) Reset()         { *m = MultiSigExecTransferTo{}
 func (m *MultiSigExecTransferTo) String() string { return proto.CompactTextString(m) }
 func (*MultiSigExecTransferTo) ProtoMessage()    {}
 func (*MultiSigExecTransferTo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{11}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{11}
 }
 func (m *MultiSigExecTransferTo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigExecTransferTo.Unmarshal(m, b)
@@ -1051,7 +1051,7 @@ func (m *MultiSigConfirmTx) Reset()         { *m = MultiSigConfirmTx{} }
 func (m *MultiSigConfirmTx) String() string { return proto.CompactTextString(m) }
 func (*MultiSigConfirmTx) ProtoMessage()    {}
 func (*MultiSigConfirmTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{12}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{12}
 }
 func (m *MultiSigConfirmTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigConfirmTx.Unmarshal(m, b)
@@ -1105,7 +1105,7 @@ func (m *ReqMultiSigAccs) Reset()         { *m = ReqMultiSigAccs{} }
 func (m *ReqMultiSigAccs) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccs) ProtoMessage()    {}
 func (*ReqMultiSigAccs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{13}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{13}
 }
 func (m *ReqMultiSigAccs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccs.Unmarshal(m, b)
@@ -1150,7 +1150,7 @@ func (m *ReplyMultiSigAccs) Reset()         { *m = ReplyMultiSigAccs{} }
 func (m *ReplyMultiSigAccs) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigAccs) ProtoMessage()    {}
 func (*ReplyMultiSigAccs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{14}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{14}
 }
 func (m *ReplyMultiSigAccs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigAccs.Unmarshal(m, b)
@@ -1189,7 +1189,7 @@ func (m *ReqMultiSigAccInfo) Reset()         { *m = ReqMultiSigAccInfo{} }
 func (m *ReqMultiSigAccInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccInfo) ProtoMessage()    {}
 func (*ReqMultiSigAccInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{15}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{15}
 }
 func (m *ReqMultiSigAccInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccInfo.Unmarshal(m, b)
@@ -1233,7 +1233,7 @@ func (m *ReplyMultiSigAccInfo) Reset()         { *m = ReplyMultiSigAccInfo{} }
 func (m *ReplyMultiSigAccInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigAccInfo) ProtoMessage()    {}
 func (*ReplyMultiSigAccInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{16}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{16}
 }
 func (m *ReplyMultiSigAccInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigAccInfo.Unmarshal(m, b)
@@ -1311,7 +1311,7 @@ func (m *ReqMultiSigTxids) Reset()         { *m = ReqMultiSigTxids{} }
 func (m *ReqMultiSigTxids) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigTxids) ProtoMessage()    {}
 func (*ReqMultiSigTxids) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{17}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{17}
 }
 func (m *ReqMultiSigTxids) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigTxids.Unmarshal(m, b)
@@ -1378,7 +1378,7 @@ func (m *ReplyMultiSigTxids) Reset()         { *m = ReplyMultiSigTxids{} }
 func (m *ReplyMultiSigTxids) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigTxids) ProtoMessage()    {}
 func (*ReplyMultiSigTxids) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{18}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{18}
 }
 func (m *ReplyMultiSigTxids) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigTxids.Unmarshal(m, b)
@@ -1425,7 +1425,7 @@ func (m *ReqMultiSigTxInfo) Reset()         { *m = ReqMultiSigTxInfo{} }
 func (m *ReqMultiSigTxInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigTxInfo) ProtoMessage()    {}
 func (*ReqMultiSigTxInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{19}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{19}
 }
 func (m *ReqMultiSigTxInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigTxInfo.Unmarshal(m, b)
@@ -1470,7 +1470,7 @@ func (m *ReplyMultiSigTxInfo) Reset()         { *m = ReplyMultiSigTxInfo{} }
 func (m *ReplyMultiSigTxInfo) String() string { return proto.CompactTextString(m) }
 func (*ReplyMultiSigTxInfo) ProtoMessage()    {}
 func (*ReplyMultiSigTxInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{20}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{20}
 }
 func (m *ReplyMultiSigTxInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyMultiSigTxInfo.Unmarshal(m, b)
@@ -1511,7 +1511,7 @@ func (m *ReqMultiSigAccUnSpentToday) Reset()         { *m = ReqMultiSigAccUnSpen
 func (m *ReqMultiSigAccUnSpentToday) String() string { return proto.CompactTextString(m) }
 func (*ReqMultiSigAccUnSpentToday) ProtoMessage()    {}
 func (*ReqMultiSigAccUnSpentToday) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{21}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{21}
 }
 func (m *ReqMultiSigAccUnSpentToday) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqMultiSigAccUnSpentToday.Unmarshal(m, b)
@@ -1563,7 +1563,7 @@ func (m *ReplyUnSpentAssets) Reset()         { *m = ReplyUnSpentAssets{} }
 func (m *ReplyUnSpentAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyUnSpentAssets) ProtoMessage()    {}
 func (*ReplyUnSpentAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{22}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{22}
 }
 func (m *ReplyUnSpentAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUnSpentAssets.Unmarshal(m, b)
@@ -1602,7 +1602,7 @@ func (m *UnSpentAssets) Reset()         { *m = UnSpentAssets{} }
 func (m *UnSpentAssets) String() string { return proto.CompactTextString(m) }
 func (*UnSpentAssets) ProtoMessage()    {}
 func (*UnSpentAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{23}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{23}
 }
 func (m *UnSpentAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UnSpentAssets.Unmarshal(m, b)
@@ -1648,7 +1648,7 @@ func (m *ReceiptMultiSig) Reset()         { *m = ReceiptMultiSig{} }
 func (m *ReceiptMultiSig) String() string { return proto.CompactTextString(m) }
 func (*ReceiptMultiSig) ProtoMessage()    {}
 func (*ReceiptMultiSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{24}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{24}
 }
 func (m *ReceiptMultiSig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptMultiSig.Unmarshal(m, b)
@@ -1688,7 +1688,7 @@ func (m *ReceiptOwnerAddOrDel) Reset()         { *m = ReceiptOwnerAddOrDel{} }
 func (m *ReceiptOwnerAddOrDel) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOwnerAddOrDel) ProtoMessage()    {}
 func (*ReceiptOwnerAddOrDel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{25}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{25}
 }
 func (m *ReceiptOwnerAddOrDel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOwnerAddOrDel.Unmarshal(m, b)
@@ -1745,7 +1745,7 @@ func (m *ReceiptOwnerModOrRep) Reset()         { *m = ReceiptOwnerModOrRep{} }
 func (m *ReceiptOwnerModOrRep) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOwnerModOrRep) ProtoMessage()    {}
 func (*ReceiptOwnerModOrRep) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{26}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{26}
 }
 func (m *ReceiptOwnerModOrRep) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOwnerModOrRep.Unmarshal(m, b)
@@ -1808,7 +1808,7 @@ func (m *ReceiptWeightModify) Reset()         { *m = ReceiptWeightModify{} }
 func (m *ReceiptWeightModify) String() string { return proto.CompactTextString(m) }
 func (*ReceiptWeightModify) ProtoMessage()    {}
 func (*ReceiptWeightModify) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{27}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{27}
 }
 func (m *ReceiptWeightModify) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptWeightModify.Unmarshal(m, b)
@@ -1865,7 +1865,7 @@ func (m *ReceiptDailyLimitOperate) Reset()         { *m = ReceiptDailyLimitOpera
 func (m *ReceiptDailyLimitOperate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptDailyLimitOperate) ProtoMessage()    {}
 func (*ReceiptDailyLimitOperate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{28}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{28}
 }
 func (m *ReceiptDailyLimitOperate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptDailyLimitOperate.Unmarshal(m, b)
@@ -1928,7 +1928,7 @@ func (m *ReceiptConfirmTx) Reset()         { *m = ReceiptConfirmTx{} }
 func (m *ReceiptConfirmTx) String() string { return proto.CompactTextString(m) }
 func (*ReceiptConfirmTx) ProtoMessage()    {}
 func (*ReceiptConfirmTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{29}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{29}
 }
 func (m *ReceiptConfirmTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptConfirmTx.Unmarshal(m, b)
@@ -1976,7 +1976,7 @@ func (m *ReceiptAccDailyLimitUpdate) Reset()         { *m = ReceiptAccDailyLimit
 func (m *ReceiptAccDailyLimitUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptAccDailyLimitUpdate) ProtoMessage()    {}
 func (*ReceiptAccDailyLimitUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{30}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{30}
 }
 func (m *ReceiptAccDailyLimitUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptAccDailyLimitUpdate.Unmarshal(m, b)
@@ -2034,7 +2034,7 @@ func (m *ReceiptMultiSigTx) Reset()         { *m = ReceiptMultiSigTx{} }
 func (m *ReceiptMultiSigTx) String() string { return proto.CompactTextString(m) }
 func (*ReceiptMultiSigTx) ProtoMessage()    {}
 func (*ReceiptMultiSigTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{31}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{31}
 }
 func (m *ReceiptMultiSigTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptMultiSigTx.Unmarshal(m, b)
@@ -2108,7 +2108,7 @@ func (m *ReceiptTxCountUpdate) Reset()         { *m = ReceiptTxCountUpdate{} }
 func (m *ReceiptTxCountUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTxCountUpdate) ProtoMessage()    {}
 func (*ReceiptTxCountUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{32}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{32}
 }
 func (m *ReceiptTxCountUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTxCountUpdate.Unmarshal(m, b)
@@ -2155,7 +2155,7 @@ func (m *MultiSigTxOwner) Reset()         { *m = MultiSigTxOwner{} }
 func (m *MultiSigTxOwner) String() string { return proto.CompactTextString(m) }
 func (*MultiSigTxOwner) ProtoMessage()    {}
 func (*MultiSigTxOwner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{33}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{33}
 }
 func (m *MultiSigTxOwner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MultiSigTxOwner.Unmarshal(m, b)
@@ -2207,7 +2207,7 @@ func (m *Uint64) Reset()         { *m = Uint64{} }
 func (m *Uint64) String() string { return proto.CompactTextString(m) }
 func (*Uint64) ProtoMessage()    {}
 func (*Uint64) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{34}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{34}
 }
 func (m *Uint64) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Uint64.Unmarshal(m, b)
@@ -2248,7 +2248,7 @@ func (m *AccountAssets) Reset()         { *m = AccountAssets{} }
 func (m *AccountAssets) String() string { return proto.CompactTextString(m) }
 func (*AccountAssets) ProtoMessage()    {}
 func (*AccountAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{35}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{35}
 }
 func (m *AccountAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountAssets.Unmarshal(m, b)
@@ -2303,7 +2303,7 @@ func (m *ReqAccAssets) Reset()         { *m = ReqAccAssets{} }
 func (m *ReqAccAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAccAssets) ProtoMessage()    {}
 func (*ReqAccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{36}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{36}
 }
 func (m *ReqAccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAccAssets.Unmarshal(m, b)
@@ -2355,7 +2355,7 @@ func (m *ReplyAccAssets) Reset()         { *m = ReplyAccAssets{} }
 func (m *ReplyAccAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyAccAssets) ProtoMessage()    {}
 func (*ReplyAccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{37}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{37}
 }
 func (m *ReplyAccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAccAssets.Unmarshal(m, b)
@@ -2396,7 +2396,7 @@ func (m *AccAssets) Reset()         { *m = AccAssets{} }
 func (m *AccAssets) String() string { return proto.CompactTextString(m) }
 func (*AccAssets) ProtoMessage()    {}
 func (*AccAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{38}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{38}
 }
 func (m *AccAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccAssets.Unmarshal(m, b)
@@ -2449,7 +2449,7 @@ func (m *Assets) Reset()         { *m = Assets{} }
 func (m *Assets) String() string { return proto.CompactTextString(m) }
 func (*Assets) ProtoMessage()    {}
 func (*Assets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{39}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{39}
 }
 func (m *Assets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Assets.Unmarshal(m, b)
@@ -2495,7 +2495,7 @@ func (m *AccAddress) Reset()         { *m = AccAddress{} }
 func (m *AccAddress) String() string { return proto.CompactTextString(m) }
 func (*AccAddress) ProtoMessage()    {}
 func (*AccAddress) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{40}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{40}
 }
 func (m *AccAddress) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccAddress.Unmarshal(m, b)
@@ -2536,7 +2536,7 @@ func (m *OwnerAttr) Reset()         { *m = OwnerAttr{} }
 func (m *OwnerAttr) String() string { return proto.CompactTextString(m) }
 func (*OwnerAttr) ProtoMessage()    {}
 func (*OwnerAttr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{41}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{41}
 }
 func (m *OwnerAttr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OwnerAttr.Unmarshal(m, b)
@@ -2588,7 +2588,7 @@ func (m *OwnerAttrs) Reset()         { *m = OwnerAttrs{} }
 func (m *OwnerAttrs) String() string { return proto.CompactTextString(m) }
 func (*OwnerAttrs) ProtoMessage()    {}
 func (*OwnerAttrs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_multisig_e7bea0a7633ad01b, []int{42}
+	return fileDescriptor_multisig_2ed46177d3c8caf6, []int{42}
 }
 func (m *OwnerAttrs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OwnerAttrs.Unmarshal(m, b)
@@ -2661,9 +2661,9 @@ func init() {
 	proto.RegisterType((*OwnerAttrs)(nil), "types.OwnerAttrs")
 }
 
-func init() { proto.RegisterFile("multisig.proto", fileDescriptor_multisig_e7bea0a7633ad01b) }
+func init() { proto.RegisterFile("multisig.proto", fileDescriptor_multisig_2ed46177d3c8caf6) }
 
-var fileDescriptor_multisig_e7bea0a7633ad01b = []byte{
+var fileDescriptor_multisig_2ed46177d3c8caf6 = []byte{
 	// 1572 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x18, 0xdd, 0x6e, 0xdc, 0x44,
 	0x37, 0xf6, 0xfe, 0x24, 0x7b, 0x92, 0x6c, 0x93, 0xf9, 0xa2, 0x7c, 0x26, 0x94, 0x12, 0x8d, 0x4a,

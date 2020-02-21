@@ -151,14 +151,14 @@ func (store *privacyStore) setWalletAccountPrivacy(addr string, privacy *privacy
 
 	return nil
 }
-func (store *privacyStore) listAvailableUTXOs(token, addr string) ([]*privacytypes.PrivacyDBStore, error) {
+func (store *privacyStore) listAvailableUTXOs(assetExec, token, addr string) ([]*privacytypes.PrivacyDBStore, error) {
 	if 0 == len(addr) {
 		bizlog.Error("listWalletPrivacyAccount addr is nil")
 		return nil, types.ErrInvalidParam
 	}
 
 	list := store.NewListHelper()
-	onetimeAccbytes := list.PrefixScan(calcPrivacyUTXOPrefix4Addr(token, addr))
+	onetimeAccbytes := list.PrefixScan(calcPrivacyUTXOPrefix4Addr(assetExec, token, addr))
 	if len(onetimeAccbytes) == 0 {
 		bizlog.Error("listWalletPrivacyAccount ", "addr not exist", addr)
 		return nil, nil
@@ -182,13 +182,13 @@ func (store *privacyStore) listAvailableUTXOs(token, addr string) ([]*privacytyp
 	return privacyDBStoreSlice, nil
 }
 
-func (store *privacyStore) listFrozenUTXOs(token, addr string) ([]*privacytypes.FTXOsSTXOsInOneTx, error) {
+func (store *privacyStore) listFrozenUTXOs(assetExec, token, addr string) ([]*privacytypes.FTXOsSTXOsInOneTx, error) {
 	if 0 == len(addr) {
 		bizlog.Error("listFrozenUTXOs addr is nil")
 		return nil, types.ErrInvalidParam
 	}
 	list := store.NewListHelper()
-	values := list.List(calcFTXOsKeyPrefix(token, addr), nil, 0, 0)
+	values := list.List(calcFTXOsKeyPrefix(assetExec, token, addr), nil, 0, 0)
 	if len(values) == 0 {
 		bizlog.Error("listFrozenUTXOs ", "addr not exist", addr)
 		return nil, nil
@@ -227,11 +227,11 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 	if len(param.Seedtxhash) == 0 {
 		var keyPrefix []byte
 		if param.SendRecvFlag == sendTx {
-			keyPrefix = calcSendPrivacyTxKey(param.Tokenname, param.Address, "")
+			keyPrefix = calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
 		} else {
-			keyPrefix = calcRecvPrivacyTxKey(param.Tokenname, param.Address, "")
+			keyPrefix = calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
 		}
-		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count)
+		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
 		for _, keybyte := range txkeybytes {
 			value, err := store.Get(keybyte)
 			if err != nil {
@@ -248,9 +248,9 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 		list := store.NewListHelper()
 		var txkeybytes [][]byte
 		if param.SendRecvFlag == sendTx {
-			txkeybytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
+			txkeybytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
 		} else {
-			txkeybytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
+			txkeybytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
 		}
 		for _, keybyte := range txkeybytes {
 			value, err := store.Get(keybyte)
@@ -287,9 +287,9 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 	return txDetails, nil
 }
 
-func (store *privacyStore) getPrivacyTokenUTXOs(token, addr string) (*walletUTXOs, error) {
+func (store *privacyStore) getPrivacyTokenUTXOs(assetExec, token, addr string) (*walletUTXOs, error) {
 	list := store.NewListHelper()
-	prefix := calcPrivacyUTXOPrefix4Addr(token, addr)
+	prefix := calcPrivacyUTXOPrefix4Addr(assetExec, token, addr)
 	values := list.List(prefix, nil, 0, 0)
 	wutxos := new(walletUTXOs)
 	if len(values) == 0 {
@@ -330,11 +330,16 @@ func (store *privacyStore) getPrivacyTokenUTXOs(token, addr string) (*walletUTXO
 //calcKey4UTXOsSpentInTx------>types.FTXOsSTXOsInOneTx,将当前交易的所有花费的utxo进行打包，设置为ftxo，同时通过支付交易hash索引
 //calcKey4FTXOsInTx----------->calcKey4UTXOsSpentInTx,创建该交易冻结的所有的utxo的信息
 //状态转移，将utxo转移至ftxo，同时记录该生成tx的花费的utxo，这样在确认执行成功之后就可以快速将相应的FTXO转换成STXO
-func (store *privacyStore) moveUTXO2FTXO(expire int64, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
-	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{}
+func (store *privacyStore) moveUTXO2FTXO(expire int64, assetExec, token, sender, txhash string, selectedUtxos []*txOutputInfo) {
+	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{
+		AssetExec: assetExec,
+		Tokenname: token,
+		Sender:    sender,
+		Txhash:    txhash,
+	}
 	newbatch := store.NewBatch(true)
 	for _, txOutputInfo := range selectedUtxos {
-		key := calcUTXOKey4TokenAddr(token, sender, hex.EncodeToString(txOutputInfo.utxoGlobalIndex.Txhash), int(txOutputInfo.utxoGlobalIndex.Outindex))
+		key := calcUTXOKey4TokenAddr(assetExec, token, sender, hex.EncodeToString(txOutputInfo.utxoGlobalIndex.Txhash), int(txOutputInfo.utxoGlobalIndex.Outindex))
 		newbatch.Delete(key)
 		utxo := &privacytypes.UTXO{
 			Amount: txOutputInfo.amount,
@@ -345,9 +350,6 @@ func (store *privacyStore) moveUTXO2FTXO(expire int64, token, sender, txhash str
 		}
 		FTXOsInOneTx.Utxos = append(FTXOsInOneTx.Utxos, utxo)
 	}
-	FTXOsInOneTx.Tokenname = token
-	FTXOsInOneTx.Sender = sender
-	FTXOsInOneTx.Txhash = txhash
 	FTXOsInOneTx.SetExpire(expire)
 	//设置在该交易中花费的UTXO
 	key1 := calcKey4UTXOsSpentInTx(txhash)
@@ -355,7 +357,7 @@ func (store *privacyStore) moveUTXO2FTXO(expire int64, token, sender, txhash str
 	newbatch.Set(key1, value1)
 
 	//设置ftxo的key，使其能够方便地获取到对应的交易花费的utxo
-	key2 := calcKey4FTXOsInTx(token, sender, txhash)
+	key2 := calcKey4FTXOsInTx(assetExec, token, sender, txhash)
 	value2 := key1
 	newbatch.Set(key2, value2)
 
@@ -407,11 +409,11 @@ func (store *privacyStore) getRescanUtxosFlag4Addr(req *privacytypes.ReqRescanUt
 	return &repRescanUtxos, nil
 }
 
-func (store *privacyStore) saveREscanUTXOsAddresses(addrs []string) {
+func (store *privacyStore) saveREscanUTXOsAddresses(addrs []string, scanFlag int32) {
 	newbatch := store.NewBatch(true)
 	for _, addr := range addrs {
 		data := &types.Int64{
-			Data: int64(privacytypes.UtxoFlagNoScan),
+			Data: int64(scanFlag),
 		}
 		value := types.Encode(data)
 		newbatch.Set(calcRescanUtxosFlagKey(addr), value)
@@ -457,9 +459,7 @@ func (store *privacyStore) updateScanInputUTXOs(utxoGlobalIndexs []*privacytypes
 	}
 	newbatch := store.NewBatch(true)
 	var utxos []*privacytypes.UTXO
-	var owner string
-	var token string
-	var txhash string
+	var owner, token, txhash, assetExec string
 	for _, utxoGlobal := range utxoGlobalIndexs {
 		accPrivacy, err := store.isUTXOExist(hex.EncodeToString(utxoGlobal.Txhash), int(utxoGlobal.Outindex))
 		if err == nil && accPrivacy != nil {
@@ -479,28 +479,29 @@ func (store *privacyStore) updateScanInputUTXOs(utxoGlobalIndexs []*privacytypes
 		newbatch.Delete(key)
 	}
 	if len(utxos) > 0 {
-		store.moveUTXO2STXO(owner, token, txhash, utxos, newbatch)
+		store.moveUTXO2STXO(assetExec, owner, token, txhash, utxos, newbatch)
 	}
 	newbatch.Write()
 }
 
-func (store *privacyStore) moveUTXO2STXO(owner, token, txhash string, utxos []*privacytypes.UTXO, newbatch db.Batch) {
+func (store *privacyStore) moveUTXO2STXO(assetExec, owner, token, txhash string, utxos []*privacytypes.UTXO, newbatch db.Batch) {
 	if len(utxos) == 0 {
 		return
 	}
 
-	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{}
-
-	FTXOsInOneTx.Utxos = utxos
-	FTXOsInOneTx.Sender = owner
-	FTXOsInOneTx.Tokenname = token
-	FTXOsInOneTx.Txhash = txhash
+	FTXOsInOneTx := &privacytypes.FTXOsSTXOsInOneTx{
+		AssetExec: assetExec,
+		Tokenname: token,
+		Sender:    owner,
+		Txhash:    txhash,
+		Utxos:     utxos,
+	}
 
 	for _, utxo := range utxos {
 		Txhash := utxo.UtxoBasic.UtxoGlobalIndex.Txhash
 		Outindex := utxo.UtxoBasic.UtxoGlobalIndex.Outindex
 		//删除存在的UTXO索引
-		key := calcUTXOKey4TokenAddr(token, owner, hex.EncodeToString(Txhash), int(Outindex))
+		key := calcUTXOKey4TokenAddr(assetExec, token, owner, hex.EncodeToString(Txhash), int(Outindex))
 		newbatch.Delete(key)
 	}
 
@@ -515,7 +516,7 @@ func (store *privacyStore) moveUTXO2STXO(owner, token, txhash string, utxos []*p
 	newbatch.Set(key2, value2)
 
 	// 在此处加入stxo-token-addr-txhash 作为key，便于查找花费出去交易
-	key3 := calcSTXOTokenAddrTxKey(FTXOsInOneTx.Tokenname, FTXOsInOneTx.Sender, FTXOsInOneTx.Txhash)
+	key3 := calcSTXOTokenAddrTxKey(assetExec, FTXOsInOneTx.Tokenname, FTXOsInOneTx.Sender, FTXOsInOneTx.Txhash)
 	value3 := key1
 	newbatch.Set(key3, value3)
 
@@ -555,21 +556,28 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 	var RpubKey []byte
 	var privacyOutput *privacytypes.PrivacyOutput
 	var privacyInput *privacytypes.PrivacyInput
-	var tokenname string
+	var tokenname, assetExec string
 	if privacytypes.ActionPublic2Privacy == privateAction.Ty {
 		RpubKey = privateAction.GetPublic2Privacy().GetOutput().GetRpubKeytx()
 		privacyOutput = privateAction.GetPublic2Privacy().GetOutput()
 		tokenname = privateAction.GetPublic2Privacy().GetTokenname()
+		assetExec = privateAction.GetPublic2Privacy().GetAssetExec()
 	} else if privacytypes.ActionPrivacy2Privacy == privateAction.Ty {
 		RpubKey = privateAction.GetPrivacy2Privacy().GetOutput().GetRpubKeytx()
 		privacyOutput = privateAction.GetPrivacy2Privacy().GetOutput()
 		tokenname = privateAction.GetPrivacy2Privacy().GetTokenname()
 		privacyInput = privateAction.GetPrivacy2Privacy().GetInput()
+		assetExec = privateAction.GetPrivacy2Privacy().GetAssetExec()
 	} else if privacytypes.ActionPrivacy2Public == privateAction.Ty {
 		RpubKey = privateAction.GetPrivacy2Public().GetOutput().GetRpubKeytx()
 		privacyOutput = privateAction.GetPrivacy2Public().GetOutput()
 		tokenname = privateAction.GetPrivacy2Public().GetTokenname()
 		privacyInput = privateAction.GetPrivacy2Public().GetInput()
+		assetExec = privateAction.GetPrivacy2Public().GetAssetExec()
+	}
+
+	if assetExec == "" {
+		assetExec = "coins"
 	}
 
 	//处理output
@@ -607,6 +615,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 							}
 
 							info2store := &privacytypes.PrivacyDBStore{
+								AssetExec:        assetExec,
 								Txhash:           txhashInbytes,
 								Tokenname:        tokenname,
 								Amount:           output.Amount,
@@ -680,7 +689,7 @@ func (store *privacyStore) setUTXO(addr, txhash *string, outindex int, dbStore *
 
 	utxoKey := calcUTXOKey(*txhash, outindex)
 	bizlog.Debug("setUTXO", "addr", *addr, "tx with hash", *txhash, "amount:", dbStore.Amount/types.Coin)
-	newbatch.Set(calcUTXOKey4TokenAddr(dbStore.Tokenname, *addr, *txhash, outindex), utxoKey)
+	newbatch.Set(calcUTXOKey4TokenAddr(dbStore.AssetExec, dbStore.Tokenname, *addr, *txhash, outindex), utxoKey)
 	newbatch.Set(utxoKey, privacyStorebyte)
 	return nil
 }
@@ -697,12 +706,12 @@ func (store *privacyStore) storeScanPrivacyInputUTXO(utxoGlobalIndexs []*privacy
 	}
 }
 
-func (store *privacyStore) listSpendUTXOs(token, addr string) (*privacytypes.UTXOHaveTxHashs, error) {
+func (store *privacyStore) listSpendUTXOs(assetExec, token, addr string) (*privacytypes.UTXOHaveTxHashs, error) {
 	if 0 == len(addr) {
 		bizlog.Error("listSpendUTXOs addr is nil")
 		return nil, types.ErrInvalidParam
 	}
-	prefix := calcSTXOPrefix4Addr(token, addr)
+	prefix := calcSTXOPrefix4Addr(assetExec, token, addr)
 	list := store.NewListHelper()
 	Key4FTXOsInTxs := list.PrefixScan(prefix)
 	//if len(Key4FTXOsInTxs) == 0 {
@@ -785,10 +794,10 @@ func (store *privacyStore) getFTXOlist() ([]*privacytypes.FTXOsSTXOsInOneTx, [][
 	revertFTXOTxs, _, _ := store.getWalletFtxoStxo(RevertSendtx)
 	var keys [][]byte
 	for _, ftxo := range curFTXOTxs {
-		keys = append(keys, calcKey4FTXOsInTx(ftxo.Tokenname, ftxo.Sender, ftxo.Txhash))
+		keys = append(keys, calcKey4FTXOsInTx(ftxo.AssetExec, ftxo.Tokenname, ftxo.Sender, ftxo.Txhash))
 	}
 	for _, ftxo := range revertFTXOTxs {
-		keys = append(keys, calcRevertSendTxKey(ftxo.Tokenname, ftxo.Sender, ftxo.Txhash))
+		keys = append(keys, calcRevertSendTxKey(ftxo.AssetExec, ftxo.Tokenname, ftxo.Sender, ftxo.Txhash))
 	}
 	curFTXOTxs = append(curFTXOTxs, revertFTXOTxs...)
 	return curFTXOTxs, keys
@@ -826,7 +835,7 @@ func (store *privacyStore) moveFTXO2STXO(key1 []byte, txhash string, newbatch db
 	if nil != err {
 		bizlog.Error("moveFTXO2STXO", "Failed to decode FTXOsSTXOsInOneTx for value", value)
 	}
-	key3 := calcSTXOTokenAddrTxKey(ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, ftxosInOneTx.Txhash)
+	key3 := calcSTXOTokenAddrTxKey(ftxosInOneTx.AssetExec, ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, ftxosInOneTx.Txhash)
 	newbatch.Set(key3, value2)
 	newbatch.Write()
 
@@ -872,7 +881,7 @@ func (store *privacyStore) moveFTXO2UTXO(key1 []byte, newbatch db.Batch) {
 	for _, ftxo := range ftxosInOneTx.Utxos {
 		utxohash := hex.EncodeToString(ftxo.UtxoBasic.UtxoGlobalIndex.Txhash)
 		outindex := int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex)
-		key := calcUTXOKey4TokenAddr(ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, utxohash, outindex)
+		key := calcUTXOKey4TokenAddr(ftxosInOneTx.AssetExec, ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, utxohash, outindex)
 		value := calcUTXOKey(utxohash, int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex))
 		bizlog.Debug("moveFTXO2UTXO", "addr", ftxosInOneTx.Sender, "tx with hash", utxohash, "amount", ftxo.Amount/types.Coin)
 		newbatch.Set(key, value)
@@ -887,25 +896,25 @@ func (store *privacyStore) moveFTXO2UTXO(key1 []byte, newbatch db.Batch) {
 // 4.清除UTXO信息
 // addr 使用UTXO的地址
 // txhash 使用UTXO的交易哈希,没有0x
-func (store *privacyStore) unsetUTXO(addr, txhash *string, outindex int, token string, newbatch db.Batch) error {
-	if 0 == len(*addr) || 0 == len(*txhash) || outindex < 0 || len(token) <= 0 {
-		bizlog.Error("unsetUTXO", "InvalidParam addr", *addr, "txhash", *txhash, "outindex", outindex, "token", token)
+func (store *privacyStore) unsetUTXO(assetExec, token, addr, txhash string, outindex int, newbatch db.Batch) error {
+	if 0 == len(addr) || 0 == len(txhash) || outindex < 0 || len(token) <= 0 {
+		bizlog.Error("unsetUTXO", "InvalidParam addr", addr, "txhash", txhash, "outindex", outindex, "token", token)
 		return types.ErrInvalidParam
 	}
 	// 1.删除可用UTXO列表的索引关系
-	ftxokey := calcUTXOKey(*txhash, outindex)
+	ftxokey := calcUTXOKey(txhash, outindex)
 	newbatch.Delete(ftxokey)
 	// 2.删除冻结UTXO列表的索引关系
-	ftxokey = calcKey4FTXOsInTx(token, *addr, *txhash)
+	ftxokey = calcKey4FTXOsInTx(assetExec, token, addr, txhash)
 	newbatch.Delete(ftxokey)
 	// 3.删除回退冻结UTXO列表中的索引关系
-	ftxokey = calcRevertSendTxKey(token, *addr, *txhash)
+	ftxokey = calcRevertSendTxKey(assetExec, token, addr, txhash)
 	newbatch.Delete(ftxokey)
 	// 4.清除可用UTXO索引信息
-	utxokey := calcUTXOKey4TokenAddr(token, *addr, *txhash, outindex)
+	utxokey := calcUTXOKey4TokenAddr(assetExec, token, addr, txhash, outindex)
 	newbatch.Delete(utxokey)
 
-	bizlog.Debug("PrivacyTrading unsetUTXO", "addr", *addr, "tx with hash", *txhash, "outindex", outindex)
+	bizlog.Debug("PrivacyTrading unsetUTXO", "addr", addr, "tx with hash", txhash, "outindex", outindex)
 	return nil
 }
 
@@ -938,11 +947,11 @@ func (store *privacyStore) moveSTXO2FTXO(tx *types.Transaction, txhash string, n
 	}
 
 	//删除stxo-token-addr-txhash key
-	key3 := calcSTXOTokenAddrTxKey(ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, ftxosInOneTx.Txhash)
+	key3 := calcSTXOTokenAddrTxKey(ftxosInOneTx.AssetExec, ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, ftxosInOneTx.Txhash)
 	newbatch.Delete(key3)
 
 	//设置在该交易中花费的UTXO
-	key1 := calcRevertSendTxKey(ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, txhash)
+	key1 := calcRevertSendTxKey(ftxosInOneTx.AssetExec, ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, txhash)
 	value1 := value2
 	newbatch.Set(key1, value1)
 	bizlog.Info("moveSTXO2FTXO", "txhash ", txhash)

@@ -5,7 +5,6 @@
 package types
 
 import (
-	"encoding/json"
 	"reflect"
 
 	//log "github.com/33cn/chain33/common/log/log15"
@@ -41,12 +40,6 @@ const (
 	// RelayOrderSell define relay sell order
 	RelayOrderSell
 )
-
-// RelayOrderOperation buy or sell operation
-var RelayOrderOperation = map[uint32]string{
-	RelayOrderBuy:  "buy",
-	RelayOrderSell: "sell",
-}
 
 const (
 	// RelayUnlock revoke order
@@ -171,13 +164,7 @@ func (r *RelayType) Amount(tx *types.Transaction) (int64, error) {
 	}
 	relay := data.(*RelayAction)
 	if RelayActionCreate == relay.Ty && relay.GetCreate() != nil {
-		return int64(relay.GetCreate().BtyAmount), nil
+		return int64(relay.GetCreate().LocalCoinAmount), nil
 	}
 	return 0, nil
-}
-
-// CreateTx relay create tx TODO 暂时不修改实现， 先完成结构的重构
-func (r *RelayType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
-	var tx *types.Transaction
-	return tx, nil
 }

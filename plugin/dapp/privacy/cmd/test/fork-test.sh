@@ -100,7 +100,7 @@ function peersCount() {
     sleepTime=15
 
     for ((i = 0; i < retryTime; i++)); do
-        peersCount=$($name net peer_info | jq '.[] | length')
+        peersCount=$($name net peer | jq '.[] | length')
         printf '查询节点 %s ,所需节点数 %d ,当前节点数 %s \n' "${name}" "${needCount}" "${peersCount}"
         if [ "${peersCount}" = "$needCount" ]; then
             echo "============= 符合节点数要求 ============="

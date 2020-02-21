@@ -40,7 +40,7 @@ func (m *VoteResult) Reset()         { *m = VoteResult{} }
 func (m *VoteResult) String() string { return proto.CompactTextString(m) }
 func (*VoteResult) ProtoMessage()    {}
 func (*VoteResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_46832911ed0f42f1, []int{0}
+	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{0}
 }
 func (m *VoteResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteResult.Unmarshal(m, b)
@@ -106,7 +106,7 @@ func (m *PublicVote) Reset()         { *m = PublicVote{} }
 func (m *PublicVote) String() string { return proto.CompactTextString(m) }
 func (*PublicVote) ProtoMessage()    {}
 func (*PublicVote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_46832911ed0f42f1, []int{1}
+	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{1}
 }
 func (m *PublicVote) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PublicVote.Unmarshal(m, b)
@@ -165,7 +165,7 @@ func (m *VotesRecord) Reset()         { *m = VotesRecord{} }
 func (m *VotesRecord) String() string { return proto.CompactTextString(m) }
 func (*VotesRecord) ProtoMessage()    {}
 func (*VotesRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_46832911ed0f42f1, []int{2}
+	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{2}
 }
 func (m *VotesRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VotesRecord.Unmarshal(m, b)
@@ -212,7 +212,7 @@ func (m *RuleConfig) Reset()         { *m = RuleConfig{} }
 func (m *RuleConfig) String() string { return proto.CompactTextString(m) }
 func (*RuleConfig) ProtoMessage()    {}
 func (*RuleConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_46832911ed0f42f1, []int{3}
+	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{3}
 }
 func (m *RuleConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RuleConfig.Unmarshal(m, b)
@@ -281,7 +281,7 @@ func (m *ActiveBoard) Reset()         { *m = ActiveBoard{} }
 func (m *ActiveBoard) String() string { return proto.CompactTextString(m) }
 func (*ActiveBoard) ProtoMessage()    {}
 func (*ActiveBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_46832911ed0f42f1, []int{4}
+	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{4}
 }
 func (m *ActiveBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ActiveBoard.Unmarshal(m, b)
@@ -337,9 +337,9 @@ func init() {
 	proto.RegisterType((*ActiveBoard)(nil), "types.ActiveBoard")
 }
 
-func init() { proto.RegisterFile("lcommon.proto", fileDescriptor_lcommon_46832911ed0f42f1) }
+func init() { proto.RegisterFile("lcommon.proto", fileDescriptor_lcommon_3cf79d051a979aaa) }
 
-var fileDescriptor_lcommon_46832911ed0f42f1 = []byte{
+var fileDescriptor_lcommon_3cf79d051a979aaa = []byte{
 	// 352 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0xbf, 0x4e, 0xe3, 0x40,
 	0x10, 0x87, 0xe5, 0xfc, 0xbb, 0x64, 0x72, 0x77, 0xd2, 0x6d, 0x71, 0x72, 0x81, 0x50, 0xe4, 0x02,

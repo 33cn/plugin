@@ -119,9 +119,6 @@ func (mock *testDataMock) initMember() {
 
 func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey) {
 	wallet := mock.wallet
-	wallet.GetMutex().Lock()
-	defer wallet.GetMutex().Unlock()
-
 	ok, err := wallet.CheckWalletStatus()
 	if !ok || err != nil {
 		return
@@ -358,7 +355,7 @@ func Test_CreateTransaction(t *testing.T) {
 			req: &ty.ReqCreatePrivacyTx{
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
-				Type:       1,
+				ActionType: ty.ActionPublic2Privacy,
 				Amount:     100 * types.Coin,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
@@ -369,7 +366,7 @@ func Test_CreateTransaction(t *testing.T) {
 			req: &ty.ReqCreatePrivacyTx{
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
-				Type:       2,
+				ActionType: ty.ActionPrivacy2Privacy,
 				Amount:     10 * types.Coin,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[1],
@@ -380,7 +377,7 @@ func Test_CreateTransaction(t *testing.T) {
 			req: &ty.ReqCreatePrivacyTx{
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
-				Type:       3,
+				ActionType: ty.ActionPrivacy2Public,
 				Amount:     10 * types.Coin,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
@@ -399,7 +396,7 @@ func Test_PrivacyAccountInfo(t *testing.T) {
 	mock.init()
 
 	testCases := []struct {
-		req       *ty.ReqPPrivacyAccount
+		req       *ty.ReqPrivacyAccount
 		needReply *ty.ReplyPrivacyAccount
 		needError error
 	}{
@@ -407,7 +404,7 @@ func Test_PrivacyAccountInfo(t *testing.T) {
 			needError: types.ErrInvalidParam,
 		},
 		{
-			req: &ty.ReqPPrivacyAccount{
+			req: &ty.ReqPrivacyAccount{
 				Addr:        testAddrs[0],
 				Token:       types.BTY,
 				Displaymode: 0,

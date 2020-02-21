@@ -69,7 +69,7 @@ func hashlockLockCmd(cmd *cobra.Command, args []string) {
 	delay, _ := cmd.Flags().GetInt64("delay")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee
@@ -129,7 +129,7 @@ func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee
@@ -172,7 +172,7 @@ func hashlockSendCmd(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 
-	defaultFee := float64(cfg.GInt("MinFee")) / float64(types.Coin)
+	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	if fee < defaultFee {
 		fee = defaultFee

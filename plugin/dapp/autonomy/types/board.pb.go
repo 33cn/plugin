@@ -45,7 +45,7 @@ func (m *AutonomyProposalBoard) Reset()         { *m = AutonomyProposalBoard{} }
 func (m *AutonomyProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalBoard) ProtoMessage()    {}
 func (*AutonomyProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{0}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{0}
 }
 func (m *AutonomyProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalBoard.Unmarshal(m, b)
@@ -151,7 +151,7 @@ func (m *ProposalBoard) Reset()         { *m = ProposalBoard{} }
 func (m *ProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*ProposalBoard) ProtoMessage()    {}
 func (*ProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{1}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{1}
 }
 func (m *ProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalBoard.Unmarshal(m, b)
@@ -238,7 +238,7 @@ func (m *RevokeProposalBoard) Reset()         { *m = RevokeProposalBoard{} }
 func (m *RevokeProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalBoard) ProtoMessage()    {}
 func (*RevokeProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{2}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{2}
 }
 func (m *RevokeProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalBoard.Unmarshal(m, b)
@@ -278,7 +278,7 @@ func (m *VoteProposalBoard) Reset()         { *m = VoteProposalBoard{} }
 func (m *VoteProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalBoard) ProtoMessage()    {}
 func (*VoteProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{3}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{3}
 }
 func (m *VoteProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalBoard.Unmarshal(m, b)
@@ -330,7 +330,7 @@ func (m *TerminateProposalBoard) Reset()         { *m = TerminateProposalBoard{}
 func (m *TerminateProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalBoard) ProtoMessage()    {}
 func (*TerminateProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{4}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{4}
 }
 func (m *TerminateProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalBoard.Unmarshal(m, b)
@@ -370,7 +370,7 @@ func (m *ReceiptProposalBoard) Reset()         { *m = ReceiptProposalBoard{} }
 func (m *ReceiptProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalBoard) ProtoMessage()    {}
 func (*ReceiptProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{5}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{5}
 }
 func (m *ReceiptProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalBoard.Unmarshal(m, b)
@@ -416,7 +416,7 @@ func (m *LocalProposalBoard) Reset()         { *m = LocalProposalBoard{} }
 func (m *LocalProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalBoard) ProtoMessage()    {}
 func (*LocalProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{6}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{6}
 }
 func (m *LocalProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalBoard.Unmarshal(m, b)
@@ -467,7 +467,7 @@ func (m *ReqQueryProposalBoard) Reset()         { *m = ReqQueryProposalBoard{} }
 func (m *ReqQueryProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalBoard) ProtoMessage()    {}
 func (*ReqQueryProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{7}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{7}
 }
 func (m *ReqQueryProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalBoard.Unmarshal(m, b)
@@ -540,7 +540,7 @@ func (m *ReplyQueryProposalBoard) Reset()         { *m = ReplyQueryProposalBoard
 func (m *ReplyQueryProposalBoard) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalBoard) ProtoMessage()    {}
 func (*ReplyQueryProposalBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_board_32b30cbe96ccf177, []int{8}
+	return fileDescriptor_board_c31efaf3c4bb8f4d, []int{8}
 }
 func (m *ReplyQueryProposalBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalBoard.Unmarshal(m, b)
@@ -579,9 +579,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalBoard)(nil), "types.ReplyQueryProposalBoard")
 }
 
-func init() { proto.RegisterFile("board.proto", fileDescriptor_board_32b30cbe96ccf177) }
+func init() { proto.RegisterFile("board.proto", fileDescriptor_board_c31efaf3c4bb8f4d) }
 
-var fileDescriptor_board_32b30cbe96ccf177 = []byte{
+var fileDescriptor_board_c31efaf3c4bb8f4d = []byte{
 	// 587 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x6f, 0xd4, 0x30,
 	0x10, 0x55, 0x9a, 0x4d, 0xba, 0x99, 0xaa, 0xa8, 0x35, 0x6d, 0xb1, 0xaa, 0x0a, 0xad, 0x72, 0x40,

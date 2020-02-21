@@ -148,7 +148,11 @@ func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *t
 
 	//  主链转出记录，
 	//  转入在 commit done 时记录， 因为没有日志里没有当时tx信息
-	r, err := e.initLocalAssetTransfer(tx, true, false)
+	asset, err := e.getAssetTransferInfo(tx, payload.Cointoken, false)
+	if err != nil {
+		return nil, err
+	}
+	r, err := e.initLocalAssetTransfer(tx, false, asset)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +164,33 @@ func (e *Paracross) ExecLocal_AssetTransfer(payload *types.AssetsTransfer, tx *t
 //ExecLocal_AssetWithdraw asset withdraw process
 func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return nil, nil
+}
+
+//ExecLocal_AssetTransfer asset transfer local proc
+func (e *Paracross) ExecLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	cfg := e.GetAPI().GetConfig()
+	act, err := getCrossAction(payload, string(tx.Execer))
+	if err != nil {
+		clog.Crit("local CrossAssetTransfer getCrossAction failed", "error", err)
+		return nil, err
+	}
+	//  主链转出和平行链提取记录，
+	//  主链提取和平行链转出在 commit done 时记录
+	if !cfg.IsPara() && (act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer) {
+		return nil, nil
+	}
+	asset, err := e.getCrossAssetTransferInfo(payload, tx)
+	if err != nil {
+		return nil, err
+	}
+	r, err := e.initLocalAssetTransfer(tx, false, asset)
+	if err != nil {
+		return nil, err
+	}
+	set.KV = append(set.KV, r)
+
+	return &set, nil
 }
 
 func setMinerTxResult(cfg *types.Chain33Config, payload *pt.ParacrossMinerAction, txs []*types.Transaction, receipts []*types.ReceiptData) error {

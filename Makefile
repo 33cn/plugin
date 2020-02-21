@@ -8,12 +8,8 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-export CHAIN33_PATH=$(shell go list  -f {{.Dir}} github.com/33cn/chain33)
 BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
 LDFLAGS := -ldflags "-w -s"
-PKG_LIST_VET := `go list ./... | grep -v "vendor" | grep -v plugin/dapp/evm/executor/vm/common/crypto/bn256`
-PKG_LIST := `go list ./... | grep -v "vendor" | grep -v "chain33/test" | grep -v "mocks" | grep -v "pbft"`
-PKG_LIST_INEFFASSIGN= `go list -f {{.Dir}} ./... | grep -v "vendor"`
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
@@ -25,14 +21,14 @@ build: depends
 	go build $(BUILD_FLAGS) -v -i -o $(APP)
 	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
 	go build $(BUILD_FLAGS) -v -i -o build/fork-config github.com/33cn/plugin/cli/fork_config/
-	@cp chain33.toml  $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_CLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
-	@cp chain33.toml $(CHAIN33_PATH)/build/system-test-rpc.sh build/
+	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
@@ -40,7 +36,7 @@ para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
 
 vet:
-	@go vet ${PKG_LIST_VET}
+	@go vet ./...
 
 autotest: ## build autotest binary
 	@cd build/autotest && bash ./run.sh build && cd ../../
@@ -77,16 +73,16 @@ linter_test: ## Use gometalinter check code, for local test
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
 ineffassign:
-	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign -n ${PKG_LIST_INEFFASSIGN}
+	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign -n ./...
 
 race: ## Run data race detector
-	@go test -parallel=8 -race -short $(PKG_LIST)
+	@go test -parallel=8 -race -short `go list ./... | grep -v "pbft"`
 
 test: ## Run unittests
-	@go test -parallel=8 -race  $(PKG_LIST)
+	@go test -parallel=8 -race  `go list ./...| grep -v "pbft"`
 
 testq: ## Run unittests
-	@go test -parallel=8 $(PKG_LIST)
+	@go test -parallel=8 `go list ./... | grep -v "pbft"`
 
 fmt: fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
@@ -125,6 +121,13 @@ docker-compose-down: ## build docker-compose for chain33 run
 	 fi; \
 	 cd ..
 
+metrics:## build docker-compose for chain33 metrics
+	@cd build && if ! [ -d ci ]; then \
+	 make -C ../ ; \
+	 fi; \
+	 cp chain33* Dockerfile  docker-compose.yml docker-compose-metrics.yml influxdb.conf *.sh ci/paracross/testcase.sh metrics/ && ./docker-compose-pre.sh run $(proj) metrics  && cd ../..
+
+
 fork-test: ## build fork-test for chain33 run
 	@cd build && cp chain33* Dockerfile system-fork-test.sh docker-compose* ci/ && cd ci/ && ./docker-compose-pre.sh forktest $(proj) $(dapp) && cd ../..
 
@@ -139,6 +142,7 @@ clean: ## Remove previous build
 	@rm -rf build/ci
 	@rm -rf build/system-rpc-test.sh
 	@rm -rf tool
+	@cd build/metrics && find * -not -name readme.md | xargs rm -fr && cd ../..
 	@go clean
 
 proto:protobuf

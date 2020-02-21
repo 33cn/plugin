@@ -74,11 +74,11 @@ func createCrossParaTempTx(cfg *types.Chain33Config, to string, amount int64) (*
 
 func createTxsGroup(cfg *types.Chain33Config, txs []*types.Transaction) ([]*types.Transaction, error) {
 
-	group, err := types.CreateTxGroup(txs, cfg.GInt("MinFee"))
+	group, err := types.CreateTxGroup(txs, cfg.GetMinTxFeeRate())
 	if err != nil {
 		return nil, err
 	}
-	err = group.Check(cfg, 0, cfg.GInt("MinFee"), cfg.GInt("MaxFee"))
+	err = group.Check(cfg, 0, cfg.GetMinTxFeeRate(), cfg.GetMaxTxFee())
 	if err != nil {
 		return nil, err
 	}

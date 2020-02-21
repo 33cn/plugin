@@ -26,19 +26,19 @@ func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.Receipt
 			privacylog.Error("PrivacyTrading ExecDelLocal", "txhash", txhashstr, "Decode item.Log error ", err)
 			panic(err)
 		}
-
-		token := receiptPrivacyOutput.Token
+		assetExec := receiptPrivacyOutput.GetAssetExec()
+		assetSymbol := receiptPrivacyOutput.GetAssetSymbol()
 		txhashInByte := tx.Hash()
 		txhash := common.ToHex(txhashInByte)
 		for m, keyOutput := range receiptPrivacyOutput.Keyoutput {
 			//kv1，添加一个具体的UTXO，方便我们可以查询相应token下特定额度下，不同高度时，不同txhash的UTXO
-			key := CalcPrivacyUTXOkeyHeight(token, keyOutput.Amount, p.GetHeight(), txhash, i, m)
+			key := CalcPrivacyUTXOkeyHeight(assetExec, assetSymbol, keyOutput.Amount, p.GetHeight(), txhash, i, m)
 			kv := &types.KeyValue{Key: key, Value: nil}
 			dbSet.KV = append(dbSet.KV, kv)
 
 			//kv2，添加各种不同额度的kv记录，能让我们很方便的获知本系统存在的所有不同的额度的UTXO
 			var amountTypes ty.AmountsOfUTXO
-			key2 := CalcprivacyKeyTokenAmountType(token)
+			key2 := CalcprivacyKeyTokenAmountType(assetExec, assetSymbol)
 			value2, err := localDB.Get(key2)
 			//如果该种token不是第一次进行隐私操作
 			if err == nil && value2 != nil {
@@ -63,15 +63,16 @@ func (p *privacy) execDelLocal(tx *types.Transaction, receiptData *types.Receipt
 			}
 
 			//kv3,添加存在隐私交易token的类型
+			assetKey := calcExecLocalAssetKey(assetExec, assetSymbol)
 			var tokenNames ty.TokenNamesOfUTXO
 			key3 := CalcprivacyKeyTokenTypes()
 			value3, err := localDB.Get(key3)
 			if err == nil && value3 != nil {
 				err := types.Decode(value3, &tokenNames)
 				if err == nil {
-					if settxhash, ok := tokenNames.TokensMap[token]; ok {
+					if settxhash, ok := tokenNames.TokensMap[assetKey]; ok {
 						if settxhash == txhash {
-							delete(tokenNames.TokensMap, token)
+							delete(tokenNames.TokensMap, assetKey)
 							value3 := types.Encode(&tokenNames)
 							kv := &types.KeyValue{Key: key3, Value: value3}
 							dbSet.KV = append(dbSet.KV, kv)

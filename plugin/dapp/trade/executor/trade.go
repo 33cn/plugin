@@ -73,7 +73,8 @@ func (t *trade) getSellOrderFromDb(sellID []byte) *pty.SellOrder {
 	return &sellorder
 }
 
-func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
+// sell limit
+func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) {
 	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
 
 	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
@@ -83,33 +84,25 @@ func (t *trade) saveSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transact
 	} else {
 		t.updateSellLimit(tx, base, sellorder, txIndex, ldb)
 	}
-	return genSaveSellKv(sellorder)
 }
 
-func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, tradedBoardlot int64) []*types.KeyValue {
+func (t *trade) deleteSell(base *pty.ReceiptSellBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, tradedBoardlot int64) {
 	sellorder := t.getSellOrderFromDb([]byte(base.SellID))
 	if ty == pty.TyLogTradeSellLimit && sellorder.SoldBoardlot == 0 {
 		ldb.Del([]byte(txIndex))
 	} else {
 		t.rollBackSellLimit(tx, base, sellorder, txIndex, ldb, tradedBoardlot)
 	}
-	return genDeleteSellKv(sellorder)
 }
 
-func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
-	//tradelog.Info("save", "buy", receiptTradeBuy)
-
-	var kv []*types.KeyValue
+func (t *trade) saveBuy(receiptTradeBuy *pty.ReceiptBuyBase, tx *types.Transaction, txIndex string, ldb *table.Table) {
 	order := t.genBuyMarket(tx, receiptTradeBuy, txIndex)
 	tradelog.Debug("trade BuyMarket save local", "order", order)
 	ldb.Add(order)
-	return saveBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
 }
 
-func (t *trade) deleteBuy(receiptTradeBuy *pty.ReceiptBuyBase, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
+func (t *trade) deleteBuy(receiptTradeBuy *pty.ReceiptBuyBase, txIndex string, ldb *table.Table) {
 	ldb.Del([]byte(txIndex))
-	return deleteBuyMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusBoughtOut, t.GetHeight())
 }
 
 // BuyLimit Local
@@ -123,7 +116,7 @@ func (t *trade) getBuyOrderFromDb(buyID []byte) *pty.BuyLimitOrder {
 	return &buyOrder
 }
 
-func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
+func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table) {
 	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
 	tradelog.Debug("Table", "buy-add", buyOrder)
 	if buyOrder.Status == pty.TradeOrderStatusOnBuy && buy.BoughtBoardlot == 0 {
@@ -133,31 +126,25 @@ func (t *trade) saveBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transa
 	} else {
 		t.updateBuyLimit(tx, buy, buyOrder, txIndex, ldb)
 	}
-
-	return genSaveBuyLimitKv(buyOrder)
 }
 
-func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, traded int64) []*types.KeyValue {
+func (t *trade) deleteBuyLimit(buy *pty.ReceiptBuyBase, ty int32, tx *types.Transaction, txIndex string, ldb *table.Table, traded int64) {
 	buyOrder := t.getBuyOrderFromDb([]byte(buy.BuyID))
 	if ty == pty.TyLogTradeBuyLimit && buy.BoughtBoardlot == 0 {
 		ldb.Del([]byte(txIndex))
 	} else {
 		t.rollbackBuyLimit(tx, buy, buyOrder, txIndex, ldb, traded)
 	}
-	return genDeleteBuyLimitKv(buyOrder)
 }
 
-func (t *trade) saveSellMarket(receiptTradeBuy *pty.ReceiptSellBase, tx *types.Transaction, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
+func (t *trade) saveSellMarket(receiptTradeBuy *pty.ReceiptSellBase, tx *types.Transaction, txIndex string, ldb *table.Table) {
 	order := t.genSellMarket(tx, receiptTradeBuy, txIndex)
 	ldb.Add(order)
-	return saveSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
+
 }
 
-func (t *trade) deleteSellMarket(receiptTradeBuy *pty.ReceiptSellBase, txIndex string, ldb *table.Table) []*types.KeyValue {
-	var kv []*types.KeyValue
+func (t *trade) deleteSellMarket(receiptTradeBuy *pty.ReceiptSellBase, txIndex string, ldb *table.Table) {
 	ldb.Del([]byte(txIndex))
-	return deleteSellMarketOrderKeyValue(kv, receiptTradeBuy, pty.TradeOrderStatusSoldOut, t.GetHeight())
 }
 
 // CheckReceiptExecOk return true to check if receipt ty is ok

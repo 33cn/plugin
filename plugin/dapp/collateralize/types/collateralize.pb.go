@@ -48,7 +48,7 @@ func (m *Collateralize) Reset()         { *m = Collateralize{} }
 func (m *Collateralize) String() string { return proto.CompactTextString(m) }
 func (*Collateralize) ProtoMessage()    {}
 func (*Collateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{0}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{0}
 }
 func (m *Collateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Collateralize.Unmarshal(m, b)
@@ -196,7 +196,7 @@ func (m *BorrowRecord) Reset()         { *m = BorrowRecord{} }
 func (m *BorrowRecord) String() string { return proto.CompactTextString(m) }
 func (*BorrowRecord) ProtoMessage()    {}
 func (*BorrowRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{1}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{1}
 }
 func (m *BorrowRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BorrowRecord.Unmarshal(m, b)
@@ -315,7 +315,7 @@ func (m *AssetPriceRecord) Reset()         { *m = AssetPriceRecord{} }
 func (m *AssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*AssetPriceRecord) ProtoMessage()    {}
 func (*AssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{2}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{2}
 }
 func (m *AssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AssetPriceRecord.Unmarshal(m, b)
@@ -384,7 +384,7 @@ func (m *CollateralizeAction) Reset()         { *m = CollateralizeAction{} }
 func (m *CollateralizeAction) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAction) ProtoMessage()    {}
 func (*CollateralizeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{3}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{3}
 }
 func (m *CollateralizeAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAction.Unmarshal(m, b)
@@ -698,7 +698,7 @@ func (m *CollateralizeManage) Reset()         { *m = CollateralizeManage{} }
 func (m *CollateralizeManage) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeManage) ProtoMessage()    {}
 func (*CollateralizeManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{4}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{4}
 }
 func (m *CollateralizeManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeManage.Unmarshal(m, b)
@@ -771,7 +771,7 @@ func (m *CollateralizeAddr) Reset()         { *m = CollateralizeAddr{} }
 func (m *CollateralizeAddr) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAddr) ProtoMessage()    {}
 func (*CollateralizeAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{5}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{5}
 }
 func (m *CollateralizeAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAddr.Unmarshal(m, b)
@@ -810,7 +810,7 @@ func (m *CollateralizeCreate) Reset()         { *m = CollateralizeCreate{} }
 func (m *CollateralizeCreate) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeCreate) ProtoMessage()    {}
 func (*CollateralizeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{6}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{6}
 }
 func (m *CollateralizeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeCreate.Unmarshal(m, b)
@@ -850,7 +850,7 @@ func (m *CollateralizeBorrow) Reset()         { *m = CollateralizeBorrow{} }
 func (m *CollateralizeBorrow) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeBorrow) ProtoMessage()    {}
 func (*CollateralizeBorrow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{7}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{7}
 }
 func (m *CollateralizeBorrow) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeBorrow.Unmarshal(m, b)
@@ -897,7 +897,7 @@ func (m *CollateralizeRepay) Reset()         { *m = CollateralizeRepay{} }
 func (m *CollateralizeRepay) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRepay) ProtoMessage()    {}
 func (*CollateralizeRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{8}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{8}
 }
 func (m *CollateralizeRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRepay.Unmarshal(m, b)
@@ -945,7 +945,7 @@ func (m *CollateralizeAppend) Reset()         { *m = CollateralizeAppend{} }
 func (m *CollateralizeAppend) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAppend) ProtoMessage()    {}
 func (*CollateralizeAppend) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{9}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{9}
 }
 func (m *CollateralizeAppend) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAppend.Unmarshal(m, b)
@@ -1000,7 +1000,7 @@ func (m *CollateralizeFeed) Reset()         { *m = CollateralizeFeed{} }
 func (m *CollateralizeFeed) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeFeed) ProtoMessage()    {}
 func (*CollateralizeFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{10}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{10}
 }
 func (m *CollateralizeFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeFeed.Unmarshal(m, b)
@@ -1054,7 +1054,7 @@ func (m *CollateralizeRetrieve) Reset()         { *m = CollateralizeRetrieve{} }
 func (m *CollateralizeRetrieve) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRetrieve) ProtoMessage()    {}
 func (*CollateralizeRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{11}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{11}
 }
 func (m *CollateralizeRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRetrieve.Unmarshal(m, b)
@@ -1103,7 +1103,7 @@ func (m *ReceiptCollateralize) Reset()         { *m = ReceiptCollateralize{} }
 func (m *ReceiptCollateralize) String() string { return proto.CompactTextString(m) }
 func (*ReceiptCollateralize) ProtoMessage()    {}
 func (*ReceiptCollateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{12}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{12}
 }
 func (m *ReceiptCollateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptCollateralize.Unmarshal(m, b)
@@ -1163,7 +1163,7 @@ func (m *CollateralizeRecords) Reset()         { *m = CollateralizeRecords{} }
 func (m *CollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRecords) ProtoMessage()    {}
 func (*CollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{13}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{13}
 }
 func (m *CollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRecords.Unmarshal(m, b)
@@ -1202,7 +1202,7 @@ func (m *ReqCollateralizeInfo) Reset()         { *m = ReqCollateralizeInfo{} }
 func (m *ReqCollateralizeInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfo) ProtoMessage()    {}
 func (*ReqCollateralizeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{14}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{14}
 }
 func (m *ReqCollateralizeInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfo.Unmarshal(m, b)
@@ -1251,7 +1251,7 @@ func (m *RepCollateralizeCurrentInfo) Reset()         { *m = RepCollateralizeCur
 func (m *RepCollateralizeCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfo) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{15}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{15}
 }
 func (m *RepCollateralizeCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Unmarshal(m, b)
@@ -1360,7 +1360,7 @@ func (m *ReqCollateralizeInfos) Reset()         { *m = ReqCollateralizeInfos{} }
 func (m *ReqCollateralizeInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfos) ProtoMessage()    {}
 func (*ReqCollateralizeInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{16}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{16}
 }
 func (m *ReqCollateralizeInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfos.Unmarshal(m, b)
@@ -1399,7 +1399,7 @@ func (m *RepCollateralizeCurrentInfos) Reset()         { *m = RepCollateralizeCu
 func (m *RepCollateralizeCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfos) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{17}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{17}
 }
 func (m *RepCollateralizeCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Unmarshal(m, b)
@@ -1439,7 +1439,7 @@ func (m *ReqCollateralizeByStatus) Reset()         { *m = ReqCollateralizeByStat
 func (m *ReqCollateralizeByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{18}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{18}
 }
 func (m *ReqCollateralizeByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Unmarshal(m, b)
@@ -1487,7 +1487,7 @@ func (m *ReqCollateralizeByAddr) Reset()         { *m = ReqCollateralizeByAddr{}
 func (m *ReqCollateralizeByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{19}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{19}
 }
 func (m *ReqCollateralizeByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Unmarshal(m, b)
@@ -1540,7 +1540,7 @@ func (m *RepCollateralizeIDs) Reset()         { *m = RepCollateralizeIDs{} }
 func (m *RepCollateralizeIDs) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeIDs) ProtoMessage()    {}
 func (*RepCollateralizeIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{20}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{20}
 }
 func (m *RepCollateralizeIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeIDs.Unmarshal(m, b)
@@ -1582,7 +1582,7 @@ func (m *ReqCollateralizeRecordByAddr) Reset()         { *m = ReqCollateralizeRe
 func (m *ReqCollateralizeRecordByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{21}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{21}
 }
 func (m *ReqCollateralizeRecordByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Unmarshal(m, b)
@@ -1644,7 +1644,7 @@ func (m *ReqCollateralizeRecordByStatus) Reset()         { *m = ReqCollateralize
 func (m *ReqCollateralizeRecordByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{22}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{22}
 }
 func (m *ReqCollateralizeRecordByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Unmarshal(m, b)
@@ -1697,7 +1697,7 @@ func (m *RepCollateralizeRecords) Reset()         { *m = RepCollateralizeRecords
 func (m *RepCollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecords) ProtoMessage()    {}
 func (*RepCollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{23}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{23}
 }
 func (m *RepCollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecords.Unmarshal(m, b)
@@ -1737,7 +1737,7 @@ func (m *ReqCollateralizeRecord) Reset()         { *m = ReqCollateralizeRecord{}
 func (m *ReqCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecord) ProtoMessage()    {}
 func (*ReqCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{24}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{24}
 }
 func (m *ReqCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecord.Unmarshal(m, b)
@@ -1783,7 +1783,7 @@ func (m *RepCollateralizeRecord) Reset()         { *m = RepCollateralizeRecord{}
 func (m *RepCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecord) ProtoMessage()    {}
 func (*RepCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{25}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{25}
 }
 func (m *RepCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecord.Unmarshal(m, b)
@@ -1828,7 +1828,7 @@ func (m *RepCollateralizeConfig) Reset()         { *m = RepCollateralizeConfig{}
 func (m *RepCollateralizeConfig) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeConfig) ProtoMessage()    {}
 func (*RepCollateralizeConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{26}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{26}
 }
 func (m *RepCollateralizeConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeConfig.Unmarshal(m, b)
@@ -1909,7 +1909,7 @@ func (m *RepCollateralizePrice) Reset()         { *m = RepCollateralizePrice{} }
 func (m *RepCollateralizePrice) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizePrice) ProtoMessage()    {}
 func (*RepCollateralizePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{27}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{27}
 }
 func (m *RepCollateralizePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizePrice.Unmarshal(m, b)
@@ -1948,7 +1948,7 @@ func (m *RepCollateralizeUserBalance) Reset()         { *m = RepCollateralizeUse
 func (m *RepCollateralizeUserBalance) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeUserBalance) ProtoMessage()    {}
 func (*RepCollateralizeUserBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_eee08d5094b5a295, []int{28}
+	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{28}
 }
 func (m *RepCollateralizeUserBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeUserBalance.Unmarshal(m, b)
@@ -2007,9 +2007,9 @@ func init() {
 	proto.RegisterType((*RepCollateralizeUserBalance)(nil), "types.RepCollateralizeUserBalance")
 }
 
-func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_collateralize_eee08d5094b5a295) }
+func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_collateralize_fc15b72da9e9ae6f) }
 
-var fileDescriptor_collateralize_eee08d5094b5a295 = []byte{
+var fileDescriptor_collateralize_fc15b72da9e9ae6f = []byte{
 	// 1208 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x58, 0x5b, 0x6f, 0xdc, 0x44,
 	0x14, 0x8e, 0xd7, 0x7b, 0xc9, 0x9e, 0x4d, 0xd2, 0x74, 0x92, 0x06, 0xd3, 0x46, 0xd1, 0x6a, 0x84,

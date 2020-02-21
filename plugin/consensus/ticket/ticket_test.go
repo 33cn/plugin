@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	apimocks "github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/common/merkle"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/consensus"
 	_ "github.com/33cn/plugin/plugin/dapp/init"
@@ -64,15 +65,15 @@ func testTicket(t *testing.T) {
 	//fmt.Println(string(js))
 	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 0})
 	assert.Nil(t, err)
-	status, err := mock33.GetAPI().GetWalletStatus()
+	status, err := mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
-	assert.Equal(t, false, status.IsAutoMining)
+	assert.Equal(t, false, status.(*types.WalletStatus).IsAutoMining)
 	assert.Equal(t, int32(2), detail.Receipt.Ty)
 	_, err = mock33.GetAPI().ExecWalletFunc("ticket", "WalletAutoMiner", &ty.MinerFlag{Flag: 1})
 	assert.Nil(t, err)
-	status, err = mock33.GetAPI().GetWalletStatus()
+	status, err = mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
-	assert.Equal(t, true, status.IsAutoMining)
+	assert.Equal(t, true, status.(*types.WalletStatus).IsAutoMining)
 	start := time.Now()
 	height := int64(0)
 	hastclose := false
@@ -83,7 +84,8 @@ func testTicket(t *testing.T) {
 		assert.Nil(t, err)
 		//查询票是否自动close，并且购买了新的票
 		req := &types.ReqWalletTransactionList{Count: 1000}
-		list, err := mock33.GetAPI().WalletTransactionList(req)
+		resp, err := mock33.GetAPI().ExecWalletFunc("wallet", "WalletTransactionList", req)
+		list := resp.(*types.WalletTxDetails)
 		assert.Nil(t, err)
 		for _, tx := range list.TxDetails {
 			if tx.ActionName == "tclose" && tx.Receipt.Ty == 2 {
@@ -103,6 +105,16 @@ func testTicket(t *testing.T) {
 	accounts, err = acc.GetBalance(mock33.GetAPI(), &types.ReqBalance{Execer: "ticket", Addresses: []string{addr}})
 	assert.Nil(t, err)
 	fmt.Println(accounts[0])
+
+	//测试最优节点的选择,难度相同
+	lastBlock := mock33.GetLastBlock()
+	temblock := types.Clone(lastBlock)
+	newblock := temblock.(*types.Block)
+	newblock.GetTxs()[0].Nonce = newblock.GetTxs()[0].Nonce + 1
+	newblock.TxHash = merkle.CalcMerkleRoot(cfg, newblock.GetHeight(), newblock.GetTxs())
+
+	isbestBlock := util.CmpBestBlock(mock33.GetClient(), newblock, lastBlock.Hash(cfg))
+	assert.Equal(t, isbestBlock, false)
 }
 
 func createBindMiner(cfg *types.Chain33Config, t *testing.T, m, r string, priv crypto.PrivKey) *types.Transaction {
