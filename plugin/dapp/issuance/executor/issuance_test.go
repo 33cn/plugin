@@ -122,6 +122,47 @@ func initEnv() *execEnv {
 	}
 }
 
+func TestTable(t *testing.T) {
+	env := initEnv()
+
+	// 原有数据状态为1
+	table := pkt.NewIssuanceTable(env.kvdb)
+	table.Replace(&pkt.ReceiptIssuanceID{IssuanceId: "0x12345", Status: 1})
+	kvs, err := table.Save()
+	assert.Nil(t, err)
+	for _, kv := range kvs {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+
+	// 状态变更1->2
+	table.Replace(&pkt.ReceiptIssuanceID{IssuanceId: "0x12345", Status: 2})
+	kvs, err = table.Save()
+	assert.Nil(t, err)
+	for _, kv := range kvs {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+
+	table.Replace(&pkt.ReceiptIssuanceID{IssuanceId: "0x54321", Status: 1})
+	kvs, err = table.Save()
+	assert.Nil(t, err)
+	for _, kv := range kvs {
+		env.kvdb.Set(kv.Key, kv.Value)
+	}
+
+	// 查询状态1,期望查询到结果
+	query := table.GetQuery(env.kvdb)
+	row1, err := query.List("status", &pkt.ReceiptIssuanceID{IssuanceId: "", Status: 1}, nil, 10, 0)
+	assert.Nil(t, err)
+	assert.NotNil(t, row1)
+	assert.Equal(t, row1[0].Primary, []byte("0x54321"))
+
+	// 查询状态2,期望查询到结果
+	row2, err := query.List("status", &pkt.ReceiptIssuanceID{IssuanceId: "", Status: 2}, nil, 10, 0)
+	assert.Nil(t, err)
+	assert.NotNil(t, row2)
+	assert.Equal(t, row2[0].Primary, []byte("0x12345"))
+}
+
 func TestIssuance(t *testing.T) {
 	env := initEnv()
 
