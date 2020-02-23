@@ -973,14 +973,15 @@ func (action *Action) IssuanceClose(close *pty.IssuanceClose) (*types.Receipt, e
 	}
 
 	// 解冻ccny
-	receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance)
-	if err != nil {
-		clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.Balance, "error", err)
-		return nil, err
+	if issuance.Balance > 0 {
+		receipt, err = action.tokenAccount.ExecActive(action.fromaddr, action.execaddr, issuance.Balance)
+		if err != nil {
+			clog.Error("IssuanceClose.ExecActive", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", issuance.Balance, "error", err)
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kv = append(kv, receipt.KV...)
 	}
-	logs = append(logs, receipt.Logs...)
-	kv = append(kv, receipt.KV...)
-
 	clog.Debug("IssuanceClose", "ID", close.IssuanceId)
 
 	issu := &IssuanceDB{*issuance}

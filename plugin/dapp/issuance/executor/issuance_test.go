@@ -30,6 +30,7 @@ type execEnv struct {
 	db          dbm.KV
 	execAddr    string
 	cfg         *types.Chain33Config
+	ldb         dbm.DB
 }
 
 var (
@@ -64,7 +65,7 @@ func initEnv() *execEnv {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(pkt.IssuanceX, cfg, nil)
-	_, _, kvdb := util.CreateTestDB()
+	_, ldb, kvdb := util.CreateTestDB()
 
 	accountA := types.Account{
 		Balance: total,
@@ -120,6 +121,7 @@ func initEnv() *execEnv {
 		db:          stateDB,
 		execAddr:    execAddr,
 		cfg:         cfg,
+		ldb:         ldb,
 	}
 }
 
@@ -129,7 +131,7 @@ func TestIssuance(t *testing.T) {
 	// issuance create
 	p1 := &pkt.IssuanceCreateTx{
 		TotalBalance:     1000,
-		DebtCeiling:      100,
+		DebtCeiling:      200,
 		LiquidationRatio: 0.25,
 		Period:           5,
 	}
@@ -160,9 +162,7 @@ func TestIssuance(t *testing.T) {
 	set, err := exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	issuanceID := createTx.Hash()
 	// query issuance by id
 	res, err := exec.Query("IssuanceInfoByID", types.Encode(&pkt.ReqIssuanceInfo{IssuanceId: common.ToHex(issuanceID)}))
@@ -205,9 +205,7 @@ func TestIssuance(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by id
 	res, err = exec.Query("IssuancePrice", nil)
 	assert.Nil(t, err)
@@ -216,6 +214,7 @@ func TestIssuance(t *testing.T) {
 	// issuance manage
 	p3 := &pkt.IssuanceManageTx{}
 	p3.Addr = append(p3.Addr, string(Nodes[1]))
+	p3.Addr = append(p3.Addr, string(Nodes[2]))
 	createTx, err = pkt.CreateRawIssuanceManageTx(env.cfg, p3)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
@@ -233,14 +232,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	// issuance debt
 	p4 := &pkt.IssuanceDebtTx{
@@ -264,14 +260,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	debtID := createTx.Hash()
 	// query issuance by id
 	res, err = exec.Query("IssuanceRecordByID",
@@ -320,14 +313,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 6}))
@@ -351,7 +341,7 @@ func TestIssuance(t *testing.T) {
 	// issuance liquidate
 	p6 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
-		Value:      100,
+		Value:      50,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p6)
 	if err != nil {
@@ -370,25 +360,22 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p61 := &pkt.IssuanceDebtTx{
 		IssuanceID: common.ToHex(issuanceID),
-		Value:      100,
+		Value:      50,
 	}
 	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p61)
 	if err != nil {
 		t.Error("RPC_Default_Process", "err", err)
 	}
 	createTx.Execer = []byte(pkt.IssuanceX)
-	createTx, err = signTx(createTx, PrivKeyB)
+	createTx, err = signTx(createTx, PrivKeyC)
 	if err != nil {
 		t.Error("RPC_Default_Process sign", "err", err)
 	}
@@ -400,14 +387,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p7 := &pkt.IssuanceFeedTx{}
 	p7.Price = append(p7.Price, 0.28)
@@ -429,14 +413,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 2}))
@@ -466,14 +447,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
 	assert.Nil(t, err)
@@ -499,14 +477,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 3}))
@@ -538,14 +513,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p10 := &pkt.IssuanceFeedTx{}
 	p10.Price = append(p10.Price, 1)
@@ -567,14 +539,11 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceRecordsByStatus",
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 5}))
@@ -602,18 +571,133 @@ func TestIssuance(t *testing.T) {
 	for _, kv := range receipt.KV {
 		env.db.Set(kv.Key, kv.Value)
 	}
-
 	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
 	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status: 2}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
+
+	// issuance create
+	p12 := &pkt.IssuanceCreateTx{
+		TotalBalance:     200,
+		DebtCeiling:      200,
+		LiquidationRatio: 0.25,
+		Period:           5,
+	}
+	createTx, err = pkt.CreateRawIssuanceCreateTx(env.cfg, p12)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyA)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	util.SaveKVList(env.ldb, set.KV)
+	issuanceID = createTx.Hash()
+	// query issuance by id
+	res, err = exec.Query("IssuanceInfoByID", types.Encode(&pkt.ReqIssuanceInfo{IssuanceId: common.ToHex(issuanceID)}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+	// query issuance by status
+	res, err = exec.Query("IssuanceByStatus", types.Encode(&pkt.ReqIssuanceByStatus{Status: 1}))
+	assert.Nil(t, err)
+	assert.NotNil(t, res)
+
+	p13 := &pkt.IssuanceDebtTx{
+		IssuanceID: common.ToHex(issuanceID),
+		Value:      100,
+	}
+	createTx, err = pkt.CreateRawIssuanceDebtTx(env.cfg, p13)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	util.SaveKVList(env.ldb, set.KV)
+
+	p14 := &pkt.IssuanceFeedTx{}
+	p14.Price = append(p14.Price, 0.25)
+	p14.Volume = append(p14.Volume, 100)
+	createTx, err = pkt.CreateRawIssuanceFeedTx(env.cfg, p14)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyB)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	t.Log(receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	util.SaveKVList(env.ldb, set.KV)
+
+	// issuance close
+	p15 := &pkt.IssuanceCloseTx{
+		IssuanceID: common.ToHex(issuanceID),
+	}
+	createTx, err = pkt.CreateRawIssuanceCloseTx(env.cfg, p15)
+	if err != nil {
+		t.Error("RPC_Default_Process", "err", err)
+	}
+	createTx.Execer = []byte(pkt.IssuanceX)
+	createTx, err = signTx(createTx, PrivKeyA)
+	if err != nil {
+		t.Error("RPC_Default_Process sign", "err", err)
+	}
+
+	exec.SetEnv(env.blockHeight+2, env.blockTime+2, env.difficulty)
+	receipt, err = exec.Exec(createTx, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	for _, kv := range receipt.KV {
+		env.db.Set(kv.Key, kv.Value)
+	}
+	receiptData = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	set, err = exec.ExecLocal(createTx, receiptData, int(1))
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	util.SaveKVList(env.ldb, set.KV)
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
@@ -636,3 +720,49 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
+
+//func TestTable(t *testing.T) {
+//	env := initEnv()
+//
+//	// 原有数据状态为1
+//	table := pkt.NewRecordTable(env.kvdb)
+//	table.Replace(&pkt.ReceiptIssuance{IssuanceId: "0x123", Status: 1, DebtId: "0x1123", AccountAddr: "a"})
+//	kvs, err := table.Save()
+//	assert.Nil(t, err)
+//	//for _, kv := range kvs {
+//	//	env.kvdb.Set(kv.Key, kv.Value)
+//	//}
+//	util.SaveKVList(env.ldb, kvs)
+//
+//	table.Replace(&pkt.ReceiptIssuance{IssuanceId: "0x123", Status: 1, DebtId: "0x2123", AccountAddr: "a"})
+//	kvs, err = table.Save()
+//	assert.Nil(t, err)
+//	//for _, kv := range kvs {
+//	//	env.kvdb.Set(kv.Key, kv.Value)
+//	//}
+//	util.SaveKVList(env.ldb, kvs)
+//
+//	// 状态变更1->2
+//	table.Replace(&pkt.ReceiptIssuance{IssuanceId: "0x123", Status: 3, DebtId: "0x1123", AccountAddr: "a"})
+//	kvs, err = table.Save()
+//	assert.Nil(t, err)
+//	util.SaveKVList(env.ldb, kvs)
+//	//for _, kv := range kvs {
+//	//	env.kvdb.Set(kv.Key, kv.Value)
+//	//}
+//
+//	table.Replace(&pkt.ReceiptIssuance{IssuanceId: "0x123", Status: 3, DebtId: "0x2123", AccountAddr: "a"})
+//
+//	kvs, err = table.Save()
+//	assert.Nil(t, err)
+//	util.SaveKVList(env.ldb, kvs)
+//	//for _, kv := range kvs {
+//	//	env.kvdb.Set(kv.Key, kv.Value)
+//	//}
+//
+//	// 查询状态1,期望查询到结果
+//	query := table.GetQuery(env.kvdb)
+//	row1, err := query.List("addr_status", &pkt.ReceiptIssuance{AccountAddr:"a", Status:1}, nil, 10, 0)
+//	assert.NotNil(t, err)
+//	assert.Nil(t, row1)
+//}
