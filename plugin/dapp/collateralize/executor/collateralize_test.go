@@ -420,7 +420,7 @@ func TestCollateralize(t *testing.T) {
 	// collateralize liquidate
 	p7 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value:           100,
+		Value:           50,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p7)
 	if err != nil {
@@ -450,7 +450,7 @@ func TestCollateralize(t *testing.T) {
 
 	p71 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value:           100,
+		Value:           50,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p71)
 	if err != nil {
@@ -589,7 +589,7 @@ func TestCollateralize(t *testing.T) {
 	// expire liquidate
 	p10 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
-		Value:           100,
+		Value:           50,
 	}
 	createTx, err = pkt.CreateRawCollateralizeBorrowTx(env.cfg, p10)
 	if err != nil {
