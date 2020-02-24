@@ -173,17 +173,19 @@ const (
 	// Pos33SortitionSize 多少区块做一次抽签
 	Pos33SortitionSize = 10
 	// Pos33VoteReward 每ticket区块voter奖励
-	Pos33VoteReward = types.Coin * 7 / 10
+	Pos33VoteReward = types.Coin * 7 / Pos33RewardVotes
 	// Pos33BpReward 每ticket区块bp奖励
-	Pos33BpReward = types.Coin * 2 / 10
+	Pos33BpReward = types.Coin * 2 / Pos33VoteReward
 	// Pos33ProposerSize 候选区块Proposer数量
-	Pos33ProposerSize = 7
+	Pos33ProposerSize = 15
 	// Pos33VoterSize  候选区块Voter数量
-	Pos33VoterSize = 15
+	Pos33VoterSize = 30
+	// Pos33SortSize  候选区块sort数量
+	Pos33SortSize = 22
+	// Pos33RewardVotes 奖励的票数
+	Pos33RewardVotes = 20
 	// Pos33MustVotes 必须达到的票数
-	Pos33MustVotes = 8 //15*2/3 + 1
-	// Pos33MinVotes 必须达到的票数
-	Pos33MinVotes = 5
+	Pos33MustVotes = 11
 )
 
 // Verify is verify vote msg

@@ -42,6 +42,7 @@ type node struct {
 
 	// slowly address
 	slowAddrs map[string]int64
+	slowBps   []string
 	tids      map[int64]map[int]string
 
 	// for new block incoming to add
@@ -93,17 +94,21 @@ func (n *node) lastBlock() *types.Block {
 
 var errNotEnoughVotes = errors.New("NOT enough votes for the last block")
 
-func (n *node) minerTx(sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.PrivKey) (*types.Transaction, error) {
+const stopedBlocks = 3600
+
+func (n *node) minerTx(height int64, sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.PrivKey) (*types.Transaction, error) {
 	plog.Info("genRewordTx", "vsw", len(vs))
-	if len(vs) > pt.Pos33VoterSize {
+	if len(vs) > pt.Pos33RewardVotes {
 		sort.Sort(pt.Votes(vs))
-		vs = vs[:pt.Pos33VoterSize]
+		vs = vs[:pt.Pos33RewardVotes]
 	}
+
 	act := &pt.Pos33TicketAction{
 		Value: &pt.Pos33TicketAction_Miner{
 			Miner: &pt.Pos33Miner{
-				Votes: vs,
-				Sort:  sm,
+				Votes:   vs,
+				Sort:    sm,
+				StopBps: n.slowBps,
 			},
 		},
 		Ty: pt.Pos33TicketActionMiner,
@@ -203,7 +208,7 @@ func (n *node) makeBlock(height int64, round int, tid string, vs []*pt.Pos33Vote
 		return err
 	}
 
-	tx, err := n.minerTx(sort, vs, priv)
+	tx, err := n.minerTx(height, sort, vs, priv)
 	if err != nil {
 		return err
 	}
@@ -241,6 +246,16 @@ func (n *node) addBlock(b *types.Block) {
 		default:
 			<-n.bch
 			n.bch <- nb
+		}
+	}
+
+	act, err := getMiner(b)
+	if err != nil {
+		plog.Info("getMiner error", "err", err, "height", b.Height)
+	}
+	if err == nil && act != nil {
+		for _, bp := range act.StopBps {
+			n.slowAddrs[bp] = b.Height + stopedBlocks
 		}
 	}
 
@@ -284,6 +299,7 @@ func (n *node) clear(height int64) {
 			delete(n.slowAddrs, tid)
 		}
 	}
+	n.slowBps = nil
 }
 
 func addr(sig *types.Signature) string {
@@ -343,14 +359,14 @@ func (n *node) blockCheck(b *types.Block) error {
 	}
 
 	// check votes
-	if len(act.Votes) < pt.Pos33MinVotes {
+	if len(act.Votes) < pt.Pos33MustVotes {
 		return fmt.Errorf("the block less Must vote, height=%d", b.Height)
 	}
 	height := b.Height
 	if !checkVotesEnough(act.Votes, height, round) {
 		return fmt.Errorf("the block NOT enough vote, height=%d", b.Height)
 	}
-	if len(act.Votes) > pt.Pos33VoterSize {
+	if len(act.Votes) > pt.Pos33RewardVotes {
 		return fmt.Errorf("the block vote too much, height=%d", b.Height)
 	}
 	tid := act.Sort.SortHash.Tid
@@ -428,7 +444,7 @@ func (n *node) reSortition(height int64, round int) bool {
 		}
 	}
 	n.sendSorts(height, round)
-	return len(n.ivs[height][round]) >= pt.Pos33MustVotes
+	return true
 }
 
 func (n *node) sortition(b *types.Block, round int) {
@@ -593,6 +609,7 @@ func (n *node) getSorts(height int64, round int) []*pt.Pos33SortMsg {
 	if !ok {
 		return nil
 	}
+
 	return ss
 }
 
@@ -607,16 +624,21 @@ func (v votes) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
 
 func checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
 	sort.Sort(votes(vs))
-	if len(vs) < pt.Pos33MinVotes {
+	if len(vs) < pt.Pos33MustVotes {
+		plog.Info("vote < minVotes too little", "height", height, "round", round)
 		return false
 	}
-	cvs := vs[:pt.Pos33MinVotes]
+	cvs := vs[:pt.Pos33MustVotes]
 	sum := 0
 	for _, v := range cvs {
 		sum += int(v.SortsCount)
 	}
-	sortsCount := sum / pt.Pos33MinVotes
-	if len(vs)*3 <= sortsCount*2 {
+	sortsCount := sum / pt.Pos33MustVotes
+	if sortsCount > pt.Pos33RewardVotes {
+		sortsCount = pt.Pos33RewardVotes
+	}
+	if len(vs)*2 <= sortsCount {
+		plog.Info("vote less than 2/3", "height", height, "round", round)
 		return false
 	}
 	return true
@@ -625,9 +647,17 @@ func checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
 func (n *node) checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) ([]*pt.Pos33VoteMsg, bool) {
 	ss := n.getSorts(height, round)
 	if len(ss) < pt.Pos33MustVotes {
+		plog.Info("vote < mustVotes too little", "height", height, "round", round)
 		return nil, false
 	}
-	if len(vs)*3 <= len(ss)*2 {
+
+	// if len(ss) > pt.Pos33RewardVotes {
+	// 	sort.Sort(pt.Sorts(ss))
+	// 	ss = ss[:pt.Pos33RewardVotes]
+	// }
+
+	if len(vs)*2 <= len(ss) {
+		plog.Info("votes less than 2/3 sorts", "height", height, "round", round, "nss", len(ss), "nvs", len(vs))
 		return nil, false
 	}
 	var rvs []*pt.Pos33VoteMsg
@@ -639,7 +669,8 @@ func (n *node) checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) 
 			}
 		}
 	}
-	return rvs, len(rvs)*3 > len(ss)*2
+	plog.Info("checkVotesEnough", "nrvs", len(rvs), "nvs", len(vs), "nss", len(ss), "height", height, "round", round)
+	return rvs, len(rvs)*2 > len(ss)
 }
 
 func (n *node) allw(height int64, check bool) int {
@@ -723,10 +754,6 @@ func (n *node) checkSorts(height int64, round int) []*pt.Pos33SortMsg {
 		}
 		rss = append(rss, s)
 	}
-	if len(rss) > pt.Pos33VoterSize {
-		sort.Sort(pt.Sorts(rss))
-		rss = rss[:pt.Pos33VoterSize]
-	}
 	n.css[height][round] = rss
 	return rss
 }
@@ -763,7 +790,6 @@ func (n *node) handleSortsMsg(m *pt.Pos33Sorts, myself bool) {
 		}
 		ss := n.css[height][round]
 		ss = append(ss, s)
-		// sort.Sort(pt.Sorts(ss))
 		n.css[height][round] = ss
 		if i == len(m.Sorts)-1 {
 			plog.Info("handleSortsMsg", "height", height, "round", round, "who", address.PubKeyToAddr(s.Proof.Pubkey), "len(css)", len(ss))
@@ -843,7 +869,7 @@ func (n *node) checkTimeout(height int64, round int) {
 		return
 	}
 	plog.Info("stop slowly address", "height", height, "stop height", height+3600, "address", t.MinerAddress)
-	n.slowAddrs[t.MinerAddress] = height + 3600
+	n.slowBps = append(n.slowBps, t.MinerAddress)
 }
 
 func (n *node) runLoop() {
@@ -943,9 +969,9 @@ func (n *node) vote(height int64, round int) {
 		plog.Info("I'm not verifer", "height", height)
 		return
 	}
-	if len(ss) > pt.Pos33VoterSize {
-		ss = ss[:pt.Pos33VoterSize]
-	}
+	// if len(ss) > pt.Pos33VoterSize {
+	// 	ss = ss[:pt.Pos33VoterSize]
+	// }
 	plog.Info("vote bp", "height", height, "round", round, "tid", tid)
 	var vs []*pt.Pos33VoteMsg
 	for _, s := range ss {

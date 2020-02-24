@@ -17,7 +17,7 @@ import (
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
-const diffValue = 1.3
+const diffValue = 1.0
 
 var max = big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil)
 var fmax = big.NewFloat(0).SetInt(max) // 2^^256
@@ -44,14 +44,7 @@ func changeDiff(size, round int) int {
 }
 
 func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos33SortMsg {
-	// 本轮难度：委员会票数 / (总票数 * 在线率)
-	size := pt.Pos33VoterSize
-	if step == 0 {
-		size = pt.Pos33ProposerSize
-	}
-	//allw := client.allWeight(height)
-	diff := float64(changeDiff(size, round)) / float64(allw)
-	diff *= diffValue
+	diff := calcDiff(step, round, allw)
 
 	priv := n.getPriv("")
 	input := &pt.VrfInput{Seed: seed, Height: height, Round: int32(round), Step: int32(step)}
@@ -73,9 +66,9 @@ func (n *node) sort(seed []byte, height int64, round, step, allw int) []*pt.Pos3
 		hash := hash2([]byte(data))
 
 		// 转为big.Float计算，比较难度diff
-		y := big.NewInt(0).SetBytes(hash)
-		z := big.NewFloat(0).SetInt(y)
-		if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
+		y := new(big.Int).SetBytes(hash)
+		z := new(big.Float).SetInt(y)
+		if new(big.Float).Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 			continue
 		}
 
@@ -151,19 +144,24 @@ func (n *node) queryTid(tid string, height int64) (*pt.Pos33Ticket, error) {
 	return rt, nil
 }
 
-func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortMsg) error {
+func calcDiff(step, round, allw int) float64 {
 	// 本轮难度：委员会票数 / (总票数 * 在线率)
 	size := pt.Pos33VoterSize
 	if step == 0 {
 		size = pt.Pos33ProposerSize
 	}
+
+	diff := float64(changeDiff(size, int(round))) / float64(allw)
+	diff *= diffValue
+	return diff
+}
+
+func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33SortMsg) error {
 	if m == nil || m.Proof == nil || m.SortHash == nil || m.Proof.Input == nil {
 		return fmt.Errorf("verifySort error: sort msg is nil")
 	}
-
 	round := m.Proof.Input.Round
-	diff := float64(changeDiff(size, int(round))) / float64(allw)
-	diff *= diffValue
+	diff := calcDiff(step, int(round), allw)
 
 	t, err := n.queryTid(m.SortHash.Tid, height)
 	if err != nil {
@@ -185,9 +183,9 @@ func (n *node) verifySort(height int64, step, allw int, seed []byte, m *pt.Pos33
 		return fmt.Errorf("sort hash error")
 	}
 
-	y := big.NewInt(0).SetBytes(hash)
-	z := big.NewFloat(0).SetInt(y)
-	if z.Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
+	y := new(big.Int).SetBytes(hash)
+	z := new(big.Float).SetInt(y)
+	if new(big.Float).Quo(z, fmax).Cmp(big.NewFloat(diff)) > 0 {
 		return errDiff
 	}
 
