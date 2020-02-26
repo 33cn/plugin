@@ -497,7 +497,7 @@ func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error 
 func (client *client) CreateBlock() {
 	defer client.wg.Done()
 
-	if client.subCfg.JumpDownloadOpen {
+	if client.subCfg.JumpDownloadClose {
 		client.jumpDldCli.tryJumpDownload()
 	}
 

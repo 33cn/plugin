@@ -256,7 +256,6 @@ func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("to", "t", "", "transfer to account")
-	cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
