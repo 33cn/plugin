@@ -328,6 +328,8 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 		if payload.Ty == pt.ParacrossActionAssetTransfer || payload.Ty == pt.ParacrossActionAssetWithdraw {
 			return nil
 		}
+		//对一些跨链的新feature，主链分叉之前不允许执行，但会走none执行器，因为分叉之前的版本就是走none执行器
+		//然后会被过滤到平行链，最好在分叉前控制主链不发送相关交易，要么设置系统统一的fork比如ForkRootHash，主链和平行链都可以阻止执行，
 		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkCommitTx) {
 			if payload.Ty == pt.ParacrossActionCommit || payload.Ty == pt.ParacrossActionNodeConfig ||
 				payload.Ty == pt.ParacrossActionNodeGroupApply {

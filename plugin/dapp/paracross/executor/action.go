@@ -1007,30 +1007,38 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 	return &receipt, nil
 }
 
+func (a *action) assetTransferMainCheck(cfg *types.Chain33Config) error {
+	//主链如果没有nodegroup配置，也不允许跨链,直接返回错误，平行链也不会执行
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		return a.isAllowTransfer()
+	}
+	return nil
+}
+
 func (a *action) AssetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, error) {
 	clog.Debug("Paracross.Exec", "AssetTransfer", transfer.Cointoken, "transfer", "")
+	cfg := a.api.GetConfig()
+	isPara := cfg.IsPara()
 
-	//rbk fork后　如果没有nodegroup　conf，也不允许跨链
-	if a.api.GetConfig().IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
-		err := a.isAllowTransfer()
+	//主链如果没有nodegroup配置，也不允许跨链,直接返回错误，平行链也不会执行
+	if !isPara {
+		err := a.assetTransferMainCheck(cfg)
 		if err != nil {
-			return nil, errors.Wrap(err, "AssetTransfer not allow")
+			return nil, errors.Wrap(err, "AssetTransfer check")
 		}
 	}
 
 	receipt, err := a.assetTransfer(transfer)
 	if err != nil {
-		return nil, errors.Wrap(err, "AssetTransfer failed")
+		return nil, errors.Wrap(err, "AssetTransfer")
 	}
 	return receipt, nil
 }
 
-func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, error) {
-	//分叉高度之后，支持从平行链提取资产
-	cfg := a.api.GetConfig()
+func (a *action) assetWithdrawMainCheck(cfg *types.Chain33Config, withdraw *types.AssetsWithdraw) error {
 	if !cfg.IsDappFork(a.height, pt.ParaX, "ForkParacrossWithdrawFromParachain") {
 		if withdraw.Cointoken != "" {
-			return nil, types.ErrNotSupport
+			return errors.Wrapf(types.ErrNotSupport, "not support,token=%s", withdraw.Cointoken)
 		}
 	}
 
@@ -1038,11 +1046,23 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
 		err := a.isAllowTransfer()
 		if err != nil {
-			return nil, errors.Wrap(err, "AssetTransfer not allow")
+			return errors.Wrap(err, "AssetWithdraw not allow")
+		}
+	}
+	return nil
+}
+
+func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, error) {
+	//分叉高度之后，支持从平行链提取资产
+	cfg := a.api.GetConfig()
+	isPara := cfg.IsPara()
+	if !isPara {
+		err := a.assetWithdrawMainCheck(cfg, withdraw)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	isPara := cfg.IsPara()
 	if !isPara {
 		// 需要平行链先执行， 达成共识时，继续执行
 		return nil, nil
@@ -1056,19 +1076,34 @@ func (a *action) AssetWithdraw(withdraw *types.AssetsWithdraw) (*types.Receipt, 
 	return receipt, nil
 }
 
-func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
-	clog.Debug("Paracross.CrossAssetTransfer", "exec", transfer.AssetExec, "symbol", transfer.AssetSymbol)
-	cfg := a.api.GetConfig()
-	isPara := cfg.IsPara()
-
+func (a *action) crossAssetTransferMainCheck(transfer *pt.CrossAssetTransfer) error {
 	err := a.isAllowTransfer()
 	if err != nil {
-		return nil, errors.Wrap(err, "CrossAssetTransfer not Allow")
+		return errors.Wrap(err, "not Allow")
 	}
 
 	if len(transfer.AssetExec) == 0 || len(transfer.AssetSymbol) == 0 || transfer.Amount == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "CrossAssetTransfer exec=%s, symbol=%s, amount=%d should not be null",
+		return errors.Wrapf(types.ErrInvalidParam, "exec=%s, symbol=%s, amount=%d should not be null",
 			transfer.AssetExec, transfer.AssetSymbol, transfer.Amount)
+	}
+	return nil
+}
+
+func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	isPara := cfg.IsPara()
+
+	//主链检查参数
+	if !isPara {
+		err := a.crossAssetTransferMainCheck(transfer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	//平行链在ForkRootHash之前不支持crossAssetTransfer
+	if isPara && !cfg.IsFork(a.exec.GetMainHeight(), "ForkRootHash") {
+		return nil, errors.Wrap(types.ErrNotSupport, "not Allow before ForkRootHash")
 	}
 
 	if len(transfer.ToAddr) == 0 {
@@ -1076,7 +1111,7 @@ func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rec
 	}
 	act, err := getCrossAction(transfer, string(a.tx.Execer))
 	if act == pt.ParacrossNoneTransfer {
-		return nil, errors.Wrap(err, "CrossAssetTransfer non action")
+		return nil, errors.Wrap(err, "non action")
 	}
 	// 需要平行链先执行， 达成共识时，继续执行
 	if !isPara && (act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer) {
@@ -1158,16 +1193,16 @@ func getTitleFrom(exec []byte) ([]byte, error) {
 
 func (a *action) isAllowTransfer() error {
 	//1. 没有配置nodegroup　不允许
-	tit, err := getTitleFrom(a.tx.Execer)
+	tempTitle, err := getTitleFrom(a.tx.Execer)
 	if err != nil {
-		return errors.Wrapf(types.ErrInvalidParam, "CrossAssetTransfer, not para chain exec=%s", string(a.tx.Execer))
+		return errors.Wrapf(types.ErrInvalidParam, "not para chain exec=%s", string(a.tx.Execer))
 	}
-	nodes, err := a.getNodesGroup(string(tit))
+	nodes, err := a.getNodesGroup(string(tempTitle))
 	if err != nil {
-		return errors.Wrapf(err, "CrossAssetTransfer get nodegroup err,title=%s", tit)
+		return errors.Wrapf(err, "nodegroup not config,title=%s", tempTitle)
 	}
 	if len(nodes) == 0 {
-		return errors.Wrapf(err, "CrossAssetTransfer nodegroup not create,title=%s", tit)
+		return errors.Wrapf(types.ErrNotSupport, "nodegroup not create,title=%s", tempTitle)
 	}
 	//2. 非跨链执行器不允许
 	if !types.IsParaExecName(string(a.tx.Execer)) {
