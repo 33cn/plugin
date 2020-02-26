@@ -18,6 +18,7 @@ import (
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -250,7 +251,7 @@ func (suite *AssetWithdrawTestSuite) TestExecWithdrawFailedOnPara() {
 	}
 
 	_, err = suite.exec.Exec(tx, 1)
-	if err != types.ErrNoBalance {
+	if errors.Cause(err) != types.ErrNoBalance {
 		suite.T().Error("Exec Transfer", err)
 		return
 	}

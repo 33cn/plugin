@@ -19,6 +19,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -114,7 +115,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferNobalance() {
 	}
 
 	_, err = suite.exec.Exec(tx, 1)
-	if err != types.ErrNoBalance {
+	if errors.Cause(err) != types.ErrNoBalance {
 		suite.T().Error("Exec Transfer", err)
 		return
 	}

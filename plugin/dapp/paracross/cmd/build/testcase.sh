@@ -70,6 +70,8 @@ function para_set_toml() {
     #autonomy
     sed -i $xsedfix 's/^useBalance=.*/useBalance=true/g' "${1}"
     sed -i $xsedfix 's/^total="16htvcBNS.*/total="1EZrEKPPC36SLRoLQBwLDjzcheiLRZJg49"/g' "${1}"
+
+    sed -i $xsedfix 's/^ForkRootHash=.*/ForkRootHash=0/g' "${1}"
 }
 
 function para_set_wallet() {
