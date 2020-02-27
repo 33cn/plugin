@@ -484,6 +484,9 @@ func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error 
 		lastBlock = b
 		blocks = append(blocks, b)
 	}
+	if len(blocks) <= 0 {
+		return nil
+	}
 	err = client.saveBatchLocalBlocks(blocks)
 	if err != nil {
 		plog.Error("procLocalAddBlocks saveBatchLocalBlocks", "err", err)
