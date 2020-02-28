@@ -49,3 +49,7 @@ const (
 	ManageKey    = "issuance-manage"
 	FundKey      = "issuance-fund"
 )
+
+var (
+	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
+)

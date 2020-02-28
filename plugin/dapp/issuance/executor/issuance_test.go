@@ -64,6 +64,7 @@ func manageKeySet(key string, value string, db dbm.KV) {
 func initEnv() *execEnv {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
+	cfg.RegisterDappFork(pkt.IssuanceX, pkt.ForkIssuanceTableUpdate, 0)
 	Init(pkt.IssuanceX, cfg, nil)
 	_, ldb, kvdb := util.CreateTestDB()
 
@@ -483,12 +484,12 @@ func TestIssuance(t *testing.T) {
 	assert.NotNil(t, set)
 	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
-	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecords{Status: 3}))
+	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 3}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
-	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	assert.Nil(t, res)
+	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 1}))
 	assert.Nil(t, res)
 
 	// expire liquidate
@@ -545,8 +546,7 @@ func TestIssuance(t *testing.T) {
 	assert.NotNil(t, set)
 	util.SaveKVList(env.ldb, set.KV)
 	// query issuance by status
-	res, err = exec.Query("IssuanceRecordsByStatus",
-		types.Encode(&pkt.ReqIssuanceRecords{Status: 5}))
+	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 5}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 
@@ -584,7 +584,7 @@ func TestIssuance(t *testing.T) {
 	// issuance create
 	p12 := &pkt.IssuanceCreateTx{
 		TotalBalance:     200,
-		DebtCeiling:      200,
+		DebtCeiling:      100,
 		LiquidationRatio: 0.25,
 		Period:           5,
 	}
