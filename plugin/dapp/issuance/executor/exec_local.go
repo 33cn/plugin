@@ -14,6 +14,13 @@ import (
 func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	var IDtable, recordTable *table.Table
+
+	cfg := c.GetAPI().GetConfig()
+	if cfg.IsDappFork(c.GetHeight(), pty.IssuanceX, pty.ForkIssuanceTableUpdate) {
+		recordTable = pty.NewRecordTable(c.GetLocalDB())
+		IDtable = pty.NewIssuanceTable(c.GetLocalDB())
+	}
+
 	for _, item := range receipt.Logs {
 		if item.Ty >= pty.TyLogIssuanceCreate && item.Ty <= pty.TyLogIssuanceClose {
 			var issuanceLog pty.ReceiptIssuance
@@ -23,13 +30,17 @@ func (c *Issuance) execLocal(tx *types.Transaction, receipt *types.ReceiptData) 
 			}
 
 			if item.Ty == pty.TyLogIssuanceCreate || item.Ty == pty.TyLogIssuanceClose {
-				IDtable = pty.NewIssuanceTable(c.GetLocalDB())
+				if !cfg.IsDappFork(c.GetHeight(), pty.IssuanceX, pty.ForkIssuanceTableUpdate) {
+					IDtable = pty.NewIssuanceTable(c.GetLocalDB())
+				}
 				err = IDtable.Replace(&pty.ReceiptIssuanceID{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status})
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				recordTable = pty.NewRecordTable(c.GetLocalDB())
+				if !cfg.IsDappFork(c.GetHeight(), pty.IssuanceX, pty.ForkIssuanceTableUpdate) {
+					recordTable = pty.NewRecordTable(c.GetLocalDB())
+				}
 				err = recordTable.Replace(&pty.ReceiptIssuance{IssuanceId: issuanceLog.IssuanceId, Status: issuanceLog.Status,
 					DebtId: issuanceLog.DebtId, AccountAddr: issuanceLog.AccountAddr})
 				if err != nil {

@@ -30,6 +30,7 @@ type execEnv struct {
 	db          dbm.KV
 	execAddr    string
 	cfg         *types.Chain33Config
+	ldb         dbm.DB
 }
 
 var (
@@ -76,8 +77,9 @@ func addrKeySet(value string, db dbm.KV) {
 func initEnv() *execEnv {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
+	cfg.RegisterDappFork(pkt.CollateralizeX, pkt.ForkCollateralizeTableUpdate, 0)
 	Init(pkt.CollateralizeX, cfg, nil)
-	_, _, kvdb := util.CreateTestDB()
+	_, ldb, kvdb := util.CreateTestDB()
 
 	accountA := types.Account{
 		Balance: total,
@@ -140,6 +142,7 @@ func initEnv() *execEnv {
 		db:          stateDB,
 		execAddr:    execAddr,
 		cfg:         cfg,
+		ldb:         ldb,
 	}
 }
 
@@ -182,9 +185,7 @@ func TestCollateralize(t *testing.T) {
 	set, err := exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	// collateralize create
 	p1 := &pkt.CollateralizeCreateTx{
@@ -211,9 +212,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	collateralizeID := createTx.Hash()
 	// query collateralize by id
 	res, err := exec.Query("CollateralizeInfoByID", types.Encode(&pkt.ReqCollateralizeInfo{CollateralizeId: common.ToHex(collateralizeID)}))
@@ -256,9 +255,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by id
 	res, err = exec.Query("CollateralizePrice", nil)
 	assert.Nil(t, err)
@@ -291,9 +288,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	borrowID := createTx.Hash()
 	// query collateralize by id
 	res, err = exec.Query("CollateralizeRecordByID",
@@ -348,9 +343,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by id
 	res, err = exec.Query("CollateralizeRecordByID",
 		types.Encode(&pkt.ReqCollateralizeRecord{CollateralizeId: common.ToHex(collateralizeID), RecordId: common.ToHex(borrowID)}))
@@ -394,9 +387,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 6}))
@@ -444,9 +435,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p71 := &pkt.CollateralizeBorrowTx{
 		CollateralizeID: common.ToHex(collateralizeID),
@@ -474,9 +463,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p8 := &pkt.CollateralizeFeedTx{}
 	p8.Price = append(p8.Price, 0.28)
@@ -503,9 +490,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 2}))
@@ -540,9 +525,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
@@ -574,9 +557,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 3}))
@@ -584,6 +565,9 @@ func TestCollateralize(t *testing.T) {
 	assert.NotNil(t, res)
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
+	assert.Nil(t, res)
+	res, err = exec.Query("CollateralizeRecordByStatus",
+		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 1}))
 	assert.Nil(t, res)
 
 	// expire liquidate
@@ -613,9 +597,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 
 	p11 := &pkt.CollateralizeFeedTx{}
 	p11.Price = append(p11.Price, 1)
@@ -642,9 +624,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 5}))
@@ -678,9 +658,7 @@ func TestCollateralize(t *testing.T) {
 	set, err = exec.ExecLocal(createTx, receiptData, int(1))
 	assert.Nil(t, err)
 	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		env.kvdb.Set(kv.Key, kv.Value)
-	}
+	util.SaveKVList(env.ldb, set.KV)
 	// query collateralize by status
 	res, err = exec.Query("CollateralizeByStatus", types.Encode(&pkt.ReqCollateralizeByStatus{Status: 1}))
 	assert.Nil(t, err)
