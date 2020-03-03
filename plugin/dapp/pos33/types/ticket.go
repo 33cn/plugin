@@ -175,7 +175,7 @@ const (
 	// Pos33VoteReward 每ticket区块voter奖励
 	Pos33VoteReward = types.Coin * 7 / Pos33RewardVotes
 	// Pos33BpReward 每ticket区块bp奖励
-	Pos33BpReward = types.Coin * 2 / Pos33VoteReward
+	Pos33BpReward = types.Coin * 2 / Pos33RewardVotes
 	// Pos33ProposerSize 候选区块Proposer数量
 	Pos33ProposerSize = 15
 	// Pos33VoterSize  候选区块Voter数量

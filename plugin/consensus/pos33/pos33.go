@@ -95,6 +95,9 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 	}
 
 	bt := time.Now().Unix()
+	if bt < lastBlock.GetBlockTime() {
+		bt = lastBlock.GetBlockTime()
+	}
 	return &types.Block{
 		ParentHash: lastBlock.Hash(cfg),
 		Height:     lastBlock.Height + 1,

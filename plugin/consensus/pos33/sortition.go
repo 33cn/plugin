@@ -217,16 +217,18 @@ func (n *node) bp(height int64, round int) string {
 		return ""
 	}
 
+	/*
 	lb := n.lastBlock()
 	if lb.Height+1 != height {
 		return ""
 	}
 	lbh := lb.Hash(n.GetAPI().GetConfig())
+	*/
 
 	var min string
 	var ss *pt.Pos33SortMsg
 	for sh, s := range pss {
-		str := string(crypto.Sha256([]byte(fmt.Sprintf("%x:%x", []byte(sh), lbh))))
+		str := string(crypto.Sha256([]byte(fmt.Sprintf("%x", []byte(sh)))))
 		if min == "" {
 			min = str
 			ss = s
