@@ -59,7 +59,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) (*types.LocalDBSet, e
 	if err != nil {
 		return nil, errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 	}
-	if kvs != nil && len(kvs) > 0 {
+	if len(kvs) > 0 {
 		kvset.KV = append(kvset.KV, kvs...)
 	}
 
@@ -67,7 +67,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) (*types.LocalDBSet, e
 	if err != nil {
 		return nil, errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart1")
 	}
-	if kvs != nil && len(kvs) > 0 {
+	if len(kvs) > 0 {
 		kvset.KV = append(kvset.KV, kvs...)
 	}
 
@@ -75,7 +75,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) (*types.LocalDBSet, e
 	if err != nil {
 		return nil, errors.Wrap(err, "UpgradeLocalDBV2 setVersion")
 	}
-	if kvs != nil && len(kvs) > 0 {
+	if len(kvs) > 0 {
 		kvset.KV = append(kvset.KV, kvs...)
 	}
 
@@ -103,7 +103,7 @@ func UpgradeLocalDBPart1(localDB dbm.KVDB) ([]*types.KeyValue, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "UpdateLocalDBPart1 delOnePrefix: %s", prefix)
 		}
-		if kvs != nil && len(kvs) > 0 {
+		if len(kvs) > 0 {
 			allKvs = append(allKvs, kvs...)
 		}
 
