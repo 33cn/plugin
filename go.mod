@@ -61,6 +61,6 @@ require (
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
 
-replace github.com/33cn/chain33 v0.0.0-20200114070319-ef01c7b69d82 => /Users/w/go/src/github.com/33cn/chain33
+replace github.com/33cn/chain33 v0.0.0-20200205062829-bb33acc5e2e8 => /Users/w/go/src/github.com/33cn/chain33
 
 replace github.com/dgraph-io/badger v1.6.0 => github.com/dgraph-io/badger v1.5.5
