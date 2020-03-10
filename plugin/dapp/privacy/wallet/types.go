@@ -16,10 +16,11 @@ type addrAndprivacy struct {
 
 // buildInputInfo 构建隐私交易输入的参数结构
 type buildInputInfo struct {
-	tokenname string
-	sender    string
-	amount    int64
-	mixcount  int32
+	assetExec   string
+	assetSymbol string
+	sender      string
+	amount      int64
+	mixcount    int32
 }
 
 // txOutputInfo 存储当前钱包地址下被选中的UTXO信息

@@ -47,7 +47,7 @@ func (m *AutonomyProposalProject) Reset()         { *m = AutonomyProposalProject
 func (m *AutonomyProposalProject) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalProject) ProtoMessage()    {}
 func (*AutonomyProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{0}
+	return fileDescriptor_project_058c6729c0a157a5, []int{0}
 }
 func (m *AutonomyProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalProject.Unmarshal(m, b)
@@ -166,7 +166,7 @@ func (m *ProposalProject) Reset()         { *m = ProposalProject{} }
 func (m *ProposalProject) String() string { return proto.CompactTextString(m) }
 func (*ProposalProject) ProtoMessage()    {}
 func (*ProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{1}
+	return fileDescriptor_project_058c6729c0a157a5, []int{1}
 }
 func (m *ProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalProject.Unmarshal(m, b)
@@ -302,7 +302,7 @@ func (m *RevokeProposalProject) Reset()         { *m = RevokeProposalProject{} }
 func (m *RevokeProposalProject) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalProject) ProtoMessage()    {}
 func (*RevokeProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{2}
+	return fileDescriptor_project_058c6729c0a157a5, []int{2}
 }
 func (m *RevokeProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalProject.Unmarshal(m, b)
@@ -341,7 +341,7 @@ func (m *VoteProposalProject) Reset()         { *m = VoteProposalProject{} }
 func (m *VoteProposalProject) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalProject) ProtoMessage()    {}
 func (*VoteProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{3}
+	return fileDescriptor_project_058c6729c0a157a5, []int{3}
 }
 func (m *VoteProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalProject.Unmarshal(m, b)
@@ -388,7 +388,7 @@ func (m *PubVoteProposalProject) Reset()         { *m = PubVoteProposalProject{}
 func (m *PubVoteProposalProject) String() string { return proto.CompactTextString(m) }
 func (*PubVoteProposalProject) ProtoMessage()    {}
 func (*PubVoteProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{4}
+	return fileDescriptor_project_058c6729c0a157a5, []int{4}
 }
 func (m *PubVoteProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PubVoteProposalProject.Unmarshal(m, b)
@@ -440,7 +440,7 @@ func (m *TerminateProposalProject) Reset()         { *m = TerminateProposalProje
 func (m *TerminateProposalProject) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalProject) ProtoMessage()    {}
 func (*TerminateProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{5}
+	return fileDescriptor_project_058c6729c0a157a5, []int{5}
 }
 func (m *TerminateProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalProject.Unmarshal(m, b)
@@ -480,7 +480,7 @@ func (m *ReceiptProposalProject) Reset()         { *m = ReceiptProposalProject{}
 func (m *ReceiptProposalProject) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalProject) ProtoMessage()    {}
 func (*ReceiptProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{6}
+	return fileDescriptor_project_058c6729c0a157a5, []int{6}
 }
 func (m *ReceiptProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalProject.Unmarshal(m, b)
@@ -526,7 +526,7 @@ func (m *LocalProposalProject) Reset()         { *m = LocalProposalProject{} }
 func (m *LocalProposalProject) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalProject) ProtoMessage()    {}
 func (*LocalProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{7}
+	return fileDescriptor_project_058c6729c0a157a5, []int{7}
 }
 func (m *LocalProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalProject.Unmarshal(m, b)
@@ -577,7 +577,7 @@ func (m *ReqQueryProposalProject) Reset()         { *m = ReqQueryProposalProject
 func (m *ReqQueryProposalProject) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalProject) ProtoMessage()    {}
 func (*ReqQueryProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{8}
+	return fileDescriptor_project_058c6729c0a157a5, []int{8}
 }
 func (m *ReqQueryProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalProject.Unmarshal(m, b)
@@ -650,7 +650,7 @@ func (m *ReplyQueryProposalProject) Reset()         { *m = ReplyQueryProposalPro
 func (m *ReplyQueryProposalProject) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalProject) ProtoMessage()    {}
 func (*ReplyQueryProposalProject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_project_56f3f85d427589c6, []int{9}
+	return fileDescriptor_project_058c6729c0a157a5, []int{9}
 }
 func (m *ReplyQueryProposalProject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalProject.Unmarshal(m, b)
@@ -690,9 +690,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalProject)(nil), "types.ReplyQueryProposalProject")
 }
 
-func init() { proto.RegisterFile("project.proto", fileDescriptor_project_56f3f85d427589c6) }
+func init() { proto.RegisterFile("project.proto", fileDescriptor_project_058c6729c0a157a5) }
 
-var fileDescriptor_project_56f3f85d427589c6 = []byte{
+var fileDescriptor_project_058c6729c0a157a5 = []byte{
 	// 713 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0x5f, 0x6f, 0xd3, 0x3e,
 	0x14, 0x55, 0x96, 0xa6, 0x5d, 0x6f, 0xbb, 0x3f, 0x3f, 0x6f, 0xbf, 0xce, 0x4c, 0x68, 0xaa, 0xf2,

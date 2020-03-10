@@ -833,19 +833,21 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 		return
 	}
 
-	// PreExec proposal block
-	blockCopy := *cs.ProposalBlock.Data
-	blockNew := cs.client.PreExecBlock(&blockCopy, true)
-	if blockNew == nil {
-		tendermintlog.Error("enterPrevote: PreExec ProposalBlock fail")
-		cs.signAddVote(ttypes.VoteTypePrevote, nil)
-		return
-	}
-	cfg := cs.client.GetQueueClient().GetConfig()
-	if !bytes.Equal(blockNew.Hash(cfg), cs.ProposalBlock.Data.Hash(cfg)) {
-		tendermintlog.Error("enterPrevote: PreExec ProposalBlock has change")
-		cs.signAddVote(ttypes.VoteTypePrevote, nil)
-		return
+	if !cs.isProposer() {
+		// PreExec proposal block
+		blockCopy := *cs.ProposalBlock.Data
+		blockNew := cs.client.PreExecBlock(&blockCopy, true)
+		if blockNew == nil {
+			tendermintlog.Error("enterPrevote: PreExec ProposalBlock fail")
+			cs.signAddVote(ttypes.VoteTypePrevote, nil)
+			return
+		}
+		cfg := cs.client.GetQueueClient().GetConfig()
+		if !bytes.Equal(blockNew.Hash(cfg), cs.ProposalBlock.Data.Hash(cfg)) {
+			tendermintlog.Error("enterPrevote: PreExec ProposalBlock has change")
+			cs.signAddVote(ttypes.VoteTypePrevote, nil)
+			return
+		}
 	}
 
 	// Prevote cs.ProposalBlock

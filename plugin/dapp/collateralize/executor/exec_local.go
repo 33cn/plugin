@@ -14,6 +14,13 @@ import (
 func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	set := &types.LocalDBSet{}
 	var collTable, recordTable *table.Table
+
+	cfg := c.GetAPI().GetConfig()
+	if cfg.IsDappFork(c.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeTableUpdate) {
+		recordTable = pty.NewRecordTable(c.GetLocalDB())
+		collTable = pty.NewCollateralizeTable(c.GetLocalDB())
+	}
+
 	for _, item := range receipt.Logs {
 		if item.Ty >= pty.TyLogCollateralizeCreate && item.Ty <= pty.TyLogCollateralizeRetrieve {
 			var collateralizeLog pty.ReceiptCollateralize
@@ -23,14 +30,18 @@ func (c *Collateralize) execLocal(tx *types.Transaction, receipt *types.ReceiptD
 			}
 
 			if item.Ty == pty.TyLogCollateralizeCreate || item.Ty == pty.TyLogCollateralizeRetrieve {
-				collTable = pty.NewCollateralizeTable(c.GetLocalDB())
+				if !cfg.IsDappFork(c.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeTableUpdate) {
+					collTable = pty.NewCollateralizeTable(c.GetLocalDB())
+				}
 				err = collTable.Replace(&pty.ReceiptCollateralize{CollateralizeId: collateralizeLog.CollateralizeId, Status: collateralizeLog.Status,
 					AccountAddr: collateralizeLog.AccountAddr})
 				if err != nil {
 					return nil, err
 				}
 			} else {
-				recordTable = pty.NewRecordTable(c.GetLocalDB())
+				if !cfg.IsDappFork(c.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizeTableUpdate) {
+					recordTable = pty.NewRecordTable(c.GetLocalDB())
+				}
 				err = recordTable.Replace(&pty.ReceiptCollateralize{CollateralizeId: collateralizeLog.CollateralizeId, Status: collateralizeLog.Status,
 					RecordId: collateralizeLog.RecordId, AccountAddr: collateralizeLog.AccountAddr})
 				if err != nil {

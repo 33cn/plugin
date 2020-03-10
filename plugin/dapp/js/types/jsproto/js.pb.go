@@ -35,7 +35,7 @@ func (m *Create) Reset()         { *m = Create{} }
 func (m *Create) String() string { return proto.CompactTextString(m) }
 func (*Create) ProtoMessage()    {}
 func (*Create) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_afd63f08422ad153, []int{0}
+	return fileDescriptor_js_ce3c26906a820fa8, []int{0}
 }
 func (m *Create) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Create.Unmarshal(m, b)
@@ -83,7 +83,7 @@ func (m *Call) Reset()         { *m = Call{} }
 func (m *Call) String() string { return proto.CompactTextString(m) }
 func (*Call) ProtoMessage()    {}
 func (*Call) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_afd63f08422ad153, []int{1}
+	return fileDescriptor_js_ce3c26906a820fa8, []int{1}
 }
 func (m *Call) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Call.Unmarshal(m, b)
@@ -139,7 +139,7 @@ func (m *JsAction) Reset()         { *m = JsAction{} }
 func (m *JsAction) String() string { return proto.CompactTextString(m) }
 func (*JsAction) ProtoMessage()    {}
 func (*JsAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_afd63f08422ad153, []int{2}
+	return fileDescriptor_js_ce3c26906a820fa8, []int{2}
 }
 func (m *JsAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JsAction.Unmarshal(m, b)
@@ -288,7 +288,7 @@ func (m *JsLog) Reset()         { *m = JsLog{} }
 func (m *JsLog) String() string { return proto.CompactTextString(m) }
 func (*JsLog) ProtoMessage()    {}
 func (*JsLog) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_afd63f08422ad153, []int{3}
+	return fileDescriptor_js_ce3c26906a820fa8, []int{3}
 }
 func (m *JsLog) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JsLog.Unmarshal(m, b)
@@ -326,7 +326,7 @@ func (m *QueryResult) Reset()         { *m = QueryResult{} }
 func (m *QueryResult) String() string { return proto.CompactTextString(m) }
 func (*QueryResult) ProtoMessage()    {}
 func (*QueryResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_js_afd63f08422ad153, []int{4}
+	return fileDescriptor_js_ce3c26906a820fa8, []int{4}
 }
 func (m *QueryResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryResult.Unmarshal(m, b)
@@ -361,9 +361,9 @@ func init() {
 	proto.RegisterType((*QueryResult)(nil), "jsproto.QueryResult")
 }
 
-func init() { proto.RegisterFile("js.proto", fileDescriptor_js_afd63f08422ad153) }
+func init() { proto.RegisterFile("js.proto", fileDescriptor_js_ce3c26906a820fa8) }
 
-var fileDescriptor_js_afd63f08422ad153 = []byte{
+var fileDescriptor_js_ce3c26906a820fa8 = []byte{
 	// 231 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x8f, 0xbf, 0x4e, 0xc3, 0x30,
 	0x10, 0xc6, 0x9b, 0x90, 0xa4, 0xe1, 0x22, 0x40, 0xf2, 0x14, 0xc1, 0x02, 0x66, 0x81, 0x25, 0x42,

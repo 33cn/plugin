@@ -9,7 +9,7 @@ type relayOrder2Show struct {
 	Status        string `json:"status"`
 	Creator       string `json:"address"`
 	Amount        string `json:"amount"`
-	CoinOperation string `json:"coinoperation"`
+	CoinOperation uint32 `json:"coinoperation"`
 	Coin          string `json:"coin"`
 	CoinAmount    string `json:"coinamount"`
 	CoinAddr      string `json:"coinaddr"`
@@ -21,4 +21,6 @@ type relayOrder2Show struct {
 	FinishTime    int64  `json:"finishtime"`
 	FinishTxHash  string `json:"finishtxhash"`
 	Height        int64  `json:"height"`
+	LocalCoinExec string `json:"localCoinExec"`
+	LocalCoinSym  string `json:"localCoinSym"`
 }

@@ -96,12 +96,12 @@ createEmptyBlocksInterval=1
 validatorNodes=["127.0.0.1:46656", "127.0.0.2:46656"]
 
 [store]
-name="kvdb"
+name="mavl"
 driver="leveldb"
 dbPath="datadir/mavltree"
 dbCache=128
 
-[store.sub.kvdb]
+[store.sub.mavl]
 enableMavlPrefix=false
 enableMVCC=false
 
@@ -129,3 +129,8 @@ enable=false
 cryptoPath="authdir/crypto"
 # 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
 signType="auth_ecdsa"
+
+[exec.sub.manage]
+superManager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+]

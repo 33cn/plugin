@@ -484,6 +484,9 @@ func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error 
 		lastBlock = b
 		blocks = append(blocks, b)
 	}
+	if len(blocks) <= 0 {
+		return nil
+	}
 	err = client.saveBatchLocalBlocks(blocks)
 	if err != nil {
 		plog.Error("procLocalAddBlocks saveBatchLocalBlocks", "err", err)
@@ -497,7 +500,7 @@ func (client *client) procLocalAddBlocks(mainBlocks *types.ParaTxDetails) error 
 func (client *client) CreateBlock() {
 	defer client.wg.Done()
 
-	if client.subCfg.JumpDownloadOpen {
+	if !client.subCfg.JumpDownloadClose {
 		client.jumpDldCli.tryJumpDownload()
 	}
 

@@ -110,8 +110,6 @@ mainBlockHashForkHeight=209186
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 mainLoopCheckCommitTxDoneForkHeight=4320000
-#主链交易验证merkelRoot主链分叉高度，需和主链保持一致，不可修改
-mainVerifyMerkleRootForkHeight=-1
 #主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
 [[consensus.sub.para.emptyBlockInterval]]
 blockHeight=0
@@ -213,7 +211,7 @@ ForkEnableParaRegExec=0
 ForkCacheDriver=0
 ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
-ForkRootHash= 4500000
+ForkRootHash=7000000
 [fork.sub.coins]
 Enable=0
 
@@ -256,7 +254,7 @@ Enable=0
 ForkParacrossWithdrawFromParachain=0
 ForkParacrossCommitTx=0
 ForkLoopCheckCommitTxDone=0
-#平行链分阶段自共识支持合约配置，缺省是0
+#仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7000000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
 ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
 
@@ -314,9 +312,11 @@ Enable=0
 
 [fork.sub.issuance]
 Enable=0
+ForkIssuanceTableUpdate=0
 
 [fork.sub.collateralize]
 Enable=0
+ForkCollateralizeTableUpdate=0
 
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]
@@ -327,7 +327,7 @@ listenAddr = "localhost:6061"
 
 [metrics]
 #是否使能发送metrics数据的发送
-enableMetrics=true
+enableMetrics=false
 #数据保存模式
 dataEmitMode="influxdb"
 

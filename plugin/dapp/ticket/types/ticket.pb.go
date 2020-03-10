@@ -54,7 +54,7 @@ func (m *Ticket) Reset()         { *m = Ticket{} }
 func (m *Ticket) String() string { return proto.CompactTextString(m) }
 func (*Ticket) ProtoMessage()    {}
 func (*Ticket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{0}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{0}
 }
 func (m *Ticket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Ticket.Unmarshal(m, b)
@@ -156,7 +156,7 @@ func (m *TicketAction) Reset()         { *m = TicketAction{} }
 func (m *TicketAction) String() string { return proto.CompactTextString(m) }
 func (*TicketAction) ProtoMessage()    {}
 func (*TicketAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{1}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{1}
 }
 func (m *TicketAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketAction.Unmarshal(m, b)
@@ -410,7 +410,7 @@ func (m *TicketMiner) Reset()         { *m = TicketMiner{} }
 func (m *TicketMiner) String() string { return proto.CompactTextString(m) }
 func (*TicketMiner) ProtoMessage()    {}
 func (*TicketMiner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{2}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{2}
 }
 func (m *TicketMiner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketMiner.Unmarshal(m, b)
@@ -493,7 +493,7 @@ func (m *TicketMinerOld) Reset()         { *m = TicketMinerOld{} }
 func (m *TicketMinerOld) String() string { return proto.CompactTextString(m) }
 func (*TicketMinerOld) ProtoMessage()    {}
 func (*TicketMinerOld) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{3}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{3}
 }
 func (m *TicketMinerOld) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketMinerOld.Unmarshal(m, b)
@@ -553,7 +553,7 @@ func (m *MinerFlag) Reset()         { *m = MinerFlag{} }
 func (m *MinerFlag) String() string { return proto.CompactTextString(m) }
 func (*MinerFlag) ProtoMessage()    {}
 func (*MinerFlag) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{4}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{4}
 }
 func (m *MinerFlag) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MinerFlag.Unmarshal(m, b)
@@ -599,7 +599,7 @@ func (m *TicketBind) Reset()         { *m = TicketBind{} }
 func (m *TicketBind) String() string { return proto.CompactTextString(m) }
 func (*TicketBind) ProtoMessage()    {}
 func (*TicketBind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{5}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{5}
 }
 func (m *TicketBind) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketBind.Unmarshal(m, b)
@@ -653,7 +653,7 @@ func (m *TicketOpen) Reset()         { *m = TicketOpen{} }
 func (m *TicketOpen) String() string { return proto.CompactTextString(m) }
 func (*TicketOpen) ProtoMessage()    {}
 func (*TicketOpen) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{6}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{6}
 }
 func (m *TicketOpen) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketOpen.Unmarshal(m, b)
@@ -721,7 +721,7 @@ func (m *TicketGenesis) Reset()         { *m = TicketGenesis{} }
 func (m *TicketGenesis) String() string { return proto.CompactTextString(m) }
 func (*TicketGenesis) ProtoMessage()    {}
 func (*TicketGenesis) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{7}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{7}
 }
 func (m *TicketGenesis) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketGenesis.Unmarshal(m, b)
@@ -774,7 +774,7 @@ func (m *TicketClose) Reset()         { *m = TicketClose{} }
 func (m *TicketClose) String() string { return proto.CompactTextString(m) }
 func (*TicketClose) ProtoMessage()    {}
 func (*TicketClose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{8}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{8}
 }
 func (m *TicketClose) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketClose.Unmarshal(m, b)
@@ -820,7 +820,7 @@ func (m *TicketList) Reset()         { *m = TicketList{} }
 func (m *TicketList) String() string { return proto.CompactTextString(m) }
 func (*TicketList) ProtoMessage()    {}
 func (*TicketList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{9}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{9}
 }
 func (m *TicketList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketList.Unmarshal(m, b)
@@ -865,7 +865,7 @@ func (m *TicketInfos) Reset()         { *m = TicketInfos{} }
 func (m *TicketInfos) String() string { return proto.CompactTextString(m) }
 func (*TicketInfos) ProtoMessage()    {}
 func (*TicketInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{10}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{10}
 }
 func (m *TicketInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TicketInfos.Unmarshal(m, b)
@@ -903,7 +903,7 @@ func (m *ReplyTicketList) Reset()         { *m = ReplyTicketList{} }
 func (m *ReplyTicketList) String() string { return proto.CompactTextString(m) }
 func (*ReplyTicketList) ProtoMessage()    {}
 func (*ReplyTicketList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{11}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{11}
 }
 func (m *ReplyTicketList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTicketList.Unmarshal(m, b)
@@ -942,7 +942,7 @@ func (m *ReplyWalletTickets) Reset()         { *m = ReplyWalletTickets{} }
 func (m *ReplyWalletTickets) String() string { return proto.CompactTextString(m) }
 func (*ReplyWalletTickets) ProtoMessage()    {}
 func (*ReplyWalletTickets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{12}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{12}
 }
 func (m *ReplyWalletTickets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyWalletTickets.Unmarshal(m, b)
@@ -990,7 +990,7 @@ func (m *ReceiptTicket) Reset()         { *m = ReceiptTicket{} }
 func (m *ReceiptTicket) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTicket) ProtoMessage()    {}
 func (*ReceiptTicket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{13}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{13}
 }
 func (m *ReceiptTicket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTicket.Unmarshal(m, b)
@@ -1051,7 +1051,7 @@ func (m *ReceiptTicketBind) Reset()         { *m = ReceiptTicketBind{} }
 func (m *ReceiptTicketBind) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTicketBind) ProtoMessage()    {}
 func (*ReceiptTicketBind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{14}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{14}
 }
 func (m *ReceiptTicketBind) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTicketBind.Unmarshal(m, b)
@@ -1106,7 +1106,7 @@ func (m *ReqBindMiner) Reset()         { *m = ReqBindMiner{} }
 func (m *ReqBindMiner) String() string { return proto.CompactTextString(m) }
 func (*ReqBindMiner) ProtoMessage()    {}
 func (*ReqBindMiner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{15}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{15}
 }
 func (m *ReqBindMiner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqBindMiner.Unmarshal(m, b)
@@ -1165,7 +1165,7 @@ func (m *ReplyBindMiner) Reset()         { *m = ReplyBindMiner{} }
 func (m *ReplyBindMiner) String() string { return proto.CompactTextString(m) }
 func (*ReplyBindMiner) ProtoMessage()    {}
 func (*ReplyBindMiner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ticket_258ffe65b0e990fb, []int{16}
+	return fileDescriptor_ticket_2306639e9c49ccaa, []int{16}
 }
 func (m *ReplyBindMiner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyBindMiner.Unmarshal(m, b)
@@ -1358,9 +1358,9 @@ var _Ticket_serviceDesc = grpc.ServiceDesc{
 	Metadata: "ticket.proto",
 }
 
-func init() { proto.RegisterFile("ticket.proto", fileDescriptor_ticket_258ffe65b0e990fb) }
+func init() { proto.RegisterFile("ticket.proto", fileDescriptor_ticket_2306639e9c49ccaa) }
 
-var fileDescriptor_ticket_258ffe65b0e990fb = []byte{
+var fileDescriptor_ticket_2306639e9c49ccaa = []byte{
 	// 877 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xdd, 0x6e, 0xeb, 0x44,
 	0x10, 0x8e, 0xed, 0x3a, 0x49, 0xa7, 0x4e, 0xcb, 0x59, 0x0a, 0xb2, 0x22, 0x74, 0x14, 0xad, 0x10,

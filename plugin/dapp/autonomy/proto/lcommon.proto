@@ -8,24 +8,24 @@ package types;
 
 message VoteResult {
     // 总票数
-    int32	totalVotes   = 1;
+    int32 totalVotes = 1;
     // 赞成票
-    int32	approveVotes = 2;
+    int32 approveVotes = 2;
     // 反对票
-    int32	opposeVotes  = 3;
+    int32 opposeVotes = 3;
     // 是否通过
-    bool	pass         = 4;
+    bool pass = 4;
 }
 
 message PublicVote {
     // 是否需要公示
-    bool  publicity      = 1;
+    bool publicity = 1;
     // 总票数
-    int32 totalVotes     = 2;
+    int32 totalVotes = 2;
     // 全体持票人反对票
-    int32 opposeVotes    = 3;
+    int32 opposeVotes = 3;
     // 是否通过
-    bool  pubPass        = 4;
+    bool pubPass = 4;
 }
 
 message VotesRecord {
@@ -34,15 +34,15 @@ message VotesRecord {
 
 message RuleConfig {
     // 董事会成员赞成率,以%为单位,只保留整数部分
-    int32 boardApproveRatio   = 1;
+    int32 boardApproveRatio = 1;
     // 全体持票人否决率
-    int32 pubOpposeRatio      = 2;
+    int32 pubOpposeRatio = 2;
     // 提案金额
-    int64 proposalAmount      = 3;
+    int64 proposalAmount = 3;
     // 重大项目公示金额阈值
-    int64 largeProjectAmount  = 4;
+    int64 largeProjectAmount = 4;
     // 重大项目公示时间（以区块数为单位）
-    int32 publicPeriod        = 5;
+    int32 publicPeriod = 5;
 }
 
 message ActiveBoard {

@@ -7,6 +7,8 @@ package executor
 import (
 	"fmt"
 
+	"strings"
+
 	ty "github.com/33cn/plugin/plugin/dapp/relay/types"
 )
 
@@ -46,25 +48,25 @@ func calcBtcHeaderKeyHeightList(height int64) []byte {
 
 func calcOrderKeyStatus(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderSCAIH+"%d:%s:%s:%s:%d",
-		status, order.Coin, order.CreaterAddr, order.Id, order.Height)
+		status, order.XCoin, order.CreaterAddr, order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyCoin(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderCSAIH+"%s:%d:%s:%s:%d",
-		order.Coin, status, order.CreaterAddr, order.Id, order.Height)
+		order.XCoin, status, order.CreaterAddr, order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyAddrStatus(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderASCIH+"%s:%d:%s:%s:%d",
-		order.CreaterAddr, status, order.Coin, order.Id, order.Height)
+		order.CreaterAddr, status, order.XCoin, order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyAddrCoin(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderACSIH+"%s:%s:%d:%s:%d",
-		order.CreaterAddr, order.Coin, status, order.Id, order.Height)
+		order.CreaterAddr, order.XCoin, status, order.Id, order.Height)
 	return []byte(key)
 }
 
@@ -90,7 +92,7 @@ func calcOrderPrefixAddr(addr string) []byte {
 func calcAcceptKeyAddr(order *ty.RelayOrder, status int32) []byte {
 	if order.AcceptAddr != "" {
 		return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s:%s:%d:%s:%d",
-			order.AcceptAddr, order.Coin, status, order.Id, order.Height))
+			order.AcceptAddr, order.XCoin, status, order.Id, order.Height))
 	}
 	return nil
 
@@ -110,4 +112,10 @@ func calcRelayOrderID(hash string) string {
 
 func calcCoinHash(hash string) string {
 	return coinHashPrefix + hash
+}
+
+func getRealTxHashID(id string) string {
+	ids := strings.Split(id, "-")
+	return ids[len(ids)-1]
+
 }

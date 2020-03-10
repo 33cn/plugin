@@ -7,7 +7,6 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/log/log15"
@@ -46,12 +45,9 @@ const (
 	TyLogParaSelfConsStageConfig   = 665
 	TyLogParaStageVoteDone         = 666
 	TyLogParaStageGroupUpdate      = 667
+	//TyLogParaCrossAssetTransfer 统一的跨链资产转移
+	TyLogParaCrossAssetTransfer = 670
 )
-
-type paracrossCommitTx struct {
-	Fee    int64               `json:"fee"`
-	Status ParacrossNodeStatus `json:"status"`
-}
 
 // action type
 const (
@@ -73,9 +69,9 @@ const (
 )
 
 const (
-	// ParacrossActionAssetTransfer paracross asset transfer key
+	// ParacrossActionAssetTransfer mainchain paracross asset transfer key
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
-	// ParacrossActionAssetWithdraw paracross asset withdraw key
+	// ParacrossActionAssetWithdraw mainchain paracross asset withdraw key
 	ParacrossActionAssetWithdraw
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
@@ -83,6 +79,16 @@ const (
 	ParacrossActionNodeGroupApply
 	//ParacrossActionSelfConsensStageConfig apply for self consensus stage config
 	ParacrossActionSelfStageConfig
+	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
+	ParacrossActionCrossAssetTransfer
+)
+
+const (
+	ParacrossNoneTransfer = iota
+	ParacrossMainAssetTransfer
+	ParacrossMainAssetWithdraw
+	ParacrossParaAssetTransfer
+	ParacrossParaAssetWithdraw
 )
 
 // status
@@ -178,14 +184,6 @@ func CreateRawCommitTx4MainChain(cfg *types.Chain33Config, status *ParacrossNode
 	return createRawCommitTx(cfg, status, name, fee)
 }
 
-func createRawParacrossCommitTx(cfg *types.Chain33Config, parm *paracrossCommitTx) (*types.Transaction, error) {
-	if parm == nil {
-		tlog.Error("createRawParacrossCommitTx", "parm", parm)
-		return nil, types.ErrInvalidParam
-	}
-	return createRawCommitTx(cfg, &parm.Status, cfg.ExecName(ParaX), parm.Fee)
-}
-
 func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
 	v := &ParacrossCommitAction{
 		Status: status,
@@ -211,54 +209,6 @@ func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, na
 		}
 	}
 	return tx, nil
-}
-
-// CreateRawNodeConfigTx create raw tx for node config
-func CreateRawNodeConfigTx(config *ParaNodeAddrConfig) (*types.Transaction, error) {
-	config.Addr = strings.Trim(config.Addr, " ")
-	config.Id = strings.Trim(config.Id, " ")
-
-	action := &ParacrossAction{
-		Ty:    ParacrossActionNodeConfig,
-		Value: &ParacrossAction_NodeConfig{config},
-	}
-	tx := &types.Transaction{
-		Payload: types.Encode(action),
-	}
-
-	return tx, nil
-}
-
-//CreateRawNodeGroupApplyTx create raw tx for node group
-func CreateRawNodeGroupApplyTx(apply *ParaNodeGroupConfig) (*types.Transaction, error) {
-	apply.Id = strings.Trim(apply.Id, " ")
-
-	action := &ParacrossAction{
-		Ty:    ParacrossActionNodeGroupApply,
-		Value: &ParacrossAction_NodeGroupConfig{apply},
-	}
-
-	tx := &types.Transaction{
-		Payload: types.Encode(action),
-	}
-
-	return tx, nil
-
-}
-
-//CreateRawSelfConsStageApplyTx create raw tx for self consens stage
-func CreateRawSelfConsStageApplyTx(apply *ParaStageConfig) (*types.Transaction, error) {
-	action := &ParacrossAction{
-		Ty:    ParacrossActionSelfStageConfig,
-		Value: &ParacrossAction_SelfStageConfig{apply},
-	}
-
-	tx := &types.Transaction{
-		Payload: types.Encode(action),
-	}
-
-	return tx, nil
-
 }
 
 // CreateRawAssetTransferTx create asset transfer tx

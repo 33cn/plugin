@@ -197,8 +197,8 @@ func (s *suiteBtcStore) TestGetMerkleRootFromHeader() {
 
 func (s *suiteBtcStore) TestVerifyBtcTx() {
 	order := &ty.RelayOrder{
-		CoinAddr:    "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT",
-		CoinAmount:  29900000,
+		XAddr:       "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT",
+		XAmount:     29900000,
 		AcceptTime:  100,
 		ConfirmTime: 200,
 	}

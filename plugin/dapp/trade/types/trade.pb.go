@@ -49,7 +49,7 @@ func (m *Trade) Reset()         { *m = Trade{} }
 func (m *Trade) String() string { return proto.CompactTextString(m) }
 func (*Trade) ProtoMessage()    {}
 func (*Trade) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{0}
+	return fileDescriptor_trade_f0f250ce01596219, []int{0}
 }
 func (m *Trade) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Trade.Unmarshal(m, b)
@@ -343,7 +343,7 @@ func (m *TradeForSell) Reset()         { *m = TradeForSell{} }
 func (m *TradeForSell) String() string { return proto.CompactTextString(m) }
 func (*TradeForSell) ProtoMessage()    {}
 func (*TradeForSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{1}
+	return fileDescriptor_trade_f0f250ce01596219, []int{1}
 }
 func (m *TradeForSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForSell.Unmarshal(m, b)
@@ -454,7 +454,7 @@ func (m *TradeForBuy) Reset()         { *m = TradeForBuy{} }
 func (m *TradeForBuy) String() string { return proto.CompactTextString(m) }
 func (*TradeForBuy) ProtoMessage()    {}
 func (*TradeForBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{2}
+	return fileDescriptor_trade_f0f250ce01596219, []int{2}
 }
 func (m *TradeForBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForBuy.Unmarshal(m, b)
@@ -500,7 +500,7 @@ func (m *TradeForRevokeSell) Reset()         { *m = TradeForRevokeSell{} }
 func (m *TradeForRevokeSell) String() string { return proto.CompactTextString(m) }
 func (*TradeForRevokeSell) ProtoMessage()    {}
 func (*TradeForRevokeSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{3}
+	return fileDescriptor_trade_f0f250ce01596219, []int{3}
 }
 func (m *TradeForRevokeSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForRevokeSell.Unmarshal(m, b)
@@ -547,7 +547,7 @@ func (m *TradeForBuyLimit) Reset()         { *m = TradeForBuyLimit{} }
 func (m *TradeForBuyLimit) String() string { return proto.CompactTextString(m) }
 func (*TradeForBuyLimit) ProtoMessage()    {}
 func (*TradeForBuyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{4}
+	return fileDescriptor_trade_f0f250ce01596219, []int{4}
 }
 func (m *TradeForBuyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForBuyLimit.Unmarshal(m, b)
@@ -636,7 +636,7 @@ func (m *TradeForSellMarket) Reset()         { *m = TradeForSellMarket{} }
 func (m *TradeForSellMarket) String() string { return proto.CompactTextString(m) }
 func (*TradeForSellMarket) ProtoMessage()    {}
 func (*TradeForSellMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{5}
+	return fileDescriptor_trade_f0f250ce01596219, []int{5}
 }
 func (m *TradeForSellMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForSellMarket.Unmarshal(m, b)
@@ -682,7 +682,7 @@ func (m *TradeForRevokeBuy) Reset()         { *m = TradeForRevokeBuy{} }
 func (m *TradeForRevokeBuy) String() string { return proto.CompactTextString(m) }
 func (*TradeForRevokeBuy) ProtoMessage()    {}
 func (*TradeForRevokeBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{6}
+	return fileDescriptor_trade_f0f250ce01596219, []int{6}
 }
 func (m *TradeForRevokeBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForRevokeBuy.Unmarshal(m, b)
@@ -740,7 +740,7 @@ func (m *SellOrder) Reset()         { *m = SellOrder{} }
 func (m *SellOrder) String() string { return proto.CompactTextString(m) }
 func (*SellOrder) ProtoMessage()    {}
 func (*SellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{7}
+	return fileDescriptor_trade_f0f250ce01596219, []int{7}
 }
 func (m *SellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SellOrder.Unmarshal(m, b)
@@ -896,7 +896,7 @@ func (m *BuyLimitOrder) Reset()         { *m = BuyLimitOrder{} }
 func (m *BuyLimitOrder) String() string { return proto.CompactTextString(m) }
 func (*BuyLimitOrder) ProtoMessage()    {}
 func (*BuyLimitOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{8}
+	return fileDescriptor_trade_f0f250ce01596219, []int{8}
 }
 func (m *BuyLimitOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BuyLimitOrder.Unmarshal(m, b)
@@ -1033,7 +1033,7 @@ func (m *ReceiptBuyBase) Reset()         { *m = ReceiptBuyBase{} }
 func (m *ReceiptBuyBase) String() string { return proto.CompactTextString(m) }
 func (*ReceiptBuyBase) ProtoMessage()    {}
 func (*ReceiptBuyBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{9}
+	return fileDescriptor_trade_f0f250ce01596219, []int{9}
 }
 func (m *ReceiptBuyBase) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptBuyBase.Unmarshal(m, b)
@@ -1191,7 +1191,7 @@ func (m *ReceiptSellBase) Reset()         { *m = ReceiptSellBase{} }
 func (m *ReceiptSellBase) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSellBase) ProtoMessage()    {}
 func (*ReceiptSellBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{10}
+	return fileDescriptor_trade_f0f250ce01596219, []int{10}
 }
 func (m *ReceiptSellBase) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSellBase.Unmarshal(m, b)
@@ -1348,7 +1348,7 @@ func (m *ReceiptTradeBuyMarket) Reset()         { *m = ReceiptTradeBuyMarket{} }
 func (m *ReceiptTradeBuyMarket) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyMarket) ProtoMessage()    {}
 func (*ReceiptTradeBuyMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{11}
+	return fileDescriptor_trade_f0f250ce01596219, []int{11}
 }
 func (m *ReceiptTradeBuyMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyMarket.Unmarshal(m, b)
@@ -1386,7 +1386,7 @@ func (m *ReceiptTradeBuyLimit) Reset()         { *m = ReceiptTradeBuyLimit{} }
 func (m *ReceiptTradeBuyLimit) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyLimit) ProtoMessage()    {}
 func (*ReceiptTradeBuyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{12}
+	return fileDescriptor_trade_f0f250ce01596219, []int{12}
 }
 func (m *ReceiptTradeBuyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyLimit.Unmarshal(m, b)
@@ -1424,7 +1424,7 @@ func (m *ReceiptTradeBuyRevoke) Reset()         { *m = ReceiptTradeBuyRevoke{} }
 func (m *ReceiptTradeBuyRevoke) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyRevoke) ProtoMessage()    {}
 func (*ReceiptTradeBuyRevoke) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{13}
+	return fileDescriptor_trade_f0f250ce01596219, []int{13}
 }
 func (m *ReceiptTradeBuyRevoke) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyRevoke.Unmarshal(m, b)
@@ -1462,7 +1462,7 @@ func (m *ReceiptTradeSellLimit) Reset()         { *m = ReceiptTradeSellLimit{} }
 func (m *ReceiptTradeSellLimit) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeSellLimit) ProtoMessage()    {}
 func (*ReceiptTradeSellLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{14}
+	return fileDescriptor_trade_f0f250ce01596219, []int{14}
 }
 func (m *ReceiptTradeSellLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeSellLimit.Unmarshal(m, b)
@@ -1500,7 +1500,7 @@ func (m *ReceiptSellMarket) Reset()         { *m = ReceiptSellMarket{} }
 func (m *ReceiptSellMarket) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSellMarket) ProtoMessage()    {}
 func (*ReceiptSellMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{15}
+	return fileDescriptor_trade_f0f250ce01596219, []int{15}
 }
 func (m *ReceiptSellMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSellMarket.Unmarshal(m, b)
@@ -1538,7 +1538,7 @@ func (m *ReceiptTradeSellRevoke) Reset()         { *m = ReceiptTradeSellRevoke{}
 func (m *ReceiptTradeSellRevoke) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeSellRevoke) ProtoMessage()    {}
 func (*ReceiptTradeSellRevoke) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{16}
+	return fileDescriptor_trade_f0f250ce01596219, []int{16}
 }
 func (m *ReceiptTradeSellRevoke) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeSellRevoke.Unmarshal(m, b)
@@ -1582,7 +1582,7 @@ func (m *ReqAddrAssets) Reset()         { *m = ReqAddrAssets{} }
 func (m *ReqAddrAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAddrAssets) ProtoMessage()    {}
 func (*ReqAddrAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{17}
+	return fileDescriptor_trade_f0f250ce01596219, []int{17}
 }
 func (m *ReqAddrAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAddrAssets.Unmarshal(m, b)
@@ -1664,7 +1664,7 @@ func (m *ReqTokenSellOrder) Reset()         { *m = ReqTokenSellOrder{} }
 func (m *ReqTokenSellOrder) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenSellOrder) ProtoMessage()    {}
 func (*ReqTokenSellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{18}
+	return fileDescriptor_trade_f0f250ce01596219, []int{18}
 }
 func (m *ReqTokenSellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenSellOrder.Unmarshal(m, b)
@@ -1734,7 +1734,7 @@ func (m *ReqTokenBuyOrder) Reset()         { *m = ReqTokenBuyOrder{} }
 func (m *ReqTokenBuyOrder) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenBuyOrder) ProtoMessage()    {}
 func (*ReqTokenBuyOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{19}
+	return fileDescriptor_trade_f0f250ce01596219, []int{19}
 }
 func (m *ReqTokenBuyOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenBuyOrder.Unmarshal(m, b)
@@ -1813,7 +1813,7 @@ func (m *ReplyBuyOrder) Reset()         { *m = ReplyBuyOrder{} }
 func (m *ReplyBuyOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplyBuyOrder) ProtoMessage()    {}
 func (*ReplyBuyOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{20}
+	return fileDescriptor_trade_f0f250ce01596219, []int{20}
 }
 func (m *ReplyBuyOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyBuyOrder.Unmarshal(m, b)
@@ -1955,7 +1955,7 @@ func (m *ReplySellOrder) Reset()         { *m = ReplySellOrder{} }
 func (m *ReplySellOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplySellOrder) ProtoMessage()    {}
 func (*ReplySellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{21}
+	return fileDescriptor_trade_f0f250ce01596219, []int{21}
 }
 func (m *ReplySellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplySellOrder.Unmarshal(m, b)
@@ -2084,7 +2084,7 @@ func (m *ReplySellOrders) Reset()         { *m = ReplySellOrders{} }
 func (m *ReplySellOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplySellOrders) ProtoMessage()    {}
 func (*ReplySellOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{22}
+	return fileDescriptor_trade_f0f250ce01596219, []int{22}
 }
 func (m *ReplySellOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplySellOrders.Unmarshal(m, b)
@@ -2122,7 +2122,7 @@ func (m *ReplyBuyOrders) Reset()         { *m = ReplyBuyOrders{} }
 func (m *ReplyBuyOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplyBuyOrders) ProtoMessage()    {}
 func (*ReplyBuyOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{23}
+	return fileDescriptor_trade_f0f250ce01596219, []int{23}
 }
 func (m *ReplyBuyOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyBuyOrders.Unmarshal(m, b)
@@ -2177,7 +2177,7 @@ func (m *ReplyTradeOrder) Reset()         { *m = ReplyTradeOrder{} }
 func (m *ReplyTradeOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplyTradeOrder) ProtoMessage()    {}
 func (*ReplyTradeOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{24}
+	return fileDescriptor_trade_f0f250ce01596219, []int{24}
 }
 func (m *ReplyTradeOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTradeOrder.Unmarshal(m, b)
@@ -2334,7 +2334,7 @@ func (m *ReplyTradeOrders) Reset()         { *m = ReplyTradeOrders{} }
 func (m *ReplyTradeOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplyTradeOrders) ProtoMessage()    {}
 func (*ReplyTradeOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{25}
+	return fileDescriptor_trade_f0f250ce01596219, []int{25}
 }
 func (m *ReplyTradeOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTradeOrders.Unmarshal(m, b)
@@ -2373,7 +2373,7 @@ func (m *ReqSellToken) Reset()         { *m = ReqSellToken{} }
 func (m *ReqSellToken) String() string { return proto.CompactTextString(m) }
 func (*ReqSellToken) ProtoMessage()    {}
 func (*ReqSellToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{26}
+	return fileDescriptor_trade_f0f250ce01596219, []int{26}
 }
 func (m *ReqSellToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqSellToken.Unmarshal(m, b)
@@ -2419,7 +2419,7 @@ func (m *ReqRevokeSell) Reset()         { *m = ReqRevokeSell{} }
 func (m *ReqRevokeSell) String() string { return proto.CompactTextString(m) }
 func (*ReqRevokeSell) ProtoMessage()    {}
 func (*ReqRevokeSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{27}
+	return fileDescriptor_trade_f0f250ce01596219, []int{27}
 }
 func (m *ReqRevokeSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRevokeSell.Unmarshal(m, b)
@@ -2465,7 +2465,7 @@ func (m *ReqBuyToken) Reset()         { *m = ReqBuyToken{} }
 func (m *ReqBuyToken) String() string { return proto.CompactTextString(m) }
 func (*ReqBuyToken) ProtoMessage()    {}
 func (*ReqBuyToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{28}
+	return fileDescriptor_trade_f0f250ce01596219, []int{28}
 }
 func (m *ReqBuyToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqBuyToken.Unmarshal(m, b)
@@ -2529,7 +2529,7 @@ func (m *LocalOrder) Reset()         { *m = LocalOrder{} }
 func (m *LocalOrder) String() string { return proto.CompactTextString(m) }
 func (*LocalOrder) ProtoMessage()    {}
 func (*LocalOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_05e36a4efd974a28, []int{29}
+	return fileDescriptor_trade_f0f250ce01596219, []int{29}
 }
 func (m *LocalOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalOrder.Unmarshal(m, b)
@@ -2959,9 +2959,9 @@ var _Trade_serviceDesc = grpc.ServiceDesc{
 	Metadata: "trade.proto",
 }
 
-func init() { proto.RegisterFile("trade.proto", fileDescriptor_trade_05e36a4efd974a28) }
+func init() { proto.RegisterFile("trade.proto", fileDescriptor_trade_f0f250ce01596219) }
 
-var fileDescriptor_trade_05e36a4efd974a28 = []byte{
+var fileDescriptor_trade_f0f250ce01596219 = []byte{
 	// 1371 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x59, 0xdd, 0x8a, 0xdb, 0xc6,
 	0x17, 0x5f, 0x5b, 0x96, 0xd7, 0x3a, 0xfe, 0x58, 0xef, 0xc4, 0xd9, 0xbf, 0xb2, 0xfc, 0x29, 0x46,

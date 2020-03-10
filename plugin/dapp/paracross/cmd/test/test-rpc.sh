@@ -21,8 +21,12 @@ function paracross_QueryParaBalance() {
     ip_http=${UNIT_HTTP%:*}
     para_http="$ip_http:8901"
     local exec=$2
+    local symbol="coins.bty"
+    if [ -n "$3" ]; then
+        symbol="$3"
+    fi
 
-    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "'"${exec}"'","asset_exec":"paracross","asset_symbol":"coins.bty"}]}'
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "'"${exec}"'","asset_exec":"paracross","asset_symbol":"'"${symbol}"'"}]}'
     resp=$(curl -ksd "$req" "${para_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
     echo "$balance"
@@ -40,6 +44,28 @@ function paracross_QueryMainBalance() {
     main_http="$ip_http:8801"
 
     req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "paracross"}]}'
+    resp=$(curl -ksd "$req" "${main_http}")
+    balance=$(jq -r '.result[0].balance' <<<"$resp")
+    echo "$balance"
+    return $?
+}
+
+function paracross_QueryMainAssetBalance() {
+    local req
+    local resp
+    local balance
+    local ip_http
+    local main_http
+
+    ip_http=${UNIT_HTTP%:*}
+    main_http="$ip_http:8801"
+    local exec=$2
+    local symbol="bty"
+    if [ -n "$3" ]; then
+        symbol="$3"
+    fi
+
+    req='{"method":"Chain33.GetBalance", "params":[{"addresses" : ["'"$1"'"], "execer" : "'"${exec}"'","asset_exec":"paracross","asset_symbol":"'"${symbol}"'"}]}'
     resp=$(curl -ksd "$req" "${main_http}")
     balance=$(jq -r '.result[0].balance' <<<"$resp")
     echo "$balance"
@@ -204,7 +230,7 @@ function paracross_ListNodeGroupStatus() {
 }
 
 function paracross_ListNodeStatus() {
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeStatusInfo","payload":{"title":"user.p.para.","status":4}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeStatusInfo","payload":{"title":"user.p.para.","status":3}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
@@ -214,15 +240,18 @@ function paracross_txgroupex() {
     local amount_transfer=$1
     local amount_trade=$2
     local para_ip=$3
+    local para_title=$4
 
-    local paracross_execer_name="user.p.para.paracross"
-    local trade_exec_name="user.p.para.trade"
+    local coins_exec="$5"
+    local bty_symbol="$6"
+    local paracross_execer_name="$para_title.paracross"
+    local trade_exec_name="$para_title.trade"
 
     #  资产从主链转移到平行链
-    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"ParacrossAssetTransfer","payload":{"execName":"'"${paracross_execer_name}"'","to":"'"$para_test_addr"'","amount":'${amount_transfer}'}}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"CrossAssetTransfer","payload":{"assetExec":"'"${coins_exec}"'","assetSymbol":"'"${bty_symbol}"'","amount":'${amount_transfer}'}}]'
     echo "$req"
     resp=$(curl -ksd "{$req}" "${para_ip}")
-    # echo "$resp"
+    echo "$resp"
     err=$(jq '(.error)' <<<"$resp")
     if [ "$err" != null ]; then
         echo "$resp"
@@ -280,14 +309,16 @@ function paracross_testTxGroupFail() {
     local amount_transfer=100000000
     local amount_left=500000000
 
+    #当前为５个
     left_exec_val=$(paracross_QueryMainBalance "${para_test_addr}")
     if [ "${left_exec_val}" != $amount_left ]; then
         echo "paracross_testTxGroupFail left main paracross failed, get=$left_exec_val,expec=$amount_left"
         exit 1
     fi
 
-    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}"
+    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}" "user.p.para" "coins" "bty"
 
+    #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
     local count=0
     local times=100
     local paracross_execer_name="user.p.para.paracross"
@@ -300,6 +331,57 @@ function paracross_testTxGroupFail() {
         left_exec_val=$(paracross_QueryMainBalance "${para_test_addr}")
         if [ "${left_exec_val}" != $amount_left ] || [ "${transfer_val}" != $transfer_expect ] || [ "${transfer_exec_val}" != $exec_expect ]; then
             echo "trans=${transfer_val}-expect=${transfer_expect},trader=${transfer_exec_val}-expect=${exec_expect},left=${left_exec_val}-expect=${amount_left}"
+            chain33_BlockWait 2 ${UNIT_HTTP}
+            times=$((times - 1))
+            if [ $times -le 0 ]; then
+                echo "para_cross_transfer_testfail failed"
+                exit 1
+            fi
+            echo "paracross_testTxGroupFail left main paracross failed, get=$left_exec_val,expec=$amount_left"
+        else
+            count=$((count + 1))
+            break
+        fi
+    done
+    [ "$count" -eq 1 ]
+    local rst=$?
+    echo_rst "$FUNCNAME" "$rst"
+}
+
+#测试paraAssetWithdraw fail, 但是目前拿不到game　平行链ip构建平行链交易，可以在主链上构建不包含CreateNoBlanaceTxs的交易组来测试，不然需要在平行链上构建
+function paracross_testParaAssetWithdrawFail() {
+    local para_ip=$1
+
+    ispara=$(echo '"'"${para_ip}"'"' | jq '.|contains("8901")')
+    echo "ipara=$ispara"
+    local paracross_addr=""
+    local main_ip=${para_ip//8901/8801}
+
+    local game_token_test_addr="1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu"
+
+    #execer
+    local trade_exec_addr="12bihjzbaYWjcpDiiy9SuAWeqNksQdiN13"
+    #测试跨链过去１0个,交易组转账8000个失败的场景,主链应该还保持原来的
+    local amount_trade=800000000000
+    local amount_transfer=1000000000
+    local amount_left=10000000000
+
+    #当前为５个
+    left_exec_val=$(paracross_QueryMainAssetBalance "${game_token_test_addr}" "paracross") "user.p.game.coins.para"
+    if [ "${left_exec_val}" != $amount_left ]; then
+        echo "paracross_testTxGroupFail left main paracross failed, get=$left_exec_val,expec=$amount_left"
+        exit 1
+    fi
+
+    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}" "user.p.game" "paracross" "user.p.game.coins.para"
+
+    #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
+    local count=0
+    local times=100
+    while true; do
+        left_exec_val=$(paracross_QueryMainAssetBalance "${game_token_test_addr}" "paracross" "user.p.game.coins.para")
+        if [ "${left_exec_val}" != $amount_left ]; then
+            echo "left=${left_exec_val}-expect=${amount_left}"
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
             if [ $times -le 0 ]; then
@@ -346,7 +428,7 @@ function paracross_testTxGroup() {
     chain33_SendToAddress "${para_test_addr}" "$paracross_addr" "$amount_deposit" "${main_ip}"
     chain33_QueryExecBalance "${para_test_addr}" "paracross" "${main_ip}"
 
-    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}"
+    paracross_txgroupex "${amount_transfer}" "${amount_trade}" "${para_ip}" "user.p.para" "coins" "bty"
 
     local transfer_expect="200000000"
     local exec_expect="100000000"
@@ -379,10 +461,10 @@ paracross_testSelfConsensStages() {
         echo "$resp"
         exit 1
     fi
-    chainheight=$(jq '(.result.chainHeight)' <<<"$resp")
+    chainheight=$(jq -r '(.result.chainHeight)' <<<"$resp")
     newHeight=$((chainheight + 2000))
     echo "apply stage startHeight=$newHeight"
-    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload" : {"title":"user.p.para.","op" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "SelfStageConfig","payload" : {"title":"user.p.para.","ty" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
@@ -402,7 +484,7 @@ paracross_testSelfConsensStages() {
     JR_PRI="0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
     NL_PRI="0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115"
 
-    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "selfConsStageConfig","payload":{"title":"user.p.para.","op":"2","vote":{"id":"'"$id"'","value":1} }}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "SelfStageConfig","payload":{"title":"user.p.para.","ty":"2","vote":{"id":"'"$id"'","value":1} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     echo "send vote 1"
@@ -450,6 +532,7 @@ function run_testcases() {
     paracross_Transfer_Withdraw
     paracross_testTxGroup "$UNIT_HTTP"
     paracross_testTxGroupFail "$UNIT_HTTP"
+    #paracross_testParaAssetWithdrawFail "$UNIT_HTTP"
     paracross_testSelfConsensStages "$UNIT_HTTP"
 }
 

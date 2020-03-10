@@ -10,8 +10,8 @@ syncSetup = 100
 syncSetupCount = 10
 
 [auth]
-# test private key
-privateKey = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+# test private key 1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3
+privateKey = "22968d29c6de695381a8719ef7bf00e2edb6cce500bb59a4fc73c41887610962"
 publicKey = ""
 address = ""
 

@@ -300,16 +300,15 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 
 //SelfConsensStageConfig support self consens stage config
 func (a *action) SelfStageConfig(config *pt.ParaStageConfig) (*types.Receipt, error) {
-	if config.Op == pt.ParaOpNewApply {
+	if config.Ty == pt.ParaOpNewApply {
 		return a.stageApply(config.GetStage())
 
-	} else if config.Op == pt.ParaOpCancel {
+	} else if config.Ty == pt.ParaOpCancel {
 		return a.stageCancel(config.GetCancel())
 
-	} else if config.Op == pt.ParaOpVote {
+	} else if config.Ty == pt.ParaOpVote {
 		return a.stageVote(config.GetVote())
 	}
-
 	return nil, pt.ErrParaUnSupportNodeOper
 
 }
