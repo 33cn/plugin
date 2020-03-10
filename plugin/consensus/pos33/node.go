@@ -961,11 +961,10 @@ func (n *node) runLoop() {
 		case <-etm.C:
 			height := n.lastBlock().Height + 1
 			n.checkSorts(height, round)
-			if height <= 5 {
-				n.vote(height, round)
-			}
 			n.makeNextBlock(height, round)
-			n.vote(height, round)
+			if round > 0 {
+				n.vote(height, round)
+			} 
 			time.AfterFunc(time.Second*5, func() {
 				ch <- height
 			})
@@ -976,6 +975,10 @@ func (n *node) runLoop() {
 			}
 			round = 0
 			n.sortition(b, round)
+			if b.Height < 5 {
+				n.vote(b.Height+1, round)
+			}
+			n.vote(b.Height+5, round)
 			etm = time.NewTimer(time.Millisecond * 10)
 			n.clear(b.Height - 1)
 		default:
