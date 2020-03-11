@@ -180,7 +180,7 @@ func (e *Paracross) ExecLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer,
 	if !cfg.IsPara() && (act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer) {
 		return nil, nil
 	}
-	asset, err := e.getCrossAssetTransferInfo(payload, tx)
+	asset, err := e.getCrossAssetTransferInfo(payload, tx, act)
 	if err != nil {
 		return nil, err
 	}
