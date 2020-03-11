@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type AutonomyProposalChange struct {
 	PropChange *ProposalChange `protobuf:"bytes,1,opt,name=propChange,proto3" json:"propChange,omitempty"`
@@ -45,16 +44,17 @@ func (m *AutonomyProposalChange) Reset()         { *m = AutonomyProposalChange{}
 func (m *AutonomyProposalChange) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalChange) ProtoMessage()    {}
 func (*AutonomyProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{0}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{0}
 }
+
 func (m *AutonomyProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalChange.Unmarshal(m, b)
 }
 func (m *AutonomyProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AutonomyProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *AutonomyProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyProposalChange.Merge(dst, src)
+func (m *AutonomyProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AutonomyProposalChange.Merge(m, src)
 }
 func (m *AutonomyProposalChange) XXX_Size() int {
 	return xxx_messageInfo_AutonomyProposalChange.Size(m)
@@ -149,16 +149,17 @@ func (m *ProposalChange) Reset()         { *m = ProposalChange{} }
 func (m *ProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ProposalChange) ProtoMessage()    {}
 func (*ProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{1}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{1}
 }
+
 func (m *ProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalChange.Unmarshal(m, b)
 }
 func (m *ProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *ProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ProposalChange.Merge(dst, src)
+func (m *ProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ProposalChange.Merge(m, src)
 }
 func (m *ProposalChange) XXX_Size() int {
 	return xxx_messageInfo_ProposalChange.Size(m)
@@ -231,16 +232,17 @@ func (m *Change) Reset()         { *m = Change{} }
 func (m *Change) String() string { return proto.CompactTextString(m) }
 func (*Change) ProtoMessage()    {}
 func (*Change) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{2}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{2}
 }
+
 func (m *Change) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Change.Unmarshal(m, b)
 }
 func (m *Change) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Change.Marshal(b, m, deterministic)
 }
-func (dst *Change) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Change.Merge(dst, src)
+func (m *Change) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Change.Merge(m, src)
 }
 func (m *Change) XXX_Size() int {
 	return xxx_messageInfo_Change.Size(m)
@@ -276,16 +278,17 @@ func (m *RevokeProposalChange) Reset()         { *m = RevokeProposalChange{} }
 func (m *RevokeProposalChange) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalChange) ProtoMessage()    {}
 func (*RevokeProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{3}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{3}
 }
+
 func (m *RevokeProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalChange.Unmarshal(m, b)
 }
 func (m *RevokeProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RevokeProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *RevokeProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeProposalChange.Merge(dst, src)
+func (m *RevokeProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RevokeProposalChange.Merge(m, src)
 }
 func (m *RevokeProposalChange) XXX_Size() int {
 	return xxx_messageInfo_RevokeProposalChange.Size(m)
@@ -315,16 +318,17 @@ func (m *VoteProposalChange) Reset()         { *m = VoteProposalChange{} }
 func (m *VoteProposalChange) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalChange) ProtoMessage()    {}
 func (*VoteProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{4}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{4}
 }
+
 func (m *VoteProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalChange.Unmarshal(m, b)
 }
 func (m *VoteProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VoteProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *VoteProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VoteProposalChange.Merge(dst, src)
+func (m *VoteProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VoteProposalChange.Merge(m, src)
 }
 func (m *VoteProposalChange) XXX_Size() int {
 	return xxx_messageInfo_VoteProposalChange.Size(m)
@@ -360,16 +364,17 @@ func (m *TerminateProposalChange) Reset()         { *m = TerminateProposalChange
 func (m *TerminateProposalChange) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalChange) ProtoMessage()    {}
 func (*TerminateProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{5}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{5}
 }
+
 func (m *TerminateProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalChange.Unmarshal(m, b)
 }
 func (m *TerminateProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TerminateProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *TerminateProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TerminateProposalChange.Merge(dst, src)
+func (m *TerminateProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TerminateProposalChange.Merge(m, src)
 }
 func (m *TerminateProposalChange) XXX_Size() int {
 	return xxx_messageInfo_TerminateProposalChange.Size(m)
@@ -400,16 +405,17 @@ func (m *ReceiptProposalChange) Reset()         { *m = ReceiptProposalChange{} }
 func (m *ReceiptProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalChange) ProtoMessage()    {}
 func (*ReceiptProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{6}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{6}
 }
+
 func (m *ReceiptProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalChange.Unmarshal(m, b)
 }
 func (m *ReceiptProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptProposalChange.Merge(dst, src)
+func (m *ReceiptProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptProposalChange.Merge(m, src)
 }
 func (m *ReceiptProposalChange) XXX_Size() int {
 	return xxx_messageInfo_ReceiptProposalChange.Size(m)
@@ -446,16 +452,17 @@ func (m *LocalProposalChange) Reset()         { *m = LocalProposalChange{} }
 func (m *LocalProposalChange) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalChange) ProtoMessage()    {}
 func (*LocalProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{7}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{7}
 }
+
 func (m *LocalProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalChange.Unmarshal(m, b)
 }
 func (m *LocalProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *LocalProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalProposalChange.Merge(dst, src)
+func (m *LocalProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalProposalChange.Merge(m, src)
 }
 func (m *LocalProposalChange) XXX_Size() int {
 	return xxx_messageInfo_LocalProposalChange.Size(m)
@@ -497,16 +504,17 @@ func (m *ReqQueryProposalChange) Reset()         { *m = ReqQueryProposalChange{}
 func (m *ReqQueryProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalChange) ProtoMessage()    {}
 func (*ReqQueryProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{8}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{8}
 }
+
 func (m *ReqQueryProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalChange.Unmarshal(m, b)
 }
 func (m *ReqQueryProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqQueryProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *ReqQueryProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQueryProposalChange.Merge(dst, src)
+func (m *ReqQueryProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQueryProposalChange.Merge(m, src)
 }
 func (m *ReqQueryProposalChange) XXX_Size() int {
 	return xxx_messageInfo_ReqQueryProposalChange.Size(m)
@@ -570,16 +578,17 @@ func (m *ReplyQueryProposalChange) Reset()         { *m = ReplyQueryProposalChan
 func (m *ReplyQueryProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalChange) ProtoMessage()    {}
 func (*ReplyQueryProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_76e5456ad380528f, []int{9}
+	return fileDescriptor_4c013f0fbf0b6ffb, []int{9}
 }
+
 func (m *ReplyQueryProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalChange.Unmarshal(m, b)
 }
 func (m *ReplyQueryProposalChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyQueryProposalChange.Marshal(b, m, deterministic)
 }
-func (dst *ReplyQueryProposalChange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQueryProposalChange.Merge(dst, src)
+func (m *ReplyQueryProposalChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQueryProposalChange.Merge(m, src)
 }
 func (m *ReplyQueryProposalChange) XXX_Size() int {
 	return xxx_messageInfo_ReplyQueryProposalChange.Size(m)
@@ -610,9 +619,11 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalChange)(nil), "types.ReplyQueryProposalChange")
 }
 
-func init() { proto.RegisterFile("change.proto", fileDescriptor_change_76e5456ad380528f) }
+func init() {
+	proto.RegisterFile("change.proto", fileDescriptor_4c013f0fbf0b6ffb)
+}
 
-var fileDescriptor_change_76e5456ad380528f = []byte{
+var fileDescriptor_4c013f0fbf0b6ffb = []byte{
 	// 596 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x6f, 0xd4, 0x30,
 	0x10, 0x55, 0x9a, 0x4d, 0x76, 0x77, 0x4a, 0xab, 0x62, 0xda, 0xc5, 0xaa, 0x00, 0x45, 0x39, 0x40,

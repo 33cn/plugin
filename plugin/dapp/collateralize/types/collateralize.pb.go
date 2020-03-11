@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // 放贷信息
 type Collateralize struct {
@@ -48,16 +47,17 @@ func (m *Collateralize) Reset()         { *m = Collateralize{} }
 func (m *Collateralize) String() string { return proto.CompactTextString(m) }
 func (*Collateralize) ProtoMessage()    {}
 func (*Collateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{0}
+	return fileDescriptor_a988fb4a61381972, []int{0}
 }
+
 func (m *Collateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Collateralize.Unmarshal(m, b)
 }
 func (m *Collateralize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Collateralize.Marshal(b, m, deterministic)
 }
-func (dst *Collateralize) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Collateralize.Merge(dst, src)
+func (m *Collateralize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Collateralize.Merge(m, src)
 }
 func (m *Collateralize) XXX_Size() int {
 	return xxx_messageInfo_Collateralize.Size(m)
@@ -196,16 +196,17 @@ func (m *BorrowRecord) Reset()         { *m = BorrowRecord{} }
 func (m *BorrowRecord) String() string { return proto.CompactTextString(m) }
 func (*BorrowRecord) ProtoMessage()    {}
 func (*BorrowRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{1}
+	return fileDescriptor_a988fb4a61381972, []int{1}
 }
+
 func (m *BorrowRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BorrowRecord.Unmarshal(m, b)
 }
 func (m *BorrowRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BorrowRecord.Marshal(b, m, deterministic)
 }
-func (dst *BorrowRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BorrowRecord.Merge(dst, src)
+func (m *BorrowRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BorrowRecord.Merge(m, src)
 }
 func (m *BorrowRecord) XXX_Size() int {
 	return xxx_messageInfo_BorrowRecord.Size(m)
@@ -315,16 +316,17 @@ func (m *AssetPriceRecord) Reset()         { *m = AssetPriceRecord{} }
 func (m *AssetPriceRecord) String() string { return proto.CompactTextString(m) }
 func (*AssetPriceRecord) ProtoMessage()    {}
 func (*AssetPriceRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{2}
+	return fileDescriptor_a988fb4a61381972, []int{2}
 }
+
 func (m *AssetPriceRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AssetPriceRecord.Unmarshal(m, b)
 }
 func (m *AssetPriceRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AssetPriceRecord.Marshal(b, m, deterministic)
 }
-func (dst *AssetPriceRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AssetPriceRecord.Merge(dst, src)
+func (m *AssetPriceRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AssetPriceRecord.Merge(m, src)
 }
 func (m *AssetPriceRecord) XXX_Size() int {
 	return xxx_messageInfo_AssetPriceRecord.Size(m)
@@ -384,16 +386,17 @@ func (m *CollateralizeAction) Reset()         { *m = CollateralizeAction{} }
 func (m *CollateralizeAction) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAction) ProtoMessage()    {}
 func (*CollateralizeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{3}
+	return fileDescriptor_a988fb4a61381972, []int{3}
 }
+
 func (m *CollateralizeAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAction.Unmarshal(m, b)
 }
 func (m *CollateralizeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAction.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAction.Merge(dst, src)
+func (m *CollateralizeAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAction.Merge(m, src)
 }
 func (m *CollateralizeAction) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAction.Size(m)
@@ -513,9 +516,9 @@ func (m *CollateralizeAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*CollateralizeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _CollateralizeAction_OneofMarshaler, _CollateralizeAction_OneofUnmarshaler, _CollateralizeAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*CollateralizeAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*CollateralizeAction_Create)(nil),
 		(*CollateralizeAction_Borrow)(nil),
 		(*CollateralizeAction_Repay)(nil),
@@ -524,162 +527,6 @@ func (*CollateralizeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.B
 		(*CollateralizeAction_Retrieve)(nil),
 		(*CollateralizeAction_Manage)(nil),
 	}
-}
-
-func _CollateralizeAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*CollateralizeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CollateralizeAction_Create:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Create); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Borrow:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Borrow); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Repay:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Repay); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Append:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Append); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Feed:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Feed); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Retrieve:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Retrieve); err != nil {
-			return err
-		}
-	case *CollateralizeAction_Manage:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Manage); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("CollateralizeAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _CollateralizeAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*CollateralizeAction)
-	switch tag {
-	case 1: // value.create
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeCreate)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Create{msg}
-		return true, err
-	case 2: // value.borrow
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeBorrow)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Borrow{msg}
-		return true, err
-	case 3: // value.repay
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeRepay)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Repay{msg}
-		return true, err
-	case 4: // value.append
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeAppend)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Append{msg}
-		return true, err
-	case 5: // value.feed
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeFeed)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Feed{msg}
-		return true, err
-	case 6: // value.retrieve
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeRetrieve)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Retrieve{msg}
-		return true, err
-	case 7: // value.manage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CollateralizeManage)
-		err := b.DecodeMessage(msg)
-		m.Value = &CollateralizeAction_Manage{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _CollateralizeAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*CollateralizeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CollateralizeAction_Create:
-		s := proto.Size(x.Create)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Borrow:
-		s := proto.Size(x.Borrow)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Repay:
-		s := proto.Size(x.Repay)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Append:
-		s := proto.Size(x.Append)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Feed:
-		s := proto.Size(x.Feed)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Retrieve:
-		s := proto.Size(x.Retrieve)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CollateralizeAction_Manage:
-		s := proto.Size(x.Manage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type CollateralizeManage struct {
@@ -698,16 +545,17 @@ func (m *CollateralizeManage) Reset()         { *m = CollateralizeManage{} }
 func (m *CollateralizeManage) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeManage) ProtoMessage()    {}
 func (*CollateralizeManage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{4}
+	return fileDescriptor_a988fb4a61381972, []int{4}
 }
+
 func (m *CollateralizeManage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeManage.Unmarshal(m, b)
 }
 func (m *CollateralizeManage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeManage.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeManage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeManage.Merge(dst, src)
+func (m *CollateralizeManage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeManage.Merge(m, src)
 }
 func (m *CollateralizeManage) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeManage.Size(m)
@@ -771,16 +619,17 @@ func (m *CollateralizeAddr) Reset()         { *m = CollateralizeAddr{} }
 func (m *CollateralizeAddr) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAddr) ProtoMessage()    {}
 func (*CollateralizeAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{5}
+	return fileDescriptor_a988fb4a61381972, []int{5}
 }
+
 func (m *CollateralizeAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAddr.Unmarshal(m, b)
 }
 func (m *CollateralizeAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAddr.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAddr.Merge(dst, src)
+func (m *CollateralizeAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAddr.Merge(m, src)
 }
 func (m *CollateralizeAddr) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAddr.Size(m)
@@ -810,16 +659,17 @@ func (m *CollateralizeCreate) Reset()         { *m = CollateralizeCreate{} }
 func (m *CollateralizeCreate) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeCreate) ProtoMessage()    {}
 func (*CollateralizeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{6}
+	return fileDescriptor_a988fb4a61381972, []int{6}
 }
+
 func (m *CollateralizeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeCreate.Unmarshal(m, b)
 }
 func (m *CollateralizeCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeCreate.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeCreate.Merge(dst, src)
+func (m *CollateralizeCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeCreate.Merge(m, src)
 }
 func (m *CollateralizeCreate) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeCreate.Size(m)
@@ -850,16 +700,17 @@ func (m *CollateralizeBorrow) Reset()         { *m = CollateralizeBorrow{} }
 func (m *CollateralizeBorrow) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeBorrow) ProtoMessage()    {}
 func (*CollateralizeBorrow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{7}
+	return fileDescriptor_a988fb4a61381972, []int{7}
 }
+
 func (m *CollateralizeBorrow) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeBorrow.Unmarshal(m, b)
 }
 func (m *CollateralizeBorrow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeBorrow.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeBorrow) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeBorrow.Merge(dst, src)
+func (m *CollateralizeBorrow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeBorrow.Merge(m, src)
 }
 func (m *CollateralizeBorrow) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeBorrow.Size(m)
@@ -897,16 +748,17 @@ func (m *CollateralizeRepay) Reset()         { *m = CollateralizeRepay{} }
 func (m *CollateralizeRepay) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRepay) ProtoMessage()    {}
 func (*CollateralizeRepay) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{8}
+	return fileDescriptor_a988fb4a61381972, []int{8}
 }
+
 func (m *CollateralizeRepay) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRepay.Unmarshal(m, b)
 }
 func (m *CollateralizeRepay) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRepay.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRepay) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRepay.Merge(dst, src)
+func (m *CollateralizeRepay) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRepay.Merge(m, src)
 }
 func (m *CollateralizeRepay) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRepay.Size(m)
@@ -945,16 +797,17 @@ func (m *CollateralizeAppend) Reset()         { *m = CollateralizeAppend{} }
 func (m *CollateralizeAppend) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeAppend) ProtoMessage()    {}
 func (*CollateralizeAppend) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{9}
+	return fileDescriptor_a988fb4a61381972, []int{9}
 }
+
 func (m *CollateralizeAppend) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeAppend.Unmarshal(m, b)
 }
 func (m *CollateralizeAppend) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeAppend.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeAppend) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeAppend.Merge(dst, src)
+func (m *CollateralizeAppend) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeAppend.Merge(m, src)
 }
 func (m *CollateralizeAppend) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeAppend.Size(m)
@@ -1000,16 +853,17 @@ func (m *CollateralizeFeed) Reset()         { *m = CollateralizeFeed{} }
 func (m *CollateralizeFeed) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeFeed) ProtoMessage()    {}
 func (*CollateralizeFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{10}
+	return fileDescriptor_a988fb4a61381972, []int{10}
 }
+
 func (m *CollateralizeFeed) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeFeed.Unmarshal(m, b)
 }
 func (m *CollateralizeFeed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeFeed.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeFeed) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeFeed.Merge(dst, src)
+func (m *CollateralizeFeed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeFeed.Merge(m, src)
 }
 func (m *CollateralizeFeed) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeFeed.Size(m)
@@ -1054,16 +908,17 @@ func (m *CollateralizeRetrieve) Reset()         { *m = CollateralizeRetrieve{} }
 func (m *CollateralizeRetrieve) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRetrieve) ProtoMessage()    {}
 func (*CollateralizeRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{11}
+	return fileDescriptor_a988fb4a61381972, []int{11}
 }
+
 func (m *CollateralizeRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRetrieve.Unmarshal(m, b)
 }
 func (m *CollateralizeRetrieve) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRetrieve.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRetrieve) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRetrieve.Merge(dst, src)
+func (m *CollateralizeRetrieve) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRetrieve.Merge(m, src)
 }
 func (m *CollateralizeRetrieve) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRetrieve.Size(m)
@@ -1103,16 +958,17 @@ func (m *ReceiptCollateralize) Reset()         { *m = ReceiptCollateralize{} }
 func (m *ReceiptCollateralize) String() string { return proto.CompactTextString(m) }
 func (*ReceiptCollateralize) ProtoMessage()    {}
 func (*ReceiptCollateralize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{12}
+	return fileDescriptor_a988fb4a61381972, []int{12}
 }
+
 func (m *ReceiptCollateralize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptCollateralize.Unmarshal(m, b)
 }
 func (m *ReceiptCollateralize) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptCollateralize.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptCollateralize) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptCollateralize.Merge(dst, src)
+func (m *ReceiptCollateralize) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptCollateralize.Merge(m, src)
 }
 func (m *ReceiptCollateralize) XXX_Size() int {
 	return xxx_messageInfo_ReceiptCollateralize.Size(m)
@@ -1163,16 +1019,17 @@ func (m *CollateralizeRecords) Reset()         { *m = CollateralizeRecords{} }
 func (m *CollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*CollateralizeRecords) ProtoMessage()    {}
 func (*CollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{13}
+	return fileDescriptor_a988fb4a61381972, []int{13}
 }
+
 func (m *CollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CollateralizeRecords.Unmarshal(m, b)
 }
 func (m *CollateralizeRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CollateralizeRecords.Marshal(b, m, deterministic)
 }
-func (dst *CollateralizeRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CollateralizeRecords.Merge(dst, src)
+func (m *CollateralizeRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CollateralizeRecords.Merge(m, src)
 }
 func (m *CollateralizeRecords) XXX_Size() int {
 	return xxx_messageInfo_CollateralizeRecords.Size(m)
@@ -1202,16 +1059,17 @@ func (m *ReqCollateralizeInfo) Reset()         { *m = ReqCollateralizeInfo{} }
 func (m *ReqCollateralizeInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfo) ProtoMessage()    {}
 func (*ReqCollateralizeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{14}
+	return fileDescriptor_a988fb4a61381972, []int{14}
 }
+
 func (m *ReqCollateralizeInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfo.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeInfo.Merge(dst, src)
+func (m *ReqCollateralizeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeInfo.Merge(m, src)
 }
 func (m *ReqCollateralizeInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeInfo.Size(m)
@@ -1251,16 +1109,17 @@ func (m *RepCollateralizeCurrentInfo) Reset()         { *m = RepCollateralizeCur
 func (m *RepCollateralizeCurrentInfo) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfo) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{15}
+	return fileDescriptor_a988fb4a61381972, []int{15}
 }
+
 func (m *RepCollateralizeCurrentInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Unmarshal(m, b)
 }
 func (m *RepCollateralizeCurrentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeCurrentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeCurrentInfo.Merge(dst, src)
+func (m *RepCollateralizeCurrentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeCurrentInfo.Merge(m, src)
 }
 func (m *RepCollateralizeCurrentInfo) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeCurrentInfo.Size(m)
@@ -1360,16 +1219,17 @@ func (m *ReqCollateralizeInfos) Reset()         { *m = ReqCollateralizeInfos{} }
 func (m *ReqCollateralizeInfos) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeInfos) ProtoMessage()    {}
 func (*ReqCollateralizeInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{16}
+	return fileDescriptor_a988fb4a61381972, []int{16}
 }
+
 func (m *ReqCollateralizeInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeInfos.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeInfos.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeInfos.Merge(dst, src)
+func (m *ReqCollateralizeInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeInfos.Merge(m, src)
 }
 func (m *ReqCollateralizeInfos) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeInfos.Size(m)
@@ -1399,16 +1259,17 @@ func (m *RepCollateralizeCurrentInfos) Reset()         { *m = RepCollateralizeCu
 func (m *RepCollateralizeCurrentInfos) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeCurrentInfos) ProtoMessage()    {}
 func (*RepCollateralizeCurrentInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{17}
+	return fileDescriptor_a988fb4a61381972, []int{17}
 }
+
 func (m *RepCollateralizeCurrentInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Unmarshal(m, b)
 }
 func (m *RepCollateralizeCurrentInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeCurrentInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeCurrentInfos.Merge(dst, src)
+func (m *RepCollateralizeCurrentInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeCurrentInfos.Merge(m, src)
 }
 func (m *RepCollateralizeCurrentInfos) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeCurrentInfos.Size(m)
@@ -1439,16 +1300,17 @@ func (m *ReqCollateralizeByStatus) Reset()         { *m = ReqCollateralizeByStat
 func (m *ReqCollateralizeByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{18}
+	return fileDescriptor_a988fb4a61381972, []int{18}
 }
+
 func (m *ReqCollateralizeByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeByStatus.Merge(dst, src)
+func (m *ReqCollateralizeByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeByStatus.Merge(m, src)
 }
 func (m *ReqCollateralizeByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeByStatus.Size(m)
@@ -1487,16 +1349,17 @@ func (m *ReqCollateralizeByAddr) Reset()         { *m = ReqCollateralizeByAddr{}
 func (m *ReqCollateralizeByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{19}
+	return fileDescriptor_a988fb4a61381972, []int{19}
 }
+
 func (m *ReqCollateralizeByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeByAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeByAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeByAddr.Merge(dst, src)
+func (m *ReqCollateralizeByAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeByAddr.Merge(m, src)
 }
 func (m *ReqCollateralizeByAddr) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeByAddr.Size(m)
@@ -1540,16 +1403,17 @@ func (m *RepCollateralizeIDs) Reset()         { *m = RepCollateralizeIDs{} }
 func (m *RepCollateralizeIDs) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeIDs) ProtoMessage()    {}
 func (*RepCollateralizeIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{20}
+	return fileDescriptor_a988fb4a61381972, []int{20}
 }
+
 func (m *RepCollateralizeIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeIDs.Unmarshal(m, b)
 }
 func (m *RepCollateralizeIDs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeIDs.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeIDs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeIDs.Merge(dst, src)
+func (m *RepCollateralizeIDs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeIDs.Merge(m, src)
 }
 func (m *RepCollateralizeIDs) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeIDs.Size(m)
@@ -1582,16 +1446,17 @@ func (m *ReqCollateralizeRecordByAddr) Reset()         { *m = ReqCollateralizeRe
 func (m *ReqCollateralizeRecordByAddr) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByAddr) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByAddr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{21}
+	return fileDescriptor_a988fb4a61381972, []int{21}
 }
+
 func (m *ReqCollateralizeRecordByAddr) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecordByAddr) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecordByAddr) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecordByAddr.Merge(dst, src)
+func (m *ReqCollateralizeRecordByAddr) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecordByAddr.Merge(m, src)
 }
 func (m *ReqCollateralizeRecordByAddr) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecordByAddr.Size(m)
@@ -1644,16 +1509,17 @@ func (m *ReqCollateralizeRecordByStatus) Reset()         { *m = ReqCollateralize
 func (m *ReqCollateralizeRecordByStatus) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecordByStatus) ProtoMessage()    {}
 func (*ReqCollateralizeRecordByStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{22}
+	return fileDescriptor_a988fb4a61381972, []int{22}
 }
+
 func (m *ReqCollateralizeRecordByStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecordByStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecordByStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecordByStatus.Merge(dst, src)
+func (m *ReqCollateralizeRecordByStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecordByStatus.Merge(m, src)
 }
 func (m *ReqCollateralizeRecordByStatus) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecordByStatus.Size(m)
@@ -1697,16 +1563,17 @@ func (m *RepCollateralizeRecords) Reset()         { *m = RepCollateralizeRecords
 func (m *RepCollateralizeRecords) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecords) ProtoMessage()    {}
 func (*RepCollateralizeRecords) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{23}
+	return fileDescriptor_a988fb4a61381972, []int{23}
 }
+
 func (m *RepCollateralizeRecords) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecords.Unmarshal(m, b)
 }
 func (m *RepCollateralizeRecords) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeRecords.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeRecords) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeRecords.Merge(dst, src)
+func (m *RepCollateralizeRecords) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeRecords.Merge(m, src)
 }
 func (m *RepCollateralizeRecords) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeRecords.Size(m)
@@ -1737,16 +1604,17 @@ func (m *ReqCollateralizeRecord) Reset()         { *m = ReqCollateralizeRecord{}
 func (m *ReqCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*ReqCollateralizeRecord) ProtoMessage()    {}
 func (*ReqCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{24}
+	return fileDescriptor_a988fb4a61381972, []int{24}
 }
+
 func (m *ReqCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCollateralizeRecord.Unmarshal(m, b)
 }
 func (m *ReqCollateralizeRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCollateralizeRecord.Marshal(b, m, deterministic)
 }
-func (dst *ReqCollateralizeRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCollateralizeRecord.Merge(dst, src)
+func (m *ReqCollateralizeRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCollateralizeRecord.Merge(m, src)
 }
 func (m *ReqCollateralizeRecord) XXX_Size() int {
 	return xxx_messageInfo_ReqCollateralizeRecord.Size(m)
@@ -1783,16 +1651,17 @@ func (m *RepCollateralizeRecord) Reset()         { *m = RepCollateralizeRecord{}
 func (m *RepCollateralizeRecord) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeRecord) ProtoMessage()    {}
 func (*RepCollateralizeRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{25}
+	return fileDescriptor_a988fb4a61381972, []int{25}
 }
+
 func (m *RepCollateralizeRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeRecord.Unmarshal(m, b)
 }
 func (m *RepCollateralizeRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeRecord.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeRecord.Merge(dst, src)
+func (m *RepCollateralizeRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeRecord.Merge(m, src)
 }
 func (m *RepCollateralizeRecord) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeRecord.Size(m)
@@ -1828,16 +1697,17 @@ func (m *RepCollateralizeConfig) Reset()         { *m = RepCollateralizeConfig{}
 func (m *RepCollateralizeConfig) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeConfig) ProtoMessage()    {}
 func (*RepCollateralizeConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{26}
+	return fileDescriptor_a988fb4a61381972, []int{26}
 }
+
 func (m *RepCollateralizeConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeConfig.Unmarshal(m, b)
 }
 func (m *RepCollateralizeConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeConfig.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeConfig.Merge(dst, src)
+func (m *RepCollateralizeConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeConfig.Merge(m, src)
 }
 func (m *RepCollateralizeConfig) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeConfig.Size(m)
@@ -1909,16 +1779,17 @@ func (m *RepCollateralizePrice) Reset()         { *m = RepCollateralizePrice{} }
 func (m *RepCollateralizePrice) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizePrice) ProtoMessage()    {}
 func (*RepCollateralizePrice) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{27}
+	return fileDescriptor_a988fb4a61381972, []int{27}
 }
+
 func (m *RepCollateralizePrice) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizePrice.Unmarshal(m, b)
 }
 func (m *RepCollateralizePrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizePrice.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizePrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizePrice.Merge(dst, src)
+func (m *RepCollateralizePrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizePrice.Merge(m, src)
 }
 func (m *RepCollateralizePrice) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizePrice.Size(m)
@@ -1948,16 +1819,17 @@ func (m *RepCollateralizeUserBalance) Reset()         { *m = RepCollateralizeUse
 func (m *RepCollateralizeUserBalance) String() string { return proto.CompactTextString(m) }
 func (*RepCollateralizeUserBalance) ProtoMessage()    {}
 func (*RepCollateralizeUserBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_collateralize_fc15b72da9e9ae6f, []int{28}
+	return fileDescriptor_a988fb4a61381972, []int{28}
 }
+
 func (m *RepCollateralizeUserBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepCollateralizeUserBalance.Unmarshal(m, b)
 }
 func (m *RepCollateralizeUserBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepCollateralizeUserBalance.Marshal(b, m, deterministic)
 }
-func (dst *RepCollateralizeUserBalance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepCollateralizeUserBalance.Merge(dst, src)
+func (m *RepCollateralizeUserBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepCollateralizeUserBalance.Merge(m, src)
 }
 func (m *RepCollateralizeUserBalance) XXX_Size() int {
 	return xxx_messageInfo_RepCollateralizeUserBalance.Size(m)
@@ -2007,9 +1879,11 @@ func init() {
 	proto.RegisterType((*RepCollateralizeUserBalance)(nil), "types.RepCollateralizeUserBalance")
 }
 
-func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_collateralize_fc15b72da9e9ae6f) }
+func init() {
+	proto.RegisterFile("collateralize.proto", fileDescriptor_a988fb4a61381972)
+}
 
-var fileDescriptor_collateralize_fc15b72da9e9ae6f = []byte{
+var fileDescriptor_a988fb4a61381972 = []byte{
 	// 1208 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x58, 0x5b, 0x6f, 0xdc, 0x44,
 	0x14, 0x8e, 0xd7, 0x7b, 0xc9, 0x9e, 0x4d, 0xd2, 0x74, 0x92, 0x06, 0xd3, 0x46, 0xd1, 0x6a, 0x84,
