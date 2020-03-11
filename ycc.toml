@@ -121,10 +121,9 @@ targetTimePerBlock=16
 [store]
 name="kvmvccmavl"
 driver="leveldb"
-dbPath="datadir/mavltree"
-dbCache=128
-# store数据库版本
 storedbVersion="2.0.0"
+dbPath="paradatadir/mavltree"
+dbCache=128
 
 [store.sub.mavl]
 enableMavlPrefix=false
@@ -152,7 +151,7 @@ enableMemTree=true
 enableMemVal=true
 # 缓存close ticket数目，该缓存越大同步速度越快，最大设置到1500000
 tkCloseCacheLen=100000
-# 该参数针对平行链，主链无需开启此功能
+# 该参数针对平行链，如果平行链的ForkKvmvccmavl高度不为0,需要开启此功能,开启此功能需要从0开始执行区块
 enableEmptyBlockHandle=false
 
 [wallet]
@@ -198,6 +197,119 @@ ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
 ForkRootHash=0 
 
+[fork.sub.pos33]
+Enable=0
+
+[fork.sub.coins]
+Enable=0
+
+[fork.sub.ticket]
+Enable=0
+ForkTicketId =0
+ForkTicketVrf =0
+
+[fork.sub.retrieve]
+Enable=0
+ForkRetrive=0
+ForkRetriveAsset=0
+
+[fork.sub.hashlock]
+Enable=0
+ForkBadRepeatSecret=0
+
+[fork.sub.manage]
+Enable=0
+ForkManageExec=0
+
+[fork.sub.token]
+Enable=0
+ForkTokenBlackList= 0
+ForkBadTokenSymbol= 0
+ForkTokenPrice=0
+ForkTokenSymbolWithNumber=0
+ForkTokenCheck= 0
+
+[fork.sub.trade]
+Enable=0
+ForkTradeBuyLimit= 0
+ForkTradeAsset= 0
+ForkTradeID = 0
+ForkTradeFixAssetDB = 0
+ForkTradePrice = 0
+
+[fork.sub.paracross]
+Enable=0
+ForkParacrossWithdrawFromParachain=0
+ForkParacrossCommitTx=0
+ForkLoopCheckCommitTxDone=0
+#仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7000000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
+ForkParaSelfConsStages=0
+ForkParaAssetTransferRbk=0
+
+[fork.sub.evm]
+Enable=0
+ForkEVMState=0
+ForkEVMABI=0
+ForkEVMFrozen=0
+ForkEVMKVHash=0
+
+[fork.sub.blackwhite]
+Enable=0
+ForkBlackWhiteV2=0
+
+[fork.sub.cert]
+Enable=0
+
+[fork.sub.guess]
+Enable=0
+
+[fork.sub.lottery]
+Enable=0
+
+[fork.sub.oracle]
+Enable=0
+
+[fork.sub.relay]
+Enable=0
+
+[fork.sub.norm]
+Enable=0
+
+[fork.sub.pokerbull]
+Enable=0
+
+[fork.sub.privacy]
+Enable=0
+
+[fork.sub.game]
+Enable=0
+
+[fork.sub.multisig]
+Enable=0
+
+[fork.sub.unfreeze]
+Enable=0
+ForkTerminatePart=0
+ForkUnfreezeIDX= 0
+
+[fork.sub.autonomy]
+Enable=0
+
+[fork.sub.jsvm]
+Enable=0
+
+[fork.sub.issuance]
+Enable=0
+ForkIssuanceTableUpdate=0
+
+[fork.sub.collateralize]
+Enable=0
+ForkCollateralizeTableUpdate=0
+
+#对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
+[fork.sub.store-kvmvccmavl]
+ForkKvmvccmavl=0
+
 [exec]
 isFree=false
 minExecFee=100000
@@ -205,43 +317,6 @@ maxExecFee=1000000000
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
-
-[exec.sub.token]
-saveTokenTxList=true
-tokenApprs = [
-	"1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
-	"1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",
-	"1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",
-	"1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",
-	"1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",
-	"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
-]
-
-[exec.sub.cert]
-# 是否启用证书验证和签名
-enable=false
-# 加密文件路径
-cryptoPath="authdir/crypto"
-# 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
-signType="auth_ecdsa"
-
-[exec.sub.relay]
-genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-
-[exec.sub.manage]
-superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S", 
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 
-    "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
-]
-[exec.sub.paracross]
-nodeGroupFrozenCoins=0
-#平行链共识停止后主链等待的高度
-paraConsensusStopBlocks=30000
-
-[exec.sub.autonomy]
-total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
-useBalance=false
 
 [metrics]
 #是否使能发送metrics数据的发送
