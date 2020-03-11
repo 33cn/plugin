@@ -4,17 +4,15 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-
-	context "golang.org/x/net/context"
-
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -26,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // trade 交易部分
 //
@@ -49,16 +47,17 @@ func (m *Trade) Reset()         { *m = Trade{} }
 func (m *Trade) String() string { return proto.CompactTextString(m) }
 func (*Trade) ProtoMessage()    {}
 func (*Trade) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{0}
+	return fileDescriptor_ee944bd90e8a0312, []int{0}
 }
+
 func (m *Trade) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Trade.Unmarshal(m, b)
 }
 func (m *Trade) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Trade.Marshal(b, m, deterministic)
 }
-func (dst *Trade) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Trade.Merge(dst, src)
+func (m *Trade) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Trade.Merge(m, src)
 }
 func (m *Trade) XXX_Size() int {
 	return xxx_messageInfo_Trade.Size(m)
@@ -165,9 +164,9 @@ func (m *Trade) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Trade) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Trade_OneofMarshaler, _Trade_OneofUnmarshaler, _Trade_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Trade) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Trade_SellLimit)(nil),
 		(*Trade_BuyMarket)(nil),
 		(*Trade_RevokeSell)(nil),
@@ -175,144 +174,6 @@ func (*Trade) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, 
 		(*Trade_SellMarket)(nil),
 		(*Trade_RevokeBuy)(nil),
 	}
-}
-
-func _Trade_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Trade)
-	// value
-	switch x := m.Value.(type) {
-	case *Trade_SellLimit:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.SellLimit); err != nil {
-			return err
-		}
-	case *Trade_BuyMarket:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.BuyMarket); err != nil {
-			return err
-		}
-	case *Trade_RevokeSell:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RevokeSell); err != nil {
-			return err
-		}
-	case *Trade_BuyLimit:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.BuyLimit); err != nil {
-			return err
-		}
-	case *Trade_SellMarket:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.SellMarket); err != nil {
-			return err
-		}
-	case *Trade_RevokeBuy:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RevokeBuy); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Trade.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Trade_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Trade)
-	switch tag {
-	case 1: // value.sellLimit
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForSell)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_SellLimit{msg}
-		return true, err
-	case 2: // value.buyMarket
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForBuy)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_BuyMarket{msg}
-		return true, err
-	case 3: // value.revokeSell
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForRevokeSell)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_RevokeSell{msg}
-		return true, err
-	case 5: // value.buyLimit
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForBuyLimit)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_BuyLimit{msg}
-		return true, err
-	case 6: // value.sellMarket
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForSellMarket)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_SellMarket{msg}
-		return true, err
-	case 7: // value.revokeBuy
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TradeForRevokeBuy)
-		err := b.DecodeMessage(msg)
-		m.Value = &Trade_RevokeBuy{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Trade_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Trade)
-	// value
-	switch x := m.Value.(type) {
-	case *Trade_SellLimit:
-		s := proto.Size(x.SellLimit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Trade_BuyMarket:
-		s := proto.Size(x.BuyMarket)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Trade_RevokeSell:
-		s := proto.Size(x.RevokeSell)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Trade_BuyLimit:
-		s := proto.Size(x.BuyLimit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Trade_SellMarket:
-		s := proto.Size(x.SellMarket)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Trade_RevokeBuy:
-		s := proto.Size(x.RevokeBuy)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 // 创建众筹交易,确定一手交易的token的数量，单价以及总共有多少手token可以进行众筹
@@ -343,16 +204,17 @@ func (m *TradeForSell) Reset()         { *m = TradeForSell{} }
 func (m *TradeForSell) String() string { return proto.CompactTextString(m) }
 func (*TradeForSell) ProtoMessage()    {}
 func (*TradeForSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{1}
+	return fileDescriptor_ee944bd90e8a0312, []int{1}
 }
+
 func (m *TradeForSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForSell.Unmarshal(m, b)
 }
 func (m *TradeForSell) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForSell.Marshal(b, m, deterministic)
 }
-func (dst *TradeForSell) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForSell.Merge(dst, src)
+func (m *TradeForSell) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForSell.Merge(m, src)
 }
 func (m *TradeForSell) XXX_Size() int {
 	return xxx_messageInfo_TradeForSell.Size(m)
@@ -454,16 +316,17 @@ func (m *TradeForBuy) Reset()         { *m = TradeForBuy{} }
 func (m *TradeForBuy) String() string { return proto.CompactTextString(m) }
 func (*TradeForBuy) ProtoMessage()    {}
 func (*TradeForBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{2}
+	return fileDescriptor_ee944bd90e8a0312, []int{2}
 }
+
 func (m *TradeForBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForBuy.Unmarshal(m, b)
 }
 func (m *TradeForBuy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForBuy.Marshal(b, m, deterministic)
 }
-func (dst *TradeForBuy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForBuy.Merge(dst, src)
+func (m *TradeForBuy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForBuy.Merge(m, src)
 }
 func (m *TradeForBuy) XXX_Size() int {
 	return xxx_messageInfo_TradeForBuy.Size(m)
@@ -500,16 +363,17 @@ func (m *TradeForRevokeSell) Reset()         { *m = TradeForRevokeSell{} }
 func (m *TradeForRevokeSell) String() string { return proto.CompactTextString(m) }
 func (*TradeForRevokeSell) ProtoMessage()    {}
 func (*TradeForRevokeSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{3}
+	return fileDescriptor_ee944bd90e8a0312, []int{3}
 }
+
 func (m *TradeForRevokeSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForRevokeSell.Unmarshal(m, b)
 }
 func (m *TradeForRevokeSell) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForRevokeSell.Marshal(b, m, deterministic)
 }
-func (dst *TradeForRevokeSell) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForRevokeSell.Merge(dst, src)
+func (m *TradeForRevokeSell) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForRevokeSell.Merge(m, src)
 }
 func (m *TradeForRevokeSell) XXX_Size() int {
 	return xxx_messageInfo_TradeForRevokeSell.Size(m)
@@ -547,16 +411,17 @@ func (m *TradeForBuyLimit) Reset()         { *m = TradeForBuyLimit{} }
 func (m *TradeForBuyLimit) String() string { return proto.CompactTextString(m) }
 func (*TradeForBuyLimit) ProtoMessage()    {}
 func (*TradeForBuyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{4}
+	return fileDescriptor_ee944bd90e8a0312, []int{4}
 }
+
 func (m *TradeForBuyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForBuyLimit.Unmarshal(m, b)
 }
 func (m *TradeForBuyLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForBuyLimit.Marshal(b, m, deterministic)
 }
-func (dst *TradeForBuyLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForBuyLimit.Merge(dst, src)
+func (m *TradeForBuyLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForBuyLimit.Merge(m, src)
 }
 func (m *TradeForBuyLimit) XXX_Size() int {
 	return xxx_messageInfo_TradeForBuyLimit.Size(m)
@@ -636,16 +501,17 @@ func (m *TradeForSellMarket) Reset()         { *m = TradeForSellMarket{} }
 func (m *TradeForSellMarket) String() string { return proto.CompactTextString(m) }
 func (*TradeForSellMarket) ProtoMessage()    {}
 func (*TradeForSellMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{5}
+	return fileDescriptor_ee944bd90e8a0312, []int{5}
 }
+
 func (m *TradeForSellMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForSellMarket.Unmarshal(m, b)
 }
 func (m *TradeForSellMarket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForSellMarket.Marshal(b, m, deterministic)
 }
-func (dst *TradeForSellMarket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForSellMarket.Merge(dst, src)
+func (m *TradeForSellMarket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForSellMarket.Merge(m, src)
 }
 func (m *TradeForSellMarket) XXX_Size() int {
 	return xxx_messageInfo_TradeForSellMarket.Size(m)
@@ -682,16 +548,17 @@ func (m *TradeForRevokeBuy) Reset()         { *m = TradeForRevokeBuy{} }
 func (m *TradeForRevokeBuy) String() string { return proto.CompactTextString(m) }
 func (*TradeForRevokeBuy) ProtoMessage()    {}
 func (*TradeForRevokeBuy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{6}
+	return fileDescriptor_ee944bd90e8a0312, []int{6}
 }
+
 func (m *TradeForRevokeBuy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeForRevokeBuy.Unmarshal(m, b)
 }
 func (m *TradeForRevokeBuy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TradeForRevokeBuy.Marshal(b, m, deterministic)
 }
-func (dst *TradeForRevokeBuy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TradeForRevokeBuy.Merge(dst, src)
+func (m *TradeForRevokeBuy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TradeForRevokeBuy.Merge(m, src)
 }
 func (m *TradeForRevokeBuy) XXX_Size() int {
 	return xxx_messageInfo_TradeForRevokeBuy.Size(m)
@@ -713,18 +580,18 @@ func (m *TradeForRevokeBuy) GetBuyID() string {
 type SellOrder struct {
 	TokenSymbol string `protobuf:"bytes,1,opt,name=tokenSymbol,proto3" json:"tokenSymbol,omitempty"`
 	Address     string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-	// 每一手出售的token的数量
+	//每一手出售的token的数量
 	AmountPerBoardlot int64 `protobuf:"varint,3,opt,name=amountPerBoardlot,proto3" json:"amountPerBoardlot,omitempty"`
 	MinBoardlot       int64 `protobuf:"varint,4,opt,name=minBoardlot,proto3" json:"minBoardlot,omitempty"`
-	// 每一手token的价格
+	//每一手token的价格
 	PricePerBoardlot int64 `protobuf:"varint,5,opt,name=pricePerBoardlot,proto3" json:"pricePerBoardlot,omitempty"`
 	TotalBoardlot    int64 `protobuf:"varint,6,opt,name=totalBoardlot,proto3" json:"totalBoardlot,omitempty"`
 	SoldBoardlot     int64 `protobuf:"varint,7,opt,name=soldBoardlot,proto3" json:"soldBoardlot,omitempty"`
-	// 此次出售的起始时间，如果非众筹则可以忽略此时间
+	//此次出售的起始时间，如果非众筹则可以忽略此时间
 	Starttime int64 `protobuf:"varint,8,opt,name=starttime,proto3" json:"starttime,omitempty"`
 	Stoptime  int64 `protobuf:"varint,9,opt,name=stoptime,proto3" json:"stoptime,omitempty"`
 	Crowdfund bool  `protobuf:"varint,10,opt,name=crowdfund,proto3" json:"crowdfund,omitempty"`
-	// 此处使用tx的hash来指定
+	//此处使用tx的hash来指定
 	SellID               string   `protobuf:"bytes,11,opt,name=sellID,proto3" json:"sellID,omitempty"`
 	Status               int32    `protobuf:"varint,12,opt,name=status,proto3" json:"status,omitempty"`
 	Height               int64    `protobuf:"varint,13,opt,name=height,proto3" json:"height,omitempty"`
@@ -740,16 +607,17 @@ func (m *SellOrder) Reset()         { *m = SellOrder{} }
 func (m *SellOrder) String() string { return proto.CompactTextString(m) }
 func (*SellOrder) ProtoMessage()    {}
 func (*SellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{7}
+	return fileDescriptor_ee944bd90e8a0312, []int{7}
 }
+
 func (m *SellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SellOrder.Unmarshal(m, b)
 }
 func (m *SellOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SellOrder.Marshal(b, m, deterministic)
 }
-func (dst *SellOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SellOrder.Merge(dst, src)
+func (m *SellOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SellOrder.Merge(m, src)
 }
 func (m *SellOrder) XXX_Size() int {
 	return xxx_messageInfo_SellOrder.Size(m)
@@ -896,16 +764,17 @@ func (m *BuyLimitOrder) Reset()         { *m = BuyLimitOrder{} }
 func (m *BuyLimitOrder) String() string { return proto.CompactTextString(m) }
 func (*BuyLimitOrder) ProtoMessage()    {}
 func (*BuyLimitOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{8}
+	return fileDescriptor_ee944bd90e8a0312, []int{8}
 }
+
 func (m *BuyLimitOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BuyLimitOrder.Unmarshal(m, b)
 }
 func (m *BuyLimitOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BuyLimitOrder.Marshal(b, m, deterministic)
 }
-func (dst *BuyLimitOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BuyLimitOrder.Merge(dst, src)
+func (m *BuyLimitOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BuyLimitOrder.Merge(m, src)
 }
 func (m *BuyLimitOrder) XXX_Size() int {
 	return xxx_messageInfo_BuyLimitOrder.Size(m)
@@ -1033,16 +902,17 @@ func (m *ReceiptBuyBase) Reset()         { *m = ReceiptBuyBase{} }
 func (m *ReceiptBuyBase) String() string { return proto.CompactTextString(m) }
 func (*ReceiptBuyBase) ProtoMessage()    {}
 func (*ReceiptBuyBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{9}
+	return fileDescriptor_ee944bd90e8a0312, []int{9}
 }
+
 func (m *ReceiptBuyBase) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptBuyBase.Unmarshal(m, b)
 }
 func (m *ReceiptBuyBase) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptBuyBase.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptBuyBase) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptBuyBase.Merge(dst, src)
+func (m *ReceiptBuyBase) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptBuyBase.Merge(m, src)
 }
 func (m *ReceiptBuyBase) XXX_Size() int {
 	return xxx_messageInfo_ReceiptBuyBase.Size(m)
@@ -1161,18 +1031,18 @@ func (m *ReceiptBuyBase) GetPriceSymbol() string {
 type ReceiptSellBase struct {
 	TokenSymbol string `protobuf:"bytes,1,opt,name=tokenSymbol,proto3" json:"tokenSymbol,omitempty"`
 	Owner       string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
-	// 每一手出售的token的数量
+	//每一手出售的token的数量
 	AmountPerBoardlot string `protobuf:"bytes,3,opt,name=amountPerBoardlot,proto3" json:"amountPerBoardlot,omitempty"`
 	MinBoardlot       int64  `protobuf:"varint,4,opt,name=minBoardlot,proto3" json:"minBoardlot,omitempty"`
-	// 每一手token的价格
+	//每一手token的价格
 	PricePerBoardlot string `protobuf:"bytes,5,opt,name=pricePerBoardlot,proto3" json:"pricePerBoardlot,omitempty"`
 	TotalBoardlot    int64  `protobuf:"varint,6,opt,name=totalBoardlot,proto3" json:"totalBoardlot,omitempty"`
 	SoldBoardlot     int64  `protobuf:"varint,7,opt,name=soldBoardlot,proto3" json:"soldBoardlot,omitempty"`
-	// 此次出售的起始时间，如果非众筹则可以忽略此时间
+	//此次出售的起始时间，如果非众筹则可以忽略此时间
 	Starttime int64 `protobuf:"varint,8,opt,name=starttime,proto3" json:"starttime,omitempty"`
 	Stoptime  int64 `protobuf:"varint,9,opt,name=stoptime,proto3" json:"stoptime,omitempty"`
 	Crowdfund bool  `protobuf:"varint,10,opt,name=crowdfund,proto3" json:"crowdfund,omitempty"`
-	// 此处使用tx的hash来指定
+	//此处使用tx的hash来指定
 	SellID string `protobuf:"bytes,11,opt,name=sellID,proto3" json:"sellID,omitempty"`
 	Status string `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
 	// buyid
@@ -1191,16 +1061,17 @@ func (m *ReceiptSellBase) Reset()         { *m = ReceiptSellBase{} }
 func (m *ReceiptSellBase) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSellBase) ProtoMessage()    {}
 func (*ReceiptSellBase) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{10}
+	return fileDescriptor_ee944bd90e8a0312, []int{10}
 }
+
 func (m *ReceiptSellBase) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSellBase.Unmarshal(m, b)
 }
 func (m *ReceiptSellBase) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptSellBase.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptSellBase) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptSellBase.Merge(dst, src)
+func (m *ReceiptSellBase) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSellBase.Merge(m, src)
 }
 func (m *ReceiptSellBase) XXX_Size() int {
 	return xxx_messageInfo_ReceiptSellBase.Size(m)
@@ -1348,16 +1219,17 @@ func (m *ReceiptTradeBuyMarket) Reset()         { *m = ReceiptTradeBuyMarket{} }
 func (m *ReceiptTradeBuyMarket) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyMarket) ProtoMessage()    {}
 func (*ReceiptTradeBuyMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{11}
+	return fileDescriptor_ee944bd90e8a0312, []int{11}
 }
+
 func (m *ReceiptTradeBuyMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyMarket.Unmarshal(m, b)
 }
 func (m *ReceiptTradeBuyMarket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTradeBuyMarket.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTradeBuyMarket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTradeBuyMarket.Merge(dst, src)
+func (m *ReceiptTradeBuyMarket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTradeBuyMarket.Merge(m, src)
 }
 func (m *ReceiptTradeBuyMarket) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTradeBuyMarket.Size(m)
@@ -1386,16 +1258,17 @@ func (m *ReceiptTradeBuyLimit) Reset()         { *m = ReceiptTradeBuyLimit{} }
 func (m *ReceiptTradeBuyLimit) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyLimit) ProtoMessage()    {}
 func (*ReceiptTradeBuyLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{12}
+	return fileDescriptor_ee944bd90e8a0312, []int{12}
 }
+
 func (m *ReceiptTradeBuyLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyLimit.Unmarshal(m, b)
 }
 func (m *ReceiptTradeBuyLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTradeBuyLimit.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTradeBuyLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTradeBuyLimit.Merge(dst, src)
+func (m *ReceiptTradeBuyLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTradeBuyLimit.Merge(m, src)
 }
 func (m *ReceiptTradeBuyLimit) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTradeBuyLimit.Size(m)
@@ -1424,16 +1297,17 @@ func (m *ReceiptTradeBuyRevoke) Reset()         { *m = ReceiptTradeBuyRevoke{} }
 func (m *ReceiptTradeBuyRevoke) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeBuyRevoke) ProtoMessage()    {}
 func (*ReceiptTradeBuyRevoke) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{13}
+	return fileDescriptor_ee944bd90e8a0312, []int{13}
 }
+
 func (m *ReceiptTradeBuyRevoke) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeBuyRevoke.Unmarshal(m, b)
 }
 func (m *ReceiptTradeBuyRevoke) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTradeBuyRevoke.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTradeBuyRevoke) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTradeBuyRevoke.Merge(dst, src)
+func (m *ReceiptTradeBuyRevoke) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTradeBuyRevoke.Merge(m, src)
 }
 func (m *ReceiptTradeBuyRevoke) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTradeBuyRevoke.Size(m)
@@ -1462,16 +1336,17 @@ func (m *ReceiptTradeSellLimit) Reset()         { *m = ReceiptTradeSellLimit{} }
 func (m *ReceiptTradeSellLimit) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeSellLimit) ProtoMessage()    {}
 func (*ReceiptTradeSellLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{14}
+	return fileDescriptor_ee944bd90e8a0312, []int{14}
 }
+
 func (m *ReceiptTradeSellLimit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeSellLimit.Unmarshal(m, b)
 }
 func (m *ReceiptTradeSellLimit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTradeSellLimit.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTradeSellLimit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTradeSellLimit.Merge(dst, src)
+func (m *ReceiptTradeSellLimit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTradeSellLimit.Merge(m, src)
 }
 func (m *ReceiptTradeSellLimit) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTradeSellLimit.Size(m)
@@ -1500,16 +1375,17 @@ func (m *ReceiptSellMarket) Reset()         { *m = ReceiptSellMarket{} }
 func (m *ReceiptSellMarket) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSellMarket) ProtoMessage()    {}
 func (*ReceiptSellMarket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{15}
+	return fileDescriptor_ee944bd90e8a0312, []int{15}
 }
+
 func (m *ReceiptSellMarket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSellMarket.Unmarshal(m, b)
 }
 func (m *ReceiptSellMarket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptSellMarket.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptSellMarket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptSellMarket.Merge(dst, src)
+func (m *ReceiptSellMarket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSellMarket.Merge(m, src)
 }
 func (m *ReceiptSellMarket) XXX_Size() int {
 	return xxx_messageInfo_ReceiptSellMarket.Size(m)
@@ -1538,16 +1414,17 @@ func (m *ReceiptTradeSellRevoke) Reset()         { *m = ReceiptTradeSellRevoke{}
 func (m *ReceiptTradeSellRevoke) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTradeSellRevoke) ProtoMessage()    {}
 func (*ReceiptTradeSellRevoke) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{16}
+	return fileDescriptor_ee944bd90e8a0312, []int{16}
 }
+
 func (m *ReceiptTradeSellRevoke) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTradeSellRevoke.Unmarshal(m, b)
 }
 func (m *ReceiptTradeSellRevoke) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTradeSellRevoke.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTradeSellRevoke) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTradeSellRevoke.Merge(dst, src)
+func (m *ReceiptTradeSellRevoke) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTradeSellRevoke.Merge(m, src)
 }
 func (m *ReceiptTradeSellRevoke) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTradeSellRevoke.Size(m)
@@ -1582,16 +1459,17 @@ func (m *ReqAddrAssets) Reset()         { *m = ReqAddrAssets{} }
 func (m *ReqAddrAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAddrAssets) ProtoMessage()    {}
 func (*ReqAddrAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{17}
+	return fileDescriptor_ee944bd90e8a0312, []int{17}
 }
+
 func (m *ReqAddrAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAddrAssets.Unmarshal(m, b)
 }
 func (m *ReqAddrAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqAddrAssets.Marshal(b, m, deterministic)
 }
-func (dst *ReqAddrAssets) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqAddrAssets.Merge(dst, src)
+func (m *ReqAddrAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqAddrAssets.Merge(m, src)
 }
 func (m *ReqAddrAssets) XXX_Size() int {
 	return xxx_messageInfo_ReqAddrAssets.Size(m)
@@ -1664,16 +1542,17 @@ func (m *ReqTokenSellOrder) Reset()         { *m = ReqTokenSellOrder{} }
 func (m *ReqTokenSellOrder) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenSellOrder) ProtoMessage()    {}
 func (*ReqTokenSellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{18}
+	return fileDescriptor_ee944bd90e8a0312, []int{18}
 }
+
 func (m *ReqTokenSellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenSellOrder.Unmarshal(m, b)
 }
 func (m *ReqTokenSellOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqTokenSellOrder.Marshal(b, m, deterministic)
 }
-func (dst *ReqTokenSellOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTokenSellOrder.Merge(dst, src)
+func (m *ReqTokenSellOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqTokenSellOrder.Merge(m, src)
 }
 func (m *ReqTokenSellOrder) XXX_Size() int {
 	return xxx_messageInfo_ReqTokenSellOrder.Size(m)
@@ -1734,16 +1613,17 @@ func (m *ReqTokenBuyOrder) Reset()         { *m = ReqTokenBuyOrder{} }
 func (m *ReqTokenBuyOrder) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenBuyOrder) ProtoMessage()    {}
 func (*ReqTokenBuyOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{19}
+	return fileDescriptor_ee944bd90e8a0312, []int{19}
 }
+
 func (m *ReqTokenBuyOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenBuyOrder.Unmarshal(m, b)
 }
 func (m *ReqTokenBuyOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqTokenBuyOrder.Marshal(b, m, deterministic)
 }
-func (dst *ReqTokenBuyOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqTokenBuyOrder.Merge(dst, src)
+func (m *ReqTokenBuyOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqTokenBuyOrder.Merge(m, src)
 }
 func (m *ReqTokenBuyOrder) XXX_Size() int {
 	return xxx_messageInfo_ReqTokenBuyOrder.Size(m)
@@ -1813,16 +1693,17 @@ func (m *ReplyBuyOrder) Reset()         { *m = ReplyBuyOrder{} }
 func (m *ReplyBuyOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplyBuyOrder) ProtoMessage()    {}
 func (*ReplyBuyOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{20}
+	return fileDescriptor_ee944bd90e8a0312, []int{20}
 }
+
 func (m *ReplyBuyOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyBuyOrder.Unmarshal(m, b)
 }
 func (m *ReplyBuyOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyBuyOrder.Marshal(b, m, deterministic)
 }
-func (dst *ReplyBuyOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyBuyOrder.Merge(dst, src)
+func (m *ReplyBuyOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyBuyOrder.Merge(m, src)
 }
 func (m *ReplyBuyOrder) XXX_Size() int {
 	return xxx_messageInfo_ReplyBuyOrder.Size(m)
@@ -1955,16 +1836,17 @@ func (m *ReplySellOrder) Reset()         { *m = ReplySellOrder{} }
 func (m *ReplySellOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplySellOrder) ProtoMessage()    {}
 func (*ReplySellOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{21}
+	return fileDescriptor_ee944bd90e8a0312, []int{21}
 }
+
 func (m *ReplySellOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplySellOrder.Unmarshal(m, b)
 }
 func (m *ReplySellOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplySellOrder.Marshal(b, m, deterministic)
 }
-func (dst *ReplySellOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplySellOrder.Merge(dst, src)
+func (m *ReplySellOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplySellOrder.Merge(m, src)
 }
 func (m *ReplySellOrder) XXX_Size() int {
 	return xxx_messageInfo_ReplySellOrder.Size(m)
@@ -2084,16 +1966,17 @@ func (m *ReplySellOrders) Reset()         { *m = ReplySellOrders{} }
 func (m *ReplySellOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplySellOrders) ProtoMessage()    {}
 func (*ReplySellOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{22}
+	return fileDescriptor_ee944bd90e8a0312, []int{22}
 }
+
 func (m *ReplySellOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplySellOrders.Unmarshal(m, b)
 }
 func (m *ReplySellOrders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplySellOrders.Marshal(b, m, deterministic)
 }
-func (dst *ReplySellOrders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplySellOrders.Merge(dst, src)
+func (m *ReplySellOrders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplySellOrders.Merge(m, src)
 }
 func (m *ReplySellOrders) XXX_Size() int {
 	return xxx_messageInfo_ReplySellOrders.Size(m)
@@ -2122,16 +2005,17 @@ func (m *ReplyBuyOrders) Reset()         { *m = ReplyBuyOrders{} }
 func (m *ReplyBuyOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplyBuyOrders) ProtoMessage()    {}
 func (*ReplyBuyOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{23}
+	return fileDescriptor_ee944bd90e8a0312, []int{23}
 }
+
 func (m *ReplyBuyOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyBuyOrders.Unmarshal(m, b)
 }
 func (m *ReplyBuyOrders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyBuyOrders.Marshal(b, m, deterministic)
 }
-func (dst *ReplyBuyOrders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyBuyOrders.Merge(dst, src)
+func (m *ReplyBuyOrders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyBuyOrders.Merge(m, src)
 }
 func (m *ReplyBuyOrders) XXX_Size() int {
 	return xxx_messageInfo_ReplyBuyOrders.Size(m)
@@ -2177,16 +2061,17 @@ func (m *ReplyTradeOrder) Reset()         { *m = ReplyTradeOrder{} }
 func (m *ReplyTradeOrder) String() string { return proto.CompactTextString(m) }
 func (*ReplyTradeOrder) ProtoMessage()    {}
 func (*ReplyTradeOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{24}
+	return fileDescriptor_ee944bd90e8a0312, []int{24}
 }
+
 func (m *ReplyTradeOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTradeOrder.Unmarshal(m, b)
 }
 func (m *ReplyTradeOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyTradeOrder.Marshal(b, m, deterministic)
 }
-func (dst *ReplyTradeOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTradeOrder.Merge(dst, src)
+func (m *ReplyTradeOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyTradeOrder.Merge(m, src)
 }
 func (m *ReplyTradeOrder) XXX_Size() int {
 	return xxx_messageInfo_ReplyTradeOrder.Size(m)
@@ -2334,16 +2219,17 @@ func (m *ReplyTradeOrders) Reset()         { *m = ReplyTradeOrders{} }
 func (m *ReplyTradeOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplyTradeOrders) ProtoMessage()    {}
 func (*ReplyTradeOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{25}
+	return fileDescriptor_ee944bd90e8a0312, []int{25}
 }
+
 func (m *ReplyTradeOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTradeOrders.Unmarshal(m, b)
 }
 func (m *ReplyTradeOrders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyTradeOrders.Marshal(b, m, deterministic)
 }
-func (dst *ReplyTradeOrders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyTradeOrders.Merge(dst, src)
+func (m *ReplyTradeOrders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyTradeOrders.Merge(m, src)
 }
 func (m *ReplyTradeOrders) XXX_Size() int {
 	return xxx_messageInfo_ReplyTradeOrders.Size(m)
@@ -2373,16 +2259,17 @@ func (m *ReqSellToken) Reset()         { *m = ReqSellToken{} }
 func (m *ReqSellToken) String() string { return proto.CompactTextString(m) }
 func (*ReqSellToken) ProtoMessage()    {}
 func (*ReqSellToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{26}
+	return fileDescriptor_ee944bd90e8a0312, []int{26}
 }
+
 func (m *ReqSellToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqSellToken.Unmarshal(m, b)
 }
 func (m *ReqSellToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqSellToken.Marshal(b, m, deterministic)
 }
-func (dst *ReqSellToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqSellToken.Merge(dst, src)
+func (m *ReqSellToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqSellToken.Merge(m, src)
 }
 func (m *ReqSellToken) XXX_Size() int {
 	return xxx_messageInfo_ReqSellToken.Size(m)
@@ -2419,16 +2306,17 @@ func (m *ReqRevokeSell) Reset()         { *m = ReqRevokeSell{} }
 func (m *ReqRevokeSell) String() string { return proto.CompactTextString(m) }
 func (*ReqRevokeSell) ProtoMessage()    {}
 func (*ReqRevokeSell) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{27}
+	return fileDescriptor_ee944bd90e8a0312, []int{27}
 }
+
 func (m *ReqRevokeSell) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRevokeSell.Unmarshal(m, b)
 }
 func (m *ReqRevokeSell) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRevokeSell.Marshal(b, m, deterministic)
 }
-func (dst *ReqRevokeSell) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRevokeSell.Merge(dst, src)
+func (m *ReqRevokeSell) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRevokeSell.Merge(m, src)
 }
 func (m *ReqRevokeSell) XXX_Size() int {
 	return xxx_messageInfo_ReqRevokeSell.Size(m)
@@ -2465,16 +2353,17 @@ func (m *ReqBuyToken) Reset()         { *m = ReqBuyToken{} }
 func (m *ReqBuyToken) String() string { return proto.CompactTextString(m) }
 func (*ReqBuyToken) ProtoMessage()    {}
 func (*ReqBuyToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{28}
+	return fileDescriptor_ee944bd90e8a0312, []int{28}
 }
+
 func (m *ReqBuyToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqBuyToken.Unmarshal(m, b)
 }
 func (m *ReqBuyToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqBuyToken.Marshal(b, m, deterministic)
 }
-func (dst *ReqBuyToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqBuyToken.Merge(dst, src)
+func (m *ReqBuyToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqBuyToken.Merge(m, src)
 }
 func (m *ReqBuyToken) XXX_Size() int {
 	return xxx_messageInfo_ReqBuyToken.Size(m)
@@ -2529,16 +2418,17 @@ func (m *LocalOrder) Reset()         { *m = LocalOrder{} }
 func (m *LocalOrder) String() string { return proto.CompactTextString(m) }
 func (*LocalOrder) ProtoMessage()    {}
 func (*LocalOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_trade_f0f250ce01596219, []int{29}
+	return fileDescriptor_ee944bd90e8a0312, []int{29}
 }
+
 func (m *LocalOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalOrder.Unmarshal(m, b)
 }
 func (m *LocalOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalOrder.Marshal(b, m, deterministic)
 }
-func (dst *LocalOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalOrder.Merge(dst, src)
+func (m *LocalOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalOrder.Merge(m, src)
 }
 func (m *LocalOrder) XXX_Size() int {
 	return xxx_messageInfo_LocalOrder.Size(m)
@@ -2722,13 +2612,107 @@ func init() {
 	proto.RegisterType((*LocalOrder)(nil), "types.LocalOrder")
 }
 
+func init() {
+	proto.RegisterFile("trade.proto", fileDescriptor_ee944bd90e8a0312)
+}
+
+var fileDescriptor_ee944bd90e8a0312 = []byte{
+	// 1371 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x59, 0xdd, 0x8a, 0xdb, 0xc6,
+	0x17, 0x5f, 0x5b, 0x96, 0xd7, 0x3a, 0xfe, 0x58, 0xef, 0xc4, 0xd9, 0xbf, 0xb2, 0xfc, 0x29, 0x46,
+	0x84, 0x36, 0x09, 0x61, 0xa1, 0x09, 0x81, 0x42, 0x4b, 0x4b, 0x9c, 0x34, 0x75, 0xda, 0x84, 0x96,
+	0x59, 0x17, 0x7a, 0x2b, 0x5b, 0x93, 0xac, 0x58, 0x59, 0xf2, 0x4a, 0xa3, 0xc4, 0x7a, 0x83, 0x42,
+	0xdf, 0xa0, 0xbd, 0xe8, 0x03, 0xf4, 0x36, 0x50, 0x42, 0xdf, 0xa7, 0x97, 0xbd, 0xea, 0x03, 0x94,
+	0x19, 0x8d, 0xa5, 0xd1, 0x97, 0x3f, 0x20, 0x85, 0x4d, 0xd2, 0x3b, 0xcf, 0x99, 0x33, 0x67, 0x8e,
+	0xce, 0xef, 0xf7, 0x9b, 0x2f, 0x43, 0x9b, 0xfa, 0xa6, 0x45, 0x4e, 0x16, 0xbe, 0x47, 0x3d, 0xa4,
+	0xd2, 0x68, 0x41, 0x82, 0xe3, 0x43, 0xea, 0x9b, 0x6e, 0x60, 0xce, 0xa8, 0xed, 0xb9, 0x71, 0x8f,
+	0xf1, 0x77, 0x1d, 0xd4, 0x09, 0xf3, 0x44, 0x77, 0x41, 0x0b, 0x88, 0xe3, 0x3c, 0xb1, 0xe7, 0x36,
+	0xd5, 0x6b, 0xc3, 0xda, 0x8d, 0xf6, 0x9d, 0x2b, 0x27, 0x7c, 0xdc, 0x09, 0x77, 0x78, 0xe4, 0xf9,
+	0xa7, 0xc4, 0x71, 0xc6, 0x7b, 0x38, 0xf5, 0x43, 0x77, 0x40, 0x9b, 0x86, 0xd1, 0x53, 0xd3, 0x3f,
+	0x27, 0x54, 0xaf, 0xf3, 0x41, 0x28, 0x37, 0x68, 0x14, 0x46, 0x6c, 0x4c, 0xe2, 0x86, 0x3e, 0x05,
+	0xf0, 0xc9, 0x0b, 0xef, 0x9c, 0xb0, 0x70, 0xba, 0xc2, 0x07, 0x5d, 0xcb, 0x0d, 0xc2, 0x89, 0xc3,
+	0x78, 0x0f, 0x4b, 0xee, 0xe8, 0x1e, 0xb4, 0xa6, 0x61, 0x14, 0x27, 0xa9, 0xf2, 0xa1, 0xff, 0x2b,
+	0xce, 0xc7, 0xbb, 0xc7, 0x7b, 0x38, 0x71, 0x65, 0x73, 0xb2, 0xa4, 0x45, 0xa2, 0xcd, 0xd2, 0x39,
+	0x4f, 0x13, 0x07, 0x36, 0x67, 0xea, 0x8e, 0x3e, 0x01, 0x2d, 0xce, 0x60, 0x14, 0x46, 0xfa, 0x3e,
+	0x1f, 0xab, 0x97, 0xe6, 0x2b, 0x3e, 0x35, 0x71, 0x46, 0x3d, 0xa8, 0xd3, 0x48, 0x6f, 0x0c, 0x6b,
+	0x37, 0x54, 0x5c, 0xa7, 0xd1, 0x68, 0x1f, 0xd4, 0x17, 0xa6, 0x13, 0x12, 0xe3, 0x47, 0x05, 0x3a,
+	0xf2, 0xbc, 0x68, 0x08, 0x6d, 0xea, 0x9d, 0x13, 0xf7, 0x34, 0x9a, 0x4f, 0x3d, 0x87, 0xd7, 0x5f,
+	0xc3, 0xb2, 0x09, 0xdd, 0x86, 0x43, 0x73, 0xee, 0x85, 0x2e, 0xfd, 0x8e, 0xf8, 0x23, 0xcf, 0xf4,
+	0x2d, 0xc7, 0x8b, 0x4b, 0xae, 0xe0, 0x62, 0x07, 0x8b, 0x37, 0xb7, 0xdd, 0xc4, 0x4f, 0xe1, 0x7e,
+	0xb2, 0x09, 0xdd, 0x82, 0xfe, 0xc2, 0xb7, 0x67, 0x44, 0x0e, 0xd7, 0xe0, 0x6e, 0x05, 0x3b, 0xba,
+	0x0e, 0x5d, 0xea, 0x51, 0xd3, 0x49, 0x1c, 0x55, 0xee, 0x98, 0x35, 0xa2, 0xff, 0x83, 0x16, 0x50,
+	0xd3, 0xa7, 0xd4, 0x9e, 0x13, 0x5e, 0x63, 0x05, 0xa7, 0x06, 0x74, 0x0c, 0xad, 0x80, 0x7a, 0x0b,
+	0xde, 0xb9, 0xcf, 0x3b, 0x93, 0x36, 0x1b, 0x39, 0xf3, 0xbd, 0x97, 0xd6, 0xb3, 0xd0, 0xb5, 0xf4,
+	0xd6, 0xb0, 0x76, 0xa3, 0x85, 0x53, 0x03, 0xeb, 0x35, 0x83, 0x80, 0xd0, 0x2f, 0x97, 0x64, 0xa6,
+	0x6b, 0xbc, 0x32, 0xa9, 0x81, 0xf5, 0xf2, 0x7c, 0x79, 0x2f, 0xc4, 0xbd, 0x89, 0x81, 0xd5, 0x81,
+	0x37, 0x44, 0x5d, 0xdb, 0x71, 0x5d, 0x25, 0x93, 0xf1, 0x15, 0xb4, 0x25, 0xea, 0xa0, 0x23, 0x68,
+	0x32, 0xe8, 0x1f, 0x3f, 0x14, 0x18, 0x88, 0x16, 0x0b, 0x34, 0x15, 0x1f, 0xfa, 0xc0, 0x5d, 0x15,
+	0x5e, 0x36, 0x19, 0xb7, 0x01, 0x15, 0xe9, 0x5b, 0x15, 0xcf, 0x78, 0x55, 0x87, 0x7e, 0x9e, 0xb2,
+	0xef, 0x0a, 0x0b, 0x52, 0xb4, 0x9a, 0x6b, 0xd1, 0xda, 0xdf, 0x80, 0x56, 0xab, 0x88, 0xd6, 0x93,
+	0xb4, 0xc8, 0xa9, 0x5e, 0xd1, 0x00, 0xd4, 0x69, 0x18, 0x25, 0x35, 0x8e, 0x1b, 0x5b, 0x40, 0x76,
+	0x13, 0x0e, 0x0b, 0x0a, 0x2e, 0x0f, 0x66, 0xfc, 0xd4, 0x00, 0x8d, 0xcd, 0xf8, 0xad, 0x6f, 0x11,
+	0x7f, 0x0b, 0xa0, 0x74, 0xd8, 0x37, 0x2d, 0xcb, 0x27, 0x41, 0xc0, 0x27, 0xd6, 0xf0, 0xaa, 0x59,
+	0x0e, 0xa1, 0xb2, 0x25, 0x84, 0x8d, 0xed, 0x20, 0x54, 0xb7, 0x85, 0xb0, 0x59, 0x06, 0xa1, 0x01,
+	0x9d, 0xc0, 0x73, 0xac, 0xc4, 0x29, 0x96, 0x6b, 0xc6, 0x96, 0x15, 0x7b, 0x6b, 0x9d, 0xd8, 0xb5,
+	0x75, 0x62, 0x87, 0xbc, 0xd8, 0x53, 0xbd, 0xb4, 0x33, 0xfa, 0x63, 0x76, 0x6a, 0xd2, 0x30, 0xd0,
+	0x3b, 0x7c, 0x39, 0x15, 0x2d, 0x66, 0x3f, 0x23, 0xf6, 0xf3, 0x33, 0xaa, 0x77, 0xf9, 0x3c, 0xa2,
+	0x95, 0xa5, 0x61, 0x6f, 0x2d, 0x0d, 0x0f, 0x36, 0xd0, 0xb0, 0x5f, 0xa4, 0xe1, 0x6b, 0x05, 0xba,
+	0x2b, 0xd5, 0xbe, 0x0f, 0x8c, 0xf8, 0x10, 0x7a, 0x53, 0x2f, 0x7c, 0x7e, 0x46, 0x73, 0x9c, 0xc8,
+	0x59, 0x53, 0xed, 0xb4, 0x64, 0x21, 0xa6, 0xd8, 0x69, 0x15, 0xd8, 0x41, 0x35, 0x76, 0xed, 0xb5,
+	0xd8, 0x75, 0x36, 0x60, 0xd7, 0x2d, 0x62, 0xf7, 0xa7, 0x02, 0x3d, 0x4c, 0x66, 0xc4, 0x5e, 0xd0,
+	0x51, 0x18, 0x8d, 0xcc, 0x80, 0x6c, 0x01, 0xde, 0x00, 0x54, 0xef, 0xa5, 0x4b, 0x7c, 0x01, 0x5d,
+	0xdc, 0xa8, 0x06, 0x4e, 0x7b, 0xb3, 0xc0, 0x69, 0x97, 0x02, 0x38, 0x4d, 0x06, 0x4e, 0x88, 0x14,
+	0xf2, 0x22, 0xa5, 0xcb, 0xb1, 0x19, 0x9c, 0xad, 0xc4, 0x1b, 0xb7, 0x24, 0xa0, 0x3b, 0xd5, 0x40,
+	0x77, 0xd7, 0x02, 0xdd, 0xdb, 0x00, 0xf4, 0x41, 0x11, 0xe8, 0x3f, 0x1a, 0x70, 0x20, 0x80, 0x66,
+	0x2b, 0xf7, 0x3b, 0x8e, 0xf4, 0xe5, 0x5f, 0xb4, 0x53, 0xfe, 0x24, 0x6c, 0xeb, 0xe6, 0xd8, 0x26,
+	0xd8, 0xd3, 0xab, 0x60, 0xcf, 0x41, 0x35, 0x7b, 0xfa, 0x6b, 0xd9, 0x73, 0xb8, 0x81, 0x3d, 0xa8,
+	0xc8, 0x9e, 0x11, 0x5c, 0x15, 0xe4, 0xe1, 0x47, 0x84, 0x51, 0x72, 0x7f, 0xb9, 0x09, 0x8d, 0xa9,
+	0x19, 0x10, 0x71, 0x47, 0xba, 0x2a, 0x6e, 0x02, 0xd9, 0x15, 0x05, 0x73, 0x17, 0xe3, 0x3e, 0x0c,
+	0x72, 0x31, 0xe2, 0x73, 0xde, 0x0e, 0x21, 0x8a, 0x69, 0xc4, 0x27, 0x95, 0x5d, 0x62, 0x3c, 0xc8,
+	0xc6, 0x38, 0x4d, 0xae, 0x6f, 0xb7, 0x32, 0x31, 0x8e, 0xb2, 0x31, 0x56, 0x9a, 0x11, 0x41, 0xbe,
+	0x80, 0x43, 0xa9, 0x43, 0xd4, 0x62, 0x97, 0x00, 0x0f, 0xe1, 0x28, 0x9f, 0x85, 0xf8, 0x94, 0x5d,
+	0xa2, 0xfc, 0x5a, 0x83, 0x2e, 0x26, 0x17, 0xf7, 0x2d, 0xcb, 0xbf, 0xcf, 0xb0, 0x0e, 0x10, 0x82,
+	0x06, 0xdb, 0x48, 0x85, 0x96, 0xf9, 0x6f, 0x89, 0x78, 0xf5, 0xcc, 0x8e, 0x33, 0x00, 0x95, 0x6b,
+	0x5d, 0x57, 0x86, 0x0a, 0x23, 0x1e, 0x6f, 0x30, 0xaa, 0x58, 0xb6, 0x4f, 0xf8, 0xbd, 0x58, 0xdc,
+	0xd6, 0x52, 0x03, 0x1b, 0x33, 0x63, 0x02, 0xe7, 0xfa, 0x54, 0x71, 0xdc, 0x60, 0xbb, 0xf9, 0x33,
+	0xdf, 0x9b, 0x7f, 0x43, 0x22, 0x71, 0xc8, 0x5d, 0x35, 0x8d, 0x5f, 0x6a, 0xac, 0x52, 0x17, 0x13,
+	0xbe, 0xa6, 0xec, 0x76, 0x62, 0x5c, 0x45, 0xac, 0x67, 0x22, 0xa6, 0x19, 0x28, 0x72, 0x06, 0xeb,
+	0xb3, 0x4e, 0x2b, 0xa0, 0xca, 0x15, 0x30, 0x7e, 0xae, 0x41, 0x7f, 0x95, 0xdd, 0x28, 0x8c, 0x2e,
+	0x57, 0x72, 0xbf, 0x2b, 0x0c, 0xdc, 0x85, 0x13, 0xed, 0x90, 0xd9, 0x8e, 0xeb, 0xf5, 0xbb, 0x7f,
+	0xa4, 0x7a, 0x23, 0x3b, 0x73, 0x1f, 0x94, 0x73, 0x12, 0x89, 0xf5, 0x99, 0xfd, 0x5c, 0x7f, 0xa0,
+	0x36, 0x5e, 0xf1, 0x43, 0xd5, 0xc2, 0x89, 0x76, 0x61, 0xfc, 0xdb, 0x0a, 0xdd, 0x36, 0x5b, 0xed,
+	0xdb, 0x01, 0xdb, 0x98, 0x9d, 0x90, 0x64, 0xd4, 0x02, 0x74, 0x2f, 0x7e, 0x2a, 0x8b, 0x5b, 0x7a,
+	0x6d, 0xa8, 0x64, 0x76, 0x17, 0xd9, 0x17, 0x4b, 0x8e, 0xc6, 0x43, 0x81, 0xff, 0x4a, 0xb9, 0x81,
+	0x78, 0x1b, 0xcc, 0xc4, 0x19, 0xc8, 0x71, 0x56, 0x9e, 0x38, 0x75, 0x33, 0x5e, 0x37, 0x44, 0x42,
+	0x7c, 0x8b, 0x78, 0x0f, 0x96, 0x00, 0xfe, 0x4a, 0x9b, 0x67, 0x52, 0xce, 0x7a, 0x99, 0xb8, 0x34,
+	0x75, 0xbc, 0xd9, 0xf9, 0x84, 0x9d, 0x10, 0x7b, 0xf1, 0xf1, 0x31, 0x31, 0xb0, 0x0a, 0xda, 0x41,
+	0x42, 0x0e, 0x7e, 0x56, 0x6b, 0x61, 0xd9, 0xf4, 0xaf, 0x1f, 0xd8, 0xfa, 0x39, 0xea, 0x04, 0xe8,
+	0x04, 0x9a, 0x9e, 0x4c, 0xc0, 0x23, 0x99, 0x80, 0xa9, 0x23, 0x16, 0x5e, 0xc6, 0x53, 0xe8, 0x60,
+	0x72, 0xc1, 0x32, 0xe6, 0x1b, 0x24, 0xfa, 0x08, 0x1a, 0xac, 0x7a, 0x6b, 0xde, 0xc3, 0x31, 0x77,
+	0x28, 0xa7, 0xa0, 0xf1, 0x03, 0x3f, 0xab, 0x48, 0xaf, 0x81, 0x1f, 0x43, 0x33, 0x7e, 0x1d, 0x16,
+	0x11, 0xab, 0xdf, 0xbd, 0xb1, 0x70, 0xac, 0x88, 0xfc, 0x18, 0xda, 0x98, 0x5c, 0x8c, 0xc2, 0x28,
+	0xce, 0xf3, 0x3a, 0x28, 0xd3, 0x30, 0x12, 0x41, 0x4b, 0x5e, 0xe0, 0x31, 0xeb, 0x16, 0x3c, 0x4a,
+	0x43, 0xf1, 0x86, 0xf1, 0x57, 0x03, 0xe0, 0x89, 0x37, 0x33, 0xd3, 0x65, 0x9b, 0x63, 0x92, 0x95,
+	0x9b, 0x64, 0xfa, 0x4f, 0x6e, 0x3b, 0xcb, 0x4d, 0xb9, 0x84, 0x72, 0xd3, 0x61, 0x9f, 0x2e, 0x1f,
+	0xbb, 0x16, 0x59, 0x0a, 0xb1, 0xad, 0x9a, 0xe8, 0x03, 0x00, 0x3b, 0x78, 0x64, 0xbb, 0x76, 0x70,
+	0x46, 0x2c, 0xae, 0xb4, 0x16, 0x96, 0x2c, 0x59, 0xa1, 0x5e, 0xd9, 0x20, 0xd4, 0x41, 0x41, 0xa8,
+	0x77, 0x7e, 0x53, 0x40, 0xe5, 0x25, 0x47, 0x9f, 0xc3, 0xe0, 0x81, 0x4f, 0x4c, 0x4a, 0xb0, 0xf9,
+	0x32, 0xb9, 0x14, 0x4c, 0x96, 0xa8, 0x4c, 0x68, 0xc7, 0x07, 0xc2, 0xf8, 0xbd, 0x1b, 0xd8, 0xcf,
+	0xdd, 0xc9, 0xd2, 0xd8, 0x43, 0x9f, 0xc1, 0x95, 0xec, 0x78, 0x26, 0x88, 0x25, 0x2a, 0x11, 0x40,
+	0xd9, 0xe8, 0x47, 0x70, 0x94, 0x1d, 0x1d, 0xab, 0x6f, 0xb2, 0x44, 0xd5, 0xb2, 0x2c, 0x8f, 0xa3,
+	0x17, 0xb2, 0xe0, 0xf7, 0xab, 0xc9, 0x12, 0x55, 0xfd, 0x3b, 0x55, 0x16, 0xe7, 0x6b, 0x38, 0x2e,
+	0x56, 0x23, 0xbe, 0x68, 0x95, 0xe4, 0x94, 0x76, 0x96, 0xc5, 0x1a, 0xc3, 0xb5, 0xb2, 0x6f, 0x8b,
+	0xeb, 0x53, 0xf9, 0xef, 0x55, 0x49, 0xa4, 0x69, 0x93, 0xff, 0x51, 0x78, 0xf7, 0x9f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0xe0, 0xb9, 0xad, 0xb0, 0x51, 0x1c, 0x00, 0x00,
+}
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // TradeClient is the client API for Trade service.
 //
@@ -2743,10 +2727,10 @@ type TradeClient interface {
 }
 
 type tradeClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewTradeClient(cc *grpc.ClientConn) TradeClient {
+func NewTradeClient(cc grpc.ClientConnInterface) TradeClient {
 	return &tradeClient{cc}
 }
 
@@ -2812,6 +2796,29 @@ type TradeServer interface {
 	CreateRawTradeBuyLimitTx(context.Context, *TradeForBuyLimit) (*types.UnsignTx, error)
 	CreateRawTradeSellMarketTx(context.Context, *TradeForSellMarket) (*types.UnsignTx, error)
 	CreateRawTradeRevokeBuyTx(context.Context, *TradeForRevokeBuy) (*types.UnsignTx, error)
+}
+
+// UnimplementedTradeServer can be embedded to have forward compatible implementations.
+type UnimplementedTradeServer struct {
+}
+
+func (*UnimplementedTradeServer) CreateRawTradeSellTx(ctx context.Context, req *TradeForSell) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeSellTx not implemented")
+}
+func (*UnimplementedTradeServer) CreateRawTradeBuyTx(ctx context.Context, req *TradeForBuy) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeBuyTx not implemented")
+}
+func (*UnimplementedTradeServer) CreateRawTradeRevokeTx(ctx context.Context, req *TradeForRevokeSell) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeRevokeTx not implemented")
+}
+func (*UnimplementedTradeServer) CreateRawTradeBuyLimitTx(ctx context.Context, req *TradeForBuyLimit) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeBuyLimitTx not implemented")
+}
+func (*UnimplementedTradeServer) CreateRawTradeSellMarketTx(ctx context.Context, req *TradeForSellMarket) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeSellMarketTx not implemented")
+}
+func (*UnimplementedTradeServer) CreateRawTradeRevokeBuyTx(ctx context.Context, req *TradeForRevokeBuy) (*types.UnsignTx, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTradeRevokeBuyTx not implemented")
 }
 
 func RegisterTradeServer(s *grpc.Server, srv TradeServer) {
@@ -2957,96 +2964,4 @@ var _Trade_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "trade.proto",
-}
-
-func init() { proto.RegisterFile("trade.proto", fileDescriptor_trade_f0f250ce01596219) }
-
-var fileDescriptor_trade_f0f250ce01596219 = []byte{
-	// 1371 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x59, 0xdd, 0x8a, 0xdb, 0xc6,
-	0x17, 0x5f, 0x5b, 0x96, 0xd7, 0x3a, 0xfe, 0x58, 0xef, 0xc4, 0xd9, 0xbf, 0xb2, 0xfc, 0x29, 0x46,
-	0x84, 0x36, 0x09, 0x61, 0xa1, 0x09, 0x81, 0x42, 0x4b, 0x4b, 0x9c, 0x34, 0x75, 0xda, 0x84, 0x96,
-	0x59, 0x17, 0x7a, 0x2b, 0x5b, 0x93, 0xac, 0x58, 0x59, 0xf2, 0x4a, 0xa3, 0xc4, 0x7a, 0x83, 0x42,
-	0xdf, 0xa0, 0xbd, 0xe8, 0x03, 0xf4, 0x36, 0x50, 0x42, 0xdf, 0xa7, 0x97, 0xbd, 0xea, 0x03, 0x94,
-	0x19, 0x8d, 0xa5, 0xd1, 0x97, 0x3f, 0x20, 0x85, 0x4d, 0xd2, 0x3b, 0xcf, 0x99, 0x33, 0x67, 0x8e,
-	0xce, 0xef, 0xf7, 0x9b, 0x2f, 0x43, 0x9b, 0xfa, 0xa6, 0x45, 0x4e, 0x16, 0xbe, 0x47, 0x3d, 0xa4,
-	0xd2, 0x68, 0x41, 0x82, 0xe3, 0x43, 0xea, 0x9b, 0x6e, 0x60, 0xce, 0xa8, 0xed, 0xb9, 0x71, 0x8f,
-	0xf1, 0x77, 0x1d, 0xd4, 0x09, 0xf3, 0x44, 0x77, 0x41, 0x0b, 0x88, 0xe3, 0x3c, 0xb1, 0xe7, 0x36,
-	0xd5, 0x6b, 0xc3, 0xda, 0x8d, 0xf6, 0x9d, 0x2b, 0x27, 0x7c, 0xdc, 0x09, 0x77, 0x78, 0xe4, 0xf9,
-	0xa7, 0xc4, 0x71, 0xc6, 0x7b, 0x38, 0xf5, 0x43, 0x77, 0x40, 0x9b, 0x86, 0xd1, 0x53, 0xd3, 0x3f,
-	0x27, 0x54, 0xaf, 0xf3, 0x41, 0x28, 0x37, 0x68, 0x14, 0x46, 0x6c, 0x4c, 0xe2, 0x86, 0x3e, 0x05,
-	0xf0, 0xc9, 0x0b, 0xef, 0x9c, 0xb0, 0x70, 0xba, 0xc2, 0x07, 0x5d, 0xcb, 0x0d, 0xc2, 0x89, 0xc3,
-	0x78, 0x0f, 0x4b, 0xee, 0xe8, 0x1e, 0xb4, 0xa6, 0x61, 0x14, 0x27, 0xa9, 0xf2, 0xa1, 0xff, 0x2b,
-	0xce, 0xc7, 0xbb, 0xc7, 0x7b, 0x38, 0x71, 0x65, 0x73, 0xb2, 0xa4, 0x45, 0xa2, 0xcd, 0xd2, 0x39,
-	0x4f, 0x13, 0x07, 0x36, 0x67, 0xea, 0x8e, 0x3e, 0x01, 0x2d, 0xce, 0x60, 0x14, 0x46, 0xfa, 0x3e,
-	0x1f, 0xab, 0x97, 0xe6, 0x2b, 0x3e, 0x35, 0x71, 0x46, 0x3d, 0xa8, 0xd3, 0x48, 0x6f, 0x0c, 0x6b,
-	0x37, 0x54, 0x5c, 0xa7, 0xd1, 0x68, 0x1f, 0xd4, 0x17, 0xa6, 0x13, 0x12, 0xe3, 0x47, 0x05, 0x3a,
-	0xf2, 0xbc, 0x68, 0x08, 0x6d, 0xea, 0x9d, 0x13, 0xf7, 0x34, 0x9a, 0x4f, 0x3d, 0x87, 0xd7, 0x5f,
-	0xc3, 0xb2, 0x09, 0xdd, 0x86, 0x43, 0x73, 0xee, 0x85, 0x2e, 0xfd, 0x8e, 0xf8, 0x23, 0xcf, 0xf4,
-	0x2d, 0xc7, 0x8b, 0x4b, 0xae, 0xe0, 0x62, 0x07, 0x8b, 0x37, 0xb7, 0xdd, 0xc4, 0x4f, 0xe1, 0x7e,
-	0xb2, 0x09, 0xdd, 0x82, 0xfe, 0xc2, 0xb7, 0x67, 0x44, 0x0e, 0xd7, 0xe0, 0x6e, 0x05, 0x3b, 0xba,
-	0x0e, 0x5d, 0xea, 0x51, 0xd3, 0x49, 0x1c, 0x55, 0xee, 0x98, 0x35, 0xa2, 0xff, 0x83, 0x16, 0x50,
-	0xd3, 0xa7, 0xd4, 0x9e, 0x13, 0x5e, 0x63, 0x05, 0xa7, 0x06, 0x74, 0x0c, 0xad, 0x80, 0x7a, 0x0b,
-	0xde, 0xb9, 0xcf, 0x3b, 0x93, 0x36, 0x1b, 0x39, 0xf3, 0xbd, 0x97, 0xd6, 0xb3, 0xd0, 0xb5, 0xf4,
-	0xd6, 0xb0, 0x76, 0xa3, 0x85, 0x53, 0x03, 0xeb, 0x35, 0x83, 0x80, 0xd0, 0x2f, 0x97, 0x64, 0xa6,
-	0x6b, 0xbc, 0x32, 0xa9, 0x81, 0xf5, 0xf2, 0x7c, 0x79, 0x2f, 0xc4, 0xbd, 0x89, 0x81, 0xd5, 0x81,
-	0x37, 0x44, 0x5d, 0xdb, 0x71, 0x5d, 0x25, 0x93, 0xf1, 0x15, 0xb4, 0x25, 0xea, 0xa0, 0x23, 0x68,
-	0x32, 0xe8, 0x1f, 0x3f, 0x14, 0x18, 0x88, 0x16, 0x0b, 0x34, 0x15, 0x1f, 0xfa, 0xc0, 0x5d, 0x15,
-	0x5e, 0x36, 0x19, 0xb7, 0x01, 0x15, 0xe9, 0x5b, 0x15, 0xcf, 0x78, 0x55, 0x87, 0x7e, 0x9e, 0xb2,
-	0xef, 0x0a, 0x0b, 0x52, 0xb4, 0x9a, 0x6b, 0xd1, 0xda, 0xdf, 0x80, 0x56, 0xab, 0x88, 0xd6, 0x93,
-	0xb4, 0xc8, 0xa9, 0x5e, 0xd1, 0x00, 0xd4, 0x69, 0x18, 0x25, 0x35, 0x8e, 0x1b, 0x5b, 0x40, 0x76,
-	0x13, 0x0e, 0x0b, 0x0a, 0x2e, 0x0f, 0x66, 0xfc, 0xd4, 0x00, 0x8d, 0xcd, 0xf8, 0xad, 0x6f, 0x11,
-	0x7f, 0x0b, 0xa0, 0x74, 0xd8, 0x37, 0x2d, 0xcb, 0x27, 0x41, 0xc0, 0x27, 0xd6, 0xf0, 0xaa, 0x59,
-	0x0e, 0xa1, 0xb2, 0x25, 0x84, 0x8d, 0xed, 0x20, 0x54, 0xb7, 0x85, 0xb0, 0x59, 0x06, 0xa1, 0x01,
-	0x9d, 0xc0, 0x73, 0xac, 0xc4, 0x29, 0x96, 0x6b, 0xc6, 0x96, 0x15, 0x7b, 0x6b, 0x9d, 0xd8, 0xb5,
-	0x75, 0x62, 0x87, 0xbc, 0xd8, 0x53, 0xbd, 0xb4, 0x33, 0xfa, 0x63, 0x76, 0x6a, 0xd2, 0x30, 0xd0,
-	0x3b, 0x7c, 0x39, 0x15, 0x2d, 0x66, 0x3f, 0x23, 0xf6, 0xf3, 0x33, 0xaa, 0x77, 0xf9, 0x3c, 0xa2,
-	0x95, 0xa5, 0x61, 0x6f, 0x2d, 0x0d, 0x0f, 0x36, 0xd0, 0xb0, 0x5f, 0xa4, 0xe1, 0x6b, 0x05, 0xba,
-	0x2b, 0xd5, 0xbe, 0x0f, 0x8c, 0xf8, 0x10, 0x7a, 0x53, 0x2f, 0x7c, 0x7e, 0x46, 0x73, 0x9c, 0xc8,
-	0x59, 0x53, 0xed, 0xb4, 0x64, 0x21, 0xa6, 0xd8, 0x69, 0x15, 0xd8, 0x41, 0x35, 0x76, 0xed, 0xb5,
-	0xd8, 0x75, 0x36, 0x60, 0xd7, 0x2d, 0x62, 0xf7, 0xa7, 0x02, 0x3d, 0x4c, 0x66, 0xc4, 0x5e, 0xd0,
-	0x51, 0x18, 0x8d, 0xcc, 0x80, 0x6c, 0x01, 0xde, 0x00, 0x54, 0xef, 0xa5, 0x4b, 0x7c, 0x01, 0x5d,
-	0xdc, 0xa8, 0x06, 0x4e, 0x7b, 0xb3, 0xc0, 0x69, 0x97, 0x02, 0x38, 0x4d, 0x06, 0x4e, 0x88, 0x14,
-	0xf2, 0x22, 0xa5, 0xcb, 0xb1, 0x19, 0x9c, 0xad, 0xc4, 0x1b, 0xb7, 0x24, 0xa0, 0x3b, 0xd5, 0x40,
-	0x77, 0xd7, 0x02, 0xdd, 0xdb, 0x00, 0xf4, 0x41, 0x11, 0xe8, 0x3f, 0x1a, 0x70, 0x20, 0x80, 0x66,
-	0x2b, 0xf7, 0x3b, 0x8e, 0xf4, 0xe5, 0x5f, 0xb4, 0x53, 0xfe, 0x24, 0x6c, 0xeb, 0xe6, 0xd8, 0x26,
-	0xd8, 0xd3, 0xab, 0x60, 0xcf, 0x41, 0x35, 0x7b, 0xfa, 0x6b, 0xd9, 0x73, 0xb8, 0x81, 0x3d, 0xa8,
-	0xc8, 0x9e, 0x11, 0x5c, 0x15, 0xe4, 0xe1, 0x47, 0x84, 0x51, 0x72, 0x7f, 0xb9, 0x09, 0x8d, 0xa9,
-	0x19, 0x10, 0x71, 0x47, 0xba, 0x2a, 0x6e, 0x02, 0xd9, 0x15, 0x05, 0x73, 0x17, 0xe3, 0x3e, 0x0c,
-	0x72, 0x31, 0xe2, 0x73, 0xde, 0x0e, 0x21, 0x8a, 0x69, 0xc4, 0x27, 0x95, 0x5d, 0x62, 0x3c, 0xc8,
-	0xc6, 0x38, 0x4d, 0xae, 0x6f, 0xb7, 0x32, 0x31, 0x8e, 0xb2, 0x31, 0x56, 0x9a, 0x11, 0x41, 0xbe,
-	0x80, 0x43, 0xa9, 0x43, 0xd4, 0x62, 0x97, 0x00, 0x0f, 0xe1, 0x28, 0x9f, 0x85, 0xf8, 0x94, 0x5d,
-	0xa2, 0xfc, 0x5a, 0x83, 0x2e, 0x26, 0x17, 0xf7, 0x2d, 0xcb, 0xbf, 0xcf, 0xb0, 0x0e, 0x10, 0x82,
-	0x06, 0xdb, 0x48, 0x85, 0x96, 0xf9, 0x6f, 0x89, 0x78, 0xf5, 0xcc, 0x8e, 0x33, 0x00, 0x95, 0x6b,
-	0x5d, 0x57, 0x86, 0x0a, 0x23, 0x1e, 0x6f, 0x30, 0xaa, 0x58, 0xb6, 0x4f, 0xf8, 0xbd, 0x58, 0xdc,
-	0xd6, 0x52, 0x03, 0x1b, 0x33, 0x63, 0x02, 0xe7, 0xfa, 0x54, 0x71, 0xdc, 0x60, 0xbb, 0xf9, 0x33,
-	0xdf, 0x9b, 0x7f, 0x43, 0x22, 0x71, 0xc8, 0x5d, 0x35, 0x8d, 0x5f, 0x6a, 0xac, 0x52, 0x17, 0x13,
-	0xbe, 0xa6, 0xec, 0x76, 0x62, 0x5c, 0x45, 0xac, 0x67, 0x22, 0xa6, 0x19, 0x28, 0x72, 0x06, 0xeb,
-	0xb3, 0x4e, 0x2b, 0xa0, 0xca, 0x15, 0x30, 0x7e, 0xae, 0x41, 0x7f, 0x95, 0xdd, 0x28, 0x8c, 0x2e,
-	0x57, 0x72, 0xbf, 0x2b, 0x0c, 0xdc, 0x85, 0x13, 0xed, 0x90, 0xd9, 0x8e, 0xeb, 0xf5, 0xbb, 0x7f,
-	0xa4, 0x7a, 0x23, 0x3b, 0x73, 0x1f, 0x94, 0x73, 0x12, 0x89, 0xf5, 0x99, 0xfd, 0x5c, 0x7f, 0xa0,
-	0x36, 0x5e, 0xf1, 0x43, 0xd5, 0xc2, 0x89, 0x76, 0x61, 0xfc, 0xdb, 0x0a, 0xdd, 0x36, 0x5b, 0xed,
-	0xdb, 0x01, 0xdb, 0x98, 0x9d, 0x90, 0x64, 0xd4, 0x02, 0x74, 0x2f, 0x7e, 0x2a, 0x8b, 0x5b, 0x7a,
-	0x6d, 0xa8, 0x64, 0x76, 0x17, 0xd9, 0x17, 0x4b, 0x8e, 0xc6, 0x43, 0x81, 0xff, 0x4a, 0xb9, 0x81,
-	0x78, 0x1b, 0xcc, 0xc4, 0x19, 0xc8, 0x71, 0x56, 0x9e, 0x38, 0x75, 0x33, 0x5e, 0x37, 0x44, 0x42,
-	0x7c, 0x8b, 0x78, 0x0f, 0x96, 0x00, 0xfe, 0x4a, 0x9b, 0x67, 0x52, 0xce, 0x7a, 0x99, 0xb8, 0x34,
-	0x75, 0xbc, 0xd9, 0xf9, 0x84, 0x9d, 0x10, 0x7b, 0xf1, 0xf1, 0x31, 0x31, 0xb0, 0x0a, 0xda, 0x41,
-	0x42, 0x0e, 0x7e, 0x56, 0x6b, 0x61, 0xd9, 0xf4, 0xaf, 0x1f, 0xd8, 0xfa, 0x39, 0xea, 0x04, 0xe8,
-	0x04, 0x9a, 0x9e, 0x4c, 0xc0, 0x23, 0x99, 0x80, 0xa9, 0x23, 0x16, 0x5e, 0xc6, 0x53, 0xe8, 0x60,
-	0x72, 0xc1, 0x32, 0xe6, 0x1b, 0x24, 0xfa, 0x08, 0x1a, 0xac, 0x7a, 0x6b, 0xde, 0xc3, 0x31, 0x77,
-	0x28, 0xa7, 0xa0, 0xf1, 0x03, 0x3f, 0xab, 0x48, 0xaf, 0x81, 0x1f, 0x43, 0x33, 0x7e, 0x1d, 0x16,
-	0x11, 0xab, 0xdf, 0xbd, 0xb1, 0x70, 0xac, 0x88, 0xfc, 0x18, 0xda, 0x98, 0x5c, 0x8c, 0xc2, 0x28,
-	0xce, 0xf3, 0x3a, 0x28, 0xd3, 0x30, 0x12, 0x41, 0x4b, 0x5e, 0xe0, 0x31, 0xeb, 0x16, 0x3c, 0x4a,
-	0x43, 0xf1, 0x86, 0xf1, 0x57, 0x03, 0xe0, 0x89, 0x37, 0x33, 0xd3, 0x65, 0x9b, 0x63, 0x92, 0x95,
-	0x9b, 0x64, 0xfa, 0x4f, 0x6e, 0x3b, 0xcb, 0x4d, 0xb9, 0x84, 0x72, 0xd3, 0x61, 0x9f, 0x2e, 0x1f,
-	0xbb, 0x16, 0x59, 0x0a, 0xb1, 0xad, 0x9a, 0xe8, 0x03, 0x00, 0x3b, 0x78, 0x64, 0xbb, 0x76, 0x70,
-	0x46, 0x2c, 0xae, 0xb4, 0x16, 0x96, 0x2c, 0x59, 0xa1, 0x5e, 0xd9, 0x20, 0xd4, 0x41, 0x41, 0xa8,
-	0x77, 0x7e, 0x53, 0x40, 0xe5, 0x25, 0x47, 0x9f, 0xc3, 0xe0, 0x81, 0x4f, 0x4c, 0x4a, 0xb0, 0xf9,
-	0x32, 0xb9, 0x14, 0x4c, 0x96, 0xa8, 0x4c, 0x68, 0xc7, 0x07, 0xc2, 0xf8, 0xbd, 0x1b, 0xd8, 0xcf,
-	0xdd, 0xc9, 0xd2, 0xd8, 0x43, 0x9f, 0xc1, 0x95, 0xec, 0x78, 0x26, 0x88, 0x25, 0x2a, 0x11, 0x40,
-	0xd9, 0xe8, 0x47, 0x70, 0x94, 0x1d, 0x1d, 0xab, 0x6f, 0xb2, 0x44, 0xd5, 0xb2, 0x2c, 0x8f, 0xa3,
-	0x17, 0xb2, 0xe0, 0xf7, 0xab, 0xc9, 0x12, 0x55, 0xfd, 0x3b, 0x55, 0x16, 0xe7, 0x6b, 0x38, 0x2e,
-	0x56, 0x23, 0xbe, 0x68, 0x95, 0xe4, 0x94, 0x76, 0x96, 0xc5, 0x1a, 0xc3, 0xb5, 0xb2, 0x6f, 0x8b,
-	0xeb, 0x53, 0xf9, 0xef, 0x55, 0x49, 0xa4, 0x69, 0x93, 0xff, 0x51, 0x78, 0xf7, 0x9f, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0xe0, 0xb9, 0xad, 0xb0, 0x51, 0x1c, 0x00, 0x00,
 }

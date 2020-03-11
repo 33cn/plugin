@@ -4,17 +4,15 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-
-	context "golang.org/x/net/context"
-
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -26,12 +24,12 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// ////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 // message for Privacy
 // start/////////////////////////////////////////////////////
-// ////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 type PrivacyAction struct {
 	// Types that are valid to be assigned to Value:
 	//	*PrivacyAction_Public2Privacy
@@ -48,16 +46,17 @@ func (m *PrivacyAction) Reset()         { *m = PrivacyAction{} }
 func (m *PrivacyAction) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction) ProtoMessage()    {}
 func (*PrivacyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{0}
+	return fileDescriptor_dde03d4df7a6e99a, []int{0}
 }
+
 func (m *PrivacyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction.Unmarshal(m, b)
 }
 func (m *PrivacyAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyAction.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyAction.Merge(dst, src)
+func (m *PrivacyAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyAction.Merge(m, src)
 }
 func (m *PrivacyAction) XXX_Size() int {
 	return xxx_messageInfo_PrivacyAction.Size(m)
@@ -125,97 +124,13 @@ func (m *PrivacyAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*PrivacyAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _PrivacyAction_OneofMarshaler, _PrivacyAction_OneofUnmarshaler, _PrivacyAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*PrivacyAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*PrivacyAction_Public2Privacy)(nil),
 		(*PrivacyAction_Privacy2Privacy)(nil),
 		(*PrivacyAction_Privacy2Public)(nil),
 	}
-}
-
-func _PrivacyAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*PrivacyAction)
-	// value
-	switch x := m.Value.(type) {
-	case *PrivacyAction_Public2Privacy:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Public2Privacy); err != nil {
-			return err
-		}
-	case *PrivacyAction_Privacy2Privacy:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Privacy2Privacy); err != nil {
-			return err
-		}
-	case *PrivacyAction_Privacy2Public:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Privacy2Public); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("PrivacyAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _PrivacyAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*PrivacyAction)
-	switch tag {
-	case 1: // value.public2privacy
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Public2Privacy)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction_Public2Privacy{msg}
-		return true, err
-	case 2: // value.privacy2privacy
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Privacy2Privacy)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction_Privacy2Privacy{msg}
-		return true, err
-	case 3: // value.privacy2public
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Privacy2Public)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction_Privacy2Public{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _PrivacyAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*PrivacyAction)
-	// value
-	switch x := m.Value.(type) {
-	case *PrivacyAction_Public2Privacy:
-		s := proto.Size(x.Public2Privacy)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PrivacyAction_Privacy2Privacy:
-		s := proto.Size(x.Privacy2Privacy)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PrivacyAction_Privacy2Public:
-		s := proto.Size(x.Privacy2Public)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type Public2Privacy struct {
@@ -233,16 +148,17 @@ func (m *Public2Privacy) Reset()         { *m = Public2Privacy{} }
 func (m *Public2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy) ProtoMessage()    {}
 func (*Public2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{1}
+	return fileDescriptor_dde03d4df7a6e99a, []int{1}
 }
+
 func (m *Public2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy.Unmarshal(m, b)
 }
 func (m *Public2Privacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Public2Privacy.Marshal(b, m, deterministic)
 }
-func (dst *Public2Privacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Public2Privacy.Merge(dst, src)
+func (m *Public2Privacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Public2Privacy.Merge(m, src)
 }
 func (m *Public2Privacy) XXX_Size() int {
 	return xxx_messageInfo_Public2Privacy.Size(m)
@@ -304,16 +220,17 @@ func (m *Privacy2Privacy) Reset()         { *m = Privacy2Privacy{} }
 func (m *Privacy2Privacy) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy) ProtoMessage()    {}
 func (*Privacy2Privacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{2}
+	return fileDescriptor_dde03d4df7a6e99a, []int{2}
 }
+
 func (m *Privacy2Privacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy.Unmarshal(m, b)
 }
 func (m *Privacy2Privacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Privacy.Marshal(b, m, deterministic)
 }
-func (dst *Privacy2Privacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Privacy.Merge(dst, src)
+func (m *Privacy2Privacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Privacy.Merge(m, src)
 }
 func (m *Privacy2Privacy) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Privacy.Size(m)
@@ -383,16 +300,17 @@ func (m *Privacy2Public) Reset()         { *m = Privacy2Public{} }
 func (m *Privacy2Public) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public) ProtoMessage()    {}
 func (*Privacy2Public) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{3}
+	return fileDescriptor_dde03d4df7a6e99a, []int{3}
 }
+
 func (m *Privacy2Public) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public.Unmarshal(m, b)
 }
 func (m *Privacy2Public) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Public.Marshal(b, m, deterministic)
 }
-func (dst *Privacy2Public) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Public.Merge(dst, src)
+func (m *Privacy2Public) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Public.Merge(m, src)
 }
 func (m *Privacy2Public) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Public.Size(m)
@@ -453,8 +371,8 @@ func (m *Privacy2Public) GetAssetExec() string {
 }
 
 type UTXOGlobalIndex struct {
-	// 	int64 height   = 1;
-	// 	int32 txindex  = 2;
+	//	int64 height   = 1;
+	//	int32 txindex  = 2;
 	Txhash               []byte   `protobuf:"bytes,3,opt,name=txhash,proto3" json:"txhash,omitempty"`
 	Outindex             int32    `protobuf:"varint,4,opt,name=outindex,proto3" json:"outindex,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -466,16 +384,17 @@ func (m *UTXOGlobalIndex) Reset()         { *m = UTXOGlobalIndex{} }
 func (m *UTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex) ProtoMessage()    {}
 func (*UTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{4}
+	return fileDescriptor_dde03d4df7a6e99a, []int{4}
 }
+
 func (m *UTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *UTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (dst *UTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOGlobalIndex.Merge(dst, src)
+func (m *UTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOGlobalIndex.Merge(m, src)
 }
 func (m *UTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_UTXOGlobalIndex.Size(m)
@@ -514,16 +433,17 @@ func (m *KeyInput) Reset()         { *m = KeyInput{} }
 func (m *KeyInput) String() string { return proto.CompactTextString(m) }
 func (*KeyInput) ProtoMessage()    {}
 func (*KeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{5}
+	return fileDescriptor_dde03d4df7a6e99a, []int{5}
 }
+
 func (m *KeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput.Unmarshal(m, b)
 }
 func (m *KeyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyInput.Marshal(b, m, deterministic)
 }
-func (dst *KeyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyInput.Merge(dst, src)
+func (m *KeyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyInput.Merge(m, src)
 }
 func (m *KeyInput) XXX_Size() int {
 	return xxx_messageInfo_KeyInput.Size(m)
@@ -566,16 +486,17 @@ func (m *PrivacyInput) Reset()         { *m = PrivacyInput{} }
 func (m *PrivacyInput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput) ProtoMessage()    {}
 func (*PrivacyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{6}
+	return fileDescriptor_dde03d4df7a6e99a, []int{6}
 }
+
 func (m *PrivacyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput.Unmarshal(m, b)
 }
 func (m *PrivacyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyInput.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyInput.Merge(dst, src)
+func (m *PrivacyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyInput.Merge(m, src)
 }
 func (m *PrivacyInput) XXX_Size() int {
 	return xxx_messageInfo_PrivacyInput.Size(m)
@@ -606,16 +527,17 @@ func (m *KeyOutput) Reset()         { *m = KeyOutput{} }
 func (m *KeyOutput) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput) ProtoMessage()    {}
 func (*KeyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{7}
+	return fileDescriptor_dde03d4df7a6e99a, []int{7}
 }
+
 func (m *KeyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput.Unmarshal(m, b)
 }
 func (m *KeyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyOutput.Marshal(b, m, deterministic)
 }
-func (dst *KeyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyOutput.Merge(dst, src)
+func (m *KeyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyOutput.Merge(m, src)
 }
 func (m *KeyOutput) XXX_Size() int {
 	return xxx_messageInfo_KeyOutput.Size(m)
@@ -652,16 +574,17 @@ func (m *PrivacyOutput) Reset()         { *m = PrivacyOutput{} }
 func (m *PrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput) ProtoMessage()    {}
 func (*PrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{8}
+	return fileDescriptor_dde03d4df7a6e99a, []int{8}
 }
+
 func (m *PrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput.Unmarshal(m, b)
 }
 func (m *PrivacyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyOutput.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyOutput.Merge(dst, src)
+func (m *PrivacyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyOutput.Merge(m, src)
 }
 func (m *PrivacyOutput) XXX_Size() int {
 	return xxx_messageInfo_PrivacyOutput.Size(m)
@@ -698,16 +621,17 @@ func (m *GroupUTXOGlobalIndex) Reset()         { *m = GroupUTXOGlobalIndex{} }
 func (m *GroupUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOGlobalIndex) ProtoMessage()    {}
 func (*GroupUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{9}
+	return fileDescriptor_dde03d4df7a6e99a, []int{9}
 }
+
 func (m *GroupUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *GroupUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (dst *GroupUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GroupUTXOGlobalIndex.Merge(dst, src)
+func (m *GroupUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GroupUTXOGlobalIndex.Merge(m, src)
 }
 func (m *GroupUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_GroupUTXOGlobalIndex.Size(m)
@@ -747,16 +671,17 @@ func (m *LocalUTXOItem) Reset()         { *m = LocalUTXOItem{} }
 func (m *LocalUTXOItem) String() string { return proto.CompactTextString(m) }
 func (*LocalUTXOItem) ProtoMessage()    {}
 func (*LocalUTXOItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{10}
+	return fileDescriptor_dde03d4df7a6e99a, []int{10}
 }
+
 func (m *LocalUTXOItem) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalUTXOItem.Unmarshal(m, b)
 }
 func (m *LocalUTXOItem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalUTXOItem.Marshal(b, m, deterministic)
 }
-func (dst *LocalUTXOItem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalUTXOItem.Merge(dst, src)
+func (m *LocalUTXOItem) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalUTXOItem.Merge(m, src)
 }
 func (m *LocalUTXOItem) XXX_Size() int {
 	return xxx_messageInfo_LocalUTXOItem.Size(m)
@@ -814,16 +739,17 @@ func (m *ReqUTXOPubKeys) Reset()         { *m = ReqUTXOPubKeys{} }
 func (m *ReqUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOPubKeys) ProtoMessage()    {}
 func (*ReqUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{11}
+	return fileDescriptor_dde03d4df7a6e99a, []int{11}
 }
+
 func (m *ReqUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOPubKeys.Unmarshal(m, b)
 }
 func (m *ReqUTXOPubKeys) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqUTXOPubKeys.Marshal(b, m, deterministic)
 }
-func (dst *ReqUTXOPubKeys) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqUTXOPubKeys.Merge(dst, src)
+func (m *ReqUTXOPubKeys) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqUTXOPubKeys.Merge(m, src)
 }
 func (m *ReqUTXOPubKeys) XXX_Size() int {
 	return xxx_messageInfo_ReqUTXOPubKeys.Size(m)
@@ -860,16 +786,17 @@ func (m *PublicKeyData) Reset()         { *m = PublicKeyData{} }
 func (m *PublicKeyData) String() string { return proto.CompactTextString(m) }
 func (*PublicKeyData) ProtoMessage()    {}
 func (*PublicKeyData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{12}
+	return fileDescriptor_dde03d4df7a6e99a, []int{12}
 }
+
 func (m *PublicKeyData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PublicKeyData.Unmarshal(m, b)
 }
 func (m *PublicKeyData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PublicKeyData.Marshal(b, m, deterministic)
 }
-func (dst *PublicKeyData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublicKeyData.Merge(dst, src)
+func (m *PublicKeyData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PublicKeyData.Merge(m, src)
 }
 func (m *PublicKeyData) XXX_Size() int {
 	return xxx_messageInfo_PublicKeyData.Size(m)
@@ -900,16 +827,17 @@ func (m *GroupUTXOPubKey) Reset()         { *m = GroupUTXOPubKey{} }
 func (m *GroupUTXOPubKey) String() string { return proto.CompactTextString(m) }
 func (*GroupUTXOPubKey) ProtoMessage()    {}
 func (*GroupUTXOPubKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{13}
+	return fileDescriptor_dde03d4df7a6e99a, []int{13}
 }
+
 func (m *GroupUTXOPubKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_GroupUTXOPubKey.Unmarshal(m, b)
 }
 func (m *GroupUTXOPubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_GroupUTXOPubKey.Marshal(b, m, deterministic)
 }
-func (dst *GroupUTXOPubKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GroupUTXOPubKey.Merge(dst, src)
+func (m *GroupUTXOPubKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GroupUTXOPubKey.Merge(m, src)
 }
 func (m *GroupUTXOPubKey) XXX_Size() int {
 	return xxx_messageInfo_GroupUTXOPubKey.Size(m)
@@ -945,16 +873,17 @@ func (m *ResUTXOPubKeys) Reset()         { *m = ResUTXOPubKeys{} }
 func (m *ResUTXOPubKeys) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOPubKeys) ProtoMessage()    {}
 func (*ResUTXOPubKeys) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{14}
+	return fileDescriptor_dde03d4df7a6e99a, []int{14}
 }
+
 func (m *ResUTXOPubKeys) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOPubKeys.Unmarshal(m, b)
 }
 func (m *ResUTXOPubKeys) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResUTXOPubKeys.Marshal(b, m, deterministic)
 }
-func (dst *ResUTXOPubKeys) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResUTXOPubKeys.Merge(dst, src)
+func (m *ResUTXOPubKeys) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResUTXOPubKeys.Merge(m, src)
 }
 func (m *ResUTXOPubKeys) XXX_Size() int {
 	return xxx_messageInfo_ResUTXOPubKeys.Size(m)
@@ -985,16 +914,17 @@ func (m *ReqPrivacyToken) Reset()         { *m = ReqPrivacyToken{} }
 func (m *ReqPrivacyToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyToken) ProtoMessage()    {}
 func (*ReqPrivacyToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{15}
+	return fileDescriptor_dde03d4df7a6e99a, []int{15}
 }
+
 func (m *ReqPrivacyToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyToken.Unmarshal(m, b)
 }
 func (m *ReqPrivacyToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyToken.Marshal(b, m, deterministic)
 }
-func (dst *ReqPrivacyToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyToken.Merge(dst, src)
+func (m *ReqPrivacyToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyToken.Merge(m, src)
 }
 func (m *ReqPrivacyToken) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyToken.Size(m)
@@ -1038,16 +968,17 @@ func (m *AmountDetail) Reset()         { *m = AmountDetail{} }
 func (m *AmountDetail) String() string { return proto.CompactTextString(m) }
 func (*AmountDetail) ProtoMessage()    {}
 func (*AmountDetail) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{16}
+	return fileDescriptor_dde03d4df7a6e99a, []int{16}
 }
+
 func (m *AmountDetail) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountDetail.Unmarshal(m, b)
 }
 func (m *AmountDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AmountDetail.Marshal(b, m, deterministic)
 }
-func (dst *AmountDetail) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AmountDetail.Merge(dst, src)
+func (m *AmountDetail) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AmountDetail.Merge(m, src)
 }
 func (m *AmountDetail) XXX_Size() int {
 	return xxx_messageInfo_AmountDetail.Size(m)
@@ -1083,16 +1014,17 @@ func (m *ReplyPrivacyAmounts) Reset()         { *m = ReplyPrivacyAmounts{} }
 func (m *ReplyPrivacyAmounts) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAmounts) ProtoMessage()    {}
 func (*ReplyPrivacyAmounts) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{17}
+	return fileDescriptor_dde03d4df7a6e99a, []int{17}
 }
+
 func (m *ReplyPrivacyAmounts) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyAmounts) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Marshal(b, m, deterministic)
 }
-func (dst *ReplyPrivacyAmounts) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyAmounts.Merge(dst, src)
+func (m *ReplyPrivacyAmounts) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyAmounts.Merge(m, src)
 }
 func (m *ReplyPrivacyAmounts) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyAmounts.Size(m)
@@ -1121,16 +1053,17 @@ func (m *ReplyUTXOsOfAmount) Reset()         { *m = ReplyUTXOsOfAmount{} }
 func (m *ReplyUTXOsOfAmount) String() string { return proto.CompactTextString(m) }
 func (*ReplyUTXOsOfAmount) ProtoMessage()    {}
 func (*ReplyUTXOsOfAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{18}
+	return fileDescriptor_dde03d4df7a6e99a, []int{18}
 }
+
 func (m *ReplyUTXOsOfAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Unmarshal(m, b)
 }
 func (m *ReplyUTXOsOfAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Marshal(b, m, deterministic)
 }
-func (dst *ReplyUTXOsOfAmount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyUTXOsOfAmount.Merge(dst, src)
+func (m *ReplyUTXOsOfAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyUTXOsOfAmount.Merge(m, src)
 }
 func (m *ReplyUTXOsOfAmount) XXX_Size() int {
 	return xxx_messageInfo_ReplyUTXOsOfAmount.Size(m)
@@ -1161,16 +1094,17 @@ func (m *ReceiptPrivacyOutput) Reset()         { *m = ReceiptPrivacyOutput{} }
 func (m *ReceiptPrivacyOutput) String() string { return proto.CompactTextString(m) }
 func (*ReceiptPrivacyOutput) ProtoMessage()    {}
 func (*ReceiptPrivacyOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{19}
+	return fileDescriptor_dde03d4df7a6e99a, []int{19}
 }
+
 func (m *ReceiptPrivacyOutput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Unmarshal(m, b)
 }
 func (m *ReceiptPrivacyOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptPrivacyOutput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptPrivacyOutput.Merge(dst, src)
+func (m *ReceiptPrivacyOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptPrivacyOutput.Merge(m, src)
 }
 func (m *ReceiptPrivacyOutput) XXX_Size() int {
 	return xxx_messageInfo_ReceiptPrivacyOutput.Size(m)
@@ -1202,7 +1136,7 @@ func (m *ReceiptPrivacyOutput) GetKeyoutput() []*KeyOutput {
 	return nil
 }
 
-// 各种amount额度的UTXO在链上的数量
+//各种amount额度的UTXO在链上的数量
 type AmountsOfUTXO struct {
 	AmountMap            map[int64]int64 `protobuf:"bytes,1,rep,name=amountMap,proto3" json:"amountMap,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -1214,16 +1148,17 @@ func (m *AmountsOfUTXO) Reset()         { *m = AmountsOfUTXO{} }
 func (m *AmountsOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*AmountsOfUTXO) ProtoMessage()    {}
 func (*AmountsOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{20}
+	return fileDescriptor_dde03d4df7a6e99a, []int{20}
 }
+
 func (m *AmountsOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AmountsOfUTXO.Unmarshal(m, b)
 }
 func (m *AmountsOfUTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AmountsOfUTXO.Marshal(b, m, deterministic)
 }
-func (dst *AmountsOfUTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AmountsOfUTXO.Merge(dst, src)
+func (m *AmountsOfUTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AmountsOfUTXO.Merge(m, src)
 }
 func (m *AmountsOfUTXO) XXX_Size() int {
 	return xxx_messageInfo_AmountsOfUTXO.Size(m)
@@ -1252,16 +1187,17 @@ func (m *TokenNamesOfUTXO) Reset()         { *m = TokenNamesOfUTXO{} }
 func (m *TokenNamesOfUTXO) String() string { return proto.CompactTextString(m) }
 func (*TokenNamesOfUTXO) ProtoMessage()    {}
 func (*TokenNamesOfUTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{21}
+	return fileDescriptor_dde03d4df7a6e99a, []int{21}
 }
+
 func (m *TokenNamesOfUTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenNamesOfUTXO.Unmarshal(m, b)
 }
 func (m *TokenNamesOfUTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TokenNamesOfUTXO.Marshal(b, m, deterministic)
 }
-func (dst *TokenNamesOfUTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TokenNamesOfUTXO.Merge(dst, src)
+func (m *TokenNamesOfUTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenNamesOfUTXO.Merge(m, src)
 }
 func (m *TokenNamesOfUTXO) XXX_Size() int {
 	return xxx_messageInfo_TokenNamesOfUTXO.Size(m)
@@ -1292,16 +1228,17 @@ func (m *UTXOGlobalIndex4Print) Reset()         { *m = UTXOGlobalIndex4Print{} }
 func (m *UTXOGlobalIndex4Print) String() string { return proto.CompactTextString(m) }
 func (*UTXOGlobalIndex4Print) ProtoMessage()    {}
 func (*UTXOGlobalIndex4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{22}
+	return fileDescriptor_dde03d4df7a6e99a, []int{22}
 }
+
 func (m *UTXOGlobalIndex4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Unmarshal(m, b)
 }
 func (m *UTXOGlobalIndex4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Marshal(b, m, deterministic)
 }
-func (dst *UTXOGlobalIndex4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOGlobalIndex4Print.Merge(dst, src)
+func (m *UTXOGlobalIndex4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOGlobalIndex4Print.Merge(m, src)
 }
 func (m *UTXOGlobalIndex4Print) XXX_Size() int {
 	return xxx_messageInfo_UTXOGlobalIndex4Print.Size(m)
@@ -1339,16 +1276,17 @@ func (m *KeyInput4Print) Reset()         { *m = KeyInput4Print{} }
 func (m *KeyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyInput4Print) ProtoMessage()    {}
 func (*KeyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{23}
+	return fileDescriptor_dde03d4df7a6e99a, []int{23}
 }
+
 func (m *KeyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyInput4Print.Unmarshal(m, b)
 }
 func (m *KeyInput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyInput4Print.Marshal(b, m, deterministic)
 }
-func (dst *KeyInput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyInput4Print.Merge(dst, src)
+func (m *KeyInput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyInput4Print.Merge(m, src)
 }
 func (m *KeyInput4Print) XXX_Size() int {
 	return xxx_messageInfo_KeyInput4Print.Size(m)
@@ -1392,16 +1330,17 @@ func (m *KeyOutput4Print) Reset()         { *m = KeyOutput4Print{} }
 func (m *KeyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*KeyOutput4Print) ProtoMessage()    {}
 func (*KeyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{24}
+	return fileDescriptor_dde03d4df7a6e99a, []int{24}
 }
+
 func (m *KeyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_KeyOutput4Print.Unmarshal(m, b)
 }
 func (m *KeyOutput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_KeyOutput4Print.Marshal(b, m, deterministic)
 }
-func (dst *KeyOutput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyOutput4Print.Merge(dst, src)
+func (m *KeyOutput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyOutput4Print.Merge(m, src)
 }
 func (m *KeyOutput4Print) XXX_Size() int {
 	return xxx_messageInfo_KeyOutput4Print.Size(m)
@@ -1437,16 +1376,17 @@ func (m *PrivacyInput4Print) Reset()         { *m = PrivacyInput4Print{} }
 func (m *PrivacyInput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyInput4Print) ProtoMessage()    {}
 func (*PrivacyInput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{25}
+	return fileDescriptor_dde03d4df7a6e99a, []int{25}
 }
+
 func (m *PrivacyInput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyInput4Print.Unmarshal(m, b)
 }
 func (m *PrivacyInput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyInput4Print.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyInput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyInput4Print.Merge(dst, src)
+func (m *PrivacyInput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyInput4Print.Merge(m, src)
 }
 func (m *PrivacyInput4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyInput4Print.Size(m)
@@ -1476,16 +1416,17 @@ func (m *PrivacyOutput4Print) Reset()         { *m = PrivacyOutput4Print{} }
 func (m *PrivacyOutput4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyOutput4Print) ProtoMessage()    {}
 func (*PrivacyOutput4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{26}
+	return fileDescriptor_dde03d4df7a6e99a, []int{26}
 }
+
 func (m *PrivacyOutput4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyOutput4Print.Unmarshal(m, b)
 }
 func (m *PrivacyOutput4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyOutput4Print.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyOutput4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyOutput4Print.Merge(dst, src)
+func (m *PrivacyOutput4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyOutput4Print.Merge(m, src)
 }
 func (m *PrivacyOutput4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyOutput4Print.Size(m)
@@ -1524,16 +1465,17 @@ func (m *Public2Privacy4Print) Reset()         { *m = Public2Privacy4Print{} }
 func (m *Public2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Public2Privacy4Print) ProtoMessage()    {}
 func (*Public2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{27}
+	return fileDescriptor_dde03d4df7a6e99a, []int{27}
 }
+
 func (m *Public2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Public2Privacy4Print.Unmarshal(m, b)
 }
 func (m *Public2Privacy4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Public2Privacy4Print.Marshal(b, m, deterministic)
 }
-func (dst *Public2Privacy4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Public2Privacy4Print.Merge(dst, src)
+func (m *Public2Privacy4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Public2Privacy4Print.Merge(m, src)
 }
 func (m *Public2Privacy4Print) XXX_Size() int {
 	return xxx_messageInfo_Public2Privacy4Print.Size(m)
@@ -1587,16 +1529,17 @@ func (m *Privacy2Privacy4Print) Reset()         { *m = Privacy2Privacy4Print{} }
 func (m *Privacy2Privacy4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Privacy4Print) ProtoMessage()    {}
 func (*Privacy2Privacy4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{28}
+	return fileDescriptor_dde03d4df7a6e99a, []int{28}
 }
+
 func (m *Privacy2Privacy4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Privacy4Print.Unmarshal(m, b)
 }
 func (m *Privacy2Privacy4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Privacy4Print.Marshal(b, m, deterministic)
 }
-func (dst *Privacy2Privacy4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Privacy4Print.Merge(dst, src)
+func (m *Privacy2Privacy4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Privacy4Print.Merge(m, src)
 }
 func (m *Privacy2Privacy4Print) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Privacy4Print.Size(m)
@@ -1657,16 +1600,17 @@ func (m *Privacy2Public4Print) Reset()         { *m = Privacy2Public4Print{} }
 func (m *Privacy2Public4Print) String() string { return proto.CompactTextString(m) }
 func (*Privacy2Public4Print) ProtoMessage()    {}
 func (*Privacy2Public4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{29}
+	return fileDescriptor_dde03d4df7a6e99a, []int{29}
 }
+
 func (m *Privacy2Public4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Privacy2Public4Print.Unmarshal(m, b)
 }
 func (m *Privacy2Public4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Privacy2Public4Print.Marshal(b, m, deterministic)
 }
-func (dst *Privacy2Public4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Privacy2Public4Print.Merge(dst, src)
+func (m *Privacy2Public4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Privacy2Public4Print.Merge(m, src)
 }
 func (m *Privacy2Public4Print) XXX_Size() int {
 	return xxx_messageInfo_Privacy2Public4Print.Size(m)
@@ -1728,16 +1672,17 @@ func (m *PrivacyAction4Print) Reset()         { *m = PrivacyAction4Print{} }
 func (m *PrivacyAction4Print) String() string { return proto.CompactTextString(m) }
 func (*PrivacyAction4Print) ProtoMessage()    {}
 func (*PrivacyAction4Print) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{30}
+	return fileDescriptor_dde03d4df7a6e99a, []int{30}
 }
+
 func (m *PrivacyAction4Print) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyAction4Print.Unmarshal(m, b)
 }
 func (m *PrivacyAction4Print) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyAction4Print.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyAction4Print) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyAction4Print.Merge(dst, src)
+func (m *PrivacyAction4Print) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyAction4Print.Merge(m, src)
 }
 func (m *PrivacyAction4Print) XXX_Size() int {
 	return xxx_messageInfo_PrivacyAction4Print.Size(m)
@@ -1805,97 +1750,13 @@ func (m *PrivacyAction4Print) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*PrivacyAction4Print) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _PrivacyAction4Print_OneofMarshaler, _PrivacyAction4Print_OneofUnmarshaler, _PrivacyAction4Print_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*PrivacyAction4Print) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*PrivacyAction4Print_Public2Privacy)(nil),
 		(*PrivacyAction4Print_Privacy2Privacy)(nil),
 		(*PrivacyAction4Print_Privacy2Public)(nil),
 	}
-}
-
-func _PrivacyAction4Print_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*PrivacyAction4Print)
-	// value
-	switch x := m.Value.(type) {
-	case *PrivacyAction4Print_Public2Privacy:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Public2Privacy); err != nil {
-			return err
-		}
-	case *PrivacyAction4Print_Privacy2Privacy:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Privacy2Privacy); err != nil {
-			return err
-		}
-	case *PrivacyAction4Print_Privacy2Public:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Privacy2Public); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("PrivacyAction4Print.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _PrivacyAction4Print_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*PrivacyAction4Print)
-	switch tag {
-	case 1: // value.public2privacy
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Public2Privacy4Print)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction4Print_Public2Privacy{msg}
-		return true, err
-	case 2: // value.privacy2privacy
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Privacy2Privacy4Print)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction4Print_Privacy2Privacy{msg}
-		return true, err
-	case 3: // value.privacy2public
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Privacy2Public4Print)
-		err := b.DecodeMessage(msg)
-		m.Value = &PrivacyAction4Print_Privacy2Public{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _PrivacyAction4Print_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*PrivacyAction4Print)
-	// value
-	switch x := m.Value.(type) {
-	case *PrivacyAction4Print_Public2Privacy:
-		s := proto.Size(x.Public2Privacy)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PrivacyAction4Print_Privacy2Privacy:
-		s := proto.Size(x.Privacy2Privacy)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *PrivacyAction4Print_Privacy2Public:
-		s := proto.Size(x.Privacy2Public)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type ReplyPrivacyPkPair struct {
@@ -1912,16 +1773,17 @@ func (m *ReplyPrivacyPkPair) Reset()         { *m = ReplyPrivacyPkPair{} }
 func (m *ReplyPrivacyPkPair) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyPkPair) ProtoMessage()    {}
 func (*ReplyPrivacyPkPair) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{31}
+	return fileDescriptor_dde03d4df7a6e99a, []int{31}
 }
+
 func (m *ReplyPrivacyPkPair) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyPkPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Marshal(b, m, deterministic)
 }
-func (dst *ReplyPrivacyPkPair) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyPkPair.Merge(dst, src)
+func (m *ReplyPrivacyPkPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyPkPair.Merge(m, src)
 }
 func (m *ReplyPrivacyPkPair) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyPkPair.Size(m)
@@ -1959,16 +1821,17 @@ func (m *ReqPrivBal4AddrToken) Reset()         { *m = ReqPrivBal4AddrToken{} }
 func (m *ReqPrivBal4AddrToken) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivBal4AddrToken) ProtoMessage()    {}
 func (*ReqPrivBal4AddrToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{32}
+	return fileDescriptor_dde03d4df7a6e99a, []int{32}
 }
+
 func (m *ReqPrivBal4AddrToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Unmarshal(m, b)
 }
 func (m *ReqPrivBal4AddrToken) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Marshal(b, m, deterministic)
 }
-func (dst *ReqPrivBal4AddrToken) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivBal4AddrToken.Merge(dst, src)
+func (m *ReqPrivBal4AddrToken) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivBal4AddrToken.Merge(m, src)
 }
 func (m *ReqPrivBal4AddrToken) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivBal4AddrToken.Size(m)
@@ -2012,16 +1875,17 @@ func (m *ReplyPrivacyBalance) Reset()         { *m = ReplyPrivacyBalance{} }
 func (m *ReplyPrivacyBalance) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyBalance) ProtoMessage()    {}
 func (*ReplyPrivacyBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{33}
+	return fileDescriptor_dde03d4df7a6e99a, []int{33}
 }
+
 func (m *ReplyPrivacyBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyBalance.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyBalance.Marshal(b, m, deterministic)
 }
-func (dst *ReplyPrivacyBalance) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyBalance.Merge(dst, src)
+func (m *ReplyPrivacyBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyBalance.Merge(m, src)
 }
 func (m *ReplyPrivacyBalance) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyBalance.Size(m)
@@ -2067,16 +1931,17 @@ func (m *PrivacyDBStore) Reset()         { *m = PrivacyDBStore{} }
 func (m *PrivacyDBStore) String() string { return proto.CompactTextString(m) }
 func (*PrivacyDBStore) ProtoMessage()    {}
 func (*PrivacyDBStore) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{34}
+	return fileDescriptor_dde03d4df7a6e99a, []int{34}
 }
+
 func (m *PrivacyDBStore) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacyDBStore.Unmarshal(m, b)
 }
 func (m *PrivacyDBStore) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacyDBStore.Marshal(b, m, deterministic)
 }
-func (dst *PrivacyDBStore) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacyDBStore.Merge(dst, src)
+func (m *PrivacyDBStore) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyDBStore.Merge(m, src)
 }
 func (m *PrivacyDBStore) XXX_Size() int {
 	return xxx_messageInfo_PrivacyDBStore.Size(m)
@@ -2176,16 +2041,17 @@ func (m *UTXO) Reset()         { *m = UTXO{} }
 func (m *UTXO) String() string { return proto.CompactTextString(m) }
 func (*UTXO) ProtoMessage()    {}
 func (*UTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{35}
+	return fileDescriptor_dde03d4df7a6e99a, []int{35}
 }
+
 func (m *UTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXO.Unmarshal(m, b)
 }
 func (m *UTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXO.Marshal(b, m, deterministic)
 }
-func (dst *UTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXO.Merge(dst, src)
+func (m *UTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXO.Merge(m, src)
 }
 func (m *UTXO) XXX_Size() int {
 	return xxx_messageInfo_UTXO.Size(m)
@@ -2223,16 +2089,17 @@ func (m *UTXOHaveTxHash) Reset()         { *m = UTXOHaveTxHash{} }
 func (m *UTXOHaveTxHash) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHash) ProtoMessage()    {}
 func (*UTXOHaveTxHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{36}
+	return fileDescriptor_dde03d4df7a6e99a, []int{36}
 }
+
 func (m *UTXOHaveTxHash) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHash.Unmarshal(m, b)
 }
 func (m *UTXOHaveTxHash) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOHaveTxHash.Marshal(b, m, deterministic)
 }
-func (dst *UTXOHaveTxHash) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOHaveTxHash.Merge(dst, src)
+func (m *UTXOHaveTxHash) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOHaveTxHash.Merge(m, src)
 }
 func (m *UTXOHaveTxHash) XXX_Size() int {
 	return xxx_messageInfo_UTXOHaveTxHash.Size(m)
@@ -2275,16 +2142,17 @@ func (m *UTXOs) Reset()         { *m = UTXOs{} }
 func (m *UTXOs) String() string { return proto.CompactTextString(m) }
 func (*UTXOs) ProtoMessage()    {}
 func (*UTXOs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{37}
+	return fileDescriptor_dde03d4df7a6e99a, []int{37}
 }
+
 func (m *UTXOs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOs.Unmarshal(m, b)
 }
 func (m *UTXOs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOs.Marshal(b, m, deterministic)
 }
-func (dst *UTXOs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOs.Merge(dst, src)
+func (m *UTXOs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOs.Merge(m, src)
 }
 func (m *UTXOs) XXX_Size() int {
 	return xxx_messageInfo_UTXOs.Size(m)
@@ -2313,16 +2181,17 @@ func (m *UTXOHaveTxHashs) Reset()         { *m = UTXOHaveTxHashs{} }
 func (m *UTXOHaveTxHashs) String() string { return proto.CompactTextString(m) }
 func (*UTXOHaveTxHashs) ProtoMessage()    {}
 func (*UTXOHaveTxHashs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{38}
+	return fileDescriptor_dde03d4df7a6e99a, []int{38}
 }
+
 func (m *UTXOHaveTxHashs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOHaveTxHashs.Unmarshal(m, b)
 }
 func (m *UTXOHaveTxHashs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOHaveTxHashs.Marshal(b, m, deterministic)
 }
-func (dst *UTXOHaveTxHashs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOHaveTxHashs.Merge(dst, src)
+func (m *UTXOHaveTxHashs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOHaveTxHashs.Merge(m, src)
 }
 func (m *UTXOHaveTxHashs) XXX_Size() int {
 	return xxx_messageInfo_UTXOHaveTxHashs.Size(m)
@@ -2354,16 +2223,17 @@ func (m *ReqUTXOGlobalIndex) Reset()         { *m = ReqUTXOGlobalIndex{} }
 func (m *ReqUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ReqUTXOGlobalIndex) ProtoMessage()    {}
 func (*ReqUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{39}
+	return fileDescriptor_dde03d4df7a6e99a, []int{39}
 }
+
 func (m *ReqUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *ReqUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (dst *ReqUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqUTXOGlobalIndex.Merge(dst, src)
+func (m *ReqUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqUTXOGlobalIndex.Merge(m, src)
 }
 func (m *ReqUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_ReqUTXOGlobalIndex.Size(m)
@@ -2414,16 +2284,17 @@ func (m *UTXOBasic) Reset()         { *m = UTXOBasic{} }
 func (m *UTXOBasic) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasic) ProtoMessage()    {}
 func (*UTXOBasic) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{40}
+	return fileDescriptor_dde03d4df7a6e99a, []int{40}
 }
+
 func (m *UTXOBasic) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasic.Unmarshal(m, b)
 }
 func (m *UTXOBasic) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOBasic.Marshal(b, m, deterministic)
 }
-func (dst *UTXOBasic) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOBasic.Merge(dst, src)
+func (m *UTXOBasic) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOBasic.Merge(m, src)
 }
 func (m *UTXOBasic) XXX_Size() int {
 	return xxx_messageInfo_UTXOBasic.Size(m)
@@ -2460,16 +2331,17 @@ func (m *UTXOIndex4Amount) Reset()         { *m = UTXOIndex4Amount{} }
 func (m *UTXOIndex4Amount) String() string { return proto.CompactTextString(m) }
 func (*UTXOIndex4Amount) ProtoMessage()    {}
 func (*UTXOIndex4Amount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{41}
+	return fileDescriptor_dde03d4df7a6e99a, []int{41}
 }
+
 func (m *UTXOIndex4Amount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOIndex4Amount.Unmarshal(m, b)
 }
 func (m *UTXOIndex4Amount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOIndex4Amount.Marshal(b, m, deterministic)
 }
-func (dst *UTXOIndex4Amount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOIndex4Amount.Merge(dst, src)
+func (m *UTXOIndex4Amount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOIndex4Amount.Merge(m, src)
 }
 func (m *UTXOIndex4Amount) XXX_Size() int {
 	return xxx_messageInfo_UTXOIndex4Amount.Size(m)
@@ -2505,16 +2377,17 @@ func (m *ResUTXOGlobalIndex) Reset()         { *m = ResUTXOGlobalIndex{} }
 func (m *ResUTXOGlobalIndex) String() string { return proto.CompactTextString(m) }
 func (*ResUTXOGlobalIndex) ProtoMessage()    {}
 func (*ResUTXOGlobalIndex) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{42}
+	return fileDescriptor_dde03d4df7a6e99a, []int{42}
 }
+
 func (m *ResUTXOGlobalIndex) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Unmarshal(m, b)
 }
 func (m *ResUTXOGlobalIndex) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Marshal(b, m, deterministic)
 }
-func (dst *ResUTXOGlobalIndex) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ResUTXOGlobalIndex.Merge(dst, src)
+func (m *ResUTXOGlobalIndex) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ResUTXOGlobalIndex.Merge(m, src)
 }
 func (m *ResUTXOGlobalIndex) XXX_Size() int {
 	return xxx_messageInfo_ResUTXOGlobalIndex.Size(m)
@@ -2549,16 +2422,17 @@ func (m *FTXOsSTXOsInOneTx) Reset()         { *m = FTXOsSTXOsInOneTx{} }
 func (m *FTXOsSTXOsInOneTx) String() string { return proto.CompactTextString(m) }
 func (*FTXOsSTXOsInOneTx) ProtoMessage()    {}
 func (*FTXOsSTXOsInOneTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{43}
+	return fileDescriptor_dde03d4df7a6e99a, []int{43}
 }
+
 func (m *FTXOsSTXOsInOneTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Unmarshal(m, b)
 }
 func (m *FTXOsSTXOsInOneTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Marshal(b, m, deterministic)
 }
-func (dst *FTXOsSTXOsInOneTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FTXOsSTXOsInOneTx.Merge(dst, src)
+func (m *FTXOsSTXOsInOneTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FTXOsSTXOsInOneTx.Merge(m, src)
 }
 func (m *FTXOsSTXOsInOneTx) XXX_Size() int {
 	return xxx_messageInfo_FTXOsSTXOsInOneTx.Size(m)
@@ -2623,16 +2497,17 @@ func (m *RealKeyInput) Reset()         { *m = RealKeyInput{} }
 func (m *RealKeyInput) String() string { return proto.CompactTextString(m) }
 func (*RealKeyInput) ProtoMessage()    {}
 func (*RealKeyInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{44}
+	return fileDescriptor_dde03d4df7a6e99a, []int{44}
 }
+
 func (m *RealKeyInput) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RealKeyInput.Unmarshal(m, b)
 }
 func (m *RealKeyInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RealKeyInput.Marshal(b, m, deterministic)
 }
-func (dst *RealKeyInput) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RealKeyInput.Merge(dst, src)
+func (m *RealKeyInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RealKeyInput.Merge(m, src)
 }
 func (m *RealKeyInput) XXX_Size() int {
 	return xxx_messageInfo_RealKeyInput.Size(m)
@@ -2668,16 +2543,17 @@ func (m *UTXOBasics) Reset()         { *m = UTXOBasics{} }
 func (m *UTXOBasics) String() string { return proto.CompactTextString(m) }
 func (*UTXOBasics) ProtoMessage()    {}
 func (*UTXOBasics) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{45}
+	return fileDescriptor_dde03d4df7a6e99a, []int{45}
 }
+
 func (m *UTXOBasics) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOBasics.Unmarshal(m, b)
 }
 func (m *UTXOBasics) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOBasics.Marshal(b, m, deterministic)
 }
-func (dst *UTXOBasics) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOBasics.Merge(dst, src)
+func (m *UTXOBasics) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOBasics.Merge(m, src)
 }
 func (m *UTXOBasics) XXX_Size() int {
 	return xxx_messageInfo_UTXOBasics.Size(m)
@@ -2720,16 +2596,17 @@ func (m *CreateTransactionCache) Reset()         { *m = CreateTransactionCache{}
 func (m *CreateTransactionCache) String() string { return proto.CompactTextString(m) }
 func (*CreateTransactionCache) ProtoMessage()    {}
 func (*CreateTransactionCache) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{46}
+	return fileDescriptor_dde03d4df7a6e99a, []int{46}
 }
+
 func (m *CreateTransactionCache) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CreateTransactionCache.Unmarshal(m, b)
 }
 func (m *CreateTransactionCache) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CreateTransactionCache.Marshal(b, m, deterministic)
 }
-func (dst *CreateTransactionCache) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreateTransactionCache.Merge(dst, src)
+func (m *CreateTransactionCache) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateTransactionCache.Merge(m, src)
 }
 func (m *CreateTransactionCache) XXX_Size() int {
 	return xxx_messageInfo_CreateTransactionCache.Size(m)
@@ -2815,16 +2692,17 @@ func (m *ReqCacheTxList) Reset()         { *m = ReqCacheTxList{} }
 func (m *ReqCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReqCacheTxList) ProtoMessage()    {}
 func (*ReqCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{47}
+	return fileDescriptor_dde03d4df7a6e99a, []int{47}
 }
+
 func (m *ReqCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCacheTxList.Unmarshal(m, b)
 }
 func (m *ReqCacheTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCacheTxList.Marshal(b, m, deterministic)
 }
-func (dst *ReqCacheTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCacheTxList.Merge(dst, src)
+func (m *ReqCacheTxList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCacheTxList.Merge(m, src)
 }
 func (m *ReqCacheTxList) XXX_Size() int {
 	return xxx_messageInfo_ReqCacheTxList.Size(m)
@@ -2860,16 +2738,17 @@ func (m *ReplyCacheTxList) Reset()         { *m = ReplyCacheTxList{} }
 func (m *ReplyCacheTxList) String() string { return proto.CompactTextString(m) }
 func (*ReplyCacheTxList) ProtoMessage()    {}
 func (*ReplyCacheTxList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{48}
+	return fileDescriptor_dde03d4df7a6e99a, []int{48}
 }
+
 func (m *ReplyCacheTxList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyCacheTxList.Unmarshal(m, b)
 }
 func (m *ReplyCacheTxList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyCacheTxList.Marshal(b, m, deterministic)
 }
-func (dst *ReplyCacheTxList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyCacheTxList.Merge(dst, src)
+func (m *ReplyCacheTxList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyCacheTxList.Merge(m, src)
 }
 func (m *ReplyCacheTxList) XXX_Size() int {
 	return xxx_messageInfo_ReplyCacheTxList.Size(m)
@@ -2906,16 +2785,17 @@ func (m *ReqPrivacyAccount) Reset()         { *m = ReqPrivacyAccount{} }
 func (m *ReqPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyAccount) ProtoMessage()    {}
 func (*ReqPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{49}
+	return fileDescriptor_dde03d4df7a6e99a, []int{49}
 }
+
 func (m *ReqPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyAccount.Unmarshal(m, b)
 }
 func (m *ReqPrivacyAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyAccount.Marshal(b, m, deterministic)
 }
-func (dst *ReqPrivacyAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyAccount.Merge(dst, src)
+func (m *ReqPrivacyAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyAccount.Merge(m, src)
 }
 func (m *ReqPrivacyAccount) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyAccount.Size(m)
@@ -2970,16 +2850,17 @@ func (m *ReplyPrivacyAccount) Reset()         { *m = ReplyPrivacyAccount{} }
 func (m *ReplyPrivacyAccount) String() string { return proto.CompactTextString(m) }
 func (*ReplyPrivacyAccount) ProtoMessage()    {}
 func (*ReplyPrivacyAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{50}
+	return fileDescriptor_dde03d4df7a6e99a, []int{50}
 }
+
 func (m *ReplyPrivacyAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyPrivacyAccount.Unmarshal(m, b)
 }
 func (m *ReplyPrivacyAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyPrivacyAccount.Marshal(b, m, deterministic)
 }
-func (dst *ReplyPrivacyAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyPrivacyAccount.Merge(dst, src)
+func (m *ReplyPrivacyAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyPrivacyAccount.Merge(m, src)
 }
 func (m *ReplyPrivacyAccount) XXX_Size() int {
 	return xxx_messageInfo_ReplyPrivacyAccount.Size(m)
@@ -3023,16 +2904,17 @@ func (m *ReqCreateCacheTxKey) Reset()         { *m = ReqCreateCacheTxKey{} }
 func (m *ReqCreateCacheTxKey) String() string { return proto.CompactTextString(m) }
 func (*ReqCreateCacheTxKey) ProtoMessage()    {}
 func (*ReqCreateCacheTxKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{51}
+	return fileDescriptor_dde03d4df7a6e99a, []int{51}
 }
+
 func (m *ReqCreateCacheTxKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Unmarshal(m, b)
 }
 func (m *ReqCreateCacheTxKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Marshal(b, m, deterministic)
 }
-func (dst *ReqCreateCacheTxKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCreateCacheTxKey.Merge(dst, src)
+func (m *ReqCreateCacheTxKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCreateCacheTxKey.Merge(m, src)
 }
 func (m *ReqCreateCacheTxKey) XXX_Size() int {
 	return xxx_messageInfo_ReqCreateCacheTxKey.Size(m)
@@ -3078,16 +2960,17 @@ func (m *ReqPrivacyTransactionList) Reset()         { *m = ReqPrivacyTransaction
 func (m *ReqPrivacyTransactionList) String() string { return proto.CompactTextString(m) }
 func (*ReqPrivacyTransactionList) ProtoMessage()    {}
 func (*ReqPrivacyTransactionList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{52}
+	return fileDescriptor_dde03d4df7a6e99a, []int{52}
 }
+
 func (m *ReqPrivacyTransactionList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Unmarshal(m, b)
 }
 func (m *ReqPrivacyTransactionList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Marshal(b, m, deterministic)
 }
-func (dst *ReqPrivacyTransactionList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqPrivacyTransactionList.Merge(dst, src)
+func (m *ReqPrivacyTransactionList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqPrivacyTransactionList.Merge(m, src)
 }
 func (m *ReqPrivacyTransactionList) XXX_Size() int {
 	return xxx_messageInfo_ReqPrivacyTransactionList.Size(m)
@@ -3166,16 +3049,17 @@ func (m *ReqRescanUtxos) Reset()         { *m = ReqRescanUtxos{} }
 func (m *ReqRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*ReqRescanUtxos) ProtoMessage()    {}
 func (*ReqRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{53}
+	return fileDescriptor_dde03d4df7a6e99a, []int{53}
 }
+
 func (m *ReqRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRescanUtxos.Unmarshal(m, b)
 }
 func (m *ReqRescanUtxos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRescanUtxos.Marshal(b, m, deterministic)
 }
-func (dst *ReqRescanUtxos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRescanUtxos.Merge(dst, src)
+func (m *ReqRescanUtxos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRescanUtxos.Merge(m, src)
 }
 func (m *ReqRescanUtxos) XXX_Size() int {
 	return xxx_messageInfo_ReqRescanUtxos.Size(m)
@@ -3212,16 +3096,17 @@ func (m *RepRescanResult) Reset()         { *m = RepRescanResult{} }
 func (m *RepRescanResult) String() string { return proto.CompactTextString(m) }
 func (*RepRescanResult) ProtoMessage()    {}
 func (*RepRescanResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{54}
+	return fileDescriptor_dde03d4df7a6e99a, []int{54}
 }
+
 func (m *RepRescanResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanResult.Unmarshal(m, b)
 }
 func (m *RepRescanResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepRescanResult.Marshal(b, m, deterministic)
 }
-func (dst *RepRescanResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepRescanResult.Merge(dst, src)
+func (m *RepRescanResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepRescanResult.Merge(m, src)
 }
 func (m *RepRescanResult) XXX_Size() int {
 	return xxx_messageInfo_RepRescanResult.Size(m)
@@ -3258,16 +3143,17 @@ func (m *RepRescanUtxos) Reset()         { *m = RepRescanUtxos{} }
 func (m *RepRescanUtxos) String() string { return proto.CompactTextString(m) }
 func (*RepRescanUtxos) ProtoMessage()    {}
 func (*RepRescanUtxos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{55}
+	return fileDescriptor_dde03d4df7a6e99a, []int{55}
 }
+
 func (m *RepRescanUtxos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepRescanUtxos.Unmarshal(m, b)
 }
 func (m *RepRescanUtxos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepRescanUtxos.Marshal(b, m, deterministic)
 }
-func (dst *RepRescanUtxos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepRescanUtxos.Merge(dst, src)
+func (m *RepRescanUtxos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepRescanUtxos.Merge(m, src)
 }
 func (m *RepRescanUtxos) XXX_Size() int {
 	return xxx_messageInfo_RepRescanUtxos.Size(m)
@@ -3303,16 +3189,17 @@ func (m *ReqEnablePrivacy) Reset()         { *m = ReqEnablePrivacy{} }
 func (m *ReqEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*ReqEnablePrivacy) ProtoMessage()    {}
 func (*ReqEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{56}
+	return fileDescriptor_dde03d4df7a6e99a, []int{56}
 }
+
 func (m *ReqEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqEnablePrivacy.Unmarshal(m, b)
 }
 func (m *ReqEnablePrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqEnablePrivacy.Marshal(b, m, deterministic)
 }
-func (dst *ReqEnablePrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqEnablePrivacy.Merge(dst, src)
+func (m *ReqEnablePrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqEnablePrivacy.Merge(m, src)
 }
 func (m *ReqEnablePrivacy) XXX_Size() int {
 	return xxx_messageInfo_ReqEnablePrivacy.Size(m)
@@ -3343,16 +3230,17 @@ func (m *PriAddrResult) Reset()         { *m = PriAddrResult{} }
 func (m *PriAddrResult) String() string { return proto.CompactTextString(m) }
 func (*PriAddrResult) ProtoMessage()    {}
 func (*PriAddrResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{57}
+	return fileDescriptor_dde03d4df7a6e99a, []int{57}
 }
+
 func (m *PriAddrResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PriAddrResult.Unmarshal(m, b)
 }
 func (m *PriAddrResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PriAddrResult.Marshal(b, m, deterministic)
 }
-func (dst *PriAddrResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PriAddrResult.Merge(dst, src)
+func (m *PriAddrResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PriAddrResult.Merge(m, src)
 }
 func (m *PriAddrResult) XXX_Size() int {
 	return xxx_messageInfo_PriAddrResult.Size(m)
@@ -3395,16 +3283,17 @@ func (m *RepEnablePrivacy) Reset()         { *m = RepEnablePrivacy{} }
 func (m *RepEnablePrivacy) String() string { return proto.CompactTextString(m) }
 func (*RepEnablePrivacy) ProtoMessage()    {}
 func (*RepEnablePrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{58}
+	return fileDescriptor_dde03d4df7a6e99a, []int{58}
 }
+
 func (m *RepEnablePrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepEnablePrivacy.Unmarshal(m, b)
 }
 func (m *RepEnablePrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RepEnablePrivacy.Marshal(b, m, deterministic)
 }
-func (dst *RepEnablePrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RepEnablePrivacy.Merge(dst, src)
+func (m *RepEnablePrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RepEnablePrivacy.Merge(m, src)
 }
 func (m *RepEnablePrivacy) XXX_Size() int {
 	return xxx_messageInfo_RepEnablePrivacy.Size(m)
@@ -3436,16 +3325,17 @@ func (m *PrivacySignatureParam) Reset()         { *m = PrivacySignatureParam{} }
 func (m *PrivacySignatureParam) String() string { return proto.CompactTextString(m) }
 func (*PrivacySignatureParam) ProtoMessage()    {}
 func (*PrivacySignatureParam) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{59}
+	return fileDescriptor_dde03d4df7a6e99a, []int{59}
 }
+
 func (m *PrivacySignatureParam) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrivacySignatureParam.Unmarshal(m, b)
 }
 func (m *PrivacySignatureParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PrivacySignatureParam.Marshal(b, m, deterministic)
 }
-func (dst *PrivacySignatureParam) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PrivacySignatureParam.Merge(dst, src)
+func (m *PrivacySignatureParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacySignatureParam.Merge(m, src)
 }
 func (m *PrivacySignatureParam) XXX_Size() int {
 	return xxx_messageInfo_PrivacySignatureParam.Size(m)
@@ -3491,16 +3381,17 @@ func (m *WalletAccountPrivacy) Reset()         { *m = WalletAccountPrivacy{} }
 func (m *WalletAccountPrivacy) String() string { return proto.CompactTextString(m) }
 func (*WalletAccountPrivacy) ProtoMessage()    {}
 func (*WalletAccountPrivacy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{60}
+	return fileDescriptor_dde03d4df7a6e99a, []int{60}
 }
+
 func (m *WalletAccountPrivacy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_WalletAccountPrivacy.Unmarshal(m, b)
 }
 func (m *WalletAccountPrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_WalletAccountPrivacy.Marshal(b, m, deterministic)
 }
-func (dst *WalletAccountPrivacy) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_WalletAccountPrivacy.Merge(dst, src)
+func (m *WalletAccountPrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletAccountPrivacy.Merge(m, src)
 }
 func (m *WalletAccountPrivacy) XXX_Size() int {
 	return xxx_messageInfo_WalletAccountPrivacy.Size(m)
@@ -3564,16 +3455,17 @@ func (m *ReqCreatePrivacyTx) Reset()         { *m = ReqCreatePrivacyTx{} }
 func (m *ReqCreatePrivacyTx) String() string { return proto.CompactTextString(m) }
 func (*ReqCreatePrivacyTx) ProtoMessage()    {}
 func (*ReqCreatePrivacyTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_privacy_5816cdb94582b926, []int{61}
+	return fileDescriptor_dde03d4df7a6e99a, []int{61}
 }
+
 func (m *ReqCreatePrivacyTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqCreatePrivacyTx.Unmarshal(m, b)
 }
 func (m *ReqCreatePrivacyTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqCreatePrivacyTx.Marshal(b, m, deterministic)
 }
-func (dst *ReqCreatePrivacyTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqCreatePrivacyTx.Merge(dst, src)
+func (m *ReqCreatePrivacyTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqCreatePrivacyTx.Merge(m, src)
 }
 func (m *ReqCreatePrivacyTx) XXX_Size() int {
 	return xxx_messageInfo_ReqCreatePrivacyTx.Size(m)
@@ -3721,190 +3613,11 @@ func init() {
 	proto.RegisterType((*ReqCreatePrivacyTx)(nil), "types.ReqCreatePrivacyTx")
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// PrivacyClient is the client API for Privacy service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type PrivacyClient interface {
-	// Privacy Trading
-	// 显示指定地址的公钥对信息，可以作为后续交易参数
-	ShowPrivacyKey(ctx context.Context, in *types.ReqString, opts ...grpc.CallOption) (*ReplyPrivacyPkPair, error)
-	// 扫描UTXO以及获取扫描UTXO后的状态
-	RescanUtxos(ctx context.Context, in *ReqRescanUtxos, opts ...grpc.CallOption) (*RepRescanUtxos, error)
-	// 使能隐私账户
-	EnablePrivacy(ctx context.Context, in *ReqEnablePrivacy, opts ...grpc.CallOption) (*RepEnablePrivacy, error)
-	// 创建隐私交易
-	CreateRawTransaction(ctx context.Context, in *ReqCreatePrivacyTx, opts ...grpc.CallOption) (*types.Transaction, error)
+func init() {
+	proto.RegisterFile("privacy.proto", fileDescriptor_dde03d4df7a6e99a)
 }
 
-type privacyClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewPrivacyClient(cc *grpc.ClientConn) PrivacyClient {
-	return &privacyClient{cc}
-}
-
-func (c *privacyClient) ShowPrivacyKey(ctx context.Context, in *types.ReqString, opts ...grpc.CallOption) (*ReplyPrivacyPkPair, error) {
-	out := new(ReplyPrivacyPkPair)
-	err := c.cc.Invoke(ctx, "/types.privacy/ShowPrivacyKey", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) RescanUtxos(ctx context.Context, in *ReqRescanUtxos, opts ...grpc.CallOption) (*RepRescanUtxos, error) {
-	out := new(RepRescanUtxos)
-	err := c.cc.Invoke(ctx, "/types.privacy/RescanUtxos", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) EnablePrivacy(ctx context.Context, in *ReqEnablePrivacy, opts ...grpc.CallOption) (*RepEnablePrivacy, error) {
-	out := new(RepEnablePrivacy)
-	err := c.cc.Invoke(ctx, "/types.privacy/EnablePrivacy", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *privacyClient) CreateRawTransaction(ctx context.Context, in *ReqCreatePrivacyTx, opts ...grpc.CallOption) (*types.Transaction, error) {
-	out := new(types.Transaction)
-	err := c.cc.Invoke(ctx, "/types.privacy/CreateRawTransaction", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// PrivacyServer is the server API for Privacy service.
-type PrivacyServer interface {
-	// Privacy Trading
-	// 显示指定地址的公钥对信息，可以作为后续交易参数
-	ShowPrivacyKey(context.Context, *types.ReqString) (*ReplyPrivacyPkPair, error)
-	// 扫描UTXO以及获取扫描UTXO后的状态
-	RescanUtxos(context.Context, *ReqRescanUtxos) (*RepRescanUtxos, error)
-	// 使能隐私账户
-	EnablePrivacy(context.Context, *ReqEnablePrivacy) (*RepEnablePrivacy, error)
-	// 创建隐私交易
-	CreateRawTransaction(context.Context, *ReqCreatePrivacyTx) (*types.Transaction, error)
-}
-
-func RegisterPrivacyServer(s *grpc.Server, srv PrivacyServer) {
-	s.RegisterService(&_Privacy_serviceDesc, srv)
-}
-
-func _Privacy_ShowPrivacyKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(types.ReqString)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).ShowPrivacyKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/ShowPrivacyKey",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).ShowPrivacyKey(ctx, req.(*types.ReqString))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_RescanUtxos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqRescanUtxos)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).RescanUtxos(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/RescanUtxos",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).RescanUtxos(ctx, req.(*ReqRescanUtxos))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_EnablePrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqEnablePrivacy)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).EnablePrivacy(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/EnablePrivacy",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).EnablePrivacy(ctx, req.(*ReqEnablePrivacy))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Privacy_CreateRawTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReqCreatePrivacyTx)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PrivacyServer).CreateRawTransaction(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.privacy/CreateRawTransaction",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PrivacyServer).CreateRawTransaction(ctx, req.(*ReqCreatePrivacyTx))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Privacy_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.privacy",
-	HandlerType: (*PrivacyServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "ShowPrivacyKey",
-			Handler:    _Privacy_ShowPrivacyKey_Handler,
-		},
-		{
-			MethodName: "RescanUtxos",
-			Handler:    _Privacy_RescanUtxos_Handler,
-		},
-		{
-			MethodName: "EnablePrivacy",
-			Handler:    _Privacy_EnablePrivacy_Handler,
-		},
-		{
-			MethodName: "CreateRawTransaction",
-			Handler:    _Privacy_CreateRawTransaction_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "privacy.proto",
-}
-
-func init() { proto.RegisterFile("privacy.proto", fileDescriptor_privacy_5816cdb94582b926) }
-
-var fileDescriptor_privacy_5816cdb94582b926 = []byte{
+var fileDescriptor_dde03d4df7a6e99a = []byte{
 	// 2329 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x39, 0xcb, 0x6f, 0x1c, 0x49,
 	0xf9, 0xee, 0x79, 0xd8, 0xee, 0xcf, 0x63, 0x7b, 0x52, 0xb1, 0xbd, 0xce, 0x24, 0x8a, 0xfc, 0xab,
@@ -4052,4 +3765,202 @@ var fileDescriptor_privacy_5816cdb94582b926 = []byte{
 	0x0c, 0x7a, 0x01, 0x2b, 0xd2, 0xc6, 0x84, 0x5e, 0x69, 0x89, 0x1c, 0x95, 0x8c, 0xdb, 0x3e, 0xd0,
 	0xa9, 0xa8, 0xb2, 0x78, 0xa6, 0x37, 0x2b, 0xfe, 0x3f, 0xff, 0xce, 0x7f, 0x02, 0x00, 0x00, 0xff,
 	0xff, 0x60, 0x83, 0x9e, 0xc4, 0x78, 0x1f, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// PrivacyClient is the client API for Privacy service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type PrivacyClient interface {
+	// Privacy Trading
+	// 显示指定地址的公钥对信息，可以作为后续交易参数
+	ShowPrivacyKey(ctx context.Context, in *types.ReqString, opts ...grpc.CallOption) (*ReplyPrivacyPkPair, error)
+	// 扫描UTXO以及获取扫描UTXO后的状态
+	RescanUtxos(ctx context.Context, in *ReqRescanUtxos, opts ...grpc.CallOption) (*RepRescanUtxos, error)
+	// 使能隐私账户
+	EnablePrivacy(ctx context.Context, in *ReqEnablePrivacy, opts ...grpc.CallOption) (*RepEnablePrivacy, error)
+	// 创建隐私交易
+	CreateRawTransaction(ctx context.Context, in *ReqCreatePrivacyTx, opts ...grpc.CallOption) (*types.Transaction, error)
+}
+
+type privacyClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPrivacyClient(cc grpc.ClientConnInterface) PrivacyClient {
+	return &privacyClient{cc}
+}
+
+func (c *privacyClient) ShowPrivacyKey(ctx context.Context, in *types.ReqString, opts ...grpc.CallOption) (*ReplyPrivacyPkPair, error) {
+	out := new(ReplyPrivacyPkPair)
+	err := c.cc.Invoke(ctx, "/types.privacy/ShowPrivacyKey", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *privacyClient) RescanUtxos(ctx context.Context, in *ReqRescanUtxos, opts ...grpc.CallOption) (*RepRescanUtxos, error) {
+	out := new(RepRescanUtxos)
+	err := c.cc.Invoke(ctx, "/types.privacy/RescanUtxos", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *privacyClient) EnablePrivacy(ctx context.Context, in *ReqEnablePrivacy, opts ...grpc.CallOption) (*RepEnablePrivacy, error) {
+	out := new(RepEnablePrivacy)
+	err := c.cc.Invoke(ctx, "/types.privacy/EnablePrivacy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *privacyClient) CreateRawTransaction(ctx context.Context, in *ReqCreatePrivacyTx, opts ...grpc.CallOption) (*types.Transaction, error) {
+	out := new(types.Transaction)
+	err := c.cc.Invoke(ctx, "/types.privacy/CreateRawTransaction", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PrivacyServer is the server API for Privacy service.
+type PrivacyServer interface {
+	// Privacy Trading
+	// 显示指定地址的公钥对信息，可以作为后续交易参数
+	ShowPrivacyKey(context.Context, *types.ReqString) (*ReplyPrivacyPkPair, error)
+	// 扫描UTXO以及获取扫描UTXO后的状态
+	RescanUtxos(context.Context, *ReqRescanUtxos) (*RepRescanUtxos, error)
+	// 使能隐私账户
+	EnablePrivacy(context.Context, *ReqEnablePrivacy) (*RepEnablePrivacy, error)
+	// 创建隐私交易
+	CreateRawTransaction(context.Context, *ReqCreatePrivacyTx) (*types.Transaction, error)
+}
+
+// UnimplementedPrivacyServer can be embedded to have forward compatible implementations.
+type UnimplementedPrivacyServer struct {
+}
+
+func (*UnimplementedPrivacyServer) ShowPrivacyKey(ctx context.Context, req *types.ReqString) (*ReplyPrivacyPkPair, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ShowPrivacyKey not implemented")
+}
+func (*UnimplementedPrivacyServer) RescanUtxos(ctx context.Context, req *ReqRescanUtxos) (*RepRescanUtxos, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RescanUtxos not implemented")
+}
+func (*UnimplementedPrivacyServer) EnablePrivacy(ctx context.Context, req *ReqEnablePrivacy) (*RepEnablePrivacy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnablePrivacy not implemented")
+}
+func (*UnimplementedPrivacyServer) CreateRawTransaction(ctx context.Context, req *ReqCreatePrivacyTx) (*types.Transaction, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRawTransaction not implemented")
+}
+
+func RegisterPrivacyServer(s *grpc.Server, srv PrivacyServer) {
+	s.RegisterService(&_Privacy_serviceDesc, srv)
+}
+
+func _Privacy_ShowPrivacyKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types.ReqString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrivacyServer).ShowPrivacyKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.privacy/ShowPrivacyKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrivacyServer).ShowPrivacyKey(ctx, req.(*types.ReqString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Privacy_RescanUtxos_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqRescanUtxos)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrivacyServer).RescanUtxos(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.privacy/RescanUtxos",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrivacyServer).RescanUtxos(ctx, req.(*ReqRescanUtxos))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Privacy_EnablePrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqEnablePrivacy)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrivacyServer).EnablePrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.privacy/EnablePrivacy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrivacyServer).EnablePrivacy(ctx, req.(*ReqEnablePrivacy))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Privacy_CreateRawTransaction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReqCreatePrivacyTx)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrivacyServer).CreateRawTransaction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.privacy/CreateRawTransaction",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrivacyServer).CreateRawTransaction(ctx, req.(*ReqCreatePrivacyTx))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Privacy_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.privacy",
+	HandlerType: (*PrivacyServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ShowPrivacyKey",
+			Handler:    _Privacy_ShowPrivacyKey_Handler,
+		},
+		{
+			MethodName: "RescanUtxos",
+			Handler:    _Privacy_RescanUtxos_Handler,
+		},
+		{
+			MethodName: "EnablePrivacy",
+			Handler:    _Privacy_EnablePrivacy_Handler,
+		},
+		{
+			MethodName: "CreateRawTransaction",
+			Handler:    _Privacy_CreateRawTransaction_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "privacy.proto",
 }

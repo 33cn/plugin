@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,9 +19,9 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// 合约对象信息
+//合约对象信息
 type EVMContractObject struct {
 	Addr                 string            `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
 	Data                 *EVMContractData  `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
@@ -36,16 +35,17 @@ func (m *EVMContractObject) Reset()         { *m = EVMContractObject{} }
 func (m *EVMContractObject) String() string { return proto.CompactTextString(m) }
 func (*EVMContractObject) ProtoMessage()    {}
 func (*EVMContractObject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{0}
+	return fileDescriptor_74353de561acd7c6, []int{0}
 }
+
 func (m *EVMContractObject) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractObject.Unmarshal(m, b)
 }
 func (m *EVMContractObject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractObject.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractObject) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractObject.Merge(dst, src)
+func (m *EVMContractObject) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractObject.Merge(m, src)
 }
 func (m *EVMContractObject) XXX_Size() int {
 	return xxx_messageInfo_EVMContractObject.Size(m)
@@ -96,16 +96,17 @@ func (m *EVMContractData) Reset()         { *m = EVMContractData{} }
 func (m *EVMContractData) String() string { return proto.CompactTextString(m) }
 func (*EVMContractData) ProtoMessage()    {}
 func (*EVMContractData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{1}
+	return fileDescriptor_74353de561acd7c6, []int{1}
 }
+
 func (m *EVMContractData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractData.Unmarshal(m, b)
 }
 func (m *EVMContractData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractData.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractData.Merge(dst, src)
+func (m *EVMContractData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractData.Merge(m, src)
 }
 func (m *EVMContractData) XXX_Size() int {
 	return xxx_messageInfo_EVMContractData.Size(m)
@@ -180,16 +181,17 @@ func (m *EVMContractState) Reset()         { *m = EVMContractState{} }
 func (m *EVMContractState) String() string { return proto.CompactTextString(m) }
 func (*EVMContractState) ProtoMessage()    {}
 func (*EVMContractState) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{2}
+	return fileDescriptor_74353de561acd7c6, []int{2}
 }
+
 func (m *EVMContractState) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractState.Unmarshal(m, b)
 }
 func (m *EVMContractState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractState.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractState) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractState.Merge(dst, src)
+func (m *EVMContractState) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractState.Merge(m, src)
 }
 func (m *EVMContractState) XXX_Size() int {
 	return xxx_messageInfo_EVMContractState.Size(m)
@@ -253,16 +255,17 @@ func (m *EVMContractAction) Reset()         { *m = EVMContractAction{} }
 func (m *EVMContractAction) String() string { return proto.CompactTextString(m) }
 func (*EVMContractAction) ProtoMessage()    {}
 func (*EVMContractAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{3}
+	return fileDescriptor_74353de561acd7c6, []int{3}
 }
+
 func (m *EVMContractAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractAction.Unmarshal(m, b)
 }
 func (m *EVMContractAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractAction.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractAction.Merge(dst, src)
+func (m *EVMContractAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractAction.Merge(m, src)
 }
 func (m *EVMContractAction) XXX_Size() int {
 	return xxx_messageInfo_EVMContractAction.Size(m)
@@ -341,16 +344,17 @@ func (m *ReceiptEVMContract) Reset()         { *m = ReceiptEVMContract{} }
 func (m *ReceiptEVMContract) String() string { return proto.CompactTextString(m) }
 func (*ReceiptEVMContract) ProtoMessage()    {}
 func (*ReceiptEVMContract) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{4}
+	return fileDescriptor_74353de561acd7c6, []int{4}
 }
+
 func (m *ReceiptEVMContract) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptEVMContract.Unmarshal(m, b)
 }
 func (m *ReceiptEVMContract) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptEVMContract.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptEVMContract) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptEVMContract.Merge(dst, src)
+func (m *ReceiptEVMContract) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptEVMContract.Merge(m, src)
 }
 func (m *ReceiptEVMContract) XXX_Size() int {
 	return xxx_messageInfo_ReceiptEVMContract.Size(m)
@@ -417,16 +421,17 @@ func (m *EVMStateChangeItem) Reset()         { *m = EVMStateChangeItem{} }
 func (m *EVMStateChangeItem) String() string { return proto.CompactTextString(m) }
 func (*EVMStateChangeItem) ProtoMessage()    {}
 func (*EVMStateChangeItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{5}
+	return fileDescriptor_74353de561acd7c6, []int{5}
 }
+
 func (m *EVMStateChangeItem) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMStateChangeItem.Unmarshal(m, b)
 }
 func (m *EVMStateChangeItem) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMStateChangeItem.Marshal(b, m, deterministic)
 }
-func (dst *EVMStateChangeItem) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMStateChangeItem.Merge(dst, src)
+func (m *EVMStateChangeItem) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMStateChangeItem.Merge(m, src)
 }
 func (m *EVMStateChangeItem) XXX_Size() int {
 	return xxx_messageInfo_EVMStateChangeItem.Size(m)
@@ -475,16 +480,17 @@ func (m *EVMContractDataCmd) Reset()         { *m = EVMContractDataCmd{} }
 func (m *EVMContractDataCmd) String() string { return proto.CompactTextString(m) }
 func (*EVMContractDataCmd) ProtoMessage()    {}
 func (*EVMContractDataCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{6}
+	return fileDescriptor_74353de561acd7c6, []int{6}
 }
+
 func (m *EVMContractDataCmd) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractDataCmd.Unmarshal(m, b)
 }
 func (m *EVMContractDataCmd) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractDataCmd.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractDataCmd) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractDataCmd.Merge(dst, src)
+func (m *EVMContractDataCmd) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractDataCmd.Merge(m, src)
 }
 func (m *EVMContractDataCmd) XXX_Size() int {
 	return xxx_messageInfo_EVMContractDataCmd.Size(m)
@@ -552,16 +558,17 @@ func (m *EVMContractStateCmd) Reset()         { *m = EVMContractStateCmd{} }
 func (m *EVMContractStateCmd) String() string { return proto.CompactTextString(m) }
 func (*EVMContractStateCmd) ProtoMessage()    {}
 func (*EVMContractStateCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{7}
+	return fileDescriptor_74353de561acd7c6, []int{7}
 }
+
 func (m *EVMContractStateCmd) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EVMContractStateCmd.Unmarshal(m, b)
 }
 func (m *EVMContractStateCmd) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EVMContractStateCmd.Marshal(b, m, deterministic)
 }
-func (dst *EVMContractStateCmd) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EVMContractStateCmd.Merge(dst, src)
+func (m *EVMContractStateCmd) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractStateCmd.Merge(m, src)
 }
 func (m *EVMContractStateCmd) XXX_Size() int {
 	return xxx_messageInfo_EVMContractStateCmd.Size(m)
@@ -618,16 +625,17 @@ func (m *ReceiptEVMContractCmd) Reset()         { *m = ReceiptEVMContractCmd{} }
 func (m *ReceiptEVMContractCmd) String() string { return proto.CompactTextString(m) }
 func (*ReceiptEVMContractCmd) ProtoMessage()    {}
 func (*ReceiptEVMContractCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{8}
+	return fileDescriptor_74353de561acd7c6, []int{8}
 }
+
 func (m *ReceiptEVMContractCmd) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptEVMContractCmd.Unmarshal(m, b)
 }
 func (m *ReceiptEVMContractCmd) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptEVMContractCmd.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptEVMContractCmd) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptEVMContractCmd.Merge(dst, src)
+func (m *ReceiptEVMContractCmd) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptEVMContractCmd.Merge(m, src)
 }
 func (m *ReceiptEVMContractCmd) XXX_Size() int {
 	return xxx_messageInfo_ReceiptEVMContractCmd.Size(m)
@@ -684,16 +692,17 @@ func (m *CheckEVMAddrReq) Reset()         { *m = CheckEVMAddrReq{} }
 func (m *CheckEVMAddrReq) String() string { return proto.CompactTextString(m) }
 func (*CheckEVMAddrReq) ProtoMessage()    {}
 func (*CheckEVMAddrReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{9}
+	return fileDescriptor_74353de561acd7c6, []int{9}
 }
+
 func (m *CheckEVMAddrReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CheckEVMAddrReq.Unmarshal(m, b)
 }
 func (m *CheckEVMAddrReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CheckEVMAddrReq.Marshal(b, m, deterministic)
 }
-func (dst *CheckEVMAddrReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CheckEVMAddrReq.Merge(dst, src)
+func (m *CheckEVMAddrReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckEVMAddrReq.Merge(m, src)
 }
 func (m *CheckEVMAddrReq) XXX_Size() int {
 	return xxx_messageInfo_CheckEVMAddrReq.Size(m)
@@ -725,16 +734,17 @@ func (m *CheckEVMAddrResp) Reset()         { *m = CheckEVMAddrResp{} }
 func (m *CheckEVMAddrResp) String() string { return proto.CompactTextString(m) }
 func (*CheckEVMAddrResp) ProtoMessage()    {}
 func (*CheckEVMAddrResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{10}
+	return fileDescriptor_74353de561acd7c6, []int{10}
 }
+
 func (m *CheckEVMAddrResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CheckEVMAddrResp.Unmarshal(m, b)
 }
 func (m *CheckEVMAddrResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CheckEVMAddrResp.Marshal(b, m, deterministic)
 }
-func (dst *CheckEVMAddrResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CheckEVMAddrResp.Merge(dst, src)
+func (m *CheckEVMAddrResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckEVMAddrResp.Merge(m, src)
 }
 func (m *CheckEVMAddrResp) XXX_Size() int {
 	return xxx_messageInfo_CheckEVMAddrResp.Size(m)
@@ -788,16 +798,17 @@ func (m *EstimateEVMGasReq) Reset()         { *m = EstimateEVMGasReq{} }
 func (m *EstimateEVMGasReq) String() string { return proto.CompactTextString(m) }
 func (*EstimateEVMGasReq) ProtoMessage()    {}
 func (*EstimateEVMGasReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{11}
+	return fileDescriptor_74353de561acd7c6, []int{11}
 }
+
 func (m *EstimateEVMGasReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EstimateEVMGasReq.Unmarshal(m, b)
 }
 func (m *EstimateEVMGasReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EstimateEVMGasReq.Marshal(b, m, deterministic)
 }
-func (dst *EstimateEVMGasReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EstimateEVMGasReq.Merge(dst, src)
+func (m *EstimateEVMGasReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EstimateEVMGasReq.Merge(m, src)
 }
 func (m *EstimateEVMGasReq) XXX_Size() int {
 	return xxx_messageInfo_EstimateEVMGasReq.Size(m)
@@ -854,16 +865,17 @@ func (m *EstimateEVMGasResp) Reset()         { *m = EstimateEVMGasResp{} }
 func (m *EstimateEVMGasResp) String() string { return proto.CompactTextString(m) }
 func (*EstimateEVMGasResp) ProtoMessage()    {}
 func (*EstimateEVMGasResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{12}
+	return fileDescriptor_74353de561acd7c6, []int{12}
 }
+
 func (m *EstimateEVMGasResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EstimateEVMGasResp.Unmarshal(m, b)
 }
 func (m *EstimateEVMGasResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EstimateEVMGasResp.Marshal(b, m, deterministic)
 }
-func (dst *EstimateEVMGasResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EstimateEVMGasResp.Merge(dst, src)
+func (m *EstimateEVMGasResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EstimateEVMGasResp.Merge(m, src)
 }
 func (m *EstimateEVMGasResp) XXX_Size() int {
 	return xxx_messageInfo_EstimateEVMGasResp.Size(m)
@@ -893,16 +905,17 @@ func (m *EvmDebugReq) Reset()         { *m = EvmDebugReq{} }
 func (m *EvmDebugReq) String() string { return proto.CompactTextString(m) }
 func (*EvmDebugReq) ProtoMessage()    {}
 func (*EvmDebugReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{13}
+	return fileDescriptor_74353de561acd7c6, []int{13}
 }
+
 func (m *EvmDebugReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmDebugReq.Unmarshal(m, b)
 }
 func (m *EvmDebugReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmDebugReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmDebugReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmDebugReq.Merge(dst, src)
+func (m *EvmDebugReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmDebugReq.Merge(m, src)
 }
 func (m *EvmDebugReq) XXX_Size() int {
 	return xxx_messageInfo_EvmDebugReq.Size(m)
@@ -931,16 +944,17 @@ func (m *EvmDebugResp) Reset()         { *m = EvmDebugResp{} }
 func (m *EvmDebugResp) String() string { return proto.CompactTextString(m) }
 func (*EvmDebugResp) ProtoMessage()    {}
 func (*EvmDebugResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{14}
+	return fileDescriptor_74353de561acd7c6, []int{14}
 }
+
 func (m *EvmDebugResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmDebugResp.Unmarshal(m, b)
 }
 func (m *EvmDebugResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmDebugResp.Marshal(b, m, deterministic)
 }
-func (dst *EvmDebugResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmDebugResp.Merge(dst, src)
+func (m *EvmDebugResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmDebugResp.Merge(m, src)
 }
 func (m *EvmDebugResp) XXX_Size() int {
 	return xxx_messageInfo_EvmDebugResp.Size(m)
@@ -969,16 +983,17 @@ func (m *EvmQueryAbiReq) Reset()         { *m = EvmQueryAbiReq{} }
 func (m *EvmQueryAbiReq) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryAbiReq) ProtoMessage()    {}
 func (*EvmQueryAbiReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{15}
+	return fileDescriptor_74353de561acd7c6, []int{15}
 }
+
 func (m *EvmQueryAbiReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmQueryAbiReq.Unmarshal(m, b)
 }
 func (m *EvmQueryAbiReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmQueryAbiReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmQueryAbiReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmQueryAbiReq.Merge(dst, src)
+func (m *EvmQueryAbiReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryAbiReq.Merge(m, src)
 }
 func (m *EvmQueryAbiReq) XXX_Size() int {
 	return xxx_messageInfo_EvmQueryAbiReq.Size(m)
@@ -1008,16 +1023,17 @@ func (m *EvmQueryAbiResp) Reset()         { *m = EvmQueryAbiResp{} }
 func (m *EvmQueryAbiResp) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryAbiResp) ProtoMessage()    {}
 func (*EvmQueryAbiResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{16}
+	return fileDescriptor_74353de561acd7c6, []int{16}
 }
+
 func (m *EvmQueryAbiResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmQueryAbiResp.Unmarshal(m, b)
 }
 func (m *EvmQueryAbiResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmQueryAbiResp.Marshal(b, m, deterministic)
 }
-func (dst *EvmQueryAbiResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmQueryAbiResp.Merge(dst, src)
+func (m *EvmQueryAbiResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryAbiResp.Merge(m, src)
 }
 func (m *EvmQueryAbiResp) XXX_Size() int {
 	return xxx_messageInfo_EvmQueryAbiResp.Size(m)
@@ -1055,16 +1071,17 @@ func (m *EvmQueryReq) Reset()         { *m = EvmQueryReq{} }
 func (m *EvmQueryReq) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryReq) ProtoMessage()    {}
 func (*EvmQueryReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{17}
+	return fileDescriptor_74353de561acd7c6, []int{17}
 }
+
 func (m *EvmQueryReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmQueryReq.Unmarshal(m, b)
 }
 func (m *EvmQueryReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmQueryReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmQueryReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmQueryReq.Merge(dst, src)
+func (m *EvmQueryReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryReq.Merge(m, src)
 }
 func (m *EvmQueryReq) XXX_Size() int {
 	return xxx_messageInfo_EvmQueryReq.Size(m)
@@ -1111,16 +1128,17 @@ func (m *EvmQueryResp) Reset()         { *m = EvmQueryResp{} }
 func (m *EvmQueryResp) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryResp) ProtoMessage()    {}
 func (*EvmQueryResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{18}
+	return fileDescriptor_74353de561acd7c6, []int{18}
 }
+
 func (m *EvmQueryResp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmQueryResp.Unmarshal(m, b)
 }
 func (m *EvmQueryResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmQueryResp.Marshal(b, m, deterministic)
 }
-func (dst *EvmQueryResp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmQueryResp.Merge(dst, src)
+func (m *EvmQueryResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryResp.Merge(m, src)
 }
 func (m *EvmQueryResp) XXX_Size() int {
 	return xxx_messageInfo_EvmQueryResp.Size(m)
@@ -1184,16 +1202,17 @@ func (m *EvmContractCreateReq) Reset()         { *m = EvmContractCreateReq{} }
 func (m *EvmContractCreateReq) String() string { return proto.CompactTextString(m) }
 func (*EvmContractCreateReq) ProtoMessage()    {}
 func (*EvmContractCreateReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{19}
+	return fileDescriptor_74353de561acd7c6, []int{19}
 }
+
 func (m *EvmContractCreateReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmContractCreateReq.Unmarshal(m, b)
 }
 func (m *EvmContractCreateReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmContractCreateReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmContractCreateReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmContractCreateReq.Merge(dst, src)
+func (m *EvmContractCreateReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmContractCreateReq.Merge(m, src)
 }
 func (m *EvmContractCreateReq) XXX_Size() int {
 	return xxx_messageInfo_EvmContractCreateReq.Size(m)
@@ -1279,16 +1298,17 @@ func (m *EvmContractCallReq) Reset()         { *m = EvmContractCallReq{} }
 func (m *EvmContractCallReq) String() string { return proto.CompactTextString(m) }
 func (*EvmContractCallReq) ProtoMessage()    {}
 func (*EvmContractCallReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{20}
+	return fileDescriptor_74353de561acd7c6, []int{20}
 }
+
 func (m *EvmContractCallReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmContractCallReq.Unmarshal(m, b)
 }
 func (m *EvmContractCallReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmContractCallReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmContractCallReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmContractCallReq.Merge(dst, src)
+func (m *EvmContractCallReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmContractCallReq.Merge(m, src)
 }
 func (m *EvmContractCallReq) XXX_Size() int {
 	return xxx_messageInfo_EvmContractCallReq.Size(m)
@@ -1378,16 +1398,17 @@ func (m *EvmContractTransferReq) Reset()         { *m = EvmContractTransferReq{}
 func (m *EvmContractTransferReq) String() string { return proto.CompactTextString(m) }
 func (*EvmContractTransferReq) ProtoMessage()    {}
 func (*EvmContractTransferReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_evmcontract_b1a4ac452ff33736, []int{21}
+	return fileDescriptor_74353de561acd7c6, []int{21}
 }
+
 func (m *EvmContractTransferReq) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvmContractTransferReq.Unmarshal(m, b)
 }
 func (m *EvmContractTransferReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EvmContractTransferReq.Marshal(b, m, deterministic)
 }
-func (dst *EvmContractTransferReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EvmContractTransferReq.Merge(dst, src)
+func (m *EvmContractTransferReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmContractTransferReq.Merge(m, src)
 }
 func (m *EvmContractTransferReq) XXX_Size() int {
 	return xxx_messageInfo_EvmContractTransferReq.Size(m)
@@ -1467,9 +1488,11 @@ func init() {
 	proto.RegisterType((*EvmContractTransferReq)(nil), "types.EvmContractTransferReq")
 }
 
-func init() { proto.RegisterFile("evmcontract.proto", fileDescriptor_evmcontract_b1a4ac452ff33736) }
+func init() {
+	proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6)
+}
 
-var fileDescriptor_evmcontract_b1a4ac452ff33736 = []byte{
+var fileDescriptor_74353de561acd7c6 = []byte{
 	// 1004 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x56, 0xcf, 0x8f, 0xdb, 0x44,
 	0x14, 0x96, 0x63, 0x27, 0x1b, 0xbf, 0x0d, 0xed, 0xae, 0x29, 0x4b, 0xb4, 0x42, 0x28, 0xb2, 0x28,

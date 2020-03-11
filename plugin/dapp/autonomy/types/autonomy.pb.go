@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // message for execs.Autonomy
 type AutonomyAction struct {
@@ -55,16 +54,17 @@ func (m *AutonomyAction) Reset()         { *m = AutonomyAction{} }
 func (m *AutonomyAction) String() string { return proto.CompactTextString(m) }
 func (*AutonomyAction) ProtoMessage()    {}
 func (*AutonomyAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_autonomy_a0c83c718d92e3be, []int{0}
+	return fileDescriptor_0246b47df8434d60, []int{0}
 }
+
 func (m *AutonomyAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyAction.Unmarshal(m, b)
 }
 func (m *AutonomyAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AutonomyAction.Marshal(b, m, deterministic)
 }
-func (dst *AutonomyAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AutonomyAction.Merge(dst, src)
+func (m *AutonomyAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AutonomyAction.Merge(m, src)
 }
 func (m *AutonomyAction) XXX_Size() int {
 	return xxx_messageInfo_AutonomyAction.Size(m)
@@ -340,9 +340,9 @@ func (m *AutonomyAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*AutonomyAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _AutonomyAction_OneofMarshaler, _AutonomyAction_OneofUnmarshaler, _AutonomyAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*AutonomyAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*AutonomyAction_PropBoard)(nil),
 		(*AutonomyAction_RvkPropBoard)(nil),
 		(*AutonomyAction_VotePropBoard)(nil),
@@ -365,385 +365,15 @@ func (*AutonomyAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer
 	}
 }
 
-func _AutonomyAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*AutonomyAction)
-	// value
-	switch x := m.Value.(type) {
-	case *AutonomyAction_PropBoard:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.PropBoard); err != nil {
-			return err
-		}
-	case *AutonomyAction_RvkPropBoard:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RvkPropBoard); err != nil {
-			return err
-		}
-	case *AutonomyAction_VotePropBoard:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VotePropBoard); err != nil {
-			return err
-		}
-	case *AutonomyAction_TmintPropBoard:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TmintPropBoard); err != nil {
-			return err
-		}
-	case *AutonomyAction_PropProject:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.PropProject); err != nil {
-			return err
-		}
-	case *AutonomyAction_RvkPropProject:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RvkPropProject); err != nil {
-			return err
-		}
-	case *AutonomyAction_VotePropProject:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VotePropProject); err != nil {
-			return err
-		}
-	case *AutonomyAction_PubVotePropProject:
-		b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.PubVotePropProject); err != nil {
-			return err
-		}
-	case *AutonomyAction_TmintPropProject:
-		b.EncodeVarint(9<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TmintPropProject); err != nil {
-			return err
-		}
-	case *AutonomyAction_PropRule:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.PropRule); err != nil {
-			return err
-		}
-	case *AutonomyAction_RvkPropRule:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RvkPropRule); err != nil {
-			return err
-		}
-	case *AutonomyAction_VotePropRule:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VotePropRule); err != nil {
-			return err
-		}
-	case *AutonomyAction_TmintPropRule:
-		b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TmintPropRule); err != nil {
-			return err
-		}
-	case *AutonomyAction_Transfer:
-		b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Transfer); err != nil {
-			return err
-		}
-	case *AutonomyAction_CommentProp:
-		b.EncodeVarint(15<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CommentProp); err != nil {
-			return err
-		}
-	case *AutonomyAction_PropChange:
-		b.EncodeVarint(16<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.PropChange); err != nil {
-			return err
-		}
-	case *AutonomyAction_RvkPropChange:
-		b.EncodeVarint(17<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RvkPropChange); err != nil {
-			return err
-		}
-	case *AutonomyAction_VotePropChange:
-		b.EncodeVarint(18<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VotePropChange); err != nil {
-			return err
-		}
-	case *AutonomyAction_TmintPropChange:
-		b.EncodeVarint(19<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TmintPropChange); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("AutonomyAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _AutonomyAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*AutonomyAction)
-	switch tag {
-	case 1: // value.propBoard
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProposalBoard)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_PropBoard{msg}
-		return true, err
-	case 2: // value.rvkPropBoard
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RevokeProposalBoard)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_RvkPropBoard{msg}
-		return true, err
-	case 3: // value.votePropBoard
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(VoteProposalBoard)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_VotePropBoard{msg}
-		return true, err
-	case 4: // value.tmintPropBoard
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TerminateProposalBoard)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_TmintPropBoard{msg}
-		return true, err
-	case 5: // value.propProject
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProposalProject)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_PropProject{msg}
-		return true, err
-	case 6: // value.rvkPropProject
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RevokeProposalProject)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_RvkPropProject{msg}
-		return true, err
-	case 7: // value.votePropProject
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(VoteProposalProject)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_VotePropProject{msg}
-		return true, err
-	case 8: // value.pubVotePropProject
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PubVoteProposalProject)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_PubVotePropProject{msg}
-		return true, err
-	case 9: // value.tmintPropProject
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TerminateProposalProject)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_TmintPropProject{msg}
-		return true, err
-	case 10: // value.propRule
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProposalRule)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_PropRule{msg}
-		return true, err
-	case 11: // value.rvkPropRule
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RevokeProposalRule)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_RvkPropRule{msg}
-		return true, err
-	case 12: // value.votePropRule
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(VoteProposalRule)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_VotePropRule{msg}
-		return true, err
-	case 13: // value.tmintPropRule
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TerminateProposalRule)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_TmintPropRule{msg}
-		return true, err
-	case 14: // value.transfer
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TransferFund)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_Transfer{msg}
-		return true, err
-	case 15: // value.commentProp
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Comment)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_CommentProp{msg}
-		return true, err
-	case 16: // value.propChange
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ProposalChange)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_PropChange{msg}
-		return true, err
-	case 17: // value.rvkPropChange
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RevokeProposalChange)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_RvkPropChange{msg}
-		return true, err
-	case 18: // value.votePropChange
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(VoteProposalChange)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_VotePropChange{msg}
-		return true, err
-	case 19: // value.tmintPropChange
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TerminateProposalChange)
-		err := b.DecodeMessage(msg)
-		m.Value = &AutonomyAction_TmintPropChange{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _AutonomyAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*AutonomyAction)
-	// value
-	switch x := m.Value.(type) {
-	case *AutonomyAction_PropBoard:
-		s := proto.Size(x.PropBoard)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_RvkPropBoard:
-		s := proto.Size(x.RvkPropBoard)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_VotePropBoard:
-		s := proto.Size(x.VotePropBoard)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_TmintPropBoard:
-		s := proto.Size(x.TmintPropBoard)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_PropProject:
-		s := proto.Size(x.PropProject)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_RvkPropProject:
-		s := proto.Size(x.RvkPropProject)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_VotePropProject:
-		s := proto.Size(x.VotePropProject)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_PubVotePropProject:
-		s := proto.Size(x.PubVotePropProject)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_TmintPropProject:
-		s := proto.Size(x.TmintPropProject)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_PropRule:
-		s := proto.Size(x.PropRule)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_RvkPropRule:
-		s := proto.Size(x.RvkPropRule)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_VotePropRule:
-		s := proto.Size(x.VotePropRule)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_TmintPropRule:
-		s := proto.Size(x.TmintPropRule)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_Transfer:
-		s := proto.Size(x.Transfer)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_CommentProp:
-		s := proto.Size(x.CommentProp)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_PropChange:
-		s := proto.Size(x.PropChange)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_RvkPropChange:
-		s := proto.Size(x.RvkPropChange)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_VotePropChange:
-		s := proto.Size(x.VotePropChange)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *AutonomyAction_TmintPropChange:
-		s := proto.Size(x.TmintPropChange)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
-}
-
 func init() {
 	proto.RegisterType((*AutonomyAction)(nil), "types.AutonomyAction")
 }
 
-func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_autonomy_a0c83c718d92e3be) }
+func init() {
+	proto.RegisterFile("autonomy.proto", fileDescriptor_0246b47df8434d60)
+}
 
-var fileDescriptor_autonomy_a0c83c718d92e3be = []byte{
+var fileDescriptor_0246b47df8434d60 = []byte{
 	// 504 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x94, 0x4d, 0x6f, 0xd3, 0x40,
 	0x10, 0x40, 0xd3, 0x40, 0xfa, 0x31, 0x8e, 0x9d, 0x32, 0x2d, 0x60, 0xc2, 0x57, 0xc5, 0xa9, 0xa7,

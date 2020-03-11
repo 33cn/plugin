@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type VoteResult struct {
 	// 总票数
@@ -40,16 +39,17 @@ func (m *VoteResult) Reset()         { *m = VoteResult{} }
 func (m *VoteResult) String() string { return proto.CompactTextString(m) }
 func (*VoteResult) ProtoMessage()    {}
 func (*VoteResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{0}
+	return fileDescriptor_d916a933dd8220ff, []int{0}
 }
+
 func (m *VoteResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteResult.Unmarshal(m, b)
 }
 func (m *VoteResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VoteResult.Marshal(b, m, deterministic)
 }
-func (dst *VoteResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VoteResult.Merge(dst, src)
+func (m *VoteResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VoteResult.Merge(m, src)
 }
 func (m *VoteResult) XXX_Size() int {
 	return xxx_messageInfo_VoteResult.Size(m)
@@ -106,16 +106,17 @@ func (m *PublicVote) Reset()         { *m = PublicVote{} }
 func (m *PublicVote) String() string { return proto.CompactTextString(m) }
 func (*PublicVote) ProtoMessage()    {}
 func (*PublicVote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{1}
+	return fileDescriptor_d916a933dd8220ff, []int{1}
 }
+
 func (m *PublicVote) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PublicVote.Unmarshal(m, b)
 }
 func (m *PublicVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PublicVote.Marshal(b, m, deterministic)
 }
-func (dst *PublicVote) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PublicVote.Merge(dst, src)
+func (m *PublicVote) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PublicVote.Merge(m, src)
 }
 func (m *PublicVote) XXX_Size() int {
 	return xxx_messageInfo_PublicVote.Size(m)
@@ -165,16 +166,17 @@ func (m *VotesRecord) Reset()         { *m = VotesRecord{} }
 func (m *VotesRecord) String() string { return proto.CompactTextString(m) }
 func (*VotesRecord) ProtoMessage()    {}
 func (*VotesRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{2}
+	return fileDescriptor_d916a933dd8220ff, []int{2}
 }
+
 func (m *VotesRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VotesRecord.Unmarshal(m, b)
 }
 func (m *VotesRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VotesRecord.Marshal(b, m, deterministic)
 }
-func (dst *VotesRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VotesRecord.Merge(dst, src)
+func (m *VotesRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotesRecord.Merge(m, src)
 }
 func (m *VotesRecord) XXX_Size() int {
 	return xxx_messageInfo_VotesRecord.Size(m)
@@ -212,16 +214,17 @@ func (m *RuleConfig) Reset()         { *m = RuleConfig{} }
 func (m *RuleConfig) String() string { return proto.CompactTextString(m) }
 func (*RuleConfig) ProtoMessage()    {}
 func (*RuleConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{3}
+	return fileDescriptor_d916a933dd8220ff, []int{3}
 }
+
 func (m *RuleConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RuleConfig.Unmarshal(m, b)
 }
 func (m *RuleConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RuleConfig.Marshal(b, m, deterministic)
 }
-func (dst *RuleConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RuleConfig.Merge(dst, src)
+func (m *RuleConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RuleConfig.Merge(m, src)
 }
 func (m *RuleConfig) XXX_Size() int {
 	return xxx_messageInfo_RuleConfig.Size(m)
@@ -281,16 +284,17 @@ func (m *ActiveBoard) Reset()         { *m = ActiveBoard{} }
 func (m *ActiveBoard) String() string { return proto.CompactTextString(m) }
 func (*ActiveBoard) ProtoMessage()    {}
 func (*ActiveBoard) Descriptor() ([]byte, []int) {
-	return fileDescriptor_lcommon_3cf79d051a979aaa, []int{4}
+	return fileDescriptor_d916a933dd8220ff, []int{4}
 }
+
 func (m *ActiveBoard) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ActiveBoard.Unmarshal(m, b)
 }
 func (m *ActiveBoard) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ActiveBoard.Marshal(b, m, deterministic)
 }
-func (dst *ActiveBoard) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ActiveBoard.Merge(dst, src)
+func (m *ActiveBoard) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ActiveBoard.Merge(m, src)
 }
 func (m *ActiveBoard) XXX_Size() int {
 	return xxx_messageInfo_ActiveBoard.Size(m)
@@ -337,9 +341,11 @@ func init() {
 	proto.RegisterType((*ActiveBoard)(nil), "types.ActiveBoard")
 }
 
-func init() { proto.RegisterFile("lcommon.proto", fileDescriptor_lcommon_3cf79d051a979aaa) }
+func init() {
+	proto.RegisterFile("lcommon.proto", fileDescriptor_d916a933dd8220ff)
+}
 
-var fileDescriptor_lcommon_3cf79d051a979aaa = []byte{
+var fileDescriptor_d916a933dd8220ff = []byte{
 	// 352 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0xbf, 0x4e, 0xe3, 0x40,
 	0x10, 0x87, 0xe5, 0xfc, 0xbb, 0x64, 0x72, 0x77, 0xd2, 0x6d, 0x71, 0x72, 0x81, 0x50, 0xe4, 0x02,
