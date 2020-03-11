@@ -96,6 +96,7 @@ genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["ticket", "autonomy"]
 enableBestBlockCmp=true
 
+
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
 powLimitBits="0x1f00ffff"
