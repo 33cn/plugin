@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type RelayOrderStatus int32
 
@@ -43,6 +42,7 @@ var RelayOrderStatus_name = map[int32]string{
 	5: "canceled",
 	6: "timeout",
 }
+
 var RelayOrderStatus_value = map[string]int32{
 	"init":       0,
 	"pending":    1,
@@ -56,8 +56,9 @@ var RelayOrderStatus_value = map[string]int32{
 func (x RelayOrderStatus) String() string {
 	return proto.EnumName(RelayOrderStatus_name, int32(x))
 }
+
 func (RelayOrderStatus) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{0}
+	return fileDescriptor_9f69a7d5a802d584, []int{0}
 }
 
 type RelayAction struct {
@@ -80,16 +81,17 @@ func (m *RelayAction) Reset()         { *m = RelayAction{} }
 func (m *RelayAction) String() string { return proto.CompactTextString(m) }
 func (*RelayAction) ProtoMessage()    {}
 func (*RelayAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{0}
+	return fileDescriptor_9f69a7d5a802d584, []int{0}
 }
+
 func (m *RelayAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayAction.Unmarshal(m, b)
 }
 func (m *RelayAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayAction.Marshal(b, m, deterministic)
 }
-func (dst *RelayAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayAction.Merge(dst, src)
+func (m *RelayAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayAction.Merge(m, src)
 }
 func (m *RelayAction) XXX_Size() int {
 	return xxx_messageInfo_RelayAction.Size(m)
@@ -209,9 +211,9 @@ func (m *RelayAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*RelayAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _RelayAction_OneofMarshaler, _RelayAction_OneofUnmarshaler, _RelayAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*RelayAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*RelayAction_Create)(nil),
 		(*RelayAction_Accept)(nil),
 		(*RelayAction_Revoke)(nil),
@@ -220,162 +222,6 @@ func (*RelayAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) e
 		(*RelayAction_VerifyCli)(nil),
 		(*RelayAction_BtcHeaders)(nil),
 	}
-}
-
-func _RelayAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*RelayAction)
-	// value
-	switch x := m.Value.(type) {
-	case *RelayAction_Create:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Create); err != nil {
-			return err
-		}
-	case *RelayAction_Accept:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Accept); err != nil {
-			return err
-		}
-	case *RelayAction_Revoke:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Revoke); err != nil {
-			return err
-		}
-	case *RelayAction_ConfirmTx:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ConfirmTx); err != nil {
-			return err
-		}
-	case *RelayAction_Verify:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Verify); err != nil {
-			return err
-		}
-	case *RelayAction_VerifyCli:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VerifyCli); err != nil {
-			return err
-		}
-	case *RelayAction_BtcHeaders:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.BtcHeaders); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("RelayAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _RelayAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*RelayAction)
-	switch tag {
-	case 1: // value.create
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayCreate)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_Create{msg}
-		return true, err
-	case 2: // value.accept
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayAccept)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_Accept{msg}
-		return true, err
-	case 3: // value.revoke
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayRevoke)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_Revoke{msg}
-		return true, err
-	case 4: // value.confirmTx
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayConfirmTx)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_ConfirmTx{msg}
-		return true, err
-	case 5: // value.verify
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayVerify)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_Verify{msg}
-		return true, err
-	case 6: // value.verifyCli
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RelayVerifyCli)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_VerifyCli{msg}
-		return true, err
-	case 7: // value.btcHeaders
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(BtcHeaders)
-		err := b.DecodeMessage(msg)
-		m.Value = &RelayAction_BtcHeaders{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _RelayAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*RelayAction)
-	// value
-	switch x := m.Value.(type) {
-	case *RelayAction_Create:
-		s := proto.Size(x.Create)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_Accept:
-		s := proto.Size(x.Accept)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_Revoke:
-		s := proto.Size(x.Revoke)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_ConfirmTx:
-		s := proto.Size(x.ConfirmTx)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_Verify:
-		s := proto.Size(x.Verify)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_VerifyCli:
-		s := proto.Size(x.VerifyCli)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *RelayAction_BtcHeaders:
-		s := proto.Size(x.BtcHeaders)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type RelayOrder struct {
@@ -409,16 +255,17 @@ func (m *RelayOrder) Reset()         { *m = RelayOrder{} }
 func (m *RelayOrder) String() string { return proto.CompactTextString(m) }
 func (*RelayOrder) ProtoMessage()    {}
 func (*RelayOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{1}
+	return fileDescriptor_9f69a7d5a802d584, []int{1}
 }
+
 func (m *RelayOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayOrder.Unmarshal(m, b)
 }
 func (m *RelayOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayOrder.Marshal(b, m, deterministic)
 }
-func (dst *RelayOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayOrder.Merge(dst, src)
+func (m *RelayOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayOrder.Merge(m, src)
 }
 func (m *RelayOrder) XXX_Size() int {
 	return xxx_messageInfo_RelayOrder.Size(m)
@@ -594,16 +441,17 @@ func (m *RelayCreate) Reset()         { *m = RelayCreate{} }
 func (m *RelayCreate) String() string { return proto.CompactTextString(m) }
 func (*RelayCreate) ProtoMessage()    {}
 func (*RelayCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{2}
+	return fileDescriptor_9f69a7d5a802d584, []int{2}
 }
+
 func (m *RelayCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayCreate.Unmarshal(m, b)
 }
 func (m *RelayCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayCreate.Marshal(b, m, deterministic)
 }
-func (dst *RelayCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayCreate.Merge(dst, src)
+func (m *RelayCreate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayCreate.Merge(m, src)
 }
 func (m *RelayCreate) XXX_Size() int {
 	return xxx_messageInfo_RelayCreate.Size(m)
@@ -683,16 +531,17 @@ func (m *RelayAccept) Reset()         { *m = RelayAccept{} }
 func (m *RelayAccept) String() string { return proto.CompactTextString(m) }
 func (*RelayAccept) ProtoMessage()    {}
 func (*RelayAccept) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{3}
+	return fileDescriptor_9f69a7d5a802d584, []int{3}
 }
+
 func (m *RelayAccept) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayAccept.Unmarshal(m, b)
 }
 func (m *RelayAccept) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayAccept.Marshal(b, m, deterministic)
 }
-func (dst *RelayAccept) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayAccept.Merge(dst, src)
+func (m *RelayAccept) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayAccept.Merge(m, src)
 }
 func (m *RelayAccept) XXX_Size() int {
 	return xxx_messageInfo_RelayAccept.Size(m)
@@ -737,16 +586,17 @@ func (m *RelayRevoke) Reset()         { *m = RelayRevoke{} }
 func (m *RelayRevoke) String() string { return proto.CompactTextString(m) }
 func (*RelayRevoke) ProtoMessage()    {}
 func (*RelayRevoke) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{4}
+	return fileDescriptor_9f69a7d5a802d584, []int{4}
 }
+
 func (m *RelayRevoke) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayRevoke.Unmarshal(m, b)
 }
 func (m *RelayRevoke) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayRevoke.Marshal(b, m, deterministic)
 }
-func (dst *RelayRevoke) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayRevoke.Merge(dst, src)
+func (m *RelayRevoke) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayRevoke.Merge(m, src)
 }
 func (m *RelayRevoke) XXX_Size() int {
 	return xxx_messageInfo_RelayRevoke.Size(m)
@@ -778,7 +628,7 @@ func (m *RelayRevoke) GetAction() uint32 {
 	return 0
 }
 
-// 客户只用交易hash提交， 验证需要的其他信息由relayd提供
+//客户只用交易hash提交， 验证需要的其他信息由relayd提供
 type RelayConfirmTx struct {
 	OrderId              string   `protobuf:"bytes,1,opt,name=orderId,proto3" json:"orderId,omitempty"`
 	TxHash               string   `protobuf:"bytes,2,opt,name=txHash,proto3" json:"txHash,omitempty"`
@@ -791,16 +641,17 @@ func (m *RelayConfirmTx) Reset()         { *m = RelayConfirmTx{} }
 func (m *RelayConfirmTx) String() string { return proto.CompactTextString(m) }
 func (*RelayConfirmTx) ProtoMessage()    {}
 func (*RelayConfirmTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{5}
+	return fileDescriptor_9f69a7d5a802d584, []int{5}
 }
+
 func (m *RelayConfirmTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayConfirmTx.Unmarshal(m, b)
 }
 func (m *RelayConfirmTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayConfirmTx.Marshal(b, m, deterministic)
 }
-func (dst *RelayConfirmTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayConfirmTx.Merge(dst, src)
+func (m *RelayConfirmTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayConfirmTx.Merge(m, src)
 }
 func (m *RelayConfirmTx) XXX_Size() int {
 	return xxx_messageInfo_RelayConfirmTx.Size(m)
@@ -839,16 +690,17 @@ func (m *RelayVerify) Reset()         { *m = RelayVerify{} }
 func (m *RelayVerify) String() string { return proto.CompactTextString(m) }
 func (*RelayVerify) ProtoMessage()    {}
 func (*RelayVerify) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{6}
+	return fileDescriptor_9f69a7d5a802d584, []int{6}
 }
+
 func (m *RelayVerify) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayVerify.Unmarshal(m, b)
 }
 func (m *RelayVerify) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayVerify.Marshal(b, m, deterministic)
 }
-func (dst *RelayVerify) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayVerify.Merge(dst, src)
+func (m *RelayVerify) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayVerify.Merge(m, src)
 }
 func (m *RelayVerify) XXX_Size() int {
 	return xxx_messageInfo_RelayVerify.Size(m)
@@ -895,16 +747,17 @@ func (m *RelayVerifyCli) Reset()         { *m = RelayVerifyCli{} }
 func (m *RelayVerifyCli) String() string { return proto.CompactTextString(m) }
 func (*RelayVerifyCli) ProtoMessage()    {}
 func (*RelayVerifyCli) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{7}
+	return fileDescriptor_9f69a7d5a802d584, []int{7}
 }
+
 func (m *RelayVerifyCli) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayVerifyCli.Unmarshal(m, b)
 }
 func (m *RelayVerifyCli) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayVerifyCli.Marshal(b, m, deterministic)
 }
-func (dst *RelayVerifyCli) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayVerifyCli.Merge(dst, src)
+func (m *RelayVerifyCli) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayVerifyCli.Merge(m, src)
 }
 func (m *RelayVerifyCli) XXX_Size() int {
 	return xxx_messageInfo_RelayVerifyCli.Size(m)
@@ -972,16 +825,17 @@ func (m *BtcHeader) Reset()         { *m = BtcHeader{} }
 func (m *BtcHeader) String() string { return proto.CompactTextString(m) }
 func (*BtcHeader) ProtoMessage()    {}
 func (*BtcHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{8}
+	return fileDescriptor_9f69a7d5a802d584, []int{8}
 }
+
 func (m *BtcHeader) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BtcHeader.Unmarshal(m, b)
 }
 func (m *BtcHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BtcHeader.Marshal(b, m, deterministic)
 }
-func (dst *BtcHeader) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BtcHeader.Merge(dst, src)
+func (m *BtcHeader) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BtcHeader.Merge(m, src)
 }
 func (m *BtcHeader) XXX_Size() int {
 	return xxx_messageInfo_BtcHeader.Size(m)
@@ -1087,16 +941,17 @@ func (m *BtcHeaders) Reset()         { *m = BtcHeaders{} }
 func (m *BtcHeaders) String() string { return proto.CompactTextString(m) }
 func (*BtcHeaders) ProtoMessage()    {}
 func (*BtcHeaders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{9}
+	return fileDescriptor_9f69a7d5a802d584, []int{9}
 }
+
 func (m *BtcHeaders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BtcHeaders.Unmarshal(m, b)
 }
 func (m *BtcHeaders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BtcHeaders.Marshal(b, m, deterministic)
 }
-func (dst *BtcHeaders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BtcHeaders.Merge(dst, src)
+func (m *BtcHeaders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BtcHeaders.Merge(m, src)
 }
 func (m *BtcHeaders) XXX_Size() int {
 	return xxx_messageInfo_BtcHeaders.Size(m)
@@ -1130,16 +985,17 @@ func (m *BtcTransaction) Reset()         { *m = BtcTransaction{} }
 func (m *BtcTransaction) String() string { return proto.CompactTextString(m) }
 func (*BtcTransaction) ProtoMessage()    {}
 func (*BtcTransaction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{10}
+	return fileDescriptor_9f69a7d5a802d584, []int{10}
 }
+
 func (m *BtcTransaction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BtcTransaction.Unmarshal(m, b)
 }
 func (m *BtcTransaction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BtcTransaction.Marshal(b, m, deterministic)
 }
-func (dst *BtcTransaction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BtcTransaction.Merge(dst, src)
+func (m *BtcTransaction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BtcTransaction.Merge(m, src)
 }
 func (m *BtcTransaction) XXX_Size() int {
 	return xxx_messageInfo_BtcTransaction.Size(m)
@@ -1204,16 +1060,17 @@ func (m *Vin) Reset()         { *m = Vin{} }
 func (m *Vin) String() string { return proto.CompactTextString(m) }
 func (*Vin) ProtoMessage()    {}
 func (*Vin) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{11}
+	return fileDescriptor_9f69a7d5a802d584, []int{11}
 }
+
 func (m *Vin) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Vin.Unmarshal(m, b)
 }
 func (m *Vin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Vin.Marshal(b, m, deterministic)
 }
-func (dst *Vin) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Vin.Merge(dst, src)
+func (m *Vin) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Vin.Merge(m, src)
 }
 func (m *Vin) XXX_Size() int {
 	return xxx_messageInfo_Vin.Size(m)
@@ -1251,16 +1108,17 @@ func (m *Vout) Reset()         { *m = Vout{} }
 func (m *Vout) String() string { return proto.CompactTextString(m) }
 func (*Vout) ProtoMessage()    {}
 func (*Vout) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{12}
+	return fileDescriptor_9f69a7d5a802d584, []int{12}
 }
+
 func (m *Vout) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Vout.Unmarshal(m, b)
 }
 func (m *Vout) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Vout.Marshal(b, m, deterministic)
 }
-func (dst *Vout) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Vout.Merge(dst, src)
+func (m *Vout) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Vout.Merge(m, src)
 }
 func (m *Vout) XXX_Size() int {
 	return xxx_messageInfo_Vout.Size(m)
@@ -1308,16 +1166,17 @@ func (m *BtcSpv) Reset()         { *m = BtcSpv{} }
 func (m *BtcSpv) String() string { return proto.CompactTextString(m) }
 func (*BtcSpv) ProtoMessage()    {}
 func (*BtcSpv) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{13}
+	return fileDescriptor_9f69a7d5a802d584, []int{13}
 }
+
 func (m *BtcSpv) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BtcSpv.Unmarshal(m, b)
 }
 func (m *BtcSpv) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BtcSpv.Marshal(b, m, deterministic)
 }
-func (dst *BtcSpv) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BtcSpv.Merge(dst, src)
+func (m *BtcSpv) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BtcSpv.Merge(m, src)
 }
 func (m *BtcSpv) XXX_Size() int {
 	return xxx_messageInfo_BtcSpv.Size(m)
@@ -1382,16 +1241,17 @@ func (m *RelayLastRcvBtcHeader) Reset()         { *m = RelayLastRcvBtcHeader{} }
 func (m *RelayLastRcvBtcHeader) String() string { return proto.CompactTextString(m) }
 func (*RelayLastRcvBtcHeader) ProtoMessage()    {}
 func (*RelayLastRcvBtcHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{14}
+	return fileDescriptor_9f69a7d5a802d584, []int{14}
 }
+
 func (m *RelayLastRcvBtcHeader) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RelayLastRcvBtcHeader.Unmarshal(m, b)
 }
 func (m *RelayLastRcvBtcHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RelayLastRcvBtcHeader.Marshal(b, m, deterministic)
 }
-func (dst *RelayLastRcvBtcHeader) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RelayLastRcvBtcHeader.Merge(dst, src)
+func (m *RelayLastRcvBtcHeader) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RelayLastRcvBtcHeader.Merge(m, src)
 }
 func (m *RelayLastRcvBtcHeader) XXX_Size() int {
 	return xxx_messageInfo_RelayLastRcvBtcHeader.Size(m)
@@ -1431,16 +1291,17 @@ func (m *ReceiptRelayRcvBTCHeaders) Reset()         { *m = ReceiptRelayRcvBTCHea
 func (m *ReceiptRelayRcvBTCHeaders) String() string { return proto.CompactTextString(m) }
 func (*ReceiptRelayRcvBTCHeaders) ProtoMessage()    {}
 func (*ReceiptRelayRcvBTCHeaders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{15}
+	return fileDescriptor_9f69a7d5a802d584, []int{15}
 }
+
 func (m *ReceiptRelayRcvBTCHeaders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptRelayRcvBTCHeaders.Unmarshal(m, b)
 }
 func (m *ReceiptRelayRcvBTCHeaders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptRelayRcvBTCHeaders.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptRelayRcvBTCHeaders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptRelayRcvBTCHeaders.Merge(dst, src)
+func (m *ReceiptRelayRcvBTCHeaders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptRelayRcvBTCHeaders.Merge(m, src)
 }
 func (m *ReceiptRelayRcvBTCHeaders) XXX_Size() int {
 	return xxx_messageInfo_ReceiptRelayRcvBTCHeaders.Size(m)
@@ -1516,16 +1377,17 @@ func (m *ReceiptRelayLog) Reset()         { *m = ReceiptRelayLog{} }
 func (m *ReceiptRelayLog) String() string { return proto.CompactTextString(m) }
 func (*ReceiptRelayLog) ProtoMessage()    {}
 func (*ReceiptRelayLog) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{16}
+	return fileDescriptor_9f69a7d5a802d584, []int{16}
 }
+
 func (m *ReceiptRelayLog) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptRelayLog.Unmarshal(m, b)
 }
 func (m *ReceiptRelayLog) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptRelayLog.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptRelayLog) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptRelayLog.Merge(dst, src)
+func (m *ReceiptRelayLog) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptRelayLog.Merge(m, src)
 }
 func (m *ReceiptRelayLog) XXX_Size() int {
 	return xxx_messageInfo_ReceiptRelayLog.Size(m)
@@ -1691,16 +1553,17 @@ func (m *ReqRelayAddrCoins) Reset()         { *m = ReqRelayAddrCoins{} }
 func (m *ReqRelayAddrCoins) String() string { return proto.CompactTextString(m) }
 func (*ReqRelayAddrCoins) ProtoMessage()    {}
 func (*ReqRelayAddrCoins) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{17}
+	return fileDescriptor_9f69a7d5a802d584, []int{17}
 }
+
 func (m *ReqRelayAddrCoins) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRelayAddrCoins.Unmarshal(m, b)
 }
 func (m *ReqRelayAddrCoins) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRelayAddrCoins.Marshal(b, m, deterministic)
 }
-func (dst *ReqRelayAddrCoins) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRelayAddrCoins.Merge(dst, src)
+func (m *ReqRelayAddrCoins) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRelayAddrCoins.Merge(m, src)
 }
 func (m *ReqRelayAddrCoins) XXX_Size() int {
 	return xxx_messageInfo_ReqRelayAddrCoins.Size(m)
@@ -1757,16 +1620,17 @@ func (m *ReplyRelayOrders) Reset()         { *m = ReplyRelayOrders{} }
 func (m *ReplyRelayOrders) String() string { return proto.CompactTextString(m) }
 func (*ReplyRelayOrders) ProtoMessage()    {}
 func (*ReplyRelayOrders) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{18}
+	return fileDescriptor_9f69a7d5a802d584, []int{18}
 }
+
 func (m *ReplyRelayOrders) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyRelayOrders.Unmarshal(m, b)
 }
 func (m *ReplyRelayOrders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyRelayOrders.Marshal(b, m, deterministic)
 }
-func (dst *ReplyRelayOrders) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyRelayOrders.Merge(dst, src)
+func (m *ReplyRelayOrders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyRelayOrders.Merge(m, src)
 }
 func (m *ReplyRelayOrders) XXX_Size() int {
 	return xxx_messageInfo_ReplyRelayOrders.Size(m)
@@ -1796,16 +1660,17 @@ func (m *QueryRelayOrderParam) Reset()         { *m = QueryRelayOrderParam{} }
 func (m *QueryRelayOrderParam) String() string { return proto.CompactTextString(m) }
 func (*QueryRelayOrderParam) ProtoMessage()    {}
 func (*QueryRelayOrderParam) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{19}
+	return fileDescriptor_9f69a7d5a802d584, []int{19}
 }
+
 func (m *QueryRelayOrderParam) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryRelayOrderParam.Unmarshal(m, b)
 }
 func (m *QueryRelayOrderParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryRelayOrderParam.Marshal(b, m, deterministic)
 }
-func (dst *QueryRelayOrderParam) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryRelayOrderParam.Merge(dst, src)
+func (m *QueryRelayOrderParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRelayOrderParam.Merge(m, src)
 }
 func (m *QueryRelayOrderParam) XXX_Size() int {
 	return xxx_messageInfo_QueryRelayOrderParam.Size(m)
@@ -1841,16 +1706,17 @@ func (m *QueryRelayOrderResult) Reset()         { *m = QueryRelayOrderResult{} }
 func (m *QueryRelayOrderResult) String() string { return proto.CompactTextString(m) }
 func (*QueryRelayOrderResult) ProtoMessage()    {}
 func (*QueryRelayOrderResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{20}
+	return fileDescriptor_9f69a7d5a802d584, []int{20}
 }
+
 func (m *QueryRelayOrderResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryRelayOrderResult.Unmarshal(m, b)
 }
 func (m *QueryRelayOrderResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryRelayOrderResult.Marshal(b, m, deterministic)
 }
-func (dst *QueryRelayOrderResult) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryRelayOrderResult.Merge(dst, src)
+func (m *QueryRelayOrderResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRelayOrderResult.Merge(m, src)
 }
 func (m *QueryRelayOrderResult) XXX_Size() int {
 	return xxx_messageInfo_QueryRelayOrderResult.Size(m)
@@ -1881,16 +1747,17 @@ func (m *ReqRelayBtcHeaderHeightList) Reset()         { *m = ReqRelayBtcHeaderHe
 func (m *ReqRelayBtcHeaderHeightList) String() string { return proto.CompactTextString(m) }
 func (*ReqRelayBtcHeaderHeightList) ProtoMessage()    {}
 func (*ReqRelayBtcHeaderHeightList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{21}
+	return fileDescriptor_9f69a7d5a802d584, []int{21}
 }
+
 func (m *ReqRelayBtcHeaderHeightList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRelayBtcHeaderHeightList.Unmarshal(m, b)
 }
 func (m *ReqRelayBtcHeaderHeightList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRelayBtcHeaderHeightList.Marshal(b, m, deterministic)
 }
-func (dst *ReqRelayBtcHeaderHeightList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRelayBtcHeaderHeightList.Merge(dst, src)
+func (m *ReqRelayBtcHeaderHeightList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRelayBtcHeaderHeightList.Merge(m, src)
 }
 func (m *ReqRelayBtcHeaderHeightList) XXX_Size() int {
 	return xxx_messageInfo_ReqRelayBtcHeaderHeightList.Size(m)
@@ -1933,16 +1800,17 @@ func (m *ReplyRelayBtcHeadHeightList) Reset()         { *m = ReplyRelayBtcHeadHe
 func (m *ReplyRelayBtcHeadHeightList) String() string { return proto.CompactTextString(m) }
 func (*ReplyRelayBtcHeadHeightList) ProtoMessage()    {}
 func (*ReplyRelayBtcHeadHeightList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{22}
+	return fileDescriptor_9f69a7d5a802d584, []int{22}
 }
+
 func (m *ReplyRelayBtcHeadHeightList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyRelayBtcHeadHeightList.Unmarshal(m, b)
 }
 func (m *ReplyRelayBtcHeadHeightList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyRelayBtcHeadHeightList.Marshal(b, m, deterministic)
 }
-func (dst *ReplyRelayBtcHeadHeightList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyRelayBtcHeadHeightList.Merge(dst, src)
+func (m *ReplyRelayBtcHeadHeightList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyRelayBtcHeadHeightList.Merge(m, src)
 }
 func (m *ReplyRelayBtcHeadHeightList) XXX_Size() int {
 	return xxx_messageInfo_ReplyRelayBtcHeadHeightList.Size(m)
@@ -1971,16 +1839,17 @@ func (m *ReqRelayQryBTCHeadHeight) Reset()         { *m = ReqRelayQryBTCHeadHeig
 func (m *ReqRelayQryBTCHeadHeight) String() string { return proto.CompactTextString(m) }
 func (*ReqRelayQryBTCHeadHeight) ProtoMessage()    {}
 func (*ReqRelayQryBTCHeadHeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{23}
+	return fileDescriptor_9f69a7d5a802d584, []int{23}
 }
+
 func (m *ReqRelayQryBTCHeadHeight) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRelayQryBTCHeadHeight.Unmarshal(m, b)
 }
 func (m *ReqRelayQryBTCHeadHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqRelayQryBTCHeadHeight.Marshal(b, m, deterministic)
 }
-func (dst *ReqRelayQryBTCHeadHeight) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqRelayQryBTCHeadHeight.Merge(dst, src)
+func (m *ReqRelayQryBTCHeadHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqRelayQryBTCHeadHeight.Merge(m, src)
 }
 func (m *ReqRelayQryBTCHeadHeight) XXX_Size() int {
 	return xxx_messageInfo_ReqRelayQryBTCHeadHeight.Size(m)
@@ -2010,16 +1879,17 @@ func (m *ReplayRelayQryBTCHeadHeight) Reset()         { *m = ReplayRelayQryBTCHe
 func (m *ReplayRelayQryBTCHeadHeight) String() string { return proto.CompactTextString(m) }
 func (*ReplayRelayQryBTCHeadHeight) ProtoMessage()    {}
 func (*ReplayRelayQryBTCHeadHeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_relay_1037c107938271b1, []int{24}
+	return fileDescriptor_9f69a7d5a802d584, []int{24}
 }
+
 func (m *ReplayRelayQryBTCHeadHeight) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplayRelayQryBTCHeadHeight.Unmarshal(m, b)
 }
 func (m *ReplayRelayQryBTCHeadHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplayRelayQryBTCHeadHeight.Marshal(b, m, deterministic)
 }
-func (dst *ReplayRelayQryBTCHeadHeight) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplayRelayQryBTCHeadHeight.Merge(dst, src)
+func (m *ReplayRelayQryBTCHeadHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplayRelayQryBTCHeadHeight.Merge(m, src)
 }
 func (m *ReplayRelayQryBTCHeadHeight) XXX_Size() int {
 	return xxx_messageInfo_ReplayRelayQryBTCHeadHeight.Size(m)
@@ -2045,6 +1915,7 @@ func (m *ReplayRelayQryBTCHeadHeight) GetBaseHeight() int64 {
 }
 
 func init() {
+	proto.RegisterEnum("types.RelayOrderStatus", RelayOrderStatus_name, RelayOrderStatus_value)
 	proto.RegisterType((*RelayAction)(nil), "types.RelayAction")
 	proto.RegisterType((*RelayOrder)(nil), "types.RelayOrder")
 	proto.RegisterType((*RelayCreate)(nil), "types.RelayCreate")
@@ -2070,12 +1941,13 @@ func init() {
 	proto.RegisterType((*ReplyRelayBtcHeadHeightList)(nil), "types.ReplyRelayBtcHeadHeightList")
 	proto.RegisterType((*ReqRelayQryBTCHeadHeight)(nil), "types.ReqRelayQryBTCHeadHeight")
 	proto.RegisterType((*ReplayRelayQryBTCHeadHeight)(nil), "types.ReplayRelayQryBTCHeadHeight")
-	proto.RegisterEnum("types.RelayOrderStatus", RelayOrderStatus_name, RelayOrderStatus_value)
 }
 
-func init() { proto.RegisterFile("relay.proto", fileDescriptor_relay_1037c107938271b1) }
+func init() {
+	proto.RegisterFile("relay.proto", fileDescriptor_9f69a7d5a802d584)
+}
 
-var fileDescriptor_relay_1037c107938271b1 = []byte{
+var fileDescriptor_9f69a7d5a802d584 = []byte{
 	// 1524 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x58, 0xc1, 0x6e, 0xdb, 0x46,
 	0x13, 0x36, 0x25, 0x91, 0x16, 0x47, 0xb6, 0x23, 0x6f, 0xec, 0xfc, 0xfc, 0xdb, 0xa0, 0x31, 0x88,
