@@ -44,7 +44,7 @@ func (m *OracleStatus) Reset()         { *m = OracleStatus{} }
 func (m *OracleStatus) String() string { return proto.CompactTextString(m) }
 func (*OracleStatus) ProtoMessage()    {}
 func (*OracleStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{0}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{0}
 }
 func (m *OracleStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OracleStatus.Unmarshal(m, b)
@@ -160,7 +160,7 @@ func (m *OracleAction) Reset()         { *m = OracleAction{} }
 func (m *OracleAction) String() string { return proto.CompactTextString(m) }
 func (*OracleAction) ProtoMessage()    {}
 func (*OracleAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{1}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{1}
 }
 func (m *OracleAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OracleAction.Unmarshal(m, b)
@@ -406,7 +406,7 @@ func (m *EventStatus) Reset()         { *m = EventStatus{} }
 func (m *EventStatus) String() string { return proto.CompactTextString(m) }
 func (*EventStatus) ProtoMessage()    {}
 func (*EventStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{2}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{2}
 }
 func (m *EventStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventStatus.Unmarshal(m, b)
@@ -455,7 +455,7 @@ func (m *EventPublish) Reset()         { *m = EventPublish{} }
 func (m *EventPublish) String() string { return proto.CompactTextString(m) }
 func (*EventPublish) ProtoMessage()    {}
 func (*EventPublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{3}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{3}
 }
 func (m *EventPublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventPublish.Unmarshal(m, b)
@@ -521,7 +521,7 @@ func (m *EventAbort) Reset()         { *m = EventAbort{} }
 func (m *EventAbort) String() string { return proto.CompactTextString(m) }
 func (*EventAbort) ProtoMessage()    {}
 func (*EventAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{4}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{4}
 }
 func (m *EventAbort) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventAbort.Unmarshal(m, b)
@@ -561,7 +561,7 @@ func (m *ResultPrePublish) Reset()         { *m = ResultPrePublish{} }
 func (m *ResultPrePublish) String() string { return proto.CompactTextString(m) }
 func (*ResultPrePublish) ProtoMessage()    {}
 func (*ResultPrePublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{5}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{5}
 }
 func (m *ResultPrePublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultPrePublish.Unmarshal(m, b)
@@ -615,7 +615,7 @@ func (m *ResultPublish) Reset()         { *m = ResultPublish{} }
 func (m *ResultPublish) String() string { return proto.CompactTextString(m) }
 func (*ResultPublish) ProtoMessage()    {}
 func (*ResultPublish) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{6}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{6}
 }
 func (m *ResultPublish) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultPublish.Unmarshal(m, b)
@@ -667,7 +667,7 @@ func (m *ResultAbort) Reset()         { *m = ResultAbort{} }
 func (m *ResultAbort) String() string { return proto.CompactTextString(m) }
 func (*ResultAbort) ProtoMessage()    {}
 func (*ResultAbort) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{7}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{7}
 }
 func (m *ResultAbort) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ResultAbort.Unmarshal(m, b)
@@ -706,7 +706,7 @@ func (m *EventRecord) Reset()         { *m = EventRecord{} }
 func (m *EventRecord) String() string { return proto.CompactTextString(m) }
 func (*EventRecord) ProtoMessage()    {}
 func (*EventRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{8}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{8}
 }
 func (m *EventRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EventRecord.Unmarshal(m, b)
@@ -744,7 +744,7 @@ func (m *QueryOracleInfos) Reset()         { *m = QueryOracleInfos{} }
 func (m *QueryOracleInfos) String() string { return proto.CompactTextString(m) }
 func (*QueryOracleInfos) ProtoMessage()    {}
 func (*QueryOracleInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{9}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{9}
 }
 func (m *QueryOracleInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryOracleInfos.Unmarshal(m, b)
@@ -782,7 +782,7 @@ func (m *ReplyEventIDs) Reset()         { *m = ReplyEventIDs{} }
 func (m *ReplyEventIDs) String() string { return proto.CompactTextString(m) }
 func (*ReplyEventIDs) ProtoMessage()    {}
 func (*ReplyEventIDs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{10}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{10}
 }
 func (m *ReplyEventIDs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyEventIDs.Unmarshal(m, b)
@@ -823,7 +823,7 @@ func (m *QueryEventID) Reset()         { *m = QueryEventID{} }
 func (m *QueryEventID) String() string { return proto.CompactTextString(m) }
 func (*QueryEventID) ProtoMessage()    {}
 func (*QueryEventID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{11}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{11}
 }
 func (m *QueryEventID) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryEventID.Unmarshal(m, b)
@@ -886,7 +886,7 @@ func (m *ReceiptOracle) Reset()         { *m = ReceiptOracle{} }
 func (m *ReceiptOracle) String() string { return proto.CompactTextString(m) }
 func (*ReceiptOracle) ProtoMessage()    {}
 func (*ReceiptOracle) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{12}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{12}
 }
 func (m *ReceiptOracle) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptOracle.Unmarshal(m, b)
@@ -952,7 +952,7 @@ func (m *ReplyOracleStatusList) Reset()         { *m = ReplyOracleStatusList{} }
 func (m *ReplyOracleStatusList) String() string { return proto.CompactTextString(m) }
 func (*ReplyOracleStatusList) ProtoMessage()    {}
 func (*ReplyOracleStatusList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_oracle_d3fda31ac2bc59b9, []int{13}
+	return fileDescriptor_oracle_5d34cbf8ecdaf0be, []int{13}
 }
 func (m *ReplyOracleStatusList) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyOracleStatusList.Unmarshal(m, b)
@@ -996,9 +996,9 @@ func init() {
 	proto.RegisterType((*ReplyOracleStatusList)(nil), "types.ReplyOracleStatusList")
 }
 
-func init() { proto.RegisterFile("oracle.proto", fileDescriptor_oracle_d3fda31ac2bc59b9) }
+func init() { proto.RegisterFile("oracle.proto", fileDescriptor_oracle_5d34cbf8ecdaf0be) }
 
-var fileDescriptor_oracle_d3fda31ac2bc59b9 = []byte{
+var fileDescriptor_oracle_5d34cbf8ecdaf0be = []byte{
 	// 579 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4d, 0x8b, 0xdb, 0x3c,
 	0x10, 0x8e, 0x3f, 0xf7, 0xdd, 0xb1, 0xf7, 0x25, 0x55, 0xbf, 0x74, 0xe8, 0x21, 0xf8, 0xd0, 0x4d,

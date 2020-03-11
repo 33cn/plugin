@@ -375,6 +375,19 @@ manage() {
     echo "========== # issuance add issuance-manage end =========="
     chain33_BlockWait 1 ${MAIN_HTTP}
 
+    echo "========== # issuance add issuance-fund begin =========="
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key": "issuance-fund", "value":"'"${IssuanceAddr1}"'", "op":"add"}}]}' ${MAIN_HTTP} | jq -r ".result")
+
+    data=$(curl -ksd '{"method":"Chain33.DecodeRawTransaction","params":[{"txHex":"'"$tx"'"}]}' ${MAIN_HTTP} | jq -r ".result.txs[0]")
+    ok=$(jq '(.execer != "")' <<<"$data")
+
+    [ "$ok" == true ]
+    echo_rst "$FUNCNAME" "$?"
+
+    chain33_SignAndSendTx "$tx" ${SystemManager} ${MAIN_HTTP}
+    echo "========== # issuance add issuance-fund end =========="
+    chain33_BlockWait 1 ${MAIN_HTTP}
+
     echo "========== # issuance add issuance-price-feed begin =========="
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key": "issuance-price-feed", "value":"'"${IssuanceAddr2}"'", "op":"add"}}]}' ${MAIN_HTTP} | jq -r ".result")
 

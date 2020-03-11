@@ -43,6 +43,8 @@ function para_set_toml() {
 
     sed -i $sedfix 's/^Title.*/Title="user.p.'''"$paraName"'''."/g' "${1}"
     sed -i $sedfix 's/^startHeight=.*/startHeight='''"$mainStartHeight"'''/g' "${1}"
+    sed -i $sedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient='''"$ParaRemoteGrpcClient"'''/g' "${1}"
+    sed -i $sedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''"$mainLoopCheckCommitTxDoneForkHeight"'''/g' "${1}"
 
     # rpc
     sed -i $sedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8901"/g' "${1}"

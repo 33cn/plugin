@@ -26,6 +26,7 @@ func init() {
 
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(IssuanceX, "Enable", 0)
+	cfg.RegisterDappFork(IssuanceX, ForkIssuanceTableUpdate, 0)
 }
 
 func InitExecutor(cfg *types.Chain33Config) {

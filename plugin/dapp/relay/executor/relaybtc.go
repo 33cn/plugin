@@ -197,7 +197,7 @@ func (b *btcStore) getMerkleRootFromHeader(blockhash string) (string, error) {
 func (b *btcStore) verifyBtcTx(verify *ty.RelayVerify, order *ty.RelayOrder) error {
 	var foundtx bool
 	for _, outtx := range verify.GetTx().GetVout() {
-		if outtx.Address == order.CoinAddr && outtx.Value >= order.CoinAmount {
+		if outtx.Address == order.XAddr && outtx.Value >= order.XAmount {
 			foundtx = true
 		}
 	}
@@ -220,7 +220,7 @@ func (b *btcStore) verifyBtcTx(verify *ty.RelayVerify, order *ty.RelayOrder) err
 		return err
 	}
 
-	if verify.Tx.BlockHeight+uint64(order.CoinWaits) > uint64(height) {
+	if verify.Tx.BlockHeight+uint64(order.XBlockWaits) > uint64(height) {
 		return ty.ErrRelayWaitBlocksErr
 	}
 

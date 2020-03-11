@@ -1,12 +1,11 @@
 syntax = "proto3";
 package types;
 
-message Exchange {
-}
+message Exchange {}
 
 message ExchangeAction {
     oneof value {
-        LimitOrder limitOrder = 1;
+        LimitOrder  limitOrder  = 1;
         MarketOrder marketOrder = 2;
         RevokeOrder revokeOrder = 3;
     }
@@ -15,11 +14,11 @@ message ExchangeAction {
 //限价订单
 message LimitOrder {
     //交易对
-    asset leftAsset  = 1;
+    asset leftAsset = 1;
     //交易对
-    asset rightAsset  = 2;
+    asset rightAsset = 2;
     //价格
-    int64 price  = 3;
+    int64 price = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖
@@ -29,7 +28,7 @@ message LimitOrder {
 //市价委托
 message MarketOrder {
     //资产1
-    asset leftAsset  = 1;
+    asset leftAsset = 1;
     //资产2
     asset rightAsset = 2;
     //总量
@@ -41,7 +40,7 @@ message MarketOrder {
 //撤回订单
 message RevokeOrder {
     //订单号
-    int64 orderID   = 1;
+    int64 orderID = 1;
 }
 //资产类型
 message asset {
@@ -51,9 +50,9 @@ message asset {
 
 //订单信息
 message Order {
-    int64 orderID   = 1;
+    int64 orderID = 1;
     oneof value {
-        LimitOrder limitOrder = 2;
+        LimitOrder  limitOrder  = 2;
         MarketOrder marketOrder = 3;
     }
     //挂单类型
@@ -63,7 +62,7 @@ message Order {
     //成交均价
     int64 AVG_price = 6;
     //余额
-    int64  balance = 7;
+    int64 balance = 7;
     //状态,0 挂单中ordered， 1 完成completed， 2撤回 revoked
     int32 status = 8;
     //用户地址
@@ -77,24 +76,24 @@ message Order {
 //查询接口
 message QueryMarketDepth {
     //资产1
-    asset leftAsset  = 1;
+    asset leftAsset = 1;
     //资产2
     asset rightAsset = 2;
     //操作， 1为买，2为卖
     int32 op = 3;
     // 这里用价格作为索引值
-    string primaryKey  = 4;
+    string primaryKey = 4;
     //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
     int32 count = 5;
 }
 //市场深度
 message MarketDepth {
     //资产1
-    asset leftAsset  = 1;
+    asset leftAsset = 1;
     //资产2
     asset rightAsset = 2;
     //价格
-    int64 price  = 3;
+    int64 price = 3;
     //总量
     int64 amount = 4;
     //操作， 1为买，2为卖
@@ -102,14 +101,14 @@ message MarketDepth {
 }
 //查询接口返回的市场深度列表
 message MarketDepthList {
-    repeated MarketDepth list = 1;
-    string primaryKey = 2;
+    repeated MarketDepth list       = 1;
+    string               primaryKey = 2;
 }
 
 //查询最新得成交信息,外部接口
 message QueryHistoryOrderList {
     //资产1
-    asset leftAsset  = 1;
+    asset leftAsset = 1;
     //资产2
     asset rightAsset = 2;
     // 索引值
@@ -122,7 +121,7 @@ message QueryHistoryOrderList {
 
 //根据orderID去查询订单信息
 message QueryOrder {
-    int64 orderID   = 1;
+    int64 orderID = 1;
 }
 //根据地址，状态查询用户自己的挂单信息
 message QueryOrderList {
@@ -139,17 +138,14 @@ message QueryOrderList {
 }
 //订单列表
 message OrderList {
-    repeated Order list = 1;
-    string primaryKey = 2;
+    repeated Order list       = 1;
+    string         primaryKey = 2;
 }
 
-
-//exchange执行票据日志
+// exchange执行票据日志
 message ReceiptExchange {
-    Order order = 1;
+    Order    order             = 1;
     repeated Order matchOrders = 2;
-    int64  index      = 3;
+    int64          index       = 3;
 }
-service exchange {
-
-}
+service exchange {}

@@ -51,7 +51,7 @@ func (m *TokenAction) Reset()         { *m = TokenAction{} }
 func (m *TokenAction) String() string { return proto.CompactTextString(m) }
 func (*TokenAction) ProtoMessage()    {}
 func (*TokenAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{0}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{0}
 }
 func (m *TokenAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenAction.Unmarshal(m, b)
@@ -431,7 +431,7 @@ func (m *TokenPreCreate) Reset()         { *m = TokenPreCreate{} }
 func (m *TokenPreCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenPreCreate) ProtoMessage()    {}
 func (*TokenPreCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{1}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{1}
 }
 func (m *TokenPreCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenPreCreate.Unmarshal(m, b)
@@ -512,7 +512,7 @@ func (m *TokenFinishCreate) Reset()         { *m = TokenFinishCreate{} }
 func (m *TokenFinishCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenFinishCreate) ProtoMessage()    {}
 func (*TokenFinishCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{2}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{2}
 }
 func (m *TokenFinishCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenFinishCreate.Unmarshal(m, b)
@@ -558,7 +558,7 @@ func (m *TokenRevokeCreate) Reset()         { *m = TokenRevokeCreate{} }
 func (m *TokenRevokeCreate) String() string { return proto.CompactTextString(m) }
 func (*TokenRevokeCreate) ProtoMessage()    {}
 func (*TokenRevokeCreate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{3}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{3}
 }
 func (m *TokenRevokeCreate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenRevokeCreate.Unmarshal(m, b)
@@ -604,7 +604,7 @@ func (m *TokenMint) Reset()         { *m = TokenMint{} }
 func (m *TokenMint) String() string { return proto.CompactTextString(m) }
 func (*TokenMint) ProtoMessage()    {}
 func (*TokenMint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{4}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{4}
 }
 func (m *TokenMint) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenMint.Unmarshal(m, b)
@@ -650,7 +650,7 @@ func (m *TokenBurn) Reset()         { *m = TokenBurn{} }
 func (m *TokenBurn) String() string { return proto.CompactTextString(m) }
 func (*TokenBurn) ProtoMessage()    {}
 func (*TokenBurn) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{5}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{5}
 }
 func (m *TokenBurn) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenBurn.Unmarshal(m, b)
@@ -704,7 +704,7 @@ func (m *Token) Reset()         { *m = Token{} }
 func (m *Token) String() string { return proto.CompactTextString(m) }
 func (*Token) ProtoMessage()    {}
 func (*Token) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{6}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{6}
 }
 func (m *Token) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Token.Unmarshal(m, b)
@@ -801,7 +801,7 @@ func (m *ReceiptToken) Reset()         { *m = ReceiptToken{} }
 func (m *ReceiptToken) String() string { return proto.CompactTextString(m) }
 func (*ReceiptToken) ProtoMessage()    {}
 func (*ReceiptToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{7}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{7}
 }
 func (m *ReceiptToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptToken.Unmarshal(m, b)
@@ -854,7 +854,7 @@ func (m *ReceiptTokenAmount) Reset()         { *m = ReceiptTokenAmount{} }
 func (m *ReceiptTokenAmount) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTokenAmount) ProtoMessage()    {}
 func (*ReceiptTokenAmount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{8}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{8}
 }
 func (m *ReceiptTokenAmount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTokenAmount.Unmarshal(m, b)
@@ -917,7 +917,7 @@ func (m *LocalToken) Reset()         { *m = LocalToken{} }
 func (m *LocalToken) String() string { return proto.CompactTextString(m) }
 func (*LocalToken) ProtoMessage()    {}
 func (*LocalToken) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{9}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{9}
 }
 func (m *LocalToken) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalToken.Unmarshal(m, b)
@@ -1070,7 +1070,7 @@ func (m *LocalLogs) Reset()         { *m = LocalLogs{} }
 func (m *LocalLogs) String() string { return proto.CompactTextString(m) }
 func (*LocalLogs) ProtoMessage()    {}
 func (*LocalLogs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{10}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{10}
 }
 func (m *LocalLogs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalLogs.Unmarshal(m, b)
@@ -1133,7 +1133,7 @@ func (m *ReqTokens) Reset()         { *m = ReqTokens{} }
 func (m *ReqTokens) String() string { return proto.CompactTextString(m) }
 func (*ReqTokens) ProtoMessage()    {}
 func (*ReqTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{11}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{11}
 }
 func (m *ReqTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokens.Unmarshal(m, b)
@@ -1192,7 +1192,7 @@ func (m *ReplyTokens) Reset()         { *m = ReplyTokens{} }
 func (m *ReplyTokens) String() string { return proto.CompactTextString(m) }
 func (*ReplyTokens) ProtoMessage()    {}
 func (*ReplyTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{12}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{12}
 }
 func (m *ReplyTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTokens.Unmarshal(m, b)
@@ -1231,7 +1231,7 @@ func (m *TokenRecv) Reset()         { *m = TokenRecv{} }
 func (m *TokenRecv) String() string { return proto.CompactTextString(m) }
 func (*TokenRecv) ProtoMessage()    {}
 func (*TokenRecv) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{13}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{13}
 }
 func (m *TokenRecv) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenRecv.Unmarshal(m, b)
@@ -1276,7 +1276,7 @@ func (m *ReplyAddrRecvForTokens) Reset()         { *m = ReplyAddrRecvForTokens{}
 func (m *ReplyAddrRecvForTokens) String() string { return proto.CompactTextString(m) }
 func (*ReplyAddrRecvForTokens) ProtoMessage()    {}
 func (*ReplyAddrRecvForTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{14}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{14}
 }
 func (m *ReplyAddrRecvForTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAddrRecvForTokens.Unmarshal(m, b)
@@ -1316,7 +1316,7 @@ func (m *ReqTokenBalance) Reset()         { *m = ReqTokenBalance{} }
 func (m *ReqTokenBalance) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenBalance) ProtoMessage()    {}
 func (*ReqTokenBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{15}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{15}
 }
 func (m *ReqTokenBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenBalance.Unmarshal(m, b)
@@ -1369,7 +1369,7 @@ func (m *ReqAccountTokenAssets) Reset()         { *m = ReqAccountTokenAssets{} }
 func (m *ReqAccountTokenAssets) String() string { return proto.CompactTextString(m) }
 func (*ReqAccountTokenAssets) ProtoMessage()    {}
 func (*ReqAccountTokenAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{16}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{16}
 }
 func (m *ReqAccountTokenAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAccountTokenAssets.Unmarshal(m, b)
@@ -1415,7 +1415,7 @@ func (m *TokenAsset) Reset()         { *m = TokenAsset{} }
 func (m *TokenAsset) String() string { return proto.CompactTextString(m) }
 func (*TokenAsset) ProtoMessage()    {}
 func (*TokenAsset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{17}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{17}
 }
 func (m *TokenAsset) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TokenAsset.Unmarshal(m, b)
@@ -1460,7 +1460,7 @@ func (m *ReplyAccountTokenAssets) Reset()         { *m = ReplyAccountTokenAssets
 func (m *ReplyAccountTokenAssets) String() string { return proto.CompactTextString(m) }
 func (*ReplyAccountTokenAssets) ProtoMessage()    {}
 func (*ReplyAccountTokenAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{18}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{18}
 }
 func (m *ReplyAccountTokenAssets) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyAccountTokenAssets.Unmarshal(m, b)
@@ -1503,7 +1503,7 @@ func (m *ReqAddrTokens) Reset()         { *m = ReqAddrTokens{} }
 func (m *ReqAddrTokens) String() string { return proto.CompactTextString(m) }
 func (*ReqAddrTokens) ProtoMessage()    {}
 func (*ReqAddrTokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{19}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{19}
 }
 func (m *ReqAddrTokens) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqAddrTokens.Unmarshal(m, b)
@@ -1583,7 +1583,7 @@ func (m *ReqTokenTx) Reset()         { *m = ReqTokenTx{} }
 func (m *ReqTokenTx) String() string { return proto.CompactTextString(m) }
 func (*ReqTokenTx) ProtoMessage()    {}
 func (*ReqTokenTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{20}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{20}
 }
 func (m *ReqTokenTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqTokenTx.Unmarshal(m, b)
@@ -1663,7 +1663,7 @@ func (m *ReplyTokenLogs) Reset()         { *m = ReplyTokenLogs{} }
 func (m *ReplyTokenLogs) String() string { return proto.CompactTextString(m) }
 func (*ReplyTokenLogs) ProtoMessage()    {}
 func (*ReplyTokenLogs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_token_1597bc5f193dd821, []int{21}
+	return fileDescriptor_token_648d195a53fbc0bd, []int{21}
 }
 func (m *ReplyTokenLogs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyTokenLogs.Unmarshal(m, b)
@@ -1791,9 +1791,9 @@ var _Token_serviceDesc = grpc.ServiceDesc{
 	Metadata: "token.proto",
 }
 
-func init() { proto.RegisterFile("token.proto", fileDescriptor_token_1597bc5f193dd821) }
+func init() { proto.RegisterFile("token.proto", fileDescriptor_token_648d195a53fbc0bd) }
 
-var fileDescriptor_token_1597bc5f193dd821 = []byte{
+var fileDescriptor_token_648d195a53fbc0bd = []byte{
 	// 1115 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x57, 0xdd, 0x6a, 0xe3, 0xc6,
 	0x17, 0xb7, 0x2d, 0x7f, 0x44, 0xc7, 0x89, 0x13, 0xcf, 0x7f, 0x37, 0x7f, 0x91, 0x2e, 0x8b, 0x11,

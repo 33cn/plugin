@@ -16,12 +16,12 @@ func Test_Upgrade(t *testing.T) {
 	assert.NotNil(t, localdb)
 
 	// test empty db
-	err := callUpgradeLocalDBV2(localdb)
+	kvset, err := callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
 
 	// test again
 	setVersion(localdb, 1)
-	err = callUpgradeLocalDBV2(localdb)
+	kvset, err = callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
 
 	// test with data
@@ -56,23 +56,27 @@ func Test_Upgrade(t *testing.T) {
 
 	// 初次升级
 	setVersion(localdb, 1)
-	err = callUpgradeLocalDBV2(localdb)
+	kvset, err = callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
+	assert.NotNil(t, kvset)
 
 	// 已经是升级后的版本了， 不需要再升级
-	err = callUpgradeLocalDBV2(localdb)
+	kvset, err = callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
+	assert.Nil(t, kvset)
 
 	// 先修改版本去升级，但数据已经升级了， 所以处理数据量为0
 	setVersion(localdb, 1)
-	err = callUpgradeLocalDBV2(localdb)
+	kvset, err = callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
+	// 只有version 升级
+	assert.Equal(t, 1, len(kvset.KV))
 
 	// just print log
 	//assert.NotNil(t, nil)
 }
 
-func callUpgradeLocalDBV2(localdb dbm.KVDB) error {
+func callUpgradeLocalDBV2(localdb dbm.KVDB) (*types.LocalDBSet, error) {
 	return UpgradeLocalDBV2(localdb, "bty")
 }
 
@@ -90,8 +94,9 @@ func Test_UpgradeOrderAsset(t *testing.T) {
 		localdb.Set(kv.Key, kv.Value)
 	}
 
-	err = callUpgradeLocalDBV2(localdb)
+	kvset, err := callUpgradeLocalDBV2(localdb)
 	assert.Nil(t, err)
+	assert.NotNil(t, kvset)
 
 	v1, err := localdb.List([]byte("LODB-trade-order"), nil, 0, dbm.ListASC|dbm.ListWithKey)
 	assert.Nil(t, err)

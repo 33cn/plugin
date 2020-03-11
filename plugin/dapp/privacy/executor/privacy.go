@@ -72,10 +72,10 @@ func (p *privacy) GetDriverName() string {
 	return driverName
 }
 
-func (p *privacy) getUtxosByTokenAndAmount(tokenName string, amount int64, count int32) ([]*pty.LocalUTXOItem, error) {
+func (p *privacy) getUtxosByTokenAndAmount(exec, tokenName string, amount int64, count int32) ([]*pty.LocalUTXOItem, error) {
 	localDB := p.GetLocalDB()
 	var utxos []*pty.LocalUTXOItem
-	prefix := CalcPrivacyUTXOkeyHeightPrefix(tokenName, amount)
+	prefix := CalcPrivacyUTXOkeyHeightPrefix(exec, tokenName, amount)
 	values, err := localDB.List(prefix, nil, count, 0)
 	if err != nil {
 		return utxos, err
@@ -97,25 +97,24 @@ func (p *privacy) getUtxosByTokenAndAmount(tokenName string, amount int64, count
 	return utxos, nil
 }
 
-func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (types.Message, error) {
+func (p *privacy) getGlobalUtxoIndex(req *pty.ReqUTXOGlobalIndex) (types.Message, error) {
 	debugBeginTime := time.Now()
 	utxoGlobalIndexResp := &pty.ResUTXOGlobalIndex{}
-	tokenName := getUtxoIndexReq.Tokenname
 	currentHeight := p.GetHeight()
-	for _, amount := range getUtxoIndexReq.Amount {
-		utxos, err := p.getUtxosByTokenAndAmount(tokenName, amount, types.UTXOCacheCount)
+	for _, amount := range req.GetAmount() {
+		utxos, err := p.getUtxosByTokenAndAmount(req.GetAssetExec(), req.GetAssetSymbol(), amount, pty.UTXOCacheCount)
 		if err != nil {
 			return utxoGlobalIndexResp, err
 		}
 
 		index := len(utxos) - 1
 		for ; index >= 0; index-- {
-			if utxos[index].GetHeight()+types.ConfirmedHeight <= currentHeight {
+			if utxos[index].GetHeight()+pty.ConfirmedHeight <= currentHeight {
 				break
 			}
 		}
 
-		mixCount := getUtxoIndexReq.MixCount
+		mixCount := req.GetMixCount()
 		totalCnt := int32(index + 1)
 		if mixCount > totalCnt {
 			mixCount = totalCnt
@@ -154,7 +153,7 @@ func (p *privacy) getGlobalUtxoIndex(getUtxoIndexReq *pty.ReqUTXOGlobalIndex) (t
 func (p *privacy) ShowAmountsOfUTXO(reqtoken *pty.ReqPrivacyToken) (types.Message, error) {
 	querydb := p.GetLocalDB()
 
-	key := CalcprivacyKeyTokenAmountType(reqtoken.Token)
+	key := CalcprivacyKeyTokenAmountType(reqtoken.GetAssetExec(), reqtoken.GetAssetSymbol())
 	replyAmounts := &pty.ReplyPrivacyAmounts{}
 	value, err := querydb.Get(key)
 	if err != nil {
@@ -182,7 +181,7 @@ func (p *privacy) ShowUTXOs4SpecifiedAmount(reqtoken *pty.ReqPrivacyToken) (type
 	querydb := p.GetLocalDB()
 
 	var replyUTXOsOfAmount pty.ReplyUTXOsOfAmount
-	values, err := querydb.List(CalcPrivacyUTXOkeyHeightPrefix(reqtoken.Token, reqtoken.Amount), nil, 0, 0)
+	values, err := querydb.List(CalcPrivacyUTXOkeyHeightPrefix(reqtoken.GetAssetExec(), reqtoken.GetAssetSymbol(), reqtoken.Amount), nil, 0, 0)
 	if err != nil {
 		return &replyUTXOsOfAmount, err
 	}
@@ -209,8 +208,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return types.ErrActionNotSupport
 	}
 	privacylog.Debug("PrivacyTrading CheckTx", "txhash", txhashstr, "action type ", action.Ty)
-	assertExec := action.GetAssertExec()
-	token := action.GetTokenName()
+	assertExec, token := action.GetAssetExecSymbol()
 	if token == "" {
 		return types.ErrInvalidParam
 	}

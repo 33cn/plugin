@@ -35,7 +35,7 @@ func (m *BlockID) Reset()         { *m = BlockID{} }
 func (m *BlockID) String() string { return proto.CompactTextString(m) }
 func (*BlockID) ProtoMessage()    {}
 func (*BlockID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{0}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{0}
 }
 func (m *BlockID) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BlockID.Unmarshal(m, b)
@@ -74,7 +74,7 @@ func (m *TendermintBitArray) Reset()         { *m = TendermintBitArray{} }
 func (m *TendermintBitArray) String() string { return proto.CompactTextString(m) }
 func (*TendermintBitArray) ProtoMessage()    {}
 func (*TendermintBitArray) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{1}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{1}
 }
 func (m *TendermintBitArray) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TendermintBitArray.Unmarshal(m, b)
@@ -126,7 +126,7 @@ func (m *Vote) Reset()         { *m = Vote{} }
 func (m *Vote) String() string { return proto.CompactTextString(m) }
 func (*Vote) ProtoMessage()    {}
 func (*Vote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{2}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{2}
 }
 func (m *Vote) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Vote.Unmarshal(m, b)
@@ -214,7 +214,7 @@ func (m *TendermintCommit) Reset()         { *m = TendermintCommit{} }
 func (m *TendermintCommit) String() string { return proto.CompactTextString(m) }
 func (*TendermintCommit) ProtoMessage()    {}
 func (*TendermintCommit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{3}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{3}
 }
 func (m *TendermintCommit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TendermintCommit.Unmarshal(m, b)
@@ -261,7 +261,7 @@ func (m *TendermintBlockInfo) Reset()         { *m = TendermintBlockInfo{} }
 func (m *TendermintBlockInfo) String() string { return proto.CompactTextString(m) }
 func (*TendermintBlockInfo) ProtoMessage()    {}
 func (*TendermintBlockInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{4}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{4}
 }
 func (m *TendermintBlockInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TendermintBlockInfo.Unmarshal(m, b)
@@ -315,7 +315,7 @@ func (m *BlockSize) Reset()         { *m = BlockSize{} }
 func (m *BlockSize) String() string { return proto.CompactTextString(m) }
 func (*BlockSize) ProtoMessage()    {}
 func (*BlockSize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{5}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{5}
 }
 func (m *BlockSize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BlockSize.Unmarshal(m, b)
@@ -368,7 +368,7 @@ func (m *TxSize) Reset()         { *m = TxSize{} }
 func (m *TxSize) String() string { return proto.CompactTextString(m) }
 func (*TxSize) ProtoMessage()    {}
 func (*TxSize) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{6}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{6}
 }
 func (m *TxSize) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TxSize.Unmarshal(m, b)
@@ -413,7 +413,7 @@ func (m *BlockGossip) Reset()         { *m = BlockGossip{} }
 func (m *BlockGossip) String() string { return proto.CompactTextString(m) }
 func (*BlockGossip) ProtoMessage()    {}
 func (*BlockGossip) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{7}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{7}
 }
 func (m *BlockGossip) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BlockGossip.Unmarshal(m, b)
@@ -451,7 +451,7 @@ func (m *EvidenceParams) Reset()         { *m = EvidenceParams{} }
 func (m *EvidenceParams) String() string { return proto.CompactTextString(m) }
 func (*EvidenceParams) ProtoMessage()    {}
 func (*EvidenceParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{8}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{8}
 }
 func (m *EvidenceParams) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EvidenceParams.Unmarshal(m, b)
@@ -492,7 +492,7 @@ func (m *ConsensusParams) Reset()         { *m = ConsensusParams{} }
 func (m *ConsensusParams) String() string { return proto.CompactTextString(m) }
 func (*ConsensusParams) ProtoMessage()    {}
 func (*ConsensusParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{9}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{9}
 }
 func (m *ConsensusParams) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConsensusParams.Unmarshal(m, b)
@@ -554,7 +554,7 @@ func (m *Validator) Reset()         { *m = Validator{} }
 func (m *Validator) String() string { return proto.CompactTextString(m) }
 func (*Validator) ProtoMessage()    {}
 func (*Validator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{10}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{10}
 }
 func (m *Validator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Validator.Unmarshal(m, b)
@@ -614,7 +614,7 @@ func (m *ValidatorSet) Reset()         { *m = ValidatorSet{} }
 func (m *ValidatorSet) String() string { return proto.CompactTextString(m) }
 func (*ValidatorSet) ProtoMessage()    {}
 func (*ValidatorSet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{11}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{11}
 }
 func (m *ValidatorSet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValidatorSet.Unmarshal(m, b)
@@ -670,7 +670,7 @@ func (m *State) Reset()         { *m = State{} }
 func (m *State) String() string { return proto.CompactTextString(m) }
 func (*State) ProtoMessage()    {}
 func (*State) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{12}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{12}
 }
 func (m *State) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_State.Unmarshal(m, b)
@@ -797,7 +797,7 @@ func (m *TendermintBlockHeader) Reset()         { *m = TendermintBlockHeader{} }
 func (m *TendermintBlockHeader) String() string { return proto.CompactTextString(m) }
 func (*TendermintBlockHeader) ProtoMessage()    {}
 func (*TendermintBlockHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{13}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{13}
 }
 func (m *TendermintBlockHeader) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TendermintBlockHeader.Unmarshal(m, b)
@@ -921,7 +921,7 @@ func (m *TendermintBlock) Reset()         { *m = TendermintBlock{} }
 func (m *TendermintBlock) String() string { return proto.CompactTextString(m) }
 func (*TendermintBlock) ProtoMessage()    {}
 func (*TendermintBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{14}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{14}
 }
 func (m *TendermintBlock) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TendermintBlock.Unmarshal(m, b)
@@ -979,7 +979,7 @@ func (m *Proposal) Reset()         { *m = Proposal{} }
 func (m *Proposal) String() string { return proto.CompactTextString(m) }
 func (*Proposal) ProtoMessage()    {}
 func (*Proposal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{15}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{15}
 }
 func (m *Proposal) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Proposal.Unmarshal(m, b)
@@ -1063,7 +1063,7 @@ func (m *NewRoundStepMsg) Reset()         { *m = NewRoundStepMsg{} }
 func (m *NewRoundStepMsg) String() string { return proto.CompactTextString(m) }
 func (*NewRoundStepMsg) ProtoMessage()    {}
 func (*NewRoundStepMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{16}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{16}
 }
 func (m *NewRoundStepMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NewRoundStepMsg.Unmarshal(m, b)
@@ -1132,7 +1132,7 @@ func (m *ValidBlockMsg) Reset()         { *m = ValidBlockMsg{} }
 func (m *ValidBlockMsg) String() string { return proto.CompactTextString(m) }
 func (*ValidBlockMsg) ProtoMessage()    {}
 func (*ValidBlockMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{17}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{17}
 }
 func (m *ValidBlockMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValidBlockMsg.Unmarshal(m, b)
@@ -1193,7 +1193,7 @@ func (m *ProposalPOLMsg) Reset()         { *m = ProposalPOLMsg{} }
 func (m *ProposalPOLMsg) String() string { return proto.CompactTextString(m) }
 func (*ProposalPOLMsg) ProtoMessage()    {}
 func (*ProposalPOLMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{18}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{18}
 }
 func (m *ProposalPOLMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalPOLMsg.Unmarshal(m, b)
@@ -1248,7 +1248,7 @@ func (m *HasVoteMsg) Reset()         { *m = HasVoteMsg{} }
 func (m *HasVoteMsg) String() string { return proto.CompactTextString(m) }
 func (*HasVoteMsg) ProtoMessage()    {}
 func (*HasVoteMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{19}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{19}
 }
 func (m *HasVoteMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HasVoteMsg.Unmarshal(m, b)
@@ -1310,7 +1310,7 @@ func (m *VoteSetMaj23Msg) Reset()         { *m = VoteSetMaj23Msg{} }
 func (m *VoteSetMaj23Msg) String() string { return proto.CompactTextString(m) }
 func (*VoteSetMaj23Msg) ProtoMessage()    {}
 func (*VoteSetMaj23Msg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{20}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{20}
 }
 func (m *VoteSetMaj23Msg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteSetMaj23Msg.Unmarshal(m, b)
@@ -1373,7 +1373,7 @@ func (m *VoteSetBitsMsg) Reset()         { *m = VoteSetBitsMsg{} }
 func (m *VoteSetBitsMsg) String() string { return proto.CompactTextString(m) }
 func (*VoteSetBitsMsg) ProtoMessage()    {}
 func (*VoteSetBitsMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{21}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{21}
 }
 func (m *VoteSetBitsMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteSetBitsMsg.Unmarshal(m, b)
@@ -1444,7 +1444,7 @@ func (m *Heartbeat) Reset()         { *m = Heartbeat{} }
 func (m *Heartbeat) String() string { return proto.CompactTextString(m) }
 func (*Heartbeat) ProtoMessage()    {}
 func (*Heartbeat) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{22}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{22}
 }
 func (m *Heartbeat) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Heartbeat.Unmarshal(m, b)
@@ -1517,7 +1517,7 @@ func (m *IsHealthy) Reset()         { *m = IsHealthy{} }
 func (m *IsHealthy) String() string { return proto.CompactTextString(m) }
 func (*IsHealthy) ProtoMessage()    {}
 func (*IsHealthy) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tendermint_f981d70e5c7b9eba, []int{23}
+	return fileDescriptor_tendermint_70881c73fbd27dfa, []int{23}
 }
 func (m *IsHealthy) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_IsHealthy.Unmarshal(m, b)
@@ -1571,9 +1571,9 @@ func init() {
 	proto.RegisterType((*IsHealthy)(nil), "types.IsHealthy")
 }
 
-func init() { proto.RegisterFile("tendermint.proto", fileDescriptor_tendermint_f981d70e5c7b9eba) }
+func init() { proto.RegisterFile("tendermint.proto", fileDescriptor_tendermint_70881c73fbd27dfa) }
 
-var fileDescriptor_tendermint_f981d70e5c7b9eba = []byte{
+var fileDescriptor_tendermint_70881c73fbd27dfa = []byte{
 	// 1334 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xdf, 0x6e, 0x1b, 0xc5,
 	0x17, 0xd6, 0xc6, 0x7f, 0x12, 0x1f, 0xe7, 0x9f, 0xa6, 0xbf, 0xf6, 0x67, 0x4a, 0x90, 0xac, 0x11,

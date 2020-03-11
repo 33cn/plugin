@@ -25,6 +25,7 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/rpc"
 	"github.com/33cn/chain33/store"
+	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	pty "github.com/33cn/plugin/plugin/dapp/norm/types"
@@ -71,6 +72,7 @@ func TendermintPerf(t *testing.T) {
 		err = createConn()
 	}
 	time.Sleep(2 * time.Second)
+	ConfigManager()
 	for i := 0; i < loopCount; i++ {
 		NormPut()
 		time.Sleep(time.Second)
@@ -196,6 +198,28 @@ func AddNode() {
 	action := &vty.ValNodeAction{Value: nput, Ty: vty.ValNodeActionUpdate}
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
+	tx.Nonce = r.Int63()
+	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
+
+	reply, err := c.SendTransaction(context.Background(), tx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	if !reply.IsOk {
+		fmt.Fprintln(os.Stderr, errors.New(string(reply.GetMsg())))
+		return
+	}
+}
+
+func ConfigManager() {
+	v := &types.ModifyConfig{Key: "tendermint-manager", Op: "add", Value: "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt", Addr: ""}
+	modify := &mty.ManageAction{
+		Ty:    mty.ManageActionModifyConfig,
+		Value: &mty.ManageAction_Modify{Modify: v},
+	}
+	tx := &types.Transaction{Execer: []byte("manage"), Payload: types.Encode(modify), Fee: fee}
+	tx.To = address.ExecAddress("manage")
 	tx.Nonce = r.Int63()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 

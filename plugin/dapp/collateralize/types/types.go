@@ -51,3 +51,7 @@ const (
 	CollateralizeUserStatusExpireLiquidate
 	CollateralizeUserStatusClose
 )
+
+var (
+	ForkCollateralizeTableUpdate = "ForkCollateralizeTableUpdate"
+)

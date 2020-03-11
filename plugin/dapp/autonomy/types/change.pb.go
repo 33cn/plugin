@@ -45,7 +45,7 @@ func (m *AutonomyProposalChange) Reset()         { *m = AutonomyProposalChange{}
 func (m *AutonomyProposalChange) String() string { return proto.CompactTextString(m) }
 func (*AutonomyProposalChange) ProtoMessage()    {}
 func (*AutonomyProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{0}
+	return fileDescriptor_change_76e5456ad380528f, []int{0}
 }
 func (m *AutonomyProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AutonomyProposalChange.Unmarshal(m, b)
@@ -149,7 +149,7 @@ func (m *ProposalChange) Reset()         { *m = ProposalChange{} }
 func (m *ProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ProposalChange) ProtoMessage()    {}
 func (*ProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{1}
+	return fileDescriptor_change_76e5456ad380528f, []int{1}
 }
 func (m *ProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ProposalChange.Unmarshal(m, b)
@@ -231,7 +231,7 @@ func (m *Change) Reset()         { *m = Change{} }
 func (m *Change) String() string { return proto.CompactTextString(m) }
 func (*Change) ProtoMessage()    {}
 func (*Change) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{2}
+	return fileDescriptor_change_76e5456ad380528f, []int{2}
 }
 func (m *Change) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Change.Unmarshal(m, b)
@@ -276,7 +276,7 @@ func (m *RevokeProposalChange) Reset()         { *m = RevokeProposalChange{} }
 func (m *RevokeProposalChange) String() string { return proto.CompactTextString(m) }
 func (*RevokeProposalChange) ProtoMessage()    {}
 func (*RevokeProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{3}
+	return fileDescriptor_change_76e5456ad380528f, []int{3}
 }
 func (m *RevokeProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RevokeProposalChange.Unmarshal(m, b)
@@ -315,7 +315,7 @@ func (m *VoteProposalChange) Reset()         { *m = VoteProposalChange{} }
 func (m *VoteProposalChange) String() string { return proto.CompactTextString(m) }
 func (*VoteProposalChange) ProtoMessage()    {}
 func (*VoteProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{4}
+	return fileDescriptor_change_76e5456ad380528f, []int{4}
 }
 func (m *VoteProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VoteProposalChange.Unmarshal(m, b)
@@ -360,7 +360,7 @@ func (m *TerminateProposalChange) Reset()         { *m = TerminateProposalChange
 func (m *TerminateProposalChange) String() string { return proto.CompactTextString(m) }
 func (*TerminateProposalChange) ProtoMessage()    {}
 func (*TerminateProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{5}
+	return fileDescriptor_change_76e5456ad380528f, []int{5}
 }
 func (m *TerminateProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TerminateProposalChange.Unmarshal(m, b)
@@ -400,7 +400,7 @@ func (m *ReceiptProposalChange) Reset()         { *m = ReceiptProposalChange{} }
 func (m *ReceiptProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReceiptProposalChange) ProtoMessage()    {}
 func (*ReceiptProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{6}
+	return fileDescriptor_change_76e5456ad380528f, []int{6}
 }
 func (m *ReceiptProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptProposalChange.Unmarshal(m, b)
@@ -446,7 +446,7 @@ func (m *LocalProposalChange) Reset()         { *m = LocalProposalChange{} }
 func (m *LocalProposalChange) String() string { return proto.CompactTextString(m) }
 func (*LocalProposalChange) ProtoMessage()    {}
 func (*LocalProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{7}
+	return fileDescriptor_change_76e5456ad380528f, []int{7}
 }
 func (m *LocalProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalProposalChange.Unmarshal(m, b)
@@ -497,7 +497,7 @@ func (m *ReqQueryProposalChange) Reset()         { *m = ReqQueryProposalChange{}
 func (m *ReqQueryProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReqQueryProposalChange) ProtoMessage()    {}
 func (*ReqQueryProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{8}
+	return fileDescriptor_change_76e5456ad380528f, []int{8}
 }
 func (m *ReqQueryProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQueryProposalChange.Unmarshal(m, b)
@@ -570,7 +570,7 @@ func (m *ReplyQueryProposalChange) Reset()         { *m = ReplyQueryProposalChan
 func (m *ReplyQueryProposalChange) String() string { return proto.CompactTextString(m) }
 func (*ReplyQueryProposalChange) ProtoMessage()    {}
 func (*ReplyQueryProposalChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_change_bc1669622d095f31, []int{9}
+	return fileDescriptor_change_76e5456ad380528f, []int{9}
 }
 func (m *ReplyQueryProposalChange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQueryProposalChange.Unmarshal(m, b)
@@ -610,9 +610,9 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalChange)(nil), "types.ReplyQueryProposalChange")
 }
 
-func init() { proto.RegisterFile("change.proto", fileDescriptor_change_bc1669622d095f31) }
+func init() { proto.RegisterFile("change.proto", fileDescriptor_change_76e5456ad380528f) }
 
-var fileDescriptor_change_bc1669622d095f31 = []byte{
+var fileDescriptor_change_76e5456ad380528f = []byte{
 	// 596 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x6f, 0xd4, 0x30,
 	0x10, 0x55, 0x9a, 0x4d, 0x76, 0x77, 0x4a, 0xab, 0x62, 0xda, 0xc5, 0xaa, 0x00, 0x45, 0x39, 0x40,

@@ -385,7 +385,7 @@ func hasVoted(addrs []string, addr string) (bool, int) {
 func (a *action) superManagerVoteProc(title string) error {
 	status, err := getNodeGroupStatus(a.db, title)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "getNodegroupStatus")
 	}
 	cfg := a.api.GetConfig()
 	conf := types.ConfSub(cfg, pt.ParaX)
@@ -393,7 +393,7 @@ func (a *action) superManagerVoteProc(title string) error {
 	data, err := a.exec.paracrossGetHeight(title)
 	if err != nil {
 		clog.Info("paracross.superManagerVoteProc get consens height", "title", title, "err", err.Error())
-		return err
+		return errors.Wrap(err, "getTitleHeight")
 	}
 	var consensMainHeight int64
 	consensHeight := data.(*pt.ParacrossStatus).Height
@@ -404,7 +404,7 @@ func (a *action) superManagerVoteProc(title string) error {
 		stat, err := a.exec.paracrossGetStateTitleHeight(title, consensHeight)
 		if err != nil {
 			clog.Info("paracross.superManagerVoteProc get consens title height", "title", title, "conesusHeight", consensHeight, "err", err.Error())
-			return err
+			return errors.Wrapf(err, "getStateTitleHeight,consensHeight=%d", consensHeight)
 		}
 		consensMainHeight = stat.(*pt.ParacrossHeightStatus).MainHeight
 	}
@@ -476,13 +476,36 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 	return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "nodeAddr:%s  get wrong status:%d", stat.TargetAddr, stat.Status)
 }
 
+func (a *action) checkIsSuperManagerVote(config *pt.ParaNodeAddrConfig, nodes map[string]struct{}) (bool, error) {
+	cfg := a.api.GetConfig()
+
+	//平行链：主链成功的交易如果不是nodegroup节点，就是superManager,为了不需在平行链配置superManger,间接判断是否是superManager
+	if cfg.IsPara() {
+		if validNode(a.fromaddr, nodes) {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	//主链：只检查超级管理员处理
+	if !isSuperManager(cfg, a.fromaddr) {
+		return false, nil
+	}
+	err := a.superManagerVoteProc(config.Title)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	nodes, _, err := getParacrossNodes(a.db, config.Title)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
 	cfg := a.api.GetConfig()
-	if !validNode(a.fromaddr, nodes) && !isSuperManager(cfg, a.fromaddr) {
+	//只在主链检查，　只有nodegroup成员和supermanager可以vote
+	if !cfg.IsPara() && !validNode(a.fromaddr, nodes) && !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
 	}
 
@@ -522,16 +545,9 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 
 	most, vote := getMostVote(stat.Votes)
 	if !isCommitDone(nodes, most) {
-		superManagerPass := false
-		if isSuperManager(cfg, a.fromaddr) {
-			//如果主链执行失败，交易不会过滤到平行链，如果主链成功，平行链直接成功
-			if !cfg.IsPara() {
-				err := a.superManagerVoteProc(config.Title)
-				if err != nil {
-					return nil, err
-				}
-			}
-			superManagerPass = true
+		superManagerPass, err := a.checkIsSuperManagerVote(config, nodes)
+		if err != nil {
+			return nil, err
 		}
 
 		//超级用户投yes票，共识停止了一定高度就可以通过，防止当前所有授权节点都忘掉私钥场景
@@ -701,7 +717,7 @@ func (a *action) nodeGroupCoinsFrozen(createAddr string, configCoinsFrozen int64
 	conf := types.ConfSub(cfg, pt.ParaX)
 	confCoins := conf.GInt("nodeGroupFrozenCoins")
 	if configCoinsFrozen < confCoins {
-		return nil, pt.ErrParaNodeGroupFrozenCoinsNotEnough
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "nodeGroupCoinsFrozen apply=%d,conf=%d", configCoinsFrozen, confCoins)
 	}
 	if configCoinsFrozen == 0 {
 		clog.Info("node group apply configCoinsFrozen is 0")
@@ -921,7 +937,8 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) {
+	//只在主链检查
+	if !cfg.IsPara() && !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
 	}
 
@@ -990,6 +1007,9 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
+	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
+	}
 
 	if config.Op == pt.ParacrossNodeGroupApply {
 		s := strings.Trim(config.Addrs, " ")
@@ -1027,6 +1047,9 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	cfg := a.api.GetConfig()
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
+	}
+	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 
 	if config.Op == pt.ParaOpNewApply {

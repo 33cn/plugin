@@ -441,28 +441,7 @@ func (p *Paracross) paracrossGetAssetTxResult(hash []byte) (types.Message, error
 		return nil, err
 	}
 
-	rsp := &pt.ParacrossAssetRsp{
-		From:             rst.From,
-		To:               rst.To,
-		Amount:           rst.Amount,
-		Exec:             rst.Exec,
-		Symbol:           rst.Symbol,
-		Height:           rst.Height,
-		CommitDoneHeight: rst.CommitDoneHeight,
-		ParaHeight:       rst.ParaHeight,
-	}
-
-	rsp.TxHash = common.ToHex(rst.TxHash)
-	rsp.IsWithdraw = "false"
-	if rst.IsWithdraw {
-		rsp.IsWithdraw = "true"
-	}
-	rsp.Success = "false"
-	if rst.Success {
-		rsp.Success = "true"
-	}
-
-	return rsp, nil
+	return &rst, nil
 }
 
 //Query_GetSelfConsStages get self consensus stages configed

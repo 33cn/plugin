@@ -47,4 +47,9 @@ const (
 	PriceFeedKey = "issuance-price-feed"
 	GuarantorKey = "issuance-guarantor"
 	ManageKey    = "issuance-manage"
+	FundKey      = "issuance-fund"
+)
+
+var (
+	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
 )

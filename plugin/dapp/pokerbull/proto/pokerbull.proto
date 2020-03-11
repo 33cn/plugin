@@ -4,40 +4,40 @@ package types;
 
 //斗牛游戏内容
 message PokerBull {
-    string            gameId      = 1;  //默认是由创建这局游戏的txHash作为gameId
-    int32             status      = 2;  // Start 1 -> Continue 2 -> Quit 3
-    int64             startTime   = 3;  //开始时间
-    string            startTxHash = 4;  //游戏启动交易hash
-    int64             value       = 5;  //赌注
-    PBPoker           poker       = 6;  //扑克牌
-    repeated PBPlayer players     = 7;  //玩家历史牌和结果集
-    int32             playerNum   = 8;  //玩家数
-    repeated PBResult results     = 9;  //游戏结果集
-    int64             index       = 10; //索引
-    int64             prevIndex   = 11; //上级索引
-    int64             quitTime    = 12; //游戏结束时间
-    string            quitTxHash  = 13; //游戏结束交易hash
-    string            dealerAddr  = 14; //下局庄家地址
-    bool              isWaiting   = 15; //游戏是否处于等待状态
-    int32             preStatus   = 16; //上一index的状态
-    int32             round       = 17; //当前游戏回合数
+    string   gameId              = 1;  //默认是由创建这局游戏的txHash作为gameId
+    int32    status              = 2;  // Start 1 -> Continue 2 -> Quit 3
+    int64    startTime           = 3;  //开始时间
+    string   startTxHash         = 4;  //游戏启动交易hash
+    int64    value               = 5;  //赌注
+    PBPoker  poker               = 6;  //扑克牌
+    repeated PBPlayer players    = 7;  //玩家历史牌和结果集
+    int32             playerNum  = 8;  //玩家数
+    repeated PBResult results    = 9;  //游戏结果集
+    int64             index      = 10; //索引
+    int64             prevIndex  = 11; //上级索引
+    int64             quitTime   = 12; //游戏结束时间
+    string            quitTxHash = 13; //游戏结束交易hash
+    string            dealerAddr = 14; //下局庄家地址
+    bool              isWaiting  = 15; //游戏是否处于等待状态
+    int32             preStatus  = 16; //上一index的状态
+    int32             round      = 17; //当前游戏回合数
 }
 
 //一把牌
 message PBHand {
-    repeated int32 cards     = 1; //一把牌，五张
-    int32          result    = 2; //斗牛结果 (没牛：0， 牛1-9：1-9， 牛牛：10)
-    string         address   = 3; //玩家地址
-    bool           isWin     = 4; //是否赢庄家
-    int32          leverage  = 5; //赌注倍数
+    repeated int32 cards    = 1; //一把牌，五张
+    int32          result   = 2; //斗牛结果 (没牛：0， 牛1-9：1-9， 牛牛：10)
+    string         address  = 3; //玩家地址
+    bool           isWin    = 4; //是否赢庄家
+    int32          leverage = 5; //赌注倍数
 }
 
 //玩家
 message PBPlayer {
-    repeated PBHand hands     = 1; //历史发牌和斗牛结果
-    string          address   = 2; //玩家地址
-    int64           txHash    = 3; //发牌随机数因子txhash的整数格式
-    bool            ready     = 4; //continue状态下，是否ready
+    repeated PBHand hands   = 1; //历史发牌和斗牛结果
+    string          address = 2; //玩家地址
+    int64           txHash  = 3; //发牌随机数因子txhash的整数格式
+    bool            ready   = 4; // continue状态下，是否ready
 }
 
 //本局游戏结果
@@ -58,11 +58,11 @@ message PBPoker {
 //游戏状态
 message PBGameAction {
     oneof value {
-        PBGameStart    start    = 1;
+        PBGameStart start       = 1;
         PBGameContinue continue = 2;
-        PBGameQuit     quit     = 3;
-        PBGameQuery    query    = 4;
-        PBGamePlay     play     = 5;
+        PBGameQuit  quit        = 3;
+        PBGameQuery query       = 4;
+        PBGamePlay  play        = 5;
     }
     int32 ty = 10;
 }
@@ -90,9 +90,9 @@ message PBGameQuery {
 
 //已匹配玩家直接游戏
 message PBGamePlay {
-    string          gameId  = 1; //游戏id
-    int32           round   = 2; //当前游戏回合数
-    int64           value   = 3; //当前游戏赌注
+    string   gameId         = 1; //游戏id
+    int32    round          = 2; //当前游戏回合数
+    int64    value          = 3; //当前游戏赌注
     repeated string address = 4; //玩家地址
 }
 
@@ -150,13 +150,13 @@ message QueryPBGameByRound {
 
 // ReplyPBGameByRound 某一回合游戏结果
 message ReplyPBGameByRound {
-    string   gameId             = 1;
-    int32    status             = 2;
-    PBResult result             = 3;
-    bool     isWaiting          = 4;
-    int64    value              = 5;
-    repeated PBPlayer players   = 6;
-    int64    return             = 7;
+    string   gameId           = 1;
+    int32    status           = 2;
+    PBResult result           = 3;
+    bool     isWaiting        = 4;
+    int64    value            = 5;
+    repeated PBPlayer players = 6;
+    int64 return              = 7;
 }
 
 message ReceiptPBGame {
@@ -169,8 +169,8 @@ message ReceiptPBGame {
     int64    value            = 7;
     bool     isWaiting        = 8;
     repeated string players   = 9;
-    int32    preStatus        = 10;
-    int32    round            = 11;
+    int32           preStatus = 10;
+    int32           round     = 11;
 }
 
 message PBStartTxReq {
@@ -193,4 +193,3 @@ message PBQueryReq {
     string gameId = 1;
     int64  fee    = 2;
 }
-

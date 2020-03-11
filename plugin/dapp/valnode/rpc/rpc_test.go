@@ -8,7 +8,6 @@ package rpc
 
 //only load all plugin and system
 import (
-	"encoding/hex"
 	"testing"
 
 	"strings"
@@ -98,5 +97,5 @@ func TestJrpc_GetNodeInfo(t *testing.T) {
 	api.On("QueryConsensusFunc", "tendermint", "NodeInfo", req).Return(set, nil)
 	err := J.GetNodeInfo(req, &result)
 	assert.Nil(t, err)
-	assert.EqualValues(t, hex.EncodeToString(types.Encode(set)), result)
+	assert.EqualValues(t, set.Validators, result)
 }

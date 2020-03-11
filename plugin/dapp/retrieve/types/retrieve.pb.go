@@ -44,7 +44,7 @@ func (m *RetrievePara) Reset()         { *m = RetrievePara{} }
 func (m *RetrievePara) String() string { return proto.CompactTextString(m) }
 func (*RetrievePara) ProtoMessage()    {}
 func (*RetrievePara) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{0}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{0}
 }
 func (m *RetrievePara) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RetrievePara.Unmarshal(m, b)
@@ -112,7 +112,7 @@ func (m *Retrieve) Reset()         { *m = Retrieve{} }
 func (m *Retrieve) String() string { return proto.CompactTextString(m) }
 func (*Retrieve) ProtoMessage()    {}
 func (*Retrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{1}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{1}
 }
 func (m *Retrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Retrieve.Unmarshal(m, b)
@@ -163,7 +163,7 @@ func (m *RetrieveAction) Reset()         { *m = RetrieveAction{} }
 func (m *RetrieveAction) String() string { return proto.CompactTextString(m) }
 func (*RetrieveAction) ProtoMessage()    {}
 func (*RetrieveAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{2}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{2}
 }
 func (m *RetrieveAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RetrieveAction.Unmarshal(m, b)
@@ -378,7 +378,7 @@ func (m *BackupRetrieve) Reset()         { *m = BackupRetrieve{} }
 func (m *BackupRetrieve) String() string { return proto.CompactTextString(m) }
 func (*BackupRetrieve) ProtoMessage()    {}
 func (*BackupRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{3}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{3}
 }
 func (m *BackupRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BackupRetrieve.Unmarshal(m, b)
@@ -431,7 +431,7 @@ func (m *PrepareRetrieve) Reset()         { *m = PrepareRetrieve{} }
 func (m *PrepareRetrieve) String() string { return proto.CompactTextString(m) }
 func (*PrepareRetrieve) ProtoMessage()    {}
 func (*PrepareRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{4}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{4}
 }
 func (m *PrepareRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PrepareRetrieve.Unmarshal(m, b)
@@ -477,7 +477,7 @@ func (m *AssetSymbol) Reset()         { *m = AssetSymbol{} }
 func (m *AssetSymbol) String() string { return proto.CompactTextString(m) }
 func (*AssetSymbol) ProtoMessage()    {}
 func (*AssetSymbol) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{5}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{5}
 }
 func (m *AssetSymbol) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AssetSymbol.Unmarshal(m, b)
@@ -524,7 +524,7 @@ func (m *PerformRetrieve) Reset()         { *m = PerformRetrieve{} }
 func (m *PerformRetrieve) String() string { return proto.CompactTextString(m) }
 func (*PerformRetrieve) ProtoMessage()    {}
 func (*PerformRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{6}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{6}
 }
 func (m *PerformRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PerformRetrieve.Unmarshal(m, b)
@@ -577,7 +577,7 @@ func (m *CancelRetrieve) Reset()         { *m = CancelRetrieve{} }
 func (m *CancelRetrieve) String() string { return proto.CompactTextString(m) }
 func (*CancelRetrieve) ProtoMessage()    {}
 func (*CancelRetrieve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{7}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{7}
 }
 func (m *CancelRetrieve) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CancelRetrieve.Unmarshal(m, b)
@@ -625,7 +625,7 @@ func (m *ReqRetrieveInfo) Reset()         { *m = ReqRetrieveInfo{} }
 func (m *ReqRetrieveInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqRetrieveInfo) ProtoMessage()    {}
 func (*ReqRetrieveInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{8}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{8}
 }
 func (m *ReqRetrieveInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqRetrieveInfo.Unmarshal(m, b)
@@ -689,7 +689,7 @@ func (m *RetrieveQuery) Reset()         { *m = RetrieveQuery{} }
 func (m *RetrieveQuery) String() string { return proto.CompactTextString(m) }
 func (*RetrieveQuery) ProtoMessage()    {}
 func (*RetrieveQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_retrieve_1666ef19b265e4fc, []int{9}
+	return fileDescriptor_retrieve_468b63ef358476e8, []int{9}
 }
 func (m *RetrieveQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RetrieveQuery.Unmarshal(m, b)
@@ -935,9 +935,9 @@ var _Retrieve_serviceDesc = grpc.ServiceDesc{
 	Metadata: "retrieve.proto",
 }
 
-func init() { proto.RegisterFile("retrieve.proto", fileDescriptor_retrieve_1666ef19b265e4fc) }
+func init() { proto.RegisterFile("retrieve.proto", fileDescriptor_retrieve_468b63ef358476e8) }
 
-var fileDescriptor_retrieve_1666ef19b265e4fc = []byte{
+var fileDescriptor_retrieve_468b63ef358476e8 = []byte{
 	// 552 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0xc1, 0x6e, 0xd3, 0x40,
 	0x10, 0xed, 0xc6, 0x8d, 0xd3, 0x4c, 0xa8, 0x23, 0x16, 0x51, 0x59, 0x15, 0xaa, 0x22, 0x0b, 0xa1,

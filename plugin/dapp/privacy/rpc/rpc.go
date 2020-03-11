@@ -50,7 +50,7 @@ func (g *channelClient) CreateRawTransaction(ctx context.Context, in *pty.ReqCre
 }
 
 // ShowPrivacyAccountInfo display privacy account information for json rpc
-func (c *Jrpc) ShowPrivacyAccountInfo(in *pty.ReqPPrivacyAccount, result *json.RawMessage) error {
+func (c *Jrpc) ShowPrivacyAccountInfo(in *pty.ReqPrivacyAccount, result *json.RawMessage) error {
 	reply, err := c.cli.ExecWalletFunc(pty.PrivacyX, "ShowPrivacyAccountInfo", in)
 	if err != nil {
 		return err

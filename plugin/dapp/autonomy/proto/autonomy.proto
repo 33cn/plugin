@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-//import "common.proto";
+// import "common.proto";
 import "board.proto";
 import "project.proto";
 import "rule.proto";
@@ -27,13 +27,13 @@ message AutonomyAction {
         PubVoteProposalProject   pubVotePropProject = 8;
         TerminateProposalProject tmintPropProject   = 9;
         // 提案规则修改相关
-        ProposalRule             propRule      = 10;
-        RevokeProposalRule       rvkPropRule   = 11;
-        VoteProposalRule         votePropRule  = 12;
-        TerminateProposalRule    tmintPropRule = 13;
+        ProposalRule          propRule      = 10;
+        RevokeProposalRule    rvkPropRule   = 11;
+        VoteProposalRule      votePropRule  = 12;
+        TerminateProposalRule tmintPropRule = 13;
         // 发展基金转自治系统合约
-        TransferFund             transfer      = 14;
-        Comment                  commentProp   = 15;
+        TransferFund transfer    = 14;
+        Comment      commentProp = 15;
         // 提案改变董事会成员
         ProposalChange          propChange      = 16;
         RevokeProposalChange    rvkPropChange   = 17;
