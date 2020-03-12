@@ -88,21 +88,9 @@ name="pos33"
 minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-minerExecs=["pos33"]
+minerExecs=["ticket", "autonomy"]
+enableBestBlockCmp=true
 
-[consensus.sub.pos33]
-genesisBlockTime=1514533394
-listenPort="10901"
-
-[[consensus.sub.pos33.genesis]]
-minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-returnAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-count=10000
-
-#[[consensus.sub.pos33.genesis]]
-#minerAddr="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-#returnAddr="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
-#count=10
 
 #[[consensus.sub.pos33.genesis]]
 #minerAddr="1EDnnePAZN48aC2hiTDzhkczfF39g1pZZX"

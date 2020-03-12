@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Cert struct {
 	CertId               []byte   `protobuf:"bytes,1,opt,name=certId,proto3" json:"certId,omitempty"`
@@ -36,16 +35,17 @@ func (m *Cert) Reset()         { *m = Cert{} }
 func (m *Cert) String() string { return proto.CompactTextString(m) }
 func (*Cert) ProtoMessage()    {}
 func (*Cert) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{0}
+	return fileDescriptor_a142e29cbef9b1cf, []int{0}
 }
+
 func (m *Cert) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Cert.Unmarshal(m, b)
 }
 func (m *Cert) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Cert.Marshal(b, m, deterministic)
 }
-func (dst *Cert) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Cert.Merge(dst, src)
+func (m *Cert) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Cert.Merge(m, src)
 }
 func (m *Cert) XXX_Size() int {
 	return xxx_messageInfo_Cert.Size(m)
@@ -100,16 +100,17 @@ func (m *CertAction) Reset()         { *m = CertAction{} }
 func (m *CertAction) String() string { return proto.CompactTextString(m) }
 func (*CertAction) ProtoMessage()    {}
 func (*CertAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{1}
+	return fileDescriptor_a142e29cbef9b1cf, []int{1}
 }
+
 func (m *CertAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertAction.Unmarshal(m, b)
 }
 func (m *CertAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertAction.Marshal(b, m, deterministic)
 }
-func (dst *CertAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertAction.Merge(dst, src)
+func (m *CertAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertAction.Merge(m, src)
 }
 func (m *CertAction) XXX_Size() int {
 	return xxx_messageInfo_CertAction.Size(m)
@@ -177,97 +178,13 @@ func (m *CertAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*CertAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _CertAction_OneofMarshaler, _CertAction_OneofUnmarshaler, _CertAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*CertAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*CertAction_New)(nil),
 		(*CertAction_Update)(nil),
 		(*CertAction_Normal)(nil),
 	}
-}
-
-func _CertAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*CertAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CertAction_New:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.New); err != nil {
-			return err
-		}
-	case *CertAction_Update:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Update); err != nil {
-			return err
-		}
-	case *CertAction_Normal:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Normal); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("CertAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _CertAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*CertAction)
-	switch tag {
-	case 1: // value.new
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CertNew)
-		err := b.DecodeMessage(msg)
-		m.Value = &CertAction_New{msg}
-		return true, err
-	case 2: // value.update
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CertUpdate)
-		err := b.DecodeMessage(msg)
-		m.Value = &CertAction_Update{msg}
-		return true, err
-	case 3: // value.normal
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CertNormal)
-		err := b.DecodeMessage(msg)
-		m.Value = &CertAction_Normal{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _CertAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*CertAction)
-	// value
-	switch x := m.Value.(type) {
-	case *CertAction_New:
-		s := proto.Size(x.New)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CertAction_Update:
-		s := proto.Size(x.Update)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *CertAction_Normal:
-		s := proto.Size(x.Normal)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type CertNew struct {
@@ -282,16 +199,17 @@ func (m *CertNew) Reset()         { *m = CertNew{} }
 func (m *CertNew) String() string { return proto.CompactTextString(m) }
 func (*CertNew) ProtoMessage()    {}
 func (*CertNew) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{2}
+	return fileDescriptor_a142e29cbef9b1cf, []int{2}
 }
+
 func (m *CertNew) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertNew.Unmarshal(m, b)
 }
 func (m *CertNew) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertNew.Marshal(b, m, deterministic)
 }
-func (dst *CertNew) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertNew.Merge(dst, src)
+func (m *CertNew) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertNew.Merge(m, src)
 }
 func (m *CertNew) XXX_Size() int {
 	return xxx_messageInfo_CertNew.Size(m)
@@ -328,16 +246,17 @@ func (m *CertUpdate) Reset()         { *m = CertUpdate{} }
 func (m *CertUpdate) String() string { return proto.CompactTextString(m) }
 func (*CertUpdate) ProtoMessage()    {}
 func (*CertUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{3}
+	return fileDescriptor_a142e29cbef9b1cf, []int{3}
 }
+
 func (m *CertUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertUpdate.Unmarshal(m, b)
 }
 func (m *CertUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertUpdate.Marshal(b, m, deterministic)
 }
-func (dst *CertUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertUpdate.Merge(dst, src)
+func (m *CertUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertUpdate.Merge(m, src)
 }
 func (m *CertUpdate) XXX_Size() int {
 	return xxx_messageInfo_CertUpdate.Size(m)
@@ -374,16 +293,17 @@ func (m *CertNormal) Reset()         { *m = CertNormal{} }
 func (m *CertNormal) String() string { return proto.CompactTextString(m) }
 func (*CertNormal) ProtoMessage()    {}
 func (*CertNormal) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{4}
+	return fileDescriptor_a142e29cbef9b1cf, []int{4}
 }
+
 func (m *CertNormal) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CertNormal.Unmarshal(m, b)
 }
 func (m *CertNormal) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CertNormal.Marshal(b, m, deterministic)
 }
-func (dst *CertNormal) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CertNormal.Merge(dst, src)
+func (m *CertNormal) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CertNormal.Merge(m, src)
 }
 func (m *CertNormal) XXX_Size() int {
 	return xxx_messageInfo_CertNormal.Size(m)
@@ -421,16 +341,17 @@ func (m *Authority) Reset()         { *m = Authority{} }
 func (m *Authority) String() string { return proto.CompactTextString(m) }
 func (*Authority) ProtoMessage()    {}
 func (*Authority) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cert_ed39500e31f072f0, []int{5}
+	return fileDescriptor_a142e29cbef9b1cf, []int{5}
 }
+
 func (m *Authority) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Authority.Unmarshal(m, b)
 }
 func (m *Authority) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Authority.Marshal(b, m, deterministic)
 }
-func (dst *Authority) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Authority.Merge(dst, src)
+func (m *Authority) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Authority.Merge(m, src)
 }
 func (m *Authority) XXX_Size() int {
 	return xxx_messageInfo_Authority.Size(m)
@@ -471,9 +392,11 @@ func init() {
 	proto.RegisterType((*Authority)(nil), "types.Authority")
 }
 
-func init() { proto.RegisterFile("cert.proto", fileDescriptor_cert_ed39500e31f072f0) }
+func init() {
+	proto.RegisterFile("cert.proto", fileDescriptor_a142e29cbef9b1cf)
+}
 
-var fileDescriptor_cert_ed39500e31f072f0 = []byte{
+var fileDescriptor_a142e29cbef9b1cf = []byte{
 	// 300 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0xcd, 0x4a, 0xf3, 0x40,
 	0x14, 0xed, 0x24, 0xfd, 0xbd, 0xfd, 0x28, 0x9f, 0x83, 0x48, 0x70, 0x21, 0x25, 0xab, 0x82, 0x10,

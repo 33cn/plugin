@@ -4,17 +4,15 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-
-	context "golang.org/x/net/context"
-
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -26,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type ValNode struct {
 	PubKey               []byte   `protobuf:"bytes,1,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
@@ -40,16 +38,17 @@ func (m *ValNode) Reset()         { *m = ValNode{} }
 func (m *ValNode) String() string { return proto.CompactTextString(m) }
 func (*ValNode) ProtoMessage()    {}
 func (*ValNode) Descriptor() ([]byte, []int) {
-	return fileDescriptor_valnode_51979219d1bb0d85, []int{0}
+	return fileDescriptor_38e9a3523ca7e0ea, []int{0}
 }
+
 func (m *ValNode) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValNode.Unmarshal(m, b)
 }
 func (m *ValNode) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ValNode.Marshal(b, m, deterministic)
 }
-func (dst *ValNode) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNode.Merge(dst, src)
+func (m *ValNode) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNode.Merge(m, src)
 }
 func (m *ValNode) XXX_Size() int {
 	return xxx_messageInfo_ValNode.Size(m)
@@ -85,16 +84,17 @@ func (m *ValNodes) Reset()         { *m = ValNodes{} }
 func (m *ValNodes) String() string { return proto.CompactTextString(m) }
 func (*ValNodes) ProtoMessage()    {}
 func (*ValNodes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_valnode_51979219d1bb0d85, []int{1}
+	return fileDescriptor_38e9a3523ca7e0ea, []int{1}
 }
+
 func (m *ValNodes) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValNodes.Unmarshal(m, b)
 }
 func (m *ValNodes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ValNodes.Marshal(b, m, deterministic)
 }
-func (dst *ValNodes) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNodes.Merge(dst, src)
+func (m *ValNodes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNodes.Merge(m, src)
 }
 func (m *ValNodes) XXX_Size() int {
 	return xxx_messageInfo_ValNodes.Size(m)
@@ -127,16 +127,17 @@ func (m *ValNodeAction) Reset()         { *m = ValNodeAction{} }
 func (m *ValNodeAction) String() string { return proto.CompactTextString(m) }
 func (*ValNodeAction) ProtoMessage()    {}
 func (*ValNodeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_valnode_51979219d1bb0d85, []int{2}
+	return fileDescriptor_38e9a3523ca7e0ea, []int{2}
 }
+
 func (m *ValNodeAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ValNodeAction.Unmarshal(m, b)
 }
 func (m *ValNodeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ValNodeAction.Marshal(b, m, deterministic)
 }
-func (dst *ValNodeAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValNodeAction.Merge(dst, src)
+func (m *ValNodeAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValNodeAction.Merge(m, src)
 }
 func (m *ValNodeAction) XXX_Size() int {
 	return xxx_messageInfo_ValNodeAction.Size(m)
@@ -191,78 +192,12 @@ func (m *ValNodeAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*ValNodeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _ValNodeAction_OneofMarshaler, _ValNodeAction_OneofUnmarshaler, _ValNodeAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ValNodeAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*ValNodeAction_Node)(nil),
 		(*ValNodeAction_BlockInfo)(nil),
 	}
-}
-
-func _ValNodeAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*ValNodeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *ValNodeAction_Node:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Node); err != nil {
-			return err
-		}
-	case *ValNodeAction_BlockInfo:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.BlockInfo); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("ValNodeAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _ValNodeAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*ValNodeAction)
-	switch tag {
-	case 1: // value.node
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ValNode)
-		err := b.DecodeMessage(msg)
-		m.Value = &ValNodeAction_Node{msg}
-		return true, err
-	case 2: // value.blockInfo
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TendermintBlockInfo)
-		err := b.DecodeMessage(msg)
-		m.Value = &ValNodeAction_BlockInfo{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _ValNodeAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*ValNodeAction)
-	// value
-	switch x := m.Value.(type) {
-	case *ValNodeAction_Node:
-		s := proto.Size(x.Node)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ValNodeAction_BlockInfo:
-		s := proto.Size(x.BlockInfo)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type ReqNodeInfo struct {
@@ -276,16 +211,17 @@ func (m *ReqNodeInfo) Reset()         { *m = ReqNodeInfo{} }
 func (m *ReqNodeInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqNodeInfo) ProtoMessage()    {}
 func (*ReqNodeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_valnode_51979219d1bb0d85, []int{3}
+	return fileDescriptor_38e9a3523ca7e0ea, []int{3}
 }
+
 func (m *ReqNodeInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqNodeInfo.Unmarshal(m, b)
 }
 func (m *ReqNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqNodeInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqNodeInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqNodeInfo.Merge(dst, src)
+func (m *ReqNodeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqNodeInfo.Merge(m, src)
 }
 func (m *ReqNodeInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqNodeInfo.Size(m)
@@ -314,16 +250,17 @@ func (m *ReqBlockInfo) Reset()         { *m = ReqBlockInfo{} }
 func (m *ReqBlockInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqBlockInfo) ProtoMessage()    {}
 func (*ReqBlockInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_valnode_51979219d1bb0d85, []int{4}
+	return fileDescriptor_38e9a3523ca7e0ea, []int{4}
 }
+
 func (m *ReqBlockInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqBlockInfo.Unmarshal(m, b)
 }
 func (m *ReqBlockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqBlockInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqBlockInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqBlockInfo.Merge(dst, src)
+func (m *ReqBlockInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqBlockInfo.Merge(m, src)
 }
 func (m *ReqBlockInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqBlockInfo.Size(m)
@@ -349,13 +286,42 @@ func init() {
 	proto.RegisterType((*ReqBlockInfo)(nil), "types.ReqBlockInfo")
 }
 
+func init() {
+	proto.RegisterFile("valnode.proto", fileDescriptor_38e9a3523ca7e0ea)
+}
+
+var fileDescriptor_38e9a3523ca7e0ea = []byte{
+	// 322 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x51, 0xcd, 0x6a, 0xf2, 0x40,
+	0x14, 0x4d, 0xcc, 0x97, 0xf8, 0xf5, 0x46, 0x45, 0xa6, 0x45, 0x42, 0x56, 0x61, 0xb0, 0x25, 0x50,
+	0x90, 0xa2, 0x8b, 0x42, 0x77, 0x75, 0x53, 0xa5, 0xd0, 0xc5, 0x28, 0xdd, 0xc7, 0xe4, 0xb6, 0x06,
+	0xe3, 0x4c, 0x4c, 0x46, 0x4b, 0x5e, 0xa1, 0x4f, 0x5d, 0x32, 0x99, 0x46, 0x68, 0xe9, 0xf2, 0xfc,
+	0xe5, 0x9c, 0xdc, 0x81, 0xfe, 0x29, 0xca, 0xb8, 0x48, 0x70, 0x92, 0x17, 0x42, 0x0a, 0x62, 0xcb,
+	0x2a, 0xc7, 0xd2, 0xef, 0xc5, 0x62, 0xbf, 0x17, 0xbc, 0x21, 0xfd, 0xa1, 0x44, 0x9e, 0x60, 0xb1,
+	0x4f, 0xb9, 0x6c, 0x18, 0x7a, 0x0f, 0xdd, 0xd7, 0x28, 0x7b, 0x11, 0x09, 0x92, 0x11, 0x38, 0xf9,
+	0x71, 0xf3, 0x8c, 0x95, 0x67, 0x06, 0x66, 0xd8, 0x63, 0x1a, 0x91, 0x2b, 0xb0, 0x73, 0xf1, 0x81,
+	0x85, 0xd7, 0x09, 0xcc, 0xd0, 0x62, 0x0d, 0xa0, 0x77, 0xf0, 0x5f, 0x07, 0x4b, 0x32, 0x06, 0xbb,
+	0x6e, 0x2e, 0x3d, 0x33, 0xb0, 0x42, 0x77, 0x3a, 0x98, 0xa8, 0xee, 0x89, 0xd6, 0x59, 0x23, 0xd2,
+	0x4f, 0x13, 0xfa, 0x9a, 0x7a, 0x8c, 0x65, 0x2a, 0x38, 0x19, 0xc3, 0xbf, 0x5a, 0x52, 0x7d, 0xbf,
+	0x62, 0x0b, 0x83, 0x29, 0x95, 0x3c, 0xc0, 0xc5, 0x26, 0x13, 0xf1, 0x6e, 0xc9, 0xdf, 0x84, 0xda,
+	0xe0, 0x4e, 0x7d, 0x6d, 0x5d, 0xb7, 0xbf, 0x33, 0xff, 0x76, 0x2c, 0x0c, 0x76, 0xb6, 0x93, 0x01,
+	0x74, 0xd6, 0x95, 0x67, 0x05, 0x66, 0x68, 0xb3, 0xce, 0xba, 0x9a, 0x77, 0xc1, 0x3e, 0x45, 0xd9,
+	0x11, 0xe9, 0x35, 0xb8, 0x0c, 0x0f, 0x75, 0x8f, 0xf2, 0x8d, 0xc0, 0xd9, 0x62, 0xfa, 0xbe, 0x95,
+	0x6a, 0x8b, 0xc5, 0x34, 0xa2, 0x37, 0xd0, 0x63, 0x78, 0x68, 0x3f, 0xfe, 0x97, 0x6f, 0xba, 0x83,
+	0xae, 0x3e, 0x3f, 0xb9, 0x05, 0x67, 0x59, 0xae, 0x2a, 0x1e, 0x93, 0xbe, 0x5e, 0x59, 0x17, 0xa5,
+	0x99, 0x3f, 0xd4, 0x70, 0x59, 0x2e, 0x30, 0xca, 0xe4, 0xb6, 0xa2, 0x06, 0x99, 0x81, 0xfb, 0x84,
+	0xb2, 0x9d, 0xf1, 0x23, 0x71, 0x79, 0xbe, 0x48, 0x9a, 0x44, 0x52, 0x14, 0x2b, 0x94, 0xd4, 0xd8,
+	0x38, 0xea, 0xe9, 0x66, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xce, 0xc8, 0x21, 0x55, 0xf2, 0x01,
+	0x00, 0x00,
+}
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ValnodeClient is the client API for Valnode service.
 //
@@ -366,10 +332,10 @@ type ValnodeClient interface {
 }
 
 type valnodeClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewValnodeClient(cc *grpc.ClientConn) ValnodeClient {
+func NewValnodeClient(cc grpc.ClientConnInterface) ValnodeClient {
 	return &valnodeClient{cc}
 }
 
@@ -395,6 +361,17 @@ func (c *valnodeClient) GetNodeInfo(ctx context.Context, in *types.ReqNil, opts 
 type ValnodeServer interface {
 	IsSync(context.Context, *types.ReqNil) (*IsHealthy, error)
 	GetNodeInfo(context.Context, *types.ReqNil) (*ValidatorSet, error)
+}
+
+// UnimplementedValnodeServer can be embedded to have forward compatible implementations.
+type UnimplementedValnodeServer struct {
+}
+
+func (*UnimplementedValnodeServer) IsSync(ctx context.Context, req *types.ReqNil) (*IsHealthy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsSync not implemented")
+}
+func (*UnimplementedValnodeServer) GetNodeInfo(ctx context.Context, req *types.ReqNil) (*ValidatorSet, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNodeInfo not implemented")
 }
 
 func RegisterValnodeServer(s *grpc.Server, srv ValnodeServer) {
@@ -452,31 +429,4 @@ var _Valnode_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "valnode.proto",
-}
-
-func init() { proto.RegisterFile("valnode.proto", fileDescriptor_valnode_51979219d1bb0d85) }
-
-var fileDescriptor_valnode_51979219d1bb0d85 = []byte{
-	// 322 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x51, 0xcd, 0x6a, 0xf2, 0x40,
-	0x14, 0x4d, 0xcc, 0x97, 0xf8, 0xf5, 0x46, 0x45, 0xa6, 0x45, 0x42, 0x56, 0x61, 0xb0, 0x25, 0x50,
-	0x90, 0xa2, 0x8b, 0x42, 0x77, 0x75, 0x53, 0xa5, 0xd0, 0xc5, 0x28, 0xdd, 0xc7, 0xe4, 0xb6, 0x06,
-	0xe3, 0x4c, 0x4c, 0x46, 0x4b, 0x5e, 0xa1, 0x4f, 0x5d, 0x32, 0x99, 0x46, 0x68, 0xe9, 0xf2, 0xfc,
-	0xe5, 0x9c, 0xdc, 0x81, 0xfe, 0x29, 0xca, 0xb8, 0x48, 0x70, 0x92, 0x17, 0x42, 0x0a, 0x62, 0xcb,
-	0x2a, 0xc7, 0xd2, 0xef, 0xc5, 0x62, 0xbf, 0x17, 0xbc, 0x21, 0xfd, 0xa1, 0x44, 0x9e, 0x60, 0xb1,
-	0x4f, 0xb9, 0x6c, 0x18, 0x7a, 0x0f, 0xdd, 0xd7, 0x28, 0x7b, 0x11, 0x09, 0x92, 0x11, 0x38, 0xf9,
-	0x71, 0xf3, 0x8c, 0x95, 0x67, 0x06, 0x66, 0xd8, 0x63, 0x1a, 0x91, 0x2b, 0xb0, 0x73, 0xf1, 0x81,
-	0x85, 0xd7, 0x09, 0xcc, 0xd0, 0x62, 0x0d, 0xa0, 0x77, 0xf0, 0x5f, 0x07, 0x4b, 0x32, 0x06, 0xbb,
-	0x6e, 0x2e, 0x3d, 0x33, 0xb0, 0x42, 0x77, 0x3a, 0x98, 0xa8, 0xee, 0x89, 0xd6, 0x59, 0x23, 0xd2,
-	0x4f, 0x13, 0xfa, 0x9a, 0x7a, 0x8c, 0x65, 0x2a, 0x38, 0x19, 0xc3, 0xbf, 0x5a, 0x52, 0x7d, 0xbf,
-	0x62, 0x0b, 0x83, 0x29, 0x95, 0x3c, 0xc0, 0xc5, 0x26, 0x13, 0xf1, 0x6e, 0xc9, 0xdf, 0x84, 0xda,
-	0xe0, 0x4e, 0x7d, 0x6d, 0x5d, 0xb7, 0xbf, 0x33, 0xff, 0x76, 0x2c, 0x0c, 0x76, 0xb6, 0x93, 0x01,
-	0x74, 0xd6, 0x95, 0x67, 0x05, 0x66, 0x68, 0xb3, 0xce, 0xba, 0x9a, 0x77, 0xc1, 0x3e, 0x45, 0xd9,
-	0x11, 0xe9, 0x35, 0xb8, 0x0c, 0x0f, 0x75, 0x8f, 0xf2, 0x8d, 0xc0, 0xd9, 0x62, 0xfa, 0xbe, 0x95,
-	0x6a, 0x8b, 0xc5, 0x34, 0xa2, 0x37, 0xd0, 0x63, 0x78, 0x68, 0x3f, 0xfe, 0x97, 0x6f, 0xba, 0x83,
-	0xae, 0x3e, 0x3f, 0xb9, 0x05, 0x67, 0x59, 0xae, 0x2a, 0x1e, 0x93, 0xbe, 0x5e, 0x59, 0x17, 0xa5,
-	0x99, 0x3f, 0xd4, 0x70, 0x59, 0x2e, 0x30, 0xca, 0xe4, 0xb6, 0xa2, 0x06, 0x99, 0x81, 0xfb, 0x84,
-	0xb2, 0x9d, 0xf1, 0x23, 0x71, 0x79, 0xbe, 0x48, 0x9a, 0x44, 0x52, 0x14, 0x2b, 0x94, 0xd4, 0xd8,
-	0x38, 0xea, 0xe9, 0x66, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xce, 0xc8, 0x21, 0x55, 0xf2, 0x01,
-	0x00, 0x00,
 }

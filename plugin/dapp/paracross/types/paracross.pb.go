@@ -4,17 +4,15 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 
 	types "github.com/33cn/chain33/types"
-
-	context "golang.org/x/net/context"
-
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -26,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // stateDB
 type ParacrossStatusDetails struct {
@@ -41,16 +39,17 @@ func (m *ParacrossStatusDetails) Reset()         { *m = ParacrossStatusDetails{}
 func (m *ParacrossStatusDetails) String() string { return proto.CompactTextString(m) }
 func (*ParacrossStatusDetails) ProtoMessage()    {}
 func (*ParacrossStatusDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{0}
+	return fileDescriptor_6a397e38c9ea6747, []int{0}
 }
+
 func (m *ParacrossStatusDetails) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossStatusDetails.Unmarshal(m, b)
 }
 func (m *ParacrossStatusDetails) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossStatusDetails.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossStatusDetails) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossStatusDetails.Merge(dst, src)
+func (m *ParacrossStatusDetails) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossStatusDetails.Merge(m, src)
 }
 func (m *ParacrossStatusDetails) XXX_Size() int {
 	return xxx_messageInfo_ParacrossStatusDetails.Size(m)
@@ -75,7 +74,7 @@ func (m *ParacrossStatusDetails) GetBlockHash() [][]byte {
 	return nil
 }
 
-// 记录不同blockHash的详细数据
+//记录不同blockHash的详细数据
 type ParacrossStatusBlockDetails struct {
 	BlockHashs           [][]byte `protobuf:"bytes,1,rep,name=blockHashs,proto3" json:"blockHashs,omitempty"`
 	TxResults            [][]byte `protobuf:"bytes,2,rep,name=txResults,proto3" json:"txResults,omitempty"`
@@ -88,16 +87,17 @@ func (m *ParacrossStatusBlockDetails) Reset()         { *m = ParacrossStatusBloc
 func (m *ParacrossStatusBlockDetails) String() string { return proto.CompactTextString(m) }
 func (*ParacrossStatusBlockDetails) ProtoMessage()    {}
 func (*ParacrossStatusBlockDetails) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{1}
+	return fileDescriptor_6a397e38c9ea6747, []int{1}
 }
+
 func (m *ParacrossStatusBlockDetails) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossStatusBlockDetails.Unmarshal(m, b)
 }
 func (m *ParacrossStatusBlockDetails) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossStatusBlockDetails.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossStatusBlockDetails) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossStatusBlockDetails.Merge(dst, src)
+func (m *ParacrossStatusBlockDetails) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossStatusBlockDetails.Merge(m, src)
 }
 func (m *ParacrossStatusBlockDetails) XXX_Size() int {
 	return xxx_messageInfo_ParacrossStatusBlockDetails.Size(m)
@@ -140,16 +140,17 @@ func (m *ParacrossHeightStatus) Reset()         { *m = ParacrossHeightStatus{} }
 func (m *ParacrossHeightStatus) String() string { return proto.CompactTextString(m) }
 func (*ParacrossHeightStatus) ProtoMessage()    {}
 func (*ParacrossHeightStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{2}
+	return fileDescriptor_6a397e38c9ea6747, []int{2}
 }
+
 func (m *ParacrossHeightStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossHeightStatus.Unmarshal(m, b)
 }
 func (m *ParacrossHeightStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossHeightStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossHeightStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossHeightStatus.Merge(dst, src)
+func (m *ParacrossHeightStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossHeightStatus.Merge(m, src)
 }
 func (m *ParacrossHeightStatus) XXX_Size() int {
 	return xxx_messageInfo_ParacrossHeightStatus.Size(m)
@@ -226,16 +227,17 @@ func (m *ParacrossHeightStatusRsp) Reset()         { *m = ParacrossHeightStatusR
 func (m *ParacrossHeightStatusRsp) String() string { return proto.CompactTextString(m) }
 func (*ParacrossHeightStatusRsp) ProtoMessage()    {}
 func (*ParacrossHeightStatusRsp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{3}
+	return fileDescriptor_6a397e38c9ea6747, []int{3}
 }
+
 func (m *ParacrossHeightStatusRsp) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossHeightStatusRsp.Unmarshal(m, b)
 }
 func (m *ParacrossHeightStatusRsp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossHeightStatusRsp.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossHeightStatusRsp) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossHeightStatusRsp.Merge(dst, src)
+func (m *ParacrossHeightStatusRsp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossHeightStatusRsp.Merge(m, src)
 }
 func (m *ParacrossHeightStatusRsp) XXX_Size() int {
 	return xxx_messageInfo_ParacrossHeightStatusRsp.Size(m)
@@ -310,16 +312,17 @@ func (m *ParacrossStatus) Reset()         { *m = ParacrossStatus{} }
 func (m *ParacrossStatus) String() string { return proto.CompactTextString(m) }
 func (*ParacrossStatus) ProtoMessage()    {}
 func (*ParacrossStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{4}
+	return fileDescriptor_6a397e38c9ea6747, []int{4}
 }
+
 func (m *ParacrossStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossStatus.Unmarshal(m, b)
 }
 func (m *ParacrossStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossStatus.Merge(dst, src)
+func (m *ParacrossStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossStatus.Merge(m, src)
 }
 func (m *ParacrossStatus) XXX_Size() int {
 	return xxx_messageInfo_ParacrossStatus.Size(m)
@@ -379,16 +382,17 @@ func (m *ParacrossConsensusStatus) Reset()         { *m = ParacrossConsensusStat
 func (m *ParacrossConsensusStatus) String() string { return proto.CompactTextString(m) }
 func (*ParacrossConsensusStatus) ProtoMessage()    {}
 func (*ParacrossConsensusStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{5}
+	return fileDescriptor_6a397e38c9ea6747, []int{5}
 }
+
 func (m *ParacrossConsensusStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossConsensusStatus.Unmarshal(m, b)
 }
 func (m *ParacrossConsensusStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossConsensusStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossConsensusStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossConsensusStatus.Merge(dst, src)
+func (m *ParacrossConsensusStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossConsensusStatus.Merge(m, src)
 }
 func (m *ParacrossConsensusStatus) XXX_Size() int {
 	return xxx_messageInfo_ParacrossConsensusStatus.Size(m)
@@ -443,16 +447,17 @@ func (m *ParaNodeAddrConfig) Reset()         { *m = ParaNodeAddrConfig{} }
 func (m *ParaNodeAddrConfig) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeAddrConfig) ProtoMessage()    {}
 func (*ParaNodeAddrConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{6}
+	return fileDescriptor_6a397e38c9ea6747, []int{6}
 }
+
 func (m *ParaNodeAddrConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeAddrConfig.Unmarshal(m, b)
 }
 func (m *ParaNodeAddrConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeAddrConfig.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeAddrConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeAddrConfig.Merge(dst, src)
+func (m *ParaNodeAddrConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeAddrConfig.Merge(m, src)
 }
 func (m *ParaNodeAddrConfig) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeAddrConfig.Size(m)
@@ -517,16 +522,17 @@ func (m *ParaNodeVoteDetail) Reset()         { *m = ParaNodeVoteDetail{} }
 func (m *ParaNodeVoteDetail) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeVoteDetail) ProtoMessage()    {}
 func (*ParaNodeVoteDetail) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{7}
+	return fileDescriptor_6a397e38c9ea6747, []int{7}
 }
+
 func (m *ParaNodeVoteDetail) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeVoteDetail.Unmarshal(m, b)
 }
 func (m *ParaNodeVoteDetail) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeVoteDetail.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeVoteDetail) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeVoteDetail.Merge(dst, src)
+func (m *ParaNodeVoteDetail) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeVoteDetail.Merge(m, src)
 }
 func (m *ParaNodeVoteDetail) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeVoteDetail.Size(m)
@@ -566,16 +572,17 @@ func (m *ParaNodeAddrIdStatus) Reset()         { *m = ParaNodeAddrIdStatus{} }
 func (m *ParaNodeAddrIdStatus) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeAddrIdStatus) ProtoMessage()    {}
 func (*ParaNodeAddrIdStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{8}
+	return fileDescriptor_6a397e38c9ea6747, []int{8}
 }
+
 func (m *ParaNodeAddrIdStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeAddrIdStatus.Unmarshal(m, b)
 }
 func (m *ParaNodeAddrIdStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeAddrIdStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeAddrIdStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeAddrIdStatus.Merge(dst, src)
+func (m *ParaNodeAddrIdStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeAddrIdStatus.Merge(m, src)
 }
 func (m *ParaNodeAddrIdStatus) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeAddrIdStatus.Size(m)
@@ -639,16 +646,17 @@ func (m *ParaNodeIdStatus) Reset()         { *m = ParaNodeIdStatus{} }
 func (m *ParaNodeIdStatus) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeIdStatus) ProtoMessage()    {}
 func (*ParaNodeIdStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{9}
+	return fileDescriptor_6a397e38c9ea6747, []int{9}
 }
+
 func (m *ParaNodeIdStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeIdStatus.Unmarshal(m, b)
 }
 func (m *ParaNodeIdStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeIdStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeIdStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeIdStatus.Merge(dst, src)
+func (m *ParaNodeIdStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeIdStatus.Merge(m, src)
 }
 func (m *ParaNodeIdStatus) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeIdStatus.Size(m)
@@ -729,16 +737,17 @@ func (m *ReceiptParaNodeConfig) Reset()         { *m = ReceiptParaNodeConfig{} }
 func (m *ReceiptParaNodeConfig) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParaNodeConfig) ProtoMessage()    {}
 func (*ReceiptParaNodeConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{10}
+	return fileDescriptor_6a397e38c9ea6747, []int{10}
 }
+
 func (m *ReceiptParaNodeConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParaNodeConfig.Unmarshal(m, b)
 }
 func (m *ReceiptParaNodeConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParaNodeConfig.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParaNodeConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParaNodeConfig.Merge(dst, src)
+func (m *ReceiptParaNodeConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParaNodeConfig.Merge(m, src)
 }
 func (m *ReceiptParaNodeConfig) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParaNodeConfig.Size(m)
@@ -790,16 +799,17 @@ func (m *ReceiptParaNodeAddrStatUpdate) Reset()         { *m = ReceiptParaNodeAd
 func (m *ReceiptParaNodeAddrStatUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParaNodeAddrStatUpdate) ProtoMessage()    {}
 func (*ReceiptParaNodeAddrStatUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{11}
+	return fileDescriptor_6a397e38c9ea6747, []int{11}
 }
+
 func (m *ReceiptParaNodeAddrStatUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParaNodeAddrStatUpdate.Unmarshal(m, b)
 }
 func (m *ReceiptParaNodeAddrStatUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParaNodeAddrStatUpdate.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParaNodeAddrStatUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParaNodeAddrStatUpdate.Merge(dst, src)
+func (m *ReceiptParaNodeAddrStatUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParaNodeAddrStatUpdate.Merge(m, src)
 }
 func (m *ReceiptParaNodeAddrStatUpdate) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParaNodeAddrStatUpdate.Size(m)
@@ -849,16 +859,17 @@ func (m *ReceiptParaNodeVoteDone) Reset()         { *m = ReceiptParaNodeVoteDone
 func (m *ReceiptParaNodeVoteDone) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParaNodeVoteDone) ProtoMessage()    {}
 func (*ReceiptParaNodeVoteDone) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{12}
+	return fileDescriptor_6a397e38c9ea6747, []int{12}
 }
+
 func (m *ReceiptParaNodeVoteDone) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParaNodeVoteDone.Unmarshal(m, b)
 }
 func (m *ReceiptParaNodeVoteDone) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParaNodeVoteDone.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParaNodeVoteDone) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParaNodeVoteDone.Merge(dst, src)
+func (m *ReceiptParaNodeVoteDone) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParaNodeVoteDone.Merge(m, src)
 }
 func (m *ReceiptParaNodeVoteDone) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParaNodeVoteDone.Size(m)
@@ -940,16 +951,17 @@ func (m *ParaNodeGroupConfig) Reset()         { *m = ParaNodeGroupConfig{} }
 func (m *ParaNodeGroupConfig) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeGroupConfig) ProtoMessage()    {}
 func (*ParaNodeGroupConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{13}
+	return fileDescriptor_6a397e38c9ea6747, []int{13}
 }
+
 func (m *ParaNodeGroupConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeGroupConfig.Unmarshal(m, b)
 }
 func (m *ParaNodeGroupConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeGroupConfig.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeGroupConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeGroupConfig.Merge(dst, src)
+func (m *ParaNodeGroupConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeGroupConfig.Merge(m, src)
 }
 func (m *ParaNodeGroupConfig) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeGroupConfig.Size(m)
@@ -1012,16 +1024,17 @@ func (m *ParaNodeGroupStatus) Reset()         { *m = ParaNodeGroupStatus{} }
 func (m *ParaNodeGroupStatus) String() string { return proto.CompactTextString(m) }
 func (*ParaNodeGroupStatus) ProtoMessage()    {}
 func (*ParaNodeGroupStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{14}
+	return fileDescriptor_6a397e38c9ea6747, []int{14}
 }
+
 func (m *ParaNodeGroupStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaNodeGroupStatus.Unmarshal(m, b)
 }
 func (m *ParaNodeGroupStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaNodeGroupStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParaNodeGroupStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaNodeGroupStatus.Merge(dst, src)
+func (m *ParaNodeGroupStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaNodeGroupStatus.Merge(m, src)
 }
 func (m *ParaNodeGroupStatus) XXX_Size() int {
 	return xxx_messageInfo_ParaNodeGroupStatus.Size(m)
@@ -1095,16 +1108,17 @@ func (m *ReceiptParaNodeGroupConfig) Reset()         { *m = ReceiptParaNodeGroup
 func (m *ReceiptParaNodeGroupConfig) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParaNodeGroupConfig) ProtoMessage()    {}
 func (*ReceiptParaNodeGroupConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{15}
+	return fileDescriptor_6a397e38c9ea6747, []int{15}
 }
+
 func (m *ReceiptParaNodeGroupConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParaNodeGroupConfig.Unmarshal(m, b)
 }
 func (m *ReceiptParaNodeGroupConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParaNodeGroupConfig.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParaNodeGroupConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParaNodeGroupConfig.Merge(dst, src)
+func (m *ReceiptParaNodeGroupConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParaNodeGroupConfig.Merge(m, src)
 }
 func (m *ReceiptParaNodeGroupConfig) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParaNodeGroupConfig.Size(m)
@@ -1158,16 +1172,17 @@ func (m *ReqParacrossNodeInfo) Reset()         { *m = ReqParacrossNodeInfo{} }
 func (m *ReqParacrossNodeInfo) String() string { return proto.CompactTextString(m) }
 func (*ReqParacrossNodeInfo) ProtoMessage()    {}
 func (*ReqParacrossNodeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{16}
+	return fileDescriptor_6a397e38c9ea6747, []int{16}
 }
+
 func (m *ReqParacrossNodeInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqParacrossNodeInfo.Unmarshal(m, b)
 }
 func (m *ReqParacrossNodeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqParacrossNodeInfo.Marshal(b, m, deterministic)
 }
-func (dst *ReqParacrossNodeInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqParacrossNodeInfo.Merge(dst, src)
+func (m *ReqParacrossNodeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqParacrossNodeInfo.Merge(m, src)
 }
 func (m *ReqParacrossNodeInfo) XXX_Size() int {
 	return xxx_messageInfo_ReqParacrossNodeInfo.Size(m)
@@ -1217,16 +1232,17 @@ func (m *RespParacrossNodeAddrs) Reset()         { *m = RespParacrossNodeAddrs{}
 func (m *RespParacrossNodeAddrs) String() string { return proto.CompactTextString(m) }
 func (*RespParacrossNodeAddrs) ProtoMessage()    {}
 func (*RespParacrossNodeAddrs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{17}
+	return fileDescriptor_6a397e38c9ea6747, []int{17}
 }
+
 func (m *RespParacrossNodeAddrs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RespParacrossNodeAddrs.Unmarshal(m, b)
 }
 func (m *RespParacrossNodeAddrs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RespParacrossNodeAddrs.Marshal(b, m, deterministic)
 }
-func (dst *RespParacrossNodeAddrs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RespParacrossNodeAddrs.Merge(dst, src)
+func (m *RespParacrossNodeAddrs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RespParacrossNodeAddrs.Merge(m, src)
 }
 func (m *RespParacrossNodeAddrs) XXX_Size() int {
 	return xxx_messageInfo_RespParacrossNodeAddrs.Size(m)
@@ -1255,16 +1271,17 @@ func (m *RespParacrossNodeGroups) Reset()         { *m = RespParacrossNodeGroups
 func (m *RespParacrossNodeGroups) String() string { return proto.CompactTextString(m) }
 func (*RespParacrossNodeGroups) ProtoMessage()    {}
 func (*RespParacrossNodeGroups) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{18}
+	return fileDescriptor_6a397e38c9ea6747, []int{18}
 }
+
 func (m *RespParacrossNodeGroups) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RespParacrossNodeGroups.Unmarshal(m, b)
 }
 func (m *RespParacrossNodeGroups) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RespParacrossNodeGroups.Marshal(b, m, deterministic)
 }
-func (dst *RespParacrossNodeGroups) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RespParacrossNodeGroups.Merge(dst, src)
+func (m *RespParacrossNodeGroups) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RespParacrossNodeGroups.Merge(m, src)
 }
 func (m *RespParacrossNodeGroups) XXX_Size() int {
 	return xxx_messageInfo_RespParacrossNodeGroups.Size(m)
@@ -1296,16 +1313,17 @@ func (m *ParaBlock2MainMap) Reset()         { *m = ParaBlock2MainMap{} }
 func (m *ParaBlock2MainMap) String() string { return proto.CompactTextString(m) }
 func (*ParaBlock2MainMap) ProtoMessage()    {}
 func (*ParaBlock2MainMap) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{19}
+	return fileDescriptor_6a397e38c9ea6747, []int{19}
 }
+
 func (m *ParaBlock2MainMap) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaBlock2MainMap.Unmarshal(m, b)
 }
 func (m *ParaBlock2MainMap) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaBlock2MainMap.Marshal(b, m, deterministic)
 }
-func (dst *ParaBlock2MainMap) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaBlock2MainMap.Merge(dst, src)
+func (m *ParaBlock2MainMap) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaBlock2MainMap.Merge(m, src)
 }
 func (m *ParaBlock2MainMap) XXX_Size() int {
 	return xxx_messageInfo_ParaBlock2MainMap.Size(m)
@@ -1355,16 +1373,17 @@ func (m *ParaBlock2MainInfo) Reset()         { *m = ParaBlock2MainInfo{} }
 func (m *ParaBlock2MainInfo) String() string { return proto.CompactTextString(m) }
 func (*ParaBlock2MainInfo) ProtoMessage()    {}
 func (*ParaBlock2MainInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{20}
+	return fileDescriptor_6a397e38c9ea6747, []int{20}
 }
+
 func (m *ParaBlock2MainInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaBlock2MainInfo.Unmarshal(m, b)
 }
 func (m *ParaBlock2MainInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaBlock2MainInfo.Marshal(b, m, deterministic)
 }
-func (dst *ParaBlock2MainInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaBlock2MainInfo.Merge(dst, src)
+func (m *ParaBlock2MainInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaBlock2MainInfo.Merge(m, src)
 }
 func (m *ParaBlock2MainInfo) XXX_Size() int {
 	return xxx_messageInfo_ParaBlock2MainInfo.Size(m)
@@ -1407,16 +1426,17 @@ func (m *ParacrossNodeStatus) Reset()         { *m = ParacrossNodeStatus{} }
 func (m *ParacrossNodeStatus) String() string { return proto.CompactTextString(m) }
 func (*ParacrossNodeStatus) ProtoMessage()    {}
 func (*ParacrossNodeStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{21}
+	return fileDescriptor_6a397e38c9ea6747, []int{21}
 }
+
 func (m *ParacrossNodeStatus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossNodeStatus.Unmarshal(m, b)
 }
 func (m *ParacrossNodeStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossNodeStatus.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossNodeStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossNodeStatus.Merge(dst, src)
+func (m *ParacrossNodeStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossNodeStatus.Merge(m, src)
 }
 func (m *ParacrossNodeStatus) XXX_Size() int {
 	return xxx_messageInfo_ParacrossNodeStatus.Size(m)
@@ -1536,16 +1556,17 @@ func (m *SelfConsensStages) Reset()         { *m = SelfConsensStages{} }
 func (m *SelfConsensStages) String() string { return proto.CompactTextString(m) }
 func (*SelfConsensStages) ProtoMessage()    {}
 func (*SelfConsensStages) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{22}
+	return fileDescriptor_6a397e38c9ea6747, []int{22}
 }
+
 func (m *SelfConsensStages) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SelfConsensStages.Unmarshal(m, b)
 }
 func (m *SelfConsensStages) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SelfConsensStages.Marshal(b, m, deterministic)
 }
-func (dst *SelfConsensStages) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SelfConsensStages.Merge(dst, src)
+func (m *SelfConsensStages) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SelfConsensStages.Merge(m, src)
 }
 func (m *SelfConsensStages) XXX_Size() int {
 	return xxx_messageInfo_SelfConsensStages.Size(m)
@@ -1575,16 +1596,17 @@ func (m *SelfConsensStage) Reset()         { *m = SelfConsensStage{} }
 func (m *SelfConsensStage) String() string { return proto.CompactTextString(m) }
 func (*SelfConsensStage) ProtoMessage()    {}
 func (*SelfConsensStage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{23}
+	return fileDescriptor_6a397e38c9ea6747, []int{23}
 }
+
 func (m *SelfConsensStage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SelfConsensStage.Unmarshal(m, b)
 }
 func (m *SelfConsensStage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SelfConsensStage.Marshal(b, m, deterministic)
 }
-func (dst *SelfConsensStage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SelfConsensStage.Merge(dst, src)
+func (m *SelfConsensStage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SelfConsensStage.Merge(m, src)
 }
 func (m *SelfConsensStage) XXX_Size() int {
 	return xxx_messageInfo_SelfConsensStage.Size(m)
@@ -1625,16 +1647,17 @@ func (m *SelfConsensStageInfo) Reset()         { *m = SelfConsensStageInfo{} }
 func (m *SelfConsensStageInfo) String() string { return proto.CompactTextString(m) }
 func (*SelfConsensStageInfo) ProtoMessage()    {}
 func (*SelfConsensStageInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{24}
+	return fileDescriptor_6a397e38c9ea6747, []int{24}
 }
+
 func (m *SelfConsensStageInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SelfConsensStageInfo.Unmarshal(m, b)
 }
 func (m *SelfConsensStageInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SelfConsensStageInfo.Marshal(b, m, deterministic)
 }
-func (dst *SelfConsensStageInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SelfConsensStageInfo.Merge(dst, src)
+func (m *SelfConsensStageInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SelfConsensStageInfo.Merge(m, src)
 }
 func (m *SelfConsensStageInfo) XXX_Size() int {
 	return xxx_messageInfo_SelfConsensStageInfo.Size(m)
@@ -1699,16 +1722,17 @@ func (m *LocalSelfConsStageInfo) Reset()         { *m = LocalSelfConsStageInfo{}
 func (m *LocalSelfConsStageInfo) String() string { return proto.CompactTextString(m) }
 func (*LocalSelfConsStageInfo) ProtoMessage()    {}
 func (*LocalSelfConsStageInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{25}
+	return fileDescriptor_6a397e38c9ea6747, []int{25}
 }
+
 func (m *LocalSelfConsStageInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LocalSelfConsStageInfo.Unmarshal(m, b)
 }
 func (m *LocalSelfConsStageInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LocalSelfConsStageInfo.Marshal(b, m, deterministic)
 }
-func (dst *LocalSelfConsStageInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LocalSelfConsStageInfo.Merge(dst, src)
+func (m *LocalSelfConsStageInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalSelfConsStageInfo.Merge(m, src)
 }
 func (m *LocalSelfConsStageInfo) XXX_Size() int {
 	return xxx_messageInfo_LocalSelfConsStageInfo.Size(m)
@@ -1746,16 +1770,17 @@ func (m *ConfigVoteInfo) Reset()         { *m = ConfigVoteInfo{} }
 func (m *ConfigVoteInfo) String() string { return proto.CompactTextString(m) }
 func (*ConfigVoteInfo) ProtoMessage()    {}
 func (*ConfigVoteInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{26}
+	return fileDescriptor_6a397e38c9ea6747, []int{26}
 }
+
 func (m *ConfigVoteInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfigVoteInfo.Unmarshal(m, b)
 }
 func (m *ConfigVoteInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ConfigVoteInfo.Marshal(b, m, deterministic)
 }
-func (dst *ConfigVoteInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfigVoteInfo.Merge(dst, src)
+func (m *ConfigVoteInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfigVoteInfo.Merge(m, src)
 }
 func (m *ConfigVoteInfo) XXX_Size() int {
 	return xxx_messageInfo_ConfigVoteInfo.Size(m)
@@ -1791,16 +1816,17 @@ func (m *ConfigCancelInfo) Reset()         { *m = ConfigCancelInfo{} }
 func (m *ConfigCancelInfo) String() string { return proto.CompactTextString(m) }
 func (*ConfigCancelInfo) ProtoMessage()    {}
 func (*ConfigCancelInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{27}
+	return fileDescriptor_6a397e38c9ea6747, []int{27}
 }
+
 func (m *ConfigCancelInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfigCancelInfo.Unmarshal(m, b)
 }
 func (m *ConfigCancelInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ConfigCancelInfo.Marshal(b, m, deterministic)
 }
-func (dst *ConfigCancelInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfigCancelInfo.Merge(dst, src)
+func (m *ConfigCancelInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfigCancelInfo.Merge(m, src)
 }
 func (m *ConfigCancelInfo) XXX_Size() int {
 	return xxx_messageInfo_ConfigCancelInfo.Size(m)
@@ -1818,7 +1844,7 @@ func (m *ConfigCancelInfo) GetId() string {
 	return ""
 }
 
-// 广义配置类型
+//广义配置类型
 type ParaStageConfig struct {
 	Title string `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	// 配置类型
@@ -1837,16 +1863,17 @@ func (m *ParaStageConfig) Reset()         { *m = ParaStageConfig{} }
 func (m *ParaStageConfig) String() string { return proto.CompactTextString(m) }
 func (*ParaStageConfig) ProtoMessage()    {}
 func (*ParaStageConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{28}
+	return fileDescriptor_6a397e38c9ea6747, []int{28}
 }
+
 func (m *ParaStageConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaStageConfig.Unmarshal(m, b)
 }
 func (m *ParaStageConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaStageConfig.Marshal(b, m, deterministic)
 }
-func (dst *ParaStageConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaStageConfig.Merge(dst, src)
+func (m *ParaStageConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaStageConfig.Merge(m, src)
 }
 func (m *ParaStageConfig) XXX_Size() int {
 	return xxx_messageInfo_ParaStageConfig.Size(m)
@@ -1921,97 +1948,13 @@ func (m *ParaStageConfig) GetCancel() *ConfigCancelInfo {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*ParaStageConfig) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _ParaStageConfig_OneofMarshaler, _ParaStageConfig_OneofUnmarshaler, _ParaStageConfig_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ParaStageConfig) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*ParaStageConfig_Stage)(nil),
 		(*ParaStageConfig_Vote)(nil),
 		(*ParaStageConfig_Cancel)(nil),
 	}
-}
-
-func _ParaStageConfig_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*ParaStageConfig)
-	// value
-	switch x := m.Value.(type) {
-	case *ParaStageConfig_Stage:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Stage); err != nil {
-			return err
-		}
-	case *ParaStageConfig_Vote:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Vote); err != nil {
-			return err
-		}
-	case *ParaStageConfig_Cancel:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Cancel); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("ParaStageConfig.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _ParaStageConfig_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*ParaStageConfig)
-	switch tag {
-	case 10: // value.stage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(SelfConsensStage)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParaStageConfig_Stage{msg}
-		return true, err
-	case 11: // value.vote
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ConfigVoteInfo)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParaStageConfig_Vote{msg}
-		return true, err
-	case 12: // value.cancel
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ConfigCancelInfo)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParaStageConfig_Cancel{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _ParaStageConfig_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*ParaStageConfig)
-	// value
-	switch x := m.Value.(type) {
-	case *ParaStageConfig_Stage:
-		s := proto.Size(x.Stage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParaStageConfig_Vote:
-		s := proto.Size(x.Vote)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParaStageConfig_Cancel:
-		s := proto.Size(x.Cancel)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type ReceiptSelfConsStageConfig struct {
@@ -2026,16 +1969,17 @@ func (m *ReceiptSelfConsStageConfig) Reset()         { *m = ReceiptSelfConsStage
 func (m *ReceiptSelfConsStageConfig) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSelfConsStageConfig) ProtoMessage()    {}
 func (*ReceiptSelfConsStageConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{29}
+	return fileDescriptor_6a397e38c9ea6747, []int{29}
 }
+
 func (m *ReceiptSelfConsStageConfig) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSelfConsStageConfig.Unmarshal(m, b)
 }
 func (m *ReceiptSelfConsStageConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptSelfConsStageConfig.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptSelfConsStageConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptSelfConsStageConfig.Merge(dst, src)
+func (m *ReceiptSelfConsStageConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSelfConsStageConfig.Merge(m, src)
 }
 func (m *ReceiptSelfConsStageConfig) XXX_Size() int {
 	return xxx_messageInfo_ReceiptSelfConsStageConfig.Size(m)
@@ -2076,16 +2020,17 @@ func (m *ReceiptSelfConsStageVoteDone) Reset()         { *m = ReceiptSelfConsSta
 func (m *ReceiptSelfConsStageVoteDone) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSelfConsStageVoteDone) ProtoMessage()    {}
 func (*ReceiptSelfConsStageVoteDone) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{30}
+	return fileDescriptor_6a397e38c9ea6747, []int{30}
 }
+
 func (m *ReceiptSelfConsStageVoteDone) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSelfConsStageVoteDone.Unmarshal(m, b)
 }
 func (m *ReceiptSelfConsStageVoteDone) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptSelfConsStageVoteDone.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptSelfConsStageVoteDone) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptSelfConsStageVoteDone.Merge(dst, src)
+func (m *ReceiptSelfConsStageVoteDone) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSelfConsStageVoteDone.Merge(m, src)
 }
 func (m *ReceiptSelfConsStageVoteDone) XXX_Size() int {
 	return xxx_messageInfo_ReceiptSelfConsStageVoteDone.Size(m)
@@ -2150,16 +2095,17 @@ func (m *ReceiptSelfConsStagesUpdate) Reset()         { *m = ReceiptSelfConsStag
 func (m *ReceiptSelfConsStagesUpdate) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSelfConsStagesUpdate) ProtoMessage()    {}
 func (*ReceiptSelfConsStagesUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{31}
+	return fileDescriptor_6a397e38c9ea6747, []int{31}
 }
+
 func (m *ReceiptSelfConsStagesUpdate) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSelfConsStagesUpdate.Unmarshal(m, b)
 }
 func (m *ReceiptSelfConsStagesUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptSelfConsStagesUpdate.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptSelfConsStagesUpdate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptSelfConsStagesUpdate.Merge(dst, src)
+func (m *ReceiptSelfConsStagesUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSelfConsStagesUpdate.Merge(m, src)
 }
 func (m *ReceiptSelfConsStagesUpdate) XXX_Size() int {
 	return xxx_messageInfo_ReceiptSelfConsStagesUpdate.Size(m)
@@ -2201,16 +2147,17 @@ func (m *ReqQuerySelfStages) Reset()         { *m = ReqQuerySelfStages{} }
 func (m *ReqQuerySelfStages) String() string { return proto.CompactTextString(m) }
 func (*ReqQuerySelfStages) ProtoMessage()    {}
 func (*ReqQuerySelfStages) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{32}
+	return fileDescriptor_6a397e38c9ea6747, []int{32}
 }
+
 func (m *ReqQuerySelfStages) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqQuerySelfStages.Unmarshal(m, b)
 }
 func (m *ReqQuerySelfStages) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqQuerySelfStages.Marshal(b, m, deterministic)
 }
-func (dst *ReqQuerySelfStages) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqQuerySelfStages.Merge(dst, src)
+func (m *ReqQuerySelfStages) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqQuerySelfStages.Merge(m, src)
 }
 func (m *ReqQuerySelfStages) XXX_Size() int {
 	return xxx_messageInfo_ReqQuerySelfStages.Size(m)
@@ -2274,16 +2221,17 @@ func (m *ReplyQuerySelfStages) Reset()         { *m = ReplyQuerySelfStages{} }
 func (m *ReplyQuerySelfStages) String() string { return proto.CompactTextString(m) }
 func (*ReplyQuerySelfStages) ProtoMessage()    {}
 func (*ReplyQuerySelfStages) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{33}
+	return fileDescriptor_6a397e38c9ea6747, []int{33}
 }
+
 func (m *ReplyQuerySelfStages) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReplyQuerySelfStages.Unmarshal(m, b)
 }
 func (m *ReplyQuerySelfStages) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReplyQuerySelfStages.Marshal(b, m, deterministic)
 }
-func (dst *ReplyQuerySelfStages) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReplyQuerySelfStages.Merge(dst, src)
+func (m *ReplyQuerySelfStages) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReplyQuerySelfStages.Merge(m, src)
 }
 func (m *ReplyQuerySelfStages) XXX_Size() int {
 	return xxx_messageInfo_ReplyQuerySelfStages.Size(m)
@@ -2312,16 +2260,17 @@ func (m *ParacrossCommitAction) Reset()         { *m = ParacrossCommitAction{} }
 func (m *ParacrossCommitAction) String() string { return proto.CompactTextString(m) }
 func (*ParacrossCommitAction) ProtoMessage()    {}
 func (*ParacrossCommitAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{34}
+	return fileDescriptor_6a397e38c9ea6747, []int{34}
 }
+
 func (m *ParacrossCommitAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossCommitAction.Unmarshal(m, b)
 }
 func (m *ParacrossCommitAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossCommitAction.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossCommitAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossCommitAction.Merge(dst, src)
+func (m *ParacrossCommitAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossCommitAction.Merge(m, src)
 }
 func (m *ParacrossCommitAction) XXX_Size() int {
 	return xxx_messageInfo_ParacrossCommitAction.Size(m)
@@ -2351,16 +2300,17 @@ func (m *ParacrossMinerAction) Reset()         { *m = ParacrossMinerAction{} }
 func (m *ParacrossMinerAction) String() string { return proto.CompactTextString(m) }
 func (*ParacrossMinerAction) ProtoMessage()    {}
 func (*ParacrossMinerAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{35}
+	return fileDescriptor_6a397e38c9ea6747, []int{35}
 }
+
 func (m *ParacrossMinerAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossMinerAction.Unmarshal(m, b)
 }
 func (m *ParacrossMinerAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossMinerAction.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossMinerAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossMinerAction.Merge(dst, src)
+func (m *ParacrossMinerAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossMinerAction.Merge(m, src)
 }
 func (m *ParacrossMinerAction) XXX_Size() int {
 	return xxx_messageInfo_ParacrossMinerAction.Size(m)
@@ -2389,7 +2339,7 @@ type CrossAssetTransfer struct {
 	AssetExec   string `protobuf:"bytes,1,opt,name=assetExec,proto3" json:"assetExec,omitempty"`
 	AssetSymbol string `protobuf:"bytes,2,opt,name=assetSymbol,proto3" json:"assetSymbol,omitempty"`
 	Amount      int64  `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-	// default signed addr
+	//default signed addr
 	ToAddr               string   `protobuf:"bytes,4,opt,name=toAddr,proto3" json:"toAddr,omitempty"`
 	Note                 string   `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -2401,16 +2351,17 @@ func (m *CrossAssetTransfer) Reset()         { *m = CrossAssetTransfer{} }
 func (m *CrossAssetTransfer) String() string { return proto.CompactTextString(m) }
 func (*CrossAssetTransfer) ProtoMessage()    {}
 func (*CrossAssetTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{36}
+	return fileDescriptor_6a397e38c9ea6747, []int{36}
 }
+
 func (m *CrossAssetTransfer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CrossAssetTransfer.Unmarshal(m, b)
 }
 func (m *CrossAssetTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CrossAssetTransfer.Marshal(b, m, deterministic)
 }
-func (dst *CrossAssetTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CrossAssetTransfer.Merge(dst, src)
+func (m *CrossAssetTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CrossAssetTransfer.Merge(m, src)
 }
 func (m *CrossAssetTransfer) XXX_Size() int {
 	return xxx_messageInfo_CrossAssetTransfer.Size(m)
@@ -2480,16 +2431,17 @@ func (m *ParacrossAction) Reset()         { *m = ParacrossAction{} }
 func (m *ParacrossAction) String() string { return proto.CompactTextString(m) }
 func (*ParacrossAction) ProtoMessage()    {}
 func (*ParacrossAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{37}
+	return fileDescriptor_6a397e38c9ea6747, []int{37}
 }
+
 func (m *ParacrossAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossAction.Unmarshal(m, b)
 }
 func (m *ParacrossAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossAction.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossAction.Merge(dst, src)
+func (m *ParacrossAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossAction.Merge(m, src)
 }
 func (m *ParacrossAction) XXX_Size() int {
 	return xxx_messageInfo_ParacrossAction.Size(m)
@@ -2661,9 +2613,9 @@ func (m *ParacrossAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*ParacrossAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _ParacrossAction_OneofMarshaler, _ParacrossAction_OneofUnmarshaler, _ParacrossAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ParacrossAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*ParacrossAction_Commit)(nil),
 		(*ParacrossAction_Miner)(nil),
 		(*ParacrossAction_AssetTransfer)(nil),
@@ -2676,234 +2628,6 @@ func (*ParacrossAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffe
 		(*ParacrossAction_SelfStageConfig)(nil),
 		(*ParacrossAction_CrossAssetTransfer)(nil),
 	}
-}
-
-func _ParacrossAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*ParacrossAction)
-	// value
-	switch x := m.Value.(type) {
-	case *ParacrossAction_Commit:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Commit); err != nil {
-			return err
-		}
-	case *ParacrossAction_Miner:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Miner); err != nil {
-			return err
-		}
-	case *ParacrossAction_AssetTransfer:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.AssetTransfer); err != nil {
-			return err
-		}
-	case *ParacrossAction_AssetWithdraw:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.AssetWithdraw); err != nil {
-			return err
-		}
-	case *ParacrossAction_Transfer:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Transfer); err != nil {
-			return err
-		}
-	case *ParacrossAction_Withdraw:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Withdraw); err != nil {
-			return err
-		}
-	case *ParacrossAction_TransferToExec:
-		b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TransferToExec); err != nil {
-			return err
-		}
-	case *ParacrossAction_NodeConfig:
-		b.EncodeVarint(9<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NodeConfig); err != nil {
-			return err
-		}
-	case *ParacrossAction_NodeGroupConfig:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.NodeGroupConfig); err != nil {
-			return err
-		}
-	case *ParacrossAction_SelfStageConfig:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.SelfStageConfig); err != nil {
-			return err
-		}
-	case *ParacrossAction_CrossAssetTransfer:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CrossAssetTransfer); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("ParacrossAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _ParacrossAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*ParacrossAction)
-	switch tag {
-	case 1: // value.commit
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ParacrossCommitAction)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_Commit{msg}
-		return true, err
-	case 3: // value.miner
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ParacrossMinerAction)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_Miner{msg}
-		return true, err
-	case 4: // value.assetTransfer
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(types.AssetsTransfer)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_AssetTransfer{msg}
-		return true, err
-	case 5: // value.assetWithdraw
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(types.AssetsWithdraw)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_AssetWithdraw{msg}
-		return true, err
-	case 6: // value.transfer
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(types.AssetsTransfer)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_Transfer{msg}
-		return true, err
-	case 7: // value.withdraw
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(types.AssetsWithdraw)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_Withdraw{msg}
-		return true, err
-	case 8: // value.transferToExec
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(types.AssetsTransferToExec)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_TransferToExec{msg}
-		return true, err
-	case 9: // value.nodeConfig
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ParaNodeAddrConfig)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_NodeConfig{msg}
-		return true, err
-	case 10: // value.nodeGroupConfig
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ParaNodeGroupConfig)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_NodeGroupConfig{msg}
-		return true, err
-	case 11: // value.selfStageConfig
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ParaStageConfig)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_SelfStageConfig{msg}
-		return true, err
-	case 12: // value.crossAssetTransfer
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CrossAssetTransfer)
-		err := b.DecodeMessage(msg)
-		m.Value = &ParacrossAction_CrossAssetTransfer{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _ParacrossAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*ParacrossAction)
-	// value
-	switch x := m.Value.(type) {
-	case *ParacrossAction_Commit:
-		s := proto.Size(x.Commit)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_Miner:
-		s := proto.Size(x.Miner)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_AssetTransfer:
-		s := proto.Size(x.AssetTransfer)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_AssetWithdraw:
-		s := proto.Size(x.AssetWithdraw)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_Transfer:
-		s := proto.Size(x.Transfer)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_Withdraw:
-		s := proto.Size(x.Withdraw)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_TransferToExec:
-		s := proto.Size(x.TransferToExec)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_NodeConfig:
-		s := proto.Size(x.NodeConfig)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_NodeGroupConfig:
-		s := proto.Size(x.NodeGroupConfig)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_SelfStageConfig:
-		s := proto.Size(x.SelfStageConfig)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *ParacrossAction_CrossAssetTransfer:
-		s := proto.Size(x.CrossAssetTransfer)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 // logs
@@ -2921,16 +2645,17 @@ func (m *ReceiptParacrossCommit) Reset()         { *m = ReceiptParacrossCommit{}
 func (m *ReceiptParacrossCommit) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParacrossCommit) ProtoMessage()    {}
 func (*ReceiptParacrossCommit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{38}
+	return fileDescriptor_6a397e38c9ea6747, []int{38}
 }
+
 func (m *ReceiptParacrossCommit) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParacrossCommit.Unmarshal(m, b)
 }
 func (m *ReceiptParacrossCommit) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParacrossCommit.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParacrossCommit) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParacrossCommit.Merge(dst, src)
+func (m *ReceiptParacrossCommit) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParacrossCommit.Merge(m, src)
 }
 func (m *ReceiptParacrossCommit) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParacrossCommit.Size(m)
@@ -2980,16 +2705,17 @@ func (m *ReceiptParacrossMiner) Reset()         { *m = ReceiptParacrossMiner{} }
 func (m *ReceiptParacrossMiner) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParacrossMiner) ProtoMessage()    {}
 func (*ReceiptParacrossMiner) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{39}
+	return fileDescriptor_6a397e38c9ea6747, []int{39}
 }
+
 func (m *ReceiptParacrossMiner) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParacrossMiner.Unmarshal(m, b)
 }
 func (m *ReceiptParacrossMiner) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParacrossMiner.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParacrossMiner) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParacrossMiner.Merge(dst, src)
+func (m *ReceiptParacrossMiner) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParacrossMiner.Merge(m, src)
 }
 func (m *ReceiptParacrossMiner) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParacrossMiner.Size(m)
@@ -3032,16 +2758,17 @@ func (m *ReceiptParacrossDone) Reset()         { *m = ReceiptParacrossDone{} }
 func (m *ReceiptParacrossDone) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParacrossDone) ProtoMessage()    {}
 func (*ReceiptParacrossDone) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{40}
+	return fileDescriptor_6a397e38c9ea6747, []int{40}
 }
+
 func (m *ReceiptParacrossDone) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParacrossDone.Unmarshal(m, b)
 }
 func (m *ReceiptParacrossDone) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParacrossDone.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParacrossDone) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParacrossDone.Merge(dst, src)
+func (m *ReceiptParacrossDone) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParacrossDone.Merge(m, src)
 }
 func (m *ReceiptParacrossDone) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParacrossDone.Size(m)
@@ -3169,16 +2896,17 @@ func (m *ReceiptParacrossRecord) Reset()         { *m = ReceiptParacrossRecord{}
 func (m *ReceiptParacrossRecord) String() string { return proto.CompactTextString(m) }
 func (*ReceiptParacrossRecord) ProtoMessage()    {}
 func (*ReceiptParacrossRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{41}
+	return fileDescriptor_6a397e38c9ea6747, []int{41}
 }
+
 func (m *ReceiptParacrossRecord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptParacrossRecord.Unmarshal(m, b)
 }
 func (m *ReceiptParacrossRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptParacrossRecord.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptParacrossRecord) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptParacrossRecord.Merge(dst, src)
+func (m *ReceiptParacrossRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptParacrossRecord.Merge(m, src)
 }
 func (m *ReceiptParacrossRecord) XXX_Size() int {
 	return xxx_messageInfo_ReceiptParacrossRecord.Size(m)
@@ -3216,16 +2944,17 @@ func (m *ParacrossTx) Reset()         { *m = ParacrossTx{} }
 func (m *ParacrossTx) String() string { return proto.CompactTextString(m) }
 func (*ParacrossTx) ProtoMessage()    {}
 func (*ParacrossTx) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{42}
+	return fileDescriptor_6a397e38c9ea6747, []int{42}
 }
+
 func (m *ParacrossTx) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossTx.Unmarshal(m, b)
 }
 func (m *ParacrossTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossTx.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossTx) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossTx.Merge(dst, src)
+func (m *ParacrossTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossTx.Merge(m, src)
 }
 func (m *ParacrossTx) XXX_Size() int {
 	return xxx_messageInfo_ParacrossTx.Size(m)
@@ -3256,16 +2985,17 @@ func (m *ReqParacrossTitleHeight) Reset()         { *m = ReqParacrossTitleHeight
 func (m *ReqParacrossTitleHeight) String() string { return proto.CompactTextString(m) }
 func (*ReqParacrossTitleHeight) ProtoMessage()    {}
 func (*ReqParacrossTitleHeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{43}
+	return fileDescriptor_6a397e38c9ea6747, []int{43}
 }
+
 func (m *ReqParacrossTitleHeight) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqParacrossTitleHeight.Unmarshal(m, b)
 }
 func (m *ReqParacrossTitleHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqParacrossTitleHeight.Marshal(b, m, deterministic)
 }
-func (dst *ReqParacrossTitleHeight) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqParacrossTitleHeight.Merge(dst, src)
+func (m *ReqParacrossTitleHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqParacrossTitleHeight.Merge(m, src)
 }
 func (m *ReqParacrossTitleHeight) XXX_Size() int {
 	return xxx_messageInfo_ReqParacrossTitleHeight.Size(m)
@@ -3310,16 +3040,17 @@ func (m *RespParacrossDone) Reset()         { *m = RespParacrossDone{} }
 func (m *RespParacrossDone) String() string { return proto.CompactTextString(m) }
 func (*RespParacrossDone) ProtoMessage()    {}
 func (*RespParacrossDone) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{44}
+	return fileDescriptor_6a397e38c9ea6747, []int{44}
 }
+
 func (m *RespParacrossDone) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RespParacrossDone.Unmarshal(m, b)
 }
 func (m *RespParacrossDone) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RespParacrossDone.Marshal(b, m, deterministic)
 }
-func (dst *RespParacrossDone) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RespParacrossDone.Merge(dst, src)
+func (m *RespParacrossDone) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RespParacrossDone.Merge(m, src)
 }
 func (m *RespParacrossDone) XXX_Size() int {
 	return xxx_messageInfo_RespParacrossDone.Size(m)
@@ -3404,16 +3135,17 @@ func (m *RespParacrossTitles) Reset()         { *m = RespParacrossTitles{} }
 func (m *RespParacrossTitles) String() string { return proto.CompactTextString(m) }
 func (*RespParacrossTitles) ProtoMessage()    {}
 func (*RespParacrossTitles) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{45}
+	return fileDescriptor_6a397e38c9ea6747, []int{45}
 }
+
 func (m *RespParacrossTitles) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RespParacrossTitles.Unmarshal(m, b)
 }
 func (m *RespParacrossTitles) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_RespParacrossTitles.Marshal(b, m, deterministic)
 }
-func (dst *RespParacrossTitles) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RespParacrossTitles.Merge(dst, src)
+func (m *RespParacrossTitles) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RespParacrossTitles.Merge(m, src)
 }
 func (m *RespParacrossTitles) XXX_Size() int {
 	return xxx_messageInfo_RespParacrossTitles.Size(m)
@@ -3443,16 +3175,17 @@ func (m *ReqParacrossTitleHash) Reset()         { *m = ReqParacrossTitleHash{} }
 func (m *ReqParacrossTitleHash) String() string { return proto.CompactTextString(m) }
 func (*ReqParacrossTitleHash) ProtoMessage()    {}
 func (*ReqParacrossTitleHash) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{46}
+	return fileDescriptor_6a397e38c9ea6747, []int{46}
 }
+
 func (m *ReqParacrossTitleHash) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReqParacrossTitleHash.Unmarshal(m, b)
 }
 func (m *ReqParacrossTitleHash) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReqParacrossTitleHash.Marshal(b, m, deterministic)
 }
-func (dst *ReqParacrossTitleHash) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReqParacrossTitleHash.Merge(dst, src)
+func (m *ReqParacrossTitleHash) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqParacrossTitleHash.Merge(m, src)
 }
 func (m *ReqParacrossTitleHash) XXX_Size() int {
 	return xxx_messageInfo_ReqParacrossTitleHash.Size(m)
@@ -3487,7 +3220,7 @@ type ParacrossAsset struct {
 	Amount     int64  `protobuf:"varint,5,opt,name=amount,proto3" json:"amount,omitempty"`
 	Exec       string `protobuf:"bytes,6,opt,name=exec,proto3" json:"exec,omitempty"`
 	Symbol     string `protobuf:"bytes,7,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	// 跨链类型　0:to para, 1:to main
+	//跨链类型　0:to para, 1:to main
 	CrossType uint32 `protobuf:"varint,8,opt,name=crossType,proto3" json:"crossType,omitempty"`
 	// 主链部分
 	Height int64 `protobuf:"varint,10,opt,name=height,proto3" json:"height,omitempty"`
@@ -3504,16 +3237,17 @@ func (m *ParacrossAsset) Reset()         { *m = ParacrossAsset{} }
 func (m *ParacrossAsset) String() string { return proto.CompactTextString(m) }
 func (*ParacrossAsset) ProtoMessage()    {}
 func (*ParacrossAsset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{47}
+	return fileDescriptor_6a397e38c9ea6747, []int{47}
 }
+
 func (m *ParacrossAsset) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParacrossAsset.Unmarshal(m, b)
 }
 func (m *ParacrossAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParacrossAsset.Marshal(b, m, deterministic)
 }
-func (dst *ParacrossAsset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParacrossAsset.Merge(dst, src)
+func (m *ParacrossAsset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParacrossAsset.Merge(m, src)
 }
 func (m *ParacrossAsset) XXX_Size() int {
 	return xxx_messageInfo_ParacrossAsset.Size(m)
@@ -3624,16 +3358,17 @@ func (m *ParaLocalDbBlock) Reset()         { *m = ParaLocalDbBlock{} }
 func (m *ParaLocalDbBlock) String() string { return proto.CompactTextString(m) }
 func (*ParaLocalDbBlock) ProtoMessage()    {}
 func (*ParaLocalDbBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{48}
+	return fileDescriptor_6a397e38c9ea6747, []int{48}
 }
+
 func (m *ParaLocalDbBlock) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaLocalDbBlock.Unmarshal(m, b)
 }
 func (m *ParaLocalDbBlock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaLocalDbBlock.Marshal(b, m, deterministic)
 }
-func (dst *ParaLocalDbBlock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaLocalDbBlock.Merge(dst, src)
+func (m *ParaLocalDbBlock) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaLocalDbBlock.Merge(m, src)
 }
 func (m *ParaLocalDbBlock) XXX_Size() int {
 	return xxx_messageInfo_ParaLocalDbBlock.Size(m)
@@ -3702,16 +3437,17 @@ func (m *ParaLocalDbBlockInfo) Reset()         { *m = ParaLocalDbBlockInfo{} }
 func (m *ParaLocalDbBlockInfo) String() string { return proto.CompactTextString(m) }
 func (*ParaLocalDbBlockInfo) ProtoMessage()    {}
 func (*ParaLocalDbBlockInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_paracross_ea462c78b37f0c3b, []int{49}
+	return fileDescriptor_6a397e38c9ea6747, []int{49}
 }
+
 func (m *ParaLocalDbBlockInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ParaLocalDbBlockInfo.Unmarshal(m, b)
 }
 func (m *ParaLocalDbBlockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ParaLocalDbBlockInfo.Marshal(b, m, deterministic)
 }
-func (dst *ParaLocalDbBlockInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ParaLocalDbBlockInfo.Merge(dst, src)
+func (m *ParaLocalDbBlockInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ParaLocalDbBlockInfo.Merge(m, src)
 }
 func (m *ParaLocalDbBlockInfo) XXX_Size() int {
 	return xxx_messageInfo_ParaLocalDbBlockInfo.Size(m)
@@ -3817,81 +3553,11 @@ func init() {
 	proto.RegisterType((*ParaLocalDbBlockInfo)(nil), "types.ParaLocalDbBlockInfo")
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// ParacrossClient is the client API for Paracross service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type ParacrossClient interface {
-	IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.IsCaughtUp, error)
+func init() {
+	proto.RegisterFile("paracross.proto", fileDescriptor_6a397e38c9ea6747)
 }
 
-type paracrossClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewParacrossClient(cc *grpc.ClientConn) ParacrossClient {
-	return &paracrossClient{cc}
-}
-
-func (c *paracrossClient) IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.IsCaughtUp, error) {
-	out := new(types.IsCaughtUp)
-	err := c.cc.Invoke(ctx, "/types.paracross/IsSync", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// ParacrossServer is the server API for Paracross service.
-type ParacrossServer interface {
-	IsSync(context.Context, *types.ReqNil) (*types.IsCaughtUp, error)
-}
-
-func RegisterParacrossServer(s *grpc.Server, srv ParacrossServer) {
-	s.RegisterService(&_Paracross_serviceDesc, srv)
-}
-
-func _Paracross_IsSync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(types.ReqNil)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ParacrossServer).IsSync(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/types.paracross/IsSync",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ParacrossServer).IsSync(ctx, req.(*types.ReqNil))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Paracross_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.paracross",
-	HandlerType: (*ParacrossServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "IsSync",
-			Handler:    _Paracross_IsSync_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "paracross.proto",
-}
-
-func init() { proto.RegisterFile("paracross.proto", fileDescriptor_paracross_ea462c78b37f0c3b) }
-
-var fileDescriptor_paracross_ea462c78b37f0c3b = []byte{
+var fileDescriptor_6a397e38c9ea6747 = []byte{
 	// 2375 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x5a, 0xbd, 0x73, 0x1c, 0x49,
 	0x15, 0xd7, 0xec, 0x97, 0xb4, 0x4f, 0x5a, 0x7d, 0xcc, 0xc9, 0xf2, 0x22, 0xfb, 0x5c, 0xaa, 0x29,
@@ -4042,4 +3708,84 @@ var fileDescriptor_paracross_ea462c78b37f0c3b = []byte{
 	0x5e, 0x7e, 0x98, 0x0c, 0xb7, 0x37, 0x14, 0x79, 0x50, 0xec, 0xc7, 0x93, 0x93, 0x53, 0xf1, 0xf1,
 	0x38, 0x5a, 0x38, 0x6e, 0xd1, 0xbf, 0x5d, 0xdc, 0xfd, 0x7f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x23,
 	0x21, 0x92, 0x91, 0xc3, 0x21, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// ParacrossClient is the client API for Paracross service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type ParacrossClient interface {
+	IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.IsCaughtUp, error)
+}
+
+type paracrossClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewParacrossClient(cc grpc.ClientConnInterface) ParacrossClient {
+	return &paracrossClient{cc}
+}
+
+func (c *paracrossClient) IsSync(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.IsCaughtUp, error) {
+	out := new(types.IsCaughtUp)
+	err := c.cc.Invoke(ctx, "/types.paracross/IsSync", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ParacrossServer is the server API for Paracross service.
+type ParacrossServer interface {
+	IsSync(context.Context, *types.ReqNil) (*types.IsCaughtUp, error)
+}
+
+// UnimplementedParacrossServer can be embedded to have forward compatible implementations.
+type UnimplementedParacrossServer struct {
+}
+
+func (*UnimplementedParacrossServer) IsSync(ctx context.Context, req *types.ReqNil) (*types.IsCaughtUp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsSync not implemented")
+}
+
+func RegisterParacrossServer(s *grpc.Server, srv ParacrossServer) {
+	s.RegisterService(&_Paracross_serviceDesc, srv)
+}
+
+func _Paracross_IsSync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types.ReqNil)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ParacrossServer).IsSync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.paracross/IsSync",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ParacrossServer).IsSync(ctx, req.(*types.ReqNil))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Paracross_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.paracross",
+	HandlerType: (*ParacrossServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IsSync",
+			Handler:    _Paracross_IsSync_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "paracross.proto",
 }
