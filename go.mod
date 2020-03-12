@@ -13,7 +13,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.3.4
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/hashicorp/memberlist v0.1.5
 	github.com/libp2p/go-conn-security v0.1.0 // indirect
@@ -55,12 +55,10 @@ require (
 	go.uber.org/multierr v1.2.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20200109152110-61a87790db17
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
-	google.golang.org/grpc v1.22.1
+	google.golang.org/grpc v1.28.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
-
-replace github.com/33cn/chain33 v0.0.0-20200306092706-a15573bb187f => /Users/w/go/src/github.com/33cn/chain33
 
 replace github.com/dgraph-io/badger v1.6.0 => github.com/dgraph-io/badger v1.5.5
