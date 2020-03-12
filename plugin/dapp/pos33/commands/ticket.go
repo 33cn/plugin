@@ -25,13 +25,51 @@ func Pos33TicketCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
+		AutoMineCmd(),
 		BindMinerCmd(),
 		CountPos33TicketCmd(),
 		ClosePos33TicketCmd(),
 		GetColdAddrByMinerCmd(),
+		listTicketCmd(),
 	)
 
 	return cmd
+}
+
+// AutoMineCmd  set auto mining
+func AutoMineCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "auto_mine",
+		Short: "Set auto mine on/off",
+		Run:   autoMine,
+	}
+	addAutoMineFlags(cmd)
+	return cmd
+}
+
+func addAutoMineFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("flag", "f", 0, `auto mine(0: off, 1: on)`)
+	cmd.MarkFlagRequired("flag")
+}
+
+func autoMine(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	flag, _ := cmd.Flags().GetInt32("flag")
+	if flag != 0 && flag != 1 {
+		err := cmd.UsageFunc()(cmd)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		return
+	}
+	params := struct {
+		Flag int32
+	}{
+		Flag: flag,
+	}
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "pos33.SetAutoMining", params, &res)
+	ctx.Run()
 }
 
 // BindMinerCmd bind miner
@@ -110,6 +148,41 @@ func ClosePos33TicketCmd() *cobra.Command {
 
 func addCloseBindAddr(cmd *cobra.Command) {
 	cmd.Flags().StringP("miner_addr", "m", "", "miner address (optional)")
+}
+
+// listTicketCmd get ticket count
+func listTicketCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "Get ticket id list",
+		Run:   listTicket,
+	}
+	cmd.Flags().StringP("miner_acct", "m", "", "miner address (optional)")
+	cmd.Flags().Int32P("status", "s", 1, "ticket status (default 1:opened tickets)")
+	return cmd
+}
+
+func listTicket(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	minerAddr, _ := cmd.Flags().GetString("miner_acct")
+	status, _ := cmd.Flags().GetInt32("status")
+
+	if minerAddr != "" {
+		var params rpctypes.Query4Jrpc
+
+		params.Execer = ty.Pos33TicketX
+		params.FuncName = "TicketList"
+		req := ty.Pos33TicketList{Addr: minerAddr, Status: status}
+		params.Payload = types.MustPBToJSON(&req)
+		var res ty.ReplyPos33TicketList
+		ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+		ctx.Run()
+		return
+	}
+
+	var res []ty.Pos33Ticket
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "pos33.GetPos33TicketList", nil, &res)
+	ctx.Run()
 }
 
 func closePos33Ticket(cmd *cobra.Command, args []string) {
