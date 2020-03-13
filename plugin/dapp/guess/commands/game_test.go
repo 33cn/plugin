@@ -91,35 +91,16 @@ isRecordBlockSequence=true
 isParaChain=false
 # 是否开启交易快速查询索引
 enableTxQuickIndex=false
+
 [p2p]
-# P2P服务监听端口号
-port=13802
-# 种子节点，格式为ip:port，多个节点以逗号分隔，如seeds=["10.0.0.1:13802","10.0.0.2:13802","10.0.0.3:13802"]
-seeds=[]
-# 是否启动P2P服务
-enable=true
-# 是否为种子节点
-isSeed=false
-# 是否作为服务端，对外提供服务
-serverStart=true
-# 是否使用内置的种子节点
-innerSeedEnable=false
-# 是否使用Github获取种子节点
-useGithub=false
-# 最多的接入节点个数
-innerBounds=300
-# 使用的数据库类型
+types=["dht"]
+msgCacheSize=10240
 driver="leveldb"
-# 数据库文件目录
 dbPath="datadir/addrbook"
-# 数据库缓存大小
 dbCache=4
-# GRPC请求日志文件
 grpcLogFile="grpc33.log"
-# p2p版本号，不同的测试网络选用不同的version
-version=200
-verMix=200
-verMax=200
+
+
 [rpc]
 # jrpc绑定地址
 jrpcBindAddr="localhost:8803"
@@ -462,7 +443,7 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(chain33Cfg)
+	network := p2p.NewP2PMgr(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
