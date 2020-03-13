@@ -40,13 +40,8 @@ isParaChain=false
 enableTxQuickIndex=false
 
 [p2p]
-seeds=[]
-enable=false
-isSeed=false
-serverStart=true
-innerSeedEnable=true
-useGithub=true
-innerBounds=300
+types=["dht"]
+enable=true
 msgCacheSize=10240
 driver="memdb"
 dbPath="datadir/addrbook"
