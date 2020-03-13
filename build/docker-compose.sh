@@ -84,7 +84,7 @@ function base_init() {
     sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
 
     # p2p
-    sed -i $sedfix 's/^seeds=.*/seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
+    sed -i $sedfix '0,/^seeds=.*/s//seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
     #sed -i $sedfix 's/^enable=.*/enable=true/g' chain33.toml
     sed -i $sedfix '0,/^enable=.*/s//enable=true/' chain33.toml
     sed -i $sedfix 's/^isSeed=.*/isSeed=true/g' chain33.toml
