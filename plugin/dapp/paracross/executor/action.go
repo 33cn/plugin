@@ -1007,9 +1007,12 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 	return &receipt, nil
 }
 
-func (a *action) assetTransferMainCheck(cfg *types.Chain33Config) error {
+func (a *action) assetTransferMainCheck(cfg *types.Chain33Config, transfer *types.AssetsTransfer) error {
 	//主链如果没有nodegroup配置，也不允许跨链,直接返回错误，平行链也不会执行
 	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		if len(transfer.To) == 0 {
+			return errors.Wrap(types.ErrInvalidParam, "toAddr should not be null")
+		}
 		return a.isAllowTransfer()
 	}
 	return nil
@@ -1022,7 +1025,7 @@ func (a *action) AssetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 
 	//主链如果没有nodegroup配置，也不允许跨链,直接返回错误，平行链也不会执行
 	if !isPara {
-		err := a.assetTransferMainCheck(cfg)
+		err := a.assetTransferMainCheck(cfg, transfer)
 		if err != nil {
 			return nil, errors.Wrap(err, "AssetTransfer check")
 		}
@@ -1044,6 +1047,9 @@ func (a *action) assetWithdrawMainCheck(cfg *types.Chain33Config, withdraw *type
 
 	//rbk fork后　如果没有nodegroup　conf，也不允许跨链
 	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
+		if len(withdraw.To) == 0 {
+			return errors.Wrap(types.ErrInvalidParam, "toAddr should not be null")
+		}
 		err := a.isAllowTransfer()
 		if err != nil {
 			return errors.Wrap(err, "AssetWithdraw not allow")
@@ -1082,9 +1088,9 @@ func (a *action) crossAssetTransferMainCheck(transfer *pt.CrossAssetTransfer) er
 		return errors.Wrap(err, "not Allow")
 	}
 
-	if len(transfer.AssetExec) == 0 || len(transfer.AssetSymbol) == 0 || transfer.Amount == 0 {
-		return errors.Wrapf(types.ErrInvalidParam, "exec=%s, symbol=%s, amount=%d should not be null",
-			transfer.AssetExec, transfer.AssetSymbol, transfer.Amount)
+	if len(transfer.AssetExec) == 0 || len(transfer.AssetSymbol) == 0 || transfer.Amount == 0 || len(transfer.ToAddr) == 0 {
+		return errors.Wrapf(types.ErrInvalidParam, "exec=%s, symbol=%s, amount=%d,toAddr=%s should not be null",
+			transfer.AssetExec, transfer.AssetSymbol, transfer.Amount, transfer.ToAddr)
 	}
 	return nil
 }
@@ -1106,9 +1112,6 @@ func (a *action) CrossAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Rec
 		return nil, errors.Wrap(types.ErrNotSupport, "not Allow before ForkRootHash")
 	}
 
-	if len(transfer.ToAddr) == 0 {
-		transfer.ToAddr = a.tx.From()
-	}
 	act, err := getCrossAction(transfer, string(a.tx.Execer))
 	if act == pt.ParacrossNoneTransfer {
 		return nil, errors.Wrap(err, "non action")
