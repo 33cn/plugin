@@ -21,6 +21,7 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	ctypes "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 //
@@ -51,7 +52,8 @@ func main() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 	flag.Parse()
 
-	config = types.NewChain33Config(types.ReadFile(*conf))
+	config = types.NewChain33Config(types.MergeCfg(types.ReadFile(*conf), ""))
+	config.EnableCheckFork(false)
 
 	privs := loadAccounts("./acc.dat", *maxacc)
 	if *pnodes {
@@ -182,6 +184,7 @@ func newTx(priv crypto.PrivKey, amount int64, to string) *Tx {
 	}
 	tx.Fee *= 10
 	tx.To = to
+	tx.Expire = 
 	tx.Sign(types.SECP256K1, priv)
 	return tx
 }

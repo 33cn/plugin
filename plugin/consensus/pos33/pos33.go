@@ -34,7 +34,8 @@ type Client struct {
 	ticketsMap map[string]*pt.Pos33Ticket
 	privmap    map[string]crypto.PrivKey
 
-	tcMap map[int64]int
+	tcMap  map[int64]int
+	tmLock sync.Mutex
 }
 
 // Tx is ...
@@ -86,7 +87,7 @@ func (client *Client) newBlock(lastBlock *types.Block, txs []*types.Transaction,
 	cfg := client.GetAPI().GetConfig()
 	ch := make(chan []*Tx, 1)
 	maxTxs := int(cfg.GetP(height).MaxTxNumber)
-	maxTxs = 3000
+	maxTxs = 1000
 	go func() { ch <- client.RequestTx(maxTxs, nil) }()
 	select {
 	case <-time.After(time.Millisecond * 300):
@@ -117,6 +118,10 @@ func (client *Client) allWeight(height int64) int {
 	if preH == height {
 		preH -= pt.Pos33SortitionSize
 	}
+
+	client.tmLock.Lock()
+	defer client.tmLock.Unlock()
+
 	tc, ok := client.tcMap[preH]
 	if ok {
 		return tc

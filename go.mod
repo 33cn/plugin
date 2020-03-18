@@ -3,19 +3,21 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20200311054608-67f804d0ad2c
+	github.com/33cn/chain33 v0.0.0-20200314025239-68ef1b429d3b
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
+	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/gogo/protobuf v1.3.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.3.4
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/hashicorp/memberlist v0.1.5
+	github.com/huin/goupnp v1.0.0
+	github.com/jackpal/go-nat-pmp v1.0.1
 	github.com/libp2p/go-conn-security v0.1.0 // indirect
 	github.com/libp2p/go-libp2p v0.5.0
 	github.com/libp2p/go-libp2p-autonat-svc v0.1.0
@@ -30,19 +32,19 @@ require (
 	github.com/libp2p/go-libp2p-peerstore v0.1.4
 	github.com/libp2p/go-libp2p-protocol v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.2.5
-	github.com/libp2p/go-libp2p-quic-transport v0.2.2
+	github.com/libp2p/go-libp2p-quic-transport v0.2.2 // indirect
 	github.com/libp2p/go-libp2p-routing v0.1.0
 	github.com/libp2p/go-libp2p-secio v0.2.1
-	github.com/libp2p/go-libp2p-tls v0.1.2
+	github.com/libp2p/go-libp2p-tls v0.1.2 // indirect
 	github.com/libp2p/go-libp2p-transport v0.1.0 // indirect
-	github.com/libp2p/go-libp2p-yamux v0.2.1
 	github.com/multiformats/go-multiaddr v0.2.0
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v1.1.0 // indirect
+	github.com/prometheus/client_golang v0.9.2 // indirect
+	github.com/prometheus/common v0.4.1 // indirect
+	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/tjfoc/gmsm v0.0.0-20171124023159-98aa888b79d8
 	github.com/valyala/fasthttp v1.5.0
@@ -60,5 +62,3 @@ require (
 	google.golang.org/grpc v1.28.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
-
-replace github.com/dgraph-io/badger v1.6.0 => github.com/dgraph-io/badger v1.5.5

@@ -62,7 +62,7 @@ func TestPbft(t *testing.T) {
 	clearTestData()
 }
 
-func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	flag.Parse()
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
 	var q = queue.New("channel")
@@ -81,7 +81,7 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.P2p, queue.Module,
 	s.SetQueueClient(q.Client())
 	cs := NewPbft(cfg.Consensus, sub.Consensus["pbft"])
 	cs.SetQueueClient(q.Client())
-	p2pnet := p2p.New(chain33Cfg)
+	p2pnet := p2p.NewP2PMgr(chain33Cfg)
 	p2pnet.SetQueueClient(q.Client())
 	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())

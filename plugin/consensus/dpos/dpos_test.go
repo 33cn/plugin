@@ -393,7 +393,7 @@ func initEnvDpos() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mod
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(chain33Cfg)
+	network := p2p.NewP2PMgr(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 
