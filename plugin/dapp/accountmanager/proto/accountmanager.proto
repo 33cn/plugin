@@ -1,0 +1,109 @@
+syntax = "proto3";
+package types;
+
+message Accountmanager {
+}
+
+message AccountmanagerAction {
+    oneof value {
+        //注册
+        Register register = 1;
+        //重置公钥
+        Reset reset = 2;
+        //转账
+        Transfer transfer = 3;
+        //监管操作
+        Supervise supervise = 4;
+        //申请操作,预留接口
+        Apply   apply = 5;
+    }
+    int32 ty = 6;
+}
+
+
+//注册
+message Register {
+    string accountID = 1;
+    //    string addr = 2;
+}
+
+//重置公钥
+message Reset {
+    string accountID = 1;
+    string addr = 2;
+}
+
+//用户申请服务
+message Apply {
+    string accountID = 1;
+    //操作， 0,账户注册,1,账户公钥重置 2,账户延期申请 3,账户注销
+    int32 op = 2;
+}
+
+//资产类型
+message asset {
+    string execer = 1;
+    string symbol = 2;
+}
+
+//合约内部账户之间转账
+message Transfer {
+    //资产类型
+    asset   Asset = 1;
+    // from账户
+    string fromAccountID = 2;
+    // to账户
+    string toAccountID = 3;
+    //转账金额
+    int64 amount = 4;
+
+}
+
+//管理员监管操作
+message Supervise {
+    //账户名单
+    repeated string accountIDs = 1;
+    //操作， 1为冻结，2为解冻
+    int32 op = 2;
+}
+
+message Account{
+    //账户名称
+    string accountID = 1;
+    //地址
+    string addr = 2;
+    //上一次公钥地址
+    string prevAddr = 3;
+    //账户状态 1 正常， 2表示冻结, 3表示锁定 4,过期注销
+    int32  status = 4;
+    //注册时间
+    int64  createTime = 5;
+    //失效时间
+    int64  expireTime = 6;
+    //锁定时间
+    int64  lockTime = 7;
+    //索引
+    int64  index = 8;
+}
+
+message Receipt{
+    //账户名称
+    string accountID = 1;
+    //地址
+    string addr = 2;
+    //上一次公钥地址
+    string prevAddr = 3;
+    //账户状态 1 正常， 2表示冻结, 3表示锁定 4,过期注销
+    int32  status = 4;
+    //注册时间
+    int64  createTime = 5;
+    //失效时间
+    int64  expireTime = 6;
+    //锁定时间
+    int64  lockTime = 7;
+    //索引
+    int64  index = 8;
+}
+service accountmanager {
+
+}
