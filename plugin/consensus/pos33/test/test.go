@@ -107,18 +107,32 @@ type pp struct {
 type Tx = types.Transaction
 
 func run(privs []crypto.PrivKey) {
-	ch := generateTxs(privs)
+	hch := make(chan int64, 10)
+	hch <- 0
+	ch := generateTxs(privs, hch)
+	tch := time.NewTicker(time.Second * 10).C
 	i := 0
+	height := int64(0)
 	for {
-		tx := <-ch
-		sendTx(tx)
-		time.Sleep(time.Microsecond * time.Duration(*rn))
-		i++
-		log.Println(i, "... txs sent")
+		select {
+		case <-tch:
+			var res rpctypes.Header
+			err := gClient.Call("Chain33.GetLastHeader", nil, &res)
+			if err != nil {
+				panic(err)
+			}
+			height = res.Height
+		case tx := <-ch:
+			sendTx(tx)
+			hch <- height
+			time.Sleep(time.Microsecond * time.Duration(*rn))
+			i++
+			log.Println(i, "... txs sent")
+		}
 	}
 }
 
-func generateTxs(privs []crypto.PrivKey) chan *Tx {
+func generateTxs(privs []crypto.PrivKey, hch <-chan int64) chan *Tx {
 	N := 4
 	l := len(privs) - 1
 	ch := make(chan *Tx, N)
@@ -126,7 +140,7 @@ func generateTxs(privs []crypto.PrivKey) chan *Tx {
 		for {
 			i := rand.Intn(len(privs))
 			signer := privs[l-i]
-			ch <- newTx(signer, 1, address.PubKeyToAddress(privs[i].PubKey().Bytes()).String())
+			ch <- newTxWithTxHeight(signer, 1, address.PubKeyToAddress(privs[i].PubKey().Bytes()).String(), <-hch)
 		}
 	}
 	for i := 0; i < N; i++ {
@@ -175,6 +189,20 @@ func sendInitTxs(privs []crypto.PrivKey, filename string) {
 	log.Println("init txs finished:", n)
 }
 
+func newTxWithTxHeight(priv crypto.PrivKey, amount int64, to string, height int64) *Tx {
+	act := &ctypes.CoinsAction{Value: &ctypes.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: "YCC", Amount: amount}}, Ty: ctypes.CoinsActionTransfer}
+	payload := types.Encode(act)
+	tx, err := types.CreateFormatTx(config, "coins", payload)
+	if err != nil {
+		panic(err)
+	}
+	tx.Fee *= 10
+	tx.To = to
+	tx.Expire = height + 20 + types.TxHeightFlag
+	tx.Sign(types.SECP256K1, priv)
+	return tx
+}
+
 func newTx(priv crypto.PrivKey, amount int64, to string) *Tx {
 	act := &ctypes.CoinsAction{Value: &ctypes.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: "YCC", Amount: amount}}, Ty: ctypes.CoinsActionTransfer}
 	payload := types.Encode(act)
@@ -184,7 +212,6 @@ func newTx(priv crypto.PrivKey, amount int64, to string) *Tx {
 	}
 	tx.Fee *= 10
 	tx.To = to
-	tx.Expire = 
 	tx.Sign(types.SECP256K1, priv)
 	return tx
 }
