@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"sync"
 
+	"sort"
+
 	log "github.com/33cn/chain33/common/log/log15"
 
 	"sync/atomic"
@@ -62,36 +64,32 @@ type client struct {
 	minerPrivateKey crypto.PrivKey
 	wg              sync.WaitGroup
 	subCfg          *subConfig
+	dldCfg          *downloadClient
 	isClosed        int32
 	quitCreate      chan struct{}
 }
 
-type emptyBlockInterval struct {
-	BlockHeight int64 `json:"blockHeight,omitempty"`
-	Interval    int64 `json:"interval,omitempty"`
-}
-
 type subConfig struct {
-	WriteBlockSeconds       int64                 `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient    string                `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight             int64                 `json:"startHeight,omitempty"`
-	GenesisStartHeightSame  bool                  `json:"genesisStartHeightSame,omitempty"`
-	EmptyBlockInterval      []*emptyBlockInterval `json:"emptyBlockInterval,omitempty"`
-	AuthAccount             string                `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg    int32                 `json:"waitBlocks4CommitMsg,omitempty"`
-	GenesisAmount           int64                 `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight int64                 `json:"mainBlockHashForkHeight,omitempty"`
-	WaitConsensStopTimes    uint32                `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount           int64                 `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount         int32                 `json:"maxSyncErrCount,omitempty"`
-	BatchFetchBlockCount    int64                 `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight  int64                 `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen       bool                  `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob   int64                 `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum     uint32                `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime  uint32                `json:"multiDownServerRspTime,omitempty"`
-	RmCommitParamMainHeight int64                 `json:"rmCommitParamMainHeight,omitempty"`
-	JumpDownloadClose       bool                  `json:"jumpDownloadClose,omitempty"`
+	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight             int64    `json:"startHeight,omitempty"`
+	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
+	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
+	AuthAccount             string   `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg    int32    `json:"waitBlocks4CommitMsg,omitempty"`
+	GenesisAmount           int64    `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight int64    `json:"mainBlockHashForkHeight,omitempty"`
+	WaitConsensStopTimes    uint32   `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount           int64    `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount         int32    `json:"maxSyncErrCount,omitempty"`
+	BatchFetchBlockCount    int64    `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight  int64    `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen       bool     `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob   int64    `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum     uint32   `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime  uint32   `json:"multiDownServerRspTime,omitempty"`
+	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
+	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
 }
 
 // New function to init paracross env
@@ -108,11 +106,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
 	}
-	if len(subcfg.EmptyBlockInterval) == 0 {
-		interval := &emptyBlockInterval{Interval: defaultEmptyBlockInterval}
-		subcfg.EmptyBlockInterval = append(subcfg.EmptyBlockInterval, interval)
+
+	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
+	if err != nil {
+		panic("para EmptyBlockInterval config not correct")
 	}
-	err := checkEmptyBlockInterval(subcfg.EmptyBlockInterval)
+	err = checkEmptyBlockInterval(emptyInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
 	}
@@ -143,6 +142,9 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subCfg:          &subcfg,
 		quitCreate:      make(chan struct{}),
 	}
+
+	para.dldCfg = &downloadClient{}
+	para.dldCfg.emptyInterval = append(para.dldCfg.emptyInterval, emptyInterval...)
 
 	para.commitMsgClient = &commitMsgClient{
 		paraClient:           para,
@@ -206,18 +208,45 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	return para
 }
 
+//["0:50","100:20","500:30"]
+func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
+	var emptyInter []*emptyBlockInterval
+	if len(cfg) == 0 {
+		interval := &emptyBlockInterval{startHeight: 0, interval: defaultEmptyBlockInterval}
+		emptyInter = append(emptyInter, interval)
+		return emptyInter, nil
+	}
+
+	list := make(map[int64]int64)
+	var seq []int64
+	for _, e := range cfg {
+		ret, err := divideStr2Int64s(e, ":")
+		if err != nil {
+			plog.Error("parse empty block inter config", "str", e)
+			return nil, err
+		}
+		seq = append(seq, ret[0])
+		list[ret[0]] = ret[1]
+	}
+	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
+	for _, h := range seq {
+		emptyInter = append(emptyInter, &emptyBlockInterval{startHeight: h, interval: list[h]})
+	}
+	return emptyInter, nil
+}
+
 func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
 	for i := 0; i < len(in); i++ {
-		if i == 0 && in[i].BlockHeight != 0 {
-			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].BlockHeight)
+		if i == 0 && in[i].startHeight != 0 {
+			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].startHeight)
 			return types.ErrInvalidParam
 		}
-		if i > 0 && in[i].BlockHeight <= in[i-1].BlockHeight {
-			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].BlockHeight, "laterHeight", in[i].BlockHeight)
+		if i > 0 && in[i].startHeight <= in[i-1].startHeight {
+			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].startHeight, "laterHeight", in[i].startHeight)
 			return types.ErrInvalidParam
 		}
-		if in[i].Interval <= 0 {
-			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].BlockHeight)
+		if in[i].interval <= 0 {
+			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].startHeight)
 			return types.ErrInvalidParam
 		}
 	}
