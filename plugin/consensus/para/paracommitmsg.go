@@ -907,24 +907,35 @@ func (client *commitMsgClient) fetchPriKey() error {
 }
 
 func parseSelfConsEnableStr(selfEnables []string) ([]*paraSelfConsEnable, error) {
-	var err error
 	var list []*paraSelfConsEnable
-	for _, v := range selfEnables {
-		hs := strings.Split(v, "-")
-		enable := &paraSelfConsEnable{}
-		enable.startHeight, err = strconv.ParseInt(hs[0], 0, 64)
+	for _, e := range selfEnables {
+		ret, err := divideStr2Int64s(e, "-")
 		if err != nil {
-			plog.Error("para setSelfConsEnable", "v0", hs[0], "err", err)
 			return nil, err
 		}
-		enable.endHeight, err = strconv.ParseInt(hs[1], 0, 64)
-		if err != nil {
-			plog.Error("para setSelfConsEnable", "v1", hs[1], "err", err)
-			return nil, err
-		}
-		list = append(list, enable)
+		list = append(list, &paraSelfConsEnable{ret[0], ret[1]})
 	}
 	return list, nil
+}
+
+//only for "0:50" or "0-50" with one sep
+func divideStr2Int64s(s, sep string) ([]int64, error) {
+	var r []int64
+	a := strings.Split(s, sep)
+	if len(a) != 2 {
+		plog.Error("error format for config to seperate", "s", s)
+		return nil, types.ErrInvalidParam
+	}
+
+	for _, v := range a {
+		val, err := strconv.ParseInt(v, 0, 64)
+		if err != nil {
+			plog.Error("error format for config to parse to int", "s", s)
+			return nil, err
+		}
+		r = append(r, val)
+	}
+	return r, nil
 }
 
 func (client *commitMsgClient) setSelfConsEnable() error {

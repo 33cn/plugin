@@ -21,6 +21,15 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
+type emptyBlockInterval struct {
+	startHeight int64
+	interval    int64
+}
+
+type downloadClient struct {
+	emptyInterval []*emptyBlockInterval
+}
+
 func (client *client) createLocalGenesisBlock(genesis *types.Block) error {
 	return client.alignLocalBlock2ChainBlock(genesis)
 }
@@ -236,7 +245,7 @@ func (client *client) getBatchSeqCount(currSeq int64) (int64, error) {
 	}
 
 	if lastSeq > currSeq {
-		if lastSeq-currSeq > client.subCfg.EmptyBlockInterval[0].Interval {
+		if lastSeq-currSeq > client.dldCfg.emptyInterval[0].interval {
 			atomic.StoreInt32(&client.caughtUp, 0)
 		} else {
 			atomic.StoreInt32(&client.caughtUp, 1)
@@ -378,8 +387,8 @@ func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []
 
 func (client *client) getEmptyInterval(lastBlock *pt.ParaLocalDbBlock) int64 {
 	for i := len(client.subCfg.EmptyBlockInterval) - 1; i >= 0; i-- {
-		if lastBlock.Height >= client.subCfg.EmptyBlockInterval[i].BlockHeight {
-			return client.subCfg.EmptyBlockInterval[i].Interval
+		if lastBlock.Height >= client.dldCfg.emptyInterval[i].startHeight {
+			return client.dldCfg.emptyInterval[i].interval
 		}
 	}
 	panic(fmt.Sprintf("emptyBlockInterval not set for height=%d", lastBlock.Height))

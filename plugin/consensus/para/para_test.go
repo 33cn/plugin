@@ -225,62 +225,116 @@ func TestGetLastBlockInfo(t *testing.T) {
 }
 
 func TestGetEmptyInterval(t *testing.T) {
-	int1 := &emptyBlockInterval{BlockHeight: 0, Interval: 1}
-	int2 := &emptyBlockInterval{BlockHeight: 10, Interval: 10}
-	int3 := &emptyBlockInterval{BlockHeight: 15, Interval: 15}
+	int1 := &emptyBlockInterval{startHeight: 0, interval: 1}
+	int2 := &emptyBlockInterval{startHeight: 10, interval: 10}
+	int3 := &emptyBlockInterval{startHeight: 15, interval: 15}
 
 	ints := []*emptyBlockInterval{int1, int2, int3}
 	para := new(client)
-	para.subCfg = &subConfig{EmptyBlockInterval: ints}
+	para.dldCfg = &downloadClient{}
+	para.dldCfg.emptyInterval = append(para.dldCfg.emptyInterval, ints...)
 
 	lastBlock := &pt.ParaLocalDbBlock{Height: 1}
 	ret := para.getEmptyInterval(lastBlock)
-	assert.Equal(t, int1.Interval, ret)
+	assert.Equal(t, int1.interval, ret)
 
 	lastBlock = &pt.ParaLocalDbBlock{Height: 10}
 	ret = para.getEmptyInterval(lastBlock)
-	assert.Equal(t, int2.Interval, ret)
+	assert.Equal(t, int2.interval, ret)
 
 	lastBlock = &pt.ParaLocalDbBlock{Height: 11}
 	ret = para.getEmptyInterval(lastBlock)
-	assert.Equal(t, int2.Interval, ret)
+	assert.Equal(t, int2.interval, ret)
 
 	lastBlock = &pt.ParaLocalDbBlock{Height: 16}
 	ret = para.getEmptyInterval(lastBlock)
-	assert.Equal(t, int3.Interval, ret)
+	assert.Equal(t, int3.interval, ret)
 
 }
 
 func TestCheckEmptyInterval(t *testing.T) {
-	int1 := &emptyBlockInterval{BlockHeight: 0, Interval: 1}
-	int2 := &emptyBlockInterval{BlockHeight: 10, Interval: 10}
-	int3 := &emptyBlockInterval{BlockHeight: 15, Interval: 15}
+	int1 := &emptyBlockInterval{startHeight: 0, interval: 1}
+	int2 := &emptyBlockInterval{startHeight: 10, interval: 10}
+	int3 := &emptyBlockInterval{startHeight: 15, interval: 15}
 
-	int1.BlockHeight = 5
+	int1.startHeight = 5
 	ints := []*emptyBlockInterval{int1, int2, int3}
 	err := checkEmptyBlockInterval(ints)
 	assert.Equal(t, types.ErrInvalidParam, err)
-	int1.BlockHeight = 0
+	int1.startHeight = 0
 
-	int3.BlockHeight = 5
+	int3.startHeight = 5
 	ints = []*emptyBlockInterval{int1, int2, int3}
 	err = checkEmptyBlockInterval(ints)
 	assert.Equal(t, types.ErrInvalidParam, err)
 
-	int3.BlockHeight = 10
+	int3.startHeight = 10
 	ints = []*emptyBlockInterval{int1, int2, int3}
 	err = checkEmptyBlockInterval(ints)
 	assert.Equal(t, types.ErrInvalidParam, err)
-	int3.BlockHeight = 15
+	int3.startHeight = 15
 
-	int2.Interval = 0
+	int2.interval = 0
 	ints = []*emptyBlockInterval{int1, int2, int3}
 	err = checkEmptyBlockInterval(ints)
 	assert.Equal(t, types.ErrInvalidParam, err)
 
-	int2.Interval = 2
+	int2.interval = 2
 	ints = []*emptyBlockInterval{int1, int2, int3}
 	err = checkEmptyBlockInterval(ints)
 	assert.Equal(t, nil, err)
 
+}
+
+func TestParseEmptyBlockInterval(t *testing.T) {
+	cfg := []string{}
+	ret, err := parseEmptyBlockInterval(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), ret[0].startHeight)
+	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+
+	cfg = []string{"0:50"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), ret[0].startHeight)
+	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+
+	cfg = []string{"0:50", "100:20"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), ret[0].startHeight)
+	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, int64(100), ret[1].startHeight)
+	assert.Equal(t, int64(20), ret[1].interval)
+
+	cfg = []string{"10:50"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(10), ret[0].startHeight)
+	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+
+	cfg = []string{"10:50", "20-30"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.NotNil(t, err)
+
+	cfg = []string{"10:50", "20:"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.NotNil(t, err)
+
+	cfg = []string{"10:50", ":20"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.NotNil(t, err)
+
+	//mess sequence
+	cfg = []string{"100:30", "0:50", "30:20", "200:10"}
+	ret, err = parseEmptyBlockInterval(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, int64(0), ret[0].startHeight)
+	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, int64(30), ret[1].startHeight)
+	assert.Equal(t, int64(20), ret[1].interval)
+	assert.Equal(t, int64(100), ret[2].startHeight)
+	assert.Equal(t, int64(30), ret[2].interval)
+	assert.Equal(t, int64(200), ret[3].startHeight)
+	assert.Equal(t, int64(10), ret[3].interval)
 }
