@@ -248,7 +248,7 @@ function paracross_txgroupex() {
     local trade_exec_name="$para_title.trade"
 
     #  资产从主链转移到平行链
-    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"CrossAssetTransfer","payload":{"assetExec":"'"${coins_exec}"'","assetSymbol":"'"${bty_symbol}"'","amount":'${amount_transfer}'}}]'
+    req='"method":"Chain33.CreateTransaction","params":[{"execer":"'"${paracross_execer_name}"'","actionName":"CrossAssetTransfer","payload":{"assetExec":"'"${coins_exec}"'","assetSymbol":"'"${bty_symbol}"'","toAddr":"'"${para_test_addr}"'","amount":'${amount_transfer}'}}]'
     echo "$req"
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
