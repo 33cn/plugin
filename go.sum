@@ -1,6 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/33cn/chain33 v0.0.0-20200314025239-68ef1b429d3b h1:p0z3gfCHhwPIv8n89mLNUS2JJxpeQeiMO3ETQNOIkt8=
-github.com/33cn/chain33 v0.0.0-20200314025239-68ef1b429d3b/go.mod h1:lQwHpQNknnHEQla33z42+YuBkjwjcNooMMwRqmhsG/c=
+github.com/33cn/chain33 v0.0.0-20200322081059-10e7a26d6dc3 h1:mfjZi5jQxSQTMZXxgAmtVCaAJ5YQp2fmxOVFIl7vt7Y=
+github.com/33cn/chain33 v0.0.0-20200322081059-10e7a26d6dc3/go.mod h1:lQwHpQNknnHEQla33z42+YuBkjwjcNooMMwRqmhsG/c=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7 h1:PqzgE6kAMi81xWQA2QIVxjWkFHptGgC547vchpUbtFo=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9 h1:HD8gA2tkByhMAwYaFAX9w2l7vxvBQ5NMoxDrkhqhtn4=
