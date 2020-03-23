@@ -186,7 +186,7 @@ func (t *Pos33Ticket) updateAllPos33TicketCount(n int) (kvs []*types.KeyValue) {
 	count += n
 	key = []byte(ty.Pos33AllTicketCountKeyPrefix + fmt.Sprintf("%d", nxtH))
 	clog.Info("@@@@@@@ saveAllPos33TicketCount", "key", string(key), "count", count, "new", n)
-	return []*types.KeyValue{&types.KeyValue{Key: key, Value: []byte(fmt.Sprintf("%d", count))}}
+	return []*types.KeyValue{{Key: key, Value: []byte(fmt.Sprintf("%d", count))}}
 }
 
 func (t *Pos33Ticket) savePos33Ticket(ticketlog *ty.ReceiptPos33Ticket) (kvs []*types.KeyValue) {

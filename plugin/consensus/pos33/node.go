@@ -964,7 +964,7 @@ func (n *node) runLoop() {
 			n.makeNextBlock(height, round)
 			if round > 0 {
 				n.vote(height, round)
-			} 
+			}
 			time.AfterFunc(time.Second*5, func() {
 				ch <- height
 			})
