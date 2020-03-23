@@ -7,7 +7,7 @@ version="6.3.0"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
-loglevel = "info"
+loglevel = "dbug"
 logConsoleLevel = "error"
 # 日志文件名，可带目录，所有生成的日志文件都放到此目录下
 logFile = "logs/chain33.log"
@@ -41,22 +41,41 @@ isRecordBlockSequence=true
 isParaChain=false
 enableTxQuickIndex=true
 enableReExecLocal=true
+txHeight=true
 
 [p2p]
-port=13801
-seeds=["47.103.215.6:13801"]
-channel=2
+# p2p类型
+types=["dht"]
+# 是否启动P2P服务
 enable=true
+# 使用的数据库类型
+driver="leveldb"
+# 使用的数据库类型
+dbPath="datadir/addrbook"
+# 数据库缓存大小
+dbCache=4
+# GRPC请求日志文件
+grpcLogFile="grpc33.log"
+#waitPid 等待seed导入
+waitPid=false
+
+[p2p.sub.gossip]
+channel=2
+seeds=[]
 isSeed=true
 serverStart=true
 innerSeedEnable=false
 useGithub=false
 innerBounds=300
-msgCacheSize=10240
-driver="leveldb"
-dbPath="datadir/addrbook"
-dbCache=4
-grpcLogFile="grpc33.log"
+
+[p2p.sub.dht]
+seeds=[]
+port=13801
+channel=2
+isSeed=true
+serverStart=true
+useGithub=false
+innerBounds=300
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -94,7 +113,6 @@ minerExecs=["pos33"]
 [consensus.sub.pos33]
 genesisBlockTime=1514533394
 listenPort="10901"
-bootPeers=["/ip4/47.103.215.6/tcp/10901/p2p/16Uiu2HAmSY1iY87Dtd7i9apngiEqpna5RKUbGNSybksX3qMkL5Vb"]
 
 [[consensus.sub.pos33.genesis]]
 minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
