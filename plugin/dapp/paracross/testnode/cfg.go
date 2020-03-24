@@ -118,9 +118,7 @@ mainBlockHashForkHeight=1
 mainForkParacrossCommitTx=1
 mainLoopCheckCommitTxDoneForkHeight=11
 selfConsensEnablePreContract=["0-1000"]
-[[consensus.sub.para.emptyBlockInterval]]
-blockHeight=0
-interval=2
+emptyBlockInterval=["0:2"]
 
 
 [store]

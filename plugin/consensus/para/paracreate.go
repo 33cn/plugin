@@ -386,7 +386,7 @@ func (client *client) processHashNotMatchError(currSeq int64, lastSeqMainHash []
 }
 
 func (client *client) getEmptyInterval(lastBlock *pt.ParaLocalDbBlock) int64 {
-	for i := len(client.subCfg.EmptyBlockInterval) - 1; i >= 0; i-- {
+	for i := len(client.dldCfg.emptyInterval) - 1; i >= 0; i-- {
 		if lastBlock.Height >= client.dldCfg.emptyInterval[i].startHeight {
 			return client.dldCfg.emptyInterval[i].interval
 		}
