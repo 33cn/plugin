@@ -773,7 +773,12 @@ func (n *node) checkSort(s *pt.Pos33SortMsg) error {
 	if err != nil {
 		return err
 	}
-	return n.verifySort(height, int(s.Proof.Input.Step), n.allw(height, true), seed, s)
+	err = n.verifySort(height, int(s.Proof.Input.Step), n.allw(height, true), seed, s)
+	if err != nil {
+		plog.Info("verifySort error", "err", err, "height", height, "s", s)
+		return err
+	}
+	return nil
 }
 
 func (n *node) checkSorts(height int64, round int) []*pt.Pos33SortMsg {
@@ -789,7 +794,7 @@ func (n *node) checkSorts(height int64, round int) []*pt.Pos33SortMsg {
 	for _, s := range ss {
 		err := n.checkSort(s)
 		if err != nil {
-			plog.Error("checkSort error", "err", err)
+			plog.Error("checkSort error", "err", err, "height", height, "round", round)
 			continue
 		}
 		rss = append(rss, s)
@@ -964,7 +969,7 @@ func (n *node) runLoop() {
 			n.makeNextBlock(height, round)
 			if round > 0 {
 				n.vote(height, round)
-			} 
+			}
 			time.AfterFunc(time.Second*5, func() {
 				ch <- height
 			})
