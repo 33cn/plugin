@@ -371,7 +371,7 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	if fundReward > 0 {
 		var receipt2 *types.Receipt
 		var err error
-		if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
+		if chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {
 			// issue coins to exec addr
 			addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
 			receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
@@ -525,7 +525,7 @@ func (action *Action) Pos33TicketClose(tclose *ty.Pos33TicketClose) (*types.Rece
 		kv = append(kv, receipt1.KV...)
 		//如果ticket 已经挖矿成功了，那么要解冻发展基金部分币
 		if t.prevstatus == 2 {
-			if !chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
+			if !chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {
 				receipt2, err := action.coinsAccount.ExecActive(chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
 				if err != nil {
 					tlog.Error("Pos33TicketClose.ExecActive fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)

@@ -263,7 +263,7 @@ ForkLocalDBAccess=0
 ForkBase58AddressCheck=1800000
 ForkEnableParaRegExec=0
 ForkCacheDriver=0
-ForkPos33TicketFundAddrV1=-1
+ForkTicketFundAddrV1=-1
 [fork.sub.coins]
 Enable=0
 

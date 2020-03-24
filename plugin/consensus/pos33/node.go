@@ -2,7 +2,6 @@ package pos33
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -19,11 +18,6 @@ import (
 var plog = log15.New("module", "pos33")
 
 const pos33Topic = "pos33"
-
-type slowAddr struct {
-	addr string
-	stop int64
-}
 
 type node struct {
 	*Client
@@ -47,7 +41,6 @@ type node struct {
 
 	// for new block incoming to add
 	bch     chan *types.Block
-	lb      *types.Block
 	lheight int64
 	lround  int
 }
@@ -69,19 +62,6 @@ func newNode(conf *subConfig) *node {
 	return n
 }
 
-// func (n *node) setLastBlock(height int64) {
-// 	b := n.GetCurrentBlock()
-// 	if b.Height == height {
-// 		n.lb = b
-// 		return
-// 	}
-// 	b, err := n.RequestBlock(height)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	n.lb = b
-// }
-
 func (n *node) lastBlock() *types.Block {
 	b, err := n.RequestLastBlock()
 	if err != nil {
@@ -89,8 +69,6 @@ func (n *node) lastBlock() *types.Block {
 	}
 	return b
 }
-
-var errNotEnoughVotes = errors.New("NOT enough votes for the last block")
 
 const stopedBlocks = 60
 
@@ -189,7 +167,7 @@ func (n *node) makeBlock(height int64, round int, tid string, vs []*pt.Pos33Vote
 		return fmt.Errorf("makeBlock height error")
 	}
 	if n.lheight == height && n.lround == round {
-		return fmt.Errorf("makeBlock already maked error")
+		return fmt.Errorf("makeBlock already made error")
 	}
 	sort := n.mySort(height, round)
 	if sort == nil {
@@ -934,7 +912,7 @@ func (n *node) runLoop() {
 		n.addBlock(lb)
 	})
 
-	plog.Info("@@@@@@@@ pos33 node runing.......", "last block height", lb.Height)
+	plog.Info("@@@@@@@@ pos33 node running.......", "last block height", lb.Height)
 	isSync := false
 	syncTick := time.NewTicker(time.Second)
 	etm := time.NewTimer(time.Hour)
@@ -1045,19 +1023,7 @@ func (n *node) vote(height int64, round int) {
 	n.handleVotesMsg(v, true)
 }
 
-func getBlockRound(b *types.Block) int {
-	if b.Height == 0 {
-		return 0
-	}
-	act, err := getMiner(b)
-	if err != nil {
-		plog.Error("getBlockRound error", "err", err, "height", b.Height)
-		return 0
-	}
-	return int(act.Sort.Proof.Input.Round)
-}
-
-func marshalSortsMsg(m *pt.Pos33Sorts) []byte {
+func marshalSortsMsg(m proto.Message) []byte {
 	pm := &pt.Pos33Msg{
 		Data: types.Encode(m),
 		Ty:   pt.Pos33Msg_S,
@@ -1065,7 +1031,7 @@ func marshalSortsMsg(m *pt.Pos33Sorts) []byte {
 	return types.Encode(pm)
 }
 
-func marshalVoteMsg(v *pt.Pos33Votes) []byte {
+func marshalVoteMsg(v proto.Message) []byte {
 	pm := &pt.Pos33Msg{
 		Data: types.Encode(v),
 		Ty:   pt.Pos33Msg_V,

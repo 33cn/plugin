@@ -15,6 +15,7 @@ import (
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/pos33/types"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
+	"github.com/golang/protobuf/proto"
 )
 
 const diffValue = 1.0
@@ -26,7 +27,7 @@ var fmax = big.NewFloat(0).SetInt(max) // 2^^256
 // 1. 通过签名，然后hash，得出的Hash值是在[0，max]的范围内均匀分布并且随机的, 那么Hash/max实在[1/max, 1]之间均匀分布的
 // 2. 那么从N个选票中抽出M个选票，等价于计算N次Hash, 并且Hash/max < M/N
 
-func calcuVrfHash(input *pt.VrfInput, priv crypto.PrivKey) ([]byte, []byte) {
+func calcuVrfHash(input proto.Message, priv crypto.PrivKey) ([]byte, []byte) {
 	privKey, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), priv.Bytes())
 	vrfPriv := &vrf.PrivateKey{PrivateKey: (*ecdsa.PrivateKey)(privKey)}
 	in := types.Encode(input)
@@ -151,7 +152,7 @@ func calcDiff(step, round, allw int) float64 {
 		size = pt.Pos33ProposerSize
 	}
 
-	diff := float64(changeDiff(size, int(round))) / float64(allw)
+	diff := float64(changeDiff(size, round)) / float64(allw)
 	diff *= diffValue
 	return diff
 }
@@ -196,13 +197,6 @@ func hash2(data []byte) []byte {
 	return crypto.Sha256(crypto.Sha256(data))
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func (n *node) bp(height int64, round int) string {
 	pss := make(map[string]*pt.Pos33SortMsg)
 	for _, s := range n.cps[height][round] {
@@ -216,14 +210,6 @@ func (n *node) bp(height int64, round int) string {
 	if len(pss) == 0 {
 		return ""
 	}
-
-	/*
-		lb := n.lastBlock()
-		if lb.Height+1 != height {
-			return ""
-		}
-		lbh := lb.Hash(n.GetAPI().GetConfig())
-	*/
 
 	var min string
 	var ss *pt.Pos33SortMsg

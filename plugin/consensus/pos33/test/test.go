@@ -38,10 +38,8 @@ func init() {
 var rpcURL = flag.String("u", "http://localhost:8801", "rpc url")
 var pnodes = flag.Bool("n", false, "only print node private keys")
 var ini = flag.Bool("i", false, "send init tx")
-var dpst = flag.String("d", "", "send deposit tx")
 var maxacc = flag.Int("a", 1000, "max account")
 var maxtx = flag.Int("t", 1000, "max txs")
-var dw = flag.Int("w", 7, "deposit weight")
 var rn = flag.Int("r", 3000, "sleep in Microsecond")
 var conf = flag.String("c", "chain33.toml", "chain33 config file")
 
@@ -89,13 +87,6 @@ func (i *Int) Unmarshal(b []byte) (int, error) {
 	a, n := binary.Varint(b)
 	*i = Int(a)
 	return n, nil
-}
-
-// UnmarshalInt is helper func
-func UnmarshalInt(b []byte) (Int, int, error) {
-	var i Int
-	n, err := i.Unmarshal(b)
-	return i, n, err
 }
 
 type pp struct {
@@ -281,7 +272,7 @@ func generateAccounts(max int) []crypto.PrivKey {
 			break
 		}
 	}
-	log.Println(time.Now().Sub(t))
+	log.Println(time.Since(t))
 	return pks
 }
 
