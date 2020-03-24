@@ -489,6 +489,10 @@ function main() {
     ### test cases ###
     ip=$(${CLI} net info | jq -r ".externalAddr")
     ip=$(echo "$ip" | cut -d':' -f 1)
+    if [ "$ip" == "127.0.0.1" ]; then
+        ip=$(${CLI} net info | jq -r ".localAddr")
+        ip=$(echo "$ip" | cut -d':' -f 1)
+    fi
     dapp_run test "${ip}"
 
     ### rpc test  ###
