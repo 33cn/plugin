@@ -4,7 +4,9 @@ import "fmt"
 
 // some errors definition
 var (
-	ErrAccountNameExist = fmt.Errorf("%s", "The account name has been registered!")
-	ErrAccountNameNotExist = fmt.Errorf("%s", "The account name is not exist")
-
+	ErrAccountIDExist      = fmt.Errorf("%s", "The account ID has been registered!")
+	ErrAccountIDNotExist   = fmt.Errorf("%s", "The account ID is not exist")
+	ErrAccountIDNotPermiss = fmt.Errorf("%s", "You don't have permission to do that!")
+	ErrAssetBalance        = fmt.Errorf("%s", "Insufficient balance!")
+	ErrNotAdmin            = fmt.Errorf("%s", "No adiministrator privileges!")
 )

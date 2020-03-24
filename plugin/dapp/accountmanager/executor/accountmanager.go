@@ -51,6 +51,11 @@ func (a *accountmanager) GetDriverName() string {
 	return driverName
 }
 
+//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+func (e *accountmanager) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
+
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (a *accountmanager) CheckTx(tx *types.Transaction, index int) error {
 	// implement code

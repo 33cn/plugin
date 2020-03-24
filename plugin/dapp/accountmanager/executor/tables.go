@@ -24,13 +24,13 @@ const (
 var opt_account = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "account",
-	Primary: "accountName",
-	Index:   []string{"status"},
+	Primary: "index",
+	Index:   []string{"status", "accountID"},
 }
 
 //状态数据库中存储具体账户信息
-func calcAccountKey(accountName string) []byte {
-	key := fmt.Sprintf("%s"+"accountName:%s", KeyPrefixStateDB, accountName)
+func calcAccountKey(accountID string) []byte {
+	key := fmt.Sprintf("%s"+"accountID:%s", KeyPrefixStateDB, accountID)
 	return []byte(key)
 }
 
@@ -73,6 +73,8 @@ func (m *AccountRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%s", m.AccountID)), nil
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%d", m.Status)), nil
+	} else if key == "index" {
+		return []byte(fmt.Sprintf("%014d", m.GetIndex())), nil
 	}
 	return nil, types.ErrNotFound
 }
