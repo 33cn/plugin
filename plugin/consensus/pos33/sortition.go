@@ -218,11 +218,11 @@ func (n *node) bp(height int64, round int) string {
 	}
 
 	/*
-	lb := n.lastBlock()
-	if lb.Height+1 != height {
-		return ""
-	}
-	lbh := lb.Hash(n.GetAPI().GetConfig())
+		lb := n.lastBlock()
+		if lb.Height+1 != height {
+			return ""
+		}
+		lbh := lb.Hash(n.GetAPI().GetConfig())
 	*/
 
 	var min string
