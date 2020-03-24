@@ -3,6 +3,7 @@ package types
 import (
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"reflect"
 )
 
 /*
@@ -21,28 +22,57 @@ const (
 	TyApplyAction
 
 	NameRegisterAction  = "Register"
-	NameResetAction     = "Reset"
+	NameResetAction     = "ResetKey"
 	NameTransferAction  = "Transfer"
 	NameSuperviseAction = "Supervise"
 	NameApplyAction     = "Apply"
+
+	FuncNameQueryAccountByID      = "QueryAccountByID"
+	FuncNameQueryAccountsByStatus = "QueryAccountsByStatus"
+	FuncNameQueryExpiredAccounts  = "QueryExpiredAccounts"
 )
 
 // log类型id值
 const (
 	TyUnknownLog = iota + 100
 	TyRegisterLog
-	TyApplyLog
+	TyResetLog
 	TyTransferLog
 	TySuperviseLog
+	TyApplyLog
 )
 
 //状态
 const (
-	UnknownStatus = iota
+	UnknownStatus = int32(iota)
 	Normal
 	Frozen
 	Locked
 	Expired
+)
+
+//supervior op
+const (
+	UnknownSupervisorOp = int32(iota)
+	Freeze
+	UnFreeze
+	AddExpire
+)
+
+//apply  op
+const (
+	UnknownApplyOp = int32(iota)
+	RevokeReset
+	EnforceReset
+)
+const (
+	ListDESC = int32(0)
+	ListASC  = int32(1)
+	ListSeek = int32(2)
+)
+const (
+	//单次list还回条数
+	Count = int32(10)
 )
 
 var (
@@ -58,7 +88,11 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		//LogID:	{Ty: reflect.TypeOf(LogStruct), Name: LogName},
+		TyRegisterLog:  {Ty: reflect.TypeOf(AccountReceipt{}), Name: "TyRegisterLog"},
+		TyResetLog:     {Ty: reflect.TypeOf(TransferReceipt{}), Name: "TyResetLog"},
+		TyTransferLog:  {Ty: reflect.TypeOf(AccountReceipt{}), Name: "TyTransferLog"},
+		TySuperviseLog: {Ty: reflect.TypeOf(SuperviseReceipt{}), Name: "TySuperviseLog"},
+		TyApplyLog:     {Ty: reflect.TypeOf(AccountReceipt{}), Name: "TyApplyLog"},
 	}
 	tlog = log.New("module", "accountmanager.types")
 )

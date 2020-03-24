@@ -9,7 +9,7 @@ message AccountmanagerAction {
         //注册
         Register register = 1;
         //重置公钥
-        Reset reset = 2;
+        ResetKey resetKey = 2;
         //转账
         Transfer transfer = 3;
         //监管操作
@@ -28,7 +28,8 @@ message Register {
 }
 
 //重置公钥
-message Reset {
+message ResetKey {
+
     string accountID = 1;
     string addr = 2;
 }
@@ -36,7 +37,7 @@ message Reset {
 //用户申请服务
 message Apply {
     string accountID = 1;
-    //操作， 0,账户注册,1,账户公钥重置 2,账户延期申请 3,账户注销
+    //操作， 1 撤销账户公钥重置, 2 锁定期结束后，执行重置公钥操作
     int32 op = 2;
 }
 
@@ -63,11 +64,11 @@ message Transfer {
 message Supervise {
     //账户名单
     repeated string accountIDs = 1;
-    //操作， 1为冻结，2为解冻
+    //操作， 1为冻结，2为解冻，3增加有效期
     int32 op = 2;
 }
 
-message Account{
+message account{
     //账户名称
     string accountID = 1;
     //地址
@@ -86,23 +87,47 @@ message Account{
     int64  index = 8;
 }
 
-message Receipt{
-    //账户名称
+message AccountReceipt{
+    account account = 1;
+}
+message ReplyAccountList {
+    repeated account accounts = 1;
+    string primaryKey = 2;
+}
+
+message TransferReceipt{
+    account FromAccount = 1;
+
+    account ToAccount = 2;
+
+    int64  blockTime = 3;
+}
+//回执日志
+message SuperviseReceipt{
+    repeated account accounts = 1;
+    int32    op = 2;
+    int64  blockTime = 3;
+
+}
+
+message QueryExpiredAccounts{
+    string primaryKey = 1;
+    //单页返回多少条记录，默认返回10条
+    // 0降序，1升序，默认降序
+    int32 direction = 2;
+}
+
+message QueryAccountsByStatus{
+    //账户状态 1 正常， 2表示冻结, 3表示锁定
+    int32  status = 1;
+    // 主键索引
+    string primaryKey = 3;
+    // 0降序，1升序，默认降序
+    int32 direction = 5;
+}
+
+message QueryAccountByID {
     string accountID = 1;
-    //地址
-    string addr = 2;
-    //上一次公钥地址
-    string prevAddr = 3;
-    //账户状态 1 正常， 2表示冻结, 3表示锁定 4,过期注销
-    int32  status = 4;
-    //注册时间
-    int64  createTime = 5;
-    //失效时间
-    int64  expireTime = 6;
-    //锁定时间
-    int64  lockTime = 7;
-    //索引
-    int64  index = 8;
 }
 service accountmanager {
 
