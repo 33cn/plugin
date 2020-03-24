@@ -42,7 +42,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^Title.*/Title="user.p.'''"$paraname"'''."/g' "${1}"
     sed -i $xsedfix 's/^# TestNet=.*/TestNet=true/g' "${1}"
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
-    sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
+    sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=["0:4"]/g' "${1}"
 
     sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"

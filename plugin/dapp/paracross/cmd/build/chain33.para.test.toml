@@ -103,9 +103,8 @@ waitBlocks4CommitMsg=2
 genesisAmount=100000000
 selfConsensEnablePreContract=["0-1000"]
 #主链每隔几个没有相关交易的区块，平行链上打包空区块
-[[consensus.sub.para.emptyBlockInterval]]
-blockHeight=0
-interval=4
+emptyBlockInterval=["0:4"]
+
 
 
 [store]
