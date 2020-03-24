@@ -291,19 +291,19 @@ func TestParseEmptyBlockInterval(t *testing.T) {
 	ret, err := parseEmptyBlockInterval(cfg)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), ret[0].startHeight)
-	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 
 	cfg = []string{"0:50"}
 	ret, err = parseEmptyBlockInterval(cfg)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), ret[0].startHeight)
-	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 
 	cfg = []string{"0:50", "100:20"}
 	ret, err = parseEmptyBlockInterval(cfg)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), ret[0].startHeight)
-	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 	assert.Equal(t, int64(100), ret[1].startHeight)
 	assert.Equal(t, int64(20), ret[1].interval)
 
@@ -311,7 +311,7 @@ func TestParseEmptyBlockInterval(t *testing.T) {
 	ret, err = parseEmptyBlockInterval(cfg)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(10), ret[0].startHeight)
-	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 
 	cfg = []string{"10:50", "20-30"}
 	ret, err = parseEmptyBlockInterval(cfg)
@@ -330,7 +330,7 @@ func TestParseEmptyBlockInterval(t *testing.T) {
 	ret, err = parseEmptyBlockInterval(cfg)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(0), ret[0].startHeight)
-	assert.Equal(t, int64(defaultEmptyBlockInterval), ret[0].interval)
+	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 	assert.Equal(t, int64(30), ret[1].startHeight)
 	assert.Equal(t, int64(20), ret[1].interval)
 	assert.Equal(t, int64(100), ret[2].startHeight)

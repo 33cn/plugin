@@ -923,7 +923,7 @@ func divideStr2Int64s(s, sep string) ([]int64, error) {
 	var r []int64
 	a := strings.Split(s, sep)
 	if len(a) != 2 {
-		plog.Error("error format for config to seperate", "s", s)
+		plog.Error("error format for config to separate", "s", s)
 		return nil, types.ErrInvalidParam
 	}
 
