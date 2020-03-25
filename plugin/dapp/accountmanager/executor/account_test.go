@@ -85,7 +85,7 @@ func TestAccountManager(t *testing.T) {
 	}
 	// set config key
 	item := &types.ConfigItem{
-		Key: "mavl-manage-"+ConfNameActiveTime,
+		Key: "mavl-manage-" + ConfNameActiveTime,
 		Value: &types.ConfigItem_Arr{
 			Arr: &types.ArrayConfig{Value: []string{"10"}},
 		},
@@ -93,7 +93,7 @@ func TestAccountManager(t *testing.T) {
 	stateDB.Set([]byte(item.Key), types.Encode(item))
 
 	item2 := &types.ConfigItem{
-		Key: "mavl-manage-"+ConfNameManagerAddr,
+		Key: "mavl-manage-" + ConfNameManagerAddr,
 		Value: &types.ConfigItem_Arr{
 			Arr: &types.ArrayConfig{Value: []string{string(Nodes[0])}},
 		},
@@ -101,31 +101,92 @@ func TestAccountManager(t *testing.T) {
 	stateDB.Set([]byte(item2.Key), types.Encode(item2))
 
 	item3 := &types.ConfigItem{
-		Key: "mavl-manage-"+ConfNameLockTime,
+		Key: "mavl-manage-" + ConfNameLockTime,
 		Value: &types.ConfigItem_Arr{
-			Arr: &types.ArrayConfig{Value: []string{"15"}},
+			Arr: &types.ArrayConfig{Value: []string{"2"}},
 		},
 	}
 	stateDB.Set([]byte(item3.Key), types.Encode(item3))
 
 	//注册
-	tx1,err := CreateRegister(&et.Register{AccountID:"harrylee2015"},PrivKeyB)
-	if err !=nil {
+	tx1, err := CreateRegister(&et.Register{AccountID: "harrylee2015"}, PrivKeyB)
+	if err != nil {
 		t.Error(err)
 	}
-	Exec_Block(t,stateDB,kvdb,env,tx1)
-	tx2,err := CreateRegister(&et.Register{AccountID:"harrylee2015"},PrivKeyC)
-	err=Exec_Block(t,stateDB,kvdb,env,tx2)
-	assert.Equal(t,err,et.ErrAccountIDExist)
-	tx3,err := CreateRegister(&et.Register{AccountID:"harrylee2020"},PrivKeyC)
-	Exec_Block(t,stateDB,kvdb,env,tx3)
+	Exec_Block(t, stateDB, kvdb, env, tx1)
+	tx2, err := CreateRegister(&et.Register{AccountID: "harrylee2015"}, PrivKeyC)
+	err = Exec_Block(t, stateDB, kvdb, env, tx2)
+	assert.Equal(t, err, et.ErrAccountIDExist)
+	tx3, err := CreateRegister(&et.Register{AccountID: "harrylee2020"}, PrivKeyC)
+	Exec_Block(t, stateDB, kvdb, env, tx3)
+	//转账
+	tx4, err := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2020", Amount: 1e8, Asset: &et.Asset{Execer: "coins", Symbol: "bty"}}, PrivKeyB)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx4)
+	assert.Equal(t, err, nil)
+	//重置公钥
+	tx5, err := CreateReset(&et.ResetKey{Addr: "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs", AccountID: "harrylee2015"}, PrivKeyA)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx5)
+	//在锁定期内撤回请求
+	tx6, err := CreateApply(&et.Apply{Op: et.RevokeReset, AccountID: "harrylee2015"}, PrivKeyB)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx6)
+	assert.Equal(t, err, nil)
+	//重置公钥
+	tx5, err = CreateReset(&et.ResetKey{Addr: "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs", AccountID: "harrylee2015"}, PrivKeyA)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx5)
+	time.Sleep(time.Second)
+	//过了锁定期，申请生效
+	tx6, err = CreateApply(&et.Apply{Op: et.EnforceReset, AccountID: "harrylee2015"}, PrivKeyD)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx6)
+	tx7, _ := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2015", Amount: 1e8, Asset: &et.Asset{Execer: "coins", Symbol: "bty"}}, PrivKeyD)
 
-	tx4,err:=CreateTransfer(&et.Transfer{FromAccountID:"harrylee2015",ToAccountID:"harrylee2020",Amount:1e8,Asset:&et.Asset{Execer:"coins",Symbol:"bty"}},PrivKeyB)
-	if err !=nil {
+	err = Exec_Block(t, stateDB, kvdb, env, tx7)
+	assert.Equal(t, err, nil)
+	balance, err := Exec_QueryBalanceByID(&et.QueryBalanceByID{AccountID: "harrylee2015", Asset: &et.Asset{Symbol: "bty", Execer: "coins"}}, stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, balance.Balance, 199*types.Coin)
+
+	//将某个账户冻结
+	tx8, _ := CreateSupervise(&et.Supervise{
+		AccountIDs: []string{"harrylee2015"},
+		Op:         et.Freeze,
+	}, PrivKeyA)
+	err = Exec_Block(t, stateDB, kvdb, env, tx8)
+	assert.Equal(t, err, nil)
+	//根据状态查询
+	accounts, err := Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, accounts.Accounts[0].Status, et.Frozen)
+	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &et.Asset{Execer: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, balance.Frozen, 199*types.Coin)
+
+	//解冻账户
+	tx9, _ := CreateSupervise(&et.Supervise{
+		AccountIDs: []string{"harrylee2015"},
+		Op:         et.UnFreeze,
+	}, PrivKeyA)
+	err = Exec_Block(t, stateDB, kvdb, env, tx9)
+	assert.Equal(t, err, nil)
+	//根据状态查询
+	accounts, err = Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
+	assert.NotEqual(t, err, nil)
+	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &et.Asset{Execer: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, balance.Balance, 199*types.Coin)
+
+	//过期账户查询
+	time.Sleep(10 * time.Second)
+	t.Log(time.Now().Unix())
+	accs, err := Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
+	if err != nil {
 		t.Error(err)
 	}
-	err=Exec_Block(t,stateDB,kvdb,env,tx4)
-	assert.Equal(t,err,nil)
+	t.Log(accs)
 }
 
 func CreateRegister(register *et.Register, privKey string) (tx *types.Transaction, err error) {
@@ -206,7 +267,7 @@ func CreateSupervise(supervise *et.Supervise, privKey string) (tx *types.Transac
 
 func CreateApply(apply *et.Apply, privKey string) (tx *types.Transaction, err error) {
 	ety := types.LoadExecutorType(et.AccountmanagerX)
-	tx, err = ety.Create(et.NameSuperviseAction, apply)
+	tx, err = ety.Create(et.NameApplyAction, apply)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +283,7 @@ func CreateApply(apply *et.Apply, privKey string) (tx *types.Transaction, err er
 	}
 	return tx, nil
 }
+
 //模拟区块中交易得执行过程
 func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...*types.Transaction) error {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
@@ -285,6 +347,22 @@ func Exec_QueryAccountByID(accountID string, stateDB db.KV, kvdb db.KVDB) (*et.A
 	return msg.(*et.Account), err
 }
 
+func Exec_QueryAccountByAddr(addr string, stateDB db.KV, kvdb db.KVDB) (*et.Account, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newAccountmanager()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	msg, err := exec.Query(et.FuncNameQueryAccountByAddr, types.Encode(&et.QueryAccountByAddr{Addr: addr}))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*et.Account), err
+}
 
 func Exec_QueryAccountsByStatus(status int32, stateDB db.KV, kvdb db.KVDB) (*et.ReplyAccountList, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
@@ -296,14 +374,14 @@ func Exec_QueryAccountsByStatus(status int32, stateDB db.KV, kvdb db.KVDB) (*et.
 	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
-	msg, err := exec.Query(et.FuncNameQueryAccountsByStatus, types.Encode(&et.QueryAccountsByStatus{Status:status}))
+	msg, err := exec.Query(et.FuncNameQueryAccountsByStatus, types.Encode(&et.QueryAccountsByStatus{Status: status}))
 	if err != nil {
 		return nil, err
 	}
 	return msg.(*et.ReplyAccountList), err
 }
 
-func Exec_QueryExpiredAccounts(status int32, stateDB db.KV, kvdb db.KVDB) (*et.ReplyAccountList, error) {
+func Exec_QueryBalanceByID(in *et.QueryBalanceByID, stateDB db.KV, kvdb db.KVDB) (*et.Balance, error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newAccountmanager()
@@ -313,14 +391,29 @@ func Exec_QueryExpiredAccounts(status int32, stateDB db.KV, kvdb db.KVDB) (*et.R
 	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
-	msg, err := exec.Query(et.FuncNameQueryExpiredAccounts, types.Encode(&et.QueryExpiredAccounts{}))
+	msg, err := exec.Query(et.FuncNameQueryBalanceByID, types.Encode(in))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*et.Balance), err
+}
+
+func Exec_QueryExpiredAccounts(expiredtime int64, stateDB db.KV, kvdb db.KVDB) (*et.ReplyAccountList, error) {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newAccountmanager()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	msg, err := exec.Query(et.FuncNameQueryExpiredAccounts, types.Encode(&et.QueryExpiredAccounts{ExpiredTime: expiredtime, Direction: 0}))
 	if err != nil {
 		return nil, err
 	}
 	return msg.(*et.ReplyAccountList), err
 }
-
-
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
 	c, err := crypto.New(types.GetSignName("", signType))

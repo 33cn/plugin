@@ -15,7 +15,7 @@ func (a *accountmanager) Exec_Register(payload *aty.Register, tx *types.Transact
 	return action.Register(payload)
 }
 
-func (a *accountmanager) Exec_Resetkey(payload *aty.ResetKey, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (a *accountmanager) Exec_ResetKey(payload *aty.ResetKey, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(a, tx, index)
 	return action.Reset(payload)
 }
@@ -31,5 +31,6 @@ func (a *accountmanager) Exec_Supervise(payload *aty.Supervise, tx *types.Transa
 }
 
 func (a *accountmanager) Exec_Apply(payload *aty.Apply, tx *types.Transaction, index int) (*types.Receipt, error) {
-	return nil, types.ErrActionNotSupport
+	action := NewAction(a, tx, index)
+	return action.Apply(payload)
 }

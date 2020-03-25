@@ -25,7 +25,7 @@ var opt_account = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "account",
 	Primary: "index",
-	Index:   []string{"status", "accountID"},
+	Index:   []string{"status", "accountID", "addr"},
 }
 
 //状态数据库中存储具体账户信息
@@ -74,7 +74,9 @@ func (m *AccountRow) Get(key string) ([]byte, error) {
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%d", m.Status)), nil
 	} else if key == "index" {
-		return []byte(fmt.Sprintf("%014d", m.GetIndex())), nil
+		return []byte(fmt.Sprintf("%018d", m.GetIndex())), nil
+	} else if key == "addr" {
+		return []byte(fmt.Sprintf("%s", m.GetAddr())), nil
 	}
 	return nil, types.ErrNotFound
 }
