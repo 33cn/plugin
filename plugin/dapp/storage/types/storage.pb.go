@@ -768,7 +768,9 @@ func init() {
 	proto.RegisterType((*ReceiptStorage)(nil), "types.ReceiptStorage")
 }
 
-func init() { proto.RegisterFile("storage.proto", fileDescriptor_0d2c4ccf1453ffdb) }
+func init() {
+	proto.RegisterFile("storage.proto", fileDescriptor_0d2c4ccf1453ffdb)
+}
 
 var fileDescriptor_0d2c4ccf1453ffdb = []byte{
 	// 471 bytes of a gzipped FileDescriptorProto
@@ -806,11 +808,11 @@ var fileDescriptor_0d2c4ccf1453ffdb = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // StorageClient is the client API for Storage service.
 //
@@ -819,10 +821,10 @@ type StorageClient interface {
 }
 
 type storageClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewStorageClient(cc *grpc.ClientConn) StorageClient {
+func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 	return &storageClient{cc}
 }
 

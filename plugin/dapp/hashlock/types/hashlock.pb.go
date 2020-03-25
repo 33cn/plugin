@@ -489,7 +489,9 @@ func init() {
 	proto.RegisterType((*HashlockAction)(nil), "types.HashlockAction")
 }
 
-func init() { proto.RegisterFile("hashlock.proto", fileDescriptor_acb83e90536b5ff8) }
+func init() {
+	proto.RegisterFile("hashlock.proto", fileDescriptor_acb83e90536b5ff8)
+}
 
 var fileDescriptor_acb83e90536b5ff8 = []byte{
 	// 421 bytes of a gzipped FileDescriptorProto
