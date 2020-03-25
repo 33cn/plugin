@@ -889,9 +889,7 @@ func init() {
 	proto.RegisterType((*ReplyOracleStatusList)(nil), "types.ReplyOracleStatusList")
 }
 
-func init() {
-	proto.RegisterFile("oracle.proto", fileDescriptor_b544994cdab50f02)
-}
+func init() { proto.RegisterFile("oracle.proto", fileDescriptor_b544994cdab50f02) }
 
 var fileDescriptor_b544994cdab50f02 = []byte{
 	// 579 bytes of a gzipped FileDescriptorProto

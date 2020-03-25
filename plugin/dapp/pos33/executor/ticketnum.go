@@ -11,7 +11,6 @@ import (
 	tickettypes "github.com/33cn/plugin/plugin/dapp/pos33/types"
 )
 
-
 func (ticket *Pos33Ticket) getTxActions(blockHash []byte, blockNum int64) ([]*tickettypes.Pos33TicketAction, error) {
 	var txActions []*tickettypes.Pos33TicketAction
 	var reqHashes types.ReqHashes

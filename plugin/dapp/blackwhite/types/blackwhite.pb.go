@@ -1448,9 +1448,7 @@ func init() {
 	proto.RegisterType((*BlackwhiteTimeoutDoneTxReq)(nil), "types.BlackwhiteTimeoutDoneTxReq")
 }
 
-func init() {
-	proto.RegisterFile("blackwhite.proto", fileDescriptor_2484d55734a116de)
-}
+func init() { proto.RegisterFile("blackwhite.proto", fileDescriptor_2484d55734a116de) }
 
 var fileDescriptor_2484d55734a116de = []byte{
 	// 961 bytes of a gzipped FileDescriptorProto
@@ -1519,11 +1517,11 @@ var fileDescriptor_2484d55734a116de = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // BlackwhiteClient is the client API for Blackwhite service.
 //
@@ -1540,10 +1538,10 @@ type BlackwhiteClient interface {
 }
 
 type blackwhiteClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewBlackwhiteClient(cc grpc.ClientConnInterface) BlackwhiteClient {
+func NewBlackwhiteClient(cc *grpc.ClientConn) BlackwhiteClient {
 	return &blackwhiteClient{cc}
 }
 
