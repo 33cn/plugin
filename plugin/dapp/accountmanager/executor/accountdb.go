@@ -24,7 +24,7 @@ var (
 	DefaultActiveTime = int64(5 * 360 * 24 * 3600)
 	//默认密钥重置锁定期
 	DefaultLockTime = int64(15 * 24 * 3600)
-
+	//默认管理员地址
 	DefaultManagerAddr = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 )
 
@@ -48,9 +48,9 @@ func NewAction(e *accountmanager, tx *types.Transaction, index int) *Action {
 		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetLocalDB(), index, e.GetAPI()}
 }
 
-//GetIndex get index
+//GetIndex get index 主键索引
 func (a *Action) GetIndex() int64 {
-	return a.blocktime*int64(types.MaxTxsPerBlock) + int64(a.index)
+	return a.height*types.MaxTxsPerBlock + int64(a.index)
 }
 
 //GetKVSet get kv set
@@ -117,6 +117,7 @@ func (a *Action) Reset(payload *et.ResetKey) (*types.Receipt, error) {
 func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	cfg := a.api.GetConfig()
 	account1, err := findAccountByID(a.localDB, payload.FromAccountID)
 	if err != nil {
 		elog.Error("Transfer", "fromAccountID", payload.FromAccountID, "err", et.ErrAccountIDNotExist)
@@ -125,6 +126,33 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	if account1.Status != et.Normal || account1.Addr != a.fromaddr || account1.ExpireTime <= a.blocktime {
 		elog.Error("Transfer", "fromaddr", a.fromaddr, "err", et.ErrAccountIDNotPermiss)
 		return nil, et.ErrAccountIDNotPermiss
+	}
+	//如果prevAddr地址不为空，先查看余额，将该地址下面得资产划转到新得公钥地址下
+	if account1.PrevAddr != "" {
+		assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExecer(), payload.Asset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		prevAccount := assetDB.LoadExecAccount(account1.PrevAddr, a.execaddr)
+		if prevAccount.Balance > 0 {
+			receipt, err := assetDB.ExecTransfer(account1.PrevAddr, account1.Addr, a.execaddr, prevAccount.Balance)
+			if err != nil {
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+	if payload.FromAccountID == payload.ToAccountID {
+		re := &et.TransferReceipt{
+			FromAccount: account1,
+			ToAccount:   account1,
+			Index:       a.GetIndex(),
+		}
+		receiptlog := &types.ReceiptLog{Ty: et.TyTransferLog, Log: types.Encode(re)}
+		logs = append(logs, receiptlog)
+		receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+		return receipts, nil
 	}
 	account2, err := findAccountByID(a.localDB, payload.ToAccountID)
 	if err != nil {
@@ -135,7 +163,7 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 		elog.Error("Transfer", "ToAccountID", account2.AccountID, "err", et.ErrAccountIDNotPermiss)
 		return nil, et.ErrAccountIDNotPermiss
 	}
-	cfg := a.api.GetConfig()
+
 	assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExecer(), payload.Asset.GetSymbol(), a.statedb)
 	if err != nil {
 		return nil, err
@@ -155,7 +183,7 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	re := &et.TransferReceipt{
 		FromAccount: account1,
 		ToAccount:   account2,
-		BlockTime:   a.blocktime,
+		Index:       a.GetIndex(),
 	}
 	receiptlog := &types.ReceiptLog{Ty: et.TyTransferLog, Log: types.Encode(re)}
 	logs = append(logs, receiptlog)
@@ -170,31 +198,50 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	if managerAddr != a.fromaddr {
 		return nil, et.ErrNotAdmin
 	}
+	coinsAssetDB, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), a.statedb)
+	if err != nil {
+		return nil, err
+	}
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var re et.SuperviseReceipt
 	for _, ID := range payload.AccountIDs {
-		account, err := findAccountByID(a.localDB, ID)
+		accountM, err := findAccountByID(a.localDB, ID)
 		if err != nil {
 			elog.Error("Supervise", "AccountID", ID, "err", et.ErrAccountIDNotExist)
 			return nil, et.ErrAccountIDNotExist
 		}
-		switch re.Op {
+		switch payload.Op {
 		case et.Freeze:
-			account.Status = et.Frozen
+			//TODO 账户冻结，还需要冻结账户地址相应得资产,这里因为查不到所有token资产，所以只冻结主币
+			accountM.Status = et.Frozen
+			coinsAccount := coinsAssetDB.LoadExecAccount(accountM.Addr, a.execaddr)
+			receipt, err := coinsAssetDB.ExecFrozen(accountM.Addr, a.execaddr, coinsAccount.Balance)
+			if err != nil {
+				elog.Error("Supervise ExecFrozen", "AccountID", ID, "err", err)
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+
 		case et.UnFreeze:
-			account.Status = et.Normal
+			accountM.Status = et.Normal
+			coinsAccount := coinsAssetDB.LoadExecAccount(accountM.Addr, a.execaddr)
+			receipt, err := coinsAssetDB.ExecActive(accountM.Addr, a.execaddr, coinsAccount.Frozen)
+			if err != nil {
+				elog.Error("Supervise ExecActive", "AccountID", ID, "err", err)
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
 		case et.AddExpire:
 			cfg := a.api.GetConfig()
 			defaultActiveTime := getConfValue(cfg, a.statedb, ConfNameActiveTime, DefaultActiveTime)
-			account.Status = et.Normal
-			account.ExpireTime = a.blocktime + defaultActiveTime
-
+			accountM.Status = et.Normal
+			accountM.ExpireTime = a.blocktime + defaultActiveTime
 		}
-		re.Accounts = append(re.Accounts, account)
+		re.Accounts = append(re.Accounts, accountM)
 	}
 	re.Op = payload.Op
-	re.BlockTime = a.blocktime
+	re.Index = a.GetIndex()
 	receiptlog := &types.ReceiptLog{Ty: et.TySuperviseLog, Log: types.Encode(&re)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -203,37 +250,52 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 
 func (a *Action) Apply(payload *et.Apply) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	account, err := findAccountByID(a.localDB, payload.AccountID)
+	var kvs []*types.KeyValue
+
+	accountM, err := findAccountByID(a.localDB, payload.AccountID)
 	if err != nil {
 		elog.Error("Apply", "AccountID", payload.AccountID, "err", et.ErrAccountIDNotExist)
 		return nil, et.ErrAccountIDNotExist
 	}
 	switch payload.Op {
 	case et.RevokeReset:
-		if account.Status != et.Locked || account.PrevAddr != a.fromaddr {
+		if accountM.Status != et.Locked || accountM.PrevAddr != a.fromaddr {
 			elog.Error("Apply", "fromaddr", a.fromaddr, "err", et.ErrAccountIDNotPermiss)
 			return nil, et.ErrAccountIDNotPermiss
 		}
-		account.LockTime = 0
-		account.Status = et.Normal
-		account.Addr = a.fromaddr
+		accountM.LockTime = 0
+		accountM.Status = et.Normal
+		accountM.Addr = a.fromaddr
 
 	case et.EnforceReset:
-		if account.Status != et.Locked || account.Addr != a.fromaddr {
+		if accountM.Status != et.Locked || accountM.Addr != a.fromaddr {
 			elog.Error("Apply", "fromaddr", a.fromaddr, "err", et.ErrAccountIDNotPermiss)
 			return nil, et.ErrAccountIDNotPermiss
 		}
-		account.LockTime = 0
-		account.Status = et.Normal
-		//TODO 资产转移,放在转transfer中执行
+		accountM.LockTime = 0
+		accountM.Status = et.Normal
+		//TODO 这里只做coins主笔资产得自动划转，token资产转移,放在转transfer中执行 fromAccountID == toAccountID
+		cfg := a.api.GetConfig()
+		coinsAssetDB, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		coinsAccount := coinsAssetDB.LoadExecAccount(accountM.PrevAddr, a.execaddr)
 
+		receipt, err := coinsAssetDB.ExecTransfer(accountM.PrevAddr, accountM.Addr, a.execaddr, coinsAccount.Balance)
+		if err != nil {
+			elog.Error("Apply ExecTransfer", "AccountID", accountM.AccountID, "err", err)
+		}
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
 	}
+
 	re := &et.AccountReceipt{
-		Account: account,
+		Account: accountM,
 	}
 	receiptlog := &types.ReceiptLog{Ty: et.TyApplyLog, Log: types.Encode(re)}
 	logs = append(logs, receiptlog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
@@ -308,24 +370,26 @@ func getConfigKey(key string, db dbm.KV) ([]byte, error) {
 	return value, nil
 }
 
-func findAccountListByIndex(localdb dbm.KV, direction int32, primaryKey string) (*et.ReplyAccountList, error) {
+//正序遍历数据，与传入时间进行对比，看是否逾期
+func findAccountListByIndex(localdb dbm.KV, expireTime int64, primaryKey string) (*et.ReplyAccountList, error) {
 	table := NewAccountTable(localdb)
-	first := []byte(fmt.Sprintf("%016d", time.Now().Unix()*int64(types.MaxTxsPerBlock)))
-
 	var rows []*tab.Row
 	var err error
 	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
-		rows, err = table.ListIndex("index", nil, first, et.Count, direction)
+		rows, err = table.ListIndex("index", nil, nil, et.Count, et.ListASC)
 	} else {
-		rows, err = table.ListIndex("index", nil, []byte(primaryKey), et.Count, direction)
+		rows, err = table.ListIndex("index", nil, []byte(primaryKey), et.Count, et.ListASC)
 	}
 	if err != nil {
-		elog.Error("findAccountListByIndex.", "index", first, "err", err.Error())
+		elog.Error("findAccountListByIndex.", "index", primaryKey, "err", err.Error())
 		return nil, err
 	}
 	var reply et.ReplyAccountList
 	for _, row := range rows {
 		account := row.Data.(*et.Account)
+		if account.ExpireTime > expireTime {
+			break
+		}
 		//状态变成逾期状态
 		account.Status = et.Expired
 		reply.Accounts = append(reply.Accounts, account)
@@ -353,9 +417,25 @@ func findAccountByID(localdb dbm.KV, accountID string) (*et.Account, error) {
 	return nil, types.ErrNotFound
 }
 
+func findAccountByAddr(localdb dbm.KV, addr string) (*et.Account, error) {
+	table := NewAccountTable(localdb)
+	prefix := []byte(fmt.Sprintf("%s", addr))
+	//第一次查询,默认展示最新得成交记录
+	rows, err := table.ListIndex("addr", prefix, nil, 1, et.ListDESC)
+	if err != nil {
+		elog.Error("findAccountByAddr.", "prefix", prefix, "err", err.Error())
+		return nil, err
+	}
+	for _, row := range rows {
+		account := row.Data.(*et.Account)
+		return account, nil
+	}
+	return nil, types.ErrNotFound
+}
+
 func findAccountListByStatus(localdb dbm.KV, status, direction int32, primaryKey string) (*et.ReplyAccountList, error) {
 	if status == et.Expired {
-		return findAccountListByIndex(localdb, direction, primaryKey)
+		return findAccountListByIndex(localdb, time.Now().Unix(), primaryKey)
 	}
 	table := NewAccountTable(localdb)
 	prefix := []byte(fmt.Sprintf("%d", status))
@@ -368,7 +448,7 @@ func findAccountListByStatus(localdb dbm.KV, status, direction int32, primaryKey
 		rows, err = table.ListIndex("status", prefix, []byte(primaryKey), et.Count, direction)
 	}
 	if err != nil {
-		elog.Error("findAccountListByStatus.", "status", prefix, "err", err.Error())
+		elog.Error("findAccountListByStatus.", "status", status, "err", err.Error())
 		return nil, err
 	}
 	var reply et.ReplyAccountList
@@ -381,4 +461,25 @@ func findAccountListByStatus(localdb dbm.KV, status, direction int32, primaryKey
 		reply.PrimaryKey = string(rows[len(rows)-1].Primary)
 	}
 	return &reply, nil
+}
+
+func queryBalanceByID(statedb, localdb dbm.KV, cfg *types.Chain33Config, execName string, in *et.QueryBalanceByID) (*et.Balance, error) {
+	acc, err := findAccountByID(localdb, in.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	assetDB, err := account.NewAccountDB(cfg, in.Asset.GetExecer(), in.Asset.GetSymbol(), statedb)
+	if err != nil {
+		return nil, err
+	}
+	var balance et.Balance
+	if acc.PrevAddr != "" {
+		prevAccount := assetDB.LoadExecAccount(acc.PrevAddr, dapp.ExecAddress(execName))
+		balance.Balance += prevAccount.Balance
+		balance.Frozen += prevAccount.Frozen
+	}
+	currAccount := assetDB.LoadExecAccount(acc.Addr, dapp.ExecAddress(execName))
+	balance.Balance += currAccount.Balance
+	balance.Frozen += currAccount.Frozen
+	return &balance, nil
 }

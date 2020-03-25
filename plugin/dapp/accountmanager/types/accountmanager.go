@@ -30,6 +30,8 @@ const (
 	FuncNameQueryAccountByID      = "QueryAccountByID"
 	FuncNameQueryAccountsByStatus = "QueryAccountsByStatus"
 	FuncNameQueryExpiredAccounts  = "QueryExpiredAccounts"
+	FuncNameQueryAccountByAddr    = "QueryAccountByAddr"
+	FuncNameQueryBalanceByID      = "QueryBalanceByID"
 )
 
 // log类型id值

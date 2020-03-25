@@ -100,21 +100,24 @@ message TransferReceipt{
 
     account ToAccount = 2;
 
-    int64  blockTime = 3;
+    int64  index = 3;
 }
 //回执日志
 message SuperviseReceipt{
     repeated account accounts = 1;
     int32    op = 2;
-    int64  blockTime = 3;
+    int64  index = 3;
 
 }
 
 message QueryExpiredAccounts{
     string primaryKey = 1;
+
+    //第一次需要传入逾期时间，时间戳
+    int64  expiredTime = 2;
     //单页返回多少条记录，默认返回10条
     // 0降序，1升序，默认降序
-    int32 direction = 2;
+    int32 direction = 3;
 }
 
 message QueryAccountsByStatus{
@@ -128,6 +131,21 @@ message QueryAccountsByStatus{
 
 message QueryAccountByID {
     string accountID = 1;
+}
+
+message QueryAccountByAddr {
+    string addr = 1;
+}
+
+message QueryBalanceByID {
+    string accountID = 1;
+
+    asset asset = 2;
+}
+
+message balance {
+    int64  balance = 1;
+    int64  frozen  = 2;
 }
 service accountmanager {
 

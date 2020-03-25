@@ -94,7 +94,20 @@ func (a *accountmanager) ExecLocal_Transfer(payload *et.Transfer, tx *types.Tran
 		for _, log := range receiptData.Logs {
 			switch log.Ty {
 			case et.TyResetLog:
-				//账户信息不变更，不需要处理
+				receipt := &et.TransferReceipt{}
+				if err := types.Decode(log.Log, receipt); err != nil {
+					return nil, err
+				}
+				accountTable := NewAccountTable(a.GetLocalDB())
+				err := accountTable.Replace(receipt.FromAccount)
+				if err != nil {
+					return nil, err
+				}
+				kvs, err := accountTable.Save()
+				if err != nil {
+					return nil, err
+				}
+				dbSet.KV = append(dbSet.KV, kvs...)
 			}
 		}
 	}
@@ -112,17 +125,39 @@ func (a *accountmanager) ExecLocal_Supervise(payload *et.Supervise, tx *types.Tr
 					return nil, err
 				}
 				accountTable := NewAccountTable(a.GetLocalDB())
-				for _, account := range receipt.Accounts {
-					err := accountTable.Replace(account)
+				//当时续期操作得话，需要重建
+				if receipt.Op == et.AddExpire {
+					for _, account := range receipt.Accounts {
+						err := accountTable.DelRow(account)
+						if err != nil {
+							return nil, err
+						}
+						//重置主键
+						account.Index = receipt.Index
+						err = accountTable.Replace(account)
+						if err != nil {
+							return nil, err
+						}
+					}
+					kvs, err := accountTable.Save()
 					if err != nil {
 						return nil, err
 					}
+					dbSet.KV = append(dbSet.KV, kvs...)
+				} else {
+					for _, account := range receipt.Accounts {
+						err := accountTable.Replace(account)
+						if err != nil {
+							return nil, err
+						}
+					}
+					kvs, err := accountTable.Save()
+					if err != nil {
+						return nil, err
+					}
+					dbSet.KV = append(dbSet.KV, kvs...)
 				}
-				kvs, err := accountTable.Save()
-				if err != nil {
-					return nil, err
-				}
-				dbSet.KV = append(dbSet.KV, kvs...)
+
 			}
 		}
 	}
