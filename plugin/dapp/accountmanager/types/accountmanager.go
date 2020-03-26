@@ -117,28 +117,28 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(AccountmanagerX, NewType(cfg))
 }
 
-type accountmanagerType struct {
+type AccountmanagerType struct {
 	types.ExecTypeBase
 }
 
-func NewType(cfg *types.Chain33Config) *accountmanagerType {
-	c := &accountmanagerType{}
+func NewType(cfg *types.Chain33Config) *AccountmanagerType {
+	c := &AccountmanagerType{}
 	c.SetChild(c)
 	c.SetConfig(cfg)
 	return c
 }
 
 // GetPayload 获取合约action结构
-func (a *accountmanagerType) GetPayload() types.Message {
+func (a *AccountmanagerType) GetPayload() types.Message {
 	return &AccountmanagerAction{}
 }
 
 // GeTypeMap 获取合约action的id和name信息
-func (a *accountmanagerType) GetTypeMap() map[string]int32 {
+func (a *AccountmanagerType) GetTypeMap() map[string]int32 {
 	return actionMap
 }
 
 // GetLogMap 获取合约log相关信息
-func (a *accountmanagerType) GetLogMap() map[int64]*types.LogInfo {
+func (a *AccountmanagerType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }
