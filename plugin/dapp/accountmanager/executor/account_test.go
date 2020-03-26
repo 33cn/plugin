@@ -97,7 +97,7 @@ func TestAccountManager(t *testing.T) {
 	item2 := &types.ConfigItem{
 		Key: "mavl-manage-" + ConfNameManagerAddr,
 		Value: &types.ConfigItem_Arr{
-			Arr: &types.ArrayConfig{Value: []string{string(Nodes[0])}},
+			Arr: &types.ArrayConfig{Value: []string{Nodes[0]}},
 		},
 	}
 	stateDB.Set([]byte(item2.Key), types.Encode(item2))
