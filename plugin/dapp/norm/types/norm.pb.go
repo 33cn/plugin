@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Norm struct {
 	NormId               []byte   `protobuf:"bytes,1,opt,name=normId,proto3" json:"normId,omitempty"`
@@ -36,16 +35,17 @@ func (m *Norm) Reset()         { *m = Norm{} }
 func (m *Norm) String() string { return proto.CompactTextString(m) }
 func (*Norm) ProtoMessage()    {}
 func (*Norm) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{0}
+	return fileDescriptor_4c505000707f0293, []int{0}
 }
+
 func (m *Norm) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Norm.Unmarshal(m, b)
 }
 func (m *Norm) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Norm.Marshal(b, m, deterministic)
 }
-func (dst *Norm) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Norm.Merge(dst, src)
+func (m *Norm) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Norm.Merge(m, src)
 }
 func (m *Norm) XXX_Size() int {
 	return xxx_messageInfo_Norm.Size(m)
@@ -98,16 +98,17 @@ func (m *NormAction) Reset()         { *m = NormAction{} }
 func (m *NormAction) String() string { return proto.CompactTextString(m) }
 func (*NormAction) ProtoMessage()    {}
 func (*NormAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{1}
+	return fileDescriptor_4c505000707f0293, []int{1}
 }
+
 func (m *NormAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormAction.Unmarshal(m, b)
 }
 func (m *NormAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_NormAction.Marshal(b, m, deterministic)
 }
-func (dst *NormAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NormAction.Merge(dst, src)
+func (m *NormAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NormAction.Merge(m, src)
 }
 func (m *NormAction) XXX_Size() int {
 	return xxx_messageInfo_NormAction.Size(m)
@@ -149,59 +150,11 @@ func (m *NormAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*NormAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _NormAction_OneofMarshaler, _NormAction_OneofUnmarshaler, _NormAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*NormAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*NormAction_Nput)(nil),
 	}
-}
-
-func _NormAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*NormAction)
-	// value
-	switch x := m.Value.(type) {
-	case *NormAction_Nput:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Nput); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("NormAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _NormAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*NormAction)
-	switch tag {
-	case 1: // value.nput
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(NormPut)
-		err := b.DecodeMessage(msg)
-		m.Value = &NormAction_Nput{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _NormAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*NormAction)
-	// value
-	switch x := m.Value.(type) {
-	case *NormAction_Nput:
-		s := proto.Size(x.Nput)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type NormPut struct {
@@ -216,16 +169,17 @@ func (m *NormPut) Reset()         { *m = NormPut{} }
 func (m *NormPut) String() string { return proto.CompactTextString(m) }
 func (*NormPut) ProtoMessage()    {}
 func (*NormPut) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{2}
+	return fileDescriptor_4c505000707f0293, []int{2}
 }
+
 func (m *NormPut) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormPut.Unmarshal(m, b)
 }
 func (m *NormPut) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_NormPut.Marshal(b, m, deterministic)
 }
-func (dst *NormPut) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NormPut.Merge(dst, src)
+func (m *NormPut) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NormPut.Merge(m, src)
 }
 func (m *NormPut) XXX_Size() int {
 	return xxx_messageInfo_NormPut.Size(m)
@@ -261,16 +215,17 @@ func (m *NormGetKey) Reset()         { *m = NormGetKey{} }
 func (m *NormGetKey) String() string { return proto.CompactTextString(m) }
 func (*NormGetKey) ProtoMessage()    {}
 func (*NormGetKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_norm_4c7b2dbe1c6a4afc, []int{3}
+	return fileDescriptor_4c505000707f0293, []int{3}
 }
+
 func (m *NormGetKey) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_NormGetKey.Unmarshal(m, b)
 }
 func (m *NormGetKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_NormGetKey.Marshal(b, m, deterministic)
 }
-func (dst *NormGetKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NormGetKey.Merge(dst, src)
+func (m *NormGetKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NormGetKey.Merge(m, src)
 }
 func (m *NormGetKey) XXX_Size() int {
 	return xxx_messageInfo_NormGetKey.Size(m)
@@ -295,9 +250,11 @@ func init() {
 	proto.RegisterType((*NormGetKey)(nil), "types.NormGetKey")
 }
 
-func init() { proto.RegisterFile("norm.proto", fileDescriptor_norm_4c7b2dbe1c6a4afc) }
+func init() {
+	proto.RegisterFile("norm.proto", fileDescriptor_4c505000707f0293)
+}
 
-var fileDescriptor_norm_4c7b2dbe1c6a4afc = []byte{
+var fileDescriptor_4c505000707f0293 = []byte{
 	// 209 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xca, 0xcb, 0x2f, 0xca,
 	0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2d, 0xa9, 0x2c, 0x48, 0x2d, 0x56, 0x4a, 0xe3,

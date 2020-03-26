@@ -39,18 +39,13 @@ isParaChain=false
 enableTxQuickIndex=false
 
 [p2p]
-seeds=[]
-enable=false
-isSeed=false
-serverStart=true
-innerSeedEnable=true
-useGithub=true
-innerBounds=300
+types=["dht"]
 msgCacheSize=10240
 driver="memdb"
 dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
+
 
 [rpc]
 jrpcBindAddr="localhost:0"

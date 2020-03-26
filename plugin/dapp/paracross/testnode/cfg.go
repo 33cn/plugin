@@ -44,13 +44,7 @@ isParaChain = true
 enableTxQuickIndex=false
 
 [p2p]
-seeds=[]
 enable=false
-isSeed=false
-serverStart=true
-innerSeedEnable=true
-useGithub=true
-innerBounds=300
 msgCacheSize=10240
 driver="leveldb"
 dbPath="paradatadir/addrbook"
@@ -124,9 +118,7 @@ mainBlockHashForkHeight=1
 mainForkParacrossCommitTx=1
 mainLoopCheckCommitTxDoneForkHeight=11
 selfConsensEnablePreContract=["0-1000"]
-[[consensus.sub.para.emptyBlockInterval]]
-blockHeight=0
-interval=2
+emptyBlockInterval=["0:2"]
 
 
 [store]

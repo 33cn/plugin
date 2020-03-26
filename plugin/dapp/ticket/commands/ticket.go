@@ -25,6 +25,7 @@ func TicketCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
+		AutoMineCmd(),
 		BindMinerCmd(),
 		CountTicketCmd(),
 		CloseTicketCmd(),
@@ -33,6 +34,42 @@ func TicketCmd() *cobra.Command {
 	)
 
 	return cmd
+}
+
+// AutoMineCmd  set auto mining
+func AutoMineCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "auto_mine",
+		Short: "Set auto mine on/off",
+		Run:   autoMine,
+	}
+	addAutoMineFlags(cmd)
+	return cmd
+}
+
+func addAutoMineFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("flag", "f", 0, `auto mine(0: off, 1: on)`)
+	cmd.MarkFlagRequired("flag")
+}
+
+func autoMine(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	flag, _ := cmd.Flags().GetInt32("flag")
+	if flag != 0 && flag != 1 {
+		err := cmd.UsageFunc()(cmd)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		return
+	}
+	params := struct {
+		Flag int32
+	}{
+		Flag: flag,
+	}
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "ticket.SetAutoMining", params, &res)
+	ctx.Run()
 }
 
 // BindMinerCmd bind miner

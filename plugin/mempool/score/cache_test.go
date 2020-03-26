@@ -223,7 +223,7 @@ func TestRealNodeMempool(t *testing.T) {
 		}
 		break
 	}
-	peer, err := mock33.GetAPI().PeerInfo()
+	peer, err := mock33.GetAPI().PeerInfo(nil)
 	assert.Nil(t, err)
 	assert.Equal(t, len(peer.Peers), 0)
 	//assert.Equal(t, peer.Peers[0].MempoolSize, int32(0))

@@ -151,7 +151,7 @@ func (c *Paracross) udpateLocalParaTxs(paraTitle string, paraHeight int64, cross
 			}
 			//主链共识后，平行链执行出错的平行链资产withdraw回滚
 			if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
-				asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), paraTx.Tx)
+				asset, err := c.getCrossAssetTransferInfo(payload.GetCrossAssetTransfer(), paraTx.Tx, act)
 				if err != nil {
 					return nil, err
 				}
@@ -210,7 +210,7 @@ func (c *Paracross) getAssetTransferInfo(tx *types.Transaction, coinToken string
 	return asset, nil
 }
 
-func (c *Paracross) getCrossAssetTransferInfo(payload *pt.CrossAssetTransfer, tx *types.Transaction) (*pt.ParacrossAsset, error) {
+func (c *Paracross) getCrossAssetTransferInfo(payload *pt.CrossAssetTransfer, tx *types.Transaction, act int64) (*pt.ParacrossAsset, error) {
 	exec := payload.AssetExec
 	symbol := payload.AssetSymbol
 	if payload.AssetSymbol == "" {
@@ -223,14 +223,20 @@ func (c *Paracross) getCrossAssetTransferInfo(payload *pt.CrossAssetTransfer, tx
 		return nil, err
 	}
 
+	isWithDraw := true
+	if act == pt.ParacrossMainAssetTransfer || act == pt.ParacrossParaAssetTransfer {
+		isWithDraw = false
+	}
+
 	asset := &pt.ParacrossAsset{
-		From:   tx.From(),
-		To:     tx.To,
-		Amount: amount,
-		TxHash: common.ToHex(tx.Hash()),
-		Height: c.GetHeight(),
-		Exec:   exec,
-		Symbol: symbol,
+		From:       tx.From(),
+		To:         tx.To,
+		IsWithdraw: isWithDraw,
+		Amount:     amount,
+		TxHash:     common.ToHex(tx.Hash()),
+		Height:     c.GetHeight(),
+		Exec:       exec,
+		Symbol:     symbol,
 	}
 	return asset, nil
 }

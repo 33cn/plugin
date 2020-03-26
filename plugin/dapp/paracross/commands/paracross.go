@@ -256,6 +256,7 @@ func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("to", "t", "", "transfer to account")
+	cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
 	cmd.MarkFlagRequired("amount")
@@ -298,8 +299,16 @@ func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
 	}
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	var res string
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	_, err := ctx.RunResult()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	//remove 0x
+	fmt.Println(res[2:])
+
 }
 
 func superNodeCmd() *cobra.Command {

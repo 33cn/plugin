@@ -5,10 +5,9 @@ package types
 
 import (
 	fmt "fmt"
+	math "math"
 
 	proto "github.com/golang/protobuf/proto"
-
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // CandidatorInfo 候选节点信息
 type CandidatorInfo struct {
@@ -46,16 +45,17 @@ func (m *CandidatorInfo) Reset()         { *m = CandidatorInfo{} }
 func (m *CandidatorInfo) String() string { return proto.CompactTextString(m) }
 func (*CandidatorInfo) ProtoMessage()    {}
 func (*CandidatorInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{0}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{0}
 }
+
 func (m *CandidatorInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CandidatorInfo.Unmarshal(m, b)
 }
 func (m *CandidatorInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CandidatorInfo.Marshal(b, m, deterministic)
 }
-func (dst *CandidatorInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CandidatorInfo.Merge(dst, src)
+func (m *CandidatorInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CandidatorInfo.Merge(m, src)
 }
 func (m *CandidatorInfo) XXX_Size() int {
 	return xxx_messageInfo_CandidatorInfo.Size(m)
@@ -173,16 +173,17 @@ func (m *DposVoter) Reset()         { *m = DposVoter{} }
 func (m *DposVoter) String() string { return proto.CompactTextString(m) }
 func (*DposVoter) ProtoMessage()    {}
 func (*DposVoter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{1}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{1}
 }
+
 func (m *DposVoter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVoter.Unmarshal(m, b)
 }
 func (m *DposVoter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVoter.Marshal(b, m, deterministic)
 }
-func (dst *DposVoter) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVoter.Merge(dst, src)
+func (m *DposVoter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVoter.Merge(m, src)
 }
 func (m *DposVoter) XXX_Size() int {
 	return xxx_messageInfo_DposVoter.Size(m)
@@ -244,16 +245,17 @@ func (m *Candidator) Reset()         { *m = Candidator{} }
 func (m *Candidator) String() string { return proto.CompactTextString(m) }
 func (*Candidator) ProtoMessage()    {}
 func (*Candidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{2}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{2}
 }
+
 func (m *Candidator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Candidator.Unmarshal(m, b)
 }
 func (m *Candidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Candidator.Marshal(b, m, deterministic)
 }
-func (dst *Candidator) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Candidator.Merge(dst, src)
+func (m *Candidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Candidator.Merge(m, src)
 }
 func (m *Candidator) XXX_Size() int {
 	return xxx_messageInfo_Candidator.Size(m)
@@ -313,16 +315,17 @@ func (m *DposCandidatorRegist) Reset()         { *m = DposCandidatorRegist{} }
 func (m *DposCandidatorRegist) String() string { return proto.CompactTextString(m) }
 func (*DposCandidatorRegist) ProtoMessage()    {}
 func (*DposCandidatorRegist) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{3}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{3}
 }
+
 func (m *DposCandidatorRegist) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCandidatorRegist.Unmarshal(m, b)
 }
 func (m *DposCandidatorRegist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCandidatorRegist.Marshal(b, m, deterministic)
 }
-func (dst *DposCandidatorRegist) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCandidatorRegist.Merge(dst, src)
+func (m *DposCandidatorRegist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCandidatorRegist.Merge(m, src)
 }
 func (m *DposCandidatorRegist) XXX_Size() int {
 	return xxx_messageInfo_DposCandidatorRegist.Size(m)
@@ -367,16 +370,17 @@ func (m *DposCandidatorCancelRegist) Reset()         { *m = DposCandidatorCancel
 func (m *DposCandidatorCancelRegist) String() string { return proto.CompactTextString(m) }
 func (*DposCandidatorCancelRegist) ProtoMessage()    {}
 func (*DposCandidatorCancelRegist) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{4}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{4}
 }
+
 func (m *DposCandidatorCancelRegist) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCandidatorCancelRegist.Unmarshal(m, b)
 }
 func (m *DposCandidatorCancelRegist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCandidatorCancelRegist.Marshal(b, m, deterministic)
 }
-func (dst *DposCandidatorCancelRegist) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCandidatorCancelRegist.Merge(dst, src)
+func (m *DposCandidatorCancelRegist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCandidatorCancelRegist.Merge(m, src)
 }
 func (m *DposCandidatorCancelRegist) XXX_Size() int {
 	return xxx_messageInfo_DposCandidatorCancelRegist.Size(m)
@@ -415,16 +419,17 @@ func (m *DposVote) Reset()         { *m = DposVote{} }
 func (m *DposVote) String() string { return proto.CompactTextString(m) }
 func (*DposVote) ProtoMessage()    {}
 func (*DposVote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{5}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{5}
 }
+
 func (m *DposVote) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVote.Unmarshal(m, b)
 }
 func (m *DposVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVote.Marshal(b, m, deterministic)
 }
-func (dst *DposVote) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVote.Merge(dst, src)
+func (m *DposVote) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVote.Merge(m, src)
 }
 func (m *DposVote) XXX_Size() int {
 	return xxx_messageInfo_DposVote.Size(m)
@@ -469,16 +474,17 @@ func (m *DposCancelVote) Reset()         { *m = DposCancelVote{} }
 func (m *DposCancelVote) String() string { return proto.CompactTextString(m) }
 func (*DposCancelVote) ProtoMessage()    {}
 func (*DposCancelVote) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{6}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{6}
 }
+
 func (m *DposCancelVote) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCancelVote.Unmarshal(m, b)
 }
 func (m *DposCancelVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCancelVote.Marshal(b, m, deterministic)
 }
-func (dst *DposCancelVote) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCancelVote.Merge(dst, src)
+func (m *DposCancelVote) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCancelVote.Merge(m, src)
 }
 func (m *DposCancelVote) XXX_Size() int {
 	return xxx_messageInfo_DposCancelVote.Size(m)
@@ -531,16 +537,17 @@ func (m *DposVoteAction) Reset()         { *m = DposVoteAction{} }
 func (m *DposVoteAction) String() string { return proto.CompactTextString(m) }
 func (*DposVoteAction) ProtoMessage()    {}
 func (*DposVoteAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{7}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{7}
 }
+
 func (m *DposVoteAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVoteAction.Unmarshal(m, b)
 }
 func (m *DposVoteAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVoteAction.Marshal(b, m, deterministic)
 }
-func (dst *DposVoteAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVoteAction.Merge(dst, src)
+func (m *DposVoteAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVoteAction.Merge(m, src)
 }
 func (m *DposVoteAction) XXX_Size() int {
 	return xxx_messageInfo_DposVoteAction.Size(m)
@@ -751,9 +758,9 @@ func (m *DposVoteAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*DposVoteAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _DposVoteAction_OneofMarshaler, _DposVoteAction_OneofUnmarshaler, _DposVoteAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*DposVoteAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*DposVoteAction_Regist)(nil),
 		(*DposVoteAction_CancelRegist)(nil),
 		(*DposVoteAction_ReRegist)(nil),
@@ -771,288 +778,6 @@ func (*DposVoteAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer
 	}
 }
 
-func _DposVoteAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*DposVoteAction)
-	// value
-	switch x := m.Value.(type) {
-	case *DposVoteAction_Regist:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Regist); err != nil {
-			return err
-		}
-	case *DposVoteAction_CancelRegist:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CancelRegist); err != nil {
-			return err
-		}
-	case *DposVoteAction_ReRegist:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ReRegist); err != nil {
-			return err
-		}
-	case *DposVoteAction_Vote:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Vote); err != nil {
-			return err
-		}
-	case *DposVoteAction_CancelVote:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CancelVote); err != nil {
-			return err
-		}
-	case *DposVoteAction_CandidatorQuery:
-		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CandidatorQuery); err != nil {
-			return err
-		}
-	case *DposVoteAction_VoteQuery:
-		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VoteQuery); err != nil {
-			return err
-		}
-	case *DposVoteAction_RegistVrfM:
-		b.EncodeVarint(8<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RegistVrfM); err != nil {
-			return err
-		}
-	case *DposVoteAction_RegistVrfRP:
-		b.EncodeVarint(9<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RegistVrfRP); err != nil {
-			return err
-		}
-	case *DposVoteAction_VrfQuery:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.VrfQuery); err != nil {
-			return err
-		}
-	case *DposVoteAction_RecordCB:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RecordCB); err != nil {
-			return err
-		}
-	case *DposVoteAction_CbQuery:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.CbQuery); err != nil {
-			return err
-		}
-	case *DposVoteAction_RegistTopN:
-		b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.RegistTopN); err != nil {
-			return err
-		}
-	case *DposVoteAction_TopNQuery:
-		b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.TopNQuery); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("DposVoteAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _DposVoteAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*DposVoteAction)
-	switch tag {
-	case 1: // value.regist
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCandidatorRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_Regist{msg}
-		return true, err
-	case 2: // value.cancelRegist
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCandidatorCancelRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_CancelRegist{msg}
-		return true, err
-	case 3: // value.reRegist
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCandidatorRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_ReRegist{msg}
-		return true, err
-	case 4: // value.vote
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposVote)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_Vote{msg}
-		return true, err
-	case 5: // value.cancelVote
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCancelVote)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_CancelVote{msg}
-		return true, err
-	case 6: // value.candidatorQuery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(CandidatorQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_CandidatorQuery{msg}
-		return true, err
-	case 7: // value.voteQuery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposVoteQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_VoteQuery{msg}
-		return true, err
-	case 8: // value.registVrfM
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposVrfMRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_RegistVrfM{msg}
-		return true, err
-	case 9: // value.registVrfRP
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposVrfRPRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_RegistVrfRP{msg}
-		return true, err
-	case 10: // value.vrfQuery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposVrfQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_VrfQuery{msg}
-		return true, err
-	case 11: // value.recordCB
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCBInfo)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_RecordCB{msg}
-		return true, err
-	case 12: // value.cbQuery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(DposCBQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_CbQuery{msg}
-		return true, err
-	case 13: // value.registTopN
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TopNCandidatorRegist)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_RegistTopN{msg}
-		return true, err
-	case 14: // value.topNQuery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(TopNCandidatorsQuery)
-		err := b.DecodeMessage(msg)
-		m.Value = &DposVoteAction_TopNQuery{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _DposVoteAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*DposVoteAction)
-	// value
-	switch x := m.Value.(type) {
-	case *DposVoteAction_Regist:
-		s := proto.Size(x.Regist)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_CancelRegist:
-		s := proto.Size(x.CancelRegist)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_ReRegist:
-		s := proto.Size(x.ReRegist)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_Vote:
-		s := proto.Size(x.Vote)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_CancelVote:
-		s := proto.Size(x.CancelVote)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_CandidatorQuery:
-		s := proto.Size(x.CandidatorQuery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_VoteQuery:
-		s := proto.Size(x.VoteQuery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_RegistVrfM:
-		s := proto.Size(x.RegistVrfM)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_RegistVrfRP:
-		s := proto.Size(x.RegistVrfRP)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_VrfQuery:
-		s := proto.Size(x.VrfQuery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_RecordCB:
-		s := proto.Size(x.RecordCB)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_CbQuery:
-		s := proto.Size(x.CbQuery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_RegistTopN:
-		s := proto.Size(x.RegistTopN)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *DposVoteAction_TopNQuery:
-		s := proto.Size(x.TopNQuery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
-}
-
 // CandidatorQuery 候选节点查询
 type CandidatorQuery struct {
 	Pubkeys              []string `protobuf:"bytes,1,rep,name=pubkeys,proto3" json:"pubkeys,omitempty"`
@@ -1067,16 +792,17 @@ func (m *CandidatorQuery) Reset()         { *m = CandidatorQuery{} }
 func (m *CandidatorQuery) String() string { return proto.CompactTextString(m) }
 func (*CandidatorQuery) ProtoMessage()    {}
 func (*CandidatorQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{8}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{8}
 }
+
 func (m *CandidatorQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CandidatorQuery.Unmarshal(m, b)
 }
 func (m *CandidatorQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CandidatorQuery.Marshal(b, m, deterministic)
 }
-func (dst *CandidatorQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CandidatorQuery.Merge(dst, src)
+func (m *CandidatorQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CandidatorQuery.Merge(m, src)
 }
 func (m *CandidatorQuery) XXX_Size() int {
 	return xxx_messageInfo_CandidatorQuery.Size(m)
@@ -1124,16 +850,17 @@ func (m *JSONCandidator) Reset()         { *m = JSONCandidator{} }
 func (m *JSONCandidator) String() string { return proto.CompactTextString(m) }
 func (*JSONCandidator) ProtoMessage()    {}
 func (*JSONCandidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{9}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{9}
 }
+
 func (m *JSONCandidator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JSONCandidator.Unmarshal(m, b)
 }
 func (m *JSONCandidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JSONCandidator.Marshal(b, m, deterministic)
 }
-func (dst *JSONCandidator) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JSONCandidator.Merge(dst, src)
+func (m *JSONCandidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JSONCandidator.Merge(m, src)
 }
 func (m *JSONCandidator) XXX_Size() int {
 	return xxx_messageInfo_JSONCandidator.Size(m)
@@ -1191,16 +918,17 @@ func (m *CandidatorReply) Reset()         { *m = CandidatorReply{} }
 func (m *CandidatorReply) String() string { return proto.CompactTextString(m) }
 func (*CandidatorReply) ProtoMessage()    {}
 func (*CandidatorReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{10}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{10}
 }
+
 func (m *CandidatorReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CandidatorReply.Unmarshal(m, b)
 }
 func (m *CandidatorReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CandidatorReply.Marshal(b, m, deterministic)
 }
-func (dst *CandidatorReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CandidatorReply.Merge(dst, src)
+func (m *CandidatorReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CandidatorReply.Merge(m, src)
 }
 func (m *CandidatorReply) XXX_Size() int {
 	return xxx_messageInfo_CandidatorReply.Size(m)
@@ -1231,16 +959,17 @@ func (m *DposVoteQuery) Reset()         { *m = DposVoteQuery{} }
 func (m *DposVoteQuery) String() string { return proto.CompactTextString(m) }
 func (*DposVoteQuery) ProtoMessage()    {}
 func (*DposVoteQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{11}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{11}
 }
+
 func (m *DposVoteQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVoteQuery.Unmarshal(m, b)
 }
 func (m *DposVoteQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVoteQuery.Marshal(b, m, deterministic)
 }
-func (dst *DposVoteQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVoteQuery.Merge(dst, src)
+func (m *DposVoteQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVoteQuery.Merge(m, src)
 }
 func (m *DposVoteQuery) XXX_Size() int {
 	return xxx_messageInfo_DposVoteQuery.Size(m)
@@ -1281,16 +1010,17 @@ func (m *JSONDposVoter) Reset()         { *m = JSONDposVoter{} }
 func (m *JSONDposVoter) String() string { return proto.CompactTextString(m) }
 func (*JSONDposVoter) ProtoMessage()    {}
 func (*JSONDposVoter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{12}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{12}
 }
+
 func (m *JSONDposVoter) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JSONDposVoter.Unmarshal(m, b)
 }
 func (m *JSONDposVoter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JSONDposVoter.Marshal(b, m, deterministic)
 }
-func (dst *JSONDposVoter) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JSONDposVoter.Merge(dst, src)
+func (m *JSONDposVoter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JSONDposVoter.Merge(m, src)
 }
 func (m *JSONDposVoter) XXX_Size() int {
 	return xxx_messageInfo_JSONDposVoter.Size(m)
@@ -1348,16 +1078,17 @@ func (m *DposVoteReply) Reset()         { *m = DposVoteReply{} }
 func (m *DposVoteReply) String() string { return proto.CompactTextString(m) }
 func (*DposVoteReply) ProtoMessage()    {}
 func (*DposVoteReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{13}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{13}
 }
+
 func (m *DposVoteReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVoteReply.Unmarshal(m, b)
 }
 func (m *DposVoteReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVoteReply.Marshal(b, m, deterministic)
 }
-func (dst *DposVoteReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVoteReply.Merge(dst, src)
+func (m *DposVoteReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVoteReply.Merge(m, src)
 }
 func (m *DposVoteReply) XXX_Size() int {
 	return xxx_messageInfo_DposVoteReply.Size(m)
@@ -1397,16 +1128,17 @@ func (m *ReceiptCandicator) Reset()         { *m = ReceiptCandicator{} }
 func (m *ReceiptCandicator) String() string { return proto.CompactTextString(m) }
 func (*ReceiptCandicator) ProtoMessage()    {}
 func (*ReceiptCandicator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{14}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{14}
 }
+
 func (m *ReceiptCandicator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptCandicator.Unmarshal(m, b)
 }
 func (m *ReceiptCandicator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptCandicator.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptCandicator) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptCandicator.Merge(dst, src)
+func (m *ReceiptCandicator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptCandicator.Merge(m, src)
 }
 func (m *ReceiptCandicator) XXX_Size() int {
 	return xxx_messageInfo_ReceiptCandicator.Size(m)
@@ -1514,16 +1246,17 @@ func (m *DposVrfM) Reset()         { *m = DposVrfM{} }
 func (m *DposVrfM) String() string { return proto.CompactTextString(m) }
 func (*DposVrfM) ProtoMessage()    {}
 func (*DposVrfM) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{15}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{15}
 }
+
 func (m *DposVrfM) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfM.Unmarshal(m, b)
 }
 func (m *DposVrfM) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfM.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfM) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfM.Merge(dst, src)
+func (m *DposVrfM) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfM.Merge(m, src)
 }
 func (m *DposVrfM) XXX_Size() int {
 	return xxx_messageInfo_DposVrfM.Size(m)
@@ -1619,16 +1352,17 @@ func (m *DposVrfRP) Reset()         { *m = DposVrfRP{} }
 func (m *DposVrfRP) String() string { return proto.CompactTextString(m) }
 func (*DposVrfRP) ProtoMessage()    {}
 func (*DposVrfRP) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{16}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{16}
 }
+
 func (m *DposVrfRP) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfRP.Unmarshal(m, b)
 }
 func (m *DposVrfRP) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfRP.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfRP) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfRP.Merge(dst, src)
+func (m *DposVrfRP) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfRP.Merge(m, src)
 }
 func (m *DposVrfRP) XXX_Size() int {
 	return xxx_messageInfo_DposVrfRP.Size(m)
@@ -1730,16 +1464,17 @@ func (m *DposVrfMRegist) Reset()         { *m = DposVrfMRegist{} }
 func (m *DposVrfMRegist) String() string { return proto.CompactTextString(m) }
 func (*DposVrfMRegist) ProtoMessage()    {}
 func (*DposVrfMRegist) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{17}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{17}
 }
+
 func (m *DposVrfMRegist) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfMRegist.Unmarshal(m, b)
 }
 func (m *DposVrfMRegist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfMRegist.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfMRegist) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfMRegist.Merge(dst, src)
+func (m *DposVrfMRegist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfMRegist.Merge(m, src)
 }
 func (m *DposVrfMRegist) XXX_Size() int {
 	return xxx_messageInfo_DposVrfMRegist.Size(m)
@@ -1786,16 +1521,17 @@ func (m *DposVrfRPRegist) Reset()         { *m = DposVrfRPRegist{} }
 func (m *DposVrfRPRegist) String() string { return proto.CompactTextString(m) }
 func (*DposVrfRPRegist) ProtoMessage()    {}
 func (*DposVrfRPRegist) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{18}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{18}
 }
+
 func (m *DposVrfRPRegist) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfRPRegist.Unmarshal(m, b)
 }
 func (m *DposVrfRPRegist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfRPRegist.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfRPRegist) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfRPRegist.Merge(dst, src)
+func (m *DposVrfRPRegist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfRPRegist.Merge(m, src)
 }
 func (m *DposVrfRPRegist) XXX_Size() int {
 	return xxx_messageInfo_DposVrfRPRegist.Size(m)
@@ -1857,16 +1593,17 @@ func (m *ReceiptVrf) Reset()         { *m = ReceiptVrf{} }
 func (m *ReceiptVrf) String() string { return proto.CompactTextString(m) }
 func (*ReceiptVrf) ProtoMessage()    {}
 func (*ReceiptVrf) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{19}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{19}
 }
+
 func (m *ReceiptVrf) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptVrf.Unmarshal(m, b)
 }
 func (m *ReceiptVrf) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptVrf.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptVrf) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptVrf.Merge(dst, src)
+func (m *ReceiptVrf) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptVrf.Merge(m, src)
 }
 func (m *ReceiptVrf) XXX_Size() int {
 	return xxx_messageInfo_ReceiptVrf.Size(m)
@@ -1980,16 +1717,17 @@ func (m *VrfInfo) Reset()         { *m = VrfInfo{} }
 func (m *VrfInfo) String() string { return proto.CompactTextString(m) }
 func (*VrfInfo) ProtoMessage()    {}
 func (*VrfInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{20}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{20}
 }
+
 func (m *VrfInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VrfInfo.Unmarshal(m, b)
 }
 func (m *VrfInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VrfInfo.Marshal(b, m, deterministic)
 }
-func (dst *VrfInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VrfInfo.Merge(dst, src)
+func (m *VrfInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VrfInfo.Merge(m, src)
 }
 func (m *VrfInfo) XXX_Size() int {
 	return xxx_messageInfo_VrfInfo.Size(m)
@@ -2071,16 +1809,17 @@ func (m *DposVrfQuery) Reset()         { *m = DposVrfQuery{} }
 func (m *DposVrfQuery) String() string { return proto.CompactTextString(m) }
 func (*DposVrfQuery) ProtoMessage()    {}
 func (*DposVrfQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{21}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{21}
 }
+
 func (m *DposVrfQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfQuery.Unmarshal(m, b)
 }
 func (m *DposVrfQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfQuery.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfQuery.Merge(dst, src)
+func (m *DposVrfQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfQuery.Merge(m, src)
 }
 func (m *DposVrfQuery) XXX_Size() int {
 	return xxx_messageInfo_DposVrfQuery.Size(m)
@@ -2138,16 +1877,17 @@ func (m *JSONVrfInfo) Reset()         { *m = JSONVrfInfo{} }
 func (m *JSONVrfInfo) String() string { return proto.CompactTextString(m) }
 func (*JSONVrfInfo) ProtoMessage()    {}
 func (*JSONVrfInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{22}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{22}
 }
+
 func (m *JSONVrfInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_JSONVrfInfo.Unmarshal(m, b)
 }
 func (m *JSONVrfInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_JSONVrfInfo.Marshal(b, m, deterministic)
 }
-func (dst *JSONVrfInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JSONVrfInfo.Merge(dst, src)
+func (m *JSONVrfInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_JSONVrfInfo.Merge(m, src)
 }
 func (m *JSONVrfInfo) XXX_Size() int {
 	return xxx_messageInfo_JSONVrfInfo.Size(m)
@@ -2226,16 +1966,17 @@ func (m *DposVrfReply) Reset()         { *m = DposVrfReply{} }
 func (m *DposVrfReply) String() string { return proto.CompactTextString(m) }
 func (*DposVrfReply) ProtoMessage()    {}
 func (*DposVrfReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{23}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{23}
 }
+
 func (m *DposVrfReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposVrfReply.Unmarshal(m, b)
 }
 func (m *DposVrfReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposVrfReply.Marshal(b, m, deterministic)
 }
-func (dst *DposVrfReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposVrfReply.Merge(dst, src)
+func (m *DposVrfReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposVrfReply.Merge(m, src)
 }
 func (m *DposVrfReply) XXX_Size() int {
 	return xxx_messageInfo_DposVrfReply.Size(m)
@@ -2269,16 +2010,17 @@ func (m *DposCycleBoundaryInfo) Reset()         { *m = DposCycleBoundaryInfo{} }
 func (m *DposCycleBoundaryInfo) String() string { return proto.CompactTextString(m) }
 func (*DposCycleBoundaryInfo) ProtoMessage()    {}
 func (*DposCycleBoundaryInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{24}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{24}
 }
+
 func (m *DposCycleBoundaryInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCycleBoundaryInfo.Unmarshal(m, b)
 }
 func (m *DposCycleBoundaryInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCycleBoundaryInfo.Marshal(b, m, deterministic)
 }
-func (dst *DposCycleBoundaryInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCycleBoundaryInfo.Merge(dst, src)
+func (m *DposCycleBoundaryInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCycleBoundaryInfo.Merge(m, src)
 }
 func (m *DposCycleBoundaryInfo) XXX_Size() int {
 	return xxx_messageInfo_DposCycleBoundaryInfo.Size(m)
@@ -2340,16 +2082,17 @@ func (m *DposCBInfo) Reset()         { *m = DposCBInfo{} }
 func (m *DposCBInfo) String() string { return proto.CompactTextString(m) }
 func (*DposCBInfo) ProtoMessage()    {}
 func (*DposCBInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{25}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{25}
 }
+
 func (m *DposCBInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCBInfo.Unmarshal(m, b)
 }
 func (m *DposCBInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCBInfo.Marshal(b, m, deterministic)
 }
-func (dst *DposCBInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCBInfo.Merge(dst, src)
+func (m *DposCBInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCBInfo.Merge(m, src)
 }
 func (m *DposCBInfo) XXX_Size() int {
 	return xxx_messageInfo_DposCBInfo.Size(m)
@@ -2410,16 +2153,17 @@ func (m *DposCBQuery) Reset()         { *m = DposCBQuery{} }
 func (m *DposCBQuery) String() string { return proto.CompactTextString(m) }
 func (*DposCBQuery) ProtoMessage()    {}
 func (*DposCBQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{26}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{26}
 }
+
 func (m *DposCBQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCBQuery.Unmarshal(m, b)
 }
 func (m *DposCBQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCBQuery.Marshal(b, m, deterministic)
 }
-func (dst *DposCBQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCBQuery.Merge(dst, src)
+func (m *DposCBQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCBQuery.Merge(m, src)
 }
 func (m *DposCBQuery) XXX_Size() int {
 	return xxx_messageInfo_DposCBQuery.Size(m)
@@ -2470,16 +2214,17 @@ func (m *DposCBReply) Reset()         { *m = DposCBReply{} }
 func (m *DposCBReply) String() string { return proto.CompactTextString(m) }
 func (*DposCBReply) ProtoMessage()    {}
 func (*DposCBReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{27}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{27}
 }
+
 func (m *DposCBReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DposCBReply.Unmarshal(m, b)
 }
 func (m *DposCBReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DposCBReply.Marshal(b, m, deterministic)
 }
-func (dst *DposCBReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DposCBReply.Merge(dst, src)
+func (m *DposCBReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DposCBReply.Merge(m, src)
 }
 func (m *DposCBReply) XXX_Size() int {
 	return xxx_messageInfo_DposCBReply.Size(m)
@@ -2518,16 +2263,17 @@ func (m *ReceiptCB) Reset()         { *m = ReceiptCB{} }
 func (m *ReceiptCB) String() string { return proto.CompactTextString(m) }
 func (*ReceiptCB) ProtoMessage()    {}
 func (*ReceiptCB) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{28}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{28}
 }
+
 func (m *ReceiptCB) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptCB.Unmarshal(m, b)
 }
 func (m *ReceiptCB) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptCB.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptCB) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptCB.Merge(dst, src)
+func (m *ReceiptCB) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptCB.Merge(m, src)
 }
 func (m *ReceiptCB) XXX_Size() int {
 	return xxx_messageInfo_ReceiptCB.Size(m)
@@ -2624,16 +2370,17 @@ func (m *TopNCandidator) Reset()         { *m = TopNCandidator{} }
 func (m *TopNCandidator) String() string { return proto.CompactTextString(m) }
 func (*TopNCandidator) ProtoMessage()    {}
 func (*TopNCandidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{29}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{29}
 }
+
 func (m *TopNCandidator) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopNCandidator.Unmarshal(m, b)
 }
 func (m *TopNCandidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TopNCandidator.Marshal(b, m, deterministic)
 }
-func (dst *TopNCandidator) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopNCandidator.Merge(dst, src)
+func (m *TopNCandidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TopNCandidator.Merge(m, src)
 }
 func (m *TopNCandidator) XXX_Size() int {
 	return xxx_messageInfo_TopNCandidator.Size(m)
@@ -2694,16 +2441,17 @@ func (m *TopNCandidators) Reset()         { *m = TopNCandidators{} }
 func (m *TopNCandidators) String() string { return proto.CompactTextString(m) }
 func (*TopNCandidators) ProtoMessage()    {}
 func (*TopNCandidators) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{30}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{30}
 }
+
 func (m *TopNCandidators) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopNCandidators.Unmarshal(m, b)
 }
 func (m *TopNCandidators) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TopNCandidators.Marshal(b, m, deterministic)
 }
-func (dst *TopNCandidators) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopNCandidators.Merge(dst, src)
+func (m *TopNCandidators) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TopNCandidators.Merge(m, src)
 }
 func (m *TopNCandidators) XXX_Size() int {
 	return xxx_messageInfo_TopNCandidators.Size(m)
@@ -2754,16 +2502,17 @@ func (m *TopNCandidatorRegist) Reset()         { *m = TopNCandidatorRegist{} }
 func (m *TopNCandidatorRegist) String() string { return proto.CompactTextString(m) }
 func (*TopNCandidatorRegist) ProtoMessage()    {}
 func (*TopNCandidatorRegist) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{31}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{31}
 }
+
 func (m *TopNCandidatorRegist) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopNCandidatorRegist.Unmarshal(m, b)
 }
 func (m *TopNCandidatorRegist) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TopNCandidatorRegist.Marshal(b, m, deterministic)
 }
-func (dst *TopNCandidatorRegist) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopNCandidatorRegist.Merge(dst, src)
+func (m *TopNCandidatorRegist) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TopNCandidatorRegist.Merge(m, src)
 }
 func (m *TopNCandidatorRegist) XXX_Size() int {
 	return xxx_messageInfo_TopNCandidatorRegist.Size(m)
@@ -2793,16 +2542,17 @@ func (m *TopNCandidatorsQuery) Reset()         { *m = TopNCandidatorsQuery{} }
 func (m *TopNCandidatorsQuery) String() string { return proto.CompactTextString(m) }
 func (*TopNCandidatorsQuery) ProtoMessage()    {}
 func (*TopNCandidatorsQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{32}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{32}
 }
+
 func (m *TopNCandidatorsQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopNCandidatorsQuery.Unmarshal(m, b)
 }
 func (m *TopNCandidatorsQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TopNCandidatorsQuery.Marshal(b, m, deterministic)
 }
-func (dst *TopNCandidatorsQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopNCandidatorsQuery.Merge(dst, src)
+func (m *TopNCandidatorsQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TopNCandidatorsQuery.Merge(m, src)
 }
 func (m *TopNCandidatorsQuery) XXX_Size() int {
 	return xxx_messageInfo_TopNCandidatorsQuery.Size(m)
@@ -2832,16 +2582,17 @@ func (m *TopNCandidatorsReply) Reset()         { *m = TopNCandidatorsReply{} }
 func (m *TopNCandidatorsReply) String() string { return proto.CompactTextString(m) }
 func (*TopNCandidatorsReply) ProtoMessage()    {}
 func (*TopNCandidatorsReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{33}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{33}
 }
+
 func (m *TopNCandidatorsReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TopNCandidatorsReply.Unmarshal(m, b)
 }
 func (m *TopNCandidatorsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TopNCandidatorsReply.Marshal(b, m, deterministic)
 }
-func (dst *TopNCandidatorsReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopNCandidatorsReply.Merge(dst, src)
+func (m *TopNCandidatorsReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TopNCandidatorsReply.Merge(m, src)
 }
 func (m *TopNCandidatorsReply) XXX_Size() int {
 	return xxx_messageInfo_TopNCandidatorsReply.Size(m)
@@ -2877,16 +2628,17 @@ func (m *ReceiptTopN) Reset()         { *m = ReceiptTopN{} }
 func (m *ReceiptTopN) String() string { return proto.CompactTextString(m) }
 func (*ReceiptTopN) ProtoMessage()    {}
 func (*ReceiptTopN) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dposvote_545deb7138bfe440, []int{34}
+	return fileDescriptor_298cd4e7a8e2cdaf, []int{34}
 }
+
 func (m *ReceiptTopN) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptTopN.Unmarshal(m, b)
 }
 func (m *ReceiptTopN) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptTopN.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptTopN) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptTopN.Merge(dst, src)
+func (m *ReceiptTopN) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptTopN.Merge(m, src)
 }
 func (m *ReceiptTopN) XXX_Size() int {
 	return xxx_messageInfo_ReceiptTopN.Size(m)
@@ -2984,9 +2736,11 @@ func init() {
 	proto.RegisterType((*ReceiptTopN)(nil), "types.ReceiptTopN")
 }
 
-func init() { proto.RegisterFile("dposvote.proto", fileDescriptor_dposvote_545deb7138bfe440) }
+func init() {
+	proto.RegisterFile("dposvote.proto", fileDescriptor_298cd4e7a8e2cdaf)
+}
 
-var fileDescriptor_dposvote_545deb7138bfe440 = []byte{
+var fileDescriptor_298cd4e7a8e2cdaf = []byte{
 	// 1511 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x58, 0xdd, 0x6e, 0xdc, 0xc4,
 	0x17, 0xcf, 0xd8, 0xfb, 0xe5, 0xe3, 0xcd, 0xe6, 0xdf, 0xf9, 0x6f, 0x2b, 0xab, 0x54, 0x68, 0xb1,

@@ -76,21 +76,13 @@ batchsync=false
 enableTxQuickIndex=true
 
 [p2p]
-seeds=["127.0.0.1:13802"]
+types=["dht"]
 enable=true
-isSeed=true
-serverStart=true
-innerSeedEnable=false
-useGithub=false
-innerBounds=300
 msgCacheSize=10240
 driver="leveldb"
-dbPath="datadir1/addrbook"
+dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
-version=199
-verMix=199
-verMax=199
 
 
 [rpc]
@@ -227,21 +219,14 @@ batchsync=false
 enableTxQuickIndex=true
 
 [p2p]
-seeds=["127.0.0.1:13803"]
+types=["dht"]
 enable=true
-isSeed=true
-serverStart=true
-innerSeedEnable=false
-useGithub=false
-innerBounds=300
 msgCacheSize=10240
 driver="leveldb"
 dbPath="datadir2/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
-version=199
-verMix=199
-verMax=199
+
 
 
 [rpc]
@@ -585,7 +570,7 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
-	network := p2p.New(chain33Cfg)
+	network := p2p.NewP2PMgr(chain33Cfg)
 
 	network.SetQueueClient(q.Client())
 

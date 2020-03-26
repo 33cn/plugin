@@ -4,14 +4,11 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-
-	proto "github.com/golang/protobuf/proto"
-
 	math "math"
 
-	context "golang.org/x/net/context"
-
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 )
 
@@ -24,9 +21,9 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// 后面如果有其他数据模型可继续往上面添加
+//后面如果有其他数据模型可继续往上面添加
 type Storage struct {
 	// Types that are valid to be assigned to Value:
 	//	*Storage_ContentStorage
@@ -44,16 +41,17 @@ func (m *Storage) Reset()         { *m = Storage{} }
 func (m *Storage) String() string { return proto.CompactTextString(m) }
 func (*Storage) ProtoMessage()    {}
 func (*Storage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{0}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{0}
 }
+
 func (m *Storage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Storage.Unmarshal(m, b)
 }
 func (m *Storage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Storage.Marshal(b, m, deterministic)
 }
-func (dst *Storage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Storage.Merge(dst, src)
+func (m *Storage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Storage.Merge(m, src)
 }
 func (m *Storage) XXX_Size() int {
 	return xxx_messageInfo_Storage.Size(m)
@@ -71,23 +69,31 @@ type isStorage_Value interface {
 type Storage_ContentStorage struct {
 	ContentStorage *ContentOnlyNotaryStorage `protobuf:"bytes,1,opt,name=contentStorage,proto3,oneof"`
 }
+
 type Storage_HashStorage struct {
 	HashStorage *HashOnlyNotaryStorage `protobuf:"bytes,2,opt,name=hashStorage,proto3,oneof"`
 }
+
 type Storage_LinkStorage struct {
 	LinkStorage *LinkNotaryStorage `protobuf:"bytes,3,opt,name=linkStorage,proto3,oneof"`
 }
+
 type Storage_EncryptStorage struct {
 	EncryptStorage *EncryptNotaryStorage `protobuf:"bytes,4,opt,name=encryptStorage,proto3,oneof"`
 }
+
 type Storage_EncryptShareStorage struct {
 	EncryptShareStorage *EncryptShareNotaryStorage `protobuf:"bytes,5,opt,name=encryptShareStorage,proto3,oneof"`
 }
 
-func (*Storage_ContentStorage) isStorage_Value()      {}
-func (*Storage_HashStorage) isStorage_Value()         {}
-func (*Storage_LinkStorage) isStorage_Value()         {}
-func (*Storage_EncryptStorage) isStorage_Value()      {}
+func (*Storage_ContentStorage) isStorage_Value() {}
+
+func (*Storage_HashStorage) isStorage_Value() {}
+
+func (*Storage_LinkStorage) isStorage_Value() {}
+
+func (*Storage_EncryptStorage) isStorage_Value() {}
+
 func (*Storage_EncryptShareStorage) isStorage_Value() {}
 
 func (m *Storage) GetValue() isStorage_Value {
@@ -132,135 +138,15 @@ func (m *Storage) GetEncryptShareStorage() *EncryptShareNotaryStorage {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Storage) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Storage_OneofMarshaler, _Storage_OneofUnmarshaler, _Storage_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Storage) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Storage_ContentStorage)(nil),
 		(*Storage_HashStorage)(nil),
 		(*Storage_LinkStorage)(nil),
 		(*Storage_EncryptStorage)(nil),
 		(*Storage_EncryptShareStorage)(nil),
 	}
-}
-
-func _Storage_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Storage)
-	// value
-	switch x := m.Value.(type) {
-	case *Storage_ContentStorage:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ContentStorage); err != nil {
-			return err
-		}
-	case *Storage_HashStorage:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.HashStorage); err != nil {
-			return err
-		}
-	case *Storage_LinkStorage:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.LinkStorage); err != nil {
-			return err
-		}
-	case *Storage_EncryptStorage:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.EncryptStorage); err != nil {
-			return err
-		}
-	case *Storage_EncryptShareStorage:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.EncryptShareStorage); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Storage.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Storage_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Storage)
-	switch tag {
-	case 1: // value.contentStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ContentOnlyNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &Storage_ContentStorage{msg}
-		return true, err
-	case 2: // value.hashStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(HashOnlyNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &Storage_HashStorage{msg}
-		return true, err
-	case 3: // value.linkStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(LinkNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &Storage_LinkStorage{msg}
-		return true, err
-	case 4: // value.encryptStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(EncryptNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &Storage_EncryptStorage{msg}
-		return true, err
-	case 5: // value.encryptShareStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(EncryptShareNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &Storage_EncryptShareStorage{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Storage_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Storage)
-	// value
-	switch x := m.Value.(type) {
-	case *Storage_ContentStorage:
-		s := proto.Size(x.ContentStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Storage_HashStorage:
-		s := proto.Size(x.HashStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Storage_LinkStorage:
-		s := proto.Size(x.LinkStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Storage_EncryptStorage:
-		s := proto.Size(x.EncryptStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Storage_EncryptShareStorage:
-		s := proto.Size(x.EncryptShareStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type StorageAction struct {
@@ -281,16 +167,17 @@ func (m *StorageAction) Reset()         { *m = StorageAction{} }
 func (m *StorageAction) String() string { return proto.CompactTextString(m) }
 func (*StorageAction) ProtoMessage()    {}
 func (*StorageAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{1}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{1}
 }
+
 func (m *StorageAction) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StorageAction.Unmarshal(m, b)
 }
 func (m *StorageAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_StorageAction.Marshal(b, m, deterministic)
 }
-func (dst *StorageAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StorageAction.Merge(dst, src)
+func (m *StorageAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StorageAction.Merge(m, src)
 }
 func (m *StorageAction) XXX_Size() int {
 	return xxx_messageInfo_StorageAction.Size(m)
@@ -308,23 +195,31 @@ type isStorageAction_Value interface {
 type StorageAction_ContentStorage struct {
 	ContentStorage *ContentOnlyNotaryStorage `protobuf:"bytes,1,opt,name=contentStorage,proto3,oneof"`
 }
+
 type StorageAction_HashStorage struct {
 	HashStorage *HashOnlyNotaryStorage `protobuf:"bytes,2,opt,name=hashStorage,proto3,oneof"`
 }
+
 type StorageAction_LinkStorage struct {
 	LinkStorage *LinkNotaryStorage `protobuf:"bytes,3,opt,name=linkStorage,proto3,oneof"`
 }
+
 type StorageAction_EncryptStorage struct {
 	EncryptStorage *EncryptNotaryStorage `protobuf:"bytes,4,opt,name=encryptStorage,proto3,oneof"`
 }
+
 type StorageAction_EncryptShareStorage struct {
 	EncryptShareStorage *EncryptShareNotaryStorage `protobuf:"bytes,5,opt,name=encryptShareStorage,proto3,oneof"`
 }
 
-func (*StorageAction_ContentStorage) isStorageAction_Value()      {}
-func (*StorageAction_HashStorage) isStorageAction_Value()         {}
-func (*StorageAction_LinkStorage) isStorageAction_Value()         {}
-func (*StorageAction_EncryptStorage) isStorageAction_Value()      {}
+func (*StorageAction_ContentStorage) isStorageAction_Value() {}
+
+func (*StorageAction_HashStorage) isStorageAction_Value() {}
+
+func (*StorageAction_LinkStorage) isStorageAction_Value() {}
+
+func (*StorageAction_EncryptStorage) isStorageAction_Value() {}
+
 func (*StorageAction_EncryptShareStorage) isStorageAction_Value() {}
 
 func (m *StorageAction) GetValue() isStorageAction_Value {
@@ -376,9 +271,9 @@ func (m *StorageAction) GetTy() int32 {
 	return 0
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*StorageAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _StorageAction_OneofMarshaler, _StorageAction_OneofUnmarshaler, _StorageAction_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*StorageAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*StorageAction_ContentStorage)(nil),
 		(*StorageAction_HashStorage)(nil),
 		(*StorageAction_LinkStorage)(nil),
@@ -387,129 +282,9 @@ func (*StorageAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer)
 	}
 }
 
-func _StorageAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*StorageAction)
-	// value
-	switch x := m.Value.(type) {
-	case *StorageAction_ContentStorage:
-		b.EncodeVarint(1<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.ContentStorage); err != nil {
-			return err
-		}
-	case *StorageAction_HashStorage:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.HashStorage); err != nil {
-			return err
-		}
-	case *StorageAction_LinkStorage:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.LinkStorage); err != nil {
-			return err
-		}
-	case *StorageAction_EncryptStorage:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.EncryptStorage); err != nil {
-			return err
-		}
-	case *StorageAction_EncryptShareStorage:
-		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.EncryptShareStorage); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("StorageAction.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _StorageAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*StorageAction)
-	switch tag {
-	case 1: // value.contentStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ContentOnlyNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &StorageAction_ContentStorage{msg}
-		return true, err
-	case 2: // value.hashStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(HashOnlyNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &StorageAction_HashStorage{msg}
-		return true, err
-	case 3: // value.linkStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(LinkNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &StorageAction_LinkStorage{msg}
-		return true, err
-	case 4: // value.encryptStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(EncryptNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &StorageAction_EncryptStorage{msg}
-		return true, err
-	case 5: // value.encryptShareStorage
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(EncryptShareNotaryStorage)
-		err := b.DecodeMessage(msg)
-		m.Value = &StorageAction_EncryptShareStorage{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _StorageAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*StorageAction)
-	// value
-	switch x := m.Value.(type) {
-	case *StorageAction_ContentStorage:
-		s := proto.Size(x.ContentStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *StorageAction_HashStorage:
-		s := proto.Size(x.HashStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *StorageAction_LinkStorage:
-		s := proto.Size(x.LinkStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *StorageAction_EncryptStorage:
-		s := proto.Size(x.EncryptStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *StorageAction_EncryptShareStorage:
-		s := proto.Size(x.EncryptShareStorage)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
-}
-
 // 内容存证模型
 type ContentOnlyNotaryStorage struct {
-	// 长度需要小于512k
+	//长度需要小于512k
 	Content              []byte   `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -520,16 +295,17 @@ func (m *ContentOnlyNotaryStorage) Reset()         { *m = ContentOnlyNotaryStora
 func (m *ContentOnlyNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*ContentOnlyNotaryStorage) ProtoMessage()    {}
 func (*ContentOnlyNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{2}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{2}
 }
+
 func (m *ContentOnlyNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContentOnlyNotaryStorage.Unmarshal(m, b)
 }
 func (m *ContentOnlyNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ContentOnlyNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *ContentOnlyNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContentOnlyNotaryStorage.Merge(dst, src)
+func (m *ContentOnlyNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContentOnlyNotaryStorage.Merge(m, src)
 }
 func (m *ContentOnlyNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_ContentOnlyNotaryStorage.Size(m)
@@ -547,9 +323,9 @@ func (m *ContentOnlyNotaryStorage) GetContent() []byte {
 	return nil
 }
 
-// 哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
+//哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
 type HashOnlyNotaryStorage struct {
-	// 长度固定为32字节
+	//长度固定为32字节
 	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -560,16 +336,17 @@ func (m *HashOnlyNotaryStorage) Reset()         { *m = HashOnlyNotaryStorage{} }
 func (m *HashOnlyNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*HashOnlyNotaryStorage) ProtoMessage()    {}
 func (*HashOnlyNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{3}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{3}
 }
+
 func (m *HashOnlyNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_HashOnlyNotaryStorage.Unmarshal(m, b)
 }
 func (m *HashOnlyNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_HashOnlyNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *HashOnlyNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HashOnlyNotaryStorage.Merge(dst, src)
+func (m *HashOnlyNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HashOnlyNotaryStorage.Merge(m, src)
 }
 func (m *HashOnlyNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_HashOnlyNotaryStorage.Size(m)
@@ -589,9 +366,9 @@ func (m *HashOnlyNotaryStorage) GetHash() []byte {
 
 // 链接存证模型
 type LinkNotaryStorage struct {
-	// 存证内容的链接，可以写入URL,或者其他可用于定位源文件得线索.
+	//存证内容的链接，可以写入URL,或者其他可用于定位源文件得线索.
 	Link []byte `protobuf:"bytes,1,opt,name=link,proto3" json:"link,omitempty"`
-	// 源文件得hash值，推荐使用sha256哈希，限制256位得摘要值
+	//源文件得hash值，推荐使用sha256哈希，限制256位得摘要值
 	Hash                 []byte   `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -602,16 +379,17 @@ func (m *LinkNotaryStorage) Reset()         { *m = LinkNotaryStorage{} }
 func (m *LinkNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*LinkNotaryStorage) ProtoMessage()    {}
 func (*LinkNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{4}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{4}
 }
+
 func (m *LinkNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LinkNotaryStorage.Unmarshal(m, b)
 }
 func (m *LinkNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_LinkNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *LinkNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LinkNotaryStorage.Merge(dst, src)
+func (m *LinkNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LinkNotaryStorage.Merge(m, src)
 }
 func (m *LinkNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_LinkNotaryStorage.Size(m)
@@ -638,11 +416,11 @@ func (m *LinkNotaryStorage) GetHash() []byte {
 
 // 隐私存证模型，如果一个文件需要存证，且不公开内容，可以选择将源文件通过对称加密算法加密后上链
 type EncryptNotaryStorage struct {
-	// 存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
+	//存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
 	ContentHash []byte `protobuf:"bytes,1,opt,name=contentHash,proto3" json:"contentHash,omitempty"`
-	// 源文件得密文，由加密key及nonce对明文加密得到该值。
+	//源文件得密文，由加密key及nonce对明文加密得到该值。
 	EncryptContent []byte `protobuf:"bytes,2,opt,name=encryptContent,proto3" json:"encryptContent,omitempty"`
-	// 加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
+	//加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
 	Nonce                []byte   `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -653,16 +431,17 @@ func (m *EncryptNotaryStorage) Reset()         { *m = EncryptNotaryStorage{} }
 func (m *EncryptNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*EncryptNotaryStorage) ProtoMessage()    {}
 func (*EncryptNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{5}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{5}
 }
+
 func (m *EncryptNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EncryptNotaryStorage.Unmarshal(m, b)
 }
 func (m *EncryptNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EncryptNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *EncryptNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptNotaryStorage.Merge(dst, src)
+func (m *EncryptNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncryptNotaryStorage.Merge(m, src)
 }
 func (m *EncryptNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_EncryptNotaryStorage.Size(m)
@@ -696,11 +475,11 @@ func (m *EncryptNotaryStorage) GetNonce() []byte {
 
 // 隐私存证模型
 type EncryptContentOnlyNotaryStorage struct {
-	// 存证内容的hash值，推荐使用sha256哈希，限制256位得摘要值
+	//存证内容的hash值，推荐使用sha256哈希，限制256位得摘要值
 	//   bytes contentHash   = 1;
-	// 源文件得密文。
+	//源文件得密文。
 	EncryptContent []byte `protobuf:"bytes,1,opt,name=encryptContent,proto3" json:"encryptContent,omitempty"`
-	// 加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
+	//加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
 	Nonce                []byte   `protobuf:"bytes,2,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -711,16 +490,17 @@ func (m *EncryptContentOnlyNotaryStorage) Reset()         { *m = EncryptContentO
 func (m *EncryptContentOnlyNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*EncryptContentOnlyNotaryStorage) ProtoMessage()    {}
 func (*EncryptContentOnlyNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{6}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{6}
 }
+
 func (m *EncryptContentOnlyNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EncryptContentOnlyNotaryStorage.Unmarshal(m, b)
 }
 func (m *EncryptContentOnlyNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EncryptContentOnlyNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *EncryptContentOnlyNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptContentOnlyNotaryStorage.Merge(dst, src)
+func (m *EncryptContentOnlyNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncryptContentOnlyNotaryStorage.Merge(m, src)
 }
 func (m *EncryptContentOnlyNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_EncryptContentOnlyNotaryStorage.Size(m)
@@ -747,16 +527,16 @@ func (m *EncryptContentOnlyNotaryStorage) GetNonce() []byte {
 
 // 分享隐私存证模型,需要完备的sdk或者相应的密钥库支持
 type EncryptShareNotaryStorage struct {
-	// 存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
+	//存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
 	ContentHash []byte `protobuf:"bytes,1,opt,name=contentHash,proto3" json:"contentHash,omitempty"`
-	// 源文件得密文。
+	//源文件得密文。
 	EncryptContent []byte `protobuf:"bytes,2,opt,name=encryptContent,proto3" json:"encryptContent,omitempty"`
-	// 密钥的kdf推导路径。密钥tree父节点根据该路径可以推导出私钥key
+	//密钥的kdf推导路径。密钥tree父节点根据该路径可以推导出私钥key
 	KeyName []byte `protobuf:"bytes,3,opt,name=keyName,proto3" json:"keyName,omitempty"`
-	// 加密key的wrap key。加密key随机生成，对明文进行加密，该key有私密key进行key wrap后公开。
-	// 使用时，通过私密key对wrap key解密得到加密key对密文进行解密。
+	//加密key的wrap key。加密key随机生成，对明文进行加密，该key有私密key进行key wrap后公开。
+	//使用时，通过私密key对wrap key解密得到加密key对密文进行解密。
 	KeyWrap []byte `protobuf:"bytes,4,opt,name=keyWrap,proto3" json:"keyWrap,omitempty"`
-	// 加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
+	//加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
 	Nonce                []byte   `protobuf:"bytes,5,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -767,16 +547,17 @@ func (m *EncryptShareNotaryStorage) Reset()         { *m = EncryptShareNotarySto
 func (m *EncryptShareNotaryStorage) String() string { return proto.CompactTextString(m) }
 func (*EncryptShareNotaryStorage) ProtoMessage()    {}
 func (*EncryptShareNotaryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{7}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{7}
 }
+
 func (m *EncryptShareNotaryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_EncryptShareNotaryStorage.Unmarshal(m, b)
 }
 func (m *EncryptShareNotaryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_EncryptShareNotaryStorage.Marshal(b, m, deterministic)
 }
-func (dst *EncryptShareNotaryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EncryptShareNotaryStorage.Merge(dst, src)
+func (m *EncryptShareNotaryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncryptShareNotaryStorage.Merge(m, src)
 }
 func (m *EncryptShareNotaryStorage) XXX_Size() int {
 	return xxx_messageInfo_EncryptShareNotaryStorage.Size(m)
@@ -822,7 +603,7 @@ func (m *EncryptShareNotaryStorage) GetNonce() []byte {
 	return nil
 }
 
-// 根据txhash去状态数据库中查询存储内容
+//根据txhash去状态数据库中查询存储内容
 type QueryStorage struct {
 	TxHash               string   `protobuf:"bytes,1,opt,name=txHash,proto3" json:"txHash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -834,16 +615,17 @@ func (m *QueryStorage) Reset()         { *m = QueryStorage{} }
 func (m *QueryStorage) String() string { return proto.CompactTextString(m) }
 func (*QueryStorage) ProtoMessage()    {}
 func (*QueryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{8}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8}
 }
+
 func (m *QueryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryStorage.Unmarshal(m, b)
 }
 func (m *QueryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QueryStorage.Marshal(b, m, deterministic)
 }
-func (dst *QueryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryStorage.Merge(dst, src)
+func (m *QueryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStorage.Merge(m, src)
 }
 func (m *QueryStorage) XXX_Size() int {
 	return xxx_messageInfo_QueryStorage.Size(m)
@@ -861,7 +643,7 @@ func (m *QueryStorage) GetTxHash() string {
 	return ""
 }
 
-// 批量查询有可能导致数据库崩溃
+//批量查询有可能导致数据库崩溃
 type BatchQueryStorage struct {
 	TxHashs              []string `protobuf:"bytes,1,rep,name=txHashs,proto3" json:"txHashs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -873,16 +655,17 @@ func (m *BatchQueryStorage) Reset()         { *m = BatchQueryStorage{} }
 func (m *BatchQueryStorage) String() string { return proto.CompactTextString(m) }
 func (*BatchQueryStorage) ProtoMessage()    {}
 func (*BatchQueryStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{9}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{9}
 }
+
 func (m *BatchQueryStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BatchQueryStorage.Unmarshal(m, b)
 }
 func (m *BatchQueryStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BatchQueryStorage.Marshal(b, m, deterministic)
 }
-func (dst *BatchQueryStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BatchQueryStorage.Merge(dst, src)
+func (m *BatchQueryStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchQueryStorage.Merge(m, src)
 }
 func (m *BatchQueryStorage) XXX_Size() int {
 	return xxx_messageInfo_BatchQueryStorage.Size(m)
@@ -911,16 +694,17 @@ func (m *BatchReplyStorage) Reset()         { *m = BatchReplyStorage{} }
 func (m *BatchReplyStorage) String() string { return proto.CompactTextString(m) }
 func (*BatchReplyStorage) ProtoMessage()    {}
 func (*BatchReplyStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{10}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{10}
 }
+
 func (m *BatchReplyStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_BatchReplyStorage.Unmarshal(m, b)
 }
 func (m *BatchReplyStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_BatchReplyStorage.Marshal(b, m, deterministic)
 }
-func (dst *BatchReplyStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BatchReplyStorage.Merge(dst, src)
+func (m *BatchReplyStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BatchReplyStorage.Merge(m, src)
 }
 func (m *BatchReplyStorage) XXX_Size() int {
 	return xxx_messageInfo_BatchReplyStorage.Size(m)
@@ -948,16 +732,17 @@ func (m *ReceiptStorage) Reset()         { *m = ReceiptStorage{} }
 func (m *ReceiptStorage) String() string { return proto.CompactTextString(m) }
 func (*ReceiptStorage) ProtoMessage()    {}
 func (*ReceiptStorage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_storage_919e542fa62fc0e7, []int{11}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{11}
 }
+
 func (m *ReceiptStorage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptStorage.Unmarshal(m, b)
 }
 func (m *ReceiptStorage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ReceiptStorage.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptStorage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptStorage.Merge(dst, src)
+func (m *ReceiptStorage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptStorage.Merge(m, src)
 }
 func (m *ReceiptStorage) XXX_Size() int {
 	return xxx_messageInfo_ReceiptStorage.Size(m)
@@ -983,47 +768,11 @@ func init() {
 	proto.RegisterType((*ReceiptStorage)(nil), "types.ReceiptStorage")
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// StorageClient is the client API for Storage service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type StorageClient interface {
+func init() {
+	proto.RegisterFile("storage.proto", fileDescriptor_0d2c4ccf1453ffdb)
 }
 
-type storageClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewStorageClient(cc *grpc.ClientConn) StorageClient {
-	return &storageClient{cc}
-}
-
-// StorageServer is the server API for Storage service.
-type StorageServer interface {
-}
-
-func RegisterStorageServer(s *grpc.Server, srv StorageServer) {
-	s.RegisterService(&_Storage_serviceDesc, srv)
-}
-
-var _Storage_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.storage",
-	HandlerType: (*StorageServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "storage.proto",
-}
-
-func init() { proto.RegisterFile("storage.proto", fileDescriptor_storage_919e542fa62fc0e7) }
-
-var fileDescriptor_storage_919e542fa62fc0e7 = []byte{
+var fileDescriptor_0d2c4ccf1453ffdb = []byte{
 	// 471 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x54, 0xcf, 0x8b, 0xd3, 0x40,
 	0x14, 0x36, 0xe9, 0xa6, 0xb1, 0x2f, 0xdd, 0xe0, 0x8e, 0xab, 0x8c, 0x28, 0x6c, 0x98, 0xc3, 0x52,
@@ -1055,4 +804,46 @@ var fileDescriptor_storage_919e542fa62fc0e7 = []byte{
 	0x31, 0xbe, 0xfa, 0xc8, 0xe0, 0x2d, 0xce, 0x6e, 0x41, 0xcc, 0x65, 0x2a, 0x97, 0xed, 0x37, 0x34,
 	0x1b, 0x41, 0x88, 0xe8, 0x97, 0xa1, 0xf9, 0xfb, 0x3f, 0xf9, 0x1d, 0x00, 0x00, 0xff, 0xff, 0x9e,
 	0x3b, 0x2b, 0xb0, 0x0e, 0x06, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// StorageClient is the client API for Storage service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type StorageClient interface {
+}
+
+type storageClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
+	return &storageClient{cc}
+}
+
+// StorageServer is the server API for Storage service.
+type StorageServer interface {
+}
+
+// UnimplementedStorageServer can be embedded to have forward compatible implementations.
+type UnimplementedStorageServer struct {
+}
+
+func RegisterStorageServer(s *grpc.Server, srv StorageServer) {
+	s.RegisterService(&_Storage_serviceDesc, srv)
+}
+
+var _Storage_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.storage",
+	HandlerType: (*StorageServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams:     []grpc.StreamDesc{},
+	Metadata:    "storage.proto",
 }

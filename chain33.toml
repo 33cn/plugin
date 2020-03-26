@@ -44,18 +44,33 @@ enableReExecLocal=true
 enableReduceLocaldb=true
 
 [p2p]
-seeds=[]
+# p2p类型
+types=["dht", "gossip"]
+# 是否启动P2P服务
 enable=true
+# 使用的数据库类型
+driver="leveldb"
+# 使用的数据库类型
+dbPath="datadir/addrbook"
+# 数据库缓存大小
+dbCache=4
+# GRPC请求日志文件
+grpcLogFile="grpc33.log"
+#waitPid 等待seed导入
+waitPid=false
+
+
+[p2p.sub.gossip]
+seeds=[]
 isSeed=false
 serverStart=true
 innerSeedEnable=true
 useGithub=true
 innerBounds=300
-msgCacheSize=10240
-driver="leveldb"
-dbPath="datadir/addrbook"
-dbCache=4
-grpcLogFile="grpc33.log"
+
+[p2p.sub.dht]
+
+
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -94,6 +109,8 @@ minerstart=true
 genesisBlockTime=1514533394
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["ticket", "autonomy"]
+enableBestBlockCmp=true
+
 
 [mver.consensus]
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"

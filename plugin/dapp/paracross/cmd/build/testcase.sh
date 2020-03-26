@@ -42,7 +42,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^Title.*/Title="user.p.'''"$paraname"'''."/g' "${1}"
     sed -i $xsedfix 's/^# TestNet=.*/TestNet=true/g' "${1}"
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
-    sed -i $xsedfix 's/^interval=.*/interval=4/g' "${1}"
+    sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=["0:4"]/g' "${1}"
 
     sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=10/g' "${1}"
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
@@ -533,26 +533,13 @@ function para_cross_transfer_from_parachain() {
         exit 1
     fi
 
-    echo "========== #1. user.p.game chain transfer to main chain 300 user.p.game.coins.para, remain=700 ==========="
+    echo "========== #1. user.p.game chain transfer to main chain 300 user.p.game.coins.para, remain=0 ==========="
     hash=$(${PARA_CLI5} send para cross_transfer -a 300 -e user.p.game.coins -s para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${PARA_CLI5}" "${hash}"
     check_cross_transfer_game_balance "300.0000" "0.0000" "${hash}"
 
-    echo "check asset transfer tx=$hash"
-    res=$(${CLI} para asset_txinfo -s "${hash}")
-    echo "$res"
-    succ=$(jq -r ".success" <<<"$res")
-    if [ "${succ}" != "true" ]; then
-        echo "para asset transfer tx report fail"
-        exit 1
-    fi
-
     echo "========== #2. main transfer 200 user.p.game.coins.para game chain asset to para chain, main remain=100, parachain=200 ===="
-    hash=$(${CLI} send para transfer_exec -e paracross -a 200 -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
-    echo "${hash}"
-    query_tx "${CLI}" "${hash}"
-
     hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 200 -e paracross -s user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -562,19 +549,9 @@ function para_cross_transfer_from_parachain() {
     hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 50 -e user.p.para.paracross -s paracross.user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
-    check_cross_transfer_para_balance "100.0000" "150.0000" "${hash}"
+    check_cross_transfer_para_balance "150.0000" "150.0000" "${hash}"
 
-    echo "withdraw 50 from paracross exec"
-    hash=$(${CLI} send para withdraw -a 50 -e paracross -s user.p.game.coins.para -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
-    echo "${hash}"
-    query_tx "${CLI}" "${hash}"
-    acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
-    if [ "${acc}" != "150.0000" ]; then
-        echo "para_cross_transfer_ withdraw from paracross exec failed, acc=$acc"
-        exit 1
-    fi
-
-    echo "========== #4. withdraw game chain asset to game chain from main chain 50 user.p.game.coins.para,parachain=150,main=100,para=50+700 ======"
+    echo "========== #4. withdraw game chain asset to game chain from main chain 50 user.p.game.coins.para,parachain=150,main=100,game=50 ======"
     hash=$(${CLI} --paraName=user.p.game. send para cross_transfer -a 50 -e paracross -s user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"

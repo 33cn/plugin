@@ -46,14 +46,7 @@ enableReExecLocal=true
 enableReduceLocaldb=false
 
 [p2p]
-seeds=[]
 enable=false
-isSeed=false
-serverStart=true
-innerSeedEnable=true
-useGithub=true
-innerBounds=300
-msgCacheSize=10240
 driver="leveldb"
 dbPath="paradatadir/addrbook"
 dbCache=4
@@ -93,8 +86,8 @@ coinDevFund=12
 
 
 [consensus.sub.para]
-#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com”
-#ParaRemoteGrpcClient="118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com,183.129.226.74:8802,183.129.226.75:8802"
+#主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
+#ParaRemoteGrpcClient="118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
@@ -110,11 +103,8 @@ mainBlockHashForkHeight=209186
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 mainLoopCheckCommitTxDoneForkHeight=4320000
-#主链每隔几个没有相关平行链交易的区块，平行链上打包空区块，缺省从平行链blockHeight=0开始，依次增长，空块间隔不能为0
-[[consensus.sub.para.emptyBlockInterval]]
-blockHeight=0
-interval=50
-
+#无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
+emptyBlockInterval=["0:50"]
 
 
 [store]

@@ -63,11 +63,13 @@ func getCrossAction(transfer *pt.CrossAssetTransfer, txExecer string) (int64, er
 
 /*
 修正原生执行器名字
-								      	realExec    realSymbol
-coins+bty								coins		bty
-paracross+user.p.test1.coins.bty		coins		bty
-user.p.test1.coins+bty					coins		bty
-user.p.test1.paracross+coins.bty		coins		bty
+								      								type			realExec    realSymbol
+coins+bty															mainTransfer	coins		bty
+paracross+user.p.test1.coins.bty									paraWithdraw	coins		bty
+user.p.test1.coins+bty												paraTransfer    coins		bty
+user.p.test1.paracross+coins.bty									mainWithdraw	coins		bty
+paracross+user.p.test1.coins.bty(->user.p.test2)					mainTransfer 	paracross   user.p.test1.coins.bty
+user.p.test2.paracross+paracross.user.p.test1.coins.bty 			mainWithdraw	paracross   user.p.test1.coins.bty
 注意:
 1. user.p.test1.coins+bty只是对外表示平行链资产，真正执行器也是coins，因为account模型的mavl-coins-bty-　在主链和平行链都一样，平行链模型并不是mavl-user.p.test.coins-bty-
 2. paracross执行器下的资产都是外来资产，在withdraw时候，真正的原生执行器是在symbol里面
@@ -195,13 +197,23 @@ func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, 
 		execAddr = address.ExecAddress(string(a.tx.Execer))
 		toAddr = address.ExecAddress(pt.ParaX)
 	}
+
+	clog.Debug("paracross.execTransfer", "execer", string(a.tx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
+		"txHash", common.ToHex(a.tx.Hash()))
+
+	//对于paracross合约下的资产直接转账，不需要通过存到paracross合约下再转账，这里只有主链的A平行链资产转移到另一个B平行链场景
+	if transfer.AssetExec == pt.ParaX {
+		r, err := accDB.Transfer(a.fromaddr, toAddr, transfer.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
+		}
+		return r, nil
+	}
+
 	fromAcc := accDB.LoadExecAccount(a.fromaddr, execAddr)
 	if fromAcc.Balance < transfer.Amount {
 		return nil, errors.Wrapf(types.ErrNoBalance, "execTransfer,acctBalance=%d,assetExec=%s,assetSym=%s", fromAcc.Balance, transfer.AssetExec, transfer.AssetSymbol)
 	}
-
-	clog.Debug("paracross.execTransfer", "execer", string(a.tx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
-		"txHash", common.ToHex(a.tx.Hash()))
 	r, err := accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
@@ -225,6 +237,16 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 
 	clog.Debug("Paracross.execWithdraw", "amount", withdraw.Amount, "from", fromAddr,
 		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", common.ToHex(a.tx.Hash()))
+
+	//对于paracross合约下的资产直接转账，不需要通过存到paracross合约下再转账，这里只有主链的A平行链资产转移到另一个B平行链场景
+	if withdraw.AssetExec == pt.ParaX {
+		r, err := accDB.Transfer(fromAddr, withdraw.ToAddr, withdraw.Amount)
+		if err != nil {
+			return nil, errors.Wrapf(err, "assetWithdraw,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
+		}
+		return r, nil
+	}
+
 	r, err := accDB.ExecTransfer(fromAddr, withdraw.ToAddr, execAddr, withdraw.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "assetWithdraw,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
