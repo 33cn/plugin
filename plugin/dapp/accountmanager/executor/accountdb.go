@@ -15,17 +15,17 @@ import (
 )
 
 var (
-	//有效期
+	// ConfNameActiveTime 有效期
 	ConfNameActiveTime = et.AccountmanagerX + "-" + "activeTime"
-	//密钥重置锁定期
+	// ConfNameLockTime 密钥重置锁定期
 	ConfNameLockTime = et.AccountmanagerX + "-" + "lockTime"
-	//管理员地址
+	// ConfNameManagerAddr 管理员地址
 	ConfNameManagerAddr = et.AccountmanagerX + "-" + "managerAddr"
-	//默认有效期
+	// DefaultActiveTime 默认有效期
 	DefaultActiveTime = int64(5 * 360 * 24 * 3600)
-	//默认密钥重置锁定期
+	// DefaultLockTime 默认密钥重置锁定期
 	DefaultLockTime = int64(15 * 24 * 3600)
-	//默认管理员地址
+	// DefaultManagerAddr 默认管理员地址
 	DefaultManagerAddr = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 )
 
@@ -42,7 +42,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
-func NewAction(e *accountmanager, tx *types.Transaction, index int) *Action {
+func NewAction(e *Accountmanager, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{e.GetStateDB(), hash, fromaddr,
@@ -407,7 +407,7 @@ func findAccountListByIndex(localdb dbm.KV, expireTime int64, primaryKey string)
 
 func findAccountByID(localdb dbm.KV, accountID string) (*et.Account, error) {
 	table := NewAccountTable(localdb)
-	prefix := []byte(fmt.Sprintf("%s", accountID))
+	prefix := []byte(accountID)
 	//第一次查询,默认展示最新得成交记录
 	rows, err := table.ListIndex("accountID", prefix, nil, 1, et.ListDESC)
 	if err != nil {
@@ -423,7 +423,7 @@ func findAccountByID(localdb dbm.KV, accountID string) (*et.Account, error) {
 
 func findAccountByAddr(localdb dbm.KV, addr string) (*et.Account, error) {
 	table := NewAccountTable(localdb)
-	prefix := []byte(fmt.Sprintf("%s", addr))
+	prefix := []byte(addr)
 	//第一次查询,默认展示最新得成交记录
 	rows, err := table.ListIndex("addr", prefix, nil, 1, et.ListDESC)
 	if err != nil {

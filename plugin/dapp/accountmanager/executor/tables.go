@@ -71,13 +71,13 @@ func (m *AccountRow) SetPayload(data types.Message) error {
 //Get 按照indexName 查询 indexValue
 func (m *AccountRow) Get(key string) ([]byte, error) {
 	if key == "accountID" {
-		return []byte(fmt.Sprintf("%s", m.AccountID)), nil
+		return []byte(m.AccountID), nil
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%d", m.Status)), nil
 	} else if key == "index" {
 		return []byte(fmt.Sprintf("%015d", m.GetIndex())), nil
 	} else if key == "addr" {
-		return []byte(fmt.Sprintf("%s", m.GetAddr())), nil
+		return []byte(m.GetAddr()), nil
 	}
 	return nil, types.ErrNotFound
 }

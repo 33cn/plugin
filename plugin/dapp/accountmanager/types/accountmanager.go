@@ -3,7 +3,6 @@ package types
 import (
 	"reflect"
 
-	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 )
 
@@ -97,7 +96,7 @@ var (
 		TySuperviseLog: {Ty: reflect.TypeOf(SuperviseReceipt{}), Name: "TySuperviseLog"},
 		TyApplyLog:     {Ty: reflect.TypeOf(AccountReceipt{}), Name: "TyApplyLog"},
 	}
-	tlog = log.New("module", "accountmanager.types")
+	//tlog = log.New("module", "accountmanager.types")
 )
 
 // init defines a register function

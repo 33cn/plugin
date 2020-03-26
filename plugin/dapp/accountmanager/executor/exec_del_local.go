@@ -9,7 +9,7 @@ import (
  */
 
 // ExecDelLocal 回退自动删除，重写基类
-func (a *accountmanager) ExecDelLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (a *Accountmanager) ExecDelLocal(tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	kvs, err := a.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
 		return nil, err

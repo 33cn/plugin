@@ -313,7 +313,7 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newAccountmanager()
-	e := exec.(*accountmanager)
+	e := exec.(*Accountmanager)
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	api, _ := client.New(q.Client(), nil)
