@@ -64,8 +64,10 @@ message Transfer {
 message Supervise {
     //账户名单
     repeated string accountIDs = 1;
-    //操作， 1为冻结，2为解冻，3增加有效期
+    //操作， 1为冻结，2为解冻，3增加有效期,4为授权
     int32 op = 2;
+    //0普通,后面根据业务需要可以自定义，有管理员授予不同的权限
+    int32 level = 3;
 }
 
 message account{
@@ -75,16 +77,18 @@ message account{
     string addr = 2;
     //上一次公钥地址
     string prevAddr = 3;
-    //账户状态 1 正常， 2表示冻结, 3表示锁定 4,过期注销
+    //账户状态 0 正常， 1表示冻结, 2表示锁定 3,过期注销
     int32  status = 4;
+    //等级权限 0普通,后面根据业务需要可以自定义，有管理员授予不同的权限
+    int32  level = 5;
     //注册时间
-    int64  createTime = 5;
+    int64  createTime = 6;
     //失效时间
-    int64  expireTime = 6;
+    int64  expireTime = 7;
     //锁定时间
-    int64  lockTime = 7;
-    //索引
-    int64  index = 8;
+    int64  lockTime = 8;
+    //主键索引
+    int64  index = 9;
 }
 
 message AccountReceipt{

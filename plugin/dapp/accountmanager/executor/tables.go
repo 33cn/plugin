@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
@@ -74,7 +75,7 @@ func (m *AccountRow) Get(key string) ([]byte, error) {
 	} else if key == "status" {
 		return []byte(fmt.Sprintf("%d", m.Status)), nil
 	} else if key == "index" {
-		return []byte(fmt.Sprintf("%018d", m.GetIndex())), nil
+		return []byte(fmt.Sprintf("%015d", m.GetIndex())), nil
 	} else if key == "addr" {
 		return []byte(fmt.Sprintf("%s", m.GetAddr())), nil
 	}
