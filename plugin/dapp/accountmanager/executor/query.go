@@ -6,26 +6,26 @@ import (
 )
 
 //根据ID查询账户信息
-func (s *accountmanager) Query_QueryAccountByID(in *et.QueryAccountByID) (types.Message, error) {
-	return findAccountByID(s.GetLocalDB(), in.AccountID)
+func (a *Accountmanager) Query_QueryAccountByID(in *et.QueryAccountByID) (types.Message, error) {
+	return findAccountByID(a.GetLocalDB(), in.AccountID)
 }
 
 //根据ID查询账户信息
-func (s *accountmanager) Query_QueryAccountByAddr(in *et.QueryAccountByAddr) (types.Message, error) {
-	return findAccountByAddr(s.GetLocalDB(), in.Addr)
+func (a *Accountmanager) Query_QueryAccountByAddr(in *et.QueryAccountByAddr) (types.Message, error) {
+	return findAccountByAddr(a.GetLocalDB(), in.Addr)
 }
 
 //根据状态查询账户列表||  账户状态 1 正常， 2表示冻结, 3表示锁定 4,过期注销
-func (s *accountmanager) Query_QueryAccountsByStatus(in *et.QueryAccountsByStatus) (types.Message, error) {
-	return findAccountListByStatus(s.GetLocalDB(), in.Status, in.Direction, in.PrimaryKey)
+func (a *Accountmanager) Query_QueryAccountsByStatus(in *et.QueryAccountsByStatus) (types.Message, error) {
+	return findAccountListByStatus(a.GetLocalDB(), in.Status, in.Direction, in.PrimaryKey)
 }
 
 //查询逾期注销的账户列表
-func (s *accountmanager) Query_QueryExpiredAccounts(in *et.QueryExpiredAccounts) (types.Message, error) {
-	return findAccountListByIndex(s.GetLocalDB(), in.ExpiredTime, in.PrimaryKey)
+func (a *Accountmanager) Query_QueryExpiredAccounts(in *et.QueryExpiredAccounts) (types.Message, error) {
+	return findAccountListByIndex(a.GetLocalDB(), in.ExpiredTime, in.PrimaryKey)
 }
 
 //根据ID查询账户余额
-func (s *accountmanager) Query_QueryBalanceByID(in *et.QueryBalanceByID) (types.Message, error) {
-	return queryBalanceByID(s.GetStateDB(), s.GetLocalDB(), s.GetAPI().GetConfig(), s.GetName(), in)
+func (a *Accountmanager) Query_QueryBalanceByID(in *et.QueryBalanceByID) (types.Message, error) {
+	return queryBalanceByID(a.GetStateDB(), a.GetLocalDB(), a.GetAPI().GetConfig(), a.GetName(), in)
 }

@@ -28,15 +28,15 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 // InitExecType Init Exec Type
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&accountmanager{}))
+	ety.InitFuncList(types.ListMethod(&Accountmanager{}))
 }
 
-type accountmanager struct {
+type Accountmanager struct {
 	drivers.DriverBase
 }
 
 func newAccountmanager() drivers.Driver {
-	t := &accountmanager{}
+	t := &Accountmanager{}
 	t.SetChild(t)
 	t.SetExecutorType(types.LoadExecutorType(driverName))
 	return t
@@ -47,17 +47,17 @@ func GetName() string {
 	return newAccountmanager().GetName()
 }
 
-func (a *accountmanager) GetDriverName() string {
+func (a *Accountmanager) GetDriverName() string {
 	return driverName
 }
 
 //ExecutorOrder Exec 的时候 同时执行 ExecLocal
-func (e *accountmanager) ExecutorOrder() int64 {
+func (a *Accountmanager) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
-func (a *accountmanager) CheckTx(tx *types.Transaction, index int) error {
+func (a *Accountmanager) CheckTx(tx *types.Transaction, index int) error {
 	//发送交易的时候就检查payload,做严格的参数检查
 	var ama et.AccountmanagerAction
 	types.Decode(tx.GetPayload(), &ama)
@@ -79,10 +79,7 @@ func (a *accountmanager) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
-func (a *accountmanager) CheckAccountIDIsExist(accountID string) bool {
+func (a *Accountmanager) CheckAccountIDIsExist(accountID string) bool {
 	_, err := findAccountByID(a.GetLocalDB(), accountID)
-	if err == types.ErrNotFound {
-		return false
-	}
-	return true
+	return err != types.ErrNotFound
 }
