@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"time"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
@@ -10,11 +12,11 @@ import (
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
-	"time"
+
+	"testing"
 
 	et "github.com/33cn/plugin/plugin/dapp/accountmanager/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type execEnv struct {
@@ -110,10 +112,13 @@ func TestAccountManager(t *testing.T) {
 
 	//注册
 	tx1, err := CreateRegister(&et.Register{AccountID: "harrylee2015"}, PrivKeyB)
-	if err != nil {
-		t.Error(err)
-	}
-	Exec_Block(t, stateDB, kvdb, env, tx1)
+	assert.Equal(t, err, nil)
+	err = Exec_Block(t, stateDB, kvdb, env, tx1)
+	assert.Equal(t, err, nil)
+	_, err = Exec_QueryAccountByID("harrylee2015", stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	_, err = Exec_QueryAccountByAddr(Nodes[1], stateDB, kvdb)
+	assert.Equal(t, err, nil)
 	tx2, err := CreateRegister(&et.Register{AccountID: "harrylee2015"}, PrivKeyC)
 	err = Exec_Block(t, stateDB, kvdb, env, tx2)
 	assert.Equal(t, err, et.ErrAccountIDExist)
@@ -181,12 +186,31 @@ func TestAccountManager(t *testing.T) {
 
 	//过期账户查询
 	time.Sleep(10 * time.Second)
-	t.Log(time.Now().Unix())
-	accs, err := Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(accs)
+	accounts, err = Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, accounts.Accounts[0].AccountID, "harrylee2015")
+	//账户延期
+	tx10, _ := CreateSupervise(&et.Supervise{
+		AccountIDs: []string{"harrylee2015"},
+		Op:         et.AddExpire,
+	}, PrivKeyA)
+	err = Exec_Block(t, stateDB, kvdb, env, tx10)
+	assert.Equal(t, err, nil)
+	accounts, err = Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, len(accounts.Accounts), 0)
+	//账户授权
+	tx11, _ := CreateSupervise(&et.Supervise{
+		AccountIDs: []string{"harrylee2015"},
+		Op:         et.Authorize,
+		Level:      2,
+	}, PrivKeyA)
+	err = Exec_Block(t, stateDB, kvdb, env, tx11)
+	assert.Equal(t, err, nil)
+	acc, err := Exec_QueryAccountByID("harrylee2015", stateDB, kvdb)
+	assert.Equal(t, err, nil)
+	assert.Equal(t, acc.Level, int32(2))
+
 }
 
 func CreateRegister(register *et.Register, privKey string) (tx *types.Transaction, err error) {
@@ -290,6 +314,12 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newAccountmanager()
 	e := exec.(*accountmanager)
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
 	for index, tx := range txs {
 		err := e.CheckTx(tx, index)
 		if err != nil {
@@ -297,12 +327,6 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 		}
 
 	}
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
-	exec.SetAPI(api)
-	exec.SetStateDB(stateDB)
-	exec.SetLocalDB(kvdb)
 	env.blockHeight = env.blockHeight + 1
 	env.blockTime = env.blockTime + 1
 	env.difficulty = env.difficulty + 1

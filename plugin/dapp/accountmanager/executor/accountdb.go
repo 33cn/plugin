@@ -2,6 +2,9 @@ package executor
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
@@ -9,8 +12,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/accountmanager/types"
-	"strconv"
-	"time"
 )
 
 var (
@@ -48,9 +49,9 @@ func NewAction(e *accountmanager, tx *types.Transaction, index int) *Action {
 		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetLocalDB(), index, e.GetAPI()}
 }
 
-//GetIndex get index 主键索引
+//GetIndex get index 主键索引,实际上是以过期时间为主键
 func (a *Action) GetIndex() int64 {
-	return a.height*types.MaxTxsPerBlock + int64(a.index)
+	return a.blocktime*types.MaxTxsPerBlock + int64(a.index)
 }
 
 //GetKVSet get kv set
@@ -74,6 +75,7 @@ func (a *Action) Register(payload *et.Register) (*types.Receipt, error) {
 		Addr:       a.fromaddr,
 		PrevAddr:   "",
 		Status:     et.Normal,
+		Level:      et.Normal,
 		CreateTime: a.blocktime,
 		ExpireTime: a.blocktime + defaultActiveTime,
 		LockTime:   0,
@@ -237,6 +239,8 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 			defaultActiveTime := getConfValue(cfg, a.statedb, ConfNameActiveTime, DefaultActiveTime)
 			accountM.Status = et.Normal
 			accountM.ExpireTime = a.blocktime + defaultActiveTime
+		case et.Authorize:
+			accountM.Level = payload.Level
 		}
 		re.Accounts = append(re.Accounts, accountM)
 	}
@@ -407,7 +411,7 @@ func findAccountByID(localdb dbm.KV, accountID string) (*et.Account, error) {
 	//第一次查询,默认展示最新得成交记录
 	rows, err := table.ListIndex("accountID", prefix, nil, 1, et.ListDESC)
 	if err != nil {
-		elog.Error("findAccountByID.", "prefix", prefix, "err", err.Error())
+		elog.Debug("findAccountByID.", "accountID", accountID, "err", err.Error())
 		return nil, err
 	}
 	for _, row := range rows {

@@ -4,7 +4,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	accountmanagertypes "github.com/33cn/plugin/plugin/dapp/accountmanager/types"
+	et "github.com/33cn/plugin/plugin/dapp/accountmanager/types"
 )
 
 /*
@@ -17,7 +17,7 @@ var (
 	elog = log.New("module", "accountmanager.executor")
 )
 
-var driverName = accountmanagertypes.AccountmanagerX
+var driverName = et.AccountmanagerX
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -58,6 +58,31 @@ func (e *accountmanager) ExecutorOrder() int64 {
 
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (a *accountmanager) CheckTx(tx *types.Transaction, index int) error {
-	// implement code
+	//发送交易的时候就检查payload,做严格的参数检查
+	var ama et.AccountmanagerAction
+	types.Decode(tx.GetPayload(), &ama)
+	switch ama.Ty {
+	case et.TyRegisterAction:
+		register := ama.GetRegister()
+		if a.CheckAccountIDIsExist(register.GetAccountID()) {
+			return et.ErrAccountIDExist
+		}
+	case et.TySuperviseAction:
+
+	case et.TyApplyAction:
+
+	case et.TyTransferAction:
+
+	case et.TyResetAction:
+
+	}
 	return nil
+}
+
+func (a *accountmanager) CheckAccountIDIsExist(accountID string) bool {
+	_, err := findAccountByID(a.GetLocalDB(), accountID)
+	if err == types.ErrNotFound {
+		return false
+	}
+	return true
 }

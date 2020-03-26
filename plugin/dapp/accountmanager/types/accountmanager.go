@@ -1,9 +1,10 @@
 package types
 
 import (
+	"reflect"
+
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
-	"reflect"
 )
 
 /*
@@ -46,8 +47,7 @@ const (
 
 //状态
 const (
-	UnknownStatus = int32(iota)
-	Normal
+	Normal = int32(iota)
 	Frozen
 	Locked
 	Expired
@@ -59,6 +59,7 @@ const (
 	Freeze
 	UnFreeze
 	AddExpire
+	Authorize
 )
 
 //apply  op
