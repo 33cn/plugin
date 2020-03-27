@@ -125,7 +125,7 @@ func TestAccountManager(t *testing.T) {
 	tx3, err := CreateRegister(&et.Register{AccountID: "harrylee2020"}, PrivKeyC)
 	Exec_Block(t, stateDB, kvdb, env, tx3)
 	//转账
-	tx4, err := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2020", Amount: 1e8, Asset: &et.Asset{Execer: "coins", Symbol: "bty"}}, PrivKeyB)
+	tx4, err := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2020", Asset: &types.Asset{Exec: "coins", Symbol: "bty", Amount: 1e8}}, PrivKeyB)
 	assert.Equal(t, err, nil)
 	err = Exec_Block(t, stateDB, kvdb, env, tx4)
 	assert.Equal(t, err, nil)
@@ -147,11 +147,11 @@ func TestAccountManager(t *testing.T) {
 	tx6, err = CreateApply(&et.Apply{Op: et.EnforceReset, AccountID: "harrylee2015"}, PrivKeyD)
 	assert.Equal(t, err, nil)
 	err = Exec_Block(t, stateDB, kvdb, env, tx6)
-	tx7, _ := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2015", Amount: 1e8, Asset: &et.Asset{Execer: "coins", Symbol: "bty"}}, PrivKeyD)
+	tx7, _ := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2015", Asset: &types.Asset{Exec: "coins", Symbol: "bty", Amount: 1e8}}, PrivKeyD)
 
 	err = Exec_Block(t, stateDB, kvdb, env, tx7)
 	assert.Equal(t, err, nil)
-	balance, err := Exec_QueryBalanceByID(&et.QueryBalanceByID{AccountID: "harrylee2015", Asset: &et.Asset{Symbol: "bty", Execer: "coins"}}, stateDB, kvdb)
+	balance, err := Exec_QueryBalanceByID(&et.QueryBalanceByID{AccountID: "harrylee2015", Asset: &types.Asset{Symbol: "bty", Exec: "coins"}}, stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, balance.Balance, 199*types.Coin)
 
@@ -166,7 +166,7 @@ func TestAccountManager(t *testing.T) {
 	accounts, err := Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, accounts.Accounts[0].Status, et.Frozen)
-	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &et.Asset{Execer: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
+	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &types.Asset{Exec: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, balance.Frozen, 199*types.Coin)
 
@@ -180,7 +180,7 @@ func TestAccountManager(t *testing.T) {
 	//根据状态查询
 	accounts, err = Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
 	assert.NotEqual(t, err, nil)
-	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &et.Asset{Execer: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
+	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &types.Asset{Exec: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, balance.Balance, 199*types.Coin)
 
