@@ -341,7 +341,9 @@ func init() {
 	proto.RegisterType((*ActiveBoard)(nil), "types.ActiveBoard")
 }
 
-func init() { proto.RegisterFile("lcommon.proto", fileDescriptor_d916a933dd8220ff) }
+func init() {
+	proto.RegisterFile("lcommon.proto", fileDescriptor_d916a933dd8220ff)
+}
 
 var fileDescriptor_d916a933dd8220ff = []byte{
 	// 352 bytes of a gzipped FileDescriptorProto

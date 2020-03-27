@@ -1709,7 +1709,9 @@ func init() {
 	proto.RegisterType((*PBQueryReq)(nil), "types.PBQueryReq")
 }
 
-func init() { proto.RegisterFile("pokerbull.proto", fileDescriptor_8d22e4ee2313e311) }
+func init() {
+	proto.RegisterFile("pokerbull.proto", fileDescriptor_8d22e4ee2313e311)
+}
 
 var fileDescriptor_8d22e4ee2313e311 = []byte{
 	// 1054 bytes of a gzipped FileDescriptorProto
