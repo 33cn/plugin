@@ -1943,7 +1943,9 @@ func init() {
 	proto.RegisterType((*ReplayRelayQryBTCHeadHeight)(nil), "types.ReplayRelayQryBTCHeadHeight")
 }
 
-func init() { proto.RegisterFile("relay.proto", fileDescriptor_9f69a7d5a802d584) }
+func init() {
+	proto.RegisterFile("relay.proto", fileDescriptor_9f69a7d5a802d584)
+}
 
 var fileDescriptor_9f69a7d5a802d584 = []byte{
 	// 1524 bytes of a gzipped FileDescriptorProto

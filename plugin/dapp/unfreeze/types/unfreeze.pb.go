@@ -1046,7 +1046,9 @@ func init() {
 	proto.RegisterType((*ReplyUnfreezes)(nil), "types.ReplyUnfreezes")
 }
 
-func init() { proto.RegisterFile("unfreeze.proto", fileDescriptor_6caa0554cb0b9167) }
+func init() {
+	proto.RegisterFile("unfreeze.proto", fileDescriptor_6caa0554cb0b9167)
+}
 
 var fileDescriptor_6caa0554cb0b9167 = []byte{
 	// 755 bytes of a gzipped FileDescriptorProto
@@ -1102,11 +1104,11 @@ var fileDescriptor_6caa0554cb0b9167 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // UnfreezeClient is the client API for Unfreeze service.
 //
@@ -1117,10 +1119,10 @@ type UnfreezeClient interface {
 }
 
 type unfreezeClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewUnfreezeClient(cc *grpc.ClientConn) UnfreezeClient {
+func NewUnfreezeClient(cc grpc.ClientConnInterface) UnfreezeClient {
 	return &unfreezeClient{cc}
 }
 
