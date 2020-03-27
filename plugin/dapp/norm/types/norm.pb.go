@@ -250,9 +250,7 @@ func init() {
 	proto.RegisterType((*NormGetKey)(nil), "types.NormGetKey")
 }
 
-func init() {
-	proto.RegisterFile("norm.proto", fileDescriptor_4c505000707f0293)
-}
+func init() { proto.RegisterFile("norm.proto", fileDescriptor_4c505000707f0293) }
 
 var fileDescriptor_4c505000707f0293 = []byte{
 	// 209 bytes of a gzipped FileDescriptorProto

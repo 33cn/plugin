@@ -2564,9 +2564,7 @@ func init() {
 	proto.RegisterType((*OwnerAttrs)(nil), "types.OwnerAttrs")
 }
 
-func init() {
-	proto.RegisterFile("multisig.proto", fileDescriptor_62b8b91adf3febfa)
-}
+func init() { proto.RegisterFile("multisig.proto", fileDescriptor_62b8b91adf3febfa) }
 
 var fileDescriptor_62b8b91adf3febfa = []byte{
 	// 1572 bytes of a gzipped FileDescriptorProto
