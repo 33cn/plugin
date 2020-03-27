@@ -427,7 +427,7 @@ func findAccountByAddr(localdb dbm.KV, addr string) (*et.Account, error) {
 	//第一次查询,默认展示最新得成交记录
 	rows, err := table.ListIndex("addr", prefix, nil, 1, et.ListDESC)
 	if err != nil {
-		elog.Error("findAccountByAddr.", "prefix", prefix, "err", err.Error())
+		elog.Error("findAccountByAddr.", "addr", addr, "err", err.Error())
 		return nil, err
 	}
 	for _, row := range rows {

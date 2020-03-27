@@ -60,7 +60,10 @@ func (a *Accountmanager) ExecutorOrder() int64 {
 func (a *Accountmanager) CheckTx(tx *types.Transaction, index int) error {
 	//发送交易的时候就检查payload,做严格的参数检查
 	var ama et.AccountmanagerAction
-	types.Decode(tx.GetPayload(), &ama)
+	err := types.Decode(tx.GetPayload(), &ama)
+	if err != nil {
+		return err
+	}
 	switch ama.Ty {
 	case et.TyRegisterAction:
 		register := ama.GetRegister()

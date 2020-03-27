@@ -185,10 +185,10 @@ func TestAccountManager(t *testing.T) {
 	assert.Equal(t, balance.Balance, 199*types.Coin)
 
 	//过期账户查询
-	time.Sleep(10 * time.Second)
+	time.Sleep(11 * time.Second)
 	accounts, err = Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, accounts.Accounts[0].AccountID, "harrylee2015")
+	assert.Equal(t, 2, len(accounts.Accounts))
 	//账户延期
 	tx10, _ := CreateSupervise(&et.Supervise{
 		AccountIDs: []string{"harrylee2015"},
@@ -198,7 +198,7 @@ func TestAccountManager(t *testing.T) {
 	assert.Equal(t, err, nil)
 	accounts, err = Exec_QueryExpiredAccounts(time.Now().Unix(), stateDB, kvdb)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, len(accounts.Accounts), 0)
+	assert.Equal(t, 1, len(accounts.Accounts))
 	//账户授权
 	tx11, _ := CreateSupervise(&et.Supervise{
 		AccountIDs: []string{"harrylee2015"},

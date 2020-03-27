@@ -13,8 +13,8 @@ func TestAccountTable(t *testing.T) {
 	_, _, kvdb := util.CreateTestDB()
 	table := NewAccountTable(kvdb)
 	now := time.Now().Unix()
-	row1 := &et.Account{Index: now * int64(types.MaxTxsPerBlock), AccountID: "harry2015", Status: 1, ExpireTime: now + 10, Addr: "xxxx"}
-	row2 := &et.Account{Index: now*int64(types.MaxTxsPerBlock) + 1, AccountID: "harry2020", Status: 1, ExpireTime: now, Addr: "xxxx"}
+	row1 := &et.Account{Index: now * int64(types.MaxTxsPerBlock), AccountID: "harry2015", Status: 0, ExpireTime: now + 10, Addr: "xxxx"}
+	row2 := &et.Account{Index: now*int64(types.MaxTxsPerBlock) + 1, AccountID: "harry2020", Status: 0, ExpireTime: now, Addr: "xxxx"}
 	table.Add(row1)
 	table.Add(row2)
 	kvs, err := table.Save()
