@@ -935,7 +935,7 @@ func (n *node) runLoop() {
 		select {
 		case height := <-ch:
 			if height == n.lastBlock().Height+1 {
-				n.checkTimeout(height, round)
+				//n.checkTimeout(height, round)
 				round++
 				plog.Info("@@@ make timeout: ", "height", height, "round", round)
 				n.reSortition(height, round)

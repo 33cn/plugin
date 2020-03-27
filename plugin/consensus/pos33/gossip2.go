@@ -3,6 +3,7 @@ package pos33
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	ccrypto "github.com/33cn/chain33/common/crypto"
@@ -162,7 +163,12 @@ func newHost(ctx context.Context, priv crypto.PrivKey, port string) host.Host {
 		panic(err)
 	}
 
-	plog.Info("@@@@@@@ host inited", "host", peerAddr(h))
+	paddr := peerAddr(h)
+	err = ioutil.WriteFile("yccpeeraddr.txt", []byte(paddr.String()), 0644)
+	if err != nil {
+		panic(err)
+	}
+	plog.Info("@@@@@@@ host inited", "host", paddr)
 
 	// If you want to help other peers to figure out if they are behind
 	// NATs, you can launch the server-side of AutoNAT too (AutoRelay
