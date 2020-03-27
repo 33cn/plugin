@@ -131,7 +131,7 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	}
 	//如果prevAddr地址不为空，先查看余额，将该地址下面得资产划转到新得公钥地址下
 	if account1.PrevAddr != "" {
-		assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExecer(), payload.Asset.GetSymbol(), a.statedb)
+		assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExec(), payload.Asset.GetSymbol(), a.statedb)
 		if err != nil {
 			return nil, err
 		}
@@ -166,16 +166,16 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 		return nil, et.ErrAccountIDNotPermiss
 	}
 
-	assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExecer(), payload.Asset.GetSymbol(), a.statedb)
+	assetDB, err := account.NewAccountDB(cfg, payload.Asset.GetExec(), payload.Asset.GetSymbol(), a.statedb)
 	if err != nil {
 		return nil, err
 	}
 	fromAccount := assetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-	if fromAccount.Balance < payload.Amount {
-		elog.Error("Transfer, check  balance", "addr", a.fromaddr, "avail", fromAccount.Balance, "need", payload.Amount)
+	if fromAccount.Balance < payload.Asset.Amount {
+		elog.Error("Transfer, check  balance", "addr", a.fromaddr, "avail", fromAccount.Balance, "need", payload.Asset.Amount)
 		return nil, et.ErrAssetBalance
 	}
-	receipt, err := assetDB.ExecTransfer(account1.Addr, account2.Addr, a.execaddr, payload.Amount)
+	receipt, err := assetDB.ExecTransfer(account1.Addr, account2.Addr, a.execaddr, payload.Asset.Amount)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +472,7 @@ func queryBalanceByID(statedb, localdb dbm.KV, cfg *types.Chain33Config, execNam
 	if err != nil {
 		return nil, err
 	}
-	assetDB, err := account.NewAccountDB(cfg, in.Asset.GetExecer(), in.Asset.GetSymbol(), statedb)
+	assetDB, err := account.NewAccountDB(cfg, in.Asset.GetExec(), in.Asset.GetSymbol(), statedb)
 	if err != nil {
 		return nil, err
 	}

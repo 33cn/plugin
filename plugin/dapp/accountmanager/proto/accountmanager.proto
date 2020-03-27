@@ -1,4 +1,7 @@
 syntax = "proto3";
+
+import "transaction.proto";
+
 package types;
 
 message Accountmanager {
@@ -41,22 +44,16 @@ message Apply {
     int32 op = 2;
 }
 
-//资产类型
-message asset {
-    string execer = 1;
-    string symbol = 2;
-}
 
 //合约内部账户之间转账
 message Transfer {
-    //资产类型
-    asset   Asset = 1;
+    //资产类型 及转账金额
+    Asset   asset = 1;
     // from账户
     string fromAccountID = 2;
     // to账户
     string toAccountID = 3;
-    //转账金额
-    int64 amount = 4;
+
 
 }
 
@@ -144,7 +141,7 @@ message QueryAccountByAddr {
 message QueryBalanceByID {
     string accountID = 1;
 
-    asset asset = 2;
+    Asset asset = 2;
 }
 
 message balance {
