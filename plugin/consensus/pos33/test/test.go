@@ -39,7 +39,6 @@ var rpcURL = flag.String("u", "http://localhost:8801", "rpc url")
 var pnodes = flag.Bool("n", false, "only print node private keys")
 var ini = flag.Bool("i", false, "send init tx")
 var maxacc = flag.Int("a", 1000, "max account")
-var maxtx = flag.Int("t", 1000, "max txs")
 var rn = flag.Int("r", 3000, "sleep in Microsecond")
 var conf = flag.String("c", "chain33.toml", "chain33 config file")
 

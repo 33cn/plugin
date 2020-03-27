@@ -17,8 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/33cn/chain33/system"
-	_ "github.com/33cn/plugin/plugin/consensus/init"
-	_ "github.com/33cn/plugin/plugin/dapp/pos33"
+	_ "github.com/33cn/plugin/plugin"
 )
 
 var mock33 *testnode.Chain33Mock
@@ -91,7 +90,8 @@ func TestPos33Ticket(t *testing.T) {
 	status, err = mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
 	assert.Equal(t, true, status.(*types.WalletStatus).IsAutoMining)
-	for i := mock33.GetLastBlock().Height; i < 100; i++ {
+
+	for i := mock33.GetLastBlock().Height; i < 10; i++ {
 		err = mock33.WaitHeight(i)
 		assert.Nil(t, err)
 		//查询票是否自动close，并且购买了新的票

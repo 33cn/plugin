@@ -5,6 +5,7 @@
 package testnode
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/33cn/chain33/util/testnode"
@@ -22,11 +23,16 @@ func TestWalletPos33Ticket(t *testing.T) {
 	minerAddr := "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	t.Log("Begin wallet ticket test")
 
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	strCfg, err := ioutil.ReadFile("./chain33.toml")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	cfg := types.NewChain33Config(string(strCfg))
 	cfg.GetModuleConfig().Consensus.Name = "pos33"
 	mock33 := testnode.NewWithConfig(cfg, nil)
 	defer mock33.Close()
-	err := mock33.WaitHeight(0)
+	err = mock33.WaitHeight(0)
 	assert.Nil(t, err)
 	msg, err := mock33.GetAPI().Query(ty.Pos33TicketX, "Pos33TicketList", &ty.Pos33TicketList{Addr: minerAddr, Status: 1})
 	assert.Nil(t, err)
