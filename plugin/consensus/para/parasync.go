@@ -414,7 +414,9 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	newBlock.BlockTime = localBlock.BlockTime
 	newBlock.MainHash = localBlock.MainHash
 	newBlock.MainHeight = localBlock.MainHeight
-
+	if newBlock.Height == 1 && newBlock.BlockTime < client.paraClient.subCfg.GenesisBlockTime {
+		panic("genesisBlockTime　bigger than the 1st block time, need rmv db and reset genesisBlockTime")
+	}
 	err = client.writeBlock(lastBlock.StateHash, &newBlock)
 
 	client.printDebugInfo("Para sync - create new Block",

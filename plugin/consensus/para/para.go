@@ -33,7 +33,7 @@ import (
 const (
 	minBlockNum = 100 //min block number startHeight before lastHeight in mainchain
 
-	genesisBlockTime int64 = 1514533390
+	defaultGenesisBlockTime int64 = 1514533390
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
 	minerPrivateKey                      = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	defaultGenesisAmount           int64 = 1e8
@@ -73,6 +73,7 @@ type subConfig struct {
 	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64    `json:"startHeight,omitempty"`
+	GenesisBlockTime        int64    `json:"genesisBlockTime,omitempty"`
 	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
 	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
 	AuthAccount             string   `json:"authAccount,omitempty"`
@@ -105,6 +106,10 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
+	}
+
+	if subcfg.GenesisBlockTime <= 0 {
+		subcfg.GenesisBlockTime = defaultGenesisBlockTime
 	}
 
 	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
@@ -319,7 +324,7 @@ func (client *client) InitBlock() {
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
-		newblock.BlockTime = genesisBlockTime
+		newblock.BlockTime = client.subCfg.GenesisBlockTime
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
 
