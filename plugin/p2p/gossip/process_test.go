@@ -22,7 +22,7 @@ type versionData struct {
 }
 
 func Test_processP2P(t *testing.T) {
-	cfg := types.NewChain33Config(types.ReadFile("../../../chain33.toml"))
+	cfg := types.NewChain33ConfigNoInit(types.ReadFile("../../../chain33.toml"))
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	go q.Start()
