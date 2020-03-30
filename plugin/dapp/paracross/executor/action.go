@@ -758,7 +758,7 @@ func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*t
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(a.tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(tx.Tx.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
@@ -802,7 +802,7 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(a.tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(tx.Tx.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit.rollbackCrossTx getCrossAction failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
