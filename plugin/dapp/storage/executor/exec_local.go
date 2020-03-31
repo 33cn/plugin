@@ -1,8 +1,9 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/types"
-	storagetypes "github.com/33cn/plugin/plugin/dapp/storage/types"
+	ety "github.com/33cn/plugin/plugin/dapp/storage/types"
 )
 
 /*
@@ -10,33 +11,94 @@ import (
  * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
  */
 
-func (s *storage) ExecLocal_ContentStorage(payload *storagetypes.ContentOnlyNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (s *storage) ExecLocal_ContentStorage(payload *ety.ContentOnlyNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code
+	if receiptData.Ty == types.ExecOk {
+		for _, log := range receiptData.Logs {
+			switch log.Ty {
+			case ety.TyContentStorageLog:
+				storage := &ety.Storage{}
+				if err := types.Decode(log.Log, storage); err != nil {
+					return nil, err
+				}
+				fmt.Println(string(storage.GetContentStorage().Key))
+				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetContentStorage().Key), Value: types.Encode(storage)}
+				dbSet.KV = append(dbSet.KV, kv)
+			}
+		}
+	}
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (s *storage) ExecLocal_HashStorage(payload *storagetypes.HashOnlyNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (s *storage) ExecLocal_HashStorage(payload *ety.HashOnlyNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code
+	if receiptData.Ty == types.ExecOk {
+		for _, log := range receiptData.Logs {
+			switch log.Ty {
+			case ety.TyHashStorageLog:
+				storage := &ety.Storage{}
+				if err := types.Decode(log.Log, storage); err != nil {
+					return nil, err
+				}
+				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetHashStorage().Key), Value: types.Encode(storage)}
+				dbSet.KV = append(dbSet.KV, kv)
+			}
+		}
+	}
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (s *storage) ExecLocal_LinkStorage(payload *storagetypes.LinkNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (s *storage) ExecLocal_LinkStorage(payload *ety.LinkNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code
+	if receiptData.Ty == types.ExecOk {
+		for _, log := range receiptData.Logs {
+			switch log.Ty {
+			case ety.TyLinkStorageLog:
+				storage := &ety.Storage{}
+				if err := types.Decode(log.Log, storage); err != nil {
+					return nil, err
+				}
+				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetLinkStorage().Key), Value: types.Encode(storage)}
+				dbSet.KV = append(dbSet.KV, kv)
+			}
+		}
+	}
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (s *storage) ExecLocal_EncryptStorage(payload *storagetypes.EncryptNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (s *storage) ExecLocal_EncryptStorage(payload *ety.EncryptNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code
+	if receiptData.Ty == types.ExecOk {
+		for _, log := range receiptData.Logs {
+			switch log.Ty {
+			case ety.TyEncryptStorageLog:
+				storage := &ety.Storage{}
+				if err := types.Decode(log.Log, storage); err != nil {
+					return nil, err
+				}
+				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetEncryptStorage().Key), Value: types.Encode(storage)}
+				dbSet.KV = append(dbSet.KV, kv)
+			}
+		}
+	}
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
-func (s *storage) ExecLocal_EncryptShareStorage(payload *storagetypes.EncryptShareNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (s *storage) ExecLocal_EncryptShareStorage(payload *ety.EncryptShareNotaryStorage, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	//implement code
+	if receiptData.Ty == types.ExecOk {
+		for _, log := range receiptData.Logs {
+			switch log.Ty {
+			case ety.TyEncryptShareStorageLog:
+				storage := &ety.Storage{}
+				if err := types.Decode(log.Log, storage); err != nil {
+					return nil, err
+				}
+				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetEncryptShareStorage().Key), Value: types.Encode(storage)}
+				dbSet.KV = append(dbSet.KV, kv)
+			}
+		}
+	}
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 

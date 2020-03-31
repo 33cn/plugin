@@ -51,6 +51,11 @@ func (s *storage) GetDriverName() string {
 	return driverName
 }
 
+//ExecutorOrder Exec 的时候 同时执行 ExecLocal
+func (s *storage) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
+
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (s *storage) CheckTx(tx *types.Transaction, index int) error {
 	// implement code
