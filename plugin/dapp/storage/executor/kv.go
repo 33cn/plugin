@@ -19,3 +19,9 @@ func Key(txHash string) (key []byte) {
 	key = append(key, []byte(txHash)...)
 	return key
 }
+
+func getLocalDBKey(txHash string) (key []byte) {
+	key = append(key, []byte(KeyPrefixLocalDB)...)
+	key = append(key, []byte(txHash)...)
+	return key
+}
