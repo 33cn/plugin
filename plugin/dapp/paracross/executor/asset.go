@@ -122,14 +122,14 @@ func (a *action) crossAssetTransfer(transfer *pt.CrossAssetTransfer, act int64, 
 		return nil, err
 	}
 	clog.Info("paracross.crossAssetTransfer", "action", act, "newExec", newTransfer.AssetExec, "newSymbol", newTransfer.AssetSymbol,
-		"ori.exec", transfer.AssetExec, "ori.symbol", transfer.AssetSymbol, "txHash", common.ToHex(a.tx.Hash()))
+		"ori.exec", transfer.AssetExec, "ori.symbol", transfer.AssetSymbol, "txHash", common.ToHex(actTx.Hash()))
 	switch act {
 	case pt.ParacrossMainAssetTransfer:
-		return a.mainAssetTransfer(newTransfer)
+		return a.mainAssetTransfer(newTransfer, actTx)
 	case pt.ParacrossMainAssetWithdraw:
 		return a.mainAssetWithdraw(newTransfer, actTx)
 	case pt.ParacrossParaAssetTransfer:
-		return a.paraAssetTransfer(newTransfer)
+		return a.paraAssetTransfer(newTransfer, actTx)
 	case pt.ParacrossParaAssetWithdraw:
 		return a.paraAssetWithdraw(newTransfer, actTx)
 	default:
@@ -138,14 +138,14 @@ func (a *action) crossAssetTransfer(transfer *pt.CrossAssetTransfer, act int64, 
 }
 
 //主链先transfer, 然后平行链create　asset, 如果平行链失败，主链再rollback
-func (a *action) mainAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+func (a *action) mainAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
 	//主链处理分支, 先处理
 	if !isPara {
-		return a.execTransfer(transfer)
+		return a.execTransfer(transfer, transferTx)
 	}
-	return a.execCreateAsset(transfer)
+	return a.execCreateAsset(transfer, transferTx)
 }
 
 //平行链先销毁，　共识后主链再withdraw
@@ -156,19 +156,19 @@ func (a *action) mainAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *
 	if !isPara {
 		return a.execWithdraw(withdraw, withdrawTx)
 	}
-	return a.execDestroyAsset(withdraw)
+	return a.execDestroyAsset(withdraw, withdrawTx)
 }
 
 //平行链先转移，　共识后主链create asset
-func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+func (a *action) paraAssetTransfer(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	isPara := cfg.IsPara()
 	//平行链链处理分支，先处理
 	if isPara {
-		return a.execTransfer(transfer)
+		return a.execTransfer(transfer, transferTx)
 	}
 	//主链共识后处理
-	return a.execCreateAsset(transfer)
+	return a.execCreateAsset(transfer, transferTx)
 }
 
 //平行链从主链提回，　先在主链处理，然后在平行链处理，　如果平行链执行失败，共识后主链再回滚
@@ -179,10 +179,10 @@ func (a *action) paraAssetWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *
 	if isPara {
 		return a.execWithdraw(withdraw, withdrawTx)
 	}
-	return a.execDestroyAsset(withdraw)
+	return a.execDestroyAsset(withdraw, withdrawTx)
 }
 
-func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
+func (a *action) execTransfer(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	accDB, err := a.createAccount(cfg, a.db, transfer.AssetExec, transfer.AssetSymbol)
 	if err != nil {
@@ -191,30 +191,30 @@ func (a *action) execTransfer(transfer *pt.CrossAssetTransfer) (*types.Receipt, 
 
 	//主链上存入toAddr为user.p.xx.paracross地址
 	execAddr := address.ExecAddress(pt.ParaX)
-	toAddr := address.ExecAddress(string(a.tx.Execer))
+	toAddr := address.ExecAddress(string(transferTx.Execer))
 	//在平行链上存入toAddr为paracross地址
 	if cfg.IsPara() {
-		execAddr = address.ExecAddress(string(a.tx.Execer))
+		execAddr = address.ExecAddress(string(transferTx.Execer))
 		toAddr = address.ExecAddress(pt.ParaX)
 	}
 
-	clog.Debug("paracross.execTransfer", "execer", string(a.tx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
-		"txHash", common.ToHex(a.tx.Hash()))
+	clog.Debug("paracross.execTransfer", "execer", string(transferTx.Execer), "assetexec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
+		"txHash", common.ToHex(transferTx.Hash()))
 
 	//对于paracross合约下的资产直接转账，不需要通过存到paracross合约下再转账，这里只有主链的A平行链资产转移到另一个B平行链场景
 	if transfer.AssetExec == pt.ParaX {
-		r, err := accDB.Transfer(a.fromaddr, toAddr, transfer.Amount)
+		r, err := accDB.Transfer(transferTx.From(), toAddr, transfer.Amount)
 		if err != nil {
 			return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
 		}
 		return r, nil
 	}
 
-	fromAcc := accDB.LoadExecAccount(a.fromaddr, execAddr)
+	fromAcc := accDB.LoadExecAccount(transferTx.From(), execAddr)
 	if fromAcc.Balance < transfer.Amount {
 		return nil, errors.Wrapf(types.ErrNoBalance, "execTransfer,acctBalance=%d,assetExec=%s,assetSym=%s", fromAcc.Balance, transfer.AssetExec, transfer.AssetSymbol)
 	}
-	r, err := accDB.ExecTransfer(a.fromaddr, toAddr, execAddr, transfer.Amount)
+	r, err := accDB.ExecTransfer(transferTx.From(), toAddr, execAddr, transfer.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "assetTransfer,assetExec=%s,assetSym=%s", transfer.AssetExec, transfer.AssetSymbol)
 	}
@@ -236,7 +236,7 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 	}
 
 	clog.Debug("Paracross.execWithdraw", "amount", withdraw.Amount, "from", fromAddr,
-		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", common.ToHex(a.tx.Hash()))
+		"assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol, "execAddr", execAddr, "txHash", common.ToHex(withdrawTx.Hash()))
 
 	//对于paracross合约下的资产直接转账，不需要通过存到paracross合约下再转账，这里只有主链的A平行链资产转移到另一个B平行链场景
 	if withdraw.AssetExec == pt.ParaX {
@@ -257,11 +257,11 @@ func (a *action) execWithdraw(withdraw *pt.CrossAssetTransfer, withdrawTx *types
 //主链Alice的token转移到user.p.bb.平行链，在平行链上表示为mavl-paracross-token.symbol-Addr(Alice),这里并没有放在Addr(user.p.bb.paracross)子账号下
 //平行链转移到主链的token在主链表示为mavl-paracross-user.p.aa.token.symbol-exec-Addr(Alice)，再转移到另一个user.p.bb.平行链，需要先transfer到paracross执行器下
 //在平行链bb上铸造新币，表示为mavl-paracross-paracross.user.p.aa.token.symbol-exec-Addr(Alice)，第二个paracross代表在主链原生执行器为paracross
-func (a *action) createParaAccount(cross *pt.CrossAssetTransfer) (*account.DB, error) {
+func (a *action) createParaAccount(cross *pt.CrossAssetTransfer, crossTx *types.Transaction) (*account.DB, error) {
 	cfg := a.api.GetConfig()
-	paraTitle, err := getTitleFrom(a.tx.Execer)
+	paraTitle, err := getTitleFrom(crossTx.Execer)
 	if err != nil {
-		return nil, errors.Wrapf(err, "createParaAccount call getTitleFrom failed,exec=%s", string(a.tx.Execer))
+		return nil, errors.Wrapf(err, "createParaAccount call getTitleFrom failed,exec=%s", string(crossTx.Execer))
 	}
 
 	assetExec := cross.AssetExec
@@ -270,20 +270,20 @@ func (a *action) createParaAccount(cross *pt.CrossAssetTransfer) (*account.DB, e
 		assetExec = string(paraTitle) + assetExec
 	}
 	paraAcc, err := NewParaAccount(cfg, string(paraTitle), assetExec, assetSymbol, a.db)
-	clog.Debug("createParaAccount", "assetExec", assetExec, "symbol", assetSymbol, "txHash", common.ToHex(a.tx.Hash()))
+	clog.Debug("createParaAccount", "assetExec", assetExec, "symbol", assetSymbol, "txHash", common.ToHex(crossTx.Hash()))
 	if err != nil {
 		return nil, errors.Wrapf(err, "createParaAccount,exec=%s,symbol=%s,title=%s", assetExec, assetSymbol, paraTitle)
 	}
 	return paraAcc, nil
 }
 
-func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer) (*types.Receipt, error) {
-	paraAcc, err := a.createParaAccount(transfer)
+func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer, transferTx *types.Transaction) (*types.Receipt, error) {
+	paraAcc, err := a.createParaAccount(transfer, transferTx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "createAsset")
 	}
 	clog.Debug("paracross.execCreateAsset", "assetExec", transfer.AssetExec, "symbol", transfer.AssetSymbol,
-		"txHash", common.ToHex(a.tx.Hash()))
+		"txHash", common.ToHex(transferTx.Hash()))
 
 	r, err := assetDepositBalance(paraAcc, transfer.ToAddr, transfer.Amount)
 	if err != nil {
@@ -292,14 +292,14 @@ func (a *action) execCreateAsset(transfer *pt.CrossAssetTransfer) (*types.Receip
 	return r, nil
 }
 
-func (a *action) execDestroyAsset(withdraw *pt.CrossAssetTransfer) (*types.Receipt, error) {
-	paraAcc, err := a.createParaAccount(withdraw)
+func (a *action) execDestroyAsset(withdraw *pt.CrossAssetTransfer, withdrawTx *types.Transaction) (*types.Receipt, error) {
+	paraAcc, err := a.createParaAccount(withdraw, withdrawTx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "destroyAsset")
 	}
 	clog.Debug("paracross.execDestroyAsset", "assetExec", withdraw.AssetExec, "symbol", withdraw.AssetSymbol,
-		"txHash", common.ToHex(a.tx.Hash()), "from", a.fromaddr, "amount", withdraw.Amount)
-	r, err := assetWithdrawBalance(paraAcc, a.fromaddr, withdraw.Amount)
+		"txHash", common.ToHex(withdrawTx.Hash()), "from", withdrawTx.From(), "amount", withdraw.Amount)
+	r, err := assetWithdrawBalance(paraAcc, withdrawTx.From(), withdraw.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "destroyAsset,assetExec=%s,assetSym=%s", withdraw.AssetExec, withdraw.AssetSymbol)
 	}
@@ -315,7 +315,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		ToAddr:      transfer.To,
 	}
 	adaptNullAssetExec(tr)
-	return a.mainAssetTransfer(tr)
+	return a.mainAssetTransfer(tr, a.tx)
 }
 
 //旧的接口，只有主链从平行链转移
@@ -363,7 +363,7 @@ func (a *action) paraAssetWithdrawRollback(wtw *pt.CrossAssetTransfer, withdrawT
 		if err != nil {
 			return nil, errors.Wrapf(err, "paraAssetWithdrawRollback amend param")
 		}
-		paraAcc, err := a.createParaAccount(withdraw)
+		paraAcc, err := a.createParaAccount(withdraw, withdrawTx)
 		if err != nil {
 			return nil, errors.Wrapf(err, "createAsset")
 		}
