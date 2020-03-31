@@ -122,13 +122,13 @@ func TestStorage(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, contents[0], reply2.Storages[0].GetContentStorage().Content)
 
-	tx, err = CreateTx("ContentStorage", &oty.ContentOnlyNotaryStorage{Content: contents[1], Op: 1,Key:txhash}, PrivKeyA, cfg)
+	tx, err = CreateTx("ContentStorage", &oty.ContentOnlyNotaryStorage{Content: contents[1], Op: 1, Key: txhash}, PrivKeyA, cfg)
 	assert.Nil(t, err)
 	Exec_Block(t, stateDB, kvdb, env, tx)
 
 	reply, err = QueryStorageByKey(stateDB, kvdb, txhash, cfg)
 	assert.Nil(t, err)
-	assert.Equal(t, append(append(contents[0],[]byte(",")...),contents[1]...), reply.GetContentStorage().Content)
+	assert.Equal(t, append(append(contents[0], []byte(",")...), contents[1]...), reply.GetContentStorage().Content)
 
 	tx, err = CreateTx("HashStorage", &oty.HashOnlyNotaryStorage{Hash: common.Sha256(contents[0])}, PrivKeyA, cfg)
 	assert.Nil(t, err)
