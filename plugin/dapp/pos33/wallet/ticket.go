@@ -406,15 +406,15 @@ func (policy *ticketPolicy) forceClosePos33TicketList(height int64, priv crypto.
 	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, height)
 	for _, t := range tlist {
 		if !t.IsGenesis {
-			if t.Status == 1 && now-t.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
+			if now-t.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
 				continue
 			}
-			if t.Status == 2 && now-t.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
-				continue
-			}
-			if t.Status == 2 && now-t.GetMinerTime() < cfg.Pos33TicketMinerWaitTime {
-				continue
-			}
+			// if now-t.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
+			// 	continue
+			// }
+			// if now-t.GetMinerTime() < cfg.Pos33TicketMinerWaitTime {
+			// 	continue
+			// }
 		}
 		tl = append(tl, t)
 	}
@@ -891,11 +891,11 @@ func (policy *ticketPolicy) autoMining() {
 					FlushPos33Ticket(policy.getAPI())
 				}
 			} else {
-				// n1, err := policy.closePos33Ticket(lastHeight + 1)
-				// if err != nil {
-				// 	bizlog.Error("closePos33Ticket", "err", err)
-				// }
-				err := policy.processFees()
+				n1, err := policy.closePos33Ticket(lastHeight + 1)
+				if err != nil {
+					bizlog.Error("closePos33Ticket", "err", err)
+				}
+				err = policy.processFees()
 				if err != nil {
 					bizlog.Error("processFees", "err", err)
 				}
@@ -906,9 +906,9 @@ func (policy *ticketPolicy) autoMining() {
 				if len(hashes) > 0 {
 					operater.WaitTxs(hashes)
 				}
-				// if n1 > 0 {
-				// 	FlushPos33Ticket(policy.getAPI())
-				// }
+				if n1 > 0 {
+					FlushPos33Ticket(policy.getAPI())
+				}
 			}
 			bizlog.Info("END miningPos33Ticket")
 		case <-operater.GetWalletDone():

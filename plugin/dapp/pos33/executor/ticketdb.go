@@ -8,14 +8,12 @@ package executor
 import (
 
 	//"bytes"
-	"encoding/hex"
-	"errors"
+
 	"fmt"
 	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -299,8 +297,8 @@ func genPubHash(tid string) string {
 	return pubHash
 }
 
-// Pos33Miner ticket miner
-func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receipt, error) {
+// Pos33TicketMiner ticket miner
+func (action *Action) Pos33TicketMiner(miner *ty.Pos33Miner, index int) (*types.Receipt, error) {
 	if index != 0 {
 		return nil, types.ErrCoinBaseIndex
 	}
@@ -329,7 +327,6 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 		logs = append(logs, receipt.GetLogs()...)
 
 		t.MinerValue += ty.Pos33VoteReward
-		//tlog.Info("ticket rerward", "height", action.height, "tid", t.TicketId, "minerAddr", t.MinerAddress, "returnAddr", t.ReturnAddress, "reward", vr)
 		prevStatus := t.Status
 		t.Status = 1 // here, Don't change to 2,
 		db := &DB{*t, prevStatus}
@@ -371,103 +368,18 @@ func (action *Action) Pos33Miner(miner *ty.Pos33Miner, index int) (*types.Receip
 	if fundReward > 0 {
 		var receipt2 *types.Receipt
 		var err error
-		if chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {
-			// issue coins to exec addr
-			addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
-			receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
-			if err != nil {
-				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
-				return nil, err
-			}
-		} else {
-			receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, fundReward)
-			if err != nil {
-				tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
-				return nil, err
-			}
+		// issue coins to exec addr
+		addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
+		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, fundReward)
+		if err != nil {
+			tlog.Error("Pos33TicketMiner.ExecIssueCoins fund to autonomy fund", "addr", addr, "error", err)
+			return nil, err
 		}
 		logs = append(logs, receipt2.Logs...)
 		kvs = append(kvs, receipt2.KV...)
 	}
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
-}
-
-// Pos33TicketMiner ticket miner
-func (action *Action) Pos33TicketMiner(miner *ty.Pos33TicketMiner, index int) (*types.Receipt, error) {
-	if index != 0 {
-		return nil, types.ErrCoinBaseIndex
-	}
-	chain33Cfg := action.api.GetConfig()
-	ticket, err := readPos33Ticket(action.db, miner.TicketId)
-	if err != nil {
-		return nil, err
-	}
-	if ticket.Status != 1 {
-		return nil, types.ErrCoinBaseTicketStatus
-	}
-	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, action.height)
-	if !ticket.IsGenesis {
-		if action.blocktime-ticket.GetCreateTime() < cfg.Pos33TicketFrozenTime {
-			return nil, ty.ErrTime
-		}
-	}
-	//check from address
-	if action.fromaddr != ticket.MinerAddress && action.fromaddr != ticket.ReturnAddress {
-		return nil, types.ErrFromAddr
-	}
-	//check pubHash and privHash
-	if !chain33Cfg.IsDappFork(action.height, ty.Pos33TicketX, "ForkTicketId") {
-		miner.PrivHash = nil
-	}
-	if len(miner.PrivHash) != 0 {
-		pubHash := genPubHash(ticket.TicketId)
-		if len(pubHash) == 0 || hex.EncodeToString(common.Sha256(miner.PrivHash)) != pubHash {
-			tlog.Error("Pos33TicketMiner", "pubHash", pubHash, "privHashHash", common.Sha256(miner.PrivHash), "ticketId", ticket.TicketId)
-			return nil, errors.New("ErrCheckPubHash")
-		}
-	}
-	prevstatus := ticket.Status
-	ticket.Status = 2
-	ticket.MinerValue = miner.Reward
-	if chain33Cfg.IsFork(action.height, "ForkMinerTime") {
-		ticket.MinerTime = action.blocktime
-	}
-	t := &DB{*ticket, prevstatus}
-	var logs []*types.ReceiptLog
-	var kv []*types.KeyValue
-	//user
-	receipt1, err := action.coinsAccount.ExecDepositFrozen(t.ReturnAddress, action.execaddr, ticket.MinerValue)
-	if err != nil {
-		tlog.Error("Pos33TicketMiner.ExecDepositFrozen user", "addr", t.ReturnAddress, "execaddr", action.execaddr)
-		return nil, err
-	}
-	//fund
-	var receipt2 *types.Receipt
-	if chain33Cfg.IsFork(action.height, "ForkPos33TicketFundAddrV1") {
-		// issue coins to exec addr
-		addr := chain33Cfg.MGStr("mver.consensus.fundKeyAddr", action.height)
-		receipt2, err = action.coinsAccount.ExecIssueCoins(addr, cfg.CoinDevFund)
-		if err != nil {
-			tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund to autonomy fund", "addr", addr, "error", err)
-			return nil, err
-		}
-	} else {
-		receipt2, err = action.coinsAccount.ExecDepositFrozen(chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-		if err != nil {
-			tlog.Error("Pos33TicketMiner.ExecDepositFrozen fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "error", err)
-			return nil, err
-		}
-	}
-
-	t.Save(action.db)
-	logs = append(logs, t.GetReceiptLog(ty.TyLogMinerPos33Ticket))
-	kv = append(kv, t.GetKVSet()...)
-	logs = append(logs, receipt1.Logs...)
-	kv = append(kv, receipt1.KV...)
-	logs = append(logs, receipt2.Logs...)
-	kv = append(kv, receipt2.KV...)
-	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
 }
 
 // Pos33TicketClose close tick
@@ -481,20 +393,12 @@ func (action *Action) Pos33TicketClose(tclose *ty.Pos33TicketClose) (*types.Rece
 			return nil, err
 		}
 		//ticket 的生成时间超过 2天,可提款
-		if ticket.Status != 2 && ticket.Status != 1 {
+		if ticket.Status != 1 {
 			tlog.Error("ticket", "id", ticket.GetTicketId(), "status", ticket.GetStatus())
 			return nil, ty.ErrPos33TicketClosed
 		}
 		if !ticket.IsGenesis {
-			//分成两种情况
-			if ticket.Status == 1 && action.blocktime-ticket.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
-				return nil, ty.ErrTime
-			}
-			//已经挖矿成功了
-			if ticket.Status == 2 && action.blocktime-ticket.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
-				return nil, ty.ErrTime
-			}
-			if ticket.Status == 2 && action.blocktime-ticket.GetMinerTime() < cfg.Pos33TicketMinerWaitTime {
+			if action.blocktime-ticket.GetCreateTime() < cfg.Pos33TicketWithdrawTime {
 				return nil, ty.ErrTime
 			}
 		}
@@ -510,31 +414,17 @@ func (action *Action) Pos33TicketClose(tclose *ty.Pos33TicketClose) (*types.Rece
 	var kv []*types.KeyValue
 	for i := 0; i < len(tickets); i++ {
 		t := tickets[i]
-		// if t.prevstatus == 1 {
-		// 	t.MinerValue = 0
-		// }
 		retValue := t.GetRealPrice(chain33Cfg) + t.MinerValue
 		receipt1, err := action.coinsAccount.ExecActive(t.ReturnAddress, action.execaddr, retValue)
 		if err != nil {
 			tlog.Error("Pos33TicketClose.ExecActive user", "addr", t.ReturnAddress, "execaddr", action.execaddr, "value", retValue)
 			return nil, err
 		}
+		tlog.Info("close pos33.ticket", "tid", t.TicketId, "height", action.height, "activeValue", retValue)
 		logs = append(logs, t.GetReceiptLog(ty.TyLogClosePos33Ticket))
 		kv = append(kv, t.GetKVSet()...)
 		logs = append(logs, receipt1.Logs...)
 		kv = append(kv, receipt1.KV...)
-		//如果ticket 已经挖矿成功了，那么要解冻发展基金部分币
-		if t.prevstatus == 2 {
-			if !chain33Cfg.IsFork(action.height, "ForkTicketFundAddrV1") {
-				receipt2, err := action.coinsAccount.ExecActive(chain33Cfg.GetFundAddr(), action.execaddr, cfg.CoinDevFund)
-				if err != nil {
-					tlog.Error("Pos33TicketClose.ExecActive fund", "addr", chain33Cfg.GetFundAddr(), "execaddr", action.execaddr, "value", retValue)
-					return nil, err
-				}
-				logs = append(logs, receipt2.Logs...)
-				kv = append(kv, receipt2.KV...)
-			}
-		}
 		t.Save(action.db)
 	}
 	tlog.Info("@@@@@@@ pos33.ticket close", "ntid", len(tclose.TicketId), "height", action.height)

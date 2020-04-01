@@ -377,40 +377,6 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	return ret
 }
 
-// CreateGenesisTx1 used generate the first txs
-/*
-func (client *Client) CreateGenesisTx1() (ret []*types.Transaction) {
-	// the 1st tx for issue 10,000,000,000 YCC
-	act := &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: types.MaxCoin, ReturnAddress: client.conf.GenesisAddr}}
-	tx := &types.Transaction{
-		Execer:  []byte("coins"),
-		To:      client.conf.GenesisAddr, //address.GetExecAddress("pos33").String(),
-		Payload: types.Encode(&ct.CoinsAction{Value: act, Ty: ct.CoinsActionGenesis}),
-	}
-	ret = append(ret, tx)
-
-	tx = &types.Transaction{}
-	tx.Execer = []byte("coins")
-	tx.To = address.GetExecAddress("pos33").String()
-	act = &ct.CoinsAction_Genesis{Genesis: &types.AssetsGenesis{Amount: 1001 * client.conf.Price, ReturnAddress: client.conf.GenesisAddr}}
-	tx.Payload = types.Encode(&ct.CoinsAction{Value: act, Ty: ct.CoinsActionGenesis})
-	ret = append(ret, tx)
-
-	// the 2th tx for the genesis accout frozon margin,
-	// so the second block must created by the genesis accout.
-	tx = &types.Transaction{}
-	tx.Execer = []byte("pos33")
-	tx.To = address.GetExecAddress("pos33").String()
-	dact := &pt.TicketOpen{W: 1000}
-	tx.Payload = types.Encode(&pt.TicketAction{Value: &pt.TicketAction_Topen{: dact}, Ty: int32(pt.Pos33ActionDeposit)})
-	tx.Sign(types.ED25519, RootPrivKey)
-	if !tx.CheckSign() {
-		panic("tx check error")
-	}
-	ret = append(ret, tx)
-	return
-}
-*/
 
 // write block to chain
 func (client *Client) setBlock(b *types.Block) error {

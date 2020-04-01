@@ -667,30 +667,6 @@ func checkVotesEnough(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
 	return true
 }
 
-// func (n *node) checkVotes(vs []*pt.Pos33VoteMsg, height int64, round int) bool {
-// 	ss := n.getSorts(height, round)
-// 	if len(ss) < pt.Pos33MustVotes {
-// 		plog.Info("sorts < 11", "height", height, "round", round)
-// 		return false
-// 	}
-
-// 	// if len(vs)*2 <= len(ss) {
-// 	// 	plog.Info("votes less than 2/3 sorts", "height", height, "round", round, "nss", len(ss), "nvs", len(vs))
-// 	// 	return false
-// 	// }
-// 	ok := false
-// 	for _, v := range vs {
-// 		for _, s := range ss {
-// 			if string(v.Sort.SortHash.Hash) == string(s.SortHash.Hash) {
-// 				ok = true
-// 				break
-// 			}
-// 		}
-// 	}
-// 	plog.Info("checkVotes", "nvs", len(vs), "nss", len(ss), "height", height, "round", round)
-// 	return ok
-// }
-
 func (n *node) allw(height int64, check bool) int {
 	if height > 10 {
 		if check {
@@ -702,13 +678,6 @@ func (n *node) allw(height int64, check bool) int {
 }
 
 func (n *node) handleSortitionMsg(m *pt.Pos33SortMsg) {
-	/*
-		err := n.checkSort(m)
-		if err != nil {
-			plog.Error("checkSort error", "err", err)
-			return
-		}
-	*/
 	if m == nil || m.Proof == nil || m.Proof.Input == nil || m.SortHash == nil {
 		plog.Error("handleSortitionMsg error, input msg is nil")
 		return
@@ -744,16 +713,13 @@ func (n *node) checkSort(s *pt.Pos33SortMsg) error {
 	}
 
 	height := s.Proof.Input.Height
-	// if n.lastBlock().Height >= height {
-	// 	return fmt.Errorf("sort msg too late, lbHeight=%d, sortHeight=%d", n.lastBlock().Height, height)
-	// }
 	seed, err := n.getMinerSeed(height)
 	if err != nil {
 		return err
 	}
 	err = n.verifySort(height, int(s.Proof.Input.Step), n.allw(height, true), seed, s)
 	if err != nil {
-		plog.Info("verifySort error", "err", err, "height", height, "s", s)
+		plog.Error("verifySort error", "err", err, "height", height)
 		return err
 	}
 	return nil

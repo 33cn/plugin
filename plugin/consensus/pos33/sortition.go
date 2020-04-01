@@ -133,6 +133,9 @@ func (n *node) queryTid(tid string, height int64) (*pt.Pos33Ticket, error) {
 
 	var rt *pt.Pos33Ticket
 	for _, t := range reply.Tickets {
+		// if t.Status != 1 {
+		// 	continue
+		// }
 		if t.TicketId == tid && getTicketHeight(t.TicketId) <= height {
 			rt = t
 			break
