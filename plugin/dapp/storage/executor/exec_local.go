@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	ety "github.com/33cn/plugin/plugin/dapp/storage/types"
 )
@@ -22,7 +20,6 @@ func (s *storage) ExecLocal_ContentStorage(payload *ety.ContentOnlyNotaryStorage
 				if err := types.Decode(log.Log, storage); err != nil {
 					return nil, err
 				}
-				fmt.Println(string(storage.GetContentStorage().Key))
 				kv := &types.KeyValue{Key: getLocalDBKey(storage.GetContentStorage().Key), Value: types.Encode(storage)}
 				dbSet.KV = append(dbSet.KV, kv)
 			}
