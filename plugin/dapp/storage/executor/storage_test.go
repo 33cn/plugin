@@ -185,7 +185,7 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
 }
-func QueryStorageByKey(stateDB dbm.DB, kvdb dbm.KVDB, key string, cfg *types.Chain33Config) (*oty.Storage, error) {
+func QueryStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, key string, cfg *types.Chain33Config) (*oty.Storage, error) {
 	exec := newStorage()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
@@ -201,7 +201,7 @@ func QueryStorageByKey(stateDB dbm.DB, kvdb dbm.KVDB, key string, cfg *types.Cha
 	}
 	return msg.(*oty.Storage), nil
 }
-func QueryBatchStorageByKey(stateDB dbm.DB, kvdb dbm.KVDB, para *oty.BatchQueryStorage, cfg *types.Chain33Config) (*oty.BatchReplyStorage, error) {
+func QueryBatchStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, para *oty.BatchQueryStorage, cfg *types.Chain33Config) (*oty.BatchReplyStorage, error) {
 	exec := newStorage()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
@@ -226,7 +226,7 @@ func CreateTx(action string, message types.Message, priv string, cfg *types.Chai
 	if err != nil {
 		return nil, err
 	}
-	tx, err = signTx(tx, PrivKeyA)
+	tx, err = signTx(tx, priv)
 	return tx, err
 }
 
