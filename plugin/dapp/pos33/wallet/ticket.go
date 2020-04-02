@@ -637,7 +637,7 @@ func (policy *ticketPolicy) buyPos33TicketOne(height int64, priv crypto.PrivKey)
 	//判断手续费是否足够，如果不足要及时补充。
 	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
 	cfg := ty.GetPos33TicketMinerParam(chain33Cfg, height)
-	fee := types.Coin
+	fee := types.Coin * 100
 	if acc1.Balance+acc2.Balance-2*fee >= cfg.Pos33TicketPrice {
 		// 如果可用余额+冻结余额，可以凑成新票，则转币到冻结余额
 		if (acc1.Balance+acc2.Balance-2*fee)/cfg.Pos33TicketPrice > acc2.Balance/cfg.Pos33TicketPrice {
@@ -671,27 +671,22 @@ func (policy *ticketPolicy) buyPos33TicketOne(height int64, priv crypto.PrivKey)
 }
 
 func (policy *ticketPolicy) buyPos33Ticket(height int64) ([][]byte, int, error) {
-	privs, err := policy.getWalletOperate().GetAllPrivKeys()
+	minerPriv, minerAddr, err := policy.getMiner(height)
 	if err != nil {
-		bizlog.Error("buyPos33Ticket.getAllPrivKeys", "err", err)
 		return nil, 0, err
 	}
 	count := 0
 	var hashes [][]byte
-	bizlog.Debug("ticketPolicy buyPos33Ticket begin")
-	for _, priv := range privs {
-		hash, n, err := policy.buyPos33TicketOne(height, priv)
-		if err != nil {
-			bizlog.Error("ticketPolicy buyPos33Ticket buyPos33TicketOne", "err", err)
-			continue
-		}
-		count += n
-		if hash != nil {
-			hashes = append(hashes, hash)
-		}
-		bizlog.Debug("ticketPolicy buyPos33Ticket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "txhash", hex.EncodeToString(hash), "n", n)
+	hash, n, err := policy.buyPos33TicketOne(height, minerPriv)
+	if err != nil {
+		bizlog.Error("ticketPolicy buyPos33Ticket buyPos33TicketOne", "err", err)
+		return nil, 0, err
 	}
-	bizlog.Debug("ticketPolicy buyPos33Ticket end")
+	count += n
+	if hash != nil {
+		hashes = append(hashes, hash)
+	}
+	bizlog.Debug("ticketPolicy buyPos33Ticket", "Address", minerAddr, "txhash", hex.EncodeToString(hash), "n", n)
 	return hashes, count, nil
 }
 
@@ -769,29 +764,58 @@ func (policy *ticketPolicy) buyMinerAddrPos33TicketOne(height int64, priv crypto
 	return hashes, total, nil
 }
 
-func (policy *ticketPolicy) buyMinerAddrPos33Ticket(height int64) ([][]byte, int, error) {
+func (policy *ticketPolicy) getMiner(height int64) (crypto.PrivKey, string, error) {
+	accs, err := policy.getWalletOperate().GetWalletAccounts()
+	if err != nil {
+		bizlog.Error("getMiner.GetWalletAccounts", "err", err)
+		return nil, "", err
+	}
+	var minerAddr string
+	for _, acc := range accs {
+		if acc.Label == "mining" {
+			minerAddr = acc.Addr
+			break
+		}
+	}
+	if minerAddr == "" {
+		err := fmt.Errorf("No mining label account in wallet")
+		bizlog.Error("getMiner error", "err", err)
+		return nil, "", err
+	}
+
 	privs, err := policy.getWalletOperate().GetAllPrivKeys()
 	if err != nil {
-		bizlog.Error("buyMinerAddrPos33Ticket.getAllPrivKeys", "err", err)
+		bizlog.Error("getMiner.getAllPrivKeys", "err", err)
+		return nil, "", err
+	}
+	var minerPriv crypto.PrivKey
+	for _, priv := range privs {
+		if address.PubKeyToAddress(priv.PubKey().Bytes()).String() == minerAddr {
+			minerPriv = priv
+			break
+		}
+	}
+	return minerPriv, minerAddr, nil
+}
+func (policy *ticketPolicy) buyMinerAddrPos33Ticket(height int64) ([][]byte, int, error) {
+	minerPriv, minerAddr, err := policy.getMiner(height)
+	if err != nil {
 		return nil, 0, err
 	}
-	count := 0
 	var hashes [][]byte
-	bizlog.Debug("ticketPolicy buyMinerAddrPos33Ticket begin")
-	for _, priv := range privs {
-		hashlist, n, err := policy.buyMinerAddrPos33TicketOne(height, priv)
-		if err != nil {
-			if err != types.ErrNotFound {
-				bizlog.Error("buyMinerAddrPos33TicketOne", "err", err)
-			}
-			continue
+	count := 0
+	hashlist, n, err := policy.buyMinerAddrPos33TicketOne(height, minerPriv)
+	if err != nil {
+		if err != types.ErrNotFound {
+			bizlog.Error("buyMinerAddrPos33TicketOne", "err", err)
+			return nil, 0, err
 		}
-		count += n
-		if hashlist != nil {
-			hashes = append(hashes, hashlist...)
-		}
-		bizlog.Debug("ticketPolicy buyMinerAddrPos33Ticket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "n", n)
 	}
+	count += n
+	if hashlist != nil {
+		hashes = append(hashes, hashlist...)
+	}
+	bizlog.Debug("ticketPolicy buyMinerAddrPos33Ticket", "Address", minerAddr, "n", n)
 	bizlog.Debug("ticketPolicy buyMinerAddrPos33Ticket end")
 	return hashes, count, nil
 }

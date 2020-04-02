@@ -331,6 +331,7 @@ func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count 
 	gticket.Genesis = &pt.Pos33TicketGenesis{MinerAddress: minerAddr, ReturnAddress: returnAddr, Count: count}
 	tx3.Payload = types.Encode(&pt.Pos33TicketAction{Value: gticket, Ty: pt.Pos33TicketActionGenesis})
 	ret = append(ret, &tx3)
+	plog.Info("genesis miner", "execaddr", tx3.To)
 	return ret
 }
 
@@ -376,7 +377,6 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	}
 	return ret
 }
-
 
 // write block to chain
 func (client *Client) setBlock(b *types.Block) error {

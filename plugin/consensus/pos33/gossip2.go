@@ -12,6 +12,7 @@ import (
 	autonat "github.com/libp2p/go-libp2p-autonat-svc"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	mplex "github.com/libp2p/go-libp2p-mplex"
@@ -29,7 +30,10 @@ type mdnsNotifee struct {
 }
 
 func (m *mdnsNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	m.h.Connect(m.ctx, pi)
+	if m.h.Network().Connectedness(pi.ID) != network.Connected {
+		plog.Info("peer mdns found", "pid", pi.ID.String())
+		m.h.Connect(m.ctx, pi)
+	}
 }
 
 type gossip2 struct {
@@ -188,11 +192,20 @@ func newHost(ctx context.Context, priv crypto.PrivKey, port string) host.Host {
 		panic(err)
 	}
 
-	mdns, err := discovery.NewMdnsService(ctx, h, time.Second*10, "")
+	mdns, err := discovery.NewMdnsService(ctx, h, time.Second*10, fmt.Sprintf("/%s-mdns/%s", "pos33", port))
 	if err != nil {
 		panic(err)
 	}
-	mdns.RegisterNotifee(&mdnsNotifee{h: h, ctx: ctx})
+
+	mn := &mdnsNotifee{h: h, ctx: ctx}
+	mdns.RegisterNotifee(mn)
+
+	// routingDiscovery := disc.NewRoutingDiscovery(idht)
+	// disc.Advertise(ctx, routingDiscovery, string("ycc"))
+	// peers, err := disc.FindPeers(ctx, routingDiscovery, string("ycc"))
+	// for _, peer := range peers {
+	// 	mn.HandlePeerFound(peer)
+	// }
 
 	// The last step to get fully up and running would be to connect to
 	// bootstrap peers (or any other peers). We leave this commented as
