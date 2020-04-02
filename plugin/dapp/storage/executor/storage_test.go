@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -64,6 +66,7 @@ func init() {
 func TestStorage(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(oty.StorageX, cfg, nil)
+	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)
 	total := 100 * types.Coin
 	accountA := types.Account{
 		Balance: total,
@@ -162,7 +165,6 @@ func TestStorage(t *testing.T) {
 	assert.Equal(t, common.Sha256(contents[0]), reply.GetEncryptStorage().ContentHash)
 	assert.Equal(t, crypted, reply.GetEncryptStorage().EncryptContent)
 	assert.Equal(t, ivs[0], reply.GetEncryptStorage().Nonce)
-
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
@@ -201,7 +203,7 @@ func QueryStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, key string, cfg *types.Cha
 	}
 	return msg.(*oty.Storage), nil
 }
-func QueryBatchStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, para *oty.BatchQueryStorage, cfg *types.Chain33Config) (*oty.BatchReplyStorage, error) {
+func QueryBatchStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, para proto.Message, cfg *types.Chain33Config) (*oty.BatchReplyStorage, error) {
 	exec := newStorage()
 	q := queue.New("channel")
 	q.SetConfig(cfg)
@@ -233,6 +235,7 @@ func CreateTx(action string, message types.Message, priv string, cfg *types.Chai
 //模拟区块中交易得执行过程
 func Exec_Block(t *testing.T, stateDB dbm.DB, kvdb dbm.KVDB, env *execEnv, txs ...*types.Transaction) error {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := newStorage()
 	e := exec.(*storage)
@@ -242,7 +245,6 @@ func Exec_Block(t *testing.T, stateDB dbm.DB, kvdb dbm.KVDB, env *execEnv, txs .
 			t.Log(err.Error())
 			return err
 		}
-
 	}
 	q := queue.New("channel")
 	q.SetConfig(cfg)

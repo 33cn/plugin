@@ -53,7 +53,11 @@ func (s *storage) GetDriverName() string {
 
 //ExecutorOrder Exec 的时候 同时执行 ExecLocal
 func (s *storage) ExecutorOrder() int64 {
-	return drivers.ExecLocalSameTime
+	cfg := s.GetAPI().GetConfig()
+	if cfg.IsDappFork(s.GetHeight(), storagetypes.StorageX, storagetypes.ForkStorageLocalDB) {
+		return drivers.ExecLocalSameTime
+	}
+	return s.DriverBase.ExecutorOrder()
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
