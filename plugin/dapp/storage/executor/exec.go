@@ -11,6 +11,7 @@ import (
  */
 
 func (s *storage) Exec_ContentStorage(payload *storagetypes.ContentOnlyNotaryStorage, tx *types.Transaction, index int) (*types.Receipt, error) {
+	s.GetAPI()
 	action := newStorageAction(s, tx, index)
 	return action.ContentStorage(payload)
 }

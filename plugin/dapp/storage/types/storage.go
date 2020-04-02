@@ -47,6 +47,9 @@ const (
 )
 
 var (
+	ForkStorageLocalDB = "ForkStorageLocalDB"
+)
+var (
 	//StorageX 执行器名称定义
 	StorageX = "storage"
 	//定义actionMap
@@ -78,6 +81,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(StorageX, "Enable", 0)
+	cfg.RegisterDappFork(StorageX, ForkStorageLocalDB, 0)
 }
 
 // InitExecutor defines register executor
