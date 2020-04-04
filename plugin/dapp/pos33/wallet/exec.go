@@ -12,7 +12,7 @@ import (
 // On_ClosePos33Tickets close ticket
 func (policy *ticketPolicy) On_ClosePos33Tickets(req *ty.Pos33TicketClose) (types.Message, error) {
 	operater := policy.getWalletOperate()
-	reply, err := policy.forceClosePos33Ticket(operater.GetBlockHeight()+1, req.MinerAddress)
+	reply, err := policy.forceClosePos33Ticket(operater.GetBlockHeight()+1, req.MinerAddress, int(req.Count))
 	if err != nil {
 		bizlog.Error("onClosePos33Tickets", "forceClosePos33Ticket error", err.Error())
 	} else {

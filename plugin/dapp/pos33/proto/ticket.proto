@@ -147,6 +147,7 @@ message Pos33TicketGenesis {
 message Pos33TicketClose {
   repeated string ticketId = 1;
   string minerAddress = 2;
+  int32 count = 3;
 }
 
 message Pos33TicketList {

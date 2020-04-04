@@ -148,6 +148,7 @@ func ClosePos33TicketCmd() *cobra.Command {
 
 func addCloseBindAddr(cmd *cobra.Command) {
 	cmd.Flags().StringP("miner_addr", "m", "", "miner address (optional)")
+	cmd.Flags().Int32P("count", "c", 200, "close ticket count (optional, default 200)")
 }
 
 // listTicketCmd get ticket count
@@ -188,6 +189,7 @@ func listTicket(cmd *cobra.Command, args []string) {
 func closePos33Ticket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	bindAddr, _ := cmd.Flags().GetString("miner_addr")
+	count, _ := cmd.Flags().GetInt32("count")
 	status, err := getWalletStatus(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -202,6 +204,7 @@ func closePos33Ticket(cmd *cobra.Command, args []string) {
 
 	tClose := &ty.Pos33TicketClose{
 		MinerAddress: bindAddr,
+		Count:        count,
 	}
 
 	var res rpctypes.ReplyHashes

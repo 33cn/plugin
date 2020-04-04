@@ -73,7 +73,6 @@ func (n *node) lastBlock() *types.Block {
 const stopedBlocks = 60
 
 func (n *node) minerTx(height int64, sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg, priv crypto.PrivKey) (*types.Transaction, error) {
-	plog.Info("genRewordTx", "vsw", len(vs))
 	if len(vs) > pt.Pos33RewardVotes {
 		sort.Sort(pt.Votes(vs))
 		vs = vs[:pt.Pos33RewardVotes]
@@ -97,6 +96,7 @@ func (n *node) minerTx(height int64, sm *pt.Pos33SortMsg, vs []*pt.Pos33VoteMsg,
 	}
 
 	tx.Sign(types.SECP256K1, priv)
+	plog.Info("make a minerTx", "nvs", len(vs), "height", height, "fee", tx.Fee, "from", tx.From())
 	return tx, nil
 }
 
