@@ -9,6 +9,7 @@ message Storage {
         EncryptNotaryStorage      encryptStorage      = 4;
         EncryptShareNotaryStorage encryptShareStorage = 5;
     }
+    int32 ty = 6;
 }
 
 message StorageAction {
@@ -23,8 +24,12 @@ message StorageAction {
 }
 // 内容存证模型
 message ContentOnlyNotaryStorage {
+    // Op 0表示创建 1表示追加add
+    int32  op = 1;
     //长度需要小于512k
-    bytes content = 1;
+    bytes content = 2;
+    //自定义的主键，可以为空，如果没传，则用txhash为key
+    string key = 3;
 }
 
 //哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
@@ -32,6 +37,8 @@ message HashOnlyNotaryStorage {
 
     //长度固定为32字节
     bytes hash = 1;
+    //自定义的主键，可以为空，如果没传，则用txhash为key
+    string key = 2;
 }
 
 // 链接存证模型
@@ -40,6 +47,8 @@ message LinkNotaryStorage {
     bytes link = 1;
     //源文件得hash值，推荐使用sha256哈希，限制256位得摘要值
     bytes hash = 2;
+    //自定义的主键，可以为空，如果没传，则用txhash为key
+    string key = 3;
 }
 
 // 隐私存证模型，如果一个文件需要存证，且不公开内容，可以选择将源文件通过对称加密算法加密后上链
@@ -50,30 +59,20 @@ message EncryptNotaryStorage {
     bytes encryptContent = 2;
     //加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
     bytes nonce = 3;
-}
-// 隐私存证模型
-message EncryptContentOnlyNotaryStorage {
-    //存证内容的hash值，推荐使用sha256哈希，限制256位得摘要值
-    //   bytes contentHash   = 1;
-    //源文件得密文。
-    bytes encryptContent = 1;
-    //加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
-    bytes nonce = 2;
+    //自定义的主键，可以为空，如果没传，则用txhash为key
+    string key = 4;
 }
 
 // 分享隐私存证模型,需要完备的sdk或者相应的密钥库支持
 message EncryptShareNotaryStorage {
     //存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
     bytes contentHash = 1;
-    //源文件得密文。
+    //源文件得密文。,用公钥地址加密
     bytes encryptContent = 2;
-    //密钥的kdf推导路径。密钥tree父节点根据该路径可以推导出私钥key
-    bytes keyName = 3;
-    //加密key的wrap key。加密key随机生成，对明文进行加密，该key有私密key进行key wrap后公开。
-    //使用时，通过私密key对wrap key解密得到加密key对密文进行解密。
-    bytes keyWrap = 4;
-    //加密iv，通过AES进行加密时制定随机生成的iv,解密时需要使用该值
-    bytes nonce = 5;
+    //公钥
+    bytes pubKey = 3;
+    //自定义的主键，可以为空，如果没传，则用txhash为key
+    string key = 4;
 }
 
 service storage {}

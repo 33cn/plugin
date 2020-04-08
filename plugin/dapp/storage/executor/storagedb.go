@@ -3,15 +3,18 @@ package executor
 import (
 	"fmt"
 
+	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
-	storagetypes "github.com/33cn/plugin/plugin/dapp/storage/types"
+	ety "github.com/33cn/plugin/plugin/dapp/storage/types"
 	"github.com/golang/protobuf/proto"
 )
 
 type StorageAction struct {
+	api       client.QueueProtocolAPI
 	db        dbm.KV
+	localdb   dbm.KV
 	txhash    []byte
 	fromaddr  string
 	blocktime int64
@@ -22,7 +25,7 @@ type StorageAction struct {
 func newStorageAction(s *storage, tx *types.Transaction, index int) *StorageAction {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-	return &StorageAction{s.GetStateDB(), hash, fromaddr,
+	return &StorageAction{s.GetAPI(), s.GetStateDB(), s.GetLocalDB(), hash, fromaddr,
 		s.GetBlockTime(), s.GetHeight(), index}
 }
 func (s *StorageAction) GetKVSet(payload proto.Message) (kvset []*types.KeyValue) {
@@ -30,54 +33,150 @@ func (s *StorageAction) GetKVSet(payload proto.Message) (kvset []*types.KeyValue
 	return kvset
 }
 
-func (s *StorageAction) ContentStorage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) ContentStorage(payload *ety.ContentOnlyNotaryStorage) (*types.Receipt, error) {
+
 	//TODO 这里可以加具体得文本内容限制，超过指定大小的数据不容许写到状态数据库中
 	var logs []*types.ReceiptLog
-	log := &types.ReceiptLog{Ty: storagetypes.TyContentStorageLog}
-	logs = append(logs, log)
-	kv := s.GetKVSet(payload)
-	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		key := payload.Key
+		op := payload.Op
+		if key == "" {
+			key = common.ToHex(s.txhash)
+		}
+		payload.Key = key
+		storage, err := QueryStorageFromLocalDB(s.localdb, key)
+		if op == ety.OpCreate {
+			if err != types.ErrNotFound {
+				return nil, ety.ErrKeyExisted
+			}
+		} else {
+			if err == nil && storage.Ty != ety.TyContentStorageAction {
+				return nil, ety.ErrStorageType
+			}
+			content := append(storage.GetContentStorage().Content, []byte(",")...)
+			payload.Content = append(content, payload.Content...)
+		}
+		stg := &ety.Storage{Value: &ety.Storage_ContentStorage{ContentStorage: payload}, Ty: ety.TyContentStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyContentStorageLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyContentStorageLog}
+		logs = append(logs, log)
+		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_ContentStorage{ContentStorage: payload}})
+	}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
-func (s *StorageAction) HashStorage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) HashStorage(payload *ety.HashOnlyNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	log := &types.ReceiptLog{Ty: storagetypes.TyHashStorageLog}
-	logs = append(logs, log)
-	kv := s.GetKVSet(payload)
-	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		key := payload.Key
+		if key == "" {
+			key = common.ToHex(s.txhash)
+		}
+		_, err := QueryStorageFromLocalDB(s.localdb, key)
+		if err != types.ErrNotFound {
+			return nil, ety.ErrKeyExisted
+		}
+		payload.Key = key
+		stg := &ety.Storage{Value: &ety.Storage_HashStorage{HashStorage: payload}, Ty: ety.TyHashStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyHashStorageLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyHashStorageLog}
+		logs = append(logs, log)
+		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_HashStorage{HashStorage: payload}})
+	}
+
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
-func (s *StorageAction) LinkStorage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) LinkStorage(payload *ety.LinkNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	log := &types.ReceiptLog{Ty: storagetypes.TyLinkStorageLog}
-	logs = append(logs, log)
-	kv := s.GetKVSet(payload)
-	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		key := payload.Key
+		if key == "" {
+			key = common.ToHex(s.txhash)
+		}
+		payload.Key = key
+		_, err := QueryStorageFromLocalDB(s.localdb, key)
+		if err != types.ErrNotFound {
+			return nil, ety.ErrKeyExisted
+		}
+		stg := &ety.Storage{Value: &ety.Storage_LinkStorage{LinkStorage: payload}, Ty: ety.TyLinkStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyLinkStorageLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyLinkStorageLog}
+		logs = append(logs, log)
+		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_LinkStorage{LinkStorage: payload}})
+	}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
-func (s *StorageAction) EncryptStorage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) EncryptStorage(payload *ety.EncryptNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	log := &types.ReceiptLog{Ty: storagetypes.TyEncryptStorageLog}
-	logs = append(logs, log)
-	kv := s.GetKVSet(payload)
-	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		key := payload.Key
+		if key == "" {
+			key = common.ToHex(s.txhash)
+		}
+		payload.Key = key
+		_, err := QueryStorageFromLocalDB(s.localdb, key)
+		if err != types.ErrNotFound {
+			return nil, ety.ErrKeyExisted
+		}
+		stg := &ety.Storage{Value: &ety.Storage_EncryptStorage{EncryptStorage: payload}, Ty: ety.TyEncryptStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyEncryptStorageLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyEncryptStorageLog}
+		logs = append(logs, log)
+		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_EncryptStorage{EncryptStorage: payload}})
+	}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
-func (s *StorageAction) EncryptShareStorage(payload proto.Message) (*types.Receipt, error) {
+func (s *StorageAction) EncryptShareStorage(payload *ety.EncryptShareNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
-	log := &types.ReceiptLog{Ty: storagetypes.TyEncryptShareStorageLog}
-	logs = append(logs, log)
-	kv := s.GetKVSet(payload)
-	receipt := &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		key := payload.Key
+		if key == "" {
+			key = common.ToHex(s.txhash)
+		}
+		payload.Key = key
+		_, err := QueryStorageFromLocalDB(s.localdb, key)
+		if err != types.ErrNotFound {
+			return nil, ety.ErrKeyExisted
+		}
+		stg := &ety.Storage{Value: &ety.Storage_EncryptShareStorage{EncryptShareStorage: payload}, Ty: ety.TyEncryptStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyEncryptShareStorageLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyEncryptShareStorageLog}
+		logs = append(logs, log)
+		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_EncryptShareStorage{EncryptShareStorage: payload}})
+	}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
-func QueryStorageByTxHash(db dbm.KV, txhash string) (*storagetypes.Storage, error) {
+func QueryStorageByTxHash(db dbm.KV, txhash string) (*ety.Storage, error) {
 	data, err := db.Get(Key(txhash))
 	if err != nil {
 		elog.Debug("QueryStorage", "get", err)
 		return nil, err
 	}
-	var storage storagetypes.Storage
+	var storage ety.Storage
 	//decode
 	err = types.Decode(data, &storage)
 	if err != nil {
@@ -86,23 +185,42 @@ func QueryStorageByTxHash(db dbm.KV, txhash string) (*storagetypes.Storage, erro
 	}
 	return &storage, nil
 }
-func QueryStorage(db dbm.KV, in *storagetypes.QueryStorage) (types.Message, error) {
-	if in.TxHash == "" {
+func QueryStorage(statedb, localdb dbm.KV, txHash string) (*ety.Storage, error) {
+	if txHash == "" {
 		return nil, fmt.Errorf("txhash can't equail nil")
 	}
-	return QueryStorageByTxHash(db, in.TxHash)
+	//先去localdb中查询，如果没有，则再去状态数据库中查询
+	storage, err := QueryStorageFromLocalDB(localdb, txHash)
+	if err != nil {
+		return QueryStorageByTxHash(statedb, txHash)
+	}
+	return storage, nil
 }
-func BatchQueryStorage(db dbm.KV, in *storagetypes.BatchQueryStorage) (types.Message, error) {
+func BatchQueryStorage(statedb, localdb dbm.KV, in *ety.BatchQueryStorage) (types.Message, error) {
 	if len(in.TxHashs) > 10 {
 		return nil, fmt.Errorf("The number of batch queries is too large! the maximux is %d,but current num %d", 10, len(in.TxHashs))
 	}
-	var storage storagetypes.BatchReplyStorage
+	var storage ety.BatchReplyStorage
 	for _, txhash := range in.TxHashs {
-		msg, err := QueryStorageByTxHash(db, txhash)
+		msg, err := QueryStorage(statedb, localdb, txhash)
 		if err != nil {
 			return msg, err
 		}
 		storage.Storages = append(storage.Storages, msg)
+	}
+	return &storage, nil
+}
+
+//因为table表不支持嵌套多种数据存储结构，改成手动KV存储
+func QueryStorageFromLocalDB(localdb dbm.KV, key string) (*ety.Storage, error) {
+	data, err := localdb.Get(getLocalDBKey(key))
+	if err != nil {
+		return nil, err
+	}
+	var storage ety.Storage
+	err = types.Decode(data, &storage)
+	if err != nil {
+		return nil, err
 	}
 	return &storage, nil
 }

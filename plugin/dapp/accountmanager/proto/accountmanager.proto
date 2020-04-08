@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+import "transaction.proto";
+
+package types;
+
+message Accountmanager {
+}
+
+message AccountmanagerAction {
+    oneof value {
+        //注册
+        Register register = 1;
+        //重置公钥
+        ResetKey resetKey = 2;
+        //转账
+        Transfer transfer = 3;
+        //监管操作
+        Supervise supervise = 4;
+        //申请操作,预留接口
+        Apply   apply = 5;
+    }
+    int32 ty = 6;
+}
+
+
+//注册
+message Register {
+    string accountID = 1;
+    //    string addr = 2;
+}
+
+//重置公钥
+message ResetKey {
+
+    string accountID = 1;
+    string addr = 2;
+}
+
+//用户申请服务
+message Apply {
+    string accountID = 1;
+    //操作， 1 撤销账户公钥重置, 2 锁定期结束后，执行重置公钥操作
+    int32 op = 2;
+}
+
+
+//合约内部账户之间转账
+message Transfer {
+    //资产类型 及转账金额
+    Asset   asset = 1;
+    // from账户
+    string fromAccountID = 2;
+    // to账户
+    string toAccountID = 3;
+
+
+}
+
+//管理员监管操作
+message Supervise {
+    //账户名单
+    repeated string accountIDs = 1;
+    //操作， 1为冻结，2为解冻，3增加有效期,4为授权
+    int32 op = 2;
+    //0普通,后面根据业务需要可以自定义，有管理员授予不同的权限
+    int32 level = 3;
+}
+
+message account{
+    //账户名称
+    string accountID = 1;
+    //地址
+    string addr = 2;
+    //上一次公钥地址
+    string prevAddr = 3;
+    //账户状态 0 正常， 1表示冻结, 2表示锁定 3,过期注销
+    int32  status = 4;
+    //等级权限 0普通,后面根据业务需要可以自定义，有管理员授予不同的权限
+    int32  level = 5;
+    //注册时间
+    int64  createTime = 6;
+    //失效时间
+    int64  expireTime = 7;
+    //锁定时间
+    int64  lockTime = 8;
+    //主键索引
+    int64  index = 9;
+}
+
+message AccountReceipt{
+    account account = 1;
+}
+message ReplyAccountList {
+    repeated account accounts = 1;
+    string primaryKey = 2;
+}
+
+message TransferReceipt{
+    account FromAccount = 1;
+
+    account ToAccount = 2;
+
+    int64  index = 3;
+}
+//回执日志
+message SuperviseReceipt{
+    repeated account accounts = 1;
+    int32    op = 2;
+    int64  index = 3;
+
+}
+
+message QueryExpiredAccounts{
+    string primaryKey = 1;
+
+    //第一次需要传入逾期时间，时间戳
+    int64  expiredTime = 2;
+    //单页返回多少条记录，默认返回10条
+    // 0降序，1升序，默认降序
+    int32 direction = 3;
+}
+
+message QueryAccountsByStatus{
+    //账户状态 1 正常， 2表示冻结, 3表示锁定
+    int32  status = 1;
+    // 主键索引
+    string primaryKey = 3;
+    // 0降序，1升序，默认降序
+    int32 direction = 5;
+}
+
+message QueryAccountByID {
+    string accountID = 1;
+}
+
+message QueryAccountByAddr {
+    string addr = 1;
+}
+
+message QueryBalanceByID {
+    string accountID = 1;
+
+    Asset asset = 2;
+}
+
+message balance {
+    int64  balance = 1;
+    int64  frozen  = 2;
+}
+service accountmanager {
+
+}

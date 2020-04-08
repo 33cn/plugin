@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -61,9 +63,10 @@ var (
 func init() {
 	r = rand.New(rand.NewSource(types.Now().UnixNano()))
 }
-func TestOrace(t *testing.T) {
+func TestStorage(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(oty.StorageX, cfg, nil)
+	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)
 	total := 100 * types.Coin
 	accountA := types.Account{
 		Balance: total,
@@ -102,206 +105,66 @@ func TestOrace(t *testing.T) {
 	accD, _ := account.NewAccountDB(cfg, "coins", "bty", stateDB)
 	accD.SaveExecAccount(execAddr, &accountD)
 
-	env := execEnv{
+	env := &execEnv{
 		10,
 		cfg.GetDappFork(oty.StorageX, "Enable"),
 		1539918074,
 	}
 
-	// publish event
-	ety := types.LoadExecutorType(oty.StorageX)
-	tx, err := ety.Create("ContentStorage", &oty.ContentOnlyNotaryStorage{Content: contents[0]})
+	tx, err := CreateTx("ContentStorage", &oty.ContentOnlyNotaryStorage{Content: contents[0], Op: 0}, PrivKeyA, cfg)
 	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, oty.StorageX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	t.Log("tx", tx)
-	exec := newStorage()
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
-	exec.SetAPI(api)
-	exec.SetStateDB(stateDB)
-	exec.SetLocalDB(kvdb)
-	exec.SetEnv(1, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(tx, receiptDate, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
+	Exec_Block(t, stateDB, kvdb, env, tx)
 	txhash := common.ToHex(tx.Hash())
-	t.Log("txhash:", txhash)
 	//根据hash查询存储得明文内容
-	msg, err := exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
-		TxHash: txhash}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply := msg.(*oty.Storage)
+	reply, err := QueryStorageByKey(stateDB, kvdb, txhash, cfg)
+	assert.Nil(t, err)
 	assert.Equal(t, contents[0], reply.GetContentStorage().Content)
 
 	//根据hash批量查询存储数据
-	msg, err = exec.Query(oty.FuncNameBatchQueryStorage, types.Encode(&oty.BatchQueryStorage{
-		TxHashs: []string{txhash}}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply2 := msg.(*oty.BatchReplyStorage)
+	reply2, err := QueryBatchStorageByKey(stateDB, kvdb, &oty.BatchQueryStorage{TxHashs: []string{txhash}}, cfg)
+	assert.Nil(t, err)
 	assert.Equal(t, contents[0], reply2.Storages[0].GetContentStorage().Content)
 
-	tx, err = ety.Create("HashStorage", &oty.HashOnlyNotaryStorage{Hash: common.Sha256(contents[0])})
+	tx, err = CreateTx("ContentStorage", &oty.ContentOnlyNotaryStorage{Content: contents[1], Op: 1, Key: txhash}, PrivKeyA, cfg)
 	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, oty.StorageX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	t.Log("tx", tx)
-	exec.SetEnv(env.blockHeight+1, env.blockTime+20, env.difficulty+1)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptDate, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
-	txhash = common.ToHex(tx.Hash())
-	t.Log("txhash:", txhash)
-	//根据hash查询存储得明文内容
-	msg, err = exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
-		TxHash: txhash}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
+	Exec_Block(t, stateDB, kvdb, env, tx)
 
-	reply = msg.(*oty.Storage)
+	reply, err = QueryStorageByKey(stateDB, kvdb, txhash, cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, append(append(contents[0], []byte(",")...), contents[1]...), reply.GetContentStorage().Content)
+
+	tx, err = CreateTx("HashStorage", &oty.HashOnlyNotaryStorage{Hash: common.Sha256(contents[0])}, PrivKeyA, cfg)
+	assert.Nil(t, err)
+	Exec_Block(t, stateDB, kvdb, env, tx)
+	txhash = common.ToHex(tx.Hash())
+	//根据hash查询存储得明文内容
+	reply, err = QueryStorageByKey(stateDB, kvdb, txhash, cfg)
+	assert.Nil(t, err)
 	assert.Equal(t, common.Sha256(contents[0]), reply.GetHashStorage().Hash)
 
-	//根据hash批量查询存储数据
-	msg, err = exec.Query(oty.FuncNameBatchQueryStorage, types.Encode(&oty.BatchQueryStorage{
-		TxHashs: []string{txhash}}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply2 = msg.(*oty.BatchReplyStorage)
-	assert.Equal(t, common.Sha256(contents[0]), reply2.Storages[0].GetHashStorage().Hash)
-
 	//存储链接地址
-	tx, err = ety.Create("LinkStorage", &oty.LinkNotaryStorage{Hash: common.Sha256(contents[0]), Link: contents[0]})
+	tx, err = CreateTx("LinkStorage", &oty.LinkNotaryStorage{Hash: common.Sha256(contents[0]), Link: contents[0]}, PrivKeyA, cfg)
 	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, oty.StorageX, tx)
-	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	t.Log("tx", tx)
-	exec.SetEnv(env.blockHeight+1, env.blockTime+20, env.difficulty+1)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptDate, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
+	Exec_Block(t, stateDB, kvdb, env, tx)
 	txhash = common.ToHex(tx.Hash())
-	t.Log("txhash:", txhash)
 	//根据hash查询存储得明文内容
-	msg, err = exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
-		TxHash: txhash}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply = msg.(*oty.Storage)
+	reply, err = QueryStorageByKey(stateDB, kvdb, txhash, cfg)
+	assert.Nil(t, err)
 	assert.Equal(t, common.Sha256(contents[0]), reply.GetLinkStorage().Hash)
-
-	//根据hash批量查询存储数据
-	msg, err = exec.Query(oty.FuncNameBatchQueryStorage, types.Encode(&oty.BatchQueryStorage{
-		TxHashs: []string{txhash}}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-	reply2 = msg.(*oty.BatchReplyStorage)
-	assert.Equal(t, common.Sha256(contents[0]), reply2.Storages[0].GetLinkStorage().Hash)
 
 	//加密存储
 	aes := des.NewAES(keys[2], ivs[0])
 	crypted, err := aes.Encrypt(contents[0])
-	if err != nil {
-		t.Error(err)
-	}
-	tx, err = ety.Create("EncryptStorage", &oty.EncryptNotaryStorage{ContentHash: common.Sha256(contents[0]), EncryptContent: crypted, Nonce: ivs[0]})
 	assert.Nil(t, err)
-	tx, err = types.FormatTx(cfg, oty.StorageX, tx)
+	tx, err = CreateTx("EncryptStorage", &oty.EncryptNotaryStorage{ContentHash: common.Sha256(contents[0]), EncryptContent: crypted, Nonce: ivs[0]}, PrivKeyA, cfg)
 	assert.Nil(t, err)
-	tx, err = signTx(tx, PrivKeyA)
-	assert.Nil(t, err)
-	t.Log("tx", tx)
-	exec.SetEnv(env.blockHeight+1, env.blockTime+20, env.difficulty+1)
-	receipt, err = exec.Exec(tx, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(tx, receiptDate, int(1))
-	if err != nil {
-		t.Error(err)
-	}
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
+	Exec_Block(t, stateDB, kvdb, env, tx)
 	txhash = common.ToHex(tx.Hash())
-	t.Log("txhash:", txhash)
-	//根据hash查询存储得明文内容
-	msg, err = exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
-		TxHash: txhash}))
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(msg)
-
-	reply = msg.(*oty.Storage)
+	reply, err = QueryStorageByKey(stateDB, kvdb, txhash, cfg)
+	assert.Nil(t, err)
 	assert.Equal(t, common.Sha256(contents[0]), reply.GetEncryptStorage().ContentHash)
-
 	assert.Equal(t, crypted, reply.GetEncryptStorage().EncryptContent)
-
 	assert.Equal(t, ivs[0], reply.GetEncryptStorage().Nonce)
-
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
@@ -323,4 +186,97 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
+}
+func QueryStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, key string, cfg *types.Chain33Config) (*oty.Storage, error) {
+	exec := newStorage()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据hash查询存储得明文内容
+	msg, err := exec.Query(oty.FuncNameQueryStorage, types.Encode(&oty.QueryStorage{
+		TxHash: key}))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*oty.Storage), nil
+}
+func QueryBatchStorageByKey(stateDB dbm.KV, kvdb dbm.KVDB, para proto.Message, cfg *types.Chain33Config) (*oty.BatchReplyStorage, error) {
+	exec := newStorage()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	//根据hash查询存储得明文内容
+	msg, err := exec.Query(oty.FuncNameBatchQueryStorage, types.Encode(para))
+	if err != nil {
+		return nil, err
+	}
+	return msg.(*oty.BatchReplyStorage), nil
+}
+func CreateTx(action string, message types.Message, priv string, cfg *types.Chain33Config) (*types.Transaction, error) {
+	ety := types.LoadExecutorType(oty.StorageX)
+	tx, err := ety.Create(action, message)
+	if err != nil {
+		return nil, err
+	}
+	tx, err = types.FormatTx(cfg, oty.StorageX, tx)
+	if err != nil {
+		return nil, err
+	}
+	tx, err = signTx(tx, priv)
+	return tx, err
+}
+
+//模拟区块中交易得执行过程
+func Exec_Block(t *testing.T, stateDB dbm.DB, kvdb dbm.KVDB, env *execEnv, txs ...*types.Transaction) error {
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)
+	cfg.SetTitleOnlyForTest("chain33")
+	exec := newStorage()
+	e := exec.(*storage)
+	for index, tx := range txs {
+		err := e.CheckTx(tx, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+	}
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
+	exec.SetStateDB(stateDB)
+	exec.SetLocalDB(kvdb)
+	env.blockHeight = env.blockHeight + 1
+	env.blockTime = env.blockTime + 20
+	env.difficulty = env.difficulty + 1
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	for index, tx := range txs {
+		receipt, err := exec.Exec(tx, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+		for _, kv := range receipt.KV {
+			stateDB.Set(kv.Key, kv.Value)
+		}
+		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+		set, err := exec.ExecLocal(tx, receiptData, index)
+		if err != nil {
+			t.Log(err.Error())
+			return err
+		}
+		for _, kv := range set.KV {
+			kvdb.Set(kv.Key, kv.Value)
+		}
+		//save to database
+		util.SaveKVList(stateDB, set.KV)
+		assert.Equal(t, types.ExecOk, int(receipt.Ty))
+	}
+	return nil
 }
