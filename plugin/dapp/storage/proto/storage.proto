@@ -30,6 +30,8 @@ message ContentOnlyNotaryStorage {
     bytes content = 2;
     //自定义的主键，可以为空，如果没传，则用txhash为key
     string key = 3;
+    //字符串值
+    string value = 4;
 }
 
 //哈希存证模型，推荐使用sha256哈希，限制256位得摘要值
@@ -39,6 +41,8 @@ message HashOnlyNotaryStorage {
     bytes hash = 1;
     //自定义的主键，可以为空，如果没传，则用txhash为key
     string key = 2;
+    //字符串值
+    string value = 3;
 }
 
 // 链接存证模型
@@ -49,6 +53,8 @@ message LinkNotaryStorage {
     bytes hash = 2;
     //自定义的主键，可以为空，如果没传，则用txhash为key
     string key = 3;
+    //字符串值
+    string value = 4;
 }
 
 // 隐私存证模型，如果一个文件需要存证，且不公开内容，可以选择将源文件通过对称加密算法加密后上链
@@ -61,6 +67,8 @@ message EncryptNotaryStorage {
     bytes nonce = 3;
     //自定义的主键，可以为空，如果没传，则用txhash为key
     string key = 4;
+    //字符串值
+    string value = 5;
 }
 
 // 分享隐私存证模型,需要完备的sdk或者相应的密钥库支持
@@ -73,6 +81,8 @@ message EncryptShareNotaryStorage {
     bytes pubKey = 3;
     //自定义的主键，可以为空，如果没传，则用txhash为key
     string key = 4;
+    //字符串值
+    string value = 5;
 }
 
 service storage {}
