@@ -55,8 +55,15 @@ func (s *StorageAction) ContentStorage(payload *ety.ContentOnlyNotaryStorage) (*
 			if err == nil && storage.Ty != ety.TyContentStorageAction {
 				return nil, ety.ErrStorageType
 			}
-			content := append(storage.GetContentStorage().Content, []byte(",")...)
-			payload.Content = append(content, payload.Content...)
+			if payload.GetContent() != nil {
+				content := append(storage.GetContentStorage().Content, []byte(",")...)
+				payload.Content = append(content, payload.Content...)
+			}
+			if payload.GetValue() != "" {
+				value := storage.GetContentStorage().GetValue() + "," + payload.GetValue()
+				payload.Value = value
+			}
+
 		}
 		stg := &ety.Storage{Value: &ety.Storage_ContentStorage{ContentStorage: payload}, Ty: ety.TyContentStorageAction}
 		log := &types.ReceiptLog{Ty: ety.TyContentStorageLog, Log: types.Encode(stg)}
