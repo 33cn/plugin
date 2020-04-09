@@ -68,13 +68,13 @@ func (g *gossip2) bootstrap(addrs ...string) error {
 	return nil
 }
 
-func newGossip2(priv ccrypto.PrivKey, port string, topics ...string) *gossip2 {
+func newGossip2(priv ccrypto.PrivKey, port, stag string, topics ...string) *gossip2 {
 	ctx, cancel := context.WithCancel(context.Background())
 	pr, err := crypto.UnmarshalSecp256k1PrivateKey(priv.Bytes())
 	if err != nil {
 		panic(err)
 	}
-	h := newHost(ctx, pr, port)
+	h := newHost(ctx, pr, port, stag)
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {
 		panic(err)
@@ -135,7 +135,7 @@ func (g *gossip2) gossip(topic string, data []byte) error {
 	return t.Publish(g.ctx, data)
 }
 
-func newHost(ctx context.Context, priv crypto.PrivKey, port string) host.Host {
+func newHost(ctx context.Context, priv crypto.PrivKey, port, stag string) host.Host {
 	var idht *dht.IpfsDHT
 	h, err := libp2p.New(ctx,
 		// Use the keypair we generated
@@ -192,7 +192,7 @@ func newHost(ctx context.Context, priv crypto.PrivKey, port string) host.Host {
 		panic(err)
 	}
 
-	mdns, err := discovery.NewMdnsService(ctx, h, time.Second*10, fmt.Sprintf("/%s-mdns/%s", "pos33", port))
+	mdns, err := discovery.NewMdnsService(ctx, h, time.Second*10, stag)
 	if err != nil {
 		panic(err)
 	}

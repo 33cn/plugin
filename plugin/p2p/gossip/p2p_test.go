@@ -179,7 +179,7 @@ func testNetInfo(t *testing.T, p2p *P2p) {
 
 //测试Peer
 func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
-	cfg := types.NewChain33ConfigNoInit(types.ReadFile("../../../chain33.toml"))
+	cfg := types.NewChain33Config(types.ReadFile("../../../chain33.toml"))
 	conn, err := grpc.Dial("localhost:53802", grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")))
 	assert.Nil(t, err)
@@ -429,7 +429,7 @@ func testRestart(t *testing.T, p2p *P2p) {
 }
 
 func Test_p2p(t *testing.T) {
-	cfg := types.NewChain33ConfigNoInit(types.ReadFile("../../../chain33.toml"))
+	cfg := types.NewChain33Config(types.ReadFile("../../../chain33.toml"))
 	q := queue.New("channel")
 	q.SetConfig(cfg)
 	go q.Start()

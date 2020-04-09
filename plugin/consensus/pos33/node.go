@@ -868,7 +868,8 @@ func (n *node) runLoop() {
 		return
 	}
 
-	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, pos33Topic)
+	svcTag := fmt.Sprintf("-%s.%s-", n.GetAPI().GetConfig().GetTitle(), n.conf.ListenPort)
+	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, svcTag, pos33Topic)
 	msgch := n.handleGossipMsg()
 	if len(n.conf.BootPeers) > 0 {
 		n.gss.bootstrap(n.conf.BootPeers...)
