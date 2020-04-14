@@ -1488,7 +1488,9 @@ func init() {
 	proto.RegisterType((*EvmContractTransferReq)(nil), "types.EvmContractTransferReq")
 }
 
-func init() { proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6) }
+func init() {
+	proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6)
+}
 
 var fileDescriptor_74353de561acd7c6 = []byte{
 	// 1004 bytes of a gzipped FileDescriptorProto

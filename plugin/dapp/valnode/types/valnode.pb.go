@@ -286,7 +286,9 @@ func init() {
 	proto.RegisterType((*ReqBlockInfo)(nil), "types.ReqBlockInfo")
 }
 
-func init() { proto.RegisterFile("valnode.proto", fileDescriptor_38e9a3523ca7e0ea) }
+func init() {
+	proto.RegisterFile("valnode.proto", fileDescriptor_38e9a3523ca7e0ea)
+}
 
 var fileDescriptor_38e9a3523ca7e0ea = []byte{
 	// 322 bytes of a gzipped FileDescriptorProto
@@ -315,11 +317,11 @@ var fileDescriptor_38e9a3523ca7e0ea = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ValnodeClient is the client API for Valnode service.
 //
@@ -330,10 +332,10 @@ type ValnodeClient interface {
 }
 
 type valnodeClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewValnodeClient(cc *grpc.ClientConn) ValnodeClient {
+func NewValnodeClient(cc grpc.ClientConnInterface) ValnodeClient {
 	return &valnodeClient{cc}
 }
 
