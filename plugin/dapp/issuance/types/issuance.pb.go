@@ -1516,9 +1516,7 @@ func init() {
 	proto.RegisterType((*RepIssuanceUserBalance)(nil), "types.RepIssuanceUserBalance")
 }
 
-func init() {
-	proto.RegisterFile("issuance.proto", fileDescriptor_7110f4228953d675)
-}
+func init() { proto.RegisterFile("issuance.proto", fileDescriptor_7110f4228953d675) }
 
 var fileDescriptor_7110f4228953d675 = []byte{
 	// 1041 bytes of a gzipped FileDescriptorProto

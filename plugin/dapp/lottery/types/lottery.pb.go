@@ -2322,9 +2322,7 @@ func init() {
 	proto.RegisterType((*ReqLotteryGainInfo)(nil), "types.ReqLotteryGainInfo")
 }
 
-func init() {
-	proto.RegisterFile("lottery.proto", fileDescriptor_2cce7afd61783b10)
-}
+func init() { proto.RegisterFile("lottery.proto", fileDescriptor_2cce7afd61783b10) }
 
 var fileDescriptor_2cce7afd61783b10 = []byte{
 	// 1509 bytes of a gzipped FileDescriptorProto

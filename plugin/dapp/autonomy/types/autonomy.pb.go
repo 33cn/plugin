@@ -369,9 +369,7 @@ func init() {
 	proto.RegisterType((*AutonomyAction)(nil), "types.AutonomyAction")
 }
 
-func init() {
-	proto.RegisterFile("autonomy.proto", fileDescriptor_0246b47df8434d60)
-}
+func init() { proto.RegisterFile("autonomy.proto", fileDescriptor_0246b47df8434d60) }
 
 var fileDescriptor_0246b47df8434d60 = []byte{
 	// 504 bytes of a gzipped FileDescriptorProto

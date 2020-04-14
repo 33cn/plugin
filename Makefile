@@ -18,15 +18,15 @@ proj := "build"
 default: depends build
 
 build: depends
-	go build $(BUILD_FLAGS) -v -i -o $(APP)
-	go build $(BUILD_FLAGS) -v -i -o $(CLI) $(SRC_CLI)
-	go build $(BUILD_FLAGS) -v -i -o build/fork-config github.com/33cn/plugin/cli/fork_config/
+	go build $(BUILD_FLAGS) -v  -o $(APP)
+	go build $(BUILD_FLAGS) -v  -o $(CLI) $(SRC_CLI)
+	go build $(BUILD_FLAGS) -v  -o build/fork-config github.com/33cn/plugin/cli/fork_config/
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
 
 build_ci: depends ## Build the binary file for CI
-	@go build -v -i -o $(CLI) $(SRC_CLI)
+	@go build -v  -o $(CLI) $(SRC_CLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
