@@ -1,0 +1,201 @@
+syntax = "proto3";
+package types;
+
+import "common.proto";
+import "transaction.proto";
+import "blockchain.proto";
+
+message Pos33Ticket {
+  string ticketId = 1;
+  // 0 -> 未成熟 1 -> 可挖矿 2 -> 已挖成功 3-> 已关闭
+  int32 status = 2;
+  // genesis 创建的私钥比较特殊
+  bool isGenesis = 3;
+  //创建时间
+  int64 createTime = 4;
+  //挖矿时间
+  int64 minerTime = 5;
+  //挖到的币的数目
+  int64 minerValue = 8;
+  string minerAddress = 6;
+  // return wallet
+  string returnAddress = 7;
+  // miner Price
+  int64 price = 9;
+}
+
+// message for execs.ticket
+message Pos33TicketAction {
+  oneof value {
+    Pos33TicketBind tbind = 5;
+    Pos33TicketOpen topen = 1;
+    Pos33TicketGenesis genesis = 2;
+    Pos33TicketClose tclose = 3;
+    Pos33Miner miner = 6;
+  }
+  int32 ty = 10;
+}
+
+message Pos33Msg {
+  bytes data = 1;
+  enum Ty {
+    V = 0; // vote msg
+    S = 1; // sortition msg
+    B = 2;
+  }
+  Ty ty = 2;
+}
+
+message SortHash {
+  string tid = 1;
+  bytes hash = 2;
+}
+
+message VrfInput {
+  int64 height = 1;
+  int32 round = 2;
+  int32 step = 3;
+  bytes seed = 4;
+}
+
+message HashProof {
+  VrfInput input = 1;
+  bytes vrf_hash = 5;
+  bytes vrf_proof = 6;
+  bytes pubkey = 7;
+}
+
+message Pos33SortMsg {
+  SortHash sort_hash = 1;
+  HashProof proof = 2;
+}
+
+message Pos33Sorts {
+  Pos33SortMsg s = 1;
+  repeated Pos33SortMsg sorts = 2;
+}
+
+message Pos33BlockMsg {
+  Block b = 1;
+  Signature sig = 2;
+}
+
+message Pos33VoteMsg {
+  Pos33SortMsg sort = 1;
+  string tid = 2;
+  uint32 sorts_count = 3;
+  Signature sig = 4;
+}
+
+message Pos33Votes { repeated Pos33VoteMsg vs = 1; }
+
+message Pos33Miner {
+  repeated Pos33VoteMsg votes = 1;
+  Pos33SortMsg sort = 2;
+  repeated string stopBps = 3;
+}
+
+message Pos33TicketMiner {
+  uint32 bits = 1;
+  int64 reward = 2;
+  string ticketId = 3;
+  bytes modify = 4;
+  //挖到区块时公开
+  bytes privHash = 5;
+  // VRF计算得到的hash
+  bytes vrfHash = 6;
+  // VRF计算得到的proof
+  bytes vrfProof = 7;
+}
+
+message Pos33TicketMinerOld {
+  uint32 bits = 1;
+  int64 reward = 2;
+  string ticketId = 3;
+  bytes modify = 4;
+}
+
+message Pos33MinerFlag {
+  int32 flag = 1;
+  int64 reserve = 2;
+}
+
+message Pos33TicketBind {
+  string minerAddress = 1;
+  string returnAddress = 2;
+}
+
+message Pos33TicketOpen {
+  //用户挖矿的ticket 地址
+  string minerAddress = 1;
+  //购买ticket的数目
+  int32 count = 2;
+  //币实际存储的地址
+  string returnAddress = 3;
+  //随机种子
+  int64 randSeed = 4;
+  //购买ticket时公开
+  repeated bytes pubHashes = 5;
+}
+
+message Pos33TicketGenesis {
+  string minerAddress = 1;
+  string returnAddress = 2;
+  int32 count = 3;
+}
+
+message Pos33TicketClose {
+  repeated string ticketId = 1;
+  string minerAddress = 2;
+  int32 count = 3;
+}
+
+message Pos33TicketList {
+  string addr = 1;
+  int32 status = 3;
+}
+
+message Pos33AllPos33TicketCount { int64 height = 1; }
+
+message ReplyPos33AllPos33TicketCount { int64 count = 1; }
+
+message Pos33TicketInfos { repeated string ticketIds = 1; }
+
+message ReplyPos33TicketList { repeated Pos33Ticket tickets = 1; }
+
+message ReplyWalletPos33Tickets {
+  repeated Pos33Ticket tickets = 1;
+  repeated bytes privkeys = 2;
+}
+
+message ReceiptPos33Ticket {
+  string ticketId = 1;
+  int32 status = 2;
+  int32 prevStatus = 3;
+  string addr = 4;
+}
+
+message ReceiptPos33TicketBind {
+  string oldMinerAddress = 1;
+  string newMinerAddress = 2;
+  string returnAddress = 3;
+}
+
+message ReqBindPos33Miner {
+  string bindAddr = 1;
+  string originAddr = 2;
+  int64 amount = 3;
+  bool checkBalance = 4;
+}
+
+message ReplyBindPos33Miner { string txHex = 1; }
+
+service pos33Ticket {
+  //创建绑定挖矿
+  rpc CreateBindMiner(ReqBindPos33Miner) returns (ReplyBindPos33Miner) {}
+  //查询钱包票数
+  rpc GetPos33TicketCount(types.ReqNil) returns (Int64) {}
+  // Miner
+  //设置自动挖矿
+  rpc SetAutoMining(Pos33MinerFlag) returns (Reply) {}
+}
