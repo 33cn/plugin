@@ -46,7 +46,7 @@ func TestForceClosePos33TicketList(t *testing.T) {
 	t3 := &ty.Pos33Ticket{Status: 3, IsGenesis: false}
 	tlist := []*ty.Pos33Ticket{t1, t2, t3}
 
-	r1, r2 := ticket.forceClosePos33TicketList(0, nil, tlist)
+	r1, r2 := ticket.forceClosePos33TicketList(0, nil, tlist, 1)
 	assert.Equal(t, []byte(sendhash), r1)
 	assert.Nil(t, r2)
 
