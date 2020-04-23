@@ -2,6 +2,7 @@ package init
 
 import (
 	_ "github.com/33cn/plugin/plugin/consensus/dpos"       //auto gen
+	_ "github.com/33cn/plugin/plugin/consensus/p"          //auto gen
 	_ "github.com/33cn/plugin/plugin/consensus/para"       //auto gen
 	_ "github.com/33cn/plugin/plugin/consensus/pbft"       //auto gen
 	_ "github.com/33cn/plugin/plugin/consensus/raft"       //auto gen
