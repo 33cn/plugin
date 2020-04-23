@@ -1593,9 +1593,7 @@ func init() {
 	proto.RegisterType((*IsHealthy)(nil), "types.IsHealthy")
 }
 
-func init() {
-	proto.RegisterFile("tendermint.proto", fileDescriptor_04f926c8da23c367)
-}
+func init() { proto.RegisterFile("tendermint.proto", fileDescriptor_04f926c8da23c367) }
 
 var fileDescriptor_04f926c8da23c367 = []byte{
 	// 1334 bytes of a gzipped FileDescriptorProto

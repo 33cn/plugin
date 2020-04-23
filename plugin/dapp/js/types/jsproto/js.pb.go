@@ -299,9 +299,7 @@ func init() {
 	proto.RegisterType((*QueryResult)(nil), "jsproto.QueryResult")
 }
 
-func init() {
-	proto.RegisterFile("js.proto", fileDescriptor_d11539bc790542aa)
-}
+func init() { proto.RegisterFile("js.proto", fileDescriptor_d11539bc790542aa) }
 
 var fileDescriptor_d11539bc790542aa = []byte{
 	// 231 bytes of a gzipped FileDescriptorProto

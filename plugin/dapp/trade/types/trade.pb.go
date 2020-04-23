@@ -2612,9 +2612,7 @@ func init() {
 	proto.RegisterType((*LocalOrder)(nil), "types.LocalOrder")
 }
 
-func init() {
-	proto.RegisterFile("trade.proto", fileDescriptor_ee944bd90e8a0312)
-}
+func init() { proto.RegisterFile("trade.proto", fileDescriptor_ee944bd90e8a0312) }
 
 var fileDescriptor_ee944bd90e8a0312 = []byte{
 	// 1371 bytes of a gzipped FileDescriptorProto
@@ -2708,11 +2706,11 @@ var fileDescriptor_ee944bd90e8a0312 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // TradeClient is the client API for Trade service.
 //
@@ -2727,10 +2725,10 @@ type TradeClient interface {
 }
 
 type tradeClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewTradeClient(cc grpc.ClientConnInterface) TradeClient {
+func NewTradeClient(cc *grpc.ClientConn) TradeClient {
 	return &tradeClient{cc}
 }
 

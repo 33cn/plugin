@@ -699,9 +699,7 @@ func init() {
 	proto.RegisterType((*ReplyQueryProposalProject)(nil), "types.ReplyQueryProposalProject")
 }
 
-func init() {
-	proto.RegisterFile("project.proto", fileDescriptor_8340e6318dfdfac2)
-}
+func init() { proto.RegisterFile("project.proto", fileDescriptor_8340e6318dfdfac2) }
 
 var fileDescriptor_8340e6318dfdfac2 = []byte{
 	// 713 bytes of a gzipped FileDescriptorProto

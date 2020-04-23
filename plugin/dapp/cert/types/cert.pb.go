@@ -392,9 +392,7 @@ func init() {
 	proto.RegisterType((*Authority)(nil), "types.Authority")
 }
 
-func init() {
-	proto.RegisterFile("cert.proto", fileDescriptor_a142e29cbef9b1cf)
-}
+func init() { proto.RegisterFile("cert.proto", fileDescriptor_a142e29cbef9b1cf) }
 
 var fileDescriptor_a142e29cbef9b1cf = []byte{
 	// 300 bytes of a gzipped FileDescriptorProto

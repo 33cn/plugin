@@ -1070,9 +1070,7 @@ func init() {
 	proto.RegisterType((*ReceiptExchange)(nil), "types.ReceiptExchange")
 }
 
-func init() {
-	proto.RegisterFile("exchange.proto", fileDescriptor_e0328a4f16f87ea1)
-}
+func init() { proto.RegisterFile("exchange.proto", fileDescriptor_e0328a4f16f87ea1) }
 
 var fileDescriptor_e0328a4f16f87ea1 = []byte{
 	// 667 bytes of a gzipped FileDescriptorProto
@@ -1122,11 +1120,11 @@ var fileDescriptor_e0328a4f16f87ea1 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // ExchangeClient is the client API for Exchange service.
 //
@@ -1135,10 +1133,10 @@ type ExchangeClient interface {
 }
 
 type exchangeClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewExchangeClient(cc grpc.ClientConnInterface) ExchangeClient {
+func NewExchangeClient(cc *grpc.ClientConn) ExchangeClient {
 	return &exchangeClient{cc}
 }
 

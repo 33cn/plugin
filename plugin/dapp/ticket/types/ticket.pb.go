@@ -1107,9 +1107,7 @@ func init() {
 	proto.RegisterType((*ReplyBindMiner)(nil), "types.ReplyBindMiner")
 }
 
-func init() {
-	proto.RegisterFile("ticket.proto", fileDescriptor_98a6c21780e82d22)
-}
+func init() { proto.RegisterFile("ticket.proto", fileDescriptor_98a6c21780e82d22) }
 
 var fileDescriptor_98a6c21780e82d22 = []byte{
 	// 877 bytes of a gzipped FileDescriptorProto
@@ -1172,11 +1170,11 @@ var fileDescriptor_98a6c21780e82d22 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConnInterface
+var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion4
 
 // TicketClient is the client API for Ticket service.
 //
@@ -1192,10 +1190,10 @@ type TicketClient interface {
 }
 
 type ticketClient struct {
-	cc grpc.ClientConnInterface
+	cc *grpc.ClientConn
 }
 
-func NewTicketClient(cc grpc.ClientConnInterface) TicketClient {
+func NewTicketClient(cc *grpc.ClientConn) TicketClient {
 	return &ticketClient{cc}
 }
 
