@@ -2736,7 +2736,9 @@ func init() {
 	proto.RegisterType((*ReceiptTopN)(nil), "types.ReceiptTopN")
 }
 
-func init() { proto.RegisterFile("dposvote.proto", fileDescriptor_298cd4e7a8e2cdaf) }
+func init() {
+	proto.RegisterFile("dposvote.proto", fileDescriptor_298cd4e7a8e2cdaf)
+}
 
 var fileDescriptor_298cd4e7a8e2cdaf = []byte{
 	// 1511 bytes of a gzipped FileDescriptorProto

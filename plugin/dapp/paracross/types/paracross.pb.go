@@ -3553,7 +3553,9 @@ func init() {
 	proto.RegisterType((*ParaLocalDbBlockInfo)(nil), "types.ParaLocalDbBlockInfo")
 }
 
-func init() { proto.RegisterFile("paracross.proto", fileDescriptor_6a397e38c9ea6747) }
+func init() {
+	proto.RegisterFile("paracross.proto", fileDescriptor_6a397e38c9ea6747)
+}
 
 var fileDescriptor_6a397e38c9ea6747 = []byte{
 	// 2375 bytes of a gzipped FileDescriptorProto
@@ -3710,11 +3712,11 @@ var fileDescriptor_6a397e38c9ea6747 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // ParacrossClient is the client API for Paracross service.
 //
@@ -3724,10 +3726,10 @@ type ParacrossClient interface {
 }
 
 type paracrossClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewParacrossClient(cc *grpc.ClientConn) ParacrossClient {
+func NewParacrossClient(cc grpc.ClientConnInterface) ParacrossClient {
 	return &paracrossClient{cc}
 }
 
