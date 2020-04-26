@@ -9,6 +9,8 @@ import (
 
 	"strconv"
 
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -208,6 +210,28 @@ func makeParaNodeGroupReceipt(title string, prev, current *types.ConfigItem) *ty
 	}
 }
 
+//获取nodes范围内的bitmap，如果bitmap超出了nodes范围，也不处理，防止越界
+func getAddrsByBitMap(nodes []string, bitmap []byte) []string {
+	rst := big.NewInt(0).SetBytes(bitmap)
+	addrs := make([]string, 0)
+
+	for i, a := range nodes {
+		if rst.Bit(i) == uint(0x1) {
+			addrs = append(addrs, a)
+		}
+	}
+	return addrs
+}
+
+//get secp256 addr's bls pubkey
+func getAddrBlsPubKey(db dbm.KV, title, addr string) (string, error) {
+	addrStat, err := getNodeAddr(db, title, addr)
+	if err != nil {
+		return "", errors.Wrapf(err, "nodeAddr:%s-%s get error", title, addr)
+	}
+	return addrStat.BlsPubKey, nil
+}
+
 func (a *action) checkValidNode(config *pt.ParaNodeAddrConfig) (bool, error) {
 	nodes, _, err := getParacrossNodes(a.db, config.Title)
 	if err != nil {
@@ -262,6 +286,7 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		Status:      pt.ParaApplyJoining,
 		Title:       config.Title,
 		TargetAddr:  config.Addr,
+		BlsPubKey:   config.BlsPubKey,
 		FromAddr:    a.fromaddr,
 		Votes:       &pt.ParaNodeVoteDetail{},
 		CoinsFrozen: config.CoinsFrozen,
@@ -348,6 +373,23 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 
 	return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeid %s was quit status:%d", config.Id, stat.Status)
 
+}
+
+func (a *action) nodeModify(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+	addrStat, err := getNodeAddr(a.db, config.Title, config.Addr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "nodeAddr:%s get error", config.Addr)
+	}
+
+	//只能提案发起人撤销
+	if a.fromaddr != config.Addr {
+		return nil, errors.Wrapf(types.ErrNotAllow, "addr create by:%s,not by:%s", config.Addr, a.fromaddr)
+	}
+
+	preStat := *addrStat
+	addrStat.BlsPubKey = config.BlsPubKey
+
+	return makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
 }
 
 // IsSuperManager is supper manager or not
@@ -439,6 +481,7 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		addrStat = &pt.ParaNodeAddrIdStatus{}
 		addrStat.Title = stat.Title
 		addrStat.Addr = stat.TargetAddr
+		addrStat.BlsPubKey = stat.BlsPubKey
 		addrStat.Status = pt.ParaApplyJoined
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
@@ -769,6 +812,15 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		return nil, errors.Wrapf(types.ErrInvalidParam, "node group apply addrs null:%s", config.Addrs)
 	}
 
+	var blsPubKeys []string
+	if len(config.BlsPubKeys) > 0 {
+		blsPubKeys = getConfigAddrs(config.BlsPubKeys)
+		if len(blsPubKeys) != len(addrs) {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "nodegroup apply blsPubkeys length=%d not match addrs=%d",
+				len(blsPubKeys), len(addrs))
+		}
+	}
+
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	//main chain
 	cfg := a.api.GetConfig()
@@ -787,9 +839,12 @@ func (a *action) nodeGroupApply(config *pt.ParaNodeGroupConfig) (*types.Receipt,
 		Status:      pt.ParacrossNodeGroupApply,
 		Title:       config.Title,
 		TargetAddrs: strings.Join(addrs, ","),
+		BlsPubKeys:  strings.Join(blsPubKeys, ","),
 		CoinsFrozen: config.CoinsFrozen,
 		FromAddr:    a.fromaddr,
-		Height:      a.height}
+		Height:      a.height,
+	}
+
 	r := makeNodeGroupIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
@@ -977,6 +1032,11 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt
 
 	receipt := makeParaNodeGroupReceipt(status.Title, nil, &item)
 
+	var blsPubKeys []string
+	if len(status.BlsPubKeys) > 0 {
+		blsPubKeys = strings.Split(status.BlsPubKeys, ",")
+	}
+
 	//update addr status
 	for i, addr := range nodes {
 		stat := &pt.ParaNodeIdStatus{
@@ -988,7 +1048,9 @@ func (a *action) nodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt
 			CoinsFrozen: status.CoinsFrozen,
 			FromAddr:    status.FromAddr,
 			Height:      a.height}
-
+		if len(blsPubKeys) > 0 {
+			stat.BlsPubKey = blsPubKeys[i]
+		}
 		r := makeNodeConfigReceipt(a.fromaddr, nil, nil, stat)
 		receipt = mergeReceipt(receipt, r)
 
@@ -1052,25 +1114,28 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 
-	if config.Op == pt.ParaOpNewApply {
+	switch config.Op {
+	case pt.ParaOpNewApply:
 		return a.nodeJoin(config)
-
-	} else if config.Op == pt.ParaOpQuit {
+	case pt.ParaOpQuit:
+		//退出nodegroup
 		return a.nodeQuit(config)
-
-	} else if config.Op == pt.ParaOpCancel {
+	case pt.ParaOpCancel:
+		//撤销未批准的申请
 		if config.Id == "" {
 			return nil, types.ErrInvalidParam
 		}
 		return a.nodeCancel(config)
-
-	} else if config.Op == pt.ParaOpVote {
+	case pt.ParaOpVote:
 		if config.Id == "" || config.Value >= pt.ParaVoteEnd {
 			return nil, types.ErrInvalidParam
 		}
 		return a.nodeVote(config)
+	case pt.ParaOpModify:
+		//修改addr相关联的参数，只能原创地址修改
+		return a.nodeModify(config)
+	default:
+		return nil, pt.ErrParaUnSupportNodeOper
 	}
-
-	return nil, pt.ErrParaUnSupportNodeOper
 
 }

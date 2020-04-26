@@ -57,4 +57,6 @@ var (
 	ErrKeyNotExist = errors.New("ErrKeyNotExist")
 	// ErrConsensClosed consensus closed
 	ErrConsensClosed = errors.New("ErrConsensClosed")
+	//ErrConsBlsSignVerify bls12-381 aggregate sign verify
+	ErrBlsSignVerify = errors.New("ErrBlsSignVerify")
 )

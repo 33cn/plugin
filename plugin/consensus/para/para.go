@@ -91,6 +91,7 @@ type subConfig struct {
 	MultiDownServerRspTime  uint32   `json:"multiDownServerRspTime,omitempty"`
 	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
 	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
+	BlsSignOff              bool     `json:"blsSignOff,omitempty"`
 }
 
 // New function to init paracross env

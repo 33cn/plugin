@@ -19,11 +19,14 @@ import (
 
 	"bytes"
 
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/phoreproject/bls/g2pubs"
 	"github.com/pkg/errors"
 )
 
@@ -60,6 +63,8 @@ type commitMsgClient struct {
 	txFeeRate            int64
 	selfConsEnableList   []*paraSelfConsEnable //适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
 	privateKey           crypto.PrivKey
+	blsPriKey            *g2pubs.SecretKey
+	blsPubKey            *g2pubs.PublicKey
 	quit                 chan struct{}
 	mutex                sync.Mutex
 }
@@ -360,7 +365,19 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		return nil, 0
 	}
 
-	signTx, count, err := client.calcCommitMsgTxs(status, atomic.LoadInt64(&client.txFeeRate))
+	var commits []*pt.ParacrossCommitAction
+	for _, stat := range status {
+		commits = append(commits, &pt.ParacrossCommitAction{Status: stat})
+	}
+
+	if !client.paraClient.subCfg.BlsSignOff {
+		err = client.blsSign(commits)
+		if err != nil {
+			return nil, 0
+		}
+	}
+
+	signTx, count, err := client.calcCommitMsgTxs(commits, atomic.LoadInt64(&client.txFeeRate))
 	if err != nil || signTx == nil {
 		return nil, 0
 	}
@@ -376,12 +393,12 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	return signTx, count
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int64, error) {
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossCommitAction, feeRate int64) (*types.Transaction, int64, error) {
 	txs, count, err := client.batchCalcTxGroup(notifications, feeRate)
 	if err != nil {
 		txs, err = client.singleCalcTx((notifications)[0], feeRate)
 		if err != nil {
-			plog.Error("single calc tx", "height", notifications[0].Height)
+			plog.Error("single calc tx", "height", notifications[0].Status.Height)
 
 			return nil, 0, err
 		}
@@ -429,14 +446,14 @@ func (client *commitMsgClient) getExecName(commitHeight int64) string {
 
 }
 
-func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, int, error) {
+func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossCommitAction, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	cfg := client.paraClient.GetAPI().GetConfig()
-	for _, status := range notifications {
-		execName := client.getExecName(status.Height)
-		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
+	for _, notify := range notifications {
+		execName := client.getExecName(notify.Status.Height)
+		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, notify, execName, feeRate)
 		if err != nil {
-			plog.Error("para get commit tx", "block height", status.Height)
+			plog.Error("para get commit tx", "block height", notify.Status.Height)
 			return nil, 0, err
 		}
 		rawTxs.Txs = append(rawTxs.Txs, tx)
@@ -449,12 +466,12 @@ func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossNod
 	return txs, len(notifications), nil
 }
 
-func (client *commitMsgClient) singleCalcTx(status *pt.ParacrossNodeStatus, feeRate int64) (*types.Transaction, error) {
+func (client *commitMsgClient) singleCalcTx(notify *pt.ParacrossCommitAction, feeRate int64) (*types.Transaction, error) {
 	cfg := client.paraClient.GetAPI().GetConfig()
-	execName := client.getExecName(status.Height)
-	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, status, execName, feeRate)
+	execName := client.getExecName(notify.Status.Height)
+	tx, err := paracross.CreateRawCommitTx4MainChain(cfg, notify, execName, feeRate)
 	if err != nil {
-		plog.Error("para get commit tx", "block height", status.Height)
+		plog.Error("para get commit tx", "block height", notify.Status.Height)
 		return nil, err
 	}
 	tx.Sign(types.SECP256K1, client.privateKey)
@@ -902,6 +919,10 @@ func (client *commitMsgClient) fetchPriKey() error {
 	}
 
 	client.privateKey = priKey
+	client.blsPriKey = getBlsPriKey(priKey.Bytes())
+	client.blsPubKey = g2pubs.PrivToPub(client.blsPriKey)
+	serial := client.blsPubKey.Serialize()
+	plog.Info("para commit get pub bls", "final keys", common.ToHex(serial[:]))
 	plog.Info("para commit fetchPriKey success")
 	return nil
 }
@@ -957,4 +978,63 @@ func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 		}
 	}
 	return false
+}
+
+//to repeat get prikey's hash until in range of bls's private key
+func getBlsPriKey(key []byte) *g2pubs.SecretKey {
+	var newKey [common.Sha256Len]byte
+	copy(newKey[:], key[:])
+	for {
+		plog.Info("para commit getBlsPriKey", "keys", common.ToHex(newKey[:]))
+		secret := g2pubs.DeserializeSecretKey(newKey)
+		if nil != secret.GetFRElement() {
+			serial := secret.Serialize()
+			plog.Info("para commit getBlsPriKey", "final keys", common.ToHex(serial[:]), "string", secret.String())
+			return secret
+		}
+		copy(newKey[:], common.Sha256(newKey[:]))
+	}
+
+}
+
+func (client *commitMsgClient) blsSign(commits []*pt.ParacrossCommitAction) error {
+	nodeStr, err := client.getNodeGroupAddrs()
+	if err != nil || len(nodeStr) <= 0 {
+		plog.Info("bls sign", "nodestr", nodeStr, "err", err)
+		return types.ErrInvalidParam
+	}
+
+	nodes := strings.Split(nodeStr, ",")
+	bitMap, remains := setAddrsBitMap(nodes, []string{client.authAccount})
+	if len(remains) > 0 {
+		plog.Error("bls sign addrs remains", "remains", remains, "nodestr", nodeStr, "bitmap", bitMap, "nodes", nodes)
+	}
+	if remains[client.authAccount] {
+		plog.Error("bls sign addrs miss setmap", "auth", client.authAccount, "remains", remains)
+		return types.ErrInvalidParam
+	}
+	for _, cmt := range commits {
+		data := types.Encode(cmt.Status)
+		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "map", bitMap)
+		sign := g2pubs.Sign(data, client.blsPriKey).Serialize()
+		cmt.Bls = &pt.ParacrossCommitBlsInfo{Sign: sign[:], Addrs: bitMap}
+	}
+	return nil
+}
+
+//设置nodes范围内的bitmap，如果addrs在node不存在，也不设置,返回未命中的addrs
+func setAddrsBitMap(nodes, addrs []string) ([]byte, map[string]bool) {
+	rst := big.NewInt(0)
+	addrsMap := make(map[string]bool)
+	for _, n := range addrs {
+		addrsMap[n] = true
+	}
+
+	for i, a := range nodes {
+		if _, exist := addrsMap[a]; exist {
+			rst.SetBit(rst, i, 1)
+			delete(addrsMap, a)
+		}
+	}
+	return rst.Bytes(), addrsMap
 }
