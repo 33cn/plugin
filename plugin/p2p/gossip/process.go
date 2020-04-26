@@ -127,7 +127,7 @@ func (n *Node) sendBlock(block *types.P2PBlock, p2pData *types.BroadCastData, pe
 
 		// cache block
 		if !totalBlockCache.Contains(blockHash) {
-			totalBlockCache.Add(blockHash, block.Block, ltBlock.Size)
+			totalBlockCache.Add(blockHash, block.Block, int(ltBlock.Size))
 		}
 
 		p2pData.Value = &types.BroadCastData_LtBlock{LtBlock: ltBlock}
@@ -355,7 +355,7 @@ func (n *Node) recvLtBlock(ltBlock *types.LightBlock, pid, peerAddr string, pubP
 	//pub to specified peer
 	pubPeerFunc(query, pid)
 	//需要将不完整的block预存
-	ltBlockCache.Add(blockHash, block, int64(block.Size()))
+	ltBlockCache.Add(blockHash, block, block.Size())
 }
 
 func (n *Node) recvQueryData(query *types.P2PQueryData, pid, peerAddr string, pubPeerFunc pubFuncType) {
@@ -443,7 +443,7 @@ func (n *Node) recvQueryReply(rep *types.P2PBlockTxReply, pid, peerAddr string, 
 		//pub to specified peer
 		pubPeerFunc(query, pid)
 		block.Txs = nil
-		ltBlockCache.Add(rep.BlockHash, block, int64(block.Size()))
+		ltBlockCache.Add(rep.BlockHash, block, block.Size())
 	}
 }
 
