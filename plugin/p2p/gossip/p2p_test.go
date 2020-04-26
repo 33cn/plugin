@@ -44,6 +44,9 @@ func processMsg(q queue.Queue) {
 		wcli := wallet.New(cfg)
 		client := q.Client()
 		wcli.SetQueueClient(client)
+		defer func(path string) {
+			_ = os.RemoveAll(path)
+		}(cfg.GetModuleConfig().Wallet.DbPath)
 		//导入种子，解锁钱包
 		password := "a12345678"
 		seed := "cushion canal bitter result harvest sentence ability time steel basket useful ask depth sorry area course purpose search exile chapter mountain project ranch buffalo"
