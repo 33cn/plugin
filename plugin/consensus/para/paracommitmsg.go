@@ -19,8 +19,6 @@ import (
 
 	"bytes"
 
-	"math/big"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
@@ -980,61 +978,3 @@ func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 	return false
 }
 
-//to repeat get prikey's hash until in range of bls's private key
-func getBlsPriKey(key []byte) *g2pubs.SecretKey {
-	var newKey [common.Sha256Len]byte
-	copy(newKey[:], key[:])
-	for {
-		plog.Info("para commit getBlsPriKey", "keys", common.ToHex(newKey[:]))
-		secret := g2pubs.DeserializeSecretKey(newKey)
-		if nil != secret.GetFRElement() {
-			serial := secret.Serialize()
-			plog.Info("para commit getBlsPriKey", "final keys", common.ToHex(serial[:]), "string", secret.String())
-			return secret
-		}
-		copy(newKey[:], common.Sha256(newKey[:]))
-	}
-
-}
-
-func (client *commitMsgClient) blsSign(commits []*pt.ParacrossCommitAction) error {
-	nodeStr, err := client.getNodeGroupAddrs()
-	if err != nil || len(nodeStr) <= 0 {
-		plog.Info("bls sign", "nodestr", nodeStr, "err", err)
-		return types.ErrInvalidParam
-	}
-
-	nodes := strings.Split(nodeStr, ",")
-	bitMap, remains := setAddrsBitMap(nodes, []string{client.authAccount})
-	if len(remains) > 0 {
-		plog.Error("bls sign addrs remains", "remains", remains, "nodestr", nodeStr, "bitmap", bitMap, "nodes", nodes)
-	}
-	if remains[client.authAccount] {
-		plog.Error("bls sign addrs miss setmap", "auth", client.authAccount, "remains", remains)
-		return types.ErrInvalidParam
-	}
-	for _, cmt := range commits {
-		data := types.Encode(cmt.Status)
-		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "map", bitMap)
-		sign := g2pubs.Sign(data, client.blsPriKey).Serialize()
-		cmt.Bls = &pt.ParacrossCommitBlsInfo{Sign: sign[:], Addrs: bitMap}
-	}
-	return nil
-}
-
-//设置nodes范围内的bitmap，如果addrs在node不存在，也不设置,返回未命中的addrs
-func setAddrsBitMap(nodes, addrs []string) ([]byte, map[string]bool) {
-	rst := big.NewInt(0)
-	addrsMap := make(map[string]bool)
-	for _, n := range addrs {
-		addrsMap[n] = true
-	}
-
-	for i, a := range nodes {
-		if _, exist := addrsMap[a]; exist {
-			rst.SetBit(rst, i, 1)
-			delete(addrsMap, a)
-		}
-	}
-	return rst.Bytes(), addrsMap
-}
