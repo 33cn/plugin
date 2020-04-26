@@ -327,6 +327,16 @@ func superNodeCmd() *cobra.Command {
 	return cmd
 }
 
+func nodeJoinCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "join",
+		Short: "super node apply for join nodegroup cmd",
+		Run:   createNodeJoinTx,
+	}
+	addNodeJoinFlags(cmd)
+	return cmd
+}
+
 func addNodeJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "target join addr")
 	cmd.MarkFlagRequired("addr")
@@ -356,13 +366,13 @@ func createNodeJoinTx(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func nodeJoinCmd() *cobra.Command {
+func nodeVoteCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "join",
-		Short: "super node apply for join nodegroup cmd",
-		Run:   createNodeJoinTx,
+		Use:   "vote",
+		Short: "nodegroup nodes vote for new join node cmd",
+		Run:   createNodeVoteTx,
 	}
-	addNodeJoinFlags(cmd)
+	addNodeVoteFlags(cmd)
 	return cmd
 }
 
@@ -395,13 +405,13 @@ func createNodeVoteTx(cmd *cobra.Command, args []string) {
 
 }
 
-func nodeVoteCmd() *cobra.Command {
+func nodeQuitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "vote",
-		Short: "nodegroup nodes vote for new join node cmd",
-		Run:   createNodeVoteTx,
+		Use:   "quit",
+		Short: "super node apply for quit nodegroup cmd",
+		Run:   createNodeQuitTx,
 	}
-	addNodeVoteFlags(cmd)
+	addNodeQuitFlags(cmd)
 	return cmd
 }
 
@@ -431,13 +441,13 @@ func createNodeQuitTx(cmd *cobra.Command, args []string) {
 
 }
 
-func nodeQuitCmd() *cobra.Command {
+func nodeCancelCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "quit",
-		Short: "super node apply for quit nodegroup cmd",
-		Run:   createNodeQuitTx,
+		Use:   "cancel",
+		Short: "super node cancel join or quit action by id cmd",
+		Run:   createNodeCancelTx,
 	}
-	addNodeQuitFlags(cmd)
+	addNodeCancelFlags(cmd)
 	return cmd
 }
 
@@ -467,14 +477,43 @@ func createNodeCancelTx(cmd *cobra.Command, args []string) {
 
 }
 
-func nodeCancelCmd() *cobra.Command {
+func nodeModifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cancel",
-		Short: "super node cancel join or quit action by id cmd",
-		Run:   createNodeCancelTx,
+		Use:   "modify",
+		Short: "super node modify parameters",
+		Run:   createNodeModifyTx,
 	}
 	addNodeCancelFlags(cmd)
 	return cmd
+}
+
+func addNodeModifyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "operating target apply id")
+	cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("pubkey", "p", "", "operating target apply id")
+	cmd.MarkFlagRequired("pubkey")
+
+}
+
+func createNodeModifyTx(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+	pubkey, _ := cmd.Flags().GetString("pubkey")
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: pt.ParaOpModify, Addr: addr, BlsPubKey: pubkey}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "NodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
 }
 
 // getNodeInfoCmd get node current status
@@ -739,9 +778,21 @@ func nodeGroupCmd() *cobra.Command {
 	return cmd
 }
 
+func nodeGroupApplyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "apply for para chain's super node group",
+		Run:   nodeGroupApply,
+	}
+	addNodeGroupApplyCmdFlags(cmd)
+	return cmd
+}
+
 func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addrs", "a", "", "addrs apply for super node,split by ',' ")
 	cmd.MarkFlagRequired("addrs")
+
+	cmd.Flags().StringP("blspubs", "p", "", "bls sign pub key for addr's private key,split by ',' (optional)")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
 	cmd.MarkFlagRequired("coins")
@@ -751,6 +802,7 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 func nodeGroupApply(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	addrs, _ := cmd.Flags().GetString("addrs")
+	blspubs, _ := cmd.Flags().GetString("blspubs")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
@@ -758,7 +810,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addrs, BlsPubKeys: blspubs, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "NodeGroupConfig",
@@ -768,16 +820,6 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
-}
-
-func nodeGroupApplyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "apply",
-		Short: "apply for para chain's super node group",
-		Run:   nodeGroupApply,
-	}
-	addNodeGroupApplyCmdFlags(cmd)
-	return cmd
 }
 
 func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
