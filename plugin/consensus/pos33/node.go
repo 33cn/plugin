@@ -868,7 +868,7 @@ func (n *node) runLoop() {
 		return
 	}
 
-	svcTag := fmt.Sprintf("-%s.%s-", n.GetAPI().GetConfig().GetTitle(), n.conf.ListenPort)
+	svcTag := n.GetAPI().GetConfig().GetTitle()
 	n.gss = newGossip2(n.getPriv(""), n.conf.ListenPort, svcTag, pos33Topic)
 	msgch := n.handleGossipMsg()
 	if len(n.conf.BootPeers) > 0 {

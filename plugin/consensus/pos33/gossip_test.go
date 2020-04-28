@@ -24,8 +24,8 @@ func TestGossip2(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	g1 := newGossip2(priv1, "10001", "bar")
-	g2 := newGossip2(priv2, "10002", "bar")
+	g1 := newGossip2(priv1, "10001", "gosssipTest", "bar")
+	g2 := newGossip2(priv2, "10002", "gosssipTest", "bar")
 
 	g2.bootstrap(peerAddr(g1.h).String())
 	time.Sleep(time.Second)
