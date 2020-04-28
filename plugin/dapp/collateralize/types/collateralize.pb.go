@@ -1879,7 +1879,9 @@ func init() {
 	proto.RegisterType((*RepCollateralizeUserBalance)(nil), "types.RepCollateralizeUserBalance")
 }
 
-func init() { proto.RegisterFile("collateralize.proto", fileDescriptor_a988fb4a61381972) }
+func init() {
+	proto.RegisterFile("collateralize.proto", fileDescriptor_a988fb4a61381972)
+}
 
 var fileDescriptor_a988fb4a61381972 = []byte{
 	// 1208 bytes of a gzipped FileDescriptorProto

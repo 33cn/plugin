@@ -1923,7 +1923,9 @@ func init() {
 	proto.RegisterType((*GuessGameRecords)(nil), "types.GuessGameRecords")
 }
 
-func init() { proto.RegisterFile("guess.proto", fileDescriptor_7574406c5d3430e8) }
+func init() {
+	proto.RegisterFile("guess.proto", fileDescriptor_7574406c5d3430e8)
+}
 
 var fileDescriptor_7574406c5d3430e8 = []byte{
 	// 1367 bytes of a gzipped FileDescriptorProto
@@ -2017,11 +2019,11 @@ var fileDescriptor_7574406c5d3430e8 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // GuessClient is the client API for Guess service.
 //
@@ -2040,10 +2042,10 @@ type GuessClient interface {
 }
 
 type guessClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewGuessClient(cc *grpc.ClientConn) GuessClient {
+func NewGuessClient(cc grpc.ClientConnInterface) GuessClient {
 	return &guessClient{cc}
 }
 

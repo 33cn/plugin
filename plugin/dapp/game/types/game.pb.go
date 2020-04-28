@@ -1023,7 +1023,9 @@ func init() {
 	proto.RegisterType((*ReceiptGame)(nil), "types.ReceiptGame")
 }
 
-func init() { proto.RegisterFile("game.proto", fileDescriptor_38fc58335341d769) }
+func init() {
+	proto.RegisterFile("game.proto", fileDescriptor_38fc58335341d769)
+}
 
 var fileDescriptor_38fc58335341d769 = []byte{
 	// 712 bytes of a gzipped FileDescriptorProto
