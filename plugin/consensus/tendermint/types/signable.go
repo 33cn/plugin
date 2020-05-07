@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/log/log15"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 )
 
@@ -27,7 +26,7 @@ var (
 	ErrVoteNonDeterministicSignature = errors.New("Non-deterministic signature")
 	ErrVoteConflict                  = errors.New("Conflicting vote")
 	ErrVoteNil                       = errors.New("Nil vote")
-	votelog                          = log15.New("module", "tendermint-vote")
+	ErrAggVoteNil                    = errors.New("Nil aggregate vote")
 )
 
 // Signable is an interface for all signable things.
@@ -156,7 +155,7 @@ func (vote *Vote) WriteSignBytes(chainID string, w io.Writer, n *int, err *error
 	byteVote, e := json.Marshal(&canonical)
 	if e != nil {
 		*err = e
-		votelog.Error("vote WriteSignBytes marshal failed", "err", e)
+		ttlog.Error("vote WriteSignBytes marshal failed", "err", e)
 		return
 	}
 	number, writeErr := w.Write(byteVote)
@@ -200,7 +199,7 @@ func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
 
 	sig, err := ConsensusCrypto.SignatureFromBytes(vote.Signature)
 	if err != nil {
-		votelog.Error("vote Verify failed", "err", err)
+		ttlog.Error("vote Verify fail", "err", err)
 		return err
 	}
 
@@ -217,7 +216,109 @@ func (vote *Vote) Hash() []byte {
 	}
 	bytes, err := json.Marshal(vote)
 	if err != nil {
-		votelog.Error("vote hash marshal failed", "err", err)
+		ttlog.Error("vote hash marshal failed", "err", err)
+		return nil
+	}
+
+	return crypto.Ripemd160(bytes)
+}
+
+// AggVote Represents a prevote, precommit, or commit vote from validators for consensus.
+type AggVote struct {
+	*tmtypes.AggVote
+}
+
+// WriteSignBytes ...
+func (aggVote *AggVote) WriteSignBytes(chainID string, w io.Writer, n *int, err *error) {
+	if *err != nil {
+		return
+	}
+	canonical := CanonicalJSONOnceAggVote{
+		chainID,
+		CanonicalAggVote(aggVote),
+	}
+	byteVote, e := json.Marshal(&canonical)
+	if e != nil {
+		*err = e
+		ttlog.Error("aggVote WriteSignBytes marshal failed", "err", e)
+		return
+	}
+	number, writeErr := w.Write(byteVote)
+	*n = number
+	*err = writeErr
+}
+
+// Verify ...
+func (aggVote *AggVote) Verify(chainID string, valSet *ValidatorSet) error {
+	aggSig, err := ConsensusCrypto.SignatureFromBytes(aggVote.Signature)
+	if err != nil {
+		return errors.New("invalid aggregate signature")
+	}
+	pubs := make([]crypto.PubKey, 0)
+	arr := &BitArray{TendermintBitArray: aggVote.ValidatorArray}
+	for i, val := range valSet.Validators {
+		if arr.GetIndex(i) {
+			pub, _ := ConsensusCrypto.PubKeyFromBytes(val.PubKey)
+			pubs = append(pubs, pub)
+		}
+	}
+	origVote := &Vote{&tmtypes.Vote{
+		BlockID:   aggVote.BlockID,
+		Height:    aggVote.Height,
+		Round:     aggVote.Round,
+		Timestamp: aggVote.Timestamp,
+		Type:      aggVote.Type,
+		UseAggSig: true,
+	}}
+	aggr, err := crypto.ToAggregate(ConsensusCrypto)
+	if err != nil {
+		return err
+	}
+	err = aggr.VerifyAggregatedOne(pubs, SignBytes(chainID, origVote), aggSig)
+	if err != nil {
+		ttlog.Error("aggVote Verify fail", "err", err, "aggVote", aggVote, "aggSig", aggSig)
+		return err
+	}
+	return nil
+}
+
+// Copy ...
+func (aggVote *AggVote) Copy() *AggVote {
+	copy := *aggVote
+	return &copy
+}
+
+func (aggVote *AggVote) String() string {
+	if aggVote == nil {
+		return "nil-AggVote"
+	}
+	var typeString string
+	switch byte(aggVote.Type) {
+	case VoteTypePrevote:
+		typeString = "Prevote"
+	case VoteTypePrecommit:
+		typeString = "Precommit"
+	default:
+		PanicSanity("Unknown vote type")
+	}
+	bitArray := &BitArray{TendermintBitArray: aggVote.ValidatorArray}
+
+	return fmt.Sprintf("AggVote{%X %v/%02d/%v(%v) %X %X @ %s %v}",
+		Fingerprint(aggVote.ValidatorAddress),
+		aggVote.Height, aggVote.Round, aggVote.Type, typeString,
+		Fingerprint(aggVote.BlockID.Hash), aggVote.Signature,
+		CanonicalTime(time.Unix(0, aggVote.Timestamp)),
+		bitArray)
+}
+
+// Hash ...
+func (aggVote *AggVote) Hash() []byte {
+	if aggVote == nil {
+		return nil
+	}
+	bytes, err := json.Marshal(aggVote)
+	if err != nil {
+		ttlog.Error("aggVote hash marshal failed", "err", err)
 		return nil
 	}
 

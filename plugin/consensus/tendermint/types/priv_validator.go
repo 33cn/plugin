@@ -6,6 +6,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +14,6 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"encoding/hex"
 
 	"github.com/33cn/chain33/common/crypto"
 )
@@ -296,15 +295,15 @@ func (pv *PrivValidatorImp) save() {
 		LastStep:      pv.LastStep,
 		LastSignature: nil,
 	}
-	privValFS.PrivKey = KeyText{Kind: "ed25519", Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
-	privValFS.PubKey = KeyText{Kind: "ed25519", Data: pv.PubKey.KeyString()}
+	privValFS.PrivKey = KeyText{Kind: CryptoName, Data: Fmt("%X", pv.PrivKey.Bytes()[:])}
+	privValFS.PubKey = KeyText{Kind: CryptoName, Data: pv.PubKey.KeyString()}
 	if len(pv.LastSignBytes) != 0 {
 		tmp := Fmt("%X", pv.LastSignBytes[:])
 		privValFS.LastSignBytes = tmp
 	}
 	if pv.LastSignature != nil {
 		sig := Fmt("%X", pv.LastSignature.Bytes()[:])
-		privValFS.LastSignature = &KeyText{Kind: "ed25519", Data: sig}
+		privValFS.LastSignature = &KeyText{Kind: CryptoName, Data: sig}
 	}
 	jsonBytes, err := json.Marshal(privValFS)
 	if err != nil {

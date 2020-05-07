@@ -8,7 +8,9 @@ import (
 	"bytes"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/33cn/chain33/common/crypto"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
 	"github.com/pkg/errors"
 )
@@ -63,6 +65,7 @@ type VoteSet struct {
 	maj23         *tmtypes.BlockID            // First 2/3 majority seen
 	votesByBlock  map[string]*blockVotes      // string(blockHash|blockParts) -> blockVotes
 	peerMaj23s    map[string]*tmtypes.BlockID // Maj23 for each peer
+	aggVote       *AggVote                    // aggregate vote
 }
 
 // NewVoteSet Constructs a new VoteSet struct used to accumulate votes for given height/round.
@@ -82,6 +85,7 @@ func NewVoteSet(chainID string, height int64, round int, voteType byte, valSet *
 		maj23:         nil,
 		votesByBlock:  make(map[string]*blockVotes, valSet.Size()),
 		peerMaj23s:    make(map[string]*tmtypes.BlockID),
+		aggVote:       nil,
 	}
 }
 
@@ -133,7 +137,7 @@ func (voteSet *VoteSet) Size() int {
 // NOTE: Vote must not be nil
 func (voteSet *VoteSet) AddVote(vote *Vote) (added bool, err error) {
 	if voteSet == nil {
-		PanicSanity("AddVote() on nil VoteSet")
+		return false, errors.New("nil vote set")
 	}
 	voteSet.mtx.Lock()
 	defer voteSet.mtx.Unlock()
@@ -291,6 +295,146 @@ func (voteSet *VoteSet) addVerifiedVote(vote *Vote, blockKey string, votingPower
 	return true, conflicting
 }
 
+// AddAggVote Returns added=true if aggVote is valid and new
+func (voteSet *VoteSet) AddAggVote(vote *AggVote) (bool, error) {
+	if voteSet == nil {
+		return false, errors.New("nil vote set")
+	}
+	if vote == nil {
+		return false, ErrAggVoteNil
+	}
+	voteSet.mtx.Lock()
+	defer voteSet.mtx.Unlock()
+
+	valAddr := vote.ValidatorAddress
+	valset := voteSet.valSet
+	if len(valAddr) == 0 {
+		return false, errors.Wrap(ErrVoteInvalidValidatorAddress, "Empty address")
+	}
+
+	// Make sure the step matches
+	if (vote.Height != voteSet.height) ||
+		(int(vote.Round) != voteSet.round) ||
+		(vote.Type != uint32(voteSet.voteType)) {
+		return false, errors.Wrapf(ErrVoteUnexpectedStep, "Got %d/%d/%d, expected %d/%d/%d",
+			voteSet.height, voteSet.round, voteSet.voteType,
+			vote.Height, vote.Round, vote.Type)
+	}
+	// Ensure that signer is proposer
+	propAddr := valset.Proposer.Address
+	if !bytes.Equal(valAddr, propAddr) {
+		return false, errors.Wrapf(ErrVoteInvalidValidatorAddress,
+			"aggVote.ValidatorAddress (%X) does not match proposer address (%X)",
+			valAddr, propAddr)
+	}
+	// If we already know of this vote, return false
+	if voteSet.aggVote != nil {
+		if bytes.Equal(voteSet.aggVote.Signature, vote.Signature) {
+			return false, nil // duplicate
+		}
+		return false, errors.Wrapf(ErrVoteNonDeterministicSignature, "Existing vote: %v; New vote: %v", voteSet.aggVote, vote)
+	}
+
+	// Check signature
+	err := vote.Verify(voteSet.chainID, voteSet.valSet)
+	if err != nil {
+		return false, err
+	}
+
+	// Check maj32
+	sum := int64(0)
+	arr := &BitArray{TendermintBitArray: vote.ValidatorArray}
+	for i, val := range valset.Validators {
+		if arr.GetIndex(i) {
+			sum += val.VotingPower
+		}
+	}
+	quorum := voteSet.valSet.TotalVotingPower()*2/3 + 1
+	if sum < quorum {
+		return false, errors.New("less than 2/3 total power")
+	}
+
+	voteSet.votesBitArray = arr.copy()
+	voteSet.aggVote = vote
+	voteSet.maj23 = vote.BlockID
+	voteSet.sum = sum
+	votesByBlock := newBlockVotes(false, voteSet.valSet.Size())
+	votesByBlock.bitArray = arr.copy()
+	votesByBlock.sum = sum
+	voteSet.votesByBlock[string(voteSet.maj23.Hash)] = votesByBlock
+
+	return true, nil
+}
+
+// SetAggVote generate aggregate vote when voteSet have 2/3 majority
+func (voteSet *VoteSet) SetAggVote() error {
+	if voteSet == nil {
+		return errors.New("nil vote set")
+	}
+	if voteSet.maj23 == nil {
+		return errors.New("no 2/3 majority in voteSet")
+	}
+	voteSet.mtx.Lock()
+	defer voteSet.mtx.Unlock()
+
+	blockKey := string(voteSet.maj23.Hash)
+	votesByBlock, ok := voteSet.votesByBlock[blockKey]
+	if !ok {
+		return errors.New("no 2/3 majority blockKey")
+	}
+	bitArray := votesByBlock.bitArray.copy()
+
+	sigs := make([]crypto.Signature, 0)
+	for _, vote := range votesByBlock.votes {
+		if vote != nil {
+			sig, err := ConsensusCrypto.SignatureFromBytes(vote.Signature)
+			if err != nil {
+				return errors.New("invalid aggregate signature")
+			}
+			sigs = append(sigs, sig)
+		}
+	}
+	aggr, err := crypto.ToAggregate(ConsensusCrypto)
+	if err != nil {
+		return err
+	}
+	aggSig, err := aggr.Aggregate(sigs)
+	if err != nil {
+		return err
+	}
+
+	aggVote := &AggVote{&tmtypes.AggVote{
+		ValidatorAddress: voteSet.valSet.Proposer.Address,
+		ValidatorArray:   bitArray.TendermintBitArray,
+		Height:           voteSet.height,
+		Round:            int32(voteSet.round),
+		Timestamp:        time.Now().UnixNano(),
+		Type:             uint32(voteSet.voteType),
+		BlockID:          voteSet.maj23,
+		Signature:        aggSig.Bytes(),
+	}}
+	// Verify aggVote
+	err = aggVote.Verify(voteSet.chainID, voteSet.valSet)
+	if err != nil {
+		return err
+	}
+	voteSet.aggVote = aggVote
+	return nil
+}
+
+// GetAggVote ...
+func (voteSet *VoteSet) GetAggVote() *AggVote {
+	if voteSet == nil {
+		return nil
+	}
+	voteSet.mtx.Lock()
+	defer voteSet.mtx.Unlock()
+	if voteSet.aggVote == nil {
+		return nil
+	}
+	return voteSet.aggVote.Copy()
+}
+
 // SetPeerMaj23 If a peer claims that it has 2/3 majority for given blockKey, call this.
 // NOTE: if there are too many peers, or too much peer churn,
 // this can cause memory issues.
@@ -446,12 +590,12 @@ func (voteSet *VoteSet) StringIndented(indent string) string {
 		}
 	}
 	return Fmt(`VoteSet{
-%s  H:%v R:%v T:%v
+%s  H:%v R:%v T:%v +2/3:%X
 %s  %v
 %s  %v
 %s  %v
 %s}`,
-		indent, voteSet.height, voteSet.round, voteSet.voteType,
+		indent, voteSet.height, voteSet.round, voteSet.voteType, voteSet.maj23,
 		indent, strings.Join(voteStrings, "\n"+indent+"  "),
 		indent, voteSet.votesBitArray,
 		indent, voteSet.peerMaj23s,
@@ -491,10 +635,15 @@ func (voteSet *VoteSet) MakeCommit() *tmtypes.TendermintCommit {
 			votesCopy[i] = &tmtypes.Vote{}
 		}
 	}
-	//copy(votesCopy, voteSet.votes)
+	var aggVote *tmtypes.AggVote
+	if voteSet.aggVote != nil {
+		copy := voteSet.aggVote.Copy()
+		aggVote = copy.AggVote
+	}
 	return &tmtypes.TendermintCommit{
 		BlockID:    voteSet.maj23,
 		Precommits: votesCopy,
+		AggVote:    aggVote,
 	}
 }
 
@@ -549,4 +698,5 @@ type VoteSetReader interface {
 	BitArray() *BitArray
 	GetByIndex(int) *Vote
 	IsCommit() bool
+	GetAggVote() *AggVote
 }

@@ -35,11 +35,22 @@ func (val *ValNode) Exec_BlockInfo(blockInfo *pty.TendermintBlockInfo, tx *types
 	return receipt, nil
 }
 
+func getConfigKey(key string, db dbm.KV) ([]byte, error) {
+	configKey := types.ConfigKey(key)
+	value, err := db.Get([]byte(configKey))
+	if err != nil {
+		clog.Error("getConfigKey not find", "configKey", configKey, "err", err)
+		return nil, err
+	}
+	return value, nil
+}
+
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
 	manageKey := types.ManageKey(key)
 	value, err := db.Get([]byte(manageKey))
 	if err != nil {
-		return nil, err
+		clog.Info("getManageKey not find", "manageKey", manageKey, "err", err)
+		return getConfigKey(key, db)
 	}
 	return value, nil
 }

@@ -12,12 +12,9 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/pkg/errors"
 )
-
-var validatorsetlog = log15.New("module", "tendermint-val")
 
 // Validator ...
 type Validator struct {
@@ -313,7 +310,7 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 	if valSet.Size() != len(commit.Precommits) {
 		return fmt.Errorf("Invalid commit -- wrong set size: %v vs %v", valSet.Size(), len(commit.Precommits))
 	}
-	validatorsetlog.Debug("VerifyCommit will get commit height", "height", commit.Height())
+	ttlog.Debug("VerifyCommit will get commit height", "height", commit.Height())
 	commitHeight := commit.Height()
 	if height != commitHeight {
 		return fmt.Errorf("VerifyCommit 1 Invalid commit -- wrong height: %v vs %v", height, commitHeight)
@@ -322,41 +319,65 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 	talliedVotingPower := int64(0)
 	round := commit.Round()
 
-	for idx, item := range commit.Precommits {
-		// may be nil if validator skipped.
-		if item == nil || len(item.Signature) == 0 {
-			continue
+	if commit.AggVote != nil {
+		aggVote := &AggVote{AggVote: commit.AggVote}
+		// Make sure the step matches
+		if (aggVote.Height != height) ||
+			(int(aggVote.Round) != round) ||
+			(aggVote.Type != uint32(VoteTypePrecommit)) {
+			return errors.Wrapf(ErrVoteUnexpectedStep, "Got %d/%d/%d, expected %d/%d/%d",
+				height, round, VoteTypePrecommit,
+				aggVote.Height, aggVote.Round, aggVote.Type)
 		}
-		precommit := &Vote{Vote: item}
-		if precommit.Height != height {
-			return fmt.Errorf("VerifyCommit 2 Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
+		// Check signature
+		err := aggVote.Verify(chainID, valSet)
+		if err != nil {
+			return err
 		}
-		if int(precommit.Round) != round {
-			return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
+		// calc voting power
+		arr := &BitArray{TendermintBitArray: aggVote.ValidatorArray}
+		for i, val := range valSet.Validators {
+			if arr.GetIndex(i) {
+				talliedVotingPower += val.VotingPower
+			}
 		}
-		if precommit.Type != uint32(VoteTypePrecommit) {
-			return fmt.Errorf("Invalid commit -- not precommit @ index %v", idx)
-		}
-		_, val := valSet.GetByIndex(idx)
-		// Validate signature
+	} else {
+		for idx, item := range commit.Precommits {
+			// may be nil if validator skipped.
+			if item == nil || len(item.Signature) == 0 {
+				continue
+			}
+			precommit := &Vote{Vote: item}
+			if precommit.Height != height {
+				return fmt.Errorf("VerifyCommit 2 Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
+			}
+			if int(precommit.Round) != round {
+				return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
+			}
+			if precommit.Type != uint32(VoteTypePrecommit) {
+				return fmt.Errorf("Invalid commit -- not precommit @ index %v", idx)
+			}
+			_, val := valSet.GetByIndex(idx)
 
-		precommitSignBytes := SignBytes(chainID, precommit)
-		sig, err := ConsensusCrypto.SignatureFromBytes(precommit.Signature)
-		if err != nil {
-			return fmt.Errorf("VerifyCommit SignatureFromBytes [%X] failed:%v", precommit.Signature, err)
+			// Validate signature
+			precommitSignBytes := SignBytes(chainID, precommit)
+			sig, err := ConsensusCrypto.SignatureFromBytes(precommit.Signature)
+			if err != nil {
+				return fmt.Errorf("VerifyCommit SignatureFromBytes [%X] failed:%v", precommit.Signature, err)
+			}
+			pubkey, err := ConsensusCrypto.PubKeyFromBytes(val.PubKey)
+			if err != nil {
+				return fmt.Errorf("VerifyCommit PubKeyFromBytes [%X] failed:%v", val.PubKey, err)
+			}
+			if !pubkey.VerifyBytes(precommitSignBytes, sig) {
+				return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
+			}
+			if !bytes.Equal(blockID.Hash, precommit.BlockID.Hash) {
+				continue // Not an error, but doesn't count
+			}
+			// Good precommit!
+			talliedVotingPower += val.VotingPower
 		}
-		pubkey, err := ConsensusCrypto.PubKeyFromBytes(val.PubKey)
-		if err != nil {
-			return fmt.Errorf("VerifyCommit PubKeyFromBytes [%X] failed:%v", val.PubKey, err)
-		}
-		if !pubkey.VerifyBytes(precommitSignBytes, sig) {
-			return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
-		}
-		if !bytes.Equal(blockID.Hash, precommit.BlockID.Hash) {
-			continue // Not an error, but doesn't count
-		}
-		// Good precommit!
-		talliedVotingPower += val.VotingPower
 	}
 
 	if talliedVotingPower > valSet.TotalVotingPower()*2/3 {

@@ -385,7 +385,7 @@ func getprivkey(key string) crypto.PrivKey {
 	if err != nil {
 		panic(err)
 	}
-	priv, err := cr.PrivKeyFromBytes(bkey)
+	priv, err := cr.PrivKeyFromBytes(bkey[:32])
 	if err != nil {
 		panic(err)
 	}
