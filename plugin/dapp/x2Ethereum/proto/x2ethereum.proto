@@ -1,0 +1,211 @@
+syntax = "proto3";
+package types;
+
+import "transaction.proto";
+import "account.proto";
+
+enum EthBridgeStatus {
+    PendingStatusText = 0;
+    SuccessStatusText = 1;
+    FailedStatusText = 2;
+    WithdrawedStatusText = 3;
+}
+
+message X2ethereumAction {
+    oneof value {
+        Eth2Chain33 eth2Chain33 = 1;
+        Eth2Chain33 withdrawEth = 2;
+        Chain33ToEth withdrawChain33 = 3;
+        Chain33ToEth chain33ToEth = 4;
+        MsgValidator addValidator = 5;
+        MsgValidator removeValidator = 6;
+        MsgValidator modifyPower = 7;
+        MsgConsensusThreshold setConsensusThreshold = 8;
+        AssetsTransfer       transfer          = 9;
+    }
+    int32 ty = 10;
+}
+
+message MsgConsensusThreshold {
+    int64 consensusThreshold = 1;
+}
+
+message MsgValidator {
+    string address = 1;
+    int64 power = 2;
+}
+
+// EthBridgeClaim is a structure that contains all the data for a particular bridge claim
+message Eth2Chain33 {
+    int64 EthereumChainID = 1;
+    string BridgeContractAddress = 2;
+    int64 Nonce = 3;
+    string localCoinSymbol = 4;
+    string localCoinExec = 5;
+    string TokenContractAddress = 6;
+    string EthereumSender = 7;
+    string Chain33Receiver = 8;
+    string ValidatorAddress = 9;
+    string Amount = 10;
+    int64 ClaimType = 11;
+    int64 Decimals = 12;
+}
+
+// OracleClaimContent is the details of how the content of the claim for each validator will be stored in the oracle
+message OracleClaimContent {
+    string Chain33Receiver = 1;
+    string Amount = 2;
+    int64 ClaimType = 3;
+    int64 Decimals = 4;
+}
+
+// MsgBurn defines a message for burning coins and triggering a related event
+message Chain33ToEth {
+    string TokenContract = 1;
+    string Chain33Sender = 2;
+    string EthereumReceiver = 3;
+    string Amount = 4;
+    string localCoinSymbol = 5;
+    string localCoinExec = 6;
+    int64 Decimals = 7;
+}
+
+// 回执接口定义
+message ReceiptEth2Chain33 {
+    int64 EthereumChainID = 1;
+    string BridgeContractAddress = 2;
+    int64 Nonce = 3;
+    string localCoinSymbol = 4;
+    string localCoinExec = 5;
+    string TokenContractAddress = 6;
+    string EthereumSender = 7;
+    string Chain33Receiver = 8;
+    string ValidatorAddress = 9;
+    string Amount = 10;
+    int64 ClaimType = 11;
+    bytes xTxHash = 12;
+    uint64 xHeight = 13;
+    string ProphecyID = 14;
+    int64 Decimals = 15;
+}
+
+message ReceiptChain33ToEth {
+    string TokenContract = 1;
+    string Chain33Sender = 2;
+    string EthereumReceiver = 3;
+    string Amount = 4;
+    string EthSymbol = 5;
+    int64 Decimals = 6;
+}
+
+message ReceiptValidator {
+    string address = 1;
+    int64 power = 2;
+    bytes xTxHash = 3;
+    uint64 xHeight = 4;
+}
+
+message ReceiptSetConsensusThreshold {
+    int64 preConsensusThreshold = 1;
+    int64 nowConsensusThreshold = 2;
+    bytes xTxHash = 3;
+    uint64 xHeight = 4;
+}
+
+// 查询接口定义
+message QueryEthProphecyParams {
+    string ID = 1;
+}
+
+message ReceiptEthProphecy {
+    string ID = 1;
+    ProphecyStatus Status = 2;
+    repeated ClaimValidators  ClaimValidators = 3;
+    repeated ValidatorClaims  ValidatorClaims = 4;
+}
+
+message ClaimValidators {
+    string claim = 1;
+    StringMap validators = 2;
+}
+
+message ValidatorClaims {
+    string validator = 1;
+    string claim = 2;
+}
+
+message StringMap {
+    repeated string validators = 1;
+}
+
+message ProphecyStatus {
+    EthBridgeStatus Text = 1;
+    string FinalClaim = 2;
+}
+
+message QueryValidatorsParams {
+    string validator = 1;
+}
+
+message ReceiptQueryValidator {
+    repeated MsgValidator validators = 1;
+    int64 totalPower = 2;
+}
+
+message QueryTotalPowerParams {
+}
+
+message ReceiptQueryTotalPower {
+    int64 totalPower = 1;
+}
+
+message QueryConsensusThresholdParams {
+}
+
+message ReceiptQueryConsensusThreshold {
+    int64 consensusThreshold = 1;
+}
+
+message QuerySymbolAssetsByTxTypeParams {
+    string tokenSymbol = 1;
+    int64 direction = 2;
+    string txType = 3;
+    string tokenAddr = 4;
+    int64 decimal = 5;
+}
+
+message ReceiptQuerySymbolAssets {
+    repeated ReceiptQuerySymbolAssetsByTxType res = 1;
+}
+
+message ReceiptQuerySymbolAssetsByTxType {
+    string tokenSymbol = 1;
+    string totalAmount = 2;
+    string txType = 3;
+    int64 direction = 4;
+    string tokenAddr = 5;
+}
+
+message QueryRelayerBalance {
+    string tokenSymbol = 1;
+    string address = 2;
+    string tokenAddr = 3;
+}
+
+message ReceiptQueryRelayerBalance {
+    repeated ReceiptQueryRelayerBalanceForOneToken res = 1;
+}
+
+message ReceiptQueryRelayerBalanceForOneToken {
+    string balance = 1;
+    string tokenSymbol = 2;
+    string tokenAddr = 3;
+}
+
+message ReceiptTokenToTokenAddress {
+    repeated string tokenAddress = 1;
+}
+
+service x2ethereum {
+
+}
