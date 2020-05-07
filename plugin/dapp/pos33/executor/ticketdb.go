@@ -10,7 +10,6 @@ import (
 	//"bytes"
 
 	"fmt"
-	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -286,15 +285,6 @@ func readPos33Ticket(db dbm.KV, id string) (*ty.Pos33Ticket, error) {
 		return nil, err
 	}
 	return &ticket, nil
-}
-
-func genPubHash(tid string) string {
-	var pubHash string
-	parts := strings.Split(tid, ":")
-	if len(parts) > ty.Pos33TicketOldParts {
-		pubHash = parts[ty.Pos33TicketOldParts]
-	}
-	return pubHash
 }
 
 // Pos33TicketMiner ticket miner

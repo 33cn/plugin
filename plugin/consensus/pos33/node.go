@@ -888,6 +888,9 @@ func (n *node) runLoop() {
 
 	for {
 		select {
+		case <-n.done:
+			plog.Info("pos33 consensus run loop stoped")
+			return
 		case msg := <-msgch:
 			n.handlePos33Msg(msg)
 		case <-syncTick.C:

@@ -36,6 +36,7 @@ type Client struct {
 
 	tcMap  map[int64]int
 	tmLock sync.Mutex
+	done   chan struct{}
 }
 
 // Tx is ...
@@ -64,14 +65,18 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	plog.Info("subcfg", "cfg", string(sub))
 
 	n := newNode(&subcfg)
-	client := &Client{BaseClient: c, n: n, conf: &subcfg, tcMap: make(map[int64]int)}
+	client := &Client{BaseClient: c, n: n, conf: &subcfg, tcMap: make(map[int64]int), done: make(chan struct{})}
 	client.n.Client = client
 	c.SetChild(client)
 	return client
 }
 
 // Close is close the client
-func (client *Client) Close() {}
+func (client *Client) Close() {
+	close(client.done)
+	client.BaseClient.Close()
+	plog.Info("pos33 consensus closed")
+}
 
 // ProcEvent do nothing?
 func (client *Client) ProcEvent(msg *queue.Message) bool {
@@ -276,6 +281,11 @@ func (client *Client) miningOK() bool {
 // CreateBlock will start run
 func (client *Client) CreateBlock() {
 	for {
+		select {
+		case <-client.done:
+			return
+		default:
+		}
 		client.flushTicket()
 		if client.IsClosed() {
 			plog.Info("create block stop")
