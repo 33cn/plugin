@@ -73,7 +73,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 // Close is close the client
 func (client *Client) Close() {
-	close(client.done)
+	client.done <- struct{}{}
 	client.BaseClient.Close()
 	plog.Info("pos33 consensus closed")
 }
