@@ -26,15 +26,15 @@ func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	params := &types.Eth2Chain33{
 		EthereumChainID:       claim.EthereumChainID,
 		BridgeContractAddress: claim.BridgeBrankAddr,
-		Nonce:                claim.Nonce,
-		LocalCoinSymbol:      claim.Symbol,
-		LocalCoinExec:        X2Eth,
-		TokenContractAddress: claim.TokenAddr,
-		EthereumSender:       claim.EthereumSender,
-		Chain33Receiver:      claim.Chain33Receiver,
-		Amount:               claim.Amount,
-		ClaimType:            int64(claim.ClaimType),
-		Decimals:             claim.Decimal,
+		Nonce:                 claim.Nonce,
+		LocalCoinSymbol:       claim.Symbol,
+		LocalCoinExec:         X2Eth,
+		TokenContractAddress:  claim.TokenAddr,
+		EthereumSender:        claim.EthereumSender,
+		Chain33Receiver:       claim.Chain33Receiver,
+		Amount:                claim.Amount,
+		ClaimType:             int64(claim.ClaimType),
+		Decimals:              claim.Decimal,
 	}
 
 	pm := rpctypes.CreateTxIn{
@@ -83,15 +83,15 @@ func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	params := &types.Eth2Chain33{
 		EthereumChainID:       claim.EthereumChainID,
 		BridgeContractAddress: claim.BridgeBrankAddr,
-		Nonce:                claim.Nonce,
-		LocalCoinSymbol:      claim.Symbol,
-		LocalCoinExec:        X2Eth,
-		TokenContractAddress: claim.TokenAddr,
-		EthereumSender:       claim.EthereumSender,
-		Chain33Receiver:      claim.Chain33Receiver,
-		Amount:               claim.Amount,
-		ClaimType:            int64(claim.ClaimType),
-		Decimals:             claim.Decimal,
+		Nonce:                 claim.Nonce,
+		LocalCoinSymbol:       claim.Symbol,
+		LocalCoinExec:         X2Eth,
+		TokenContractAddress:  claim.TokenAddr,
+		EthereumSender:        claim.EthereumSender,
+		Chain33Receiver:       claim.Chain33Receiver,
+		Amount:                claim.Amount,
+		ClaimType:             int64(claim.ClaimType),
+		Decimals:              claim.Decimal,
 	}
 
 	pm := rpctypes.CreateTxIn{

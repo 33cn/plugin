@@ -171,16 +171,16 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	payload := &types2.Eth2Chain33{
 		EthereumChainID:       0,
 		BridgeContractAddress: bridgeContractAddress,
-		Nonce:                0,
-		LocalCoinSymbol:      symbol,
-		LocalCoinExec:        coinExec,
-		TokenContractAddress: tokenContractAddress,
-		EthereumSender:       ethereumAddr,
-		Chain33Receiver:      chain33Receiver,
-		ValidatorAddress:     addValidator1,
-		Amount:               10,
-		ClaimType:            common2.LockText,
-		EthSymbol:            symbol,
+		Nonce:                 0,
+		LocalCoinSymbol:       symbol,
+		LocalCoinExec:         coinExec,
+		TokenContractAddress:  tokenContractAddress,
+		EthereumSender:        ethereumAddr,
+		Chain33Receiver:       chain33Receiver,
+		ValidatorAddress:      addValidator1,
+		Amount:                10,
+		ClaimType:             common2.LockText,
+		EthSymbol:             symbol,
 	}
 
 	receipt, err := x.action.procMsgEth2Chain33(payload)
