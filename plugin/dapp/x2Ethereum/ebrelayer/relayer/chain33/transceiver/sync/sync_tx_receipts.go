@@ -105,8 +105,6 @@ func handleRequest(body []byte) error {
 		log.Error("handleRequest", "DecodeBlockSeqErr", err)
 		return err
 	}
-
-	log.Info("response", "err", err)
 	err = pushTxReceipts(&req)
 	return err
 }

@@ -85,9 +85,6 @@ func (syncTx *SyncTxReceipts) SaveAndSyncTxs2Relayer() {
 		select {
 		case txReceipts := <-txReceiptCh:
 			log.Info("to deal request", "seq", txReceipts.TxReceipts[0].SeqNum, "count", len(txReceipts.TxReceipts))
-			if len(txReceipts.TxReceipts) > 0 {
-				log.Info("to deal request", "seq", txReceipts.TxReceipts[0].SeqNum, "count", len(txReceipts.TxReceipts))
-			}
 			syncTx.dealTxReceipts(txReceipts)
 		case <-syncTx.quit:
 			return
