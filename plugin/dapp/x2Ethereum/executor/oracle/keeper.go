@@ -21,11 +21,11 @@ type Keeper struct {
 	ConsensusThreshold int64
 }
 
-func NewKeeper(db dbm.KV, ConsensusThreshold int64) Keeper {
-	if ConsensusThreshold <= 0 || ConsensusThreshold > 1 {
-		panic(types.ErrMinimumConsensusNeededInvalid)
+func NewKeeper(db dbm.KV, ConsensusThreshold int64) *Keeper {
+	if ConsensusThreshold <= 0 || ConsensusThreshold > 100 {
+		return nil
 	}
-	return Keeper{
+	return &Keeper{
 		db:                 db,
 		ConsensusThreshold: ConsensusThreshold,
 	}

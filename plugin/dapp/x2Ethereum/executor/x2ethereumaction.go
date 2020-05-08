@@ -86,10 +86,13 @@ func newAction(a *x2ethereum, tx *chain33types.Transaction, index int32) (*actio
 		ConsensusThreshold = mc.NowConsensusThreshold
 	}
 	oracleKeeper := oracle.NewKeeper(a.GetStateDB(), ConsensusThreshold)
+	if oracleKeeper == nil {
+		return nil, true
+	}
 
 	elog.Info("newAction", "newAction", "done")
 	return &action{a.GetAPI(), a.GetCoinsAccount(), a.GetStateDB(), hash, fromaddr,
-		a.GetBlockTime(), a.GetHeight(), index, address.ExecAddress(string(tx.Execer)), ethbridge.NewKeeper(&oracleKeeper, a.GetStateDB())}, defaultCon
+		a.GetBlockTime(), a.GetHeight(), index, address.ExecAddress(string(tx.Execer)), ethbridge.NewKeeper(oracleKeeper, a.GetStateDB())}, defaultCon
 }
 
 // ethereum ---> chain33
@@ -189,19 +192,19 @@ func (a *action) procMsgEth2Chain33(ethBridgeClaim *types2.Eth2Chain33, defaultC
 		execlog := &chain33types.ReceiptLog{Ty: types2.TyEth2Chain33Log, Log: chain33types.Encode(&types2.ReceiptEth2Chain33{
 			EthereumChainID:       msgEthBridgeClaim.EthereumChainID,
 			BridgeContractAddress: msgEthBridgeClaim.BridgeContractAddress,
-			Nonce:                msgEthBridgeClaim.Nonce,
-			LocalCoinSymbol:      msgEthBridgeClaim.LocalCoinSymbol,
-			LocalCoinExec:        msgEthBridgeClaim.LocalCoinExec,
-			TokenContractAddress: msgEthBridgeClaim.TokenContractAddress,
-			EthereumSender:       msgEthBridgeClaim.EthereumSender,
-			Chain33Receiver:      msgEthBridgeClaim.Chain33Receiver,
-			ValidatorAddress:     msgEthBridgeClaim.ValidatorAddress,
-			Amount:               msgEthBridgeClaim.Amount,
-			ClaimType:            msgEthBridgeClaim.ClaimType,
-			XTxHash:              a.txhash,
-			XHeight:              uint64(a.height),
-			ProphecyID:           ID,
-			Decimals:             msgEthBridgeClaim.Decimals,
+			Nonce:                 msgEthBridgeClaim.Nonce,
+			LocalCoinSymbol:       msgEthBridgeClaim.LocalCoinSymbol,
+			LocalCoinExec:         msgEthBridgeClaim.LocalCoinExec,
+			TokenContractAddress:  msgEthBridgeClaim.TokenContractAddress,
+			EthereumSender:        msgEthBridgeClaim.EthereumSender,
+			Chain33Receiver:       msgEthBridgeClaim.Chain33Receiver,
+			ValidatorAddress:      msgEthBridgeClaim.ValidatorAddress,
+			Amount:                msgEthBridgeClaim.Amount,
+			ClaimType:             msgEthBridgeClaim.ClaimType,
+			XTxHash:               a.txhash,
+			XHeight:               uint64(a.height),
+			ProphecyID:            ID,
+			Decimals:              msgEthBridgeClaim.Decimals,
 		})}
 		receipt.Logs = append(receipt.Logs, execlog)
 
@@ -401,19 +404,19 @@ func (a *action) procWithdrawEth(withdrawEth *types2.Eth2Chain33, defaultCon boo
 		execlog := &chain33types.ReceiptLog{Ty: types2.TyWithdrawEthLog, Log: chain33types.Encode(&types2.ReceiptEth2Chain33{
 			EthereumChainID:       msgWithdrawEth.EthereumChainID,
 			BridgeContractAddress: msgWithdrawEth.BridgeContractAddress,
-			Nonce:                msgWithdrawEth.Nonce,
-			LocalCoinSymbol:      msgWithdrawEth.LocalCoinSymbol,
-			LocalCoinExec:        msgWithdrawEth.LocalCoinExec,
-			TokenContractAddress: msgWithdrawEth.TokenContractAddress,
-			EthereumSender:       msgWithdrawEth.EthereumSender,
-			Chain33Receiver:      msgWithdrawEth.Chain33Receiver,
-			ValidatorAddress:     msgWithdrawEth.ValidatorAddress,
-			Amount:               msgWithdrawEth.Amount,
-			ClaimType:            msgWithdrawEth.ClaimType,
-			XTxHash:              a.txhash,
-			XHeight:              uint64(a.height),
-			ProphecyID:           ID,
-			Decimals:             msgWithdrawEth.Decimals,
+			Nonce:                 msgWithdrawEth.Nonce,
+			LocalCoinSymbol:       msgWithdrawEth.LocalCoinSymbol,
+			LocalCoinExec:         msgWithdrawEth.LocalCoinExec,
+			TokenContractAddress:  msgWithdrawEth.TokenContractAddress,
+			EthereumSender:        msgWithdrawEth.EthereumSender,
+			Chain33Receiver:       msgWithdrawEth.Chain33Receiver,
+			ValidatorAddress:      msgWithdrawEth.ValidatorAddress,
+			Amount:                msgWithdrawEth.Amount,
+			ClaimType:             msgWithdrawEth.ClaimType,
+			XTxHash:               a.txhash,
+			XHeight:               uint64(a.height),
+			ProphecyID:            ID,
+			Decimals:              msgWithdrawEth.Decimals,
 		})}
 		receipt.Logs = append(receipt.Logs, execlog)
 
@@ -582,8 +585,8 @@ func (a *action) procMsgSetConsensusThreshold(msgSetConsensusThreshold *types2.M
 	}
 
 	setConsensusThreshold := &types2.ReceiptSetConsensusThreshold{
-		PreConsensusThreshold: int64(preConsensusNeeded * 100),
-		NowConsensusThreshold: int64(nowConsensusNeeded * 100),
+		PreConsensusThreshold: preConsensusNeeded,
+		NowConsensusThreshold: nowConsensusNeeded,
 		XTxHash:               a.txhash,
 		XHeight:               uint64(a.height),
 	}
