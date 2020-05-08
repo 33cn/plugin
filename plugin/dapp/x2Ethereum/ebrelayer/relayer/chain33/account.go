@@ -108,6 +108,7 @@ func (chain33Relayer *Chain33Relayer) RestorePrivateKeys(passphrase string) erro
 
 	chain33Relayer.rwLock.Lock()
 	chain33Relayer.privateKey4Ethereum = privateKey
+	chain33Relayer.ethSender = crypto.PubkeyToAddress(privateKey.PublicKey)
 	chain33Relayer.rwLock.Unlock()
 	chain33Relayer.unlock <- start
 	return nil
