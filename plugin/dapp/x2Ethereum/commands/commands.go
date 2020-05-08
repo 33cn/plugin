@@ -116,16 +116,16 @@ func Eth2Chain33(cmd *cobra.Command, args []string) {
 	params := &types3.Eth2Chain33{
 		EthereumChainID:       ethid,
 		BridgeContractAddress: bcontract,
-		Nonce:                nonce,
-		LocalCoinSymbol:      csymbol,
-		LocalCoinExec:        cexec,
-		TokenContractAddress: tcontract,
-		EthereumSender:       sender,
-		Chain33Receiver:      receiver,
-		ValidatorAddress:     validator,
-		Amount:               strconv.FormatFloat(types3.MultiplySpecifyTimes(amount, decimal), 'f', 4, 64),
-		ClaimType:            claimtype,
-		Decimals:             decimal,
+		Nonce:                 nonce,
+		LocalCoinSymbol:       csymbol,
+		LocalCoinExec:         cexec,
+		TokenContractAddress:  tcontract,
+		EthereumSender:        sender,
+		Chain33Receiver:       receiver,
+		ValidatorAddress:      validator,
+		Amount:                strconv.FormatFloat(types3.MultiplySpecifyTimes(amount, decimal), 'f', 4, 64),
+		ClaimType:             claimtype,
+		Decimals:              decimal,
 	}
 
 	payLoad := types.MustPBToJSON(params)
@@ -162,16 +162,16 @@ func WithdrawEth(cmd *cobra.Command, args []string) {
 	params := &types3.Eth2Chain33{
 		EthereumChainID:       ethid,
 		BridgeContractAddress: bcontract,
-		Nonce:                nonce,
-		LocalCoinSymbol:      csymbol,
-		LocalCoinExec:        cexec,
-		TokenContractAddress: tcontract,
-		EthereumSender:       sender,
-		Chain33Receiver:      receiver,
-		ValidatorAddress:     validator,
-		Amount:               strconv.FormatFloat(amount*1e8, 'f', 4, 64),
-		ClaimType:            claimtype,
-		Decimals:             decimal,
+		Nonce:                 nonce,
+		LocalCoinSymbol:       csymbol,
+		LocalCoinExec:         cexec,
+		TokenContractAddress:  tcontract,
+		EthereumSender:        sender,
+		Chain33Receiver:       receiver,
+		ValidatorAddress:      validator,
+		Amount:                strconv.FormatFloat(amount*1e8, 'f', 4, 64),
+		ClaimType:             claimtype,
+		Decimals:              decimal,
 	}
 
 	payLoad := types.MustPBToJSON(params)

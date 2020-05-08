@@ -19,15 +19,15 @@ func NewEthBridgeClaim(ethereumChainID int64, bridgeContract string, nonce int64
 	return types.Eth2Chain33{
 		EthereumChainID:       ethereumChainID,
 		BridgeContractAddress: bridgeContract,
-		Nonce:                nonce,
-		TokenContractAddress: tokenContact,
-		EthereumSender:       ethereumSender,
-		Chain33Receiver:      chain33Receiver,
-		ValidatorAddress:     validator,
-		Amount:               amount,
-		ClaimType:            claimType,
-		LocalCoinSymbol:      localCoinSymbol,
-		LocalCoinExec:        localCoinExec,
+		Nonce:                 nonce,
+		TokenContractAddress:  tokenContact,
+		EthereumSender:        ethereumSender,
+		Chain33Receiver:       chain33Receiver,
+		ValidatorAddress:      validator,
+		Amount:                amount,
+		ClaimType:             claimType,
+		LocalCoinSymbol:       localCoinSymbol,
+		LocalCoinExec:         localCoinExec,
 	}
 }
 

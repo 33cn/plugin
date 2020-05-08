@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	x2ethereumtypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
