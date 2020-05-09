@@ -346,7 +346,7 @@ main() {
 
     InitAndDeploy
     TestETH2Chain33Erc20
-    #TestETH2Chain33Erc20_err
+    TestETH2Chain33Erc20_err
     TestETH2Chain33Assets
     TestChain33ToEthAssets
 

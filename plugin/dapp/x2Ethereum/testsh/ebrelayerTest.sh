@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -x
 
+# 只启动 eth 这一端的测试
+# 启动4个 relayer  每个权重一样
+
 source "./publicTest.sh"
 CLIA="../build/ebcli_A"
 CLIB="../build/ebcli_B"

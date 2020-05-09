@@ -3,12 +3,15 @@
 # shellcheck source=/dev/null
 set -x
 
-source "./ebrelayer/publicTest.sh"
+# eth 和 chain33 两端都启动
+# 启动4个 relayer 每个权重一样
 
-CLIA="./build/ebcli_A"
-CLIB="./build/ebcli_B"
-CLIC="./build/ebcli_C"
-CLID="./build/ebcli_D"
+source "./publicTest.sh"
+
+CLIA="../build/ebcli_A"
+CLIB="../build/ebcli_B"
+CLIC="../build/ebcli_C"
+CLID="../build/ebcli_D"
 
 docker_chain33_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' build_chain33_1)
 Chain33Cli="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
@@ -56,10 +59,10 @@ function EthImportKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 重启 ebrelayer 并解锁
     for name in A B C D; do
-        start_ebrelayer "./build/"$name"/ebrelayer" "./build/"$name"/ebrelayer.log"
+        start_ebrelayer "../build/"$name"/ebrelayer" "../build/"$name"/ebrelayer.log"
 
         # 导入测试地址私钥
-        CLI="./build/ebcli_$name"
+        CLI="../build/ebcli_$name"
 
         result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
         #cli_ret "${result}" "set_pwd"
@@ -102,20 +105,20 @@ function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     for name in A B C D; do
-        local ebrelayer="./build/$name/ebrelayer"
+        local ebrelayer="../build/$name/ebrelayer"
         kill_ebrelayer "${ebrelayer}"
     done
-    kill_ebrelayer "./build/ebrelayer"
+    kill_ebrelayer "../build/ebrelayer"
     sleep 1
 
-    rm -rf './build/A' './build/B' './build/C' './build/D' './build/datadir' './build/ebrelayer.log' './build/logs'
-    mkdir './build/A' './build/B' './build/C' './build/D'
-    cp './ebrelayer/relayer.toml' './build/A/relayer.toml'
-    cp './build/ebrelayer' './build/A/ebrelayer'
+    rm -rf '../build/A' '../build/B' '../build/C' '../build/D' '../build/datadir' '../build/ebrelayer.log' '../build/logs'
+    mkdir '../build/A' '../build/B' '../build/C' '../build/D'
+    cp '../ebrelayer/relayer.toml' '../build/A/relayer.toml'
+    cp '../build/ebrelayer' '../build/A/ebrelayer'
 
     start_trufflesuite
 
-    start_ebrelayer "./build/A/ebrelayer" "./build/A/ebrelayer.log"
+    start_ebrelayer "../build/A/ebrelayer" "../build/A/ebrelayer.log"
     # 部署合约
     InitAndDeploy
 
@@ -124,9 +127,9 @@ function StartRelayerAndDeploy() {
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
     #    BridgeRegistry="0x5331F912027057fBE8139D91B225246e8159232f"
 
-    kill_ebrelayer "./build/A/ebrelayer"
+    kill_ebrelayer "../build/A/ebrelayer"
     # 修改 relayer.toml 配置文件
-    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "./build/A/relayer.toml"
+    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "../build/A/relayer.toml"
     updata_all_relayer_toml
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

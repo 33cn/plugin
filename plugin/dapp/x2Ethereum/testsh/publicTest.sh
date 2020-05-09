@@ -4,19 +4,20 @@
 set -x
 set -e
 
+# 公用测试函数
+
 #color
 RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
-# 解锁
-#function unlock_relayer() {
-#    for name in A B C D
-#    do
-#        local CLI="../build/ebcli_$name"
-#        ${CLI} relayer unlock -p 123456hzj
-#    done
-#}
+function kill_all_ebrelayer() {
+    for name in A B C D
+    do
+        local ebrelayer="./../build/$name/ebrelayer"
+        kill_ebrelayer "${ebrelayer}"
+    done
+}
 
 # 判断结果是否正确
 function cli_ret() {
@@ -148,14 +149,6 @@ function kill_ebrelayer() {
     sleep 1
 }
 
-#function kill_all_ebrelayer() {
-#    for name in A B C D
-#    do
-#        local ebrelayer="./../build/$name/ebrelayer"
-#        kill_ebrelayer "${ebrelayer}"
-#    done
-#}
-
 # chain33 区块等待 $1:cli 路径  $2:等待高度
 function block_wait() {
     set +x
@@ -177,10 +170,6 @@ function block_wait() {
 
         count=$((count + 1))
         sleep 1
-
-        #        if [[ ${count} -ge 30 ]]; then
-        #           break
-        #        fi
     done
 
     count=$((count + 1))
@@ -294,9 +283,9 @@ function updata_relayer_toml() {
     sed -i 's/EthMaturityDegree=10/'EthMaturityDegree=${maturityDegree}'/g' "${file}"
     sed -i 's/maturityDegree=10/'maturityDegree=${maturityDegree}'/g' "${file}"
 
-    #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "./build/relayer.toml"
-    #sed -i 's/192.168.64.2/'${chain33Host}'/g' "./build/relayer.toml"
-    #sed -i 's/192.168.3.156/'${pushHost}'/g' "./build/relayer.toml"
+    #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
+    #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
+    #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
 }
 
 # 更新 B C D 的配置文件
@@ -306,9 +295,9 @@ function updata_all_relayer_toml() {
     #    local dockername=30
 
     for name in B C D; do
-        local file="./build/"$name"/relayer.toml"
-        cp './build/A/relayer.toml' "${file}"
-        cp './build/ebrelayer' "./build/"$name"/ebrelayer"
+        local file="../build/"$name"/relayer.toml"
+        cp '../build/A/relayer.toml' "${file}"
+        cp '../build/ebrelayer' "../build/"$name"/ebrelayer"
 
         # 删除配置文件中不需要的字段
         for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "\[deploy\]"; do
@@ -440,10 +429,6 @@ function eth_block_wait() {
 
         count=$((count + 1))
         sleep 1
-
-        #        if [[ ${count} -ge 80 ]]; then
-        #           break
-        #        fi
     done
 
     count=$((count + 1))

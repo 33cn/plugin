@@ -3,9 +3,12 @@
 # shellcheck source=/dev/null
 set -x
 
-source "./ebrelayer/publicTest.sh"
+# eth 和 chain33 两端都启动
+# 只启动一个 relayer 第一个地址权重设置超过2/3
 
-CLI="./build/ebcli_A"
+source "./publicTest.sh"
+
+CLI="../build/ebcli_A"
 docker_chain33_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' build_chain33_1)
 Chain33Cli="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
 
@@ -65,17 +68,17 @@ function EthImportKey() {
 function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    kill_ebrelayer "./build/ebrelayer"
-    kill_ebrelayer "./build/A/ebrelayer"
+    kill_ebrelayer "../build/ebrelayer"
+    kill_ebrelayer "../build/A/ebrelayer"
 
-    cp "./ebrelayer/relayer.toml" "./build/relayer.toml"
-    sed -i 's/initPowers=\[25, 25, 25, 25\]/initPowers=\[925, 25, 25, 25\]/g' "./build/relayer.toml"
-    rm -rf "./build/datadir" "./build/ebrelayer.log" "./build/logs"
+    cp "../ebrelayer/relayer.toml" "../build/relayer.toml"
+    sed -i 's/initPowers=\[25, 25, 25, 25\]/initPowers=\[925, 25, 25, 25\]/g' "../build/relayer.toml"
+    rm -rf "../build/datadir" "../build/ebrelayer.log" "../build/logs"
 
     # 启动 eth
     start_trufflesuite
 
-    start_ebrelayer "./build/ebrelayer" "./build/ebrelayer.log"
+    start_ebrelayer "../build/ebrelayer" "../build/ebrelayer.log"
 
     InitAndDeploy
 
@@ -84,12 +87,12 @@ function StartRelayerAndDeploy() {
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
     #    BridgeRegistry="0x5331F912027057fBE8139D91B225246e8159232f"
 
-    kill_ebrelayer "./build/ebrelayer"
+    kill_ebrelayer "../build/ebrelayer"
     # 修改 relayer.toml 配置文件
-    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "./build/relayer.toml"
+    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "../build/relayer.toml"
 
     # 重启 ebrelayer 并解锁
-    start_ebrelayer "./build/ebrelayer" "./build/ebrelayer.log"
+    start_ebrelayer "../build/ebrelayer" "../build/ebrelayer.log"
 
     ${CLI} relayer set_pwd -n 123456hzj -o kk
     ${CLI} relayer unlock -p 123456hzj
@@ -99,7 +102,7 @@ function StartRelayerAndDeploy() {
 
 function ExitRelayer() {
     # kill ebrelayer
-    kill_ebrelayer "./build/ebrelayer"
+    kill_ebrelayer "../build/ebrelayer"
 
     # 删除 eth
     docker stop ganachetest
