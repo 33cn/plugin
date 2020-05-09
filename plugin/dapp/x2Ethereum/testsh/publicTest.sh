@@ -369,8 +369,8 @@ function start_trufflesuite() {
     local ganacheName=ganachetest
     #local isExit=$(docker inspect ${ganacheName} | jq ".[]" | jq ".Id")
     #if [[ ${isExit} != "" ]]; then
-        docker stop ${ganacheName}
-        docker rm ${ganacheName}
+    docker stop ${ganacheName}
+    docker rm ${ganacheName}
     #fi
 
     # 启动 eth
