@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -x
 
-source "./../ebrelayer/publicTest.sh"
+source "./publicTest.sh"
 
-CLI="./ebcli_A"
-docker_chain33_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' build_chain33_1)
-Chain33_CLI="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+CLIA="./ebcli_A"
+Chain33_CLI=""
 
 Ethsender="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
 tokenAddr="0x9C3D40A44a2F61Ef8D46fa8C7A731C08FB16cCEF"
@@ -35,6 +34,8 @@ ethAddress[7]="0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e"
 ethAddress[8]="0xA4Ea64a583F6e51C3799335b28a8F0529570A635"
 ethAddress[9]="0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF"
 
+maturityDegree=10
+
 loop_send_lock_eth() {
     #while 遍历数组
     #    ======================== Ethereum Lock =========================================
@@ -44,12 +45,12 @@ loop_send_lock_eth() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
-        ethTxHash=$(${CLI} relayer ethereum lock-async -m 0.1 -k "${privateKeys[i]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${CLIA} relayer ethereum lock-async -m 0.1 -k "${privateKeys[i]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "lock-async tx hash:" ${ethTxHash}
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -64,16 +65,15 @@ loop_send_lock_eth() {
         fi
         let i++
     done
+
     nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
     diff=$(gawk -M 'BEGIN{printf "%d\n", \
     '${nowChain33Balance}' - \
     '${preChain33Balance}'}')
     check_number "${diff}" 1
-
 }
 
 loop_send_burn_eth() {
-
     #   =========================== Chain33 Burn ========================================
     echo -e "${GRE}=========== Chain33 Burn begin ===========${NOC}"
 
@@ -87,7 +87,7 @@ loop_send_burn_eth() {
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -119,17 +119,17 @@ loop_send_lock_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
+        preEthBalance[$i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
         ethTxHash=$(${Chain33_CLI} send x2ethereum lock -q "${tokenAddr}" -a 1 -r ${ethAddress[i]} -t bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "lock chain33 tx hash:" ${ethTxHash}
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
         res=$(gawk -M 'BEGIN{printf "%d\n", \
       '${nowEthBalance}' - \
       '${preEthBalance[i]}'}')
@@ -154,18 +154,18 @@ loop_send_burn_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
-        approveTxHash=$(${CLI} relayer ethereum approve -m 1 -k "${privateKeys[i]}" -t "${tokenAddr}")
-        ethTxHash=$(${CLI} relayer ethereum burn-async -m 1 -k "${privateKeys[i]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t "${tokenAddr}")
+        preEthBalance[$i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
+        approveTxHash=$(${CLIA} relayer ethereum approve -m 1 -k "${privateKeys[i]}" -t "${tokenAddr}")
+        ethTxHash=$(${CLIA} relayer ethereum burn-async -m 1 -k "${privateKeys[i]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t "${tokenAddr}")
         echo ${i} "burn-async tx hash:" ${ethTxHash}
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
         res=$(gawk -M 'BEGIN{printf "%d\n", \
       '${preEthBalance[i]}' - \
       '${nowEthBalance}'}')
@@ -188,20 +188,20 @@ loop_send_lock_erc20() {
     preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
 
     i=0
-    preEthBalance=$(${CLI} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
+    preEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
 
-    approveTxHash=$(${CLI} relayer ethereum approve -m 10 -k "${privateKeys[8]}" -t "${testcAddr}")
+    approveTxHash=$(${CLIA} relayer ethereum approve -m 10 -k "${privateKeys[8]}" -t "${testcAddr}")
     echo ${i} "lock-async erc20 approve tx hash:" ${approveTxHash}
 
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        ethTxHash=$(${CLI} relayer ethereum lock-async -m 1 -k "${privateKeys[8]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t "${testcAddr}")
+        ethTxHash=$(${CLIA} relayer ethereum lock-async -m 1 -k "${privateKeys[8]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t "${testcAddr}")
         echo ${i} "lock-async erc20 tx hash:" ${ethTxHash}
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
-    nowEthBalance=$(${CLI} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
+    nowEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
     res=$(gawk -M 'BEGIN{printf "%d\n", \
       '${preEthBalance}' - \
       '${nowEthBalance}'}')
@@ -225,17 +225,17 @@ loop_send_burn_erc20() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[i]=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${testcAddr}" | jq -r ".balance")
+        preEthBalance[i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${testcAddr}" | jq -r ".balance")
         ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t testc -q "${testcAddr}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" ${ethTxHash}
         let i++
     done
 
-    eth_block_wait 12
+    eth_block_wait $((maturityDegree + 2))
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLI} relayer ethereum balance -o "${ethAddress[i]}" -t "${testcAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${testcAddr}" | jq -r ".balance")
         res=$(gawk -M 'BEGIN{printf "%d\n", \
       '${nowEthBalance}' - \
       '${preEthBalance[i]}'}')
@@ -249,16 +249,26 @@ loop_send_burn_erc20() {
     '${preChain33Balance}' - \
     '${nowChain33Balance}'}')
     check_number "${diff}" 10
-
 }
 
-main() {
+perf_test_main() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    docker_chain33_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' build_chain33_1)
+    Chain33_CLI="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+
+    if [[ ${1} != "" ]]; then
+        maturityDegree=${1}
+        echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
+    fi
+
     loop_send_lock_eth
     loop_send_burn_eth
     loop_send_lock_bty
     loop_send_burn_bty
     loop_send_lock_erc20
     loop_send_burn_erc20
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-main

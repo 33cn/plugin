@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 source "./allRelayerTest.sh"
+source "./perf_test.sh"
 
 function x2Ethereum() {
     if [ "${2}" == "init" ]; then
@@ -10,6 +11,7 @@ function x2Ethereum() {
         echo "========================== x2Ethereum test =========================="
         set +e
         set -x
-        MainTest 1
+        AllRelayerMainTest 1
+        perf_test_main 1
     fi
 }

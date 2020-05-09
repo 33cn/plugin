@@ -52,12 +52,16 @@ function kill_ebrelayerD() {
 function start_ebrelayerC() {
     start_ebrelayer "./C/ebrelayer" "./C/ebrelayer.log"
     ${CLIC} relayer unlock -p 123456hzj
-    sleep 60
+    sleep 5
+    eth_block_wait 1
+    sleep 1
 }
 function start_ebrelayerD() {
     start_ebrelayer "./D/ebrelayer" "./D/ebrelayer.log"
     ${CLID} relayer unlock -p 123456hzj
-    sleep 60
+    sleep 5
+    eth_block_wait 1
+    sleep 1
 }
 
 function InitAndDeploy() {
@@ -537,12 +541,12 @@ function TestETH2Chain33Erc20Kill() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function MainTest() {
+function AllRelayerMainTest() {
     set +e
     docker_chain33_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' build_chain33_1)
     Chain33Cli="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
 
-    echo -e "${GRE}===========allTest $FUNCNAME begin ===========${NOC}"
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
@@ -560,9 +564,9 @@ function MainTest() {
     TestETH2Chain33Erc20
 
     # kill relayer and start relayer
-    TestChain33ToEthAssetsKill
-    TestETH2Chain33AssetsKill
-    TestETH2Chain33Erc20Kill
+#    TestChain33ToEthAssetsKill
+#    TestETH2Chain33AssetsKill
+#    TestETH2Chain33Erc20Kill
 
-    echo -e "${GRE}===========allTest $FUNCNAME end ===========${NOC}"
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
