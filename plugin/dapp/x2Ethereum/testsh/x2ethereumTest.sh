@@ -376,4 +376,4 @@ function main() {
 }
 
 # $1 等待区块 默认10
-main "${1}"
+main 1

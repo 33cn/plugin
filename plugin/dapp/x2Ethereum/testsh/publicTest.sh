@@ -368,11 +368,11 @@ function updata_all_relayer_toml2() {
 function start_trufflesuite() {
     # 如果原来存在先删除
     local ganacheName=ganachetest
-    local isExit=$(docker inspect ${ganacheName} | jq ".[]")
-    if [[ ${isExit} != "" ]]; then
+    #local isExit=$(docker inspect ${ganacheName} | jq ".[]" | jq ".Id")
+    #if [[ ${isExit} != "" ]]; then
         docker stop ${ganacheName}
         docker rm ${ganacheName}
-    fi
+    #fi
 
     # 启动 eth
     docker run -d --name ${ganacheName} -p 7545:8545 -l eth_test trufflesuite/ganache-cli:latest -a 10 --debug -b 5 -m "coast bar giraffe art venue decide symbol law visual crater vital fold"
