@@ -12,8 +12,7 @@ GRE='\033[1;32m'
 NOC='\033[0m'
 
 function kill_all_ebrelayer() {
-    for name in A B C D
-    do
+    for name in A B C D; do
         local ebrelayer="./../build/$name/ebrelayer"
         kill_ebrelayer "${ebrelayer}"
     done
