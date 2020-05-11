@@ -40,7 +40,7 @@ loop_send_lock_eth() {
     #while 遍历数组
     #    ======================== Ethereum Lock =========================================
     echo -e "${GRE}=========== Ethereum Lock begin ===========${NOC}"
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
+    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -64,7 +64,7 @@ loop_send_lock_eth() {
         let i++
     done
 
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
+    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 1
 }
@@ -73,7 +73,7 @@ loop_send_burn_eth() {
     #   =========================== Chain33 Burn ========================================
     echo -e "${GRE}=========== Chain33 Burn begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
+    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -96,7 +96,7 @@ loop_send_burn_eth() {
         fi
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
+    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 1
 
@@ -107,7 +107,7 @@ loop_send_lock_bty() {
     #   =========================== Chain33 Lock =========================================
     echo -e "${GRE}=========== Chain33 Lock begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
+    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -121,13 +121,13 @@ loop_send_lock_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance" )
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         check_number "${res}" 1
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
+    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
     diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 10
 
@@ -138,7 +138,7 @@ loop_send_burn_bty() {
     #   =========================== Ethereum Burn ========================================
     echo -e "${GRE}=========== Ethereum Burn begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
+    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -159,7 +159,7 @@ loop_send_burn_bty() {
         check_number "${res}" 1
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
+    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
     diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 10
 
@@ -169,7 +169,7 @@ loop_send_lock_erc20() {
 
     #    ======================== Ethereum Lock Erc20 =========================================
     echo -e "${GRE}=========== Ethereum Lock Erc20 begin ===========${NOC}"
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
+    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     preEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
@@ -190,7 +190,7 @@ loop_send_lock_erc20() {
     echo ${i} "preBalance" ${preEthBalance} "nowBalance" ${nowEthBalance} "diff" ${res}
     check_number "${diff}" 10
 
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
+    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 10
 
@@ -201,7 +201,7 @@ loop_send_burn_erc20() {
     #   =========================== Chain33 Burn Erc20 ========================================
     echo -e "${GRE}=========== Chain33 Burn Erc20 begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
+    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -222,7 +222,7 @@ loop_send_burn_erc20() {
         let i++
     done
 
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
+    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 10
 }
