@@ -121,7 +121,7 @@ loop_send_lock_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance" )
+        nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         check_number "${res}" 1
