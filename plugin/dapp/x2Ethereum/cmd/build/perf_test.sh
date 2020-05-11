@@ -55,7 +55,7 @@ loop_send_lock_eth() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
-        res=$(( ${preEthBalance[i]} - ${nowEthBalance} ))
+        res=$((preEthBalance[i] - nowEthBalance))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         if [[ $res -le 100000000000000000 ]]; then
             echo -e "${RED}error number, expect greater than 100000000000000000, get ${res}${NOC}"
@@ -65,7 +65,7 @@ loop_send_lock_eth() {
     done
 
     nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
-    diff=$(( ${nowChain33Balance} - ${preChain33Balance} ))
+    diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 1
 }
 
@@ -88,7 +88,7 @@ loop_send_burn_eth() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
-        res=$(( ${nowEthBalance} - ${preEthBalance[i]} ))
+        res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         if [[ $res -gt 100000000000000000 ]]; then
             echo -e "${RED}error number, expect greater than 100000000000000000, get ${res}${NOC}"
@@ -97,7 +97,7 @@ loop_send_burn_eth() {
         let i++
     done
     nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance")
-    diff=$(( ${preChain33Balance} - ${nowChain33Balance} ))
+    diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 1
 
 }
@@ -122,13 +122,13 @@ loop_send_lock_bty() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
-        res=$(( ${nowEthBalance} - ${preEthBalance[i]} ))
+        res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         check_number "${res}" 1
         let i++
     done
     nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
-    diff=$(( ${preChain33Balance} - ${nowChain33Balance} ))
+    diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 10
 
 }
@@ -154,13 +154,13 @@ loop_send_burn_bty() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
-        res=$(( ${preEthBalance[i]} - ${nowEthBalance} ))
+        res=$((preEthBalance[i] - nowEthBalance))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         check_number "${res}" 1
         let i++
     done
     nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance")
-    diff=$(( ${nowChain33Balance} - ${preChain33Balance} ))
+    diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 10
 
 }
@@ -186,12 +186,12 @@ loop_send_lock_erc20() {
     eth_block_wait $((maturityDegree + 2))
 
     nowEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${testcAddr}" | jq -r ".balance")
-    res=$(( ${preEthBalance} - ${nowEthBalance} ))
+    res=$((preEthBalance - nowEthBalance))
     echo ${i} "preBalance" ${preEthBalance} "nowBalance" ${nowEthBalance} "diff" ${res}
     check_number "${diff}" 10
 
     nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
-    diff=$(( ${nowChain33Balance} - ${preChain33Balance} ))
+    diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 10
 
 }
@@ -216,14 +216,14 @@ loop_send_burn_erc20() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         nowEthBalance=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${testcAddr}" | jq -r ".balance")
-        res=$(( ${nowEthBalance} - ${preEthBalance[i]} ))
+        res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" ${preEthBalance[i]} "nowBalance" ${nowEthBalance} "diff" ${res}
         check_number "${res}" 1
         let i++
     done
 
     nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance")
-    diff=$(( ${preChain33Balance} - ${nowChain33Balance} ))
+    diff=$((preChain33Balance - nowChain33Balance))
     check_number "${diff}" 10
 }
 
