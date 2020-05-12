@@ -287,6 +287,34 @@ function updata_relayer_toml() {
     #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
 }
 
+# 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
+function updata_relayer_toml_ropston() {
+    local BridgeRegistry=${1}
+    local maturityDegree=${2}
+    local file=${3}
+
+    local chain33Host=127.0.0.1
+    local pushHost=127.0.0.1
+
+    local line=$(delete_line_show ${file} "chain33Host")
+    # 在第 line 行后面 新增合约地址
+    sed -i ''${line}' a chain33Host="http://'${chain33Host}':8801"' "${file}"
+
+    line=$(delete_line_show ${file} "pushHost")
+    sed -i ''${line}' a pushHost="http://'${pushHost}':20000"' "${file}"
+
+    line=$(delete_line_show ${file} "BridgeRegistry")
+    sed -i ''${line}' a BridgeRegistry="'${BridgeRegistry}'"' "${file}"
+
+    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree=${maturityDegree}'/g' "${file}"
+    sed -i 's/maturityDegree=10/'maturityDegree=${maturityDegree}'/g' "${file}"
+
+    #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
+    #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
+    #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
+}
+
+
 # 更新 B C D 的配置文件
 function updata_all_relayer_toml() {
     local port=9901
@@ -409,7 +437,7 @@ function wait_prophecy_finish() {
     set -x
 }
 
-# eth 区块等待 $1:等待高度
+# eth 区块等待 $1:等待高度 $2:url地址，默认为 http://localhost:7545,测试网络用 https://ropsten-rpc.linkpool.io/
 function eth_block_wait() {
     set +x
     if [[ $# -lt 0 ]]; then
@@ -417,11 +445,24 @@ function eth_block_wait() {
         exit 1
     fi
 
-    local cur_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
+    local cur_height=""
+    local new_height=""
+    local url=${2}
+    if [ "${url}" == "" ];then
+        cur_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
+    else
+        cur_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")
+    fi
+
     local expect=$((cur_height + ${1} + 1))
     local count=0
     while true; do
-        new_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
+        if [ "${url}" == "" ];then
+            new_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
+        else
+            new_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")
+        fi
+
         if [[ ${new_height} -ge ${expect} ]]; then
             break
         fi
