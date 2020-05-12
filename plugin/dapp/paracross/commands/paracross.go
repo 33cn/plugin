@@ -44,6 +44,8 @@ func ParcCmd() *cobra.Command {
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
 		GetConsensDoneInfoCmd(),
+		LeaderCmd(),
+		CmtTxInfoCmd(),
 	)
 	return cmd
 }
@@ -947,6 +949,40 @@ func isSync(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res bool
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.IsSync", nil, &res)
+	ctx.Run()
+}
+
+// IsSyncCmd query parachain is sync
+func LeaderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "leader",
+		Short: "node leader info",
+		Run:   leaderInfo,
+	}
+	return cmd
+}
+
+func leaderInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	var res pt.ElectionStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaNodeLeaderInfo", nil, &res)
+	ctx.Run()
+}
+
+// IsSyncCmd query parachain is sync
+func CmtTxInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cmtinfo",
+		Short: "commit tx info",
+		Run:   cmtTxInfo,
+	}
+	return cmd
+}
+
+func cmtTxInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	var res pt.ParaBlsSignSumInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaCmtTxInfo", nil, &res)
 	ctx.Run()
 }
 

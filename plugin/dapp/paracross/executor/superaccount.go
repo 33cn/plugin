@@ -587,7 +587,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	stat.Votes = updateVotes(stat.Votes, nodes)
 
 	most, vote := getMostVote(stat.Votes)
-	if !isCommitDone(nodes, most) {
+	if !isCommitDone(len(nodes), most) {
 		superManagerPass, err := a.checkIsSuperManagerVote(config, nodes)
 		if err != nil {
 			return nil, err

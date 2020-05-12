@@ -52,3 +52,41 @@ func (c *Jrpc) GetParaLocalBlockInfo(in *types.ReqInt, result *interface{}) erro
 	*result = data
 	return nil
 }
+
+// GetParaLocalBlockInfo query para chain the download layer's local height
+func (c *channelClient) GetParaNodeLeaderInfo(ctx context.Context, in *types.ReqNil) (*pt.ElectionStatus, error) {
+	data, err := c.QueryConsensusFunc("para", "LeaderInfo", in)
+	if err != nil {
+		return nil, err
+	}
+	return data.(*pt.ElectionStatus), nil
+}
+
+// GetParaLocalBlockInfo query para local height
+func (c *Jrpc) GetParaNodeLeaderInfo(in *types.ReqNil, result *interface{}) error {
+	data, err := c.cli.GetParaNodeLeaderInfo(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return nil
+}
+
+// GetParaLocalBlockInfo query para chain the download layer's local height
+func (c *channelClient) GetParaCmtTxInfo(ctx context.Context, in *types.ReqNil) (*pt.ParaBlsSignSumInfo, error) {
+	data, err := c.QueryConsensusFunc("para", "CommitTxInfo", in)
+	if err != nil {
+		return nil, err
+	}
+	return data.(*pt.ParaBlsSignSumInfo), nil
+}
+
+// GetParaLocalBlockInfo query para local height
+func (c *Jrpc) GetParaCmtTxInfo(in *types.ReqNil, result *interface{}) error {
+	data, err := c.cli.GetParaCmtTxInfo(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return nil
+}

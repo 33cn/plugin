@@ -133,8 +133,8 @@ func checkCommitInfo(cfg *types.Chain33Config, commit *pt.ParacrossNodeStatus) e
 }
 
 //区块链中不能使用float类型
-func isCommitDone(nodes map[string]struct{}, mostSame int) bool {
-	return 3*mostSame > 2*len(nodes)
+func isCommitDone(nodes, mostSame int) bool {
+	return 3*mostSame > 2*nodes
 }
 
 func makeCommitReceipt(addr string, commit *pt.ParacrossNodeStatus, prev, current *pt.ParacrossHeightStatus) *types.Receipt {
@@ -226,14 +226,14 @@ func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight, execHeight int64,
 	}
 }
 
-func getMostCommit(stat *pt.ParacrossHeightStatus) (int, string) {
+func GetMostCommit(commits [][]byte) (int, string) {
 	stats := make(map[string]int)
-	n := len(stat.Details.Addrs)
+	n := len(commits)
 	for i := 0; i < n; i++ {
-		if _, ok := stats[string(stat.Details.BlockHash[i])]; ok {
-			stats[string(stat.Details.BlockHash[i])]++
+		if _, ok := stats[string(commits[i])]; ok {
+			stats[string(commits[i])]++
 		} else {
-			stats[string(stat.Details.BlockHash[i])] = 1
+			stats[string(commits[i])] = 1
 		}
 	}
 	most := -1
@@ -343,7 +343,7 @@ func paraCheckSelfConsOn(cfg *types.Chain33Config, db dbm.KV, commit *pt.Paracro
 	return true, nil, nil
 }
 
-func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus) error {
+func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddr string) error {
 	cfg := a.api.GetConfig()
 	err := checkCommitInfo(cfg, commit)
 	if err != nil {
@@ -354,18 +354,19 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus) error {
 	if err != nil {
 		return err
 	}
-	if !validNode(a.fromaddr, nodesMap) {
-		return errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", a.fromaddr)
+	//允许a.fromAddr非nodegroup成员，将来也许可以代nodegroup提交共识交易
+	if !validNode(commitAddr, nodesMap) {
+		return errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", commitAddr)
 	}
 
 	titleStatus, err := getTitle(a.db, calcTitleKey(commit.Title))
 	if err != nil {
-		return errors.Wrapf(err, "getTitle:%s", a.fromaddr)
+		return errors.Wrapf(err, "getTitle:%s", commitAddr)
 	}
 	if titleStatus.Height+1 == commit.Height && commit.Height > 0 && !pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		if !bytes.Equal(titleStatus.BlockHash, commit.PreBlockHash) {
 			clog.Error("paracross.Commit", "check PreBlockHash", common.ToHex(titleStatus.BlockHash),
-				"commit tx", common.ToHex(commit.PreBlockHash), "commitheit", commit.Height, "from", a.fromaddr)
+				"commit tx", common.ToHex(commit.PreBlockHash), "commitheit", commit.Height, "from", commitAddr)
 			return pt.ErrParaBlockHashNoMatch
 		}
 	}
@@ -378,7 +379,7 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus) error {
 	if !cfg.IsPara() {
 		blockHash, err := getBlockHash(a.api, commit.MainBlockHeight)
 		if err != nil {
-			clog.Error("paracross.Commit getBlockHash", "err", err, "commit tx height", commit.MainBlockHeight, "from", a.fromaddr)
+			clog.Error("paracross.Commit getBlockHash", "err", err, "commit tx height", commit.MainBlockHeight, "from", commitAddr)
 			return err
 		}
 		dbMainHash = blockHash.Hash
@@ -386,7 +387,7 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus) error {
 	} else {
 		block, err := getBlockInfo(a.api, commit.Height)
 		if err != nil {
-			clog.Error("paracross.Commit getBlockInfo", "err", err, "height", commit.Height, "from", a.fromaddr)
+			clog.Error("paracross.Commit getBlockInfo", "err", err, "height", commit.Height, "from", commitAddr)
 			return err
 		}
 		dbMainHash = block.MainHash
@@ -397,7 +398,7 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus) error {
 	if !bytes.Equal(dbMainHash, commit.MainBlockHash) && commit.Height > 0 {
 		clog.Error("paracross.Commit blockHash not match", "isMain", !cfg.IsPara(), "db", common.ToHex(dbMainHash),
 			"commit", common.ToHex(commit.MainBlockHash), "commitHeight", commit.Height,
-			"commitMainHeight", commit.MainBlockHeight, "from", a.fromaddr)
+			"commitMainHeight", commit.MainBlockHeight, "from", commitAddr)
 		return types.ErrBlockHashNoMatch
 	}
 
@@ -414,12 +415,6 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			return receipt, err
 		}
 	}
-
-	err := a.preCheckCommitInfo(commit.Status)
-	if err != nil {
-		return nil, err
-	}
-
 	if commit.Bls != nil {
 		return a.commitBls(commit)
 	}
@@ -449,6 +444,11 @@ func (a *action) commitBls(commit *pt.ParacrossCommitAction) (*types.Receipt, er
 
 func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, commitAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
+
+	err := a.preCheckCommitInfo(commit, commitAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	nodes, _, err := a.getNodesGroup(commit.Title)
 	if err != nil {
@@ -553,7 +553,7 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 	}
 
 	//1.　获取addr对应的bls 公钥
-	signAddrs := getAddrsByBitMap(nodesArry, commit.Bls.Addrs)
+	signAddrs := getAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
 		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr)
@@ -597,7 +597,7 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 
 	if !g2pubs.Verify(msg, aPub, sign) {
 		clog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
-			"addrsMap", common.ToHex(commit.Bls.Addrs), "sign", common.ToHex(commit.Bls.Sign), "addr", signAddrs, "nodes", nodesArry)
+			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "addr", signAddrs, "nodes", nodesArry)
 		clog.Error("paracross.commit bls sign verify", "data", common.ToHex(msg), "height", commit.Status.Height)
 		return nil, pt.ErrBlsSignVerify
 	}
@@ -615,8 +615,8 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	}
 
 	commitCount := len(stat.Details.Addrs)
-	most, mostHash := getMostCommit(stat)
-	if !isCommitDone(nodes, most) {
+	most, mostHash := GetMostCommit(stat.Details.BlockHash)
+	if !isCommitDone(len(nodes), most) {
 		return receipt, nil
 	}
 	clog.Debug("paracross.Commit commit ----pass", "most", most, "mostHash", common.ToHex([]byte(mostHash)))
@@ -794,8 +794,8 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 
 	updateCommitAddrs(stat, nodes)
 	commitCount := len(stat.Details.Addrs)
-	most, mostHash := getMostCommit(stat)
-	if !isCommitDone(nodes, most) {
+	most, mostHash := GetMostCommit(stat.Details.BlockHash)
+	if !isCommitDone(len(nodes), most) {
 		return nil, nil
 	}
 	clog.Debug("paracross.commitTxDoneByStat ----pass", "most", most, "mostHash", common.ToHex([]byte(mostHash)))

@@ -1,0 +1,98 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package para
+
+import (
+	"fmt"
+
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+)
+
+//IsCaughtUp 是否追上最新高度,
+func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp()}, nil
+}
+
+func (client *client) Query_LocalBlockInfo(req *types.ReqInt) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	var block *pt.ParaLocalDbBlock
+	var err error
+	if req.Height <= -1 {
+		block, err = client.getLastLocalBlock()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		block, err = client.getLocalBlockByHeight(req.Height)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	blockInfo := &pt.ParaLocalDbBlockInfo{
+		Height:         block.Height,
+		MainHash:       common.ToHex(block.MainHash),
+		MainHeight:     block.MainHeight,
+		ParentMainHash: common.ToHex(block.ParentMainHash),
+		BlockTime:      block.BlockTime,
+	}
+
+	for _, tx := range block.Txs {
+		blockInfo.Txs = append(blockInfo.Txs, common.ToHex(tx.Hash()))
+	}
+
+	return blockInfo, nil
+}
+
+func (client *client) Query_LeaderInfo(req *types.ReqNil) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	isLeader := client.bullyCli.IsSelfCoordinator()
+	leader := client.bullyCli.Coordinator()
+
+	return &pt.ElectionStatus{IsLeader: isLeader, LeaderId: leader}, nil
+}
+
+func (client *client) Query_CommitTxInfo(req *types.ReqNil) (types.Message, error) {
+	if client == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	rt := client.blsSignCli.showTxBuffInfo()
+	return rt, nil
+}
+
+// Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户
+func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
+	if acc == nil {
+		return nil, types.ErrInvalidParam
+	}
+	plog.Info("Query_CreateNewAccount", "acc", acc.Addr)
+	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
+	client.commitMsgClient.onWalletAccount(acc)
+	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
+}
+
+// Query_WalletStatus 通知para共识模块钱包锁状态有变化
+func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
+	if walletStatus == nil {
+		return nil, types.ErrInvalidParam
+	}
+	plog.Info("Query_WalletStatus", "walletStatus", walletStatus.IsWalletLock)
+	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
+	client.commitMsgClient.onWalletStatus(walletStatus)
+	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
+}

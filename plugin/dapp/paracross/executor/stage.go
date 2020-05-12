@@ -274,7 +274,7 @@ func (a *action) stageVote(config *pt.ConfigVoteInfo) (*types.Receipt, error) {
 	stat.Votes = updateVotes(stat.Votes, nodes)
 
 	most, vote := getMostVote(stat.Votes)
-	if !isCommitDone(nodes, most) {
+	if !isCommitDone(len(nodes), most) {
 		return makeStageConfigReceipt(copyStat, stat), nil
 	}
 	clog.Info("paracross.stageVote  ----pass", "most", most, "pass", vote)
