@@ -27,6 +27,7 @@ var (
 	ErrAddressExists                 = errors.New("This address already exists")
 	ErrInvalidAdminAddress           = errors.New("This address is not admin address")
 	ErrClaimInconsist                = errors.New("This claim does not consist with others")
+	ErrInvalidPower                  = errors.New("This power is invalid")
 )
 
 //common

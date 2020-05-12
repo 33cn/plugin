@@ -42,6 +42,12 @@ func LogLockToEthBridgeClaim(event *events.LockEvent, ethereumChainID int64, bri
 	witnessClaim.Symbol = event.Symbol
 	witnessClaim.EthereumSender = event.From.String()
 	witnessClaim.Chain33Receiver = string(recipient)
+
+	if decimal > 8 {
+		event.Value = event.Value.Quo(event.Value, big.NewInt(int64(types.MultiplySpecifyTimes(1, decimal-8))))
+	} else {
+		event.Value = event.Value.Mul(event.Value, big.NewInt(int64(types.MultiplySpecifyTimes(1, 8-decimal))))
+	}
 	witnessClaim.Amount = event.Value.String()
 
 	witnessClaim.ClaimType = types.LOCK_CLAIM_TYPE
@@ -97,6 +103,11 @@ func ParseBurnLockTxReceipt(claimType events.Event, receipt *chain33Types.Receip
 			chain33ToEth.Amount = types.TrimZeroAndDot(chain33ToEth.Amount)
 			amount = big.NewInt(1)
 			amount, _ = amount.SetString(chain33ToEth.Amount, 10)
+			if chain33ToEth.Decimals > 8 {
+				amount = amount.Mul(amount, big.NewInt(int64(types.MultiplySpecifyTimes(1, chain33ToEth.Decimals-8))))
+			} else {
+				amount = amount.Quo(amount, big.NewInt(int64(types.MultiplySpecifyTimes(1, 8-chain33ToEth.Decimals))))
+			}
 
 			txslog.Info("ParseBurnLockTxReceipt", "chain33Sender", chain33Sender, "ethereumReceiver", ethereumReceiver.String(), "tokenContractAddress", tokenContractAddress.String(), "symbol", symbol, "amount", amount.String())
 			// Package the event data into a Chain33Msg

@@ -13,9 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// todo
-// 所有amount要做bigint处理，还要做只保留四位的截断处理
-
 // EthereumRelayerCmd command func
 func EthereumRelayerCmd() *cobra.Command {
 	cmd := &cobra.Command{

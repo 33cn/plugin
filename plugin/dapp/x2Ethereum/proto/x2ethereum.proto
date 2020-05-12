@@ -8,7 +8,6 @@ enum EthBridgeStatus {
     PendingStatusText = 0;
     SuccessStatusText = 1;
     FailedStatusText = 2;
-    WithdrawedStatusText = 3;
 }
 
 message X2ethereumAction {
@@ -136,6 +135,10 @@ message ValidatorClaims {
 
 message StringMap {
     repeated string validators = 1;
+}
+
+message ValidatorList {
+    repeated MsgValidator validators = 1;
 }
 
 message ProphecyStatus {

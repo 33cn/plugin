@@ -1,71 +1,52 @@
 package executor
 
 import (
-	"encoding/json"
+	"github.com/golang/protobuf/proto"
 	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/executor/oracle"
 	types2 "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 )
 
 func (x *x2ethereum) Query_GetEthProphecy(in *types2.QueryEthProphecyParams) (types.Message, error) {
-	prophecy := &types2.ReceiptEthProphecy{}
-	prophecyKey := types2.CalProphecyPrefix()
+	prophecyKey := types2.CalProphecyPrefix(in.ID)
 
-	var dbProphecy []oracle.DBProphecy
+	var dbProphecy types2.ReceiptEthProphecy
+
 	val, err := x.GetStateDB().Get(prophecyKey)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(val, &dbProphecy)
+	err = proto.Unmarshal(val, &dbProphecy)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
 
-	for _, dbP := range dbProphecy {
-		if dbP.ID == in.ID {
-			dbPD, err := dbP.DeserializeFromDB()
-			if err != nil {
-				return nil, err
-			}
-			prophecy = &types2.ReceiptEthProphecy{
-				ID: in.ID,
-				Status: &types2.ProphecyStatus{
-					Text:       types2.EthBridgeStatus(dbP.Status.Text),
-					FinalClaim: dbP.Status.FinalClaim,
-				},
-				ClaimValidators: dbPD.ClaimValidators,
-				ValidatorClaims: dbPD.ValidatorClaims,
-			}
-			return prophecy, nil
-		}
-	}
-	return nil, types2.ErrInvalidProphecyID
+	return &dbProphecy, nil
 }
 
 func (x *x2ethereum) Query_GetValidators(in *types2.QueryValidatorsParams) (types.Message, error) {
 	validatorsKey := types2.CalValidatorMapsPrefix()
 
-	var v []*types2.MsgValidator
+	var v types2.ValidatorList
 	vBytes, err := x.GetStateDB().Get(validatorsKey)
 	if err != nil {
 		elog.Error("Query_GetValidators", "GetValidators Err", err)
 		return nil, err
 	}
 
-	err = json.Unmarshal(vBytes, &v)
+	err = proto.Unmarshal(vBytes, &v)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
 
 	if in.Validator != "" {
 		validatorsRes := new(types2.ReceiptQueryValidator)
-		for _, vv := range v {
+		for _, vv := range v.Validators {
 			if vv.Address == in.Validator {
 				val := make([]*types2.MsgValidator, 1)
 				val[0] = vv
@@ -81,10 +62,10 @@ func (x *x2ethereum) Query_GetValidators(in *types2.QueryValidatorsParams) (type
 	} else {
 		validatorsRes := new(types2.ReceiptQueryValidator)
 		var totalPower int64
-		for _, vv := range v {
+		for _, vv := range v.Validators {
 			totalPower += vv.Power
 		}
-		validatorsRes.Validators = v
+		validatorsRes.Validators = v.Validators
 		validatorsRes.TotalPower = totalPower
 		return validatorsRes, nil
 	}
@@ -99,7 +80,7 @@ func (x *x2ethereum) Query_GetTotalPower(in *types2.QueryTotalPowerParams) (type
 		elog.Error("Query_GetTotalPower", "GetTotalPower Err", err)
 		return nil, err
 	}
-	err = json.Unmarshal(totalPowerBytes, &totalPower)
+	err = proto.Unmarshal(totalPowerBytes, totalPower)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
@@ -107,7 +88,7 @@ func (x *x2ethereum) Query_GetTotalPower(in *types2.QueryTotalPowerParams) (type
 }
 
 func (x *x2ethereum) Query_GetConsensusThreshold(in *types2.QueryConsensusThresholdParams) (types.Message, error) {
-	consensus := &types2.ReceiptSetConsensusThreshold{}
+	consensus := &types2.ReceiptQueryConsensusThreshold{}
 	consensusKey := types2.CalConsensusThresholdPrefix()
 
 	consensusBytes, err := x.GetStateDB().Get(consensusKey)
@@ -115,7 +96,7 @@ func (x *x2ethereum) Query_GetConsensusThreshold(in *types2.QueryConsensusThresh
 		elog.Error("Query_GetConsensusNeeded", "GetConsensusNeeded Err", err)
 		return nil, err
 	}
-	err = json.Unmarshal(consensusBytes, &consensus)
+	err = proto.Unmarshal(consensusBytes, consensus)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}

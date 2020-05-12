@@ -1,82 +1,78 @@
 package oracle
 
 import (
-	"encoding/json"
-
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 )
 
-type Prophecy struct {
-	ID              string                   `json:"id"`
-	Status          Status                   `json:"status"`
-	ClaimValidators []*types.ClaimValidators `json:"claim_validators"`
-	ValidatorClaims []*types.ValidatorClaims `json:"validator_claims"`
-}
+func NewProphecy(id string) *types.ReceiptEthProphecy {
 
-func NewProphecy(id string) Prophecy {
-	return Prophecy{
+	status := new(types.ProphecyStatus)
+	status.Text = types.EthBridgeStatus_PendingStatusText
+
+	return &types.ReceiptEthProphecy{
 		ID:              id,
-		Status:          NewStatus(StatusText(types.EthBridgeStatus_PendingStatusText), ""),
+		Status:          status,
 		ClaimValidators: *new([]*types.ClaimValidators),
 		ValidatorClaims: *new([]*types.ValidatorClaims),
 	}
 }
 
-func NewEmptyProphecy() Prophecy {
+func NewEmptyProphecy() *types.ReceiptEthProphecy {
 	return NewProphecy("")
 }
 
-type DBProphecy struct {
-	ID              string `json:"id"`
-	Status          Status `json:"status"`
-	ClaimValidators []byte `json:"claim_validators"`
-	ValidatorClaims []byte `json:"validator_claims"`
-}
-
-// SerializeForDB serializes a prophecy into a DBProphecy
-func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
-	claimValidators, err := json.Marshal(prophecy.ClaimValidators)
-	if err != nil {
-		return DBProphecy{}, err
-	}
-
-	validatorClaims, err := json.Marshal(prophecy.ValidatorClaims)
-	if err != nil {
-		return DBProphecy{}, err
-	}
-
-	return DBProphecy{
-		ID:              prophecy.ID,
-		Status:          prophecy.Status,
-		ClaimValidators: claimValidators,
-		ValidatorClaims: validatorClaims,
-	}, nil
-}
-
-// DeserializeFromDB deserializes a DBProphecy into a prophecy
-func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
-	claimValidators := new([]*types.ClaimValidators)
-	err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators)
-	if err != nil {
-		return Prophecy{}, err
-	}
-
-	validatorClaims := new([]*types.ValidatorClaims)
-	err = json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims)
-	if err != nil {
-		return Prophecy{}, err
-	}
-
-	return Prophecy{
-		ID:              dbProphecy.ID,
-		Status:          dbProphecy.Status,
-		ClaimValidators: *claimValidators,
-		ValidatorClaims: *validatorClaims,
-	}, nil
-}
+//
+//type DBProphecy struct {
+//	ID              string `json:"id"`
+//	Status          Status `json:"status"`
+//	ClaimValidators []byte `json:"claim_validators"`
+//	ValidatorClaims []byte `json:"validator_claims"`
+//}
+//
+//// SerializeForDB serializes a prophecy into a DBProphecy
+//func (prophecy Prophecy) SerializeForDB() (DBProphecy, error) {
+//	claimValidators, err := json.Marshal(prophecy.ClaimValidators)
+//	if err != nil {
+//		return DBProphecy{}, err
+//	}
+//
+//	validatorClaims, err := json.Marshal(prophecy.ValidatorClaims)
+//	if err != nil {
+//		return DBProphecy{}, err
+//	}
+//
+//	return DBProphecy{
+//		ID:              prophecy.ID,
+//		Status:          prophecy.Status,
+//		ClaimValidators: claimValidators,
+//		ValidatorClaims: validatorClaims,
+//	}, nil
+//}
+//
+//// DeserializeFromDB deserializes a DBProphecy into a prophecy
+//func (dbProphecy DBProphecy) DeserializeFromDB() (Prophecy, error) {
+//	claimValidators := new([]*types.ClaimValidators)
+//	err := json.Unmarshal(dbProphecy.ClaimValidators, &claimValidators)
+//	if err != nil {
+//		return Prophecy{}, err
+//	}
+//
+//	validatorClaims := new([]*types.ValidatorClaims)
+//	err = json.Unmarshal(dbProphecy.ValidatorClaims, &validatorClaims)
+//	if err != nil {
+//		return Prophecy{}, err
+//	}
+//
+//	return Prophecy{
+//		ID:              dbProphecy.ID,
+//		Status:          dbProphecy.Status,
+//		ClaimValidators: *claimValidators,
+//		ValidatorClaims: *validatorClaims,
+//	}, nil
+//}
 
 // AddClaim adds a given claim to this prophecy
-func (prophecy *Prophecy) AddClaim(validator string, claim string) {
+func AddClaim(prophecy *types.ReceiptEthProphecy, validator string, claim string) {
 	claimValidators := new(types.StringMap)
 	if len(prophecy.ClaimValidators) == 0 {
 		prophecy.ClaimValidators = append(prophecy.ClaimValidators, &types.ClaimValidators{
@@ -95,29 +91,36 @@ func (prophecy *Prophecy) AddClaim(validator string, claim string) {
 		}
 	}
 
-	if len(prophecy.ValidatorClaims) == 0 {
-		prophecy.ValidatorClaims = append(prophecy.ValidatorClaims, &types.ValidatorClaims{
-			Validator: validator,
-			Claim:     claim,
-		})
-	} else {
-		for index, vc := range prophecy.ValidatorClaims {
-			if vc.Validator == validator {
-				prophecy.ValidatorClaims[index].Claim = claim
-				break
-			} else {
-				prophecy.ValidatorClaims = append(prophecy.ValidatorClaims, &types.ValidatorClaims{
-					Validator: validator,
-					Claim:     claim,
-				})
-			}
-		}
-	}
+	//todo
+	// validator不可能相同？
+	//if len(prophecy.ValidatorClaims) == 0 {
+	//	prophecy.ValidatorClaims = append(prophecy.ValidatorClaims, &types.ValidatorClaims{
+	//		Validator: validator,
+	//		Claim:     claim,
+	//	})
+	//} else {
+	//	for index, vc := range prophecy.ValidatorClaims {
+	//		if vc.Validator == validator {
+	//			prophecy.ValidatorClaims[index].Claim = claim
+	//			break
+	//		} else {
+	//			prophecy.ValidatorClaims = append(prophecy.ValidatorClaims, &types.ValidatorClaims{
+	//				Validator: validator,
+	//				Claim:     claim,
+	//			})
+	//		}
+	//	}
+	//}
+
+	prophecy.ValidatorClaims = append(prophecy.ValidatorClaims, &types.ValidatorClaims{
+		Validator: validator,
+		Claim:     claim,
+	})
 
 }
 
 // 遍历该prophecy所有claim，找出获得最多票数的claim
-func (prophecy *Prophecy) FindHighestClaim(validators map[string]int64) (string, int64, int64) {
+func FindHighestClaim(prophecy *types.ReceiptEthProphecy, validators map[string]int64) (string, int64, int64) {
 	totalClaimsPower := int64(0)
 	highestClaimPower := int64(-1)
 	highestClaim := ""
@@ -134,18 +137,4 @@ func (prophecy *Prophecy) FindHighestClaim(validators map[string]int64) (string,
 		}
 	}
 	return highestClaim, highestClaimPower, totalClaimsPower
-}
-
-// Status is a struct that contains the status of a given prophecy
-type Status struct {
-	Text       StatusText `json:"text"`
-	FinalClaim string     `json:"final_claim"`
-}
-
-// NewStatus returns a new Status with the given data contained
-func NewStatus(text StatusText, finalClaim string) Status {
-	return Status{
-		Text:       text,
-		FinalClaim: finalClaim,
-	}
 }

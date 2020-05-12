@@ -94,9 +94,6 @@ func addEth2Chain33Flags(cmd *cobra.Command) {
 	cmd.Flags().Int64("claimtype", 0, "the type of this claim,lock=1,burn=2")
 	_ = cmd.MarkFlagRequired("claimtype")
 
-	cmd.Flags().Int64("decimal", 0, "the decimal of this token")
-	_ = cmd.MarkFlagRequired("decimal")
-
 }
 
 func Eth2Chain33(cmd *cobra.Command, args []string) {
@@ -111,7 +108,13 @@ func Eth2Chain33(cmd *cobra.Command, args []string) {
 	validator, _ := cmd.Flags().GetString("validator")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	claimtype, _ := cmd.Flags().GetInt64("claimtype")
-	decimal, _ := cmd.Flags().GetInt64("decimal")
+	nodeAddr, _ := cmd.Flags().GetString("node_addr")
+
+	decimal, err := utils.GetDecimalsFromNode(tcontract, nodeAddr)
+	if err != nil {
+		fmt.Println("get decimal error")
+		return
+	}
 
 	params := &types3.Eth2Chain33{
 		EthereumChainID:       ethid,
@@ -123,7 +126,7 @@ func Eth2Chain33(cmd *cobra.Command, args []string) {
 		EthereumSender:        sender,
 		Chain33Receiver:       receiver,
 		ValidatorAddress:      validator,
-		Amount:                strconv.FormatFloat(types3.MultiplySpecifyTimes(amount, decimal), 'f', 4, 64),
+		Amount:                strconv.FormatFloat(amount*1e8, 'f', 4, 64),
 		ClaimType:             claimtype,
 		Decimals:              decimal,
 	}
@@ -157,7 +160,13 @@ func WithdrawEth(cmd *cobra.Command, args []string) {
 	validator, _ := cmd.Flags().GetString("validator")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	claimtype, _ := cmd.Flags().GetInt64("claimtype")
-	decimal, _ := cmd.Flags().GetInt64("decimal")
+	nodeAddr, _ := cmd.Flags().GetString("node_addr")
+
+	decimal, err := utils.GetDecimalsFromNode(tcontract, nodeAddr)
+	if err != nil {
+		fmt.Println("get decimal error")
+		return
+	}
 
 	params := &types3.Eth2Chain33{
 		EthereumChainID:       ethid,
@@ -226,7 +235,7 @@ func burn(cmd *cobra.Command, args []string) {
 	params := &types3.Chain33ToEth{
 		TokenContract:    contract,
 		EthereumReceiver: receiver,
-		Amount:           types3.TrimZeroAndDot(strconv.FormatFloat(types3.MultiplySpecifyTimes(amount, decimal), 'f', 4, 64)),
+		Amount:           types3.TrimZeroAndDot(strconv.FormatFloat(amount*1e8, 'f', 4, 64)),
 		LocalCoinSymbol:  csymbol,
 		Decimals:         decimal,
 	}
@@ -319,7 +328,7 @@ func CreateRawAddValidatorTxCmd() *cobra.Command {
 	}
 
 	addValidatorFlags(cmd)
-	cmd.Flags().Int64P("power", "p", 0, "validator power set")
+	cmd.Flags().Int64P("power", "p", 0, "validator power set,must be 1-100")
 	_ = cmd.MarkFlagRequired("power")
 	return cmd
 }
@@ -377,7 +386,7 @@ func CreateRawModifyValidatorTxCmd() *cobra.Command {
 
 	addValidatorFlags(cmd)
 
-	cmd.Flags().Int64P("power", "p", 0, "validator power set")
+	cmd.Flags().Int64P("power", "p", 0, "validator power set,must be 1-100")
 	_ = cmd.MarkFlagRequired("power")
 	return cmd
 }
@@ -409,7 +418,7 @@ func CreateRawSetConsensusTxCmd() *cobra.Command {
 }
 
 func addSetConsensusFlags(cmd *cobra.Command) {
-	cmd.Flags().Int64P("power", "p", 0, "the power you want to set consensus need")
+	cmd.Flags().Int64P("power", "p", 0, "the power you want to set consensus need,must be 1-100")
 	_ = cmd.MarkFlagRequired("power")
 }
 

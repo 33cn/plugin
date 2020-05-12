@@ -53,7 +53,11 @@ func (x *x2ethereum) GetDriverName() string {
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
+// todo
+// 实现
 func (x *x2ethereum) CheckTx(tx *types.Transaction, index int) error {
-	// implement code
+	//var action x2ethereumtypes.X2EthereumAction
+	//err := types.Decode(tx.Payload, &action)
+	//if action.Ty
 	return nil
 }
