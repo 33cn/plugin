@@ -335,7 +335,7 @@ func (p *Peer) readStream() {
 					log.Error("CloseSend", "err", errs)
 				}
 
-				if strings.Contains(err.Error(), "transport is closing") {
+				if grpc.Code(err) == codes.Unavailable {
 					break //重新创建新的流
 				}
 
