@@ -35,7 +35,6 @@ type Client struct {
 	validatorC  <-chan bool
 	ctx         context.Context
 	cancel      context.CancelFunc
-	once        sync.Once
 	blockInfo   *BlockInfo
 	mtx         sync.Mutex
 }
@@ -98,6 +97,7 @@ func (client *Client) recoverFromSnapshot(snapshot []byte) error {
 func (client *Client) SetQueueClient(c queue.Client) {
 	rlog.Info("Enter SetQueue method of raft consensus")
 	client.InitClient(c, func() {
+		client.InitBlock()
 	})
 	go client.EventLoop()
 	go client.readCommits(client.commitC, client.errorC)
@@ -244,10 +244,6 @@ func (client *Client) pollingTask() {
 		case <-client.ctx.Done():
 			return
 		case value, ok := <-client.validatorC:
-			//各个节点Block只初始化一次
-			client.once.Do(func() {
-				client.InitBlock()
-			})
 			if ok && !value {
 				rlog.Debug("================I'm not the validator node=============")
 				leader := mux.Load().(bool)

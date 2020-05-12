@@ -24,12 +24,12 @@ message StorageAction {
 }
 // 内容存证模型
 message ContentOnlyNotaryStorage {
-    // Op 0表示创建 1表示追加add
-    int32  op = 1;
     //长度需要小于512k
-    bytes content = 2;
+    bytes content = 1;
     //自定义的主键，可以为空，如果没传，则用txhash为key
-    string key = 3;
+    string key = 2;
+    // Op 0表示创建 1表示追加add
+    int32  op = 3;
     //字符串值
     string value = 4;
 }
