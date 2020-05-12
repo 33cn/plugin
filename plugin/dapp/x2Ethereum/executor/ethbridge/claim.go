@@ -3,8 +3,9 @@ package ethbridge
 import (
 	"errors"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"strconv"
+
+	"github.com/golang/protobuf/proto"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
