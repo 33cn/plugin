@@ -42,6 +42,7 @@ ethReceiverAddr2="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
 ethReceiverAddrKey2="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
 maturityDegree=10
 tokenAddrBty=""
+tokenAddr=""
 
 function kill_ebrelayerC() {
     kill_ebrelayer "./C/ebrelayer"

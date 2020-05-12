@@ -97,6 +97,7 @@ func (k Keeper) ProcessSuccessfulClaimForBurn(claim, execAddr, tokenSymbol strin
 // ProcessBurn processes the burn of bridged coins from the given sender
 func (k Keeper) ProcessBurn(address, execAddr, amount, tokenAddress string, d int64, accDB *account.DB) (*types2.Receipt, error) {
 	var a int64
+	a, _ = strconv.ParseInt(types.TrimZeroAndDot(amount), 10, 64)
 	receipt, err := accDB.ExecWithdraw(execAddr, address, a)
 	if err != nil {
 		return nil, err
