@@ -15,10 +15,10 @@ import (
 
 	"sync/atomic"
 
+	"errors"
 	"time"
 
 	"github.com/33cn/chain33/client/api"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
@@ -40,6 +40,12 @@ const (
 	poolMainBlockSec               int64 = 5
 	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth int32 = 10000
+	defaultParaBlsSignTopic              = "BLS-SIGN"
+)
+
+const (
+	P2pSubCommitTx = iota
+	P2pSubElectMsg
 )
 
 var (
@@ -50,6 +56,10 @@ var (
 func init() {
 	drivers.Reg("para", New)
 	drivers.QueryData.Register("para", &client{})
+}
+
+type ClientInter interface {
+	SendPubP2PMsg(data []byte) error
 }
 
 type client struct {
@@ -65,6 +75,8 @@ type client struct {
 	wg              sync.WaitGroup
 	subCfg          *subConfig
 	dldCfg          *downloadClient
+	bullyCli        *Bully
+	blsSignCli      *blsClient
 	isClosed        int32
 	quitCreate      chan struct{}
 }
@@ -191,72 +203,22 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		para.blockSyncClient.maxSyncErrCount = subcfg.MaxSyncErrCount
 	}
 
-	para.multiDldCli = &multiDldClient{
-		paraClient:    para,
-		invNumPerJob:  defaultInvNumPerJob,
-		jobBufferNum:  defaultJobBufferNum,
-		serverTimeout: maxServerRspTimeout,
-	}
-	if subcfg.MultiDownInvNumPerJob > 0 {
-		para.multiDldCli.invNumPerJob = subcfg.MultiDownInvNumPerJob
-	}
-	if subcfg.MultiDownJobBuffNum > 0 {
-		para.multiDldCli.jobBufferNum = subcfg.MultiDownJobBuffNum
-	}
-
-	if subcfg.MultiDownServerRspTime > 0 {
-		para.multiDldCli.serverTimeout = subcfg.MultiDownServerRspTime
-	}
+	para.multiDldCli = newMultiDldCli(para, &subcfg)
 
 	para.jumpDldCli = &jumpDldClient{paraClient: para}
 
+	if len(subcfg.AuthAccount) > 0 {
+		para.blsSignCli = newBlsClient(para, &subcfg)
+		cli, err := NewBully(para, subcfg.AuthAccount, &para.wg)
+		if err != nil {
+			panic("bully create err")
+		}
+		para.bullyCli = cli
+		para.bullyCli.SetParaAPI(para.GetQueueClient())
+	}
+
 	c.SetChild(para)
 	return para
-}
-
-//["0:50","100:20","500:30"]
-func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
-	var emptyInter []*emptyBlockInterval
-	if len(cfg) == 0 {
-		interval := &emptyBlockInterval{startHeight: 0, interval: defaultEmptyBlockInterval}
-		emptyInter = append(emptyInter, interval)
-		return emptyInter, nil
-	}
-
-	list := make(map[int64]int64)
-	var seq []int64
-	for _, e := range cfg {
-		ret, err := divideStr2Int64s(e, ":")
-		if err != nil {
-			plog.Error("parse empty block inter config", "str", e)
-			return nil, err
-		}
-		seq = append(seq, ret[0])
-		list[ret[0]] = ret[1]
-	}
-	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
-	for _, h := range seq {
-		emptyInter = append(emptyInter, &emptyBlockInterval{startHeight: h, interval: list[h]})
-	}
-	return emptyInter, nil
-}
-
-func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
-	for i := 0; i < len(in); i++ {
-		if i == 0 && in[i].startHeight != 0 {
-			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-		if i > 0 && in[i].startHeight <= in[i-1].startHeight {
-			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].startHeight, "laterHeight", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-		if in[i].interval <= 0 {
-			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-	}
-	return nil
 }
 
 //para 不检查任何的交易
@@ -270,6 +232,11 @@ func (client *client) Close() {
 	close(client.commitMsgClient.quit)
 	close(client.quitCreate)
 	close(client.blockSyncClient.quitChan)
+	if len(client.subCfg.AuthAccount) > 0 {
+		close(client.blsSignCli.quit)
+		client.bullyCli.Close()
+	}
+
 	client.wg.Wait()
 
 	client.BaseClient.Close()
@@ -287,12 +254,21 @@ func (client *client) SetQueueClient(c queue.Client) {
 		client.InitBlock()
 	})
 	go client.EventLoop()
+
 	client.wg.Add(1)
 	go client.commitMsgClient.handler()
 	client.wg.Add(1)
 	go client.CreateBlock()
 	client.wg.Add(1)
 	go client.blockSyncClient.syncBlocks()
+
+	if len(client.subCfg.AuthAccount) > 0 {
+		client.wg.Add(1)
+		go client.blsSignCli.procRcvSignTxs()
+		client.wg.Add(1)
+		go client.bullyCli.Run()
+	}
+
 }
 
 func (client *client) InitBlock() {
@@ -405,54 +381,67 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 }
 
 func (client *client) ProcEvent(msg *queue.Message) bool {
+	if msg.Ty == types.EventReceiveSubData {
+		if req, ok := msg.GetData().(*types.TopicData); ok {
+
+			var sub pt.ParaP2PSubMsg
+			err := types.Decode(req.Data, &sub)
+			if err != nil {
+				plog.Error("paracross ProcEvent decode", "ty", types.EventReceiveSubData)
+				return true
+			}
+			plog.Info("paracross Recv from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			switch sub.GetTy() {
+			case P2pSubCommitTx:
+				client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
+			case P2pSubElectMsg:
+				client.bullyCli.Receive(sub.GetElection())
+			}
+
+		} else {
+			plog.Error("paracross ProcEvent topicData", "ty", types.EventReceiveSubData)
+		}
+
+		return true
+	}
+
 	return false
+}
+
+func (client *client) sendP2PMsg(ty int64, data interface{}) error {
+	msg := client.GetQueueClient().NewMessage("p2p", ty, data)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		return err
+	}
+	resp, err := client.GetQueueClient().Wait(msg)
+	if err != nil {
+		return err
+	}
+	if resp.GetData().(*types.Reply).IsOk {
+		return nil
+	}
+	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
+}
+
+func (client *client) SendPubP2PMsg(msg []byte) error {
+	data := &types.PublishTopicMsg{Topic: "consensus", Msg: msg}
+	return client.sendP2PMsg(types.EventPubTopicMsg, data)
+
+}
+
+func (client *client) subP2PTopic() error {
+	return client.sendP2PMsg(types.EventSubTopic, &types.SubTopic{Module: "consensus", Topic: defaultParaBlsSignTopic})
+}
+
+//TODO 本节点退出时候会自动removeTopic吗
+func (client *client) rmvP2PTopic() error {
+	return client.sendP2PMsg(types.EventRemoveTopic, &types.RemoveTopic{Module: "consensus", Topic: defaultParaBlsSignTopic})
+
 }
 
 func (client *client) isCaughtUp() bool {
 	return atomic.LoadInt32(&client.caughtUp) == 1
-}
-
-//IsCaughtUp 是否追上最新高度,
-func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
-
-	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp()}, nil
-}
-
-func (client *client) Query_LocalBlockInfo(req *types.ReqInt) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
-
-	var block *pt.ParaLocalDbBlock
-	var err error
-	if req.Height <= -1 {
-		block, err = client.getLastLocalBlock()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		block, err = client.getLocalBlockByHeight(req.Height)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	blockInfo := &pt.ParaLocalDbBlockInfo{
-		Height:         block.Height,
-		MainHash:       common.ToHex(block.MainHash),
-		MainHeight:     block.MainHeight,
-		ParentMainHash: common.ToHex(block.ParentMainHash),
-		BlockTime:      block.BlockTime,
-	}
-
-	for _, tx := range block.Txs {
-		blockInfo.Txs = append(blockInfo.Txs, common.ToHex(tx.Hash()))
-	}
-
-	return blockInfo, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {
@@ -482,29 +471,52 @@ func checkMinerTx(current *types.BlockDetail) error {
 	return nil
 }
 
-// Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户
-func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
-	if acc == nil {
-		return nil, types.ErrInvalidParam
-	}
-	plog.Info("Query_CreateNewAccount", "acc", acc.Addr)
-	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
-	client.commitMsgClient.onWalletAccount(acc)
-	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
-}
-
-// Query_WalletStatus 通知para共识模块钱包锁状态有变化
-func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
-	if walletStatus == nil {
-		return nil, types.ErrInvalidParam
-	}
-	plog.Info("Query_WalletStatus", "walletStatus", walletStatus.IsWalletLock)
-	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
-	client.commitMsgClient.onWalletStatus(walletStatus)
-	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
-}
-
 //比较newBlock是不是最优区块
 func (client *client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
+}
+
+//["0:50","100:20","500:30"]
+func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
+	var emptyInter []*emptyBlockInterval
+	if len(cfg) == 0 {
+		interval := &emptyBlockInterval{startHeight: 0, interval: defaultEmptyBlockInterval}
+		emptyInter = append(emptyInter, interval)
+		return emptyInter, nil
+	}
+
+	list := make(map[int64]int64)
+	var seq []int64
+	for _, e := range cfg {
+		ret, err := divideStr2Int64s(e, ":")
+		if err != nil {
+			plog.Error("parse empty block inter config", "str", e)
+			return nil, err
+		}
+		seq = append(seq, ret[0])
+		list[ret[0]] = ret[1]
+	}
+	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
+	for _, h := range seq {
+		emptyInter = append(emptyInter, &emptyBlockInterval{startHeight: h, interval: list[h]})
+	}
+	return emptyInter, nil
+}
+
+func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
+	for i := 0; i < len(in); i++ {
+		if i == 0 && in[i].startHeight != 0 {
+			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+		if i > 0 && in[i].startHeight <= in[i-1].startHeight {
+			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].startHeight, "laterHeight", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+		if in[i].interval <= 0 {
+			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+	}
+	return nil
 }

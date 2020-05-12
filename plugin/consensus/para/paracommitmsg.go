@@ -61,6 +61,7 @@ type commitMsgClient struct {
 	txFeeRate            int64
 	selfConsEnableList   []*paraSelfConsEnable //适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
 	privateKey           crypto.PrivKey
+	authNodes            atomic.Value
 	blsPriKey            *g2pubs.SecretKey
 	blsPubKey            *g2pubs.PublicKey
 	quit                 chan struct{}
@@ -96,11 +97,11 @@ out:
 		//出错场景入口，需要reset 重发
 		case <-client.resetCh:
 			client.resetSend()
-			client.sendCommitTx()
-		//例行检查发送入口
+			client.createCommitTx()
+		//例行检查发送入口,及时触发未发送共识
 		case <-readTick:
 			client.procChecks(checkParams)
-			client.sendCommitTx()
+			client.createCommitTx()
 
 		case <-client.quit:
 			break out
@@ -121,10 +122,7 @@ func (client *commitMsgClient) updateChainHeightNotify(height int64, isDel bool)
 	atomic.StoreInt64(&client.chainHeight, height)
 
 	client.checkRollback(height)
-	if !client.isSendingCommitMsg() {
-		client.sendCommitTx()
-	}
-
+	client.createCommitTx()
 }
 
 // reset notify 提供重设发送参数，发送tx的入口
@@ -135,7 +133,7 @@ func (client *commitMsgClient) resetNotify() {
 //新的区块产生，检查是否有commitTx正在发送入口
 func (client *commitMsgClient) commitTxCheckNotify(block *types.ParaTxDetail) {
 	if client.checkCommitTxSuccess(block) {
-		client.sendCommitTx()
+		client.createCommitTx()
 	}
 }
 
@@ -160,7 +158,28 @@ func (client *commitMsgClient) getConsensusHeight() int64 {
 	return status.Height
 }
 
-func (client *commitMsgClient) sendCommitTx() {
+func (client *commitMsgClient) createCommitTx() {
+	tx := client.getCommitTx()
+	if tx == nil {
+		return
+	}
+
+	//bls sign, send to p2p
+	if !client.paraClient.subCfg.BlsSignOff {
+		//send to p2p pubsub
+		plog.Info("para commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
+		client.paraClient.SendPubP2PMsg(types.Encode(tx))
+
+		return
+	}
+
+	client.pushCommitTx(tx)
+
+}
+
+//四个触发：1,新增区块 2,10s tick例行检查 3,发送交易成功上链 4,异常重发
+//1&2　只要共识高度追赶上了sendingHeight，就可以继续发送，即便当前节点发送交易仍未上链也直接取消发送新交易
+func (client *commitMsgClient) getCommitTx() *types.Transaction {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
@@ -172,35 +191,76 @@ func (client *commitMsgClient) sendCommitTx() {
 
 	chainHeight := atomic.LoadInt64(&client.chainHeight)
 	sendingHeight := client.sendingHeight
-	isSync := client.isSync()
-	plog.Info("para commitMsg---status", "chainHeight", chainHeight, "sendingHeight", sendingHeight,
-		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync)
-
-	if client.isSendingCommitMsg() || !isSync {
-		return
-	}
-
 	if sendingHeight < consensHeight {
 		sendingHeight = consensHeight
 	}
 
+	isSync := client.isSync()
+	plog.Info("para commitMsg---status", "chainHeight", chainHeight, "sendingHeight", sendingHeight,
+		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync)
+
+	if !isSync {
+		return nil
+	}
+
 	//1.如果是在主链共识场景，共识高度可能大于平行链的链高度
 	//2.已发送，未共识场景
-	if chainHeight < consensHeight || sendingHeight > consensHeight {
+	if sendingHeight > consensHeight || consensHeight > chainHeight || sendingHeight >= chainHeight {
+		return nil
+	}
+
+	//满足　sendingHeight <= consensHeight <= chainHeight && sendingHeight < chainHeight
+	signTx, count := client.getSendingTx(sendingHeight, chainHeight)
+	if signTx == nil {
+		return nil
+	}
+	client.sendingHeight = sendingHeight + count
+	return signTx
+
+}
+
+//client.checkTxCommitTimes和client.sendingHeight锁的场景可以区分
+//发送commitTx，可能跟checkCommitTxSuccess获取全局变量冲突，加锁，　如果有仍未成功上链的交易，直接覆盖重置
+func (client *commitMsgClient) pushCommitTx(signTx *types.Transaction) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	client.checkTxCommitTimes = 0
+	client.setCurrentTx(signTx)
+	client.sendMsgCh <- signTx
+}
+
+func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitAction) {
+	txs, _, err := client.calcCommitMsgTxs(acts)
+	if err != nil {
 		return
 	}
+	plog.Debug("paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
+	for i, msg := range acts {
+		plog.Debug("paracommitmsg sendCommitActions", "idx", i, "height", msg.Status.Height, "mainheight", msg.Status.MainBlockHeight,
+			"blockhash", common.HashHex(msg.Status.BlockHash), "mainHash", common.HashHex(msg.Status.MainBlockHash),
+			"addrsmap", common.ToHex(msg.Bls.AddrsMap))
+	}
+	client.pushCommitTx(txs)
+}
 
-	if sendingHeight < chainHeight {
-		signTx, count := client.getSendingTx(sendingHeight, chainHeight)
-		if signTx == nil {
-			return
+func (client *commitMsgClient) checkTxIn(block *types.ParaTxDetail, tx *types.Transaction) bool {
+	//committx是平行链交易
+	if types.IsParaExecName(string(tx.Execer)) {
+		for _, tx := range block.TxDetails {
+			if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
+				return true
+			}
 		}
-		client.checkTxCommitTimes = 0
-		client.sendingHeight = sendingHeight + count
-		client.setCurrentTx(signTx)
-		client.sendMsgCh <- signTx
+		return false
 	}
 
+	//主链交易，向主链查询,平行链获取到的只是过滤了的平行链交易
+	receipt, _ := client.paraClient.QueryTxOnMainByHash(tx.Hash())
+	if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
+		return true
+	}
+	return false
 }
 
 func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) bool {
@@ -212,82 +272,63 @@ func (client *commitMsgClient) checkCommitTxSuccess(block *types.ParaTxDetail) b
 		return false
 	}
 
-	//只处理AddType block,回滚的不处理
-	if block.Type == types.AddBlock {
-		//使用map　比每个交易hash byte比较效率应该会高些
-		txMap := make(map[string]bool)
-		//committx是平行链交易
-		if types.IsParaExecName(string(curTx.Execer)) {
-			for _, tx := range block.TxDetails {
-				if bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) && tx.Receipt.Ty == types.ExecOk {
-					txMap[string(tx.Tx.Hash())] = true
-				}
-			}
-		} else {
-			// committx是主链交易，需要向主链查询,平行链获取到的只是过滤了的平行链交易
-			//如果正在追赶，则暂时不去主链查找，减少耗时
-			if !client.paraClient.isCaughtUp() {
-				return false
-			}
-			receipt, _ := client.paraClient.QueryTxOnMainByHash(curTx.Hash())
-			if receipt != nil && receipt.Receipt.Ty == types.ExecOk {
-				txMap[string(curTx.Hash())] = true
-			}
-		}
-
-		//验证通过
-		if txMap[string(curTx.Hash())] {
-			client.setCurrentTx(nil)
-			return true
-		}
-	}
-
-	return client.reSendCommitTx(block.Type)
-}
-
-func (client *commitMsgClient) reSendCommitTx(addType int64) bool {
 	//当前addType是回滚，则不计数，如果有累计则撤销上次累计次数，重新计数
-	if addType != types.AddBlock {
+	if block.Type != types.AddBlock {
 		if client.checkTxCommitTimes > 0 {
 			client.checkTxCommitTimes--
 		}
 		return false
 	}
 
+	if client.checkTxIn(block, curTx) {
+		client.setCurrentTx(nil)
+		return true
+	}
+
+	return client.reSendCommitTx(curTx)
+}
+
+func (client *commitMsgClient) reSendCommitTx(tx *types.Transaction) bool {
 	client.checkTxCommitTimes++
 	if client.checkTxCommitTimes < client.waitMainBlocks {
 		return false
 	}
 
 	client.checkTxCommitTimes = 0
+	//bls聚合签名场景，发送未成功上链，继续发送交易
+	if !client.paraClient.subCfg.BlsSignOff {
+		//resend tx
+		client.sendMsgCh <- tx
+		return false
+	}
+	//非聚合签名场景，发送未成功，触发重新构建交易发送
 	client.resetSendEnv()
 	return true
 }
 
-//如果共识高度一直没有追上发送高度，且当前发送高度已经上链，说明共识一直没达成，安全起见，超过停止次数后，重发
-func (client *commitMsgClient) checkConsensusStop(consensStopTimes uint32) uint32 {
+//如果共识高度一直没有追上发送高度，超出等待时间后，说明共识一直没达成，安全起见，超过停止次数后，重发
+func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
 	consensHeight := client.getConsensusHeight()
-	if client.sendingHeight > consensHeight && !client.isSendingCommitMsg() {
-		if consensStopTimes > client.waitConsensStopTimes {
-			plog.Debug("para commitMsg-checkConsensusStop", "times", consensStopTimes)
+	if client.sendingHeight > consensHeight {
+		checks.consensStopTimes += 1
+		if checks.consensStopTimes > client.waitConsensStopTimes {
+			plog.Debug("para commitMsg-checkConsensusStop", "times", checks.consensStopTimes)
+			checks.consensStopTimes = 0
 			client.resetSendEnv()
-			return 0
 		}
-		return consensStopTimes + 1
 	}
-
-	return 0
+	return
 }
 
 func (client *commitMsgClient) checkAuthAccountIn() {
-	nodes, err := client.getNodeGroupAddrs()
+	nodeStr, err := client.getNodeGroupAddrs()
 	if err != nil {
 		return
 	}
-	authExist := strings.Contains(nodes, client.authAccount)
+	authExist := strings.Contains(nodeStr, client.authAccount)
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -295,10 +336,15 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 	}
 
 	client.authAccountIn = authExist
+
+	nodes := strings.Split(nodeStr, ",")
+	client.paraClient.bullyCli.UpdateValidNodes(nodes)
+	client.authNodes.Store(nodes)
+
 }
 
 func (client *commitMsgClient) procChecks(checks *commitCheckParams) {
-	checks.consensStopTimes = client.checkConsensusStop(checks.consensStopTimes)
+	client.checkConsensusStop(checks)
 	client.checkAuthAccountIn()
 }
 
@@ -369,13 +415,13 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	}
 
 	if !client.paraClient.subCfg.BlsSignOff {
-		err = client.blsSign(commits)
+		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
 			return nil, 0
 		}
 	}
 
-	signTx, count, err := client.calcCommitMsgTxs(commits, atomic.LoadInt64(&client.txFeeRate))
+	signTx, count, err := client.calcCommitMsgTxs(commits)
 	if err != nil || signTx == nil {
 		return nil, 0
 	}
@@ -391,10 +437,10 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	return signTx, count
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossCommitAction, feeRate int64) (*types.Transaction, int64, error) {
-	txs, count, err := client.batchCalcTxGroup(notifications, feeRate)
+func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossCommitAction) (*types.Transaction, int64, error) {
+	txs, count, err := client.batchCalcTxGroup(notifications, atomic.LoadInt64(&client.txFeeRate))
 	if err != nil {
-		txs, err = client.singleCalcTx((notifications)[0], feeRate)
+		txs, err = client.singleCalcTx((notifications)[0], atomic.LoadInt64(&client.txFeeRate))
 		if err != nil {
 			plog.Error("single calc tx", "height", notifications[0].Status.Height)
 
@@ -447,7 +493,10 @@ func (client *commitMsgClient) getExecName(commitHeight int64) string {
 func (client *commitMsgClient) batchCalcTxGroup(notifications []*pt.ParacrossCommitAction, feeRate int64) (*types.Transaction, int, error) {
 	var rawTxs types.Transactions
 	cfg := client.paraClient.GetAPI().GetConfig()
-	for _, notify := range notifications {
+	for i, notify := range notifications {
+		if i >= int(types.MaxTxGroupSize) {
+			break
+		}
 		execName := client.getExecName(notify.Status.Height)
 		tx, err := paracross.CreateRawCommitTx4MainChain(cfg, notify, execName, feeRate)
 		if err != nil {
@@ -917,11 +966,8 @@ func (client *commitMsgClient) fetchPriKey() error {
 	}
 
 	client.privateKey = priKey
-	client.blsPriKey = getBlsPriKey(priKey.Bytes())
-	client.blsPubKey = g2pubs.PrivToPub(client.blsPriKey)
-	serial := client.blsPubKey.Serialize()
-	plog.Info("para commit get pub bls", "final keys", common.ToHex(serial[:]))
-	plog.Info("para commit fetchPriKey success")
+	client.paraClient.blsSignCli.setBlsPriKey(priKey.Bytes())
+
 	return nil
 }
 
@@ -972,6 +1018,16 @@ func (client *commitMsgClient) setSelfConsEnable() error {
 func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 	for _, v := range client.selfConsEnableList {
 		if height >= v.startHeight && height <= v.endHeight {
+			return true
+		}
+	}
+	return false
+}
+
+func (client *commitMsgClient) isValidNode(addr string) bool {
+	nodes := client.authNodes.Load().([]string)
+	for _, v := range nodes {
+		if v == addr {
 			return true
 		}
 	}

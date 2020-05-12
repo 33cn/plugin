@@ -266,8 +266,9 @@ message ReplyQuerySelfStages {
 }
 
 message ParacrossCommitBlsInfo {
-    bytes   sign        = 1;
-    bytes   addrs       = 2;  //addrs' bitmap
+    bytes   sign           = 1;
+    bytes   addrsMap       = 2;  //addrs' bitmap
+    repeated string addrs  = 3; //addr's array
 }
 
 message ParacrossCommitAction {
@@ -413,6 +414,39 @@ message ParaLocalDbBlockInfo {
     int64    blockTime      = 5;
     repeated string txs     = 6;
 }
+
+message ParaBlsSignSumDetails {
+    repeated string addrs    = 1;
+    repeated bytes msgs      = 2;
+    repeated bytes signs     = 3;
+    int64 height             = 4;
+}
+
+message ParaBlsSignSumInfo {
+    repeated ParaBlsSignSumDetails info = 1;
+}
+
+message ElectionMsg {
+    string toID     = 1; //target id
+    string peerID   = 2; //src id
+    int32  type     = 3;
+    bytes  data     = 4;
+}
+
+message ParaP2PSubMsg {
+    int32 ty = 1;
+    oneof value {
+        Transaction    commitTx          = 10;
+        ElectionMsg    election          = 11;
+    }
+
+}
+
+message ElectionStatus {
+    bool   isLeader = 1;
+    string leaderId = 2;
+}
+
 
 service paracross {
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}

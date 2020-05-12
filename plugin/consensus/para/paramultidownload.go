@@ -68,6 +68,26 @@ type multiDldClient struct {
 	mtx            sync.Mutex
 }
 
+func newMultiDldCli(para *client, cfg *subConfig) *multiDldClient {
+	multi := &multiDldClient{
+		paraClient:    para,
+		invNumPerJob:  defaultInvNumPerJob,
+		jobBufferNum:  defaultJobBufferNum,
+		serverTimeout: maxServerRspTimeout,
+	}
+	if cfg.MultiDownInvNumPerJob > 0 {
+		multi.invNumPerJob = cfg.MultiDownInvNumPerJob
+	}
+	if cfg.MultiDownJobBuffNum > 0 {
+		multi.jobBufferNum = cfg.MultiDownJobBuffNum
+	}
+
+	if cfg.MultiDownServerRspTime > 0 {
+		multi.serverTimeout = cfg.MultiDownServerRspTime
+	}
+	return multi
+}
+
 func (m *multiDldClient) getInvs(startHeight, endHeight int64) []*inventory {
 	var invs []*inventory
 	if endHeight > startHeight && endHeight-startHeight > maxRollbackHeight {
