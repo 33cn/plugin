@@ -335,6 +335,10 @@ func (p *Peer) readStream() {
 					log.Error("CloseSend", "err", errs)
 				}
 
+				if strings.Contains(err.Error(), "transport is closing") {
+					break //重新创建新的流
+				}
+
 				log.Error("readStream", "recv,err:", err.Error(), "peerIp", p.Addr())
 
 				if grpc.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
