@@ -425,7 +425,7 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 func (b *blsClient) showTxBuffInfo() *pt.ParaBlsSignSumInfo {
 	var seq []int64
 	var ret pt.ParaBlsSignSumInfo
-	for k, _ := range b.txsBuff {
+	for k := range b.txsBuff {
 		seq = append(seq, k)
 	}
 	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })

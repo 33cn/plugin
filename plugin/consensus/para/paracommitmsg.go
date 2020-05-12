@@ -1033,4 +1033,3 @@ func (client *commitMsgClient) isValidNode(addr string) bool {
 	}
 	return false
 }
-
