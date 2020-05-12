@@ -314,7 +314,6 @@ function updata_relayer_toml_ropston() {
     #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
 }
 
-
 # 更新 B C D 的配置文件
 function updata_all_relayer_toml() {
     local port=9901
@@ -448,7 +447,7 @@ function eth_block_wait() {
     local cur_height=""
     local new_height=""
     local url=${2}
-    if [ "${url}" == "" ];then
+    if [ "${url}" == "" ]; then
         cur_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
     else
         cur_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")
@@ -457,7 +456,7 @@ function eth_block_wait() {
     local expect=$((cur_height + ${1} + 1))
     local count=0
     while true; do
-        if [ "${url}" == "" ];then
+        if [ "${url}" == "" ]; then
             new_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
         else
             new_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")

@@ -306,8 +306,8 @@ function TestETH2Chain33Erc20() {
 
     # token4erc20 在 chain33 上先有 token,同时 mint
     tokenSymbol="testc"
-#    result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
-#    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
+    #    result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
+    #    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
     tokenAddr="0x47F62ba65bCa4150BE98F31566DC559b9b04fc2D"
 
     # 先铸币 1000
@@ -543,7 +543,7 @@ function TestETH2Chain33Erc20Kill() {
 
 function AllRelayerMainTest() {
     set +e
-#    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2Ethereum build_chain33_1:/root/x2Ethereum
+    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2Ethereum build_chain33_1:/root/x2Ethereum
 
     Chain33Cli="./../chain33-cli"
 
@@ -561,14 +561,14 @@ function AllRelayerMainTest() {
     EthImportKey
 
     # test
-#    TestChain33ToEthAssets
+    #    TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
-#
-#    # kill relayer and start relayer
-#        TestChain33ToEthAssetsKill
-#        TestETH2Chain33AssetsKill
-#        TestETH2Chain33Erc20Kill
+    #
+    #    # kill relayer and start relayer
+    #        TestChain33ToEthAssetsKill
+    #        TestETH2Chain33AssetsKill
+    #        TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
