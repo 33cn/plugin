@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 # shellcheck source=/dev/null
+
+# 测试前请先阅读文档，对代码进行修改 http://note.youdao.com/noteshare?id=675ce9a1162b6639182206864985e935&sub=14A1CFAA14CB4318B207EAEC94991A93
 set -x
 set +e
 
@@ -44,27 +46,20 @@ function kill_ebrelayerD() {
     kill_ebrelayer "./D/ebrelayer"
 }
 function start_ebrelayerC() {
-    start_ebrelayer "./C/ebrelayer" "./C/ebrelayer.log"
-    ${CLIC} relayer unlock -p 123456hzj
-    sleep 5
-    eth_block_wait 1 https://ropsten-rpc.linkpool.io/
+    start_ebrelayer_and_unlock C
+    block_wait 2
+    eth_block_wait 3 https://ropsten-rpc.linkpool.io/
     sleep 1
 }
 function start_ebrelayerD() {
-    start_ebrelayer "./D/ebrelayer" "./D/ebrelayer.log"
-    ${CLID} relayer unlock -p 123456hzj
-    sleep 5
-    eth_block_wait 1 https://ropsten-rpc.linkpool.io/
+    start_ebrelayer_and_unlock D
+    block_wait 2
+    eth_block_wait 3 https://ropsten-rpc.linkpool.io/
     sleep 1
 }
 
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLIA} relayer set_pwd -n 123456hzj -o kk)
-    cli_ret "${result}" "set_pwd"
-
-    result=$(${CLIA} relayer unlock -p 123456hzj)
-    cli_ret "${result}" "unlock"
 
     result=$(${CLIA} relayer ethereum deploy)
     cli_ret "${result}" "deploy"
@@ -86,18 +81,17 @@ function StartRelayerAndDeploy() {
     cp './relayer.toml' './A/relayer.toml'
     cp './ebrelayer' './A/ebrelayer'
 
-    #start_trufflesuite
+    start_ebrelayer_and_setpwd_unlock A
 
-    #start_ebrelayer "./A/ebrelayer" "./A/ebrelayer.log"
     # 部署合约
-    #InitAndDeploy
+    InitAndDeploy
 
-    # 获取 BridgeRegistry 地址
-    #result=$(${CLIA} relayer ethereum bridgeRegistry)
-    #BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
-    BridgeRegistry="0x212ae3c705DA7E3568a85595E8e16268FE7F6448"
+    获取 BridgeRegistry 地址
+    result=$(${CLIA} relayer ethereum bridgeRegistry)
+    BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
+#    BridgeRegistry="0x212ae3c705DA7E3568a85595E8e16268FE7F6448"
 
-    #kill_ebrelayer "./A/ebrelayer"
+    kill_ebrelayer "./A/ebrelayer"
     # 修改 relayer.toml 配置文件
     updata_relayer_toml_ropston ${BridgeRegistry} ${maturityDegree} "./A/relayer.toml"
     updata_all_relayer_toml2
@@ -171,15 +165,7 @@ function StartAllEbrelayer() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 重启 ebrelayer 并解锁
     for name in A B C D; do
-        start_ebrelayer "./"$name"/ebrelayer" "./"$name"/ebrelayer.log"
-
-        # 导入测试地址私钥
-        CLI="./ebcli_$name"
-
-        result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
-
-        result=$(${CLI} relayer unlock -p 123456hzj)
-        cli_ret "${result}" "unlock"
+        start_ebrelayer_and_setpwd_unlock $name
     done
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -219,14 +205,18 @@ function EthImportKey() {
 function TestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # token4chain33 在 以太坊 上先有 bty
-    result=$(${CLIA} relayer ethereum token4chain33 -s bty)
+    tokenSymbol="bty"
+
+    result=$(${CLIA} relayer ethereum token4chain33 -s "${tokenSymbol}")
     tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
+
+    #tokenAddrBty="0x79033B1090b0394BadCf43C4394cfe334BA2AF88" # YCC
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr1} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t "${tokenSymbol}" -r ${ethReceiverAddr1} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -282,7 +272,7 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
     balance=$(cli_ret "${result}" "balance" ".balance")
 
-    hash=$(${Chain33Cli} send x2ethereum burn -a 0.01 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum burn -a 0.1 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -306,9 +296,9 @@ function TestETH2Chain33Erc20() {
 
     # token4erc20 在 chain33 上先有 token,同时 mint
     tokenSymbol="testc"
-    #    result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
-    #    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
-    tokenAddr="0x47F62ba65bCa4150BE98F31566DC559b9b04fc2D"
+    result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
+    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
+    #tokenAddr="0x47F62ba65bCa4150BE98F31566DC559b9b04fc2D"
 
     # 先铸币 1000
     result=$(${CLIA} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
@@ -367,6 +357,8 @@ function TestChain33ToEthAssetsKill() {
         tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
     fi
 
+    # tokenAddrBty="0x79033B1090b0394BadCf43C4394cfe334BA2AF88" # YCC
+
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
@@ -374,7 +366,7 @@ function TestChain33ToEthAssetsKill() {
     kill_ebrelayerD
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 1.41 -t bty -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -386,10 +378,10 @@ function TestChain33ToEthAssetsKill() {
     start_ebrelayerC
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
-    cli_ret "${result}" "balance" ".balance" "5"
+    cli_ret "${result}" "balance" ".balance" "1.41"
 
     # eth burn
-    result=$(${CLIA} relayer ethereum burn -m 5 -k "${ethReceiverAddrKey2}" -r "${chain33Validator1}" -t "${tokenAddrBty}")
+    result=$(${CLIA} relayer ethereum burn -m 1.41 -k "${ethReceiverAddrKey2}" -r "${chain33Validator1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "burn"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
@@ -404,7 +396,7 @@ function TestChain33ToEthAssetsKill() {
     start_ebrelayerD
 
     result=$(${Chain33Cli} account balance -a "${chain33Validator1}" -e x2ethereum)
-    balance_ret "${result}" "5"
+    balance_ret "${result}" "1.41"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -419,29 +411,30 @@ function TestETH2Chain33AssetsKill() {
     bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
 
     result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-    cli_ret "${result}" "balance" ".balance" "0"
+    balance=$(cli_ret "${result}" "balance" ".balance")
 
     kill_ebrelayerC
     kill_ebrelayerD
 
     # eth lock 0.1
-    result=$(${CLIA} relayer ethereum lock -m 0.1 -k "${ethReceiverAddrKey1}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    result=$(${CLIA} relayer ethereum lock -m 0.133 -k "${ethReceiverAddrKey1}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     cli_ret "${result}" "lock"
 
     result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-    cli_ret "${result}" "balance" ".balance" "0.1"
+    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.133" | bc)
 
     # eth 等待 10 个区块
     eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
 
-    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
+    balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq -r ".balance")
     balance_ret "${result}" "0"
 
     start_ebrelayerC
     start_ebrelayerD
 
-    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
-    balance_ret "${result}" "0.1"
+
+    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq -r ".balance")
+    balance_ret "${result}" "0.133"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
     balance=$(cli_ret "${result}" "balance" ".balance")
@@ -449,7 +442,7 @@ function TestETH2Chain33AssetsKill() {
     kill_ebrelayerC
     kill_ebrelayerD
 
-    hash=$(${Chain33Cli} send x2ethereum burn -a 0.1 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum burn -a 0.133 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -459,13 +452,13 @@ function TestETH2Chain33AssetsKill() {
     eth_block_wait 2 https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-    cli_ret "${result}" "balance" ".balance" "0.1"
+    cli_ret "${result}" "balance" ".balance" "0.133"
 
     start_ebrelayerC
     start_ebrelayerD
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
-    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.1" | bc)
+    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.133" | bc)
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -544,6 +537,7 @@ function TestETH2Chain33Erc20Kill() {
 function AllRelayerMainTest() {
     set +e
     #    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2Ethereum build_chain33_1:/root/x2Ethereum
+#    docker cp ${GOPATH}/src/github.com/33cn/plugin/plugin/dapp/x2Ethereum/cmd/build/RopstenTest.sh build_chain33_1:/root/x2Ethereum/RopstenTest.sh
 
     Chain33Cli="./../chain33-cli"
 
@@ -555,19 +549,19 @@ function AllRelayerMainTest() {
     fi
 
     # init
-    #StartRelayerAndDeploy
-    #InitChain33Vilators
+    StartRelayerAndDeploy
+    InitChain33Vilators
     StartAllEbrelayer
     EthImportKey
 
     # test
-    #    TestChain33ToEthAssets
+    TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
-    #
+
     #    # kill relayer and start relayer
     #        TestChain33ToEthAssetsKill
-    #        TestETH2Chain33AssetsKill
+   #         TestETH2Chain33AssetsKill
     #        TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

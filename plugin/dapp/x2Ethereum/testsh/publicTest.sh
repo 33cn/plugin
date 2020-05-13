@@ -131,6 +131,68 @@ function start_ebrelayer() {
     done
 }
 
+# 后台启动 ebrelayer 进程 $1 A B C D
+function start_ebrelayer_and_unlock() {
+    start_ebrelayer "./${1}/ebrelayer" "./${1}/ebrelayer.log"
+    sleep 2
+
+    local CLI="./ebcli_$1"
+    local count=0
+    while true; do
+        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
+        if [[ ${result} == "true" ]]; then
+            break
+        fi
+
+        count=$((count + 1))
+        if [[ ${count} == 5 ]]; then
+            echo -e "${RED}failed to unlock${NOC}"
+            exit 1
+        fi
+
+        sleep 1
+    done
+}
+
+# 后台启动 ebrelayer 进程 $1 A B C D
+function start_ebrelayer_and_setpwd_unlock() {
+    start_ebrelayer "./${1}/ebrelayer" "./${1}/ebrelayer.log"
+    sleep 2
+
+    local CLI="./ebcli_$1"
+    local count=0
+    while true; do
+        result=$(${CLI} relayer set_pwd -n 123456hzj -o kk | jq -r .isOK)
+        if [[ ${result} == "true" ]]; then
+            break
+        fi
+
+        count=$((count + 1))
+        if [[ ${count} == 5 ]]; then
+            echo -e "${RED}failed to set_pwd${NOC}"
+            exit 1
+        fi
+
+        sleep 1
+    done
+
+    count=0
+    while true; do
+        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
+        if [[ ${result} == "true" ]]; then
+            break
+        fi
+
+        count=$((count + 1))
+        if [[ ${count} == 5 ]]; then
+            echo -e "${RED}failed to unlock${NOC}"
+            exit 1
+        fi
+
+        sleep 1
+    done
+}
+
 # 杀死进程ebrelayer 进程 $1进程名称
 function kill_ebrelayer() {
     pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}')
