@@ -359,7 +359,7 @@ function TestChain33ToEthAssetsKill() {
         tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
     fi
 
-#    tokenAddrBty="0xE79142B3171019fcfcA838f0792edB08d4F2a94F"
+    #    tokenAddrBty="0xE79142B3171019fcfcA838f0792edB08d4F2a94F"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -560,10 +560,10 @@ function AllRelayerMainTest() {
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
 
-       # kill relayer and start relayer
-            TestChain33ToEthAssetsKill
-             TestETH2Chain33AssetsKill
-            TestETH2Chain33Erc20Kill
+    # kill relayer and start relayer
+    TestChain33ToEthAssetsKill
+    TestETH2Chain33AssetsKill
+    TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
