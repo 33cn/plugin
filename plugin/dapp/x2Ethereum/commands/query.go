@@ -122,7 +122,7 @@ func queryConsensus(cmd *cobra.Command, args []string) {
 		FuncName: types2.FuncQueryConsensusThreshold,
 	}
 
-	channel := &types2.ReceiptSetConsensusThreshold{}
+	channel := &types2.ReceiptQueryConsensusThreshold{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", query, channel)
 	ctx.Run()
 }

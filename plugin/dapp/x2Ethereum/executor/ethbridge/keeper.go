@@ -1,8 +1,9 @@
 package ethbridge
 
 import (
-	"encoding/json"
 	"strconv"
+
+	"github.com/golang/protobuf/proto"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
@@ -13,11 +14,11 @@ import (
 )
 
 type Keeper struct {
-	oracleKeeper OracleKeeper
+	oracleKeeper oracle.OracleKeeper
 	db           dbm.KV
 }
 
-func NewKeeper(oracleKeeper OracleKeeper, db dbm.KV) Keeper {
+func NewKeeper(oracleKeeper oracle.OracleKeeper, db dbm.KV) Keeper {
 	return Keeper{
 		oracleKeeper: oracleKeeper,
 		db:           db,
@@ -25,16 +26,16 @@ func NewKeeper(oracleKeeper OracleKeeper, db dbm.KV) Keeper {
 }
 
 // 处理接收到的ethchain33请求
-func (k Keeper) ProcessClaim(claim types.Eth2Chain33) (oracle.Status, error) {
+func (k Keeper) ProcessClaim(claim types.Eth2Chain33) (*types.ProphecyStatus, error) {
 	oracleClaim, err := CreateOracleClaimFromEthClaim(claim)
 	if err != nil {
 		elog.Error("CreateEthClaimFromOracleString", "CreateOracleClaimFromOracleString error", err)
-		return oracle.Status{}, err
+		return nil, err
 	}
 
 	status, err := k.oracleKeeper.ProcessClaim(oracleClaim)
 	if err != nil {
-		return oracle.Status{}, err
+		return nil, err
 	}
 	return status, nil
 }
@@ -52,14 +53,7 @@ func (k Keeper) ProcessSuccessfulClaimForLock(claim, execAddr, tokenSymbol, toke
 
 	if oracleClaim.ClaimType == int64(types.LOCK_CLAIM_TYPE) {
 		//铸币到相关的tokenSymbolBank账户下
-		d := oracleClaim.Decimals
-		var amount int64
-		if d > 8 {
-			amount = int64(types.Toeth(oracleClaim.Amount, d-8))
-		} else {
-			a, _ := strconv.ParseFloat(types.TrimZeroAndDot(oracleClaim.Amount), 64)
-			amount = int64(types.MultiplySpecifyTimes(a, 8-d))
-		}
+		amount, _ := strconv.ParseInt(types.TrimZeroAndDot(oracleClaim.Amount), 10, 64)
 
 		receipt, err = accDB.Mint(execAddr, amount)
 		if err != nil {
@@ -103,12 +97,7 @@ func (k Keeper) ProcessSuccessfulClaimForBurn(claim, execAddr, tokenSymbol strin
 // ProcessBurn processes the burn of bridged coins from the given sender
 func (k Keeper) ProcessBurn(address, execAddr, amount, tokenAddress string, d int64, accDB *account.DB) (*types2.Receipt, error) {
 	var a int64
-	if d > 8 {
-		a = int64(types.Toeth(amount, d-8))
-	} else {
-		aa, _ := strconv.ParseFloat(types.TrimZeroAndDot(amount), 64)
-		a = int64(types.MultiplySpecifyTimes(aa, 8-d))
-	}
+	a, _ = strconv.ParseInt(types.TrimZeroAndDot(amount), 10, 64)
 	receipt, err := accDB.ExecWithdraw(execAddr, address, a)
 	if err != nil {
 		return nil, err
@@ -135,7 +124,6 @@ func (k Keeper) ProcessLock(address, to, execAddr, amount string, accDB *account
 	return receipt, nil
 }
 
-//todo
 // 对于相同的地址该如何处理?
 // 现有方案是相同地址就报错
 func (k Keeper) ProcessAddValidator(address string, power int64) (*types2.Receipt, error) {
@@ -146,9 +134,13 @@ func (k Keeper) ProcessAddValidator(address string, power int64) (*types2.Receip
 		return nil, err
 	}
 
+	if validatorMaps == nil {
+		validatorMaps = new(types.ValidatorList)
+	}
+
 	elog.Info("ProcessLogInValidator", "pre validatorMaps", validatorMaps, "Add Address", address, "Add power", power)
 	var totalPower int64
-	for _, p := range validatorMaps {
+	for _, p := range validatorMaps.Validators {
 		if p.Address != address {
 			totalPower += p.Power
 		} else {
@@ -156,18 +148,21 @@ func (k Keeper) ProcessAddValidator(address string, power int64) (*types2.Receip
 		}
 	}
 
-	validatorMaps = append(validatorMaps, types.MsgValidator{
+	vs := append(validatorMaps.Validators, &types.MsgValidator{
 		Address: address,
 		Power:   power,
 	})
-	v, _ := json.Marshal(validatorMaps)
+
+	validatorMaps.Validators = vs
+
+	v, _ := proto.Marshal(validatorMaps)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalValidatorMapsPrefix(), Value: v})
 	totalPower += power
 
 	totalP := types.ReceiptQueryTotalPower{
 		TotalPower: totalPower,
 	}
-	totalPBytes, _ := json.Marshal(totalP)
+	totalPBytes, _ := proto.Marshal(&totalP)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalLastTotalPowerPrefix(), Value: totalPBytes})
 	return receipt, nil
 }
@@ -183,13 +178,13 @@ func (k Keeper) ProcessRemoveValidator(address string) (*types2.Receipt, error) 
 
 	elog.Info("ProcessLogOutValidator", "pre validatorMaps", validatorMaps, "Delete Address", address)
 	var totalPower int64
-	var validatorRes []types.MsgValidator
-	for _, p := range validatorMaps {
+	validatorRes := new(types.ValidatorList)
+	for _, p := range validatorMaps.Validators {
 		if address != p.Address {
-			validatorRes = append(validatorRes, p)
+			v := append(validatorRes.Validators, p)
+			validatorRes.Validators = v
 			totalPower += p.Power
 		} else {
-			//oracle.RemoveAddrFromValidatorMap(validatorMaps, index)
 			exist = true
 			continue
 		}
@@ -199,12 +194,12 @@ func (k Keeper) ProcessRemoveValidator(address string) (*types2.Receipt, error) 
 		return nil, types.ErrAddressNotExist
 	}
 
-	v, _ := json.Marshal(validatorRes)
+	v, _ := proto.Marshal(validatorRes)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalValidatorMapsPrefix(), Value: v})
 	totalP := types.ReceiptQueryTotalPower{
 		TotalPower: totalPower,
 	}
-	totalPBytes, _ := json.Marshal(totalP)
+	totalPBytes, _ := proto.Marshal(&totalP)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalLastTotalPowerPrefix(), Value: totalPBytes})
 	return receipt, nil
 }
@@ -221,11 +216,11 @@ func (k Keeper) ProcessModifyValidator(address string, power int64) (*types2.Rec
 
 	elog.Info("ProcessModifyValidator", "pre validatorMaps", validatorMaps, "Modify Address", address, "Modify power", power)
 	var totalPower int64
-	for index, p := range validatorMaps {
+	for index, p := range validatorMaps.Validators {
 		if address != p.Address {
 			totalPower += p.Power
 		} else {
-			validatorMaps[index].Power = power
+			validatorMaps.Validators[index].Power = power
 			exist = true
 			totalPower += power
 		}
@@ -235,18 +230,18 @@ func (k Keeper) ProcessModifyValidator(address string, power int64) (*types2.Rec
 		return nil, types.ErrAddressNotExist
 	}
 
-	v, _ := json.Marshal(validatorMaps)
+	v, _ := proto.Marshal(validatorMaps)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalValidatorMapsPrefix(), Value: v})
 	totalP := types.ReceiptQueryTotalPower{
 		TotalPower: totalPower,
 	}
-	totalPBytes, _ := json.Marshal(totalP)
+	totalPBytes, _ := proto.Marshal(&totalP)
 	receipt.KV = append(receipt.KV, &types2.KeyValue{Key: types.CalLastTotalPowerPrefix(), Value: totalPBytes})
 
 	return receipt, nil
 }
 
-func (k Keeper) ProcessSetConsensusNeeded(ConsensusThreshold int64) (int64, int64, error) {
+func (k *Keeper) ProcessSetConsensusNeeded(ConsensusThreshold int64) (int64, int64, error) {
 	preCon := k.oracleKeeper.GetConsensusThreshold()
 	k.oracleKeeper.SetConsensusThreshold(ConsensusThreshold)
 	nowCon := k.oracleKeeper.GetConsensusThreshold()

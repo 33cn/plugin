@@ -95,3 +95,10 @@ func TrimZeroAndDot(s string) string {
 
 	return s
 }
+
+func CheckPower(power int64) bool {
+	if power <= 0 || power > 100 {
+		return false
+	}
+	return true
+}

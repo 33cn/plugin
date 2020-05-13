@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/chain33/types"
 	chain33types "github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
-	common2 "github.com/33cn/plugin/plugin/dapp/x2Ethereum/executor/common"
 	types2 "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -74,7 +73,7 @@ func (x *suiteX2Ethereum) SetupSuite() {
 	tx.Nonce = 1
 	tx.Sign(types.SECP256K1, privFrom)
 
-	x.action = newAction(x2eth, tx, 0)
+	x.action, _ = newAction(x2eth, tx, 0)
 	x.x2eth = x2eth
 	x.addrX2Eth = address.ExecAddress(driverName)
 
@@ -178,9 +177,8 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 		EthereumSender:        ethereumAddr,
 		Chain33Receiver:       chain33Receiver,
 		ValidatorAddress:      addValidator1,
-		Amount:                10,
-		ClaimType:             common2.LockText,
-		EthSymbol:             symbol,
+		Amount:                "10",
+		ClaimType:             int64(types2.LOCK_CLAIM_TYPE),
 	}
 
 	receipt, err := x.action.procMsgEth2Chain33(payload)
@@ -198,20 +196,20 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.query_GetEthProphecy("000x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
 	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "lock", 10)
 
-	payload.Amount = 3
+	payload.Amount = "3"
 	payload.Nonce = 1
-	payload.ClaimType = common2.BurnText
+	payload.ClaimType = int64(types2.BURN_CLAIM_TYPE)
 	payload.ValidatorAddress = addValidator1
 	receipt, err = x.action.procWithdrawEth(payload)
 	x.NoError(err)
 	x.setDb(receipt)
 
 	payload.ValidatorAddress = addValidator2
-	payload.Amount = 2
+	payload.Amount = "2"
 	receipt, err = x.action.procWithdrawEth(payload)
 	x.Equal(err, types2.ErrClaimInconsist)
 
-	payload.Amount = 3
+	payload.Amount = "3"
 	receipt, err = x.action.procWithdrawEth(payload)
 	x.NoError(err)
 	x.setDb(receipt)
@@ -220,7 +218,7 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.query_GetSymbolTotalAmount(symbol, 1, 7)
 	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "withdraw", 3)
 
-	payload.Amount = 10
+	payload.Amount = "10"
 	payload.Nonce = 2
 	payload.ValidatorAddress = addValidator1
 	receipt, err = x.action.procWithdrawEth(payload)
@@ -228,9 +226,9 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	receipt, err = x.action.procWithdrawEth(payload)
 	x.Equal(types.ErrNoBalance, err)
 
-	payload.Amount = 1
+	payload.Amount = "1"
 	payload.Nonce = 3
-	payload.ClaimType = common2.LockText
+	payload.ClaimType = int64(types2.LOCK_CLAIM_TYPE)
 	payload.ValidatorAddress = addValidator1
 	receipt, err = x.action.procMsgEth2Chain33(payload)
 	x.setDb(receipt)
@@ -248,8 +246,7 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 		TokenContract:    tokenContractAddress,
 		Chain33Sender:    addValidator1,
 		EthereumReceiver: ethereumAddr,
-		Amount:           5,
-		EthSymbol:        symbol,
+		Amount:           "5",
 		LocalCoinSymbol:  "bty",
 		LocalCoinExec:    coinExec,
 	}
@@ -261,7 +258,7 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 	x.query_GetSymbolTotalAmount("bty", 2, 5)
 	x.query_GetSymbolTotalAmountByTxType("bty", 2, "lock", 5)
 
-	msgLock.Amount = 4
+	msgLock.Amount = "4"
 	receipt, err = x.action.procMsgBurn(msgLock)
 	x.NoError(err)
 	x.setDb(receipt)
@@ -272,7 +269,7 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 	receipt, err = x.action.procMsgBurn(msgLock)
 	x.Equal(err, types.ErrNoBalance)
 
-	msgLock.Amount = 1
+	msgLock.Amount = "1"
 	receipt, err = x.action.procMsgBurn(msgLock)
 	x.NoError(err)
 	x.setDb(receipt)

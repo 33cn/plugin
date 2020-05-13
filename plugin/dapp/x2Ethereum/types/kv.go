@@ -15,8 +15,8 @@ var (
 	KeyPrefixLocalDB = "LODB-x2ethereum-"
 )
 
-func CalProphecyPrefix() []byte {
-	return []byte(KeyPrefixStateDB + string(ProphecyKey))
+func CalProphecyPrefix(id string) []byte {
+	return []byte(KeyPrefixStateDB + string(ProphecyKey) + id)
 }
 
 func CalEth2Chain33Prefix() []byte {

@@ -19,57 +19,56 @@ import (
 // 然后relayer端订阅到该消息后向chain33发送该类型消息
 // 本端在验证该类型的请求合理后铸币，并生成相同数额的token
 func (x *x2ethereum) Exec_Eth2Chain33(payload *x2ethereumtypes.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action, defaultCon := newAction(x, tx, int32(index))
+	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
 	}
-	if payload.ValidatorAddress == "" {
-		payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
-	}
-	return action.procMsgEth2Chain33(payload, defaultCon)
+
+	payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
+
+	return action.procMsgEth2Chain33(payload)
 }
 
-// 将因ethereum端锁定的eth或者erc20而在chain33端生成的token返还
-func (x *x2ethereum) Exec_WithdrawEth(payload *x2ethereumtypes.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action, defaultCon := newAction(x, tx, int32(index))
+// WithdrawChain33类型的交易是将Eth端因Chain33端锁定所生成的token返还给Chain33端（Burn）
+func (x *x2ethereum) Exec_WithdrawChain33(payload *x2ethereumtypes.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
 	}
-	if payload.ValidatorAddress == "" {
-		payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
-	}
-
-	return action.procWithdrawEth(payload, defaultCon)
+	return action.procMsgBurn(payload)
 }
 
 //---------------- Chain33(eth/erc20) --> Ethereum-------------------//
 
-// WithdrawChain33类型的交易是Chain33侧将本端生成的token返还到Ethereum端
-func (x *x2ethereum) Exec_WithdrawChain33(payload *x2ethereumtypes.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action, defaultCon := newAction(x, tx, int32(index))
+// 将因ethereum端锁定的eth或者erc20而在chain33端生成的token返还
+func (x *x2ethereum) Exec_WithdrawEth(payload *x2ethereumtypes.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
 	}
-	return action.procMsgBurn(payload, defaultCon)
+
+	payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
+
+	return action.procWithdrawEth(payload)
 }
 
 // Chain33ToEth类型的交易是Chain33侧在本端发出申请
 // 在本端锁定一定数额的token，然后在ethereum端生成相同数额的token
 func (x *x2ethereum) Exec_Chain33ToEth(payload *x2ethereumtypes.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action, defaultCon := newAction(x, tx, int32(index))
+	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
 	}
-	return action.procMsgLock(payload, defaultCon)
+	return action.procMsgLock(payload)
 }
 
 // 转账功能
 func (x *x2ethereum) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action, defaultCon := newAction(x, tx, int32(index))
+	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
 	}
-	return action.procMsgTransfer(payload, defaultCon)
+	return action.procMsgTransfer(payload)
 }
 
 //--------------------------合约管理员账户操作-------------------------//
@@ -78,11 +77,11 @@ func (x *x2ethereum) Exec_Transfer(payload *types.AssetsTransfer, tx *types.Tran
 func (x *x2ethereum) Exec_AddValidator(payload *x2ethereumtypes.MsgValidator, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkTxSignBySpecificAddr(tx, x2ethereumtypes.X2ethereumAdmin)
 	if err == nil {
-		action, defaultCon := newAction(x, tx, int32(index))
+		action := newAction(x, tx, int32(index))
 		if action == nil {
 			return nil, errors.New("Create Action Error")
 		}
-		return action.procAddValidator(payload, defaultCon)
+		return action.procAddValidator(payload)
 	}
 	return nil, err
 }
@@ -91,11 +90,11 @@ func (x *x2ethereum) Exec_AddValidator(payload *x2ethereumtypes.MsgValidator, tx
 func (x *x2ethereum) Exec_RemoveValidator(payload *x2ethereumtypes.MsgValidator, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkTxSignBySpecificAddr(tx, x2ethereumtypes.X2ethereumAdmin)
 	if err == nil {
-		action, defaultCon := newAction(x, tx, int32(index))
+		action := newAction(x, tx, int32(index))
 		if action == nil {
 			return nil, errors.New("Create Action Error")
 		}
-		return action.procRemoveValidator(payload, defaultCon)
+		return action.procRemoveValidator(payload)
 	}
 	return nil, err
 }
@@ -104,11 +103,11 @@ func (x *x2ethereum) Exec_RemoveValidator(payload *x2ethereumtypes.MsgValidator,
 func (x *x2ethereum) Exec_ModifyPower(payload *x2ethereumtypes.MsgValidator, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkTxSignBySpecificAddr(tx, x2ethereumtypes.X2ethereumAdmin)
 	if err == nil {
-		action, defaultCon := newAction(x, tx, int32(index))
+		action := newAction(x, tx, int32(index))
 		if action == nil {
 			return nil, errors.New("Create Action Error")
 		}
-		return action.procModifyValidator(payload, defaultCon)
+		return action.procModifyValidator(payload)
 	}
 	return nil, err
 }
@@ -117,7 +116,7 @@ func (x *x2ethereum) Exec_ModifyPower(payload *x2ethereumtypes.MsgValidator, tx 
 func (x *x2ethereum) Exec_SetConsensusThreshold(payload *x2ethereumtypes.MsgConsensusThreshold, tx *types.Transaction, index int) (*types.Receipt, error) {
 	err := checkTxSignBySpecificAddr(tx, x2ethereumtypes.X2ethereumAdmin)
 	if err == nil {
-		action, _ := newAction(x, tx, int32(index))
+		action := newAction(x, tx, int32(index))
 		if action == nil {
 			return nil, errors.New("Create Action Error")
 		}
