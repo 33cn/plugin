@@ -47,13 +47,13 @@ function kill_ebrelayerD() {
 }
 function start_ebrelayerC() {
     start_ebrelayer_and_unlock C
-    block_wait 2
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     eth_block_wait 3 https://ropsten-rpc.linkpool.io/
     sleep 1
 }
 function start_ebrelayerD() {
     start_ebrelayer_and_unlock D
-    block_wait 2
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     eth_block_wait 3 https://ropsten-rpc.linkpool.io/
     sleep 1
 }
@@ -86,10 +86,10 @@ function StartRelayerAndDeploy() {
     # 部署合约
     InitAndDeploy
 
-    获取 BridgeRegistry 地址
+    # 获取 BridgeRegistry 地址
     result=$(${CLIA} relayer ethereum bridgeRegistry)
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
-    #    BridgeRegistry="0x212ae3c705DA7E3568a85595E8e16268FE7F6448"
+    #    BridgeRegistry="0xcA5E8FCE034888ea51eB568CCA83C413b9DE3F73"
 
     kill_ebrelayer "./A/ebrelayer"
     # 修改 relayer.toml 配置文件
@@ -163,8 +163,9 @@ function InitChain33Vilators() {
 
 function StartAllEbrelayer() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    start_ebrelayer_and_unlock A
     # 重启 ebrelayer 并解锁
-    for name in A B C D; do
+    for name in B C D; do
         start_ebrelayer_and_setpwd_unlock $name
     done
 
@@ -210,20 +211,20 @@ function TestChain33ToEthAssets() {
     result=$(${CLIA} relayer ethereum token4chain33 -s "${tokenSymbol}")
     tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
 
-    #tokenAddrBty="0x79033B1090b0394BadCf43C4394cfe334BA2AF88" # YCC
+    #tokenAddrBty="0xE79142B3171019fcfcA838f0792edB08d4F2a94F"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
     hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t "${tokenSymbol}" -r ${ethReceiverAddr1} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum)
     balance_ret "${result}" "195.0000"
 
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "5"
@@ -236,7 +237,7 @@ function TestChain33ToEthAssets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${Chain33Cli} account balance -a "${chain33SenderAddr}" -e x2ethereum)
     balance_ret "${result}" "5"
@@ -264,7 +265,7 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "0.1"
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
     balance_ret "${result}" "0.1"
@@ -273,7 +274,7 @@ function TestETH2Chain33Assets() {
     balance=$(cli_ret "${result}" "balance" ".balance")
 
     hash=$(${Chain33Cli} send x2ethereum burn -a 0.1 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
@@ -324,14 +325,14 @@ function TestETH2Chain33Erc20() {
     cli_ret "${result}" "balance" ".balance" "100"
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "100"
 
     # chain33 burn 100
     hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33Validator1}")
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
@@ -351,13 +352,14 @@ function TestETH2Chain33Erc20() {
 function TestChain33ToEthAssetsKill() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
+    tokenSymbol="bty"
     if [ "${tokenAddrBty}" == "" ]; then
         # token4chain33 在 以太坊 上先有 bty
-        result=$(${CLIA} relayer ethereum token4chain33 -s bty)
+        result=$(${CLIA} relayer ethereum token4chain33 -s "${tokenSymbol}")
         tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
     fi
 
-    # tokenAddrBty="0x79033B1090b0394BadCf43C4394cfe334BA2AF88" # YCC
+#    tokenAddrBty="0xE79142B3171019fcfcA838f0792edB08d4F2a94F"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -366,11 +368,11 @@ function TestChain33ToEthAssetsKill() {
     kill_ebrelayerD
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 1.41 -t bty -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    hash=$(${Chain33Cli} send x2ethereum lock -a 1.41 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -388,7 +390,7 @@ function TestChain33ToEthAssetsKill() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${Chain33Cli} account balance -a "${chain33Validator1}" -e x2ethereum)
     balance_ret "${result}" "0"
@@ -424,7 +426,7 @@ function TestETH2Chain33AssetsKill() {
     cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.133" | bc)
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq -r ".balance")
     balance_ret "${result}" "0"
@@ -442,7 +444,7 @@ function TestETH2Chain33AssetsKill() {
     kill_ebrelayerD
 
     hash=$(${Chain33Cli} send x2ethereum burn -a 0.133 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
@@ -498,7 +500,7 @@ function TestETH2Chain33Erc20Kill() {
     cli_ret "${result}" "balance" ".balance" "100"
 
     # eth 等待 10 个区块
-    eth_block_wait $((maturityDegree + 2)) https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
@@ -514,7 +516,7 @@ function TestETH2Chain33Erc20Kill() {
 
     # chain33 burn 100
     hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33Validator1}")
-    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    block_wait "${Chain33Cli}" $((maturityDegree + 3))
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
@@ -558,10 +560,10 @@ function AllRelayerMainTest() {
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
 
-    #    # kill relayer and start relayer
-    #        TestChain33ToEthAssetsKill
-    #         TestETH2Chain33AssetsKill
-    #        TestETH2Chain33Erc20Kill
+       # kill relayer and start relayer
+            TestChain33ToEthAssetsKill
+             TestETH2Chain33AssetsKill
+            TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
