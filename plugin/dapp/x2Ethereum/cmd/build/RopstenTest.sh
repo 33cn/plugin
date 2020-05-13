@@ -89,7 +89,7 @@ function StartRelayerAndDeploy() {
     获取 BridgeRegistry 地址
     result=$(${CLIA} relayer ethereum bridgeRegistry)
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
-#    BridgeRegistry="0x212ae3c705DA7E3568a85595E8e16268FE7F6448"
+    #    BridgeRegistry="0x212ae3c705DA7E3568a85595E8e16268FE7F6448"
 
     kill_ebrelayer "./A/ebrelayer"
     # 修改 relayer.toml 配置文件
@@ -432,7 +432,6 @@ function TestETH2Chain33AssetsKill() {
     start_ebrelayerC
     start_ebrelayerD
 
-
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq -r ".balance")
     balance_ret "${result}" "0.133"
 
@@ -537,7 +536,7 @@ function TestETH2Chain33Erc20Kill() {
 function AllRelayerMainTest() {
     set +e
     #    docker cp ${GOPATH}/src/github.com/33cn/plugin/build/ci/x2Ethereum build_chain33_1:/root/x2Ethereum
-#    docker cp ${GOPATH}/src/github.com/33cn/plugin/plugin/dapp/x2Ethereum/cmd/build/RopstenTest.sh build_chain33_1:/root/x2Ethereum/RopstenTest.sh
+    #    docker cp ${GOPATH}/src/github.com/33cn/plugin/plugin/dapp/x2Ethereum/cmd/build/RopstenTest.sh build_chain33_1:/root/x2Ethereum/RopstenTest.sh
 
     Chain33Cli="./../chain33-cli"
 
@@ -561,7 +560,7 @@ function AllRelayerMainTest() {
 
     #    # kill relayer and start relayer
     #        TestChain33ToEthAssetsKill
-   #         TestETH2Chain33AssetsKill
+    #         TestETH2Chain33AssetsKill
     #        TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
