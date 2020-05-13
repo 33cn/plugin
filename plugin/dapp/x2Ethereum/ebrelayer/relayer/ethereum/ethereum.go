@@ -588,7 +588,8 @@ func (ethRelayer *EthereumRelayer) filterLogEventsProc(logchan chan<- types.Log,
 			panic(errinfo)
 		}
 
-		relayerLog.Info(title, "received logs", len(logs))
+		relayerLog.Info(title, "received logs with number", len(logs),
+			"start height", query.FromBlock.String(), "stop height", query.ToBlock.String())
 		for _, log := range logs {
 			relayerLog.Info(title, "received log with topics", log.Topics[0].Hex(), "BlockNumber", log.BlockNumber)
 			if _, exist := eventSig[log.Topics[0].Hex()]; !exist {
