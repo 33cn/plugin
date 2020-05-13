@@ -12,6 +12,6 @@ function x2Ethereum() {
         set +e
         set -x
         AllRelayerMainTest 1
-        perf_test_main 1
+        perf_test_main 10
     fi
 }

@@ -93,7 +93,7 @@ func getNonce(sender common.Address, backend bind.ContractBackend) (*big.Int, er
 		defer nonceMutex.rw.Unlock()
 		nonceMutex.nonce += 1
 		addr2Nonce[sender] = nonceMutex
-		txslog.Debug("getNonce", "address", sender.String(), "nonce", nonceMutex.nonce)
+		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.nonce)
 		return big.NewInt(nonceMutex.nonce), nil
 	}
 
