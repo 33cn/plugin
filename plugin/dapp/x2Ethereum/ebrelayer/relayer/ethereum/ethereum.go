@@ -378,9 +378,9 @@ func (ethRelayer *EthereumRelayer) proc() {
 				}
 				relayerLog.Info("Ethereum relayer starts to run...")
 				ethRelayer.prePareSubscribeEvent()
-				ethRelayer.filterLogEvents()
 				//向bridgeBank订阅事件
 				ethRelayer.subscribeEvent()
+				ethRelayer.filterLogEvents()
 				relayerLog.Info("Ethereum relayer starts to process online log event...")
 				timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 				goto latter
@@ -396,7 +396,7 @@ latter:
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			panic("bridgeBankSub" + err.Error())
 		case vLog := <-ethRelayer.bridgeBankLog:
-			ethRelayer.storeBridgeBankLogs(vLog)
+			ethRelayer.storeBridgeBankLogs(vLog, true)
 		}
 	}
 }
@@ -451,7 +451,7 @@ func (ethRelayer *EthereumRelayer) procNewHeight(continueFailCount *int32, ctx c
 	}
 }
 
-func (ethRelayer *EthereumRelayer) storeBridgeBankLogs(vLog types.Log) {
+func (ethRelayer *EthereumRelayer) storeBridgeBankLogs(vLog types.Log, setBlockNumber bool) {
 	//lock,用于捕捉 (ETH/ERC20----->chain33) 跨链转移
 	//burn,用于捕捉 (chain33 token----->chain33) 实现chain33资产withdraw操作，之后在chain33上实现unlock操作
 	if vLog.Topics[0].Hex() == ethRelayer.bridgeBankEventLockSig {
@@ -469,8 +469,11 @@ func (ethRelayer *EthereumRelayer) storeBridgeBankLogs(vLog types.Log) {
 		}
 	}
 
-	if err := ethRelayer.setHeight4BridgeBankLogAt(vLog.BlockNumber); nil != err {
-		panic(err.Error())
+	//确定是否需要更新保存同步日志高度
+	if setBlockNumber {
+		if err := ethRelayer.setHeight4BridgeBankLogAt(vLog.BlockNumber); nil != err {
+			panic(err.Error())
+		}
 	}
 
 	return
@@ -554,7 +557,10 @@ func (ethRelayer *EthereumRelayer) filterLogEvents() {
 	for {
 		select {
 		case vLog := <-bridgeBankLog:
-			ethRelayer.storeBridgeBankLogs(vLog)
+			ethRelayer.storeBridgeBankLogs(vLog, true)
+		case vLog := <-ethRelayer.bridgeBankLog:
+			//因为此处是同步保存信息，防止未同步完成出现panic时，直接将其设置为最新高度，中间出现部分信息不同步的情况
+			ethRelayer.storeBridgeBankLogs(vLog, false)
 		case <-done:
 			relayerLog.Info("Finshed offline logs processed")
 			return
