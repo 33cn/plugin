@@ -19,6 +19,7 @@ contract Chain33Bank {
     mapping(bytes32 => Chain33Deposit) chain33Deposits;
     mapping(bytes32 => Chain33Burn) chain33Burns;
     mapping(address => DepositBurnCount) depositBurnCounts;
+    mapping(bytes32 => address) public token2address;
 
     struct Chain33Deposit {
         bytes chain33Sender;
@@ -74,6 +75,18 @@ contract Chain33Bank {
          require(
              !hasBridgeTokenCreated(_symbol),
              "The symbol has been created already"
+         );
+         _;
+     }
+
+     /*
+     * @dev: Modifier to make sure this symbol not created now
+     */
+     modifier created(string memory _symbol)
+     {
+         require(
+             hasBridgeTokenCreated(_symbol),
+             "The symbol has not been created yet"
          );
          _;
      }
@@ -206,8 +219,8 @@ contract Chain33Bank {
         bridgeTokenCreated[symHash] = true;
         depositBurnCounts[newBridgeTokenAddress] = DepositBurnCount(
             uint256(0),
-            uint256(0)
-        );
+            uint256(0));
+        token2address[symHash] = newBridgeTokenAddress;
 
         emit LogNewBridgeToken(
             newBridgeTokenAddress,
@@ -358,5 +371,14 @@ contract Chain33Bank {
             deposit.bridgeTokenAddress,
             deposit.amount
         );
+    }
+
+    function getToken2address(string memory _symbol)
+        created(_symbol)
+        public view returns(address)
+    {
+        bytes32 symHash = keccak256(abi.encodePacked(_symbol));
+        return token2address[symHash];
+
     }
 }
