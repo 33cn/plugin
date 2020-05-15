@@ -1,6 +1,7 @@
 package executor
 
 import (
+	//"github.com/33cn/chain33/client"
 	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
@@ -73,7 +74,7 @@ func (x *suiteX2Ethereum) SetupSuite() {
 	tx.Nonce = 1
 	tx.Sign(types.SECP256K1, privFrom)
 
-	x.action, _ = newAction(x2eth, tx, 0)
+	x.action = newAction(x2eth, tx, 0)
 	x.x2eth = x2eth
 	x.addrX2Eth = address.ExecAddress(driverName)
 
@@ -214,7 +215,7 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.query_GetEthProphecy("010x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_WithdrawedStatusText)
+	x.query_GetEthProphecy("010x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
 	x.query_GetSymbolTotalAmount(symbol, 1, 7)
 	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "withdraw", 3)
 
@@ -333,10 +334,10 @@ func (x *suiteX2Ethereum) query_GetSymbolTotalAmountByTxType(tokenSymbol string,
 }
 
 func (x *suiteX2Ethereum) query_GetSymbolTotalAmount(tokenSymbol string, direction int64, equal int64) {
-	msg, err := x.x2eth.Query_GetSymbolTotalAmount(&types2.QuerySymbolAssetsParams{TokenSymbol: tokenSymbol, Direction: direction})
+	msg, err := x.x2eth.Query_GetSymbolTotalAmountByTxType(&types2.QuerySymbolAssetsByTxTypeParams{TokenSymbol: tokenSymbol, Direction: direction})
 	x.NoError(err)
 	reply := msg.(*types2.ReceiptQuerySymbolAssets)
-	x.Equal(reply.TotalAmount, uint64(equal))
+	x.Equal(reply.Res[0].TotalAmount, uint64(equal))
 }
 
 func (x *suiteX2Ethereum) query_GetEthProphecy(id string, statusTest types2.EthBridgeStatus) {

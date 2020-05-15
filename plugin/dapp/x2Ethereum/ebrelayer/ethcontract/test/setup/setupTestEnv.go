@@ -1,4 +1,4 @@
-package test
+package setup
 
 import (
 	"crypto/ecdsa"
@@ -21,8 +21,6 @@ func PrepareTestEnv() (bind.ContractBackend, *ethtxs.DeployPara) {
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
-	gasLimit := uint64(2999280)
-	sim := backends.NewSimulatedBackend(alloc, gasLimit)
 
 	var InitValidators []common.Address
 	var ValidatorPriKey []*ecdsa.PrivateKey
@@ -31,7 +29,16 @@ func PrepareTestEnv() (bind.ContractBackend, *ethtxs.DeployPara) {
 		addr := crypto.PubkeyToAddress(key.PublicKey)
 		InitValidators = append(InitValidators, addr)
 		ValidatorPriKey = append(ValidatorPriKey, key)
+
+		account := core.GenesisAccount{
+			Balance:    big.NewInt(100000000 * 100),
+			PrivateKey: crypto.FromECDSA(key),
+		}
+		alloc[addr] = account
 	}
+
+	gasLimit := uint64(100000000)
+	sim := backends.NewSimulatedBackend(alloc, gasLimit)
 
 	InitPowers := []*big.Int{big.NewInt(80), big.NewInt(10), big.NewInt(10)}
 
