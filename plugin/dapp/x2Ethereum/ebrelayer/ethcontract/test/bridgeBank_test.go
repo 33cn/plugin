@@ -3,6 +3,10 @@ package test
 import (
 	"context"
 	"fmt"
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethtxs"
@@ -14,9 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
-	"math/big"
-	"testing"
-	"time"
 )
 
 //"BridgeToken creation (Chain33 assets)"
