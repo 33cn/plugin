@@ -37,6 +37,8 @@ func Cmd() *cobra.Command {
 		CreateRawModifyValidatorTxCmd(),
 		CreateRawSetConsensusTxCmd(),
 		CreateTransferCmd(),
+		CreateTokenTransferExecCmd(),
+		CreateTokenWithdrawCmd(),
 		queryCmd(),
 		queryRelayerBalanceCmd(),
 	)
@@ -73,9 +75,6 @@ func addEth2Chain33Flags(cmd *cobra.Command) {
 	cmd.Flags().StringP("csymbol", "t", "", "token symbol in chain33")
 	_ = cmd.MarkFlagRequired("csymbol")
 
-	cmd.Flags().StringP("cexec", "e", "", "chain execer in chain33")
-	_ = cmd.MarkFlagRequired("cexec")
-
 	cmd.Flags().StringP("tcontract", "q", "", "token contract address in ethereum")
 	_ = cmd.MarkFlagRequired("tcontract")
 
@@ -101,7 +100,6 @@ func Eth2Chain33(cmd *cobra.Command, args []string) {
 	bcontract, _ := cmd.Flags().GetString("bcontract")
 	nonce, _ := cmd.Flags().GetInt64("nonce")
 	csymbol, _ := cmd.Flags().GetString("csymbol")
-	cexec, _ := cmd.Flags().GetString("cexec")
 	tcontract, _ := cmd.Flags().GetString("tcontract")
 	sender, _ := cmd.Flags().GetString("sender")
 	receiver, _ := cmd.Flags().GetString("receiver")
@@ -120,8 +118,7 @@ func Eth2Chain33(cmd *cobra.Command, args []string) {
 		EthereumChainID:       ethid,
 		BridgeContractAddress: bcontract,
 		Nonce:                 nonce,
-		LocalCoinSymbol:       csymbol,
-		LocalCoinExec:         cexec,
+		IssuerDotSymbol:       csymbol,
 		TokenContractAddress:  tcontract,
 		EthereumSender:        sender,
 		Chain33Receiver:       receiver,
@@ -145,6 +142,10 @@ func CreateRawWithdrawEthTxCmd() *cobra.Command {
 	}
 
 	addEth2Chain33Flags(cmd)
+
+	cmd.Flags().StringP("exec", "e", "", "exec name token or coins")
+	_ = cmd.MarkFlagRequired("exec")
+
 	return cmd
 }
 
@@ -153,7 +154,6 @@ func WithdrawEth(cmd *cobra.Command, args []string) {
 	bcontract, _ := cmd.Flags().GetString("bcontract")
 	nonce, _ := cmd.Flags().GetInt64("nonce")
 	csymbol, _ := cmd.Flags().GetString("csymbol")
-	cexec, _ := cmd.Flags().GetString("cexec")
 	tcontract, _ := cmd.Flags().GetString("tcontract")
 	sender, _ := cmd.Flags().GetString("sender")
 	receiver, _ := cmd.Flags().GetString("receiver")
@@ -172,8 +172,7 @@ func WithdrawEth(cmd *cobra.Command, args []string) {
 		EthereumChainID:       ethid,
 		BridgeContractAddress: bcontract,
 		Nonce:                 nonce,
-		LocalCoinSymbol:       csymbol,
-		LocalCoinExec:         cexec,
+		IssuerDotSymbol:       csymbol,
 		TokenContractAddress:  tcontract,
 		EthereumSender:        sender,
 		Chain33Receiver:       receiver,
@@ -236,7 +235,7 @@ func burn(cmd *cobra.Command, args []string) {
 		TokenContract:    contract,
 		EthereumReceiver: receiver,
 		Amount:           types3.TrimZeroAndDot(strconv.FormatFloat(amount*1e8, 'f', 4, 64)),
-		LocalCoinSymbol:  csymbol,
+		IssuerDotSymbol:  csymbol,
 		Decimals:         decimal,
 	}
 
@@ -254,6 +253,9 @@ func CreateRawChain33ToEthTxCmd() *cobra.Command {
 	}
 
 	addChain33ToEthFlags(cmd)
+
+	cmd.Flags().StringP("exec", "e", "", "exec name token or coins")
+	_ = cmd.MarkFlagRequired("exec")
 
 	return cmd
 }
@@ -280,7 +282,7 @@ func lock(cmd *cobra.Command, args []string) {
 		TokenContract:    contract,
 		EthereumReceiver: receiver,
 		Amount:           strconv.FormatFloat(amount*1e8, 'f', 4, 64),
-		LocalCoinSymbol:  csymbol,
+		IssuerDotSymbol:  csymbol,
 		Decimals:         decimal,
 	}
 
@@ -317,6 +319,62 @@ func addTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	_ = cmd.MarkFlagRequired("symbol")
 
+}
+
+// CreateTokenTransferExecCmd create raw transfer tx
+func CreateTokenTransferExecCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "send_exec",
+		Short: "Create a token send to executor transaction",
+		Run:   createTokenSendToExec,
+	}
+	addCreateTokenSendToExecFlags(cmd)
+	return cmd
+}
+
+func addCreateTokenSendToExecFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "receiver executor address")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createTokenSendToExec(cmd *cobra.Command, args []string) {
+	commands.CreateAssetSendToExec(cmd, args, types3.X2ethereumX)
+}
+
+// CreateTokenWithdrawCmd create raw withdraw tx
+func CreateTokenWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdrawfromexec",
+		Short: "Create a token withdraw transaction",
+		Run:   createTokenWithdraw,
+	}
+	addCreateTokenWithdrawFlags(cmd)
+	return cmd
+}
+
+func addCreateTokenWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "execer withdrawn from")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().Float64P("amount", "a", 0, "withdraw amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createTokenWithdraw(cmd *cobra.Command, args []string) {
+	commands.CreateAssetWithdraw(cmd, args, types3.X2ethereumX)
 }
 
 // AddValidator

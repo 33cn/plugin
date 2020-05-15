@@ -200,11 +200,6 @@ func (chain33Relayer *Chain33Relayer) onNewHeightProc(currentHeight int64) {
 			_ = chain33Types.Decode(tx.Payload, &ss)
 			actionName := ss.GetActionName()
 			if relayerTx.BurnAction == actionName || relayerTx.LockAction == actionName {
-				if actionName == relayerTx.BurnAction {
-					actionName = actionName + "-burn"
-				} else {
-					actionName = actionName + "-lock"
-				}
 				relayerLog.Debug("^_^ ^_^ Processing chain33 tx receipt", "ActionName", actionName, "fromAddr", tx.From(), "exec", string(tx.Execer))
 				actionEvent := getOracleClaimType(actionName)
 				if err := chain33Relayer.handleBurnLockMsg(actionEvent, TxReceipts.ReceiptData[i], tx.Hash()); nil != err {

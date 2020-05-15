@@ -4,7 +4,7 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	x2ethereumtypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
+	x2eTy "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 )
 
 /*
@@ -17,7 +17,7 @@ var (
 	elog = log.New("module", "x2ethereum.executor")
 )
 
-var driverName = x2ethereumtypes.X2ethereumX
+var driverName = x2eTy.X2ethereumX
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {

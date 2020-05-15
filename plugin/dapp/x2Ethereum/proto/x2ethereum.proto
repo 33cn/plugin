@@ -21,8 +21,10 @@ message X2ethereumAction {
         MsgValidator modifyPower = 7;
         MsgConsensusThreshold setConsensusThreshold = 8;
         AssetsTransfer       transfer          = 9;
+        AssetsTransferToExec transferToExec    = 10;
+        AssetsWithdraw       withdraw          = 11;
     }
-    int32 ty = 10;
+    int32 ty = 12;
 }
 
 message MsgConsensusThreshold {
@@ -39,8 +41,7 @@ message Eth2Chain33 {
     int64 EthereumChainID = 1;
     string BridgeContractAddress = 2;
     int64 Nonce = 3;
-    string localCoinSymbol = 4;
-    string localCoinExec = 5;
+    string IssuerDotSymbol = 4;
     string TokenContractAddress = 6;
     string EthereumSender = 7;
     string Chain33Receiver = 8;
@@ -64,8 +65,7 @@ message Chain33ToEth {
     string Chain33Sender = 2;
     string EthereumReceiver = 3;
     string Amount = 4;
-    string localCoinSymbol = 5;
-    string localCoinExec = 6;
+    string IssuerDotSymbol = 5;
     int64 Decimals = 7;
 }
 
@@ -74,9 +74,8 @@ message ReceiptEth2Chain33 {
     int64 EthereumChainID = 1;
     string BridgeContractAddress = 2;
     int64 Nonce = 3;
-    string localCoinSymbol = 4;
-    string localCoinExec = 5;
-    string TokenContractAddress = 6;
+    string IssuerDotSymbol = 4;
+    string TokenAddress = 5;
     string EthereumSender = 7;
     string Chain33Receiver = 8;
     string ValidatorAddress = 9;
@@ -93,7 +92,7 @@ message ReceiptChain33ToEth {
     string Chain33Sender = 2;
     string EthereumReceiver = 3;
     string Amount = 4;
-    string EthSymbol = 5;
+    string IssuerDotSymbol = 5;
     int64 Decimals = 6;
 }
 

@@ -2,7 +2,9 @@ package types
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	"math"
 	"math/big"
 	"strings"
@@ -101,4 +103,17 @@ func CheckPower(power int64) bool {
 		return false
 	}
 	return true
+}
+
+func DivideDot(in string) (left, right string, err error) {
+	if strings.Contains(in, ".") {
+		ss := strings.Split(in, ".")
+		return ss[0], ss[1], nil
+	}
+	return "", "", errors.New("Divide error")
+}
+
+func IsExecAddrMatch(name string, to string) bool {
+	toaddr := address.ExecAddress(name)
+	return toaddr == to
 }

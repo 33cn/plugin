@@ -27,6 +27,8 @@ var (
 		NameModifyPowerAction:           TyModifyPowerAction,
 		NameSetConsensusThresholdAction: TySetConsensusThresholdAction,
 		NameTransferAction:              TyTransferAction,
+		NameTransferToExecAction:        TyTransferToExecAction,
+		NameWithdrawFromExecAction:      TyWithdrawFromExecAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -40,6 +42,8 @@ var (
 		TySetConsensusThresholdLog: {Ty: reflect.TypeOf(ReceiptSetConsensusThreshold{}), Name: "LogSetConsensusThreshold"},
 		TyProphecyLog:              {Ty: reflect.TypeOf(ReceiptEthProphecy{}), Name: "LogEthProphecy"},
 		TyTransferLog:              {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogTransfer"},
+		TyTransferToExecLog:        {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecTransfer"},
+		TyWithdrawFromExecLog:      {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenExecWithdraw"},
 	}
 	tlog = log.New("module", "x2ethereum.types")
 )
@@ -106,13 +110,13 @@ func (x x2ethereumType) ActionName(tx *types.Transaction) string {
 // GetActionName get action name
 func (action *X2EthereumAction) GetActionName() string {
 	if action.Ty == TyEth2Chain33Action && action.GetEth2Chain33() != nil {
-		return "Eth2Chain33"
+		return "Eth2Chain33_lock"
 	} else if action.Ty == TyWithdrawEthAction && action.GetWithdrawEth() != nil {
-		return "WithdrawEth"
+		return "Eth2Chain33_burn"
 	} else if action.Ty == TyWithdrawChain33Action && action.GetWithdrawChain33() != nil {
-		return "WithdrawChain33"
+		return "Chain33ToEth_burn"
 	} else if action.Ty == TyChain33ToEthAction && action.GetChain33ToEth() != nil {
-		return "Chain33ToEth"
+		return "Chain33ToEth_lock"
 	} else if action.Ty == TyAddValidatorAction && action.GetAddValidator() != nil {
 		return "AddValidator"
 	} else if action.Ty == TyRemoveValidatorAction && action.GetRemoveValidator() != nil {
@@ -121,6 +125,12 @@ func (action *X2EthereumAction) GetActionName() string {
 		return "ModifyPower"
 	} else if action.Ty == TySetConsensusThresholdAction && action.GetSetConsensusThreshold() != nil {
 		return "SetConsensusThreshold"
+	} else if action.Ty == TyTransferAction && action.GetTransfer() != nil {
+		return "Transfer"
+	} else if action.Ty == TyTransferToExecAction && action.GetTransferToExec() != nil {
+		return "TransferToExec"
+	} else if action.Ty == TyWithdrawFromExecAction && action.GetWithdraw() != nil {
+		return "WithdrawFromExec"
 	}
 	return "unknown-x2ethereum"
 }

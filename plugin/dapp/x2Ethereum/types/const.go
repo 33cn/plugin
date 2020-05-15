@@ -27,6 +27,8 @@ const (
 	TySetConsensusThresholdLog
 	TyProphecyLog
 	TyTransferLog
+	TyTransferToExecLog
+	TyWithdrawFromExecLog
 )
 
 // action类型id和name，这些常量可以自定义修改
@@ -41,19 +43,21 @@ const (
 	TyModifyPowerAction
 	TySetConsensusThresholdAction
 	TyTransferAction
+	TyTransferToExecAction
+	TyWithdrawFromExecAction
 
-	NameEth2Chain33Action           = "Eth2Chain33"
-	NameWithdrawEthAction           = "WithdrawEth"
-	NameWithdrawChain33Action       = "WithdrawChain33"
-	NameChain33ToEthAction          = "Chain33ToEth"
+	NameEth2Chain33Action           = "Eth2Chain33_lock"
+	NameWithdrawEthAction           = "Eth2Chain33_burn"
+	NameWithdrawChain33Action       = "Chain33ToEth_burn"
+	NameChain33ToEthAction          = "Chain33ToEth_lock"
 	NameAddValidatorAction          = "AddValidator"
 	NameRemoveValidatorAction       = "RemoveValidator"
 	NameModifyPowerAction           = "ModifyPower"
 	NameSetConsensusThresholdAction = "SetConsensusThreshold"
 	NameTransferAction              = "Transfer"
+	NameTransferToExecAction        = "TransferToExec"
+	NameWithdrawFromExecAction      = "WithdrawFromExec"
 )
-
-const ModuleName = "ETH"
 
 const DefaultConsensusNeeded = int64(70)
 
@@ -75,9 +79,6 @@ const (
 	FuncQuerySymbolTotalAmountByTxType = "GetSymbolTotalAmountByTxType"
 	FuncQueryRelayerBalance            = "GetRelayerBalance"
 )
-
-//设置合约管理员地址
-const X2ethereumAdmin = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 const (
 	LOCK_CLAIM_TYPE = int32(1)

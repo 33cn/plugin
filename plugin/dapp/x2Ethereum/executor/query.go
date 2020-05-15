@@ -4,25 +4,23 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
-	types2 "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
+	x2eTy "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 )
 
-func (x *x2ethereum) Query_GetEthProphecy(in *types2.QueryEthProphecyParams) (types.Message, error) {
-	prophecyKey := types2.CalProphecyPrefix(in.ID)
+func (x *x2ethereum) Query_GetEthProphecy(in *x2eTy.QueryEthProphecyParams) (types.Message, error) {
+	prophecyKey := x2eTy.CalProphecyPrefix(in.ID)
 
-	var dbProphecy types2.ReceiptEthProphecy
+	var dbProphecy x2eTy.ReceiptEthProphecy
 
 	val, err := x.GetStateDB().Get(prophecyKey)
 	if err != nil {
 		return nil, err
 	}
 
-	err = proto.Unmarshal(val, &dbProphecy)
+	err = types.Decode(val, &dbProphecy)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
@@ -30,28 +28,28 @@ func (x *x2ethereum) Query_GetEthProphecy(in *types2.QueryEthProphecyParams) (ty
 	return &dbProphecy, nil
 }
 
-func (x *x2ethereum) Query_GetValidators(in *types2.QueryValidatorsParams) (types.Message, error) {
-	validatorsKey := types2.CalValidatorMapsPrefix()
+func (x *x2ethereum) Query_GetValidators(in *x2eTy.QueryValidatorsParams) (types.Message, error) {
+	validatorsKey := x2eTy.CalValidatorMapsPrefix()
 
-	var v types2.ValidatorList
+	var v x2eTy.ValidatorList
 	vBytes, err := x.GetStateDB().Get(validatorsKey)
 	if err != nil {
 		elog.Error("Query_GetValidators", "GetValidators Err", err)
 		return nil, err
 	}
 
-	err = proto.Unmarshal(vBytes, &v)
+	err = types.Decode(vBytes, &v)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
 
 	if in.Validator != "" {
-		validatorsRes := new(types2.ReceiptQueryValidator)
+		validatorsRes := new(x2eTy.ReceiptQueryValidator)
 		for _, vv := range v.Validators {
 			if vv.Address == in.Validator {
-				val := make([]*types2.MsgValidator, 1)
+				val := make([]*x2eTy.MsgValidator, 1)
 				val[0] = vv
-				validatorsRes = &types2.ReceiptQueryValidator{
+				validatorsRes = &x2eTy.ReceiptQueryValidator{
 					Validators: val,
 					TotalPower: vv.Power,
 				}
@@ -59,9 +57,9 @@ func (x *x2ethereum) Query_GetValidators(in *types2.QueryValidatorsParams) (type
 			}
 		}
 		// 未知的地址
-		return nil, types2.ErrInvalidValidator
+		return nil, x2eTy.ErrInvalidValidator
 	} else {
-		validatorsRes := new(types2.ReceiptQueryValidator)
+		validatorsRes := new(x2eTy.ReceiptQueryValidator)
 		var totalPower int64
 		for _, vv := range v.Validators {
 			totalPower += vv.Power
@@ -72,44 +70,44 @@ func (x *x2ethereum) Query_GetValidators(in *types2.QueryValidatorsParams) (type
 	}
 }
 
-func (x *x2ethereum) Query_GetTotalPower(in *types2.QueryTotalPowerParams) (types.Message, error) {
-	totalPower := &types2.ReceiptQueryTotalPower{}
-	totalPowerKey := types2.CalLastTotalPowerPrefix()
+func (x *x2ethereum) Query_GetTotalPower(in *x2eTy.QueryTotalPowerParams) (types.Message, error) {
+	totalPower := &x2eTy.ReceiptQueryTotalPower{}
+	totalPowerKey := x2eTy.CalLastTotalPowerPrefix()
 
 	totalPowerBytes, err := x.GetStateDB().Get(totalPowerKey)
 	if err != nil {
 		elog.Error("Query_GetTotalPower", "GetTotalPower Err", err)
 		return nil, err
 	}
-	err = proto.Unmarshal(totalPowerBytes, totalPower)
+	err = types.Decode(totalPowerBytes, totalPower)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
 	return totalPower, nil
 }
 
-func (x *x2ethereum) Query_GetConsensusThreshold(in *types2.QueryConsensusThresholdParams) (types.Message, error) {
-	consensus := &types2.ReceiptQueryConsensusThreshold{}
-	consensusKey := types2.CalConsensusThresholdPrefix()
+func (x *x2ethereum) Query_GetConsensusThreshold(in *x2eTy.QueryConsensusThresholdParams) (types.Message, error) {
+	consensus := &x2eTy.ReceiptQueryConsensusThreshold{}
+	consensusKey := x2eTy.CalConsensusThresholdPrefix()
 
 	consensusBytes, err := x.GetStateDB().Get(consensusKey)
 	if err != nil {
 		elog.Error("Query_GetConsensusNeeded", "GetConsensusNeeded Err", err)
 		return nil, err
 	}
-	err = proto.Unmarshal(consensusBytes, consensus)
+	err = types.Decode(consensusBytes, consensus)
 	if err != nil {
 		return nil, types.ErrUnmarshal
 	}
 	return consensus, nil
 }
 
-func (x *x2ethereum) Query_GetSymbolTotalAmountByTxType(in *types2.QuerySymbolAssetsByTxTypeParams) (types.Message, error) {
-	symbolAmount := &types2.ReceiptQuerySymbolAssets{}
+func (x *x2ethereum) Query_GetSymbolTotalAmountByTxType(in *x2eTy.QuerySymbolAssetsByTxTypeParams) (types.Message, error) {
+	symbolAmount := &x2eTy.ReceiptQuerySymbolAssets{}
 
 	if in.TokenAddr != "" {
-		var r types2.ReceiptQuerySymbolAssetsByTxType
-		symbolAmountKey := types2.CalTokenSymbolTotalLockOrBurnAmount(in.TokenSymbol, in.TokenAddr, types2.DirectionType[in.Direction], in.TxType)
+		var r x2eTy.ReceiptQuerySymbolAssetsByTxType
+		symbolAmountKey := x2eTy.CalTokenSymbolTotalLockOrBurnAmount(in.TokenSymbol, in.TokenAddr, x2eTy.DirectionType[in.Direction], in.TxType)
 
 		totalAmountBytes, err := x.GetLocalDB().Get(symbolAmountKey)
 		if err != nil {
@@ -121,23 +119,23 @@ func (x *x2ethereum) Query_GetSymbolTotalAmountByTxType(in *types2.QuerySymbolAs
 			return nil, types.ErrUnmarshal
 		}
 
-		r.TotalAmount = types2.TrimZeroAndDot(strconv.FormatFloat(types2.Toeth(r.TotalAmount, in.Decimal), 'f', 4, 64))
+		r.TotalAmount = x2eTy.TrimZeroAndDot(strconv.FormatFloat(x2eTy.Toeth(r.TotalAmount, in.Decimal), 'f', 4, 64))
 
 		symbolAmount.Res = append(symbolAmount.Res, &r)
 	} else {
-		tokenAddressesBytes, err := x.GetLocalDB().Get(types2.CalTokenSymbolToTokenAddress(in.TokenSymbol))
+		tokenAddressesBytes, err := x.GetLocalDB().Get(x2eTy.CalTokenSymbolToTokenAddress(in.TokenSymbol))
 		if err != nil && err != types.ErrNotFound {
 			return nil, err
 		}
-		var tokenAddresses types2.ReceiptTokenToTokenAddress
+		var tokenAddresses x2eTy.ReceiptTokenToTokenAddress
 		err = types.Decode(tokenAddressesBytes, &tokenAddresses)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, addr := range tokenAddresses.TokenAddress {
-			var r types2.ReceiptQuerySymbolAssetsByTxType
-			symbolAmountKey := types2.CalTokenSymbolTotalLockOrBurnAmount(in.TokenSymbol, addr, types2.DirectionType[in.Direction], in.TxType)
+			var r x2eTy.ReceiptQuerySymbolAssetsByTxType
+			symbolAmountKey := x2eTy.CalTokenSymbolTotalLockOrBurnAmount(in.TokenSymbol, addr, x2eTy.DirectionType[in.Direction], in.TxType)
 
 			totalAmountBytes, err := x.GetLocalDB().Get(symbolAmountKey)
 			if err != nil {
@@ -149,7 +147,7 @@ func (x *x2ethereum) Query_GetSymbolTotalAmountByTxType(in *types2.QuerySymbolAs
 				return nil, types.ErrUnmarshal
 			}
 
-			r.TotalAmount = types2.TrimZeroAndDot(strconv.FormatFloat(types2.Toeth(r.TotalAmount, in.Decimal), 'f', 4, 64))
+			r.TotalAmount = x2eTy.TrimZeroAndDot(strconv.FormatFloat(x2eTy.Toeth(r.TotalAmount, in.Decimal), 'f', 4, 64))
 
 			symbolAmount.Res = append(symbolAmount.Res, &r)
 		}
@@ -158,46 +156,46 @@ func (x *x2ethereum) Query_GetSymbolTotalAmountByTxType(in *types2.QuerySymbolAs
 	return symbolAmount, nil
 }
 
-func (x *x2ethereum) Query_GetRelayerBalance(in *types2.QueryRelayerBalance) (types.Message, error) {
-	symbolAmount := &types2.ReceiptQueryRelayerBalance{}
+func (x *x2ethereum) Query_GetRelayerBalance(in *x2eTy.QueryRelayerBalance) (types.Message, error) {
+	symbolAmount := &x2eTy.ReceiptQueryRelayerBalance{}
 
 	// 要查询特定的tokenAddr
 	if in.TokenAddr != "" {
-		accDB, err := account.NewAccountDB(x.GetAPI().GetConfig(), types2.X2ethereumX, strings.ToLower(in.TokenSymbol+in.TokenAddr), x.GetStateDB())
+		accDB, err := account.NewAccountDB(x.GetAPI().GetConfig(), x2eTy.X2ethereumX, strings.ToLower(in.TokenSymbol+in.TokenAddr), x.GetStateDB())
 		if err != nil {
 			return nil, err
 		}
 
-		acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(types2.X2ethereumX))
-		res := new(types2.ReceiptQueryRelayerBalanceForOneToken)
+		acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(x2eTy.X2ethereumX))
+		res := new(x2eTy.ReceiptQueryRelayerBalanceForOneToken)
 		res.TokenAddr = in.TokenAddr
 		res.TokenSymbol = in.TokenSymbol
-		res.Balance = types2.TrimZeroAndDot(strconv.FormatFloat(float64(acc.Balance)/1e8, 'f', 4, 64))
+		res.Balance = x2eTy.TrimZeroAndDot(strconv.FormatFloat(float64(acc.Balance)/1e8, 'f', 4, 64))
 		symbolAmount.Res = append(symbolAmount.Res, res)
 
 	} else {
 
-		tokenAddressesBytes, err := x.GetLocalDB().Get(types2.CalTokenSymbolToTokenAddress(in.TokenSymbol))
+		tokenAddressesBytes, err := x.GetLocalDB().Get(x2eTy.CalTokenSymbolToTokenAddress(in.TokenSymbol))
 		if err != nil && err != types.ErrNotFound {
 			return nil, err
 		}
-		var tokenAddresses types2.ReceiptTokenToTokenAddress
+		var tokenAddresses x2eTy.ReceiptTokenToTokenAddress
 		err = types.Decode(tokenAddressesBytes, &tokenAddresses)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, addr := range tokenAddresses.TokenAddress {
-			accDB, err := account.NewAccountDB(x.GetAPI().GetConfig(), types2.X2ethereumX, strings.ToLower(in.TokenSymbol+addr), x.GetStateDB())
+			accDB, err := account.NewAccountDB(x.GetAPI().GetConfig(), x2eTy.X2ethereumX, strings.ToLower(in.TokenSymbol+addr), x.GetStateDB())
 			if err != nil {
 				return nil, err
 			}
 
-			acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(types2.X2ethereumX))
-			res := new(types2.ReceiptQueryRelayerBalanceForOneToken)
+			acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(x2eTy.X2ethereumX))
+			res := new(x2eTy.ReceiptQueryRelayerBalanceForOneToken)
 			res.TokenAddr = addr
 			res.TokenSymbol = in.TokenSymbol
-			res.Balance = types2.TrimZeroAndDot(strconv.FormatFloat(float64(acc.Balance)/1e8, 'f', 4, 64))
+			res.Balance = x2eTy.TrimZeroAndDot(strconv.FormatFloat(float64(acc.Balance)/1e8, 'f', 4, 64))
 			symbolAmount.Res = append(symbolAmount.Res, res)
 		}
 	}
