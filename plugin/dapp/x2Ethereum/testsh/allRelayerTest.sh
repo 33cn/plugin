@@ -338,7 +338,6 @@ function TestETH2Chain33Erc20() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-
 function TestChain33ToEthAssetsKill() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 

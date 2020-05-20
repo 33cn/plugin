@@ -3,9 +3,10 @@ package executor
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/33cn/chain33/types"
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
-	"strconv"
 )
 
 func NewProphecy(id string) *x2eTy.ReceiptEthProphecy {

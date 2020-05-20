@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+
 	"github.com/33cn/chain33/system/dapp"
 	manTy "github.com/33cn/chain33/system/dapp/manage/types"
 
