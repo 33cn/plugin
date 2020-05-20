@@ -326,6 +326,7 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(getNodeInfoCmd())
 	cmd.AddCommand(getNodeIDInfoCmd())
 	cmd.AddCommand(getNodeListCmd())
+	cmd.AddCommand(nodeModifyCmd())
 	return cmd
 }
 
@@ -485,7 +486,7 @@ func nodeModifyCmd() *cobra.Command {
 		Short: "super node modify parameters",
 		Run:   createNodeModifyTx,
 	}
-	addNodeCancelFlags(cmd)
+	addNodeModifyFlags(cmd)
 	return cmd
 }
 

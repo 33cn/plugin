@@ -416,35 +416,42 @@ message ParaLocalDbBlockInfo {
 }
 
 message ParaBlsSignSumDetails {
-    repeated string addrs    = 1;
-    repeated bytes msgs      = 2;
-    repeated bytes signs     = 3;
-    int64 height             = 4;
+    int64 height             = 1;
+    repeated string addrs    = 2;
+    repeated bytes msgs      = 3;
+    repeated bytes signs     = 4;
+
 }
 
+message ParaBlsSignSumDetailsShow {
+    int64 height             = 1;
+    repeated string addrs    = 2;
+    repeated string msgs     = 3;
+
+}
 message ParaBlsSignSumInfo {
-    repeated ParaBlsSignSumDetails info = 1;
+    repeated ParaBlsSignSumDetailsShow info = 1;
 }
 
-message ElectionMsg {
-    string toID     = 1; //target id
-    string peerID   = 2; //src id
-    int32  type     = 3;
-    bytes  data     = 4;
+message LeaderSyncInfo {
+    string ID       = 1;   //self id
+    int32 baseIdx   = 2; //calculated by corrent consensus height and remainder by len(nodes)
+    int32 offset    = 3;
+
 }
 
 message ParaP2PSubMsg {
     int32 ty = 1;
     oneof value {
-        Transaction    commitTx          = 10;
-        ElectionMsg    election          = 11;
+        Transaction    commitTx         = 10;
+        LeaderSyncInfo  syncMsg          = 11;
     }
 
 }
 
 message ElectionStatus {
     bool   isLeader = 1;
-    string leaderId = 2;
+    LeaderSyncInfo leader = 2;
 }
 
 

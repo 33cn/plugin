@@ -8,7 +8,9 @@ import (
 	"bytes"
 	"math/big"
 	"sort"
-
+	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -19,19 +21,33 @@ import (
 )
 
 const (
-	maxRcvTxCount = 100 //max 100 nodes, 1 height tx or 1 txgroup per node
+	maxRcvTxCount      = 100 //channel buffer, max 100 nodes, 1 height tx or 1 txgroup per node
+	leaderSyncInt      = 15  //15s heartbeat sync interval
+	defLeaderSwitchInt = 100 //每隔100个共识高度切换一次leader,大约6小时（按50个空块间隔计算）
+
+	defaultParaBlsSignTopic = "PARA-BLS-SIGN-TOPIC"
+)
+
+//新增需要保证顺序
+const (
+	P2pSubCommitTx      = 1
+	P2pSubLeaderSyncMsg = 2
 )
 
 type blsClient struct {
-	paraClient     *client
-	selfID         string
-	blsPriKey      *g2pubs.SecretKey
-	blsPubKey      *g2pubs.PublicKey
-	peers          map[string]bool
-	peersBlsPubKey map[string]*g2pubs.PublicKey
-	txsBuff        map[int64]*pt.ParaBlsSignSumDetails
-	rcvCommitTxCh  chan []*pt.ParacrossCommitAction
-	quit           chan struct{}
+	paraClient      *client
+	selfID          string
+	blsPriKey       *g2pubs.SecretKey
+	blsPubKey       *g2pubs.PublicKey
+	peers           map[string]bool
+	peersBlsPubKey  map[string]*g2pubs.PublicKey
+	commitsPool     map[int64]*pt.ParaBlsSignSumDetails
+	rcvCommitTxCh   chan []*pt.ParacrossCommitAction
+	leaderOffset    int32
+	leaderSwitchInt int32
+	feedDog         uint32
+	quit            chan struct{}
+	mutex           sync.Mutex
 }
 
 func newBlsClient(para *client, cfg *subConfig) *blsClient {
@@ -39,107 +55,228 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b.selfID = cfg.AuthAccount
 	b.peers = make(map[string]bool)
 	b.peersBlsPubKey = make(map[string]*g2pubs.PublicKey)
-	b.txsBuff = make(map[int64]*pt.ParaBlsSignSumDetails)
+	b.commitsPool = make(map[int64]*pt.ParaBlsSignSumDetails)
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
+	b.leaderSwitchInt = defLeaderSwitchInt
+	if cfg.BlsLeaderSwitchInt > 0 {
+		b.leaderSwitchInt = cfg.BlsLeaderSwitchInt
+	}
 
 	return b
 }
 
-//1. 要等到达成共识了才发送，不然处理未达成共识的各种场景会比较复杂，而且浪费手续费
-func (b *blsClient) procRcvSignTxs() {
+/*
+1. 当前的leaderIndex和自己在nodegroup里面index一致，则自己是leader，负责发送共识交易
+2. 当前leader负责每15s 发送一个喂狗消息，表明自己live
+3. 每个node开启watchdog定时器，如果超时，则leaderIndex++, 寻找新的活的leader
+4. node一旦收到新的喂狗消息，则把新消息的index更新为自己的leaderIndex， 如果和自己的leaderIndex冲突，则选大者
+5. 每隔比如100个共识高度，就需要轮换leader，触发leaderIndex++，leader均衡轮换发送共识交易
+*/
+func (b *blsClient) procLeaderSync() {
 	defer b.paraClient.wg.Done()
 	if len(b.selfID) <= 0 {
 		return
 	}
-	p2pTimer := time.NewTimer(time.Minute)
+
+	var feedDogTicker <-chan time.Time
+	var watchDogTicker <-chan time.Time
+
+	p2pTimer := time.After(time.Minute)
 out:
 	for {
 		select {
-		case commits := <-b.rcvCommitTxCh:
-			collectSigns(b.txsBuff, commits)
-			nodes := b.paraClient.commitMsgClient.authNodes.Load().([]string)
-			if !isMostCommitDone(len(nodes), b.txsBuff) {
+		case <-feedDogTicker:
+			//leader需要定期喂狗
+			_, _, base, off, isLeader := b.getLeaderInfo()
+			if isLeader {
+				act := &pt.ParaP2PSubMsg{Ty: P2pSubLeaderSyncMsg}
+				act.Value = &pt.ParaP2PSubMsg_SyncMsg{SyncMsg: &pt.LeaderSyncInfo{ID: b.selfID, BaseIdx: base, Offset: off}}
+				err := b.paraClient.SendPubP2PMsg(defaultParaBlsSignTopic, types.Encode(act))
+				if err != nil {
+					plog.Error("para.procLeaderSync feed dog", "err", err)
+				}
+				plog.Info("procLeaderSync feed dog", "id", b.selfID, "base", base, "off", off)
+			}
+
+		case <-watchDogTicker:
+			//至少1分钟内要收到leader喂狗消息，否则认为leader挂了，index++
+			if atomic.LoadUint32(&b.feedDog) == 0 {
+				nodes, leader, _, off, _ := b.getLeaderInfo()
+				if len(nodes) <= 0 {
+					continue
+				}
+				atomic.StoreInt32(&b.leaderOffset, (off+1)%int32(len(nodes)))
+				plog.Info("procLeaderSync watchdog", "fail node", nodes[leader], "newOffset", atomic.LoadInt32(&b.leaderOffset))
+			}
+			atomic.StoreUint32(&b.feedDog, 0)
+
+		case <-p2pTimer:
+			err := b.paraClient.SendSubP2PTopic(defaultParaBlsSignTopic)
+			if err != nil {
+				plog.Error("procLeaderSync.SubP2PTopic", "err", err)
+				p2pTimer = time.After(time.Minute)
 				continue
 			}
-			//清空txsBuff，重新收集
-			txsBuff := b.txsBuff
-			b.txsBuff = make(map[int64]*pt.ParaBlsSignSumDetails)
-
-			//自己是Coordinator,则聚合交易
-			if b.paraClient.bullyCli.IsSelfCoordinator() {
-				dones := filterDoneCommits(len(nodes), txsBuff)
-				if len(dones) > 0 {
-					continue
-				}
-				acts, err := b.transferCommit2Action(dones)
-				if err != nil {
-					continue
-				}
-				b.paraClient.commitMsgClient.sendCommitActions(acts)
-			}
-		case <-p2pTimer.C:
-			if len(b.selfID) > 0 {
-				//tle := cfg.GetTitle()
-				plog.Info("send p2p topic------------------------------")
-				b.paraClient.subP2PTopic()
-				plog.Info("rcv p2p topic-------------------------------")
-
-			}
+			feedDogTicker = time.NewTicker(leaderSyncInt * time.Second).C
+			watchDogTicker = time.NewTicker(time.Minute).C
 		case <-b.quit:
 			break out
 		}
 	}
+}
+
+//处理leader sync tx, 需接受同步的数据，两个节点基本的共识高度相同, 两个共同leader需相同
+func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
+	nodes, _, base, off, isLeader := b.getLeaderInfo()
+	if len(nodes) <= 0 {
+		return errors.Wrapf(pt.ErrParaNodeGroupNotSet, "id=%s", b.selfID)
+	}
+	syncLeader := (sync.BaseIdx + sync.Offset) % int32(len(nodes))
+	//接受同步数据需要两个节点基本的共识高度相同, 两个共同leader需相同
+	if sync.BaseIdx != base || nodes[syncLeader] != sync.ID {
+		return errors.Wrapf(types.ErrNotSync, "peer base=%d,id=%s,self.Base=%d,id=%s", sync.BaseIdx, sync.ID, base, nodes[syncLeader])
+	}
+	//如果leader节点冲突，取大者
+	if isLeader && off > sync.Offset {
+		return errors.Wrapf(types.ErrNotSync, "self leader off=%d bigger than sync=%d", off, sync.Offset)
+	}
+	//更新同步过来的最新offset 高度
+	atomic.StoreInt32(&b.leaderOffset, sync.Offset)
+
+	//两节点不同步则不喂狗，以防止非同步或作恶节点喂狗
+	atomic.StoreUint32(&b.feedDog, 1)
+	return nil
+}
+
+func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
+	nodes, _ := b.getSuperNodes()
+	if len(nodes) <= 0 {
+		return nil, 0, 0, 0, false
+	}
+	h := b.paraClient.commitMsgClient.getConsensusHeight()
+	//间隔的除数再根据nodes取余数，平均覆盖所有节点
+	baseIdx := int32((h / int64(b.leaderSwitchInt)) % int64(len(nodes)))
+	offIdx := atomic.LoadInt32(&b.leaderOffset)
+	leaderIdx := (baseIdx + offIdx) % int32(len(nodes))
+	return nodes, leaderIdx, baseIdx, offIdx, nodes[leaderIdx] == b.selfID
 
 }
 
-func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
-	if !tx.CheckSign() {
-		return types.ErrSign
+func (b *blsClient) getSuperNodes() ([]string, string) {
+	nodeStr, err := b.paraClient.commitMsgClient.getNodeGroupAddrs()
+	if err != nil {
+		return nil, ""
+	}
+	return strings.Split(nodeStr, ","), nodeStr
+}
+
+func (b *blsClient) isValidNodes(id string) bool {
+	_, nodes := b.getSuperNodes()
+	return strings.Contains(nodes, id)
+}
+
+//1. 要等到达成共识了才发送，不然处理未达成共识的各种场景会比较复杂，而且浪费手续费
+func (b *blsClient) procAggregateTxs() {
+	defer b.paraClient.wg.Done()
+	if len(b.selfID) <= 0 {
+		return
 	}
 
-	if !b.paraClient.commitMsgClient.isValidNode(tx.From()) {
+out:
+	for {
+		select {
+		case commits := <-b.rcvCommitTxCh:
+			b.mutex.Lock()
+			integrateCommits(b.commitsPool, commits)
+
+			//commitsPool里面任一高度满足共识，则认为done
+			nodes, _ := b.getSuperNodes()
+			if !isMostCommitDone(len(nodes), b.commitsPool) {
+				b.mutex.Unlock()
+				continue
+			}
+			//自己是Leader,则聚合并发送交易
+			_, _, _, _, isLeader := b.getLeaderInfo()
+			if isLeader {
+				b.sendAggregateTx(nodes)
+			}
+
+			//清空txsBuff，重新收集
+			b.commitsPool = make(map[int64]*pt.ParaBlsSignSumDetails)
+			b.mutex.Unlock()
+
+		case <-b.quit:
+			break out
+		}
+	}
+}
+
+func (b *blsClient) sendAggregateTx(nodes []string) error {
+	dones := filterDoneCommits(len(nodes), b.commitsPool)
+	plog.Info("sendAggregateTx filterDone", "commits", len(dones))
+	if len(dones) <= 0 {
+		return nil
+	}
+	acts, err := b.AggregateCommit2Action(nodes, dones)
+	if err != nil {
+		plog.Error("sendAggregateTx AggregateCommit2Action", "err", err)
+		return err
+	}
+	b.paraClient.commitMsgClient.sendCommitActions(acts)
+	return nil
+}
+
+func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
+	if !b.isValidNodes(tx.From()) {
 		b.updatePeers(tx.From(), false)
 		return pt.ErrParaNodeAddrNotExisted
 	}
-	b.updatePeers(tx.From(), true)
 
 	txs := []*types.Transaction{tx}
 	if count := tx.GetGroupCount(); count > 0 {
 		group, err := tx.GetTxGroup()
 		if err != nil {
-			return err
+			return errors.Wrap(err, "GetTxGroup")
 		}
 		txs = group.Txs
 	}
 
-	commits, err := b.getCommitInfo(txs)
+	commits, err := b.checkCommitTx(txs)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "checkCommitTx")
 	}
+	b.updatePeers(tx.From(), true)
+
 	b.rcvCommitTxCh <- commits
 	return nil
 
 }
 
-func (b *blsClient) getCommitInfo(txs []*types.Transaction) ([]*pt.ParacrossCommitAction, error) {
+func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossCommitAction, error) {
 	var commits []*pt.ParacrossCommitAction
 	for _, tx := range txs {
+		//验签
+		if !tx.CheckSign() {
+			return nil, errors.Wrapf(types.ErrSign, "hash=%s", common.ToHex(tx.Hash()))
+		}
 		var act pt.ParacrossAction
 		err := types.Decode(tx.Payload, &act)
 		if err != nil {
 			return nil, errors.Wrap(err, "decode act")
 		}
 		if act.Ty != pt.ParacrossActionCommit {
-			return nil, types.ErrInvalidParam
+			return nil, errors.Wrapf(types.ErrInvalidParam, "act ty=%d", act.Ty)
 		}
+		//交易签名和bls签名用户一致
 		commit := act.GetCommit()
 		if tx.From() != commit.Bls.Addrs[0] {
-			return nil, types.ErrFromAddr
+			return nil, errors.Wrapf(types.ErrFromAddr, "from=%s,bls addr=%s", tx.From(), commit.Bls.Addrs[0])
 		}
+		//验证bls 签名
 		err = b.verifyBlsSign(tx.From(), commit)
 		if err != nil {
-			return nil, pt.ErrBlsSignVerify
+			return nil, errors.Wrapf(pt.ErrBlsSignVerify, "from=%s", tx.From())
 		}
 		commits = append(commits, commit)
 	}
@@ -147,12 +284,13 @@ func (b *blsClient) getCommitInfo(txs []*types.Transaction) ([]*pt.ParacrossComm
 	return commits, nil
 }
 
-func collectSigns(txsBuff map[int64]*pt.ParaBlsSignSumDetails, commits []*pt.ParacrossCommitAction) {
+//整合相同高度commits
+func integrateCommits(pool map[int64]*pt.ParaBlsSignSumDetails, commits []*pt.ParacrossCommitAction) {
 	for _, cmt := range commits {
-		if _, ok := txsBuff[cmt.Status.Height]; !ok {
-			txsBuff[cmt.Status.Height] = &pt.ParaBlsSignSumDetails{Height: cmt.Status.Height}
+		if _, ok := pool[cmt.Status.Height]; !ok {
+			pool[cmt.Status.Height] = &pt.ParaBlsSignSumDetails{Height: cmt.Status.Height}
 		}
-		a := txsBuff[cmt.Status.Height]
+		a := pool[cmt.Status.Height]
 		for i, v := range a.Addrs {
 			//节点更新交易参数的场景
 			if v == cmt.Bls.Addrs[0] {
@@ -167,7 +305,12 @@ func collectSigns(txsBuff map[int64]*pt.ParaBlsSignSumDetails, commits []*pt.Par
 	}
 }
 
+//txBuff中任一高度满足done则认为ok，有可能某些未达成的高度是冗余的，达成共识的高度发给链最终判决
 func isMostCommitDone(peers int, txsBuff map[int64]*pt.ParaBlsSignSumDetails) bool {
+	if peers <= 0 {
+		return false
+	}
+
 	for i, v := range txsBuff {
 		most, _ := getMostCommit(v.Msgs)
 		if isCommitDone(peers, most) {
@@ -178,18 +321,19 @@ func isMostCommitDone(peers int, txsBuff map[int64]*pt.ParaBlsSignSumDetails) bo
 	return false
 }
 
+//找出共识并达到2/3的commits， 并去除与共识不同的commits,为后面聚合签名做准备
 func filterDoneCommits(peers int, txs map[int64]*pt.ParaBlsSignSumDetails) []*pt.ParaBlsSignSumDetails {
 	var seq []int64
 	for i, v := range txs {
 		most, hash := getMostCommit(v.Msgs)
 		if !isCommitDone(peers, most) {
-			plog.Info("blssign.filterDoneCommits not commit done", "height", i)
+			plog.Debug("blssign.filterDoneCommits not commit done", "height", i)
 			delete(txs, i)
 			continue
 		}
 		seq = append(seq, i)
 
-		//只保留相同的commits
+		//只保留与most相同的commits做聚合签名使用
 		a := &pt.ParaBlsSignSumDetails{Msgs: [][]byte{[]byte(hash)}}
 		for j, m := range v.Msgs {
 			if bytes.Equal([]byte(hash), m) {
@@ -201,12 +345,12 @@ func filterDoneCommits(peers int, txs map[int64]*pt.ParaBlsSignSumDetails) []*pt
 	}
 
 	if len(seq) <= 0 {
-		plog.Info("blssign.filterDoneCommits nil")
 		return nil
 	}
 
+	//从低到高找出连续的commits
 	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
-	plog.Info("blssign.filterDoneCommits", "seq", seq)
+	plog.Debug("blssign.filterDoneCommits", "seq", seq)
 	var signs []*pt.ParaBlsSignSumDetails
 	//共识高度要连续，不连续则退出
 	lastSeq := seq[0] - 1
@@ -221,22 +365,22 @@ func filterDoneCommits(peers int, txs map[int64]*pt.ParaBlsSignSumDetails) []*pt
 
 }
 
-func (b *blsClient) transferCommit2Action(commits []*pt.ParaBlsSignSumDetails) ([]*pt.ParacrossCommitAction, error) {
+//聚合多个签名为一个签名，并设置地址bitmap
+func (b *blsClient) AggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails) ([]*pt.ParacrossCommitAction, error) {
 	var notify []*pt.ParacrossCommitAction
 
 	for _, v := range commits {
-		a := &pt.ParacrossCommitAction{}
+		a := &pt.ParacrossCommitAction{Bls: &pt.ParacrossCommitBlsInfo{}}
 		s := &pt.ParacrossNodeStatus{}
 		types.Decode(v.Msgs[0], s)
 		a.Status = s
 
 		sign, err := b.aggregateSigns(v.Signs)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "bls aggreate=%s", v.Addrs)
 		}
 		signData := sign.Serialize()
-		copy(a.Bls.Sign, signData[:])
-		nodes := b.paraClient.commitMsgClient.authNodes.Load().([]string)
+		a.Bls.Sign = append(a.Bls.Sign, signData[:]...)
 		bits, remains := setAddrsBitMap(nodes, v.Addrs)
 		if len(remains) > 0 {
 			plog.Info("bls.signDoneCommits", "remains", remains)
@@ -254,7 +398,7 @@ func (b *blsClient) aggregateSigns(signs [][]byte) (*g2pubs.Signature, error) {
 		copy(s[:], data)
 		signKey, err := g2pubs.DeserializeSignature(s)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "aggregateSigns")
 		}
 		signatures = append(signatures, signKey)
 	}
@@ -262,15 +406,15 @@ func (b *blsClient) aggregateSigns(signs [][]byte) (*g2pubs.Signature, error) {
 	return g2pubs.AggregateSignatures(signatures), nil
 }
 
-func (b *blsClient) updatePeers(peer string, add bool) {
-	if _, ok := b.peers[peer]; ok {
+func (b *blsClient) updatePeers(id string, add bool) {
+	if _, ok := b.peers[id]; ok {
 		if !add {
-			delete(b.peers, peer)
+			delete(b.peers, id)
 		}
 		return
 	}
 	if add {
-		b.peers[peer] = true
+		b.peers[id] = true
 	}
 
 }
@@ -285,7 +429,7 @@ func (b *blsClient) setBlsPriKey(secpPrkKey []byte) {
 //to repeat get prikey's hash until in range of bls's private key
 func getBlsPriKey(key []byte) *g2pubs.SecretKey {
 	var newKey [common.Sha256Len]byte
-	copy(newKey[:], key[:])
+	copy(newKey[:], key)
 	for {
 		plog.Info("para commit getBlsPriKey", "keys", common.ToHex(newKey[:]))
 		secret := g2pubs.DeserializeSecretKey(newKey)
@@ -302,9 +446,14 @@ func getBlsPriKey(key []byte) *g2pubs.SecretKey {
 func (b *blsClient) blsSign(commits []*pt.ParacrossCommitAction) error {
 	for _, cmt := range commits {
 		data := types.Encode(cmt.Status)
-		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height)
+
+		cmt.Bls = &pt.ParacrossCommitBlsInfo{Addrs: []string{b.selfID}}
 		sign := g2pubs.Sign(data, b.blsPriKey).Serialize()
-		cmt.Bls = &pt.ParacrossCommitBlsInfo{Sign: sign[:], Addrs: []string{b.selfID}}
+		if len(sign) <= 0 {
+			return errors.Wrapf(types.ErrInvalidParam, "addr=%s,prikey=%d,height=%d", b.selfID, len(b.blsPriKey.Serialize()), cmt.Status.Height)
+		}
+		cmt.Bls.Sign = append(cmt.Bls.Sign, sign[:]...)
+		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "sign", len(cmt.Bls.Sign), "src", len(sign))
 	}
 	return nil
 }
@@ -397,8 +546,7 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 	//1. 获取对应公钥
 	pubKey, err := b.getBlsPubKey(addr)
 	if err != nil {
-		plog.Error("verifyBlsSign pub　key not exist", "addr", addr)
-		return err
+		return errors.Wrapf(err, "pub key not exist to addr=%s", addr)
 	}
 
 	//2.　获取bls签名
@@ -406,8 +554,7 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 	copy(signkey[:], commit.Bls.Sign)
 	sign, err := g2pubs.DeserializeSignature(signkey)
 	if err != nil {
-		plog.Error("verifyBlsSign.DeserializeSignature", "key", common.ToHex(commit.Bls.Sign))
-		return err
+		return errors.Wrapf(err, "DeserializeSignature key=%s", common.ToHex(commit.Bls.Sign))
 	}
 
 	//3. 获取签名前原始msg
@@ -423,15 +570,24 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 }
 
 func (b *blsClient) showTxBuffInfo() *pt.ParaBlsSignSumInfo {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
 	var seq []int64
 	var ret pt.ParaBlsSignSumInfo
-	for k := range b.txsBuff {
+	for k := range b.commitsPool {
 		seq = append(seq, k)
 	}
 	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
 
-	for _, h := range seq {
-		ret.Info = append(ret.Info, b.txsBuff[h])
+	for _, s := range seq {
+		sum := b.commitsPool[s]
+		info := &pt.ParaBlsSignSumDetailsShow{Height: s}
+		for i, a := range sum.Addrs {
+			info.Addrs = append(info.Addrs, a)
+			info.Msgs = append(info.Msgs, common.ToHex(sum.Msgs[i]))
+		}
+		ret.Info = append(ret.Info, info)
 	}
 	return &ret
 }

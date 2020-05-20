@@ -527,7 +527,7 @@ func (client *client) CreateBlock() {
 out:
 	for {
 		select {
-		case <-client.quitCreate:
+		case <-client.quit:
 			break out
 		default:
 			count, err := client.getBatchSeqCount(currSeq)

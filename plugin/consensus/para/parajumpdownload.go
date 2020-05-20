@@ -28,6 +28,10 @@ type jumpDldClient struct {
 	wg         sync.WaitGroup
 }
 
+func newJumpDldCli(para *client, cfg *subConfig) *jumpDldClient {
+	return &jumpDldClient{paraClient: para}
+}
+
 //校验按高度获取的block hash和前一步对应高度的blockhash比对
 func verifyBlockHash(heights []*types.BlockInfo, blocks []*types.ParaTxDetail) error {
 	heightMap := make(map[int64][]byte)

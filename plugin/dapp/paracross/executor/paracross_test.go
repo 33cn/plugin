@@ -169,7 +169,7 @@ func (suite *CommitTestSuite) TestSetup() {
 }
 
 func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
-	st1 := pt.ParacrossNodeStatus{
+	st1 := &pt.ParacrossNodeStatus{
 		MainBlockHash:   MainBlockHash10,
 		MainBlockHeight: MainBlockHeight,
 		Title:           Title,
@@ -184,7 +184,8 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 		CrossTxResult:   []byte("abc"),
 		CrossTxHashs:    [][]byte{},
 	}
-	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, &st1, pt.GetExecName(chain33TestCfg), 0)
+	act := &pt.ParacrossCommitAction{Status: st1}
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, act, pt.GetExecName(chain33TestCfg), 0)
 	if err != nil {
 		suite.T().Error("TestExec", "create tx failed", err)
 	}
@@ -718,19 +719,12 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 
 func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 	status := &pt.ParacrossNodeStatus{MainBlockHash: []byte("hash"), MainBlockHeight: 0, Title: Title}
-
-	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, status, Title+pt.ParaX, 0)
+	act := &pt.ParacrossCommitAction{Status: status}
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, act, Title+pt.ParaX, 0)
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
 	}
-
-	//tx, err = signTx(s, tx, privFrom)
-	//assert.Nil(s.T(), err, "sign asset transfer failed")
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	return tx, nil
 }
 
