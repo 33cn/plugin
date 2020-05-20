@@ -208,6 +208,7 @@ contract Chain33Bridge {
         bytes memory _chain33Sender,
         address payable _ethereumReceiver,
         address _originalValidator,
+        address _tokenAddress,
         string memory _symbol,
         uint256 _amount
     )
@@ -219,7 +220,10 @@ contract Chain33Bridge {
         prophecyClaimCount = prophecyClaimCount.add(1);
         ClaimType claimType = ClaimType(_claimType);
 
-        address tokenAddress = bridgeBank.getToken2address(_symbol);
+        //overwrite the token address in case of lock
+        if (claimType == ClaimType.Lock) {
+            _tokenAddress = bridgeBank.getToken2address(_symbol);
+        }
 
         // Create the new ProphecyClaim
         ProphecyClaim memory prophecyClaim = ProphecyClaim(
@@ -227,7 +231,7 @@ contract Chain33Bridge {
             _chain33Sender,
             _ethereumReceiver,
             _originalValidator,
-            tokenAddress,
+            _tokenAddress,
             _symbol,
             _amount,
             Status.Pending
@@ -242,7 +246,7 @@ contract Chain33Bridge {
             _chain33Sender,
             _ethereumReceiver,
             _originalValidator,
-            tokenAddress,
+            _tokenAddress,
             _symbol,
             _amount
         );

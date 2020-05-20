@@ -130,6 +130,7 @@ contract Oracle {
         ClaimType _claimType,
         bytes memory _chain33Sender,
         address payable _ethereumReceiver,
+        address _tokenAddress,
         string memory _symbol,
         uint256 _amount,
         bytes32 _claimID,
@@ -163,6 +164,7 @@ contract Oracle {
                             _chain33Sender,
                             _ethereumReceiver,
                             validatorAddress,
+                            _tokenAddress,
                             _symbol,
                             _amount);
         }

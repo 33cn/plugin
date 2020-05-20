@@ -467,7 +467,7 @@ func MakeNewProphecyClaim(newProphecyClaimPara *NewProphecyClaimPara, client *et
 		return "", err
 	}
 
-	tx, err := x2EthContracts.Oracle.NewOracleClaim(authVali, newProphecyClaimPara.ClaimType, newProphecyClaimPara.Chain33Sender, ethReceiver, newProphecyClaimPara.Symbol, amount, claimID, signature)
+	tx, err := x2EthContracts.Oracle.NewOracleClaim(authVali, newProphecyClaimPara.ClaimType, newProphecyClaimPara.Chain33Sender, ethReceiver, newProphecyClaimPara.TokenAddr, newProphecyClaimPara.Symbol, amount, claimID, signature)
 	if nil != err {
 		return "", err
 	}

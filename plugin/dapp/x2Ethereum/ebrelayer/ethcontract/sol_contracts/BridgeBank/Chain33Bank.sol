@@ -379,6 +379,5 @@ contract Chain33Bank {
     {
         bytes32 symHash = keccak256(abi.encodePacked(_symbol));
         return token2address[symHash];
-
     }
 }
