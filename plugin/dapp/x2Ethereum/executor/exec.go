@@ -20,7 +20,7 @@ import (
 // Eth2Chain33类型的交易是Ethereum侧锁定一定金额的eth或者erc20到合约中
 // 然后relayer端订阅到该消息后向chain33发送该类型消息
 // 本端在验证该类型的请求合理后铸币，并生成相同数额的token
-func (x *x2ethereum) Exec_Eth2Chain33_lock(payload *x2eTy.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (x *x2ethereum) Exec_Eth2Chain33Lock(payload *x2eTy.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
@@ -33,7 +33,7 @@ func (x *x2ethereum) Exec_Eth2Chain33_lock(payload *x2eTy.Eth2Chain33, tx *types
 
 //----------------  Chain33(eth/erc20)------> Ethereum -------------------//
 // WithdrawChain33类型的交易是将Eth端因Chain33端锁定所生成的token返还给Chain33端（Burn）
-func (x *x2ethereum) Exec_Chain33ToEth_burn(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (x *x2ethereum) Exec_Chain33ToEthBurn(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
@@ -44,7 +44,7 @@ func (x *x2ethereum) Exec_Chain33ToEth_burn(payload *x2eTy.Chain33ToEth, tx *typ
 //---------------- Chain33(eth/erc20) --> Ethereum-------------------//
 
 // 将因ethereum端锁定的eth或者erc20而在chain33端生成的token返还
-func (x *x2ethereum) Exec_Eth2Chain33_burn(payload *x2eTy.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (x *x2ethereum) Exec_Eth2Chain33Burn(payload *x2eTy.Eth2Chain33, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
@@ -57,7 +57,7 @@ func (x *x2ethereum) Exec_Eth2Chain33_burn(payload *x2eTy.Eth2Chain33, tx *types
 
 // Chain33ToEth类型的交易是Chain33侧在本端发出申请
 // 在本端锁定一定数额的token，然后在ethereum端生成相同数额的token
-func (x *x2ethereum) Exec_Chain33ToEth_lock(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (x *x2ethereum) Exec_Chain33ToEthLock(payload *x2eTy.Chain33ToEth, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(x, tx, int32(index))
 	if action == nil {
 		return nil, errors.New("Create Action Error")
@@ -156,10 +156,15 @@ func (x *x2ethereum) Exec_SetConsensusThreshold(payload *x2eTy.MsgConsensusThres
 
 func checkTxSignBySpecificAddr(tx *types.Transaction, addrs []string) error {
 	signAddr := address.PubKeyToAddr(tx.Signature.Pubkey)
+	var exist bool
 	for _, addr := range addrs {
 		if signAddr == addr {
+			exist = true
 			continue
 		}
+	}
+
+	if !exist {
 		return x2eTy.ErrInvalidAdminAddress
 	}
 

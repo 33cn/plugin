@@ -67,13 +67,13 @@ TestETH2Chain33Erc20() {
     result=$(${CLI} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
     cli_ret "${result}" "mint"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "1000"
 
     result=$(${CLI} relayer ethereum bridgeBankAddr)
     bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 2 chain33 lock 前先审批一下
@@ -85,10 +85,10 @@ TestETH2Chain33Erc20() {
     result=$(${CLI} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret "${result}" "lock"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "900"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "100"
 
     # ETH 2 chain33 withdraw 40
@@ -98,10 +98,10 @@ TestETH2Chain33Erc20() {
 
     walitProphecyFinish "${ethReceiverAddr2}" "${tokenAddr}" 40
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "40"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "60"
 
     # burn 60
@@ -110,10 +110,10 @@ TestETH2Chain33Erc20() {
 
     walitProphecyFinish "${ethReceiverAddr2}" "${tokenAddr}" 100
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "100"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     echo "=========== $FUNCNAME end ==========="
@@ -132,13 +132,13 @@ TestETH2Chain33Erc20_err() {
     result=$(${CLI} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
     cli_ret "${result}" "mint"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "1000"
 
     result=$(${CLI} relayer ethereum bridgeBankAddr)
     bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 2 chain33 lock 前先审批一下
@@ -149,7 +149,7 @@ TestETH2Chain33Erc20_err() {
     result=$(${CLI} relayer ethereum lock -m 200 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret_err "${result}"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # lock 1100 err
@@ -158,7 +158,7 @@ TestETH2Chain33Erc20_err() {
     result=$(${CLI} relayer ethereum lock -m 1100 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret_err "${result}"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     result=$(${CLI} relayer ethereum approve -m 300 -k "${ethReceiverAddrKey1}" -t "${tokenAddr}")
@@ -169,10 +169,10 @@ TestETH2Chain33Erc20_err() {
     result=$(${CLI} relayer ethereum lock -m 300 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret "${result}" "lock"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "700"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "300"
 
     # -c 1 burn 500
@@ -181,10 +181,10 @@ TestETH2Chain33Erc20_err() {
 
     sleep 15
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "300"
 
     echo "=========== $FUNCNAME end ==========="
@@ -283,10 +283,10 @@ TestChain33ToEthAssets() {
     echo "=========== $FUNCNAME begin ==========="
     result=$(${CLI} relayer unlock -p 123456hzj)
     # token4chain33 在 以太坊 上先有 bty
-    result=$(${CLI} relayer ethereum token4chain33 -s bty)
+    result=$(${CLI} relayer ethereum token4chain33 -s coins.bty)
     tokenAddr=$(cli_ret "${result}" "token4chain33" ".addr")
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # -c 2 chain33 lock 100
@@ -295,26 +295,26 @@ TestChain33ToEthAssets() {
 
     walitProphecyFinish "${ethReceiverAddr1}" "${tokenAddr}" "100"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "100"
 
     # transfer 10
     result=$(${CLI} relayer ethereum transfer -m 10 -k "${ethReceiverAddrKey1}" -r "${ethReceiverAddr2}" -t "${tokenAddr}")
     cli_ret "${result}" "transfer"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "90"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "10"
 
     result=$(${CLI} relayer ethereum transfer -m 10 -k "${ethReceiverAddrKey2}" -r "${ethReceiverAddr3}" -t "${tokenAddr}")
     cli_ret "${result}" "transfer"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr3}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr3}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "10"
 
     result=$(${CLI} relayer ethereum transfer -m 10 -k "${ethReceiverAddrKey2}" -r "${ethReceiverAddr3}" -t "${tokenAddr}")
@@ -327,7 +327,7 @@ TestChain33ToEthAssets() {
     result=$(${CLI} relayer ethereum burn -m 90 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret "${result}" "burn"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # brun 10 err

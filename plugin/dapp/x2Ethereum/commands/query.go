@@ -26,7 +26,6 @@ func queryCmd() *cobra.Command {
 		queryConsensusCmd(),
 		queryTotalPowerCmd(),
 		querySymbolTotalAmountByTxTypeCmd(),
-		queryRelayerBalanceCmd(),
 	)
 	return cmd
 }

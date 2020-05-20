@@ -27,7 +27,7 @@ func NewOracle(db dbm.KV, consensusThreshold int64) *Oracle {
 }
 
 // 处理经过审核的关于Lock的claim
-func (o *Oracle) ProcessSuccessfulClaimForLock(claim, execAddr, tokenSymbol string, accDB *account.DB) (*types.Receipt, error) {
+func (o *Oracle) ProcessSuccessfulClaimForLock(claim, execAddr string, accDB *account.DB) (*types.Receipt, error) {
 	var receipt *types.Receipt
 	oracleClaim, err := CreateOracleClaimFromOracleString(claim)
 	if err != nil {

@@ -31,7 +31,7 @@ const (
 
 // String : returns the event type as a string
 func (d Event) String() string {
-	return [...]string{"unknown-x2ethereum", "WithdrawChain33-burn", "Chain33ToEth-lock", "LogLock", "LogChain33TokenBurn", "LogNewProphecyClaim"}[d]
+	return [...]string{"unknown-x2ethereum", "Chain33ToEthBurn", "Chain33ToEthLock", "LogLock", "LogChain33TokenBurn", "LogNewProphecyClaim"}[d]
 }
 
 // Chain33MsgAttributeKey : enum containing supported attribute keys

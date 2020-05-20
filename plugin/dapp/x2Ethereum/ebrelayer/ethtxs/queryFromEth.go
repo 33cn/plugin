@@ -135,3 +135,15 @@ func GetDepositFunds(client *ethclient.Client, tokenAddrStr string) (string, err
 	}
 	return supply.String(), nil
 }
+
+func GetToken2address(bridgeBank *generated.BridgeBank, tokenSymbol string) (string, error) {
+	opts := &bind.CallOpts{
+		Pending: true,
+		Context: context.Background(),
+	}
+	tokenAddr, err := bridgeBank.GetToken2address(opts, tokenSymbol)
+	if nil != err {
+		return "", err
+	}
+	return tokenAddr.String(), nil
+}

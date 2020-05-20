@@ -72,13 +72,12 @@ func (a *action) procEth2Chain33_lock(ethBridgeClaim *x2eTy.Eth2Chain33) (*types
 	if status.Text == x2eTy.EthBridgeStatus_SuccessStatusText {
 		// mavl-x2ethereum-eth+tokenAddress
 		// 这里为了区分相同tokensymbol不同tokenAddress做了级联处理
-		_, symbol, _ := x2eTy.DivideDot(ethBridgeClaim.IssuerDotSymbol)
-		accDB, err := account.NewAccountDB(a.api.GetConfig(), x2eTy.X2ethereumX, strings.ToLower(symbol+ethBridgeClaim.TokenContractAddress), a.db)
+		accDB, err := account.NewAccountDB(a.api.GetConfig(), x2eTy.X2ethereumX, strings.ToLower(ethBridgeClaim.IssuerDotSymbol+ethBridgeClaim.TokenContractAddress), a.db)
 		if err != nil {
-			return nil, errors.Wrapf(err, "relay procMsgEth2Chain33,exec=%s,sym=%s", x2eTy.X2ethereumX, symbol)
+			return nil, errors.Wrapf(err, "relay procMsgEth2Chain33,exec=%s,sym=%s", x2eTy.X2ethereumX, ethBridgeClaim.IssuerDotSymbol)
 		}
 
-		r, err := a.oracle.ProcessSuccessfulClaimForLock(status.FinalClaim, a.execaddr, symbol, accDB)
+		r, err := a.oracle.ProcessSuccessfulClaimForLock(status.FinalClaim, a.execaddr, accDB)
 		if err != nil {
 			return nil, err
 		}
@@ -122,10 +121,9 @@ func (a *action) procChain33ToEth_burn(msgBurn *x2eTy.Chain33ToEth) (*types.Rece
 		return nil, err
 	}
 
-	_, symbol, _ := x2eTy.DivideDot(msgBurn.IssuerDotSymbol)
-	accDB, err := account.NewAccountDB(a.api.GetConfig(), x2eTy.X2ethereumX, strings.ToLower(symbol+msgBurn.TokenContract), a.db)
+	accDB, err := account.NewAccountDB(a.api.GetConfig(), x2eTy.X2ethereumX, strings.ToLower(msgBurn.IssuerDotSymbol+msgBurn.TokenContract), a.db)
 	if err != nil {
-		return nil, errors.Wrapf(err, "relay procMsgBurn,exec=%s,sym=%s", x2eTy.X2ethereumX, symbol)
+		return nil, errors.Wrapf(err, "relay procMsgBurn,exec=%s,sym=%s", x2eTy.X2ethereumX, msgBurn.IssuerDotSymbol)
 	}
 	r, err := a.oracle.ProcessBurn(a.fromaddr, a.execaddr, msgBurn.Amount, msgBurn.TokenContract, msgBurn.Decimals, accDB)
 	if err != nil {
@@ -162,7 +160,7 @@ func (a *action) procChain33ToEth_lock(msgLock *x2eTy.Chain33ToEth) (*types.Rece
 	var accDB *account.DB
 	exec, symbol, _ := x2eTy.DivideDot(msgLock.IssuerDotSymbol)
 	if exec == "coins" {
-		accDB := account.NewCoinsAccount(a.api.GetConfig())
+		accDB = account.NewCoinsAccount(a.api.GetConfig())
 		accDB.SetDB(a.db)
 	} else {
 		accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)
@@ -233,7 +231,7 @@ func (a *action) procEth2Chain33_burn(withdrawEth *x2eTy.Eth2Chain33) (*types.Re
 		var accDB *account.DB
 		exec, symbol, _ := x2eTy.DivideDot(withdrawEth.IssuerDotSymbol)
 		if exec == "coins" {
-			accDB := account.NewCoinsAccount(a.api.GetConfig())
+			accDB = account.NewCoinsAccount(a.api.GetConfig())
 			accDB.SetDB(a.db)
 		} else {
 			accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
 )
@@ -166,7 +165,7 @@ func (x *x2ethereum) Query_GetRelayerBalance(in *x2eTy.QueryRelayerBalance) (typ
 			return nil, err
 		}
 
-		acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(x2eTy.X2ethereumX))
+		acc := accDB.LoadAccount(in.Address)
 		res := new(x2eTy.ReceiptQueryRelayerBalanceForOneToken)
 		res.TokenAddr = in.TokenAddr
 		res.TokenSymbol = in.TokenSymbol
@@ -191,7 +190,7 @@ func (x *x2ethereum) Query_GetRelayerBalance(in *x2eTy.QueryRelayerBalance) (typ
 				return nil, err
 			}
 
-			acc := accDB.LoadExecAccount(in.Address, address.ExecAddress(x2eTy.X2ethereumX))
+			acc := accDB.LoadAccount(in.Address)
 			res := new(x2eTy.ReceiptQueryRelayerBalanceForOneToken)
 			res.TokenAddr = addr
 			res.TokenSymbol = in.TokenSymbol

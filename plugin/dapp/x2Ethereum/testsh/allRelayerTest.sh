@@ -200,14 +200,14 @@ function InitChain33Vilators() {
 function TestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # token4chain33 在 以太坊 上先有 bty
-    result=$(${CLIA} relayer ethereum token4chain33 -s bty)
+    result=$(${CLIA} relayer ethereum token4chain33 -s coins.bty)
     tokenAddr=$(cli_ret "${result}" "token4chain33" ".addr")
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr1} -q ${tokenAddr} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q ${tokenAddr} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -216,14 +216,14 @@ function TestChain33ToEthAssets() {
 
     eth_block_wait $((maturityDegree + 2))
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "5"
 
     # eth burn
     result=$(${CLIA} relayer ethereum burn -m 5 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret "${result}" "burn"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # eth 等待 10 个区块
@@ -294,23 +294,23 @@ function TestETH2Chain33Erc20() {
     result=$(${CLIA} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
     cli_ret "${result}" "mint"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "1000"
 
     result=$(${CLIA} relayer ethereum bridgeBankAddr)
     bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
 
-    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # lock 100
     result=$(${CLIA} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33Validator1}" -t "${tokenAddr}")
     cli_ret "${result}" "lock"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "900"
 
-    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "100"
 
     # eth 等待 10 个区块
@@ -328,6 +328,190 @@ function TestETH2Chain33Erc20() {
     balance_ret "${result}" "0"
 
     eth_block_wait 2
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenSymbol}")
+    cli_ret "${result}" "balance" ".balance" "100"
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+
+function TestChain33ToEthAssetsKill() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    if [ "${tokenAddrBty}" == "" ]; then
+        # token4chain33 在 以太坊 上先有 bty
+        result=$(${CLIA} relayer ethereum token4chain33 -s bty)
+        tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
+    fi
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    kill_ebrelayerC
+    kill_ebrelayerD
+
+    # chain33 lock bty
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    check_tx "${Chain33Cli}" "${hash}"
+
+    eth_block_wait $((maturityDegree + 2))
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    start_ebrelayerC
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
+    cli_ret "${result}" "balance" ".balance" "5"
+
+    # eth burn
+    result=$(${CLIA} relayer ethereum burn -m 5 -k "${ethReceiverAddrKey2}" -r "${chain33Validator1}" -t "${tokenAddrBty}")
+    cli_ret "${result}" "burn"
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    # eth 等待 10 个区块
+    eth_block_wait $((maturityDegree + 2))
+
+    result=$(${Chain33Cli} account balance -a "${chain33Validator1}" -e x2ethereum)
+    balance_ret "${result}" "0"
+
+    start_ebrelayerD
+
+    result=$(${Chain33Cli} account balance -a "${chain33Validator1}" -e x2ethereum)
+    balance_ret "${result}" "5"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+# eth to chain33
+# 在以太坊上锁定资产,然后在 chain33 上铸币,针对 eth 资产
+function TestETH2Chain33AssetsKill() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    ${CLIA} relayer unlock -p 123456hzj
+
+    result=$(${CLIA} relayer ethereum bridgeBankAddr)
+    bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    kill_ebrelayerC
+    kill_ebrelayerD
+
+    # eth lock 0.1
+    result=$(${CLIA} relayer ethereum lock -m 0.1 -k "${ethReceiverAddrKey1}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    cli_ret "${result}" "lock"
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
+    cli_ret "${result}" "balance" ".balance" "0.1"
+
+    # eth 等待 10 个区块
+    eth_block_wait $((maturityDegree + 2))
+
+    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
+    balance_ret "${result}" "0"
+
+    start_ebrelayerC
+    start_ebrelayerD
+
+    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
+    balance_ret "${result}" "0.1"
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
+    balance=$(cli_ret "${result}" "balance" ".balance")
+
+    kill_ebrelayerC
+    kill_ebrelayerD
+
+    hash=$(${Chain33Cli} send x2ethereum burn -a 0.1 -t eth -r ${ethReceiverAddr2} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    check_tx "${Chain33Cli}" "${hash}"
+
+    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
+    balance_ret "${result}" "0"
+
+    eth_block_wait 2
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
+    cli_ret "${result}" "balance" ".balance" "0.1"
+
+    start_ebrelayerC
+    start_ebrelayerD
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
+    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.1" | bc)
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+function TestETH2Chain33Erc20Kill() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    ${CLIA} relayer unlock -p 123456hzj
+
+    # token4erc20 在 chain33 上先有 token,同时 mint
+    tokenSymbol="testcc"
+    result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
+    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
+
+    # 先铸币 1000
+    result=$(${CLIA} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    cli_ret "${result}" "mint"
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    cli_ret "${result}" "balance" ".balance" "1000"
+
+    result=$(${CLIA} relayer ethereum bridgeBankAddr)
+    bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    cli_ret "${result}" "balance" ".balance" "0"
+
+    kill_ebrelayerC
+    kill_ebrelayerD
+
+    # lock 100
+    result=$(${CLIA} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33Validator1}" -t "${tokenAddr}")
+    cli_ret "${result}" "lock"
+
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    cli_ret "${result}" "balance" ".balance" "900"
+
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    cli_ret "${result}" "balance" ".balance" "100"
+
+    # eth 等待 10 个区块
+    eth_block_wait $((maturityDegree + 2))
+
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    balance_ret "${result}" "0"
+
+    start_ebrelayerC
+    start_ebrelayerD
+
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    balance_ret "${result}" "100"
+
+    kill_ebrelayerC
+    kill_ebrelayerD
+
+    # chain33 burn 100
+    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33Validator1}")
+    block_wait "${Chain33Cli}" $((maturityDegree + 2))
+    check_tx "${Chain33Cli}" "${hash}"
+
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    balance_ret "${result}" "0"
+
+    eth_block_wait 2
+
+    start_ebrelayerC
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
     cli_ret "${result}" "balance" ".balance" "100"
@@ -353,6 +537,12 @@ function main() {
     TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
+
+    # kill relayer and start relayer
+    #    TestChain33ToEthAssetsKill
+    #    TestETH2Chain33AssetsKill
+    #    TestETH2Chain33Erc20Kill
+
     echo -e "${GRE}===========allTest $FUNCNAME end ===========${NOC}"
 }
 

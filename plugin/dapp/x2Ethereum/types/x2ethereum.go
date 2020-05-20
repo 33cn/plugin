@@ -109,14 +109,14 @@ func (x x2ethereumType) ActionName(tx *types.Transaction) string {
 
 // GetActionName get action name
 func (action *X2EthereumAction) GetActionName() string {
-	if action.Ty == TyEth2Chain33Action && action.GetEth2Chain33() != nil {
-		return "Eth2Chain33_lock"
-	} else if action.Ty == TyWithdrawEthAction && action.GetWithdrawEth() != nil {
-		return "Eth2Chain33_burn"
-	} else if action.Ty == TyWithdrawChain33Action && action.GetWithdrawChain33() != nil {
-		return "Chain33ToEth_burn"
-	} else if action.Ty == TyChain33ToEthAction && action.GetChain33ToEth() != nil {
-		return "Chain33ToEth_lock"
+	if action.Ty == TyEth2Chain33Action && action.GetEth2Chain33Lock() != nil {
+		return "Eth2Chain33Lock"
+	} else if action.Ty == TyWithdrawEthAction && action.GetEth2Chain33Burn() != nil {
+		return "Eth2Chain33Burn"
+	} else if action.Ty == TyWithdrawChain33Action && action.GetChain33ToEthBurn() != nil {
+		return "Chain33ToEthBurn"
+	} else if action.Ty == TyChain33ToEthAction && action.GetChain33ToEthLock() != nil {
+		return "Chain33ToEthLock"
 	} else if action.Ty == TyAddValidatorAction && action.GetAddValidator() != nil {
 		return "AddValidator"
 	} else if action.Ty == TyRemoveValidatorAction && action.GetRemoveValidator() != nil {
@@ -129,7 +129,7 @@ func (action *X2EthereumAction) GetActionName() string {
 		return "Transfer"
 	} else if action.Ty == TyTransferToExecAction && action.GetTransferToExec() != nil {
 		return "TransferToExec"
-	} else if action.Ty == TyWithdrawFromExecAction && action.GetWithdraw() != nil {
+	} else if action.Ty == TyWithdrawFromExecAction && action.GetWithdrawFromExec() != nil {
 		return "WithdrawFromExec"
 	}
 	return "unknown-x2ethereum"

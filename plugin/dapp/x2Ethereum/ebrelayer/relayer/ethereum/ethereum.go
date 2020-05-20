@@ -257,6 +257,10 @@ func (ethRelayer *EthereumRelayer) ShowDepositStatics(tokenAddr string) (string,
 	return ethtxs.GetDepositFunds(ethRelayer.client, tokenAddr)
 }
 
+func (ethRelayer *EthereumRelayer) ShowTokenAddrBySymbol(tokenSymbol string) (string, error) {
+	return ethtxs.GetToken2address(ethRelayer.x2EthContracts.BridgeBank, tokenSymbol)
+}
+
 func (ethRelayer *EthereumRelayer) IsProphecyPending(claimID [32]byte) (bool, error) {
 	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethValidator, ethRelayer.x2EthContracts.Chain33Bridge)
 }

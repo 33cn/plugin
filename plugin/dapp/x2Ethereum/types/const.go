@@ -46,10 +46,10 @@ const (
 	TyTransferToExecAction
 	TyWithdrawFromExecAction
 
-	NameEth2Chain33Action           = "Eth2Chain33_lock"
-	NameWithdrawEthAction           = "Eth2Chain33_burn"
-	NameWithdrawChain33Action       = "Chain33ToEth_burn"
-	NameChain33ToEthAction          = "Chain33ToEth_lock"
+	NameEth2Chain33Action           = "Eth2Chain33Lock"
+	NameWithdrawEthAction           = "Eth2Chain33Burn"
+	NameWithdrawChain33Action       = "Chain33ToEthBurn"
+	NameChain33ToEthAction          = "Chain33ToEthLock"
 	NameAddValidatorAction          = "AddValidator"
 	NameRemoveValidatorAction       = "RemoveValidator"
 	NameModifyPowerAction           = "ModifyPower"

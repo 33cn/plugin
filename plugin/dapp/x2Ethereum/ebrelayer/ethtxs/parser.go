@@ -99,7 +99,7 @@ func ParseBurnLockTxReceipt(claimType events.Event, receipt *chain33Types.Receip
 			chain33Sender = []byte(chain33ToEth.Chain33Sender)
 			ethereumReceiver = common.HexToAddress(chain33ToEth.EthereumReceiver)
 			tokenContractAddress = common.HexToAddress(chain33ToEth.TokenContract)
-			symbol = chain33ToEth.EthSymbol
+			symbol = chain33ToEth.IssuerDotSymbol
 			chain33ToEth.Amount = types.TrimZeroAndDot(chain33ToEth.Amount)
 			amount = big.NewInt(1)
 			amount, _ = amount.SetString(chain33ToEth.Amount, 10)

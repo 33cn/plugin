@@ -143,9 +143,6 @@ func CreateRawWithdrawEthTxCmd() *cobra.Command {
 
 	addEth2Chain33Flags(cmd)
 
-	cmd.Flags().StringP("exec", "e", "", "exec name token or coins")
-	_ = cmd.MarkFlagRequired("exec")
-
 	return cmd
 }
 
@@ -203,7 +200,7 @@ func CreateRawWithdrawChain33TxCmd() *cobra.Command {
 func addChain33ToEthFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("contract", "q", "", "token contract address,nil for ETH")
 
-	cmd.Flags().StringP("symbol", "t", "", "token symbol in chain33")
+	cmd.Flags().StringP("symbol", "t", "", "token symbol in chain33,coins.bty etc.")
 	_ = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("receiver", "r", "", "ethereum receiver address")
@@ -221,14 +218,14 @@ func burn(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
 
+	if contract == "" {
+		contract = "0x0000000000000000000000000000000000000000"
+	}
+
 	decimal, err := utils.GetDecimalsFromNode(contract, nodeAddr)
 	if err != nil {
 		fmt.Println("get decimal error")
 		return
-	}
-
-	if contract == "" {
-		contract = "0x0000000000000000000000000000000000000000"
 	}
 
 	params := &types3.Chain33ToEth{
@@ -253,9 +250,6 @@ func CreateRawChain33ToEthTxCmd() *cobra.Command {
 	}
 
 	addChain33ToEthFlags(cmd)
-
-	cmd.Flags().StringP("exec", "e", "", "exec name token or coins")
-	_ = cmd.MarkFlagRequired("exec")
 
 	return cmd
 }

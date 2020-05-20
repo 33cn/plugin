@@ -12,17 +12,17 @@ enum EthBridgeStatus {
 
 message X2ethereumAction {
     oneof value {
-        Eth2Chain33 eth2Chain33 = 1;
-        Eth2Chain33 withdrawEth = 2;
-        Chain33ToEth withdrawChain33 = 3;
-        Chain33ToEth chain33ToEth = 4;
+        Eth2Chain33 eth2Chain33Lock = 1;
+        Eth2Chain33 eth2Chain33Burn = 2;
+        Chain33ToEth chain33ToEthBurn = 3;
+        Chain33ToEth chain33ToEthLock = 4;
         MsgValidator addValidator = 5;
         MsgValidator removeValidator = 6;
         MsgValidator modifyPower = 7;
         MsgConsensusThreshold setConsensusThreshold = 8;
         AssetsTransfer       transfer          = 9;
         AssetsTransferToExec transferToExec    = 10;
-        AssetsWithdraw       withdraw          = 11;
+        AssetsWithdraw       withdrawFromExec          = 11;
     }
     int32 ty = 12;
 }

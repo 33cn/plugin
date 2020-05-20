@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -507,16 +508,25 @@ func (manager *RelayerManager) IsProphecyPending(claimID [32]byte, result *inter
 func (manager *RelayerManager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	balance, err := manager.ethRelayer.GetBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
+	var addr string
+	var err error
+	if balanceAddr.TokenAddr != "" {
+		addr, err = manager.ethRelayer.ShowTokenAddrBySymbol(balanceAddr.TokenAddr)
+		if nil != err {
+			return err
+		}
+	}
+
+	balance, err := manager.ethRelayer.GetBalance(addr, balanceAddr.Owner)
 	if nil != err {
 		return err
 	}
 
 	var d int64
-	if balanceAddr.TokenAddr == "" || balanceAddr.TokenAddr == "0x0000000000000000000000000000000000000000" {
+	if balanceAddr.TokenAddr == "" || strings.ToLower(balanceAddr.TokenAddr) == "eth" {
 		d = 18
 	} else {
-		d, err = manager.GetDecimals(balanceAddr.TokenAddr)
+		d, err = manager.GetDecimals(addr)
 		if err != nil {
 			return errors.New("get decimals error")
 		}
@@ -597,6 +607,21 @@ func (manager *RelayerManager) ShowDepositStatics(token relayerTypes.TokenStatic
 	}
 	*result = relayerTypes.StaticsDeposit{
 		Supply: strconv.FormatFloat(types.Toeth(supply, d), 'f', 4, 64),
+	}
+	return nil
+}
+
+func (manager *RelayerManager) ShowTokenAddrBySymbol(token relayerTypes.TokenStatics, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	addr, err := manager.ethRelayer.ShowTokenAddrBySymbol(token.TokenAddr)
+	if nil != err {
+		return err
+	}
+
+	*result = relayerTypes.ReplyAddr{
+		IsOK: true,
+		Addr: addr,
 	}
 	return nil
 }

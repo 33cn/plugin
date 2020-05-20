@@ -32,7 +32,7 @@ func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client *ethcli
 	}
 	auth.GasLimit = GasLimit
 
-	claimID := crypto.Keccak256Hash(chain33TxHash, claim.Chain33Sender, claim.EthereumReceiver.Bytes(), claim.TokenContractAddress.Bytes(), claim.Amount.Bytes())
+	claimID := crypto.Keccak256Hash(chain33TxHash, claim.Chain33Sender, claim.EthereumReceiver.Bytes(), []byte(claim.Symbol), claim.Amount.Bytes())
 
 	// Sign the hash using the active validator's private key
 	signature, err := SignClaim4Eth(claimID, privateKey)

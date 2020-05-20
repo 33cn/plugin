@@ -112,23 +112,23 @@ function ImportCBDKey() {
 TestChain33ToEth() {
     echo "=========== $FUNCNAME begin ==========="
     # token4chain33 在 以太坊 上先有 bty
-    result=$(${CLIA} relayer ethereum token4chain33 -s bty)
+    result=$(${CLIA} relayer ethereum token4chain33 -s coins.bty)
     tokenAddr=$(cli_ret "${result}" "token4chain33" ".addr")
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     for name in A B C D; do
         CLI="../build/ebcli_$name"
         # -c 2 chain33 lock 100
-        result=$(${CLI} relayer ethereum prophecy -i "${prophecyTx0}" -m 100 -a "${chain33SenderAddr}" -c 2 -r "${ethReceiverAddr1}" -s bty -t "${tokenAddr}")
+        result=$(${CLI} relayer ethereum prophecy -i "${prophecyTx0}" -m 100 -a "${chain33SenderAddr}" -c 2 -r "${ethReceiverAddr1}" -s coins.bty -t "${tokenAddr}")
         cli_ret "${result}" "prophecy -m 1"
 
         if [[ ${name} == "A" || ${name} == "B" ]]; then
-            result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+            result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
             cli_ret "${result}" "balance" ".balance" "0"
         elif [[ ${name} == "C" || ${name} == "D" ]]; then
-            result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+            result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
             cli_ret "${result}" "balance" ".balance" "100"
         fi
     done
@@ -137,10 +137,10 @@ TestChain33ToEth() {
     result=$(${CLIA} relayer ethereum transfer -m 10 -k "${ethReceiverAddrKey1}" -r "${ethReceiverAddr2}" -t "${tokenAddr}")
     cli_ret "${result}" "transfer"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "90"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "10"
 
     # burn 90

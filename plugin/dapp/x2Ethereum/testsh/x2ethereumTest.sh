@@ -153,15 +153,15 @@ function InitChain33Vilators() {
 function TestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # token4chain33 在 以太坊 上先有 bty
-    result=$(${CLI} relayer ethereum token4chain33 -s bty)
+    result=$(${CLI} relayer ethereum token4chain33 -s coins.bty)
     tokenAddr=$(cli_ret "${result}" "token4chain33" ".addr")
     #    tokenAddr="0x9C3D40A44a2F61Ef8D46fa8C7A731C08FB16cCEF"
 
-    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLI} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr1} -q ${tokenAddr} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q ${tokenAddr} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 

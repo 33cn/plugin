@@ -9,8 +9,8 @@ import (
 
 const (
 	X2Eth      = "x2ethereum"
-	BurnAction = "WithdrawChain33"
-	LockAction = "Chain33ToEth"
+	BurnAction = "Chain33ToEthBurn"
+	LockAction = "Chain33ToEthLock"
 )
 
 // OracleClaim : contains data required to make an OracleClaim

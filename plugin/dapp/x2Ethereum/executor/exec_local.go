@@ -12,7 +12,7 @@ import (
  * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
  */
 
-func (x *x2ethereum) ExecLocal_Eth2Chain33_lock(payload *x2eTy.Eth2Chain33, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (x *x2ethereum) ExecLocal_Eth2Chain33Lock(payload *x2eTy.Eth2Chain33, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := x.execLocal(receiptData)
 	if err != nil {
 		return set, err
@@ -20,7 +20,7 @@ func (x *x2ethereum) ExecLocal_Eth2Chain33_lock(payload *x2eTy.Eth2Chain33, tx *
 	return x.addAutoRollBack(tx, set.KV), nil
 }
 
-func (x *x2ethereum) ExecLocal_Eth2Chain33_burn(payload *x2eTy.Eth2Chain33, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (x *x2ethereum) ExecLocal_Eth2Chain33Burn(payload *x2eTy.Eth2Chain33, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := x.execLocal(receiptData)
 	if err != nil {
 		return set, err
@@ -28,7 +28,7 @@ func (x *x2ethereum) ExecLocal_Eth2Chain33_burn(payload *x2eTy.Eth2Chain33, tx *
 	return x.addAutoRollBack(tx, set.KV), nil
 }
 
-func (x *x2ethereum) ExecLocal_Chain33ToEth_burn(payload *x2eTy.Chain33ToEth, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (x *x2ethereum) ExecLocal_Chain33ToEthBurn(payload *x2eTy.Chain33ToEth, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := x.execLocal(receiptData)
 	if err != nil {
 		return set, err
@@ -36,7 +36,7 @@ func (x *x2ethereum) ExecLocal_Chain33ToEth_burn(payload *x2eTy.Chain33ToEth, tx
 	return x.addAutoRollBack(tx, set.KV), nil
 }
 
-func (x *x2ethereum) ExecLocal_Chain33ToEth_lock(payload *x2eTy.Chain33ToEth, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (x *x2ethereum) ExecLocal_Chain33ToEthLock(payload *x2eTy.Chain33ToEth, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	set, err := x.execLocal(receiptData)
 	if err != nil {
 		return set, err
