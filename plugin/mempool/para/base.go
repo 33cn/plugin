@@ -49,6 +49,10 @@ func (mem *Mempool) SetQueueClient(client queue.Client) {
 				reply, err = mem.mainGrpcCli.SendTransaction(context.Background(), tx)
 			case types.EventGetProperFee:
 				reply, err = mem.mainGrpcCli.GetProperFee(context.Background(), &types.ReqProperFee{})
+			case types.EventGetMempoolSize:
+				// 消息类型EventGetMempoolSize：获取mempool大小
+				msg.Reply(mem.client.NewMessage("rpc", types.EventMempoolSize, &types.MempoolSize{Size: 1000000}))
+				continue
 			default:
 				msg.Reply(client.NewMessage(mem.key, types.EventReply, types.ErrActionNotSupport))
 				continue

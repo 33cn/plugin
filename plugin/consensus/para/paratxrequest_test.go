@@ -66,14 +66,14 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 	}
 	commit1 := &pt.ParacrossCommitAction{Status: nt1}
 	notify := []*pt.ParacrossCommitAction{commit1}
-	tx, count, err := client.calcCommitMsgTxs(notify, 0)
+	tx, count, err := client.createCommitMsgTxs(notify)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 	assert.NotNil(t, tx)
 
 	commit1 = &pt.ParacrossCommitAction{Status: nt2}
 	notify = append(notify, commit1)
-	tx, count, err = client.calcCommitMsgTxs(notify, 0)
+	tx, count, err = client.createCommitMsgTxs(notify)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), count)
 	assert.NotNil(t, tx)

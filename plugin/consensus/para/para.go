@@ -15,10 +15,10 @@ import (
 
 	"sync/atomic"
 
-	"errors"
 	"time"
 
 	"github.com/33cn/chain33/client/api"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
@@ -28,6 +28,7 @@ import (
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -40,12 +41,6 @@ const (
 	poolMainBlockSec               int64 = 5
 	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth int32 = 10000
-	defaultParaBlsSignTopic              = "BLS-SIGN"
-)
-
-const (
-	P2pSubCommitTx = iota
-	P2pSubElectMsg
 )
 
 var (
@@ -56,10 +51,6 @@ var (
 func init() {
 	drivers.Reg("para", New)
 	drivers.QueryData.Register("para", &client{})
-}
-
-type ClientInter interface {
-	SendPubP2PMsg(data []byte) error
 }
 
 type client struct {
@@ -73,19 +64,18 @@ type client struct {
 	jumpDldCli      *jumpDldClient
 	minerPrivateKey crypto.PrivKey
 	wg              sync.WaitGroup
+	cfg             *types.Consensus
 	subCfg          *subConfig
 	dldCfg          *downloadClient
-	bullyCli        *Bully
 	blsSignCli      *blsClient
 	isClosed        int32
-	quitCreate      chan struct{}
+	quit            chan struct{}
 }
 
 type subConfig struct {
 	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64    `json:"startHeight,omitempty"`
-	GenesisBlockTime        int64    `json:"genesisBlockTime,omitempty"`
 	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
 	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
 	AuthAccount             string   `json:"authAccount,omitempty"`
@@ -104,6 +94,7 @@ type subConfig struct {
 	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
 	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
 	BlsSignOff              bool     `json:"blsSignOff,omitempty"`
+	BlsLeaderSwitchInt      int32    `json:"blsLeaderSwitchInt,omitempty"`
 }
 
 // New function to init paracross env
@@ -119,10 +110,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
-	}
-
-	if subcfg.GenesisBlockTime <= 0 {
-		subcfg.GenesisBlockTime = defaultGenesisBlockTime
 	}
 
 	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
@@ -157,65 +144,22 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	para := &client{
 		BaseClient:      c,
 		minerPrivateKey: priKey,
+		cfg:             cfg,
 		subCfg:          &subcfg,
-		quitCreate:      make(chan struct{}),
+		quit:            make(chan struct{}),
 	}
 
 	para.dldCfg = &downloadClient{}
 	para.dldCfg.emptyInterval = append(para.dldCfg.emptyInterval, emptyInterval...)
 
-	para.commitMsgClient = &commitMsgClient{
-		paraClient:           para,
-		authAccount:          subcfg.AuthAccount,
-		waitMainBlocks:       waitBlocks4CommitMsg,
-		waitConsensStopTimes: waitConsensStopTimes,
-		consensHeight:        -2,
-		sendingHeight:        -1,
-		consensDoneHeight:    -1,
-		resetCh:              make(chan interface{}, 1),
-		quit:                 make(chan struct{}),
-	}
-	if subcfg.WaitBlocks4CommitMsg > 0 {
-		para.commitMsgClient.waitMainBlocks = subcfg.WaitBlocks4CommitMsg
-	}
-
-	if subcfg.WaitConsensStopTimes > 0 {
-		para.commitMsgClient.waitConsensStopTimes = subcfg.WaitConsensStopTimes
-	}
-
-	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
-	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
-	if subcfg.ParaConsensStartHeight > 0 {
-		para.commitMsgClient.consensDoneHeight = subcfg.ParaConsensStartHeight - 1
-	}
-
-	para.blockSyncClient = &blockSyncClient{
-		paraClient:      para,
-		notifyChan:      make(chan bool, 1),
-		quitChan:        make(chan struct{}),
-		maxCacheCount:   defaultMaxCacheCount,
-		maxSyncErrCount: defaultMaxSyncErrCount,
-	}
-	if subcfg.MaxCacheCount > 0 {
-		para.blockSyncClient.maxCacheCount = subcfg.MaxCacheCount
-	}
-	if subcfg.MaxSyncErrCount > 0 {
-		para.blockSyncClient.maxSyncErrCount = subcfg.MaxSyncErrCount
-	}
+	para.commitMsgClient = newCommitMsgCli(para, &subcfg)
+	para.blockSyncClient = newBlockSyncCli(para, &subcfg)
 
 	para.multiDldCli = newMultiDldCli(para, &subcfg)
 
-	para.jumpDldCli = &jumpDldClient{paraClient: para}
+	para.jumpDldCli = newJumpDldCli(para, &subcfg)
 
-	if len(subcfg.AuthAccount) > 0 {
-		para.blsSignCli = newBlsClient(para, &subcfg)
-		cli, err := NewBully(para, subcfg.AuthAccount, &para.wg)
-		if err != nil {
-			panic("bully create err")
-		}
-		para.bullyCli = cli
-		para.bullyCli.SetParaAPI(para.GetQueueClient())
-	}
+	para.blsSignCli = newBlsClient(para, &subcfg)
 
 	c.SetChild(para)
 	return para
@@ -230,12 +174,9 @@ func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail
 func (client *client) Close() {
 	atomic.StoreInt32(&client.isClosed, 1)
 	close(client.commitMsgClient.quit)
-	close(client.quitCreate)
+	close(client.quit)
 	close(client.blockSyncClient.quitChan)
-	if len(client.subCfg.AuthAccount) > 0 {
-		close(client.blsSignCli.quit)
-		client.bullyCli.Close()
-	}
+	close(client.blsSignCli.quit)
 
 	client.wg.Wait()
 
@@ -262,12 +203,9 @@ func (client *client) SetQueueClient(c queue.Client) {
 	client.wg.Add(1)
 	go client.blockSyncClient.syncBlocks()
 
-	if len(client.subCfg.AuthAccount) > 0 {
-		client.wg.Add(1)
-		go client.blsSignCli.procRcvSignTxs()
-		client.wg.Add(1)
-		go client.bullyCli.Run()
-	}
+	client.wg.Add(2)
+	go client.blsSignCli.procAggregateTxs()
+	go client.blsSignCli.procLeaderSync()
 
 }
 
@@ -301,7 +239,10 @@ func (client *client) InitBlock() {
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
-		newblock.BlockTime = client.subCfg.GenesisBlockTime
+		newblock.BlockTime = defaultGenesisBlockTime
+		if client.cfg.GenesisBlockTime > 0 {
+			newblock.BlockTime = client.cfg.GenesisBlockTime
+		}
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
 
@@ -383,19 +324,26 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 func (client *client) ProcEvent(msg *queue.Message) bool {
 	if msg.Ty == types.EventReceiveSubData {
 		if req, ok := msg.GetData().(*types.TopicData); ok {
-
 			var sub pt.ParaP2PSubMsg
 			err := types.Decode(req.Data, &sub)
 			if err != nil {
 				plog.Error("paracross ProcEvent decode", "ty", types.EventReceiveSubData)
 				return true
 			}
-			plog.Info("paracross Recv from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			plog.Info("paracross ProcEvent from", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
 			switch sub.GetTy() {
 			case P2pSubCommitTx:
-				client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
-			case P2pSubElectMsg:
-				client.bullyCli.Receive(sub.GetElection())
+				err := client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
+				if err != nil {
+					plog.Error("paracross ProcEvent commit tx", "err", err, "txhash", common.ToHex(sub.GetCommitTx().Hash()), "from", sub.GetCommitTx().From())
+				}
+			case P2pSubLeaderSyncMsg:
+				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
+				if err != nil {
+					plog.Info("paracross ProcEvent leader sync msg", "err", err)
+				}
+			default:
+				plog.Error("paracross ProcEvent not support", "ty", sub.GetTy())
 			}
 
 		} else {
@@ -408,35 +356,40 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 	return false
 }
 
-func (client *client) sendP2PMsg(ty int64, data interface{}) error {
+func (client *client) sendP2PMsg(ty int64, data interface{}) ([]byte, error) {
 	msg := client.GetQueueClient().NewMessage("p2p", ty, data)
 	err := client.GetQueueClient().Send(msg, true)
 	if err != nil {
-		return err
+		return nil, errors.Wrapf(err, "ty=%d", ty)
 	}
 	resp, err := client.GetQueueClient().Wait(msg)
 	if err != nil {
-		return err
+		return nil, errors.Wrapf(err, "wait ty=%d", ty)
 	}
+
 	if resp.GetData().(*types.Reply).IsOk {
-		return nil
+		return resp.GetData().(*types.Reply).Msg, nil
 	}
-	return errors.New(string(resp.GetData().(*types.Reply).GetMsg()))
+	return nil, errors.Wrapf(types.ErrInvalidParam, "resp msg=%s", string(resp.GetData().(*types.Reply).GetMsg()))
 }
 
-func (client *client) SendPubP2PMsg(msg []byte) error {
-	data := &types.PublishTopicMsg{Topic: "consensus", Msg: msg}
-	return client.sendP2PMsg(types.EventPubTopicMsg, data)
-
+// p2p订阅消息
+func (client *client) SendPubP2PMsg(topic string, msg []byte) error {
+	data := &types.PublishTopicMsg{Topic: topic, Msg: msg}
+	_, err := client.sendP2PMsg(types.EventPubTopicMsg, data)
+	return err
 }
 
-func (client *client) subP2PTopic() error {
-	return client.sendP2PMsg(types.EventSubTopic, &types.SubTopic{Module: "consensus", Topic: defaultParaBlsSignTopic})
+func (client *client) SendSubP2PTopic(topic string) error {
+	data := &types.SubTopic{Topic: topic, Module: "consensus"}
+	_, err := client.sendP2PMsg(types.EventSubTopic, data)
+	return err
 }
 
-//TODO 本节点退出时候会自动removeTopic吗
-func (client *client) rmvP2PTopic() error {
-	return client.sendP2PMsg(types.EventRemoveTopic, &types.RemoveTopic{Module: "consensus", Topic: defaultParaBlsSignTopic})
+func (client *client) SendRmvP2PTopic(topic string) error {
+	data := &types.RemoveTopic{Topic: topic, Module: "consensus"}
+	_, err := client.sendP2PMsg(types.EventRemoveTopic, data)
+	return err
 
 }
 

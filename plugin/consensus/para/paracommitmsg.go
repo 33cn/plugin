@@ -24,7 +24,6 @@ import (
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"github.com/phoreproject/bls/g2pubs"
 	"github.com/pkg/errors"
 )
 
@@ -32,8 +31,8 @@ const (
 	consensusInterval = 10 //about 1 new block interval
 	minerInterval     = 10 //5s的主块间隔后分叉概率增加，10s可以消除一些分叉回退
 
-	waitBlocks4CommitMsg int32  = 5  //commit msg共识发送后等待几个块没确认则重发
-	waitConsensStopTimes uint32 = 30 //30*10s = 5min
+	waitBlocks4CommitMsg int32  = 5 //commit msg共识发送后等待几个块没确认则重发
+	waitConsensStopTimes uint32 = 3 //3*10s
 )
 
 type paraSelfConsEnable struct {
@@ -61,15 +60,40 @@ type commitMsgClient struct {
 	txFeeRate            int64
 	selfConsEnableList   []*paraSelfConsEnable //适配在自共识合约配置前有自共识的平行链项目，fork之后，采用合约配置
 	privateKey           crypto.PrivKey
-	authNodes            atomic.Value
-	blsPriKey            *g2pubs.SecretKey
-	blsPubKey            *g2pubs.PublicKey
 	quit                 chan struct{}
 	mutex                sync.Mutex
 }
 
 type commitCheckParams struct {
 	consensStopTimes uint32
+}
+
+func newCommitMsgCli(para *client, cfg *subConfig) *commitMsgClient {
+	cli := &commitMsgClient{
+		paraClient:           para,
+		authAccount:          cfg.AuthAccount,
+		waitMainBlocks:       waitBlocks4CommitMsg,
+		waitConsensStopTimes: waitConsensStopTimes,
+		consensHeight:        -2,
+		sendingHeight:        -1,
+		consensDoneHeight:    -1,
+		resetCh:              make(chan interface{}, 1),
+		quit:                 make(chan struct{}),
+	}
+	if cfg.WaitBlocks4CommitMsg > 0 {
+		cli.waitMainBlocks = cfg.WaitBlocks4CommitMsg
+	}
+
+	if cfg.WaitConsensStopTimes > 0 {
+		cli.waitConsensStopTimes = cfg.WaitConsensStopTimes
+	}
+
+	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
+	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
+	if cfg.ParaConsensStartHeight > 0 {
+		cli.consensDoneHeight = cfg.ParaConsensStartHeight - 1
+	}
+	return cli
 }
 
 // 1. 链高度回滚，低于当前发送高度，需要重新计算当前发送高度,不然不会重新发送回滚的高度
@@ -163,18 +187,15 @@ func (client *commitMsgClient) createCommitTx() {
 	if tx == nil {
 		return
 	}
-
 	//bls sign, send to p2p
 	if !client.paraClient.subCfg.BlsSignOff {
 		//send to p2p pubsub
 		plog.Info("para commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
-		client.paraClient.SendPubP2PMsg(types.Encode(tx))
-
+		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
+		client.paraClient.SendPubP2PMsg(defaultParaBlsSignTopic, types.Encode(act))
 		return
 	}
-
 	client.pushCommitTx(tx)
-
 }
 
 //四个触发：1,新增区块 2,10s tick例行检查 3,发送交易成功上链 4,异常重发
@@ -231,7 +252,7 @@ func (client *commitMsgClient) pushCommitTx(signTx *types.Transaction) {
 }
 
 func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitAction) {
-	txs, _, err := client.calcCommitMsgTxs(acts)
+	txs, _, err := client.createCommitMsgTxs(acts)
 	if err != nil {
 		return
 	}
@@ -239,7 +260,7 @@ func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitActio
 	for i, msg := range acts {
 		plog.Debug("paracommitmsg sendCommitActions", "idx", i, "height", msg.Status.Height, "mainheight", msg.Status.MainBlockHeight,
 			"blockhash", common.HashHex(msg.Status.BlockHash), "mainHash", common.HashHex(msg.Status.MainBlockHash),
-			"addrsmap", common.ToHex(msg.Bls.AddrsMap))
+			"addrsmap", common.ToHex(msg.Bls.AddrsMap), "sign", common.ToHex(msg.Bls.Sign))
 	}
 	client.pushCommitTx(txs)
 }
@@ -313,14 +334,13 @@ func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 
 	consensHeight := client.getConsensusHeight()
 	if client.sendingHeight > consensHeight {
-		checks.consensStopTimes += 1
+		checks.consensStopTimes++
 		if checks.consensStopTimes > client.waitConsensStopTimes {
 			plog.Debug("para commitMsg-checkConsensusStop", "times", checks.consensStopTimes)
 			checks.consensStopTimes = 0
 			client.resetSendEnv()
 		}
 	}
-	return
 }
 
 func (client *commitMsgClient) checkAuthAccountIn() {
@@ -336,11 +356,6 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 	}
 
 	client.authAccountIn = authExist
-
-	nodes := strings.Split(nodeStr, ",")
-	client.paraClient.bullyCli.UpdateValidNodes(nodes)
-	client.authNodes.Store(nodes)
-
 }
 
 func (client *commitMsgClient) procChecks(checks *commitCheckParams) {
@@ -417,11 +432,12 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	if !client.paraClient.subCfg.BlsSignOff {
 		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
+			plog.Error("paracommitmsg bls sign", "err", err)
 			return nil, 0
 		}
 	}
 
-	signTx, count, err := client.calcCommitMsgTxs(commits)
+	signTx, count, err := client.createCommitMsgTxs(commits)
 	if err != nil || signTx == nil {
 		return nil, 0
 	}
@@ -437,7 +453,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 	return signTx, count
 }
 
-func (client *commitMsgClient) calcCommitMsgTxs(notifications []*pt.ParacrossCommitAction) (*types.Transaction, int64, error) {
+func (client *commitMsgClient) createCommitMsgTxs(notifications []*pt.ParacrossCommitAction) (*types.Transaction, int64, error) {
 	txs, count, err := client.batchCalcTxGroup(notifications, atomic.LoadInt64(&client.txFeeRate))
 	if err != nil {
 		txs, err = client.singleCalcTx((notifications)[0], atomic.LoadInt64(&client.txFeeRate))
@@ -566,6 +582,15 @@ func (client *commitMsgClient) sendCommitTxOut(tx *types.Transaction) error {
 
 }
 
+func needResentErr(err error) bool {
+	switch err {
+	case nil, types.ErrBalanceLessThanTenTimesFee, types.ErrNoBalance, types.ErrDupTx, types.ErrTxExist, types.ErrTxExpire:
+		return false
+	default:
+		return true
+	}
+}
+
 func (client *commitMsgClient) sendCommitMsg() {
 	var err error
 	var tx *types.Transaction
@@ -583,7 +608,7 @@ out:
 				}
 				continue
 			}
-			if err != nil && (err != types.ErrBalanceLessThanTenTimesFee && err != types.ErrNoBalance) {
+			if needResentErr(err) {
 				resendTimer = time.After(time.Second * 2)
 			}
 		case <-resendTimer:
@@ -1018,16 +1043,6 @@ func (client *commitMsgClient) setSelfConsEnable() error {
 func (client *commitMsgClient) isSelfConsEnable(height int64) bool {
 	for _, v := range client.selfConsEnableList {
 		if height >= v.startHeight && height <= v.endHeight {
-			return true
-		}
-	}
-	return false
-}
-
-func (client *commitMsgClient) isValidNode(addr string) bool {
-	nodes := client.authNodes.Load().([]string)
-	for _, v := range nodes {
-		if v == addr {
 			return true
 		}
 	}

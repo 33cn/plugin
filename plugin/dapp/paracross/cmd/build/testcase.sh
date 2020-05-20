@@ -659,7 +659,7 @@ function para_create_nodegroup() {
     local JR="0x8ed5ba075c27015e2c6da399b42da4cd272d4082b55f05c85d84b1308ec87bdb4aeea70dbef3e754eae99a6be0c0e49512d7e9197712f8538ce3d57c1b2d88e17b37f0e419f55333f6e841261a8d3151552fd7d4fd8e19f4f38a413395aab26e"
     local NL="0x872e3ac07998deb12045ee48c52a8ba5d2538dc85123866fb330112eb0b805ce23f31bfde3a485cd89fac48eab48560005d12f714ca3786c7f47fe3b5edb1dc7838677c041c89cee4caf9225c1d68346bfcde3365ada0a627fbd77bc72e9b356"
     local MC="0x87c58bb6cce41842462a0030335bb95948dcfba77e47e2d8ee893c0b2c34ac20d08c9e98a883ef2a6492d0ad808ace9a1730e8bae5d3b0861aaf743449df5de510073e2991c7274cab47f327e48d7eacf300e4b24174dae2e8603d1904b8a015"
-    local blspubs=$E5","$KS","$JR","$NL","$MC
+    local blspubs=$E5,$KS,$JR,$NL,$MC
     txhash=$(${PARA_CLI} send para nodegroup apply -a "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY,1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -p "$blspubs" -c 6 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"

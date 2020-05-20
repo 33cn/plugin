@@ -67,6 +67,23 @@ const (
 	blockSyncStateFinished
 )
 
+func newBlockSyncCli(para *client, cfg *subConfig) *blockSyncClient {
+	cli := &blockSyncClient{
+		paraClient:      para,
+		notifyChan:      make(chan bool, 1),
+		quitChan:        make(chan struct{}),
+		maxCacheCount:   defaultMaxCacheCount,
+		maxSyncErrCount: defaultMaxSyncErrCount,
+	}
+	if cfg.MaxCacheCount > 0 {
+		cli.maxCacheCount = cfg.MaxCacheCount
+	}
+	if cfg.MaxSyncErrCount > 0 {
+		cli.maxSyncErrCount = cfg.MaxSyncErrCount
+	}
+	return cli
+}
+
 //syncHasCaughtUp 判断同步是否已追赶上，供发送层调用
 func (client *blockSyncClient) syncHasCaughtUp() bool {
 	return atomic.LoadInt32(&client.isSyncCaughtUpAtom) == 1
@@ -414,7 +431,7 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	newBlock.BlockTime = localBlock.BlockTime
 	newBlock.MainHash = localBlock.MainHash
 	newBlock.MainHeight = localBlock.MainHeight
-	if newBlock.Height == 1 && newBlock.BlockTime < client.paraClient.subCfg.GenesisBlockTime {
+	if newBlock.Height == 1 && newBlock.BlockTime < client.paraClient.cfg.GenesisBlockTime {
 		panic("genesisBlockTime　bigger than the 1st block time, need rmv db and reset genesisBlockTime")
 	}
 	err = client.writeBlock(lastBlock.StateHash, &newBlock)

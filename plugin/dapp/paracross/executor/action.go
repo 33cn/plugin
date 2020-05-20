@@ -549,7 +549,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, commitAddr string)
 func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, error) {
 	_, nodesArry, err := a.getNodesGroup(commit.Status.Title)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "getNodegroup")
 	}
 
 	//1.　获取addr对应的bls 公钥
@@ -558,8 +558,7 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 	for _, addr := range signAddrs {
 		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr)
 		if err != nil {
-			clog.Error("verifyBlsSign pub　key not exist", "addr", addr)
-			return nil, err
+			return nil, errors.Wrapf(err, "pubkey not exist to addr=%s", addr)
 		}
 		pubs = append(pubs, pub)
 	}
@@ -568,14 +567,12 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 		k := [96]byte{}
 		val, err := common.FromHex(p)
 		if err != nil {
-			clog.Error("verifyBlsSign.fromhex", "p", p)
-			return nil, err
+			return nil, errors.Wrapf(err, "fromhex.p=%s", p)
 		}
 		copy(k[:], val)
 		key, err := g2pubs.DeserializePublicKey(k)
 		if err != nil {
-			clog.Error("verifyBlsSign.DeserializePublicKey", "key", p)
-			return nil, err
+			return nil, errors.Wrapf(err, "DeserializePublicKey=%s", p)
 		}
 		pubKeys = append(pubKeys, key)
 
@@ -588,8 +585,7 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 	copy(signkey[:], commit.Bls.Sign)
 	sign, err := g2pubs.DeserializeSignature(signkey)
 	if err != nil {
-		clog.Error("verifyBlsSign.DeserializeSignature", "key", common.ToHex(commit.Bls.Sign))
-		return nil, err
+		return nil, errors.Wrapf(err, "DeserializeSignature,key=%s", common.ToHex(commit.Bls.Sign))
 	}
 
 	//4. 获取签名前原始msg
