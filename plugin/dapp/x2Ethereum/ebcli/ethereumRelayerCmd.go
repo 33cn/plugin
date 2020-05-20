@@ -684,17 +684,17 @@ func GetBalanceCmd() *cobra.Command {
 func GetBalanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "owner address")
 	_ = cmd.MarkFlagRequired("owner")
-	cmd.Flags().StringP("token", "t", "", "token symbol,nil for Eth")
+	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for Eth")
 }
 
 func GetBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	owner, _ := cmd.Flags().GetString("owner")
-	token, _ := cmd.Flags().GetString("token")
+	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")
 
 	para := ebTypes.BalanceAddr{
 		Owner:     owner,
-		TokenAddr: token,
+		TokenAddr: tokenAddr,
 	}
 	var res ebTypes.ReplyBalance
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.GetBalance", para, &res)

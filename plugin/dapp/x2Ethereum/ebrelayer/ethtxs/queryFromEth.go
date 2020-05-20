@@ -145,5 +145,6 @@ func GetToken2address(bridgeBank *generated.BridgeBank, tokenSymbol string) (str
 	if nil != err {
 		return "", err
 	}
+	txslog.Info("GetToken2address", "Name", tokenSymbol, "Address", tokenAddr.String())
 	return tokenAddr.String(), nil
 }
