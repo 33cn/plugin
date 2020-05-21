@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"reflect"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -133,4 +134,30 @@ func (action *X2EthereumAction) GetActionName() string {
 		return "WithdrawFromExec"
 	}
 	return "unknown-x2ethereum"
+}
+
+// CreateTx token 创建合约
+func (x *x2ethereumType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	tx, err := x.ExecTypeBase.CreateTx(action, msg)
+	if err != nil {
+		tlog.Error("token CreateTx failed", "err", err, "action", action, "msg", string(msg))
+		return nil, err
+	}
+	cfg := x.GetConfig()
+	if !cfg.IsPara() {
+		var transfer X2EthereumAction
+		err = types.Decode(tx.Payload, &transfer)
+		if err != nil {
+			tlog.Error("token CreateTx failed", "decode payload err", err, "action", action, "msg", string(msg))
+			return nil, err
+		}
+		if action == "Transfer" {
+			tx.To = transfer.GetTransfer().To
+		} else if action == "Withdraw" {
+			tx.To = transfer.GetWithdrawFromExec().To
+		} else if action == "TransferToExec" {
+			tx.To = transfer.GetTransferToExec().To
+		}
+	}
+	return tx, nil
 }
