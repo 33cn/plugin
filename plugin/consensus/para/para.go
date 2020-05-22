@@ -93,7 +93,7 @@ type subConfig struct {
 	MultiDownServerRspTime  uint32   `json:"multiDownServerRspTime,omitempty"`
 	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
 	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
-	BlsSignOff              bool     `json:"blsSignOff,omitempty"`
+	BlsSign                 bool     `json:"blsSign,omitempty"`
 	BlsLeaderSwitchInt      int32    `json:"blsLeaderSwitchInt,omitempty"`
 }
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"github.com/pkg/errors"
 )
 
 //Exec_Commit consensus commit tx exec process
@@ -18,7 +17,7 @@ func (e *Paracross) Exec_Commit(payload *pt.ParacrossCommitAction, tx *types.Tra
 	receipt, err := a.Commit(payload)
 	if err != nil {
 		clog.Error("Paracross commit failed", "error", err, "hash", hex.EncodeToString(tx.Hash()))
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 	return receipt, nil
 }

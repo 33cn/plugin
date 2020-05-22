@@ -188,11 +188,11 @@ func (client *commitMsgClient) createCommitTx() {
 		return
 	}
 	//bls sign, send to p2p
-	if !client.paraClient.subCfg.BlsSignOff {
+	if client.paraClient.subCfg.BlsSign {
 		//send to p2p pubsub
 		plog.Info("para commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
 		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
-		client.paraClient.SendPubP2PMsg(defaultParaBlsSignTopic, types.Encode(act))
+		client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
 		return
 	}
 	client.pushCommitTx(tx)
@@ -314,15 +314,7 @@ func (client *commitMsgClient) reSendCommitTx(tx *types.Transaction) bool {
 	if client.checkTxCommitTimes < client.waitMainBlocks {
 		return false
 	}
-
 	client.checkTxCommitTimes = 0
-	//bls聚合签名场景，发送未成功上链，继续发送交易
-	if !client.paraClient.subCfg.BlsSignOff {
-		//resend tx
-		client.sendMsgCh <- tx
-		return false
-	}
-	//非聚合签名场景，发送未成功，触发重新构建交易发送
 	client.resetSendEnv()
 	return true
 }
@@ -429,7 +421,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		commits = append(commits, &pt.ParacrossCommitAction{Status: stat})
 	}
 
-	if !client.paraClient.subCfg.BlsSignOff {
+	if client.paraClient.subCfg.BlsSign {
 		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
 			plog.Error("paracommitmsg bls sign", "err", err)
