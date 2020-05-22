@@ -50,8 +50,8 @@ func LogLockToEthBridgeClaim(event *events.LockEvent, ethereumChainID int64, bri
 	}
 	witnessClaim.Amount = event.Value.String()
 
-	witnessClaim.ClaimType = types.LOCK_CLAIM_TYPE
-	witnessClaim.ChainName = types.LOCK_CLAIM
+	witnessClaim.ClaimType = types.LockClaimType
+	witnessClaim.ChainName = types.LockClaim
 	witnessClaim.Decimal = decimal
 
 	return witnessClaim, nil
@@ -72,8 +72,8 @@ func LogBurnToEthBridgeClaim(event *events.BurnEvent, ethereumChainID int64, bri
 	witnessClaim.EthereumSender = event.OwnerFrom.String()
 	witnessClaim.Chain33Receiver = string(recipient)
 	witnessClaim.Amount = event.Amount.String()
-	witnessClaim.ClaimType = types.BURN_CLAIM_TYPE
-	witnessClaim.ChainName = types.BURN_CLAIM
+	witnessClaim.ClaimType = types.BurnClaimType
+	witnessClaim.ChainName = types.BurnClaim
 	witnessClaim.Decimal = decimal
 
 	return witnessClaim, nil

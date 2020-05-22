@@ -64,8 +64,8 @@ const DefaultConsensusNeeded = int64(70)
 const (
 	DirEth2Chain33  = "eth2chain33"
 	DirChain33ToEth = "chain33toeth"
-	LOCK_CLAIM      = "lock"
-	BURN_CLAIM      = "burn"
+	LockClaim       = "lock"
+	BurnClaim       = "burn"
 )
 
 var DirectionType = [3]string{"", DirEth2Chain33, DirChain33ToEth}
@@ -81,6 +81,6 @@ const (
 )
 
 const (
-	LOCK_CLAIM_TYPE = int32(1)
-	BURN_CLAIM_TYPE = int32(2)
+	LockClaimType = int32(1)
+	BurnClaimType = int32(2)
 )

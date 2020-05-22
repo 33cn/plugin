@@ -1,4 +1,4 @@
-package x2Ethereum
+package x2ethereum
 
 import (
 	"github.com/33cn/chain33/pluginmgr"

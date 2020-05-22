@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -88,13 +87,13 @@ func NewClaim(id string, validatorAddress string, content string) x2eTy.OracleCl
 
 //通过ethchain33结构构造一个OracleClaim结构，包括生成唯一的ID
 func CreateOracleClaimFromEthClaim(ethClaim x2eTy.Eth2Chain33) (x2eTy.OracleClaim, error) {
-	if ethClaim.ClaimType != int64(x2eTy.LOCK_CLAIM_TYPE) && ethClaim.ClaimType != int64(x2eTy.BURN_CLAIM_TYPE) {
+	if ethClaim.ClaimType != int64(x2eTy.LockClaimType) && ethClaim.ClaimType != int64(x2eTy.BurnClaimType) {
 		return x2eTy.OracleClaim{}, x2eTy.ErrInvalidClaimType
 	}
 	oracleID := strconv.Itoa(int(ethClaim.EthereumChainID)) + strconv.Itoa(int(ethClaim.Nonce)) + ethClaim.EthereumSender + ethClaim.TokenContractAddress
-	if ethClaim.ClaimType == int64(x2eTy.LOCK_CLAIM_TYPE) {
+	if ethClaim.ClaimType == int64(x2eTy.LockClaimType) {
 		oracleID = oracleID + "lock"
-	} else if ethClaim.ClaimType == int64(x2eTy.BURN_CLAIM_TYPE) {
+	} else if ethClaim.ClaimType == int64(x2eTy.BurnClaimType) {
 		oracleID = oracleID + "burn"
 	}
 	claimContent := NewOracleClaimContent(ethClaim.Chain33Receiver, ethClaim.Amount, ethClaim.ClaimType, ethClaim.Decimals)
@@ -110,7 +109,7 @@ func CreateOracleClaimFromOracleString(oracleClaimString string) (x2eTy.OracleCl
 
 	bz := []byte(oracleClaimString)
 	if err := types.Decode(bz, &oracleClaimContent); err != nil {
-		return x2eTy.OracleClaimContent{}, errors.New(fmt.Sprintf("failed to parse claim: %s", err.Error()))
+		return x2eTy.OracleClaimContent{}, fmt.Errorf("failed to parse claim: %s", err.Error())
 	}
 
 	return oracleClaimContent, nil

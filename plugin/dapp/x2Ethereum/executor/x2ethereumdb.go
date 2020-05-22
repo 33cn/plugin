@@ -37,7 +37,7 @@ func (o *Oracle) ProcessSuccessfulClaimForLock(claim, execAddr string, accDB *ac
 
 	receiverAddress := oracleClaim.Chain33Receiver
 
-	if oracleClaim.ClaimType == int64(x2eTy.LOCK_CLAIM_TYPE) {
+	if oracleClaim.ClaimType == int64(x2eTy.LockClaimType) {
 		//铸币到相关的tokenSymbolBank账户下
 		amount, _ := strconv.ParseInt(x2eTy.TrimZeroAndDot(oracleClaim.Amount), 10, 64)
 
@@ -62,7 +62,7 @@ func (o *Oracle) ProcessSuccessfulClaimForBurn(claim, execAddr, tokenSymbol stri
 
 	senderAddr := oracleClaim.Chain33Receiver
 
-	if oracleClaim.ClaimType == int64(x2eTy.BURN_CLAIM_TYPE) {
+	if oracleClaim.ClaimType == int64(x2eTy.BurnClaimType) {
 		amount, _ := strconv.ParseInt(x2eTy.TrimZeroAndDot(oracleClaim.Amount), 10, 64)
 		receipt, err = accDB.ExecTransfer(address.ExecAddress(tokenSymbol), senderAddr, execAddr, amount)
 		if err != nil {
@@ -441,7 +441,6 @@ func (o *Oracle) GetValidatorArray() (*x2eTy.ValidatorList, error) {
 func (o *Oracle) SetConsensusThreshold(ConsensusThreshold int64) {
 	o.consensusThreshold = ConsensusThreshold
 	elog.Info("SetConsensusNeeded", "nowConsensusNeeded", o.consensusThreshold)
-	return
 }
 
 func (o *Oracle) GetConsensusThreshold() int64 {

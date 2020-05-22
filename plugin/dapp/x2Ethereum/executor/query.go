@@ -57,16 +57,17 @@ func (x *x2ethereum) Query_GetValidators(in *x2eTy.QueryValidatorsParams) (types
 		}
 		// 未知的地址
 		return nil, x2eTy.ErrInvalidValidator
-	} else {
-		validatorsRes := new(x2eTy.ReceiptQueryValidator)
-		var totalPower int64
-		for _, vv := range v.Validators {
-			totalPower += vv.Power
-		}
-		validatorsRes.Validators = v.Validators
-		validatorsRes.TotalPower = totalPower
-		return validatorsRes, nil
 	}
+
+	validatorsRes := new(x2eTy.ReceiptQueryValidator)
+	var totalPower int64
+	for _, vv := range v.Validators {
+		totalPower += vv.Power
+	}
+	validatorsRes.Validators = v.Validators
+	validatorsRes.TotalPower = totalPower
+	return validatorsRes, nil
+
 }
 
 func (x *x2ethereum) Query_GetTotalPower(in *x2eTy.QueryTotalPowerParams) (types.Message, error) {

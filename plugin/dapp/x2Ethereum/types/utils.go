@@ -9,13 +9,6 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/common/address"
-
-	log "github.com/33cn/chain33/common/log/log15"
-)
-
-var (
-	//日志
-	clog = log.New("module", "common")
 )
 
 func Float64ToBytes(float float64) []byte {

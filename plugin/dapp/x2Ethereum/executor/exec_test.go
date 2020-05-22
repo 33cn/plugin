@@ -29,7 +29,6 @@ var (
 	chain33Receiver       = "1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
 	bridgeContractAddress = "0xC4cE93a5699c68241fc2fB503Fb0f21724A624BB"
 	symbol                = "eth"
-	coinExec              = "x2ethereum"
 	tokenContractAddress  = "0x0000000000000000000000000000000000000000"
 	ethereumAddr          = "0x7B95B6EC7EbD73572298cEf32Bb54FA408207359"
 	addValidator1         = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
@@ -172,22 +171,21 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 		EthereumChainID:       0,
 		BridgeContractAddress: bridgeContractAddress,
 		Nonce:                 0,
-		LocalCoinSymbol:       symbol,
-		LocalCoinExec:         coinExec,
+		IssuerDotSymbol:       symbol,
 		TokenContractAddress:  tokenContractAddress,
 		EthereumSender:        ethereumAddr,
 		Chain33Receiver:       chain33Receiver,
 		ValidatorAddress:      addValidator1,
 		Amount:                "10",
-		ClaimType:             int64(types2.LOCK_CLAIM_TYPE),
+		ClaimType:             int64(types2.LockClaimType),
 	}
 
-	receipt, err := x.action.procMsgEth2Chain33(payload)
+	receipt, err := x.action.procEth2Chain33_lock(payload)
 	x.NoError(err)
 	x.setDb(receipt)
 
 	payload.ValidatorAddress = addValidator2
-	receipt, err = x.action.procMsgEth2Chain33(payload)
+	receipt, err = x.action.procEth2Chain33_lock(payload)
 	x.NoError(err)
 	x.setDb(receipt)
 
@@ -197,21 +195,25 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.query_GetEthProphecy("000x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
 	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "lock", 10)
 
-	payload.Amount = "3"
-	payload.Nonce = 1
-	payload.ClaimType = int64(types2.BURN_CLAIM_TYPE)
-	payload.ValidatorAddress = addValidator1
-	receipt, err = x.action.procWithdrawEth(payload)
+	payload1 := &types2.Chain33ToEth{
+		TokenContract:    tokenContractAddress,
+		Chain33Sender:    addValidator1,
+		EthereumReceiver: ethereumAddr,
+		Amount:           "3",
+		IssuerDotSymbol:  "coins.bty",
+		Decimals:         8,
+	}
+
+	receipt, err = x.action.procChain33ToEth_burn(payload1)
 	x.NoError(err)
 	x.setDb(receipt)
 
-	payload.ValidatorAddress = addValidator2
-	payload.Amount = "2"
-	receipt, err = x.action.procWithdrawEth(payload)
+	payload1.Amount = "2"
+	_, err = x.action.procChain33ToEth_burn(payload1)
 	x.Equal(err, types2.ErrClaimInconsist)
 
-	payload.Amount = "3"
-	receipt, err = x.action.procWithdrawEth(payload)
+	payload1.Amount = "3"
+	receipt, err = x.action.procChain33ToEth_burn(payload1)
 	x.NoError(err)
 	x.setDb(receipt)
 
@@ -219,23 +221,25 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.query_GetSymbolTotalAmount(symbol, 1, 7)
 	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "withdraw", 3)
 
-	payload.Amount = "10"
-	payload.Nonce = 2
-	payload.ValidatorAddress = addValidator1
-	receipt, err = x.action.procWithdrawEth(payload)
-	payload.ValidatorAddress = addValidator2
-	receipt, err = x.action.procWithdrawEth(payload)
-	x.Equal(types.ErrNoBalance, err)
+	//payload.Amount = "10"
+	//payload.Nonce = 2
+	//payload.ValidatorAddress = addValidator1
+	//receipt, err = x.action.procChain33ToEth_burn(payload)
+	//payload.ValidatorAddress = addValidator2
+	//receipt, err = x.action.procChain33ToEth_burn(payload)
+	//x.Equal(types.ErrNoBalance, err)
 
 	payload.Amount = "1"
 	payload.Nonce = 3
-	payload.ClaimType = int64(types2.LOCK_CLAIM_TYPE)
+	payload.ClaimType = int64(types2.LockClaimType)
 	payload.ValidatorAddress = addValidator1
-	receipt, err = x.action.procMsgEth2Chain33(payload)
+	receipt, err = x.action.procEth2Chain33_lock(payload)
+	x.NoError(err)
 	x.setDb(receipt)
 
 	payload.ValidatorAddress = addValidator2
-	receipt, err = x.action.procMsgEth2Chain33(payload)
+	receipt, err = x.action.procEth2Chain33_lock(payload)
+	x.NoError(err)
 	x.setDb(receipt)
 
 	x.query_GetEthProphecy("030x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
@@ -248,32 +252,31 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 		Chain33Sender:    addValidator1,
 		EthereumReceiver: ethereumAddr,
 		Amount:           "5",
-		LocalCoinSymbol:  "bty",
-		LocalCoinExec:    coinExec,
+		IssuerDotSymbol:  "coins.bty",
 	}
 
-	receipt, err := x.action.procMsgLock(msgLock)
+	receipt, err := x.action.procChain33ToEth_lock(msgLock)
 	x.NoError(err)
 	x.setDb(receipt)
 
 	x.query_GetSymbolTotalAmount("bty", 2, 5)
 	x.query_GetSymbolTotalAmountByTxType("bty", 2, "lock", 5)
 
-	msgLock.Amount = "4"
-	receipt, err = x.action.procMsgBurn(msgLock)
-	x.NoError(err)
-	x.setDb(receipt)
-
-	x.query_GetSymbolTotalAmount("bty", 2, 1)
-	x.query_GetSymbolTotalAmountByTxType("bty", 2, "withdraw", 4)
-
-	receipt, err = x.action.procMsgBurn(msgLock)
-	x.Equal(err, types.ErrNoBalance)
-
-	msgLock.Amount = "1"
-	receipt, err = x.action.procMsgBurn(msgLock)
-	x.NoError(err)
-	x.setDb(receipt)
+	//msgLock.Amount = "4"
+	//receipt, err = x.action.procEth2Chain33_burn(msgLock)
+	//x.NoError(err)
+	//x.setDb(receipt)
+	//
+	//x.query_GetSymbolTotalAmount("bty", 2, 1)
+	//x.query_GetSymbolTotalAmountByTxType("bty", 2, "withdraw", 4)
+	//
+	//receipt, err = x.action.procEth2Chain33_burn(msgLock)
+	//x.Equal(err, types.ErrNoBalance)
+	//
+	//msgLock.Amount = "1"
+	//receipt, err = x.action.procEth2Chain33_burn(msgLock)
+	//x.NoError(err)
+	//x.setDb(receipt)
 
 	x.query_GetSymbolTotalAmount("bty", 2, 0)
 	x.query_GetSymbolTotalAmountByTxType("bty", 2, "withdraw", 5)

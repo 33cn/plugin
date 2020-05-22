@@ -67,38 +67,38 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(X2ethereumX, NewType(cfg))
 }
 
-type x2ethereumType struct {
+type X2ethereumType struct {
 	types.ExecTypeBase
 }
 
-func NewType(cfg *types.Chain33Config) *x2ethereumType {
-	c := &x2ethereumType{}
+func NewType(cfg *types.Chain33Config) *X2ethereumType {
+	c := &X2ethereumType{}
 	c.SetChild(c)
 	c.SetConfig(cfg)
 	return c
 }
 
-func (x *x2ethereumType) GetName() string {
+func (x *X2ethereumType) GetName() string {
 	return X2ethereumX
 }
 
 // GetPayload 获取合约action结构
-func (x *x2ethereumType) GetPayload() types.Message {
+func (x *X2ethereumType) GetPayload() types.Message {
 	return &X2EthereumAction{}
 }
 
 // GeTypeMap 获取合约action的id和name信息
-func (x *x2ethereumType) GetTypeMap() map[string]int32 {
+func (x *X2ethereumType) GetTypeMap() map[string]int32 {
 	return actionMap
 }
 
 // GetLogMap 获取合约log相关信息
-func (x *x2ethereumType) GetLogMap() map[int64]*types.LogInfo {
+func (x *X2ethereumType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }
 
 // ActionName get PrivacyType action name
-func (x x2ethereumType) ActionName(tx *types.Transaction) string {
+func (x X2ethereumType) ActionName(tx *types.Transaction) string {
 	var action X2EthereumAction
 	err := types.Decode(tx.Payload, &action)
 	if err != nil {
@@ -137,7 +137,7 @@ func (action *X2EthereumAction) GetActionName() string {
 }
 
 // CreateTx token 创建合约
-func (x *x2ethereumType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+func (x *X2ethereumType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
 	tx, err := x.ExecTypeBase.CreateTx(action, msg)
 	if err != nil {
 		tlog.Error("token CreateTx failed", "err", err, "action", action, "msg", string(msg))
