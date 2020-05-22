@@ -7,8 +7,6 @@ package para
 import (
 	"testing"
 
-	"encoding/hex"
-
 	"github.com/33cn/chain33/queue"
 	_ "github.com/33cn/chain33/system"
 	drivers "github.com/33cn/chain33/system/consensus"
@@ -72,11 +70,4 @@ func TestSetSelfConsEnable(t *testing.T) {
 	ep1 := []*paraSelfConsEnable{e1}
 	assert.Equal(t, ep1, para.commitMsgClient.selfConsEnableList)
 
-}
-
-func TestSetAddrsBitMap(t *testing.T) {
-	nodes := []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4", "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR", "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k", "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"}
-	addrs := []string{"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}
-	val, remain := setAddrsBitMap(nodes, addrs)
-	t.Log("val", hex.EncodeToString(val), "remain", remain)
 }

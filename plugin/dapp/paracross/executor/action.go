@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -300,6 +301,9 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 
 //相同的BlockHash，只保留一份数据
 func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.ParacrossNodeStatus) {
+	if stat.BlockDetails == nil {
+		stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
+	}
 	for _, blockHash := range stat.BlockDetails.BlockHashs {
 		if bytes.Equal(blockHash, commit.BlockHash) {
 			return
@@ -343,30 +347,21 @@ func paraCheckSelfConsOn(cfg *types.Chain33Config, db dbm.KV, commit *pt.Paracro
 	return true, nil, nil
 }
 
-func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddr string) error {
+func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddrs []string) error {
 	cfg := a.api.GetConfig()
 	err := checkCommitInfo(cfg, commit)
 	if err != nil {
 		return err
 	}
 
-	nodesMap, _, err := a.getNodesGroup(commit.Title)
-	if err != nil {
-		return err
-	}
-	//允许a.fromAddr非nodegroup成员，将来也许可以代nodegroup提交共识交易
-	if !validNode(commitAddr, nodesMap) {
-		return errors.Wrapf(pt.ErrNodeNotForTheTitle, "not validNode:%s", commitAddr)
-	}
-
 	titleStatus, err := getTitle(a.db, calcTitleKey(commit.Title))
 	if err != nil {
-		return errors.Wrapf(err, "getTitle:%s", commitAddr)
+		return errors.Wrapf(err, "getTitle=%s", commit.Title)
 	}
 	if titleStatus.Height+1 == commit.Height && commit.Height > 0 && !pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		if !bytes.Equal(titleStatus.BlockHash, commit.PreBlockHash) {
 			clog.Error("paracross.Commit", "check PreBlockHash", common.ToHex(titleStatus.BlockHash),
-				"commit tx", common.ToHex(commit.PreBlockHash), "commitheit", commit.Height, "from", commitAddr)
+				"commit tx", common.ToHex(commit.PreBlockHash), "commitheit", commit.Height, "from", commitAddrs)
 			return pt.ErrParaBlockHashNoMatch
 		}
 	}
@@ -379,7 +374,7 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddr s
 	if !cfg.IsPara() {
 		blockHash, err := getBlockHash(a.api, commit.MainBlockHeight)
 		if err != nil {
-			clog.Error("paracross.Commit getBlockHash", "err", err, "commit tx height", commit.MainBlockHeight, "from", commitAddr)
+			clog.Error("paracross.Commit getBlockHash", "err", err, "commit tx height", commit.MainBlockHeight, "from", commitAddrs)
 			return err
 		}
 		dbMainHash = blockHash.Hash
@@ -387,7 +382,7 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddr s
 	} else {
 		block, err := getBlockInfo(a.api, commit.Height)
 		if err != nil {
-			clog.Error("paracross.Commit getBlockInfo", "err", err, "height", commit.Height, "from", commitAddr)
+			clog.Error("paracross.Commit getBlockInfo", "err", err, "height", commit.Height, "from", commitAddrs)
 			return err
 		}
 		dbMainHash = block.MainHash
@@ -398,154 +393,26 @@ func (a *action) preCheckCommitInfo(commit *pt.ParacrossNodeStatus, commitAddr s
 	if !bytes.Equal(dbMainHash, commit.MainBlockHash) && commit.Height > 0 {
 		clog.Error("paracross.Commit blockHash not match", "isMain", !cfg.IsPara(), "db", common.ToHex(dbMainHash),
 			"commit", common.ToHex(commit.MainBlockHash), "commitHeight", commit.Height,
-			"commitMainHeight", commit.MainBlockHeight, "from", commitAddr)
+			"commitMainHeight", commit.MainBlockHeight, "from", commitAddrs)
 		return types.ErrBlockHashNoMatch
 	}
 
 	return nil
 }
 
-//共识commit　msg　处理
-func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-	//平行链侧，自共识未使能则不处理
-	if cfg.IsPara() {
-		isSelfConsOn, receipt, err := paraCheckSelfConsOn(cfg, a.db, commit.Status)
-		if !isSelfConsOn {
-			return receipt, err
+func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
+	var ret []string
+	for _, addr := range addrs {
+		if !validNode(addr, nodes) {
+			clog.Error("paracross.Commit getValidAddrs not valid", "addr", addr)
+			continue
 		}
+		ret = append(ret, addr)
 	}
-	if commit.Bls != nil {
-		return a.commitBls(commit)
-	}
-
-	return a.proCommitMsg(commit.Status, a.fromaddr)
+	return ret
 }
 
-//bls签名共识交易处理
-func (a *action) commitBls(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
-	commitAddrs, err := a.verifyBlsSign(commit)
-	if err != nil {
-		clog.Error("paracross.Commit verifyBlsSign failed", "err", err)
-		return nil, err
-	}
-	receipt := &types.Receipt{Ty: types.ExecOk}
-	for _, addr := range commitAddrs {
-		r, err := a.proCommitMsg(commit.Status, addr)
-		if err != nil {
-			clog.Error("paracross.CommitBls proCommitMsg failed", "err", err)
-			return nil, err
-		}
-		receipt = mergeReceipt(receipt, r)
-
-	}
-	return receipt, nil
-}
-
-func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, commitAddr string) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-
-	err := a.preCheckCommitInfo(commit, commitAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	nodes, _, err := a.getNodesGroup(commit.Title)
-	if err != nil {
-		return nil, err
-	}
-
-	titleStatus, err := getTitle(a.db, calcTitleKey(commit.Title))
-	if err != nil {
-		return nil, errors.Wrapf(err, "getTitle:%s", a.fromaddr)
-	}
-
-	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
-	if commit.Height <= titleStatus.Height {
-		clog.Debug("paracross.Commit record", "node", commitAddr, "titile", commit.Title, "height", commit.Height)
-		return makeRecordReceipt(commitAddr, commit), nil
-	}
-
-	// 未共识处理， 接受当前高度以及后续高度
-	stat, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height))
-	if err != nil && !isNotFound(err) {
-		clog.Error("paracross.Commit getTitleHeight failed", "err", err)
-		return nil, err
-	}
-
-	var receipt *types.Receipt
-	if isNotFound(err) {
-		stat = &pt.ParacrossHeightStatus{
-			Status: pt.ParacrossStatusCommiting,
-			Title:  commit.Title,
-			Height: commit.Height,
-			Details: &pt.ParacrossStatusDetails{
-				Addrs:     []string{commitAddr},
-				BlockHash: [][]byte{commit.BlockHash},
-			},
-		}
-		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkCommitTx) {
-			stat.MainHeight = commit.MainBlockHeight
-			stat.MainHash = commit.MainBlockHash
-		}
-		//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
-		// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
-		if pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
-			stat.BlockDetails = &pt.ParacrossStatusBlockDetails{}
-			updateCommitBlockHashs(stat, commit)
-		}
-
-		receipt = makeCommitReceipt(commitAddr, commit, nil, stat)
-	} else {
-		copyStat := proto.Clone(stat).(*pt.ParacrossHeightStatus)
-		// 如有分叉， 同一个节点可能再次提交commit交易
-		found, index := hasCommited(stat.Details.Addrs, commitAddr)
-		if found {
-			stat.Details.BlockHash[index] = commit.BlockHash
-			if pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
-				updateCommitBlockHashs(stat, commit)
-			}
-		} else {
-			stat.Details.Addrs = append(stat.Details.Addrs, commitAddr)
-			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.BlockHash)
-			if pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
-				updateCommitBlockHashs(stat, commit)
-			}
-		}
-
-		receipt = makeCommitReceipt(commitAddr, commit, copyStat, stat)
-	}
-	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
-	if cfg.IsDappFork(commit.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
-		updateCommitAddrs(stat, nodes)
-	}
-	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
-	//fork之前记录的stat 没有根据nodes更新而更新
-	if pt.IsParaForkHeight(cfg, stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
-		r := makeCommitStatReceipt(stat)
-		receipt = mergeReceipt(receipt, r)
-	}
-
-	if commit.Height > titleStatus.Height+1 {
-		saveTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height), stat)
-		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
-		allow, err := a.isAllowConsensJump(commit, titleStatus)
-		if err != nil {
-			clog.Error("paracross.Commit allowJump", "err", err)
-			return nil, err
-		}
-		if !allow {
-			return receipt, nil
-		}
-	}
-	r, err := a.commitTxDone(commit, stat, titleStatus, nodes)
-	if err != nil {
-		return nil, err
-	}
-	receipt = mergeReceipt(receipt, r)
-	return receipt, nil
-}
-
+//bls签名共识交易验证 大约耗时100ms
 func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, error) {
 	_, nodesArry, err := a.getNodesGroup(commit.Status.Title)
 	if err != nil {
@@ -594,10 +461,136 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 	if !g2pubs.Verify(msg, aPub, sign) {
 		clog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
 			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "addr", signAddrs, "nodes", nodesArry)
-		clog.Error("paracross.commit bls sign verify", "data", common.ToHex(msg), "height", commit.Status.Height)
+		clog.Error("paracross.commit bls sign verify", "data", common.ToHex(msg), "height", commit.Status.Height, "from", a.fromaddr)
 		return nil, pt.ErrBlsSignVerify
 	}
 	return signAddrs, nil
+}
+
+//共识commit　msg　处理
+func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	//平行链侧，自共识未使能则不处理
+	if cfg.IsPara() {
+		isSelfConsOn, receipt, err := paraCheckSelfConsOn(cfg, a.db, commit.Status)
+		if !isSelfConsOn {
+			return receipt, errors.Wrap(err, "checkSelfConsOn")
+		}
+	}
+
+	//获取commitAddrs, bls sign 包含多个账户的聚合签名
+	commitAddrs := []string{a.fromaddr}
+	if commit.Bls != nil {
+		addrs, err := a.verifyBlsSign(commit)
+		if err != nil {
+			return nil, errors.Wrap(err, "verifyBlsSign")
+		}
+		commitAddrs = addrs
+	}
+
+	nodesMap, _, err := a.getNodesGroup(commit.Status.Title)
+	if err != nil {
+		return nil, errors.Wrap(err, "getNodesGroup")
+	}
+
+	correctAddrs := getValidAddrs(nodesMap, commitAddrs)
+	if len(correctAddrs) <= 0 {
+		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s", strings.Join(commitAddrs, ","))
+	}
+
+	return a.proCommitMsg(commit.Status, nodesMap, correctAddrs)
+}
+
+func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]struct{}, commitAddrs []string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+
+	err := a.preCheckCommitInfo(commit, commitAddrs)
+	if err != nil {
+		return nil, err
+	}
+
+	titleStatus, err := getTitle(a.db, calcTitleKey(commit.Title))
+	if err != nil {
+		return nil, errors.Wrapf(err, "getTitle:%s", commit.Title)
+	}
+
+	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
+	if commit.Height <= titleStatus.Height {
+		clog.Debug("paracross.Commit record", "node", commitAddrs, "titile", commit.Title, "height", commit.Height)
+		return makeRecordReceipt(strings.Join(commitAddrs, ","), commit), nil
+	}
+
+	// 未共识处理， 接受当前高度以及后续高度
+	stat, err := getTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height))
+	if err != nil && !isNotFound(err) {
+		clog.Error("paracross.Commit getTitleHeight failed", "err", err)
+		return nil, err
+	}
+
+	var receipt *types.Receipt
+	var copyStat *pt.ParacrossHeightStatus
+	if isNotFound(err) {
+		stat = &pt.ParacrossHeightStatus{
+			Status:  pt.ParacrossStatusCommiting,
+			Title:   commit.Title,
+			Height:  commit.Height,
+			Details: &pt.ParacrossStatusDetails{},
+		}
+		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkCommitTx) {
+			stat.MainHeight = commit.MainBlockHeight
+			stat.MainHash = commit.MainBlockHash
+		}
+	} else {
+		copyStat = proto.Clone(stat).(*pt.ParacrossHeightStatus)
+	}
+
+	for _, addr := range commitAddrs {
+		// 如有分叉， 同一个节点可能再次提交commit交易
+		found, index := hasCommited(stat.Details.Addrs, addr)
+		if found {
+			stat.Details.BlockHash[index] = commit.BlockHash
+		} else {
+			stat.Details.Addrs = append(stat.Details.Addrs, addr)
+			stat.Details.BlockHash = append(stat.Details.BlockHash, commit.BlockHash)
+		}
+	}
+
+	//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
+	// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
+	if pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
+		updateCommitBlockHashs(stat, commit)
+	}
+	receipt = makeCommitReceipt(strings.Join(commitAddrs, ","), commit, copyStat, stat)
+
+	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
+	if cfg.IsDappFork(commit.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
+		updateCommitAddrs(stat, nodes)
+	}
+	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
+	//fork之前记录的stat 没有根据nodes更新而更新
+	if pt.IsParaForkHeight(cfg, stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
+		r := makeCommitStatReceipt(stat)
+		receipt = mergeReceipt(receipt, r)
+	}
+
+	if commit.Height > titleStatus.Height+1 {
+		saveTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height), stat)
+		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
+		allow, err := a.isAllowConsensJump(commit, titleStatus)
+		if err != nil {
+			clog.Error("paracross.Commit allowJump", "err", err)
+			return nil, err
+		}
+		if !allow {
+			return receipt, nil
+		}
+	}
+	r, err := a.commitTxDone(commit, stat, titleStatus, nodes)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
+	return receipt, nil
 }
 
 //分叉以前stat里面只记录了blockhash的信息，没有crossTxHash等信息，无法通过stat直接重构出mostCommitStatus
@@ -610,12 +603,11 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 		clog.Debug("paracross.Commit commit detail", "addr", v, "hash", common.ToHex(stat.Details.BlockHash[i]))
 	}
 
-	commitCount := len(stat.Details.Addrs)
-	most, mostHash := GetMostCommit(stat.Details.BlockHash)
-	if !isCommitDone(len(nodes), most) {
+	mostCount, mostHash := GetMostCommit(stat.Details.BlockHash)
+	if !isCommitDone(len(nodes), mostCount) {
 		return receipt, nil
 	}
-	clog.Debug("paracross.Commit commit ----pass", "most", most, "mostHash", common.ToHex([]byte(mostHash)))
+	clog.Debug("paracross.Commit commit ----pass", "most", mostCount, "mostHash", common.ToHex([]byte(mostHash)))
 	stat.Status = pt.ParacrossStatusCommitDone
 	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
@@ -627,7 +619,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	}
 
 	//add commit done receipt
-	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, nodeStatus, int32(most), int32(commitCount), int32(len(nodes)))
+	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, nodeStatus, int32(mostCount), int32(len(stat.Details.Addrs)), int32(len(nodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
 	r, err := a.commitTxDoneStep2(nodeStatus, stat, titleStatus)
@@ -864,25 +856,25 @@ func (a *action) isAllowConsensJump(commit *pt.ParacrossNodeStatus, titleStatus 
 
 }
 
-func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
-	if !bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) {
+func execCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
 	var payload pt.ParacrossAction
-	err := types.Decode(tx.Tx.Payload, &payload)
+	err := types.Decode(cross.Tx.Payload, &payload)
 	if err != nil {
 		clog.Crit("paracross.Commit Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 		return nil, err
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(tx.Tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
 		}
 		if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
-			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, tx.Tx)
+			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, cross.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
 				return nil, err
@@ -895,7 +887,7 @@ func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*t
 
 	//主链共识后，执行主链资产withdraw, 在支持CrossAssetTransfer之前使用此action
 	if payload.Ty == pt.ParacrossActionAssetWithdraw {
-		receiptWithdraw, err := a.assetWithdraw(payload.GetAssetWithdraw(), tx.Tx)
+		receiptWithdraw, err := a.assetWithdraw(payload.GetAssetWithdraw(), cross.Tx)
 		if err != nil {
 			clog.Crit("paracross.Commit withdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, errors.Cause(err)
@@ -908,26 +900,26 @@ func execCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*t
 
 }
 
-func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
-	if !bytes.HasSuffix(tx.Tx.Execer, []byte(pt.ParaX)) {
+func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
 	var payload pt.ParacrossAction
-	err := types.Decode(tx.Tx.Payload, &payload)
+	err := types.Decode(cross.Tx.Payload, &payload)
 	if err != nil {
 		clog.Crit("paracross.Commit.rollbackCrossTx Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 		return nil, err
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(tx.Tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit.rollbackCrossTx getCrossAction failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
 		}
 		//主链共识后，平行链执行出错的主链资产transfer回滚
 		if act == pt.ParacrossMainAssetTransfer {
-			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), tx.Tx)
+			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), cross.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer rbk failed", "error", err, "txHash", common.ToHex(crossTxHash))
 				return nil, errors.Cause(err)
@@ -938,7 +930,7 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 		}
 		//主链共识后，平行链执行出错的平行链资产withdraw回滚
 		if act == pt.ParacrossParaAssetWithdraw {
-			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), tx.Tx)
+			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), cross.Tx)
 			if err != nil {
 				clog.Crit("paracross.Commit rbk paraAssetWithdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 				return nil, errors.Cause(err)
@@ -951,15 +943,15 @@ func rollbackCrossTx(a *action, tx *types.TransactionDetail, crossTxHash []byte)
 
 	//主链共识后，平行链执行出错的主链资产transfer回滚
 	if payload.Ty == pt.ParacrossActionAssetTransfer {
-		assettf := payload.GetAssetTransfer()
-		cross := &pt.CrossAssetTransfer{
-			AssetSymbol: assettf.Cointoken,
-			Amount:      assettf.Amount,
-			Note:        string(assettf.Note),
-			ToAddr:      assettf.To,
+		cfg := payload.GetAssetTransfer()
+		transfer := &pt.CrossAssetTransfer{
+			AssetSymbol: cfg.Cointoken,
+			Amount:      cfg.Amount,
+			Note:        string(cfg.Note),
+			ToAddr:      cfg.To,
 		}
 
-		receipt, err := a.assetTransferRollback(cross, tx.Tx)
+		receipt, err := a.assetTransferRollback(transfer, cross.Tx)
 		if err != nil {
 			clog.Crit("paracross.Commit rbk asset transfer Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, errors.Cause(err)
