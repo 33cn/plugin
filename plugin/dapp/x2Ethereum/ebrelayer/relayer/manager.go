@@ -32,9 +32,9 @@ const (
 	EncryptEnable = int64(1)
 )
 
-type RelayerManager struct {
-	chain33Relayer *chain33.Chain33Relayer
-	ethRelayer     *ethereum.EthereumRelayer
+type Manager struct {
+	chain33Relayer *chain33.Relayer4Chain33
+	ethRelayer     *ethereum.Relayer4Ethereum
 	store          *Store
 	isLocked       int32
 	mtx            sync.Mutex
@@ -47,9 +47,9 @@ type RelayerManager struct {
 //1.验证人的私钥需要通过cli命令行进行导入，且chain33和ethereum两种不同的验证人需要分别导入
 //2.显示或者重新替换原有的私钥首先需要通过passpin进行unlock的操作
 
-func NewRelayerManager(chain33Relayer *chain33.Chain33Relayer, ethRelayer *ethereum.EthereumRelayer, db dbm.DB) *RelayerManager {
+func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayer *ethereum.Relayer4Ethereum, db dbm.DB) *Manager {
 	l, _ := lru.New(4096)
-	manager := &RelayerManager{
+	manager := &Manager{
 		chain33Relayer: chain33Relayer,
 		ethRelayer:     ethRelayer,
 		store:          NewStore(db),
@@ -63,7 +63,7 @@ func NewRelayerManager(chain33Relayer *chain33.Chain33Relayer, ethRelayer *ether
 	return manager
 }
 
-func (manager *RelayerManager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, result *interface{}) error {
+func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	// 新密码合法性校验
@@ -135,7 +135,7 @@ func (manager *RelayerManager) SetPassphase(setPasswdReq relayerTypes.ReqSetPass
 }
 
 //进行unlok操作
-func (manager *RelayerManager) Unlock(passphase string, result *interface{}) error {
+func (manager *Manager) Unlock(passphase string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if EncryptEnable != manager.encryptFlag {
@@ -170,7 +170,7 @@ func (manager *RelayerManager) Unlock(passphase string, result *interface{}) err
 }
 
 //锁定操作，该操作一旦执行，就不能替换验证人的私钥，需要重新unlock之后才能修改
-func (manager *RelayerManager) Lock(param interface{}, result *interface{}) error {
+func (manager *Manager) Lock(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -185,7 +185,7 @@ func (manager *RelayerManager) Lock(param interface{}, result *interface{}) erro
 }
 
 //导入chain33relayer验证人的私钥,该私钥实际用于向ethereum提交验证交易时签名使用
-func (manager *RelayerManager) ImportChain33RelayerPrivateKey(importKeyReq relayerTypes.ImportKeyReq, result *interface{}) error {
+func (manager *Manager) ImportChain33RelayerPrivateKey(importKeyReq relayerTypes.ImportKeyReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	privateKey := importKeyReq.PrivateKey
@@ -194,7 +194,7 @@ func (manager *RelayerManager) ImportChain33RelayerPrivateKey(importKeyReq relay
 	}
 	_, err := manager.chain33Relayer.ImportPrivateKey(manager.passphase, privateKey)
 	if err != nil {
-		mlog.Error("ImportChain33ValidatorPrivateKey", "Failed due to casue:", err.Error())
+		mlog.Error("ImportChain33ValidatorPrivateKey", "Failed due to cause:", err.Error())
 		return err
 	}
 
@@ -206,7 +206,7 @@ func (manager *RelayerManager) ImportChain33RelayerPrivateKey(importKeyReq relay
 }
 
 //生成以太坊私钥
-func (manager *RelayerManager) GenerateEthereumPrivateKey(param interface{}, result *interface{}) error {
+func (manager *Manager) GenerateEthereumPrivateKey(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -223,7 +223,7 @@ func (manager *RelayerManager) GenerateEthereumPrivateKey(param interface{}, res
 }
 
 //为ethrelayer导入chain33私钥，为向chain33发送交易时进行签名使用
-func (manager *RelayerManager) ImportChain33PrivateKey4EthRelayer(privateKey string, result *interface{}) error {
+func (manager *Manager) ImportChain33PrivateKey4EthRelayer(privateKey string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -240,7 +240,7 @@ func (manager *RelayerManager) ImportChain33PrivateKey4EthRelayer(privateKey str
 }
 
 //为ethrelayer导入chain33私钥，为向chain33发送交易时进行签名使用
-func (manager *RelayerManager) ImportEthValidatorPrivateKey(privateKey string, result *interface{}) error {
+func (manager *Manager) ImportEthValidatorPrivateKey(privateKey string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -257,7 +257,7 @@ func (manager *RelayerManager) ImportEthValidatorPrivateKey(privateKey string, r
 }
 
 //显示在chain33中以验证人validator身份进行登录的地址
-func (manager *RelayerManager) ShowChain33RelayerValidator(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowChain33RelayerValidator(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	var err error
@@ -270,7 +270,7 @@ func (manager *RelayerManager) ShowChain33RelayerValidator(param interface{}, re
 }
 
 //显示在Ethereum中以验证人validator身份进行登录的地址
-func (manager *RelayerManager) ShowEthRelayerValidator(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowEthRelayerValidator(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	var err error
@@ -281,7 +281,7 @@ func (manager *RelayerManager) ShowEthRelayerValidator(param interface{}, result
 	return nil
 }
 
-func (manager *RelayerManager) IsValidatorActive(vallidatorAddr string, result *interface{}) error {
+func (manager *Manager) IsValidatorActive(vallidatorAddr string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	active, err := manager.ethRelayer.IsValidatorActive(vallidatorAddr)
@@ -295,7 +295,7 @@ func (manager *RelayerManager) IsValidatorActive(vallidatorAddr string, result *
 	return nil
 }
 
-func (manager *RelayerManager) ShowOperator(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowOperator(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	operator, err := manager.ethRelayer.ShowOperator()
@@ -306,7 +306,7 @@ func (manager *RelayerManager) ShowOperator(param interface{}, result *interface
 	return nil
 }
 
-func (manager *RelayerManager) DeployContrcts(param interface{}, result *interface{}) error {
+func (manager *Manager) DeployContrcts(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -323,7 +323,7 @@ func (manager *RelayerManager) DeployContrcts(param interface{}, result *interfa
 	return nil
 }
 
-func (manager *RelayerManager) CreateBridgeToken(symbol string, result *interface{}) error {
+func (manager *Manager) CreateBridgeToken(symbol string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -335,12 +335,12 @@ func (manager *RelayerManager) CreateBridgeToken(symbol string, result *interfac
 	}
 	*result = relayerTypes.ReplyAddr{
 		IsOK: true,
-		Addr: fmt.Sprintf("%s", tokenAddr),
+		Addr: tokenAddr,
 	}
 	return nil
 }
 
-func (manager *RelayerManager) CreateERC20Token(symbol string, result *interface{}) error {
+func (manager *Manager) CreateERC20Token(symbol string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -352,12 +352,12 @@ func (manager *RelayerManager) CreateERC20Token(symbol string, result *interface
 	}
 	*result = relayerTypes.ReplyAddr{
 		IsOK: true,
-		Addr: fmt.Sprintf("%s", tokenAddr),
+		Addr: tokenAddr,
 	}
 	return nil
 }
 
-func (manager *RelayerManager) MintErc20(mintToken relayerTypes.MintToken, result *interface{}) error {
+func (manager *Manager) MintErc20(mintToken relayerTypes.MintToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -374,7 +374,7 @@ func (manager *RelayerManager) MintErc20(mintToken relayerTypes.MintToken, resul
 	return nil
 }
 
-func (manager *RelayerManager) ApproveAllowance(approveAllowance relayerTypes.ApproveAllowance, result *interface{}) error {
+func (manager *Manager) ApproveAllowance(approveAllowance relayerTypes.ApproveAllowance, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -391,7 +391,7 @@ func (manager *RelayerManager) ApproveAllowance(approveAllowance relayerTypes.Ap
 	return nil
 }
 
-func (manager *RelayerManager) Burn(burn relayerTypes.Burn, result *interface{}) error {
+func (manager *Manager) Burn(burn relayerTypes.Burn, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -408,7 +408,7 @@ func (manager *RelayerManager) Burn(burn relayerTypes.Burn, result *interface{})
 	return nil
 }
 
-func (manager *RelayerManager) BurnAsync(burn relayerTypes.Burn, result *interface{}) error {
+func (manager *Manager) BurnAsync(burn relayerTypes.Burn, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -425,7 +425,7 @@ func (manager *RelayerManager) BurnAsync(burn relayerTypes.Burn, result *interfa
 	return nil
 }
 
-func (manager *RelayerManager) LockEthErc20AssetAsync(lockEthErc20Asset relayerTypes.LockEthErc20, result *interface{}) error {
+func (manager *Manager) LockEthErc20AssetAsync(lockEthErc20Asset relayerTypes.LockEthErc20, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -442,7 +442,7 @@ func (manager *RelayerManager) LockEthErc20AssetAsync(lockEthErc20Asset relayerT
 	return nil
 }
 
-func (manager *RelayerManager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEthErc20, result *interface{}) error {
+func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEthErc20, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -459,7 +459,7 @@ func (manager *RelayerManager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.
 	return nil
 }
 
-func (manager *RelayerManager) MakeNewProphecyClaim(newProphecyClaim relayerTypes.NewProphecyClaim, result *interface{}) error {
+func (manager *Manager) MakeNewProphecyClaim(newProphecyClaim relayerTypes.NewProphecyClaim, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
@@ -491,7 +491,7 @@ func (manager *RelayerManager) MakeNewProphecyClaim(newProphecyClaim relayerType
 	return nil
 }
 
-func (manager *RelayerManager) IsProphecyPending(claimID [32]byte, result *interface{}) error {
+func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	active, err := manager.ethRelayer.IsProphecyPending(claimID)
@@ -504,7 +504,7 @@ func (manager *RelayerManager) IsProphecyPending(claimID [32]byte, result *inter
 	return nil
 }
 
-func (manager *RelayerManager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
+func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	balance, err := manager.ethRelayer.GetBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
@@ -529,7 +529,7 @@ func (manager *RelayerManager) GetBalance(balanceAddr relayerTypes.BalanceAddr, 
 	return nil
 }
 
-func (manager *RelayerManager) ShowBridgeBankAddr(para interface{}, result *interface{}) error {
+func (manager *Manager) ShowBridgeBankAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	addr, err := manager.ethRelayer.ShowBridgeBankAddr()
@@ -543,7 +543,7 @@ func (manager *RelayerManager) ShowBridgeBankAddr(para interface{}, result *inte
 	return nil
 }
 
-func (manager *RelayerManager) ShowBridgeRegistryAddr(para interface{}, result *interface{}) error {
+func (manager *Manager) ShowBridgeRegistryAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	addr, err := manager.ethRelayer.ShowBridgeRegistryAddr()
@@ -557,7 +557,7 @@ func (manager *RelayerManager) ShowBridgeRegistryAddr(para interface{}, result *
 	return nil
 }
 
-func (manager *RelayerManager) ShowLockStatics(token relayerTypes.TokenStatics, result *interface{}) error {
+func (manager *Manager) ShowLockStatics(token relayerTypes.TokenStatics, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	balance, err := manager.ethRelayer.ShowLockStatics(token.TokenAddr)
@@ -579,7 +579,7 @@ func (manager *RelayerManager) ShowLockStatics(token relayerTypes.TokenStatics, 
 	return nil
 }
 
-func (manager *RelayerManager) ShowDepositStatics(token relayerTypes.TokenStatics, result *interface{}) error {
+func (manager *Manager) ShowDepositStatics(token relayerTypes.TokenStatics, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	supply, err := manager.ethRelayer.ShowDepositStatics(token.TokenAddr)
@@ -601,7 +601,7 @@ func (manager *RelayerManager) ShowDepositStatics(token relayerTypes.TokenStatic
 	return nil
 }
 
-func (manager *RelayerManager) ShowTokenAddrBySymbol(token relayerTypes.TokenStatics, result *interface{}) error {
+func (manager *Manager) ShowTokenAddrBySymbol(token relayerTypes.TokenStatics, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	addr, err := manager.ethRelayer.ShowTokenAddrBySymbol(token.TokenAddr)
@@ -616,7 +616,7 @@ func (manager *RelayerManager) ShowTokenAddrBySymbol(token relayerTypes.TokenSta
 	return nil
 }
 
-func (manager *RelayerManager) ShowTxReceipt(txhash string, result *interface{}) error {
+func (manager *Manager) ShowTxReceipt(txhash string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	receipt, err := manager.ethRelayer.ShowTxReceipt(txhash)
@@ -627,7 +627,7 @@ func (manager *RelayerManager) ShowTxReceipt(txhash string, result *interface{})
 	return nil
 }
 
-func (manager *RelayerManager) checkPermission() error {
+func (manager *Manager) checkPermission() error {
 	if EncryptEnable != manager.encryptFlag {
 		return errors.New("pls set passphase first")
 	}
@@ -637,54 +637,54 @@ func (manager *RelayerManager) checkPermission() error {
 	return nil
 }
 
-func (manager *RelayerManager) ShowEthRelayerStatus(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowEthRelayerStatus(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	*result = manager.ethRelayer.GetRunningStatus()
 	return nil
 }
 
-func (manager *RelayerManager) ShowChain33RelayerStatus(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowChain33RelayerStatus(param interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	*result = manager.chain33Relayer.GetRunningStatus()
 	return nil
 }
 
-func (manager *RelayerManager) ShowEthRelayer2EthTxs(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowEthRelayer2EthTxs(param interface{}, result *interface{}) error {
 	*result = manager.ethRelayer.QueryTxhashRelay2Eth()
 	return nil
 }
 
-func (manager *RelayerManager) ShowEthRelayer2Chain33Txs(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowEthRelayer2Chain33Txs(param interface{}, result *interface{}) error {
 	*result = manager.ethRelayer.QueryTxhashRelay2Chain33()
 	return nil
 }
 
-func (manager *RelayerManager) ShowChain33Relayer2EthTxs(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowChain33Relayer2EthTxs(param interface{}, result *interface{}) error {
 	*result = manager.chain33Relayer.QueryTxhashRelay2Eth()
 	return nil
 }
 
-func (manager *RelayerManager) ShowTxsEth2chain33TxLock(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowTxsEth2chain33TxLock(param interface{}, result *interface{}) error {
 	return nil
 }
 
-func (manager *RelayerManager) ShowTxsEth2chain33TxBurn(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowTxsEth2chain33TxBurn(param interface{}, result *interface{}) error {
 	return nil
 }
 
-func (manager *RelayerManager) ShowTxsChain33ToEthTxLock(param interface{}, result *interface{}) error {
-
-	return nil
-}
-
-func (manager *RelayerManager) ShowTxsChain33ToEthTxBurn(param interface{}, result *interface{}) error {
+func (manager *Manager) ShowTxsChain33ToEthTxLock(param interface{}, result *interface{}) error {
 
 	return nil
 }
 
-func (manager *RelayerManager) TransferToken(transfer relayerTypes.TransferToken, result *interface{}) error {
+func (manager *Manager) ShowTxsChain33ToEthTxBurn(param interface{}, result *interface{}) error {
+
+	return nil
+}
+
+func (manager *Manager) TransferToken(transfer relayerTypes.TransferToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	txhash, err := manager.ethRelayer.TransferToken(transfer.TokenAddr, transfer.FromKey, transfer.ToAddr, transfer.Amount)
@@ -698,36 +698,31 @@ func (manager *RelayerManager) TransferToken(transfer relayerTypes.TransferToken
 	return nil
 }
 
-func (manager *RelayerManager) GetDecimals(tokenAddr string) (int64, error) {
+func (manager *Manager) GetDecimals(tokenAddr string) (int64, error) {
 	if d, ok := manager.decimalLru.Get(tokenAddr); ok {
 		mlog.Info("GetDecimals", "from cache", d)
 		return d.(int64), nil
-	} else {
-		if d, err := manager.store.Get(utils.CalAddr2DecimalsPrefix(tokenAddr)); err == nil {
-			decimal, err := strconv.ParseInt(string(d), 10, 64)
-			if err != nil {
-				return 0, err
-			}
-
-			manager.decimalLru.Add(tokenAddr, decimal)
-
-			mlog.Info("GetDecimals", "from DB", d)
-
-			return decimal, nil
-
-		} else {
-			d, err := manager.ethRelayer.GetDecimals(tokenAddr)
-			if err != nil {
-				return 0, err
-			}
-
-			_ = manager.store.Set(utils.CalAddr2DecimalsPrefix(tokenAddr), []byte(strconv.FormatInt(int64(d), 10)))
-
-			manager.decimalLru.Add(tokenAddr, int64(d))
-
-			mlog.Info("GetDecimals", "from Node", d)
-
-			return int64(d), nil
-		}
 	}
+
+	if d, err := manager.store.Get(utils.CalAddr2DecimalsPrefix(tokenAddr)); err == nil {
+		decimal, err := strconv.ParseInt(string(d), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		manager.decimalLru.Add(tokenAddr, decimal)
+		mlog.Info("GetDecimals", "from DB", d)
+
+		return decimal, nil
+	}
+
+	d, err := manager.ethRelayer.GetDecimals(tokenAddr)
+	if err != nil {
+		return 0, err
+	}
+	_ = manager.store.Set(utils.CalAddr2DecimalsPrefix(tokenAddr), []byte(strconv.FormatInt(int64(d), 10)))
+	manager.decimalLru.Add(tokenAddr, int64(d))
+
+	mlog.Info("GetDecimals", "from Node", d)
+
+	return int64(d), nil
 }

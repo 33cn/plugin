@@ -8,17 +8,16 @@ import (
 	"sync"
 	"time"
 
+	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/ethclient"
-	solsha3 "github.com/miguelmota/go-solidity-sha3"
-
-	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/ethereum/go-ethereum/ethclient"
+	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 type EthTxStatus int32
@@ -66,14 +65,6 @@ func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) 
 	return sig, prefixed
 }
 
-func loadPrivateKey(privateKey []byte) (key *ecdsa.PrivateKey, err error) {
-	key, err = crypto.ToECDSA(privateKey)
-	if nil != err {
-		return nil, err
-	}
-	return
-}
-
 // LoadSender : uses the validator's private key to load the validator's address
 func LoadSender(privateKey *ecdsa.PrivateKey) (address common.Address, err error) {
 	// Parse public key
@@ -91,7 +82,7 @@ func getNonce(sender common.Address, backend bind.ContractBackend) (*big.Int, er
 	if nonceMutex, exist := addr2Nonce[sender]; exist {
 		nonceMutex.rw.Lock()
 		defer nonceMutex.rw.Unlock()
-		nonceMutex.nonce += 1
+		nonceMutex.nonce++
 		addr2Nonce[sender] = nonceMutex
 		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.nonce)
 		return big.NewInt(nonceMutex.nonce), nil
@@ -113,7 +104,7 @@ func revokeNonce(sender common.Address) (*big.Int, error) {
 	if nonceMutex, exist := addr2Nonce[sender]; exist {
 		nonceMutex.rw.Lock()
 		defer nonceMutex.rw.Unlock()
-		nonceMutex.nonce -= 1
+		nonceMutex.nonce--
 		addr2Nonce[sender] = nonceMutex
 		txslog.Debug("revokeNonce", "address", sender.String(), "nonce", nonceMutex.nonce)
 		return big.NewInt(nonceMutex.nonce), nil
@@ -122,6 +113,8 @@ func revokeNonce(sender common.Address) (*big.Int, error) {
 }
 
 func PrepareAuth(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
+	//var backend bind.ContractBackend = client
+	//client *ethclient.Client
 	if nil == privateKey || nil == backend {
 		txslog.Error("PrepareAuth", "nil input parameter", "backend", backend, "privateKey", privateKey)
 		return nil, errors.New("nil input parameter")

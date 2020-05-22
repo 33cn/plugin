@@ -22,12 +22,12 @@ import (
 
 var (
 	log            = l.New("module", "sync.tx_receipts")
-	syncTxReceipts *SyncTxReceipts
+	syncTxReceipts *TxReceipts
 )
 
-func StartSyncTxReceipt(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *SyncTxReceipts {
+func StartSyncTxReceipt(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *TxReceipts {
 	log.Debug("StartSyncTxReceipt, load config", "para:", cfg)
-	log.Debug("SyncTxReceipts started ")
+	log.Debug("TxReceipts started ")
 
 	bindOrResumePush(cfg)
 	syncTxReceipts = NewSyncTxReceipts(db)

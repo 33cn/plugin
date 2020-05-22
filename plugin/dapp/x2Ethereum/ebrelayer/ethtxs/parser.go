@@ -12,7 +12,6 @@ package ethtxs
 import (
 	"crypto/ecdsa"
 	"math/big"
-	"regexp"
 	"strings"
 
 	chain33Types "github.com/33cn/chain33/types"
@@ -165,31 +164,4 @@ func Chain33MsgToProphecyClaim(event events.Chain33Msg) ProphecyClaim {
 	}
 
 	return prophecyClaim
-}
-
-// getSymbolAmountFromCoin : Parse (symbol, amount) from coin string
-func getSymbolAmountFromCoin(coin string) (string, *big.Int) {
-	coinRune := []rune(coin)
-	amount := new(big.Int)
-
-	var symbol string
-
-	// Set up regex
-	isLetter := regexp.MustCompile(`[a-z]`)
-
-	// Iterate over each rune in the coin string
-	for i, char := range coinRune {
-		// Regex will match first letter [a-z] (lowercase)
-		matched := isLetter.MatchString(string(char))
-
-		// On first match, split the coin into (amount, symbol)
-		if matched {
-			amount, _ = amount.SetString(string(coinRune[0:i]), 10)
-			symbol = string(coinRune[i:])
-
-			break
-		}
-	}
-
-	return symbol, amount
 }

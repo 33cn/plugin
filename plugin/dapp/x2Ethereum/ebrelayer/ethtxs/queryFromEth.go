@@ -113,13 +113,13 @@ func GetLockedFunds(bridgeBank *generated.BridgeBank, tokenAddrStr string) (stri
 	return balance.String(), nil
 }
 
-func GetDepositFunds(client *ethclient.Client, tokenAddrStr string) (string, error) {
+func GetDepositFunds(backend bind.ContractBackend, tokenAddrStr string) (string, error) {
 	if tokenAddrStr == "" {
 		return "", errors.New("nil token address")
 	}
 
 	tokenAddr := common.HexToAddress(tokenAddrStr)
-	bridgeToken, err := generated.NewBridgeToken(tokenAddr, client)
+	bridgeToken, err := generated.NewBridgeToken(tokenAddr, backend)
 	if nil != err {
 		return "", err
 	}

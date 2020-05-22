@@ -76,7 +76,7 @@ func importChain33Privatekey(cmd *cobra.Command, args []string) {
 	params := privateKey
 
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ImportChain33PrivateKey4EthRelayer", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportChain33PrivateKey4EthRelayer", params, &res)
 	ctx.Run()
 }
 
@@ -96,7 +96,7 @@ func importEthValidtorPrivatekey(cmd *cobra.Command, args []string) {
 	params := privateKey
 
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ImportEthValidatorPrivateKey", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportEthValidatorPrivateKey", params, &res)
 	ctx.Run()
 }
 
@@ -113,7 +113,7 @@ func generateEthereumPrivateKey(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.Account4Show
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.GenerateEthereumPrivateKey", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GenerateEthereumPrivateKey", nil, &res)
 	ctx.Run()
 }
 
@@ -129,7 +129,7 @@ func ShowValidatorsAddrCmd() *cobra.Command {
 func showValidatorsAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ValidatorAddr4EthRelayer
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowEthRelayerValidator", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerValidator", nil, &res)
 	ctx.Run()
 }
 
@@ -146,7 +146,7 @@ func showChain33Txs(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.Txhashes
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowEthRelayer2Chain33Txs", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayer2Chain33Txs", nil, &res)
 	if _, err := ctx.RunResult(); nil != err {
 		errInfo := err.Error()
 		fmt.Println("errinfo:" + errInfo)
@@ -170,7 +170,7 @@ func showEthTxs(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.Txhashes
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowEthRelayer2Chain33Txs", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayer2Chain33Txs", nil, &res)
 	if _, err := ctx.RunResult(); nil != err {
 		errInfo := err.Error()
 		fmt.Println("errinfo:" + errInfo)
@@ -194,7 +194,7 @@ func showEthRelayerStatus(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.RelayerRunStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowEthRelayerStatus", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerStatus", nil, &res)
 	ctx.Run()
 }
 
@@ -219,7 +219,7 @@ func IsValidatorActive(cmd *cobra.Command, args []string) {
 
 	params := addr
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.IsValidatorActive", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.IsValidatorActive", params, &res)
 	ctx.Run()
 }
 
@@ -235,7 +235,7 @@ func ShowOperatorCmd() *cobra.Command {
 func ShowOperator(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res string
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowOperator", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowOperator", nil, &res)
 	ctx.Run()
 }
 
@@ -251,7 +251,7 @@ func DeployContrctsCmd() *cobra.Command {
 func DeployContrcts(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.DeployContrcts", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployContrcts", nil, &res)
 	ctx.Run()
 }
 
@@ -275,7 +275,7 @@ func ShowTxReceipt(cmd *cobra.Command, args []string) {
 	txhash, _ := cmd.Flags().GetString("hash")
 	para := txhash
 	var res ethTypes.Receipt
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowTxReceipt", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowTxReceipt", para, &res)
 	ctx.Run()
 }
 
@@ -299,7 +299,7 @@ func CreateBridgeToken(cmd *cobra.Command, args []string) {
 	token, _ := cmd.Flags().GetString("symbol")
 	para := token
 	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.CreateBridgeToken", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateBridgeToken", para, &res)
 	ctx.Run()
 }
 
@@ -323,7 +323,7 @@ func CreateEthereumTokenToken(cmd *cobra.Command, args []string) {
 	token, _ := cmd.Flags().GetString("symbol")
 	para := token
 	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.CreateERC20Token", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateERC20Token", para, &res)
 	ctx.Run()
 }
 
@@ -365,7 +365,7 @@ func MintErc20(cmd *cobra.Command, args []string) {
 		Amount:    realAmount.String(),
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.MintErc20", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.MintErc20", para, &res)
 	ctx.Run()
 }
 
@@ -408,7 +408,7 @@ func ApproveAllowance(cmd *cobra.Command, args []string) {
 		Amount:    realAmount.String(),
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ApproveAllowance", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ApproveAllowance", para, &res)
 	ctx.Run()
 }
 
@@ -463,7 +463,7 @@ func Burn(cmd *cobra.Command, args []string) {
 		Chain33Receiver: receiver,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.Burn", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Burn", para, &res)
 	ctx.Run()
 }
 
@@ -487,7 +487,7 @@ func BurnAsync(cmd *cobra.Command, args []string) {
 		Chain33Receiver: receiver,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.BurnAsync", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.BurnAsync", para, &res)
 	ctx.Run()
 }
 
@@ -544,7 +544,7 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 		Chain33Receiver: receiver,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.LockEthErc20Asset", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20Asset", para, &res)
 	ctx.Run()
 }
 
@@ -571,7 +571,7 @@ func LockEthErc20AssetAsync(cmd *cobra.Command, args []string) {
 		Chain33Receiver: receiver,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.LockEthErc20AssetAsync", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20AssetAsync", para, &res)
 	ctx.Run()
 }
 
@@ -587,7 +587,7 @@ func ShowBridgeBankAddrCmd() *cobra.Command {
 func ShowBridgeBankAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowBridgeBankAddr", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBridgeBankAddr", nil, &res)
 	ctx.Run()
 }
 
@@ -603,7 +603,7 @@ func ShowBridgeRegistryAddrCmd() *cobra.Command {
 func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowBridgeRegistryAddr", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBridgeRegistryAddr", nil, &res)
 	ctx.Run()
 }
 
@@ -667,7 +667,7 @@ func MakeNewProphecyClaim(cmd *cobra.Command, args []string) {
 		TxHash:        txhash,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.MakeNewProphecyClaim", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.MakeNewProphecyClaim", para, &res)
 	ctx.Run()
 }
 
@@ -697,7 +697,7 @@ func GetBalance(cmd *cobra.Command, args []string) {
 		TokenAddr: tokenAddr,
 	}
 	var res ebTypes.ReplyBalance
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.GetBalance", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetBalance", para, &res)
 	ctx.Run()
 }
 
@@ -722,7 +722,7 @@ func IsProphecyPending(cmd *cobra.Command, args []string) {
 	para := common.HexToHash(id)
 
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.IsProphecyPending", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.IsProphecyPending", para, &res)
 	ctx.Run()
 }
 
@@ -770,7 +770,7 @@ func TransferToken(cmd *cobra.Command, args []string) {
 		Amount:    realAmount.String(),
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.TransferToken", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.TransferToken", para, &res)
 	ctx.Run()
 }
 
@@ -798,6 +798,6 @@ func GetToken2address(cmd *cobra.Command, args []string) {
 		TokenAddr: tokenSymbol,
 	}
 	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowTokenAddrBySymbol", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowTokenAddrBySymbol", para, &res)
 	ctx.Run()
 }

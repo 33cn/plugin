@@ -17,15 +17,9 @@ var (
 )
 
 const (
-	keyAccount            = "Account"
-	keyAddr               = "Addr"
-	keyLabel              = "Label"
-	keyTx                 = "Tx"
 	keyEncryptionFlag     = "Encryption"
 	keyEncryptionCompFlag = "EncryptionFlag" // 中间有一段时间运行了一个错误的密码版本，导致有部分用户信息发生错误，需要兼容下
 	keyPasswordHash       = "PasswordHash"
-	keyWalletSeed         = "walletseed"
-	keyAirDropIndex       = "AirDropIndex" //存储通过seed生成的空投地址信息
 )
 
 // CalcEncryptionFlag 加密标志Key

@@ -25,8 +25,8 @@ const (
 )
 
 const (
-	CLAIM_TYPE_BURN = uint8(1)
-	CLAIM_TYPE_LOCK = uint8(2)
+	ClaimTypeBurn = uint8(1)
+	ClaimTypeLock = uint8(2)
 )
 
 // String : returns the event type as a string

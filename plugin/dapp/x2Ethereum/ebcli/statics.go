@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
 	"github.com/spf13/cobra"
 )
@@ -16,8 +15,6 @@ func StaticsCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		ShowLockStaticsCmd(),
-		//ShowUnlockStaticsCmd(),
-		//ShowBurnStaticsCmd(),
 		ShowDepositStaticsCmd(),
 	)
 
@@ -46,66 +43,7 @@ func ShowLockStatics(cmd *cobra.Command, args []string) {
 		TokenAddr: tokenAddr,
 	}
 	var res ebTypes.StaticsLock
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowLockStatics", para, &res)
-	ctx.Run()
-}
-
-func ShowUnlockStaticsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "unlock",
-		Short: "show the unlock statics of ETH or ERC20",
-		Run:   ShowUnlockStatics,
-	}
-	ShowUnlockStaticsFlags(cmd)
-	return cmd
-}
-
-func ShowUnlockStaticsFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("token", "t", "", "token address, optional, nil for ETH")
-	cmd.Flags().StringP("owner", "o", "", "owner address, optional, nil for all")
-}
-
-func ShowUnlockStatics(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	tokenAddr, _ := cmd.Flags().GetString("token")
-	owner, _ := cmd.Flags().GetString("owner")
-	para := ebTypes.StaticsRequest{
-		Owner:     owner,
-		TokenAddr: tokenAddr,
-	}
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowUnlockStatics", para, &res)
-	ctx.Run()
-}
-
-func ShowBurnStaticsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "burn",
-		Short: "show the burn statics of chain33 asset",
-		Run:   ShowBurnStatics,
-	}
-	ShowBurnStaticsFlags(cmd)
-	return cmd
-}
-
-func ShowBurnStaticsFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("token", "t", "", "token address, optional, nil for ETH")
-	cmd.Flags().StringP("owner", "o", "", "owner address, optional, nil for all")
-}
-
-func ShowBurnStatics(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	tokenAddr, _ := cmd.Flags().GetString("token")
-	owner, _ := cmd.Flags().GetString("owner")
-
-	para := ebTypes.StaticsRequest{
-		Owner:     owner,
-		TokenAddr: tokenAddr,
-	}
-
-	var res ebTypes.StaticsResponse
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowLockStaticsCmd", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowLockStatics", para, &res)
 	ctx.Run()
 }
 
@@ -132,6 +70,6 @@ func ShowDepositStatics(cmd *cobra.Command, args []string) {
 		TokenAddr: tokenAddr,
 	}
 	var res ebTypes.StaticsDeposit
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowDepositStatics", para, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowDepositStatics", para, &res)
 	ctx.Run()
 }

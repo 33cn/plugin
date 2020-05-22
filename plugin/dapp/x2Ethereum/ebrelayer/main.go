@@ -69,13 +69,13 @@ func main() {
 	mainlog.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
 	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
 
-	chain33RelayerService := chain33Relayer.StartChain33Relayer(cfg.SyncTxConfig, cfg.BridgeRegistry, cfg.EthProvider, db, ctx)
+	chain33RelayerService := chain33Relayer.StartChain33Relayer(ctx, cfg.SyncTxConfig, cfg.BridgeRegistry, cfg.EthProvider, db)
 	ethRelayerService := ethRelayer.StartEthereumRelayer(cfg.SyncTxConfig.Chain33Host, db, cfg.EthProvider, cfg.BridgeRegistry, cfg.Deploy, cfg.EthMaturityDegree, cfg.EthBlockFetchPeriod)
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerService, db)
 
 	log.Info("cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
-	startRpcServer(cfg.JrpcBindAddr, relayerManager)
+	startRPCServer(cfg.JrpcBindAddr, relayerManager)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM)
@@ -160,16 +160,16 @@ func (r *RPCServer) HandleHTTP(rpcPath, debugPath string) {
 	http.Handle(rpcPath, r)
 }
 
-type HttpConn struct {
+type HTTPConn struct {
 	in  io.Reader
 	out io.Writer
 }
 
-func (c *HttpConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
-func (c *HttpConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
-func (c *HttpConn) Close() error                      { return nil }
+func (c *HTTPConn) Read(p []byte) (n int, err error)  { return c.in.Read(p) }
+func (c *HTTPConn) Write(d []byte) (n int, err error) { return c.out.Write(d) }
+func (c *HTTPConn) Close() error                      { return nil }
 
-func startRpcServer(address string, api interface{}) {
+func startRPCServer(address string, api interface{}) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		fmt.Println("监听失败，端口可能已经被占用")
@@ -180,7 +180,7 @@ func startRpcServer(address string, api interface{}) {
 	srv.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
 	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			serverCodec := jsonrpc.NewServerCodec(&HttpConn{in: r.Body, out: w})
+			serverCodec := jsonrpc.NewServerCodec(&HTTPConn{in: r.Body, out: w})
 			w.Header().Set("Content-type", "application/json")
 			w.WriteHeader(200)
 			err := srv.ServeRequest(serverCodec)

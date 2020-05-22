@@ -15,7 +15,7 @@ var (
 	start             = int(1)
 )
 
-func (chain33Relayer *Chain33Relayer) GetAccount(passphrase string) (privateKey, addr string, err error) {
+func (chain33Relayer *Relayer4Chain33) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
 		return "", "", err
@@ -29,7 +29,7 @@ func (chain33Relayer *Chain33Relayer) GetAccount(passphrase string) (privateKey,
 	addr = ethAccount.Addr
 	return
 }
-func (chain33Relayer *Chain33Relayer) GetAccountAddr() (addr string, err error) {
+func (chain33Relayer *Relayer4Chain33) GetAccountAddr() (addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
 		relayerLog.Info("GetValidatorAddr", "Failed to get account from db due to:", err.Error())
@@ -44,7 +44,7 @@ func (chain33Relayer *Chain33Relayer) GetAccountAddr() (addr string, err error) 
 	return
 }
 
-func (chain33Relayer *Chain33Relayer) ImportPrivateKey(passphrase, privateKeyStr string) (addr string, err error) {
+func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeyStr string) (addr string, err error) {
 	privateKeySlice, err := chain33Common.FromHex(privateKeyStr)
 	if nil != err {
 		return "", err
@@ -71,7 +71,7 @@ func (chain33Relayer *Chain33Relayer) ImportPrivateKey(passphrase, privateKeyStr
 	return
 }
 
-func (chain33Relayer *Chain33Relayer) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
+func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
 		relayerLog.Info("StoreAccountWithNewPassphase", "pls check account is created already, err", err)
@@ -88,10 +88,10 @@ func (chain33Relayer *Chain33Relayer) StoreAccountWithNewPassphase(newPassphrase
 	return chain33Relayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
-func (chain33Relayer *Chain33Relayer) RestorePrivateKeys(passphrase string) error {
+func (chain33Relayer *Relayer4Chain33) RestorePrivateKeys(passphrase string) error {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
-		relayerLog.Info("No private key saved for Chain33Relayer")
+		relayerLog.Info("No private key saved for Relayer4Chain33")
 		return nil
 	}
 	ethAccount := &x2ethTypes.Account4Relayer{}
@@ -114,7 +114,7 @@ func (chain33Relayer *Chain33Relayer) RestorePrivateKeys(passphrase string) erro
 	return nil
 }
 
-func (chain33Relayer *Chain33Relayer) UpdatePrivateKey(Passphrase, privateKey string) error {
+func (chain33Relayer *Relayer4Chain33) UpdatePrivateKey(Passphrase, privateKey string) error {
 
 	return nil
 }

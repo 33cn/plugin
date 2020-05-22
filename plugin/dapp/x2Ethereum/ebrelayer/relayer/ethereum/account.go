@@ -29,7 +29,7 @@ var (
 )
 
 type Key struct {
-	Id uuid.UUID // Version 4 "random" for unique id not derived from key data
+	ID uuid.UUID // Version 4 "random" for unique id not derived from key data
 	// to simplify lookups we also store the address
 	Address common.Address
 	// we only store privkey as pubkey/address can be derived from it
@@ -37,7 +37,7 @@ type Key struct {
 	PrivateKey *ecdsa.PrivateKey
 }
 
-func (ethRelayer *EthereumRelayer) NewAccount(passphrase string) (privateKeystr, addr string, err error) {
+func (ethRelayer *Relayer4Ethereum) NewAccount(passphrase string) (privateKeystr, addr string, err error) {
 	var privateKey *ecdsa.PrivateKey
 	privateKey, privateKeystr, addr, err = newKeyAndStore(ethRelayer.db, crand.Reader, passphrase)
 	if err != nil {
@@ -47,7 +47,7 @@ func (ethRelayer *EthereumRelayer) NewAccount(passphrase string) (privateKeystr,
 	return
 }
 
-func (ethRelayer *EthereumRelayer) GetAccount(passphrase string) (privateKey, addr string, err error) {
+func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil != err {
 		return "", "", err
@@ -62,7 +62,7 @@ func (ethRelayer *EthereumRelayer) GetAccount(passphrase string) (privateKey, ad
 	return
 }
 
-func (ethRelayer *EthereumRelayer) GetValidatorAddr() (validators x2ethTypes.ValidatorAddr4EthRelayer, err error) {
+func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.ValidatorAddr4EthRelayer, err error) {
 	var ethAccountAddr string
 	var chain33AccountAddr string
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
@@ -92,7 +92,7 @@ func (ethRelayer *EthereumRelayer) GetValidatorAddr() (validators x2ethTypes.Val
 	return
 }
 
-func (ethRelayer *EthereumRelayer) RestorePrivateKeys(passPhase string) (err error) {
+func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err error) {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil == err {
 		ethAccount := &x2ethTypes.Account4Relayer{}
@@ -135,7 +135,7 @@ func (ethRelayer *EthereumRelayer) RestorePrivateKeys(passPhase string) (err err
 	return nil
 }
 
-func (ethRelayer *EthereumRelayer) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
+func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
 	if nil != err {
 		relayerLog.Info("StoreAccountWithNewPassphase", "pls check account is created already, err", err)
@@ -152,7 +152,7 @@ func (ethRelayer *EthereumRelayer) StoreAccountWithNewPassphase(newPassphrase, o
 	return ethRelayer.db.SetSync(ethAccountKey, encodedInfo)
 }
 
-func (ethRelayer *EthereumRelayer) ImportChain33PrivateKey(passphrase, privateKeyStr string) error {
+func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateKeyStr string) error {
 	var driver secp256k1.Driver
 	privateKeySli, err := chain33Common.FromHex(privateKeyStr)
 	if nil != err {
@@ -181,7 +181,7 @@ func (ethRelayer *EthereumRelayer) ImportChain33PrivateKey(passphrase, privateKe
 	return ethRelayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
-func (ethRelayer *EthereumRelayer) ImportEthValidatorPrivateKey(passphrase, privateKeyStr string) error {
+func (ethRelayer *Relayer4Ethereum) ImportEthValidatorPrivateKey(passphrase, privateKeyStr string) error {
 	privateKeySli, err := chain33Common.FromHex(privateKeyStr)
 	if nil != err {
 		return err
@@ -285,7 +285,7 @@ func newKey(rand io.Reader) (*Key, error) {
 func newKeyFromECDSA(privateKeyECDSA *ecdsa.PrivateKey) *Key {
 	id := uuid.NewRandom()
 	key := &Key{
-		Id:         id,
+		ID:         id,
 		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
 		PrivateKey: privateKeyECDSA,
 	}

@@ -245,7 +245,7 @@ func TestBrigeTokenMint(t *testing.T) {
 
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_LOCK,
+		events.ClaimTypeLock,
 		chain33Sender,
 		ethReceiver,
 		logEvent.Token,
@@ -501,7 +501,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		ethAddr,
@@ -535,7 +535,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,
@@ -666,7 +666,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		ethAddr,
@@ -696,7 +696,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		ethAddr,
@@ -828,7 +828,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	require.Nil(t, err)
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,
@@ -852,7 +852,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	require.Nil(t, err)
 	_, err = x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
-		events.CLAIM_TYPE_BURN,
+		events.ClaimTypeBurn,
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,

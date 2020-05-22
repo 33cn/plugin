@@ -51,7 +51,7 @@ func importPrivatekey(cmd *cobra.Command, args []string) {
 	}
 
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ImportChain33RelayerPrivateKey", importKeyReq, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportChain33RelayerPrivateKey", importKeyReq, &res)
 	ctx.Run()
 }
 
@@ -67,7 +67,7 @@ func ShowValidatorAddrCmd() *cobra.Command {
 func showValidatorAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res string
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowChain33RelayerValidator", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowChain33RelayerValidator", nil, &res)
 	ctx.Run()
 }
 
@@ -84,7 +84,7 @@ func showChain33Relayer2EthTxs(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.Txhashes
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowChain33Relayer2EthTxs", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowChain33Relayer2EthTxs", nil, &res)
 	if _, err := ctx.RunResult(); nil != err {
 		errInfo := err.Error()
 		fmt.Println("errinfo:" + errInfo)
@@ -108,6 +108,6 @@ func showChain33RelayerStatus(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	var res ebTypes.RelayerRunStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.ShowChain33RelayerStatus", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowChain33RelayerStatus", nil, &res)
 	ctx.Run()
 }

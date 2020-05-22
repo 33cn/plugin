@@ -15,22 +15,22 @@ const (
 )
 
 func LoadABI(contractName string) abi.ABI {
-	var abiJson string
+	var abiJSON string
 	switch contractName {
 	case BridgeBankABI:
-		abiJson = generated.BridgeBankABI
+		abiJSON = generated.BridgeBankABI
 	case Chain33BankABI:
-		abiJson = generated.Chain33BankABI
+		abiJSON = generated.Chain33BankABI
 	case Chain33BridgeABI:
-		abiJson = generated.Chain33BridgeABI
+		abiJSON = generated.Chain33BridgeABI
 	case EthereumBankABI:
-		abiJson = generated.EthereumBankABI
+		abiJSON = generated.EthereumBankABI
 	default:
 		panic("No abi matched")
 	}
 
 	// Convert the raw abi into a usable format
-	contractABI, err := abi.JSON(strings.NewReader(abiJson))
+	contractABI, err := abi.JSON(strings.NewReader(abiJSON))
 	if err != nil {
 		panic(err)
 	}

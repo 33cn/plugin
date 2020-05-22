@@ -57,7 +57,7 @@ func setPwd(cmd *cobra.Command, args []string) {
 		NewPassphase: newPwd,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.SetPassphase", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetPassphase", params, &res)
 	ctx.Run()
 }
 
@@ -74,7 +74,7 @@ func LockCmd() *cobra.Command {
 func lock(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.Lock", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Lock", nil, &res)
 	ctx.Run()
 }
 
@@ -100,6 +100,6 @@ func unLock(cmd *cobra.Command, args []string) {
 
 	params := pwd
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "RelayerManager.Unlock", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Unlock", params, &res)
 	ctx.Run()
 }

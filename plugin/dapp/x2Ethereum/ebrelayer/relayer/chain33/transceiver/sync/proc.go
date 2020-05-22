@@ -21,7 +21,6 @@ var (
 	syncLastHeight   = []byte("syncLastHeight:")
 	txReceiptPrefix  = []byte("txReceiptPrefix:")
 	lastSequences    = []byte("lastSequences:")
-	lastSyncHeight   = []byte("lastSyncHeight:")
 	seqOperationType = []string{"SeqTypeAdd", "SeqTypeDel"}
 )
 
@@ -44,15 +43,15 @@ func pushTxReceipts(txReceipts *types.TxReceipts4Subscribe) error {
 	return err
 }
 
-type SyncTxReceipts struct {
+type TxReceipts struct {
 	db     dbm.DB
 	seqNum int64 //当前同步的序列号
 	height int64 //当前区块高度
 	quit   chan struct{}
 }
 
-func NewSyncTxReceipts(db dbm.DB) *SyncTxReceipts {
-	sync := &SyncTxReceipts{
+func NewSyncTxReceipts(db dbm.DB) *TxReceipts {
+	sync := &TxReceipts{
 		db: db,
 	}
 	sync.seqNum, _ = sync.loadBlockLastSequence()
@@ -64,7 +63,7 @@ func NewSyncTxReceipts(db dbm.DB) *SyncTxReceipts {
 }
 
 //此处添加一个高度为0的空块，只是为了查找下一个比较方便，并不需要使用其信息
-func (syncTx *SyncTxReceipts) initSyncReceiptDataBase() {
+func (syncTx *TxReceipts) initSyncReceiptDataBase() {
 	txblock0, _ := syncTx.GetTxReceipts(0)
 	if nil != txblock0 {
 		return
@@ -75,12 +74,12 @@ func (syncTx *SyncTxReceipts) initSyncReceiptDataBase() {
 	syncTx.setTxReceiptsPerBlock(txsPerBlock)
 }
 
-func (syncTx *SyncTxReceipts) Stop() {
+func (syncTx *TxReceipts) Stop() {
 	close(syncTx.quit)
 }
 
 // SaveAndSyncTxs2Relayer save block to db
-func (syncTx *SyncTxReceipts) SaveAndSyncTxs2Relayer() {
+func (syncTx *TxReceipts) SaveAndSyncTxs2Relayer() {
 	for {
 		select {
 		case txReceipts := <-txReceiptCh:
@@ -103,7 +102,7 @@ func (syncTx *SyncTxReceipts) SaveAndSyncTxs2Relayer() {
 // 所以不需要恢复过程， 读出高度即可
 
 // 处理输入流程
-func (syncTx *SyncTxReceipts) dealTxReceipts(txReceipts *types.TxReceipts4Subscribe) {
+func (syncTx *TxReceipts) dealTxReceipts(txReceipts *types.TxReceipts4Subscribe) {
 	count, start, txReceiptsParsed, err := parseTxReceipts(txReceipts)
 	if err != nil {
 		resultCh <- err
@@ -136,35 +135,34 @@ func (syncTx *SyncTxReceipts) dealTxReceipts(txReceipts *types.TxReceipts4Subscr
 	//发送回复，确认接收成功
 	resultCh <- nil
 	log.Debug("dealTxReceipts", "seqStart", start, "count", count, "maxBlockHeight", height)
-	return
 }
 
-func (syncTx *SyncTxReceipts) loadBlockLastSequence() (int64, error) {
+func (syncTx *TxReceipts) loadBlockLastSequence() (int64, error) {
 	return utils.LoadInt64FromDB(lastSequences, syncTx.db)
 }
 
-func (syncTx *SyncTxReceipts) LoadLastBlockHeight() (int64, error) {
+func (syncTx *TxReceipts) LoadLastBlockHeight() (int64, error) {
 	return utils.LoadInt64FromDB(syncLastHeight, syncTx.db)
 }
 
-func (syncTx *SyncTxReceipts) setBlockLastSequence(newSequence int64) {
+func (syncTx *TxReceipts) setBlockLastSequence(newSequence int64) {
 	Sequencebytes := types.Encode(&types.Int64{Data: newSequence})
 	syncTx.db.Set(lastSequences, Sequencebytes)
 	//同时更新内存中的seq
 	syncTx.updateSequence(newSequence)
 }
 
-func (syncTx *SyncTxReceipts) setBlockHeight(height int64) {
+func (syncTx *TxReceipts) setBlockHeight(height int64) {
 	bytes := types.Encode(&types.Int64{Data: height})
 	syncTx.db.Set(syncLastHeight, bytes)
 	atomic.StoreInt64(&syncTx.height, height)
 }
 
-func (syncTx *SyncTxReceipts) updateSequence(newSequence int64) {
+func (syncTx *TxReceipts) updateSequence(newSequence int64) {
 	atomic.StoreInt64(&syncTx.seqNum, newSequence)
 }
 
-func (syncTx *SyncTxReceipts) setTxReceiptsPerBlock(txReceipts *types.TxReceipts4SubscribePerBlk) {
+func (syncTx *TxReceipts) setTxReceiptsPerBlock(txReceipts *types.TxReceipts4SubscribePerBlk) {
 	key := txReceiptsKey4Height(txReceipts.Height)
 	value := types.Encode(txReceipts)
 	if err := syncTx.db.Set(key, value); nil != err {
@@ -172,7 +170,7 @@ func (syncTx *SyncTxReceipts) setTxReceiptsPerBlock(txReceipts *types.TxReceipts
 	}
 }
 
-func (syncTx *SyncTxReceipts) GetTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
+func (syncTx *TxReceipts) GetTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
 	key := txReceiptsKey4Height(height)
 	value, err := syncTx.db.Get(key)
 	if err != nil {
@@ -186,7 +184,7 @@ func (syncTx *SyncTxReceipts) GetTxReceipts(height int64) (*types.TxReceipts4Sub
 	return detail, nil
 }
 
-func (syncTx *SyncTxReceipts) GetNextValidTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
+func (syncTx *TxReceipts) GetNextValidTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
 	key := txReceiptsKey4Height(height)
 	helper := dbm.NewListHelper(syncTx.db)
 	TxReceipts := helper.List(txReceiptPrefix, key, 1, dbm.ListASC)
@@ -201,7 +199,7 @@ func (syncTx *SyncTxReceipts) GetNextValidTxReceipts(height int64) (*types.TxRec
 	return detail, nil
 }
 
-func (syncTx *SyncTxReceipts) delTxReceipts(height int64) {
+func (syncTx *TxReceipts) delTxReceipts(height int64) {
 	key := txReceiptsKey4Height(height)
 	_ = syncTx.db.Set(key, nil)
 }

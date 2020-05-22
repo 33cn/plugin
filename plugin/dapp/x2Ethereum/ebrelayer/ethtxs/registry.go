@@ -32,8 +32,8 @@ func (d ContractRegistry) String() string {
 }
 
 // GetAddressFromBridgeRegistry : utility method which queries the requested contract address from the BridgeRegistry
-func GetAddressFromBridgeRegistry(client *ethclient.Client, sender, registry common.Address, target ContractRegistry) (address *common.Address, err error) {
-	header, err := client.HeaderByNumber(context.Background(), nil)
+func GetAddressFromBridgeRegistry(backend bind.ContractBackend, sender, registry common.Address, target ContractRegistry) (address *common.Address, err error) {
+	header, err := backend.(*ethclient.Client).HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		txslog.Error("GetAddressFromBridgeRegistry", "Failed to get HeaderByNumber due to:", err.Error())
 		return nil, err
@@ -48,7 +48,7 @@ func GetAddressFromBridgeRegistry(client *ethclient.Client, sender, registry com
 	}
 
 	// Initialize BridgeRegistry instance
-	registryInstance, err := bridgeRegistry.NewBridgeRegistry(registry, client)
+	registryInstance, err := bridgeRegistry.NewBridgeRegistry(registry, backend)
 	if err != nil {
 		txslog.Error("GetAddressFromBridgeRegistry", "Failed to NewBridgeRegistry to:", err.Error())
 		return nil, err

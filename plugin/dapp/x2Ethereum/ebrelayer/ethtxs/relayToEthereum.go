@@ -3,12 +3,13 @@ package ethtxs
 import (
 	"crypto/ecdsa"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/events"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 var (
@@ -22,10 +23,10 @@ const (
 )
 
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
-func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client *ethclient.Client, sender common.Address, event events.Event, claim ProphecyClaim, privateKey *ecdsa.PrivateKey, chain33TxHash []byte) (txhash string, err error) {
+func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, backend bind.ContractBackend, sender common.Address, event events.Event, claim ProphecyClaim, privateKey *ecdsa.PrivateKey, chain33TxHash []byte) (txhash string, err error) {
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "event", event, "chain33Sender", common.ToHex(claim.Chain33Sender), "ethereumReceiver", claim.EthereumReceiver.String(), "TokenAddress", claim.TokenContractAddress.String(), "symbol", claim.Symbol, "Amount", claim.Amount.String(), "claimType", claim.ClaimType.String())
 
-	auth, err := PrepareAuth(client, privateKey, sender)
+	auth, err := PrepareAuth(backend, privateKey, sender)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 		return "", err

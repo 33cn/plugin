@@ -26,8 +26,6 @@ var (
 
 	ethTxEventPrefix               = []byte("ethTxEventPrefix")
 	lastBridgeBankHeightProcPrefix = []byte("lastBridgeBankHeight")
-
-	bridgeBankTxProCnt = []byte("bridgeBankTxProCnt")
 )
 
 func ethTxEventKey4Height(height uint64, index uint32) []byte {
@@ -42,11 +40,11 @@ func calcRelay2EthTxhash(txindex int64) []byte {
 	return []byte(fmt.Sprintf("%s-%012d", chain33ToEthTxHashPrefix, txindex))
 }
 
-func (ethRelayer *EthereumRelayer) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
+func (ethRelayer *Relayer4Ethereum) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
 	return ethRelayer.db.Set(bridgeRegistryAddrPrefix, []byte(bridgeRegistryAddr))
 }
 
-func (ethRelayer *EthereumRelayer) getBridgeRegistryAddr() (string, error) {
+func (ethRelayer *Relayer4Ethereum) getBridgeRegistryAddr() (string, error) {
 	addr, err := ethRelayer.db.Get(bridgeRegistryAddrPrefix)
 	if nil != err {
 		return "", err
@@ -54,7 +52,7 @@ func (ethRelayer *EthereumRelayer) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (ethRelayer *EthereumRelayer) updateTotalTxAmount2chain33(total int64) error {
+func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2chain33(total int64) error {
 	totalTx := &chain33Types.Int64{
 		Data: atomic.LoadInt64(&ethRelayer.totalTx4Eth2Chain33),
 	}
@@ -62,12 +60,12 @@ func (ethRelayer *EthereumRelayer) updateTotalTxAmount2chain33(total int64) erro
 	return ethRelayer.db.Set(eth2chain33TxTotalAmount, chain33Types.Encode(totalTx))
 }
 
-func (ethRelayer *EthereumRelayer) setLastestRelay2Chain33Txhash(txhash string, txIndex int64) error {
+func (ethRelayer *Relayer4Ethereum) setLastestRelay2Chain33Txhash(txhash string, txIndex int64) error {
 	key := calcRelay2Chain33Txhash(txIndex)
 	return ethRelayer.db.Set(key, []byte(txhash))
 }
 
-func (ethRelayer *EthereumRelayer) updateTotalTxAmount2Eth(total int64) error {
+func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2Eth(total int64) error {
 	totalTx := &chain33Types.Int64{
 		Data: atomic.LoadInt64(&ethRelayer.totalTx4Chain33ToEth),
 	}
@@ -75,39 +73,39 @@ func (ethRelayer *EthereumRelayer) updateTotalTxAmount2Eth(total int64) error {
 	return ethRelayer.db.Set(chain33ToEthTxTotalAmount, chain33Types.Encode(totalTx))
 }
 
-func (ethRelayer *EthereumRelayer) setLastestRelay2EthTxhash(txhash string, txIndex int64) error {
+func (ethRelayer *Relayer4Ethereum) setLastestRelay2EthTxhash(txhash string, txIndex int64) error {
 	key := calcRelay2EthTxhash(txIndex)
 	return ethRelayer.db.Set(key, []byte(txhash))
 }
 
-func (ethRelayer *EthereumRelayer) queryTxhashes(prefix []byte) []string {
+func (ethRelayer *Relayer4Ethereum) queryTxhashes(prefix []byte) []string {
 	return utils.QueryTxhashes(prefix, ethRelayer.db)
 }
 
-func (ethRelayer *EthereumRelayer) setHeight4chain33BridgeLogAt(height uint64) error {
+func (ethRelayer *Relayer4Ethereum) setHeight4chain33BridgeLogAt(height uint64) error {
 	return ethRelayer.setLogProcHeight(chain33BridgeLogProcessedAt, height)
 }
 
-func (ethRelayer *EthereumRelayer) getHeight4chain33BridgeLogAt() uint64 {
+func (ethRelayer *Relayer4Ethereum) getHeight4chain33BridgeLogAt() uint64 {
 	return ethRelayer.getLogProcHeight(chain33BridgeLogProcessedAt)
 }
 
-func (ethRelayer *EthereumRelayer) setHeight4BridgeBankLogAt(height uint64) error {
+func (ethRelayer *Relayer4Ethereum) setHeight4BridgeBankLogAt(height uint64) error {
 	return ethRelayer.setLogProcHeight(bridgeBankLogProcessedAt, height)
 }
 
-func (ethRelayer *EthereumRelayer) getHeight4BridgeBankLogAt() uint64 {
+func (ethRelayer *Relayer4Ethereum) getHeight4BridgeBankLogAt() uint64 {
 	return ethRelayer.getLogProcHeight(bridgeBankLogProcessedAt)
 }
 
-func (ethRelayer *EthereumRelayer) setLogProcHeight(key []byte, height uint64) error {
+func (ethRelayer *Relayer4Ethereum) setLogProcHeight(key []byte, height uint64) error {
 	data := &ebTypes.Uint64{
 		Data: height,
 	}
 	return ethRelayer.db.Set(key, chain33Types.Encode(data))
 }
 
-func (ethRelayer *EthereumRelayer) getLogProcHeight(key []byte) uint64 {
+func (ethRelayer *Relayer4Ethereum) getLogProcHeight(key []byte) uint64 {
 	value, err := ethRelayer.db.Get(key)
 	if nil != err {
 		return 0
@@ -121,20 +119,17 @@ func (ethRelayer *EthereumRelayer) getLogProcHeight(key []byte) uint64 {
 }
 
 //保存处理过的交易
-func (ethRelayer *EthereumRelayer) setTxProcessed(txhash []byte) error {
+func (ethRelayer *Relayer4Ethereum) setTxProcessed(txhash []byte) error {
 	return ethRelayer.db.Set(txhash, []byte("1"))
 }
 
 //判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
-func (ethRelayer *EthereumRelayer) checkTxProcessed(txhash []byte) bool {
+func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash []byte) bool {
 	_, err := ethRelayer.db.Get(txhash)
-	if nil != err {
-		return false
-	}
-	return true
+	return nil == err
 }
 
-func (ethRelayer *EthereumRelayer) setEthTxEvent(vLog types.Log) error {
+func (ethRelayer *Relayer4Ethereum) setEthTxEvent(vLog types.Log) error {
 	key := ethTxEventKey4Height(vLog.BlockNumber, uint32(vLog.TxIndex))
 	value, err := json.Marshal(vLog)
 	if nil != err {
@@ -143,7 +138,7 @@ func (ethRelayer *EthereumRelayer) setEthTxEvent(vLog types.Log) error {
 	return ethRelayer.db.Set(key, value)
 }
 
-func (ethRelayer *EthereumRelayer) getEthTxEvent(blockNumber uint64, txIndex uint32) (*types.Log, error) {
+func (ethRelayer *Relayer4Ethereum) getEthTxEvent(blockNumber uint64, txIndex uint32) (*types.Log, error) {
 	key := ethTxEventKey4Height(blockNumber, txIndex)
 	data, err := ethRelayer.db.Get(key)
 	if nil != err {
@@ -157,7 +152,7 @@ func (ethRelayer *EthereumRelayer) getEthTxEvent(blockNumber uint64, txIndex uin
 	return &log, nil
 }
 
-func (ethRelayer *EthereumRelayer) getNextValidEthTxEventLogs(height uint64, index uint32, fetchCnt int32) ([]*types.Log, error) {
+func (ethRelayer *Relayer4Ethereum) getNextValidEthTxEventLogs(height uint64, index uint32, fetchCnt int32) ([]*types.Log, error) {
 	key := ethTxEventKey4Height(height, index)
 	helper := dbm.NewListHelper(ethRelayer.db)
 	datas := helper.List(ethTxEventPrefix, key, fetchCnt, dbm.ListASC)
@@ -177,14 +172,14 @@ func (ethRelayer *EthereumRelayer) getNextValidEthTxEventLogs(height uint64, ind
 	return logs, nil
 }
 
-func (ethRelayer *EthereumRelayer) setBridgeBankProcessedHeight(height uint64, index uint32) {
+func (ethRelayer *Relayer4Ethereum) setBridgeBankProcessedHeight(height uint64, index uint32) {
 	bytes := chain33Types.Encode(&ebTypes.EventLogIndex{
 		Height: height,
 		Index:  index})
 	_ = ethRelayer.db.Set(lastBridgeBankHeightProcPrefix, bytes)
 }
 
-func (ethRelayer *EthereumRelayer) getLastBridgeBankProcessedHeight() ebTypes.EventLogIndex {
+func (ethRelayer *Relayer4Ethereum) getLastBridgeBankProcessedHeight() ebTypes.EventLogIndex {
 	data, err := ethRelayer.db.Get(lastBridgeBankHeightProcPrefix)
 	if nil != err {
 		return ebTypes.EventLogIndex{}
@@ -195,7 +190,7 @@ func (ethRelayer *EthereumRelayer) getLastBridgeBankProcessedHeight() ebTypes.Ev
 }
 
 //构建一个引导查询使用的bridgeBankTx
-func (ethRelayer *EthereumRelayer) initBridgeBankTx() {
+func (ethRelayer *Relayer4Ethereum) initBridgeBankTx() {
 	log, _ := ethRelayer.getEthTxEvent(0, 0)
 	if nil != log {
 		return

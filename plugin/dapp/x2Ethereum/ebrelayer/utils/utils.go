@@ -84,7 +84,7 @@ func LoadInt64FromDB(key []byte, db dbm.DB) (int64, error) {
 
 func QueryTxhashes(prefix []byte, db dbm.DB) []string {
 	kvdb := dbm.NewKVDB(db)
-	hashes, err := kvdb.List([]byte(prefix), nil, 10, 1)
+	hashes, err := kvdb.List(prefix, nil, 10, 1)
 	if nil != err {
 		return nil
 	}

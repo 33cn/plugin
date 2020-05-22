@@ -20,7 +20,7 @@ import (
 
 // RelayLockToChain33 : RelayLockToChain33 applies validator's signature to an EthBridgeClaim message
 //		containing information about an event on the Ethereum blockchain before relaying to the Bridge
-func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, rpcUrl string) (string, error) {
+func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, rpcURL string) (string, error) {
 	var res string
 
 	params := &types.Eth2Chain33{
@@ -41,7 +41,7 @@ func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 		ActionName: types.NameEth2Chain33Action,
 		Payload:    chain33Types.MustPBToJSON(params),
 	}
-	ctx := jsonclient.NewRPCCtx(rpcUrl, "Chain33.CreateTransaction", pm, &res)
+	ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.CreateTransaction", pm, &res)
 	_, _ = ctx.RunResult()
 
 	data, err := common.FromHex(res)
@@ -71,12 +71,12 @@ func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	}
 	var txhash string
 
-	ctx = jsonclient.NewRPCCtx(rpcUrl, "Chain33.SendTransaction", pms, &txhash)
+	ctx = jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", pms, &txhash)
 	_, err = ctx.RunResult()
 	return txhash, err
 }
 
-func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, rpcUrl string) (string, error) {
+func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, rpcURL string) (string, error) {
 	var res string
 
 	params := &types.Eth2Chain33{
@@ -97,7 +97,7 @@ func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 		ActionName: types.NameWithdrawEthAction,
 		Payload:    chain33Types.MustPBToJSON(params),
 	}
-	ctx := jsonclient.NewRPCCtx(rpcUrl, "Chain33.CreateTransaction", pm, &res)
+	ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.CreateTransaction", pm, &res)
 	_, _ = ctx.RunResult()
 
 	data, err := common.FromHex(res)
@@ -127,7 +127,7 @@ func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	}
 	var txhash string
 
-	ctx = jsonclient.NewRPCCtx(rpcUrl, "Chain33.SendTransaction", pms, &txhash)
+	ctx = jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", pms, &txhash)
 	_, err = ctx.RunResult()
 	return txhash, err
 }
