@@ -18,7 +18,7 @@ Chain33Cli=""
 Chain33Cli="docker exec ${NODE3} /root/chain33-cli"
 
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-chain33SenderAddrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
+#chain33SenderAddrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 
 # validatorsAddr=["0x92c8b16afd6d423652559c6e266cbe1c29bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 ethValidatorAddrKeyA="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
@@ -83,7 +83,7 @@ function EthImportKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 重启 ebrelayer 并解锁
     for name in A B C D; do
-        start_ebrelayer "./"$name"/ebrelayer" "./"$name"/ebrelayer.log"
+        start_ebrelayer "./$name/ebrelayer" "./$name/ebrelayer.log"
 
         # 导入测试地址私钥
         CLI="./ebcli_$name"
@@ -150,7 +150,7 @@ function StartRelayerAndDeploy() {
 
     kill_ebrelayer "./A/ebrelayer"
     # 修改 relayer.toml 配置文件
-    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "./A/relayer.toml"
+    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./A/relayer.toml"
     updata_all_relayer_toml2
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -185,7 +185,7 @@ function InitChain33Vilators() {
 
     # query Validators
     totalPower=$(${Chain33Cli} send x2ethereum query totalpower -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq .totalPower | sed 's/\"//g')
-    check_number 100 ${totalPower}
+    check_number 100 "${totalPower}"
 
     # cions 转帐到 x2ethereum 合约地址
     hash=$(${Chain33Cli} send coins send_exec -e x2ethereum -a 200 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
@@ -228,7 +228,7 @@ function TestChain33ToEthAssets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q "${tokenAddrBty}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -297,7 +297,7 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
-    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.1" | bc)
+    cli_ret "${result}" "balance" ".balance" "$(echo "${balance}+0.1" | bc)"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -341,7 +341,7 @@ function TestETH2Chain33Erc20() {
     balance_ret "${result}" "100"
 
     # chain33 burn 100
-    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33Validator1}")
+    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33Validator1}")
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -375,7 +375,7 @@ function TestChain33ToEthAssetsKill() {
     kill_ebrelayerD
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr2} -q ${tokenAddrBty} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr2} -q "${tokenAddrBty}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -466,7 +466,7 @@ function TestETH2Chain33AssetsKill() {
     start_ebrelayerD
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
-    cli_ret "${result}" "balance" ".balance" $(echo "${balance}+0.1" | bc)
+    cli_ret "${result}" "balance" ".balance" "$(echo "${balance}+0.1" | bc)"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -522,7 +522,7 @@ function TestETH2Chain33Erc20Kill() {
     kill_ebrelayerD
 
     # chain33 burn 100
-    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33Validator1}")
+    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33Validator1}")
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 

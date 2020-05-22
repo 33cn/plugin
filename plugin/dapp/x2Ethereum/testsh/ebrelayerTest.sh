@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 set -x
 
 # 只启动 eth 这一端的测试
@@ -20,7 +22,7 @@ prophecyTx0="0x772260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
 
 # 初始化部署合约
 InitAndDeploy() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 创建文件夹及拷贝
     rm -rf '../build/A' '../build/B' '../build/C' '../build/D'
     mkdir '../build/A' '../build/B' '../build/C' '../build/D'
@@ -36,47 +38,47 @@ InitAndDeploy() {
 
     result=$(${CLIA} relayer ethereum deploy)
     cli_ret "${result}" "deploy"
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # 初始化 B C D 文件夹下的文容
 function InitConfigFile() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 获取 BridgeRegistry 地址
     result=$(${CLIA} relayer ethereum bridgeRegistry)
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
 
     port=9901
     for name in B C D; do
-        file="../build/"$name"/relayer.toml"
+        file="../build/$name/relayer.toml"
         cp '../build/relayer.toml' "${file}"
-        cp '../build/ebrelayer' "../build/"$name"/ebrelayer"
+        cp '../build/ebrelayer' "../build/$name/ebrelayer"
 
         # 删除配置文件中不需要的字段
-        for deleteName in "BridgeRegistry" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "\[deploy\]"; do
+        for deleteName in "BridgeRegistry" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
             delete_line "${file}" "${deleteName}"
         done
 
         # 在第 5 行后面 新增合约地址
-        sed -i '5 a BridgeRegistry="'${BridgeRegistry}'"' "${file}"
+        sed -i '5 a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
 
         # 替换端口
         port=$((port + 1))
         sed -i 's/localhost:9901/localhost:'${port}'/g' "${file}"
     done
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # 启动 B C D 的 ebrelayer 服务,导入私钥
 function ImportCBDKey() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     local ethValidatorAddrKeyA="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
     local ethValidatorAddrKeyB="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
     local ethValidatorAddrKeyC="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
     local ethValidatorAddrKeyD="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 
     for name in B C D; do
-        start_ebrelayer "./../build/"$name"/ebrelayer" "./../build/"$name"/ebrelayer.log"
+        start_ebrelayer "./../build/$name/ebrelayer" "./../build/$name/ebrelayer.log"
 
         # 导入测试地址私钥
         CLI="../build/ebcli_$name"
@@ -105,12 +107,12 @@ function ImportCBDKey() {
 
     result=$(${CLID} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKeyD}")
     cli_ret "${result}" "import_ethprivatekeyD"
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # chain33 到 eth,chian33 lock 100,必须 A B C D 中有三个都lock,才能成功
 TestChain33ToEth() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # token4chain33 在 以太坊 上先有 bty
     result=$(${CLIA} relayer ethereum token4chain33 -s coins.bty)
     tokenAddr=$(cli_ret "${result}" "token4chain33" ".addr")
@@ -147,7 +149,7 @@ TestChain33ToEth() {
     result=$(${CLIA} relayer ethereum burn -m 90 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret "${result}" "burn"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 main() {

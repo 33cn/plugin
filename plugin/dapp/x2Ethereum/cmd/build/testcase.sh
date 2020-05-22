@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
+
 source "./allRelayerTest.sh"
 source "./perf_test.sh"
 

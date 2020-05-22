@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128
+# shellcheck source=/dev/null
 set -x
 # 只启动 eth 这一端的测试
 # 只启动一个 relayer 第一个地址权重设置超过2/3
@@ -31,7 +33,7 @@ prophecyTx5="0x662260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
 prophecyTx6="0x772260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
 
 InitAndDeploy() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
     cli_ret "${result}" "set_pwd"
@@ -48,14 +50,14 @@ InitAndDeploy() {
     result=$(${CLI} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKey}")
     cli_ret "${result}" "import_ethprivatekey"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # eth to chain33
 # 在以太坊上锁定资产,然后在 chain33 上铸币,针对 erc20 资产
 # 以太坊 brun 资产,balance 对比是否正确
 TestETH2Chain33Erc20() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     ${CLI} relayer unlock -p 123456hzj
     # token4erc20 在 chain33 上先有 token,同时 mint
@@ -116,11 +118,11 @@ TestETH2Chain33Erc20() {
     result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 TestETH2Chain33Erc20_err() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     ${CLI} relayer unlock -p 123456hzj
     # token4erc20 在 chain33 上先有 token,同时 mint
@@ -187,13 +189,13 @@ TestETH2Chain33Erc20_err() {
     result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenSymbol}")
     cli_ret "${result}" "balance" ".balance" "300"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # eth to chain33
 # 在以太坊上锁定资产,然后在 chain33 上铸币,针对 eth 资产
 TestETH2Chain33Assets() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     ${CLI} relayer unlock -p 123456hzj
 
     result=$(${CLI} relayer ethereum bridgeBankAddr)
@@ -273,14 +275,14 @@ TestETH2Chain33Assets() {
     result=$(${CLI} relayer ethereum balance -o "${bridgeBankAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # chain33 to eth
 # 在 chain33 上锁定资产,然后在以太坊上铸币
 # chain33 brun 资产,balance 对比是否正确
 TestChain33ToEthAssets() {
-    echo "=========== $FUNCNAME begin ==========="
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     result=$(${CLI} relayer unlock -p 123456hzj)
     # token4chain33 在 以太坊 上先有 bty
     result=$(${CLI} relayer ethereum token4chain33 -s coins.bty)
@@ -334,7 +336,7 @@ TestChain33ToEthAssets() {
     result=$(${CLI} relayer ethereum burn -m 10 -k "${ethReceiverAddrKey1}" -r "${chain33SenderAddr}" -t "${tokenAddr}")
     cli_ret_err "${result}"
 
-    echo "=========== $FUNCNAME end ==========="
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 main() {

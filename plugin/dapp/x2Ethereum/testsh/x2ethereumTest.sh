@@ -23,14 +23,14 @@ ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
 ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
 ethReceiverAddr2="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
 ethReceiverAddrKey2="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
-ethReceiverAddr3="0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e"
-ethReceiverAddrKey3="62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
+#ethReceiverAddr3="0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e"
+#ethReceiverAddrKey3="62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
 
 chain33Validator1="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 chain33Validator2="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" #0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
 chain33Validator3="1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
-BtyReceiever="1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
-ETHContractAddr="0x0000000000000000000000000000000000000000"
+#BtyReceiever="1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
+#ETHContractAddr="0x0000000000000000000000000000000000000000"
 maturityDegree=10
 
 function InitAndDeploy() {
@@ -89,7 +89,7 @@ function StartRelayerAndDeploy() {
 
     kill_ebrelayer "../build/ebrelayer"
     # 修改 relayer.toml 配置文件
-    updata_relayer_toml ${BridgeRegistry} ${maturityDegree} "../build/relayer.toml"
+    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "../build/relayer.toml"
 
     # 重启 ebrelayer 并解锁
     start_ebrelayer "../build/ebrelayer" "../build/ebrelayer.log"
@@ -130,10 +130,10 @@ function InitChain33Vilators() {
 
     # query Validators
     totalPower=$(${Chain33Cli} send x2ethereum query validators -v ${chain33Validator1} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq .totalPower | sed 's/\"//g')
-    check_number 87 ${totalPower}
+    check_number 87 "${totalPower}"
 
     totalPower=$(${Chain33Cli} send x2ethereum query totalpower -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq .totalPower | sed 's/\"//g')
-    check_number 100 ${totalPower}
+    check_number 100 "${totalPower}"
 
     # cions 转帐到 x2ethereum 合约地址
     hash=$(${Chain33Cli} send coins send_exec -e x2ethereum -a 200 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
@@ -161,7 +161,7 @@ function TestChain33ToEthAssets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q ${tokenAddr} -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr1} -q "${tokenAddr}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -323,7 +323,7 @@ function TestETH2Chain33Erc20() {
     balance_ret "${result}" "100"
 
     # chain33 burn 40
-    hash=$(${Chain33Cli} send x2ethereum burn -a 40 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33SenderAddr}")
+    hash=$(${Chain33Cli} send x2ethereum burn -a 40 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33SenderAddr}")
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -339,7 +339,7 @@ function TestETH2Chain33Erc20() {
     cli_ret "${result}" "balance" ".balance" "60"
 
     # burn 60
-    hash=$(${Chain33Cli} send x2ethereum burn -a 60 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q ${tokenAddr} -k "${chain33SenderAddr}")
+    hash=$(${Chain33Cli} send x2ethereum burn -a 60 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33SenderAddr}")
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
