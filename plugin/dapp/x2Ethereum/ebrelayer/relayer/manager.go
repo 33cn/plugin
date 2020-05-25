@@ -66,6 +66,49 @@ func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayer *ethe
 func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
+
+	// 第一次设置密码的时候才使用 后面用 ChangePasswd
+	if EncryptEnable == manager.encryptFlag {
+		return errors.New("passphase alreade exists")
+	}
+
+	// 密码合法性校验
+	if !utils.IsValidPassWord(setPasswdReq.Passphase) {
+		return chain33Types.ErrInvalidPassWord
+	}
+
+	//使用密码生成passwdhash用于下次密码的验证
+	newBatch := manager.store.NewBatch(true)
+	err := manager.store.SetPasswordHash(setPasswdReq.Passphase, newBatch)
+	if err != nil {
+		mlog.Error("SetPassphase", "SetPasswordHash err", err)
+		return err
+	}
+	//设置钱包加密标志位
+	err = manager.store.SetEncryptionFlag(newBatch)
+	if err != nil {
+		mlog.Error("SetPassphase", "SetEncryptionFlag err", err)
+		return err
+	}
+
+	err = newBatch.Write()
+	if err != nil {
+		mlog.Error("ProcWalletSetPasswd newBatch.Write", "err", err)
+		return err
+	}
+	manager.passphase = setPasswdReq.Passphase
+	atomic.StoreInt64(&manager.encryptFlag, EncryptEnable)
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Succeed to set passphase",
+	}
+	return nil
+}
+
+func (manager *Manager) ChangePassphase(setPasswdReq relayerTypes.ReqChangePasswd, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
 	// 新密码合法性校验
 	if !utils.IsValidPassWord(setPasswdReq.NewPassphase) {
 		return chain33Types.ErrInvalidPassWord
@@ -79,17 +122,17 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 		atomic.CompareAndSwapInt32(&manager.isLocked, Unlocked, tempislock)
 	}()
 
-	// 钱包已经加密需要验证oldpass的正确性
+	// 钱包已经加密需要验证oldpass的正确性 ??? 什么时候会进入到这个里
 	if len(manager.passphase) == 0 && manager.encryptFlag == 1 {
 		isok := manager.store.VerifyPasswordHash(setPasswdReq.OldPassphase)
 		if !isok {
-			mlog.Error("SetPassphase Verify Oldpasswd fail!")
+			mlog.Error("ChangePassphase Verify Oldpasswd fail!")
 			return chain33Types.ErrVerifyOldpasswdFail
 		}
 	}
 
 	if len(manager.passphase) != 0 && setPasswdReq.OldPassphase != manager.passphase {
-		mlog.Error("SetPassphase Oldpass err!")
+		mlog.Error("ChangePassphase Oldpass err!")
 		return chain33Types.ErrVerifyOldpasswdFail
 	}
 
@@ -97,25 +140,25 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 	newBatch := manager.store.NewBatch(true)
 	err := manager.store.SetPasswordHash(setPasswdReq.NewPassphase, newBatch)
 	if err != nil {
-		mlog.Error("SetPassphase", "SetPasswordHash err", err)
+		mlog.Error("ChangePassphase", "SetPasswordHash err", err)
 		return err
 	}
 	//设置钱包加密标志位
 	err = manager.store.SetEncryptionFlag(newBatch)
 	if err != nil {
-		mlog.Error("SetPassphase", "SetEncryptionFlag err", err)
+		mlog.Error("ChangePassphase", "SetEncryptionFlag err", err)
 		return err
 	}
 
 	err = manager.ethRelayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
 	if err != nil {
-		mlog.Error("SetPassphase", "StoreAccountWithNewPassphase err", err)
+		mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
 		return err
 	}
 
 	err = manager.chain33Relayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
 	if err != nil {
-		mlog.Error("SetPassphase", "StoreAccountWithNewPassphase err", err)
+		mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
 		return err
 	}
 
@@ -129,7 +172,7 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 
 	*result = rpctypes.Reply{
 		IsOk: true,
-		Msg:  "Succeed to set passphase",
+		Msg:  "Succeed to change passphase",
 	}
 	return nil
 }

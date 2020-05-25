@@ -19,9 +19,13 @@ message Txhashes {
     repeated string txhash = 1;
 }
 
-message ReqSetPasswd {
+message ReqChangePasswd {
     string oldPassphase = 1;
     string newPassphase = 2;
+}
+
+message ReqSetPasswd {
+    string Passphase = 1;
 }
 
 message Account4Show {

@@ -75,7 +75,7 @@ func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphras
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
 		relayerLog.Info("StoreAccountWithNewPassphase", "pls check account is created already, err", err)
-		return nil
+		return err
 	}
 	ethAccount := &x2ethTypes.Account4Relayer{}
 	if err := chain33Types.Decode(accountInfo, ethAccount); nil != err {

@@ -30,7 +30,7 @@ InitAndDeploy() {
     cp '../build/ebrelayer' '../build/A/ebrelayer'
     start_ebrelayer "./../build/A/ebrelayer" "./../build/A/ebrelayer.log"
 
-    result=$(${CLIA} relayer set_pwd -n 123456hzj -o kk)
+    result=$(${CLIA} relayer set_pwd -p 123456hzj)
     cli_ret "${result}" "set_pwd"
 
     result=$(${CLIA} relayer unlock -p 123456hzj)
@@ -83,7 +83,7 @@ function ImportCBDKey() {
         # 导入测试地址私钥
         CLI="../build/ebcli_$name"
 
-        result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
+        result=$(${CLI} relayer set_pwd -p 123456hzj)
         cli_ret "${result}" "set_pwd"
 
         result=$(${CLI} relayer unlock -p 123456hzj)

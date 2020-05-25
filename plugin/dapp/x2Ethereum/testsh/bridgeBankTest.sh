@@ -35,7 +35,7 @@ prophecyTx6="0x772260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
 InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
+    result=$(${CLI} relayer set_pwd -p 123456hzj)
     cli_ret "${result}" "set_pwd"
 
     result=$(${CLI} relayer unlock -p 123456hzj)

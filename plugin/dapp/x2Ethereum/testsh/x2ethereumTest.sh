@@ -35,7 +35,7 @@ maturityDegree=10
 
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
+    result=$(${CLI} relayer set_pwd -p 123456hzj)
     cli_ret "${result}" "set_pwd"
 
     result=$(${CLI} relayer unlock -p 123456hzj)
@@ -49,7 +49,7 @@ function InitAndDeploy() {
 
 function EthImportKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
+    result=$(${CLI} relayer set_pwd -p 123456hzj)
 
     result=$(${CLI} relayer unlock -p 123456hzj)
 
@@ -94,7 +94,7 @@ function StartRelayerAndDeploy() {
     # 重启 ebrelayer 并解锁
     start_ebrelayer "../build/ebrelayer" "../build/ebrelayer.log"
 
-    ${CLI} relayer set_pwd -n 123456hzj -o kk
+    ${CLI} relayer set_pwd -p 123456hzj
     ${CLI} relayer unlock -p 123456hzj
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

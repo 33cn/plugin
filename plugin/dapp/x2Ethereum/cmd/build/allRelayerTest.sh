@@ -67,7 +67,7 @@ function start_ebrelayerD() {
 
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLIA} relayer set_pwd -n 123456hzj -o kk)
+    result=$(${CLIA} relayer set_pwd -p 123456hzj)
     cli_ret "${result}" "set_pwd"
 
     result=$(${CLIA} relayer unlock -p 123456hzj)
@@ -88,7 +88,7 @@ function EthImportKey() {
         # 导入测试地址私钥
         CLI="./ebcli_$name"
 
-        result=$(${CLI} relayer set_pwd -n 123456hzj -o kk)
+        result=$(${CLI} relayer set_pwd -p 123456hzj)
 
         result=$(${CLI} relayer unlock -p 123456hzj)
         cli_ret "${result}" "unlock"
