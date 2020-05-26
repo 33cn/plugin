@@ -21,7 +21,6 @@ func Chain33RelayerCmd() *cobra.Command {
 		ImportPrivateKeyCmd(),
 		ShowValidatorAddrCmd(),
 		ShowTxsHashCmd(),
-		ShowChain33RelayerStatusCmd(),
 	)
 
 	return cmd
@@ -93,21 +92,4 @@ func showChain33Relayer2EthTxs(cmd *cobra.Command, args []string) {
 	for _, hash := range res.Txhash {
 		fmt.Println(hash)
 	}
-}
-
-func ShowChain33RelayerStatusCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "status",
-		Short: "show chain33-relayer status",
-		Run:   showChain33RelayerStatus,
-	}
-	return cmd
-}
-
-func showChain33RelayerStatus(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var res ebTypes.RelayerRunStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowChain33RelayerStatus", nil, &res)
-	ctx.Run()
 }

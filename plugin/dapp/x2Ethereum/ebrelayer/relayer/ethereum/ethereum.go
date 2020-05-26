@@ -56,7 +56,6 @@ type Relayer4Ethereum struct {
 	maturityDegree         int32
 	fetchHeightPeriodMs    int32
 	eventLogIndex          ebTypes.EventLogIndex
-	status                 int32
 	backend                bind.ContractBackend
 	bridgeBankAddr         common.Address
 	bridgeBankSub          ethereum.Subscription
@@ -88,7 +87,6 @@ func StartEthereumRelayer(rpcURL2Chain33 string, db dbm.DB, provider, registryAd
 		db:                  db,
 		unlockchan:          make(chan int, 2),
 		rpcURL2Chain33:      rpcURL2Chain33,
-		status:              ebTypes.StatusPending,
 		bridgeRegistryAddr:  common.HexToAddress(registryAddress),
 		deployInfo:          deploy,
 		maturityDegree:      degree,
@@ -119,25 +117,6 @@ func (ethRelayer *Relayer4Ethereum) SetPrivateKey4Ethereum(privateKey4Ethereum *
 	if ethRelayer.privateKey4Chain33 != nil {
 		ethRelayer.unlockchan <- start
 	}
-}
-
-func (ethRelayer *Relayer4Ethereum) GetRunningStatus() (relayerRunStatus *ebTypes.RelayerRunStatus) {
-	relayerRunStatus = &ebTypes.RelayerRunStatus{}
-	ethRelayer.rwLock.RLock()
-	relayerRunStatus.Status = ethRelayer.status
-	ethRelayer.rwLock.RUnlock()
-	if relayerRunStatus.Status == ebTypes.StatusPending {
-		if nil == ethRelayer.privateKey4Ethereum {
-			relayerRunStatus.Details = "Ethereum's private key not imported"
-		}
-
-		if nil == ethRelayer.privateKey4Chain33 {
-			relayerRunStatus.Details += "\nChain33's private key not imported"
-		}
-		return
-	}
-	relayerRunStatus.Details = "Running"
-	return
 }
 
 func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {

@@ -28,7 +28,6 @@ func EthereumRelayerCmd() *cobra.Command {
 		ShowValidatorsAddrCmd(),
 		ShowChain33TxsHashCmd(),
 		ShowEthereumTxsHashCmd(),
-		ShowEthRelayerStatusCmd(),
 		IsValidatorActiveCmd(),
 		ShowOperatorCmd(),
 		DeployContrctsCmd(),
@@ -179,23 +178,6 @@ func showEthTxs(cmd *cobra.Command, args []string) {
 	for _, hash := range res.Txhash {
 		fmt.Println(hash)
 	}
-}
-
-func ShowEthRelayerStatusCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "status",
-		Short: "show ethereum-relayer status",
-		Run:   showEthRelayerStatus,
-	}
-	return cmd
-}
-
-func showEthRelayerStatus(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var res ebTypes.RelayerRunStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerStatus", nil, &res)
-	ctx.Run()
 }
 
 func IsValidatorActiveCmd() *cobra.Command {

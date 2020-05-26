@@ -122,8 +122,8 @@ func (manager *Manager) ChangePassphase(setPasswdReq relayerTypes.ReqChangePassw
 		atomic.CompareAndSwapInt32(&manager.isLocked, Unlocked, tempislock)
 	}()
 
-	// 钱包已经加密需要验证oldpass的正确性 ??? 什么时候会进入到这个里
-	if len(manager.passphase) == 0 && manager.encryptFlag == 1 {
+	// 钱包已经加密需要验证oldpass的正确性
+	if len(manager.passphase) == 0 && manager.encryptFlag == EncryptEnable {
 		isok := manager.store.VerifyPasswordHash(setPasswdReq.OldPassphase)
 		if !isok {
 			mlog.Error("ChangePassphase Verify Oldpasswd fail!")
@@ -677,20 +677,6 @@ func (manager *Manager) checkPermission() error {
 	if Locked == manager.isLocked {
 		return errors.New("pls unlock this relay-manager first")
 	}
-	return nil
-}
-
-func (manager *Manager) ShowEthRelayerStatus(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	*result = manager.ethRelayer.GetRunningStatus()
-	return nil
-}
-
-func (manager *Manager) ShowChain33RelayerStatus(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	*result = manager.chain33Relayer.GetRunningStatus()
 	return nil
 }
 
