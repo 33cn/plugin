@@ -5,6 +5,14 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"sync/atomic"
+	"syscall"
+	"testing"
+	"time"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
@@ -20,13 +28,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/suite"
-	"os"
-	"os/signal"
-	"sync"
-	"sync/atomic"
-	"syscall"
-	"testing"
-	"time"
 
 	// 需要显示引用系统插件，以加载系统内置合约
 	"github.com/33cn/chain33/client/mocks"
