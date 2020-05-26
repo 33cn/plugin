@@ -5,6 +5,7 @@
 package para
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/33cn/chain33/common"
@@ -70,6 +71,30 @@ func (client *client) Query_CommitTxInfo(req *types.ReqNil) (types.Message, erro
 
 	rt := client.blsSignCli.showTxBuffInfo()
 	return rt, nil
+}
+
+func (client *client) Query_BlsPubKey(req *types.ReqString) (types.Message, error) {
+	if client == nil || req == nil {
+		return nil, fmt.Errorf("%s", "client not bind message queue.")
+	}
+
+	var pub pt.BlsPubKey
+	if len(req.Data) > 0 {
+		p, err := secpPrikey2BlsPub(req.Data)
+		if err != nil {
+			return nil, err
+		}
+		pub.Key = p
+		return &pub, nil
+	}
+	//缺省获取钱包的
+	if nil != client.blsSignCli.blsPubKey {
+		t := client.blsSignCli.blsPubKey.Serialize()
+		pub.Key = common.ToHex(t[:])
+		return &pub, nil
+	}
+
+	return nil, errors.New("no bls prikey init")
 }
 
 // Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户

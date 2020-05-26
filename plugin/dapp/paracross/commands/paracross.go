@@ -44,8 +44,7 @@ func ParcCmd() *cobra.Command {
 		GetBlockInfoCmd(),
 		GetLocalBlockInfoCmd(),
 		GetConsensDoneInfoCmd(),
-		LeaderCmd(),
-		CmtTxInfoCmd(),
+		blsCmd(),
 	)
 	return cmd
 }
@@ -315,7 +314,7 @@ func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
 
 func superNodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "super_node",
+		Use:   "node",
 		Short: "super node manage cmd",
 	}
 	cmd.AddCommand(nodeJoinCmd())
@@ -953,11 +952,22 @@ func isSync(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// IsSyncCmd query parachain is sync
-func LeaderCmd() *cobra.Command {
+func blsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bls",
+		Short: "bls sign manager cmd",
+	}
+	cmd.AddCommand(leaderCmd())
+	cmd.AddCommand(cmtTxInfoCmd())
+	cmd.AddCommand(blsPubKeyCmd())
+	return cmd
+}
+
+// leaderCmd query parachain is sync
+func leaderCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "leader",
-		Short: "node leader info",
+		Short: "current bls sign leader",
 		Run:   leaderInfo,
 	}
 	return cmd
@@ -970,11 +980,11 @@ func leaderInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// IsSyncCmd query parachain is sync
-func CmtTxInfoCmd() *cobra.Command {
+// cmtTxInfoCmd query parachain is sync
+func cmtTxInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cmtinfo",
-		Short: "commit tx info",
+		Use:   "cmts",
+		Short: "current bls sign commits info",
 		Run:   cmtTxInfo,
 	}
 	return cmd
@@ -984,6 +994,27 @@ func cmtTxInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res pt.ParaBlsSignSumInfo
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaCmtTxInfo", nil, &res)
+	ctx.Run()
+}
+
+// cmtTxInfoCmd query parachain is sync
+func blsPubKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pubkey",
+		Short: "get bls pub key by secp256 prikey or current wallet bls pubkey",
+		Run:   blsPubKey,
+	}
+	return cmd
+}
+
+func blsPubKey(cmd *cobra.Command, args []string) {
+	cmd.Flags().StringP("prikey", "p", "", "secp256 private key")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	prikey, _ := cmd.Flags().GetString("prikey")
+	req := &types.ReqString{Data: prikey}
+	var res pt.BlsPubKey
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "paracross.GetParaBlsPubKey", req, &res)
 	ctx.Run()
 }
 

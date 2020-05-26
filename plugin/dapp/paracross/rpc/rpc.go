@@ -53,7 +53,7 @@ func (c *Jrpc) GetParaLocalBlockInfo(in *types.ReqInt, result *interface{}) erro
 	return nil
 }
 
-// GetParaLocalBlockInfo query para chain the download layer's local height
+// GetParaNodeLeaderInfo query para bls sign leader info
 func (c *channelClient) GetParaNodeLeaderInfo(ctx context.Context, in *types.ReqNil) (*pt.ElectionStatus, error) {
 	data, err := c.QueryConsensusFunc("para", "LeaderInfo", in)
 	if err != nil {
@@ -62,7 +62,7 @@ func (c *channelClient) GetParaNodeLeaderInfo(ctx context.Context, in *types.Req
 	return data.(*pt.ElectionStatus), nil
 }
 
-// GetParaLocalBlockInfo query para local height
+// GetParaNodeLeaderInfo query para bls sign leader info
 func (c *Jrpc) GetParaNodeLeaderInfo(in *types.ReqNil, result *interface{}) error {
 	data, err := c.cli.GetParaNodeLeaderInfo(context.Background(), in)
 	if err != nil {
@@ -72,7 +72,7 @@ func (c *Jrpc) GetParaNodeLeaderInfo(in *types.ReqNil, result *interface{}) erro
 	return nil
 }
 
-// GetParaLocalBlockInfo query para chain the download layer's local height
+// GetParaCmtTxInfo query para chain commit tx info to bls sign
 func (c *channelClient) GetParaCmtTxInfo(ctx context.Context, in *types.ReqNil) (*pt.ParaBlsSignSumInfo, error) {
 	data, err := c.QueryConsensusFunc("para", "CommitTxInfo", in)
 	if err != nil {
@@ -81,9 +81,28 @@ func (c *channelClient) GetParaCmtTxInfo(ctx context.Context, in *types.ReqNil) 
 	return data.(*pt.ParaBlsSignSumInfo), nil
 }
 
-// GetParaLocalBlockInfo query para local height
+// GetParaCmtTxInfo query para commit tx info
 func (c *Jrpc) GetParaCmtTxInfo(in *types.ReqNil, result *interface{}) error {
 	data, err := c.cli.GetParaCmtTxInfo(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	*result = data
+	return nil
+}
+
+// GetParaBlsPubKey query para chain bls pubkey
+func (c *channelClient) GetParaBlsPubKey(ctx context.Context, in *types.ReqString) (*pt.BlsPubKey, error) {
+	data, err := c.QueryConsensusFunc("para", "BlsPubKey", in)
+	if err != nil {
+		return nil, err
+	}
+	return data.(*pt.BlsPubKey), nil
+}
+
+// GetParaBlsPubKey query para local height
+func (c *Jrpc) GetParaBlsPubKey(in *types.ReqString, result *interface{}) error {
+	data, err := c.cli.GetParaBlsPubKey(context.Background(), in)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/client/api"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
@@ -333,10 +332,7 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 			plog.Info("paracross ProcEvent from", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
 			switch sub.GetTy() {
 			case P2pSubCommitTx:
-				err := client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
-				if err != nil {
-					plog.Error("paracross ProcEvent commit tx", "err", err, "txhash", common.ToHex(sub.GetCommitTx().Hash()), "from", sub.GetCommitTx().From())
-				}
+				go client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
 			case P2pSubLeaderSyncMsg:
 				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
 				if err != nil {

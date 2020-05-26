@@ -449,11 +449,15 @@ message ParaP2PSubMsg {
 
 }
 
+//bls sign leader info
 message ElectionStatus {
     bool   isLeader = 1;
     LeaderSyncInfo leader = 2;
 }
 
+message BlsPubKey{
+    string key = 1;
+}
 
 service paracross {
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
