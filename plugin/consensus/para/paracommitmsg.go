@@ -328,7 +328,7 @@ func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 	if client.sendingHeight > consensHeight {
 		checks.consensStopTimes++
 		if checks.consensStopTimes > client.waitConsensStopTimes {
-			plog.Debug("para commitMsg-checkConsensusStop", "times", checks.consensStopTimes)
+			plog.Debug("para checkConsensusStop", "times", checks.consensStopTimes, "consens", consensHeight, "send", client.sendingHeight)
 			checks.consensStopTimes = 0
 			client.resetSendEnv()
 		}
@@ -961,24 +961,33 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 
 }
 
+func getSecpPriKey(key string) (crypto.PrivKey, error) {
+	pk, err := common.FromHex(key)
+	if err != nil && pk == nil {
+		return nil, errors.Wrapf(err, "fromhex=%s", key)
+	}
+
+	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	if err != nil {
+		return nil, errors.Wrapf(err, "crypto=%s", key)
+	}
+
+	priKey, err := secp.PrivKeyFromBytes(pk)
+	if err != nil {
+		return nil, errors.Wrapf(err, "fromBytes=%s", key)
+	}
+
+	return priKey, nil
+}
+
 func (client *commitMsgClient) fetchPriKey() error {
 	req := &types.ReqString{Data: client.authAccount}
 
 	resp, err := client.paraClient.GetAPI().ExecWalletFunc("wallet", "DumpPrivkey", req)
 	str := resp.(*types.ReplyString).Data
-	pk, err := common.FromHex(str)
-	if err != nil && pk == nil {
-		return err
-	}
-
-	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	priKey, err := getSecpPriKey(str)
 	if err != nil {
-		return err
-	}
-
-	priKey, err := secp.PrivKeyFromBytes(pk)
-	if err != nil {
-		plog.Error("para commit msg get priKey", "err", err.Error())
+		plog.Error("para commit msg get priKey", "err", err)
 		return err
 	}
 

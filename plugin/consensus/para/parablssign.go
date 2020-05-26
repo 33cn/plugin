@@ -231,6 +231,7 @@ func (b *blsClient) sendAggregateTx(nodes []string) error {
 func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 	if !b.isValidNodes(tx.From()) {
 		b.updatePeers(tx.From(), false)
+		plog.Error("rcvCommitTx is not valid node", "addr", tx.From())
 		return pt.ErrParaNodeAddrNotExisted
 	}
 
@@ -238,6 +239,7 @@ func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 	if count := tx.GetGroupCount(); count > 0 {
 		group, err := tx.GetTxGroup()
 		if err != nil {
+			plog.Error("rcvCommitTx GetTxGroup ", "err", err)
 			return errors.Wrap(err, "GetTxGroup")
 		}
 		txs = group.Txs
@@ -245,9 +247,13 @@ func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 
 	commits, err := b.checkCommitTx(txs)
 	if err != nil {
+		plog.Error("rcvCommitTx checkCommitTx ", "err", err)
 		return errors.Wrap(err, "checkCommitTx")
 	}
 	b.updatePeers(tx.From(), true)
+	if len(commits) > 0 {
+		plog.Debug("rcvCommitTx tx", "addr", tx.From(), "height", commits[0].Status.Height)
+	}
 
 	b.rcvCommitTxCh <- commits
 	return nil
@@ -415,6 +421,9 @@ func aggregateSigns(signs [][]byte) (*g2pubs.Signature, error) {
 }
 
 func (b *blsClient) updatePeers(id string, add bool) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
 	if _, ok := b.peers[id]; ok {
 		if !add {
 			delete(b.peers, id)
@@ -449,6 +458,19 @@ func getBlsPriKey(key []byte) *g2pubs.SecretKey {
 		copy(newKey[:], common.Sha256(newKey[:]))
 	}
 
+}
+
+//transfer secp Private key to bls pub key
+func secpPrikey2BlsPub(key string) (string, error) {
+	secpPrkKey, err := getSecpPriKey(key)
+	if err != nil {
+		plog.Error("getSecpPriKey", "err", err)
+		return "", err
+	}
+	blsPriKey := getBlsPriKey(secpPrkKey.Bytes())
+	blsPubKey := g2pubs.PrivToPub(blsPriKey)
+	serial := blsPubKey.Serialize()
+	return common.ToHex(serial[:]), nil
 }
 
 func (b *blsClient) blsSign(commits []*pt.ParacrossCommitAction) error {
@@ -509,6 +531,9 @@ func isCommitDone(nodes, mostSame int) bool {
 }
 
 func (b *blsClient) getBlsPubKey(addr string) (*g2pubs.PublicKey, error) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
 	//先从缓存中获取
 	if v, ok := b.peersBlsPubKey[addr]; ok {
 		return v, nil

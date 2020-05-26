@@ -412,14 +412,9 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 	return ret
 }
 
-//bls签名共识交易验证 大约耗时100ms
-func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, error) {
-	_, nodesArry, err := a.getNodesGroup(commit.Status.Title)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getNodegroup")
-	}
-
-	//1.　获取addr对应的bls 公钥
+//bls签名共识交易验证 大约平均耗时30ms (20~40ms)
+func (a *action) verifyBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
+	//1.　获取addr对应的bls 公钥 单独耗时3ms (3 addrs)
 	signAddrs := getAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
@@ -429,6 +424,7 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 		}
 		pubs = append(pubs, pub)
 	}
+	//单独deserial 5ms, g2pubs的公钥结构不好整合到protobuf，就不好压缩到数据库直接读取
 	pubKeys := make([]*g2pubs.PublicKey, 0)
 	for _, p := range pubs {
 		k := [96]byte{}
@@ -444,10 +440,11 @@ func (a *action) verifyBlsSign(commit *pt.ParacrossCommitAction) ([]string, erro
 		pubKeys = append(pubKeys, key)
 
 	}
-	//2.　聚合公钥
+
+	//2.　聚合公钥 单独耗时200us
 	aPub := g2pubs.AggregatePublicKeys(pubKeys)
 
-	//3.　获取聚合的签名
+	//3.　获取聚合的签名, deserial 5ms
 	signkey := [48]byte{}
 	copy(signkey[:], commit.Bls.Sign)
 	sign, err := g2pubs.DeserializeSignature(signkey)
@@ -478,27 +475,27 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		}
 	}
 
+	nodesMap, nodesArry, err := a.getNodesGroup(commit.Status.Title)
+	if err != nil {
+		return nil, errors.Wrap(err, "getNodesGroup")
+	}
+
 	//获取commitAddrs, bls sign 包含多个账户的聚合签名
 	commitAddrs := []string{a.fromaddr}
 	if commit.Bls != nil {
-		addrs, err := a.verifyBlsSign(commit)
+		addrs, err := a.verifyBlsSign(nodesArry, commit)
 		if err != nil {
 			return nil, errors.Wrap(err, "verifyBlsSign")
 		}
 		commitAddrs = addrs
 	}
 
-	nodesMap, _, err := a.getNodesGroup(commit.Status.Title)
-	if err != nil {
-		return nil, errors.Wrap(err, "getNodesGroup")
-	}
-
-	correctAddrs := getValidAddrs(nodesMap, commitAddrs)
-	if len(correctAddrs) <= 0 {
+	validAddrs := getValidAddrs(nodesMap, commitAddrs)
+	if len(validAddrs) <= 0 {
 		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s", strings.Join(commitAddrs, ","))
 	}
 
-	return a.proCommitMsg(commit.Status, nodesMap, correctAddrs)
+	return a.proCommitMsg(commit.Status, nodesMap, validAddrs)
 }
 
 func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]struct{}, commitAddrs []string) (*types.Receipt, error) {
