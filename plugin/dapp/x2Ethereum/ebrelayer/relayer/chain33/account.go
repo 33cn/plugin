@@ -114,7 +114,6 @@ func (chain33Relayer *Relayer4Chain33) RestorePrivateKeys(passphrase string) err
 	return nil
 }
 
-func (chain33Relayer *Relayer4Chain33) UpdatePrivateKey(Passphrase, privateKey string) error {
-
-	return nil
-}
+//func (chain33Relayer *Relayer4Chain33) UpdatePrivateKey(Passphrase, privateKey string) error {
+//	return nil
+//}

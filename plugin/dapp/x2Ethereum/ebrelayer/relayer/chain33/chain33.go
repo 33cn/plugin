@@ -32,14 +32,14 @@ import (
 var relayerLog = log.New("module", "chain33_relayer")
 
 type Relayer4Chain33 struct {
-	syncTxReceipts       *syncTx.TxReceipts
-	ethBackend           bind.ContractBackend
-	rpcLaddr             string //用户向指定的blockchain节点进行rpc调用
-	fetchHeightPeriodMs  int64
-	db                   dbm.DB
-	lastHeight4Tx        int64 //等待被处理的具有相应的交易回执的高度
-	matDegree            int32 //成熟度         heightSync2App    matDegress   height
-	passphase            string
+	syncTxReceipts      *syncTx.TxReceipts
+	ethBackend          bind.ContractBackend
+	rpcLaddr            string //用户向指定的blockchain节点进行rpc调用
+	fetchHeightPeriodMs int64
+	db                  dbm.DB
+	lastHeight4Tx       int64 //等待被处理的具有相应的交易回执的高度
+	matDegree           int32 //成熟度         heightSync2App    matDegress   height
+	//passphase            string
 	privateKey4Ethereum  *ecdsa.PrivateKey
 	ethSender            ethCommon.Address
 	bridgeRegistryAddr   ethCommon.Address
