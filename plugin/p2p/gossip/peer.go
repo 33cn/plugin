@@ -15,6 +15,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Start peer start
@@ -265,7 +266,7 @@ func (p *Peer) sendStream() {
 				P2pComm.CollectPeerStat(err, p)
 				if err != nil {
 					log.Error("sendStream", "send", err)
-					if grpc.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
+					if status.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
 						p.node.nodeInfo.blacklist.Add(p.Addr(), 3600)
 					}
 					time.Sleep(time.Second) //have a rest
@@ -335,9 +336,13 @@ func (p *Peer) readStream() {
 					log.Error("CloseSend", "err", errs)
 				}
 
+				if status.Code(err) == codes.Unavailable {
+					break //重新创建新的流
+				}
+
 				log.Error("readStream", "recv,err:", err.Error(), "peerIp", p.Addr())
 
-				if grpc.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
+				if status.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
 					p.node.nodeInfo.blacklist.Add(p.Addr(), 3600)
 					return
 				}
