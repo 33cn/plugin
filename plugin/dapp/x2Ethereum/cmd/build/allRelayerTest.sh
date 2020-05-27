@@ -552,9 +552,9 @@ function AllRelayerMainTest() {
     TestETH2Chain33Erc20
 
     # kill relayer and start relayer
-#        TestChain33ToEthAssetsKill
-#        TestETH2Chain33AssetsKill
-#        TestETH2Chain33Erc20Kill
+    #        TestChain33ToEthAssetsKill
+    #        TestETH2Chain33AssetsKill
+    #        TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
