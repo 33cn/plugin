@@ -49,15 +49,15 @@ function start_ebrelayerC() {
     start_ebrelayer "./C/ebrelayer" "./C/ebrelayer.log"
     ${CLIC} relayer unlock -p 123456hzj
     sleep 5
-    eth_block_wait 1
-    sleep 1
+    eth_block_wait $((maturityDegree + 2))
+    sleep 10
 }
 function start_ebrelayerD() {
     start_ebrelayer "./D/ebrelayer" "./D/ebrelayer.log"
     ${CLID} relayer unlock -p 123456hzj
     sleep 5
-    eth_block_wait 1
-    sleep 1
+    eth_block_wait $((maturityDegree + 2))
+    sleep 10
 }
 
 function InitAndDeploy() {
@@ -354,32 +354,32 @@ function TestChain33ToEthAssetsKill() {
         tokenAddrBty=$(cli_ret "${result}" "token4chain33" ".addr")
     fi
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "coins.bty")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     kill_ebrelayerC
     kill_ebrelayerD
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t bty -r ${ethReceiverAddr2} -q "${tokenAddrBty}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    hash=$(${Chain33Cli} send x2ethereum lock -a 5 -t coins.bty -r ${ethReceiverAddr2} -q "${tokenAddrBty}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
     eth_block_wait $((maturityDegree + 2))
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     start_ebrelayerC
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     # eth burn
     result=$(${CLIA} relayer ethereum burn -m 5 -k "${ethReceiverAddrKey2}" -r "${chain33Validator1}" -t "${tokenAddrBty}")
     cli_ret "${result}" "burn"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "coins.bty")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddrBty}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # eth 等待 10 个区块
@@ -518,6 +518,7 @@ function TestETH2Chain33Erc20Kill() {
     eth_block_wait 2
 
     start_ebrelayerC
+    start_ebrelayerD
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
     cli_ret "${result}" "balance" ".balance" "100"
@@ -551,9 +552,9 @@ function AllRelayerMainTest() {
     TestETH2Chain33Erc20
 
     # kill relayer and start relayer
-    #    TestChain33ToEthAssetsKill
-    #    TestETH2Chain33AssetsKill
-    #    TestETH2Chain33Erc20Kill
+#        TestChain33ToEthAssetsKill
+#        TestETH2Chain33AssetsKill
+#        TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
