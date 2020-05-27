@@ -73,7 +73,10 @@ func testTicket(t *testing.T) {
 	assert.Nil(t, err)
 	status, err = mock33.GetAPI().ExecWalletFunc("wallet", "GetWalletStatus", &types.ReqNil{})
 	assert.Nil(t, err)
+	fmt.Println("XXXXXXXXdddXXXXXXXXXXXXXXXX")
 	assert.Equal(t, true, status.(*types.WalletStatus).IsAutoMining)
+	fmt.Println("XXXXXXXXdddXXXXXXXXXXXXXXXX")
+	return
 	start := time.Now()
 	height := int64(0)
 	hastclose := false
