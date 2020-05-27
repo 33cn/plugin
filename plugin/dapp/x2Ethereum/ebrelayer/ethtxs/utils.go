@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -63,19 +62,6 @@ func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) 
 	}
 
 	return sig, prefixed
-}
-
-// LoadSender : uses the validator's private key to load the validator's address
-func LoadSender(privateKey *ecdsa.PrivateKey) (address common.Address, err error) {
-	// Parse public key
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return common.Address{}, ebrelayerTypes.ErrPublicKeyType
-	}
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-
-	return fromAddress, nil
 }
 
 func getNonce(sender common.Address, backend bind.ContractBackend) (*big.Int, error) {

@@ -2,7 +2,6 @@ package ethtxs
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"math/big"
 
@@ -438,45 +437,6 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 		if err != nil {
 			return "", err
 		}
-		return "", err
-	}
-	return tx.Hash().String(), nil
-}
-
-/////////////////NewProphecyClaim////////////////
-func MakeNewProphecyClaim(newProphecyClaimPara *NewProphecyClaimPara, backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, transactor common.Address, x2EthContracts *X2EthContracts) (string, error) {
-	var prepareDone bool
-	authVali, err := PrepareAuth(backend, privateKey, transactor)
-	if nil != err {
-		return "", err
-	}
-
-	prepareDone = true
-
-	defer func() {
-		if err != nil && prepareDone {
-			_, _ = revokeNonce(transactor)
-		}
-	}()
-
-	amount := newProphecyClaimPara.Amount
-	ethReceiver := newProphecyClaimPara.EthReceiver
-
-	// Generate rawHash using ProphecyClaim data
-	claimID := crypto.Keccak256Hash(newProphecyClaimPara.Txhash, newProphecyClaimPara.Chain33Sender, newProphecyClaimPara.EthReceiver.Bytes(), newProphecyClaimPara.TokenAddr.Bytes(), amount.Bytes())
-
-	// Sign the hash using the active validator's private key
-	signature, err := SignClaim4Eth(claimID, privateKey)
-	if nil != err {
-		return "", err
-	}
-
-	tx, err := x2EthContracts.Oracle.NewOracleClaim(authVali, newProphecyClaimPara.ClaimType, newProphecyClaimPara.Chain33Sender, ethReceiver, newProphecyClaimPara.TokenAddr, newProphecyClaimPara.Symbol, amount, claimID, signature)
-	if nil != err {
-		return "", err
-	}
-	err = waitEthTxFinished(backend.(*ethclient.Client), tx.Hash(), "MakeNewProphecyClaim")
-	if nil != err {
 		return "", err
 	}
 	return tx.Hash().String(), nil

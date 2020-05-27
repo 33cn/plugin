@@ -3,7 +3,6 @@ package relayer
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -12,13 +11,11 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	chain33Types "github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/relayer/chain33"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/relayer/ethereum"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/types"
-	"github.com/ethereum/go-ethereum/common"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -109,6 +106,9 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 func (manager *Manager) ChangePassphase(setPasswdReq relayerTypes.ReqChangePasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
+	if setPasswdReq.OldPassphase == setPasswdReq.NewPassphase {
+		return errors.New("the old password is the same as the new one")
+	}
 	// 新密码合法性校验
 	if !utils.IsValidPassWord(setPasswdReq.NewPassphase) {
 		return chain33Types.ErrInvalidPassWord
@@ -278,23 +278,6 @@ func (manager *Manager) ImportChain33PrivateKey4EthRelayer(privateKey string, re
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  "Succeed to import chain33 private key for ethereum relayer",
-	}
-	return nil
-}
-
-//为ethrelayer导入chain33私钥，为向chain33发送交易时进行签名使用
-func (manager *Manager) ImportEthValidatorPrivateKey(privateKey string, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	if err := manager.ethRelayer.ImportEthValidatorPrivateKey(manager.passphase, privateKey); nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  "Succeed to import ethereum private key for validator",
 	}
 	return nil
 }
@@ -498,38 +481,6 @@ func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEth
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  txhash,
-	}
-	return nil
-}
-
-func (manager *Manager) MakeNewProphecyClaim(newProphecyClaim relayerTypes.NewProphecyClaim, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	var tokenAddress common.Address
-	if "" != newProphecyClaim.TokenAddr {
-		tokenAddress = common.HexToAddress(newProphecyClaim.TokenAddr)
-	}
-	bn := big.NewInt(1)
-	bn, _ = bn.SetString(types.TrimZeroAndDot(newProphecyClaim.Amount), 10)
-	newProphecyClaimPara := &ethtxs.NewProphecyClaimPara{
-		ClaimType:     uint8(newProphecyClaim.ClaimType),
-		Chain33Sender: []byte(newProphecyClaim.Chain33Sender),
-		TokenAddr:     tokenAddress,
-		EthReceiver:   common.HexToAddress(newProphecyClaim.EthReceiver),
-		Symbol:        newProphecyClaim.Symbol,
-		Amount:        bn,
-		Txhash:        common.FromHex(newProphecyClaim.TxHash),
-	}
-	txhash, err := manager.ethRelayer.MakeNewProphecyClaim(newProphecyClaimPara)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  fmt.Sprintf("Tx:%s", txhash),
 	}
 	return nil
 }

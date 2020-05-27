@@ -39,15 +39,12 @@ import (
 )
 
 type Relayer4Ethereum struct {
-	provider           string
-	clientChainID      *big.Int
-	bridgeRegistryAddr common.Address
-	//validatorName        string
-	db dbm.DB
-	//passphase            string
+	provider               string
+	clientChainID          *big.Int
+	bridgeRegistryAddr     common.Address
+	db                     dbm.DB
 	rwLock                 sync.RWMutex
 	privateKey4Chain33     chain33Crypto.PrivKey
-	privateKey4Ethereum    *ecdsa.PrivateKey
 	ethValidator           common.Address
 	totalTx4Eth2Chain33    int64
 	totalTx4Chain33ToEth   int64
@@ -110,15 +107,6 @@ func StartEthereumRelayer(rpcURL2Chain33 string, db dbm.DB, provider, registryAd
 	return relayer
 }
 
-func (ethRelayer *Relayer4Ethereum) SetPrivateKey4Ethereum(privateKey4Ethereum *ecdsa.PrivateKey) {
-	ethRelayer.rwLock.Lock()
-	defer ethRelayer.rwLock.Unlock()
-	ethRelayer.privateKey4Ethereum = privateKey4Ethereum
-	if ethRelayer.privateKey4Chain33 != nil {
-		ethRelayer.unlockchan <- start
-	}
-}
-
 func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {
 	if nil == ethRelayer.deployInfo {
 		return nil
@@ -141,24 +129,24 @@ func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {
 func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err error) {
 	bridgeRegistry = ""
 	if nil == ethRelayer.deployInfo {
-		return bridgeRegistry, errors.New("No deploy info configured yet")
+		return bridgeRegistry, errors.New("no deploy info configured yet")
 	}
 	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(ethRelayer.deployInfo.DeployerPrivateKey))
 	if nil != err {
 		return bridgeRegistry, err
 	}
 	if len(ethRelayer.deployInfo.ValidatorsAddr) != len(ethRelayer.deployInfo.InitPowers) {
-		return bridgeRegistry, errors.New("Not same number for validator address and power")
+		return bridgeRegistry, errors.New("not same number for validator address and power")
 	}
 	if len(ethRelayer.deployInfo.ValidatorsAddr) < 3 {
-		return bridgeRegistry, errors.New("The number of validator must be not less than 3")
+		return bridgeRegistry, errors.New("the number of validator must be not less than 3")
 	}
 
 	nilAddr := common.Address{}
 
 	//已经设置了注册合约地址，说明已经部署了相关的合约，不再重复部署
 	if ethRelayer.bridgeRegistryAddr != nilAddr {
-		return bridgeRegistry, errors.New("Contract deployed already")
+		return bridgeRegistry, errors.New("contract deployed already")
 	}
 
 	var validators []common.Address
@@ -211,7 +199,7 @@ func (ethRelayer *Relayer4Ethereum) GetBalance(tokenAddr, owner string) (string,
 
 func (ethRelayer *Relayer4Ethereum) ShowBridgeBankAddr() (string, error) {
 	if nil == ethRelayer.x2EthDeployInfo {
-		return "", errors.New("The relayer is not started yes")
+		return "", errors.New("the relayer is not started yes")
 	}
 
 	return ethRelayer.x2EthDeployInfo.BridgeBank.Address.String(), nil
@@ -219,7 +207,7 @@ func (ethRelayer *Relayer4Ethereum) ShowBridgeBankAddr() (string, error) {
 
 func (ethRelayer *Relayer4Ethereum) ShowBridgeRegistryAddr() (string, error) {
 	if nil == ethRelayer.x2EthDeployInfo {
-		return "", errors.New("The relayer is not started yes")
+		return "", errors.New("the relayer is not started yes")
 	}
 
 	return ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String(), nil
@@ -239,10 +227,6 @@ func (ethRelayer *Relayer4Ethereum) ShowTokenAddrBySymbol(tokenSymbol string) (s
 
 func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, error) {
 	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethValidator, ethRelayer.x2EthContracts.Chain33Bridge)
-}
-
-func (ethRelayer *Relayer4Ethereum) MakeNewProphecyClaim(newProphecyClaimPara *ethtxs.NewProphecyClaimPara) (string, error) {
-	return ethtxs.MakeNewProphecyClaim(newProphecyClaimPara, ethRelayer.backend, ethRelayer.privateKey4Ethereum, ethRelayer.ethValidator, ethRelayer.x2EthContracts)
 }
 
 func (ethRelayer *Relayer4Ethereum) CreateBridgeToken(symbol string) (string, error) {
@@ -349,12 +333,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	continueFailCount := int32(0)
 	for range ethRelayer.unlockchan {
 		relayerLog.Info("Received ethRelayer.unlockchan")
-		if nil != ethRelayer.privateKey4Ethereum && nil != ethRelayer.privateKey4Chain33 && nilAddr != ethRelayer.bridgeRegistryAddr {
-			ethRelayer.ethValidator, err = ethtxs.LoadSender(ethRelayer.privateKey4Ethereum)
-			if nil != err {
-				errinfo := fmt.Sprintf("Failed to load validator for ethereum due to:%s", err.Error())
-				panic(errinfo)
-			}
+		if nil != ethRelayer.privateKey4Chain33 && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
@@ -571,14 +550,14 @@ func (ethRelayer *Relayer4Ethereum) filterLogEventsProc(logchan chan<- types.Log
 
 		relayerLog.Info(title, "received logs with number", len(logs),
 			"start height", query.FromBlock.String(), "stop height", query.ToBlock.String())
-		for _, log := range logs {
-			relayerLog.Info(title, "received log with topics", log.Topics[0].Hex(), "BlockNumber", log.BlockNumber)
-			if _, exist := eventSig[log.Topics[0].Hex()]; !exist {
+		for _, logv := range logs {
+			relayerLog.Info(title, "received log with topics", logv.Topics[0].Hex(), "BlockNumber", logv.BlockNumber)
+			if _, exist := eventSig[logv.Topics[0].Hex()]; !exist {
 				continue
 			}
-			logchan <- log
-			relayerLog.Info(title, "get unprocessed log with topic:", log.Topics[0].String(),
-				"BlockNumber", log.BlockNumber)
+			logchan <- logv
+			relayerLog.Info(title, "get unprocessed log with topic:", logv.Topics[0].String(),
+				"BlockNumber", logv.BlockNumber)
 		}
 
 		if query.ToBlock.Int64() == curHeight {

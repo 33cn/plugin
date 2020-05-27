@@ -11,18 +11,11 @@ CLI="../build/ebcli_A"
 
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 chain33SenderAddrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
-
-# 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
-ethValidatorAddrKey="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-
 ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
 ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
-
 ethReceiverAddr2="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
 ethReceiverAddrKey2="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
-
 ethReceiverAddr3="0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e"
-#ethReceiverAddrKey3="62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
 
 prophecyTx0="0x112260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
 prophecyTx1="0x222260c98aec81b3e235af47c355db720f60e751cce100fed6f334e1b1530bde"
@@ -46,9 +39,6 @@ InitAndDeploy() {
 
     result=$(${CLI} relayer ethereum import_chain33privatekey -k "${chain33SenderAddrKey}")
     cli_ret "${result}" "import_chain33privatekey"
-
-    result=$(${CLI} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKey}")
-    cli_ret "${result}" "import_ethprivatekey"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

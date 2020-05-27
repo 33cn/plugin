@@ -8,9 +8,6 @@ set -x
 
 source "./publicTest.sh"
 CLIA="../build/ebcli_A"
-CLIB="../build/ebcli_B"
-CLIC="../build/ebcli_C"
-CLID="../build/ebcli_D"
 
 tokenAddr=""
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
@@ -72,11 +69,6 @@ function InitConfigFile() {
 # 启动 B C D 的 ebrelayer 服务,导入私钥
 function ImportCBDKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    local ethValidatorAddrKeyA="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-    local ethValidatorAddrKeyB="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-    local ethValidatorAddrKeyC="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-    local ethValidatorAddrKeyD="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
-
     for name in B C D; do
         start_ebrelayer "./../build/$name/ebrelayer" "./../build/$name/ebrelayer.log"
 
@@ -95,18 +87,6 @@ function ImportCBDKey() {
 
     result=$(${CLIA} relayer ethereum import_chain33privatekey -k "${chain33SenderAddrKey}")
     cli_ret "${result}" "import_chain33privatekey"
-
-    result=$(${CLIA} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKeyA}")
-    cli_ret "${result}" "import_ethprivatekey"
-
-    result=$(${CLIB} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKeyB}")
-    cli_ret "${result}" "import_ethprivatekeyB"
-
-    result=$(${CLIC} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKeyC}")
-    cli_ret "${result}" "import_ethprivatekeyC"
-
-    result=$(${CLID} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKeyD}")
-    cli_ret "${result}" "import_ethprivatekeyD"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 

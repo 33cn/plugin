@@ -11,8 +11,7 @@ message Account4Relayer {
 }
 
 message ValidatorAddr4EthRelayer {
-    string ethValidator      = 1;
-    string chain33Validator  = 2;
+    string chain33Validator  = 1;
 }
 
 message Txhashes {

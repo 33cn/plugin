@@ -16,21 +16,15 @@ tokenAddr=""
 BridgeRegistry=""
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 chain33SenderAddrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
-
 ethValidatorAddrKey="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-
 ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
 ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
 ethReceiverAddr2="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
 ethReceiverAddrKey2="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
-#ethReceiverAddr3="0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e"
-#ethReceiverAddrKey3="62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
-
 chain33Validator1="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 chain33Validator2="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" #0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01
 chain33Validator3="1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
-#BtyReceiever="1BqP2vHkYNjSgdnTqm7pGbnphLhtEhuJFi"
-#ETHContractAddr="0x0000000000000000000000000000000000000000"
+
 maturityDegree=10
 
 function InitAndDeploy() {
@@ -55,9 +49,6 @@ function EthImportKey() {
 
     result=$(${CLI} relayer ethereum import_chain33privatekey -k "${chain33SenderAddrKey}")
     cli_ret "${result}" "import_chain33privatekey"
-
-    result=$(${CLI} relayer ethereum import_ethprivatekey -k "${ethValidatorAddrKey}")
-    cli_ret "${result}" "import_ethprivatekey"
 
     result=$(${CLI} relayer chain33 import_privatekey -k "${ethValidatorAddrKey}")
     cli_ret "${result}" "import_ethprivatekey"

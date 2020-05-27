@@ -22,8 +22,7 @@ func (m *Account4Relayer) String() string { return proto.CompactTextString(m) }
 func (*Account4Relayer) ProtoMessage()    {}
 
 type ValidatorAddr4EthRelayer struct {
-	EthValidator     string `protobuf:"bytes,1,opt,name=ethValidator" json:"ethValidator,omitempty"`
-	Chain33Validator string `protobuf:"bytes,2,opt,name=chain33Validator" json:"chain33Validator,omitempty"`
+	Chain33Validator string `protobuf:"bytes,1,opt,name=chain33Validator" json:"chain33Validator,omitempty"`
 }
 
 func (m *ValidatorAddr4EthRelayer) Reset()         { *m = ValidatorAddr4EthRelayer{} }
