@@ -99,6 +99,7 @@ func (policy *ticketPolicy) IsTicketLocked() bool {
 
 // PolicyName Policy Name
 func (policy *ticketPolicy) PolicyName() string {
+
 	return ty.TicketX
 }
 
