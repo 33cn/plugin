@@ -97,6 +97,12 @@ func (policy *ticketPolicy) IsTicketLocked() bool {
 	return atomic.LoadInt32(&policy.isTicketLocked) != 0
 }
 
+// PolicyName Policy Name
+func (policy *ticketPolicy) PolicyName() string {
+
+	return ty.TicketX
+}
+
 // Init initial
 func (policy *ticketPolicy) Init(walletBiz wcom.WalletOperate, sub []byte) {
 	policy.setWalletOperate(walletBiz)
