@@ -10,22 +10,21 @@ import (
 	"time"
 
 	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethcontract/generated"
-	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethcontract/test/setup"
-	"github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/ethtxs"
-	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2Ethereum/ebrelayer/types"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
+	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 )
 
 var (
 	configPath           = flag.String("f", "./../../relayer.toml", "configfile")
-	ethPrivateKeyStr     = "0x3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-	ethAccountAddr       = "0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
 	chain33PrivateKeyStr = "0xd627968e445f2a41c92173225791bae1ba42126ae96c32f28f97ff8f226e5c68"
 	chain33AccountAddr   = "1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
 
@@ -56,25 +55,26 @@ func (r *suiteEthRelayer) Test_1_ImportPrivateKey() {
 	r.Error(err)
 	r.Empty(validators)
 
-	//a, b, c := r.ethRelayer.NewAccount("123")
-	//fmt.Println("++++++++++", a, b, c)
+	_, _, err = r.ethRelayer.NewAccount("123")
+	r.NoError(err)
 
 	err = r.ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
 	r.NoError(err)
 
 	privateKey, addr, err := r.ethRelayer.GetAccount("123")
 	r.NoError(err)
-	r.NotEqual(privateKey, ethPrivateKeyStr)
+	r.NotEqual(privateKey, chain33PrivateKeyStr)
 
 	privateKey, addr, err = r.ethRelayer.GetAccount(passphrase)
 	r.NoError(err)
-	r.Equal(privateKey, ethPrivateKeyStr)
-	r.Equal(addr, ethAccountAddr)
+	r.Equal(privateKey, chain33PrivateKeyStr)
+	r.Equal(addr, chain33AccountAddr)
 
 	validators, err = r.ethRelayer.GetValidatorAddr()
 	r.NoError(err)
-	//r.Equal(validators.EthValidator, ethAccountAddr)
 	r.Equal(validators.Chain33Validator, chain33AccountAddr)
+
+	time.Sleep(5 * time.Second)
 }
 
 func (r *suiteEthRelayer) Test_2_RestorePrivateKeys() {
@@ -82,8 +82,28 @@ func (r *suiteEthRelayer) Test_2_RestorePrivateKeys() {
 	err := r.ethRelayer.RestorePrivateKeys(passphrase)
 	r.NoError(err)
 
-	//err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
-	//r.NoError(err)
+	err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
+	r.NoError(err)
+}
+
+func (r *suiteEthRelayer) Test_3_IsValidatorActive() {
+	is, err := r.ethRelayer.IsValidatorActive("0x92c8b16afd6d423652559c6e266cbe1c29bfd84f")
+	r.Equal(is, true)
+	r.NoError(err)
+
+	is, err = r.ethRelayer.IsValidatorActive("0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF")
+	r.Equal(is, false)
+	r.NoError(err)
+
+	/*
+		re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+			if !re.MatchString(addr) {
+				return false, errors.New("this address is not an ethereum address")
+			}
+	*/
+
+	is, err = r.ethRelayer.IsValidatorActive("123")
+	r.Error(err)
 }
 
 func (r *suiteEthRelayer) Test_Relayer4Ethereum_GetAccount() {
@@ -313,7 +333,7 @@ func (r *suiteEthRelayer) proc() {
 			r.ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			r.ethRelayer.subscribeEvent()
-			//r.ethRelayer.filterLogEvents()
+			r.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			goto latter
@@ -331,6 +351,32 @@ latter:
 			r.ethRelayer.storeBridgeBankLogs(vLog, true)
 		}
 	}
+}
+
+func Test3(t *testing.T) {
+	i := 1
+	j := 1
+	for i > 0 {
+		i++
+		fmt.Println("i", i)
+		time.Sleep(time.Second)
+		goto aaa
+	}
+
+	fmt.Println("--00--")
+
+aaa:
+	for j > 0 {
+		j++
+		fmt.Println("j", j)
+		time.Sleep(time.Second)
+		if j > 3 {
+			j = 1
+			break
+		}
+	}
+
+	fmt.Println("--00--")
 }
 
 func (r *suiteEthRelayer) deployContracts() {
@@ -356,6 +402,38 @@ func (r *suiteEthRelayer) deployContracts() {
 	r.x2EthContracts, r.x2EthDeployInfo, err = ethtxs.DeployAndInit(backend, r.para)
 	r.NoError(err)
 	r.sim.Commit()
+}
+
+func (r *suiteEthRelayer) filterLogEvents() {
+	deployHeight := int64(0)
+	height4BridgeBankLogAt := int64(r.ethRelayer.getHeight4BridgeBankLogAt())
+
+	if height4BridgeBankLogAt < deployHeight {
+		height4BridgeBankLogAt = deployHeight
+	}
+
+	curHeight := int64(0)
+	relayerLog.Info("filterLogEvents", "curHeight:", curHeight)
+
+	bridgeBankSig := make(map[string]bool)
+	bridgeBankSig[r.ethRelayer.bridgeBankEventLockSig] = true
+	bridgeBankSig[r.ethRelayer.bridgeBankEventBurnSig] = true
+	bridgeBankLog := make(chan types.Log)
+	done := make(chan int)
+	go r.ethRelayer.filterLogEventsProc(bridgeBankLog, done, "bridgeBank", curHeight, height4BridgeBankLogAt, r.ethRelayer.bridgeBankAddr, bridgeBankSig)
+
+	for {
+		select {
+		case vLog := <-bridgeBankLog:
+			r.ethRelayer.storeBridgeBankLogs(vLog, true)
+		case vLog := <-r.ethRelayer.bridgeBankLog:
+			//因为此处是同步保存信息，防止未同步完成出现panic时，直接将其设置为最新高度，中间出现部分信息不同步的情况
+			r.ethRelayer.storeBridgeBankLogs(vLog, false)
+		case <-done:
+			relayerLog.Info("Finshed offline logs processed")
+			return
+		}
+	}
 }
 
 func initCfg(path string) *relayerTypes.RelayerConfig {
