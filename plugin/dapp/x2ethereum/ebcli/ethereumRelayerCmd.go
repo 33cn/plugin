@@ -23,12 +23,10 @@ func EthereumRelayerCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		ImportChain33PrivateKeyCmd(),
-		ImportEthValidatorPrivateKeyCmd(),
 		GenEthPrivateKeyCmd(),
 		ShowValidatorsAddrCmd(),
 		ShowChain33TxsHashCmd(),
 		ShowEthereumTxsHashCmd(),
-		ShowEthRelayerStatusCmd(),
 		IsValidatorActiveCmd(),
 		ShowOperatorCmd(),
 		DeployContrctsCmd(),
@@ -36,7 +34,6 @@ func EthereumRelayerCmd() *cobra.Command {
 		//////auxiliary///////
 		CreateBridgeTokenCmd(),
 		CreateEthereumTokenCmd(),
-		MakeNewProphecyClaimCmd(),
 		GetBalanceCmd(),
 		IsProphecyPendingCmd(),
 		MintErc20Cmd(),
@@ -77,26 +74,6 @@ func importChain33Privatekey(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportChain33PrivateKey4EthRelayer", params, &res)
-	ctx.Run()
-}
-
-func ImportEthValidatorPrivateKeyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "import_ethprivatekey",
-		Short: "import ethereum's validator private key ",
-		Run:   importEthValidtorPrivatekey,
-	}
-	addImportPrivateKeyFlags(cmd)
-	return cmd
-}
-
-func importEthValidtorPrivatekey(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	privateKey, _ := cmd.Flags().GetString("key")
-	params := privateKey
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportEthValidatorPrivateKey", params, &res)
 	ctx.Run()
 }
 
@@ -179,23 +156,6 @@ func showEthTxs(cmd *cobra.Command, args []string) {
 	for _, hash := range res.Txhash {
 		fmt.Println(hash)
 	}
-}
-
-func ShowEthRelayerStatusCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "status",
-		Short: "show ethereum-relayer status",
-		Run:   showEthRelayerStatus,
-	}
-	return cmd
-}
-
-func showEthRelayerStatus(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var res ebTypes.RelayerRunStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerStatus", nil, &res)
-	ctx.Run()
 }
 
 func IsValidatorActiveCmd() *cobra.Command {
@@ -604,70 +564,6 @@ func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBridgeRegistryAddr", nil, &res)
-	ctx.Run()
-}
-
-func MakeNewProphecyClaimCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "prophecy",
-		Short: "Make New Prophecy Claim",
-		Run:   MakeNewProphecyClaim,
-	}
-	MakeNewProphecyClaimFlags(cmd)
-	return cmd
-}
-
-func MakeNewProphecyClaimFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("claim", "c", uint32(1), "claim type, 1 denote burn, and 2 denotes lock")
-	_ = cmd.MarkFlagRequired("claim")
-	cmd.Flags().StringP("chain33Sender", "a", "", "Chain33Sender")
-	_ = cmd.MarkFlagRequired("chain33Sender")
-	cmd.Flags().StringP("token", "t", "", "token address,optional, nil for ETH")
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-	cmd.Flags().StringP("ethReceiver", "r", "", "eth Receiver")
-	_ = cmd.MarkFlagRequired("ethReceiver")
-	cmd.Flags().Float64P("amount", "m", 0, "amount")
-	_ = cmd.MarkFlagRequired("amount")
-	cmd.Flags().StringP("hash", "i", "", "chain33 tx hash")
-	_ = cmd.MarkFlagRequired("hash")
-
-}
-
-func MakeNewProphecyClaim(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	claimType, _ := cmd.Flags().GetUint32("claim")
-	if claimType != uint32(1) && claimType != uint32(2) {
-		fmt.Println("Wrong claim type")
-		return
-	}
-	chain33Sender, _ := cmd.Flags().GetString("chain33Sender")
-	tokenAddr, _ := cmd.Flags().GetString("token")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	ethReceiver, _ := cmd.Flags().GetString("ethReceiver")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	txhash, _ := cmd.Flags().GetString("hash")
-	nodeAddr, _ := cmd.Flags().GetString("node_addr")
-
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
-	if err != nil {
-		fmt.Println("get decimals error")
-		return
-	}
-
-	realAmount := types.ToWei(amount, d)
-
-	para := ebTypes.NewProphecyClaim{
-		ClaimType:     claimType,
-		Chain33Sender: chain33Sender,
-		TokenAddr:     tokenAddr,
-		Symbol:        symbol,
-		EthReceiver:   ethReceiver,
-		Amount:        realAmount.String(),
-		TxHash:        txhash,
-	}
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.MakeNewProphecyClaim", para, &res)
 	ctx.Run()
 }
 

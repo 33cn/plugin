@@ -115,6 +115,10 @@ function base_init() {
     #autonomy
     sed -i $sedfix 's/^useBalance=.*/useBalance=true/g' chain33.toml
     sed -i $sedfix 's/^total="16htvcBNS.*/total="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"/g' chain33.toml
+
+    if [ "$DAPP" == "x2Ethereum" ]; then
+        sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
+    fi
 }
 
 function start() {

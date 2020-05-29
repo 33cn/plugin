@@ -3,7 +3,6 @@ package relayer
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -12,13 +11,11 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	chain33Types "github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/relayer/chain33"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/relayer/ethereum"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/types"
-	"github.com/ethereum/go-ethereum/common"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -66,6 +63,52 @@ func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayer *ethe
 func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
+
+	// 第一次设置密码的时候才使用 后面用 ChangePasswd
+	if EncryptEnable == manager.encryptFlag {
+		return errors.New("passphase alreade exists")
+	}
+
+	// 密码合法性校验
+	if !utils.IsValidPassWord(setPasswdReq.Passphase) {
+		return chain33Types.ErrInvalidPassWord
+	}
+
+	//使用密码生成passwdhash用于下次密码的验证
+	newBatch := manager.store.NewBatch(true)
+	err := manager.store.SetPasswordHash(setPasswdReq.Passphase, newBatch)
+	if err != nil {
+		mlog.Error("SetPassphase", "SetPasswordHash err", err)
+		return err
+	}
+	//设置钱包加密标志位
+	err = manager.store.SetEncryptionFlag(newBatch)
+	if err != nil {
+		mlog.Error("SetPassphase", "SetEncryptionFlag err", err)
+		return err
+	}
+
+	err = newBatch.Write()
+	if err != nil {
+		mlog.Error("ProcWalletSetPasswd newBatch.Write", "err", err)
+		return err
+	}
+	manager.passphase = setPasswdReq.Passphase
+	atomic.StoreInt64(&manager.encryptFlag, EncryptEnable)
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Succeed to set passphase",
+	}
+	return nil
+}
+
+func (manager *Manager) ChangePassphase(setPasswdReq relayerTypes.ReqChangePasswd, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if setPasswdReq.OldPassphase == setPasswdReq.NewPassphase {
+		return errors.New("the old password is the same as the new one")
+	}
 	// 新密码合法性校验
 	if !utils.IsValidPassWord(setPasswdReq.NewPassphase) {
 		return chain33Types.ErrInvalidPassWord
@@ -80,16 +123,16 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 	}()
 
 	// 钱包已经加密需要验证oldpass的正确性
-	if len(manager.passphase) == 0 && manager.encryptFlag == 1 {
+	if len(manager.passphase) == 0 && manager.encryptFlag == EncryptEnable {
 		isok := manager.store.VerifyPasswordHash(setPasswdReq.OldPassphase)
 		if !isok {
-			mlog.Error("SetPassphase Verify Oldpasswd fail!")
+			mlog.Error("ChangePassphase Verify Oldpasswd fail!")
 			return chain33Types.ErrVerifyOldpasswdFail
 		}
 	}
 
 	if len(manager.passphase) != 0 && setPasswdReq.OldPassphase != manager.passphase {
-		mlog.Error("SetPassphase Oldpass err!")
+		mlog.Error("ChangePassphase Oldpass err!")
 		return chain33Types.ErrVerifyOldpasswdFail
 	}
 
@@ -97,25 +140,25 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 	newBatch := manager.store.NewBatch(true)
 	err := manager.store.SetPasswordHash(setPasswdReq.NewPassphase, newBatch)
 	if err != nil {
-		mlog.Error("SetPassphase", "SetPasswordHash err", err)
+		mlog.Error("ChangePassphase", "SetPasswordHash err", err)
 		return err
 	}
 	//设置钱包加密标志位
 	err = manager.store.SetEncryptionFlag(newBatch)
 	if err != nil {
-		mlog.Error("SetPassphase", "SetEncryptionFlag err", err)
+		mlog.Error("ChangePassphase", "SetEncryptionFlag err", err)
 		return err
 	}
 
 	err = manager.ethRelayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
 	if err != nil {
-		mlog.Error("SetPassphase", "StoreAccountWithNewPassphase err", err)
+		mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
 		return err
 	}
 
 	err = manager.chain33Relayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
 	if err != nil {
-		mlog.Error("SetPassphase", "StoreAccountWithNewPassphase err", err)
+		mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
 		return err
 	}
 
@@ -129,7 +172,7 @@ func (manager *Manager) SetPassphase(setPasswdReq relayerTypes.ReqSetPasswd, res
 
 	*result = rpctypes.Reply{
 		IsOk: true,
-		Msg:  "Succeed to set passphase",
+		Msg:  "Succeed to change passphase",
 	}
 	return nil
 }
@@ -235,23 +278,6 @@ func (manager *Manager) ImportChain33PrivateKey4EthRelayer(privateKey string, re
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  "Succeed to import chain33 private key for ethereum relayer",
-	}
-	return nil
-}
-
-//为ethrelayer导入chain33私钥，为向chain33发送交易时进行签名使用
-func (manager *Manager) ImportEthValidatorPrivateKey(privateKey string, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	if err := manager.ethRelayer.ImportEthValidatorPrivateKey(manager.passphase, privateKey); nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  "Succeed to import ethereum private key for validator",
 	}
 	return nil
 }
@@ -459,38 +485,6 @@ func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEth
 	return nil
 }
 
-func (manager *Manager) MakeNewProphecyClaim(newProphecyClaim relayerTypes.NewProphecyClaim, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	var tokenAddress common.Address
-	if "" != newProphecyClaim.TokenAddr {
-		tokenAddress = common.HexToAddress(newProphecyClaim.TokenAddr)
-	}
-	bn := big.NewInt(1)
-	bn, _ = bn.SetString(types.TrimZeroAndDot(newProphecyClaim.Amount), 10)
-	newProphecyClaimPara := &ethtxs.NewProphecyClaimPara{
-		ClaimType:     uint8(newProphecyClaim.ClaimType),
-		Chain33Sender: []byte(newProphecyClaim.Chain33Sender),
-		TokenAddr:     tokenAddress,
-		EthReceiver:   common.HexToAddress(newProphecyClaim.EthReceiver),
-		Symbol:        newProphecyClaim.Symbol,
-		Amount:        bn,
-		Txhash:        common.FromHex(newProphecyClaim.TxHash),
-	}
-	txhash, err := manager.ethRelayer.MakeNewProphecyClaim(newProphecyClaimPara)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  fmt.Sprintf("Tx:%s", txhash),
-	}
-	return nil
-}
-
 func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -634,20 +628,6 @@ func (manager *Manager) checkPermission() error {
 	if Locked == manager.isLocked {
 		return errors.New("pls unlock this relay-manager first")
 	}
-	return nil
-}
-
-func (manager *Manager) ShowEthRelayerStatus(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	*result = manager.ethRelayer.GetRunningStatus()
-	return nil
-}
-
-func (manager *Manager) ShowChain33RelayerStatus(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	*result = manager.chain33Relayer.GetRunningStatus()
 	return nil
 }
 

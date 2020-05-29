@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 # shellcheck source=/dev/null
+# shellcheck disable=SC2155
 set -x
 set -e
 
@@ -39,7 +40,7 @@ function cli_ret() {
 
     msg=$(echo "${1}" | jq -r "${jqMsg}")
     if [[ $# -eq 4 ]]; then
-        if [ $(echo "$msg < $4" | bc) -eq 1 ] || [ $(echo "$msg > $4" | bc) -eq 1 ]; then
+        if [ "$(echo "$msg < $4" | bc)" -eq 1 ] || [ "$(echo "$msg > $4" | bc)" -eq 1 ]; then
             echo -e "${RED}The balance is not correct${NOC}"
             exit 1
         fi
@@ -58,7 +59,7 @@ function balance_ret() {
     fi
 
     local balance=$(echo "${1}" | jq -r ".balance")
-    if [ $(echo "$balance < $2" | bc) -eq 1 ] || [ $(echo "$balance > $2" | bc) -eq 1 ]; then
+    if [ "$(echo "$balance < $2" | bc)" -eq 1 ] || [ "$(echo "$balance > $2" | bc)" -eq 1 ]; then
         echo -e "${RED}The balance is not correct${NOC}"
         exit 1
     fi
@@ -115,6 +116,7 @@ function start_ebrelayer() {
     nohup "${1}" >"${2}" 2>&1 &
     sleep 2
 
+    # shellcheck disable=SC2009
     pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}')
     local count=0
     while [ "${pid}" == "" ]; do
@@ -127,6 +129,7 @@ function start_ebrelayer() {
             exit 1
         fi
 
+        # shellcheck disable=SC2009
         pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}')
     done
 }
@@ -162,7 +165,7 @@ function start_ebrelayer_and_setpwd_unlock() {
     local CLI="./ebcli_$1"
     local count=0
     while true; do
-        result=$(${CLI} relayer set_pwd -n 123456hzj -o kk | jq -r .isOK)
+        result=$(${CLI} relayer set_pwd -p 123456hzj | jq -r .isOK)
         if [[ ${result} == "true" ]]; then
             break
         fi
@@ -195,6 +198,7 @@ function start_ebrelayer_and_setpwd_unlock() {
 
 # 杀死进程ebrelayer 进程 $1进程名称
 function kill_ebrelayer() {
+    # shellcheck disable=SC2009
     pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}')
     if [ "${pid}" == "" ]; then
         echo "not find ${1} pid"
@@ -202,6 +206,7 @@ function kill_ebrelayer() {
     fi
 
     kill "${pid}"
+    # shellcheck disable=SC2009
     pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}')
     if [ "${pid}" != "" ]; then
         echo "kill ${1} failed"
@@ -255,7 +260,7 @@ function check_tx() {
 
     local count=0
     while true; do
-        ty=$(${CLI} tx query -s ${2} | jq .receipt.ty)
+        ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
         if [[ ${ty} != "" ]]; then
             break
         fi
@@ -271,7 +276,7 @@ function check_tx() {
 
     set -x
 
-    ty=$(${CLI} tx query -s ${2} | jq .receipt.ty)
+    ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
         exit 1
@@ -283,7 +288,7 @@ function check_number() {
         echo -e "${RED}wrong check number parameters${NOC}"
         exit 1
     fi
-    if [[ ${1} != ${2} ]]; then
+    if [[ ${1} != "${2}" ]]; then
         echo -e "${RED}error number, expect ${1}, get ${2}${NOC}"
         exit 1
     fi
@@ -296,8 +301,8 @@ function check_addr() {
         exit 1
     fi
 
-    addr=$(echo ${1} | jq -r ".acc.addr")
-    if [[ ${addr} != ${2} ]]; then
+    addr=$(echo "${1}" | jq -r ".acc.addr")
+    if [[ ${addr} != "${2}" ]]; then
         echo -e "${RED}error addr, expect ${1}, get ${2}${NOC}"
         exit 1
     fi
@@ -331,18 +336,18 @@ function updata_relayer_toml() {
         exit 1
     fi
 
-    local line=$(delete_line_show ${file} "chain33Host")
+    local line=$(delete_line_show "${file}" "chain33Host")
     # 在第 line 行后面 新增合约地址
-    sed -i ''${line}' a chain33Host="http://'${chain33Host}':8801"' "${file}"
+    sed -i ''"${line}"' a chain33Host="http://'"${chain33Host}"':8801"' "${file}"
 
-    line=$(delete_line_show ${file} "pushHost")
-    sed -i ''${line}' a pushHost="http://'${pushHost}':20000"' "${file}"
+    line=$(delete_line_show "${file}" "pushHost")
+    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
 
-    line=$(delete_line_show ${file} "BridgeRegistry")
-    sed -i ''${line}' a BridgeRegistry="'${BridgeRegistry}'"' "${file}"
+    line=$(delete_line_show "${file}" "BridgeRegistry")
+    sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
 
-    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree=${maturityDegree}'/g' "${file}"
-    sed -i 's/maturityDegree=10/'maturityDegree=${maturityDegree}'/g' "${file}"
+    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
+    sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
 
     #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
     #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
@@ -358,18 +363,18 @@ function updata_relayer_toml_ropston() {
     local chain33Host=127.0.0.1
     local pushHost=127.0.0.1
 
-    local line=$(delete_line_show ${file} "chain33Host")
+    local line=$(delete_line_show "${file}" "chain33Host")
     # 在第 line 行后面 新增合约地址
-    sed -i ''${line}' a chain33Host="http://'${chain33Host}':8801"' "${file}"
+    sed -i ''"${line}"' a chain33Host="http://'${chain33Host}':8801"' "${file}"
 
-    line=$(delete_line_show ${file} "pushHost")
-    sed -i ''${line}' a pushHost="http://'${pushHost}':20000"' "${file}"
+    line=$(delete_line_show "${file}" "pushHost")
+    sed -i ''"${line}"' a pushHost="http://'${pushHost}':20000"' "${file}"
 
-    line=$(delete_line_show ${file} "BridgeRegistry")
-    sed -i ''${line}' a BridgeRegistry="'${BridgeRegistry}'"' "${file}"
+    line=$(delete_line_show "${file}" "BridgeRegistry")
+    sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
 
-    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree=${maturityDegree}'/g' "${file}"
-    sed -i 's/maturityDegree=10/'maturityDegree=${maturityDegree}'/g' "${file}"
+    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
+    sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
 
     #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
     #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
@@ -383,12 +388,12 @@ function updata_all_relayer_toml() {
     #    local dockername=30
 
     for name in B C D; do
-        local file="../build/"$name"/relayer.toml"
+        local file="../build/$name/relayer.toml"
         cp '../build/A/relayer.toml' "${file}"
-        cp '../build/ebrelayer' "../build/"$name"/ebrelayer"
+        cp '../build/ebrelayer' "../build/$name/ebrelayer"
 
         # 删除配置文件中不需要的字段
-        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "\[deploy\]"; do
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
             delete_line "${file}" "${deleteName}"
         done
 
@@ -421,12 +426,12 @@ function updata_all_relayer_toml2() {
     #    local dockername=30
 
     for name in B C D; do
-        local file="./"$name"/relayer.toml"
+        local file="./$name/relayer.toml"
         cp './A/relayer.toml' "${file}"
-        cp './ebrelayer' "./"$name"/ebrelayer"
+        cp './ebrelayer' "./$name/ebrelayer"
 
         # 删除配置文件中不需要的字段
-        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "\[deploy\]"; do
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
             delete_line "${file}" "${deleteName}"
         done
 
@@ -512,7 +517,7 @@ function eth_block_wait() {
     if [ "${url}" == "" ]; then
         cur_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
     else
-        cur_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")
+        cur_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' "${url}" | jq -r ".result")
     fi
 
     local expect=$((cur_height + ${1} + 1))
@@ -521,7 +526,7 @@ function eth_block_wait() {
         if [ "${url}" == "" ]; then
             new_height=$(curl -ksd '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' http://localhost:7545 | jq -r ".result")
         else
-            new_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' ${url} | jq -r ".result")
+            new_height=$(curl -H "Content-Type: application/json" -X POST --data '{"id":1,"jsonrpc":"2.0","method":"eth_blockNumber","params":[]}' "${url}" | jq -r ".result")
         fi
 
         if [[ ${new_height} -ge ${expect} ]]; then

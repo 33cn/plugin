@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	ethAccountKey     = []byte("EthAccount4EthRelayer")
 	chain33AccountKey = []byte("Chain33Account4EthRelayer")
 	start             = int(1)
 )
@@ -38,42 +37,31 @@ type Key struct {
 }
 
 func (ethRelayer *Relayer4Ethereum) NewAccount(passphrase string) (privateKeystr, addr string, err error) {
-	var privateKey *ecdsa.PrivateKey
-	privateKey, privateKeystr, addr, err = newKeyAndStore(ethRelayer.db, crand.Reader, passphrase)
+	_, privateKeystr, addr, err = newKeyAndStore(ethRelayer.db, crand.Reader, passphrase)
 	if err != nil {
 		return "", "", err
 	}
-	ethRelayer.SetPrivateKey4Ethereum(privateKey)
 	return
 }
 
 func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, addr string, err error) {
-	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
+	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil != err {
 		return "", "", err
 	}
-	ethAccount := &x2ethTypes.Account4Relayer{}
-	if err := chain33Types.Decode(accountInfo, ethAccount); nil != err {
+	Chain33Account := &x2ethTypes.Account4Relayer{}
+	if err := chain33Types.Decode(accountInfo, Chain33Account); nil != err {
 		return "", "", err
 	}
-	decryptered := wcom.CBCDecrypterPrivkey([]byte(passphrase), ethAccount.Privkey)
+	decryptered := wcom.CBCDecrypterPrivkey([]byte(passphrase), Chain33Account.Privkey)
 	privateKey = chain33Common.ToHex(decryptered)
-	addr = ethAccount.Addr
+	addr = Chain33Account.Addr
 	return
 }
 
 func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.ValidatorAddr4EthRelayer, err error) {
-	var ethAccountAddr string
 	var chain33AccountAddr string
-	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
-	if nil == err {
-		ethAccount := &x2ethTypes.Account4Relayer{}
-		if err := chain33Types.Decode(accountInfo, ethAccount); nil == err {
-			ethAccountAddr = ethAccount.Addr
-		}
-	}
-
-	accountInfo, err = ethRelayer.db.Get(chain33AccountKey)
+	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil == err {
 		ethAccount := &x2ethTypes.Account4Relayer{}
 		if err := chain33Types.Decode(accountInfo, ethAccount); nil == err {
@@ -81,40 +69,22 @@ func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.Va
 		}
 	}
 
-	if 0 == len(chain33AccountAddr) && 0 == len(ethAccountAddr) {
+	if 0 == len(chain33AccountAddr) {
 		return x2ethTypes.ValidatorAddr4EthRelayer{}, x2ethTypes.ErrNoValidatorConfigured
 	}
 
 	validators = x2ethTypes.ValidatorAddr4EthRelayer{
-		EthValidator:     ethAccountAddr,
 		Chain33Validator: chain33AccountAddr,
 	}
 	return
 }
 
 func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err error) {
-	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
+	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil == err {
-		ethAccount := &x2ethTypes.Account4Relayer{}
-		if err := chain33Types.Decode(accountInfo, ethAccount); nil == err {
-			decryptered := wcom.CBCDecrypterPrivkey([]byte(passPhase), ethAccount.Privkey)
-			privateKey, err := crypto.ToECDSA(decryptered)
-			if nil != err {
-				errInfo := fmt.Sprintf("Failed to ToECDSA due to:%s", err.Error())
-				relayerLog.Info("RestorePrivateKeys", "Failed to ToECDSA:", err.Error())
-				return errors.New(errInfo)
-			}
-			ethRelayer.rwLock.Lock()
-			ethRelayer.privateKey4Ethereum = privateKey
-			ethRelayer.rwLock.Unlock()
-		}
-	}
-
-	accountInfo, err = ethRelayer.db.Get(chain33AccountKey)
-	if nil == err {
-		ethAccount := &x2ethTypes.Account4Relayer{}
-		if err := chain33Types.Decode(accountInfo, ethAccount); nil == err {
-			decryptered := wcom.CBCDecrypterPrivkey([]byte(passPhase), ethAccount.Privkey)
+		Chain33Account := &x2ethTypes.Account4Relayer{}
+		if err := chain33Types.Decode(accountInfo, Chain33Account); nil == err {
+			decryptered := wcom.CBCDecrypterPrivkey([]byte(passPhase), Chain33Account.Privkey)
 			var driver secp256k1.Driver
 			priKey, err := driver.PrivKeyFromBytes(decryptered)
 			if nil != err {
@@ -128,7 +98,7 @@ func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err er
 		}
 	}
 
-	if ethRelayer.privateKey4Ethereum != nil && nil != ethRelayer.privateKey4Chain33 {
+	if nil != ethRelayer.privateKey4Chain33 {
 		ethRelayer.unlockchan <- start
 	}
 
@@ -136,20 +106,20 @@ func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err er
 }
 
 func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
-	accountInfo, err := ethRelayer.db.Get(ethAccountKey)
+	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil != err {
 		relayerLog.Info("StoreAccountWithNewPassphase", "pls check account is created already, err", err)
-		return nil
-	}
-	ethAccount := &x2ethTypes.Account4Relayer{}
-	if err := chain33Types.Decode(accountInfo, ethAccount); nil != err {
 		return err
 	}
-	decryptered := wcom.CBCDecrypterPrivkey([]byte(oldPassphrase), ethAccount.Privkey)
+	Chain33Account := &x2ethTypes.Account4Relayer{}
+	if err := chain33Types.Decode(accountInfo, Chain33Account); nil != err {
+		return err
+	}
+	decryptered := wcom.CBCDecrypterPrivkey([]byte(oldPassphrase), Chain33Account.Privkey)
 	encryptered := wcom.CBCEncrypterPrivkey([]byte(newPassphrase), decryptered)
-	ethAccount.Privkey = encryptered
-	encodedInfo := chain33Types.Encode(ethAccount)
-	return ethRelayer.db.SetSync(ethAccountKey, encodedInfo)
+	Chain33Account.Privkey = encryptered
+	encodedInfo := chain33Types.Encode(Chain33Account)
+	return ethRelayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
 func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateKeyStr string) error {
@@ -164,9 +134,7 @@ func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateK
 	}
 
 	ethRelayer.privateKey4Chain33 = priKey
-	if nil != ethRelayer.privateKey4Ethereum {
-		ethRelayer.unlockchan <- start
-	}
+	ethRelayer.unlockchan <- start
 	addr, err := pubKeyToAddress4Bty(priKey.PubKey().Bytes())
 	if nil != err {
 		return err
@@ -179,33 +147,6 @@ func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateK
 	}
 	encodedInfo := chain33Types.Encode(account)
 	return ethRelayer.db.SetSync(chain33AccountKey, encodedInfo)
-}
-
-func (ethRelayer *Relayer4Ethereum) ImportEthValidatorPrivateKey(passphrase, privateKeyStr string) error {
-	privateKeySli, err := chain33Common.FromHex(privateKeyStr)
-	if nil != err {
-		return err
-	}
-	privateKeyECDSA, err := crypto.ToECDSA(privateKeySli)
-	if nil != err {
-		errInfo := fmt.Sprintf("Failed to ToECDSA due to:%s", err.Error())
-		relayerLog.Info("RestorePrivateKeys", "Failed to ToECDSA:", err.Error())
-		return errors.New(errInfo)
-	}
-	ethRelayer.rwLock.Lock()
-	ethRelayer.privateKey4Ethereum = privateKeyECDSA
-	ethRelayer.rwLock.Unlock()
-	if nil != ethRelayer.privateKey4Chain33 {
-		ethRelayer.unlockchan <- start
-	}
-
-	Encryptered := wcom.CBCEncrypterPrivkey([]byte(passphrase), privateKeySli)
-	ethAccount := &x2ethTypes.Account4Relayer{
-		Privkey: Encryptered,
-		Addr:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey).String(),
-	}
-	encodedInfo := chain33Types.Encode(ethAccount)
-	return ethRelayer.db.SetSync(ethAccountKey, encodedInfo)
 }
 
 //checksum: first four bytes of double-SHA256.
@@ -266,8 +207,7 @@ func newKeyAndStore(db dbm.DB, rand io.Reader, passphrase string) (privateKey *e
 		Privkey: Encryptered,
 		Addr:    key.Address.Hex(),
 	}
-	encodedInfo := chain33Types.Encode(ethAccount)
-	_ = db.SetSync(ethAccountKey, encodedInfo)
+	_ = db
 
 	privateKeyStr = chain33Common.ToHex(privateKeyBytes)
 	addr = ethAccount.Addr

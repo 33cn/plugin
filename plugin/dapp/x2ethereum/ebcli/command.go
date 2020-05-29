@@ -20,6 +20,7 @@ func RelayerCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		SetPwdCmd(),
+		ChangePwdCmd(),
 		LockCmd(),
 		UnlockCmd(),
 		Chain33RelayerCmd(),
@@ -41,6 +42,33 @@ func SetPwdCmd() *cobra.Command {
 }
 
 func addSetPwdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("password", "p", "", "password,[8-30]letter and digit")
+	cmd.MarkFlagRequired("password")
+}
+
+func setPwd(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	newPwd, _ := cmd.Flags().GetString("password")
+	params := relayerTypes.ReqSetPasswd{
+		Passphase: newPwd,
+	}
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetPassphase", params, &res)
+	ctx.Run()
+}
+
+// ChangePwdCmd set password
+func ChangePwdCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "change_pwd",
+		Short: "Change password",
+		Run:   changePwd,
+	}
+	addChangePwdFlags(cmd)
+	return cmd
+}
+
+func addChangePwdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("old", "o", "", "old password")
 	cmd.MarkFlagRequired("old")
 
@@ -48,16 +76,16 @@ func addSetPwdFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("new")
 }
 
-func setPwd(cmd *cobra.Command, args []string) {
+func changePwd(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	oldPwd, _ := cmd.Flags().GetString("old")
 	newPwd, _ := cmd.Flags().GetString("new")
-	params := relayerTypes.ReqSetPasswd{
+	params := relayerTypes.ReqChangePasswd{
 		OldPassphase: oldPwd,
 		NewPassphase: newPwd,
 	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetPassphase", params, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ChangePassphase", params, &res)
 	ctx.Run()
 }
 

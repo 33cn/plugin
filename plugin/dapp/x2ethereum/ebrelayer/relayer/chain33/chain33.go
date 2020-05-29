@@ -32,14 +32,14 @@ import (
 var relayerLog = log.New("module", "chain33_relayer")
 
 type Relayer4Chain33 struct {
-	syncTxReceipts       *syncTx.TxReceipts
-	ethBackend           bind.ContractBackend
-	rpcLaddr             string //用户向指定的blockchain节点进行rpc调用
-	fetchHeightPeriodMs  int64
-	db                   dbm.DB
-	lastHeight4Tx        int64 //等待被处理的具有相应的交易回执的高度
-	matDegree            int32 //成熟度         heightSync2App    matDegress   height
-	passphase            string
+	syncTxReceipts      *syncTx.TxReceipts
+	ethBackend          bind.ContractBackend
+	rpcLaddr            string //用户向指定的blockchain节点进行rpc调用
+	fetchHeightPeriodMs int64
+	db                  dbm.DB
+	lastHeight4Tx       int64 //等待被处理的具有相应的交易回执的高度
+	matDegree           int32 //成熟度         heightSync2App    matDegress   height
+	//passphase            string
 	privateKey4Ethereum  *ecdsa.PrivateKey
 	ethSender            ethCommon.Address
 	bridgeRegistryAddr   ethCommon.Address
@@ -49,7 +49,6 @@ type Relayer4Chain33 struct {
 	ctx                  context.Context
 	rwLock               sync.RWMutex
 	unlock               chan int
-	status               int32
 }
 
 // StartChain33Relayer : initializes a relayer which witnesses events on the chain33 network and relays them to Ethereum
@@ -85,30 +84,9 @@ func StartChain33Relayer(ctx context.Context, syncTxConfig *ebTypes.SyncTxConfig
 	return relayer
 }
 
-func (chain33Relayer *Relayer4Chain33) SetPassphase(passphase string) {
-	chain33Relayer.rwLock.Lock()
-	chain33Relayer.passphase = passphase
-	chain33Relayer.rwLock.Unlock()
-}
-
 func (chain33Relayer *Relayer4Chain33) QueryTxhashRelay2Eth() ebTypes.Txhashes {
 	txhashs := utils.QueryTxhashes([]byte(chain33ToEthBurnLockTxHashPrefix), chain33Relayer.db)
 	return ebTypes.Txhashes{Txhash: txhashs}
-}
-
-func (chain33Relayer *Relayer4Chain33) GetRunningStatus() (relayerRunStatus *ebTypes.RelayerRunStatus) {
-	relayerRunStatus = &ebTypes.RelayerRunStatus{}
-	chain33Relayer.rwLock.RLock()
-	relayerRunStatus.Status = chain33Relayer.status
-	chain33Relayer.rwLock.RUnlock()
-	if relayerRunStatus.Status == ebTypes.StatusPending {
-		if nil == chain33Relayer.privateKey4Ethereum {
-			relayerRunStatus.Details = "Ethereum's private key not imported"
-		}
-		return
-	}
-	relayerRunStatus.Details = "Running"
-	return
 }
 
 func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
