@@ -11,11 +11,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/33cn/chain33/blockchain"
 	dbm "github.com/33cn/chain33/common/db"
 	l "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/chain33/blockchain"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	"github.com/rs/cors"
 )
