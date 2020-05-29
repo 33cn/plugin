@@ -349,6 +349,9 @@ function updata_relayer_toml() {
     sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
     sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
 
+    sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${file}"
+    sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
+
     #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
     #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
     #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"

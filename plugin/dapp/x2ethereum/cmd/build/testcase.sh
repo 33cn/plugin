@@ -11,7 +11,7 @@ function x2ethereum() {
     elif [ "${2}" == "config" ]; then
         return
     elif [ "${2}" == "test" ]; then
-        echo "========================== x2Ethereum test =========================="
+        echo "========================== x2ethereum test =========================="
         set +e
         set -x
         AllRelayerMainTest 1

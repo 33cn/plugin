@@ -42,6 +42,7 @@ enableTxQuickIndex=true
 enableReExecLocal=true
 # 使能精简localdb
 enableReduceLocaldb=true
+enablePushSubscribe=false
 
 [p2p]
 # p2p类型

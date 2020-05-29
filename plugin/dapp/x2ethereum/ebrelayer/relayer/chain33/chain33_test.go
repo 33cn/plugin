@@ -200,7 +200,7 @@ func (r *suiteChain33Relayer) deployContracts() {
 }
 
 func (r *suiteChain33Relayer) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
-	var ret = types.ReplySubTxReceipt{IsOk: true}
+	var ret = types.ReplySubscribePush{IsOk: true}
 	var he = types.Header{Height: 10000}
 
 	mockapi := &mocks.QueueProtocolAPI{}
