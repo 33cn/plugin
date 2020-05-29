@@ -464,55 +464,55 @@ function TestETH2Chain33Erc20Kill() {
     # token4erc20 在 chain33 上先有 token,同时 mint
     tokenSymbol="testcc"
     result=$(${CLIA} relayer ethereum token4erc20 -s "${tokenSymbol}")
-    tokenAddr=$(cli_ret "${result}" "token4erc20" ".addr")
+    tokenAddr2=$(cli_ret "${result}" "token4erc20" ".addr")
 
     # 先铸币 1000
-    result=$(${CLIA} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum mint -m 1000 -o "${ethReceiverAddr1}" -t "${tokenAddr2}")
     cli_ret "${result}" "mint"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "1000"
 
     result=$(${CLIA} relayer ethereum bridgeBankAddr)
     bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
 
-    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     kill_ebrelayerC
     kill_ebrelayerD
 
     # lock 100
-    result=$(${CLIA} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33Validator1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33Validator1}" -t "${tokenAddr2}")
     cli_ret "${result}" "lock"
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "900"
 
-    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "100"
 
     # eth 等待 10 个区块
     eth_block_wait $((maturityDegree + 2))
 
-    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr2}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
     start_ebrelayerC
     start_ebrelayerD
 
-    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr2}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "100"
 
     kill_ebrelayerC
     kill_ebrelayerD
 
     # chain33 burn 100
-    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33Validator1}")
+    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr2}" -k "${chain33Validator1}")
     block_wait "${Chain33Cli}" $((maturityDegree + 2))
     check_tx "${Chain33Cli}" "${hash}"
 
-    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
+    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr2}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
     eth_block_wait 2
@@ -520,10 +520,10 @@ function TestETH2Chain33Erc20Kill() {
     start_ebrelayerC
     start_ebrelayerD
 
-    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "100"
 
-    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
+    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr2}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -552,9 +552,9 @@ function AllRelayerMainTest() {
     TestETH2Chain33Erc20
 
     # kill relayer and start relayer
-    #        TestChain33ToEthAssetsKill
-    #        TestETH2Chain33AssetsKill
-    #        TestETH2Chain33Erc20Kill
+            TestChain33ToEthAssetsKill
+            TestETH2Chain33AssetsKill
+            TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

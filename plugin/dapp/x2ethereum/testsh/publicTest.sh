@@ -288,7 +288,8 @@ function check_number() {
         echo -e "${RED}wrong check number parameters${NOC}"
         exit 1
     fi
-    if [[ ${1} != "${2}" ]]; then
+
+    if [ "$(echo "$1 < $2" | bc)" -eq 1 ] || [ "$(echo "$1 > $2" | bc)" -eq 1 ]; then
         echo -e "${RED}error number, expect ${1}, get ${2}${NOC}"
         exit 1
     fi

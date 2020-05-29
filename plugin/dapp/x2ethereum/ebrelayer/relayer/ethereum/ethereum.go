@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"regexp"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -603,6 +604,11 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 }
 
 func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error) {
+	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	if !re.MatchString(addr) {
+		return false, errors.New("this address is not an ethereum address")
+	}
+
 	return ethtxs.IsActiveValidator(common.HexToAddress(addr), ethRelayer.x2EthContracts.Valset)
 }
 
