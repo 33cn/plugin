@@ -2,7 +2,7 @@
 source "./allRelayerTest.sh"
 source "./perf_test.sh"
 
-function x2Ethereum() {
+function x2ethereum() {
     if [ "${2}" == "init" ]; then
         return
     elif [ "${2}" == "config" ]; then
