@@ -12,6 +12,12 @@ PARANAME_GAME="game"
 PARA_COIN_FROZEN="5.0000"
 MainLoopCheckForkHeight="60"
 
+BLSPUB_E5="8920442cf306fccd11e7bde3cfffe183a138a941f471df0818edff5580b3ad7df42850a5cec15e09aef0fdd4489f7c12"
+BLSPUB_KS="a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
+BLSPUB_JR="81307df1fdde8f0e846ed1542c859c1e9daba2553e62e48db0877329c5c63fb86e70b9e2e83263da0eb7fcad275857f8"
+BLSPUB_NL="ad1d9ff67d790581fa3659c1817985eeec7c65206e8a873147cd5b6bfe1356d5cd4ed1089462bd11e51705e100c95a6b"
+BLSPUB_MC="980287e26d4d44f8c57944ffc096f7d98a460c97dadbffaed14ff0de901fa7f8afc59fcb1805a0b031e5eae5601df1c2"
+
 xsedfix=""
 if [ "$(uname)" == "Darwin" ]; then
     xsedfix=".bak"
@@ -496,8 +502,7 @@ function para_cross_transfer_withdraw_for_token() {
 function para_create_nodegroup_gamechain() {
     echo "=========== # game para chain create node group test ============="
     ##apply
-    local KS="0x8293f1e8eab2919910c2d347348d1d344a86e0dd10610ff06211f85c8cd3dfc99d81c36ef0f6ad6ba1db931d1ffbe7321411d80ce76269463301af5cce4128b196e48abced00c536f7be557fd5940ef5a0740c85a871fe81fe940aca9ed329e7"
-    txhash=$(${CLI} --paraName user.p.game. send para nodegroup apply -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -p "$KS" -c 5 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    txhash=$(${CLI} --paraName user.p.game. send para nodegroup apply -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -p "$BLSPUB_KS" -c 5 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI5}" "${txhash}"
     id=$txhash
@@ -654,12 +659,7 @@ function para_create_nodegroup() {
 
     echo "=========== # para chain create node group again ============="
     ##apply
-    local E5="0x9293f1e8eab2919910c2d347348d1d344a86e0dd10610ff06211f85c8cd3dfc99d81c36ef0f6ad6ba1db931d1ffbe7321411d80ce76269463301af5cce4128b196e48abced00c536f7be557fd5940ef5a0740c85a871fe81fe940aca9ed329e7"
-    local KS="0x8293f1e8eab2919910c2d347348d1d344a86e0dd10610ff06211f85c8cd3dfc99d81c36ef0f6ad6ba1db931d1ffbe7321411d80ce76269463301af5cce4128b196e48abced00c536f7be557fd5940ef5a0740c85a871fe81fe940aca9ed329e7"
-    local JR="0x8ed5ba075c27015e2c6da399b42da4cd272d4082b55f05c85d84b1308ec87bdb4aeea70dbef3e754eae99a6be0c0e49512d7e9197712f8538ce3d57c1b2d88e17b37f0e419f55333f6e841261a8d3151552fd7d4fd8e19f4f38a413395aab26e"
-    local NL="0x872e3ac07998deb12045ee48c52a8ba5d2538dc85123866fb330112eb0b805ce23f31bfde3a485cd89fac48eab48560005d12f714ca3786c7f47fe3b5edb1dc7838677c041c89cee4caf9225c1d68346bfcde3365ada0a627fbd77bc72e9b356"
-    local MC="0x87c58bb6cce41842462a0030335bb95948dcfba77e47e2d8ee893c0b2c34ac20d08c9e98a883ef2a6492d0ad808ace9a1730e8bae5d3b0861aaf743449df5de510073e2991c7274cab47f327e48d7eacf300e4b24174dae2e8603d1904b8a015"
-    local blspubs=$E5,$KS,$JR,$NL,$MC
+    local blspubs=$BLSPUB_E5,$BLSPUB_KS,$BLSPUB_JR,$BLSPUB_NL,$BLSPUB_MC
     txhash=$(${PARA_CLI} send para nodegroup apply -a "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY,1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -p "$blspubs" -c 6 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"

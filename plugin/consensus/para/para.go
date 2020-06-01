@@ -7,9 +7,8 @@ package para
 import (
 	"encoding/hex"
 	"fmt"
-	"sync"
-
 	"sort"
+	"sync"
 
 	log "github.com/33cn/chain33/common/log/log15"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/33cn/chain33/types"
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/herumi/bls-eth-go-binary/bls"
 	"github.com/pkg/errors"
 )
 
@@ -210,6 +210,8 @@ func (client *client) SetQueueClient(c queue.Client) {
 
 func (client *client) InitBlock() {
 	var err error
+	//only init once for bls sign
+	bls.Init(bls.BLS12_381)
 
 	client.execAPI = api.New(client.BaseClient.GetAPI(), client.grpcClient)
 	cfg := client.GetAPI().GetConfig()

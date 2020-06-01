@@ -93,7 +93,8 @@ func (c *Jrpc) GetParaCmtTxInfo(in *types.ReqNil, result *interface{}) error {
 
 // GetParaBlsPubKey query para chain bls pubkey
 func (c *channelClient) GetParaBlsPubKey(ctx context.Context, in *types.ReqString) (*pt.BlsPubKey, error) {
-	data, err := c.QueryConsensusFunc("para", "BlsPubKey", in)
+	ins := *in
+	data, err := c.QueryConsensusFunc("para", "BlsPubKey", &ins)
 	if err != nil {
 		return nil, err
 	}

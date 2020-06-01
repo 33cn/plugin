@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/herumi/bls-eth-go-binary/bls"
 )
 
 var (
@@ -32,6 +33,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newParacross, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 	setPrefix()
+	bls.Init(bls.BLS12_381)
 }
 
 func InitExecType() {

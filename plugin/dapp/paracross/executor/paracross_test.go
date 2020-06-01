@@ -6,9 +6,8 @@ package executor
 
 import (
 	"bytes"
-	"testing"
-
 	"strings"
+	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
@@ -21,6 +20,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/herumi/bls-eth-go-binary/bls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -825,4 +825,48 @@ func TestValidParaCrossExec(t *testing.T) {
 	exec = []byte("user.p.para.paracross")
 	valid = types.IsParaExecName(string(exec))
 	assert.Equal(t, true, valid)
+}
+
+func TestVerifyBlsSign(t *testing.T) {
+	bls.Init(bls.BLS12_381)
+
+	status := &pt.ParacrossNodeStatus{}
+	status.Height = 0
+	status.Title = "user.p.para."
+	msg := types.Encode(status)
+	blsInfo := &pt.ParacrossCommitBlsInfo{}
+	commit := &pt.ParacrossCommitAction{Status: status, Bls: blsInfo}
+
+	PriKS := "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	PriJR := "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
+	var priKeyKs bls.SecretKey
+	var prikeyJr bls.SecretKey
+	//set hex 支持有0x前缀的，unserial支持无前缀的
+	priKeyKs.SetHexString(PriKS)
+	prikeyJr.SetHexString(PriJR)
+	signKs := priKeyKs.SignByte(msg)
+	signJr := prikeyJr.SignByte(msg)
+	pubKs := priKeyKs.GetPublicKey()
+	pubJr := prikeyJr.GetPublicKey()
+	var si bls.Sign
+	si.Aggregate([]bls.Sign{*signKs, *signJr})
+	pubs := []bls.PublicKey{*pubKs, *pubJr}
+
+	ret := si.FastAggregateVerify(pubs, msg)
+	assert.Equal(t, true, ret)
+
+	blsInfo.Sign = append(blsInfo.Sign, si.Serialize()...)
+	blsInfo.AddrsMap = []byte{0x3}
+	PubKS := "a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
+	PubJR := "81307df1fdde8f0e846ed1542c859c1e9daba2553e62e48db0877329c5c63fb86e70b9e2e83263da0eb7fcad275857f8"
+	pubKeys := []string{PubJR, PubKS}
+	err := verifyBlsSignPlus(pubKeys, commit)
+	assert.Equal(t, nil, err)
+
+	blsInfo.Sign = signKs.Serialize()
+	blsInfo.AddrsMap = []byte{0x3}
+	pubKeys = []string{PubKS}
+	err = verifyBlsSignPlus(pubKeys, commit)
+	assert.Equal(t, nil, err)
+
 }
