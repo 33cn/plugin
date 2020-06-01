@@ -134,7 +134,7 @@ function run_testcases() {
     chain33_applyCoins "${minerAddr2}" 1000000000 "${MAIN_HTTP}"
 
     pos33_SetAutoMining 0
-    pos33_GetPos33TicketCount
+    # pos33_GetPos33TicketCount
     pos33_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
     pos33_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
