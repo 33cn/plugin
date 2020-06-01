@@ -18,7 +18,7 @@ import (
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/golang/protobuf/proto"
-	"github.com/phoreproject/bls/g2pubs"
+	"github.com/herumi/bls-eth-go-binary/bls"
 	"github.com/pkg/errors"
 )
 
@@ -424,44 +424,45 @@ func (a *action) verifyBlsSign(nodesArry []string, commit *pt.ParacrossCommitAct
 		}
 		pubs = append(pubs, pub)
 	}
-	//单独deserial 5ms, g2pubs的公钥结构不好整合到protobuf，就不好压缩到数据库直接读取
-	pubKeys := make([]*g2pubs.PublicKey, 0)
-	for _, p := range pubs {
-		k := [96]byte{}
-		val, err := common.FromHex(p)
-		if err != nil {
-			return nil, errors.Wrapf(err, "fromhex.p=%s", p)
-		}
-		copy(k[:], val)
-		key, err := g2pubs.DeserializePublicKey(k)
-		if err != nil {
-			return nil, errors.Wrapf(err, "DeserializePublicKey=%s", p)
-		}
-		pubKeys = append(pubKeys, key)
-
-	}
-
-	//2.　聚合公钥 单独耗时200us
-	aPub := g2pubs.AggregatePublicKeys(pubKeys)
-
-	//3.　获取聚合的签名, deserial 5ms
-	signkey := [48]byte{}
-	copy(signkey[:], commit.Bls.Sign)
-	sign, err := g2pubs.DeserializeSignature(signkey)
+	err := verifyBlsSignPlus(pubs, commit)
 	if err != nil {
-		return nil, errors.Wrapf(err, "DeserializeSignature,key=%s", common.ToHex(commit.Bls.Sign))
-	}
-
-	//4. 获取签名前原始msg
-	msg := types.Encode(commit.Status)
-
-	if !g2pubs.Verify(msg, aPub, sign) {
-		clog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
-			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "addr", signAddrs, "nodes", nodesArry)
-		clog.Error("paracross.commit bls sign verify", "data", common.ToHex(msg), "height", commit.Status.Height, "from", a.fromaddr)
-		return nil, pt.ErrBlsSignVerify
+		clog.Error("paracross.Commit bls sign verify", "addr", signAddrs, "nodes", nodesArry, "from", a.fromaddr)
+		return nil, err
 	}
 	return signAddrs, nil
+}
+
+func verifyBlsSignPlus(pubs []string, commit *pt.ParacrossCommitAction) error {
+	t1 := types.Now()
+	//单独deserial 90us, g2pubs的公钥结构不好整合到protobuf，就不好压缩到数据库直接读取
+	pubKeys := make([]bls.PublicKey, 0)
+	for _, p := range pubs {
+
+		var pub bls.PublicKey
+		err := pub.DeserializeHexStr(p)
+		if err != nil {
+			return errors.Wrapf(err, "DeserializePublicKey=%s", p)
+		}
+		pubKeys = append(pubKeys, pub)
+
+	}
+
+	//3.　获取聚合的签名, deserial 300us
+	var sign bls.Sign
+	err := sign.Deserialize(commit.Bls.Sign)
+	if err != nil {
+		return errors.Wrapf(err, "DeserializeSignature,key=%s", common.ToHex(commit.Bls.Sign))
+	}
+	//4. 获取签名前原始msg
+	msg := types.Encode(commit.Status)
+	//verify 1ms, total 2ms
+	if !sign.FastAggregateVerify(pubKeys, msg) {
+		clog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
+			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "data", common.ToHex(msg))
+		return pt.ErrBlsSignVerify
+	}
+	clog.Info("paracross verifyBlsSign success", "title", commit.Status.Title, "height", commit.Status.Height, "time", types.Since(t1))
+	return nil
 }
 
 //共识commit　msg　处理

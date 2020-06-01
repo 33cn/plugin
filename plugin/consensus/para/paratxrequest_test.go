@@ -26,7 +26,7 @@ import (
 
 func init() {
 	//types.Init("user.p.para.", nil)
-	log.SetLogLevel("error")
+	log.SetLogLevel("info")
 }
 
 func getPrivKey(t *testing.T) crypto.PrivKey {
