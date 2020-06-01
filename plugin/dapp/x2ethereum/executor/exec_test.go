@@ -91,8 +91,8 @@ func (x *suiteX2Ethereum) Test_1_SetConsensus() {
 	msg, err := x.x2eth.Query_GetConsensusThreshold(&types2.QueryConsensusThresholdParams{})
 	x.NoError(err)
 
-	reply := msg.(*types2.ReceiptSetConsensusThreshold)
-	x.Equal(reply.NowConsensusThreshold, int64(80))
+	reply := msg.(*types2.ReceiptQueryConsensusThreshold)
+	x.Equal(reply.ConsensusThreshold, int64(80))
 }
 
 func (x *suiteX2Ethereum) Test_2_AddValidator() {
