@@ -135,16 +135,16 @@ function run_testcases() {
 
     pos33_SetAutoMining 0
     # pos33_GetPos33TicketCount
-    pos33_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
-    pos33_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
-    #购票
-    pos33_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
-    pos33_MinerAddress "${returnAddr2}" "${minerAddr2}"
-    pos33_MinerSourceList "${minerAddr2}" "${returnAddr2}"
-    #关闭
-    pos33_ClosePos33Tickets "${minerAddr1}"
+    # pos33_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
+    # pos33_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
+    # #购票
+    # pos33_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
+    # pos33_MinerAddress "${returnAddr2}" "${minerAddr2}"
+    # pos33_MinerSourceList "${minerAddr2}" "${returnAddr2}"
+    # #关闭
+    # pos33_ClosePos33Tickets "${minerAddr1}"
 
-    chain33_LastBlockhash "${MAIN_HTTP}"
+    # chain33_LastBlockhash "${MAIN_HTTP}"
     # pos33_RandNumHash "${LAST_BLOCK_HASH}" 5
 }
 
