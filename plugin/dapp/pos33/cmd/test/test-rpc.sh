@@ -157,6 +157,7 @@ function main() {
     if [[ $ispara == true ]]; then
         echo "***skip ticket test on parachain***"
     else
+        echo "***skip ticket test on pos33 ***"
         # run_testcases
     fi
 
