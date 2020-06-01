@@ -3,11 +3,12 @@ package ethereum
 import (
 	"context"
 	"flag"
-	"github.com/stretchr/testify/assert"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
