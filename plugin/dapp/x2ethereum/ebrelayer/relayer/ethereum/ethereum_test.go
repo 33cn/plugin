@@ -4,6 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math/big"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
@@ -18,10 +23,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
-	"math/big"
-	"os"
-	"testing"
-	"time"
 
 	dbm "github.com/33cn/chain33/common/db"
 
