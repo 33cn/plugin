@@ -97,7 +97,7 @@ func (policy *ticketPolicy) IsTicketLocked() bool {
 	return atomic.LoadInt32(&policy.isTicketLocked) != 0
 }
 
-// PolicyName return policy name
+// PolicyName Policy Name
 func (policy *ticketPolicy) PolicyName() string {
 	return ty.TicketX
 }
