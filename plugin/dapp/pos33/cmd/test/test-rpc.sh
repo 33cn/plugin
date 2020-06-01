@@ -11,13 +11,13 @@ source ../dapp-test-common.sh
 ticketId=""
 price=$((10000 * 100000000))
 
-ticket_CreateBindMiner() {
+pos33_CreateBindMiner() {
     #创建交易
     minerAddr=$1
     returnAddr=$2
     returnPriv=$3
     amount=$4
-    resp=$(curl -ksd '{"method":"ticket.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"method":"pos33.CreateBindMiner","params":[{"bindAddr":"'"$minerAddr"'", "originAddr":"'"$returnAddr"'", "amount":'"$amount"', "checkBalance":true}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(echo "${resp}" | jq -r ".error")
     [[ $ok == null ]]
     rst=$?
@@ -27,37 +27,37 @@ ticket_CreateBindMiner() {
     chain33_SignRawTx "${rawTx}" "${returnPriv}" ${MAIN_HTTP}
 }
 
-ticket_SetAutoMining() {
+pos33_SetAutoMining() {
     flag=$1
-    resp=$(curl -ksd '{"method":"ticket.SetAutoMining","params":[{"flag":'"$flag"'}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"method":"pos33.SetAutoMining","params":[{"flag":'"$flag"'}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.isOK == true)' <<<"$resp")
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_GetPos33TicketCount() {
-    resp=$(curl -ksd '{"method":"ticket.GetPos33TicketCount","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+pos33_GetPos33TicketCount() {
+    resp=$(curl -ksd '{"method":"pos33.GetPos33TicketCount","params":[{}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result > 0)' <<<"$resp")
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_ClosePos33Tickets() {
+pos33_ClosePos33Tickets() {
     addr=$1
-    resp=$(curl -ksd '{"method":"ticket.ClosePos33Tickets","params":[{"minerAddress":"'"$addr"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+    resp=$(curl -ksd '{"method":"pos33.ClosePos33Tickets","params":[{"minerAddress":"'"$addr"'"}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not)' <<<"$resp")
     [[ $ok == true ]]
     rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_Pos33TicketInfos() {
+pos33_Pos33TicketInfos() {
     tid=$1
     minerAddr=$2
     returnAddr=$3
-    execer="ticket"
+    execer="pos33"
     funcName="Pos33TicketInfos"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"ticketIds":["'"$tid"'"]}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'")' <<<"$resp")
@@ -66,11 +66,11 @@ ticket_Pos33TicketInfos() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_Pos33TicketList() {
+pos33_Pos33TicketList() {
     minerAddr=$1
     returnAddr=$2
     status=$3
-    execer="ticket"
+    execer="pos33"
     funcName="Pos33TicketList"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"addr":"'"$minerAddr"'", "status":'"$status"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')' <<<"$resp")
@@ -84,10 +84,10 @@ ticket_Pos33TicketList() {
     echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
-ticket_MinerAddress() {
+pos33_MinerAddress() {
     returnAddr=$1
     minerAddr=$2
-    execer="ticket"
+    execer="pos33"
     funcName="MinerAddress"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"data":"'"$returnAddr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.data == "'"$minerAddr"'")' <<<"$resp")
@@ -96,10 +96,10 @@ ticket_MinerAddress() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_MinerSourceList() {
+pos33_MinerSourceList() {
     minerAddr=$1
     returnAddr=$2
-    execer="ticket"
+    execer="pos33"
     funcName="MinerSourceList"
     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"data":"'"$minerAddr"'"}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
     ok=$(jq '(.error|not) and (.result.datas | length > 0) and (.result.datas[0] == "'"$returnAddr"'")' <<<"$resp")
@@ -108,17 +108,17 @@ ticket_MinerSourceList() {
     echo_rst "$FUNCNAME" "$rst"
 }
 
-ticket_RandNumHash() {
-    hash=$1
-    blockNum=$2
-    execer="ticket"
-    funcName="RandNumHash"
-    resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"hash":"'"$hash"'", "blockNum":'"$blockNum"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
-    ok=$(jq '(.error|not) and (.result.hash != "")' <<<"$resp")
-    [[ $ok == true ]]
-    rst=$?
-    echo_rst "$FUNCNAME" "$rst"
-}
+# pos33_RandNumHash() {
+#     hash=$1
+#     blockNum=$2
+#     execer="pos33"
+#     funcName="RandNumHash"
+#     resp=$(curl -ksd '{"method":"Chain33.Query","params":[{"execer":"'"$execer"'","funcName":"'"$funcName"'","payload":{"hash":"'"$hash"'", "blockNum":'"$blockNum"'}}]}' -H 'content-type:text/plain;' ${MAIN_HTTP})
+#     ok=$(jq '(.error|not) and (.result.hash != "")' <<<"$resp")
+#     [[ $ok == true ]]
+#     rst=$?
+#     echo_rst "$FUNCNAME" "$rst"
+# }
 
 function run_testcases() {
     #账户地址
@@ -133,19 +133,19 @@ function run_testcases() {
     chain33_QueryBalance "${returnAddr2}" "${MAIN_HTTP}"
     chain33_applyCoins "${minerAddr2}" 1000000000 "${MAIN_HTTP}"
 
-    ticket_SetAutoMining 0
-    ticket_GetPos33TicketCount
-    ticket_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
-    ticket_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
+    pos33_SetAutoMining 0
+    pos33_GetPos33TicketCount
+    pos33_Pos33TicketList "${minerAddr1}" "${returnAddr1}" 1
+    pos33_Pos33TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
-    ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
-    ticket_MinerAddress "${returnAddr2}" "${minerAddr2}"
-    ticket_MinerSourceList "${minerAddr2}" "${returnAddr2}"
+    pos33_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
+    pos33_MinerAddress "${returnAddr2}" "${minerAddr2}"
+    pos33_MinerSourceList "${minerAddr2}" "${returnAddr2}"
     #关闭
-    ticket_ClosePos33Tickets "${minerAddr1}"
+    pos33_ClosePos33Tickets "${minerAddr1}"
 
     chain33_LastBlockhash "${MAIN_HTTP}"
-    ticket_RandNumHash "${LAST_BLOCK_HASH}" 5
+    # pos33_RandNumHash "${LAST_BLOCK_HASH}" 5
 }
 
 function main() {
