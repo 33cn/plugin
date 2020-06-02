@@ -30,12 +30,6 @@ const (
 	paraBlsSignTopic = "PARA-BLS-SIGN-TOPIC"
 )
 
-//新增需要保证顺序
-const (
-	P2pSubCommitTx      = 1
-	P2pSubLeaderSyncMsg = 2
-)
-
 type blsClient struct {
 	paraClient      *client
 	selfID          string

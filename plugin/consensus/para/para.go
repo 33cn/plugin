@@ -27,7 +27,6 @@ import (
 	paracross "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/herumi/bls-eth-go-binary/bls"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -352,43 +351,6 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 	}
 
 	return false
-}
-
-func (client *client) sendP2PMsg(ty int64, data interface{}) ([]byte, error) {
-	msg := client.GetQueueClient().NewMessage("p2p", ty, data)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		return nil, errors.Wrapf(err, "ty=%d", ty)
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		return nil, errors.Wrapf(err, "wait ty=%d", ty)
-	}
-
-	if resp.GetData().(*types.Reply).IsOk {
-		return resp.GetData().(*types.Reply).Msg, nil
-	}
-	return nil, errors.Wrapf(types.ErrInvalidParam, "resp msg=%s", string(resp.GetData().(*types.Reply).GetMsg()))
-}
-
-// p2p订阅消息
-func (client *client) SendPubP2PMsg(topic string, msg []byte) error {
-	data := &types.PublishTopicMsg{Topic: topic, Msg: msg}
-	_, err := client.sendP2PMsg(types.EventPubTopicMsg, data)
-	return err
-}
-
-func (client *client) SendSubP2PTopic(topic string) error {
-	data := &types.SubTopic{Topic: topic, Module: "consensus"}
-	_, err := client.sendP2PMsg(types.EventSubTopic, data)
-	return err
-}
-
-func (client *client) SendRmvP2PTopic(topic string) error {
-	data := &types.RemoveTopic{Topic: topic, Module: "consensus"}
-	_, err := client.sendP2PMsg(types.EventRemoveTopic, data)
-	return err
-
 }
 
 func (client *client) isCaughtUp() bool {
