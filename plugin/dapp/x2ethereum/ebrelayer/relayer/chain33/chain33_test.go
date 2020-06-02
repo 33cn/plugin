@@ -175,9 +175,22 @@ func (r *suiteChain33Relayer) newChain33Relayer() *Relayer4Chain33 {
 }
 
 func (r *suiteChain33Relayer) deployContracts() {
+	// 0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a
+	var deployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
+	// 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
+	var ethValidatorAddrKeyA = "3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
+	var ethValidatorAddrKeyB = "a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
+	var ethValidatorAddrKeyC = "bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
+	var ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
+	ethValidatorAddrKeys := make([]string, 0)
+	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
+	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
+	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyC)
+	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyD)
+
 	ctx := context.Background()
 	var backend bind.ContractBackend
-	backend, r.para = setup.PrepareTestEnvironment()
+	backend, r.para = setup.PrepareTestEnvironment(deployerPrivateKey, ethValidatorAddrKeys)
 	r.sim = backend.(*backends.SimulatedBackend)
 
 	balance, _ := r.sim.BalanceAt(ctx, r.para.Deployer, nil)
@@ -206,7 +219,7 @@ func (r *suiteChain33Relayer) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
 	mockapi := &mocks.QueueProtocolAPI{}
 	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
 	mockapi.On("Close").Return()
-	mockapi.On("AddSubscribeTxReceipt", mock.Anything).Return(&ret, nil)
+	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
 	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
 	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 

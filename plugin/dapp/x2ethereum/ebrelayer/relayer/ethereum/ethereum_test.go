@@ -8,12 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
+	_ "github.com/33cn/chain33/system"
+	chain33Types "github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum"
@@ -29,6 +33,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -40,6 +46,7 @@ var (
 	testEthKey, _        = crypto.HexToECDSA("8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230")
 	testEthAddr          = crypto.PubkeyToAddress(testEthKey.PublicKey)
 	testBalance          = big.NewInt(2e18)
+	chainTestCfg         = chain33Types.NewChain33Config(chain33Types.GetDefaultCfgstring())
 )
 
 type suiteEthRelayer struct {
@@ -87,16 +94,18 @@ func (r *suiteEthRelayer) Test_1_ImportPrivateKey() {
 	r.Equal(validators.Chain33Validator, chain33AccountAddr)
 }
 
-func (r *suiteEthRelayer) Test_2_RestorePrivateKeys() {
+func (r *suiteEthRelayer) Test_3_RestorePrivateKeys() {
 	// 错误的密码 也不报错
 	err := r.ethRelayer.RestorePrivateKeys(passphrase)
 	r.NoError(err)
 
 	err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
 	r.NoError(err)
+
+	time.Sleep(1 * time.Second)
 }
 
-func (r *suiteEthRelayer) Test_3_LockEth() {
+func (r *suiteEthRelayer) Test_2_LockEth() {
 	ctx := context.Background()
 	bridgeBankBalance, err := r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
 	r.NoError(err)
@@ -117,6 +126,8 @@ func (r *suiteEthRelayer) Test_3_LockEth() {
 	r.NoError(err)
 	r.Equal(bridgeBankBalance.Int64(), ethAmount.Int64())
 
+	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{r.ethRelayer.bridgeBankAddr},
 	}
@@ -124,13 +135,97 @@ func (r *suiteEthRelayer) Test_3_LockEth() {
 	r.NoError(err)
 
 	for _, logv := range logs {
-		if err := r.ethRelayer.setEthTxEvent(logv); nil != err {
-			r.NoError(err)
-		}
+		//err := r.ethRelayer.setEthTxEvent(logv)
+		//r.NoError(err)
+		r.ethRelayer.storeBridgeBankLogs(logv, true)
 	}
 
 	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	time.Sleep(10 * time.Second)
+	//time.Sleep(time.Second * 5)
+}
+
+func (r *suiteEthRelayer) Test_4_handleLogLockEvent() {
+	var tx chain33Types.Transaction
+	var ret chain33Types.Reply
+	ret.IsOk = true
+
+	mockapi := &mocks.QueueProtocolAPI{}
+	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
+	mockapi.On("Close").Return()
+	mockapi.On("CreateTransaction", mock.Anything).Return(&tx, nil)
+	mockapi.On("SendTx", mock.Anything).Return(&ret, nil)
+	mockapi.On("SendTransaction", mock.Anything).Return(&ret, nil)
+	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+
+	mock33 := testnode.New("", mockapi)
+	defer mock33.Close()
+	rpcCfg := mock33.GetCfg().RPC
+	// 这里必须设置监听端口，默认的是无效值
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
+	mock33.GetRPC().Listen()
+
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{r.ethRelayer.bridgeBankAddr},
+	}
+	logs, err := r.sim.FilterLogs(context.Background(), query)
+	r.NoError(err)
+
+	for _, logv := range logs {
+		eventName := events.LogLock.String()
+		err := r.ethRelayer.handleLogLockEvent(r.ethRelayer.clientChainID, r.ethRelayer.bridgeBankAbi, eventName, logv)
+		r.NoError(err)
+	}
+}
+
+func (r *suiteEthRelayer) Test_5_Show() {
+
+	addr, err := r.ethRelayer.ShowBridgeBankAddr()
+	r.NoError(err)
+	r.Equal(addr, r.x2EthDeployInfo.BridgeBank.Address.String())
+
+	addr, err = r.ethRelayer.ShowBridgeRegistryAddr()
+	r.NoError(err)
+	r.Equal(addr, r.x2EthDeployInfo.BridgeRegistry.Address.String())
+
+	balance, err := r.ethRelayer.GetBalance("", testEthAddr.String())
+	r.NoError(err)
+	r.Equal(balance, "2000000000000000000")
+
+	_, err = r.ethRelayer.GetBalance("0x0000000000000000000000000000000000000000", testEthAddr.String())
+	r.Error(err)
+
+	balance, err = r.ethRelayer.ShowLockStatics("")
+	r.NoError(err)
+	r.Equal(balance, "50")
+
+	_, err = r.ethRelayer.ShowDepositStatics("")
+	r.Error(err)
+
+	_, err = r.ethRelayer.ShowTokenAddrBySymbol("bty")
+	r.Error(err)
+
+	claimID := crypto.Keccak256Hash(big.NewInt(50).Bytes())
+	ret, err := r.ethRelayer.IsProphecyPending(claimID)
+	r.NoError(err)
+	r.Equal(ret, false)
+
+	//addr, err = r.ethRelayer.CreateBridgeToken("bty")
+	//r.NoError(err)
+
+	//tokenAddr, err := r.ethRelayer.CreateERC20Token("testc")
+	//r.Error(err)
+
+	//addr, err = r.ethRelayer.MintERC20Token(tokenAddr, r.ethRelayer.ethValidator.String(), "20000000000000")
+	//r.Error(err)
+
+	_, err = r.ethRelayer.ShowOperator()
+	r.Error(err)
+
+	tx1 := r.ethRelayer.QueryTxhashRelay2Eth()
+	r.Empty(tx1)
+
+	tx2 := r.ethRelayer.QueryTxhashRelay2Chain33()
+	r.Empty(tx2)
 }
 
 func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
@@ -140,6 +235,7 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 	cfg.SyncTxConfig.PushBind = "127.0.0.1:60000"
 	cfg.SyncTxConfig.FetchHeightPeriodMs = 50
 	cfg.SyncTxConfig.Dbdriver = "memdb"
+	cfg.SyncTxConfig.DbPath = "datadirEth"
 
 	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
 
@@ -149,9 +245,26 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 		unlockchan:          make(chan int, 2),
 		rpcURL2Chain33:      cfg.SyncTxConfig.Chain33Host,
 		bridgeRegistryAddr:  r.x2EthDeployInfo.BridgeRegistry.Address,
-		deployInfo:          cfg.Deploy,
 		maturityDegree:      cfg.EthMaturityDegree,
 		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
+	}
+
+	relayer.deployInfo = &ebTypes.Deploy{}
+	//relayer.deployInfo.DeployerPrivateKey = "0x9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
+	//relayer.deployInfo.OperatorAddr = "0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF"
+	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0xA4Ea64a583F6e51C3799335b28a8F0529570A635")
+	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e")
+	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0x9cBA1fF8D0b0c9Bc95d5762533F8CddBE795f687")
+	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0xdb15E7327aDc83F2878624bBD6307f5Af1B477b4")
+	//InitPowers := []int64{int64(80), int64(10), int64(10), int64(10)}
+	//relayer.deployInfo.InitPowers = InitPowers
+	relayer.deployInfo.DeployerPrivateKey = common.ToHex(crypto.FromECDSA(r.para.DeployPrivateKey))
+	relayer.deployInfo.OperatorAddr = r.para.Operator.String()
+	for _, v := range r.para.InitValidators {
+		relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, v.String())
+	}
+	for _, v := range r.para.InitPowers {
+		relayer.deployInfo.InitPowers = append(relayer.deployInfo.InitPowers, v.Int64())
 	}
 
 	registrAddrInDB, err := relayer.getBridgeRegistryAddr()
@@ -172,7 +285,7 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 }
 
 func (r *suiteEthRelayer) proc() {
-	backend, _ := newTestBackend(r.T())
+	backend, _ := r.newTestBackend()
 	client, _ := backend.Attach()
 	defer backend.Stop()
 	defer client.Close()
@@ -226,8 +339,20 @@ latter:
 }
 
 func (r *suiteEthRelayer) deployContracts() {
+	//// 0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF
+	//var deployerPrivateKey = "9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
+	//// 0xA4Ea64a583F6e51C3799335b28a8F0529570A635
+	//var ethValidatorAddrKeyA = "355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
+	//var ethValidatorAddrKeyB = "62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
+	//var ethValidatorAddrKeyC = "4ae589fe3837dcfc90d1c85b8423dc30841525cbebc41dfb537868b0f8376bbf"
+	//var ethValidatorAddrKeyD = "1385016736f7379884763f4a39811d1391fa156a7ca017be6afffa52bb327695"
+	//ethValidatorAddrKeys := make([]string, 0)
+	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
+	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
+	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyC)
+	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyD)
+
 	ctx := context.Background()
-	//var backend bind.ContractBackend
 	r.backend, r.para = setup.PrepareTestEnv()
 	r.sim = r.backend.(*backends.SimulatedBackend)
 
@@ -256,9 +381,9 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 	return &cfg
 }
 
-func newTestBackend(t *testing.T) (*node.Node, []*types.Block) {
+func (r *suiteEthRelayer) newTestBackend() (*node.Node, []*types.Block) {
 	// Generate test chain.
-	genesis, blocks := generateTestChain()
+	genesis, blocks := r.generateTestChain()
 
 	// Start Ethereum service.
 	var ethservice *eth.Ethereum
@@ -269,24 +394,31 @@ func newTestBackend(t *testing.T) (*node.Node, []*types.Block) {
 		ethservice, err = eth.New(ctx, config)
 		return ethservice, err
 	})
-	assert.NoError(t, err)
+	assert.NoError(r.T(), err)
 
 	// Import the test chain.
 	if err := n.Start(); err != nil {
-		t.Fatalf("can't start test node: %v", err)
+		r.T().Fatalf("can't start test node: %v", err)
 	}
 	if _, err := ethservice.BlockChain().InsertChain(blocks[1:]); err != nil {
-		t.Fatalf("can't import test blocks: %v", err)
+		r.T().Fatalf("can't import test blocks: %v", err)
 	}
 	return n, blocks
 }
 
-func generateTestChain() (*core.Genesis, []*types.Block) {
+func (r *suiteEthRelayer) generateTestChain() (*core.Genesis, []*types.Block) {
 	db := rawdb.NewMemoryDatabase()
 	config := params.AllEthashProtocolChanges
+	alloc := make(core.GenesisAlloc)
+	alloc[testEthAddr] = core.GenesisAccount{Balance: testBalance}
+	alloc[r.para.Operator] = core.GenesisAccount{Balance: testBalance}
+	for _, v := range r.para.InitValidators {
+		alloc[v] = core.GenesisAccount{Balance: testBalance}
+	}
 	genesis := &core.Genesis{
-		Config:    config,
-		Alloc:     core.GenesisAlloc{testEthAddr: {Balance: testBalance}},
+		Config: config,
+		//Alloc:     core.GenesisAlloc{testEthAddr: {Balance: testBalance}},
+		Alloc:     alloc,
 		ExtraData: []byte("test genesis"),
 		Timestamp: 9000,
 	}
@@ -296,7 +428,7 @@ func generateTestChain() (*core.Genesis, []*types.Block) {
 	}
 	gblock := genesis.ToBlock(db)
 	engine := ethash.NewFaker()
-	blocks, _ := core.GenerateChain(config, gblock, engine, db, 50, generate)
+	blocks, _ := core.GenerateChain(config, gblock, engine, db, 20, generate)
 	blocks = append([]*types.Block{gblock}, blocks...)
 	return genesis, blocks
 }
