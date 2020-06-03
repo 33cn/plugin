@@ -11,15 +11,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	chain33Types "github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	relayerTx "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 	syncTx "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/relayer/chain33/transceiver/sync"
@@ -33,7 +31,7 @@ var relayerLog = log.New("module", "chain33_relayer")
 
 type Relayer4Chain33 struct {
 	syncTxReceipts      *syncTx.TxReceipts
-	ethBackend          bind.ContractBackend
+	ethClient           ethinterface.EthClientSpec
 	rpcLaddr            string //用户向指定的blockchain节点进行rpc调用
 	fetchHeightPeriodMs int64
 	db                  dbm.DB
@@ -53,7 +51,7 @@ type Relayer4Chain33 struct {
 
 // StartChain33Relayer : initializes a relayer which witnesses events on the chain33 network and relays them to Ethereum
 func StartChain33Relayer(ctx context.Context, syncTxConfig *ebTypes.SyncTxConfig, registryAddr, provider string, db dbm.DB) *Relayer4Chain33 {
-	relayer := &Relayer4Chain33{
+	chian33Relayer := &Relayer4Chain33{
 		rpcLaddr:            syncTxConfig.Chain33Host,
 		fetchHeightPeriodMs: syncTxConfig.FetchHeightPeriodMs,
 		unlock:              make(chan int),
@@ -76,12 +74,12 @@ func StartChain33Relayer(ctx context.Context, syncTxConfig *ebTypes.SyncTxConfig
 	if err != nil {
 		panic(err)
 	}
-	relayer.ethBackend = client
-	relayer.totalTx4Chain33ToEth = relayer.getTotalTxAmount2Eth()
-	relayer.statusCheckedIndex = relayer.getStatusCheckedIndex()
+	chian33Relayer.ethClient = client
+	chian33Relayer.totalTx4Chain33ToEth = chian33Relayer.getTotalTxAmount2Eth()
+	chian33Relayer.statusCheckedIndex = chian33Relayer.getStatusCheckedIndex()
 
-	go relayer.syncProc(syncCfg)
-	return relayer
+	go chian33Relayer.syncProc(syncCfg)
+	return chian33Relayer
 }
 
 func (chain33Relayer *Relayer4Chain33) QueryTxhashRelay2Eth() ebTypes.Txhashes {
@@ -97,7 +95,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptCo
 	chain33Relayer.syncTxReceipts = syncTx.StartSyncTxReceipt(syncCfg, chain33Relayer.db)
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 
-	oracleInstance, err := relayerTx.RecoverOracleInstance(chain33Relayer.ethBackend, chain33Relayer.bridgeRegistryAddr, chain33Relayer.bridgeRegistryAddr)
+	oracleInstance, err := relayerTx.RecoverOracleInstance(chain33Relayer.ethClient, chain33Relayer.bridgeRegistryAddr, chain33Relayer.bridgeRegistryAddr)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -137,7 +135,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 			relayerLog.Error("onNewHeightProc", "getEthTxhash for index ", index, "error", err.Error())
 			break
 		}
-		status := relayerTx.GetEthTxStatus(chain33Relayer.ethBackend.(*ethclient.Client), txhash)
+		status := relayerTx.GetEthTxStatus(chain33Relayer.ethClient, txhash)
 		//按照提交交易的先后顺序检查交易，只要出现当前交易还在pending状态，就不再检查后续交易，等到下个区块再从该交易进行检查
 		//TODO:可能会由于网络和打包挖矿的原因，使得交易执行顺序和提交顺序有差别，后续完善该检查逻辑
 		if status == relayerTx.EthTxPending.String() {
@@ -221,7 +219,7 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockMsg(claimEvent events.Event
 	prophecyClaim := relayerTx.Chain33MsgToProphecyClaim(*chain33Msg)
 
 	// Relay the Chain33Msg to the Ethereum network
-	txhash, err := relayerTx.RelayOracleClaimToEthereum(chain33Relayer.oracleInstance, chain33Relayer.ethBackend, chain33Relayer.ethSender, claimEvent, prophecyClaim, chain33Relayer.privateKey4Ethereum, chain33TxHash)
+	txhash, err := relayerTx.RelayOracleClaimToEthereum(chain33Relayer.oracleInstance, chain33Relayer.ethClient, chain33Relayer.ethSender, claimEvent, prophecyClaim, chain33Relayer.privateKey4Ethereum, chain33TxHash)
 	if nil != err {
 		return err
 	}

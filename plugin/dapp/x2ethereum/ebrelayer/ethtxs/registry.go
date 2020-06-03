@@ -4,12 +4,11 @@ import (
 	"context"
 	"log"
 
+	bridgeRegistry "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
+	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	bridgeRegistry "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
-	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 )
 
 // ContractRegistry :
@@ -32,8 +31,8 @@ func (d ContractRegistry) String() string {
 }
 
 // GetAddressFromBridgeRegistry : utility method which queries the requested contract address from the BridgeRegistry
-func GetAddressFromBridgeRegistry(backend bind.ContractBackend, sender, registry common.Address, target ContractRegistry) (address *common.Address, err error) {
-	header, err := backend.(*ethclient.Client).HeaderByNumber(context.Background(), nil)
+func GetAddressFromBridgeRegistry(client ethinterface.EthClientSpec, sender, registry common.Address, target ContractRegistry) (address *common.Address, err error) {
+	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		txslog.Error("GetAddressFromBridgeRegistry", "Failed to get HeaderByNumber due to:", err.Error())
 		return nil, err
@@ -48,7 +47,7 @@ func GetAddressFromBridgeRegistry(backend bind.ContractBackend, sender, registry
 	}
 
 	// Initialize BridgeRegistry instance
-	registryInstance, err := bridgeRegistry.NewBridgeRegistry(registry, backend)
+	registryInstance, err := bridgeRegistry.NewBridgeRegistry(registry, client)
 	if err != nil {
 		txslog.Error("GetAddressFromBridgeRegistry", "Failed to NewBridgeRegistry to:", err.Error())
 		return nil, err
@@ -86,7 +85,7 @@ func GetAddressFromBridgeRegistry(backend bind.ContractBackend, sender, registry
 }
 
 // GetDeployHeight : 获取合约部署高度
-func GetDeployHeight(client *ethclient.Client, sender, registry common.Address) (height int64, err error) {
+func GetDeployHeight(client ethinterface.EthClientSpec, sender, registry common.Address) (height int64, err error) {
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		txslog.Error("GetAddressFromBridgeRegistry", "Failed to get HeaderByNumber due to:", err.Error())

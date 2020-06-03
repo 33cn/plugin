@@ -3,14 +3,13 @@ package ethtxs
 import (
 	"context"
 	"errors"
-
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func GetOperator(client *ethclient.Client, sender, bridgeBank common.Address) (common.Address, error) {
+func GetOperator(client ethinterface.EthClientSpec, sender, bridgeBank common.Address) (common.Address, error) {
 	header, err := client.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		txslog.Error("GetOperator", "Failed to get HeaderByNumber due to:", err.Error())
@@ -68,7 +67,7 @@ func IsProphecyPending(claimID [32]byte, validator common.Address, chain33Bridge
 	return active, nil
 }
 
-func GetBalance(client *ethclient.Client, tokenAddr, owner string) (string, error) {
+func GetBalance(client ethinterface.EthClientSpec, tokenAddr, owner string) (string, error) {
 	//查询ERC20余额
 	if tokenAddr != "" {
 		bridgeToken, err := generated.NewBridgeToken(common.HexToAddress(tokenAddr), client)
@@ -113,13 +112,13 @@ func GetLockedFunds(bridgeBank *generated.BridgeBank, tokenAddrStr string) (stri
 	return balance.String(), nil
 }
 
-func GetDepositFunds(backend bind.ContractBackend, tokenAddrStr string) (string, error) {
+func GetDepositFunds(client ethinterface.EthClientSpec, tokenAddrStr string) (string, error) {
 	if tokenAddrStr == "" {
 		return "", errors.New("nil token address")
 	}
 
 	tokenAddr := common.HexToAddress(tokenAddrStr)
-	bridgeToken, err := generated.NewBridgeToken(tokenAddr, backend)
+	bridgeToken, err := generated.NewBridgeToken(tokenAddr, client)
 	if nil != err {
 		return "", err
 	}

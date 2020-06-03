@@ -7,12 +7,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -57,14 +55,14 @@ type OperatorInfo struct {
 }
 
 //DeployValset: 部署Valset
-func DeployValset(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, deployer common.Address, operator common.Address, initValidators []common.Address, initPowers []*big.Int) (*generated.Valset, *DeployResult, error) {
-	auth, err := PrepareAuth(backend, privateKey, deployer)
+func DeployValset(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, deployer common.Address, operator common.Address, initValidators []common.Address, initPowers []*big.Int) (*generated.Valset, *DeployResult, error) {
+	auth, err := PrepareAuth(client, privateKey, deployer)
 	if nil != err {
 		return nil, nil, err
 	}
 
 	//部署合约
-	addr, tx, valset, err := generated.DeployValset(auth, backend, operator, initValidators, initPowers)
+	addr, tx, valset, err := generated.DeployValset(auth, client, operator, initValidators, initPowers)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,14 +76,14 @@ func DeployValset(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, de
 }
 
 //DeployChain33Bridge: 部署Chain33Bridge
-func DeployChain33Bridge(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, deployer common.Address, operator, valset common.Address) (*generated.Chain33Bridge, *DeployResult, error) {
-	auth, err := PrepareAuth(backend, privateKey, deployer)
+func DeployChain33Bridge(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, deployer common.Address, operator, valset common.Address) (*generated.Chain33Bridge, *DeployResult, error) {
+	auth, err := PrepareAuth(client, privateKey, deployer)
 	if nil != err {
 		return nil, nil, err
 	}
 
 	//部署合约
-	addr, tx, chain33Bridge, err := generated.DeployChain33Bridge(auth, backend, operator, valset)
+	addr, tx, chain33Bridge, err := generated.DeployChain33Bridge(auth, client, operator, valset)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -98,14 +96,14 @@ func DeployChain33Bridge(backend bind.ContractBackend, privateKey *ecdsa.Private
 }
 
 //DeployOracle: 部署Oracle
-func DeployOracle(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, deployer, operator, valset, chain33Bridge common.Address) (*generated.Oracle, *DeployResult, error) {
-	auth, err := PrepareAuth(backend, privateKey, deployer)
+func DeployOracle(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, deployer, operator, valset, chain33Bridge common.Address) (*generated.Oracle, *DeployResult, error) {
+	auth, err := PrepareAuth(client, privateKey, deployer)
 	if nil != err {
 		return nil, nil, err
 	}
 
 	//部署合约
-	addr, tx, oracle, err := generated.DeployOracle(auth, backend, operator, valset, chain33Bridge)
+	addr, tx, oracle, err := generated.DeployOracle(auth, client, operator, valset, chain33Bridge)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,14 +116,14 @@ func DeployOracle(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, de
 }
 
 //DeployBridgeBank: 部署BridgeBank
-func DeployBridgeBank(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, deployer, operator, oracle, chain33Bridge common.Address) (*generated.BridgeBank, *DeployResult, error) {
-	auth, err := PrepareAuth(backend, privateKey, deployer)
+func DeployBridgeBank(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, deployer, operator, oracle, chain33Bridge common.Address) (*generated.BridgeBank, *DeployResult, error) {
+	auth, err := PrepareAuth(client, privateKey, deployer)
 	if nil != err {
 		return nil, nil, err
 	}
 
 	//部署合约
-	addr, tx, bridgeBank, err := generated.DeployBridgeBank(auth, backend, operator, oracle, chain33Bridge)
+	addr, tx, bridgeBank, err := generated.DeployBridgeBank(auth, client, operator, oracle, chain33Bridge)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -138,14 +136,14 @@ func DeployBridgeBank(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey
 }
 
 //DeployBridgeRegistry: 部署BridgeRegistry
-func DeployBridgeRegistry(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, deployer, chain33BridgeAddr, bridgeBankAddr, oracleAddr, valsetAddr common.Address) (*generated.BridgeRegistry, *DeployResult, error) {
-	auth, err := PrepareAuth(backend, privateKey, deployer)
+func DeployBridgeRegistry(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, deployer, chain33BridgeAddr, bridgeBankAddr, oracleAddr, valsetAddr common.Address) (*generated.BridgeRegistry, *DeployResult, error) {
+	auth, err := PrepareAuth(client, privateKey, deployer)
 	if nil != err {
 		return nil, nil, err
 	}
 
 	//部署合约
-	addr, tx, bridgeRegistry, err := generated.DeployBridgeRegistry(auth, backend, chain33BridgeAddr, bridgeBankAddr, oracleAddr, valsetAddr)
+	addr, tx, bridgeRegistry, err := generated.DeployBridgeRegistry(auth, client, chain33BridgeAddr, bridgeBankAddr, oracleAddr, valsetAddr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -157,20 +155,20 @@ func DeployBridgeRegistry(backend bind.ContractBackend, privateKey *ecdsa.Privat
 	return bridgeRegistry, deployResult, nil
 }
 
-func DeployAndInit(backend bind.ContractBackend, para *DeployPara) (*X2EthContracts, *X2EthDeployInfo, error) {
+func DeployAndInit(client ethinterface.EthClientSpec, para *DeployPara) (*X2EthContracts, *X2EthDeployInfo, error) {
 	x2EthContracts := &X2EthContracts{}
 	deployInfo := &X2EthDeployInfo{}
 	var err error
 
 	/////////////////////////////////////
-	sim, isSim := backend.(*backends.SimulatedBackend)
+	sim, isSim := client.(*ethinterface.SimExtend)
 	if isSim {
 		fmt.Println("Use the simulator")
 	} else {
 		fmt.Println("Use the actual Ethereum")
 	}
 
-	x2EthContracts.Valset, deployInfo.Valset, err = DeployValset(backend, para.DeployPrivateKey, para.Deployer, para.Operator, para.InitValidators, para.InitPowers)
+	x2EthContracts.Valset, deployInfo.Valset, err = DeployValset(client, para.DeployPrivateKey, para.Deployer, para.Operator, para.InitValidators, para.InitPowers)
 	if nil != err {
 		deployLog.Error("DeployAndInit", "failed to DeployValset due to:", err.Error())
 		return nil, nil, err
@@ -178,7 +176,6 @@ func DeployAndInit(backend bind.ContractBackend, para *DeployPara) (*X2EthContra
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("\nDeployValset tx hash:", deployInfo.Valset.TxHash)
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)
@@ -215,7 +212,7 @@ func DeployAndInit(backend bind.ContractBackend, para *DeployPara) (*X2EthContra
 	}
 
 deployChain33Bridge:
-	x2EthContracts.Chain33Bridge, deployInfo.Chain33Bridge, err = DeployChain33Bridge(backend, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Valset.Address)
+	x2EthContracts.Chain33Bridge, deployInfo.Chain33Bridge, err = DeployChain33Bridge(client, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Valset.Address)
 	if nil != err {
 		deployLog.Error("DeployAndInit", "failed to DeployChain33Bridge due to:", err.Error())
 		return nil, nil, err
@@ -223,7 +220,6 @@ deployChain33Bridge:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Printf("\n\nGoing to DeployChain33Bridge with valset address:%s", deployInfo.Valset.Address.String())
 		fmt.Println("\nDeployChain33Bridge tx hash:", deployInfo.Chain33Bridge.TxHash)
 		timeout := time.NewTimer(300 * time.Second)
@@ -261,7 +257,7 @@ deployChain33Bridge:
 	}
 
 deployOracle:
-	x2EthContracts.Oracle, deployInfo.Oracle, err = DeployOracle(backend, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Valset.Address, deployInfo.Chain33Bridge.Address)
+	x2EthContracts.Oracle, deployInfo.Oracle, err = DeployOracle(client, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Valset.Address, deployInfo.Chain33Bridge.Address)
 	if nil != err {
 		deployLog.Error("DeployAndInit", "failed to DeployOracle due to:", err.Error())
 		return nil, nil, err
@@ -269,7 +265,6 @@ deployOracle:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("DeployOracle tx hash:", deployInfo.Oracle.TxHash)
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)
@@ -306,7 +301,7 @@ deployOracle:
 	}
 	/////////////////////////////////////
 deployBridgeBank:
-	x2EthContracts.BridgeBank, deployInfo.BridgeBank, err = DeployBridgeBank(backend, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Oracle.Address, deployInfo.Chain33Bridge.Address)
+	x2EthContracts.BridgeBank, deployInfo.BridgeBank, err = DeployBridgeBank(client, para.DeployPrivateKey, para.Deployer, para.Operator, deployInfo.Oracle.Address, deployInfo.Chain33Bridge.Address)
 	if nil != err {
 		deployLog.Error("DeployAndInit", "failed to DeployBridgeBank due to:", err.Error())
 		return nil, nil, err
@@ -314,7 +309,6 @@ deployBridgeBank:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("DeployBridgeBank tx hash:", deployInfo.BridgeBank.TxHash)
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)
@@ -352,7 +346,7 @@ deployBridgeBank:
 
 settingBridgeBank:
 	////////////////////////
-	auth, err := PrepareAuth(backend, para.DeployPrivateKey, para.Deployer)
+	auth, err := PrepareAuth(client, para.DeployPrivateKey, para.Deployer)
 	if nil != err {
 		return nil, nil, err
 	}
@@ -364,7 +358,6 @@ settingBridgeBank:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("setBridgeBankTx tx hash:", setBridgeBankTx.Hash().String())
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)
@@ -401,7 +394,7 @@ settingBridgeBank:
 	}
 
 setOracle:
-	auth, err = PrepareAuth(backend, para.DeployPrivateKey, para.Deployer)
+	auth, err = PrepareAuth(client, para.DeployPrivateKey, para.Deployer)
 	if nil != err {
 		return nil, nil, err
 	}
@@ -413,7 +406,6 @@ setOracle:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("setOracleTx tx hash:", setOracleTx.Hash().String())
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)
@@ -450,7 +442,7 @@ setOracle:
 	}
 
 deployBridgeRegistry:
-	x2EthContracts.BridgeRegistry, deployInfo.BridgeRegistry, err = DeployBridgeRegistry(backend, para.DeployPrivateKey, para.Deployer, deployInfo.Chain33Bridge.Address, deployInfo.BridgeBank.Address, deployInfo.Oracle.Address, deployInfo.Valset.Address)
+	x2EthContracts.BridgeRegistry, deployInfo.BridgeRegistry, err = DeployBridgeRegistry(client, para.DeployPrivateKey, para.Deployer, deployInfo.Chain33Bridge.Address, deployInfo.BridgeBank.Address, deployInfo.Oracle.Address, deployInfo.Valset.Address)
 	if nil != err {
 		deployLog.Error("DeployAndInit", "failed to DeployBridgeBank due to:", err.Error())
 		return nil, nil, err
@@ -458,7 +450,6 @@ deployBridgeRegistry:
 	if isSim {
 		sim.Commit()
 	} else {
-		client := backend.(*ethclient.Client)
 		fmt.Println("DeployBridgeRegistry tx hash:", deployInfo.BridgeRegistry.TxHash)
 		timeout := time.NewTimer(300 * time.Second)
 		oneSecondtimeout := time.NewTicker(5 * time.Second)

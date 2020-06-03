@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/ethclient"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
@@ -34,8 +34,6 @@ func (ethTxStatus EthTxStatus) String() string {
 
 const (
 	PendingDuration4TxExeuction = 300
-	EthTxFail                   = EthTxStatus(0)
-	EthTxSuccess                = EthTxStatus(1)
 	EthTxPending                = EthTxStatus(2)
 )
 
@@ -64,7 +62,7 @@ func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) 
 	return sig, prefixed
 }
 
-func getNonce(sender common.Address, backend bind.ContractBackend) (*big.Int, error) {
+func getNonce(sender common.Address, client ethinterface.EthClientSpec) (*big.Int, error) {
 	if nonceMutex, exist := addr2Nonce[sender]; exist {
 		nonceMutex.rw.Lock()
 		defer nonceMutex.rw.Unlock()
@@ -74,7 +72,7 @@ func getNonce(sender common.Address, backend bind.ContractBackend) (*big.Int, er
 		return big.NewInt(nonceMutex.nonce), nil
 	}
 
-	nonce, err := backend.PendingNonceAt(context.Background(), sender)
+	nonce, err := client.PendingNonceAt(context.Background(), sender)
 	if nil != err {
 		return nil, err
 	}
@@ -95,43 +93,41 @@ func revokeNonce(sender common.Address) (*big.Int, error) {
 		txslog.Debug("revokeNonce", "address", sender.String(), "nonce", nonceMutex.nonce)
 		return big.NewInt(nonceMutex.nonce), nil
 	}
-	return nil, errors.New("Address doesn't exist tx")
+	return nil, errors.New("address doesn't exist tx")
 }
 
-func PrepareAuth(backend bind.ContractBackend, privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
-	//var backend bind.ContractBackend = client
-	//client *ethclient.Client
-	if nil == privateKey || nil == backend {
-		txslog.Error("PrepareAuth", "nil input parameter", "backend", backend, "privateKey", privateKey)
+func PrepareAuth(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address) (*bind.TransactOpts, error) {
+	if nil == privateKey || nil == client {
+		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
 		return nil, errors.New("nil input parameter")
 	}
 
 	ctx := context.Background()
-	gasPrice, err := backend.SuggestGasPrice(ctx)
+	gasPrice, err := client.SuggestGasPrice(ctx)
 	if err != nil {
 		txslog.Error("PrepareAuth", "Failed to SuggestGasPrice due to:", err.Error())
-		return nil, errors.New("Failed to get suggest gas price")
+		return nil, errors.New("failed to get suggest gas price")
 	}
 	auth := bind.NewKeyedTransactor(privateKey)
 	auth.Value = big.NewInt(0) // in wei
 	auth.GasLimit = GasLimit4Deploy
 	auth.GasPrice = gasPrice
 
-	if auth.Nonce, err = getNonce(transactor, backend); err != nil {
+	if auth.Nonce, err = getNonce(transactor, client); err != nil {
 		return nil, err
 	}
 
 	return auth, nil
 }
 
-func waitEthTxFinished(client *ethclient.Client, txhash common.Hash, txName string) error {
+func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, txName string) error {
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
 	oneSecondtimeout := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-timeout.C:
-			return errors.New("Eth tx timeout")
+			return errors.New("eth tx timeout")
 		case <-oneSecondtimeout.C:
 			_, err := client.TransactionReceipt(context.Background(), txhash)
 			if err == ethereum.NotFound {
@@ -145,7 +141,7 @@ func waitEthTxFinished(client *ethclient.Client, txhash common.Hash, txName stri
 	}
 }
 
-func GetEthTxStatus(client *ethclient.Client, txhash common.Hash) string {
+func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) string {
 	receipt, err := client.TransactionReceipt(context.Background(), txhash)
 	if nil != err {
 		return EthTxPending.String()
