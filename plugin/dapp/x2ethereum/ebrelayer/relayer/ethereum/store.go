@@ -13,17 +13,11 @@ import (
 )
 
 var (
-	eth2chain33TxHashPrefix  = "Eth2chain33TxHash"
-	eth2chain33TxTotalAmount = []byte("Eth2chain33TxTotalAmount")
-
-	chain33ToEthTxHashPrefix  = "chain33ToEthTxHash"
-	chain33ToEthTxTotalAmount = []byte("chain33ToEthTxTotalAmount")
-
-	bridgeRegistryAddrPrefix = []byte("x2EthBridgeRegistryAddr")
-
-	chain33BridgeLogProcessedAt = []byte("chain33BridgeLogProcessedAt")
-	bridgeBankLogProcessedAt    = []byte("bridgeBankLogProcessedAt")
-
+	eth2chain33TxHashPrefix        = "Eth2chain33TxHash"
+	eth2chain33TxTotalAmount       = []byte("Eth2chain33TxTotalAmount")
+	chain33ToEthTxHashPrefix       = "chain33ToEthTxHash"
+	bridgeRegistryAddrPrefix       = []byte("x2EthBridgeRegistryAddr")
+	bridgeBankLogProcessedAt       = []byte("bridgeBankLogProcessedAt")
 	ethTxEventPrefix               = []byte("ethTxEventPrefix")
 	lastBridgeBankHeightProcPrefix = []byte("lastBridgeBankHeight")
 )
@@ -34,10 +28,6 @@ func ethTxEventKey4Height(height uint64, index uint32) []byte {
 
 func calcRelay2Chain33Txhash(txindex int64) []byte {
 	return []byte(fmt.Sprintf("%s-%012d", eth2chain33TxHashPrefix, txindex))
-}
-
-func calcRelay2EthTxhash(txindex int64) []byte {
-	return []byte(fmt.Sprintf("%s-%012d", chain33ToEthTxHashPrefix, txindex))
 }
 
 func (ethRelayer *Relayer4Ethereum) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
@@ -65,29 +55,8 @@ func (ethRelayer *Relayer4Ethereum) setLastestRelay2Chain33Txhash(txhash string,
 	return ethRelayer.db.Set(key, []byte(txhash))
 }
 
-func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2Eth(total int64) error {
-	totalTx := &chain33Types.Int64{
-		Data: atomic.LoadInt64(&ethRelayer.totalTx4Chain33ToEth),
-	}
-	//更新成功见证的交易数
-	return ethRelayer.db.Set(chain33ToEthTxTotalAmount, chain33Types.Encode(totalTx))
-}
-
-func (ethRelayer *Relayer4Ethereum) setLastestRelay2EthTxhash(txhash string, txIndex int64) error {
-	key := calcRelay2EthTxhash(txIndex)
-	return ethRelayer.db.Set(key, []byte(txhash))
-}
-
 func (ethRelayer *Relayer4Ethereum) queryTxhashes(prefix []byte) []string {
 	return utils.QueryTxhashes(prefix, ethRelayer.db)
-}
-
-func (ethRelayer *Relayer4Ethereum) setHeight4chain33BridgeLogAt(height uint64) error {
-	return ethRelayer.setLogProcHeight(chain33BridgeLogProcessedAt, height)
-}
-
-func (ethRelayer *Relayer4Ethereum) getHeight4chain33BridgeLogAt() uint64 {
-	return ethRelayer.getLogProcHeight(chain33BridgeLogProcessedAt)
 }
 
 func (ethRelayer *Relayer4Ethereum) setHeight4BridgeBankLogAt(height uint64) error {

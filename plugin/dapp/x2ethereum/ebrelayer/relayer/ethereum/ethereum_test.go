@@ -94,17 +94,6 @@ func (r *suiteEthRelayer) Test_1_ImportPrivateKey() {
 	r.Equal(validators.Chain33Validator, chain33AccountAddr)
 }
 
-func (r *suiteEthRelayer) Test_3_RestorePrivateKeys() {
-	// 错误的密码 也不报错
-	err := r.ethRelayer.RestorePrivateKeys(passphrase)
-	r.NoError(err)
-
-	err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
-	r.NoError(err)
-
-	time.Sleep(1 * time.Second)
-}
-
 func (r *suiteEthRelayer) Test_2_LockEth() {
 	ctx := context.Background()
 	bridgeBankBalance, err := r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
@@ -135,13 +124,21 @@ func (r *suiteEthRelayer) Test_2_LockEth() {
 	r.NoError(err)
 
 	for _, logv := range logs {
-		//err := r.ethRelayer.setEthTxEvent(logv)
-		//r.NoError(err)
 		r.ethRelayer.storeBridgeBankLogs(logv, true)
 	}
 
 	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	//time.Sleep(time.Second * 5)
+}
+
+func (r *suiteEthRelayer) Test_3_RestorePrivateKeys() {
+	// 错误的密码 也不报错
+	err := r.ethRelayer.RestorePrivateKeys(passphrase)
+	r.NoError(err)
+
+	err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
+	r.NoError(err)
+
+	time.Sleep(1 * time.Second)
 }
 
 func (r *suiteEthRelayer) Test_4_handleLogLockEvent() {
@@ -250,14 +247,6 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 	}
 
 	relayer.deployInfo = &ebTypes.Deploy{}
-	//relayer.deployInfo.DeployerPrivateKey = "0x9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
-	//relayer.deployInfo.OperatorAddr = "0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF"
-	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0xA4Ea64a583F6e51C3799335b28a8F0529570A635")
-	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0x1919203bA8b325278d28Fb8fFeac49F2CD881A4e")
-	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0x9cBA1fF8D0b0c9Bc95d5762533F8CddBE795f687")
-	//relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, "0xdb15E7327aDc83F2878624bBD6307f5Af1B477b4")
-	//InitPowers := []int64{int64(80), int64(10), int64(10), int64(10)}
-	//relayer.deployInfo.InitPowers = InitPowers
 	relayer.deployInfo.DeployerPrivateKey = common.ToHex(crypto.FromECDSA(r.para.DeployPrivateKey))
 	relayer.deployInfo.OperatorAddr = r.para.Operator.String()
 	for _, v := range r.para.InitValidators {
@@ -339,19 +328,6 @@ latter:
 }
 
 func (r *suiteEthRelayer) deployContracts() {
-	//// 0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF
-	//var deployerPrivateKey = "9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
-	//// 0xA4Ea64a583F6e51C3799335b28a8F0529570A635
-	//var ethValidatorAddrKeyA = "355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
-	//var ethValidatorAddrKeyB = "62ca4122aac0e6f35bed02fc15c7ddbdaa07f2f2a1821c8b8210b891051e3ee9"
-	//var ethValidatorAddrKeyC = "4ae589fe3837dcfc90d1c85b8423dc30841525cbebc41dfb537868b0f8376bbf"
-	//var ethValidatorAddrKeyD = "1385016736f7379884763f4a39811d1391fa156a7ca017be6afffa52bb327695"
-	//ethValidatorAddrKeys := make([]string, 0)
-	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
-	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
-	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyC)
-	//ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyD)
-
 	ctx := context.Background()
 	r.backend, r.para = setup.PrepareTestEnv()
 	r.sim = r.backend.(*backends.SimulatedBackend)

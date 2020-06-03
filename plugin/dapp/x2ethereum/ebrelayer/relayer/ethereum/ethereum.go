@@ -625,9 +625,9 @@ func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Eth() ebTypes.Txhashes {
 	return ebTypes.Txhashes{Txhash: txhashs}
 }
 
-func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Chain33() *ebTypes.Txhashes {
+func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Chain33() ebTypes.Txhashes {
 	txhashs := ethRelayer.queryTxhashes([]byte(eth2chain33TxHashPrefix))
-	return &ebTypes.Txhashes{Txhash: txhashs}
+	return ebTypes.Txhashes{Txhash: txhashs}
 }
 
 // handleLogLockEvent : unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to chain33

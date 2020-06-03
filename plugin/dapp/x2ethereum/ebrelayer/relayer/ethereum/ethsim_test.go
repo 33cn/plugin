@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -66,15 +67,31 @@ func (r *suiteEthRelayerSim) TestSim_1_ImportPrivateKey() {
 }
 
 func (r *suiteEthRelayerSim) TestSim_2_RestorePrivateKeys() {
-	// 错误的密码 也不报错
-	err := r.ethRelayer.RestorePrivateKeys(passphrase)
+	go func() {
+		for range r.ethRelayer.unlockchan {
+
+		}
+	}()
+	temp := r.ethRelayer.privateKey4Chain33
+
+	err := r.ethRelayer.RestorePrivateKeys("123")
+	r.NotEqual(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.ethRelayer.privateKey4Chain33.Bytes()))
 	r.NoError(err)
 
-	err = r.ethRelayer.StoreAccountWithNewPassphase(passphrase, passphrase)
+	err = r.ethRelayer.RestorePrivateKeys(passphrase)
+	r.Equal(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.ethRelayer.privateKey4Chain33.Bytes()))
+	r.NoError(err)
+
+	err = r.ethRelayer.StoreAccountWithNewPassphase("new123", passphrase)
+	r.NoError(err)
+
+	err = r.ethRelayer.RestorePrivateKeys("new123")
+	r.Equal(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.ethRelayer.privateKey4Chain33.Bytes()))
 	r.NoError(err)
 }
 
 func (r *suiteEthRelayerSim) TestSim_3_IsValidatorActive() {
+	// 有时候会不通过
 	is, err := r.ethRelayer.IsValidatorActive("0x92c8b16afd6d423652559c6e266cbe1c29bfd84f")
 	r.Equal(is, true)
 	r.NoError(err)
@@ -91,164 +108,6 @@ func (r *suiteEthRelayerSim) Test_4_DeployContrcts() {
 	_, err := r.ethRelayer.DeployContrcts()
 	r.Error(err)
 }
-
-func (r *suiteEthRelayerSim) Test_5_Show() {
-	//addr, err = r.ethRelayer.ShowLockStatics("123")
-	//fmt.Println(addr, err)
-	//
-	//addr, err = r.ethRelayer.ShowDepositStatics("123")
-	//fmt.Println(addr, err)
-	//
-	//addr, err = r.ethRelayer.ShowTokenAddrBySymbol("bty")
-	//fmt.Println(addr, err)
-
-	//addr, err := r.ethRelayer.CreateBridgeToken("bty")
-	//r.NoError(err)
-
-	//ethtxs.PendingDuration4TxExeuction = 10
-	//tokenAddr, err := r.ethRelayer.CreateERC20Token("testc")
-	//r.Error(err)
-	//fmt.Println(addr, err)
-	//
-	//addr, err = r.ethRelayer.MintERC20Token(tokenAddr, r.ethRelayer.ethValidator.String(), "20000000000000")
-	//r.Error(err)
-	//fmt.Println(addr, err)
-}
-
-//func (r *suiteEthRelayerSim) TestSim_4_LockEth() {
-//	ctx := context.Background()
-//	bridgeBankBalance, err := r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
-//	fmt.Println(bridgeBankBalance, err)
-//	r.NoError(err)
-//
-//	userOneAuth, err := ethtxs.PrepareAuth(r.backend, r.para.ValidatorPriKey[0], r.para.InitValidators[0])
-//	r.NoError(err)
-//	ethAmount := big.NewInt(50)
-//	userOneAuth.Value = ethAmount
-//
-//	//lock 50 eth
-//	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-//	_, err = r.x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, common.Address{}, ethAmount)
-//	r.NoError(err)
-//	r.sim.Commit()
-//
-//	bridgeBankBalance, err = r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
-//	r.NoError(err)
-//	//require.Equal(t, bridgeBankBalance.Int64(), ethAmount.Int64())
-//	fmt.Println(bridgeBankBalance, err)
-//	//
-//	///*	ctx := context.Background()
-//	//	auth, err := ethtxs.PrepareAuth(r.backend, r.para.DeployPrivateKey, r.para.Operator)
-//	//	r.NoError(err)
-//	//
-//	//	opts := &bind.CallOpts{
-//	//		Pending: true,
-//	//		From:    r.para.Operator,
-//	//		Context: ctx,
-//	//	}
-//	//
-//	//	tokenCount, err := r.x2EthContracts.BridgeBank.BridgeTokenCount(opts)
-//	//	r.Equal(tokenCount.Int64(), int64(0))
-//	//	//创建token
-//	//	symbol := "bty"
-//	//	_, err = r.ethRelayer.x2EthContracts.BridgeBank.BridgeBankTransactor.CreateNewBridgeToken(auth, symbol)
-//	//	r.NoError(err)
-//	//	r.sim.Commit()
-//	//
-//	//	eventName := "LogNewBridgeToken"
-//	//	bridgeBankABI := ethtxs.LoadABI(ethtxs.BridgeBankABI)
-//	//	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID().Hex()
-//	//
-//	//	logEvent := &events.LogNewBridgeToken{}
-//	//	select {
-//	//	// Handle any errors
-//	//	case err := <-r.ethRelayer.bridgeBankSub.Err():
-//	//		r.NoError(err)
-//	//	// vLog is raw event data
-//	//	case vLog := <-r.ethRelayer.bridgeBankLog:
-//	//		// Check if the event is a 'LogLock' event
-//	//		if vLog.Topics[0].Hex() == logNewBridgeTokenSig {
-//	//			//_ = fmt.Sprint("Witnessed new event:%s, Block number:%d, Tx hash:%s", eventName, vLog.BlockNumber, vLog.TxHash.Hex())
-//	//
-//	//			err = bridgeBankABI.Unpack(logEvent, eventName, vLog.Data)
-//	//			r.NoError(err)
-//	//			//_ = fmt.Sprint("token addr:%s, symbol:%s", logEvent.Token.String(), logEvent.Symbol)
-//	//			r.Equal(symbol, logEvent.Symbol)
-//	//
-//	//			//tokenCount正确加1
-//	//			tokenCount, err = r.x2EthContracts.BridgeBank.BridgeTokenCount(opts)
-//	//			r.Equal(tokenCount.Int64(), int64(1))
-//	//			break
-//	//		}
-//	//	}
-//	//
-//	//	///////////newOracleClaim///////////////////////////
-//	//	balance, _ := r.sim.BalanceAt(ctx, r.para.InitValidators[0], nil)
-//	//	fmt.Println("InitValidators[0] addr,", r.para.InitValidators[0].String(), "balance =", balance.String())
-//	//
-//	//	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-//	//	amount := int64(99)
-//	//	ethReceiver := r.para.InitValidators[2]
-//	//	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), logEvent.Token.Bytes(), big.NewInt(amount).Bytes())
-//	//
-//	//	authOracle, err := ethtxs.PrepareAuth(r.backend, r.para.ValidatorPriKey[0], r.para.InitValidators[0])
-//	//	r.NoError(err)
-//	//
-//	//	signature, err := ethtxs.SignClaim4Eth(claimID, r.para.ValidatorPriKey[0])
-//	//	r.NoError(err)
-//	//
-//	//	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, r.backend)
-//	//	r.NoError(err)
-//	//	opts = &bind.CallOpts{
-//	//		Pending: true,
-//	//		Context: ctx,
-//	//	}
-//	//
-//	//	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
-//	//	r.NoError(err)
-//	//	r.Equal(balance.Int64(), int64(0))
-//	//
-//	//	_, err = r.x2EthContracts.Oracle.NewOracleClaim(
-//	//		authOracle,
-//	//		events.ClaimTypeLock,
-//	//		chain33Sender,
-//	//		ethReceiver,
-//	//		logEvent.Token,
-//	//		logEvent.Symbol,
-//	//		big.NewInt(amount),
-//	//		claimID,
-//	//		signature)
-//	//	r.NoError(err)
-//	//
-//	//	r.sim.Commit()
-//	//	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
-//	//	r.NoError(err)
-//	//	r.Equal(balance.Int64(), amount)
-//	//	fmt.Println("the minted amount is:", balance.Int64())
-//	//*/
-//	time.Sleep(1 * time.Second)
-//
-//	query := ethereum.FilterQuery{
-//		Addresses: []common.Address{r.ethRelayer.bridgeBankAddr},
-//	}
-//	logs, err := r.sim.FilterLogs(context.Background(), query)
-//	if err != nil {
-//		errinfo := fmt.Sprintf("Failed to filterLogEvents due to:%s", err.Error())
-//		fmt.Println(errinfo)
-//	}
-//
-//	for _, logv := range logs {
-//		if err := r.ethRelayer.setEthTxEvent(logv); nil != err {
-//			//	panic(err.Error())
-//		}
-//	}
-//
-//	time.Sleep(5 * time.Second)
-//}
-
-//func (r *suiteEthRelayerSim) TestRelayer4Ethereum_ApproveAllowance(t *testing.T) {
-//	r.ethRelayer.ApproveAllowance()
-//}
 
 func (r *suiteEthRelayerSim) newSimEthRelayer() *Relayer4Ethereum {
 	cfg := initCfg(*configPath)
@@ -284,6 +143,9 @@ func (r *suiteEthRelayerSim) newSimEthRelayer() *Relayer4Ethereum {
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
 	relayer.initBridgeBankTx()
 
+	relayer.x2EthContracts = r.x2EthContracts
+	relayer.x2EthDeployInfo = r.x2EthDeployInfo
+
 	go r.procSim()
 
 	return relayer
@@ -297,9 +159,6 @@ func (r *suiteEthRelayerSim) procSim() {
 	relayerLog.Info("Please unlock or import private key for Ethereum relayer")
 	nilAddr := common.Address{}
 	if nilAddr != r.ethRelayer.bridgeRegistryAddr {
-		r.ethRelayer.x2EthContracts = r.x2EthContracts
-		r.ethRelayer.x2EthDeployInfo = r.x2EthDeployInfo
-
 		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
 		if nil != r.ethRelayer.recoverDeployPara() {
 			panic("Failed to recoverDeployPara")
