@@ -3,6 +3,7 @@ package ethtxs
 import (
 	"context"
 	"errors"
+
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

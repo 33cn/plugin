@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/33cn/chain33/client/mocks"
-	"github.com/33cn/chain33/util/testnode"
-	"github.com/stretchr/testify/mock"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/util/testnode"
+	"github.com/stretchr/testify/mock"
 
 	dbm "github.com/33cn/chain33/common/db"
 	_ "github.com/33cn/chain33/system"
