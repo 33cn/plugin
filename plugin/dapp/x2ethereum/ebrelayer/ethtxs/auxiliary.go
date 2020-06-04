@@ -3,6 +3,7 @@ package ethtxs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
@@ -64,6 +65,13 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *O
 	if nil != err {
 		return "", err
 	}
+
+	sim, isSim := client.(*ethinterface.SimExtend)
+	if isSim {
+		fmt.Println("Use the simulator")
+		sim.Commit()
+	}
+
 	err = waitEthTxFinished(client, tx.Hash(), "CreateBridgeToken")
 	if nil != err {
 		return "", err
@@ -406,7 +414,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 }
 
 func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank) (string, error) {
-	txslog.Info("LockEthErc20Asset", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
+	txslog.Info("LockEthErc20AssetAsync", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
 		return "", err
@@ -415,7 +423,7 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 
 	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
 	if nil != err {
-		txslog.Error("LockEthErc20Asset", "PrepareAuth err", err.Error())
+		txslog.Error("LockEthErc20AssetAsync", "PrepareAuth err", err.Error())
 		return "", err
 	}
 	//ETH转账，空地址，且设置value
@@ -429,7 +437,7 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 	}
 	tx, err := bridgeBank.Lock(auth, []byte(chain33Receiver), tokenAddr, amount)
 	if nil != err {
-		txslog.Error("LockEthErc20Asset", "lock err", err.Error())
+		txslog.Error("LockEthErc20AssetAsync", "lock err", err.Error())
 		_, err = revokeNonce(ownerAddr)
 		if err != nil {
 			return "", err

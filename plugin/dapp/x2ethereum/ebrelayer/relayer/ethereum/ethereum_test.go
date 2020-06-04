@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
-	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -21,7 +24,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
-	ebTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum"
@@ -38,6 +40,14 @@ var (
 	chain33AccountAddr   = "1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
 	passphrase           = "123456hzj"
 	chainTestCfg         = chain33Types.NewChain33Config(chain33Types.GetDefaultCfgstring())
+
+	// 0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a
+	deployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
+	// 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
+	ethValidatorAddrKeyA = "3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
+	ethValidatorAddrKeyB = "a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
+	ethValidatorAddrKeyC = "bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
+	ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 )
 
 type suiteEthRelayer struct {
@@ -77,6 +87,9 @@ func TestRunSuiteX2Ethereum(t *testing.T) {
 func (r *suiteEthRelayer) SetupSuite() {
 	r.deployContracts()
 	r.ethRelayer = r.newEthRelayer()
+
+	_, err := r.ethRelayer.DeployContrcts()
+	r.Error(err)
 }
 
 func (r *suiteEthRelayer) Test_1_ImportPrivateKey() {
@@ -120,7 +133,88 @@ func (r *suiteEthRelayer) Test_2_IsValidatorActive() {
 	r.Error(err)
 }
 
-func (r *suiteEthRelayer) Test_2_LockEth() {
+func (r *suiteEthRelayer) Test_3_Token() {
+	r.isChain33KeyImport()
+	r.ethRelayer.prePareSubscribeEvent()
+
+	addr, err := r.ethRelayer.ShowBridgeBankAddr()
+	r.NoError(err)
+	r.Equal(addr, r.x2EthDeployInfo.BridgeBank.Address.String())
+
+	addr, err = r.ethRelayer.ShowBridgeRegistryAddr()
+	r.NoError(err)
+	r.Equal(addr, r.x2EthDeployInfo.BridgeRegistry.Address.String())
+
+	addr, err = r.ethRelayer.ShowOperator()
+	r.NoError(err)
+	r.Equal(addr, r.para.Operator.String())
+
+	balance, err := r.ethRelayer.GetBalance("", r.para.InitValidators[0].String())
+	r.NoError(err)
+	r.Equal(balance, "10000000000")
+
+	tokenAddrbty, err := r.ethRelayer.CreateBridgeToken("bty")
+	r.NoError(err)
+	r.NotEmpty(tokenAddrbty)
+	r.sim.Commit()
+
+	addr, err = r.ethRelayer.ShowTokenAddrBySymbol("bty")
+	r.NoError(err)
+	r.Equal(addr, tokenAddrbty)
+
+	tokenErc20Addr, err := r.ethRelayer.CreateERC20Token("testcc")
+	r.NoError(err)
+	r.NotEmpty(tokenErc20Addr)
+	r.sim.Commit()
+
+	_, err = r.ethRelayer.MintERC20Token(tokenErc20Addr, r.para.Deployer.String(), "20000000000000")
+	r.NoError(err)
+	r.sim.Commit()
+
+	balance, err = r.ethRelayer.ShowDepositStatics(tokenErc20Addr)
+	r.NoError(err)
+	r.Equal(balance, "20000000000000")
+
+	//claimID := crypto.Keccak256Hash(big.NewInt(50).Bytes())
+	//ret, err = r.ethRelayer.IsProphecyPending(claimID)
+	//r.NoError(err)
+	//r.Equal(ret, false)
+
+	decimals, err := r.ethRelayer.GetDecimals(tokenAddrbty)
+	r.NoError(err)
+	r.Equal(decimals, uint8(8))
+
+	_, err = r.ethRelayer.Burn(ethValidatorAddrKeyA, tokenAddrbty, chain33AccountAddr, "10")
+	r.Error(err)
+
+	_, err = r.ethRelayer.BurnAsync(ethValidatorAddrKeyA, tokenAddrbty, chain33AccountAddr, "10")
+	r.Error(err)
+
+	txhash, err := r.ethRelayer.TransferToken(tokenErc20Addr, hexutil.Encode(crypto.FromECDSA(r.para.DeployPrivateKey)), r.ethRelayer.deployInfo.ValidatorsAddr[0], "100")
+	r.NoError(err)
+	r.sim.Commit()
+
+	_, err = r.ethRelayer.ShowTxReceipt(txhash)
+	r.NoError(err)
+
+	balance, err = r.ethRelayer.GetBalance(tokenErc20Addr, r.ethRelayer.deployInfo.ValidatorsAddr[0])
+	r.NoError(err)
+	r.Equal(balance, "100")
+
+	balance, err = r.ethRelayer.GetBalance(tokenErc20Addr, r.para.Deployer.String())
+	r.NoError(err)
+	r.Equal(balance, "19999999999900")
+
+	tx1 := r.ethRelayer.QueryTxhashRelay2Eth()
+	r.Empty(tx1)
+
+	tx2 := r.ethRelayer.QueryTxhashRelay2Chain33()
+	r.Empty(tx2)
+}
+
+func (r *suiteEthRelayer) Test_4_LockEth() {
+	r.isChain33KeyImport()
+
 	ctx := context.Background()
 	bridgeBankBalance, err := r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
 	r.NoError(err)
@@ -141,14 +235,95 @@ func (r *suiteEthRelayer) Test_2_LockEth() {
 	r.NoError(err)
 	r.Equal(bridgeBankBalance.Int64(), ethAmount.Int64())
 
-	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-
 	for i := 0; i < 11; i++ {
 		r.sim.Commit()
 	}
+
+	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	balance, err := r.ethRelayer.ShowLockStatics("")
+	r.NoError(err)
+	r.Equal(balance, "50")
 }
 
-func (r *suiteEthRelayer) Test_3_RestorePrivateKeys() {
+//func (r *suiteEthRelayer) Test_5_LockErc20() {
+//	r.isChain33KeyImport()
+//
+//	tokenErc20Addr, err := r.ethRelayer.CreateERC20Token("testc")
+//	r.NoError(err)
+//	r.NotEmpty(tokenErc20Addr)
+//	r.sim.Commit()
+//
+//	_, err = r.ethRelayer.MintERC20Token(tokenErc20Addr, r.para.Deployer.String(), "10000000000000")
+//	r.NoError(err)
+//	r.sim.Commit()
+//
+//	balance, err := r.ethRelayer.ShowDepositStatics(tokenErc20Addr)
+//	r.NoError(err)
+//	r.Equal(balance, "10000000000000")
+//
+//	chain33Receiver := "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+//	_, err = r.ethRelayer.LockEthErc20Asset(hexutil.Encode(crypto.FromECDSA(r.para.DeployPrivateKey)), tokenErc20Addr, "100", chain33Receiver)
+//	r.NoError(err)
+//	r.sim.Commit()
+//
+//	balance, err = r.ethRelayer.GetBalance(tokenErc20Addr, r.para.Deployer.String())
+//	r.NoError(err)
+//	r.Equal(balance, "9999999999900")
+//
+//	_, err = r.ethRelayer.ApproveAllowance(hexutil.Encode(crypto.FromECDSA(r.para.DeployPrivateKey)), tokenErc20Addr, "500")
+//	r.NoError(err)
+//	r.sim.Commit()
+//
+//	_, err = r.ethRelayer.LockEthErc20AssetAsync(hexutil.Encode(crypto.FromECDSA(r.para.DeployPrivateKey)), tokenErc20Addr, "100", chain33Receiver)
+//	r.NoError(err)
+//	r.sim.Commit()
+//
+//	balance, err = r.ethRelayer.GetBalance(tokenErc20Addr, r.para.Deployer.String())
+//	r.NoError(err)
+//	r.Equal(balance, "9999999999800")
+//
+//	//ret, err := r.ethRelayer.ApproveAllowance(hexutil.Encode(crypto.FromECDSA(r.para.DeployPrivateKey)), tokenErc20Addr, "20000000000000")
+//	//fmt.Println("?????", ret, err)
+//	//r.Error(err)
+//
+//	//ctx := context.Background()
+//	//bridgeBankBalance, err := r.sim.BalanceAt(ctx, r.x2EthDeployInfo.BridgeBank.Address, nil)
+//	//r.NoError(err)
+//	//r.Equal(bridgeBankBalance.Int64(), int64(0))
+//	//
+//	//userOneAuth, err := ethtxs.PrepareAuth(r.sim, r.para.DeployPrivateKey, r.para.Deployer)
+//	//r.NoError(err)
+//	//
+//	//allowAmount := int64(100)
+//	//erc20TokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenErc20Addr), r.ethRelayer.clientSpec)
+//	//r.NoError(err)
+//	//
+//	//_, err = erc20TokenInstance.Approve(userOneAuth, r.ethRelayer.x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
+//	//r.NoError(err)
+//	//r.sim.Commit()
+//	//
+//	////lock 100 testc
+//	//chain33Receiver := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+//	//lockAmount := big.NewInt(100)
+//	//userOneAuth, err = ethtxs.PrepareAuth(r.sim, r.para.DeployPrivateKey, r.para.Deployer)
+//	//r.NoError(err)
+//	//
+//	//_, err = r.x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Receiver, common.HexToAddress(tokenErc20Addr), lockAmount)
+//	//r.NoError(err)
+//	//r.sim.Commit()
+//	//
+//	//balance, err = r.ethRelayer.ShowLockStatics(tokenErc20Addr)
+//	//r.NoError(err)
+//	//r.Equal(balance, "100")
+//
+//	for i := 0; i < 11; i++ {
+//		r.sim.Commit()
+//	}
+//	time.Sleep(time.Duration(r.ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+//}
+
+func (r *suiteEthRelayer) Test_6_RestorePrivateKeys() {
 	go func() {
 		for range r.ethRelayer.unlockchan {
 		}
@@ -170,69 +345,15 @@ func (r *suiteEthRelayer) Test_3_RestorePrivateKeys() {
 	r.Equal(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.ethRelayer.privateKey4Chain33.Bytes()))
 	r.NoError(err)
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(time.Second)
 }
 
-func (r *suiteEthRelayer) Test_2_1_Show() {
-	{
-		time.Sleep(1 * time.Second)
-
-		addr, err := r.ethRelayer.CreateBridgeToken("bty")
+func (r *suiteEthRelayer) isChain33KeyImport() {
+	_, err := r.ethRelayer.GetValidatorAddr()
+	if err != nil {
+		err = r.ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
 		r.NoError(err)
-		fmt.Println("++++++", addr, err)
-		r.sim.Commit()
-
-		tokenAddr, err := r.ethRelayer.CreateERC20Token("testc")
-		fmt.Println("++++++", tokenAddr, err)
-		//r.Error(err)
-
-		addr, err = r.ethRelayer.MintERC20Token(tokenAddr, r.ethRelayer.ethValidator.String(), "20000000000000")
-		fmt.Println("++++++", addr, err)
-		//r.Error(err)
-
-		return
 	}
-	_, err := r.ethRelayer.DeployContrcts()
-	r.Error(err)
-
-	addr, err := r.ethRelayer.ShowBridgeBankAddr()
-	r.NoError(err)
-	r.Equal(addr, r.x2EthDeployInfo.BridgeBank.Address.String())
-
-	addr, err = r.ethRelayer.ShowBridgeRegistryAddr()
-	r.NoError(err)
-	r.Equal(addr, r.x2EthDeployInfo.BridgeRegistry.Address.String())
-
-	//balance, err := r.ethRelayer.GetBalance("", testEthAddr.String())
-	//r.NoError(err)
-	//r.Equal(balance, "2000000000000000000")
-	//
-	//_, err = r.ethRelayer.GetBalance("0x0000000000000000000000000000000000000000", testEthAddr.String())
-	//r.Error(err)
-
-	//balance, err := r.ethRelayer.ShowLockStatics("")
-	//r.NoError(err)
-	//r.Equal(balance, "50")
-
-	_, err = r.ethRelayer.ShowDepositStatics("")
-	r.Error(err)
-
-	_, err = r.ethRelayer.ShowTokenAddrBySymbol("bty")
-	r.Error(err)
-
-	claimID := crypto.Keccak256Hash(big.NewInt(50).Bytes())
-	ret, err := r.ethRelayer.IsProphecyPending(claimID)
-	r.NoError(err)
-	r.Equal(ret, false)
-
-	//_, err = r.ethRelayer.ShowOperator()
-	//r.Error(err)
-	//
-	//tx1 := r.ethRelayer.QueryTxhashRelay2Eth()
-	//r.Empty(tx1)
-	//
-	//tx2 := r.ethRelayer.QueryTxhashRelay2Chain33()
-	//r.Empty(tx2)
 }
 
 func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
@@ -254,16 +375,7 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 		bridgeRegistryAddr:  r.x2EthDeployInfo.BridgeRegistry.Address,
 		maturityDegree:      cfg.EthMaturityDegree,
 		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
-	}
-
-	relayer.deployInfo = &ebTypes.Deploy{}
-	relayer.deployInfo.DeployerPrivateKey = common.ToHex(crypto.FromECDSA(r.para.DeployPrivateKey))
-	relayer.deployInfo.OperatorAddr = r.para.Operator.String()
-	for _, v := range r.para.InitValidators {
-		relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, v.String())
-	}
-	for _, v := range r.para.InitPowers {
-		relayer.deployInfo.InitPowers = append(relayer.deployInfo.InitPowers, v.Int64())
+		deployInfo:          cfg.Deploy,
 	}
 
 	_ = relayer.setBridgeRegistryAddr(cfg.BridgeRegistry)
@@ -276,18 +388,32 @@ func (r *suiteEthRelayer) newEthRelayer() *Relayer4Ethereum {
 	relayer.clientSpec = r.sim
 	relayer.clientChainID = big.NewInt(1)
 
+	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
+	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
+	relayer.operatorInfo = &ethtxs.OperatorInfo{
+		PrivateKey: deployPrivateKey,
+		Address:    deployerAddr,
+	}
+	relayer.deployPara = r.para
+	relayer.x2EthContracts = r.x2EthContracts
+	relayer.x2EthDeployInfo = r.x2EthDeployInfo
+
 	go relayer.proc()
+
+	var wg sync.WaitGroup
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM)
+	go func() {
+		<-ch
+		//cancel()
+		wg.Wait()
+		os.Exit(0)
+	}()
+
 	return relayer
 }
 
 func (r *suiteEthRelayer) deployContracts() {
-	// 0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a
-	var deployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
-	// 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
-	var ethValidatorAddrKeyA = "3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-	var ethValidatorAddrKeyB = "a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-	var ethValidatorAddrKeyC = "bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-	var ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 	ethValidatorAddrKeys := make([]string, 0)
 	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
 	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
