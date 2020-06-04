@@ -5,16 +5,19 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/util/testnode"
+
 	//"github.com/ethereum/go-ethereum/core/types"
-	"github.com/influxdata/influxdb/pkg/testing/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/influxdata/influxdb/pkg/testing/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
