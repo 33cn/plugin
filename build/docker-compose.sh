@@ -104,7 +104,8 @@ function base_init() {
 
     # blockchain
     # TODO 剩下evm trade 测试和这个选项有关，在其他pr中解决，不使得这个pr太大
-    sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=true/g' chain33.toml
+    sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
+    sed -i $sedfix 's/^enablePushSubscribe=.*/enablePushSubscribe=true/g' chain33.toml
 
     # ticket
     sed -i $sedfix 's/^ticketPrice =.*/ticketPrice = 10000/g' chain33.toml
