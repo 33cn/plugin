@@ -92,7 +92,7 @@ type subConfig struct {
 	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
 	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
 	BlsSign                 bool     `json:"blsSign,omitempty"`
-	BlsLeaderSwitchInt      int32    `json:"blsLeaderSwitchInt,omitempty"`
+	BlsLeaderSwitchIntval   int32    `json:"blsLeaderSwitchIntval,omitempty"`
 }
 
 // New function to init paracross env

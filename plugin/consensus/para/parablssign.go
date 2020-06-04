@@ -55,8 +55,8 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
 	b.leaderSwitchInt = defLeaderSwitchInt
-	if cfg.BlsLeaderSwitchInt > 0 {
-		b.leaderSwitchInt = cfg.BlsLeaderSwitchInt
+	if cfg.BlsLeaderSwitchIntval > 0 {
+		b.leaderSwitchInt = cfg.BlsLeaderSwitchIntval
 	}
 
 	return b
