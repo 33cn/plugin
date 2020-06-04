@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"os"
 	"os/signal"
@@ -12,6 +11,8 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/util/testnode"
