@@ -15,7 +15,7 @@ import (
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/ed25519/edwards25519"
+	"github.com/33cn/chain33/system/crypto/ed25519/ed25519/edwards25519"
 	"github.com/33cn/chain33/types"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
