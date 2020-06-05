@@ -3,8 +3,9 @@ package setup
 import (
 	"context"
 	"crypto/ecdsa"
-	"github.com/ethereum/go-ethereum"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum"
 
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"

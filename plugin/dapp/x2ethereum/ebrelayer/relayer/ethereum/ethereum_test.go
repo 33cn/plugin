@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 
 	"github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
