@@ -18,6 +18,7 @@ import (
 	"github.com/33cn/chain33/util/testnode"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	syncTx "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/relayer/chain33/transceiver/sync"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
@@ -47,13 +48,30 @@ var (
 type suiteChain33Relayer struct {
 	suite.Suite
 	chain33Relayer  *Relayer4Chain33
-	sim             *backends.SimulatedBackend
+	sim             *ethinterface.SimExtend
 	x2EthContracts  *ethtxs.X2EthContracts
 	x2EthDeployInfo *ethtxs.X2EthDeployInfo
 	para            *ethtxs.DeployPara
 }
 
 func TestRunSuiteX2Ethereum(t *testing.T) {
+	var ret = types.ReplySubscribePush{IsOk: true}
+	var he = types.Header{Height: 10000}
+
+	mockapi := &mocks.QueueProtocolAPI{}
+	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
+	mockapi.On("Close").Return()
+	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
+	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
+	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+
+	mock33 := testnode.New("", mockapi)
+	defer mock33.Close()
+	rpcCfg := mock33.GetCfg().RPC
+	// 这里必须设置监听端口，默认的是无效值
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
+	mock33.GetRPC().Listen()
+
 	log := new(suiteChain33Relayer)
 	suite.Run(t, log)
 }
@@ -89,7 +107,6 @@ func (r *suiteChain33Relayer) Test_2_HandleRequest() {
 	err = syncTx.HandleRequest(body)
 	r.NoError(err)
 
-	//time.Sleep(50 * time.Second)
 	time.Sleep(50 * time.Millisecond)
 }
 
@@ -98,28 +115,36 @@ func (r *suiteChain33Relayer) Test_3_QueryTxhashRelay2Eth() {
 	r.NotEmpty(ret)
 }
 
-func (r *suiteChain33Relayer) Test_4_StoreAccountWithNewPassphase() {
-	err := r.chain33Relayer.StoreAccountWithNewPassphase(passphrase, passphrase)
-	r.NoError(err)
-}
-
-func (r *suiteChain33Relayer) Test_5_getEthTxhash() {
+func (r *suiteChain33Relayer) Test_4_getEthTxhash() {
 	txIndex := atomic.LoadInt64(&r.chain33Relayer.totalTx4Chain33ToEth)
 	hash, err := r.chain33Relayer.getEthTxhash(txIndex)
 	r.NoError(err)
 	r.Equal(hash.String(), "0x6fa087c7a2a8a4421f6e269fbc6c0838e99fa59d5760155a71cd7eb1c01aafad")
 }
 
-func (r *suiteChain33Relayer) Test_7_RestorePrivateKeys() {
-	//err := r.chain33Relayer.RestorePrivateKeys("123") // 不会报错
-	//r.Error(err)
-
+func (r *suiteChain33Relayer) Test_5_RestorePrivateKeys() {
 	go func() {
-		time.Sleep(1 * time.Millisecond)
-		<-r.chain33Relayer.unlock
+		for range r.chain33Relayer.unlock {
+		}
 	}()
-	err := r.chain33Relayer.RestorePrivateKeys(passphrase)
+	temp := r.chain33Relayer.ethSender
+
+	err := r.chain33Relayer.RestorePrivateKeys("123")
+	r.NotEqual(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.chain33Relayer.ethSender.Bytes()))
 	r.NoError(err)
+
+	err = r.chain33Relayer.RestorePrivateKeys(passphrase)
+	r.Equal(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.chain33Relayer.ethSender.Bytes()))
+	r.NoError(err)
+
+	err = r.chain33Relayer.StoreAccountWithNewPassphase("new123", passphrase)
+	r.NoError(err)
+
+	err = r.chain33Relayer.RestorePrivateKeys("new123")
+	r.Equal(hex.EncodeToString(temp.Bytes()), hex.EncodeToString(r.chain33Relayer.ethSender.Bytes()))
+	r.NoError(err)
+
+	time.Sleep(time.Second)
 }
 
 func (r *suiteChain33Relayer) newChain33Relayer() *Relayer4Chain33 {
@@ -139,12 +164,12 @@ func (r *suiteChain33Relayer) newChain33Relayer() *Relayer4Chain33 {
 		unlock:              make(chan int),
 		db:                  db,
 		ctx:                 ctx,
+		bridgeRegistryAddr:  r.x2EthDeployInfo.BridgeRegistry.Address,
 	}
 	err := relayer.setStatusCheckedIndex(1)
 	r.NoError(err)
 
-	relayer.ethBackend = r.sim
-	relayer.bridgeRegistryAddr = r.para.Deployer
+	relayer.ethClient = r.sim
 	relayer.totalTx4Chain33ToEth = relayer.getTotalTxAmount2Eth()
 	relayer.statusCheckedIndex = relayer.getStatusCheckedIndex()
 	r.Equal(relayer.statusCheckedIndex, int64(1))
@@ -158,8 +183,7 @@ func (r *suiteChain33Relayer) newChain33Relayer() *Relayer4Chain33 {
 		StartSyncSequence: cfg.SyncTxConfig.StartSyncSequence,
 		StartSyncHash:     cfg.SyncTxConfig.StartSyncHash,
 	}
-	_ = syncCfg
-	go r.syncProc(syncCfg)
+	go relayer.syncProc(syncCfg)
 
 	var wg sync.WaitGroup
 	ch := make(chan os.Signal, 1)
@@ -191,7 +215,8 @@ func (r *suiteChain33Relayer) deployContracts() {
 	ctx := context.Background()
 	var backend bind.ContractBackend
 	backend, r.para = setup.PrepareTestEnvironment(deployerPrivateKey, ethValidatorAddrKeys)
-	r.sim = backend.(*backends.SimulatedBackend)
+	r.sim = new(ethinterface.SimExtend)
+	r.sim.SimulatedBackend = backend.(*backends.SimulatedBackend)
 
 	balance, _ := r.sim.BalanceAt(ctx, r.para.Deployer, nil)
 	fmt.Println("deployer addr,", r.para.Deployer.String(), "balance =", balance.String())
@@ -207,50 +232,9 @@ func (r *suiteChain33Relayer) deployContracts() {
 	fmt.Printf("\nThe estimated gas=%d\n", gas)
 	////////////////////////////////////////////////////
 
-	r.x2EthContracts, r.x2EthDeployInfo, err = ethtxs.DeployAndInit(backend, r.para)
+	r.x2EthContracts, r.x2EthDeployInfo, err = ethtxs.DeployAndInit(r.sim, r.para)
 	r.NoError(err)
 	r.sim.Commit()
-}
-
-func (r *suiteChain33Relayer) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
-	var ret = types.ReplySubscribePush{IsOk: true}
-	var he = types.Header{Height: 10000}
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
-	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
-
-	mock33 := testnode.New("", mockapi)
-	defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
-
-	fmt.Println("Pls unlock or import private key for Chain33 relayer")
-	<-r.chain33Relayer.unlock
-	fmt.Println("Chain33 relayer starts to run...")
-
-	r.chain33Relayer.syncTxReceipts = syncTx.StartSyncTxReceipt(syncCfg, r.chain33Relayer.db)
-	r.chain33Relayer.lastHeight4Tx = r.chain33Relayer.loadLastSyncHeight()
-	r.chain33Relayer.oracleInstance = r.x2EthContracts.Oracle
-
-	timer := time.NewTicker(time.Duration(r.chain33Relayer.fetchHeightPeriodMs) * time.Millisecond)
-	for {
-		select {
-		case <-timer.C:
-			height := r.chain33Relayer.getCurrentHeight()
-			relayerLog.Debug("syncProc", "getCurrentHeight", height)
-			r.chain33Relayer.onNewHeightProc(height)
-
-		case <-r.chain33Relayer.ctx.Done():
-			timer.Stop()
-			return
-		}
-	}
 }
 
 func initCfg(path string) *relayerTypes.RelayerConfig {

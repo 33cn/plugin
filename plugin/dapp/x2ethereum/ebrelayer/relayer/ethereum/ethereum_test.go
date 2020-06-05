@@ -116,6 +116,9 @@ func Test_ShowAddr(t *testing.T) {
 	addr, err = ethRelayer.ShowOperator()
 	assert.NoError(t, err)
 	assert.Equal(t, addr, para.Operator.String())
+
+	_, err = ethRelayer.DeployContrcts()
+	require.Error(t, err)
 }
 
 func Test_CreateBridgeToken(t *testing.T) {

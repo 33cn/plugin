@@ -13,7 +13,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -25,8 +24,7 @@ func TestBrigeTokenCreat(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -44,7 +42,7 @@ func TestBrigeTokenCreat(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
@@ -63,9 +61,8 @@ func TestBrigeTokenCreat(t *testing.T) {
 	sub, err := sim.SubscribeFilterLogs(ctx, query, logs)
 	require.Nil(t, err)
 
-	//fmt.Printf("\n*****BridgeBank addr:%s, BridgeBank:%v***\n\n", deployInfo.BridgeBank.Address.String(), x2EthContracts.BridgeBank)
 	t.Logf("x2EthDeployInfo.BridgeBank.Address is:%s", x2EthDeployInfo.BridgeBank.Address.String())
-	bridgeBank, err := generated.NewBridgeBank(x2EthDeployInfo.BridgeBank.Address, backend)
+	bridgeBank, err := generated.NewBridgeBank(x2EthDeployInfo.BridgeBank.Address, sim)
 	require.Nil(t, err)
 
 	opts := &bind.CallOpts{
@@ -77,13 +74,12 @@ func TestBrigeTokenCreat(t *testing.T) {
 	require.Nil(t, err)
 	t.Logf("BridgeBankAddr is:%s", BridgeBankAddr.String())
 
-	//tokenCount, err := x2EthContracts.BridgeBank.BridgeTokenCount(opts)
 	tokenCount, err := bridgeBank.BridgeBankCaller.BridgeTokenCount(opts)
 	require.Nil(t, err)
 	require.Equal(t, tokenCount.Int64(), int64(0))
 
 	//3rd：创建token
-	auth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	if nil != err {
 		t.Fatalf("PrepareAuth failed due to:%s", err.Error())
 	}
@@ -134,8 +130,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -153,12 +148,12 @@ func TestBrigeTokenMint(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
 	sim.Commit()
-	auth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	if nil != err {
 		t.Fatalf("PrepareAuth failed due to:%s", err.Error())
 	}
@@ -183,6 +178,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	}
 
 	tokenCount, err := x2EthContracts.BridgeBank.BridgeTokenCount(opts)
+	require.Nil(t, err)
 	require.Equal(t, tokenCount.Int64(), int64(0))
 
 	//3rd：创建token
@@ -212,6 +208,7 @@ func TestBrigeTokenMint(t *testing.T) {
 
 			//tokenCount正确加1
 			tokenCount, err = x2EthContracts.BridgeBank.BridgeTokenCount(opts)
+			require.Nil(t, err)
 			require.Equal(t, tokenCount.Int64(), int64(1))
 			break
 		}
@@ -226,13 +223,13 @@ func TestBrigeTokenMint(t *testing.T) {
 	ethReceiver := para.InitValidators[2]
 	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), logEvent.Token.Bytes(), big.NewInt(amount).Bytes())
 
-	authOracle, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
 	require.Nil(t, err)
 
-	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, backend)
+	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, sim)
 	require.Nil(t, err)
 	opts = &bind.CallOpts{
 		Pending: true,
@@ -268,8 +265,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Bridge deposit locking (Erc20/Eth assets)")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -287,16 +283,16 @@ func TestBridgeDepositLock(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
 	sim.Commit()
 
 	//创建token
-	operatorAuth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	symbol := "USDT"
-	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, backend, symbol)
+	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbol)
 	require.Nil(t, err)
 	sim.Commit()
 	t.Logf("The new creaded symbol:%s, address:%s", symbol, bridgeTokenAddr.String())
@@ -316,7 +312,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, isMiner, true)
 
-	operatorAuth, err = ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	require.Nil(t, err)
 
 	mintAmount := int64(1000)
@@ -325,7 +321,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	require.Nil(t, err)
 	sim.Commit()
 
-	userOneAuth, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
@@ -338,7 +334,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	require.Equal(t, userOneBalance.Int64(), mintAmount)
 
 	// 测试子项目:should allow users to lock ERC20 tokens
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	//lock 100
@@ -366,7 +362,7 @@ func TestBridgeDepositLock(t *testing.T) {
 	require.Nil(t, err)
 	t.Logf("origin eth bridgeBankBalance is:%d", bridgeBankBalance.Int64())
 
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	ethAmount := big.NewInt(50)
 	userOneAuth.Value = ethAmount
@@ -390,8 +386,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Ethereum/ERC20 token unlocking (for burned chain33 assets)")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -409,7 +404,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
@@ -417,8 +412,9 @@ func TestBridgeBankUnlock(t *testing.T) {
 
 	//1.lockEth资产
 	ethAddr := common.Address{}
-	ethToken, err := generated.NewBridgeToken(ethAddr, backend)
-	userOneAuth, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	ethToken, err := generated.NewBridgeToken(ethAddr, sim)
+	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
+	require.Nil(t, err)
 	userOneAuth.Value = big.NewInt(300)
 	_, err = ethToken.Transfer(userOneAuth, x2EthDeployInfo.BridgeBank.Address, userOneAuth.Value)
 	sim.Commit()
@@ -435,12 +431,12 @@ func TestBridgeBankUnlock(t *testing.T) {
 
 	//2.lockErc20资产
 	//创建token
-	operatorAuth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
-	symbol_usdt := "USDT"
-	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, backend, symbol_usdt)
+	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	symbolUsdt := "USDT"
+	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
 	sim.Commit()
-	t.Logf("The new creaded symbol_usdt:%s, address:%s", symbol_usdt, bridgeTokenAddr.String())
+	t.Logf("The new creaded symbolUsdt:%s, address:%s", symbolUsdt, bridgeTokenAddr.String())
 
 	//创建实例
 	//为userOne铸币
@@ -452,21 +448,21 @@ func TestBridgeBankUnlock(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
-	require.Equal(t, symQuery, symbol_usdt)
+	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 
 	isMiner, err := bridgeTokenInstance.IsMinter(callopts, para.Operator)
 	require.Nil(t, err)
 	require.Equal(t, isMiner, true)
 
-	operatorAuth, err = ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 
 	mintAmount := int64(1000)
 	_, err = bridgeTokenInstance.Mint(operatorAuth, userOne, big.NewInt(mintAmount))
 	require.Nil(t, err)
 	sim.Commit()
 
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
 	require.Nil(t, err)
@@ -478,7 +474,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	require.Equal(t, userOneBalance.Int64(), mintAmount)
 
 	//***测试子项目:should allow users to lock ERC20 tokens
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	//lock 100
@@ -493,7 +489,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	ethSym := "eth"
 	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), ethAddr.Bytes(), big.NewInt(newProphecyAmount).Bytes())
 
-	authOracle, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -527,7 +523,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	ethReceiver = para.InitValidators[2]
 	claimID = crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), bridgeTokenAddr.Bytes(), big.NewInt(newProphecyAmount).Bytes())
 
-	authOracle, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err = ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -539,13 +535,14 @@ func TestBridgeBankUnlock(t *testing.T) {
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,
-		symbol_usdt,
+		symbolUsdt,
 		big.NewInt(newProphecyAmount),
 		claimID,
 		signature)
 	require.Nil(t, err)
 
 	userUSDTbalance, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
+	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance.Int64())
 	require.Equal(t, userUSDTbalance.Int64(), newProphecyAmount)
 }
@@ -556,8 +553,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:to be unlocked incrementally by successive burn prophecies (for burned chain33 assets)")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -575,7 +571,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
@@ -583,8 +579,9 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 
 	//1.lockEth资产
 	ethAddr := common.Address{}
-	ethToken, err := generated.NewBridgeToken(ethAddr, backend)
-	userOneAuth, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	ethToken, err := generated.NewBridgeToken(ethAddr, sim)
+	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
+	require.Nil(t, err)
 	userOneAuth.Value = big.NewInt(300)
 	_, err = ethToken.Transfer(userOneAuth, x2EthDeployInfo.BridgeBank.Address, userOneAuth.Value)
 	sim.Commit()
@@ -600,12 +597,12 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 
 	//2.lockErc20资产
 	//创建token
-	operatorAuth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
-	symbol_usdt := "USDT"
-	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, backend, symbol_usdt)
+	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	symbolUsdt := "USDT"
+	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
 	sim.Commit()
-	t.Logf("The new creaded symbol_usdt:%s, address:%s", symbol_usdt, bridgeTokenAddr.String())
+	t.Logf("The new creaded symbolUsdt:%s, address:%s", symbolUsdt, bridgeTokenAddr.String())
 
 	//创建实例
 	//为userOne铸币
@@ -617,21 +614,21 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
-	require.Equal(t, symQuery, symbol_usdt)
+	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 
 	isMiner, err := bridgeTokenInstance.IsMinter(callopts, para.Operator)
 	require.Nil(t, err)
 	require.Equal(t, isMiner, true)
 
-	operatorAuth, err = ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	require.Nil(t, err)
 	mintAmount := int64(1000)
 	_, err = bridgeTokenInstance.Mint(operatorAuth, userOne, big.NewInt(mintAmount))
 	require.Nil(t, err)
 	sim.Commit()
 
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
 	require.Nil(t, err)
@@ -643,7 +640,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	require.Equal(t, userOneBalance.Int64(), mintAmount)
 
 	//***测试子项目:should allow users to lock ERC20 tokens
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	//lock 100
@@ -658,7 +655,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	ethSym := "eth"
 	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), ethAddr.Bytes(), big.NewInt(newProphecyAmount).Bytes())
 
-	authOracle, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -688,7 +685,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	//第二次 newOracleClaim
 	newProphecyAmountSecond := int64(33)
 	claimID = crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), ethAddr.Bytes(), big.NewInt(newProphecyAmountSecond).Bytes())
-	authOracle, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err = ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -721,8 +718,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:ERC20 to be unlocked incrementally by successive burn prophecies (for burned chain33 assets))")
 	//1st部署相关合约
-	backend, para := setup.PrepareTestEnv()
-	sim := backend.(*backends.SimulatedBackend)
+	sim, para := setup.PrepareTestEnv()
 
 	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
 	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
@@ -740,14 +736,14 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	fmt.Printf("\nThe estimated gas=%d", gas)
 	////////////////////////////////////////////////////
 
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(backend, para)
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
 	if nil != err {
 		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
 	}
 	sim.Commit()
 
 	//1.lockEth资产
-	userOneAuth, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	ethLockAmount := big.NewInt(150)
 	userOneAuth.Value = ethLockAmount
@@ -760,12 +756,12 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 
 	//2.lockErc20资产
 	//创建token
-	operatorAuth, err := ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
-	symbol_usdt := "USDT"
-	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, backend, symbol_usdt)
+	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	symbolUsdt := "USDT"
+	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
 	sim.Commit()
-	t.Logf("The new creaded symbol_usdt:%s, address:%s", symbol_usdt, bridgeTokenAddr.String())
+	t.Logf("The new creaded symbolUsdt:%s, address:%s", symbolUsdt, bridgeTokenAddr.String())
 
 	//创建实例
 	//为userOne铸币
@@ -777,19 +773,19 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
-	require.Equal(t, symQuery, symbol_usdt)
+	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 	isMiner, err := bridgeTokenInstance.IsMinter(callopts, para.Operator)
 	require.Nil(t, err)
 	require.Equal(t, isMiner, true)
 
-	operatorAuth, err = ethtxs.PrepareAuth(backend, para.DeployPrivateKey, para.Operator)
+	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 
 	mintAmount := int64(1000)
 	_, err = bridgeTokenInstance.Mint(operatorAuth, userOne, big.NewInt(mintAmount))
 	require.Nil(t, err)
 	sim.Commit()
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
@@ -802,7 +798,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	require.Equal(t, userOneBalance.Int64(), mintAmount)
 
 	//测试子项目:should allow users to lock ERC20 tokens
-	userOneAuth, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	//lock 100
@@ -817,11 +813,12 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), bridgeTokenAddr.Bytes(), big.NewInt(newProphecyAmount).Bytes())
 
 	userUSDTbalance0, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
+	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance0.Int64())
 	require.Equal(t, userUSDTbalance0.Int64(), int64(0))
 
 	///////////newOracleClaim///////////////////////////
-	authOracle, err := ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -832,20 +829,21 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,
-		symbol_usdt,
+		symbolUsdt,
 		big.NewInt(newProphecyAmount),
 		claimID,
 		signature)
 	require.Nil(t, err)
 
 	userUSDTbalance1, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
+	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance1.Int64())
 	require.Equal(t, userUSDTbalance1.Int64(), userUSDTbalance0.Int64()+newProphecyAmount)
 
 	// newOracleClaim
 	newProphecyAmountSecond := int64(66)
 	claimID = crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), bridgeTokenAddr.Bytes(), big.NewInt(newProphecyAmountSecond).Bytes())
-	authOracle, err = ethtxs.PrepareAuth(backend, para.ValidatorPriKey[0], para.InitValidators[0])
+	authOracle, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
 	signature, err = ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
@@ -856,13 +854,14 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		chain33Sender,
 		ethReceiver,
 		bridgeTokenAddr,
-		symbol_usdt,
+		symbolUsdt,
 		big.NewInt(newProphecyAmountSecond),
 		claimID,
 		signature)
 	require.Nil(t, err)
 
 	userUSDTbalance2, err := bridgeTokenInstance.BalanceOf(callopts, ethReceiver)
+	require.Nil(t, err)
 	t.Logf("userEthbalance for addr:%s balance=%d", ethReceiver.String(), userUSDTbalance2.Int64())
 	require.Equal(t, userUSDTbalance2.Int64(), userUSDTbalance1.Int64()+newProphecyAmountSecond)
 }

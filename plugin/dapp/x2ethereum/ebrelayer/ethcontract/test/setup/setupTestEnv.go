@@ -2,6 +2,7 @@ package setup
 
 import (
 	"crypto/ecdsa"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"math/big"
 
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
@@ -12,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func PrepareTestEnv() (bind.ContractBackend, *ethtxs.DeployPara) {
+func PrepareTestEnv() (*ethinterface.SimExtend, *ethtxs.DeployPara) {
 	genesiskey, _ := crypto.GenerateKey()
 	alloc := make(core.GenesisAlloc)
 	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
@@ -37,7 +38,8 @@ func PrepareTestEnv() (bind.ContractBackend, *ethtxs.DeployPara) {
 		alloc[addr] = account
 	}
 	gasLimit := uint64(100000000)
-	sim := backends.NewSimulatedBackend(alloc, gasLimit)
+	sim := new(ethinterface.SimExtend)
+	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
 
 	InitPowers := []*big.Int{big.NewInt(80), big.NewInt(10), big.NewInt(10)}
 	para := &ethtxs.DeployPara{
