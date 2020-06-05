@@ -408,7 +408,7 @@ func Test_BurnBty(t *testing.T) {
 	require.NoError(t, err)
 	sim.Commit()
 
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+	time.Sleep(time.Second * 2)
 
 	fetchCnt := int32(10)
 	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
