@@ -75,7 +75,7 @@ func (o *Oracle) ProcessSuccessfulClaimForBurn(claim, execAddr, tokenSymbol stri
 }
 
 // ProcessBurn processes the burn of bridged coins from the given sender
-func (o *Oracle) ProcessBurn(address, execAddr, amount, tokenAddress string, d int64, accDB *account.DB) (*types.Receipt, error) {
+func (o *Oracle) ProcessBurn(address, amount string, accDB *account.DB) (*types.Receipt, error) {
 	var a int64
 	a, _ = strconv.ParseInt(x2eTy.TrimZeroAndDot(amount), 10, 64)
 

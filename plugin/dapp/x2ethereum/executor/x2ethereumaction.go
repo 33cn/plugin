@@ -125,7 +125,7 @@ func (a *action) procChain33ToEth_burn(msgBurn *x2eTy.Chain33ToEth) (*types.Rece
 	if err != nil {
 		return nil, errors.Wrapf(err, "relay procMsgBurn,exec=%s,sym=%s", x2eTy.X2ethereumX, msgBurn.IssuerDotSymbol)
 	}
-	r, err := a.oracle.ProcessBurn(a.fromaddr, a.execaddr, msgBurn.Amount, msgBurn.TokenContract, msgBurn.Decimals, accDB)
+	r, err := a.oracle.ProcessBurn(a.fromaddr, msgBurn.Amount, accDB)
 	if err != nil {
 		return nil, err
 	}

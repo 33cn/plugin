@@ -24,29 +24,8 @@ func TestBrigeTokenCreat(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 
 	//2nd：订阅事件
 	eventName := "LogNewBridgeToken"
@@ -130,33 +109,8 @@ func TestBrigeTokenMint(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:BridgeToken creation (Chain33 assets)")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
-	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
-	if nil != err {
-		t.Fatalf("PrepareAuth failed due to:%s", err.Error())
-	}
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 
 	//2nd：订阅事件
 	eventName := "LogNewBridgeToken"
@@ -183,6 +137,10 @@ func TestBrigeTokenMint(t *testing.T) {
 
 	//3rd：创建token
 	symbol := "BTY"
+	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	if nil != err {
+		t.Fatalf("PrepareAuth failed due to:%s", err.Error())
+	}
 	_, err = x2EthContracts.BridgeBank.BridgeBankTransactor.CreateNewBridgeToken(auth, symbol)
 	if nil != err {
 		t.Fatalf("CreateNewBridgeToken failed due to:%s", err.Error())
@@ -215,7 +173,7 @@ func TestBrigeTokenMint(t *testing.T) {
 	}
 
 	///////////newOracleClaim///////////////////////////
-	balance, _ = sim.BalanceAt(ctx, para.InitValidators[0], nil)
+	balance, _ := sim.BalanceAt(ctx, para.InitValidators[0], nil)
 	fmt.Println("InitValidators[0] addr,", para.InitValidators[0].String(), "balance =", balance.String())
 
 	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
@@ -265,29 +223,8 @@ func TestBridgeDepositLock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Bridge deposit locking (Erc20/Eth assets)")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 
 	//创建token
 	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
@@ -386,41 +323,13 @@ func TestBridgeBankUnlock(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:Ethereum/ERC20 token unlocking (for burned chain33 assets)")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
-
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 	//1.lockEth资产
 	ethAddr := common.Address{}
-	ethToken, err := generated.NewBridgeToken(ethAddr, sim)
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
-	userOneAuth.Value = big.NewInt(300)
-	_, err = ethToken.Transfer(userOneAuth, x2EthDeployInfo.BridgeBank.Address, userOneAuth.Value)
-	sim.Commit()
-	//ToDO://///////////////////////////////////////////////
-	////////????####To check the balance by hzj/////////////
-	////////////////////////////////////////////////////////
+
 	ethLockAmount := big.NewInt(150)
 	userOneAuth.Value = ethLockAmount
 	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
@@ -553,42 +462,16 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:to be unlocked incrementally by successive burn prophecies (for burned chain33 assets)")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 
 	//1.lockEth资产
 	ethAddr := common.Address{}
-	ethToken, err := generated.NewBridgeToken(ethAddr, sim)
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
-	userOneAuth.Value = big.NewInt(300)
-	_, err = ethToken.Transfer(userOneAuth, x2EthDeployInfo.BridgeBank.Address, userOneAuth.Value)
-	sim.Commit()
 
 	ethLockAmount := big.NewInt(150)
 	userOneAuth.Value = ethLockAmount
-
 	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
 	//lock 150 eth
 	_, err = x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, common.Address{}, ethLockAmount)
@@ -718,36 +601,14 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	ctx := context.Background()
 	println("TEST:ERC20 to be unlocked incrementally by successive burn prophecies (for burned chain33 assets))")
 	//1st部署相关合约
-	sim, para := setup.PrepareTestEnv()
-
-	balance, _ := sim.BalanceAt(ctx, para.Deployer, nil)
-	fmt.Println("deployer addr,", para.Deployer.String(), "balance =", balance.String())
-
-	/////////////////////////EstimateGas///////////////////////////
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	gas, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	fmt.Printf("\nThe estimated gas=%d", gas)
-	////////////////////////////////////////////////////
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
-	if nil != err {
-		t.Fatalf("DeployAndInit failed due to:%s", err.Error())
-	}
-	sim.Commit()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 
 	//1.lockEth资产
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	ethLockAmount := big.NewInt(150)
 	userOneAuth.Value = ethLockAmount
-
 	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
 	//lock 150 eth
 	_, err = x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, common.Address{}, ethLockAmount)
@@ -763,9 +624,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	sim.Commit()
 	t.Logf("The new creaded symbolUsdt:%s, address:%s", symbolUsdt, bridgeTokenAddr.String())
 
-	//创建实例
-	//为userOne铸币
-	//userOne为bridgebank允许allowance设置数额
+	//创建实例 为userOne铸币 userOne为bridgebank允许allowance设置数额
 	userOne := para.InitValidators[0]
 	callopts := &bind.CallOpts{
 		Pending: true,
@@ -780,11 +639,12 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	require.Equal(t, isMiner, true)
 
 	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
-
+	require.Nil(t, err)
 	mintAmount := int64(1000)
 	_, err = bridgeTokenInstance.Mint(operatorAuth, userOne, big.NewInt(mintAmount))
 	require.Nil(t, err)
 	sim.Commit()
+
 	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 	allowAmount := int64(100)
@@ -800,7 +660,6 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	//测试子项目:should allow users to lock ERC20 tokens
 	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
-
 	//lock 100
 	lockAmount := big.NewInt(100)
 	_, err = x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, bridgeTokenAddr, lockAmount)

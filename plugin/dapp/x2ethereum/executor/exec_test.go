@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"fmt"
+	"strconv"
 	//"github.com/33cn/chain33/client"
 	"testing"
 
@@ -190,10 +192,11 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.setDb(receipt)
 
 	_, err = x.x2eth.Query_GetEthProphecy(&types2.QueryEthProphecyParams{ID: "010x7B95B6EC7EbD73572298cEf32Bb54FA408207359"})
-	x.Equal(err, types2.ErrInvalidProphecyID)
+	x.Equal(err, types.ErrNotFound)
 
-	x.query_GetEthProphecy("000x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
-	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "lock", 10)
+	ID := strconv.Itoa(0) + strconv.Itoa(0) + ethereumAddr + tokenContractAddress + "lock"
+	x.queryGetEthProphecy(ID, types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetSymbolTotalAmountByTxType(1, symbol, "lock", "10")
 
 	payload1 := &types2.Chain33ToEth{
 		TokenContract:    tokenContractAddress,
@@ -217,9 +220,9 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.query_GetEthProphecy("010x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
-	x.query_GetSymbolTotalAmount(symbol, 1, 7)
-	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "withdraw", 3)
+	x.queryGetEthProphecy("010x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetSymbolTotalAmount(symbol, 1, 7)
+	x.queryGetSymbolTotalAmountByTxType(1, symbol, "withdraw", "3")
 
 	//payload.Amount = "10"
 	//payload.Nonce = 2
@@ -242,8 +245,8 @@ func (x *suiteX2Ethereum) Test_4_Eth2Chain33() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.query_GetEthProphecy("030x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
-	x.query_GetSymbolTotalAmountByTxType(symbol, 1, "lock", 11)
+	x.queryGetEthProphecy("030x7B95B6EC7EbD73572298cEf32Bb54FA408207359", types2.EthBridgeStatus_SuccessStatusText)
+	x.queryGetSymbolTotalAmountByTxType(1, symbol, "lock", "11")
 }
 
 func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
@@ -259,16 +262,16 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 	x.NoError(err)
 	x.setDb(receipt)
 
-	x.query_GetSymbolTotalAmount("bty", 2, 5)
-	x.query_GetSymbolTotalAmountByTxType("bty", 2, "lock", 5)
+	x.queryGetSymbolTotalAmount("bty", 2, 5)
+	x.queryGetSymbolTotalAmountByTxType(2, "bty", "lock", "5")
 
 	//msgLock.Amount = "4"
 	//receipt, err = x.action.procEth2Chain33_burn(msgLock)
 	//x.NoError(err)
 	//x.setDb(receipt)
 	//
-	//x.query_GetSymbolTotalAmount("bty", 2, 1)
-	//x.query_GetSymbolTotalAmountByTxType("bty", 2, "withdraw", 4)
+	//x.queryGetSymbolTotalAmount("bty", 2, 1)
+	//x.queryGetSymbolTotalAmountByTxType("bty", 2, "withdraw", 4)
 	//
 	//receipt, err = x.action.procEth2Chain33_burn(msgLock)
 	//x.Equal(err, types.ErrNoBalance)
@@ -278,8 +281,8 @@ func (x *suiteX2Ethereum) Test_5_Chain33ToEth() {
 	//x.NoError(err)
 	//x.setDb(receipt)
 
-	x.query_GetSymbolTotalAmount("bty", 2, 0)
-	x.query_GetSymbolTotalAmountByTxType("bty", 2, "withdraw", 5)
+	x.queryGetSymbolTotalAmount("bty", 2, 0)
+	x.queryGetSymbolTotalAmountByTxType(2, "bty", "withdraw", "5")
 }
 
 func (x *suiteX2Ethereum) accountSetup() {
@@ -323,7 +326,7 @@ func (x *suiteX2Ethereum) setDb(receipt *chain33types.Receipt) {
 	}
 }
 
-func (x *suiteX2Ethereum) query_GetSymbolTotalAmountByTxType(tokenSymbol string, direction int64, txType string, equal int64) {
+func (x *suiteX2Ethereum) queryGetSymbolTotalAmountByTxType(direction int64, tokenSymbol, txType, equal string) {
 	params := &types2.QuerySymbolAssetsByTxTypeParams{
 		TokenSymbol: tokenSymbol,
 		Direction:   direction,
@@ -332,18 +335,20 @@ func (x *suiteX2Ethereum) query_GetSymbolTotalAmountByTxType(tokenSymbol string,
 	msg, err := x.x2eth.Query_GetSymbolTotalAmountByTxType(params)
 	x.NoError(err)
 
-	symbolAmount := msg.(*types2.ReceiptQuerySymbolAssetsByTxType)
-	x.Equal(symbolAmount.TotalAmount, uint64(equal))
+	fmt.Println("***", msg, err)
+
+	symbolAmount := msg.(*types2.ReceiptQuerySymbolAssets)
+	x.Equal(symbolAmount.Res[0].TotalAmount, equal)
 }
 
-func (x *suiteX2Ethereum) query_GetSymbolTotalAmount(tokenSymbol string, direction int64, equal int64) {
+func (x *suiteX2Ethereum) queryGetSymbolTotalAmount(tokenSymbol string, direction int64, equal int64) {
 	msg, err := x.x2eth.Query_GetSymbolTotalAmountByTxType(&types2.QuerySymbolAssetsByTxTypeParams{TokenSymbol: tokenSymbol, Direction: direction})
 	x.NoError(err)
 	reply := msg.(*types2.ReceiptQuerySymbolAssets)
 	x.Equal(reply.Res[0].TotalAmount, uint64(equal))
 }
 
-func (x *suiteX2Ethereum) query_GetEthProphecy(id string, statusTest types2.EthBridgeStatus) {
+func (x *suiteX2Ethereum) queryGetEthProphecy(id string, statusTest types2.EthBridgeStatus) {
 	msg, err := x.x2eth.Query_GetEthProphecy(&types2.QueryEthProphecyParams{ID: id})
 	x.NoError(err)
 	reply := msg.(*types2.ReceiptEthProphecy)

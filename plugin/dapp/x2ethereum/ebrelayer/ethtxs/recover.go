@@ -36,12 +36,22 @@ func RecoverContractHandler(client ethinterface.EthClientSpec, sender, registry 
 		return nil, nil, errors.New("failed to NewOracle")
 	}
 
+	valsetAddr, err := GetAddressFromBridgeRegistry(client, sender, registry, Valset)
+	if nil != err {
+		return nil, nil, errors.New("failed to get addr for valset from registry")
+	}
+	valset, err := generated.NewValset(*valsetAddr, client)
+	if nil != err {
+		return nil, nil, errors.New("failed to NewValset")
+	}
+
 	registryInstance, _ := generated.NewBridgeRegistry(registry, client)
 	x2EthContracts := &X2EthContracts{
 		BridgeRegistry: registryInstance,
 		BridgeBank:     bridgeBank,
 		Chain33Bridge:  chain33Bridge,
 		Oracle:         oracle,
+		Valset:         valset,
 	}
 
 	x2EthDeployInfo := &X2EthDeployInfo{
@@ -49,6 +59,7 @@ func RecoverContractHandler(client ethinterface.EthClientSpec, sender, registry 
 		BridgeBank:     &DeployResult{Address: *bridgeBankAddr},
 		Chain33Bridge:  &DeployResult{Address: *chain33BridgeAddr},
 		Oracle:         &DeployResult{Address: *oracleAddr},
+		Valset:         &DeployResult{Address: *valsetAddr},
 	}
 
 	return x2EthContracts, x2EthDeployInfo, nil
