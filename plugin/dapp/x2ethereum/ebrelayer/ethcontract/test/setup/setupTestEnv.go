@@ -2,8 +2,9 @@ package setup
 
 import (
 	"crypto/ecdsa"
-	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"math/big"
+
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
