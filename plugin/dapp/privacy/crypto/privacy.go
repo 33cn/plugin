@@ -14,8 +14,8 @@ import (
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/crypto/sha3"
-	"github.com/33cn/chain33/common/ed25519/edwards25519"
 	log "github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/system/crypto/ed25519/ed25519/edwards25519"
 	sccrypto "github.com/NebulousLabs/Sia/crypto"
 )
 
