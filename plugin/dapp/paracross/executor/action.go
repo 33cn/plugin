@@ -12,13 +12,13 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/golang/protobuf/proto"
-	"github.com/herumi/bls-eth-go-binary/bls"
 	"github.com/pkg/errors"
 )
 
@@ -413,8 +413,8 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 }
 
 //bls签名共识交易验证 大约平均耗时30ms (20~40ms)
-func (a *action) verifyBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
-	//1.　获取addr对应的bls 公钥 单独耗时3ms (3 addrs)
+func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
+
 	signAddrs := getAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
@@ -424,7 +424,7 @@ func (a *action) verifyBlsSign(nodesArry []string, commit *pt.ParacrossCommitAct
 		}
 		pubs = append(pubs, pub)
 	}
-	err := verifyBlsSignPlus(pubs, commit)
+	err := verifyBlsSign(a.exec.cryptoCli, pubs, commit)
 	if err != nil {
 		clog.Error("paracross.Commit bls sign verify", "addr", signAddrs, "nodes", nodesArry, "from", a.fromaddr)
 		return nil, err
@@ -432,14 +432,16 @@ func (a *action) verifyBlsSign(nodesArry []string, commit *pt.ParacrossCommitAct
 	return signAddrs, nil
 }
 
-func verifyBlsSignPlus(pubs []string, commit *pt.ParacrossCommitAction) error {
+func verifyBlsSign(cryptoCli crypto.Crypto, pubs []string, commit *pt.ParacrossCommitAction) error {
 	t1 := types.Now()
-	//单独deserial 90us, g2pubs的公钥结构不好整合到protobuf，就不好压缩到数据库直接读取
-	pubKeys := make([]bls.PublicKey, 0)
+	//1. 获取addr对应的bls 公钥
+	pubKeys := make([]crypto.PubKey, 0)
 	for _, p := range pubs {
-
-		var pub bls.PublicKey
-		err := pub.DeserializeHexStr(p)
+		k, err := common.FromHex(p)
+		if err != nil {
+			return errors.Wrapf(err, "pub FromHex=%s", p)
+		}
+		pub, err := cryptoCli.PubKeyFromBytes(k)
 		if err != nil {
 			return errors.Wrapf(err, "DeserializePublicKey=%s", p)
 		}
@@ -447,21 +449,26 @@ func verifyBlsSignPlus(pubs []string, commit *pt.ParacrossCommitAction) error {
 
 	}
 
-	//3.　获取聚合的签名, deserial 300us
-	var sign bls.Sign
-	err := sign.Deserialize(commit.Bls.Sign)
+	//2.　获取聚合的签名, deserial 300us
+	sign, err := cryptoCli.SignatureFromBytes(commit.Bls.Sign)
 	if err != nil {
 		return errors.Wrapf(err, "DeserializeSignature,key=%s", common.ToHex(commit.Bls.Sign))
 	}
-	//4. 获取签名前原始msg
+	//3. 获取签名前原始msg
 	msg := types.Encode(commit.Status)
-	//verify 1ms, total 2ms
-	if !sign.FastAggregateVerify(pubKeys, msg) {
+
+	//4. verify 1ms, total 2ms
+	agg, err := crypto.ToAggregate(cryptoCli)
+	if err != nil {
+		return errors.Wrap(err, "ToAggregate")
+	}
+	err = agg.VerifyAggregatedOne(pubKeys, msg, sign)
+	if err != nil {
 		clog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
 			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "data", common.ToHex(msg))
 		return pt.ErrBlsSignVerify
 	}
-	clog.Info("paracross verifyBlsSign success", "title", commit.Status.Title, "height", commit.Status.Height, "time", types.Since(t1))
+	clog.Info("paracross procBlsSign success", "title", commit.Status.Title, "height", commit.Status.Height, "time", types.Since(t1))
 	return nil
 }
 
@@ -484,9 +491,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	//获取commitAddrs, bls sign 包含多个账户的聚合签名
 	commitAddrs := []string{a.fromaddr}
 	if commit.Bls != nil {
-		addrs, err := a.verifyBlsSign(nodesArry, commit)
+		addrs, err := a.procBlsSign(nodesArry, commit)
 		if err != nil {
-			return nil, errors.Wrap(err, "verifyBlsSign")
+			return nil, errors.Wrap(err, "procBlsSign")
 		}
 		commitAddrs = addrs
 	}

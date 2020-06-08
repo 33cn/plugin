@@ -9,22 +9,24 @@ import (
 	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"github.com/herumi/bls-eth-go-binary/bls"
 )
 
 var (
 	clog                    = log.New("module", "execs.paracross")
 	enableParacrossTransfer = true
 	driverName              = pt.ParaX
+	blsSignName             = "bls"
 )
 
 // Paracross exec
 type Paracross struct {
+	cryptoCli crypto.Crypto
 	drivers.DriverBase
 }
 
@@ -33,7 +35,6 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newParacross, cfg.GetDappFork(driverName, "Enable"))
 	InitExecType()
 	setPrefix()
-	bls.Init(bls.BLS12_381)
 }
 
 func InitExecType() {
@@ -50,6 +51,11 @@ func newParacross() drivers.Driver {
 	c := &Paracross{}
 	c.SetChild(c)
 	c.SetExecutorType(types.LoadExecutorType(driverName))
+	cli, err := crypto.New("bls")
+	if err != nil {
+		panic("paracross need bls sign register")
+	}
+	c.cryptoCli = cli
 	return c
 }
 

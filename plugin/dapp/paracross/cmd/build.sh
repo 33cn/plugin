@@ -11,6 +11,7 @@ OUT_DIR="${1}/$strapp"
 #SRC_CLI=github.com/33cn/plugin/cli
 #go build -v -o "${PARACLI}" -ldflags "-X ${SRC_CLI}/buildflags.ParaName=user.p.${PARANAME}. -X ${SRC_CLI}/buildflags.RPCAddr=http://localhost:8901" "${SRC_CLI}"
 
+mkdir -p "${OUT_DIR}"
 # shellcheck disable=SC2086
 cp ./build/* "${OUT_DIR}"
 
