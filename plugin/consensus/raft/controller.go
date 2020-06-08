@@ -103,13 +103,12 @@ func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
 	//采用context来统一管理所有服务
 	ctx, stop := context.WithCancel(context.Background())
 	// propose channel
-	proposeC := make(chan BlockInfo)
+	proposeC := make(chan *types.Block)
 	confChangeC = make(chan raftpb.ConfChange)
-	node, commitC, errorC, snapshotterReady, validatorC := NewRaftNode(ctx, int(subcfg.NodeID), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
+	commitC, errorC, snapshotterReady, validatorC := NewRaftNode(ctx, int(subcfg.NodeID), subcfg.IsNewJoinNode, peers, readOnlyPeers, addPeers, getSnapshot, proposeC, confChangeC)
 	//启动raft删除节点操作监听
 	go serveHTTPRaftAPI(ctx, int(subcfg.RaftAPIPort), confChangeC, errorC)
 	// 监听commit channel,取block
 	b = NewBlockstore(ctx, cfg, <-snapshotterReady, proposeC, commitC, errorC, validatorC, stop)
-	node.SetClient(b)
 	return b
 }

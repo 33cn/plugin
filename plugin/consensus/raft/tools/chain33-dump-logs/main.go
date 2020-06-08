@@ -5,13 +5,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"path/filepath"
 	"strconv"
 
+	ttypes "github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/coreos/etcd/pkg/pbutil"
 	"github.com/coreos/etcd/pkg/types"
@@ -19,6 +19,7 @@ import (
 	raftsnap "github.com/coreos/etcd/snap"
 	"github.com/coreos/etcd/wal"
 	"github.com/coreos/etcd/wal/walpb"
+	"github.com/golang/protobuf/proto"
 )
 
 func main() {
@@ -94,12 +95,12 @@ func main() {
 				break
 			}
 			// 解码
-			info := &BlockInfo{}
-			if err := json.Unmarshal(e.Data, info); err != nil {
+			block := &ttypes.Block{}
+			if err := proto.Unmarshal(e.Data, block); err != nil {
 				log.Printf("failed to unmarshal: %v", err)
 				break
 			}
-			msg = fmt.Sprintf("%s\tHeight=%d\tHash=%s", msg, info.Height, info.Hash)
+			msg = fmt.Sprintf("%s\tHeight=%d\tTxHash=%X", msg, block.Height, block.TxHash)
 		case raftpb.EntryConfChange:
 			msg = fmt.Sprintf("%s\tconf", msg)
 			var r raftpb.ConfChange
@@ -131,9 +132,4 @@ func genIDSlice(a []uint64) []types.ID {
 		ids[i] = types.ID(id)
 	}
 	return ids
-}
-
-type BlockInfo struct {
-	Height int64  `json:"height"`
-	Hash   string `json:"hash"`
 }
