@@ -6,15 +6,18 @@ package raft
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/etcdserver/stats"
 	"github.com/coreos/etcd/pkg/fileutil"
 	typec "github.com/coreos/etcd/pkg/types"
@@ -24,6 +27,7 @@ import (
 	"github.com/coreos/etcd/snap"
 	"github.com/coreos/etcd/wal"
 	"github.com/coreos/etcd/wal/walpb"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -31,10 +35,9 @@ var (
 )
 
 type raftNode struct {
-	client           *Client
-	proposeC         <-chan BlockInfo
+	proposeC         <-chan *types.Block
 	confChangeC      <-chan raftpb.ConfChange
-	commitC          chan<- *BlockInfo
+	commitC          chan<- *types.Block
 	errorC           chan<- error
 	id               int
 	bootstrapPeers   []string
@@ -69,17 +72,13 @@ type Node struct {
 	*raftNode
 }
 
-func (node *Node) SetClient(client *Client) {
-	node.client = client
-}
-
 // NewRaftNode create raft node
-func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan BlockInfo,
-	confChangeC <-chan raftpb.ConfChange) (*Node, <-chan *BlockInfo, <-chan error, <-chan *snap.Snapshotter, <-chan bool) {
+func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnlyPeers []string, addPeers []string, getSnapshot func() ([]byte, error), proposeC <-chan *types.Block,
+	confChangeC <-chan raftpb.ConfChange) (<-chan *types.Block, <-chan error, <-chan *snap.Snapshotter, <-chan bool) {
 
 	rlog.Info("Enter consensus raft")
 	// commit channel
-	commitC := make(chan *BlockInfo)
+	commitC := make(chan *types.Block)
 	errorC := make(chan error)
 	rc := &raftNode{
 		proposeC:         proposeC,
@@ -102,7 +101,7 @@ func NewRaftNode(ctx context.Context, id int, join bool, peers []string, readOnl
 	}
 	go rc.startRaft()
 
-	return &Node{rc}, commitC, errorC, rc.snapshotterReady, rc.validatorC
+	return commitC, errorC, rc.snapshotterReady, rc.validatorC
 }
 
 //  启动raft节点
@@ -176,6 +175,9 @@ func (rc *raftNode) startRaft() {
 
 	//定时轮询watch leader 状态是否改变，更新validator
 	go rc.updateValidator()
+
+	//定时清理wal日志
+	go rc.cleanupWal()
 }
 
 // 网络监听
@@ -232,7 +234,7 @@ func (rc *raftNode) serveChannels() {
 				if !ok {
 					rc.proposeC = nil
 				} else {
-					out, err := json.Marshal(prop)
+					out, err := proto.Marshal(prop)
 					if err != nil {
 						rlog.Error(fmt.Sprintf("failed to marshal block:%v ", err.Error()))
 					}
@@ -265,10 +267,6 @@ func (rc *raftNode) serveChannels() {
 		case <-ticker.C:
 			rc.node.Tick()
 		case rd := <-rc.node.Ready():
-			if !rc.checkEntries(rd.Entries) || !rc.checkEntries(rd.CommittedEntries) {
-				rc.stop()
-				return
-			}
 			rc.wal.Save(rd.HardState, rd.Entries)
 			if !raft.IsEmptySnap(rd.Snapshot) {
 				rc.saveSnap(rd.Snapshot)
@@ -293,25 +291,6 @@ func (rc *raftNode) serveChannels() {
 			return
 		}
 	}
-}
-
-func (rc *raftNode) checkEntries(ents []raftpb.Entry) bool {
-	for i := range ents {
-		if ents[i].Type == raftpb.EntryNormal && len(ents[i].Data) != 0 {
-			info := &BlockInfo{}
-			if err := json.Unmarshal(ents[i].Data, info); err != nil {
-				rlog.Error("checkEntries Unmarshal BlockInfo fail", "err", err)
-				return false
-			}
-			if rc.client != nil {
-				if !rc.client.CheckBlockInfo(info) {
-					rlog.Error("checkEntries CheckBlockInfo fail")
-					return false
-				}
-			}
-		}
-	}
-	return true
 }
 
 func (rc *raftNode) updateValidator() {
@@ -447,7 +426,7 @@ func (rc *raftNode) publishSnapshot(snapshotToSave raftpb.Snapshot) {
 	}
 
 	rlog.Info(fmt.Sprintf("publishing snapshot at index %d", rc.snapshotIndex))
-	defer rlog.Info("finished publishing snapshot at index %d", rc.snapshotIndex)
+	defer rlog.Info(fmt.Sprintf("finished publishing snapshot at index %d", rc.snapshotIndex))
 
 	if snapshotToSave.Metadata.Index <= rc.appliedIndex {
 		rlog.Error(fmt.Sprintf("snapshot index [%d] should > progress.appliedIndex [%d] + 1", snapshotToSave.Metadata.Index, rc.appliedIndex))
@@ -517,13 +496,13 @@ func (rc *raftNode) publishEntries(ents []raftpb.Entry) bool {
 				break
 			}
 			// 解码
-			info := &BlockInfo{}
-			if err := json.Unmarshal(ents[i].Data, info); err != nil {
-				rlog.Error("Unmarshal BlockInfo fail", "err", err)
+			block := &types.Block{}
+			if err := proto.Unmarshal(ents[i].Data, block); err != nil {
+				rlog.Error("Unmarshal block fail", "err", err)
 				break
 			}
 			select {
-			case rc.commitC <- info:
+			case rc.commitC <- block:
 			case <-rc.ctx.Done():
 				return false
 			}
@@ -609,4 +588,64 @@ func (rc *raftNode) addReadOnlyPeers() {
 			}
 		}
 	}
+}
+
+func (rc *raftNode) cleanupWal() {
+	walcount := 10
+	ticker := time.NewTicker(600 * time.Second)
+	for {
+		select {
+		case <-rc.ctx.Done():
+			return
+		case <-ticker.C:
+			names, _ := readWalNames(rc.waldir)
+			if len(names) <= walcount*2 {
+				continue
+			}
+			wnames := sort.StringSlice(names)
+			_, lastWalIndex, _ := parseWalName(wnames[walcount-1])
+			lastEntryIndex := lastWalIndex - 1
+			compactIndex := rc.snapshotIndex - snapshotCatchUpEntriesN
+			if compactIndex > lastEntryIndex {
+				beg := time.Now()
+				rlog.Info(fmt.Sprintf("clean up wal [compacted index: %d | last wal index: %d]", compactIndex, lastEntryIndex))
+				removeWal(wnames[:walcount], rc.waldir)
+				rlog.Info(fmt.Sprintf("clean up %d wal cost %s", walcount, time.Since(beg)))
+			}
+		}
+	}
+}
+
+func readWalNames(dirpath string) ([]string, error) {
+	wnames := make([]string, 0)
+	names, err := fileutil.ReadDir(dirpath)
+	if err != nil {
+		rlog.Error(fmt.Sprintf("chain33_raft: error read wal names (%v)", err.Error()))
+		return nil, err
+	}
+	for _, name := range names {
+		if _, _, err := parseWalName(name); err == nil {
+			wnames = append(wnames, name)
+		}
+	}
+	return wnames, nil
+}
+
+func parseWalName(str string) (seq, index uint64, err error) {
+	if !strings.HasSuffix(str, ".wal") {
+		return 0, 0, errors.New("bad wal name")
+	}
+	_, err = fmt.Sscanf(str, "%016x-%016x.wal", &seq, &index)
+	return seq, index, err
+}
+
+func removeWal(names []string, waldir string) error {
+	for _, name := range names {
+		srcPath := fmt.Sprintf("%s%s%s", waldir, string(os.PathSeparator), name)
+		if err := os.Remove(srcPath); err != nil {
+			rlog.Error(fmt.Sprintf("chain33_raft: error remove wal (%v)", err.Error()))
+			return err
+		}
+	}
+	return nil
 }

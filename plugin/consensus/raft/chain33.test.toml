@@ -35,7 +35,7 @@ batchsync=false
 enableTxQuickIndex=true
 
 [p2p]
-types=[]
+types=["dht"]
 enable=false
 msgCacheSize=10240
 driver="leveldb"
@@ -160,3 +160,9 @@ superManager=[
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
+
+[metrics]
+#是否使能发送metrics数据的发送
+enableMetrics=false
+#数据保存模式
+dataEmitMode="influxdb"

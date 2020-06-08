@@ -277,7 +277,6 @@ func CheckState(t *testing.T, client *Client) {
 	assert.Equal(t, client.csState.IsProposer(), true)
 	assert.Nil(t, client.csState.GetPrevotesState(state.LastBlockHeight, 0, nil))
 	assert.Nil(t, client.csState.GetPrecommitsState(state.LastBlockHeight, 0, nil))
-	assert.NotEmpty(t, client.csState.GetPrivValidator())
 	assert.Len(t, client.GenesisDoc().Validators, 1)
 
 	msg1, err := client.Query_IsHealthy(&types.ReqNil{})
