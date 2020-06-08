@@ -413,7 +413,12 @@ func (b *blsClient) aggregateSigns(signs [][]byte) (crypto.Signature, error) {
 		}
 		signatures = append(signatures, si)
 	}
-	return b.cryptoCli.Aggregate(signatures)
+	agg, err := crypto.ToAggregate(b.cryptoCli)
+	if err != nil {
+		return nil, types.ErrNotSupport
+	}
+
+	return agg.Aggregate(signatures)
 }
 
 func (b *blsClient) updatePeers(id string, add bool) {
