@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -39,8 +42,7 @@ import (
 )
 
 var (
-	configPath = flag.String("f", "./../../relayer.toml", "configfile")
-	//chainTestCfg  = types.NewChain33Config(types.GetDefaultCfgstring())
+	configPath    = flag.String("f", "./../../relayer.toml", "configfile")
 	privateKeyStr = "0x3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
 	accountAddr   = "0x92c8b16afd6d423652559c6e266cbe1c29bfd84f"
 	passphrase    = "123456hzj"
@@ -55,13 +57,20 @@ var (
 	ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 )
 
-func Test_HandleRequest(t *testing.T) {
-	mock33 := newMock33("127.0.0.1:8801")
+func TestAll(t *testing.T) {
+	mock33 := newMock33()
 	defer mock33.Close()
-	_, sim, _, x2EthDeployInfo := deployContracts()
-	//require.NoError(t, err)
-	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60002", "http://127.0.0.1:8801", t)
-	_, err := chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
+	test_HandleRequest(t)
+	test_ImportPrivateKey(t)
+	test_Lockbty(t)
+	test_restorePrivateKeys(t)
+}
+
+func test_HandleRequest(t *testing.T) {
+	_, sim, _, x2EthDeployInfo, err := deployContracts()
+	require.NoError(t, err)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60002", t)
+	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
 
 	body, err := hex.DecodeString(test)
@@ -71,7 +80,7 @@ func Test_HandleRequest(t *testing.T) {
 	err = syncTx.HandleRequest(body)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(200 * time.Millisecond)
 
 	ret := chain33Relayer.QueryTxhashRelay2Eth()
 	assert.NotEmpty(t, ret)
@@ -80,12 +89,10 @@ func Test_HandleRequest(t *testing.T) {
 	assert.Equal(t, event, events.Event(events.ClaimTypeLock))
 }
 
-func Test_ImportPrivateKey(t *testing.T) {
-	mock33 := newMock33("127.0.0.1:8802")
-	defer mock33.Close()
+func test_ImportPrivateKey(t *testing.T) {
 	_, sim, _, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
-	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60000", "http://127.0.0.1:8802", t)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60000", t)
 
 	addr, err := chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
@@ -104,12 +111,10 @@ func Test_ImportPrivateKey(t *testing.T) {
 	assert.Equal(t, key, privateKeyStr)
 }
 
-func Test_Lockbty(t *testing.T) {
-	mock33 := newMock33("127.0.0.1:8803")
-	defer mock33.Close()
+func test_Lockbty(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
-	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60001", "http://127.0.0.1:8803", t)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60001", t)
 	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
 
@@ -215,14 +220,15 @@ func Test_Lockbty(t *testing.T) {
 	txhash := tx.Hash().Hex()
 
 	chain33Relayer.rwLock.Lock()
+	chain33Relayer.statusCheckedIndex = 1
 	chain33Relayer.totalTx4Chain33ToEth = 2
 	chain33Relayer.rwLock.Unlock()
-	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), txhash, 3)
+	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), txhash, 2)
 
 	time.Sleep(200 * time.Millisecond)
 
 	chain33Relayer.rwLock.Lock()
-	chain33Relayer.totalTx4Chain33ToEth = 9
+	chain33Relayer.statusCheckedIndex = 9
 	chain33Relayer.totalTx4Chain33ToEth = 11
 	chain33Relayer.rwLock.Unlock()
 	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), "", 11)
@@ -230,12 +236,10 @@ func Test_Lockbty(t *testing.T) {
 	time.Sleep(200 * time.Millisecond)
 }
 
-func Test_RestorePrivateKeys(t *testing.T) {
-	mock33 := newMock33("127.0.0.1:8804")
-	defer mock33.Close()
+func test_restorePrivateKeys(t *testing.T) {
 	_, sim, _, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
-	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60003", "http://127.0.0.1:8804", t)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60003", t)
 	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
 
@@ -260,23 +264,23 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second)
-
+	time.Sleep(200 * time.Millisecond)
 }
 
-func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind, chain33Host string, t *testing.T) *Relayer4Chain33 {
+func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string, t *testing.T) *Relayer4Chain33 {
 	cfg := initCfg(*configPath)
-	cfg.SyncTxConfig.Chain33Host = chain33Host
+	cfg.SyncTxConfig.Chain33Host = "http://127.0.0.1:8801"
 	cfg.BridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
 	cfg.SyncTxConfig.PushBind = pushBind
 	cfg.SyncTxConfig.FetchHeightPeriodMs = 50
 	cfg.SyncTxConfig.Dbdriver = "memdb"
 
 	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
 
 	relayer := &Relayer4Chain33{
-		rpcLaddr:            chain33Host,
+		rpcLaddr:            cfg.SyncTxConfig.Chain33Host,
 		fetchHeightPeriodMs: cfg.SyncTxConfig.FetchHeightPeriodMs,
 		unlock:              make(chan int),
 		db:                  db,
@@ -292,7 +296,7 @@ func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2Et
 	assert.Equal(t, relayer.statusCheckedIndex, int64(1))
 
 	syncCfg := &ebTypes.SyncTxReceiptConfig{
-		Chain33Host:       chain33Host,
+		Chain33Host:       cfg.SyncTxConfig.Chain33Host,
 		PushHost:          cfg.SyncTxConfig.PushHost,
 		PushName:          cfg.SyncTxConfig.PushName,
 		PushBind:          pushBind,
@@ -302,10 +306,18 @@ func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2Et
 	}
 	go relayer.syncProc(syncCfg)
 
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM)
+	go func() {
+		<-ch
+		cancel()
+		wg.Wait()
+		os.Exit(0)
+	}()
 	return relayer
 }
 
-func deployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo) {
+func deployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
 	ethValidatorAddrKeys := make([]string, 0)
 	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
 	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
@@ -323,11 +335,17 @@ func deployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2E
 		Data: common.FromHex(generated.BridgeBankBin),
 	}
 
-	_, _ = sim.EstimateGas(ctx, callMsg)
-	x2EthContracts, x2EthDeployInfo, _ := ethtxs.DeployAndInit(sim, para)
+	_, err := sim.EstimateGas(ctx, callMsg)
+	if nil != err {
+		panic("failed to estimate gas due to:" + err.Error())
+	}
+	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(sim, para)
+	if nil != err {
+		return nil, nil, nil, nil, err
+	}
 	sim.Commit()
 
-	return para, sim, x2EthContracts, x2EthDeployInfo
+	return para, sim, x2EthContracts, x2EthDeployInfo, nil
 }
 
 func initCfg(path string) *relayerTypes.RelayerConfig {
@@ -339,7 +357,7 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 	return &cfg
 }
 
-func newMock33(JrpcBindAddr string) *testnode.Chain33Mock {
+func newMock33() *testnode.Chain33Mock {
 	var ret = types.ReplySubscribePush{IsOk: true, Msg: ""}
 	var he = types.Header{Height: 10000}
 
@@ -348,13 +366,12 @@ func newMock33(JrpcBindAddr string) *testnode.Chain33Mock {
 	mockapi.On("Close").Return()
 	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
 	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
-	//mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 
 	mock33 := testnode.New("", mockapi)
 	//defer mock33.Close()
 	rpcCfg := mock33.GetCfg().RPC
 	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = JrpcBindAddr
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
 	mock33.GetRPC().Listen()
 
 	return mock33

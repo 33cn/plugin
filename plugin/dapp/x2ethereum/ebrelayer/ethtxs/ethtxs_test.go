@@ -48,8 +48,7 @@ func Test_GetAddressFromBridgeRegistry(t *testing.T) {
 	sim := new(ethinterface.SimExtend)
 	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
 
-	var bridgebankTest ContractRegistry
-	bridgebankTest = 5
+	bridgebankTest := ContractRegistry(5)
 	_, err := GetAddressFromBridgeRegistry(sim, genesisAddr, genesisAddr, bridgebankTest)
 	require.NotNil(t, err)
 }
