@@ -526,7 +526,6 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.x2EthDeployInfo = x2EthDeployInfo
 	relayer.rwLock.Unlock()
 
-
 	go relayer.proc()
 	return relayer
 }
