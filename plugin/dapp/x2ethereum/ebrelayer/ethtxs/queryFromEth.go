@@ -113,7 +113,7 @@ func GetLockedFunds(bridgeBank *generated.BridgeBank, tokenAddrStr string) (stri
 	return balance.String(), nil
 }
 
-func GetDepositFunds(client ethinterface.EthClientSpec, tokenAddrStr string) (string, error) {
+func GetDepositFunds(client bind.ContractBackend, tokenAddrStr string) (string, error) {
 	if tokenAddrStr == "" {
 		return "", errors.New("nil token address")
 	}

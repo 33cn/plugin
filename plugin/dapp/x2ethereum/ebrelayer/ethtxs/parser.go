@@ -10,7 +10,6 @@ package ethtxs
 // --------------------------------------------------------
 
 import (
-	"crypto/ecdsa"
 	"math/big"
 	"strings"
 
@@ -115,34 +114,6 @@ func ParseBurnLockTxReceipt(claimType events.Event, receipt *chain33Types.Receip
 		}
 	}
 	return nil
-}
-
-// ProphecyClaimToSignedOracleClaim : packages and signs a prophecy claim's data, returning a new oracle claim
-func ProphecyClaimToSignedOracleClaim(event events.NewProphecyClaimEvent, privateKey *ecdsa.PrivateKey) (*OracleClaim, error) {
-	// Parse relevant data into type byte[]
-	prophecyID := event.ProphecyID.Bytes()
-	sender := event.Chain33Sender
-	recipient := []byte(event.EthereumReceiver.Hex())
-	token := []byte(event.TokenAddress.Hex())
-	amount := event.Amount.Bytes()
-	validator := []byte(event.ValidatorAddress.Hex())
-
-	// Generate rawHash using ProphecyClaim data
-	hash := GenerateClaimHash(prophecyID, sender, recipient, token, amount, validator)
-
-	// Sign the hash using the active validator's private key
-	signature, err := SignClaim4Eth(hash, privateKey)
-	if nil != err {
-		return nil, err
-	}
-	// Package the ProphecyID, Message, and Signature into an OracleClaim
-	oracleClaim := &OracleClaim{
-		ProphecyID: event.ProphecyID,
-		Message:    hash,
-		Signature:  signature,
-	}
-
-	return oracleClaim, nil
 }
 
 // Chain33MsgToProphecyClaim : parses event data from a Chain33Msg, packaging it as a ProphecyClaim

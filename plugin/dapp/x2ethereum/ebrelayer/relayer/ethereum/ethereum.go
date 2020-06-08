@@ -46,7 +46,6 @@ type Relayer4Ethereum struct {
 	privateKey4Chain33     chain33Crypto.PrivKey
 	ethValidator           common.Address
 	totalTx4Eth2Chain33    int64
-	totalTx4Chain33ToEth   int64
 	rpcURL2Chain33         string
 	unlockchan             chan int
 	maturityDegree         int32
