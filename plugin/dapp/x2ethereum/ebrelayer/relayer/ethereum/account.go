@@ -98,9 +98,11 @@ func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err er
 		}
 	}
 
+	ethRelayer.rwLock.RLock()
 	if nil != ethRelayer.privateKey4Chain33 {
 		ethRelayer.unlockchan <- start
 	}
+	ethRelayer.rwLock.RUnlock()
 
 	return nil
 }
@@ -133,7 +135,9 @@ func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateK
 		return err
 	}
 
+	ethRelayer.rwLock.Lock()
 	ethRelayer.privateKey4Chain33 = priKey
+	ethRelayer.rwLock.Unlock()
 	ethRelayer.unlockchan <- start
 	addr, err := pubKeyToAddress4Bty(priKey.PubKey().Bytes())
 	if nil != err {
