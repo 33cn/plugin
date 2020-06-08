@@ -198,7 +198,7 @@ func (x *x2ethereum) execLocal(receiptData *types.ReceiptData) (*types.LocalDBSe
 				return nil, err
 			}
 
-			nb, err := x.GetLocalDB().Get(x2eTy.CalTokenSymbolTotalLockOrBurnAmount(receiptChain33ToEth.IssuerDotSymbol, receiptChain33ToEth.TokenContract, x2eTy.DirChain33ToEth, "withdraw"))
+			nb, err := x.GetLocalDB().Get(x2eTy.CalTokenSymbolTotalLockOrBurnAmount(receiptChain33ToEth.IssuerDotSymbol, receiptChain33ToEth.TokenContract, x2eTy.DirChain33ToEth, ""))
 			if err != nil && err != types.ErrNotFound {
 				return nil, err
 			}
