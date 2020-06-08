@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -25,6 +26,7 @@ import (
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum"
+
 	//"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	//"github.com/stretchr/testify/suite"
