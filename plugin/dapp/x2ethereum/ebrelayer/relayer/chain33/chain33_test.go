@@ -39,8 +39,8 @@ import (
 )
 
 var (
-	configPath    = flag.String("f", "./../../relayer.toml", "configfile")
-	chainTestCfg  = types.NewChain33Config(types.GetDefaultCfgstring())
+	configPath = flag.String("f", "./../../relayer.toml", "configfile")
+	//chainTestCfg  = types.NewChain33Config(types.GetDefaultCfgstring())
 	privateKeyStr = "0x3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
 	accountAddr   = "0x92c8b16afd6d423652559c6e266cbe1c29bfd84f"
 	passphrase    = "123456hzj"
@@ -348,7 +348,7 @@ func newMock33(JrpcBindAddr string) *testnode.Chain33Mock {
 	mockapi.On("Close").Return()
 	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
 	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
-	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+	//mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 
 	mock33 := testnode.New("", mockapi)
 	//defer mock33.Close()
