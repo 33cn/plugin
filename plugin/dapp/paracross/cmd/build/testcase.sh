@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-PARA_CLI="docker exec ${NODE3} /root/chain33-para-cli"
+PARA_CLI="docker exec ${NODE3} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 
-PARA_CLI2="docker exec ${NODE2} /root/chain33-para-cli"
-PARA_CLI1="docker exec ${NODE1} /root/chain33-para-cli"
-PARA_CLI4="docker exec ${NODE4} /root/chain33-para-cli"
-PARA_CLI5="docker exec ${NODE5} /root/chain33-para-cli --paraName user.p.game."
+PARA_CLI2="docker exec ${NODE2} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI1="docker exec ${NODE1} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI4="docker exec ${NODE4} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI5="docker exec ${NODE5} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
 MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"

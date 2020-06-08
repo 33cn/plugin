@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-	"github.com/herumi/bls-eth-go-binary/bls"
 
 	"github.com/pkg/errors"
 )
@@ -33,10 +33,11 @@ const (
 type blsClient struct {
 	paraClient      *client
 	selfID          string
-	blsPriKey       *bls.SecretKey
-	blsPubKey       *bls.PublicKey
+	cryptoCli       crypto.Crypto
+	blsPriKey       crypto.PrivKey
+	blsPubKey       crypto.PubKey
 	peers           map[string]bool
-	peersBlsPubKey  map[string]*bls.PublicKey
+	peersBlsPubKey  map[string]crypto.PubKey
 	commitsPool     map[int64]*pt.ParaBlsSignSumDetails
 	rcvCommitTxCh   chan []*pt.ParacrossCommitAction
 	leaderOffset    int32
@@ -50,7 +51,12 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b := &blsClient{paraClient: para}
 	b.selfID = cfg.AuthAccount
 	b.peers = make(map[string]bool)
-	b.peersBlsPubKey = make(map[string]*bls.PublicKey)
+	cli, err := crypto.New("bls")
+	if err != nil {
+		panic("new bls crypto fail")
+	}
+	b.cryptoCli = cli
+	b.peersBlsPubKey = make(map[string]crypto.PubKey)
 	b.commitsPool = make(map[int64]*pt.ParaBlsSignSumDetails)
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
@@ -214,7 +220,7 @@ func (b *blsClient) sendAggregateTx(nodes []string) error {
 	if len(dones) <= 0 {
 		return nil
 	}
-	acts, err := aggregateCommit2Action(nodes, dones)
+	acts, err := b.aggregateCommit2Action(nodes, dones)
 	if err != nil {
 		plog.Error("sendAggregateTx AggregateCommit2Action", "err", err)
 		return err
@@ -374,7 +380,7 @@ func filterDoneCommits(peers int, pool map[int64]*pt.ParaBlsSignSumDetails) []*p
 }
 
 //聚合多个签名为一个签名，并设置地址bitmap
-func aggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails) ([]*pt.ParacrossCommitAction, error) {
+func (b *blsClient) aggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails) ([]*pt.ParacrossCommitAction, error) {
 	var notify []*pt.ParacrossCommitAction
 	for _, v := range commits {
 		a := &pt.ParacrossCommitAction{Bls: &pt.ParacrossCommitBlsInfo{}}
@@ -382,11 +388,11 @@ func aggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails)
 		types.Decode(v.Msgs[0], s)
 		a.Status = s
 
-		sign, err := aggregateSigns(v.Signs)
+		sign, err := b.aggregateSigns(v.Signs)
 		if err != nil {
 			return nil, errors.Wrapf(err, "bls aggregate=%s", v.Addrs)
 		}
-		a.Bls.Sign = sign.Serialize()
+		a.Bls.Sign = sign.Bytes()
 		bits, remains := setAddrsBitMap(nodes, v.Addrs)
 		plog.Debug("AggregateCommit2Action", "nodes", nodes, "addr", v.Addrs, "bits", common.ToHex(bits), "height", v.Height)
 		if len(remains) > 0 {
@@ -398,16 +404,16 @@ func aggregateCommit2Action(nodes []string, commits []*pt.ParaBlsSignSumDetails)
 	return notify, nil
 }
 
-func aggregateSigns(signs [][]byte) (*bls.Sign, error) {
-	var sum bls.Sign
-	var signatures []bls.Sign
+func (b *blsClient) aggregateSigns(signs [][]byte) (crypto.Signature, error) {
+	var signatures []crypto.Signature
 	for _, data := range signs {
-		var si bls.Sign
-		si.Deserialize(data)
+		si, err := b.cryptoCli.SignatureFromBytes(data)
+		if err != nil {
+			return nil, err
+		}
 		signatures = append(signatures, si)
 	}
-	sum.Aggregate(signatures)
-	return &sum, nil
+	return b.cryptoCli.Aggregate(signatures)
 }
 
 func (b *blsClient) updatePeers(id string, add bool) {
@@ -427,38 +433,36 @@ func (b *blsClient) updatePeers(id string, add bool) {
 }
 
 func (b *blsClient) setBlsPriKey(secpPrkKey []byte) {
-	b.blsPriKey = getBlsPriKey(secpPrkKey)
-	b.blsPubKey = b.blsPriKey.GetPublicKey()
-	serial := b.blsPubKey.Serialize()
-	plog.Info("para commit get pub bls", "pubkey", common.ToHex(serial[:]))
+	b.blsPriKey = b.getBlsPriKey(secpPrkKey)
+	b.blsPubKey = b.blsPriKey.PubKey()
+	serial := b.blsPubKey.Bytes()
+	plog.Debug("para commit get pub bls", "pubkey", common.ToHex(serial[:]))
 }
 
-func getBlsPriKey(key []byte) *bls.SecretKey {
+func (b *blsClient) getBlsPriKey(key []byte) crypto.PrivKey {
 	var newKey [common.Sha256Len]byte
 	copy(newKey[:], key)
 	for {
 		plog.Info("para commit getBlsPriKey try", "key", common.ToHex(newKey[:]))
-		var secret bls.SecretKey
-		err := secret.Deserialize(newKey[:])
+		pri, err := b.cryptoCli.PrivKeyFromBytes(newKey[:])
 		if nil != err {
 			copy(newKey[:], common.Sha256(newKey[:]))
 			continue
 		}
-		plog.Info("para commit getBlsPriKey", "final key", secret.SerializeToHexStr())
-		return &secret
+		return pri
 	}
 }
 
-//transfer secp Private key to bls pub key
-func secpPrikey2BlsPub(key string) (string, error) {
+//transfer secp256 Private key to bls pub key
+func (b *blsClient) secp256Prikey2BlsPub(key string) (string, error) {
 	secpPrkKey, err := getSecpPriKey(key)
 	if err != nil {
 		plog.Error("getSecpPriKey", "err", err)
 		return "", err
 	}
-	blsPriKey := getBlsPriKey(secpPrkKey.Bytes())
-	blsPubKey := blsPriKey.GetPublicKey()
-	serial := blsPubKey.Serialize()
+	blsPriKey := b.getBlsPriKey(secpPrkKey.Bytes())
+	blsPubKey := blsPriKey.PubKey()
+	serial := blsPubKey.Bytes()
 	return common.ToHex(serial[:]), nil
 }
 
@@ -467,10 +471,10 @@ func (b *blsClient) blsSign(commits []*pt.ParacrossCommitAction) error {
 		data := types.Encode(cmt.Status)
 
 		cmt.Bls = &pt.ParacrossCommitBlsInfo{Addrs: []string{b.selfID}}
-		sig := b.blsPriKey.SignByte(data)
-		sign := sig.Serialize()
+		sig := b.blsPriKey.Sign(data)
+		sign := sig.Bytes()
 		if len(sign) <= 0 {
-			return errors.Wrapf(types.ErrInvalidParam, "addr=%s,prikey=%d,height=%d", b.selfID, len(b.blsPriKey.Serialize()), cmt.Status.Height)
+			return errors.Wrapf(types.ErrInvalidParam, "addr=%s,height=%d", b.selfID, cmt.Status.Height)
 		}
 		cmt.Bls.Sign = sign
 		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "sign", len(cmt.Bls.Sign), "src", len(sign))
@@ -520,7 +524,7 @@ func isCommitDone(nodes, mostSame int) bool {
 	return 3*mostSame > 2*nodes
 }
 
-func (b *blsClient) getBlsPubKey(addr string) (*bls.PublicKey, error) {
+func (b *blsClient) getBlsPubKey(addr string) (crypto.PubKey, error) {
 	//先从缓存中获取
 	if v, ok := b.peersBlsPubKey[addr]; ok {
 		return v, nil
@@ -543,16 +547,20 @@ func (b *blsClient) getBlsPubKey(addr string) (*bls.PublicKey, error) {
 		return nil, err
 	}
 
-	var pubKey bls.PublicKey
-	err = pubKey.DeserializeHexStr(resp.BlsPubKey)
+	s, err := common.FromHex(resp.BlsPubKey)
+	if err != nil {
+		plog.Error("commitmsg.getNode pubkey nok", "pubkey", resp.BlsPubKey)
+		return nil, err
+	}
+	pubKey, err := b.cryptoCli.PubKeyFromBytes(s)
 	if err != nil {
 		plog.Error("verifyBlsSign.DeserializePublicKey", "key", addr)
 		return nil, err
 	}
-	plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", pubKey.SerializeToHexStr())
-	b.peersBlsPubKey[addr] = &pubKey
+	plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", pubKey.Bytes())
+	b.peersBlsPubKey[addr] = pubKey
 
-	return &pubKey, nil
+	return pubKey, nil
 }
 
 func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction) error {
@@ -562,8 +570,7 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 		return errors.Wrapf(err, "pub key not exist to addr=%s", addr)
 	}
 	//2.　获取bls签名
-	var sig bls.Sign
-	sig.Deserialize(commit.Bls.Sign)
+	sig, err := b.cryptoCli.SignatureFromBytes(commit.Bls.Sign)
 	if err != nil {
 		return errors.Wrapf(err, "DeserializeSignature key=%s", common.ToHex(commit.Bls.Sign))
 	}
@@ -572,11 +579,11 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 	msg := types.Encode(commit.Status)
 
 	//4. 验证bls 签名
-	if !sig.VerifyByte(pubKey, msg) {
+	if !pubKey.VerifyBytes(msg, sig) {
 		plog.Error("paracross.Commit bls sign verify", "title", commit.Status.Title, "height", commit.Status.Height,
 			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "addr", addr)
 		plog.Error("paracross.commit bls sign verify", "data", common.ToHex(msg), "height", commit.Status.Height,
-			"pub", common.ToHex(pubKey.Serialize()))
+			"pub", common.ToHex(pubKey.Bytes()))
 		return pt.ErrBlsSignVerify
 	}
 	return nil

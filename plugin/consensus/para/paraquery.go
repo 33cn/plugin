@@ -80,7 +80,7 @@ func (client *client) Query_BlsPubKey(req *types.ReqString) (types.Message, erro
 
 	var pub pt.BlsPubKey
 	if len(req.Data) > 0 {
-		p, err := secpPrikey2BlsPub(req.Data)
+		p, err := client.blsSignCli.secp256Prikey2BlsPub(req.Data)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func (client *client) Query_BlsPubKey(req *types.ReqString) (types.Message, erro
 	}
 	//缺省获取钱包的
 	if nil != client.blsSignCli.blsPubKey {
-		t := client.blsSignCli.blsPubKey.Serialize()
+		t := client.blsSignCli.blsPubKey.Bytes()
 		pub.Key = common.ToHex(t[:])
 		return &pub, nil
 	}
