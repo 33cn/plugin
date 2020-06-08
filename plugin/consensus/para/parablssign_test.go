@@ -70,13 +70,13 @@ func TestBlsSignMain(t *testing.T) {
 
 func testSecpPrikey2BlsPub(t *testing.T) {
 	key := ""
-	ret, _ := secpPrikey2BlsPub(key)
+	ret, _ := secp256Prikey2BlsPub(key)
 	assert.Equal(t, "", ret)
 
 	//real prikey="1626b254a75e5c44de9500a0c7897643e7736c09a7270b807546acb7cf7c94c9"
 	key = "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71"
 	q := "0x980287e26d4d44f8c57944ffc096f7d98a460c97dadbffaed14ff0de901fa7f8afc59fcb1805a0b031e5eae5601df1c2"
-	ret, _ = secpPrikey2BlsPub(key)
+	ret, _ = secp256Prikey2BlsPub(key)
 	assert.Equal(t, q, ret)
 }
 
