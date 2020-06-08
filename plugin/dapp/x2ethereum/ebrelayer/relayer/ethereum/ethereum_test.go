@@ -477,21 +477,29 @@ func Test_RestorePrivateKeys(t *testing.T) {
 		for range ethRelayer.unlockchan {
 		}
 	}()
+	ethRelayer.rwLock.RLock()
 	temp := ethRelayer.privateKey4Chain33
+	ethRelayer.rwLock.RUnlock()
 
 	err = ethRelayer.RestorePrivateKeys("123")
+	ethRelayer.rwLock.RLock()
 	assert.NotEqual(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(ethRelayer.privateKey4Chain33.Bytes()))
+	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
 
 	err = ethRelayer.RestorePrivateKeys(passphrase)
+	ethRelayer.rwLock.RLock()
 	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(ethRelayer.privateKey4Chain33.Bytes()))
+	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
 
 	err = ethRelayer.StoreAccountWithNewPassphase("new123", passphrase)
 	require.Nil(t, err)
 
 	err = ethRelayer.RestorePrivateKeys("new123")
+	ethRelayer.rwLock.RLock()
 	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(ethRelayer.privateKey4Chain33.Bytes()))
+	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
 
 	time.Sleep(time.Second)
@@ -536,6 +544,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
 	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
+	relayer.rwLock.Lock()
 	relayer.operatorInfo = &ethtxs.OperatorInfo{
 		PrivateKey: deployPrivateKey,
 		Address:    deployerAddr,
@@ -543,6 +552,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.deployPara = para
 	relayer.x2EthContracts = x2EthContracts
 	relayer.x2EthDeployInfo = x2EthDeployInfo
+	relayer.rwLock.Unlock()
 
 	go relayer.proc()
 	return relayer

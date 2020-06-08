@@ -130,11 +130,12 @@ func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {
 		return err
 	}
 	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
-
+	ethRelayer.rwLock.Lock()
 	ethRelayer.operatorInfo = &ethtxs.OperatorInfo{
 		PrivateKey: deployPrivateKey,
 		Address:    deployerAddr,
 	}
+	ethRelayer.rwLock.Unlock()
 
 	return nil
 }
@@ -189,6 +190,7 @@ func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err
 	if err != nil {
 		return bridgeRegistry, err
 	}
+	ethRelayer.rwLock.Lock()
 	ethRelayer.operatorInfo = &ethtxs.OperatorInfo{
 		PrivateKey: deployPrivateKey,
 		Address:    deployerAddr,
@@ -200,6 +202,7 @@ func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err
 	_ = ethRelayer.setBridgeRegistryAddr(bridgeRegistry)
 	//设置注册合约地址，同时设置启动中继服务的信号
 	ethRelayer.bridgeRegistryAddr = x2EthDeployInfo.BridgeRegistry.Address
+	ethRelayer.rwLock.Unlock()
 	ethRelayer.unlockchan <- start
 	relayerLog.Info("deploy", "the BridgeRegistry address is", bridgeRegistry)
 
@@ -244,16 +247,22 @@ func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, e
 }
 
 func (ethRelayer *Relayer4Ethereum) CreateBridgeToken(symbol string) (string, error) {
+	ethRelayer.rwLock.RLock()
+	defer ethRelayer.rwLock.RUnlock()
 	return ethtxs.CreateBridgeToken(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts)
 }
 
 func (ethRelayer *Relayer4Ethereum) CreateERC20Token(symbol string) (string, error) {
+	ethRelayer.rwLock.RLock()
+	defer ethRelayer.rwLock.RUnlock()
 	return ethtxs.CreateERC20Token(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
 func (ethRelayer *Relayer4Ethereum) MintERC20Token(tokenAddr, ownerAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
+	ethRelayer.rwLock.RLock()
+	defer ethRelayer.rwLock.RUnlock()
 	return ethtxs.MintERC20Token(tokenAddr, ownerAddr, bn, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
@@ -315,10 +324,12 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	if nilAddr != ethRelayer.bridgeRegistryAddr {
 		relayerLog.Info("proc", "Going to recover corresponding solidity contract handler with bridgeRegistryAddr", ethRelayer.bridgeRegistryAddr.String())
 		var err error
+		ethRelayer.rwLock.Lock()
 		ethRelayer.x2EthContracts, ethRelayer.x2EthDeployInfo, err = ethtxs.RecoverContractHandler(ethRelayer.clientSpec, ethRelayer.bridgeRegistryAddr, ethRelayer.bridgeRegistryAddr)
 		if nil != err {
 			panic("Failed to recover corresponding solidity contract handler due to:" + err.Error())
 		}
+		ethRelayer.rwLock.Unlock()
 		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
 		if nil != ethRelayer.recoverDeployPara() {
 			panic("Failed to recoverDeployPara")
@@ -331,7 +342,10 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	continueFailCount := int32(0)
 	for range ethRelayer.unlockchan {
 		relayerLog.Info("Received ethRelayer.unlockchan")
-		if nil != ethRelayer.privateKey4Chain33 && nilAddr != ethRelayer.bridgeRegistryAddr {
+		ethRelayer.rwLock.RLock()
+		privateKey4Chain33 := ethRelayer.privateKey4Chain33
+		ethRelayer.rwLock.RUnlock()
+		if nil != privateKey4Chain33 && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
@@ -605,8 +619,10 @@ func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error)
 	if !re.MatchString(addr) {
 		return false, errors.New("this address is not an ethereum address")
 	}
-
-	return ethtxs.IsActiveValidator(common.HexToAddress(addr), ethRelayer.x2EthContracts.Valset)
+	ethRelayer.rwLock.RLock()
+	active, err := ethtxs.IsActiveValidator(common.HexToAddress(addr), ethRelayer.x2EthContracts.Valset)
+	ethRelayer.rwLock.RUnlock()
+	return active, err
 }
 
 func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
@@ -663,7 +679,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	}
 
 	// Initiate the relay
-	txhash, err := ethtxs.RelayLockToChain33(ethRelayer.privateKey4Chain33, prophecyClaim, rpcURL)
+	ethRelayer.rwLock.RLock()
+	privateKey4Chain33 := ethRelayer.privateKey4Chain33
+	ethRelayer.rwLock.RUnlock()
+	txhash, err := ethtxs.RelayLockToChain33(privateKey4Chain33, prophecyClaim, rpcURL)
 	if err != nil {
 		relayerLog.Error("handleLogLockEvent", "Failed to RelayLockToChain33 due to:", err.Error())
 		return err
@@ -718,7 +737,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogBurnEvent(clientChainID *big.Int, c
 	}
 
 	// Initiate the relay
-	txhash, err := ethtxs.RelayBurnToChain33(ethRelayer.privateKey4Chain33, prophecyClaim, rpcURL)
+	ethRelayer.rwLock.RLock()
+	privateKey4Chain33 := ethRelayer.privateKey4Chain33
+	ethRelayer.rwLock.RUnlock()
+	txhash, err := ethtxs.RelayBurnToChain33(privateKey4Chain33, prophecyClaim, rpcURL)
 	if err != nil {
 		relayerLog.Error("handleLogLockEvent", "Failed to RelayLockToChain33 due to:", err.Error())
 		return err
