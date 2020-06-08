@@ -132,9 +132,36 @@ func Test_ShowAddr(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, addr, para.Operator.String())
 
-	_, err = ethRelayer.DeployContrcts()
-	require.Error(t, err)
+}
 
+func Test_DeployContrcts(t *testing.T) {
+	_, sim, _, _ := deployContracts()
+	cfg := initCfg(*configPath)
+	cfg.SyncTxConfig.Dbdriver = "memdb"
+
+	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
+
+	relayer := &Relayer4Ethereum{
+		provider:            cfg.EthProvider,
+		db:                  db,
+		unlockchan:          make(chan int, 2),
+		rpcURL2Chain33:      cfg.SyncTxConfig.Chain33Host,
+		maturityDegree:      cfg.EthMaturityDegree,
+		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
+		deployInfo:          cfg.Deploy,
+	}
+	relayer.clientSpec = sim
+	relayer.clientChainID = big.NewInt(1)
+
+	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
+	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
+	relayer.operatorInfo = &ethtxs.OperatorInfo{
+		PrivateKey: deployPrivateKey,
+		Address:    deployerAddr,
+	}
+
+	_, err := relayer.DeployContrcts()
+	require.NoError(t, err)
 }
 
 func Test_SetBridgeRegistryAddr(t *testing.T) {
@@ -242,7 +269,8 @@ func Test_LockEth(t *testing.T) {
 }
 
 func Test_CreateERC20Token(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo := deployContracts()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
 	time.Sleep(time.Second)
