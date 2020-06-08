@@ -5,13 +5,10 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -20,16 +17,20 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
+	relayerTx "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 	syncTx "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/relayer/chain33/transceiver/sync"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/ethereum/go-ethereum"
-
-	//"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
-	//"github.com/stretchr/testify/suite"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	// 需要显示引用系统插件，以加载系统内置合约
 	"github.com/33cn/chain33/client/mocks"
@@ -103,171 +104,171 @@ func Test_ImportPrivateKey(t *testing.T) {
 	assert.Equal(t, key, privateKeyStr)
 }
 
-//func Test_Lockbty(t *testing.T) {
-//	mock33 := newMock33("127.0.0.1:8803")
-//	defer mock33.Close()
-//	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-//	require.NoError(t, err)
-//	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60001", "http://127.0.0.1:8803", t)
-//	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
-//	assert.NoError(t, err)
-//
-//	//Test_1_ImportPrivateKey()
-//	ctx := context.Background()
-//
-//	//2nd：订阅事件
-//	eventName := "LogNewBridgeToken"
-//	bridgeBankABI := ethtxs.LoadABI(ethtxs.BridgeBankABI)
-//	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID().Hex()
-//	query := ethereum.FilterQuery{
-//		Addresses: []common.Address{x2EthDeployInfo.BridgeBank.Address},
-//	}
-//	// We will check logs for new events
-//	logs := make(chan ethTypes.Log)
-//	// Filter by contract and event, write results to logs
-//	sub, err := sim.SubscribeFilterLogs(ctx, query, logs)
-//	//require.Nil(t, err)
-//
-//	opts := &bind.CallOpts{
-//		Pending: true,
-//		From:    para.Operator,
-//		Context: ctx,
-//	}
-//
-//	tokenCount, err := x2EthContracts.BridgeBank.BridgeTokenCount(opts)
-//	require.Nil(t, err)
-//	assert.Equal(t, tokenCount.Int64(), int64(0))
-//
-//	//3rd：创建token
-//	symbol := "BTY"
-//	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
-//	require.Nil(t, err)
-//	_, err = x2EthContracts.BridgeBank.BridgeBankTransactor.CreateNewBridgeToken(auth, symbol)
-//	require.Nil(t, err)
-//	sim.Commit()
-//
-//	logEvent := &events.LogNewBridgeToken{}
-//	select {
-//	// Handle any errors
-//	case err := <-sub.Err():
-//		t.Fatalf("sub error:%s", err.Error())
-//	// vLog is raw event data
-//	case vLog := <-logs:
-//		// Check if the event is a 'LogLock' event
-//		if vLog.Topics[0].Hex() == logNewBridgeTokenSig {
-//			err = bridgeBankABI.Unpack(logEvent, eventName, vLog.Data)
-//			require.Nil(t, err)
-//			require.Equal(t, symbol, logEvent.Symbol)
-//
-//			//tokenCount正确加1
-//			tokenCount, err = x2EthContracts.BridgeBank.BridgeTokenCount(opts)
-//			require.Nil(t, err)
-//			require.Equal(t, tokenCount.Int64(), int64(1))
-//			break
-//		}
-//	}
-//
-//	///////////newOracleClaim///////////////////////////
-//	balance, _ := sim.BalanceAt(ctx, para.InitValidators[0], nil)
-//	fmt.Println("InitValidators[0] addr,", para.InitValidators[0].String(), "balance =", balance.String())
-//
-//	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-//	amount := int64(99)
-//	ethReceiver := para.InitValidators[2]
-//	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), logEvent.Token.Bytes(), big.NewInt(amount).Bytes())
-//
-//	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
-//	require.Nil(t, err)
-//
-//	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
-//	require.Nil(t, err)
-//
-//	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, sim)
-//	require.Nil(t, err)
-//	opts = &bind.CallOpts{
-//		Pending: true,
-//		Context: ctx,
-//	}
-//
-//	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
-//	require.Nil(t, err)
-//	require.Equal(t, balance.Int64(), int64(0))
-//
-//	tx, err := x2EthContracts.Oracle.NewOracleClaim(
-//		authOracle,
-//		events.ClaimTypeLock,
-//		chain33Sender,
-//		ethReceiver,
-//		logEvent.Token,
-//		logEvent.Symbol,
-//		big.NewInt(amount),
-//		claimID,
-//		signature)
-//	require.Nil(t, err)
-//
-//	sim.Commit()
-//	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
-//	require.Nil(t, err)
-//	require.Equal(t, balance.Int64(), amount)
-//	//t.Logf("The minted amount is:%d", balance.Int64())
-//
-//	txhash := tx.Hash().Hex()
-//
-//	chain33Relayer.rwLock.Lock()
-//	chain33Relayer.totalTx4Chain33ToEth = 2
-//	chain33Relayer.rwLock.Unlock()
-//	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), txhash, 3)
-//
-//	time.Sleep(200 * time.Millisecond)
-//
-//	chain33Relayer.rwLock.Lock()
-//	chain33Relayer.totalTx4Chain33ToEth = 9
-//	chain33Relayer.totalTx4Chain33ToEth = 11
-//	chain33Relayer.rwLock.Unlock()
-//	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), "", 11)
-//
-//	time.Sleep(200 * time.Millisecond)
-//}
-//
-//func Test_RestorePrivateKeys(t *testing.T) {
-//	mock33 := newMock33("127.0.0.1:8804")
-//	defer mock33.Close()
-//	_, sim, _, x2EthDeployInfo, err := setup.DeployContracts()
-//	require.NoError(t, err)
-//	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60003", "http://127.0.0.1:8804", t)
-//	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
-//	assert.NoError(t, err)
-//
-//	go func() {
-//		for range chain33Relayer.unlock {
-//		}
-//	}()
-//	temp := chain33Relayer.ethSender
-//
-//	err = chain33Relayer.RestorePrivateKeys("123")
-//	assert.NotEqual(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
-//	assert.NoError(t, err)
-//
-//	err = chain33Relayer.RestorePrivateKeys(passphrase)
-//	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
-//	assert.NoError(t, err)
-//
-//	err = chain33Relayer.StoreAccountWithNewPassphase("new123", passphrase)
-//	assert.NoError(t, err)
-//
-//	err = chain33Relayer.RestorePrivateKeys("new123")
-//	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
-//	assert.NoError(t, err)
-//
-//	time.Sleep(time.Second)
-//
-//}
+func Test_Lockbty(t *testing.T) {
+	mock33 := newMock33("127.0.0.1:8803")
+	defer mock33.Close()
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60001", "http://127.0.0.1:8803", t)
+	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
+	assert.NoError(t, err)
+
+	//Test_1_ImportPrivateKey()
+	ctx := context.Background()
+
+	//2nd：订阅事件
+	eventName := "LogNewBridgeToken"
+	bridgeBankABI := ethtxs.LoadABI(ethtxs.BridgeBankABI)
+	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID().Hex()
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{x2EthDeployInfo.BridgeBank.Address},
+	}
+	// We will check logs for new events
+	logs := make(chan ethTypes.Log)
+	// Filter by contract and event, write results to logs
+	sub, err := sim.SubscribeFilterLogs(ctx, query, logs)
+	//require.Nil(t, err)
+
+	opts := &bind.CallOpts{
+		Pending: true,
+		From:    para.Operator,
+		Context: ctx,
+	}
+
+	tokenCount, err := x2EthContracts.BridgeBank.BridgeTokenCount(opts)
+	require.Nil(t, err)
+	assert.Equal(t, tokenCount.Int64(), int64(0))
+
+	//3rd：创建token
+	symbol := "BTY"
+	auth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.BridgeBankTransactor.CreateNewBridgeToken(auth, symbol)
+	require.Nil(t, err)
+	sim.Commit()
+
+	logEvent := &events.LogNewBridgeToken{}
+	select {
+	// Handle any errors
+	case err := <-sub.Err():
+		t.Fatalf("sub error:%s", err.Error())
+	// vLog is raw event data
+	case vLog := <-logs:
+		// Check if the event is a 'LogLock' event
+		if vLog.Topics[0].Hex() == logNewBridgeTokenSig {
+			err = bridgeBankABI.Unpack(logEvent, eventName, vLog.Data)
+			require.Nil(t, err)
+			require.Equal(t, symbol, logEvent.Symbol)
+
+			//tokenCount正确加1
+			tokenCount, err = x2EthContracts.BridgeBank.BridgeTokenCount(opts)
+			require.Nil(t, err)
+			require.Equal(t, tokenCount.Int64(), int64(1))
+			break
+		}
+	}
+
+	///////////newOracleClaim///////////////////////////
+	balance, _ := sim.BalanceAt(ctx, para.InitValidators[0], nil)
+	fmt.Println("InitValidators[0] addr,", para.InitValidators[0].String(), "balance =", balance.String())
+
+	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+	amount := int64(99)
+	ethReceiver := para.InitValidators[2]
+	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), logEvent.Token.Bytes(), big.NewInt(amount).Bytes())
+
+	authOracle, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
+	require.Nil(t, err)
+
+	signature, err := ethtxs.SignClaim4Eth(claimID, para.ValidatorPriKey[0])
+	require.Nil(t, err)
+
+	bridgeToken, err := generated.NewBridgeToken(logEvent.Token, sim)
+	require.Nil(t, err)
+	opts = &bind.CallOpts{
+		Pending: true,
+		Context: ctx,
+	}
+
+	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
+	require.Nil(t, err)
+	require.Equal(t, balance.Int64(), int64(0))
+
+	tx, err := x2EthContracts.Oracle.NewOracleClaim(
+		authOracle,
+		events.ClaimTypeLock,
+		chain33Sender,
+		ethReceiver,
+		logEvent.Token,
+		logEvent.Symbol,
+		big.NewInt(amount),
+		claimID,
+		signature)
+	require.Nil(t, err)
+
+	sim.Commit()
+	balance, err = bridgeToken.BalanceOf(opts, ethReceiver)
+	require.Nil(t, err)
+	require.Equal(t, balance.Int64(), amount)
+	//t.Logf("The minted amount is:%d", balance.Int64())
+
+	txhash := tx.Hash().Hex()
+
+	chain33Relayer.rwLock.Lock()
+	chain33Relayer.totalTx4Chain33ToEth = 2
+	chain33Relayer.rwLock.Unlock()
+	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), txhash, 3)
+
+	time.Sleep(200 * time.Millisecond)
+
+	chain33Relayer.rwLock.Lock()
+	chain33Relayer.totalTx4Chain33ToEth = 9
+	chain33Relayer.totalTx4Chain33ToEth = 11
+	chain33Relayer.rwLock.Unlock()
+	_ = chain33Relayer.setLastestRelay2EthTxhash(relayerTx.EthTxPending.String(), "", 11)
+
+	time.Sleep(200 * time.Millisecond)
+}
+
+func Test_RestorePrivateKeys(t *testing.T) {
+	mock33 := newMock33("127.0.0.1:8804")
+	defer mock33.Close()
+	_, sim, _, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
+	chain33Relayer := newChain33Relayer(sim, x2EthDeployInfo, "127.0.0.1:60003", "http://127.0.0.1:8804", t)
+	_, err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
+	assert.NoError(t, err)
+
+	go func() {
+		for range chain33Relayer.unlock {
+		}
+	}()
+	temp := chain33Relayer.ethSender
+
+	err = chain33Relayer.RestorePrivateKeys("123")
+	assert.NotEqual(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
+	assert.NoError(t, err)
+
+	err = chain33Relayer.RestorePrivateKeys(passphrase)
+	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
+	assert.NoError(t, err)
+
+	err = chain33Relayer.StoreAccountWithNewPassphase("new123", passphrase)
+	assert.NoError(t, err)
+
+	err = chain33Relayer.RestorePrivateKeys("new123")
+	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(chain33Relayer.ethSender.Bytes()))
+	assert.NoError(t, err)
+
+	time.Sleep(time.Second)
+
+}
 
 func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind, chain33Host string, t *testing.T) *Relayer4Chain33 {
 	cfg := initCfg(*configPath)
-	cfg.SyncTxConfig.Chain33Host = chain33Host //"http://127.0.0.1:8801"
+	cfg.SyncTxConfig.Chain33Host = chain33Host
 	cfg.BridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
-	cfg.SyncTxConfig.PushBind = pushBind // "127.0.0.1:60000"
+	cfg.SyncTxConfig.PushBind = pushBind
 	cfg.SyncTxConfig.FetchHeightPeriodMs = 50
 	cfg.SyncTxConfig.Dbdriver = "memdb"
 
@@ -275,7 +276,7 @@ func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2Et
 	ctx, _ := context.WithCancel(context.Background())
 
 	relayer := &Relayer4Chain33{
-		rpcLaddr:            chain33Host, //cfg.SyncTxConfig.Chain33Host,
+		rpcLaddr:            chain33Host,
 		fetchHeightPeriodMs: cfg.SyncTxConfig.FetchHeightPeriodMs,
 		unlock:              make(chan int),
 		db:                  db,
@@ -291,10 +292,10 @@ func newChain33Relayer(sim *ethinterface.SimExtend, x2EthDeployInfo *ethtxs.X2Et
 	assert.Equal(t, relayer.statusCheckedIndex, int64(1))
 
 	syncCfg := &ebTypes.SyncTxReceiptConfig{
-		Chain33Host:       cfg.SyncTxConfig.Chain33Host,
+		Chain33Host:       chain33Host,
 		PushHost:          cfg.SyncTxConfig.PushHost,
 		PushName:          cfg.SyncTxConfig.PushName,
-		PushBind:          pushBind, //cfg.SyncTxConfig.PushBind,
+		PushBind:          pushBind,
 		StartSyncHeight:   cfg.SyncTxConfig.StartSyncHeight,
 		StartSyncSequence: cfg.SyncTxConfig.StartSyncSequence,
 		StartSyncHash:     cfg.SyncTxConfig.StartSyncHash,
