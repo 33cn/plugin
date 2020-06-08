@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
-	"fmt"
 	"math/big"
 	"os"
 	"testing"
@@ -436,16 +435,6 @@ func Test_BurnBty(t *testing.T) {
 	require.NoError(t, err)
 	sim.Commit()
 
-	time.Sleep(time.Second * 2)
-
-	fetchCnt := int32(10)
-	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
-	require.NoError(t, err)
-
-	for _, vLog := range logs {
-		ethRelayer.procBridgeBankLogs(*vLog)
-	}
-
 	balanceNew, err = ethRelayer.GetBalance(tokenAddrbty, ethReceiver.String())
 	require.Nil(t, err)
 	require.Equal(t, balanceNew, "90")
@@ -462,8 +451,15 @@ func Test_BurnBty(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, balanceNew, "80")
 
+	fetchCnt := int32(10)
+	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
+	require.NoError(t, err)
+
+	for _, vLog := range logs {
+		ethRelayer.procBridgeBankLogs(*vLog)
+	}
+
 	time.Sleep(time.Second)
-	fmt.Println("---------------------- end ----------------------")
 }
 
 func Test_RestorePrivateKeys(t *testing.T) {

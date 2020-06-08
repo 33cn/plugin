@@ -128,6 +128,7 @@ func (chain33Relayer *Relayer4Chain33) getCurrentHeight() int64 {
 
 func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 	//检查已经提交的交易结果
+	chain33Relayer.rwLock.Lock()
 	for chain33Relayer.statusCheckedIndex < chain33Relayer.totalTx4Chain33ToEth {
 		index := chain33Relayer.statusCheckedIndex + 1
 		txhash, err := chain33Relayer.getEthTxhash(index)
@@ -145,6 +146,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 		atomic.AddInt64(&chain33Relayer.statusCheckedIndex, 1)
 		_ = chain33Relayer.setStatusCheckedIndex(chain33Relayer.statusCheckedIndex)
 	}
+	chain33Relayer.rwLock.Unlock()
 	//未达到足够的成熟度，不进行处理
 	//  +++++++++||++++++++++++||++++++++++||
 	//           ^             ^           ^

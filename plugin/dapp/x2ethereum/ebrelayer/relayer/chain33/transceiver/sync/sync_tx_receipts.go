@@ -36,9 +36,9 @@ func StartSyncTxReceipt(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *TxRec
 	return syncTxReceipts
 }
 
-func StopSyncTxReceipt() {
-	syncTxReceipts.Stop()
-}
+//func StopSyncTxReceipt() {
+//	syncTxReceipts.Stop()
+//}
 
 func startHTTPService(url string, clientHost string) {
 	listen, err := net.Listen("tcp", url)

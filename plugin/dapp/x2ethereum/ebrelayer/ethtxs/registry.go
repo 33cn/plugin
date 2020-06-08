@@ -27,7 +27,7 @@ const (
 
 // String : returns the event type as a string
 func (d ContractRegistry) String() string {
-	return [...]string{"valset", "oracle", "bridgebank", "chain33bridge"}[d-1]
+	return [...]string{"valset", "oracle", "bridgebank", "chain33bridge", "notsupport"}[d-1]
 }
 
 // GetAddressFromBridgeRegistry : utility method which queries the requested contract address from the BridgeRegistry
