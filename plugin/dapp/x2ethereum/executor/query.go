@@ -172,9 +172,7 @@ func (x *x2ethereum) Query_GetRelayerBalance(in *x2eTy.QueryRelayerBalance) (typ
 		res.TokenSymbol = in.TokenSymbol
 		res.Balance = x2eTy.TrimZeroAndDot(strconv.FormatFloat(float64(acc.Balance)/1e8, 'f', 4, 64))
 		symbolAmount.Res = append(symbolAmount.Res, res)
-
 	} else {
-
 		tokenAddressesBytes, err := x.GetLocalDB().Get(x2eTy.CalTokenSymbolToTokenAddress(in.TokenSymbol))
 		if err != nil && err != types.ErrNotFound {
 			return nil, err

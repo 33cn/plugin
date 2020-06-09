@@ -51,7 +51,6 @@ var (
 
 func Test_LockAndBurn(t *testing.T) {
 	var tx chain33Types.Transaction
-	//tx.Nonce = 12
 	var ret chain33Types.Reply
 	ret.IsOk = true
 
