@@ -2,6 +2,8 @@ package ethtxs
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/33cn/chain33/client/mocks"
 	chain33Common "github.com/33cn/chain33/common"
 	_ "github.com/33cn/chain33/system"
@@ -11,7 +13,6 @@ import (
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (
