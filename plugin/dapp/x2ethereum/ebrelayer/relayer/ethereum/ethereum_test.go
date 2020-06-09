@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"math/big"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 
 	"github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
@@ -20,6 +19,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/events"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
@@ -49,12 +49,42 @@ var (
 	ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 )
 
+func Test_LockAndBurn(t *testing.T) {
+	var tx chain33Types.Transaction
+	//tx.Nonce = 12
+	var ret chain33Types.Reply
+	ret.IsOk = true
+
+	mockapi := &mocks.QueueProtocolAPI{}
+	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
+	mockapi.On("Close").Return()
+	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
+	mockapi.On("CreateTransaction", mock.Anything).Return(&tx, nil)
+	mockapi.On("SendTx", mock.Anything).Return(&ret, nil)
+	mockapi.On("SendTransaction", mock.Anything).Return(&ret, nil)
+	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
+
+	mock33 := testnode.New("", mockapi)
+	defer mock33.Close()
+	rpcCfg := mock33.GetCfg().RPC
+	// 这里必须设置监听端口，默认的是无效值
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
+	mock33.GetRPC().Listen()
+
+	fmt.Println("======================= testLockEth =======================")
+	testLockEth(t)
+	fmt.Println("======================= testCreateERC20Token =======================")
+	testCreateERC20Token(t)
+	fmt.Println("======================= testBurnBty =======================")
+	testBurnBty(t)
+}
+
 func Test_GetValidatorAddr(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	_, _, err = ethRelayer.NewAccount("123")
 	require.Nil(t, err)
@@ -78,9 +108,7 @@ func Test_IsValidatorActive(t *testing.T) {
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
-
-	//fmt.Println("ethRelayer.x2EthContracts.Valset", ethRelayer.x2EthContracts.Valset)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	is, err := ethRelayer.IsValidatorActive(para.InitValidators[0].String())
 	assert.Equal(t, is, true)
@@ -115,7 +143,7 @@ func Test_ShowAddr(t *testing.T) {
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	ethRelayer.prePareSubscribeEvent()
 
@@ -130,7 +158,6 @@ func Test_ShowAddr(t *testing.T) {
 	addr, err = ethRelayer.ShowOperator()
 	require.Nil(t, err)
 	assert.Equal(t, addr, para.Operator.String())
-
 }
 
 func Test_DeployContrcts(t *testing.T) {
@@ -168,7 +195,7 @@ func Test_SetBridgeRegistryAddr(t *testing.T) {
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	_ = ethRelayer.setBridgeRegistryAddr(x2EthDeployInfo.BridgeRegistry.Address.String())
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
@@ -181,7 +208,7 @@ func Test_CreateBridgeToken(t *testing.T) {
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	balance, err := ethRelayer.GetBalance("", para.InitValidators[0].String())
 	require.Nil(t, err)
@@ -207,32 +234,12 @@ func Test_CreateBridgeToken(t *testing.T) {
 	require.Error(t, err)
 }
 
-func Test_LockEth(t *testing.T) {
+func testLockEth(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
-
-	var tx chain33Types.Transaction
-	var ret chain33Types.Reply
-	ret.IsOk = true
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("CreateTransaction", mock.Anything).Return(&tx, nil)
-	mockapi.On("SendTx", mock.Anything).Return(&ret, nil)
-	mockapi.On("SendTransaction", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
-
-	mock33 := testnode.New("", mockapi)
-	defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	ctx := context.Background()
 	bridgeBankBalance, err := sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
@@ -264,15 +271,15 @@ func Test_LockEth(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, balance, "50")
 
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 }
 
-func Test_CreateERC20Token(t *testing.T) {
+func testCreateERC20Token(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	tokenErc20Addr, err := ethRelayer.CreateERC20Token("testcc")
 	require.Nil(t, err)
@@ -312,26 +319,6 @@ func Test_CreateERC20Token(t *testing.T) {
 
 	tx2 := ethRelayer.QueryTxhashRelay2Chain33()
 	require.Empty(t, tx2)
-
-	var tx chain33Types.Transaction
-	var ret chain33Types.Reply
-	ret.IsOk = true
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("CreateTransaction", mock.Anything).Return(&tx, nil)
-	mockapi.On("SendTx", mock.Anything).Return(&ret, nil)
-	mockapi.On("SendTransaction", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
-
-	mock33 := testnode.New("", mockapi)
-	defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
 
 	tokenErc20Addrtestc, err := ethRelayer.CreateERC20Token("testc")
 	require.Nil(t, err)
@@ -373,32 +360,12 @@ func Test_CreateERC20Token(t *testing.T) {
 	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 }
 
-func Test_BurnBty(t *testing.T) {
+func testBurnBty(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
-
-	var tx chain33Types.Transaction
-	var ret chain33Types.Reply
-	ret.IsOk = true
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("CreateTransaction", mock.Anything).Return(&tx, nil)
-	mockapi.On("SendTx", mock.Anything).Return(&ret, nil)
-	mockapi.On("SendTransaction", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
-
-	mock33 := testnode.New("", mockapi)
-	defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	tokenAddrbty, err := ethRelayer.CreateBridgeToken("bty")
 	require.Nil(t, err)
@@ -459,7 +426,7 @@ func Test_BurnBty(t *testing.T) {
 		ethRelayer.procBridgeBankLogs(*vLog)
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 }
 
 func Test_RestorePrivateKeys(t *testing.T) {
@@ -467,7 +434,7 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	require.NoError(t, err)
 	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
 	_ = ethRelayer.ImportChain33PrivateKey(passphrase, chain33PrivateKeyStr)
-	time.Sleep(time.Second)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
 	go func() {
 		for range ethRelayer.unlockchan {
@@ -497,8 +464,6 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	assert.Equal(t, hex.EncodeToString(temp.Bytes()), hex.EncodeToString(ethRelayer.privateKey4Chain33.Bytes()))
 	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
-
-	time.Sleep(time.Second)
 }
 
 func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthContracts *ethtxs.X2EthContracts, x2EthDeployInfo *ethtxs.X2EthDeployInfo) *Relayer4Ethereum {
@@ -524,7 +489,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	}
 
 	relayer.deployInfo = &ebTypes.Deploy{}
-	relayer.deployInfo.DeployerPrivateKey = common.ToHex(crypto.FromECDSA(para.DeployPrivateKey))
+	relayer.deployInfo.DeployerPrivateKey = hexutil.Encode(crypto.FromECDSA(para.DeployPrivateKey))
 	relayer.deployInfo.OperatorAddr = para.Operator.String()
 	for _, v := range para.InitValidators {
 		relayer.deployInfo.ValidatorsAddr = append(relayer.deployInfo.ValidatorsAddr, v.String())
