@@ -22,7 +22,6 @@ go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_C" -ldflags "-X ${SRC_EBCLI}/buildfl
 go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_D" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9904" "${SRC_EBCLI}"
 
 cp ../ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"
-cp ../testsh/publicTest.sh "${OUT_DIR}/publicTest.sh"
 cp ./build/* "${OUT_DIR}"
 
 OUT_TESTDIR="${1}/dapptest/$strapp"
