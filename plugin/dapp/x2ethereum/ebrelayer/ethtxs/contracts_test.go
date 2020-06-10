@@ -200,12 +200,67 @@ func (c *suiteContracts) Test_CreateBridgeToken() {
 	addr, err := GetToken2address(c.x2EthContracts.BridgeBank, "bty")
 	require.Nil(c.T(), err)
 	assert.Equal(c.T(), addr, tokenAddr)
-}
 
-func (c *suiteContracts) Test_GetBalance() {
-	balance, err := GetBalance(c.sim, "", c.para.InitValidators[0].String())
+	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+	amount := int64(100)
+	ethReceiver := c.para.InitValidators[2]
+	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), big.NewInt(amount).Bytes())
+	authOracle, err := PrepareAuth(c.sim, c.para.ValidatorPriKey[0], c.para.InitValidators[0])
 	require.Nil(c.T(), err)
-	assert.Equal(c.T(), balance, "10000000000")
+	signature, err := SignClaim4Eth(claimID, c.para.ValidatorPriKey[0])
+	require.Nil(c.T(), err)
+
+	_, err = c.x2EthContracts.Oracle.NewOracleClaim(
+		authOracle,
+		events.ClaimTypeLock,
+		chain33Sender,
+		ethReceiver,
+		common.HexToAddress(tokenAddr),
+		"bty",
+		big.NewInt(amount),
+		claimID,
+		signature)
+	require.Nil(c.T(), err)
+	c.sim.Commit()
+
+	balanceNew, err := GetBalance(c.sim, tokenAddr, ethReceiver.String())
+	require.Nil(c.T(), err)
+	require.Equal(c.T(), balanceNew, "100")
+
+	chain33Receiver := "1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
+	{
+		amount := "10"
+		bn := big.NewInt(1)
+		bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
+		txhash, err := Burn(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, chain33Receiver, c.x2EthDeployInfo.BridgeBank.Address, bn, c.x2EthContracts.BridgeBank, c.sim)
+		require.NoError(c.T(), err)
+		c.sim.Commit()
+
+		balanceNew, err = GetBalance(c.sim, tokenAddr, ethReceiver.String())
+		require.Nil(c.T(), err)
+		require.Equal(c.T(), balanceNew, "90")
+
+		status := GetEthTxStatus(c.sim, common.HexToHash(txhash))
+		fmt.Println()
+		fmt.Println(status)
+	}
+
+	{
+		amount := "10"
+		bn := big.NewInt(1)
+		bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
+		_, err := ApproveAllowance(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, c.x2EthDeployInfo.BridgeBank.Address, bn, c.sim)
+		require.Nil(c.T(), err)
+		c.sim.Commit()
+
+		_, err = BurnAsync(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, chain33Receiver, bn, c.x2EthContracts.BridgeBank, c.sim)
+		require.Nil(c.T(), err)
+		c.sim.Commit()
+
+		balanceNew, err = GetBalance(c.sim, tokenAddr, ethReceiver.String())
+		require.Nil(c.T(), err)
+		require.Equal(c.T(), balanceNew, "80")
+	}
 }
 
 func (c *suiteContracts) Test_CreateERC20Token() {
@@ -281,16 +336,6 @@ func (c *suiteContracts) Test_GetLockedFunds() {
 	balance, err := GetLockedFunds(c.x2EthContracts.BridgeBank, "")
 	require.Nil(c.T(), err)
 	assert.Equal(c.T(), balance, "0")
-}
-
-//func (c *suiteContracts) Test_GetEthTxStatus() {
-//	hash := "0xc0c22aa6198fdde0dbe47ddadbe449f736b82ed4a498871de5d5f4ad9ae122a0"
-//	status := GetEthTxStatus(c.sim, common.HexToHash(hash))
-//	fmt.Println(status)
-//}
-
-func Test_All(t *testing.T) {
-
 }
 
 func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {

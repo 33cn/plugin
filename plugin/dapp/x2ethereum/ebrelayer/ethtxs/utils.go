@@ -36,15 +36,6 @@ const (
 	EthTxPending                = EthTxStatus(2)
 )
 
-// GenerateClaimHash : Generates an OracleClaim hash from a ProphecyClaim's event data
-//func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) common.Hash {
-//	// Generate a hash containing the information
-//	rawHash := crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
-//
-//	// Cast hash to hex encoded string
-//	return rawHash
-//}
-
 func SignClaim4Eth(hash common.Hash, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	rawSignature, _ := prefixMessage(hash, privateKey)
 	signature := hexutil.Bytes(rawSignature)

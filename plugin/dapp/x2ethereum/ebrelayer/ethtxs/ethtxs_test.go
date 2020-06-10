@@ -87,6 +87,13 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	//hash := "0xc0c22aa6198fdde0dbe47ddadbe449f736b82ed4a498871de5d5f4ad9ae122a0"
 	//status := GetEthTxStatus(sim, common.HexToHash(hash))
 	//fmt.Println(status)
+
+	_, err = revokeNonce(para.Operator)
+	require.Nil(t, err)
+}
+
+func Test_revokeNonce(t *testing.T) {
+
 }
 
 func deployContracts() (*DeployPara, *ethinterface.SimExtend, *X2EthContracts, *X2EthDeployInfo, error) {
