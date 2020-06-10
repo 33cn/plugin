@@ -34,7 +34,7 @@
 #    chain33_ImportPrivkey "${chain33ValidatorKey3}" "${chain33Validator3}" "tokenAddr" "${MAIN_HTTP}"
 #    chain33_ImportPrivkey "${chain33ValidatorKey4}" "${chain33Validator4}" "tokenAddr" "${MAIN_HTTP}"
 #
-#    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Play","payload":{"gameId":"pokerbull-abc", "value":"1000000000", "round":1}}]}' ${MAIN_HTTP} | jq -r ".result")
-#    chain33_SignAndSendTxWait "$tx" "0x0316d5e33e7bce2455413156cb95209f8c641af352ee5d648c647f24383e4d94" ${MAIN_HTTP} "$FUNCNAME"
+#    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"SetConsensusThreshold","payload":{"consensusThreshold":"80", }}]}' ${MAIN_HTTP} | jq -r ".result")
+#    chain33_SignAndSendTxWait "$tx" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" ${MAIN_HTTP} "$FUNCNAME"
 #}
-#
+
