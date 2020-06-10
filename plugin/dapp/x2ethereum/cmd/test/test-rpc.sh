@@ -37,4 +37,3 @@
 #    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"SetConsensusThreshold","payload":{"consensusThreshold":"80", }}]}' ${MAIN_HTTP} | jq -r ".result")
 #    chain33_SignAndSendTxWait "$tx" "0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01" ${MAIN_HTTP} "$FUNCNAME"
 #}
-
