@@ -315,7 +315,7 @@ function updata_relayer_toml() {
     local maturityDegree=${2}
     local file=${3}
 
-    local chain33Host=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks.build_default.IPAddress" | sed 's/\"//g')
+    local chain33Host=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.IPAddress" | sed 's/\"//g')
     if [[ ${chain33Host} == "" ]]; then
         echo -e "${RED}chain33Host is empty${NOC}"
         exit 1
