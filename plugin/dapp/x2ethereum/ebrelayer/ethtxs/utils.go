@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
@@ -35,6 +36,15 @@ const (
 	PendingDuration4TxExeuction = 300
 	EthTxPending                = EthTxStatus(2)
 )
+
+// GenerateClaimHash : Generates an OracleClaim hash from a ProphecyClaim's event data
+func GenerateClaimHash(prophecyID []byte, sender []byte, recipient []byte, token []byte, amount []byte, validator []byte) common.Hash {
+	// Generate a hash containing the information
+	rawHash := crypto.Keccak256Hash(prophecyID, sender, recipient, token, amount, validator)
+
+	// Cast hash to hex encoded string
+	return rawHash
+}
 
 func SignClaim4Eth(hash common.Hash, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	rawSignature, _ := prefixMessage(hash, privateKey)
