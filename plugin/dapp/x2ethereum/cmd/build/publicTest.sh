@@ -329,6 +329,10 @@ function updata_relayer_toml() {
             pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
             if [[ ${pushHost} == "" ]]; then
                 pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}')
+                if [[ ${pushHost} == "" ]]; then
+                    ip addr show eth0
+                    pushHost=$(ip addr show eth0 | grep "inet " | awk '{ print $2}' | head -c-4)
+                fi
             fi
         fi
     fi
