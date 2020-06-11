@@ -84,9 +84,9 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, txhash, "0x6fa087c7a2a8a4421f6e269fbc6c0838e99fa59d5760155a71cd7eb1c01aafad")
 
-	//hash := "0xc0c22aa6198fdde0dbe47ddadbe449f736b82ed4a498871de5d5f4ad9ae122a0"
-	//status := GetEthTxStatus(sim, common.HexToHash(hash))
-	//fmt.Println(status)
+	hash := "0xc0c22aa6198fdde0dbe47ddadbe449f736b82ed4a498871de5d5f4ad9ae122a0"
+	status := GetEthTxStatus(sim, common.HexToHash(hash))
+	assert.Equal(t, status, EthTxPending.String())
 
 	_, err = revokeNonce(para.Operator)
 	require.Nil(t, err)

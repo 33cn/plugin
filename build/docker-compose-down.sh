@@ -42,6 +42,12 @@ function down() {
         docker-compose down --rmi local
     fi
 
+    # shellcheck disable=SC2155
+    local isGanacheExit=$(docker ps | grep ganachetest)
+    if [[ ${isGanacheExit} != "" ]]; then
+        docker stop ganachetest
+        docker rm ganachetest
+    fi
 }
 
 # run script
