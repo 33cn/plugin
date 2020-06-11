@@ -2,7 +2,6 @@ package ethinterface
 
 import (
 	"context"
-	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,11 +25,11 @@ func (sim *SimExtend) HeaderByNumber(ctx context.Context, number *big.Int) (*typ
 	return sim.Blockchain().CurrentBlock().Header(), nil
 }
 
-func (sim *SimExtend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	receipt, err := sim.SimulatedBackend.TransactionReceipt(ctx, txHash)
-	if receipt == nil {
-		err = errors.New("not found")
-	}
-
-	return receipt, err
-}
+//func (sim *SimExtend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+//	receipt, err := sim.SimulatedBackend.TransactionReceipt(ctx, txHash)
+//	if receipt == nil {
+//		err = errors.New("not found")
+//	}
+//
+//	return receipt, err
+//}
