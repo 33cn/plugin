@@ -4,7 +4,17 @@
 
 package types
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
+)
+
+const (
+	AuthBLS = 259
+)
 
 var (
 	// ErrHeightLessThanOne error type
@@ -17,4 +27,18 @@ var (
 	ErrBaseExecErr = errors.New("ErrBaseExecErr")
 	// ErrLastBlockID error type
 	ErrLastBlockID = errors.New("ErrLastBlockID")
+)
+
+var (
+	ttlog = log15.New("module", "tendermint-types")
+	// ConsensusCrypto define
+	ConsensusCrypto crypto.Crypto
+	CryptoName      string
+	// SignMap define sign type
+	SignMap = map[string]int{
+		"secp256k1": types.SECP256K1,
+		"ed25519":   types.ED25519,
+		"sm2":       types.SM2,
+		"bls":       AuthBLS,
+	}
 )

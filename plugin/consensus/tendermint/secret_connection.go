@@ -16,12 +16,13 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/plugin/plugin/consensus/tendermint/types"
+	ttypes "github.com/33cn/plugin/plugin/consensus/tendermint/types"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/ripemd160"
@@ -33,7 +34,6 @@ const (
 	dataMaxSize     = 1024
 	totalFrameSize  = dataMaxSize + dataLenSize
 	sealedFrameSize = totalFrameSize + secretbox.Overhead
-	authSigMsgSize  = (32) + (64)
 ) // fixed size (length prefixed) byte arrays
 
 // SecretConnection Implements net.Conn
@@ -62,7 +62,7 @@ func MakeSecretConnection(conn io.ReadWriteCloser, locPrivKey crypto.PrivKey) (*
 	// (see DJB's Curve25519 paper: http://cr.yp.to/ecdh/curve25519-20060209.pdf)
 	remEphPub, err := shareEphPubKey(conn, locEphPub)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("shareEphPubKey: %v", err)
 	}
 
 	// Compute common shared secret.
@@ -96,7 +96,7 @@ func MakeSecretConnection(conn io.ReadWriteCloser, locPrivKey crypto.PrivKey) (*
 	// Share (in secret) each other's pubkey & challenge signature
 	authSigMsg, err := shareAuthSignature(sc, locPubKey, locSignature)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("shareAuthSignature: %v", err)
 	}
 	remPubKey, remSignature := authSigMsg.Key, authSigMsg.Sig
 	if !remPubKey.VerifyBytes(challenge[:], remSignature) {
@@ -205,7 +205,7 @@ func genEphKeys() (ephPub, ephPriv *[32]byte) {
 	var err error
 	ephPub, ephPriv, err = box.GenerateKey(crand.Reader)
 	if err != nil {
-		types.PanicCrisis("Could not generate ephemeral keypairs")
+		ttypes.PanicCrisis("Could not generate ephemeral keypairs")
 	}
 	return
 }
@@ -282,26 +282,28 @@ type authSigMessage struct {
 func shareAuthSignature(sc io.ReadWriter, pubKey crypto.PubKey, signature crypto.Signature) (*authSigMessage, error) {
 	var recvMsg authSigMessage
 	var err1, err2 error
+	pubLen := len(pubKey.Bytes())
+	sigLen := len(signature.Bytes())
 
 	Parallel(
 		func() {
-			msgByte := make([]byte, len(pubKey.Bytes())+len(signature.Bytes()))
-			copy(msgByte, pubKey.Bytes())
-			copy(msgByte[len(pubKey.Bytes()):], signature.Bytes())
+			msgByte := make([]byte, pubLen+sigLen)
+			copy(msgByte, pubKey.Bytes()[:pubLen])
+			copy(msgByte[pubLen:], signature.Bytes())
 			_, err1 = sc.Write(msgByte)
 		},
 		func() {
-			readBuffer := make([]byte, authSigMsgSize)
+			readBuffer := make([]byte, pubLen+sigLen)
 			_, err2 = io.ReadFull(sc, readBuffer)
 			if err2 != nil {
 				return
 			}
 
-			recvMsg.Key, err2 = types.ConsensusCrypto.PubKeyFromBytes(readBuffer[:32])
+			recvMsg.Key, err2 = ttypes.ConsensusCrypto.PubKeyFromBytes(readBuffer[:pubLen])
 			if err2 != nil {
 				return
 			}
-			recvMsg.Sig, err2 = types.ConsensusCrypto.SignatureFromBytes(readBuffer[32:])
+			recvMsg.Sig, err2 = ttypes.ConsensusCrypto.SignatureFromBytes(readBuffer[pubLen:])
 			if err2 != nil {
 				return
 			}

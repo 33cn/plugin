@@ -25,6 +25,7 @@ const (
 	tryListenSeconds       = 5
 	handshakeTimeout       = 20 // * time.Second,
 	maxSendQueueSize       = 1024
+	minSendQueueSize       = 10
 	defaultSendTimeout     = 60 * time.Second
 	//MaxMsgPacketPayloadSize define
 	MaxMsgPacketPayloadSize            = 10 * 1024 * 1024
@@ -57,11 +58,12 @@ func Parallel(tasks ...func()) {
 	wg.Wait()
 }
 
-// GenAddressByPubKey method
-func GenAddressByPubKey(pubkey crypto.PubKey) []byte {
+// GenIDByPubKey method
+func GenIDByPubKey(pubkey crypto.PubKey) ID {
 	//must add 3 bytes ahead to make compatibly
-	typeAddr := append([]byte{byte(0x01), byte(0x01), byte(0x20)}, pubkey.Bytes()...)
-	return crypto.Ripemd160(typeAddr)
+	typeAddr := append([]byte{byte(0x01), byte(0x01), byte(0x20)}, pubkey.Bytes()[:32]...)
+	address := crypto.Ripemd160(typeAddr)
+	return ID(hex.EncodeToString(address))
 }
 
 // IP2IPPort struct
@@ -129,6 +131,7 @@ type Node struct {
 
 	state            *ConsensusState
 	broadcastChannel chan MsgInfo
+	unicastChannel   chan MsgInfo
 	started          uint32 // atomic
 	stopped          uint32 // atomic
 	quit             chan struct{}
@@ -136,8 +139,6 @@ type Node struct {
 
 // NewNode method
 func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivKey, network string, version string, state *ConsensusState) *Node {
-	address := GenAddressByPubKey(privKey.PubKey())
-
 	node := &Node{
 		peerSet:     NewPeerSet(),
 		seeds:       seeds,
@@ -148,16 +149,18 @@ func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivK
 		privKey:          privKey,
 		Network:          network,
 		Version:          version,
-		ID:               ID(hex.EncodeToString(address)),
+		ID:               GenIDByPubKey(privKey.PubKey()),
 		dialing:          NewMutexMap(),
 		reconnecting:     NewMutexMap(),
 		broadcastChannel: make(chan MsgInfo, maxSendQueueSize),
+		unicastChannel:   make(chan MsgInfo, minSendQueueSize),
 		state:            state,
 		localIPs:         make(map[string]net.IP),
 	}
 
 	state.SetOurID(node.ID)
 	state.SetBroadcastChannel(node.broadcastChannel)
+	state.SetUnicastChannel(node.unicastChannel)
 
 	localIPs := getNaiveExternalAddress(true)
 	if len(localIPs) > 0 {
@@ -179,7 +182,7 @@ func (node *Node) Start() {
 			if err == nil {
 				break
 			} else if i < tryListenSeconds-1 {
-				time.Sleep(time.Second * 1)
+				time.Sleep(time.Second)
 			}
 		}
 		if err != nil {
@@ -213,6 +216,7 @@ func (node *Node) Start() {
 
 		go node.StartConsensusRoutine()
 		go node.BroadcastRoutine()
+		go node.UnicastRoutine()
 	}
 }
 
@@ -305,10 +309,30 @@ func (node *Node) BroadcastRoutine() {
 	for {
 		msg, ok := <-node.broadcastChannel
 		if !ok {
-			tendermintlog.Debug("broadcastChannel closed")
+			tendermintlog.Info("broadcastChannel closed")
 			return
 		}
 		node.Broadcast(msg)
+	}
+}
+
+// BroadcastRoutine receive to broadcast
+func (node *Node) UnicastRoutine() {
+	for {
+		msg, ok := <-node.unicastChannel
+		if !ok {
+			tendermintlog.Info("unicastChannel closed")
+			return
+		}
+		for _, peer := range node.peerSet.List() {
+			if peer.ID() == msg.PeerID {
+				success := peer.Send(msg)
+				if !success {
+					tendermintlog.Error("send failure in UnicastRoutine")
+				}
+				break
+			}
+		}
 	}
 }
 
@@ -640,7 +664,7 @@ func dial(addr string) (net.Conn, error) {
 func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError func(Peer, interface{}), state *ConsensusState) (*peerConn, error) {
 	conn, err := dial(addr)
 	if err != nil {
-		return &peerConn{}, fmt.Errorf("Error creating peer:%v", err)
+		return &peerConn{}, fmt.Errorf("newOutboundPeerConn dial fail:%v", err)
 	}
 
 	pc, err := newPeerConn(conn, true, true, ourNodePrivKey, onPeerError, state)
@@ -684,7 +708,7 @@ func newPeerConn(
 	// Encrypt connection
 	conn, err = MakeSecretConnection(conn, ourNodePrivKey)
 	if err != nil {
-		return pc, fmt.Errorf("Error creating peer:%v", err)
+		return pc, fmt.Errorf("MakeSecretConnection fail:%v", err)
 	}
 
 	// Only the information we already have
