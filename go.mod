@@ -12,7 +12,6 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/gogo/protobuf v1.3.1
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/protobuf v1.3.4
 	github.com/hashicorp/golang-lru v0.5.4
@@ -36,7 +35,7 @@ require (
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	github.com/tjfoc/gmsm v0.0.0-20171124023159-98aa888b79d8
+	github.com/tjfoc/gmsm v1.3.1
 	github.com/valyala/fasthttp v1.5.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
@@ -49,3 +48,5 @@ require (
 	google.golang.org/grpc v1.28.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
+
+replace github.com/33cn/chain33 v0.0.0-20200605043414-355d96f9ec97 => /Users/w/pos33/chain33
