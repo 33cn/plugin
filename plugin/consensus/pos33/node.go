@@ -55,7 +55,7 @@ func newNode(conf *subConfig) *node {
 		css:       make(map[int64]map[int][]*pt.Pos33SortMsg),
 		tids:      make(map[int64]map[int]string),
 		slowAddrs: make(map[string]int64),
-		bch:       make(chan *types.Block, 1),
+		bch:       make(chan *types.Block, 16),
 	}
 
 	plog.Info("@@@@@@@ node start:", "addr", addr, "conf", conf)
