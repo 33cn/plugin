@@ -154,7 +154,6 @@ jobs:
           export GOPATH=$HOME/go
           export PATH=${PATH}:`go env GOPATH`/bin
           echo $GOPATH
-          echo $PATH
           make
           make docker-compose dapp=x2ethereum
           make docker-compose-down dapp=x2ethereum
