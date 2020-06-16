@@ -534,6 +534,8 @@ function AllRelayerMainTest() {
     Chain33Cli="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
     echo "GOPATH=$GOPATH"
     echo "Chain33Cli=$Chain33Cli"
+    godir="$(go list -f "{{.Dir}}")"
+    echo "godir=$godir"
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     if [[ ${1} != "" ]]; then
