@@ -54,17 +54,19 @@ func TestParallel(t *testing.T) {
 	assert.Equal(t, 6, sum)
 }
 
-func TestGenAddressByPubKey(t *testing.T) {
+func TestGenIDByPubKey(t *testing.T) {
 	tmp, err := hex.DecodeString(privKey)
 	assert.Nil(t, err)
 
 	priv, err := secureConnCrypto.PrivKeyFromBytes(tmp)
 	assert.Nil(t, err)
 
-	addr := GenAddressByPubKey(priv.PubKey())
+	id := GenIDByPubKey(priv.PubKey())
+	addr, err := hex.DecodeString(string(id))
+	assert.Nil(t, err)
 	strAddr := fmt.Sprintf("%X", addr)
 	assert.Equal(t, expectAddress, strAddr)
-	fmt.Println("TestGenAddressByPubKey ok")
+	fmt.Println("TestGenIDByPubKey ok")
 }
 
 func TestIP2IPPort(t *testing.T) {
@@ -154,7 +156,6 @@ func testUpdateStateRoutine(t *testing.T, pc *peerConn) {
 		},
 	}
 	ps := pc.state
-	pc.waitQuit.Add(1)
 	go pc.updateStateRoutine()
 
 	//NewRoundStepID msg
@@ -249,7 +250,6 @@ func testUpdateStateRoutine(t *testing.T, pc *peerConn) {
 	assert.NotNil(t, ps.getVoteBitArray(3, 2, ttypes.VoteTypePrecommit))
 
 	pc.quitUpdate <- struct{}{}
-	pc.waitQuit.Wait()
 
 	fmt.Println("testUpdateStateRoutine ok")
 }

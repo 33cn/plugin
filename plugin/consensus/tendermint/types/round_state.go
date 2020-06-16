@@ -42,6 +42,7 @@ const (
 	ProposalHeartbeatID = byte(0x08)
 	ProposalBlockID     = byte(0x09)
 	ValidBlockID        = byte(0x0a)
+	AggVoteID           = byte(0x0b)
 
 	PacketTypePing = byte(0xff)
 	PacketTypePong = byte(0xfe)
@@ -60,6 +61,7 @@ func InitMessageMap() {
 		ProposalHeartbeatID: reflect.TypeOf(tmtypes.Heartbeat{}),
 		ProposalBlockID:     reflect.TypeOf(tmtypes.TendermintBlock{}),
 		ValidBlockID:        reflect.TypeOf(tmtypes.ValidBlockMsg{}),
+		AggVoteID:           reflect.TypeOf(tmtypes.AggVote{}),
 	}
 }
 
@@ -186,6 +188,7 @@ type PeerRoundState struct {
 	LastCommit         *BitArray // All commit precommits of commit for last height.
 	CatchupCommitRound int       // Round that we have commit for. Not necessarily unique. -1 if none.
 	CatchupCommit      *BitArray // All commit precommits peer has for this height & CatchupCommitRound
+	AggPrecommit       bool      // True if peer has aggregate precommit for this round
 }
 
 // String returns a string representation of the PeerRoundState
@@ -204,17 +207,19 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 %s  Prevotes   %v
 %s  Precommits %v
 %s  LastCommit %v (round %v)
-%s  Catchup    %v (round %v)
+%s  CatchupCommit %v (round %v)
+%s  AggPrecommit %v
 %s}`,
 		indent, prs.Height, prs.Round, prs.Step, prs.StartTime,
 		indent, prs.Proposal,
 		indent, prs.ProposalBlock,
-		indent, prs.ProposalBlock,
+		indent, prs.ProposalBlockHash,
 		indent, prs.ProposalPOL, prs.ProposalPOLRound,
 		indent, prs.Prevotes,
 		indent, prs.Precommits,
 		indent, prs.LastCommit, prs.LastCommitRound,
 		indent, prs.CatchupCommit, prs.CatchupCommitRound,
+		indent, prs.AggPrecommit,
 		indent)
 }
 
@@ -274,6 +279,12 @@ type CanonicalJSONOnceVote struct {
 	Vote    CanonicalJSONVote `json:"vote"`
 }
 
+// CanonicalJSONOnceAggVote ...
+type CanonicalJSONOnceAggVote struct {
+	ChainID string            `json:"chain_id"`
+	AggVote CanonicalJSONVote `json:"agg_vote"`
+}
+
 // CanonicalJSONOnceHeartbeat ...
 type CanonicalJSONOnceHeartbeat struct {
 	ChainID   string                 `json:"chain_id"`
@@ -305,11 +316,26 @@ func CanonicalProposal(proposal *Proposal) CanonicalJSONProposal {
 
 // CanonicalVote ...
 func CanonicalVote(vote *Vote) CanonicalJSONVote {
+	timestamp := ""
+	if !vote.UseAggSig {
+		timestamp = CanonicalTime(time.Unix(0, vote.Timestamp))
+	}
 	return CanonicalJSONVote{
 		BlockID:   CanonicalJSONBlockID{Hash: vote.BlockID.Hash},
 		Height:    vote.Height,
 		Round:     int(vote.Round),
-		Timestamp: CanonicalTime(time.Unix(0, vote.Timestamp)),
+		Timestamp: timestamp,
+		Type:      byte(vote.Type),
+	}
+}
+
+// CanonicalAggVote ...
+func CanonicalAggVote(vote *AggVote) CanonicalJSONVote {
+	return CanonicalJSONVote{
+		BlockID:   CanonicalJSONBlockID{Hash: vote.BlockID.Hash},
+		Height:    vote.Height,
+		Round:     int(vote.Round),
+		Timestamp: "",
 		Type:      byte(vote.Type),
 	}
 }

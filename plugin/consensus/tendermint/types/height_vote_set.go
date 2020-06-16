@@ -138,6 +138,30 @@ func (hvs *HeightVoteSet) AddVote(vote *Vote, peerID string) (added bool, err er
 	return
 }
 
+// AddAggVote Duplicate votes return added=false, err=nil.
+// By convention, peerKey is "" if origin is self.
+func (hvs *HeightVoteSet) AddAggVote(vote *AggVote, peerID string) (added bool, err error) {
+	hvs.mtx.Lock()
+	defer hvs.mtx.Unlock()
+	if !IsVoteTypeValid(byte(vote.Type)) {
+		return
+	}
+	round := int(vote.Round)
+	voteSet := hvs.getVoteSet(round, byte(vote.Type))
+	if voteSet == nil {
+		if rndz := hvs.peerCatchupRounds[peerID]; len(rndz) < 2 {
+			hvs.addRound(int(vote.Round))
+			voteSet = hvs.getVoteSet(round, byte(vote.Type))
+			hvs.peerCatchupRounds[peerID] = append(rndz, round)
+		} else {
+			err = errors.New("Peer has sent a aggregate vote that does not match our round for more than one round")
+			return
+		}
+	}
+	added, err = voteSet.AddAggVote(vote)
+	return
+}
+
 // Prevotes ...
 func (hvs *HeightVoteSet) Prevotes(round int) *VoteSet {
 	hvs.mtx.Lock()

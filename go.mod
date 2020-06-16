@@ -33,6 +33,7 @@ require (
 	github.com/mr-tron/base58 v1.1.3
 	github.com/multiformats/go-multiaddr v0.2.0
 	github.com/pborman/uuid v1.2.0
+	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/prometheus/common v0.4.1

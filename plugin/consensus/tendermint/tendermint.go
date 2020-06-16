@@ -24,11 +24,14 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-const tendermintVersion = "0.1.0"
+const (
+	tendermintVersion = "0.1.0"
+)
 
 var (
 	tendermintlog               = log15.New("module", "tendermint")
 	genesis                     string
+	genesisAmount               int64 = 1e8
 	genesisBlockTime            int64
 	timeoutTxAvail              int32 = 1000
 	timeoutPropose              int32 = 3000 // millisecond
@@ -41,12 +44,15 @@ var (
 	skipTimeoutCommit                 = false
 	createEmptyBlocks                 = false
 	fastSync                          = false
+	preExec                           = false
 	createEmptyBlocksInterval   int32 // second
 	validatorNodes                    = []string{"127.0.0.1:46656"}
-	peerGossipSleepDuration     int32 = 100
+	peerGossipSleepDuration     int32 = 200
 	peerQueryMaj23SleepDuration int32 = 2000
 	zeroHash                    [32]byte
 	random                      *rand.Rand
+	signName                    = "ed25519"
+	useAggSig                   = false
 )
 
 func init() {
@@ -65,7 +71,6 @@ type Client struct {
 	pubKey        string
 	csState       *ConsensusState
 	csStore       *ConsensusStore // save consensus state
-	crypto        crypto.Crypto
 	node          *Node
 	txsAvailable  chan int64
 	stopC         chan struct{}
@@ -73,6 +78,7 @@ type Client struct {
 
 type subConfig struct {
 	Genesis                   string   `json:"genesis"`
+	GenesisAmount             int64    `json:"genesisAmount"`
 	GenesisBlockTime          int64    `json:"genesisBlockTime"`
 	TimeoutTxAvail            int32    `json:"timeoutTxAvail"`
 	TimeoutPropose            int32    `json:"timeoutPropose"`
@@ -87,15 +93,21 @@ type subConfig struct {
 	CreateEmptyBlocksInterval int32    `json:"createEmptyBlocksInterval"`
 	ValidatorNodes            []string `json:"validatorNodes"`
 	FastSync                  bool     `json:"fastSync"`
+	PreExec                   bool     `json:"preExec"`
+	SignName                  string   `json:"signName"`
+	UseAggregateSignature     bool     `json:"useAggregateSignature"`
 }
 
-func (client *Client) applyConfig(sub []byte) {
+func applyConfig(sub []byte) {
 	var subcfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
 	if subcfg.Genesis != "" {
 		genesis = subcfg.Genesis
+	}
+	if subcfg.GenesisAmount > 0 {
+		genesisAmount = subcfg.GenesisAmount
 	}
 	if subcfg.GenesisBlockTime > 0 {
 		genesisBlockTime = subcfg.GenesisBlockTime
@@ -133,6 +145,11 @@ func (client *Client) applyConfig(sub []byte) {
 		validatorNodes = subcfg.ValidatorNodes
 	}
 	fastSync = subcfg.FastSync
+	preExec = subcfg.PreExec
+	if subcfg.SignName != "" {
+		signName = subcfg.SignName
+	}
+	useAggSig = subcfg.UseAggregateSignature
 }
 
 // DefaultDBProvider returns a database using the DBBackend and DBDir
@@ -144,37 +161,47 @@ func DefaultDBProvider(name string) dbm.DB {
 // New ...
 func New(cfg *types.Consensus, sub []byte) queue.Module {
 	tendermintlog.Info("Start to create tendermint client")
+	applyConfig(sub)
 	//init rand
 	ttypes.Init()
 
-	genDoc, err := ttypes.GenesisDocFromFile("genesis.json")
-	if err != nil {
-		tendermintlog.Error("NewTendermintClient", "msg", "GenesisDocFromFile failded", "error", err)
+	signType, ok := ttypes.SignMap[signName]
+	if !ok {
+		tendermintlog.Error("Invalid sign name")
 		return nil
 	}
 
-	cr, err := crypto.New(types.GetSignName("", types.ED25519))
+	ttypes.CryptoName = types.GetSignName("", signType)
+	cr, err := crypto.New(ttypes.CryptoName)
 	if err != nil {
 		tendermintlog.Error("NewTendermintClient", "err", err)
 		return nil
 	}
-
 	ttypes.ConsensusCrypto = cr
 
-	priv, err := cr.GenKey()
+	if useAggSig {
+		_, err = crypto.ToAggregate(ttypes.ConsensusCrypto)
+		if err != nil {
+			tendermintlog.Error("ConsensusCrypto not support aggregate signature", "name", ttypes.CryptoName)
+			return nil
+		}
+	}
+
+	genDoc, err := ttypes.GenesisDocFromFile("genesis.json")
 	if err != nil {
-		tendermintlog.Error("NewTendermintClient", "GenKey err", err)
+		tendermintlog.Error("NewTendermintClient", "msg", "GenesisDocFromFile fail", "error", err)
 		return nil
 	}
 
 	privValidator := ttypes.LoadOrGenPrivValidatorFS("priv_validator.json")
 	if privValidator == nil {
-		tendermintlog.Error("NewTendermintClient create priv_validator file failed")
+		tendermintlog.Error("NewTendermintClient create priv_validator file fail")
 		return nil
 	}
 
 	ttypes.InitMessageMap()
 
+	priv := privValidator.PrivKey
 	pubkey := privValidator.GetPubKey().KeyString()
 	c := drivers.NewBaseClient(cfg)
 	client := &Client{
@@ -184,19 +211,11 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		privKey:       priv,
 		pubKey:        pubkey,
 		csStore:       NewConsensusStore(),
-		crypto:        cr,
 		txsAvailable:  make(chan int64, 1),
 		stopC:         make(chan struct{}, 1),
 	}
 	c.SetChild(client)
-
-	client.applyConfig(sub)
 	return client
-}
-
-// PrivValidator returns the Node's PrivValidator.
-func (client *Client) PrivValidator() ttypes.PrivValidator {
-	return client.privValidator
 }
 
 // GenesisDoc returns the Node's GenesisDoc.
@@ -216,6 +235,7 @@ func (client *Client) GenesisState() *State {
 
 // Close TODO:may need optimize
 func (client *Client) Close() {
+	client.BaseClient.Close()
 	client.node.Stop()
 	client.stopC <- struct{}{}
 	tendermintlog.Info("consensus tendermint closed")
@@ -335,7 +355,7 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = genesisAmount * types.Coin
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return
@@ -405,10 +425,13 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 // CreateBlock a routine monitor whether some transactions available and tell client by available channel
 func (client *Client) CreateBlock() {
 	issleep := true
-
 	for {
+		if client.IsClosed() {
+			tendermintlog.Info("CreateBlock quit")
+			break
+		}
 		if !client.csState.IsRunning() {
-			tendermintlog.Error("consensus not running now")
+			tendermintlog.Info("consensus not running")
 			time.Sleep(time.Second)
 			continue
 		}
@@ -483,7 +506,6 @@ func (client *Client) BuildBlock() *types.Block {
 	client.AddTxsToBlock(&newblock, txs)
 	//固定难度
 	newblock.Difficulty = cfg.GetP(0).PowLimitBits
-	//newblock.TxHash = merkle.CalcMerkleRoot(newblock.Txs)
 	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
 		newblock.BlockTime = lastBlock.BlockTime + 1
@@ -498,6 +520,9 @@ func (client *Client) CommitBlock(block *types.Block) error {
 	if retErr != nil {
 		tendermintlog.Info("CommitBlock fail", "err", retErr)
 		if client.WaitBlock(block.Height) {
+			if !preExec {
+				return nil
+			}
 			curBlock, err := client.RequestBlock(block.Height)
 			if err == nil {
 				if bytes.Equal(curBlock.Hash(cfg), block.Hash(cfg)) {
@@ -636,7 +661,7 @@ func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
 	return &tmtypes.ValidatorSet{Validators: validators, Proposer: &tmtypes.Validator{}}, nil
 }
 
-//比较newBlock是不是最优区块
+// CmpBestBlock 比较newBlock是不是最优区块
 func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
 }
