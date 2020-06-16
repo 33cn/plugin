@@ -248,9 +248,10 @@ func delticket(addr string, ticketID string, status int32) *types.KeyValue {
 
 // IsFriend check is fri
 func (t *Pos33Ticket) IsFriend(myexec, writekey []byte, tx *types.Transaction) bool {
-	clog.Error("pos33.ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
+	return true
+	//clog.Error("pos33.ticket  IsFriend", "myex", string(myexec), "writekey", string(writekey))
 	//不允许平行链
-	return false
+	//return false
 }
 
 // CheckTx check tx
