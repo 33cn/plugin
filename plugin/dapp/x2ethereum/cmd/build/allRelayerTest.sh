@@ -135,7 +135,7 @@ function StartRelayerAndDeploy() {
     kill_ebrelayer "./A/ebrelayer"
     # 修改 relayer.toml 配置文件
     updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./A/relayer.toml"
-    updata_all_relayer_toml2
+    updata_all_relayer_toml
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
