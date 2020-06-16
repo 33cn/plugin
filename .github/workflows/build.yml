@@ -149,10 +149,10 @@ jobs:
         id: go
       - name: set go env
         run: |
-        export GOPATH=$HOME/go
-        export PATH=${PATH}:`go env GOPATH`/bin
-        echo $GOPATH
-        echo $PATH
+          export GOPATH=$HOME/go
+          export PATH=${PATH}:`go env GOPATH`/bin
+          echo $GOPATH
+          echo $PATH
       - name: checkout
         uses: actions/checkout@v2
       - name: deploy
