@@ -19,6 +19,8 @@ jobs:
           # TODO: this will hopefully be fixed by
           # https://github.com/actions/setup-go/issues/14
           export PATH=${PATH}:`go env GOPATH`/bin
+          echo $GOPATH
+          echo $PATH
           go get -u golang.org/x/tools/cmd/goimports
           go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
           go get -u mvdan.cc/sh/cmd/shfmt
@@ -146,7 +148,11 @@ jobs:
           go-version: 1.13
         id: go
       - name: set go env
-        run: export PATH=${PATH}:`go env GOPATH`/bin
+        run: |
+        export GOPATH=$HOME/go
+        export PATH=${PATH}:`go env GOPATH`/bin
+        echo $GOPATH
+        echo $PATH
       - name: checkout
         uses: actions/checkout@v2
       - name: deploy
