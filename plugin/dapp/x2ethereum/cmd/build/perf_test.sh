@@ -216,7 +216,7 @@ perf_test_main() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     docker_chain33_ip=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
-    Chain33_CLI="$GOPATH/src/github.com/33cn/plugin/build/chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+    Chain33_CLI="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
 
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
