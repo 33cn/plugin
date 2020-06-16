@@ -357,10 +357,6 @@ function updata_relayer_toml() {
 
     sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${file}"
     sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
-
-    #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
-    #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
-    #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
 }
 
 # 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
@@ -384,52 +380,10 @@ function updata_relayer_toml_ropston() {
 
     sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
     sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
-
-    #sed -i 's/#BridgeRegistry=\"0x40BFE5eD039A9a2Eb42ece2E2CA431bFa7Cf4c42\"/BridgeRegistry=\"'${BridgeRegistry}'\"/g' "../build/relayer.toml"
-    #sed -i 's/192.168.64.2/'${chain33Host}'/g' "../build/relayer.toml"
-    #sed -i 's/192.168.3.156/'${pushHost}'/g' "../build/relayer.toml"
 }
 
 # 更新 B C D 的配置文件
 function updata_all_relayer_toml() {
-    local port=9901
-    local port2=20000
-    #    local dockername=30
-
-    for name in B C D; do
-        local file="../build/$name/relayer.toml"
-        cp '../build/A/relayer.toml' "${file}"
-        cp '../build/ebrelayer' "../build/$name/ebrelayer"
-
-        # 删除配置文件中不需要的字段
-        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
-            delete_line "${file}" "${deleteName}"
-        done
-
-        # 替换端口
-        port=$((port + 1))
-        sed -i 's/localhost:9901/localhost:'${port}'/g' "${file}"
-
-        port2=$((port2 + 1))
-        sed -i 's/20000/'${port2}'/g' "${file}"
-
-        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
-
-        #        local chain33Host=$(docker inspect build_chain${dockername}_1 | jq ".[].NetworkSettings.Networks.build_default.IPAddress" | sed 's/\"//g')
-        #        if [[ "${chain33Host}" == "" ]]; then
-        #            echo -e "${RED}chain33Host is empty${NOC}"
-        #            exit 1
-        #        fi
-        #        local line=$(delete_line_show ${file} "chain33Host")
-        #        # 在第 line 行后面 新增合约地址
-        #        sed -i ''${line}' a chain33Host="http://'${chain33Host}':8801"' "${file}"
-        #
-        #        dockername=$((${dockername} + 1))
-    done
-}
-
-# 更新 B C D 的配置文件
-function updata_all_relayer_toml2() {
     local port=9901
     local port2=20000
     #    local dockername=30
@@ -452,17 +406,6 @@ function updata_all_relayer_toml2() {
         sed -i 's/20000/'${port2}'/g' "${file}"
 
         sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
-
-        #        local chain33Host=$(docker inspect build_chain${dockername}_1 | jq ".[].NetworkSettings.Networks.build_default.IPAddress" | sed 's/\"//g')
-        #        if [[ "${chain33Host}" == "" ]]; then
-        #            echo -e "${RED}chain33Host is empty${NOC}"
-        #            exit 1
-        #        fi
-        #        local line=$(delete_line_show ${file} "chain33Host")
-        #        # 在第 line 行后面 新增合约地址
-        #        sed -i ''${line}' a chain33Host="http://'${chain33Host}':8801"' "${file}"
-        #
-        #        dockername=$((${dockername} + 1))
     done
 }
 
