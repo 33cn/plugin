@@ -100,57 +100,57 @@ jobs:
           make docker-compose
           make docker-compose-down
 
-    ci_paracross:
-      name: paracross
-      runs-on: ubuntu-latest
-      steps:
-        - name: Set up Golang
-          uses: actions/setup-go@v2
-          with:
-            go-version: 1.13
-          id: go
-        - name: set go env
-          run: export PATH=${PATH}:`go env GOPATH`/bin
-        - name: checkout
-          uses: actions/checkout@v2
-        - name: deploy
-          run: |
-            make docker-compose dapp=paracross
-            make docker-compose-down dapp=paracross
+  ci_paracross:
+    name: paracross
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.13
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=paracross
+          make docker-compose-down dapp=paracross
 
-    ci_x2ethereum:
-      name: x2ethereum
-      runs-on: ubuntu-latest
-      steps:
-        - name: Set up Golang
-          uses: actions/setup-go@v2
-          with:
-            go-version: 1.13
-          id: go
-        - name: set go env
-          run: export PATH=${PATH}:`go env GOPATH`/bin
-        - name: checkout
-          uses: actions/checkout@v2
-        - name: deploy
-          run: |
-            make docker-compose dapp=x2ethereum
-            make docker-compose-down dapp=x2ethereum
+  ci_x2ethereum:
+    name: x2ethereum
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.13
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=x2ethereum
+          make docker-compose-down dapp=x2ethereum
 
-    ci_relay:
-      name: relay
-      runs-on: ubuntu-latest
-      steps:
-        - name: Set up Golang
-          uses: actions/setup-go@v2
-          with:
-            go-version: 1.13
-          id: go
-        - name: set go env
-          run: export PATH=${PATH}:`go env GOPATH`/bin
-        - name: checkout
-          uses: actions/checkout@v2
-        - name: deploy
-          run: |
-            make docker-compose dapp=relay
-            make docker-compose-down dapp=relay
+  ci_relay:
+    name: relay
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.13
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=relay
+          make docker-compose-down dapp=relay
 
