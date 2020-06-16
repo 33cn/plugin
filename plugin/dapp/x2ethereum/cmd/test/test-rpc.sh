@@ -412,11 +412,13 @@ function TestETH2Chain33Erc20() {
 #    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33Validator1}")
 #    block_wait "${Chain33Cli}" $((maturityDegree + 2))
 #    check_tx "${Chain33Cli}" "${hash}"
+#"{\"method\":\"Chain33.CreateTransaction\",\"params\":[{\"execer\":\"x2ethereum\",\"actionName\":\"Chain33ToEthBurn\",\"payload\":{\"TokenContract\":\"0xb43393f9f588fC18Bbd8E99716c25291dB804b41\",\"Chain33Sender\":\"\",\"EthereumReceiver\":\"0x0c05ba5c230fdaa503b53702af1962e08d0c60bf\",\"Amount\":\"10000000000\",\"IssuerDotSymbol\":\"testc\",\"Decimals\":\"8\"}}],\"id\":0}"
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"'${tokenAddr}'","Chain33Sender":"'${chain33ValidatorKey1}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000000","IssuerDotSymbol":"'${tokenSymbol}'","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
-    chain33_SignAndSendTxWait "$tx" "$sendPriKey" ${MAIN_HTTP} "Chain33ToEthBurn"
+    chain33_SignAndSendTxWait "$tx" "$chain33ValidatorKey1" ${MAIN_HTTP} "Chain33ToEthBurn"
 
 #    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
 #    balance_ret "${result}" "0"
+#request="{\"method\":\"Chain33.Query\",\"params\":[{\"execer\":\"x2ethereum\",\"funcName\":\"GetRelayerBalance\",\"payload\":{\"tokenSymbol\":\"testc\",\"address\":\"1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV\",\"tokenAddr\":\"0xb43393f9f588fC18Bbd8E99716c25291dB804b41\"}}],\"id\":0}"
 
     eth_block_wait 2
 
