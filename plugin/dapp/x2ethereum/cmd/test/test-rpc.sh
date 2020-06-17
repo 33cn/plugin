@@ -292,6 +292,7 @@ function TestChain33ToEthAssets() {
     queryRelayerBalance "$req" "0"
 
     # chain33 lock bty
+    #shellcheck disable=SC2086
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthLock","payload":{"TokenContract":"'${tokenAddrBty}'","Chain33Sender":"'${sendPriKey}'","EthereumReceiver":"'${ethReceiverAddr1}'","Amount":"500000000","IssuerDotSymbol":"coins.bty","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$sendPriKey" ${MAIN_HTTP} "Chain33ToEthLock"
 
@@ -405,6 +406,7 @@ function TestETH2Chain33Erc20() {
     queryChain33X2ethBalance "${req}" "100"
 
     # chain33 burn 100
+    #shellcheck disable=SC2086
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"'${tokenAddr}'","Chain33Sender":"'${chain33ValidatorKey1}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000000","IssuerDotSymbol":"testc","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$chain33ValidatorKey1" ${MAIN_HTTP} "Chain33ToEthBurn"
 
