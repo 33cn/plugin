@@ -179,7 +179,6 @@ function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     local req='{"method":"Manager.SetPassphase","params":[{"Passphase":"123456hzj"}]}'
@@ -239,7 +238,6 @@ function InitChain33Vilators() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-
 function EthImportKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
@@ -251,8 +249,8 @@ function EthImportKey() {
         local CLI_HTTP="http://127.0.0.1:${port}"
 
         if [ "${name}" != "A" ]; then
-          local req='{"method":"Manager.SetPassphase","params":[{"Passphase":"123456hzj"}]}'
-          chain33_Http "$req" ${CLI_HTTP} '(.error|not) and (.result != null)' "SetPassphase" ".result"
+            local req='{"method":"Manager.SetPassphase","params":[{"Passphase":"123456hzj"}]}'
+            chain33_Http "$req" ${CLI_HTTP} '(.error|not) and (.result != null)' "SetPassphase" ".result"
         fi
 
         req='{"method":"Manager.Unlock","params":["123456hzj"]}'
@@ -288,7 +286,7 @@ function TestChain33ToEthAssets() {
     local req='{"method":"Manager.CreateBridgeToken","params":["coins.bty"]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "CreateBridgeToken" ".result.addr"
     tokenAddrBty=${RETURN_RESP}
-#    tokenAddrBty="0x9C3D40A44a2F61Ef8D46fa8C7A731C08FB16cCEF"
+    #    tokenAddrBty="0x9C3D40A44a2F61Ef8D46fa8C7A731C08FB16cCEF"
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddrBty}'"}]}'
     queryRelayerBalance "$req" "0"
@@ -330,7 +328,7 @@ function TestETH2Chain33Assets() {
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
     queryRelayerBalance "$req" "0"
 
-#    # eth lock 0.1
+    #    # eth lock 0.1
     req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"","amount":"100000000000000000","chain33Receiver":"'${sendAddress}'"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "LockEthErc20Asset" ".result"
 
@@ -347,7 +345,7 @@ function TestETH2Chain33Assets() {
     chain33_Http "${req}" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result.balance"
     local balance=${RETURN_RESP}
 
-#    burn 0.1
+    #    burn 0.1
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"0x0000000000000000000000000000000000000000","Chain33Sender":"'${sendPriKey}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000","IssuerDotSymbol":"eth","Decimals":"18"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$sendPriKey" ${MAIN_HTTP} "Chain33ToEthBurn"
 
@@ -367,14 +365,14 @@ function TestETH2Chain33Assets() {
 
 function TestETH2Chain33Erc20() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-  #  ${CLIA} relayer unlock -p 123456hzj
+    #  ${CLIA} relayer unlock -p 123456hzj
 
     # token4erc20 在 chain33 上先有 token,同时 mint
     #tokenSymbol="testc"
     local req='{"method":"Manager.CreateERC20Token","params":["testc"]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "CreateERC20Token" ".result.addr"
     tokenAddr="${RETURN_RESP}"
-#    tokenAddr="0xb43393f9f588fC18Bbd8E99716c25291dB804b41"
+    #    tokenAddr="0xb43393f9f588fC18Bbd8E99716c25291dB804b41"
 
     # 先铸币 1000
     req='{"method":"Manager.MintErc20","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddr}'","amount":"100000000000"}]}'
@@ -445,5 +443,3 @@ function rpc_test() {
 }
 
 chain33_debug_function rpc_test "$1"
-
-
