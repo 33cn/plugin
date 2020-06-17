@@ -106,6 +106,46 @@ function updata_relayer_toml_rpc() {
     sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
 }
 
+# $1 sendAddress, $2 balance
+function queryExecBalance() {
+    local resp=""
+    chain33_QueryExecBalance "${1}" "x2ethereum" "$MAIN_HTTP"
+    # shellcheck disable=SC2155
+    local balance=$(echo "$resp" | jq -r ".result" | jq ".[].balance")
+    if [ "${balance}" != "${2}" ]; then
+        echo_rst "queryExecBalance" "1" "${balance} != ${2}"
+    fi
+}
+
+# $1 chain33Address, $2 balance
+function queryChain33Balance() {
+    local resp=""
+    chain33_QueryBalance "${1}" "${MAIN_HTTP}"
+    # shellcheck disable=SC2155
+    local balance=$(echo $resp | jq -r ".result.execAccount" | jq ".[].account.balance")
+    if [ "${balance}" != "${2}" ]; then
+        echo_rst "queryChain33Balance" "1" "${balance} != ${2}"
+    fi
+}
+
+# $1 req , $2 balance
+function queryRelayerBalance() {
+    chain33_Http "${1}" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result.balance"
+    if [ "${RETURN_RESP}" != "${2}" ]; then
+        echo_rst "queryRelayerBalance" "1" "${RETURN_RESP} != ${2}"
+    fi
+}
+
+# $1 req , $2 balance
+function queryChain33X2ethBalance() {
+    chain33_Http "${req}" ${MAIN_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    # shellcheck disable=SC2155
+    local balance=$(echo "${RETURN_RESP}" | jq -r ".res" | jq ".[].balance" | sed 's/\"//g')
+    if [ "${balance}" != "${2}" ]; then
+        echo_rst "queryChain33X2ethBalance" "1" "${balance} != ${2}"
+    fi
+}
+
 function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
@@ -129,7 +169,7 @@ function StartRelayerAndDeploy() {
     # 获取 BridgeRegistry 地址
     local req='{"method":"Manager.ShowBridgeRegistryAddr","params":[{}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "$FUNCNAME" ".result.addr"
-    BridgeRegistry="$RETURN_RESP"
+    local BridgeRegistry="$RETURN_RESP"
 
     kill_ebrelayer "./x2ethereum/A/ebrelayer"
     # 修改 relayer.toml 配置文件
@@ -183,24 +223,19 @@ function InitChain33Vilators() {
     fi
 
     # cions 转帐到 x2ethereum 合约地址
-    resp=""
     x2eth_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"x2ethereum"}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SendToAddress "${sendAddress}" "${x2eth_addr}" 20000000000 "${MAIN_HTTP}"
-    chain33_QueryExecBalance "${sendAddress}" "x2ethereum" "$MAIN_HTTP"
-    balance=$(echo "$resp" | jq -r ".result.[].balance")
-    if [ "${balance}" != "20000000000" ]; then
-        echo -e "${RED}=========== balance err: balance = $balance ===========${NOC}"
-    fi
+    queryExecBalance "${sendAddress}" "20000000000"
 
     # chain33Validator 要有手续费
     chain33_applyCoins "${chain33Validator1}" 1000000000 "${MAIN_HTTP}"
-    chain33_QueryBalance "${chain33Validator1}" "${MAIN_HTTP}"
+    queryChain33Balance "${chain33Validator1}" "1000000000"
     chain33_applyCoins "${chain33Validator2}" 1000000000 "${MAIN_HTTP}"
-    chain33_QueryBalance "${chain33Validator2}" "${MAIN_HTTP}"
+    queryChain33Balance "${chain33Validator2}" "1000000000"
     chain33_applyCoins "${chain33Validator3}" 1000000000 "${MAIN_HTTP}"
-    chain33_QueryBalance "${chain33Validator3}" "${MAIN_HTTP}"
+    queryChain33Balance "${chain33Validator3}" "1000000000"
     chain33_applyCoins "${chain33Validator4}" 1000000000 "${MAIN_HTTP}"
-    chain33_QueryBalance "${chain33Validator4}" "${MAIN_HTTP}"
+    queryChain33Balance "${chain33Validator4}" "1000000000"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -252,42 +287,34 @@ function TestChain33ToEthAssets() {
     # token4chain33 在 以太坊 上先有 bty
     local req='{"method":"Manager.CreateBridgeToken","params":["coins.bty"]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "CreateBridgeToken" ".result.addr"
-    tokenAddrBty="${RETURN_RESP}"
+    tokenAddrBty=${RETURN_RESP}
 #    tokenAddrBty="0x9C3D40A44a2F61Ef8D46fa8C7A731C08FB16cCEF"
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddrBty}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0"
 
     # chain33 lock bty
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthLock","payload":{"TokenContract":"'${tokenAddrBty}'","Chain33Sender":"'${sendPriKey}'","EthereumReceiver":"'${ethReceiverAddr1}'","Amount":"500000000","IssuerDotSymbol":"coins.bty","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$sendPriKey" ${MAIN_HTTP} "Chain33ToEthLock"
 
-#    result=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum)
-#    balance_ret "${result}" "195.0000"
-    chain33_QueryExecBalance "${sendAddress}" "x2ethereum" "$MAIN_HTTP"
+    queryExecBalance "${sendAddress}" "19500000000"
 
     eth_block_wait $((maturityDegree + 2))
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
-#    cli_ret "${result}" "balance" ".balance" "5"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddrBty}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "5"
 
     # eth burn
     req='{"method":"Manager.Burn","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"'${tokenAddrBty}'","chain33Receiver":"'${chain33SenderAddr}'","amount":"500000000"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "Burn" ".result"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddrBty}")
-#    cli_ret "${result}" "balance" ".balance" "0"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddrBty}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0"
 
     # eth 等待 10 个区块
     eth_block_wait $((maturityDegree + 2))
 
-#    result=$(${Chain33Cli} account balance -a "${chain33SenderAddr}" -e x2ethereum)
-#    balance_ret "${result}" "5"
-    chain33_QueryExecBalance "${chain33SenderAddr}" "x2ethereum" "$MAIN_HTTP"
+    queryExecBalance "${chain33SenderAddr}" "500000000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -296,59 +323,44 @@ function TestChain33ToEthAssets() {
 # 在以太坊上锁定资产,然后在 chain33 上铸币,针对 eth 资产
 function TestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    #${CLIA} relayer unlock -p 123456hzj
-
-#    result=$(${CLIA} relayer ethereum bridgeBankAddr)
-#    bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
     local req='{"method":"Manager.ShowBridgeBankAddr","params":[{}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "ShowBridgeBankAddr" ".result.addr"
     bridgeBankAddr="${RETURN_RESP}"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
-#
+    queryRelayerBalance "$req" "0"
+
 #    # eth lock 0.1
-#    result=$(${CLIA} relayer ethereum lock -m 0.1 -k "${ethReceiverAddrKey1}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
-#    cli_ret "${result}" "lock"
-    req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"","amount":"100000000000000000","chain33Receiver":"'$sendAddress'"}]}'
+    req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"","amount":"100000000000000000","chain33Receiver":"'${sendAddress}'"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "LockEthErc20Asset" ".result"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0.1"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0.1"
 
     # eth 等待 10 个区块
     eth_block_wait $((maturityDegree + 2))
 
-#    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
-#    balance_ret "${result}" "0.1"
+    req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"eth","address":"'${sendAddress}'","tokenAddr":"0x0000000000000000000000000000000000000000"}}]}'
+    queryChain33X2ethBalance "${req}" "0.1"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
-#    balance=$(cli_ret "${result}" "balance" ".balance")
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr2}'","tokenAddr":""}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    chain33_Http "${req}" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result.balance"
+    local balance=${RETURN_RESP}
 
 #    burn 0.1
     tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"0x0000000000000000000000000000000000000000","Chain33Sender":"'${sendPriKey}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000","IssuerDotSymbol":"eth","Decimals":"18"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$sendPriKey" ${MAIN_HTTP} "Chain33ToEthBurn"
 
-#    result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
-#    balance_ret "${result}" "0"
+    req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"eth","address":"'${sendAddress}'","tokenAddr":"0x0000000000000000000000000000000000000000"}}]}'
+    queryChain33X2ethBalance "${req}" "0"
 
     eth_block_wait 2
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}")
-#    cli_ret "${result}" "balance" ".balance" "$(echo "${balance}+0.1" | bc)"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr2}'","tokenAddr":""}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "$(echo "${balance}+0.1" | bc)"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -358,7 +370,7 @@ function TestETH2Chain33Erc20() {
   #  ${CLIA} relayer unlock -p 123456hzj
 
     # token4erc20 在 chain33 上先有 token,同时 mint
-    tokenSymbol="testc"
+    #tokenSymbol="testc"
     local req='{"method":"Manager.CreateERC20Token","params":["testc"]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "CreateERC20Token" ".result.addr"
     tokenAddr="${RETURN_RESP}"
@@ -368,69 +380,46 @@ function TestETH2Chain33Erc20() {
     req='{"method":"Manager.MintErc20","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddr}'","amount":"100000000000"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "MintErc20" ".result.addr"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "1000"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "1000"
 
-#    result=$(${CLIA} relayer ethereum bridgeBankAddr)
-#    bridgeBankAddr=$(cli_ret "${result}" "bridgeBankAddr" ".addr")
     local req='{"method":"Manager.ShowBridgeBankAddr","params":[{}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "ShowBridgeBankAddr" ".result.addr"
     bridgeBankAddr="${RETURN_RESP}"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0"
 
     # lock 100
-#    result=$(${CLIA} relayer ethereum lock -m 100 -k "${ethReceiverAddrKey1}" -r "${chain33Validator1}" -t "${tokenAddr}")
-#    cli_ret "${result}" "lock"
-    req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"'${tokenAddr}'","amount":"10000000000","chain33Receiver":"'$chain33Validator1'"}]}'
+    req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"'${tokenAddr}'","amount":"10000000000","chain33Receiver":"'${chain33Validator1}'"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "LockEthErc20Asset" ".result"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr1}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "900"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "900"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "100"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "100"
 
     # eth 等待 10 个区块
     eth_block_wait $((maturityDegree + 2))
 
-#Chain33Cli="docker exec build_chain33_1 /root/chain33-cli"
-#    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
-#    echo $result
-#    balance_ret "${result}" "100"
+    req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"testc","address":"'${chain33Validator1}'","tokenAddr":"'${tokenAddr}'"}}]}'
+    queryChain33X2ethBalance "${req}" "100"
 
     # chain33 burn 100
-#    hash=$(${Chain33Cli} send x2ethereum burn -a 100 -t "${tokenSymbol}" -r ${ethReceiverAddr2} -q "${tokenAddr}" -k "${chain33Validator1}")
-#    block_wait "${Chain33Cli}" $((maturityDegree + 2))
-#    check_tx "${Chain33Cli}" "${hash}"
-#"{\"method\":\"Chain33.CreateTransaction\",\"params\":[{\"execer\":\"x2ethereum\",\"actionName\":\"Chain33ToEthBurn\",\"payload\":{\"TokenContract\":\"0xb43393f9f588fC18Bbd8E99716c25291dB804b41\",\"Chain33Sender\":\"\",\"EthereumReceiver\":\"0x0c05ba5c230fdaa503b53702af1962e08d0c60bf\",\"Amount\":\"10000000000\",\"IssuerDotSymbol\":\"testc\",\"Decimals\":\"8\"}}],\"id\":0}"
-    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"'${tokenAddr}'","Chain33Sender":"'${chain33ValidatorKey1}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000000","IssuerDotSymbol":"'${tokenSymbol}'","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
+    tx=$(curl -ksd '{"method":"Chain33.CreateTransaction","params":[{"execer":"x2ethereum","actionName":"Chain33ToEthBurn","payload":{"TokenContract":"'${tokenAddr}'","Chain33Sender":"'${chain33ValidatorKey1}'","EthereumReceiver":"'${ethReceiverAddr2}'","Amount":"10000000000","IssuerDotSymbol":"testc","Decimals":"8"}}]}' ${MAIN_HTTP} | jq -r ".result")
     chain33_SignAndSendTxWait "$tx" "$chain33ValidatorKey1" ${MAIN_HTTP} "Chain33ToEthBurn"
 
-#    result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
-#    balance_ret "${result}" "0"
-#request="{\"method\":\"Chain33.Query\",\"params\":[{\"execer\":\"x2ethereum\",\"funcName\":\"GetRelayerBalance\",\"payload\":{\"tokenSymbol\":\"testc\",\"address\":\"1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV\",\"tokenAddr\":\"0xb43393f9f588fC18Bbd8E99716c25291dB804b41\"}}],\"id\":0}"
+    req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"testc","address":"'${chain33Validator1}'","tokenAddr":"'${tokenAddr}'"}}]}'
+    queryChain33X2ethBalance "${req}" "0"
 
     eth_block_wait 2
 
-#    result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "100"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr2}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "100"
 
-#    result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}" -t "${tokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":"'${tokenAddr}'"}]}'
-    chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result"
+    queryRelayerBalance "$req" "0"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
