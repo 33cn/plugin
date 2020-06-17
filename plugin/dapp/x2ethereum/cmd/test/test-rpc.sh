@@ -5,8 +5,6 @@
 source ../dapp-test-common.sh
 source "../x2ethereum/publicTest.sh"
 
-set -x
-
 sendAddress="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 sendPriKey="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 MAIN_HTTP=""
@@ -329,7 +327,7 @@ function TestETH2Chain33Assets() {
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
     queryRelayerBalance "$req" "0"
 
-    #    # eth lock 0.1
+    # eth lock 0.1
     req='{"method":"Manager.LockEthErc20Asset","params":[{"ownerKey":"'${ethReceiverAddrKey1}'","tokenAddr":"","amount":"100000000000000000","chain33Receiver":"'${sendAddress}'"}]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "LockEthErc20Asset" ".result"
 
@@ -367,14 +365,10 @@ function TestETH2Chain33Assets() {
 
 function TestETH2Chain33Erc20() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    #  ${CLIA} relayer unlock -p 123456hzj
-
     # token4erc20 在 chain33 上先有 token,同时 mint
-    #tokenSymbol="testc"
     local req='{"method":"Manager.CreateERC20Token","params":["testc"]}'
     chain33_Http "$req" ${CLIA_HTTP} '(.error|not) and (.result != null)' "CreateERC20Token" ".result.addr"
     tokenAddr="${RETURN_RESP}"
-    #    tokenAddr="0xb43393f9f588fC18Bbd8E99716c25291dB804b41"
 
     # 先铸币 1000
     req='{"method":"Manager.MintErc20","params":[{"owner":"'${ethReceiverAddr1}'","tokenAddr":"'${tokenAddr}'","amount":"100000000000"}]}'
@@ -426,22 +420,23 @@ function TestETH2Chain33Erc20() {
 }
 
 function rpc_test() {
-    set -x
     set +e
     chain33_RpcTestBegin x2ethereum
     MAIN_HTTP="$1"
     echo "main_ip=$MAIN_HTTP"
 
-    # init
-    StartRelayerAndDeploy
-    InitChain33Vilators
-    EthImportKey
+    ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
+    if [ "$ispara" == false ]; then
+        # init
+        StartRelayerAndDeploy
+        InitChain33Vilators
+        EthImportKey
 
-    # test
-    TestChain33ToEthAssets
-    TestETH2Chain33Assets
-    TestETH2Chain33Erc20
-
+        # test
+        TestChain33ToEthAssets
+        TestETH2Chain33Assets
+        TestETH2Chain33Erc20
+    fi
     chain33_RpcTestRst x2ethereum "$CASE_ERR"
 }
 
