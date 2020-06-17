@@ -43,6 +43,8 @@ dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
 
+[p2p.sub.dht]
+channel=123
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -73,6 +75,7 @@ powLimitBits = "0x1f2fffff"
 
 [consensus.sub.tendermint]
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+genesisAmount=100000000
 genesisBlockTime=1514533394
 timeoutTxAvail=1000
 timeoutPropose=1000
@@ -86,14 +89,21 @@ skipTimeoutCommit=false
 createEmptyBlocks=true
 createEmptyBlocksInterval=1
 validatorNodes=["127.0.0.1:46656", "127.0.0.2:46656"]
+fastSync=false
+# Propose阶段是否预执行区块
+preExec=false
+# 签名算法,支持"secp256k1","ed25519","sm2","bls",默认为"ed25519"
+signName="ed25519"
+# 是否使用聚合签名,签名算法需支持该特性,比如"bls"
+useAggregateSignature=false
 
 [store]
-name="mavl"
+name="kvmvcc"
 driver="leveldb"
-dbPath="datadir/mavltree"
+dbPath="datadir/kvmvcc"
 dbCache=128
 
-[store.sub.mavl]
+[store.sub.kvmvcc]
 enableMavlPrefix=false
 enableMVCC=false
 
@@ -126,3 +136,9 @@ signType="auth_ecdsa"
 superManager=[
     "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
 ]
+
+[metrics]
+#是否使能发送metrics数据的发送
+enableMetrics=false
+#数据保存模式
+dataEmitMode="influxdb"

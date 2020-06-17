@@ -113,7 +113,7 @@ func (params *ConsensusParams) Validate() error {
 func (params *ConsensusParams) Hash() []byte {
 	bytes, err := json.Marshal(params)
 	if err != nil {
-		blocklog.Error("block header Hash() marshal failed", "error", err)
+		ttlog.Error("block header Hash() marshal failed", "error", err)
 		return nil
 	}
 	return crypto.Ripemd160(bytes)

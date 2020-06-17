@@ -5,86 +5,88 @@ import "blockchain.proto";
 package types;
 
 message BlockID {
-    bytes Hash = 1;
+    bytes hash = 1;
 }
 
 message TendermintBitArray {
-    int32    Bits         = 1;
-    repeated uint64 Elems = 2;
+    int32    bits         = 1;
+    repeated uint64 elems = 2;
 }
 
 message Vote {
-    bytes   ValidatorAddress = 1;
-    int32   ValidatorIndex   = 2;
-    int64   Height           = 3;
-    int32   Round            = 4;
-    int64   Timestamp        = 5;
-    uint32  Type             = 6;
-    BlockID BlockID          = 7;
-    bytes   Signature        = 8;
+    bytes   validatorAddress = 1;
+    int32   validatorIndex   = 2;
+    int64   height           = 3;
+    int32   round            = 4;
+    int64   timestamp        = 5;
+    uint32  type             = 6;
+    BlockID blockID          = 7;
+    bytes   signature        = 8;
+    bool    useAggSig        = 9;
 }
 
 message TendermintCommit {
-    BlockID  BlockID         = 1;
-    repeated Vote Precommits = 2;
+    BlockID  blockID         = 1;
+    repeated Vote precommits = 2;
+    AggVote  aggVote         = 3;
 }
 
 message TendermintBlockInfo {
-    State           State    = 2;
-    Proposal        Proposal = 3;
+    State           state    = 2;
+    Proposal        proposal = 3;
     TendermintBlock block    = 4;
 }
 
 message BlockSize {
-    int32 MaxBytes = 1;
-    int32 MaxTxs   = 2;
-    int64 MaxGas   = 3;
+    int32 maxBytes = 1;
+    int32 maxTxs   = 2;
+    int64 maxGas   = 3;
 }
 
 message TxSize {
-    int32 MaxBytes = 1;
-    int64 MaxGas   = 2;
+    int32 maxBytes = 1;
+    int64 maxGas   = 2;
 }
 
 message BlockGossip {
-    int32 BlockPartSizeBytes = 1;
+    int32 blockPartSizeBytes = 1;
 }
 
 message EvidenceParams {
-    int64 MaxAge = 1;
+    int64 maxAge = 1;
 }
 message ConsensusParams {
-    BlockSize      BlockSize      = 1;
-    TxSize         TxSize         = 2;
-    BlockGossip    BlockGossip    = 3;
-    EvidenceParams EvidenceParams = 4;
+    BlockSize      blockSize      = 1;
+    TxSize         txSize         = 2;
+    BlockGossip    blockGossip    = 3;
+    EvidenceParams evidenceParams = 4;
 }
 
 message Validator {
-    bytes Address     = 1;
-    bytes PubKey      = 2;
-    int64 VotingPower = 3;
-    int64 Accum       = 4;
+    bytes address     = 1;
+    bytes pubKey      = 2;
+    int64 votingPower = 3;
+    int64 accum       = 4;
 }
 
 message ValidatorSet {
-    repeated Validator Validators = 1;
-    Validator          Proposer   = 2;
+    repeated Validator validators = 1;
+    Validator          proposer   = 2;
 }
 
 message State {
-    string          ChainID                          = 1;
-    int64           LastBlockHeight                  = 2;
-    int64           LastBlockTotalTx                 = 3;
-    BlockID         LastBlockID                      = 4;
-    int64           LastBlockTime                    = 5;
-    ValidatorSet    Validators                       = 6;
-    ValidatorSet    LastValidators                   = 7;
-    int64           LastHeightValidatorsChanged      = 8;
-    ConsensusParams ConsensusParams                  = 9;
-    int64           LastHeightConsensusParamsChanged = 10;
-    bytes           LastResultsHash                  = 11;
-    bytes           AppHash                          = 12;
+    string          chainID                          = 1;
+    int64           lastBlockHeight                  = 2;
+    int64           lastBlockTotalTx                 = 3;
+    BlockID         lastBlockID                      = 4;
+    int64           lastBlockTime                    = 5;
+    ValidatorSet    validators                       = 6;
+    ValidatorSet    lastValidators                   = 7;
+    int64           lastHeightValidatorsChanged      = 8;
+    ConsensusParams consensusParams                  = 9;
+    int64           lastHeightConsensusParamsChanged = 10;
+    bytes           lastResultsHash                  = 11;
+    bytes           appHash                          = 12;
 }
 
 message TendermintBlockHeader {
@@ -173,4 +175,15 @@ message Heartbeat {
 
 message IsHealthy {
     bool isHealthy = 1;
+}
+
+message AggVote {
+    bytes   validatorAddress = 1;
+    TendermintBitArray validatorArray = 2;
+    int64   height           = 3;
+    int32   round            = 4;
+    int64   timestamp        = 5;
+    uint32  type             = 6;
+    BlockID blockID          = 7;
+    bytes   signature        = 8;
 }

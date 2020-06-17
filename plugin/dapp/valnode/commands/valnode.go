@@ -25,6 +25,7 @@ var (
 	strChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" // 62 characters
 	genFile  = "genesis_file.json"
 	pvFile   = "priv_validator_"
+	AuthBLS  = 259
 )
 
 // ValCmd valnode cmd register
@@ -164,8 +165,9 @@ func CreateCmd() *cobra.Command {
 }
 
 func addCreateCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("num", "n", "", "Num of the keyfile to create")
+	cmd.Flags().StringP("num", "n", "", "num of the keyfile to create")
 	cmd.MarkFlagRequired("num")
+	cmd.Flags().StringP("type", "t", "ed25519", "sign type of the keyfile (secp256k1, ed25519, sm2, bls)")
 }
 
 // RandStr ...
@@ -192,10 +194,11 @@ MAIN_LOOP:
 	return string(chars)
 }
 
-func initCryptoImpl() error {
-	cr, err := crypto.New(types.GetSignName("", types.ED25519))
+func initCryptoImpl(signType int) error {
+	ttypes.CryptoName = types.GetSignName("", signType)
+	cr, err := crypto.New(ttypes.CryptoName)
 	if err != nil {
-		fmt.Printf("New crypto impl failed err: %v", err)
+		fmt.Printf("Init crypto fail: %v", err)
 		return err
 	}
 	ttypes.ConsensusCrypto = cr
@@ -204,7 +207,13 @@ func initCryptoImpl() error {
 
 func createFiles(cmd *cobra.Command, args []string) {
 	// init crypto instance
-	err := initCryptoImpl()
+	ty, _ := cmd.Flags().GetString("type")
+	signType, ok := ttypes.SignMap[ty]
+	if !ok {
+		fmt.Println("type parameter is not valid")
+		return
+	}
+	err := initCryptoImpl(signType)
 	if err != nil {
 		return
 	}
@@ -232,7 +241,7 @@ func createFiles(cmd *cobra.Command, args []string) {
 
 		// create genesis validator by the pubkey of private validator
 		gv := ttypes.GenesisValidator{
-			PubKey: ttypes.KeyText{Kind: "ed25519", Data: privValidator.GetPubKey().KeyString()},
+			PubKey: ttypes.KeyText{Kind: ttypes.CryptoName, Data: privValidator.GetPubKey().KeyString()},
 			Power:  10,
 		}
 		genDoc.Validators = append(genDoc.Validators, gv)

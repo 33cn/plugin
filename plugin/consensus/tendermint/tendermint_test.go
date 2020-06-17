@@ -272,13 +272,12 @@ func CheckState(t *testing.T, client *Client) {
 
 	assert.Equal(t, client.csState.Prevote(0), 1000*time.Millisecond)
 	assert.Equal(t, client.csState.Precommit(0), 1000*time.Millisecond)
-	assert.Equal(t, client.csState.PeerGossipSleep(), 100*time.Millisecond)
+	assert.Equal(t, client.csState.PeerGossipSleep(), 200*time.Millisecond)
 	assert.Equal(t, client.csState.PeerQueryMaj23Sleep(), 2000*time.Millisecond)
 	assert.Equal(t, client.csState.IsProposer(), true)
 	assert.Nil(t, client.csState.GetPrevotesState(state.LastBlockHeight, 0, nil))
 	assert.Nil(t, client.csState.GetPrecommitsState(state.LastBlockHeight, 0, nil))
-
-	assert.NotEmpty(t, client.PrivValidator())
+	assert.NotEmpty(t, client.csState.GetPrivValidator())
 	assert.Len(t, client.GenesisDoc().Validators, 1)
 
 	msg1, err := client.Query_IsHealthy(&types.ReqNil{})

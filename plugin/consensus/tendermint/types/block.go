@@ -13,16 +13,9 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/valnode/types"
-)
-
-var (
-	blocklog = log15.New("module", "tendermint-block")
-	// ConsensusCrypto define
-	ConsensusCrypto crypto.Crypto
 )
 
 // BlockID struct
@@ -86,11 +79,6 @@ func (b *TendermintBlock) ValidateBasic() error {
 		return errors.New("Negative Header.Height")
 	} else if b.Header.Height == 0 {
 		return errors.New("Zero Header.Height")
-	}
-
-	newTxs := int64(len(b.Data.Txs))
-	if b.Header.NumTxs != newTxs {
-		return fmt.Errorf("Wrong Header.NumTxs. Expected %v, got %v", newTxs, b.Header.NumTxs)
 	}
 
 	if b.Header.TotalTxs < 0 {
@@ -192,7 +180,7 @@ func (h *Header) Hash() []byte {
 	}
 	bytes, err := json.Marshal(h)
 	if err != nil {
-		blocklog.Error("block header Hash() marshal failed", "error", err)
+		ttlog.Error("block header Hash() marshal failed", "error", err)
 		return nil
 	}
 	return crypto.Ripemd160(bytes)
@@ -254,6 +242,9 @@ func (commit *Commit) FirstPrecommit() *tmtypes.Vote {
 
 // Height returns the height of the commit
 func (commit *Commit) Height() int64 {
+	if commit.AggVote != nil {
+		return commit.AggVote.Height
+	}
 	if len(commit.Precommits) == 0 {
 		return 0
 	}
@@ -262,6 +253,9 @@ func (commit *Commit) Height() int64 {
 
 // Round returns the round of the commit
 func (commit *Commit) Round() int {
+	if commit.AggVote != nil {
+		return int(commit.AggVote.Round)
+	}
 	if len(commit.Precommits) == 0 {
 		return 0
 	}
@@ -283,6 +277,10 @@ func (commit *Commit) Size() int {
 
 // BitArray returns a BitArray of which validators voted in this commit
 func (commit *Commit) BitArray() *BitArray {
+	if commit.AggVote != nil {
+		bitArray := &BitArray{TendermintBitArray: commit.AggVote.ValidatorArray}
+		return bitArray.copy()
+	}
 	if commit.bitArray == nil {
 		commit.bitArray = NewBitArray(len(commit.Precommits))
 		for i, precommit := range commit.Precommits {
@@ -301,7 +299,16 @@ func (commit *Commit) GetByIndex(index int) *Vote {
 
 // IsCommit returns true if there is at least one vote
 func (commit *Commit) IsCommit() bool {
-	return len(commit.Precommits) != 0
+	return len(commit.Precommits) != 0 || commit.AggVote != nil
+}
+
+// GetAggVote ...
+func (commit *Commit) GetAggVote() *AggVote {
+	if commit == nil {
+		return nil
+	}
+	aggVote := &AggVote{commit.AggVote}
+	return aggVote.Copy()
 }
 
 // ValidateBasic performs basic validation that doesn't involve state data.
@@ -338,18 +345,35 @@ func (commit *Commit) ValidateBasic() error {
 				round, precommit.Round)
 		}
 	}
+	// validate the aggVote
+	if commit.AggVote != nil {
+		if commit.AggVote.Type != uint32(VoteTypePrecommit) {
+			return fmt.Errorf("Invalid aggVote type. Expected Precommit, got %v", commit.AggVote.Type)
+		}
+		if commit.AggVote.Height != height {
+			return fmt.Errorf("Invalid aggVote height. Expected %v, got %v", height, commit.AggVote.Height)
+		}
+		if int(commit.AggVote.Round) != round {
+			return fmt.Errorf("Invalid aggVote round. Expected %v, got %v", round, commit.AggVote.Round)
+		}
+	}
 	return nil
 }
 
 // Hash returns the hash of the commit
 func (commit *Commit) Hash() []byte {
 	if commit.hash == nil {
-		bs := make([][]byte, len(commit.Precommits))
-		for i, item := range commit.Precommits {
-			precommit := Vote{Vote: item}
-			bs[i] = precommit.Hash()
+		if commit.AggVote != nil {
+			aggVote := &AggVote{AggVote: commit.AggVote}
+			commit.hash = aggVote.Hash()
+		} else {
+			bs := make([][]byte, len(commit.Precommits))
+			for i, item := range commit.Precommits {
+				precommit := Vote{Vote: item}
+				bs[i] = precommit.Hash()
+			}
+			commit.hash = merkle.GetMerkleRoot(bs)
 		}
-		commit.hash = merkle.GetMerkleRoot(bs)
 	}
 	return commit.hash
 }
@@ -366,9 +390,11 @@ func (commit *Commit) StringIndented(indent string) string {
 	return Fmt(`Commit{
 %s  BlockID:    %v
 %s  Precommits: %v
+%s  AggVote:    %v
 %s}#%v`,
 		indent, commit.BlockID,
 		indent, strings.Join(precommitStrings, "\n"+indent+"  "),
+		indent, commit.AggVote.String(),
 		indent, commit.hash)
 }
 
