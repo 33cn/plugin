@@ -19,7 +19,7 @@ func (s *sm2Signer) Sign(k Key, digest []byte, opts SignerOpts) (signature []byt
 }
 
 func signSM2(k *sm2.PrivateKey, digest []byte, opts SignerOpts) (signature []byte, err error) {
-	r, s, err := sm2.Sign(k, digest)
+	r, s, err := sm2.Sm2Sign(k, digest, nil)
 	if err != nil {
 		return nil, err
 	}
