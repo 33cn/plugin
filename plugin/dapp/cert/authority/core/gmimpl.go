@@ -90,7 +90,8 @@ func (validator *gmValidator) Validate(certByte []byte, pubKey []byte) error {
 		return fmt.Errorf("Error publick key type in transaction. expect SM2")
 	}
 
-	if !bytes.Equal(pubKey, sm2_util.SerializePublicKey(ParseECDSAPubKey2SM2PubKey(certPubKey))) {
+	if !bytes.Equal(pubKey, sm2_util.SerializePublicKey(
+			ParseECDSAPubKey2SM2PubKey(certPubKey), len(pubKey) == sm2_util.SM2PublicKeyCompressed)) {
 		return fmt.Errorf("Invalid public key")
 	}
 
