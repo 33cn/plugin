@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/33cn/chain33/system/p2p/dht/protocol"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/executor"
 	"github.com/33cn/chain33/p2p"
@@ -435,6 +437,7 @@ func TestIP2IPPort(t *testing.T) {
 func TestNode(t *testing.T) {
 	fmt.Println("=======start TestNode!=======")
 	Init()
+	protocol.ClearEventHandler()
 	q1, chain1, s1, mem1, exec1, cs1, p2p1 := initEnvDpos1("chain33.test1.toml")
 
 	defer clearTestData1()
