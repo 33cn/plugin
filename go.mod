@@ -19,6 +19,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.3.4
 	github.com/hashicorp/golang-lru v0.5.4
+	github.com/herumi/bls-eth-go-binary v0.0.0-20200618063237-4d3c66ab099d
 	github.com/huin/goupnp v1.0.0
 	github.com/jackpal/go-nat-pmp v1.0.2-0.20160603034137-1fa385a6f458
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
