@@ -5,40 +5,64 @@
 package utils
 
 import (
+	"crypto"
+	"crypto/rand"
 	"crypto/x509"
+	"encoding/pem"
+	"os"
 
-	"github.com/33cn/plugin/plugin/dapp/cert/authority/tools/cryptogen/factory/csp"
 	"github.com/tjfoc/gmsm/sm2"
 )
 
 // CreateCertificateToMem 证书转mem
-func CreateCertificateToMem(template, parent *sm2.Certificate, key csp.Key) (cert []byte, err error) {
-	pk := key.(*csp.SM2PrivateKey).PrivKey
-
+func CreateCertificateToMem(template, parent *sm2.Certificate, key crypto.Signer) ([]byte, error) {
 	pub, _ := template.PublicKey.(*sm2.PublicKey)
 
 	var puk sm2.PublicKey
 	puk.Curve = sm2.P256Sm2()
 	puk.X = pub.X
 	puk.Y = pub.Y
-	cert, err = sm2.CreateCertificateToMem(template, parent, &puk, pk)
 
-	return
+	der, err := sm2.CreateCertificate(rand.Reader, template, parent, &puk, key)
+	if err != nil {
+		return nil, err
+	}
+	block := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: der,
+	}
+
+	return pem.EncodeToMemory(block), nil
 }
 
 // CreateCertificateToPem 证书转pem
-func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, key csp.Key) error {
-	pk := key.(*csp.SM2PrivateKey).PrivKey
-
+func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, key crypto.Signer) error {
 	pub, _ := template.PublicKey.(*sm2.PublicKey)
 	var puk sm2.PublicKey
 
 	puk.Curve = sm2.P256Sm2()
 	puk.X = pub.X
 	puk.Y = pub.Y
-	_, err := sm2.CreateCertificateToPem(FileName, template, parent, &puk, pk)
 
-	return err
+	der, err := sm2.CreateCertificate(rand.Reader, template, parent, &puk, key)
+	if err != nil {
+		return err
+	}
+	block := &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: der,
+	}
+	file, err := os.Create(FileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = pem.Encode(file, block)
+	if err != nil {
+		return  err
+	}
+
+	return  nil
 }
 
 // ParseX509CertificateToSm2 解析x509格式为sm2格式证书
@@ -51,7 +75,7 @@ func ParseX509CertificateToSm2(x509Cert *x509.Certificate) *sm2.Certificate {
 		RawIssuer:               x509Cert.RawIssuer,
 
 		Signature:          x509Cert.Signature,
-		SignatureAlgorithm: sm2.SignatureAlgorithm(x509Cert.SignatureAlgorithm),
+		SignatureAlgorithm: sm2.SM2WithSM3,
 
 		PublicKeyAlgorithm: sm2.PublicKeyAlgorithm(x509Cert.PublicKeyAlgorithm),
 		PublicKey:          x509Cert.PublicKey,
