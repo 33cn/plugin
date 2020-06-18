@@ -21,7 +21,7 @@ import (
 )
 
 func init() {
-	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{})
+	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{}, true)
 	crypto.RegisterType(privacytypes.SignNameRing, privacytypes.RingBaseonED25519)
 }
 

@@ -200,7 +200,7 @@ func newTx(priv crypto.PrivKey, amount int64, to string) *Tx {
 	if err != nil {
 		panic(err)
 	}
-	tx.Fee *= 10
+	// tx.Fee *= 10
 	tx.To = to
 	tx.Sign(types.SECP256K1, priv)
 	return tx

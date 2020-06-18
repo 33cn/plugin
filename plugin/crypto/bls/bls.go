@@ -303,6 +303,6 @@ const Name = "bls"
 const ID = 259
 
 func init() {
-	crypto.Register(Name, &Driver{})
+	crypto.Register(Name, &Driver{}, true)
 	crypto.RegisterType(Name, ID)
 }

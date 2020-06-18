@@ -223,7 +223,7 @@ const Name = "auth_ecdsa"
 const ID = 257
 
 func init() {
-	crypto.Register(Name, &Driver{})
+	crypto.Register(Name, &Driver{}, true)
 	crypto.RegisterType(Name, ID)
 }
 

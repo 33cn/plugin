@@ -16,7 +16,7 @@ import (
 type oneTimeEd25519 struct{}
 
 func init() {
-	crypto.Register(privacytypes.SignNameOnetimeED25519, &oneTimeEd25519{})
+	crypto.Register(privacytypes.SignNameOnetimeED25519, &oneTimeEd25519{}, true)
 }
 
 func (onetime *oneTimeEd25519) GenKey() (crypto.PrivKey, error) {
