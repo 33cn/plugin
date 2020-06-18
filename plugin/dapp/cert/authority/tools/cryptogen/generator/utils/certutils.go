@@ -59,10 +59,10 @@ func CreateCertificateToPem(FileName string, template, parent *sm2.Certificate, 
 	defer file.Close()
 	err = pem.Encode(file, block)
 	if err != nil {
-		return  err
+		return err
 	}
 
-	return  nil
+	return nil
 }
 
 // ParseX509CertificateToSm2 解析x509格式为sm2格式证书
