@@ -486,7 +486,7 @@ func TestNode(t *testing.T) {
 	fmt.Println(cs1.(*Client).GetConsensusState() != nil)
 	fmt.Println(cs1.(*Client).GetConsensusState().String())
 	fmt.Println(len(cs1.(*Client).GetConsensusState().GetValidators()) == 1)
-	// fix data race --- 写只会在共识初始化，正常运行不会有datarace
+	// fix dpos testcase err --- 写只会在共识初始化，正常运行不会有datarace
 	//cs1.(*Client).GetConsensusState().SetPrivValidator(cs1.(*Client).GetConsensusState().GetPrivValidator(), cs1.(*Client).GetConsensusState().privValidatorIndex)
 	fmt.Println(cs1.(*Client).GetConsensusState().GetValidatorMgr().ChainID)
 	fmt.Println(cs1.(*Client).GetConsensusState().GetPrivValidator().GetAddress() != nil)
