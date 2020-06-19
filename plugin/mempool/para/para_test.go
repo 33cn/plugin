@@ -47,4 +47,13 @@ func TestParaNodeMempool(t *testing.T) {
 	_, err := mockpara.Para.GetAPI().GetMempool(&types.ReqGetMempool{})
 	assert.Equal(t, err, types.ErrActionNotSupport)
 	t.Log(err)
+	msg := para.GetClient().NewMessage("mempool", types.EventGetMempoolSize, nil)
+	para.GetClient().Send(msg, true)
+	reply, err := para.GetClient().Wait(msg)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log("TestGetMempoolSize ", reply.GetData().(*types.MempoolSize).Size)
+
 }

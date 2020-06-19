@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/33cn/chain33/common"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,6 +46,19 @@ func TestSignAndVerify(t *testing.T) {
 	sig12 := sk2.Sign(m1)
 	ret = pk.VerifyBytes(m1, sig12)
 	assert.Equal(t, false, ret)
+}
+
+func TestPrivKeyFromBytes(t *testing.T) {
+	keybyte, _ := common.FromHex("0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71")
+	p, err := blsDrv.PrivKeyFromBytes(keybyte)
+	assert.Nil(t, p)
+	assert.NotNil(t, err)
+
+	keybyte, _ = common.FromHex("0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b")
+	p, err = blsDrv.PrivKeyFromBytes(keybyte)
+	assert.NotNil(t, p)
+	assert.Nil(t, err)
+
 }
 
 func TestAggregate(t *testing.T) {
