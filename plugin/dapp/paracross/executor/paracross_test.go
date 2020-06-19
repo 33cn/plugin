@@ -18,6 +18,7 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin/crypto/bls"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"

@@ -415,7 +415,7 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 //bls签名共识交易验证 大约平均耗时30ms (20~40ms)
 func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
 
-	signAddrs := getAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
+	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
 		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr)
@@ -468,7 +468,7 @@ func verifyBlsSign(cryptoCli crypto.Crypto, pubs []string, commit *pt.ParacrossC
 			"addrsMap", common.ToHex(commit.Bls.AddrsMap), "sign", common.ToHex(commit.Bls.Sign), "data", common.ToHex(msg))
 		return pt.ErrBlsSignVerify
 	}
-	clog.Info("paracross procBlsSign success", "title", commit.Status.Title, "height", commit.Status.Height, "time", types.Since(t1))
+	clog.Debug("paracross procBlsSign success", "title", commit.Status.Title, "height", commit.Status.Height, "time", types.Since(t1))
 	return nil
 }
 

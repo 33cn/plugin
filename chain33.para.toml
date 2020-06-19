@@ -56,7 +56,7 @@ grpcLogFile="grpc33.log"
 
 [p2p.sub.dht]
 isSeed=true
-
+DHTDataPath="paradatadir/p2pstore"
 
 [rpc]
 # 避免与主链配置冲突
@@ -112,6 +112,7 @@ mainForkParacrossCommitTx=2270000
 mainLoopCheckCommitTxDoneForkHeight=4320000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
+blsSign=true
 
 
 [store]
