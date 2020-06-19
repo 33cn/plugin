@@ -9,8 +9,6 @@ import (
 
 	"strconv"
 
-	"math/big"
-
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
@@ -208,19 +206,6 @@ func makeParaNodeGroupReceipt(title string, prev, current *types.ConfigItem) *ty
 			},
 		},
 	}
-}
-
-//获取nodes范围内的bitmap，如果bitmap超出了nodes范围，也不处理，防止越界
-func getAddrsByBitMap(nodes []string, bitmap []byte) []string {
-	rst := big.NewInt(0).SetBytes(bitmap)
-	addrs := make([]string, 0)
-
-	for i, a := range nodes {
-		if rst.Bit(i) == uint(0x1) {
-			addrs = append(addrs, a)
-		}
-	}
-	return addrs
 }
 
 //get secp256 addr's bls pubkey

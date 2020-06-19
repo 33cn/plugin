@@ -11,32 +11,10 @@ import (
 	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common/crypto"
+	_ "github.com/33cn/plugin/plugin/crypto/bls"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestSetAddrsBitMap(t *testing.T) {
-	nodes := []string{"aa", "bb", "cc", "dd"}
-	addrs := []string{}
-	rst, rem := setAddrsBitMap(nodes, addrs)
-	assert.Equal(t, len(rst), 0)
-	assert.Equal(t, len(rem), 0)
-
-	addrs = []string{"aa"}
-	rst, rem = setAddrsBitMap(nodes, addrs)
-	assert.Equal(t, rst, []byte{0x1})
-	assert.Equal(t, len(rem), 0)
-
-	addrs = []string{"aa", "cc"}
-	rst, rem = setAddrsBitMap(nodes, addrs)
-	assert.Equal(t, rst, []byte{0x5})
-	assert.Equal(t, len(rem), 0)
-
-	addrs = []string{"aa", "cc", "dd"}
-	rst, rem = setAddrsBitMap(nodes, addrs)
-	assert.Equal(t, rst, []byte{0xd})
-	assert.Equal(t, len(rem), 0)
-}
 
 func TestIntegrateCommits(t *testing.T) {
 	pool := make(map[int64]*pt.ParaBlsSignSumDetails)
@@ -135,12 +113,17 @@ func testVerifyBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 
 	commit := &pt.ParacrossCommitAction{}
 	blsInfo := &pt.ParacrossCommitBlsInfo{}
-	signData := "0x82753675393576758571cbbaefada498614b4a0a967ca2dd5724eb46ecfd1c89f1e49792ebbe1866c1d6d6ceaf3054c7189751477a5b7312218eb77dcab1bfb6287c6fbf2e1c6cf8fe2ade7c17596b081dc98be785a34db5b45a5cca08e7e744"
+	//bls-cgo sign data
+	//signData := "0x82753675393576758571cbbaefada498614b4a0a967ca2dd5724eb46ecfd1c89f1e49792ebbe1866c1d6d6ceaf3054c7189751477a5b7312218eb77dcab1bfb6287c6fbf2e1c6cf8fe2ade7c17596b081dc98be785a34db5b45a5cca08e7e744"
+
+	//g1pubs' sign data
+	signData := "0x90b4510399b16e6b3c3129593b29f88bfbc6bb1ab3fe44f682f7ff32a9b8e7086c07d28a25efc29b460fb40ea2674c7910d63293f0d57670276b7baabe4c95c92143063296371b8ba2a0e540f7956d569740bc08553a0dc6bf2fff4f4241c082"
 	blsInfo.Sign, err = common.FromHex(signData)
 	assert.NoError(t, err)
 
 	status := &pt.ParacrossNodeStatus{}
-	data := "0x1a0c757365722e702e706172612e322097162f9d4a888121fdba2fb1ab402596acdbcb602121bd12284adb739d85f225"
+	//data := "0x1a0c757365722e702e706172612e322097162f9d4a888121fdba2fb1ab402596acdbcb602121bd12284adb739d85f225"
+	data := "0x1a0c757365722e702e706172612e"
 	msg, err := common.FromHex(data)
 	assert.NoError(t, err)
 	types.Decode(msg, status)

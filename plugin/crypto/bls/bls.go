@@ -44,7 +44,7 @@ func (d Driver) PrivKeyFromBytes(b []byte) (privKey crypto.PrivKey, err error) {
 	privKeyBytes := new([BLSPrivateKeyLength]byte)
 	copy(privKeyBytes[:], b[:BLSPrivateKeyLength])
 	priv := g1pubs.DeserializeSecretKey(*privKeyBytes)
-	if priv == nil {
+	if priv.GetFRElement() == nil {
 		return nil, errors.New("invalid bls privkey")
 	}
 	privBytes := priv.Serialize()

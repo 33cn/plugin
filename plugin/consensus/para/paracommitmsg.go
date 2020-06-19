@@ -927,11 +927,13 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 	if status == nil || client.authAccount == "" {
+		plog.Info("para onWalletStatus", "status", status == nil, "auth", client.authAccount == "")
 		return
 	}
 	if !status.IsWalletLock && client.privateKey == nil {
+		plog.Info("para commit fetchPriKey try")
 		client.fetchPriKey()
-		plog.Info("para commit fetchPriKey")
+		plog.Info("para commit fetchPriKey ok")
 	}
 
 	if client.privateKey == nil {
@@ -951,9 +953,10 @@ func (client *commitMsgClient) onWalletAccount(acc *types.Account) {
 	if acc == nil || client.authAccount == "" || client.authAccount != acc.Addr || client.privateKey != nil {
 		return
 	}
+	plog.Error("para onWalletAccount try fetch prikey")
 	err := client.fetchPriKey()
 	if err != nil {
-		plog.Error("para commit fetchPriKey", "err", err.Error())
+		plog.Error("para onWalletAccount", "err", err.Error())
 		return
 	}
 

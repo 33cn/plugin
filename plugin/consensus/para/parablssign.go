@@ -6,12 +6,13 @@ package para
 
 import (
 	"bytes"
-	"math/big"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
@@ -36,7 +37,6 @@ type blsClient struct {
 	cryptoCli       crypto.Crypto
 	blsPriKey       crypto.PrivKey
 	blsPubKey       crypto.PubKey
-	peers           map[string]bool
 	peersBlsPubKey  map[string]crypto.PubKey
 	commitsPool     map[int64]*pt.ParaBlsSignSumDetails
 	rcvCommitTxCh   chan []*pt.ParacrossCommitAction
@@ -50,7 +50,6 @@ type blsClient struct {
 func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b := &blsClient{paraClient: para}
 	b.selfID = cfg.AuthAccount
-	b.peers = make(map[string]bool)
 	cli, err := crypto.New("bls")
 	if err != nil {
 		panic("new bls crypto fail")
@@ -231,7 +230,6 @@ func (b *blsClient) sendAggregateTx(nodes []string) error {
 
 func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 	if !b.isValidNodes(tx.From()) {
-		b.updatePeers(tx.From(), false)
 		plog.Error("rcvCommitTx is not valid node", "addr", tx.From())
 		return pt.ErrParaNodeAddrNotExisted
 	}
@@ -251,7 +249,7 @@ func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 		plog.Error("rcvCommitTx checkCommitTx ", "err", err)
 		return errors.Wrap(err, "checkCommitTx")
 	}
-	b.updatePeers(tx.From(), true)
+
 	if len(commits) > 0 {
 		plog.Debug("rcvCommitTx tx", "addr", tx.From(), "height", commits[0].Status.Height)
 	}
@@ -328,8 +326,8 @@ func isMostCommitDone(peers int, txsBuff map[int64]*pt.ParaBlsSignSumDetails) bo
 	}
 
 	for i, v := range txsBuff {
-		most, _ := getMostCommit(v.Msgs)
-		if isCommitDone(peers, most) {
+		most, _ := util.GetMostCommit(v.Msgs)
+		if util.IsCommitDone(peers, most) {
 			plog.Info("blssign.isMostCommitDone", "height", i, "most", most, "peers", peers)
 			return true
 		}
@@ -341,8 +339,8 @@ func isMostCommitDone(peers int, txsBuff map[int64]*pt.ParaBlsSignSumDetails) bo
 func filterDoneCommits(peers int, pool map[int64]*pt.ParaBlsSignSumDetails) []*pt.ParaBlsSignSumDetails {
 	var seq []int64
 	for i, v := range pool {
-		most, hash := getMostCommit(v.Msgs)
-		if !isCommitDone(peers, most) {
+		most, hash := util.GetMostCommit(v.Msgs)
+		if !util.IsCommitDone(peers, most) {
 			plog.Debug("blssign.filterDoneCommits not commit done", "height", i)
 			continue
 		}
@@ -393,7 +391,7 @@ func (b *blsClient) aggregateCommit2Action(nodes []string, commits []*pt.ParaBls
 			return nil, errors.Wrapf(err, "bls aggregate=%s", v.Addrs)
 		}
 		a.Bls.Sign = sign.Bytes()
-		bits, remains := setAddrsBitMap(nodes, v.Addrs)
+		bits, remains := util.SetAddrsBitMap(nodes, v.Addrs)
 		plog.Debug("AggregateCommit2Action", "nodes", nodes, "addr", v.Addrs, "bits", common.ToHex(bits), "height", v.Height)
 		if len(remains) > 0 {
 			plog.Info("bls.signDoneCommits", "remains", remains)
@@ -421,22 +419,6 @@ func (b *blsClient) aggregateSigns(signs [][]byte) (crypto.Signature, error) {
 	return agg.Aggregate(signatures)
 }
 
-func (b *blsClient) updatePeers(id string, add bool) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	if _, ok := b.peers[id]; ok {
-		if !add {
-			delete(b.peers, id)
-		}
-		return
-	}
-	if add {
-		b.peers[id] = true
-	}
-
-}
-
 func (b *blsClient) setBlsPriKey(secpPrkKey []byte) {
 	b.blsPriKey = b.getBlsPriKey(secpPrkKey)
 	b.blsPubKey = b.blsPriKey.PubKey()
@@ -448,9 +430,9 @@ func (b *blsClient) getBlsPriKey(key []byte) crypto.PrivKey {
 	var newKey [common.Sha256Len]byte
 	copy(newKey[:], key)
 	for {
-		plog.Info("para commit getBlsPriKey try", "key", common.ToHex(newKey[:]))
 		pri, err := b.cryptoCli.PrivKeyFromBytes(newKey[:])
 		if nil != err {
+			plog.Debug("para commit getBlsPriKey try", "key", common.ToHex(newKey[:]))
 			copy(newKey[:], common.Sha256(newKey[:]))
 			continue
 		}
@@ -482,51 +464,9 @@ func (b *blsClient) blsSign(commits []*pt.ParacrossCommitAction) error {
 			return errors.Wrapf(types.ErrInvalidParam, "addr=%s,height=%d", b.selfID, cmt.Status.Height)
 		}
 		cmt.Bls.Sign = sign
-		plog.Debug("blsign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "sign", len(cmt.Bls.Sign), "src", len(sign))
+		plog.Info("bls sign msg", "data", common.ToHex(data), "height", cmt.Status.Height, "sign", len(cmt.Bls.Sign), "src", len(sign))
 	}
 	return nil
-}
-
-//设置nodes范围内的bitmap，如果addrs在node不存在，也不设置,返回未命中的addrs
-func setAddrsBitMap(nodes, addrs []string) ([]byte, map[string]bool) {
-	rst := big.NewInt(0)
-	addrsMap := make(map[string]bool)
-	for _, n := range addrs {
-		addrsMap[n] = true
-	}
-
-	for i, a := range nodes {
-		if _, exist := addrsMap[a]; exist {
-			rst.SetBit(rst, i, 1)
-			delete(addrsMap, a)
-		}
-	}
-	return rst.Bytes(), addrsMap
-}
-
-func getMostCommit(commits [][]byte) (int, string) {
-	stats := make(map[string]int)
-	n := len(commits)
-	for i := 0; i < n; i++ {
-		if _, ok := stats[string(commits[i])]; ok {
-			stats[string(commits[i])]++
-		} else {
-			stats[string(commits[i])] = 1
-		}
-	}
-	most := -1
-	var hash string
-	for k, v := range stats {
-		if v > most {
-			most = v
-			hash = k
-		}
-	}
-	return most, hash
-}
-
-func isCommitDone(nodes, mostSame int) bool {
-	return 3*mostSame > 2*nodes
 }
 
 func (b *blsClient) getBlsPubKey(addr string) (crypto.PubKey, error) {
