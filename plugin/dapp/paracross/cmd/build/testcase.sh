@@ -27,17 +27,17 @@ fi
 #source test-rpc.sh
 
 function para_init() {
-    para_set_toml chain33.para33.toml "$PARANAME"
-    para_set_toml chain33.para32.toml "$PARANAME"
-    para_set_toml chain33.para31.toml "$PARANAME"
-    para_set_toml chain33.para30.toml "$PARANAME"
+    para_set_toml chain33.para33.toml "$PARANAME" "$1"
+    para_set_toml chain33.para32.toml "$PARANAME" "$1"
+    para_set_toml chain33.para31.toml "$PARANAME" "$1"
+    para_set_toml chain33.para30.toml "$PARANAME" "$1"
 
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"/g' chain33.para33.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"/g' chain33.para32.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"/g' chain33.para31.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"/g' chain33.para30.toml
 
-    para_set_toml chain33.para29.toml "$PARANAME_GAME"
+    para_set_toml chain33.para29.toml "$PARANAME_GAME" "$1"
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"/g' chain33.para29.toml
 }
 
@@ -54,6 +54,13 @@ function para_set_toml() {
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
+
+    #blsSign case
+    if [ -n "$3" ]; then
+        echo "${1} blssign=$3"
+        sed -i $xsedfix '/types=\["dht"\]/!b;n;cenable=true' "${1}"
+        sed -i $xsedfix '/emptyBlockInterval=/!b;n;cblsSign=true' "${1}"
+    fi
 
     #blockchain
     sed -i $xsedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' "${1}"
@@ -1093,7 +1100,7 @@ function para_test() {
 
 function paracross() {
     if [ "${2}" == "init" ]; then
-        para_init
+        para_init "${3}"
     elif [ "${2}" == "config" ]; then
         para_set_wallet
         para_transfer
