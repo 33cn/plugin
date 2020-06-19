@@ -8,13 +8,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"reflect"
-	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -56,8 +54,6 @@ type Peer interface {
 	Stop()
 
 	SetTransferChannel(chan MsgInfo)
-	//Set(string, interface{})
-	//Get(string) interface{}
 }
 
 // PeerConnState struct
@@ -85,10 +81,8 @@ type peerConn struct {
 	started uint32 //atomic
 	stopped uint32 // atomic
 
-	quitSend   chan struct{}
 	quitUpdate chan struct{}
 	quitBeat   chan struct{}
-	waitQuit   sync.WaitGroup
 
 	transferChannel chan MsgInfo
 
@@ -222,8 +216,7 @@ func (pc *peerConn) ID() ID {
 	if len(pc.id) != 0 {
 		return pc.id
 	}
-	address := GenAddressByPubKey(pc.conn.(*SecretConnection).RemotePubKey())
-	pc.id = ID(hex.EncodeToString(address))
+	pc.id = GenIDByPubKey(pc.conn.(*SecretConnection).RemotePubKey())
 	return pc.id
 }
 
@@ -263,6 +256,11 @@ func (pc *peerConn) RemoteAddr() (net.Addr, error) {
 
 func (pc *peerConn) SetTransferChannel(transferChannel chan MsgInfo) {
 	pc.transferChannel = transferChannel
+}
+
+func (pc *peerConn) String() string {
+	return fmt.Sprintf("PeerConn{outbound:%v persistent:%v ip:%s id:%s started:%v stopped:%v}",
+		pc.outbound, pc.persistent, pc.ip.String(), pc.id, pc.started, pc.stopped)
 }
 
 func (pc *peerConn) CloseConn() {
@@ -358,7 +356,7 @@ func (pc *peerConn) Send(msg MsgInfo) bool {
 		atomic.AddInt32(&pc.sendQueueSize, 1)
 		return true
 	case <-time.After(defaultSendTimeout):
-		tendermintlog.Error("send msg timeout", "peerip", msg.PeerIP, "msg", msg.Msg)
+		tendermintlog.Error("send msg timeout", "peerip", msg.PeerIP, "msg", msg)
 		return false
 	}
 }
@@ -379,9 +377,25 @@ func (pc *peerConn) TrySend(msg MsgInfo) bool {
 // PickSendVote picks a vote and sends it to the peer.
 // Returns true if vote was sent.
 func (pc *peerConn) PickSendVote(votes ttypes.VoteSetReader) bool {
-	if vote, ok := pc.state.PickVoteToSend(votes); ok {
+	if useAggSig {
+		if pc.state.AggPrecommit {
+			time.Sleep(pc.myState.PeerGossipSleep())
+			return false
+		}
+		aggVote := votes.GetAggVote()
+		if aggVote != nil {
+			msg := MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVote.AggVote, PeerID: pc.id, PeerIP: pc.ip.String()}
+			tendermintlog.Debug("Sending aggregate vote message", "msg", msg)
+			if pc.Send(msg) {
+				pc.state.SetHasAggPrecommit(aggVote)
+				time.Sleep(pc.myState.PeerGossipSleep())
+				return true
+			}
+		}
+		return false
+	} else if vote, ok := pc.state.PickVoteToSend(votes); ok {
 		msg := MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: pc.id, PeerIP: pc.ip.String()}
-		tendermintlog.Debug("Sending vote message", "vote", msg)
+		tendermintlog.Debug("Sending vote message", "msg", msg)
 		if pc.Send(msg) {
 			pc.state.SetHasVote(vote)
 			return true
@@ -406,7 +420,6 @@ func (pc *peerConn) Start() error {
 		pc.pongChannel = make(chan struct{})
 		pc.sendQueue = make(chan MsgInfo, maxSendQueueSize)
 		pc.sendBuffer = make([]byte, 0, MaxMsgPacketPayloadSize)
-		pc.quitSend = make(chan struct{})
 		pc.quitUpdate = make(chan struct{})
 		pc.quitBeat = make(chan struct{})
 		pc.state = &PeerConnState{ip: pc.ip, PeerRoundState: ttypes.PeerRoundState{
@@ -417,7 +430,6 @@ func (pc *peerConn) Start() error {
 		}}
 		pc.updateStateQueue = make(chan MsgInfo, maxSendQueueSize)
 		pc.heartbeatQueue = make(chan proto.Message, 100)
-		pc.waitQuit.Add(5) //heartbeatRoutine, updateStateRoutine,gossipDataRoutine,gossipVotesRoutine,queryMaj23Routine
 
 		go pc.sendRoutine()
 		go pc.recvRoutine()
@@ -434,27 +446,8 @@ func (pc *peerConn) Start() error {
 
 func (pc *peerConn) Stop() {
 	if atomic.CompareAndSwapUint32(&pc.stopped, 0, 1) {
-		pc.quitSend <- struct{}{}
-		pc.quitUpdate <- struct{}{}
-		pc.quitBeat <- struct{}{}
-
-		pc.waitQuit.Wait()
-		tendermintlog.Info("peerConn stop waitQuit", "peerIP", pc.ip.String())
-
-		close(pc.sendQueue)
-		pc.sendQueue = nil
-		pc.transferChannel = nil
 		pc.CloseConn()
-		tendermintlog.Info("peerConn stop finish", "peerIP", pc.ip.String())
-	}
-}
-
-// Catch panics, usually caused by remote disconnects.
-func (pc *peerConn) _recover() {
-	if r := recover(); r != nil {
-		stack := debug.Stack()
-		err := StackError{r, stack}
-		pc.stopForError(err)
+		tendermintlog.Info("peerConn close connection", "peerIP", pc.ip.String())
 	}
 }
 
@@ -468,12 +461,9 @@ func (pc *peerConn) stopForError(r interface{}) {
 }
 
 func (pc *peerConn) sendRoutine() {
-	defer pc._recover()
 FOR_LOOP:
 	for {
 		select {
-		case <-pc.quitSend:
-			break FOR_LOOP
 		case msg := <-pc.sendQueue:
 			bytes, err := proto.Marshal(msg.Msg)
 			if err != nil {
@@ -525,7 +515,6 @@ FOR_LOOP:
 }
 
 func (pc *peerConn) recvRoutine() {
-	defer pc._recover()
 FOR_LOOP:
 	for {
 		//typeID+msgLen+msg
@@ -563,7 +552,7 @@ FOR_LOOP:
 					continue
 				}
 				if pc.transferChannel != nil && (pkt.TypeID == ttypes.ProposalID || pkt.TypeID == ttypes.VoteID ||
-					pkt.TypeID == ttypes.ProposalBlockID) {
+					pkt.TypeID == ttypes.ProposalBlockID || pkt.TypeID == ttypes.AggVoteID) {
 					pc.transferChannel <- MsgInfo{pkt.TypeID, realMsg.(proto.Message), pc.ID(), pc.ip.String()}
 					if pkt.TypeID == ttypes.ProposalID {
 						proposal := realMsg.(*tmtypes.Proposal)
@@ -577,6 +566,9 @@ FOR_LOOP:
 						block := &ttypes.TendermintBlock{TendermintBlock: realMsg.(*tmtypes.TendermintBlock)}
 						tendermintlog.Debug("Receiving proposal block", "block-height", block.Header.Height, "peerip", pc.ip.String())
 						pc.state.SetHasProposalBlock(block)
+					} else if pkt.TypeID == ttypes.AggVoteID {
+						aggVote := &ttypes.AggVote{AggVote: realMsg.(*tmtypes.AggVote)}
+						tendermintlog.Debug("Receiving aggregate vote", "aggVote-height", aggVote.Height, "peerip", pc.ip.String())
 					}
 				} else if pkt.TypeID == ttypes.ProposalHeartbeatID {
 					pc.heartbeatQueue <- realMsg.(*tmtypes.Heartbeat)
@@ -591,10 +583,8 @@ FOR_LOOP:
 			}
 		}
 	}
-
-	close(pc.pongChannel)
-	close(pc.heartbeatQueue)
-	close(pc.updateStateQueue)
+	pc.quitUpdate <- struct{}{}
+	pc.quitBeat <- struct{}{}
 	tendermintlog.Info("peerConn stop recvRoutine", "peerIP", pc.ip.String())
 }
 
@@ -603,7 +593,6 @@ FOR_LOOP:
 	for {
 		select {
 		case <-pc.quitUpdate:
-			pc.waitQuit.Done()
 			break FOR_LOOP
 		case msg := <-pc.updateStateQueue:
 			typeID := msg.TypeID
@@ -662,6 +651,7 @@ FOR_LOOP:
 			}
 		}
 	}
+	close(pc.updateStateQueue)
 	tendermintlog.Info("peerConn stop updateStateRoutine", "peerIP", pc.ip.String())
 }
 
@@ -670,15 +660,17 @@ FOR_LOOP:
 	for {
 		select {
 		case <-pc.quitBeat:
-			pc.waitQuit.Done()
 			break FOR_LOOP
 		case heartbeat := <-pc.heartbeatQueue:
-			msg := heartbeat.(*tmtypes.Heartbeat)
-			tendermintlog.Debug("Received proposal heartbeat message",
-				"height", msg.Height, "round", msg.Round, "sequence", msg.Sequence,
-				"valIdx", msg.ValidatorIndex, "valAddr", msg.ValidatorAddress)
+			msg, ok := heartbeat.(*tmtypes.Heartbeat)
+			if ok {
+				tendermintlog.Debug("Received proposal heartbeat message",
+					"height", msg.Height, "round", msg.Round, "sequence", msg.Sequence,
+					"valIdx", msg.ValidatorIndex, "valAddr", msg.ValidatorAddress)
+			}
 		}
 	}
+	close(pc.heartbeatQueue)
 	tendermintlog.Info("peerConn stop heartbeatRoutine", "peerIP", pc.ip.String())
 }
 
@@ -687,7 +679,6 @@ OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
 		if !pc.IsRunning() {
-			pc.waitQuit.Done()
 			tendermintlog.Info("peerConn stop gossipDataRoutine", "peerIP", pc.ip.String())
 			return
 		}
@@ -789,7 +780,6 @@ OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
 		if !pc.IsRunning() {
-			pc.waitQuit.Done()
 			tendermintlog.Info("peerConn stop gossipVotesRoutine", "peerIP", pc.ip.String())
 			return
 		}
@@ -806,7 +796,7 @@ OUTER_LOOP:
 
 		// If height matches, then send LastCommit, Prevotes, Precommits.
 		if rs.Height == prs.Height {
-			if pc.gossipVotesForHeight(rs, &prs.PeerRoundState) {
+			if !useAggSig && pc.gossipVotesForHeight(rs, &prs.PeerRoundState) {
 				continue OUTER_LOOP
 			}
 		}
@@ -914,7 +904,6 @@ OUTER_LOOP:
 	for {
 		// Manage disconnects from self or peer.
 		if !pc.IsRunning() {
-			pc.waitQuit.Done()
 			tendermintlog.Info("peerConn stop queryMaj23Routine", "peerIP", pc.ip.String())
 			return
 		}
@@ -1003,20 +992,6 @@ OUTER_LOOP:
 	}
 }
 
-// StackError struct
-type StackError struct {
-	Err   interface{}
-	Stack []byte
-}
-
-func (se StackError) String() string {
-	return fmt.Sprintf("Error: %v\nStack: %s", se.Err, se.Stack)
-}
-
-func (se StackError) Error() string {
-	return se.String()
-}
-
 // GetRoundState returns an atomic snapshot of the PeerRoundState.
 // There's no point in mutating it since it won't change PeerState.
 func (ps *PeerConnState) GetRoundState() *ttypes.PeerRoundState {
@@ -1071,6 +1046,23 @@ func (ps *PeerConnState) SetHasProposalBlock(block *ttypes.TendermintBlock) {
 		"peer-state", fmt.Sprintf("%v/%v/%v", ps.Height, ps.Round, ps.Step),
 		"block(H/R)", fmt.Sprintf("%v/%v", block.Header.Height, block.Header.Round))
 	ps.ProposalBlock = true
+}
+
+// SetHasAggPrecommit sets the given aggregate precommit as known for the peer.
+func (ps *PeerConnState) SetHasAggPrecommit(aggVote *ttypes.AggVote) {
+	ps.mtx.Lock()
+	defer ps.mtx.Unlock()
+
+	if ps.Height != aggVote.Height || ps.Round != int(aggVote.Round) {
+		return
+	}
+	if ps.AggPrecommit {
+		return
+	}
+	tendermintlog.Debug("Peer set aggregate precommit", "peerip", ps.ip.String(),
+		"peer-state", fmt.Sprintf("%v/%v/%v", ps.Height, ps.Round, ps.Step),
+		"aggVote(H/R)", fmt.Sprintf("%v/%v", aggVote.Height, aggVote.Round))
+	ps.AggPrecommit = true
 }
 
 // PickVoteToSend picks a vote to send to the peer.
@@ -1266,6 +1258,7 @@ func (ps *PeerConnState) ApplyNewRoundStepMessage(msg *tmtypes.NewRoundStepMsg) 
 		// We'll update the BitArray capacity later.
 		ps.Prevotes = nil
 		ps.Precommits = nil
+		ps.AggPrecommit = false
 	}
 	if psHeight == msg.Height && psRound != int(msg.Round) && int(msg.Round) == psCatchupCommitRound {
 		// Peer caught up to CatchupCommitRound.

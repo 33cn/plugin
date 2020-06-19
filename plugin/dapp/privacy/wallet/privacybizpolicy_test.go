@@ -149,11 +149,11 @@ func (mock *testDataMock) importPrivateKey(PrivKey *types.ReqWalletImportPrivkey
 		return
 	}
 
-	pub, err := bipwallet.PrivkeyToPub(cointype, privkeybyte)
+	pub, err := bipwallet.PrivkeyToPub(cointype, uint32(signType), privkeybyte)
 	if err != nil {
 		return
 	}
-	addr, err := bipwallet.PubToAddress(cointype, pub)
+	addr, err := bipwallet.PubToAddress(pub)
 	if err != nil {
 		return
 	}

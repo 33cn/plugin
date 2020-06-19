@@ -220,7 +220,7 @@ func newSM2CA(baseDir, name string) (*SM2CA, error) {
 
 	sm2cert := utils.ParseX509CertificateToSm2(&template)
 	sm2cert.PublicKey = smPubKey
-	x509Cert, err := genCertificateGMSM2(baseDir, name, sm2cert, sm2cert, priv)
+	x509Cert, err := genCertificateGMSM2(baseDir, name, sm2cert, sm2cert, signer)
 	if err == nil {
 		ca = &SM2CA{
 			Name:     name,
@@ -247,7 +247,7 @@ func (ca *SM2CA) SignCertificate(baseDir, name string, sans []string, pub interf
 	template.PublicKey = pub
 
 	sm2Tpl := utils.ParseX509CertificateToSm2(&template)
-	cert, err := genCertificateGMSM2(baseDir, name, sm2Tpl, ca.SignCert, ca.Sm2Key)
+	cert, err := genCertificateGMSM2(baseDir, name, sm2Tpl, ca.SignCert, ca.Signer)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (ca *SM2CA) GenerateLocalUser(baseDir, name string) error {
 	return err
 }
 
-func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate, key csp.Key) (*sm2.Certificate, error) {
+func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate, key crypto.Signer) (*sm2.Certificate, error) {
 	certBytes, err := utils.CreateCertificateToMem(template, parent, key)
 	if err != nil {
 		return nil, err

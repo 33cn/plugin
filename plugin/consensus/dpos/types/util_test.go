@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -19,6 +20,8 @@ func init() {
 
 func TestWriteFile(t *testing.T) {
 	filename := "./tmp_priv_validator.json"
+	mask := syscall.Umask(0)
+	defer syscall.Umask(mask)
 	err := WriteFile(filename, []byte(privValidatorFile), 0664)
 	require.Nil(t, err)
 
@@ -35,6 +38,8 @@ func TestWriteFile(t *testing.T) {
 }
 
 func TestWriteFileAtomic(t *testing.T) {
+	mask := syscall.Umask(0)
+	defer syscall.Umask(mask)
 	filename := "./tmp_priv_validator.json"
 	err := WriteFileAtomic(filename, []byte(privValidatorFile), 0664)
 	require.Nil(t, err)
