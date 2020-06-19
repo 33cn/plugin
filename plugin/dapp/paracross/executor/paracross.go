@@ -21,7 +21,6 @@ var (
 	clog                    = log.New("module", "execs.paracross")
 	enableParacrossTransfer = true
 	driverName              = pt.ParaX
-	blsSignName             = "bls"
 )
 
 // Paracross exec

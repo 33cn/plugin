@@ -48,14 +48,13 @@ enablePushSubscribe=false
 
 [p2p]
 types=["dht"]
-enable=true
+enable=false
 driver="leveldb"
 dbPath="paradatadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
 
 [p2p.sub.dht]
-isSeed=true
 DHTDataPath="paradatadir/p2pstore"
 
 [rpc]
@@ -112,7 +111,6 @@ mainForkParacrossCommitTx=2270000
 mainLoopCheckCommitTxDoneForkHeight=4320000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
-blsSign=true
 
 
 [store]
