@@ -897,7 +897,7 @@ func (n *node) runLoop() {
 			isSync = n.miningOK()
 		default:
 			if !isSync {
-				time.Sleep(time.Millisecond * 1000)
+				time.Sleep(time.Millisecond * 300)
 				continue
 			}
 		}
