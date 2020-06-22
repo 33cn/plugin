@@ -3,11 +3,12 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20200605043414-355d96f9ec97
+	github.com/33cn/chain33 v0.0.0-20200618095014-8773a3526b6f
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
@@ -55,4 +56,4 @@ require (
 	google.golang.org/grpc v1.28.0
 )
 
-replace github.com/33cn/chain33 v0.0.0-20200605043414-355d96f9ec97 => /Users/w/pos33/chain33
+replace github.com/33cn/chain33 v0.0.0-20200618095014-8773a3526b6f => /Users/w/pos33/chain33

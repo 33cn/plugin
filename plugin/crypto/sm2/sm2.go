@@ -17,6 +17,6 @@ const name = "auth_sm2"
 const id = 258
 
 func init() {
-	crypto.Register(name, &sm2Driver{}, true)
+	crypto.Register(name, &sm2Driver{}, false)
 	crypto.RegisterType(name, id)
 }

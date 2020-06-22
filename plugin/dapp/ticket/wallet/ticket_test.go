@@ -278,3 +278,8 @@ func (_m *walletOperateMock) WaitTx(hash []byte) *types.TransactionDetail {
 func (_m *walletOperateMock) WaitTxs(hashes [][]byte) []*types.TransactionDetail {
 	return nil
 }
+
+// GetCoinType provides a mock function with given fields:
+func (_m *walletOperateMock) GetCoinType() uint32 {
+	return 0
+}

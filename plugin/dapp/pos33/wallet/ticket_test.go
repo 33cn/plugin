@@ -274,6 +274,11 @@ func (_m *walletOperateMock) WaitTxs(hashes [][]byte) []*types.TransactionDetail
 	return nil
 }
 
+// GetCoinType provides a mock function with given fields:
+func (_m *walletOperateMock) GetCoinType() uint32 {
+	return 0
+}
+
 var cfgstring = `
 Title="YCC"
 coinSymbol="YCC"
