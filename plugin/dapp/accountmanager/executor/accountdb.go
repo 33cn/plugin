@@ -200,10 +200,6 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	if managerAddr != a.fromaddr {
 		return nil, et.ErrNotAdmin
 	}
-	coinsAssetDB, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), a.statedb)
-	if err != nil {
-		return nil, err
-	}
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var re et.SuperviseReceipt
@@ -215,25 +211,12 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 		}
 		switch payload.Op {
 		case et.Freeze:
-			//TODO 账户冻结，还需要冻结账户地址相应得资产,这里因为查不到所有token资产，所以只冻结主币
+			//TODO 冻结操作交给外部其他执行器去控制,处于freeze状态的地址禁止操作
 			accountM.Status = et.Frozen
-			coinsAccount := coinsAssetDB.LoadExecAccount(accountM.Addr, a.execaddr)
-			receipt, err := coinsAssetDB.ExecFrozen(accountM.Addr, a.execaddr, coinsAccount.Balance)
-			if err != nil {
-				elog.Error("Supervise ExecFrozen", "AccountID", ID, "err", err)
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
 
 		case et.UnFreeze:
 			accountM.Status = et.Normal
-			coinsAccount := coinsAssetDB.LoadExecAccount(accountM.Addr, a.execaddr)
-			receipt, err := coinsAssetDB.ExecActive(accountM.Addr, a.execaddr, coinsAccount.Frozen)
-			if err != nil {
-				elog.Error("Supervise ExecActive", "AccountID", ID, "err", err)
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
+
 		case et.AddExpire:
 			cfg := a.api.GetConfig()
 			defaultActiveTime := getConfValue(cfg, a.statedb, ConfNameActiveTime, DefaultActiveTime)
