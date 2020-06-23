@@ -1,11 +1,11 @@
 #!/bin/sh
 # 官方ci集成脚本
-#strpwd=$(pwd)
-#strcmd=${strpwd##*dapp/}
-#strapp=${strcmd%/cmd*}
-#
-#OUT_DIR="${1}/$strapp"
-#FLAG=$2
+strpwd=$(pwd)
+strcmd=${strpwd##*dapp/}
+strapp=${strcmd%/cmd*}
 
+OUT_DIR="${1}/$strapp"
+#FLAG=$2
+echo $OUT_DIR
 # mkdir -p "${OUT_DIR}"
 # cp ./build/* "${OUT_DIR}"
