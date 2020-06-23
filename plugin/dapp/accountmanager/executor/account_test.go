@@ -166,9 +166,6 @@ func TestAccountManager(t *testing.T) {
 	accounts, err := Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, accounts.Accounts[0].Status, et.Frozen)
-	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &types.Asset{Exec: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
-	assert.Equal(t, err, nil)
-	assert.Equal(t, balance.Frozen, 199*types.Coin)
 
 	//解冻账户
 	tx9, _ := CreateSupervise(&et.Supervise{
@@ -180,9 +177,6 @@ func TestAccountManager(t *testing.T) {
 	//根据状态查询
 	accounts, err = Exec_QueryAccountsByStatus(et.Frozen, stateDB, kvdb)
 	assert.NotEqual(t, err, nil)
-	balance, err = Exec_QueryBalanceByID(&et.QueryBalanceByID{Asset: &types.Asset{Exec: "coins", Symbol: "bty"}, AccountID: "harrylee2015"}, stateDB, kvdb)
-	assert.Equal(t, err, nil)
-	assert.Equal(t, balance.Balance, 199*types.Coin)
 
 	//过期账户查询
 	time.Sleep(11 * time.Second)
