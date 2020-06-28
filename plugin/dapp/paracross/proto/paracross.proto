@@ -443,7 +443,7 @@ message LeaderSyncInfo {
 message ParaP2PSubMsg {
     int32 ty = 1;
     oneof value {
-        Transaction    commitTx         = 10;
+        Transaction    commitTx          = 10;
         LeaderSyncInfo  syncMsg          = 11;
     }
 
@@ -451,7 +451,7 @@ message ParaP2PSubMsg {
 
 //bls sign leader info
 message ElectionStatus {
-    bool   isLeader = 1;
+    bool   isLeader       = 1;
     LeaderSyncInfo leader = 2;
 }
 

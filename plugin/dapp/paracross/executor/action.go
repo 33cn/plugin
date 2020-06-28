@@ -412,7 +412,7 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 	return ret
 }
 
-//bls签名共识交易验证 大约平均耗时30ms (20~40ms)
+//bls签名共识交易验证 大约平均耗时3ms (2~4ms)
 func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
 	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
