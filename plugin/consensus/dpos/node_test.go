@@ -560,7 +560,7 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 	cfg := chain33Cfg.GetModuleConfig()
 	sub := chain33Cfg.GetSubConfig()
 	rpc.InitCfg(cfg.RPC)
-	
+
 	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
