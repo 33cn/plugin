@@ -18,9 +18,11 @@ func TestParaNode(t *testing.T) {
 	defer para.Close()
 	//通过rpc 发生信息
 	tx := util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
+	assert.NotNil(t, tx)
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(1)
 	tx = util.CreateTxWithExecer(paraCfg, para.Para.GetGenesisKey(), "user.p.test.none")
+	assert.NotNil(t, tx)
 	para.Para.SendTxRPC(tx)
 	para.Para.WaitHeight(2)
 
