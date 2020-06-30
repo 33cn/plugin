@@ -1,8 +1,6 @@
 package testnode
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
 )
@@ -26,7 +24,6 @@ func NewParaNode(main *testnode.Chain33Mock, para *testnode.Chain33Mock) *ParaNo
 	}
 	if para == nil {
 		cfg := types.NewChain33Config(DefaultConfig)
-		fmt.Println("mainnode.Grpc=", main.GetCfg().RPC.GrpcBindAddr, "mainnode.jrpc=", main.GetCfg().RPC.JrpcBindAddr)
 		testnode.ModifyParaClient(cfg, main.GetCfg().RPC.GrpcBindAddr)
 		para = testnode.NewWithConfig(cfg, nil)
 		para.Listen()
