@@ -13,10 +13,10 @@ function dapp_test_rpc() {
         rm -f "jobs.log"
         rm -rf "outdir"
 
-        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name . | sed 's/^\.\///' | sort)
+        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name autonomy ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
-        parallel -k --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
+        parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
         local ret=$?
         if [ $ret -ne 0 ]; then
             wrongdapps=$(awk '{print $7,$9 }' jobs.log | grep -a 1 | awk -F '/' '{print $2}')
