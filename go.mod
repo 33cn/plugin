@@ -2,12 +2,11 @@ module github.com/33cn/plugin
 
 go 1.12
 
-replace github.com/33cn/chain33 => github.com/mdj33/chain33 v0.0.0-20200701062134-2b351aad6ba6
-
 require (
-	github.com/33cn/chain33 v0.0.0-20200630063322-48270f23c77d
+	github.com/33cn/chain33 v0.0.0-20200701103614-378175ebb161
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
+	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
 	github.com/NebulousLabs/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
 	github.com/NebulousLabs/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
