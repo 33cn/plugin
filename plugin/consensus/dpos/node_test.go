@@ -559,6 +559,8 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 	q.SetConfig(chain33Cfg)
 	cfg := chain33Cfg.GetModuleConfig()
 	sub := chain33Cfg.GetSubConfig()
+	rpc.InitCfg(cfg.RPC)
+
 	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
 
@@ -578,7 +580,6 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 
 	network.SetQueueClient(q.Client())
 
-	rpc.InitCfg(cfg.RPC)
 	gapi := rpc.NewGRpcServer(q.Client(), nil)
 	go gapi.Listen()
 
