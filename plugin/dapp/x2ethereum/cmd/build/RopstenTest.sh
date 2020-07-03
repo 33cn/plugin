@@ -268,7 +268,7 @@ function TestETH2Chain33Assets() {
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
-    eth_block_wait 2 https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -326,7 +326,7 @@ function TestETH2Chain33Erc20() {
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
-    eth_block_wait 2 https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${ethReceiverAddr2}" -t "${tokenAddr}")
     cli_ret "${result}" "balance" ".balance" "100"
@@ -438,7 +438,7 @@ function TestETH2Chain33AssetsKill() {
     result=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
-    eth_block_wait 2 https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     result=$(${CLIA} relayer ethereum balance -o "${bridgeBankAddr}")
     cli_ret "${result}" "balance" ".balance" "0.133"
@@ -510,7 +510,7 @@ function TestETH2Chain33Erc20Kill() {
     result=$(${Chain33Cli} x2ethereum balance -s "${chain33Validator1}" -t "${tokenSymbol}" -a "${tokenAddr}" | jq ".res" | jq ".[]")
     balance_ret "${result}" "0"
 
-    eth_block_wait 2 https://ropsten-rpc.linkpool.io/
+    eth_block_wait $((maturityDegree + 3)) https://ropsten-rpc.linkpool.io/
 
     start_ebrelayerC
 
