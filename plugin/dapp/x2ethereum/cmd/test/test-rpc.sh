@@ -351,7 +351,7 @@ function TestETH2Chain33Assets() {
     req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"eth","address":"'${sendAddress}'","tokenAddr":"0x0000000000000000000000000000000000000000"}}]}'
     queryChain33X2ethBalance "${req}" "0"
 
-    eth_block_wait 2
+    eth_block_wait $((maturityDegree + 3))
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":""}]}'
     queryRelayerBalance "$req" "0"
@@ -408,7 +408,7 @@ function TestETH2Chain33Erc20() {
     req='{"method":"Chain33.Query","params":[{"execer":"x2ethereum","funcName":"GetRelayerBalance","payload":{"tokenSymbol":"testc","address":"'${chain33Validator1}'","tokenAddr":"'${tokenAddr}'"}}]}'
     queryChain33X2ethBalance "${req}" "0"
 
-    eth_block_wait 2
+    eth_block_wait $((maturityDegree + 3))
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${ethReceiverAddr2}'","tokenAddr":"'${tokenAddr}'"}]}'
     queryRelayerBalance "$req" "100"
