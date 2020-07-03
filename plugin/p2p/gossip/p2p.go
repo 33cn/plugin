@@ -360,6 +360,21 @@ func (network *P2p) subP2pMsg() {
 			}
 			taskIndex++
 			log.Debug("p2p recv", "msg", types.GetEventName(int(msg.Ty)), "msg type", msg.Ty, "taskIndex", taskIndex)
+			if msg.Ty == types.EventAddP2PBlacklist {
+				fraudPeer, ok := msg.Data.(*types.FraudPeer)
+				if !ok {
+					log.Error("subP2pMsg", "error", "wrong fraud peer type")
+					return
+				}
+				info := network.node.nodeInfo.peerInfos.GetPeerInfo(fraudPeer.Pid)
+				if info == nil {
+					//此时可能是dht的pid传给了gossip
+					return
+				}
+				network.node.nodeInfo.blacklist.Add(info.Addr, 3600*4)
+				return
+			}
+
 			if msg.Ty == types.EventTxBroadcast {
 				network.txFactory <- struct{}{} //allocal task
 				atomic.AddInt32(&network.txCapcity, -1)
