@@ -43,8 +43,4 @@ func TestParaNodeMempool(t *testing.T) {
 	tx := util.CreateTxWithExecer(chainCfg, mockpara.Para.GetGenesisKey(), "user.p.guodun.none")
 	hash := mockpara.Para.SendTx(tx)
 	assert.Equal(t, tx.Hash(), hash)
-
-	_, err := mockpara.Para.GetAPI().GetMempool(&types.ReqGetMempool{})
-	assert.Equal(t, err, types.ErrActionNotSupport)
-	t.Log(err)
 }

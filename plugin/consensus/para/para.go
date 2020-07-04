@@ -7,9 +7,8 @@ package para
 import (
 	"encoding/hex"
 	"fmt"
-	"sync"
-
 	"sort"
+	"sync"
 
 	log "github.com/33cn/chain33/common/log/log15"
 
@@ -18,7 +17,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/client/api"
-	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/merkle"
 	"github.com/33cn/chain33/queue"
@@ -63,17 +61,18 @@ type client struct {
 	jumpDldCli      *jumpDldClient
 	minerPrivateKey crypto.PrivKey
 	wg              sync.WaitGroup
+	cfg             *types.Consensus
 	subCfg          *subConfig
 	dldCfg          *downloadClient
+	blsSignCli      *blsClient
 	isClosed        int32
-	quitCreate      chan struct{}
+	quit            chan struct{}
 }
 
 type subConfig struct {
 	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64    `json:"startHeight,omitempty"`
-	GenesisBlockTime        int64    `json:"genesisBlockTime,omitempty"`
 	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
 	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
 	AuthAccount             string   `json:"authAccount,omitempty"`
@@ -91,6 +90,8 @@ type subConfig struct {
 	MultiDownServerRspTime  uint32   `json:"multiDownServerRspTime,omitempty"`
 	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
 	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
+	BlsSign                 bool     `json:"blsSign,omitempty"`
+	BlsLeaderSwitchIntval   int32    `json:"blsLeaderSwitchIntval,omitempty"`
 }
 
 // New function to init paracross env
@@ -106,10 +107,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
-	}
-
-	if subcfg.GenesisBlockTime <= 0 {
-		subcfg.GenesisBlockTime = defaultGenesisBlockTime
 	}
 
 	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
@@ -144,118 +141,25 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	para := &client{
 		BaseClient:      c,
 		minerPrivateKey: priKey,
+		cfg:             cfg,
 		subCfg:          &subcfg,
-		quitCreate:      make(chan struct{}),
+		quit:            make(chan struct{}),
 	}
 
 	para.dldCfg = &downloadClient{}
 	para.dldCfg.emptyInterval = append(para.dldCfg.emptyInterval, emptyInterval...)
 
-	para.commitMsgClient = &commitMsgClient{
-		paraClient:           para,
-		authAccount:          subcfg.AuthAccount,
-		waitMainBlocks:       waitBlocks4CommitMsg,
-		waitConsensStopTimes: waitConsensStopTimes,
-		consensHeight:        -2,
-		sendingHeight:        -1,
-		consensDoneHeight:    -1,
-		resetCh:              make(chan interface{}, 1),
-		quit:                 make(chan struct{}),
-	}
-	if subcfg.WaitBlocks4CommitMsg > 0 {
-		para.commitMsgClient.waitMainBlocks = subcfg.WaitBlocks4CommitMsg
-	}
+	para.commitMsgClient = newCommitMsgCli(para, &subcfg)
+	para.blockSyncClient = newBlockSyncCli(para, &subcfg)
 
-	if subcfg.WaitConsensStopTimes > 0 {
-		para.commitMsgClient.waitConsensStopTimes = subcfg.WaitConsensStopTimes
-	}
+	para.multiDldCli = newMultiDldCli(para, &subcfg)
 
-	// 设置平行链共识起始高度，在共识高度为-1也就是从未共识过的环境中允许从设置的非0起始高度开始共识
-	//note：只有在主链LoopCheckCommitTxDoneForkHeight之后才支持设置ParaConsensStartHeight
-	if subcfg.ParaConsensStartHeight > 0 {
-		para.commitMsgClient.consensDoneHeight = subcfg.ParaConsensStartHeight - 1
-	}
+	para.jumpDldCli = newJumpDldCli(para, &subcfg)
 
-	para.blockSyncClient = &blockSyncClient{
-		paraClient:      para,
-		notifyChan:      make(chan bool, 1),
-		quitChan:        make(chan struct{}),
-		maxCacheCount:   defaultMaxCacheCount,
-		maxSyncErrCount: defaultMaxSyncErrCount,
-	}
-	if subcfg.MaxCacheCount > 0 {
-		para.blockSyncClient.maxCacheCount = subcfg.MaxCacheCount
-	}
-	if subcfg.MaxSyncErrCount > 0 {
-		para.blockSyncClient.maxSyncErrCount = subcfg.MaxSyncErrCount
-	}
-
-	para.multiDldCli = &multiDldClient{
-		paraClient:    para,
-		invNumPerJob:  defaultInvNumPerJob,
-		jobBufferNum:  defaultJobBufferNum,
-		serverTimeout: maxServerRspTimeout,
-	}
-	if subcfg.MultiDownInvNumPerJob > 0 {
-		para.multiDldCli.invNumPerJob = subcfg.MultiDownInvNumPerJob
-	}
-	if subcfg.MultiDownJobBuffNum > 0 {
-		para.multiDldCli.jobBufferNum = subcfg.MultiDownJobBuffNum
-	}
-
-	if subcfg.MultiDownServerRspTime > 0 {
-		para.multiDldCli.serverTimeout = subcfg.MultiDownServerRspTime
-	}
-
-	para.jumpDldCli = &jumpDldClient{paraClient: para}
+	para.blsSignCli = newBlsClient(para, &subcfg)
 
 	c.SetChild(para)
 	return para
-}
-
-//["0:50","100:20","500:30"]
-func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
-	var emptyInter []*emptyBlockInterval
-	if len(cfg) == 0 {
-		interval := &emptyBlockInterval{startHeight: 0, interval: defaultEmptyBlockInterval}
-		emptyInter = append(emptyInter, interval)
-		return emptyInter, nil
-	}
-
-	list := make(map[int64]int64)
-	var seq []int64
-	for _, e := range cfg {
-		ret, err := divideStr2Int64s(e, ":")
-		if err != nil {
-			plog.Error("parse empty block inter config", "str", e)
-			return nil, err
-		}
-		seq = append(seq, ret[0])
-		list[ret[0]] = ret[1]
-	}
-	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
-	for _, h := range seq {
-		emptyInter = append(emptyInter, &emptyBlockInterval{startHeight: h, interval: list[h]})
-	}
-	return emptyInter, nil
-}
-
-func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
-	for i := 0; i < len(in); i++ {
-		if i == 0 && in[i].startHeight != 0 {
-			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-		if i > 0 && in[i].startHeight <= in[i-1].startHeight {
-			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].startHeight, "laterHeight", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-		if in[i].interval <= 0 {
-			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].startHeight)
-			return types.ErrInvalidParam
-		}
-	}
-	return nil
 }
 
 //para 不检查任何的交易
@@ -267,8 +171,10 @@ func (client *client) CheckBlock(parent *types.Block, current *types.BlockDetail
 func (client *client) Close() {
 	atomic.StoreInt32(&client.isClosed, 1)
 	close(client.commitMsgClient.quit)
-	close(client.quitCreate)
+	close(client.quit)
 	close(client.blockSyncClient.quitChan)
+	close(client.blsSignCli.quit)
+
 	client.wg.Wait()
 
 	client.BaseClient.Close()
@@ -286,12 +192,18 @@ func (client *client) SetQueueClient(c queue.Client) {
 		client.InitBlock()
 	})
 	go client.EventLoop()
+
 	client.wg.Add(1)
 	go client.commitMsgClient.handler()
 	client.wg.Add(1)
 	go client.CreateBlock()
 	client.wg.Add(1)
 	go client.blockSyncClient.syncBlocks()
+
+	client.wg.Add(2)
+	go client.blsSignCli.procAggregateTxs()
+	go client.blsSignCli.procLeaderSync()
+
 }
 
 func (client *client) InitBlock() {
@@ -324,7 +236,10 @@ func (client *client) InitBlock() {
 		// 创世区块
 		newblock := &types.Block{}
 		newblock.Height = 0
-		newblock.BlockTime = client.subCfg.GenesisBlockTime
+		newblock.BlockTime = defaultGenesisBlockTime
+		if client.cfg.GenesisBlockTime > 0 {
+			newblock.BlockTime = client.cfg.GenesisBlockTime
+		}
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
 
@@ -404,54 +319,39 @@ func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 }
 
 func (client *client) ProcEvent(msg *queue.Message) bool {
+	if msg.Ty == types.EventReceiveSubData {
+		if req, ok := msg.GetData().(*types.TopicData); ok {
+			var sub pt.ParaP2PSubMsg
+			err := types.Decode(req.Data, &sub)
+			if err != nil {
+				plog.Error("paracross ProcEvent decode", "ty", types.EventReceiveSubData)
+				return true
+			}
+			plog.Info("paracross ProcEvent from", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			switch sub.GetTy() {
+			case P2pSubCommitTx:
+				go client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
+			case P2pSubLeaderSyncMsg:
+				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
+				if err != nil {
+					plog.Info("paracross ProcEvent leader sync msg", "err", err)
+				}
+			default:
+				plog.Error("paracross ProcEvent not support", "ty", sub.GetTy())
+			}
+
+		} else {
+			plog.Error("paracross ProcEvent topicData", "ty", types.EventReceiveSubData)
+		}
+
+		return true
+	}
+
 	return false
 }
 
 func (client *client) isCaughtUp() bool {
 	return atomic.LoadInt32(&client.caughtUp) == 1
-}
-
-//IsCaughtUp 是否追上最新高度,
-func (client *client) Query_IsCaughtUp(req *types.ReqNil) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
-
-	return &types.IsCaughtUp{Iscaughtup: client.isCaughtUp()}, nil
-}
-
-func (client *client) Query_LocalBlockInfo(req *types.ReqInt) (types.Message, error) {
-	if client == nil {
-		return nil, fmt.Errorf("%s", "client not bind message queue.")
-	}
-
-	var block *pt.ParaLocalDbBlock
-	var err error
-	if req.Height <= -1 {
-		block, err = client.getLastLocalBlock()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		block, err = client.getLocalBlockByHeight(req.Height)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	blockInfo := &pt.ParaLocalDbBlockInfo{
-		Height:         block.Height,
-		MainHash:       common.ToHex(block.MainHash),
-		MainHeight:     block.MainHeight,
-		ParentMainHash: common.ToHex(block.ParentMainHash),
-		BlockTime:      block.BlockTime,
-	}
-
-	for _, tx := range block.Txs {
-		blockInfo.Txs = append(blockInfo.Txs, common.ToHex(tx.Hash()))
-	}
-
-	return blockInfo, nil
 }
 
 func checkMinerTx(current *types.BlockDetail) error {
@@ -481,29 +381,52 @@ func checkMinerTx(current *types.BlockDetail) error {
 	return nil
 }
 
-// Query_CreateNewAccount 通知para共识模块钱包创建了一个新的账户
-func (client *client) Query_CreateNewAccount(acc *types.Account) (types.Message, error) {
-	if acc == nil {
-		return nil, types.ErrInvalidParam
-	}
-	plog.Info("Query_CreateNewAccount", "acc", acc.Addr)
-	// 需要para共识这边处理新创建的账户是否是超级节点发送commit共识交易的账户
-	client.commitMsgClient.onWalletAccount(acc)
-	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
-}
-
-// Query_WalletStatus 通知para共识模块钱包锁状态有变化
-func (client *client) Query_WalletStatus(walletStatus *types.WalletStatus) (types.Message, error) {
-	if walletStatus == nil {
-		return nil, types.ErrInvalidParam
-	}
-	plog.Info("Query_WalletStatus", "walletStatus", walletStatus.IsWalletLock)
-	// 需要para共识这边根据walletStatus.IsWalletLock锁的状态开启/关闭发送共识交易
-	client.commitMsgClient.onWalletStatus(walletStatus)
-	return &types.Reply{IsOk: true, Msg: []byte("OK")}, nil
-}
-
 //比较newBlock是不是最优区块
 func (client *client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
+}
+
+//["0:50","100:20","500:30"]
+func parseEmptyBlockInterval(cfg []string) ([]*emptyBlockInterval, error) {
+	var emptyInter []*emptyBlockInterval
+	if len(cfg) == 0 {
+		interval := &emptyBlockInterval{startHeight: 0, interval: defaultEmptyBlockInterval}
+		emptyInter = append(emptyInter, interval)
+		return emptyInter, nil
+	}
+
+	list := make(map[int64]int64)
+	var seq []int64
+	for _, e := range cfg {
+		ret, err := divideStr2Int64s(e, ":")
+		if err != nil {
+			plog.Error("parse empty block inter config", "str", e)
+			return nil, err
+		}
+		seq = append(seq, ret[0])
+		list[ret[0]] = ret[1]
+	}
+	sort.Slice(seq, func(i, j int) bool { return seq[i] < seq[j] })
+	for _, h := range seq {
+		emptyInter = append(emptyInter, &emptyBlockInterval{startHeight: h, interval: list[h]})
+	}
+	return emptyInter, nil
+}
+
+func checkEmptyBlockInterval(in []*emptyBlockInterval) error {
+	for i := 0; i < len(in); i++ {
+		if i == 0 && in[i].startHeight != 0 {
+			plog.Error("EmptyBlockInterval,first blockHeight should be 0", "height", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+		if i > 0 && in[i].startHeight <= in[i-1].startHeight {
+			plog.Error("EmptyBlockInterval,blockHeight should be sequence", "preHeight", in[i-1].startHeight, "laterHeight", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+		if in[i].interval <= 0 {
+			plog.Error("EmptyBlockInterval,interval should > 0", "height", in[i].startHeight)
+			return types.ErrInvalidParam
+		}
+	}
+	return nil
 }

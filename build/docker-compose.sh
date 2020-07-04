@@ -41,6 +41,12 @@ if [ -n "${2}" ]; then
     DAPP=$2
 fi
 
+#EXTRA can do more test to dapp
+EXTRA=""
+if [ -n "${3}" ]; then
+    EXTRA=$3
+fi
+
 DAPP_TEST_FILE=""
 if [ -n "${DAPP}" ]; then
     DAPP_TEST_FILE="testcase.sh"
@@ -66,6 +72,7 @@ fi
 
 echo "=========== # env setting ============="
 echo "DAPP=$DAPP"
+echo "EXTRA=$EXTRA"
 echo "DAPP_TEST_FILE=$DAPP_TEST_FILE"
 echo "COMPOSE_FILE=$COMPOSE_FILE"
 echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
@@ -482,7 +489,7 @@ function main() {
     echo "==============================DAPP=$DAPP main begin========================================================"
     ### init para ####
     base_init
-    dapp_run init
+    dapp_run init "${EXTRA}"
 
     ### start docker ####
     start

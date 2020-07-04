@@ -6,6 +6,6 @@ strapp=${strcmd%/cmd*}
 
 OUT_DIR="${1}/$strapp"
 #FLAG=$2
-
-mkdir -p "${OUT_DIR}"
-cp ./build/* "${OUT_DIR}"
+echo "${OUT_DIR}"
+# mkdir -p "${OUT_DIR}"
+# cp ./build/* "${OUT_DIR}"

@@ -105,6 +105,7 @@ const (
 	ParaOpVote
 	ParaOpQuit
 	ParaOpCancel
+	ParaOpModify
 )
 
 // node vote op
@@ -180,17 +181,14 @@ func CalcMinerHeightKey(title string, height int64) []byte {
 }
 
 // CreateRawCommitTx4MainChain create commit tx to main chain
-func CreateRawCommitTx4MainChain(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, fee int64) (*types.Transaction, error) {
+func CreateRawCommitTx4MainChain(cfg *types.Chain33Config, status *ParacrossCommitAction, name string, fee int64) (*types.Transaction, error) {
 	return createRawCommitTx(cfg, status, name, fee)
 }
 
-func createRawCommitTx(cfg *types.Chain33Config, status *ParacrossNodeStatus, name string, feeRate int64) (*types.Transaction, error) {
-	v := &ParacrossCommitAction{
-		Status: status,
-	}
+func createRawCommitTx(cfg *types.Chain33Config, commit *ParacrossCommitAction, name string, feeRate int64) (*types.Transaction, error) {
 	action := &ParacrossAction{
 		Ty:    ParacrossActionCommit,
-		Value: &ParacrossAction_Commit{v},
+		Value: &ParacrossAction_Commit{commit},
 	}
 	tx := &types.Transaction{
 		Execer:  []byte(name),

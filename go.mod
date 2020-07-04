@@ -3,9 +3,12 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v0.0.0-20200618095014-8773a3526b6f
+	github.com/33cn/chain33 v0.0.0-20200703030312-6b32b7a3906e
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
+	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
+	github.com/NebulousLabs/fastrand v0.0.0-20181203155948-6fb6489aac4e // indirect
+	github.com/NebulousLabs/merkletree v0.0.0-20181203152040-08d5d54b07f5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -39,7 +42,7 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.2.0 // indirect
 	go.uber.org/zap v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
+	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.28.0

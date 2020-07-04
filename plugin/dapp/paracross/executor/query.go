@@ -6,7 +6,6 @@ package executor
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -78,17 +77,21 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
 	}
 
-	ret, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
+	_, nodesArry, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, err
 	}
-	var nodes []string
-	for k := range ret {
-		nodes = append(nodes, k)
+	var nodes string
+	for _, k := range nodesArry {
+		if len(nodes) == 0 {
+			nodes = k
+			continue
+		}
+		nodes = nodes + "," + k
 	}
 	var reply types.ReplyConfig
 	reply.Key = string(key)
-	reply.Value = fmt.Sprint(nodes)
+	reply.Value = nodes
 	return &reply, nil
 }
 

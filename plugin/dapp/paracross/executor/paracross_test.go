@@ -6,9 +6,8 @@ package executor
 
 import (
 	"bytes"
-	"testing"
-
 	"strings"
+	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
 	"github.com/33cn/chain33/common"
@@ -19,6 +18,7 @@ import (
 	"github.com/33cn/chain33/common/log"
 	mty "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	_ "github.com/33cn/plugin/plugin/crypto/bls"
 	"github.com/33cn/plugin/plugin/dapp/paracross/testnode"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
@@ -169,7 +169,7 @@ func (suite *CommitTestSuite) TestSetup() {
 }
 
 func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
-	st1 := pt.ParacrossNodeStatus{
+	st1 := &pt.ParacrossNodeStatus{
 		MainBlockHash:   MainBlockHash10,
 		MainBlockHeight: MainBlockHeight,
 		Title:           Title,
@@ -184,7 +184,8 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 		CrossTxResult:   []byte("abc"),
 		CrossTxHashs:    [][]byte{},
 	}
-	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, &st1, pt.GetExecName(chain33TestCfg), 0)
+	act := &pt.ParacrossCommitAction{Status: st1}
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, act, pt.GetExecName(chain33TestCfg), 0)
 	if err != nil {
 		suite.T().Error("TestExec", "create tx failed", err)
 	}
@@ -718,19 +719,12 @@ func createCrossParaTx(s suite.Suite, to []byte) (*types.Transaction, error) {
 
 func createCrossCommitTx(s suite.Suite) (*types.Transaction, error) {
 	status := &pt.ParacrossNodeStatus{MainBlockHash: []byte("hash"), MainBlockHeight: 0, Title: Title}
-
-	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, status, Title+pt.ParaX, 0)
+	act := &pt.ParacrossCommitAction{Status: status}
+	tx, err := pt.CreateRawCommitTx4MainChain(chain33TestCfg, act, Title+pt.ParaX, 0)
 	assert.Nil(s.T(), err, "create asset transfer failed")
 	if err != nil {
 		return nil, err
 	}
-
-	//tx, err = signTx(s, tx, privFrom)
-	//assert.Nil(s.T(), err, "sign asset transfer failed")
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	return tx, nil
 }
 
@@ -831,4 +825,55 @@ func TestValidParaCrossExec(t *testing.T) {
 	exec = []byte("user.p.para.paracross")
 	valid = types.IsParaExecName(string(exec))
 	assert.Equal(t, true, valid)
+}
+
+func TestVerifyBlsSign(t *testing.T) {
+	cryptoCli, err := crypto.New("bls")
+	assert.NoError(t, err)
+
+	status := &pt.ParacrossNodeStatus{}
+	status.Height = 0
+	status.Title = "user.p.para."
+	msg := types.Encode(status)
+	blsInfo := &pt.ParacrossCommitBlsInfo{}
+	commit := &pt.ParacrossCommitAction{Status: status, Bls: blsInfo}
+
+	priKSStr := "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
+	p, err := common.FromHex(priKSStr)
+	assert.NoError(t, err)
+	priKS, err := cryptoCli.PrivKeyFromBytes(p)
+	assert.NoError(t, err)
+
+	priJRStr := "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4"
+	p, err = common.FromHex(priJRStr)
+	assert.NoError(t, err)
+	priJR, err := cryptoCli.PrivKeyFromBytes(p)
+	assert.NoError(t, err)
+
+	signKs := priKS.Sign(msg)
+	signJr := priJR.Sign(msg)
+	pubKs := priKS.PubKey()
+	pubJr := priJR.PubKey()
+
+	agg, err := crypto.ToAggregate(cryptoCli)
+	assert.NoError(t, err)
+	aggSigns, err := agg.Aggregate([]crypto.Signature{signKs, signJr})
+	assert.NoError(t, err)
+	pubs := []crypto.PubKey{pubKs, pubJr}
+
+	err = agg.VerifyAggregatedOne(pubs, msg, aggSigns)
+	assert.NoError(t, err)
+
+	blsInfo.Sign = aggSigns.Bytes()
+	PubKS := "a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
+	PubJR := "81307df1fdde8f0e846ed1542c859c1e9daba2553e62e48db0877329c5c63fb86e70b9e2e83263da0eb7fcad275857f8"
+	pubKeys := []string{PubJR, PubKS}
+	err = verifyBlsSign(cryptoCli, pubKeys, commit)
+	assert.Equal(t, nil, err)
+
+	blsInfo.Sign = signKs.Bytes()
+	pubKeys = []string{PubKS}
+	err = verifyBlsSign(cryptoCli, pubKeys, commit)
+	assert.Equal(t, nil, err)
+
 }

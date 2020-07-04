@@ -47,12 +47,15 @@ enableReduceLocaldb=true
 enablePushSubscribe=false
 
 [p2p]
+types=["dht"]
 enable=false
 driver="leveldb"
 dbPath="paradatadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
 
+[p2p.sub.dht]
+DHTDataPath="paradatadir/p2pstore"
 
 [rpc]
 # 避免与主链配置冲突
@@ -71,7 +74,7 @@ maxTxNumPerAccount=10000
 
 [consensus]
 name="para"
-genesisBlockTime=1514533394
+genesisBlockTime=1514533390
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["paracross"]    #配置挖矿合约
 

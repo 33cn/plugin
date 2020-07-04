@@ -527,7 +527,7 @@ func (client *client) CreateBlock() {
 out:
 	for {
 		select {
-		case <-client.quitCreate:
+		case <-client.quit:
 			break out
 		default:
 			count, err := client.getBatchSeqCount(currSeq)
@@ -553,6 +553,7 @@ out:
 			}
 			//如果当前正在追赶，暂不处理
 			if client.commitMsgClient.authAccount != "" && client.isCaughtUp() && len(paraTxs.Items) > 0 {
+				//在追赶上之后，每次seq只请求一个，只检查第一个即可
 				client.commitMsgClient.commitTxCheckNotify(paraTxs.Items[0])
 			}
 

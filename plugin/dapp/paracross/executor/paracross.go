@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -24,6 +25,7 @@ var (
 
 // Paracross exec
 type Paracross struct {
+	cryptoCli crypto.Crypto
 	drivers.DriverBase
 }
 
@@ -48,6 +50,11 @@ func newParacross() drivers.Driver {
 	c := &Paracross{}
 	c.SetChild(c)
 	c.SetExecutorType(types.LoadExecutorType(driverName))
+	cli, err := crypto.New("bls")
+	if err != nil {
+		panic("paracross need bls sign register")
+	}
+	c.cryptoCli = cli
 	return c
 }
 

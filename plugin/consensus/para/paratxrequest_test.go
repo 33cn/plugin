@@ -26,7 +26,7 @@ import (
 
 func init() {
 	//types.Init("user.p.para.", nil)
-	log.SetLogLevel("error")
+	log.SetLogLevel("info")
 }
 
 func getPrivKey(t *testing.T) crypto.PrivKey {
@@ -64,19 +64,21 @@ func TestCalcCommitMsgTxs(t *testing.T) {
 		Height: 2,
 		Title:  "user.p.para",
 	}
-	notify := []*pt.ParacrossNodeStatus{nt1}
-	tx, count, err := client.calcCommitMsgTxs(notify, 0)
+	commit1 := &pt.ParacrossCommitAction{Status: nt1}
+	notify := []*pt.ParacrossCommitAction{commit1}
+	tx, count, err := client.createCommitMsgTxs(notify)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), count)
 	assert.NotNil(t, tx)
 
-	notify = append(notify, nt2)
-	tx, count, err = client.calcCommitMsgTxs(notify, 0)
+	commit1 = &pt.ParacrossCommitAction{Status: nt2}
+	notify = append(notify, commit1)
+	tx, count, err = client.createCommitMsgTxs(notify)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(2), count)
 	assert.NotNil(t, tx)
 
-	tx, err = client.singleCalcTx(nt2, 0)
+	tx, err = client.singleCalcTx(commit1, 0)
 	assert.Nil(t, err)
 	assert.NotNil(t, tx)
 
