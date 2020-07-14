@@ -68,6 +68,7 @@ type raftNode struct {
 	restartC chan struct{}
 }
 
+//Node ...
 type Node struct {
 	*raftNode
 }

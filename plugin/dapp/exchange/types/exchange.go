@@ -58,9 +58,9 @@ const (
 )
 
 const (
-	//单次list还回条数
+	//Count 单次list还回条数
 	Count = int32(10)
-	//系统最大撮合深度
+	//MaxMatchCount 系统最大撮合深度
 	MaxMatchCount = 100
 )
 
@@ -100,10 +100,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ExchangeX, NewType(cfg))
 }
 
+//ExchangeType ...
 type ExchangeType struct {
 	types.ExecTypeBase
 }
 
+//NewType ...
 func NewType(cfg *types.Chain33Config) *ExchangeType {
 	c := &ExchangeType{}
 	c.SetChild(c)
@@ -116,7 +118,7 @@ func (e *ExchangeType) GetPayload() types.Message {
 	return &ExchangeAction{}
 }
 
-// GeTypeMap 获取合约action的id和name信息
+// GetTypeMap 获取合约action的id和name信息
 func (e *ExchangeType) GetTypeMap() map[string]int32 {
 	return actionMap
 }

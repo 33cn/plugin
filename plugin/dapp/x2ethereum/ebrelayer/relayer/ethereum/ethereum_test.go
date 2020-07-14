@@ -88,11 +88,11 @@ func Test_GetValidatorAddr(t *testing.T) {
 	_, _, err = ethRelayer.NewAccount("123")
 	require.Nil(t, err)
 
-	privateKey, addr, err := ethRelayer.GetAccount("123")
+	privateKey, _, err := ethRelayer.GetAccount("123")
 	require.Nil(t, err)
 	assert.NotEqual(t, privateKey, chain33PrivateKeyStr)
 
-	privateKey, addr, err = ethRelayer.GetAccount(passphrase)
+	privateKey, addr, err := ethRelayer.GetAccount(passphrase)
 	require.Nil(t, err)
 	assert.Equal(t, privateKey, chain33PrivateKeyStr)
 	assert.Equal(t, addr, chain33AccountAddr)
@@ -117,7 +117,7 @@ func Test_IsValidatorActive(t *testing.T) {
 	assert.Equal(t, is, false)
 	require.Nil(t, err)
 
-	is, err = ethRelayer.IsValidatorActive("123")
+	_, err = ethRelayer.IsValidatorActive("123")
 	require.Error(t, err)
 }
 

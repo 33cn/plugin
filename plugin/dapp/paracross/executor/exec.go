@@ -55,7 +55,7 @@ func (e *Paracross) Exec_AssetWithdraw(payload *types.AssetsWithdraw, tx *types.
 	return receipt, nil
 }
 
-//Exec_ParaAssetTransfer parallel chain asset transfer exec process
+//Exec_CrossAssetTransfer parallel chain asset transfer exec process
 func (e *Paracross) Exec_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	_, err := e.checkTxGroup(tx, index)
 	if err != nil {
@@ -114,7 +114,7 @@ func (e *Paracross) Exec_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, tx *ty
 	return a.NodeGroupConfig(payload)
 }
 
-//Exec_NodeGroupConfig node group config process
+//Exec_SelfStageConfig node group config process
 func (e *Paracross) Exec_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)
 	return a.SelfStageConfig(payload)

@@ -277,6 +277,8 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 	}
 	return nil
 }
+
+//OpSwap ...
 func OpSwap(op int32) int32 {
 	if op == ety.OpBuy {
 		return ety.OpSell

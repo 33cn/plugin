@@ -48,7 +48,7 @@ func Cmd() *cobra.Command {
 	return cmd
 }
 
-// Burn
+//CreateRawWithdrawChain33TxCmd Burn
 func CreateRawWithdrawChain33TxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn",
@@ -105,7 +105,7 @@ func burn(cmd *cobra.Command, args []string) {
 	createTx(cmd, payLoad, types3.NameWithdrawChain33Action)
 }
 
-// Lock
+//CreateRawChain33ToEthTxCmd Lock
 func CreateRawChain33ToEthTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock",
@@ -149,7 +149,7 @@ func lock(cmd *cobra.Command, args []string) {
 	createTx(cmd, payLoad, types3.NameChain33ToEthAction)
 }
 
-// Transfer
+//CreateTransferCmd Transfer
 func CreateTransferCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -235,7 +235,7 @@ func createTokenWithdraw(cmd *cobra.Command, args []string) {
 	commands.CreateAssetWithdraw(cmd, args, types3.X2ethereumX)
 }
 
-// AddValidator
+//CreateRawAddValidatorTxCmd AddValidator
 func CreateRawAddValidatorTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
@@ -268,7 +268,7 @@ func addValidator(cmd *cobra.Command, args []string) {
 	createTx(cmd, payLoad, types3.NameAddValidatorAction)
 }
 
-// RemoveValidator
+//CreateRawRemoveValidatorTxCmd RemoveValidator
 func CreateRawRemoveValidatorTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "remove",
@@ -292,7 +292,7 @@ func removeValidator(cmd *cobra.Command, args []string) {
 	createTx(cmd, payLoad, types3.NameRemoveValidatorAction)
 }
 
-// ModifyValidator
+//CreateRawModifyValidatorTxCmd ModifyValidator
 func CreateRawModifyValidatorTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "modify",
@@ -321,7 +321,7 @@ func modify(cmd *cobra.Command, args []string) {
 	createTx(cmd, payLoad, types3.NameModifyPowerAction)
 }
 
-// MsgSetConsensusNeeded
+//CreateRawSetConsensusTxCmd MsgSetConsensusNeeded
 func CreateRawSetConsensusTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "setconsensus",

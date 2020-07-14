@@ -186,12 +186,14 @@ func TestExchange(t *testing.T) {
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"}, RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
 	//根据地址状态查看订单
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID3 := orderList.List[0].OrderID
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "paracross", Symbol: "coins.bty"}, Price: 50000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
 	//根据地址状态查看订单
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[0], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID4 := orderList.List[0].OrderID
 
 	//根据op查询市场深度
@@ -244,11 +246,13 @@ func TestExchange(t *testing.T) {
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpBuy}, PrivKeyD, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[3], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID6 := orderList.List[0].OrderID
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 300000000, Amount: 10 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID7 := orderList.List[0].OrderID
 
 	//此时订单6应该被吃掉
@@ -266,10 +270,12 @@ func TestExchange(t *testing.T) {
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID8 := orderList.List[0].OrderID
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 500000000, Amount: 5 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID9 := orderList.List[0].OrderID
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
@@ -277,7 +283,7 @@ func TestExchange(t *testing.T) {
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[3], "", stateDB, kvdb)
 	//orderID10 := orderList.List[0].OrderID
 	assert.Equal(t, 5*types.Coin, orderList.List[0].Balance)
-
+	assert.Nil(t, err)
 	//order7和order8价格在吃单范围内
 	order, err = Exec_QueryOrder(orderID7, stateDB, kvdb)
 	assert.Equal(t, nil, err)
@@ -300,9 +306,11 @@ func TestExchange(t *testing.T) {
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 2 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Completed, Nodes[2], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 8 * types.Coin, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
 	orderList, err = Exec_QueryOrderList(et.Ordered, Nodes[2], "", stateDB, kvdb)
+	assert.Nil(t, err)
 	orderID10 := orderList.List[0].OrderID
 	assert.Equal(t, int32(et.Ordered), orderList.List[0].Status)
 	assert.Equal(t, 5*types.Coin, orderList.List[0].Balance)

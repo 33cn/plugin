@@ -14,6 +14,7 @@ import (
 	"github.com/phoreproject/bls/g1pubs"
 )
 
+//setting
 const (
 	BLSPrivateKeyLength = 32
 	BLSPublicKeyLength  = 48

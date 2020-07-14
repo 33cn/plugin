@@ -23,10 +23,12 @@ func init() {
 	types.RegExec(LotteryX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(LotteryX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(LotteryX, NewType(cfg))
 }

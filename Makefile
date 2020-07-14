@@ -73,7 +73,7 @@ linter_test: ## Use gometalinter check code, for local test
 	@find . -name '*.sh' -not -path "./vendor/*" | xargs shellcheck
 
 ineffassign:
-	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign -n ./...
+	@golangci-lint  run --no-config --issues-exit-code=1  --deadline=2m --disable-all   --enable=ineffassign ./...
 
 race: ## Run data race detector
 	@go test -parallel=8 -race -short `go list ./... | grep -v "pbft"`

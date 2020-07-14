@@ -35,6 +35,7 @@ func calcAccountKey(accountID string) []byte {
 	return []byte(key)
 }
 
+//NewAccountTable ...
 func NewAccountTable(kvdb db.KV) *table.Table {
 	rowmeta := NewAccountRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_account)
@@ -44,7 +45,7 @@ func NewAccountTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//account table meta 结构
+//AccountRow account table meta 结构
 type AccountRow struct {
 	*aty.Account
 }

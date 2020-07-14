@@ -166,7 +166,7 @@ func (e *Paracross) ExecLocal_AssetWithdraw(payload *types.AssetsWithdraw, tx *t
 	return nil, nil
 }
 
-//ExecLocal_AssetTransfer asset transfer local proc
+//ExecLocal_CrossAssetTransfer asset transfer local proc
 func (e *Paracross) ExecLocal_CrossAssetTransfer(payload *pt.CrossAssetTransfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	cfg := e.GetAPI().GetConfig()
@@ -318,7 +318,7 @@ func (e *Paracross) ExecLocal_TransferToExec(payload *types.AssetsTransferToExec
 	return nil, nil
 }
 
-//ExecLocal_SelfConsensStageConfig transfer asset to exec local db process
+//ExecLocal_SelfStageConfig transfer asset to exec local db process
 func (e *Paracross) ExecLocal_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.execAutoLocalStage(tx, receiptData, index)
 }

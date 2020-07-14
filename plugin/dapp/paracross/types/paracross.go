@@ -77,12 +77,13 @@ const (
 	ParacrossActionNodeConfig
 	//ParacrossActionNodeGroupApply apply for node group initially
 	ParacrossActionNodeGroupApply
-	//ParacrossActionSelfConsensStageConfig apply for self consensus stage config
+	//ParacrossActionSelfStageConfig apply for self consensus stage config
 	ParacrossActionSelfStageConfig
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
 	ParacrossActionCrossAssetTransfer
 )
 
+//paracross asset porcess
 const (
 	ParacrossNoneTransfer = iota
 	ParacrossMainAssetTransfer
@@ -116,6 +117,7 @@ const (
 	ParaVoteEnd
 )
 
+//config yes or no
 const (
 	ParaConfigInvalid = iota
 	ParaConfigYes

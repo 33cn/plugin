@@ -14,6 +14,7 @@ import (
 var clog = log.New("module", "execs.issuance")
 var driverName = pty.IssuanceX
 
+//InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Issuance{}))

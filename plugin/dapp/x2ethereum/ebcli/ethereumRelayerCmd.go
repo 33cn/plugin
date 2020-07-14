@@ -52,6 +52,7 @@ func EthereumRelayerCmd() *cobra.Command {
 	return cmd
 }
 
+//ImportChain33PrivateKeyCmd ...
 func ImportChain33PrivateKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import_chain33privatekey",
@@ -77,6 +78,7 @@ func importChain33Privatekey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//GenEthPrivateKeyCmd ...
 func GenEthPrivateKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create_eth_key",
@@ -94,6 +96,7 @@ func generateEthereumPrivateKey(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowValidatorsAddrCmd ...
 func ShowValidatorsAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_validators",
@@ -110,6 +113,7 @@ func showValidatorsAddr(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowChain33TxsHashCmd ...
 func ShowChain33TxsHashCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_chain33_tx",
@@ -134,6 +138,7 @@ func showChain33Txs(cmd *cobra.Command, args []string) {
 	}
 }
 
+//ShowEthereumTxsHashCmd ...
 func ShowEthereumTxsHashCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show_eth_tx",
@@ -158,6 +163,7 @@ func showEthTxs(cmd *cobra.Command, args []string) {
 	}
 }
 
+//IsValidatorActiveCmd ...
 func IsValidatorActiveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "active",
@@ -168,11 +174,13 @@ func IsValidatorActiveCmd() *cobra.Command {
 	return cmd
 }
 
+//IsValidatorActiveFlags ...
 func IsValidatorActiveFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "validator address")
 	_ = cmd.MarkFlagRequired("addr")
 }
 
+//IsValidatorActive ...
 func IsValidatorActive(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
@@ -183,6 +191,7 @@ func IsValidatorActive(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowOperatorCmd ...
 func ShowOperatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "operator",
@@ -192,6 +201,7 @@ func ShowOperatorCmd() *cobra.Command {
 	return cmd
 }
 
+//ShowOperator ...
 func ShowOperator(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res string
@@ -199,6 +209,7 @@ func ShowOperator(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//DeployContrctsCmd ...
 func DeployContrctsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy",
@@ -208,6 +219,7 @@ func DeployContrctsCmd() *cobra.Command {
 	return cmd
 }
 
+//DeployContrcts ...
 func DeployContrcts(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res rpctypes.Reply
@@ -215,6 +227,7 @@ func DeployContrcts(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowTxReceiptCmd ...
 func ShowTxReceiptCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "receipt",
@@ -225,11 +238,13 @@ func ShowTxReceiptCmd() *cobra.Command {
 	return cmd
 }
 
+//ShowTxReceiptFlags ...
 func ShowTxReceiptFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("hash", "s", "", "tx hash")
 	_ = cmd.MarkFlagRequired("hash")
 }
 
+//ShowTxReceipt ...
 func ShowTxReceipt(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	txhash, _ := cmd.Flags().GetString("hash")
@@ -239,6 +254,7 @@ func ShowTxReceipt(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//CreateBridgeTokenCmd ...
 func CreateBridgeTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token4chain33",
@@ -249,11 +265,13 @@ func CreateBridgeTokenCmd() *cobra.Command {
 	return cmd
 }
 
+//CreateBridgeTokenFlags ...
 func CreateBridgeTokenFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	_ = cmd.MarkFlagRequired("symbol")
 }
 
+//CreateBridgeToken ...
 func CreateBridgeToken(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	token, _ := cmd.Flags().GetString("symbol")
@@ -263,6 +281,7 @@ func CreateBridgeToken(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//CreateEthereumTokenCmd ...
 func CreateEthereumTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token4erc20",
@@ -273,11 +292,13 @@ func CreateEthereumTokenCmd() *cobra.Command {
 	return cmd
 }
 
+//CreateEthereumTokenFlags ...
 func CreateEthereumTokenFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol")
 	_ = cmd.MarkFlagRequired("symbol")
 }
 
+//CreateEthereumTokenToken ...
 func CreateEthereumTokenToken(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	token, _ := cmd.Flags().GetString("symbol")
@@ -287,6 +308,7 @@ func CreateEthereumTokenToken(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//MintErc20Cmd ...
 func MintErc20Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mint",
@@ -297,6 +319,7 @@ func MintErc20Cmd() *cobra.Command {
 	return cmd
 }
 
+//MintErc20Flags ...
 func MintErc20Flags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token address")
 	_ = cmd.MarkFlagRequired("token")
@@ -305,6 +328,8 @@ func MintErc20Flags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "m", float64(0), "amount")
 	_ = cmd.MarkFlagRequired("amount")
 }
+
+//MintErc20 ...
 func MintErc20(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenAddr, _ := cmd.Flags().GetString("token")
@@ -329,6 +354,7 @@ func MintErc20(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ApproveCmd ...
 func ApproveCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "approve",
@@ -339,6 +365,7 @@ func ApproveCmd() *cobra.Command {
 	return cmd
 }
 
+//ApproveAllowanceFlags ...
 func ApproveAllowanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "owner private key")
 	_ = cmd.MarkFlagRequired("key")
@@ -348,6 +375,7 @@ func ApproveAllowanceFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("amount")
 }
 
+//ApproveAllowance ...
 func ApproveAllowance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("key")
@@ -372,6 +400,7 @@ func ApproveAllowance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//BurnCmd ...
 func BurnCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn",
@@ -382,6 +411,7 @@ func BurnCmd() *cobra.Command {
 	return cmd
 }
 
+//BurnAsyncCmd ...
 func BurnAsyncCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "burn-async",
@@ -392,6 +422,7 @@ func BurnAsyncCmd() *cobra.Command {
 	return cmd
 }
 
+//BurnFlags ...
 func BurnFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "owner private key")
 	_ = cmd.MarkFlagRequired("key")
@@ -403,6 +434,7 @@ func BurnFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("amount")
 }
 
+// Burn ...
 func Burn(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("key")
@@ -427,6 +459,7 @@ func Burn(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//BurnAsync ...
 func BurnAsync(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("key")
@@ -451,6 +484,7 @@ func BurnAsync(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//LockSyncCmd ...
 func LockSyncCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock",
@@ -461,6 +495,7 @@ func LockSyncCmd() *cobra.Command {
 	return cmd
 }
 
+//LockAsyncCmd ...
 func LockAsyncCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lock-async",
@@ -471,6 +506,7 @@ func LockAsyncCmd() *cobra.Command {
 	return cmd
 }
 
+//LockEthErc20AssetFlags ...
 func LockEthErc20AssetFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "owner private key")
 	_ = cmd.MarkFlagRequired("key")
@@ -481,6 +517,7 @@ func LockEthErc20AssetFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("receiver")
 }
 
+//LockEthErc20Asset ...
 func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("key")
@@ -508,6 +545,7 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//LockEthErc20AssetAsync ...
 func LockEthErc20AssetAsync(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	key, _ := cmd.Flags().GetString("key")
@@ -535,6 +573,7 @@ func LockEthErc20AssetAsync(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowBridgeBankAddrCmd ...
 func ShowBridgeBankAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridgeBankAddr",
@@ -544,6 +583,7 @@ func ShowBridgeBankAddrCmd() *cobra.Command {
 	return cmd
 }
 
+//ShowBridgeBankAddr ...
 func ShowBridgeBankAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
@@ -551,6 +591,7 @@ func ShowBridgeBankAddr(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//ShowBridgeRegistryAddrCmd ...
 func ShowBridgeRegistryAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridgeRegistry",
@@ -560,6 +601,7 @@ func ShowBridgeRegistryAddrCmd() *cobra.Command {
 	return cmd
 }
 
+//ShowBridgeRegistryAddr ...
 func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
@@ -567,6 +609,7 @@ func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//GetBalanceCmd ...
 func GetBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
@@ -577,12 +620,14 @@ func GetBalanceCmd() *cobra.Command {
 	return cmd
 }
 
+//GetBalanceFlags ...
 func GetBalanceFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "owner address")
 	_ = cmd.MarkFlagRequired("owner")
 	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for Eth")
 }
 
+//GetBalance ...
 func GetBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	owner, _ := cmd.Flags().GetString("owner")
@@ -597,6 +642,7 @@ func GetBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//IsProphecyPendingCmd ...
 func IsProphecyPendingCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ispending",
@@ -607,11 +653,13 @@ func IsProphecyPendingCmd() *cobra.Command {
 	return cmd
 }
 
+//IsProphecyPendingFlags ...
 func IsProphecyPendingFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "claim prophecy id")
 	_ = cmd.MarkFlagRequired("id")
 }
 
+//IsProphecyPending ...
 func IsProphecyPending(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	id, _ := cmd.Flags().GetString("id")
@@ -622,6 +670,7 @@ func IsProphecyPending(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//TransferTokenCmd ...
 func TransferTokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer",
@@ -632,6 +681,7 @@ func TransferTokenCmd() *cobra.Command {
 	return cmd
 }
 
+//TransferTokenFlags ...
 func TransferTokenFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token address")
 	_ = cmd.MarkFlagRequired("token")
@@ -644,6 +694,7 @@ func TransferTokenFlags(cmd *cobra.Command) {
 
 }
 
+//TransferToken ...
 func TransferToken(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenAddr, _ := cmd.Flags().GetString("token")
@@ -670,6 +721,7 @@ func TransferToken(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+//GetToken2addressCmd ...
 func GetToken2addressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tokenaddr",
@@ -680,12 +732,14 @@ func GetToken2addressCmd() *cobra.Command {
 	return cmd
 }
 
+//GetToken2addressFlags ...
 func GetToken2addressFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("token", "t", "", "token symbol")
 	_ = cmd.MarkFlagRequired("token")
 
 }
 
+//GetToken2address ...
 func GetToken2address(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	tokenSymbol, _ := cmd.Flags().GetString("token")

@@ -25,6 +25,7 @@ const (
 	MaxCount     = int32(100) // 最多取100条
 )
 
+//setting
 const (
 	Coin                      = types.Coin      // 1e8
 	DefaultDebtCeiling        = 10000 * Coin    // 默认借贷限额
@@ -63,19 +64,19 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-// Key for CollateralizeConfig
+//ConfigKey Key for CollateralizeConfig
 func ConfigKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-config")...)
 	return key
 }
 
-// Key for CollateralizeAddrConfig
+//AddrKey Key for CollateralizeAddrConfig
 func AddrKey() (key []byte) {
 	key = append(key, []byte("mavl-"+issuanceE.IssuanceX+"-addr")...)
 	return key
 }
 
-// Key for IssuancePriceFeed
+//PriceKey Key for IssuancePriceFeed
 func PriceKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.CollateralizeX+"-price")...)
 	return key
@@ -193,7 +194,7 @@ func (action *Action) GetFeedReceiptLog(collateralize *pty.Collateralize, record
 	return log
 }
 
-// GetCloseReceiptLog generate logs for Collateralize close action
+// GetRetrieveReceiptLog generate logs for Collateralize close action
 func (action *Action) GetRetrieveReceiptLog(collateralize *pty.Collateralize) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogCollateralizeRetrieve
@@ -236,7 +237,7 @@ func getLatestExpireTime(coll *pty.Collateralize) int64 {
 	return latest
 }
 
-// CollateralizeConfig 设置全局借贷参数（管理员权限）
+// CollateralizeManage 设置全局借贷参数（管理员权限）
 func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*types.Receipt, error) {
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
@@ -505,7 +506,7 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 	return false
 }
 
-// CheckExecAccount 检查账户token余额
+// CheckExecTokenAccount 检查账户token余额
 func (action *Action) CheckExecTokenAccount(addr string, amount int64, isFrozen bool) bool {
 	acc := action.tokenAccount.LoadExecAccount(addr, action.execaddr)
 	if isFrozen {

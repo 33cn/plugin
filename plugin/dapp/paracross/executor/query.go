@@ -471,6 +471,7 @@ func (p *Paracross) Query_ListSelfStages(in *pt.ReqQuerySelfStages) (types.Messa
 	return p.listSelfStages(in)
 }
 
+//Query_GetBlock2MainInfo ...
 func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
 	ret := &pt.ParaBlock2MainInfo{}
 	details, err := p.GetAPI().GetBlocks(req)
@@ -491,6 +492,7 @@ func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock
 	return ret, nil
 }
 
+//Query_GetHeight ...
 func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
 	cfg := p.GetAPI().GetConfig()
 	if req == nil || req.Data == "" {

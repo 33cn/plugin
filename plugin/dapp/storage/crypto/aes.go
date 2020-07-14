@@ -5,16 +5,19 @@ import (
 	"crypto/cipher"
 )
 
+//AES ...
 type AES struct {
 	key []byte
 	//iv的长度必须等于block块的大小，这里是16字节，固定
 	iv []byte
 }
 
-//AES 密钥长度为 16,24,32 字节，三种
+//NewAES 密钥长度为 16,24,32 字节，三种
 func NewAES(key, iv []byte) *AES {
 	return &AES{key: key, iv: iv}
 }
+
+//Encrypt ...
 func (a *AES) Encrypt(origData []byte) ([]byte, error) {
 	block, err := aes.NewCipher(a.key)
 	if err != nil {
@@ -31,6 +34,7 @@ func (a *AES) Encrypt(origData []byte) ([]byte, error) {
 	return crypted, nil
 }
 
+//Decrypt ...
 func (a *AES) Decrypt(crypted []byte) ([]byte, error) {
 	block, err := aes.NewCipher(a.key)
 	if err != nil {

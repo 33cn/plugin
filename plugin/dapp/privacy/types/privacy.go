@@ -45,10 +45,12 @@ func init() {
 	types.RegExec(PrivacyX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(PrivacyX, "Enable", 980000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(PrivacyX, NewType(cfg))
 }

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"math"
@@ -11,39 +10,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
-func Float64ToBytes(float float64) []byte {
-	result := make([]byte, 8)
-	binary.LittleEndian.PutUint64(result, math.Float64bits(float))
-	return result
-}
-
-func BytesToFloat64(bytes []byte) float64 {
-	return math.Float64frombits(binary.LittleEndian.Uint64(bytes))
-}
-
-func AddressIsEmpty(address string) bool {
-	if address == "" {
-		return true
-	}
-
-	var aa2 string
-	return address == aa2
-}
-
-func AddToStringMap(in *StringMap, validator string) *StringMap {
-	inStringMap := append(in.GetValidators(), validator)
-	stringMapRes := new(StringMap)
-	stringMapRes.Validators = inStringMap
-	return stringMapRes
-}
-
-func DivideSpecifyTimes(start, time int64) int64 {
-	for i := 0; i < int(time); i++ {
-		start /= 10
-	}
-	return start
-}
-
+//MultiplySpecifyTimes ...
 func MultiplySpecifyTimes(start float64, time int64) float64 {
 	for i := 0; i < int(time); i++ {
 		start *= 10
@@ -51,6 +18,7 @@ func MultiplySpecifyTimes(start float64, time int64) float64 {
 	return start
 }
 
+//Toeth ...
 func Toeth(amount string, decimal int64) float64 {
 
 	bf := big.NewFloat(0)
@@ -64,7 +32,7 @@ func Toeth(amount string, decimal int64) float64 {
 	return f
 }
 
-//将eth单位的金额转为wei单位
+//ToWei 将eth单位的金额转为wei单位
 func ToWei(amount float64, decimal int64) *big.Int {
 
 	var ok bool
@@ -81,6 +49,7 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	return nil
 }
 
+//TrimZeroAndDot ...
 func TrimZeroAndDot(s string) string {
 	if strings.Contains(s, ".") {
 		var trimDotStr string
@@ -92,6 +61,7 @@ func TrimZeroAndDot(s string) string {
 	return s
 }
 
+//CheckPower ...
 func CheckPower(power int64) bool {
 	if power <= 0 || power > 100 {
 		return false
@@ -99,6 +69,7 @@ func CheckPower(power int64) bool {
 	return true
 }
 
+//DivideDot ...
 func DivideDot(in string) (left, right string, err error) {
 	if strings.Contains(in, ".") {
 		ss := strings.Split(in, ".")
@@ -107,6 +78,7 @@ func DivideDot(in string) (left, right string, err error) {
 	return "", "", errors.New("Divide error")
 }
 
+//IsExecAddrMatch ...
 func IsExecAddrMatch(name string, to string) bool {
 	toaddr := address.ExecAddress(name)
 	return toaddr == to

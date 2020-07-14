@@ -254,7 +254,6 @@ func (mvccs *KVMVCCStore) Del(req *types.StoreDel) ([]byte, error) {
 		if err != types.ErrNotFound {
 			panic(err)
 		} else {
-			maxVersion = -1
 			return nil, err
 		}
 	}
@@ -296,7 +295,7 @@ func (mvccs *KVMVCCStore) saveKVSets(kvset []*types.KeyValue, sync bool) {
 	dbm.MustWrite(storeBatch)
 }
 
-// GetMaxVersion 获取当前最大高度
+//GetMaxVersion GetMaxVersion 获取当前最大高度
 func (mvccs *KVMVCCStore) GetMaxVersion() (int64, error) {
 	return mvccs.mvcc.GetMaxVersion()
 }
@@ -348,6 +347,7 @@ func calcHash(datas proto.Message) []byte {
 	return common.Sha256(b)
 }
 
+//SetRdm ...
 func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
 	mvccHash := calcHash(datas)
 	// 取出前一个hash映射
@@ -376,6 +376,7 @@ func (mvccs *KVMVCCStore) SetRdm(datas *types.StoreSet, mavlHash []byte, sync bo
 	return hash, nil
 }
 
+//MemSetRdm ...
 func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync bool) ([]byte, error) {
 	beg := types.Now()
 	defer func() {
@@ -429,11 +430,13 @@ func (mvccs *KVMVCCStore) MemSetRdm(datas *types.StoreSet, mavlHash []byte, sync
 	return hash, nil
 }
 
+//GetHashRdm ...
 func (mvccs *KVMVCCStore) GetHashRdm(hash []byte, height int64) ([]byte, error) {
 	key := calcRdmKey(hash, height)
 	return mvccs.db.Get(key)
 }
 
+//GetFirstHashRdm ...
 func (mvccs *KVMVCCStore) GetFirstHashRdm(hash []byte) ([]byte, error) {
 	prefix := append(rdmHashPrefix, hash...)
 	list := dbm.NewListHelper(mvccs.db)

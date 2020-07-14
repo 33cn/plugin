@@ -1305,7 +1305,7 @@ func stagesInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetParaInfoCmd get para chain status by height
+// GetSelfConsStagesCmd get para chain status by height
 func GetSelfConsStagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "all",
@@ -1331,7 +1331,7 @@ func stageOneInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// GetParaInfoCmd get para chain status by height
+// GetSelfConsOneStageCmd get para chain status by height
 func GetSelfConsOneStageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "one",

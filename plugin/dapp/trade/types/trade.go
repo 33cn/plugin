@@ -36,14 +36,17 @@ var (
 	}
 )
 
+//GetName ...
 func (t *TradeType) GetName() string {
 	return TradeX
 }
 
+//GetTypeMap ...
 func (t *TradeType) GetTypeMap() map[string]int32 {
 	return actionName
 }
 
+//GetLogMap ...
 func (t *TradeType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
 }
@@ -54,6 +57,7 @@ func init() {
 	types.RegExec(TradeX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TradeX, "Enable", 100899)
 	cfg.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
@@ -63,14 +67,17 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TradeX, ForkTradePriceX, 3150000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(TradeX, NewType(cfg))
 }
 
+//TradeType ...
 type TradeType struct {
 	types.ExecTypeBase
 }
 
+//NewType ...
 func NewType(cfg *types.Chain33Config) *TradeType {
 	c := &TradeType{}
 	c.SetChild(c)
@@ -78,11 +85,12 @@ func NewType(cfg *types.Chain33Config) *TradeType {
 	return c
 }
 
+//GetPayload ...
 func (t *TradeType) GetPayload() types.Message {
 	return &Trade{}
 }
 
-//ActionName :
+//ActionName ...
 func (t *TradeType) ActionName(tx *types.Transaction) string {
 	var action Trade
 	err := types.Decode(tx.Payload, &action)
@@ -105,6 +113,7 @@ func (t *TradeType) ActionName(tx *types.Transaction) string {
 	return "unknown"
 }
 
+//Amount ...
 func (t *TradeType) Amount(tx *types.Transaction) (int64, error) {
 	//TODO: 补充和完善token和trade分支的amount的计算, added by hzj
 	var trade Trade
@@ -123,6 +132,7 @@ func (t *TradeType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
+//CreateTx ...
 func (t *TradeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	//var tx *types.Transaction
 	cfg := t.GetConfig()

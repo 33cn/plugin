@@ -427,6 +427,7 @@ func TestIssuance(t *testing.T) {
 	res, err = exec.Query("IssuanceRecordsByStatus",
 		types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
 	assert.Nil(t, res)
+	assert.NotNil(t, err)
 
 	p8 := &pkt.IssuanceFeedTx{}
 	p8.Price = append(p8.Price, 0.5)
@@ -488,9 +489,11 @@ func TestIssuance(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, res)
 	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 4}))
+	assert.NotNil(t, err)
 	assert.Nil(t, res)
 	res, err = exec.Query("IssuanceRecordsByStatus", types.Encode(&pkt.ReqIssuanceRecords{Status: 1}))
 	assert.Nil(t, res)
+	assert.NotNil(t, err)
 
 	// expire liquidate
 	p9 := &pkt.IssuanceDebtTx{

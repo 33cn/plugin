@@ -17,10 +17,12 @@ func init() {
 	types.RegExec(GuessX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(GuessX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(GuessX, NewType(cfg))
 }

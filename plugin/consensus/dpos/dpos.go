@@ -785,7 +785,7 @@ func (client *Client) GetNode() *Node {
 	return client.node
 }
 
-//比较newBlock是不是最优区块
+//CmpBestBlock 比较newBlock是不是最优区块
 func (client *Client) CmpBestBlock(newBlock *types.Block, cmpBlock *types.Block) bool {
 	return false
 }

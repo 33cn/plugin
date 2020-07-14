@@ -7,4 +7,5 @@ package buildflags
 // RPCAddr  rpc address
 var RPCAddr string
 
+// NodeAddr ...
 var NodeAddr string
