@@ -499,6 +499,7 @@ func TestCollateralize(t *testing.T) {
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
 	assert.Nil(t, res)
+	assert.NotNil(t, err)
 
 	p81 := &pkt.CollateralizeFeedTx{}
 	p81.Price = append(p81.Price, 0.5)
@@ -566,9 +567,11 @@ func TestCollateralize(t *testing.T) {
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 4}))
 	assert.Nil(t, res)
+	assert.NotNil(t, err)
 	res, err = exec.Query("CollateralizeRecordByStatus",
 		types.Encode(&pkt.ReqCollateralizeRecordByStatus{CollateralizeId: common.ToHex(collateralizeID), Status: 1}))
 	assert.Nil(t, res)
+	assert.NotNil(t, err)
 
 	// expire liquidate
 	p10 := &pkt.CollateralizeBorrowTx{

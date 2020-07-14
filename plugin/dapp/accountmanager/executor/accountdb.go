@@ -42,6 +42,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
+//NewAction ...
 func NewAction(e *Accountmanager, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -60,6 +61,7 @@ func (a *Action) GetKVSet(account *et.Account) (kvset []*types.KeyValue) {
 	return kvset
 }
 
+//Register ...
 func (a *Action) Register(payload *et.Register) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	account1, err := findAccountByID(a.localDB, payload.AccountID)
@@ -90,7 +92,7 @@ func (a *Action) Register(payload *et.Register) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-//为了避免别人恶意重置别人的帐号,这个操作仅有系统管理员有权限去操作
+//Reset 为了避免别人恶意重置别人的帐号,这个操作仅有系统管理员有权限去操作
 func (a *Action) Reset(payload *et.ResetKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	cfg := a.api.GetConfig()
@@ -116,6 +118,8 @@ func (a *Action) Reset(payload *et.ResetKey) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: nil, Logs: logs}
 	return receipts, nil
 }
+
+//Transfer ...
 func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -193,6 +197,7 @@ func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
 	return receipts, nil
 }
 
+//Supervise ...
 func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	//鉴权，看一下地址是否时管理员地址
 	cfg := a.api.GetConfig()
@@ -235,6 +240,7 @@ func (a *Action) Supervise(payload *et.Supervise) (*types.Receipt, error) {
 	return receipts, nil
 }
 
+//Apply ...
 func (a *Action) Apply(payload *et.Apply) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue

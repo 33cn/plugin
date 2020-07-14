@@ -50,7 +50,7 @@ var opt_exchange_history = &table.Option{
 	Index:   []string{"name", "addr_status"},
 }
 
-//NewTable 新建表
+//NewMarketDepthTable 新建表
 func NewMarketDepthTable(kvdb db.KV) *table.Table {
 	rowmeta := NewMarketDepthRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_depth)
@@ -60,6 +60,7 @@ func NewMarketDepthTable(kvdb db.KV) *table.Table {
 	return table
 }
 
+//NewMarketOrderTable ...
 func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_order)
@@ -69,6 +70,7 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 	return table
 }
 
+//NewHistoryOrderTable ...
 func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewHistoryOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_history)
@@ -88,7 +90,7 @@ func NewOrderRow() *OrderRow {
 	return &OrderRow{Order: &ety.Order{}}
 }
 
-//CreateRow
+//CreateRow ...
 func (r *OrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{}}
 }
@@ -119,10 +121,12 @@ type HistoryOrderRow struct {
 	*ety.Order
 }
 
+//NewHistoryOrderRow ...
 func NewHistoryOrderRow() *HistoryOrderRow {
 	return &HistoryOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
 
+//CreateRow ...
 func (m *HistoryOrderRow) CreateRow() *table.Row {
 	return &table.Row{Data: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
 }
@@ -148,12 +152,12 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-//marketDepthRow table meta 结构
+//MarketDepthRow table meta 结构
 type MarketDepthRow struct {
 	*ety.MarketDepth
 }
 
-//NewOracleRow 新建一个meta 结构
+//NewMarketDepthRow 新建一个meta 结构
 func NewMarketDepthRow() *MarketDepthRow {
 	return &MarketDepthRow{MarketDepth: &ety.MarketDepth{}}
 }

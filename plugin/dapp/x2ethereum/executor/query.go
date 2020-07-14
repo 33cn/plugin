@@ -43,16 +43,12 @@ func (x *x2ethereum) Query_GetValidators(in *x2eTy.QueryValidatorsParams) (types
 	}
 
 	if in.Validator != "" {
-		validatorsRes := new(x2eTy.ReceiptQueryValidator)
 		for _, vv := range v.Validators {
 			if vv.Address == in.Validator {
-				val := make([]*x2eTy.MsgValidator, 1)
-				val[0] = vv
-				validatorsRes = &x2eTy.ReceiptQueryValidator{
-					Validators: val,
+				return &x2eTy.ReceiptQueryValidator{
+					Validators: []*x2eTy.MsgValidator{vv},
 					TotalPower: vv.Power,
-				}
-				return validatorsRes, nil
+				}, nil
 			}
 		}
 		// 未知的地址

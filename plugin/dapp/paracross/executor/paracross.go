@@ -36,6 +36,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	setPrefix()
 }
 
+//InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Paracross{}))

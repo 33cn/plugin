@@ -22,10 +22,12 @@ func init() {
 	types.RegExec(ValNodeX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ValNodeX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ValNodeX, NewType(cfg))
 }
@@ -66,7 +68,7 @@ func (t *ValNodeType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{}
 }
 
-// CreateTx
+// CreateTx ...
 func (t *ValNodeType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
 	tlog.Debug("valnode.CreateTx", "action", action)
 	cfg := t.GetConfig()
@@ -82,7 +84,7 @@ func (t *ValNodeType) CreateTx(action string, message json.RawMessage) (*types.T
 	return nil, types.ErrNotSupport
 }
 
-// CreateNodeUpdateTx
+// CreateNodeUpdateTx ...
 func CreateNodeUpdateTx(cfg *types.Chain33Config, parm *NodeUpdateTx) (*types.Transaction, error) {
 	if parm == nil {
 		tlog.Error("CreateNodeUpdateTx", "parm", parm)

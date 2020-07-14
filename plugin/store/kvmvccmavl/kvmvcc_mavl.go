@@ -65,6 +65,7 @@ func init() {
 	types.RegFork("store-kvmvccmavl", InitFork)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
 }
@@ -528,6 +529,7 @@ func setDelMavl(state int32) {
 	atomic.StoreInt32(&delMavlDataState, state)
 }
 
+//CompactDelMavl ...
 func CompactDelMavl(db dbm.DB) {
 	setDelMavl(delMavlStateStart)
 	defer setDelMavl(delMavlStateEnd)

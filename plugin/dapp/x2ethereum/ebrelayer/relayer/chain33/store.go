@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+//key ...
 var (
 	lastSyncHeightPrefix              = []byte("lastSyncHeight:")
 	chain33ToEthBurnLockTxHashPrefix  = "chain33ToEthBurnLockTxHash"

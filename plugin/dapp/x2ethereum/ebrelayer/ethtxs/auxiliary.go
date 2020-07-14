@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+//NewProphecyClaimPara ...
 type NewProphecyClaimPara struct {
 	ClaimType     uint8
 	Chain33Sender []byte
@@ -25,6 +26,7 @@ type NewProphecyClaimPara struct {
 	Txhash        []byte
 }
 
+//CreateBridgeToken ...
 func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthDeployInfo *X2EthDeployInfo, x2EthContracts *X2EthContracts) (string, error) {
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -102,6 +104,7 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *O
 	return logEvent.Token.String(), nil
 }
 
+//CreateERC20Token ...
 func CreateERC20Token(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo) (string, error) {
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -136,6 +139,7 @@ func CreateERC20Token(symbol string, client ethinterface.EthClientSpec, para *Op
 	return tokenAddr.String(), nil
 }
 
+//MintERC20Token ...
 func MintERC20Token(tokenAddr, ownerAddr string, amount *big.Int, client ethinterface.EthClientSpec, para *OperatorInfo) (string, error) {
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -174,6 +178,7 @@ func MintERC20Token(tokenAddr, ownerAddr string, amount *big.Int, client ethinte
 	return tx.Hash().String(), nil
 }
 
+//ApproveAllowance ...
 func ApproveAllowance(ownerPrivateKeyStr, tokenAddr string, bridgeBank common.Address, amount *big.Int, client ethinterface.EthClientSpec) (string, error) {
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
@@ -214,6 +219,7 @@ func ApproveAllowance(ownerPrivateKeyStr, tokenAddr string, bridgeBank common.Ad
 	return tx.Hash().String(), nil
 }
 
+//Burn ...
 func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank common.Address, amount *big.Int, bridgeBankIns *generated.BridgeBank, client ethinterface.EthClientSpec) (string, error) {
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
@@ -272,6 +278,7 @@ func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank c
 	return tx.Hash().String(), nil
 }
 
+//BurnAsync ...
 func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount *big.Int, bridgeBankIns *generated.BridgeBank, client ethinterface.EthClientSpec) (string, error) {
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
@@ -302,6 +309,7 @@ func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount 
 	return tx.Hash().String(), nil
 }
 
+//TransferToken ...
 func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int, client ethinterface.EthClientSpec) (string, error) {
 	tokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenAddr), client)
 	if nil != err {
@@ -341,6 +349,7 @@ func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int,
 	return tx.Hash().String(), nil
 }
 
+//LockEthErc20Asset ...
 func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank, bridgeBankAddr common.Address) (string, error) {
 	var prepareDone bool
 	txslog.Info("LockEthErc20Asset", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
@@ -413,6 +422,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 	return tx.Hash().String(), nil
 }
 
+//LockEthErc20AssetAsync ...
 func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank) (string, error) {
 	txslog.Info("LockEthErc20AssetAsync", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))

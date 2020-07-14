@@ -1277,6 +1277,10 @@ func (action *Action) RegistTopN(regist *dty.TopNCandidatorRegist) (*types.Recei
 	}
 
 	topNCands, err := action.readTopNCandicators(topNVersion)
+	if err != nil {
+		logger.Error("RegistTopN failed readTopNCandicators", "addr", action.fromaddr, "execaddr", action.execaddr, "version", topNVersion)
+		return nil, types.ErrInvalidParam
+	}
 	if topNCands == nil {
 		topNCands = &dty.TopNCandidators{
 			Version: topNVersion,

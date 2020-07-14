@@ -26,6 +26,7 @@ type Action struct {
 	api       client.QueueProtocolAPI
 }
 
+//NewAction ...
 func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
@@ -45,7 +46,7 @@ func (a *Action) GetKVSet(order *et.Order) (kvset []*types.KeyValue) {
 	return kvset
 }
 
-//反转
+//OpSwap 反转
 func (a *Action) OpSwap(op int32) int32 {
 	if op == et.OpBuy {
 		return et.OpSell
@@ -53,7 +54,7 @@ func (a *Action) OpSwap(op int32) int32 {
 	return et.OpBuy
 }
 
-//计算实际花费
+//CalcActualCost 计算实际花费
 func CalcActualCost(op int32, amount int64, price int64) int64 {
 	if op == et.OpBuy {
 		return SafeMul(amount, price)
@@ -61,13 +62,15 @@ func CalcActualCost(op int32, amount int64, price int64) int64 {
 	return amount
 }
 
-//price 精度允许范围 1<=price<=1e16 整数
+//CheckPrice price 精度允许范围 1<=price<=1e16 整数
 func CheckPrice(price int64) bool {
 	if price > 1e16 || price < 1 {
 		return false
 	}
 	return true
 }
+
+//CheckOp ...
 func CheckOp(op int32) bool {
 	if op == et.OpBuy || op == et.OpSell {
 		return true
@@ -75,11 +78,12 @@ func CheckOp(op int32) bool {
 	return false
 }
 
+//CheckCount ...
 func CheckCount(count int32) bool {
 	return count <= 20 && count >= 0
 }
 
-//最小交易1e8
+//CheckAmount 最小交易1e8
 func CheckAmount(amount int64) bool {
 	if amount < types.Coin || amount >= types.MaxCoin {
 		return false
@@ -87,6 +91,7 @@ func CheckAmount(amount int64) bool {
 	return true
 }
 
+//CheckDirection ...
 func CheckDirection(direction int32) bool {
 	if direction == et.ListASC || direction == et.ListDESC {
 		return true
@@ -94,6 +99,7 @@ func CheckDirection(direction int32) bool {
 	return false
 }
 
+//CheckStatus ...
 func CheckStatus(status int32) bool {
 	if status == et.Ordered || status == et.Completed || status == et.Revoked {
 		return true
@@ -101,7 +107,7 @@ func CheckStatus(status int32) bool {
 	return false
 }
 
-//检查交易得资产是否合法
+//CheckExchangeAsset 检查交易得资产是否合法
 func CheckExchangeAsset(left, right *et.Asset) bool {
 	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
 		return false
@@ -111,6 +117,8 @@ func CheckExchangeAsset(left, right *et.Asset) bool {
 	}
 	return true
 }
+
+//LimitOrder ...
 func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	leftAsset := payload.GetLeftAsset()
 	rightAsset := payload.GetRightAsset()
@@ -161,6 +169,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	return nil, fmt.Errorf("unknow op")
 }
 
+//RevokeOrder ...
 func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -539,7 +548,7 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 	return &orderList, nil
 }
 
-//买单深度是按价格倒序，由高到低
+//Direction 买单深度是按价格倒序，由高到低
 func Direction(op int32) int32 {
 	if op == et.OpBuy {
 		return et.ListDESC
@@ -547,7 +556,7 @@ func Direction(op int32) int32 {
 	return et.ListASC
 }
 
-//这里primaryKey当作主键索引来用，首次查询不需要填值,买单按价格由高往低，卖单按价格由低往高查询
+//QueryMarketDepth 这里primaryKey当作主键索引来用，首次查询不需要填值,买单按价格由高往低，卖单按价格由低往高查询
 func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), op))
@@ -623,7 +632,7 @@ HERE:
 	return &orderList, nil
 }
 
-//QueryOrderList,默认展示最新的
+//QueryOrderList 默认展示最新的
 func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
 	var table *tab.Table
 	if status == et.Completed || status == et.Revoked {
@@ -671,7 +680,7 @@ func queryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, price int
 	return row.Data.(*et.MarketDepth), nil
 }
 
-//math库中的安全大数乘法，防溢出
+//SafeMul math库中的安全大数乘法，防溢出
 func SafeMul(x, y int64) int64 {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
 	res = big.NewInt(0).Div(res, big.NewInt(types.Coin))

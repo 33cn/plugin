@@ -55,6 +55,7 @@ func LogLockToEthBridgeClaim(event *events.LockEvent, ethereumChainID int64, bri
 	return witnessClaim, nil
 }
 
+//LogBurnToEthBridgeClaim ...
 func LogBurnToEthBridgeClaim(event *events.BurnEvent, ethereumChainID int64, bridgeBrankAddr string, decimal int64) (*ebrelayerTypes.EthBridgeClaim, error) {
 	recipient := event.Chain33Receiver
 	if 0 == len(recipient) {

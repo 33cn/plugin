@@ -164,6 +164,9 @@ func (a *action) procChain33ToEth_lock(msgLock *x2eTy.Chain33ToEth) (*types.Rece
 		accDB.SetDB(a.db)
 	} else {
 		accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)
+		if err != nil {
+			return nil, errors.Wrap(err, "newAccountDB")
+		}
 	}
 	r, err := a.oracle.ProcessLock(a.fromaddr, address.ExecAddress(symbol), a.execaddr, msgLock.Amount, accDB)
 	if err != nil {
@@ -235,6 +238,9 @@ func (a *action) procEth2Chain33_burn(withdrawEth *x2eTy.Eth2Chain33) (*types.Re
 			accDB.SetDB(a.db)
 		} else {
 			accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)
+			if err != nil {
+				return nil, errors.Wrap(err, "newAccountDB")
+			}
 		}
 
 		r, err := a.oracle.ProcessSuccessfulClaimForBurn(status.FinalClaim, a.execaddr, symbol, accDB)

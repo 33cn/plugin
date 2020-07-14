@@ -79,6 +79,7 @@ func testPerformCmd(t *testing.T, jrpc *jsonclient.JSONClient) error {
 	var txS string
 	t.Log("tx info", "x", params.Assets)
 	err := jrpc.Call("retrieve.CreateRawRetrievePerformTx", &params, &txS)
+	assert.Nil(t, err)
 	var tx types.Transaction
 	bytes, err := common.FromHex(txS)
 	if err != nil {

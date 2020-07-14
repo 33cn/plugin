@@ -54,10 +54,12 @@ func init() {
 	types.RegExec(RelayX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RelayX, "Enable", 570000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(RelayX, NewType(cfg))
 }

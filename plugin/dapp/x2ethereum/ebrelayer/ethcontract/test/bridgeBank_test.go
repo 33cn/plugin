@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/generated"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethcontract/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
@@ -228,6 +230,7 @@ func TestBridgeDepositLock(t *testing.T) {
 
 	//创建token
 	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	assert.Nil(t, err)
 	symbol := "USDT"
 	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbol)
 	require.Nil(t, err)
@@ -242,6 +245,7 @@ func TestBridgeDepositLock(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
+	assert.Nil(t, err)
 	require.Equal(t, symQuery, symbol)
 	t.Logf("symQuery = %s", symQuery)
 
@@ -341,6 +345,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 	//2.lockErc20资产
 	//创建token
 	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	assert.Nil(t, err)
 	symbolUsdt := "USDT"
 	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
@@ -357,6 +362,7 @@ func TestBridgeBankUnlock(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
+	assert.Nil(t, err)
 	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 
@@ -365,13 +371,14 @@ func TestBridgeBankUnlock(t *testing.T) {
 	require.Equal(t, isMiner, true)
 
 	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
-
+	assert.Nil(t, err)
 	mintAmount := int64(1000)
 	_, err = bridgeTokenInstance.Mint(operatorAuth, userOne, big.NewInt(mintAmount))
 	require.Nil(t, err)
 	sim.Commit()
 
 	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
+	assert.Nil(t, err)
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
 	require.Nil(t, err)
@@ -481,6 +488,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	//2.lockErc20资产
 	//创建token
 	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	assert.Nil(t, err)
 	symbolUsdt := "USDT"
 	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
@@ -497,6 +505,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
+	assert.Nil(t, err)
 	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 
@@ -512,6 +521,7 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	sim.Commit()
 
 	userOneAuth, err = ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
+	assert.Nil(t, err)
 	allowAmount := int64(100)
 	_, err = bridgeTokenInstance.Approve(userOneAuth, x2EthDeployInfo.BridgeBank.Address, big.NewInt(allowAmount))
 	require.Nil(t, err)
@@ -618,6 +628,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	//2.lockErc20资产
 	//创建token
 	operatorAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	assert.Nil(t, err)
 	symbolUsdt := "USDT"
 	bridgeTokenAddr, _, bridgeTokenInstance, err := generated.DeployBridgeToken(operatorAuth, sim, symbolUsdt)
 	require.Nil(t, err)
@@ -632,6 +643,7 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 		Context: ctx,
 	}
 	symQuery, err := bridgeTokenInstance.Symbol(callopts)
+	assert.Nil(t, err)
 	require.Equal(t, symQuery, symbolUsdt)
 	t.Logf("symQuery = %s", symQuery)
 	isMiner, err := bridgeTokenInstance.IsMinter(callopts, para.Operator)

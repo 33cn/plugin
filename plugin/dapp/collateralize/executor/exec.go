@@ -27,7 +27,7 @@ func (c *Collateralize) Exec_Repay(payload *pty.CollateralizeRepay, tx *types.Tr
 	return actiondb.CollateralizeRepay(payload)
 }
 
-// Exec_Repay Action
+// Exec_Append Action
 func (c *Collateralize) Exec_Append(payload *pty.CollateralizeAppend, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewCollateralizeAction(c, tx, index)
 	return actiondb.CollateralizeAppend(payload)
@@ -45,7 +45,7 @@ func (c *Collateralize) Exec_Retrieve(payload *pty.CollateralizeRetrieve, tx *ty
 	return actiondb.CollateralizeRetrieve(payload)
 }
 
-// Exec_Close Action
+// Exec_Manage Action
 func (c *Collateralize) Exec_Manage(payload *pty.CollateralizeManage, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewCollateralizeAction(c, tx, index)
 	return actiondb.CollateralizeManage(payload)

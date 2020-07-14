@@ -86,7 +86,7 @@ func (c *Collateralize) ExecLocal_Repay(payload *pty.CollateralizeRepay, tx *typ
 	return c.execLocal(tx, receiptData)
 }
 
-// ExecLocal_Repay Action
+// ExecLocal_Append Action
 func (c *Collateralize) ExecLocal_Append(payload *pty.CollateralizeAppend, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return c.execLocal(tx, receiptData)
 }

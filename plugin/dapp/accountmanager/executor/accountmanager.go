@@ -31,6 +31,7 @@ func InitExecType() {
 	ety.InitFuncList(types.ListMethod(&Accountmanager{}))
 }
 
+//Accountmanager ...
 type Accountmanager struct {
 	drivers.DriverBase
 }
@@ -47,6 +48,7 @@ func GetName() string {
 	return newAccountmanager().GetName()
 }
 
+//GetDriverName ...
 func (a *Accountmanager) GetDriverName() string {
 	return driverName
 }
@@ -82,6 +84,7 @@ func (a *Accountmanager) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 }
 
+//CheckAccountIDIsExist ...
 func (a *Accountmanager) CheckAccountIDIsExist(accountID string) bool {
 	_, err := findAccountByID(a.GetLocalDB(), accountID)
 	return err != types.ErrNotFound

@@ -17,6 +17,7 @@ var (
 	stateKey = []byte("stateKey")
 )
 
+//ConsensusStore ...
 type ConsensusStore struct {
 	db dbm.DB
 }
@@ -30,7 +31,7 @@ func NewConsensusStore() *ConsensusStore {
 	}
 }
 
-// LoadStateFromStore
+// LoadStateFromStore ...
 func (cs *ConsensusStore) LoadStateFromStore() *tmtypes.State {
 	buf, err := cs.db.Get(stateKey)
 	if err != nil {
@@ -45,7 +46,7 @@ func (cs *ConsensusStore) LoadStateFromStore() *tmtypes.State {
 	return state
 }
 
-// LoadStateHeight
+// LoadStateHeight ...
 func (cs *ConsensusStore) LoadStateHeight() int64 {
 	state := cs.LoadStateFromStore()
 	if state == nil {

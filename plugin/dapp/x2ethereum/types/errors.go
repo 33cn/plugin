@@ -2,6 +2,7 @@ package types
 
 import "errors"
 
+//err ...
 var (
 	ErrInvalidClaimType              = errors.New("invalid claim type provided")
 	ErrInvalidEthSymbol              = errors.New("invalid symbol provided, symbol \"eth\" must have null address set as token contract address")

@@ -25,7 +25,8 @@ var (
 	strChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" // 62 characters
 	genFile  = "genesis_file.json"
 	pvFile   = "priv_validator_"
-	AuthBLS  = 259
+	//AuthBLS ...
+	AuthBLS = 259
 )
 
 // ValCmd valnode cmd register

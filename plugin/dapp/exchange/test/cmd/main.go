@@ -8,6 +8,7 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 )
 
+//setting ...
 var (
 	cli      *test.GRPCCli
 	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4

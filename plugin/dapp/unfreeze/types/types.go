@@ -26,6 +26,7 @@ func init() {
 	types.RegExec(name, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	name = UnfreezeX
 	cfg.RegisterDappFork(name, "Enable", 0)
@@ -33,6 +34,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(name, ForkUnfreezeIDX, 1450000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(UnfreezeX, NewType(cfg))
 }
