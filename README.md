@@ -14,7 +14,7 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 ### 环境
 
 ```
-需要安装golang1.12 or latest
+需要安装golang1.13 or latest
 
 ```
 
