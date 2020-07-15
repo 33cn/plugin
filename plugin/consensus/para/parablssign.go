@@ -6,6 +6,7 @@ package para
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -101,6 +102,11 @@ out:
 			}
 
 		case <-watchDogTicker:
+			//排除不在Nodegroup里面的Node
+			if !b.isValidNodes(b.selfID) {
+				plog.Info("procLeaderSync watchdog, not in nodegroup", "self", b.selfID)
+				continue
+			}
 			//至少1分钟内要收到leader喂狗消息，否则认为leader挂了，index++
 			if atomic.LoadUint32(&b.feedDog) == 0 {
 				nodes, leader, _, off, _ := b.getLeaderInfo()
@@ -537,6 +543,12 @@ func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction)
 func (b *blsClient) showTxBuffInfo() *pt.ParaBlsSignSumInfo {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
+
+	reply, err := b.paraClient.SendFetchP2PTopic()
+	if err != nil {
+		plog.Error("fetch p2p topic", "err", err)
+	}
+	plog.Info("fetch p2p topics", "list", fmt.Sprint(reply.Topics))
 
 	var seq []int64
 	var ret pt.ParaBlsSignSumInfo

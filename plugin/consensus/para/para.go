@@ -327,14 +327,14 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 				plog.Error("paracross ProcEvent decode", "ty", types.EventReceiveSubData)
 				return true
 			}
-			plog.Info("paracross ProcEvent from", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			plog.Info("paracross ProcEvent", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
 			switch sub.GetTy() {
 			case P2pSubCommitTx:
 				go client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
 			case P2pSubLeaderSyncMsg:
 				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
 				if err != nil {
-					plog.Info("paracross ProcEvent leader sync msg", "err", err)
+					plog.Error("paracross ProcEvent leader sync msg", "err", err)
 				}
 			default:
 				plog.Error("paracross ProcEvent not support", "ty", sub.GetTy())
