@@ -95,13 +95,19 @@ func (client *Client) SetQueueClient(c queue.Client) {
 		client.InitBlock()
 	})
 	go client.EventLoop()
+	if !client.IsMining() {
+		rlog.Info("enter sync mode")
+		return
+	}
 	go client.readCommits(client.commitC, client.errorC)
 	go client.pollingTask()
 }
 
 // Close method
 func (client *Client) Close() {
-	client.cancel()
+	if client.cancel != nil {
+		client.cancel()
+	}
 	rlog.Info("consensus raft closed")
 }
 
