@@ -15,8 +15,8 @@ NOC='\033[0m'
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
     ls
-     # shellcheck disable=SC2116
-    dirNameFa=$( echo ~ )
+    # shellcheck disable=SC2116
+    dirNameFa=$(echo ~)
     dirName="$dirNameFa/x2ethereumlogs"
 
     if [ ! -d "${dirName}" ]; then
@@ -25,7 +25,7 @@ function exit_cp_file() {
     fi
 
     for name in A B C D; do
-        cp  "./$name/ebrelayer.log" "$dirName/ebrelayer$name.log"
+        cp "./$name/ebrelayer.log" "$dirName/ebrelayer$name.log"
     done
     docker cp "${NODE3}":/root/logs/chain33.log "$dirName/chain33.log"
 
