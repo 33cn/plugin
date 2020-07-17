@@ -8,6 +8,7 @@ source "../x2ethereum/publicTest.sh"
 sendAddress="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 sendPriKey="0x4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 MAIN_HTTP=""
+NODE3=""
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 # validatorsAddr=["0x92c8b16afd6d423652559c6e266cbe1c29bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 ethValidatorAddrKeyA="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
@@ -106,6 +107,7 @@ function updata_relayer_toml_rpc() {
 
 function copyErrLogs() {
     if [ -n "$CASE_ERR" ]; then
+        # /var/lib/jenkins
         # shellcheck disable=SC2116
         dirNameFa=$(echo ~)
         dirName="$dirNameFa/x2ethereumlogs"
@@ -119,18 +121,21 @@ function copyErrLogs() {
             cp "./x2ethereum/$name/ebrelayer.log" "$dirName/rpc_ebrelayer$name.log"
         done
 
-        oldIFS=$IFS
-        IFS=//
-        # shellcheck disable=SC2207
-        arrpwd=($(pwd))
-        if [ ${#arrpwd[@]} -ge 3 ]; then
-            i=$((${#arrpwd[@]} - 3))
-            # shellcheck disable=SC2116
-            # shellcheck disable=SC2086
-            dockerName=$(echo ${arrpwd[$i]})
-            docker cp "${dockerName}_chain33_1":/root/logs/chain33.log "$dirName/rpc_chain33.log"
-        fi
-        IFS=$oldIFS
+        pwd
+        docker cp "${NODE3}":/root/logs/chain33.log "$dirName/rpc_chain33.log"
+
+#        oldIFS=$IFS
+#        IFS=//
+#        # shellcheck disable=SC2207
+#        arrpwd=($(pwd))
+#        if [ ${#arrpwd[@]} -ge 3 ]; then
+#            i=$((${#arrpwd[@]} - 3))
+#            # shellcheck disable=SC2116
+#            # shellcheck disable=SC2086
+#            dockerName=$(echo ${arrpwd[$i]})
+#            docker cp "${dockerName}_chain33_1":/root/logs/chain33.log "$dirName/rpc_chain33.log"
+#        fi
+#        IFS=$oldIFS
     fi
 }
 
@@ -448,7 +453,7 @@ function TestETH2Chain33Erc20() {
     queryRelayerBalance "$req" "100"
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":"'${tokenAddr}'"}]}'
-    queryRelayerBalance "$req" "0"
+    queryRelayerBalance "$req" "0.009"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -458,6 +463,7 @@ function rpc_test() {
     set +e
     chain33_RpcTestBegin x2ethereum
     MAIN_HTTP="$1"
+    NODE3="$2"
     echo "main_ip=$MAIN_HTTP"
 
     ispara=$(echo '"'"${MAIN_HTTP}"'"' | jq '.|contains("8901")')
@@ -475,4 +481,4 @@ function rpc_test() {
     chain33_RpcTestRst x2ethereum "$CASE_ERR"
 }
 
-chain33_debug_function rpc_test "$1"
+chain33_debug_function rpc_test "$1" "$2"
