@@ -157,6 +157,10 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 }
 
 func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
+	//在未同步前 不处理聚合消息
+	if !b.paraClient.commitMsgClient.isSync() {
+		return nil, 0, 0, 0, false
+	}
 	nodes, _ := b.getSuperNodes()
 	if len(nodes) <= 0 {
 		return nil, 0, 0, 0, false
