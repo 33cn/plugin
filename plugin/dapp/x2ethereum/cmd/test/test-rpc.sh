@@ -118,7 +118,19 @@ function copyErrLogs() {
         for name in A B C D; do
             cp "./x2ethereum/$name/ebrelayer.log" "$dirName/rpc_ebrelayer$name.log"
         done
-        docker cp "${NODE3}":/root/logs/chain33.log "$dirName/rpc_chain33.log"
+
+        oldIFS=$IFS
+        IFS=//
+        # shellcheck disable=SC2207
+        arrpwd=( $( pwd ) )
+        if [ ${#arrpwd[@]} -ge 3 ]; then
+            i=$(( ${#arrpwd[@]}-3 ))
+            # shellcheck disable=SC2116
+            # shellcheck disable=SC2086
+            dockerName=$( echo ${arrpwd[$i]} )
+            docker cp "${dockerName}_chain33_1":/root/logs/chain33.log "$dirName/rpc_chain33.log"
+        fi
+        IFS=$oldIFS
     fi
 }
 
