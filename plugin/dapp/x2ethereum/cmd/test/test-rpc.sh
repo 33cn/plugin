@@ -442,6 +442,7 @@ function TestETH2Chain33Erc20() {
 }
 
 function rpc_test() {
+    set -x
     set +e
     chain33_RpcTestBegin x2ethereum
     MAIN_HTTP="$1"
