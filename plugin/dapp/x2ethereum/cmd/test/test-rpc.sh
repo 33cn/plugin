@@ -453,7 +453,7 @@ function TestETH2Chain33Erc20() {
     queryRelayerBalance "$req" "100"
 
     req='{"method":"Manager.GetBalance","params":[{"owner":"'${bridgeBankAddr}'","tokenAddr":"'${tokenAddr}'"}]}'
-    queryRelayerBalance "$req" "0.009"
+    queryRelayerBalance "$req" "0"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
