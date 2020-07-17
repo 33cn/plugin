@@ -106,8 +106,8 @@ function updata_relayer_toml_rpc() {
 
 function copyErrLogs() {
     if [ -n "$CASE_ERR" ]; then
-      # shellcheck disable=SC2116
-        dirNameFa=$( echo ~ )
+        # shellcheck disable=SC2116
+        dirNameFa=$(echo ~)
         dirName="$dirNameFa/x2ethereumlogs"
 
         if [ ! -d "${dirName}" ]; then
@@ -116,7 +116,7 @@ function copyErrLogs() {
         fi
 
         for name in A B C D; do
-            cp  "./x2ethereum/$name/ebrelayer.log" "$dirName/rpc_ebrelayer$name.log"
+            cp "./x2ethereum/$name/ebrelayer.log" "$dirName/rpc_ebrelayer$name.log"
         done
         docker cp "${NODE3}":/root/logs/chain33.log "$dirName/rpc_chain33.log"
     fi
