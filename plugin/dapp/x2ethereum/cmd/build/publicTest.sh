@@ -14,7 +14,6 @@ NOC='\033[0m'
 
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
-    ls
     # shellcheck disable=SC2116
     dirNameFa=$(echo ~)
     dirName="$dirNameFa/x2ethereumlogs"

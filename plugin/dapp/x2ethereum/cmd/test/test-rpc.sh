@@ -104,6 +104,24 @@ function updata_relayer_toml_rpc() {
     sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
 }
 
+function copyErrLogs() {
+    if [ -n "$CASE_ERR" ]; then
+      # shellcheck disable=SC2116
+        dirNameFa=$( echo ~ )
+        dirName="$dirNameFa/x2ethereumlogs"
+
+        if [ ! -d "${dirName}" ]; then
+            # shellcheck disable=SC2086
+            mkdir -p ${dirName}
+        fi
+
+        for name in A B C D; do
+            cp  "./x2ethereum/$name/ebrelayer.log" "$dirName/rpc_ebrelayer$name.log"
+        done
+        docker cp "${NODE3}":/root/logs/chain33.log "$dirName/rpc_chain33.log"
+    fi
+}
+
 # $1 sendAddress, $2 balance
 function queryExecBalance() {
     local resp=""
@@ -112,6 +130,7 @@ function queryExecBalance() {
     local balance=$(echo "$resp" | jq -r ".result" | jq ".[].balance")
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryExecBalance" "1" "${balance} != ${2}"
+        copyErrLogs
     fi
 }
 
@@ -123,6 +142,7 @@ function queryChain33Balance() {
     local balance=$(echo $resp | jq -r ".result.execAccount" | jq ".[].account.balance")
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryChain33Balance" "1" "${balance} != ${2}"
+        copyErrLogs
     fi
 }
 
@@ -131,6 +151,7 @@ function queryRelayerBalance() {
     chain33_Http "${1}" ${CLIA_HTTP} '(.error|not) and (.result != null)' "GetBalance" ".result.balance"
     if [ "${RETURN_RESP}" != "${2}" ]; then
         echo_rst "queryRelayerBalance" "1" "${RETURN_RESP} != ${2}"
+        copyErrLogs
     fi
 }
 
@@ -141,6 +162,7 @@ function queryChain33X2ethBalance() {
     local balance=$(echo "${RETURN_RESP}" | jq -r ".res" | jq ".[].balance" | sed 's/\"//g')
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryChain33X2ethBalance" "1" "${balance} != ${2}"
+        copyErrLogs
     fi
 }
 
