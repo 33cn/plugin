@@ -122,12 +122,12 @@ function copyErrLogs() {
         oldIFS=$IFS
         IFS=//
         # shellcheck disable=SC2207
-        arrpwd=( $( pwd ) )
+        arrpwd=($(pwd))
         if [ ${#arrpwd[@]} -ge 3 ]; then
-            i=$(( ${#arrpwd[@]}-3 ))
+            i=$((${#arrpwd[@]} - 3))
             # shellcheck disable=SC2116
             # shellcheck disable=SC2086
-            dockerName=$( echo ${arrpwd[$i]} )
+            dockerName=$(echo ${arrpwd[$i]})
             docker cp "${dockerName}_chain33_1":/root/logs/chain33.log "$dirName/rpc_chain33.log"
         fi
         IFS=$oldIFS
