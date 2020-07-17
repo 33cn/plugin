@@ -6,6 +6,7 @@ DAPP_TEST_COMMON=dapp-test-common.sh
 
 function dapp_test_rpc() {
     local ip=$1
+    local node3=$2
     echo "============ # dapp rpc test begin ============="
     if [ -d dapptest ]; then
         cp "$DAPP_TEST_COMMON" dapptest/
@@ -16,7 +17,7 @@ function dapp_test_rpc() {
         dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name autonomy ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
-        parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "$dapps"
+        parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" "$node3" ::: "$dapps"
         local ret=$?
         if [ $ret -ne 0 ]; then
             wrongdapps=$(awk '{print $7,$9 }' jobs.log | grep -a 1 | awk -F '/' '{print $2}')
