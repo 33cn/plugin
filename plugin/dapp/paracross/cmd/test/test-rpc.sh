@@ -128,7 +128,7 @@ function paracross_Transfer_Withdraw_Inner() {
     chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #4 查询转移后余额状态
-    local times=100
+    local times=200
     while true; do
         para_balance_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after transferring:$para_balance_after"
@@ -156,7 +156,7 @@ function paracross_Transfer_Withdraw_Inner() {
     chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #6 查询取钱后余额状态
-    local times=100
+    local times=200
     while true; do
         para_balance_withdraw_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after withdrawing :$para_balance_withdraw_after"
@@ -320,7 +320,7 @@ function paracross_testTxGroupFail() {
 
     #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
     local count=0
-    local times=100
+    local times=300
     local paracross_execer_name="user.p.para.paracross"
     local trade_exec_name="user.p.para.trade"
     local transfer_expect="200000000"
@@ -377,7 +377,7 @@ function paracross_testParaAssetWithdrawFail() {
 
     #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
     local count=0
-    local times=100
+    local times=300
     while true; do
         left_exec_val=$(paracross_QueryMainAssetBalance "${game_token_test_addr}" "paracross" "user.p.game.coins.para")
         if [ "${left_exec_val}" != $amount_left ]; then
