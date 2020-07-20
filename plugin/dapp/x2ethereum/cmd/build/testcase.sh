@@ -14,7 +14,7 @@ function x2ethereum() {
         echo "========================== x2ethereum test =========================="
         set +e
         set -x
-        AllRelayerMainTest 10
+        AllRelayerMainTest 5
         perf_test_main 10
         echo "========================== x2ethereum test end =========================="
     fi
