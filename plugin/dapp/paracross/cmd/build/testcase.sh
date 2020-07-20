@@ -252,7 +252,7 @@ function para_configkey() {
 function query_tx() {
     block_wait "${1}" 1
 
-    local times=100
+    local times=200
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
