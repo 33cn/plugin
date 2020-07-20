@@ -6,7 +6,6 @@ package para
 
 import (
 	"bytes"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -146,10 +145,13 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 	}
 	//如果leader节点冲突，取大者
 	if isLeader && off > sync.Offset {
-		return errors.Wrapf(types.ErrNotSync, "self leader off=%d bigger than sync=%d", off, sync.Offset)
+		return errors.Wrapf(types.ErrNotSync, "self is leader, off=%d bigger than peer sync=%d", off, sync.Offset)
 	}
 	//更新同步过来的最新offset 高度
-	atomic.StoreInt32(&b.leaderOffset, sync.Offset)
+	if off != sync.Offset {
+		atomic.StoreInt32(&b.leaderOffset, sync.Offset)
+		plog.Error("rcvLeaderSyncTx sync to peer", "offset", sync.Offset)
+	}
 
 	//两节点不同步则不喂狗，以防止非同步或作恶节点喂狗
 	atomic.StoreUint32(&b.feedDog, 1)
@@ -548,14 +550,15 @@ func (b *blsClient) showTxBuffInfo() *pt.ParaBlsSignSumInfo {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
+	var ret pt.ParaBlsSignSumInfo
+
 	reply, err := b.paraClient.SendFetchP2PTopic()
 	if err != nil {
 		plog.Error("fetch p2p topic", "err", err)
 	}
-	plog.Info("fetch p2p topics", "list", fmt.Sprint(reply.Topics))
+	ret.Topics = append(ret.Topics, reply.Topics...)
 
 	var seq []int64
-	var ret pt.ParaBlsSignSumInfo
 	for k := range b.commitsPool {
 		seq = append(seq, k)
 	}
