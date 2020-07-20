@@ -149,6 +149,10 @@ func (client *commitMsgClient) updateChainHeightNotify(height int64, isDel bool)
 	client.createCommitTx()
 }
 
+func (client *commitMsgClient) setInitChainHeight(height int64) {
+	atomic.StoreInt64(&client.chainHeight, height)
+}
+
 // reset notify 提供重设发送参数，发送tx的入口
 func (client *commitMsgClient) resetNotify() {
 	client.resetCh <- 1

@@ -431,6 +431,7 @@ message ParaBlsSignSumDetailsShow {
 }
 message ParaBlsSignSumInfo {
     repeated ParaBlsSignSumDetailsShow info = 1;
+    repeated string topics = 2;
 }
 
 message LeaderSyncInfo {

@@ -109,6 +109,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
 	}
 
+	//最初平行链toml GenesisBlockTime=1514533394，但是未被使用，一直使用的内置的1514533390,最新版本开始适配cfg.GenesisBlockTime,并且
+	//时间也缺省改为1514533390，支持修改时间， 如果有以前的旧的配置未修改，panic强制修改
+	if cfg.GenesisBlockTime == 1514533394 {
+		panic("para chain GenesisBlockTime need be modified to 1514533390 or other")
+	}
+
 	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
@@ -240,6 +246,7 @@ func (client *client) InitBlock() {
 		if client.cfg.GenesisBlockTime > 0 {
 			newblock.BlockTime = client.cfg.GenesisBlockTime
 		}
+
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
 
