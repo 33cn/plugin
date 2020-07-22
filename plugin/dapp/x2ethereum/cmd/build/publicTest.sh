@@ -439,7 +439,7 @@ function start_trufflesuite() {
     #fi
 
     # 启动 eth
-    docker run -d --name ${ganacheName} -p 7545:8545 -l eth_test trufflesuite/ganache-cli:latest -a 10 --debug -b 2 -m "coast bar giraffe art venue decide symbol law visual crater vital fold"
+    docker run -d --name ${ganacheName} -p 7545:8545 -l eth_test trufflesuite/ganache-cli:latest -a 10 --debug -b 1 -m "coast bar giraffe art venue decide symbol law visual crater vital fold"
     sleep 1
 }
 
