@@ -835,7 +835,7 @@ func (client *commitMsgClient) getSelfConsensus() (*pt.ParacrossStatus, error) {
 		Param:    types.Encode(&types.Int64{Data: block.Height}),
 	})
 	if err != nil {
-		plog.Error("getSelfConsensusStatus.GetSelfConsOneStage ", "err", err.Error())
+		plog.Debug("getSelfConsensusStatus.GetSelfConsOneStage ", "err", err.Error())
 		return nil, err
 	}
 	stage, ok := ret.(*pt.SelfConsensStage)
