@@ -158,6 +158,31 @@ message RespParacrossNodeGroups {
     repeated ParaNodeGroupStatus ids = 1;
 }
 
+//para bind miner
+message ParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    int32  bindStatus   = 2;  // 0: init, 1: bind, 2:unbind
+    int64  bindCount    = 3;  // bind coins count
+    int64  blockTime    = 4;  // status bind block time
+    string targetAddr   = 5;  // super node addr
+}
+
+message ReceiptParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    ParaBindMinerInfo prev = 2;
+    ParaBindMinerInfo current = 3;
+}
+
+message ParaNodeBindList{
+    string superNode = 1;
+    repeated string miners = 2;
+}
+
+message ReceiptParaNodeBindListUpdate{
+    ParaNodeBindList prev = 1;
+    ParaNodeBindList current = 2;
+}
+
 message ParaBlock2MainMap {
     int64  height     = 1;
     string blockHash  = 2;

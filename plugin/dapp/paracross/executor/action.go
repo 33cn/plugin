@@ -300,6 +300,15 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 
 }
 
+func (a *action) isValidSuperNode(addr string) (bool, error) {
+	cfg := a.api.GetConfig()
+	nodes, _, err := getParacrossNodes(a.db, cfg.GetTitle())
+	if err != nil {
+		return false, errors.Wrapf(err, "getNodes for title:%s", cfg.GetTitle())
+	}
+	return validNode(addr, nodes), nil
+}
+
 //相同的BlockHash，只保留一份数据
 func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.ParacrossNodeStatus) {
 	if stat.BlockDetails == nil {
