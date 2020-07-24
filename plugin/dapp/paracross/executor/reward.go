@@ -2,6 +2,7 @@ package executor
 
 import (
 	"bytes"
+
 	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/types"
