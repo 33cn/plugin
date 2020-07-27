@@ -537,12 +537,13 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 // Query_GetNodeBindMinerList query get super node bind miner list
 func (p *Paracross) Query_GetNodeBindMinerList(in *types.ReqString) (types.Message, error) {
 	if in == nil || len(in.Data) == 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "in=%v", in)
+		return nil, types.ErrInvalidParam
 	}
 
 	list, err := getBindNodeInfo(p.GetStateDB(), in.Data)
 	if err != nil {
-		return nil, err
+		clog.Error("Query_GetNodeBindMinerList get node", "err", err, "req", in.Data)
+		return nil, errors.Cause(err)
 	}
 
 	var resp pt.RespParaNodeBindList
@@ -551,10 +552,18 @@ func (p *Paracross) Query_GetNodeBindMinerList(in *types.ReqString) (types.Messa
 	for _, addr := range list.Miners {
 		info, err := getBindAddrInfo(p.GetStateDB(), in.Data, addr)
 		if err != nil {
-			return nil, err
+			clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", in.Data, "addr", addr)
+			return nil, errors.Cause(err)
 		}
 		resp.Details = append(resp.Details, info)
 	}
+
+	info, err := getBindAddrInfo(p.GetStateDB(), in.Data, "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY")
+	if err != nil {
+		clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", in.Data, "addr", "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY")
+		return nil, errors.Cause(err)
+	}
+	resp.Details = append(resp.Details, info)
 
 	return &resp, nil
 }

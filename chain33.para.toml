@@ -90,7 +90,7 @@ coinReward=18
 #发展基金奖励
 coinDevFund=12
 #如果超级节点上绑定了委托账户，则奖励超级节点coinBaseReward，其余部分(coinReward-coinBaseReward)按权重分给委托账户
-coinBaseReward=5
+coinBaseReward=3
 #委托账户最少解绑定时间(按小时)
 unBindTime=24
 

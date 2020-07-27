@@ -545,7 +545,7 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	action, _ := cmd.Flags().GetUint32("action")
 	node, _ := cmd.Flags().GetString("node")
-	coins, _ := cmd.Flags().GetUint32("coins")
+	coins, _ := cmd.Flags().GetUint64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
 		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
@@ -556,7 +556,7 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "coins should bigger than 0")
 	}
 
-	payload := &pt.ParaBindMinerInfo{BindAction: int32(action), BindCount: int64(coins), TargetAddr: node}
+	payload := &pt.ParaBindMinerInfo{BindAction: int32(action), BindCount: int64(coins), TargetNode: node}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "ParaBindMiner",
@@ -587,8 +587,7 @@ func addNodeBindCmdFlags(cmd *cobra.Command) {
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	addr, _ := cmd.Flags().GetString("addr")
+	addr, _ := cmd.Flags().GetString("node")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
