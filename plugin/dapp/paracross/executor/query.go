@@ -533,3 +533,28 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 	}
 	return nil, types.ErrDecode
 }
+
+// Query_GetNodeBindMinerList query get super node bind miner list
+func (p *Paracross) Query_GetNodeBindMinerList(in *types.ReqString) (types.Message, error) {
+	if in == nil || len(in.Data) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "in=%v", in)
+	}
+
+	list, err := getBindNodeInfo(p.GetStateDB(), in.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp pt.RespParaNodeBindList
+	resp.List = list
+
+	for _, addr := range list.Miners {
+		info, err := getBindAddrInfo(p.GetStateDB(), in.Data, addr)
+		if err != nil {
+			return nil, err
+		}
+		resp.Details = append(resp.Details, info)
+	}
+
+	return &resp, nil
+}
