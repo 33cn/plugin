@@ -195,7 +195,3 @@ func calcParaBindMinerAddr(node, bind string) []byte {
 func calcParaBindMinerNode(node string) []byte {
 	return []byte(paraBindMinderNode + node)
 }
-
-func calcParaBindMinerNodePrefix() []byte {
-	return []byte(paraBindMinderNode)
-}
