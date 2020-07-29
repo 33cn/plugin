@@ -89,7 +89,7 @@ func (a *action) rewardBindAddr(coinReward int64, bindList []*pt.ParaNodeBindLis
 
 	var totalCoins int64
 	for _, addr := range bindAddrList {
-		totalCoins += addr.BindCount
+		totalCoins += addr.BindCoins
 	}
 
 	//分配给矿工的单位奖励
@@ -100,10 +100,10 @@ func (a *action) rewardBindAddr(coinReward int64, bindList []*pt.ParaNodeBindLis
 		//如果不等分转到发展基金
 		change = coinReward % minerUnit
 		for _, miner := range bindAddrList {
-			rep, err := a.coinsAccount.ExecDeposit(miner.Addr, a.execaddr, minerUnit*miner.BindCount)
+			rep, err := a.coinsAccount.ExecDeposit(miner.Addr, a.execaddr, minerUnit*miner.BindCoins)
 			if err != nil {
 				clog.Error("paracross bind miner reward deposit err", "height", statusHeight,
-					"execAddr", a.execaddr, "minerAddr", miner.Addr, "amount", minerUnit*miner.BindCount, "err", err)
+					"execAddr", a.execaddr, "minerAddr", miner.Addr, "amount", minerUnit*miner.BindCoins, "err", err)
 				return nil, 0, err
 			}
 			receipt = mergeReceipt(receipt, rep)
@@ -195,15 +195,11 @@ func makeAddrBindReceipt(node, addr string, prev, current *pt.ParaBindMinerInfo)
 		Prev:    prev,
 		Current: current,
 	}
-	var val []byte
-	if current != nil {
-		val = types.Encode(current)
-	}
 
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{Key: key, Value: val},
+			{Key: key, Value: types.Encode(current)},
 		},
 		Logs: []*types.ReceiptLog{
 			{
@@ -220,15 +216,11 @@ func makeNodeBindReceipt(addr string, prev, current *pt.ParaNodeBindList) *types
 		Prev:    prev,
 		Current: current,
 	}
-	var val []byte
-	if current != nil {
-		val = types.Encode(current)
-	}
 
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
-			{Key: key, Value: val},
+			{Key: key, Value: types.Encode(current)},
 		},
 		Logs: []*types.ReceiptLog{
 			{
@@ -305,22 +297,14 @@ func getBindAddrInfo(db dbm.KV, node, addr string) (*pt.ParaBindMinerInfo, error
 	return &info, nil
 }
 
-func (a *action) bindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
-	if len(cmd.Addr) > 0 && cmd.Addr != a.fromaddr {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "bindMiner addr=%s not from addr %s", cmd.Addr, a.fromaddr)
+func (a *action) bindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
+	if cmd.BindCoins <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "bindMiner BindCoins nil from addr %s", a.fromaddr)
 	}
 
-	if cmd.BindCount <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "bindMiner bindCount nil from addr %s", a.fromaddr)
-	}
-
-	ok, err := a.isValidSuperNode(cmd.TargetNode)
+	err := a.isValidSuperNode(cmd.TargetNode)
 	if err != nil {
 		return nil, err
-	}
-	//非有效超级节点
-	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "invalid target node=%s", cmd.TargetNode)
 	}
 
 	current, err := getBindAddrInfo(a.db, cmd.TargetNode, a.fromaddr)
@@ -329,49 +313,49 @@ func (a *action) bindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
 	}
 
 	//found, 修改当前的绑定
-	if current != nil {
+	if current != nil && current.BindStatus == opBind {
 		var receipt *types.Receipt
 
-		if cmd.BindCount == current.BindCount {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "bind coins same current=%d, cmd=%d", current.BindCount, cmd.BindCount)
+		if cmd.BindCoins == current.BindCoins {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "bind coins same current=%d, cmd=%d", current.BindCoins, cmd.BindCoins)
 		}
 
 		//释放一部分coins
-		if cmd.BindCount < current.BindCount {
-			receipt, err = a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, (current.BindCount-cmd.BindCount)*types.Coin)
+		if cmd.BindCoins < current.BindCoins {
+			receipt, err = a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, (current.BindCoins-cmd.BindCoins)*types.Coin)
 			if err != nil {
-				return nil, errors.Wrapf(err, "bindOp Active addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, current.BindCount-cmd.BindCount)
+				return nil, errors.Wrapf(err, "bindOp Active addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, current.BindCoins-cmd.BindCoins)
 			}
 		} else {
 			//冻结更多
-			receipt, err = a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, (cmd.BindCount-current.BindCount)*types.Coin)
+			receipt, err = a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, (cmd.BindCoins-current.BindCoins)*types.Coin)
 			if err != nil {
-				return nil, errors.Wrapf(err, "bindOp frozen more addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, cmd.BindCount-current.BindCount)
+				return nil, errors.Wrapf(err, "bindOp frozen more addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, cmd.BindCoins-current.BindCoins)
 			}
 		}
 
 		acctCopy := *current
-		current.BindCount = cmd.BindCount
+		current.BindCoins = cmd.BindCoins
 		r := makeAddrBindReceipt(cmd.TargetNode, a.fromaddr, &acctCopy, current)
 		return mergeReceipt(receipt, r), nil
 	}
 
-	//not found, 增加新绑定
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, cmd.BindCount*types.Coin)
+	//not bind, 增加新绑定
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, cmd.BindCoins*types.Coin)
 	if err != nil {
-		return nil, errors.Wrapf(err, "bindOp frozen addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, cmd.BindCount)
+		return nil, errors.Wrapf(err, "bindOp frozen addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, cmd.BindCoins)
 	}
 
 	//bind addr
-	acct := &pt.ParaBindMinerInfo{
+	newer := &pt.ParaBindMinerInfo{
 		Addr:        a.fromaddr,
-		BindAction:  opBind,
-		BindCount:   cmd.BindCount,
+		BindStatus:  opBind,
+		BindCoins:   cmd.BindCoins,
 		BlockTime:   a.blocktime,
 		BlockHeight: a.height,
 		TargetNode:  cmd.TargetNode,
 	}
-	rBind := makeAddrBindReceipt(cmd.TargetNode, a.fromaddr, nil, acct)
+	rBind := makeAddrBindReceipt(cmd.TargetNode, a.fromaddr, current, newer)
 	mergeReceipt(receipt, rBind)
 
 	//增加到列表中
@@ -384,7 +368,7 @@ func (a *action) bindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
 
 }
 
-func (a *action) unBindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
+func (a *action) unBindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	acct, err := getBindAddrInfo(a.db, cmd.TargetNode, a.fromaddr)
 	if err != nil {
 		return nil, err
@@ -397,13 +381,18 @@ func (a *action) unBindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
 	}
 
 	//unfrozen
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, acct.BindCount*types.Coin)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, acct.BindCoins*types.Coin)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unBindOp addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, acct.BindCount)
+		return nil, errors.Wrapf(err, "unBindOp addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, acct.BindCoins)
 	}
 
 	//删除 bind addr
-	rUnBind := makeAddrBindReceipt(cmd.TargetNode, a.fromaddr, acct, nil)
+	//由于kvmvcc的原因，不能通过把一个key值=nil的方式删除，kvmvcc这样是删除了当前版本，就会查询更早的版本，&struct{}也不行，len=0 也被认为是删除了的
+	acctCopy := *acct
+	acct.BindStatus = opUnBind
+	acct.BlockHeight = a.height
+	acct.BlockTime = a.blocktime
+	rUnBind := makeAddrBindReceipt(cmd.TargetNode, a.fromaddr, &acctCopy, acct)
 	mergeReceipt(receipt, rUnBind)
 
 	//从列表删除
@@ -416,7 +405,7 @@ func (a *action) unBindOp(cmd *pt.ParaBindMinerInfo) (*types.Receipt, error) {
 	return receipt, nil
 }
 
-func (a *action) bindMiner(info *pt.ParaBindMinerInfo) (*types.Receipt, error) {
+func (a *action) bindMiner(info *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	if len(info.TargetNode) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "bindMiner TargetNode should not be nil to addr %s", a.fromaddr)
 	}

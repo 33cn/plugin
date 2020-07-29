@@ -300,13 +300,16 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 
 }
 
-func (a *action) isValidSuperNode(addr string) (bool, error) {
+func (a *action) isValidSuperNode(addr string) error {
 	cfg := a.api.GetConfig()
 	nodes, _, err := getParacrossNodes(a.db, cfg.GetTitle())
 	if err != nil {
-		return false, errors.Wrapf(err, "getNodes for title:%s", cfg.GetTitle())
+		return errors.Wrapf(err, "getNodes for title:%s", cfg.GetTitle())
 	}
-	return validNode(addr, nodes), nil
+	if !validNode(addr, nodes) {
+		return errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "invalid node=%s", addr)
+	}
+	return nil
 }
 
 //相同的BlockHash，只保留一份数据
