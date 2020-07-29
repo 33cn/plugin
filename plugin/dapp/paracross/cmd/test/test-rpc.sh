@@ -165,7 +165,7 @@ function paracross_Transfer_Withdraw_Inner() {
         #实际取钱金额
         para_withdraw_real=$((para_balance_after - para_balance_withdraw_after))
         main_withdraw_real=$((main_balance_withdraw_after - main_balance_after))
-        if [ "$withdraw_should" != "$para_withdraw_real" ] || [ "$withdraw_should" != "$main_withdraw_real" ]; then
+        if [ "$withdraw_should" != "$para_withdraw_real" ] && [ "$withdraw_should" != "$main_withdraw_real" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
             if [ $times -le 0 ]; then
