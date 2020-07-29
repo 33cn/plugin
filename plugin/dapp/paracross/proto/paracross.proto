@@ -159,10 +159,16 @@ message RespParacrossNodeGroups {
 }
 
 //para bind miner
+message ParaBindMinerCmd{
+    int32  bindAction   = 1;  // 1: bind, 2:unbind
+    int64  bindCoins    = 2;  // bind coins count
+    string targetNode   = 3;  // super node addr
+}
+
 message ParaBindMinerInfo{
     string addr         = 1;  // miner addr
-    int32  bindAction   = 2;  // 1: bind, 2:unbind
-    int64  bindCount    = 3;  // bind coins count
+    int32  bindStatus   = 2;  // 1: bind, 2:unbind
+    int64  bindCoins    = 3;  // bind coins count
     string targetNode   = 4;  // super node addr
     int64  blockTime    = 5;  // action bind block time
     int64  blockHeight  = 6;  // action bind block height
@@ -334,7 +340,7 @@ message ParacrossAction {
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
         CrossAssetTransfer    crossAssetTransfer = 12;
-        ParaBindMinerInfo     paraBindMiner   = 13;
+        ParaBindMinerCmd      paraBindMiner   = 13;
     }
     int32 ty = 2;
 }

@@ -558,12 +558,5 @@ func (p *Paracross) Query_GetNodeBindMinerList(in *types.ReqString) (types.Messa
 		resp.Details = append(resp.Details, info)
 	}
 
-	info, err := getBindAddrInfo(p.GetStateDB(), in.Data, "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY")
-	if err != nil {
-		clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", in.Data, "addr", "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY")
-		return nil, errors.Cause(err)
-	}
-	resp.Details = append(resp.Details, info)
-
 	return &resp, nil
 }

@@ -556,7 +556,7 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "coins should bigger than 0")
 	}
 
-	payload := &pt.ParaBindMinerInfo{BindAction: int32(action), BindCount: int64(coins), TargetNode: node}
+	payload := &pt.ParaBindMinerCmd{BindAction: int32(action), BindCoins: int64(coins), TargetNode: node}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "ParaBindMiner",
