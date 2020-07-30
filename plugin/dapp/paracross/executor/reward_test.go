@@ -29,12 +29,6 @@ type RewardTestSuite struct {
 	action *action
 }
 
-//func init() {
-//	log.SetFileLog(nil)
-//	log.SetLogLevel("debug")
-//	Init(pt.ParaX, chain33TestCfg, nil)
-//}
-
 func (suite *RewardTestSuite) SetupSuite() {
 
 	suite.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
@@ -53,42 +47,13 @@ func (suite *RewardTestSuite) SetupSuite() {
 	accountdb := suite.exec.GetCoinsAccount()
 	suite.action = &action{coinsAccount: accountdb, db: suite.stateDB}
 
-	//// TODO, more fields
-	//// setup block
-	//blockDetail := &types.BlockDetail{
-	//	Block: &types.Block{},
-	//}
-	//MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
-	//blockDetail.Block.MainHash = MainBlockHash10
-	//
-	//// setup title nodes : len = 4
-	//nodeConfigKey := calcManageConfigNodesKey(Title)
-	//nodeValue := makeNodeInfo(Title, Title, 4)
-	//suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
-	//value, err := suite.stateDB.Get(nodeConfigKey)
-	//if err != nil {
-	//	suite.T().Error("get setup title failed", err)
-	//	return
-	//}
-	//assert.Equal(suite.T(), value, types.Encode(nodeValue))
-
 }
-
-//func (suite *RewardTestSuite) TestSetup() {
-//	nodeConfigKey := calcManageConfigNodesKey(Title)
-//	suite.T().Log(string(nodeConfigKey))
-//	_, err := suite.stateDB.Get(nodeConfigKey)
-//	if err != nil {
-//		suite.T().Error("get setup title failed", err)
-//		return
-//	}
-//}
 
 func TestRewardSuite(t *testing.T) {
 	suite.Run(t, new(RewardTestSuite))
 }
 
-func (s *RewardTestSuite) TestRewardBindAddr() {
+func (suite *RewardTestSuite) TestRewardBindAddr() {
 	node := "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
 	addr := "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
 	key := calcParaBindMinerAddr(node, addr)
@@ -101,22 +66,22 @@ func (s *RewardTestSuite) TestRewardBindAddr() {
 		TargetNode:  node,
 	}
 	data := types.Encode(newer)
-	s.stateDB.Set(key, data)
-	rst, err := s.stateDB.Get(key)
+	suite.stateDB.Set(key, data)
+	rst, err := suite.stateDB.Get(key)
 	if err != nil {
-		s.T().Error("get setup title failed", err)
+		suite.T().Error("get setup title failed", err)
 		return
 	}
 	var info pt.ParaBindMinerInfo
 	types.Decode(rst, &info)
-	s.Equal(info.BindCoins, newer.BindCoins)
+	suite.Equal(info.BindCoins, newer.BindCoins)
 
 	addr2 := "1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
 	new2 := *newer
 	new2.Addr = addr2
 	data = types.Encode(&new2)
 	key = calcParaBindMinerAddr(node, addr2)
-	s.stateDB.Set(key, data)
+	suite.stateDB.Set(key, data)
 
 	list := &pt.ParaNodeBindList{
 		SuperNode: node,
@@ -125,9 +90,9 @@ func (s *RewardTestSuite) TestRewardBindAddr() {
 
 	lists := []*pt.ParaNodeBindList{list}
 
-	recp, change, err := s.action.rewardBindAddr(50000005, lists, 1)
-	s.Nil(err)
-	s.Equal(int64(5), change)
-	s.Equal(int32(types.ExecOk), recp.Ty)
+	recp, change, err := suite.action.rewardBindAddr(50000005, lists, 1)
+	suite.Nil(err)
+	suite.Equal(int64(5), change)
+	suite.Equal(int32(types.ExecOk), recp.Ty)
 
 }
