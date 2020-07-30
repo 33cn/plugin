@@ -846,7 +846,7 @@ func TestFp2NonResidue(t *testing.T) {
 				t.Fatal("element is quadratic non residue, 2", i)
 			}
 		} else {
-			i --
+			i--
 		}
 	}
 }

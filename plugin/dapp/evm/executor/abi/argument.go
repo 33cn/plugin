@@ -30,6 +30,7 @@ type Argument struct {
 	Type    Type
 	Indexed bool // indexed is only used by events
 }
+
 // Arguments 参数
 type Arguments []Argument
 
