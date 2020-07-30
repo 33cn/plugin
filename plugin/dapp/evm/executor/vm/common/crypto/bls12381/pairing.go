@@ -272,8 +272,9 @@ func (e *Engine) Check() bool {
 // Result computes pairing and returns target group element as result.
 func (e *Engine) Result() *E {
 	r := e.calculate()
+	var r1 *E = r
 	e.Reset()
-	return r
+	return r1
 }
 
 // GT returns target group instance.

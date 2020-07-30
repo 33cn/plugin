@@ -843,7 +843,7 @@ func opPush1(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 		codeLen = uint64(len(callContext.contract.Code))
 		integer = new(uint256.Int)
 	)
-	*pc += 1
+	*pc++
 	if *pc < codeLen {
 		callContext.stack.Push(integer.SetUint64(uint64(callContext.contract.Code[*pc])))
 	} else {

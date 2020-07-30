@@ -51,21 +51,21 @@ func (g *G1) String() string {
 
 // ScalarBaseMult sets e to g*k where g is the generator of the group and then
 // returns e.
-func (e *G1) ScalarBaseMult(k *big.Int) *G1 {
-	if e.p == nil {
-		e.p = &curvePoint{}
+func (g *G1) ScalarBaseMult(k *big.Int) *G1 {
+	if g.p == nil {
+		g.p = &curvePoint{}
 	}
-	e.p.Mul(curveGen, k)
-	return e
+	g.p.Mul(curveGen, k)
+	return g
 }
 
 // ScalarMult sets e to a*k and then returns e.
-func (e *G1) ScalarMult(a *G1, k *big.Int) *G1 {
-	if e.p == nil {
-		e.p = &curvePoint{}
+func (g *G1) ScalarMult(a *G1, k *big.Int) *G1 {
+	if g.p == nil {
+		g.p = &curvePoint{}
 	}
-	e.p.Mul(a.p, k)
-	return e
+	g.p.Mul(a.p, k)
+	return g
 }
 
 // Add sets e to a+b and then returns e.

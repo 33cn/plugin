@@ -56,9 +56,9 @@ func MemoryCreate(stack *Stack) (uint64, bool) {
 	return calcMemSize64(stack.Back(1), stack.Back(2))
 }
 
-func memoryCreate2(stack *Stack) (uint64, bool) {
-	return calcMemSize64(stack.Back(1), stack.Back(2))
-}
+//func memoryCreate2(stack *Stack) (uint64, bool) {
+//	return calcMemSize64(stack.Back(1), stack.Back(2))
+//}
 
 //MemoryCall call所需内存大小
 func MemoryCall(stack *Stack) (uint64, bool) {

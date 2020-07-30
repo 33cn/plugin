@@ -206,19 +206,6 @@ func (abi *ABI) overloadedEventName(rawName string) string {
 	return name
 }
 
-// MethodById looks up a method by the 4-byte id, returns nil if none found
-func (abi *ABI) MethodById(sigdata []byte) (*Method, error) {
-	if len(sigdata) < 4 {
-		return nil, fmt.Errorf("data too short (%d bytes) for abi method lookup", len(sigdata))
-	}
-	for _, method := range abi.Methods {
-		if bytes.Equal(method.ID, sigdata[:4]) {
-			return &method, nil
-		}
-	}
-	return nil, fmt.Errorf("no method with id: %#x", sigdata[:4])
-}
-
 // EventByID looks an event up by its topic hash in the
 // ABI and returns nil if none found.
 func (abi *ABI) EventByID(topic common.Hash) (*Event, error) {
@@ -255,7 +242,7 @@ func (abi *ABI) MethodByID(sigdata []byte) (*Method, error) {
 }
 
 var revertSelector = crypto.Keccak256([]byte("Error(string)"))[:4]
-
+// UnpackRevert 解包转换为string
 func UnpackRevert(data []byte) (string, error) {
 	if len(data) < 4 {
 		return "", errors.New("invalid data for unpacking")
