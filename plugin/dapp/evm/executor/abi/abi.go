@@ -242,6 +242,7 @@ func (abi *ABI) MethodByID(sigdata []byte) (*Method, error) {
 }
 
 var revertSelector = crypto.Keccak256([]byte("Error(string)"))[:4]
+
 // UnpackRevert 解包转换为string
 func UnpackRevert(data []byte) (string, error) {
 	if len(data) < 4 {

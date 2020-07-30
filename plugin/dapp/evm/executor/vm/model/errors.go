@@ -40,13 +40,13 @@ var (
 	ErrMaxCodeSizeExceeded = errors.New("evm: max code size exceeded")
 
 	// ErrNoCoinsAccount no coins account in executor!
-	ErrNoCoinsAccount         = errors.New("no coins account in executor")
+	ErrNoCoinsAccount = errors.New("no coins account in executor")
 	// ErrReturnStackExceeded
-	ErrReturnStackExceeded    = errors.New("return stack limit reached")
+	ErrReturnStackExceeded = errors.New("return stack limit reached")
 	// ErrInvalidSubroutineEntry
 	ErrInvalidSubroutineEntry = errors.New("invalid subroutine entry")
 	// ErrInvalidJump
-	ErrInvalidJump            = errors.New("invalid jump destination")
+	ErrInvalidJump = errors.New("invalid jump destination")
 	// ErrInvalidRetsub
-	ErrInvalidRetsub          = errors.New("invalid retsub")
+	ErrInvalidRetsub = errors.New("invalid retsub")
 )

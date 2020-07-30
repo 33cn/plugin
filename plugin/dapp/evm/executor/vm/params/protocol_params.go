@@ -82,7 +82,7 @@ const (
 	//SloadGasEIP150               uint64 = 200
 	//SloadGasEIP1884              uint64 = 800  // Cost of SLOAD after EIP 1884 (part of Istanbul)
 	//SloadGasEIP2200              uint64 = 800  // Cost of SLOAD after EIP 2200 (part of Istanbul)
-	ExtcodeHashGasConstantinople uint64 = 400  // Cost of EXTCODEHASH (introduced in Constantinople)
+	ExtcodeHashGasConstantinople uint64 = 400 // Cost of EXTCODEHASH (introduced in Constantinople)
 	//ExtcodeHashGasEIP1884        uint64 = 700  // Cost of EXTCODEHASH after EIP 1884 (part in Istanbul)
 	//SelfdestructGasEIP150        uint64 = 5000 // Cost of SELFDESTRUCT post EIP 150 (Tangerine)
 	//
@@ -139,9 +139,9 @@ var (
 	//  DifficultyBoundDivisor The bound divisor of the difficulty, used in the update calculations.
 	DifficultyBoundDivisor = big.NewInt(2048)
 	// GenesisDifficulty Difficulty of the Genesis block.
-	GenesisDifficulty      = big.NewInt(131072)
+	GenesisDifficulty = big.NewInt(131072)
 	// MinimumDifficulty The minimum that the difficulty may ever be.
-	MinimumDifficulty      = big.NewInt(131072)
+	MinimumDifficulty = big.NewInt(131072)
 	// DurationLimit The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
-	DurationLimit          = big.NewInt(13)
+	DurationLimit = big.NewInt(13)
 )
