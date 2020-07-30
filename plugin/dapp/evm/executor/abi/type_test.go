@@ -17,11 +17,12 @@
 package abi
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	"github.com/holiman/uint256"
 	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/holiman/uint256"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )

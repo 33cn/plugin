@@ -21,10 +21,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	"math/big"
 	"strings"
 	"testing"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 
 	"reflect"
 

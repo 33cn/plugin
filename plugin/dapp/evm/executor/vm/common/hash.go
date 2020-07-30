@@ -5,8 +5,9 @@
 package common
 
 import (
-	"github.com/holiman/uint256"
 	"math/big"
+
+	"github.com/holiman/uint256"
 
 	"github.com/33cn/chain33/common"
 )
