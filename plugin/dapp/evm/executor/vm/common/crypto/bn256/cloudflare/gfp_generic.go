@@ -1,6 +1,5 @@
 // +build !amd64,!arm64 generic
 
-
 //nolint:unparam // 忽视本文件所有golangci-linter检查
 package bn256
 

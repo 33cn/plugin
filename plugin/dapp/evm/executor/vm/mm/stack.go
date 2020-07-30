@@ -26,6 +26,7 @@ type Stack struct {
 func NewStack() *Stack {
 	return stackPool.Get().(*Stack)
 }
+
 // Returnstack 把用完的stack还给stackpool
 func Returnstack(s *Stack) {
 	s.data = s.data[:0]
