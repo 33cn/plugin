@@ -1,6 +1,8 @@
 // Copyright Fuzamei Corp. 2018 All Rights Reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
+//Package sync ...
 package sync
 
 import (
@@ -25,6 +27,7 @@ var (
 	syncTxReceipts *TxReceipts
 )
 
+//StartSyncTxReceipt ...
 func StartSyncTxReceipt(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *TxReceipts {
 	log.Debug("StartSyncTxReceipt, load config", "para:", cfg)
 	log.Debug("TxReceipts started ")

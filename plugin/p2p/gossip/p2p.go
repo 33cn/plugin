@@ -144,7 +144,7 @@ func (network *P2p) isRestart() bool {
 	return atomic.LoadInt32(&network.restart) == 1
 }
 
-// Close network client
+//CloseP2P Close network client
 func (network *P2p) CloseP2P() {
 	log.Info("p2p network start shutdown")
 	atomic.StoreInt32(&network.closed, 1)
@@ -154,7 +154,7 @@ func (network *P2p) CloseP2P() {
 	network.mgr.PubSub.Unsub(network.subChan)
 }
 
-// SetQueueClient set the queue
+// StartP2P set the queue
 func (network *P2p) StartP2P() {
 	network.node.SetQueueClient(network.client)
 

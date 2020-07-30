@@ -67,13 +67,15 @@ const (
 	RevokeReset
 	EnforceReset
 )
+
+//list ...
 const (
 	ListDESC = int32(0)
 	ListASC  = int32(1)
 	ListSeek = int32(2)
 )
 const (
-	//单次list还回条数
+	//Count 单次list还回条数
 	Count = int32(10)
 )
 
@@ -117,10 +119,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(AccountmanagerX, NewType(cfg))
 }
 
+//AccountmanagerType ...
 type AccountmanagerType struct {
 	types.ExecTypeBase
 }
 
+//NewType ...
 func NewType(cfg *types.Chain33Config) *AccountmanagerType {
 	c := &AccountmanagerType{}
 	c.SetChild(c)
@@ -133,7 +137,7 @@ func (a *AccountmanagerType) GetPayload() types.Message {
 	return &AccountmanagerAction{}
 }
 
-// GeTypeMap 获取合约action的id和name信息
+// GetTypeMap 获取合约action的id和name信息
 func (a *AccountmanagerType) GetTypeMap() map[string]int32 {
 	return actionMap
 }

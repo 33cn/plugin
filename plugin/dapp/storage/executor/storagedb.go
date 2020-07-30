@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+//StorageAction ...
 type StorageAction struct {
 	api       client.QueueProtocolAPI
 	db        dbm.KV
@@ -28,11 +29,14 @@ func newStorageAction(s *storage, tx *types.Transaction, index int) *StorageActi
 	return &StorageAction{s.GetAPI(), s.GetStateDB(), s.GetLocalDB(), hash, fromaddr,
 		s.GetBlockTime(), s.GetHeight(), index}
 }
+
+//GetKVSet ...
 func (s *StorageAction) GetKVSet(payload proto.Message) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: Key(common.ToHex(s.txhash)), Value: types.Encode(payload)})
 	return kvset
 }
 
+//ContentStorage ...
 func (s *StorageAction) ContentStorage(payload *ety.ContentOnlyNotaryStorage) (*types.Receipt, error) {
 
 	//TODO 这里可以加具体得文本内容限制，超过指定大小的数据不容许写到状态数据库中
@@ -76,6 +80,8 @@ func (s *StorageAction) ContentStorage(payload *ety.ContentOnlyNotaryStorage) (*
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
+
+//HashStorage ...
 func (s *StorageAction) HashStorage(payload *ety.HashOnlyNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -102,6 +108,8 @@ func (s *StorageAction) HashStorage(payload *ety.HashOnlyNotaryStorage) (*types.
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
+
+//LinkStorage ...
 func (s *StorageAction) LinkStorage(payload *ety.LinkNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -127,6 +135,8 @@ func (s *StorageAction) LinkStorage(payload *ety.LinkNotaryStorage) (*types.Rece
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
+
+//EncryptStorage ...
 func (s *StorageAction) EncryptStorage(payload *ety.EncryptNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -152,6 +162,8 @@ func (s *StorageAction) EncryptStorage(payload *ety.EncryptNotaryStorage) (*type
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
+
+//EncryptShareStorage ...
 func (s *StorageAction) EncryptShareStorage(payload *ety.EncryptShareNotaryStorage) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -177,6 +189,8 @@ func (s *StorageAction) EncryptShareStorage(payload *ety.EncryptShareNotaryStora
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }
+
+//QueryStorageByTxHash ...
 func QueryStorageByTxHash(db dbm.KV, txhash string) (*ety.Storage, error) {
 	data, err := db.Get(Key(txhash))
 	if err != nil {
@@ -192,6 +206,8 @@ func QueryStorageByTxHash(db dbm.KV, txhash string) (*ety.Storage, error) {
 	}
 	return &storage, nil
 }
+
+//QueryStorage ...
 func QueryStorage(statedb, localdb dbm.KV, txHash string) (*ety.Storage, error) {
 	if txHash == "" {
 		return nil, fmt.Errorf("txhash can't equail nil")
@@ -203,6 +219,8 @@ func QueryStorage(statedb, localdb dbm.KV, txHash string) (*ety.Storage, error) 
 	}
 	return storage, nil
 }
+
+//BatchQueryStorage ...
 func BatchQueryStorage(statedb, localdb dbm.KV, in *ety.BatchQueryStorage) (types.Message, error) {
 	if len(in.TxHashs) > 10 {
 		return nil, fmt.Errorf("The number of batch queries is too large! the maximux is %d,but current num %d", 10, len(in.TxHashs))
@@ -218,7 +236,7 @@ func BatchQueryStorage(statedb, localdb dbm.KV, in *ety.BatchQueryStorage) (type
 	return &storage, nil
 }
 
-//因为table表不支持嵌套多种数据存储结构，改成手动KV存储
+//QueryStorageFromLocalDB 因为table表不支持嵌套多种数据存储结构，改成手动KV存储
 func QueryStorageFromLocalDB(localdb dbm.KV, key string) (*ety.Storage, error) {
 	data, err := localdb.Get(getLocalDBKey(key))
 	if err != nil {

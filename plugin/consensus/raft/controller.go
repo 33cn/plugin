@@ -11,6 +11,7 @@ import (
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/queue"
+	drivers "github.com/33cn/chain33/system/consensus"
 	"github.com/33cn/chain33/types"
 	"github.com/coreos/etcd/raft/raftpb"
 )
@@ -50,6 +51,15 @@ func init() {
 
 // NewRaftCluster create raft cluster
 func NewRaftCluster(cfg *types.Consensus, sub []byte) queue.Module {
+	genesis = cfg.Genesis
+	genesisBlockTime = cfg.GenesisBlockTime
+	if !cfg.Minerstart {
+		rlog.Info("node only sync block")
+		c := drivers.NewBaseClient(cfg)
+		client := &Client{BaseClient: c}
+		c.SetChild(client)
+		return client
+	}
 	rlog.Info("Start to create raft cluster")
 	var subcfg subConfig
 	if sub != nil {

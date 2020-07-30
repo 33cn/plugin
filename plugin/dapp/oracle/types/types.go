@@ -19,10 +19,12 @@ func init() {
 	types.RegExec(OracleX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(OracleX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(OracleX, NewType(cfg))
 }

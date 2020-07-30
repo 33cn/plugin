@@ -316,7 +316,7 @@ func (node *Node) BroadcastRoutine() {
 	}
 }
 
-// BroadcastRoutine receive to broadcast
+// UnicastRoutine receive to broadcast
 func (node *Node) UnicastRoutine() {
 	for {
 		msg, ok := <-node.unicastChannel

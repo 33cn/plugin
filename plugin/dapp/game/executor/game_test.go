@@ -145,6 +145,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(matchTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
@@ -163,7 +164,7 @@ func TestGame(t *testing.T) {
 	}
 	t.Log(msg)
 
-	msg, err = exec.Query(pty.FuncNameQueryGameListByStatusAndAddr, types.Encode(&pty.QueryGameListByStatusAndAddr{
+	_, err = exec.Query(pty.FuncNameQueryGameListByStatusAndAddr, types.Encode(&pty.QueryGameListByStatusAndAddr{
 		Status: pty.GameActionMatch}))
 	if err != nil {
 		t.Error(err)
@@ -192,6 +193,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(closeTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
@@ -336,6 +338,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(matchTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
@@ -363,6 +366,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(closeTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
@@ -432,6 +436,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(matchTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}
@@ -458,6 +463,7 @@ func TestGame(t *testing.T) {
 
 	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	set, err = exec.ExecLocal(closeTx, receiptDate, int(1))
+	assert.Nil(t, err)
 	for _, kv := range set.KV {
 		kvdb.Set(kv.Key, kv.Value)
 	}

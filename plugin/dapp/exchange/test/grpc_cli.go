@@ -16,10 +16,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+//GRPCCli ...
 type GRPCCli struct {
 	client types.Chain33Client
 }
 
+//NewGRPCCli ...
 func NewGRPCCli(grpcAddr string) *GRPCCli {
 	conn, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
 	if err != nil {
@@ -34,6 +36,7 @@ func NewGRPCCli(grpcAddr string) *GRPCCli {
 	}
 }
 
+//Send ...
 func (c *GRPCCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLog, error) {
 	txHash, logs, err := c.sendAndWaitReceipt(tx, hexKey)
 	if txHash != nil {
@@ -50,6 +53,7 @@ func (c *GRPCCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 	return logs, nil
 }
 
+//Query ...
 func (c *GRPCCli) Query(fn string, msg proto.Message) ([]byte, error) {
 	ss := strings.Split(fn, ".")
 	var in types.ChainExecutor
@@ -72,6 +76,7 @@ func (c *GRPCCli) Query(fn string, msg proto.Message) ([]byte, error) {
 	return r.Msg, nil
 }
 
+//GetExecAccount ...
 func (c *GRPCCli) GetExecAccount(addr string, exec string, symbol string) (*types.Account, error) {
 	if exec == "coins" {
 		// bty
@@ -131,6 +136,7 @@ func (c *GRPCCli) sendAndWaitReceipt(tx *types.Transaction, hexKey string) (txHa
 	return r.Msg, d.Receipt.Logs, nil
 }
 
+//SendTx ...
 func (c *GRPCCli) SendTx(tx *types.Transaction, hexKey string) (reply *types.Reply, err error) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")

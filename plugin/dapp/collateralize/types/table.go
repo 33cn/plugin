@@ -16,7 +16,7 @@ var opt = &table.Option{
 	Index:   []string{"status", "addr", "addr_status"},
 }
 
-//NewTable 新建表
+//NewCollateralizeTable 新建表
 func NewCollateralizeTable(kvdb db.KV) *table.Table {
 	rowmeta := NewCollatetalizeRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt)
@@ -31,7 +31,7 @@ type CollatetalizeRow struct {
 	*ReceiptCollateralize
 }
 
-//NewIssuanceRow 新建一个meta 结构
+//NewCollatetalizeRow 新建一个meta 结构
 func NewCollatetalizeRow() *CollatetalizeRow {
 	return &CollatetalizeRow{ReceiptCollateralize: &ReceiptCollateralize{}}
 }
@@ -81,12 +81,12 @@ func NewRecordTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//CollatetalizeRow table meta 结构
+//CollateralizeRecordRow table meta 结构
 type CollateralizeRecordRow struct {
 	*ReceiptCollateralize
 }
 
-//NewIssuanceRow 新建一个meta 结构
+//NewRecordRow 新建一个meta 结构
 func NewRecordRow() *CollateralizeRecordRow {
 	return &CollateralizeRecordRow{ReceiptCollateralize: &ReceiptCollateralize{}}
 }

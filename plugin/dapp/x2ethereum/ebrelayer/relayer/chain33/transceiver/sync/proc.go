@@ -43,6 +43,7 @@ func pushTxReceipts(txReceipts *types.TxReceipts4Subscribe) error {
 	return err
 }
 
+//TxReceipts ...
 type TxReceipts struct {
 	db     dbm.DB
 	seqNum int64 //当前同步的序列号
@@ -50,6 +51,7 @@ type TxReceipts struct {
 	quit   chan struct{}
 }
 
+//NewSyncTxReceipts ...
 func NewSyncTxReceipts(db dbm.DB) *TxReceipts {
 	sync := &TxReceipts{
 		db: db,
@@ -74,6 +76,7 @@ func (syncTx *TxReceipts) initSyncReceiptDataBase() {
 	syncTx.setTxReceiptsPerBlock(txsPerBlock)
 }
 
+//Stop ...
 func (syncTx *TxReceipts) Stop() {
 	close(syncTx.quit)
 }
@@ -141,6 +144,7 @@ func (syncTx *TxReceipts) loadBlockLastSequence() (int64, error) {
 	return utils.LoadInt64FromDB(lastSequences, syncTx.db)
 }
 
+//LoadLastBlockHeight ...
 func (syncTx *TxReceipts) LoadLastBlockHeight() (int64, error) {
 	return utils.LoadInt64FromDB(syncLastHeight, syncTx.db)
 }
@@ -170,6 +174,7 @@ func (syncTx *TxReceipts) setTxReceiptsPerBlock(txReceipts *types.TxReceipts4Sub
 	}
 }
 
+//GetTxReceipts ...
 func (syncTx *TxReceipts) GetTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
 	key := txReceiptsKey4Height(height)
 	value, err := syncTx.db.Get(key)
@@ -184,6 +189,7 @@ func (syncTx *TxReceipts) GetTxReceipts(height int64) (*types.TxReceipts4Subscri
 	return detail, nil
 }
 
+//GetNextValidTxReceipts ...
 func (syncTx *TxReceipts) GetNextValidTxReceipts(height int64) (*types.TxReceipts4SubscribePerBlk, error) {
 	key := txReceiptsKey4Height(height)
 	helper := dbm.NewListHelper(syncTx.db)

@@ -29,6 +29,7 @@ import (
 
 var relayerLog = log.New("module", "chain33_relayer")
 
+//Relayer4Chain33 ...
 type Relayer4Chain33 struct {
 	syncTxReceipts      *syncTx.TxReceipts
 	ethClient           ethinterface.EthClientSpec
@@ -82,6 +83,7 @@ func StartChain33Relayer(ctx context.Context, syncTxConfig *ebTypes.SyncTxConfig
 	return chian33Relayer
 }
 
+//QueryTxhashRelay2Eth ...
 func (chain33Relayer *Relayer4Chain33) QueryTxhashRelay2Eth() ebTypes.Txhashes {
 	txhashs := utils.QueryTxhashes([]byte(chain33ToEthBurnLockTxHashPrefix), chain33Relayer.db)
 	return ebTypes.Txhashes{Txhash: txhashs}

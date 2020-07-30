@@ -42,10 +42,12 @@ func init() {
 	types.RegExec(EchoX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(EchoX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(EchoX, NewType(cfg))
 }

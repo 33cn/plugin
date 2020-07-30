@@ -43,6 +43,7 @@ const (
 //	CollateralizeAssetTypeEth
 //)
 
+//collater ...
 const (
 	CollateralizeUserStatusCreate = 1 + iota
 	CollateralizeUserStatusWarning
@@ -52,6 +53,7 @@ const (
 	CollateralizeUserStatusClose
 )
 
+//fork ...
 var (
 	ForkCollateralizeTableUpdate = "ForkCollateralizeTableUpdate"
 )

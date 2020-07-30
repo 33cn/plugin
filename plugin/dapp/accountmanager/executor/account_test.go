@@ -120,9 +120,11 @@ func TestAccountManager(t *testing.T) {
 	_, err = Exec_QueryAccountByAddr(Nodes[1], stateDB, kvdb)
 	assert.Equal(t, err, nil)
 	tx2, err := CreateRegister(&et.Register{AccountID: "harrylee2015"}, PrivKeyC)
+	assert.Nil(t, err)
 	err = Exec_Block(t, stateDB, kvdb, env, tx2)
 	assert.Equal(t, err, et.ErrAccountIDExist)
 	tx3, err := CreateRegister(&et.Register{AccountID: "harrylee2020"}, PrivKeyC)
+	assert.Nil(t, err)
 	Exec_Block(t, stateDB, kvdb, env, tx3)
 	//转账
 	tx4, err := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2020", Asset: &types.Asset{Exec: "coins", Symbol: "bty", Amount: 1e8}}, PrivKeyB)
@@ -133,6 +135,7 @@ func TestAccountManager(t *testing.T) {
 	tx5, err := CreateReset(&et.ResetKey{Addr: "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs", AccountID: "harrylee2015"}, PrivKeyA)
 	assert.Equal(t, err, nil)
 	err = Exec_Block(t, stateDB, kvdb, env, tx5)
+	assert.Nil(t, err)
 	//在锁定期内撤回请求
 	tx6, err := CreateApply(&et.Apply{Op: et.RevokeReset, AccountID: "harrylee2015"}, PrivKeyB)
 	assert.Equal(t, err, nil)
@@ -142,11 +145,13 @@ func TestAccountManager(t *testing.T) {
 	tx5, err = CreateReset(&et.ResetKey{Addr: "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs", AccountID: "harrylee2015"}, PrivKeyA)
 	assert.Equal(t, err, nil)
 	err = Exec_Block(t, stateDB, kvdb, env, tx5)
+	assert.Nil(t, err)
 	time.Sleep(time.Second)
 	//过了锁定期，申请生效
 	tx6, err = CreateApply(&et.Apply{Op: et.EnforceReset, AccountID: "harrylee2015"}, PrivKeyD)
 	assert.Equal(t, err, nil)
 	err = Exec_Block(t, stateDB, kvdb, env, tx6)
+	assert.Nil(t, err)
 	tx7, _ := CreateTransfer(&et.Transfer{FromAccountID: "harrylee2015", ToAccountID: "harrylee2015", Asset: &types.Asset{Exec: "coins", Symbol: "bty", Amount: 1e8}}, PrivKeyD)
 
 	err = Exec_Block(t, stateDB, kvdb, env, tx7)

@@ -27,6 +27,7 @@ var (
 	start             = int(1)
 )
 
+//Key ...
 type Key struct {
 	ID uuid.UUID // Version 4 "random" for unique id not derived from key data
 	// to simplify lookups we also store the address
@@ -36,6 +37,7 @@ type Key struct {
 	PrivateKey *ecdsa.PrivateKey
 }
 
+//NewAccount ...
 func (ethRelayer *Relayer4Ethereum) NewAccount(passphrase string) (privateKeystr, addr string, err error) {
 	_, privateKeystr, addr, err = newKeyAndStore(ethRelayer.db, crand.Reader, passphrase)
 	if err != nil {
@@ -44,6 +46,7 @@ func (ethRelayer *Relayer4Ethereum) NewAccount(passphrase string) (privateKeystr
 	return
 }
 
+//GetAccount ...
 func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -59,6 +62,7 @@ func (ethRelayer *Relayer4Ethereum) GetAccount(passphrase string) (privateKey, a
 	return
 }
 
+//GetValidatorAddr ...
 func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.ValidatorAddr4EthRelayer, err error) {
 	var chain33AccountAddr string
 	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
@@ -79,6 +83,7 @@ func (ethRelayer *Relayer4Ethereum) GetValidatorAddr() (validators x2ethTypes.Va
 	return
 }
 
+//RestorePrivateKeys ...
 func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err error) {
 	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil == err {
@@ -107,6 +112,7 @@ func (ethRelayer *Relayer4Ethereum) RestorePrivateKeys(passPhase string) (err er
 	return nil
 }
 
+//StoreAccountWithNewPassphase ...
 func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := ethRelayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -124,6 +130,7 @@ func (ethRelayer *Relayer4Ethereum) StoreAccountWithNewPassphase(newPassphrase, 
 	return ethRelayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
+//ImportChain33PrivateKey ...
 func (ethRelayer *Relayer4Ethereum) ImportChain33PrivateKey(passphrase, privateKeyStr string) error {
 	var driver secp256k1.Driver
 	privateKeySli, err := chain33Common.FromHex(privateKeyStr)

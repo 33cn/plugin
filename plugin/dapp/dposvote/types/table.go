@@ -15,7 +15,7 @@ data:  voter
 index: FromAddr,Pubkey,Votes,Index,Time
 */
 
-var opt_dpos_voter = &table.Option{
+var optDposVoter = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "voter",
 	Primary: "index",
@@ -25,7 +25,7 @@ var opt_dpos_voter = &table.Option{
 //NewDposVoteTable 新建表
 func NewDposVoteTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposVoterRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_voter)
+	table, err := table.NewTable(rowmeta, kvdb, optDposVoter)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func (tx *DposVoterRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-var opt_dpos_candidator = &table.Option{
+var optDposCandidator = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "candidator",
 	Primary: "pubkey",
@@ -79,7 +79,7 @@ var opt_dpos_candidator = &table.Option{
 //NewDposCandidatorTable 新建表
 func NewDposCandidatorTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposCandidatorRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_candidator)
+	table, err := table.NewTable(rowmeta, kvdb, optDposCandidator)
 	if err != nil {
 		panic(err)
 	}
@@ -121,7 +121,7 @@ func (tx *DposCandidatorRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-var opt_dpos_vrfm = &table.Option{
+var optDposVrfm = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "vrfm",
 	Primary: "index",
@@ -131,7 +131,7 @@ var opt_dpos_vrfm = &table.Option{
 //NewDposVrfMTable 新建表
 func NewDposVrfMTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposVrfMRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_vrfm)
+	table, err := table.NewTable(rowmeta, kvdb, optDposVrfm)
 	if err != nil {
 		panic(err)
 	}
@@ -175,7 +175,7 @@ func (tx *DposVrfMRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-var opt_dpos_vrfrp = &table.Option{
+var optDposVrfrp = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "vrfrp",
 	Primary: "index",
@@ -185,7 +185,7 @@ var opt_dpos_vrfrp = &table.Option{
 //NewDposVrfRPTable 新建表
 func NewDposVrfRPTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposVrfRPRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_vrfrp)
+	table, err := table.NewTable(rowmeta, kvdb, optDposVrfrp)
 	if err != nil {
 		panic(err)
 	}
@@ -229,7 +229,7 @@ func (tx *DposVrfRPRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-var opt_dpos_cb = &table.Option{
+var optDposCb = &table.Option{
 	Prefix:  "LODB-dpos",
 	Name:    "cb",
 	Primary: "cycle",
@@ -239,7 +239,7 @@ var opt_dpos_cb = &table.Option{
 //NewDposCBTable 新建表
 func NewDposCBTable(kvdb db.KV) *table.Table {
 	rowmeta := NewDposCBRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_dpos_cb)
+	table, err := table.NewTable(rowmeta, kvdb, optDposCb)
 	if err != nil {
 		panic(err)
 	}

@@ -132,6 +132,7 @@ func test_Lockbty(t *testing.T) {
 	logs := make(chan ethTypes.Log)
 	// Filter by contract and event, write results to logs
 	sub, err := sim.SubscribeFilterLogs(ctx, query, logs)
+	assert.Nil(t, err)
 	//require.Nil(t, err)
 
 	opts := &bind.CallOpts{

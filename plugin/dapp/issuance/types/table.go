@@ -16,7 +16,7 @@ var opt = &table.Option{
 	Index:   []string{"status"},
 }
 
-//NewTable 新建表
+//NewIssuanceTable 新建表
 func NewIssuanceTable(kvdb db.KV) *table.Table {
 	rowmeta := NewIssuanceRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt)
@@ -77,12 +77,12 @@ func NewRecordTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-//IssuanceRow table meta 结构
+//IssuanceRecordRow table meta 结构
 type IssuanceRecordRow struct {
 	*ReceiptIssuance
 }
 
-//NewIssuanceRow 新建一个meta 结构
+//NewRecordRow 新建一个meta 结构
 func NewRecordRow() *IssuanceRecordRow {
 	return &IssuanceRecordRow{ReceiptIssuance: &ReceiptIssuance{}}
 }

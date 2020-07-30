@@ -37,6 +37,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+//Relayer4Ethereum ...
 type Relayer4Ethereum struct {
 	provider               string
 	clientChainID          *big.Int
@@ -69,10 +70,12 @@ var (
 	relayerLog = log.New("module", "ethereum_relayer")
 )
 
+//const ...
 const (
 	DefaultBlockPeriod = 5000
 )
 
+//StartEthereumRelayer ///
 func StartEthereumRelayer(rpcURL2Chain33 string, db dbm.DB, provider, registryAddress string, deploy *ebTypes.Deploy, degree, blockInterval int32) *Relayer4Ethereum {
 	if 0 == blockInterval {
 		blockInterval = DefaultBlockPeriod
@@ -140,7 +143,7 @@ func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {
 	return nil
 }
 
-//部署以太坊合约
+//DeployContrcts 部署以太坊合约
 func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err error) {
 	bridgeRegistry = ""
 	if nil == ethRelayer.deployInfo {
@@ -209,11 +212,12 @@ func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err
 	return bridgeRegistry, nil
 }
 
-//GetBalance：获取某一个币种的余额
+//GetBalance ：获取某一个币种的余额
 func (ethRelayer *Relayer4Ethereum) GetBalance(tokenAddr, owner string) (string, error) {
 	return ethtxs.GetBalance(ethRelayer.clientSpec, tokenAddr, owner)
 }
 
+//ShowBridgeBankAddr ...
 func (ethRelayer *Relayer4Ethereum) ShowBridgeBankAddr() (string, error) {
 	if nil == ethRelayer.x2EthDeployInfo {
 		return "", errors.New("the relayer is not started yes")
@@ -222,6 +226,7 @@ func (ethRelayer *Relayer4Ethereum) ShowBridgeBankAddr() (string, error) {
 	return ethRelayer.x2EthDeployInfo.BridgeBank.Address.String(), nil
 }
 
+//ShowBridgeRegistryAddr ...
 func (ethRelayer *Relayer4Ethereum) ShowBridgeRegistryAddr() (string, error) {
 	if nil == ethRelayer.x2EthDeployInfo {
 		return "", errors.New("the relayer is not started yes")
@@ -230,34 +235,41 @@ func (ethRelayer *Relayer4Ethereum) ShowBridgeRegistryAddr() (string, error) {
 	return ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String(), nil
 }
 
+//ShowLockStatics ...
 func (ethRelayer *Relayer4Ethereum) ShowLockStatics(tokenAddr string) (string, error) {
 	return ethtxs.GetLockedFunds(ethRelayer.x2EthContracts.BridgeBank, tokenAddr)
 }
 
+//ShowDepositStatics ...
 func (ethRelayer *Relayer4Ethereum) ShowDepositStatics(tokenAddr string) (string, error) {
 	return ethtxs.GetDepositFunds(ethRelayer.clientSpec, tokenAddr)
 }
 
+//ShowTokenAddrBySymbol ...
 func (ethRelayer *Relayer4Ethereum) ShowTokenAddrBySymbol(tokenSymbol string) (string, error) {
 	return ethtxs.GetToken2address(ethRelayer.x2EthContracts.BridgeBank, tokenSymbol)
 }
 
+//IsProphecyPending ...
 func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, error) {
 	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethValidator, ethRelayer.x2EthContracts.Chain33Bridge)
 }
 
+//CreateBridgeToken ...
 func (ethRelayer *Relayer4Ethereum) CreateBridgeToken(symbol string) (string, error) {
 	ethRelayer.rwLock.RLock()
 	defer ethRelayer.rwLock.RUnlock()
 	return ethtxs.CreateBridgeToken(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts)
 }
 
+//CreateERC20Token ...
 func (ethRelayer *Relayer4Ethereum) CreateERC20Token(symbol string) (string, error) {
 	ethRelayer.rwLock.RLock()
 	defer ethRelayer.rwLock.RUnlock()
 	return ethtxs.CreateERC20Token(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
+//MintERC20Token ...
 func (ethRelayer *Relayer4Ethereum) MintERC20Token(tokenAddr, ownerAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
@@ -266,30 +278,35 @@ func (ethRelayer *Relayer4Ethereum) MintERC20Token(tokenAddr, ownerAddr, amount 
 	return ethtxs.MintERC20Token(tokenAddr, ownerAddr, bn, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
+//ApproveAllowance ...
 func (ethRelayer *Relayer4Ethereum) ApproveAllowance(ownerPrivateKey, tokenAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.ApproveAllowance(ownerPrivateKey, tokenAddr, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn, ethRelayer.clientSpec)
 }
 
+//Burn ...
 func (ethRelayer *Relayer4Ethereum) Burn(ownerPrivateKey, tokenAddr, chain33Receiver, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.Burn(ownerPrivateKey, tokenAddr, chain33Receiver, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec)
 }
 
+//BurnAsync ...
 func (ethRelayer *Relayer4Ethereum) BurnAsync(ownerPrivateKey, tokenAddr, chain33Receiver, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.BurnAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec)
 }
 
+//TransferToken ...
 func (ethRelayer *Relayer4Ethereum) TransferToken(tokenAddr, fromKey, toAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.TransferToken(tokenAddr, fromKey, toAddr, bn, ethRelayer.clientSpec)
 }
 
+//GetDecimals ...
 func (ethRelayer *Relayer4Ethereum) GetDecimals(tokenAddr string) (uint8, error) {
 	opts := &bind.CallOpts{
 		Pending: true,
@@ -300,18 +317,21 @@ func (ethRelayer *Relayer4Ethereum) GetDecimals(tokenAddr string) (uint8, error)
 	return bridgeToken.Decimals(opts)
 }
 
+//LockEthErc20Asset ...
 func (ethRelayer *Relayer4Ethereum) LockEthErc20Asset(ownerPrivateKey, tokenAddr, amount string, chain33Receiver string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.LockEthErc20Asset(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.x2EthDeployInfo.BridgeBank.Address)
 }
 
+//LockEthErc20AssetAsync ...
 func (ethRelayer *Relayer4Ethereum) LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, amount string, chain33Receiver string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(x2ethTypes.TrimZeroAndDot(amount), 10)
 	return ethtxs.LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank)
 }
 
+//ShowTxReceipt ...
 func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, error) {
 	txhash := common.HexToHash(hash)
 	return ethRelayer.clientSpec.TransactionReceipt(context.Background(), txhash)
@@ -614,6 +634,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	ethRelayer.bridgeBankSub = sub
 }
 
+//IsValidatorActive ...
 func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error) {
 	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 	if !re.MatchString(addr) {
@@ -625,6 +646,7 @@ func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error)
 	return active, err
 }
 
+//ShowOperator ...
 func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
 	operator, err := ethtxs.GetOperator(ethRelayer.clientSpec, ethRelayer.ethValidator, ethRelayer.bridgeBankAddr)
 	if nil != err {
@@ -633,11 +655,13 @@ func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
 	return operator.String(), nil
 }
 
+//QueryTxhashRelay2Eth ...
 func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Eth() ebTypes.Txhashes {
 	txhashs := ethRelayer.queryTxhashes([]byte(chain33ToEthTxHashPrefix))
 	return ebTypes.Txhashes{Txhash: txhashs}
 }
 
+//QueryTxhashRelay2Chain33 ...
 func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Chain33() ebTypes.Txhashes {
 	txhashs := ethRelayer.queryTxhashes([]byte(eth2chain33TxHashPrefix))
 	return ebTypes.Txhashes{Txhash: txhashs}

@@ -23,6 +23,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 
 var driverName = pkt.PokerBullX
 
+//InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&PokerBull{}))

@@ -987,10 +987,14 @@ func (client *commitMsgClient) fetchPriKey() error {
 	req := &types.ReqString{Data: client.authAccount}
 
 	resp, err := client.paraClient.GetAPI().ExecWalletFunc("wallet", "DumpPrivkey", req)
+	if err != nil {
+		plog.Error("para fetchPriKey dump priKey", "err", err)
+		return err
+	}
 	str := resp.(*types.ReplyString).Data
 	priKey, err := getSecpPriKey(str)
 	if err != nil {
-		plog.Error("para commit msg get priKey", "err", err)
+		plog.Error("para fetchPriKey get priKey", "err", err)
 		return err
 	}
 

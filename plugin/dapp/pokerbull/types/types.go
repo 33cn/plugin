@@ -17,10 +17,12 @@ func init() {
 	types.RegExec(PokerBullX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(PokerBullX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(PokerBullX, NewType(cfg))
 }

@@ -35,6 +35,7 @@ type exchange struct {
 	drivers.DriverBase
 }
 
+//NewExchange ...
 func NewExchange() drivers.Driver {
 	t := &exchange{}
 	t.SetChild(t)
@@ -47,6 +48,7 @@ func GetName() string {
 	return NewExchange().GetName()
 }
 
+//GetDriverName ...
 func (e *exchange) GetDriverName() string {
 	return driverName
 }
