@@ -35,9 +35,9 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee int64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg)
-
+	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
-	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg)
+	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0
 	var (
 		ret          []byte
@@ -48,7 +48,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		execName     string
 		methodName   string
 	)
-	cfg := evm.GetAPI().GetConfig()
 
 	// 为了方便计费，即使合约为新生成，也将地址的初始化放到外面操作
 	if isCreate {
@@ -85,20 +84,18 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 			}
 			inData = packData
 			methodName = funcName
+			log.Debug("call contract ", "abi funcName", funcName, "packData", common.Bytes2Hex(inData))
 		}
 		ret, snapshot, leftOverGas, vmerr = env.Call(runtime.AccountRef(msg.From()), *msg.To(), inData, context.GasLimit, msg.Value())
+		log.Debug("call(create) contract ", "input", common.Bytes2Hex(inData))
 	}
-
-	log.Debug("call(create) contract ", "input", common.Bytes2Hex(msg.Data()))
 	usedGas := msg.GasLimit() - leftOverGas
 	logMsg := "call contract details:"
 	if isCreate {
 		logMsg = "create contract details:"
 	}
 	log.Debug(logMsg, "caller address", msg.From().String(), "contract address", contractAddr.String(), "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
-
 	curVer := evm.mStateDB.GetLastSnapshot()
-
 	if vmerr != nil {
 		log.Error("evm contract exec error", "error info", vmerr)
 		return receipt, vmerr

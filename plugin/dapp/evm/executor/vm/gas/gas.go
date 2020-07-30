@@ -5,9 +5,8 @@
 package gas
 
 import (
-	"math/big"
-
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
+	"github.com/holiman/uint256"
 )
 
 const (
@@ -30,7 +29,7 @@ const (
 
 // 返回真实花费的Gas
 //  availableGas - base * 63 / 64.
-func callGas(gasTable Table, availableGas, base uint64, callCost *big.Int) (uint64, error) {
+func callGas(gasTable Table, availableGas, base uint64, callCost *uint256.Int) (uint64, error) {
 	if availableGas == callCost.Uint64() {
 		availableGas = availableGas - base
 		gas := availableGas - availableGas/64

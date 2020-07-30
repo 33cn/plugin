@@ -5,9 +5,8 @@
 package runtime
 
 import (
-	"math/big"
-
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/holiman/uint256"
 )
 
 // Destinations 存储合约以及代码对应的位向量对象
@@ -16,13 +15,16 @@ import (
 type Destinations map[common.Hash]bitvec
 
 // Has 检查PC只想的代码是否存在JUMPDEST指令，并且跳转目标有效
-func (d Destinations) Has(codehash common.Hash, code []byte, dest *big.Int) bool {
+func (d Destinations) Has(codehash common.Hash, code []byte, dest *uint256.Int) bool {
 	// 首先需要检查PC（指令指针），它不可能比代码长度还大，也不可能大于63位
 	// 注意，这里的参数dest就是PC指针
-	udest := dest.Uint64()
-	if dest.BitLen() >= 63 || udest >= uint64(len(code)) {
+	udest, overflow := dest.Uint64WithOverflow()
+	// PC cannot go beyond len(code) and certainly can't be bigger than 63bits.
+	// Don't bother checking for JUMPDEST in that case.
+	if overflow || udest >= uint64(len(code)) {
 		return false
 	}
+
 	// 查看丢应代码是否已经解析，如果没有则，立即执行解析
 	m, analysed := d[codehash]
 	if !analysed {
