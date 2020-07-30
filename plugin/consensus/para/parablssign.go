@@ -148,10 +148,7 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 		return errors.Wrapf(types.ErrNotSync, "self is leader, off=%d bigger than peer sync=%d", off, sync.Offset)
 	}
 	//更新同步过来的最新offset 高度
-	if off != sync.Offset {
-		atomic.StoreInt32(&b.leaderOffset, sync.Offset)
-		plog.Error("rcvLeaderSyncTx sync to peer", "offset", sync.Offset)
-	}
+	atomic.CompareAndSwapInt32(&b.leaderOffset, b.leaderOffset, sync.Offset)
 
 	//两节点不同步则不喂狗，以防止非同步或作恶节点喂狗
 	atomic.StoreUint32(&b.feedDog, 1)
