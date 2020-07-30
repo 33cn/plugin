@@ -19,8 +19,6 @@ import (
 
 // 构造一个4个节点的平行链数据， 进行测试
 
-var ()
-
 type RewardTestSuite struct {
 	suite.Suite
 	stateDB dbm.KV
