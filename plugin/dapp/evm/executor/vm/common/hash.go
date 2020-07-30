@@ -18,7 +18,7 @@ const (
 
 	// Hash160Length Hash160格式的地址长度
 	Hash160Length = 20
-    // AddressLength 地址长度
+	// AddressLength 地址长度
 	AddressLength = 20
 )
 
