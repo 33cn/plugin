@@ -11,7 +11,7 @@ type (
 	MemorySizeFunc func(*Stack) (size uint64, overflow bool)
 )
 
-// MemorySha3 sha3计算所需内存大小
+//MemorySha3 sha3计算所需内存大小
 func MemorySha3(stack *Stack) (uint64, bool) {
 	return calcMemSize64(stack.Back(0), stack.Back(1))
 }

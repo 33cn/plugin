@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package bls12381
 
 import (
@@ -37,8 +38,7 @@ func (e *E) Set(e2 *E) *E {
 // One sets a new target group element to one
 func (e *E) One() *E {
 	e = new(fe12).one()
-	var e1 *E = e
-	return e1
+	return e
 }
 
 // IsOne returns true if given element equals to one
@@ -69,11 +69,10 @@ func (g *GT) FromBytes(in []byte) (*E, error) {
 	if err != nil {
 		return nil, err
 	}
-	var e1 *E = e
-	if !g.IsValid(e1) {
-		return e1, errors.New("invalid element")
+	if !g.IsValid(e) {
+		return e, errors.New("invalid element")
 	}
-	return e1, nil
+	return e, nil
 }
 
 // ToBytes serializes target group element.

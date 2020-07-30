@@ -4,6 +4,7 @@
 
 // +build gofuzz
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package bn256
 
 import (

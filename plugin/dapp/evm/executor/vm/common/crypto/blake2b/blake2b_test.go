@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package blake2b
 
 import (
@@ -14,13 +15,13 @@ import (
 	"testing"
 )
 
-//func fromHex(s string) []byte {
-//	b, err := hex.DecodeString(s)
-//	if err != nil {
-//		panic(err)
-//	}
-//	return b
-//}
+func fromHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
 
 func TestHashes(t *testing.T) {
 	defer func(sse4, avx, avx2 bool) {

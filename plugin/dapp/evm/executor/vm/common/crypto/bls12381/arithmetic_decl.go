@@ -16,6 +16,7 @@
 
 // +build amd64,blsasm amd64,blsadx
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package bls12381
 
 import (

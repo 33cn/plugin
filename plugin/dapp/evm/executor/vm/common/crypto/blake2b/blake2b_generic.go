@@ -2,9 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package blake2b
 
 import (
+	"encoding/binary"
 	"math/bits"
 )
 
@@ -24,23 +26,23 @@ var precomputed = [10][16]byte{
 	{10, 8, 7, 1, 2, 4, 6, 5, 15, 9, 3, 13, 11, 14, 12, 0},
 }
 
-//func hashBlocksGeneric(h *[8]uint64, c *[2]uint64, flag uint64, blocks []byte) {
-//	var m [16]uint64
-//	c0, c1 := c[0], c[1]
-//
-//	for i := 0; i < len(blocks); {
-//		c0 += BlockSize
-//		if c0 < BlockSize {
-//			c1++
-//		}
-//		for j := range m {
-//			m[j] = binary.LittleEndian.Uint64(blocks[i:])
-//			i += 8
-//		}
-//		fGeneric(h, &m, c0, c1, flag, 12)
-//	}
-//	c[0], c[1] = c0, c1
-//}
+func hashBlocksGeneric(h *[8]uint64, c *[2]uint64, flag uint64, blocks []byte) {
+	var m [16]uint64
+	c0, c1 := c[0], c[1]
+
+	for i := 0; i < len(blocks); {
+		c0 += BlockSize
+		if c0 < BlockSize {
+			c1++
+		}
+		for j := range m {
+			m[j] = binary.LittleEndian.Uint64(blocks[i:])
+			i += 8
+		}
+		fGeneric(h, &m, c0, c1, flag, 12)
+	}
+	c[0], c[1] = c0, c1
+}
 
 func fGeneric(h *[8]uint64, m *[16]uint64, c0, c1 uint64, flag uint64, rounds uint64) {
 	v0, v1, v2, v3, v4, v5, v6, v7 := h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7]

@@ -4,6 +4,7 @@
 
 // +build !go1.7,amd64,!gccgo,!appengine
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package blake2b
 
 import "golang.org/x/sys/cpu"

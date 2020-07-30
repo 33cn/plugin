@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package model
 
 const (
