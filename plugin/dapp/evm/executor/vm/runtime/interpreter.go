@@ -6,8 +6,9 @@ package runtime
 
 import (
 	"fmt"
-	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"sync/atomic"
+
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"

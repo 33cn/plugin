@@ -20,13 +20,14 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/holiman/uint256"
 	"math"
 	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/holiman/uint256"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 )
