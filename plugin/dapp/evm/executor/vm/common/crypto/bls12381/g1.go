@@ -27,6 +27,7 @@ import (
 // If z is equal to one the point is considered as in affine form.
 type PointG1 [3]fe
 
+// Set 设置G1 point
 func (p *PointG1) Set(p2 *PointG1) *PointG1 {
 	p[0].set(&p2[0])
 	p[1].set(&p2[1])
@@ -228,7 +229,7 @@ func (g *G1) IsAffine(p *PointG1) bool {
 	return p[2].isOne()
 }
 
-// Add adds two G1 points p1, p2 and assigns the result to point at first argument.
+// Affine Add adds two G1 points p1, p2 and assigns the result to point at first argument.
 func (g *G1) Affine(p *PointG1) *PointG1 {
 	if g.IsZero(p) {
 		return p
@@ -266,9 +267,8 @@ func (g *G1) Add(r, p1, p2 *PointG1) *PointG1 {
 	if t[1].equal(t[3]) {
 		if t[0].equal(t[2]) {
 			return g.Double(r, p1)
-		} else {
-			return r.Zero()
 		}
+		return r.Zero()
 	}
 	sub(t[1], t[1], t[3])
 	double(t[4], t[1])

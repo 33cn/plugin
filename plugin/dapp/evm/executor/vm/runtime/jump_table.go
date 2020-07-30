@@ -47,12 +47,14 @@ var (
 	// ConstantinopleInstructionSet 对应EVM不同版本的指令集，从上往下，从旧版本到新版本，
 	// 新版本包含旧版本的指令集（目前直接使用康士坦丁堡指令集）
 	ConstantinopleInstructionSet = NewConstantinopleInstructionSet()
-	YoloV1InstructionSet         = NewYoloV1InstructionSet()
+	// YoloV1InstructionSet 黄皮书指令集
+	YoloV1InstructionSet = NewYoloV1InstructionSet()
 )
 
 // JumpTable contains the EVM opcodes supported at a given fork.
 type JumpTable [256]Operation
 
+// NewYoloV1InstructionSet 黄皮书指令集
 func NewYoloV1InstructionSet() JumpTable {
 	instructionSet := NewConstantinopleInstructionSet()
 	// New opcode
@@ -85,6 +87,15 @@ func NewYoloV1InstructionSet() JumpTable {
 		ValidateStack: mm.MakeStackFunc(0, 1),
 		Valid:         true,
 	}
+	// New opcode
+	instructionSet[EXTCODEHASH] = Operation{
+		Execute:       opExtCodeHash,
+		GasCost:       gas.ConstGasFunc(params.ExtcodeHashGasConstantinople),
+		ValidateStack: mm.MakeStackFunc(1, 1),
+		Valid:         true,
+	}
+	// create2 不支持
+	// chainID 不支持
 	return instructionSet
 }
 

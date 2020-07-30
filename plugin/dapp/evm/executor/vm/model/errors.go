@@ -41,8 +41,12 @@ var (
 
 	// ErrNoCoinsAccount no coins account in executor!
 	ErrNoCoinsAccount         = errors.New("no coins account in executor")
+	// ErrReturnStackExceeded
 	ErrReturnStackExceeded    = errors.New("return stack limit reached")
+	// ErrInvalidSubroutineEntry
 	ErrInvalidSubroutineEntry = errors.New("invalid subroutine entry")
+	// ErrInvalidJump
 	ErrInvalidJump            = errors.New("invalid jump destination")
+	// ErrInvalidRetsub
 	ErrInvalidRetsub          = errors.New("invalid retsub")
 )

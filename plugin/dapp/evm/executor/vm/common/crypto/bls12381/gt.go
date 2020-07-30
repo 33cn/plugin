@@ -29,6 +29,7 @@ type GT struct {
 	fp12 *fp12
 }
 
+// Set 设置E
 func (e *E) Set(e2 *E) *E {
 	return e.set(e2)
 }
@@ -36,7 +37,8 @@ func (e *E) Set(e2 *E) *E {
 // One sets a new target group element to one
 func (e *E) One() *E {
 	e = new(fe12).one()
-	return e
+	var e1 *E = e
+	return e1
 }
 
 // IsOne returns true if given element equals to one
@@ -45,8 +47,8 @@ func (e *E) IsOne() bool {
 }
 
 // Equal returns true if given two element is equal, otherwise returns false
-func (g *E) Equal(g2 *E) bool {
-	return g.equal(g2)
+func (e *E) Equal(g2 *E) bool {
+	return e.equal(g2)
 }
 
 // NewGT constructs new target group instance.
@@ -67,10 +69,11 @@ func (g *GT) FromBytes(in []byte) (*E, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !g.IsValid(e) {
-		return e, errors.New("invalid element")
+	var e1 *E = e
+	if !g.IsValid(e1) {
+		return e1, errors.New("invalid element")
 	}
-	return e, nil
+	return e1, nil
 }
 
 // ToBytes serializes target group element.

@@ -112,11 +112,12 @@ type ReturnStack struct {
 	data []uint32
 }
 
-// ReturnStack 返回栈对象封装，提供常用的返回栈操作
+// NewReturnStack 返回栈对象封装，提供常用的返回栈操作
 func NewReturnStack() *ReturnStack {
 	return rStackPool.Get().(*ReturnStack)
 }
 
+// ReturnRStack 将returnStack还给rStackPool
 func ReturnRStack(rs *ReturnStack) {
 	rs.data = rs.data[:0]
 	rStackPool.Put(rs)
@@ -126,17 +127,19 @@ func (st *ReturnStack) Push(d uint32) {
 	st.data = append(st.data, d)
 }
 
-// A uint32 is sufficient as for code below 4.2G
+//  Pop A uint32 is sufficient as for code below 4.2G
 func (st *ReturnStack) Pop() (ret uint32) {
 	ret = st.data[len(st.data)-1]
 	st.data = st.data[:len(st.data)-1]
 	return
 }
 
+// Len ReturnStack大小
 func (st *ReturnStack) Len() int {
 	return len(st.data)
 }
 
+// Data 返回栈中的所有底层数据
 func (st *ReturnStack) Data() []uint32 {
 	return st.data
 }

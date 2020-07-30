@@ -155,9 +155,8 @@ func EmptyAddress() Address { return BytesToAddress([]byte{0}) }
 // If s is larger than len(h), s will be cropped from the left.
 func HexToAddress(s string) Hash160Address { return BytesToHash160Address(FromHex(s)) }
 
-// INTToAddress 大数字转换为地址
+// Uint256ToAddress 大数字转换为地址
 func Uint256ToAddress(b *uint256.Int) Address {
-	//TODO 这样转换可能与之前的版本不兼容
 	a := new(address.Address)
 	a.Version = 0
 	out := make([]byte, 20)
@@ -166,7 +165,7 @@ func Uint256ToAddress(b *uint256.Int) Address {
 	return Address{Addr: a}
 }
 
-//十六进制转换为虚拟机中的地址
+// HexToAddr 十六进制转换为虚拟机中的地址
 func HexToAddr(s string) Address {
 	a := new(address.Address)
 	a.Version = 0

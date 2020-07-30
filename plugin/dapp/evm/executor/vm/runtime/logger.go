@@ -6,7 +6,6 @@ package runtime
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"math/big"
 	"time"
@@ -35,8 +34,6 @@ type Tracer interface {
 type JSONLogger struct {
 	encoder *json.Encoder
 }
-
-var errTraceLimitReached = errors.New("the number of logs reached the specified limit")
 
 // Storage represents a contract's storage.
 type Storage map[common.Hash]common.Hash
