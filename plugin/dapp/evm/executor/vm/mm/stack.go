@@ -26,7 +26,7 @@ type Stack struct {
 func NewStack() *Stack {
 	return stackPool.Get().(*Stack)
 }
-
+// Returnstack 把用完的stack还给stackpool
 func Returnstack(s *Stack) {
 	s.data = s.data[:0]
 	stackPool.Put(s)
@@ -108,6 +108,7 @@ var rStackPool = sync.Pool{
 	},
 }
 
+// ReturnStack 返回栈对象
 type ReturnStack struct {
 	data []uint32
 }
@@ -123,11 +124,12 @@ func ReturnRStack(rs *ReturnStack) {
 	rStackPool.Put(rs)
 }
 
+// Push 压栈
 func (st *ReturnStack) Push(d uint32) {
 	st.data = append(st.data, d)
 }
 
-//  Pop A uint32 is sufficient as for code below 4.2G
+// Pop  A uint32 is sufficient as for code below 4.2G
 func (st *ReturnStack) Pop() (ret uint32) {
 	ret = st.data[len(st.data)-1]
 	st.data = st.data[:len(st.data)-1]

@@ -14,6 +14,8 @@
 //
 // BLAKE2X is a construction to compute hash values larger than 64 bytes. It
 // can produce hash values between 0 and 4 GiB.
+
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package blake2b
 
 import (
@@ -302,18 +304,18 @@ func appendUint64(b []byte, x uint64) []byte {
 	return append(b, a[:]...)
 }
 
-//func appendUint32(b []byte, x uint32) []byte {
-//	var a [4]byte
-//	binary.BigEndian.PutUint32(a[:], x)
-//	return append(b, a[:]...)
-//}
+func appendUint32(b []byte, x uint32) []byte {
+	var a [4]byte
+	binary.BigEndian.PutUint32(a[:], x)
+	return append(b, a[:]...)
+}
 
 func consumeUint64(b []byte) ([]byte, uint64) {
 	x := binary.BigEndian.Uint64(b)
 	return b[8:], x
 }
 
-//func consumeUint32(b []byte) ([]byte, uint32) {
-//	x := binary.BigEndian.Uint32(b)
-//	return b[4:], x
-//}
+func consumeUint32(b []byte) ([]byte, uint32) {
+	x := binary.BigEndian.Uint32(b)
+	return b[4:], x
+}

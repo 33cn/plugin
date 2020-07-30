@@ -18,7 +18,7 @@ const (
 
 	// Hash160Length Hash160格式的地址长度
 	Hash160Length = 20
-
+    // AddressLength 地址长度
 	AddressLength = 20
 )
 
@@ -51,7 +51,7 @@ func BigToHash(b *big.Int) Hash {
 	return Hash(common.BytesToHash(b.Bytes()))
 }
 
-// uinitToHash
+// Uint256ToHash 大数转化为哈希
 func Uint256ToHash(u *uint256.Int) Hash {
 	return Hash(common.BytesToHash(u.Bytes()))
 }

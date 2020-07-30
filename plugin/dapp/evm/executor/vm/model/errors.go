@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package model
 
 import "errors"
@@ -41,12 +42,12 @@ var (
 
 	// ErrNoCoinsAccount no coins account in executor!
 	ErrNoCoinsAccount = errors.New("no coins account in executor")
-	// ErrReturnStackExceeded
+	// ErrReturnStackExceeded return stack limit reached
 	ErrReturnStackExceeded = errors.New("return stack limit reached")
-	// ErrInvalidSubroutineEntry
+	// ErrInvalidSubroutineEntry invalid subroutine entry
 	ErrInvalidSubroutineEntry = errors.New("invalid subroutine entry")
-	// ErrInvalidJump
+	// ErrInvalidJump invalid jump destination
 	ErrInvalidJump = errors.New("invalid jump destination")
-	// ErrInvalidRetsub
+	// ErrInvalidRetsub invalid retsub
 	ErrInvalidRetsub = errors.New("invalid retsub")
 )

@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package bls12381
 
 type pair struct {
@@ -272,9 +273,8 @@ func (e *Engine) Check() bool {
 // Result computes pairing and returns target group element as result.
 func (e *Engine) Result() *E {
 	r := e.calculate()
-	var r1 *E = r
 	e.Reset()
-	return r1
+	return r
 }
 
 // GT returns target group instance.

@@ -1,3 +1,4 @@
+//nolint:unparam // 忽视本文件所有golangci-linter检查
 package bn256
 
 func lineFunctionAdd(r, p *twistPoint, q *curvePoint, r2 *gfP2) (a, b, c *gfP2, rOut *twistPoint) {

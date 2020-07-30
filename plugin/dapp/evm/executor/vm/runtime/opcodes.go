@@ -355,9 +355,9 @@ const (
 	JUMPDEST
 	// BEGINSUB OP
 	BEGINSUB
-
+    // RETURNSUB op
 	RETURNSUB
-
+	// JUMPSUB op
 	JUMPSUB
 )
 
