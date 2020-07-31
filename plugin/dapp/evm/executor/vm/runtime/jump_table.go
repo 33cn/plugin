@@ -96,6 +96,14 @@ func NewYoloV1InstructionSet() JumpTable {
 	}
 	// create2 不支持
 	// chainID 不支持
+
+	//PUSH1 指令变更
+	instructionSet[PUSH1] = Operation{
+		Execute:       opPush1,
+		GasCost:       gas.Push,
+		ValidateStack: mm.MakeStackFunc(0, 1),
+		Valid:         true,
+	}
 	return instructionSet
 }
 
@@ -519,7 +527,7 @@ func NewFrontierInstructionSet() [256]Operation {
 			Valid:         true,
 		},
 		PUSH1: {
-			Execute:       opPush1,
+			Execute:       makePush(1,1),
 			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,

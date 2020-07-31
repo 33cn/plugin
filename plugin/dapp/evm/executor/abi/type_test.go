@@ -21,10 +21,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/holiman/uint256"
-
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/davecgh/go-spew/spew"
 )
 
 // typeWithoutStringer is a alias for the Type type which simply doesn't implement
@@ -213,10 +211,11 @@ func TestTypeCheck(t *testing.T) {
 		{"uint16[3]", nil, [4]uint16{1, 2, 3}, "abi: cannot use [4]uint16 as type [3]uint16 as argument"},
 		{"uint16[3]", nil, []uint16{1, 2, 3}, ""},
 		{"uint16[3]", nil, []uint16{1, 2, 3, 4}, "abi: cannot use [4]uint16 as type [3]uint16 as argument"},
-		{"address[]", nil, []common.Address{common.Uint256ToAddress(uint256.NewInt().SetUint64(1))}, ""},
-		{"address[1]", nil, []common.Address{common.Uint256ToAddress(uint256.NewInt().SetUint64(1))}, ""},
-		{"address[1]", nil, [1]common.Address{common.Uint256ToAddress(uint256.NewInt().SetUint64(1))}, ""},
-		{"address[2]", nil, [1]common.Address{common.Uint256ToAddress(uint256.NewInt().SetUint64(1))}, "abi: cannot use [1]array as type [2]array as argument"},
+		//转化为chain33中evm下Hash160Address 合约地址
+		{"address[]", nil, []common.Hash160Address{{1}}, ""},
+		{"address[1]", nil, []common.Hash160Address{{1}}, ""},
+		{"address[1]", nil, [1]common.Hash160Address{{1}}, ""},
+		{"address[2]", nil, [1]common.Hash160Address{{1}}, "abi: cannot use [1]array as type [2]array as argument"},
 		{"bytes32", nil, [32]byte{}, ""},
 		{"bytes31", nil, [31]byte{}, ""},
 		{"bytes30", nil, [30]byte{}, ""},
@@ -261,9 +260,10 @@ func TestTypeCheck(t *testing.T) {
 		{"string", nil, []byte{}, "abi: cannot use slice as type string as argument"},
 		{"bytes32[]", nil, [][32]byte{{}}, ""},
 		{"function", nil, [24]byte{}, ""},
-		{"bytes20", nil, common.Address{}, ""},
+		//转化为chain33中evm下Hash160Address 合约地址
+		{"bytes20", nil, common.Hash160Address{}, ""},
 		{"address", nil, [20]byte{}, ""},
-		{"address", nil, common.Address{}, ""},
+		{"address", nil, common.Hash160Address{}, ""},
 		{"bytes32[]]", nil, "", "invalid arg type in abi"},
 		{"invalidType", nil, "", "unsupported arg type: invalidType"},
 		{"invalidSlice[]", nil, "", "unsupported arg type: invalidSlice"},
