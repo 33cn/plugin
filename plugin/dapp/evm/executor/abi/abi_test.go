@@ -722,143 +722,143 @@ func TestBareEvents(t *testing.T) {
 //    }
 // When receive("X") is called with sender 0x00... and value 1, it produces this tx receipt:
 //   receipt{status=1 cgas=23949 bloom=00000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000040200000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 logs=[log: b6818c8064f645cd82d99b59a1a267d6d61117ef [75fd880d39c1daf53b6547ab6cb59451fc6452d27caa90e5b6649dd8293b9eed] 000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158 9ae378b6d4409eada347a5dc0c180f186cb62dc68fcc0f043425eb917335aa28 0 95d429d309bb9d753954195fe2d69bd140b4ae731b9b5b605c34323de162cf00 0]}
-//func TestUnpackEvent(t *testing.T) {
-//	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
-//	abi, err := JSON(strings.NewReader(abiJSON))
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//
-//	const hexdata = `000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158`
-//	data, err := hex.DecodeString(hexdata)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	if len(data)%32 == 0 {
-//		t.Errorf("len(data) is %d, want a non-multiple of 32", len(data))
-//	}
-//
-//	type ReceivedEvent struct {
-//		Sender common.Address
-//		Amount *big.Int
-//		Memo   []byte
-//	}
-//	var ev ReceivedEvent
-//
-//	err = abi.Unpack(&ev, "received", data)
-//	if err != nil {
-//		t.Error(err)
-//	}
-//
-//	type ReceivedAddrEvent struct {
-//		Sender common.Address
-//	}
-//	var receivedAddrEv ReceivedAddrEvent
-//	err = abi.Unpack(&receivedAddrEv, "receivedAddr", data)
-//	if err != nil {
-//		t.Error(err)
-//	}
-//}
+func TestUnpackEvent(t *testing.T) {
+	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
+	abi, err := JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-//func TestUnpackEventIntoMap(t *testing.T) {
-//	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
-//	abi, err := JSON(strings.NewReader(abiJSON))
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//
-//	const hexdata = `000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158`
-//	data, err := hex.DecodeString(hexdata)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	if len(data)%32 == 0 {
-//		t.Errorf("len(data) is %d, want a non-multiple of 32", len(data))
-//	}
-//
-//	receivedMap := map[string]interface{}{}
-//	expectedReceivedMap := map[string]interface{}{
-//		"sender": common.HexToAddress("0x376c47978271565f56DEB45495afa69E59c16Ab2"),
-//		"amount": big.NewInt(1),
-//		"memo":   []byte{88},
-//	}
-//	if err := abi.UnpackIntoMap(receivedMap, "received", data); err != nil {
-//		t.Error(err)
-//	}
-//	if len(receivedMap) != 3 {
-//		t.Error("unpacked `received` map expected to have length 3")
-//	}
-//	if receivedMap["sender"] != expectedReceivedMap["sender"] {
-//		t.Error("unpacked `received` map does not match expected map")
-//	}
-//	if receivedMap["amount"].(*big.Int).Cmp(expectedReceivedMap["amount"].(*big.Int)) != 0 {
-//		t.Error("unpacked `received` map does not match expected map")
-//	}
-//	if !bytes.Equal(receivedMap["memo"].([]byte), expectedReceivedMap["memo"].([]byte)) {
-//		t.Error("unpacked `received` map does not match expected map")
-//	}
-//
-//	receivedAddrMap := map[string]interface{}{}
-//	if err = abi.UnpackIntoMap(receivedAddrMap, "receivedAddr", data); err != nil {
-//		t.Error(err)
-//	}
-//	if len(receivedAddrMap) != 1 {
-//		t.Error("unpacked `receivedAddr` map expected to have length 1")
-//	}
-//	if receivedAddrMap["sender"] != expectedReceivedMap["sender"] {
-//		t.Error("unpacked `receivedAddr` map does not match expected map")
-//	}
-//}
-//
-//func TestUnpackMethodIntoMap(t *testing.T) {
-//	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[],"name":"send","outputs":[{"name":"amount","type":"uint256"}],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"get","outputs":[{"name":"hash","type":"bytes"}],"payable":true,"stateMutability":"payable","type":"function"}]`
-//	abi, err := JSON(strings.NewReader(abiJSON))
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	const hexdata = `00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000015800000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000158000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001580000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000015800000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000158`
-//	data, err := hex.DecodeString(hexdata)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	if len(data)%32 != 0 {
-//		t.Errorf("len(data) is %d, want a multiple of 32", len(data))
-//	}
-//
-//	// Tests a method with no outputs
-//	receiveMap := map[string]interface{}{}
-//	if err = abi.UnpackIntoMap(receiveMap, "receive", data); err != nil {
-//		t.Error(err)
-//	}
-//	if len(receiveMap) > 0 {
-//		t.Error("unpacked `receive` map expected to have length 0")
-//	}
-//
-//	// Tests a method with only outputs
-//	sendMap := map[string]interface{}{}
-//	if err = abi.UnpackIntoMap(sendMap, "send", data); err != nil {
-//		t.Error(err)
-//	}
-//	if len(sendMap) != 1 {
-//		t.Error("unpacked `send` map expected to have length 1")
-//	}
-//	if sendMap["amount"].(*big.Int).Cmp(big.NewInt(1)) != 0 {
-//		t.Error("unpacked `send` map expected `amount` value of 1")
-//	}
-//
-//	// Tests a method with outputs and inputs
-//	getMap := map[string]interface{}{}
-//	if err = abi.UnpackIntoMap(getMap, "get", data); err != nil {
-//		t.Error(err)
-//	}
-//	if len(getMap) != 1 {
-//		t.Error("unpacked `get` map expected to have length 1")
-//	}
-//	expectedBytes := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0}
-//	if !bytes.Equal(getMap["hash"].([]byte), expectedBytes) {
-//		t.Errorf("unpacked `get` map expected `hash` value of %v", expectedBytes)
-//	}
-//}
+	const hexdata = `000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158`
+	data, err := hex.DecodeString(hexdata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data)%32 == 0 {
+		t.Errorf("len(data) is %d, want a non-multiple of 32", len(data))
+	}
+
+	type ReceivedEvent struct {
+		Sender common.Address
+		Amount *big.Int
+		Memo   []byte
+	}
+	var ev ReceivedEvent
+
+	err = abi.Unpack(&ev, "received", data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	type ReceivedAddrEvent struct {
+		Sender common.Address
+	}
+	var receivedAddrEv ReceivedAddrEvent
+	err = abi.Unpack(&receivedAddrEv, "receivedAddr", data)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestUnpackEventIntoMap(t *testing.T) {
+	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
+	abi, err := JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const hexdata = `000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158`
+	data, err := hex.DecodeString(hexdata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data)%32 == 0 {
+		t.Errorf("len(data) is %d, want a non-multiple of 32", len(data))
+	}
+
+	receivedMap := map[string]interface{}{}
+	expectedReceivedMap := map[string]interface{}{
+		"sender": common.HexToAddress("0x376c47978271565f56DEB45495afa69E59c16Ab2"),
+		"amount": big.NewInt(1),
+		"memo":   []byte{88},
+	}
+	if err := abi.UnpackIntoMap(receivedMap, "received", data); err != nil {
+		t.Error(err)
+	}
+	if len(receivedMap) != 3 {
+		t.Error("unpacked `received` map expected to have length 3")
+	}
+	if receivedMap["sender"] != expectedReceivedMap["sender"] {
+		t.Error("unpacked `received` map does not match expected map")
+	}
+	if receivedMap["amount"].(*big.Int).Cmp(expectedReceivedMap["amount"].(*big.Int)) != 0 {
+		t.Error("unpacked `received` map does not match expected map")
+	}
+	if !bytes.Equal(receivedMap["memo"].([]byte), expectedReceivedMap["memo"].([]byte)) {
+		t.Error("unpacked `received` map does not match expected map")
+	}
+
+	receivedAddrMap := map[string]interface{}{}
+	if err = abi.UnpackIntoMap(receivedAddrMap, "receivedAddr", data); err != nil {
+		t.Error(err)
+	}
+	if len(receivedAddrMap) != 1 {
+		t.Error("unpacked `receivedAddr` map expected to have length 1")
+	}
+	if receivedAddrMap["sender"] != expectedReceivedMap["sender"] {
+		t.Error("unpacked `receivedAddr` map does not match expected map")
+	}
+}
+
+func TestUnpackMethodIntoMap(t *testing.T) {
+	const abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"receive","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[],"name":"send","outputs":[{"name":"amount","type":"uint256"}],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"addr","type":"address"}],"name":"get","outputs":[{"name":"hash","type":"bytes"}],"payable":true,"stateMutability":"payable","type":"function"}]`
+	abi, err := JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const hexdata = `00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000015800000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000158000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001580000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000015800000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000158`
+	data, err := hex.DecodeString(hexdata)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data)%32 != 0 {
+		t.Errorf("len(data) is %d, want a multiple of 32", len(data))
+	}
+
+	// Tests a method with no outputs
+	receiveMap := map[string]interface{}{}
+	if err = abi.UnpackIntoMap(receiveMap, "receive", data); err != nil {
+		t.Error(err)
+	}
+	if len(receiveMap) > 0 {
+		t.Error("unpacked `receive` map expected to have length 0")
+	}
+
+	// Tests a method with only outputs
+	sendMap := map[string]interface{}{}
+	if err = abi.UnpackIntoMap(sendMap, "send", data); err != nil {
+		t.Error(err)
+	}
+	if len(sendMap) != 1 {
+		t.Error("unpacked `send` map expected to have length 1")
+	}
+	if sendMap["amount"].(*big.Int).Cmp(big.NewInt(1)) != 0 {
+		t.Error("unpacked `send` map expected `amount` value of 1")
+	}
+
+	// Tests a method with outputs and inputs
+	getMap := map[string]interface{}{}
+	if err = abi.UnpackIntoMap(getMap, "get", data); err != nil {
+		t.Error(err)
+	}
+	if len(getMap) != 1 {
+		t.Error("unpacked `get` map expected to have length 1")
+	}
+	expectedBytes := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 88, 0}
+	if !bytes.Equal(getMap["hash"].([]byte), expectedBytes) {
+		t.Errorf("unpacked `get` map expected `hash` value of %v", expectedBytes)
+	}
+}
 
 func TestUnpackIntoMapNamingConflict(t *testing.T) {
 	// Two methods have the same name
@@ -886,6 +886,7 @@ func TestUnpackIntoMapNamingConflict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	hexdata = `000000000000000000000000376c47978271565f56deb45495afa69e59c16ab200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000158`
 	data, err = hex.DecodeString(hexdata)
 	if err != nil {
@@ -898,7 +899,6 @@ func TestUnpackIntoMapNamingConflict(t *testing.T) {
 	if err = abi.UnpackIntoMap(receivedMap, "received", data); err != nil {
 		t.Error("naming conflict between two events; no error expected")
 	}
-
 	// Method and event have the same name
 	abiJSON = `[{"constant":false,"inputs":[{"name":"memo","type":"bytes"}],"name":"received","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"},{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"memo","type":"bytes"}],"name":"received","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"sender","type":"address"}],"name":"receivedAddr","type":"event"}]`
 	abi, err = JSON(strings.NewReader(abiJSON))

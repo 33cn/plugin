@@ -458,7 +458,6 @@ func opBlockhash(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 // 获取区块打包者地址
 func opCoinbase(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	// 需要注意coinbase可能为空的情况，这时将返回合约的创建者作为coinbase
-	callContext.stack.Push(new(uint256.Int).SetBytes(evm.Coinbase.Bytes()))
 	if evm.Coinbase == nil {
 		callContext.stack.Push(new(uint256.Int).SetBytes(callContext.contract.CallerAddress.Bytes()))
 	} else {
