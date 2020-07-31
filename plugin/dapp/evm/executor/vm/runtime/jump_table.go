@@ -527,7 +527,7 @@ func NewFrontierInstructionSet() [256]Operation {
 			Valid:         true,
 		},
 		PUSH1: {
-			Execute:       makePush(1,1),
+			Execute:       makePush(1, 1),
 			GasCost:       gas.Push,
 			ValidateStack: mm.MakeStackFunc(0, 1),
 			Valid:         true,
