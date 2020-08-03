@@ -192,7 +192,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	}
 
 	type EventPledge struct {
-		Who      common.Address
+		Who      common.Hash160Address
 		Wad      *big.Int
 		Currency [3]byte
 	}
@@ -213,7 +213,7 @@ func TestEventTupleUnpack(t *testing.T) {
 	bigintExpected := big.NewInt(1000000)
 	bigintExpected2 := big.NewInt(2218516807680)
 	bigintExpected3 := big.NewInt(1000001)
-	addr := common.HexToAddr("0x00Ce0d46d924CC8437c806721496599FC3FFA268")
+	addr := common.HexToAddress("0x00Ce0d46d924CC8437c806721496599FC3FFA268")
 	var testCases = []struct {
 		data     string
 		dest     interface{}
@@ -275,7 +275,7 @@ func TestEventTupleUnpack(t *testing.T) {
 		"Can unpack Pledge event into structure",
 	}, {
 		pledgeData1,
-		&[]interface{}{&common.Address{}, &bigint, &[3]byte{}},
+		&[]interface{}{&common.Hash160Address{}, &bigint, &[3]byte{}},
 		&[]interface{}{
 			&addr,
 			&bigintExpected2,
@@ -285,7 +285,7 @@ func TestEventTupleUnpack(t *testing.T) {
 		"Can unpack Pledge event into slice",
 	}, {
 		pledgeData1,
-		&[3]interface{}{&common.Address{}, &bigint, &[3]byte{}},
+		&[3]interface{}{&common.Hash160Address{}, &bigint, &[3]byte{}},
 		&[3]interface{}{
 			&addr,
 			&bigintExpected2,
@@ -298,18 +298,18 @@ func TestEventTupleUnpack(t *testing.T) {
 		&[]interface{}{new(int), 0, 0},
 		&[]interface{}{},
 		jsonEventPledge,
-		"abi: cannot unmarshal common.Address in to int",
+		"abi: cannot unmarshal common.Hash160Address in to int",
 		"Can not unpack Pledge event into slice with wrong types",
 	}, {
 		pledgeData1,
 		&BadEventPledge{},
 		&BadEventPledge{},
 		jsonEventPledge,
-		"abi: cannot unmarshal common.Address in to string",
+		"abi: cannot unmarshal common.Hash160Address in to string",
 		"Can not unpack Pledge event into struct with wrong filed types",
 	}, {
 		pledgeData1,
-		&[]interface{}{common.Address{}, new(big.Int)},
+		&[]interface{}{common.Hash160Address{}, new(big.Int)},
 		&[]interface{}{},
 		jsonEventPledge,
 		"abi: insufficient number of arguments for unpack, want 3, got 2",
