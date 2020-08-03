@@ -12,7 +12,7 @@
 // http://cryptojedi.org/papers/dclxvi-20100714.pdf. Its output is compatible
 // with the implementation described in that paper.
 
-//nolint:unparam // 忽视本文件所有golangci-linter检查
+//nolint:unparam
 package bn256
 
 import (

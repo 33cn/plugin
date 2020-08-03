@@ -739,7 +739,7 @@ func TestUnpackEvent(t *testing.T) {
 	}
 
 	type ReceivedEvent struct {
-		Sender common.Address
+		Sender common.Hash160Address
 		Amount *big.Int
 		Memo   []byte
 	}
@@ -751,7 +751,7 @@ func TestUnpackEvent(t *testing.T) {
 	}
 
 	type ReceivedAddrEvent struct {
-		Sender common.Address
+		Sender common.Hash160Address
 	}
 	var receivedAddrEv ReceivedAddrEvent
 	err = abi.Unpack(&receivedAddrEv, "receivedAddr", data)

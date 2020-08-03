@@ -18,6 +18,7 @@ function filterLinter() {
             --enable=goimports \
             --enable=misspell \
             --enable=golint \
+            --skip-dirs=["plugin/dapp/evm/executor/vm/common/crypto"] \
             --exclude=underscores \
             --exclude-use-default=false
     )
@@ -40,6 +41,8 @@ function testLinter() {
         --enable=goimports \
         --enable=misspell \
         --enable=golint \
+        --enable=nolintlint \
+        --skip-dirs=["plugin/dapp/evm/executor/vm/common/crypto"] \
         --exclude=underscores
 
     cd - >/dev/null || exit
