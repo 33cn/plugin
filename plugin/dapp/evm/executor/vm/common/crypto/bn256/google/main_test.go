@@ -1,4 +1,3 @@
-
 package bn256 //nolint
 
 import (
