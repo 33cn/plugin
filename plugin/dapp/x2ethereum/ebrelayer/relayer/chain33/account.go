@@ -15,6 +15,7 @@ var (
 	start             = int(1)
 )
 
+//GetAccount ...
 func (chain33Relayer *Relayer4Chain33) GetAccount(passphrase string) (privateKey, addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -29,6 +30,8 @@ func (chain33Relayer *Relayer4Chain33) GetAccount(passphrase string) (privateKey
 	addr = ethAccount.Addr
 	return
 }
+
+//GetAccountAddr ...
 func (chain33Relayer *Relayer4Chain33) GetAccountAddr() (addr string, err error) {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -44,6 +47,7 @@ func (chain33Relayer *Relayer4Chain33) GetAccountAddr() (addr string, err error)
 	return
 }
 
+//ImportPrivateKey ...
 func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeyStr string) (addr string, err error) {
 	privateKeySlice, err := chain33Common.FromHex(privateKeyStr)
 	if nil != err {
@@ -71,6 +75,7 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 	return
 }
 
+//StoreAccountWithNewPassphase ...
 func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphrase, oldPassphrase string) error {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {
@@ -88,6 +93,7 @@ func (chain33Relayer *Relayer4Chain33) StoreAccountWithNewPassphase(newPassphras
 	return chain33Relayer.db.SetSync(chain33AccountKey, encodedInfo)
 }
 
+//RestorePrivateKeys ...
 func (chain33Relayer *Relayer4Chain33) RestorePrivateKeys(passphrase string) error {
 	accountInfo, err := chain33Relayer.db.Get(chain33AccountKey)
 	if nil != err {

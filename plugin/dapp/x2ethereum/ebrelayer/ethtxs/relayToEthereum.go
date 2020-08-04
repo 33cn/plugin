@@ -17,6 +17,7 @@ var (
 	txslog = log15.New("ethereum relayer", "ethtxs")
 )
 
+//const ...
 const (
 	// GasLimit : the gas limit in Gwei used for transactions sent with TransactOpts
 	GasLimit        = uint64(100 * 10000)

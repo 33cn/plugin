@@ -49,6 +49,7 @@ func init() {
 
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, "Enable", 0)
 	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
@@ -60,6 +61,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(ParaX, NewType(cfg))
 }

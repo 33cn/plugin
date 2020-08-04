@@ -33,6 +33,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	InitExecType()
 }
 
+//InitExecType ...
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
 	ety.InitFuncList(types.ListMethod(&Retrieve{}))

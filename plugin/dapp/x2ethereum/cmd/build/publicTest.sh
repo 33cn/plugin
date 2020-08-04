@@ -12,6 +12,25 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
+# 出错退出前拷贝日志文件
+function exit_cp_file() {
+    # shellcheck disable=SC2116
+    dirNameFa=$(echo ~)
+    dirName="$dirNameFa/x2ethereumlogs"
+
+    if [ ! -d "${dirName}" ]; then
+        # shellcheck disable=SC2086
+        mkdir -p ${dirName}
+    fi
+
+    for name in A B C D; do
+        cp "./$name/ebrelayer.log" "$dirName/ebrelayer$name.log"
+    done
+    docker cp "${NODE3}":/root/logs/chain33.log "$dirName/chain33.log"
+
+    exit 1
+}
+
 function kill_all_ebrelayer() {
     for name in A B C D; do
         local ebrelayer="./../build/$name/ebrelayer"
@@ -24,13 +43,13 @@ function cli_ret() {
     set +x
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     ok=$(echo "${1}" | jq -r .isOK)
     if [[ ${ok} != "true" ]]; then
         echo -e "${RED}failed to ${2}${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local jqMsg=".msg"
@@ -42,7 +61,7 @@ function cli_ret() {
     if [[ $# -eq 4 ]]; then
         if [ "$(echo "$msg < $4" | bc)" -eq 1 ] || [ "$(echo "$msg > $4" | bc)" -eq 1 ]; then
             echo -e "${RED}The balance is not correct${NOC}"
-            exit 1
+            exit_cp_file
         fi
     fi
 
@@ -55,13 +74,13 @@ function balance_ret() {
     set +x
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local balance=$(echo "${1}" | jq -r ".balance")
     if [ "$(echo "$balance < $2" | bc)" -eq 1 ] || [ "$(echo "$balance > $2" | bc)" -eq 1 ]; then
         echo -e "${RED}The balance is not correct${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     set -x
@@ -75,7 +94,7 @@ function cli_ret_err() {
     echo "${ok}"
     if [[ ${ok} == "true" ]]; then
         echo -e "${RED}isOK is true${NOC}"
-        exit 1
+        exit_cp_file
     fi
     #set -x
 }
@@ -103,13 +122,13 @@ function start_ebrelayer() {
     # 参数如果小于 2 直接报错
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     # 判断可执行文件是否存在
     if [ ! -x "${1}" ]; then
         echo -e "${RED}${1} not exist${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     # 后台启动程序
@@ -126,7 +145,7 @@ function start_ebrelayer() {
         count=$((count + 1))
         if [[ ${count} -ge 20 ]]; then
             echo -e "${RED}start ${1} failed${NOC}"
-            exit 1
+            exit_cp_file
         fi
 
         # shellcheck disable=SC2009
@@ -150,7 +169,7 @@ function start_ebrelayer_and_unlock() {
         count=$((count + 1))
         if [[ ${count} == 5 ]]; then
             echo -e "${RED}failed to unlock${NOC}"
-            exit 1
+            exit_cp_file
         fi
 
         sleep 1
@@ -173,7 +192,7 @@ function start_ebrelayer_and_setpwd_unlock() {
         count=$((count + 1))
         if [[ ${count} == 5 ]]; then
             echo -e "${RED}failed to set_pwd${NOC}"
-            exit 1
+            exit_cp_file
         fi
 
         sleep 1
@@ -189,7 +208,7 @@ function start_ebrelayer_and_setpwd_unlock() {
         count=$((count + 1))
         if [[ ${count} == 5 ]]; then
             echo -e "${RED}failed to unlock${NOC}"
-            exit 1
+            exit_cp_file
         fi
 
         sleep 1
@@ -222,7 +241,7 @@ function block_wait() {
 
     if [[ $# -lt 1 ]]; then
         echo -e "${RED}wrong block_wait parameter${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local cur_height=$(${CLI} block last_header | jq ".height")
@@ -250,12 +269,12 @@ function check_tx() {
 
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong check_tx parameters${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     if [[ ${2} == "" ]]; then
         echo -e "${RED}wrong check_tx txHash is empty${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local count=0
@@ -279,19 +298,19 @@ function check_tx() {
     ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
-        exit 1
+        exit_cp_file
     fi
 }
 
 function check_number() {
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong check number parameters${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     if [ "$(echo "$1 < $2" | bc)" -eq 1 ] || [ "$(echo "$1 > $2" | bc)" -eq 1 ]; then
         echo -e "${RED}error number, expect ${1}, get ${2}${NOC}"
-        exit 1
+        exit_cp_file
     fi
 }
 
@@ -299,13 +318,13 @@ function check_number() {
 function check_addr() {
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong check number parameters${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     addr=$(echo "${1}" | jq -r ".acc.addr")
     if [[ ${addr} != "${2}" ]]; then
         echo -e "${RED}error addr, expect ${1}, get ${2}${NOC}"
-        exit 1
+        exit_cp_file
     fi
 }
 
@@ -319,7 +338,7 @@ function updata_relayer_toml() {
     local chain33Host=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
     if [[ ${chain33Host} == "" ]]; then
         echo -e "${RED}chain33Host is empty${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local pushHost=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
@@ -339,7 +358,7 @@ function updata_relayer_toml() {
 
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local line=$(delete_line_show "${file}" "chain33Host")
@@ -420,7 +439,7 @@ function start_trufflesuite() {
     #fi
 
     # 启动 eth
-    docker run -d --name ${ganacheName} -p 7545:8545 -l eth_test trufflesuite/ganache-cli:latest -a 10 --debug -b 2 -m "coast bar giraffe art venue decide symbol law visual crater vital fold"
+    docker run -d --name ${ganacheName} -p 7545:8545 -l eth_test trufflesuite/ganache-cli:latest -a 10 --debug -b 1 -m "coast bar giraffe art venue decide symbol law visual crater vital fold"
     sleep 1
 }
 
@@ -447,7 +466,7 @@ function wait_prophecy_finish() {
         count=$((count + 1))
         if [[ ${count} == 30 ]]; then
             echo -e "${RED}failed to get balance${NOC}"
-            exit 1
+            exit_cp_file
         fi
 
         sleep 1
@@ -460,7 +479,7 @@ function eth_block_wait() {
     set +x
     if [[ $# -lt 0 ]]; then
         echo -e "${RED}wrong block_wait parameter${NOC}"
-        exit 1
+        exit_cp_file
     fi
 
     local cur_height=""

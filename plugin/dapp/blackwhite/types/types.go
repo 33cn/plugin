@@ -28,11 +28,13 @@ func init() {
 	types.RegExec(BlackwhiteX, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(BlackwhiteX, "ForkBlackWhiteV2", 900000)
 	cfg.RegisterDappFork(BlackwhiteX, "Enable", 850000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(BlackwhiteX, NewType(cfg))
 }

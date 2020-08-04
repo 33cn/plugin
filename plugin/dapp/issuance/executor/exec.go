@@ -15,7 +15,7 @@ func (c *Issuance) Exec_Create(payload *pty.IssuanceCreate, tx *types.Transactio
 	return actiondb.IssuanceCreate(payload)
 }
 
-// Exec_Borrow Action
+// Exec_Debt Action
 func (c *Issuance) Exec_Debt(payload *pty.IssuanceDebt, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewIssuanceAction(c, tx, index)
 	return actiondb.IssuanceDebt(payload)

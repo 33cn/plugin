@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+//SymbolBty ...
 const SymbolBty = "bty"
 
 /*

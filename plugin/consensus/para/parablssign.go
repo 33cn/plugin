@@ -101,6 +101,11 @@ out:
 			}
 
 		case <-watchDogTicker:
+			//排除不在Nodegroup里面的Node
+			if !b.isValidNodes(b.selfID) {
+				plog.Info("procLeaderSync watchdog, not in nodegroup", "self", b.selfID)
+				continue
+			}
 			//至少1分钟内要收到leader喂狗消息，否则认为leader挂了，index++
 			if atomic.LoadUint32(&b.feedDog) == 0 {
 				nodes, leader, _, off, _ := b.getLeaderInfo()
@@ -140,10 +145,10 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 	}
 	//如果leader节点冲突，取大者
 	if isLeader && off > sync.Offset {
-		return errors.Wrapf(types.ErrNotSync, "self leader off=%d bigger than sync=%d", off, sync.Offset)
+		return errors.Wrapf(types.ErrNotSync, "self is leader, off=%d bigger than peer sync=%d", off, sync.Offset)
 	}
 	//更新同步过来的最新offset 高度
-	atomic.StoreInt32(&b.leaderOffset, sync.Offset)
+	atomic.CompareAndSwapInt32(&b.leaderOffset, b.leaderOffset, sync.Offset)
 
 	//两节点不同步则不喂狗，以防止非同步或作恶节点喂狗
 	atomic.StoreUint32(&b.feedDog, 1)
@@ -151,6 +156,10 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 }
 
 func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
+	//在未同步前 不处理聚合消息
+	if !b.paraClient.commitMsgClient.isSync() {
+		return nil, 0, 0, 0, false
+	}
 	nodes, _ := b.getSuperNodes()
 	if len(nodes) <= 0 {
 		return nil, 0, 0, 0, false
@@ -538,8 +547,15 @@ func (b *blsClient) showTxBuffInfo() *pt.ParaBlsSignSumInfo {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	var seq []int64
 	var ret pt.ParaBlsSignSumInfo
+
+	reply, err := b.paraClient.SendFetchP2PTopic()
+	if err != nil {
+		plog.Error("fetch p2p topic", "err", err)
+	}
+	ret.Topics = append(ret.Topics, reply.Topics...)
+
+	var seq []int64
 	for k := range b.commitsPool {
 		seq = append(seq, k)
 	}

@@ -314,15 +314,15 @@ func TestParseEmptyBlockInterval(t *testing.T) {
 	assert.Equal(t, defaultEmptyBlockInterval, ret[0].interval)
 
 	cfg = []string{"10:50", "20-30"}
-	ret, err = parseEmptyBlockInterval(cfg)
+	_, err = parseEmptyBlockInterval(cfg)
 	assert.NotNil(t, err)
 
 	cfg = []string{"10:50", "20:"}
-	ret, err = parseEmptyBlockInterval(cfg)
+	_, err = parseEmptyBlockInterval(cfg)
 	assert.NotNil(t, err)
 
 	cfg = []string{"10:50", ":20"}
-	ret, err = parseEmptyBlockInterval(cfg)
+	_, err = parseEmptyBlockInterval(cfg)
 	assert.NotNil(t, err)
 
 	//mess sequence

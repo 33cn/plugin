@@ -469,7 +469,7 @@ function rpc_test() {
     if [ "$DAPP" == "" ]; then
         system_test_rpc "http://${1}:8801"
         dapp_test_address "${CLI}"
-        dapp_test_rpc "http://${1}:8801"
+        dapp_test_rpc "http://${1}:8801" "${NODE3}"
     fi
     if [ "$DAPP" == "paracross" ]; then
         system_test_rpc "http://${1}:8901"

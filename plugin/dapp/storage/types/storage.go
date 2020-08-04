@@ -41,11 +41,13 @@ const (
 	TyEncryptShareStorageLog
 )
 
+//storage op
 const (
 	OpCreate = int32(iota)
 	OpAdd
 )
 
+//fork
 var (
 	ForkStorageLocalDB = "ForkStorageLocalDB"
 )
@@ -89,10 +91,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(StorageX, NewType(cfg))
 }
 
+//StorageType ...
 type StorageType struct {
 	types.ExecTypeBase
 }
 
+//NewType ...
 func NewType(cfg *types.Chain33Config) *StorageType {
 	c := &StorageType{}
 	c.SetChild(c)
@@ -105,7 +109,7 @@ func (s *StorageType) GetPayload() types.Message {
 	return &StorageAction{}
 }
 
-// GeTypeMap 获取合约action的id和name信息
+// GetTypeMap 获取合约action的id和name信息
 func (s *StorageType) GetTypeMap() map[string]int32 {
 	return actionMap
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 )
 
+//authbls register
 const (
 	AuthBLS = 259
 )
@@ -31,9 +32,10 @@ var (
 
 var (
 	ttlog = log15.New("module", "tendermint-types")
-	// ConsensusCrypto define
+	//ConsensusCrypto define
 	ConsensusCrypto crypto.Crypto
-	CryptoName      string
+	//CryptoName ...
+	CryptoName string
 	// SignMap define sign type
 	SignMap = map[string]int{
 		"secp256k1": types.SECP256K1,

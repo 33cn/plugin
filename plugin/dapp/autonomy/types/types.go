@@ -19,10 +19,12 @@ func init() {
 	types.RegExec(name, InitExecutor)
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(AutonomyX, "Enable", 0)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(AutonomyX, NewType(cfg))
 }

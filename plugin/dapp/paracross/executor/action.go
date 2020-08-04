@@ -227,6 +227,7 @@ func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight, execHeight int64,
 	}
 }
 
+//GetMostCommit ...
 func GetMostCommit(commits [][]byte) (int, string) {
 	stats := make(map[string]int)
 	n := len(commits)

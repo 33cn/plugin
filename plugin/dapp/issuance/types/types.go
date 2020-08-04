@@ -34,6 +34,7 @@ const (
 	IssuanceStatusClose
 )
 
+//status ...
 const (
 	IssuanceUserStatusCreate = 1 + iota
 	IssuanceUserStatusWarning
@@ -43,6 +44,7 @@ const (
 	IssuanceUserStatusClose
 )
 
+//type ...
 const (
 	PriceFeedKey = "issuance-price-feed"
 	GuarantorKey = "issuance-guarantor"
@@ -50,6 +52,7 @@ const (
 	FundKey      = "issuance-fund"
 )
 
+//fork ...
 var (
 	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
 )

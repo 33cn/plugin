@@ -23,6 +23,7 @@ const (
 	MaxCount     = int32(100) // 最多取100条
 )
 
+//setting
 const (
 	Coin                    = types.Coin      // 1e8
 	DefaultDebtCeiling      = 100000 * Coin   // 默认借贷限额
@@ -139,13 +140,13 @@ func Key(id string) (key []byte) {
 	return key
 }
 
-// Key for IssuanceAddrConfig
+// AddrKey for IssuanceAddrConfig
 func AddrKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.IssuanceX+"-addr")...)
 	return key
 }
 
-// Key for IssuancePriceFeed
+// PriceKey for IssuancePriceFeed
 func PriceKey() (key []byte) {
 	key = append(key, []byte("mavl-"+pty.IssuanceX+"-price")...)
 	return key
@@ -288,7 +289,7 @@ func getLatestExpireTime(issu *pty.Issuance) int64 {
 	return latest
 }
 
-// IssuanceConfig 设置全局借贷参数（管理员权限）
+// IssuanceManage 设置全局借贷参数（管理员权限）
 func (action *Action) IssuanceManage(manage *pty.IssuanceManage) (*types.Receipt, error) {
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
@@ -467,7 +468,7 @@ func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActiv
 	return false
 }
 
-// CheckExecAccount 检查账户token余额
+// CheckExecTokenAccount 检查账户token余额
 func (action *Action) CheckExecTokenAccount(addr string, amount int64, isFrozen bool) bool {
 	acc := action.tokenAccount.LoadExecAccount(addr, action.execaddr)
 	if isFrozen {

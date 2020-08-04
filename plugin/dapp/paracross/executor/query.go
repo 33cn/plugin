@@ -460,9 +460,13 @@ func (p *Paracross) Query_GetSelfConsStages(in *types.ReqNil) (types.Message, er
 //Query_GetSelfConsOneStage get self consensus one stage
 func (p *Paracross) Query_GetSelfConsOneStage(in *types.Int64) (types.Message, error) {
 	stage, err := getSelfConsOneStage(p.GetStateDB(), in.Data)
+	if errors.Cause(err) == pt.ErrKeyNotExist {
+		return &pt.SelfConsensStage{StartHeight: in.Data}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	return stage, nil
 }
 
@@ -471,6 +475,7 @@ func (p *Paracross) Query_ListSelfStages(in *pt.ReqQuerySelfStages) (types.Messa
 	return p.listSelfStages(in)
 }
 
+//Query_GetBlock2MainInfo ...
 func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock2MainInfo, error) {
 	ret := &pt.ParaBlock2MainInfo{}
 	details, err := p.GetAPI().GetBlocks(req)
@@ -491,6 +496,7 @@ func (p *Paracross) Query_GetBlock2MainInfo(req *types.ReqBlocks) (*pt.ParaBlock
 	return ret, nil
 }
 
+//Query_GetHeight ...
 func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensusStatus, error) {
 	cfg := p.GetAPI().GetConfig()
 	if req == nil || req.Data == "" {

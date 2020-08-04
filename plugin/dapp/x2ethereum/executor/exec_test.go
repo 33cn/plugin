@@ -110,7 +110,7 @@ func (x *suiteX2Ethereum) Test_2_AddValidator() {
 	x.NotEmpty(receipt)
 	x.setDb(receipt)
 
-	receipt, err = x.action.procAddValidator(add)
+	_, err = x.action.procAddValidator(add)
 	x.Error(err)
 
 	add2 := &types2.MsgValidator{

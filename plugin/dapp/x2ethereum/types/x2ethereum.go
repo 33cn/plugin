@@ -67,10 +67,12 @@ func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(X2ethereumX, NewType(cfg))
 }
 
+//X2ethereumType ...
 type X2ethereumType struct {
 	types.ExecTypeBase
 }
 
+//NewType ...
 func NewType(cfg *types.Chain33Config) *X2ethereumType {
 	c := &X2ethereumType{}
 	c.SetChild(c)
@@ -78,6 +80,7 @@ func NewType(cfg *types.Chain33Config) *X2ethereumType {
 	return c
 }
 
+//GetName ...
 func (x *X2ethereumType) GetName() string {
 	return X2ethereumX
 }
@@ -87,7 +90,7 @@ func (x *X2ethereumType) GetPayload() types.Message {
 	return &X2EthereumAction{}
 }
 
-// GeTypeMap 获取合约action的id和name信息
+// GetTypeMap 获取合约action的id和name信息
 func (x *X2ethereumType) GetTypeMap() map[string]int32 {
 	return actionMap
 }

@@ -10,6 +10,7 @@ import (
  * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
  */
 
+//ExecLocal_Register ...
 func (a *Accountmanager) ExecLocal_Register(payload *et.Register, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.Ty == types.ExecOk {
@@ -36,6 +37,8 @@ func (a *Accountmanager) ExecLocal_Register(payload *et.Register, tx *types.Tran
 	}
 	return a.addAutoRollBack(tx, dbSet.KV), nil
 }
+
+//ExecLocal_ResetKey ...
 func (a *Accountmanager) ExecLocal_ResetKey(payload *et.ResetKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.Ty == types.ExecOk {
@@ -62,6 +65,7 @@ func (a *Accountmanager) ExecLocal_ResetKey(payload *et.ResetKey, tx *types.Tran
 	return a.addAutoRollBack(tx, dbSet.KV), nil
 }
 
+//ExecLocal_Apply ...
 func (a *Accountmanager) ExecLocal_Apply(payload *et.Apply, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.Ty == types.ExecOk {
@@ -88,6 +92,7 @@ func (a *Accountmanager) ExecLocal_Apply(payload *et.Apply, tx *types.Transactio
 	return a.addAutoRollBack(tx, dbSet.KV), nil
 }
 
+//ExecLocal_Transfer ...
 func (a *Accountmanager) ExecLocal_Transfer(payload *et.Transfer, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.Ty == types.ExecOk {
@@ -114,6 +119,7 @@ func (a *Accountmanager) ExecLocal_Transfer(payload *et.Transfer, tx *types.Tran
 	return a.addAutoRollBack(tx, dbSet.KV), nil
 }
 
+//ExecLocal_Supervise ...
 func (a *Accountmanager) ExecLocal_Supervise(payload *et.Supervise, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	if receiptData.Ty == types.ExecOk {

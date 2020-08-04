@@ -76,6 +76,7 @@ func RelayLockToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	return txhash, err
 }
 
+//RelayBurnToChain33 ...
 func RelayBurnToChain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, rpcURL string) (string, error) {
 	var res string
 

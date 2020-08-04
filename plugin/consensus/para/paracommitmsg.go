@@ -149,6 +149,10 @@ func (client *commitMsgClient) updateChainHeightNotify(height int64, isDel bool)
 	client.createCommitTx()
 }
 
+func (client *commitMsgClient) setInitChainHeight(height int64) {
+	atomic.StoreInt64(&client.chainHeight, height)
+}
+
 // reset notify 提供重设发送参数，发送tx的入口
 func (client *commitMsgClient) resetNotify() {
 	client.resetCh <- 1
@@ -831,7 +835,7 @@ func (client *commitMsgClient) getSelfConsensus() (*pt.ParacrossStatus, error) {
 		Param:    types.Encode(&types.Int64{Data: block.Height}),
 	})
 	if err != nil {
-		plog.Error("getSelfConsensusStatus.GetSelfConsOneStage ", "err", err.Error())
+		plog.Debug("getSelfConsensusStatus.GetSelfConsOneStage ", "err", err.Error())
 		return nil, err
 	}
 	stage, ok := ret.(*pt.SelfConsensStage)
@@ -987,10 +991,14 @@ func (client *commitMsgClient) fetchPriKey() error {
 	req := &types.ReqString{Data: client.authAccount}
 
 	resp, err := client.paraClient.GetAPI().ExecWalletFunc("wallet", "DumpPrivkey", req)
+	if err != nil {
+		plog.Error("para fetchPriKey dump priKey", "err", err)
+		return err
+	}
 	str := resp.(*types.ReplyString).Data
 	priKey, err := getSecpPriKey(str)
 	if err != nil {
-		plog.Error("para commit msg get priKey", "err", err)
+		plog.Error("para fetchPriKey get priKey", "err", err)
 		return err
 	}
 

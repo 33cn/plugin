@@ -75,12 +75,14 @@ func init() {
 
 }
 
+//InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(TicketX, "Enable", 0)
 	cfg.RegisterDappFork(TicketX, "ForkTicketId", 1062000)
 	cfg.RegisterDappFork(TicketX, "ForkTicketVrf", 1770000)
 }
 
+//InitExecutor ...
 func InitExecutor(cfg *types.Chain33Config) {
 	types.RegistorExecutor(TicketX, NewType(cfg))
 }
@@ -143,7 +145,7 @@ func (ticket *TicketType) GetTypeMap() map[string]int32 {
 	}
 }
 
-// TicketMinerParam
+// TicketMinerParam ...
 type TicketMinerParam struct {
 	CoinDevFund              int64
 	CoinReward               int64

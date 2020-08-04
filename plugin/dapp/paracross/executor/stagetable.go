@@ -22,7 +22,7 @@ var boardOpt = &table.Option{
 	Index:   []string{"id", "status"},
 }
 
-//NewBoardTable 新建表
+//NewStageTable 新建表
 func NewStageTable(kvdb db.KV) *table.Table {
 	rowmeta := NewStageRow()
 	table, err := table.NewTable(rowmeta, kvdb, boardOpt)

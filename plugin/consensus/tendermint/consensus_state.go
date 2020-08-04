@@ -133,7 +133,7 @@ func (cs *ConsensusState) SetBroadcastChannel(broadcastChannel chan<- MsgInfo) {
 	cs.broadcastChannel = broadcastChannel
 }
 
-// SetBroadcastChannel method
+// SetUnicastChannel method
 func (cs *ConsensusState) SetUnicastChannel(unicastChannel chan<- MsgInfo) {
 	cs.unicastChannel = unicastChannel
 }
