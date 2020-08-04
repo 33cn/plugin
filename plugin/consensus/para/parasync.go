@@ -573,4 +573,14 @@ func (client *blockSyncClient) syncInit() {
 	if err != nil {
 		client.printError(err)
 	}
+
+	//设置初始chainHeight,及时发送共识，不然需要等到再产生一个新块才发送
+	lastBlock, err := client.paraClient.getLastBlockInfo()
+	if err != nil {
+		//取已执行最新区块发生错误，不做任何操作
+		plog.Info("Para sync init", "err", err)
+	} else {
+		client.paraClient.commitMsgClient.setInitChainHeight(lastBlock.Height)
+	}
+
 }
