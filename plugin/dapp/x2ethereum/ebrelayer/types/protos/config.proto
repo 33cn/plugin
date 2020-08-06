@@ -40,6 +40,7 @@ message RelayerConfig {
   Deploy deploy = 7;
   int32 ethMaturityDegree = 8;
   int32 ethBlockFetchPeriod = 9;
+  string ethProviderCli  = 10;
 }
 
 message SyncTxReceiptConfig {

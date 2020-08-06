@@ -6,13 +6,6 @@ set +e
 
 source "./publicTest.sh"
 
-CLIA="./ebcli_A"
-CLIB="./ebcli_B"
-CLIC="./ebcli_C"
-CLID="./ebcli_D"
-
-Chain33Cli="docker exec ${NODE3} /root/chain33-cli"
-
 chain33SenderAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 # validatorsAddr=["0x92c8b16afd6d423652559c6e266cbe1c29bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 ethValidatorAddrKeyA="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
@@ -43,6 +36,7 @@ function kill_ebrelayerC() {
 function kill_ebrelayerD() {
     kill_ebrelayer "./D/ebrelayer"
 }
+
 function start_ebrelayerC() {
     start_ebrelayer "./C/ebrelayer" "./C/ebrelayer.log"
     ${CLIC} relayer unlock -p 123456hzj
@@ -72,14 +66,57 @@ function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function StartRelayerAndDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    # stop all docker
+    docker-compose -f docker-compose-ebrelayer.yml down
+    for name in b c d; do
+         docker-compose -f "docker-compose-ebrelayer${name}.yml" down
+    done
+
+    # change EthProvider url
+    {
+        inetAddr=$(get_inet_addr)
+
+        # shellcheck disable=SC2155
+        local line=$(delete_line_show "./relayer.toml" "EthProvider=\"ws:")
+        sed -i ''"${line}"' a EthProvider="ws://'"${inetAddr}"':7545/"' "./relayer.toml"
+
+        line=$(delete_line_show "./relayer.toml" "EthProviderCli=\"http:")
+        sed -i ''"${line}"' a EthProviderCli="http://'"${inetAddr}"':7545"' "./relayer.toml"
+    }
+
+    docker-compose -f docker-compose-ebrelayer.yml up --build -d
+    sleep 1
+    # 部署合约
+    InitAndDeploy
+
+    # 获取 BridgeRegistry 地址
+    result=$(${CLIA} relayer ethereum bridgeRegistry)
+    BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
+
+    #    kill_ebrelayer "./A/ebrelayer"
+    docker-compose -f docker-compose-ebrelayer.yml down
+    # 修改 relayer.toml 配置文件
+    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./relayer.toml"
+    docker-compose -f docker-compose-ebrelayer.yml up --build -d
+
+    updata_docker_relayer_toml
+    for name in b c d; do
+        docker-compose -f "docker-compose-ebrelayer$name.yml" up --build -d
+    done
+
+    sleep 1
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
 function EthImportKey() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 重启 ebrelayer 并解锁
-    for name in A B C D; do
-        start_ebrelayer "./$name/ebrelayer" "./$name/ebrelayer.log"
-
+    for name in a b c d; do
         # 导入测试地址私钥
-        CLI="./ebcli_$name"
+        # shellcheck disable=SC2154
+        CLI="docker exec ${dockerNamePrefix}_ebrelayer${name}_1 /root/ebcli_A"
 
         result=$(${CLI} relayer set_pwd -p 123456hzj)
 
@@ -104,38 +141,6 @@ function EthImportKey() {
     cli_ret "${result}" "C relayer chain33 import_privatekey"
     result=$(${CLID} relayer chain33 import_privatekey -k "${ethValidatorAddrKeyD}")
     cli_ret "${result}" "D relayer chain33 import_privatekey"
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
-function StartRelayerAndDeploy() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    for name in A B C D; do
-        local ebrelayer="./$name/ebrelayer"
-        kill_ebrelayer "${ebrelayer}"
-    done
-    sleep 1
-
-    rm -rf './A' './B' './C' './D' './datadir' './ebrelayer.log' './logs'
-    mkdir './A' './B' './C' './D'
-    cp './relayer.toml' './A/relayer.toml'
-    cp './ebrelayer' './A/ebrelayer'
-
-    start_trufflesuite
-
-    start_ebrelayer "./A/ebrelayer" "./A/ebrelayer.log"
-    # 部署合约
-    InitAndDeploy
-
-    # 获取 BridgeRegistry 地址
-    result=$(${CLIA} relayer ethereum bridgeRegistry)
-    BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
-
-    kill_ebrelayer "./A/ebrelayer"
-    # 修改 relayer.toml 配置文件
-    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./A/relayer.toml"
-    updata_all_relayer_toml
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -530,8 +535,14 @@ function TestETH2Chain33Erc20Kill() {
 function AllRelayerMainTest() {
     set +e
     docker_chain33_ip=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
-
     Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+
+    CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
+    CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
+    CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
+    CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
+    echo "${CLIA}"
+
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     if [[ ${1} != "" ]]; then
@@ -548,11 +559,13 @@ function AllRelayerMainTest() {
     TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33Erc20
-
-    # kill relayer and start relayer
-    TestChain33ToEthAssetsKill
-    TestETH2Chain33AssetsKill
-    TestETH2Chain33Erc20Kill
+#
+#    # kill relayer and start relayer
+#    TestChain33ToEthAssetsKill
+#    TestETH2Chain33AssetsKill
+#    TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
+
+

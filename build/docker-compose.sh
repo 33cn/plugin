@@ -15,6 +15,9 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
+dockerNamePrefix="${1}"
+echo "dockerNamePrefix : ${dockerNamePrefix}"
+
 NODE3="${1}_chain33_1"
 CLI="docker exec ${NODE3} /root/chain33-cli"
 
@@ -58,9 +61,7 @@ if [ -n "${DAPP}" ]; then
     DAPP_COMPOSE_FILE="docker-compose-${DAPP}.yml"
     if [ -e "$DAPP_COMPOSE_FILE" ]; then
         export COMPOSE_FILE="docker-compose.yml:${DAPP_COMPOSE_FILE}"
-
     fi
-
 fi
 
 if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then

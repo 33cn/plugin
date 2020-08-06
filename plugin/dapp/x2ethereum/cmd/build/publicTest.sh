@@ -23,8 +23,9 @@ function exit_cp_file() {
         mkdir -p ${dirName}
     fi
 
-    for name in A B C D; do
-        cp "./$name/ebrelayer.log" "$dirName/ebrelayer$name.log"
+    for name in a b c d; do
+        # shellcheck disable=SC2154
+        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "$dirName/ebrelayer$name.log"
     done
     docker cp "${NODE3}":/root/logs/chain33.log "$dirName/chain33.log"
 
@@ -328,6 +329,25 @@ function check_addr() {
     fi
 }
 
+function get_inet_addr() {
+    local inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
+    if [[ ${inetAddr} == "" ]]; then
+        inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}')
+        if [[ ${inetAddr} == "" ]]; then
+            inetAddr=$(ifconfig eth0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
+            if [[ ${inetAddr} == "" ]]; then
+                inetAddr=$(ifconfig eth0 | grep "inet " | awk '{ print $2}')
+                if [[ ${inetAddr} == "" ]]; then
+                    ip addr show eth0
+                    inetAddr=$(ip addr show eth0 | grep "inet " | awk '{ print $2}' | head -c-4)
+                fi
+            fi
+        fi
+    fi
+
+    echo "${inetAddr}"
+}
+
 # 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
 function updata_relayer_toml() {
     local BridgeRegistry=${1}
@@ -341,21 +361,7 @@ function updata_relayer_toml() {
         exit_cp_file
     fi
 
-    local pushHost=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
-    if [[ ${pushHost} == "" ]]; then
-        pushHost=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}')
-        if [[ ${pushHost} == "" ]]; then
-            pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
-            if [[ ${pushHost} == "" ]]; then
-                pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}')
-                if [[ ${pushHost} == "" ]]; then
-                    ip addr show eth0
-                    pushHost=$(ip addr show eth0 | grep "inet " | awk '{ print $2}' | head -c-4)
-                fi
-            fi
-        fi
-    fi
-
+    local pushHost=$(get_inet_addr)
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
         exit_cp_file
@@ -367,6 +373,9 @@ function updata_relayer_toml() {
 
     line=$(delete_line_show "${file}" "pushHost")
     sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+#    line=$(delete_line_show "${file}" "pushBind")
+#    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
     line=$(delete_line_show "${file}" "BridgeRegistry")
     sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
@@ -399,6 +408,47 @@ function updata_relayer_toml_ropston() {
 
     sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
     sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
+}
+
+function updata_docker_relayer_toml() {
+    local port=20000
+
+    for name in b c d; do
+        local file="./relayer$name.toml"
+        cp './relayer.toml' "${file}"
+
+        # 删除配置文件中不需要的字段
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
+           delete_line "${file}" "${deleteName}"
+        done
+
+        port=$((port + 1))
+        sed -i 's/20000/'${port}'/g' "${file}"
+
+        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
+
+        local dockerfile="./Dockerfile-x2ethrelay$name"
+        cp "./Dockerfile-x2ethrelay" "${dockerfile}"
+
+        # shellcheck disable=SC2155
+        local line=$(delete_line_show "${dockerfile}" "COPY relayer.toml relayer.toml")
+        sed -i ''"${line}"' a COPY relayer'$name'.toml relayer.toml' "${dockerfile}"
+
+        line=$(delete_line_show "${dockerfile}" "EXPOSE 20000")
+        sed -i ''"${line}"' a EXPOSE '$port'' "${dockerfile}"
+
+        local dockeryml="./docker-compose-ebrelayer$name.yml"
+        cp "./docker-compose-ebrelayer.yml" "${dockeryml}"
+
+        line=$(delete_line_show "${dockeryml}" "ebrelayera")
+        sed -i ''"${line}"' a \ \ ebrelayer'$name':' "${dockeryml}"
+
+        line=$(delete_line_show "${dockeryml}" "dockerfile: Dockerfile-x2ethrelay")
+        sed -i ''"${line}"' a \ \ \ \ \ \ dockerfile: Dockerfile-x2ethrelay'$name'' "${dockeryml}"
+
+        line=$(delete_line_show "${dockeryml}" "20000:20000")
+        sed -i ''"${line}"' a \ \ \ \ \ \ -\ "'${port}':'${port}'"' "${dockeryml}"
+    done
 }
 
 # 更新 B C D 的配置文件

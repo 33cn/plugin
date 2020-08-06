@@ -3,6 +3,7 @@
 # shellcheck source=/dev/null
 
 source "./allRelayerTest.sh"
+#source "./relayerTest.sh"
 source "./perf_test.sh"
 
 function x2ethereum() {
@@ -15,7 +16,7 @@ function x2ethereum() {
         set +e
         set -x
         AllRelayerMainTest 5
-        perf_test_main 10
+#        perf_test_main 10
         echo "========================== x2ethereum test end =========================="
     fi
 }

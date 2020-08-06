@@ -1,0 +1,10 @@
+FROM ubuntu:16.04
+
+WORKDIR /root
+COPY relayer.toml relayer.toml
+COPY ebrelayer ebrelayer
+COPY ebcli_A ebcli_A
+
+EXPOSE 20000
+
+CMD ["/root/ebrelayer"]

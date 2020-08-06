@@ -69,6 +69,7 @@ type RelayerConfig struct {
 	Deploy              *Deploy       `protobuf:"bytes,7,opt,name=deploy" json:"deploy,omitempty"`
 	EthMaturityDegree   int32         `protobuf:"varint,8,opt,name=ethMaturityDegree" json:"ethMaturityDegree,omitempty"`
 	EthBlockFetchPeriod int32         `protobuf:"varint,9,opt,name=ethBlockFetchPeriod" json:"ethBlockFetchPeriod,omitempty"`
+	EthProviderCli      string        `protobuf:"bytes,10,opt,name=ethProviderCli" json:"ethProviderCli,omitempty"`
 }
 
 func (m *RelayerConfig) Reset()         { *m = RelayerConfig{} }
