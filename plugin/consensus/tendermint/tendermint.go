@@ -473,9 +473,29 @@ func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
 }
 
+// GetMempoolSize get tx num in mempool
+func (client *Client) GetMempoolSize() int64 {
+	msg := client.GetQueueClient().NewMessage("mempool", types.EventGetMempoolSize, nil)
+	err := client.GetQueueClient().Send(msg, true)
+	if err != nil {
+		tendermintlog.Error("GetMempoolSize send", "err", err)
+		return 0
+	}
+	resp, err := client.GetQueueClient().Wait(msg)
+	if err != nil {
+		tendermintlog.Error("GetMempoolSize result", "err", err)
+		return 0
+	}
+	return resp.GetData().(*types.MempoolSize).GetSize()
+}
+
 // CheckTxsAvailable check whether some new transactions arriving
 func (client *Client) CheckTxsAvailable(height int64) bool {
-	txs := client.RequestTx(10, nil)
+	num := client.GetMempoolSize()
+	if num == 0 {
+		return false
+	}
+	txs := client.RequestTx(int(num), nil)
 	txs = client.CheckTxDup(txs, height)
 	return len(txs) != 0
 }
@@ -493,7 +513,11 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 
 // BuildBlock build a new block
 func (client *Client) BuildBlock() *types.Block {
-	lastBlock := client.GetCurrentBlock()
+	lastBlock, err := client.RequestLastBlock()
+	if err != nil {
+		tendermintlog.Error("BuildBlock fail", "err", err)
+		return nil
+	}
 	cfg := client.GetAPI().GetConfig()
 	txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber)-1, nil)
 	// placeholder

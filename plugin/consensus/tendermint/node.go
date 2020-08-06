@@ -25,7 +25,6 @@ const (
 	tryListenSeconds       = 5
 	handshakeTimeout       = 20 // * time.Second,
 	maxSendQueueSize       = 1024
-	minSendQueueSize       = 10
 	defaultSendTimeout     = 60 * time.Second
 	//MaxMsgPacketPayloadSize define
 	MaxMsgPacketPayloadSize            = 10 * 1024 * 1024
@@ -153,7 +152,7 @@ func NewNode(seeds []string, protocol string, lAddr string, privKey crypto.PrivK
 		dialing:          NewMutexMap(),
 		reconnecting:     NewMutexMap(),
 		broadcastChannel: make(chan MsgInfo, maxSendQueueSize),
-		unicastChannel:   make(chan MsgInfo, minSendQueueSize),
+		unicastChannel:   make(chan MsgInfo, maxSendQueueSize),
 		state:            state,
 		localIPs:         make(map[string]net.IP),
 	}
