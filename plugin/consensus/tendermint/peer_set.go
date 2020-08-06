@@ -481,7 +481,7 @@ FOR_LOOP:
 
 			pc.sendBuffer = append(pc.sendBuffer, bytes...)
 			if len+5 > MaxMsgPacketPayloadSize {
-				pc.sendBuffer = append(pc.sendBuffer, bytes[MaxMsgPacketPayloadSize-5:]...)
+				tendermintlog.Info("packet exceed max size", "len", len+5)
 			}
 			_, err = pc.bufWriter.Write(pc.sendBuffer[:len+5])
 			if err != nil {
@@ -688,29 +688,23 @@ OUTER_LOOP:
 
 		// If the peer is on a previous height, help catch up.
 		if (0 < prs.Height) && (prs.Height < rs.Height) {
-			if prs.ProposalBlockHash == nil || prs.ProposalBlock {
-				time.Sleep(pc.myState.PeerGossipSleep())
+			time.Sleep(2 * pc.myState.PeerGossipSleep())
+			if prs.Height >= rs.Height {
 				continue OUTER_LOOP
 			}
-			tendermintlog.Info("help catch up", "peerip", pc.ip.String(), "selfHeight", rs.Height, "peerHeight", prs.Height)
 			proposalBlock := pc.myState.client.LoadProposalBlock(prs.Height)
-			newBlock := &ttypes.TendermintBlock{TendermintBlock: proposalBlock}
 			if proposalBlock == nil {
-				tendermintlog.Error("Fail to load propsal block", "selfHeight", rs.Height,
-					"blockstoreHeight", pc.myState.client.GetCurrentHeight())
-				time.Sleep(pc.myState.PeerGossipSleep())
-				continue OUTER_LOOP
-			} else if !bytes.Equal(newBlock.Hash(), prs.ProposalBlockHash) {
-				tendermintlog.Error("Peer ProposalBlockHash mismatch", "ProposalBlockHash", fmt.Sprintf("%X", prs.ProposalBlockHash),
-					"newBlockHash", fmt.Sprintf("%X", newBlock.Hash()))
-				time.Sleep(pc.myState.PeerGossipSleep())
+				tendermintlog.Error("load proposal block fail", "selfHeight", rs.Height,
+					"blockHeight", pc.myState.client.GetCurrentHeight())
 				continue OUTER_LOOP
 			}
+			newBlock := &ttypes.TendermintBlock{TendermintBlock: proposalBlock}
 			msg := MsgInfo{TypeID: ttypes.ProposalBlockID, Msg: proposalBlock, PeerID: pc.id, PeerIP: pc.ip.String()}
-			tendermintlog.Info("Sending block for catchup", "peerip", pc.ip.String(), "block(H/R)",
-				fmt.Sprintf("%v/%v", proposalBlock.Header.Height, proposalBlock.Header.Round))
-			if pc.Send(msg) {
-				prs.SetHasProposalBlock(newBlock)
+			tendermintlog.Info("Sending block for catchup", "peerip", pc.ip.String(),
+				"selfHeight", rs.Height, "peerHeight", prs.Height, "block(H/R/hash)",
+				fmt.Sprintf("%v/%v/%X", proposalBlock.Header.Height, proposalBlock.Header.Round, newBlock.Hash()))
+			if !pc.Send(msg) {
+				tendermintlog.Error("send catchup block fail")
 			}
 			continue OUTER_LOOP
 		}
