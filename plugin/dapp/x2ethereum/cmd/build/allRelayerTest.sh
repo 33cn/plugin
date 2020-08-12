@@ -43,6 +43,7 @@ function kill_ebrelayerD() {
 
 function start_ebrelayerC() {
     docker start "${dockerNamePrefix}_ebrelayerc_1"
+    sleep 5
     ${CLIC} relayer unlock -p 123456hzj
     sleep 5
     eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
@@ -50,6 +51,7 @@ function start_ebrelayerC() {
 }
 function start_ebrelayerD() {
     docker start "${dockerNamePrefix}_ebrelayerd_1"
+    sleep 5
     ${CLID} relayer unlock -p 123456hzj
     sleep 5
     eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
@@ -75,7 +77,7 @@ function port_exist() {
     grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     while [ -n "$grep_port" ]; do
         echo "port $portRelayer is in use"
-        portRelayer=$((portRelayer - 4))
+        portRelayer=$((portRelayer + 4))
         grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     done
 
