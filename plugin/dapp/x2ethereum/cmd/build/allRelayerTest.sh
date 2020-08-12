@@ -69,6 +69,20 @@ function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function port_exist() {
+    grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
+    while [ -n "$grep_port" ]; do
+        echo "port $portRelayer is in use"
+        portRelayer=$((portRelayer - 4))
+        grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
+    done
+
+    if [ "${portRelayer}" != "20000" ]; then
+        line=$(delete_line_show "./docker-compose-ebrelayer.yml" "20000:20000")
+        sed -i ''"${line}"' a \ \ \ \ \ \ -\ "'${portRelayer}':'${portRelayer}'"' "./docker-compose-ebrelayer.yml"
+    fi
+}
+
 function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # stop all docker
@@ -88,18 +102,7 @@ function StartRelayerAndDeploy() {
     line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
     sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./relayer.toml"
 
-    grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    while [ -n "$grep_port" ]; do
-        echo "port $portRelayer is in use"
-        portRelayer=$((portRelayer - 4))
-        grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    done
-
-    if [ "${portRelayer}" != "20000" ]; then
-        line=$(delete_line_show "./docker-compose-ebrelayer.yml" "20000:20000")
-        sed -i ''"${line}"' a \ \ \ \ \ \ -\ "'${portRelayer}':'${portRelayer}'"' "./docker-compose-ebrelayer.yml"
-    fi
-
+    port_exist
     docker-compose -f docker-compose-ebrelayer.yml up --build -d
     sleep 1
     # 部署合约
@@ -111,16 +114,18 @@ function StartRelayerAndDeploy() {
 
     # kill_ebrelayer "./A/ebrelayer"
     docker-compose -f docker-compose-ebrelayer.yml down
-    # 修改 relayer.toml 配置文件
-    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./relayer.toml"
-    docker-compose -f docker-compose-ebrelayer.yml up --build -d
 
+    # 修改 relayer.toml 配置文件
+    port_exist
+    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./relayer.toml"
     updata_docker_relayer_toml "${portRelayer}"
+
+    docker-compose -f docker-compose-ebrelayer.yml up --build -d
     for name in b c d; do
         docker-compose -f "docker-compose-ebrelayer$name.yml" up --build -d
     done
-
     sleep 1
+    
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
