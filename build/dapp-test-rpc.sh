@@ -15,7 +15,7 @@ function dapp_test_rpc() {
         rm -f "jobsTicket.log"
         rm -rf "outdir"
 
-        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
+        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name x2ethereum ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
         parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" "$node3" ::: "$dapps"

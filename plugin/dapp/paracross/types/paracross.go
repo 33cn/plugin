@@ -47,6 +47,8 @@ const (
 	TyLogParaStageGroupUpdate      = 667
 	//TyLogParaCrossAssetTransfer 统一的跨链资产转移
 	TyLogParaCrossAssetTransfer = 670
+	TyLogParaBindMinerAddr      = 671
+	TyLogParaBindMinerNode      = 672
 )
 
 // action type
@@ -61,6 +63,8 @@ const (
 	ParacrossActionWithdraw
 	// ParacrossActionTransferToExec asset transfer to exec
 	ParacrossActionTransferToExec
+	// ParacrossActionParaBindMiner  para chain bind super node miner
+	ParacrossActionParaBindMiner
 )
 
 const (

@@ -321,11 +321,13 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(nodeVoteCmd())
 	cmd.AddCommand(nodeQuitCmd())
 	cmd.AddCommand(nodeCancelCmd())
+	cmd.AddCommand(nodeBindCmd())
 
 	cmd.AddCommand(getNodeInfoCmd())
 	cmd.AddCommand(getNodeIDInfoCmd())
 	cmd.AddCommand(getNodeListCmd())
 	cmd.AddCommand(nodeModifyCmd())
+	cmd.AddCommand(getNodeBindListCmd())
 	return cmd
 }
 
@@ -516,6 +518,86 @@ func createNodeModifyTx(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 
+}
+
+func nodeBindCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bind",
+		Short: "bind miner for specific account",
+		Run:   createNodeBindTx,
+	}
+	addNodeBindFlags(cmd)
+	return cmd
+}
+
+func addNodeBindFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("action", "a", 1, "action bind:1 or unbind:2")
+	cmd.MarkFlagRequired("action")
+
+	cmd.Flags().Uint64P("coins", "c", 0, "bind coins, unbind not needed")
+
+	cmd.Flags().StringP("node", "n", "", "target node to bind/unbind miner")
+	cmd.MarkFlagRequired("node")
+
+}
+
+func createNodeBindTx(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	action, _ := cmd.Flags().GetUint32("action")
+	node, _ := cmd.Flags().GetString("node")
+	coins, _ := cmd.Flags().GetUint64("coins")
+
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
+	if action == 1 && coins == 0 {
+		fmt.Fprintln(os.Stderr, "coins should bigger than 0")
+	}
+
+	payload := &pt.ParaBindMinerCmd{BindAction: int32(action), BindCoins: int64(coins), TargetNode: node}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "ParaBindMiner",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
+}
+
+func getNodeBindListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bind_list",
+		Short: "Get node bind miner account list",
+		Run:   nodeBindInfo,
+	}
+	addNodeBindCmdFlags(cmd)
+	return cmd
+}
+
+func addNodeBindCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
+	cmd.MarkFlagRequired("node")
+
+}
+
+func nodeBindInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("node")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeBindMinerList"
+
+	params.Payload = types.MustPBToJSON(&types.ReqString{Data: addr})
+
+	var res pt.RespParaNodeBindList
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }
 
 // getNodeInfoCmd get node current status

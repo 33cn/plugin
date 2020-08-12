@@ -6,909 +6,807 @@ package runtime
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
+	"github.com/holiman/uint256"
 )
 
 // 加法操作
-func opAdd(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	common.U256(y.Add(x, y))
-
-	evm.Interpreter.IntPool.Put(x)
+func opAdd(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Add(&x, y)
 	return nil, nil
 }
 
 // 减法操作
-func opSub(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	//x, y := stack.Pop(), stack.Pop()
-	//stack.Push(common.U256(x.Sub(x, y)))
-	//
-	//evm.Interpreter.IntPool.Put(y)
-	//
-	//return nil, nil
-	x, y := stack.Pop(), stack.Peek()
-	common.U256(y.Sub(x, y))
-
-	evm.Interpreter.IntPool.Put(x)
+func opSub(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Sub(&x, y)
 	return nil, nil
 }
 
 // 乘法操作
-func opMul(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Pop()
-	stack.Push(common.U256(x.Mul(x, y)))
-
-	evm.Interpreter.IntPool.Put(y)
-
+func opMul(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Mul(&x, y)
 	return nil, nil
 }
 
 // 除法操作
-func opDiv(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	if y.Sign() != 0 {
-		common.U256(y.Div(x, y))
-	} else {
-		y.SetUint64(0)
-	}
-	evm.Interpreter.IntPool.Put(x)
+func opDiv(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Div(&x, y)
 	return nil, nil
 }
 
 // 除法操作（带符号）
-func opSdiv(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := common.S256(stack.Pop()), common.S256(stack.Pop())
-	res := evm.Interpreter.IntPool.GetZero()
-
-	if y.Sign() == 0 || x.Sign() == 0 {
-		stack.Push(res)
-	} else {
-		if x.Sign() != y.Sign() {
-			res.Div(x.Abs(x), y.Abs(y))
-			res.Neg(res)
-		} else {
-			res.Div(x.Abs(x), y.Abs(y))
-		}
-		stack.Push(common.U256(res))
-	}
-	evm.Interpreter.IntPool.Put(x, y)
+func opSdiv(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.SDiv(&x, y)
 	return nil, nil
 }
 
 // 两数取模
-func opMod(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Pop()
-	if y.Sign() == 0 {
-		stack.Push(x.SetUint64(0))
-	} else {
-		stack.Push(common.U256(x.Mod(x, y)))
-	}
-	evm.Interpreter.IntPool.Put(y)
+func opMod(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Mod(&x, y)
 	return nil, nil
 }
 
 // 两数取模（带符号）
-func opSmod(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := common.S256(stack.Pop()), common.S256(stack.Pop())
-	res := evm.Interpreter.IntPool.GetZero()
-
-	if y.Sign() == 0 {
-		stack.Push(res)
-	} else {
-		if x.Sign() < 0 {
-			res.Mod(x.Abs(x), y.Abs(y))
-			res.Neg(res)
-		} else {
-			res.Mod(x.Abs(x), y.Abs(y))
-		}
-		stack.Push(common.U256(res))
-	}
-	evm.Interpreter.IntPool.Put(x, y)
+func opSmod(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.SMod(&x, y)
 	return nil, nil
 }
 
 // 指数操作
-func opExp(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	base, exponent := stack.Pop(), stack.Pop()
-	stack.Push(common.Exp(base, exponent))
-
-	evm.Interpreter.IntPool.Put(base, exponent)
-
+func opExp(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	base, exponent := callContext.stack.Pop(), callContext.stack.Peek()
+	exponent.Exp(&base, exponent)
 	return nil, nil
 }
 
 // 带符号扩展
-func opSignExtend(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	back := stack.Pop()
-	if back.Cmp(big.NewInt(31)) < 0 {
-		bit := uint(back.Uint64()*8 + 7)
-		num := stack.Pop()
-		mask := back.Lsh(common.Big1, bit)
-		mask.Sub(mask, common.Big1)
-		if num.Bit(int(bit)) > 0 {
-			num.Or(num, mask.Not(mask))
-		} else {
-			num.And(num, mask)
-		}
-
-		stack.Push(common.U256(num))
-	}
-
-	evm.Interpreter.IntPool.Put(back)
+func opSignExtend(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	back, num := callContext.stack.Pop(), callContext.stack.Peek()
+	num.ExtendSign(num, &back)
 	return nil, nil
 }
 
 // 取非
-func opNot(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x := stack.Peek()
-	common.U256(x.Not(x))
+func opNot(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x := callContext.stack.Peek()
+	x.Not(x)
 	return nil, nil
 }
 
 // 小于判断
-func opLt(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	if x.Cmp(y) < 0 {
-		y.SetUint64(1)
+func opLt(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	if x.Lt(y) {
+		y.SetOne()
 	} else {
-		y.SetUint64(0)
+		y.Clear()
 	}
-	evm.Interpreter.IntPool.Put(x)
 	return nil, nil
 }
 
 // 大于判断
-func opGt(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	if x.Cmp(y) > 0 {
-		y.SetUint64(1)
+func opGt(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	if x.Gt(y) {
+		y.SetOne()
 	} else {
-		y.SetUint64(0)
+		y.Clear()
 	}
-	evm.Interpreter.IntPool.Put(x)
 	return nil, nil
 }
 
 // 小于判断（带符号）
-func opSlt(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-
-	xSign := x.Cmp(common.TT255)
-	ySign := y.Cmp(common.TT255)
-
-	switch {
-	case xSign >= 0 && ySign < 0:
-		y.SetUint64(1)
-
-	case xSign < 0 && ySign >= 0:
-		y.SetUint64(0)
-
-	default:
-		if x.Cmp(y) < 0 {
-			y.SetUint64(1)
-		} else {
-			y.SetUint64(0)
-		}
+func opSlt(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	if x.Slt(y) {
+		y.SetOne()
+	} else {
+		y.Clear()
 	}
-	evm.Interpreter.IntPool.Put(x)
 	return nil, nil
 }
 
 // 判断两数是否相等（带符号）
-func opSgt(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-
-	xSign := x.Cmp(common.TT255)
-	ySign := y.Cmp(common.TT255)
-
-	switch {
-	case xSign >= 0 && ySign < 0:
-		y.SetUint64(0)
-
-	case xSign < 0 && ySign >= 0:
-		y.SetUint64(1)
-
-	default:
-		if x.Cmp(y) > 0 {
-			y.SetUint64(1)
-		} else {
-			y.SetUint64(0)
-		}
+func opSgt(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	if x.Sgt(y) {
+		y.SetOne()
+	} else {
+		y.Clear()
 	}
-	evm.Interpreter.IntPool.Put(x)
 	return nil, nil
 }
 
 // 判断两数是否相等
-func opEq(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	if x.Cmp(y) == 0 {
-		y.SetUint64(1)
+func opEq(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	if x.Eq(y) {
+		y.SetOne()
 	} else {
-		y.SetUint64(0)
+		y.Clear()
 	}
-	evm.Interpreter.IntPool.Put(x)
 	return nil, nil
 }
 
 // 判断指定数是否为0
-func opIszero(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x := stack.Peek()
-	if x.Sign() > 0 {
-		x.SetUint64(0)
+func opIszero(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x := callContext.stack.Peek()
+	if x.IsZero() {
+		x.SetOne()
 	} else {
-		x.SetUint64(1)
+		x.Clear()
 	}
 	return nil, nil
 }
 
 // 与操作
-func opAnd(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Pop()
-	stack.Push(x.And(x, y))
-
-	evm.Interpreter.IntPool.Put(y)
+func opAnd(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.And(&x, y)
 	return nil, nil
 }
 
 // 或操作
-func opOr(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	y.Or(x, y)
-
-	evm.Interpreter.IntPool.Put(x)
+func opOr(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Or(&x, y)
 	return nil, nil
 }
 
 // 异或操作
-func opXor(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y := stack.Pop(), stack.Peek()
-	y.Xor(x, y)
-
-	evm.Interpreter.IntPool.Put(x)
+func opXor(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y := callContext.stack.Pop(), callContext.stack.Peek()
+	y.Xor(&x, y)
 	return nil, nil
 }
 
 // 获取指定数据中指定位的byte值
-func opByte(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	th, val := stack.Pop(), stack.Peek()
-
-	// 只处理不超过32位整数的值，否则直接设置0
-	if th.Cmp(common.Big32) < 0 {
-		b := common.Byte(val, model.WordByteSize, int(th.Int64()))
-		val.SetUint64(uint64(b))
-	} else {
-		val.SetUint64(0)
-	}
-	evm.Interpreter.IntPool.Put(th)
+func opByte(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	th, val := callContext.stack.Pop(), callContext.stack.Peek()
+	val.Byte(&th)
 	return nil, nil
 }
 
 // 两数相加，并和第三数求模
-func opAddmod(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y, z := stack.Pop(), stack.Pop(), stack.Pop()
-	if z.Cmp(common.Big0) > 0 {
-		x.Add(x, y)
-		x.Mod(x, z)
-		stack.Push(common.U256(x))
+func opAddmod(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y, z := callContext.stack.Pop(), callContext.stack.Pop(), callContext.stack.Peek()
+	if z.IsZero() {
+		z.Clear()
 	} else {
-		stack.Push(x.SetUint64(0))
+		z.AddMod(&x, &y, z)
 	}
-	evm.Interpreter.IntPool.Put(y, z)
 	return nil, nil
 }
 
 // 两数相乘，并和第三数求模
-func opMulmod(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	x, y, z := stack.Pop(), stack.Pop(), stack.Pop()
-	if z.Cmp(common.Big0) > 0 {
-		mul := x.Mul(x, y)
-		mul.Mod(mul, z)
-		stack.Push(common.U256(mul))
-	} else {
-		stack.Push(new(big.Int))
-	}
-
-	evm.Interpreter.IntPool.Put(y, z)
+func opMulmod(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x, y, z := callContext.stack.Pop(), callContext.stack.Pop(), callContext.stack.Peek()
+	z.MulMod(&x, &y, z)
 	return nil, nil
 }
 
 // 左移位操作：
 // 操作弹出x和y，将y向左移x位，并将结果入栈
-func opSHL(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	// 注意，这里y值并没有弹出，后面的操作直接改变其值，不需要再次入栈
-	shift, value := common.U256(stack.Pop()), common.U256(stack.Peek())
-
-	// 将x放入整数池
-	defer evm.Interpreter.IntPool.Put(shift)
-
-	// 如果移动范围超过256位整数的长度，则直接置零
-	if shift.Cmp(common.Big256) >= 0 {
-		value.SetUint64(0)
-		return nil, nil
+func opSHL(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	// Note, second operand is left in the stack; accumulate result into it, and no need to push it afterwards
+	shift, value := callContext.stack.Pop(), callContext.stack.Peek()
+	if shift.LtUint64(256) {
+		value.Lsh(value, uint(shift.Uint64()))
+	} else {
+		value.Clear()
 	}
-
-	// 执行移位操作
-	n := uint(shift.Uint64())
-	common.U256(value.Lsh(value, n))
 
 	return nil, nil
 }
 
 // 右移位操作：
 // 操作弹出x和y，将y向右移x位，并将结果入栈 （左边的空位用0填充）
-func opSHR(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	// 注意，这里y值并没有弹出，后面的操作直接改变其值，不需要再次入栈
-	shift, value := common.U256(stack.Pop()), common.U256(stack.Peek())
-
-	// 将x放入整数池
-	defer evm.Interpreter.IntPool.Put(shift)
-
-	// 如果移动范围超过256位整数的长度，则直接置零
-	if shift.Cmp(common.Big256) >= 0 {
-		value.SetUint64(0)
-		return nil, nil
+func opSHR(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	// Note, second operand is left in the stack; accumulate result into it, and no need to push it afterwards
+	shift, value := callContext.stack.Pop(), callContext.stack.Peek()
+	if shift.LtUint64(256) {
+		value.Rsh(value, uint(shift.Uint64()))
+	} else {
+		value.Clear()
 	}
-
-	// 执行移位操作
-	n := uint(shift.Uint64())
-	common.U256(value.Rsh(value, n))
 
 	return nil, nil
 }
 
 // 右移位操作：
 // 操作弹出x和y，将y向右移x位，并将结果入栈 （左边的空位用左边第一位的符号位填充）
-func opSAR(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	// 注意，这里y值弹出了，后面计算出结果后需要入栈
-	shift, value := common.U256(stack.Pop()), common.S256(stack.Pop())
-	// 将x放入整数池
-	defer evm.Interpreter.IntPool.Put(shift)
-
-	// 如果移动范围超过256位整数的长度，正数置零，负数置-1
-	if shift.Cmp(common.Big256) >= 0 {
-		if value.Sign() > 0 {
-			value.SetUint64(0)
+func opSAR(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	shift, value := callContext.stack.Pop(), callContext.stack.Peek()
+	if shift.GtUint64(256) {
+		if value.Sign() >= 0 {
+			value.Clear()
 		} else {
-			value.SetInt64(-1)
+			// Max negative shift: all bits set
+			value.SetAllOne()
 		}
-		stack.Push(common.U256(value))
 		return nil, nil
 	}
-
-	// 正常移位操作（注意这里需要将结果入栈）
 	n := uint(shift.Uint64())
-	value.Rsh(value, n)
-	stack.Push(common.U256(value))
+	value.SRsh(value, n)
 
 	return nil, nil
 }
 
 //使用keccak256进行哈希运算
-func opSha3(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	offset, size := stack.Pop(), stack.Pop()
-	data := memory.Get(offset.Int64(), size.Int64())
+func opSha3(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	offset, size := callContext.stack.Pop(), callContext.stack.Peek()
+	data := callContext.memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
 	hash := crypto.Keccak256(data)
 
 	if evm.VMConfig.EnablePreimageRecording {
 		evm.StateDB.AddPreimage(common.BytesToHash(hash), data)
 	}
-
-	stack.Push(evm.Interpreter.IntPool.Get().SetBytes(hash))
-
-	evm.Interpreter.IntPool.Put(offset, size)
+	size.SetBytes(hash)
 	return nil, nil
 }
 
 // 获取合约地址
-func opAddress(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(contract.Address().Big())
+func opAddress(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetBytes(callContext.contract.Address().Bytes()))
 	return nil, nil
 }
 
 // 获取指定地址的账户余额
-func opBalance(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	slot := stack.Peek()
-	slot.SetUint64(evm.StateDB.GetBalance(common.BigToAddress(slot).String()))
+func opBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	//采用新的库unint256.Int
+	slot := callContext.stack.Peek()
+	address := common.Uint256ToAddress(slot)
+	slot.SetUint64(evm.StateDB.GetBalance(address.String()))
 	return nil, nil
 }
 
 // 获取合约调用者地址
-func opOrigin(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Origin.Big())
+func opOrigin(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetBytes(evm.Origin.Bytes()))
 	return nil, nil
 }
 
 // 获取合约的调用者（最终的外部账户地址）
-func opCaller(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(contract.Caller().Big())
+func opCaller(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetBytes(callContext.contract.Caller().Bytes()))
 	return nil, nil
 }
 
 // 获取调用合约的同时，进行转账操作的额度
-func opCallValue(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	amount := common.BigMax(big.NewInt(0), big.NewInt(int64(contract.value)))
-	stack.Push(evm.Interpreter.IntPool.Get().Set(amount))
+func opCallValue(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(callContext.contract.value))
 	return nil, nil
 }
 
 // 从调用合约的入参中获取数据
-func opCallDataLoad(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetBytes(common.GetDataBig(contract.Input, stack.Pop(), big32)))
+func opCallDataLoad(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	x := callContext.stack.Peek()
+	if offset, overflow := x.Uint64WithOverflow(); !overflow {
+		data := common.GetData(callContext.contract.Input, offset, 32)
+		x.SetBytes(data)
+	} else {
+		x.Clear()
+	}
 	return nil, nil
 }
 
 // 获取调用合约时的入参长度
-func opCallDataSize(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetInt64(int64(len(contract.Input))))
+func opCallDataSize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(uint64(len(callContext.contract.Input))))
 	return nil, nil
 }
 
 // 将调用合约时的入参写入内存
-func opCallDataCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opCallDataCopy(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
-		memOffset  = stack.Pop()
-		dataOffset = stack.Pop()
-		length     = stack.Pop()
+		memOffset  = callContext.stack.Pop()
+		dataOffset = callContext.stack.Pop()
+		length     = callContext.stack.Pop()
 	)
-	if merr := memory.Set(memOffset.Uint64(), length.Uint64(), common.GetDataBig(contract.Input, dataOffset, length)); merr != nil {
-		return nil, merr
+	dataOffset64, overflow := dataOffset.Uint64WithOverflow()
+	if overflow {
+		dataOffset64 = 0xffffffffffffffff
 	}
-	evm.Interpreter.IntPool.Put(memOffset, dataOffset, length)
+	// These values are checked for overflow during gas cost calculation
+	memOffset64 := memOffset.Uint64()
+	length64 := length.Uint64()
+	callContext.memory.Set(memOffset64, length64, common.GetData(callContext.contract.Input, dataOffset64, length64))
 	return nil, nil
 }
 
 // 获取合约执行返回结果的大小
-func opReturnDataSize(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetUint64(uint64(len(evm.Interpreter.ReturnData))))
+func opReturnDataSize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(uint64(len(evm.Interpreter.ReturnData))))
 	return nil, nil
 }
 
 // 将合约执行的返回结果复制到内存
-func opReturnDataCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opReturnDataCopy(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
-		memOffset  = stack.Pop()
-		dataOffset = stack.Pop()
-		length     = stack.Pop()
-
-		end = evm.Interpreter.IntPool.Get().Add(dataOffset, length)
+		memOffset  = callContext.stack.Pop()
+		dataOffset = callContext.stack.Pop()
+		length     = callContext.stack.Pop()
 	)
-	defer evm.Interpreter.IntPool.Put(memOffset, dataOffset, length, end)
 
-	if end.BitLen() > 64 || uint64(len(evm.Interpreter.ReturnData)) < end.Uint64() {
+	offset64, overflow := dataOffset.Uint64WithOverflow()
+	if overflow {
 		return nil, model.ErrReturnDataOutOfBounds
 	}
-	err := memory.Set(memOffset.Uint64(), length.Uint64(), evm.Interpreter.ReturnData[dataOffset.Uint64():end.Uint64()])
+	// we can reuse dataOffset now (aliasing it for clarity)
+	var end = dataOffset
+	end.Add(&dataOffset, &length)
+	end64, overflow := end.Uint64WithOverflow()
+	if overflow || uint64(len(evm.Interpreter.ReturnData)) < end64 {
+		return nil, model.ErrReturnDataOutOfBounds
+	}
+	err := callContext.memory.Set(memOffset.Uint64(), length.Uint64(), evm.Interpreter.ReturnData[offset64:end64])
 	if err != nil {
 		panic(err)
 	}
-
 	return nil, nil
 }
 
 // 获取指定合约地址的合约代码大小
-func opExtCodeSize(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	a := stack.Pop()
-
-	addr := common.BigToAddress(a)
-	a.SetInt64(int64(evm.StateDB.GetCodeSize(addr.String())))
-	stack.Push(a)
-
+func opExtCodeSize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	slot := callContext.stack.Peek()
+	address := common.Uint256ToAddress(slot)
+	slot.SetUint64(uint64(evm.StateDB.GetCodeSize(address.String())))
 	return nil, nil
 }
 
 // 获取合约代码大小
-func opCodeSize(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	l := evm.Interpreter.IntPool.Get().SetInt64(int64(len(contract.Code)))
-	stack.Push(l)
+func opCodeSize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	l := new(uint256.Int)
+	l.SetUint64(uint64(len(callContext.contract.Code)))
+	callContext.stack.Push(l)
 	return nil, nil
 }
 
 // 蒋合约中指定位置的数据复制到内存中
-func opCodeCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opCodeCopy(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
-		memOffset  = stack.Pop()
-		codeOffset = stack.Pop()
-		length     = stack.Pop()
+		memOffset  = callContext.stack.Pop()
+		codeOffset = callContext.stack.Pop()
+		length     = callContext.stack.Pop()
 	)
-	codeCopy := common.GetDataBig(contract.Code, codeOffset, length)
-	if merr := memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy); merr != nil {
+	uint64CodeOffset, overflow := codeOffset.Uint64WithOverflow()
+	if overflow {
+		uint64CodeOffset = 0xffffffffffffffff
+	}
+	codeCopy := common.GetData(callContext.contract.Code, uint64CodeOffset, length.Uint64())
+	if merr := callContext.memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy); merr != nil {
 		return nil, merr
 	}
-	evm.Interpreter.IntPool.Put(memOffset, codeOffset, length)
 	return nil, nil
 }
 
 // 蒋指定合约中指定位置的数据复制到内存中
-func opExtCodeCopy(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opExtCodeCopy(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
-		addr       = common.BigToAddress(stack.Pop())
+		stack      = callContext.stack
+		a          = stack.Pop()
 		memOffset  = stack.Pop()
 		codeOffset = stack.Pop()
 		length     = stack.Pop()
 	)
-	codeCopy := common.GetDataBig(evm.StateDB.GetCode(addr.String()), codeOffset, length)
-	if merr := memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy); merr != nil {
+	uint64CodeOffset, overflow := codeOffset.Uint64WithOverflow()
+	if overflow {
+		uint64CodeOffset = 0xffffffffffffffff
+	}
+	addr := common.Uint256ToAddress(&a)
+	codeCopy := common.GetData(evm.StateDB.GetCode(addr.String()), uint64CodeOffset, length.Uint64())
+	if merr := callContext.memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy); merr != nil {
 		return nil, merr
 	}
-	evm.Interpreter.IntPool.Put(memOffset, codeOffset, length)
+	return nil, nil
+}
+
+// opExtCodeHash 返回指定账户的代码hash
+func opExtCodeHash(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	slot := callContext.stack.Peek()
+	addr := common.Uint256ToAddress(slot)
+	if evm.StateDB.Empty(addr.String()) {
+		slot.Clear()
+	} else {
+		slot.SetBytes(evm.StateDB.GetCodeHash(addr.String()).Bytes())
+	}
 	return nil, nil
 }
 
 // 获取当前区块的GasPrice
-func opGasprice(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	gasPrice := common.BigMax(big.NewInt(0), big.NewInt(int64(evm.GasPrice)))
-	stack.Push(evm.Interpreter.IntPool.Get().Set(gasPrice))
+func opGasprice(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	v := uint256.NewInt().SetUint64(uint64(evm.GasPrice))
+	callContext.stack.Push(v)
 	return nil, nil
 }
 
 // 获取区块哈希
-func opBlockhash(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	num := stack.Pop()
-
-	n := evm.Interpreter.IntPool.Get().Sub(evm.BlockNumber, common.Big257)
-	if num.Cmp(n) > 0 && num.Cmp(evm.BlockNumber) < 0 {
-		stack.Push(evm.GetHash(num.Uint64()).Big())
-	} else {
-		stack.Push(evm.Interpreter.IntPool.GetZero())
+func opBlockhash(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	num := callContext.stack.Peek()
+	num64, overflow := num.Uint64WithOverflow()
+	if overflow {
+		num.Clear()
+		return nil, nil
 	}
-	evm.Interpreter.IntPool.Put(num, n)
+	var upper, lower uint64
+	upper = evm.BlockNumber.Uint64()
+	if upper < 257 {
+		lower = 0
+	} else {
+		lower = upper - 256
+	}
+	if num64 >= lower && num64 < upper {
+		num.SetBytes(evm.GetHash(num64).Bytes())
+	} else {
+		num.Clear()
+	}
 	return nil, nil
 }
 
 // 获取区块打包者地址
-func opCoinbase(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opCoinbase(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	// 需要注意coinbase可能为空的情况，这时将返回合约的创建者作为coinbase
 	if evm.Coinbase == nil {
-		stack.Push(contract.CallerAddress.Big())
+		callContext.stack.Push(new(uint256.Int).SetBytes(callContext.contract.CallerAddress.Bytes()))
 	} else {
-		stack.Push(evm.Coinbase.Big())
+		callContext.stack.Push(new(uint256.Int).SetBytes(evm.Coinbase.Bytes()))
 	}
 	return nil, nil
 }
 
 // 获取区块打包时间
-func opTimestamp(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(common.U256(evm.Interpreter.IntPool.Get().Set(evm.Time)))
+func opTimestamp(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	v, _ := uint256.FromBig(evm.Time)
+	callContext.stack.Push(v)
 	return nil, nil
 }
 
 // 获取区块高度
-func opNumber(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(common.U256(evm.Interpreter.IntPool.Get().Set(evm.BlockNumber)))
+func opNumber(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	v, _ := uint256.FromBig(evm.BlockNumber)
+	callContext.stack.Push(v)
 	return nil, nil
 }
 
 // 获取区块难度
-func opDifficulty(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(common.U256(evm.Interpreter.IntPool.Get().Set(evm.Difficulty)))
+func opDifficulty(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	v, _ := uint256.FromBig(evm.Difficulty)
+	callContext.stack.Push(v)
 	return nil, nil
 }
 
 // 获取GasLimit
-func opGasLimit(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(common.U256(evm.Interpreter.IntPool.Get().SetUint64(evm.GasLimit)))
+func opGasLimit(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(evm.GasLimit))
 	return nil, nil
 }
 
 // 弹出栈顶数据
-func opPop(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	evm.Interpreter.IntPool.Put(stack.Pop())
+func opPop(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Pop()
 	return nil, nil
 }
 
 // 加载内存中的数据
-func opMload(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	offset := stack.Pop()
-	val := evm.Interpreter.IntPool.Get().SetBytes(memory.Get(offset.Int64(), 32))
-	stack.Push(val)
-
-	evm.Interpreter.IntPool.Put(offset)
+func opMload(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	v := callContext.stack.Peek()
+	offset := int64(v.Uint64())
+	v.SetBytes(callContext.memory.GetPtr(offset, 32))
 	return nil, nil
 }
 
 // 写内存操作，每次写一个字长（32个字节）
-func opMstore(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opMstore(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	// 从栈中分别弹出内存偏移量和要设置的值
-	mStart, val := stack.Pop(), stack.Pop()
-	if merr := memory.Set32(mStart.Uint64(), val); merr != nil {
-		return nil, merr
-	}
-
-	evm.Interpreter.IntPool.Put(mStart, val)
+	// pop value of the stack
+	mStart, val := callContext.stack.Pop(), callContext.stack.Pop()
+	callContext.memory.Set32(mStart.Uint64(), &val)
 	return nil, nil
 }
 
 // 写内存操作，每次写一个字节
-func opMstore8(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	off, val := stack.Pop().Int64(), stack.Pop().Int64()
-	memory.Store[off] = byte(val & 0xff)
-
+func opMstore8(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	off, val := callContext.stack.Pop(), callContext.stack.Pop()
+	callContext.memory.Store[off.Uint64()] = byte(val.Uint64())
 	return nil, nil
 }
 
 // 加载合约状态数据
-func opSload(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	loc := stack.Peek()
-	val := evm.StateDB.GetState(contract.Address().String(), common.BigToHash(loc))
+func opSload(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	loc := callContext.stack.Peek()
+	hash := common.BytesToHash(loc.Bytes())
+	val := evm.StateDB.GetState(callContext.contract.Address().String(), hash)
 	loc.SetBytes(val.Bytes())
 
 	return nil, nil
 }
 
 // 写合约状态数据
-func opSstore(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	loc := common.BigToHash(stack.Pop())
-	val := stack.Pop()
-	evm.StateDB.SetState(contract.Address().String(), loc, common.BigToHash(val))
-
-	evm.Interpreter.IntPool.Put(val)
+func opSstore(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	loc := callContext.stack.Pop()
+	val := callContext.stack.Pop()
+	//适配evm中hash
+	evm.StateDB.SetState(callContext.contract.Address().String(),
+		common.BytesToHash(loc.Bytes()), common.BytesToHash(val.Bytes()))
 	return nil, nil
 }
 
 // 无条件跳转操作
-func opJump(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	pos := stack.Pop()
-	if !contract.Jumpdests.Has(contract.CodeHash, contract.Code, pos) {
+func opJump(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	pos := callContext.stack.Pop()
+	contract := callContext.contract
+	if !contract.Jumpdests.Has(contract.CodeHash, contract.Code, &pos) {
 		nop := contract.GetOp(pos.Uint64())
 		return nil, fmt.Errorf("invalid jump destination (%v) %v", nop, pos)
 	}
 	*pc = pos.Uint64()
-
-	evm.Interpreter.IntPool.Put(pos)
 	return nil, nil
 }
 
 // 有条件跳转操作
-func opJumpi(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	pos, cond := stack.Pop(), stack.Pop()
-	if cond.Sign() != 0 {
-		if !contract.Jumpdests.Has(contract.CodeHash, contract.Code, pos) {
-			nop := contract.GetOp(pos.Uint64())
-			return nil, fmt.Errorf("invalid jump destination (%v) %v", nop, pos)
+func opJumpi(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	pos, cond := callContext.stack.Pop(), callContext.stack.Pop()
+	if !cond.IsZero() {
+		if !callContext.contract.validJumpdest(&pos) {
+			return nil, model.ErrInvalidJump
 		}
 		*pc = pos.Uint64()
 	} else {
 		*pc++
 	}
-
-	evm.Interpreter.IntPool.Put(pos, cond)
 	return nil, nil
 }
 
 // 跳转目标位置
-func opJumpdest(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opJumpdest(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	return nil, nil
+}
+
+func opBeginSub(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	return nil, model.ErrInvalidSubroutineEntry
+}
+
+func opJumpSub(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	if callContext.rstack.Len() >= 1023 {
+		return nil, model.ErrReturnStackExceeded
+	}
+	pos := callContext.stack.Pop()
+	if !pos.IsUint64() {
+		return nil, model.ErrInvalidJump
+	}
+	posU64 := pos.Uint64()
+	if !callContext.contract.validJumpSubdest(posU64) {
+		return nil, model.ErrInvalidJump
+	}
+	callContext.rstack.Push(uint32(*pc))
+	*pc = posU64 + 1
+	return nil, nil
+}
+func opReturnSub(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	if callContext.rstack.Len() == 0 {
+		return nil, model.ErrInvalidRetsub
+	}
+	// Other than the check that the return stack is not empty, there is no
+	// need to validate the pc from 'returns', since we only ever push valid
+	//values onto it via jumpsub.
+	*pc = uint64(callContext.rstack.Pop()) + 1
 	return nil, nil
 }
 
 // 将指令计数器指针当前的值写入整数池
-func opPc(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetUint64(*pc))
+func opPc(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(*pc))
 	return nil, nil
 }
 
 // 获取内存大小
-func opMsize(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetInt64(int64(memory.Len())))
+func opMsize(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(uint64(callContext.memory.Len())))
 	return nil, nil
 }
 
 // 获取可用Gas
-func opGas(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	stack.Push(evm.Interpreter.IntPool.Get().SetUint64(contract.Gas))
+func opGas(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	callContext.stack.Push(new(uint256.Int).SetUint64(callContext.contract.Gas))
 	return nil, nil
 }
 
 // 合约创建操作
-func opCreate(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+
 	// 从栈和内存中分别获取操作所需的参数
 	var (
-		value        = stack.Pop()
-		offset, size = stack.Pop(), stack.Pop()
-		inPut        = memory.Get(offset.Int64(), size.Int64())
-		gas          = contract.Gas
+		value        = callContext.stack.Pop()
+		offset, size = callContext.stack.Pop(), callContext.stack.Pop()
+		input        = callContext.memory.Get(int64(offset.Uint64()), int64(size.Uint64()))
+		gas          = callContext.contract.Gas
 	)
 
-	contract.UseGas(gas)
-
+	callContext.contract.UseGas(gas)
+	stackvalue := size
 	// 调用合约创建逻辑
 	addr := crypto.RandomContractAddress()
-	res, _, returnGas, suberr := evm.Create(contract, *addr, inPut, gas, "innerContract", "", "")
+	res, _, returnGas, suberr := evm.Create(callContext.contract, *addr, input, gas, "innerContract", "", "")
 
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
 	if suberr != nil && suberr != model.ErrCodeStoreOutOfGas {
-		log15.Error("evm contract opCreate instruction error", suberr)
-		stack.Push(evm.Interpreter.IntPool.GetZero())
+		log15.Error("evm contract opCreate instruction error,value", suberr, value)
+		stackvalue.Clear()
 	} else {
-		stack.Push(addr.Big())
+		stackvalue.SetBytes(addr.Bytes())
 	}
-
+	callContext.stack.Push(&stackvalue)
 	// 剩余的Gas再返还给合约对象
-	contract.Gas += returnGas
-
-	// 其它参数写入整数池
-	evm.Interpreter.IntPool.Put(value, offset, size)
+	callContext.contract.Gas += returnGas
 
 	if suberr == model.ErrExecutionReverted {
+		log15.Error("evm contract opCreate instruction error,value", suberr, value)
 		return res, nil
 	}
 	return nil, nil
 }
 
 // 合约调用操作
-func opCall(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	// 弹出可用的gas，并放入整数池
-	evm.Interpreter.IntPool.Put(stack.Pop())
-	// CallGasTemp中存储的是当前操作需要消耗的Gas
+func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	stack := callContext.stack
+	// Pop gas. The actual gas in interpreter.evm.callGasTemp.
+	// We can use this as a temporary value
+	temp := stack.Pop()
 	gas := evm.CallGasTemp
-
-	// 从栈中一次弹出其它参数
+	// Pop other call parameters.
 	addr, value, inOffset, inSize, retOffset, retSize := stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop()
-	toAddr := common.BigToAddress(addr)
-	value = common.U256(value)
-
-	// 从内存中读取调用合约时需要的输入参数，
-	// 注意，这里使用栈中弹出的内存偏移量和存储长度从内存中获取参数，
-	// 之所以这样通过间接的方式获取，主要是因为参数的大小可能比较大，放在栈中不方便组织，
-	// 所以通过store操作提前写入内存，在这里再读出来使用
-	args := memory.Get(inOffset.Int64(), inSize.Int64())
-
-	if value.Sign() != 0 {
-		// 如果有转账操作，这里给予一定的Gas赠送
+	toAddr := common.Uint256ToAddress(&addr)
+	// Get the arguments from the memory.
+	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
+	log15.Info("evm contract opCall", "toAddr", toAddr.String(), "value:", value.Uint64())
+	if !value.IsZero() {
 		gas += params.CallStipend
 	}
-
-	// 调用合约执行逻辑
-	ret, _, returnGas, err := evm.Call(contract, toAddr, args, gas, value.Uint64())
-
-	// 调用结果压栈，
 	// 注意，这里的处理比较特殊，出错情况下0压栈，正确情况下1压栈
+	ret, _, returnGas, err := evm.Call(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
-		stack.Push(evm.Interpreter.IntPool.GetZero())
+		temp.Clear()
 		log15.Error("evm contract opCall instruction error", "error", err)
 	} else {
-		stack.Push(evm.Interpreter.IntPool.Get().SetUint64(1))
+		temp.SetOne()
 	}
-
-	// 如果正确执行，将结果写内存
+	stack.Push(&temp)
 	if err == nil || err == model.ErrExecutionReverted {
-		if merr := memory.Set(retOffset.Uint64(), retSize.Uint64(), ret); merr != nil {
-			return ret, merr
-		}
+		callContext.memory.Set(retOffset.Uint64(), retSize.Uint64(), ret)
 	}
-
-	// 剩余的Gas再返还给合约对象
-	contract.Gas += returnGas
-
-	// 其它参数写入整数池
-	evm.Interpreter.IntPool.Put(addr, value, inOffset, inSize, retOffset, retSize)
+	//剩余的Gas再返还给合约对象
+	callContext.contract.Gas += returnGas
 	return ret, nil
 }
 
 // 合约调用操作，
 // 逻辑同opCall大致相同，仅调用evm的方法不同
-func opCallCode(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	evm.Interpreter.IntPool.Put(stack.Pop())
+func opCallCode(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
+	stack := callContext.stack
+	// We use it as a temporary value
+	temp := stack.Pop()
 	gas := evm.CallGasTemp
+	// Pop other call parameters.
 	addr, value, inOffset, inSize, retOffset, retSize := stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop()
-	toAddr := common.BigToAddress(addr)
-	value = common.U256(value)
-	args := memory.Get(inOffset.Int64(), inSize.Int64())
+	toAddr := common.Uint256ToAddress(&addr)
+	// Get arguments from the memory.
+	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
-	if value.Sign() != 0 {
+	if !value.IsZero() {
 		gas += params.CallStipend
 	}
-
-	ret, returnGas, err := evm.CallCode(contract, toAddr, args, gas, value.Uint64())
+	ret, returnGas, err := evm.CallCode(callContext.contract, toAddr, args, gas, value.Uint64())
 	if err != nil {
-		stack.Push(evm.Interpreter.IntPool.GetZero())
+		temp.Clear()
 		log15.Error("evm contract opCallCode instruction error", err)
 	} else {
-		stack.Push(evm.Interpreter.IntPool.Get().SetUint64(1))
+		temp.SetOne()
 	}
+	stack.Push(&temp)
 	if err == nil || err == model.ErrExecutionReverted {
-		if merr := memory.Set(retOffset.Uint64(), retSize.Uint64(), ret); merr != nil {
-			return ret, merr
-		}
+		callContext.memory.Set(retOffset.Uint64(), retSize.Uint64(), ret)
 	}
-	contract.Gas += returnGas
-
-	evm.Interpreter.IntPool.Put(addr, value, inOffset, inSize, retOffset, retSize)
+	callContext.contract.Gas += returnGas
 	return ret, nil
 }
 
 // 合约委托调用操作，
 // 逻辑同opCall大致相同，仅调用evm的方法不同
-func opDelegateCall(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	evm.Interpreter.IntPool.Put(stack.Pop())
+func opDelegateCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	stack := callContext.stack
+	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
+	// We use it as a temporary value
+	temp := stack.Pop()
 	gas := evm.CallGasTemp
+	// Pop other call parameters.
 	addr, inOffset, inSize, retOffset, retSize := stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop()
-	toAddr := common.BigToAddress(addr)
-	args := memory.Get(inOffset.Int64(), inSize.Int64())
+	toAddr := common.Uint256ToAddress(&addr)
+	// Get arguments from the memory.
+	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
-	ret, returnGas, err := evm.DelegateCall(contract, toAddr, args, gas)
+	ret, returnGas, err := evm.DelegateCall(callContext.contract, toAddr, args, gas)
 	if err != nil {
+		temp.Clear()
 		log15.Error("evm contract opDelegateCall instruction error", err)
-		stack.Push(evm.Interpreter.IntPool.GetZero())
 	} else {
-		stack.Push(evm.Interpreter.IntPool.Get().SetUint64(1))
+		temp.SetOne()
 	}
+	stack.Push(&temp)
 	if err == nil || err == model.ErrExecutionReverted {
-		if merr := memory.Set(retOffset.Uint64(), retSize.Uint64(), ret); merr != nil {
-			return ret, merr
-		}
+		callContext.memory.Set(retOffset.Uint64(), retSize.Uint64(), ret)
 	}
-	contract.Gas += returnGas
-
-	evm.Interpreter.IntPool.Put(addr, inOffset, inSize, retOffset, retSize)
+	callContext.contract.Gas += returnGas
 	return ret, nil
 }
 
 // 合约调用操作，
 // 逻辑同opCall大致相同，仅调用evm的方法不同
-func opStaticCall(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	evm.Interpreter.IntPool.Put(stack.Pop())
+func opStaticCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
+	stack := callContext.stack
+	// We use it as a temporary value
+	temp := stack.Pop()
 	gas := evm.CallGasTemp
+	// Pop other call parameters.
 	addr, inOffset, inSize, retOffset, retSize := stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop(), stack.Pop()
-	toAddr := common.BigToAddress(addr)
-	args := memory.Get(inOffset.Int64(), inSize.Int64())
+	toAddr := common.Uint256ToAddress(&addr)
+	// Get arguments from the memory.
+	args := callContext.memory.GetPtr(int64(inOffset.Uint64()), int64(inSize.Uint64()))
 
-	ret, returnGas, err := evm.StaticCall(contract, toAddr, args, gas)
+	ret, returnGas, err := evm.StaticCall(callContext.contract, toAddr, args, gas)
 	if err != nil {
+		temp.Clear()
 		log15.Error("evm contract opDelegateCall instruction error", err)
-		stack.Push(evm.Interpreter.IntPool.GetZero())
 	} else {
-		stack.Push(evm.Interpreter.IntPool.Get().SetUint64(1))
+		temp.SetOne()
 	}
+	stack.Push(&temp)
 	if err == nil || err == model.ErrExecutionReverted {
-		if merr := memory.Set(retOffset.Uint64(), retSize.Uint64(), ret); merr != nil {
-			return ret, merr
-		}
-
+		callContext.memory.Set(retOffset.Uint64(), retSize.Uint64(), ret)
 	}
-	contract.Gas += returnGas
-
-	evm.Interpreter.IntPool.Put(addr, inOffset, inSize, retOffset, retSize)
+	callContext.contract.Gas += returnGas
 	return ret, nil
 }
 
 // 返回操作
-func opReturn(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	offset, size := stack.Pop(), stack.Pop()
-	ret := memory.GetPtr(offset.Int64(), size.Int64())
-
-	evm.Interpreter.IntPool.Put(offset, size)
+func opReturn(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	offset, size := callContext.stack.Pop(), callContext.stack.Pop()
+	ret := callContext.memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
 	return ret, nil
 }
 
 // 恢复操作
-func opRevert(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	offset, size := stack.Pop(), stack.Pop()
-	ret := memory.GetPtr(offset.Int64(), size.Int64())
-
-	evm.Interpreter.IntPool.Put(offset, size)
+func opRevert(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	offset, size := callContext.stack.Pop(), callContext.stack.Pop()
+	ret := callContext.memory.GetPtr(int64(offset.Uint64()), int64(size.Uint64()))
 	return ret, nil
 }
 
 // 停止操作
-func opStop(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+func opStop(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	return nil, nil
 }
 
 // 自毁操作
-func opSuicide(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-	balance := evm.StateDB.GetBalance(contract.Address().String())
+func opSuicide(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	beneficiary := callContext.stack.Pop()
+	balance := evm.StateDB.GetBalance(callContext.contract.Address().String())
 	// 合约自毁后，将剩余金额返还给创建者
-	evm.StateDB.AddBalance(common.BigToAddress(stack.Pop()).String(), (*contract.CodeAddr).String(), balance)
-
-	evm.StateDB.Suicide(contract.Address().String())
+	evm.StateDB.AddBalance(common.Uint256ToAddress(&beneficiary).String(), (*callContext.contract.CodeAddr).String(), balance)
+	evm.StateDB.Suicide(callContext.contract.Address().String())
 	return nil, nil
 }
 
@@ -916,30 +814,48 @@ func opSuicide(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stac
 // 生成的方法允许在合约执行时，创建N条日志写入StateDB；
 // 在合约执行完成后，这些日志会打印出来（目前不会存储）
 func makeLog(size int) ExecutionFunc {
-	return func(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
+	return func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 		topics := make([]common.Hash, size)
+		stack := callContext.stack
 		mStart, mSize := stack.Pop(), stack.Pop()
 		for i := 0; i < size; i++ {
-			topics[i] = common.BigToHash(stack.Pop())
+			addr := stack.Pop()
+			topics[i] = common.Uint256ToHash(&addr)
 		}
 
-		d := memory.Get(mStart.Int64(), mSize.Int64())
+		d := callContext.memory.Get(int64(mStart.Uint64()), int64(mSize.Uint64()))
 		evm.StateDB.AddLog(&model.ContractLog{
-			Address: contract.Address(),
+			Address: callContext.contract.Address(),
 			Topics:  topics,
 			Data:    d,
+			// This is a non-consensus field, but assigned here because
+			// core/state doesn't know the current block number.
+			//BlockNumber: evm.BlockNumber.Uint64(),
 		})
-
-		evm.Interpreter.IntPool.Put(mStart, mSize)
 		return nil, nil
 	}
+}
+
+// opPush1 is a specialized version of pushN
+func opPush1(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	var (
+		codeLen = uint64(len(callContext.contract.Code))
+		integer = new(uint256.Int)
+	)
+	*pc++
+	if *pc < codeLen {
+		callContext.stack.Push(integer.SetUint64(uint64(callContext.contract.Code[*pc])))
+	} else {
+		callContext.stack.Push(integer.Clear())
+	}
+	return nil, nil
 }
 
 // 生成PUSHN操作的方法，支持PUSH1-PUSH32
 // 此操作可以讲合约中的数据进行压栈
 func makePush(size uint64, pushByteSize int) ExecutionFunc {
-	return func(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-		codeLen := len(contract.Code)
+	return func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+		codeLen := len(callContext.contract.Code)
 
 		startMin := codeLen
 		if int(*pc+1) < startMin {
@@ -951,8 +867,9 @@ func makePush(size uint64, pushByteSize int) ExecutionFunc {
 			endMin = startMin + pushByteSize
 		}
 
-		integer := evm.Interpreter.IntPool.Get()
-		stack.Push(integer.SetBytes(common.RightPadBytes(contract.Code[startMin:endMin], pushByteSize)))
+		integer := new(uint256.Int)
+		callContext.stack.Push(integer.SetBytes(common.RightPadBytes(
+			callContext.contract.Code[startMin:endMin], pushByteSize)))
 
 		*pc += size
 		return nil, nil
@@ -961,17 +878,32 @@ func makePush(size uint64, pushByteSize int) ExecutionFunc {
 
 // 生成DUP操作，可以讲栈中指定位置数据复制并压栈
 func makeDup(size int64) ExecutionFunc {
-	return func(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-		stack.Dup(evm.Interpreter.IntPool, int(size))
+	return func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+		callContext.stack.Dup(int(size))
 		return nil, nil
 	}
 }
 
 // 生成SWAP操作，将指定位置的数据和栈顶数据互换位置
 func makeSwap(size int64) ExecutionFunc {
+	// switch n + 1 otherwise n would be swapped with n
 	size++
-	return func(pc *uint64, evm *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error) {
-		stack.Swap(int(size))
+	return func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+		callContext.stack.Swap(int(size))
 		return nil, nil
 	}
 }
+
+// 获取自身余额
+func opSelfBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+	balance := uint256.NewInt().SetUint64(evm.StateDB.GetBalance(callContext.contract.Address().String()))
+	callContext.stack.Push(balance)
+	return nil, nil
+}
+
+// opChainID implements CHAINID opcode
+//func opChainID(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
+//	chainId, _ := uint256.FromBig(evm.ChainConfig.ChainID)
+//	callContext.stack.Push(chainId)
+//	return nil, nil
+//}

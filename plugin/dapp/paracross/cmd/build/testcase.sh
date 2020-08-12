@@ -54,6 +54,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
+    sed -i $xsedfix 's/^unBindTime=.*/unBindTime=0/g' "${1}"
 
     #blsSign case
     if [ -n "$3" ]; then
@@ -252,7 +253,7 @@ function para_configkey() {
 function query_tx() {
     block_wait "${1}" 1
 
-    local times=100
+    local times=200
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "

@@ -439,7 +439,7 @@ func Test_GoValue(t *testing.T) {
 			common.Hex2Bytes("0000000000000000000000000000000000000000000000000000000000000006666f6f6261720000000000000000000000000000000000000000000000000000"),
 		},
 	} {
-		typ, err := NewType(test.typ)
+		typ, err := NewType(test.typ, "", nil)
 		if err != nil {
 			t.Fatalf("%v failed. Unexpected new type error: %v", i, err)
 		}

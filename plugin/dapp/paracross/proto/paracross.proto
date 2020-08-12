@@ -158,6 +158,43 @@ message RespParacrossNodeGroups {
     repeated ParaNodeGroupStatus ids = 1;
 }
 
+//para bind miner
+message ParaBindMinerCmd{
+    int32  bindAction   = 1;  // 1: bind, 2:unbind
+    int64  bindCoins    = 2;  // bind coins count
+    string targetNode   = 3;  // super node addr
+}
+
+message ParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    int32  bindStatus   = 2;  // 1: bind, 2:unbind
+    int64  bindCoins    = 3;  // bind coins count
+    string targetNode   = 4;  // super node addr
+    int64  blockTime    = 5;  // action bind block time
+    int64  blockHeight  = 6;  // action bind block height
+}
+
+message ReceiptParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    ParaBindMinerInfo prev = 2;
+    ParaBindMinerInfo current = 3;
+}
+
+message ParaNodeBindList{
+    string superNode = 1;
+    repeated string miners = 2;
+}
+
+message ReceiptParaNodeBindListUpdate{
+    ParaNodeBindList prev = 1;
+    ParaNodeBindList current = 2;
+}
+
+message RespParaNodeBindList{
+    ParaNodeBindList list = 1;
+    repeated ParaBindMinerInfo details = 2;
+}
+
 message ParaBlock2MainMap {
     int64  height     = 1;
     string blockHash  = 2;
@@ -303,6 +340,7 @@ message ParacrossAction {
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
         CrossAssetTransfer    crossAssetTransfer = 12;
+        ParaBindMinerCmd      paraBindMiner   = 13;
     }
     int32 ty = 2;
 }
@@ -431,6 +469,7 @@ message ParaBlsSignSumDetailsShow {
 }
 message ParaBlsSignSumInfo {
     repeated ParaBlsSignSumDetailsShow info = 1;
+    repeated string topics = 2;
 }
 
 message LeaderSyncInfo {

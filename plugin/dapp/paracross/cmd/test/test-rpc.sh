@@ -128,7 +128,7 @@ function paracross_Transfer_Withdraw_Inner() {
     chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #4 查询转移后余额状态
-    local times=100
+    local times=200
     while true; do
         para_balance_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after transferring:$para_balance_after"
@@ -156,7 +156,7 @@ function paracross_Transfer_Withdraw_Inner() {
     chain33_SignAndSendTx "$tx_hash" "$privkey" ${UNIT_HTTP}
 
     #6 查询取钱后余额状态
-    local times=100
+    local times=200
     while true; do
         para_balance_withdraw_after=$(paracross_QueryParaBalance "$from_addr" "paracross")
         echo "para after withdrawing :$para_balance_withdraw_after"
@@ -165,7 +165,7 @@ function paracross_Transfer_Withdraw_Inner() {
         #实际取钱金额
         para_withdraw_real=$((para_balance_after - para_balance_withdraw_after))
         main_withdraw_real=$((main_balance_withdraw_after - main_balance_after))
-        if [ "$withdraw_should" != "$para_withdraw_real" ] || [ "$withdraw_should" != "$main_withdraw_real" ]; then
+        if [ "$withdraw_should" != "$para_withdraw_real" ] && [ "$withdraw_should" != "$main_withdraw_real" ]; then
             chain33_BlockWait 2 ${UNIT_HTTP}
             times=$((times - 1))
             if [ $times -le 0 ]; then
@@ -320,7 +320,7 @@ function paracross_testTxGroupFail() {
 
     #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
     local count=0
-    local times=100
+    local times=300
     local paracross_execer_name="user.p.para.paracross"
     local trade_exec_name="user.p.para.trade"
     local transfer_expect="200000000"
@@ -377,7 +377,7 @@ function paracross_testParaAssetWithdrawFail() {
 
     #跨链失败后仍应该有５个，之前transfer到trade的２个应该保持不变
     local count=0
-    local times=100
+    local times=300
     while true; do
         left_exec_val=$(paracross_QueryMainAssetBalance "${game_token_test_addr}" "paracross" "user.p.game.coins.para")
         if [ "${left_exec_val}" != $amount_left ]; then
@@ -463,13 +463,13 @@ paracross_testSelfConsensStages() {
     fi
     chainheight=$(jq -r '(.result.chainHeight)' <<<"$resp")
     newHeight=$((chainheight + 2000))
-    echo "apply stage startHeight=$newHeight"
+    echo "1. apply stage startHeight=$newHeight"
     req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "SelfStageConfig","payload" : {"title":"user.p.para.","ty" : "1", "stage" : {"startHeight":'"$newHeight"',"enable":2} }}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     rawtx=$(jq -r ".result" <<<"$resp")
     chain33_SignAndSendTx "$rawtx" "$para_test_prikey" "${para_ip}"
 
-    echo "get stage apply id"
+    echo "2. get stage apply id"
     req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSelfStages","payload":{"status":1,"count":1}}]'
     resp=$(curl -ksd "{$req}" "${para_ip}")
     echo "$resp"
@@ -520,6 +520,74 @@ paracross_testSelfConsensStages() {
     local rst=$?
     echo_rst "$FUNCNAME" "$rst"
 }
+
+addr1q9="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
+priv1q9="0x1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
+
+paracross_testBind() {
+    local para_ip=$1
+    echo "bind miner"
+    echo "1. create tx"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "ParaBindMiner","payload" : {"bindAction":"1","bindCoins":5, "targetNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignAndSendTxWait "$rawtx" "${priv1q9}" "${para_ip}"
+
+    echo "2. get bind"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"data":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List.SuperNode| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"data":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List.Miners| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
+}
+
+paracross_testUnBind() {
+    local para_ip=$1
+    echo "unBind miner"
+    echo "1. create tx"
+    req='"method":"Chain33.CreateTransaction","params":[{"execer" : "user.p.para.paracross","actionName" : "ParaBindMiner","payload" : {"bindAction":"2", "targetNode" : "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]'
+    resp=$(curl -ksd "{$req}" "${para_ip}")
+    rawtx=$(jq -r ".result" <<<"$resp")
+    chain33_SignAndSendTxWait "$rawtx" "${priv1q9}" "${para_ip}"
+
+    echo "2. get bind"
+    #    req='"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"data":$nodeAddr}]'
+    #    resp=$(curl -ksd "{$req}" "${para_ip}")
+    #    echo "$resp"
+    #    superNode=$(jq -r ".result.List.SuperNode" <<<"$resp")
+    #    miners=$(jq -r ".result.List.Miners" <<<"$resp")
+
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"data":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List.SuperNode| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"data":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List.Miners| [has("1Q9sQw"),false])' "$FUNCNAME" '(.result.List)'
+}
+
+paracross_testBindMiner() {
+    #bind node
+    paracross_testBind "$1"
+    #unbind
+    paracross_testUnBind "$1"
+
+    #bind agin
+    paracross_testBind "$1"
+}
+
+function apply_coins() {
+    local main_ip=${UNIT_HTTP//8901/8801}
+
+    chain33_applyCoins "${addr1q9}" 1000000000 "${main_ip}"
+    chain33_QueryBalance "${addr1q9}" "$main_ip"
+
+    local para_ip="${UNIT_HTTP}"
+
+    chain33_applyCoins "${addr1q9}" 1000000000 "${para_ip}"
+    chain33_QueryBalance "${addr1q9}" "$para_ip"
+
+    chain33_ImportPrivkey "$priv1q9" "$addr1q9" "bindminer" "$para_ip"
+
+    local para_exec_addr=""
+    para_exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.paracross"}]}' ${para_ip} | jq -r ".result")
+    chain33_SendToAddress "$addr1q9" "${para_exec_addr}" 900000000 "${para_ip}"
+    chain33_QueryExecBalance "${addr1q9}" "user.p.para.paracross" "$para_ip"
+
+}
+
 function run_testcases() {
     paracross_GetBlock2MainInfo
     paracross_IsSync
@@ -530,6 +598,8 @@ function run_testcases() {
     paracross_ListNodeGroupStatus
     paracross_ListNodeStatus
     paracross_Transfer_Withdraw
+    paracross_testBindMiner "$UNIT_HTTP"
+
     paracross_testTxGroup "$UNIT_HTTP"
     paracross_testTxGroupFail "$UNIT_HTTP"
     #paracross_testParaAssetWithdrawFail "$UNIT_HTTP"
@@ -559,6 +629,7 @@ function main() {
     else
         if [ "$IS_PARA" == "true" ]; then
             echo "=========== # paracross rpc test ============="
+            apply_coins
             run_testcases
         fi
     fi

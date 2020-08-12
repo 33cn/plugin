@@ -279,7 +279,7 @@ func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret
 	context := inst.NewEVMContext(msg)
 
 	// 创建EVM运行时对象
-	env := runtime.NewEVM(context, statedb, *vmcfg)
+	env := runtime.NewEVM(context, statedb, *vmcfg, q.GetConfig())
 	if maxCodeSize != 0 {
 		env.SetMaxCodeSize(maxCodeSize)
 	}

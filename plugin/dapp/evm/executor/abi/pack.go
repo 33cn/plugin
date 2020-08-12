@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 )
 
 // packBytesSlice packs the given bytes as [L, V] as the canonical representation
@@ -46,9 +47,9 @@ func packElement(t Type, reflectValue reflect.Value) []byte {
 		return common.LeftPadBytes(reflectValue.Bytes(), 32)
 	case BoolTy:
 		if reflectValue.Bool() {
-			return common.PaddedBigBytes(common.Big1, 32)
+			return math.PaddedBigBytes(common.Big1, 32)
 		}
-		return common.PaddedBigBytes(common.Big0, 32)
+		return math.PaddedBigBytes(common.Big0, 32)
 	case BytesTy:
 		if reflectValue.Kind() == reflect.Array {
 			reflectValue = mustArrayToByteSlice(reflectValue)
@@ -68,11 +69,11 @@ func packElement(t Type, reflectValue reflect.Value) []byte {
 func packNum(value reflect.Value) []byte {
 	switch kind := value.Kind(); kind {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return U256(new(big.Int).SetUint64(value.Uint()))
+		return math.U256Bytes(new(big.Int).SetUint64(value.Uint()))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return U256(big.NewInt(value.Int()))
+		return math.U256Bytes(big.NewInt(value.Int()))
 	case reflect.Ptr:
-		return U256(value.Interface().(*big.Int))
+		return math.U256Bytes(new(big.Int).Set(value.Interface().(*big.Int)))
 	default:
 		panic("abi: fatal error")
 	}

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package model
+package model //nolint
 
 import "errors"
 
@@ -41,4 +41,12 @@ var (
 
 	// ErrNoCoinsAccount no coins account in executor!
 	ErrNoCoinsAccount = errors.New("no coins account in executor")
+	// ErrReturnStackExceeded return stack limit reached
+	ErrReturnStackExceeded = errors.New("return stack limit reached")
+	// ErrInvalidSubroutineEntry invalid subroutine entry
+	ErrInvalidSubroutineEntry = errors.New("invalid subroutine entry")
+	// ErrInvalidJump invalid jump destination
+	ErrInvalidJump = errors.New("invalid jump destination")
+	// ErrInvalidRetsub invalid retsub
+	ErrInvalidRetsub = errors.New("invalid retsub")
 )

@@ -12,7 +12,7 @@ import (
 
 type (
 	// ExecutionFunc 指令执行函数，每个操作指令对应一个实现，它实现了指令的具体操作逻辑
-	ExecutionFunc func(pc *uint64, env *EVM, contract *Contract, memory *mm.Memory, stack *mm.Stack) ([]byte, error)
+	ExecutionFunc func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error)
 )
 
 // Operation 定义指令操作的结构提
@@ -47,10 +47,68 @@ var (
 	// ConstantinopleInstructionSet 对应EVM不同版本的指令集，从上往下，从旧版本到新版本，
 	// 新版本包含旧版本的指令集（目前直接使用康士坦丁堡指令集）
 	ConstantinopleInstructionSet = NewConstantinopleInstructionSet()
+	// YoloV1InstructionSet 黄皮书指令集
+	YoloV1InstructionSet = NewYoloV1InstructionSet()
 )
 
+// JumpTable contains the EVM opcodes supported at a given fork.
+type JumpTable [256]Operation
+
+// NewYoloV1InstructionSet 黄皮书指令集
+func NewYoloV1InstructionSet() JumpTable {
+	instructionSet := NewConstantinopleInstructionSet()
+	// New opcode
+	instructionSet[BEGINSUB] = Operation{
+		Execute:       opBeginSub,
+		GasCost:       gas.ConstGasFunc(gas.GasQuickStep),
+		ValidateStack: mm.MakeStackFunc(0, 0),
+		Valid:         true,
+	}
+	// New opcode
+	instructionSet[JUMPSUB] = Operation{
+		Execute:       opJumpSub,
+		GasCost:       gas.ConstGasFunc(gas.GasSlowStep),
+		ValidateStack: mm.MakeStackFunc(1, 0),
+		Jumps:         true,
+		Valid:         true,
+	}
+	// New opcode
+	instructionSet[RETURNSUB] = Operation{
+		Execute:       opReturnSub,
+		GasCost:       gas.ConstGasFunc(gas.GasFastStep),
+		ValidateStack: mm.MakeStackFunc(0, 0),
+		Jumps:         true,
+		Valid:         true,
+	}
+	// New opcode
+	instructionSet[SELFBALANCE] = Operation{
+		Execute:       opSelfBalance,
+		GasCost:       gas.ConstGasFunc(gas.GasFastStep),
+		ValidateStack: mm.MakeStackFunc(0, 1),
+		Valid:         true,
+	}
+	// New opcode
+	instructionSet[EXTCODEHASH] = Operation{
+		Execute:       opExtCodeHash,
+		GasCost:       gas.ConstGasFunc(params.ExtcodeHashGasConstantinople),
+		ValidateStack: mm.MakeStackFunc(1, 1),
+		Valid:         true,
+	}
+	// create2 不支持
+	// chainID 不支持
+
+	//PUSH1 指令变更
+	instructionSet[PUSH1] = Operation{
+		Execute:       opPush1,
+		GasCost:       gas.Push,
+		ValidateStack: mm.MakeStackFunc(0, 1),
+		Valid:         true,
+	}
+	return instructionSet
+}
+
 // NewConstantinopleInstructionSet 康士坦丁堡 版本支持的指令集
-func NewConstantinopleInstructionSet() [256]Operation {
+func NewConstantinopleInstructionSet() JumpTable {
 	instructionSet := NewByzantiumInstructionSet()
 	instructionSet[SHL] = Operation{
 		Execute:       opSHL,

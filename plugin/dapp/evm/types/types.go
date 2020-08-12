@@ -40,6 +40,8 @@ const (
 	ForkEVMABI = "ForkEVMABI"
 	// ForkEVMFrozen EVM合约用户金额冻结
 	ForkEVMFrozen = "ForkEVMFrozen"
+	// ForkEVMYoloV1 YoloV1虚拟机指令分叉
+	ForkEVMYoloV1 = "ForkEVMYoloV1"
 )
 
 var (

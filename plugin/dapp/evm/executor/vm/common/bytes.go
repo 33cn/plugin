@@ -99,3 +99,14 @@ func Bytes2HexTrim(b []byte) string {
 	hex.Encode(enc[2:], data)
 	return string(enc)
 }
+
+// CopyBytes returns an exact copy of the provided bytes.
+func CopyBytes(b []byte) (copiedBytes []byte) {
+	if b == nil {
+		return nil
+	}
+	copiedBytes = make([]byte, len(b))
+	copy(copiedBytes, b)
+
+	return
+}

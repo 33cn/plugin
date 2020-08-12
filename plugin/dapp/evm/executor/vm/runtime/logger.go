@@ -5,11 +5,12 @@
 package runtime
 
 import (
+	"encoding/json"
+	"io"
 	"math/big"
 	"time"
 
-	"encoding/json"
-	"io"
+	"github.com/holiman/uint256"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
@@ -22,9 +23,9 @@ type Tracer interface {
 	// CaptureStart 开始记录
 	CaptureStart(from common.Address, to common.Address, call bool, input []byte, gas uint64, value uint64) error
 	// CaptureState 保存状态
-	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, contract *Contract, depth int, err error) error
+	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error
 	// CaptureFault 保存错误
-	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, contract *Contract, depth int, err error) error
+	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error
 	// CaptureEnd 结束记录
 	CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) error
 }
@@ -34,12 +35,34 @@ type JSONLogger struct {
 	encoder *json.Encoder
 }
 
+// Storage represents a contract's storage.
+type Storage map[common.Hash]common.Hash
+
+// Copy duplicates the current storage.
+func (s Storage) Copy() Storage {
+	cpy := make(Storage)
+	for key, value := range s {
+		cpy[key] = value
+	}
+	return cpy
+}
+
+// LogConfig are the configuration options for structured logger the EVM
+type LogConfig struct {
+	DisableMemory     bool // disable memory capture
+	DisableStack      bool // disable stack capture
+	DisableStorage    bool // disable storage capture
+	DisableReturnData bool // disable return data capture
+	Debug             bool // print output during capture end
+	Limit             int  // maximum length of output, but zero means unlimited
+}
+
 // StructLog 指令执行状态信息
 type StructLog struct {
 	// Pc pc指针
 	Pc uint64 `json:"pc"`
 	// Op 操作码
-	Op string `json:"op"`
+	Op OpCode `json:"op"`
 	// Gas gas
 	Gas uint64 `json:"gas"`
 	// GasCost 花费
@@ -49,11 +72,17 @@ type StructLog struct {
 	// MemorySize 内存大小
 	MemorySize int `json:"memSize"`
 	// Stack 栈对象
-	Stack []string `json:"stack"`
+	Stack []*big.Int `json:"stack"`
+	// ReturnStack 返回栈
+	ReturnStack []uint32 `json:"returnStack"`
+	// ReturnData 返回数据
+	ReturnData []byte `json:"returnData"`
 	// Storage 存储对象
 	Storage map[common.Hash]common.Hash `json:"-"`
 	// Depth 调用深度
 	Depth int `json:"depth"`
+	// RefundCounter 退款统计
+	RefundCounter uint64 `json:"refund"`
 	// Err 错误信息
 	Err error `json:"-"`
 }
@@ -69,10 +98,10 @@ func (logger *JSONLogger) CaptureStart(from common.Address, to common.Address, c
 }
 
 // CaptureState 输出当前虚拟机状态
-func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error {
 	log := StructLog{
 		Pc:         pc,
-		Op:         op.String(),
+		Op:         op,
 		Gas:        gas,
 		GasCost:    cost,
 		MemorySize: memory.Len(),
@@ -82,12 +111,14 @@ func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost
 	}
 	log.Memory = formatMemory(memory.Data())
 	log.Stack = formatStack(stack.Data())
+	log.ReturnStack = rStack.Data()
+	log.ReturnData = rData
 	return logger.encoder.Encode(log)
 }
 
-func formatStack(data []*big.Int) (res []string) {
+func formatStack(data []uint256.Int) (res []*big.Int) {
 	for _, v := range data {
-		res = append(res, v.Text(16))
+		res = append(res, v.ToBig())
 	}
 	return
 }
@@ -99,8 +130,8 @@ func formatMemory(data []byte) (res []string) {
 	return
 }
 
-// CaptureFault 目前实现为空
-func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, contract *Contract, depth int, err error) error {
+//CaptureFault 目前实现为空
+func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error {
 	return nil
 }
 

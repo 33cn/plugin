@@ -109,6 +109,12 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
 	}
 
+	//最初平行链toml GenesisBlockTime=1514533394，但是未被使用，一直使用的内置的1514533390,最新版本开始适配cfg.GenesisBlockTime,并且
+	//时间也缺省改为1514533390，支持修改时间， 如果有以前的旧的配置未修改，panic强制修改
+	if cfg.GenesisBlockTime == 1514533394 {
+		panic("para chain GenesisBlockTime need be modified to 1514533390 or other")
+	}
+
 	emptyInterval, err := parseEmptyBlockInterval(subcfg.EmptyBlockInterval)
 	if err != nil {
 		panic("para EmptyBlockInterval config not correct")
@@ -240,6 +246,7 @@ func (client *client) InitBlock() {
 		if client.cfg.GenesisBlockTime > 0 {
 			newblock.BlockTime = client.cfg.GenesisBlockTime
 		}
+
 		newblock.ParentHash = zeroHash[:]
 		newblock.MainHash = mainHash
 
@@ -327,14 +334,14 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 				plog.Error("paracross ProcEvent decode", "ty", types.EventReceiveSubData)
 				return true
 			}
-			plog.Info("paracross ProcEvent from", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			plog.Info("paracross ProcEvent", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
 			switch sub.GetTy() {
 			case P2pSubCommitTx:
 				go client.blsSignCli.rcvCommitTx(sub.GetCommitTx())
 			case P2pSubLeaderSyncMsg:
 				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
 				if err != nil {
-					plog.Info("paracross ProcEvent leader sync msg", "err", err)
+					plog.Error("paracross ProcEvent leader sync msg", "err", err)
 				}
 			default:
 				plog.Error("paracross ProcEvent not support", "ty", sub.GetTy())

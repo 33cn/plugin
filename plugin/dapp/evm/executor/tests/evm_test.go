@@ -130,7 +130,7 @@ func runCase(tt *testing.T, c VMCase, file string) {
 	context.Coinbase = common.StringToAddress(c.env.currentCoinbase)
 
 	// 3 调用执行逻辑 call
-	env := runtime.NewEVM(context, statedb, *vmcfg)
+	env := runtime.NewEVM(context, statedb, *vmcfg, api.GetConfig())
 	var (
 		ret []byte
 		//addr common.Address

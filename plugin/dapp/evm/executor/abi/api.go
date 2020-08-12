@@ -39,7 +39,7 @@ func Pack(param, abiData string, readOnly bool) (methodName string, packData []b
 		return methodName, packData, err
 	}
 
-	if readOnly && !method.Const {
+	if readOnly && !method.IsConstant() {
 		return methodName, packData, errors.New("method is not readonly")
 	}
 	if len(params) != method.Inputs.LengthNonIndexed() {
@@ -163,7 +163,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 			if err != nil {
 				return res, err
 			}
-			return convertInt(x, typ.Kind), nil
+			return convertInt(x, typ.GetType().Kind()), nil
 		}
 		b := new(big.Int)
 		b.SetString(val, 10)
@@ -174,7 +174,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 			if err != nil {
 				return res, err
 			}
-			return convertUint(x, typ.Kind), nil
+			return convertUint(x, typ.GetType().Kind()), nil
 		}
 		b := new(big.Int)
 		b.SetString(val, 10)
@@ -192,7 +192,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 		if err != nil {
 			return res, err
 		}
-		rval := reflect.MakeSlice(typ.Type, len(subs), len(subs))
+		rval := reflect.MakeSlice(typ.GetType(), len(subs), len(subs))
 		for idx, sub := range subs {
 			subVal, er := str2GoValue(*typ.Elem, sub)
 			if er != nil {
@@ -202,7 +202,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 		}
 		return rval.Interface(), nil
 	case ArrayTy:
-		rval := reflect.New(typ.Type).Elem()
+		rval := reflect.New(typ.GetType()).Elem()
 		subs, err := procArrayItem(val)
 		if err != nil {
 			return res, err
@@ -227,7 +227,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 		if err != nil {
 			return res, err
 		}
-		rval := reflect.New(typ.Type).Elem()
+		rval := reflect.New(typ.GetType()).Elem()
 		for i, b := range x {
 			rval.Index(i).Set(reflect.ValueOf(b))
 		}

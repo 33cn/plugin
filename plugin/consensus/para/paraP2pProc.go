@@ -13,6 +13,7 @@ import (
 const (
 	P2pSubCommitTx      = 1
 	P2pSubLeaderSyncMsg = 2
+	moduleName          = "consensus"
 )
 
 func (client *client) sendP2PMsg(ty int64, data interface{}) ([]byte, error) {
@@ -40,14 +41,29 @@ func (client *client) SendPubP2PMsg(topic string, msg []byte) error {
 }
 
 func (client *client) SendSubP2PTopic(topic string) error {
-	data := &types.SubTopic{Topic: topic, Module: "consensus"}
+	data := &types.SubTopic{Topic: topic, Module: moduleName}
 	_, err := client.sendP2PMsg(types.EventSubTopic, data)
 	return err
 }
 
 func (client *client) SendRmvP2PTopic(topic string) error {
-	data := &types.RemoveTopic{Topic: topic, Module: "consensus"}
+	data := &types.RemoveTopic{Topic: topic, Module: moduleName}
 	_, err := client.sendP2PMsg(types.EventRemoveTopic, data)
 	return err
+
+}
+
+func (client *client) SendFetchP2PTopic() (*types.TopicList, error) {
+	data := &types.FetchTopicList{Module: moduleName}
+	msg, err := client.sendP2PMsg(types.EventFetchTopics, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "reply fail")
+	}
+	var reply types.TopicList
+	err = types.Decode(msg, &reply)
+	if err != nil {
+		return nil, errors.Wrap(err, "decode fail")
+	}
+	return &reply, err
 
 }

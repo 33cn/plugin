@@ -7,6 +7,8 @@ package common
 import (
 	"math/big"
 
+	"github.com/holiman/uint256"
+
 	"github.com/33cn/chain33/common"
 )
 
@@ -16,6 +18,8 @@ const (
 
 	// Hash160Length Hash160格式的地址长度
 	Hash160Length = 20
+	// AddressLength 地址长度
+	AddressLength = 20
 )
 
 // Hash 重定义哈希类型
@@ -45,6 +49,11 @@ func (h *Hash) SetBytes(b []byte) {
 // BigToHash 大数字转换为哈希
 func BigToHash(b *big.Int) Hash {
 	return Hash(common.BytesToHash(b.Bytes()))
+}
+
+// Uint256ToHash 大数转化为哈希
+func Uint256ToHash(u *uint256.Int) Hash {
+	return Hash(common.BytesToHash(u.Bytes()))
 }
 
 // BytesToHash 将[]byte直接当做哈希处理

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package model
+package model //nolint
 
 const (
 	// WordBitSize 内存中存储的字，占用多少位

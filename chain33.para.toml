@@ -85,8 +85,14 @@ maxTxNumber = 1600
 
 
 [mver.consensus.paracross]
+#超级节点挖矿奖励
 coinReward=18
+#发展基金奖励
 coinDevFund=12
+#如果超级节点上绑定了委托账户，则奖励超级节点coinBaseReward，其余部分(coinReward-coinBaseReward)按权重分给委托账户
+coinBaseReward=3
+#委托账户最少解绑定时间(按小时)
+unBindTime=24
 
 
 [consensus.sub.para]
@@ -260,6 +266,7 @@ ForkEVMState=0
 ForkEVMABI=0
 ForkEVMFrozen=0
 ForkEVMKVHash=0
+ForkEVMYoloV1=0
 
 [fork.sub.blackwhite]
 Enable=0

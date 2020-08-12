@@ -100,7 +100,7 @@ func CallDataCopy(gt Table, evm *params.EVMParam, contractGas *params.GasParam, 
 		return 0, model.ErrGasUintOverflow
 	}
 
-	words, overflow := common.BigUint64(stack.Back(2))
+	words, overflow := stack.Back(2).Uint64WithOverflow()
 	if overflow {
 		return 0, model.ErrGasUintOverflow
 	}
@@ -127,7 +127,7 @@ func ReturnDataCopy(gt Table, evm *params.EVMParam, contractGas *params.GasParam
 		return 0, model.ErrGasUintOverflow
 	}
 
-	words, overflow := common.BigUint64(stack.Back(2))
+	words, overflow := stack.Back(2).Uint64WithOverflow()
 	if overflow {
 		return 0, model.ErrGasUintOverflow
 	}
@@ -146,7 +146,7 @@ func ReturnDataCopy(gt Table, evm *params.EVMParam, contractGas *params.GasParam
 func SStore(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *mm.Stack, mem *mm.Memory, memorySize uint64) (uint64, error) {
 	var (
 		y, x = stack.Back(1), stack.Back(0)
-		val  = evm.StateDB.GetState(contractGas.Address.String(), common.BigToHash(x))
+		val  = evm.StateDB.GetState(contractGas.Address.String(), common.Uint256ToHash(x))
 	)
 
 	// 三种场景消耗的Gas是不一样的
@@ -169,7 +169,7 @@ func SStore(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack 
 // MakeGasLog 生成Gas计算方法
 func MakeGasLog(n uint64) CalcGasFunc {
 	return func(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *mm.Stack, mem *mm.Memory, memorySize uint64) (uint64, error) {
-		requestedSize, overflow := common.BigUint64(stack.Back(1))
+		requestedSize, overflow := stack.Back(1).Uint64WithOverflow()
 		if overflow {
 			return 0, model.ErrGasUintOverflow
 		}
@@ -209,7 +209,7 @@ func Sha3(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *m
 		return 0, model.ErrGasUintOverflow
 	}
 
-	wordGas, overflow := common.BigUint64(stack.Back(1))
+	wordGas, overflow := stack.Back(1).Uint64WithOverflow()
 	if overflow {
 		return 0, model.ErrGasUintOverflow
 	}
@@ -234,7 +234,7 @@ func CodeCopy(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stac
 		return 0, model.ErrGasUintOverflow
 	}
 
-	wordGas, overflow := common.BigUint64(stack.Back(2))
+	wordGas, overflow := stack.Back(2).Uint64WithOverflow()
 	if overflow {
 		return 0, model.ErrGasUintOverflow
 	}
@@ -259,7 +259,7 @@ func ExtCodeCopy(gt Table, evm *params.EVMParam, contractGas *params.GasParam, s
 		return 0, model.ErrGasUintOverflow
 	}
 
-	wordGas, overflow := common.BigUint64(stack.Back(3))
+	wordGas, overflow := stack.Back(3).Uint64WithOverflow()
 	if overflow {
 		return 0, model.ErrGasUintOverflow
 	}
@@ -343,7 +343,7 @@ func SLoad(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *
 
 // Exp exp运算计费
 func Exp(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *mm.Stack, mem *mm.Memory, memorySize uint64) (uint64, error) {
-	expByteLen := uint64((stack.Items[stack.Len()-2].BitLen() + 7) / 8)
+	expByteLen := uint64((stack.Data()[stack.Len()-2].BitLen() + 7) / 8)
 
 	var (
 		gas      = expByteLen * gt.ExpByte // no overflow check required. Max is 256 * ExpByte gas
@@ -360,7 +360,7 @@ func Call(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *m
 	var (
 		gas            = gt.Calls
 		transfersValue = stack.Back(2).Sign() != 0
-		address        = common.BigToAddress(stack.Back(1))
+		address        = common.Uint256ToAddress(stack.Back(1))
 	)
 	if !evm.StateDB.Exist(address.String()) {
 		gas += params.CallNewAccountGas
@@ -426,7 +426,7 @@ func Revert(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack 
 func Suicide(gt Table, evm *params.EVMParam, contractGas *params.GasParam, stack *mm.Stack, mem *mm.Memory, memorySize uint64) (uint64, error) {
 	var gas uint64
 	if !evm.StateDB.HasSuicided(contractGas.Address.String()) {
-		evm.StateDB.AddRefund(params.SuicideRefundGas)
+		evm.StateDB.AddRefund(params.SelfdestructRefundGas)
 	}
 	return gas, nil
 }

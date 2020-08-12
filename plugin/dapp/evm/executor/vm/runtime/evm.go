@@ -36,6 +36,10 @@ func run(evm *EVM, contract *Contract, input []byte) (ret []byte, err error) {
 	if contract.CodeAddr != nil {
 		// 预编译合约以拜占庭分支为初始版本，后继如有分叉，需要在此处理
 		precompiles := PrecompiledContractsByzantium
+		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
+		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
+			precompiles = PrecompiledContractsYoloV1
+		}
 		if p := precompiles[*contract.CodeAddr]; p != nil {
 			return RunPrecompiledContract(p, input, contract)
 		}
@@ -107,16 +111,20 @@ type EVM struct {
 
 	// 支持的最长合约代码大小
 	maxCodeSize int
+
+	// chain33配置
+	cfg *types.Chain33Config
 }
 
 // NewEVM 创建一个新的EVM实例对象
 // 在同一个节点中，一个EVM实例对象只服务于一个交易执行的生命周期
-func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config) *EVM {
+func NewEVM(ctx Context, statedb state.EVMStateDB, vmConfig Config, cfg *types.Chain33Config) *EVM {
 	evm := &EVM{
 		Context:     ctx,
 		StateDB:     statedb,
 		VMConfig:    vmConfig,
 		maxCodeSize: params.MaxCodeSize,
+		cfg:         cfg,
 	}
 
 	evm.Interpreter = NewInterpreter(evm, vmConfig)
@@ -176,7 +184,12 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 	}
 
 	if !evm.StateDB.Exist(addr.String()) {
+		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
 		precompiles := PrecompiledContractsByzantium
+		// 是否是黄皮书v1分叉
+		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
+			precompiles = PrecompiledContractsYoloV1
+		}
 		// 合约地址在自定义合约和预编译合约中都不存在时，可能为外部账户
 		if precompiles[addr] == nil {
 			// 只有一种情况会走到这里来，就是合约账户向外部账户转账的情况
@@ -206,7 +219,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 
 	// 向合约地址转账
 	evm.Transfer(evm.StateDB, caller.Address(), to.Address(), value)
-
+	log.Info("evm call", "caller address", caller.Address().String(), "contract address", to.Address().String(), "value", value)
 	// 创建新的合约对象，包含双方地址以及合约代码，可用Gas信息
 	contract := NewContract(caller, to, value, gas)
 	contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))

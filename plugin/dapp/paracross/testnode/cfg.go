@@ -72,7 +72,7 @@ poolCacheSize=102400
 
 [consensus]
 name="para"
-genesisBlockTime=1514533394
+genesisBlockTime=1514533390
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["paracross"]
 
