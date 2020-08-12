@@ -30,6 +30,7 @@ maturityDegree=10
 tokenAddrBty=""
 tokenAddr=""
 ethUrl=""
+Chain33Cli=""
 portRelayer=20000
 
 function kill_ebrelayerC() {

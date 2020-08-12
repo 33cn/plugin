@@ -25,15 +25,15 @@ ethAddress[6]="0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF"
 maturityDegree=10
 tokenAddr=""
 tokenAddrBty=""
-Chain33_CLI=""
 CLIA=""
 ethUrl=""
+Chain33Cli=""
 
 loop_send_lock_eth() {
     # while 遍历数组
     echo -e "${GRE}=========== Ethereum Lock begin ===========${NOC}"
     #shellcheck disable=SC2154
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -59,7 +59,7 @@ loop_send_lock_eth() {
         # shellcheck disable=SC2219
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$(echo "$nowChain33Balance - $preChain33Balance" | bc)
     check_number "${diff}" 7
 }
@@ -67,12 +67,12 @@ loop_send_lock_eth() {
 loop_send_burn_eth() {
     echo -e "${GRE}=========== Chain33 Burn begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' "${ethUrl}" | jq -r ".result")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t eth --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33Cli} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t eth --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
@@ -92,7 +92,7 @@ loop_send_burn_eth() {
         # shellcheck disable=SC2219
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
     check_number "${diff}" 7
 }
@@ -100,12 +100,12 @@ loop_send_burn_eth() {
 loop_send_lock_bty() {
     echo -e "${GRE}=========== Chain33 Lock begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddrBty}" | jq -r ".balance")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum lock -q "${tokenAddrBty}" -a 1 -r ${ethAddress[i]} -t coins.bty --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33Cli} send x2ethereum lock -q "${tokenAddrBty}" -a 1 -r ${ethAddress[i]} -t coins.bty --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "lock chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
@@ -122,7 +122,7 @@ loop_send_lock_bty() {
         # shellcheck disable=SC2219
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
     check_number "${diff}" 7
 }
@@ -130,7 +130,7 @@ loop_send_lock_bty() {
 loop_send_burn_bty() {
     echo -e "${GRE}=========== Ethereum Burn begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -153,14 +153,14 @@ loop_send_burn_bty() {
         # shellcheck disable=SC2219
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} account balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -e x2ethereum | jq -r ".balance" | sed 's/\"//g')
     diff=$(echo "$nowChain33Balance - $preChain33Balance" | bc)
     check_number "${diff}" 7
 }
 
 loop_send_lock_erc20() {
     echo -e "${GRE}=========== Ethereum Lock Erc20 begin ===========${NOC}"
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     preEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${tokenAddr}" | jq -r ".balance")
     approveTxHash=$(${CLIA} relayer ethereum approve -m 10 -k "${privateKeys[5]}" -t "${tokenAddr}")
 
@@ -179,19 +179,19 @@ loop_send_lock_erc20() {
     echo ${i} "preBalance" "${preEthBalance}" "nowBalance" "${nowEthBalance}" "diff" ${res}
     check_number "${diff}" 7
 
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$((nowChain33Balance - preChain33Balance))
     check_number "${diff}" 7
 }
 
 loop_send_burn_erc20() {
     echo -e "${GRE}=========== Chain33 Burn Erc20 begin ===========${NOC}"
-    preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    preChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t testc -q "${tokenAddr}" --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33Cli} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t testc -q "${tokenAddr}" --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
@@ -208,19 +208,13 @@ loop_send_burn_erc20() {
         # shellcheck disable=SC2219
         let i++
     done
-    nowChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
+    nowChain33Balance=$(${Chain33Cli} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t testc | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
     check_number "${diff}" 7
 }
 
 perf_test_main() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    #shellcheck disable=SC2154
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    #shellcheck disable=SC2034
-    Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
         echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
