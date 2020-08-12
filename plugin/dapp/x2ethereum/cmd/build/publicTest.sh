@@ -399,8 +399,8 @@ function updata_relayer_toml() {
     line=$(delete_line_show "${file}" "pushHost")
     sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
 
-#    line=$(delete_line_show "${file}" "pushBind")
-#    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+    #    line=$(delete_line_show "${file}" "pushBind")
+    #    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
     line=$(delete_line_show "${file}" "BridgeRegistry")
     sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
@@ -441,8 +441,8 @@ function updata_docker_relayer_toml() {
     local portRelayer=$1
 
     if [ "${portRelayer}" != "20000" ]; then
-      sed -i 's/20000/'"${portRelayer}"'/g' "./relayer.toml"
-      sed -i 's/20000/'"${portRelayer}"'/g' "./Dockerfile-x2ethrelay"
+        sed -i 's/20000/'"${portRelayer}"'/g' "./relayer.toml"
+        sed -i 's/20000/'"${portRelayer}"'/g' "./Dockerfile-x2ethrelay"
     fi
 
     for name in b c d; do
@@ -451,7 +451,7 @@ function updata_docker_relayer_toml() {
 
         # 删除配置文件中不需要的字段
         for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
-           delete_line "${file}" "${deleteName}"
+            delete_line "${file}" "${deleteName}"
         done
 
         port=$((port + 1))
@@ -526,7 +526,7 @@ function updata_docker_relayer_toml_rpc() {
 
         # 删除配置文件中不需要的字段
         for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
-           delete_line "${file}" "${deleteName}"
+            delete_line "${file}" "${deleteName}"
         done
 
         port=$((port - 1))

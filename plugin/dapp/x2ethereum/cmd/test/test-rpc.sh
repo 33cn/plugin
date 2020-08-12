@@ -93,16 +93,15 @@ function StartRelayerAndDeploy() {
     sleep 5
 
     # change EthProvider url
-          dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_rpc_1")
-        ethUrl="http://${dockerAddr}:8545"
+    dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_rpc_1")
+    ethUrl="http://${dockerAddr}:8545"
 
-        # shellcheck disable=SC2155
-        local line=$(delete_line_show "./x2ethereum/relayer.toml" "EthProvider=\"ws:")
-        sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./x2ethereum/relayer.toml"
+    # shellcheck disable=SC2155
+    local line=$(delete_line_show "./x2ethereum/relayer.toml" 'EthProvider="ws:')
+    sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./x2ethereum/relayer.toml"
 
-        line=$(delete_line_show "./x2ethereum/relayer.toml" "EthProviderCli=\"http:")
-        sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./x2ethereum/relayer.toml"
-
+    line=$(delete_line_show "./x2ethereum/relayer.toml" 'EthProviderCli="http:')
+    sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./x2ethereum/relayer.toml"
 
     grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     while [ -n "$grep_port" ]; do

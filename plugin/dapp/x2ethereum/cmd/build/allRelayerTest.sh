@@ -74,19 +74,19 @@ function StartRelayerAndDeploy() {
     # stop all docker
     docker-compose -f docker-compose-ebrelayer.yml down
     for name in b c d; do
-         docker-compose -f "docker-compose-ebrelayer${name}.yml" down
+        docker-compose -f "docker-compose-ebrelayer${name}.yml" down
     done
 
     # change EthProvider url
-          dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        ethUrl="http://${dockerAddr}:8545"
+    dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+    ethUrl="http://${dockerAddr}:8545"
 
-        # shellcheck disable=SC2155
-        local line=$(delete_line_show "./relayer.toml" "EthProvider=\"ws:")
-        sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./relayer.toml"
+    # shellcheck disable=SC2155
+    local line=$(delete_line_show "./relayer.toml" 'EthProvider="ws:')
+    sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./relayer.toml"
 
-        line=$(delete_line_show "./relayer.toml" "EthProviderCli=\"http:")
-        sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./relayer.toml"
+    line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
+    sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./relayer.toml"
 
     grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     while [ -n "$grep_port" ]; do
@@ -581,5 +581,3 @@ function AllRelayerMainTest() {
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
-
-
