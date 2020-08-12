@@ -71,6 +71,7 @@ function InitAndDeploy() {
 }
 
 function port_exist() {
+    local prot_ori=${portRelayer}
     grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     while [ -n "$grep_port" ]; do
         echo "port $portRelayer is in use"
@@ -78,9 +79,8 @@ function port_exist() {
         grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
     done
 
-    if [ "${portRelayer}" != "20000" ]; then
-        line=$(delete_line_show "./docker-compose-ebrelayer.yml" "20000:20000")
-        sed -i ''"${line}"' a \ \ \ \ \ \ -\ "'${portRelayer}':'${portRelayer}'"' "./docker-compose-ebrelayer.yml"
+    if [ "${portRelayer}" != "${prot_ori}" ]; then
+        sed -i 's/'"${prot_ori}"'/'"${portRelayer}"'/g' "./docker-compose-ebrelayer.yml"
     fi
 }
 
