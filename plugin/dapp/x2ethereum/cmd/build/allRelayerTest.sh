@@ -125,7 +125,7 @@ function StartRelayerAndDeploy() {
         docker-compose -f "docker-compose-ebrelayer$name.yml" up --build -d
     done
     sleep 1
-    
+
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
