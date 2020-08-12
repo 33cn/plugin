@@ -37,7 +37,7 @@ loop_send_lock_eth() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
+        preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' "${ethUrl}" | jq -r ".result")
         ethTxHash=$(${CLIA} relayer ethereum lock-async -m 1 -k "${privateKeys[i]}" -r 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "lock-async tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
@@ -49,7 +49,7 @@ loop_send_lock_eth() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
+        nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' "${ethUrl}" | jq -r ".result")
         res=$((preEthBalance[i] - nowEthBalance))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         if [[ $res -le 100000000000000000 ]]; then
@@ -71,7 +71,7 @@ loop_send_burn_eth() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
+        preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' "${ethUrl}" | jq -r ".result")
         ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t eth --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
@@ -82,7 +82,7 @@ loop_send_burn_eth() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
+        nowEthBalance=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' "${ethUrl}" | jq -r ".result")
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         if [[ $res -gt 1000000000000000000 ]]; then
