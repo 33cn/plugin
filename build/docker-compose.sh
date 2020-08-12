@@ -461,31 +461,29 @@ function dapp_test_address() {
 }
 
 function base_config() {
-    #    sync
     transfer "${CLI}"
-    #    transfer "${CLI4}"
 }
 
 function rpc_test() {
     if [ "$DAPP" == "" ]; then
         system_test_rpc "http://${1}:8801"
         dapp_test_address "${CLI}"
-        dapp_test_rpc "http://${1}:8801" "${NODE3}"
+        dapp_test_rpc "http://${1}:8801" "${dockerNamePrefix}"
     fi
     if [ "$DAPP" == "paracross" ]; then
         system_test_rpc "http://${1}:8901"
         dapp_test_address "${CLI}"
-
         dapp_test_rpc "http://${1}:8901"
     fi
-
 }
+
 function dapp_run() {
     if [ -e "$DAPP_TEST_FILE" ]; then
         ${DAPP} "${CLI}" "${1}" "${2}"
     fi
 
 }
+
 function main() {
     echo "==============================DAPP=$DAPP main begin========================================================"
     ### init para ####

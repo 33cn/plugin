@@ -67,7 +67,6 @@ function run_dapp() {
     fi
     cd ..
     echo "============ run dapp=$app end ================="
-
 }
 
 function run_single_app() {
@@ -145,7 +144,6 @@ function main() {
     elif [ "${OP}" == "modify" ]; then
         sed -i $sedfix '/^useGithub=.*/a version=1' chain33.toml
     fi
-
 }
 
 # run script

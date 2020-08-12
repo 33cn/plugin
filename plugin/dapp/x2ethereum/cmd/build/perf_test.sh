@@ -6,10 +6,6 @@ set -x
 
 source "./publicTest.sh"
 source "./allRelayerTest.sh"
-
-CLIA="./ebcli_A"
-Chain33_CLI=""
-
 Ethsender="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
 privateKeys[0]="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 privateKeys[1]="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
@@ -29,10 +25,14 @@ ethAddress[6]="0x0C05bA5c230fDaA503b53702aF1962e08D0C60BF"
 maturityDegree=10
 tokenAddr=""
 tokenAddrBty=""
+Chain33_CLI=""
+CLIA=""
+ethUrl=""
 
 loop_send_lock_eth() {
     # while 遍历数组
     echo -e "${GRE}=========== Ethereum Lock begin ===========${NOC}"
+    #shellcheck disable=SC2154
     preChain33Balance=$(${Chain33_CLI} x2ethereum balance -s 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -t eth | jq ".res" | jq ".[]" | jq ".balance" | sed 's/\"//g')
 
     i=0
@@ -44,7 +44,8 @@ loop_send_lock_eth() {
         let i++
     done
 
-    eth_block_wait $((maturityDegree + 2))
+    #shellcheck disable=SC2154
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -71,13 +72,13 @@ loop_send_burn_eth() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(curl -ksd '{"jsonrpc":"2.0","method":"eth_getBalance","params":["'${ethAddress[i]}'", "latest"],"id":1}' http://localhost:7545 | jq -r ".result")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t eth -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t eth --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
     done
 
-    eth_block_wait $((maturityDegree + 2))
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -104,13 +105,13 @@ loop_send_lock_bty() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddrBty}" | jq -r ".balance")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum lock -q "${tokenAddrBty}" -a 1 -r ${ethAddress[i]} -t coins.bty -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33_CLI} send x2ethereum lock -q "${tokenAddrBty}" -a 1 -r ${ethAddress[i]} -t coins.bty --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "lock chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
     done
 
-    eth_block_wait $((maturityDegree + 2))
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -141,7 +142,7 @@ loop_send_burn_bty() {
         let i++
     done
 
-    eth_block_wait $((maturityDegree + 2))
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -171,7 +172,7 @@ loop_send_lock_erc20() {
         # shellcheck disable=SC2219
         let i++
     done
-    eth_block_wait $((maturityDegree + 2))
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     nowEthBalance=$(${CLIA} relayer ethereum balance -o "${Ethsender}" -t "${tokenAddr}" | jq -r ".balance")
     res=$((preEthBalance - nowEthBalance))
@@ -190,13 +191,13 @@ loop_send_burn_erc20() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[i]=$(${CLIA} relayer ethereum balance -o "${ethAddress[i]}" -t "${tokenAddr}" | jq -r ".balance")
-        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t testc -q "${tokenAddr}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+        ethTxHash=$(${Chain33_CLI} send x2ethereum burn -a 1 -r ${ethAddress[i]} -t testc -q "${tokenAddr}" --node_addr "${ethUrl}" -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         # shellcheck disable=SC2219
         let i++
     done
 
-    eth_block_wait $((maturityDegree + 2))
+    eth_block_wait $((maturityDegree + 2)) "${ethUrl}"
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -215,8 +216,10 @@ loop_send_burn_erc20() {
 perf_test_main() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    docker_chain33_ip=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
-    Chain33_CLI="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+    #shellcheck disable=SC2154
+    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    #shellcheck disable=SC2034
+    Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
 
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
