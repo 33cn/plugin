@@ -154,6 +154,8 @@ function StartRelayerAndDeploy() {
     ebrelayeraRpcHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayerd_rpc_1")
     CLID_HTTP="http://${ebrelayeraRpcHost}:9901"
 
+    docker ps -a
+
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
