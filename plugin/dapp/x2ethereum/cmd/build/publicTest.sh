@@ -12,6 +12,8 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
+inetAddr=""
+
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
     # shellcheck disable=SC2116
@@ -350,7 +352,7 @@ function check_addr() {
 }
 
 function get_inet_addr() {
-    local inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
+    inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
     if [[ ${inetAddr} == "" ]]; then
         inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}')
         if [[ ${inetAddr} == "" ]]; then
@@ -386,7 +388,8 @@ function updata_relayer_toml() {
         exit_cp_file
     fi
 
-    local pushHost=$(get_inet_addr)
+    get_inet_addr
+    local pushHost="${inetAddr}"
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
         exit_cp_file
@@ -488,8 +491,8 @@ function updata_relayer_toml_rpc() {
     local MAIN_HTTP=${3}
     local file=${4}
 
-    # shellcheck disable=SC2155
-    local pushHost=$(get_inet_addr)
+    get_inet_addr
+    local pushHost="${inetAddr}"
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
     fi

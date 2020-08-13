@@ -416,9 +416,6 @@ function rpc_test() {
 
         copyErrLogs
 
-        docker ps -a
-        docker logs -f "${dockerNamePrefix}_ebrelayera_rpc_1" | head -n 1000
-
         docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
     fi
     chain33_RpcTestRst x2ethereum "$CASE_ERR"
