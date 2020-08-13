@@ -404,17 +404,20 @@ function rpc_test() {
     if [ "$ispara" == false ]; then
         # init
         StartRelayerAndDeploy
-        #        InitChain33Vilators
-        #        EthImportKey
-        #
-        #        # test
-        #        TestChain33ToEthAssets
-        #        TestETH2Chain33Assets
-        #        TestETH2Chain33Erc20
+        InitChain33Vilators
+        EthImportKey
+
+        # test
+        TestChain33ToEthAssets
+        TestETH2Chain33Assets
+        TestETH2Chain33Erc20
 
         copyErrLogs
 
-        # docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
+        docker ps -a
+        docker logs -f "${dockerNamePrefix}_ebrelayera_rpc_1" | head -n 1000
+
+        docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
     fi
     chain33_RpcTestRst x2ethereum "$CASE_ERR"
 }
