@@ -416,7 +416,7 @@ function rpc_test() {
         TestETH2Chain33Assets
         TestETH2Chain33Erc20
 
-        docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
+        # docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
     fi
     chain33_RpcTestRst x2ethereum "$CASE_ERR"
 }
