@@ -1,4 +1,3 @@
-# 本配置文件专门用于33复杂美闪电网络使用,即lns33
 title="x2Ethereum_relayer"
 #用于cli向该relayer进行配置
 JrpcBindAddr="localhost:9901"

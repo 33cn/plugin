@@ -19,12 +19,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "chain33xEth-relayer" + "-cli",
-	Short: "chain33xEth-relayer" + "client tools",
-}
-
 var (
+	rootCmd = &cobra.Command{
+		Use:   "chain33xEth-relayer" + "-cli",
+		Short: "chain33xEth-relayer" + "client tools",
+	}
 	configPath = flag.String("f", "", "configfile")
 )
 
@@ -66,7 +65,6 @@ func run(RPCAddr, NodeAddr string) {
 	log.SetLogLevel("error")
 	rootCmd.PersistentFlags().String("rpc_laddr", RPCAddr, "http url")
 	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "eth node url")
-	//rootCmd.PersistentFlags().String("rpc_laddr", "", "http url")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -79,7 +77,6 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	//fmt.Println(cfg)
 	return &cfg
 }
 
@@ -94,7 +91,6 @@ func main() {
 		buildflags.RPCAddr = "http://localhost:9901"
 	}
 	if buildflags.NodeAddr == "" {
-		//buildflags.NodeAddr = "http://127.0.0.1:7545"
 		buildflags.NodeAddr = cfg.EthProviderCli
 	}
 	run(buildflags.RPCAddr, buildflags.NodeAddr)

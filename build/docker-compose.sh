@@ -461,6 +461,7 @@ function dapp_test_address() {
 }
 
 function base_config() {
+    #    sync
     transfer "${CLI}"
 }
 
