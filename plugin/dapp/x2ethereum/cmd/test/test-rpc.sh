@@ -404,13 +404,13 @@ function rpc_test() {
     if [ "$ispara" == false ]; then
         # init
         StartRelayerAndDeploy
-#        InitChain33Vilators
-#        EthImportKey
-#
-#        # test
-#        TestChain33ToEthAssets
-#        TestETH2Chain33Assets
-#        TestETH2Chain33Erc20
+        #        InitChain33Vilators
+        #        EthImportKey
+        #
+        #        # test
+        #        TestChain33ToEthAssets
+        #        TestETH2Chain33Assets
+        #        TestETH2Chain33Erc20
 
         copyErrLogs
 
