@@ -44,7 +44,6 @@ function queryExecBalance() {
     local balance=$(echo "$resp" | jq -r ".result" | jq ".[].balance")
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryExecBalance" "1" "${balance} != ${2}"
-        copyErrLogs
     fi
 }
 
@@ -56,7 +55,6 @@ function queryChain33Balance() {
     local balance=$(echo $resp | jq -r ".result.execAccount" | jq ".[].account.balance")
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryChain33Balance" "1" "${balance} != ${2}"
-        copyErrLogs
     fi
 }
 
@@ -76,7 +74,6 @@ function queryChain33X2ethBalance() {
     local balance=$(echo "${RETURN_RESP}" | jq -r ".res" | jq ".[].balance" | sed 's/\"//g')
     if [ "${balance}" != "${2}" ]; then
         echo_rst "queryChain33X2ethBalance" "1" "${balance} != ${2}"
-        copyErrLogs
     fi
 }
 
@@ -125,7 +122,6 @@ function StartRelayerAndDeploy() {
     ebrelayeraRpcHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_rpc_1")
     if [[ ${ebrelayeraRpcHost} == "" ]]; then
         echo -e "${RED}ebrelayeraRpcHost a is empty${NOC}"
-        copyErrLogs
     fi
     CLIA_HTTP="http://${ebrelayeraRpcHost}:9901"
 
@@ -408,13 +404,15 @@ function rpc_test() {
     if [ "$ispara" == false ]; then
         # init
         StartRelayerAndDeploy
-        InitChain33Vilators
-        EthImportKey
+#        InitChain33Vilators
+#        EthImportKey
+#
+#        # test
+#        TestChain33ToEthAssets
+#        TestETH2Chain33Assets
+#        TestETH2Chain33Erc20
 
-        # test
-        TestChain33ToEthAssets
-        TestETH2Chain33Assets
-        TestETH2Chain33Erc20
+        copyErrLogs
 
         # docker-compose -f ./x2ethereum/docker-compose-x2ethereum.yml down
     fi

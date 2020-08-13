@@ -25,9 +25,9 @@ function exit_cp_file() {
 
     for name in a b c d; do
         # shellcheck disable=SC2154
-        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "$dirName/ebrelayer$name.log"
+        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
     done
-    docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "$dirName/chain33.log"
+    docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33.log"
 
     exit 1
 }
@@ -46,9 +46,9 @@ function copyErrLogs() {
 
         for name in a b c d; do
             # shellcheck disable=SC2154
-            docker cp "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/logs/x2Ethereum_relayer.log "$dirName/ebrelayer$name_rpc.log"
+            docker cp "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}_rpc.log"
         done
-        docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "$dirName/chain33_rpc.log"
+        docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33_rpc.log"
     fi
 }
 
@@ -492,7 +492,6 @@ function updata_relayer_toml_rpc() {
     local pushHost=$(get_inet_addr)
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
-        copyErrLogs
     fi
 
     # shellcheck disable=SC2155
