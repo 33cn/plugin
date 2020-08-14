@@ -1,7 +1,7 @@
-# 本配置文件专门用于33复杂美闪电网络使用,即lns33
 title="x2Ethereum_relayer"
 #用于cli向该relayer进行配置
 JrpcBindAddr="localhost:9901"
+EthProviderCli="http://127.0.0.1:7545"
 EthProvider="ws://127.0.0.1:7545/"
 #EthProvider="wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270"
 #EthProvider="wss://ropsten.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270"

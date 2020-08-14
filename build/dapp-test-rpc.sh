@@ -6,7 +6,7 @@ DAPP_TEST_COMMON=dapp-test-common.sh
 
 function dapp_test_rpc() {
     local ip=$1
-    local node3=$2
+    local dockerNamePrefix=$2
     echo "============ # dapp rpc test begin ============="
     if [ -d dapptest ]; then
         cp "$DAPP_TEST_COMMON" dapptest/
@@ -15,10 +15,10 @@ function dapp_test_rpc() {
         rm -f "jobsTicket.log"
         rm -rf "outdir"
 
-        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name x2ethereum ! -name . | sed 's/^\.\///' | sort)
+        dapps=$(find . -maxdepth 1 -type d ! -name dapptest ! -name ticket ! -name . | sed 's/^\.\///' | sort)
         echo "dapps list: $dapps"
         set +e
-        parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" "$node3" ::: "$dapps"
+        parallel -k --jobs 40 --results outdir --joblog ./jobs.log ./{}/"${RPC_TESTFILE}" "$ip" "$dockerNamePrefix" ::: "$dapps"
         local ret=$?
         parallel -k --jobs 1 --results outdir --joblog ./jobsTicket.log ./{}/"${RPC_TESTFILE}" "$ip" ::: "ticket"
         local retTicket=$?

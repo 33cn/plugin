@@ -67,7 +67,6 @@ function run_dapp() {
     fi
     cd ..
     echo "============ run dapp=$app end ================="
-
 }
 
 function run_single_app() {
@@ -101,7 +100,7 @@ function main() {
             echo "============ run main end ================="
 
             find . -maxdepth 1 -type d -name "*-ci" -exec rm -rf {} \;
-            dir=$(find . -maxdepth 1 -type d ! -name system ! -name x2ethereum ! -name . | sed 's/^\.\///')
+            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . | sed 's/^\.\///')
             for app in $dir; do
                 run_single_app "${app}" "$TESTCASEFILE" "down"
             done
@@ -145,7 +144,6 @@ function main() {
     elif [ "${OP}" == "modify" ]; then
         sed -i $sedfix '/^useGithub=.*/a version=1' chain33.toml
     fi
-
 }
 
 # run script

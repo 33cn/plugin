@@ -12,6 +12,8 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
+inetAddr=""
+
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
     # shellcheck disable=SC2116
@@ -23,12 +25,33 @@ function exit_cp_file() {
         mkdir -p ${dirName}
     fi
 
-    for name in A B C D; do
-        cp "./$name/ebrelayer.log" "$dirName/ebrelayer$name.log"
+    for name in a b c d; do
+        # shellcheck disable=SC2154
+        docker cp "${dockerNamePrefix}_ebrelayer${name}_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}.log"
     done
-    docker cp "${NODE3}":/root/logs/chain33.log "$dirName/chain33.log"
+    docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33.log"
 
     exit 1
+}
+
+function copyErrLogs() {
+    if [ -n "$CASE_ERR" ]; then
+        # /var/lib/jenkins
+        # shellcheck disable=SC2116
+        dirNameFa=$(echo ~)
+        dirName="$dirNameFa/x2ethereumlogs"
+
+        if [ ! -d "${dirName}" ]; then
+            # shellcheck disable=SC2086
+            mkdir -p ${dirName}
+        fi
+
+        for name in a b c d; do
+            # shellcheck disable=SC2154
+            docker cp "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}_rpc.log"
+        done
+        docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33_rpc.log"
+    fi
 }
 
 function kill_all_ebrelayer() {
@@ -328,34 +351,45 @@ function check_addr() {
     fi
 }
 
+function get_inet_addr() {
+    inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
+    if [[ ${inetAddr} == "" ]]; then
+        inetAddr=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}')
+        if [[ ${inetAddr} == "" ]]; then
+            inetAddr=$(ifconfig eth0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
+            if [[ ${inetAddr} == "" ]]; then
+                inetAddr=$(ifconfig eth0 | grep "inet " | awk '{ print $2}')
+                if [[ ${inetAddr} == "" ]]; then
+                    ip addr show eth0
+                    inetAddr=$(ip addr show eth0 | grep "inet " | awk '{ print $2}' | head -c-4)
+                fi
+            fi
+        fi
+    fi
+
+    echo "${inetAddr}"
+}
+
+# $1 dockerName
+function get_docker_addr() {
+    local dockerAddr=$(docker inspect "${1}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
+    echo "${dockerAddr}"
+}
+
 # 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
 function updata_relayer_toml() {
     local BridgeRegistry=${1}
     local maturityDegree=${2}
     local file=${3}
 
-    #    local chain33Host=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks.${PROJ}_default.IPAddress" | sed 's/\"//g')
-    local chain33Host=$(docker inspect "${NODE3}" | jq ".[].NetworkSettings.Networks" | grep "IPAddress" | awk '{ print $2}' | sed 's/\"//g' | sed 's/,//g')
+    local chain33Host=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
     if [[ ${chain33Host} == "" ]]; then
         echo -e "${RED}chain33Host is empty${NOC}"
         exit_cp_file
     fi
 
-    local pushHost=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
-    if [[ ${pushHost} == "" ]]; then
-        pushHost=$(ifconfig wlp2s0 | grep "inet " | awk '{ print $2}')
-        if [[ ${pushHost} == "" ]]; then
-            pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}' | awk -F: '{print $2}')
-            if [[ ${pushHost} == "" ]]; then
-                pushHost=$(ifconfig eth0 | grep "inet " | awk '{ print $2}')
-                if [[ ${pushHost} == "" ]]; then
-                    ip addr show eth0
-                    pushHost=$(ip addr show eth0 | grep "inet " | awk '{ print $2}' | head -c-4)
-                fi
-            fi
-        fi
-    fi
-
+    get_inet_addr
+    local pushHost="${inetAddr}"
     if [[ ${pushHost} == "" ]]; then
         echo -e "${RED}pushHost is empty${NOC}"
         exit_cp_file
@@ -367,6 +401,9 @@ function updata_relayer_toml() {
 
     line=$(delete_line_show "${file}" "pushHost")
     sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+    #    line=$(delete_line_show "${file}" "pushBind")
+    #    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
     line=$(delete_line_show "${file}" "BridgeRegistry")
     sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
@@ -399,6 +436,121 @@ function updata_relayer_toml_ropston() {
 
     sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
     sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
+}
+
+# $1 portRelayer
+function updata_docker_relayer_toml() {
+    local port=$1
+    local portRelayer=$1
+
+    if [ "${portRelayer}" != "20000" ]; then
+        sed -i 's/20000/'"${portRelayer}"'/g' "./relayer.toml"
+        sed -i 's/20000/'"${portRelayer}"'/g' "./Dockerfile-x2ethrelay"
+    fi
+
+    for name in b c d; do
+        local file="./relayer$name.toml"
+        cp './relayer.toml' "${file}"
+
+        # 删除配置文件中不需要的字段
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
+            delete_line "${file}" "${deleteName}"
+        done
+
+        port=$((port + 1))
+        sed -i 's/'"${portRelayer}"'/'${port}'/g' "${file}"
+
+        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
+
+        local dockerfile="./Dockerfile-x2ethrelay$name"
+        cp "./Dockerfile-x2ethrelay" "${dockerfile}"
+
+        # shellcheck disable=SC2155
+        local line=$(delete_line_show "${dockerfile}" "COPY relayer.toml relayer.toml")
+        sed -i ''"${line}"' a COPY relayer'$name'.toml relayer.toml' "${dockerfile}"
+
+        sed -i 's/'"${portRelayer}"'/'"${port}"'/g' "${dockerfile}"
+
+        local dockeryml="./docker-compose-ebrelayer$name.yml"
+        cp "./docker-compose-ebrelayer.yml" "${dockeryml}"
+
+        line=$(delete_line_show "${dockeryml}" "ebrelayera")
+        sed -i ''"${line}"' a \ \ ebrelayer'$name':' "${dockeryml}"
+
+        line=$(delete_line_show "${dockeryml}" "dockerfile: Dockerfile-x2ethrelay")
+        sed -i ''"${line}"' a \ \ \ \ \ \ dockerfile: Dockerfile-x2ethrelay'$name'' "${dockeryml}"
+
+        sed -i 's/'"${portRelayer}"'/'${port}'/g' "${dockeryml}"
+    done
+}
+
+# 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 MAIN_HTTP; $4 relayer.toml 地址
+function updata_relayer_toml_rpc() {
+    local BridgeRegistry=${1}
+    local maturityDegree=${2}
+    local MAIN_HTTP=${3}
+    local file=${4}
+
+    get_inet_addr
+    local pushHost="${inetAddr}"
+    if [[ ${pushHost} == "" ]]; then
+        echo -e "${RED}pushHost is empty${NOC}"
+    fi
+
+    # shellcheck disable=SC2155
+    local line=$(delete_line_show "${file}" "chain33Host")
+    # 在第 line 行后面 新增合约地址
+    sed -i ''"${line}"' a chain33Host="'"${MAIN_HTTP}"'"' "${file}"
+
+    line=$(delete_line_show "${file}" "pushHost")
+    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+    line=$(delete_line_show "${file}" "BridgeRegistry")
+    sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
+
+    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
+    sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
+
+    sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${file}"
+    sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
+}
+
+# $1 portRelayer
+function updata_docker_relayer_toml_rpc() {
+    local portRelayer=$1
+    local port=$1
+    sed -i 's/20000/'"${portRelayer}"'/g' "./x2ethereum/relayer.toml"
+    sed -i 's/20000/'"${portRelayer}"'/g' "./x2ethereum/Dockerfile-x2ethrelay"
+
+    for name in b c d; do
+        local file="./x2ethereum/relayer$name.toml"
+        cp './x2ethereum/relayer.toml' "${file}"
+
+        # 删除配置文件中不需要的字段
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
+            delete_line "${file}" "${deleteName}"
+        done
+
+        port=$((port - 1))
+        sed -i 's/'"${portRelayer}"'/'${port}'/g' "${file}"
+
+        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
+
+        local dockerfile="./x2ethereum/Dockerfile-x2ethrelay$name"
+        cp "./x2ethereum/Dockerfile-x2ethrelay" "${dockerfile}"
+
+        # shellcheck disable=SC2155
+        local line=$(delete_line_show "${dockerfile}" "COPY relayer.toml relayer.toml")
+        sed -i ''"${line}"' a COPY relayer'$name'.toml relayer.toml' "${dockerfile}"
+        sed -i 's/'"${portRelayer}"'/'"${port}"'/g' "${dockerfile}"
+
+        local dockeryml="./x2ethereum/docker-compose-ebrelayer$name.yml"
+        cp "./x2ethereum/docker-compose-ebrelayer.yml" "${dockeryml}"
+
+        sed -i 's/ebrelayera/ebrelayer'${name}'/g' "${dockeryml}"
+        sed -i 's/Dockerfile-x2ethrelay/Dockerfile-x2ethrelay'${name}'/g' "${dockeryml}"
+        sed -i 's/'"${portRelayer}"'/'${port}'/g' "${dockeryml}"
+    done
 }
 
 # 更新 B C D 的配置文件
@@ -465,6 +617,7 @@ function wait_prophecy_finish() {
         fi
         count=$((count + 1))
         if [[ ${count} == 30 ]]; then
+            set -x
             echo -e "${RED}failed to get balance${NOC}"
             exit_cp_file
         fi
@@ -474,7 +627,7 @@ function wait_prophecy_finish() {
     set -x
 }
 
-# eth 区块等待 $1:等待高度 $2:url地址，默认为 http://localhost:7545,测试网络用 https://ropsten-rpc.linkpool.io/
+# eth 区块等待 $1:等待高度  $2:url地址，默认为 http://localhost:7545,测试网络用 https://ropsten-rpc.linkpool.io/
 function eth_block_wait() {
     set +x
     if [[ $# -lt 0 ]]; then
