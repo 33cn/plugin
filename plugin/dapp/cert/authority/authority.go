@@ -11,8 +11,6 @@ import (
 	"runtime"
 	"sync"
 
-	"bytes"
-
 	"github.com/33cn/chain33/common/crypto"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -45,8 +43,6 @@ type Authority struct {
 	validator core.Validator
 	// 签名类型
 	signType int
-	// 有效证书缓存
-	validCertCache [][]byte
 	// 历史证书缓存
 	HistoryCertCache *HistoryCertData
 }
@@ -91,7 +87,6 @@ func (auth *Authority) Init(conf *ty.Authority) error {
 	}
 	auth.validator = vldt
 
-	auth.validCertCache = make([][]byte, 0)
 	auth.HistoryCertCache = &HistoryCertData{authConfig, -1, -1}
 
 	IsAuthEnable = true
@@ -139,9 +134,6 @@ func (auth *Authority) ReloadCert(store *types.HistoryCertStore) error {
 		auth.validator = vldt
 	}
 
-	// 清空有效证书缓存
-	auth.validCertCache = auth.validCertCache[:0]
-
 	// 更新最新历史数据
 	auth.HistoryCertCache = &HistoryCertData{auth.authConfig, store.CurHeigth, store.NxtHeight}
 
@@ -167,9 +159,6 @@ func (auth *Authority) ReloadCertByHeght(currentHeight int64) error {
 		return err
 	}
 	auth.validator = vldt
-
-	// 清空有效证书缓存
-	auth.validCertCache = auth.validCertCache[:0]
 
 	// 更新最新历史数据
 	auth.HistoryCertCache = &HistoryCertData{auth.authConfig, currentHeight, -1}
@@ -248,11 +237,11 @@ func (auth *Authority) Validate(signature *types.Signature) error {
 	}
 
 	// 是否在有效证书缓存中
-	for _, v := range auth.validCertCache {
-		if bytes.Equal(v, cert) {
-			return nil
-		}
-	}
+	//for _, v := range auth.validCertCache {
+	//	if bytes.Equal(v, cert) {
+	//		return nil
+	//	}
+	//}
 
 	// 校验
 	err = auth.validator.Validate(cert, signature.GetPubkey())
@@ -260,7 +249,6 @@ func (auth *Authority) Validate(signature *types.Signature) error {
 		alog.Error(fmt.Sprintf("validate cert failed. %s", err.Error()))
 		return fmt.Errorf("validate cert failed. error:%s", err.Error())
 	}
-	auth.validCertCache = append(auth.validCertCache, cert)
 
 	return nil
 }

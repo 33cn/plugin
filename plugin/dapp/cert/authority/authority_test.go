@@ -59,7 +59,7 @@ var SIGNTYPE = ct.AuthSM2
 
 func signtx(tx *types.Transaction, priv crypto.PrivKey, cert []byte) {
 	tx.Sign(int32(SIGNTYPE), priv)
-	tx.Signature.Signature, _ = utils.EncodeCertToSignature(tx.Signature.Signature, cert)
+	tx.Signature.Signature = utils.EncodeCertToSignature(tx.Signature.Signature, cert, nil)
 }
 
 func signtxs(priv crypto.PrivKey, cert []byte) {

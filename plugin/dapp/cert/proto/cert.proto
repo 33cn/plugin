@@ -38,3 +38,9 @@ message Authority {
     string cryptoPath = 2;
     string signType   = 3;
 }
+
+message CertSignature {
+    bytes signature = 1;
+    bytes cert      = 2;
+    bytes uid       = 3;
+}
