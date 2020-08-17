@@ -405,16 +405,16 @@ func (validator *ecdsaValidator) getValidityOptsForCert(cert *x509.Certificate) 
 }
 
 func (validator *ecdsaValidator) GetCertFromSignature(signature []byte) ([]byte, error) {
-	cert, _, err := utils.DecodeCertFromSignature(signature)
+	certSign, err := utils.DecodeCertFromSignature(signature)
 	if err != nil {
 		authLogger.Error(fmt.Sprintf("unmashal certificate from signature failed. %s", err.Error()))
 		return nil, err
 	}
 
-	if len(cert) == 0 {
+	if len(certSign.Cert) == 0 {
 		authLogger.Error("cert can not be null")
 		return nil, types.ErrInvalidParam
 	}
 
-	return cert, nil
+	return certSign.Cert, nil
 }
