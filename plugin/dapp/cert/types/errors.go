@@ -15,4 +15,6 @@ var (
 	ErrUnknowAuthSignType = errors.New("ErrUnknowAuthSignType")
 	// ErrInitializeAuthority 初始化校验器失败
 	ErrInitializeAuthority = errors.New("ErrInitializeAuthority")
+	// ErrPermissionDeny 权限校验失败
+	ErrPermissionDeny = errors.New("ErrPermissionDeny")
 )

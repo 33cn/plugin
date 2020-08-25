@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 	"time"
 
@@ -100,7 +101,7 @@ func (validator *gmValidator) Validate(certByte []byte, pubKey []byte) error {
 		return fmt.Errorf("Could not obtain certification chain, err %s", err)
 	}
 
-	err = validator.validateCertAgainstChain(cert, validationChain)
+	err = validator.validateCertAgainstChain(cert.SerialNumber, validationChain)
 	if err != nil {
 		return fmt.Errorf("Could not validate identity against certification chain, err %s", err)
 	}
@@ -292,10 +293,10 @@ func (validator *gmValidator) validateCAIdentity(cert *sm2.Certificate) error {
 		return nil
 	}
 
-	return validator.validateCertAgainstChain(cert, validationChain)
+	return validator.validateCertAgainstChain(cert.SerialNumber, validationChain)
 }
 
-func (validator *gmValidator) validateCertAgainstChain(cert *sm2.Certificate, validationChain []*sm2.Certificate) error {
+func (validator *gmValidator) validateCertAgainstChain(serialNumber *big.Int, validationChain []*sm2.Certificate) error {
 	SKI, err := getSubjectKeyIdentifierFromSm2Cert(validationChain[1])
 	if err != nil {
 		return fmt.Errorf("Could not obtain Subject Key Identifier for signer cert, err %s", err)
@@ -309,7 +310,7 @@ func (validator *gmValidator) validateCertAgainstChain(cert *sm2.Certificate, va
 
 		if bytes.Equal(aki, SKI) {
 			for _, rc := range crl.TBSCertList.RevokedCertificates {
-				if rc.SerialNumber.Cmp(cert.SerialNumber) == 0 {
+				if rc.SerialNumber.Cmp(serialNumber) == 0 {
 					err = validationChain[1].CheckCRLSignature(crl)
 					if err != nil {
 						authLogger.Warn(fmt.Sprintf("Invalid signature over the identified CRL, error %s", err))
@@ -351,4 +352,19 @@ func (validator *gmValidator) GetCertFromSignature(signature []byte) ([]byte, er
 	}
 
 	return cert.Cert, nil
+}
+
+func (validator *gmValidator) GetCertSnFromSignature(signature []byte) ([]byte, error) {
+	certByte, err := validator.GetCertFromSignature(signature)
+	if err != nil {
+		authLogger.Error(fmt.Sprintf("GetCertSnFromSignature from signature failed. %s", err.Error()))
+		return nil, err
+	}
+
+	cert, err := validator.getCertFromPem(certByte)
+	if err != nil {
+		return nil, fmt.Errorf("ParseCertificate failed %s", err)
+	}
+
+	return cert.SerialNumber.Bytes(), nil
 }

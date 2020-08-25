@@ -14,4 +14,6 @@ var (
 		"Update": CertActionUpdate,
 		"Normal": CertActionNormal,
 	}
+
+	AdminKey = "Auth-cert-admin"
 )

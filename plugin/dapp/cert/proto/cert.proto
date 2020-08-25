@@ -44,3 +44,11 @@ message CertSignature {
     bytes cert      = 2;
     bytes uid       = 3;
 }
+
+message ReqQueryValidCertSN {
+    string addr = 1;
+}
+
+message RepQueryValidCertSN {
+    bytes sn = 1;
+}

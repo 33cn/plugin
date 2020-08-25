@@ -162,7 +162,7 @@ func (validator *ecdsaValidator) Validate(certByte []byte, pubKey []byte) error 
 		return fmt.Errorf("Could not obtain certification chain, err %s", err)
 	}
 
-	err = validator.validateCertAgainstChain(cert, validationChain)
+	err = validator.validateCertAgainstChain(cert.SerialNumber, validationChain)
 	if err != nil {
 		return fmt.Errorf("Could not validate identity against certification chain, err %s", err)
 	}
@@ -360,10 +360,10 @@ func (validator *ecdsaValidator) validateCAIdentity(cert *x509.Certificate) erro
 		return nil
 	}
 
-	return validator.validateCertAgainstChain(cert, validationChain)
+	return validator.validateCertAgainstChain(cert.SerialNumber, validationChain)
 }
 
-func (validator *ecdsaValidator) validateCertAgainstChain(cert *x509.Certificate, validationChain []*x509.Certificate) error {
+func (validator *ecdsaValidator) validateCertAgainstChain(serialNumber *big.Int, validationChain []*x509.Certificate) error {
 	SKI, err := getSubjectKeyIdentifierFromCert(validationChain[1])
 	if err != nil {
 		return fmt.Errorf("Could not obtain Subject Key Identifier for signer cert, err %s", err)
@@ -377,7 +377,7 @@ func (validator *ecdsaValidator) validateCertAgainstChain(cert *x509.Certificate
 
 		if bytes.Equal(aki, SKI) {
 			for _, rc := range crl.TBSCertList.RevokedCertificates {
-				if rc.SerialNumber.Cmp(cert.SerialNumber) == 0 {
+				if rc.SerialNumber.Cmp(serialNumber) == 0 {
 					err = validationChain[1].CheckCRLSignature(crl)
 					if err != nil {
 						authLogger.Warn("Invalid signature over the identified CRL, error %s", err)
@@ -417,4 +417,19 @@ func (validator *ecdsaValidator) GetCertFromSignature(signature []byte) ([]byte,
 	}
 
 	return certSign.Cert, nil
+}
+
+func (validator *ecdsaValidator) GetCertSnFromSignature(signature []byte) ([]byte, error) {
+	certByte, err := validator.GetCertFromSignature(signature)
+	if err != nil {
+		authLogger.Error(fmt.Sprintf("GetCertSnFromSignature from signature failed. %s", err.Error()))
+		return nil, err
+	}
+
+	cert, err := validator.getCertFromPem(certByte)
+	if err != nil {
+		return nil, fmt.Errorf("ParseCertificate failed %s", err)
+	}
+
+	return cert.SerialNumber.Bytes(), nil
 }
