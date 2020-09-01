@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package types;
+
+message wasmAction {
+  oneof value {
+    wasmCreate create = 1;
+    wasmCall call = 2;
+  }
+  int32 ty = 3;
+}
+
+message wasmCreate {
+  string name = 1;
+  bytes code = 2;
+}
+
+message wasmCall {
+  string contract = 1;
+  string method = 2;
+  repeated int64 parameters = 3;
+}
+
+message queryCheckConract {
+  string name = 1;
+}
+
+message queryCreateTransaction{
+  int32 ty = 1;
+  string name = 2;
+  bytes code = 3;
+  string method = 4;
+  repeated int64 parameters = 5;
+  int64 fee = 6;
+}
+
+message customLog {
+  repeated string info = 1;
+}
+
+message createContractLog {
+  string name = 1;
+  string code = 2;
+}
+
+message callContractLog {
+  string contract = 1;
+  string method = 2;
+  int64 result = 3;
+}
+
+message localDataLog {
+  bytes key = 1;
+  bytes preValue = 2;
+  bytes curValue = 3;
+}
+

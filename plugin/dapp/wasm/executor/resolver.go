@@ -1,0 +1,200 @@
+package executor
+
+import (
+	"fmt"
+
+	"github.com/perlin-network/life/exec"
+)
+
+// Resolver defines imports for WebAssembly modules ran in Life.
+type Resolver struct{}
+
+// ResolveFunc defines a set of import functions that may be called within a WebAssembly module.
+func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
+	switch module {
+	case "env":
+		switch field {
+		case "setStateDB":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				value := vm.Memory[valuePtr : valuePtr+valueLen]
+				setStateDB(key, value)
+				return 0
+			}
+		case "getStateDBSize":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				return int64(getStateDBSize(key))
+			}
+		case "getStateDB":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				value, err := getStateDB(key)
+				if err != nil {
+					for i := 0; i < valueLen; i++ {
+						vm.Memory[valuePtr+i] = 0
+					}
+					return 0
+				}
+				if valueLen != len(value) {
+					return 0
+				}
+				for i, c := range value {
+					vm.Memory[valuePtr+i] = c
+				}
+				return int64(valueLen)
+			}
+		case "setLocalDB":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				value := vm.Memory[valuePtr : valuePtr+valueLen]
+				setLocalDB(key, value)
+				return 0
+			}
+		case "getLocalDBSize":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				return int64(getLocalDBSize(key))
+			}
+		case "getLocalDB":
+			return func(vm *exec.VirtualMachine) int64 {
+				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				keyLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				key := vm.Memory[keyPtr : keyPtr+keyLen]
+				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				value, err := getLocalDB(key)
+				if err != nil {
+					for i := 0; i < valueLen; i++ {
+						vm.Memory[valuePtr+i] = 0
+					}
+					return 0
+				}
+				if valueLen != len(value) {
+					return 0
+				}
+				for i, c := range value {
+					vm.Memory[valuePtr+i] = c
+				}
+				return int64(valueLen)
+			}
+		case "execFrozen":
+			return func(vm *exec.VirtualMachine) int64 {
+				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				addrLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				addr := string(vm.Memory[addrPtr : addrPtr+addrLen])
+				amount := vm.GetCurrentFrame().Locals[2]
+				err := execFrozen(addr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+		case "execActive":
+			return func(vm *exec.VirtualMachine) int64 {
+				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				addrLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				addr := string(vm.Memory[addrPtr : addrPtr+addrLen])
+				amount := vm.GetCurrentFrame().Locals[2]
+				err := execActive(addr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+		case "execTransfer":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				fromAddr := string(vm.Memory[fromPtr : fromPtr+fromLen])
+				toPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				toLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				toAddr := string(vm.Memory[toPtr : toPtr+toLen])
+				amount := vm.GetCurrentFrame().Locals[4]
+				err := execTransfer(fromAddr, toAddr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+		case "execTransferFrozen":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				fromAddr := string(vm.Memory[fromPtr : fromPtr+fromLen])
+				toPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				toLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				toAddr := string(vm.Memory[toPtr : toPtr+toLen])
+				amount := vm.GetCurrentFrame().Locals[4]
+				err := execTransferFrozen(fromAddr, toAddr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+		case "getFrom":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromAddr := []byte(getFrom())
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				copy(vm.Memory[fromPtr:fromPtr+fromLen], fromAddr)
+				return 0
+			}
+		case "getHeight":
+			return func(vm *exec.VirtualMachine) int64 {
+				return getHeight()
+			}
+		case "getRandom":
+			return func(vm *exec.VirtualMachine) int64 {
+				return getRandom()
+			}
+
+		case "printlog":
+			return func(vm *exec.VirtualMachine) int64 {
+				fmt.Println(vm.GetCurrentFrame().Locals)
+				logPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				logLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				logInfo := string(vm.Memory[logPtr : logPtr+logLen])
+				printlog(logInfo)
+				return 0
+			}
+
+		default:
+			panic(fmt.Errorf("unknown field: %s", field))
+		}
+	default:
+		panic(fmt.Errorf("unknown module: %s", module))
+	}
+}
+
+// ResolveGlobal defines a set of global variables for use within a WebAssembly module.
+func (r *Resolver) ResolveGlobal(module, field string) int64 {
+	fmt.Printf("Resolve global: %s %s\n", module, field)
+	switch module {
+	case "env":
+		switch field {
+		case "__life_magic":
+			return 424
+		default:
+			panic(fmt.Errorf("unknown field: %s", field))
+		}
+	default:
+		panic(fmt.Errorf("unknown module: %s", module))
+	}
+}
