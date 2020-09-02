@@ -103,11 +103,16 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 
 	logs = append(logs, w.receiptLogs...)
 
-	return &types.Receipt{
+	receipt := &types.Receipt{
 		Ty:   types.ExecOk,
 		KV:   w.kvs,
 		Logs: logs,
-	}, nil
+	}
+	if ret != 0 {
+		receipt.Ty = types.ExecPack
+	}
+
+	return receipt, nil
 }
 
 func validateName(name string) bool {
