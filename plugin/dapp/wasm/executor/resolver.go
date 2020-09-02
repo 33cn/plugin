@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/perlin-network/life/exec"
 )
@@ -21,10 +22,12 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				key := vm.Memory[keyPtr : keyPtr+keyLen]
 				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
 				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
-				value := vm.Memory[valuePtr : valuePtr+valueLen]
+				value := make([]byte, valueLen)
+				copy(value, vm.Memory[valuePtr:valuePtr+valueLen])
 				setStateDB(key, value)
 				return 0
 			}
+
 		case "getStateDBSize":
 			return func(vm *exec.VirtualMachine) int64 {
 				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -32,6 +35,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				key := vm.Memory[keyPtr : keyPtr+keyLen]
 				return int64(getStateDBSize(key))
 			}
+
 		case "getStateDB":
 			return func(vm *exec.VirtualMachine) int64 {
 				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -49,11 +53,10 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				if valueLen != len(value) {
 					return 0
 				}
-				for i, c := range value {
-					vm.Memory[valuePtr+i] = c
-				}
+				copy(vm.Memory[valuePtr:valuePtr+valueLen], value)
 				return int64(valueLen)
 			}
+
 		case "setLocalDB":
 			return func(vm *exec.VirtualMachine) int64 {
 				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -61,10 +64,12 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				key := vm.Memory[keyPtr : keyPtr+keyLen]
 				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
 				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
-				value := vm.Memory[valuePtr : valuePtr+valueLen]
+				value := make([]byte, valueLen)
+				copy(value, vm.Memory[valuePtr:valuePtr+valueLen])
 				setLocalDB(key, value)
 				return 0
 			}
+
 		case "getLocalDBSize":
 			return func(vm *exec.VirtualMachine) int64 {
 				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -72,6 +77,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				key := vm.Memory[keyPtr : keyPtr+keyLen]
 				return int64(getLocalDBSize(key))
 			}
+
 		case "getLocalDB":
 			return func(vm *exec.VirtualMachine) int64 {
 				keyPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -81,10 +87,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				valueLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
 				value, err := getLocalDB(key)
 				if err != nil {
-					for i := 0; i < valueLen; i++ {
-						vm.Memory[valuePtr+i] = 0
-					}
-					return 0
+					copy(vm.Memory[valuePtr:valuePtr+valueLen], make([]byte, valueLen))
 				}
 				if valueLen != len(value) {
 					return 0
@@ -94,6 +97,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return int64(valueLen)
 			}
+
 		case "execFrozen":
 			return func(vm *exec.VirtualMachine) int64 {
 				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -106,6 +110,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return 0
 			}
+
 		case "execActive":
 			return func(vm *exec.VirtualMachine) int64 {
 				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -118,6 +123,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return 0
 			}
+
 		case "execTransfer":
 			return func(vm *exec.VirtualMachine) int64 {
 				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -133,6 +139,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return 0
 			}
+
 		case "execTransferFrozen":
 			return func(vm *exec.VirtualMachine) int64 {
 				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -148,6 +155,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				}
 				return 0
 			}
+
 		case "getFrom":
 			return func(vm *exec.VirtualMachine) int64 {
 				fromAddr := []byte(getFrom())
@@ -157,17 +165,13 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				return 0
 			}
 		case "getHeight":
-			return func(vm *exec.VirtualMachine) int64 {
-				return getHeight()
-			}
+			return func(vm *exec.VirtualMachine) int64 { return getHeight() }
+
 		case "getRandom":
-			return func(vm *exec.VirtualMachine) int64 {
-				return getRandom()
-			}
+			return func(vm *exec.VirtualMachine) int64 { return getRandom() }
 
 		case "printlog":
 			return func(vm *exec.VirtualMachine) int64 {
-				fmt.Println(vm.GetCurrentFrame().Locals)
 				logPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
 				logLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
 				logInfo := string(vm.Memory[logPtr : logPtr+logLen])
@@ -175,12 +179,21 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				return 0
 			}
 
+		case "printint":
+			return func(vm *exec.VirtualMachine) int64 {
+				n := vm.GetCurrentFrame().Locals[0]
+				printlog(strconv.FormatInt(n, 10))
+				return 0
+			}
+
 		default:
-			panic(fmt.Errorf("unknown field: %s", field))
+			log.Error("ResolveFunc", "unknown field", field)
 		}
+
 	default:
-		panic(fmt.Errorf("unknown module: %s", module))
+		log.Error("ResolveFunc", "unknown module", module)
 	}
+	return nil
 }
 
 // ResolveGlobal defines a set of global variables for use within a WebAssembly module.
@@ -192,9 +205,11 @@ func (r *Resolver) ResolveGlobal(module, field string) int64 {
 		case "__life_magic":
 			return 424
 		default:
-			panic(fmt.Errorf("unknown field: %s", field))
+			log.Error("ResolveGlobal", "unknown field", field)
 		}
 	default:
-		panic(fmt.Errorf("unknown module: %s", module))
+		log.Error("ResolveGlobal", "unknown module", module)
 	}
+
+	return 0
 }
