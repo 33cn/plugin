@@ -110,6 +110,9 @@ func getRandom() int64 {
 	for _, c := range hash {
 		rand = rand*256 + int64(c)
 	}
+	if rand < 0 {
+		return -rand
+	}
 	return rand
 }
 
