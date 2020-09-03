@@ -102,7 +102,7 @@ function StartRelayerAndDeploy() {
     # 修改 relayer.toml 配置文件
     updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./relayer.toml"
     # 重启
-    start_ebrelayerA
+  start_ebrelayerA
 
     # start ebrelayer B C D
     for name in b c d; do
@@ -587,6 +587,4 @@ function AllRelayerMainTest() {
     TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
 }
