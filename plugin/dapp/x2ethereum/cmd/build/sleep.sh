@@ -5,5 +5,5 @@ set -x
 set +e
 
 while [ 1 == 1 ]; do
-     sleep 100
+    sleep 100
 done
