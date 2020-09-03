@@ -31,18 +31,23 @@ tokenAddrBty=""
 tokenAddr=""
 ethUrl=""
 Chain33Cli=""
-portRelayer=20000
 
 function kill_ebrelayerC() {
     #shellcheck disable=SC2154
-    docker stop "${dockerNamePrefix}_ebrelayerc_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayerc_1"
 }
 function kill_ebrelayerD() {
-    docker stop "${dockerNamePrefix}_ebrelayerd_1"
+    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayerd_1"
+}
+
+function start_ebrelayerA() {
+    docker cp "./relayer.toml" "${dockerNamePrefix}_ebrelayera_1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1" "/root/ebrelayer" "./ebrelayera.log"
+    sleep 5
 }
 
 function start_ebrelayerC() {
-    docker start "${dockerNamePrefix}_ebrelayerc_1"
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerc_1" "/root/ebrelayer" "./ebrelayerc.log"
     sleep 5
     ${CLIC} relayer unlock -p 123456hzj
     sleep 5
@@ -50,7 +55,7 @@ function start_ebrelayerC() {
     sleep 10
 }
 function start_ebrelayerD() {
-    docker start "${dockerNamePrefix}_ebrelayerd_1"
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerd_1" "/root/ebrelayer" "./ebrelayerd.log"
     sleep 5
     ${CLID} relayer unlock -p 123456hzj
     sleep 5
@@ -72,42 +77,17 @@ function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function port_exist() {
-    local prot_ori=${portRelayer}
-    grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    while [ -n "$grep_port" ]; do
-        echo "port $portRelayer is in use"
-        portRelayer=$((portRelayer + 4))
-        grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    done
-
-    if [ "${portRelayer}" != "${prot_ori}" ]; then
-        sed -i 's/'"${prot_ori}"'/'"${portRelayer}"'/g' "./docker-compose-ebrelayer.yml"
-    fi
-}
-
 function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    # stop all docker
-    docker-compose -f docker-compose-ebrelayer.yml down
-    for name in b c d; do
-        docker-compose -f "docker-compose-ebrelayer${name}.yml" down
-    done
 
     # change EthProvider url
     dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
     ethUrl="http://${dockerAddr}:8545"
 
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./relayer.toml" 'EthProvider="ws:')
-    sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./relayer.toml"
-
-    line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
-    sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./relayer.toml"
-
-    port_exist
-    docker-compose -f docker-compose-ebrelayer.yml up --build -d
-    sleep 1
+    # 修改 relayer.toml 配置文件
+    updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
+    # start ebrelayer A
+    start_ebrelayerA
     # 部署合约
     InitAndDeploy
 
@@ -115,19 +95,38 @@ function StartRelayerAndDeploy() {
     result=$(${CLIA} relayer ethereum bridgeRegistry)
     BridgeRegistry=$(cli_ret "${result}" "bridgeRegistry" ".addr")
 
-    # kill_ebrelayer "./A/ebrelayer"
-    docker-compose -f docker-compose-ebrelayer.yml down
+    # kill ebrelayer A
+    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
+    sleep 1
 
     # 修改 relayer.toml 配置文件
-    port_exist
     updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./relayer.toml"
-    updata_docker_relayer_toml "${portRelayer}"
+    # 重启
+    start_ebrelayerA
 
-    docker-compose -f docker-compose-ebrelayer.yml up --build -d
+    # start ebrelayer B C D
     for name in b c d; do
-        docker-compose -f "docker-compose-ebrelayer$name.yml" up --build -d
+        local file="./relayer$name.toml"
+        cp './relayer.toml' "${file}"
+
+        # 删除配置文件中不需要的字段
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
+            delete_line "${file}" "${deleteName}"
+        done
+
+        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
+
+        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+        line=$(delete_line_show "${file}" "pushHost")
+        sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+        line=$(delete_line_show "${file}" "pushBind")
+        sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+
+        docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
+        start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
     done
-    sleep 1
+    sleep 5
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -588,4 +587,6 @@ function AllRelayerMainTest() {
     TestETH2Chain33Erc20Kill
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
 }

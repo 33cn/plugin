@@ -28,13 +28,13 @@ ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b
 ethReceiverAddr2="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
 #ethReceiverAddrKey2="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
 maturityDegree=5
-portRelayer=19999
+#portRelayer=19999
 ethUrl=""
 
-CLIA_HTTP="http://127.0.0.1:9901"
-CLIB_HTTP="http://127.0.0.1:9902"
-CLIC_HTTP="http://127.0.0.1:9903"
-CLID_HTTP="http://127.0.0.1:9904"
+CLIA_HTTP=""
+CLIB_HTTP=""
+CLIC_HTTP=""
+CLID_HTTP=""
 
 # $1 sendAddress, $2 balance
 function queryExecBalance() {
@@ -77,6 +77,12 @@ function queryChain33X2ethBalance() {
     fi
 }
 
+function start_ebrelayerA() {
+    docker cp "./x2ethereum/relayer.toml" "${dockerNamePrefix}_ebrelayera_rpc_1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_rpc_1" "/root/ebrelayer" "./x2ethereum/ebrelayera.log"
+    sleep 5
+}
+
 function StartRelayerAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
@@ -93,31 +99,13 @@ function StartRelayerAndDeploy() {
     dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_rpc_1")
     ethUrl="http://${dockerAddr}:8545"
 
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./x2ethereum/relayer.toml" 'EthProvider="ws:')
-    sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "./x2ethereum/relayer.toml"
-
-    line=$(delete_line_show "./x2ethereum/relayer.toml" 'EthProviderCli="http:')
-    sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "./x2ethereum/relayer.toml"
-
-    grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    while [ -n "$grep_port" ]; do
-        echo "port $portRelayer is in use"
-        portRelayer=$((portRelayer - 4))
-        grep_port=$(netstat -tlpn | grep "\b${portRelayer}\b")
-    done
-
-    line=$(delete_line_show "./x2ethereum/docker-compose-ebrelayer.yml" "20000:20000")
-    sed -i ''"${line}"' a \ \ \ \ \ \ -\ "'${portRelayer}':'${portRelayer}'"' "./x2ethereum/docker-compose-ebrelayer.yml"
-
-    line=$(delete_line_show "./x2ethereum/docker-compose-ebrelayer.yml" "ebrelayera:")
-    sed -i ''"${line}"' a \ \ ebrelayera_rpc:' "./x2ethereum/docker-compose-ebrelayer.yml"
+    # 修改 relayer.toml 配置文件
+    updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_rpc_1" "./x2ethereum/relayer.toml"
 
     line=$(delete_line_show "./x2ethereum/relayer.toml" "localhost:9901")
     sed -i ''"${line}"' a JrpcBindAddr=":9901"' "./x2ethereum/relayer.toml"
-
-    docker-compose -f ./x2ethereum/docker-compose-ebrelayer.yml up --build -d
-    sleep 1
+    # start ebrelayer A
+    start_ebrelayerA
 
     ebrelayeraRpcHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_rpc_1")
     if [[ ${ebrelayeraRpcHost} == "" ]]; then
@@ -133,17 +121,38 @@ function StartRelayerAndDeploy() {
     chain33_Http "$req" "${CLIA_HTTP}" '(.error|not) and (.result != null)' "$FUNCNAME" ".result.addr"
     local BridgeRegistry="$RETURN_RESP"
 
-    docker-compose -f ./x2ethereum/docker-compose-ebrelayer.yml down
-    # 修改 relayer.toml 配置文件
-    updata_relayer_toml_rpc "${BridgeRegistry}" "${maturityDegree}" "${MAIN_HTTP}" "./x2ethereum/relayer.toml"
-    updata_docker_relayer_toml_rpc ${portRelayer}
-
-    docker-compose -f "./x2ethereum/docker-compose-ebrelayer.yml" up --build -d
-    for name in b c d; do
-        docker-compose -f "./x2ethereum/docker-compose-ebrelayer$name.yml" down
-        docker-compose -f "./x2ethereum/docker-compose-ebrelayer$name.yml" up --build -d
-    done
+    # kill ebrelayer A
+    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_rpc_1"
     sleep 1
+
+    # 修改 relayer.toml 配置文件
+    updata_relayer_toml "${BridgeRegistry}" ${maturityDegree} "./x2ethereum/relayer.toml"
+    # 重启
+    start_ebrelayerA
+
+    # start ebrelayer B C D
+    for name in b c d; do
+        local file="./x2ethereum/relayer$name.toml"
+        cp './x2ethereum/relayer.toml' "${file}"
+
+        # 删除配置文件中不需要的字段
+        for deleteName in "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deployerPrivateKey" "deploy"; do
+            delete_line "${file}" "${deleteName}"
+        done
+
+        sed -i 's/x2ethereum/x2ethereum'${name}'/g' "${file}"
+
+        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_rpc_1")
+        line=$(delete_line_show "${file}" "pushHost")
+        sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+        line=$(delete_line_show "${file}" "pushBind")
+        sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+
+        docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/relayer.toml
+        start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_rpc_1" "/root/ebrelayer" "./x2ethereum/ebrelayer${name}.log"
+    done
+    sleep 5
 
     ebrelayeraRpcHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_rpc_1")
     CLIA_HTTP="http://${ebrelayeraRpcHost}:9901"
@@ -223,7 +232,6 @@ function EthImportKey() {
 
     # 解锁
     local req='{"method":"Manager.SetPassphase","params":[{"Passphase":"123456hzj"}]}'
-    chain33_Http "$req" "${CLIA_HTTP}" '(.error|not) and (.result != null)' "SetPassphase" ".result"
     chain33_Http "$req" "${CLIB_HTTP}" '(.error|not) and (.result != null)' "SetPassphase" ".result"
     chain33_Http "$req" "${CLIC_HTTP}" '(.error|not) and (.result != null)' "SetPassphase" ".result"
     chain33_Http "$req" "${CLID_HTTP}" '(.error|not) and (.result != null)' "SetPassphase" ".result"
