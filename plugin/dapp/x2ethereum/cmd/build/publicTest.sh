@@ -15,7 +15,7 @@ NOC='\033[0m'
 # 出错退出前拷贝日志文件
 function exit_cp_file() {
     # shellcheck disable=SC2116
-#    dirNameFa=$(echo ~)
+    #    dirNameFa=$(echo ~)
     dirName="/x2ethereumlogs"
 
     if [ ! -d "${dirName}" ]; then
@@ -36,7 +36,7 @@ function copyErrLogs() {
     if [ -n "$CASE_ERR" ]; then
         # /var/lib/jenkins
         # shellcheck disable=SC2116
-#        dirNameFa=$(echo ~)
+        #        dirNameFa=$(echo ~)
         dirName="/x2ethereumlogs"
 
         if [ ! -d "${dirName}" ]; then
@@ -128,14 +128,14 @@ function start_docker_ebrelayer() {
     fi
 
     # 后台启动程序
-    docker exec "$1" nohup "${2}" > "${3}" 2>&1 &
+    docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
     sleep 2
 
     # shellcheck disable=SC2009
     pid=$(docker exec "$1" ps -ef | grep "$2" | grep -v 'grep' | awk '{print $2}')
     local count=0
     while [ "${pid}" == "" ]; do
-        docker exec "$1" nohup "${2}" > "${3}" 2>&1 &
+        docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
         sleep 2
 
         count=$((count + 1))
