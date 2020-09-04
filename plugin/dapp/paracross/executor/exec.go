@@ -125,3 +125,9 @@ func (e *Paracross) Exec_ParaBindMiner(payload *pt.ParaBindMinerCmd, tx *types.T
 	a := newAction(e, tx)
 	return a.bindMiner(payload)
 }
+
+//Exec_SupervisionNodeGroupConfig exec Supervision node config
+func (e *Paracross) Exec_SupervisionNodeGroupConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.SupervisionNodeGroupConfig(payload)
+}

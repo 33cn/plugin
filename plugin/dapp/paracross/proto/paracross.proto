@@ -20,13 +20,14 @@ message ParacrossStatusBlockDetails {
 
 message ParacrossHeightStatus {
     // ing, done
-    int32                       status       = 1;
-    string                      title        = 2;
-    int64                       height       = 3;
-    ParacrossStatusDetails      details      = 4;
-    int64                       mainHeight   = 5;
-    bytes                       mainHash     = 6;
-    ParacrossStatusBlockDetails blockDetails = 7;
+    int32                       status              = 1;
+    string                      title               = 2;
+    int64                       height              = 3;
+    ParacrossStatusDetails      details             = 4;
+    ParacrossStatusDetails      supervisionDetails  = 5;
+    int64                       mainHeight          = 6;
+    bytes                       mainHash            = 7;
+    ParacrossStatusBlockDetails blockDetails        = 8;
 }
 
 message ParacrossHeightStatusRsp {

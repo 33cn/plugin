@@ -280,7 +280,6 @@ func (a *action) nodeJoin(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 	return receipt, nil
-
 }
 
 func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -309,7 +308,6 @@ func (a *action) nodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		Votes:      &pt.ParaNodeVoteDetail{},
 		Height:     a.height}
 	return makeNodeConfigReceipt(a.fromaddr, config, nil, stat), nil
-
 }
 
 func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -357,7 +355,6 @@ func (a *action) nodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	}
 
 	return nil, errors.Wrapf(pt.ErrParaUnSupportNodeOper, "nodeid %s was quit status:%d", config.Id, stat.Status)
-
 }
 
 func (a *action) nodeModify(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -602,7 +599,6 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
 		}
-
 	} else {
 		if stat.Status == pt.ParaApplyJoining {
 			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
@@ -651,7 +647,6 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	receiptDone := makeVoteDoneReceipt(stat, len(nodes), len(stat.Votes.Addrs), most, pt.ParaNodeVoteStr[vote], stat.Status)
 	receipt = mergeReceipt(receipt, receiptDone)
 	return receipt, nil
-
 }
 
 func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, error) {
@@ -929,7 +924,6 @@ func (a *action) nodeGroupApproveModify(config *pt.ParaNodeGroupConfig, modify *
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
 	return receipt, nil
-
 }
 
 func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
@@ -971,7 +965,6 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	}
 
 	return receipt, nil
-
 }
 
 // NodeGroupApprove super addr approve the node group apply
@@ -1068,13 +1061,11 @@ func (a *action) NodeGroupConfig(config *pt.ParaNodeGroupConfig) (*types.Receipt
 			return nil, err
 		}
 		return a.nodeGroupApply(config)
-
 	} else if config.Op == pt.ParacrossNodeGroupApprove {
 		if config.Id == "" {
 			return nil, types.ErrInvalidParam
 		}
 		return a.nodeGroupApprove(config)
-
 	} else if config.Op == pt.ParacrossNodeGroupQuit {
 		if config.Id == "" {
 			return nil, types.ErrInvalidParam
@@ -1122,5 +1113,4 @@ func (a *action) NodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, erro
 	default:
 		return nil, pt.ErrParaUnSupportNodeOper
 	}
-
 }

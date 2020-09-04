@@ -75,6 +75,7 @@ func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 	return nodesMap, nodesArray, nil
 }
 
+// manager 合约 分叉前写入 现在不用了
 func getConfigManageNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
 	key := calcManageConfigNodesKey(title)
 	return getNodes(db, key)
@@ -275,8 +276,7 @@ func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []string, []b
 		if errors.Cause(err) != pt.ErrTitleNotExist {
 			return nil, nil, nil, errors.Wrapf(err, "getNodes para for title:%s", title)
 		}
-		key = calcManageConfigNodesKey(title)
-		nodes, nodesArray, err = getNodes(db, key)
+		nodes, nodesArray, err = getConfigManageNodes(db, title)
 		if err != nil {
 			return nil, nil, nil, errors.Wrapf(err, "getNodes manager for title:%s", title)
 		}
@@ -287,6 +287,7 @@ func getConfigNodes(db dbm.KV, title string) (map[string]struct{}, []string, []b
 
 func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, error) {
 	cfg := a.api.GetConfig()
+	// 如果高度是分叉前，获取老的Nodes
 	if a.exec.GetMainHeight() < pt.GetDappForkHeight(cfg, pt.ForkCommitTx) {
 		nodes, nodesArray, err := getConfigManageNodes(a.db, title)
 		if err != nil {
@@ -297,7 +298,18 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 
 	nodes, nodesArray, _, err := getConfigNodes(a.db, title)
 	return nodes, nodesArray, err
+}
 
+func (a *action) getSupervisionNodesGroup(title string) (map[string]struct{}, []string, error) {
+	key := calcParaSupervisionNodeGroupAddrsKey(title)
+	nodes, nodesArray, err := getNodes(a.db, key)
+	if err != nil {
+		if errors.Cause(err) != pt.ErrTitleNotExist {
+			return nil, nil, errors.Wrapf(err, "getSupervisionNodesGroup para for title:%s", title)
+		}
+	}
+
+	return nodes, nodesArray, err
 }
 
 func (a *action) isValidSuperNode(addr string) error {
@@ -324,7 +336,6 @@ func updateCommitBlockHashs(stat *pt.ParacrossHeightStatus, commit *pt.Paracross
 	}
 	stat.BlockDetails.BlockHashs = append(stat.BlockDetails.BlockHashs, commit.BlockHash)
 	stat.BlockDetails.TxResults = append(stat.BlockDetails.TxResults, commit.TxResult)
-
 }
 
 //根据nodes过滤掉可能退出了的addrs
@@ -337,7 +348,17 @@ func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}
 		}
 	}
 	stat.Details = details
+}
 
+func updateSupervisionDetailsCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) {
+	supervisionDetailsDetails := &pt.ParacrossStatusDetails{}
+	for i, addr := range stat.Details.Addrs {
+		if _, ok := nodes[addr]; ok {
+			supervisionDetailsDetails.Addrs = append(supervisionDetailsDetails.Addrs, addr)
+			supervisionDetailsDetails.BlockHash = append(supervisionDetailsDetails.BlockHash, stat.Details.BlockHash[i])
+		}
+	}
+	stat.SupervisionDetails = supervisionDetailsDetails
 }
 
 //自共识分阶段使能，综合考虑挖矿奖励和共识分配奖励，判断是否自共识使能需要采用共识的高度，而不能采用当前区块高度a.height
@@ -511,14 +532,32 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	validAddrs := getValidAddrs(nodesMap, commitAddrs)
-	if len(validAddrs) <= 0 {
-		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s", strings.Join(commitAddrs, ","))
+
+	// 获取监督节点的数据 监督节点在高度分叉后
+	supervisionNodesMap, supervisionNodesArry, err := a.getSupervisionNodesGroup(commit.Status.Title)
+	if err != nil && err != pt.ErrTitleNotExist && a.exec.GetMainHeight() >= pt.GetDappForkHeight(cfg, pt.ForkCommitTx) {
+		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
 	}
 
-	return a.proCommitMsg(commit.Status, nodesMap, validAddrs)
+	//获取commitAddrs, bls sign 包含多个账户的聚合签名
+	commitSupervisionAddrs := []string{a.fromaddr}
+	if commit.Bls != nil {
+		addrs, err := a.procBlsSign(supervisionNodesArry, commit)
+		if err != nil {
+			return nil, errors.Wrap(err, "procBlsSign")
+		}
+		commitSupervisionAddrs = addrs
+	}
+
+	supervisionValidAddrs := getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
+	if len(validAddrs) <= 0 && len(supervisionValidAddrs) <= 0 {
+		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s commitSupervisionAddrs=%s", strings.Join(commitAddrs, ","), strings.Join(commitSupervisionAddrs, ","))
+	}
+
+	return a.proCommitMsg(commit.Status, nodesMap, validAddrs, supervisionNodesMap, supervisionValidAddrs)
 }
 
-func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]struct{}, commitAddrs []string) (*types.Receipt, error) {
+func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]struct{}, commitAddrs []string, supervisionNodes map[string]struct{}, supervisionValidAddrs []string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
 	err := a.preCheckCommitInfo(commit, commitAddrs)
@@ -534,7 +573,8 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
 	if commit.Height <= titleStatus.Height {
 		clog.Debug("paracross.Commit record", "node", commitAddrs, "titile", commit.Title, "height", commit.Height)
-		return makeRecordReceipt(strings.Join(commitAddrs, ","), commit), nil
+		addr := strings.Join(commitAddrs, ",") + strings.Join(supervisionValidAddrs, ",")
+		return makeRecordReceipt(addr, commit), nil
 	}
 
 	// 未共识处理， 接受当前高度以及后续高度
@@ -572,6 +612,17 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 		}
 	}
 
+	for _, addr := range supervisionValidAddrs {
+		// 如有分叉， 同一个节点可能再次提交commit交易
+		found, index := hasCommited(stat.Details.Addrs, addr)
+		if found {
+			stat.SupervisionDetails.BlockHash[index] = commit.BlockHash
+		} else {
+			stat.SupervisionDetails.Addrs = append(stat.Details.Addrs, addr)
+			stat.SupervisionDetails.BlockHash = append(stat.Details.BlockHash, commit.BlockHash)
+		}
+	}
+
 	//用commit.MainBlockHeight 判断更准确，如果用a.exec.MainHeight也可以，但是可能收到MainHeight之前的高度共识tx，
 	// 后面loopCommitTxDone时候也是用当前共识高度大于分叉高度判断
 	if pt.IsParaForkHeight(cfg, commit.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
@@ -582,8 +633,9 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
 	if cfg.IsDappFork(commit.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		updateCommitAddrs(stat, nodes)
+		updateSupervisionDetailsCommitAddrs(stat, supervisionNodes)
 	}
-	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
+	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 	//fork之前记录的stat 没有根据nodes更新而更新
 	if pt.IsParaForkHeight(cfg, stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {
 		r := makeCommitStatReceipt(stat)
@@ -591,7 +643,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	}
 
 	if commit.Height > titleStatus.Height+1 {
-		saveTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height), stat)
+		_ = saveTitleHeight(a.db, calcTitleHeightKey(commit.Title, commit.Height), stat)
 		//平行链由主链共识无缝切换，即接收第一个收到的高度，可以不从0开始
 		allow, err := a.isAllowConsensJump(commit, titleStatus)
 		if err != nil {
@@ -602,7 +654,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 			return receipt, nil
 		}
 	}
-	r, err := a.commitTxDone(commit, stat, titleStatus, nodes)
+	r, err := a.commitTxDone(commit, stat, titleStatus, nodes, supervisionNodes)
 	if err != nil {
 		return nil, err
 	}
@@ -612,7 +664,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 
 //分叉以前stat里面只记录了blockhash的信息，没有crossTxHash等信息，无法通过stat直接重构出mostCommitStatus
 func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus,
-	nodes map[string]struct{}) (*types.Receipt, error) {
+	nodes map[string]struct{}, supervisionNodes map[string]struct{}) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
 
 	clog.Debug("paracross.Commit commit", "stat.title", stat.Title, "stat.height", stat.Height, "notes", len(nodes))
@@ -624,9 +676,23 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	if !isCommitDone(len(nodes), mostCount) {
 		return receipt, nil
 	}
+
+	// 如果已经有监督节点
+	if len(supervisionNodes) > 0 {
+		for i, v := range stat.SupervisionDetails.Addrs {
+			clog.Debug("paracross.Commit commit SupervisionDetails", "addr", v, "hash", common.ToHex(stat.SupervisionDetails.BlockHash[i]))
+		}
+
+		mostSupervisionCount, mostSupervisionHash := GetMostCommit(stat.SupervisionDetails.BlockHash)
+		if !isCommitDone(len(supervisionNodes), mostSupervisionCount) {
+			return receipt, nil
+		}
+		clog.Debug("paracross.Commit commit SupervisionDetails ----pass", "mostSupervisionCount", mostSupervisionCount, "mostSupervisionHash", common.ToHex([]byte(mostSupervisionHash)))
+	}
+
 	clog.Debug("paracross.Commit commit ----pass", "most", mostCount, "mostHash", common.ToHex([]byte(mostHash)))
 	stat.Status = pt.ParacrossStatusCommitDone
-	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
+	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
 	//之前记录的stat 状态没更新
 	cfg := a.api.GetConfig()
@@ -658,7 +724,7 @@ func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.
 		titleStatus.MainHeight = nodeStatus.MainBlockHeight
 		titleStatus.MainHash = nodeStatus.MainBlockHash
 	}
-	saveTitle(a.db, calcTitleKey(titleStatus.Title), titleStatus)
+	_ = saveTitle(a.db, calcTitleKey(titleStatus.Title), titleStatus)
 
 	clog.Debug("paracross.Commit commit done", "height", nodeStatus.Height, "statusBlockHash", common.ToHex(nodeStatus.BlockHash))
 
@@ -1345,29 +1411,6 @@ func (a *action) isAllowTransfer() error {
 	return nil
 }
 
-/*
-func (a *Paracross) CrossLimits(tx *types.Transaction, index int) bool {
-	if tx.GroupCount < 2 {
-		return true
-	}
-
-	txs, err := a.GetTxGroup(index)
-	if err != nil {
-		clog.Error("crossLimits", "get tx group failed", err, "hash", common.ToHex(tx.Hash()))
-		return false
-	}
-
-	titles := make(map[string] struct{})
-	for _, txTmp := range txs {
-		title, err := getTitleFrom(txTmp.Execer)
-		if err == nil {
-			titles[string(title)] = struct{}{}
-		}
-	}
-	return len(titles) <= 1
-}
-*/
-
 func (a *action) Transfer(transfer *types.AssetsTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
 	clog.Debug("Paracross.Exec Transfer", "symbol", transfer.Cointoken, "amount",
 		transfer.Amount, "to", tx.To)
@@ -1417,4 +1460,9 @@ func (a *action) TransferToExec(transfer *types.AssetsTransferToExec, tx *types.
 		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
 	}
 	return nil, types.ErrToAddrNotSameToExecAddr
+}
+
+func getParacrossSupervisonNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
+	key := calcParaSupervisionNodeGroupAddrsKey(title)
+	return getNodes(db, key)
 }
