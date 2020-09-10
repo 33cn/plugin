@@ -1,10 +1,13 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
 )
 
+//stateDB wrapper
 func setStateDB(key, value []byte) {
 	wasmCB.kvs = append(wasmCB.kvs, &types.KeyValue{
 		Key:   wasmCB.formatStateKey(key),
@@ -24,6 +27,7 @@ func getStateDB(key []byte) ([]byte, error) {
 	return wasmCB.GetStateDB().Get(wasmCB.formatStateKey(key))
 }
 
+//localDB wrapper
 func setLocalDB(key, value []byte) {
 	preValue, _ := getLocalDB(key)
 	wasmCB.receiptLogs = append(wasmCB.receiptLogs, &types.ReceiptLog{
@@ -46,6 +50,45 @@ func getLocalDBSize(key []byte) int {
 
 func getLocalDB(key []byte) ([]byte, error) {
 	return wasmCB.GetLocalDB().Get(wasmCB.formatLocalKey(key))
+}
+
+//account wrapper
+func getBalance(addr, execer string) (balance, frozen int64, err error) {
+	accounts, err := wasmCB.GetCoinsAccount().GetBalance(wasmCB.GetAPI(), &types.ReqBalance{
+		Addresses: []string{addr},
+		Execer:    execer,
+	})
+	if err != nil {
+		return -1, -1, err
+	}
+	return accounts[0].Balance, accounts[0].Frozen, nil
+}
+
+func transfer(from, to string, amount int64) error {
+	receipt, err := wasmCB.GetCoinsAccount().Transfer(from, to, amount)
+	if err != nil {
+		return err
+	}
+	wasmCB.receiptLogs = append(wasmCB.receiptLogs, receipt.Logs...)
+	return nil
+}
+
+func transferToExec(addr, execaddr string, amount int64) error {
+	receipt, err := wasmCB.GetCoinsAccount().TransferToExec(addr, execaddr, amount)
+	if err != nil {
+		return err
+	}
+	wasmCB.receiptLogs = append(wasmCB.receiptLogs, receipt.Logs...)
+	return nil
+}
+
+func transferWithdraw(addr, execaddr string, amount int64) error {
+	receipt, err := wasmCB.GetCoinsAccount().TransferWithdraw(addr, execaddr, amount)
+	if err != nil {
+		return err
+	}
+	wasmCB.receiptLogs = append(wasmCB.receiptLogs, receipt.Logs...)
+	return nil
 }
 
 func execFrozen(addr string, amount int64) error {
@@ -88,6 +131,10 @@ func execTransferFrozen(from, to string, amount int64) error {
 	return nil
 }
 
+func execAddress(name string) string {
+	return address.ExecAddress(name)
+}
+
 func getFrom() string {
 	return wasmCB.tx.From()
 }
@@ -118,4 +165,8 @@ func getRandom() int64 {
 
 func printlog(s string) {
 	wasmCB.logs = append(wasmCB.logs, s)
+}
+
+func sha256(data []byte) []byte {
+	return common.Sha256(data)
 }

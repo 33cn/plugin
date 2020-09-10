@@ -98,6 +98,96 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				return int64(valueLen)
 			}
 
+		case "getBalance":
+			return func(vm *exec.VirtualMachine) int64 {
+				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				addrLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				addr := string(vm.Memory[addrPtr : addrPtr+addrLen])
+				execPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				execLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				exec := string(vm.Memory[execPtr : execPtr+execLen])
+				balance, _, err := getBalance(addr, exec)
+				if err != nil {
+					return -1
+				}
+				return balance
+			}
+
+		case "getFrozen":
+			return func(vm *exec.VirtualMachine) int64 {
+				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				addrLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				addr := string(vm.Memory[addrPtr : addrPtr+addrLen])
+				execPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				execLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				exec := string(vm.Memory[execPtr : execPtr+execLen])
+				_, frozen, err := getBalance(addr, exec)
+				if err != nil {
+					return -1
+				}
+				return frozen
+			}
+
+		case "transfer":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				fromAddr := string(vm.Memory[fromPtr : fromPtr+fromLen])
+				toPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				toLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				toAddr := string(vm.Memory[toPtr : toPtr+toLen])
+				amount := vm.GetCurrentFrame().Locals[4]
+				err := transfer(fromAddr, toAddr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+
+		case "transferToExec":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				fromAddr := string(vm.Memory[fromPtr : fromPtr+fromLen])
+				toPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				toLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				toAddr := string(vm.Memory[toPtr : toPtr+toLen])
+				amount := vm.GetCurrentFrame().Locals[4]
+				err := transferToExec(fromAddr, toAddr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+
+		case "transferWithdraw":
+			return func(vm *exec.VirtualMachine) int64 {
+				fromPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				fromLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				fromAddr := string(vm.Memory[fromPtr : fromPtr+fromLen])
+				toPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				toLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				toAddr := string(vm.Memory[toPtr : toPtr+toLen])
+				amount := vm.GetCurrentFrame().Locals[4]
+				err := transferWithdraw(fromAddr, toAddr, amount)
+				if err != nil {
+					return -1
+				}
+				return 0
+			}
+
+		case "execAddress":
+			return func(vm *exec.VirtualMachine) int64 {
+				namePtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				nameLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				name := string(vm.Memory[namePtr : namePtr+nameLen])
+				addr := []byte(execAddress(name))
+				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				addrLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				copy(vm.Memory[addrPtr:addrPtr+addrLen], addr)
+				return 0
+			}
+
 		case "execFrozen":
 			return func(vm *exec.VirtualMachine) int64 {
 				addrPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
@@ -164,6 +254,7 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				copy(vm.Memory[fromPtr:fromPtr+fromLen], fromAddr)
 				return 0
 			}
+
 		case "getHeight":
 			return func(vm *exec.VirtualMachine) int64 { return getHeight() }
 
@@ -183,6 +274,17 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 			return func(vm *exec.VirtualMachine) int64 {
 				n := vm.GetCurrentFrame().Locals[0]
 				printlog(strconv.FormatInt(n, 10))
+				return 0
+			}
+
+		case "sha256":
+			return func(vm *exec.VirtualMachine) int64 {
+				dataPtr := int(uint32(vm.GetCurrentFrame().Locals[0]))
+				dataLen := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				data := vm.Memory[dataPtr : dataPtr+dataLen]
+				sumPtr := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				sumLen := int(uint32(vm.GetCurrentFrame().Locals[3]))
+				copy(vm.Memory[sumPtr:sumPtr+sumLen], sha256(data))
 				return 0
 			}
 
