@@ -117,18 +117,19 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":             ParacrossActionCommit,
-		"Miner":              ParacrossActionMiner,
-		"AssetTransfer":      ParacrossActionAssetTransfer,
-		"AssetWithdraw":      ParacrossActionAssetWithdraw,
-		"Transfer":           ParacrossActionTransfer,
-		"Withdraw":           ParacrossActionWithdraw,
-		"TransferToExec":     ParacrossActionTransferToExec,
-		"CrossAssetTransfer": ParacrossActionCrossAssetTransfer,
-		"NodeConfig":         ParacrossActionNodeConfig,
-		"NodeGroupConfig":    ParacrossActionNodeGroupApply,
-		"SelfStageConfig":    ParacrossActionSelfStageConfig,
-		"ParaBindMiner":      ParacrossActionParaBindMiner,
+		"Commit":                     ParacrossActionCommit,
+		"Miner":                      ParacrossActionMiner,
+		"AssetTransfer":              ParacrossActionAssetTransfer,
+		"AssetWithdraw":              ParacrossActionAssetWithdraw,
+		"Transfer":                   ParacrossActionTransfer,
+		"Withdraw":                   ParacrossActionWithdraw,
+		"TransferToExec":             ParacrossActionTransferToExec,
+		"CrossAssetTransfer":         ParacrossActionCrossAssetTransfer,
+		"NodeConfig":                 ParacrossActionNodeConfig,
+		"NodeGroupConfig":            ParacrossActionNodeGroupApply,
+		"SelfStageConfig":            ParacrossActionSelfStageConfig,
+		"ParaBindMiner":              ParacrossActionParaBindMiner,
+		"SupervisionNodeGroupConfig": ParacrossActionSupervisionNodeGroupConfig,
 	}
 }
 

@@ -91,6 +91,8 @@ const (
 	ParacrossActionSelfStageConfig
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
 	ParacrossActionCrossAssetTransfer
+	// ParacrossActionSupervisionNodeGroupConfig
+	ParacrossActionSupervisionNodeGroupConfig
 )
 
 //paracross asset porcess

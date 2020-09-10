@@ -9,14 +9,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	//"github.com/stretchr/testify/mock"
+	"strings"
 	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
-
-	"strings"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
@@ -25,9 +24,7 @@ import (
 var (
 	PrivKey14K = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" // 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 	Account14K = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	//Account1MC = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
 	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
 	Account12Q = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 )
@@ -234,7 +231,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -265,7 +261,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
