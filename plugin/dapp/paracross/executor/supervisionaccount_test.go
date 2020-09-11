@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/stretchr/testify/assert"
 )
 
 // createRawSupervisionNodeConfigTx create raw tx for node config
@@ -20,7 +21,7 @@ func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Tra
 }
 
 func (suite *NodeManageTestSuite) TestSupervisionExec() {
-	//suite.testSupervisionNodeConfigQuit()
+	suite.testSupervisionNodeConfigQuit()
 	suite.testSupervisionNodeConfigApprove()
 }
 
@@ -34,16 +35,8 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
-	fmt.Println(receipt)
-	fmt.Println(receipt.Ty, int32(types.ExecOk))
-	fmt.Println(receipt.KV, 1)
-	fmt.Println(receipt.Logs, 1)
-	fmt.Println(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
+	checkSupervisionGroupApplyReceipt(suite, receipt)
 
-	//assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
-	//checkGroupApplyReceipt(suite, receipt)
-
-	//suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -56,7 +49,9 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 	tx, err = createRawSupervisionNodeConfigTx(config)
 	suite.Nil(err)
 
-	nodeCommit(suite, PrivKey14K, tx)
+	receipt = nodeCommit(suite, PrivKey14K, tx)
+	fmt.Println("***", receipt)
+	fmt.Println("***", receipt.Logs[0].Ty)
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
@@ -69,16 +64,8 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
 	suite.Nil(err)
 
 	receipt := nodeCommit(suite, PrivKey14K, tx)
-	fmt.Println(receipt)
-	fmt.Println(receipt.Ty, int32(types.ExecOk))
-	fmt.Println(receipt.KV, 1)
-	fmt.Println(receipt.Logs, 1)
-	fmt.Println(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
+	checkSupervisionGroupApplyReceipt(suite, receipt)
 
-	//assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
-	//checkGroupApplyReceipt(suite, receipt)
-
-	//suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -91,13 +78,13 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
 	tx, err = createRawSupervisionNodeConfigTx(config)
 	suite.Nil(err)
 
-	receipt = nodeCommit(suite, Account14K, tx)
+	receipt = nodeCommit(suite, PrivKey14K, tx)
+	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
+}
 
-	fmt.Println(receipt)
-	fmt.Println(receipt.Ty, int32(types.ExecOk))
-	fmt.Println(receipt.KV, 1)
-	fmt.Println(receipt.Logs, 1)
-
-	fmt.Println(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
-	checkGroupApproveReceipt(suite, receipt)
+func checkSupervisionGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
+	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
+	assert.Len(suite.T(), receipt.KV, 1)
+	assert.Len(suite.T(), receipt.Logs, 1)
+	assert.Equal(suite.T(), int32(pt.TyLogParaSupervisionNodeGroupConfig), receipt.Logs[0].Ty)
 }

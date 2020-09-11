@@ -55,6 +55,7 @@ const (
 	TyLogParaSupervisionNodeConfig
 	TyLogParaSupervisionNodeStatusUpdate
 	TyLogParaStageSupervisionGroupUpdate
+	TyLogParaSupervisionNodeGroupStatusUpdate
 )
 
 // action type

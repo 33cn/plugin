@@ -363,6 +363,27 @@ func (a *action) supervisionNodeGroupApprove(config *pt.ParaNodeAddrConfig) (*ty
 	return a.supervisionNodeGroupApproveApply(config, id)
 }
 
+func makeParaSupervisionNodeGroupStatusReceipt(title string, addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
+	key := calcParaSupervisionNodeGroupStatusKey(title)
+	log := &pt.ReceiptParaNodeGroupConfig{
+		Addr:    addr,
+		Prev:    prev,
+		Current: current,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(current)},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  pt.TyLogParaSupervisionNodeGroupStatusUpdate,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
 func (a *action) supervisionNodeGroupApproveApply(config *pt.ParaNodeAddrConfig, apply *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
 	err := a.checkSupervisionNodeGroupExist(config.Title)
 	if err != nil {
@@ -383,14 +404,14 @@ func (a *action) supervisionNodeGroupApproveApply(config *pt.ParaNodeAddrConfig,
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
 	copyStat := *apply
-	apply.Status = pt.ParacrossNodeGroupApprove
+	apply.Status = pt.ParacrossSupervisionNodeApprove
 	apply.Height = a.height
 
-	r = makeNodeGroupIDReceipt(a.fromaddr, &copyStat, apply)
+	r = makeSupervisionNodeGroupIDReceipt(a.fromaddr, &copyStat, apply)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 
-	r = makeParaNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, apply)
+	r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, apply)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 	cfg := a.api.GetConfig()
