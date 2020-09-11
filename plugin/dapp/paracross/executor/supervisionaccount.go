@@ -12,57 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool, error) {
-	nodes, _, err := getParacrossSupervisonNodes(a.db, config.Title)
-	if err != nil && !isNotFound(err) {
-		return false, errors.Wrapf(err, "getNodes for title:%s", config.Title)
-	}
-	//有可能申请地址和配置地址不是同一个
-	if validNode(config.Addr, nodes) {
-		return true, nil
-	}
-	return false, nil
-}
-
-func (a *action) checkSupervisionNodeGroupExist(title string) error {
-	key := calcParaSupervisionNodeGroupAddrsKey(title)
-	value, err := a.db.Get(key)
-	if err != nil && !isNotFound(err) {
-		return err
-	}
-
-	if value != nil {
-		clog.Error("node group apply, group existed")
-		return pt.ErrParaSupervisionNodeGroupExisted
-	}
-
-	return nil
-}
-
-func getSupervisionNodeGroupStatus(db dbm.KV, title string) (*pt.ParaNodeGroupStatus, error) {
-	key := calcParaSupervisionNodeGroupStatusKey(title)
-	val, err := db.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
-	var status pt.ParaNodeGroupStatus
-	err = types.Decode(val, &status)
-	return &status, err
-}
-
-func getSupervisionNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdStatus, error) {
-	key := calcParaSupervisionNodeAddrKey(title, addr)
-	val, err := db.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
-	var status pt.ParaNodeAddrIdStatus
-	err = types.Decode(val, &status)
-	return &status, err
-}
-
 func makeSupervisionNodeGroupIDReceipt(addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
 	log := &pt.ReceiptParaNodeGroupConfig{
 		Addr:    addr,
@@ -142,16 +91,6 @@ func makeParaSupervisionNodeStatusReceipt(fromAddr string, prev, current *pt.Par
 	}
 }
 
-func supervisionSelfConsentInitStage(cfg *types.Chain33Config) *types.Receipt {
-	isEnable := cfg.IsEnable(pt.ParaConsSubConf + "." + pt.ParaSelfConsInitConf)
-	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
-	if isEnable {
-		stage.Enable = pt.ParaConfigNo
-	}
-	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
-	return makeStageSupervisionGroupReceipt(nil, stages)
-}
-
 func makeStageSupervisionGroupReceipt(prev, current *pt.SelfConsensStages) *types.Receipt {
 	key := []byte(fmt.Sprintf(paraSupervisionSelfConsensStages))
 	log := &pt.ReceiptSelfConsStagesUpdate{Prev: prev, Current: current}
@@ -169,6 +108,61 @@ func makeStageSupervisionGroupReceipt(prev, current *pt.SelfConsensStages) *type
 	}
 }
 
+func makeParaSupervisionNodeGroupStatusReceipt(title string, addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
+	key := calcParaSupervisionNodeGroupStatusKey(title)
+	log := &pt.ReceiptParaNodeGroupConfig{
+		Addr:    addr,
+		Prev:    prev,
+		Current: current,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(current)},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  pt.TyLogParaSupervisionNodeGroupStatusUpdate,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
+func getSupervisionNodeGroupStatus(db dbm.KV, title string) (*pt.ParaNodeGroupStatus, error) {
+	key := calcParaSupervisionNodeGroupStatusKey(title)
+	val, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	var status pt.ParaNodeGroupStatus
+	err = types.Decode(val, &status)
+	return &status, err
+}
+
+func getSupervisionNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdStatus, error) {
+	key := calcParaSupervisionNodeAddrKey(title, addr)
+	val, err := db.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	var status pt.ParaNodeAddrIdStatus
+	err = types.Decode(val, &status)
+	return &status, err
+}
+
+func supervisionSelfConsentInitStage(cfg *types.Chain33Config) *types.Receipt {
+	isEnable := cfg.IsEnable(pt.ParaConsSubConf + "." + pt.ParaSelfConsInitConf)
+	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
+	if isEnable {
+		stage.Enable = pt.ParaConfigNo
+	}
+	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
+	return makeStageSupervisionGroupReceipt(nil, stages)
+}
+
 func getSupervisionNodeGroupID(cfg *types.Chain33Config, db dbm.KV, title string, height int64, id string) (*pt.ParaNodeGroupStatus, error) {
 	if pt.IsParaForkHeight(cfg, height, pt.ForkLoopCheckCommitTxDone) {
 		id = calcParaSupervisionNodeGroupIDKey(title, id)
@@ -181,6 +175,33 @@ func getSupervisionNodeGroupID(cfg *types.Chain33Config, db dbm.KV, title string
 	var status pt.ParaNodeGroupStatus
 	err = types.Decode(val, &status)
 	return &status, err
+}
+
+func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool, error) {
+	nodes, _, err := getParacrossSupervisonNodes(a.db, config.Title)
+	if err != nil && !isNotFound(err) {
+		return false, errors.Wrapf(err, "getNodes for title:%s", config.Title)
+	}
+	//有可能申请地址和配置地址不是同一个
+	if validNode(config.Addr, nodes) {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (a *action) checkSupervisionNodeGroupExist(title string) error {
+	key := calcParaSupervisionNodeGroupAddrsKey(title)
+	value, err := a.db.Get(key)
+	if err != nil && !isNotFound(err) {
+		return err
+	}
+
+	if value != nil {
+		clog.Error("node group apply, group existed")
+		return pt.ErrParaSupervisionNodeGroupExisted
+	}
+
+	return nil
 }
 
 func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
@@ -362,27 +383,6 @@ func (a *action) supervisionNodeGroupApprove(config *pt.ParaNodeAddrConfig) (*ty
 	}
 
 	return a.supervisionNodeGroupApproveApply(config, id)
-}
-
-func makeParaSupervisionNodeGroupStatusReceipt(title string, addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
-	key := calcParaSupervisionNodeGroupStatusKey(title)
-	log := &pt.ReceiptParaNodeGroupConfig{
-		Addr:    addr,
-		Prev:    prev,
-		Current: current,
-	}
-	return &types.Receipt{
-		Ty: types.ExecOk,
-		KV: []*types.KeyValue{
-			{Key: key, Value: types.Encode(current)},
-		},
-		Logs: []*types.ReceiptLog{
-			{
-				Ty:  pt.TyLogParaSupervisionNodeGroupStatusUpdate,
-				Log: types.Encode(log),
-			},
-		},
-	}
 }
 
 func (a *action) supervisionNodeGroupApproveApply(config *pt.ParaNodeAddrConfig, apply *pt.ParaNodeGroupStatus) (*types.Receipt, error) {

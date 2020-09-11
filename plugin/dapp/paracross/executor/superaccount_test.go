@@ -320,6 +320,7 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 func (suite *NodeManageTestSuite) TestExec() {
 	suite.testNodeGroupConfig()
 	suite.testNodeConfig()
+	suite.testSupervisionExec()
 }
 
 func TestNodeManageSuite(t *testing.T) {

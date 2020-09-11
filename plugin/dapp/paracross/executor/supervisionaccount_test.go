@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +19,7 @@ func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Tra
 	return tx, nil
 }
 
-func (suite *NodeManageTestSuite) TestSupervisionExec() {
+func (suite *NodeManageTestSuite) testSupervisionExec() {
 	suite.testSupervisionNodeConfigQuit()
 	suite.testSupervisionNodeConfigApprove()
 }
@@ -51,8 +49,6 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey14K, tx)
-	fmt.Println("***", receipt)
-	fmt.Println("***", receipt.Logs[0].Ty)
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
