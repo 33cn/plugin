@@ -74,7 +74,7 @@ func main() {
 // LoadHelp ...
 func LoadHelp() {
 	fmt.Println("Available Commands:")
-	fmt.Println("perf [ip, size, num, interval, duration] {offset}            : 写数据性能测试")
+	fmt.Println("perf [ip, size, num, interval, duration]                     : 写数据性能测试")
 	fmt.Println("put  [ip, size]                                              : 写数据")
 	fmt.Println("get  [ip, hash]                                              : 读数据")
 	fmt.Println("valnode [ip, pubkey, power]                                  : 增加/删除/修改tendermint节点")

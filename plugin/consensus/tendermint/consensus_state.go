@@ -768,8 +768,12 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.TendermintBlock) 
 	// Mempool validated transactions
 	beg := time.Now()
 	pblock := cs.client.BuildBlock()
+	if pblock == nil {
+		tendermintlog.Error("createProposalBlock BuildBlock fail")
+		return nil
+	}
 	tendermintlog.Info(fmt.Sprintf("createProposalBlock BuildBlock. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
-		"txs-len", len(pblock.Txs), "cost", types.Since(beg))
+		"height", pblock.Height, "txs-len", len(pblock.Txs), "cost", types.Since(beg))
 
 	if pblock.Height != cs.Height {
 		tendermintlog.Error("pblock.Height is not equal to cs.Height")
