@@ -47,7 +47,7 @@ const (
 	//VoteFrozenTime    = 3 * 24 * 3600
 
 	//RegistFrozenCoins 注册为候选节点需要抵押冻结的代币数量
-	RegistFrozenCoins = 1000000000000
+	RegistFrozenCoins int64 = 1000000000000
 
 	//VoteTypeNone 非投票类型
 	VoteTypeNone int32 = 1
