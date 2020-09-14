@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -x
+
 PARA_CLI="docker exec ${NODE3} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 
 PARA_CLI2="docker exec ${NODE2} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
@@ -378,6 +380,8 @@ function para_cross_transfer_withdraw() {
     query_tx "${PARA_CLI}" "${hash}"
 
     hash2=$(${CLI} send para asset_withdraw --paraName user.p.para. -a 0.7 -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash2}"
+    query_tx "${PARA_CLI}" "${hash2}"
 
     local times=200
     while true; do
@@ -1088,9 +1092,6 @@ function para_test() {
     para_create_nodegroup
     para_nodegroup_behalf_quit_test
     para_create_nodegroup_gamechain
-    #    para_nodemanage_cancel_test
-    #    para_nodemanage_test
-    #    para_nodemanage_node_behalf_join
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"
     para_cross_transfer_withdraw
@@ -1100,12 +1101,12 @@ function para_test() {
 }
 
 function paracross() {
+    set -x
     if [ "${2}" == "init" ]; then
         para_init "${3}"
     elif [ "${2}" == "config" ]; then
         para_set_wallet
         para_transfer
-
     elif [ "${2}" == "test" ]; then
         para_test "${1}"
     fi
@@ -1127,5 +1128,4 @@ function paracross() {
     elif [ "${2}" == "fork2CheckRst" ]; then
         checkParaBlockHashfun 30
     fi
-
 }

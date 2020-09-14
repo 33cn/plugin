@@ -535,7 +535,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 	// 获取监督节点的数据 监督节点在高度分叉后
 	supervisionNodesMap, supervisionNodesArry, err := a.getSupervisionNodesGroup(commit.Status.Title)
-	if err != nil && err != pt.ErrTitleNotExist && a.exec.GetMainHeight() >= pt.GetDappForkHeight(cfg, pt.ForkCommitTx) {
+	if err != nil && errors.Cause(err) != pt.ErrTitleNotExist && a.exec.GetMainHeight() >= pt.GetDappForkHeight(cfg, pt.ForkCommitTx) {
 		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
 	}
 
