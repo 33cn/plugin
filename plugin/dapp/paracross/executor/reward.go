@@ -254,9 +254,10 @@ func (a *action) unbind2Node(node string) (*types.Receipt, error) {
 	old := proto.Clone(list).(*pt.ParaNodeBindList)
 
 	for _, m := range list.Miners {
-		if m.SuperNode != node && m.Miner != a.fromaddr {
-			newList.Miners = append(newList.Miners, m)
+		if m.SuperNode == node && m.Miner == a.fromaddr {
+			continue
 		}
+		newList.Miners = append(newList.Miners, m)
 	}
 	return makeNodeBindReceipt(old, newList), nil
 
@@ -376,6 +377,10 @@ func (a *action) unBindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	unBindHours := cfg.MGInt("mver.consensus.paracross.unBindTime", a.height)
 	if a.blocktime-acct.BlockTime < unBindHours*60*60 {
 		return nil, errors.Wrapf(types.ErrNotAllow, "unBindOp unbind time=%d less %d hours than bind time =%d", a.blocktime, unBindHours, acct.BlockTime)
+	}
+
+	if acct.BindStatus != opBind {
+		return nil, errors.Wrapf(types.ErrNotAllow, "unBindOp,current addr is unbind status")
 	}
 
 	//unfrozen
