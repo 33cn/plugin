@@ -581,19 +581,20 @@ func getNodeBindListCmd() *cobra.Command {
 
 func addNodeBindCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
-	cmd.MarkFlagRequired("node")
+	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
 
 }
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("node")
+	node, _ := cmd.Flags().GetString("node")
+	miner, _ := cmd.Flags().GetString("miner")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
 	params.FuncName = "GetNodeBindMinerList"
 
-	params.Payload = types.MustPBToJSON(&types.ReqString{Data: addr})
+	params.Payload = types.MustPBToJSON(&pt.ParaNodeBindOne{SuperNode: node, Miner: miner})
 
 	var res pt.RespParaNodeBindList
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)

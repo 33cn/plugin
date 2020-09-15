@@ -26,7 +26,7 @@ const (
 	maxRcvTxCount      = 100 //channel buffer, max 100 nodes, 1 height tx or 1 txgroup per node
 	leaderSyncInt      = 15  //15s heartbeat sync interval
 	defLeaderSwitchInt = 100 //每隔100个共识高度切换一次leader,大约6小时（按50个空块间隔计算）
-	delaySubP2pTopic   = 30  //30s to sub p2p topic
+	delaySubP2pTopic   = 10  //30s to sub p2p topic
 
 	paraBlsSignTopic = "PARA-BLS-SIGN-TOPIC"
 )

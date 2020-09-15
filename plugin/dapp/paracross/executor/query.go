@@ -534,29 +534,63 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 	return nil, types.ErrDecode
 }
 
-// Query_GetNodeBindMinerList query get super node bind miner list
-func (p *Paracross) Query_GetNodeBindMinerList(in *types.ReqString) (types.Message, error) {
-	if in == nil || len(in.Data) == 0 {
-		return nil, types.ErrInvalidParam
-	}
-
-	list, err := getBindNodeInfo(p.GetStateDB(), in.Data)
-	if err != nil {
-		clog.Error("Query_GetNodeBindMinerList get node", "err", err, "req", in.Data)
-		return nil, errors.Cause(err)
-	}
-
+func getMinerListResp(db dbm.KV, list *pt.ParaNodeBindList) (types.Message, error) {
 	var resp pt.RespParaNodeBindList
 	resp.List = list
 
-	for _, addr := range list.Miners {
-		info, err := getBindAddrInfo(p.GetStateDB(), in.Data, addr)
+	for _, n := range list.Miners {
+		info, err := getBindAddrInfo(db, n.SuperNode, n.Miner)
 		if err != nil {
-			clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", in.Data, "addr", addr)
+			clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", n.SuperNode, "addr", n.Miner)
 			return nil, errors.Cause(err)
 		}
 		resp.Details = append(resp.Details, info)
 	}
-
 	return &resp, nil
+}
+
+// Query_GetNodeBindMinerList query get super node bind miner list
+func (p *Paracross) Query_GetNodeBindMinerList(in *pt.ParaNodeBindOne) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	list, err := getBindNodeInfo(p.GetStateDB())
+	if err != nil {
+		clog.Error("Query_GetNodeBindMinerList get node", "err", err)
+		return nil, errors.Cause(err)
+	}
+
+	var newList pt.ParaNodeBindList
+	//按node query
+	if len(in.SuperNode) != 0 && len(in.Miner) == 0 {
+		for _, n := range list.Miners {
+			if n.SuperNode == in.SuperNode {
+				newList.Miners = append(newList.Miners, n)
+			}
+		}
+		return getMinerListResp(p.GetStateDB(), &newList)
+	}
+
+	//按miner query
+	if len(in.SuperNode) == 0 && len(in.Miner) != 0 {
+		for _, n := range list.Miners {
+			if n.Miner == in.Miner {
+				newList.Miners = append(newList.Miners, n)
+			}
+		}
+		return getMinerListResp(p.GetStateDB(), &newList)
+	}
+	//按唯一绑定查询
+	if len(in.SuperNode) != 0 && len(in.Miner) != 0 {
+		for _, n := range list.Miners {
+			if n.SuperNode == in.SuperNode && n.Miner == in.Miner {
+				newList.Miners = append(newList.Miners, n)
+			}
+		}
+		return getMinerListResp(p.GetStateDB(), &newList)
+	}
+
+	//获取所有
+	return getMinerListResp(p.GetStateDB(), list)
 }
