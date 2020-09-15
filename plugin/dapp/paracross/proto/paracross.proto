@@ -186,7 +186,8 @@ message ParaNodeBindOne{
 }
 
 message ParaNodeBindList{
-    repeated ParaNodeBindOne miners = 1;
+    string title = 1;
+    repeated ParaNodeBindOne miners = 2;
 }
 
 message ReceiptParaNodeBindListUpdate{

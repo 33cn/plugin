@@ -232,6 +232,11 @@ func (a *action) bind2Node(node string) (*types.Receipt, error) {
 		return nil, errors.Wrap(err, "bind2Node")
 	}
 
+	//由于kvmvcc内存架构，如果存储结构为nil，将回溯查找，这样在只有一个绑定时候，unbind后，有可能会回溯到更早状态，是错误的，title这里就是占位使用
+	if len(list.Title) <= 0 {
+		list.Title = a.api.GetConfig().GetTitle()
+	}
+
 	old := proto.Clone(list).(*pt.ParaNodeBindList)
 	list.Miners = append(list.Miners, &pt.ParaNodeBindOne{SuperNode: node, Miner: a.fromaddr})
 
@@ -245,7 +250,7 @@ func (a *action) unbind2Node(node string) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unbind2Node")
 	}
-	newList := &pt.ParaNodeBindList{}
+	newList := &pt.ParaNodeBindList{Title: a.api.GetConfig().GetTitle()}
 	old := proto.Clone(list).(*pt.ParaNodeBindList)
 
 	for _, m := range list.Miners {
