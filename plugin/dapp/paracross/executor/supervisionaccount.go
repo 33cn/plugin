@@ -299,8 +299,17 @@ func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*ty
 }
 
 func (a *action) supervisionNodeGroupApply(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+	// 不能跟授权节点一致
+	addrExist, err := a.checkValidNode(config)
+	if err != nil {
+		return nil, err
+	}
+	if addrExist {
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s in super", config.Addr)
+	}
+
 	// 是否已经申请
-	addrExist, err := a.checkValidSupervisionNode(config)
+	addrExist, err = a.checkValidSupervisionNode(config)
 	if err != nil {
 		//return nil, err
 		fmt.Println("err:", err)

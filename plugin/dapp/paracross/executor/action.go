@@ -300,15 +300,20 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 	return nodes, nodesArray, err
 }
 
-func (a *action) getSupervisionNodesGroup(title string) (map[string]struct{}, []string, error) {
+func getSupervisionConfigNodes(db dbm.KV, title string) (map[string]struct{}, []string, []byte, error) {
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
-	nodes, nodesArray, err := getNodes(a.db, key)
+	nodes, nodesArray, err := getNodes(db, key)
 	if err != nil {
 		if errors.Cause(err) != pt.ErrTitleNotExist {
-			return nil, nil, errors.Wrapf(err, "getSupervisionNodesGroup para for title:%s", title)
+			return nil, nil, nil, errors.Wrapf(err, "getSupervisionNodesGroup para for title:%s", title)
 		}
 	}
 
+	return nodes, nodesArray, key, nil
+}
+
+func (a *action) getSupervisionNodesGroup(title string) (map[string]struct{}, []string, error) {
+	nodes, nodesArray, _, err := getSupervisionConfigNodes(a.db, title)
 	return nodes, nodesArray, err
 }
 
@@ -446,12 +451,31 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 	return ret
 }
 
+//get secp256 addr's bls pubkey
+func getAddrBlsPubKey(db dbm.KV, title, addr string, commitNodeType uint32) (string, error) {
+	if commitNodeType == pt.ParaCommitSuperNode {
+		addrStat, err := getNodeAddr(db, title, addr)
+		if err != nil {
+			return "", errors.Wrapf(err, "nodeAddr:%s-%s get error", title, addr)
+		}
+		return addrStat.BlsPubKey, nil
+	} else if commitNodeType == pt.ParaCommitSupervisionNode {
+		addrStat, err := getSupervisionNodeAddr(db, title, addr)
+		if err != nil {
+			return "", errors.Wrapf(err, "Supervision nodeAddr:%s-%s get error", title, addr)
+		}
+		return addrStat.BlsPubKey, nil
+	} else {
+		return "", errors.New("commitNodeType is ParaCommitNode")
+	}
+}
+
 //bls签名共识交易验证 大约平均耗时3ms (2~4ms)
-func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
+func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction, commitNodeType uint32) ([]string, error) {
 	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
-		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr)
+		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr, commitNodeType)
 		if err != nil {
 			return nil, errors.Wrapf(err, "pubkey not exist to addr=%s", addr)
 		}
@@ -521,17 +545,25 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, errors.Wrap(err, "getNodesGroup")
 	}
 
-	//获取commitAddrs, bls sign 包含多个账户的聚合签名
-	commitAddrs := []string{a.fromaddr}
-	if commit.Bls != nil {
-		addrs, err := a.procBlsSign(nodesArry, commit)
-		if err != nil {
-			return nil, errors.Wrap(err, "procBlsSign")
-		}
-		commitAddrs = addrs
-	}
+	var commitAddrs, commitSupervisionAddrs, validAddrs, supervisionValidAddrs []string
 
-	validAddrs := getValidAddrs(nodesMap, commitAddrs)
+	for _, addr := range nodesArry {
+		if addr == a.fromaddr {
+			// 授权节点共识
+			//获取commitAddrs, bls sign 包含多个账户的聚合签名
+			commitAddrs = []string{a.fromaddr}
+			if commit.Bls != nil {
+				addrs, err := a.procBlsSign(nodesArry, commit, pt.ParaCommitSuperNode)
+				if err != nil {
+					return nil, errors.Wrap(err, "procBlsSign")
+				}
+				commitAddrs = addrs
+			}
+
+			validAddrs = getValidAddrs(nodesMap, commitAddrs)
+			break
+		}
+	}
 
 	// 获取监督节点的数据 监督节点在高度分叉后
 	supervisionNodesMap, supervisionNodesArry, err := a.getSupervisionNodesGroup(commit.Status.Title)
@@ -539,17 +571,24 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
 	}
 
-	//获取commitAddrs, bls sign 包含多个账户的聚合签名
-	commitSupervisionAddrs := []string{a.fromaddr}
-	if commit.Bls != nil {
-		addrs, err := a.procBlsSign(supervisionNodesArry, commit)
-		if err != nil {
-			return nil, errors.Wrap(err, "procBlsSign")
+	for _, addr := range supervisionNodesArry {
+		if addr == a.fromaddr {
+			// 监督节点共识
+			//获取commitAddrs, bls sign 包含多个账户的聚合签名
+			commitSupervisionAddrs = []string{a.fromaddr}
+			if commit.Bls != nil {
+				addrs, err := a.procBlsSign(supervisionNodesArry, commit, pt.ParaCommitSupervisionNode)
+				if err != nil {
+					return nil, errors.Wrap(err, "procBlsSign")
+				}
+				commitSupervisionAddrs = addrs
+			}
+
+			supervisionValidAddrs = getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
+			break
 		}
-		commitSupervisionAddrs = addrs
 	}
 
-	supervisionValidAddrs := getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
 	if len(validAddrs) <= 0 && len(supervisionValidAddrs) <= 0 {
 		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s commitSupervisionAddrs=%s", strings.Join(commitAddrs, ","), strings.Join(commitSupervisionAddrs, ","))
 	}

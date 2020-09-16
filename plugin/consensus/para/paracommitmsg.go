@@ -929,6 +929,27 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 	return resp.Value, nil
 }
 
+//Supervision node group会在主链和平行链都同时配置,只本地查询就可以
+func (client *commitMsgClient) getSupervisionNodeGroupAddrs() (string, error) {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetSupervisionNodeGroupAddrs",
+		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs ", "err", err.Error())
+		return "", err
+	}
+	resp, ok := ret.(*types.ReplyConfig)
+	if !ok {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs rsp nok")
+		return "", err
+	}
+
+	return resp.Value, nil
+}
+
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 	if status == nil || client.authAccount == "" {
 		plog.Info("para onWalletStatus", "status", status == nil, "auth", client.authAccount == "")

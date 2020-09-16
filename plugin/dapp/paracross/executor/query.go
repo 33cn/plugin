@@ -95,6 +95,37 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 	return &reply, nil
 }
 
+//Query_GetNodeGroupAddrs get node group addrs
+func (p *Paracross) Query_GetSupervisionNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
+	}
+
+	_, nodesArry, key, err := getSupervisionConfigNodes(p.GetStateDB(), in.GetTitle())
+	if err != nil {
+		return nil, err
+	}
+	var nodes string
+	for _, k := range nodesArry {
+		if len(nodes) == 0 {
+			nodes = k
+			continue
+		}
+		nodes = nodes + "," + k
+	}
+	var reply types.ReplyConfig
+	reply.Key = string(key)
+	reply.Value = nodes
+	return &reply, nil
+}
+
 //Query_GetNodeAddrInfo get specific node addr info
 func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil || in.Addr == "" {

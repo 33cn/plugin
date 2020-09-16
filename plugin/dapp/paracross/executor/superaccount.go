@@ -208,15 +208,6 @@ func makeParaNodeGroupReceipt(title string, prev, current *types.ConfigItem) *ty
 	}
 }
 
-//get secp256 addr's bls pubkey
-func getAddrBlsPubKey(db dbm.KV, title, addr string) (string, error) {
-	addrStat, err := getNodeAddr(db, title, addr)
-	if err != nil {
-		return "", errors.Wrapf(err, "nodeAddr:%s-%s get error", title, addr)
-	}
-	return addrStat.BlsPubKey, nil
-}
-
 func (a *action) checkValidNode(config *pt.ParaNodeAddrConfig) (bool, error) {
 	nodes, _, err := getParacrossNodes(a.db, config.Title)
 	if err != nil {
