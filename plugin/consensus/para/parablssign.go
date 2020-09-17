@@ -172,38 +172,26 @@ func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
 	return nodes, leaderIdx, baseIdx, offIdx, nodes[leaderIdx] == b.selfID
 }
 
-func (b *blsClient) getSupervisionLeaderInfo() ([]string, int32, int32, int32, bool) {
-	//在未同步前 不处理聚合消息
-	if !b.paraClient.commitMsgClient.isSync() {
-		return nil, 0, 0, 0, false
-	}
-	supervisionNodes, _ := b.getSupervisionSuperNodes()
-	if len(supervisionNodes) <= 0 {
-		return nil, 0, 0, 0, false
-	}
-	h := b.paraClient.commitMsgClient.getConsensusHeight()
-	//间隔的除数再根据nodes取余数，平均覆盖所有节点
-	baseIdx := int32((h / int64(b.leaderSwitchInt)) % int64(len(supervisionNodes)))
-	offIdx := atomic.LoadInt32(&b.leaderOffset)
-	leaderIdx := (baseIdx + offIdx) % int32(len(supervisionNodes))
-	return supervisionNodes, leaderIdx, baseIdx, offIdx, supervisionNodes[leaderIdx] == b.selfID
-}
-
 func (b *blsClient) getSuperNodes() ([]string, string) {
+	// 获取授权节点
 	nodeStr, err := b.paraClient.commitMsgClient.getNodeGroupAddrs()
-	if err != nil {
-		return nil, ""
+	if strings.Contains(nodeStr, b.selfID) {
+		if err != nil {
+			return nil, ""
+		}
+		return strings.Split(nodeStr, ","), nodeStr
 	}
-	return strings.Split(nodeStr, ","), nodeStr
-}
 
-// 获取监督节点
-func (b *blsClient) getSupervisionSuperNodes() ([]string, string) {
-	nodeStr, err := b.paraClient.commitMsgClient.getSupervisionNodeGroupAddrs()
-	if err != nil {
-		return nil, ""
+	// 获取监督节点
+	nodeStr, err = b.paraClient.commitMsgClient.getSupervisionNodeGroupAddrs()
+	if strings.Contains(nodeStr, b.selfID) {
+		if err != nil {
+			return nil, ""
+		}
+		return strings.Split(nodeStr, ","), nodeStr
 	}
-	return strings.Split(nodeStr, ","), nodeStr
+
+	return nil, ""
 }
 
 func (b *blsClient) isValidNodes(id string) bool {

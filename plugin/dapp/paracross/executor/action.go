@@ -547,6 +547,8 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 	var commitAddrs, commitSupervisionAddrs, validAddrs, supervisionValidAddrs []string
 
+	bIsCommitSuperNode := false
+	bIsCommitSupervisionNode := false
 	for _, addr := range nodesArry {
 		if addr == a.fromaddr {
 			// 授权节点共识
@@ -561,6 +563,11 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 			}
 
 			validAddrs = getValidAddrs(nodesMap, commitAddrs)
+			if len(validAddrs) <= 0 {
+				return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s ", strings.Join(commitAddrs, ","))
+			}
+
+			bIsCommitSuperNode = true
 			break
 		}
 	}
@@ -571,26 +578,33 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
 	}
 
-	for _, addr := range supervisionNodesArry {
-		if addr == a.fromaddr {
-			// 监督节点共识
-			//获取commitAddrs, bls sign 包含多个账户的聚合签名
-			commitSupervisionAddrs = []string{a.fromaddr}
-			if commit.Bls != nil {
-				addrs, err := a.procBlsSign(supervisionNodesArry, commit, pt.ParaCommitSupervisionNode)
-				if err != nil {
-					return nil, errors.Wrap(err, "procBlsSign")
+	if !bIsCommitSuperNode {
+		for _, addr := range supervisionNodesArry {
+			if addr == a.fromaddr {
+				// 监督节点共识
+				//获取commitAddrs, bls sign 包含多个账户的聚合签名
+				commitSupervisionAddrs = []string{a.fromaddr}
+				if commit.Bls != nil {
+					addrs, err := a.procBlsSign(supervisionNodesArry, commit, pt.ParaCommitSupervisionNode)
+					if err != nil {
+						return nil, errors.Wrap(err, "procBlsSign")
+					}
+					commitSupervisionAddrs = addrs
 				}
-				commitSupervisionAddrs = addrs
-			}
 
-			supervisionValidAddrs = getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
-			break
+				supervisionValidAddrs = getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
+				if len(supervisionValidAddrs) <= 0 {
+					return nil, errors.Wrapf(err, "getValidAddrs nil commitSupervisionAddrs=%s", strings.Join(commitSupervisionAddrs, ","))
+				}
+
+				bIsCommitSupervisionNode = true
+				break
+			}
 		}
 	}
 
-	if len(validAddrs) <= 0 && len(supervisionValidAddrs) <= 0 {
-		return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s commitSupervisionAddrs=%s", strings.Join(commitAddrs, ","), strings.Join(commitSupervisionAddrs, ","))
+	if !bIsCommitSuperNode && !bIsCommitSupervisionNode {
+		return nil, errors.Wrapf(errors.New("from addr error"), "form addr %s not in SuperNodesGroup, not in SupervisionNodesGroup", a.fromaddr)
 	}
 
 	return a.proCommitMsg(commit.Status, nodesMap, validAddrs, supervisionNodesMap, supervisionValidAddrs)
