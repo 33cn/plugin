@@ -8,4 +8,6 @@ var (
 	ErrCodeOversize        = errors.New("code oversize")
 	ErrInvalidMethod       = errors.New("invalid method")
 	ErrInvalidContractName = errors.New("invalid contract name")
+	ErrInvalidParam        = errors.New("invalid parameters")
+	ErrUnknown             = errors.New("unknown error")
 )

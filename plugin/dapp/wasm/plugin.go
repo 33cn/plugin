@@ -4,7 +4,7 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/wasm/commands"
 	"github.com/33cn/plugin/plugin/dapp/wasm/executor"
-	_ "github.com/33cn/plugin/plugin/dapp/wasm/rpc"
+	"github.com/33cn/plugin/plugin/dapp/wasm/rpc"
 	"github.com/33cn/plugin/plugin/dapp/wasm/types"
 )
 
@@ -14,6 +14,6 @@ func init() {
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.Cmd,
-		//RPC:      rpc.Init,
+		RPC:      rpc.Init,
 	})
 }

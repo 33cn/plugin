@@ -21,17 +21,8 @@ message wasmCall {
   repeated int64 parameters = 3;
 }
 
-message queryCheckConract {
+message queryCheckContract {
   string name = 1;
-}
-
-message queryCreateTransaction{
-  int32 ty = 1;
-  string name = 2;
-  bytes code = 3;
-  string method = 4;
-  repeated int64 parameters = 5;
-  int64 fee = 6;
 }
 
 message customLog {

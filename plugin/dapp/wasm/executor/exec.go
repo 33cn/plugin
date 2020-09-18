@@ -108,7 +108,7 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 		KV:   w.kvs,
 		Logs: logs,
 	}
-	if ret != 0 {
+	if ret < 0 {
 		receipt.Ty = types.ExecPack
 	}
 

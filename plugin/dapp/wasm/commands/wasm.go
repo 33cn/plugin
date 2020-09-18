@@ -74,7 +74,7 @@ func checkContract(cmd *cobra.Command, args []string) {
 	params := rpctypes.Query4Jrpc{
 		Execer:   wasmtypes.WasmX,
 		FuncName: "Check",
-		Payload: types.MustPBToJSON(&wasmtypes.QueryCheckConract{
+		Payload: types.MustPBToJSON(&wasmtypes.QueryCheckContract{
 			Name: name,
 		}),
 	}
