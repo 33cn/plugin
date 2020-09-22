@@ -259,6 +259,7 @@ ForkLoopCheckCommitTxDone=0
 #仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7200000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
 ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
+ForkParaSupervisionRbk=0
 
 [fork.sub.evm]
 Enable=0

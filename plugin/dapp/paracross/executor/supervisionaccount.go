@@ -485,7 +485,7 @@ func (a *action) SupervisionNodeGroupConfig(config *pt.ParaNodeAddrConfig) (*typ
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
-	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
+	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaSupervisionRbk) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 	if (config.Op == pt.ParacrossSupervisionNodeApprove || config.Op == pt.ParacrossSupervisionNodeQuit) && config.Id == "" {

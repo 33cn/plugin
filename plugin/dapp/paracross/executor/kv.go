@@ -46,6 +46,8 @@ var (
 	paraSupervisionNodeGroupIDPrefix        string
 	paraSupervisionSelfConsensStages        string
 	paraSupervisionSelfConsensStageIDPrefix string
+
+	localSupervisionNodeGroupStatusTitle string
 )
 
 func setPrefix() {
@@ -81,6 +83,8 @@ func setPrefix() {
 	paraSupervisionNodeGroupIDPrefix = "mavl-paracross-supervision-title-nodegroupid-"
 	paraSupervisionSelfConsensStages = "mavl-paracross-supervision-selfconsens-stages-"
 	paraSupervisionSelfConsensStageIDPrefix = "mavl-paracross-supervision-selfconsens-id-"
+
+	localSupervisionNodeGroupStatusTitle = "LODB-paracross-supervision-nodegroupStatusTitle-"
 }
 
 func calcTitleKey(t string) []byte {
@@ -199,6 +203,18 @@ func calcLocalNodeGroupStatusPrefix(status int32) []byte {
 
 func calcLocalNodeGroupAllPrefix() []byte {
 	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
+}
+
+func calcLocalSupervisionNodeGroupStatusTitle(status int32, title, id string) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle+"%02d-%s-%s", status, title, id))
+}
+
+func calcLocalSupervisionNodeGroupStatusPrefix(status int32) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle+"%02d-", status))
+}
+
+func calcLocalSupervisionNodeGroupAllPrefix() []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle))
 }
 
 //bind miner

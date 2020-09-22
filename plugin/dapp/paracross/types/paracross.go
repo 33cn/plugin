@@ -49,13 +49,13 @@ const (
 	TyLogParaCrossAssetTransfer = 670
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
-
-	TyLogParaSupervisionNodeGroupConfig = 680
-	TyLogParaSupervisionNodeGroupAddrsUpdate
-	TyLogParaSupervisionNodeConfig
-	TyLogParaSupervisionNodeStatusUpdate
-	TyLogParaStageSupervisionGroupUpdate
-	TyLogParaSupervisionNodeGroupStatusUpdate
+	// Supervision Node
+	TyLogParaSupervisionNodeGroupConfig       = 680
+	TyLogParaSupervisionNodeGroupAddrsUpdate  = 681
+	TyLogParaSupervisionNodeConfig            = 682
+	TyLogParaSupervisionNodeStatusUpdate      = 683
+	TyLogParaStageSupervisionGroupUpdate      = 684
+	TyLogParaSupervisionNodeGroupStatusUpdate = 685
 )
 
 // action type

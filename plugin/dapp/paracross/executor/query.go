@@ -239,11 +239,21 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	return stat, nil
 }
 
+//Query_GetSupervisionNodeGroupStatus get specific node addr info
+func (p *Paracross) Query_GetSupervisionNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+	stat, err := getSupervisionNodeGroupStatus(p.GetStateDB(), in.Title)
+	return stat, err
+}
+
 //Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
+
 	resp, err := listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
 	if err != nil {
 		return resp, err
@@ -261,6 +271,22 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	}
 
 	return resp, nil
+}
+
+//Query_ListSupervisionNodeGroupStatus list node info by status
+func (p *Paracross) Query_ListSupervisionNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	var prefix []byte
+	if in.Status == 0 {
+		prefix = calcLocalSupervisionNodeGroupAllPrefix()
+	} else {
+		prefix = calcLocalSupervisionNodeGroupStatusPrefix(in.Status)
+	}
+
+	resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
+	return resp, err
 }
 
 //Query_ListTitles query paracross titles list

@@ -28,6 +28,8 @@ var (
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
+	// ForkParaSupervisionRbk 平行链新增监督节点
+	ForkParaSupervisionRbk = "ForkParaSupervisionRbk"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -56,6 +58,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
+	cfg.RegisterDappFork(ParaX, ForkParaSupervisionRbk, 6000000)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
@@ -92,25 +95,31 @@ func (p *ParacrossType) GetName() string {
 // GetLogMap get receipt log map
 func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogParacrossCommit:           {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
-		TyLogParacrossCommitDone:       {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
-		TyLogParacrossCommitRecord:     {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
-		TyLogParaAssetWithdraw:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
-		TyLogParaAssetTransfer:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
-		TyLogParaAssetDeposit:          {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
-		TyLogParaCrossAssetTransfer:    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
-		TyLogParacrossMiner:            {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
-		TyLogParaNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
-		TyLogParaNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
-		TyLogParaNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
-		TyLogParaNodeVoteDone:          {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
-		TyLogParaNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
-		TyLogParaNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
-		TyLogParaSelfConsStageConfig:   {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
-		TyLogParaStageVoteDone:         {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
-		TyLogParaStageGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
-		TyLogParaBindMinerAddr:         {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
-		TyLogParaBindMinerNode:         {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParacrossCommit:                      {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
+		TyLogParacrossCommitDone:                  {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
+		TyLogParacrossCommitRecord:                {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
+		TyLogParaAssetWithdraw:                    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
+		TyLogParaAssetTransfer:                    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
+		TyLogParaAssetDeposit:                     {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParaCrossAssetTransfer:               {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
+		TyLogParacrossMiner:                       {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
+		TyLogParaNodeConfig:                       {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
+		TyLogParaNodeStatusUpdate:                 {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
+		TyLogParaNodeGroupAddrsUpdate:             {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
+		TyLogParaNodeVoteDone:                     {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
+		TyLogParaNodeGroupConfig:                  {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
+		TyLogParaNodeGroupStatusUpdate:            {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
+		TyLogParaSelfConsStageConfig:              {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
+		TyLogParaStageVoteDone:                    {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
+		TyLogParaStageGroupUpdate:                 {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
+		TyLogParaBindMinerAddr:                    {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
+		TyLogParaBindMinerNode:                    {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParaSupervisionNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaSupervisionNodeGroupConfig"},
+		TyLogParaSupervisionNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaSupervisionNodeGroupAddrsUpdate"},
+		TyLogParaSupervisionNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaSupervisionNodeConfig"},
+		TyLogParaSupervisionNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaSupervisionNodeStatusUpdate"},
+		TyLogParaStageSupervisionGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaStageSupervisionGroupUpdate"},
+		TyLogParaSupervisionNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaSupervisionNodeGroupStatusUpdate"},
 	}
 }
 
