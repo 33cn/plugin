@@ -154,6 +154,29 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 	return stat, nil
 }
 
+//Query_GetSupervisionNodeAddrInfo get specific node addr info
+func (p *Paracross) Query_GetSupervisionNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Addr == "" {
+		return nil, types.ErrInvalidParam
+	}
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	stat, err := getSupervisionNodeAddr(p.GetStateDB(), in.Title, in.Addr)
+	if err != nil {
+		return nil, err
+	}
+
+	stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
+	stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
+
+	return stat, nil
+}
+
 func (p *Paracross) getMainHeight() (int64, error) {
 	mainHeight := p.GetMainHeight()
 	cfg := p.GetAPI().GetConfig()
@@ -573,9 +596,12 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 			return nil, errors.Wrap(types.ErrInvalidParam, "req invalid")
 		}
 	}
-	reqTitle := req.Data
+
+	var reqTitle string
 	if cfg.IsPara() {
 		reqTitle = cfg.GetTitle()
+	} else if req != nil {
+		reqTitle = req.Data
 	}
 	res, err := p.paracrossGetHeight(reqTitle)
 	if err != nil {

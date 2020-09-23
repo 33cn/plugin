@@ -12,13 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/33cn/chain33/util"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-
 	"github.com/pkg/errors"
 )
 
@@ -45,6 +43,7 @@ type blsClient struct {
 	feedDog         uint32
 	quit            chan struct{}
 	mutex           sync.Mutex
+	typeNode        uint32
 }
 
 func newBlsClient(para *client, cfg *subConfig) *blsClient {
@@ -60,6 +59,7 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
 	b.leaderSwitchInt = defLeaderSwitchInt
+	b.typeNode = pt.ParaCommitNode
 	if cfg.BlsLeaderSwitchIntval > 0 {
 		b.leaderSwitchInt = cfg.BlsLeaderSwitchIntval
 	}
@@ -172,23 +172,53 @@ func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
 	return nodes, leaderIdx, baseIdx, offIdx, nodes[leaderIdx] == b.selfID
 }
 
-func (b *blsClient) getSuperNodes() ([]string, string) {
+func (b *blsClient) getSuperGroupNodes() ([]string, string) {
 	// 获取授权节点
 	nodeStr, err := b.paraClient.commitMsgClient.getNodeGroupAddrs()
-	if strings.Contains(nodeStr, b.selfID) {
-		if err != nil {
-			return nil, ""
-		}
-		return strings.Split(nodeStr, ","), nodeStr
+	if err != nil {
+		return nil, ""
 	}
 
-	// 获取监督节点
-	nodeStr, err = b.paraClient.commitMsgClient.getSupervisionNodeGroupAddrs()
 	if strings.Contains(nodeStr, b.selfID) {
-		if err != nil {
-			return nil, ""
-		}
+		b.typeNode = pt.ParaCommitSuperNode
 		return strings.Split(nodeStr, ","), nodeStr
+	} else {
+		b.typeNode = pt.ParaCommitNode
+	}
+
+	return nil, ""
+}
+
+func (b *blsClient) getSupervisionGroupNodes() ([]string, string) {
+	// 获取监督节点
+	nodeStr, err := b.paraClient.commitMsgClient.getSupervisionNodeGroupAddrs()
+	if err != nil {
+		return nil, ""
+	}
+
+	if strings.Contains(nodeStr, b.selfID) {
+		b.typeNode = pt.ParaCommitSupervisionNode
+		return strings.Split(nodeStr, ","), nodeStr
+	} else {
+		b.typeNode = pt.ParaCommitNode
+	}
+
+	return nil, ""
+}
+
+func (b *blsClient) getSuperNodes() ([]string, string) {
+	if b.typeNode == pt.ParaCommitNode {
+		// 获取授权节点
+		nodes, nodeStr := b.getSuperGroupNodes()
+		if len(nodes) > 0 {
+			return nodes, nodeStr
+		} else {
+			return b.getSupervisionGroupNodes()
+		}
+	} else if b.typeNode == pt.ParaCommitSuperNode {
+		return b.getSuperGroupNodes()
+	} else if b.typeNode == pt.ParaCommitSupervisionNode {
+		return b.getSupervisionGroupNodes()
 	}
 
 	return nil, ""
@@ -278,7 +308,6 @@ func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 
 	b.rcvCommitTxCh <- commits
 	return nil
-
 }
 
 func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossCommitAction, error) {
@@ -304,7 +333,7 @@ func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossComm
 		//验证bls 签名
 		err = b.verifyBlsSign(tx.From(), commit)
 		if err != nil {
-			return nil, errors.Wrapf(pt.ErrBlsSignVerify, "from=%s", tx.From())
+			return nil, errors.Wrapf(err, "from=%s", tx.From())
 		}
 		commits = append(commits, commit)
 	}
@@ -405,7 +434,7 @@ func (b *blsClient) aggregateCommit2Action(nodes []string, commits []*pt.ParaBls
 	for _, v := range commits {
 		a := &pt.ParacrossCommitAction{Bls: &pt.ParacrossCommitBlsInfo{}}
 		s := &pt.ParacrossNodeStatus{}
-		types.Decode(v.Msgs[0], s)
+		_ = types.Decode(v.Msgs[0], s)
 		a.Status = s
 
 		sign, err := b.aggregateSigns(v.Signs)
@@ -492,42 +521,54 @@ func (b *blsClient) blsSign(commits []*pt.ParacrossCommitAction) error {
 }
 
 func (b *blsClient) getBlsPubKey(addr string) (crypto.PubKey, error) {
-	//先从缓存中获取
-	if v, ok := b.peersBlsPubKey[addr]; ok {
-		return v, nil
+	if b.typeNode == pt.ParaCommitSuperNode || b.typeNode == pt.ParaCommitSupervisionNode {
+		var funcName string
+		if b.typeNode == pt.ParaCommitSuperNode {
+			funcName = "GetNodeAddrInfo"
+		} else {
+			funcName = "GetSupervisionNodeAddrInfo"
+		}
+
+		//先从缓存中获取
+		if v, ok := b.peersBlsPubKey[addr]; ok {
+			return v, nil
+		}
+
+		//缓存没有，则从statedb获取
+		cfg := b.paraClient.GetAPI().GetConfig()
+		ret, err := b.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+			Driver:   "paracross",
+			FuncName: funcName,
+			Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle(), Addr: addr}),
+		})
+		if err != nil {
+			plog.Error("commitmsg.GetNodeAddrInfo ", "funcName", funcName, "err", err.Error())
+			return nil, err
+		}
+		resp, ok := ret.(*pt.ParaNodeAddrIdStatus)
+		if !ok {
+			plog.Error("commitmsg.getNodeGroupAddrs rsp nok", "funcName", funcName)
+			return nil, err
+		}
+
+		s, err := common.FromHex(resp.BlsPubKey)
+		if err != nil {
+			plog.Error("commitmsg.getNode pubkey nok", "pubkey", resp.BlsPubKey, "funcName", funcName)
+			return nil, err
+		}
+		pubKey, err := b.cryptoCli.PubKeyFromBytes(s)
+		if err != nil {
+			plog.Error("verifyBlsSign.DeserializePublicKey", "key", addr)
+			return nil, err
+		}
+		plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", common.ToHex(pubKey.Bytes()))
+		b.peersBlsPubKey[addr] = pubKey
+
+		return pubKey, nil
+
 	}
 
-	//缓存没有，则从statedb获取
-	cfg := b.paraClient.GetAPI().GetConfig()
-	ret, err := b.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
-		Driver:   "paracross",
-		FuncName: "GetNodeAddrInfo",
-		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle(), Addr: addr}),
-	})
-	if err != nil {
-		plog.Error("commitmsg.GetNodeAddrInfo ", "err", err.Error())
-		return nil, err
-	}
-	resp, ok := ret.(*pt.ParaNodeAddrIdStatus)
-	if !ok {
-		plog.Error("commitmsg.getNodeGroupAddrs rsp nok")
-		return nil, err
-	}
-
-	s, err := common.FromHex(resp.BlsPubKey)
-	if err != nil {
-		plog.Error("commitmsg.getNode pubkey nok", "pubkey", resp.BlsPubKey)
-		return nil, err
-	}
-	pubKey, err := b.cryptoCli.PubKeyFromBytes(s)
-	if err != nil {
-		plog.Error("verifyBlsSign.DeserializePublicKey", "key", addr)
-		return nil, err
-	}
-	plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", pubKey.Bytes())
-	b.peersBlsPubKey[addr] = pubKey
-
-	return pubKey, nil
+	return nil, errors.New("b.typeNode = pt.ParaCommitNode")
 }
 
 func (b *blsClient) verifyBlsSign(addr string, commit *pt.ParacrossCommitAction) error {
