@@ -357,10 +357,10 @@ func updateCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}
 
 func updateSupervisionDetailsCommitAddrs(stat *pt.ParacrossHeightStatus, nodes map[string]struct{}) {
 	supervisionDetailsDetails := &pt.ParacrossStatusDetails{}
-	for i, addr := range stat.Details.Addrs {
+	for i, addr := range stat.SupervisionDetails.Addrs {
 		if _, ok := nodes[addr]; ok {
 			supervisionDetailsDetails.Addrs = append(supervisionDetailsDetails.Addrs, addr)
-			supervisionDetailsDetails.BlockHash = append(supervisionDetailsDetails.BlockHash, stat.Details.BlockHash[i])
+			supervisionDetailsDetails.BlockHash = append(supervisionDetailsDetails.BlockHash, stat.SupervisionDetails.BlockHash[i])
 		}
 	}
 	stat.SupervisionDetails = supervisionDetailsDetails
@@ -613,7 +613,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]struct{}, commitAddrs []string, supervisionNodes map[string]struct{}, supervisionValidAddrs []string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
-	err := a.preCheckCommitInfo(commit, commitAddrs)
+	var err error
+	if len(commitAddrs) > 0 {
+		err = a.preCheckCommitInfo(commit, commitAddrs)
+	} else {
+		err = a.preCheckCommitInfo(commit, supervisionValidAddrs)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -641,10 +646,11 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	var copyStat *pt.ParacrossHeightStatus
 	if isNotFound(err) {
 		stat = &pt.ParacrossHeightStatus{
-			Status:  pt.ParacrossStatusCommiting,
-			Title:   commit.Title,
-			Height:  commit.Height,
-			Details: &pt.ParacrossStatusDetails{},
+			Status:             pt.ParacrossStatusCommiting,
+			Title:              commit.Title,
+			Height:             commit.Height,
+			Details:            &pt.ParacrossStatusDetails{},
+			SupervisionDetails: &pt.ParacrossStatusDetails{},
 		}
 		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkCommitTx) {
 			stat.MainHeight = commit.MainBlockHeight
@@ -667,12 +673,12 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 
 	for _, addr := range supervisionValidAddrs {
 		// 如有分叉， 同一个节点可能再次提交commit交易
-		found, index := hasCommited(stat.Details.Addrs, addr)
+		found, index := hasCommited(stat.SupervisionDetails.Addrs, addr)
 		if found {
 			stat.SupervisionDetails.BlockHash[index] = commit.BlockHash
 		} else {
-			stat.SupervisionDetails.Addrs = append(stat.Details.Addrs, addr)
-			stat.SupervisionDetails.BlockHash = append(stat.Details.BlockHash, commit.BlockHash)
+			stat.SupervisionDetails.Addrs = append(stat.SupervisionDetails.Addrs, addr)
+			stat.SupervisionDetails.BlockHash = append(stat.SupervisionDetails.BlockHash, commit.BlockHash)
 		}
 	}
 
@@ -735,7 +741,6 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 		for i, v := range stat.SupervisionDetails.Addrs {
 			clog.Debug("paracross.Commit commit SupervisionDetails", "addr", v, "hash", common.ToHex(stat.SupervisionDetails.BlockHash[i]))
 		}
-
 		mostSupervisionCount, mostSupervisionHash := GetMostCommit(stat.SupervisionDetails.BlockHash)
 		if !isCommitDone(len(supervisionNodes), mostSupervisionCount) {
 			return receipt, nil

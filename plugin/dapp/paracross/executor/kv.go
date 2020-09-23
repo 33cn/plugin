@@ -80,9 +80,9 @@ func setPrefix() {
 	paraSupervisionNodes = "mavl-paracross-supervision-nodes-title-"
 	paraSupervisionNodeAddr = "mavl-paracross-supervision-nodes-titleAddr-"
 	paraSupervisionNodeGroupStatusAddrs = "mavl-paracross-supervision-nodegroup-apply-title-"
-	paraSupervisionNodeGroupIDPrefix = "mavl-paracross-supervision-title-nodegroupid-"
+	paraSupervisionNodeGroupIDPrefix = "mavl-paracross-title-nodegroupid-supervision-"
 	paraSupervisionSelfConsensStages = "mavl-paracross-supervision-selfconsens-stages-"
-	paraSupervisionSelfConsensStageIDPrefix = "mavl-paracross-supervision-selfconsens-id-"
+	paraSupervisionSelfConsensStageIDPrefix = "mavl-paracross-selfconsens-id-supervision-"
 
 	localSupervisionNodeGroupStatusTitle = "LODB-paracross-supervision-nodegroupStatusTitle-"
 }

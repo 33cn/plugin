@@ -245,6 +245,10 @@ func (p *Paracross) Query_GetSupervisionNodeGroupStatus(in *pt.ReqParacrossNodeI
 		return nil, types.ErrInvalidParam
 	}
 	stat, err := getSupervisionNodeGroupStatus(p.GetStateDB(), in.Title)
+	if err != nil {
+		return stat, err
+	}
+	stat.Id = getParaNodeIDSuffix(stat.Id)
 	return stat, err
 }
 
@@ -286,6 +290,14 @@ func (p *Paracross) Query_ListSupervisionNodeGroupStatus(in *pt.ReqParacrossNode
 	}
 
 	resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
+	if err != nil {
+		return resp, err
+	}
+	addrs := resp.(*pt.RespParacrossNodeGroups)
+	for _, id := range addrs.Ids {
+		id.Id = getParaNodeIDSuffix(id.Id)
+	}
+
 	return resp, err
 }
 

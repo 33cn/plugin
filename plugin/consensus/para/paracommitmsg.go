@@ -341,10 +341,14 @@ func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 
 func (client *commitMsgClient) checkAuthAccountIn() {
 	nodeStr, err := client.getNodeGroupAddrs()
-	if err != nil {
+	nodeSupervisionStr, errSupervision := client.getSupervisionNodeGroupAddrs() // 判断是否是监督节点
+	if err != nil && errSupervision != nil {
 		return
 	}
-	authExist := strings.Contains(nodeStr, client.authAccount)
+
+	authExist1 := strings.Contains(nodeStr, client.authAccount)
+	authExist2 := strings.Contains(nodeSupervisionStr, client.authAccount)
+	authExist := authExist1 || authExist2
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -403,7 +407,6 @@ func (client *commitMsgClient) isSync() bool {
 	}
 
 	return true
-
 }
 
 func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*types.Transaction, int64) {
