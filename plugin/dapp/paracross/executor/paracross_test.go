@@ -46,6 +46,13 @@ var (
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
 
+	PrivKeyE         = "0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f" // 15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h
+	PrivKeyF         = "0xaffa90b6a897c798e63890312b2ec9fb5a3c156dac290479ccb67c25c78e9413" // 1JQjqDChawMYfG3yyxByrhJ467HorPVfFZ
+	SupervisionNodes = [][]byte{
+		[]byte("15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h"),
+		[]byte("1JQjqDChawMYfG3yyxByrhJ467HorPVfFZ"),
+	}
+
 	chain33TestCfg     = types.NewChain33Config(testnode.DefaultConfig)
 	chain33TestMainCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
 )
@@ -74,6 +81,28 @@ func makeNodeInfo(key, addr string, cnt int) *types.ConfigItem {
 		item.GetArr().Value = append(item.GetArr().Value, string(n))
 	}
 	return &item
+}
+
+func makeSupervisionNodeInfo(suite *CommitTestSuite) {
+	SupervisionNodeKey := calcParaSupervisionNodeGroupAddrsKey(Title)
+	var item types.ConfigItem
+	item.Key = Title
+	item.Addr = Title
+	item.Ty = mty.ConfigItemArrayConfig
+	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
+	arr := types.ConfigItem_Arr{Arr: emptyValue}
+	item.Value = &arr
+	for _, n := range SupervisionNodes {
+		item.GetArr().Value = append(item.GetArr().Value, string(n))
+	}
+
+	_ = suite.stateDB.Set(SupervisionNodeKey, types.Encode(&item))
+	value, err := suite.stateDB.Get(SupervisionNodeKey)
+	if err != nil {
+		suite.T().Error("get setup title failed", err)
+		return
+	}
+	assert.Equal(suite.T(), value, types.Encode(&item))
 }
 
 func init() {
@@ -115,6 +144,8 @@ func (suite *CommitTestSuite) SetupSuite() {
 		return
 	}
 	assert.Equal(suite.T(), value, types.Encode(nodeValue))
+
+	makeSupervisionNodeInfo(suite)
 
 	stageKey := calcParaSelfConsStagesKey()
 	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
@@ -246,7 +277,7 @@ func commitOnceImpl(suite suite.Suite, exec *Paracross, privkeyStr string) (rece
 	return
 }
 
-func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCnt int) {
+func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCnt int, commitSupervisionCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
@@ -264,6 +295,7 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 	assert.Equal(suite.T(), int32(pt.ParacrossStatusCommiting), titleHeight.Status)
 	assert.Equal(suite.T(), Title, titleHeight.Title)
 	assert.Equal(suite.T(), commitCnt, len(titleHeight.Details.Addrs))
+	assert.Equal(suite.T(), commitSupervisionCnt, len(titleHeight.SupervisionDetails.Addrs))
 }
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
@@ -318,16 +350,22 @@ func checkRecordReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 
 func (suite *CommitTestSuite) TestExec() {
 	receipt := commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 1)
+	checkCommitReceipt(suite, receipt, 1, 0)
 
 	receipt = commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 1)
+	checkCommitReceipt(suite, receipt, 1, 0)
 
 	receipt = commitOnce(suite, PrivKeyB)
-	checkCommitReceipt(suite, receipt, 2)
+	checkCommitReceipt(suite, receipt, 2, 0)
 
 	receipt = commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 2)
+	checkCommitReceipt(suite, receipt, 2, 0)
+
+	receipt = commitOnce(suite, PrivKeyE)
+	checkCommitReceipt(suite, receipt, 2, 1)
+
+	receipt = commitOnce(suite, PrivKeyF)
+	checkCommitReceipt(suite, receipt, 2, 2)
 
 	receipt = commitOnce(suite, PrivKeyC)
 	checkDoneReceipt(suite.Suite, receipt, 3)
@@ -337,6 +375,7 @@ func (suite *CommitTestSuite) TestExec() {
 
 	receipt = commitOnce(suite, PrivKeyD)
 	checkRecordReceipt(suite, receipt, 4)
+
 }
 
 func TestCommitSuite(t *testing.T) {

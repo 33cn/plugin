@@ -585,7 +585,6 @@ function apply_coins() {
     para_exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.paracross"}]}' ${para_ip} | jq -r ".result")
     chain33_SendToAddress "$addr1q9" "${para_exec_addr}" 900000000 "${para_ip}"
     chain33_QueryExecBalance "${addr1q9}" "user.p.para.paracross" "$para_ip"
-
 }
 
 function run_testcases() {

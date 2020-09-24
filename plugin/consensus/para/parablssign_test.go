@@ -34,7 +34,6 @@ func TestIntegrateCommits(t *testing.T) {
 	assert.Equal(t, len(pool[0].Signs), 2)
 	assert.Equal(t, pool[0].Addrs[0], "aa")
 	assert.Equal(t, pool[0].Addrs[1], "bb")
-
 }
 
 func TestBlsSignMain(t *testing.T) {
@@ -97,6 +96,10 @@ func testBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 
 	err = client.verifyBlsSign(KS, commit)
 	assert.Equal(t, err, nil)
+
+	client.typeNode = pt.ParaCommitNode
+	err = client.verifyBlsSign(KS, commit)
+	assert.NotEmpty(t, err)
 }
 
 func testVerifyBlsSign(t *testing.T, cryptCli crypto.Crypto) {

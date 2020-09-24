@@ -25,6 +25,7 @@ func (suite *NodeManageTestSuite) testSupervisionExec() {
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
+	// Apply
 	config := &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
@@ -40,6 +41,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
+	// Quit
 	config = &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeQuit,
@@ -49,6 +51,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 	suite.Nil(err)
 
 	receipt = nodeCommit(suite, PrivKey14K, tx)
+	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
