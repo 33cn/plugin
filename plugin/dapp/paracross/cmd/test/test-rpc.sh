@@ -233,6 +233,13 @@ function paracross_ListNodeStatus() {
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeStatusInfo","payload":{"title":"user.p.para.","status":3}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
+function paracross_GetSupervisionInfo() {
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupAddrs","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "GetSupervisionNodeGroupAddrs"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupStatus","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "GetSupervisionNodeGroupStatus"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeGroupStatus","payload":{"title":"user.p.para.","status":2}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeGroupStatus status:2"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeGroupStatus","payload":{"title":"user.p.para.","status":3}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeGroupStatus status:3"
+}
+
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
 para_test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
 
@@ -596,6 +603,7 @@ function run_testcases() {
     paracross_GetNodeGroupStatus
     paracross_ListNodeGroupStatus
     paracross_ListNodeStatus
+    paracross_GetSupervisionInfo
     paracross_Transfer_Withdraw
     paracross_testBindMiner "$UNIT_HTTP"
 
