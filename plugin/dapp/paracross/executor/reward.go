@@ -8,6 +8,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -15,36 +16,28 @@ const (
 	opUnBind = 2
 )
 
-//根据挖矿节点地址 获取委托挖矿地址
-func (a *action) getBindAddrs(nodes []string, statusHeight int64) []*pt.ParaNodeBindList {
-	var lists []*pt.ParaNodeBindList
-	for _, m := range nodes {
-		list, err := getBindNodeInfo(a.db, m)
-		if isNotFound(errors.Cause(err)) {
-			continue
-		}
-		if err != nil {
-			clog.Error("paracross getBindAddrs err", "height", statusHeight, "node", m)
-			continue
-		}
-		lists = append(lists, list)
+//根据挖矿共识节点地址 过滤整体共识节点映射列表， 获取委托挖矿地址
+func (a *action) getBindAddrs(nodes []string, statusHeight int64) (*pt.ParaNodeBindList, error) {
+	nodesMap := make(map[string]bool)
+	for _, n := range nodes {
+		nodesMap[n] = true
 	}
 
-	return lists
-
-}
-
-func isBindAddrFound(bindAddrs []*pt.ParaNodeBindList) bool {
-	if len(bindAddrs) <= 0 {
-		return false
+	var newLists pt.ParaNodeBindList
+	list, err := getBindNodeInfo(a.db)
+	if err != nil {
+		clog.Error("paracross getBindAddrs err", "height", statusHeight)
+		return nil, err
 	}
-
-	for _, addr := range bindAddrs {
-		if len(addr.Miners) > 0 {
-			return true
+	//这样检索是按照list的映射顺序，不是按照nodes的顺序(需要循环嵌套)
+	for _, m := range list.Miners {
+		if nodesMap[m.SuperNode] {
+			newLists.Miners = append(newLists.Miners, m)
 		}
 	}
-	return false
+
+	return &newLists, nil
+
 }
 
 func (a *action) rewardSuperNode(coinReward int64, miners []string, statusHeight int64) (*types.Receipt, int64, error) {
@@ -70,21 +63,19 @@ func (a *action) rewardSuperNode(coinReward int64, miners []string, statusHeight
 }
 
 //奖励委托挖矿账户
-func (a *action) rewardBindAddr(coinReward int64, bindList []*pt.ParaNodeBindList, statusHeight int64) (*types.Receipt, int64, error) {
+func (a *action) rewardBindAddr(coinReward int64, bindList *pt.ParaNodeBindList, statusHeight int64) (*types.Receipt, int64, error) {
 	if coinReward <= 0 {
 		return nil, 0, nil
 	}
 
 	//有可能一个bindAddr 在多个node绑定，这里会累计上去
 	var bindAddrList []*pt.ParaBindMinerInfo
-	for _, node := range bindList {
-		for _, miner := range node.Miners {
-			info, err := getBindAddrInfo(a.db, node.SuperNode, miner)
-			if err != nil {
-				return nil, 0, err
-			}
-			bindAddrList = append(bindAddrList, info)
+	for _, node := range bindList.Miners {
+		info, err := getBindAddrInfo(a.db, node.SuperNode, node.Miner)
+		if err != nil {
+			return nil, 0, err
 		}
+		bindAddrList = append(bindAddrList, info)
 	}
 
 	var totalCoins int64
@@ -127,18 +118,21 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	}
 
 	//超级节点地址
-	minerAddrs := getMiners(stat.Details, nodeStatus.BlockHash)
+	nodeAddrs := getSuperNodes(stat.Details, nodeStatus.BlockHash)
 	//委托地址
-	bindAddrs := a.getBindAddrs(minerAddrs, nodeStatus.Height)
+	bindAddrs, err := a.getBindAddrs(nodeAddrs, nodeStatus.Height)
+	if err != nil {
+		return nil, err
+	}
 
 	//奖励超级节点
 	minderRewards := coinReward
 	//如果有委托挖矿地址，则超级节点分baseReward部分，否则全部
-	if isBindAddrFound(bindAddrs) {
+	if len(bindAddrs.Miners) > 0 {
 		minderRewards = coinBaseReward
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	r, change, err := a.rewardSuperNode(minderRewards, minerAddrs, nodeStatus.Height)
+	r, change, err := a.rewardSuperNode(minderRewards, nodeAddrs, nodeStatus.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +161,8 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	return receipt, nil
 }
 
-// getMiners 获取提交共识消息的矿工地址
-func getMiners(detail *pt.ParacrossStatusDetails, blockHash []byte) []string {
+// getSuperNodes 获取提交共识消息的矿工地址
+func getSuperNodes(detail *pt.ParacrossStatusDetails, blockHash []byte) []string {
 	addrs := make([]string, 0)
 	for i, hash := range detail.BlockHash {
 		if bytes.Equal(hash, blockHash) {
@@ -210,8 +204,8 @@ func makeAddrBindReceipt(node, addr string, prev, current *pt.ParaBindMinerInfo)
 	}
 }
 
-func makeNodeBindReceipt(addr string, prev, current *pt.ParaNodeBindList) *types.Receipt {
-	key := calcParaBindMinerNode(addr)
+func makeNodeBindReceipt(prev, current *pt.ParaNodeBindList) *types.Receipt {
+	key := calcParaBindMinerNode()
 	log := &pt.ReceiptParaNodeBindListUpdate{
 		Prev:    prev,
 		Current: current,
@@ -233,51 +227,56 @@ func makeNodeBindReceipt(addr string, prev, current *pt.ParaNodeBindList) *types
 
 //绑定到超级节点
 func (a *action) bind2Node(node string) (*types.Receipt, error) {
-	info, err := getBindNodeInfo(a.db, node)
-	if err != nil && !isNotFound(errors.Cause(err)) {
+	list, err := getBindNodeInfo(a.db)
+	if err != nil {
 		return nil, errors.Wrap(err, "bind2Node")
 	}
 
-	//found
-	if info != nil {
-		listCopy := *info
-		info.Miners = append(info.Miners, a.fromaddr)
-		return makeNodeBindReceipt(node, &listCopy, info), nil
+	//由于kvmvcc内存架构，如果存储结构为nil，将回溯查找，这样在只有一个绑定时候，unbind后，有可能会回溯到更早状态，是错误的，title这里就是占位使用
+	if len(list.Title) <= 0 {
+		list.Title = a.api.GetConfig().GetTitle()
 	}
-	//unfound
-	var list pt.ParaNodeBindList
-	list.SuperNode = node
-	list.Miners = append(list.Miners, a.fromaddr)
-	return makeNodeBindReceipt(node, nil, &list), nil
+
+	old := proto.Clone(list).(*pt.ParaNodeBindList)
+	list.Miners = append(list.Miners, &pt.ParaNodeBindOne{SuperNode: node, Miner: a.fromaddr})
+
+	return makeNodeBindReceipt(old, list), nil
+
 }
 
 //从超级节点解绑
 func (a *action) unbind2Node(node string) (*types.Receipt, error) {
-	list, err := getBindNodeInfo(a.db, node)
+	list, err := getBindNodeInfo(a.db)
 	if err != nil {
 		return nil, errors.Wrap(err, "unbind2Node")
 	}
-	newList := &pt.ParaNodeBindList{SuperNode: list.SuperNode}
+	newList := &pt.ParaNodeBindList{Title: a.api.GetConfig().GetTitle()}
+	old := proto.Clone(list).(*pt.ParaNodeBindList)
+
 	for _, m := range list.Miners {
-		if m != a.fromaddr {
-			newList.Miners = append(newList.Miners, m)
+		if m.SuperNode == node && m.Miner == a.fromaddr {
+			continue
 		}
+		newList.Miners = append(newList.Miners, m)
 	}
-	return makeNodeBindReceipt(node, list, newList), nil
+	return makeNodeBindReceipt(old, newList), nil
 
 }
 
-func getBindNodeInfo(db dbm.KV, node string) (*pt.ParaNodeBindList, error) {
-	key := calcParaBindMinerNode(node)
+func getBindNodeInfo(db dbm.KV) (*pt.ParaNodeBindList, error) {
+	var list pt.ParaNodeBindList
+	key := calcParaBindMinerNode()
 	data, err := db.Get(key)
+	if isNotFound(err) {
+		return &list, nil
+	}
 	if err != nil {
-		return nil, errors.Wrapf(err, "get key failed node=%s", node)
+		return nil, errors.Wrapf(err, "get key failed")
 	}
 
-	var list pt.ParaNodeBindList
 	err = types.Decode(data, &list)
 	if err != nil {
-		return nil, errors.Wrapf(err, "decode failed node=%s", node)
+		return nil, errors.Wrapf(err, "decode failed")
 	}
 	return &list, nil
 }
@@ -378,6 +377,10 @@ func (a *action) unBindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	unBindHours := cfg.MGInt("mver.consensus.paracross.unBindTime", a.height)
 	if a.blocktime-acct.BlockTime < unBindHours*60*60 {
 		return nil, errors.Wrapf(types.ErrNotAllow, "unBindOp unbind time=%d less %d hours than bind time =%d", a.blocktime, unBindHours, acct.BlockTime)
+	}
+
+	if acct.BindStatus != opBind {
+		return nil, errors.Wrapf(types.ErrNotAllow, "unBindOp,current addr is unbind status")
 	}
 
 	//unfrozen
