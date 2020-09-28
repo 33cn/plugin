@@ -405,7 +405,7 @@ func (suite *NodeManageTestSuite) testSuperQuery() {
 	assert.Equal(suite.T(), ok, true)
 	assert.NotNil(suite.T(), resp2)
 
-	ret, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1FbS6G4CRYAYeSEPGg7uKP9MukUo6crEE5"})
+	_, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1FbS6G4CRYAYeSEPGg7uKP9MukUo6crEE5"})
 	suite.NotNil(err)
 
 	ret, err = suite.exec.Query_GetNodeGroupStatus(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
