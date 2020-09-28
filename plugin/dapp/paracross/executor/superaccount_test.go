@@ -413,4 +413,7 @@ func (suite *NodeManageTestSuite) testSuperQuery() {
 	resp3, ok := ret.(*pt.ParaNodeGroupStatus)
 	assert.Equal(suite.T(), ok, true)
 	assert.Equal(suite.T(), resp3.Status, int32(pt.ParacrossNodeGroupApprove))
+
+	_, err = suite.exec.Query_GetNodeIDInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Id: "mavl-paracross-title-nodeid-user.p.test.-0x8cf0e600667b8e6cf66516369acd4e1b5f6c93b3ae1c0b5edf458dfbe01f1607"})
+	suite.Nil(err)
 }
