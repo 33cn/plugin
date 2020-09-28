@@ -22,6 +22,7 @@ func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Tra
 func (suite *NodeManageTestSuite) testSupervisionExec() {
 	suite.testSupervisionNodeConfigQuit()
 	suite.testSupervisionNodeConfigApprove()
+	suite.testSupervisionQuery()
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
@@ -87,4 +88,24 @@ func checkSupervisionGroupApplyReceipt(suite *NodeManageTestSuite, receipt *type
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
 	assert.Equal(suite.T(), int32(pt.TyLogParaSupervisionNodeGroupConfig), receipt.Logs[0].Ty)
+}
+
+func (suite *NodeManageTestSuite) testSupervisionQuery() {
+	ret, err := suite.exec.Query_GetSupervisionNodeGroupAddrs(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp, ok := ret.(*types.ReplyConfig)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp.Value, Account14K)
+
+	ret, err = suite.exec.Query_GetSupervisionNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: Account14K})
+	suite.Nil(err)
+	resp2, ok := ret.(*pt.ParaNodeAddrIdStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.NotNil(suite.T(), resp2)
+
+	ret, err = suite.exec.Query_GetSupervisionNodeGroupStatus(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp3, ok := ret.(*pt.ParaNodeGroupStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp3.Status, int32(pt.ParacrossSupervisionNodeApprove))
 }

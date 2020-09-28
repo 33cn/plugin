@@ -24,7 +24,7 @@ import (
 var (
 	PrivKey14K = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" // 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 	Account14K = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
 	Account12Q = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 )
@@ -74,6 +74,14 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
 	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+
+	block := &types.Block{
+		Height:     1,
+		MainHeight: 10,
+	}
+	detail := &types.BlockDetail{Block: block}
+	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
+	suite.api.On("GetBlocks", mock.Anything).Return(details, nil)
 
 	suite.exec = newParacross().(*Paracross)
 	suite.exec.SetAPI(suite.api)
@@ -244,7 +252,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
-	//checkGroupApproveReceipt(suite, receipt)
 }
 
 func (suite *NodeManageTestSuite) testNodeGroupConfig() {
@@ -318,9 +325,14 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 }
 
 func (suite *NodeManageTestSuite) TestExec() {
+	suite.testSuperExec()
+	suite.testSupervisionExec()
+}
+
+func (suite *NodeManageTestSuite) testSuperExec() {
 	suite.testNodeGroupConfig()
 	suite.testNodeConfig()
-	suite.testSupervisionExec()
+	suite.testSuperQuery()
 }
 
 func TestNodeManageSuite(t *testing.T) {
@@ -378,4 +390,27 @@ func TestGetNodeIdSuffix(t *testing.T) {
 	id = "mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b-1"
 	rtID = getParaNodeIDSuffix(id)
 	assert.Equal(t, txID, rtID)
+}
+
+func (suite *NodeManageTestSuite) testSuperQuery() {
+	ret, err := suite.exec.Query_GetNodeGroupAddrs(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp, ok := ret.(*types.ReplyConfig)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp.Value, applyAddrs)
+
+	ret, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"})
+	suite.Nil(err)
+	resp2, ok := ret.(*pt.ParaNodeAddrIdStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.NotNil(suite.T(), resp2)
+
+	ret, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1FbS6G4CRYAYeSEPGg7uKP9MukUo6crEE5"})
+	suite.NotNil(err)
+
+	ret, err = suite.exec.Query_GetNodeGroupStatus(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp3, ok := ret.(*pt.ParaNodeGroupStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp3.Status, int32(pt.ParacrossNodeGroupApprove))
 }
