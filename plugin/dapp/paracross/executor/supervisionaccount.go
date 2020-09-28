@@ -182,7 +182,7 @@ func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool,
 	if err != nil && !isNotFound(err) {
 		return false, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
-	//有可能申请地址和配置地址不是同一个
+
 	if validNode(config.Addr, nodes) {
 		return true, nil
 	}
@@ -191,15 +191,15 @@ func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool,
 
 func (a *action) checkSupervisionNodeGroupExist(title string) error {
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
-	value, err := a.db.Get(key)
+	_, err := a.db.Get(key)
 	if err != nil && !isNotFound(err) {
 		return err
 	}
 
-	if value != nil {
-		clog.Error("node group apply, group existed")
-		return pt.ErrParaSupervisionNodeGroupExisted
-	}
+	//if value != nil {
+	//	clog.Error("node group apply, group existed")
+	//	return pt.ErrParaSupervisionNodeGroupExisted
+	//}
 
 	return nil
 }
@@ -227,10 +227,9 @@ func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeGroupStatus) (*ty
 	for i, addr := range nodes {
 		stat := &pt.ParaNodeIdStatus{
 			Id:          status.Id + "-" + strconv.Itoa(i),
-			Status:      pt.ParaApplyClosed,
+			Status:      pt.ParacrossSupervisionNodeApprove,
 			Title:       status.Title,
 			TargetAddr:  addr,
-			Votes:       &pt.ParaNodeVoteDetail{Addrs: []string{a.fromaddr}, Votes: []string{"yes"}},
 			CoinsFrozen: status.CoinsFrozen,
 			FromAddr:    status.FromAddr,
 			Height:      a.height}
@@ -251,7 +250,7 @@ func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeGroupStatus) (*ty
 
 //由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
 func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
+	//cfg := a.api.GetConfig()
 	addrStat, err := getSupervisionNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
 		if !isNotFound(err) {
@@ -261,41 +260,17 @@ func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*ty
 		addrStat.Title = stat.Title
 		addrStat.Addr = stat.TargetAddr
 		addrStat.BlsPubKey = stat.BlsPubKey
-		addrStat.Status = pt.ParaApplyJoined
+		addrStat.Status = pt.ParacrossSupervisionNodeApprove
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaSupervisionNodeStatusReceipt(a.fromaddr, nil, addrStat), nil
 	}
 
 	preStat := *addrStat
-	if stat.Status == pt.ParaApplyJoining {
-		addrStat.Status = pt.ParaApplyJoined
-		addrStat.ProposalId = stat.Id
-		addrStat.QuitId = ""
-		return makeParaSupervisionNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
-	}
-
-	if stat.Status == pt.ParaApplyQuiting {
-		proposalStat, err := getNodeID(a.db, addrStat.ProposalId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "nodeAddr:%s quiting wrong proposeid:%s", stat.TargetAddr, addrStat.ProposalId)
-		}
-
-		addrStat.Status = pt.ParaApplyQuited
-		addrStat.QuitId = stat.Id
-		receipt := makeParaSupervisionNodeStatusReceipt(a.fromaddr, &preStat, addrStat)
-
-		if !cfg.IsPara() {
-			r, err := a.nodeGroupCoinsActive(proposalStat.FromAddr, proposalStat.CoinsFrozen, 1)
-			if err != nil {
-				return nil, err
-			}
-			receipt = mergeReceipt(receipt, r)
-		}
-		return receipt, nil
-	}
-
-	return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "nodeAddr:%s  get wrong status:%d", stat.TargetAddr, stat.Status)
+	stat.Status = pt.ParacrossSupervisionNodeApprove
+	addrStat.ProposalId = stat.Id
+	addrStat.QuitId = ""
+	return makeParaSupervisionNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
 }
 
 func (a *action) supervisionNodeGroupApply(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -305,17 +280,18 @@ func (a *action) supervisionNodeGroupApply(config *pt.ParaNodeAddrConfig) (*type
 		return nil, err
 	}
 	if addrExist {
-		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeAddr existed:%s in super", config.Addr)
+		clog.Debug("supervisionNodeGroup Apply", "config.Addr", config.Addr, "err", "config.Addr existed in super group")
+		return nil, pt.ErrParaNodeAddrExisted
 	}
 
 	// 是否已经申请
 	addrExist, err = a.checkValidSupervisionNode(config)
 	if err != nil {
-		//return nil, err
 		fmt.Println("err:", err)
 	}
 	if addrExist {
-		return nil, errors.Wrapf(pt.ErrParaSupervisionNodeAddrExisted, "nodeAddr existed:%s", config.Addr)
+		clog.Debug("supervisionNodeGroup Apply", "config.Addr", config.Addr, "err", "config.Addr existed in supervision group")
+		return nil, pt.ErrParaSupervisionNodeAddrExisted
 	}
 
 	// 判断和监督组冻结金额是否一致
@@ -346,7 +322,7 @@ func (a *action) supervisionNodeGroupApply(config *pt.ParaNodeAddrConfig) (*type
 	if err != nil && !isNotFound(err) {
 		return nil, errors.Wrapf(err, "nodeJoin get title=%s,nodeAddr=%s", config.Title, config.Addr)
 	}
-	if addrStat != nil && addrStat.Status != pt.ParaApplyQuited {
+	if addrStat != nil && addrStat.Status != pt.ParacrossSupervisionNodeQuit {
 		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeJoin nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
 	}
 
@@ -379,7 +355,7 @@ func (a *action) supervisionNodeGroupApprove(config *pt.ParaNodeAddrConfig) (*ty
 	cfg := a.api.GetConfig()
 	//只在主链检查
 	if !cfg.IsPara() && !isSuperManager(cfg, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not supervision manager:%s", a.fromaddr)
 	}
 
 	id, err := getSupervisionNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
@@ -452,7 +428,7 @@ func (a *action) supervisionNodeGroupQuit(config *pt.ParaNodeAddrConfig) (*types
 	}
 
 	//approved or quited
-	if status.Status != pt.ParacrossNodeGroupApply {
+	if status.Status != pt.ParacrossSupervisionNodeApply {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "node group apply not apply:%d", status.Status)
 	}
 
@@ -470,7 +446,7 @@ func (a *action) supervisionNodeGroupQuit(config *pt.ParaNodeAddrConfig) (*types
 	}
 
 	copyStat := *status
-	status.Status = pt.ParacrossNodeGroupQuit
+	status.Status = pt.ParacrossSupervisionNodeQuit
 	status.Height = a.height
 
 	r := makeSupervisionNodeGroupIDReceipt(a.fromaddr, &copyStat, status)

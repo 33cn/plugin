@@ -7,7 +7,7 @@ import (
 )
 
 // createRawSupervisionNodeConfigTx create raw tx for node config
-func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Transaction, error) {
+func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) *types.Transaction {
 	action := &pt.ParacrossAction{
 		Ty:    pt.ParacrossActionSupervisionNodeGroupConfig,
 		Value: &pt.ParacrossAction_SupervisionNodeGroupConfig{SupervisionNodeGroupConfig: config},
@@ -16,12 +16,15 @@ func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) (*types.Tra
 		Payload: types.Encode(action),
 		Execer:  []byte(config.Title + pt.ParaX),
 	}
-	return tx, nil
+	return tx
 }
 
 func (suite *NodeManageTestSuite) testSupervisionExec() {
 	suite.testSupervisionNodeConfigQuit()
-	suite.testSupervisionNodeConfigApprove()
+	suite.testSupervisionNodeConfigApprove(Account14K, PrivKey14K)
+	suite.testSupervisionNodeConfigApprove(Account1Ku, PrivKey1Ku)
+	suite.testSupervisionNodeConfigApprove(Account1M3, PrivKey1M3)
+	suite.testSupervisionNodeError()
 	suite.testSupervisionQuery()
 }
 
@@ -32,14 +35,12 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 		Op:    pt.ParacrossSupervisionNodeApply,
 		Addr:  Account14K,
 	}
-	tx, err := createRawSupervisionNodeConfigTx(config)
-	suite.Nil(err)
-
+	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, PrivKey14K, tx)
 	checkSupervisionGroupApplyReceipt(suite, receipt)
 
 	var g pt.ReceiptParaNodeGroupConfig
-	err = types.Decode(receipt.Logs[0].Log, &g)
+	err := types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
 	// Quit
@@ -48,27 +49,23 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigQuit() {
 		Op:    pt.ParacrossSupervisionNodeQuit,
 		Id:    g.Current.Id,
 	}
-	tx, err = createRawSupervisionNodeConfigTx(config)
-	suite.Nil(err)
-
+	tx = createRawSupervisionNodeConfigTx(config)
 	receipt = nodeCommit(suite, PrivKey14K, tx)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 }
 
-func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
+func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove(addr, privKey string) {
 	config := &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  Account14K,
+		Addr:  addr,
 	}
-	tx, err := createRawSupervisionNodeConfigTx(config)
-	suite.Nil(err)
-
+	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, PrivKey14K, tx)
 	checkSupervisionGroupApplyReceipt(suite, receipt)
 
 	var g pt.ReceiptParaNodeGroupConfig
-	err = types.Decode(receipt.Logs[0].Log, &g)
+	err := types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
 	config = &pt.ParaNodeAddrConfig{
@@ -76,11 +73,31 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove() {
 		Id:    g.Current.Id,
 		Op:    pt.ParacrossSupervisionNodeApprove,
 	}
-	tx, err = createRawSupervisionNodeConfigTx(config)
-	suite.Nil(err)
-
-	receipt = nodeCommit(suite, PrivKey14K, tx)
+	tx = createRawSupervisionNodeConfigTx(config)
+	receipt = nodeCommit(suite, privKey, tx)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
+}
+
+func (suite *NodeManageTestSuite) testSupervisionNodeError() {
+	config := &pt.ParaNodeAddrConfig{
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParacrossSupervisionNodeApply,
+		Addr:  Account1M3,
+	}
+	tx := createRawSupervisionNodeConfigTx(config)
+	tx, _ = signTx(suite.Suite, tx, PrivKey1Ku)
+	_, err := suite.exec.Exec(tx, 0)
+	assert.Equal(suite.T(), err, pt.ErrParaSupervisionNodeAddrExisted)
+
+	config = &pt.ParaNodeAddrConfig{
+		Title: chain33TestCfg.GetTitle(),
+		Op:    pt.ParacrossSupervisionNodeApply,
+		Addr:  "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+	}
+	tx = createRawSupervisionNodeConfigTx(config)
+	tx, _ = signTx(suite.Suite, tx, PrivKey1KS)
+	_, err = suite.exec.Exec(tx, 0)
+	assert.Equal(suite.T(), err, pt.ErrParaNodeAddrExisted)
 }
 
 func checkSupervisionGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
@@ -95,7 +112,7 @@ func (suite *NodeManageTestSuite) testSupervisionQuery() {
 	suite.Nil(err)
 	resp, ok := ret.(*types.ReplyConfig)
 	assert.Equal(suite.T(), ok, true)
-	assert.Equal(suite.T(), resp.Value, Account14K)
+	assert.Equal(suite.T(), resp.Value, "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt,1KufZaLTKVAy37AsXNd9bsva5WZvP8w5uG,1M3XCbWVxAPBH5AR8VmLky4ZtDdGgC6ugD")
 
 	ret, err = suite.exec.Query_GetSupervisionNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: Account14K})
 	suite.Nil(err)
