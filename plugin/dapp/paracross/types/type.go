@@ -28,8 +28,8 @@ var (
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
-	// ForkParaSupervisionRbk 平行链新增监督节点
-	ForkParaSupervisionRbk = "ForkParaSupervisionRbk"
+	// ForkParaSupervision 平行链新增监督节点
+	ForkParaSupervision = "ForkParaSupervision"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -58,7 +58,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
-	cfg.RegisterDappFork(ParaX, ForkParaSupervisionRbk, 6000000)
+	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 6000000)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)

@@ -318,13 +318,13 @@ func (a *action) supervisionNodeGroupApply(config *pt.ParaNodeAddrConfig) (*type
 	}
 
 	// 判断申请节点之前没有申请或者状态不是申请退出
-	addrStat, err := getSupervisionNodeAddr(a.db, config.Title, config.Addr)
-	if err != nil && !isNotFound(err) {
-		return nil, errors.Wrapf(err, "nodeJoin get title=%s,nodeAddr=%s", config.Title, config.Addr)
-	}
-	if addrStat != nil && addrStat.Status != pt.ParacrossSupervisionNodeQuit {
-		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "nodeJoin nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
-	}
+	//addrStat, err := getSupervisionNodeAddr(a.db, config.Title, config.Addr)
+	//if err != nil && !isNotFound(err) {
+	//	return nil, errors.Wrapf(err, "nodeJoin get title=%s,nodeAddr=%s", config.Title, config.Addr)
+	//}
+	//if addrStat != nil && addrStat.Status != pt.ParacrossSupervisionNodeQuit {
+	//	return nil, errors.Wrapf(pt.ErrParaSupervisionNodeGroupExisted, "nodeJoin nodeAddr existed:%s,status:%d", config.Addr, addrStat.Status)
+	//}
 
 	targetAddrs := ""
 	blsPubKeys := ""
@@ -461,7 +461,7 @@ func (a *action) SupervisionNodeGroupConfig(config *pt.ParaNodeAddrConfig) (*typ
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle
 	}
-	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaSupervisionRbk) {
+	if !types.IsParaExecName(string(a.tx.Execer)) && cfg.IsDappFork(a.exec.GetMainHeight(), pt.ParaX, pt.ForkParaSupervision) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,should prefix with user.p.", string(a.tx.Execer))
 	}
 	if (config.Op == pt.ParacrossSupervisionNodeApprove || config.Op == pt.ParacrossSupervisionNodeQuit) && config.Id == "" {

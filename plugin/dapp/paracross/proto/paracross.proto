@@ -24,10 +24,10 @@ message ParacrossHeightStatus {
     string                      title               = 2;
     int64                       height              = 3;
     ParacrossStatusDetails      details             = 4;
-    ParacrossStatusDetails      supervisionDetails  = 5;
-    int64                       mainHeight          = 6;
-    bytes                       mainHash            = 7;
-    ParacrossStatusBlockDetails blockDetails        = 8;
+    int64                       mainHeight          = 5;
+    bytes                       mainHash            = 6;
+    ParacrossStatusBlockDetails blockDetails        = 7;
+    ParacrossStatusDetails      supervisionDetails  = 8;
 }
 
 message ParacrossHeightStatusRsp {
