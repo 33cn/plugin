@@ -237,7 +237,7 @@ function paracross_GetSupervisionInfo() {
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupAddrs","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "GetSupervisionNodeGroupAddrs"
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupStatus","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "GetSupervisionNodeGroupStatus"
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeGroupStatus","payload":{"title":"user.p.para.","status":2}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeGroupStatus status:2"
-   # chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeGroupStatus","payload":{"title":"user.p.para.","status":4}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeGroupStatus status:4"
+    # chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeGroupStatus","payload":{"title":"user.p.para.","status":4}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeGroupStatus status:4"
 }
 
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
