@@ -780,7 +780,7 @@ function para_create_supervision_nodegroup() {
     if [ -z "$newid" ]; then
         ${PARA_CLI} para supervision_node list -s 4
         echo "cancel status error "
-#        exit 1
+        #        exit 1
     fi
     check_balance_1ka "$balancePre" -6
 
