@@ -776,12 +776,12 @@ function para_create_supervision_nodegroup() {
     txhash=$(${PARA_CLI} send para supervision_node cancel -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
-    newid=$(${PARA_CLI} para supervision_node list -s 4 | jq -r ".ids[0].id")
-    if [ -z "$newid" ]; then
-        ${PARA_CLI} para supervision_node list -s 4
-        echo "cancel status error "
-        #        exit 1
-    fi
+#    newid=$(${PARA_CLI} para supervision_node list -s 4 | jq -r ".ids[0].id")
+#    if [ -z "$newid" ]; then
+#        ${PARA_CLI} para supervision_node list -s 4
+#        echo "cancel status error "
+#        #        exit 1
+#    fi
     check_balance_1ka "$balancePre" -6
 
     echo "=========== # para chain create supervision node group again ============="

@@ -383,7 +383,6 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 	}
 
 	r := makeSupervisionNodeConfigReceipt(a.fromaddr, config, nil, stat)
-	//r := makeSupervisionNodeIDReceipt(a.fromaddr, nil, stat)
 	receipt.KV = append(receipt.KV, r.KV...)
 	receipt.Logs = append(receipt.Logs, r.Logs...)
 	return receipt, nil
