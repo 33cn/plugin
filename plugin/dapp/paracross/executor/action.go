@@ -452,30 +452,20 @@ func getValidAddrs(nodes map[string]struct{}, addrs []string) []string {
 }
 
 //get secp256 addr's bls pubkey
-func getAddrBlsPubKey(db dbm.KV, title, addr string, commitNodeType uint32) (string, error) {
-	if commitNodeType == pt.ParaCommitSuperNode {
-		addrStat, err := getNodeAddr(db, title, addr)
-		if err != nil {
-			return "", errors.Wrapf(err, "nodeAddr:%s-%s get error", title, addr)
-		}
-		return addrStat.BlsPubKey, nil
-	} else if commitNodeType == pt.ParaCommitSupervisionNode {
-		addrStat, err := getSupervisionNodeAddr(db, title, addr)
-		if err != nil {
-			return "", errors.Wrapf(err, "Supervision nodeAddr:%s-%s get error", title, addr)
-		}
-		return addrStat.BlsPubKey, nil
-	} else {
-		return "", errors.New("commitNodeType is ParaCommitNode")
+func getAddrBlsPubKey(db dbm.KV, title, addr string) (string, error) {
+	addrStat, err := getNodeAddr(db, title, addr)
+	if err != nil {
+		return "", errors.Wrapf(err, "nodeAddr:%s-%s get error", title, addr)
 	}
+	return addrStat.BlsPubKey, nil
 }
 
 //bls签名共识交易验证 大约平均耗时3ms (2~4ms)
-func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction, commitNodeType uint32) ([]string, error) {
+func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
 	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
 	var pubs []string
 	for _, addr := range signAddrs {
-		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr, commitNodeType)
+		pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr /*, commitNodeType*/)
 		if err != nil {
 			return nil, errors.Wrapf(err, "pubkey not exist to addr=%s", addr)
 		}
@@ -529,6 +519,25 @@ func verifyBlsSign(cryptoCli crypto.Crypto, pubs []string, commit *pt.ParacrossC
 	return nil
 }
 
+func (a *action) getValidCommitAddrs(commit *pt.ParacrossCommitAction, nodesMap map[string]struct{}, nodesArry []string) ([]string, error) {
+	//获取commitAddrs, bls sign 包含多个账户的聚合签名
+	commitAddrs := []string{a.fromaddr}
+	if commit.Bls != nil {
+		addrs, err := a.procBlsSign(nodesArry, commit)
+		if err != nil {
+			return nil, errors.Wrap(err, "procBlsSign")
+		}
+		commitAddrs = addrs
+	}
+
+	validAddrs := getValidAddrs(nodesMap, commitAddrs)
+	if len(validAddrs) <= 0 {
+		return nil, errors.Wrapf(errors.New("getValidAddrs error"), "getValidAddrs nil commitAddrs=%s ", strings.Join(commitAddrs, ","))
+	}
+
+	return validAddrs, nil
+}
+
 //共识commit　msg　处理
 func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
@@ -545,31 +554,17 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 		return nil, errors.Wrap(err, "getNodesGroup")
 	}
 
-	var commitAddrs, commitSupervisionAddrs, validAddrs, supervisionValidAddrs []string
+	var validAddrs, supervisionValidAddrs []string
 
 	bIsCommitSuperNode := false
 	bIsCommitSupervisionNode := false
-	for _, addr := range nodesArry {
-		if addr == a.fromaddr {
-			// 授权节点共识
-			//获取commitAddrs, bls sign 包含多个账户的聚合签名
-			commitAddrs = []string{a.fromaddr}
-			if commit.Bls != nil {
-				addrs, err := a.procBlsSign(nodesArry, commit, pt.ParaCommitSuperNode)
-				if err != nil {
-					return nil, errors.Wrap(err, "procBlsSign")
-				}
-				commitAddrs = addrs
-			}
-
-			validAddrs = getValidAddrs(nodesMap, commitAddrs)
-			if len(validAddrs) <= 0 {
-				return nil, errors.Wrapf(err, "getValidAddrs nil commitAddrs=%s ", strings.Join(commitAddrs, ","))
-			}
-
-			bIsCommitSuperNode = true
-			break
+	if _, exist := nodesMap[a.fromaddr]; exist {
+		validAddrs, err = a.getValidCommitAddrs(commit, nodesMap, nodesArry)
+		if err != nil {
+			return nil, errors.Wrap(err, "getValidCommitAddrs")
 		}
+
+		bIsCommitSuperNode = true
 	}
 
 	// 获取监督节点的数据 监督节点在高度分叉后
@@ -579,27 +574,12 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	if !bIsCommitSuperNode {
-		for _, addr := range supervisionNodesArry {
-			if addr == a.fromaddr {
-				// 监督节点共识
-				//获取commitAddrs, bls sign 包含多个账户的聚合签名
-				commitSupervisionAddrs = []string{a.fromaddr}
-				if commit.Bls != nil {
-					addrs, err := a.procBlsSign(supervisionNodesArry, commit, pt.ParaCommitSupervisionNode)
-					if err != nil {
-						return nil, errors.Wrap(err, "procBlsSign")
-					}
-					commitSupervisionAddrs = addrs
-				}
-
-				supervisionValidAddrs = getValidAddrs(supervisionNodesMap, commitSupervisionAddrs)
-				if len(supervisionValidAddrs) <= 0 {
-					return nil, errors.Wrapf(err, "getValidAddrs nil commitSupervisionAddrs=%s", strings.Join(commitSupervisionAddrs, ","))
-				}
-
-				bIsCommitSupervisionNode = true
-				break
+		if _, exist := supervisionNodesMap[a.fromaddr]; exist {
+			supervisionValidAddrs, err = a.getValidCommitAddrs(commit, supervisionNodesMap, supervisionNodesArry)
+			if err != nil {
+				return nil, errors.Wrap(err, "getValidCommitAddrs")
 			}
+			bIsCommitSupervisionNode = true
 		}
 	}
 
@@ -646,15 +626,17 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	var copyStat *pt.ParacrossHeightStatus
 	if isNotFound(err) {
 		stat = &pt.ParacrossHeightStatus{
-			Status:             pt.ParacrossStatusCommiting,
-			Title:              commit.Title,
-			Height:             commit.Height,
-			Details:            &pt.ParacrossStatusDetails{},
-			SupervisionDetails: &pt.ParacrossStatusDetails{},
+			Status:  pt.ParacrossStatusCommiting,
+			Title:   commit.Title,
+			Height:  commit.Height,
+			Details: &pt.ParacrossStatusDetails{},
 		}
 		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkCommitTx) {
 			stat.MainHeight = commit.MainBlockHeight
 			stat.MainHash = commit.MainBlockHash
+		}
+		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkParaSupervision) {
+			stat.SupervisionDetails = &pt.ParacrossStatusDetails{}
 		}
 	} else {
 		copyStat = proto.Clone(stat).(*pt.ParacrossHeightStatus)
@@ -692,7 +674,7 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
 	if cfg.IsDappFork(commit.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		updateCommitAddrs(stat, nodes)
-		updateSupervisionDetailsCommitAddrs(stat, supervisionNodes)
+		//updateSupervisionDetailsCommitAddrs(stat, supervisionNodes) // ???
 	}
 	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 	//fork之前记录的stat 没有根据nodes更新而更新
@@ -736,6 +718,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 		return receipt, nil
 	}
 
+	clog.Debug("paracross.Commit commit ----pass", "most", mostCount, "mostHash", common.ToHex([]byte(mostHash)))
 	// 如果已经有监督节点
 	if len(supervisionNodes) > 0 {
 		for i, v := range stat.SupervisionDetails.Addrs {
@@ -746,9 +729,14 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 			return receipt, nil
 		}
 		clog.Debug("paracross.Commit commit SupervisionDetails ----pass", "mostSupervisionCount", mostSupervisionCount, "mostSupervisionHash", common.ToHex([]byte(mostSupervisionHash)))
-	}
 
-	clog.Debug("paracross.Commit commit ----pass", "most", mostCount, "mostHash", common.ToHex([]byte(mostHash)))
+		if common.ToHex([]byte(mostHash)) != common.ToHex([]byte(mostSupervisionHash)) {
+			clog.Debug("paracross.Commit commit mostSupervisionHash mostHash not equal")
+			return receipt, nil
+		}
+	}
+	clog.Debug("paracross.Commit commit ----pass")
+
 	stat.Status = pt.ParacrossStatusCommitDone
 	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 
@@ -929,7 +917,7 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 	}
 	clog.Debug("paracross.commitTxDoneByStat ----pass", "most", most, "mostHash", common.ToHex([]byte(mostHash)))
 	stat.Status = pt.ParacrossStatusCommitDone
-	saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
+	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 	r := makeCommitStatReceipt(stat)
 	receipt = mergeReceipt(receipt, r)
 

@@ -295,7 +295,9 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 	assert.Equal(suite.T(), int32(pt.ParacrossStatusCommiting), titleHeight.Status)
 	assert.Equal(suite.T(), Title, titleHeight.Title)
 	assert.Equal(suite.T(), commitCnt, len(titleHeight.Details.Addrs))
-	assert.Equal(suite.T(), commitSupervisionCnt, len(titleHeight.SupervisionDetails.Addrs))
+	if commitSupervisionCnt > 0 {
+		assert.Equal(suite.T(), commitSupervisionCnt, len(titleHeight.SupervisionDetails.Addrs))
+	}
 }
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
@@ -375,7 +377,6 @@ func (suite *CommitTestSuite) TestExec() {
 
 	receipt = commitOnce(suite, PrivKeyD)
 	checkRecordReceipt(suite, receipt, 4)
-
 }
 
 func TestCommitSuite(t *testing.T) {

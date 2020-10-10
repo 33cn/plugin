@@ -177,6 +177,7 @@ const (
 	ParacrossSupervisionNodeApply = iota + 1
 	ParacrossSupervisionNodeApprove
 	ParacrossSupervisionNodeQuit
+	ParacrossSupervisionNodeCancel
 )
 
 // 0 普通节点共识  1 授权节点正在共识  2 监督节点正在共识
@@ -333,6 +334,10 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
+		}
+
+		if key == ForkParaSupervision { // ????
+			forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
 		}
 	} else {
 		forkHeight = cfg.GetDappFork(ParaX, forkKey)

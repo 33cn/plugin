@@ -40,12 +40,10 @@ var (
 	paraBindMinderNode string
 
 	//监督节点
-	paraSupervisionNodes                    string
-	paraSupervisionNodeAddr                 string
-	paraSupervisionNodeGroupStatusAddrs     string
-	paraSupervisionNodeGroupIDPrefix        string
-	paraSupervisionSelfConsensStages        string
-	paraSupervisionSelfConsensStageIDPrefix string
+	paraSupervisionNodes                string
+	paraSupervisionNodeGroupStatusAddrs string
+	paraSupervisionNodeGroupIDPrefix    string
+	paraSupervisionSelfConsensStages    string
 
 	localSupervisionNodeGroupStatusTitle string
 )
@@ -78,11 +76,9 @@ func setPrefix() {
 	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
 	paraSupervisionNodes = "mavl-paracross-supervision-nodes-title-"
-	paraSupervisionNodeAddr = "mavl-paracross-supervision-nodes-titleAddr-"
 	paraSupervisionNodeGroupStatusAddrs = "mavl-paracross-supervision-nodegroup-apply-title-"
 	paraSupervisionNodeGroupIDPrefix = "mavl-paracross-title-nodegroupid-supervision-"
 	paraSupervisionSelfConsensStages = "mavl-paracross-supervision-selfconsens-stages-"
-	paraSupervisionSelfConsensStageIDPrefix = "mavl-paracross-selfconsens-id-supervision-"
 
 	localSupervisionNodeGroupStatusTitle = "LODB-paracross-supervision-nodegroupStatusTitle-"
 }
@@ -232,10 +228,6 @@ func calcParaSupervisionNodeGroupAddrsKey(title string) []byte {
 
 func calcParaSupervisionNodeGroupStatusKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraSupervisionNodeGroupStatusAddrs+"%s", title))
-}
-
-func calcParaSupervisionNodeAddrKey(title string, addr string) []byte {
-	return []byte(fmt.Sprintf(paraSupervisionNodeAddr+"%s-%s", title, addr))
 }
 
 func calcParaSupervisionNodeGroupIDKey(title, hash string) string {

@@ -48,6 +48,10 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 		res.CommitAddrs = append(res.CommitAddrs, addr)
 		res.CommitBlockHash = append(res.CommitBlockHash, common.ToHex(status.Details.BlockHash[i]))
 	}
+	for i, addr := range status.SupervisionDetails.Addrs {
+		res.CommitSupervisionAddrs = append(res.CommitSupervisionAddrs, addr)
+		res.CommitSupervisionBlockHash = append(res.CommitSupervisionBlockHash, common.ToHex(status.SupervisionDetails.BlockHash[i]))
+	}
 	return res, nil
 }
 
@@ -151,29 +155,6 @@ func (p *Paracross) Query_GetNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Me
 		stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
 		stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
 	}
-	return stat, nil
-}
-
-//Query_GetSupervisionNodeAddrInfo get specific node addr info
-func (p *Paracross) Query_GetSupervisionNodeAddrInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Addr == "" {
-		return nil, types.ErrInvalidParam
-	}
-	cfg := p.GetAPI().GetConfig()
-	if cfg.IsPara() {
-		in.Title = cfg.GetTitle()
-	} else if in.Title == "" {
-		return nil, types.ErrInvalidParam
-	}
-
-	stat, err := getSupervisionNodeAddr(p.GetStateDB(), in.Title, in.Addr)
-	if err != nil {
-		return nil, err
-	}
-
-	stat.QuitId = getParaNodeIDSuffix(stat.QuitId)
-	stat.ProposalId = getParaNodeIDSuffix(stat.ProposalId)
-
 	return stat, nil
 }
 

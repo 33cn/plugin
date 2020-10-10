@@ -65,4 +65,6 @@ var (
 	ErrParaSupervisionNodeGroupNotSet = errors.New("ErrParaSupervisionNodeGroupNotSet")
 	//ErrParaSupervisionNodeGroupExisted para config group taked over alreay
 	ErrParaSupervisionNodeGroupExisted = errors.New("ErrParaSupervisionNodesExisted")
+	//ErrParaSupervisionNodeAddrNotExisted node addr not exist in supervision group
+	ErrParaSupervisionNodeAddrNotExisted = errors.New("ErrParaSupervisionNodeAddrNotExisted")
 )

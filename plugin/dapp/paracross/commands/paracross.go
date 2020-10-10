@@ -1522,6 +1522,7 @@ func supervisionNodeCmd() *cobra.Command {
 	cmd.AddCommand(supervisionNodeApplyCmd())
 	cmd.AddCommand(supervisionNodeApproveCmd())
 	cmd.AddCommand(supervisionNodeQuitCmd())
+	cmd.AddCommand(supervisionNodeCancelCmd())
 
 	cmd.AddCommand(getSupervisionNodeGroupAddrsCmd())
 	cmd.AddCommand(supervisionNodeGroupStatusCmd())
@@ -1623,18 +1624,52 @@ func supervisionNodeQuitCmd() *cobra.Command {
 }
 
 func addSupervisionNodeQuitCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("id", "i", "", "apply quit id for supervision node")
-	_ = cmd.MarkFlagRequired("id")
+	cmd.Flags().StringP("addr", "a", "", "apply quit id for supervision node")
+	_ = cmd.MarkFlagRequired("addr")
 }
 
 func supervisionNodeQuit(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	opAddr, _ := cmd.Flags().GetString("addr")
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeGroupConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func supervisionNodeCancelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel",
+		Short: "cancel for para chain's supervision node application",
+		Run:   supervisionNodeCancel,
+	}
+	addSupervisionNodeCancelCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeCancelCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("id", "i", "", "apply cancel id for supervision node")
+	_ = cmd.MarkFlagRequired("id")
+}
+
+func supervisionNodeCancel(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	if !strings.HasPrefix(paraName, "user.p") {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
-	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Id: id}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "SupervisionNodeGroupConfig",

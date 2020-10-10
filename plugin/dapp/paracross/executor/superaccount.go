@@ -445,7 +445,6 @@ func updateVotes(in *pt.ParaNodeVoteDetail, nodes map[string]struct{}) *pt.ParaN
 
 //由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
 func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
 		if !isNotFound(err) {
@@ -479,6 +478,7 @@ func (a *action) updateNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt
 		addrStat.QuitId = stat.Id
 		receipt := makeParaNodeStatusReceipt(a.fromaddr, &preStat, addrStat)
 
+		cfg := a.api.GetConfig()
 		if !cfg.IsPara() {
 			r, err := a.nodeGroupCoinsActive(proposalStat.FromAddr, proposalStat.CoinsFrozen, 1)
 			if err != nil {
@@ -592,7 +592,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 		}
 	} else {
 		if stat.Status == pt.ParaApplyJoining {
-			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
+			r, err := updateNodeGroup(a.db, config.Title, stat.TargetAddr, true)
 			if err != nil {
 				return nil, err
 			}
@@ -607,7 +607,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 			stat.Status = pt.ParaApplyClosed
 			stat.Height = a.height
 		} else if stat.Status == pt.ParaApplyQuiting {
-			r, err := unpdateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
+			r, err := updateNodeGroup(a.db, config.Title, stat.TargetAddr, false)
 			if err != nil {
 				return nil, err
 			}
@@ -623,7 +623,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				//node quit后，如果committx满足2/3目标，自动触发commitDone
 				r, err = a.loopCommitTxDone(config.Title)
 				if err != nil {
-					clog.Error("unpdateNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
+					clog.Error("updateNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
 				}
 				receipt = mergeReceipt(receipt, r)
 			}
@@ -640,7 +640,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 	return receipt, nil
 }
 
-func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, error) {
+func updateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, error) {
 	var item types.ConfigItem
 
 	key := calcParaNodeGroupAddrsKey(title)
@@ -651,7 +651,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	if value != nil {
 		err = types.Decode(value, &item)
 		if err != nil {
-			clog.Error("unpdateNodeGroup", "decode db key", key)
+			clog.Error("updateNodeGroup", "decode db key", key)
 			return nil, err // types.ErrBadConfigValue
 		}
 	}
@@ -663,8 +663,7 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
-		clog.Info("unpdateNodeGroup add", "addr", addr, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
-
+		clog.Info("updateNodeGroup add", "addr", addr, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
 	} else {
 		//必须保留至少1个授权账户
 		if len(item.GetArr().Value) <= 1 {
@@ -677,11 +676,11 @@ func unpdateNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, 
 				item.GetArr().Value = append(item.GetArr().Value, value)
 			}
 		}
-		clog.Info("unpdateNodeGroup delete", "addr", addr)
+		clog.Info("updateNodeGroup delete", "addr", addr)
 	}
 	err = db.Set(key, types.Encode(&item))
 	if err != nil {
-		return nil, errors.Wrapf(err, "unpdateNodeGroup set dbkey=%s", key)
+		return nil, errors.Wrapf(err, "updateNodeGroup set dbkey=%s", key)
 	}
 	return makeParaNodeGroupReceipt(title, &copyItem, &item), nil
 }

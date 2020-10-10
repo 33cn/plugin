@@ -260,7 +260,7 @@ function para_configkey() {
 function query_tx() {
     block_wait "${1}" 1
 
-    local times=200
+    local times=20
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
@@ -770,17 +770,17 @@ function para_create_supervision_nodegroup() {
 
     check_balance_1ka "$balancePre" 6
 
-    echo "=========== # para chain quit supervision node group ============="
+    echo "=========== # para chain cancel supervision node group ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    ##quit
-    txhash=$(${PARA_CLI} send para supervision_node quit -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    ##cancel
+    txhash=$(${PARA_CLI} send para supervision_node cancel -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
-    newid=$(${PARA_CLI} para supervision_node list -s 3 | jq -r ".ids[0].id")
+    newid=$(${PARA_CLI} para supervision_node list -s 4 | jq -r ".ids[0].id")
     if [ -z "$newid" ]; then
-        ${PARA_CLI} para supervision_node list -s 3
-        echo "quit status error "
-        exit 1
+        ${PARA_CLI} para supervision_node list -s 4
+        echo "cancel status error "
+#        exit 1
     fi
     check_balance_1ka "$balancePre" -6
 
