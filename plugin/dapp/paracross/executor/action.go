@@ -716,7 +716,7 @@ func isHaveCrossTxs(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus) bo
 func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if enableParacrossTransfer && status.Height > 0 && isHaveCrossTxs(cfg, status) {
-		clog.Debug("paracross.Commit commitDone do cross", "height", status.Height)
+		clog.Debug("paracross.Commit commitDone do cross ok", "height", status.Height)
 		crossTxReceipt, err := a.execCrossTxs(status)
 		if err != nil {
 			return nil, err
