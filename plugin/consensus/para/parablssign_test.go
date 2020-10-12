@@ -69,7 +69,7 @@ func testBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 	PriKS := "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 
 	commit := &pt.ParacrossCommitAction{Status: status}
-	client := &blsClient{cryptoCli: cryptCli, typeNode: pt.ParaCommitSuperNode}
+	client := &blsClient{cryptoCli: cryptCli}
 	client.peersBlsPubKey = make(map[string]crypto.PubKey)
 
 	p, err := common.FromHex(PriKS)
@@ -96,16 +96,11 @@ func testBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 
 	err = client.verifyBlsSign(KS, commit)
 	assert.Equal(t, err, nil)
-
-	client.typeNode = pt.ParaCommitNode
-	err = client.verifyBlsSign(KS, commit)
-	assert.NotEmpty(t, err)
 }
 
 func testVerifyBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 	client := &blsClient{cryptoCli: cryptCli}
 	client.peersBlsPubKey = make(map[string]crypto.PubKey)
-	client.typeNode = pt.ParaCommitSuperNode
 	KS := "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
 	PubKS := "a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
 
