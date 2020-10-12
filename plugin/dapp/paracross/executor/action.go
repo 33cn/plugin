@@ -635,9 +635,6 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 			stat.MainHeight = commit.MainBlockHeight
 			stat.MainHash = commit.MainBlockHash
 		}
-		if pt.IsParaForkHeight(cfg, a.exec.GetMainHeight(), pt.ForkParaSupervision) {
-			stat.SupervisionDetails = &pt.ParacrossStatusDetails{}
-		}
 	} else {
 		copyStat = proto.Clone(stat).(*pt.ParacrossHeightStatus)
 	}
@@ -654,6 +651,9 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	}
 
 	for _, addr := range supervisionValidAddrs {
+		if stat.SupervisionDetails == nil {
+			stat.SupervisionDetails = &pt.ParacrossStatusDetails{}
+		}
 		// 如有分叉， 同一个节点可能再次提交commit交易
 		found, index := hasCommited(stat.SupervisionDetails.Addrs, addr)
 		if found {
@@ -674,8 +674,11 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	//平行链fork pt.ForkCommitTx=0,主链在ForkCommitTx后支持nodegroup，这里平行链dappFork一定为true
 	if cfg.IsDappFork(commit.MainBlockHeight, pt.ParaX, pt.ForkCommitTx) {
 		updateCommitAddrs(stat, nodes)
-		//updateSupervisionDetailsCommitAddrs(stat, supervisionNodes) // ???
 	}
+	if stat.SupervisionDetails != nil {
+		updateSupervisionDetailsCommitAddrs(stat, supervisionNodes)
+	}
+
 	_ = saveTitleHeight(a.db, calcTitleHeightKey(stat.Title, stat.Height), stat)
 	//fork之前记录的stat 没有根据nodes更新而更新
 	if pt.IsParaForkHeight(cfg, stat.MainHeight, pt.ForkLoopCheckCommitTxDone) {

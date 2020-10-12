@@ -24,6 +24,8 @@ var (
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
+
+	//MainForkParaSupervision = "mainForkParaSupervision"
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚

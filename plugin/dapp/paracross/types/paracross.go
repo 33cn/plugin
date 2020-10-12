@@ -329,6 +329,8 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 			key = MainForkParacrossCommitTx
 		case ForkLoopCheckCommitTxDone:
 			key = MainLoopCheckCommitTxDoneForkHeight
+			//case ForkParaSupervision:
+			//	key = MainForkParaSupervision
 		}
 
 		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
@@ -336,9 +338,6 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 			forkHeight = types.MaxHeight
 		}
 
-		if key == ForkParaSupervision { // ????
-			forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
-		}
 	} else {
 		forkHeight = cfg.GetDappFork(ParaX, forkKey)
 
