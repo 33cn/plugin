@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/gas"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
@@ -34,9 +37,6 @@ type Interpreter struct {
 	evm      *EVM
 	cfg      Config
 	gasTable gas.Table
-	// IntPool 整数内存池
-	IntPool *mm.IntPool
-
 	// 是否允许修改数据
 	readOnly bool
 	// 合约执行返回的结果数据
@@ -49,6 +49,10 @@ func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 	// 需要注意，后继如果新增指令，需要在这里判断硬分叉，指定不同的指令集
 	if !cfg.JumpTable[STOP].Valid {
 		cfg.JumpTable = ConstantinopleInstructionSet
+		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
+			//这里需要替换为最新得指令集
+			cfg.JumpTable = YoloV1InstructionSet
+		}
 	}
 
 	return &Interpreter{
@@ -73,18 +77,17 @@ func (in *Interpreter) enforceRestrictions(op OpCode, operation Operation, stack
 // 需要注意的是，如果返回执行出错，依然会扣除剩余的Gas
 // （除非返回的是ErrExecutionReverted，这种情况下会保留剩余的Gas）
 func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err error) {
-	if in.IntPool == nil {
-		in.IntPool = mm.PoolOfIntPools.Get()
-		defer func() {
-			mm.PoolOfIntPools.Put(in.IntPool)
-			in.IntPool = nil
-		}()
-	}
-
+	//TODO 切换为最新的管理方式,合约涉及转账报错？
 	// 每次递归调用，深度加1
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
 
+	// Make sure the readOnly is only set if we aren't in readOnly yet.
+	// This makes also sure that the readOnly flag isn't removed for child calls.
+	//if !in.readOnly {
+	//	in.readOnly = true
+	//	defer func() { in.readOnly = false }()
+	//}
 	// 执行前讲返回数据置空
 	in.ReturnData = nil
 
@@ -100,6 +103,14 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		mem = mm.NewMemory()
 		// 本地栈空间
 		stack = mm.NewStack()
+		// 本地返回的栈
+		returns     = mm.NewReturnStack() // local returns stack
+		callContext = &callCtx{
+			memory:   mem,
+			stack:    stack,
+			rstack:   returns,
+			contract: contract,
+		}
 		// 指令计数器
 		pc = uint64(0)
 		// 操作消耗的Gas
@@ -108,25 +119,35 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		pcCopy  uint64
 		gasCopy uint64
 		logged  bool
+		// 操作码执行函数的结果
+		res []byte
 	)
 	contract.Input = input
 
-	// 执行结束后，重新初始化IntPool
-	defer func() { in.IntPool.Put(stack.Items...) }()
+	// 执行结束后，返还堆栈
+	defer func() {
+		mm.Returnstack(stack)
+		mm.ReturnRStack(returns)
+	}()
 
 	if in.cfg.Debug {
 		defer func() {
 			if err != nil {
 				if !logged {
-					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, contract, in.evm.depth, err)
+					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, returns, in.ReturnData, contract, in.evm.depth, err)
 				} else {
-					in.cfg.Tracer.CaptureFault(in.evm, pcCopy, op, gasCopy, cost, mem, stack, contract, in.evm.depth, err)
+					in.cfg.Tracer.CaptureFault(in.evm, pcCopy, op, gasCopy, cost, mem, stack, returns, contract, in.evm.depth, err)
 				}
 			}
 		}()
 	}
 	// 遍历合约代码中的指令执行，知道遇到特殊指令（停止、自毁、暂停、恢复、返回）
-	for atomic.LoadInt32(&in.evm.abort) == 0 {
+	steps := 0
+	for {
+		steps++
+		if steps%1000 == 0 && atomic.LoadInt32(&in.evm.abort) != 0 {
+			break
+		}
 		if in.cfg.Debug {
 			// 记录当前指令执行前的状态数据
 			logged, pcCopy, gasCopy = false, pc, contract.Gas
@@ -145,16 +166,16 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		if err := in.enforceRestrictions(op, operation, stack); err != nil {
 			return nil, err
 		}
-
 		var memorySize uint64
 		// 计算需要开辟的内存空间
 		if operation.MemorySize != nil {
-			memSize, overflow := common.BigUint64(operation.MemorySize(stack))
+			memSize, overflow := operation.MemorySize(stack)
 			if overflow {
 				return nil, model.ErrGasUintOverflow
 			}
-			// 按字长分配内存
-			if memorySize, overflow = common.SafeMul(common.ToWordSize(memSize), 32); overflow {
+			// memory is expanded in words of 32 bytes. Gas
+			// is also calculated in words.
+			if memorySize, overflow = math.SafeMul(common.ToWordSize(memSize), 32); overflow {
 				return nil, model.ErrGasUintOverflow
 			}
 		}
@@ -173,16 +194,15 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		}
 
 		if in.cfg.Debug {
-			in.cfg.Tracer.CaptureState(in.evm, pc, op, gasCopy, cost, mem, stack, contract, in.evm.depth, err)
+			in.cfg.Tracer.CaptureState(in.evm, pc, op, gasCopy, cost, mem, stack, returns, in.ReturnData, contract, in.evm.depth, err)
 			logged = true
 		}
 
 		// 执行具体的指令操作逻辑（合约执行的核心）
-		res, err := operation.Execute(&pc, in.evm, contract, mem, stack)
-
+		res, err = operation.Execute(&pc, in.evm, callContext)
 		// 如果本操作需要返回，则讲操作返回的结果最为合约执行的结果
 		if operation.Returns {
-			in.ReturnData = res
+			in.ReturnData = common.CopyBytes(res)
 		}
 
 		switch {
@@ -221,4 +241,13 @@ func buildEVMParam(evm *EVM) *params.EVMParam {
 // 之所以只设置CallGasTemp，是因为其它参数均为指针引用，参数中可以直接修改EVM中的状态
 func fillEVM(param *params.EVMParam, evm *EVM) {
 	evm.CallGasTemp = param.CallGasTemp
+}
+
+// callCtx contains the things that are per-call, such as stack and memory,
+// but not transients like pc and gas
+type callCtx struct {
+	memory   *mm.Memory
+	stack    *mm.Stack
+	rstack   *mm.ReturnStack
+	contract *Contract
 }

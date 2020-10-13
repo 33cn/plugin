@@ -26,6 +26,12 @@ type ContractLog struct {
 
 	// Data 日志数据
 	Data []byte
+	// 区块高度
+	BlockNumber uint64 `json:"blockNumber"`
+	// index of the transaction in the block
+	TxIndex uint `json:"transactionIndex"`
+	// hash of the block in which the transaction was included
+	BlockHash common.Hash `json:"blockHash"`
 }
 
 // PrintLog 合约日志打印格式

@@ -81,14 +81,17 @@ func initMap() {
 		EXTCODECOPY:    "EXTCODECOPY",
 		RETURNDATASIZE: "RETURNDATASIZE",
 		RETURNDATACOPY: "RETURNDATACOPY",
+		EXTCODEHASH:    "EXTCODEHASH",
 
 		// 0x40 range - block operations
-		BLOCKHASH:  "BLOCKHASH",
-		COINBASE:   "COINBASE",
-		TIMESTAMP:  "TIMESTAMP",
-		NUMBER:     "NUMBER",
-		DIFFICULTY: "DIFFICULTY",
-		GASLIMIT:   "GASLIMIT",
+		BLOCKHASH:   "BLOCKHASH",
+		COINBASE:    "COINBASE",
+		TIMESTAMP:   "TIMESTAMP",
+		NUMBER:      "NUMBER",
+		DIFFICULTY:  "DIFFICULTY",
+		GASLIMIT:    "GASLIMIT",
+		CHAINID:     "CHAINID",
+		SELFBALANCE: "SELFBALANCE",
 
 		// 0x50 range - 'storage' and execution
 		POP: "POP",
@@ -105,6 +108,10 @@ func initMap() {
 		MSIZE:    "MSIZE",
 		GAS:      "GAS",
 		JUMPDEST: "JUMPDEST",
+
+		BEGINSUB:  "BEGINSUB",
+		JUMPSUB:   "JUMPSUB",
+		RETURNSUB: "RETURNSUB",
 
 		// 0x60 range - push
 		PUSH1:  "PUSH1",
@@ -179,12 +186,13 @@ func initMap() {
 		LOG3:   "LOG3",
 		LOG4:   "LOG4",
 
-		// 0xf0 range
+		// 0xf0 range.
 		CREATE:       "CREATE",
 		CALL:         "CALL",
 		RETURN:       "RETURN",
 		CALLCODE:     "CALLCODE",
 		DELEGATECALL: "DELEGATECALL",
+		CREATE2:      "CREATE2",
 		STATICCALL:   "STATICCALL",
 		REVERT:       "REVERT",
 		SELFDESTRUCT: "SELFDESTRUCT",
@@ -297,6 +305,8 @@ const (
 	RETURNDATASIZE
 	// RETURNDATACOPY op
 	RETURNDATACOPY
+	// EXTCODEHASH op
+	EXTCODEHASH
 )
 
 const (
@@ -312,6 +322,10 @@ const (
 	DIFFICULTY
 	// GASLIMIT op
 	GASLIMIT
+	// CHAINID op
+	CHAINID OpCode = 0x46
+	// SELFBALANCE op
+	SELFBALANCE OpCode = 0x47
 )
 
 const (
@@ -339,6 +353,12 @@ const (
 	GAS
 	// JUMPDEST op
 	JUMPDEST
+	// BEGINSUB OP
+	BEGINSUB
+	// RETURNSUB op
+	RETURNSUB
+	// JUMPSUB op
+	JUMPSUB
 )
 
 const (
@@ -496,6 +516,9 @@ const (
 	RETURN
 	// DELEGATECALL op
 	DELEGATECALL
+	// CREATE2 op
+	CREATE2
+
 	// STATICCALL  op
 	STATICCALL = 0xfa
 

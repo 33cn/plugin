@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,13 +14,18 @@ import (
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebcli/buildflags"
+	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
+	tml "github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "chain33xEth-relayer" + "-cli",
-	Short: "chain33xEth-relayer" + "client tools",
-}
+var (
+	rootCmd = &cobra.Command{
+		Use:   "chain33xEth-relayer" + "-cli",
+		Short: "chain33xEth-relayer" + "client tools",
+	}
+	configPath = flag.String("f", "", "configfile")
+)
 
 func init() {
 	rootCmd.AddCommand(
@@ -59,19 +65,33 @@ func run(RPCAddr, NodeAddr string) {
 	log.SetLogLevel("error")
 	rootCmd.PersistentFlags().String("rpc_laddr", RPCAddr, "http url")
 	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "eth node url")
-	//rootCmd.PersistentFlags().String("rpc_laddr", "", "http url")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
+func initCfg(path string) *relayerTypes.RelayerConfig {
+	var cfg relayerTypes.RelayerConfig
+	if _, err := tml.DecodeFile(path, &cfg); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	return &cfg
+}
+
 func main() {
+	if *configPath == "" {
+		*configPath = "relayer.toml"
+	}
+
+	cfg := initCfg(*configPath)
+
 	if buildflags.RPCAddr == "" {
 		buildflags.RPCAddr = "http://localhost:9901"
 	}
 	if buildflags.NodeAddr == "" {
-		buildflags.NodeAddr = "http://127.0.0.1:7545"
+		buildflags.NodeAddr = cfg.EthProviderCli
 	}
 	run(buildflags.RPCAddr, buildflags.NodeAddr)
 }

@@ -38,3 +38,24 @@ func MakeDupStackFunc(n int) StackValidationFunc {
 func MakeSwapStackFunc(n int) StackValidationFunc {
 	return MakeStackFunc(n, n)
 }
+
+//func MinSwapStack(n int) int {
+//	return MinStack(n, n)
+//}
+//func MaxSwapStack(n int) int {
+//	return MaxStack(n, n)
+//}
+//
+//func MinDupStack(n int) int {
+//	return MinStack(n, n+1)
+//}
+//func MaxDupStack(n int) int {
+//	return MaxStack(n, n+1)
+//}
+
+//func MaxStack(pop, push int) int {
+//	return int(params.StackLimit) + pop - push
+//}
+//func MinStack(pops, push int) int {
+//	return pops
+//}

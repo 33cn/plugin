@@ -54,6 +54,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
+    sed -i $xsedfix 's/^unBindTime=.*/unBindTime=0/g' "${1}"
 
     #blsSign case
     if [ -n "$3" ]; then

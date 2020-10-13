@@ -119,3 +119,9 @@ func (e *Paracross) Exec_SelfStageConfig(payload *pt.ParaStageConfig, tx *types.
 	a := newAction(e, tx)
 	return a.SelfStageConfig(payload)
 }
+
+//Exec_ParaBindMiner node group config process
+func (e *Paracross) Exec_ParaBindMiner(payload *pt.ParaBindMinerCmd, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.bindMiner(payload)
+}

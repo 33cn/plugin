@@ -43,6 +43,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
 	// EEVM合约用户金额冻结
 	cfg.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
+	// EEVM 黄皮v1分叉高度
+	cfg.RegisterDappFork(ExecutorName, ForkEVMYoloV1, 9500000)
 }
 
 //InitExecutor ...

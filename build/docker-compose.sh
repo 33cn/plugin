@@ -15,6 +15,9 @@ set -o pipefail
 PWD=$(cd "$(dirname "$0")" && pwd)
 export PATH="$PWD:$PATH"
 
+dockerNamePrefix="${1}"
+echo "dockerNamePrefix : ${dockerNamePrefix}"
+
 NODE3="${1}_chain33_1"
 CLI="docker exec ${NODE3} /root/chain33-cli"
 
@@ -58,9 +61,7 @@ if [ -n "${DAPP}" ]; then
     DAPP_COMPOSE_FILE="docker-compose-${DAPP}.yml"
     if [ -e "$DAPP_COMPOSE_FILE" ]; then
         export COMPOSE_FILE="docker-compose.yml:${DAPP_COMPOSE_FILE}"
-
     fi
-
 fi
 
 if [ -z "$DAPP" ] || [ "$DAPP" == "paracross" ]; then
@@ -462,29 +463,28 @@ function dapp_test_address() {
 function base_config() {
     #    sync
     transfer "${CLI}"
-    #    transfer "${CLI4}"
 }
 
 function rpc_test() {
     if [ "$DAPP" == "" ]; then
         system_test_rpc "http://${1}:8801"
         dapp_test_address "${CLI}"
-        dapp_test_rpc "http://${1}:8801" "${NODE3}"
+        dapp_test_rpc "http://${1}:8801" "${dockerNamePrefix}"
     fi
     if [ "$DAPP" == "paracross" ]; then
         system_test_rpc "http://${1}:8901"
         dapp_test_address "${CLI}"
-
         dapp_test_rpc "http://${1}:8901"
     fi
-
 }
+
 function dapp_run() {
     if [ -e "$DAPP_TEST_FILE" ]; then
         ${DAPP} "${CLI}" "${1}" "${2}"
     fi
 
 }
+
 function main() {
     echo "==============================DAPP=$DAPP main begin========================================================"
     ### init para ####

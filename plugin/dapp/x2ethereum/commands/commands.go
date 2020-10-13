@@ -72,7 +72,6 @@ func addChain33ToEthFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("amount", "a", float64(0), "the amount of this contract want to lock")
 	_ = cmd.MarkFlagRequired("amount")
-
 }
 
 func burn(cmd *cobra.Command, args []string) {

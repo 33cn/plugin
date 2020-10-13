@@ -1,0 +1,8 @@
+FROM ubuntu:16.04
+
+WORKDIR /root
+COPY ebrelayer ebrelayer
+COPY ebcli_A ebcli_A
+COPY sleep.sh sleep.sh
+
+CMD ["/root/sleep.sh"]

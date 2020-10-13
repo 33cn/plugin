@@ -35,6 +35,9 @@ var (
 
 	paraSelfConsensStages        string
 	paraSelfConsensStageIDPrefix string
+
+	paraBindMinderAddr string
+	paraBindMinderNode string
 )
 
 func setPrefix() {
@@ -49,6 +52,10 @@ func setPrefix() {
 
 	paraSelfConsensStages = "mavl-paracross-selfconsens-stages-"
 	paraSelfConsensStageIDPrefix = "mavl-paracross-selfconsens-id-"
+
+	//bind miner
+	paraBindMinderAddr = "mavl-paracross-bindmineraddr-"
+	paraBindMinderNode = "mavl-paracross-bindminernode-"
 
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
@@ -178,4 +185,13 @@ func calcLocalNodeGroupStatusPrefix(status int32) []byte {
 
 func calcLocalNodeGroupAllPrefix() []byte {
 	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
+}
+
+//bind miner
+func calcParaBindMinerAddr(node, bind string) []byte {
+	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s-%s", node, bind))
+}
+
+func calcParaBindMinerNode() []byte {
+	return []byte(paraBindMinderNode)
 }
