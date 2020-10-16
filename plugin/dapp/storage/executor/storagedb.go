@@ -197,7 +197,7 @@ func (s *StorageAction) EncryptAdd(payload *ety.EncryptNotaryAdd) (*types.Receip
 	var kvs []*types.KeyValue
 	cfg := s.api.GetConfig()
 
-	store, err := QueryStorage(s.db, s.localdb, payload.ContentHash)
+	store, err := QueryStorage(s.db, s.localdb, payload.Key)
 	if err != nil {
 		fmt.Errorf("EncryptAdd.QueryStorage. err:%v", err)
 		return nil, err
@@ -227,7 +227,7 @@ func (s *StorageAction) EncryptAdd(payload *ety.EncryptNotaryAdd) (*types.Receip
 	} else {
 		log := &types.ReceiptLog{Ty: ety.TyEncryptAddLog}
 		logs = append(logs, log)
-		kvs = append(kvs, &types.KeyValue{Key: Key(payload.ContentHash), Value: types.Encode(newStore)})
+		kvs = append(kvs, &types.KeyValue{Key: Key(payload.Key), Value: types.Encode(newStore)})
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}

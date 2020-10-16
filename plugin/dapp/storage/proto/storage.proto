@@ -89,8 +89,8 @@ message EncryptShareNotaryStorage {
 
 // 加密存证数据运算
 message EncryptNotaryAdd {
-    //存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
-    string contentHash = 1;
+    //源操作数存证索引
+    string key = 1;
     //待操作数据
     bytes encryptAdd = 2;
 }
