@@ -8,8 +8,9 @@ message Storage {
         LinkNotaryStorage         linkStorage         = 3;
         EncryptNotaryStorage      encryptStorage      = 4;
         EncryptShareNotaryStorage encryptShareStorage = 5;
+        EncryptNotaryAdd          encryptAdd          = 6;
     }
-    int32 ty = 6;
+    int32 ty = 7;
 }
 
 message StorageAction {
@@ -19,8 +20,9 @@ message StorageAction {
         LinkNotaryStorage         linkStorage         = 3;
         EncryptNotaryStorage      encryptStorage      = 4;
         EncryptShareNotaryStorage encryptShareStorage = 5;
+        EncryptNotaryAdd          encryptAdd          = 6;
     }
-    int32 ty = 6;
+    int32 ty = 7;
 }
 // 内容存证模型
 message ContentOnlyNotaryStorage {
@@ -83,6 +85,14 @@ message EncryptShareNotaryStorage {
     string key = 4;
     //字符串值
     string value = 5;
+}
+
+// 加密存证数据运算
+message EncryptNotaryAdd {
+    //存证明文内容的hash值，推荐使用sha256哈希，限制256位得摘要值
+    string contentHash = 1;
+    //待操作数据
+    bytes encryptAdd = 2;
 }
 
 service storage {}

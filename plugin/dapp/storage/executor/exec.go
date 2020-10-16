@@ -35,3 +35,8 @@ func (s *storage) Exec_EncryptShareStorage(payload *storagetypes.EncryptShareNot
 	action := newStorageAction(s, tx, index)
 	return action.EncryptShareStorage(payload)
 }
+
+func (s *storage) Exec_EncryptAdd(payload *storagetypes.EncryptNotaryAdd, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newStorageAction(s, tx, index)
+	return action.EncryptAdd(payload)
+}
