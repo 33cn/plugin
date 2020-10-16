@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"

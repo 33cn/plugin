@@ -762,11 +762,11 @@ function para_create_nodegroup() {
 # $1 status
 function check_supervision_node_list() {
     newid=$(${PARA_CLI} para supervision_node list -s "$1" | jq -r ".ids[0].id")
-        if [ -z "$newid" ]; then
-            ${PARA_CLI} para supervision_node list -s "$1"
-            echo "cancel status error "
-                    exit 1
-        fi
+    if [ -z "$newid" ]; then
+        ${PARA_CLI} para supervision_node list -s "$1"
+        echo "cancel status error "
+        exit 1
+    fi
 }
 
 # $1 status
