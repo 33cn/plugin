@@ -333,7 +333,6 @@ func getSupervisionNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdSt
 func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
-		fmt.Println("QM_updateSupervisionNodeAddrStatus", "err", err)
 		if !isNotFound(err) {
 			return nil, errors.Wrapf(err, "nodeAddr:%s get error", stat.TargetAddr)
 		}

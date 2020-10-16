@@ -43,9 +43,8 @@ var (
 	paraSupervisionNodes                string
 	paraSupervisionNodeGroupStatusAddrs string
 	paraSupervisionNodeGroupIDPrefix    string
-	//paraSupervisionNodeStatusAddrs      string
-	paraSupervisionNodeIDPrefix      string
-	paraSupervisionSelfConsensStages string
+	paraSupervisionNodeIDPrefix         string
+	paraSupervisionSelfConsensStages    string
 
 	localSupervisionNodeGroupStatusTitle string
 	localSupervisionNodeStatusTitle      string
@@ -81,7 +80,6 @@ func setPrefix() {
 	paraSupervisionNodes = "mavl-paracross-supervision-nodes-title-"
 	paraSupervisionNodeGroupStatusAddrs = "mavl-paracross-supervision-nodegroup-status-title-"
 	paraSupervisionNodeGroupIDPrefix = "mavl-paracross-title-nodegroupid-supervision-"
-	//paraSupervisionNodeStatusAddrs = "mavl-paracross-supervision-node-status-title-"
 	paraSupervisionNodeIDPrefix = "mavl-paracross-title-nodeid-supervision-"
 	paraSupervisionSelfConsensStages = "mavl-paracross-supervision-selfconsens-stages-"
 
@@ -223,14 +221,6 @@ func calcLocalSupervisionNodeStatusTitle(status int32, addr, title, id string) [
 	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s", addr, status, title, id))
 }
 
-//func calcLocalSupervisionNodeStatusPrefix(status int32, addr string) []byte {
-//	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%02d-%s", status, addr))
-//}
-
-func calcLocalSupervisionNodeAllPrefix(addr string) []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s", addr))
-}
-
 //bind miner
 func calcParaBindMinerAddr(node, bind string) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s-%s", node, bind))
@@ -251,10 +241,6 @@ func calcParaSupervisionNodeGroupStatusKey(title string) []byte {
 func calcParaSupervisionNodeGroupIDKey(title, hash string) string {
 	return fmt.Sprintf(paraSupervisionNodeGroupIDPrefix+"%s-%s", title, hash)
 }
-
-//func calcParaSupervisionNodeStatusKey(title string) []byte {
-//	return []byte(fmt.Sprintf(paraSupervisionNodeStatusAddrs+"%s", title))
-//}
 
 func calcParaSupervisionNodeIDKey(title, hash string) string {
 	return fmt.Sprintf(paraSupervisionNodeIDPrefix+"%s-%s", title, hash)

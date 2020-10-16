@@ -305,32 +305,6 @@ func (p *Paracross) Query_ListSupervisionNodeGroupStatus(in *pt.ReqParacrossNode
 	return resp, err
 }
 
-//
-////Query_ListSupervisionNodeStatus list node info by status
-//func (p *Paracross) Query_ListSupervisionNodeStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-//	if in == nil {
-//		return nil, types.ErrInvalidParam
-//	}
-//	var prefix []byte
-//	prefix = calcLocalSupervisionNodeAllPrefix(in.Addr)
-//
-//	//resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
-//	value, err := p.GetLocalDB().Get(prefix)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var rst pt.ParaNodeIdStatus
-//	err = types.Decode(value, &rst)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	//rst.Id = getParaNodeIDSuffix(rst.Id)
-//
-//	return &rst, err
-//}
-
 //Query_ListTitles query paracross titles list
 func (p *Paracross) Query_ListTitles(in *types.ReqNil) (types.Message, error) {
 	return p.paracrossListTitles()
