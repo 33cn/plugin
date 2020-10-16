@@ -2,7 +2,6 @@ package executor
 
 import (
 	"fmt"
-
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -11,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func makeSupervisionNodeIDReceipt(addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
+func makeSupervisionNodeGroupIDReceipt(addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
 	log := &pt.ReceiptParaNodeGroupConfig{
 		Addr:    addr,
 		Prev:    prev,
@@ -162,10 +161,20 @@ func supervisionSelfConsentInitStage(cfg *types.Chain33Config) *types.Receipt {
 	return makeStageSupervisionGroupReceipt(nil, stages)
 }
 
-func getSupervisionNodeGroupID(cfg *types.Chain33Config, db dbm.KV, title string, height int64, id string) (*pt.ParaNodeIdStatus, error) {
-	if pt.IsParaForkHeight(cfg, height, pt.ForkLoopCheckCommitTxDone) {
-		id = calcParaSupervisionNodeGroupIDKey(title, id)
+func getSupervisionNodeGroupID(db dbm.KV, title string, id string) (*pt.ParaNodeGroupStatus, error) {
+	id = calcParaSupervisionNodeGroupIDKey(title, id)
+	val, err := getDb(db, []byte(id))
+	if err != nil {
+		return nil, err
 	}
+
+	var status pt.ParaNodeGroupStatus
+	err = types.Decode(val, &status)
+	return &status, err
+}
+
+func getSupervisionNodeID(db dbm.KV, title string, id string) (*pt.ParaNodeIdStatus, error) {
+	id = calcParaSupervisionNodeIDKey(title, id)
 	val, err := getDb(db, []byte(id))
 	if err != nil {
 		return nil, err
@@ -176,11 +185,10 @@ func getSupervisionNodeGroupID(cfg *types.Chain33Config, db dbm.KV, title string
 	return &status, err
 }
 
-func updateSupervisionNodeGroup(db dbm.KV, title, addr string, add bool) (*types.Receipt, error) {
+func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*types.Receipt, error) {
 	var item types.ConfigItem
-
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
-	value, err := db.Get(key)
+	value, err := a.db.Get(key)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +196,7 @@ func updateSupervisionNodeGroup(db dbm.KV, title, addr string, add bool) (*types
 		err = types.Decode(value, &item)
 		if err != nil {
 			clog.Error("updateSupervisionNodeGroup", "decode db key", key)
-			return nil, err // types.ErrBadConfigValue
+			return nil, err
 		}
 	}
 
@@ -196,6 +204,7 @@ func updateSupervisionNodeGroup(db dbm.KV, title, addr string, add bool) (*types
 	copyItem := item
 	copyItem.Value = &types.ConfigItem_Arr{Arr: &copyValue}
 
+	receipt := &types.Receipt{Ty: types.ExecOk}
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
@@ -209,12 +218,31 @@ func updateSupervisionNodeGroup(db dbm.KV, title, addr string, add bool) (*types
 			}
 		}
 		clog.Info("updateSupervisionNodeGroup delete", "addr", addr)
+
+		// 如果全部退出 监督组也删除
+		if len(item.GetArr().Value) <= 0 {
+			nodeGroupStatus, err := getSupervisionNodeGroupStatus(a.db, title)
+			if err != nil && !isNotFound(err) {
+				return nil, errors.Wrapf(pt.ErrParaSupervisionNodeGroupNotSet, "nodegroup not exist:%s", title)
+			}
+			copyStat := *nodeGroupStatus
+			nodeGroupStatus.Status = pt.ParacrossNodeGroupQuit
+			nodeGroupStatus.Height = a.height
+
+			r := makeSupervisionNodeGroupIDReceipt(a.fromaddr, &copyStat, nodeGroupStatus)
+			receipt = mergeReceipt(receipt, r)
+
+			r = makeParaSupervisionNodeGroupStatusReceipt(title, a.fromaddr, &copyStat, nodeGroupStatus)
+			receipt = mergeReceipt(receipt, r)
+		}
 	}
-	err = db.Set(key, types.Encode(&item))
+	err = a.db.Set(key, types.Encode(&item))
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateNodeGroup set dbkey=%s", key)
 	}
-	return makeParaSupervisionNodeGroupReceipt(title, &copyItem, &item), nil
+	r := makeParaSupervisionNodeGroupReceipt(title, &copyItem, &item)
+	receipt = mergeReceipt(receipt, r)
+	return receipt, nil
 }
 
 func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool, error) {
@@ -237,33 +265,54 @@ func (a *action) checkSupervisionNodeGroupExist(title string) (error, bool) {
 	}
 
 	if value != nil {
+		var item types.ConfigItem
+		err = types.Decode(value, &item)
+		if err != nil {
+			clog.Error("updateSupervisionNodeGroup", "decode db key", key)
+			return err, false
+		}
+
+		// quit 后 数据没有了
+		if len(item.GetArr().Value) <= 0 {
+			return nil, false
+		}
+
 		return nil, true
 	}
 
 	return nil, false
 }
 
-func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeIdStatus) (*types.Receipt, error) {
+func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
 	var item types.ConfigItem
 	key := calcParaSupervisionNodeGroupAddrsKey(status.Title)
 	item.Key = string(key)
 	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
 	arr := types.ConfigItem_Arr{Arr: emptyValue}
 	item.Value = &arr
-	item.GetArr().Value = append(item.GetArr().Value, status.TargetAddr)
+	item.GetArr().Value = append(item.GetArr().Value, status.TargetAddrs)
 	item.Addr = a.fromaddr
 
 	receipt := makeParaSupervisionNodeGroupReceipt(status.Title, nil, &item)
 
-	status.Status = pt.ParacrossSupervisionNodeApprove
-	r := makeSupervisionNodeConfigReceipt(a.fromaddr, nil, nil, status)
-	receipt = mergeReceipt(receipt, r)
-
-	r, err := a.updateSupervisionNodeAddrStatus(status)
-	if err != nil {
-		return nil, err
-	}
-	receipt = mergeReceipt(receipt, r)
+	//copyStat := &pt.ParaNodeIdStatus{
+	//	Id:          status.Id + "-0",
+	//	Status:      pt.ParacrossSupervisionNodeApprove,
+	//	Title:       status.Title,
+	//	TargetAddr:  status.TargetAddrs,
+	//	Votes:       &pt.ParaNodeVoteDetail{},
+	//	CoinsFrozen: status.CoinsFrozen,
+	//	FromAddr:    status.FromAddr,
+	//	Height:      a.height,
+	//}
+	//r := makeSupervisionNodeConfigReceipt(a.fromaddr, nil, nil, copyStat)
+	//receipt = mergeReceipt(receipt, r)
+	//
+	//r, err := a.updateSupervisionNodeAddrStatus(copyStat)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//receipt = mergeReceipt(receipt, r)
 	return receipt, nil
 }
 
@@ -281,9 +330,9 @@ func getSupervisionNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdSt
 
 //由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
 func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*types.Receipt, error) {
-	//cfg := a.api.GetConfig()
 	addrStat, err := getNodeAddr(a.db, stat.Title, stat.TargetAddr)
 	if err != nil {
+		fmt.Println("QM_updateSupervisionNodeAddrStatus", "err", err)
 		if !isNotFound(err) {
 			return nil, errors.Wrapf(err, "nodeAddr:%s get error", stat.TargetAddr)
 		}
@@ -291,7 +340,7 @@ func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*ty
 		addrStat.Title = stat.Title
 		addrStat.Addr = stat.TargetAddr
 		addrStat.BlsPubKey = stat.BlsPubKey
-		addrStat.Status = pt.ParacrossSupervisionNodeApprove
+		addrStat.Status = pt.ParacrossSupervisionNodeApply
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaSupervisionNodeStatusReceipt(a.fromaddr, nil, addrStat), nil
@@ -318,7 +367,7 @@ func (a *action) updateSupervisionNodeAddrStatus(stat *pt.ParaNodeIdStatus) (*ty
 		}
 		return receipt, nil
 	} else {
-		stat.Status = pt.ParacrossSupervisionNodeApprove
+		addrStat.Status = stat.Status
 		addrStat.ProposalId = stat.Id
 		addrStat.QuitId = ""
 		return makeParaSupervisionNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
@@ -338,7 +387,7 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 		return nil, pt.ErrParaNodeAddrExisted
 	}
 
-	// 是否已经申请
+	// 判断 node 是否已经申请
 	addrExist, err = a.checkValidSupervisionNode(config)
 	if err != nil {
 		fmt.Println("err:", err)
@@ -367,12 +416,36 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 		if err != nil {
 			return nil, err
 		}
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
+		receipt = mergeReceipt(receipt, r)
+	}
+
+	// 判断监督账户组是否已经存在
+	err, exist := a.checkSupervisionNodeGroupExist(config.Title)
+	if err != nil {
+		return nil, err
+	}
+	// 监督账户组不存在
+	if !exist {
+		statGroup := &pt.ParaNodeGroupStatus{
+			Id:          calcParaSupervisionNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+			Status:      pt.ParacrossSupervisionNodeApply,
+			Title:       config.Title,
+			TargetAddrs: config.Addr,
+			BlsPubKeys:  config.BlsPubKey,
+			CoinsFrozen: config.CoinsFrozen,
+			FromAddr:    a.fromaddr,
+			Height:      a.height,
+		}
+
+		r := makeSupervisionNodeGroupIDReceipt(a.fromaddr, nil, statGroup)
+		receipt = mergeReceipt(receipt, r)
+
+		r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, statGroup)
+		receipt = mergeReceipt(receipt, r)
 	}
 
 	stat := &pt.ParaNodeIdStatus{
-		Id:          calcParaSupervisionNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+		Id:          calcParaSupervisionNodeIDKey(config.Title, common.ToHex(a.txhash)),
 		Status:      pt.ParacrossSupervisionNodeApply,
 		Title:       config.Title,
 		TargetAddr:  config.Addr,
@@ -381,10 +454,15 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 		FromAddr:    a.fromaddr,
 		Height:      a.height,
 	}
-
 	r := makeSupervisionNodeConfigReceipt(a.fromaddr, config, nil, stat)
-	receipt.KV = append(receipt.KV, r.KV...)
-	receipt.Logs = append(receipt.Logs, r.Logs...)
+	receipt = mergeReceipt(receipt, r)
+
+	r, err = a.updateSupervisionNodeAddrStatus(stat)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
+
 	return receipt, nil
 }
 
@@ -395,7 +473,7 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not supervision manager:%s", a.fromaddr)
 	}
 
-	apply, err := getSupervisionNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	apply, err := getSupervisionNodeID(a.db, config.Title, config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -410,78 +488,64 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 		return nil, err
 	}
 
-	// 监督账户组已经不存在
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	// 监督账户组不存在
 	if !exist {
 		if apply.CoinsFrozen < config.CoinsFrozen {
 			return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
 		}
 
-		receipt := &types.Receipt{Ty: types.ExecOk}
+		statGroup, err := getSupervisionNodeGroupID(a.db, config.Title, config.Id)
+		if err != nil {
+			return nil, err
+		}
+
 		//create the supervision node group
-		r, err := a.supervisionNodeGroupCreate(apply)
+		r, err := a.supervisionNodeGroupCreate(statGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title, apply.TargetAddr)
 		}
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
+		receipt = mergeReceipt(receipt, r)
 
-		stat := &pt.ParaNodeGroupStatus{
-			Id:          apply.Id,
-			Status:      apply.Status,
-			Title:       apply.Title,
-			TargetAddrs: apply.TargetAddr,
-			BlsPubKeys:  apply.BlsPubKey,
-			CoinsFrozen: apply.CoinsFrozen,
-			FromAddr:    apply.FromAddr,
-			Height:      apply.Height,
-		}
+		copyStat := *statGroup
+		statGroup.Status = pt.ParacrossSupervisionNodeApprove
+		statGroup.Height = a.height
 
-		copyStat := *stat
-		stat.Status = pt.ParacrossSupervisionNodeApprove
-		apply.Status = pt.ParacrossSupervisionNodeApprove
-		apply.Height = a.height
+		r = makeSupervisionNodeGroupIDReceipt(a.fromaddr, &copyStat, statGroup)
+		receipt = mergeReceipt(receipt, r)
 
-		r = makeSupervisionNodeIDReceipt(a.fromaddr, &copyStat, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
-
-		r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, stat)
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
+		r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, &copyStat, statGroup)
+		receipt = mergeReceipt(receipt, r)
 
 		//不允许主链成功平行链失败导致不一致的情况，这里如果失败则手工设置init stage 默认设置自共识
 		if cfg.IsPara() {
 			r = supervisionSelfConsentInitStage(cfg)
-			receipt.KV = append(receipt.KV, r.KV...)
-			receipt.Logs = append(receipt.Logs, r.Logs...)
+			receipt = mergeReceipt(receipt, r)
 		}
 
-		return receipt, nil
+		//return receipt, nil
+	} else {
+		// 监督账户组已经存在
+		r, err := a.updateSupervisionNodeGroup(config.Title, apply.TargetAddr, true)
+		if err != nil {
+			return nil, err
+		}
+		receipt = mergeReceipt(receipt, r)
 	}
 
-	// 监督账户组已经存在
 	copyStat := proto.Clone(apply).(*pt.ParaNodeIdStatus)
-	receipt := &types.Receipt{Ty: types.ExecOk}
-
-	r, err := updateSupervisionNodeGroup(a.db, config.Title, apply.TargetAddr, true)
-	if err != nil {
-		return nil, err
-	}
-	receipt = mergeReceipt(receipt, r)
-
-	r, err = a.updateSupervisionNodeAddrStatus(apply)
-	if err != nil {
-		return nil, err
-	}
-	receipt = mergeReceipt(receipt, r)
-
 	apply.Status = pt.ParacrossSupervisionNodeApprove
 	apply.Height = a.height
+
+	r, err := a.updateSupervisionNodeAddrStatus(apply)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
 
 	r = makeSupervisionNodeConfigReceipt(a.fromaddr, config, copyStat, apply)
 	receipt = mergeReceipt(receipt, r)
 	return receipt, nil
-
 }
 
 func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
@@ -503,7 +567,8 @@ func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Rece
 
 	cfg := a.api.GetConfig()
 	stat := &pt.ParaNodeIdStatus{
-		Id:         calcParaSupervisionNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+		//Id:         calcParaSupervisionNodeGroupIDKey(config.Title, common.ToHex(a.txhash)),
+		Id:         status.ProposalId,
 		Status:     pt.ParacrossSupervisionNodeQuit,
 		Title:      config.Title,
 		TargetAddr: config.Addr,
@@ -521,7 +586,8 @@ func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Rece
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	r, err := updateSupervisionNodeGroup(a.db, config.Title, stat.TargetAddr, false)
+
+	r, err := a.updateSupervisionNodeGroup(config.Title, stat.TargetAddr, false)
 	if err != nil {
 		return nil, err
 	}
@@ -533,6 +599,13 @@ func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Rece
 	}
 	receipt = mergeReceipt(receipt, r)
 
+	// node quit后，如果committx满足2/3目标，自动触发commitDone 后期增加
+	//r, err = a.loopCommitTxDone(config.Title)
+	//if err != nil {
+	//	clog.Error("updateSupervisionNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
+	//}
+	//receipt = mergeReceipt(receipt, r)
+
 	r = makeSupervisionNodeConfigReceipt(a.fromaddr, config, nil, stat)
 	receipt = mergeReceipt(receipt, r)
 
@@ -541,7 +614,7 @@ func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Rece
 
 func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	status, err := getSupervisionNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
+	status, err := getSupervisionNodeID(a.db, config.Title, config.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -566,8 +639,29 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Re
 		if err != nil {
 			return nil, err
 		}
-		receipt.KV = append(receipt.KV, r.KV...)
-		receipt.Logs = append(receipt.Logs, r.Logs...)
+		receipt = mergeReceipt(receipt, r)
+	}
+
+	// 判断监督账户组是否已经存在
+	err, exist := a.checkSupervisionNodeGroupExist(config.Title)
+	if err != nil {
+		return nil, err
+	}
+	// 监督账户组不存在
+	if !exist {
+		statusGroup, err := getSupervisionNodeGroupID(a.db, config.Title, config.Id)
+		if err != nil {
+			return nil, err
+		}
+		copyPrevStat := proto.Clone(statusGroup).(*pt.ParaNodeGroupStatus)
+		statusGroup.Status = pt.ParacrossSupervisionNodeCancel
+		statusGroup.Height = a.height
+
+		r := makeSupervisionNodeGroupIDReceipt(a.fromaddr, copyPrevStat, statusGroup)
+		receipt = mergeReceipt(receipt, r)
+
+		r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, copyPrevStat, statusGroup)
+		receipt = mergeReceipt(receipt, r)
 	}
 
 	copyStat := proto.Clone(status).(*pt.ParaNodeIdStatus)
@@ -575,8 +669,13 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Re
 	status.Height = a.height
 
 	r := makeSupervisionNodeConfigReceipt(a.fromaddr, config, copyStat, status)
-	receipt.KV = append(receipt.KV, r.KV...)
-	receipt.Logs = append(receipt.Logs, r.Logs...)
+	receipt = mergeReceipt(receipt, r)
+
+	r, err = a.updateSupervisionNodeAddrStatus(status)
+	if err != nil {
+		return nil, err
+	}
+	receipt = mergeReceipt(receipt, r)
 
 	return receipt, nil
 }

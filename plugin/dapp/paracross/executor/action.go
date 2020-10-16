@@ -885,7 +885,6 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 			return receipt, nil
 		}
 		receipt = mergeReceipt(receipt, r)
-
 	}
 }
 

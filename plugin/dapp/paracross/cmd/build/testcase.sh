@@ -260,7 +260,7 @@ function para_configkey() {
 function query_tx() {
     block_wait "${1}" 1
 
-    local times=20
+    local times=200
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
@@ -759,8 +759,39 @@ function para_create_nodegroup() {
     fi
 }
 
+# $1 status
+function check_supervision_node_list() {
+    newid=$(${PARA_CLI} para supervision_node list -s "$1" | jq -r ".ids[0].id")
+        if [ -z "$newid" ]; then
+            ${PARA_CLI} para supervision_node list -s "$1"
+            echo "cancel status error "
+                    exit 1
+        fi
+}
+
+# $1 status
+function check_supervision_node_status() {
+    status=$(${PARA_CLI} para supervision_node status | jq -r ".status")
+    if [ "$status" != "$1" ]; then
+        ${PARA_CLI} para supervision_node status
+        echo "status $status not eq target status $1"
+        exit 1
+    fi
+}
+
+# $1 status
+function check_supervision_node_addr_status() {
+    status=$(${PARA_CLI} para supervision_node addr_status -a "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" | jq -r ".status")
+    if [ "$status" != "$1" ]; then
+        ${PARA_CLI} para supervision_node addr_status -a "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h"
+        echo "addr_status $status not eq target status $1"
+        exit 1
+    fi
+}
+
 function para_create_supervision_nodegroup() {
     echo "=========== # para chain create supervision node group ============="
+    echo "=========== # para chain apply supervision node group 1 ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     ##apply
     txhash=$(${PARA_CLI} send para supervision_node apply -a "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" -c 6 -p "$BLSPUB_5H" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
@@ -769,6 +800,9 @@ function para_create_supervision_nodegroup() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
+    check_supervision_node_list 1
+    check_supervision_node_status 1
+    check_supervision_node_addr_status 1
 
     echo "=========== # para chain cancel supervision node group ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
@@ -776,13 +810,59 @@ function para_create_supervision_nodegroup() {
     txhash=$(${PARA_CLI} send para supervision_node cancel -i "$id" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
-    #    newid=$(${PARA_CLI} para supervision_node list -s 4 | jq -r ".ids[0].id")
-    #    if [ -z "$newid" ]; then
-    #        ${PARA_CLI} para supervision_node list -s 4
-    #        echo "cancel status error "
-    #        #        exit 1
-    #    fi
+
     check_balance_1ka "$balancePre" -6
+    check_supervision_node_list 4
+    check_supervision_node_status 4
+    check_supervision_node_addr_status 4
+
+    echo "=========== # para chain create supervision node group again ============="
+    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
+    ##apply
+    txhash=$(${PARA_CLI} send para supervision_node apply -a "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" -c 6 -p "$BLSPUB_5H" -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+    id=$txhash
+
+    check_balance_1ka "$balancePre" 6
+    check_supervision_node_list 1
+    check_supervision_node_status 1
+    check_supervision_node_addr_status 1
+
+    echo "=========== # para chain approve supervision node group ============="
+    ##approve
+    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+
+    check_supervision_node_list 2
+    check_supervision_node_status 2
+    check_supervision_node_addr_status 2
+
+    addrs=$(${PARA_CLI} para supervision_node addrs | jq -r ".value")
+    if [ "$addrs" != "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" ]; then
+        ${PARA_CLI} para supervision_node addrs
+        echo "supervision group addrs $addrs"
+        exit 1
+    fi
+
+    echo "=========== # para chain quit supervision node group ============="
+    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
+    txhash=$(${PARA_CLI} send para supervision_node quit -a "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+    status=$(${PARA_CLI} para supervision_node status | jq -r ".status")
+
+    check_balance_1ka "$balancePre" -6
+    check_supervision_node_list 3
+    check_supervision_node_status 3
+    check_supervision_node_addr_status 3
+    addrs=$(${PARA_CLI} para supervision_node addrs | jq -r ".value")
+    if [ "$addrs" != null ]; then
+        ${PARA_CLI} para supervision_node addrs
+        echo "supervision group addrs $addrs"
+        exit 1
+    fi
 
     echo "=========== # para chain create supervision node group again ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
@@ -794,19 +874,26 @@ function para_create_supervision_nodegroup() {
 
     check_balance_1ka "$balancePre" 6
 
+    check_supervision_node_list 1
+    check_supervision_node_status 1
+    check_supervision_node_addr_status 1
+
     echo "=========== # para chain approve supervision node group ============="
     ##approve
     txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    status=$(${PARA_CLI} para supervision_node status | jq -r ".status")
-    if [ "$status" != 2 ]; then
-        echo "status not approve status=$status"
+    check_supervision_node_list 2
+    check_supervision_node_status 2
+    check_supervision_node_addr_status 2
+
+    addrs=$(${PARA_CLI} para supervision_node addrs | jq -r ".value")
+    if [ "$addrs" != "15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h" ]; then
+        ${PARA_CLI} para supervision_node addrs
+        echo "supervision group addrs $addrs"
         exit 1
     fi
-
-    ${PARA_CLI} para supervision_node addrs
 
     echo "=========== # para chain approve supervision node group end ============="
 }

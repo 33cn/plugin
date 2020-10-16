@@ -1527,6 +1527,7 @@ func supervisionNodeCmd() *cobra.Command {
 	cmd.AddCommand(getSupervisionNodeGroupAddrsCmd())
 	cmd.AddCommand(supervisionNodeGroupStatusCmd())
 	cmd.AddCommand(supervisionNodeGroupListCmd())
+	cmd.AddCommand(getSupervisionNodeInfoCmd())
 
 	return cmd
 }
@@ -1740,7 +1741,7 @@ func supervisionNodeGroupListCmd() *cobra.Command {
 }
 
 func getSupervisionNodeGroupListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().Int32P("status", "s", 0, "status:1:apply, 2:approve, 3:quit")
+	cmd.Flags().Int32P("status", "s", 0, "status:1:apply, 2:approve, 3:quit, 4:cancel")
 	_ = cmd.MarkFlagRequired("status")
 }
 
@@ -1757,6 +1758,42 @@ func supervisionNodeGroupList(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 
 	var res pt.RespParacrossNodeGroups
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// getNodeInfoCmd get node current status
+func getSupervisionNodeInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "addr_status",
+		Short: "Get node current status:1:apply, 2:approve, 3:quit, 4:cancel from supervision group",
+		Run:   supervisionNodeInfo,
+	}
+	addSupervisionNodeInfoCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeInfoCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
+	_ = cmd.MarkFlagRequired("addr")
+
+}
+
+func supervisionNodeInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeAddrInfo"
+	req := pt.ReqParacrossNodeInfo{
+		Title: paraName,
+		Addr:  addr,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res pt.ParaNodeAddrIdStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
