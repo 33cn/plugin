@@ -25,6 +25,7 @@ require (
 	github.com/holiman/uint256 v1.1.1
 	github.com/huin/goupnp v1.0.0
 	github.com/jackpal/go-nat-pmp v1.0.2
+	github.com/libp2p/go-sockaddr v0.0.2
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
