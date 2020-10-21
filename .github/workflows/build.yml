@@ -28,7 +28,11 @@ jobs:
 
       - name: Lint
         run: |
+          echo "findlarge"
           bash findlarge.sh
+          echo "find2"
+          ./findlarge.sh
+          echo "find3"
           make checkgofmt && make fmt_go
           make linter
 

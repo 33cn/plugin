@@ -20,16 +20,16 @@ allObjects=`git rev-list --all --objects`
 for y in $objects
 do
     # extract the size in bytes
-    size=$((`echo $y | cut -f 5 -d ' '`/1024))
+    size=$((`echo “$y” | cut -f 5 -d ' '`/1024))
     # extract the compressed size in bytes
-    compressedSize=$((`echo $y | cut -f 6 -d ' '`/1024))
+    compressedSize=$((`echo “$y” | cut -f 6 -d ' '`/1024))
     # extract the SHA
-    sha=`echo $y | cut -f 1 -d ' '`
+    sha=`echo "$y" | cut -f 1 -d ' '`
     # find the objects location in the repository tree
-    other=`echo "${allObjects}" | grep $sha`
+    other=`echo "${allObjects}" | grep "$sha"`
     #lineBreak=`echo -e "\n"`
     output="${output}\n${size},${compressedSize},${other}"
 done
 
-echo -e $output | column -t -s ', '
+echo -e "$output" | column -t -s ', '
 
