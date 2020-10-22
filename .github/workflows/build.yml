@@ -29,7 +29,7 @@ jobs:
       - name: Lint
         run: |
           echo "findlarge"
-          git gc --auto --prune=now
+          git gc --auto 1
           bash findlarge.sh
           echo "find2"
           make checkgofmt && make fmt_go
