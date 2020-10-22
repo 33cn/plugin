@@ -26,7 +26,7 @@ echo "All sizes are in kB's. The pack column is the size of the object, compress
 
 history=("650902c0f310f2f64e9ae5dfda35656ce8dadae3 5e8c0c3e6bc33034fd804d4c68b589c1eb66804b d2d4a3aa838d85738e27ee474c785331bfe8e81c \
          1e21797c3af8a4385c9169570b9b1c4072d7b3b6 9ec4f3d49403e8b9dd46885031a92e23af3828b9 825659f96c308cd79ed2b32860d45d510dff6cce  \
-         9df156a7f0c9570431161873e3f605c7e4bb7ba9 0304d27f62317d2216c3288047a1a2a8bf37d94a 0304d27f62317d2216c3288047a1a2a8bf37d94a" )
+         9df156a7f0c9570431161873e3f605c7e4bb7ba9 0304d27f62317d2216c3288047a1a2a8bf37d94a 0304d27f62317d2216c3288047a1a2a8bf37d94a")
 
 oversize="false"
 
@@ -41,7 +41,7 @@ for y in $objects; do
     sha=$(echo "$y" | cut -f 1 -d ' ')
     if [[ ! $history =~ $sha ]]; then
         echo "not include =$sha"
-        if [ $size -ge 2000 ];then
+        if [ $size -ge 2000 ]; then
             oversize="true"
         fi
     fi
