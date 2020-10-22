@@ -23,7 +23,6 @@ pipeline {
                 dir("${PROJ_DIR}"){
                     gitlabCommitStatus(name: 'deploy'){
                     	sh 'go version'
-                    	sh 'make largefile-check'
                         sh 'make build_ci'
                         sh "cd build && mkdir ${env.BUILD_NUMBER} && cp ci/* ${env.BUILD_NUMBER} -r && ./docker-compose-pre.sh modify && cp chain33* Dockerfile* docker* *.sh ${env.BUILD_NUMBER}/ && cd ${env.BUILD_NUMBER}/ && ./docker-compose-pre.sh run ${env.BUILD_NUMBER} all "
                     }
