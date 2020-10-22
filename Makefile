@@ -134,7 +134,7 @@ fork-test: ## build fork-test for chain33 run
 
 largefile-check:
 	git gc
-	./findlarge.sh
+	./findlargefile.sh
 
 clean: ## Remove previous build
 	@rm -rf $(shell find . -name 'datadir' -not -path "./vendor/*")
