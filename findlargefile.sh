@@ -40,8 +40,8 @@ for y in $objects; do
     # extract the SHA
     sha=$(echo "$y" | cut -f 1 -d ' ')
     if [[ ! $history =~ $sha ]]; then
-        echo "over size = $sha"
         if [ $size -ge 2000 ]; then
+            echo "over size file = $sha"
             oversize="true"
         fi
     fi
