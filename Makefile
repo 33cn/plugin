@@ -132,6 +132,9 @@ metrics:## build docker-compose for chain33 metrics
 fork-test: ## build fork-test for chain33 run
 	@cd build && cp chain33* Dockerfile system-fork-test.sh docker-compose* ci/ && cd ci/ && ./docker-compose-pre.sh forktest $(proj) $(dapp) && cd ../..
 
+largefile-check:
+	git gc
+	./findlarge.sh
 
 clean: ## Remove previous build
 	@rm -rf $(shell find . -name 'datadir' -not -path "./vendor/*")
