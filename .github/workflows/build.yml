@@ -29,7 +29,7 @@ jobs:
       - name: Lint
         run: |
           echo "findlarge"
-          git config --global gc.auto 1
+          git config --global gc.auto 250
           git gc
           bash findlarge.sh
           echo "find2"
