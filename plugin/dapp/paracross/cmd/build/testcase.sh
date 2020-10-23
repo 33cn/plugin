@@ -294,7 +294,7 @@ function query_tx() {
     block_wait "${1}" 1
 
     local times=200
-#        local times=10
+    #        local times=10
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
@@ -952,7 +952,6 @@ function para_create_supervision_nodegroup_approve() {
 
     check_supervision_node_addr_status 2 "$ADDR_26"
     check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26"
-
 
     echo "=========== # para chain apply supervision node group 25 again ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
