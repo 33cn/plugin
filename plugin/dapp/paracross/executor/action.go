@@ -193,19 +193,19 @@ func makeDoneReceipt(cfg *types.Chain33Config, execMainHeight, execHeight int64,
 	most, commitCount, totalCount, mostSupervisionCount, totalSupervisionCommit, totalSupervisionNodes int32) *types.Receipt {
 
 	log := &pt.ReceiptParacrossDone{
-		TotalNodes:      totalCount,
-		TotalCommit:     commitCount,
-		MostSameCommit:  most,
-		Title:           commit.Title,
-		Height:          commit.Height,
-		BlockHash:       commit.BlockHash,
-		TxResult:        commit.TxResult,
-		MainBlockHeight: commit.MainBlockHeight,
-		MainBlockHash:   commit.MainBlockHash,
-		ChainExecHeight: execHeight,
-		//TotalSupervisionNodes:  totalSupervisionNodes,
-		//TotalSupervisionCommit: totalSupervisionCommit,
-		//MostSupervisionCommit:  mostSupervisionCount,
+		TotalNodes:             totalCount,
+		TotalCommit:            commitCount,
+		MostSameCommit:         most,
+		Title:                  commit.Title,
+		Height:                 commit.Height,
+		BlockHash:              commit.BlockHash,
+		TxResult:               commit.TxResult,
+		MainBlockHeight:        commit.MainBlockHeight,
+		MainBlockHash:          commit.MainBlockHash,
+		ChainExecHeight:        execHeight,
+		TotalSupervisionNodes:  totalSupervisionNodes,
+		TotalSupervisionCommit: totalSupervisionCommit,
+		MostSupervisionCommit:  mostSupervisionCount,
 	}
 	key := calcTitleKey(commit.Title)
 	status := &pt.ParacrossStatus{
