@@ -20,7 +20,7 @@ func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) *types.Tran
 }
 
 func (suite *NodeManageTestSuite) testSupervisionExec() {
-	suite.testSupervisionNodeConfigCancel()
+	suite.testSupervisionNodeConfigCancel(Account14K, PrivKey14K)
 	suite.testSupervisionNodeConfigApprove(Account14K, PrivKey14K)
 	suite.testSupervisionNodeConfigApprove(Account1Ku, PrivKey1Ku)
 	suite.testSupervisionNodeConfigApprove(Account1M3, PrivKey1M3)
@@ -29,15 +29,15 @@ func (suite *NodeManageTestSuite) testSupervisionExec() {
 	suite.testSupervisionNodeQuit()
 }
 
-func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel() {
+func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel(addr, privKey string) {
 	// Apply
 	config := &pt.ParaNodeAddrConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  Account14K,
+		Addr:  addr,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
-	receipt := nodeCommit(suite, PrivKey14K, tx)
+	receipt := nodeCommit(suite, privKey, tx)
 	checkSupervisionGroupApplyReceipt(suite, receipt)
 
 	var g pt.ReceiptParaNodeGroupConfig
@@ -51,7 +51,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel() {
 		Id:    getParaNodeIDSuffix(g.Current.Id),
 	}
 	tx = createRawSupervisionNodeConfigTx(config)
-	receipt = nodeCommit(suite, PrivKey14K, tx)
+	receipt = nodeCommit(suite, privKey, tx)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 }
 
@@ -123,9 +123,9 @@ func (suite *NodeManageTestSuite) testSupervisionNodeQuit() {
 
 func checkSupervisionGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	//assert.Len(suite.T(), receipt.KV, 1)
-	//assert.Len(suite.T(), receipt.Logs, 1)
-	//assert.Equal(suite.T(), int32(pt.TyLogParaSupervisionNodeConfig), receipt.Logs[0].Ty)
+	assert.Len(suite.T(), receipt.KV, 1)
+	assert.Len(suite.T(), receipt.Logs, 1)
+	assert.Equal(suite.T(), int32(pt.TyLogParaSupervisionNodeConfig), receipt.Logs[0].Ty)
 }
 
 func (suite *NodeManageTestSuite) testSupervisionQuery() {

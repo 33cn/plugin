@@ -50,12 +50,10 @@ const (
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
 	// Supervision Node
-	TyLogParaSupervisionNodeGroupConfig       = 680
+	TyLogParaSupervisionNodeConfig            = 680
 	TyLogParaSupervisionNodeGroupAddrsUpdate  = 681
-	TyLogParaSupervisionNodeConfig            = 682
-	TyLogParaSupervisionNodeStatusUpdate      = 683
-	TyLogParaStageSupervisionGroupUpdate      = 684
-	TyLogParaSupervisionNodeGroupStatusUpdate = 685
+	TyLogParaSupervisionNodeStatusUpdate      = 682
+	TyLogParaSupervisionNodeGroupStatusUpdate = 683
 )
 
 // action type

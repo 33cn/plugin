@@ -116,11 +116,9 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaStageGroupUpdate:                 {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
 		TyLogParaBindMinerAddr:                    {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
 		TyLogParaBindMinerNode:                    {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
-		TyLogParaSupervisionNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaSupervisionNodeGroupConfig"},
-		TyLogParaSupervisionNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaSupervisionNodeGroupAddrsUpdate"},
 		TyLogParaSupervisionNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaSupervisionNodeConfig"},
+		TyLogParaSupervisionNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaSupervisionNodeGroupAddrsUpdate"},
 		TyLogParaSupervisionNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaSupervisionNodeStatusUpdate"},
-		TyLogParaStageSupervisionGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaStageSupervisionGroupUpdate"},
 		TyLogParaSupervisionNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaSupervisionNodeGroupStatusUpdate"},
 	}
 }

@@ -294,7 +294,7 @@ function query_tx() {
     block_wait "${1}" 1
 
     local times=200
-    #    local times=10
+#        local times=10
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
@@ -571,7 +571,6 @@ function para_create_nodegroup_gamechain() {
     fi
 
     ${PARA_CLI5} para nodegroup addrs
-
 }
 
 function para_cross_transfer_from_parachain() {
@@ -794,7 +793,7 @@ function para_create_nodegroup() {
 }
 
 # $1 status, $2 hash
-function check_supervision_node_list() {
+function check_supervision_node_group_list() {
     newid=$(${PARA_CLI} para supervision_node list -s "$1" | jq -r ".ids[0].id")
     if [ "$newid" != "$2" ]; then
         ${PARA_CLI} para supervision_node list -s "$1"
@@ -804,7 +803,7 @@ function check_supervision_node_list() {
 }
 
 # $1 status
-function check_supervision_node_status() {
+function check_supervision_node_group_status() {
     status=$(${PARA_CLI} para supervision_node status | jq -r ".status")
     if [ "$status" != "$1" ]; then
         ${PARA_CLI} para supervision_node status
@@ -844,9 +843,6 @@ function para_create_supervision_nodegroup_cancel() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
-    check_supervision_node_list 1 "$id"
-    check_supervision_node_status 1
-    check_supervision_node_addr_status 1 "$ADDR_28"
 
     echo "=========== # supervision node group cancel ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
@@ -856,9 +852,43 @@ function para_create_supervision_nodegroup_cancel() {
     query_tx "${PARA_CLI}" "${txhash}"
 
     check_balance_1ka "$balancePre" -6
-    check_supervision_node_list 4 "$id"
-    check_supervision_node_status 4
-    check_supervision_node_addr_status 4 "$ADDR_28"
+    echo "=========== # ${FUNCNAME} end ============="
+}
+
+function para_create_supervision_nodegroup_quit() {
+    echo "=========== # ${FUNCNAME} begin ============="
+    echo "=========== # para chain apply supervision node group 25 ============="
+    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
+    ##apply
+    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_25" -c 6 -p "$BLSPUB_25" -k "${ADDR_1KA_KEY}")
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+    id=$txhash
+
+    check_balance_1ka "$balancePre" 6
+
+    echo "=========== # para chain approve supervision node group 25 ============="
+    ##approve
+    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+
+    check_supervision_node_addr_status 2 "$ADDR_25"
+    check_supervision_node_group_list 2 "$id"
+    check_supervision_node_group_status 2
+    check_supervision_node_addrs "$ADDR_25"
+
+    echo "=========== # para chain quit supervision node group 25 ============="
+    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
+    txhash=$(${PARA_CLI} send para supervision_node quit -a "$ADDR_25" -k "${SUPER_KEY}")
+    echo "tx=$txhash"
+    query_tx "${PARA_CLI}" "${txhash}"
+
+    check_balance_1ka "$balancePre" -6
+    check_supervision_node_group_list 3 "$id"
+    check_supervision_node_group_status 3
+    check_supervision_node_addr_status 3 "$ADDR_25"
+    check_supervision_node_addrs null
     echo "=========== # ${FUNCNAME} end ============="
 }
 
@@ -873,9 +903,6 @@ function para_create_supervision_nodegroup_approve() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
-    check_supervision_node_list 1 "$id"
-    check_supervision_node_status 1
-    check_supervision_node_addr_status 1 "$ADDR_28"
 
     echo "=========== # para chain approve supervision node group 28 ============="
     ##approve
@@ -883,8 +910,8 @@ function para_create_supervision_nodegroup_approve() {
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    check_supervision_node_list 2 "$id"
-    check_supervision_node_status 2
+    check_supervision_node_group_list 2 "$id"
+    check_supervision_node_group_status 2
     check_supervision_node_addr_status 2 "$ADDR_28"
     check_supervision_node_addrs "$ADDR_28"
 
@@ -897,7 +924,6 @@ function para_create_supervision_nodegroup_approve() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
-    check_supervision_node_addr_status 1 "$ADDR_27"
 
     echo "=========== # para chain approve supervision node group 27 ============="
     ##approve
@@ -917,7 +943,6 @@ function para_create_supervision_nodegroup_approve() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
-    check_supervision_node_addr_status 1 "$ADDR_26"
 
     echo "=========== # para chain approve supervision node group 26 ============="
     ##approve
@@ -928,40 +953,6 @@ function para_create_supervision_nodegroup_approve() {
     check_supervision_node_addr_status 2 "$ADDR_26"
     check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26"
 
-    echo "=========== # ${FUNCNAME} end ============="
-}
-
-function para_create_supervision_nodegroup_quit() {
-    echo "=========== # ${FUNCNAME} begin ============="
-    echo "=========== # para chain apply supervision node group 25 ============="
-    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    ##apply
-    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_25" -c 6 -p "$BLSPUB_25" -k "${ADDR_1KA_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-    id=$txhash
-
-    check_balance_1ka "$balancePre" 6
-    check_supervision_node_addr_status 1 "$ADDR_25"
-
-    echo "=========== # para chain approve supervision node group 25 ============="
-    ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-
-    check_supervision_node_addr_status 2 "$ADDR_25"
-    check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26,$ADDR_25"
-
-    echo "=========== # para chain quit supervision node group 25 ============="
-    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    txhash=$(${PARA_CLI} send para supervision_node quit -a "$ADDR_25" -k "${SUPER_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-
-    check_balance_1ka "$balancePre" -6
-    check_supervision_node_addr_status 3 "$ADDR_25"
-    check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26"
 
     echo "=========== # para chain apply supervision node group 25 again ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
@@ -972,7 +963,6 @@ function para_create_supervision_nodegroup_quit() {
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
-    check_supervision_node_addr_status 1 "$ADDR_25"
 
     echo "=========== # para chain approve supervision node group 25 again ============="
     ##approve
@@ -989,8 +979,8 @@ function para_create_supervision_nodegroup_quit() {
 function para_create_supervision_nodegroup() {
     echo "=========== # ${FUNCNAME} begin ============="
     para_create_supervision_nodegroup_cancel
-    para_create_supervision_nodegroup_approve
     para_create_supervision_nodegroup_quit
+    para_create_supervision_nodegroup_approve
     docker stop "${NODE9}"
     echo "=========== # ${FUNCNAME} end ============="
 }
@@ -1330,8 +1320,8 @@ function privacy_transfer_test() {
 function para_test() {
     echo "=========== # para chain test ============="
     para_create_nodegroup
-    para_create_supervision_nodegroup
     para_nodegroup_behalf_quit_test
+    para_create_supervision_nodegroup
     para_create_nodegroup_gamechain
     token_create "${PARA_CLI}"
     token_transfer "${PARA_CLI}"

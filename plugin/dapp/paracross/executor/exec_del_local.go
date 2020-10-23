@@ -142,7 +142,7 @@ func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig
 func (e *Paracross) ExecDelLocal_SupervisionNodeGroupConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
-		if log.Ty == pt.TyLogParaSupervisionNodeGroupConfig {
+		if log.Ty == pt.TyLogParaSupervisionNodeGroupStatusUpdate {
 			var g pt.ReceiptParaNodeGroupConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {

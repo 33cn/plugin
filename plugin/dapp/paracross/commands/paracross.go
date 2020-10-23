@@ -1741,7 +1741,7 @@ func supervisionNodeGroupListCmd() *cobra.Command {
 }
 
 func getSupervisionNodeGroupListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().Int32P("status", "s", 0, "status:1:apply, 2:approve, 3:quit, 4:cancel")
+	cmd.Flags().Int32P("status", "s", 0, "status:2:approve, 3:quit")
 	_ = cmd.MarkFlagRequired("status")
 }
 
@@ -1766,7 +1766,7 @@ func supervisionNodeGroupList(cmd *cobra.Command, args []string) {
 func getSupervisionNodeInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "addr_status",
-		Short: "Get node current status:1:apply, 2:approve, 3:quit, 4:cancel from supervision group",
+		Short: "Get node current status:2:approve, 3:quit from supervision group",
 		Run:   supervisionNodeInfo,
 	}
 	addSupervisionNodeInfoCmdFlags(cmd)

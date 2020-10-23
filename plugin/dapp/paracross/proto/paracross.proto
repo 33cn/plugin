@@ -382,6 +382,9 @@ message ReceiptParacrossDone {
     bytes          mainBlockHash   = 13;
     int64          mainBlockHeight = 14;
     int64          chainExecHeight = 15;
+    int32 totalSupervisionNodes    = 16;
+    int32 totalSupervisionCommit   = 17;
+    int32 mostSupervisionCommit    = 18;
 }
 
 message ReceiptParacrossRecord {
