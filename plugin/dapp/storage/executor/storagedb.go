@@ -200,15 +200,13 @@ func (s *StorageAction) EncryptAdd(payload *ety.EncryptNotaryAdd) (*types.Receip
 
 	store, err := QueryStorage(s.db, s.localdb, payload.Key)
 	if err != nil {
-		fmt.Errorf("EncryptAdd.QueryStorage. err:%v", err)
-		return nil, err
+		return nil, fmt.Errorf("EncryptAdd.QueryStorage. err:%v", err)
 	}
 
 	cipherText := store.GetEncryptStorage().EncryptContent
 	res, err := paillier.CiphertextAddBytes(cipherText, payload.EncryptAdd)
 	if err != nil {
-		fmt.Errorf("EncryptAdd.CiphertextAddBytes. err:%v", err)
-		return nil, err
+		return nil, fmt.Errorf("EncryptAdd.CiphertextAddBytes. err:%v", err)
 	}
 
 	store.GetEncryptStorage().EncryptContent = res
