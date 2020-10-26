@@ -11,13 +11,11 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
+	"github.com/33cn/chain33/types"
 	"math/big"
-
-	"encoding/asn1"
 
 	"fmt"
 
-	"github.com/33cn/chain33/common/crypto"
 	sm2_util "github.com/33cn/chain33/system/crypto/sm2"
 	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
 	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
@@ -65,22 +63,23 @@ func GetPublicKeySKIFromCert(cert []byte, signType int) (string, error) {
 }
 
 // EncodeCertToSignature 证书编码进签名
-func EncodeCertToSignature(signByte []byte, cert []byte) ([]byte, error) {
-	certSign := crypto.CertSignature{}
+func EncodeCertToSignature(signByte []byte, cert []byte, uid []byte) []byte {
+	var certSign ty.CertSignature
 	certSign.Signature = append(certSign.Signature, signByte...)
 	certSign.Cert = append(certSign.Cert, cert...)
-	return asn1.Marshal(certSign)
+	certSign.Uid = append(certSign.Uid, uid...)
+	return types.Encode(&certSign)
 }
 
 // DecodeCertFromSignature 从签名中解码证书
-func DecodeCertFromSignature(signByte []byte) ([]byte, []byte, error) {
-	var certSignature crypto.CertSignature
-	_, err := asn1.Unmarshal(signByte, &certSignature)
+func DecodeCertFromSignature(signByte []byte) (*ty.CertSignature, error) {
+	var certSign ty.CertSignature
+	err := types.Decode(signByte, &certSign)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return certSignature.Cert, certSignature.Signature, nil
+	return &certSign, nil
 }
 
 // PrivKeyByteFromRaw pem结构转成byte类型私钥
