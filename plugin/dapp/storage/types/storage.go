@@ -20,12 +20,14 @@ const (
 	TyLinkStorageAction
 	TyEncryptStorageAction
 	TyEncryptShareStorageAction
+	TyEncryptAddAction
 
 	NameContentStorageAction      = "ContentStorage"
 	NameHashStorageAction         = "HashStorage"
 	NameLinkStorageAction         = "LinkStorage"
 	NameEncryptStorageAction      = "EncryptStorage"
 	NameEncryptShareStorageAction = "EncryptShareStorage"
+	NameEncryptAddAction          = "EncryptAdd"
 
 	FuncNameQueryStorage      = "QueryStorage"
 	FuncNameBatchQueryStorage = "BatchQueryStorage"
@@ -39,6 +41,7 @@ const (
 	TyLinkStorageLog
 	TyEncryptStorageLog
 	TyEncryptShareStorageLog
+	TyEncryptAddLog
 )
 
 //storage op
@@ -61,6 +64,7 @@ var (
 		NameLinkStorageAction:         TyLinkStorageAction,
 		NameEncryptStorageAction:      TyEncryptStorageAction,
 		NameEncryptShareStorageAction: TyEncryptShareStorageAction,
+		NameEncryptAddAction:          TyEncryptAddAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -69,6 +73,7 @@ var (
 		TyLinkStorageLog:         {Ty: reflect.TypeOf(Storage{}), Name: "LogLinkStorage"},
 		TyEncryptStorageLog:      {Ty: reflect.TypeOf(Storage{}), Name: "LogEncryptStorage"},
 		TyEncryptShareStorageLog: {Ty: reflect.TypeOf(Storage{}), Name: "LogEncryptShareStorage"},
+		TyEncryptAddLog:          {Ty: reflect.TypeOf(Storage{}), Name: "LogEncryptAdd"},
 	}
 )
 
