@@ -10,9 +10,10 @@ import (
 	"crypto/elliptic"
 	"errors"
 	"fmt"
+	"math/big"
+
 	"github.com/33cn/chain33/types"
 	pkt "github.com/33cn/plugin/plugin/dapp/cert/types"
-	"math/big"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/tjfoc/gmsm/sm2"

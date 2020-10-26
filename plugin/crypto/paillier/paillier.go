@@ -5,9 +5,10 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
-	"math/big"
 )
 
 func CiphertextAdd(ciphertext1, ciphertext2 string) (string, error) {
@@ -61,7 +62,6 @@ func CiphertextAddBytes(cipherbytes1, cipherbytes2 []byte) ([]byte, error) {
 
 	data2 := make([]byte, len(cipherbytes2)-nlen2-2)
 	copy(data2, cipherbytes2[2+nlen2:])
-
 
 	cipher1 := new(big.Int).SetBytes(data1)
 	cipher2 := new(big.Int).SetBytes(data2)

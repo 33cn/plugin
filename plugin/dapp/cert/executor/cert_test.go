@@ -2,6 +2,9 @@ package executor
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	apimock "github.com/33cn/chain33/client/mocks"
@@ -21,8 +24,6 @@ import (
 	pkt "github.com/33cn/plugin/plugin/dapp/collateralize/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
 type execEnv struct {
@@ -43,18 +44,18 @@ var (
 	Nodes    = [][]byte{
 		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
 	}
-	total      = 100 * types.Coin
+	total    = 100 * types.Coin
 	USERNAME = "User"
 	SIGNTYPE = ct.AuthSM2
 
-	transfer1 = &ct.CertAction{Value: &ct.CertAction_Normal{Normal:&ct.CertNormal{Key: "", Value: nil}}, Ty: ct.CertActionNormal}
-	tx1      = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer1), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
+	transfer1 = &ct.CertAction{Value: &ct.CertAction_Normal{Normal: &ct.CertNormal{Key: "", Value: nil}}, Ty: ct.CertActionNormal}
+	tx1       = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer1), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
 
-	transfer2 = &ct.CertAction{Value: &ct.CertAction_New{New:&ct.CertNew{Key: "", Value: nil}}, Ty: ct.CertActionNew}
-	tx2      = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer2), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
+	transfer2 = &ct.CertAction{Value: &ct.CertAction_New{New: &ct.CertNew{Key: "", Value: nil}}, Ty: ct.CertActionNew}
+	tx2       = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer2), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
 
-	transfer3 = &ct.CertAction{Value: &ct.CertAction_Update{Update:&ct.CertUpdate{Key: "", Value: nil}}, Ty: ct.CertActionUpdate}
-	tx3      = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer3), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
+	transfer3 = &ct.CertAction{Value: &ct.CertAction_Update{Update: &ct.CertUpdate{Key: "", Value: nil}}, Ty: ct.CertActionUpdate}
+	tx3       = &types.Transaction{Execer: []byte("cert"), Payload: types.Encode(transfer3), Fee: 100000000, Expire: 0, To: dapp.ExecAddress("cert")}
 )
 
 func manageKeySet(key string, value string, db dbm.KV) {
@@ -224,4 +225,3 @@ func TestCert(t *testing.T) {
 	assert.NotNil(t, set)
 	util.SaveKVList(env.ldb, set.KV)
 }
-

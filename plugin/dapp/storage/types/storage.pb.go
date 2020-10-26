@@ -4,9 +4,12 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
+	grpc "google.golang.org/grpc"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -881,7 +884,9 @@ func init() {
 	proto.RegisterType((*ReceiptStorage)(nil), "types.ReceiptStorage")
 }
 
-func init() { proto.RegisterFile("storage.proto", fileDescriptor_0d2c4ccf1453ffdb) }
+func init() {
+	proto.RegisterFile("storage.proto", fileDescriptor_0d2c4ccf1453ffdb)
+}
 
 var fileDescriptor_0d2c4ccf1453ffdb = []byte{
 	// 528 bytes of a gzipped FileDescriptorProto
@@ -918,4 +923,46 @@ var fileDescriptor_0d2c4ccf1453ffdb = []byte{
 	0x9f, 0xc2, 0x1d, 0xfc, 0xa0, 0xd5, 0xf1, 0xee, 0xdc, 0xc3, 0x1f, 0x1d, 0x46, 0xd0, 0xc6, 0x1f,
 	0x4e, 0xc0, 0xa3, 0x2c, 0x66, 0xeb, 0xe6, 0xaf, 0x60, 0xee, 0x80, 0x8d, 0xde, 0xeb, 0x91, 0xfa,
 	0x1e, 0x3e, 0xff, 0x13, 0x00, 0x00, 0xff, 0xff, 0x66, 0xc3, 0x4e, 0x48, 0x20, 0x07, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// StorageClient is the client API for Storage service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type StorageClient interface {
+}
+
+type storageClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
+	return &storageClient{cc}
+}
+
+// StorageServer is the server API for Storage service.
+type StorageServer interface {
+}
+
+// UnimplementedStorageServer can be embedded to have forward compatible implementations.
+type UnimplementedStorageServer struct {
+}
+
+func RegisterStorageServer(s *grpc.Server, srv StorageServer) {
+	s.RegisterService(&_Storage_serviceDesc, srv)
+}
+
+var _Storage_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.storage",
+	HandlerType: (*StorageServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams:     []grpc.StreamDesc{},
+	Metadata:    "storage.proto",
 }

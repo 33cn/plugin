@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/plugin/plugin/crypto/paillier"
 
 	"github.com/33cn/chain33/client"
@@ -213,11 +214,11 @@ func (s *StorageAction) EncryptAdd(payload *ety.EncryptNotaryAdd) (*types.Receip
 	store.GetEncryptStorage().EncryptContent = res
 
 	newStore := &ety.EncryptNotaryStorage{
-		ContentHash:          store.GetEncryptStorage().ContentHash,
-		EncryptContent:       res,
-		Nonce:                store.GetEncryptStorage().Nonce,
-		Key:                  store.GetEncryptStorage().Key,
-		Value:                store.GetEncryptStorage().Value,
+		ContentHash:    store.GetEncryptStorage().ContentHash,
+		EncryptContent: res,
+		Nonce:          store.GetEncryptStorage().Nonce,
+		Key:            store.GetEncryptStorage().Key,
+		Value:          store.GetEncryptStorage().Value,
 	}
 
 	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
