@@ -727,7 +727,7 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 	clog.Debug("paracross.Commit commit ----pass", "most", mostCount, "mostHash", common.ToHex([]byte(mostHash)))
 	// 如果已经有监督节点
 	mostSupervisionCount := 0
-	if len(supervisionNodes) > 0 {
+	if len(supervisionNodes) > 0 && stat.SupervisionDetails != nil {
 		for i, v := range stat.SupervisionDetails.Addrs {
 			clog.Debug("paracross.Commit commit SupervisionDetails", "addr", v, "hash", common.ToHex(stat.SupervisionDetails.BlockHash[i]))
 		}
@@ -753,10 +753,15 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 		receipt = mergeReceipt(receipt, r)
 	}
 
+	supervisionDetailsAddrsLen := 0
+	if stat.SupervisionDetails != nil {
+		supervisionDetailsAddrsLen = len(stat.SupervisionDetails.Addrs)
+	}
+
 	//add commit done receipt
 	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, nodeStatus,
 		int32(mostCount), int32(len(stat.Details.Addrs)), int32(len(nodes)),
-		int32(mostSupervisionCount), int32(len(stat.SupervisionDetails.Addrs)), int32(len(supervisionNodes)))
+		int32(mostSupervisionCount), int32(supervisionDetailsAddrsLen), int32(len(supervisionNodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
 	r, err := a.commitTxDoneStep2(nodeStatus, stat, titleStatus)
@@ -857,7 +862,7 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 	// 获取监督节点的数据
 	supervisionNodes, _, err := a.getSupervisionNodesGroup(title)
 	if err != nil && errors.Cause(err) != pt.ErrTitleNotExist {
-		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
+		return nil, errors.Wrap(err, "getSupervisionNodesGroup loopCommitTxDone")
 	}
 	//从当前共识高度开始遍历
 	titleStatus, err := getTitle(a.db, calcTitleKey(title))
@@ -888,7 +893,7 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 
 		r, err := a.checkCommitTxDone(stat, nodes, supervisionNodes)
 		if err != nil {
-			clog.Error("paracross.loopCommitTxDone checkExecCommitTxDone", "para title", title, "height", stat.Height, "error", err)
+			clog.Error("paracropara_cross_transfer main chain and game chain failedss.loopCommitTxDone checkExecCommitTxDone", "para title", title, "height", stat.Height, "error", err)
 			return receipt, nil
 		}
 		if r == nil {
@@ -961,11 +966,16 @@ func (a *action) commitTxDoneByStat(stat *pt.ParacrossHeightStatus, titleStatus 
 		TxResult:        txRst,
 	}
 
+	supervisionDetailsAddrsLen := 0
+	if stat.SupervisionDetails != nil {
+		supervisionDetailsAddrsLen = len(stat.SupervisionDetails.Addrs)
+	}
+
 	//add commit done receipt
 	cfg := a.api.GetConfig()
 	receiptDone := makeDoneReceipt(cfg, a.exec.GetMainHeight(), a.height, mostStatus,
 		int32(most), int32(len(stat.Details.Addrs)), int32(len(nodes)),
-		int32(mostSupervisionCount), int32(len(stat.SupervisionDetails.Addrs)), int32(len(supervisionNodes)))
+		int32(mostSupervisionCount), int32(supervisionDetailsAddrsLen), int32(len(supervisionNodes)))
 	receipt = mergeReceipt(receipt, receiptDone)
 
 	r, err := a.commitTxDoneStep2(mostStatus, stat, titleStatus)

@@ -8,10 +8,10 @@ PARA_CLI2="docker exec ${NODE2} /root/chain33-cli --paraName user.p.para. --rpc_
 PARA_CLI1="docker exec ${NODE1} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 PARA_CLI4="docker exec ${NODE4} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 PARA_CLI5="docker exec ${NODE5} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
-PARA_CLI6="docker exec ${NODE6} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
-PARA_CLI7="docker exec ${NODE7} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
-PARA_CLI8="docker exec ${NODE8} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
-PARA_CLI9="docker exec ${NODE9} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
+PARA_CLI6="docker exec ${NODE6} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI7="docker exec ${NODE7} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI8="docker exec ${NODE8} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
+PARA_CLI9="docker exec ${NODE9} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
@@ -242,7 +242,7 @@ function para_transfer() {
     #1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY test
     main_transfer2paracross "0x9c451df9e5cb05b88b28729aeaaeb3169a2414097401fcb4c79c1971df734588"
     #1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj
-    main_transfer2paracross "${ADDR_1KA_KEY}" 200
+    main_transfer2paracross "${ADDR_1KA_KEY}" 100
 
     block_wait "${CLI}" 2
 
@@ -255,7 +255,7 @@ function para_transfer() {
 
 function main_transfer2account() {
     echo "${1}"
-    local coins=300
+    local coins=200
     if [ "$#" -ge 2 ]; then
         coins="$2"
     fi
@@ -294,7 +294,6 @@ function query_tx() {
     block_wait "${1}" 1
 
     local times=200
-    #        local times=10
     while true; do
         ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
         echo "query hash is ${2}, return ${ret} "
