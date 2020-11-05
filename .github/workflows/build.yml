@@ -12,6 +12,8 @@ jobs:
         id: go
       - name: checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Intsall Golangci-lint
         run: |
@@ -28,6 +30,7 @@ jobs:
 
       - name: Lint
         run: |
+          make largefile-check
           make checkgofmt && make fmt_go
           make linter
 

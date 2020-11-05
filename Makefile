@@ -49,9 +49,9 @@ autotest_tick: autotest ## run with ticket mining
 
 update: ## version 可以是git tag打的具体版本号,也可以是commit hash, 什么都不填的情况下默认从master分支拉取最新版本
 	@if [ -n "$(version)" ]; then   \
-	go get github.com/33cn/chain33@${version}  ; \
+	go get -v github.com/33cn/chain33@${version}  ; \
 	else \
-	go get github.com/33cn/chain33@master ;fi
+	go get -v github.com/33cn/chain33@master ;fi
 	@go mod tidy
 dep:
 	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.18.0
@@ -132,6 +132,9 @@ metrics:## build docker-compose for chain33 metrics
 fork-test: ## build fork-test for chain33 run
 	@cd build && cp chain33* Dockerfile system-fork-test.sh docker-compose* ci/ && cd ci/ && ./docker-compose-pre.sh forktest $(proj) $(dapp) && cd ../..
 
+largefile-check:
+	git gc
+	./findlargefile.sh
 
 clean: ## Remove previous build
 	@rm -rf $(shell find . -name 'datadir' -not -path "./vendor/*")
