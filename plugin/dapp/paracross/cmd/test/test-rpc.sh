@@ -235,7 +235,6 @@ function paracross_ListNodeStatus() {
 
 function paracross_GetSupervisionInfo() {
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupAddrs","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "GetSupervisionNodeGroupAddrs"
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupStatus","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "GetSupervisionNodeGroupStatus"
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeStatusInfo","payload":{"title":"user.p.para.","status":0}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeStatusInfo status:0"
 }
 
@@ -608,7 +607,6 @@ function run_testcases() {
 
     paracross_testTxGroup "$UNIT_HTTP"
     paracross_testTxGroupFail "$UNIT_HTTP"
-    #paracross_testParaAssetWithdrawFail "$UNIT_HTTP"
     paracross_testSelfConsensStages "$UNIT_HTTP"
 }
 

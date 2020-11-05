@@ -85,10 +85,12 @@ func getSupervisionNodeID(db dbm.KV, title string, id string) (*pt.ParaNodeIdSta
 func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*types.Receipt, error) {
 	var item types.ConfigItem
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
+
 	value, err := a.db.Get(key)
 	if err != nil {
 		return nil, err
 	}
+
 	if value != nil {
 		err = types.Decode(value, &item)
 		if err != nil {
@@ -105,7 +107,7 @@ func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*type
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
 		item.Addr = addr
-		clog.Info("updateSupervisionNodeGroup add", "addr", addr, "from", copyItem.GetArr().Value, "to", item.GetArr().Value)
+		clog.Info("updateSupervisionNodeGroup add", "addr", addr)
 	} else {
 		item.Addr = addr
 		item.GetArr().Value = make([]string, 0)
@@ -151,11 +153,6 @@ func (a *action) checkSupervisionNodeGroupExist(title string) (error, bool) {
 		if err != nil {
 			clog.Error("updateSupervisionNodeGroup", "decode db key", key)
 			return err, false
-		}
-
-		// quit 后 数据没有了
-		if len(item.GetArr().Value) <= 0 {
-			return nil, false
 		}
 
 		return nil, true
@@ -301,6 +298,10 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, apply.Title)
 	}
 
+	if apply.CoinsFrozen < config.CoinsFrozen {
+		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
+	}
+
 	// 判断监督账户组是否已经存在
 	err, exist := a.checkSupervisionNodeGroupExist(config.Title)
 	if err != nil {
@@ -310,10 +311,6 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	// 监督账户组不存在
 	if !exist {
-		if apply.CoinsFrozen < config.CoinsFrozen {
-			return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
-		}
-
 		r, err := a.supervisionNodeGroupCreate(apply.Title, apply.TargetAddr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title, apply.TargetAddr)
