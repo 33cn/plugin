@@ -6,12 +6,13 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	math "math"
+
 	types "github.com/33cn/chain33/types"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -4529,7 +4530,9 @@ func init() {
 	proto.RegisterType((*BlsPubKey)(nil), "types.BlsPubKey")
 }
 
-func init() { proto.RegisterFile("paracross.proto", fileDescriptor_6a397e38c9ea6747) }
+func init() {
+	proto.RegisterFile("paracross.proto", fileDescriptor_6a397e38c9ea6747)
+}
 
 var fileDescriptor_6a397e38c9ea6747 = []byte{
 	// 3049 bytes of a gzipped FileDescriptorProto
