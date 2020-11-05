@@ -774,7 +774,6 @@ func (a *action) commitTxDone(nodeStatus *pt.ParacrossNodeStatus, stat *pt.Parac
 
 func (a *action) commitTxDoneStep2(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus, titleStatus *pt.ParacrossStatus) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
-
 	titleStatus.Title = nodeStatus.Title
 	titleStatus.Height = nodeStatus.Height
 	titleStatus.BlockHash = nodeStatus.BlockHash
@@ -1546,9 +1545,4 @@ func (a *action) TransferToExec(transfer *types.AssetsTransferToExec, tx *types.
 		return acc.TransferToExec(from, tx.GetRealToAddr(), transfer.Amount)
 	}
 	return nil, types.ErrToAddrNotSameToExecAddr
-}
-
-func getParacrossSupervisonNodes(db dbm.KV, title string) (map[string]struct{}, []string, error) {
-	key := calcParaSupervisionNodeGroupAddrsKey(title)
-	return getNodes(db, key)
 }

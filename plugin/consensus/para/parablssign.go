@@ -281,7 +281,7 @@ func (b *blsClient) sendAggregateTx(nodes []string) error {
 
 func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 	if !b.isValidNodes(tx.From()) {
-		plog.Error("rcvCommitTx is not valid node", "addr", tx.From())
+		plog.Error("rcvCommitTx is not valid node", "addr", tx.From(), "typeNode", b.typeNode)
 		return pt.ErrParaNodeAddrNotExisted
 	}
 

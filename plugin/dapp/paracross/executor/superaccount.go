@@ -623,7 +623,7 @@ func (a *action) nodeVote(config *pt.ParaNodeAddrConfig) (*types.Receipt, error)
 				//node quit后，如果committx满足2/3目标，自动触发commitDone
 				r, err = a.loopCommitTxDone(config.Title)
 				if err != nil {
-					clog.Error("updateNodeGroup.loopCommitTxDone", "title", title, "err", err.Error())
+					clog.Error("updateNodeGroup.loopCommitTxDone", "title", cfg.GetTitle(), "err", err.Error())
 				}
 				receipt = mergeReceipt(receipt, r)
 			}

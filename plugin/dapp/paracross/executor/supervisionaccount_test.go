@@ -9,8 +9,8 @@ import (
 // createRawSupervisionNodeConfigTx create raw tx for node config
 func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) *types.Transaction {
 	action := &pt.ParacrossAction{
-		Ty:    pt.ParacrossActionSupervisionNodeGroupConfig,
-		Value: &pt.ParacrossAction_SupervisionNodeGroupConfig{SupervisionNodeGroupConfig: config},
+		Ty:    pt.ParacrossActionSupervisionNodeConfig,
+		Value: &pt.ParacrossAction_SupervisionNodeConfig{SupervisionNodeConfig: config},
 	}
 	tx := &types.Transaction{
 		Payload: types.Encode(action),
@@ -86,7 +86,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeError() {
 		Addr:  Account1M3,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
-	tx, _ = signTx(suite.Suite, tx, PrivKey1Ku)
+	tx, _ = signTx(suite.Suite, tx, PrivKey1M3)
 	_, err := suite.exec.Exec(tx, 0)
 	assert.Equal(suite.T(), err, pt.ErrParaSupervisionNodeAddrExisted)
 
@@ -140,10 +140,4 @@ func (suite *NodeManageTestSuite) testSupervisionQuery() {
 	resp2, ok := ret.(*pt.ParaNodeAddrIdStatus)
 	assert.Equal(suite.T(), ok, true)
 	assert.NotNil(suite.T(), resp2)
-
-	ret, err = suite.exec.Query_GetSupervisionNodeGroupStatus(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
-	suite.Nil(err)
-	resp3, ok := ret.(*pt.ParaNodeGroupStatus)
-	assert.Equal(suite.T(), ok, true)
-	assert.Equal(suite.T(), resp3.Status, int32(pt.ParacrossSupervisionNodeApprove))
 }

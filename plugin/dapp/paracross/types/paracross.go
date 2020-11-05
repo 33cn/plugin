@@ -50,10 +50,9 @@ const (
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
 	// Supervision Node
-	TyLogParaSupervisionNodeConfig            = 680
-	TyLogParaSupervisionNodeGroupAddrsUpdate  = 681
-	TyLogParaSupervisionNodeStatusUpdate      = 682
-	TyLogParaSupervisionNodeGroupStatusUpdate = 683
+	TyLogParaSupervisionNodeConfig           = 680
+	TyLogParaSupervisionNodeGroupAddrsUpdate = 681
+	TyLogParaSupervisionNodeStatusUpdate     = 682
 )
 
 // action type
@@ -90,8 +89,8 @@ const (
 	ParacrossActionSelfStageConfig
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
 	ParacrossActionCrossAssetTransfer
-	// ParacrossActionSupervisionNodeGroupConfig
-	ParacrossActionSupervisionNodeGroupConfig
+	// ParacrossActionSupervisionNodeConfig
+	ParacrossActionSupervisionNodeConfig
 )
 
 //paracross asset porcess
@@ -327,8 +326,6 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 			key = MainForkParacrossCommitTx
 		case ForkLoopCheckCommitTxDone:
 			key = MainLoopCheckCommitTxDoneForkHeight
-			//case ForkParaSupervision:
-			//	key = MainForkParaSupervision
 		}
 
 		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)

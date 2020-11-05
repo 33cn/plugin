@@ -125,6 +125,12 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 		return nil, err
 	}
 
+	// 监督节点地址
+	supervisionAddrs := make([]string, 0)
+	if stat.SupervisionDetails != nil {
+		supervisionAddrs = getSuperNodes(stat.SupervisionDetails, nodeStatus.BlockHash)
+	}
+
 	//奖励超级节点
 	minderRewards := coinReward
 	//如果有委托挖矿地址，则超级节点分baseReward部分，否则全部
@@ -132,7 +138,12 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 		minderRewards = coinBaseReward
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	r, change, err := a.rewardSuperNode(minderRewards, nodeAddrs, nodeStatus.Height)
+
+	miners := nodeAddrs
+	for _, addr := range supervisionAddrs {
+		miners = append(miners, addr)
+	}
+	r, change, err := a.rewardSuperNode(minderRewards, miners, nodeStatus.Height)
 	if err != nil {
 		return nil, err
 	}

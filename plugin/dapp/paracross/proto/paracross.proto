@@ -347,9 +347,9 @@ message ParacrossAction {
         ParaNodeAddrConfig    nodeConfig      = 9;
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
-        CrossAssetTransfer    crossAssetTransfer = 12;
-        ParaBindMinerCmd      paraBindMiner   = 13;
-        ParaNodeAddrConfig  supervisionNodeGroupConfig=14;
+        CrossAssetTransfer    crossAssetTransfer    = 12;
+        ParaBindMinerCmd      paraBindMiner         = 13;
+        ParaNodeAddrConfig    supervisionNodeConfig = 14;
     }
     int32 ty = 2;
 }

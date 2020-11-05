@@ -70,39 +70,6 @@ func makeParaSupervisionNodeStatusReceipt(fromAddr string, prev, current *pt.Par
 	}
 }
 
-func makeParaSupervisionNodeGroupStatusReceipt(title string, addr string, prev, current *pt.ParaNodeGroupStatus) *types.Receipt {
-	key := calcParaSupervisionNodeGroupStatusKey(title)
-	log := &pt.ReceiptParaNodeGroupConfig{
-		Addr:    addr,
-		Prev:    prev,
-		Current: current,
-	}
-	return &types.Receipt{
-		Ty: types.ExecOk,
-		KV: []*types.KeyValue{
-			{Key: key, Value: types.Encode(current)},
-		},
-		Logs: []*types.ReceiptLog{
-			{
-				Ty:  pt.TyLogParaSupervisionNodeGroupStatusUpdate,
-				Log: types.Encode(log),
-			},
-		},
-	}
-}
-
-func getSupervisionNodeGroupStatus(db dbm.KV, title string) (*pt.ParaNodeGroupStatus, error) {
-	key := calcParaSupervisionNodeGroupStatusKey(title)
-	val, err := db.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
-	var status pt.ParaNodeGroupStatus
-	err = types.Decode(val, &status)
-	return &status, err
-}
-
 func getSupervisionNodeID(db dbm.KV, title string, id string) (*pt.ParaNodeIdStatus, error) {
 	id = calcParaSupervisionNodeIDKey(title, id)
 	val, err := getDb(db, []byte(id))
@@ -148,20 +115,6 @@ func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*type
 			}
 		}
 		clog.Info("updateSupervisionNodeGroup delete", "addr", addr)
-
-		// 如果全部退出 监督组也删除
-		if len(item.GetArr().Value) <= 0 {
-			nodeGroupStatus, err := getSupervisionNodeGroupStatus(a.db, title)
-			if err != nil && !isNotFound(err) {
-				return nil, errors.Wrapf(pt.ErrParaSupervisionNodeGroupNotSet, "nodegroup not exist:%s", title)
-			}
-			copyStat := *nodeGroupStatus
-			nodeGroupStatus.Status = pt.ParacrossNodeGroupQuit
-			nodeGroupStatus.Height = a.height
-
-			r := makeParaSupervisionNodeGroupStatusReceipt(title, a.fromaddr, &copyStat, nodeGroupStatus)
-			receipt = mergeReceipt(receipt, r)
-		}
 	}
 	err = a.db.Set(key, types.Encode(&item))
 	if err != nil {
@@ -173,8 +126,9 @@ func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*type
 }
 
 func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool, error) {
-	nodes, _, err := getParacrossSupervisonNodes(a.db, config.Title)
-	if err != nil && !isNotFound(err) {
+	key := calcParaSupervisionNodeGroupAddrsKey(config.Title)
+	nodes, _, err := getNodes(a.db, key)
+	if err != nil && !(isNotFound(err) || errors.Cause(err) == pt.ErrTitleNotExist) {
 		return false, errors.Wrapf(err, "getNodes for title:%s", config.Title)
 	}
 
@@ -210,17 +164,17 @@ func (a *action) checkSupervisionNodeGroupExist(title string) (error, bool) {
 	return nil, false
 }
 
-func (a *action) supervisionNodeGroupCreate(status *pt.ParaNodeGroupStatus) (*types.Receipt, error) {
+func (a *action) supervisionNodeGroupCreate(title, targetAddrs string) (*types.Receipt, error) {
 	var item types.ConfigItem
-	key := calcParaSupervisionNodeGroupAddrsKey(status.Title)
+	key := calcParaSupervisionNodeGroupAddrsKey(title)
 	item.Key = string(key)
 	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
 	arr := types.ConfigItem_Arr{Arr: emptyValue}
 	item.Value = &arr
-	item.GetArr().Value = append(item.GetArr().Value, status.TargetAddrs)
+	item.GetArr().Value = append(item.GetArr().Value, targetAddrs)
 	item.Addr = a.fromaddr
 
-	receipt := makeParaSupervisionNodeGroupReceipt(status.Title, nil, &item)
+	receipt := makeParaSupervisionNodeGroupReceipt(title, nil, &item)
 	return receipt, nil
 }
 
@@ -304,17 +258,6 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 		return nil, pt.ErrParaSupervisionNodeAddrExisted
 	}
 
-	// 判断和监督组冻结金额是否一致
-	nodeGroupStatus, err := getSupervisionNodeGroupStatus(a.db, config.Title)
-	if err != nil && !isNotFound(err) {
-		return nil, errors.Wrapf(pt.ErrParaSupervisionNodeGroupNotSet, "nodegroup not exist:%s", config.Title)
-	}
-
-	if nodeGroupStatus != nil && config.CoinsFrozen < nodeGroupStatus.CoinsFrozen {
-		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough,
-			"coinFrozen not enough:%d,expected:%d", config.CoinsFrozen, nodeGroupStatus.CoinsFrozen)
-	}
-
 	// 在主链上冻结金额
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	cfg := a.api.GetConfig()
@@ -371,24 +314,10 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 			return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
 		}
 
-		statGroup := &pt.ParaNodeGroupStatus{
-			Id:          apply.Id,
-			Status:      pt.ParacrossSupervisionNodeApprove,
-			Title:       apply.Title,
-			TargetAddrs: apply.TargetAddr,
-			BlsPubKeys:  apply.BlsPubKey,
-			CoinsFrozen: apply.CoinsFrozen,
-			FromAddr:    a.fromaddr,
-			Height:      a.height,
-		}
-
-		r, err := a.supervisionNodeGroupCreate(statGroup)
+		r, err := a.supervisionNodeGroupCreate(apply.Title, apply.TargetAddr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title, apply.TargetAddr)
 		}
-		receipt = mergeReceipt(receipt, r)
-
-		r = makeParaSupervisionNodeGroupStatusReceipt(config.Title, a.fromaddr, nil, statGroup)
 		receipt = mergeReceipt(receipt, r)
 	} else {
 		// 监督账户组已经存在
@@ -517,7 +446,7 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Re
 	return receipt, nil
 }
 
-func (a *action) SupervisionNodeGroupConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+func (a *action) SupervisionNodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !validTitle(cfg, config.Title) {
 		return nil, pt.ErrInvalidTitle

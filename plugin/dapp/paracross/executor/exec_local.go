@@ -140,23 +140,10 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 	return &set, nil
 }
 
-func (e *Paracross) ExecLocal_SupervisionNodeGroupConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *Paracross) ExecLocal_SupervisionNodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	var set types.LocalDBSet
 	for _, log := range receiptData.Logs {
-		if log.Ty == pt.TyLogParaSupervisionNodeGroupStatusUpdate {
-			var g pt.ReceiptParaNodeGroupConfig
-			err := types.Decode(log.Log, &g)
-			if err != nil {
-				return nil, err
-			}
-			if g.Prev != nil {
-				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalSupervisionNodeGroupStatusTitle(g.Prev.Status, g.Current.Title, g.Current.Id), Value: nil})
-			}
-
-			set.KV = append(set.KV, &types.KeyValue{
-				Key: calcLocalSupervisionNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: types.Encode(g.Current)})
-		} else if log.Ty == pt.TyLogParaSupervisionNodeConfig {
+		if log.Ty == pt.TyLogParaSupervisionNodeConfig {
 			var g pt.ReceiptParaNodeConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
@@ -164,11 +151,11 @@ func (e *Paracross) ExecLocal_SupervisionNodeGroupConfig(payload *pt.ParaNodeAdd
 			}
 			if g.Prev != nil {
 				set.KV = append(set.KV, &types.KeyValue{
-					Key: calcLocalSupervisionNodeStatusTitle(g.Prev.Status, g.Current.Title, g.Current.TargetAddr, g.Current.Id), Value: types.Encode(g.Prev)})
+					Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Prev.Status, g.Current.TargetAddr, g.Current.Id), Value: nil})
 			}
 
 			set.KV = append(set.KV, &types.KeyValue{
-				Key: calcLocalSupervisionNodeStatusTitle(g.Current.Status, g.Current.Title, g.Current.TargetAddr, g.Current.Id), Value: nil})
+				Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Current.Status, g.Current.TargetAddr, g.Current.Id), Value: types.Encode(g.Current)})
 		}
 	}
 	return &set, nil

@@ -33,7 +33,7 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 	}
 	stat, err := p.paracrossGetStateTitleHeight(in.Title, in.Height)
 	if err != nil {
-		clog.Error("paracross.GetTitleHeight", "title", title, "height", in.Height, "err", err.Error())
+		clog.Error("paracross.GetTitleHeight", "title", in.Title, "height", in.Height, "err", err.Error())
 		return nil, err
 	}
 	status := stat.(*pt.ParacrossHeightStatus)
@@ -243,19 +243,6 @@ func (p *Paracross) Query_GetNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types
 	return stat, nil
 }
 
-//Query_GetSupervisionNodeGroupStatus get specific node addr info
-func (p *Paracross) Query_GetSupervisionNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil || in.Title == "" {
-		return nil, types.ErrInvalidParam
-	}
-	stat, err := getSupervisionNodeGroupStatus(p.GetStateDB(), in.Title)
-	if err != nil {
-		return stat, err
-	}
-	stat.Id = getParaNodeIDSuffix(stat.Id)
-	return stat, err
-}
-
 //Query_ListNodeGroupStatus list node info by status
 func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
 	if in == nil {
@@ -281,28 +268,29 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	return resp, nil
 }
 
-//Query_ListSupervisionNodeGroupStatus list node info by status
-func (p *Paracross) Query_ListSupervisionNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
-	if in == nil {
+//Query_ListSupervisionNodeStatusInfo list node info by status
+func (p *Paracross) Query_ListSupervisionNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
 		return nil, types.ErrInvalidParam
 	}
+
 	var prefix []byte
 	if in.Status == 0 {
-		prefix = calcLocalSupervisionNodeGroupAllPrefix()
+		prefix = calcLocalSupervisionNodeStatusTitleAllPrefix(in.Title)
 	} else {
-		prefix = calcLocalSupervisionNodeGroupStatusPrefix(in.Status)
+		prefix = calcLocalSupervisionNodeStatusTitlePrefix(in.Title, in.Status)
 	}
 
-	resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
+	resp, err := listNodeStatus(p.GetLocalDB(), prefix)
 	if err != nil {
 		return resp, err
 	}
-	addrs := resp.(*pt.RespParacrossNodeGroups)
+
+	addrs := resp.(*pt.RespParacrossNodeAddrs)
 	for _, id := range addrs.Ids {
 		id.Id = getParaNodeIDSuffix(id.Id)
 	}
-
-	return resp, err
+	return resp, nil
 }
 
 //Query_ListTitles query paracross titles list

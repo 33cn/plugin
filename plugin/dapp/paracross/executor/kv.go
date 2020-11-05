@@ -40,12 +40,9 @@ var (
 	paraBindMinderNode string
 
 	//监督节点
-	paraSupervisionNodes                string
-	paraSupervisionNodeGroupStatusAddrs string
-	paraSupervisionNodeIDPrefix         string
-
-	localSupervisionNodeGroupStatusTitle string
-	localSupervisionNodeStatusTitle      string
+	paraSupervisionNodes            string
+	paraSupervisionNodeIDPrefix     string
+	localSupervisionNodeStatusTitle string
 )
 
 func setPrefix() {
@@ -76,10 +73,7 @@ func setPrefix() {
 	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
 	paraSupervisionNodes = "mavl-paracross-supervision-nodes-title-"
-	paraSupervisionNodeGroupStatusAddrs = "mavl-paracross-supervision-nodegroup-status-title-"
 	paraSupervisionNodeIDPrefix = "mavl-paracross-title-nodeid-supervision-"
-
-	localSupervisionNodeGroupStatusTitle = "LODB-paracross-supervision-nodegroupStatusTitle-"
 	localSupervisionNodeStatusTitle = "LODB-paracross-supervision-nodeStatusTitle-"
 }
 
@@ -201,20 +195,16 @@ func calcLocalNodeGroupAllPrefix() []byte {
 	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
 }
 
-func calcLocalSupervisionNodeGroupStatusTitle(status int32, title, id string) []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle+"%02d-%s-%s", status, title, id))
+func calcLocalSupervisionNodeStatusTitle(title string, status int32, addr, id string) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s-%s", title, status, addr, id))
 }
 
-func calcLocalSupervisionNodeGroupStatusPrefix(status int32) []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle+"%02d-", status))
+func calcLocalSupervisionNodeStatusTitlePrefix(title string, status int32) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d", title, status))
 }
 
-func calcLocalSupervisionNodeGroupAllPrefix() []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeGroupStatusTitle))
-}
-
-func calcLocalSupervisionNodeStatusTitle(status int32, addr, title, id string) []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s", addr, status, title, id))
+func calcLocalSupervisionNodeStatusTitleAllPrefix(title string) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-", title))
 }
 
 //bind miner
@@ -228,10 +218,6 @@ func calcParaBindMinerNode() []byte {
 
 func calcParaSupervisionNodeGroupAddrsKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraSupervisionNodes+"%s", title))
-}
-
-func calcParaSupervisionNodeGroupStatusKey(title string) []byte {
-	return []byte(fmt.Sprintf(paraSupervisionNodeGroupStatusAddrs+"%s", title))
 }
 
 func calcParaSupervisionNodeIDKey(title, hash string) string {

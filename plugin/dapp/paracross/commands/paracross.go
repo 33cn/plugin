@@ -1167,7 +1167,6 @@ func GetBlockInfoCmd() *cobra.Command {
 func addLocalBlockBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("start", "t", 0, "block height,-1:latest height")
 	_ = cmd.MarkFlagRequired("start")
-
 }
 
 func localBlockInfo(cmd *cobra.Command, args []string) {
@@ -1197,7 +1196,6 @@ func GetLocalBlockInfoCmd() *cobra.Command {
 func addParaBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
 	_ = cmd.MarkFlagRequired("height")
-
 }
 
 func paraInfo(cmd *cobra.Command, args []string) {
@@ -1525,8 +1523,7 @@ func supervisionNodeCmd() *cobra.Command {
 	cmd.AddCommand(supervisionNodeCancelCmd())
 
 	cmd.AddCommand(getSupervisionNodeGroupAddrsCmd())
-	cmd.AddCommand(supervisionNodeGroupStatusCmd())
-	cmd.AddCommand(supervisionNodeGroupListCmd())
+	cmd.AddCommand(supervisionNodeListInfoCmd())
 	cmd.AddCommand(getSupervisionNodeInfoCmd())
 
 	return cmd
@@ -1565,7 +1562,7 @@ func supervisionNodeApply(cmd *cobra.Command, args []string) {
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 1, Addr: addr, BlsPubKey: blspub, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "SupervisionNodeGroupConfig",
+		ActionName: "SupervisionNodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -1605,7 +1602,7 @@ func supervisionNodeApprove(cmd *cobra.Command, args []string) {
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "SupervisionNodeGroupConfig",
+		ActionName: "SupervisionNodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -1639,7 +1636,7 @@ func supervisionNodeQuit(cmd *cobra.Command, args []string) {
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "SupervisionNodeGroupConfig",
+		ActionName: "SupervisionNodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -1673,7 +1670,7 @@ func supervisionNodeCancel(cmd *cobra.Command, args []string) {
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
-		ActionName: "SupervisionNodeGroupConfig",
+		ActionName: "SupervisionNodeConfig",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -1706,58 +1703,38 @@ func supervisionNodeGroup(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-func supervisionNodeGroupStatusCmd() *cobra.Command {
+// supervisionNodeListInfoCmd get node list by status
+func supervisionNodeListInfoCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "status",
-		Short: "query supervision node group apply status by title",
-		Run:   supervisionNodeGroupStatus,
+		Use:   "id_list",
+		Short: "Get supervision node apply id list info by status",
+		Run:   supervisionNodeListInfo,
 	}
+	getSupervisionNodeListInfoCmdFlags(cmd)
 	return cmd
 }
 
-func supervisionNodeGroupStatus(cmd *cobra.Command, args []string) {
+func getSupervisionNodeListInfoCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("status", "s", 0, "status:0:all,1:joining,2:quiting,3:closed,4:canceled")
+	_ = cmd.MarkFlagRequired("status")
+
+}
+
+func supervisionNodeListInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
-
-	var params rpctypes.Query4Jrpc
-	params.Execer = pt.ParaX
-	params.FuncName = "GetSupervisionNodeGroupStatus"
-	req := pt.ReqParacrossNodeInfo{Title: paraName}
-	params.Payload = types.MustPBToJSON(&req)
-
-	var res pt.ParaNodeGroupStatus
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.Run()
-}
-
-func supervisionNodeGroupListCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "query supervision node group apply list by status",
-		Run:   supervisionNodeGroupList,
-	}
-	getSupervisionNodeGroupListCmdFlags(cmd)
-	return cmd
-}
-
-func getSupervisionNodeGroupListCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().Int32P("status", "s", 0, "status:2:approve, 3:quit")
-	_ = cmd.MarkFlagRequired("status")
-}
-
-func supervisionNodeGroupList(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	status, _ := cmd.Flags().GetInt32("status")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
-	params.FuncName = "ListSupervisionNodeGroupStatus"
+	params.FuncName = "ListSupervisionNodeStatusInfo"
 	req := pt.ReqParacrossNodeInfo{
+		Title:  paraName,
 		Status: status,
 	}
 	params.Payload = types.MustPBToJSON(&req)
 
-	var res pt.RespParacrossNodeGroups
+	var res pt.RespParacrossNodeAddrs
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

@@ -793,20 +793,10 @@ function para_create_nodegroup() {
 
 # $1 status, $2 hash
 function check_supervision_node_group_list() {
-    newid=$(${PARA_CLI} para supervision_node list -s "$1" | jq -r ".ids[0].id")
+    newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[0].id")
     if [ "$newid" != "$2" ]; then
-        ${PARA_CLI} para supervision_node list -s "$1"
+        ${PARA_CLI} para supervision_node id_list -s "$1"
         echo "cancel status error "
-        exit 1
-    fi
-}
-
-# $1 status
-function check_supervision_node_group_status() {
-    status=$(${PARA_CLI} para supervision_node status | jq -r ".status")
-    if [ "$status" != "$1" ]; then
-        ${PARA_CLI} para supervision_node status
-        echo "status $status not eq target status $1"
         exit 1
     fi
 }
@@ -874,7 +864,6 @@ function para_create_supervision_nodegroup_quit() {
 
     check_supervision_node_addr_status 2 "$ADDR_25"
     check_supervision_node_group_list 2 "$id"
-    check_supervision_node_group_status 2
     check_supervision_node_addrs "$ADDR_25"
 
     echo "=========== # para chain quit supervision node group 25 ============="
@@ -885,7 +874,6 @@ function para_create_supervision_nodegroup_quit() {
 
     check_balance_1ka "$balancePre" -6
     check_supervision_node_group_list 3 "$id"
-    check_supervision_node_group_status 3
     check_supervision_node_addr_status 3 "$ADDR_25"
     check_supervision_node_addrs null
     echo "=========== # ${FUNCNAME} end ============="
@@ -910,7 +898,6 @@ function para_create_supervision_nodegroup_approve() {
     query_tx "${PARA_CLI}" "${txhash}"
 
     check_supervision_node_group_list 2 "$id"
-    check_supervision_node_group_status 2
     check_supervision_node_addr_status 2 "$ADDR_28"
     check_supervision_node_addrs "$ADDR_28"
 
