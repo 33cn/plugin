@@ -104,12 +104,11 @@ func (a *action) updateSupervisionNodeGroup(title, addr string, add bool) (*type
 	copyItem.Value = &types.ConfigItem_Arr{Arr: &copyValue}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
+	item.Addr = addr
 	if add {
 		item.GetArr().Value = append(item.GetArr().Value, addr)
-		item.Addr = addr
 		clog.Info("updateSupervisionNodeGroup add", "addr", addr)
 	} else {
-		item.Addr = addr
 		item.GetArr().Value = make([]string, 0)
 		for _, value := range copyItem.GetArr().Value {
 			if value != addr {
@@ -140,11 +139,11 @@ func (a *action) checkValidSupervisionNode(config *pt.ParaNodeAddrConfig) (bool,
 	return false, nil
 }
 
-func (a *action) checkSupervisionNodeGroupExist(title string) (error, bool) {
+func (a *action) checkSupervisionNodeGroupExist(title string) (bool, error) {
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
 	value, err := a.db.Get(key)
 	if err != nil && !isNotFound(err) {
-		return err, false
+		return false, err
 	}
 
 	if value != nil {
@@ -152,13 +151,13 @@ func (a *action) checkSupervisionNodeGroupExist(title string) (error, bool) {
 		err = types.Decode(value, &item)
 		if err != nil {
 			clog.Error("updateSupervisionNodeGroup", "decode db key", key)
-			return err, false
+			return false, err
 		}
 
-		return nil, true
+		return true, nil
 	}
 
-	return nil, false
+	return false, nil
 }
 
 func (a *action) supervisionNodeGroupCreate(title, targetAddrs string) (*types.Receipt, error) {
@@ -173,18 +172,6 @@ func (a *action) supervisionNodeGroupCreate(title, targetAddrs string) (*types.R
 
 	receipt := makeParaSupervisionNodeGroupReceipt(title, nil, &item)
 	return receipt, nil
-}
-
-func getSupervisionNodeAddr(db dbm.KV, title, addr string) (*pt.ParaNodeAddrIdStatus, error) {
-	key := calcParaNodeAddrKey(title, addr)
-	val, err := db.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
-	var status pt.ParaNodeAddrIdStatus
-	err = types.Decode(val, &status)
-	return &status, err
 }
 
 //由于propasal id 和quit id分开，quit id不知道对应addr　proposal id的coinfrozen信息，需要维护一个围绕addr的数据库结构信息
@@ -293,24 +280,22 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeAddrConfig) (*types.R
 	if err != nil {
 		return nil, err
 	}
-
 	if config.Title != apply.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, apply.Title)
 	}
-
 	if apply.CoinsFrozen < config.CoinsFrozen {
 		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
 	}
 
 	// 判断监督账户组是否已经存在
-	err, exist := a.checkSupervisionNodeGroupExist(config.Title)
+	exist, err := a.checkSupervisionNodeGroupExist(config.Title)
 	if err != nil {
 		return nil, err
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	// 监督账户组不存在
 	if !exist {
+		// 监督账户组不存在
 		r, err := a.supervisionNodeGroupCreate(apply.Title, apply.TargetAddr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "nodegroup create:title:%s,addrs:%s", config.Title, apply.TargetAddr)
@@ -349,7 +334,7 @@ func (a *action) supervisionNodeQuit(config *pt.ParaNodeAddrConfig) (*types.Rece
 		return nil, errors.Wrapf(pt.ErrParaSupervisionNodeAddrNotExisted, "nodeAddr not existed:%s", config.Addr)
 	}
 
-	status, err := getSupervisionNodeAddr(a.db, config.Title, config.Addr)
+	status, err := getNodeAddr(a.db, config.Title, config.Addr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "nodeAddr:%s get error", config.Addr)
 	}
@@ -414,11 +399,9 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Re
 	if a.fromaddr != status.FromAddr {
 		return nil, errors.Wrapf(types.ErrNotAllow, "id create by:%s,not by:%s", status.FromAddr, a.fromaddr)
 	}
-
 	if config.Title != status.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, status.Title)
 	}
-
 	if status.Status != pt.ParacrossSupervisionNodeApply {
 		return nil, errors.Wrapf(pt.ErrParaNodeOpStatusWrong, "config id:%s,status:%d", config.Id, status.Status)
 	}
