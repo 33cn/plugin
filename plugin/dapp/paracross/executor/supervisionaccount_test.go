@@ -74,6 +74,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove(addr, privKey
 		Id:    getParaNodeIDSuffix(g.Current.Id),
 		Op:    pt.ParacrossSupervisionNodeApprove,
 	}
+
 	tx = createRawSupervisionNodeConfigTx(config)
 	receipt = nodeCommit(suite, privKey, tx)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
