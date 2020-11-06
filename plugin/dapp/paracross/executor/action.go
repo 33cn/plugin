@@ -303,21 +303,16 @@ func (a *action) getNodesGroup(title string) (map[string]struct{}, []string, err
 	return nodes, nodesArray, err
 }
 
-func getSupervisionConfigNodes(db dbm.KV, title string) (map[string]struct{}, []string, []byte, error) {
+func getSupervisionNodeGroupAddrs(db dbm.KV, title string) (map[string]struct{}, []string, []byte, error) {
 	key := calcParaSupervisionNodeGroupAddrsKey(title)
 	nodes, nodesArray, err := getNodes(db, key)
 	if err != nil {
 		if errors.Cause(err) != pt.ErrTitleNotExist {
-			return nil, nil, nil, errors.Wrapf(err, "getSupervisionNodesGroup para for title:%s", title)
+			return nil, nil, nil, errors.Wrapf(err, "getSupervisionNodeGroupAddrs para for title:%s", title)
 		}
 	}
 
 	return nodes, nodesArray, key, nil
-}
-
-func (a *action) getSupervisionNodesGroup(title string) (map[string]struct{}, []string, error) {
-	nodes, nodesArray, _, err := getSupervisionConfigNodes(a.db, title)
-	return nodes, nodesArray, err
 }
 
 func (a *action) isValidSuperNode(addr string) error {
@@ -571,9 +566,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	// 获取监督节点的数据
-	supervisionNodesMap, supervisionNodesArry, err := a.getSupervisionNodesGroup(commit.Status.Title)
+	supervisionNodesMap, supervisionNodesArry, _, err := getSupervisionNodeGroupAddrs(a.db, commit.Status.Title)
 	if err != nil && errors.Cause(err) != pt.ErrTitleNotExist {
-		return nil, errors.Wrap(err, "getSupervisionNodesGroup")
+		return nil, errors.Wrap(err, "getSupervisionNodeGroupAddrs")
 	}
 
 	if !bIsCommitSuperNode {
@@ -859,9 +854,9 @@ func (a *action) loopCommitTxDone(title string) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "getNodes for title:%s", title)
 	}
 	// 获取监督节点的数据
-	supervisionNodes, _, err := a.getSupervisionNodesGroup(title)
+	supervisionNodes, _, _, err := getSupervisionNodeGroupAddrs(a.db, title)
 	if err != nil && errors.Cause(err) != pt.ErrTitleNotExist {
-		return nil, errors.Wrap(err, "getSupervisionNodesGroup loopCommitTxDone")
+		return nil, errors.Wrap(err, "getSupervisionNodeGroupAddrs loopCommitTxDone")
 	}
 	//从当前共识高度开始遍历
 	titleStatus, err := getTitle(a.db, calcTitleKey(title))

@@ -112,7 +112,7 @@ func (p *Paracross) Query_GetSupervisionNodeGroupAddrs(in *pt.ReqParacrossNodeIn
 		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
 	}
 
-	_, nodesArry, key, err := getSupervisionConfigNodes(p.GetStateDB(), in.GetTitle())
+	_, nodesArry, key, err := getSupervisionNodeGroupAddrs(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, err
 	}
