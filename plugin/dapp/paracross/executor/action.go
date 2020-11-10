@@ -1298,7 +1298,6 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 		if fundReward > 0 {
 			totalReward += fundReward
 		}
-		totalReward *= types.Coin
 
 		decimalMode := cfg.MIsEnable("mver.consensus.paracross.decimalMode", a.height)
 		if !decimalMode {
