@@ -37,7 +37,7 @@ require (
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.6.1
-	github.com/tjfoc/gmsm v1.3.1
+	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.5.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9

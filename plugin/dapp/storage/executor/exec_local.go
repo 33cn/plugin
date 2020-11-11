@@ -115,6 +115,27 @@ func (s *storage) ExecLocal_EncryptShareStorage(payload *ety.EncryptShareNotaryS
 	return s.addAutoRollBack(tx, dbSet.KV), nil
 }
 
+func (s *storage) ExecLocal_EncryptAdd(payload *ety.EncryptNotaryAdd, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	dbSet := &types.LocalDBSet{}
+	cfg := s.GetAPI().GetConfig()
+	if cfg.IsDappFork(s.GetHeight(), ety.StorageX, ety.ForkStorageLocalDB) {
+		if receiptData.Ty == types.ExecOk {
+			for _, log := range receiptData.Logs {
+				switch log.Ty {
+				case ety.TyEncryptAddLog:
+					storage := &ety.Storage{}
+					if err := types.Decode(log.Log, storage); err != nil {
+						return nil, err
+					}
+					kv := &types.KeyValue{Key: getLocalDBKey(storage.GetEncryptStorage().Key), Value: types.Encode(storage)}
+					dbSet.KV = append(dbSet.KV, kv)
+				}
+			}
+		}
+	}
+	return s.addAutoRollBack(tx, dbSet.KV), nil
+}
+
 //设置自动回滚
 func (s *storage) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
