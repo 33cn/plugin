@@ -83,14 +83,14 @@ func (suite *RewardTestSuite) TestRewardBindAddr() {
 	key = calcParaBindMinerAddr(node, addr2)
 	suite.stateDB.Set(key, data)
 
-	list := &pt.ParaNodeBindList{
-		SuperNode: node,
-		Miners:    []string{addr, addr2},
-	}
+	node1 := &pt.ParaNodeBindOne{SuperNode: node, Miner: addr}
+	node2 := &pt.ParaNodeBindOne{SuperNode: node, Miner: addr2}
 
-	lists := []*pt.ParaNodeBindList{list}
+	list := &pt.ParaNodeBindList{}
+	list.Miners = append(list.Miners, node1)
+	list.Miners = append(list.Miners, node2)
 
-	recp, change, err := suite.action.rewardBindAddr(50000005, lists, 1)
+	recp, change, err := suite.action.rewardBindAddr(50000005, list, 1)
 	suite.Nil(err)
 	suite.Equal(int64(5), change)
 	suite.Equal(int32(types.ExecOk), recp.Ty)

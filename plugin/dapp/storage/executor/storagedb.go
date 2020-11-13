@@ -3,6 +3,8 @@ package executor
 import (
 	"fmt"
 
+	"github.com/33cn/plugin/plugin/crypto/paillier"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -186,6 +188,47 @@ func (s *StorageAction) EncryptShareStorage(payload *ety.EncryptShareNotaryStora
 		logs = append(logs, log)
 		kvs = s.GetKVSet(&ety.Storage{Value: &ety.Storage_EncryptShareStorage{EncryptShareStorage: payload}})
 	}
+	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipt, nil
+}
+
+//EncryptAdd ...
+func (s *StorageAction) EncryptAdd(payload *ety.EncryptNotaryAdd) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	cfg := s.api.GetConfig()
+
+	store, err := QueryStorage(s.db, s.localdb, payload.Key)
+	if err != nil {
+		return nil, fmt.Errorf("EncryptAdd.QueryStorage. err:%v", err)
+	}
+
+	cipherText := store.GetEncryptStorage().EncryptContent
+	res, err := paillier.CiphertextAddBytes(cipherText, payload.EncryptAdd)
+	if err != nil {
+		return nil, fmt.Errorf("EncryptAdd.CiphertextAddBytes. err:%v", err)
+	}
+
+	store.GetEncryptStorage().EncryptContent = res
+
+	newStore := &ety.EncryptNotaryStorage{
+		ContentHash:    store.GetEncryptStorage().ContentHash,
+		EncryptContent: res,
+		Nonce:          store.GetEncryptStorage().Nonce,
+		Key:            store.GetEncryptStorage().Key,
+		Value:          store.GetEncryptStorage().Value,
+	}
+
+	if cfg.IsDappFork(s.height, ety.StorageX, ety.ForkStorageLocalDB) {
+		stg := &ety.Storage{Value: &ety.Storage_EncryptStorage{EncryptStorage: newStore}, Ty: ety.TyEncryptStorageAction}
+		log := &types.ReceiptLog{Ty: ety.TyEncryptAddLog, Log: types.Encode(stg)}
+		logs = append(logs, log)
+	} else {
+		log := &types.ReceiptLog{Ty: ety.TyEncryptAddLog}
+		logs = append(logs, log)
+		kvs = append(kvs, &types.KeyValue{Key: Key(payload.Key), Value: types.Encode(newStore)})
+	}
+
 	receipt := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipt, nil
 }

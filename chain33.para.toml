@@ -53,6 +53,7 @@ driver="leveldb"
 dbPath="paradatadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
+waitPid=true
 
 [p2p.sub.dht]
 DHTDataPath="paradatadir/p2pstore"
@@ -93,7 +94,8 @@ coinDevFund=12
 coinBaseReward=3
 #委托账户最少解绑定时间(按小时)
 unBindTime=24
-
+#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置
+#decimalMode=true
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”

@@ -192,6 +192,6 @@ func calcParaBindMinerAddr(node, bind string) []byte {
 	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s-%s", node, bind))
 }
 
-func calcParaBindMinerNode(node string) []byte {
-	return []byte(paraBindMinderNode + node)
+func calcParaBindMinerNode() []byte {
+	return []byte(paraBindMinderNode)
 }

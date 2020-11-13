@@ -180,9 +180,14 @@ message ReceiptParaBindMinerInfo{
     ParaBindMinerInfo current = 3;
 }
 
-message ParaNodeBindList{
+message ParaNodeBindOne{
     string superNode = 1;
-    repeated string miners = 2;
+    string miner = 2;
+}
+
+message ParaNodeBindList{
+    string title = 1;
+    repeated ParaNodeBindOne miners = 2;
 }
 
 message ReceiptParaNodeBindListUpdate{

@@ -265,6 +265,12 @@ func (auth *Authority) Validate(signature *types.Signature) error {
 	return nil
 }
 
+// GetSnFromSig 解析证书序列号
+func (auth *Authority) GetSnFromByte(signature *types.Signature) ([]byte, error) {
+	return auth.validator.GetCertSnFromSignature(signature.Signature)
+
+}
+
 // ToHistoryCertStore 历史数据转成store可存储的历史数据
 func (certdata *HistoryCertData) ToHistoryCertStore(store *types.HistoryCertStore) {
 	if store == nil {
