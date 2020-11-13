@@ -1,0 +1,284 @@
+// Copyright Fuzamei Corp. 2018 All Rights Reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package executor
+
+import (
+	"bytes"
+
+	"github.com/33cn/chain33/common"
+	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/NebulousLabs/merkletree"
+	"github.com/consensys/gnark/crypto/hash/mimc/bn256"
+	"github.com/pkg/errors"
+)
+
+//func makeTreeReceipt(key []byte, logTy int32, data proto.Message) *types.Receipt {
+//	return &types.Receipt{
+//		Ty: types.ExecOk,
+//		KV: []*types.KeyValue{
+//			{Key: key, Value: types.Encode(data)},
+//		},
+//		Logs: []*types.ReceiptLog{
+//			{Ty: logTy, Log: types.Encode(data)},
+//		},
+//	}
+//}
+
+func makeTreeLeavesReceipt(data *mixTy.CommitTreeLeaves) *types.Receipt {
+	return makeReceipt(calcCurrentCommitLeavesKey(), mixTy.TyLogCurrentCommitTreeLeaves, data)
+}
+
+func makeTreeRootsReceipt(data *mixTy.CommitTreeRoots) *types.Receipt {
+	return makeReceipt(calcCurrentCommitRootsKey(), mixTy.TyLogCurrentCommitTreeRoots, data)
+}
+
+func makeCurrentTreeReceipt(leaves *mixTy.CommitTreeLeaves, roots *mixTy.CommitTreeRoots) *types.Receipt {
+	r1 := makeTreeLeavesReceipt(leaves)
+	r2 := makeTreeRootsReceipt(roots)
+	return mergeReceipt(r1, r2)
+}
+
+func makeTreeRootLeavesReceipt(root []byte, data *mixTy.CommitTreeLeaves) *types.Receipt {
+	return makeReceipt(calcCommitTreeRootLeaves(common.ToHex(root)), mixTy.TyLogCommitTreeRootLeaves, data)
+}
+
+func makeTreeArchiveRootsReceipt(data *mixTy.CommitTreeRoots) *types.Receipt {
+	return makeReceipt(calcCommitTreeArchiveRootsKey(), mixTy.TyLogCommitTreeArchiveRoots, data)
+}
+
+func getCommitLeaves(db dbm.KV, key []byte) (*mixTy.CommitTreeLeaves, error) {
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get db")
+	}
+	var leaves mixTy.CommitTreeLeaves
+	err = types.Decode(v, &leaves)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db verify key")
+	}
+
+	return &leaves, nil
+}
+
+func getCurrentCommitTreeLeaves(db dbm.KV) (*mixTy.CommitTreeLeaves, error) {
+	return getCommitLeaves(db, calcCurrentCommitLeavesKey())
+}
+
+func getCommitRootLeaves(db dbm.KV, rootHash []byte) (*mixTy.CommitTreeLeaves, error) {
+	return getCommitLeaves(db, calcCommitTreeRootLeaves(common.ToHex(rootHash)))
+}
+
+func getCommitTreeRoots(db dbm.KV, key []byte) (*mixTy.CommitTreeRoots, error) {
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get db")
+	}
+	var roots mixTy.CommitTreeRoots
+	err = types.Decode(v, &roots)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db verify key")
+	}
+
+	return &roots, nil
+}
+
+func getCurrentCommitTreeRoots(db dbm.KV) (*mixTy.CommitTreeRoots, error) {
+	return getCommitTreeRoots(db, calcCurrentCommitRootsKey())
+}
+
+func getArchiveCommitRoots(db dbm.KV) (*mixTy.CommitTreeRoots, error) {
+	return getCommitTreeRoots(db, calcCommitTreeArchiveRootsKey())
+}
+
+func getNewTree() *merkletree.Tree {
+	return merkletree.New(bn256.NewMiMC("seed"))
+}
+
+func calcTreeRoot(leaves *mixTy.CommitTreeLeaves) []byte {
+	tree := getNewTree()
+	for _, leaf := range leaves.Data {
+		tree.Push(leaf)
+	}
+	return tree.Root()
+
+}
+
+func getNewCommitLeaves() (*mixTy.CommitTreeLeaves, *mixTy.CommitTreeRoots) {
+	leaves := &mixTy.CommitTreeLeaves{}
+	roots := &mixTy.CommitTreeRoots{}
+
+	//第一个叶子节点都是固定的"00"字节
+	leaf := []byte("00")
+	leaves.Data = append(leaves.Data, leaf)
+	roots.Data = append(roots.Data, calcTreeRoot(leaves))
+
+	return leaves, roots
+}
+
+func initNewLeaves(leaf []byte) *types.Receipt {
+	leaves, roots := getNewCommitLeaves()
+	if len(leaf) > 0 {
+		leaves.Data = append(leaves.Data, leaf)
+		roots.Data = append(roots.Data, calcTreeRoot(leaves))
+	}
+
+	return makeCurrentTreeReceipt(leaves, roots)
+}
+
+func archiveRoots(db dbm.KV, root []byte, leaves *mixTy.CommitTreeLeaves) (*types.Receipt, error) {
+	receiptRootLeaves := makeTreeRootLeavesReceipt(root, leaves)
+
+	archiveRoots, err := getArchiveCommitRoots(db)
+	if isNotFound(errors.Cause(err)) {
+		archiveRoots = &mixTy.CommitTreeRoots{}
+		err = nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	archiveRoots.Data = append(archiveRoots.Data, root)
+	receiptArch := makeTreeArchiveRootsReceipt(archiveRoots)
+	return mergeReceipt(receiptRootLeaves, receiptArch), nil
+}
+
+/*
+1. 增加到当前leaves 和roots
+2. 如果leaves 达到最大比如1024，则按root归档leaves，并归档相应root
+3. 归档同时初始化新的current leaves 和roots
+
+*/
+func pushTree(db dbm.KV, leaf []byte) (*types.Receipt, error) {
+	leaves, err := getCurrentCommitTreeLeaves(db)
+	if isNotFound(errors.Cause(err)) {
+		//系统初始状态
+		return initNewLeaves(leaf), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	//Roots应该和Leaves保持一致，如果err 是不应该的。
+	roots, err := getCurrentCommitTreeRoots(db)
+	if isNotFound(errors.Cause(err)) {
+		roots = &mixTy.CommitTreeRoots{}
+		err = nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	leaves.Data = append(leaves.Data, leaf)
+	currentRoot := calcTreeRoot(leaves)
+	roots.Data = append(roots.Data, currentRoot)
+	r := makeCurrentTreeReceipt(leaves, roots)
+
+	//归档
+	if len(leaves.Data) >= mixTy.MaxTreeLeaves {
+		receiptArch, err := archiveRoots(db, currentRoot, leaves)
+		if err != nil {
+			return nil, err
+		}
+		mergeReceipt(r, receiptArch)
+
+		//创建新的leaves
+		receiptNew := initNewLeaves(nil)
+		mergeReceipt(r, receiptNew)
+
+	}
+
+	return r, nil
+}
+
+func checkTreeRootHashExist(db dbm.KV, hash []byte) bool {
+	var roots [][]byte
+	currentRoots, err := getCurrentCommitTreeRoots(db)
+	if err == nil {
+		roots = append(roots, currentRoots.Data...)
+	}
+
+	archiveRoots, err := getArchiveCommitRoots(db)
+	if err == nil {
+		roots = append(roots, archiveRoots.Data...)
+	}
+
+	for _, k := range roots {
+		if bytes.Equal(k, hash) {
+			return true
+		}
+	}
+	return false
+
+}
+
+func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, error) {
+	index := 0
+	for i, key := range leaves {
+		if bytes.Equal(key, targetLeaf) {
+			index = i
+			break
+		}
+	}
+	//index=0的leaf是占位"00"，不会和leaf相等
+	if index == 0 {
+		return nil, mixTy.ErrLeafNotFound
+	}
+
+	tree := getNewTree()
+	tree.SetIndex(uint64(index))
+	for _, key := range leaves {
+		tree.Push(key)
+	}
+	root, set, proofIndex, num := tree.Prove()
+	var prove mixTy.CommitTreeProve
+	prove.RootHash = common.ToHex(root)
+	prove.ProofIndex = uint32(proofIndex)
+	prove.NumLeaves = uint32(num)
+	for _, s := range set {
+		prove.ProofSet = append(prove.ProofSet, common.ToHex(s))
+	}
+	return &prove, nil
+
+}
+
+func CalcTreeProve(db dbm.KV, rootHash, leaf []byte) (*mixTy.CommitTreeProve, error) {
+	leaves, err := getCurrentCommitTreeLeaves(db)
+	if err == nil {
+		p, err := getProveData(leaf, leaves.Data)
+		if err == nil {
+			return p, nil
+		}
+	}
+
+	if len(rootHash) > 0 {
+		leaves, err := getCommitRootLeaves(db, rootHash)
+		if err != nil {
+			return nil, err
+		}
+		p, err := getProveData(leaf, leaves.Data)
+		if err != nil {
+			return nil, errors.Wrapf(err, "hash=%s,leaf=%s", common.ToHex(rootHash), common.ToHex(leaf))
+		}
+		return p, nil
+	}
+
+	roots, err := getArchiveCommitRoots(db)
+	if err == nil {
+		for _, root := range roots.Data {
+			leaves, err := getCommitRootLeaves(db, root)
+			if err == nil {
+				p, err := getProveData(leaf, leaves.Data)
+				if err == nil {
+					return p, nil
+				}
+			}
+
+		}
+	}
+
+	return nil, errors.Wrapf(err, "hash=%s,leaf=%s", common.ToHex(rootHash), common.ToHex(leaf))
+
+}

@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+
+package types;
+
+//区分不同的验证电路
+enum VerifyType{
+    DEPOSIT         = 0;
+    WITHDRAW        = 1;
+    TRANSFERINPUT      = 2;
+    TRANSFEROUTPUT     = 3;
+    AUTHORIZE       = 4;
+}
+
+//区分zk 所选取的曲线，需要和gnark保持一致
+enum ZkCurveId{
+	UNKNOWN = 0;
+	BLS377 = 1;
+	BLS381 = 2;
+	BN256 = 3;
+}
+
+message ZkVerifyKey {
+    ZkCurveId curveId = 1;
+    VerifyType type = 2;
+    string value = 3;
+}
+
+message ZkVerifyKeys{
+    repeated ZkVerifyKey data = 1;
+}
+
+message AuthPubKeys{
+    repeated string data = 1;
+}
+
+enum MixConfigType{
+    VerifyKey = 0;
+    AuthPubKey = 1;
+}
+
+enum MixConfigAct{
+    Add = 0;
+    Delete = 1;
+}
+
+
+message AuthorizePubKey {
+    string value = 3;
+}
+
+//config verify parameter for proof
+message MixConfigAction {
+    MixConfigType Ty = 1;
+    MixConfigAct Action = 2;
+    oneof  value {
+        ZkVerifyKey  verifyKey = 3;
+        AuthorizePubKey authKey = 4;
+    }
+}
+
+message ZkProofInfo {
+    string proof        = 1;
+    string publicInput  = 2;
+}
+
+message MixDepositAction {
+    uint64 amount = 1;
+    repeated ZkProofInfo newCommits = 2;
+
+}
+
+message MixTransferAction {
+    repeated ZkProofInfo input = 1;
+    repeated ZkProofInfo output = 2;
+
+}
+
+message MixWithdrawAction {
+    uint64 amount = 1;
+    repeated ZkProofInfo spendCommits = 2;
+
+}
+
+message MixAuthorizeAction {
+    repeated ZkProofInfo authCommits = 1;
+
+}
+
+message MixAction {
+    int32 ty = 1;
+    oneof value {
+        MixConfigAction     config            = 2;
+        MixDepositAction    deposit           = 3;
+        MixWithdrawAction   withdraw          = 4;
+        MixTransferAction   transfer          = 5;
+        MixAuthorizeAction  authorize         = 6;
+
+    }
+
+}
+
+
+message DepositPublicInput {
+    bytes nodeHash = 1;
+    string amount = 2;
+
+}
+
+message WithdrawPublicInput {
+    bytes treeRootHash  = 1;
+    bytes nullifierHash = 2;
+    bytes authorizeHash = 3;
+    string amount = 4;
+
+}
+
+message TransferInputPublicInput {
+    bytes treeRootHash = 1;
+    string commitValueX = 2;
+    string commitValueY = 3;
+    bytes authorizeHash = 4;
+    bytes nullifierHash = 5;
+}
+
+message TransferOutputPublicInput {
+    bytes nodeHash = 1;
+    string commitValueX = 2;
+    string commitValueY = 3;
+
+}
+
+message AuthorizePublicInput {
+    bytes treeRootHash = 1;
+    string authorizePubKey = 2;
+    bytes authorizeHash = 3;
+    bytes authorizeSpendHash = 4;
+
+}
+
+message ExistValue {
+    bool data = 1;
+}
+
+message CommitTreeLeaves {
+    repeated bytes data = 1;
+}
+
+message CommitTreeRoots {
+    repeated bytes data = 1;
+}
+
+
+message CommitTreeProve {
+    string rootHash = 1;
+    repeated string proofSet = 2;
+    uint32 proofIndex = 3;
+    uint32 numLeaves = 4;
+}
+
+
+
+
+
+
