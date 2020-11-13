@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TokenCmd token 命令行
+// Cmd wasm 命令行
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wasm",
@@ -21,15 +21,15 @@ func Cmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdCheckContract(),
-		CmdCreateContract(),
-		CmdCallContract(),
+		cmdCheckContract(),
+		cmdCreateContract(),
+		cmdCallContract(),
 	)
 
 	return cmd
 }
 
-func CmdCheckContract() *cobra.Command {
+func cmdCheckContract() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Check whether the contract with the given name exists or not.",
@@ -40,7 +40,7 @@ func CmdCheckContract() *cobra.Command {
 	return cmd
 }
 
-func CmdCreateContract() *cobra.Command {
+func cmdCreateContract() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "publish a new contract on chain33",
@@ -53,7 +53,7 @@ func CmdCreateContract() *cobra.Command {
 	return cmd
 }
 
-func CmdCallContract() *cobra.Command {
+func cmdCallContract() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
 		Short: "call contract on chain33",
