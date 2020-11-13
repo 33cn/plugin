@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/system/dapp"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
@@ -28,11 +29,13 @@ type Wasm struct {
 	drivers.DriverBase
 
 	tx           *types.Transaction
+	stateKVC     *dapp.KVCreator
+	localCache   []*types2.LocalDataLog
 	kvs          []*types.KeyValue
 	receiptLogs  []*types.ReceiptLog
-	logs         []string
+	customLogs   []string
 	execAddr     string
-	contractAddr string
+	contractName string
 }
 
 func newWasm() drivers.Driver {

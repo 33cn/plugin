@@ -12,6 +12,8 @@ var NameReg *regexp.Regexp
 const (
 	WasmX      = "wasm"
 	NameRegExp = "^[a-z0-9]+$"
+	//TODO: max size to define
+	MaxCodeSize = 1 << 20
 )
 
 // action for executor

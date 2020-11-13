@@ -1,37 +1,37 @@
 package executor
 
 import (
-	"fmt"
-
-	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/types"
+	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
 )
 
-const (
-	KeyPrefixContract = "mavl-wasm-%s:%s"
-	KeyPrefixLocal    = "LODB-wasm-%s:%s"
-)
-
+// "mavl-wasm-code-{name}"
 func contractKey(name string) []byte {
-	contractAddr := address.ExecAddress(name)
-	key := "mavl-wasm-address:" + contractAddr
-	return []byte(key)
+	return append([]byte("mavl-"+types2.WasmX+"-code-"), []byte(name)...)
 }
 
-func (w *Wasm) formatStateKey(key []byte) []byte {
-	addr := address.ExecAddress(w.contractAddr)
-	return []byte(fmt.Sprintf(KeyPrefixContract, addr, string(key)))
+// "mavl-wasm-{contract}-"
+func calcStatePrefix(contract string) []byte {
+	var prefix []byte
+	prefix = append(prefix, types.CalcStatePrefix([]byte(types2.WasmX))...)
+	prefix = append(prefix, []byte(contract)...)
+	prefix = append(prefix, '-')
+	return prefix
 }
 
-func (w *Wasm) formatLocalKey(key []byte) []byte {
-	addr := address.ExecAddress(w.contractAddr)
-	return []byte(fmt.Sprintf(KeyPrefixLocal, addr, string(key)))
+// "LODB-wasm-{contract}-"
+func calcLocalPrefix(contract string) []byte {
+	var prefix []byte
+	prefix = append(prefix, types.CalcLocalPrefix([]byte(types2.WasmX))...)
+	prefix = append(prefix, []byte(contract)...)
+	prefix = append(prefix, '-')
+	return prefix
 }
 
 func (w *Wasm) contractExist(name string) bool {
 	_, err := w.GetStateDB().Get(contractKey(name))
+	if err != nil && err != types.ErrNotFound {
+		panic(err)
+	}
 	return err == nil
-}
-
-func (w *Wasm) getContract(name string) ([]byte, error) {
-	return w.GetStateDB().Get(contractKey(name))
 }

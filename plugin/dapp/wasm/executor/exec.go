@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
 	"github.com/perlin-network/life/compiler"
@@ -13,30 +14,49 @@ import (
 
 var wasmCB *Wasm
 
+func (w *Wasm) userExecName(name string, local bool) string {
+	execer := "user." + types2.WasmX + "." + name
+	if local {
+		cfg := w.GetAPI().GetConfig()
+		execer = cfg.ExecName(execer)
+	}
+	return execer
+}
+
+func (w *Wasm) checkTxExec(txExec string, execName string) bool {
+	cfg := w.GetAPI().GetConfig()
+	return txExec == cfg.ExecName(execName)
+}
+
 func (w *Wasm) Exec_Create(payload *types2.WasmCreate, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload == nil {
 		return nil, types.ErrInvalidParam
+	}
+	if !w.checkTxExec(string(tx.Execer), types2.WasmX) {
+		return nil, types.ErrExecNameNotMatch
 	}
 
 	name := payload.Name
 	if !validateName(name) {
 		return nil, types2.ErrInvalidContractName
 	}
-	if w.contractExist(name) {
-		return nil, types2.ErrContractExist
-	}
 	code := payload.Code
-	if len(code) > 1<<20 { //TODO: max size to define
+	if len(code) > types2.MaxCodeSize {
 		return nil, types2.ErrCodeOversize
 	}
 	if err := validation.ValidateWasm(code); err != nil {
 		return nil, types2.ErrInvalidWasm
 	}
-	var receiptLogs []*types.ReceiptLog
-	kv := []*types.KeyValue{{
-		Key:   contractKey(name),
-		Value: code,
-	}}
+
+	kvc := dapp.NewKVCreator(w.GetStateDB(), nil, nil)
+	_, err := kvc.GetNoPrefix(contractKey(name))
+	if err == nil {
+		return nil, types2.ErrContractExist
+	}
+	if err != types.ErrNotFound {
+		return nil, err
+	}
+	kvc.AddNoPrefix(contractKey(name), code)
 
 	receiptLog := &types.ReceiptLog{
 		Ty: types2.TyLogWasmCreate,
@@ -45,20 +65,25 @@ func (w *Wasm) Exec_Create(payload *types2.WasmCreate, tx *types.Transaction, in
 			Code: hex.EncodeToString(code),
 		}),
 	}
-	receiptLogs = append(receiptLogs, receiptLog)
 
 	return &types.Receipt{
 		Ty:   types.ExecOk,
-		KV:   kv,
-		Logs: receiptLogs,
+		KV:   kvc.KVList(),
+		Logs: []*types.ReceiptLog{receiptLog},
 	}, nil
 }
 
 func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index int) (*types.Receipt, error) {
+	log.Info("into wasm Exec_Call...")
 	if payload == nil {
 		return nil, types.ErrInvalidParam
 	}
-	code, err := w.getContract(payload.Contract)
+	if !w.checkTxExec(string(tx.Execer), types2.WasmX) {
+		return nil, types.ErrExecNameNotMatch
+	}
+
+	w.stateKVC = dapp.NewKVCreator(w.GetStateDB(), calcStatePrefix(payload.Contract), nil)
+	code, err := w.stateKVC.GetNoPrefix(contractKey(payload.Contract))
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +103,9 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 		return nil, types2.ErrInvalidMethod
 	}
 
-	w.contractAddr = address.ExecAddress(payload.Contract)
+	w.contractName = payload.Contract
 	w.tx = tx
-	w.execAddr = address.ExecAddress(string(tx.Execer))
+	w.execAddr = address.ExecAddress(string(types.GetRealExecName(tx.Execer)))
 	wasmCB = w
 	defer func() {
 		wasmCB = nil
@@ -90,22 +115,31 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	if err != nil {
 		return nil, err
 	}
+
+	var kvs []*types.KeyValue
+	kvs = append(kvs, w.kvs...)
+	kvs = append(kvs, w.stateKVC.KVList()...)
+
 	var logs []*types.ReceiptLog
 	logs = append(logs, &types.ReceiptLog{Ty: types2.TyLogWasmCall, Log: types.Encode(&types2.CallContractLog{
 		Contract: payload.Contract,
 		Method:   payload.Method,
 		Result:   ret,
 	})})
-
-	logs = append(logs, &types.ReceiptLog{Ty: types2.TyLogCustom, Log: types.Encode(&types2.CustomLog{
-		Info: w.logs,
-	})})
-
 	logs = append(logs, w.receiptLogs...)
+	logs = append(logs, &types.ReceiptLog{Ty: types2.TyLogCustom, Log: types.Encode(&types2.CustomLog{
+		Info: w.customLogs,
+	})})
+	for _, log := range w.localCache {
+		logs = append(logs, &types.ReceiptLog{
+			Ty:  types2.TyLogLocalData,
+			Log: types.Encode(log),
+		})
+	}
 
 	receipt := &types.Receipt{
 		Ty:   types.ExecOk,
-		KV:   w.kvs,
+		KV:   kvs,
 		Logs: logs,
 	}
 	if ret < 0 {

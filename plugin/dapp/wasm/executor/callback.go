@@ -9,10 +9,7 @@ import (
 
 //stateDB wrapper
 func setStateDB(key, value []byte) {
-	wasmCB.kvs = append(wasmCB.kvs, &types.KeyValue{
-		Key:   wasmCB.formatStateKey(key),
-		Value: value,
-	})
+	wasmCB.stateKVC.Add(key, value)
 }
 
 func getStateDBSize(key []byte) int {
@@ -24,19 +21,14 @@ func getStateDBSize(key []byte) int {
 }
 
 func getStateDB(key []byte) ([]byte, error) {
-	return wasmCB.GetStateDB().Get(wasmCB.formatStateKey(key))
+	return wasmCB.stateKVC.Get(key)
 }
 
 //localDB wrapper
 func setLocalDB(key, value []byte) {
-	preValue, _ := getLocalDB(key)
-	wasmCB.receiptLogs = append(wasmCB.receiptLogs, &types.ReceiptLog{
-		Ty: types2.TyLogLocalData,
-		Log: types.Encode(&types2.LocalDataLog{
-			Key:      wasmCB.formatLocalKey(key),
-			PreValue: preValue,
-			CurValue: value,
-		}),
+	wasmCB.localCache = append(wasmCB.localCache, &types2.LocalDataLog{
+		Key:   append(calcLocalPrefix(wasmCB.contractName), key...),
+		Value: value,
 	})
 }
 
@@ -49,7 +41,14 @@ func getLocalDBSize(key []byte) int {
 }
 
 func getLocalDB(key []byte) ([]byte, error) {
-	return wasmCB.GetLocalDB().Get(wasmCB.formatLocalKey(key))
+	newKey := append(calcLocalPrefix(wasmCB.contractName), key...)
+	// 先查缓存，再查数据库
+	for _, kv := range wasmCB.localCache {
+		if string(newKey) == string(kv.Key) {
+			return kv.Value, nil
+		}
+	}
+	return wasmCB.GetLocalDB().Get(newKey)
 }
 
 //account wrapper
@@ -94,6 +93,7 @@ func transferWithdraw(addr, execaddr string, amount int64) error {
 func execFrozen(addr string, amount int64) error {
 	receipt, err := wasmCB.GetCoinsAccount().ExecFrozen(addr, wasmCB.execAddr, amount)
 	if err != nil {
+		log.Error("execFrozen", "error", err)
 		return err
 	}
 	wasmCB.kvs = append(wasmCB.kvs, receipt.KV...)
@@ -164,7 +164,7 @@ func getRandom() int64 {
 }
 
 func printlog(s string) {
-	wasmCB.logs = append(wasmCB.logs, s)
+	wasmCB.customLogs = append(wasmCB.customLogs, s)
 }
 
 func sha256(data []byte) []byte {

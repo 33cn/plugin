@@ -6,28 +6,28 @@ import (
 )
 
 func (w *Wasm) ExecLocal_Create(payload *types2.WasmCreate, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return execLocal(receipt)
+	return &types.LocalDBSet{}, nil
 }
 
 func (w *Wasm) ExecLocal_Call(payload *types2.WasmCall, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return execLocal(receipt)
-}
-
-func execLocal(receipt *types.ReceiptData) (*types.LocalDBSet, error) {
 	if receipt.Ty != types.ExecOk {
-		return nil, nil
+		return &types.LocalDBSet{}, nil
 	}
-	set := &types.LocalDBSet{}
+	localExecer := w.userExecName(payload.Contract, true)
+	var KVs []*types.KeyValue
 	for _, item := range receipt.Logs {
 		if item.Ty == types2.TyLogLocalData {
 			var data types2.LocalDataLog
 			err := types.Decode(item.Log, &data)
 			if err != nil {
-				log.Error("execLocal", "decode error", err)
-				continue
+				return nil, err
 			}
-			set.KV = append(set.KV, &types.KeyValue{Key: data.Key, Value: data.CurValue})
+			KVs = append(KVs, &types.KeyValue{
+				Key:   data.Key,
+				Value: data.Value,
+			})
 		}
 	}
-	return set, nil
+
+	return &types.LocalDBSet{KV: w.AddRollbackKV(tx, []byte(localExecer), KVs)}, nil
 }
