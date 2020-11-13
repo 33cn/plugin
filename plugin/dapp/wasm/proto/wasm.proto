@@ -42,7 +42,6 @@ message callContractLog {
 
 message localDataLog {
   bytes key = 1;
-  bytes preValue = 2;
-  bytes curValue = 3;
+  bytes value = 2;
 }
 
