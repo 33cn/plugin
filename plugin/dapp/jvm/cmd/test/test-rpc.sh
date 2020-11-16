@@ -39,9 +39,9 @@ function create_contract() {
 
 function transfer() {
     echo "send coins send_exec -a 30"
-#    contract_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${contract}'"}]}' ${MAIN_HTTP} | jq -r ".result")
+    #    contract_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"'${contract}'"}]}' ${MAIN_HTTP} | jq -r ".result")
     #2  存钱到合约地址
-#    chain33_SendToAddress "$jvm_addr" "$contract_addr" 3000000000 ${MAIN_HTTP}
+    #    chain33_SendToAddress "$jvm_addr" "$contract_addr" 3000000000 ${MAIN_HTTP}
 
     local CLI="docker exec ${dockerNamePrefix}_chain33_1 /root/chain33-cli"
     ${CLI} send coins send_exec -a 300 -e $contract -n send2exec -k $jvm_addr

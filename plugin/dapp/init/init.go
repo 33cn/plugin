@@ -15,7 +15,7 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/hashlock"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/issuance"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/js"             //auto gen
-	_ "github.com/33cn/plugin/plugin/dapp/jvm"             //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/jvm"            //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/lottery"        //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/multisig"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/norm"           //auto gen
