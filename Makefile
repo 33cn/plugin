@@ -78,13 +78,13 @@ ineffassign:
 race: ## Run data race detector
 	@go test -parallel=8 -race -short `go list ./... | grep -v "pbft"`
 
-test: ## Run unittests
+test: depends ## Run unittests
 	@go test -parallel=8 -race  `go list ./...| grep -v "pbft"`
 
 testq: ## Run unittests
 	@go test -parallel=8 `go list ./... | grep -v "pbft"`
 
-fmt: fmt_proto fmt_shell ## go fmt
+fmt: depends fmt_proto fmt_shell ## go fmt
 	@go fmt ./...
 	@find . -name '*.go' -not -path "./vendor/*" | xargs goimports -l -w
 
