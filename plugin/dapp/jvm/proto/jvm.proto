@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package types;
+
+//合约对象信息
+message JVMContractObject {
+    string            addr  = 1;
+    JVMContractData  data  = 2;
+}
+
+// 存放合约固定数据
+message JVMContractData {
+    string creator  = 1;
+    string name     = 2;
+    string addr     = 4;
+    bytes  code     = 5;
+    bytes  codeHash = 6;
+    bytes  abi      = 7;
+}
+
+message LogJVMContractData {
+    string creator  = 1;
+    string name     = 2;
+    string addr     = 3;
+    string codeHash = 4;
+    string abiHash  = 5;
+}
+
+message JVMContractAction {
+    oneof value {
+        CreateJvmContract createJvmContract = 1;
+        CallJvmContract   callJvmContract   = 2;
+        UpdateJvmContract updateJvmContract = 3;
+    }
+    int32 ty = 4;
+}
+
+// 创建JVM合约
+message CreateJvmContract {
+    // 用户自定义Jvm合约名字，必须是user.Jvm.xxx的风格，且xxx由a-zA-Z0-9组成的4-16字符长度组成
+    string name = 1;
+    // 合约字节码
+    string code = 2;
+}
+
+// 调用Jvm合约
+message CallJvmContract {
+    //合约名称
+    string Name = 1;
+    //执行参数
+    repeated string actionData = 2;
+}
+
+// 更新Jvm合约
+message UpdateJvmContract {
+    // 用户需要更新的Jvm合约
+    string name = 1;
+    // 合约字节码
+    string code = 2;
+}
+
+// 存放本地数据库的数据
+message ReceiptLocalData {
+    bytes key      = 1;
+    bytes curValue = 2;
+    bytes preValue = 3;
+}
+
+// 合约创建/调用日志
+message ReceiptJVMContract {
+    string caller       = 1;
+    string contractName = 2;
+    string contractAddr = 3;
+}
+
+// 用于保存JVM只能合约中的状态数据变更
+message JVMStateChangeItem {
+    string key          = 1;
+    bytes  preValue     = 2;
+    bytes  currentValue = 3;
+}
+
+message CheckJVMContractNameReq {
+    string JvmContractName = 1;
+}
+
+message CheckJVMAddrResp {
+    bool existAlready = 1;
+}
+
+message JVMQueryReq {
+    string contract      = 1;
+    repeated string para = 2;
+}
+
+message JVMQueryResponse {
+    bool            success    = 1;
+    repeated string result     = 2;
+}
+
+//message JVMLog {
+//    repeated string LogInfo = 1;
+//}

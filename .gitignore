@@ -47,4 +47,5 @@ build/parawallet/
 build/sendstock
 build/sendstock.toml
 build/*.csv
-
+plugin/dapp/jvm/cmd/bigfile/
+plugin/dapp/jvm/openjdk/libjli.a

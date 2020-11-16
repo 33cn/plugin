@@ -24,6 +24,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/holiman/uint256 v1.1.1
 	github.com/huin/goupnp v1.0.0
+	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20201020185029-6689ec8725c4
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0

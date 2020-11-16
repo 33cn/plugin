@@ -282,6 +282,9 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.jvm]
+jdkPath="/root/j2sdk-image"
+
 [metrics]
 #是否使能发送metrics数据的发送
 enableMetrics=false
