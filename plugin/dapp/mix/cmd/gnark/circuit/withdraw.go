@@ -16,7 +16,7 @@ func main() {
 /*
 public:
 	treeRootHash
-	authorizeHash
+	authorizeSpendHash
 	nullifierHash
 	amount
 
@@ -62,9 +62,9 @@ func NewWithdraw() *frontend.R1CS {
 	noteRandom := circuit.SECRET_INPUT("noteRandom")
 
 	//need check in database if not null
-	authHash := circuit.PUBLIC_INPUT("authorizeHash")
+	authHash := circuit.PUBLIC_INPUT("authorizeSpendHash")
 
-	nullValue := circuit.ALLOCATE("null")
+	nullValue := circuit.ALLOCATE(0)
 	// specify auth hash constraint
 	calcAuthHash := mimc.Hash(&circuit, targetPubHash, spendValue, noteRandom)
 	targetAuthHash := circuit.SELECT(authFlag, calcAuthHash, nullValue)
@@ -77,9 +77,9 @@ func NewWithdraw() *frontend.R1CS {
 	calcAuthPubkey := circuit.SELECT(authFlag, authPubkey, nullValue)
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, calcReturnPubkey, calcAuthPubkey, spendValue, noteRandom)
-	circuit.MUSTBE_EQ(noteHash, mimc.Hash(&circuit, preImage))
+	circuit.MUSTBE_EQ(noteHash, preImage)
 
-	merkelPathPart(&circuit, mimc, noteHash)
+	merkelPathPart(&circuit, mimc, preImage)
 
 	r1cs := circuit.ToR1CS()
 
