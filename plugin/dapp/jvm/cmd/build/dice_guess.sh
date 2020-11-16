@@ -147,13 +147,13 @@ function playGameInfinite() {
 }
 
 function dice_game_test() {
-  set -x
+    set -x
     setupAccount
     deployJavaContract
     depositAndStartGame
     closeGame
     queryGame
-#    playGameInfinite
+    #    playGameInfinite
 }
 
 #dice_game_test
