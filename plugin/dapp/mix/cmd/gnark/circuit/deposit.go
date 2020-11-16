@@ -19,9 +19,9 @@ public:
 	amount
 
 private:
-	spendPubkey
-	returnPubkey
-	authorizePubkey
+	spendPubKey
+	returnPubKey
+	authorizePubKey
 	noteRandom
 
 */
@@ -34,9 +34,9 @@ func NewDeposit() *frontend.R1CS {
 	spendValue := circuit.PUBLIC_INPUT("amount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("spendPubkey")
-	returnPubkey := circuit.SECRET_INPUT("returnPubkey")
-	authPubkey := circuit.SECRET_INPUT("authorizePubkey")
+	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
+	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
+	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
 
 	// hash function
 	mimc, _ := mimc.NewMiMCGadget("seed", gurvy.BN256)
@@ -49,7 +49,7 @@ func NewDeposit() *frontend.R1CS {
 	noteHash := circuit.PUBLIC_INPUT("noteHash")
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
-	circuit.MUSTBE_EQ(noteHash, mimc.Hash(&circuit, preImage))
+	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	r1cs := circuit.ToR1CS()
 

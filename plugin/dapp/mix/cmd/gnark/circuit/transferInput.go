@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gnark/frontend"
 	twistededwards_gadget "github.com/consensys/gnark/gadgets/algebra/twistededwards"
@@ -48,10 +46,10 @@ func NewTransferInput() *frontend.R1CS {
 	spendValue := circuit.SECRET_INPUT("spendAmount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("spendPubkey")
-	returnPubkey := circuit.SECRET_INPUT("returnPubkey")
-	authPubkey := circuit.SECRET_INPUT("authorizePubkey")
-	spendPrikey := circuit.SECRET_INPUT("spendPrikey")
+	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
+	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
+	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
+	spendPrikey := circuit.SECRET_INPUT("spendPriKey")
 	//spend_flag 0：return_pubkey, 1:  spend_pubkey
 	spendFlag := circuit.SECRET_INPUT("spendFlag")
 	circuit.MUSTBE_BOOLEAN(spendFlag)
@@ -69,25 +67,29 @@ func NewTransferInput() *frontend.R1CS {
 	noteRandom := circuit.SECRET_INPUT("noteRandom")
 
 	//need check in database if not null
-	authHash := circuit.PUBLIC_INPUT("authorizeHash")
+	authHash := circuit.PUBLIC_INPUT("authorizeSpendHash")
 
-	nullValue := circuit.ALLOCATE("null")
-	// specify auth hash constraint
-	calcAuthHash := mimc.Hash(&circuit, targetPubHash, spendValue, noteRandom)
-	targetAuthHash := circuit.SELECT(authFlag, calcAuthHash, nullValue)
+	nullValue := circuit.ALLOCATE(0)
+	//// specify auth hash constraint
+	calcAuthSpendHash := mimc.Hash(&circuit, targetPubHash, spendValue, noteRandom)
+	targetAuthHash := circuit.SELECT(authFlag, calcAuthSpendHash, nullValue)
 	circuit.MUSTBE_EQ(authHash, targetAuthHash)
 
+	//need check in database if not null
+	nullifierHash := circuit.PUBLIC_INPUT("nullifierHash")
+	calcNullifierHash := mimc.Hash(&circuit, noteRandom)
+	circuit.MUSTBE_EQ(nullifierHash, calcNullifierHash)
+
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
-	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
 	noteHash := circuit.SECRET_INPUT("noteHash")
 	calcReturnPubkey := circuit.SELECT(authFlag, returnPubkey, nullValue)
 	calcAuthPubkey := circuit.SELECT(authFlag, authPubkey, nullValue)
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, calcReturnPubkey, calcAuthPubkey, spendValue, noteRandom)
-	circuit.MUSTBE_EQ(noteHash, mimc.Hash(&circuit, preImage))
+	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	commitValuePart(&circuit, spendValue)
-	merkelPathPart(&circuit, mimc, noteHash)
+	merkelPathPart(&circuit, mimc, preImage)
 
 	r1cs := circuit.ToR1CS()
 
@@ -130,19 +132,4 @@ func commitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	//cmtvalue=transfer_value*G + random_value*H
 	circuit.MUSTBE_EQ(cmtvalueX, pointSumSnark.X)
 	circuit.MUSTBE_EQ(cmtvalueY, pointSumSnark.Y)
-}
-
-func merkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {
-	var proofSet, helper, valid []*frontend.Constraint
-	merkleRoot := circuit.PUBLIC_INPUT("treeRootHash")
-	proofSet = append(proofSet, noteHash)
-
-	//depth:10, path num need be 9
-	for i := 1; i < 10; i++ {
-		proofSet = append(proofSet, circuit.SECRET_INPUT("path"+strconv.Itoa(i)))
-		helper = append(helper, circuit.SECRET_INPUT("helper"+strconv.Itoa(i)))
-		valid = append(valid, circuit.SECRET_INPUT("valid"+strconv.Itoa(i)))
-	}
-
-	VerifyMerkleProof(circuit, mimc, merkleRoot, proofSet, helper, valid)
 }

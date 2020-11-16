@@ -51,7 +51,7 @@ func NewTransferOutput() *frontend.R1CS {
 	noteHash := circuit.SECRET_INPUT("noteHash")
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
-	circuit.MUSTBE_EQ(noteHash, mimc.Hash(&circuit, preImage))
+	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	commitValuePart(&circuit, spendValue)
 
