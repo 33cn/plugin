@@ -9,8 +9,6 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/33cn/chain33/common"
-
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
@@ -20,8 +18,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-func makeNullifierSetReceipt(hash []byte, data proto.Message) *types.Receipt {
-	return makeReceipt(calcNullifierHashKey(common.ToHex(hash)), mixTy.TyLogNulliferSet, data)
+func makeNullifierSetReceipt(hash string, data proto.Message) *types.Receipt {
+	return makeReceipt(calcNullifierHashKey(hash), mixTy.TyLogNulliferSet, data)
 
 }
 
@@ -72,7 +70,7 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error)
 		return nil, 0, err
 	}
 
-	return input.NodeHash, val, nil
+	return transferFr2Bytes(input.NodeHash), val, nil
 
 }
 
