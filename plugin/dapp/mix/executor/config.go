@@ -26,7 +26,7 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) {
-		return nil, types.ErrNotAllow
+		return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
 	}
 	switch config.Ty {
 	case mixTy.MixConfigType_VerifyKey:

@@ -9,37 +9,35 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/33cn/chain33/common"
-
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
 )
 
-func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeHash []byte) error {
+func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeSpendHash string) error {
 	//zk-proof校验
 	//check tree rootHash exist
-	if !checkTreeRootHashExist(a.db, treeRootHash) {
-		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", common.ToHex(treeRootHash))
+	if !checkTreeRootHashExist(a.db, transferFr2Bytes(treeRootHash)) {
+		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", treeRootHash)
 	}
 
 	//nullifier should not exist
-	nullifierKey := calcNullifierHashKey(common.ToHex(nulliferHash))
+	nullifierKey := calcNullifierHashKey(nulliferHash)
 	_, err := a.db.Get(nullifierKey)
 	if err == nil {
-		return errors.Wrapf(mixTy.ErrNulliferHashExist, "nullifier=%s", common.ToHex(nulliferHash))
+		return errors.Wrapf(mixTy.ErrNulliferHashExist, "nullifier=%s", nulliferHash)
 	}
 	if !isNotFound(err) {
-		return errors.Wrapf(err, "nullifier=%s", common.ToHex(nulliferHash))
+		return errors.Wrapf(err, "nullifier=%s", nulliferHash)
 	}
 
 	// authorize should exist if needed
-	if len(authorizeHash) > 0 {
-		authKey := calcAuthorizeHashKey(common.ToHex(authorizeHash))
+	if len(authorizeSpendHash) > 0 {
+		authKey := calcAuthorizeHashKey(authorizeSpendHash)
 		_, err = a.db.Get(authKey)
 		if err != nil {
-			return errors.Wrapf(err, "authorize=%s", common.ToHex(authorizeHash))
+			return errors.Wrapf(err, "authorize=%s", authorizeSpendHash)
 		}
 	}
 
@@ -47,29 +45,29 @@ func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeHash []byte) e
 
 }
 
-func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error) {
+func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error) {
 	var input mixTy.WithdrawPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
+		return "", 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
 	err = json.Unmarshal(data, &input)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
+		return "", 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
 	}
 	val, err := strconv.ParseUint(input.Amount, 10, 64)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
+		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
 
-	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeHash)
+	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
-		return nil, 0, err
+		return "", 0, err
 	}
 
 	err = a.zkProofVerify(proof, mixTy.VerifyType_WITHDRAW)
 	if err != nil {
-		return nil, 0, err
+		return "", 0, err
 	}
 
 	return input.NullifierHash, val, nil
@@ -82,7 +80,7 @@ func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error
 3. set nullifier exist
 */
 func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, error) {
-	var nulliferSet [][]byte
+	var nulliferSet []string
 	var sumValue uint64
 	for _, k := range withdraw.SpendCommits {
 		nulfier, v, err := a.withdrawVerify(k)

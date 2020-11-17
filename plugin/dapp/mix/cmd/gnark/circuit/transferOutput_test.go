@@ -45,8 +45,6 @@ func TestTransferOutput(t *testing.T) {
 
 		good.Assign(backend.Secret, "noteRandom", "2824204835")
 
-		good.Assign(backend.Secret, "noteHash", "16308793397024662832064523892418908145900866571524124093537199035808550255649")
-
 		assert.Solved(&r1csBN256, good, nil)
 	}
 

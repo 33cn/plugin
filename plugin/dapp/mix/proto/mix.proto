@@ -102,39 +102,39 @@ message MixAction {
 
 
 message DepositPublicInput {
-    bytes nodeHash = 1;
+    string nodeHash = 1;
     string amount = 2;
 
 }
 
 message WithdrawPublicInput {
-    bytes treeRootHash  = 1;
-    bytes nullifierHash = 2;
-    bytes authorizeHash = 3;
+    string treeRootHash  = 1;
+    string nullifierHash = 2;
+    string authorizeSpendHash = 3;
     string amount = 4;
 
 }
 
 message TransferInputPublicInput {
-    bytes treeRootHash = 1;
+    string treeRootHash = 1;
     string commitValueX = 2;
     string commitValueY = 3;
-    bytes authorizeHash = 4;
-    bytes nullifierHash = 5;
+    string authorizeSpendHash = 4;
+    string nullifierHash = 5;
 }
 
 message TransferOutputPublicInput {
-    bytes nodeHash = 1;
+    string nodeHash = 1;
     string commitValueX = 2;
     string commitValueY = 3;
 
 }
 
 message AuthorizePublicInput {
-    bytes treeRootHash = 1;
+    string treeRootHash = 1;
     string authorizePubKey = 2;
-    bytes authorizeHash = 3;
-    bytes authorizeSpendHash = 4;
+    string authorizeHash = 3;
+    string authorizeSpendHash = 4;
 
 }
 
@@ -156,9 +156,13 @@ message CommitTreeProve {
     repeated string proofSet = 2;
     uint32 proofIndex = 3;
     uint32 numLeaves = 4;
+    string helpers = 5;
 }
 
-
+message TreePathReq{
+    string rootHash = 1;
+    string leafHash = 2;
+}
 
 
 
