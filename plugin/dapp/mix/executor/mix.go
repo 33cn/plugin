@@ -5,8 +5,6 @@
 package executor
 
 import (
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -49,6 +47,6 @@ func newMix() drivers.Driver {
 }
 
 // GetDriverName return paracross driver name
-func (c *Mix) GetDriverName() string {
-	return pt.ParaX
+func (m *Mix) GetDriverName() string {
+	return mixTy.MixX
 }

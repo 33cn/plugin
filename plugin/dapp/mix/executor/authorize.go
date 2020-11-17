@@ -8,8 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	"github.com/33cn/chain33/common"
-
 	"github.com/33cn/chain33/types"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -19,18 +17,18 @@ import (
 
 func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 	//check tree rootHash exist
-	if !checkTreeRootHashExist(a.db, input.TreeRootHash) {
-		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", common.ToHex(input.TreeRootHash))
+	if !checkTreeRootHashExist(a.db, transferFr2Bytes(input.TreeRootHash)) {
+		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", input.TreeRootHash)
 	}
 
 	//authorize key should not exist
-	authKey := calcAuthorizeHashKey(common.ToHex(input.AuthorizeHash))
+	authKey := calcAuthorizeHashKey(input.AuthorizeHash)
 	_, err := a.db.Get(authKey)
 	if err == nil {
-		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", common.ToHex(input.AuthorizeHash))
+		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", input.AuthorizeHash)
 	}
 	if !isNotFound(err) {
-		return errors.Wrapf(err, "auth=%s", common.ToHex(input.AuthorizeHash))
+		return errors.Wrapf(err, "auth=%s", input.AuthorizeHash)
 	}
 
 	authPubKeys, err := a.getAuthKeys()
@@ -97,9 +95,9 @@ func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt,
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	for _, in := range inputs {
-		r := makeReceipt(calcAuthorizeHashKey(common.ToHex(in.AuthorizeHash)), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Data: true})
+		r := makeReceipt(calcAuthorizeHashKey(in.AuthorizeHash), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Data: true})
 		mergeReceipt(receipt, r)
-		r = makeReceipt(calcAuthorizeSpendHashKey(common.ToHex(in.AuthorizeSpendHash)), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Data: true})
+		r = makeReceipt(calcAuthorizeSpendHashKey(in.AuthorizeSpendHash), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Data: true})
 		mergeReceipt(receipt, r)
 	}
 

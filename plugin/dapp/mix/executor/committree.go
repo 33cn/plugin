@@ -6,27 +6,16 @@ package executor
 
 import (
 	"bytes"
+	"strconv"
+	"strings"
 
-	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/NebulousLabs/merkletree"
 	"github.com/consensys/gnark/crypto/hash/mimc/bn256"
 	"github.com/pkg/errors"
 )
-
-//func makeTreeReceipt(key []byte, logTy int32, data proto.Message) *types.Receipt {
-//	return &types.Receipt{
-//		Ty: types.ExecOk,
-//		KV: []*types.KeyValue{
-//			{Key: key, Value: types.Encode(data)},
-//		},
-//		Logs: []*types.ReceiptLog{
-//			{Ty: logTy, Log: types.Encode(data)},
-//		},
-//	}
-//}
 
 func makeTreeLeavesReceipt(data *mixTy.CommitTreeLeaves) *types.Receipt {
 	return makeReceipt(calcCurrentCommitLeavesKey(), mixTy.TyLogCurrentCommitTreeLeaves, data)
@@ -42,8 +31,8 @@ func makeCurrentTreeReceipt(leaves *mixTy.CommitTreeLeaves, roots *mixTy.CommitT
 	return mergeReceipt(r1, r2)
 }
 
-func makeTreeRootLeavesReceipt(root []byte, data *mixTy.CommitTreeLeaves) *types.Receipt {
-	return makeReceipt(calcCommitTreeRootLeaves(common.ToHex(root)), mixTy.TyLogCommitTreeRootLeaves, data)
+func makeTreeRootLeavesReceipt(root string, data *mixTy.CommitTreeLeaves) *types.Receipt {
+	return makeReceipt(calcCommitTreeRootLeaves(root), mixTy.TyLogCommitTreeRootLeaves, data)
 }
 
 func makeTreeArchiveRootsReceipt(data *mixTy.CommitTreeRoots) *types.Receipt {
@@ -68,8 +57,8 @@ func getCurrentCommitTreeLeaves(db dbm.KV) (*mixTy.CommitTreeLeaves, error) {
 	return getCommitLeaves(db, calcCurrentCommitLeavesKey())
 }
 
-func getCommitRootLeaves(db dbm.KV, rootHash []byte) (*mixTy.CommitTreeLeaves, error) {
-	return getCommitLeaves(db, calcCommitTreeRootLeaves(common.ToHex(rootHash)))
+func getCommitRootLeaves(db dbm.KV, rootHash string) (*mixTy.CommitTreeLeaves, error) {
+	return getCommitLeaves(db, calcCommitTreeRootLeaves(rootHash))
 }
 
 func getCommitTreeRoots(db dbm.KV, key []byte) (*mixTy.CommitTreeRoots, error) {
@@ -130,7 +119,7 @@ func initNewLeaves(leaf []byte) *types.Receipt {
 }
 
 func archiveRoots(db dbm.KV, root []byte, leaves *mixTy.CommitTreeLeaves) (*types.Receipt, error) {
-	receiptRootLeaves := makeTreeRootLeavesReceipt(root, leaves)
+	receiptRootLeaves := makeTreeRootLeavesReceipt(transferFr2String(root), leaves)
 
 	archiveRoots, err := getArchiveCommitRoots(db)
 	if isNotFound(errors.Cause(err)) {
@@ -216,14 +205,16 @@ func checkTreeRootHashExist(db dbm.KV, hash []byte) bool {
 
 func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, error) {
 	index := 0
+	found := false
 	for i, key := range leaves {
 		if bytes.Equal(key, targetLeaf) {
 			index = i
+			found = true
 			break
 		}
 	}
 	//index=0的leaf是占位"00"，不会和leaf相等
-	if index == 0 {
+	if !found {
 		return nil, mixTy.ErrLeafNotFound
 	}
 
@@ -232,22 +223,35 @@ func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, e
 	for _, key := range leaves {
 		tree.Push(key)
 	}
-	root, set, proofIndex, num := tree.Prove()
+	root, proofSet, proofIndex, num := tree.Prove()
 	var prove mixTy.CommitTreeProve
-	prove.RootHash = common.ToHex(root)
+
+	prove.RootHash = transferFr2String(root)
 	prove.ProofIndex = uint32(proofIndex)
 	prove.NumLeaves = uint32(num)
-	for _, s := range set {
-		prove.ProofSet = append(prove.ProofSet, common.ToHex(s))
+	//set[0] 是targetLeaf
+	for _, s := range proofSet {
+		prove.ProofSet = append(prove.ProofSet, transferFr2String(s))
 	}
+
+	helpers := merkletree.GenerateProofHelper(proofSet, proofIndex, num)
+	var helpStr []string
+	for _, i := range helpers {
+		helpStr = append(helpStr, strconv.Itoa(i))
+	}
+	prove.Helpers = strings.Join(helpStr, ",")
+
 	return &prove, nil
 
 }
 
-func CalcTreeProve(db dbm.KV, rootHash, leaf []byte) (*mixTy.CommitTreeProve, error) {
+func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, error) {
+	if len(leaf) <= 0 {
+		return nil, errors.Wrap(types.ErrInvalidParam, "leaf is null")
+	}
 	leaves, err := getCurrentCommitTreeLeaves(db)
 	if err == nil {
-		p, err := getProveData(leaf, leaves.Data)
+		p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
 		if err == nil {
 			return p, nil
 		}
@@ -258,9 +262,9 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf []byte) (*mixTy.CommitTreeProve, er
 		if err != nil {
 			return nil, err
 		}
-		p, err := getProveData(leaf, leaves.Data)
+		p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
 		if err != nil {
-			return nil, errors.Wrapf(err, "hash=%s,leaf=%s", common.ToHex(rootHash), common.ToHex(leaf))
+			return nil, errors.Wrapf(err, "hash=%s,leaf=%s", rootHash, leaf)
 		}
 		return p, nil
 	}
@@ -268,9 +272,9 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf []byte) (*mixTy.CommitTreeProve, er
 	roots, err := getArchiveCommitRoots(db)
 	if err == nil {
 		for _, root := range roots.Data {
-			leaves, err := getCommitRootLeaves(db, root)
+			leaves, err := getCommitRootLeaves(db, transferFr2String(root))
 			if err == nil {
-				p, err := getProveData(leaf, leaves.Data)
+				p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
 				if err == nil {
 					return p, nil
 				}
@@ -279,6 +283,6 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf []byte) (*mixTy.CommitTreeProve, er
 		}
 	}
 
-	return nil, errors.Wrapf(err, "hash=%s,leaf=%s", common.ToHex(rootHash), common.ToHex(leaf))
+	return nil, errors.Wrapf(err, "hash=%s,leaf=%s", rootHash, leaf)
 
 }

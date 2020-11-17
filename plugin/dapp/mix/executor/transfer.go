@@ -31,7 +31,7 @@ func (a *action) transferInputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferI
 		return nil, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
 	}
 
-	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeHash)
+	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 
 	//push new commit to merkle tree
 	for _, h := range outputs {
-		rpt, err := pushTree(a.db, h.NodeHash)
+		rpt, err := pushTree(a.db, transferFr2Bytes(h.NodeHash))
 		if err != nil {
 			return nil, err
 		}
