@@ -5,7 +5,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/gadgets/hash/mimc"
 	"github.com/consensys/gurvy"
-	"strconv"
 )
 
 func main() {
@@ -74,57 +73,4 @@ func NewAuth() *frontend.R1CS {
 	r1cs := circuit.ToR1CS()
 
 	return r1cs
-}
-
-func merkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {
-	var proofSet, helper, valid []*frontend.Constraint
-	merkleRoot := circuit.PUBLIC_INPUT("treeRootHash")
-	proofSet = append(proofSet, noteHash)
-	//helper[0],valid[0]占位， 方便接口只设置有效值
-	helper = append(helper, circuit.ALLOCATE("1"))
-	valid = append(valid, circuit.ALLOCATE("1"))
-
-	//depth:10, path num need be 9
-	for i := 1; i < 10; i++ {
-		proofSet = append(proofSet, circuit.SECRET_INPUT("path"+strconv.Itoa(i)))
-		helper = append(helper, circuit.SECRET_INPUT("helper"+strconv.Itoa(i)))
-		valid = append(valid, circuit.SECRET_INPUT("valid"+strconv.Itoa(i)))
-	}
-
-	VerifyMerkleProof(circuit, mimc, merkleRoot, proofSet, helper, valid)
-}
-
-func VerifyMerkleProof(circuit *frontend.CS, h mimc.MiMCGadget, merkleRoot *frontend.Constraint, proofSet, helper, valid []*frontend.Constraint) {
-
-	sum := leafSum(circuit, h, proofSet[0])
-
-	for i := 1; i < len(proofSet); i++ {
-		circuit.MUSTBE_BOOLEAN(helper[i])
-		d1 := circuit.SELECT(helper[i], sum, proofSet[i])
-		d2 := circuit.SELECT(helper[i], proofSet[i], sum)
-		rst := nodeSum(circuit, h, d1, d2)
-		sum = circuit.SELECT(valid[i], rst, sum)
-	}
-
-	// Compare our calculated Merkle root to the desired Merkle root.
-	circuit.MUSTBE_EQ(sum, merkleRoot)
-
-}
-
-// nodeSum returns the hash created from data inserted to form a leaf.
-// Without domain separation.
-func nodeSum(circuit *frontend.CS, h mimc.MiMCGadget, a, b *frontend.Constraint) *frontend.Constraint {
-
-	res := h.Hash(circuit, a, b)
-
-	return res
-}
-
-// leafSum returns the hash created from data inserted to form a leaf.
-// Without domain separation.
-func leafSum(circuit *frontend.CS, h mimc.MiMCGadget, data *frontend.Constraint) *frontend.Constraint {
-
-	res := h.Hash(circuit, data)
-
-	return res
 }

@@ -70,7 +70,7 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error)
 		return nil, 0, err
 	}
 
-	return transferFr2Bytes(input.NodeHash), val, nil
+	return transferFr2Bytes(input.NoteHash), val, nil
 
 }
 
