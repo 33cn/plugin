@@ -102,7 +102,7 @@ message MixAction {
 
 
 message DepositPublicInput {
-    string nodeHash = 1;
+    string noteHash = 1;
     string amount = 2;
 
 }
@@ -124,7 +124,7 @@ message TransferInputPublicInput {
 }
 
 message TransferOutputPublicInput {
-    string nodeHash = 1;
+    string noteHash = 1;
     string commitValueX = 2;
     string commitValueY = 3;
 

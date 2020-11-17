@@ -48,7 +48,7 @@ func NewTransferOutput() *frontend.R1CS {
 
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
 	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
-	noteHash := circuit.SECRET_INPUT("noteHash")
+	noteHash := circuit.PUBLIC_INPUT("noteHash")
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)

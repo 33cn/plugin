@@ -3,10 +3,8 @@ package main
 import (
 	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gnark/frontend"
-	twistededwards_gadget "github.com/consensys/gnark/gadgets/algebra/twistededwards"
 	"github.com/consensys/gnark/gadgets/hash/mimc"
 	"github.com/consensys/gurvy"
-	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
 )
 
 func main() {
@@ -94,42 +92,4 @@ func NewTransferInput() *frontend.R1CS {
 	r1cs := circuit.ToR1CS()
 
 	return r1cs
-}
-
-func commitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
-	//cmt=transfer_value*G + random_value*H
-	cmtvalueX := circuit.PUBLIC_INPUT("commitValueX")
-	cmtvalueY := circuit.PUBLIC_INPUT("commitValueY")
-
-	// set curve parameters
-	edgadget, _ := twistededwards_gadget.NewEdCurveGadget(gurvy.BN256)
-	// set point G in the circuit
-	pointGSnark := twistededwards_gadget.NewPointGadget(circuit, nil, nil)
-
-	//scalar := circuit.ALLOCATE("-1")
-	circuit.MUSTBE_LESS_OR_EQ(spendValue, 10000000000, 256)
-
-	// set point G in the circuit
-	pointGSnark.ScalarMulFixedBase(circuit, edgadget.BaseX, edgadget.BaseY, spendValue, edgadget)
-	pointGSnark.X.Tag("xg")
-	pointGSnark.Y.Tag("yg")
-
-	transfer_random := circuit.SECRET_INPUT("spendRandom")
-	//circuit.MUSTBE_LESS_OR_EQ(random_value,10000000000,256)
-	//H is not G, H should be a point that no one know the prikey
-	var baseX_H, baseY_H fr_bn256.Element
-	baseX_H.SetString("10190477835300927557649934238820360529458681672073866116232821892325659279502")
-	baseY_H.SetString("7969140283216448215269095418467361784159407896899334866715345504515077887397")
-	pointHSnark := twistededwards_gadget.NewPointGadget(circuit, nil, nil)
-	// add points in circuit (the method updates the underlying plain points as well)
-	pointHSnark.ScalarMulFixedBase(circuit, baseX_H, baseY_H, transfer_random, edgadget)
-	pointHSnark.X.Tag("xh")
-	pointHSnark.Y.Tag("yh")
-
-	pointSumSnark := twistededwards_gadget.NewPointGadget(circuit, nil, nil)
-	pointSumSnark.AddGeneric(circuit, &pointGSnark, &pointHSnark, edgadget)
-
-	//cmtvalue=transfer_value*G + random_value*H
-	circuit.MUSTBE_EQ(cmtvalueX, pointSumSnark.X)
-	circuit.MUSTBE_EQ(cmtvalueY, pointSumSnark.Y)
 }

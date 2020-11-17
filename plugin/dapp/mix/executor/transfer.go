@@ -138,7 +138,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 
 	//push new commit to merkle tree
 	for _, h := range outputs {
-		rpt, err := pushTree(a.db, transferFr2Bytes(h.NodeHash))
+		rpt, err := pushTree(a.db, transferFr2Bytes(h.NoteHash))
 		if err != nil {
 			return nil, err
 		}
