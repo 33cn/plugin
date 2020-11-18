@@ -62,8 +62,10 @@ func (p *MixType) GetName() string {
 // GetLogMap get receipt log map
 func (p *MixType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogMixConfigVk:   {Ty: reflect.TypeOf(ZkVerifyKeys{}), Name: "LogMixConfigVk"},
-		TyLogMixConfigAuth: {Ty: reflect.TypeOf(AuthPubKeys{}), Name: "LogMixConfigAuthPubKey"},
+		TyLogMixConfigVk:             {Ty: reflect.TypeOf(ZkVerifyKeys{}), Name: "LogMixConfigVk"},
+		TyLogMixConfigAuth:           {Ty: reflect.TypeOf(AuthPubKeys{}), Name: "LogMixConfigAuthPubKey"},
+		TyLogCurrentCommitTreeLeaves: {Ty: reflect.TypeOf(CommitTreeLeaves{}), Name: "TyLogCommitTreeLeaves"},
+		TyLogCurrentCommitTreeRoots:  {Ty: reflect.TypeOf(CommitTreeRoots{}), Name: "TyLogCommitTreeRoots"},
 	}
 }
 

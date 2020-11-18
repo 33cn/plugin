@@ -52,7 +52,6 @@ var (
 func init() {
 	rootCmd.AddCommand(readCmd)
 	readCmd.PersistentFlags().Int32VarP(&fType, "type", "t", 0, "0: proof or vk file, 1: input file, default 0")
-	_ = readCmd.MarkPersistentFlagRequired("type")
 
 }
 

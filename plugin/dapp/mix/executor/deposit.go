@@ -110,13 +110,15 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 		return nil, errors.Wrapf(err, "ExecTransfer")
 	}
 	//push new commit to merkle tree
+	var leaves [][]byte
 	for _, h := range commitHashs {
-		rpt, err := pushTree(a.db, h)
-		if err != nil {
-			return nil, err
-		}
-		mergeReceipt(receipt, rpt)
+		leaves = append(leaves, h)
 	}
+	rpt, err := pushTree(a.db, leaves)
+	if err != nil {
+		return nil, err
+	}
+	mergeReceipt(receipt, rpt)
 
 	return receipt, nil
 
