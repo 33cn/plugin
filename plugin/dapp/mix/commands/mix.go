@@ -29,6 +29,7 @@ func ParcCmd() *cobra.Command {
 		CreateWithdrawCmd(),
 		CreateConfigCmd(),
 		CreateAuthorizeCmd(),
+		QueryCmd(),
 	)
 	return cmd
 }
@@ -260,14 +261,14 @@ func mixConfigVerifyKeyParaCmd() *cobra.Command {
 func addVkConfigFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("action", "a", 0, "0:add,1:delete")
 
-	cmd.Flags().Uint32P("curveid", "i", 0, "zk curve id,1:bls377,2:bls381,3:bn256")
+	cmd.Flags().Uint32P("curveid", "i", 3, "zk curve id,1:bls377,2:bls381,3:bn256")
 	cmd.MarkFlagRequired("curveid")
 
 	cmd.Flags().Uint32P("circuit", "c", 0, "mix circuit type,0:deposit,1:withdraw,2:spendinput,3:spendout,4:authorize")
 	cmd.MarkFlagRequired("circuit")
 
-	cmd.Flags().StringP("key", "k", "", "zk proof verify key")
-	cmd.MarkFlagRequired("key")
+	cmd.Flags().StringP("zkey", "z", "", "zk proof verify key")
+	cmd.MarkFlagRequired("zkey")
 
 }
 
@@ -276,7 +277,7 @@ func createConfigVerify(cmd *cobra.Command, args []string) {
 	action, _ := cmd.Flags().GetUint32("action")
 	curveid, _ := cmd.Flags().GetUint32("curveid")
 	circuit, _ := cmd.Flags().GetUint32("circuit")
-	key, _ := cmd.Flags().GetString("key")
+	key, _ := cmd.Flags().GetString("zkey")
 
 	var zkVk mixTy.ZkVerifyKey
 	zkVk.Value = key
@@ -313,15 +314,15 @@ func mixConfigAuthPubKeyParaCmd() *cobra.Command {
 func addPubKeyConfigFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("action", "a", 0, "0:add,1:delete")
 
-	cmd.Flags().StringP("key", "k", "", "zk proof verify key")
-	cmd.MarkFlagRequired("key")
+	cmd.Flags().StringP("zkey", "z", "", "zk proof verify key")
+	cmd.MarkFlagRequired("zkey")
 
 }
 
 func createConfigPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	action, _ := cmd.Flags().GetUint32("action")
-	key, _ := cmd.Flags().GetString("key")
+	key, _ := cmd.Flags().GetString("zkey")
 
 	var pubkey mixTy.AuthorizePubKey
 	pubkey.Value = key
@@ -340,4 +341,52 @@ func createConfigPubKey(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 
+}
+
+func QueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query cmd",
+	}
+	cmd.AddCommand(GetTreePathCmd())
+
+	return cmd
+}
+
+// GetParaInfoCmd get para chain status by height
+func GetTreePathCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "path",
+		Short: "Get leaf tree path",
+		Run:   treePath,
+	}
+	addGetPathCmdFlags(cmd)
+	return cmd
+}
+
+func addGetPathCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("root", "r", "", "tree root hash, null allowed")
+
+	cmd.Flags().StringP("leaf", "l", "", "leaf hash")
+	cmd.MarkFlagRequired("leaf")
+
+}
+
+func treePath(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	root, _ := cmd.Flags().GetString("root")
+	leaf, _ := cmd.Flags().GetString("leaf")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = mixTy.MixX
+	params.FuncName = "GetTreePath"
+	req := mixTy.TreePathReq{
+		RootHash: root,
+		LeafHash: leaf,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res mixTy.CommitTreeProve
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }

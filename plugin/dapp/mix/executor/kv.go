@@ -24,16 +24,16 @@ var (
 )
 
 func setPrefix() {
-	verifyKeys = "mavl-mixcoin-verify-keys-"
-	authPubKeys = "mavl-mixcoin-auth-pubkeys-"
-	commitTreeArchiveRoots = "mavl-mixcoin-commitTree-roots-archive-"
-	commitTreeCurrentRoots = "mavl-mixcoin-commitTree-current-roots"
-	commitTreeCurrentLeaves = "mavl-mixcoin-commitTree-current-leaves-"
+	verifyKeys = "mavl-mix-verify-keys-"
+	authPubKeys = "mavl-mix-auth-pubkeys-"
+	commitTreeArchiveRoots = "mavl-mix-commitTree-roots-archive-"
+	commitTreeCurrentRoots = "mavl-mix-commitTree-current-roots"
+	commitTreeCurrentLeaves = "mavl-mix-commitTree-current-leaves-"
 
-	commitTreeRootLeaves = "mavl-mixcoin-commitTree-rootLeaves-"
-	authorizeHash = "mavl-mixcoin-authorizeHash"
-	authorizeSpendHash = "mavl-mixcoin-authorizeHash-spend-"
-	nullifierHash = "mavl-mixcoin-nullifierHash"
+	commitTreeRootLeaves = "mavl-mix-commitTree-rootLeaves-"
+	authorizeHash = "mavl-mix-authorizeHash"
+	authorizeSpendHash = "mavl-mix-authorizeHash-spend-"
+	nullifierHash = "mavl-mix-nullifierHash"
 
 }
 
