@@ -108,10 +108,10 @@ func getNewCommitLeaves() (*mixTy.CommitTreeLeaves, *mixTy.CommitTreeRoots) {
 	return leaves, roots
 }
 
-func initNewLeaves(leaf []byte) *types.Receipt {
+func initNewLeaves(leaf [][]byte) *types.Receipt {
 	leaves, roots := getNewCommitLeaves()
 	if len(leaf) > 0 {
-		leaves.Data = append(leaves.Data, leaf)
+		leaves.Data = append(leaves.Data, leaf...)
 		roots.Data = append(roots.Data, calcTreeRoot(leaves))
 	}
 
@@ -140,7 +140,7 @@ func archiveRoots(db dbm.KV, root []byte, leaves *mixTy.CommitTreeLeaves) (*type
 3. 归档同时初始化新的current leaves 和roots
 
 */
-func pushTree(db dbm.KV, leaf []byte) (*types.Receipt, error) {
+func pushTree(db dbm.KV, leaf [][]byte) (*types.Receipt, error) {
 	leaves, err := getCurrentCommitTreeLeaves(db)
 	if isNotFound(errors.Cause(err)) {
 		//系统初始状态
@@ -160,7 +160,7 @@ func pushTree(db dbm.KV, leaf []byte) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	leaves.Data = append(leaves.Data, leaf)
+	leaves.Data = append(leaves.Data, leaf...)
 	currentRoot := calcTreeRoot(leaves)
 	roots.Data = append(roots.Data, currentRoot)
 	r := makeCurrentTreeReceipt(leaves, roots)

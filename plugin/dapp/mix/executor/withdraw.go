@@ -33,8 +33,8 @@ func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeSpendHash stri
 	}
 
 	// authorize should exist if needed
-	if len(authorizeSpendHash) > 0 {
-		authKey := calcAuthorizeHashKey(authorizeSpendHash)
+	if len(authorizeSpendHash) > 1 {
+		authKey := calcAuthorizeSpendHashKey(authorizeSpendHash)
 		_, err = a.db.Get(authKey)
 		if err != nil {
 			return errors.Wrapf(err, "authorize=%s", authorizeSpendHash)

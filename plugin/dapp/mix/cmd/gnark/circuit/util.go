@@ -1,12 +1,13 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/consensys/gnark/frontend"
 	twistededwards_gadget "github.com/consensys/gnark/gadgets/algebra/twistededwards"
 	"github.com/consensys/gnark/gadgets/hash/mimc"
 	"github.com/consensys/gurvy"
 	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
-	"strconv"
 )
 
 func merkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {

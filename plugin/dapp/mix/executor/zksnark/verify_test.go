@@ -9,8 +9,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/mix/types"
 	"testing"
+
+	"github.com/33cn/plugin/plugin/dapp/mix/types"
 
 	"github.com/stretchr/testify/assert"
 )

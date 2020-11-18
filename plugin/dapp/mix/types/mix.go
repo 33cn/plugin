@@ -22,12 +22,12 @@ const (
 	TyLogMixConfigVk             = 754
 	TyLogMixConfigAuth           = 755
 	TyLogCurrentCommitTreeLeaves = 756
-	TyLogCurrentCommitTreeRoots  = 756
-	TyLogCommitTreeRootLeaves    = 757
-	TyLogCommitTreeArchiveRoots  = 758
-	TyLogNulliferSet             = 759
-	TyLogAuthorizeSet            = 760
-	TyLogAuthorizeSpendSet       = 761
+	TyLogCurrentCommitTreeRoots  = 757
+	TyLogCommitTreeRootLeaves    = 758
+	TyLogCommitTreeArchiveRoots  = 759
+	TyLogNulliferSet             = 760
+	TyLogAuthorizeSet            = 761
+	TyLogAuthorizeSpendSet       = 762
 )
 
 //action type
