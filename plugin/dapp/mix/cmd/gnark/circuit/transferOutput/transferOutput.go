@@ -1,6 +1,7 @@
 package main
 
 import (
+	util "github.com/33cn/plugin/plugin/dapp/mix/cmd/gnark/circuit"
 	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/gadgets/hash/mimc"
@@ -53,7 +54,7 @@ func NewTransferOutput() *frontend.R1CS {
 	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
-	commitValuePart(&circuit, spendValue)
+	util.CommitValuePart(&circuit, spendValue)
 
 	r1cs := circuit.ToR1CS()
 

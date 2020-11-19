@@ -245,6 +245,8 @@ func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, e
 
 }
 
+//1. 首先在当前tree查找
+//2. 如果提供了rootHash,则根据roothash+leaf查找，否则全局遍历查找
 func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, error) {
 	if len(leaf) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "leaf is null")

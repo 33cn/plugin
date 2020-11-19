@@ -15,10 +15,10 @@ const (
 // 执行器的日志类型
 const (
 	// TyLogParacrossCommit commit log key
-	TyLogMixDeposit              = 750
-	TyLogMixWithdraw             = 751
-	TyLogMixTransfer             = 752
-	TyLogMixAuth                 = 753
+	TyLogMixLocalDeposit         = 750
+	TyLogMixLocalNullifier       = 751
+	TyLogMixLocalAuth            = 752
+	TyLogMixLocalAuthSpend       = 753
 	TyLogMixConfigVk             = 754
 	TyLogMixConfigAuth           = 755
 	TyLogCurrentCommitTreeLeaves = 756

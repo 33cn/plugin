@@ -1,6 +1,7 @@
 package main
 
 import (
+	util "github.com/33cn/plugin/plugin/dapp/mix/cmd/gnark/circuit"
 	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/gadgets/hash/mimc"
@@ -8,19 +9,22 @@ import (
 )
 
 func main() {
-	circuit := NewWithdraw()
-	gob.Write("circuit_withdraw.r1cs", circuit, gurvy.BN256)
+	circuit := NewTransferInput()
+	gob.Write("circuit_transfer_input.r1cs", circuit, gurvy.BN256)
 }
 
-//withdraw commit hash the circuit implementing
+//spend commit hash the circuit implementing
 /*
 public:
 	treeRootHash
-	authorizeSpendHash
+	commitValueX
+	commitValueY
+	authorizeHash
 	nullifierHash
-	amount
 
 private:
+	spendAmount
+	spendRandom
 	spendPubKey
 	returnPubKey
 	authorizePubKey
@@ -33,12 +37,12 @@ private:
 	helper...
 	valid...
 */
-func NewWithdraw() *frontend.R1CS {
+func NewTransferInput() *frontend.R1CS {
 
 	// create root constraint system
 	circuit := frontend.New()
 
-	spendValue := circuit.PUBLIC_INPUT("amount")
+	spendValue := circuit.SECRET_INPUT("spendAmount")
 
 	//spend pubkey
 	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
@@ -65,13 +69,17 @@ func NewWithdraw() *frontend.R1CS {
 	authHash := circuit.PUBLIC_INPUT("authorizeSpendHash")
 
 	nullValue := circuit.ALLOCATE(0)
-	// specify auth hash constraint
-	calcAuthHash := mimc.Hash(&circuit, targetPubHash, spendValue, noteRandom)
-	targetAuthHash := circuit.SELECT(authFlag, calcAuthHash, nullValue)
+	//// specify auth hash constraint
+	calcAuthSpendHash := mimc.Hash(&circuit, targetPubHash, spendValue, noteRandom)
+	targetAuthHash := circuit.SELECT(authFlag, calcAuthSpendHash, nullValue)
 	circuit.MUSTBE_EQ(authHash, targetAuthHash)
 
+	//need check in database if not null
+	nullifierHash := circuit.PUBLIC_INPUT("nullifierHash")
+	calcNullifierHash := mimc.Hash(&circuit, noteRandom)
+	circuit.MUSTBE_EQ(nullifierHash, calcNullifierHash)
+
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
-	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
 	noteHash := circuit.SECRET_INPUT("noteHash")
 	calcReturnPubkey := circuit.SELECT(authFlag, returnPubkey, nullValue)
 	calcAuthPubkey := circuit.SELECT(authFlag, authPubkey, nullValue)
@@ -79,7 +87,8 @@ func NewWithdraw() *frontend.R1CS {
 	preImage := mimc.Hash(&circuit, spendPubkey, calcReturnPubkey, calcAuthPubkey, spendValue, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
-	merkelPathPart(&circuit, mimc, preImage)
+	util.CommitValuePart(&circuit, spendValue)
+	util.MerkelPathPart(&circuit, mimc, preImage)
 
 	r1cs := circuit.ToR1CS()
 

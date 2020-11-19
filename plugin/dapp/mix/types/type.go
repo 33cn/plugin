@@ -5,7 +5,11 @@
 package types
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"reflect"
+
+	"github.com/pkg/errors"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -83,4 +87,121 @@ func (p *MixType) GetTypeMap() map[string]int32 {
 // GetPayload mix get action payload
 func (p *MixType) GetPayload() types.Message {
 	return &MixAction{}
+}
+
+//
+//func DecodeDepositInput(input string) (*DepositPublicInput, error) {
+//	var v DepositPublicInput
+//	data, err := hex.DecodeString(input)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "decode string=%s", input)
+//	}
+//	err = json.Unmarshal(data, &v)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+//	}
+//
+//	return &v, nil
+//}
+//
+//func DecodeWithdrawInput(input string) (*WithdrawPublicInput, error) {
+//	var v WithdrawPublicInput
+//	data, err := hex.DecodeString(input)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "decode string=%s", input)
+//	}
+//	err = json.Unmarshal(data, &v)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+//	}
+//
+//	return &v, nil
+//}
+//
+//
+//func DecodeTransferInput(input string) (*TransferInputPublicInput, error) {
+//	var v TransferInputPublicInput
+//	data, err := hex.DecodeString(input)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "decode string=%s", input)
+//	}
+//	err = json.Unmarshal(data, &v)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+//	}
+//
+//	return &v, nil
+//}
+//
+//func DecodeTransferOut(input string) (*TransferOutputPublicInput, error) {
+//	var v TransferOutputPublicInput
+//	data, err := hex.DecodeString(input)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "decode string=%s", input)
+//	}
+//	err = json.Unmarshal(data, &v)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+//	}
+//
+//	return &v, nil
+//}
+//
+//func DecodeAuthorizeInput(input string) (*AuthorizePublicInput, error) {
+//	var v AuthorizePublicInput
+//	data, err := hex.DecodeString(input)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "decode string=%s", input)
+//	}
+//	err = json.Unmarshal(data, &v)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+//	}
+//
+//	return &v, nil
+//}
+
+func DecodePubInput(ty VerifyType, input string) (interface{}, error) {
+	data, err := hex.DecodeString(input)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode string=%s", input)
+	}
+	switch ty {
+	case VerifyType_DEPOSIT:
+		var v DepositPublicInput
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+		}
+		return &v, nil
+	case VerifyType_WITHDRAW:
+		var v WithdrawPublicInput
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+		}
+		return &v, nil
+	case VerifyType_TRANSFERINPUT:
+		var v TransferInputPublicInput
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+		}
+		return &v, nil
+	case VerifyType_TRANSFEROUTPUT:
+		var v TransferOutputPublicInput
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+		}
+		return &v, nil
+	case VerifyType_AUTHORIZE:
+		var v AuthorizePublicInput
+		err = json.Unmarshal(data, &v)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
+		}
+		return &v, nil
+	}
+	return nil, types.ErrInvalidParam
 }
