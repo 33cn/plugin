@@ -3,6 +3,9 @@ syntax = "proto3";
 
 package types;
 
+import "common.proto";
+import "transaction.proto";
+
 //区分不同的验证电路
 enum VerifyType{
     DEPOSIT         = 0;
@@ -36,7 +39,10 @@ message AuthPubKeys{
 
 enum MixConfigType{
     VerifyKey = 0;
+    //register unify authorize pubkey
     AuthPubKey = 1;
+    //for spender's pay pubkey register,DH secret
+    PaymentPubKey = 2;
 }
 
 enum MixConfigAct{
@@ -45,23 +51,36 @@ enum MixConfigAct{
 }
 
 
-message AuthorizePubKey {
-    string value = 3;
-}
 
 //config verify parameter for proof
+//当前authPk=mimc_hash(prikey),没有X,Y值
 message MixConfigAction {
     MixConfigType Ty = 1;
     MixConfigAct Action = 2;
     oneof  value {
-        ZkVerifyKey  verifyKey = 3;
-        AuthorizePubKey authKey = 4;
+        ZkVerifyKey     verifyKey   = 3;
+        string          authPk     = 4;
+        PubKey          paymentPk   = 5;
     }
+}
+
+//DH one time pubkey with secret
+message DHSecret{
+    PubKey      epk = 1;
+    string      secret   = 3;
+}
+
+//Diff-Helman 加密group, for spender, returner, authorizer to decrypt
+message DHSecretGroup{
+    DHSecret spender = 1;
+    DHSecret returner = 2;
+    DHSecret authorize = 3;
 }
 
 message ZkProofInfo {
     string proof        = 1;
     string publicInput  = 2;
+    DHSecretGroup group = 3;
 }
 
 message MixDepositAction {
@@ -101,6 +120,7 @@ message MixAction {
 }
 
 
+
 message DepositPublicInput {
     string noteHash = 1;
     string amount = 2;
@@ -115,19 +135,26 @@ message WithdrawPublicInput {
 
 }
 
+//加密了的input/output amount
+message commitAmount{
+    string X = 1;
+    string Y = 2;
+}
+
 message TransferInputPublicInput {
     string treeRootHash = 1;
-    string commitValueX = 2;
-    string commitValueY = 3;
+    string amountX = 2;
+    string amountY = 3;
     string authorizeSpendHash = 4;
     string nullifierHash = 5;
 }
 
 message TransferOutputPublicInput {
     string noteHash = 1;
-    string commitValueX = 2;
-    string commitValueY = 3;
+    string amountX = 2;
+    string amountY = 3;
 
+    DHSecretGroup dhSecrets = 4;
 }
 
 message AuthorizePublicInput {
@@ -138,6 +165,7 @@ message AuthorizePublicInput {
 
 }
 
+//nullifer 存在value
 message ExistValue {
     bool data = 1;
 }
@@ -159,11 +187,176 @@ message CommitTreeProve {
     string helpers = 5;
 }
 
-message TreePathReq{
+message TreeInfoReq{
     string rootHash = 1;
     string leafHash = 2;
 }
 
+message TreeListResp{
+    repeated string datas = 1;
+}
+
+// mix wallet part
+// payKey = hash(spendKey) for zk-snark note spend
+// 用在note内部的payment key
+message PaymentKeyPair {
+    string payKey  = 1;
+    string spendKey = 2;
+}
+
+// pub = priv*G for diff-helman crypto
+// out: take spender's tempPrikey*pubkey as password, tempPubkey show in note
+// spender: take self prikey*tempPubkey as password to decode
+message PubKey {
+    string X = 1;
+    string Y = 2;
+}
+message PrivKey{
+    string data = 1;
+}
+message ShareSecretKeyPair {
+    PrivKey privKey = 1;
+    PubKey  receivingPk  = 2;
+
+}
+
+//spend pair for note proof
+//crypt pair for DH crypt/decrypt
+message AccountPrivacyKey {
+    PaymentKeyPair paymentKey   = 1;
+    ShareSecretKeyPair shareSecretKey  = 2;
+}
+
+message WalletAddrPrivacy {
+    AccountPrivacyKey privacy   = 1;
+    string addr                    = 2;
+}
 
 
 
+message SecretData{
+    string paymentPubKey = 1;
+    string returnPubKey = 2;
+    string authorizePubKey = 3;
+    string amount = 4;
+    string noteRandom = 5;
+}
+
+message EncodedSecretData{
+    string encoded = 1;
+    SecretData rawData = 2;
+}
+
+message EncryptSecretData{
+    string secret = 1;
+    PubKey receivingPk = 2;
+}
+
+message DecryptSecretData{
+    string secret = 1;
+    PrivKey receivingPriKey = 2;
+    PubKey epk = 3;
+
+}
+
+enum NoteStatus{
+	UNDEF = 0;
+	FROZEN = 1; //未授权
+	OPEN = 2;   //已授权可使用
+	CLOSE = 3;   //已使用
+}
+
+message WalletIndexInfo {
+    string             noteHash   = 1;
+    string             nullifier    = 2;
+    string             authSpendHash = 3;
+    string             spender        = 4;
+    string             account      = 5; //账户地址
+    NoteStatus         status       = 6;
+    SecretData         note         = 7;
+
+}
+
+message WalletDbMixInfo {
+    WalletIndexInfo      info   = 1;
+    string               txIndex = 2;
+}
+
+
+message WalletMixIndexReq {
+    string             noteHash       = 1;
+    string             nullifier       = 2;
+    string             authSpendHash   = 3;
+    string             spender       = 4;
+    string             account       = 5;
+    int32              status     = 6;
+    int32              count      = 7;
+    int32              direction  = 8;
+}
+
+message WalletIndexResp {
+    repeated WalletIndexInfo datas = 1;
+}
+
+message WalletReqAddrs{
+    repeated string data = 1;
+}
+
+message WalletEnablePrivacyRst{
+    string  addr = 1;
+    bool    isOK = 2;
+    string  msg = 3;
+}
+
+message WalletEnablePrivacyResp{
+    repeated WalletEnablePrivacyRst data = 1;
+}
+
+
+
+enum MixWalletRescanStatus{
+    IDLE = 0;
+    SCANNING = 1;
+    FINISHED = 2;
+}
+///////localdb index query
+
+message LocalMixTx {
+    bytes hash = 1;
+    int64 height = 2;
+    int64 index = 3;
+}
+
+message MixTxListReq{
+    string  txIndex   = 1; //primary direct query
+    string  hash = 2;
+    int64   height = 3;
+    int64   index = 4;
+    int32   count      =5;
+    int32   direction  = 6;
+
+}
+
+message MixTxListResp{
+    repeated LocalMixTx txs = 1;
+}
+
+message PrivacyAddrResult{
+    string addr = 1;
+    bool isOK = 2;
+    string msg = 3;
+
+}
+
+message ReqEnablePrivacyRst{
+    repeated PrivacyAddrResult results = 1;
+}
+
+service mixPrivacy {
+    // 扫描UTXO以及获取扫描UTXO后的状态
+    rpc GetRescanStatus(ReqNil) returns (ReqString) {}
+    // 使能隐私账户
+    rpc RescanNotes(ReqNil) returns (ReqString) {}
+    // 创建隐私交易
+    rpc EnablePrivacy(ReqAddrs) returns (ReqEnablePrivacyRst) {}
+}

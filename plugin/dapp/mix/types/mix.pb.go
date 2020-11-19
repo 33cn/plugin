@@ -4,10 +4,15 @@
 package types
 
 import (
+	context "context"
 	fmt "fmt"
 	math "math"
 
+	types "github.com/33cn/chain33/types"
 	proto "github.com/golang/protobuf/proto"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -91,18 +96,23 @@ func (ZkCurveId) EnumDescriptor() ([]byte, []int) {
 type MixConfigType int32
 
 const (
-	MixConfigType_VerifyKey  MixConfigType = 0
+	MixConfigType_VerifyKey MixConfigType = 0
+	//register unify authorize pubkey
 	MixConfigType_AuthPubKey MixConfigType = 1
+	//for spender's pay pubkey register,DH secret
+	MixConfigType_PaymentPubKey MixConfigType = 2
 )
 
 var MixConfigType_name = map[int32]string{
 	0: "VerifyKey",
 	1: "AuthPubKey",
+	2: "PaymentPubKey",
 }
 
 var MixConfigType_value = map[string]int32{
-	"VerifyKey":  0,
-	"AuthPubKey": 1,
+	"VerifyKey":     0,
+	"AuthPubKey":    1,
+	"PaymentPubKey": 2,
 }
 
 func (x MixConfigType) String() string {
@@ -136,6 +146,65 @@ func (x MixConfigAct) String() string {
 
 func (MixConfigAct) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_5c21d519a9be369a, []int{3}
+}
+
+type NoteStatus int32
+
+const (
+	NoteStatus_UNDEF  NoteStatus = 0
+	NoteStatus_FROZEN NoteStatus = 1
+	NoteStatus_OPEN   NoteStatus = 2
+	NoteStatus_CLOSE  NoteStatus = 3
+)
+
+var NoteStatus_name = map[int32]string{
+	0: "UNDEF",
+	1: "FROZEN",
+	2: "OPEN",
+	3: "CLOSE",
+}
+
+var NoteStatus_value = map[string]int32{
+	"UNDEF":  0,
+	"FROZEN": 1,
+	"OPEN":   2,
+	"CLOSE":  3,
+}
+
+func (x NoteStatus) String() string {
+	return proto.EnumName(NoteStatus_name, int32(x))
+}
+
+func (NoteStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{4}
+}
+
+type MixWalletRescanStatus int32
+
+const (
+	MixWalletRescanStatus_IDLE     MixWalletRescanStatus = 0
+	MixWalletRescanStatus_SCANNING MixWalletRescanStatus = 1
+	MixWalletRescanStatus_FINISHED MixWalletRescanStatus = 2
+)
+
+var MixWalletRescanStatus_name = map[int32]string{
+	0: "IDLE",
+	1: "SCANNING",
+	2: "FINISHED",
+}
+
+var MixWalletRescanStatus_value = map[string]int32{
+	"IDLE":     0,
+	"SCANNING": 1,
+	"FINISHED": 2,
+}
+
+func (x MixWalletRescanStatus) String() string {
+	return proto.EnumName(MixWalletRescanStatus_name, int32(x))
+}
+
+func (MixWalletRescanStatus) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{5}
 }
 
 type ZkVerifyKey struct {
@@ -271,52 +340,15 @@ func (m *AuthPubKeys) GetData() []string {
 	return nil
 }
 
-type AuthorizePubKey struct {
-	Value                string   `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *AuthorizePubKey) Reset()         { *m = AuthorizePubKey{} }
-func (m *AuthorizePubKey) String() string { return proto.CompactTextString(m) }
-func (*AuthorizePubKey) ProtoMessage()    {}
-func (*AuthorizePubKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{3}
-}
-
-func (m *AuthorizePubKey) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AuthorizePubKey.Unmarshal(m, b)
-}
-func (m *AuthorizePubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AuthorizePubKey.Marshal(b, m, deterministic)
-}
-func (m *AuthorizePubKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AuthorizePubKey.Merge(m, src)
-}
-func (m *AuthorizePubKey) XXX_Size() int {
-	return xxx_messageInfo_AuthorizePubKey.Size(m)
-}
-func (m *AuthorizePubKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_AuthorizePubKey.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_AuthorizePubKey proto.InternalMessageInfo
-
-func (m *AuthorizePubKey) GetValue() string {
-	if m != nil {
-		return m.Value
-	}
-	return ""
-}
-
 //config verify parameter for proof
+//当前authPk=mimc_hash(prikey),没有X,Y值
 type MixConfigAction struct {
 	Ty     MixConfigType `protobuf:"varint,1,opt,name=Ty,proto3,enum=types.MixConfigType" json:"Ty,omitempty"`
 	Action MixConfigAct  `protobuf:"varint,2,opt,name=Action,proto3,enum=types.MixConfigAct" json:"Action,omitempty"`
 	// Types that are valid to be assigned to Value:
 	//	*MixConfigAction_VerifyKey
-	//	*MixConfigAction_AuthKey
+	//	*MixConfigAction_AuthPk
+	//	*MixConfigAction_PaymentPk
 	Value                isMixConfigAction_Value `protobuf_oneof:"value"`
 	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
 	XXX_unrecognized     []byte                  `json:"-"`
@@ -327,7 +359,7 @@ func (m *MixConfigAction) Reset()         { *m = MixConfigAction{} }
 func (m *MixConfigAction) String() string { return proto.CompactTextString(m) }
 func (*MixConfigAction) ProtoMessage()    {}
 func (*MixConfigAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{4}
+	return fileDescriptor_5c21d519a9be369a, []int{3}
 }
 
 func (m *MixConfigAction) XXX_Unmarshal(b []byte) error {
@@ -370,13 +402,19 @@ type MixConfigAction_VerifyKey struct {
 	VerifyKey *ZkVerifyKey `protobuf:"bytes,3,opt,name=verifyKey,proto3,oneof"`
 }
 
-type MixConfigAction_AuthKey struct {
-	AuthKey *AuthorizePubKey `protobuf:"bytes,4,opt,name=authKey,proto3,oneof"`
+type MixConfigAction_AuthPk struct {
+	AuthPk string `protobuf:"bytes,4,opt,name=authPk,proto3,oneof"`
+}
+
+type MixConfigAction_PaymentPk struct {
+	PaymentPk *PubKey `protobuf:"bytes,5,opt,name=paymentPk,proto3,oneof"`
 }
 
 func (*MixConfigAction_VerifyKey) isMixConfigAction_Value() {}
 
-func (*MixConfigAction_AuthKey) isMixConfigAction_Value() {}
+func (*MixConfigAction_AuthPk) isMixConfigAction_Value() {}
+
+func (*MixConfigAction_PaymentPk) isMixConfigAction_Value() {}
 
 func (m *MixConfigAction) GetValue() isMixConfigAction_Value {
 	if m != nil {
@@ -392,9 +430,16 @@ func (m *MixConfigAction) GetVerifyKey() *ZkVerifyKey {
 	return nil
 }
 
-func (m *MixConfigAction) GetAuthKey() *AuthorizePubKey {
-	if x, ok := m.GetValue().(*MixConfigAction_AuthKey); ok {
-		return x.AuthKey
+func (m *MixConfigAction) GetAuthPk() string {
+	if x, ok := m.GetValue().(*MixConfigAction_AuthPk); ok {
+		return x.AuthPk
+	}
+	return ""
+}
+
+func (m *MixConfigAction) GetPaymentPk() *PubKey {
+	if x, ok := m.GetValue().(*MixConfigAction_PaymentPk); ok {
+		return x.PaymentPk
 	}
 	return nil
 }
@@ -403,23 +448,129 @@ func (m *MixConfigAction) GetAuthKey() *AuthorizePubKey {
 func (*MixConfigAction) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
 		(*MixConfigAction_VerifyKey)(nil),
-		(*MixConfigAction_AuthKey)(nil),
+		(*MixConfigAction_AuthPk)(nil),
+		(*MixConfigAction_PaymentPk)(nil),
 	}
 }
 
-type ZkProofInfo struct {
-	Proof                string   `protobuf:"bytes,1,opt,name=proof,proto3" json:"proof,omitempty"`
-	PublicInput          string   `protobuf:"bytes,2,opt,name=publicInput,proto3" json:"publicInput,omitempty"`
+//DH one time pubkey with secret
+type DHSecret struct {
+	Epk                  *PubKey  `protobuf:"bytes,1,opt,name=epk,proto3" json:"epk,omitempty"`
+	Secret               string   `protobuf:"bytes,3,opt,name=secret,proto3" json:"secret,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DHSecret) Reset()         { *m = DHSecret{} }
+func (m *DHSecret) String() string { return proto.CompactTextString(m) }
+func (*DHSecret) ProtoMessage()    {}
+func (*DHSecret) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{4}
+}
+
+func (m *DHSecret) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DHSecret.Unmarshal(m, b)
+}
+func (m *DHSecret) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DHSecret.Marshal(b, m, deterministic)
+}
+func (m *DHSecret) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DHSecret.Merge(m, src)
+}
+func (m *DHSecret) XXX_Size() int {
+	return xxx_messageInfo_DHSecret.Size(m)
+}
+func (m *DHSecret) XXX_DiscardUnknown() {
+	xxx_messageInfo_DHSecret.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DHSecret proto.InternalMessageInfo
+
+func (m *DHSecret) GetEpk() *PubKey {
+	if m != nil {
+		return m.Epk
+	}
+	return nil
+}
+
+func (m *DHSecret) GetSecret() string {
+	if m != nil {
+		return m.Secret
+	}
+	return ""
+}
+
+//Diff-Helman 加密group, for spender, returner, authorizer to decrypt
+type DHSecretGroup struct {
+	Spender              *DHSecret `protobuf:"bytes,1,opt,name=spender,proto3" json:"spender,omitempty"`
+	Returner             *DHSecret `protobuf:"bytes,2,opt,name=returner,proto3" json:"returner,omitempty"`
+	Authorize            *DHSecret `protobuf:"bytes,3,opt,name=authorize,proto3" json:"authorize,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
+}
+
+func (m *DHSecretGroup) Reset()         { *m = DHSecretGroup{} }
+func (m *DHSecretGroup) String() string { return proto.CompactTextString(m) }
+func (*DHSecretGroup) ProtoMessage()    {}
+func (*DHSecretGroup) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{5}
+}
+
+func (m *DHSecretGroup) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DHSecretGroup.Unmarshal(m, b)
+}
+func (m *DHSecretGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DHSecretGroup.Marshal(b, m, deterministic)
+}
+func (m *DHSecretGroup) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DHSecretGroup.Merge(m, src)
+}
+func (m *DHSecretGroup) XXX_Size() int {
+	return xxx_messageInfo_DHSecretGroup.Size(m)
+}
+func (m *DHSecretGroup) XXX_DiscardUnknown() {
+	xxx_messageInfo_DHSecretGroup.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DHSecretGroup proto.InternalMessageInfo
+
+func (m *DHSecretGroup) GetSpender() *DHSecret {
+	if m != nil {
+		return m.Spender
+	}
+	return nil
+}
+
+func (m *DHSecretGroup) GetReturner() *DHSecret {
+	if m != nil {
+		return m.Returner
+	}
+	return nil
+}
+
+func (m *DHSecretGroup) GetAuthorize() *DHSecret {
+	if m != nil {
+		return m.Authorize
+	}
+	return nil
+}
+
+type ZkProofInfo struct {
+	Proof                string         `protobuf:"bytes,1,opt,name=proof,proto3" json:"proof,omitempty"`
+	PublicInput          string         `protobuf:"bytes,2,opt,name=publicInput,proto3" json:"publicInput,omitempty"`
+	Group                *DHSecretGroup `protobuf:"bytes,3,opt,name=group,proto3" json:"group,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
 func (m *ZkProofInfo) Reset()         { *m = ZkProofInfo{} }
 func (m *ZkProofInfo) String() string { return proto.CompactTextString(m) }
 func (*ZkProofInfo) ProtoMessage()    {}
 func (*ZkProofInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{5}
+	return fileDescriptor_5c21d519a9be369a, []int{6}
 }
 
 func (m *ZkProofInfo) XXX_Unmarshal(b []byte) error {
@@ -454,6 +605,13 @@ func (m *ZkProofInfo) GetPublicInput() string {
 	return ""
 }
 
+func (m *ZkProofInfo) GetGroup() *DHSecretGroup {
+	if m != nil {
+		return m.Group
+	}
+	return nil
+}
+
 type MixDepositAction struct {
 	Amount               uint64         `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
 	NewCommits           []*ZkProofInfo `protobuf:"bytes,2,rep,name=newCommits,proto3" json:"newCommits,omitempty"`
@@ -466,7 +624,7 @@ func (m *MixDepositAction) Reset()         { *m = MixDepositAction{} }
 func (m *MixDepositAction) String() string { return proto.CompactTextString(m) }
 func (*MixDepositAction) ProtoMessage()    {}
 func (*MixDepositAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{6}
+	return fileDescriptor_5c21d519a9be369a, []int{7}
 }
 
 func (m *MixDepositAction) XXX_Unmarshal(b []byte) error {
@@ -513,7 +671,7 @@ func (m *MixTransferAction) Reset()         { *m = MixTransferAction{} }
 func (m *MixTransferAction) String() string { return proto.CompactTextString(m) }
 func (*MixTransferAction) ProtoMessage()    {}
 func (*MixTransferAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{7}
+	return fileDescriptor_5c21d519a9be369a, []int{8}
 }
 
 func (m *MixTransferAction) XXX_Unmarshal(b []byte) error {
@@ -560,7 +718,7 @@ func (m *MixWithdrawAction) Reset()         { *m = MixWithdrawAction{} }
 func (m *MixWithdrawAction) String() string { return proto.CompactTextString(m) }
 func (*MixWithdrawAction) ProtoMessage()    {}
 func (*MixWithdrawAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{8}
+	return fileDescriptor_5c21d519a9be369a, []int{9}
 }
 
 func (m *MixWithdrawAction) XXX_Unmarshal(b []byte) error {
@@ -606,7 +764,7 @@ func (m *MixAuthorizeAction) Reset()         { *m = MixAuthorizeAction{} }
 func (m *MixAuthorizeAction) String() string { return proto.CompactTextString(m) }
 func (*MixAuthorizeAction) ProtoMessage()    {}
 func (*MixAuthorizeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{9}
+	return fileDescriptor_5c21d519a9be369a, []int{10}
 }
 
 func (m *MixAuthorizeAction) XXX_Unmarshal(b []byte) error {
@@ -652,7 +810,7 @@ func (m *MixAction) Reset()         { *m = MixAction{} }
 func (m *MixAction) String() string { return proto.CompactTextString(m) }
 func (*MixAction) ProtoMessage()    {}
 func (*MixAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{10}
+	return fileDescriptor_5c21d519a9be369a, []int{11}
 }
 
 func (m *MixAction) XXX_Unmarshal(b []byte) error {
@@ -779,7 +937,7 @@ func (m *DepositPublicInput) Reset()         { *m = DepositPublicInput{} }
 func (m *DepositPublicInput) String() string { return proto.CompactTextString(m) }
 func (*DepositPublicInput) ProtoMessage()    {}
 func (*DepositPublicInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{11}
+	return fileDescriptor_5c21d519a9be369a, []int{12}
 }
 
 func (m *DepositPublicInput) XXX_Unmarshal(b []byte) error {
@@ -828,7 +986,7 @@ func (m *WithdrawPublicInput) Reset()         { *m = WithdrawPublicInput{} }
 func (m *WithdrawPublicInput) String() string { return proto.CompactTextString(m) }
 func (*WithdrawPublicInput) ProtoMessage()    {}
 func (*WithdrawPublicInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{12}
+	return fileDescriptor_5c21d519a9be369a, []int{13}
 }
 
 func (m *WithdrawPublicInput) XXX_Unmarshal(b []byte) error {
@@ -877,10 +1035,58 @@ func (m *WithdrawPublicInput) GetAmount() string {
 	return ""
 }
 
+//加密了的input/output amount
+type CommitAmount struct {
+	X                    string   `protobuf:"bytes,1,opt,name=X,proto3" json:"X,omitempty"`
+	Y                    string   `protobuf:"bytes,2,opt,name=Y,proto3" json:"Y,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CommitAmount) Reset()         { *m = CommitAmount{} }
+func (m *CommitAmount) String() string { return proto.CompactTextString(m) }
+func (*CommitAmount) ProtoMessage()    {}
+func (*CommitAmount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{14}
+}
+
+func (m *CommitAmount) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CommitAmount.Unmarshal(m, b)
+}
+func (m *CommitAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CommitAmount.Marshal(b, m, deterministic)
+}
+func (m *CommitAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CommitAmount.Merge(m, src)
+}
+func (m *CommitAmount) XXX_Size() int {
+	return xxx_messageInfo_CommitAmount.Size(m)
+}
+func (m *CommitAmount) XXX_DiscardUnknown() {
+	xxx_messageInfo_CommitAmount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CommitAmount proto.InternalMessageInfo
+
+func (m *CommitAmount) GetX() string {
+	if m != nil {
+		return m.X
+	}
+	return ""
+}
+
+func (m *CommitAmount) GetY() string {
+	if m != nil {
+		return m.Y
+	}
+	return ""
+}
+
 type TransferInputPublicInput struct {
 	TreeRootHash         string   `protobuf:"bytes,1,opt,name=treeRootHash,proto3" json:"treeRootHash,omitempty"`
-	CommitValueX         string   `protobuf:"bytes,2,opt,name=commitValueX,proto3" json:"commitValueX,omitempty"`
-	CommitValueY         string   `protobuf:"bytes,3,opt,name=commitValueY,proto3" json:"commitValueY,omitempty"`
+	AmountX              string   `protobuf:"bytes,2,opt,name=amountX,proto3" json:"amountX,omitempty"`
+	AmountY              string   `protobuf:"bytes,3,opt,name=amountY,proto3" json:"amountY,omitempty"`
 	AuthorizeSpendHash   string   `protobuf:"bytes,4,opt,name=authorizeSpendHash,proto3" json:"authorizeSpendHash,omitempty"`
 	NullifierHash        string   `protobuf:"bytes,5,opt,name=nullifierHash,proto3" json:"nullifierHash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -892,7 +1098,7 @@ func (m *TransferInputPublicInput) Reset()         { *m = TransferInputPublicInp
 func (m *TransferInputPublicInput) String() string { return proto.CompactTextString(m) }
 func (*TransferInputPublicInput) ProtoMessage()    {}
 func (*TransferInputPublicInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{13}
+	return fileDescriptor_5c21d519a9be369a, []int{15}
 }
 
 func (m *TransferInputPublicInput) XXX_Unmarshal(b []byte) error {
@@ -920,16 +1126,16 @@ func (m *TransferInputPublicInput) GetTreeRootHash() string {
 	return ""
 }
 
-func (m *TransferInputPublicInput) GetCommitValueX() string {
+func (m *TransferInputPublicInput) GetAmountX() string {
 	if m != nil {
-		return m.CommitValueX
+		return m.AmountX
 	}
 	return ""
 }
 
-func (m *TransferInputPublicInput) GetCommitValueY() string {
+func (m *TransferInputPublicInput) GetAmountY() string {
 	if m != nil {
-		return m.CommitValueY
+		return m.AmountY
 	}
 	return ""
 }
@@ -949,19 +1155,20 @@ func (m *TransferInputPublicInput) GetNullifierHash() string {
 }
 
 type TransferOutputPublicInput struct {
-	NoteHash             string   `protobuf:"bytes,1,opt,name=noteHash,proto3" json:"noteHash,omitempty"`
-	CommitValueX         string   `protobuf:"bytes,2,opt,name=commitValueX,proto3" json:"commitValueX,omitempty"`
-	CommitValueY         string   `protobuf:"bytes,3,opt,name=commitValueY,proto3" json:"commitValueY,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	NoteHash             string         `protobuf:"bytes,1,opt,name=noteHash,proto3" json:"noteHash,omitempty"`
+	AmountX              string         `protobuf:"bytes,2,opt,name=amountX,proto3" json:"amountX,omitempty"`
+	AmountY              string         `protobuf:"bytes,3,opt,name=amountY,proto3" json:"amountY,omitempty"`
+	DhSecrets            *DHSecretGroup `protobuf:"bytes,4,opt,name=dhSecrets,proto3" json:"dhSecrets,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
 func (m *TransferOutputPublicInput) Reset()         { *m = TransferOutputPublicInput{} }
 func (m *TransferOutputPublicInput) String() string { return proto.CompactTextString(m) }
 func (*TransferOutputPublicInput) ProtoMessage()    {}
 func (*TransferOutputPublicInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{14}
+	return fileDescriptor_5c21d519a9be369a, []int{16}
 }
 
 func (m *TransferOutputPublicInput) XXX_Unmarshal(b []byte) error {
@@ -989,18 +1196,25 @@ func (m *TransferOutputPublicInput) GetNoteHash() string {
 	return ""
 }
 
-func (m *TransferOutputPublicInput) GetCommitValueX() string {
+func (m *TransferOutputPublicInput) GetAmountX() string {
 	if m != nil {
-		return m.CommitValueX
+		return m.AmountX
 	}
 	return ""
 }
 
-func (m *TransferOutputPublicInput) GetCommitValueY() string {
+func (m *TransferOutputPublicInput) GetAmountY() string {
 	if m != nil {
-		return m.CommitValueY
+		return m.AmountY
 	}
 	return ""
+}
+
+func (m *TransferOutputPublicInput) GetDhSecrets() *DHSecretGroup {
+	if m != nil {
+		return m.DhSecrets
+	}
+	return nil
 }
 
 type AuthorizePublicInput struct {
@@ -1017,7 +1231,7 @@ func (m *AuthorizePublicInput) Reset()         { *m = AuthorizePublicInput{} }
 func (m *AuthorizePublicInput) String() string { return proto.CompactTextString(m) }
 func (*AuthorizePublicInput) ProtoMessage()    {}
 func (*AuthorizePublicInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{15}
+	return fileDescriptor_5c21d519a9be369a, []int{17}
 }
 
 func (m *AuthorizePublicInput) XXX_Unmarshal(b []byte) error {
@@ -1066,6 +1280,7 @@ func (m *AuthorizePublicInput) GetAuthorizeSpendHash() string {
 	return ""
 }
 
+//nullifer 存在value
 type ExistValue struct {
 	Data                 bool     `protobuf:"varint,1,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1077,7 +1292,7 @@ func (m *ExistValue) Reset()         { *m = ExistValue{} }
 func (m *ExistValue) String() string { return proto.CompactTextString(m) }
 func (*ExistValue) ProtoMessage()    {}
 func (*ExistValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{16}
+	return fileDescriptor_5c21d519a9be369a, []int{18}
 }
 
 func (m *ExistValue) XXX_Unmarshal(b []byte) error {
@@ -1116,7 +1331,7 @@ func (m *CommitTreeLeaves) Reset()         { *m = CommitTreeLeaves{} }
 func (m *CommitTreeLeaves) String() string { return proto.CompactTextString(m) }
 func (*CommitTreeLeaves) ProtoMessage()    {}
 func (*CommitTreeLeaves) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{17}
+	return fileDescriptor_5c21d519a9be369a, []int{19}
 }
 
 func (m *CommitTreeLeaves) XXX_Unmarshal(b []byte) error {
@@ -1155,7 +1370,7 @@ func (m *CommitTreeRoots) Reset()         { *m = CommitTreeRoots{} }
 func (m *CommitTreeRoots) String() string { return proto.CompactTextString(m) }
 func (*CommitTreeRoots) ProtoMessage()    {}
 func (*CommitTreeRoots) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{18}
+	return fileDescriptor_5c21d519a9be369a, []int{20}
 }
 
 func (m *CommitTreeRoots) XXX_Unmarshal(b []byte) error {
@@ -1198,7 +1413,7 @@ func (m *CommitTreeProve) Reset()         { *m = CommitTreeProve{} }
 func (m *CommitTreeProve) String() string { return proto.CompactTextString(m) }
 func (*CommitTreeProve) ProtoMessage()    {}
 func (*CommitTreeProve) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{19}
+	return fileDescriptor_5c21d519a9be369a, []int{21}
 }
 
 func (m *CommitTreeProve) XXX_Unmarshal(b []byte) error {
@@ -1254,7 +1469,7 @@ func (m *CommitTreeProve) GetHelpers() string {
 	return ""
 }
 
-type TreePathReq struct {
+type TreeInfoReq struct {
 	RootHash             string   `protobuf:"bytes,1,opt,name=rootHash,proto3" json:"rootHash,omitempty"`
 	LeafHash             string   `protobuf:"bytes,2,opt,name=leafHash,proto3" json:"leafHash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -1262,43 +1477,1252 @@ type TreePathReq struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *TreePathReq) Reset()         { *m = TreePathReq{} }
-func (m *TreePathReq) String() string { return proto.CompactTextString(m) }
-func (*TreePathReq) ProtoMessage()    {}
-func (*TreePathReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_5c21d519a9be369a, []int{20}
+func (m *TreeInfoReq) Reset()         { *m = TreeInfoReq{} }
+func (m *TreeInfoReq) String() string { return proto.CompactTextString(m) }
+func (*TreeInfoReq) ProtoMessage()    {}
+func (*TreeInfoReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{22}
 }
 
-func (m *TreePathReq) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TreePathReq.Unmarshal(m, b)
+func (m *TreeInfoReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TreeInfoReq.Unmarshal(m, b)
 }
-func (m *TreePathReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TreePathReq.Marshal(b, m, deterministic)
+func (m *TreeInfoReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TreeInfoReq.Marshal(b, m, deterministic)
 }
-func (m *TreePathReq) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TreePathReq.Merge(m, src)
+func (m *TreeInfoReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TreeInfoReq.Merge(m, src)
 }
-func (m *TreePathReq) XXX_Size() int {
-	return xxx_messageInfo_TreePathReq.Size(m)
+func (m *TreeInfoReq) XXX_Size() int {
+	return xxx_messageInfo_TreeInfoReq.Size(m)
 }
-func (m *TreePathReq) XXX_DiscardUnknown() {
-	xxx_messageInfo_TreePathReq.DiscardUnknown(m)
+func (m *TreeInfoReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_TreeInfoReq.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_TreePathReq proto.InternalMessageInfo
+var xxx_messageInfo_TreeInfoReq proto.InternalMessageInfo
 
-func (m *TreePathReq) GetRootHash() string {
+func (m *TreeInfoReq) GetRootHash() string {
 	if m != nil {
 		return m.RootHash
 	}
 	return ""
 }
 
-func (m *TreePathReq) GetLeafHash() string {
+func (m *TreeInfoReq) GetLeafHash() string {
 	if m != nil {
 		return m.LeafHash
 	}
 	return ""
+}
+
+type TreeListResp struct {
+	Datas                []string `protobuf:"bytes,1,rep,name=datas,proto3" json:"datas,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TreeListResp) Reset()         { *m = TreeListResp{} }
+func (m *TreeListResp) String() string { return proto.CompactTextString(m) }
+func (*TreeListResp) ProtoMessage()    {}
+func (*TreeListResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{23}
+}
+
+func (m *TreeListResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TreeListResp.Unmarshal(m, b)
+}
+func (m *TreeListResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TreeListResp.Marshal(b, m, deterministic)
+}
+func (m *TreeListResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TreeListResp.Merge(m, src)
+}
+func (m *TreeListResp) XXX_Size() int {
+	return xxx_messageInfo_TreeListResp.Size(m)
+}
+func (m *TreeListResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_TreeListResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TreeListResp proto.InternalMessageInfo
+
+func (m *TreeListResp) GetDatas() []string {
+	if m != nil {
+		return m.Datas
+	}
+	return nil
+}
+
+// mix wallet part
+// payKey = hash(spendKey) for zk-snark note spend
+// 用在note内部的payment key
+type PaymentKeyPair struct {
+	PayKey               string   `protobuf:"bytes,1,opt,name=payKey,proto3" json:"payKey,omitempty"`
+	SpendKey             string   `protobuf:"bytes,2,opt,name=spendKey,proto3" json:"spendKey,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PaymentKeyPair) Reset()         { *m = PaymentKeyPair{} }
+func (m *PaymentKeyPair) String() string { return proto.CompactTextString(m) }
+func (*PaymentKeyPair) ProtoMessage()    {}
+func (*PaymentKeyPair) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{24}
+}
+
+func (m *PaymentKeyPair) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PaymentKeyPair.Unmarshal(m, b)
+}
+func (m *PaymentKeyPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PaymentKeyPair.Marshal(b, m, deterministic)
+}
+func (m *PaymentKeyPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PaymentKeyPair.Merge(m, src)
+}
+func (m *PaymentKeyPair) XXX_Size() int {
+	return xxx_messageInfo_PaymentKeyPair.Size(m)
+}
+func (m *PaymentKeyPair) XXX_DiscardUnknown() {
+	xxx_messageInfo_PaymentKeyPair.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PaymentKeyPair proto.InternalMessageInfo
+
+func (m *PaymentKeyPair) GetPayKey() string {
+	if m != nil {
+		return m.PayKey
+	}
+	return ""
+}
+
+func (m *PaymentKeyPair) GetSpendKey() string {
+	if m != nil {
+		return m.SpendKey
+	}
+	return ""
+}
+
+// pub = priv*G for diff-helman crypto
+// out: take spender's tempPrikey*pubkey as password, tempPubkey show in note
+// spender: take self prikey*tempPubkey as password to decode
+type PubKey struct {
+	X                    string   `protobuf:"bytes,1,opt,name=X,proto3" json:"X,omitempty"`
+	Y                    string   `protobuf:"bytes,2,opt,name=Y,proto3" json:"Y,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PubKey) Reset()         { *m = PubKey{} }
+func (m *PubKey) String() string { return proto.CompactTextString(m) }
+func (*PubKey) ProtoMessage()    {}
+func (*PubKey) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{25}
+}
+
+func (m *PubKey) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PubKey.Unmarshal(m, b)
+}
+func (m *PubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PubKey.Marshal(b, m, deterministic)
+}
+func (m *PubKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PubKey.Merge(m, src)
+}
+func (m *PubKey) XXX_Size() int {
+	return xxx_messageInfo_PubKey.Size(m)
+}
+func (m *PubKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_PubKey.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PubKey proto.InternalMessageInfo
+
+func (m *PubKey) GetX() string {
+	if m != nil {
+		return m.X
+	}
+	return ""
+}
+
+func (m *PubKey) GetY() string {
+	if m != nil {
+		return m.Y
+	}
+	return ""
+}
+
+type PrivKey struct {
+	Data                 string   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrivKey) Reset()         { *m = PrivKey{} }
+func (m *PrivKey) String() string { return proto.CompactTextString(m) }
+func (*PrivKey) ProtoMessage()    {}
+func (*PrivKey) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{26}
+}
+
+func (m *PrivKey) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrivKey.Unmarshal(m, b)
+}
+func (m *PrivKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrivKey.Marshal(b, m, deterministic)
+}
+func (m *PrivKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivKey.Merge(m, src)
+}
+func (m *PrivKey) XXX_Size() int {
+	return xxx_messageInfo_PrivKey.Size(m)
+}
+func (m *PrivKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrivKey.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrivKey proto.InternalMessageInfo
+
+func (m *PrivKey) GetData() string {
+	if m != nil {
+		return m.Data
+	}
+	return ""
+}
+
+type ShareSecretKeyPair struct {
+	PrivKey              *PrivKey `protobuf:"bytes,1,opt,name=privKey,proto3" json:"privKey,omitempty"`
+	ReceivingPk          *PubKey  `protobuf:"bytes,2,opt,name=receivingPk,proto3" json:"receivingPk,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ShareSecretKeyPair) Reset()         { *m = ShareSecretKeyPair{} }
+func (m *ShareSecretKeyPair) String() string { return proto.CompactTextString(m) }
+func (*ShareSecretKeyPair) ProtoMessage()    {}
+func (*ShareSecretKeyPair) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{27}
+}
+
+func (m *ShareSecretKeyPair) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ShareSecretKeyPair.Unmarshal(m, b)
+}
+func (m *ShareSecretKeyPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ShareSecretKeyPair.Marshal(b, m, deterministic)
+}
+func (m *ShareSecretKeyPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ShareSecretKeyPair.Merge(m, src)
+}
+func (m *ShareSecretKeyPair) XXX_Size() int {
+	return xxx_messageInfo_ShareSecretKeyPair.Size(m)
+}
+func (m *ShareSecretKeyPair) XXX_DiscardUnknown() {
+	xxx_messageInfo_ShareSecretKeyPair.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ShareSecretKeyPair proto.InternalMessageInfo
+
+func (m *ShareSecretKeyPair) GetPrivKey() *PrivKey {
+	if m != nil {
+		return m.PrivKey
+	}
+	return nil
+}
+
+func (m *ShareSecretKeyPair) GetReceivingPk() *PubKey {
+	if m != nil {
+		return m.ReceivingPk
+	}
+	return nil
+}
+
+//spend pair for note proof
+//crypt pair for DH crypt/decrypt
+type AccountPrivacyKey struct {
+	PaymentKey           *PaymentKeyPair     `protobuf:"bytes,1,opt,name=paymentKey,proto3" json:"paymentKey,omitempty"`
+	ShareSecretKey       *ShareSecretKeyPair `protobuf:"bytes,2,opt,name=shareSecretKey,proto3" json:"shareSecretKey,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *AccountPrivacyKey) Reset()         { *m = AccountPrivacyKey{} }
+func (m *AccountPrivacyKey) String() string { return proto.CompactTextString(m) }
+func (*AccountPrivacyKey) ProtoMessage()    {}
+func (*AccountPrivacyKey) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{28}
+}
+
+func (m *AccountPrivacyKey) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AccountPrivacyKey.Unmarshal(m, b)
+}
+func (m *AccountPrivacyKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AccountPrivacyKey.Marshal(b, m, deterministic)
+}
+func (m *AccountPrivacyKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountPrivacyKey.Merge(m, src)
+}
+func (m *AccountPrivacyKey) XXX_Size() int {
+	return xxx_messageInfo_AccountPrivacyKey.Size(m)
+}
+func (m *AccountPrivacyKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccountPrivacyKey.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AccountPrivacyKey proto.InternalMessageInfo
+
+func (m *AccountPrivacyKey) GetPaymentKey() *PaymentKeyPair {
+	if m != nil {
+		return m.PaymentKey
+	}
+	return nil
+}
+
+func (m *AccountPrivacyKey) GetShareSecretKey() *ShareSecretKeyPair {
+	if m != nil {
+		return m.ShareSecretKey
+	}
+	return nil
+}
+
+type WalletAddrPrivacy struct {
+	Privacy              *AccountPrivacyKey `protobuf:"bytes,1,opt,name=privacy,proto3" json:"privacy,omitempty"`
+	Addr                 string             `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *WalletAddrPrivacy) Reset()         { *m = WalletAddrPrivacy{} }
+func (m *WalletAddrPrivacy) String() string { return proto.CompactTextString(m) }
+func (*WalletAddrPrivacy) ProtoMessage()    {}
+func (*WalletAddrPrivacy) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{29}
+}
+
+func (m *WalletAddrPrivacy) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletAddrPrivacy.Unmarshal(m, b)
+}
+func (m *WalletAddrPrivacy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletAddrPrivacy.Marshal(b, m, deterministic)
+}
+func (m *WalletAddrPrivacy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletAddrPrivacy.Merge(m, src)
+}
+func (m *WalletAddrPrivacy) XXX_Size() int {
+	return xxx_messageInfo_WalletAddrPrivacy.Size(m)
+}
+func (m *WalletAddrPrivacy) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletAddrPrivacy.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletAddrPrivacy proto.InternalMessageInfo
+
+func (m *WalletAddrPrivacy) GetPrivacy() *AccountPrivacyKey {
+	if m != nil {
+		return m.Privacy
+	}
+	return nil
+}
+
+func (m *WalletAddrPrivacy) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+type SecretData struct {
+	PaymentPubKey        string   `protobuf:"bytes,1,opt,name=paymentPubKey,proto3" json:"paymentPubKey,omitempty"`
+	ReturnPubKey         string   `protobuf:"bytes,2,opt,name=returnPubKey,proto3" json:"returnPubKey,omitempty"`
+	AuthorizePubKey      string   `protobuf:"bytes,3,opt,name=authorizePubKey,proto3" json:"authorizePubKey,omitempty"`
+	Amount               string   `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
+	NoteRandom           string   `protobuf:"bytes,5,opt,name=noteRandom,proto3" json:"noteRandom,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SecretData) Reset()         { *m = SecretData{} }
+func (m *SecretData) String() string { return proto.CompactTextString(m) }
+func (*SecretData) ProtoMessage()    {}
+func (*SecretData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{30}
+}
+
+func (m *SecretData) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SecretData.Unmarshal(m, b)
+}
+func (m *SecretData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SecretData.Marshal(b, m, deterministic)
+}
+func (m *SecretData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SecretData.Merge(m, src)
+}
+func (m *SecretData) XXX_Size() int {
+	return xxx_messageInfo_SecretData.Size(m)
+}
+func (m *SecretData) XXX_DiscardUnknown() {
+	xxx_messageInfo_SecretData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SecretData proto.InternalMessageInfo
+
+func (m *SecretData) GetPaymentPubKey() string {
+	if m != nil {
+		return m.PaymentPubKey
+	}
+	return ""
+}
+
+func (m *SecretData) GetReturnPubKey() string {
+	if m != nil {
+		return m.ReturnPubKey
+	}
+	return ""
+}
+
+func (m *SecretData) GetAuthorizePubKey() string {
+	if m != nil {
+		return m.AuthorizePubKey
+	}
+	return ""
+}
+
+func (m *SecretData) GetAmount() string {
+	if m != nil {
+		return m.Amount
+	}
+	return ""
+}
+
+func (m *SecretData) GetNoteRandom() string {
+	if m != nil {
+		return m.NoteRandom
+	}
+	return ""
+}
+
+type EncodedSecretData struct {
+	Encoded              string      `protobuf:"bytes,1,opt,name=encoded,proto3" json:"encoded,omitempty"`
+	RawData              *SecretData `protobuf:"bytes,2,opt,name=rawData,proto3" json:"rawData,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *EncodedSecretData) Reset()         { *m = EncodedSecretData{} }
+func (m *EncodedSecretData) String() string { return proto.CompactTextString(m) }
+func (*EncodedSecretData) ProtoMessage()    {}
+func (*EncodedSecretData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{31}
+}
+
+func (m *EncodedSecretData) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EncodedSecretData.Unmarshal(m, b)
+}
+func (m *EncodedSecretData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EncodedSecretData.Marshal(b, m, deterministic)
+}
+func (m *EncodedSecretData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncodedSecretData.Merge(m, src)
+}
+func (m *EncodedSecretData) XXX_Size() int {
+	return xxx_messageInfo_EncodedSecretData.Size(m)
+}
+func (m *EncodedSecretData) XXX_DiscardUnknown() {
+	xxx_messageInfo_EncodedSecretData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EncodedSecretData proto.InternalMessageInfo
+
+func (m *EncodedSecretData) GetEncoded() string {
+	if m != nil {
+		return m.Encoded
+	}
+	return ""
+}
+
+func (m *EncodedSecretData) GetRawData() *SecretData {
+	if m != nil {
+		return m.RawData
+	}
+	return nil
+}
+
+type EncryptSecretData struct {
+	Secret               string   `protobuf:"bytes,1,opt,name=secret,proto3" json:"secret,omitempty"`
+	ReceivingPk          *PubKey  `protobuf:"bytes,2,opt,name=receivingPk,proto3" json:"receivingPk,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EncryptSecretData) Reset()         { *m = EncryptSecretData{} }
+func (m *EncryptSecretData) String() string { return proto.CompactTextString(m) }
+func (*EncryptSecretData) ProtoMessage()    {}
+func (*EncryptSecretData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{32}
+}
+
+func (m *EncryptSecretData) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EncryptSecretData.Unmarshal(m, b)
+}
+func (m *EncryptSecretData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EncryptSecretData.Marshal(b, m, deterministic)
+}
+func (m *EncryptSecretData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EncryptSecretData.Merge(m, src)
+}
+func (m *EncryptSecretData) XXX_Size() int {
+	return xxx_messageInfo_EncryptSecretData.Size(m)
+}
+func (m *EncryptSecretData) XXX_DiscardUnknown() {
+	xxx_messageInfo_EncryptSecretData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EncryptSecretData proto.InternalMessageInfo
+
+func (m *EncryptSecretData) GetSecret() string {
+	if m != nil {
+		return m.Secret
+	}
+	return ""
+}
+
+func (m *EncryptSecretData) GetReceivingPk() *PubKey {
+	if m != nil {
+		return m.ReceivingPk
+	}
+	return nil
+}
+
+type DecryptSecretData struct {
+	Secret               string   `protobuf:"bytes,1,opt,name=secret,proto3" json:"secret,omitempty"`
+	ReceivingPriKey      *PrivKey `protobuf:"bytes,2,opt,name=receivingPriKey,proto3" json:"receivingPriKey,omitempty"`
+	Epk                  *PubKey  `protobuf:"bytes,3,opt,name=epk,proto3" json:"epk,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DecryptSecretData) Reset()         { *m = DecryptSecretData{} }
+func (m *DecryptSecretData) String() string { return proto.CompactTextString(m) }
+func (*DecryptSecretData) ProtoMessage()    {}
+func (*DecryptSecretData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{33}
+}
+
+func (m *DecryptSecretData) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DecryptSecretData.Unmarshal(m, b)
+}
+func (m *DecryptSecretData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DecryptSecretData.Marshal(b, m, deterministic)
+}
+func (m *DecryptSecretData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DecryptSecretData.Merge(m, src)
+}
+func (m *DecryptSecretData) XXX_Size() int {
+	return xxx_messageInfo_DecryptSecretData.Size(m)
+}
+func (m *DecryptSecretData) XXX_DiscardUnknown() {
+	xxx_messageInfo_DecryptSecretData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DecryptSecretData proto.InternalMessageInfo
+
+func (m *DecryptSecretData) GetSecret() string {
+	if m != nil {
+		return m.Secret
+	}
+	return ""
+}
+
+func (m *DecryptSecretData) GetReceivingPriKey() *PrivKey {
+	if m != nil {
+		return m.ReceivingPriKey
+	}
+	return nil
+}
+
+func (m *DecryptSecretData) GetEpk() *PubKey {
+	if m != nil {
+		return m.Epk
+	}
+	return nil
+}
+
+type WalletIndexInfo struct {
+	NoteHash             string      `protobuf:"bytes,1,opt,name=noteHash,proto3" json:"noteHash,omitempty"`
+	Nullifier            string      `protobuf:"bytes,2,opt,name=nullifier,proto3" json:"nullifier,omitempty"`
+	AuthSpendHash        string      `protobuf:"bytes,3,opt,name=authSpendHash,proto3" json:"authSpendHash,omitempty"`
+	Spender              string      `protobuf:"bytes,4,opt,name=spender,proto3" json:"spender,omitempty"`
+	Account              string      `protobuf:"bytes,5,opt,name=account,proto3" json:"account,omitempty"`
+	Status               NoteStatus  `protobuf:"varint,6,opt,name=status,proto3,enum=types.NoteStatus" json:"status,omitempty"`
+	Note                 *SecretData `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *WalletIndexInfo) Reset()         { *m = WalletIndexInfo{} }
+func (m *WalletIndexInfo) String() string { return proto.CompactTextString(m) }
+func (*WalletIndexInfo) ProtoMessage()    {}
+func (*WalletIndexInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{34}
+}
+
+func (m *WalletIndexInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletIndexInfo.Unmarshal(m, b)
+}
+func (m *WalletIndexInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletIndexInfo.Marshal(b, m, deterministic)
+}
+func (m *WalletIndexInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletIndexInfo.Merge(m, src)
+}
+func (m *WalletIndexInfo) XXX_Size() int {
+	return xxx_messageInfo_WalletIndexInfo.Size(m)
+}
+func (m *WalletIndexInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletIndexInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletIndexInfo proto.InternalMessageInfo
+
+func (m *WalletIndexInfo) GetNoteHash() string {
+	if m != nil {
+		return m.NoteHash
+	}
+	return ""
+}
+
+func (m *WalletIndexInfo) GetNullifier() string {
+	if m != nil {
+		return m.Nullifier
+	}
+	return ""
+}
+
+func (m *WalletIndexInfo) GetAuthSpendHash() string {
+	if m != nil {
+		return m.AuthSpendHash
+	}
+	return ""
+}
+
+func (m *WalletIndexInfo) GetSpender() string {
+	if m != nil {
+		return m.Spender
+	}
+	return ""
+}
+
+func (m *WalletIndexInfo) GetAccount() string {
+	if m != nil {
+		return m.Account
+	}
+	return ""
+}
+
+func (m *WalletIndexInfo) GetStatus() NoteStatus {
+	if m != nil {
+		return m.Status
+	}
+	return NoteStatus_UNDEF
+}
+
+func (m *WalletIndexInfo) GetNote() *SecretData {
+	if m != nil {
+		return m.Note
+	}
+	return nil
+}
+
+type WalletDbMixInfo struct {
+	Info                 *WalletIndexInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	TxIndex              string           `protobuf:"bytes,2,opt,name=txIndex,proto3" json:"txIndex,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *WalletDbMixInfo) Reset()         { *m = WalletDbMixInfo{} }
+func (m *WalletDbMixInfo) String() string { return proto.CompactTextString(m) }
+func (*WalletDbMixInfo) ProtoMessage()    {}
+func (*WalletDbMixInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{35}
+}
+
+func (m *WalletDbMixInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletDbMixInfo.Unmarshal(m, b)
+}
+func (m *WalletDbMixInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletDbMixInfo.Marshal(b, m, deterministic)
+}
+func (m *WalletDbMixInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletDbMixInfo.Merge(m, src)
+}
+func (m *WalletDbMixInfo) XXX_Size() int {
+	return xxx_messageInfo_WalletDbMixInfo.Size(m)
+}
+func (m *WalletDbMixInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletDbMixInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletDbMixInfo proto.InternalMessageInfo
+
+func (m *WalletDbMixInfo) GetInfo() *WalletIndexInfo {
+	if m != nil {
+		return m.Info
+	}
+	return nil
+}
+
+func (m *WalletDbMixInfo) GetTxIndex() string {
+	if m != nil {
+		return m.TxIndex
+	}
+	return ""
+}
+
+type WalletMixIndexReq struct {
+	NoteHash             string   `protobuf:"bytes,1,opt,name=noteHash,proto3" json:"noteHash,omitempty"`
+	Nullifier            string   `protobuf:"bytes,2,opt,name=nullifier,proto3" json:"nullifier,omitempty"`
+	AuthSpendHash        string   `protobuf:"bytes,3,opt,name=authSpendHash,proto3" json:"authSpendHash,omitempty"`
+	Spender              string   `protobuf:"bytes,4,opt,name=spender,proto3" json:"spender,omitempty"`
+	Account              string   `protobuf:"bytes,5,opt,name=account,proto3" json:"account,omitempty"`
+	Status               int32    `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
+	Count                int32    `protobuf:"varint,7,opt,name=count,proto3" json:"count,omitempty"`
+	Direction            int32    `protobuf:"varint,8,opt,name=direction,proto3" json:"direction,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WalletMixIndexReq) Reset()         { *m = WalletMixIndexReq{} }
+func (m *WalletMixIndexReq) String() string { return proto.CompactTextString(m) }
+func (*WalletMixIndexReq) ProtoMessage()    {}
+func (*WalletMixIndexReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{36}
+}
+
+func (m *WalletMixIndexReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletMixIndexReq.Unmarshal(m, b)
+}
+func (m *WalletMixIndexReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletMixIndexReq.Marshal(b, m, deterministic)
+}
+func (m *WalletMixIndexReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletMixIndexReq.Merge(m, src)
+}
+func (m *WalletMixIndexReq) XXX_Size() int {
+	return xxx_messageInfo_WalletMixIndexReq.Size(m)
+}
+func (m *WalletMixIndexReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletMixIndexReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletMixIndexReq proto.InternalMessageInfo
+
+func (m *WalletMixIndexReq) GetNoteHash() string {
+	if m != nil {
+		return m.NoteHash
+	}
+	return ""
+}
+
+func (m *WalletMixIndexReq) GetNullifier() string {
+	if m != nil {
+		return m.Nullifier
+	}
+	return ""
+}
+
+func (m *WalletMixIndexReq) GetAuthSpendHash() string {
+	if m != nil {
+		return m.AuthSpendHash
+	}
+	return ""
+}
+
+func (m *WalletMixIndexReq) GetSpender() string {
+	if m != nil {
+		return m.Spender
+	}
+	return ""
+}
+
+func (m *WalletMixIndexReq) GetAccount() string {
+	if m != nil {
+		return m.Account
+	}
+	return ""
+}
+
+func (m *WalletMixIndexReq) GetStatus() int32 {
+	if m != nil {
+		return m.Status
+	}
+	return 0
+}
+
+func (m *WalletMixIndexReq) GetCount() int32 {
+	if m != nil {
+		return m.Count
+	}
+	return 0
+}
+
+func (m *WalletMixIndexReq) GetDirection() int32 {
+	if m != nil {
+		return m.Direction
+	}
+	return 0
+}
+
+type WalletIndexResp struct {
+	Datas                []*WalletIndexInfo `protobuf:"bytes,1,rep,name=datas,proto3" json:"datas,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *WalletIndexResp) Reset()         { *m = WalletIndexResp{} }
+func (m *WalletIndexResp) String() string { return proto.CompactTextString(m) }
+func (*WalletIndexResp) ProtoMessage()    {}
+func (*WalletIndexResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{37}
+}
+
+func (m *WalletIndexResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletIndexResp.Unmarshal(m, b)
+}
+func (m *WalletIndexResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletIndexResp.Marshal(b, m, deterministic)
+}
+func (m *WalletIndexResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletIndexResp.Merge(m, src)
+}
+func (m *WalletIndexResp) XXX_Size() int {
+	return xxx_messageInfo_WalletIndexResp.Size(m)
+}
+func (m *WalletIndexResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletIndexResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletIndexResp proto.InternalMessageInfo
+
+func (m *WalletIndexResp) GetDatas() []*WalletIndexInfo {
+	if m != nil {
+		return m.Datas
+	}
+	return nil
+}
+
+type WalletReqAddrs struct {
+	Data                 []string `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WalletReqAddrs) Reset()         { *m = WalletReqAddrs{} }
+func (m *WalletReqAddrs) String() string { return proto.CompactTextString(m) }
+func (*WalletReqAddrs) ProtoMessage()    {}
+func (*WalletReqAddrs) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{38}
+}
+
+func (m *WalletReqAddrs) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletReqAddrs.Unmarshal(m, b)
+}
+func (m *WalletReqAddrs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletReqAddrs.Marshal(b, m, deterministic)
+}
+func (m *WalletReqAddrs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletReqAddrs.Merge(m, src)
+}
+func (m *WalletReqAddrs) XXX_Size() int {
+	return xxx_messageInfo_WalletReqAddrs.Size(m)
+}
+func (m *WalletReqAddrs) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletReqAddrs.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletReqAddrs proto.InternalMessageInfo
+
+func (m *WalletReqAddrs) GetData() []string {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type WalletEnablePrivacyRst struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	IsOK                 bool     `protobuf:"varint,2,opt,name=isOK,proto3" json:"isOK,omitempty"`
+	Msg                  string   `protobuf:"bytes,3,opt,name=msg,proto3" json:"msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WalletEnablePrivacyRst) Reset()         { *m = WalletEnablePrivacyRst{} }
+func (m *WalletEnablePrivacyRst) String() string { return proto.CompactTextString(m) }
+func (*WalletEnablePrivacyRst) ProtoMessage()    {}
+func (*WalletEnablePrivacyRst) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{39}
+}
+
+func (m *WalletEnablePrivacyRst) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletEnablePrivacyRst.Unmarshal(m, b)
+}
+func (m *WalletEnablePrivacyRst) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletEnablePrivacyRst.Marshal(b, m, deterministic)
+}
+func (m *WalletEnablePrivacyRst) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletEnablePrivacyRst.Merge(m, src)
+}
+func (m *WalletEnablePrivacyRst) XXX_Size() int {
+	return xxx_messageInfo_WalletEnablePrivacyRst.Size(m)
+}
+func (m *WalletEnablePrivacyRst) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletEnablePrivacyRst.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletEnablePrivacyRst proto.InternalMessageInfo
+
+func (m *WalletEnablePrivacyRst) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *WalletEnablePrivacyRst) GetIsOK() bool {
+	if m != nil {
+		return m.IsOK
+	}
+	return false
+}
+
+func (m *WalletEnablePrivacyRst) GetMsg() string {
+	if m != nil {
+		return m.Msg
+	}
+	return ""
+}
+
+type WalletEnablePrivacyResp struct {
+	Data                 []*WalletEnablePrivacyRst `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
+}
+
+func (m *WalletEnablePrivacyResp) Reset()         { *m = WalletEnablePrivacyResp{} }
+func (m *WalletEnablePrivacyResp) String() string { return proto.CompactTextString(m) }
+func (*WalletEnablePrivacyResp) ProtoMessage()    {}
+func (*WalletEnablePrivacyResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{40}
+}
+
+func (m *WalletEnablePrivacyResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WalletEnablePrivacyResp.Unmarshal(m, b)
+}
+func (m *WalletEnablePrivacyResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WalletEnablePrivacyResp.Marshal(b, m, deterministic)
+}
+func (m *WalletEnablePrivacyResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WalletEnablePrivacyResp.Merge(m, src)
+}
+func (m *WalletEnablePrivacyResp) XXX_Size() int {
+	return xxx_messageInfo_WalletEnablePrivacyResp.Size(m)
+}
+func (m *WalletEnablePrivacyResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_WalletEnablePrivacyResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WalletEnablePrivacyResp proto.InternalMessageInfo
+
+func (m *WalletEnablePrivacyResp) GetData() []*WalletEnablePrivacyRst {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type LocalMixTx struct {
+	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Height               int64    `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LocalMixTx) Reset()         { *m = LocalMixTx{} }
+func (m *LocalMixTx) String() string { return proto.CompactTextString(m) }
+func (*LocalMixTx) ProtoMessage()    {}
+func (*LocalMixTx) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{41}
+}
+
+func (m *LocalMixTx) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LocalMixTx.Unmarshal(m, b)
+}
+func (m *LocalMixTx) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LocalMixTx.Marshal(b, m, deterministic)
+}
+func (m *LocalMixTx) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LocalMixTx.Merge(m, src)
+}
+func (m *LocalMixTx) XXX_Size() int {
+	return xxx_messageInfo_LocalMixTx.Size(m)
+}
+func (m *LocalMixTx) XXX_DiscardUnknown() {
+	xxx_messageInfo_LocalMixTx.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LocalMixTx proto.InternalMessageInfo
+
+func (m *LocalMixTx) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *LocalMixTx) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *LocalMixTx) GetIndex() int64 {
+	if m != nil {
+		return m.Index
+	}
+	return 0
+}
+
+type MixTxListReq struct {
+	TxIndex              string   `protobuf:"bytes,1,opt,name=txIndex,proto3" json:"txIndex,omitempty"`
+	Hash                 string   `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	Height               int64    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Index                int64    `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	Count                int32    `protobuf:"varint,5,opt,name=count,proto3" json:"count,omitempty"`
+	Direction            int32    `protobuf:"varint,6,opt,name=direction,proto3" json:"direction,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MixTxListReq) Reset()         { *m = MixTxListReq{} }
+func (m *MixTxListReq) String() string { return proto.CompactTextString(m) }
+func (*MixTxListReq) ProtoMessage()    {}
+func (*MixTxListReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{42}
+}
+
+func (m *MixTxListReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MixTxListReq.Unmarshal(m, b)
+}
+func (m *MixTxListReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MixTxListReq.Marshal(b, m, deterministic)
+}
+func (m *MixTxListReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MixTxListReq.Merge(m, src)
+}
+func (m *MixTxListReq) XXX_Size() int {
+	return xxx_messageInfo_MixTxListReq.Size(m)
+}
+func (m *MixTxListReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_MixTxListReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MixTxListReq proto.InternalMessageInfo
+
+func (m *MixTxListReq) GetTxIndex() string {
+	if m != nil {
+		return m.TxIndex
+	}
+	return ""
+}
+
+func (m *MixTxListReq) GetHash() string {
+	if m != nil {
+		return m.Hash
+	}
+	return ""
+}
+
+func (m *MixTxListReq) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *MixTxListReq) GetIndex() int64 {
+	if m != nil {
+		return m.Index
+	}
+	return 0
+}
+
+func (m *MixTxListReq) GetCount() int32 {
+	if m != nil {
+		return m.Count
+	}
+	return 0
+}
+
+func (m *MixTxListReq) GetDirection() int32 {
+	if m != nil {
+		return m.Direction
+	}
+	return 0
+}
+
+type MixTxListResp struct {
+	Txs                  []*LocalMixTx `protobuf:"bytes,1,rep,name=txs,proto3" json:"txs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *MixTxListResp) Reset()         { *m = MixTxListResp{} }
+func (m *MixTxListResp) String() string { return proto.CompactTextString(m) }
+func (*MixTxListResp) ProtoMessage()    {}
+func (*MixTxListResp) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{43}
+}
+
+func (m *MixTxListResp) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MixTxListResp.Unmarshal(m, b)
+}
+func (m *MixTxListResp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MixTxListResp.Marshal(b, m, deterministic)
+}
+func (m *MixTxListResp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MixTxListResp.Merge(m, src)
+}
+func (m *MixTxListResp) XXX_Size() int {
+	return xxx_messageInfo_MixTxListResp.Size(m)
+}
+func (m *MixTxListResp) XXX_DiscardUnknown() {
+	xxx_messageInfo_MixTxListResp.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MixTxListResp proto.InternalMessageInfo
+
+func (m *MixTxListResp) GetTxs() []*LocalMixTx {
+	if m != nil {
+		return m.Txs
+	}
+	return nil
+}
+
+type PrivacyAddrResult struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	IsOK                 bool     `protobuf:"varint,2,opt,name=isOK,proto3" json:"isOK,omitempty"`
+	Msg                  string   `protobuf:"bytes,3,opt,name=msg,proto3" json:"msg,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrivacyAddrResult) Reset()         { *m = PrivacyAddrResult{} }
+func (m *PrivacyAddrResult) String() string { return proto.CompactTextString(m) }
+func (*PrivacyAddrResult) ProtoMessage()    {}
+func (*PrivacyAddrResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{44}
+}
+
+func (m *PrivacyAddrResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrivacyAddrResult.Unmarshal(m, b)
+}
+func (m *PrivacyAddrResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrivacyAddrResult.Marshal(b, m, deterministic)
+}
+func (m *PrivacyAddrResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrivacyAddrResult.Merge(m, src)
+}
+func (m *PrivacyAddrResult) XXX_Size() int {
+	return xxx_messageInfo_PrivacyAddrResult.Size(m)
+}
+func (m *PrivacyAddrResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrivacyAddrResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrivacyAddrResult proto.InternalMessageInfo
+
+func (m *PrivacyAddrResult) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *PrivacyAddrResult) GetIsOK() bool {
+	if m != nil {
+		return m.IsOK
+	}
+	return false
+}
+
+func (m *PrivacyAddrResult) GetMsg() string {
+	if m != nil {
+		return m.Msg
+	}
+	return ""
+}
+
+type ReqEnablePrivacyRst struct {
+	Results              []*PrivacyAddrResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *ReqEnablePrivacyRst) Reset()         { *m = ReqEnablePrivacyRst{} }
+func (m *ReqEnablePrivacyRst) String() string { return proto.CompactTextString(m) }
+func (*ReqEnablePrivacyRst) ProtoMessage()    {}
+func (*ReqEnablePrivacyRst) Descriptor() ([]byte, []int) {
+	return fileDescriptor_5c21d519a9be369a, []int{45}
+}
+
+func (m *ReqEnablePrivacyRst) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReqEnablePrivacyRst.Unmarshal(m, b)
+}
+func (m *ReqEnablePrivacyRst) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReqEnablePrivacyRst.Marshal(b, m, deterministic)
+}
+func (m *ReqEnablePrivacyRst) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReqEnablePrivacyRst.Merge(m, src)
+}
+func (m *ReqEnablePrivacyRst) XXX_Size() int {
+	return xxx_messageInfo_ReqEnablePrivacyRst.Size(m)
+}
+func (m *ReqEnablePrivacyRst) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReqEnablePrivacyRst.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReqEnablePrivacyRst proto.InternalMessageInfo
+
+func (m *ReqEnablePrivacyRst) GetResults() []*PrivacyAddrResult {
+	if m != nil {
+		return m.Results
+	}
+	return nil
 }
 
 func init() {
@@ -1306,11 +2730,14 @@ func init() {
 	proto.RegisterEnum("types.ZkCurveId", ZkCurveId_name, ZkCurveId_value)
 	proto.RegisterEnum("types.MixConfigType", MixConfigType_name, MixConfigType_value)
 	proto.RegisterEnum("types.MixConfigAct", MixConfigAct_name, MixConfigAct_value)
+	proto.RegisterEnum("types.NoteStatus", NoteStatus_name, NoteStatus_value)
+	proto.RegisterEnum("types.MixWalletRescanStatus", MixWalletRescanStatus_name, MixWalletRescanStatus_value)
 	proto.RegisterType((*ZkVerifyKey)(nil), "types.ZkVerifyKey")
 	proto.RegisterType((*ZkVerifyKeys)(nil), "types.ZkVerifyKeys")
 	proto.RegisterType((*AuthPubKeys)(nil), "types.AuthPubKeys")
-	proto.RegisterType((*AuthorizePubKey)(nil), "types.AuthorizePubKey")
 	proto.RegisterType((*MixConfigAction)(nil), "types.MixConfigAction")
+	proto.RegisterType((*DHSecret)(nil), "types.DHSecret")
+	proto.RegisterType((*DHSecretGroup)(nil), "types.DHSecretGroup")
 	proto.RegisterType((*ZkProofInfo)(nil), "types.ZkProofInfo")
 	proto.RegisterType((*MixDepositAction)(nil), "types.MixDepositAction")
 	proto.RegisterType((*MixTransferAction)(nil), "types.MixTransferAction")
@@ -1319,6 +2746,7 @@ func init() {
 	proto.RegisterType((*MixAction)(nil), "types.MixAction")
 	proto.RegisterType((*DepositPublicInput)(nil), "types.DepositPublicInput")
 	proto.RegisterType((*WithdrawPublicInput)(nil), "types.WithdrawPublicInput")
+	proto.RegisterType((*CommitAmount)(nil), "types.commitAmount")
 	proto.RegisterType((*TransferInputPublicInput)(nil), "types.TransferInputPublicInput")
 	proto.RegisterType((*TransferOutputPublicInput)(nil), "types.TransferOutputPublicInput")
 	proto.RegisterType((*AuthorizePublicInput)(nil), "types.AuthorizePublicInput")
@@ -1326,7 +2754,30 @@ func init() {
 	proto.RegisterType((*CommitTreeLeaves)(nil), "types.CommitTreeLeaves")
 	proto.RegisterType((*CommitTreeRoots)(nil), "types.CommitTreeRoots")
 	proto.RegisterType((*CommitTreeProve)(nil), "types.CommitTreeProve")
-	proto.RegisterType((*TreePathReq)(nil), "types.TreePathReq")
+	proto.RegisterType((*TreeInfoReq)(nil), "types.TreeInfoReq")
+	proto.RegisterType((*TreeListResp)(nil), "types.TreeListResp")
+	proto.RegisterType((*PaymentKeyPair)(nil), "types.PaymentKeyPair")
+	proto.RegisterType((*PubKey)(nil), "types.PubKey")
+	proto.RegisterType((*PrivKey)(nil), "types.PrivKey")
+	proto.RegisterType((*ShareSecretKeyPair)(nil), "types.ShareSecretKeyPair")
+	proto.RegisterType((*AccountPrivacyKey)(nil), "types.AccountPrivacyKey")
+	proto.RegisterType((*WalletAddrPrivacy)(nil), "types.WalletAddrPrivacy")
+	proto.RegisterType((*SecretData)(nil), "types.SecretData")
+	proto.RegisterType((*EncodedSecretData)(nil), "types.EncodedSecretData")
+	proto.RegisterType((*EncryptSecretData)(nil), "types.EncryptSecretData")
+	proto.RegisterType((*DecryptSecretData)(nil), "types.DecryptSecretData")
+	proto.RegisterType((*WalletIndexInfo)(nil), "types.WalletIndexInfo")
+	proto.RegisterType((*WalletDbMixInfo)(nil), "types.WalletDbMixInfo")
+	proto.RegisterType((*WalletMixIndexReq)(nil), "types.WalletMixIndexReq")
+	proto.RegisterType((*WalletIndexResp)(nil), "types.WalletIndexResp")
+	proto.RegisterType((*WalletReqAddrs)(nil), "types.WalletReqAddrs")
+	proto.RegisterType((*WalletEnablePrivacyRst)(nil), "types.WalletEnablePrivacyRst")
+	proto.RegisterType((*WalletEnablePrivacyResp)(nil), "types.WalletEnablePrivacyResp")
+	proto.RegisterType((*LocalMixTx)(nil), "types.LocalMixTx")
+	proto.RegisterType((*MixTxListReq)(nil), "types.MixTxListReq")
+	proto.RegisterType((*MixTxListResp)(nil), "types.MixTxListResp")
+	proto.RegisterType((*PrivacyAddrResult)(nil), "types.PrivacyAddrResult")
+	proto.RegisterType((*ReqEnablePrivacyRst)(nil), "types.ReqEnablePrivacyRst")
 }
 
 func init() {
@@ -1334,69 +2785,290 @@ func init() {
 }
 
 var fileDescriptor_5c21d519a9be369a = []byte{
-	// 1013 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xdd, 0x6e, 0xe3, 0x54,
-	0x10, 0x8e, 0xf3, 0x5b, 0x4f, 0x92, 0xd6, 0x3d, 0x5b, 0x2d, 0x5e, 0x84, 0x50, 0x30, 0xbb, 0x4b,
-	0x14, 0xa4, 0x08, 0x52, 0xe8, 0x82, 0xb8, 0x4a, 0xdb, 0xa0, 0x84, 0xdd, 0x26, 0xd1, 0x89, 0xbb,
-	0x85, 0x4a, 0x20, 0xb9, 0xc9, 0x09, 0xb1, 0x9a, 0xd8, 0xc6, 0x39, 0x4e, 0x13, 0x6e, 0x78, 0x16,
-	0xae, 0x78, 0x03, 0x2e, 0x78, 0x0f, 0xee, 0x78, 0x18, 0x74, 0x7e, 0xfc, 0x17, 0x1a, 0x95, 0x4a,
-	0x7b, 0xe7, 0x19, 0x7f, 0x33, 0xe7, 0xfb, 0x66, 0xe6, 0xfc, 0x80, 0xba, 0xb0, 0xd7, 0x4d, 0xcf,
-	0x77, 0xa9, 0x8b, 0x0a, 0x74, 0xe3, 0x91, 0xa5, 0xb1, 0x82, 0xf2, 0xf5, 0xed, 0x5b, 0xe2, 0xdb,
-	0xd3, 0xcd, 0x6b, 0xb2, 0x41, 0x0d, 0x28, 0x8d, 0x03, 0x7f, 0x45, 0x7a, 0x13, 0x5d, 0xa9, 0x29,
-	0xf5, 0xfd, 0x96, 0xd6, 0xe4, 0xb8, 0xe6, 0xf5, 0xed, 0x99, 0xf0, 0xe3, 0x10, 0x80, 0x5e, 0x40,
-	0x9e, 0xfd, 0xd3, 0xb3, 0x1c, 0x78, 0x28, 0x81, 0x22, 0x97, 0xb9, 0xf1, 0x08, 0xe6, 0xbf, 0xd1,
-	0x11, 0x14, 0x56, 0xd6, 0x3c, 0x20, 0x7a, 0xae, 0xa6, 0xd4, 0x55, 0x2c, 0x0c, 0xe3, 0x04, 0x2a,
-	0x89, 0x75, 0x97, 0xe8, 0x25, 0xe4, 0x27, 0x16, 0xb5, 0x74, 0xa5, 0x96, 0xab, 0x97, 0x5b, 0x28,
-	0x5a, 0x35, 0x82, 0x60, 0xfe, 0xdf, 0xf8, 0x08, 0xca, 0xed, 0x80, 0xce, 0x86, 0xc1, 0x0d, 0x0f,
-	0x43, 0x89, 0x30, 0x55, 0x42, 0x3e, 0x81, 0x03, 0x06, 0x71, 0x7d, 0xfb, 0x57, 0x22, 0x70, 0x3b,
-	0x38, 0xfc, 0xad, 0xc0, 0xc1, 0x85, 0xbd, 0x3e, 0x73, 0x9d, 0xa9, 0xfd, 0x73, 0x7b, 0x4c, 0x6d,
-	0xd7, 0x41, 0xcf, 0x21, 0x6b, 0x6e, 0xa4, 0xf6, 0x23, 0xc9, 0x22, 0xc2, 0x70, 0x55, 0x59, 0x73,
-	0x83, 0x3e, 0x85, 0xa2, 0xc0, 0x4b, 0xf1, 0x4f, 0xb6, 0x91, 0xed, 0x31, 0xc5, 0x12, 0x82, 0x5a,
-	0xa0, 0xae, 0x42, 0x15, 0x9c, 0xc0, 0xbd, 0xfa, 0xba, 0x19, 0x1c, 0xc3, 0x50, 0x0b, 0x4a, 0x56,
-	0x40, 0x67, 0x2c, 0x22, 0xcf, 0x23, 0x9e, 0xca, 0x88, 0x2d, 0x65, 0xdd, 0x0c, 0x0e, 0x81, 0xa7,
-	0x25, 0x29, 0xd2, 0xe8, 0xb0, 0x9e, 0x0e, 0x7d, 0xd7, 0x9d, 0xf6, 0x9c, 0xa9, 0xcb, 0xc4, 0x7b,
-	0xcc, 0xe0, 0xaa, 0x54, 0x2c, 0x0c, 0x54, 0x83, 0xb2, 0x17, 0xdc, 0xcc, 0xed, 0x71, 0xcf, 0xf1,
-	0x02, 0xca, 0x75, 0xa8, 0x38, 0xe9, 0x32, 0x7e, 0x02, 0xed, 0xc2, 0x5e, 0x9f, 0x13, 0xcf, 0x5d,
-	0xda, 0x54, 0x6a, 0x79, 0x0a, 0x45, 0x6b, 0xe1, 0x06, 0x0e, 0xe5, 0xc9, 0xf2, 0x58, 0x5a, 0xa8,
-	0x05, 0xe0, 0x90, 0xbb, 0x33, 0x77, 0xb1, 0xb0, 0xe9, 0x52, 0xcf, 0x6e, 0x35, 0x31, 0xe2, 0x82,
-	0x13, 0x28, 0xc3, 0x86, 0xc3, 0x0b, 0x7b, 0x6d, 0xfa, 0x96, 0xb3, 0x9c, 0x12, 0x5f, 0x2e, 0x50,
-	0x87, 0x82, 0xcd, 0x09, 0x29, 0x3b, 0x73, 0x08, 0x00, 0x6a, 0x40, 0xd1, 0x0d, 0xa8, 0xe0, 0xbe,
-	0x0b, 0x2a, 0x11, 0xc6, 0x98, 0x2f, 0x75, 0x65, 0xd3, 0xd9, 0xc4, 0xb7, 0xee, 0x1e, 0xd0, 0x72,
-	0x02, 0x95, 0xa5, 0x47, 0x9c, 0xc9, 0xc3, 0x6a, 0x52, 0x38, 0xe3, 0x3b, 0x40, 0x17, 0xf6, 0x3a,
-	0x6a, 0x90, 0x5c, 0xe5, 0x0b, 0x28, 0xb3, 0x06, 0x85, 0xc9, 0x76, 0xcb, 0x4a, 0xc2, 0x8c, 0x3f,
-	0xb3, 0xa0, 0xb2, 0x64, 0x22, 0xc7, 0x3e, 0x64, 0xa9, 0x18, 0xca, 0x02, 0xce, 0xd2, 0x0d, 0xfa,
-	0x0c, 0x8a, 0x63, 0x3e, 0x66, 0xbc, 0x6d, 0xf1, 0x70, 0x6c, 0x0d, 0x73, 0x37, 0x83, 0x25, 0x0e,
-	0x1d, 0x43, 0x69, 0x22, 0x1a, 0x29, 0x27, 0xf0, 0xbd, 0x38, 0x24, 0xd5, 0x61, 0x36, 0x50, 0x12,
-	0x89, 0x4e, 0x60, 0xef, 0x4e, 0x96, 0x4c, 0x4e, 0xa1, 0x1e, 0x47, 0xa5, 0x8b, 0xd9, 0xcd, 0xe0,
-	0x08, 0xcb, 0xe2, 0xa8, 0xec, 0xaa, 0x5e, 0xd8, 0x8e, 0x4b, 0xf7, 0x9b, 0xc5, 0x85, 0x58, 0xf4,
-	0x35, 0xa8, 0x56, 0x58, 0x3d, 0xbd, 0xc8, 0x03, 0x9f, 0xc5, 0x81, 0x5b, 0x85, 0x65, 0xfb, 0x25,
-	0x42, 0xc7, 0xb3, 0xdf, 0x05, 0x24, 0xf5, 0x0c, 0xe3, 0x51, 0x46, 0xef, 0xc3, 0x9e, 0xe3, 0x52,
-	0xd2, 0xb5, 0x96, 0x33, 0xb9, 0x0b, 0x22, 0x3b, 0x31, 0x06, 0x62, 0x0f, 0x48, 0xcb, 0xf8, 0x43,
-	0x81, 0x27, 0xa1, 0xc8, 0x64, 0x2e, 0x03, 0x2a, 0xd4, 0x27, 0x04, 0xbb, 0x2e, 0x4d, 0xe4, 0x4b,
-	0xf9, 0xd0, 0x73, 0xa8, 0x3a, 0xc1, 0x7c, 0x6e, 0x4f, 0x6d, 0xe2, 0x73, 0x90, 0x48, 0x9d, 0x76,
-	0xa2, 0x26, 0xa0, 0x48, 0xc1, 0x88, 0x4d, 0x12, 0x87, 0x8a, 0x23, 0xea, 0x9e, 0x3f, 0x09, 0xa6,
-	0xf9, 0x14, 0xd3, 0x7f, 0x14, 0xd0, 0xc3, 0xb2, 0x72, 0x8e, 0x8f, 0xa5, 0x6b, 0x40, 0x65, 0xcc,
-	0x07, 0xef, 0x2d, 0xab, 0xe1, 0xf7, 0x92, 0x6d, 0xca, 0xb7, 0x85, 0xf9, 0x41, 0xd2, 0x4c, 0xf9,
-	0x76, 0x08, 0xca, 0xef, 0x14, 0xf4, 0x9f, 0x32, 0x15, 0xee, 0x29, 0x93, 0xf1, 0x1b, 0x3c, 0x0b,
-	0xd5, 0x0d, 0xf8, 0x76, 0xfe, 0xbf, 0x9d, 0x7d, 0x47, 0xb2, 0x8c, 0xbf, 0x14, 0x38, 0x4a, 0x9e,
-	0xbb, 0x8f, 0xaa, 0x6d, 0x1d, 0x0e, 0xac, 0xf4, 0x99, 0x2d, 0x79, 0x6c, 0xbb, 0x59, 0x35, 0x22,
-	0x57, 0x62, 0x12, 0xd2, 0xce, 0xc7, 0xd6, 0xd8, 0xa8, 0x01, 0x74, 0xd6, 0xf6, 0x52, 0x68, 0x49,
-	0xdc, 0x97, 0x4a, 0x7d, 0x4f, 0xde, 0x97, 0x2f, 0x41, 0x13, 0xc7, 0x8e, 0xe9, 0x13, 0xf2, 0x86,
-	0x58, 0x2b, 0x92, 0xbe, 0x57, 0x2b, 0x12, 0xf7, 0x02, 0x0e, 0x62, 0x1c, 0xd3, 0x77, 0x3f, 0xec,
-	0x77, 0x25, 0x89, 0x1b, 0xfa, 0xee, 0x8a, 0xb0, 0x2e, 0xf9, 0xe9, 0x22, 0x45, 0x36, 0xfb, 0xc7,
-	0x6f, 0xa4, 0x11, 0x11, 0x27, 0xb9, 0x8a, 0x23, 0x1b, 0x7d, 0x08, 0xe0, 0x89, 0x03, 0x72, 0x42,
-	0xd6, 0xbc, 0x1e, 0x55, 0x9c, 0xf0, 0xa0, 0x0f, 0x40, 0x75, 0x82, 0x85, 0xe0, 0xcc, 0x6b, 0x50,
-	0xc5, 0xb1, 0x03, 0xe9, 0x50, 0x9a, 0x91, 0xb9, 0x47, 0xfc, 0xa5, 0x1c, 0xac, 0xd0, 0x64, 0x37,
-	0x24, 0x27, 0x67, 0xd1, 0x19, 0x26, 0xbf, 0x3c, 0x44, 0x6f, 0x4e, 0xac, 0x69, 0x62, 0x17, 0x47,
-	0x76, 0xe3, 0x47, 0x80, 0xf8, 0xb9, 0x83, 0xca, 0x50, 0x3a, 0xef, 0x0c, 0x07, 0xa3, 0x9e, 0xa9,
-	0x65, 0x50, 0x05, 0xf6, 0xae, 0x7a, 0x66, 0xf7, 0x1c, 0xb7, 0xaf, 0x34, 0x05, 0x1d, 0x42, 0xd5,
-	0xc4, 0xed, 0xfe, 0xe8, 0xdb, 0x0e, 0xee, 0xf5, 0x87, 0x97, 0xa6, 0x96, 0x45, 0x08, 0xf6, 0x43,
-	0xd7, 0xe0, 0xd2, 0x64, 0xbe, 0x1c, 0xaa, 0x82, 0xda, 0xbe, 0x34, 0xbb, 0x03, 0xdc, 0xbb, 0xee,
-	0x68, 0xf9, 0xc6, 0x37, 0xa0, 0x46, 0xcf, 0x2e, 0x96, 0xfd, 0xb2, 0xff, 0xba, 0x3f, 0xb8, 0xea,
-	0x6b, 0x19, 0x04, 0x50, 0x3c, 0x7d, 0x33, 0x3a, 0x7e, 0xf5, 0x4a, 0x53, 0xc2, 0xef, 0xaf, 0x3e,
-	0xd7, 0xb2, 0x48, 0x85, 0xc2, 0x69, 0xbf, 0xf5, 0xe5, 0x89, 0x96, 0x6b, 0x34, 0xa1, 0x9a, 0x7a,
-	0xb7, 0xb0, 0xe4, 0xd1, 0x63, 0x43, 0xcb, 0xa0, 0x7d, 0x80, 0xf8, 0x21, 0xa5, 0x29, 0x8d, 0x8f,
-	0xa1, 0x92, 0xbc, 0x3e, 0x50, 0x09, 0x72, 0xed, 0xc9, 0x44, 0xac, 0x75, 0x4e, 0xe6, 0x84, 0x12,
-	0x4d, 0xb9, 0x29, 0xf2, 0xb7, 0xe3, 0xf1, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x5f, 0xa6, 0xaa,
-	0xe3, 0x48, 0x0a, 0x00, 0x00,
+	// 2018 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0x5b, 0x73, 0x1b, 0x49,
+	0x15, 0xf6, 0xe8, 0xae, 0x23, 0xd9, 0x1e, 0x75, 0xbc, 0x5e, 0xad, 0x8b, 0x05, 0x33, 0xeb, 0xdd,
+	0xf2, 0x2a, 0x10, 0x76, 0x95, 0x6c, 0x36, 0x14, 0x05, 0x94, 0x62, 0x29, 0x91, 0x88, 0x2d, 0xa9,
+	0x5a, 0xf2, 0x3a, 0x31, 0x97, 0xaa, 0xb1, 0xa6, 0x6d, 0x4d, 0x59, 0x9a, 0x19, 0xcf, 0xb4, 0x1c,
+	0x89, 0x1f, 0xc0, 0x1b, 0xaf, 0x3c, 0x42, 0xf1, 0xc4, 0x1f, 0xa0, 0x28, 0x8a, 0x5f, 0xc0, 0x6f,
+	0xe1, 0x95, 0x07, 0x5e, 0xa9, 0xbe, 0xcd, 0x45, 0x96, 0x72, 0x81, 0x97, 0x7d, 0x9b, 0x73, 0xfa,
+	0xeb, 0xd3, 0xe7, 0xde, 0xa7, 0x07, 0x8a, 0x53, 0x7b, 0xfe, 0xc0, 0xf3, 0x5d, 0xea, 0xa2, 0x2c,
+	0x5d, 0x78, 0x24, 0xd8, 0x2b, 0x8f, 0xdc, 0xe9, 0xd4, 0x75, 0x04, 0x73, 0xaf, 0x42, 0x7d, 0xd3,
+	0x09, 0xcc, 0x11, 0xb5, 0x15, 0xcb, 0xb8, 0x85, 0xd2, 0xf9, 0xf5, 0x37, 0xc4, 0xb7, 0x2f, 0x17,
+	0x2f, 0xc8, 0x02, 0xd5, 0x20, 0x3f, 0x9a, 0xf9, 0xb7, 0xa4, 0x63, 0x55, 0xb5, 0x7d, 0xed, 0x70,
+	0xab, 0xae, 0x3f, 0xe0, 0x82, 0x1e, 0x9c, 0x5f, 0x1f, 0x09, 0x3e, 0x56, 0x00, 0xf4, 0x29, 0x64,
+	0xd8, 0x5a, 0x35, 0xc5, 0x81, 0x15, 0x09, 0x14, 0xb2, 0x86, 0x0b, 0x8f, 0x60, 0xbe, 0x8c, 0x76,
+	0x20, 0x7b, 0x6b, 0x4e, 0x66, 0xa4, 0x9a, 0xde, 0xd7, 0x0e, 0x8b, 0x58, 0x10, 0xc6, 0x63, 0x28,
+	0xc7, 0xce, 0x0d, 0xd0, 0x67, 0x90, 0xb1, 0x4c, 0x6a, 0x56, 0xb5, 0xfd, 0xf4, 0x61, 0xa9, 0x8e,
+	0xc2, 0x53, 0x43, 0x08, 0xe6, 0xeb, 0xc6, 0xf7, 0xa1, 0xd4, 0x98, 0xd1, 0x71, 0x7f, 0x76, 0xc1,
+	0xb7, 0xa1, 0xd8, 0xb6, 0xa2, 0x84, 0xfc, 0x4b, 0x83, 0xed, 0x13, 0x7b, 0x7e, 0xe4, 0x3a, 0x97,
+	0xf6, 0x55, 0x83, 0x1b, 0x8b, 0x0e, 0x20, 0x35, 0x5c, 0x48, 0x93, 0x76, 0xa4, 0xf0, 0x10, 0xc3,
+	0x95, 0x4d, 0x0d, 0x17, 0xe8, 0x3e, 0xe4, 0x04, 0x5e, 0xda, 0x74, 0x6f, 0x19, 0xd9, 0x18, 0x51,
+	0x2c, 0x21, 0xa8, 0x0e, 0xc5, 0x5b, 0xa5, 0x1c, 0xb7, 0x6d, 0xa5, 0xda, 0xed, 0x0d, 0x1c, 0xc1,
+	0x50, 0x15, 0x72, 0x26, 0xd3, 0xfe, 0xba, 0x9a, 0x61, 0xce, 0x68, 0x6f, 0x60, 0x49, 0xa3, 0x1f,
+	0x42, 0xd1, 0x33, 0x17, 0x53, 0xe2, 0xd0, 0xfe, 0x75, 0x35, 0xcb, 0xa5, 0x6d, 0x4a, 0x69, 0xc2,
+	0x56, 0x26, 0x28, 0x44, 0x3c, 0xcd, 0x4b, 0xa7, 0x1a, 0x47, 0x50, 0x68, 0xb6, 0x07, 0x64, 0xe4,
+	0x13, 0x8a, 0xbe, 0x07, 0x69, 0xe2, 0x5d, 0x73, 0x2b, 0x97, 0x77, 0x63, 0xb6, 0x82, 0x76, 0x21,
+	0x17, 0x70, 0xa8, 0x8c, 0x85, 0xa4, 0x8c, 0x3f, 0x68, 0xb0, 0xa9, 0xa4, 0x3c, 0xf7, 0xdd, 0x99,
+	0x87, 0x3e, 0x87, 0x7c, 0xe0, 0x11, 0xc7, 0x22, 0xbe, 0x14, 0xb7, 0x2d, 0xc5, 0x29, 0x18, 0x56,
+	0xeb, 0xe8, 0x3e, 0x14, 0x7c, 0x42, 0x67, 0xbe, 0x43, 0x7c, 0xee, 0xb6, 0x15, 0xd8, 0x10, 0xc0,
+	0xcc, 0x64, 0x06, 0xbb, 0xbe, 0xfd, 0x5b, 0x22, 0x9d, 0x76, 0x07, 0x1d, 0x21, 0x8c, 0x1b, 0x96,
+	0x9d, 0x7d, 0xdf, 0x75, 0x2f, 0x3b, 0xce, 0xa5, 0xcb, 0x52, 0xc9, 0x63, 0x04, 0xd7, 0xa9, 0x88,
+	0x05, 0x81, 0xf6, 0xa1, 0xe4, 0xcd, 0x2e, 0x26, 0xf6, 0xa8, 0xe3, 0x78, 0x33, 0xca, 0x75, 0x28,
+	0xe2, 0x38, 0x0b, 0xd5, 0x20, 0x7b, 0xc5, 0xcc, 0x92, 0x27, 0xee, 0x2c, 0x9d, 0xc8, 0x4d, 0xc6,
+	0x02, 0x62, 0xfc, 0x06, 0xf4, 0x13, 0x7b, 0xde, 0x24, 0x9e, 0x1b, 0xd8, 0x54, 0x86, 0x7a, 0x17,
+	0x72, 0xe6, 0xd4, 0x9d, 0x39, 0x94, 0x1f, 0x9c, 0xc1, 0x92, 0x42, 0x75, 0x00, 0x87, 0xbc, 0x3e,
+	0x72, 0xa7, 0x53, 0x9b, 0x06, 0xd5, 0xd4, 0x52, 0xea, 0x86, 0x7a, 0xe3, 0x18, 0xca, 0xb0, 0xa1,
+	0x72, 0x62, 0xcf, 0x87, 0xac, 0x10, 0x2f, 0x89, 0x2f, 0x0f, 0x38, 0x84, 0xac, 0xcd, 0x95, 0xd7,
+	0xd6, 0xca, 0x10, 0x00, 0x54, 0x83, 0x9c, 0x3b, 0xa3, 0xc2, 0xce, 0x75, 0x50, 0x89, 0x30, 0x46,
+	0xfc, 0xa8, 0x33, 0x9b, 0x8e, 0x2d, 0xdf, 0x7c, 0xfd, 0x16, 0x5b, 0x1e, 0x43, 0x99, 0x47, 0xf4,
+	0xed, 0xd6, 0x24, 0x70, 0xc6, 0x2f, 0x00, 0x9d, 0xd8, 0xf3, 0x86, 0x0a, 0x99, 0x3c, 0xe5, 0x11,
+	0x94, 0x58, 0x14, 0x95, 0xb0, 0xf5, 0x66, 0xc5, 0x61, 0xc6, 0xdf, 0x52, 0x50, 0x64, 0xc2, 0x84,
+	0x8c, 0x2d, 0x48, 0x51, 0x51, 0xb3, 0x59, 0x9c, 0xa2, 0x0b, 0xf4, 0x05, 0xe4, 0x46, 0xbc, 0x0a,
+	0x65, 0x9a, 0xed, 0xae, 0xa8, 0x4e, 0xdb, 0x75, 0x58, 0x51, 0x09, 0x1c, 0x7a, 0x08, 0x79, 0x4b,
+	0x04, 0x52, 0x46, 0xfe, 0xc3, 0x68, 0x4b, 0x22, 0xc2, 0xed, 0x0d, 0xac, 0x90, 0xe8, 0x31, 0x14,
+	0x5e, 0x4b, 0x97, 0xf1, 0x2a, 0x2d, 0xd5, 0xab, 0xd1, 0xae, 0xa4, 0x33, 0xdb, 0x1b, 0x38, 0xc4,
+	0xb2, 0x7d, 0x54, 0x46, 0x55, 0x16, 0x70, 0x6c, 0x5f, 0x32, 0xde, 0x6c, 0x9f, 0xc2, 0xa2, 0x1f,
+	0xc7, 0x4b, 0x22, 0xc7, 0x37, 0x7e, 0x14, 0x6d, 0x5c, 0x72, 0x2c, 0xeb, 0x02, 0x21, 0x3a, 0xea,
+	0x02, 0x6d, 0x40, 0xd2, 0x9e, 0x7e, 0x2c, 0xed, 0xf7, 0xa0, 0xe0, 0xb8, 0x94, 0xb4, 0xcd, 0x60,
+	0x2c, 0x2b, 0x26, 0xa4, 0x63, 0x69, 0x20, 0xea, 0x45, 0x52, 0xc6, 0x5f, 0x34, 0xb8, 0xa7, 0x8c,
+	0x8c, 0xcb, 0x32, 0xa0, 0x4c, 0x7d, 0x42, 0xb0, 0xeb, 0xd2, 0x98, 0xbc, 0x04, 0x0f, 0x1d, 0xc0,
+	0xa6, 0x33, 0x9b, 0x4c, 0xec, 0x4b, 0x9b, 0xf8, 0x1c, 0x24, 0x44, 0x27, 0x99, 0xe8, 0x01, 0xa0,
+	0xd0, 0x82, 0x01, 0xcb, 0x24, 0x0e, 0x15, 0x0d, 0x69, 0xc5, 0x4a, 0x4c, 0xd3, 0x4c, 0x42, 0xd3,
+	0x1a, 0xf0, 0xcb, 0xcd, 0xa6, 0x0d, 0x91, 0xc0, 0x65, 0xd0, 0x5e, 0x4a, 0xb5, 0xb4, 0x97, 0x8c,
+	0x7a, 0x25, 0xcf, 0xd7, 0x5e, 0x19, 0xff, 0xd4, 0xa0, 0xaa, 0x42, 0xc0, 0xed, 0x79, 0x5f, 0xd3,
+	0xaa, 0x90, 0x17, 0xc7, 0xbe, 0x94, 0x42, 0x15, 0x19, 0xad, 0xbc, 0x92, 0x36, 0x28, 0x72, 0x8d,
+	0xa1, 0x99, 0xb5, 0x86, 0xde, 0x71, 0x5f, 0x76, 0x85, 0xfb, 0x8c, 0x3f, 0x69, 0xf0, 0x91, 0x32,
+	0xa5, 0xc7, 0xeb, 0xfc, 0x5d, 0x43, 0xfe, 0xbf, 0xd8, 0x50, 0x87, 0xa2, 0x35, 0x16, 0x5d, 0x32,
+	0x90, 0xd5, 0xb0, 0xba, 0x7b, 0x46, 0x30, 0xe3, 0x1f, 0x1a, 0xec, 0x84, 0x69, 0xfb, 0xbe, 0x8e,
+	0x3e, 0x84, 0x6d, 0x33, 0xb6, 0x97, 0xdd, 0xad, 0x42, 0xd9, 0x65, 0x36, 0x73, 0x57, 0xc8, 0x8a,
+	0xa5, 0x50, 0x92, 0xf9, 0xbe, 0x41, 0x30, 0xf6, 0x01, 0x5a, 0x73, 0x3b, 0xa0, 0xdf, 0xb0, 0xba,
+	0x8a, 0x8d, 0x17, 0xda, 0x61, 0x41, 0x8e, 0x17, 0x9f, 0x81, 0x2e, 0xfa, 0xd5, 0xd0, 0x27, 0xe4,
+	0x98, 0x98, 0xb7, 0x24, 0x39, 0x86, 0x94, 0x25, 0xee, 0x53, 0xd8, 0x8e, 0x70, 0xcc, 0xbe, 0xd5,
+	0xb0, 0x3f, 0x6b, 0x71, 0x5c, 0xdf, 0x77, 0x6f, 0x09, 0x8b, 0xa2, 0x9f, 0x74, 0x52, 0x48, 0xb3,
+	0x35, 0x7e, 0xed, 0x0d, 0x88, 0xb8, 0x02, 0x8a, 0x38, 0xa4, 0xd1, 0x77, 0x01, 0x3c, 0xd1, 0x59,
+	0x2d, 0x32, 0xe7, 0xfe, 0xd8, 0xc4, 0x31, 0x0e, 0xfa, 0x0e, 0x14, 0x9d, 0xd9, 0x54, 0xe8, 0xcc,
+	0x7d, 0xb0, 0x89, 0x23, 0x06, 0xcb, 0x82, 0x31, 0x99, 0x78, 0xc4, 0x0f, 0x64, 0xe6, 0x29, 0xd2,
+	0x68, 0x41, 0x89, 0x29, 0xc7, 0x1b, 0x36, 0xb9, 0x79, 0x9b, 0x7a, 0x13, 0x62, 0x5e, 0xc6, 0xca,
+	0x3f, 0xa4, 0x8d, 0x03, 0x28, 0x73, 0x9f, 0xd9, 0x01, 0xc5, 0x24, 0xf0, 0xd8, 0x75, 0xce, 0x5c,
+	0x10, 0xc8, 0xe9, 0x4d, 0x10, 0x46, 0x13, 0xb6, 0xfa, 0x62, 0xce, 0x79, 0x41, 0x16, 0x7d, 0xd3,
+	0xf6, 0x59, 0x07, 0xf0, 0x4c, 0x3e, 0x66, 0x89, 0xd3, 0x24, 0xc5, 0xce, 0xe2, 0x57, 0x51, 0x94,
+	0x24, 0x21, 0x6d, 0x1c, 0x40, 0x4e, 0xe6, 0xc9, 0x9b, 0xfa, 0xc2, 0xc7, 0x90, 0xef, 0xfb, 0xf6,
+	0x2d, 0x83, 0xc5, 0x43, 0xad, 0x26, 0x49, 0x17, 0xd0, 0x60, 0x6c, 0xfa, 0x44, 0x64, 0xb6, 0x52,
+	0xe7, 0x10, 0xf2, 0x9e, 0xd8, 0x24, 0x67, 0xa3, 0x2d, 0x35, 0x6a, 0x09, 0x2e, 0x56, 0xcb, 0xe8,
+	0x47, 0x50, 0xf2, 0xc9, 0x88, 0xd8, 0xb7, 0xb6, 0x73, 0xd5, 0xbf, 0x96, 0xd7, 0xd6, 0xd2, 0x60,
+	0x16, 0x47, 0x18, 0xbf, 0xd7, 0xa0, 0xd2, 0x18, 0x8d, 0x58, 0xed, 0x31, 0x61, 0xe6, 0x88, 0xdb,
+	0xf9, 0x15, 0x80, 0x17, 0x7a, 0x44, 0x9e, 0xf9, 0x81, 0x92, 0x92, 0x70, 0x15, 0x8e, 0x01, 0x51,
+	0x03, 0xb6, 0x82, 0x84, 0xf6, 0x52, 0x01, 0x75, 0xbb, 0xdc, 0x35, 0x0d, 0x2f, 0x6d, 0x30, 0x7e,
+	0x09, 0x95, 0x33, 0x73, 0x32, 0x21, 0xb4, 0x61, 0x59, 0xbe, 0xd4, 0x08, 0xd5, 0x85, 0xfd, 0xe6,
+	0x48, 0xe9, 0xa2, 0xee, 0xb9, 0x3b, 0x9a, 0x63, 0x05, 0x64, 0xde, 0x35, 0x2d, 0xcb, 0x97, 0x9e,
+	0xe7, 0xdf, 0xc6, 0xdf, 0x35, 0x00, 0x71, 0x54, 0xd3, 0xa4, 0x26, 0xab, 0x67, 0x35, 0xdf, 0x8a,
+	0xba, 0x17, 0x91, 0x48, 0x32, 0x59, 0x0f, 0x11, 0xc3, 0x64, 0xa2, 0x39, 0x24, 0x78, 0xab, 0x7a,
+	0x48, 0x7a, 0x75, 0x0f, 0x59, 0x73, 0xb7, 0xb0, 0x42, 0x62, 0x6d, 0x13, 0x9b, 0x8e, 0xe5, 0x4e,
+	0x65, 0x35, 0xc4, 0x38, 0xc6, 0x39, 0x54, 0x5a, 0xce, 0xc8, 0xb5, 0x88, 0x15, 0x33, 0xa0, 0x0a,
+	0x79, 0x22, 0x98, 0x52, 0x75, 0x45, 0xa2, 0xfb, 0x90, 0xf7, 0xcd, 0xd7, 0x0c, 0x24, 0x43, 0xa0,
+	0x1e, 0x4b, 0xd1, 0x6e, 0xac, 0x10, 0xc6, 0xaf, 0xb8, 0x6c, 0x7f, 0xe1, 0xd1, 0x98, 0xec, 0x68,
+	0x72, 0xd7, 0xe2, 0x93, 0xfb, 0xfb, 0x67, 0xd8, 0xef, 0x34, 0xa8, 0x34, 0xc9, 0xbb, 0x8a, 0x7f,
+	0x02, 0xdb, 0xd1, 0x66, 0xdf, 0x8e, 0x72, 0x68, 0x39, 0xe5, 0x97, 0x61, 0xea, 0x2d, 0x92, 0x5e,
+	0xf7, 0x16, 0x31, 0xfe, 0xa3, 0xc1, 0xb6, 0xc8, 0x2d, 0xde, 0x9b, 0xf8, 0x7c, 0xff, 0xa6, 0xdb,
+	0x8b, 0xf7, 0x2e, 0x79, 0x11, 0xca, 0xa8, 0x47, 0x0c, 0x75, 0x19, 0x2c, 0xcf, 0x13, 0x49, 0x26,
+	0x8b, 0x90, 0x7a, 0xd5, 0x88, 0x78, 0x87, 0x8f, 0x18, 0x76, 0x03, 0x8a, 0xec, 0x55, 0xbd, 0x4f,
+	0x92, 0xe8, 0x73, 0xc8, 0x05, 0xd4, 0xa4, 0xb3, 0x80, 0xcf, 0x66, 0xd1, 0x3b, 0xb7, 0xeb, 0x52,
+	0x32, 0xe0, 0x0b, 0x58, 0x02, 0xd8, 0x83, 0x98, 0xa9, 0x5b, 0xcd, 0xaf, 0x8b, 0x31, 0x5f, 0x36,
+	0xce, 0x94, 0xe1, 0xcd, 0x8b, 0x13, 0x5b, 0x18, 0x5e, 0x83, 0x8c, 0xed, 0x5c, 0xba, 0xb2, 0x9e,
+	0xd4, 0x60, 0xbb, 0xe4, 0x1e, 0xcc, 0x31, 0x4c, 0x55, 0x3a, 0x17, 0x1d, 0x5e, 0x5e, 0xe3, 0x92,
+	0x34, 0xfe, 0xad, 0xa9, 0x72, 0xe5, 0x72, 0x2d, 0x32, 0x97, 0xdd, 0xfa, 0x5b, 0xe7, 0xd4, 0xdd,
+	0x84, 0x53, 0xb3, 0xa1, 0x07, 0x77, 0x20, 0x2b, 0xf0, 0x79, 0xce, 0x16, 0x04, 0xd3, 0xd2, 0xb2,
+	0x7d, 0x22, 0x5e, 0xe6, 0x05, 0xbe, 0x12, 0x31, 0x8c, 0x9f, 0x27, 0xf2, 0x88, 0x5f, 0x2c, 0x3f,
+	0x88, 0x5f, 0x2c, 0xeb, 0xfd, 0x29, 0x2f, 0x9c, 0x03, 0xd8, 0x12, 0x2b, 0x98, 0xdc, 0xb0, 0x3e,
+	0xb7, 0xfa, 0xaf, 0x02, 0x86, 0x5d, 0x81, 0x6a, 0x39, 0xe6, 0xc5, 0x84, 0xc8, 0x26, 0x87, 0x03,
+	0x1a, 0xf6, 0x36, 0x2d, 0xea, 0x6d, 0x8c, 0x67, 0x07, 0xbd, 0x17, 0xdc, 0xa7, 0x05, 0xcc, 0xbf,
+	0x91, 0x0e, 0xe9, 0x69, 0x70, 0x25, 0x9d, 0xc8, 0x3e, 0x8d, 0x63, 0xf8, 0x70, 0x95, 0x4c, 0x66,
+	0xc2, 0x97, 0x89, 0xff, 0x21, 0x1f, 0x27, 0x2c, 0x58, 0xd6, 0x40, 0x6a, 0xd8, 0x05, 0x38, 0x76,
+	0x47, 0xe6, 0x84, 0x3d, 0x37, 0xe6, 0x4c, 0x83, 0xb1, 0x0a, 0x79, 0x19, 0xf3, 0x6f, 0xe6, 0xf6,
+	0x31, 0xb1, 0xaf, 0xc6, 0x62, 0xe8, 0x4f, 0x63, 0x49, 0x31, 0xb7, 0xdb, 0xe1, 0xc8, 0x90, 0xc6,
+	0x82, 0x30, 0xfe, 0xa8, 0x41, 0x99, 0xcb, 0x12, 0x17, 0xf6, 0x4d, 0x3c, 0xf3, 0xb4, 0x44, 0xe6,
+	0x85, 0x87, 0xc9, 0xf6, 0xbe, 0x74, 0x58, 0x7a, 0xf5, 0x61, 0x99, 0xd8, 0x61, 0x51, 0xe4, 0xb3,
+	0x6b, 0x23, 0x9f, 0x5b, 0x8e, 0xfc, 0x23, 0xd8, 0x8c, 0xe9, 0x17, 0x78, 0xe8, 0x13, 0x48, 0xd3,
+	0xb9, 0x8a, 0xba, 0xaa, 0xbf, 0xc8, 0x27, 0x98, 0xad, 0x1a, 0x27, 0x50, 0x91, 0xae, 0x63, 0xc1,
+	0xc6, 0x24, 0x98, 0x4d, 0xfe, 0x9f, 0x18, 0x76, 0xe0, 0x1e, 0x26, 0x37, 0x77, 0x92, 0xa2, 0x0e,
+	0x79, 0x9f, 0x8b, 0x56, 0xea, 0x54, 0x63, 0x1d, 0x33, 0x71, 0x36, 0x56, 0xc0, 0xda, 0xaf, 0x01,
+	0xa2, 0xbf, 0x67, 0xa8, 0x04, 0xf9, 0x66, 0xab, 0xdf, 0x1b, 0x74, 0x86, 0xfa, 0x06, 0x2a, 0x43,
+	0xe1, 0xac, 0x33, 0x6c, 0x37, 0x71, 0xe3, 0x4c, 0xd7, 0x50, 0x05, 0x36, 0x87, 0xb8, 0xd1, 0x1d,
+	0x3c, 0x6b, 0xe1, 0x4e, 0xb7, 0x7f, 0x3a, 0xd4, 0x53, 0x08, 0xc1, 0x96, 0x62, 0xf5, 0x4e, 0x87,
+	0x8c, 0x97, 0x46, 0x9b, 0x50, 0x6c, 0x9c, 0x0e, 0xdb, 0x3d, 0xdc, 0x39, 0x6f, 0xe9, 0x99, 0xda,
+	0x4f, 0xa0, 0x18, 0xfe, 0xc5, 0x63, 0xd2, 0x4f, 0xbb, 0x2f, 0xba, 0xbd, 0xb3, 0xae, 0xbe, 0x81,
+	0x00, 0x72, 0x4f, 0x8f, 0x07, 0x0f, 0xbf, 0xfe, 0x5a, 0xd7, 0xd4, 0xf7, 0x93, 0x2f, 0xf5, 0x14,
+	0x2a, 0x42, 0xf6, 0x69, 0xb7, 0xfe, 0xd5, 0x63, 0x3d, 0x5d, 0x6b, 0x70, 0x5f, 0x47, 0xff, 0xcb,
+	0x98, 0xf0, 0xf0, 0x27, 0x97, 0xbe, 0x81, 0xb6, 0x00, 0xa2, 0xff, 0x72, 0x42, 0xc5, 0x7e, 0xfc,
+	0xe2, 0xd6, 0x53, 0xb5, 0x4f, 0x78, 0x3a, 0x85, 0x4f, 0x75, 0x94, 0x87, 0x74, 0xc3, 0xb2, 0xc4,
+	0xf1, 0x4d, 0x32, 0x21, 0x94, 0xe8, 0x5a, 0xed, 0x09, 0x40, 0xd4, 0x59, 0x99, 0x02, 0xa7, 0xdd,
+	0x66, 0xeb, 0x99, 0x00, 0x3d, 0xc3, 0xbd, 0xf3, 0x56, 0x57, 0xd7, 0x50, 0x01, 0x32, 0xbd, 0x7e,
+	0xab, 0x2b, 0x34, 0x3c, 0x3a, 0xee, 0x0d, 0x5a, 0x7a, 0xba, 0xf6, 0x53, 0xf8, 0x80, 0x3d, 0xd0,
+	0x65, 0x25, 0x07, 0x23, 0xd3, 0x91, 0x42, 0x0a, 0x90, 0xe9, 0x34, 0x8f, 0x5b, 0xc2, 0x8b, 0x83,
+	0xa3, 0x46, 0xb7, 0xdb, 0xe9, 0x3e, 0xd7, 0x35, 0x46, 0x3d, 0xeb, 0x74, 0x3b, 0x83, 0x76, 0xab,
+	0xa9, 0xa7, 0xea, 0x7f, 0xd5, 0x00, 0xa6, 0xf6, 0x5c, 0x0d, 0x39, 0x8f, 0x60, 0xfb, 0xf9, 0x92,
+	0x1c, 0x75, 0x8b, 0x61, 0x72, 0xd3, 0xb5, 0x27, 0x7b, 0x7a, 0x44, 0x0e, 0xa8, 0x6f, 0x3b, 0x57,
+	0xc6, 0x06, 0xfa, 0x02, 0x4a, 0x62, 0x0b, 0xb3, 0xe1, 0x9d, 0x76, 0xfc, 0x0c, 0x36, 0x13, 0xb9,
+	0x83, 0xb6, 0x23, 0x10, 0x6f, 0x46, 0x7b, 0x7b, 0x11, 0x63, 0x39, 0xcb, 0x8c, 0x8d, 0x8b, 0x1c,
+	0xff, 0x8d, 0xfb, 0xf0, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x14, 0x2c, 0xb6, 0xdb, 0xfb, 0x15,
+	0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// MixPrivacyClient is the client API for MixPrivacy service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type MixPrivacyClient interface {
+	// 扫描UTXO以及获取扫描UTXO后的状态
+	GetRescanStatus(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.ReqString, error)
+	// 使能隐私账户
+	RescanNotes(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.ReqString, error)
+	// 创建隐私交易
+	EnablePrivacy(ctx context.Context, in *types.ReqAddrs, opts ...grpc.CallOption) (*ReqEnablePrivacyRst, error)
+}
+
+type mixPrivacyClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMixPrivacyClient(cc grpc.ClientConnInterface) MixPrivacyClient {
+	return &mixPrivacyClient{cc}
+}
+
+func (c *mixPrivacyClient) GetRescanStatus(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.ReqString, error) {
+	out := new(types.ReqString)
+	err := c.cc.Invoke(ctx, "/types.mixPrivacy/GetRescanStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mixPrivacyClient) RescanNotes(ctx context.Context, in *types.ReqNil, opts ...grpc.CallOption) (*types.ReqString, error) {
+	out := new(types.ReqString)
+	err := c.cc.Invoke(ctx, "/types.mixPrivacy/RescanNotes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *mixPrivacyClient) EnablePrivacy(ctx context.Context, in *types.ReqAddrs, opts ...grpc.CallOption) (*ReqEnablePrivacyRst, error) {
+	out := new(ReqEnablePrivacyRst)
+	err := c.cc.Invoke(ctx, "/types.mixPrivacy/EnablePrivacy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MixPrivacyServer is the server API for MixPrivacy service.
+type MixPrivacyServer interface {
+	// 扫描UTXO以及获取扫描UTXO后的状态
+	GetRescanStatus(context.Context, *types.ReqNil) (*types.ReqString, error)
+	// 使能隐私账户
+	RescanNotes(context.Context, *types.ReqNil) (*types.ReqString, error)
+	// 创建隐私交易
+	EnablePrivacy(context.Context, *types.ReqAddrs) (*ReqEnablePrivacyRst, error)
+}
+
+// UnimplementedMixPrivacyServer can be embedded to have forward compatible implementations.
+type UnimplementedMixPrivacyServer struct {
+}
+
+func (*UnimplementedMixPrivacyServer) GetRescanStatus(ctx context.Context, req *types.ReqNil) (*types.ReqString, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRescanStatus not implemented")
+}
+func (*UnimplementedMixPrivacyServer) RescanNotes(ctx context.Context, req *types.ReqNil) (*types.ReqString, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RescanNotes not implemented")
+}
+func (*UnimplementedMixPrivacyServer) EnablePrivacy(ctx context.Context, req *types.ReqAddrs) (*ReqEnablePrivacyRst, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnablePrivacy not implemented")
+}
+
+func RegisterMixPrivacyServer(s *grpc.Server, srv MixPrivacyServer) {
+	s.RegisterService(&_MixPrivacy_serviceDesc, srv)
+}
+
+func _MixPrivacy_GetRescanStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types.ReqNil)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MixPrivacyServer).GetRescanStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.mixPrivacy/GetRescanStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MixPrivacyServer).GetRescanStatus(ctx, req.(*types.ReqNil))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MixPrivacy_RescanNotes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types.ReqNil)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MixPrivacyServer).RescanNotes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.mixPrivacy/RescanNotes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MixPrivacyServer).RescanNotes(ctx, req.(*types.ReqNil))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MixPrivacy_EnablePrivacy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(types.ReqAddrs)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MixPrivacyServer).EnablePrivacy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/types.mixPrivacy/EnablePrivacy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MixPrivacyServer).EnablePrivacy(ctx, req.(*types.ReqAddrs))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _MixPrivacy_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.mixPrivacy",
+	HandlerType: (*MixPrivacyServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetRescanStatus",
+			Handler:    _MixPrivacy_GetRescanStatus_Handler,
+		},
+		{
+			MethodName: "RescanNotes",
+			Handler:    _MixPrivacy_RescanNotes_Handler,
+		},
+		{
+			MethodName: "EnablePrivacy",
+			Handler:    _MixPrivacy_EnablePrivacy_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "mix.proto",
 }

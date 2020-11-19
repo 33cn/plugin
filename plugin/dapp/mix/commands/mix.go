@@ -17,7 +17,7 @@ import (
 )
 
 //ParcCmd paracross cmd register
-func ParcCmd() *cobra.Command {
+func MixCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mix",
 		Short: "Construct mix coin transactions",
@@ -30,6 +30,7 @@ func ParcCmd() *cobra.Command {
 		CreateConfigCmd(),
 		CreateAuthorizeCmd(),
 		QueryCmd(),
+		WalletCmd(),
 	)
 	return cmd
 }
@@ -314,23 +315,23 @@ func mixConfigAuthPubKeyParaCmd() *cobra.Command {
 func addPubKeyConfigFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("action", "a", 0, "0:add,1:delete")
 
-	cmd.Flags().StringP("zkey", "z", "", "zk proof verify key")
-	cmd.MarkFlagRequired("zkey")
+	cmd.Flags().StringP("key", "k", "", "authorize pub key")
+	cmd.MarkFlagRequired("key")
 
 }
 
 func createConfigPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	action, _ := cmd.Flags().GetUint32("action")
-	key, _ := cmd.Flags().GetString("zkey")
+	key, _ := cmd.Flags().GetString("key")
 
-	var pubkey mixTy.AuthorizePubKey
-	pubkey.Value = key
+	//var pubkey mixTy.AuthorizePubKey
+	//pubkey.Value = key
 
 	payload := &mixTy.MixConfigAction{}
 	payload.Ty = mixTy.MixConfigType_AuthPubKey
 	payload.Action = mixTy.MixConfigAct(action)
-	payload.Value = &mixTy.MixConfigAction_AuthKey{AuthKey: &pubkey}
+	payload.Value = &mixTy.MixConfigAction_AuthPk{AuthPk: key}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
@@ -349,6 +350,9 @@ func QueryCmd() *cobra.Command {
 		Short: "query cmd",
 	}
 	cmd.AddCommand(GetTreePathCmd())
+	cmd.AddCommand(GetTreeLeavesCmd())
+	cmd.AddCommand(GetTreeRootsCmd())
+	cmd.AddCommand(ShowMixTxsCmd())
 
 	return cmd
 }
@@ -380,7 +384,7 @@ func treePath(cmd *cobra.Command, args []string) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetTreePath"
-	req := mixTy.TreePathReq{
+	req := mixTy.TreeInfoReq{
 		RootHash: root,
 		LeafHash: leaf,
 	}
@@ -388,5 +392,423 @@ func treePath(cmd *cobra.Command, args []string) {
 
 	var res mixTy.CommitTreeProve
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// GetParaInfoCmd get para chain status by height
+func GetTreeLeavesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "leaves",
+		Short: "Get tree leaves",
+		Run:   treeLeaves,
+	}
+	addGetLeavesCmdFlags(cmd)
+	return cmd
+}
+
+func addGetLeavesCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("root", "r", "", "tree root hash, null means current leaves")
+
+}
+
+func treeLeaves(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	root, _ := cmd.Flags().GetString("root")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = mixTy.MixX
+	params.FuncName = "Query_GetLeavesList"
+	req := mixTy.TreeInfoReq{
+		RootHash: root,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res mixTy.TreeListResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// GetParaInfoCmd get para chain status by height
+func GetTreeRootsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "roots",
+		Short: "Get archive roots",
+		Run:   treeRoot,
+	}
+	//addGetPathCmdFlags(cmd)
+	return cmd
+}
+
+func treeRoot(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = mixTy.MixX
+	params.FuncName = "GetRootList"
+
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
+
+	var res mixTy.TreeListResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// ShowProposalBoardCmd 显示提案查询信息
+func ShowMixTxsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "txs",
+		Short: "show mix txs info",
+		Run:   showMixTxs,
+	}
+	addShowMixTxsflags(cmd)
+	return cmd
+}
+
+func addShowMixTxsflags(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("type", "y", 0, "type(0:query by hash; 1:list)")
+	cmd.MarkFlagRequired("type")
+
+	cmd.Flags().StringP("hash", "s", "", "mix tx hash")
+
+	cmd.Flags().Int64P("height", "t", -1, "height, default is -1")
+	cmd.Flags().Int64P("index", "i", -1, "index, default is -1")
+
+	cmd.Flags().Int32P("count", "c", 1, "count, default is 1")
+	cmd.Flags().Int32P("direction", "d", 0, "direction, default is reserve")
+
+}
+
+func showMixTxs(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	typ, _ := cmd.Flags().GetUint32("type")
+	hash, _ := cmd.Flags().GetString("hash")
+	count, _ := cmd.Flags().GetInt32("count")
+	direction, _ := cmd.Flags().GetInt32("direction")
+	height, _ := cmd.Flags().GetInt64("height")
+	index, _ := cmd.Flags().GetInt64("index")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = mixTy.MixX
+	var req *mixTy.MixTxListReq
+	if typ < 1 {
+		req = &mixTy.MixTxListReq{
+			Count:     count,
+			Direction: direction,
+			Hash:      hash,
+		}
+	} else {
+		req = &mixTy.MixTxListReq{
+			Count:     count,
+			Direction: direction,
+			Height:    height,
+			Index:     index,
+		}
+	}
+
+	params.FuncName = "ListMixTxs"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp mixTy.MixTxListResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func WalletCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "wallet",
+		Short: "wallet query cmd",
+	}
+	cmd.AddCommand(ShowAccountPrivacyInfo())
+	cmd.AddCommand(ShowAccountNoteInfo())
+	cmd.AddCommand(RescanCmd())
+	cmd.AddCommand(RescanStatusCmd())
+	cmd.AddCommand(EnableCmd())
+	cmd.AddCommand(EncodeSecretDataCmd())
+	cmd.AddCommand(EncryptSecretDataCmd())
+	cmd.AddCommand(DecryptSecretDataCmd())
+
+	return cmd
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func ShowAccountPrivacyInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "keys",
+		Short: "show account privacy keys",
+		Run:   accountPrivacy,
+	}
+	accountPrivacyCmdFlags(cmd)
+	return cmd
+}
+
+func accountPrivacyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("account", "a", "", "accounts")
+	cmd.MarkFlagRequired("account")
+
+}
+
+func accountPrivacy(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	account, _ := cmd.Flags().GetString("account")
+
+	var res mixTy.WalletAddrPrivacy
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountPrivacyInfo", &types.ReqString{Data: account}, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func ShowAccountNoteInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "notes",
+		Short: "show account notes",
+		Run:   accountNote,
+	}
+	accountNoteCmdFlags(cmd)
+	return cmd
+}
+
+func accountNoteCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("accounts", "a", "", "accounts")
+	cmd.MarkFlagRequired("accounts")
+
+}
+
+func accountNote(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	accounts, _ := cmd.Flags().GetString("accounts")
+
+	l := strings.Split(accounts, ",")
+
+	var params types.ReqAddrs
+	params.Addrs = append(params.Addrs, l...)
+
+	var res mixTy.WalletIndexResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountNoteInfo", params, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func RescanStatusCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "status",
+		Short: "rescan status",
+		Run:   rescanStatus,
+	}
+	rescanStatusCmdFlags(cmd)
+	return cmd
+}
+
+func rescanStatusCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("accounts", "a", "", "accounts")
+	//cmd.MarkFlagRequired("accounts")
+
+}
+
+func rescanStatus(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	//accounts, _ := cmd.Flags().GetString("accounts")
+
+	//l := strings.Split(accounts,",")
+
+	//var params types.ReqAddrs
+	//params.Addrs = append(params.Addrs,l...)
+
+	var res types.ReqString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.GetRescanStatus", &types.ReqNil{}, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func RescanCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rescan",
+		Short: "rescan notes",
+		Run:   rescanNote,
+	}
+	rescanNoteCmdFlags(cmd)
+	return cmd
+}
+
+func rescanNoteCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("accounts", "a", "", "accounts")
+	//cmd.MarkFlagRequired("accounts")
+
+}
+
+func rescanNote(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	//accounts, _ := cmd.Flags().GetString("accounts")
+
+	//l := strings.Split(accounts,",")
+
+	//var params types.ReqAddrs
+	//params.Addrs = append(params.Addrs,l...)
+
+	var res types.ReqString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.RescanNotes", &types.ReqNil{}, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func EnableCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "enable",
+		Short: "enable privacy",
+		Run:   enablePrivacy,
+	}
+	enablePrivacyCmdFlags(cmd)
+	return cmd
+}
+
+func enablePrivacyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("accounts", "a", "", "accounts")
+	//cmd.MarkFlagRequired("accounts")
+
+}
+
+func enablePrivacy(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	accounts, _ := cmd.Flags().GetString("accounts")
+
+	var params types.ReqAddrs
+	if len(accounts) > 0 {
+		l := strings.Split(accounts, ",")
+		params.Addrs = append(params.Addrs, l...)
+	}
+
+	var res mixTy.ReqEnablePrivacyRst
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.EnablePrivacy", &params, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func EncodeSecretDataCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "encode",
+		Short: "encode secret data",
+		Run:   encodeSecret,
+	}
+	encodeSecretCmdFlags(cmd)
+	return cmd
+}
+
+func encodeSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("payment", "p", "", "payment key")
+	cmd.MarkFlagRequired("payment")
+
+	cmd.Flags().StringP("return", "r", "", "return key")
+
+	cmd.Flags().StringP("authorize", "a", "", "authorize key")
+
+	cmd.Flags().StringP("amount", "m", "", "amount with 1e8")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func encodeSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payment, _ := cmd.Flags().GetString("payment")
+	returnKey, _ := cmd.Flags().GetString("return")
+	authorize, _ := cmd.Flags().GetString("authorize")
+	amount, _ := cmd.Flags().GetString("amount")
+
+	req := mixTy.SecretData{
+		PaymentPubKey:   payment,
+		ReturnPubKey:    returnKey,
+		AuthorizePubKey: authorize,
+		Amount:          amount,
+	}
+
+	var res mixTy.EncodedSecretData
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.EncodeSecretData", req, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func EncryptSecretDataCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "encrypt",
+		Short: "encrypt secret data",
+		Run:   encryptSecret,
+	}
+	encryptSecrettCmdFlags(cmd)
+	return cmd
+}
+
+func encryptSecrettCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("secret", "s", "", "raw secret data")
+	cmd.MarkFlagRequired("secret")
+
+	cmd.Flags().StringP("pubX", "x", "", "receiving pub key X")
+	cmd.MarkFlagRequired("pubX")
+
+	cmd.Flags().StringP("pubY", "y", "", "receiving pub key Y")
+	cmd.MarkFlagRequired("pubY")
+
+}
+
+func encryptSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	secret, _ := cmd.Flags().GetString("secret")
+	x, _ := cmd.Flags().GetString("pubX")
+	y, _ := cmd.Flags().GetString("pubY")
+
+	pubkey := &mixTy.PubKey{X: x, Y: y}
+
+	req := mixTy.EncryptSecretData{
+		Secret:      secret,
+		ReceivingPk: pubkey,
+	}
+
+	var res mixTy.DHSecret
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.EncryptSecretData", req, &res)
+	ctx.Run()
+}
+
+// ShowAccountPrivacyInfo get para chain status by height
+func DecryptSecretDataCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "decrypt",
+		Short: "decrypt secret data by receiving privacy key",
+		Run:   decryptSecret,
+	}
+	decryptSecrettCmdFlags(cmd)
+	return cmd
+}
+
+func decryptSecrettCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("secret", "s", "", "raw secret data")
+	cmd.MarkFlagRequired("secret")
+
+	cmd.Flags().StringP("pri", "p", "", "receiving pri key")
+	cmd.MarkFlagRequired("pri")
+
+	cmd.Flags().StringP("epkX", "x", "", "ephemeral pub key X")
+	cmd.MarkFlagRequired("epkX")
+
+	cmd.Flags().StringP("epkY", "y", "", "ephemeral pub key Y")
+	cmd.MarkFlagRequired("epkY")
+}
+
+func decryptSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	secret, _ := cmd.Flags().GetString("secret")
+	p, _ := cmd.Flags().GetString("pri")
+	x, _ := cmd.Flags().GetString("epkX")
+	y, _ := cmd.Flags().GetString("epkY")
+
+	pubkey := &mixTy.PubKey{X: x, Y: y}
+
+	prikey := &mixTy.PrivKey{Data: p}
+
+	req := mixTy.DecryptSecretData{
+		Secret:          secret,
+		Epk:             pubkey,
+		ReceivingPriKey: prikey,
+	}
+
+	var res mixTy.SecretData
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.DecryptSecretData", req, &res)
 	ctx.Run()
 }

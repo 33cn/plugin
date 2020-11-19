@@ -74,15 +74,15 @@ func verifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	var inputPoints, outputPoints []*twistededwards.Point
 	for _, in := range inputs {
 		var p twistededwards.Point
-		p.X.SetString(in.CommitValueX)
-		p.Y.SetString(in.CommitValueY)
+		p.X.SetString(in.AmountX)
+		p.Y.SetString(in.AmountY)
 		inputPoints = append(inputPoints, &p)
 	}
 
 	for _, out := range outputs {
 		var p twistededwards.Point
-		p.X.SetString(out.CommitValueX)
-		p.Y.SetString(out.CommitValueY)
+		p.X.SetString(out.AmountX)
+		p.Y.SetString(out.AmountY)
 		outputPoints = append(outputPoints, &p)
 	}
 
@@ -130,7 +130,6 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	//set nullifier
 	for _, k := range inputs {
 		r := makeNullifierSetReceipt(k.NullifierHash, &mixTy.ExistValue{Data: true})
 		mergeReceipt(receipt, r)

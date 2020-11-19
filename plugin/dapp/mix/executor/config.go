@@ -37,9 +37,9 @@ func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 		}
 	case mixTy.MixConfigType_AuthPubKey:
 		if config.Action == mixTy.MixConfigAct_Add {
-			return a.ConfigAddAuthPubKey(config.GetAuthKey())
+			return a.ConfigAddAuthPubKey(config.GetAuthPk())
 		} else {
-			return a.ConfigDeleteAuthPubKey(config.GetAuthKey())
+			return a.ConfigDeleteAuthPubKey(config.GetAuthPk())
 		}
 	}
 	return nil, types.ErrNotFound
@@ -137,22 +137,22 @@ func (a *action) getAuthKeys() (*mixTy.AuthPubKeys, error) {
 	return &keys, nil
 }
 
-func (a *action) ConfigAddAuthPubKey(config *mixTy.AuthorizePubKey) (*types.Receipt, error) {
+func (a *action) ConfigAddAuthPubKey(key string) (*types.Receipt, error) {
 	keys, err := a.getAuthKeys()
 	if isNotFound(errors.Cause(err)) {
 		keys := &mixTy.AuthPubKeys{}
-		keys.Data = append(keys.Data, config.Value)
+		keys.Data = append(keys.Data, key)
 		return makeConfigAuthKeyReceipt(keys), nil
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	keys.Data = append(keys.Data, config.Value)
+	keys.Data = append(keys.Data, key)
 	return makeConfigAuthKeyReceipt(keys), nil
 }
 
-func (a *action) ConfigDeleteAuthPubKey(config *mixTy.AuthorizePubKey) (*types.Receipt, error) {
+func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 	keys, err := a.getAuthKeys()
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (a *action) ConfigDeleteAuthPubKey(config *mixTy.AuthorizePubKey) (*types.R
 
 	var newKeys mixTy.AuthPubKeys
 	for _, v := range keys.Data {
-		if config.Value == v {
+		if key == v {
 			continue
 		}
 		newKeys.Data = append(newKeys.Data, v)

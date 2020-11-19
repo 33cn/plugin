@@ -1,4 +1,4 @@
-package main
+package circuit
 
 import (
 	"strconv"
@@ -10,7 +10,7 @@ import (
 	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
 )
 
-func merkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {
+func MerkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {
 	var proofSet, helper, valid []*frontend.Constraint
 	merkleRoot := circuit.PUBLIC_INPUT("treeRootHash")
 	proofSet = append(proofSet, noteHash)
@@ -25,10 +25,10 @@ func merkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *fronte
 		valid = append(valid, circuit.SECRET_INPUT("valid"+strconv.Itoa(i)))
 	}
 
-	verifyMerkleProof(circuit, mimc, merkleRoot, proofSet, helper, valid)
+	VerifyMerkleProof(circuit, mimc, merkleRoot, proofSet, helper, valid)
 }
 
-func verifyMerkleProof(circuit *frontend.CS, h mimc.MiMCGadget, merkleRoot *frontend.Constraint, proofSet, helper, valid []*frontend.Constraint) {
+func VerifyMerkleProof(circuit *frontend.CS, h mimc.MiMCGadget, merkleRoot *frontend.Constraint, proofSet, helper, valid []*frontend.Constraint) {
 
 	sum := leafSum(circuit, h, proofSet[0])
 
@@ -63,7 +63,7 @@ func leafSum(circuit *frontend.CS, h mimc.MiMCGadget, data *frontend.Constraint)
 	return res
 }
 
-func commitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
+func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	//cmt=transfer_value*G + random_value*H
 	cmtvalueX := circuit.PUBLIC_INPUT("commitValueX")
 	cmtvalueY := circuit.PUBLIC_INPUT("commitValueY")
