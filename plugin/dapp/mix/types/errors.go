@@ -23,4 +23,7 @@ var (
 
 	//ErrSpendInOutValueNotMatch spend input and output value not match
 	ErrSpendInOutValueNotMatch = errors.New("ErrSpendInOutValueNotMatch")
+
+	//ErrDecryptDataFail decrypt data fail like by wrong prikey
+	ErrDecryptDataFail = errors.New("ErrDecryptDataFail")
 )

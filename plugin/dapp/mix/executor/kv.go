@@ -18,9 +18,6 @@ var (
 	authorizeHash           string
 	authorizeSpendHash      string
 	nullifierHash           string
-
-	localTx    string
-	localTitle string
 )
 
 func setPrefix() {

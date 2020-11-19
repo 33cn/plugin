@@ -6,11 +6,11 @@ package paracross
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
-
 	"github.com/33cn/plugin/plugin/dapp/mix/commands"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor"
+	"github.com/33cn/plugin/plugin/dapp/mix/rpc"
 	"github.com/33cn/plugin/plugin/dapp/mix/types"
-	_ "github.com/33cn/plugin/plugin/dapp/paracross/wallet" // register wallet package
+	_ "github.com/33cn/plugin/plugin/dapp/mix/wallet" // register wallet package
 )
 
 func init() {
@@ -18,6 +18,7 @@ func init() {
 		Name:     types.MixX,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      commands.ParcCmd,
+		Cmd:      commands.MixCmd,
+		RPC:      rpc.Init,
 	})
 }

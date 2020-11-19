@@ -50,27 +50,27 @@ func (a *action) zkProofVerify(proof *mixTy.ZkProofInfo, verifyTy mixTy.VerifyTy
 	return nil
 }
 
-func (a *action) depositVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error) {
+func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error) {
 	var input mixTy.DepositPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
+		return "", 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
 	err = json.Unmarshal(data, &input)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
+		return "", 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
 	}
 	val, err := strconv.ParseUint(input.Amount, 10, 64)
 	if err != nil {
-		return nil, 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
+		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
 
 	err = a.zkProofVerify(proof, mixTy.VerifyType_DEPOSIT)
 	if err != nil {
-		return nil, 0, err
+		return "", 0, err
 	}
 
-	return transferFr2Bytes(input.NoteHash), val, nil
+	return input.NoteHash, val, nil
 
 }
 
@@ -83,7 +83,7 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) ([]byte, uint64, error)
 func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error) {
 	//1. zk-proof校验
 	var sum uint64
-	var commitHashs [][]byte
+	var commitHashs []string
 	for _, v := range deposit.NewCommits {
 		hash, val, err := a.depositVerify(v)
 		if err != nil {
@@ -112,7 +112,7 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, h := range commitHashs {
-		leaves = append(leaves, h)
+		leaves = append(leaves, transferFr2Bytes(h))
 	}
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {
