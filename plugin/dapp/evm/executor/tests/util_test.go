@@ -264,7 +264,7 @@ func createContract(mdb *db.GoMemDB, tx types.Transaction, maxCodeSize int) (ret
 	api, _ := client.New(q.Client(), nil)
 	inst.SetAPI(api)
 	inst.CheckInit()
-	msg, _ := inst.GetMessage(&tx)
+	msg, _ := inst.GetMessage(&tx, 0)
 
 	inst.SetEnv(10, 0, uint64(10))
 	statedb = inst.GetMStateDB()

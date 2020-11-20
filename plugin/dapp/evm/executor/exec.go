@@ -5,8 +5,8 @@
 package executor
 
 import (
+	"encoding/hex"
 	"fmt"
-
 	"strings"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -23,11 +23,12 @@ import (
 func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {
 	evm.CheckInit()
 	// 先转换消息
-	msg, err := evm.GetMessage(tx)
+	msg, err := evm.GetMessage(tx, index)
 	if err != nil {
 		return nil, err
 	}
-	return evm.innerExec(msg, tx.Hash(), index, tx.Fee, false)
+
+	return evm.innerExec(msg, tx.Hash(), index, evm.GetTxFee(tx, index), false)
 }
 
 // 通用的EVM合约执行逻辑封装
@@ -166,7 +167,7 @@ func (evm *EVMExecutor) CheckInit() {
 }
 
 // GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
-func (evm *EVMExecutor) GetMessage(tx *types.Transaction) (msg *common.Message, err error) {
+func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int) (msg *common.Message, err error) {
 	var action evmtypes.EVMContractAction
 	err = types.Decode(tx.Payload, &action)
 	if err != nil {
@@ -182,7 +183,7 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction) (msg *common.Message, 
 	gasLimit := action.GasLimit
 	gasPrice := action.GasPrice
 	if gasLimit == 0 {
-		gasLimit = uint64(tx.Fee)
+		gasLimit = uint64(evm.GetTxFee(tx, index))
 	}
 	if gasPrice == 0 {
 		gasPrice = uint32(1)
@@ -222,6 +223,23 @@ func (evm *EVMExecutor) calcKVHash(addr common.Address, logs []*types.ReceiptLog
 		return &types.KeyValue{Key: getDataHashKey(addr), Value: hash.Bytes()}
 	}
 	return nil
+}
+
+// GetTxFee 获取交易手续费，支持交易组
+func (evm *EVMExecutor) GetTxFee(tx *types.Transaction, index int) int64 {
+	fee := tx.Fee
+	cfg := evm.GetAPI().GetConfig()
+	if fee == 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMTxGroup) {
+		if tx.GroupCount >= 2 {
+			txs, err := evm.GetTxGroup(index)
+			if err != nil {
+				log.Error("evm GetTxFee", "get tx group fail", err, "hash", hex.EncodeToString(tx.Hash()))
+				return 0
+			}
+			fee = txs[0].Fee
+		}
+	}
+	return fee
 }
 
 func getDataHashKey(addr common.Address) []byte {
