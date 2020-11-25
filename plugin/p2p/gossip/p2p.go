@@ -57,8 +57,8 @@ type subConfig struct {
 	MaxTTL int32 `protobuf:"varint,10,opt,name=maxTTL" json:"maxTTL,omitempty"`
 	// p2p网络频道,用于区分主网/测试网/其他网络
 	Channel int32 `protobuf:"varint,11,opt,name=channel" json:"channel,omitempty"`
-	//区块轻广播的最低打包交易数, 大于该值时区块内交易采用短哈希广播
-	MinLtBlockTxNum int32 `protobuf:"varint,12,opt,name=minLtBlockTxNum" json:"minLtBlockTxNum,omitempty"`
+	//触发区块轻广播最小大小, KB
+	MinLtBlockSize int32 `protobuf:"varint,12,opt,name=minLtBlockSize" json:"minLtBlockSize,omitempty"`
 	//指定p2p类型, 支持gossip, dht
 }
 
@@ -100,8 +100,8 @@ func New(mgr *p2p.Manager, subCfg []byte) p2p.IP2P {
 		mcfg.MaxTTL = DefaultMaxTxBroadCastTTL
 	}
 
-	if mcfg.MinLtBlockTxNum <= 0 {
-		mcfg.MinLtBlockTxNum = DefaultMinLtBlockTxNum
+	if mcfg.MinLtBlockSize <= 0 {
+		mcfg.MinLtBlockSize = defaultMinLtBlockSize
 	}
 
 	log.Info("p2p", "Channel", mcfg.Channel, "Version", VERSION, "IsTest", cfg.IsTestNet())

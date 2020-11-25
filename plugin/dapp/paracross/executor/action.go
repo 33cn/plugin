@@ -1444,14 +1444,18 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 		if fundReward > 0 {
 			totalReward += fundReward
 		}
-		totalReward *= types.Coin
+
+		decimalMode := cfg.MIsEnable("mver.consensus.paracross.decimalMode", a.height)
+		if !decimalMode {
+			totalReward *= types.Coin
+		}
 
 		if totalReward > 0 {
 			issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, totalReward)
 
 			if err != nil {
 				clog.Error("paracross miner issue err", "height", miner.Status.Height,
-					"execAddr", a.execaddr, "amount", totalReward/types.Coin)
+					"execAddr", a.execaddr, "amount", totalReward)
 				return nil, err
 			}
 			minerReceipt = mergeReceipt(minerReceipt, issueReceipt)

@@ -187,6 +187,9 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 	if cfg.IsDappFork(action.height, pty.TokenX, pty.ForkTokenBlackListX) {
 		found, err := inBlacklist(token.GetSymbol(), blacklist, action.db)
 		if err != nil {
+			if err == types.ErrNotFound {
+				return nil, pty.ErrTokenBlacklistNotInit
+			}
 			return nil, err
 		}
 		if found {
@@ -402,7 +405,7 @@ func checkTokenHasPrecreateWithHeight(cfg *types.Chain33Config, token, owner str
 }
 
 func validFinisher(addr string, db dbm.KV) (bool, error) {
-	return validOperator(addr, finisherKey, db)
+	return hasConfiged(addr, finisherKey, db)
 }
 
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
@@ -425,7 +428,7 @@ func getConfigKey(key string, db dbm.KV) ([]byte, error) {
 	return value, nil
 }
 
-func validOperator(addr, key string, db dbm.KV) (bool, error) {
+func hasConfiged(v1, key string, db dbm.KV) (bool, error) {
 	value, err := getManageKey(key, db)
 	if err != nil {
 		tokenlog.Info("tokendb", "get db key", "not found", "key", key)
@@ -443,8 +446,8 @@ func validOperator(addr, key string, db dbm.KV) (bool, error) {
 		return false, err // types.ErrBadConfigValue
 	}
 
-	for _, op := range item.GetArr().Value {
-		if op == addr {
+	for _, v := range item.GetArr().Value {
+		if v == v1 {
 			return true, nil
 		}
 	}
@@ -501,7 +504,7 @@ func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue
 }
 
 func inBlacklist(symbol, key string, db dbm.KV) (bool, error) {
-	found, err := validOperator(symbol, key, db)
+	found, err := hasConfiged(symbol, key, db)
 	return found, err
 }
 

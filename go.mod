@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v1.65.1-0.20201022110501-fde367b8c955
+	github.com/33cn/chain33 v1.65.1-0.20201111090506-e2d7705ea453
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/rs/cors v1.6.0
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.6.1
-	github.com/tjfoc/gmsm v1.3.1
+	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.5.0
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
