@@ -175,6 +175,7 @@ const (
 	ParacrossSupervisionNodeApprove
 	ParacrossSupervisionNodeQuit
 	ParacrossSupervisionNodeCancel
+	ParacrossSupervisionNodeModify
 )
 
 // 0 普通节点共识  1 授权节点正在共识  2 监督节点正在共识

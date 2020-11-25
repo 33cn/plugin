@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"fmt"
-
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -228,18 +226,16 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeAddrConfig) (*types.Rec
 
 	// 不能跟授权节点一致
 	if addrExist {
-		clog.Debug("supervisionNodeGroup Apply", "config.Addr", config.Addr, "err", "config.Addr existed in super group")
-		return nil, pt.ErrParaNodeAddrExisted
+		return nil, errors.Wrapf(pt.ErrParaNodeAddrExisted, "supervisionNodeGroup Apply Addr existed:%s in super group", config.Addr)
 	}
 
 	// 判断 node 是否已经申请
 	addrExist, err = a.checkValidSupervisionNode(config)
 	if err != nil {
-		fmt.Println("err:", err)
+		return nil, err
 	}
 	if addrExist {
-		clog.Debug("supervisionNodeGroup Apply", "config.Addr", config.Addr, "err", "config.Addr existed in supervision group")
-		return nil, pt.ErrParaSupervisionNodeAddrExisted
+		return nil, errors.Wrapf(pt.ErrParaSupervisionNodeAddrExisted, "supervisionNodeGroup Apply Addr existed:%s", config.Addr)
 	}
 
 	// 在主链上冻结金额
@@ -426,6 +422,23 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeAddrConfig) (*types.Re
 	return receipt, nil
 }
 
+func (a *action) supervisionNodeModify(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
+	addrStat, err := getNodeAddr(a.db, config.Title, config.Addr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "nodeAddr:%s get error", config.Addr)
+	}
+
+	// 只能提案发起人
+	if a.fromaddr != config.Addr {
+		return nil, errors.Wrapf(types.ErrNotAllow, "addr create by:%s,not by:%s", config.Addr, a.fromaddr)
+	}
+
+	preStat := *addrStat
+	addrStat.BlsPubKey = config.BlsPubKey
+
+	return makeParaSupervisionNodeStatusReceipt(a.fromaddr, &preStat, addrStat), nil
+}
+
 func (a *action) SupervisionNodeConfig(config *pt.ParaNodeAddrConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !validTitle(cfg, config.Title) {
@@ -448,6 +461,8 @@ func (a *action) SupervisionNodeConfig(config *pt.ParaNodeAddrConfig) (*types.Re
 	} else if config.Op == pt.ParacrossSupervisionNodeCancel {
 		// 撤销未批准的申请
 		return a.supervisionNodeCancel(config)
+	} else if config.Op == pt.ParacrossSupervisionNodeModify {
+		return a.supervisionNodeModify(config)
 	}
 
 	return nil, pt.ErrParaUnSupportNodeOper

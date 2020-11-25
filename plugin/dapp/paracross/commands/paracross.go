@@ -1525,6 +1525,7 @@ func supervisionNodeCmd() *cobra.Command {
 	cmd.AddCommand(getSupervisionNodeGroupAddrsCmd())
 	cmd.AddCommand(supervisionNodeListInfoCmd())
 	cmd.AddCommand(getSupervisionNodeInfoCmd())
+	cmd.AddCommand(supervisionNodeModifyCmd())
 
 	return cmd
 }
@@ -1773,4 +1774,42 @@ func supervisionNodeInfo(cmd *cobra.Command, args []string) {
 	var res pt.ParaNodeAddrIdStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
+}
+
+func supervisionNodeModifyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "modify",
+		Short: "supervision node modify parameters",
+		Run:   createSupervisionNodeModifyTx,
+	}
+	addSupervisionNodeModifyFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeModifyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "operating target apply id")
+	_ = cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("pubkey", "p", "", "operating target apply id")
+	_ = cmd.MarkFlagRequired("pubkey")
+
+}
+
+func createSupervisionNodeModifyTx(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+	pubkey, _ := cmd.Flags().GetString("pubkey")
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: pt.ParacrossSupervisionNodeModify, Addr: addr, BlsPubKey: pubkey}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
