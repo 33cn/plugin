@@ -9,14 +9,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	//"github.com/stretchr/testify/mock"
+	"strings"
 	"testing"
 
 	apimock "github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
 	dbmock "github.com/33cn/chain33/common/db/mocks"
 	"github.com/33cn/chain33/types"
-
-	"strings"
 
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/stretchr/testify/mock"
@@ -25,11 +24,15 @@ import (
 var (
 	PrivKey14K = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" // 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 	Account14K = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	Account1MC = "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4, 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR, 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
-
+	Bls14K     = "80e713aae96a44607ba6e0f1acfe88641ac72b789e81696cb646b1e1ae5335bd92011593eee303f9e909fd752c762db3"
+	applyAddrs = "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+	PrivKey1KS = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	Account12Q = "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 	PrivKey12Q = "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
+	PrivKey1Ku = "0xb1474387fe5beda4d6a9d999226bab561c708e07da15d74d575dad890e24cef0"
+	Account1Ku = "1KufZaLTKVAy37AsXNd9bsva5WZvP8w5uG"
+	PrivKey1M3 = "0xa4ebb30bd017f3d8e60532dd4f7059704d7897071fc07482aa0681c57c88f874"
+	Account1M3 = "1M3XCbWVxAPBH5AR8VmLky4ZtDdGgC6ugD"
 )
 
 // createRawNodeConfigTx create raw tx for node config
@@ -60,7 +63,6 @@ func createRawNodeGroupApplyTx(apply *pt.ParaNodeGroupConfig) (*types.Transactio
 	}
 
 	return tx, nil
-
 }
 
 type NodeManageTestSuite struct {
@@ -68,19 +70,24 @@ type NodeManageTestSuite struct {
 	stateDB dbm.KV
 	localDB *dbmock.KVDB
 	api     *apimock.QueueProtocolAPI
-
-	exec *Paracross
-	//title string
+	exec    *Paracross
 }
 
 func (suite *NodeManageTestSuite) SetupSuite() {
-
 	suite.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
 	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
 	suite.localDB = new(dbmock.KVDB)
 	suite.api = new(apimock.QueueProtocolAPI)
 	suite.api.On("GetConfig", mock.Anything).Return(chain33TestCfg, nil)
+
+	block := &types.Block{
+		Height:     1,
+		MainHeight: 10,
+	}
+	detail := &types.BlockDetail{Block: block}
+	details := &types.BlockDetails{Items: []*types.BlockDetail{detail}}
+	suite.api.On("GetBlocks", mock.Anything).Return(details, nil)
 
 	suite.exec = newParacross().(*Paracross)
 	suite.exec.SetAPI(suite.api)
@@ -89,12 +96,6 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	suite.exec.SetEnv(0, 0, 0)
 	suite.exec.SetBlockInfo([]byte(""), []byte(""), 3)
 	enableParacrossTransfer = false
-
-	//forkHeight := types.GetDappFork(pt.ParaX, pt.ForkCommitTx)
-	//if forkHeight == types.MaxHeight {
-	//	types.ReplaceDappFork(MainTitle, pt.ParaX, pt.ForkCommitTx, 0)
-	//
-	//}
 
 	chain33TestCfg.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
 	chain33TestCfg.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
@@ -105,7 +106,6 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 		Block: &types.Block{},
 	}
 	MainBlockHash10 = blockDetail.Block.Hash(chain33TestCfg)
-
 }
 
 func (suite *NodeManageTestSuite) TestSetup() {
@@ -143,9 +143,7 @@ func checkGroupApplyReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) 
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
-
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
-
 }
 
 func checkGroupApproveReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
@@ -160,11 +158,9 @@ func checkJoinReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	var stat pt.ParaNodeIdStatus
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
-	//suite.T().Log("titleHeight", titleHeight)
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
 	assert.Equal(suite.T(), int32(pt.ParaApplyJoining), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
-
 }
 
 func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
@@ -179,7 +175,6 @@ func checkQuitReceipt(suite *NodeManageTestSuite, receipt *types.Receipt) {
 	assert.Equal(suite.T(), int32(pt.TyLogParaNodeConfig), receipt.Logs[0].Ty)
 	assert.Equal(suite.T(), int32(pt.ParaApplyQuiting), stat.Status)
 	assert.NotNil(suite.T(), stat.Votes)
-
 }
 
 func checkVoteReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count int) {
@@ -189,15 +184,14 @@ func checkVoteReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count 
 	err := types.Decode(receipt.KV[0].Value, &stat)
 	assert.Nil(suite.T(), err, "decode ParaNodeAddrStatus failed")
 	assert.Len(suite.T(), stat.Votes.Votes, count)
-
 }
 
 func checkVoteDoneReceipt(suite *NodeManageTestSuite, receipt *types.Receipt, count int, join bool) {
+	_ = count
 	suite.NotNil(receipt)
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 
 	suite.T().Log("checkVoteDoneReceipt", "kvlen", len(receipt.KV))
-
 	_, arry, err := getParacrossNodes(suite.stateDB, Title)
 	suite.Suite.Nil(err)
 	if join {
@@ -249,7 +243,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -263,8 +256,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfigQuit() {
 	suite.Nil(err)
 
 	nodeCommit(suite, PrivKeyB, tx)
-	//checkGroupApproveReceipt(suite, receipt)
-
 }
 
 func (suite *NodeManageTestSuite) testNodeGroupConfig() {
@@ -281,7 +272,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 	receipt := nodeCommit(suite, PrivKeyB, tx)
 	checkGroupApplyReceipt(suite, receipt)
 
-	suite.Equal(int32(pt.TyLogParaNodeGroupConfig), receipt.Logs[0].Ty)
 	var g pt.ReceiptParaNodeGroupConfig
 	err = types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
@@ -296,7 +286,6 @@ func (suite *NodeManageTestSuite) testNodeGroupConfig() {
 
 	receipt = nodeCommit(suite, PrivKey12Q, tx)
 	checkGroupApproveReceipt(suite, receipt)
-
 }
 
 func (suite *NodeManageTestSuite) testNodeConfig() {
@@ -340,9 +329,14 @@ func (suite *NodeManageTestSuite) testNodeConfig() {
 }
 
 func (suite *NodeManageTestSuite) TestExec() {
+	suite.testSuperExec()
+	suite.testSupervisionExec()
+}
+
+func (suite *NodeManageTestSuite) testSuperExec() {
 	suite.testNodeGroupConfig()
 	suite.testNodeConfig()
-
+	suite.testSuperQuery()
 }
 
 func TestNodeManageSuite(t *testing.T) {
@@ -350,7 +344,6 @@ func TestNodeManageSuite(t *testing.T) {
 }
 
 func (suite *NodeManageTestSuite) TearDownSuite() {
-
 }
 
 func TestGetAddrGroup(t *testing.T) {
@@ -374,7 +367,6 @@ func TestGetAddrGroup(t *testing.T) {
 	ret = getConfigAddrs(addrs)
 	assert.Equal(t, []string(nil), ret)
 	assert.Equal(t, 0, len(ret))
-
 }
 
 func TestUpdateVotes(t *testing.T) {
@@ -402,5 +394,30 @@ func TestGetNodeIdSuffix(t *testing.T) {
 	id = "mavl-paracross-title-nodegroupid-user.p.para.-0xb6cd0274aa5f839fa2291ecfbfc626b494aacac7587a61e444e9f848a4c02d7b-1"
 	rtID = getParaNodeIDSuffix(id)
 	assert.Equal(t, txID, rtID)
+}
 
+func (suite *NodeManageTestSuite) testSuperQuery() {
+	ret, err := suite.exec.Query_GetNodeGroupAddrs(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp, ok := ret.(*types.ReplyConfig)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp.Value, applyAddrs)
+
+	ret, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"})
+	suite.Nil(err)
+	resp2, ok := ret.(*pt.ParaNodeAddrIdStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.NotNil(suite.T(), resp2)
+
+	_, err = suite.exec.Query_GetNodeAddrInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Addr: "1FbS6G4CRYAYeSEPGg7uKP9MukUo6crEE5"})
+	suite.NotNil(err)
+
+	ret, err = suite.exec.Query_GetNodeGroupStatus(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle()})
+	suite.Nil(err)
+	resp3, ok := ret.(*pt.ParaNodeGroupStatus)
+	assert.Equal(suite.T(), ok, true)
+	assert.Equal(suite.T(), resp3.Status, int32(pt.ParacrossNodeGroupApprove))
+
+	_, err = suite.exec.Query_GetNodeIDInfo(&pt.ReqParacrossNodeInfo{Title: chain33TestCfg.GetTitle(), Id: "mavl-paracross-title-nodeid-user.p.test.-0x8cf0e600667b8e6cf66516369acd4e1b5f6c93b3ae1c0b5edf458dfbe01f1607"})
+	suite.Nil(err)
 }

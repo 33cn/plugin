@@ -23,8 +23,15 @@ CLI5="docker exec ${NODE5} /root/chain33-cli"
 NODE6="${1}_chain28_1"
 CLI6="docker exec ${NODE6} /root/chain33-cli"
 
-containers=("${NODE1}" "${NODE2}" "${NODE3}" "${NODE4}" "${NODE5}" "${NODE6}")
-forkContainers=("${CLI3}" "${CLI2}" "${CLI}" "${CLI4}" "${CLI5}" "${CLI6}")
+NODE7="${1}_chain27_1"
+CLI7="docker exec ${NODE7} /root/chain33-cli"
+NODE8="${1}_chain26_1"
+CLI8="docker exec ${NODE8} /root/chain33-cli"
+NODE9="${1}_chain25_1"
+CLI9="docker exec ${NODE9} /root/chain33-cli"
+
+containers=("${NODE1}" "${NODE2}" "${NODE3}" "${NODE4}" "${NODE5}" "${NODE6}" "${NODE7}" "${NODE8}" "${NODE9}")
+forkContainers=("${CLI3}" "${CLI2}" "${CLI}" "${CLI4}" "${CLI5}" "${CLI6}" "${CLI7}" "${CLI8}" "${CLI9}")
 
 export COMPOSE_PROJECT_NAME="$1"
 

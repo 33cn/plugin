@@ -59,4 +59,12 @@ var (
 	ErrConsensClosed = errors.New("ErrConsensClosed")
 	//ErrBlsSignVerify bls12-381 aggregate sign verify
 	ErrBlsSignVerify = errors.New("ErrBlsSignVerify")
+	//ErrParaSupervisionNodeAddrExisted node addr exist in group
+	ErrParaSupervisionNodeAddrExisted = errors.New("ErrParaSupervisionNodeAddrExisted")
+	//ErrParaSupervisionNodeGroupNotSet para config node group not set by take over
+	ErrParaSupervisionNodeGroupNotSet = errors.New("ErrParaSupervisionNodeGroupNotSet")
+	//ErrParaSupervisionNodeGroupExisted para config group taked over alreay
+	ErrParaSupervisionNodeGroupExisted = errors.New("ErrParaSupervisionNodesExisted")
+	//ErrParaSupervisionNodeAddrNotExisted node addr not exist in supervision group
+	ErrParaSupervisionNodeAddrNotExisted = errors.New("ErrParaSupervisionNodeAddrNotExisted")
 )

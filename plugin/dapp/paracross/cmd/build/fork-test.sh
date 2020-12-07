@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 
 # shellcheck source=/dev/null
 source testcase.sh

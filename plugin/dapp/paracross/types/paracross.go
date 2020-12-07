@@ -49,6 +49,10 @@ const (
 	TyLogParaCrossAssetTransfer = 670
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
+	// Supervision Node
+	TyLogParaSupervisionNodeConfig           = 680
+	TyLogParaSupervisionNodeGroupAddrsUpdate = 681
+	TyLogParaSupervisionNodeStatusUpdate     = 682
 )
 
 // action type
@@ -85,6 +89,8 @@ const (
 	ParacrossActionSelfStageConfig
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
 	ParacrossActionCrossAssetTransfer
+	// ParacrossActionSupervisionNodeConfig
+	ParacrossActionSupervisionNodeConfig
 )
 
 //paracross asset porcess
@@ -162,6 +168,21 @@ const (
 	ParacrossNodeGroupQuit
 	//ParacrossNodeGroupModify applyer modify some parameters
 	ParacrossNodeGroupModify
+)
+
+const (
+	ParacrossSupervisionNodeApply = iota + 1
+	ParacrossSupervisionNodeApprove
+	ParacrossSupervisionNodeQuit
+	ParacrossSupervisionNodeCancel
+	ParacrossSupervisionNodeModify
+)
+
+// 0 普通节点共识  1 授权节点正在共识  2 监督节点正在共识
+const (
+	ParaCommitNode = iota
+	ParaCommitSuperNode
+	ParaCommitSupervisionNode
 )
 
 var (
@@ -312,6 +333,7 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
+
 	} else {
 		forkHeight = cfg.GetDappFork(ParaX, forkKey)
 

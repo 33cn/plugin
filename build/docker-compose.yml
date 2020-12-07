@@ -24,3 +24,15 @@ services:
   chain28:
     build:
       context: .
+
+  chain27:
+    build:
+      context: .
+
+  chain26:
+    build:
+      context: .
+
+  chain25:
+    build:
+      context: .

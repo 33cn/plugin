@@ -117,6 +117,7 @@ mainBlockHashForkHeight=209186
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 mainLoopCheckCommitTxDoneForkHeight=4320000
+#mainForkParaSupervision=10400000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
 
@@ -261,6 +262,7 @@ ForkLoopCheckCommitTxDone=0
 #仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7200000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
 ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
+ForkParaSupervision=0
 
 [fork.sub.evm]
 Enable=0

@@ -12,13 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/33cn/chain33/util"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/chain33/util"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
-
 	"github.com/pkg/errors"
 )
 
@@ -45,6 +43,7 @@ type blsClient struct {
 	feedDog         uint32
 	quit            chan struct{}
 	mutex           sync.Mutex
+	typeNode        uint32
 }
 
 func newBlsClient(para *client, cfg *subConfig) *blsClient {
@@ -60,6 +59,7 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
 	b.leaderSwitchInt = defLeaderSwitchInt
+	b.typeNode = pt.ParaCommitNode
 	if cfg.BlsLeaderSwitchIntval > 0 {
 		b.leaderSwitchInt = cfg.BlsLeaderSwitchIntval
 	}
@@ -170,15 +170,57 @@ func (b *blsClient) getLeaderInfo() ([]string, int32, int32, int32, bool) {
 	offIdx := atomic.LoadInt32(&b.leaderOffset)
 	leaderIdx := (baseIdx + offIdx) % int32(len(nodes))
 	return nodes, leaderIdx, baseIdx, offIdx, nodes[leaderIdx] == b.selfID
-
 }
 
-func (b *blsClient) getSuperNodes() ([]string, string) {
+func (b *blsClient) getSuperGroupNodes() ([]string, string) {
+	// 获取授权节点
 	nodeStr, err := b.paraClient.commitMsgClient.getNodeGroupAddrs()
 	if err != nil {
 		return nil, ""
 	}
-	return strings.Split(nodeStr, ","), nodeStr
+
+	if strings.Contains(nodeStr, b.selfID) {
+		b.typeNode = pt.ParaCommitSuperNode
+		return strings.Split(nodeStr, ","), nodeStr
+	} else {
+		b.typeNode = pt.ParaCommitNode
+	}
+
+	return nil, ""
+}
+
+func (b *blsClient) getSupervisionGroupNodes() ([]string, string) {
+	// 获取监督节点
+	nodeStr, err := b.paraClient.commitMsgClient.getSupervisionNodeGroupAddrs()
+	if err != nil {
+		return nil, ""
+	}
+
+	if strings.Contains(nodeStr, b.selfID) {
+		b.typeNode = pt.ParaCommitSupervisionNode
+		return strings.Split(nodeStr, ","), nodeStr
+	} else {
+		b.typeNode = pt.ParaCommitNode
+	}
+
+	return nil, ""
+}
+
+func (b *blsClient) getSuperNodes() ([]string, string) {
+	if b.typeNode == pt.ParaCommitNode {
+		// 获取授权节点
+		nodes, nodeStr := b.getSuperGroupNodes()
+		if len(nodes) > 0 {
+			return nodes, nodeStr
+		}
+		return b.getSupervisionGroupNodes()
+	} else if b.typeNode == pt.ParaCommitSuperNode {
+		return b.getSuperGroupNodes()
+	} else if b.typeNode == pt.ParaCommitSupervisionNode {
+		return b.getSupervisionGroupNodes()
+	}
+
+	return nil, ""
 }
 
 func (b *blsClient) isValidNodes(id string) bool {
@@ -209,7 +251,7 @@ out:
 			//自己是Leader,则聚合并发送交易
 			_, _, _, _, isLeader := b.getLeaderInfo()
 			if isLeader {
-				b.sendAggregateTx(nodes)
+				_ = b.sendAggregateTx(nodes)
 			}
 			//聚合签名总共消耗大约1.5ms
 			//清空txsBuff，重新收集
@@ -239,7 +281,7 @@ func (b *blsClient) sendAggregateTx(nodes []string) error {
 
 func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 	if !b.isValidNodes(tx.From()) {
-		plog.Error("rcvCommitTx is not valid node", "addr", tx.From())
+		plog.Error("rcvCommitTx is not valid node", "addr", tx.From(), "typeNode", b.typeNode)
 		return pt.ErrParaNodeAddrNotExisted
 	}
 
@@ -265,7 +307,6 @@ func (b *blsClient) rcvCommitTx(tx *types.Transaction) error {
 
 	b.rcvCommitTxCh <- commits
 	return nil
-
 }
 
 func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossCommitAction, error) {
@@ -291,7 +332,7 @@ func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossComm
 		//验证bls 签名
 		err = b.verifyBlsSign(tx.From(), commit)
 		if err != nil {
-			return nil, errors.Wrapf(pt.ErrBlsSignVerify, "from=%s", tx.From())
+			return nil, errors.Wrapf(err, "from=%s", tx.From())
 		}
 		commits = append(commits, commit)
 	}
@@ -392,7 +433,7 @@ func (b *blsClient) aggregateCommit2Action(nodes []string, commits []*pt.ParaBls
 	for _, v := range commits {
 		a := &pt.ParacrossCommitAction{Bls: &pt.ParacrossCommitBlsInfo{}}
 		s := &pt.ParacrossNodeStatus{}
-		types.Decode(v.Msgs[0], s)
+		_ = types.Decode(v.Msgs[0], s)
 		a.Status = s
 
 		sign, err := b.aggregateSigns(v.Signs)
@@ -511,7 +552,7 @@ func (b *blsClient) getBlsPubKey(addr string) (crypto.PubKey, error) {
 		plog.Error("verifyBlsSign.DeserializePublicKey", "key", addr)
 		return nil, err
 	}
-	plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", pubKey.Bytes())
+	plog.Info("getBlsPubKey", "addr", addr, "pub", resp.BlsPubKey, "serial", common.ToHex(pubKey.Bytes()))
 	b.peersBlsPubKey[addr] = pubKey
 
 	return pubKey, nil
