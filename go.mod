@@ -28,6 +28,7 @@ require (
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
+	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
 	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.2 // indirect
