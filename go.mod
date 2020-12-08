@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.12
 
 require (
-	github.com/33cn/chain33 v1.65.1-0.20201022110501-fde367b8c955
+	github.com/33cn/chain33 v1.65.1-0.20201111090506-e2d7705ea453
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -28,6 +28,7 @@ require (
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
+	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
 	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v0.9.2 // indirect

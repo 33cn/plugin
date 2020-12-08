@@ -35,4 +35,6 @@ var (
 	ErrTokenBlacklist = errors.New("ErrTokenBlacklist")
 	// ErrTokenNotExist error token symbol not exist
 	ErrTokenNotExist = errors.New("ErrTokenSymbolNotExist")
+	// ErrTokenBlacklistNotInit error token hasn't init blacklist
+	ErrTokenBlacklistNotInit = errors.New("ErrTokenBlacklistNotInit")
 )

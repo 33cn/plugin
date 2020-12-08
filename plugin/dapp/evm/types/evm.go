@@ -6,9 +6,8 @@ package types
 
 import (
 	"encoding/json"
-	"strings"
-
 	"errors"
+	"strings"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -45,6 +44,8 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
 	// EEVM 黄皮v1分叉高度
 	cfg.RegisterDappFork(ExecutorName, ForkEVMYoloV1, 9500000)
+	// EVM合约支持交易组
+	cfg.RegisterDappFork(ExecutorName, ForkEVMTxGroup, 0)
 }
 
 //InitExecutor ...

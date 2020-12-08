@@ -107,9 +107,17 @@ func (a *action) rewardBindAddr(coinReward int64, bindList *pt.ParaNodeBindList,
 func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus) (*types.Receipt, error) {
 	//获取挖矿相关配置，这里需注意是共识的高度，而不是交易的高度
 	cfg := a.api.GetConfig()
-	coinReward := cfg.MGInt("mver.consensus.paracross.coinReward", nodeStatus.Height) * types.Coin
-	coinBaseReward := cfg.MGInt("mver.consensus.paracross.coinBaseReward", nodeStatus.Height) * types.Coin
-	fundReward := cfg.MGInt("mver.consensus.paracross.coinDevFund", nodeStatus.Height) * types.Coin
+	coinReward := cfg.MGInt("mver.consensus.paracross.coinReward", nodeStatus.Height)
+	fundReward := cfg.MGInt("mver.consensus.paracross.coinDevFund", nodeStatus.Height)
+	coinBaseReward := cfg.MGInt("mver.consensus.paracross.coinBaseReward", nodeStatus.Height)
+
+	decimalMode := cfg.MIsEnable("mver.consensus.paracross.decimalMode", nodeStatus.Height)
+	if !decimalMode {
+		coinReward *= types.Coin
+		fundReward *= types.Coin
+		coinBaseReward *= types.Coin
+	}
+
 	fundAddr := cfg.MGStr("mver.consensus.fundKeyAddr", nodeStatus.Height)
 
 	//防止coinBaseReward 设置出错场景， coinBaseReward 一定要比coinReward小

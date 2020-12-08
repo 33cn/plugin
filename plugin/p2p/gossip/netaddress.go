@@ -152,8 +152,12 @@ func (na *NetAddress) DialTimeout(version int32) (*grpc.ClientConn, error) {
 	keepaliveOp := grpc.WithKeepaliveParams(cliparm)
 	timeoutOp := grpc.WithTimeout(time.Second * 3)
 	log.Debug("NetAddress", "Dial", na.String())
+	maxMsgSize := pb.MaxBlockSize + 1024*1024
 	conn, err := grpc.Dial(na.String(), grpc.WithInsecure(),
-		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")), grpc.WithServiceConfig(ch), keepaliveOp, timeoutOp)
+		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(maxMsgSize)),
+		grpc.WithServiceConfig(ch), keepaliveOp, timeoutOp)
 	if err != nil {
 		log.Debug("grpc DialCon", "did not connect", err, "addr", na.String())
 		return nil, err
