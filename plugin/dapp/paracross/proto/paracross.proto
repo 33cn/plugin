@@ -323,6 +323,11 @@ message ParacrossMinerAction {
     bool                isSelfConsensus = 2;
 }
 
+message ParaMinerReward{
+    string addr = 1;
+    int64 amount = 2;
+}
+
 message CrossAssetTransfer {
     string assetExec    = 1;
     string assetSymbol  = 2;
