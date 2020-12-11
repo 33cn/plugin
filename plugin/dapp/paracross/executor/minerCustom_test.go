@@ -6,24 +6,25 @@ package executor
 
 import (
 	"fmt"
-	"github.com/bmizerany/assert"
 	"testing"
+
+	"github.com/bmizerany/assert"
 
 	_ "github.com/33cn/plugin/plugin/crypto/bls"
 )
 
 func TestGetNHeight(t *testing.T) {
 	h := getNHeight(1)
-	assert.Equal(t, int64(4096), h)
+	assert.Equal(t, int64(40960), h)
 
 	h = getNHeight(2)
-	assert.Equal(t, int64(12288), h)
+	assert.Equal(t, int64(122880), h)
 
 	h = getNHeight(6)
-	assert.Equal(t, int64(258048), h)
+	assert.Equal(t, int64(2580480), h)
 
 	h = getNHeight(7)
-	assert.Equal(t, int64(520192), h)
+	assert.Equal(t, int64(5201920), h)
 
 }
 
@@ -31,16 +32,16 @@ func TestGetN(t *testing.T) {
 	n := getCurrentN(1)
 	assert.Equal(t, uint32(7), n)
 
-	n = getCurrentN(262144)
+	n = getCurrentN(2621440)
 	assert.Equal(t, uint32(7), n)
 
-	n = getCurrentN(262145)
+	n = getCurrentN(2621441)
 	assert.Equal(t, uint32(8), n)
 
-	n = getCurrentN(3932160)
+	n = getCurrentN(39321600)
 	assert.Equal(t, uint32(10), n)
 
-	n = getCurrentN(3932161)
+	n = getCurrentN(39321601)
 	assert.Equal(t, uint32(11), n)
 }
 

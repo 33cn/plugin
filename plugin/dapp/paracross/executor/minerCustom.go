@@ -6,11 +6,12 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/types"
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 const (
@@ -59,7 +60,7 @@ func getCustomReward(cfg *types.Chain33Config, height int64) (int64, int64, int6
 
 func getNHeight(n uint32) int64 {
 	v := 1 << n
-	return 4096 * (int64(v) - 1)
+	return 40960 * (int64(v) - 1)
 }
 
 //高度 4096*(2^n -1)+1 开始减半， n=1:1~4096, n=2:4096+1~12288
