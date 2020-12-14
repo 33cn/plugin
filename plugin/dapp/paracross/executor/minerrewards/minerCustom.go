@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package executor
+package minerrewards
 
 import (
 	"fmt"
@@ -29,6 +29,8 @@ const (
 var addrs = []string{addrStaffA, addrStaffB, addrBoss}
 var addrsMap = make(map[string]int64)
 
+type custom struct{}
+
 func checkQuota() {
 	var sum int64
 	for _, a := range addrs {
@@ -46,13 +48,11 @@ func checkQuota() {
 }
 
 func init() {
-	getConfigRewards[customMiner] = getCustomReward
-	rewardMiner[customMiner] = customRewardMiner
-
+	register(customMiner, &custom{})
 	checkQuota()
 }
 
-func getCustomReward(cfg *types.Chain33Config, height int64) (int64, int64, int64) {
+func (c *custom) GetConfigReward(cfg *types.Chain33Config, height int64) (int64, int64, int64) {
 	n := getCurrentN(height)
 	return calcCoins(n), 0, 0
 
@@ -94,12 +94,12 @@ func calcCoins(n uint32) int64 {
 	return int64(math.Trunc(float64(vf)))
 }
 
-func customRewardMiner(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
+func (c *custom) RewardMiners(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
 	//找零
 	var change int64
 	var rewards []*pt.ParaMinerReward
 
-	coins, _, _ := getCustomReward(nil, height)
+	coins, _, _ := c.GetConfigReward(nil, height)
 	var sum int64
 	//get quto to miner
 	for _, m := range miners {

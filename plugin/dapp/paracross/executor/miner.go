@@ -6,6 +6,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/paracross/executor/minerrewards"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
 )
@@ -71,31 +72,16 @@ func (a *action) isSelfConsensOn(miner *pt.ParacrossMinerAction) (bool, error) {
 	return isSelfConsensOn, nil
 }
 
-const (
-	normalMiner = iota
-	halveMiner
-	customMiner
-)
-
-type rewardValFn func(cfg *types.Chain33Config, height int64) (int64, int64, int64)
-
-var getConfigRewards = make(map[int]rewardValFn)
-
-func init() {
-	getConfigRewards[normalMiner] = getNormalReward
-
-}
-
 func (a *action) issueCoins(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
 	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
 
-	if getConfigRewards[mode] == nil {
+	if minerrewards.MinerRewards[mode] == nil {
 		panic("getTotalReward not be set depend on consensus.paracross.minerMode")
 	}
 
-	coinReward, coinFundReward, _ := getConfigRewards[mode](cfg, a.height)
+	coinReward, coinFundReward, _ := minerrewards.MinerRewards[mode].GetConfigReward(cfg, a.height)
 	totalReward := coinReward + coinFundReward
 	if totalReward > 0 {
 		issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, totalReward)
