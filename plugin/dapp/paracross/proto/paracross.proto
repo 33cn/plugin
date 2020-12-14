@@ -321,6 +321,7 @@ message ParacrossCommitAction {
 message ParacrossMinerAction {
     ParacrossNodeStatus status          = 1;
     bool                isSelfConsensus = 2;
+    int64               addIssueCoins   = 3;
 }
 
 message ParaMinerReward{

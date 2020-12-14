@@ -42,24 +42,6 @@ func (a *action) getBindAddrs(nodes []string, statusHeight int64) (*pt.ParaNodeB
 
 }
 
-func rewardEven(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
-	//找零
-	var change int64
-	var rewards []*pt.ParaMinerReward
-	//分配给矿工的平均奖励
-	minerUnit := coinReward / int64(len(miners))
-	if minerUnit > 0 {
-		for _, m := range miners {
-			r := &pt.ParaMinerReward{Addr: m, Amount: minerUnit}
-			rewards = append(rewards, r)
-		}
-
-		//如果不等分转到发展基金
-		change = coinReward % minerUnit
-	}
-	return rewards, change
-}
-
 func (a *action) rewardSuperNode(coinReward int64, miners []string, statusHeight int64) (*types.Receipt, int64, error) {
 	cfg := a.api.GetConfig()
 	receipt := &types.Receipt{Ty: types.ExecOk}

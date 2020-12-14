@@ -79,7 +79,8 @@ func TestGetCoins(t *testing.T) {
 }
 
 func getCustomRewardMinerRst(miners []string, height int64) (map[string]int64, int64) {
-	res, change := customRewardMiner(0, miners, height)
+	c := &custom{}
+	res, change := c.RewardMiners(0, miners, height)
 	check := make(map[string]int64)
 	for _, r := range res {
 		//fmt.Println("addr",r.Addr,"amount",r.Amount)
