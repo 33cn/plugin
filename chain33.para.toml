@@ -43,7 +43,7 @@ enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
 enableReExecLocal=true
 # 使能精简localdb
-enableReduceLocaldb=true
+enableReduceLocaldb=false
 enablePushSubscribe=false
 
 [p2p]
@@ -97,7 +97,7 @@ unBindTime=24
 #支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即coinReward=1800000000
 decimalMode=false
 #挖矿模式， 0：普通挖矿，1：减半挖矿,2:自定义
-minerMode=2
+minerMode=0
 #挖矿减半周期,按高度减半
 halvePeriod=1000
 

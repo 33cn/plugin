@@ -842,6 +842,7 @@ func paraConfigCmd() *cobra.Command {
 		Short: "parachain config cmd",
 	}
 	cmd.AddCommand(paraStageConfigCmd())
+	cmd.AddCommand(issueCoinsCmd())
 
 	return cmd
 }
@@ -1512,4 +1513,46 @@ func GetConsensDoneInfoCmd() *cobra.Command {
 	}
 	addConsensDoneCmdFlags(cmd)
 	return cmd
+}
+
+func issueCoinsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "issue",
+		Short: "issue new coins by super manager",
+		Run:   createIssueCoinsTx,
+	}
+	addIssueCoinsFlags(cmd)
+	return cmd
+}
+
+func addIssueCoinsFlags(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("amount", "a", 0, "new issue amount")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func createIssueCoinsTx(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	coins, _ := cmd.Flags().GetUint64("amount")
+
+	if !strings.HasPrefix(paraName, "user.p") {
+		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
+	if coins == 0 {
+		fmt.Fprintln(os.Stderr, "coins should bigger than 0")
+	}
+
+	payload := &pt.ParacrossMinerAction{AddIssueCoins: int64(coins)}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "Miner",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
 }

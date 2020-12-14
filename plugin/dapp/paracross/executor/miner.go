@@ -13,8 +13,14 @@ import (
 
 //当前miner tx不需要校验上一个区块的衔接性，因为tx就是本节点发出，高度，preHash等都在本区块里面的blockchain做了校验
 //note: 平行链的Miner从Height=1开始， 创世区块不挖矿
+//因为bug原因，支持手动增发一部分coin到执行器地址，这部分coin不会对现有账户产生影响。因为转账到合约下的coin，同时会存到合约子账户下
 func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
+	//增发coin
+	if miner.AddIssueCoins > 0 {
+		return a.addIssueCoins(miner.AddIssueCoins)
+	}
+
 	if miner.Status.Title != cfg.GetTitle() || miner.Status.MainBlockHash == nil {
 		return nil, pt.ErrParaMinerExecErr
 	}
@@ -46,6 +52,22 @@ func (a *action) Miner(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	}
 
 	return minerReceipt, nil
+}
+
+// 主链走None执行器，只在平行链执行，只是平行链的manager 账户允许发行，目前也只是发行到paracross执行器，不会对个人账户任何影响
+func (a *action) addIssueCoins(amount int64) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "addr=%s,is not super manager", a.fromaddr)
+	}
+
+	issueReceipt, err := a.coinsAccount.ExecIssueCoins(a.execaddr, amount)
+	if err != nil {
+		clog.Error("paracross miner issue err", "execAddr", a.execaddr, "amount", amount)
+		return nil, errors.Wrap(err, "issueCoins")
+	}
+	return issueReceipt, nil
+
 }
 
 func (a *action) isSelfConsensOn(miner *pt.ParacrossMinerAction) (bool, error) {
