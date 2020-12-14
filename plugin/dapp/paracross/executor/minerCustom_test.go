@@ -26,6 +26,10 @@ func TestGetNHeight(t *testing.T) {
 	h = getNHeight(7)
 	assert.Equal(t, int64(5201920), h)
 
+	for i := 1; i < 10; i++ {
+		fmt.Println("n=", i, "height=", getNHeight(uint32(i)))
+	}
+
 }
 
 func TestGetN(t *testing.T) {
@@ -59,10 +63,13 @@ func TestGetBlockNum(t *testing.T) {
 
 func TestGetCoins(t *testing.T) {
 	c := calcCoins(7)
-	assert.Equal(t, int64(1.6*1e8), c)
+	assert.Equal(t, int64(16*1e7), c)
 
 	c = calcCoins(6)
-	assert.Equal(t, int64(3.2*1e8), c)
+	assert.Equal(t, int64(32*1e7), c)
+
+	c = calcCoins(13)
+	assert.Equal(t, int64(0.25*1e7), c)
 
 	//for i:=uint32(0);i<50;i++{
 	//	coin := calcCoins(i)
