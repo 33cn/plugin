@@ -3,6 +3,8 @@ package executor
 import (
 	"bytes"
 
+	"github.com/33cn/plugin/plugin/dapp/paracross/executor/minerrewards"
+
 	"github.com/pkg/errors"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -40,14 +42,6 @@ func (a *action) getBindAddrs(nodes []string, statusHeight int64) (*pt.ParaNodeB
 
 }
 
-type rewardFn func(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64)
-
-var rewardMiner = make(map[int]rewardFn)
-
-func init() {
-	rewardMiner[normalMiner] = rewardEven
-}
-
 func rewardEven(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
 	//找零
 	var change int64
@@ -71,10 +65,10 @@ func (a *action) rewardSuperNode(coinReward int64, miners []string, statusHeight
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
 	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
-	if rewardMiner[mode] == nil {
+	if minerrewards.MinerRewards[mode] == nil {
 		panic("getReward not be set depend on consensus.paracross.minerMode")
 	}
-	rewards, change := rewardMiner[mode](coinReward, miners, statusHeight)
+	rewards, change := minerrewards.MinerRewards[mode].RewardMiners(coinReward, miners, statusHeight)
 	resp, err := a.rewardDeposit(rewards, statusHeight)
 	if err != nil {
 		return nil, 0, err
@@ -139,29 +133,6 @@ func (a *action) rewardBindAddr(coinReward int64, bindList *pt.ParaNodeBindList,
 	return receipt, change, nil
 }
 
-func getNormalReward(cfg *types.Chain33Config, height int64) (int64, int64, int64) {
-	coinReward := cfg.MGInt("mver.consensus.paracross.coinReward", height)
-	fundReward := cfg.MGInt("mver.consensus.paracross.coinDevFund", height)
-	coinBaseReward := cfg.MGInt("mver.consensus.paracross.coinBaseReward", height)
-
-	if coinReward < 0 || fundReward < 0 || coinBaseReward < 0 {
-		panic("para config consensus.paracross.coinReward should bigger than 0")
-	}
-
-	//decimalMode=false,意味着精简模式，需要乘1e8
-	decimalMode := cfg.MIsEnable("mver.consensus.paracross.decimalMode", height)
-	if !decimalMode {
-		coinReward *= types.Coin
-		fundReward *= types.Coin
-		coinBaseReward *= types.Coin
-	}
-	//防止coinBaseReward 设置出错场景， coinBaseReward 一定要比coinReward小
-	if coinBaseReward >= coinReward {
-		coinBaseReward = coinReward / 10
-	}
-	return coinReward, fundReward, coinBaseReward
-}
-
 // reward 挖矿奖励， 主要处理挖矿分配逻辑，先实现基本策略，后面根据需求进行重构
 func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHeightStatus) (*types.Receipt, error) {
 	//获取挖矿相关配置，这里需注意是共识的高度，而不是交易的高度
@@ -172,7 +143,7 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	}
 
 	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
-	coinReward, fundReward, coinBaseReward := getConfigRewards[mode](cfg, nodeStatus.Height)
+	coinReward, fundReward, coinBaseReward := minerrewards.MinerRewards[mode].GetConfigReward(cfg, nodeStatus.Height)
 
 	fundAddr := cfg.MGStr("mver.consensus.fundKeyAddr", nodeStatus.Height)
 	//超级节点地址
