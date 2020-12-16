@@ -5,31 +5,13 @@ import (
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
-type normal struct {
-}
+type normal struct{}
 
 func init() {
-	register(normalMiner, &normal{})
+	register("normal", &normal{})
 }
 
-func (n *normal) RewardMiners(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
-	//找零
-	var change int64
-	var rewards []*pt.ParaMinerReward
-	//分配给矿工的平均奖励
-	minerUnit := coinReward / int64(len(miners))
-	if minerUnit > 0 {
-		for _, m := range miners {
-			r := &pt.ParaMinerReward{Addr: m, Amount: minerUnit}
-			rewards = append(rewards, r)
-		}
-
-		//如果不等分转到发展基金
-		change = coinReward % minerUnit
-	}
-	return rewards, change
-}
-
+//获取配置的奖励数值
 func (n *normal) GetConfigReward(cfg *types.Chain33Config, height int64) (int64, int64, int64) {
 	coinReward := cfg.MGInt("mver.consensus.paracross.coinReward", height)
 	fundReward := cfg.MGInt("mver.consensus.paracross.coinDevFund", height)
@@ -51,4 +33,23 @@ func (n *normal) GetConfigReward(cfg *types.Chain33Config, height int64) (int64,
 		coinBaseReward = coinReward / 10
 	}
 	return coinReward, fundReward, coinBaseReward
+}
+
+//奖励矿工算法
+func (n *normal) RewardMiners(cfg *types.Chain33Config, coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64) {
+	//找零
+	var change int64
+	var rewards []*pt.ParaMinerReward
+	//分配给矿工的平均奖励
+	minerUnit := coinReward / int64(len(miners))
+	if minerUnit > 0 {
+		for _, m := range miners {
+			r := &pt.ParaMinerReward{Addr: m, Amount: minerUnit}
+			rewards = append(rewards, r)
+		}
+
+		//如果不等分转到发展基金
+		change = coinReward % minerUnit
+	}
+	return rewards, change
 }

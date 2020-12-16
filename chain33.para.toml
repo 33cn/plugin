@@ -96,8 +96,8 @@ coinBaseReward=3
 unBindTime=24
 #支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即coinReward=1800000000
 decimalMode=false
-#挖矿模式， 0：普通挖矿，1：减半挖矿,2:自定义
-minerMode=0
+#挖矿模式， normal：缺省挖矿，其他自定义，注册名字需要和配置名字保持一致
+minerMode="normal"
 #挖矿减半周期,按高度减半
 halvePeriod=1000
 

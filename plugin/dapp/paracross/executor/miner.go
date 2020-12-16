@@ -97,9 +97,8 @@ func (a *action) isSelfConsensOn(miner *pt.ParacrossMinerAction) (bool, error) {
 func (a *action) issueCoins(miner *pt.ParacrossMinerAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 
-	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
-
-	if minerrewards.MinerRewards[mode] == nil {
+	mode := cfg.MGStr("mver.consensus.paracross.minerMode", a.height)
+	if _, ok := minerrewards.MinerRewards[mode]; !ok {
 		panic("getTotalReward not be set depend on consensus.paracross.minerMode")
 	}
 
