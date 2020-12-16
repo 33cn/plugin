@@ -97,6 +97,7 @@ targetTimePerBlock = 16
 [mver.consensus.paracross]
 coinReward = 18
 coinDevFund = 12
+minerMode="normal"
 
 
 [consensus.sub.para]
