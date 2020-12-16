@@ -9,20 +9,14 @@ import (
 
 type RewardPolicy interface {
 	GetConfigReward(cfg *types.Chain33Config, height int64) (int64, int64, int64)
-	RewardMiners(coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64)
+	RewardMiners(cfg *types.Chain33Config, coinReward int64, miners []string, height int64) ([]*pt.ParaMinerReward, int64)
 }
 
-const (
-	normalMiner = iota
-	halveMiner
-	customMiner
-)
+var MinerRewards = make(map[string]RewardPolicy)
 
-var MinerRewards = make(map[int]RewardPolicy)
-
-func register(ty int, policy RewardPolicy) {
+func register(ty string, policy RewardPolicy) {
 	if _, ok := MinerRewards[ty]; ok {
-		panic(fmt.Sprintf("paracross minerreward ty=%d registered", ty))
+		panic(fmt.Sprintf("paracross minerreward ty=%s registered", ty))
 	}
 	MinerRewards[ty] = policy
 }

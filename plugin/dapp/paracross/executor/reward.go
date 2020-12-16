@@ -46,11 +46,9 @@ func (a *action) rewardSuperNode(coinReward int64, miners []string, statusHeight
 	cfg := a.api.GetConfig()
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
-	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
-	if minerrewards.MinerRewards[mode] == nil {
-		panic("getReward not be set depend on consensus.paracross.minerMode")
-	}
-	rewards, change := minerrewards.MinerRewards[mode].RewardMiners(coinReward, miners, statusHeight)
+	mode := cfg.MGStr("mver.consensus.paracross.minerMode", a.height)
+
+	rewards, change := minerrewards.MinerRewards[mode].RewardMiners(cfg, coinReward, miners, statusHeight)
 	resp, err := a.rewardDeposit(rewards, statusHeight)
 	if err != nil {
 		return nil, 0, err
@@ -124,7 +122,10 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 		return nil, nil
 	}
 
-	mode := int(cfg.MGInt("mver.consensus.paracross.minerMode", a.height))
+	mode := cfg.MGStr("mver.consensus.paracross.minerMode", a.height)
+	if _, ok := minerrewards.MinerRewards[mode]; !ok {
+		panic("getReward not be set depend on consensus.paracross.minerMode")
+	}
 	coinReward, fundReward, coinBaseReward := minerrewards.MinerRewards[mode].GetConfigReward(cfg, nodeStatus.Height)
 
 	fundAddr := cfg.MGStr("mver.consensus.fundKeyAddr", nodeStatus.Height)
