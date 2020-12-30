@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package types;
+
+// vote 合约交易行为总类型
+message VoteAction {
+    int32 ty = 1;
+    oneof value {
+        CreateGroup createGroup = 2;
+        UpdateMember updateMember = 3;
+        CreateVote createVote = 4;
+        CommitVote commitVote = 5;
+
+    }
+}
+
+message GroupMember {
+    string addr = 1;
+    uint32 voteWeight = 2;
+}
+
+//创建投票组
+message CreateGroup {
+    string name = 1;
+    repeated string admins = 2;
+    repeated GroupMember members = 3;
+}
+
+//更新投票组
+message UpdateMember{
+    string groupID = 1;
+    repeated GroupMember addMembers = 2;
+    repeated string removeMemberAddrs = 3;
+}
+
+//
+message GroupInfo {
+
+    string ID = 1;
+    string name = 2;
+    uint32 memberNum = 3;
+    string creator = 4;
+    repeated string admins = 5;
+    repeated GroupMember members = 6;
+
+}
+
+message VoteOption {
+    string option = 1;
+    uint32 score = 2;
+}
+
+//
+message CreateVote{
+    string name = 1;
+    repeated string voteGroups = 2;
+    repeated string voteOptions = 3;
+    int64 beginTimestamp = 4;
+    int64 endTimestamp = 5;
+}
+
+//
+message CommitVote{
+    string voteID = 1;
+    string groupID = 2;
+    uint32 optionIndex = 3;
+}
+
+//
+message VoteInfo{
+
+    string ID = 1;
+    string name = 2;
+    string creator = 3;
+    repeated string voteGroups = 4;
+    repeated VoteOption voteOptions = 5;
+    int64 beginTimestamp = 6;
+    int64 endTimestamp = 7;
+    repeated string votedMembers = 8;
+
+}
+
+message VoteInfos {
+    repeated VoteInfo voteList = 1;
+}
+
+
+message GroupVoteInfo{
+
+    GroupInfo groupInfo = 1;
+    repeated string voteIDs = 2;
+}
+
+message GroupVoteInfos{
+    repeated GroupVoteInfo groupList = 1;
+}
+
+message MemberInfo {
+    string addr = 1;
+    repeated string groupIDs = 2;
+}
+
+message MemberInfos{
+    repeated MemberInfo memberList = 1;
+}
+
+message ReqListItem{
+    string startItemID = 1;
+    int32 count = 2;
+    int32 direction = 3;
+}
+
+
+
+
+
+
