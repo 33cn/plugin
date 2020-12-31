@@ -299,7 +299,7 @@ func (m *UpdateMember) GetRemoveMemberAddrs() []string {
 	return nil
 }
 
-//
+// 投票组信息
 type GroupInfo struct {
 	ID                   string         `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	Name                 string         `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -379,6 +379,7 @@ func (m *GroupInfo) GetMembers() []*GroupMember {
 	return nil
 }
 
+//投票选项
 type VoteOption struct {
 	Option               string   `protobuf:"bytes,1,opt,name=option,proto3" json:"option,omitempty"`
 	Score                uint32   `protobuf:"varint,2,opt,name=score,proto3" json:"score,omitempty"`
@@ -426,7 +427,7 @@ func (m *VoteOption) GetScore() uint32 {
 	return 0
 }
 
-//
+// 创建投票交易，请求结构
 type CreateVote struct {
 	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	VoteGroups           []string `protobuf:"bytes,2,rep,name=voteGroups,proto3" json:"voteGroups,omitempty"`
@@ -498,7 +499,7 @@ func (m *CreateVote) GetEndTimestamp() int64 {
 	return 0
 }
 
-//
+// 创建提交投票交易，请求结构
 type CommitVote struct {
 	VoteID               string   `protobuf:"bytes,1,opt,name=voteID,proto3" json:"voteID,omitempty"`
 	GroupID              string   `protobuf:"bytes,2,opt,name=groupID,proto3" json:"groupID,omitempty"`
@@ -554,7 +555,7 @@ func (m *CommitVote) GetOptionIndex() uint32 {
 	return 0
 }
 
-//
+//投票信息
 type VoteInfo struct {
 	ID                   string        `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
 	Name                 string        `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -861,6 +862,7 @@ func (m *MemberInfos) GetMemberList() []*MemberInfo {
 	return nil
 }
 
+//列表请求结构
 type ReqListItem struct {
 	StartItemID          string   `protobuf:"bytes,1,opt,name=startItemID,proto3" json:"startItemID,omitempty"`
 	Count                int32    `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
