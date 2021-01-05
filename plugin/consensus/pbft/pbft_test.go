@@ -110,10 +110,11 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	if err != nil {
 		panic(err)
 	}
-	data, ok = msg2.Data.(*types.MempoolSize)
+	data2, ok := msg2.Data.(*types.MempoolSize)
 	if !ok {
 		panic("invalid response2")
 	}
+	fmt.Printf("data: %#v\n", data2)
 
 	return q, chain, p2pnet, s, mem, exec, cs, walletm
 
