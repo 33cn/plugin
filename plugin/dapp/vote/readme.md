@@ -108,11 +108,17 @@ message VoteInfo {
     int64               endTimestamp   = 7; //投票结束时间戳
     repeated string votedMembers       = 8; //已投票的成员
 }
+
+//投票选项
+message VoteOption {
+    string option = 1; //投票选项
+    uint32 score  = 2; //投票得分
+}
 ```
 
 #### 提交投票
-- 群成员发起投票交易
-- 指定所在投票群ID，投票ID，投票选项
+- 投票组成员发起投票交易
+- 指定所在投票组ID，投票ID，投票选项
 - 投票选项使用数组下标标识，而不是选项内容
 
 ##### 交易请求
@@ -270,6 +276,6 @@ message MemberInfos {
 }
 ```
 
-####其他 
+#### 其他 
  
 [投票合约proto源文件](proto/vote.proto)
