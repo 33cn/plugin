@@ -74,6 +74,21 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	chain.SetQueueClient(q.Client())
 	mem := mempool.New(chain33Cfg)
 	mem.SetQueueClient(q.Client())
+	client := q.Client()
+	msg := client.NewMessage("mempool", types.EventGetMempoolSize, nil)
+	err := client.Send(msg, true)
+	if err != nil {
+		panic(err)
+	}
+	msg2, err := client.WaitTimeout(msg, time.Second*10)
+	if err != nil {
+		panic(err)
+	}
+	data, ok := msg2.Data.(*types.MempoolSize)
+	if !ok {
+		panic("invalid response")
+	}
+	fmt.Printf("data: %#v\n", data)
 	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
 	chain33Cfg.SetMinFee(0)
