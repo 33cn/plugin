@@ -97,9 +97,23 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	cs := NewPbft(cfg.Consensus, sub.Consensus["pbft"])
 	cs.SetQueueClient(q.Client())
 	p2pnet := p2p.NewP2PMgr(chain33Cfg)
-	p2pnet.SetQueueClient(q.Client())
+	p2pnet.SetQueueClient(client)
 	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())
+
+	msg = client.NewMessage("mempool", types.EventGetMempoolSize, nil)
+	err = client.Send(msg, true)
+	if err != nil {
+		panic(err)
+	}
+	msg2, err = client.WaitTimeout(msg, time.Second*10)
+	if err != nil {
+		panic(err)
+	}
+	data, ok = msg2.Data.(*types.MempoolSize)
+	if !ok {
+		panic("invalid response2")
+	}
 
 	return q, chain, p2pnet, s, mem, exec, cs, walletm
 
