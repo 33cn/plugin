@@ -74,7 +74,6 @@ func (w *Wasm) Exec_Create(payload *types2.WasmCreate, tx *types.Transaction, in
 }
 
 func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index int) (*types.Receipt, error) {
-	log.Info("into wasm Exec_Call...")
 	if payload == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -83,18 +82,26 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	}
 
 	w.stateKVC = dapp.NewKVCreator(w.GetStateDB(), calcStatePrefix(payload.Contract), nil)
-	code, err := w.stateKVC.GetNoPrefix(contractKey(payload.Contract))
-	if err != nil {
-		return nil, err
-	}
-	vm, err := exec.NewVirtualMachine(code, exec.VMConfig{
-		DefaultMemoryPages:   128,
-		DefaultTableSize:     128,
-		DisableFloatingPoint: true,
-		GasLimit:             uint64(tx.Fee),
-	}, new(Resolver), &compiler.SimpleGasPolicy{GasPerInstruction: 1})
-	if err != nil {
-		return nil, err
+	var vm *exec.VirtualMachine
+	var ok bool
+	if vm, ok = w.VMCache[payload.Contract]; !ok {
+		code, err := w.stateKVC.GetNoPrefix(contractKey(payload.Contract))
+		if err != nil {
+			return nil, err
+		}
+		vm, err = exec.NewVirtualMachine(code, exec.VMConfig{
+			DefaultMemoryPages:   128,
+			DefaultTableSize:     128,
+			DisableFloatingPoint: true,
+			GasLimit:             uint64(tx.Fee),
+		}, new(Resolver), &compiler.SimpleGasPolicy{GasPerInstruction: 1})
+		if err != nil {
+			return nil, err
+		}
+		w.VMCache[payload.Contract] = vm
+	} else {
+		vm.Config.GasLimit = uint64(tx.Fee)
+		vm.Gas = 0
 	}
 
 	// Get the function ID of the entry function to be executed.
@@ -115,7 +122,6 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	if err != nil {
 		return nil, err
 	}
-
 	var kvs []*types.KeyValue
 	kvs = append(kvs, w.kvs...)
 	kvs = append(kvs, w.stateKVC.KVList()...)
