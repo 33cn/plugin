@@ -101,12 +101,14 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())
 
-	msg = client.NewMessage("mempool", types.EventGetMempoolSize, nil)
-	err = client.Send(msg, true)
+	client2 := p2pnet.Client
+
+	msg = client2.NewMessage("mempool", types.EventGetMempoolSize, nil)
+	err = client2.Send(msg, true)
 	if err != nil {
 		panic(err)
 	}
-	msg2, err = client.WaitTimeout(msg, time.Second*10)
+	msg2, err = client2.WaitTimeout(msg, time.Second*10)
 	if err != nil {
 		panic(err)
 	}
