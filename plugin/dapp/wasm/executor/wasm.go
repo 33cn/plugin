@@ -6,6 +6,7 @@ import (
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	types2 "github.com/33cn/plugin/plugin/dapp/wasm/types"
+	"github.com/perlin-network/life/exec"
 )
 
 var driverName = types2.WasmX
@@ -36,10 +37,13 @@ type Wasm struct {
 	customLogs   []string
 	execAddr     string
 	contractName string
+	VMCache      map[string]*exec.VirtualMachine
 }
 
 func newWasm() drivers.Driver {
-	d := &Wasm{}
+	d := &Wasm{
+		VMCache: make(map[string]*exec.VirtualMachine),
+	}
 	d.SetChild(d)
 	d.SetExecutorType(types.LoadExecutorType(driverName))
 	return d
