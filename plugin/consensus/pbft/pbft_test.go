@@ -19,7 +19,6 @@ import (
 	"github.com/33cn/chain33/common/limits"
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
-	"github.com/33cn/chain33/mempool"
 	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
@@ -47,9 +46,8 @@ func init() {
 	log.SetLogLevel("info")
 }
 func TestPbft(t *testing.T) {
-	q, chain, p2pnet, s, mem, exec, cs, wallet := initEnvPbft()
+	q, chain, p2pnet, s, exec, cs, wallet := initEnvPbft()
 	defer chain.Close()
-	defer mem.Close()
 	defer p2pnet.Close()
 	defer exec.Close()
 	defer s.Close()
@@ -62,7 +60,7 @@ func TestPbft(t *testing.T) {
 	clearTestData()
 }
 
-func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	flag.Parse()
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
 	var q = queue.New("channel")
@@ -72,8 +70,8 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 
 	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
-	mem := mempool.New(chain33Cfg)
-	mem.SetQueueClient(q.Client())
+	//mem := mempool.New(chain33Cfg)
+	//mem.SetQueueClient(q.Client())
 	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
 	chain33Cfg.SetMinFee(0)
@@ -86,7 +84,7 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())
 
-	return q, chain, p2pnet, s, mem, exec, cs, walletm
+	return q, chain, p2pnet, s, exec, cs, walletm
 
 }
 
