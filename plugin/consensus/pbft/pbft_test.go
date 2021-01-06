@@ -104,6 +104,8 @@ func sendReplyList(q queue.Queue) {
 				time.Sleep(5 * time.Second)
 				break
 			}
+		} else if msg.Ty == types.EventGetMempoolSize {
+			msg.Reply(client.NewMessage("", 0, &types.MempoolSize{}))
 		}
 	}
 }
