@@ -103,20 +103,23 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 
 	client2 := p2pnet.Client
 
-	msg = client2.NewMessage("mempool", types.EventGetMempoolSize, nil)
-	err = client2.Send(msg, true)
-	if err != nil {
-		panic(err)
+	for i := 0; i < 10; i++ {
+		msg = client2.NewMessage("mempool", types.EventGetMempoolSize, nil)
+		err = client2.Send(msg, true)
+		if err != nil {
+			panic(err)
+		}
+		msg2, err = client2.WaitTimeout(msg, time.Second*10)
+		if err != nil {
+			panic(err)
+		}
+		data2, ok := msg2.Data.(*types.MempoolSize)
+		if !ok {
+			panic("invalid response2")
+		}
+		fmt.Printf("data: %#v\n", data2)
+		time.Sleep(3 * time.Second)
 	}
-	msg2, err = client2.WaitTimeout(msg, time.Second*10)
-	if err != nil {
-		panic(err)
-	}
-	data2, ok := msg2.Data.(*types.MempoolSize)
-	if !ok {
-		panic("invalid response2")
-	}
-	fmt.Printf("data: %#v\n", data2)
 
 	return q, chain, p2pnet, s, mem, exec, cs, walletm
 
