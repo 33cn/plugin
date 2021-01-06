@@ -693,8 +693,8 @@ github.com/x-cray/logrus-prefixed-formatter v0.5.2/go.mod h1:2duySbKsL6M18s5GU7V
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
-github.com/yann-sjtu/chain33 v0.0.0-20210106060707-cc5290d813d4 h1:KC/GrheMrLO7b/jOHP09dC4Pawb4Q8ib5QWph5wDTsA=
-github.com/yann-sjtu/chain33 v0.0.0-20210106060707-cc5290d813d4/go.mod h1:XEhB5IOpLl42xM37TpYzFNJg48U4cYIe7dZVmNA/78Y=
+github.com/yann-sjtu/chain33 v0.0.0-20210106063959-000005313f62 h1:lTIjVMupv+1yCjAYrZmqqBDvQ5M+Qo5P5C+vUahxLlA=
+github.com/yann-sjtu/chain33 v0.0.0-20210106063959-000005313f62/go.mod h1:XEhB5IOpLl42xM37TpYzFNJg48U4cYIe7dZVmNA/78Y=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.1/go.mod h1:Ap50jQcDJrx6rB6VgeeFPtuPIf3wMRvRfrfYDO6+BmA=

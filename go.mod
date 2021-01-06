@@ -48,4 +48,4 @@ require (
 	google.golang.org/grpc v1.29.1
 )
 
-replace github.com/33cn/chain33 v1.65.1-0.20201231085928-5bbc657c3af7 => github.com/yann-sjtu/chain33 v0.0.0-20210106060707-cc5290d813d4
+replace github.com/33cn/chain33 v1.65.1-0.20201231085928-5bbc657c3af7 => github.com/yann-sjtu/chain33 v0.0.0-20210106063959-000005313f62
