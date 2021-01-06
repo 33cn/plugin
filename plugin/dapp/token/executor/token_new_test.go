@@ -170,6 +170,7 @@ func TestPrecreate(t *testing.T) {
 		Fee:     feeForToken,
 		Nonce:   r.Int63(),
 		To:      address.ExecAddress(execName),
+		ChainID: mainClient.Version().GetChainID(),
 	}
 	tx.Sign(types.SECP256K1, privkey)
 
@@ -211,6 +212,7 @@ func TestFinish(t *testing.T) {
 		Fee:     feeForToken,
 		Nonce:   r.Int63(),
 		To:      address.ExecAddress(execName),
+		ChainID: mainClient.Version().GetChainID(),
 	}
 	tx.Sign(types.SECP256K1, privkey)
 
@@ -246,6 +248,7 @@ func TestTransferToken(t *testing.T) {
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
 	tx.Nonce = r.Int63()
+	tx.ChainID = mainClient.Version().GetChainID()
 	tx.Sign(types.SECP256K1, privkey)
 
 	reply, err := mainClient.SendTransaction(context.Background(), tx)
@@ -326,6 +329,8 @@ func TestTokenMint(t *testing.T) {
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
 	tx.Nonce = r.Int63()
+	tx.ChainID = mainClient.Version().GetChainID()
+
 	tx.Sign(types.SECP256K1, privkey)
 
 	reply, err := mainClient.SendTransaction(context.Background(), tx)

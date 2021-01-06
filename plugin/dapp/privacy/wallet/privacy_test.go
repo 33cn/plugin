@@ -217,6 +217,7 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 		Payload: types.Encode(action),
 		Nonce:   mock.walletOp.Nonce(),
 		To:      address.ExecAddress(ty.PrivacyX),
+		ChainID: cfg.GetChainID(),
 	}
 	cfg := mock.walletOp.GetAPI().GetConfig()
 	txSize := types.Size(tx) + ty.SignatureSize

@@ -537,6 +537,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 		Payload: types.Encode(action),
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	tx.Signature = &types.Signature{
@@ -621,6 +622,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
@@ -711,6 +713,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
