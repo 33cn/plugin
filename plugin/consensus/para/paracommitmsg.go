@@ -490,6 +490,10 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 
 func (client *commitMsgClient) getExecName(commitHeight int64) string {
 	cfg := client.paraClient.GetAPI().GetConfig()
+	if cfg.IsDappFork(commitHeight, pt.ParaX, pt.ForkParaFullMinerHeight) {
+		return paracross.GetExecName(cfg)
+	}
+
 	if cfg.IsDappFork(commitHeight, pt.ParaX, pt.ForkParaSelfConsStages) {
 		return paracross.GetExecName(cfg)
 	}

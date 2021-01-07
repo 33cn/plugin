@@ -136,7 +136,6 @@ func newP2p(cfg *types.Chain33Config, port int32, dbpath string, q queue.Queue) 
 	pcfg.Port = port
 	pcfg.Channel = testChannel
 	pcfg.ServerStart = true
-	pcfg.MinLtBlockTxNum = 1
 	subCfgBytes, _ := json.Marshal(pcfg)
 	p2pcli := New(p2pMgr, subCfgBytes).(*P2p)
 

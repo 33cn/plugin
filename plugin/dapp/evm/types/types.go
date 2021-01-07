@@ -42,6 +42,8 @@ const (
 	ForkEVMFrozen = "ForkEVMFrozen"
 	// ForkEVMYoloV1 YoloV1虚拟机指令分叉
 	ForkEVMYoloV1 = "ForkEVMYoloV1"
+	//ForkEVMTxGroup 交易组中的交易通过GAS检查
+	ForkEVMTxGroup = "ForkEVMTxGroup"
 )
 
 var (
