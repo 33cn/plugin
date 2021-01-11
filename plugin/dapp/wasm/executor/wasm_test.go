@@ -339,11 +339,11 @@ func initAccount(db db.KV) *account.DB {
 		panic(err)
 	}
 	acc.SaveAccount(&types.Account{
-		Balance: 1e15,
+		Balance: 1e10,
 		Addr:    Addrs[0],
 	})
 	acc.SaveAccount(&types.Account{
-		Balance: 1e15,
+		Balance: 1e10,
 		Addr:    Addrs[1],
 	})
 	return acc
