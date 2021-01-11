@@ -130,7 +130,7 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	logs = append(logs, &types.ReceiptLog{Ty: types2.TyLogWasmCall, Log: types.Encode(&types2.CallContractLog{
 		Contract: payload.Contract,
 		Method:   payload.Method,
-		Result:   ret,
+		Result:   int32(ret),
 	})})
 	logs = append(logs, w.receiptLogs...)
 	logs = append(logs, &types.ReceiptLog{Ty: types2.TyLogCustom, Log: types.Encode(&types2.CustomLog{
@@ -148,7 +148,7 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 		KV:   kvs,
 		Logs: logs,
 	}
-	if ret < 0 {
+	if int32(ret) < 0 || int16(ret) < 0 {
 		receipt.Ty = types.ExecPack
 	}
 

@@ -37,7 +37,7 @@ message createContractLog {
 message callContractLog {
   string contract = 1;
   string method = 2;
-  int64 result = 3;
+  int32 result = 3;
 }
 
 message localDataLog {
