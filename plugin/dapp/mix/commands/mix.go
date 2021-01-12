@@ -60,6 +60,19 @@ func addCreateDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("amount", "a", 0, "deposit amount")
 	cmd.MarkFlagRequired("amount")
 
+	cmd.Flags().StringP("secretPayment", "s", "", "secret for payment addr")
+	cmd.MarkFlagRequired("secretPayment")
+
+	cmd.Flags().StringP("pubX", "x", "", "receiving pub key X")
+	cmd.MarkFlagRequired("pubX")
+
+	cmd.Flags().StringP("pubY", "y", "", "receiving pub key Y")
+	cmd.MarkFlagRequired("pubY")
+
+	cmd.Flags().StringP("secretAuth", "u", "", "secret for authorize addr")
+
+	cmd.Flags().StringP("secretReturn", "r", "", "secret for return addr")
+
 }
 
 func parseProofPara(input string) ([]*mixTy.ZkProofInfo, error) {
@@ -83,15 +96,30 @@ func createDeposit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	proofsPara, _ := cmd.Flags().GetString("proofs")
+	secretPayment, _ := cmd.Flags().GetString("secretPayment")
+	pubX, _ := cmd.Flags().GetString("pubX")
+	pubY, _ := cmd.Flags().GetString("pubY")
 
 	proofInputs, err := parseProofPara(proofsPara)
 	if err != nil {
 		return
 	}
 
+	var pubkey mixTy.PubKey
+	pubkey.X = pubX
+	pubkey.Y = pubY
+	var paySecret mixTy.DHSecret
+	paySecret.Secret = secretPayment
+	paySecret.Epk = &pubkey
+
+	var group mixTy.DHSecretGroup
+	group.Spender = &paySecret
+
 	payload := &mixTy.MixDepositAction{}
 	payload.Amount = amount
 	payload.NewCommits = append(payload.NewCommits, proofInputs...)
+	payload.NewCommits[0].Group = &group
+
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
 		ActionName: "Deposit",

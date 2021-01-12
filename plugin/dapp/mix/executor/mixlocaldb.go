@@ -27,7 +27,7 @@ func (e *Mix) execLocalMix(tx *types.Transaction, receiptData *types.ReceiptData
 	table := NewMixTxTable(e.GetLocalDB())
 
 	r := &mixTy.LocalMixTx{
-		Hash:   tx.Hash(),
+		Hash:   common.ToHex(tx.Hash()),
 		Height: e.GetHeight(),
 		Index:  int64(index),
 	}
@@ -66,29 +66,24 @@ func (e *Mix) listMixInfos(req *mixTy.MixTxListReq) (types.Message, error) {
 		primary = []byte(req.TxIndex)
 	}
 
+	cur := &MixTxRow{}
 	indexName := "height"
+	var prefix []byte
 	info := &mixTy.LocalMixTx{Height: req.Height, Index: req.Index}
 	if len(req.Hash) > 0 {
-		hash, err := common.FromHex(req.Hash)
+		info.Hash = req.Hash
+		indexName = "hash"
+		var err error
+		prefix, err = cur.Get(indexName)
 		if err != nil {
-			mlog.Error("listMixInfos fromHex", "hash", req.Hash, "err", err)
+			mlog.Error("listMixInfos Get", "indexName", indexName, "err", err)
 			return nil, err
 		}
-		info.Hash = hash
-		indexName = "hash"
 	}
-
-	cur := &MixTxRow{}
 	cur.SetPayload(info)
-
-	prefix, err := cur.Get(indexName)
-	if err != nil {
-		mlog.Error("listMixInfos Get", "indexName", indexName, "err", err)
-		return nil, err
-	}
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {
-		mlog.Error("listMixInfos query failed", "indexName", indexName, "prefix", prefix, "key", string(primary), "err", err)
+		mlog.Error("listMixInfos query failed", "indexName", indexName, "prefix", string(prefix), "key", string(primary), "err", err)
 		return nil, err
 	}
 	if len(rows) == 0 {
