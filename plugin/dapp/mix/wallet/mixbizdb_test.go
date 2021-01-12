@@ -93,7 +93,7 @@ func TestEncodeSecretData(t *testing.T) {
 	privacy, err := newPrivacyWithPrivKey(keyByte)
 	assert.Equal(t, nil, err)
 
-	req := &mixTy.EncryptSecretData{ReceivingPk: privacy.ShareSecretKey.ReceivingPk, Secret: ret.Encode}
+	req := &mixTy.EncryptSecretData{ReceivingPk: privacy.ShareSecretKey.ReceivingPk, Secret: ret.Encoded}
 	dhSecret, err := encryptSecretData(req)
 	assert.Nil(t, err)
 	t.Log(dhSecret)

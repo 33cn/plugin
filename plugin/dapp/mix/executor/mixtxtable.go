@@ -18,7 +18,7 @@ index: status
 */
 
 var txBoardOpt = &table.Option{
-	Prefix:  "LODB-mixcoin",
+	Prefix:  "LODB-mix",
 	Name:    "tx",
 	Primary: "txIndex",
 	Index:   []string{"height", "hash"},
@@ -66,7 +66,7 @@ func (r *MixTxRow) Get(key string) ([]byte, error) {
 	case "height":
 		return []byte(fmt.Sprintf("%022d", r.Height)), nil
 	case "hash":
-		return r.Hash, nil
+		return []byte(r.Hash), nil
 
 	default:
 		return nil, types.ErrNotFound

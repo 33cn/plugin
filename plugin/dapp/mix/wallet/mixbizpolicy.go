@@ -141,5 +141,5 @@ func (policy *mixPolicy) Call(funName string, in types.Message) (ret types.Messa
 // SignTransaction 对隐私交易进行签名
 func (policy *mixPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtxhex string, err error) {
 
-	return false, "", types.ErrNotSupport
+	return true, "", types.ErrNotSupport
 }

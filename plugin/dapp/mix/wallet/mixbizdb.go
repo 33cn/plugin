@@ -5,7 +5,7 @@
 package wallet
 
 import (
-	"encoding/hex"
+	"github.com/33cn/chain33/common"
 
 	commondb "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -46,7 +46,7 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 		return nil, types.ErrInvalidParam
 	}
 
-	table := NewMixTable(p.getWalletOperate().GetDBStore())
+	table := NewMixTable(commondb.NewKVDB(p.getWalletOperate().GetDBStore()))
 	switch v.GetTy() {
 	//deposit 匹配newcommits，属于自己的存到数据库
 	case mixTy.MixActionDeposit:
@@ -227,12 +227,12 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	}
 	var rep mixTy.WalletIndexResp
 	for _, row := range rows {
-		r, ok := row.Data.(*mixTy.WalletIndexInfo)
+		r, ok := row.Data.(*mixTy.WalletDbMixInfo)
 		if !ok {
 			bizlog.Error("listMixInfos", "err", "bad row type")
 			return nil, types.ErrDecode
 		}
-		rep.Datas = append(rep.Datas, r)
+		rep.Datas = append(rep.Datas, r.Info)
 	}
 	return &rep, nil
 }
@@ -273,7 +273,7 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 	//可能自己账户里面既有spender,也有returner 或authorize,都要解一遍
 	info, err := p.decodeSecret(noteHash, secretGroup.Spender, privacyKeys)
 	if err != nil {
-		bizlog.Info("processSecretGroup.spender", "err", err)
+		bizlog.Error("processSecretGroup.spender", "err", err)
 	}
 	if info != nil {
 		p.addTable(info, heightIndex, table)
@@ -281,7 +281,7 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 
 	info, err = p.decodeSecret(noteHash, secretGroup.Returner, privacyKeys)
 	if err != nil {
-		bizlog.Info("processSecretGroup.Returner", "err", err)
+		bizlog.Error("processSecretGroup.Returner", "err", err)
 	}
 	if info != nil {
 		p.addTable(info, heightIndex, table)
@@ -289,7 +289,7 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 
 	info, err = p.decodeSecret(noteHash, secretGroup.Authorize, privacyKeys)
 	if err != nil {
-		bizlog.Info("processSecretGroup.Authorize", "err", err)
+		bizlog.Error("processSecretGroup.Authorize", "err", err)
 	}
 	if info != nil {
 		p.addTable(info, heightIndex, table)
@@ -304,7 +304,7 @@ func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, priv
 	tempPubKey := &mixTy.PubKey{X: dhSecret.Epk.X, Y: dhSecret.Epk.Y}
 
 	for _, key := range privacyKeys {
-		cryptData, err := hex.DecodeString(dhSecret.Secret)
+		cryptData, err := common.FromHex(dhSecret.Secret)
 		if err != nil {
 			return nil, errors.Wrapf(err, "decode for notehash=%s,crypt=%s", noteHash, dhSecret.Secret)
 		}
@@ -341,7 +341,7 @@ func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, priv
 			}
 			//账户地址
 			info.Account = key.Addr
-
+			info.Secret = &rawData
 			return &info, nil
 
 		}

@@ -16,7 +16,7 @@ index: status
 */
 
 var boardOpt = &table.Option{
-	Prefix:  "LODB-mixcoin",
+	Prefix:  "LODB-mix",
 	Name:    "wallet",
 	Primary: "heightindex",
 	Index: []string{
@@ -69,6 +69,8 @@ func (r *MixRow) Get(key string) ([]byte, error) {
 		return []byte(r.TxIndex), nil
 	case "noteHash":
 		return []byte(r.Info.NoteHash), nil
+	case "nullifier":
+		return []byte(r.Info.Nullifier), nil
 	case "authSpendHash":
 		return []byte(r.Info.AuthSpendHash), nil
 	case "spender":
