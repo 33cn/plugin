@@ -267,13 +267,13 @@ enum NoteStatus{
 }
 
 message WalletIndexInfo {
-    string             noteHash   = 1;
-    string             nullifier    = 2;
-    string             authSpendHash = 3;
-    string             spender        = 4;
-    string             account      = 5; //账户地址
-    NoteStatus         status       = 6;
-    SecretData         note         = 7;
+    string             noteHash         = 1;
+    string             nullifier        = 2;
+    string             authSpendHash    = 3;
+    string             spender          = 4;
+    string             account          = 5; //账户地址
+    NoteStatus         status           = 6;
+    SecretData         secret           = 7;
 
 }
 
@@ -322,7 +322,7 @@ enum MixWalletRescanStatus{
 ///////localdb index query
 
 message LocalMixTx {
-    bytes hash = 1;
+    string hash = 1;
     int64 height = 2;
     int64 index = 3;
 }

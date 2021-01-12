@@ -292,7 +292,7 @@ func (policy *mixPolicy) rescanNotes() {
 		}
 		mixTxInfos := msg.(*mixTy.MixTxListResp)
 		if mixTxInfos == nil {
-			bizlog.Info("privacy ReqTxInfosByAddr ReplyTxInfos is nil")
+			bizlog.Info("rescanNotes mix privacy ReqTxInfosByAddr ReplyTxInfos is nil")
 			break
 		}
 		txcount := len(mixTxInfos.Txs)
@@ -300,7 +300,11 @@ func (policy *mixPolicy) rescanNotes() {
 		var ReqHashes types.ReqHashes
 		ReqHashes.Hashes = make([][]byte, len(mixTxInfos.Txs))
 		for index, tx := range mixTxInfos.Txs {
-			ReqHashes.Hashes[index] = tx.GetHash()
+			hash, err := common.FromHex(tx.Hash)
+			if err != nil {
+				bizlog.Error("rescanNotes mix decode hash", "hash", tx.Hash)
+			}
+			ReqHashes.Hashes[index] = hash
 		}
 
 		if txcount > 0 {
