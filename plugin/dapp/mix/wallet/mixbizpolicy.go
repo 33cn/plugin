@@ -5,7 +5,12 @@
 package wallet
 
 import (
+	"encoding/hex"
 	"sync"
+
+	"github.com/33cn/chain33/common/address"
+
+	"github.com/33cn/chain33/common"
 
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
@@ -140,6 +145,42 @@ func (policy *mixPolicy) Call(funName string, in types.Message) (ret types.Messa
 
 // SignTransaction 对隐私交易进行签名
 func (policy *mixPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtxhex string, err error) {
+	needSysSign = false
+	bytes, err := common.FromHex(req.GetTxHex())
+	if err != nil {
+		bizlog.Error("SignTransaction", "common.FromHex error", err)
+		return
+	}
+	tx := new(types.Transaction)
+	if err = types.Decode(bytes, tx); err != nil {
+		bizlog.Error("SignTransaction", "Decode Transaction error", err)
+		return
+	}
 
-	return true, "", types.ErrNotSupport
+	action := new(mixTy.MixAction)
+	if err = types.Decode(tx.Payload, action); err != nil {
+		bizlog.Error("SignTransaction", "Decode PrivacyAction error", err)
+		return
+	}
+	if action.Ty == mixTy.MixActionTransfer {
+		// 隐私交易的私对私、私对公需要进行特殊签名
+		policy.signatureTx(tx, action.GetTransfer())
+	} else {
+		tx.Sign(int32(policy.getWalletOperate().GetSignType()), key)
+	}
+
+	signtxhex = hex.EncodeToString(types.Encode(tx))
+	return
+}
+
+func (policy *mixPolicy) signatureTx(tx *types.Transaction, transfer *mixTy.MixTransferAction) error {
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	mixSignData := types.Encode(transfer)
+	tx.Signature = &types.Signature{
+		Ty:        MixSignID,
+		Signature: common.BytesToHash(mixSignData).Bytes(),
+		// 这里填的是mix合约的公钥，让框架保持一致
+		Pubkey: address.ExecPubKey(cfg.ExecName(mixTy.MixX)),
+	}
+	return nil
 }
