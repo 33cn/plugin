@@ -12,6 +12,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/consensys/gurvy/bn256/twistededwards"
 
+	"github.com/consensys/gurvy/bn256/fr"
 	"github.com/pkg/errors"
 )
 
@@ -24,21 +25,21 @@ func (a *action) transferInputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferI
 	var input mixTy.TransferInputPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
-		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "transferInput verify decode string=%s", proof.PublicInput)
 	}
 	err = json.Unmarshal(data, &input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "transferInput verify unmarshal string=%s", proof.PublicInput)
 	}
 
 	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "transferInput verify spendVerify")
 	}
 
 	err = a.zkProofVerify(proof, mixTy.VerifyType_TRANSFERINPUT)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "transferInput verify proof verify")
 	}
 
 	return &input, nil
@@ -54,23 +55,33 @@ func (a *action) transferOutputVerify(proof *mixTy.ZkProofInfo) (*mixTy.Transfer
 	var input mixTy.TransferOutputPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
-		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "Output verify decode string=%s", proof.PublicInput)
 	}
 	err = json.Unmarshal(data, &input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "Output verify  unmarshal string=%s", proof.PublicInput)
 	}
 
 	err = a.zkProofVerify(proof, mixTy.VerifyType_TRANSFEROUTPUT)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Output verify proof verify")
 	}
 
 	return &input, nil
 
 }
 
-func verifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput) bool {
+func getFee() *twistededwards.Point {
+	//手续费 可配， 缺省100000， 即0.001， point=fee*G + 0*H
+	var fee fr.Element
+	fee.SetUint64(100000).FromMont()
+	var pFee twistededwards.Point
+	ed := twistededwards.GetEdwardsCurve()
+	pFee.ScalarMul(&ed.Base, fee)
+	return &pFee
+}
+
+func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput) bool {
 	var inputPoints, outputPoints []*twistededwards.Point
 	for _, in := range inputs {
 		var p twistededwards.Point
@@ -85,13 +96,17 @@ func verifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 		p.Y.SetString(out.AmountY)
 		outputPoints = append(outputPoints, &p)
 	}
+	//out value add fee
+	outputPoints = append(outputPoints, getFee())
 
-	var sumInput, sumOutput twistededwards.Point
-	for _, p := range inputPoints {
-		sumInput.Add(&sumInput, p)
+	//sum input and output
+	sumInput := inputPoints[0]
+	sumOutput := outputPoints[0]
+	for _, p := range inputPoints[1:] {
+		sumInput.Add(sumInput, p)
 	}
-	for _, p := range outputPoints {
-		sumOutput.Add(&sumOutput, p)
+	for _, p := range outputPoints[1:] {
+		sumOutput.Add(sumOutput, p)
 	}
 
 	if sumInput.X.Equal(&sumOutput.X) && sumInput.Y.Equal(&sumOutput.Y) {
@@ -125,7 +140,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 		outputs = append(outputs, out)
 	}
 
-	if !verifyCommitValues(inputs, outputs) {
+	if !VerifyCommitValues(inputs, outputs) {
 		return nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
 	}
 
