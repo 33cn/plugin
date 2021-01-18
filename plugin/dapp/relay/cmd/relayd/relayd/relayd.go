@@ -323,7 +323,7 @@ func (r *Relayd) transaction(payload []byte) *types.Transaction {
 		Payload: payload,
 		Nonce:   rand.Int63(),
 		To:      address.ExecAddress(ty.RelayX),
-		ChainID: r.config.Chain33Cfg..GetChainID(),
+		ChainID: r.config.Chain33Cfg.GetChainID(),
 	}
 
 	minFee := types.DefaultMinFee

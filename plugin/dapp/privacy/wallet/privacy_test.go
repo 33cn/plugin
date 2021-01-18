@@ -190,6 +190,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 }
 
 func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *types.Transaction {
+	cfg := mock.walletOp.GetAPI().GetConfig()
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		return nil
@@ -219,7 +220,6 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 		To:      address.ExecAddress(ty.PrivacyX),
 		ChainID: cfg.GetChainID(),
 	}
-	cfg := mock.walletOp.GetAPI().GetConfig()
 	txSize := types.Size(tx) + ty.SignatureSize
 	realFee := int64((txSize+1023)>>ty.Size1Kshiftlen) * cfg.GetMinTxFeeRate()
 	tx.Fee = realFee
