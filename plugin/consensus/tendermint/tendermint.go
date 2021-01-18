@@ -567,17 +567,20 @@ func (client *Client) CommitBlock(block *types.Block) error {
 
 // WaitBlock by height
 func (client *Client) WaitBlock(height int64) bool {
-	retry := 0
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	beg := time.Now()
 	for {
-		newHeight, err := client.getLastHeight()
-		if err == nil && newHeight >= height {
-			return true
-		}
-		retry++
-		time.Sleep(100 * time.Millisecond)
-		if retry >= 100 {
-			tendermintlog.Error("Wait block fail", "height", height, "CurrentHeight", newHeight)
-			return false
+		select {
+		case <-ticker.C:
+			tendermintlog.Info("Still waiting block......", "height", height, "cost", time.Since(beg))
+		default:
+			newHeight, err := client.getLastHeight()
+			if err == nil && newHeight >= height {
+				return true
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
