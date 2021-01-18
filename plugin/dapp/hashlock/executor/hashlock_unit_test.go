@@ -126,7 +126,6 @@ func constructHashlockInstance() drivers.Driver {
 }
 
 func ConstructLockTx() *types.Transaction {
-	
 
 	var lockAmount int64 = 90
 	var locktime int64 = 70
