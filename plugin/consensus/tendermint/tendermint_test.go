@@ -200,7 +200,10 @@ func AddNode() {
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
 	tx.Nonce = r.Int63()
-	tx.ChainID = c.Version().ChainID
+	version, _ := c.Version(context.Background(), nil)
+	if version != nil {
+		tx.ChainID = version.ChainID
+	}
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
@@ -223,8 +226,11 @@ func ConfigManager() {
 	tx := &types.Transaction{Execer: []byte("manage"), Payload: types.Encode(modify), Fee: fee}
 	tx.To = address.ExecAddress("manage")
 	tx.Nonce = r.Int63()
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.ChainID
+	version, _ := c.Version(context.Background(), nil)
+	if version != nil {
+		tx.ChainID = version.ChainID
+
+	}
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
