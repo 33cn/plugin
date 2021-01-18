@@ -67,7 +67,7 @@ func (a *action) authorizeVerify(proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePubl
 	}
 
 	//zk-proof校验
-	err = a.zkProofVerify(proof, mixTy.VerifyType_AUTHORIZE)
+	err = zkProofVerify(a.db, proof, mixTy.VerifyType_AUTHORIZE)
 	if err != nil {
 		return nil, err
 	}

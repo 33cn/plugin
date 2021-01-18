@@ -10,21 +10,22 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
 )
 
-func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeSpendHash string) error {
+func spendVerify(db dbm.KV, treeRootHash, nulliferHash, authorizeSpendHash string) error {
 	//zk-proof校验
 	//check tree rootHash exist
-	if !checkTreeRootHashExist(a.db, transferFr2Bytes(treeRootHash)) {
+	if !checkTreeRootHashExist(db, transferFr2Bytes(treeRootHash)) {
 		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", treeRootHash)
 	}
 
 	//nullifier should not exist
 	nullifierKey := calcNullifierHashKey(nulliferHash)
-	_, err := a.db.Get(nullifierKey)
+	_, err := db.Get(nullifierKey)
 	if err == nil {
 		return errors.Wrapf(mixTy.ErrNulliferHashExist, "nullifier=%s", nulliferHash)
 	}
@@ -35,7 +36,7 @@ func (a *action) spendVerify(treeRootHash, nulliferHash, authorizeSpendHash stri
 	// authorize should exist if needed
 	if len(authorizeSpendHash) > 1 {
 		authKey := calcAuthorizeSpendHashKey(authorizeSpendHash)
-		_, err = a.db.Get(authKey)
+		_, err = db.Get(authKey)
 		if err != nil {
 			return errors.Wrapf(err, "authorize=%s", authorizeSpendHash)
 		}
@@ -60,12 +61,12 @@ func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error
 		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
 
-	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
+	err = spendVerify(a.db, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
 		return "", 0, err
 	}
 
-	err = a.zkProofVerify(proof, mixTy.VerifyType_WITHDRAW)
+	err = zkProofVerify(a.db, proof, mixTy.VerifyType_WITHDRAW)
 	if err != nil {
 		return "", 0, err
 	}
