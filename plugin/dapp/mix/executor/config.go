@@ -5,6 +5,7 @@
 package executor
 
 import (
+	dbm "github.com/33cn/chain33/common/db"
 	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -60,9 +61,9 @@ func makeConfigVerifyKeyReceipt(data *mixTy.ZkVerifyKeys) *types.Receipt {
 
 }
 
-func (a *action) getVerifyKeys() (*mixTy.ZkVerifyKeys, error) {
+func getVerifyKeys(db dbm.KV) (*mixTy.ZkVerifyKeys, error) {
 	key := getVerifyKeysKey()
-	v, err := a.db.Get(key)
+	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
 	}
@@ -76,7 +77,7 @@ func (a *action) getVerifyKeys() (*mixTy.ZkVerifyKeys, error) {
 }
 
 func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, error) {
-	keys, err := a.getVerifyKeys()
+	keys, err := getVerifyKeys(a.db)
 	if isNotFound(errors.Cause(err)) {
 		keys := &mixTy.ZkVerifyKeys{}
 		keys.Data = append(keys.Data, newKey)
@@ -92,7 +93,7 @@ func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, 
 }
 
 func (a *action) ConfigDeleteVerifyKey(config *mixTy.ZkVerifyKey) (*types.Receipt, error) {
-	keys, err := a.getVerifyKeys()
+	keys, err := getVerifyKeys(a.db)
 	if err != nil {
 		return nil, err
 	}

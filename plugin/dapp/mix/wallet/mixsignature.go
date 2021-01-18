@@ -12,6 +12,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 
@@ -44,7 +46,7 @@ func (r *MixSignature) Bytes() []byte {
 
 // IsZero check is zero
 func (r *MixSignature) IsZero() bool {
-	return false
+	return len(r.sign.Output) == 0 || len(r.sign.Input) == 0
 }
 
 // String convert to string
@@ -100,14 +102,14 @@ func (pubkey *MixSignPublicKey) Bytes() []byte {
 	return pubkey.key[:]
 }
 
-func verifyCommitAmount(transfer *mixTy.MixTransferAction) bool {
+func verifyCommitAmount(transfer *mixTy.MixTransferAction) error {
 	var inputs []*mixTy.TransferInputPublicInput
 	var outputs []*mixTy.TransferOutputPublicInput
 
 	for _, k := range transfer.Input {
 		v, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, k.PublicInput)
 		if err != nil {
-			return false
+			return errors.Wrap(types.ErrInvalidParam, "decode transfer Input")
 		}
 		inputs = append(inputs, v.(*mixTy.TransferInputPublicInput))
 	}
@@ -115,15 +117,15 @@ func verifyCommitAmount(transfer *mixTy.MixTransferAction) bool {
 	for _, k := range transfer.Output {
 		v, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, k.PublicInput)
 		if err != nil {
-			return false
+			return errors.Wrap(types.ErrInvalidParam, "decode transfer output")
 		}
 		outputs = append(outputs, v.(*mixTy.TransferOutputPublicInput))
 	}
 
 	if !mixExec.VerifyCommitValues(inputs, outputs) {
-		return false
+		return errors.Wrap(types.ErrInvalidParam, "verify commit amount")
 	}
-	return true
+	return nil
 }
 
 // VerifyBytes verify bytes
@@ -135,23 +137,28 @@ func (pubkey *MixSignPublicKey) VerifyBytes(msg []byte, sign crypto.Signature) b
 	tx := new(types.Transaction)
 	if err := types.Decode(msg, tx); err != nil || !bytes.Equal([]byte(mixTy.MixX), types.GetRealExecName(tx.Execer)) {
 		// mix特定执行器的签名
-
+		bizlog.Error("pubkey.VerifyBytes", "err", err, "exec", string(types.GetRealExecName(tx.Execer)))
 		return false
 	}
 	action := new(mixTy.MixAction)
 	if err := types.Decode(tx.Payload, action); err != nil {
+		bizlog.Error("pubkey.VerifyBytes decode tx")
 		return false
 	}
 	if action.Ty != mixTy.MixActionTransfer {
 		// mix隐私交易，只私对私需要特殊签名验证
+		bizlog.Error("pubkey.VerifyBytes", "ty", action.Ty)
 		return false
 	}
 
 	//确保签名数据和tx 一致
 	if !bytes.Equal(sign.Bytes(), common.BytesToHash(types.Encode(action.GetTransfer())).Bytes()) {
+		bizlog.Error("pubkey.VerifyBytes tx and sign not match", "sign", common.ToHex(sign.Bytes()), "tx", common.ToHex(common.BytesToHash(types.Encode(action.GetTransfer())).Bytes()))
 		return false
 	}
-	if !verifyCommitAmount(action.GetTransfer()) {
+
+	if err := verifyCommitAmount(action.GetTransfer()); err != nil {
+		bizlog.Error("pubkey.VerifyBytes verify amount", "err", err)
 		return false
 	}
 

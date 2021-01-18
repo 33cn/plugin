@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -23,8 +24,8 @@ func makeNullifierSetReceipt(hash string, data proto.Message) *types.Receipt {
 
 }
 
-func (a *action) zkProofVerify(proof *mixTy.ZkProofInfo, verifyTy mixTy.VerifyType) error {
-	keys, err := a.getVerifyKeys()
+func zkProofVerify(db dbm.KV, proof *mixTy.ZkProofInfo, verifyTy mixTy.VerifyType) error {
+	keys, err := getVerifyKeys(db)
 	if err != nil {
 		return err
 	}
@@ -65,7 +66,7 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error)
 		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
 
-	err = a.zkProofVerify(proof, mixTy.VerifyType_DEPOSIT)
+	err = zkProofVerify(a.db, proof, mixTy.VerifyType_DEPOSIT)
 	if err != nil {
 		return "", 0, err
 	}
