@@ -318,7 +318,7 @@ func (r *Relayd) syncBlockHeaders() {
 }
 
 func (r *Relayd) transaction(payload []byte) *types.Transaction {
-	chainID := 0
+	var chainID int32
 	minFee := types.DefaultMinFee
 
 	//chain33的配置中获取chainID和minFee
