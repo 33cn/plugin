@@ -351,7 +351,7 @@ func NormPut(cfg *types.Chain33Config) {
 }
 
 func prepareTxList(cfg *types.Chain33Config) *types.Transaction {
-	
+
 	var key string
 	var value string
 	var i int
