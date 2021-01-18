@@ -12,6 +12,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/consensys/gurvy/bn256/twistededwards"
 
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/consensys/gurvy/bn256/fr"
 	"github.com/pkg/errors"
 )
@@ -21,7 +22,7 @@ import (
 2. check if exist in authorize pool and nullifier pool
 
 */
-func (a *action) transferInputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferInputPublicInput, error) {
+func transferInputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferInputPublicInput, error) {
 	var input mixTy.TransferInputPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
@@ -32,12 +33,12 @@ func (a *action) transferInputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferI
 		return nil, errors.Wrapf(err, "transferInput verify unmarshal string=%s", proof.PublicInput)
 	}
 
-	err = a.spendVerify(input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
+	err = spendVerify(db, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify spendVerify")
 	}
 
-	err = a.zkProofVerify(proof, mixTy.VerifyType_TRANSFERINPUT)
+	err = zkProofVerify(db, proof, mixTy.VerifyType_TRANSFERINPUT)
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify proof verify")
 	}
@@ -51,7 +52,7 @@ func (a *action) transferInputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferI
 2. check if exist in authorize pool and nullifier pool
 
 */
-func (a *action) transferOutputVerify(proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputPublicInput, error) {
+func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputPublicInput, error) {
 	var input mixTy.TransferOutputPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
@@ -62,7 +63,7 @@ func (a *action) transferOutputVerify(proof *mixTy.ZkProofInfo) (*mixTy.Transfer
 		return nil, errors.Wrapf(err, "Output verify  unmarshal string=%s", proof.PublicInput)
 	}
 
-	err = a.zkProofVerify(proof, mixTy.VerifyType_TRANSFEROUTPUT)
+	err = zkProofVerify(db, proof, mixTy.VerifyType_TRANSFEROUTPUT)
 	if err != nil {
 		return nil, errors.Wrap(err, "Output verify proof verify")
 	}
@@ -75,10 +76,11 @@ func getFee() *twistededwards.Point {
 	//手续费 可配， 缺省100000， 即0.001， point=fee*G + 0*H
 	var fee fr.Element
 	fee.SetUint64(100000).FromMont()
-	var pFee twistededwards.Point
+
+	var pointFee twistededwards.Point
 	ed := twistededwards.GetEdwardsCurve()
-	pFee.ScalarMul(&ed.Base, fee)
-	return &pFee
+	pointFee.ScalarMul(&ed.Base, fee)
+	return &pointFee
 }
 
 func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput) bool {
@@ -115,33 +117,42 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	return false
 }
 
+func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
+	var inputs []*mixTy.TransferInputPublicInput
+	var outputs []*mixTy.TransferOutputPublicInput
+
+	for _, k := range transfer.Input {
+		in, err := transferInputVerify(db, k)
+		if err != nil {
+			return nil, nil, err
+		}
+		inputs = append(inputs, in)
+	}
+
+	for _, k := range transfer.Output {
+		out, err := transferOutputVerify(db, k)
+		if err != nil {
+			return nil, nil, err
+		}
+		outputs = append(outputs, out)
+	}
+
+	if !VerifyCommitValues(inputs, outputs) {
+		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
+	}
+
+	return inputs, outputs, nil
+}
+
 /*
 1. verify(zk-proof, sum value of spend and new commits)
 2. check if exist in authorize pool and nullifier pool
 3. add nullifier to pool
 */
 func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, error) {
-	var inputs []*mixTy.TransferInputPublicInput
-	var outputs []*mixTy.TransferOutputPublicInput
-
-	for _, k := range transfer.Input {
-		in, err := a.transferInputVerify(k)
-		if err != nil {
-			return nil, err
-		}
-		inputs = append(inputs, in)
-	}
-
-	for _, k := range transfer.Output {
-		out, err := a.transferOutputVerify(k)
-		if err != nil {
-			return nil, err
-		}
-		outputs = append(outputs, out)
-	}
-
-	if !VerifyCommitValues(inputs, outputs) {
-		return nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
+	inputs, outputs, err := MixTransferInfoVerify(a.db, transfer)
+	if err != nil {
+		return nil, errors.Wrap(err, "Transfer.MixTransferInfoVerify")
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
@@ -157,7 +168,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	}
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "transfer.pushTree")
 	}
 	mergeReceipt(receipt, rpt)
 	return receipt, nil

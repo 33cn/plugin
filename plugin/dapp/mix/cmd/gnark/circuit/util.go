@@ -73,9 +73,11 @@ func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	// set point G in the circuit
 	pointGSnark := twistededwards_gadget.NewPointGadget(circuit, nil, nil)
 
-	//scalar := circuit.ALLOCATE("-1")
-	//100000000*1e8 to avoid <0 values input
-	circuit.MUSTBE_LESS_OR_EQ(spendValue, 10000000000000000, 256)
+	//to avoid <0 values input
+	//negOne := circuit.ALLOCATE("-1")
+	//negSpendVal := circuit.MUL(spendValue,negOne)
+	//circuit.MUSTBE_LESS_OR_EQ(negSpendVal, 0, 256)
+	circuit.MUSTBE_LESS_OR_EQ(spendValue, 1000000000000000000, 256)
 
 	// set point G in the circuit
 	pointGSnark.ScalarMulFixedBase(circuit, edgadget.BaseX, edgadget.BaseY, spendValue, edgadget)
