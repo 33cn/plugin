@@ -124,7 +124,7 @@ func DposPerf() {
 	fmt.Println("=======start NormPut!=======")
 
 	for i := 0; i < loopCount; i++ {
-		NormPut()
+		NormPut(cfg)
 		time.Sleep(time.Second)
 	}
 
@@ -462,7 +462,7 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
-func prepareTxList() *types.Transaction {
+func prepareTxList(cfg *types.Chain33Config) *types.Transaction {
 	var key string
 	var value string
 	var i int
@@ -475,6 +475,7 @@ func prepareTxList() *types.Transaction {
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
 	tx.Nonce = random.Int63()
+	tx.ChainID = cfg.GetChainID()
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 	return tx
 }
@@ -489,8 +490,8 @@ func clearTestData() {
 	fmt.Println("test data clear successfully!")
 }
 
-func NormPut() {
-	tx := prepareTxList()
+func NormPut(cfg *types.Chain33Config) {
+	tx := prepareTxList(cfg)
 
 	reply, err := c.SendTransaction(context.Background(), tx)
 	if err != nil {

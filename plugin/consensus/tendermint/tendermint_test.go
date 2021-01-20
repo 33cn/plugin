@@ -74,13 +74,13 @@ func TendermintPerf(t *testing.T) {
 	time.Sleep(2 * time.Second)
 	ConfigManager()
 	for i := 0; i < loopCount; i++ {
-		NormPut()
+		NormPut(q.GetConfig().GetChainID())
 		time.Sleep(time.Second)
 	}
 	CheckState(t, cs.(*Client))
 	AddNode()
 	for i := 0; i < loopCount*3; i++ {
-		NormPut()
+		NormPut(q.GetConfig().GetChainID())
 		time.Sleep(time.Second)
 	}
 	time.Sleep(2 * time.Second)
@@ -148,7 +148,7 @@ func generateValue(i, valI int) string {
 	return string(value)
 }
 
-func prepareTxList() *types.Transaction {
+func prepareTxList(chainid int32) *types.Transaction {
 	var key string
 	var value string
 	var i int
@@ -161,6 +161,7 @@ func prepareTxList() *types.Transaction {
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
 	tx.Nonce = r.Int63()
+	tx.ChainID = chainid
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 	return tx
 }
@@ -173,8 +174,8 @@ func clearTestData() {
 	fmt.Println("test data clear successfully!")
 }
 
-func NormPut() {
-	tx := prepareTxList()
+func NormPut(chainid int32) {
+	tx := prepareTxList(chainid)
 
 	reply, err := c.SendTransaction(context.Background(), tx)
 	if err != nil {
@@ -199,6 +200,10 @@ func AddNode() {
 	tx := &types.Transaction{Execer: []byte("valnode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("valnode")
 	tx.Nonce = r.Int63()
+	version, _ := c.Version(context.Background(), nil)
+	if version != nil {
+		tx.ChainID = version.ChainID
+	}
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)
@@ -221,6 +226,11 @@ func ConfigManager() {
 	tx := &types.Transaction{Execer: []byte("manage"), Payload: types.Encode(modify), Fee: fee}
 	tx.To = address.ExecAddress("manage")
 	tx.Nonce = r.Int63()
+	version, _ := c.Version(context.Background(), nil)
+	if version != nil {
+		tx.ChainID = version.ChainID
+
+	}
 	tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 
 	reply, err := c.SendTransaction(context.Background(), tx)

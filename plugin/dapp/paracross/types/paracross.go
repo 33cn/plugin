@@ -260,6 +260,7 @@ func CreateRawMinerTx(cfg *types.Chain33Config, value *ParacrossMinerAction) (*t
 		Payload: types.Encode(action),
 		Nonce:   0, //for consensus purpose, block hash need same, different auth node need keep totally same vote tx
 		To:      address.ExecAddress(cfg.ExecName(ParaX)),
+		ChainID: cfg.GetChainID(),
 	}
 	err := tx.SetRealFee(cfg.GetMinTxFeeRate())
 	if err != nil {
