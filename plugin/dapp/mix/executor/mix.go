@@ -71,3 +71,24 @@ func (m *Mix) CheckTx(tx *types.Transaction, index int) error {
 	return nil
 
 }
+
+// CheckTx check transaction
+func (m *Mix) CheckTx(tx *types.Transaction, index int) error {
+	action := new(mixTy.MixAction)
+	if err := types.Decode(tx.Payload, action); err != nil {
+		mlog.Error("CheckTx decode", "err", err)
+		return err
+	}
+	if action.Ty != mixTy.MixActionTransfer {
+		// mix隐私交易，只私对私需要特殊签名验证
+		return m.DriverBase.CheckTx(tx, index)
+	}
+
+	_, _, err := MixTransferInfoVerify(m.GetStateDB(), action.GetTransfer())
+	if err != nil {
+		mlog.Error("checkTx", "err", err)
+		return err
+	}
+	return nil
+
+}

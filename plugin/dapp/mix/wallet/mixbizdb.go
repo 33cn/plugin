@@ -158,7 +158,7 @@ func updateNullifier(ldb *table.Table, nullifier string) error {
 		return nil
 
 	}
-	u.Info.Status = mixTy.NoteStatus_CLOSE
+	u.Info.Status = mixTy.NoteStatus_INVALID
 	return ldb.Update([]byte(u.TxIndex), u)
 }
 
@@ -174,7 +174,7 @@ func updateAuthSpend(ldb *table.Table, authSpend string) error {
 		return nil
 
 	}
-	u.Info.Status = mixTy.NoteStatus_OPEN
+	u.Info.Status = mixTy.NoteStatus_VALID
 	return ldb.Update([]byte(u.TxIndex), u)
 }
 
@@ -193,8 +193,6 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 		indexName = "nullifier"
 	} else if len(req.AuthSpendHash) > 0 {
 		indexName = "authSpendHash"
-	} else if len(req.Spender) > 0 {
-		indexName = "spender"
 	} else if len(req.Account) > 0 {
 		indexName = "account"
 	} else if req.Status > 0 {
@@ -206,7 +204,6 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 			NoteHash:      req.NoteHash,
 			Nullifier:     req.Nullifier,
 			AuthSpendHash: req.AuthSpendHash,
-			Spender:       req.Spender,
 			Account:       req.Account,
 			Status:        mixTy.NoteStatus(req.Status),
 		}},
@@ -271,7 +268,7 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 	}
 
 	//可能自己账户里面既有spender,也有returner 或authorize,都要解一遍
-	info, err := p.decodeSecret(noteHash, secretGroup.Spender, privacyKeys)
+	info, err := p.decodeSecret(noteHash, secretGroup.Payment, privacyKeys)
 	if err != nil {
 		bizlog.Error("processSecretGroup.spender", "err", err)
 	}
@@ -324,18 +321,17 @@ func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, priv
 			//decrypted, save database
 			var info mixTy.WalletIndexInfo
 			info.NoteHash = noteHash
-			info.Nullifier = getFrString(MimcHashString([]string{rawData.NoteRandom}))
+			info.Nullifier = getFrString(mimcHashString([]string{rawData.NoteRandom}))
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
 			//如果授权为spenderAuthHash，则spender更新本地为OPEN，returner侧仍为FROZEN，花费后，两端都变为USED
 			//如果授权为returnerAuthHash，则returner更新本地为OPEN，spender侧仍为FROZEN，
 			if rawData.PaymentPubKey == key.Privacy.PaymentKey.PayKey {
-				info.Spender = rawData.PaymentPubKey
-				info.AuthSpendHash = getFrString(MimcHashString([]string{rawData.PaymentPubKey, rawData.Amount, rawData.NoteRandom}))
+				info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.PaymentPubKey, rawData.Amount, rawData.NoteRandom}))
 			} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.PayKey {
-				info.Spender = rawData.ReturnPubKey
-				info.AuthSpendHash = getFrString(MimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
+				info.IsReturner = true
+				info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
 			}
-			info.Status = mixTy.NoteStatus_OPEN
+			info.Status = mixTy.NoteStatus_VALID
 			if len(rawData.AuthorizePubKey) > 0 {
 				info.Status = mixTy.NoteStatus_FROZEN
 			}

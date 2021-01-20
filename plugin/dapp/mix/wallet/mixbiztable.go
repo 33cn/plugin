@@ -23,7 +23,6 @@ var boardOpt = &table.Option{
 		"noteHash",
 		"nullifier",
 		"authSpendHash",
-		"spender",
 		"account",
 		"status"},
 }
@@ -73,8 +72,6 @@ func (r *MixRow) Get(key string) ([]byte, error) {
 		return []byte(r.Info.Nullifier), nil
 	case "authSpendHash":
 		return []byte(r.Info.AuthSpendHash), nil
-	case "spender":
-		return []byte(r.Info.Spender), nil
 	case "account":
 		return []byte(r.Info.Account), nil
 	case "status":

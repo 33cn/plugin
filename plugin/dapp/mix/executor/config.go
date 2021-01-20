@@ -31,24 +31,22 @@ func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 	}
 	switch config.Ty {
 	case mixTy.MixConfigType_VerifyKey:
-		if config.Action == mixTy.MixConfigAct_Add {
-			return a.ConfigAddVerifyKey(config.GetVerifyKey())
-		} else {
-			return a.ConfigDeleteVerifyKey(config.GetVerifyKey())
-		}
+		return a.ConfigAddVerifyKey(config.GetVerifyKey())
 	case mixTy.MixConfigType_AuthPubKey:
 		if config.Action == mixTy.MixConfigAct_Add {
 			return a.ConfigAddAuthPubKey(config.GetAuthPk())
 		} else {
 			return a.ConfigDeleteAuthPubKey(config.GetAuthPk())
 		}
+	case mixTy.MixConfigType_PaymentPubKey:
+		return a.ConfigPaymentPubKey(config.GetPaymentKey())
 	}
-	return nil, types.ErrNotFound
+	return nil, errors.Wrapf(types.ErrNotFound, "ty=%d", config.Ty)
 
 }
 
-func makeConfigVerifyKeyReceipt(data *mixTy.ZkVerifyKeys) *types.Receipt {
-	key := getVerifyKeysKey()
+func makeConfigVerifyKeyReceipt(data *mixTy.ZkVerifyKeys, ty int32) *types.Receipt {
+	key := getVerifyKeysKey(ty)
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
@@ -61,8 +59,8 @@ func makeConfigVerifyKeyReceipt(data *mixTy.ZkVerifyKeys) *types.Receipt {
 
 }
 
-func getVerifyKeys(db dbm.KV) (*mixTy.ZkVerifyKeys, error) {
-	key := getVerifyKeysKey()
+func getVerifyKeys(db dbm.KV, ty int32) (*mixTy.ZkVerifyKeys, error) {
+	key := getVerifyKeysKey(ty)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
@@ -77,36 +75,19 @@ func getVerifyKeys(db dbm.KV) (*mixTy.ZkVerifyKeys, error) {
 }
 
 func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, error) {
-	keys, err := getVerifyKeys(a.db)
+	keys, err := getVerifyKeys(a.db, int32(newKey.Type))
 	if isNotFound(errors.Cause(err)) {
 		keys := &mixTy.ZkVerifyKeys{}
 		keys.Data = append(keys.Data, newKey)
-		return makeConfigVerifyKeyReceipt(keys), nil
+		return makeConfigVerifyKeyReceipt(keys, int32(newKey.Type)), nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "AddVerifyKey,ty=%d", newKey.Type)
 	}
+	//逆序保存keys,保证新的key先遍历到
+	keys.Data = []*mixTy.ZkVerifyKey{newKey, keys.Data[0]}
+	return makeConfigVerifyKeyReceipt(keys, int32(newKey.Type)), nil
 
-	keys.Data = append(keys.Data, newKey)
-	return makeConfigVerifyKeyReceipt(keys), nil
-
-}
-
-func (a *action) ConfigDeleteVerifyKey(config *mixTy.ZkVerifyKey) (*types.Receipt, error) {
-	keys, err := getVerifyKeys(a.db)
-	if err != nil {
-		return nil, err
-	}
-
-	var newKeys mixTy.ZkVerifyKeys
-	for _, v := range keys.Data {
-		//不同类型的vk 肯定不同，
-		if v.CurveId == config.CurveId && v.Value == config.Value {
-			continue
-		}
-		newKeys.Data = append(newKeys.Data, v)
-	}
-	return makeConfigVerifyKeyReceipt(&newKeys), nil
 }
 
 func makeConfigAuthKeyReceipt(data *mixTy.AuthPubKeys) *types.Receipt {
@@ -168,4 +149,45 @@ func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 	}
 
 	return makeConfigAuthKeyReceipt(&newKeys), nil
+}
+
+func makeConfigPaymentKeyReceipt(data *mixTy.PaymentKey) *types.Receipt {
+	key := getPaymentPubKey(data.Addr)
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(data)},
+		},
+		Logs: []*types.ReceiptLog{
+			{Ty: mixTy.TyLogMixConfigPaymentKey, Log: types.Encode(data)},
+		},
+	}
+
+}
+
+func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
+	key := getPaymentPubKey(addr)
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get db")
+	}
+	var keys mixTy.PaymentKey
+	err = types.Decode(v, &keys)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db key")
+	}
+
+	return &keys, nil
+}
+
+func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, error) {
+	if paykey == nil || len(paykey.PayingKey) == 0 || len(paykey.ReceivingKey.X) == 0 || len(paykey.ReceivingKey.Y) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey=%v", paykey)
+	}
+	//直接覆盖
+	return makeConfigPaymentKeyReceipt(&mixTy.PaymentKey{
+		Addr:         a.fromaddr,
+		PayingKey:    paykey.PayingKey,
+		ReceivingKey: paykey.ReceivingKey}), nil
+
 }

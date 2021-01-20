@@ -29,6 +29,7 @@ private:
 	authorizePriKey
 	spendFlag
 	noteRandom
+	noteHash
 
 	path...
 	helper...
@@ -69,6 +70,9 @@ func NewAuth() *frontend.R1CS {
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubKey, returnPubKey, authPubKey, spendAmount, noteRandom)
+	noteHash := circuit.SECRET_INPUT("noteHash")
+	circuit.MUSTBE_EQ(noteHash, preImage)
+
 	util.MerkelPathPart(&circuit, mimc, preImage)
 
 	r1cs := circuit.ToR1CS()

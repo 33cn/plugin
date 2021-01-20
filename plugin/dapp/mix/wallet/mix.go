@@ -7,8 +7,6 @@ package wallet
 import (
 	"bytes"
 	"fmt"
-	"math/big"
-
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/pkg/errors"
 
@@ -26,10 +24,10 @@ import (
 //payment, payPrivKey=hash(privkey), payPubkey=hash(payPrivKey)
 //DH crypt key, prikey=payPrikey, pubKey=payPrikey*G
 func newPrivacyWithPrivKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
-	payPrivacyKey := MimcHashByte([][]byte{privKey})
+	payPrivacyKey := mimcHashByte([][]byte{privKey})
 	paymentKey := &mixTy.PaymentKeyPair{}
 	paymentKey.SpendKey = getFrString(payPrivacyKey)
-	paymentKey.PayKey = getFrString(MimcHashByte([][]byte{payPrivacyKey}))
+	paymentKey.PayKey = getFrString(mimcHashByte([][]byte{payPrivacyKey}))
 
 	shareSecretKey := &mixTy.ShareSecretKeyPair{}
 	ecdh := NewCurveBn256ECDH()
@@ -71,13 +69,14 @@ func encryptDataWithPadding(password, data []byte) []byte {
 	return wcom.CBCEncrypterPrivkey(password, paddingText)
 }
 
-func encryptData(receiverPubKey *mixTy.PubKey, data []byte) (*mixTy.PubKey, []byte, error) {
+func encryptData(receiverPubKey *mixTy.PubKey, data []byte) *mixTy.DHSecret {
 	ecdh := NewCurveBn256ECDH()
 	//generate ephemeral priv/pub key
 	ephPriv, ephPub := ecdh.GenerateKey(nil)
 	password, _ := ecdh.GenerateSharedSecret(ephPriv, receiverPubKey)
+	encrypt := encryptDataWithPadding(password, data)
 
-	return ephPub, encryptDataWithPadding(password, data), nil
+	return &mixTy.DHSecret{Epk: ephPub, Secret: common.ToHex(encrypt)}
 
 }
 
@@ -104,25 +103,25 @@ func getFrString(v []byte) string {
 	return f.String()
 }
 
-func MimcHashString(params []string) []byte {
+func mimcHashString(params []string) []byte {
 	var sum []byte
 	for _, k := range params {
-		fmt.Println("input:", k)
+		//fmt.Println("input:", k)
 		sum = append(sum, getByte(k)...)
 	}
 	hash := mimcHashCalc(sum)
-	fmt.Println("hash=", getFrString(hash))
+	//fmt.Println("hash=", getFrString(hash))
 	return hash
 
 }
 
-func MimcHashByte(params [][]byte) []byte {
+func mimcHashByte(params [][]byte) []byte {
 	var sum []byte
 	for _, k := range params {
 		sum = append(sum, k...)
 	}
 	hash := mimcHashCalc(sum)
-	fmt.Println("hash=", getFrString(hash))
+	//fmt.Println("hash=", getFrString(hash))
 	return hash
 
 }
@@ -386,65 +385,4 @@ func (policy *mixPolicy) showAccountNoteInfo(addrs []string) (*mixTy.WalletIndex
 		resps.Datas = append(resps.Datas, resp.(*mixTy.WalletIndexResp).Datas...)
 	}
 	return &resps, nil
-}
-
-//对secretData 编码为string,同时增加随机值
-func encodeSecretData(secret *mixTy.SecretData) (*mixTy.EncodedSecretData, error) {
-	if secret == nil {
-		return nil, errors.Wrap(types.ErrInvalidParam, "para is nil")
-	}
-	if len(secret.PaymentPubKey) <= 0 {
-		return nil, errors.Wrap(types.ErrInvalidParam, "spendPubKey is nil")
-	}
-	var val big.Int
-	ret, succ := val.SetString(secret.Amount, 10)
-	if !succ {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount = %s", secret.Amount)
-	}
-	if ret.Sign() <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "amount = %s, need bigger than 0", secret.Amount)
-	}
-
-	//获取随机值
-	var fr fr_bn256.Element
-	fr.SetRandom()
-	secret.NoteRandom = fr.String()
-	code := types.Encode(secret)
-	var resp mixTy.EncodedSecretData
-
-	resp.Encoded = common.ToHex(code)
-	resp.RawData = secret
-
-	return &resp, nil
-
-}
-
-//产生随机秘钥和receivingPk对data DH加密，返回随机秘钥的公钥
-func encryptSecretData(req *mixTy.EncryptSecretData) (*mixTy.DHSecret, error) {
-	secret, err := common.FromHex(req.Secret)
-	if err != nil {
-		return nil, errors.Wrap(err, "decode secret")
-	}
-	epk, crypt, err := encryptData(req.ReceivingPk, secret)
-	if err != nil {
-		return nil, errors.Wrap(err, "encrypt")
-	}
-	return &mixTy.DHSecret{Epk: epk, Secret: common.ToHex(crypt)}, nil
-}
-
-func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) {
-	secret, err := common.FromHex(req.Secret)
-	if err != nil {
-		return nil, errors.Wrap(err, "decode req.secret")
-	}
-	decrypt, err := decryptData(req.ReceivingPriKey, req.Epk, secret)
-	if err != nil {
-		return nil, errors.Wrap(err, "decrypt secret")
-	}
-	var raw mixTy.SecretData
-	err = types.Decode(decrypt, &raw)
-	if err != nil {
-		return nil, errors.Wrap(mixTy.ErrDecryptDataFail, "decode decrypt.secret")
-	}
-	return &raw, nil
 }

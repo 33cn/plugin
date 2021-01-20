@@ -113,7 +113,7 @@ func createDeposit(cmd *cobra.Command, args []string) {
 	paySecret.Epk = &pubkey
 
 	var group mixTy.DHSecretGroup
-	group.Spender = &paySecret
+	group.Payment = &paySecret
 
 	payload := &mixTy.MixDepositAction{}
 	payload.Amount = amount
@@ -272,13 +272,14 @@ func CreateConfigCmd() *cobra.Command {
 	}
 	cmd.AddCommand(mixConfigVerifyKeyParaCmd())
 	cmd.AddCommand(mixConfigAuthPubKeyParaCmd())
+	cmd.AddCommand(mixConfigPaymentPubKeyParaCmd())
 
 	return cmd
 }
 
 func mixConfigVerifyKeyParaCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "verify",
+		Use:   "vk",
 		Short: "zk proof verify key config cmd",
 		Run:   createConfigVerify,
 	}
@@ -288,12 +289,7 @@ func mixConfigVerifyKeyParaCmd() *cobra.Command {
 }
 
 func addVkConfigFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("action", "a", 0, "0:add,1:delete")
-
-	cmd.Flags().Uint32P("curveid", "i", 3, "zk curve id,1:bls377,2:bls381,3:bn256")
-	cmd.MarkFlagRequired("curveid")
-
-	cmd.Flags().Uint32P("circuit", "c", 0, "mix circuit type,0:deposit,1:withdraw,2:spendinput,3:spendout,4:authorize")
+	cmd.Flags().Uint32P("circuit", "c", 0, "mix circuit type,0:deposit,1:withdraw,2:payinput,3:payoutput,4:authorize")
 	cmd.MarkFlagRequired("circuit")
 
 	cmd.Flags().StringP("zkey", "z", "", "zk proof verify key")
@@ -303,19 +299,16 @@ func addVkConfigFlags(cmd *cobra.Command) {
 
 func createConfigVerify(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
-	action, _ := cmd.Flags().GetUint32("action")
-	curveid, _ := cmd.Flags().GetUint32("curveid")
 	circuit, _ := cmd.Flags().GetUint32("circuit")
 	key, _ := cmd.Flags().GetString("zkey")
 
 	var zkVk mixTy.ZkVerifyKey
 	zkVk.Value = key
 	zkVk.Type = mixTy.VerifyType(circuit)
-	zkVk.CurveId = mixTy.ZkCurveId(curveid)
 
 	payload := &mixTy.MixConfigAction{}
 	payload.Ty = mixTy.MixConfigType_VerifyKey
-	payload.Action = mixTy.MixConfigAct(action)
+	payload.Action = mixTy.MixConfigAct(0)
 	payload.Value = &mixTy.MixConfigAction_VerifyKey{VerifyKey: &zkVk}
 
 	params := &rpctypes.CreateTxIn{
@@ -331,7 +324,7 @@ func createConfigVerify(cmd *cobra.Command, args []string) {
 
 func mixConfigAuthPubKeyParaCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pubkey",
+		Use:   "auth",
 		Short: "mix authorize pub key config cmd",
 		Run:   createConfigPubKey,
 	}
@@ -372,6 +365,52 @@ func createConfigPubKey(cmd *cobra.Command, args []string) {
 
 }
 
+func mixConfigPaymentPubKeyParaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pay",
+		Short: "mix payment pub key config cmd",
+		Run:   createConfigPayPubKey,
+	}
+	addPayPubKeyConfigFlags(cmd)
+
+	return cmd
+}
+
+func addPayPubKeyConfigFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("paying", "p", "", "paying key")
+	cmd.MarkFlagRequired("paying")
+
+	cmd.Flags().StringP("keyX", "x", "", "receiving pub key X")
+	cmd.MarkFlagRequired("keyX")
+
+	cmd.Flags().StringP("keyY", "y", "", "receiving pub key Y")
+	cmd.MarkFlagRequired("keyY")
+}
+
+func createConfigPayPubKey(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	paying, _ := cmd.Flags().GetString("paying")
+	keyx, _ := cmd.Flags().GetString("keyX")
+	keyy, _ := cmd.Flags().GetString("keyY")
+
+	payload := &mixTy.MixConfigAction{}
+	payload.Ty = mixTy.MixConfigType_PaymentPubKey
+
+	receivingKey := &mixTy.PubKey{X: keyx, Y: keyy}
+
+	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{PayingKey: paying, ReceivingKey: receivingKey}}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, mixTy.MixX),
+		ActionName: "Config",
+		Payload:    types.MustPBToJSON(payload),
+	}
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+
+}
+
 func QueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
@@ -381,7 +420,7 @@ func QueryCmd() *cobra.Command {
 	cmd.AddCommand(GetTreeLeavesCmd())
 	cmd.AddCommand(GetTreeRootsCmd())
 	cmd.AddCommand(ShowMixTxsCmd())
-
+	cmd.AddCommand(ShowPaymentPubKeyCmd())
 	return cmd
 }
 
@@ -542,6 +581,39 @@ func showMixTxs(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+// ShowProposalBoardCmd 显示提案查询信息
+func ShowPaymentPubKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "paykey",
+		Short: "show addr's payment pub key info",
+		Run:   showPayment,
+	}
+	addShowPaymentflags(cmd)
+	return cmd
+}
+
+func addShowPaymentflags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "s", "", "mix tx hash")
+	cmd.MarkFlagRequired("addr")
+
+}
+
+func showPayment(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("addr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = mixTy.MixX
+
+	params.FuncName = "PaymentPubKey"
+	params.Payload = types.MustPBToJSON(&types.ReqString{Data: addr})
+
+	var resp mixTy.PaymentKey
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func WalletCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wallet",
@@ -552,9 +624,8 @@ func WalletCmd() *cobra.Command {
 	cmd.AddCommand(RescanCmd())
 	cmd.AddCommand(RescanStatusCmd())
 	cmd.AddCommand(EnableCmd())
-	cmd.AddCommand(EncodeSecretDataCmd())
-	cmd.AddCommand(EncryptSecretDataCmd())
-	cmd.AddCommand(DecryptSecretDataCmd())
+	cmd.AddCommand(SecretCmd())
+	cmd.AddCommand(ProofCmd())
 
 	return cmd
 }
@@ -710,11 +781,23 @@ func enablePrivacy(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// ShowAccountPrivacyInfo get para chain status by height
+func SecretCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "secret",
+		Short: "note secret cmd",
+	}
+	cmd.AddCommand(EncodeSecretDataCmd())
+	cmd.AddCommand(EncryptSecretDataCmd())
+	cmd.AddCommand(DecryptSecretDataCmd())
+
+	return cmd
+}
+
+// EncodeSecretDataCmd get para chain status by height
 func EncodeSecretDataCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "encode",
-		Short: "encode secret data",
+		Use:   "raw",
+		Short: "raw secret data",
 		Run:   encodeSecret,
 	}
 	encodeSecretCmdFlags(cmd)
@@ -729,7 +812,7 @@ func encodeSecretCmdFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize key")
 
-	cmd.Flags().StringP("amount", "m", "", "amount with 1e8")
+	cmd.Flags().StringP("amount", "m", "", "amount")
 	cmd.MarkFlagRequired("amount")
 
 }
@@ -838,5 +921,221 @@ func decryptSecret(cmd *cobra.Command, args []string) {
 
 	var res mixTy.SecretData
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.DecryptSecretData", req, &res)
+	ctx.Run()
+}
+
+func ProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proof",
+		Short: "circuit proof inputs",
+	}
+	cmd.AddCommand(DepositInputsCmd())
+	cmd.AddCommand(PayInInputsCmd())
+	cmd.AddCommand(PayOutInputsCmd())
+	cmd.AddCommand(WithdrawInputsCmd())
+	cmd.AddCommand(AuthInputsCmd())
+
+	return cmd
+}
+
+// DepositInputsCmd get para chain status by height
+func DepositInputsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deposit",
+		Short: "one key get deposit input data",
+		Run:   depositSecret,
+	}
+	depositSecretCmdFlags(cmd)
+	return cmd
+}
+
+func depositSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("payment", "p", "", "payment addr")
+	cmd.MarkFlagRequired("payment")
+
+	cmd.Flags().StringP("return", "r", "", "return addr")
+
+	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
+
+	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func depositSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payment, _ := cmd.Flags().GetString("payment")
+	returnKey, _ := cmd.Flags().GetString("return")
+	authorize, _ := cmd.Flags().GetString("authorize")
+	amount, _ := cmd.Flags().GetString("amount")
+
+	req := &mixTy.DepositProofReq{
+		PaymentAddr:   payment,
+		ReturnAddr:    returnKey,
+		AuthorizeAddr: authorize,
+		Amount:        amount,
+	}
+
+	var res mixTy.DepositProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.DepositProof", req, &res)
+	ctx.Run()
+}
+
+// DepositInputsCmd get para chain status by height
+func PayInInputsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "payin",
+		Short: "one key get pay input data",
+		Run:   payInSecret,
+	}
+	payInSecretCmdFlags(cmd)
+	return cmd
+}
+
+func payInSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("payment", "p", "", "payment addr")
+	cmd.MarkFlagRequired("payment")
+
+	cmd.Flags().StringP("return", "r", "", "return addr")
+
+	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
+
+	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func payInSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payment, _ := cmd.Flags().GetString("payment")
+	returnKey, _ := cmd.Flags().GetString("return")
+	authorize, _ := cmd.Flags().GetString("authorize")
+	amount, _ := cmd.Flags().GetString("amount")
+
+	req := &mixTy.DepositProofReq{
+		PaymentAddr:   payment,
+		ReturnAddr:    returnKey,
+		AuthorizeAddr: authorize,
+		Amount:        amount,
+	}
+
+	var res mixTy.DHSecretGroup
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.PayInProof", req, &res)
+	ctx.Run()
+}
+
+// DepositInputsCmd get para chain status by height
+func PayOutInputsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "payout",
+		Short: "one key get payout input data",
+		Run:   payOutSecret,
+	}
+	payOutSecretCmdFlags(cmd)
+	return cmd
+}
+
+func payOutSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("payment", "p", "", "payment addr")
+	cmd.MarkFlagRequired("payment")
+
+	cmd.Flags().StringP("return", "r", "", "return addr")
+
+	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
+
+	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func payOutSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payment, _ := cmd.Flags().GetString("payment")
+	returnKey, _ := cmd.Flags().GetString("return")
+	authorize, _ := cmd.Flags().GetString("authorize")
+	amount, _ := cmd.Flags().GetString("amount")
+
+	req := &mixTy.DepositProofReq{
+		PaymentAddr:   payment,
+		ReturnAddr:    returnKey,
+		AuthorizeAddr: authorize,
+		Amount:        amount,
+	}
+
+	var res mixTy.DepositProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.PayOutProof", req, &res)
+	ctx.Run()
+}
+
+// DepositInputsCmd get para chain status by height
+func WithdrawInputsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "one key get withdraw proof input data",
+		Run:   withdrawSecret,
+	}
+	withdrawSecretCmdFlags(cmd)
+	return cmd
+}
+
+func withdrawSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend")
+	cmd.MarkFlagRequired("noteHash")
+
+}
+
+func withdrawSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	noteHash, _ := cmd.Flags().GetString("noteHash")
+
+	req := &mixTy.WithdrawProofReq{
+		NoteHash: noteHash,
+	}
+
+	var res mixTy.WithdrawProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.WithdrawProof", req, &res)
+	ctx.Run()
+}
+
+// DepositInputsCmd get para chain status by height
+func AuthInputsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "auth",
+		Short: "one key get authorize input data",
+		Run:   authSecret,
+	}
+	authSecretCmdFlags(cmd)
+	return cmd
+}
+
+func authSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("payment", "p", "", "payment addr")
+	cmd.MarkFlagRequired("payment")
+
+	cmd.Flags().StringP("return", "r", "", "return addr")
+
+	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
+
+	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.MarkFlagRequired("amount")
+
+}
+
+func authSecret(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payment, _ := cmd.Flags().GetString("payment")
+	returnKey, _ := cmd.Flags().GetString("return")
+	authorize, _ := cmd.Flags().GetString("authorize")
+	amount, _ := cmd.Flags().GetString("amount")
+
+	req := &mixTy.DepositProofReq{
+		PaymentAddr:   payment,
+		ReturnAddr:    returnKey,
+		AuthorizeAddr: authorize,
+		Amount:        amount,
+	}
+
+	var res mixTy.DHSecretGroup
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.AuthProof", req, &res)
 	ctx.Run()
 }
