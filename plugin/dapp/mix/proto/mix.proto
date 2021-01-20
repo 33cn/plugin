@@ -15,18 +15,11 @@ enum VerifyType{
     AUTHORIZE       = 4;
 }
 
-//区分zk 所选取的曲线，需要和gnark保持一致
-enum ZkCurveId{
-	UNKNOWN = 0;
-	BLS377 = 1;
-	BLS381 = 2;
-	BN256 = 3;
-}
 
 message ZkVerifyKey {
-    ZkCurveId curveId = 1;
-    VerifyType type = 2;
-    string value = 3;
+    VerifyType type = 1;
+    string value = 2;
+
 }
 
 message ZkVerifyKeys{
@@ -37,11 +30,18 @@ message AuthPubKeys{
     repeated string data = 1;
 }
 
+message PaymentKey{
+    string addr = 1;
+    string payingKey = 2;
+    PubKey receivingKey = 3;
+}
+
 enum MixConfigType{
     VerifyKey = 0;
     //register unify authorize pubkey
     AuthPubKey = 1;
     //for spender's pay pubkey register,DH secret
+    //spender注册自己的payment公钥, 用来生成DiffHellman秘钥
     PaymentPubKey = 2;
 }
 
@@ -60,7 +60,7 @@ message MixConfigAction {
     oneof  value {
         ZkVerifyKey     verifyKey   = 3;
         string          authPk     = 4;
-        PubKey          paymentPk   = 5;
+        PaymentKey      paymentKey   = 5;
     }
 }
 
@@ -72,7 +72,7 @@ message DHSecret{
 
 //Diff-Helman 加密group, for spender, returner, authorizer to decrypt
 message DHSecretGroup{
-    DHSecret spender = 1;
+    DHSecret payment = 1;
     DHSecret returner = 2;
     DHSecret authorize = 3;
 }
@@ -184,7 +184,7 @@ message CommitTreeProve {
     repeated string proofSet = 2;
     uint32 proofIndex = 3;
     uint32 numLeaves = 4;
-    string helpers = 5;
+    repeated uint32 helpers = 5;
 }
 
 message TreeInfoReq{
@@ -259,18 +259,76 @@ message DecryptSecretData{
 
 }
 
+//一键式获取加密数据
+message DepositProofReq{
+    string paymentAddr = 1;
+    string returnAddr = 2;
+    string authorizeAddr = 3;
+    string amount = 4;
+}
+
+
+message DepositProofResp{
+    string          noteHash = 1;
+    SecretData      proof    = 2;
+    DHSecretGroup   secrets  = 3;
+
+}
+
+
+message TreePathProof{
+    string          treeRootHash    = 1;
+    repeated string treePath        = 2;
+    repeated uint32 helpers         = 3;
+    repeated uint32 validPath       = 4;
+}
+
+message WithdrawProofReq{
+    string  noteHash  = 1;
+}
+
+
+message WithdrawProofResp{
+    SecretData      proof    = 1;
+    string          nullifierHash = 2;
+    string          authSpendHash = 3;
+    string          noteHash  = 4;
+    string          spendPrivKey = 5;
+    uint32          spendFlag = 6;
+    uint32          authFlag = 7;
+    TreePathProof   treeProof = 8;
+}
+
+message AuthProofReq{
+    string noteHash = 1;
+    uint32 authReturn = 2;
+}
+
+message AuthProofResp{
+    SecretData      proof           = 1;
+    string          authPubKey      = 2;
+    string          authPrivKey     = 3;
+    string          authHash        = 4;
+    string          authSpendHash   = 5;
+    string          noteHash        = 6;
+    uint32          spendFlag       = 7;
+    TreePathProof   treeProof       = 8;
+
+}
+
+
 enum NoteStatus{
-	UNDEF = 0;
-	FROZEN = 1; //未授权
-	OPEN = 2;   //已授权可使用
-	CLOSE = 3;   //已使用
+	UNDEF   = 0;
+	FROZEN  = 1; //未授权
+	VALID   = 2;   //已授权可使用
+	INVALID = 3;   //已使用
 }
 
 message WalletIndexInfo {
     string             noteHash         = 1;
     string             nullifier        = 2;
     string             authSpendHash    = 3;
-    string             spender          = 4;
+    bool               isReturner       = 4;
     string             account          = 5; //账户地址
     NoteStatus         status           = 6;
     SecretData         secret           = 7;
@@ -287,7 +345,6 @@ message WalletMixIndexReq {
     string             noteHash       = 1;
     string             nullifier       = 2;
     string             authSpendHash   = 3;
-    string             spender       = 4;
     string             account       = 5;
     int32              status     = 6;
     int32              count      = 7;

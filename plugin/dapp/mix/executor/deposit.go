@@ -24,25 +24,23 @@ func makeNullifierSetReceipt(hash string, data proto.Message) *types.Receipt {
 
 }
 
-func zkProofVerify(db dbm.KV, proof *mixTy.ZkProofInfo, verifyTy mixTy.VerifyType) error {
-	keys, err := getVerifyKeys(db)
+func zkProofVerify(db dbm.KV, proof *mixTy.ZkProofInfo, ty mixTy.VerifyType) error {
+	keys, err := getVerifyKeys(db, int32(ty))
 	if err != nil {
 		return err
 	}
 
 	var pass bool
 	for _, verifyKey := range keys.Data {
-		if verifyKey.Type == verifyTy {
-			ok, err := zksnark.Verify(verifyKey.Value, proof.Proof, proof.PublicInput)
-			if err != nil {
-				return err
-			}
-			if !ok {
-				continue
-			}
-			pass = true
-			break
+		ok, err := zksnark.Verify(verifyKey.Value, proof.Proof, proof.PublicInput)
+		if err != nil {
+			return err
 		}
+		if !ok {
+			continue
+		}
+		pass = true
+		break
 	}
 	if !pass {
 		return errors.Wrap(mixTy.ErrZkVerifyFail, "verify")

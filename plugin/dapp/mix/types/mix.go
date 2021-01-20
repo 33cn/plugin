@@ -28,6 +28,7 @@ const (
 	TyLogNulliferSet             = 760
 	TyLogAuthorizeSet            = 761
 	TyLogAuthorizeSpendSet       = 762
+	TyLogMixConfigPaymentKey     = 763
 )
 
 //action type
