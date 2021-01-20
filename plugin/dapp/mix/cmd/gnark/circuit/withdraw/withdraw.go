@@ -29,6 +29,7 @@ private:
 	spendFlag
 	authorizeFlag
 	noteRandom
+	noteHash
 
 	path...
 	helper...

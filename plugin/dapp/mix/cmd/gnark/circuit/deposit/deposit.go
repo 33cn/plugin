@@ -15,7 +15,7 @@ func main() {
 //spend commit hash the circuit implementing
 /*
 public:
-	nodeHash
+	noteHash
 	amount
 
 private:
@@ -31,7 +31,7 @@ func NewDeposit() *frontend.R1CS {
 	circuit := frontend.New()
 
 	//公共输入以验证
-	spendValue := circuit.PUBLIC_INPUT("amount")
+	amount := circuit.PUBLIC_INPUT("amount")
 
 	//spend pubkey
 	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
@@ -48,7 +48,7 @@ func NewDeposit() *frontend.R1CS {
 	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
 	noteHash := circuit.PUBLIC_INPUT("noteHash")
 	// specify note hash constraint
-	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
+	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, amount, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	r1cs := circuit.ToR1CS()

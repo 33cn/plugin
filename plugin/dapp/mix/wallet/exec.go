@@ -46,3 +46,11 @@ func (policy *mixPolicy) On_EncryptSecretData(req *mixTy.EncryptSecretData) (typ
 func (policy *mixPolicy) On_DecryptSecretData(req *mixTy.DecryptSecretData) (types.Message, error) {
 	return decryptSecretData(req)
 }
+
+func (policy *mixPolicy) On_DepositProof(req *mixTy.DepositProofReq) (types.Message, error) {
+	return policy.depositProof(req)
+}
+
+func (policy *mixPolicy) On_WithdrawProof(req *mixTy.WithdrawProofReq) (types.Message, error) {
+	return policy.withdrawProof(req)
+}

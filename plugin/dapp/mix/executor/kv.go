@@ -11,6 +11,7 @@ import (
 var (
 	verifyKeys              string
 	authPubKeys             string
+	paymentPubKey           string
 	commitTreeArchiveRoots  string
 	commitTreeCurrentRoots  string
 	commitTreeCurrentLeaves string
@@ -23,6 +24,7 @@ var (
 func setPrefix() {
 	verifyKeys = "mavl-mix-verify-keys-"
 	authPubKeys = "mavl-mix-auth-pubkeys-"
+	paymentPubKey = "mavl-mix-payment-pubkey-"
 	commitTreeArchiveRoots = "mavl-mix-commitTree-roots-archive-"
 	commitTreeCurrentRoots = "mavl-mix-commitTree-current-roots"
 	commitTreeCurrentLeaves = "mavl-mix-commitTree-current-leaves-"
@@ -35,12 +37,16 @@ func setPrefix() {
 }
 
 //support multi version verify parameter setting
-func getVerifyKeysKey() []byte {
-	return []byte(fmt.Sprintf(verifyKeys))
+func getVerifyKeysKey(ty int32) []byte {
+	return []byte(fmt.Sprintf(verifyKeys+"%d", ty))
 }
 
 func getAuthPubKeysKey() []byte {
 	return []byte(fmt.Sprintf(authPubKeys))
+}
+
+func getPaymentPubKey(addr string) []byte {
+	return []byte(fmt.Sprintf(paymentPubKey+"%s", addr))
 }
 
 func calcCommitTreeArchiveRootsKey() []byte {
@@ -56,7 +62,7 @@ func calcCurrentCommitLeavesKey() []byte {
 }
 
 func calcCommitTreeRootLeaves(rootHash string) []byte {
-	return []byte(fmt.Sprintf(commitTreeRootLeaves+"s", rootHash))
+	return []byte(fmt.Sprintf(commitTreeRootLeaves+"%s", rootHash))
 }
 
 func calcAuthorizeHashKey(hash string) []byte {

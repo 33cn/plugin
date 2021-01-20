@@ -6,9 +6,6 @@ package executor
 
 import (
 	"bytes"
-	"strconv"
-	"strings"
-
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
@@ -235,11 +232,10 @@ func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, e
 	}
 
 	helpers := merkletree.GenerateProofHelper(proofSet, proofIndex, num)
-	var helpStr []string
+
 	for _, i := range helpers {
-		helpStr = append(helpStr, strconv.Itoa(i))
+		prove.Helpers = append(prove.Helpers, uint32(i))
 	}
-	prove.Helpers = strings.Join(helpStr, ",")
 
 	return &prove, nil
 

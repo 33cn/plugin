@@ -10,7 +10,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
-// Query_GetTitle query paracross title
+// Query_GetTreePath 根据leaf获取path 证明和roothash
 func (m *Mix) Query_GetTreePath(in *mixTy.TreeInfoReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -59,4 +59,10 @@ func (m *Mix) Query_GetRootList(in *types.ReqNil) (types.Message, error) {
 // Query_ListMixTxs 批量查询
 func (m *Mix) Query_ListMixTxs(in *mixTy.MixTxListReq) (types.Message, error) {
 	return m.listMixInfos(in)
+}
+
+// Query_PaymentPubKey 批量查询
+func (m *Mix) Query_PaymentPubKey(addr *types.ReqString) (types.Message, error) {
+	return GetPaymentPubKey(m.GetStateDB(), addr.Data)
+
 }
