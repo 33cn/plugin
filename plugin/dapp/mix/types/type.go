@@ -13,6 +13,8 @@ import (
 
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/consensys/gurvy/bn256/fr"
+	"github.com/consensys/gurvy/bn256/twistededwards"
 )
 
 var (
@@ -204,4 +206,41 @@ func DecodePubInput(ty VerifyType, input string) (interface{}, error) {
 		return &v, nil
 	}
 	return nil, types.ErrInvalidParam
+}
+
+func MulCurvePointG(val interface{}) *twistededwards.Point {
+	v := fr.FromInterface(val)
+	var point twistededwards.Point
+	ed := twistededwards.GetEdwardsCurve()
+	point.ScalarMul(&ed.Base, *v.FromMont())
+	return &point
+}
+
+func MulCurvePointH(val string) *twistededwards.Point {
+	v := fr.FromInterface(val)
+
+	var pointV, pointH twistededwards.Point
+	pointH.X.SetString(PointHX)
+	pointH.Y.SetString(PointHY)
+
+	pointV.ScalarMul(&pointH, *v.FromMont())
+	return &pointV
+}
+
+//A=B+C
+func CheckSumEqual(points ...*twistededwards.Point) bool {
+	if len(points) < 2 {
+		return false
+	}
+	//Add之前需初始化pointSum,不能空值，不然会等于0
+	pointSum := twistededwards.NewPoint(points[1].X, points[1].Y)
+	for _, a := range points[2:] {
+		pointSum.Add(&pointSum, a)
+	}
+
+	if pointSum.X.Equal(&points[0].X) && pointSum.Y.Equal(&points[0].Y) {
+		return true
+	}
+	return false
+
 }

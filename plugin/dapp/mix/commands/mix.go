@@ -930,8 +930,7 @@ func ProofCmd() *cobra.Command {
 		Short: "circuit proof inputs",
 	}
 	cmd.AddCommand(DepositInputsCmd())
-	cmd.AddCommand(PayInInputsCmd())
-	cmd.AddCommand(PayOutInputsCmd())
+	cmd.AddCommand(TransferInputsCmd())
 	cmd.AddCommand(WithdrawInputsCmd())
 	cmd.AddCommand(AuthInputsCmd())
 
@@ -957,7 +956,7 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
 
-	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.Flags().Uint64P("amount", "m", 0, "amount")
 	cmd.MarkFlagRequired("amount")
 
 }
@@ -967,7 +966,7 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	payment, _ := cmd.Flags().GetString("payment")
 	returnKey, _ := cmd.Flags().GetString("return")
 	authorize, _ := cmd.Flags().GetString("authorize")
-	amount, _ := cmd.Flags().GetString("amount")
+	amount, _ := cmd.Flags().GetUint64("amount")
 
 	req := &mixTy.DepositProofReq{
 		PaymentAddr:   payment,
@@ -981,89 +980,53 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// DepositInputsCmd get para chain status by height
-func PayInInputsCmd() *cobra.Command {
+// TransferInputsCmd get para chain status by height
+func TransferInputsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "payin",
-		Short: "one key get pay input data",
-		Run:   payInSecret,
+		Use:   "transfer",
+		Short: "one key get transfer input output data",
+		Run:   transferSecret,
 	}
-	payInSecretCmdFlags(cmd)
+	transferSecretCmdFlags(cmd)
 	return cmd
 }
 
-func payInSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("payment", "p", "", "payment addr")
-	cmd.MarkFlagRequired("payment")
+func transferSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend")
+	cmd.MarkFlagRequired("noteHash")
 
-	cmd.Flags().StringP("return", "r", "", "return addr")
+	cmd.Flags().StringP("toAddr", "t", "", "transfer to addr")
+	cmd.MarkFlagRequired("toAddr")
 
-	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
+	cmd.Flags().StringP("auth", "a", "", "transfer to auth addr")
+	cmd.MarkFlagRequired("auth")
 
-	cmd.Flags().StringP("amount", "m", "", "amount")
+	cmd.Flags().StringP("returner", "r", "", "transfer to returner addr")
+	cmd.MarkFlagRequired("returner")
+
+	cmd.Flags().Uint64P("amount", "m", 0, "transfer amount")
 	cmd.MarkFlagRequired("amount")
 
 }
 
-func payInSecret(cmd *cobra.Command, args []string) {
+func transferSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payment, _ := cmd.Flags().GetString("payment")
-	returnKey, _ := cmd.Flags().GetString("return")
-	authorize, _ := cmd.Flags().GetString("authorize")
-	amount, _ := cmd.Flags().GetString("amount")
+	noteHash, _ := cmd.Flags().GetString("noteHash")
+	toAddr, _ := cmd.Flags().GetString("toAddr")
+	auth, _ := cmd.Flags().GetString("auth")
+	returner, _ := cmd.Flags().GetString("returner")
+	amount, _ := cmd.Flags().GetUint64("amount")
 
-	req := &mixTy.DepositProofReq{
-		PaymentAddr:   payment,
-		ReturnAddr:    returnKey,
-		AuthorizeAddr: authorize,
-		Amount:        amount,
+	req := &mixTy.TransferProofReq{
+		NoteHash:   noteHash,
+		ToAddr:     toAddr,
+		ToAuthAddr: auth,
+		ReturnAddr: returner,
+		Amount:     amount,
 	}
 
-	var res mixTy.DHSecretGroup
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.PayInProof", req, &res)
-	ctx.Run()
-}
-
-// DepositInputsCmd get para chain status by height
-func PayOutInputsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "payout",
-		Short: "one key get payout input data",
-		Run:   payOutSecret,
-	}
-	payOutSecretCmdFlags(cmd)
-	return cmd
-}
-
-func payOutSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("payment", "p", "", "payment addr")
-	cmd.MarkFlagRequired("payment")
-
-	cmd.Flags().StringP("return", "r", "", "return addr")
-
-	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
-
-	cmd.Flags().StringP("amount", "m", "", "amount")
-	cmd.MarkFlagRequired("amount")
-
-}
-
-func payOutSecret(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payment, _ := cmd.Flags().GetString("payment")
-	returnKey, _ := cmd.Flags().GetString("return")
-	authorize, _ := cmd.Flags().GetString("authorize")
-	amount, _ := cmd.Flags().GetString("amount")
-
-	req := &mixTy.DepositProofReq{
-		PaymentAddr:   payment,
-		ReturnAddr:    returnKey,
-		AuthorizeAddr: authorize,
-		Amount:        amount,
-	}
-
-	var res mixTy.DepositProofResp
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.PayOutProof", req, &res)
+	var res mixTy.TransferProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.TransferProof", req, &res)
 	ctx.Run()
 }
 
@@ -1109,33 +1072,24 @@ func AuthInputsCmd() *cobra.Command {
 }
 
 func authSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("payment", "p", "", "payment addr")
-	cmd.MarkFlagRequired("payment")
+	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend")
+	cmd.MarkFlagRequired("noteHash")
 
-	cmd.Flags().StringP("return", "r", "", "return addr")
-
-	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
-
-	cmd.Flags().StringP("amount", "m", "", "amount")
-	cmd.MarkFlagRequired("amount")
-
+	cmd.Flags().Uint32P("toReturn", "r", 0, "authorize to returner,0:to payment,1:to returner")
+	cmd.MarkFlagRequired("noteHash")
 }
 
 func authSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payment, _ := cmd.Flags().GetString("payment")
-	returnKey, _ := cmd.Flags().GetString("return")
-	authorize, _ := cmd.Flags().GetString("authorize")
-	amount, _ := cmd.Flags().GetString("amount")
+	noteHash, _ := cmd.Flags().GetString("noteHash")
+	toReturn, _ := cmd.Flags().GetUint32("toReturn")
 
-	req := &mixTy.DepositProofReq{
-		PaymentAddr:   payment,
-		ReturnAddr:    returnKey,
-		AuthorizeAddr: authorize,
-		Amount:        amount,
+	req := &mixTy.AuthProofReq{
+		NoteHash: noteHash,
+		ToReturn: toReturn,
 	}
 
-	var res mixTy.DHSecretGroup
+	var res mixTy.AuthProofResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.AuthProof", req, &res)
 	ctx.Run()
 }
