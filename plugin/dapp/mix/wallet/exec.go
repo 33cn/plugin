@@ -54,3 +54,11 @@ func (policy *mixPolicy) On_DepositProof(req *mixTy.DepositProofReq) (types.Mess
 func (policy *mixPolicy) On_WithdrawProof(req *mixTy.WithdrawProofReq) (types.Message, error) {
 	return policy.withdrawProof(req)
 }
+
+func (policy *mixPolicy) On_AuthProof(req *mixTy.AuthProofReq) (types.Message, error) {
+	return policy.authProof(req)
+}
+
+func (policy *mixPolicy) On_TransferProof(req *mixTy.TransferProofReq) (types.Message, error) {
+	return policy.transferProof(req)
+}

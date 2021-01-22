@@ -142,7 +142,7 @@ func (c *Jrpc) DepositProof(in *mixTy.DepositProofReq, result *json.RawMessage) 
 	return err
 }
 
-func (c *Jrpc) AuthProof(in *mixTy.DepositProofReq, result *json.RawMessage) error {
+func (c *Jrpc) AuthProof(in *mixTy.AuthProofReq, result *json.RawMessage) error {
 	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "AuthProof", in)
 	if err != nil {
 		return err
@@ -151,17 +151,8 @@ func (c *Jrpc) AuthProof(in *mixTy.DepositProofReq, result *json.RawMessage) err
 	return err
 }
 
-func (c *Jrpc) PayInProof(in *mixTy.DepositProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "PayInProof", in)
-	if err != nil {
-		return err
-	}
-	*result, err = types.PBToJSON(reply)
-	return err
-}
-
-func (c *Jrpc) PayOutProof(in *mixTy.DepositProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "PayOutProof", in)
+func (c *Jrpc) TransferProof(in *mixTy.TransferProofReq, result *json.RawMessage) error {
+	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "TransferProof", in)
 	if err != nil {
 		return err
 	}
