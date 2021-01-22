@@ -135,11 +135,7 @@ message WithdrawPublicInput {
 
 }
 
-//加密了的input/output amount
-message commitAmount{
-    string X = 1;
-    string Y = 2;
-}
+
 
 message TransferInputPublicInput {
     string treeRootHash = 1;
@@ -264,7 +260,7 @@ message DepositProofReq{
     string paymentAddr = 1;
     string returnAddr = 2;
     string authorizeAddr = 3;
-    string amount = 4;
+    uint64 amount = 4;
 }
 
 
@@ -301,7 +297,7 @@ message WithdrawProofResp{
 
 message AuthProofReq{
     string noteHash = 1;
-    uint32 authReturn = 2;
+    uint32 toReturn = 2;
 }
 
 message AuthProofResp{
@@ -316,6 +312,59 @@ message AuthProofResp{
 
 }
 
+message TransferProofReq{
+    string noteHash     = 1;
+    string toAddr       = 2;
+    string toAuthAddr   = 3;
+    string returnAddr   = 4;
+    uint64 amount       = 5;
+}
+
+//加密了的input/output amount
+message commitValue{
+    string X = 1;
+    string Y = 2;
+}
+
+message TransferInputProof{
+    SecretData      proof    = 1;
+    string          nullifierHash = 2;
+    string          authSpendHash = 3;
+    string          noteHash  = 4;
+    string          spendPrivKey = 5;
+    uint32          spendFlag = 6;
+    uint32          authFlag = 7;
+    TreePathProof   treeProof = 8;
+    commitValue     commitValue = 9;
+    string          spendRandom = 10;
+}
+
+message TransferOutputProof{
+    SecretData      proof    = 1;
+    string          noteHash = 2;
+    DHSecretGroup   secrets  = 3;
+    commitValue     commitValue = 4;
+    string          spendRandom = 5;
+
+
+}
+
+message TransferProofResp{
+    TransferInputProof  transferInput  = 1;
+    TransferOutputProof targetOutput = 2;
+    TransferOutputProof changeOutput = 3;
+
+}
+
+message CommitValueRst{
+    string noteRandom = 1;
+    string transferRandom = 2;
+    string changeRandom = 3;
+    commitValue note = 4;
+    commitValue transfer = 5;
+    commitValue change = 6;
+
+}
 
 enum NoteStatus{
 	UNDEF   = 0;

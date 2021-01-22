@@ -41,9 +41,10 @@ func TestNewPrivacyWithPrivKey(t *testing.T) {
 	//	NoteRandom:"2824204835",
 	//	Amount:"28242048",
 	//}
-	pub1, cryptData1, err := encryptData(pairs.ShareSecretKey.ReceivingPk, types.Encode(secret1))
+	data := encryptData(pairs.ShareSecretKey.ReceivingPk, types.Encode(secret1))
+	crypData, err := common.FromHex(data.Secret)
 	assert.Nil(t, err)
-	decryData1, err := decryptData(pairs.ShareSecretKey.PrivKey, pub1, cryptData1)
+	decryData1, err := decryptData(pairs.ShareSecretKey.PrivKey, data.Epk, crypData)
 	assert.Nil(t, err)
 	var val mixTy.SecretData
 	err = types.Decode(decryData1, &val)
