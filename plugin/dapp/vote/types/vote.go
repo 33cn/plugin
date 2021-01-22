@@ -17,28 +17,36 @@ import (
 const (
 	TyUnknowAction = iota + 100
 	TyCreateGroupAction
-	TyUpdateMemberAction
+	TyUpdateGroupAction
 	TyCreateVoteAction
 	TyCommitVoteAction
+	TyCloseVoteAction
+	TyUpdateMemberAction
 
 	NameCreateGroupAction  = "CreateGroup"
-	NameUpdateMemberAction = "UpdateMember"
+	NameUpdateGroupAction  = "UpdateGroup"
 	NameCreateVoteAction   = "CreateVote"
 	NameCommitVoteAction   = "CommitVote"
+	NameCloseVoteAction    = "CloseVote"
+	NameUpdateMemberAction = "UpdateMember"
 )
 
 // log类型id值
 const (
 	TyUnknownLog = iota + 100
 	TyCreateGroupLog
-	TyUpdateMemberLog
+	TyUpdateGroupLog
 	TyCreateVoteLog
 	TyCommitVoteLog
+	TyCloseVoteLog
+	TyUpdateMemberLog
 
 	NameCreateGroupLog  = "CreateGroupLog"
-	NameUpdateMemberLog = "UpdateMemberLog"
+	NameUpdateGroupLog  = "UpdateGroupLog"
 	NameCreateVoteLog   = "CreateVoteLog"
 	NameCommitVoteLog   = "CommitVoteLog"
+	NameCloseVoteLog    = "CloseVoteLog"
+	NameUpdateMemberLog = "UpdateMemberLog"
 )
 
 var (
@@ -47,16 +55,20 @@ var (
 	//定义actionMap
 	actionMap = map[string]int32{
 		NameCreateGroupAction:  TyCreateGroupAction,
-		NameUpdateMemberAction: TyUpdateMemberAction,
+		NameUpdateGroupAction:  TyUpdateGroupAction,
 		NameCreateVoteAction:   TyCreateVoteAction,
 		NameCommitVoteAction:   TyCommitVoteAction,
+		NameCloseVoteAction:    TyCloseVoteAction,
+		NameUpdateMemberAction: TyUpdateMemberAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		TyCreateGroupLog:  {Ty: reflect.TypeOf(GroupInfo{}), Name: NameCreateGroupLog},
-		TyUpdateMemberLog: {Ty: reflect.TypeOf(GroupInfo{}), Name: NameUpdateMemberLog},
+		TyUpdateGroupLog:  {Ty: reflect.TypeOf(GroupInfo{}), Name: NameUpdateGroupLog},
 		TyCreateVoteLog:   {Ty: reflect.TypeOf(VoteInfo{}), Name: NameCreateVoteLog},
-		TyCommitVoteLog:   {Ty: reflect.TypeOf(VoteInfo{}), Name: NameCommitVoteLog},
+		TyCommitVoteLog:   {Ty: reflect.TypeOf(CommitInfo{}), Name: NameCommitVoteLog},
+		TyCloseVoteLog:    {Ty: reflect.TypeOf(VoteInfo{}), Name: NameCloseVoteLog},
+		TyUpdateMemberLog: {Ty: reflect.TypeOf(MemberInfo{}), Name: NameUpdateMemberLog},
 	}
 	tlog = log.New("module", "vote.types")
 )

@@ -22,6 +22,7 @@ var voteTableOpt = &table.Option{
 	Prefix:  keyPrefixLocalDB,
 	Name:    "vote",
 	Primary: voteTablePrimary,
+	Index:   []string{groupTablePrimary},
 }
 
 var memberTableOpt = &table.Option{
@@ -53,18 +54,18 @@ func newMemberTable(kvDB db.KV) *table.Table {
 
 //groupTableRow table meta 结构
 type groupTableRow struct {
-	*vty.GroupVoteInfo
+	*vty.GroupInfo
 }
 
 //CreateRow 新建数据行
 func (r *groupTableRow) CreateRow() *table.Row {
-	return &table.Row{Data: &vty.GroupVoteInfo{}}
+	return &table.Row{Data: &vty.GroupInfo{}}
 }
 
 //SetPayload 设置数据
 func (r *groupTableRow) SetPayload(data types.Message) error {
-	if d, ok := data.(*vty.GroupVoteInfo); ok {
-		r.GroupVoteInfo = d
+	if d, ok := data.(*vty.GroupInfo); ok {
+		r.GroupInfo = d
 		return nil
 	}
 	return types.ErrTypeAsset
@@ -73,7 +74,7 @@ func (r *groupTableRow) SetPayload(data types.Message) error {
 //Get 按照indexName 查询 indexValue
 func (r *groupTableRow) Get(key string) ([]byte, error) {
 	if key == groupTablePrimary {
-		return []byte(r.GroupVoteInfo.GetGroupInfo().GetID()), nil
+		return []byte(r.GroupInfo.GetID()), nil
 	}
 	return nil, types.ErrNotFound
 }
@@ -101,6 +102,8 @@ func (r *voteTableRow) SetPayload(data types.Message) error {
 func (r *voteTableRow) Get(key string) ([]byte, error) {
 	if key == voteTablePrimary {
 		return []byte(r.VoteInfo.GetID()), nil
+	} else if key == groupTablePrimary {
+		return []byte(r.VoteInfo.GetGroupID()), nil
 	}
 	return nil, types.ErrNotFound
 }

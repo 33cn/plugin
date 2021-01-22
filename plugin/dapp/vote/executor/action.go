@@ -3,6 +3,8 @@ package executor
 import (
 	"encoding/hex"
 
+	"github.com/33cn/chain33/system/dapp"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	vty "github.com/33cn/plugin/plugin/dapp/vote/types"
@@ -51,14 +53,15 @@ func (a *action) createGroup(create *vty.CreateGroup) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
-	xhash := hex.EncodeToString(a.txHash)
 	group := &vty.GroupInfo{}
 	group.Name = create.Name
-	group.ID = formatGroupID(xhash)
+	group.ID = formatGroupID(dapp.HeightIndexStr(a.height, int64(a.index)))
 	//添加创建者作为默认管理员
-	group.Admins = append(group.Admins, create.Admins...)
-	if !checkSliceItemExist(a.fromAddr, create.Admins) {
-		group.Admins = append(group.Admins, a.fromAddr)
+	group.Admins = append(group.Admins, a.fromAddr)
+	for _, addr := range create.GetAdmins() {
+		if addr != a.fromAddr {
+			group.Admins = append(group.Admins, addr)
+		}
 	}
 
 	group.Members = create.Members
@@ -77,13 +80,13 @@ func (a *action) createGroup(create *vty.CreateGroup) (*types.Receipt, error) {
 	return receipt, nil
 }
 
-func (a *action) updateMember(update *vty.UpdateMember) (*types.Receipt, error) {
+func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
 	group, err := a.getGroupInfo(update.GroupID)
 	if err != nil {
-		elog.Error("vote exec updateMember", "txHash", a.txHash, "err", err)
+		elog.Error("vote exec updateGroup", "txHash", a.txHash, "err", err)
 		return nil, errStateDBGet
 	}
 	addrMap := make(map[string]int)
@@ -91,20 +94,43 @@ func (a *action) updateMember(update *vty.UpdateMember) (*types.Receipt, error) 
 		addrMap[member.Addr] = index
 	}
 	// remove members
-	for _, addr := range update.GetRemoveMemberAddrs() {
+	for _, addr := range update.GetRemoveMembers() {
 		if index, ok := addrMap[addr]; ok {
 			group.Members = append(group.Members[:index], group.Members[index+1:]...)
+			delete(addrMap, addr)
 		}
 	}
 
 	// add members
 	for _, member := range update.GetAddMembers() {
-		group.Members = append(group.Members, member)
+		if _, ok := addrMap[member.Addr]; !ok {
+			group.Members = append(group.Members, member)
+		}
+	}
+
+	adminMap := make(map[string]int)
+	for index, addr := range group.Admins {
+		adminMap[addr] = index
+	}
+
+	// remove admins
+	for _, addr := range update.GetRemoveAdmins() {
+		if index, ok := adminMap[addr]; ok {
+			group.Admins = append(group.Admins[:index], group.Admins[index+1:]...)
+			delete(adminMap, addr)
+		}
+	}
+
+	// add admins
+	for _, addr := range update.GetAddAdmins() {
+		if _, ok := adminMap[addr]; !ok {
+			group.Admins = append(group.Admins, addr)
+		}
 	}
 
 	groupValue := types.Encode(group)
 	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(group.ID), Value: groupValue})
-	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyUpdateMemberLog, Log: groupValue})
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyUpdateGroupLog, Log: groupValue})
 
 	return receipt, nil
 }
@@ -114,17 +140,17 @@ func (a *action) createVote(create *vty.CreateVote) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
 	vote := &vty.VoteInfo{}
-	vote.ID = formatVoteID(hex.EncodeToString(a.txHash))
+	vote.ID = formatVoteID(dapp.HeightIndexStr(a.height, int64(a.index)))
 	vote.BeginTimestamp = create.BeginTimestamp
 	vote.EndTimestamp = create.EndTimestamp
 	vote.Name = create.Name
-	vote.VoteGroups = create.VoteGroups
+	vote.GroupID = create.GroupID
 
 	vote.VoteOptions = make([]*vty.VoteOption, 0)
 	for _, option := range create.VoteOptions {
 		vote.VoteOptions = append(vote.VoteOptions, &vty.VoteOption{Option: option})
 	}
-	vote.Creator = a.fromAddr
+
 	voteValue := types.Encode(vote)
 	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(vote.ID), Value: voteValue})
 	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCreateVoteLog, Log: voteValue})
@@ -136,9 +162,13 @@ func (a *action) commitVote(commit *vty.CommitVote) (*types.Receipt, error) {
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	vote, err := a.getVoteInfo(commit.VoteID)
-	group, err1 := a.getGroupInfo(commit.GroupID)
-	if err != nil || err1 != nil {
-		elog.Error("vote exec commitVote", "txHash", a.txHash, "err", err, "err1", err1)
+	if err != nil {
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "get vote err", err)
+		return nil, errStateDBGet
+	}
+	group, err := a.getGroupInfo(vote.GroupID)
+	if err != nil {
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "get group err", err)
 		return nil, errStateDBGet
 	}
 
@@ -147,10 +177,34 @@ func (a *action) commitVote(commit *vty.CommitVote) (*types.Receipt, error) {
 			vote.VoteOptions[commit.OptionIndex].Score += member.VoteWeight
 		}
 	}
-	vote.VotedMembers = append(vote.VotedMembers, a.fromAddr)
+	info := &vty.CommitInfo{Addr: a.fromAddr}
+	vote.CommitInfos = append(vote.CommitInfos, info)
+	voteValue := types.Encode(vote)
+	info.TxHash = hex.EncodeToString(a.txHash)
+	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(vote.ID), Value: voteValue})
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCommitVoteLog, Log: types.Encode(info)})
+
+	return receipt, nil
+}
+
+func (a *action) closeVote(close *vty.CloseVote) (*types.Receipt, error) {
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	vote, err := a.getVoteInfo(close.VoteID)
+	if err != nil {
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "get vote err", err)
+		return nil, errStateDBGet
+	}
+	vote.Status = voteStatusClosed
 	voteValue := types.Encode(vote)
 	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(vote.ID), Value: voteValue})
-	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCommitVoteLog, Log: voteValue})
+	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCloseVoteLog, Log: voteValue})
 
+	return receipt, nil
+}
+
+func (a *action) updateMember(update *vty.UpdateMember) (*types.Receipt, error) {
+
+	receipt := &types.Receipt{Ty: types.ExecOk}
 	return receipt, nil
 }

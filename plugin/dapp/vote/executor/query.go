@@ -5,36 +5,48 @@ import (
 	vty "github.com/33cn/plugin/plugin/dapp/vote/types"
 )
 
-// Query_GroupInfo query group info
-func (v *vote) Query_GetGroup(in *types.ReqString) (types.Message, error) {
+func (v *vote) getGroup(groupID string) (*vty.GroupInfo, error) {
 
-	if len(in.GetData()) != IDLen {
+	if len(groupID) != IDLen {
 		return nil, errInvalidGroupID
 	}
-	groupID := in.Data
 	table := newGroupTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(groupID))
 
 	if err != nil {
-		elog.Error("query getGroup", "id", groupID, "err", err)
+		elog.Error("query getGroup", "groupID", groupID, "err", err)
 		return nil, err
 	}
 
-	info, ok := row.Data.(*vty.GroupVoteInfo)
+	info, ok := row.Data.(*vty.GroupInfo)
 	if !ok {
 		return nil, types.ErrTypeAsset
 	}
 
 	return info, nil
-
 }
 
-func (v *vote) Query_GetVote(in *types.ReqString) (types.Message, error) {
+// Query_GroupInfo query group info
+func (v *vote) Query_GetGroups(in *vty.ReqStrings) (types.Message, error) {
 
-	if len(in.GetData()) != IDLen {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	infos := &vty.GroupInfos{GroupList: make([]*vty.GroupInfo, 0, len(in.GetItems()))}
+	for _, id := range in.GetItems() {
+		info, err := v.getGroup(id)
+		if err != nil {
+			return nil, err
+		}
+		infos.GroupList = append(infos.GroupList, info)
+	}
+	return infos, nil
+}
+
+func (v *vote) getVote(voteID string) (*vty.VoteInfo, error) {
+	if len(voteID) != IDLen {
 		return nil, errInvalidVoteID
 	}
-	voteID := in.Data
 	table := newVoteTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(voteID))
 
@@ -49,15 +61,30 @@ func (v *vote) Query_GetVote(in *types.ReqString) (types.Message, error) {
 	}
 
 	return info, nil
+}
+
+func (v *vote) Query_GetVotes(in *vty.ReqStrings) (types.Message, error) {
+
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	infos := &vty.VoteInfos{VoteList: make([]*vty.VoteInfo, 0, len(in.GetItems()))}
+	for _, id := range in.GetItems() {
+		info, err := v.getVote(id)
+		if err != nil {
+			return nil, err
+		}
+		infos.VoteList = append(infos.VoteList, info)
+	}
+	return classifyVoteList(infos), nil
 
 }
 
-func (v *vote) Query_GetMember(in *types.ReqString) (types.Message, error) {
+func (v *vote) getMember(addr string) (*vty.MemberInfo, error) {
 
-	if len(in.GetData()) != addrLen {
+	if len(addr) != addrLen {
 		return nil, types.ErrInvalidAddress
 	}
-	addr := in.Data
 	table := newMemberTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(addr))
 
@@ -71,6 +98,22 @@ func (v *vote) Query_GetMember(in *types.ReqString) (types.Message, error) {
 		return nil, types.ErrTypeAsset
 	}
 	return info, nil
+}
+
+func (v *vote) Query_GetMembers(in *vty.ReqStrings) (types.Message, error) {
+
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	infos := &vty.MemberInfos{MemberList: make([]*vty.MemberInfo, 0, len(in.GetItems()))}
+	for _, id := range in.GetItems() {
+		info, err := v.getMember(id)
+		if err != nil {
+			return nil, err
+		}
+		infos.MemberList = append(infos.MemberList, info)
+	}
+	return infos, nil
 }
 
 func (v *vote) Query_ListGroup(in *vty.ReqListItem) (types.Message, error) {
@@ -87,9 +130,9 @@ func (v *vote) Query_ListGroup(in *vty.ReqListItem) (types.Message, error) {
 		return nil, err
 	}
 
-	list := &vty.GroupVoteInfos{GroupList: make([]*vty.GroupVoteInfo, 0)}
+	list := &vty.GroupInfos{GroupList: make([]*vty.GroupInfo, 0, len(rows))}
 	for _, row := range rows {
-		info, ok := row.Data.(*vty.GroupVoteInfo)
+		info, ok := row.Data.(*vty.GroupInfo)
 		if !ok {
 			return nil, types.ErrTypeAsset
 		}
@@ -99,21 +142,28 @@ func (v *vote) Query_ListGroup(in *vty.ReqListItem) (types.Message, error) {
 	return list, nil
 }
 
-func (v *vote) Query_ListVote(in *vty.ReqListItem) (types.Message, error) {
+func (v *vote) Query_ListVote(in *vty.ReqListVote) (types.Message, error) {
 
-	if in == nil {
+	if in.GetListReq() == nil {
 		return nil, types.ErrInvalidParam
 	}
 	table := newVoteTable(v.GetLocalDB())
-	var primaryKey []byte
-	primaryKey = append(primaryKey, []byte(in.StartItemID)...)
-	rows, err := table.ListIndex(voteTablePrimary, nil, primaryKey, in.Count, in.Direction)
+	//指定了组ID，则查询对应组下的投票列表
+	groupID := in.GetGroupID()
+	indexName := voteTablePrimary
+	var prefix, primaryKey []byte
+	if len(groupID) > 0 {
+		indexName = groupTablePrimary
+		prefix = []byte(groupID)
+	}
+	primaryKey = append(primaryKey, []byte(in.GetListReq().GetStartItemID())...)
+	rows, err := table.ListIndex(indexName, prefix, primaryKey, in.GetListReq().Count, in.GetListReq().Direction)
 	if err != nil {
 		elog.Error("query listVote", "err", err, "param", in)
 		return nil, err
 	}
 
-	list := &vty.VoteInfos{VoteList: make([]*vty.VoteInfo, 0)}
+	list := &vty.VoteInfos{VoteList: make([]*vty.VoteInfo, 0, len(rows))}
 	for _, row := range rows {
 		info, ok := row.Data.(*vty.VoteInfo)
 		if !ok {
@@ -122,7 +172,7 @@ func (v *vote) Query_ListVote(in *vty.ReqListItem) (types.Message, error) {
 		list.VoteList = append(list.VoteList, info)
 	}
 
-	return list, nil
+	return classifyVoteList(list), nil
 }
 
 func (v *vote) Query_ListMember(in *vty.ReqListItem) (types.Message, error) {
@@ -139,7 +189,7 @@ func (v *vote) Query_ListMember(in *vty.ReqListItem) (types.Message, error) {
 		return nil, err
 	}
 
-	list := &vty.MemberInfos{MemberList: make([]*vty.MemberInfo, 0)}
+	list := &vty.MemberInfos{MemberList: make([]*vty.MemberInfo, 0, len(rows))}
 	for _, row := range rows {
 		info, ok := row.Data.(*vty.MemberInfo)
 		if !ok {

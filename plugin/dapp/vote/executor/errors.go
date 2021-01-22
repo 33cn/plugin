@@ -21,4 +21,6 @@ var (
 	errAlreadyVoted         = errors.New("errAlreadyVoted")
 	errInvalidGroupMember   = errors.New("errInvalidGroupMember")
 	errVoteAlreadyFinished  = errors.New("errVoteAlreadyFinished")
+	errVoteAlreadyClosed    = errors.New("errVoteAlreadyClosed")
+	errAddrPermissionDenied = errors.New("errAddrPermissionDenied")
 )

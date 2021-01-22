@@ -11,36 +11,38 @@ import (
 
 func groupInfoCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "groupInfo",
-		Short: "show group info",
-		Run:   groupInfo,
+		Use:     "groupInfo",
+		Short:   "get group infos",
+		Run:     groupInfo,
+		Example: "groupInfo -g=id1 -g=id2...",
 	}
 	groupInfoFlags(cmd)
 	return cmd
 }
 
 func groupInfoFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("groupID", "g", "", "group id")
-	markRequired(cmd, "groupID")
+	cmd.Flags().StringArrayP("groupIDs", "g", nil, "group id array")
+	markRequired(cmd, "groupIDs")
 }
 
 func groupInfo(cmd *cobra.Command, args []string) {
-	groupID, _ := cmd.Flags().GetString("groupID")
-	if len(groupID) == 0 {
-		fmt.Fprintf(os.Stderr, "ErrNilGroupID")
+	groupIDs, _ := cmd.Flags().GetStringArray("groupIDs")
+	if len(groupIDs) == 0 {
+		fmt.Fprintf(os.Stderr, "ErrNilGroupIDs")
+		return
 	}
 
-	params := &types.ReqString{
-		Data: groupID,
+	params := &vty.ReqStrings{
+		Items: groupIDs,
 	}
-	info := &vty.GroupVoteInfo{}
-	sendQueryRPC(cmd, "GetGroup", params, info)
+	info := &vty.GroupInfos{}
+	sendQueryRPC(cmd, "GetGroups", params, info)
 }
 
 func voteInfoCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "voteInfo",
-		Short: "show vote info",
+		Short: "get vote info",
 		Run:   voteInfo,
 	}
 	voteInfoFlags(cmd)
@@ -48,27 +50,28 @@ func voteInfoCMD() *cobra.Command {
 }
 
 func voteInfoFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("voteID", "v", "", "vote id")
+	cmd.Flags().StringArrayP("voteIDs", "v", nil, "vote id array")
 	markRequired(cmd, "voteID")
 }
 
 func voteInfo(cmd *cobra.Command, args []string) {
-	voteID, _ := cmd.Flags().GetString("voteID")
-	if len(voteID) == 0 {
+	voteIDs, _ := cmd.Flags().GetStringArray("voteIDs")
+	if len(voteIDs) == 0 {
 		fmt.Fprintf(os.Stderr, "ErrNilVoteID")
+		return
 	}
 
-	params := &types.ReqString{
-		Data: voteID,
+	params := &vty.ReqStrings{
+		Items: voteIDs,
 	}
-	info := &vty.VoteInfo{}
-	sendQueryRPC(cmd, "GetVote", params, info)
+	info := &vty.ReplyVoteList{}
+	sendQueryRPC(cmd, "GetVotes", params, info)
 }
 
 func memberInfoCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "memberInfo",
-		Short: "show member info",
+		Short: "get member info",
 		Run:   memberInfo,
 	}
 	memberInfoFlags(cmd)
@@ -76,21 +79,22 @@ func memberInfoCMD() *cobra.Command {
 }
 
 func memberInfoFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("addr", "a", "", "member address")
+	cmd.Flags().StringArrayP("addrs", "a", nil, "member address array")
 	markRequired(cmd, "addr")
 }
 
 func memberInfo(cmd *cobra.Command, args []string) {
-	addr, _ := cmd.Flags().GetString("addr")
-	if len(addr) == 0 {
+	addrs, _ := cmd.Flags().GetStringArray("addr")
+	if len(addrs) == 0 {
 		fmt.Fprintf(os.Stderr, "ErrNilAddress")
+		return
 	}
 
-	params := &types.ReqString{
-		Data: addr,
+	params := &vty.ReqStrings{
+		Items: addrs,
 	}
-	info := &vty.MemberInfo{}
-	sendQueryRPC(cmd, "GetMember", params, info)
+	info := &vty.MemberInfos{}
+	sendQueryRPC(cmd, "GetMembers", params, info)
 }
 
 func listGroupCMD() *cobra.Command {
@@ -104,7 +108,7 @@ func listGroupCMD() *cobra.Command {
 }
 
 func listGroup(cmd *cobra.Command, args []string) {
-	runListCMD(cmd, args, "ListGroup", &vty.GroupVoteInfos{})
+	runListCMD(cmd, "ListGroup", &vty.GroupInfos{})
 }
 
 func listVoteCMD() *cobra.Command {
@@ -113,12 +117,22 @@ func listVoteCMD() *cobra.Command {
 		Short: "show vote list",
 		Run:   listVote,
 	}
-	listCmdFlags(cmd)
+	listVoteFlags(cmd)
 	return cmd
+}
+func listVoteFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("groupID", "g", "", "list vote belongs to specified group, list all if not set")
+	listCmdFlags(cmd)
 }
 
 func listVote(cmd *cobra.Command, args []string) {
-	runListCMD(cmd, args, "ListVote", &vty.VoteInfos{})
+	groupID, _ := cmd.Flags().GetString("groupID")
+	listReq := getListReq(cmd)
+	req := &vty.ReqListVote{
+		GroupID: groupID,
+		ListReq: listReq,
+	}
+	sendQueryRPC(cmd, "ListVote", req, &vty.ReplyVoteList{})
 }
 
 func listMemberCMD() *cobra.Command {
@@ -132,23 +146,28 @@ func listMemberCMD() *cobra.Command {
 }
 
 func listMember(cmd *cobra.Command, args []string) {
-	runListCMD(cmd, args, "ListMember", &vty.MemberInfos{})
+	runListCMD(cmd, "ListMember", &vty.MemberInfos{})
 }
 
 func listCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("startItem", "s", "", "list start item id, default nil value")
 	cmd.Flags().Uint32P("count", "c", 10, "list count, default 10")
-	cmd.Flags().Uint32P("direction", "d", 0, "list direction, default 1 (Ascending order)")
+	cmd.Flags().Uint32P("direction", "d", 1, "list direction, default 1 (Ascending order)")
 }
 
-func runListCMD(cmd *cobra.Command, args []string, funcName string, reply types.Message) {
+func runListCMD(cmd *cobra.Command, funcName string, reply types.Message) {
+	req := getListReq(cmd)
+	sendQueryRPC(cmd, funcName, req, reply)
+}
+
+func getListReq(cmd *cobra.Command) *vty.ReqListItem {
 	startID, _ := cmd.Flags().GetString("startItem")
 	count, _ := cmd.Flags().GetUint32("count")
 	direction, _ := cmd.Flags().GetUint32("direction")
-	params := &vty.ReqListItem{
+	req := &vty.ReqListItem{
 		StartItemID: startID,
 		Count:       int32(count),
 		Direction:   int32(direction),
 	}
-	sendQueryRPC(cmd, funcName, params, reply)
+	return req
 }

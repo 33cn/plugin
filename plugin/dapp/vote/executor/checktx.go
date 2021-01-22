@@ -20,12 +20,16 @@ func (v *vote) CheckTx(tx *types.Transaction, index int) error {
 	}
 	if action.Ty == vty.TyCreateGroupAction {
 		err = v.checkCreateGroup(action.GetCreateGroup())
-	} else if action.Ty == vty.TyUpdateMemberAction {
-		err = v.checkUpdateMember(action.GetUpdateMember())
+	} else if action.Ty == vty.TyUpdateGroupAction {
+		err = v.checkUpdateGroup(action.GetUpdateGroup(), tx, index)
 	} else if action.Ty == vty.TyCreateVoteAction {
-		err = v.checkCreateVote(action.GetCreateVote())
+		err = v.checkCreateVote(action.GetCreateVote(), tx, index)
 	} else if action.Ty == vty.TyCommitVoteAction {
 		err = v.checkCommitVote(action.GetCommitVote(), tx, index)
+	} else if action.Ty == vty.TyCloseVoteAction {
+		err = v.checkCloseVote(action.GetCloseVote(), tx, index)
+	} else if action.Ty == vty.TyUpdateMemberAction {
+		err = v.checkUpdateMember(action.GetUpdateMember())
 	} else {
 		err = types.ErrActionNotSupport
 	}
@@ -68,19 +72,35 @@ func (v *vote) checkCreateGroup(create *vty.CreateGroup) error {
 	return nil
 }
 
-func (v *vote) checkUpdateMember(update *vty.UpdateMember) error {
+func (v *vote) checkUpdateGroup(update *vty.UpdateGroup, tx *types.Transaction, index int) error {
 
-	if len(update.GetGroupID()) != IDLen {
-		return errInvalidGroupID
+	action := newAction(v, tx, index)
+	groupInfo, err := action.getGroupInfo(update.GetGroupID())
+	if err != nil {
+		return err
 	}
+	if !checkSliceItemExist(action.fromAddr, groupInfo.GetAdmins()) {
+		return errAddrPermissionDenied
+	}
+
+	//防止将管理员全部删除
+	if len(update.RemoveAdmins) >= len(update.AddAdmins)+len(groupInfo.GetAdmins()) {
+		return errAddrPermissionDenied
+	}
+
+	addrs := make([]string, 0, len(update.RemoveMembers)+len(update.AddAdmins)+len(update.RemoveAdmins))
+	addrs = append(addrs, update.RemoveMembers...)
+	addrs = append(addrs, update.AddAdmins...)
+	addrs = append(addrs, update.RemoveAdmins...)
 	for _, member := range update.AddMembers {
 		if len(member.Addr) != addrLen {
 			return types.ErrInvalidAddress
 		}
 	}
 
-	for _, addr := range update.RemoveMemberAddrs {
+	for _, addr := range addrs {
 		if len(addr) != addrLen {
+			elog.Error("checkUpdateGroup", "invalid addr", addr)
 			return types.ErrInvalidAddress
 		}
 	}
@@ -88,10 +108,19 @@ func (v *vote) checkUpdateMember(update *vty.UpdateMember) error {
 	return nil
 }
 
-func (v *vote) checkCreateVote(create *vty.CreateVote) error {
+func (v *vote) checkCreateVote(create *vty.CreateVote, tx *types.Transaction, index int) error {
 
 	if create.GetName() == "" {
 		return errEmptyName
+	}
+
+	action := newAction(v, tx, index)
+	groupInfo, err := action.getGroupInfo(create.GetGroupID())
+	if err != nil {
+		return err
+	}
+	if !checkSliceItemExist(action.fromAddr, groupInfo.GetAdmins()) {
+		return errAddrPermissionDenied
 	}
 
 	if create.GetEndTimestamp() <= v.GetBlockTime() || create.EndTimestamp <= create.BeginTimestamp {
@@ -102,29 +131,13 @@ func (v *vote) checkCreateVote(create *vty.CreateVote) error {
 		return errInvalidVoteOption
 	}
 
-	if len(create.VoteGroups) == 0 {
-		return errEmptyVoteGroup
-	}
-
-	if checkSliceItemDuplicate(create.VoteGroups) {
-		return errDuplicateGroup
-	}
-
 	return nil
 }
 
 func (v *vote) checkCommitVote(commit *vty.CommitVote, tx *types.Transaction, index int) error {
 
-	voteID := commit.GetVoteID()
-	groupID := commit.GetGroupID()
-	if len(voteID) != IDLen {
-		return errInvalidVoteID
-	}
-	if len(groupID) != IDLen {
-		return errInvalidGroupID
-	}
 	action := newAction(v, tx, index)
-	voteInfo, err := action.getVoteInfo(voteID)
+	voteInfo, err := action.getVoteInfo(commit.GetVoteID())
 	if err != nil {
 		return err
 	}
@@ -133,29 +146,52 @@ func (v *vote) checkCommitVote(commit *vty.CommitVote, tx *types.Transaction, in
 		return errVoteAlreadyFinished
 	}
 
+	if voteInfo.Status == voteStatusClosed {
+		return errVoteAlreadyClosed
+	}
+
 	if commit.OptionIndex >= uint32(len(voteInfo.VoteOptions)) {
 		return errInvalidOptionIndex
 	}
 
-	//check group validity
-	if !checkSliceItemExist(commit.GroupID, voteInfo.VoteGroups) {
-		return errInvalidGroupID
-	}
-
-	// check if already vote
-	if checkSliceItemExist(action.fromAddr, voteInfo.VotedMembers) {
-		return errAlreadyVoted
-	}
-
-	groupInfo, err := action.getGroupInfo(commit.GroupID)
+	groupInfo, err := action.getGroupInfo(voteInfo.GroupID)
 	if err != nil {
 		return err
 	}
 
 	// check if exist in group members
 	if !checkMemberExist(action.fromAddr, groupInfo.Members) {
-		return errInvalidGroupMember
+		return errAddrPermissionDenied
+	}
+	// check if already vote
+	for _, info := range voteInfo.GetCommitInfos() {
+		if action.fromAddr == info.Addr {
+			return errAlreadyVoted
+		}
 	}
 
+	return nil
+}
+
+func (v *vote) checkCloseVote(close *vty.CloseVote, tx *types.Transaction, index int) error {
+
+	action := newAction(v, tx, index)
+	voteInfo, err := action.getVoteInfo(close.GetVoteID())
+	if err != nil {
+		return err
+	}
+	if voteInfo.Creator != action.fromAddr {
+		return errAddrPermissionDenied
+	}
+	if voteInfo.Status == voteStatusClosed {
+		return errVoteAlreadyClosed
+	}
+	return nil
+}
+
+func (v *vote) checkUpdateMember(update *vty.UpdateMember) error {
+	if update.GetName() == "" {
+		return errEmptyName
+	}
 	return nil
 }

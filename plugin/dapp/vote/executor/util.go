@@ -7,17 +7,22 @@ import (
 )
 
 const (
+	voteStatusNormal = iota
+	voteStatusClosed
+)
+
+const (
 	// IDLen length of groupID or voteID
-	IDLen   = 65
+	IDLen   = 19
 	addrLen = 34
 )
 
-func formatGroupID(txHash string) string {
-	return "g" + txHash
+func formatGroupID(id string) string {
+	return "g" + id
 }
 
-func formatVoteID(txHash string) string {
-	return "v" + txHash
+func formatVoteID(id string) string {
+	return "v" + id
 }
 
 func checkMemberExist(addr string, members []*vty.GroupMember) bool {
@@ -75,4 +80,28 @@ func decodeVoteInfo(data []byte) *vty.VoteInfo {
 	info := &vty.VoteInfo{}
 	mustDecodeProto(data, info)
 	return info
+}
+
+func decodeCommitInfo(data []byte) *vty.CommitInfo {
+	info := &vty.CommitInfo{}
+	mustDecodeProto(data, info)
+	return info
+}
+
+func classifyVoteList(infos *vty.VoteInfos) *vty.ReplyVoteList {
+
+	reply := &vty.ReplyVoteList{}
+	for _, voteInfo := range infos.GetVoteList() {
+
+		if voteInfo.Status == voteStatusClosed {
+			reply.ClosedList = append(reply.ClosedList, voteInfo)
+		} else if voteInfo.BeginTimestamp > types.Now().Unix() {
+			reply.PendingList = append(reply.PendingList, voteInfo)
+		} else if voteInfo.EndTimestamp > types.Now().Unix() {
+			reply.OngoingList = append(reply.OngoingList, voteInfo)
+		} else {
+			reply.FinishedList = append(reply.FinishedList, voteInfo)
+		}
+	}
+	return reply
 }

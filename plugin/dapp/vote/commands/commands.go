@@ -23,7 +23,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(
 		//create tx
 		createGroupCMD(),
-		updateMemberCMD(),
+		updateGroupCMD(),
 		createVoteCMD(),
 		commitVoteCMD(),
 		//query rpc

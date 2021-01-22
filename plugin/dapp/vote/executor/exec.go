@@ -15,9 +15,9 @@ func (v *vote) Exec_CreateGroup(payload *votetypes.CreateGroup, tx *types.Transa
 	return action.createGroup(payload)
 }
 
-func (v *vote) Exec_UpdateMember(payload *votetypes.UpdateMember, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (v *vote) Exec_UpdateGroup(payload *votetypes.UpdateGroup, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(v, tx, index)
-	return action.updateMember(payload)
+	return action.updateGroup(payload)
 }
 
 func (v *vote) Exec_CreateVote(payload *votetypes.CreateVote, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -28,4 +28,14 @@ func (v *vote) Exec_CreateVote(payload *votetypes.CreateVote, tx *types.Transact
 func (v *vote) Exec_CommitVote(payload *votetypes.CommitVote, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newAction(v, tx, index)
 	return action.commitVote(payload)
+}
+
+func (v *vote) Exec_CloseVote(payload *votetypes.CloseVote, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(v, tx, index)
+	return action.closeVote(payload)
+}
+
+func (v *vote) Exec_UpdateMember(payload *votetypes.UpdateMember, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newAction(v, tx, index)
+	return action.updateMember(payload)
 }
