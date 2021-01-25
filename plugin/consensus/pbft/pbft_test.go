@@ -19,7 +19,6 @@ import (
 	"github.com/33cn/chain33/common/limits"
 	"github.com/33cn/chain33/common/log"
 	"github.com/33cn/chain33/executor"
-	"github.com/33cn/chain33/mempool"
 	"github.com/33cn/chain33/p2p"
 	"github.com/33cn/chain33/queue"
 	"github.com/33cn/chain33/store"
@@ -47,9 +46,8 @@ func init() {
 	log.SetLogLevel("info")
 }
 func TestPbft(t *testing.T) {
-	q, chain, p2pnet, s, mem, exec, cs, wallet := initEnvPbft()
+	q, chain, p2pnet, s, exec, cs, wallet := initEnvPbft()
 	defer chain.Close()
-	defer mem.Close()
 	defer p2pnet.Close()
 	defer exec.Close()
 	defer s.Close()
@@ -62,7 +60,7 @@ func TestPbft(t *testing.T) {
 	clearTestData()
 }
 
-func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Module, queue.Module, *executor.Executor, queue.Module, queue.Module) {
+func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Module, *executor.Executor, queue.Module, queue.Module) {
 	flag.Parse()
 	chain33Cfg := types.NewChain33Config(types.ReadFile("chain33.test.toml"))
 	var q = queue.New("channel")
@@ -72,8 +70,6 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 
 	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())
-	mem := mempool.New(chain33Cfg)
-	mem.SetQueueClient(q.Client())
 	exec := executor.New(chain33Cfg)
 	exec.SetQueueClient(q.Client())
 	chain33Cfg.SetMinFee(0)
@@ -86,7 +82,7 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	walletm := wallet.New(chain33Cfg)
 	walletm.SetQueueClient(q.Client())
 
-	return q, chain, p2pnet, s, mem, exec, cs, walletm
+	return q, chain, p2pnet, s, exec, cs, walletm
 
 }
 
@@ -97,13 +93,15 @@ func sendReplyList(q queue.Queue) {
 	for msg := range client.Recv() {
 		if msg.Ty == types.EventTxList {
 			count++
-			createReplyList("test" + strconv.Itoa(count))
+			createReplyList(client.GetConfig(), "test"+strconv.Itoa(count))
 			msg.Reply(client.NewMessage("consensus", types.EventReplyTxList,
 				&types.ReplyTxList{Txs: transactions}))
 			if count == 5 {
 				time.Sleep(5 * time.Second)
 				break
 			}
+		} else if msg.Ty == types.EventGetMempoolSize {
+			msg.Reply(client.NewMessage("", 0, &types.MempoolSize{}))
 		}
 	}
 }
@@ -124,7 +122,8 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
-func createReplyList(account string) {
+func createReplyList(cfg *types.Chain33Config, account string) {
+
 	var result []*types.Transaction
 	for j := 0; j < txSize; j++ {
 		//tx := &types.Transaction{}
@@ -134,6 +133,7 @@ func createReplyList(account string) {
 		tx.To = "14qViLJfdGaP4EeHnDyJbEGQysnCpwn1gZ"
 
 		tx.Nonce = random.Int63()
+		tx.ChainID = cfg.GetChainID()
 
 		tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 		result = append(result, tx)

@@ -43,7 +43,7 @@ enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
 enableReExecLocal=true
 # 使能精简localdb
-enableReduceLocaldb=true
+enableReduceLocaldb=false
 enablePushSubscribe=false
 
 [p2p]
@@ -94,8 +94,13 @@ coinDevFund=12
 coinBaseReward=3
 #委托账户最少解绑定时间(按小时)
 unBindTime=24
-#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置
-#decimalMode=true
+#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即coinReward=1800000000
+decimalMode=false
+#挖矿模式， normal：缺省挖矿，其他自定义，注册名字需要和配置名字保持一致
+minerMode="normal"
+#挖矿减半周期,按高度减半
+halvePeriod=1000
+
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
@@ -261,6 +266,8 @@ ForkLoopCheckCommitTxDone=0
 #仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7200000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
 ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
+#仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
+ForkParaFullMinerHeight=0
 
 [fork.sub.evm]
 Enable=0
