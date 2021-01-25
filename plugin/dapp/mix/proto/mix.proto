@@ -72,26 +72,27 @@ message DHSecret{
 
 //Diff-Helman 加密group, for spender, returner, authorizer to decrypt
 message DHSecretGroup{
-    DHSecret payment = 1;
-    DHSecret returner = 2;
-    DHSecret authorize = 3;
+    string payment = 1;
+    string returner = 2;
+    string authorize = 3;
 }
 
 message ZkProofInfo {
     string proof        = 1;
     string publicInput  = 2;
-    DHSecretGroup group = 3;
+    DHSecretGroup secrets = 3;
 }
 
 message MixDepositAction {
     uint64 amount = 1;
-    repeated ZkProofInfo newCommits = 2;
+    ZkProofInfo proof = 2;
 
 }
 
 message MixTransferAction {
-    repeated ZkProofInfo input = 1;
-    repeated ZkProofInfo output = 2;
+    ZkProofInfo input = 1;
+    ZkProofInfo output = 2;
+    ZkProofInfo change = 3;
 
 }
 
@@ -368,9 +369,9 @@ message CommitValueRst{
 
 enum NoteStatus{
 	UNDEF   = 0;
-	FROZEN  = 1; //未授权
-	VALID   = 2;   //已授权可使用
-	INVALID = 3;   //已使用
+	VALID   = 1;   //已授权可使用
+	FROZEN  = 2; //未授权
+	USED    = 3;   //已使用
 }
 
 message WalletIndexInfo {
@@ -401,11 +402,11 @@ message WalletMixIndexReq {
 }
 
 message WalletIndexResp {
-    repeated WalletIndexInfo datas = 1;
+    repeated WalletIndexInfo notes = 1;
 }
 
 message WalletReqAddrs{
-    repeated string data = 1;
+    repeated string addrs = 1;
 }
 
 message WalletEnablePrivacyRst{
@@ -415,7 +416,7 @@ message WalletEnablePrivacyRst{
 }
 
 message WalletEnablePrivacyResp{
-    repeated WalletEnablePrivacyRst data = 1;
+    repeated WalletEnablePrivacyRst resps = 1;
 }
 
 

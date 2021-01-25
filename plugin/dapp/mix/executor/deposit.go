@@ -81,19 +81,13 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error)
 */
 func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error) {
 	//1. zk-proof校验
-	var sum uint64
-	var commitHashs []string
-	for _, v := range deposit.NewCommits {
-		hash, val, err := a.depositVerify(v)
-		if err != nil {
-			return nil, err
-		}
-		sum += val
-		commitHashs = append(commitHashs, hash)
+	noteHash, val, err := a.depositVerify(deposit.Proof)
+	if err != nil {
+		return nil, err
 	}
-	//校验总存款额
-	if sum != deposit.Amount {
-		return nil, mixTy.ErrInputParaNotMatch
+	//校验存款额,目前只支持一次只存一张支票
+	if val != deposit.Amount {
+		return nil, errors.Wrapf(mixTy.ErrInputParaNotMatch, "deposit amount=%d not equal proof amount=%d", deposit.Amount, val)
 	}
 
 	//存款
@@ -110,9 +104,7 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	}
 	//push new commit to merkle tree
 	var leaves [][]byte
-	for _, h := range commitHashs {
-		leaves = append(leaves, transferFr2Bytes(h))
-	}
+	leaves = append(leaves, transferFr2Bytes(noteHash))
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {
 		return nil, err

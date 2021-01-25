@@ -26,19 +26,25 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 // need super manager
 func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
-	}
 	switch config.Ty {
 	case mixTy.MixConfigType_VerifyKey:
+		//必须是超级管理员才能配置
+		if !isSuperManager(cfg, a.fromaddr) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
+		}
 		return a.ConfigAddVerifyKey(config.GetVerifyKey())
 	case mixTy.MixConfigType_AuthPubKey:
+		//必须是超级管理员才能配置
+		if !isSuperManager(cfg, a.fromaddr) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
+		}
 		if config.Action == mixTy.MixConfigAct_Add {
 			return a.ConfigAddAuthPubKey(config.GetAuthPk())
 		} else {
 			return a.ConfigDeleteAuthPubKey(config.GetAuthPk())
 		}
 	case mixTy.MixConfigType_PaymentPubKey:
+		//个人配置，个人负责，可重配
 		return a.ConfigPaymentPubKey(config.GetPaymentKey())
 	}
 	return nil, errors.Wrapf(types.ErrNotFound, "ty=%d", config.Ty)
