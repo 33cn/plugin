@@ -73,6 +73,7 @@ func (a *action) createGroup(create *vty.CreateGroup) (*types.Receipt, error) {
 	}
 	group.MemberNum = uint32(len(group.Members))
 	group.Creator = a.fromAddr
+	group.Description = create.GetDescription()
 	groupValue := types.Encode(group)
 	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(group.ID), Value: groupValue})
 	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCreateGroupLog, Log: groupValue})
@@ -145,7 +146,7 @@ func (a *action) createVote(create *vty.CreateVote) (*types.Receipt, error) {
 	vote.EndTimestamp = create.EndTimestamp
 	vote.Name = create.Name
 	vote.GroupID = create.GroupID
-
+	vote.Description = create.Description
 	vote.VoteOptions = make([]*vty.VoteOption, 0)
 	for _, option := range create.VoteOptions {
 		vote.VoteOptions = append(vote.VoteOptions, &vty.VoteOption{Option: option})
