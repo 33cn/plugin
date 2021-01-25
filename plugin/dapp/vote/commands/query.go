@@ -84,7 +84,7 @@ func memberInfoFlags(cmd *cobra.Command) {
 }
 
 func memberInfo(cmd *cobra.Command, args []string) {
-	addrs, _ := cmd.Flags().GetStringArray("addr")
+	addrs, _ := cmd.Flags().GetStringArray("addrs")
 	if len(addrs) == 0 {
 		fmt.Fprintf(os.Stderr, "ErrNilAddress")
 		return

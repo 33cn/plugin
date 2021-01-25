@@ -26,6 +26,8 @@ func Cmd() *cobra.Command {
 		updateGroupCMD(),
 		createVoteCMD(),
 		commitVoteCMD(),
+		closeVoteCMD(),
+		updateMemberCMD(),
 		//query rpc
 		groupInfoCMD(),
 		voteInfoCMD(),
