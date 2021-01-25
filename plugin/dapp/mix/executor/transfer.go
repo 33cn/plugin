@@ -111,21 +111,22 @@ func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction, minFee 
 	var inputs []*mixTy.TransferInputPublicInput
 	var outputs []*mixTy.TransferOutputPublicInput
 
-	for _, k := range transfer.Input {
-		in, err := transferInputVerify(db, k)
-		if err != nil {
-			return nil, nil, err
-		}
-		inputs = append(inputs, in)
+	in, err := transferInputVerify(db, transfer.Input)
+	if err != nil {
+		return nil, nil, err
 	}
+	inputs = append(inputs, in)
 
-	for _, k := range transfer.Output {
-		out, err := transferOutputVerify(db, k)
-		if err != nil {
-			return nil, nil, err
-		}
-		outputs = append(outputs, out)
+	out, err := transferOutputVerify(db, transfer.Output)
+	if err != nil {
+		return nil, nil, err
 	}
+	outputs = append(outputs, out)
+	change, err := transferOutputVerify(db, transfer.Change)
+	if err != nil {
+		return nil, nil, err
+	}
+	outputs = append(outputs, change)
 
 	if !VerifyCommitValues(inputs, outputs, minFee) {
 		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")

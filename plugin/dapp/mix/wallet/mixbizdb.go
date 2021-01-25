@@ -5,6 +5,8 @@
 package wallet
 
 import (
+	"encoding/hex"
+
 	"github.com/33cn/chain33/common"
 
 	commondb "github.com/33cn/chain33/common/db"
@@ -14,6 +16,9 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
 )
+
+//空的公钥字符为“0”，不是空，这里多设置了长度
+const LENNULLKEY = 10
 
 func (p *mixPolicy) execAutoLocalMix(tx *types.Transaction, receiptData *types.ReceiptData, index int, height int64) (*types.LocalDBSet, error) {
 	set, err := p.execLocalMix(tx, receiptData, height, int64(index))
@@ -86,40 +91,43 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 }
 
 func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex string, table *table.Table) {
-	for _, m := range deposit.NewCommits {
-		data, err := mixTy.DecodePubInput(mixTy.VerifyType_DEPOSIT, m.PublicInput)
-		if err != nil {
-			bizlog.Error("processDeposit decode", "pubInput", m.PublicInput)
-			continue
-		}
-		input := data.(*mixTy.DepositPublicInput)
-		p.processSecretGroup(input.NoteHash, m.Group, heightIndex, table)
-
+	data, err := mixTy.DecodePubInput(mixTy.VerifyType_DEPOSIT, deposit.Proof.PublicInput)
+	if err != nil {
+		bizlog.Error("processDeposit decode", "pubInput", deposit.Proof.PublicInput)
+		return
 	}
+	input := data.(*mixTy.DepositPublicInput)
+	p.processSecretGroup(input.NoteHash, deposit.Proof.Secrets, heightIndex, table)
 }
 
 func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightIndex string, table *table.Table) {
 	var nulls []string
-	for _, m := range transfer.Input {
-		data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, m.PublicInput)
-		if err != nil {
-			bizlog.Error("processTransfer.input decode", "pubInput", m.PublicInput)
-			continue
-		}
-		input := data.(*mixTy.TransferInputPublicInput)
-		nulls = append(nulls, input.NullifierHash)
+	data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, transfer.Input.PublicInput)
+	if err != nil {
+		bizlog.Error("processTransfer.input decode", "pubInput", transfer.Input.PublicInput)
+		return
 	}
+	input := data.(*mixTy.TransferInputPublicInput)
+	nulls = append(nulls, input.NullifierHash)
 	p.processNullifiers(nulls, table)
 
-	for _, m := range transfer.Output {
-		data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, m.PublicInput)
-		if err != nil {
-			bizlog.Error("processTransfer.output decode", "pubInput", m.PublicInput)
-			continue
-		}
-		input := data.(*mixTy.TransferOutputPublicInput)
-		p.processSecretGroup(input.NoteHash, input.DhSecrets, heightIndex, table)
+	//out
+	data, err = mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Output.PublicInput)
+	if err != nil {
+		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Output.PublicInput)
+		return
 	}
+	outInput := data.(*mixTy.TransferOutputPublicInput)
+	p.processSecretGroup(outInput.NoteHash, outInput.DhSecrets, heightIndex, table)
+
+	//change
+	data, err = mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Change.PublicInput)
+	if err != nil {
+		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Change.PublicInput)
+		return
+	}
+	changeInput := data.(*mixTy.TransferOutputPublicInput)
+	p.processSecretGroup(changeInput.NoteHash, changeInput.DhSecrets, heightIndex, table)
 
 }
 
@@ -158,7 +166,7 @@ func updateNullifier(ldb *table.Table, nullifier string) error {
 		return nil
 
 	}
-	u.Info.Status = mixTy.NoteStatus_INVALID
+	u.Info.Status = mixTy.NoteStatus_USED
 	return ldb.Update([]byte(u.TxIndex), u)
 }
 
@@ -222,16 +230,16 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	if len(rows) == 0 {
 		return nil, types.ErrNotFound
 	}
-	var rep mixTy.WalletIndexResp
+	var resp mixTy.WalletIndexResp
 	for _, row := range rows {
 		r, ok := row.Data.(*mixTy.WalletDbMixInfo)
 		if !ok {
 			bizlog.Error("listMixInfos", "err", "bad row type")
 			return nil, types.ErrDecode
 		}
-		rep.Datas = append(rep.Datas, r.Info)
+		resp.Notes = append(resp.Notes, r.Info)
 	}
-	return &rep, nil
+	return &resp, nil
 }
 
 func (e *mixPolicy) execAutoDelLocal(tx *types.Transaction) (*types.LocalDBSet, error) {
@@ -268,34 +276,46 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 	}
 
 	//可能自己账户里面既有spender,也有returner 或authorize,都要解一遍
-	info, err := p.decodeSecret(noteHash, secretGroup.Payment, privacyKeys)
-	if err != nil {
-		bizlog.Error("processSecretGroup.spender", "err", err)
-	}
-	if info != nil {
-		p.addTable(info, heightIndex, table)
-	}
-
-	info, err = p.decodeSecret(noteHash, secretGroup.Returner, privacyKeys)
-	if err != nil {
-		bizlog.Error("processSecretGroup.Returner", "err", err)
-	}
-	if info != nil {
-		p.addTable(info, heightIndex, table)
+	if len(secretGroup.Payment) > 0 {
+		info, err := p.decodeSecret(noteHash, secretGroup.Payment, privacyKeys)
+		if err != nil {
+			bizlog.Error("processSecretGroup.spender", "err", err)
+		}
+		if info != nil {
+			p.addTable(info, heightIndex, table)
+		}
 	}
 
-	info, err = p.decodeSecret(noteHash, secretGroup.Authorize, privacyKeys)
-	if err != nil {
-		bizlog.Error("processSecretGroup.Authorize", "err", err)
+	if len(secretGroup.Returner) > 0 {
+		info, err := p.decodeSecret(noteHash, secretGroup.Returner, privacyKeys)
+		if err != nil {
+			bizlog.Error("processSecretGroup.Returner", "err", err)
+		}
+		if info != nil {
+			p.addTable(info, heightIndex, table)
+		}
 	}
-	if info != nil {
-		p.addTable(info, heightIndex, table)
+
+	if len(secretGroup.Authorize) > 0 {
+		info, err := p.decodeSecret(noteHash, secretGroup.Authorize, privacyKeys)
+		if err != nil {
+			bizlog.Error("processSecretGroup.Authorize", "err", err)
+		}
+		if info != nil {
+			p.addTable(info, heightIndex, table)
+		}
 	}
 }
 
-func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, privacyKeys []*mixTy.WalletAddrPrivacy) (*mixTy.WalletIndexInfo, error) {
-	if dhSecret == nil {
-		return nil, errors.Wrapf(types.ErrEmpty, "secret nil for notehash=%s", noteHash)
+func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys []*mixTy.WalletAddrPrivacy) (*mixTy.WalletIndexInfo, error) {
+	var dhSecret mixTy.DHSecret
+	data, err := hex.DecodeString(secretData)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode secret str=%s", secretData)
+	}
+	err = types.Decode(data, &dhSecret)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode secret data=%s", secretData)
 	}
 
 	tempPubKey := &mixTy.PubKey{X: dhSecret.Epk.X, Y: dhSecret.Epk.Y}
@@ -307,8 +327,10 @@ func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, priv
 		}
 		decryptData, err := decryptData(key.Privacy.ShareSecretKey.PrivKey, tempPubKey, cryptData)
 		if err != nil {
-			return nil, errors.Wrapf(err, "decrypt for notehash=%s,crypt=%s", noteHash, dhSecret.Secret)
+			bizlog.Info("processSecret.decryptData", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
+			continue
 		}
+		bizlog.Info("processSecret.decryptData OK", "decrypt for notehash", noteHash, "addr", key.Addr)
 		var rawData mixTy.SecretData
 		err = types.Decode(decryptData, &rawData)
 		if err != nil {
@@ -323,16 +345,20 @@ func (p *mixPolicy) decodeSecret(noteHash string, dhSecret *mixTy.DHSecret, priv
 			info.NoteHash = noteHash
 			info.Nullifier = getFrString(mimcHashString([]string{rawData.NoteRandom}))
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
-			//如果授权为spenderAuthHash，则spender更新本地为OPEN，returner侧仍为FROZEN，花费后，两端都变为USED
-			//如果授权为returnerAuthHash，则returner更新本地为OPEN，spender侧仍为FROZEN，
-			if rawData.PaymentPubKey == key.Privacy.PaymentKey.PayKey {
-				info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.PaymentPubKey, rawData.Amount, rawData.NoteRandom}))
-			} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.PayKey {
-				info.IsReturner = true
-				info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
+			//如果授权为spenderAuthHash，则根据授权hash索引到本地数据库，spender更新本地为VALID，returner侧不变仍为FROZEN，花费后，两端都变为USED
+			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
+			if len(rawData.AuthorizePubKey) > LENNULLKEY {
+				if rawData.PaymentPubKey == key.Privacy.PaymentKey.PayKey {
+					info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.PaymentPubKey, rawData.Amount, rawData.NoteRandom}))
+				} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.PayKey {
+					info.IsReturner = true
+					info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
+				}
 			}
+
 			info.Status = mixTy.NoteStatus_VALID
-			if len(rawData.AuthorizePubKey) > 0 {
+			//空的公钥为"0"字符，不是空字符
+			if len(rawData.AuthorizePubKey) > LENNULLKEY {
 				info.Status = mixTy.NoteStatus_FROZEN
 			}
 			//账户地址
