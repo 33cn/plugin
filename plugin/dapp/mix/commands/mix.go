@@ -54,42 +54,48 @@ func CreateDepositCmd() *cobra.Command {
 }
 
 func addCreateDepositFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("proofs", "p", "", "'proof-pubinput' pair, multi pairs allowed with ','")
+	cmd.Flags().StringP("proofs", "f", "", "'proof-pubinput' format pair")
 	cmd.MarkFlagRequired("proofs")
 
-	cmd.Flags().Uint64P("amount", "a", 0, "deposit amount")
+	cmd.Flags().Uint64P("amount", "m", 0, "deposit amount")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("secretPayment", "s", "", "secret for payment addr")
+	cmd.Flags().StringP("secretPayment", "p", "", "secret for payment addr")
 	cmd.MarkFlagRequired("secretPayment")
 
-	cmd.Flags().StringP("pubX", "x", "", "receiving pub key X")
-	cmd.MarkFlagRequired("pubX")
-
-	cmd.Flags().StringP("pubY", "y", "", "receiving pub key Y")
-	cmd.MarkFlagRequired("pubY")
-
-	cmd.Flags().StringP("secretAuth", "u", "", "secret for authorize addr")
+	cmd.Flags().StringP("secretAuth", "a", "", "secret for authorize addr")
 
 	cmd.Flags().StringP("secretReturn", "r", "", "secret for return addr")
 
 }
 
-func parseProofPara(input string) ([]*mixTy.ZkProofInfo, error) {
-	var proofInputs []*mixTy.ZkProofInfo
-	inputParas := strings.Split(input, ",")
-	for _, i := range inputParas {
-		inputs := strings.Split(i, "-")
-		if len(inputs) != 2 {
-			fmt.Println("proofs parameters not correct:", i)
-			return nil, types.ErrInvalidParam
-		}
-		var proofInfo mixTy.ZkProofInfo
-		proofInfo.Proof = inputs[0]
-		proofInfo.PublicInput = inputs[1]
-		proofInputs = append(proofInputs, &proofInfo)
+//func parseProofPara(input string) ([]*mixTy.ZkProofInfo, error) {
+//	var proofInputs []*mixTy.ZkProofInfo
+//	inputParas := strings.Split(input, ",")
+//	for _, i := range inputParas {
+//		inputs := strings.Split(i, "-")
+//		if len(inputs) != 2 {
+//			fmt.Println("proofs parameters not correct:", i)
+//			return nil, types.ErrInvalidParam
+//		}
+//		var proofInfo mixTy.ZkProofInfo
+//		proofInfo.Proof = inputs[0]
+//		proofInfo.PublicInput = inputs[1]
+//		proofInputs = append(proofInputs, &proofInfo)
+//	}
+//	return proofInputs, nil
+//}
+
+func parseProofPara(input string) (*mixTy.ZkProofInfo, error) {
+	inputs := strings.Split(input, "-")
+	if len(inputs) != 2 {
+		fmt.Println("proofs parameters not correct:", input)
+		return nil, types.ErrInvalidParam
 	}
-	return proofInputs, nil
+	var proofInfo mixTy.ZkProofInfo
+	proofInfo.Proof = inputs[0]
+	proofInfo.PublicInput = inputs[1]
+	return &proofInfo, nil
 }
 
 func createDeposit(cmd *cobra.Command, args []string) {
@@ -97,28 +103,23 @@ func createDeposit(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetUint64("amount")
 	proofsPara, _ := cmd.Flags().GetString("proofs")
 	secretPayment, _ := cmd.Flags().GetString("secretPayment")
-	pubX, _ := cmd.Flags().GetString("pubX")
-	pubY, _ := cmd.Flags().GetString("pubY")
+	secretAuth, _ := cmd.Flags().GetString("secretAuth")
+	secretReturn, _ := cmd.Flags().GetString("secretReturn")
 
 	proofInputs, err := parseProofPara(proofsPara)
 	if err != nil {
 		return
 	}
 
-	var pubkey mixTy.PubKey
-	pubkey.X = pubX
-	pubkey.Y = pubY
-	var paySecret mixTy.DHSecret
-	paySecret.Secret = secretPayment
-	paySecret.Epk = &pubkey
-
-	var group mixTy.DHSecretGroup
-	group.Payment = &paySecret
+	proofInputs.Secrets = &mixTy.DHSecretGroup{
+		Payment:   secretPayment,
+		Authorize: secretAuth,
+		Returner:  secretReturn,
+	}
 
 	payload := &mixTy.MixDepositAction{}
 	payload.Amount = amount
-	payload.NewCommits = append(payload.NewCommits, proofInputs...)
-	payload.NewCommits[0].Group = &group
+	payload.Proof = proofInputs
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
@@ -163,7 +164,7 @@ func createWithdraw(cmd *cobra.Command, args []string) {
 
 	payload := &mixTy.MixWithdrawAction{}
 	payload.Amount = amount
-	payload.SpendCommits = append(payload.SpendCommits, proofInputs...)
+	payload.SpendCommits = append(payload.SpendCommits, proofInputs)
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
 		ActionName: "Withdraw",
@@ -190,8 +191,25 @@ func addCreateTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("input", "i", "", "input 'proof-pubinput' pair, multi pairs allowed with ','")
 	cmd.MarkFlagRequired("input")
 
-	cmd.Flags().StringP("output", "o", "", "output 'proof-pubinput' pair, multi pairs allowed with ','")
+	cmd.Flags().StringP("output", "o", "", "output 'proof-pubinput' pair")
 	cmd.MarkFlagRequired("output")
+
+	cmd.Flags().StringP("secretPayment", "p", "", "secret for payment addr")
+	cmd.MarkFlagRequired("secretPayment")
+
+	cmd.Flags().StringP("secretAuth", "a", "", "secret for authorize addr")
+
+	cmd.Flags().StringP("secretReturn", "r", "", "secret for return addr")
+
+	cmd.Flags().StringP("change", "c", "", "output change 'proof-pubinput' pair")
+	cmd.MarkFlagRequired("change")
+
+	cmd.Flags().StringP("changePayment", "t", "", "secret for change payment addr")
+	cmd.MarkFlagRequired("changePayment")
+
+	cmd.Flags().StringP("changeAuth", "u", "", "secret for change authorize addr")
+
+	cmd.Flags().StringP("changeReturn", "e", "", "secret for change return addr")
 
 }
 
@@ -199,6 +217,13 @@ func createTransfer(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	proofsInput, _ := cmd.Flags().GetString("input")
 	proofsOutput, _ := cmd.Flags().GetString("output")
+	proofsChange, _ := cmd.Flags().GetString("change")
+	secretPayment, _ := cmd.Flags().GetString("secretPayment")
+	secretAuth, _ := cmd.Flags().GetString("secretAuth")
+	secretReturn, _ := cmd.Flags().GetString("secretReturn")
+	changePayment, _ := cmd.Flags().GetString("changePayment")
+	changeAuth, _ := cmd.Flags().GetString("changeAuth")
+	changeReturn, _ := cmd.Flags().GetString("changeReturn")
 
 	proofInputs, err := parseProofPara(proofsInput)
 	if err != nil {
@@ -210,10 +235,27 @@ func createTransfer(cmd *cobra.Command, args []string) {
 		fmt.Println("proofsOutput error")
 		return
 	}
+	proofOutputs.Secrets = &mixTy.DHSecretGroup{
+		Payment:   secretPayment,
+		Returner:  secretAuth,
+		Authorize: secretReturn,
+	}
+
+	proofChanges, err := parseProofPara(proofsChange)
+	if err != nil {
+		fmt.Println("proofsOutput error")
+		return
+	}
+	proofChanges.Secrets = &mixTy.DHSecretGroup{
+		Payment:   changePayment,
+		Returner:  changeAuth,
+		Authorize: changeReturn,
+	}
 
 	payload := &mixTy.MixTransferAction{}
-	payload.Input = append(payload.Input, proofInputs...)
-	payload.Output = append(payload.Output, proofOutputs...)
+	payload.Input = proofInputs
+	payload.Output = proofOutputs
+	payload.Change = proofChanges
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
 		ActionName: "Transfer",
@@ -246,13 +288,13 @@ func createAuthorize(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	proofsPara, _ := cmd.Flags().GetString("proofs")
 
-	proofInputs, err := parseProofPara(proofsPara)
+	proofInput, err := parseProofPara(proofsPara)
 	if err != nil {
 		return
 	}
 
 	payload := &mixTy.MixAuthorizeAction{}
-	payload.AuthCommits = append(payload.AuthCommits, proofInputs...)
+	payload.AuthCommits = append(payload.AuthCommits, proofInput)
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
 		ActionName: "Authorize",
@@ -668,7 +710,7 @@ func ShowAccountNoteInfo() *cobra.Command {
 }
 
 func accountNoteCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("accounts", "a", "", "accounts")
+	cmd.Flags().StringP("accounts", "a", "", "accounts,note status:1:valid,2:frozen,3:used")
 	cmd.MarkFlagRequired("accounts")
 
 }
@@ -998,11 +1040,9 @@ func transferSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("toAddr", "t", "", "transfer to addr")
 	cmd.MarkFlagRequired("toAddr")
 
-	cmd.Flags().StringP("auth", "a", "", "transfer to auth addr")
-	cmd.MarkFlagRequired("auth")
+	cmd.Flags().StringP("auth", "a", "", "transfer to auth addr,optional")
 
-	cmd.Flags().StringP("returner", "r", "", "transfer to returner addr")
-	cmd.MarkFlagRequired("returner")
+	cmd.Flags().StringP("returner", "r", "", "transfer to returner addr,optional")
 
 	cmd.Flags().Uint64P("amount", "m", 0, "transfer amount")
 	cmd.MarkFlagRequired("amount")

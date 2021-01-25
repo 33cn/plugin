@@ -43,7 +43,7 @@ func (r *MixSignature) Bytes() []byte {
 
 // IsZero check is zero
 func (r *MixSignature) IsZero() bool {
-	return len(r.sign.Output) == 0 || len(r.sign.Input) == 0
+	return r.sign.Output == nil || r.sign.Input == nil
 }
 
 // String convert to string

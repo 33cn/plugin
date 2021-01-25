@@ -5,6 +5,7 @@
 package wallet
 
 import (
+	"encoding/hex"
 	"math/big"
 	"strconv"
 
@@ -104,28 +105,33 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 	fr.SetRandom()
 	secret.NoteRandom = fr.String()
 
-	// 获取addr对应的paymentKey
-	toKey, errr := policy.getPaymentKey(req.PaymentAddr)
-	if errr != nil {
-		return nil, errors.Wrapf(errr, "get payment key for addr = %s", req.PaymentAddr)
+	// 获取receiving addr对应的paymentKey
+	toKey, e := policy.getPaymentKey(req.PaymentAddr)
+	if e != nil {
+		return nil, errors.Wrapf(e, "get payment key for addr = %s", req.PaymentAddr)
 	}
 	secret.PaymentPubKey = toKey.PayingKey
 
+	//获取return addr对应的key
 	var returnKey *mixTy.PaymentKey
 	var err error
+	//如果Input不填，缺省空为“0”字符串
+	secret.ReturnPubKey = "0"
 	if len(req.ReturnAddr) > 0 {
-		returnKey, err = policy.getPaymentKey(req.PaymentAddr)
+		returnKey, err = policy.getPaymentKey(req.ReturnAddr)
 		if err != nil {
-			return nil, errors.Wrapf(err, "get payment key for addr = %s", req.PaymentAddr)
+			return nil, errors.Wrapf(err, "get payment key for return addr = %s", req.ReturnAddr)
 		}
 		secret.ReturnPubKey = returnKey.PayingKey
 	}
 
+	//获取auth addr对应的key
 	var authKey *mixTy.PaymentKey
-	if len(req.ReturnAddr) > 0 {
-		authKey, err = policy.getPaymentKey(req.PaymentAddr)
+	secret.AuthorizePubKey = "0"
+	if len(req.AuthorizeAddr) > 0 {
+		authKey, err = policy.getPaymentKey(req.AuthorizeAddr)
 		if err != nil {
-			return nil, errors.Wrapf(err, "get payment key for addr = %s", req.PaymentAddr)
+			return nil, errors.Wrapf(err, "get payment key for authorize addr = %s", req.AuthorizeAddr)
 		}
 		secret.AuthorizePubKey = authKey.PayingKey
 	}
@@ -133,12 +139,13 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 	//DH加密
 	data := types.Encode(&secret)
 	var group mixTy.DHSecretGroup
-	group.Payment = encryptData(toKey.ReceivingKey, data)
+
+	group.Payment = hex.EncodeToString(types.Encode(encryptData(toKey.ReceivingKey, data)))
 	if returnKey != nil {
-		group.Returner = encryptData(returnKey.ReceivingKey, data)
+		group.Returner = hex.EncodeToString(types.Encode(encryptData(returnKey.ReceivingKey, data)))
 	}
 	if authKey != nil {
-		group.Authorize = encryptData(authKey.ReceivingKey, data)
+		group.Authorize = hex.EncodeToString(types.Encode(encryptData(authKey.ReceivingKey, data)))
 	}
 
 	var resp mixTy.DepositProofResp
@@ -180,8 +187,12 @@ func (policy *mixPolicy) getNoteInfo(noteHash string, noteStatus mixTy.NoteStatu
 	if err != nil {
 		return nil, errors.Wrapf(err, "list table fail noteHash=%s", noteHash)
 	}
+	resp := msg.(*mixTy.WalletIndexResp)
+	if len(resp.Notes) < 1 {
+		return nil, errors.Wrapf(err, "list table lens=0 for noteHash=%s", noteHash)
+	}
 
-	note := msg.(*mixTy.WalletIndexResp).Datas[0]
+	note := msg.(*mixTy.WalletIndexResp).Notes[0]
 	if note.Status != noteStatus {
 		return nil, errors.Wrapf(types.ErrNotAllow, "note status=%s", note.Status.String())
 	}
@@ -324,18 +335,19 @@ func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.CommitV
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount sum fail for mul G point")
 	}
 
+	//三个混淆随机值可以随机获取，这里noteRandom和为了Nullifier计算的NoteRandom不同。
 	//获取随机值，截取一半给change和transfer,和值给Note,直接用完整的random值会溢出
-	var changeRandom, transRandom, v fr_bn256.Element
+	var changeRdm, transRdm, v fr_bn256.Element
 	random := v.SetRandom().String()
-	changeRandom.SetString(random[0 : len(random)/2])
-	transRandom.SetString(random[len(random)/2:])
+	changeRdm.SetString(random[0 : len(random)/2])
+	transRdm.SetString(random[len(random)/2:])
 
-	var noteRandom fr_bn256.Element
-	noteRandom.Add(&changeRandom, &transRandom)
+	var noteRdm fr_bn256.Element
+	noteRdm.Add(&changeRdm, &transRdm)
 
-	noteH := mixTy.MulCurvePointH(noteRandom.String())
-	transferH := mixTy.MulCurvePointH(transRandom.String())
-	changeH := mixTy.MulCurvePointH(changeRandom.String())
+	noteH := mixTy.MulCurvePointH(noteRdm.String())
+	transferH := mixTy.MulCurvePointH(transRdm.String())
+	changeH := mixTy.MulCurvePointH(changeRdm.String())
 	//fmt.Println("change",changeRandom.String())
 	//fmt.Println("transfer",transRandom.String())
 	//fmt.Println("note",noteRandom.String())
@@ -353,9 +365,9 @@ func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.CommitV
 	}
 
 	rst := &mixTy.CommitValueRst{
-		NoteRandom:     noteRandom.String(),
-		TransferRandom: transRandom.String(),
-		ChangeRandom:   changeRandom.String(),
+		NoteRandom:     noteRdm.String(),
+		TransferRandom: transRdm.String(),
+		ChangeRandom:   changeRdm.String(),
 		Note:           &mixTy.CommitValue{X: noteAmountG.X.String(), Y: noteAmountG.Y.String()},
 		Transfer:       &mixTy.CommitValue{X: transAmountG.X.String(), Y: transAmountG.Y.String()},
 		Change:         &mixTy.CommitValue{X: changeAmountG.X.String(), Y: changeAmountG.Y.String()},
@@ -369,6 +381,7 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 		return nil, err
 	}
 	inputPart, err := policy.getTransferInputPart(note)
+	bizlog.Info("transferProof get notes succ", "notehash", req.NoteHash)
 
 	noteAmount, err := strconv.ParseUint(note.Secret.Amount, 10, 64)
 	if err != nil {
@@ -388,6 +401,7 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	if err != nil {
 		return nil, errors.Wrapf(err, "deposit toAddr")
 	}
+	bizlog.Info("transferProof deposit to receiver succ", "notehash", req.NoteHash)
 
 	//output 找零 part,如果找零为0也需要设置，否则只有一个输入一个输出，H部分的随机数要相等，就能推测出转账值来
 	//在transfer output 部分特殊处理，如果amount是0的值则不加进tree
@@ -399,12 +413,13 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	if err != nil {
 		return nil, errors.Wrapf(err, "deposit toAddr")
 	}
+	bizlog.Info("transferProof deposit to change succ", "notehash", req.NoteHash)
 
 	commitValue, err := getCommitValue(noteAmount, req.Amount, minTxFee)
 	if err != nil {
 		return nil, err
 	}
-
+	bizlog.Info("transferProof get commit value succ", "notehash", req.NoteHash)
 	//noteCommitX, transferX, changeX
 	inputPart.CommitValue = commitValue.Note
 	inputPart.SpendRandom = commitValue.NoteRandom
