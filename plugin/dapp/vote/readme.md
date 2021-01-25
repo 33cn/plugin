@@ -266,7 +266,7 @@ message MemberInfo {
 ##### 请求结构
 ```proto
 message ReqStrings {
-    repeated string items = 1; //请求项数组
+    repeated string items = 1; //投票组ID列表
 }
 ```
 
@@ -292,7 +292,7 @@ curl -ksd '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"GetG
 ##### 请求结构
 ```proto
 message ReqStrings {
-    repeated string items = 1; //请求项数组
+    repeated string items = 1; //投票ID列表
 }
 ```
 
@@ -316,12 +316,12 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"GetV
 ```
 
 #### 获取成员信息(GetMembers)
-获取用户信息，支持多个同时查询
+根据用户地址，获取用户信息，支持多个同时查询
 
 ##### 请求结构
 ```proto
 message ReqStrings {
-    repeated string items = 1; //请求项数组
+    repeated string items = 1; //用户地址列表
 }
 ```
 
