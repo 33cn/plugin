@@ -19,7 +19,7 @@
 //创建投票组
 message CreateGroup {
     string   name                    = 1; //投票组名称
-    repeated string admins           = 2; //管理员地址列表
+    repeated string admins           = 2; //管理员地址列表, 创建者默认为管理员
     repeated GroupMember members     = 3; //组员
     string               description = 4; //描述
 }
@@ -349,12 +349,13 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"GetM
 ```
 
 #### 获取投票组列表(ListGroup)
+全局投票组有序列表
 
 ##### 请求结构
 ```proto
 //列表请求结构
 message ReqListItem {
-    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    string startItemID = 1; //列表开始的投票组ID，不包含在结果中
     int32  count       = 2; //列表项单次请求数量
     int32  direction   = 3; // 0表示根据ID降序，1表示升序
 }
@@ -377,17 +378,17 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"List
 ```
 
 #### 获取投票列表(ListVote)
-
+获取全局投票列表, 指定groupID时，则获取指定组的投票列表
 ##### 请求结构
 ```proto
 //列表请求结构
 message ReqListVote {
-    string      groupID = 1; //所属组ID
+    string      groupID = 1; //所属组ID，不填时获取全局的投票列表
     ReqListItem listReq = 2; //列表请求
 }
 
 message ReqListItem {
-    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    string startItemID = 1; //列表开始的投票ID，不包含在结果中
     int32  count       = 2; //列表项单次请求数量
     int32  direction   = 3; // 0表示根据ID降序，1表示升序
 }
@@ -414,13 +415,14 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"List
 ```
 
 #### 获取用户列表(ListMember)
+全局用户有序列表
 
 ##### 请求结构
 
 ```proto
 //列表请求结构
 message ReqListItem {
-    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    string startItemID = 1; //列表开始的用户ID（地址）
     int32  count       = 2; //列表项单次请求数量
     int32  direction   = 3; // 0表示根据ID降序，1表示升序
 }

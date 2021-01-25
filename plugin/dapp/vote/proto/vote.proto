@@ -23,7 +23,7 @@ message GroupMember {
 //创建投票组
 message CreateGroup {
     string   name                    = 1; //投票组名称
-    repeated string admins           = 2; //管理员地址列表
+    repeated string admins           = 2; //管理员地址列表，创建者默认为管理员
     repeated GroupMember members     = 3; //组员
     string               description = 4; //描述
 }
@@ -134,8 +134,9 @@ message ReqListVote {
 }
 
 message ReplyVoteList {
-    repeated VoteInfo pendingList  = 1; //即将开始投票列表
-    repeated VoteInfo ongoingList  = 2; //正在进行投票列表
-    repeated VoteInfo finishedList = 3; //已经完成投票列表
-    repeated VoteInfo closedList   = 4; //已经关闭投票列表
+    repeated VoteInfo pendingList      = 1; //即将开始投票列表
+    repeated VoteInfo ongoingList      = 2; //正在进行投票列表
+    repeated VoteInfo finishedList     = 3; //已经完成投票列表
+    repeated VoteInfo closedList       = 4; //已经关闭投票列表
+    int64             currentTimestamp = 5;
 }

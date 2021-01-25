@@ -91,17 +91,19 @@ func decodeCommitInfo(data []byte) *vty.CommitInfo {
 func classifyVoteList(infos *vty.VoteInfos) *vty.ReplyVoteList {
 
 	reply := &vty.ReplyVoteList{}
+	currentTime := types.Now().Unix()
 	for _, voteInfo := range infos.GetVoteList() {
 
 		if voteInfo.Status == voteStatusClosed {
 			reply.ClosedList = append(reply.ClosedList, voteInfo)
-		} else if voteInfo.BeginTimestamp > types.Now().Unix() {
+		} else if voteInfo.BeginTimestamp > currentTime {
 			reply.PendingList = append(reply.PendingList, voteInfo)
-		} else if voteInfo.EndTimestamp > types.Now().Unix() {
+		} else if voteInfo.EndTimestamp > currentTime {
 			reply.OngoingList = append(reply.OngoingList, voteInfo)
 		} else {
 			reply.FinishedList = append(reply.FinishedList, voteInfo)
 		}
 	}
+	reply.CurrentTimestamp = currentTime
 	return reply
 }
