@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -62,10 +63,9 @@ func (m *Mix) CheckTx(tx *types.Transaction, index int) error {
 		// mix隐私交易，只私对私需要特殊签名验证
 		return m.DriverBase.CheckTx(tx, index)
 	}
-	minTxFee := m.GetAPI().GetConfig().GInt("wallet.minFee")
-	_, _, err := MixTransferInfoVerify(m.GetStateDB(), action.GetTransfer(), minTxFee)
+	_, _, err := MixTransferInfoVerify(m.GetAPI().GetConfig(), m.GetStateDB(), action.GetTransfer())
 	if err != nil {
-		mlog.Error("checkTx", "err", err)
+		mlog.Error("checkTx", "err", err, "txhash", common.ToHex(tx.Hash()))
 		return err
 	}
 	return nil

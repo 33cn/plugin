@@ -7,6 +7,7 @@ package executor
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -75,15 +76,15 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	var inputPoints, outputPoints []*twistededwards.Point
 	for _, in := range inputs {
 		var p twistededwards.Point
-		p.X.SetString(in.AmountX)
-		p.Y.SetString(in.AmountY)
+		p.X.SetString(in.ShieldAmountX)
+		p.Y.SetString(in.ShieldAmountY)
 		inputPoints = append(inputPoints, &p)
 	}
 
 	for _, out := range outputs {
 		var p twistededwards.Point
-		p.X.SetString(out.AmountX)
-		p.Y.SetString(out.AmountY)
+		p.X.SetString(out.ShieldAmountX)
+		p.Y.SetString(out.ShieldAmountY)
 		outputPoints = append(outputPoints, &p)
 	}
 	//out value add fee
@@ -107,7 +108,7 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	return false
 }
 
-func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction, minFee int64) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
+func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
 	var inputs []*mixTy.TransferInputPublicInput
 	var outputs []*mixTy.TransferOutputPublicInput
 
@@ -128,7 +129,8 @@ func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction, minFee 
 	}
 	outputs = append(outputs, change)
 
-	if !VerifyCommitValues(inputs, outputs, minFee) {
+	minTxFee := types.Conf(cfg, "config.wallet").GInt("minFee")
+	if !VerifyCommitValues(inputs, outputs, minTxFee) {
 		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
 	}
 
@@ -141,8 +143,7 @@ func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction, minFee 
 3. add nullifier to pool
 */
 func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, error) {
-	minTxFee := a.api.GetConfig().GInt("wallet.minFee")
-	inputs, outputs, err := MixTransferInfoVerify(a.db, transfer, minTxFee)
+	inputs, outputs, err := MixTransferInfoVerify(a.api.GetConfig(), a.db, transfer)
 	if err != nil {
 		return nil, errors.Wrap(err, "Transfer.MixTransferInfoVerify")
 	}

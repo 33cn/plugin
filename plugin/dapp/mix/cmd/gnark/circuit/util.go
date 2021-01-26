@@ -65,8 +65,8 @@ func leafSum(circuit *frontend.CS, h mimc.MiMCGadget, data *frontend.Constraint)
 
 func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	//cmt=transfer_value*G + random_value*H
-	cmtvalueX := circuit.PUBLIC_INPUT("commitValueX")
-	cmtvalueY := circuit.PUBLIC_INPUT("commitValueY")
+	cmtvalueX := circuit.PUBLIC_INPUT("shieldAmountX")
+	cmtvalueY := circuit.PUBLIC_INPUT("shieldAmountY")
 
 	// set curve parameters
 	edgadget, _ := twistededwards_gadget.NewEdCurveGadget(gurvy.BN256)
@@ -84,7 +84,7 @@ func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	pointGSnark.X.Tag("xg")
 	pointGSnark.Y.Tag("yg")
 
-	transfer_random := circuit.SECRET_INPUT("spendRandom")
+	transfer_random := circuit.SECRET_INPUT("amountRandom")
 	//circuit.MUSTBE_LESS_OR_EQ(random_value,10000000000,256)
 	//H is not G, H should be a point that no one know the prikey
 	var baseX_H, baseY_H fr_bn256.Element

@@ -22,10 +22,9 @@ public:
 	authorizeSpendHash(=hash(spendpub+value+noterandom))
 
 private:
-	spendAmount
-	spendPubKey
+	amount
+	receiverPubKey
 	returnPubKey
-	authorizePubKey
 	authorizePriKey
 	spendFlag
 	noteRandom
@@ -40,10 +39,10 @@ func NewAuth() *frontend.R1CS {
 	// create root constraint system
 	circuit := frontend.New()
 
-	spendAmount := circuit.SECRET_INPUT("spendAmount")
+	amount := circuit.SECRET_INPUT("amount")
 
 	//spend pubkey
-	spendPubKey := circuit.SECRET_INPUT("spendPubKey")
+	receiverPubKey := circuit.SECRET_INPUT("receiverPubKey")
 	returnPubKey := circuit.SECRET_INPUT("returnPubKey")
 	authorizePriKey := circuit.SECRET_INPUT("authorizePriKey")
 	noteRandom := circuit.SECRET_INPUT("noteRandom")
@@ -63,13 +62,13 @@ func NewAuth() *frontend.R1CS {
 	//spend_flag 0：return_pubkey, 1:  spend_pubkey
 	spendFlag := circuit.SECRET_INPUT("spendFlag")
 	circuit.MUSTBE_BOOLEAN(spendFlag)
-	targetPubHash := circuit.SELECT(spendFlag, spendPubKey, returnPubKey)
-	calcAuthSpendHash := mimc.Hash(&circuit, targetPubHash, spendAmount, noteRandom)
+	targetPubHash := circuit.SELECT(spendFlag, receiverPubKey, returnPubKey)
+	calcAuthSpendHash := mimc.Hash(&circuit, targetPubHash, amount, noteRandom)
 	circuit.MUSTBE_EQ(authSpendHash, calcAuthSpendHash)
 
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
 	// specify note hash constraint
-	preImage := mimc.Hash(&circuit, spendPubKey, returnPubKey, authPubKey, spendAmount, noteRandom)
+	preImage := mimc.Hash(&circuit, receiverPubKey, returnPubKey, authPubKey, amount, noteRandom)
 	noteHash := circuit.SECRET_INPUT("noteHash")
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
