@@ -147,6 +147,7 @@ func CreateUnfreezeCreateTx(cfg *types.Chain33Config, title string, parm *Unfree
 		Payload: types.Encode(create),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetRealFee(cfg.GetMinTxFeeRate())
 	return tx, nil
@@ -176,6 +177,7 @@ func CreateUnfreezeWithdrawTx(cfg *types.Chain33Config, title string, parm *Unfr
 		Payload: types.Encode(withdraw),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetRealFee(cfg.GetMinTxFeeRate())
 	return tx, nil
@@ -205,6 +207,7 @@ func CreateUnfreezeTerminateTx(cfg *types.Chain33Config, title string, parm *Unf
 		Payload: types.Encode(terminate),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(getRealExecName(cfg, cfg.GetParaName())),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetRealFee(cfg.GetMinTxFeeRate())
 	return tx, nil

@@ -440,6 +440,7 @@ func LoadProposer(source *tmtypes.Validator) (*ttypes.Validator, error) {
 
 // CreateBlockInfoTx make blockInfo to the first transaction of the block and execer is valnode
 func CreateBlockInfoTx(pubkey string, state *tmtypes.State, block *tmtypes.TendermintBlock) *types.Transaction {
+
 	blockSave := *block
 	blockSave.Data = nil
 	blockInfo := &tmtypes.TendermintBlockInfo{

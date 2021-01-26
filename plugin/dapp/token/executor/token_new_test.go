@@ -164,12 +164,14 @@ func TestPrecreate(t *testing.T) {
 		Ty:    pty.TokenActionPreCreate,
 		Value: &pty.TokenAction_TokenPreCreate{TokenPreCreate: v},
 	}
+	version, _ := mainClient.Version(context.Background(), nil)
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
 		Payload: types.Encode(precreate),
 		Fee:     feeForToken,
 		Nonce:   r.Int63(),
 		To:      address.ExecAddress(execName),
+		ChainID: version.GetChainID(),
 	}
 	tx.Sign(types.SECP256K1, privkey)
 
@@ -205,12 +207,15 @@ func TestFinish(t *testing.T) {
 		Ty:    pty.TokenActionFinishCreate,
 		Value: &pty.TokenAction_TokenFinishCreate{TokenFinishCreate: v},
 	}
+	version, _ := mainClient.Version(context.Background(), nil)
+
 	tx := &types.Transaction{
 		Execer:  []byte(execName),
 		Payload: types.Encode(finish),
 		Fee:     feeForToken,
 		Nonce:   r.Int63(),
 		To:      address.ExecAddress(execName),
+		ChainID: version.GetChainID(),
 	}
 	tx.Sign(types.SECP256K1, privkey)
 
@@ -246,6 +251,9 @@ func TestTransferToken(t *testing.T) {
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
 	tx.Nonce = r.Int63()
+
+	version, _ := mainClient.Version(context.Background(), nil)
+	tx.ChainID = version.GetChainID()
 	tx.Sign(types.SECP256K1, privkey)
 
 	reply, err := mainClient.SendTransaction(context.Background(), tx)
@@ -326,6 +334,10 @@ func TestTokenMint(t *testing.T) {
 
 	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
 	tx.Nonce = r.Int63()
+
+	version, _ := mainClient.Version(context.Background(), nil)
+	tx.ChainID = version.GetChainID()
+
 	tx.Sign(types.SECP256K1, privkey)
 
 	reply, err := mainClient.SendTransaction(context.Background(), tx)

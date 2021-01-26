@@ -93,7 +93,7 @@ func sendReplyList(q queue.Queue) {
 	for msg := range client.Recv() {
 		if msg.Ty == types.EventTxList {
 			count++
-			createReplyList("test" + strconv.Itoa(count))
+			createReplyList(client.GetConfig(), "test"+strconv.Itoa(count))
 			msg.Reply(client.NewMessage("consensus", types.EventReplyTxList,
 				&types.ReplyTxList{Txs: transactions}))
 			if count == 5 {
@@ -122,7 +122,8 @@ func getprivkey(key string) crypto.PrivKey {
 	return priv
 }
 
-func createReplyList(account string) {
+func createReplyList(cfg *types.Chain33Config, account string) {
+
 	var result []*types.Transaction
 	for j := 0; j < txSize; j++ {
 		//tx := &types.Transaction{}
@@ -132,6 +133,7 @@ func createReplyList(account string) {
 		tx.To = "14qViLJfdGaP4EeHnDyJbEGQysnCpwn1gZ"
 
 		tx.Nonce = random.Int63()
+		tx.ChainID = cfg.GetChainID()
 
 		tx.Sign(types.SECP256K1, getprivkey("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"))
 		result = append(result, tx)

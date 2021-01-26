@@ -334,6 +334,8 @@ func NormPut(privkey string, key string, value string) {
 	tx := &types.Transaction{Execer: []byte("norm"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("norm")
 	tx.Nonce = r.Int63()
+	version, _ := c.Version(context.Background(), nil)
+	tx.ChainID = version.ChainID
 	tx.Sign(types.SECP256K1, getprivkey(privkey))
 
 	reply, err := c.SendTransaction(context.Background(), tx)

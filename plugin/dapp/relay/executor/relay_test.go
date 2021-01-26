@@ -139,6 +139,7 @@ func (s *suiteRelay) TestExec_1() {
 	tx.Execer = []byte(ty.RelayX)
 	tx.To = address.ExecAddress(ty.RelayX)
 	tx.Nonce = 1 //for different order id
+	tx.ChainID = chainTestCfg.GetChainID()
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -489,6 +490,8 @@ func (s *suiteBtcHeader) TestSaveBtcHead_1() {
 	tx.Execer = []byte(ty.RelayX)
 	tx.To = address.ExecAddress(ty.RelayX)
 	tx.Nonce = 2 //for different order id
+	tx.ChainID = chainTestCfg.GetChainID()
+
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
