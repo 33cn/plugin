@@ -24,7 +24,7 @@ func encodeSecretData(secret *mixTy.SecretData) (*mixTy.EncodedSecretData, error
 	if secret == nil {
 		return nil, errors.Wrap(types.ErrInvalidParam, "para is nil")
 	}
-	if len(secret.PaymentPubKey) <= 0 {
+	if len(secret.ReceiverPubKey) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "spendPubKey is nil")
 	}
 	var val big.Int
@@ -57,7 +57,7 @@ func encryptSecretData(req *mixTy.EncryptSecretData) (*mixTy.DHSecret, error) {
 		return nil, errors.Wrap(err, "decode secret")
 	}
 
-	return encryptData(req.ReceivingPk, secret), nil
+	return encryptData(req.SecretPubKey, secret), nil
 }
 
 func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) {
@@ -65,7 +65,7 @@ func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "decode req.secret")
 	}
-	decrypt, err := decryptData(req.ReceivingPriKey, req.Epk, secret)
+	decrypt, err := decryptData(req.SecretPriKey, req.Epk, secret)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypt secret")
 	}
@@ -90,7 +90,7 @@ func (policy *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
 }
 
 func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.DepositProofResp, error) {
-	if req == nil || len(req.PaymentAddr) <= 0 {
+	if req == nil || len(req.ReceiverAddr) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "paymentAddr is nil")
 	}
 	if req.Amount <= 0 {
@@ -106,11 +106,11 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 	secret.NoteRandom = fr.String()
 
 	// 获取receiving addr对应的paymentKey
-	toKey, e := policy.getPaymentKey(req.PaymentAddr)
+	toKey, e := policy.getPaymentKey(req.ReceiverAddr)
 	if e != nil {
-		return nil, errors.Wrapf(e, "get payment key for addr = %s", req.PaymentAddr)
+		return nil, errors.Wrapf(e, "get payment key for addr = %s", req.ReceiverAddr)
 	}
-	secret.PaymentPubKey = toKey.PayingKey
+	secret.ReceiverPubKey = toKey.ReceiverKey
 
 	//获取return addr对应的key
 	var returnKey *mixTy.PaymentKey
@@ -122,7 +122,7 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 		if err != nil {
 			return nil, errors.Wrapf(err, "get payment key for return addr = %s", req.ReturnAddr)
 		}
-		secret.ReturnPubKey = returnKey.PayingKey
+		secret.ReturnPubKey = returnKey.ReceiverKey
 	}
 
 	//获取auth addr对应的key
@@ -133,19 +133,19 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 		if err != nil {
 			return nil, errors.Wrapf(err, "get payment key for authorize addr = %s", req.AuthorizeAddr)
 		}
-		secret.AuthorizePubKey = authKey.PayingKey
+		secret.AuthorizePubKey = authKey.ReceiverKey
 	}
 
 	//DH加密
 	data := types.Encode(&secret)
 	var group mixTy.DHSecretGroup
 
-	group.Payment = hex.EncodeToString(types.Encode(encryptData(toKey.ReceivingKey, data)))
+	group.Receiver = hex.EncodeToString(types.Encode(encryptData(toKey.SecretKey, data)))
 	if returnKey != nil {
-		group.Returner = hex.EncodeToString(types.Encode(encryptData(returnKey.ReceivingKey, data)))
+		group.Returner = hex.EncodeToString(types.Encode(encryptData(returnKey.SecretKey, data)))
 	}
 	if authKey != nil {
-		group.Authorize = hex.EncodeToString(types.Encode(encryptData(authKey.ReceivingKey, data)))
+		group.Authorize = hex.EncodeToString(types.Encode(encryptData(authKey.SecretKey, data)))
 	}
 
 	var resp mixTy.DepositProofResp
@@ -153,7 +153,7 @@ func (policy *mixPolicy) depositProof(req *mixTy.DepositProofReq) (*mixTy.Deposi
 	resp.Secrets = &group
 
 	keys := []string{
-		secret.PaymentPubKey,
+		secret.ReceiverPubKey,
 		secret.ReturnPubKey,
 		secret.AuthorizePubKey,
 		secret.Amount,
@@ -206,16 +206,16 @@ func (policy *mixPolicy) withdrawProof(req *mixTy.WithdrawProofReq) (*mixTy.With
 	}
 
 	var resp mixTy.WithdrawProofResp
-	resp.Proof = note.Secret
+	resp.Secret = note.Secret
 	resp.NullifierHash = note.Nullifier
-	resp.AuthSpendHash = note.AuthSpendHash
+	resp.AuthorizeSpendHash = note.AuthorizeSpendHash
 	resp.NoteHash = note.NoteHash
 	resp.SpendFlag = 1
 	if note.IsReturner {
 		resp.SpendFlag = 0
 	}
-	if len(resp.AuthSpendHash) > 0 {
-		resp.AuthFlag = 1
+	if len(resp.AuthorizeSpendHash) > 0 {
+		resp.AuthorizeFlag = 1
 	}
 
 	//get spend privacy key
@@ -223,7 +223,7 @@ func (policy *mixPolicy) withdrawProof(req *mixTy.WithdrawProofReq) (*mixTy.With
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
-	resp.SpendPrivKey = privacyKey.Privacy.PaymentKey.SpendKey
+	resp.SpendPrivKey = privacyKey.Privacy.PaymentKey.SpendPriKey
 	//get tree path
 	path, err := policy.getPathProof(note.NoteHash)
 	if err != nil {
@@ -255,22 +255,22 @@ func (policy *mixPolicy) authProof(req *mixTy.AuthProofReq) (*mixTy.AuthProofRes
 	var resp mixTy.AuthProofResp
 	resp.Proof = note.Secret
 	resp.NoteHash = note.NoteHash
-	resp.AuthPrivKey = privacyKey.Privacy.PaymentKey.SpendKey
-	resp.AuthPubKey = privacyKey.Privacy.PaymentKey.PayKey
-	if privacyKey.Privacy.PaymentKey.PayKey != note.Secret.AuthorizePubKey {
+	resp.AuthPrivKey = privacyKey.Privacy.PaymentKey.SpendPriKey
+	resp.AuthPubKey = privacyKey.Privacy.PaymentKey.ReceiverPubKey
+	if privacyKey.Privacy.PaymentKey.ReceiverPubKey != note.Secret.AuthorizePubKey {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "auth pubkey from note=%s, from privacyKey=%s,for account =%s",
-			note.Secret.AuthorizePubKey, privacyKey.Privacy.PaymentKey.PayKey, note.Account)
+			note.Secret.AuthorizePubKey, privacyKey.Privacy.PaymentKey.ReceiverPubKey, note.Account)
 	}
 
 	resp.AuthHash = getFrString(mimcHashString([]string{resp.AuthPubKey, note.Secret.NoteRandom}))
 
 	//default auto to paymenter
 	resp.SpendFlag = 1
-	resp.AuthSpendHash = getFrString(mimcHashString([]string{note.Secret.PaymentPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
+	resp.AuthorizeSpendHash = getFrString(mimcHashString([]string{note.Secret.ReceiverPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
 	if req.ToReturn != 0 {
 		resp.SpendFlag = 0
 		//auth to returner
-		resp.AuthSpendHash = getFrString(mimcHashString([]string{note.Secret.ReturnPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
+		resp.AuthorizeSpendHash = getFrString(mimcHashString([]string{note.Secret.ReturnPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
 	}
 
 	//get tree path
@@ -289,8 +289,23 @@ func (policy *mixPolicy) authProof(req *mixTy.AuthProofReq) (*mixTy.AuthProofRes
 
 }
 
-func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*mixTy.TransferInputProof, error) {
+func (policy *mixPolicy) getTreeProof(leaf string) (*mixTy.TreePathProof, error) {
+	//get tree path
+	path, err := policy.getPathProof(leaf)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s", leaf)
+	}
+	var proof mixTy.TreePathProof
+	proof.TreePath = path.ProofSet[1:]
+	proof.Helpers = path.Helpers
+	for i := 0; i < len(proof.TreePath); i++ {
+		proof.ValidPath = append(proof.ValidPath, 1)
+	}
+	proof.TreeRootHash = path.RootHash
+	return &proof, nil
+}
 
+func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*mixTy.TransferInputProof, error) {
 	//get spend privacy key
 	privacyKey, err := policy.getAccountPrivacyKey(note.Account)
 	if err != nil {
@@ -302,23 +317,30 @@ func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*mix
 	input.NoteHash = note.NoteHash
 	input.NullifierHash = note.Nullifier
 	//自己是payment 还是returner已经在解析note时候算好了，authSpendHash也对应算好了，如果note valid,则就用本地即可
-	input.AuthSpendHash = note.AuthSpendHash
-	input.SpendPrivKey = privacyKey.Privacy.PaymentKey.SpendKey
-	if privacyKey.Privacy.PaymentKey.PayKey != note.Secret.AuthorizePubKey {
+	input.AuthorizeSpendHash = note.AuthorizeSpendHash
+	input.SpendPrivKey = privacyKey.Privacy.PaymentKey.SpendPriKey
+	if privacyKey.Privacy.PaymentKey.ReceiverPubKey != note.Secret.ReceiverPubKey {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "payment pubkey from note=%s not match from privacyKey=%s,for account =%s",
-			note.Secret.AuthorizePubKey, privacyKey.Privacy.PaymentKey.PayKey, note.Account)
+			note.Secret.ReceiverPubKey, privacyKey.Privacy.PaymentKey.ReceiverPubKey, note.Account)
 	}
 	input.SpendFlag = 1
 	if note.IsReturner {
 		input.SpendFlag = 0
 	}
-	if len(input.AuthSpendHash) > 0 {
-		input.AuthFlag = 1
+	if len(input.AuthorizeSpendHash) > LENNULLKEY {
+		input.AuthorizeFlag = 1
 	}
+
+	treeProof, err := policy.getTreeProof(note.NoteHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
+	}
+	input.TreeProof = treeProof
+
 	return &input, nil
 }
 
-func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.CommitValueRst, error) {
+func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
 	if noteAmount < transferAmount+minTxFee {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer amount=%d big than note=%d - fee=%d", transferAmount, noteAmount, minTxFee)
 	}
@@ -337,17 +359,17 @@ func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.CommitV
 
 	//三个混淆随机值可以随机获取，这里noteRandom和为了Nullifier计算的NoteRandom不同。
 	//获取随机值，截取一半给change和transfer,和值给Note,直接用完整的random值会溢出
-	var changeRdm, transRdm, v fr_bn256.Element
+	var rChange, rTrans, v fr_bn256.Element
 	random := v.SetRandom().String()
-	changeRdm.SetString(random[0 : len(random)/2])
-	transRdm.SetString(random[len(random)/2:])
+	rChange.SetString(random[0 : len(random)/2])
+	rTrans.SetString(random[len(random)/2:])
 
-	var noteRdm fr_bn256.Element
-	noteRdm.Add(&changeRdm, &transRdm)
+	var rNote fr_bn256.Element
+	rNote.Add(&rChange, &rTrans)
 
-	noteH := mixTy.MulCurvePointH(noteRdm.String())
-	transferH := mixTy.MulCurvePointH(transRdm.String())
-	changeH := mixTy.MulCurvePointH(changeRdm.String())
+	noteH := mixTy.MulCurvePointH(rNote.String())
+	transferH := mixTy.MulCurvePointH(rTrans.String())
+	changeH := mixTy.MulCurvePointH(rChange.String())
 	//fmt.Println("change",changeRandom.String())
 	//fmt.Println("transfer",transRandom.String())
 	//fmt.Println("note",noteRandom.String())
@@ -364,13 +386,13 @@ func getCommitValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.CommitV
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount sum fail for G+H point")
 	}
 
-	rst := &mixTy.CommitValueRst{
-		NoteRandom:     noteRdm.String(),
-		TransferRandom: transRdm.String(),
-		ChangeRandom:   changeRdm.String(),
-		Note:           &mixTy.CommitValue{X: noteAmountG.X.String(), Y: noteAmountG.Y.String()},
-		Transfer:       &mixTy.CommitValue{X: transAmountG.X.String(), Y: transAmountG.Y.String()},
-		Change:         &mixTy.CommitValue{X: changeAmountG.X.String(), Y: changeAmountG.Y.String()},
+	rst := &mixTy.ShieldAmountRst{
+		NoteRandom:     rNote.String(),
+		TransferRandom: rTrans.String(),
+		ChangeRandom:   rChange.String(),
+		Note:           &mixTy.ShieldAmount{X: noteAmountG.X.String(), Y: noteAmountG.Y.String()},
+		Transfer:       &mixTy.ShieldAmount{X: transAmountG.X.String(), Y: transAmountG.Y.String()},
+		Change:         &mixTy.ShieldAmount{X: changeAmountG.X.String(), Y: changeAmountG.Y.String()},
 	}
 	return rst, nil
 }
@@ -381,6 +403,9 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 		return nil, err
 	}
 	inputPart, err := policy.getTransferInputPart(note)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getTransferInputPart note=%s", note.NoteHash)
+	}
 	bizlog.Info("transferProof get notes succ", "notehash", req.NoteHash)
 
 	noteAmount, err := strconv.ParseUint(note.Secret.Amount, 10, 64)
@@ -392,7 +417,7 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 
 	//output toAddr part
 	reqTransfer := &mixTy.DepositProofReq{
-		PaymentAddr:   req.ToAddr,
+		ReceiverAddr:  req.ToAddr,
 		AuthorizeAddr: req.ToAuthAddr,
 		ReturnAddr:    req.ReturnAddr,
 		Amount:        req.Amount,
@@ -406,8 +431,8 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	//output 找零 part,如果找零为0也需要设置，否则只有一个输入一个输出，H部分的随机数要相等，就能推测出转账值来
 	//在transfer output 部分特殊处理，如果amount是0的值则不加进tree
 	reqChange := &mixTy.DepositProofReq{
-		PaymentAddr: note.Account,
-		Amount:      noteAmount - req.Amount - minTxFee,
+		ReceiverAddr: note.Account,
+		Amount:       noteAmount - req.Amount - minTxFee,
 	}
 	depositChange, err := policy.depositProof(reqChange)
 	if err != nil {
@@ -416,28 +441,30 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	bizlog.Info("transferProof deposit to change succ", "notehash", req.NoteHash)
 
 	commitValue, err := getCommitValue(noteAmount, req.Amount, minTxFee)
+
 	if err != nil {
 		return nil, err
 	}
 	bizlog.Info("transferProof get commit value succ", "notehash", req.NoteHash)
+
 	//noteCommitX, transferX, changeX
-	inputPart.CommitValue = commitValue.Note
-	inputPart.SpendRandom = commitValue.NoteRandom
+	inputPart.ShieldAmount = commitValue.Note
+	inputPart.AmountRandom = commitValue.NoteRandom
+
 	transferOutput := &mixTy.TransferOutputProof{
-		Proof:       depositTransfer.Proof,
-		NoteHash:    depositTransfer.NoteHash,
-		Secrets:     depositTransfer.Secrets,
-		CommitValue: commitValue.Transfer,
-		SpendRandom: commitValue.TransferRandom,
+		Proof:        depositTransfer.Proof,
+		NoteHash:     depositTransfer.NoteHash,
+		Secrets:      depositTransfer.Secrets,
+		ShieldAmount: commitValue.Transfer,
+		AmountRandom: commitValue.TransferRandom,
 	}
 	changeOutput := &mixTy.TransferOutputProof{
-		Proof:       depositChange.Proof,
-		NoteHash:    depositChange.NoteHash,
-		Secrets:     depositChange.Secrets,
-		CommitValue: commitValue.Change,
-		SpendRandom: commitValue.ChangeRandom,
+		Proof:        depositChange.Proof,
+		NoteHash:     depositChange.NoteHash,
+		Secrets:      depositChange.Secrets,
+		ShieldAmount: commitValue.Change,
+		AmountRandom: commitValue.ChangeRandom,
 	}
-
 	return &mixTy.TransferProofResp{
 		TransferInput: inputPart,
 		TargetOutput:  transferOutput,

@@ -71,7 +71,7 @@ func (r *MixRow) Get(key string) ([]byte, error) {
 	case "nullifier":
 		return []byte(r.Info.Nullifier), nil
 	case "authSpendHash":
-		return []byte(r.Info.AuthSpendHash), nil
+		return []byte(r.Info.AuthorizeSpendHash), nil
 	case "account":
 		return []byte(r.Info.Account), nil
 	case "status":

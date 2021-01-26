@@ -240,6 +240,7 @@ function miner() {
     fi
 
 }
+
 function block_wait() {
     if [ "$#" -lt 2 ]; then
         echo "wrong block_wait params"
@@ -405,6 +406,10 @@ function transfer() {
         echo "withdraw cannot find tx"
         exit 1
     fi
+
+    echo "=========== # cold bind mining ============="
+    hash=$(${CLI} send ticket bind -b 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -o 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    echo "${hash}"
 
     hash=$(${1} send coins transfer -a 1000 -n transfer -t 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"

@@ -6,7 +6,7 @@ package wallet
 
 import (
 	"bytes"
-	"fmt"
+
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/pkg/errors"
 
@@ -20,14 +20,16 @@ import (
 	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
 )
 
+const CECBLOCKSIZE = 32
+
 // newPrivacyWithPrivKey create privacy from private key
 //payment, payPrivKey=hash(privkey), payPubkey=hash(payPrivKey)
 //DH crypt key, prikey=payPrikey, pubKey=payPrikey*G
 func newPrivacyWithPrivKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
 	payPrivacyKey := mimcHashByte([][]byte{privKey})
 	paymentKey := &mixTy.PaymentKeyPair{}
-	paymentKey.SpendKey = getFrString(payPrivacyKey)
-	paymentKey.PayKey = getFrString(mimcHashByte([][]byte{payPrivacyKey}))
+	paymentKey.SpendPriKey = getFrString(payPrivacyKey)
+	paymentKey.ReceiverPubKey = getFrString(mimcHashByte([][]byte{payPrivacyKey}))
 
 	shareSecretKey := &mixTy.ShareSecretKeyPair{}
 	ecdh := NewCurveBn256ECDH()
@@ -44,13 +46,13 @@ func newPrivacyWithPrivKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
 //填充算法有pkcs5,pkcs7, 比如Pkcs5的思想填充的值为填充的长度，比如加密he,不足8
 //则填充为he666666, 解密后直接算最后一个值为6，把解密值的后6个Byte去掉即可
 func pKCS5Padding(plainText []byte, blockSize int) []byte {
-	if blockSize < 32 {
-		blockSize = 32
+	if blockSize < CECBLOCKSIZE {
+		blockSize = CECBLOCKSIZE
 	}
 	padding := blockSize - (len(plainText) % blockSize)
-	fmt.Println("pading", "passsize", blockSize, "plaintext", len(plainText), "pad", padding)
+	//fmt.Println("pading", "passsize", blockSize, "plaintext", len(plainText), "pad", padding)
 	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	fmt.Println("padding", padding, "text", common.ToHex(padText[:]))
+	//fmt.Println("padding", padding, "text", common.ToHex(padText[:]))
 	newText := append(plainText, padText...)
 	return newText
 }
@@ -196,9 +198,7 @@ func (policy *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy,
 	}
 
 	password := []byte(policy.getWalletOperate().GetPassword())
-	bizlog.Info("savePrivacyPair", "newprivacy", newPrivacy.PaymentKey.PayKey, "password", common.ToHex(password))
 	encryptered := encryptDataWithPadding(password, types.Encode(newPrivacy))
-	bizlog.Info("savePrivacyPair--2")
 	//save the privacy created to wallet db
 	policy.store.setAccountPrivacy(addr, encryptered)
 	return &mixTy.WalletAddrPrivacy{Privacy: newPrivacy, Addr: addr}, nil
@@ -312,7 +312,7 @@ func (policy *mixPolicy) rescanNotes() {
 			txInfo.Index = mixTxInfos.Txs[txcount-1].GetIndex()
 		}
 
-		policy.getPrivacyTxDetailByHashs(&ReqHashes)
+		policy.processPrivcyTxs(&ReqHashes)
 		if txcount < int(MaxTxHashsPerTime) {
 			break
 		}
@@ -322,16 +322,25 @@ func (policy *mixPolicy) rescanNotes() {
 	return
 }
 
-func (policy *mixPolicy) getPrivacyTxDetailByHashs(ReqHashes *types.ReqHashes) {
+func (policy *mixPolicy) processPrivcyTxs(ReqHashes *types.ReqHashes) {
 	//通过txhashs获取对应的txdetail
 	txDetails, err := policy.getWalletOperate().GetAPI().GetTransactionByHash(ReqHashes)
 	if err != nil {
-		bizlog.Error("getPrivacyTxDetailByHashs", "GetTransactionByHash error", err)
+		bizlog.Error("processPrivcyTx", "GetTransactionByHash error", err)
 		return
 	}
 
 	for _, tx := range txDetails.Txs {
-		policy.processMixTx(tx.Tx, tx.Height, tx.Index)
+		if tx.Receipt.Ty != types.ExecOk {
+			bizlog.Error("processPrivcyTx wrong tx", "receipt ty", tx.Receipt.Ty, "hash", common.ToHex(tx.Tx.Hash()))
+			continue
+		}
+		set, err := policy.processMixTx(tx.Tx, tx.Height, tx.Index)
+		if err != nil {
+			bizlog.Error("processPrivcyTx", "processMixTx error", err)
+			continue
+		}
+		policy.store.setKvs(set)
 	}
 }
 
@@ -382,7 +391,7 @@ func (policy *mixPolicy) showAccountNoteInfo(addrs []string) (*mixTy.WalletIndex
 		if err != nil {
 			return nil, err
 		}
-		resps.Datas = append(resps.Datas, resp.(*mixTy.WalletIndexResp).Datas...)
+		resps.Notes = append(resps.Notes, resp.(*mixTy.WalletIndexResp).Notes...)
 	}
 	return &resps, nil
 }

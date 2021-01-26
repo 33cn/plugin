@@ -187,13 +187,13 @@ func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
 }
 
 func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, error) {
-	if paykey == nil || len(paykey.PayingKey) == 0 || len(paykey.ReceivingKey.X) == 0 || len(paykey.ReceivingKey.Y) == 0 {
+	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.SecretKey.X) == 0 || len(paykey.SecretKey.Y) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey=%v", paykey)
 	}
 	//直接覆盖
 	return makeConfigPaymentKeyReceipt(&mixTy.PaymentKey{
-		Addr:         a.fromaddr,
-		PayingKey:    paykey.PayingKey,
-		ReceivingKey: paykey.ReceivingKey}), nil
+		Addr:        a.fromaddr,
+		ReceiverKey: paykey.ReceiverKey,
+		SecretKey:   paykey.SecretKey}), nil
 
 }

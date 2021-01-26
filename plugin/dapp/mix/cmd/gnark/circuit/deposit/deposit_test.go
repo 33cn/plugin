@@ -15,7 +15,7 @@ public:
 	amount
 
 private:
-	spendPubkey
+	receiverPubKey
 	returnPubkey
 	authorizePubkey
 	noteRandom
@@ -45,7 +45,7 @@ func TestDeposit(t *testing.T) {
 		good.Assign(backend.Public, "noteHash", "16308793397024662832064523892418908145900866571524124093537199035808550255649")
 		good.Assign(backend.Public, "amount", "28242048")
 
-		good.Assign(backend.Secret, "spendPubKey", "13735985067536865723202617343666111332145536963656464451727087263423649028705")
+		good.Assign(backend.Secret, "receiverPubKey", "13735985067536865723202617343666111332145536963656464451727087263423649028705")
 		good.Assign(backend.Secret, "returnPubKey", "16067249407809359746114321133992130903102335882983385972747813693681808870497")
 		good.Assign(backend.Secret, "authorizePubKey", "13519883267141251871527102103999205179714486518503885909948192364772977661583")
 		good.Assign(backend.Secret, "noteRandom", "2824204835")

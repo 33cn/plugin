@@ -19,7 +19,7 @@ public:
 	amount
 
 private:
-	spendPubKey
+	receiverPubKey
 	returnPubKey
 	authorizePubKey
 	noteRandom
@@ -34,7 +34,7 @@ func NewDeposit() *frontend.R1CS {
 	amount := circuit.PUBLIC_INPUT("amount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
+	receiverPubKey := circuit.SECRET_INPUT("receiverPubKey")
 	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
 	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
 
@@ -48,7 +48,7 @@ func NewDeposit() *frontend.R1CS {
 	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
 	noteHash := circuit.PUBLIC_INPUT("noteHash")
 	// specify note hash constraint
-	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, amount, noteRandom)
+	preImage := mimc.Hash(&circuit, receiverPubKey, returnPubkey, authPubkey, amount, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	r1cs := circuit.ToR1CS()

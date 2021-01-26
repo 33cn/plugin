@@ -117,6 +117,14 @@ func (store *mixStore) setRescanNoteStatus(status int32) {
 	newbatch.Write()
 }
 
+func (store *mixStore) setKvs(set *types.LocalDBSet) {
+	newbatch := store.NewBatch(true)
+	for _, s := range set.KV {
+		newbatch.Set(s.Key, s.Value)
+	}
+	newbatch.Write()
+}
+
 func (store *mixStore) getRescanNoteStatus() int32 {
 	v, err := store.Get(calcRescanNoteStatus())
 	if err != nil {

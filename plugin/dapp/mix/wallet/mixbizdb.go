@@ -199,7 +199,7 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 		indexName = "noteHash"
 	} else if len(req.Nullifier) > 0 {
 		indexName = "nullifier"
-	} else if len(req.AuthSpendHash) > 0 {
+	} else if len(req.AuthorizeSpendHash) > 0 {
 		indexName = "authSpendHash"
 	} else if len(req.Account) > 0 {
 		indexName = "account"
@@ -209,11 +209,11 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 
 	cur := &MixRow{
 		WalletDbMixInfo: &mixTy.WalletDbMixInfo{Info: &mixTy.WalletIndexInfo{
-			NoteHash:      req.NoteHash,
-			Nullifier:     req.Nullifier,
-			AuthSpendHash: req.AuthSpendHash,
-			Account:       req.Account,
-			Status:        mixTy.NoteStatus(req.Status),
+			NoteHash:           req.NoteHash,
+			Nullifier:          req.Nullifier,
+			AuthorizeSpendHash: req.AuthorizeSpendHash,
+			Account:            req.Account,
+			Status:             mixTy.NoteStatus(req.Status),
 		}},
 	}
 
@@ -224,7 +224,7 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	}
 	rows, err := query.ListIndex(indexName, prefix, primary, req.Count, req.Direction)
 	if err != nil {
-		bizlog.Error("listMixInfos query failed", "indexName", indexName, "prefix", prefix, "key", string(primary), "err", err)
+		bizlog.Error("listMixInfos query failed", "indexName", indexName, "prefix", string(prefix), "key", string(primary), "err", err)
 		return nil, err
 	}
 	if len(rows) == 0 {
@@ -276,8 +276,8 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 	}
 
 	//可能自己账户里面既有spender,也有returner 或authorize,都要解一遍
-	if len(secretGroup.Payment) > 0 {
-		info, err := p.decodeSecret(noteHash, secretGroup.Payment, privacyKeys)
+	if len(secretGroup.Receiver) > 0 {
+		info, err := p.decodeSecret(noteHash, secretGroup.Receiver, privacyKeys)
 		if err != nil {
 			bizlog.Error("processSecretGroup.spender", "err", err)
 		}
@@ -330,16 +330,18 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			bizlog.Info("processSecret.decryptData", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
 			continue
 		}
-		bizlog.Info("processSecret.decryptData OK", "decrypt for notehash", noteHash, "addr", key.Addr)
+
 		var rawData mixTy.SecretData
 		err = types.Decode(decryptData, &rawData)
 		if err != nil {
-			bizlog.Info("processSecret.DecrypterPrivkey", "err", err)
+			bizlog.Info("processSecret.decode rawData", "addr", key.Addr, "err", err)
 			continue
 		}
-		if rawData.PaymentPubKey == key.Privacy.PaymentKey.PayKey ||
-			rawData.ReturnPubKey == key.Privacy.PaymentKey.PayKey ||
-			rawData.AuthorizePubKey == key.Privacy.PaymentKey.PayKey {
+		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr)
+
+		if rawData.ReceiverPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
+			rawData.ReturnPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
+			rawData.AuthorizePubKey == key.Privacy.PaymentKey.ReceiverPubKey {
 			//decrypted, save database
 			var info mixTy.WalletIndexInfo
 			info.NoteHash = noteHash
@@ -347,12 +349,13 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
 			//如果授权为spenderAuthHash，则根据授权hash索引到本地数据库，spender更新本地为VALID，returner侧不变仍为FROZEN，花费后，两端都变为USED
 			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
+			info.AuthorizeSpendHash = "0"
 			if len(rawData.AuthorizePubKey) > LENNULLKEY {
-				if rawData.PaymentPubKey == key.Privacy.PaymentKey.PayKey {
-					info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.PaymentPubKey, rawData.Amount, rawData.NoteRandom}))
-				} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.PayKey {
+				if rawData.ReceiverPubKey == key.Privacy.PaymentKey.ReceiverPubKey {
+					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReceiverPubKey, rawData.Amount, rawData.NoteRandom}))
+				} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.ReceiverPubKey {
 					info.IsReturner = true
-					info.AuthSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
+					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
 				}
 			}
 
