@@ -17,8 +17,8 @@ public:
 	authorizeSpendHash(=hash(spendpub+value+noterandom))
 
 private:
-	spendAmount
-	spendPubKey
+	amount
+	receiverPubKey
 	returnPubKey
 	authorizePriKey
 	spendFlag
@@ -41,8 +41,8 @@ func TestAuthorizeSpend(t *testing.T) {
 		good.Assign(backend.Public, "authorizeHash", "1267825436937766239630340333349685320927256968591056373125946583184548355070")
 		good.Assign(backend.Public, "authorizeSpendHash", "14468512365438613046028281588661351435476168610934165547900473609197783547663")
 
-		good.Assign(backend.Secret, "spendAmount", "28242048")
-		good.Assign(backend.Secret, "spendPubKey", "13735985067536865723202617343666111332145536963656464451727087263423649028705")
+		good.Assign(backend.Secret, "amount", "28242048")
+		good.Assign(backend.Secret, "receiverPubKey", "13735985067536865723202617343666111332145536963656464451727087263423649028705")
 		good.Assign(backend.Secret, "returnPubKey", "16067249407809359746114321133992130903102335882983385972747813693681808870497")
 		good.Assign(backend.Secret, "authorizePriKey", "17822967620457187568904804290291537271142779717280482398091401115827760898835")
 		good.Assign(backend.Secret, "spendFlag", "1")

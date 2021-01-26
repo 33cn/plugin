@@ -32,8 +32,8 @@ message AuthPubKeys{
 
 message PaymentKey{
     string addr = 1;
-    string payingKey = 2;
-    PubKey receivingKey = 3;
+    string receiverKey = 2;
+    PubKey secretKey = 3;
 }
 
 enum MixConfigType{
@@ -72,7 +72,7 @@ message DHSecret{
 
 //Diff-Helman 加密group, for spender, returner, authorizer to decrypt
 message DHSecretGroup{
-    string payment = 1;
+    string receiver = 1;
     string returner = 2;
     string authorize = 3;
 }
@@ -140,16 +140,16 @@ message WithdrawPublicInput {
 
 message TransferInputPublicInput {
     string treeRootHash = 1;
-    string amountX = 2;
-    string amountY = 3;
+    string shieldAmountX = 2;
+    string shieldAmountY = 3;
     string authorizeSpendHash = 4;
     string nullifierHash = 5;
 }
 
 message TransferOutputPublicInput {
     string noteHash = 1;
-    string amountX = 2;
-    string amountY = 3;
+    string shieldAmountX = 2;
+    string shieldAmountY = 3;
 
     DHSecretGroup dhSecrets = 4;
 }
@@ -194,11 +194,10 @@ message TreeListResp{
 }
 
 // mix wallet part
-// payKey = hash(spendKey) for zk-snark note spend
-// 用在note内部的payment key
+// receiverPubKey = hash(spendPriKey) for zk-snark note spend
 message PaymentKeyPair {
-    string payKey  = 1;
-    string spendKey = 2;
+    string receiverPubKey  = 1;
+    string spendPriKey = 2;
 }
 
 // pub = priv*G for diff-helman crypto
@@ -232,7 +231,7 @@ message WalletAddrPrivacy {
 
 
 message SecretData{
-    string paymentPubKey = 1;
+    string receiverPubKey = 1;
     string returnPubKey = 2;
     string authorizePubKey = 3;
     string amount = 4;
@@ -246,19 +245,19 @@ message EncodedSecretData{
 
 message EncryptSecretData{
     string secret = 1;
-    PubKey receivingPk = 2;
+    PubKey SecretPubKey = 2;
 }
 
 message DecryptSecretData{
     string secret = 1;
-    PrivKey receivingPriKey = 2;
+    PrivKey SecretPriKey = 2;
     PubKey epk = 3;
 
 }
 
 //一键式获取加密数据
 message DepositProofReq{
-    string paymentAddr = 1;
+    string receiverAddr = 1;
     string returnAddr = 2;
     string authorizeAddr = 3;
     uint64 amount = 4;
@@ -286,13 +285,13 @@ message WithdrawProofReq{
 
 
 message WithdrawProofResp{
-    SecretData      proof    = 1;
+    SecretData      secret    = 1;
     string          nullifierHash = 2;
-    string          authSpendHash = 3;
+    string          authorizeSpendHash = 3;
     string          noteHash  = 4;
     string          spendPrivKey = 5;
     uint32          spendFlag = 6;
-    uint32          authFlag = 7;
+    uint32          authorizeFlag = 7;
     TreePathProof   treeProof = 8;
 }
 
@@ -306,7 +305,7 @@ message AuthProofResp{
     string          authPubKey      = 2;
     string          authPrivKey     = 3;
     string          authHash        = 4;
-    string          authSpendHash   = 5;
+    string          authorizeSpendHash   = 5;
     string          noteHash        = 6;
     uint32          spendFlag       = 7;
     TreePathProof   treeProof       = 8;
@@ -322,7 +321,7 @@ message TransferProofReq{
 }
 
 //加密了的input/output amount
-message commitValue{
+message ShieldAmount{
     string X = 1;
     string Y = 2;
 }
@@ -330,22 +329,22 @@ message commitValue{
 message TransferInputProof{
     SecretData      proof    = 1;
     string          nullifierHash = 2;
-    string          authSpendHash = 3;
+    string          authorizeSpendHash = 3;
     string          noteHash  = 4;
     string          spendPrivKey = 5;
     uint32          spendFlag = 6;
-    uint32          authFlag = 7;
+    uint32          authorizeFlag = 7;
     TreePathProof   treeProof = 8;
-    commitValue     commitValue = 9;
-    string          spendRandom = 10;
+    ShieldAmount    shieldAmount = 9;
+    string          amountRandom = 10;
 }
 
 message TransferOutputProof{
     SecretData      proof    = 1;
     string          noteHash = 2;
     DHSecretGroup   secrets  = 3;
-    commitValue     commitValue = 4;
-    string          spendRandom = 5;
+    ShieldAmount    shieldAmount = 4;
+    string          amountRandom = 5;
 
 
 }
@@ -357,13 +356,13 @@ message TransferProofResp{
 
 }
 
-message CommitValueRst{
+message ShieldAmountRst{
     string noteRandom = 1;
     string transferRandom = 2;
     string changeRandom = 3;
-    commitValue note = 4;
-    commitValue transfer = 5;
-    commitValue change = 6;
+    ShieldAmount note = 4;
+    ShieldAmount transfer = 5;
+    ShieldAmount change = 6;
 
 }
 
@@ -377,7 +376,7 @@ enum NoteStatus{
 message WalletIndexInfo {
     string             noteHash         = 1;
     string             nullifier        = 2;
-    string             authSpendHash    = 3;
+    string             authorizeSpendHash    = 3;
     bool               isReturner       = 4;
     string             account          = 5; //账户地址
     NoteStatus         status           = 6;
@@ -394,7 +393,7 @@ message WalletDbMixInfo {
 message WalletMixIndexReq {
     string             noteHash       = 1;
     string             nullifier       = 2;
-    string             authSpendHash   = 3;
+    string             authorizeSpendHash   = 3;
     string             account       = 5;
     int32              status     = 6;
     int32              count      = 7;

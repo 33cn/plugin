@@ -22,7 +22,7 @@ public:
 	amount
 
 private:
-	spendPubKey
+	receiverPubKey
 	returnPubKey
 	authorizePubKey
 	spendPriKey
@@ -43,7 +43,7 @@ func NewWithdraw() *frontend.R1CS {
 	spendValue := circuit.PUBLIC_INPUT("amount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
+	receiverPubKey := circuit.SECRET_INPUT("receiverPubKey")
 	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
 	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
 	spendPrikey := circuit.SECRET_INPUT("spendPriKey")
@@ -57,7 +57,7 @@ func NewWithdraw() *frontend.R1CS {
 	// hash function
 	mimc, _ := mimc.NewMiMCGadget("seed", gurvy.BN256)
 	calcPubHash := mimc.Hash(&circuit, spendPrikey)
-	targetPubHash := circuit.SELECT(spendFlag, spendPubkey, returnPubkey)
+	targetPubHash := circuit.SELECT(spendFlag, receiverPubKey, returnPubkey)
 	circuit.MUSTBE_EQ(targetPubHash, calcPubHash)
 
 	//note hash random
@@ -78,7 +78,7 @@ func NewWithdraw() *frontend.R1CS {
 	calcReturnPubkey := circuit.SELECT(authFlag, returnPubkey, nullValue)
 	calcAuthPubkey := circuit.SELECT(authFlag, authPubkey, nullValue)
 	// specify note hash constraint
-	preImage := mimc.Hash(&circuit, spendPubkey, calcReturnPubkey, calcAuthPubkey, spendValue, noteRandom)
+	preImage := mimc.Hash(&circuit, receiverPubKey, calcReturnPubkey, calcAuthPubkey, spendValue, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)
 
 	util.MerkelPathPart(&circuit, mimc, preImage)

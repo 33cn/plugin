@@ -17,15 +17,15 @@ func main() {
 /*
 public:
 	treeRootHash
-	commitValueX
-	commitValueY
-	authorizeHash
+	shieldAmountX
+	shieldAmountY
+	authorizeSpendHash
 	nullifierHash
 
 private:
-	spendAmount
-	spendRandom
-	spendPubKey
+	amount
+	amountRandom
+	receiverPubKey
 	returnPubKey
 	authorizePubKey
 	spendPriKey
@@ -42,10 +42,10 @@ func NewTransferInput() *frontend.R1CS {
 	// create root constraint system
 	circuit := frontend.New()
 
-	spendValue := circuit.SECRET_INPUT("spendAmount")
+	spendValue := circuit.SECRET_INPUT("amount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("spendPubKey")
+	spendPubkey := circuit.SECRET_INPUT("receiverPubKey")
 	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
 	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
 	spendPrikey := circuit.SECRET_INPUT("spendPriKey")

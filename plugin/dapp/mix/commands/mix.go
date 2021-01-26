@@ -60,8 +60,8 @@ func addCreateDepositFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("amount", "m", 0, "deposit amount")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("secretPayment", "p", "", "secret for payment addr")
-	cmd.MarkFlagRequired("secretPayment")
+	cmd.Flags().StringP("secretReceiver", "p", "", "secret for receiver addr")
+	cmd.MarkFlagRequired("secretReceiver")
 
 	cmd.Flags().StringP("secretAuth", "a", "", "secret for authorize addr")
 
@@ -102,7 +102,7 @@ func createDeposit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	proofsPara, _ := cmd.Flags().GetString("proofs")
-	secretPayment, _ := cmd.Flags().GetString("secretPayment")
+	secretReceiver, _ := cmd.Flags().GetString("secretReceiver")
 	secretAuth, _ := cmd.Flags().GetString("secretAuth")
 	secretReturn, _ := cmd.Flags().GetString("secretReturn")
 
@@ -112,7 +112,7 @@ func createDeposit(cmd *cobra.Command, args []string) {
 	}
 
 	proofInputs.Secrets = &mixTy.DHSecretGroup{
-		Payment:   secretPayment,
+		Receiver:  secretReceiver,
 		Authorize: secretAuth,
 		Returner:  secretReturn,
 	}
@@ -194,8 +194,8 @@ func addCreateTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("output", "o", "", "output 'proof-pubinput' pair")
 	cmd.MarkFlagRequired("output")
 
-	cmd.Flags().StringP("secretPayment", "p", "", "secret for payment addr")
-	cmd.MarkFlagRequired("secretPayment")
+	cmd.Flags().StringP("secretReceiver", "p", "", "secret for receiver addr")
+	cmd.MarkFlagRequired("secretReceiver")
 
 	cmd.Flags().StringP("secretAuth", "a", "", "secret for authorize addr")
 
@@ -204,8 +204,8 @@ func addCreateTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("change", "c", "", "output change 'proof-pubinput' pair")
 	cmd.MarkFlagRequired("change")
 
-	cmd.Flags().StringP("changePayment", "t", "", "secret for change payment addr")
-	cmd.MarkFlagRequired("changePayment")
+	cmd.Flags().StringP("changeReceiver", "t", "", "secret for change receiver addr")
+	cmd.MarkFlagRequired("changeReceiver")
 
 	cmd.Flags().StringP("changeAuth", "u", "", "secret for change authorize addr")
 
@@ -218,10 +218,10 @@ func createTransfer(cmd *cobra.Command, args []string) {
 	proofsInput, _ := cmd.Flags().GetString("input")
 	proofsOutput, _ := cmd.Flags().GetString("output")
 	proofsChange, _ := cmd.Flags().GetString("change")
-	secretPayment, _ := cmd.Flags().GetString("secretPayment")
+	secretReceiver, _ := cmd.Flags().GetString("secretReceiver")
 	secretAuth, _ := cmd.Flags().GetString("secretAuth")
 	secretReturn, _ := cmd.Flags().GetString("secretReturn")
-	changePayment, _ := cmd.Flags().GetString("changePayment")
+	changeReceiver, _ := cmd.Flags().GetString("changeReceiver")
 	changeAuth, _ := cmd.Flags().GetString("changeAuth")
 	changeReturn, _ := cmd.Flags().GetString("changeReturn")
 
@@ -236,7 +236,7 @@ func createTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 	proofOutputs.Secrets = &mixTy.DHSecretGroup{
-		Payment:   secretPayment,
+		Receiver:  secretReceiver,
 		Returner:  secretAuth,
 		Authorize: secretReturn,
 	}
@@ -247,7 +247,7 @@ func createTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 	proofChanges.Secrets = &mixTy.DHSecretGroup{
-		Payment:   changePayment,
+		Receiver:  changeReceiver,
 		Returner:  changeAuth,
 		Authorize: changeReturn,
 	}
@@ -331,7 +331,7 @@ func mixConfigVerifyKeyParaCmd() *cobra.Command {
 }
 
 func addVkConfigFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("circuit", "c", 0, "mix circuit type,0:deposit,1:withdraw,2:payinput,3:payoutput,4:authorize")
+	cmd.Flags().Uint32P("circuit", "c", 0, "mix circuit type,0:deposit,1:withdraw,2:tansferinput,3:transferoutput,4:authorize")
 	cmd.MarkFlagRequired("circuit")
 
 	cmd.Flags().StringP("zkey", "z", "", "zk proof verify key")
@@ -419,8 +419,8 @@ func mixConfigPaymentPubKeyParaCmd() *cobra.Command {
 }
 
 func addPayPubKeyConfigFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("paying", "p", "", "paying key")
-	cmd.MarkFlagRequired("paying")
+	cmd.Flags().StringP("receiver", "r", "", "receiver key")
+	cmd.MarkFlagRequired("receiver")
 
 	cmd.Flags().StringP("keyX", "x", "", "receiving pub key X")
 	cmd.MarkFlagRequired("keyX")
@@ -431,16 +431,16 @@ func addPayPubKeyConfigFlags(cmd *cobra.Command) {
 
 func createConfigPayPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
-	paying, _ := cmd.Flags().GetString("paying")
+	receiver, _ := cmd.Flags().GetString("receiver")
 	keyx, _ := cmd.Flags().GetString("keyX")
 	keyy, _ := cmd.Flags().GetString("keyY")
 
 	payload := &mixTy.MixConfigAction{}
 	payload.Ty = mixTy.MixConfigType_PaymentPubKey
 
-	receivingKey := &mixTy.PubKey{X: keyx, Y: keyy}
+	secretKey := &mixTy.PubKey{X: keyx, Y: keyy}
 
-	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{PayingKey: paying, ReceivingKey: receivingKey}}
+	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{ReceiverKey: receiver, SecretKey: secretKey}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
@@ -847,8 +847,8 @@ func EncodeSecretDataCmd() *cobra.Command {
 }
 
 func encodeSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("payment", "p", "", "payment key")
-	cmd.MarkFlagRequired("payment")
+	cmd.Flags().StringP("receiver", "p", "", "receiver key")
+	cmd.MarkFlagRequired("receiver")
 
 	cmd.Flags().StringP("return", "r", "", "return key")
 
@@ -861,13 +861,13 @@ func encodeSecretCmdFlags(cmd *cobra.Command) {
 
 func encodeSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payment, _ := cmd.Flags().GetString("payment")
+	receiver, _ := cmd.Flags().GetString("receiver")
 	returnKey, _ := cmd.Flags().GetString("return")
 	authorize, _ := cmd.Flags().GetString("authorize")
 	amount, _ := cmd.Flags().GetString("amount")
 
 	req := mixTy.SecretData{
-		PaymentPubKey:   payment,
+		ReceiverPubKey:  receiver,
 		ReturnPubKey:    returnKey,
 		AuthorizePubKey: authorize,
 		Amount:          amount,
@@ -910,8 +910,8 @@ func encryptSecret(cmd *cobra.Command, args []string) {
 	pubkey := &mixTy.PubKey{X: x, Y: y}
 
 	req := mixTy.EncryptSecretData{
-		Secret:      secret,
-		ReceivingPk: pubkey,
+		Secret:       secret,
+		SecretPubKey: pubkey,
 	}
 
 	var res mixTy.DHSecret
@@ -956,9 +956,9 @@ func decryptSecret(cmd *cobra.Command, args []string) {
 	prikey := &mixTy.PrivKey{Data: p}
 
 	req := mixTy.DecryptSecretData{
-		Secret:          secret,
-		Epk:             pubkey,
-		ReceivingPriKey: prikey,
+		Secret:       secret,
+		Epk:          pubkey,
+		SecretPriKey: prikey,
 	}
 
 	var res mixTy.SecretData
@@ -991,10 +991,10 @@ func DepositInputsCmd() *cobra.Command {
 }
 
 func depositSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("payment", "p", "", "payment addr")
-	cmd.MarkFlagRequired("payment")
+	cmd.Flags().StringP("receiver", "r", "", "receiver addr")
+	cmd.MarkFlagRequired("receiver")
 
-	cmd.Flags().StringP("return", "r", "", "return addr")
+	cmd.Flags().StringP("return", "n", "", "return addr")
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr")
 
@@ -1005,13 +1005,13 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 
 func depositSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payment, _ := cmd.Flags().GetString("payment")
+	receiver, _ := cmd.Flags().GetString("receiver")
 	returnKey, _ := cmd.Flags().GetString("return")
 	authorize, _ := cmd.Flags().GetString("authorize")
 	amount, _ := cmd.Flags().GetUint64("amount")
 
 	req := &mixTy.DepositProofReq{
-		PaymentAddr:   payment,
+		ReceiverAddr:  receiver,
 		ReturnAddr:    returnKey,
 		AuthorizeAddr: authorize,
 		Amount:        amount,

@@ -10,6 +10,7 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/33cn/chain33/common"
@@ -33,29 +34,28 @@ func init() {
 
 // MixSignature mix签名中对于crypto.Signature接口实现
 type MixSignature struct {
-	sign mixTy.MixTransferAction
+	sign []byte
 }
 
 // Bytes convert to bytest
 func (r *MixSignature) Bytes() []byte {
-	return types.Encode(&r.sign)
+	return r.sign[:]
 }
 
 // IsZero check is zero
 func (r *MixSignature) IsZero() bool {
-	return r.sign.Output == nil || r.sign.Input == nil
+	return len(r.sign) == 0
 }
 
 // String convert to string
 func (r *MixSignature) String() string {
-	return r.sign.String()
+	return hex.EncodeToString(r.sign)
 }
 
 // Equals check equals
 func (r *MixSignature) Equals(other crypto.Signature) bool {
 	if _, ok := other.(*MixSignature); ok {
-		this := types.Encode(&r.sign)
-		return bytes.Equal(this, other.Bytes())
+		return bytes.Equal(r.Bytes(), other.Bytes())
 	}
 	return false
 }
@@ -213,10 +213,9 @@ func (r *MixSignZkSnark) SignatureFromBytes(b []byte) (crypto.Signature, error) 
 	if len(b) <= 0 {
 		return nil, types.ErrInvalidParam
 	}
-	sign := new(MixSignature)
-	if err := types.Decode(b, &sign.sign); err != nil {
-		return nil, err
-	}
 
-	return sign, nil
+	var mixSig MixSignature
+	mixSig.sign = append(mixSig.sign, b...)
+
+	return &mixSig, nil
 }
