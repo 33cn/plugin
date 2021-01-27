@@ -214,7 +214,7 @@ func (policy *mixPolicy) withdrawProof(req *mixTy.WithdrawProofReq) (*mixTy.With
 	if note.IsReturner {
 		resp.SpendFlag = 0
 	}
-	if len(resp.AuthorizeSpendHash) > 0 {
+	if len(resp.AuthorizeSpendHash) > LENNULLKEY {
 		resp.AuthorizeFlag = 1
 	}
 
@@ -225,16 +225,11 @@ func (policy *mixPolicy) withdrawProof(req *mixTy.WithdrawProofReq) (*mixTy.With
 	}
 	resp.SpendPrivKey = privacyKey.Privacy.PaymentKey.SpendPriKey
 	//get tree path
-	path, err := policy.getPathProof(note.NoteHash)
+	treeProof, err := policy.getTreeProof(note.NoteHash)
 	if err != nil {
-		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s", note.NoteHash)
+		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	resp.TreeProof.TreePath = path.ProofSet[1:]
-	resp.TreeProof.Helpers = path.Helpers
-	for i := 0; i < len(resp.TreeProof.TreePath); i++ {
-		resp.TreeProof.ValidPath = append(resp.TreeProof.ValidPath, 1)
-	}
-	resp.TreeProof.TreeRootHash = path.RootHash
+	resp.TreeProof = treeProof
 
 	return &resp, nil
 
@@ -274,16 +269,11 @@ func (policy *mixPolicy) authProof(req *mixTy.AuthProofReq) (*mixTy.AuthProofRes
 	}
 
 	//get tree path
-	path, err := policy.getPathProof(note.NoteHash)
+	treeProof, err := policy.getTreeProof(note.NoteHash)
 	if err != nil {
-		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s", note.NoteHash)
+		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	resp.TreeProof.TreePath = path.ProofSet[1:]
-	resp.TreeProof.Helpers = path.Helpers
-	for i := 0; i < len(resp.TreeProof.TreePath); i++ {
-		resp.TreeProof.ValidPath = append(resp.TreeProof.ValidPath, 1)
-	}
-	resp.TreeProof.TreeRootHash = path.RootHash
+	resp.TreeProof = treeProof
 
 	return &resp, nil
 
@@ -412,8 +402,6 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	if err != nil {
 		return nil, errors.Wrapf(err, "input part parseUint=%s", inputPart.Proof.Amount)
 	}
-	//还要扣除手续费
-	minTxFee := uint64(policy.walletOperate.GetConfig().MinFee)
 
 	//output toAddr part
 	reqTransfer := &mixTy.DepositProofReq{
@@ -428,11 +416,12 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	}
 	bizlog.Info("transferProof deposit to receiver succ", "notehash", req.NoteHash)
 
+	//还要扣除手续费
 	//output 找零 part,如果找零为0也需要设置，否则只有一个输入一个输出，H部分的随机数要相等，就能推测出转账值来
 	//在transfer output 部分特殊处理，如果amount是0的值则不加进tree
 	reqChange := &mixTy.DepositProofReq{
 		ReceiverAddr: note.Account,
-		Amount:       noteAmount - req.Amount - minTxFee,
+		Amount:       noteAmount - req.Amount - uint64(mixTy.Privacy2PrivacyTxFee),
 	}
 	depositChange, err := policy.depositProof(reqChange)
 	if err != nil {
@@ -440,7 +429,7 @@ func (policy *mixPolicy) transferProof(req *mixTy.TransferProofReq) (*mixTy.Tran
 	}
 	bizlog.Info("transferProof deposit to change succ", "notehash", req.NoteHash)
 
-	commitValue, err := getCommitValue(noteAmount, req.Amount, minTxFee)
+	commitValue, err := getCommitValue(noteAmount, req.Amount, uint64(mixTy.Privacy2PrivacyTxFee))
 
 	if err != nil {
 		return nil, err

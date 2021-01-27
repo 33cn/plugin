@@ -93,7 +93,7 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 	}
 
 	if sumValue != withdraw.Amount {
-		return nil, mixTy.ErrInputParaNotMatch
+		return nil, errors.Wrapf(mixTy.ErrInputParaNotMatch, "amount:input=%d,proof sum=%d", withdraw.Amount, sumValue)
 	}
 
 	//withdraw value

@@ -4,7 +4,10 @@
 
 package types
 
-import "github.com/33cn/chain33/common/log/log15"
+import (
+	"github.com/33cn/chain33/common/log/log15"
+	"github.com/33cn/chain33/types"
+)
 
 var tlog = log15.New("module", MixX)
 
@@ -45,3 +48,6 @@ const (
 	PointHX = "10190477835300927557649934238820360529458681672073866116232821892325659279502"
 	PointHY = "7969140283216448215269095418467361784159407896899334866715345504515077887397"
 )
+
+//mix transfer tx fee
+const Privacy2PrivacyTxFee = types.Coin
