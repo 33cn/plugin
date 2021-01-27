@@ -63,7 +63,7 @@ func (m *Mix) CheckTx(tx *types.Transaction, index int) error {
 		// mix隐私交易，只私对私需要特殊签名验证
 		return m.DriverBase.CheckTx(tx, index)
 	}
-	_, _, err := MixTransferInfoVerify(m.GetAPI().GetConfig(), m.GetStateDB(), action.GetTransfer())
+	_, _, err := MixTransferInfoVerify(m.GetStateDB(), action.GetTransfer())
 	if err != nil {
 		mlog.Error("checkTx", "err", err, "txhash", common.ToHex(tx.Hash()))
 		return err

@@ -176,6 +176,7 @@ func (policy *mixPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignR
 func (policy *mixPolicy) signatureTx(tx *types.Transaction, transfer *mixTy.MixTransferAction) error {
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	mixSignData := types.Encode(transfer)
+	tx.Fee = mixTy.Privacy2PrivacyTxFee
 	tx.Signature = &types.Signature{
 		Ty:        MixSignID,
 		Signature: common.BytesToHash(mixSignData).Bytes(),

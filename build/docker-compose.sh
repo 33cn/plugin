@@ -89,6 +89,10 @@ function base_init() {
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
     sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
     sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
+    #新ticket 只冻结60s 测试目的
+    sed -i $sedfix 's/^ticketFrozenTime = 43200/ticketFrozenTime = 60/g' chain33.toml
+    sed -i $sedfix 's/^ticketMinerWaitTime = 7200/ticketMinerWaitTime = 600/g' chain33.toml
+
 
     # p2p
     sed -i $sedfix '0,/^seeds=.*/s//seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml

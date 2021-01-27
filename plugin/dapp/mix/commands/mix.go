@@ -5,7 +5,10 @@
 package commands
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -829,6 +832,7 @@ func SecretCmd() *cobra.Command {
 		Short: "note secret cmd",
 	}
 	cmd.AddCommand(EncodeSecretDataCmd())
+	cmd.AddCommand(DecodeSecretDataCmd())
 	cmd.AddCommand(EncryptSecretDataCmd())
 	cmd.AddCommand(DecryptSecretDataCmd())
 
@@ -876,6 +880,47 @@ func encodeSecret(cmd *cobra.Command, args []string) {
 	var res mixTy.EncodedSecretData
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.EncodeSecretData", req, &res)
 	ctx.Run()
+}
+
+// EncodeSecretDataCmd get para chain status by height
+func DecodeSecretDataCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "decode",
+		Short: "decode secret data",
+		Run:   decodeSecret,
+	}
+	decodeSecretCmdFlags(cmd)
+	return cmd
+}
+
+func decodeSecretCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("data", "d", "", "receiver data")
+	cmd.MarkFlagRequired("data")
+
+}
+
+func decodeSecret(cmd *cobra.Command, args []string) {
+	//rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	data, _ := cmd.Flags().GetString("data")
+
+	var secret mixTy.DHSecret
+	d, err := hex.DecodeString(data)
+	if err != nil {
+		fmt.Println("decode string fail")
+		return
+	}
+	err = types.Decode(d, &secret)
+	if err != nil {
+		fmt.Println("decode data fail")
+		return
+	}
+
+	rst, err := json.MarshalIndent(secret, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(rst))
 }
 
 // ShowAccountPrivacyInfo get para chain status by height

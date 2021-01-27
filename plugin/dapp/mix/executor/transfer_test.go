@@ -51,21 +51,21 @@ func TestVerifyCommitValuesBasePoint(t *testing.T) {
 	t.Log("p3.x", p3.X.String())
 	t.Log("p3.y", p3.Y.String())
 	input1 := &mixTy.TransferInputPublicInput{
-		AmountX: p1.X.String(),
-		AmountY: p1.Y.String(),
+		ShieldAmountX: p1.X.String(),
+		ShieldAmountY: p1.Y.String(),
 	}
 
 	var inputs []*mixTy.TransferInputPublicInput
 	inputs = append(inputs, input1)
 
 	output1 := &mixTy.TransferOutputPublicInput{
-		AmountX: p2.X.String(),
-		AmountY: p2.Y.String(),
+		ShieldAmountX: p2.X.String(),
+		ShieldAmountY: p2.Y.String(),
 	}
 
 	output2 := &mixTy.TransferOutputPublicInput{
-		AmountX: p3.X.String(),
-		AmountY: p3.Y.String(),
+		ShieldAmountX: p3.X.String(),
+		ShieldAmountY: p3.Y.String(),
 	}
 
 	var outputs []*mixTy.TransferOutputPublicInput
@@ -107,21 +107,21 @@ func TestVerifyCommitValuesBaseAddHPoint(t *testing.T) {
 	p3.Add(&p3, &r3)
 
 	input1 := &mixTy.TransferInputPublicInput{
-		AmountX: p1.X.String(),
-		AmountY: p1.Y.String(),
+		ShieldAmountX: p1.X.String(),
+		ShieldAmountY: p1.Y.String(),
 	}
 
 	var inputs []*mixTy.TransferInputPublicInput
 	inputs = append(inputs, input1)
 
 	output1 := &mixTy.TransferOutputPublicInput{
-		AmountX: p2.X.String(),
-		AmountY: p2.Y.String(),
+		ShieldAmountX: p2.X.String(),
+		ShieldAmountY: p2.Y.String(),
 	}
 
 	output2 := &mixTy.TransferOutputPublicInput{
-		AmountX: p3.X.String(),
-		AmountY: p3.Y.String(),
+		ShieldAmountX: p3.X.String(),
+		ShieldAmountY: p3.Y.String(),
 	}
 
 	var outputs []*mixTy.TransferOutputPublicInput

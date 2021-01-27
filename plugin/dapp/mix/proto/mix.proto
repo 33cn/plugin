@@ -151,7 +151,6 @@ message TransferOutputPublicInput {
     string shieldAmountX = 2;
     string shieldAmountY = 3;
 
-    DHSecretGroup dhSecrets = 4;
 }
 
 message AuthorizePublicInput {
