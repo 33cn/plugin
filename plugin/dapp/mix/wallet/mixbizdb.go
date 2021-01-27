@@ -118,7 +118,7 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		return
 	}
 	outInput := data.(*mixTy.TransferOutputPublicInput)
-	p.processSecretGroup(outInput.NoteHash, outInput.DhSecrets, heightIndex, table)
+	p.processSecretGroup(outInput.NoteHash, transfer.Output.Secrets, heightIndex, table)
 
 	//change
 	data, err = mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Change.PublicInput)
@@ -127,7 +127,7 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 		return
 	}
 	changeInput := data.(*mixTy.TransferOutputPublicInput)
-	p.processSecretGroup(changeInput.NoteHash, changeInput.DhSecrets, heightIndex, table)
+	p.processSecretGroup(changeInput.NoteHash, transfer.Change.Secrets, heightIndex, table)
 
 }
 
@@ -327,18 +327,17 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 		}
 		decryptData, err := decryptData(key.Privacy.ShareSecretKey.PrivKey, tempPubKey, cryptData)
 		if err != nil {
-			bizlog.Info("processSecret.decryptData", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
+			bizlog.Debug("processSecret.decryptData fail", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
 			continue
 		}
 
 		var rawData mixTy.SecretData
 		err = types.Decode(decryptData, &rawData)
 		if err != nil {
-			bizlog.Info("processSecret.decode rawData", "addr", key.Addr, "err", err)
+			bizlog.Debug("processSecret.decode rawData fail", "addr", key.Addr, "err", err)
 			continue
 		}
 		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr)
-
 		if rawData.ReceiverPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
 			rawData.ReturnPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
 			rawData.AuthorizePubKey == key.Privacy.PaymentKey.ReceiverPubKey {

@@ -7,8 +7,6 @@ package executor
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
-
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/consensys/gurvy/bn256/twistededwards"
@@ -72,7 +70,7 @@ func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferO
 
 }
 
-func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput, minFee int64) bool {
+func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput) bool {
 	var inputPoints, outputPoints []*twistededwards.Point
 	for _, in := range inputs {
 		var p twistededwards.Point
@@ -90,7 +88,7 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	//out value add fee
 	//对于平行链来说， 隐私交易需要一个公共账户扣主链的手续费，隐私交易只需要扣平行链执行器内的费用即可
 	//由于平行链的隐私交易没有实际扣平行链mix合约的手续费，平行链Mix合约会有手续费留下，平行链隐私可以考虑手续费为0
-	outputPoints = append(outputPoints, mixTy.MulCurvePointG(uint64(minFee)))
+	outputPoints = append(outputPoints, mixTy.MulCurvePointG(uint64(mixTy.Privacy2PrivacyTxFee)))
 
 	//sum input and output
 	sumInput := inputPoints[0]
@@ -108,7 +106,7 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	return false
 }
 
-func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
+func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
 	var inputs []*mixTy.TransferInputPublicInput
 	var outputs []*mixTy.TransferOutputPublicInput
 
@@ -129,8 +127,7 @@ func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.
 	}
 	outputs = append(outputs, change)
 
-	minTxFee := types.Conf(cfg, "config.wallet").GInt("minFee")
-	if !VerifyCommitValues(inputs, outputs, minTxFee) {
+	if !VerifyCommitValues(inputs, outputs) {
 		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
 	}
 
@@ -143,7 +140,7 @@ func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.
 3. add nullifier to pool
 */
 func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, error) {
-	inputs, outputs, err := MixTransferInfoVerify(a.api.GetConfig(), a.db, transfer)
+	inputs, outputs, err := MixTransferInfoVerify(a.db, transfer)
 	if err != nil {
 		return nil, errors.Wrap(err, "Transfer.MixTransferInfoVerify")
 	}
