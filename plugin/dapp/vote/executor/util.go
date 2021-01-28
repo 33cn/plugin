@@ -7,8 +7,11 @@ import (
 )
 
 const (
-	voteStatusNormal = iota
-	voteStatusClosed
+	voteStatusNormal   = iota //非关闭常规状态
+	voteStatusPending         //即将开始
+	voteStatusOngoing         //正在进行
+	voteStatusFinished        //已经结束
+	voteStatusClosed          //已经关闭
 )
 
 const (
@@ -88,22 +91,23 @@ func decodeCommitInfo(data []byte) *vty.CommitInfo {
 	return info
 }
 
-func classifyVoteList(infos *vty.VoteInfos) *vty.ReplyVoteList {
+func classifyVoteList(voteList []*vty.VoteInfo) *vty.ReplyVoteList {
 
 	reply := &vty.ReplyVoteList{}
 	currentTime := types.Now().Unix()
-	for _, voteInfo := range infos.GetVoteList() {
+	for _, voteInfo := range voteList {
 
 		if voteInfo.Status == voteStatusClosed {
-			reply.ClosedList = append(reply.ClosedList, voteInfo)
+			continue
 		} else if voteInfo.BeginTimestamp > currentTime {
-			reply.PendingList = append(reply.PendingList, voteInfo)
+			voteInfo.Status = voteStatusPending
 		} else if voteInfo.EndTimestamp > currentTime {
-			reply.OngoingList = append(reply.OngoingList, voteInfo)
+			voteInfo.Status = voteStatusOngoing
 		} else {
-			reply.FinishedList = append(reply.FinishedList, voteInfo)
+			voteInfo.Status = voteStatusFinished
 		}
 	}
 	reply.CurrentTimestamp = currentTime
+	reply.VoteList = voteList
 	return reply
 }

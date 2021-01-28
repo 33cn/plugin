@@ -131,7 +131,7 @@ message VoteInfo {
     int64               endTimestamp   = 7;  //投票结束时间戳
     repeated CommitInfo commitInfos    = 8;  //已投票的提交信息
     string              description    = 9;  //描述信息
-    uint32              status         = 10; //状态，0正常，1关闭
+    uint32              status         = 10; //状态，1即将开始，2正在进行，3已经结束，4已关闭
 }
 
 //投票选项
@@ -212,7 +212,7 @@ message VoteInfo {
     int64               endTimestamp   = 7;  //投票结束时间戳
     repeated CommitInfo commitInfos    = 8;  //已投票的提交信息
     string              description    = 9;  //描述信息
-    uint32              status         = 10; //状态，0正常，1关闭
+    uint32              status         = 10; //状态，1即将开始，2正在进行，3已经结束，4已关闭
 }
 ```
 

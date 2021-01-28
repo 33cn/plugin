@@ -100,7 +100,7 @@ message VoteInfo {
     int64               endTimestamp   = 7;  //投票结束时间戳
     repeated CommitInfo commitInfos    = 8;  //已投票的提交信息
     string              description    = 9;  //描述信息
-    uint32              status         = 10; //状态，0正常，1关闭
+    uint32              status         = 10; //状态，1即将开始，2正在进行，3已经结束，4已关闭
 }
 
 message VoteInfos {
@@ -134,9 +134,6 @@ message ReqListVote {
 }
 
 message ReplyVoteList {
-    repeated VoteInfo pendingList      = 1; //即将开始投票列表
-    repeated VoteInfo ongoingList      = 2; //正在进行投票列表
-    repeated VoteInfo finishedList     = 3; //已经完成投票列表
-    repeated VoteInfo closedList       = 4; //已经关闭投票列表
-    int64             currentTimestamp = 5;
+    repeated VoteInfo voteList         = 1; //投票列表
+    int64             currentTimestamp = 2; //当前系统时间
 }

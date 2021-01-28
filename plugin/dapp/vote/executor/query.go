@@ -68,15 +68,15 @@ func (v *vote) Query_GetVotes(in *vty.ReqStrings) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	infos := &vty.VoteInfos{VoteList: make([]*vty.VoteInfo, 0, len(in.GetItems()))}
+	voteList := make([]*vty.VoteInfo, 0, len(in.GetItems()))
 	for _, id := range in.GetItems() {
 		info, err := v.getVote(id)
 		if err != nil {
 			return nil, err
 		}
-		infos.VoteList = append(infos.VoteList, info)
+		voteList = append(voteList, info)
 	}
-	return classifyVoteList(infos), nil
+	return classifyVoteList(voteList), nil
 
 }
 
@@ -163,13 +163,13 @@ func (v *vote) Query_ListVote(in *vty.ReqListVote) (types.Message, error) {
 		return nil, err
 	}
 
-	list := &vty.VoteInfos{VoteList: make([]*vty.VoteInfo, 0, len(rows))}
+	list := make([]*vty.VoteInfo, 0, len(rows))
 	for _, row := range rows {
 		info, ok := row.Data.(*vty.VoteInfo)
 		if !ok {
 			return nil, types.ErrTypeAsset
 		}
-		list.VoteList = append(list.VoteList, info)
+		list = append(list, info)
 	}
 
 	return classifyVoteList(list), nil
