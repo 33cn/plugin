@@ -129,14 +129,14 @@ func (a *action) ConfigAddAuthPubKey(key string) (*types.Receipt, error) {
 	keys, err := a.getAuthKeys()
 	if isNotFound(errors.Cause(err)) {
 		keys := &mixTy.AuthPubKeys{}
-		keys.Data = append(keys.Data, key)
+		keys.Pks = append(keys.Pks, key)
 		return makeConfigAuthKeyReceipt(keys), nil
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	keys.Data = append(keys.Data, key)
+	keys.Pks = append(keys.Pks, key)
 	return makeConfigAuthKeyReceipt(keys), nil
 }
 
@@ -147,11 +147,11 @@ func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 	}
 
 	var newKeys mixTy.AuthPubKeys
-	for _, v := range keys.Data {
+	for _, v := range keys.Pks {
 		if key == v {
 			continue
 		}
-		newKeys.Data = append(newKeys.Data, v)
+		newKeys.Pks = append(newKeys.Pks, v)
 	}
 
 	return makeConfigAuthKeyReceipt(&newKeys), nil

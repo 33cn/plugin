@@ -91,6 +91,7 @@ function base_init() {
     sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
     #新ticket 只冻结60s 测试目的
     sed -i $sedfix 's/^ticketFrozenTime = 43200/ticketFrozenTime = 60/g' chain33.toml
+    sed -i $sedfix 's/^ticketWithdrawTime = 172800/ticketMinerWaitTime = 1000/g' chain33.toml
     sed -i $sedfix 's/^ticketMinerWaitTime = 7200/ticketMinerWaitTime = 600/g' chain33.toml
 
 
@@ -101,6 +102,8 @@ function base_init() {
     sed -i $sedfix 's/^isSeed=.*/isSeed=true/g' chain33.toml
     sed -i $sedfix 's/^innerSeedEnable=.*/innerSeedEnable=false/g' chain33.toml
     sed -i $sedfix 's/^useGithub=.*/useGithub=false/g' chain33.toml
+    sed -i $sedfix 's/^disableShard=false/disableShard=true/g' chain33.toml
+
 
     # rpc
     sed -i $sedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8801"/g' chain33.toml

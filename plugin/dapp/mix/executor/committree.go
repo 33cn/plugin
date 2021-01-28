@@ -87,7 +87,7 @@ func getNewTree() *merkletree.Tree {
 
 func calcTreeRoot(leaves *mixTy.CommitTreeLeaves) []byte {
 	tree := getNewTree()
-	for _, leaf := range leaves.Data {
+	for _, leaf := range leaves.Leaves {
 		tree.Push(leaf)
 	}
 	return tree.Root()
@@ -100,8 +100,8 @@ func getNewCommitLeaves() (*mixTy.CommitTreeLeaves, *mixTy.CommitTreeRoots) {
 
 	//第一个叶子节点都是固定的"00"字节
 	leaf := []byte("00")
-	leaves.Data = append(leaves.Data, leaf)
-	roots.Data = append(roots.Data, calcTreeRoot(leaves))
+	leaves.Leaves = append(leaves.Leaves, leaf)
+	roots.Roots = append(roots.Roots, calcTreeRoot(leaves))
 
 	return leaves, roots
 }
@@ -109,8 +109,8 @@ func getNewCommitLeaves() (*mixTy.CommitTreeLeaves, *mixTy.CommitTreeRoots) {
 func initNewLeaves(leaf [][]byte) *types.Receipt {
 	leaves, roots := getNewCommitLeaves()
 	if len(leaf) > 0 {
-		leaves.Data = append(leaves.Data, leaf...)
-		roots.Data = append(roots.Data, calcTreeRoot(leaves))
+		leaves.Leaves = append(leaves.Leaves, leaf...)
+		roots.Roots = append(roots.Roots, calcTreeRoot(leaves))
 	}
 
 	return makeCurrentTreeReceipt(leaves, roots)
@@ -127,7 +127,7 @@ func archiveRoots(db dbm.KV, root []byte, leaves *mixTy.CommitTreeLeaves) (*type
 	if err != nil {
 		return nil, err
 	}
-	archiveRoots.Data = append(archiveRoots.Data, root)
+	archiveRoots.Roots = append(archiveRoots.Roots, root)
 	receiptArch := makeTreeArchiveRootsReceipt(archiveRoots)
 	return mergeReceipt(receiptRootLeaves, receiptArch), nil
 }
@@ -158,13 +158,13 @@ func pushTree(db dbm.KV, leaf [][]byte) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	leaves.Data = append(leaves.Data, leaf...)
+	leaves.Leaves = append(leaves.Leaves, leaf...)
 	currentRoot := calcTreeRoot(leaves)
-	roots.Data = append(roots.Data, currentRoot)
+	roots.Roots = append(roots.Roots, currentRoot)
 	r := makeCurrentTreeReceipt(leaves, roots)
 
 	//归档
-	if len(leaves.Data) >= mixTy.MaxTreeLeaves {
+	if len(leaves.Leaves) >= mixTy.MaxTreeLeaves {
 		receiptArch, err := archiveRoots(db, currentRoot, leaves)
 		if err != nil {
 			return nil, err
@@ -184,12 +184,12 @@ func checkTreeRootHashExist(db dbm.KV, hash []byte) bool {
 	var roots [][]byte
 	currentRoots, err := getCurrentCommitTreeRoots(db)
 	if err == nil {
-		roots = append(roots, currentRoots.Data...)
+		roots = append(roots, currentRoots.Roots...)
 	}
 
 	archiveRoots, err := getArchiveCommitRoots(db)
 	if err == nil {
-		roots = append(roots, archiveRoots.Data...)
+		roots = append(roots, archiveRoots.Roots...)
 	}
 
 	for _, k := range roots {
@@ -250,7 +250,7 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, er
 	}
 	leaves, err := getCurrentCommitTreeLeaves(db)
 	if err == nil {
-		p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
+		p, err := getProveData(transferFr2Bytes(leaf), leaves.Leaves)
 		if err == nil {
 			return p, nil
 		}
@@ -261,7 +261,7 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, er
 		if err != nil {
 			return nil, err
 		}
-		p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
+		p, err := getProveData(transferFr2Bytes(leaf), leaves.Leaves)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hash=%s,leaf=%s", rootHash, leaf)
 		}
@@ -270,10 +270,10 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, er
 
 	roots, err := getArchiveCommitRoots(db)
 	if err == nil {
-		for _, root := range roots.Data {
+		for _, root := range roots.Roots {
 			leaves, err := getCommitRootLeaves(db, transferFr2String(root))
 			if err == nil {
-				p, err := getProveData(transferFr2Bytes(leaf), leaves.Data)
+				p, err := getProveData(transferFr2Bytes(leaf), leaves.Leaves)
 				if err == nil {
 					return p, nil
 				}
