@@ -210,12 +210,12 @@ func (policy *mixPolicy) withdrawProof(req *mixTy.WithdrawProofReq) (*mixTy.With
 	resp.NullifierHash = note.Nullifier
 	resp.AuthorizeSpendHash = note.AuthorizeSpendHash
 	resp.NoteHash = note.NoteHash
-	resp.SpendFlag = 1
-	if note.IsReturner {
-		resp.SpendFlag = 0
+	resp.SpendFlag = "1"
+	if note.Role == mixTy.Role_RETURNER {
+		resp.SpendFlag = "0"
 	}
 	if len(resp.AuthorizeSpendHash) > LENNULLKEY {
-		resp.AuthorizeFlag = 1
+		resp.AuthorizeFlag = "1"
 	}
 
 	//get spend privacy key
@@ -260,10 +260,10 @@ func (policy *mixPolicy) authProof(req *mixTy.AuthProofReq) (*mixTy.AuthProofRes
 	resp.AuthHash = getFrString(mimcHashString([]string{resp.AuthPubKey, note.Secret.NoteRandom}))
 
 	//default auto to paymenter
-	resp.SpendFlag = 1
+	resp.SpendFlag = "1"
 	resp.AuthorizeSpendHash = getFrString(mimcHashString([]string{note.Secret.ReceiverPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
 	if req.ToReturn != 0 {
-		resp.SpendFlag = 0
+		resp.SpendFlag = "0"
 		//auth to returner
 		resp.AuthorizeSpendHash = getFrString(mimcHashString([]string{note.Secret.ReturnPubKey, note.Secret.Amount, note.Secret.NoteRandom}))
 	}
@@ -313,12 +313,12 @@ func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*mix
 		return nil, errors.Wrapf(types.ErrInvalidParam, "payment pubkey from note=%s not match from privacyKey=%s,for account =%s",
 			note.Secret.ReceiverPubKey, privacyKey.Privacy.PaymentKey.ReceiverPubKey, note.Account)
 	}
-	input.SpendFlag = 1
-	if note.IsReturner {
-		input.SpendFlag = 0
+	input.SpendFlag = "1"
+	if note.Role == mixTy.Role_RETURNER {
+		input.SpendFlag = "0"
 	}
 	if len(input.AuthorizeSpendHash) > LENNULLKEY {
-		input.AuthorizeFlag = 1
+		input.AuthorizeFlag = "1"
 	}
 
 	treeProof, err := policy.getTreeProof(note.NoteHash)

@@ -27,7 +27,7 @@ message ZkVerifyKeys{
 }
 
 message AuthPubKeys{
-    repeated string data = 1;
+    repeated string pks = 1;
 }
 
 message PaymentKey{
@@ -167,11 +167,11 @@ message ExistValue {
 }
 
 message CommitTreeLeaves {
-    repeated bytes data = 1;
+    repeated bytes leaves = 1;
 }
 
 message CommitTreeRoots {
-    repeated bytes data = 1;
+    repeated bytes roots = 1;
 }
 
 
@@ -189,7 +189,7 @@ message TreeInfoReq{
 }
 
 message TreeListResp{
-    repeated string datas = 1;
+    repeated string leaves = 1;
 }
 
 // mix wallet part
@@ -289,8 +289,8 @@ message WithdrawProofResp{
     string          authorizeSpendHash = 3;
     string          noteHash  = 4;
     string          spendPrivKey = 5;
-    uint32          spendFlag = 6;
-    uint32          authorizeFlag = 7;
+    string          spendFlag = 6;
+    string          authorizeFlag = 7;
     TreePathProof   treeProof = 8;
 }
 
@@ -306,7 +306,7 @@ message AuthProofResp{
     string          authHash        = 4;
     string          authorizeSpendHash   = 5;
     string          noteHash        = 6;
-    uint32          spendFlag       = 7;
+    string          spendFlag       = 7;
     TreePathProof   treeProof       = 8;
 
 }
@@ -331,8 +331,8 @@ message TransferInputProof{
     string          authorizeSpendHash = 3;
     string          noteHash  = 4;
     string          spendPrivKey = 5;
-    uint32          spendFlag = 6;
-    uint32          authorizeFlag = 7;
+    string          spendFlag = 6;
+    string          authorizeFlag = 7;
     TreePathProof   treeProof = 8;
     ShieldAmount    shieldAmount = 9;
     string          amountRandom = 10;
@@ -372,14 +372,20 @@ enum NoteStatus{
 	USED    = 3;   //已使用
 }
 
+enum Role{
+    SPENDER     = 0;
+    RETURNER    = 1;
+    AUTHORIZER  = 2;
+}
+
 message WalletIndexInfo {
-    string             noteHash         = 1;
-    string             nullifier        = 2;
-    string             authorizeSpendHash    = 3;
-    bool               isReturner       = 4;
-    string             account          = 5; //账户地址
-    NoteStatus         status           = 6;
-    SecretData         secret           = 7;
+    string             noteHash             = 1;
+    string             nullifier            = 2;
+    string             authorizeSpendHash   = 3;
+    Role               role                 = 4;
+    string             account              = 5; //账户地址
+    NoteStatus         status               = 6;
+    SecretData         secret               = 7;
 
 }
 

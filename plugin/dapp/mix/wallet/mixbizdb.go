@@ -350,11 +350,15 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
 			info.AuthorizeSpendHash = "0"
 			if len(rawData.AuthorizePubKey) > LENNULLKEY {
-				if rawData.ReceiverPubKey == key.Privacy.PaymentKey.ReceiverPubKey {
+				switch key.Privacy.PaymentKey.ReceiverPubKey {
+				case rawData.ReceiverPubKey:
+					info.Role = mixTy.Role_SPENDER
 					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReceiverPubKey, rawData.Amount, rawData.NoteRandom}))
-				} else if rawData.ReturnPubKey == key.Privacy.PaymentKey.ReceiverPubKey {
-					info.IsReturner = true
+				case rawData.ReturnPubKey:
+					info.Role = mixTy.Role_RETURNER
 					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
+				case rawData.AuthorizePubKey:
+					info.Role = mixTy.Role_AUTHORIZER
 				}
 			}
 
