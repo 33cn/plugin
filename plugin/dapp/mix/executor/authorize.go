@@ -38,7 +38,7 @@ func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 
 	//authorize pubkey hash should be configured already
 	var found bool
-	for _, k := range authPubKeys.Data {
+	for _, k := range authPubKeys.Pks {
 		if input.AuthorizePubKey == k {
 			found = true
 			break

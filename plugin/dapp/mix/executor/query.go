@@ -34,8 +34,8 @@ func (m *Mix) Query_GetLeavesList(in *mixTy.TreeInfoReq) (types.Message, error) 
 		return nil, err
 	}
 	var resp mixTy.TreeListResp
-	for _, k := range leaves.Data {
-		resp.Datas = append(resp.Datas, transferFr2String(k))
+	for _, k := range leaves.Leaves {
+		resp.Leaves = append(resp.Leaves, transferFr2String(k))
 	}
 
 	return &resp, nil
@@ -49,8 +49,8 @@ func (m *Mix) Query_GetRootList(in *types.ReqNil) (types.Message, error) {
 		return nil, err
 	}
 	var resp mixTy.TreeListResp
-	for _, k := range roots.Data {
-		resp.Datas = append(resp.Datas, transferFr2String(k))
+	for _, k := range roots.Roots {
+		resp.Leaves = append(resp.Leaves, transferFr2String(k))
 	}
 
 	return &resp, nil
