@@ -152,7 +152,7 @@ curl -kd  '{"method":"Chain33.CreateTransaction","params":[{"execer":"vote","act
 
 #### 提交投票(CommitVote)
 - 投票组成员发起投票交易
-- 指定所在投票组ID，投票ID，投票选项
+- 指定投票ID，投票选项
 - 投票选项使用数组下标标识，而不是选项内容
 
 ##### 交易请求
@@ -299,10 +299,8 @@ message ReqStrings {
 ##### 响应结构
 ```proto
 message ReplyVoteList {
-    repeated VoteInfo pendingList  = 1; //即将开始投票列表
-    repeated VoteInfo ongoingList  = 2; //正在进行投票列表
-    repeated VoteInfo finishedList = 3; //已经完成投票列表
-    repeated VoteInfo closedList   = 4; //已经关闭投票列表
+    repeated VoteInfo voteList         = 1; //投票列表
+    int64             currentTimestamp = 2; //当前系统时间
 }
 ```
 
@@ -398,10 +396,8 @@ message ReqListItem {
 ##### 响应结构
 ```proto
 message ReplyVoteList {
-    repeated VoteInfo pendingList  = 1; //即将开始投票列表
-    repeated VoteInfo ongoingList  = 2; //正在进行投票列表
-    repeated VoteInfo finishedList = 3; //已经完成投票列表
-    repeated VoteInfo closedList   = 4; //已经关闭投票列表
+    repeated VoteInfo voteList         = 1; //投票列表
+    int64             currentTimestamp = 2; //当前系统时间
 }
 ```
 
