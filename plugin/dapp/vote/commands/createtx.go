@@ -13,6 +13,7 @@ import (
 func createGroupCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "createGroup",
+		Aliases: []string{"cg"},
 		Short:   "create tx(create vote group)",
 		Run:     createGroup,
 		Example: "createGroup -n=group1 -a=admin1 -m=member1 -m=member2",
@@ -64,6 +65,7 @@ func createGroup(cmd *cobra.Command, args []string) {
 func updateGroupCMD() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "updateGroup",
+		Aliases: []string{"ug"},
 		Short:   "create tx(update group members or admin)",
 		Run:     updateGroup,
 		Example: "updateGroup -g=id -a=addMember1 -a=addMember2 -r=removeMember1 ...",
@@ -74,11 +76,11 @@ func updateGroupCMD() *cobra.Command {
 
 func updateGroupFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("groupID", "g", "", "group id")
-	cmd.Flags().StringArrayP("addMembers", "a", nil, "group member address array for adding")
+	cmd.Flags().StringArrayP("addMembers", "m", nil, "group member address array for adding")
 	cmd.Flags().UintSliceP("weights", "w", nil, "member vote weight array for adding")
-	cmd.Flags().StringArrayP("removeMembers", "r", nil, "group member address array for removing")
-	cmd.Flags().StringArrayP("addAdmins", "d", nil, "group admin address array for adding")
-	cmd.Flags().StringArrayP("removeAdmins", "m", nil, "group admin address array for removing")
+	cmd.Flags().StringArrayP("removeMembers", "v", nil, "group member address array for removing")
+	cmd.Flags().StringArrayP("addAdmins", "a", nil, "group admin address array for adding")
+	cmd.Flags().StringArrayP("removeAdmins", "r", nil, "group admin address array for removing")
 	markRequired(cmd, "groupID")
 }
 
@@ -120,9 +122,10 @@ func updateGroup(cmd *cobra.Command, args []string) {
 
 func createVoteCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "createVote",
-		Short: "create tx(create vote)",
-		Run:   createVote,
+		Use:     "createVote",
+		Aliases: []string{"ctv"},
+		Short:   "create tx(create vote)",
+		Run:     createVote,
 	}
 	createVoteFlags(cmd)
 	return cmd
@@ -180,9 +183,10 @@ func createVote(cmd *cobra.Command, args []string) {
 
 func commitVoteCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commitVote",
-		Short: "create tx(commit vote)",
-		Run:   commitVote,
+		Use:     "commitVote",
+		Aliases: []string{"cmv"},
+		Short:   "create tx(commit vote)",
+		Run:     commitVote,
 	}
 	commitVoteFlags(cmd)
 	return cmd
@@ -211,9 +215,10 @@ func commitVote(cmd *cobra.Command, args []string) {
 
 func closeVoteCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "closeVote",
-		Short: "create tx(close vote)",
-		Run:   closeVote,
+		Use:     "closeVote",
+		Aliases: []string{"csv"},
+		Short:   "create tx(close vote)",
+		Run:     closeVote,
 	}
 	closeVoteFlags(cmd)
 	return cmd
@@ -239,9 +244,10 @@ func closeVote(cmd *cobra.Command, args []string) {
 
 func updateMemberCMD() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "updateMember",
-		Short: "create tx(update member name)",
-		Run:   updateMember,
+		Use:     "updateMember",
+		Aliases: []string{"um"},
+		Short:   "create tx(update member name)",
+		Run:     updateMember,
 	}
 	updateMemberFlags(cmd)
 	return cmd

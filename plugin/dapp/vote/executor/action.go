@@ -147,6 +147,7 @@ func (a *action) createVote(create *vty.CreateVote) (*types.Receipt, error) {
 	vote.Name = create.Name
 	vote.GroupID = create.GroupID
 	vote.Description = create.Description
+	vote.Creator = a.fromAddr
 	vote.VoteOptions = make([]*vty.VoteOption, 0)
 	for _, option := range create.VoteOptions {
 		vote.VoteOptions = append(vote.VoteOptions, &vty.VoteOption{Option: option})

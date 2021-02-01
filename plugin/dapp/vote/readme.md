@@ -353,9 +353,9 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"GetM
 ```proto
 //列表请求结构
 message ReqListItem {
-    string startItemID = 1; //列表开始的投票组ID，不包含在结果中
-    int32  count       = 2; //列表项单次请求数量
-    int32  direction   = 3; // 0表示根据ID降序，1表示升序
+    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    int32  count       = 2; //请求列表项数量, 0表示请求所有
+    int32  direction   = 3; // 0表示根据ID降序，1表示升序，目前ID和区块高度正相关
 }
 ```
 
@@ -381,14 +381,15 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"List
 ```proto
 //列表请求结构
 message ReqListVote {
-    string      groupID = 1; //所属组ID，不填时获取全局的投票列表
+    string      groupID = 1; //指定所属组ID
     ReqListItem listReq = 2; //列表请求
+    uint32      status  = 3; //指定投票状态
 }
 
 message ReqListItem {
-    string startItemID = 1; //列表开始的投票ID，不包含在结果中
-    int32  count       = 2; //列表项单次请求数量
-    int32  direction   = 3; // 0表示根据ID降序，1表示升序
+    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    int32  count       = 2; //请求列表项数量, 0表示请求所有
+    int32  direction   = 3; // 0表示根据ID降序，1表示升序，目前ID和区块高度正相关
 }
 ```
 
@@ -418,9 +419,9 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"List
 ```proto
 //列表请求结构
 message ReqListItem {
-    string startItemID = 1; //列表开始的用户ID（地址）
-    int32  count       = 2; //列表项单次请求数量
-    int32  direction   = 3; // 0表示根据ID降序，1表示升序
+    string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
+    int32  count       = 2; //请求列表项数量, 0表示请求所有
+    int32  direction   = 3; // 0表示根据ID降序，1表示升序，目前ID和区块高度正相关
 }
 ```
 

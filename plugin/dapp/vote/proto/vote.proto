@@ -124,13 +124,14 @@ message ReqStrings {
 //列表请求结构
 message ReqListItem {
     string startItemID = 1; //列表开始的ID，如请求组列表即groupID，不包含在结果中
-    int32  count       = 2; //请求列表项数量
-    int32  direction   = 3; // 0表示根据ID降序，1表示升序
+    int32  count       = 2; //请求列表项数量, 0表示请求所有
+    int32  direction   = 3; // 0表示根据ID降序，1表示升序，目前ID和区块高度正相关
 }
 
 message ReqListVote {
-    string      groupID = 1; //所属组ID
+    string      groupID = 1; //指定所属组ID
     ReqListItem listReq = 2; //列表请求
+    uint32      status  = 3; //指定投票状态
 }
 
 message ReplyVoteList {

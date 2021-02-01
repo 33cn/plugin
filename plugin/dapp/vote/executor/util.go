@@ -91,14 +91,12 @@ func decodeCommitInfo(data []byte) *vty.CommitInfo {
 	return info
 }
 
-func classifyVoteList(voteList []*vty.VoteInfo) *vty.ReplyVoteList {
+func filterVoteWithStatus(voteList []*vty.VoteInfo, status uint32, currentTime int64) []*vty.VoteInfo {
 
-	reply := &vty.ReplyVoteList{}
-	currentTime := types.Now().Unix()
+	var filterList []*vty.VoteInfo
 	for _, voteInfo := range voteList {
 
 		if voteInfo.Status == voteStatusClosed {
-			continue
 		} else if voteInfo.BeginTimestamp > currentTime {
 			voteInfo.Status = voteStatusPending
 		} else if voteInfo.EndTimestamp > currentTime {
@@ -106,8 +104,14 @@ func classifyVoteList(voteList []*vty.VoteInfo) *vty.ReplyVoteList {
 		} else {
 			voteInfo.Status = voteStatusFinished
 		}
+		//remove vote info with other status
+		if status == voteInfo.Status {
+			filterList = append(filterList, voteInfo)
+		}
 	}
-	reply.CurrentTimestamp = currentTime
-	reply.VoteList = voteList
-	return reply
+	//设置了状态筛选，返回对应的筛选列表
+	if status > 0 {
+		return filterList
+	}
+	return voteList
 }

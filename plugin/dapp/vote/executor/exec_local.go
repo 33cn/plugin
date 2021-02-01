@@ -96,7 +96,7 @@ func (v *vote) ExecLocal_CommitVote(payload *vty.CommitVote, tx *types.Transacti
 	//implement code, add customize kv to dbSet...
 	commitInfo := decodeCommitInfo(receiptData.Logs[0].Log)
 	table := newVoteTable(v.GetLocalDB())
-	row, err := table.GetData([]byte(formatVoteID(payload.GetVoteID())))
+	row, err := table.GetData([]byte(payload.GetVoteID()))
 	if err != nil {
 		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
 		return nil, err
@@ -127,7 +127,7 @@ func (v *vote) ExecLocal_CommitVote(payload *vty.CommitVote, tx *types.Transacti
 func (v *vote) ExecLocal_CloseVote(payload *vty.CloseVote, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	table := newVoteTable(v.GetLocalDB())
-	row, err := table.GetData([]byte(formatVoteID(payload.GetVoteID())))
+	row, err := table.GetData([]byte(payload.GetVoteID()))
 	if err != nil {
 		elog.Error("execLocal closeVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
 		return nil, err

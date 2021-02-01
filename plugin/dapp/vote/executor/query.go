@@ -76,7 +76,9 @@ func (v *vote) Query_GetVotes(in *vty.ReqStrings) (types.Message, error) {
 		}
 		voteList = append(voteList, info)
 	}
-	return classifyVoteList(voteList), nil
+	reply := &vty.ReplyVoteList{CurrentTimestamp: types.Now().Unix()}
+	reply.VoteList = filterVoteWithStatus(voteList, 0, reply.CurrentTimestamp)
+	return reply, nil
 
 }
 
@@ -124,13 +126,18 @@ func (v *vote) Query_ListGroup(in *vty.ReqListItem) (types.Message, error) {
 	table := newGroupTable(v.GetLocalDB())
 	var primaryKey []byte
 	primaryKey = append(primaryKey, []byte(in.StartItemID)...)
+	list := &vty.GroupInfos{}
 	rows, err := table.ListIndex(groupTablePrimary, nil, primaryKey, in.Count, in.Direction)
+	// 已经没有数据，直接返回
+	if err == types.ErrNotFound {
+		return list, nil
+	}
 	if err != nil {
 		elog.Error("query listGroup", "err", err, "param", in)
 		return nil, err
 	}
 
-	list := &vty.GroupInfos{GroupList: make([]*vty.GroupInfo, 0, len(rows))}
+	list.GroupList = make([]*vty.GroupInfo, 0, len(rows))
 	for _, row := range rows {
 		info, ok := row.Data.(*vty.GroupInfo)
 		if !ok {
@@ -157,7 +164,16 @@ func (v *vote) Query_ListVote(in *vty.ReqListVote) (types.Message, error) {
 		prefix = []byte(groupID)
 	}
 	primaryKey = append(primaryKey, []byte(in.GetListReq().GetStartItemID())...)
-	rows, err := table.ListIndex(indexName, prefix, primaryKey, in.GetListReq().Count, in.GetListReq().Direction)
+	reply := &vty.ReplyVoteList{CurrentTimestamp: types.Now().Unix()}
+	listCount := in.ListReq.GetCount()
+
+listMore:
+	rows, err := table.ListIndex(indexName, prefix, primaryKey, listCount, in.GetListReq().Direction)
+	// 已经没有数据，直接返回
+	if err == types.ErrNotFound {
+		return reply, nil
+	}
+
 	if err != nil {
 		elog.Error("query listVote", "err", err, "param", in)
 		return nil, err
@@ -171,8 +187,16 @@ func (v *vote) Query_ListVote(in *vty.ReqListVote) (types.Message, error) {
 		}
 		list = append(list, info)
 	}
+	primaryKey = append(primaryKey[:0], []byte(list[len(list)-1].ID)...)
+	list = filterVoteWithStatus(list, in.Status, reply.CurrentTimestamp)
+	reply.VoteList = append(reply.VoteList, list...)
+	//经过筛选后，数量小于请求数量，则需要再次list, 需要满足len(rows)==listCount, 否则表示已经没有数据
+	if len(rows) == int(listCount) && int(listCount) > len(list) {
+		listCount -= int32(len(list))
+		goto listMore
+	}
 
-	return classifyVoteList(list), nil
+	return reply, nil
 }
 
 func (v *vote) Query_ListMember(in *vty.ReqListItem) (types.Message, error) {
@@ -183,13 +207,18 @@ func (v *vote) Query_ListMember(in *vty.ReqListItem) (types.Message, error) {
 	table := newMemberTable(v.GetLocalDB())
 	var primaryKey []byte
 	primaryKey = append(primaryKey, []byte(in.StartItemID)...)
+	list := &vty.MemberInfos{}
 	rows, err := table.ListIndex(memberTablePrimary, nil, primaryKey, in.Count, in.Direction)
+	// 已经没有数据，直接返回
+	if err == types.ErrNotFound {
+		return list, nil
+	}
 	if err != nil {
 		elog.Error("query listMember", "err", err, "param", in)
 		return nil, err
 	}
 
-	list := &vty.MemberInfos{MemberList: make([]*vty.MemberInfo, 0, len(rows))}
+	list.MemberList = make([]*vty.MemberInfo, 0, len(rows))
 	for _, row := range rows {
 		info, ok := row.Data.(*vty.MemberInfo)
 		if !ok {
