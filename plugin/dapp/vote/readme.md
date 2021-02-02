@@ -27,6 +27,7 @@ message CreateGroup {
 message GroupMember {
     string addr       = 1; //用户地址
     uint32 voteWeight = 2; //投票权重， 不填时默认为1
+    string nickName   = 3; //群昵称
 }
 
 ```
@@ -67,6 +68,12 @@ message UpdateGroup {
     repeated string removeMembers   = 3; //删除组成员的地址列表
     repeated string addAdmins       = 4; //增加管理员
     repeated string removeAdmins    = 5; //删除管理员
+}
+
+message GroupMember {
+    string addr       = 1; //用户地址
+    uint32 voteWeight = 2; //投票权重， 不填时默认为1
+    string nickName   = 3; //群昵称
 }
 ```
 ##### 交易回执
@@ -376,14 +383,17 @@ curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"List
 ```
 
 #### 获取投票列表(ListVote)
-获取全局投票列表, 指定groupID时，则获取指定组的投票列表
+- 获取全局投票列表
+- 可指定groupID，获取指定组的投票列表
+- 可指定投票状态进行分页查找, status 0表示不做状态区分
+
 ##### 请求结构
 ```proto
 //列表请求结构
 message ReqListVote {
     string      groupID = 1; //指定所属组ID
     ReqListItem listReq = 2; //列表请求
-    uint32      status  = 3; //指定投票状态
+    uint32      status  = 3; //指定投票状态, 1即将开始，2正在进行，3已经结束，4已关闭
 }
 
 message ReqListItem {

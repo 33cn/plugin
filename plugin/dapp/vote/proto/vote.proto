@@ -18,6 +18,7 @@ message VoteAction {
 message GroupMember {
     string addr       = 1; //用户地址
     uint32 voteWeight = 2; //投票权重， 不填时默认为1
+    string nickName   = 3; //群昵称
 }
 
 //创建投票组

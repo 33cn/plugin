@@ -108,7 +108,7 @@ func (a *action) updateGroup(update *vty.UpdateGroup) (*types.Receipt, error) {
 			group.Members = append(group.Members, member)
 		}
 	}
-
+	group.MemberNum = uint32(len(group.Members))
 	adminMap := make(map[string]int)
 	for index, addr := range group.Admins {
 		adminMap[addr] = index

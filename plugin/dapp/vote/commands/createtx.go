@@ -27,7 +27,34 @@ func createGroupFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArrayP("admins", "a", nil, "group admin address array, default set creator as admin")
 	cmd.Flags().StringArrayP("members", "m", nil, "group member address array")
 	cmd.Flags().UintSliceP("weights", "w", nil, "member vote weight array")
+	cmd.Flags().StringArrayP("nicks", "c", nil, "group member nick name array")
 	markRequired(cmd, "name")
+}
+
+func formatAddMembers(addrs, nickNames []string, voteWeights []uint) []*vty.GroupMember {
+
+	if len(voteWeights) == 0 {
+		voteWeights = make([]uint, len(addrs))
+	}
+	if len(voteWeights) != len(voteWeights) {
+		fmt.Fprintf(os.Stderr, "member address array length should equal with vote weight array length")
+		return nil
+	}
+
+	if len(nickNames) == 0 {
+		nickNames = make([]string, len(addrs))
+	}
+	if len(nickNames) != len(addrs) {
+		fmt.Fprintf(os.Stderr, "member nick name array, add member addr array should have same length")
+		return nil
+	}
+
+	members := make([]*vty.GroupMember, 0)
+	for i, addr := range addrs {
+		members = append(members, &vty.GroupMember{Addr: addr, VoteWeight: uint32(voteWeights[i]), NickName: nickNames[i]})
+	}
+
+	return members
 }
 
 func createGroup(cmd *cobra.Command, args []string) {
@@ -36,22 +63,16 @@ func createGroup(cmd *cobra.Command, args []string) {
 	admins, _ := cmd.Flags().GetStringArray("admins")
 	memberAddrs, _ := cmd.Flags().GetStringArray("members")
 	weights, _ := cmd.Flags().GetUintSlice("weights")
+	nicks, _ := cmd.Flags().GetStringArray("nicks")
 
 	if name == "" {
 		fmt.Fprintf(os.Stderr, "ErrNilGroupName")
 		return
 	}
-	if len(weights) == 0 {
-		weights = make([]uint, len(memberAddrs))
-	}
-	if len(weights) != len(memberAddrs) {
-		fmt.Fprintf(os.Stderr, "member address array length should equal with vote weight array length")
-		return
-	}
 
-	members := make([]*vty.GroupMember, 0)
-	for i, addr := range memberAddrs {
-		members = append(members, &vty.GroupMember{Addr: addr, VoteWeight: uint32(weights[i])})
+	members := formatAddMembers(memberAddrs, nicks, weights)
+	if members == nil {
+		return
 	}
 
 	params := &vty.CreateGroup{
@@ -78,6 +99,7 @@ func updateGroupFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("groupID", "g", "", "group id")
 	cmd.Flags().StringArrayP("addMembers", "m", nil, "group member address array for adding")
 	cmd.Flags().UintSliceP("weights", "w", nil, "member vote weight array for adding")
+	cmd.Flags().StringArrayP("nicks", "c", nil, "group member nick name array")
 	cmd.Flags().StringArrayP("removeMembers", "v", nil, "group member address array for removing")
 	cmd.Flags().StringArrayP("addAdmins", "a", nil, "group admin address array for adding")
 	cmd.Flags().StringArrayP("removeAdmins", "r", nil, "group admin address array for removing")
@@ -89,6 +111,7 @@ func updateGroup(cmd *cobra.Command, args []string) {
 	groupID, _ := cmd.Flags().GetString("groupID")
 	addAddrs, _ := cmd.Flags().GetStringArray("addMembers")
 	weights, _ := cmd.Flags().GetUintSlice("weights")
+	nicks, _ := cmd.Flags().GetStringArray("nicks")
 	removeAddrs, _ := cmd.Flags().GetStringArray("removeMembers")
 	addAdmins, _ := cmd.Flags().GetStringArray("addAdmins")
 	removeAdmins, _ := cmd.Flags().GetStringArray("removeAdmins")
@@ -97,17 +120,9 @@ func updateGroup(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "ErrNilGroupID")
 		return
 	}
-	if len(weights) == 0 {
-		weights = make([]uint, len(addAddrs))
-	}
-	if len(weights) != len(addAddrs) {
-		fmt.Fprintf(os.Stderr, "member address array length should equal with vote weight array length")
+	addMembers := formatAddMembers(addAddrs, nicks, weights)
+	if addMembers == nil {
 		return
-	}
-
-	addMembers := make([]*vty.GroupMember, 0)
-	for i, addr := range addAddrs {
-		addMembers = append(addMembers, &vty.GroupMember{Addr: addr, VoteWeight: uint32(weights[i])})
 	}
 
 	params := &vty.UpdateGroup{

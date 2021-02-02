@@ -55,16 +55,15 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 		return nil, err
 	}
 	dbSet.KV = kvs
-
-	kvs, err = v.addGroupMember(groupInfo.GetID(), update.AddMembers)
-	if err != nil {
-		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "addMemberErr", err)
-		return nil, err
-	}
-	dbSet.KV = append(dbSet.KV, kvs...)
 	kvs, err = v.removeGroupMember(groupInfo.GetID(), update.RemoveMembers)
 	if err != nil {
 		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "removeMemberErr", err)
+		return nil, err
+	}
+	dbSet.KV = append(dbSet.KV, kvs...)
+	kvs, err = v.addGroupMember(groupInfo.GetID(), update.AddMembers)
+	if err != nil {
+		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "addMemberErr", err)
 		return nil, err
 	}
 	dbSet.KV = append(dbSet.KV, kvs...)
