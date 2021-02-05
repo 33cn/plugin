@@ -3,6 +3,8 @@ package executor
 import (
 	"encoding/hex"
 
+	"github.com/33cn/chain33/system/dapp"
+
 	"github.com/33cn/chain33/types"
 	vty "github.com/33cn/plugin/plugin/dapp/vote/types"
 )
@@ -84,7 +86,7 @@ func (v *vote) checkUpdateGroup(update *vty.UpdateGroup, tx *types.Transaction, 
 	}
 
 	//防止将管理员全部删除
-	if len(update.RemoveAdmins) >= len(update.AddAdmins)+len(groupInfo.GetAdmins()) {
+	if len(update.RemoveAdmins) >= len(groupInfo.GetAdmins()) && len(update.AddAdmins) == 0 {
 		return errAddrPermissionDenied
 	}
 
@@ -101,6 +103,14 @@ func (v *vote) checkUpdateGroup(update *vty.UpdateGroup, tx *types.Transaction, 
 	for _, addr := range addrs {
 		if len(addr) != addrLen {
 			elog.Error("checkUpdateGroup", "invalid addr", addr)
+			return types.ErrInvalidAddress
+		}
+	}
+
+	//保证管理员地址合法性
+	for _, addr := range update.GetAddAdmins() {
+		if err := dapp.CheckAddress(v.GetAPI().GetConfig(), addr, v.GetHeight()); err != nil {
+			elog.Error("checkUpdateGroup", "addr", addr, "CheckAddress err", err)
 			return types.ErrInvalidAddress
 		}
 	}
@@ -166,7 +176,7 @@ func (v *vote) checkCommitVote(commit *vty.CommitVote, tx *types.Transaction, in
 	// check if already vote
 	for _, info := range voteInfo.GetCommitInfos() {
 		if action.fromAddr == info.Addr {
-			return errAlreadyVoted
+			return errAddrAlreadyVoted
 		}
 	}
 

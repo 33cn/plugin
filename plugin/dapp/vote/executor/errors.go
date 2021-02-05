@@ -18,7 +18,7 @@ var (
 	errInvalidVoteID        = errors.New("errInvalidVoteID")
 	errInvalidGroupID       = errors.New("errInvalidGroupID")
 	errInvalidOptionIndex   = errors.New("errInvalidOptionIndex")
-	errAlreadyVoted         = errors.New("errAlreadyVoted")
+	errAddrAlreadyVoted     = errors.New("errAddrAlreadyVoted")
 	errInvalidGroupMember   = errors.New("errInvalidGroupMember")
 	errVoteAlreadyFinished  = errors.New("errVoteAlreadyFinished")
 	errVoteAlreadyClosed    = errors.New("errVoteAlreadyClosed")
