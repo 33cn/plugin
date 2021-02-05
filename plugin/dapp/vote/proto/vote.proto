@@ -80,6 +80,7 @@ message CommitVote {
 message CommitInfo {
     string addr   = 1; //提交地址
     string txHash = 2; //提交交易哈希
+    uint32 voteWeight = 3;//投票权重
 }
 
 message CloseVote {

@@ -25,7 +25,9 @@ func (v *vote) ExecLocal_CreateGroup(payload *vty.CreateGroup, tx *types.Transac
 	addAddrs := make([]string, 0)
 	addAddrs = append(addAddrs, groupInfo.Admins...)
 	for _, member := range groupInfo.Members {
-		addAddrs = append(addAddrs, member.Addr)
+		if !checkSliceItemExist(member.Addr, groupInfo.Admins) {
+			addAddrs = append(addAddrs, member.Addr)
+		}
 	}
 	kvs, err = v.addGroupMember(groupInfo.GetID(), addAddrs)
 	if err != nil {
@@ -47,12 +49,14 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 		return nil, err
 	}
 	dbSet.KV = kvs
-	removeAddrs := append(update.RemoveAdmins, update.RemoveMembers...)
+	removeAddrs := make([]string, 0)
 	//仍然为管理员或群成员之一，不删除groupID索引
-	for i, addr := range removeAddrs {
+	tempAddrs := append(update.RemoveAdmins, update.RemoveMembers...)
+	for _, addr := range tempAddrs {
 		if checkMemberExist(addr, groupInfo.Members) || checkSliceItemExist(addr, groupInfo.Admins) {
-			removeAddrs = append(removeAddrs[:i], removeAddrs[i+1:]...)
+			continue
 		}
+		removeAddrs = append(removeAddrs, addr)
 	}
 	kvs, err = v.removeGroupMember(groupInfo.GetID(), removeAddrs)
 	if err != nil {
@@ -63,7 +67,9 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 	addAddrs := make([]string, 0)
 	addAddrs = append(addAddrs, update.AddAdmins...)
 	for _, member := range update.AddMembers {
-		addAddrs = append(addAddrs, member.Addr)
+		if !checkSliceItemExist(member.Addr, update.AddAdmins) {
+			addAddrs = append(addAddrs, member.Addr)
+		}
 	}
 	kvs, err = v.addGroupMember(groupInfo.GetID(), addAddrs)
 	if err != nil {
@@ -112,6 +118,7 @@ func (v *vote) ExecLocal_CommitVote(payload *vty.CommitVote, tx *types.Transacti
 		return nil, err
 	}
 	voteInfo, _ := row.Data.(*vty.VoteInfo)
+	voteInfo.VoteOptions[payload.OptionIndex].Score += commitInfo.VoteWeight
 	voteInfo.CommitInfos = append(voteInfo.CommitInfos, commitInfo)
 	dbSet.KV, err = v.updateAndSaveTable(table.Replace, table.Save, voteInfo, tx, vty.NameCommitVoteAction, "vote")
 	if err != nil {

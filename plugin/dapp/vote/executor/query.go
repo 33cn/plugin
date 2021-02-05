@@ -29,7 +29,7 @@ func (v *vote) getGroup(groupID string) (*vty.GroupInfo, error) {
 // Query_GroupInfo query group info
 func (v *vote) Query_GetGroups(in *vty.ReqStrings) (types.Message, error) {
 
-	if in == nil {
+	if len(in.GetItems()) == 0 {
 		return nil, types.ErrInvalidParam
 	}
 	infos := &vty.GroupInfos{GroupList: make([]*vty.GroupInfo, 0, len(in.GetItems()))}
@@ -65,7 +65,7 @@ func (v *vote) getVote(voteID string) (*vty.VoteInfo, error) {
 
 func (v *vote) Query_GetVotes(in *vty.ReqStrings) (types.Message, error) {
 
-	if in == nil {
+	if len(in.GetItems()) == 0 {
 		return nil, types.ErrInvalidParam
 	}
 	voteList := make([]*vty.VoteInfo, 0, len(in.GetItems()))
@@ -104,7 +104,7 @@ func (v *vote) getMember(addr string) (*vty.MemberInfo, error) {
 
 func (v *vote) Query_GetMembers(in *vty.ReqStrings) (types.Message, error) {
 
-	if in == nil {
+	if len(in.GetItems()) == 0 {
 		return nil, types.ErrInvalidParam
 	}
 	infos := &vty.MemberInfos{MemberList: make([]*vty.MemberInfo, 0, len(in.GetItems()))}

@@ -152,6 +152,9 @@ func (v *vote) checkCommitVote(commit *vty.CommitVote, tx *types.Transaction, in
 		return err
 	}
 
+	if voteInfo.BeginTimestamp > action.blockTime {
+		return errVoteNotStarted
+	}
 	if voteInfo.EndTimestamp <= action.blockTime {
 		return errVoteAlreadyFinished
 	}

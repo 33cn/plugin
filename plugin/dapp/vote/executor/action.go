@@ -173,15 +173,18 @@ func (a *action) commitVote(commit *vty.CommitVote) (*types.Receipt, error) {
 		elog.Error("vote exec commitVote", "txHash", a.txHash, "get group err", err)
 		return nil, errStateDBGet
 	}
-
+	var voteWeight uint32
 	for _, member := range group.Members {
 		if member.Addr == a.fromAddr {
-			vote.VoteOptions[commit.OptionIndex].Score += member.VoteWeight
+			voteWeight = member.VoteWeight
 		}
 	}
+	vote.VoteOptions[commit.OptionIndex].Score += voteWeight
 	info := &vty.CommitInfo{Addr: a.fromAddr}
 	vote.CommitInfos = append(vote.CommitInfos, info)
 	voteValue := types.Encode(vote)
+	//提交的哈希和权重等信息不记录到statedb中
+	info.VoteWeight = voteWeight
 	info.TxHash = hex.EncodeToString(a.txHash)
 	receipt.KV = append(receipt.KV, &types.KeyValue{Key: formatStateIDKey(vote.ID), Value: voteValue})
 	receipt.Logs = append(receipt.Logs, &types.ReceiptLog{Ty: vty.TyCommitVoteLog, Log: types.Encode(info)})
