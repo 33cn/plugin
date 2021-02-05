@@ -17,14 +17,8 @@ func (v *vote) ExecLocal_CreateGroup(payload *vty.CreateGroup, tx *types.Transac
 
 	groupInfo := decodeGroupInfo(receiptData.Logs[0].Log)
 	table := newGroupTable(v.GetLocalDB())
-	err := table.Add(groupInfo)
+	kvs, err := v.updateAndSaveTable(table.Add, table.Save, groupInfo, tx, vty.NameCreateGroupAction, "group")
 	if err != nil {
-		elog.Error("execLocal createGroup", "txHash", hex.EncodeToString(tx.Hash()), "table add", err)
-		return nil, err
-	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal createGroup", "txHash", hex.EncodeToString(tx.Hash()), "table save", err)
 		return nil, err
 	}
 	dbSet.KV = kvs
@@ -44,14 +38,8 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 	dbSet := &types.LocalDBSet{}
 	groupInfo := decodeGroupInfo(receiptData.Logs[0].Log)
 	table := newGroupTable(v.GetLocalDB())
-	err := table.Replace(groupInfo)
+	kvs, err := v.updateAndSaveTable(table.Replace, table.Save, groupInfo, tx, vty.NameUpdateGroupAction, "group")
 	if err != nil {
-		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "groupID", groupInfo.ID, "table replace", err)
-		return nil, err
-	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "groupID", groupInfo.ID, "table save", err)
 		return nil, err
 	}
 	dbSet.KV = kvs
@@ -75,17 +63,24 @@ func (v *vote) ExecLocal_CreateVote(payload *vty.CreateVote, tx *types.Transacti
 	dbSet := &types.LocalDBSet{}
 	voteInfo := decodeVoteInfo(receiptData.Logs[0].Log)
 	table := newVoteTable(v.GetLocalDB())
-	err := table.Add(voteInfo)
+	kvs, err := v.updateAndSaveTable(table.Add, table.Save, voteInfo, tx, vty.NameCreateVoteAction, "vote")
 	if err != nil {
-		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable add", err)
-		return nil, err
-	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable save", err)
 		return nil, err
 	}
 	dbSet.KV = kvs
+	table = newGroupTable(v.GetLocalDB())
+	row, err := table.GetData([]byte(voteInfo.GroupID))
+	if err != nil {
+		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
+		return nil, err
+	}
+	groupInfo, _ := row.Data.(*vty.GroupInfo)
+	groupInfo.VoteNum++
+	kvs, err = v.updateAndSaveTable(table.Replace, table.Save, groupInfo, tx, vty.NameCreateVoteAction, "group")
+	if err != nil {
+		return nil, err
+	}
+	dbSet.KV = append(dbSet.KV, kvs...)
 	//auto gen for localdb auto rollback
 	return v.addAutoRollBack(tx, dbSet.KV), nil
 }
@@ -97,28 +92,15 @@ func (v *vote) ExecLocal_CommitVote(payload *vty.CommitVote, tx *types.Transacti
 	table := newVoteTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(payload.GetVoteID()))
 	if err != nil {
-		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
+		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "table get", err)
 		return nil, err
 	}
-	voteInfo, ok := row.Data.(*vty.VoteInfo)
-
-	if !ok {
-		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "voteInfo type asset", err)
-		return nil, types.ErrTypeAsset
-	}
-
+	voteInfo, _ := row.Data.(*vty.VoteInfo)
 	voteInfo.CommitInfos = append(voteInfo.CommitInfos, commitInfo)
-	err = table.Replace(voteInfo)
+	dbSet.KV, err = v.updateAndSaveTable(table.Replace, table.Save, voteInfo, tx, vty.NameCommitVoteAction, "vote")
 	if err != nil {
-		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable replace", err)
 		return nil, err
 	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal commitVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable save", err)
-		return nil, err
-	}
-	dbSet.KV = kvs
 	//auto gen for localdb auto rollback
 	return v.addAutoRollBack(tx, dbSet.KV), nil
 }
@@ -128,7 +110,7 @@ func (v *vote) ExecLocal_CloseVote(payload *vty.CloseVote, tx *types.Transaction
 	table := newVoteTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(payload.GetVoteID()))
 	if err != nil {
-		elog.Error("execLocal closeVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
+		elog.Error("execLocal closeVote", "txHash", hex.EncodeToString(tx.Hash()), "table get", err)
 		return nil, err
 	}
 	voteInfo, ok := row.Data.(*vty.VoteInfo)
@@ -139,17 +121,10 @@ func (v *vote) ExecLocal_CloseVote(payload *vty.CloseVote, tx *types.Transaction
 	}
 
 	voteInfo.Status = voteStatusClosed
-	err = table.Replace(voteInfo)
+	dbSet.KV, err = v.updateAndSaveTable(table.Replace, table.Save, voteInfo, tx, vty.NameCloseVoteAction, "vote")
 	if err != nil {
-		elog.Error("execLocal closeVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable replace", err)
 		return nil, err
 	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal closeVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable save", err)
-		return nil, err
-	}
-	dbSet.KV = kvs
 	//auto gen for localdb auto rollback
 	return v.addAutoRollBack(tx, dbSet.KV), nil
 }
@@ -159,27 +134,15 @@ func (v *vote) ExecLocal_UpdateMember(payload *vty.UpdateMember, tx *types.Trans
 	table := newMemberTable(v.GetLocalDB())
 	row, err := table.GetData([]byte(tx.From()))
 	if err != nil {
-		elog.Error("execLocal updateMember", "txHash", hex.EncodeToString(tx.Hash()), "memberTable get", err)
+		elog.Error("execLocal updateMember", "txHash", hex.EncodeToString(tx.Hash()), "table get", err)
 		return nil, err
 	}
-	memberInfo, ok := row.Data.(*vty.MemberInfo)
-
-	if !ok {
-		elog.Error("execLocal updateMember", "txHash", hex.EncodeToString(tx.Hash()), "memberInfo type asset", err)
-		return nil, types.ErrTypeAsset
-	}
+	memberInfo, _ := row.Data.(*vty.MemberInfo)
 	memberInfo.Name = payload.GetName()
-	err = table.Replace(memberInfo)
+	dbSet.KV, err = v.updateAndSaveTable(table.Replace, table.Save, memberInfo, tx, vty.NameUpdateMemberAction, "member")
 	if err != nil {
-		elog.Error("execLocal updateMember", "txHash", hex.EncodeToString(tx.Hash()), "memberTable replace", err)
 		return nil, err
 	}
-	kvs, err := table.Save()
-	if err != nil {
-		elog.Error("execLocal updateMember", "txHash", hex.EncodeToString(tx.Hash()), "memberTable save", err)
-		return nil, err
-	}
-	dbSet.KV = kvs
 	//auto gen for localdb auto rollback
 	return v.addAutoRollBack(tx, dbSet.KV), nil
 }
@@ -190,6 +153,24 @@ func (v *vote) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *typ
 	dbSet := &types.LocalDBSet{}
 	dbSet.KV = v.AddRollbackKV(tx, tx.Execer, kv)
 	return dbSet
+}
+
+type updateFunc func(message types.Message) error
+type saveFunc func() ([]*types.KeyValue, error)
+
+func (v *vote) updateAndSaveTable(update updateFunc, save saveFunc, data types.Message, tx *types.Transaction, actionName, tableName string) ([]*types.KeyValue, error) {
+
+	err := update(data)
+	if err != nil {
+		elog.Error("execLocal "+actionName, "txHash", hex.EncodeToString(tx.Hash()), tableName+" table update", err)
+		return nil, err
+	}
+	kvs, err := save()
+	if err != nil {
+		elog.Error("execLocal "+actionName, "txHash", hex.EncodeToString(tx.Hash()), tableName+" table save", err)
+		return nil, err
+	}
+	return kvs, nil
 }
 
 func (v *vote) addGroupMember(groupID string, members []*vty.GroupMember) ([]*types.KeyValue, error) {

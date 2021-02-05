@@ -48,6 +48,7 @@ message GroupInfo {
     repeated string admins           = 5; //管理员列表
     repeated GroupMember members     = 6; //成员列表
     string               description = 7; //描述信息
+    uint32 voteNum = 8; //投票数量
 }
 
 message GroupInfos {
