@@ -46,7 +46,7 @@ func checkMemberValidity(members []*vty.GroupMember) error {
 	filter := make(map[string]struct{}, len(members))
 	for _, member := range members {
 		if member.GetAddr() == "" {
-			return errNilMember
+			return types.ErrInvalidAddress
 		}
 		if _, ok := filter[member.Addr]; ok {
 			return errDuplicateMember

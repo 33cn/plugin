@@ -45,6 +45,7 @@ message GroupInfo {
     repeated string admins           = 5; //管理员列表
     repeated GroupMember members     = 6; //成员列表
     string               description = 7; //描述信息
+    uint32 voteNum = 8; //投票数量
 }
 
 ```
@@ -89,6 +90,7 @@ message GroupInfo {
     repeated string admins           = 5; //管理员列表
     repeated GroupMember members     = 6; //成员列表
     string               description = 7; //描述信息
+    uint32 voteNum = 8; //投票数量
 }
 
 ```
@@ -178,8 +180,9 @@ message CommitVote {
 
 //投票信息
 message CommitInfo {
-    string addr   = 1; //提交地址
-    string txHash = 2; //提交交易哈希
+    string addr       = 1; //提交地址
+    string txHash     = 2; //提交交易哈希
+    uint32 voteWeight = 3; //投票权重
 }
 ```
 
@@ -450,6 +453,32 @@ message MemberInfos {
 ```bash
 curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"ListMember","payload":{"startItemID":"","count":1,"direction":1}}],"id":0}' http://localhost:8801
 ```
+
+#### 错误码表
+发送交易和查询等接口可能返回的错误
+
+|名称 |含义
+|---|---|
+errEmptyName|       名称为空
+errInvalidMemberWeights | 非法投票权重
+errDuplicateMember      | 投票组成员重复
+errDuplicateAdmin       | 投票组管理员重复
+errInvalidVoteTime      | 非法投票时间
+errInvalidVoteOption    | 非法投票选项
+errVoteNotExist         | 投票不存在
+errGroupNotExist        | 投票组不存在
+errStateDBGet           | 状态数据获取错误
+errInvalidVoteID        | 非法投票ID
+errInvalidGroupID       | 非法投票组ID
+errInvalidOptionIndex   | 非法投票索引
+errAddrAlreadyVoted     | 已完成投票
+errVoteAlreadyFinished  | 投票已结束
+errVoteNotStarted       | 投票未开始
+errVoteAlreadyClosed    | 投票已关闭
+errAddrPermissionDenied | 地址没有权限
+
+
+
 
 #### 其他
 

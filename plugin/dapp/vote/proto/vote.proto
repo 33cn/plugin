@@ -48,7 +48,7 @@ message GroupInfo {
     repeated string admins           = 5; //管理员列表
     repeated GroupMember members     = 6; //成员列表
     string               description = 7; //描述信息
-    uint32 voteNum = 8; //投票数量
+    uint32               voteNum     = 8; //投票数量
 }
 
 message GroupInfos {
@@ -78,9 +78,9 @@ message CommitVote {
 }
 
 message CommitInfo {
-    string addr   = 1; //提交地址
-    string txHash = 2; //提交交易哈希
-    uint32 voteWeight = 3;//投票权重
+    string addr       = 1; //提交地址
+    string txHash     = 2; //提交交易哈希
+    uint32 voteWeight = 3; //投票权重
 }
 
 message CloseVote {

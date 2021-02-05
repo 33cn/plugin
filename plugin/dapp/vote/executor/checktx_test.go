@@ -19,7 +19,7 @@ func TestVote_CheckTx_CreateGroup(t *testing.T) {
 	}, {
 		index:          2,
 		payload:        &vty.CreateGroup{Name: "test", Members: []*vty.GroupMember{{}}},
-		expectCheckErr: errNilMember,
+		expectCheckErr: types.ErrInvalidAddress,
 	}, {
 		index: 3,
 		payload: &vty.CreateGroup{
