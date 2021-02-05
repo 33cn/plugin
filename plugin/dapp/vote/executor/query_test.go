@@ -30,13 +30,13 @@ func TestVote_Query_GetGroups(t *testing.T) {
 
 	exec := mock.exec
 	funcName := "GetGroups"
-	data, err := exec.Query(funcName, nil)
+	_, err := exec.Query(funcName, nil)
 	require.Equal(t, types.ErrInvalidParam, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[3:]}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[3:]}))
 	require.Equal(t, errInvalidGroupID, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[:3]}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[:3]}))
 	require.Equal(t, types.ErrNotFound, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[:2]}))
+	data, err := exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: groupIDs[:2]}))
 	require.Equal(t, nil, err)
 	groups := data.(*vty.GroupInfos)
 	require.Equal(t, 2, len(groups.GroupList))
@@ -64,13 +64,13 @@ func TestVote_Query_GetVotes(t *testing.T) {
 
 	exec := mock.exec
 	funcName := "GetVotes"
-	data, err := exec.Query(funcName, nil)
+	_, err := exec.Query(funcName, nil)
 	require.Equal(t, types.ErrInvalidParam, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{voteID2}}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{voteID2}}))
 	require.Equal(t, types.ErrNotFound, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{"voteid"}}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{"voteid"}}))
 	require.Equal(t, errInvalidVoteID, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{voteID}}))
+	data, err := exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{voteID}}))
 	require.Equal(t, nil, err)
 	vote := data.(*vty.ReplyVoteList)
 	require.Equal(t, voteID, vote.VoteList[0].ID)
@@ -90,13 +90,13 @@ func TestVote_Query_GetMembers(t *testing.T) {
 
 	exec := mock.exec
 	funcName := "GetMembers"
-	data, err := exec.Query(funcName, nil)
+	_, err := exec.Query(funcName, nil)
 	require.Equal(t, types.ErrInvalidParam, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{testAddrs[1]}}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{testAddrs[1]}}))
 	require.Equal(t, types.ErrNotFound, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{"addr"}}))
+	_, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{"addr"}}))
 	require.Equal(t, types.ErrInvalidAddress, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{testAddrs[0]}}))
+	data, err := exec.Query(funcName, types.Encode(&vty.ReqStrings{Items: []string{testAddrs[0]}}))
 	require.Equal(t, nil, err)
 	members := data.(*vty.MemberInfos)
 	require.Equal(t, testAddrs[0], members.MemberList[0].Addr)
@@ -161,9 +161,9 @@ func TestVote_Query_ListVote(t *testing.T) {
 
 	exec := mock.exec
 	funcName := "ListVote"
-	data, err := exec.Query(funcName, nil)
+	_, err := exec.Query(funcName, nil)
 	require.Equal(t, types.ErrInvalidParam, err)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqListVote{GroupID: groupID, ListReq: &vty.ReqListItem{}}))
+	data, err := exec.Query(funcName, types.Encode(&vty.ReqListVote{GroupID: groupID, ListReq: &vty.ReqListItem{}}))
 	require.Nil(t, err)
 	list := data.(*vty.ReplyVoteList)
 	require.Equal(t, 2, len(list.VoteList))
