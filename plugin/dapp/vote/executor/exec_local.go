@@ -22,8 +22,12 @@ func (v *vote) ExecLocal_CreateGroup(payload *vty.CreateGroup, tx *types.Transac
 		return nil, err
 	}
 	dbSet.KV = kvs
-
-	kvs, err = v.addGroupMember(groupInfo.GetID(), groupInfo.Members)
+	addAddrs := make([]string, 0)
+	addAddrs = append(addAddrs, groupInfo.Admins...)
+	for _, member := range groupInfo.Members {
+		addAddrs = append(addAddrs, member.Addr)
+	}
+	kvs, err = v.addGroupMember(groupInfo.GetID(), addAddrs)
 	if err != nil {
 		elog.Error("execLocal createGroup", "txHash", hex.EncodeToString(tx.Hash()), "addMemberErr", err)
 		return nil, err
@@ -43,13 +47,25 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 		return nil, err
 	}
 	dbSet.KV = kvs
-	kvs, err = v.removeGroupMember(groupInfo.GetID(), update.RemoveMembers)
+	removeAddrs := append(update.RemoveAdmins, update.RemoveMembers...)
+	//仍然为管理员或群成员之一，不删除groupID索引
+	for i, addr := range removeAddrs {
+		if checkMemberExist(addr, groupInfo.Members) || checkSliceItemExist(addr, groupInfo.Admins) {
+			removeAddrs = append(removeAddrs[:i], removeAddrs[i+1:]...)
+		}
+	}
+	kvs, err = v.removeGroupMember(groupInfo.GetID(), removeAddrs)
 	if err != nil {
 		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "removeMemberErr", err)
 		return nil, err
 	}
 	dbSet.KV = append(dbSet.KV, kvs...)
-	kvs, err = v.addGroupMember(groupInfo.GetID(), update.AddMembers)
+	addAddrs := make([]string, 0)
+	addAddrs = append(addAddrs, update.AddAdmins...)
+	for _, member := range update.AddMembers {
+		addAddrs = append(addAddrs, member.Addr)
+	}
+	kvs, err = v.addGroupMember(groupInfo.GetID(), addAddrs)
 	if err != nil {
 		elog.Error("execLocal UpdateGroup", "txHash", hex.EncodeToString(tx.Hash()), "addMemberErr", err)
 		return nil, err
@@ -173,20 +189,21 @@ func (v *vote) updateAndSaveTable(update updateFunc, save saveFunc, data types.M
 	return kvs, nil
 }
 
-func (v *vote) addGroupMember(groupID string, members []*vty.GroupMember) ([]*types.KeyValue, error) {
+// 新增用户时，将对应的groupID信息添加到用户表中
+func (v *vote) addGroupMember(groupID string, addrs []string) ([]*types.KeyValue, error) {
 
 	table := newMemberTable(v.GetLocalDB())
-	for _, member := range members {
-		addrKey := []byte(member.Addr)
+	for _, addr := range addrs {
+		addrKey := []byte(addr)
 		row, err := table.GetData(addrKey)
 		if err == nil {
-			info, ok := row.Data.(*vty.MemberInfo)
-			if ok && !checkSliceItemExist(groupID, info.GroupIDs) {
+			info, _ := row.Data.(*vty.MemberInfo)
+			if !checkSliceItemExist(groupID, info.GroupIDs) {
 				info.GroupIDs = append(info.GroupIDs, groupID)
 				err = table.Replace(info)
 			}
 		} else if err == types.ErrNotFound {
-			err = table.Add(&vty.MemberInfo{Addr: member.Addr, GroupIDs: []string{groupID}})
+			err = table.Add(&vty.MemberInfo{Addr: addr, GroupIDs: []string{groupID}})
 		}
 
 		// 这个错可能由GetData，Replace，Add返回
@@ -203,6 +220,7 @@ func (v *vote) addGroupMember(groupID string, members []*vty.GroupMember) ([]*ty
 	return kvs, nil
 }
 
+//删除用户，将对应的groupID信息删除
 func (v *vote) removeGroupMember(groupID string, addrs []string) ([]*types.KeyValue, error) {
 
 	table := newMemberTable(v.GetLocalDB())
@@ -210,16 +228,13 @@ func (v *vote) removeGroupMember(groupID string, addrs []string) ([]*types.KeyVa
 		addrKey := []byte(addr)
 		row, err := table.GetData(addrKey)
 		if err == types.ErrNotFound {
-			return nil, nil
+			continue
 		} else if err != nil {
 			elog.Error("execLocal removeMember", "member table getData", err)
 			return nil, err
 		}
 
-		info, ok := row.Data.(*vty.MemberInfo)
-		if !ok {
-			return nil, types.ErrTypeAsset
-		}
+		info, _ := row.Data.(*vty.MemberInfo)
 		for index, id := range info.GroupIDs {
 			if id == groupID {
 				info.GroupIDs = append(info.GroupIDs[:index], info.GroupIDs[index+1:]...)
