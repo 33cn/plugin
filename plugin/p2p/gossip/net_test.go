@@ -39,7 +39,7 @@ func TestGetLocalAddr(t *testing.T) {
 func TestP2pListen(t *testing.T) {
 	var node Node
 	node.listenPort = 3333
-	node.nodeInfo=&NodeInfo{}
+	node.nodeInfo = &NodeInfo{}
 	listen1 := newListener("tcp", &node)
 	assert.Equal(t, true, listen1 != nil)
 	listen2 := newListener("tcp", &node)
