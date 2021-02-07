@@ -563,7 +563,6 @@ func (m *Cli) CheckPeerNatOk(addr string, info *NodeInfo) bool {
 	//连接自己的地址信息做测试
 	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion, info.cliCreds)) == 0)
 
-
 }
 
 // CheckSelf check addrbook privPubKey
@@ -574,7 +573,7 @@ func (m *Cli) CheckSelf(addr string, nodeinfo *NodeInfo) bool {
 		return false
 	}
 
-	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion,nodeinfo.cliCreds)
+	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion, nodeinfo.cliCreds)
 	if err != nil {
 		return false
 	}

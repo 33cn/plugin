@@ -5,9 +5,10 @@
 package gossip
 
 import (
-	"google.golang.org/grpc/credentials"
 	"sync"
 	"sync/atomic"
+
+	"google.golang.org/grpc/credentials"
 
 	"github.com/33cn/chain33/p2p/utils"
 
