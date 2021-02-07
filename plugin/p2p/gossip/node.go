@@ -122,9 +122,6 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 		node.cfgSeeds.Store(seed, "cfg")
 	}
 	node.nodeInfo = NewNodeInfo(cfg.GetModuleConfig().P2P, mcfg)
-	if mcfg.ServerStart {
-		node.server = newListener(protocol, node)
-	}
 	node.chainCfg = cfg
 	if mcfg.EnableTls { //读取证书，初始化tls客户端
 		var err error
@@ -136,6 +133,9 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 		if err != nil {
 			panic(err)
 		}
+	}
+	if mcfg.ServerStart {
+		node.server = newListener(protocol, node)
 	}
 	return node, nil
 }
