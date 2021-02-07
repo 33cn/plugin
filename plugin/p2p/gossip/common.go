@@ -8,14 +8,15 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/types"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"math/rand"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/33cn/chain33/common/crypto"
+	"github.com/33cn/chain33/types"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // P2pComm p2p communication
@@ -78,6 +79,7 @@ func (c Comm) GetLocalAddr() string {
 func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node) (*Peer, error) {
 	log.Debug("dialPeerWithAddress")
 	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds)
+
 	if err != nil {
 		return nil, err
 	}

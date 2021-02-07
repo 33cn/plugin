@@ -6,11 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"net"
 	"sort"
 	"sync/atomic"
 	"time"
+
+	"google.golang.org/grpc/credentials"
 
 	"github.com/33cn/chain33/p2p"
 
@@ -367,7 +368,7 @@ func testGrpcStreamConns(t *testing.T, p2p *P2p) {
 
 func testP2pComm(t *testing.T, p2p *P2p) {
 
-	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION),nil)
+	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION), nil)
 	t.Log(addrs)
 	i32 := P2pComm.BytesToInt32([]byte{0xff})
 	t.Log(i32)
@@ -498,8 +499,8 @@ func TestSortArr(t *testing.T) {
 	sort.Sort(Inventorys)
 }
 
-func TestCreds(t *testing.T){
-	cert:=`-----BEGIN CERTIFICATE-----
+func TestCreds(t *testing.T) {
+	cert := `-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgIJAJ1Z/S9L51/5MA0GCSqGSIb3DQEBCwUAMFExCzAJBgNV
 BAYTAkNOMQswCQYDVQQIDAJaSjELMAkGA1UEBwwCSFoxDDAKBgNVBAoMA0ZaTTEM
 MAoGA1UECwwDRlpNMQwwCgYDVQQDDANMQlowHhcNMTgwNjI5MDMxNzEzWhcNMjgw
@@ -521,7 +522,7 @@ u8/Svlv5uH+2EqDGtYiDqmWlyGFJ3Q6lOGwCqRvhty7SYaHDZpV+10M32UuMBOOz
 aHJJceqATq0U4NdzjbR0ygkApyDfv/5yfw==
 -----END CERTIFICATE-----
 `
-	key:=`-----BEGIN RSA PRIVATE KEY-----
+	key := `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEA2OkNfozvtf5td2qgnDya9q+cR+wjD69ZuWe3DkPeOI2H/wRq
 yeasCj51qDDd6kQEVoyVfVtNMQgMQUxvHxSt1QU9rMp4zsm/aJaoeiYhJJH7l/FX
 LL4hYQ7LUSr2ee4at8fV9CCRh33DMpQ+50xGiWLtIfRtzAqiKV7P6RO+jz3iCted
@@ -549,35 +550,35 @@ RObdAoGBALP9HK7KuX7xl0cKBzOiXqnAyoMUfxvO30CsMI3DS0SrPc1p95OHswdu
 /gd2v1Fb6oM82QBmWOFWaRSZj0UHZf8GvT09bs/SCSW4/hY/m4uC
 -----END RSA PRIVATE KEY-----`
 
-
-	certificate,err:=tls.X509KeyPair([]byte(cert),[]byte(key))
-	assert.Nil(t,err)
+	certificate, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	assert.Nil(t, err)
 	cp := x509.NewCertPool()
-	if !cp.AppendCertsFromPEM([]byte(cert)){
+	if !cp.AppendCertsFromPEM([]byte(cert)) {
 		return
 	}
 	var node Node
 	node.nodeInfo=&NodeInfo{}
-
 	servCreds:=	credentials.NewServerTLSFromCert(&certificate)
 	cliCreds:=credentials.NewClientTLSFromCert(cp,"")
+
 	node.listenPort = 3331
 	node.nodeInfo.servCreds=servCreds
 	newListener("tcp", &node)
-	netAddr,err:=	NewNetAddressString("localhost:3331")
-	assert.Nil(t,err)
+	netAddr, err := NewNetAddressString("localhost:3331")
+	assert.Nil(t, err)
+
 
 	conn,err:=grpc.Dial(netAddr.String(),grpc.WithTransportCredentials(cliCreds))
 	assert.Nil(t,err)
 	assert.NotNil(t,conn)
 	conn.Close()
 
-	conn,err=grpc.Dial(netAddr.String())
-	assert.NotNil(t,err)
-	t.Log("without creds",err)
-	assert.Nil(t,conn)
-	conn,err=grpc.Dial(netAddr.String(),grpc.WithInsecure())
-	assert.Nil(t,err)
-	assert.NotNil(t,conn)
+	conn, err = grpc.Dial(netAddr.String())
+	assert.NotNil(t, err)
+	t.Log("without creds", err)
+	assert.Nil(t, conn)
+	conn, err = grpc.Dial(netAddr.String(), grpc.WithInsecure())
+	assert.Nil(t, err)
+	assert.NotNil(t, conn)
 
 }

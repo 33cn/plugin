@@ -561,7 +561,8 @@ func (m *Cli) GetNetInfo(msg *queue.Message, taskindex int64) {
 // CheckPeerNatOk check peer is ok or not
 func (m *Cli) CheckPeerNatOk(addr string, info *NodeInfo) bool {
 	//连接自己的地址信息做测试
-	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion,nil)) == 0)
+	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion, info.cliCreds)) == 0)
+
 
 }
 
@@ -572,6 +573,7 @@ func (m *Cli) CheckSelf(addr string, nodeinfo *NodeInfo) bool {
 		log.Error("AddrRouteble", "NewNetAddressString", err.Error())
 		return false
 	}
+
 	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion,nodeinfo.cliCreds)
 	if err != nil {
 		return false
