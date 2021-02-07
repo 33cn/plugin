@@ -5,6 +5,7 @@
 package gossip
 
 import (
+	"google.golang.org/grpc/credentials"
 	"sync"
 	"sync/atomic"
 
@@ -32,6 +33,8 @@ type NodeInfo struct {
 	outSide        int32
 	ServiceType    int32
 	channelVersion int32
+	cliCreds       credentials.TransportCredentials
+	servCreds      credentials.TransportCredentials
 }
 
 // NewNodeInfo new a node object
@@ -49,6 +52,7 @@ func NewNodeInfo(p2pCfg *types.P2P, subCfg *subConfig) *NodeInfo {
 	nodeInfo.listenAddr = new(NetAddress)
 	nodeInfo.addrBook = NewAddrBook(p2pCfg, subCfg)
 	nodeInfo.channelVersion = utils.CalcChannelVersion(subCfg.Channel, VERSION)
+
 	return nodeInfo
 }
 

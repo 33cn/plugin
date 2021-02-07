@@ -25,7 +25,7 @@ var P2pComm Comm
 type Comm struct{}
 
 // AddrRouteble address router ,return enbale address
-func (Comm) AddrRouteble(addrs []string, version int32,creds credentials.TransportCredentials) []string {
+func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials) []string {
 	var enableAddrs []string
 
 	for _, addr := range addrs {
@@ -34,7 +34,7 @@ func (Comm) AddrRouteble(addrs []string, version int32,creds credentials.Transpo
 			log.Error("AddrRouteble", "NewNetAddressString", err.Error())
 			continue
 		}
-		conn, err := netaddr.DialTimeout(version,creds)
+		conn, err := netaddr.DialTimeout(version, creds)
 		if err != nil {
 			//log.Error("AddrRouteble", "DialTimeout", err.Error())
 			continue
@@ -77,7 +77,7 @@ func (c Comm) GetLocalAddr() string {
 
 func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node) (*Peer, error) {
 	log.Debug("dialPeerWithAddress")
-	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion,node.cliCreds)
+	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds)
 	if err != nil {
 		return nil, err
 	}

@@ -144,8 +144,8 @@ Retry:
 	keepOp := grpc.KeepaliveParams(keepparm)
 	StatsOp := grpc.StatsHandler(&statshandler{})
 	opts = append(opts, msgRecvOp, msgSendOp, grpc.KeepaliveEnforcementPolicy(kaep), keepOp, maxStreams, StatsOp)
-	if node.servCreds!=nil{
-		opts=append(opts,grpc.Creds(node.servCreds))
+	if node.nodeInfo.servCreds != nil {
+		opts = append(opts, grpc.Creds(node.nodeInfo.servCreds))
 	}
 	dl.server = grpc.NewServer(opts...)
 	dl.p2pserver = pServer

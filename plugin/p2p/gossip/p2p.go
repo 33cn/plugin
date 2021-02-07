@@ -60,7 +60,7 @@ type subConfig struct {
 	//触发区块轻广播最小大小, KB
 	MinLtBlockSize int32 `protobuf:"varint,12,opt,name=minLtBlockSize" json:"minLtBlockSize,omitempty"`
 	//是否使用证书进行节点之间的通信,true 使用证书通信，读取rpc配置项下的证书文件
-	enableTls bool `protobuf:"varint,13,opt,name=enableTls" json:"enableTls,omitempty"`
+	EnableTls bool `protobuf:"varint,13,opt,name=enableTls" json:"enableTls,omitempty"`
 }
 
 // P2p interface

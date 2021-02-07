@@ -264,7 +264,7 @@ func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 
 	_, err = p2pcli.SendVersion(peer, localP2P.node.nodeInfo)
 	assert.Nil(t, err)
-
+	t.Log("nodeinfo",localP2P.node.nodeInfo)
 	t.Log(p2pcli.CheckPeerNatOk("localhost:53802", localP2P.node.nodeInfo))
 	t.Log("checkself:", p2pcli.CheckSelf("loadhost:43803", localP2P.node.nodeInfo))
 	_, err = p2pcli.GetAddr(peer)
@@ -557,14 +557,17 @@ RObdAoGBALP9HK7KuX7xl0cKBzOiXqnAyoMUfxvO30CsMI3DS0SrPc1p95OHswdu
 		return
 	}
 	var node Node
-	node.servCreds=	credentials.NewServerTLSFromCert(&certificate)
-	node.cliCreds=credentials.NewClientTLSFromCert(cp,"")
+	node.nodeInfo=&NodeInfo{}
+
+	servCreds:=	credentials.NewServerTLSFromCert(&certificate)
+	cliCreds:=credentials.NewClientTLSFromCert(cp,"")
 	node.listenPort = 3331
+	node.nodeInfo.servCreds=servCreds
 	newListener("tcp", &node)
 	netAddr,err:=	NewNetAddressString("localhost:3331")
 	assert.Nil(t,err)
 
-	conn,err:=grpc.Dial(netAddr.String(),grpc.WithTransportCredentials(node.cliCreds))
+	conn,err:=grpc.Dial(netAddr.String(),grpc.WithTransportCredentials(cliCreds))
 	assert.Nil(t,err)
 	assert.NotNil(t,conn)
 	conn.Close()
