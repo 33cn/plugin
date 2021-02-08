@@ -34,12 +34,12 @@ func (c *Jrpc) IsSync(req *types.ReqNil, result *interface{}) error {
 }
 
 // GetNodeInfo query node info
-func (c *channelClient) GetNodeInfo(ctx context.Context, req *types.ReqNil) (*vt.ValidatorSet, error) {
+func (c *channelClient) GetNodeInfo(ctx context.Context, req *types.ReqNil) (*vt.ValNodeInfoSet, error) {
 	data, err := c.QueryConsensusFunc("tendermint", "NodeInfo", &types.ReqNil{})
 	if err != nil {
 		return nil, err
 	}
-	if resp, ok := data.(*vt.ValidatorSet); ok {
+	if resp, ok := data.(*vt.ValNodeInfoSet); ok {
 		return resp, nil
 	}
 	return nil, types.ErrDecode
@@ -51,6 +51,6 @@ func (c *Jrpc) GetNodeInfo(req *types.ReqNil, result *interface{}) error {
 	if err != nil {
 		return err
 	}
-	*result = data.Validators
+	*result = data
 	return nil
 }
