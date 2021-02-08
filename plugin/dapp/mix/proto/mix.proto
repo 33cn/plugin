@@ -26,23 +26,23 @@ message ZkVerifyKeys{
     repeated ZkVerifyKey data = 1;
 }
 
-message AuthPubKeys{
-    repeated string pks = 1;
+message AuthKeys{
+    repeated string keys = 1;
 }
 
 message PaymentKey{
     string addr = 1;
     string receiverKey = 2;
-    PubKey secretKey = 3;
+    string encryptKey = 3;
 }
 
 enum MixConfigType{
-    VerifyKey = 0;
+    Verify = 0;
     //register unify authorize pubkey
-    AuthPubKey = 1;
+    Auth = 1;
     //for spender's pay pubkey register,DH secret
     //spender注册自己的payment公钥, 用来生成DiffHellman秘钥
-    PaymentPubKey = 2;
+    Payment = 2;
 }
 
 enum MixConfigAct{
@@ -59,15 +59,15 @@ message MixConfigAction {
     MixConfigAct Action = 2;
     oneof  value {
         ZkVerifyKey     verifyKey   = 3;
-        string          authPk     = 4;
+        string          authKey     = 4;
         PaymentKey      paymentKey   = 5;
     }
 }
 
 //DH one time pubkey with secret
 message DHSecret{
-    PubKey      epk = 1;
-    string      secret   = 3;
+    string      peerKey = 1;
+    string      secret   = 2;
 }
 
 //Diff-Helman 加密group, for spender, returner, authorizer to decrypt
@@ -84,8 +84,7 @@ message ZkProofInfo {
 }
 
 message MixDepositAction {
-    uint64 amount = 1;
-    ZkProofInfo proof = 2;
+    ZkProofInfo proof = 1;
 
 }
 
@@ -98,12 +97,12 @@ message MixTransferAction {
 
 message MixWithdrawAction {
     uint64 amount = 1;
-    repeated ZkProofInfo spendCommits = 2;
+    repeated ZkProofInfo proofs = 2;
 
 }
 
 message MixAuthorizeAction {
-    repeated ZkProofInfo authCommits = 1;
+    ZkProofInfo proof = 1;
 
 }
 
@@ -161,6 +160,12 @@ message AuthorizePublicInput {
 
 }
 
+message VerifyProofInfo{
+    VerifyType  ty = 1;
+    ZkProofInfo proof = 2;
+
+}
+
 //nullifer 存在value
 message ExistValue {
     bool data = 1;
@@ -195,23 +200,16 @@ message TreeListResp{
 // mix wallet part
 // receiverPubKey = hash(spendPriKey) for zk-snark note spend
 message PaymentKeyPair {
-    string receiverPubKey  = 1;
-    string spendPriKey = 2;
+    string receiveKey  = 1;
+    string spendKey = 2;
 }
 
 // pub = priv*G for diff-helman crypto
 // out: take spender's tempPrikey*pubkey as password, tempPubkey show in note
 // spender: take self prikey*tempPubkey as password to decode
-message PubKey {
-    string X = 1;
-    string Y = 2;
-}
-message PrivKey{
-    string data = 1;
-}
-message ShareSecretKeyPair {
-    PrivKey privKey = 1;
-    PubKey  receivingPk  = 2;
+message EncryptKeyPair {
+    string  privKey = 1;
+    string  pubKey  = 2;
 
 }
 
@@ -219,7 +217,7 @@ message ShareSecretKeyPair {
 //crypt pair for DH crypt/decrypt
 message AccountPrivacyKey {
     PaymentKeyPair paymentKey   = 1;
-    ShareSecretKeyPair shareSecretKey  = 2;
+    EncryptKeyPair encryptKey  = 2;
 }
 
 message WalletAddrPrivacy {
@@ -230,36 +228,43 @@ message WalletAddrPrivacy {
 
 
 message SecretData{
-    string receiverPubKey = 1;
-    string returnPubKey = 2;
-    string authorizePubKey = 3;
+    string receiverKey = 1;
+    string returnKey = 2;
+    string authorizeKey = 3;
     string amount = 4;
     string noteRandom = 5;
 }
 
-message EncodedSecretData{
-    string encoded = 1;
-    SecretData rawData = 2;
-}
 
 message EncryptSecretData{
     string secret = 1;
-    PubKey SecretPubKey = 2;
+    string peerKey = 2;
 }
 
 message DecryptSecretData{
     string secret = 1;
-    PrivKey SecretPriKey = 2;
-    PubKey epk = 3;
+    string priKey = 2;
+    string peerKey = 3;
 
 }
 
-//一键式获取加密数据
-message DepositProofReq{
-    string receiverAddr = 1;
+//path+filename, filename can take default
+message circuitPathInfo{
+    string path = 1;
+}
+
+message DepositInfo{
+    string addr = 1;
     string returnAddr = 2;
     string authorizeAddr = 3;
     uint64 amount = 4;
+}
+
+//钱包生成deposit tx
+message DepositTxReq{
+    DepositInfo deposit = 1;
+    circuitPathInfo zkPath = 2;
+
 }
 
 
@@ -275,15 +280,17 @@ message TreePathProof{
     string          treeRootHash    = 1;
     repeated string treePath        = 2;
     repeated uint32 helpers         = 3;
-    repeated uint32 validPath       = 4;
 }
 
-message WithdrawProofReq{
-    string  noteHash  = 1;
+//可withdraw 多个note
+message WithdrawTxReq{
+    uint64 totalAmount = 1;
+    string noteHashs  = 2;
+    circuitPathInfo zkPath = 3;
 }
 
 
-message WithdrawProofResp{
+message WithdrawProofRe{
     SecretData      secret    = 1;
     string          nullifierHash = 2;
     string          authorizeSpendHash = 3;
@@ -292,14 +299,17 @@ message WithdrawProofResp{
     string          spendFlag = 6;
     string          authorizeFlag = 7;
     TreePathProof   treeProof = 8;
+
 }
 
-message AuthProofReq{
+//只授权一个note，超过一个，toAddr不好设置
+message AuthTxReq{
     string noteHash = 1;
-    uint32 toReturn = 2;
+    string authorizeToAddr = 3;
+    circuitPathInfo zkPath = 4;
 }
 
-message AuthProofResp{
+message AuthProofRe{
     SecretData      proof           = 1;
     string          authPubKey      = 2;
     string          authPrivKey     = 3;
@@ -311,12 +321,19 @@ message AuthProofResp{
 
 }
 
-message TransferProofReq{
+message TransferInputTxReq{
     string noteHash     = 1;
-    string toAddr       = 2;
-    string toAuthAddr   = 3;
-    string returnAddr   = 4;
-    uint64 amount       = 5;
+    circuitPathInfo zkPath = 2;
+}
+
+message TransferOutputTxReq{
+    DepositInfo deposit    = 1;
+    circuitPathInfo zkPath = 2;
+}
+
+message TransferTxReq{
+    TransferInputTxReq  input        = 1;
+    TransferOutputTxReq output       = 2;
 }
 
 //加密了的input/output amount
@@ -344,8 +361,6 @@ message TransferOutputProof{
     DHSecretGroup   secrets  = 3;
     ShieldAmount    shieldAmount = 4;
     string          amountRandom = 5;
-
-
 }
 
 message TransferProofResp{
@@ -356,12 +371,22 @@ message TransferProofResp{
 }
 
 message ShieldAmountRst{
-    string noteRandom = 1;
-    string transferRandom = 2;
+    string inputRandom = 1;
+    string outputRandom = 2;
     string changeRandom = 3;
-    ShieldAmount note = 4;
-    ShieldAmount transfer = 5;
+    ShieldAmount input = 4;
+    ShieldAmount output = 5;
     ShieldAmount change = 6;
+
+}
+
+message CreateRawTxReq{
+    int32  actionTy = 1;
+    bytes  data = 4;
+    string assetExec = 2;
+    string assetToken = 3;
+    string title = 6; //平行链名字
+
 
 }
 

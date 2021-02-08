@@ -5,6 +5,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"reflect"
@@ -69,7 +70,7 @@ func (p *MixType) GetName() string {
 func (p *MixType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
 		TyLogMixConfigVk:             {Ty: reflect.TypeOf(ZkVerifyKeys{}), Name: "LogMixConfigVk"},
-		TyLogMixConfigAuth:           {Ty: reflect.TypeOf(AuthPubKeys{}), Name: "LogMixConfigAuthPubKey"},
+		TyLogMixConfigAuth:           {Ty: reflect.TypeOf(AuthKeys{}), Name: "LogMixConfigAuthPubKey"},
 		TyLogCurrentCommitTreeLeaves: {Ty: reflect.TypeOf(CommitTreeLeaves{}), Name: "LogCommitTreeLeaves"},
 		TyLogCurrentCommitTreeRoots:  {Ty: reflect.TypeOf(CommitTreeRoots{}), Name: "LogCommitTreeRoots"},
 		TyLogMixConfigPaymentKey:     {Ty: reflect.TypeOf(PaymentKey{}), Name: "LogConfigReceivingKey"},
@@ -91,78 +92,6 @@ func (p *MixType) GetTypeMap() map[string]int32 {
 func (p *MixType) GetPayload() types.Message {
 	return &MixAction{}
 }
-
-//
-//func DecodeDepositInput(input string) (*DepositPublicInput, error) {
-//	var v DepositPublicInput
-//	data, err := hex.DecodeString(input)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "decode string=%s", input)
-//	}
-//	err = json.Unmarshal(data, &v)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-//	}
-//
-//	return &v, nil
-//}
-//
-//func DecodeWithdrawInput(input string) (*WithdrawPublicInput, error) {
-//	var v WithdrawPublicInput
-//	data, err := hex.DecodeString(input)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "decode string=%s", input)
-//	}
-//	err = json.Unmarshal(data, &v)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-//	}
-//
-//	return &v, nil
-//}
-//
-//
-//func DecodeTransferInput(input string) (*TransferInputPublicInput, error) {
-//	var v TransferInputPublicInput
-//	data, err := hex.DecodeString(input)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "decode string=%s", input)
-//	}
-//	err = json.Unmarshal(data, &v)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-//	}
-//
-//	return &v, nil
-//}
-//
-//func DecodeTransferOut(input string) (*TransferOutputPublicInput, error) {
-//	var v TransferOutputPublicInput
-//	data, err := hex.DecodeString(input)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "decode string=%s", input)
-//	}
-//	err = json.Unmarshal(data, &v)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-//	}
-//
-//	return &v, nil
-//}
-//
-//func DecodeAuthorizeInput(input string) (*AuthorizePublicInput, error) {
-//	var v AuthorizePublicInput
-//	data, err := hex.DecodeString(input)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "decode string=%s", input)
-//	}
-//	err = json.Unmarshal(data, &v)
-//	if err != nil {
-//		return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-//	}
-//
-//	return &v, nil
-//}
 
 func DecodePubInput(ty VerifyType, input string) (interface{}, error) {
 	data, err := hex.DecodeString(input)
@@ -244,4 +173,31 @@ func CheckSumEqual(points ...*twistededwards.Point) bool {
 	}
 	return false
 
+}
+
+func GetByteBuff(input string) (*bytes.Buffer, error) {
+	var buffInput bytes.Buffer
+	res, err := hex.DecodeString(input)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getByteBuff to %s", input)
+	}
+	buffInput.Write(res)
+	return &buffInput, nil
+
+}
+
+func Str2Byte(v string) []byte {
+	var fr fr.Element
+	fr.SetString(v)
+	return fr.Bytes()
+}
+func Byte2Str(v []byte) string {
+	var f fr.Element
+	f.SetBytes(v)
+	return f.String()
+}
+
+func GetFrRandom() string {
+	var f fr.Element
+	return f.SetRandom().String()
 }

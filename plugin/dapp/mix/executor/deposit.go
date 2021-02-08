@@ -63,6 +63,9 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error)
 	if err != nil {
 		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
+	if val <= 0 {
+		return "", 0, errors.Wrapf(err, "amount=%d should >0", val)
+	}
 
 	err = zkProofVerify(a.db, proof, mixTy.VerifyType_DEPOSIT)
 	if err != nil {
@@ -81,14 +84,14 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error)
 */
 func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error) {
 	//1. zk-proof校验
-	noteHash, val, err := a.depositVerify(deposit.Proof)
+	noteHash, amount, err := a.depositVerify(deposit.Proof)
 	if err != nil {
 		return nil, err
 	}
-	//校验存款额,目前只支持一次只存一张支票
-	if val != deposit.Amount {
-		return nil, errors.Wrapf(mixTy.ErrInputParaNotMatch, "deposit amount=%d not equal proof amount=%d", deposit.Amount, val)
-	}
+	////校验存款额,目前只支持一次只存一张支票
+	//if val != deposit.Amount {
+	//	return nil, errors.Wrapf(mixTy.ErrInputParaNotMatch, "deposit amount=%d not equal proof amount=%d", deposit.Amount, val)
+	//}
 
 	//存款
 	cfg := a.api.GetConfig()
@@ -98,7 +101,7 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	}
 	//主链上存入toAddr为mix 执行器地址，平行链上为user.p.{}.mix执行器地址,execAddr和toAddr一致
 	execAddr := address.ExecAddress(string(a.tx.Execer))
-	receipt, err := accoutDb.ExecTransfer(a.fromaddr, execAddr, execAddr, int64(deposit.Amount))
+	receipt, err := accoutDb.ExecTransfer(a.fromaddr, execAddr, execAddr, int64(amount))
 	if err != nil {
 		return nil, errors.Wrapf(err, "ExecTransfer")
 	}

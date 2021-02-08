@@ -17,8 +17,6 @@ limitations under the License.
 package zksnark
 
 import (
-	"bytes"
-	"encoding/hex"
 	"encoding/json"
 
 	"github.com/consensys/gnark/backend"
@@ -26,22 +24,12 @@ import (
 	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gurvy"
 
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
 )
 
-func getByteBuff(input string) (*bytes.Buffer, error) {
-	var buffInput bytes.Buffer
-	res, err := hex.DecodeString(input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getByteBuff to %s", input)
-	}
-	buffInput.Write(res)
-	return &buffInput, nil
-
-}
-
 func deserializeInput(input string) (map[string]interface{}, error) {
-	buff, err := getByteBuff(input)
+	buff, err := mixTy.GetByteBuff(input)
 	if err != nil {
 		return nil, err
 	}
@@ -58,13 +46,13 @@ func deserializeInput(input string) (map[string]interface{}, error) {
 func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	curveID := gurvy.BN256
 
-	output, err := getByteBuff(verifyKeyStr)
+	output, err := mixTy.GetByteBuff(verifyKeyStr)
 	if err != nil {
-		return false, errors.Wrapf(err, "zk.verify")
+		return false, errors.Wrapf(err, "zkVerify.GetByteBuff")
 	}
 	var vk groth16_bn256.VerifyingKey
 	if err := gob.Deserialize(output, &vk, curveID); err != nil {
-		return false, errors.Wrapf(err, "zk.verify.Deserize.VK=%s", verifyKeyStr[:10])
+		return false, errors.Wrapf(err, "zkVerify.Deserize.VK=%s", verifyKeyStr[:10])
 	}
 
 	// parse input file
@@ -78,20 +66,20 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	}
 
 	// load proof
-	output, err = getByteBuff(proofStr)
+	output, err = mixTy.GetByteBuff(proofStr)
 	if err != nil {
-		return false, errors.Wrapf(err, "proof")
+		return false, errors.Wrapf(err, "zkVerify.proof")
 	}
 	var proof groth16_bn256.Proof
 	if err := gob.Deserialize(output, &proof, curveID); err != nil {
-		return false, errors.Wrapf(err, "zk.verify.deserial.proof=%s", proofStr[:10])
+		return false, errors.Wrapf(err, "zkVerify.deserial.proof=%s", proofStr[:10])
 	}
 
 	// verify proof
 	//start := time.Now()
 	result, err := groth16_bn256.Verify(&proof, &vk, r1csInput)
 	if err != nil {
-		return false, errors.Wrapf(err, "zk.Verify")
+		return false, errors.Wrapf(err, "zkVerify.verify")
 	}
 	return result, nil
 }

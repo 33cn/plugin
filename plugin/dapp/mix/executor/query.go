@@ -66,3 +66,8 @@ func (m *Mix) Query_PaymentPubKey(addr *types.ReqString) (types.Message, error) 
 	return GetPaymentPubKey(m.GetStateDB(), addr.Data)
 
 }
+
+// Query_PaymentPubKey 批量查询
+func (m *Mix) Query_VerifyProof(req *mixTy.VerifyProofInfo) (types.Message, error) {
+	return nil, zkProofVerify(m.GetStateDB(), req.Proof, req.Ty)
+}

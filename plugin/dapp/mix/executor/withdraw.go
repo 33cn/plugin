@@ -83,7 +83,7 @@ func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error
 func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, error) {
 	var nulliferSet []string
 	var sumValue uint64
-	for _, k := range withdraw.SpendCommits {
+	for _, k := range withdraw.Proofs {
 		nulfier, v, err := a.withdrawVerify(k)
 		if err != nil {
 			return nil, err
