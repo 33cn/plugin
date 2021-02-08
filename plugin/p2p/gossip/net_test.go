@@ -28,7 +28,7 @@ func TestNetAddress(t *testing.T) {
 }
 
 func TestAddrRouteble(t *testing.T) {
-	resp := P2pComm.AddrRouteble([]string{"114.55.101.159:13802"}, utils.CalcChannelVersion(119, VERSION))
+	resp := P2pComm.AddrRouteble([]string{"114.55.101.159:13802"}, utils.CalcChannelVersion(119, VERSION), nil)
 	t.Log(resp)
 }
 
@@ -39,11 +39,12 @@ func TestGetLocalAddr(t *testing.T) {
 func TestP2pListen(t *testing.T) {
 	var node Node
 	node.listenPort = 3333
+	node.nodeInfo = &NodeInfo{}
 	listen1 := newListener("tcp", &node)
 	assert.Equal(t, true, listen1 != nil)
 	listen2 := newListener("tcp", &node)
 	assert.Equal(t, true, listen2 != nil)
-
-	listen1.Close()
 	listen2.Close()
+	listen1.Close()
+
 }
