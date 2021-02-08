@@ -38,7 +38,7 @@ func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 
 	//authorize pubkey hash should be configured already
 	var found bool
-	for _, k := range authPubKeys.Pks {
+	for _, k := range authPubKeys.Keys {
 		if input.AuthorizePubKey == k {
 			found = true
 			break
@@ -85,13 +85,12 @@ func (a *action) authorizeVerify(proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePubl
 */
 func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt, error) {
 	var inputs []*mixTy.AuthorizePublicInput
-	for _, proof := range authorize.AuthCommits {
-		in, err := a.authorizeVerify(proof)
-		if err != nil {
-			return nil, err
-		}
-		inputs = append(inputs, in)
+
+	in, err := a.authorizeVerify(authorize.Proof)
+	if err != nil {
+		return nil, err
 	}
+	inputs = append(inputs, in)
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	var auths, authSpends []string

@@ -12,17 +12,17 @@ import (
 
 func MerkelPathPart(circuit *frontend.CS, mimc mimc.MiMCGadget, noteHash *frontend.Constraint) {
 	var proofSet, helper, valid []*frontend.Constraint
-	merkleRoot := circuit.PUBLIC_INPUT("treeRootHash")
+	merkleRoot := circuit.PUBLIC_INPUT("TreeRootHash")
 	proofSet = append(proofSet, noteHash)
 	//helper[0],valid[0]占位， 方便接口只设置有效值
 	helper = append(helper, circuit.ALLOCATE("1"))
 	valid = append(valid, circuit.ALLOCATE("1"))
 
 	//depth:10, path num need be 9
-	for i := 1; i < 10; i++ {
-		proofSet = append(proofSet, circuit.SECRET_INPUT("path"+strconv.Itoa(i)))
-		helper = append(helper, circuit.SECRET_INPUT("helper"+strconv.Itoa(i)))
-		valid = append(valid, circuit.SECRET_INPUT("valid"+strconv.Itoa(i)))
+	for i := 0; i < 10; i++ {
+		proofSet = append(proofSet, circuit.SECRET_INPUT("Path"+strconv.Itoa(i)))
+		helper = append(helper, circuit.SECRET_INPUT("Helper"+strconv.Itoa(i)))
+		valid = append(valid, circuit.SECRET_INPUT("Valid"+strconv.Itoa(i)))
 	}
 
 	VerifyMerkleProof(circuit, mimc, merkleRoot, proofSet, helper, valid)
@@ -65,8 +65,8 @@ func leafSum(circuit *frontend.CS, h mimc.MiMCGadget, data *frontend.Constraint)
 
 func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	//cmt=transfer_value*G + random_value*H
-	cmtvalueX := circuit.PUBLIC_INPUT("shieldAmountX")
-	cmtvalueY := circuit.PUBLIC_INPUT("shieldAmountY")
+	cmtvalueX := circuit.PUBLIC_INPUT("ShieldAmountX")
+	cmtvalueY := circuit.PUBLIC_INPUT("ShieldAmountY")
 
 	// set curve parameters
 	edgadget, _ := twistededwards_gadget.NewEdCurveGadget(gurvy.BN256)
@@ -84,7 +84,7 @@ func CommitValuePart(circuit *frontend.CS, spendValue *frontend.Constraint) {
 	pointGSnark.X.Tag("xg")
 	pointGSnark.Y.Tag("yg")
 
-	transfer_random := circuit.SECRET_INPUT("amountRandom")
+	transfer_random := circuit.SECRET_INPUT("AmountRandom")
 	//circuit.MUSTBE_LESS_OR_EQ(random_value,10000000000,256)
 	//H is not G, H should be a point that no one know the prikey
 	var baseX_H, baseY_H fr_bn256.Element

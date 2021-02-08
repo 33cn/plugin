@@ -6,6 +6,7 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/pkg/errors"
@@ -17,7 +18,6 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	mimcbn256 "github.com/consensys/gnark/crypto/hash/mimc/bn256"
-	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
 )
 
 const CECBLOCKSIZE = 32
@@ -25,19 +25,24 @@ const CECBLOCKSIZE = 32
 // newPrivacyWithPrivKey create privacy from private key
 //payment, payPrivKey=hash(privkey), payPubkey=hash(payPrivKey)
 //DH crypt key, prikey=payPrikey, pubKey=payPrikey*G
-func newPrivacyWithPrivKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
+func newPrivacyKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
 	payPrivacyKey := mimcHashByte([][]byte{privKey})
 	paymentKey := &mixTy.PaymentKeyPair{}
-	paymentKey.SpendPriKey = getFrString(payPrivacyKey)
-	paymentKey.ReceiverPubKey = getFrString(mimcHashByte([][]byte{payPrivacyKey}))
+	paymentKey.SpendKey = mixTy.Byte2Str(payPrivacyKey)
+	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{payPrivacyKey}))
 
-	shareSecretKey := &mixTy.ShareSecretKeyPair{}
-	ecdh := NewCurveBn256ECDH()
-	shareSecretKey.PrivKey, shareSecretKey.ReceivingPk = ecdh.GenerateKey(payPrivacyKey)
+	encryptKeyPair := &mixTy.EncryptKeyPair{}
+	//ecdh := NewCurveBn256ECDH()
+	ecdh := X25519()
+	pubkey := ecdh.PublicKey(payPrivacyKey)
+	//需要Hex编码，而不腻使用fr.string, 模范围不同
+	encryptKeyPair.PrivKey = hex.EncodeToString(payPrivacyKey)
+	pubData := pubkey.([32]byte)
+	encryptKeyPair.PubKey = hex.EncodeToString(pubData[:])
 
 	privacy := &mixTy.AccountPrivacyKey{}
 	privacy.PaymentKey = paymentKey
-	privacy.ShareSecretKey = shareSecretKey
+	privacy.EncryptKey = encryptKeyPair
 
 	return privacy, nil
 }
@@ -71,14 +76,22 @@ func encryptDataWithPadding(password, data []byte) []byte {
 	return wcom.CBCEncrypterPrivkey(password, paddingText)
 }
 
-func encryptData(receiverPubKey *mixTy.PubKey, data []byte) *mixTy.DHSecret {
-	ecdh := NewCurveBn256ECDH()
-	//generate ephemeral priv/pub key
-	ephPriv, ephPub := ecdh.GenerateKey(nil)
-	password, _ := ecdh.GenerateSharedSecret(ephPriv, receiverPubKey)
+func encryptData(peerPubKey string, data []byte) (*mixTy.DHSecret, error) {
+	ecdh := X25519()
+	oncePriv, oncePub, err := ecdh.GenerateKey(nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "x25519 generate key")
+	}
+
+	peerPubByte, err := hex.DecodeString(peerPubKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "encrypt Decode peer pubkey=%s", peerPubKey)
+	}
+	password := ecdh.ComputeSecret(oncePriv, peerPubByte)
 	encrypt := encryptDataWithPadding(password, data)
 
-	return &mixTy.DHSecret{Epk: ephPub, Secret: common.ToHex(encrypt)}
+	pubData := oncePub.([32]byte)
+	return &mixTy.DHSecret{PeerKey: hex.EncodeToString(pubData[:]), Secret: common.ToHex(encrypt)}, nil
 
 }
 
@@ -87,29 +100,25 @@ func decryptDataWithPading(password, data []byte) ([]byte, error) {
 	return pKCS5UnPadding(plainData)
 }
 
-func decryptData(selfPrivKey *mixTy.PrivKey, oppositePubKey *mixTy.PubKey, cryptData []byte) ([]byte, error) {
-	ecdh := NewCurveBn256ECDH()
-	password, _ := ecdh.GenerateSharedSecret(selfPrivKey, oppositePubKey)
-
+func decryptData(selfPrivKey string, peerPubKey string, cryptData []byte) ([]byte, error) {
+	ecdh := X25519()
+	self, err := hex.DecodeString(selfPrivKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decrypt Decode self prikey=%s", selfPrivKey)
+	}
+	peer, err := hex.DecodeString(peerPubKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decrypt Decode peer pubkey=%s", peerPubKey)
+	}
+	password := ecdh.ComputeSecret(self, peer)
 	return decryptDataWithPading(password, cryptData)
-}
-
-func getByte(v string) []byte {
-	var fr fr_bn256.Element
-	fr.SetString(v)
-	return fr.Bytes()
-}
-func getFrString(v []byte) string {
-	var f fr_bn256.Element
-	f.SetBytes(v)
-	return f.String()
 }
 
 func mimcHashString(params []string) []byte {
 	var sum []byte
 	for _, k := range params {
 		//fmt.Println("input:", k)
-		sum = append(sum, getByte(k)...)
+		sum = append(sum, mixTy.Str2Byte(k)...)
 	}
 	hash := mimcHashCalc(sum)
 	//fmt.Println("hash=", getFrString(hash))
@@ -192,7 +201,7 @@ func (policy *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy,
 	}
 
 	bizlog.Info("savePrivacyPair", "pri", common.ToHex(priv.Bytes()), "addr", addr)
-	newPrivacy, err := newPrivacyWithPrivKey(priv.Bytes())
+	newPrivacy, err := newPrivacyKey(priv.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -394,4 +403,20 @@ func (policy *mixPolicy) showAccountNoteInfo(addrs []string) (*mixTy.WalletIndex
 		resps.Notes = append(resps.Notes, resp.(*mixTy.WalletIndexResp).Notes...)
 	}
 	return &resps, nil
+}
+
+func (policy *mixPolicy) createRawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+	switch req.ActionTy {
+	case mixTy.MixActionDeposit:
+		return policy.createDepositTx(req)
+	case mixTy.MixActionWithdraw:
+		return policy.createWithdrawTx(req)
+	case mixTy.MixActionAuth:
+		return policy.createAuthTx(req)
+	case mixTy.MixActionTransfer:
+		return policy.createTransferTx(req)
+	default:
+		return nil, errors.Wrapf(types.ErrInvalidParam, "action=%d", req.ActionTy)
+	}
+
 }

@@ -34,22 +34,22 @@ func NewTransferOutput() *frontend.R1CS {
 	// create root constraint system
 	circuit := frontend.New()
 
-	spendValue := circuit.SECRET_INPUT("amount")
+	spendValue := circuit.SECRET_INPUT("Amount")
 
 	//spend pubkey
-	spendPubkey := circuit.SECRET_INPUT("receiverPubKey")
-	returnPubkey := circuit.SECRET_INPUT("returnPubKey")
-	authPubkey := circuit.SECRET_INPUT("authorizePubKey")
+	spendPubkey := circuit.SECRET_INPUT("ReceiverPubKey")
+	returnPubkey := circuit.SECRET_INPUT("ReturnPubKey")
+	authPubkey := circuit.SECRET_INPUT("AuthorizePubKey")
 
 	// hash function
 	mimc, _ := mimc.NewMiMCGadget("seed", gurvy.BN256)
 
 	//note hash random
-	noteRandom := circuit.SECRET_INPUT("noteRandom")
+	noteRandom := circuit.SECRET_INPUT("NoteRandom")
 
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
 	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
-	noteHash := circuit.PUBLIC_INPUT("noteHash")
+	noteHash := circuit.PUBLIC_INPUT("NoteHash")
 	// specify note hash constraint
 	preImage := mimc.Hash(&circuit, spendPubkey, returnPubkey, authPubkey, spendValue, noteRandom)
 	circuit.MUSTBE_EQ(noteHash, preImage)

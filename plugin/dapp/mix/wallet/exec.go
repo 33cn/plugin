@@ -35,9 +35,9 @@ func (policy *mixPolicy) On_EnablePrivacy(req *types.ReqAddrs) (types.Message, e
 	return policy.enablePrivacy(req.Addrs)
 }
 
-func (policy *mixPolicy) On_EncodeSecretData(req *mixTy.SecretData) (types.Message, error) {
-	return encodeSecretData(req)
-}
+//func (policy *mixPolicy) On_EncodeSecretData(req *mixTy.SecretData) (types.Message, error) {
+//	return encodeSecretData(req)
+//}
 
 func (policy *mixPolicy) On_EncryptSecretData(req *mixTy.EncryptSecretData) (types.Message, error) {
 	return encryptSecretData(req)
@@ -47,18 +47,22 @@ func (policy *mixPolicy) On_DecryptSecretData(req *mixTy.DecryptSecretData) (typ
 	return decryptSecretData(req)
 }
 
-func (policy *mixPolicy) On_DepositProof(req *mixTy.DepositProofReq) (types.Message, error) {
-	return policy.depositProof(req)
-}
+//func (policy *mixPolicy) On_DepositProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
+//	return policy.createDepositTx(req)
+//}
+//
+//func (policy *mixPolicy) On_WithdrawProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
+//	return policy.createWithdrawTx(req)
+//}
+//
+//func (policy *mixPolicy) On_AuthProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
+//	return policy.createAuthTx(req)
+//}
+//
+//func (policy *mixPolicy) On_TransferProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
+//	return policy.createTransferTx(req)
+//}
 
-func (policy *mixPolicy) On_WithdrawProof(req *mixTy.WithdrawProofReq) (types.Message, error) {
-	return policy.withdrawProof(req)
-}
-
-func (policy *mixPolicy) On_AuthProof(req *mixTy.AuthProofReq) (types.Message, error) {
-	return policy.authProof(req)
-}
-
-func (policy *mixPolicy) On_TransferProof(req *mixTy.TransferProofReq) (types.Message, error) {
-	return policy.transferProof(req)
+func (policy *mixPolicy) On_CreateRawTransaction(req *mixTy.CreateRawTxReq) (types.Message, error) {
+	return policy.createRawTx(req)
 }

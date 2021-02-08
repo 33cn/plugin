@@ -106,6 +106,10 @@ func (policy *mixPolicy) OnWalletUnlocked(WalletUnLock *types.WalletUnLock) {
 
 // OnAddBlockTx 响应区块交易添加的处理
 func (policy *mixPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbBatch db.Batch) *types.WalletTxDetail {
+	if tx == nil {
+		bizlog.Error("OnAddBlockTx tx is nil", "height", block.Block.Height, "index", index)
+		return nil
+	}
 	dbSet, err := policy.execAutoLocalMix(tx, block.Receipts[index], int(index), block.Block.Height)
 	if err != nil {
 		return nil
