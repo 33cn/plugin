@@ -27,23 +27,23 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	switch config.Ty {
-	case mixTy.MixConfigType_VerifyKey:
+	case mixTy.MixConfigType_Verify:
 		//必须是超级管理员才能配置
 		if !isSuperManager(cfg, a.fromaddr) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
 		}
 		return a.ConfigAddVerifyKey(config.GetVerifyKey())
-	case mixTy.MixConfigType_AuthPubKey:
+	case mixTy.MixConfigType_Auth:
 		//必须是超级管理员才能配置
 		if !isSuperManager(cfg, a.fromaddr) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "not super manager,%s", a.fromaddr)
 		}
 		if config.Action == mixTy.MixConfigAct_Add {
-			return a.ConfigAddAuthPubKey(config.GetAuthPk())
+			return a.ConfigAddAuthPubKey(config.GetAuthKey())
 		} else {
-			return a.ConfigDeleteAuthPubKey(config.GetAuthPk())
+			return a.ConfigDeleteAuthPubKey(config.GetAuthKey())
 		}
-	case mixTy.MixConfigType_PaymentPubKey:
+	case mixTy.MixConfigType_Payment:
 		//个人配置，个人负责，可重配
 		return a.ConfigPaymentPubKey(config.GetPaymentKey())
 	}
@@ -96,7 +96,7 @@ func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, 
 
 }
 
-func makeConfigAuthKeyReceipt(data *mixTy.AuthPubKeys) *types.Receipt {
+func makeConfigAuthKeyReceipt(data *mixTy.AuthKeys) *types.Receipt {
 	key := getAuthPubKeysKey()
 	return &types.Receipt{
 		Ty: types.ExecOk,
@@ -110,13 +110,13 @@ func makeConfigAuthKeyReceipt(data *mixTy.AuthPubKeys) *types.Receipt {
 
 }
 
-func (a *action) getAuthKeys() (*mixTy.AuthPubKeys, error) {
+func (a *action) getAuthKeys() (*mixTy.AuthKeys, error) {
 	key := getAuthPubKeysKey()
 	v, err := a.db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db")
 	}
-	var keys mixTy.AuthPubKeys
+	var keys mixTy.AuthKeys
 	err = types.Decode(v, &keys)
 	if err != nil {
 		return nil, errors.Wrapf(err, "decode db key")
@@ -128,15 +128,15 @@ func (a *action) getAuthKeys() (*mixTy.AuthPubKeys, error) {
 func (a *action) ConfigAddAuthPubKey(key string) (*types.Receipt, error) {
 	keys, err := a.getAuthKeys()
 	if isNotFound(errors.Cause(err)) {
-		keys := &mixTy.AuthPubKeys{}
-		keys.Pks = append(keys.Pks, key)
+		keys := &mixTy.AuthKeys{}
+		keys.Keys = append(keys.Keys, key)
 		return makeConfigAuthKeyReceipt(keys), nil
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	keys.Pks = append(keys.Pks, key)
+	keys.Keys = append(keys.Keys, key)
 	return makeConfigAuthKeyReceipt(keys), nil
 }
 
@@ -146,12 +146,12 @@ func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 		return nil, err
 	}
 
-	var newKeys mixTy.AuthPubKeys
-	for _, v := range keys.Pks {
+	var newKeys mixTy.AuthKeys
+	for _, v := range keys.Keys {
 		if key == v {
 			continue
 		}
-		newKeys.Pks = append(newKeys.Pks, v)
+		newKeys.Keys = append(newKeys.Keys, v)
 	}
 
 	return makeConfigAuthKeyReceipt(&newKeys), nil
@@ -187,13 +187,13 @@ func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
 }
 
 func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, error) {
-	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.SecretKey.X) == 0 || len(paykey.SecretKey.Y) == 0 {
+	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.EncryptKey) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey=%v", paykey)
 	}
 	//直接覆盖
 	return makeConfigPaymentKeyReceipt(&mixTy.PaymentKey{
 		Addr:        a.fromaddr,
 		ReceiverKey: paykey.ReceiverKey,
-		SecretKey:   paykey.SecretKey}), nil
+		EncryptKey:  paykey.EncryptKey}), nil
 
 }

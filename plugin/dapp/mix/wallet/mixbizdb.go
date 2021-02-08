@@ -60,7 +60,7 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 	//根据withdraw nullifier hash 更新数据状态为USED
 	case mixTy.MixActionWithdraw:
 		var nulls []string
-		for _, m := range v.GetWithdraw().SpendCommits {
+		for _, m := range v.GetWithdraw().Proofs {
 			out, err := mixTy.DecodePubInput(mixTy.VerifyType_WITHDRAW, m.PublicInput)
 			if err != nil {
 				bizlog.Error("processWithdraw decode", "pubInput", m.PublicInput)
@@ -132,15 +132,13 @@ func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightInd
 }
 
 func (p *mixPolicy) processAuth(auth *mixTy.MixAuthorizeAction, table *table.Table) {
-	for _, m := range auth.AuthCommits {
-		out, err := mixTy.DecodePubInput(mixTy.VerifyType_AUTHORIZE, m.PublicInput)
-		if err != nil {
-			bizlog.Error("processAuth decode", "pubInput", m.PublicInput)
-			continue
-		}
-		input := out.(*mixTy.AuthorizePublicInput)
-		updateAuthSpend(table, input.AuthorizeSpendHash)
+	out, err := mixTy.DecodePubInput(mixTy.VerifyType_AUTHORIZE, auth.Proof.PublicInput)
+	if err != nil {
+		bizlog.Error("processAuth decode", "pubInput", auth.Proof.PublicInput)
+		return
 	}
+	input := out.(*mixTy.AuthorizePublicInput)
+	updateAuthSpend(table, input.AuthorizeSpendHash)
 }
 
 func (p *mixPolicy) processNullifiers(nulls []string, table *table.Table) {
@@ -318,14 +316,12 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 		return nil, errors.Wrapf(err, "decode secret data=%s", secretData)
 	}
 
-	tempPubKey := &mixTy.PubKey{X: dhSecret.Epk.X, Y: dhSecret.Epk.Y}
-
 	for _, key := range privacyKeys {
 		cryptData, err := common.FromHex(dhSecret.Secret)
 		if err != nil {
 			return nil, errors.Wrapf(err, "decode for notehash=%s,crypt=%s", noteHash, dhSecret.Secret)
 		}
-		decryptData, err := decryptData(key.Privacy.ShareSecretKey.PrivKey, tempPubKey, cryptData)
+		decryptData, err := decryptData(key.Privacy.EncryptKey.PrivKey, dhSecret.PeerKey, cryptData)
 		if err != nil {
 			bizlog.Debug("processSecret.decryptData fail", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
 			continue
@@ -338,33 +334,33 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			continue
 		}
 		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr)
-		if rawData.ReceiverPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
-			rawData.ReturnPubKey == key.Privacy.PaymentKey.ReceiverPubKey ||
-			rawData.AuthorizePubKey == key.Privacy.PaymentKey.ReceiverPubKey {
+		if rawData.ReceiverKey == key.Privacy.PaymentKey.ReceiveKey ||
+			rawData.ReturnKey == key.Privacy.PaymentKey.ReceiveKey ||
+			rawData.AuthorizeKey == key.Privacy.PaymentKey.ReceiveKey {
 			//decrypted, save database
 			var info mixTy.WalletIndexInfo
 			info.NoteHash = noteHash
-			info.Nullifier = getFrString(mimcHashString([]string{rawData.NoteRandom}))
+			info.Nullifier = mixTy.Byte2Str(mimcHashString([]string{rawData.NoteRandom}))
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
 			//如果授权为spenderAuthHash，则根据授权hash索引到本地数据库，spender更新本地为VALID，returner侧不变仍为FROZEN，花费后，两端都变为USED
 			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
 			info.AuthorizeSpendHash = "0"
-			if len(rawData.AuthorizePubKey) > LENNULLKEY {
-				switch key.Privacy.PaymentKey.ReceiverPubKey {
-				case rawData.ReceiverPubKey:
+			if len(rawData.AuthorizeKey) > LENNULLKEY {
+				switch key.Privacy.PaymentKey.ReceiveKey {
+				case rawData.ReceiverKey:
 					info.Role = mixTy.Role_SPENDER
-					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReceiverPubKey, rawData.Amount, rawData.NoteRandom}))
-				case rawData.ReturnPubKey:
+					info.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{rawData.ReceiverKey, rawData.Amount, rawData.NoteRandom}))
+				case rawData.ReturnKey:
 					info.Role = mixTy.Role_RETURNER
-					info.AuthorizeSpendHash = getFrString(mimcHashString([]string{rawData.ReturnPubKey, rawData.Amount, rawData.NoteRandom}))
-				case rawData.AuthorizePubKey:
+					info.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{rawData.ReturnKey, rawData.Amount, rawData.NoteRandom}))
+				case rawData.AuthorizeKey:
 					info.Role = mixTy.Role_AUTHORIZER
 				}
 			}
 
 			info.Status = mixTy.NoteStatus_VALID
 			//空的公钥为"0"字符，不是空字符
-			if len(rawData.AuthorizePubKey) > LENNULLKEY {
+			if len(rawData.AuthorizeKey) > LENNULLKEY {
 				info.Status = mixTy.NoteStatus_FROZEN
 			}
 			//账户地址

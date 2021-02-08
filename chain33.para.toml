@@ -73,8 +73,8 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="para"
 poolCacheSize=10240
-#平行链的最小feeRate为0
-#minTxFeeRate=100000
+#联盟链没有交易费，对应平行链minTxFeeRate需要设为0
+minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
 [consensus]

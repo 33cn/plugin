@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"encoding/hex"
 	"encoding/json"
 
 	"github.com/33cn/chain33/types"
@@ -106,14 +107,14 @@ func (c *Jrpc) EnablePrivacy(in *types.ReqAddrs, result *json.RawMessage) error 
 	return err
 }
 
-func (c *Jrpc) EncodeSecretData(in *mixTy.SecretData, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "EncodeSecretData", in)
-	if err != nil {
-		return err
-	}
-	*result, err = types.PBToJSON(reply)
-	return err
-}
+//func (c *Jrpc) EncodeSecretData(in *mixTy.SecretData, result *json.RawMessage) error {
+//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "EncodeSecretData", in)
+//	if err != nil {
+//		return err
+//	}
+//	*result, err = types.PBToJSON(reply)
+//	return err
+//}
 
 func (c *Jrpc) EncryptSecretData(in *mixTy.EncryptSecretData, result *json.RawMessage) error {
 	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "EncryptSecretData", in)
@@ -133,38 +134,48 @@ func (c *Jrpc) DecryptSecretData(in *mixTy.DecryptSecretData, result *json.RawMe
 	return err
 }
 
-func (c *Jrpc) DepositProof(in *mixTy.DepositProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "DepositProof", in)
-	if err != nil {
-		return err
-	}
-	*result, err = types.PBToJSON(reply)
-	return err
-}
+//
+//func (c *Jrpc) DepositProof(in *mixTy.DepositTxReq, result *json.RawMessage) error {
+//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "DepositProof", in)
+//	if err != nil {
+//		return err
+//	}
+//	*result, err = types.PBToJSON(reply)
+//	return err
+//}
+//
+//func (c *Jrpc) AuthProof(in *mixTy.AuthTxReq, result *json.RawMessage) error {
+//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "AuthProof", in)
+//	if err != nil {
+//		return err
+//	}
+//	*result, err = types.PBToJSON(reply)
+//	return err
+//}
+//
+//func (c *Jrpc) TransferProof(in *mixTy.TransferTxReq, result *json.RawMessage) error {
+//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "TransferProof", in)
+//	if err != nil {
+//		return err
+//	}
+//	*result, err = types.PBToJSON(reply)
+//	return err
+//}
+//
+//func (c *Jrpc) WithdrawProof(in *mixTy.WithdrawTxReq, result *json.RawMessage) error {
+//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "WithdrawProof", in)
+//	if err != nil {
+//		return err
+//	}
+//	*result, err = types.PBToJSON(reply)
+//	return err
+//}
 
-func (c *Jrpc) AuthProof(in *mixTy.AuthProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "AuthProof", in)
+func (c *Jrpc) CreateRawTransaction(in *mixTy.CreateRawTxReq, result *interface{}) error {
+	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "CreateRawTransaction", in)
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJSON(reply)
-	return err
-}
-
-func (c *Jrpc) TransferProof(in *mixTy.TransferProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "TransferProof", in)
-	if err != nil {
-		return err
-	}
-	*result, err = types.PBToJSON(reply)
-	return err
-}
-
-func (c *Jrpc) WithdrawProof(in *mixTy.WithdrawProofReq, result *json.RawMessage) error {
-	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "WithdrawProof", in)
-	if err != nil {
-		return err
-	}
-	*result, err = types.PBToJSON(reply)
+	*result = hex.EncodeToString(types.Encode(reply))
 	return err
 }

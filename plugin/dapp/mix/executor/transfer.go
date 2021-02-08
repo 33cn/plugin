@@ -7,6 +7,7 @@ package executor
 import (
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/consensys/gurvy/bn256/twistededwards"
