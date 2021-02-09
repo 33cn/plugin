@@ -21,7 +21,7 @@ message ValNodeAction {
     int32 Ty = 3;
 }
 
-message ReqNodeInfo {
+message ReqValNodes {
     int64 height = 1;
 }
 
@@ -29,7 +29,33 @@ message ReqBlockInfo {
     int64 height = 1;
 }
 
+message ValNodeInfo {
+    string nodeIP      = 1;
+    string nodeID      = 2;
+    string address     = 3;
+    string pubKey      = 4;
+    int64  votingPower = 5;
+    int64  accum       = 6;
+}
+
+message ValNodeInfoSet {
+    repeated ValNodeInfo nodes = 1;
+}
+
+message PerfStat {
+    int64  totalTx     = 1;
+    int64  totalBlock  = 2;
+    int64  txPerBlock  = 3;
+    int64  totalSecond = 4;
+    int64  txPerSecond = 5;
+}
+
+message ReqPerfStat {
+    int64 start = 1;
+    int64 end   = 2;
+}
+
 service valnode {
     rpc IsSync(ReqNil) returns (IsHealthy) {}
-    rpc GetNodeInfo(ReqNil) returns (ValidatorSet) {}
+    rpc GetNodeInfo(ReqNil) returns (ValNodeInfoSet) {}
 }

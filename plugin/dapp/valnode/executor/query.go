@@ -10,7 +10,7 @@ import (
 )
 
 // Query_GetValNodeByHeight method
-func (val *ValNode) Query_GetValNodeByHeight(in *pty.ReqNodeInfo) (types.Message, error) {
+func (val *ValNode) Query_GetValNodeByHeight(in *pty.ReqValNodes) (types.Message, error) {
 	height := in.GetHeight()
 
 	if height <= 0 {
@@ -59,4 +59,61 @@ func (val *ValNode) Query_GetBlockInfoByHeight(in *pty.ReqBlockInfo) (types.Mess
 		return nil, err
 	}
 	return reply, nil
+}
+
+// Query_GetPerfState method
+func (val *ValNode) Query_GetPerfState(in *pty.ReqPerfStat) (types.Message, error) {
+	start := in.GetStart()
+	end := in.GetEnd()
+
+	if start < 0 || end < 0 || start > end || end > val.GetHeight() {
+		return nil, types.ErrInvalidParam
+	}
+	if start == 0 {
+		start = 1
+	}
+	if end == 0 {
+		end = val.GetHeight()
+	}
+
+	startKey := CalcValNodeBlockInfoHeightKey(start)
+	startValue, err := val.GetLocalDB().Get(startKey)
+	if err != nil {
+		return nil, err
+	}
+	if len(startValue) == 0 {
+		return nil, types.ErrNotFound
+	}
+	startInfo := &pty.TendermintBlockInfo{}
+	err = types.Decode(startValue, startInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	endKey := CalcValNodeBlockInfoHeightKey(end)
+	endValue, err := val.GetLocalDB().Get(endKey)
+	if err != nil {
+		return nil, err
+	}
+	if len(endValue) == 0 {
+		return nil, types.ErrNotFound
+	}
+	endInfo := &pty.TendermintBlockInfo{}
+	err = types.Decode(endValue, endInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	startHeader := startInfo.Block.Header
+	endHeader := endInfo.Block.Header
+	totalTx := endHeader.TotalTxs - startHeader.TotalTxs
+	totalBlock := endHeader.Height - startHeader.Height + 1
+	totalSecond := endHeader.Time - startHeader.Time + 1
+	return &pty.PerfStat{
+		TotalTx:     totalTx,
+		TotalBlock:  totalBlock,
+		TxPerBlock:  totalTx / totalBlock,
+		TotalSecond: totalSecond,
+		TxPerSecond: totalTx / totalSecond,
+	}, nil
 }
