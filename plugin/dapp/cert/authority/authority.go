@@ -25,9 +25,6 @@ var (
 	alog   = log.New("module", "authority")
 	cpuNum = runtime.NumCPU()
 
-	// OrgName 默认证书组织名
-	OrgName = "Chain33"
-
 	// Author 全局证书校验器
 	Author = &Authority{}
 
@@ -369,12 +366,12 @@ func (loader *UserLoader) genCryptoPriv(keyBytes []byte) (crypto.PrivKey, error)
 	if err != nil {
 		return nil, fmt.Errorf("create crypto %s failed, error:%s", types.GetSignName("cert", loader.signType), err)
 	}
-	privKeyByte, err := utils.PrivKeyByteFromRaw(keyBytes, loader.signType)
-	if err != nil {
-		return nil, err
-	}
+	//privKeyByte, err := utils.PrivKeyByteFromRaw(keyBytes, loader.signType)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	priv, err := cr.PrivKeyFromBytes(privKeyByte)
+	priv, err := cr.PrivKeyFromBytes(keyBytes)
 	if err != nil {
 		return nil, fmt.Errorf("get private key failed, error:%s", err)
 	}
@@ -383,8 +380,8 @@ func (loader *UserLoader) genCryptoPriv(keyBytes []byte) (crypto.PrivKey, error)
 }
 
 // Get 根据用户名获取user结构
-func (loader *UserLoader) Get(userName string) (*User, error) {
-	keyvalue := fmt.Sprintf("%s@%s-cert.pem", userName, OrgName)
+func (loader *UserLoader) Get(userName, orgName string) (*User, error) {
+	keyvalue := fmt.Sprintf("%s@%s-cert.pem", userName, orgName)
 	user, ok := loader.userMap[keyvalue]
 	if !ok {
 		return nil, types.ErrInvalidParam

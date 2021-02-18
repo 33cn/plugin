@@ -54,7 +54,8 @@ var (
 	}
 )
 
-var USERNAME = "User"
+var USERNAME = "user1"
+var ORGNAME = "org1"
 var SIGNTYPE = ct.AuthSM2
 
 func signtx(tx *types.Transaction, priv crypto.PrivKey, cert []byte) {
@@ -98,7 +99,7 @@ func initEnv() (*types.Chain33Config, error) {
 		return nil, err
 	}
 
-	user, err := userLoader.Get(USERNAME)
+	user, err := userLoader.Get(USERNAME, ORGNAME)
 	if err != nil {
 		fmt.Printf("Get user failed")
 		return nil, err
@@ -124,10 +125,7 @@ func TestChckSign(t *testing.T) {
 	}
 	cfg.SetMinFee(0)
 
-	if !tx1.CheckSign() {
-		t.Error("check signature failed")
-		return
-	}
+	assert.Equal(t, true, tx1.CheckSign())
 }
 
 /**
