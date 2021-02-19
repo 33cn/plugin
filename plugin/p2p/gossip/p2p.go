@@ -59,7 +59,8 @@ type subConfig struct {
 	Channel int32 `protobuf:"varint,11,opt,name=channel" json:"channel,omitempty"`
 	//触发区块轻广播最小大小, KB
 	MinLtBlockSize int32 `protobuf:"varint,12,opt,name=minLtBlockSize" json:"minLtBlockSize,omitempty"`
-	//指定p2p类型, 支持gossip, dht
+	//是否使用证书进行节点之间的通信,true 使用证书通信，读取rpc配置项下的证书文件
+	EnableTls bool `protobuf:"varint,13,opt,name=enableTls" json:"enableTls,omitempty"`
 }
 
 // P2p interface
