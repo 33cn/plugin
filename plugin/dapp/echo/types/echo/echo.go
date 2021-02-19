@@ -43,6 +43,7 @@ func createPingTx(cfg *types.Chain33Config, op string, parm *Tx) (*types.Transac
 		Payload: types.Encode(action),
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),
 		To:      address.ExecAddress(cfg.ExecName(EchoX)),
+		ChainID: cfg.GetChainID(),
 	}
 	return tx, nil
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/33cn/chain33/common/crypto"
@@ -47,12 +48,13 @@ var (
 	preExec                           = false
 	createEmptyBlocksInterval   int32 // second
 	validatorNodes                    = []string{"127.0.0.1:46656"}
-	peerGossipSleepDuration     int32 = 200
+	peerGossipSleepDuration     int32 = 100
 	peerQueryMaj23SleepDuration int32 = 2000
 	zeroHash                    [32]byte
 	random                      *rand.Rand
 	signName                    = "ed25519"
 	useAggSig                   = false
+	gossipVotes                 atomic.Value
 )
 
 func init() {
@@ -150,6 +152,7 @@ func applyConfig(sub []byte) {
 		signName = subcfg.SignName
 	}
 	useAggSig = subcfg.UseAggregateSignature
+	gossipVotes.Store(true)
 }
 
 // DefaultDBProvider returns a database using the DBBackend and DBDir
@@ -306,12 +309,11 @@ OuterLoop:
 		}
 		tendermintlog.Info("Save state from block")
 	}
-	tendermintlog.Debug("Load state finish", "state", state)
 
 	// start
 	tendermintlog.Info("StartConsensus",
 		"privValidator", fmt.Sprintf("%X", ttypes.Fingerprint(client.privValidator.GetAddress())),
-		"Validators", state.Validators.String())
+		"state", state)
 	// Log whether this node is a validator or an observer
 	if state.Validators.HasAddress(client.privValidator.GetAddress()) {
 		tendermintlog.Info("This node is a validator")
@@ -424,7 +426,6 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 
 // CreateBlock a routine monitor whether some transactions available and tell client by available channel
 func (client *Client) CreateBlock() {
-	issleep := true
 	for {
 		if client.IsClosed() {
 			tendermintlog.Info("CreateBlock quit")
@@ -432,23 +433,18 @@ func (client *Client) CreateBlock() {
 		}
 		if !client.csState.IsRunning() {
 			tendermintlog.Info("consensus not running")
-			time.Sleep(time.Second)
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 
-		if issleep {
-			time.Sleep(time.Second)
-		}
 		height, err := client.getLastHeight()
 		if err != nil {
-			issleep = true
 			continue
 		}
 		if !client.CheckTxsAvailable(height) {
-			issleep = true
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-		issleep = false
 
 		client.txsAvailable <- height + 1
 		time.Sleep(time.Duration(timeoutTxAvail) * time.Millisecond)
@@ -567,17 +563,20 @@ func (client *Client) CommitBlock(block *types.Block) error {
 
 // WaitBlock by height
 func (client *Client) WaitBlock(height int64) bool {
-	retry := 0
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	beg := time.Now()
 	for {
-		newHeight, err := client.getLastHeight()
-		if err == nil && newHeight >= height {
-			return true
-		}
-		retry++
-		time.Sleep(100 * time.Millisecond)
-		if retry >= 100 {
-			tendermintlog.Error("Wait block fail", "height", height, "CurrentHeight", newHeight)
-			return false
+		select {
+		case <-ticker.C:
+			tendermintlog.Info("Still waiting block......", "height", height, "cost", time.Since(beg))
+		default:
+			newHeight, err := client.getLastHeight()
+			if err == nil && newHeight >= height {
+				return true
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
@@ -587,7 +586,7 @@ func (client *Client) QueryValidatorsByHeight(height int64) (*tmtypes.ValNodes, 
 	if height < 1 {
 		return nil, ttypes.ErrHeightLessThanOne
 	}
-	req := &tmtypes.ReqNodeInfo{Height: height}
+	req := &tmtypes.ReqValNodes{Height: height}
 	param, err := proto.Marshal(req)
 	if err != nil {
 		tendermintlog.Error("QueryValidatorsByHeight marshal", "err", err)
@@ -667,22 +666,43 @@ func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) 
 
 // Query_NodeInfo query validator node info
 func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
-	nodes := client.csState.GetRoundState().Validators.Validators
-	validators := make([]*tmtypes.Validator, 0)
-	for _, node := range nodes {
-		if node == nil {
-			validators = append(validators, &tmtypes.Validator{})
+	vals := client.csState.GetRoundState().Validators.Validators
+	nodes := make([]*tmtypes.ValNodeInfo, 0)
+	for _, val := range vals {
+		if val == nil {
+			nodes = append(nodes, &tmtypes.ValNodeInfo{})
 		} else {
-			item := &tmtypes.Validator{
-				Address:     node.Address,
-				PubKey:      node.PubKey,
-				VotingPower: node.VotingPower,
-				Accum:       node.Accum,
+			ipstr, idstr := "UNKOWN", "UNKOWN"
+			pub, err := ttypes.ConsensusCrypto.PubKeyFromBytes(val.PubKey)
+			if err != nil {
+				tendermintlog.Error("Query_NodeInfo invalid pubkey", "err", err)
+			} else {
+				id := GenIDByPubKey(pub)
+				idstr = string(id)
+				if id == client.node.ID {
+					ipstr = client.node.IP
+				} else {
+					ip := client.node.peerSet.GetIP(id)
+					if ip == nil {
+						tendermintlog.Error("Query_NodeInfo nil ip", "id", idstr)
+					} else {
+						ipstr = ip.String()
+					}
+				}
 			}
-			validators = append(validators, item)
+
+			item := &tmtypes.ValNodeInfo{
+				NodeIP:      ipstr,
+				NodeID:      idstr,
+				Address:     fmt.Sprintf("%X", val.Address),
+				PubKey:      fmt.Sprintf("%X", val.PubKey),
+				VotingPower: val.VotingPower,
+				Accum:       val.Accum,
+			}
+			nodes = append(nodes, item)
 		}
 	}
-	return &tmtypes.ValidatorSet{Validators: validators, Proposer: &tmtypes.Validator{}}, nil
+	return &tmtypes.ValNodeInfoSet{Nodes: nodes}, nil
 }
 
 // CmpBestBlock 比较newBlock是不是最优区块

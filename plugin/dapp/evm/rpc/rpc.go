@@ -40,7 +40,7 @@ func (c *channelClient) Create(ctx context.Context, in evmtypes.EvmContractCreat
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tx.Nonce = random.Int63()
-
+	tx.ChainID = cfg.GetChainID()
 	txHex := types.Encode(tx)
 
 	return &types.UnsignTx{Data: txHex}, nil
@@ -69,7 +69,7 @@ func (c *channelClient) Call(ctx context.Context, in evmtypes.EvmContractCallReq
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tx.Nonce = random.Int63()
-
+	tx.ChainID = cfg.GetChainID()
 	txHex := types.Encode(tx)
 
 	return &types.UnsignTx{Data: txHex}, nil
@@ -103,7 +103,7 @@ func (c *channelClient) Transfer(ctx context.Context, in evmtypes.EvmContractTra
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tx.Nonce = random.Int63()
-
+	tx.ChainID = cfg.GetChainID()
 	txHex := types.Encode(tx)
 
 	return &types.UnsignTx{Data: txHex}, nil
