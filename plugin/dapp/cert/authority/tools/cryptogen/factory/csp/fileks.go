@@ -123,7 +123,7 @@ func (ks *fileBasedKeyStore) StoreKey(k Key) (err error) {
 func (ks *fileBasedKeyStore) storePrivateKeyByte(alias string, privateKey interface{}) error {
 	rawKey, err := utils.PrivateKeyToByte(privateKey)
 	if err != nil {
-		logger.Error("Failed converting private key to PEM","name", alias, "error", err)
+		logger.Error("Failed converting private key to PEM", "name", alias, "error", err)
 		return err
 	}
 

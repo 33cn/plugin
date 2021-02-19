@@ -6,10 +6,11 @@ package main
 
 import (
 	"fmt"
-	log "github.com/33cn/chain33/common/log/log15"
-	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+
+	log "github.com/33cn/chain33/common/log/log15"
+	"gopkg.in/yaml.v2"
 
 	"github.com/33cn/chain33/types"
 	_ "github.com/33cn/plugin/plugin/crypto/init"
@@ -30,8 +31,8 @@ var (
 		Short: "chain33 crypto tool for generating key and certificate",
 		Run:   generate,
 	}
-	cfg *generator.GenConfig
-    logger = log.New("module", "main")
+	cfg    *generator.GenConfig
+	logger = log.New("module", "main")
 )
 
 func initCfg(path string) (*generator.GenConfig, error) {
