@@ -28,19 +28,19 @@ import (
 
 // EcdsaCA ecdsa CA结构
 type EcdsaCA struct {
-	Name        string
-	Signer      crypto.Signer
-	SignCert    *x509.Certificate
-	CertConfig  *CertConfig
+	Name       string
+	Signer     crypto.Signer
+	SignCert   *x509.Certificate
+	CertConfig *CertConfig
 }
 
 // SM2CA SM2 CA结构
 type SM2CA struct {
-	Name         string
-	Signer       crypto.Signer
-	SignCert     *sm2.Certificate
-	Sm2Key       csp.Key
-	CertConfig   *CertConfig
+	Name       string
+	Signer     crypto.Signer
+	SignCert   *sm2.Certificate
+	Sm2Key     csp.Key
+	CertConfig *CertConfig
 }
 
 // NewCA 根据类型生成CA生成器
@@ -79,7 +79,7 @@ func newEcdsaCA(baseDir string, certConfig *CertConfig) (*EcdsaCA, error) {
 	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageAny}
 
 	subject := pkix.Name{
-		Country: []string{certConfig.CA.Country},
+		Country:  []string{certConfig.CA.Country},
 		Locality: []string{certConfig.CA.Locality},
 		Province: []string{certConfig.CA.Province},
 	}
@@ -94,10 +94,10 @@ func newEcdsaCA(baseDir string, certConfig *CertConfig) (*EcdsaCA, error) {
 		return nil, err
 	}
 	ca = &EcdsaCA{
-		Name:         certConfig.Name,
-		Signer:       signer,
-		SignCert:     x509Cert,
-		CertConfig:   certConfig,
+		Name:       certConfig.Name,
+		Signer:     signer,
+		SignCert:   x509Cert,
+		CertConfig: certConfig,
 	}
 
 	return ca, nil
@@ -119,7 +119,7 @@ func (ca *EcdsaCA) SignCertificate(baseDir, fileName string, sans []string, pub 
 	}
 
 	subject := pkix.Name{
-		Country: []string{ca.CertConfig.CA.Country},
+		Country:  []string{ca.CertConfig.CA.Country},
 		Locality: []string{ca.CertConfig.CA.Locality},
 		Province: []string{ca.CertConfig.CA.Province},
 	}
@@ -171,10 +171,10 @@ func (ca *EcdsaCA) GenerateLocalOrg(baseDir, fileName string, orgCfg *CertConfig
 	}
 
 	orgCA := &EcdsaCA{
-		Name:          ca.Name,
-		Signer:        signer,
-		SignCert:      cert,
-		CertConfig:    orgCfg,
+		Name:       ca.Name,
+		Signer:     signer,
+		SignCert:   cert,
+		CertConfig: orgCfg,
 	}
 	return orgCA, nil
 }
@@ -267,7 +267,7 @@ func newSM2CA(baseDir string, certConfig *CertConfig) (*SM2CA, error) {
 	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageAny}
 
 	subject := pkix.Name{
-		Country: []string{certConfig.CA.Country},
+		Country:  []string{certConfig.CA.Country},
 		Locality: []string{certConfig.CA.Locality},
 		Province: []string{certConfig.CA.Province},
 	}
@@ -309,7 +309,7 @@ func (ca *SM2CA) SignCertificate(baseDir, fileName string, sans []string, pub in
 	}
 
 	subject := pkix.Name{
-		Country: []string{ca.CertConfig.CA.Country},
+		Country:  []string{ca.CertConfig.CA.Country},
 		Locality: []string{ca.CertConfig.CA.Locality},
 		Province: []string{ca.CertConfig.CA.Province},
 	}
@@ -362,10 +362,10 @@ func (ca *SM2CA) GenerateLocalOrg(baseDir, fileName string, orgCfg *CertConfig) 
 	}
 
 	orgCA := &SM2CA{
-		Name:          orgCfg.Name,
-		Signer:        signer,
-		SignCert:      utils.ParseX509CertificateToSm2(cert),
-		CertConfig:    orgCfg,
+		Name:       orgCfg.Name,
+		Signer:     signer,
+		SignCert:   utils.ParseX509CertificateToSm2(cert),
+		CertConfig: orgCfg,
 	}
 	return orgCA, nil
 }
@@ -424,7 +424,7 @@ func createFolderStructure(rootDir string, isOrg bool) error {
 		filepath.Join(rootDir, "signcerts"),
 	}
 	if isOrg {
-		folders = append(folders, filepath.Join(rootDir, "intermediatecerts"),)
+		folders = append(folders, filepath.Join(rootDir, "intermediatecerts"))
 	}
 
 	for _, folder := range folders {
