@@ -45,8 +45,8 @@ var (
 		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
 	}
 	total    = 100 * types.Coin
-    USERNAME = "user1"
-    ORGNAME = "org1"
+	USERNAME = "user1"
+	ORGNAME  = "org1"
 	SIGNTYPE = ct.AuthSM2
 
 	transfer1 = &ct.CertAction{Value: &ct.CertAction_Normal{Normal: &ct.CertNormal{Key: "", Value: nil}}, Ty: ct.CertActionNormal}
