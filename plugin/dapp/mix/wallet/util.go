@@ -87,7 +87,7 @@ func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) 
 	return &raw, nil
 }
 
-func (policy *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string) error {
+func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string) error {
 	//vkpath verify
 	if len(vkPath) > 0 {
 		vk, err := getVerifyKey(vkPath)
@@ -111,7 +111,7 @@ func (policy *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.Zk
 		Proof: proof,
 	}
 	//onchain verify
-	_, err := policy.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
+	_, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "mix",
 		FuncName: "VerifyProof",
 		Param:    types.Encode(verify),
@@ -119,8 +119,8 @@ func (policy *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.Zk
 	return err
 }
 
-func (policy *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
-	msg, err := policy.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
+func (p *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
+	msg, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "mix",
 		FuncName: "PaymentPubKey",
 		Param:    types.Encode(&types.ReqString{Data: addr}),
@@ -131,8 +131,8 @@ func (policy *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
 	return msg.(*mixTy.PaymentKey), err
 }
 
-func (policy *mixPolicy) getPathProof(leaf string) (*mixTy.CommitTreeProve, error) {
-	msg, err := policy.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
+func (p *mixPolicy) getPathProof(leaf string) (*mixTy.CommitTreeProve, error) {
+	msg, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "mix",
 		FuncName: "GetTreePath",
 		Param:    types.Encode(&mixTy.TreeInfoReq{LeafHash: leaf}),
@@ -143,32 +143,30 @@ func (policy *mixPolicy) getPathProof(leaf string) (*mixTy.CommitTreeProve, erro
 	return msg.(*mixTy.CommitTreeProve), nil
 }
 
-func (policy *mixPolicy) getNoteInfo(noteHash string, noteStatus mixTy.NoteStatus) (*mixTy.WalletIndexInfo, error) {
-	if policy.walletOperate.IsWalletLocked() {
+func (p *mixPolicy) getNoteInfo(noteHash string) (*mixTy.WalletNoteInfo, error) {
+	if p.walletOperate.IsWalletLocked() {
 		return nil, types.ErrWalletIsLocked
 	}
 
 	var index mixTy.WalletMixIndexReq
 	index.NoteHash = noteHash
-	msg, err := policy.listMixInfos(&index)
+	msg, err := p.listMixInfos(&index)
 	if err != nil {
 		return nil, errors.Wrapf(err, "list  noteHash=%s", noteHash)
 	}
-	resp := msg.(*mixTy.WalletIndexResp)
+	resp := msg.(*mixTy.WalletNoteResp)
 	if len(resp.Notes) < 1 {
 		return nil, errors.Wrapf(err, "list not found noteHash=%s", noteHash)
 	}
 
-	note := msg.(*mixTy.WalletIndexResp).Notes[0]
-	if note.Status != noteStatus {
-		return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
-	}
+	note := msg.(*mixTy.WalletNoteResp).Notes[0]
+
 	return note, nil
 }
 
-func (policy *mixPolicy) getTreeProof(leaf string) (*mixTy.TreePathProof, error) {
+func (p *mixPolicy) getTreeProof(leaf string) (*mixTy.TreePathProof, error) {
 	//get tree path
-	path, err := policy.getPathProof(leaf)
+	path, err := p.getPathProof(leaf)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s", leaf)
 	}

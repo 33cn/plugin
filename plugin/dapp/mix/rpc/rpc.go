@@ -65,13 +65,13 @@ func (c *Jrpc) ShowAccountPrivacyInfo(in *types.ReqString, result *json.RawMessa
 /////////////////privacy///////////////
 
 // ShowPrivacyAccountSpend display spend privacy account for json rpc
-func (c *Jrpc) ShowAccountNoteInfo(in *types.ReqAddrs, result *json.RawMessage) error {
-	if 0 == len(in.Addrs) {
+func (c *Jrpc) ShowAccountNoteInfo(in *mixTy.WalletMixIndexReq, result *json.RawMessage) error {
+	if in == nil {
 		return types.ErrInvalidParam
 	}
 	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "ShowAccountNoteInfo", in)
 	if err != nil {
-		log.Info("ShowPrivacyAccountSpend", "return err info", err)
+		log.Error("ShowAccountNoteInfo", "return err info", err)
 		return err
 	}
 	*result, err = types.PBToJSON(reply)
@@ -133,43 +133,6 @@ func (c *Jrpc) DecryptSecretData(in *mixTy.DecryptSecretData, result *json.RawMe
 	*result, err = types.PBToJSON(reply)
 	return err
 }
-
-//
-//func (c *Jrpc) DepositProof(in *mixTy.DepositTxReq, result *json.RawMessage) error {
-//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "DepositProof", in)
-//	if err != nil {
-//		return err
-//	}
-//	*result, err = types.PBToJSON(reply)
-//	return err
-//}
-//
-//func (c *Jrpc) AuthProof(in *mixTy.AuthTxReq, result *json.RawMessage) error {
-//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "AuthProof", in)
-//	if err != nil {
-//		return err
-//	}
-//	*result, err = types.PBToJSON(reply)
-//	return err
-//}
-//
-//func (c *Jrpc) TransferProof(in *mixTy.TransferTxReq, result *json.RawMessage) error {
-//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "TransferProof", in)
-//	if err != nil {
-//		return err
-//	}
-//	*result, err = types.PBToJSON(reply)
-//	return err
-//}
-//
-//func (c *Jrpc) WithdrawProof(in *mixTy.WithdrawTxReq, result *json.RawMessage) error {
-//	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "WithdrawProof", in)
-//	if err != nil {
-//		return err
-//	}
-//	*result, err = types.PBToJSON(reply)
-//	return err
-//}
 
 func (c *Jrpc) CreateRawTransaction(in *mixTy.CreateRawTxReq, result *interface{}) error {
 	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "CreateRawTransaction", in)

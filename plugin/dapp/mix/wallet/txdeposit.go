@@ -32,7 +32,12 @@ type DepositInput struct {
 	NoteRandom      string `tag:"secret"`
 }
 
-func (policy *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mixTy.DepositProofResp, error) {
+func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mixTy.DepositProofResp, error) {
+	if receiver == returner || receiver == auth || returner == auth {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "addrs should not be same to receiver=%s,return=%s,auth=%s",
+			receiver, returner, auth)
+	}
+
 	if len(receiver) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "receiver is nil")
 	}
@@ -53,7 +58,7 @@ func (policy *mixPolicy) depositParams(receiver, returner, auth, amount string) 
 	//TODO 线上检查是否随机值在nullifer里面
 
 	// 获取receiving addr对应的paymentKey
-	payKeys, e := policy.getPaymentKey(receiver)
+	payKeys, e := p.getPaymentKey(receiver)
 	if e != nil {
 		return nil, errors.Wrapf(e, "get payment key for addr = %s", receiver)
 	}
@@ -65,7 +70,7 @@ func (policy *mixPolicy) depositParams(receiver, returner, auth, amount string) 
 	//如果Input不填，缺省空为“0”字符串
 	secret.ReturnKey = "0"
 	if len(returner) > 0 {
-		returnKey, err = policy.getPaymentKey(returner)
+		returnKey, err = p.getPaymentKey(returner)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get payment key for return addr = %s", returner)
 		}
@@ -76,7 +81,7 @@ func (policy *mixPolicy) depositParams(receiver, returner, auth, amount string) 
 	var authKey *mixTy.PaymentKey
 	secret.AuthorizeKey = "0"
 	if len(auth) > 0 {
-		authKey, err = policy.getPaymentKey(auth)
+		authKey, err = p.getPaymentKey(auth)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get payment key for authorize addr = %s", auth)
 		}
@@ -123,9 +128,9 @@ func (policy *mixPolicy) depositParams(receiver, returner, auth, amount string) 
 
 }
 
-func (policy *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath string) (*mixTy.ZkProofInfo, error) {
+func (p *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath string) (*mixTy.ZkProofInfo, error) {
 
-	resp, err := policy.depositParams(receiver, returner, auth, amount)
+	resp, err := p.depositParams(receiver, returner, auth, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -144,14 +149,14 @@ func (policy *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPat
 	}
 
 	//线上验证proof,失败的原因有可能circuit,Pk和线上vk不匹配，或不是一起产生的版本
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_DEPOSIT, proofInfo, zkPath+mixTy.DepositVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_DEPOSIT, proofInfo, zkPath+mixTy.DepositVk); err != nil {
 		return nil, errors.Wrap(err, "verifyProof fail")
 	}
 	proofInfo.Secrets = resp.Secrets
 	return proofInfo, nil
 }
 
-func (policy *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+func (p *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
 	var deposit mixTy.DepositTxReq
 	err := types.Decode(req.Data, &deposit)
 	if err != nil {
@@ -175,22 +180,22 @@ func (policy *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Tran
 
 	var proofs []*mixTy.ZkProofInfo
 	for i, rcv := range receivers {
-		p, err := policy.getDepositProof(rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath)
+		p, err := p.getDepositProof(rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get Deposit proof for=%s", rcv)
 		}
 		proofs = append(proofs, p)
 	}
 
-	return policy.getDepositTx(strings.TrimSpace(req.Title+mixTy.MixX), proofs)
+	return p.getDepositTx(strings.TrimSpace(req.Title+mixTy.MixX), proofs)
 
 }
 
-func (policy *mixPolicy) getDepositTx(execName string, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getDepositTx(execName string, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixDepositAction{}
 	payload.Proofs = proofs
 
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
 		Ty:    mixTy.MixActionDeposit,
 		Value: &mixTy.MixAction_Deposit{Deposit: payload},
