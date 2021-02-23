@@ -22,21 +22,27 @@ import (
 
 const CECBLOCKSIZE = 32
 
-// newPrivacyWithPrivKey create privacy from private key
-//payment, payPrivKey=hash(privkey), payPubkey=hash(payPrivKey)
-//DH crypt key, prikey=payPrikey, pubKey=payPrikey*G
-func newPrivacyKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
-	payPrivacyKey := mimcHashByte([][]byte{privKey})
+/*
+ 从secp256k1根私钥创建支票需要的私钥和公钥
+ payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
+
+ 支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
+ DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
+*/
+func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
+	ecdh := X25519()
+	key := ecdh.PublicKey(rootPrivKey)
+	payPrivKey := key.([32]byte)
+
+	//payPrivKey := mimcHashByte([][]byte{rootPrivKey})
 	paymentKey := &mixTy.PaymentKeyPair{}
-	paymentKey.SpendKey = mixTy.Byte2Str(payPrivacyKey)
-	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{payPrivacyKey}))
+	paymentKey.SpendKey = mixTy.Byte2Str(payPrivKey[:])
+	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{payPrivKey[:]}))
 
 	encryptKeyPair := &mixTy.EncryptKeyPair{}
-	//ecdh := NewCurveBn256ECDH()
-	ecdh := X25519()
-	pubkey := ecdh.PublicKey(payPrivacyKey)
-	//需要Hex编码，而不腻使用fr.string, 模范围不同
-	encryptKeyPair.PrivKey = hex.EncodeToString(payPrivacyKey)
+	pubkey := ecdh.PublicKey(payPrivKey)
+	//需要Hex编码，不要使用fr.string, 模范围不同
+	encryptKeyPair.PrivKey = hex.EncodeToString(payPrivKey[:])
 	pubData := pubkey.([32]byte)
 	encryptKeyPair.PubKey = hex.EncodeToString(pubData[:])
 
@@ -44,7 +50,7 @@ func newPrivacyKey(privKey []byte) (*mixTy.AccountPrivacyKey, error) {
 	privacy.PaymentKey = paymentKey
 	privacy.EncryptKey = encryptKeyPair
 
-	return privacy, nil
+	return privacy
 }
 
 //CEC加密需要保证明文是秘钥的倍数，如果不是，则需要填充明文，在解密时候把填充物去掉
@@ -201,10 +207,7 @@ func (policy *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy,
 	}
 
 	bizlog.Info("savePrivacyPair", "pri", common.ToHex(priv.Bytes()), "addr", addr)
-	newPrivacy, err := newPrivacyKey(priv.Bytes())
-	if err != nil {
-		return nil, err
-	}
+	newPrivacy := newPrivacyKey(priv.Bytes())
 
 	password := []byte(policy.getWalletOperate().GetPassword())
 	encryptered := encryptDataWithPadding(password, types.Encode(newPrivacy))

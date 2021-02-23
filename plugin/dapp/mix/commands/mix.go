@@ -416,8 +416,8 @@ func createConfigPubKey(cmd *cobra.Command, args []string) {
 
 func mixConfigPaymentPubKeyParaCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pay",
-		Short: "mix payment pub key config cmd",
+		Use:   "register",
+		Short: "receiver key register cmd",
 		Run:   createConfigPayPubKey,
 	}
 	addPayPubKeyConfigFlags(cmd)
@@ -629,7 +629,7 @@ func showMixTxs(cmd *cobra.Command, args []string) {
 func ShowPaymentPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "paykey",
-		Short: "show addr's payment pub key info",
+		Short: "show peer addr payment key info",
 		Run:   showPayment,
 	}
 	addShowPaymentflags(cmd)
@@ -637,7 +637,7 @@ func ShowPaymentPubKeyCmd() *cobra.Command {
 }
 
 func addShowPaymentflags(cmd *cobra.Command) {
-	cmd.Flags().StringP("addr", "s", "", "mix tx hash")
+	cmd.Flags().StringP("addr", "a", "", "account addr")
 	cmd.MarkFlagRequired("addr")
 
 }
@@ -677,7 +677,7 @@ func WalletCmd() *cobra.Command {
 func ShowAccountPrivacyInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keys",
-		Short: "show account privacy keys",
+		Short: "show account note privacy keys",
 		Run:   accountPrivacy,
 	}
 	accountPrivacyCmdFlags(cmd)
@@ -685,17 +685,27 @@ func ShowAccountPrivacyInfo() *cobra.Command {
 }
 
 func accountPrivacyCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("account", "a", "", "accounts")
-	cmd.MarkFlagRequired("account")
+	cmd.Flags().StringP("addr", "a", "", "user wallet addr")
+
+	cmd.Flags().StringP("priv", "p", "", "user wallet privacy key,option")
+
+	cmd.Flags().Uint32P("detail", "d", 0, "if get payment priv keys,option")
 
 }
 
 func accountPrivacy(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	account, _ := cmd.Flags().GetString("account")
+	priv, _ := cmd.Flags().GetString("priv")
+	addr, _ := cmd.Flags().GetString("addr")
+	detail, _ := cmd.Flags().GetUint32("detail")
+
+	if len(priv) == 0 && len(addr) == 0 {
+		fmt.Println("err: one of addr or priv should be fill")
+		return
+	}
 
 	var res mixTy.WalletAddrPrivacy
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountPrivacyInfo", &types.ReqString{Data: account}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountPrivacyInfo", &mixTy.PaymentKeysReq{PrivKey: priv, Addr: addr, Detail: int32(detail)}, &res)
 	ctx.Run()
 }
 
@@ -1023,14 +1033,14 @@ func CreateDepositRawTxCmd() *cobra.Command {
 }
 
 func depositSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("receiver", "t", "", "receiver addr")
-	cmd.MarkFlagRequired("receiver")
+	cmd.Flags().StringP("targets", "t", "", "target addrs,seperated by ','")
+	cmd.MarkFlagRequired("targets")
 
 	cmd.Flags().StringP("return", "r", "", "return addr,optional")
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr,optional")
 
-	cmd.Flags().Uint64P("amount", "m", 0, "amount")
+	cmd.Flags().StringP("amount", "m", "", "amounts,seperated by ','")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
@@ -1044,33 +1054,30 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 func depositSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
-	receiver, _ := cmd.Flags().GetString("receiver")
+	targets, _ := cmd.Flags().GetString("targets")
 	returnAddr, _ := cmd.Flags().GetString("return")
 	authorize, _ := cmd.Flags().GetString("authorize")
-	amount, _ := cmd.Flags().GetUint64("amount")
+	amount, _ := cmd.Flags().GetString("amount")
 	assetExec, _ := cmd.Flags().GetString("exec")
 	token, _ := cmd.Flags().GetString("token")
 
 	path, _ := cmd.Flags().GetString("path")
 
 	deposit := &mixTy.DepositInfo{
-		Addr:          receiver,
+		ReceiverAddrs: targets,
 		ReturnAddr:    returnAddr,
 		AuthorizeAddr: authorize,
-		Amount:        amount,
+		Amounts:       amount,
 	}
-	circuits := &mixTy.CircuitPathInfo{
-		Path: path,
-	}
+
 	tx := &mixTy.DepositTxReq{
 		Deposit: deposit,
-		ZkPath:  circuits,
+		ZkPath:  path,
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy: mixTy.MixActionDeposit,
-		Data:     types.Encode(tx),
-		//Value:&mixTy.CreateRawTxReq_Deposit{Deposit:tx},
+		ActionTy:   mixTy.MixActionDeposit,
+		Data:       types.Encode(tx),
 		AssetExec:  assetExec,
 		AssetToken: token,
 		Title:      paraName,
@@ -1092,17 +1099,17 @@ func CreateTransferRawTxCmd() *cobra.Command {
 }
 
 func transferSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend")
+	cmd.Flags().StringP("noteHash", "n", "", "note hash to spend, seperate by ',' ")
 	cmd.MarkFlagRequired("noteHash")
 
-	cmd.Flags().StringP("toAddr", "t", "", "transfer to addr")
+	cmd.Flags().StringP("toAddr", "t", "", "transfer to addr, only one addr")
 	cmd.MarkFlagRequired("toAddr")
 
 	cmd.Flags().StringP("auth", "a", "", "transfer to auth addr,optional")
 
 	cmd.Flags().StringP("returner", "r", "", "transfer to returner addr,optional")
 
-	cmd.Flags().Uint64P("amount", "m", 0, "transfer amount")
+	cmd.Flags().StringP("amount", "m", "", "transfer amount")
 	cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
@@ -1122,7 +1129,7 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	toAddr, _ := cmd.Flags().GetString("toAddr")
 	auth, _ := cmd.Flags().GetString("auth")
 	returner, _ := cmd.Flags().GetString("returner")
-	amount, _ := cmd.Flags().GetUint64("amount")
+	amount, _ := cmd.Flags().GetString("amount")
 
 	inpath, _ := cmd.Flags().GetString("inpath")
 	outpath, _ := cmd.Flags().GetString("outpath")
@@ -1130,27 +1137,21 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	assetExec, _ := cmd.Flags().GetString("exec")
 	token, _ := cmd.Flags().GetString("token")
 
-	inCircuits := &mixTy.CircuitPathInfo{
-		Path: inpath,
-	}
 	input := &mixTy.TransferInputTxReq{
-		NoteHash: noteHash,
-		ZkPath:   inCircuits,
+		NoteHashs: noteHash,
+		ZkPath:    inpath,
 	}
 
 	deposit := &mixTy.DepositInfo{
-		Addr:          toAddr,
+		ReceiverAddrs: toAddr,
 		ReturnAddr:    returner,
 		AuthorizeAddr: auth,
-		Amount:        amount,
-	}
-	outCircuits := &mixTy.CircuitPathInfo{
-		Path: outpath,
+		Amounts:       amount,
 	}
 
 	output := &mixTy.TransferOutputTxReq{
 		Deposit: deposit,
-		ZkPath:  outCircuits,
+		ZkPath:  outpath,
 	}
 
 	req := &mixTy.TransferTxReq{
@@ -1206,14 +1207,10 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 
 	path, _ := cmd.Flags().GetString("path")
 
-	circuits := &mixTy.CircuitPathInfo{
-		Path: path,
-	}
-
 	req := &mixTy.WithdrawTxReq{
 		TotalAmount: amount,
 		NoteHashs:   noteHashs,
-		ZkPath:      circuits,
+		ZkPath:      path,
 	}
 
 	params := &mixTy.CreateRawTxReq{
@@ -1265,14 +1262,10 @@ func authSecret(cmd *cobra.Command, args []string) {
 
 	path, _ := cmd.Flags().GetString("path")
 
-	circuits := &mixTy.CircuitPathInfo{
-		Path: path,
-	}
-
 	req := &mixTy.AuthTxReq{
 		AuthorizeToAddr: toKey,
 		NoteHash:        noteHash,
-		ZkPath:          circuits,
+		ZkPath:          path,
 	}
 
 	params := &mixTy.CreateRawTxReq{

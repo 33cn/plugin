@@ -91,28 +91,33 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 }
 
 func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex string, table *table.Table) {
-	data, err := mixTy.DecodePubInput(mixTy.VerifyType_DEPOSIT, deposit.Proof.PublicInput)
-	if err != nil {
-		bizlog.Error("processDeposit decode", "pubInput", deposit.Proof.PublicInput)
-		return
+	for _, proof := range deposit.Proofs {
+		data, err := mixTy.DecodePubInput(mixTy.VerifyType_DEPOSIT, proof.PublicInput)
+		if err != nil {
+			bizlog.Error("processDeposit decode", "pubInput", proof.PublicInput)
+			return
+		}
+		input := data.(*mixTy.DepositPublicInput)
+		p.processSecretGroup(input.NoteHash, proof.Secrets, heightIndex, table)
 	}
-	input := data.(*mixTy.DepositPublicInput)
-	p.processSecretGroup(input.NoteHash, deposit.Proof.Secrets, heightIndex, table)
+
 }
 
 func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightIndex string, table *table.Table) {
 	var nulls []string
-	data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, transfer.Input.PublicInput)
-	if err != nil {
-		bizlog.Error("processTransfer.input decode", "pubInput", transfer.Input.PublicInput)
-		return
+	for _, in := range transfer.Inputs {
+		data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, in.PublicInput)
+		if err != nil {
+			bizlog.Error("processTransfer.input decode", "pubInput", in.PublicInput)
+			return
+		}
+		input := data.(*mixTy.TransferInputPublicInput)
+		nulls = append(nulls, input.NullifierHash)
 	}
-	input := data.(*mixTy.TransferInputPublicInput)
-	nulls = append(nulls, input.NullifierHash)
 	p.processNullifiers(nulls, table)
 
 	//out
-	data, err = mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Output.PublicInput)
+	data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Output.PublicInput)
 	if err != nil {
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Output.PublicInput)
 		return

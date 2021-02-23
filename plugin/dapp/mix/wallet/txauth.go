@@ -132,12 +132,12 @@ func (policy *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transac
 		return nil, err
 	}
 
-	proofInfo, err := getZkProofKeys(auth.ZkPath.Path+mixTy.AuthCircuit, auth.ZkPath.Path+mixTy.AuthPk, *input)
+	proofInfo, err := getZkProofKeys(auth.ZkPath+mixTy.AuthCircuit, auth.ZkPath+mixTy.AuthPk, *input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getZkProofKeys note=%s", auth.NoteHash)
 	}
 	//verify
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, auth.ZkPath.Path+mixTy.AuthVk); err != nil {
+	if err := policy.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, auth.ZkPath+mixTy.AuthVk); err != nil {
 		return nil, errors.Wrapf(err, "verifyProof fail for note=%s", auth.NoteHash)
 	}
 

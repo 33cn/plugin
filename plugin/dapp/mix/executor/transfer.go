@@ -111,17 +111,23 @@ func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mix
 	var inputs []*mixTy.TransferInputPublicInput
 	var outputs []*mixTy.TransferOutputPublicInput
 
-	in, err := transferInputVerify(db, transfer.Input)
-	if err != nil {
-		return nil, nil, err
+	//inputs
+	for _, i := range transfer.Inputs {
+		in, err := transferInputVerify(db, i)
+		if err != nil {
+			return nil, nil, err
+		}
+		inputs = append(inputs, in)
 	}
-	inputs = append(inputs, in)
 
+	//output
 	out, err := transferOutputVerify(db, transfer.Output)
 	if err != nil {
 		return nil, nil, err
 	}
 	outputs = append(outputs, out)
+
+	//change
 	change, err := transferOutputVerify(db, transfer.Change)
 	if err != nil {
 		return nil, nil, err
@@ -129,7 +135,7 @@ func MixTransferInfoVerify(db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mix
 	outputs = append(outputs, change)
 
 	if !VerifyCommitValues(inputs, outputs) {
-		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verifyValue")
+		return nil, nil, errors.Wrap(mixTy.ErrSpendInOutValueNotMatch, "verify shieldValue")
 	}
 
 	return inputs, outputs, nil
@@ -148,7 +154,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	for _, k := range inputs {
-		r := makeNullifierSetReceipt(k.NullifierHash, &mixTy.ExistValue{Data: true})
+		r := makeNullifierSetReceipt(k.NullifierHash, &mixTy.ExistValue{Nullifier: k.NullifierHash, Exist: true})
 		mergeReceipt(receipt, r)
 	}
 
