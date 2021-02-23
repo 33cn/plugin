@@ -397,22 +397,19 @@ message PaymentKeysReq{
 
 enum NoteStatus{
 	UNDEF   = 0;
-	VALID   = 1;   //已授权可使用
-	FROZEN  = 2; //未授权
-	USED    = 3;   //已使用
+	VALID   = 1;   //已授权可使用 相对消费者
+	USED    = 2;    //已使用
+	FROZEN  = 3;   //未授权
+	UNFROZEN  = 4;  //已授权 相对授权者
 }
 
-enum Role{
-    SPENDER     = 0;
-    RETURNER    = 1;
-    AUTHORIZER  = 2;
-}
 
-message WalletIndexInfo {
+
+message WalletNoteInfo {
     string             noteHash             = 1;
     string             nullifier            = 2;
     string             authorizeSpendHash   = 3;
-    Role               role                 = 4;
+    string             authorizeHash        = 4;
     string             account              = 5; //账户地址
     NoteStatus         status               = 6;
     SecretData         secret               = 7;
@@ -420,7 +417,7 @@ message WalletIndexInfo {
 }
 
 message WalletDbMixInfo {
-    WalletIndexInfo      info   = 1;
+    WalletNoteInfo       info   = 1;
     string               txIndex = 2;
 }
 
@@ -429,19 +426,17 @@ message WalletMixIndexReq {
     string             noteHash       = 1;
     string             nullifier       = 2;
     string             authorizeSpendHash   = 3;
+    string             authorizeHash        = 4;
     string             account       = 5;
     int32              status     = 6;
     int32              count      = 7;
     int32              direction  = 8;
 }
 
-message WalletIndexResp {
-    repeated WalletIndexInfo notes = 1;
+message WalletNoteResp {
+    repeated WalletNoteInfo notes = 1;
 }
 
-message WalletReqAddrs{
-    repeated string addrs = 1;
-}
 
 message WalletEnablePrivacyRst{
     string  addr = 1;

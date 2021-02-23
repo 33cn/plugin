@@ -147,9 +147,9 @@ func mimcHashCalc(sum []byte) []byte {
 	return mimcbn256.Sum("seed", sum)
 }
 
-func (policy *mixPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
+func (p *mixPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
 	//获取指定地址在钱包里的账户信息
-	Accountstor, err := policy.store.GetAccountByAddr(addr)
+	Accountstor, err := p.store.GetAccountByAddr(addr)
 	if err != nil {
 		bizlog.Error("ProcSendToAddress", "GetAccountByAddr err:", err)
 		return nil, err
@@ -161,7 +161,7 @@ func (policy *mixPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
 		bizlog.Error("ProcSendToAddress", "FromHex err", err)
 		return nil, err
 	}
-	operater := policy.getWalletOperate()
+	operater := p.getWalletOperate()
 	password := []byte(operater.GetPassword())
 	privkey := wcom.CBCDecrypterPrivkey(password, prikeybyte)
 	//通过privkey生成一个pubkey然后换算成对应的addr
@@ -178,30 +178,30 @@ func (policy *mixPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
 	return priv, nil
 }
 
-func (policy *mixPolicy) getAccountPrivacyKey(addr string) (*mixTy.WalletAddrPrivacy, error) {
-	if data, _ := policy.store.getAccountPrivacy(addr); data != nil {
+func (p *mixPolicy) getAccountPrivacyKey(addr string) (*mixTy.WalletAddrPrivacy, error) {
+	if data, _ := p.store.getAccountPrivacy(addr); data != nil {
 		privacyInfo := &mixTy.AccountPrivacyKey{}
-		password := []byte(policy.getWalletOperate().GetPassword())
+		password := []byte(p.getWalletOperate().GetPassword())
 		decrypted, err := decryptDataWithPading(password, data)
 		if err != nil {
-			return policy.savePrivacyPair(addr)
+			return p.savePrivacyPair(addr)
 		}
 
 		//有可能修改了秘钥，如果解密失败，需要重新设置
 		err = types.Decode(decrypted, privacyInfo)
 		if err != nil {
-			return policy.savePrivacyPair(addr)
+			return p.savePrivacyPair(addr)
 		}
 
 		return &mixTy.WalletAddrPrivacy{Privacy: privacyInfo, Addr: addr}, nil
 	}
 
-	return policy.savePrivacyPair(addr)
+	return p.savePrivacyPair(addr)
 
 }
 
-func (policy *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy, error) {
-	priv, err := policy.getPrivKeyByAddr(addr)
+func (p *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy, error) {
+	priv, err := p.getPrivKeyByAddr(addr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "savePrivacyPair addr=%s", addr)
 	}
@@ -209,17 +209,17 @@ func (policy *mixPolicy) savePrivacyPair(addr string) (*mixTy.WalletAddrPrivacy,
 	bizlog.Info("savePrivacyPair", "pri", common.ToHex(priv.Bytes()), "addr", addr)
 	newPrivacy := newPrivacyKey(priv.Bytes())
 
-	password := []byte(policy.getWalletOperate().GetPassword())
+	password := []byte(p.getWalletOperate().GetPassword())
 	encryptered := encryptDataWithPadding(password, types.Encode(newPrivacy))
 	//save the privacy created to wallet db
-	policy.store.setAccountPrivacy(addr, encryptered)
+	p.store.setAccountPrivacy(addr, encryptered)
 	return &mixTy.WalletAddrPrivacy{Privacy: newPrivacy, Addr: addr}, nil
 }
 
 //查询钱包里面所有的地址对应的PrivacyKeys
-func (policy *mixPolicy) getWalletPrivacyKeys() ([]*mixTy.WalletAddrPrivacy, error) {
+func (p *mixPolicy) getWalletPrivacyKeys() ([]*mixTy.WalletAddrPrivacy, error) {
 	//通过Account前缀查找获取钱包中的所有账户信息
-	WalletAccStores, err := policy.store.GetAccountByPrefix("Account")
+	WalletAccStores, err := p.store.GetAccountByPrefix("Account")
 	if err != nil || len(WalletAccStores) == 0 {
 		bizlog.Info("getPrivacyKeyPairs", "store getAccountByPrefix error", err)
 		return nil, err
@@ -228,7 +228,7 @@ func (policy *mixPolicy) getWalletPrivacyKeys() ([]*mixTy.WalletAddrPrivacy, err
 	var infoPriRes []*mixTy.WalletAddrPrivacy
 	for _, AccStore := range WalletAccStores {
 		if len(AccStore.Addr) != 0 {
-			if privacyInfo, err := policy.getAccountPrivacyKey(AccStore.Addr); err == nil {
+			if privacyInfo, err := p.getAccountPrivacyKey(AccStore.Addr); err == nil {
 				infoPriRes = append(infoPriRes, privacyInfo)
 			}
 		}
@@ -243,38 +243,38 @@ func (policy *mixPolicy) getWalletPrivacyKeys() ([]*mixTy.WalletAddrPrivacy, err
 
 }
 
-func (policy *mixPolicy) getRescanStatus() string {
-	status := policy.store.getRescanNoteStatus()
+func (p *mixPolicy) getRescanStatus() string {
+	status := p.store.getRescanNoteStatus()
 	return mixTy.MixWalletRescanStatus(status).String()
 }
 
-func (policy *mixPolicy) tryRescanNotes() error {
+func (p *mixPolicy) tryRescanNotes() error {
 	//未使能，直接使能
-	if !policy.store.getPrivacyEnable() {
-		//policy.store.enablePrivacy()
+	if !p.store.getPrivacyEnable() {
+		//p.store.enablePrivacy()
 		return errors.Wrap(types.ErrNotAllow, "privacy need enable firstly")
 	}
-	operater := policy.getWalletOperate()
+	operater := p.getWalletOperate()
 	if operater.IsWalletLocked() {
 		return types.ErrWalletIsLocked
 	}
-	status := policy.store.getRescanNoteStatus()
+	status := p.store.getRescanNoteStatus()
 	if status == int32(mixTy.MixWalletRescanStatus_SCANNING) {
 		return errors.Wrap(types.ErrNotAllow, "mix wallet is scanning")
 	}
 
-	policy.store.setRescanNoteStatus(int32(mixTy.MixWalletRescanStatus_SCANNING))
+	p.store.setRescanNoteStatus(int32(mixTy.MixWalletRescanStatus_SCANNING))
 
-	go policy.rescanNotes()
+	go p.rescanNotes()
 
 	return nil
 }
 
 //从localdb中把Mix合约的交易按升序都获取出来依次处理
-func (policy *mixPolicy) rescanNotes() {
+func (p *mixPolicy) rescanNotes() {
 	var txInfo mixTy.LocalMixTx
 	i := 0
-	operater := policy.getWalletOperate()
+	operater := p.getWalletOperate()
 	for {
 		select {
 		case <-operater.GetWalletDone():
@@ -324,19 +324,19 @@ func (policy *mixPolicy) rescanNotes() {
 			txInfo.Index = mixTxInfos.Txs[txcount-1].GetIndex()
 		}
 
-		policy.processPrivcyTxs(&ReqHashes)
+		p.processPrivcyTxs(&ReqHashes)
 		if txcount < int(MaxTxHashsPerTime) {
 			break
 		}
 	}
 
-	policy.store.setRescanNoteStatus(int32(mixTy.MixWalletRescanStatus_FINISHED))
+	p.store.setRescanNoteStatus(int32(mixTy.MixWalletRescanStatus_FINISHED))
 	return
 }
 
-func (policy *mixPolicy) processPrivcyTxs(ReqHashes *types.ReqHashes) {
+func (p *mixPolicy) processPrivcyTxs(ReqHashes *types.ReqHashes) {
 	//通过txhashs获取对应的txdetail
-	txDetails, err := policy.getWalletOperate().GetAPI().GetTransactionByHash(ReqHashes)
+	txDetails, err := p.getWalletOperate().GetAPI().GetTransactionByHash(ReqHashes)
 	if err != nil {
 		bizlog.Error("processPrivcyTx", "GetTransactionByHash error", err)
 		return
@@ -347,18 +347,18 @@ func (policy *mixPolicy) processPrivcyTxs(ReqHashes *types.ReqHashes) {
 			bizlog.Error("processPrivcyTx wrong tx", "receipt ty", tx.Receipt.Ty, "hash", common.ToHex(tx.Tx.Hash()))
 			continue
 		}
-		set, err := policy.processMixTx(tx.Tx, tx.Height, tx.Index)
+		set, err := p.processMixTx(tx.Tx, tx.Height, tx.Index)
 		if err != nil {
 			bizlog.Error("processPrivcyTx", "processMixTx error", err)
 			continue
 		}
-		policy.store.setKvs(set)
+		p.store.setKvs(set)
 	}
 }
 
-func (policy *mixPolicy) enablePrivacy(addrs []string) (*mixTy.ReqEnablePrivacyRst, error) {
+func (p *mixPolicy) enablePrivacy(addrs []string) (*mixTy.ReqEnablePrivacyRst, error) {
 	if 0 == len(addrs) {
-		WalletAccStores, err := policy.store.GetAccountByPrefix("Account")
+		WalletAccStores, err := p.store.GetAccountByPrefix("Account")
 		if err != nil || len(WalletAccStores) == 0 {
 			bizlog.Info("enablePrivacy", "GetAccountByPrefix:err", err)
 			return nil, types.ErrNotFound
@@ -376,7 +376,7 @@ func (policy *mixPolicy) enablePrivacy(addrs []string) (*mixTy.ReqEnablePrivacyR
 	for _, addr := range addrs {
 		str := ""
 		isOK := true
-		_, err := policy.getAccountPrivacyKey(addr)
+		_, err := p.getAccountPrivacyKey(addr)
 		if err != nil {
 			isOK = false
 			str = err.Error()
@@ -390,34 +390,25 @@ func (policy *mixPolicy) enablePrivacy(addrs []string) (*mixTy.ReqEnablePrivacyR
 
 		rep.Results = append(rep.Results, priAddrResult)
 	}
-	policy.store.enablePrivacy()
+	p.store.enablePrivacy()
 	return &rep, nil
 }
 
-func (policy *mixPolicy) showAccountNoteInfo(addrs []string) (*mixTy.WalletIndexResp, error) {
-	var resps mixTy.WalletIndexResp
-	for _, addr := range addrs {
-		var req mixTy.WalletMixIndexReq
-		req.Account = addr
-		resp, err := policy.listMixInfos(&req)
-		if err != nil {
-			return nil, err
-		}
-		resps.Notes = append(resps.Notes, resp.(*mixTy.WalletIndexResp).Notes...)
-	}
-	return &resps, nil
+func (p *mixPolicy) showAccountNoteInfo(req *mixTy.WalletMixIndexReq) (*mixTy.WalletNoteResp, error) {
+	resp, err := p.listMixInfos(req)
+	return resp.(*mixTy.WalletNoteResp), err
 }
 
-func (policy *mixPolicy) createRawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+func (p *mixPolicy) createRawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
 	switch req.ActionTy {
 	case mixTy.MixActionDeposit:
-		return policy.createDepositTx(req)
+		return p.createDepositTx(req)
 	case mixTy.MixActionWithdraw:
-		return policy.createWithdrawTx(req)
+		return p.createWithdrawTx(req)
 	case mixTy.MixActionAuth:
-		return policy.createAuthTx(req)
+		return p.createAuthTx(req)
 	case mixTy.MixActionTransfer:
-		return policy.createTransferTx(req)
+		return p.createTransferTx(req)
 	default:
 		return nil, errors.Wrapf(types.ErrInvalidParam, "action=%d", req.ActionTy)
 	}

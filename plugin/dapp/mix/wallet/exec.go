@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (policy *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (types.Message, error) {
+func (p *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (types.Message, error) {
 	if len(req.Addr) == 0 && len(req.PrivKey) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "addr or privkey need be set")
 	}
@@ -32,7 +32,7 @@ func (policy *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (t
 	}
 
 	//通过account 从钱包获取
-	keys, err := policy.getAccountPrivacyKey(req.Addr)
+	keys, err := p.getAccountPrivacyKey(req.Addr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get account =%s privacy key", req.Addr)
 	}
@@ -43,56 +43,40 @@ func (policy *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (t
 	return keys, nil
 }
 
-func (policy *mixPolicy) On_ShowAccountNoteInfo(req *types.ReqAddrs) (types.Message, error) {
-	return policy.showAccountNoteInfo(req.Addrs)
+func (p *mixPolicy) On_ShowAccountNoteInfo(req *mixTy.WalletMixIndexReq) (types.Message, error) {
+	return p.showAccountNoteInfo(req)
 }
 
-func (policy *mixPolicy) On_GetRescanStatus(in *types.ReqNil) (types.Message, error) {
-	return &types.ReqString{Data: policy.getRescanStatus()}, nil
+func (p *mixPolicy) On_GetRescanStatus(in *types.ReqNil) (types.Message, error) {
+	return &types.ReqString{Data: p.getRescanStatus()}, nil
 
 }
 
 //重新扫描所有notes
-func (policy *mixPolicy) On_RescanNotes(in *types.ReqNil) (types.Message, error) {
-	err := policy.tryRescanNotes()
+func (p *mixPolicy) On_RescanNotes(in *types.ReqNil) (types.Message, error) {
+	err := p.tryRescanNotes()
 	if err != nil {
 		bizlog.Error("rescanUTXOs", "err", err.Error())
 	}
 	return &types.ReqString{Data: "ok"}, err
 }
 
-func (policy *mixPolicy) On_EnablePrivacy(req *types.ReqAddrs) (types.Message, error) {
-	return policy.enablePrivacy(req.Addrs)
+func (p *mixPolicy) On_EnablePrivacy(req *types.ReqAddrs) (types.Message, error) {
+	return p.enablePrivacy(req.Addrs)
 }
 
-//func (policy *mixPolicy) On_EncodeSecretData(req *mixTy.SecretData) (types.Message, error) {
+//func (p *mixPolicy) On_EncodeSecretData(req *mixTy.SecretData) (types.Message, error) {
 //	return encodeSecretData(req)
 //}
 
-func (policy *mixPolicy) On_EncryptSecretData(req *mixTy.EncryptSecretData) (types.Message, error) {
+func (p *mixPolicy) On_EncryptSecretData(req *mixTy.EncryptSecretData) (types.Message, error) {
 	return encryptSecretData(req)
 }
 
-func (policy *mixPolicy) On_DecryptSecretData(req *mixTy.DecryptSecretData) (types.Message, error) {
+func (p *mixPolicy) On_DecryptSecretData(req *mixTy.DecryptSecretData) (types.Message, error) {
 	return decryptSecretData(req)
 }
 
-//func (policy *mixPolicy) On_DepositProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
-//	return policy.createDepositTx(req)
-//}
-//
-//func (policy *mixPolicy) On_WithdrawProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
-//	return policy.createWithdrawTx(req)
-//}
-//
-//func (policy *mixPolicy) On_AuthProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
-//	return policy.createAuthTx(req)
-//}
-//
-//func (policy *mixPolicy) On_TransferProof(req *mixTy.CreateRawTxReq) (types.Message, error) {
-//	return policy.createTransferTx(req)
-//}
-
-func (policy *mixPolicy) On_CreateRawTransaction(req *mixTy.CreateRawTxReq) (types.Message, error) {
-	return policy.createRawTx(req)
+func (p *mixPolicy) On_CreateRawTransaction(req *mixTy.CreateRawTxReq) (types.Message, error) {
+	return p.createRawTx(req)
 }
