@@ -95,9 +95,9 @@ func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt,
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	var auths, authSpends []string
 	for _, in := range inputs {
-		r := makeReceipt(calcAuthorizeHashKey(in.AuthorizeHash), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Data: true})
+		r := makeReceipt(calcAuthorizeHashKey(in.AuthorizeHash), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Nullifier: in.AuthorizeHash, Exist: true})
 		mergeReceipt(receipt, r)
-		r = makeReceipt(calcAuthorizeSpendHashKey(in.AuthorizeSpendHash), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Data: true})
+		r = makeReceipt(calcAuthorizeSpendHashKey(in.AuthorizeSpendHash), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Nullifier: in.AuthorizeSpendHash, Exist: true})
 		mergeReceipt(receipt, r)
 		auths = append(auths, in.AuthorizeHash)
 		authSpends = append(authSpends, in.AuthorizeSpendHash)

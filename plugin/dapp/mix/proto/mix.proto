@@ -84,12 +84,12 @@ message ZkProofInfo {
 }
 
 message MixDepositAction {
-    ZkProofInfo proof = 1;
+    repeated ZkProofInfo proofs = 1;
 
 }
 
 message MixTransferAction {
-    ZkProofInfo input = 1;
+    repeated ZkProofInfo inputs = 1;
     ZkProofInfo output = 2;
     ZkProofInfo change = 3;
 
@@ -118,7 +118,6 @@ message MixAction {
     }
 
 }
-
 
 
 message DepositPublicInput {
@@ -168,7 +167,8 @@ message VerifyProofInfo{
 
 //nullifer 存在value
 message ExistValue {
-    bool data = 1;
+    string nullifier = 1;
+    bool exist = 2;
 }
 
 message CommitTreeLeaves {
@@ -248,22 +248,21 @@ message DecryptSecretData{
 
 }
 
-//path+filename, filename can take default
-message circuitPathInfo{
-    string path = 1;
-}
 
+
+//支持同时存入多个地址，多个地址具有相同的returnAddr和AuthorizeAddr,如果不同，则单个来存
 message DepositInfo{
-    string addr = 1;
+    string receiverAddrs = 1;
     string returnAddr = 2;
     string authorizeAddr = 3;
-    uint64 amount = 4;
+    string amounts = 4;
 }
+
 
 //钱包生成deposit tx
 message DepositTxReq{
     DepositInfo deposit = 1;
-    circuitPathInfo zkPath = 2;
+    string zkPath = 2;
 
 }
 
@@ -285,8 +284,8 @@ message TreePathProof{
 //可withdraw 多个note
 message WithdrawTxReq{
     uint64 totalAmount = 1;
-    string noteHashs  = 2;
-    circuitPathInfo zkPath = 3;
+    string noteHashs  = 2;   // seperate by ","
+    string zkPath = 3;
 }
 
 
@@ -306,7 +305,7 @@ message WithdrawProofRe{
 message AuthTxReq{
     string noteHash = 1;
     string authorizeToAddr = 3;
-    circuitPathInfo zkPath = 4;
+    string zkPath = 4;
 }
 
 message AuthProofRe{
@@ -322,13 +321,13 @@ message AuthProofRe{
 }
 
 message TransferInputTxReq{
-    string noteHash     = 1;
-    circuitPathInfo zkPath = 2;
+    string noteHashs     = 1;
+    string zkPath = 2;
 }
 
 message TransferOutputTxReq{
     DepositInfo deposit    = 1;
-    circuitPathInfo zkPath = 2;
+    string zkPath = 2;
 }
 
 message TransferTxReq{
@@ -371,10 +370,10 @@ message TransferProofResp{
 }
 
 message ShieldAmountRst{
-    string inputRandom = 1;
+    repeated string inputRandoms = 1;
     string outputRandom = 2;
     string changeRandom = 3;
-    ShieldAmount input = 4;
+    repeated ShieldAmount inputs = 4;
     ShieldAmount output = 5;
     ShieldAmount change = 6;
 
@@ -388,6 +387,12 @@ message CreateRawTxReq{
     string title = 6; //平行链名字
 
 
+}
+
+message PaymentKeysReq{
+    string privKey = 1; //user wallet priv key
+    string addr    = 2; //user addr
+    int32 detail = 3; //获取私钥信息
 }
 
 enum NoteStatus{

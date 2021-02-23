@@ -16,8 +16,8 @@ func TestNewPrivacyWithPrivKey(t *testing.T) {
 	keyByte, err := hex.DecodeString(prikey)
 	assert.Equal(t, nil, err)
 
-	pairs, err := newPrivacyKey(keyByte)
-	assert.Equal(t, nil, err)
+	pairs := newPrivacyKey(keyByte)
+
 	t.Log("payPri", pairs.PaymentKey.SpendKey, "payPub", pairs.PaymentKey.ReceiveKey)
 	t.Log("crytoPub", pairs.EncryptKey.PubKey, "crytoPri", pairs.EncryptKey.PrivKey)
 
@@ -87,8 +87,8 @@ func TestEncodeSecretData(t *testing.T) {
 	prikey := "4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 	keyByte, err := hex.DecodeString(prikey)
 	assert.Equal(t, nil, err)
-	privacy, err := newPrivacyKey(keyByte)
-	assert.Equal(t, nil, err)
+	privacy := newPrivacyKey(keyByte)
+
 	ret := types.Encode(secret)
 	hexRet := hex.EncodeToString(ret)
 	//assert.Nil(t,err)

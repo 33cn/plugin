@@ -136,12 +136,12 @@ func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Tra
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
 
-		proofInfo, err := getZkProofKeys(withdraw.ZkPath.Path+mixTy.WithdrawCircuit, withdraw.ZkPath.Path+mixTy.WithdrawPk, *input)
+		proofInfo, err := getZkProofKeys(withdraw.ZkPath+mixTy.WithdrawCircuit, withdraw.ZkPath+mixTy.WithdrawPk, *input)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getZkProofKeys note=%s", note)
 		}
 		//verify
-		if err := policy.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath.Path+mixTy.WithdrawVk); err != nil {
+		if err := policy.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk); err != nil {
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
@@ -153,6 +153,7 @@ func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Tra
 		proofs = append(proofs, proofInfo)
 	}
 
+	//不设计找零操作，可以全部提取回来后再存入，提取的找零一定是本账户的，不利于隐私，而且提取操作功能不够单一
 	if sum != withdraw.TotalAmount {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount not match req=%d,note.sum=%d", withdraw.TotalAmount, sum)
 	}
