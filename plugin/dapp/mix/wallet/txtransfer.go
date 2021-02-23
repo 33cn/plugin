@@ -5,6 +5,7 @@
 package wallet
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 
 	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
+	"github.com/consensys/gurvy/bn256/twistededwards"
 )
 
 type TransferInput struct {
@@ -142,9 +144,14 @@ func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*Tra
 }
 
 func (policy *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
-	resp, err := policy.depositParams(req)
+	//目前只支持一个ReceiverAddr
+	if strings.Contains(req.ReceiverAddrs, ",") || strings.Contains(req.Amounts, ",") {
+		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "only support one addr or amount,addrs=%s,amount=%s",
+			req.ReceiverAddrs, req.Amounts)
+	}
+	resp, err := policy.depositParams(req.ReceiverAddrs, req.ReturnAddr, req.AuthorizeAddr, req.Amounts)
 	if err != nil {
-		return nil, nil, errors.Wrapf(err, "deposit toAddr")
+		return nil, nil, errors.Wrapf(err, "deposit toAddr=%s", req.ReceiverAddrs)
 	}
 
 	var input TransferOutput
@@ -159,59 +166,105 @@ func (policy *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOut
 
 }
 
-func getShieldValue(noteAmount, transferAmount, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
-	if noteAmount < transferAmount+minTxFee {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "transfer amount=%d big than note=%d - fee=%d", transferAmount, noteAmount, minTxFee)
+//input = output+找零+交易费
+func getShieldValue(inputAmounts []uint64, outAmount, change, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
+	var sum uint64
+	for _, i := range inputAmounts {
+		sum += i
 	}
-
-	change := noteAmount - transferAmount - minTxFee
+	if sum != outAmount+change+minTxFee {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "getShieldValue.sum error,sum=%d,out=%d,change=%d,fee=%d",
+			sum, outAmount, change, minTxFee)
+	}
 	//get amount*G point
 	//note = transfer + change + minTxFee
-	noteAmountG := mixTy.MulCurvePointG(noteAmount)
-	transAmountG := mixTy.MulCurvePointG(transferAmount)
+	var inputGPoints []*twistededwards.Point
+	for _, i := range inputAmounts {
+		inputGPoints = append(inputGPoints, mixTy.MulCurvePointG(i))
+	}
+	//noteAmountG := mixTy.MulCurvePointG(inputAmount)
+	outAmountG := mixTy.MulCurvePointG(outAmount)
 	changeAmountG := mixTy.MulCurvePointG(change)
 	minTxFeeG := mixTy.MulCurvePointG(minTxFee)
 
-	if !mixTy.CheckSumEqual(noteAmountG, transAmountG, changeAmountG, minTxFeeG) {
+	sumPointG := mixTy.GetCurveSum(inputGPoints...)
+	if !mixTy.CheckSumEqual(sumPointG, outAmountG, changeAmountG, minTxFeeG) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount sum fail for mul G point")
 	}
 
 	//三个混淆随机值可以随机获取，这里noteRandom和为了Nullifier计算的NoteRandom不同。
 	//获取随机值，截取一半给change和transfer,和值给Note,直接用完整的random值会溢出
-	var rChange, rTrans, v fr_bn256.Element
+	var rChange, rOut, v fr_bn256.Element
 	random := v.SetRandom().String()
 	rChange.SetString(random[0 : len(random)/2])
-	rTrans.SetString(random[len(random)/2:])
+	rOut.SetString(random[len(random)/2:])
+	fmt.Println("rOut", rOut.String())
+	fmt.Println("rChange", rChange.String())
 
-	var rNote fr_bn256.Element
-	rNote.Add(&rChange, &rTrans)
+	var rSumIn, rSumOut fr_bn256.Element
+	rSumIn.SetZero()
+	rSumOut.Add(&rChange, &rOut)
 
-	noteH := mixTy.MulCurvePointH(rNote.String())
-	transferH := mixTy.MulCurvePointH(rTrans.String())
+	var rInputs []fr_bn256.Element
+	rInputs = append(rInputs, rSumOut)
+
+	//len(inputAmounts)>1场景,每个input的随机值设为随机值的1/3长度，这样加起来不会超过rOut+rChange
+	for i := 1; i < len(inputAmounts); i++ {
+		var a, v fr_bn256.Element
+		rv := v.SetRandom().String()
+		a.SetString(rv[0 : len(random)/3])
+		rInputs = append(rInputs, a)
+		rSumIn.Add(&rSumIn, &a)
+	}
+	//如果len(inputAmounts)>1，则把rInputs[0]替换为rrSumOut-rSumIn,rSumIn都是1/3的随机值长度，减法应该不会溢出
+	if len(rInputs) > 1 {
+		var sub fr_bn256.Element
+		sub.Sub(&rSumOut, &rSumIn)
+		rInputs[0] = sub
+	}
+	rSumIn.Add(&rSumIn, &rInputs[0])
+	if !rSumIn.Equal(&rSumOut) {
+
+		return nil, errors.Wrapf(types.ErrInvalidParam, "random sumIn=%s not equal sumOut=%s", rSumIn.String(), rSumOut.String())
+	}
+
+	var inputHPoints []*twistededwards.Point
+	for _, i := range rInputs {
+		inputHPoints = append(inputHPoints, mixTy.MulCurvePointH(i.String()))
+	}
+	//noteH := mixTy.MulCurvePointH(rNote.String())
+	outH := mixTy.MulCurvePointH(rOut.String())
 	changeH := mixTy.MulCurvePointH(rChange.String())
 	//fmt.Println("change",changeRandom.String())
 	//fmt.Println("transfer",transRandom.String())
 	//fmt.Println("note",noteRandom.String())
-
-	if !mixTy.CheckSumEqual(noteH, transferH, changeH) {
+	sumPointH := mixTy.GetCurveSum(inputHPoints...)
+	if !mixTy.CheckSumEqual(sumPointH, outH, changeH) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "random sum error")
 	}
 
-	noteAmountG.Add(noteAmountG, noteH)
-	transAmountG.Add(transAmountG, transferH)
+	for i, p := range inputGPoints {
+		p.Add(p, inputHPoints[i])
+	}
+	outAmountG.Add(outAmountG, outH)
 	changeAmountG.Add(changeAmountG, changeH)
-
-	if !mixTy.CheckSumEqual(noteAmountG, transAmountG, changeAmountG, minTxFeeG) {
+	sumPointG = mixTy.GetCurveSum(inputGPoints...)
+	if !mixTy.CheckSumEqual(sumPointG, outAmountG, changeAmountG, minTxFeeG) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount sum fail for G+H point")
 	}
 
 	rst := &mixTy.ShieldAmountRst{
-		InputRandom:  rNote.String(),
-		OutputRandom: rTrans.String(),
+		OutputRandom: rOut.String(),
 		ChangeRandom: rChange.String(),
-		Input:        &mixTy.ShieldAmount{X: noteAmountG.X.String(), Y: noteAmountG.Y.String()},
-		Output:       &mixTy.ShieldAmount{X: transAmountG.X.String(), Y: transAmountG.Y.String()},
+		Output:       &mixTy.ShieldAmount{X: outAmountG.X.String(), Y: outAmountG.Y.String()},
 		Change:       &mixTy.ShieldAmount{X: changeAmountG.X.String(), Y: changeAmountG.Y.String()},
+	}
+	for _, r := range rInputs {
+		rst.InputRandoms = append(rst.InputRandoms, r.String())
+		fmt.Println("inputRandom", r.String())
+	}
+	for _, p := range inputGPoints {
+		rst.Inputs = append(rst.Inputs, &mixTy.ShieldAmount{X: p.X.String(), Y: p.Y.String()})
 	}
 	return rst, nil
 }
@@ -222,54 +275,83 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrap(err, "decode req fail")
 	}
-	note, err := policy.getNoteInfo(transfer.GetInput().NoteHash, mixTy.NoteStatus_VALID)
-	if err != nil {
-		return nil, err
+
+	noteHashs := strings.Split(transfer.GetInput().NoteHashs, ",")
+	var notes []*mixTy.WalletIndexInfo
+	for _, h := range noteHashs {
+		note, err := policy.getNoteInfo(h, mixTy.NoteStatus_VALID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "get note info for=%s", h)
+		}
+		notes = append(notes, note)
 	}
 
 	//1.获取Input
-	inputPart, err := policy.getTransferInputPart(note)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getTransferInputPart note=%s", inputPart.NoteHash)
+	var inputParts []*TransferInput
+	for _, n := range notes {
+		input, err := policy.getTransferInputPart(n)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getTransferInputPart note=%s", n.NoteHash)
+		}
+		inputParts = append(inputParts, input)
 	}
-	bizlog.Info("transferProof get input succ", "notehash", inputPart.NoteHash)
+	bizlog.Info("transferProof get input succ", "notehash", transfer.GetInput().NoteHashs)
 
-	noteAmount, err := strconv.ParseUint(inputPart.Amount, 10, 64)
-	if err != nil {
-		return nil, errors.Wrapf(err, "input part parseUint=%s", inputPart.Amount)
+	var inputAmounts []uint64
+	var sumInput uint64
+	for _, i := range inputParts {
+		amount, err := strconv.ParseUint(i.Amount, 10, 64)
+		if err != nil {
+			return nil, errors.Wrapf(err, "input part parseUint=%s", i.Amount)
+		}
+		inputAmounts = append(inputAmounts, amount)
+		sumInput += amount
 	}
 
 	//2. 获取output
+	outAmount, err := strconv.ParseUint(transfer.Output.Deposit.Amounts, 10, 64)
+	if err != nil {
+		return nil, errors.Wrapf(err, "output part parseUint=%s", transfer.Output.Deposit.Amounts)
+	}
+	if outAmount == 0 {
+		return nil, errors.Wrapf(err, "output part amount=0, parseUint=%s", transfer.Output.Deposit.Amounts)
+	}
+	if sumInput < outAmount+uint64(mixTy.Privacy2PrivacyTxFee) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "out amount=%d big than input=%d - fee=%d", outAmount, sumInput, uint64(mixTy.Privacy2PrivacyTxFee))
+	}
 	outPart, outDHSecret, err := policy.getTransferOutput(transfer.Output.Deposit)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getTransferOutput note=%s", inputPart.NoteHash)
+		return nil, errors.Wrap(err, "getTransferOutput for deposit")
 	}
 	bizlog.Info("transferProof deposit to receiver succ")
 
 	//3. 获取找零，并扣除手续费
 	//如果找零为0也需要设置，否则只有一个输入一个输出，H部分的随机数要相等，就能推测出转账值来
 	//在transfer output 部分特殊处理，如果amount是0的值则不加进tree
+	changeAmount := sumInput - outAmount - uint64(mixTy.Privacy2PrivacyTxFee)
 	change := &mixTy.DepositInfo{
-		Addr:   note.Account,
-		Amount: noteAmount - transfer.Output.Deposit.Amount - uint64(mixTy.Privacy2PrivacyTxFee),
+		ReceiverAddrs: notes[0].Account,
+		Amounts:       strconv.FormatUint(changeAmount, 10),
 	}
 	changePart, changeDHSecret, err := policy.getTransferOutput(change)
 	if err != nil {
-		return nil, errors.Wrapf(err, "change part note=%s", inputPart.NoteHash)
+		return nil, errors.Wrap(err, "getTransferOutput change part ")
 	}
-	bizlog.Info("transferProof deposit to change succ", "notehash", inputPart.NoteHash)
+	bizlog.Info("transferProof deposit to change succ")
 
 	//获取shieldValue 输入输出对amount隐藏
-	shieldValue, err := getShieldValue(noteAmount, transfer.Output.Deposit.Amount, uint64(mixTy.Privacy2PrivacyTxFee))
+	shieldValue, err := getShieldValue(inputAmounts, outAmount, changeAmount, uint64(mixTy.Privacy2PrivacyTxFee))
 	if err != nil {
 		return nil, err
 	}
-	bizlog.Info("transferProof get commit value succ", "notehash", inputPart.NoteHash)
+	bizlog.Info("transferProof get shield value succ")
 
 	//noteCommitX, transferX, changeX
-	inputPart.ShieldAmountX = shieldValue.Input.X
-	inputPart.ShieldAmountY = shieldValue.Input.Y
-	inputPart.AmountRandom = shieldValue.InputRandom
+	for i, input := range inputParts {
+		input.ShieldAmountX = shieldValue.Inputs[i].X
+		input.ShieldAmountY = shieldValue.Inputs[i].Y
+		input.AmountRandom = shieldValue.InputRandoms[i]
+	}
 
 	outPart.ShieldAmountX = shieldValue.Output.X
 	outPart.ShieldAmountY = shieldValue.Output.Y
@@ -280,40 +362,44 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	changePart.AmountRandom = shieldValue.ChangeRandom
 
 	//verify input
-	inputProof, err := getZkProofKeys(transfer.Input.ZkPath.Path+mixTy.TransInputCircuit, transfer.Input.ZkPath.Path+mixTy.TransInputPk, *inputPart)
-	if err != nil {
-		return nil, errors.Wrapf(err, "input getZkProofKeys note=%s", note)
-	}
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath.Path+mixTy.TransInputVk); err != nil {
-		return nil, errors.Wrapf(err, "input verifyProof fail for note=%s", note)
+	var inputProofs []*mixTy.ZkProofInfo
+	for i, input := range inputParts {
+		inputProof, err := getZkProofKeys(transfer.Input.ZkPath+mixTy.TransInputCircuit, transfer.Input.ZkPath+mixTy.TransInputPk, *input)
+		if err != nil {
+			return nil, errors.Wrapf(err, "verify.input getZkProofKeys,the i=%d", i)
+		}
+		if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk); err != nil {
+			return nil, errors.Wrapf(err, "input verifyProof fail,the i=%d", i)
+		}
+		inputProofs = append(inputProofs, inputProof)
 	}
 
 	//verify output
-	outputProof, err := getZkProofKeys(transfer.Output.ZkPath.Path+mixTy.TransOutputCircuit, transfer.Output.ZkPath.Path+mixTy.TransOutputPk, *outPart)
+	outputProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *outPart)
 	if err != nil {
-		return nil, errors.Wrapf(err, "output getZkProofKeys note=%s", note)
+		return nil, errors.Wrapf(err, "output getZkProofKeys")
 	}
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath.Path+mixTy.TransOutputVk); err != nil {
-		return nil, errors.Wrapf(err, "output verifyProof fail for note=%s", note)
+	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+		return nil, errors.Wrapf(err, "output verifyProof fail")
 	}
 	outputProof.Secrets = outDHSecret
 
 	//verify change
-	changeProof, err := getZkProofKeys(transfer.Output.ZkPath.Path+mixTy.TransOutputCircuit, transfer.Output.ZkPath.Path+mixTy.TransOutputPk, *changePart)
+	changeProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *changePart)
 	if err != nil {
-		return nil, errors.Wrapf(err, "change getZkProofKeys note=%s", note)
+		return nil, errors.Wrapf(err, "change getZkProofKeys")
 	}
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath.Path+mixTy.TransOutputVk); err != nil {
-		return nil, errors.Wrapf(err, "change verifyProof fail for note=%s", note)
+	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+		return nil, errors.Wrapf(err, "change verifyProof fail")
 	}
 	changeProof.Secrets = changeDHSecret
 
-	return policy.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), inputProof, outputProof, changeProof)
+	return policy.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), inputProofs, outputProof, changeProof)
 }
 
-func (policy *mixPolicy) getTransferTx(execName string, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (policy *mixPolicy) getTransferTx(execName string, inputProofs []*mixTy.ZkProofInfo, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixTransferAction{}
-	payload.Input = proofs[0]
+	payload.Inputs = inputProofs
 	payload.Output = proofs[1]
 	payload.Change = proofs[2]
 

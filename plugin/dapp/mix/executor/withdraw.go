@@ -111,7 +111,7 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 
 	//set nullifier
 	for _, k := range nulliferSet {
-		r := makeNullifierSetReceipt(k, &mixTy.ExistValue{Data: true})
+		r := makeNullifierSetReceipt(k, &mixTy.ExistValue{Nullifier: k, Exist: true})
 		mergeReceipt(receipt, r)
 	}
 	return receipt, nil

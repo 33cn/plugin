@@ -5,12 +5,42 @@
 package wallet
 
 import (
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/pkg/errors"
 )
 
-func (policy *mixPolicy) On_ShowAccountPrivacyInfo(req *types.ReqString) (types.Message, error) {
-	return policy.getAccountPrivacyKey(req.Data)
+func (policy *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (types.Message, error) {
+	if len(req.Addr) == 0 && len(req.PrivKey) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "addr or privkey need be set")
+	}
+
+	//通过私钥获取
+	if len(req.PrivKey) > 0 {
+		prikeybyte, err := common.FromHex(req.PrivKey)
+		if err != nil {
+			return nil, errors.Wrapf(err, "privkey fromHex error,key=%s", req.PrivKey)
+		}
+		var ret mixTy.WalletAddrPrivacy
+		ret.Privacy = newPrivacyKey(prikeybyte)
+		if req.Detail <= 0 {
+			ret.Privacy.EncryptKey.PrivKey = ""
+			ret.Privacy.PaymentKey.SpendKey = ""
+		}
+		return &ret, nil
+	}
+
+	//通过account 从钱包获取
+	keys, err := policy.getAccountPrivacyKey(req.Addr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get account =%s privacy key", req.Addr)
+	}
+	if req.Detail <= 0 {
+		keys.Privacy.EncryptKey.PrivKey = ""
+		keys.Privacy.PaymentKey.SpendKey = ""
+	}
+	return keys, nil
 }
 
 func (policy *mixPolicy) On_ShowAccountNoteInfo(req *types.ReqAddrs) (types.Message, error) {

@@ -83,15 +83,17 @@ func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error)
 4. add new commits to merkle tree
 */
 func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error) {
+	var notes []string
+	var sum uint64
 	//1. zk-proof校验
-	noteHash, amount, err := a.depositVerify(deposit.Proof)
-	if err != nil {
-		return nil, err
+	for _, p := range deposit.Proofs {
+		noteHash, amount, err := a.depositVerify(p)
+		if err != nil {
+			return nil, errors.Wrapf(err, "verify fail for input=%s", p.PublicInput)
+		}
+		sum += amount
+		notes = append(notes, noteHash)
 	}
-	////校验存款额,目前只支持一次只存一张支票
-	//if val != deposit.Amount {
-	//	return nil, errors.Wrapf(mixTy.ErrInputParaNotMatch, "deposit amount=%d not equal proof amount=%d", deposit.Amount, val)
-	//}
 
 	//存款
 	cfg := a.api.GetConfig()
@@ -101,16 +103,18 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	}
 	//主链上存入toAddr为mix 执行器地址，平行链上为user.p.{}.mix执行器地址,execAddr和toAddr一致
 	execAddr := address.ExecAddress(string(a.tx.Execer))
-	receipt, err := accoutDb.ExecTransfer(a.fromaddr, execAddr, execAddr, int64(amount))
+	receipt, err := accoutDb.ExecTransfer(a.fromaddr, execAddr, execAddr, int64(sum))
 	if err != nil {
-		return nil, errors.Wrapf(err, "ExecTransfer")
+		return nil, errors.Wrapf(err, "account save to exec")
 	}
 	//push new commit to merkle tree
 	var leaves [][]byte
-	leaves = append(leaves, transferFr2Bytes(noteHash))
+	for _, n := range notes {
+		leaves = append(leaves, transferFr2Bytes(n))
+	}
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "pushTree")
 	}
 	mergeReceipt(receipt, rpt)
 

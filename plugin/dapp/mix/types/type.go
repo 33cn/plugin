@@ -74,6 +74,7 @@ func (p *MixType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogCurrentCommitTreeLeaves: {Ty: reflect.TypeOf(CommitTreeLeaves{}), Name: "LogCommitTreeLeaves"},
 		TyLogCurrentCommitTreeRoots:  {Ty: reflect.TypeOf(CommitTreeRoots{}), Name: "LogCommitTreeRoots"},
 		TyLogMixConfigPaymentKey:     {Ty: reflect.TypeOf(PaymentKey{}), Name: "LogConfigReceivingKey"},
+		TyLogNulliferSet:             {Ty: reflect.TypeOf(ExistValue{}), Name: "LogNullifierSet"},
 	}
 }
 
@@ -155,6 +156,17 @@ func MulCurvePointH(val string) *twistededwards.Point {
 
 	pointV.ScalarMul(&pointH, *v.FromMont())
 	return &pointV
+}
+
+func GetCurveSum(points ...*twistededwards.Point) *twistededwards.Point {
+
+	//Add之前需初始化pointSum,不能空值，不然会等于0
+	pointSum := twistededwards.NewPoint(points[0].X, points[0].Y)
+	for _, a := range points[1:] {
+		pointSum.Add(&pointSum, a)
+	}
+
+	return &pointSum
 }
 
 //A=B+C
