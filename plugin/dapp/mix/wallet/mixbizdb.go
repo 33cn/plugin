@@ -144,6 +144,8 @@ func (p *mixPolicy) processAuth(auth *mixTy.MixAuthorizeAction, table *table.Tab
 	}
 	input := out.(*mixTy.AuthorizePublicInput)
 	updateAuthSpend(table, input.AuthorizeSpendHash)
+	updateAuthHash(table, input.AuthorizeHash)
+
 }
 
 func (p *mixPolicy) processNullifiers(nulls []string, table *table.Table) {
@@ -189,11 +191,27 @@ func updateAuthSpend(ldb *table.Table, authSpend string) error {
 	return ldb.Update([]byte(u.TxIndex), u)
 }
 
-func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, error) {
+func updateAuthHash(ldb *table.Table, authHash string) error {
+	xs, err := ldb.ListIndex("authHash", []byte(authHash), nil, 1, 0)
+	if err != nil || len(xs) != 1 {
+		bizlog.Error("updateAuthHash update query List failed", "key", authHash, "err", err, "len", len(xs))
+		return nil
+	}
+	u, ok := xs[0].Data.(*mixTy.WalletDbMixInfo)
+	if !ok {
+		bizlog.Error("updateAuthSpend update decode failed", "data", xs[0].Data)
+		return nil
+
+	}
+	u.Info.Status = mixTy.NoteStatus_UNFROZEN
+	return ldb.Update([]byte(u.TxIndex), u)
+}
+
+func (p *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, error) {
 	if req == nil {
 		return nil, types.ErrInvalidParam
 	}
-	localDb := e.getWalletOperate().GetDBStore()
+	localDb := p.getWalletOperate().GetDBStore()
 	query := NewMixTable(localDb).GetQuery(commondb.NewKVDB(localDb))
 	var primary []byte
 
@@ -211,7 +229,7 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	}
 
 	cur := &MixRow{
-		WalletDbMixInfo: &mixTy.WalletDbMixInfo{Info: &mixTy.WalletIndexInfo{
+		WalletDbMixInfo: &mixTy.WalletDbMixInfo{Info: &mixTy.WalletNoteInfo{
 			NoteHash:           req.NoteHash,
 			Nullifier:          req.Nullifier,
 			AuthorizeSpendHash: req.AuthorizeSpendHash,
@@ -233,7 +251,7 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	if len(rows) == 0 {
 		return nil, types.ErrNotFound
 	}
-	var resp mixTy.WalletIndexResp
+	var resp mixTy.WalletNoteResp
 	for _, row := range rows {
 		r, ok := row.Data.(*mixTy.WalletDbMixInfo)
 		if !ok {
@@ -245,8 +263,8 @@ func (e *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 	return &resp, nil
 }
 
-func (e *mixPolicy) execAutoDelLocal(tx *types.Transaction) (*types.LocalDBSet, error) {
-	kvs, err := e.store.DelRollbackKV(tx, tx.Execer)
+func (p *mixPolicy) execAutoDelLocal(tx *types.Transaction) (*types.LocalDBSet, error) {
+	kvs, err := p.store.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +273,7 @@ func (e *mixPolicy) execAutoDelLocal(tx *types.Transaction) (*types.LocalDBSet, 
 	return dbSet, nil
 }
 
-func (p *mixPolicy) addTable(info *mixTy.WalletIndexInfo, heightIndex string, table *table.Table) {
+func (p *mixPolicy) addTable(info *mixTy.WalletNoteInfo, heightIndex string, table *table.Table) {
 	r := &mixTy.WalletDbMixInfo{
 		Info:    info,
 		TxIndex: heightIndex + info.NoteHash,
@@ -310,7 +328,7 @@ func (p *mixPolicy) processSecretGroup(noteHash string, secretGroup *mixTy.DHSec
 	}
 }
 
-func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys []*mixTy.WalletAddrPrivacy) (*mixTy.WalletIndexInfo, error) {
+func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys []*mixTy.WalletAddrPrivacy) (*mixTy.WalletNoteInfo, error) {
 	var dhSecret mixTy.DHSecret
 	data, err := hex.DecodeString(secretData)
 	if err != nil {
@@ -339,13 +357,14 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			continue
 		}
 		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr)
+		//wallet产生deposit tx时候 确保了三个key不同，除非自己构造相同key的交易
 		if rawData.ReceiverKey == key.Privacy.PaymentKey.ReceiveKey ||
 			rawData.ReturnKey == key.Privacy.PaymentKey.ReceiveKey ||
 			rawData.AuthorizeKey == key.Privacy.PaymentKey.ReceiveKey {
 			//decrypted, save database
-			var info mixTy.WalletIndexInfo
+			var info mixTy.WalletNoteInfo
 			info.NoteHash = noteHash
-			info.Nullifier = mixTy.Byte2Str(mimcHashString([]string{rawData.NoteRandom}))
+			info.Nullifier = hex.EncodeToString(mimcHashString([]string{rawData.NoteRandom}))
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
 			//如果授权为spenderAuthHash，则根据授权hash索引到本地数据库，spender更新本地为VALID，returner侧不变仍为FROZEN，花费后，两端都变为USED
 			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
@@ -353,13 +372,10 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			if len(rawData.AuthorizeKey) > LENNULLKEY {
 				switch key.Privacy.PaymentKey.ReceiveKey {
 				case rawData.ReceiverKey:
-					info.Role = mixTy.Role_SPENDER
-					info.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{rawData.ReceiverKey, rawData.Amount, rawData.NoteRandom}))
 				case rawData.ReturnKey:
-					info.Role = mixTy.Role_RETURNER
-					info.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{rawData.ReturnKey, rawData.Amount, rawData.NoteRandom}))
+					info.AuthorizeSpendHash = hex.EncodeToString(mimcHashString([]string{key.Privacy.PaymentKey.ReceiveKey, rawData.Amount, rawData.NoteRandom}))
 				case rawData.AuthorizeKey:
-					info.Role = mixTy.Role_AUTHORIZER
+					info.AuthorizeHash = hex.EncodeToString(mimcHashString([]string{rawData.AuthorizeKey, rawData.NoteRandom}))
 				}
 			}
 

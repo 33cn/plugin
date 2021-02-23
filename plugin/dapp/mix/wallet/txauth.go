@@ -67,18 +67,20 @@ type AuthorizeInput struct {
 	Valid9 string `tag:"secret"`
 }
 
-func (policy *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) {
-	note, err := policy.getNoteInfo(req.NoteHash, mixTy.NoteStatus_FROZEN)
+func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) {
+	note, err := p.getNoteInfo(req.NoteHash)
 	if err != nil {
 		return nil, err
 	}
-
+	if note.Status != mixTy.NoteStatus_FROZEN {
+		return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
+	}
 	if note.Secret.ReceiverKey != req.AuthorizeToAddr && note.Secret.ReturnKey != req.AuthorizeToAddr {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "note no match addr to AuthorizeToAddr=%s", req.AuthorizeToAddr)
 	}
 
 	//get spend privacy key
-	privacyKey, err := policy.getAccountPrivacyKey(note.Account)
+	privacyKey, err := p.getAccountPrivacyKey(note.Account)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
@@ -110,7 +112,7 @@ func (policy *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, er
 	}
 
 	//get tree path
-	treeProof, err := policy.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -121,13 +123,13 @@ func (policy *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, er
 
 }
 
-func (policy *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
 	var auth mixTy.AuthTxReq
 	err := types.Decode(req.Data, &auth)
 	if err != nil {
 		return nil, errors.Wrap(err, "decode req fail")
 	}
-	input, err := policy.getAuthParms(&auth)
+	input, err := p.getAuthParms(&auth)
 	if err != nil {
 		return nil, err
 	}
@@ -137,18 +139,18 @@ func (policy *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transac
 		return nil, errors.Wrapf(err, "getZkProofKeys note=%s", auth.NoteHash)
 	}
 	//verify
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, auth.ZkPath+mixTy.AuthVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, auth.ZkPath+mixTy.AuthVk); err != nil {
 		return nil, errors.Wrapf(err, "verifyProof fail for note=%s", auth.NoteHash)
 	}
 
-	return policy.getAuthTx(strings.TrimSpace(req.Title+mixTy.MixX), proofInfo)
+	return p.getAuthTx(strings.TrimSpace(req.Title+mixTy.MixX), proofInfo)
 }
 
-func (policy *mixPolicy) getAuthTx(execName string, proof *mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getAuthTx(execName string, proof *mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixAuthorizeAction{}
 	payload.Proof = proof
 
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
 		Ty:    mixTy.MixActionAuth,
 		Value: &mixTy.MixAction_Authorize{Authorize: payload},

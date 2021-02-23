@@ -92,10 +92,10 @@ type TransferOutput struct {
 	AmountRandom    string `tag:"secret"`
 }
 
-func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*TransferInput, error) {
+func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferInput, error) {
 
 	//get spend privacy key
-	privacyKey, err := policy.getAccountPrivacyKey(note.Account)
+	privacyKey, err := p.getAccountPrivacyKey(note.Account)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
@@ -133,7 +133,7 @@ func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*Tra
 		input.AuthorizeFlag = "1"
 	}
 
-	treeProof, err := policy.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -143,13 +143,13 @@ func (policy *mixPolicy) getTransferInputPart(note *mixTy.WalletIndexInfo) (*Tra
 	return &input, nil
 }
 
-func (policy *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
+func (p *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
 	//目前只支持一个ReceiverAddr
 	if strings.Contains(req.ReceiverAddrs, ",") || strings.Contains(req.Amounts, ",") {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "only support one addr or amount,addrs=%s,amount=%s",
 			req.ReceiverAddrs, req.Amounts)
 	}
-	resp, err := policy.depositParams(req.ReceiverAddrs, req.ReturnAddr, req.AuthorizeAddr, req.Amounts)
+	resp, err := p.depositParams(req.ReceiverAddrs, req.ReturnAddr, req.AuthorizeAddr, req.Amounts)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "deposit toAddr=%s", req.ReceiverAddrs)
 	}
@@ -269,7 +269,7 @@ func getShieldValue(inputAmounts []uint64, outAmount, change, minTxFee uint64) (
 	return rst, nil
 }
 
-func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
 	var transfer mixTy.TransferTxReq
 	err := types.Decode(req.Data, &transfer)
 	if err != nil {
@@ -277,11 +277,14 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	}
 
 	noteHashs := strings.Split(transfer.GetInput().NoteHashs, ",")
-	var notes []*mixTy.WalletIndexInfo
+	var notes []*mixTy.WalletNoteInfo
 	for _, h := range noteHashs {
-		note, err := policy.getNoteInfo(h, mixTy.NoteStatus_VALID)
+		note, err := p.getNoteInfo(h)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get note info for=%s", h)
+		}
+		if note.Status != mixTy.NoteStatus_VALID && note.Status != mixTy.NoteStatus_UNFROZEN {
+			return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
 		}
 		notes = append(notes, note)
 	}
@@ -289,7 +292,7 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	//1.获取Input
 	var inputParts []*TransferInput
 	for _, n := range notes {
-		input, err := policy.getTransferInputPart(n)
+		input, err := p.getTransferInputPart(n)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getTransferInputPart note=%s", n.NoteHash)
 		}
@@ -319,7 +322,7 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	if sumInput < outAmount+uint64(mixTy.Privacy2PrivacyTxFee) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "out amount=%d big than input=%d - fee=%d", outAmount, sumInput, uint64(mixTy.Privacy2PrivacyTxFee))
 	}
-	outPart, outDHSecret, err := policy.getTransferOutput(transfer.Output.Deposit)
+	outPart, outDHSecret, err := p.getTransferOutput(transfer.Output.Deposit)
 	if err != nil {
 		return nil, errors.Wrap(err, "getTransferOutput for deposit")
 	}
@@ -333,7 +336,7 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 		ReceiverAddrs: notes[0].Account,
 		Amounts:       strconv.FormatUint(changeAmount, 10),
 	}
-	changePart, changeDHSecret, err := policy.getTransferOutput(change)
+	changePart, changeDHSecret, err := p.getTransferOutput(change)
 	if err != nil {
 		return nil, errors.Wrap(err, "getTransferOutput change part ")
 	}
@@ -368,7 +371,7 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 		if err != nil {
 			return nil, errors.Wrapf(err, "verify.input getZkProofKeys,the i=%d", i)
 		}
-		if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk); err != nil {
+		if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk); err != nil {
 			return nil, errors.Wrapf(err, "input verifyProof fail,the i=%d", i)
 		}
 		inputProofs = append(inputProofs, inputProof)
@@ -379,7 +382,7 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrapf(err, "output getZkProofKeys")
 	}
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
 		return nil, errors.Wrapf(err, "output verifyProof fail")
 	}
 	outputProof.Secrets = outDHSecret
@@ -389,21 +392,21 @@ func (policy *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Tra
 	if err != nil {
 		return nil, errors.Wrapf(err, "change getZkProofKeys")
 	}
-	if err := policy.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
 		return nil, errors.Wrapf(err, "change verifyProof fail")
 	}
 	changeProof.Secrets = changeDHSecret
 
-	return policy.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), inputProofs, outputProof, changeProof)
+	return p.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), inputProofs, outputProof, changeProof)
 }
 
-func (policy *mixPolicy) getTransferTx(execName string, inputProofs []*mixTy.ZkProofInfo, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getTransferTx(execName string, inputProofs []*mixTy.ZkProofInfo, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixTransferAction{}
 	payload.Inputs = inputProofs
 	payload.Output = proofs[1]
 	payload.Change = proofs[2]
 
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
 		Ty:    mixTy.MixActionTransfer,
 		Value: &mixTy.MixAction_Transfer{Transfer: payload},

@@ -67,10 +67,13 @@ type WithdrawInput struct {
 	Valid9 string `tag:"secret"`
 }
 
-func (policy *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, error) {
-	note, err := policy.getNoteInfo(noteHash, mixTy.NoteStatus_VALID)
+func (p *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, error) {
+	note, err := p.getNoteInfo(noteHash)
 	if err != nil {
 		return nil, err
+	}
+	if note.Status != mixTy.NoteStatus_VALID && note.Status != mixTy.NoteStatus_UNFROZEN {
+		return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
 	}
 
 	var input WithdrawInput
@@ -85,24 +88,24 @@ func (policy *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, err
 	input.AuthorizePubKey = note.Secret.AuthorizeKey
 	input.NoteRandom = note.Secret.NoteRandom
 
-	input.SpendFlag = "1"
-	if note.Role == mixTy.Role_RETURNER {
-		input.SpendFlag = "0"
-	}
 	input.AuthorizeFlag = "0"
 	if len(input.AuthorizeSpendHash) > LENNULLKEY {
 		input.AuthorizeFlag = "1"
 	}
 
 	//get spend privacy key
-	privacyKey, err := policy.getAccountPrivacyKey(note.Account)
+	privacyKey, err := p.getAccountPrivacyKey(note.Account)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
 	input.SpendPriKey = privacyKey.Privacy.PaymentKey.SpendKey
+	input.SpendFlag = "1"
+	if privacyKey.Privacy.PaymentKey.ReceiveKey == input.ReturnPubKey {
+		input.SpendFlag = "0"
+	}
 
 	//get tree path
-	treeProof, err := policy.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -113,7 +116,7 @@ func (policy *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, err
 
 }
 
-func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
+func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {
 	var withdraw mixTy.WithdrawTxReq
 	err := types.Decode(req.Data, &withdraw)
 	if err != nil {
@@ -131,7 +134,7 @@ func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Tra
 
 	var sum uint64
 	for _, note := range notes {
-		input, err := policy.getWithdrawParams(note)
+		input, err := p.getWithdrawParams(note)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
@@ -141,7 +144,7 @@ func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Tra
 			return nil, errors.Wrapf(err, "getZkProofKeys note=%s", note)
 		}
 		//verify
-		if err := policy.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk); err != nil {
+		if err := p.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk); err != nil {
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
@@ -158,16 +161,16 @@ func (policy *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Tra
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount not match req=%d,note.sum=%d", withdraw.TotalAmount, sum)
 	}
 
-	return policy.getWithdrawTx(strings.TrimSpace(req.Title+mixTy.MixX), withdraw.TotalAmount, proofs)
+	return p.getWithdrawTx(strings.TrimSpace(req.Title+mixTy.MixX), withdraw.TotalAmount, proofs)
 
 }
 
-func (policy *mixPolicy) getWithdrawTx(execName string, amount uint64, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getWithdrawTx(execName string, amount uint64, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixWithdrawAction{}
 	payload.Amount = amount
 	payload.Proofs = proofs
 
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
 		Ty:    mixTy.MixActionWithdraw,
 		Value: &mixTy.MixAction_Withdraw{Withdraw: payload},

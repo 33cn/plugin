@@ -22,31 +22,6 @@ type mixStore struct {
 	*wcom.Store
 }
 
-//
-//func (store *mixStore) getAccountByPrefix(addr string) ([]*types.WalletAccountStore, error) {
-//	if len(addr) == 0 {
-//		bizlog.Error("getAccountByPrefix addr is nil")
-//		return nil, types.ErrInvalidParam
-//	}
-//	list := store.NewListHelper()
-//	accbytes := list.PrefixScan([]byte(addr))
-//	if len(accbytes) == 0 {
-//		bizlog.Error("getAccountByPrefix addr not exist")
-//		return nil, types.ErrAccountNotExist
-//	}
-//	WalletAccountStores := make([]*types.WalletAccountStore, len(accbytes))
-//	for index, accbyte := range accbytes {
-//		var walletaccount types.WalletAccountStore
-//		err := proto.Unmarshal(accbyte, &walletaccount)
-//		if err != nil {
-//			bizlog.Error("GetAccountByAddr", "proto.Unmarshal err:", err)
-//			return nil, types.ErrUnmarshal
-//		}
-//		WalletAccountStores[index] = &walletaccount
-//	}
-//	return WalletAccountStores, nil
-//}
-
 func (store *mixStore) getAccountPrivacy(addr string) ([]byte, error) {
 	if len(addr) == 0 {
 		return nil, types.ErrInvalidParam
@@ -55,29 +30,6 @@ func (store *mixStore) getAccountPrivacy(addr string) ([]byte, error) {
 	return store.Get(calcMixAddrKey(addr))
 
 }
-
-//
-//func (store *mixStore) getAccountByAddr(addr string) (*types.WalletAccountStore, error) {
-//	var account types.WalletAccountStore
-//	if len(addr) == 0 {
-//		bizlog.Error("GetAccountByAddr addr is nil")
-//		return nil, types.ErrInvalidParam
-//	}
-//	data, err := store.Get(calcMixAddrKey(addr))
-//	if data == nil || err != nil {
-//		if err != db.ErrNotFoundInDb {
-//			bizlog.Debug("GetAccountByAddr addr", "err", err)
-//		}
-//		return nil, types.ErrAddrNotExist
-//	}
-//
-//	err = types.Decode(data, &account)
-//	if err != nil {
-//		bizlog.Error("GetAccountByAddr", "proto.Unmarshal err:", err)
-//		return nil, types.ErrUnmarshal
-//	}
-//	return &account, nil
-//}
 
 func (store *mixStore) setAccountPrivacy(addr string, data []byte) error {
 	if len(addr) == 0 {
@@ -90,9 +42,6 @@ func (store *mixStore) setAccountPrivacy(addr string, data []byte) error {
 	}
 
 	store.GetDB().Set(calcMixAddrKey(addr), data)
-	//newbatch := store.NewBatch(true)
-	//newbatch.Set(calcMixAddrKey(addr), data)
-	//newbatch.Write()
 
 	return nil
 }
