@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"encoding/hex"
+	"math/big"
 	"testing"
 
 	"github.com/33cn/chain33/common"
@@ -105,4 +106,29 @@ func TestEncodeSecretData(t *testing.T) {
 	var rawSecret mixTy.SecretData
 	types.Decode(rawData, &rawSecret)
 	assert.Equal(t, rawSecret.ReceiverKey, secret.ReceiverKey)
+}
+
+func TestMimcHashPriKey(t *testing.T) {
+	//frModValue := "21888242871839275222246405745257275088548364400416034343698204186575808495617"
+	a := "11888242871839275222246405745257275088548364400416034343698204186575808495617"
+	b := "31888242871839275222246405745257275088548364400416034343698204186575808495617"
+
+	var bigVal, lessVal big.Int
+	lessVal.SetString(a, 10)
+	bigVal.SetString(b, 10)
+
+	//测试大值
+	prikey := bigVal.Bytes()
+	//prikey对modValue取了模，spendkey 不一定和Prikey相等了， lessval相等，bigVal不相等
+	spendKey := mixTy.Byte2Str(prikey[:])
+	t.Log("prikey ori", hex.EncodeToString(prikey), "prikey spendkey", hex.EncodeToString(mixTy.Str2Byte(spendKey)))
+
+	//mimcHash 会对每个val取模，这样又相等了
+	rcvSpenPri := mimcHashByte([][]byte{mixTy.Str2Byte(spendKey)})
+	//payPrivKey 可能超出fr的模，spendKey是payPrivKey对fr取的模，有可能和payPrivKey不相等，这里需要用spendKey取hash
+	rcvKeyPri := mimcHashByte([][]byte{prikey})
+	receiveKeyBig := mimcHashByte([][]byte{mixTy.Str2Byte(b)})
+	t.Log("spendPri", hex.EncodeToString(rcvSpenPri), "prikey", hex.EncodeToString(rcvKeyPri), "big", hex.EncodeToString(receiveKeyBig))
+
+	assert.Equal(t, rcvSpenPri, rcvKeyPri)
 }

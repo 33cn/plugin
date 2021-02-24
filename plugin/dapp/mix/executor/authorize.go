@@ -28,25 +28,25 @@ func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", input.AuthorizeHash)
 	}
 	if !isNotFound(err) {
-		return errors.Wrapf(err, "auth=%s", input.AuthorizeHash)
+		return errors.Wrapf(err, "get auth=%s", input.AuthorizeHash)
 	}
 
-	authPubKeys, err := a.getAuthKeys()
-	if err != nil {
-		return errors.Wrap(err, "get AuthPubkey")
-	}
-
-	//authorize pubkey hash should be configured already
-	var found bool
-	for _, k := range authPubKeys.Keys {
-		if input.AuthorizePubKey == k {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return errors.Wrapf(types.ErrNotFound, "authPubkey=%s", input.AuthorizePubKey)
-	}
+	//authPubKeys, err := a.getAuthKeys()
+	//if err != nil {
+	//	return errors.Wrap(err, "get AuthPubkey")
+	//}
+	//
+	////authorize pubkey hash should be configured already
+	//var found bool
+	//for _, k := range authPubKeys.Keys {
+	//	if input.AuthorizePubKey == k {
+	//		found = true
+	//		break
+	//	}
+	//}
+	//if !found {
+	//	return errors.Wrapf(types.ErrNotFound, "authPubkey=%s", input.AuthorizePubKey)
+	//}
 	return nil
 }
 

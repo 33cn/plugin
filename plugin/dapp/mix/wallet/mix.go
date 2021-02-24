@@ -35,13 +35,15 @@ func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	payPrivKey := key.([32]byte)
 
 	//payPrivKey := mimcHashByte([][]byte{rootPrivKey})
+	//payPrivKey 可能超出fr的模，spendKey是payPrivKey对fr取的模，有可能和payPrivKey不相等，这里用spendKey取hash
+	//mimcHashByte 会对输入参数对fr取模，在电路上不会影响ReceiveKey
 	paymentKey := &mixTy.PaymentKeyPair{}
 	paymentKey.SpendKey = mixTy.Byte2Str(payPrivKey[:])
-	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{payPrivKey[:]}))
+	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{mixTy.Str2Byte(paymentKey.SpendKey)}))
 
 	encryptKeyPair := &mixTy.EncryptKeyPair{}
 	pubkey := ecdh.PublicKey(payPrivKey)
-	//需要Hex编码，不要使用fr.string, 模范围不同
+	//加解密是在x25519域，需要Hex编码，不要使用fr.string, 模范围不同
 	encryptKeyPair.PrivKey = hex.EncodeToString(payPrivKey[:])
 	pubData := pubkey.([32]byte)
 	encryptKeyPair.PubKey = hex.EncodeToString(pubData[:])
@@ -396,7 +398,10 @@ func (p *mixPolicy) enablePrivacy(addrs []string) (*mixTy.ReqEnablePrivacyRst, e
 
 func (p *mixPolicy) showAccountNoteInfo(req *mixTy.WalletMixIndexReq) (*mixTy.WalletNoteResp, error) {
 	resp, err := p.listMixInfos(req)
-	return resp.(*mixTy.WalletNoteResp), err
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*mixTy.WalletNoteResp), nil
 }
 
 func (p *mixPolicy) createRawTx(req *mixTy.CreateRawTxReq) (*types.Transaction, error) {

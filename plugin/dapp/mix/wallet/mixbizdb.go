@@ -364,18 +364,17 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			//decrypted, save database
 			var info mixTy.WalletNoteInfo
 			info.NoteHash = noteHash
-			info.Nullifier = hex.EncodeToString(mimcHashString([]string{rawData.NoteRandom}))
+			info.Nullifier = mixTy.Byte2Str(mimcHashString([]string{rawData.NoteRandom}))
 			//如果自己是spender,则记录有关spenderAuthHash,如果是returner，则记录returnerAuthHash
 			//如果授权为spenderAuthHash，则根据授权hash索引到本地数据库，spender更新本地为VALID，returner侧不变仍为FROZEN，花费后，两端都变为USED
 			//如果授权为returnerAuthHash，则returner更新本地为VALID，spender侧仍为FROZEN，
 			info.AuthorizeSpendHash = "0"
 			if len(rawData.AuthorizeKey) > LENNULLKEY {
 				switch key.Privacy.PaymentKey.ReceiveKey {
-				case rawData.ReceiverKey:
-				case rawData.ReturnKey:
-					info.AuthorizeSpendHash = hex.EncodeToString(mimcHashString([]string{key.Privacy.PaymentKey.ReceiveKey, rawData.Amount, rawData.NoteRandom}))
+				case rawData.ReceiverKey, rawData.ReturnKey:
+					info.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{key.Privacy.PaymentKey.ReceiveKey, rawData.Amount, rawData.NoteRandom}))
 				case rawData.AuthorizeKey:
-					info.AuthorizeHash = hex.EncodeToString(mimcHashString([]string{rawData.AuthorizeKey, rawData.NoteRandom}))
+					info.AuthorizeHash = mixTy.Byte2Str(mimcHashString([]string{rawData.AuthorizeKey, rawData.NoteRandom}))
 				}
 			}
 

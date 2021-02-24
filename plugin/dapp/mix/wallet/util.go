@@ -284,6 +284,18 @@ func updateTreePath(obj interface{}, treeProof *mixTy.TreePathProof) {
 	}
 }
 
+//func printObj(obj interface{}) {
+//	tv := reflect.ValueOf(obj)
+//	for i:=0;i<tv.NumField();i++{
+//		name := tv.Field(i).Elem()
+//	}
+//	for i, t := range treeProof.TreePath {
+//		tv.Elem().FieldByName("Path" + strconv.Itoa(i)).SetString(t)
+//		tv.Elem().FieldByName("Helper" + strconv.Itoa(i)).SetString(strconv.Itoa(int(treeProof.Helpers[i])))
+//		tv.Elem().FieldByName("Valid" + strconv.Itoa(i)).SetString("1")
+//	}
+//}
+
 func getZkProofKeys(circuitFile, pkFile string, inputs interface{}) (*mixTy.ZkProofInfo, error) {
 	assignments, err := getAssignments(inputs)
 	if err != nil {

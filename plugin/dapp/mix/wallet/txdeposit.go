@@ -33,7 +33,7 @@ type DepositInput struct {
 }
 
 func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mixTy.DepositProofResp, error) {
-	if receiver == returner || receiver == auth || returner == auth {
+	if len(receiver) > 0 && len(returner) > 0 && (receiver == returner || receiver == auth || returner == auth) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "addrs should not be same to receiver=%s,return=%s,auth=%s",
 			receiver, returner, auth)
 	}

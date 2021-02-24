@@ -403,8 +403,8 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 func (p *mixPolicy) getTransferTx(execName string, inputProofs []*mixTy.ZkProofInfo, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixTransferAction{}
 	payload.Inputs = inputProofs
-	payload.Output = proofs[1]
-	payload.Change = proofs[2]
+	payload.Output = proofs[0]
+	payload.Change = proofs[1]
 
 	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
