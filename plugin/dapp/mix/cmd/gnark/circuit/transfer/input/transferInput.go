@@ -1,4 +1,4 @@
-package main
+package input
 
 import (
 	util "github.com/33cn/plugin/plugin/dapp/mix/cmd/gnark/circuit"

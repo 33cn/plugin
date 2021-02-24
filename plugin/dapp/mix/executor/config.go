@@ -187,8 +187,12 @@ func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
 }
 
 func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, error) {
-	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.EncryptKey) == 0 {
+	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.EncryptKey) == 0 || len(paykey.Addr) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey=%v", paykey)
+	}
+	//检查用户使用对应的addr的key，但不能确保key就是对应addr
+	if paykey.Addr != a.fromaddr {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "register addr=%s not match with sign=%s", paykey.Addr, a.fromaddr)
 	}
 	//直接覆盖
 	return makeConfigPaymentKeyReceipt(&mixTy.PaymentKey{

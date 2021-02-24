@@ -17,7 +17,6 @@ func main() {
 /*
 public:
 	treeRootHash
-	authorizePubKey
 	authorizeHash(=hash(authpubkey+noterandom))
 	authorizeSpendHash(=hash(spendpub+value+noterandom))
 
@@ -25,6 +24,7 @@ private:
 	amount
 	receiverPubKey
 	returnPubKey
+	authorizePubKey
 	authorizePriKey
 	spendFlag
 	noteRandom
@@ -47,7 +47,7 @@ func NewAuth() *frontend.R1CS {
 	authorizePriKey := circuit.SECRET_INPUT("AuthorizePriKey")
 	noteRandom := circuit.SECRET_INPUT("NoteRandom")
 
-	authPubKey := circuit.PUBLIC_INPUT("AuthorizePubKey")
+	authPubKey := circuit.SECRET_INPUT("AuthorizePubKey")
 	authorizeHash := circuit.PUBLIC_INPUT("AuthorizeHash")
 
 	// hash function

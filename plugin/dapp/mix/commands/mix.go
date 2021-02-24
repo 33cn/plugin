@@ -160,23 +160,27 @@ func mixConfigPaymentPubKeyParaCmd() *cobra.Command {
 }
 
 func addPayPubKeyConfigFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "register for addr ")
+	cmd.MarkFlagRequired("addr")
+
 	cmd.Flags().StringP("receiver", "r", "", "receiver key")
 	cmd.MarkFlagRequired("receiver")
 
-	cmd.Flags().StringP("encryptKey", "a", "", "encrypt key for secret")
+	cmd.Flags().StringP("encryptKey", "e", "", "encrypt key for secret")
 	cmd.MarkFlagRequired("encryptKey")
 
 }
 
 func createConfigPayPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	encryptKey, _ := cmd.Flags().GetString("encryptKey")
 
 	payload := &mixTy.MixConfigAction{}
 	payload.Ty = mixTy.MixConfigType_Payment
 
-	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{ReceiverKey: receiver, EncryptKey: encryptKey}}
+	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{Addr: addr, ReceiverKey: receiver, EncryptKey: encryptKey}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
@@ -362,8 +366,8 @@ func showMixTxs(cmd *cobra.Command, args []string) {
 // ShowProposalBoardCmd 显示提案查询信息
 func ShowPaymentPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rcvkey",
-		Short: "show peer addr receive key info",
+		Use:   "peer",
+		Short: "get peer addr receive key info",
 		Run:   showPayment,
 	}
 	addShowPaymentflags(cmd)
@@ -411,7 +415,7 @@ func WalletCmd() *cobra.Command {
 func ShowAccountPrivacyInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keys",
-		Short: "show account note privacy keys",
+		Short: "get account privacy keys for mix note",
 		Run:   accountPrivacy,
 	}
 	accountPrivacyCmdFlags(cmd)
@@ -421,9 +425,9 @@ func ShowAccountPrivacyInfo() *cobra.Command {
 func accountPrivacyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "user wallet addr")
 
-	cmd.Flags().StringP("priv", "p", "", "user wallet privacy key,option")
+	cmd.Flags().StringP("priv", "p", "", "user wallet addr's privacy key,option")
 
-	cmd.Flags().Uint32P("detail", "d", 0, "if get payment priv keys,option")
+	cmd.Flags().Uint32P("detail", "d", 0, "if get keys' privacy keys,option")
 
 }
 
@@ -588,49 +592,6 @@ func SecretCmd() *cobra.Command {
 
 	return cmd
 }
-
-//// EncodeSecretDataCmd get para chain status by height
-//func EncodeSecretDataCmd() *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "raw",
-//		Short: "raw secret data",
-//		Run:   encodeSecret,
-//	}
-//	encodeSecretCmdFlags(cmd)
-//	return cmd
-//}
-//
-//func encodeSecretCmdFlags(cmd *cobra.Command) {
-//	cmd.Flags().StringP("receiver", "p", "", "receiver key")
-//	cmd.MarkFlagRequired("receiver")
-//
-//	cmd.Flags().StringP("return", "r", "", "return key")
-//
-//	cmd.Flags().StringP("authorize", "a", "", "authorize key")
-//
-//	cmd.Flags().StringP("amount", "m", "", "amount")
-//	cmd.MarkFlagRequired("amount")
-//
-//}
-
-//func encodeSecret(cmd *cobra.Command, args []string) {
-//	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-//	receiver, _ := cmd.Flags().GetString("receiver")
-//	returnKey, _ := cmd.Flags().GetString("return")
-//	authorize, _ := cmd.Flags().GetString("authorize")
-//	amount, _ := cmd.Flags().GetString("amount")
-//
-//	req := mixTy.SecretData{
-//		ReceiverKey:  receiver,
-//		ReturnKey:    returnKey,
-//		AuthorizeKey: authorize,
-//		Amount:          amount,
-//	}
-//
-//	var res mixTy.EncodedSecretData
-//	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.EncodeSecretData", req, &res)
-//	ctx.Run()
-//}
 
 // EncodeSecretDataCmd get para chain status by height
 func DecodeSecretDataCmd() *cobra.Command {

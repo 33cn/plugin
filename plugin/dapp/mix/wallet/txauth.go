@@ -18,13 +18,13 @@ import (
 type AuthorizeInput struct {
 	//public
 	TreeRootHash       string `tag:"public"`
-	AuthorizePubKey    string `tag:"public"`
 	AuthorizeHash      string `tag:"public"`
 	AuthorizeSpendHash string `tag:"public"`
 
 	//secret
 	ReceiverPubKey  string `tag:"secret"`
 	ReturnPubKey    string `tag:"secret"`
+	AuthorizePubKey string `tag:"secret"`
 	AuthorizePriKey string `tag:"secret"`
 	NoteRandom      string `tag:"secret"`
 
@@ -106,7 +106,7 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) 
 
 	//default auto to receiver
 	input.SpendFlag = "1"
-	if input.ReturnPubKey != "0" && input.ReturnPubKey != req.AuthorizeToAddr {
+	if input.ReturnPubKey != "0" && input.ReturnPubKey == req.AuthorizeToAddr {
 		//auth to returner
 		input.SpendFlag = "0"
 	}

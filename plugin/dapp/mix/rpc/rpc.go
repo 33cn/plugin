@@ -23,7 +23,6 @@ import (
 //}
 
 func (g *channelClient) GetRescanStatus(ctx context.Context, in *types.ReqNil) (*types.ReqString, error) {
-	log.Info("GetRescanStatus in")
 	data, err := g.ExecWalletFunc(mixTy.MixX, "GetRescanStatus", in)
 	if err != nil {
 		return nil, err
@@ -34,7 +33,6 @@ func (g *channelClient) GetRescanStatus(ctx context.Context, in *types.ReqNil) (
 //
 //// 扫描UTXO以及获取扫描UTXO后的状态
 func (g *channelClient) RescanNotes(ctx context.Context, in *types.ReqNil) (*types.ReqString, error) {
-	log.Info("RescanNotes in")
 	data, err := g.ExecWalletFunc(mixTy.MixX, "RescanNotes", in)
 	if err != nil {
 		return nil, err
@@ -52,8 +50,7 @@ func (g *channelClient) EnablePrivacy(ctx context.Context, in *types.ReqAddrs) (
 }
 
 // ShowPrivacyAccountInfo display privacy account information for json rpc
-func (c *Jrpc) ShowAccountPrivacyInfo(in *types.ReqString, result *json.RawMessage) error {
-	log.Info("ShowAccountPrivacyInfo jrpc in")
+func (c *Jrpc) ShowAccountPrivacyInfo(in *mixTy.PaymentKeysReq, result *json.RawMessage) error {
 	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "ShowAccountPrivacyInfo", in)
 	if err != nil {
 		return err

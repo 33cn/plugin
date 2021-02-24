@@ -72,6 +72,11 @@ func NewWithdraw() *frontend.R1CS {
 	targetAuthHash := circuit.SELECT(authFlag, calcAuthHash, nullValue)
 	circuit.MUSTBE_EQ(authHash, targetAuthHash)
 
+	//need check in database if not null
+	nullifierHash := circuit.PUBLIC_INPUT("NullifierHash")
+	calcNullifierHash := mimc.Hash(&circuit, noteRandom)
+	circuit.MUSTBE_EQ(nullifierHash, calcNullifierHash)
+
 	//通过merkle tree保证noteHash存在，即便return,auth都是null也是存在的，则可以不经过授权即可消费
 	//preImage=hash(spendPubkey, returnPubkey,AuthPubkey,spendValue,noteRandom)
 	noteHash := circuit.SECRET_INPUT("NoteHash")
