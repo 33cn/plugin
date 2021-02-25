@@ -442,11 +442,13 @@ func (client *Client) CreateBlock() {
 			continue
 		}
 		if !client.CheckTxsAvailable(height) {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 			continue
 		}
 
-		client.txsAvailable <- height + 1
+		if height+1 == client.csState.GetRoundState().Height {
+			client.txsAvailable <- height + 1
+		}
 		time.Sleep(time.Duration(timeoutTxAvail) * time.Millisecond)
 	}
 }
@@ -469,29 +471,9 @@ func (client *Client) StopC() <-chan struct{} {
 	return client.stopC
 }
 
-// GetMempoolSize get tx num in mempool
-func (client *Client) GetMempoolSize() int64 {
-	msg := client.GetQueueClient().NewMessage("mempool", types.EventGetMempoolSize, nil)
-	err := client.GetQueueClient().Send(msg, true)
-	if err != nil {
-		tendermintlog.Error("GetMempoolSize send", "err", err)
-		return 0
-	}
-	resp, err := client.GetQueueClient().Wait(msg)
-	if err != nil {
-		tendermintlog.Error("GetMempoolSize result", "err", err)
-		return 0
-	}
-	return resp.GetData().(*types.MempoolSize).GetSize()
-}
-
 // CheckTxsAvailable check whether some new transactions arriving
 func (client *Client) CheckTxsAvailable(height int64) bool {
-	num := client.GetMempoolSize()
-	if num == 0 {
-		return false
-	}
-	txs := client.RequestTx(int(num), nil)
+	txs := client.RequestTx(1, nil)
 	txs = client.CheckTxDup(txs, height)
 	return len(txs) != 0
 }
