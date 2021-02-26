@@ -25,7 +25,8 @@ var boardOpt = &table.Option{
 		"authHash",
 		"authSpendHash",
 		"account",
-		"status"},
+		"status",
+		"owner_status"},
 }
 
 //NewStageTable 新建表
@@ -79,6 +80,8 @@ func (r *MixRow) Get(key string) ([]byte, error) {
 		return []byte(r.Info.Account), nil
 	case "status":
 		return []byte(fmt.Sprintf("%2d", r.Info.Status)), nil
+	case "owner_status":
+		return []byte(fmt.Sprintf("%s_%2d", r.Info.Account, r.Info.Status)), nil
 	default:
 		return nil, types.ErrNotFound
 	}

@@ -93,7 +93,6 @@ type TransferOutput struct {
 }
 
 func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferInput, error) {
-
 	//get spend privacy key
 	privacyKey, err := p.getAccountPrivacyKey(note.Account)
 	if err != nil {
@@ -101,7 +100,7 @@ func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferI
 	}
 	if privacyKey.Privacy.PaymentKey.ReceiveKey != note.Secret.ReceiverKey &&
 		privacyKey.Privacy.PaymentKey.ReceiveKey != note.Secret.ReturnKey {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "payment pubkey from note=%s not match from privacyKey=%s,for account =%s",
+		return nil, errors.Wrapf(types.ErrInvalidParam, "receiver key from note=%s not match from key=%s,for account =%s",
 			note.Secret.ReceiverKey, privacyKey.Privacy.PaymentKey.ReceiveKey, note.Account)
 	}
 
@@ -367,32 +366,32 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	//verify input
 	var inputProofs []*mixTy.ZkProofInfo
 	for i, input := range inputParts {
-		inputProof, err := getZkProofKeys(transfer.Input.ZkPath+mixTy.TransInputCircuit, transfer.Input.ZkPath+mixTy.TransInputPk, *input)
+		inputProof, err := getZkProofKeys(transfer.Input.ZkPath+mixTy.TransInputCircuit, transfer.Input.ZkPath+mixTy.TransInputPk, *input, req.Privacy)
 		if err != nil {
 			return nil, errors.Wrapf(err, "verify.input getZkProofKeys,the i=%d", i)
 		}
-		if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk); err != nil {
+		if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk, req.Verify); err != nil {
 			return nil, errors.Wrapf(err, "input verifyProof fail,the i=%d", i)
 		}
 		inputProofs = append(inputProofs, inputProof)
 	}
 
 	//verify output
-	outputProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *outPart)
+	outputProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *outPart, req.Privacy)
 	if err != nil {
 		return nil, errors.Wrapf(err, "output getZkProofKeys")
 	}
-	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk, req.Verify); err != nil {
 		return nil, errors.Wrapf(err, "output verifyProof fail")
 	}
 	outputProof.Secrets = outDHSecret
 
 	//verify change
-	changeProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *changePart)
+	changeProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *changePart, req.Privacy)
 	if err != nil {
 		return nil, errors.Wrapf(err, "change getZkProofKeys")
 	}
-	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk, req.Verify); err != nil {
 		return nil, errors.Wrapf(err, "change verifyProof fail")
 	}
 	changeProof.Secrets = changeDHSecret
