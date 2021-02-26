@@ -87,9 +87,9 @@ func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) 
 	return &raw, nil
 }
 
-func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string) error {
+func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string, verifyOnChain int32) error {
 	//vkpath verify
-	if len(vkPath) > 0 {
+	if verifyOnChain > 0 && len(vkPath) > 0 {
 		vk, err := getVerifyKey(vkPath)
 		if err != nil {
 			return errors.Wrapf(err, "getVerifyKey path=%s", vkPath)
@@ -111,11 +111,7 @@ func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProof
 		Proof: proof,
 	}
 	//onchain verify
-	_, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
-		Driver:   "mix",
-		FuncName: "VerifyProof",
-		Param:    types.Encode(verify),
-	})
+	_, err := p.walletOperate.GetAPI().Query(mixTy.MixX, "VerifyProof", verify)
 	return err
 }
 
@@ -284,19 +280,34 @@ func updateTreePath(obj interface{}, treeProof *mixTy.TreePathProof) {
 	}
 }
 
-//func printObj(obj interface{}) {
-//	tv := reflect.ValueOf(obj)
-//	for i:=0;i<tv.NumField();i++{
-//		name := tv.Field(i).Elem()
-//	}
-//	for i, t := range treeProof.TreePath {
-//		tv.Elem().FieldByName("Path" + strconv.Itoa(i)).SetString(t)
-//		tv.Elem().FieldByName("Helper" + strconv.Itoa(i)).SetString(strconv.Itoa(int(treeProof.Helpers[i])))
-//		tv.Elem().FieldByName("Valid" + strconv.Itoa(i)).SetString("1")
-//	}
-//}
+func printObj(obj interface{}) {
+	ty := reflect.TypeOf(obj)
+	tv := reflect.ValueOf(obj)
+	n := ty.NumField()
 
-func getZkProofKeys(circuitFile, pkFile string, inputs interface{}) (*mixTy.ZkProofInfo, error) {
+	for i := 0; i < n; i++ {
+		name := ty.Field(i).Name
+		v, ok := ty.Field(i).Tag.Lookup("tag")
+		if !ok {
+			fmt.Println("fieldname=", ty.Field(i).Name, "not set tag")
+		}
+
+		fmt.Println("fieldname=", ty.Field(i).Name, "| value=", tv.FieldByName(name).Interface(), "| tag=", v)
+	}
+
+}
+
+func getZkProofKeys(circuitFile, pkFile string, inputs interface{}, privacyPrint int32) (*mixTy.ZkProofInfo, error) {
+	if privacyPrint > 0 {
+		fmt.Println("--output zk parameters for circuit:", circuitFile)
+		rst, err := json.MarshalIndent(inputs, "", "    ")
+		if err != nil {
+			fmt.Println(err)
+
+		}
+		fmt.Println(string(rst))
+	}
+
 	assignments, err := getAssignments(inputs)
 	if err != nil {
 		return nil, err

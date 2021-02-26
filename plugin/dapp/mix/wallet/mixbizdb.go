@@ -224,6 +224,9 @@ func (p *mixPolicy) listMixInfos(req *mixTy.WalletMixIndexReq) (types.Message, e
 		indexName = "authSpendHash"
 	} else if len(req.Account) > 0 {
 		indexName = "account"
+		if req.Status > 0 {
+			indexName = "owner_status"
+		}
 	} else if req.Status > 0 {
 		indexName = "status"
 	}
