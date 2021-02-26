@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -87,13 +88,20 @@ func TestGetAssignments(t *testing.T) {
 	_, ok := reduceAssign["ReceiverPubKey"]
 	assert.Equal(t, ok, false)
 
-	//tv := reflect.ValueOf(&deposit)
-	//tv.Elem().FieldByName("NoteHash").SetString("999")
-	////tv.FieldByName("NoteHash").Elem().SetString("999")
-	//assert.Equal(t,"999",deposit.NoteHash)
-	var in WithdrawInput
-	initTreePath(&in)
-	assert.Equal(t, "99", in.Path1)
+	tv := reflect.ValueOf(&deposit)
+	tv.Elem().FieldByName("NoteHash").SetString("999")
+	//tv.FieldByName("NoteHash").Elem().SetString("999")
+	assert.Equal(t, "999", deposit.NoteHash)
+	//var in WithdrawInput
+	//initTreePath(&in)
+	//assert.Equal(t, "99", in.Path1)
+	printObj(deposit)
+	rst, err := json.MarshalIndent(deposit, "", "    ")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(rst))
 }
 
 func TestVerifyProof(t *testing.T) {

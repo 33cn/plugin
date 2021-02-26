@@ -26,12 +26,12 @@ func setPrefix() {
 	authPubKeys = "mavl-mix-auth-pubkeys-"
 	paymentPubKey = "mavl-mix-payment-pubkey-"
 	commitTreeArchiveRoots = "mavl-mix-commitTree-roots-archive-"
-	commitTreeCurrentRoots = "mavl-mix-commitTree-current-roots"
+	commitTreeCurrentRoots = "mavl-mix-commitTree-roots-current-"
 	commitTreeCurrentLeaves = "mavl-mix-commitTree-current-leaves-"
 
 	commitTreeRootLeaves = "mavl-mix-commitTree-rootLeaves-"
 	authorizeHash = "mavl-mix-authorizeHash"
-	authorizeSpendHash = "mavl-mix-authorizeHash-spend-"
+	authorizeSpendHash = "mavl-mix-authorizeSpendHash-"
 	nullifierHash = "mavl-mix-nullifierHash"
 
 }

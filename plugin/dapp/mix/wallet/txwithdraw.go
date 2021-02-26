@@ -139,12 +139,12 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
 
-		proofInfo, err := getZkProofKeys(withdraw.ZkPath+mixTy.WithdrawCircuit, withdraw.ZkPath+mixTy.WithdrawPk, *input)
+		proofInfo, err := getZkProofKeys(withdraw.ZkPath+mixTy.WithdrawCircuit, withdraw.ZkPath+mixTy.WithdrawPk, *input, req.Privacy)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getZkProofKeys note=%s", note)
 		}
 		//verify
-		if err := p.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk); err != nil {
+		if err := p.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk, req.Verify); err != nil {
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 

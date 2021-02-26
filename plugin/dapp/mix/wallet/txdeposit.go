@@ -128,7 +128,7 @@ func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mix
 
 }
 
-func (p *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath string) (*mixTy.ZkProofInfo, error) {
+func (p *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath string, verifyOnChain, privacyPrint int32) (*mixTy.ZkProofInfo, error) {
 
 	resp, err := p.depositParams(receiver, returner, auth, amount)
 	if err != nil {
@@ -143,13 +143,13 @@ func (p *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath str
 	input.ReturnPubKey = resp.Proof.ReturnKey
 	input.NoteRandom = resp.Proof.NoteRandom
 
-	proofInfo, err := getZkProofKeys(zkPath+mixTy.DepositCircuit, zkPath+mixTy.DepositPk, input)
+	proofInfo, err := getZkProofKeys(zkPath+mixTy.DepositCircuit, zkPath+mixTy.DepositPk, input, privacyPrint)
 	if err != nil {
 		return nil, err
 	}
 
 	//线上验证proof,失败的原因有可能circuit,Pk和线上vk不匹配，或不是一起产生的版本
-	if err := p.verifyProofOnChain(mixTy.VerifyType_DEPOSIT, proofInfo, zkPath+mixTy.DepositVk); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_DEPOSIT, proofInfo, zkPath+mixTy.DepositVk, verifyOnChain); err != nil {
 		return nil, errors.Wrap(err, "verifyProof fail")
 	}
 	proofInfo.Secrets = resp.Secrets
@@ -180,7 +180,7 @@ func (p *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Transacti
 
 	var proofs []*mixTy.ZkProofInfo
 	for i, rcv := range receivers {
-		p, err := p.getDepositProof(rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath)
+		p, err := p.getDepositProof(rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath, req.Verify, req.Privacy)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get Deposit proof for=%s", rcv)
 		}
