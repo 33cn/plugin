@@ -19,6 +19,7 @@ message wasmCall {
   string contract = 1;
   string method = 2;
   repeated int64 parameters = 3;
+  repeated string env = 4;
 }
 
 message queryCheckContract {

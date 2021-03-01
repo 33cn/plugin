@@ -62,6 +62,7 @@ func cmdCallContract() *cobra.Command {
 	cmd.Flags().StringP("name", "n", "", "contract name")
 	cmd.Flags().StringP("method", "m", "", "method name")
 	cmd.Flags().IntSliceP("parameters", "p", nil, "parameters of the method which should be num")
+	cmd.Flags().StringSliceP("env", "v", nil, "string parameters set to environment")
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("method")
 	return cmd
@@ -114,6 +115,7 @@ func callContract(cmd *cobra.Command, args []string) {
 	name, _ := cmd.Flags().GetString("name")
 	method, _ := cmd.Flags().GetString("method")
 	parameters, _ := cmd.Flags().GetIntSlice("parameters")
+	env, _ := cmd.Flags().GetStringSlice("env")
 	var parameters2 []int64
 	for _, param := range parameters {
 		parameters2 = append(parameters2, int64(param))
@@ -123,6 +125,7 @@ func callContract(cmd *cobra.Command, args []string) {
 		Contract:   name,
 		Method:     method,
 		Parameters: parameters2,
+		Env:        env,
 	}
 	params := rpctypes.CreateTxIn{
 		Execer:     wasmtypes.WasmX,

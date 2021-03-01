@@ -287,6 +287,21 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				copy(vm.Memory[sumPtr:sumPtr+sumLen], sha256(data))
 				return 0
 			}
+		case "getENVSize":
+			return func(vm *exec.VirtualMachine) int64 {
+				n := vm.GetCurrentFrame().Locals[0]
+				return int64(getENVSize(int(n)))
+			}
+
+		case "getENV":
+			return func(vm *exec.VirtualMachine) int64 {
+				n := vm.GetCurrentFrame().Locals[0]
+				valuePtr := int(uint32(vm.GetCurrentFrame().Locals[1]))
+				valueLen := int(uint32(vm.GetCurrentFrame().Locals[2]))
+				value := getENV(int(n))
+				copy(vm.Memory[valuePtr:valuePtr+valueLen], value)
+				return int64(len(value))
+			}
 
 		default:
 			log.Error("ResolveFunc", "unknown field", field)

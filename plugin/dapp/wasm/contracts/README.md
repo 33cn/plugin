@@ -60,8 +60,8 @@ wabt/bin/wasm2wat dice.wasm
 
 ### 调用合约
 ```bash
-#其中参数为用逗号分隔的数字
-./chain33-cli send wasm call -n 发布合约时指定的合约 -m 调用合约方法名 -p 参数 -k 用户私钥  
+#其中参数为用逗号分隔的数字列表，字符串参数为逗号分隔的字符串列表
+./chain33-cli send wasm call -n 发布合约时指定的合约 -m 调用合约方法名 -p 参数 -v 字符串参数 -k 用户私钥  
 ```
 
 ### 转账及提款
