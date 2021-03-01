@@ -170,3 +170,11 @@ func printlog(s string) {
 func sha256(data []byte) []byte {
 	return common.Sha256(data)
 }
+
+func getENVSize(n int) int {
+	return len(wasmCB.ENV[n])
+}
+
+func getENV(n int) string {
+	return wasmCB.ENV[n]
+}

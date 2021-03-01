@@ -113,6 +113,10 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	w.contractName = payload.Contract
 	w.tx = tx
 	w.execAddr = address.ExecAddress(string(types.GetRealExecName(tx.Execer)))
+	w.ENV = make(map[int]string)
+	for i, v := range payload.Env {
+		w.ENV[i] = v
+	}
 	wasmCB = w
 	defer func() {
 		wasmCB = nil
