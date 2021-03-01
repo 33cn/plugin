@@ -296,7 +296,7 @@ func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller,
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tx.Nonce = random.Int63()
-
+	tx.ChainID = cfg.GetChainID()
 	txHex := types.Encode(tx)
 	rawTx := hex.EncodeToString(txHex)
 
@@ -348,7 +348,7 @@ func createEvmTransferTx(cfg *types.Chain33Config, cmd *cobra.Command, caller, e
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	tx.Nonce = random.Int63()
-
+	tx.ChainID = cfg.GetChainID()
 	txHex := types.Encode(tx)
 	rawTx := hex.EncodeToString(txHex)
 

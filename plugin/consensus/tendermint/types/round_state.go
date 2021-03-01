@@ -22,14 +22,16 @@ var (
 
 // step and message id define
 const (
-	RoundStepNewHeight     = RoundStepType(0x01) // Wait til CommitTime + timeoutCommit
-	RoundStepNewRound      = RoundStepType(0x02) // Setup new round and go to RoundStepPropose
-	RoundStepPropose       = RoundStepType(0x03) // Did propose, gossip proposal
-	RoundStepPrevote       = RoundStepType(0x04) // Did prevote, gossip prevotes
-	RoundStepPrevoteWait   = RoundStepType(0x05) // Did receive any +2/3 prevotes, start timeout
-	RoundStepPrecommit     = RoundStepType(0x06) // Did precommit, gossip precommits
-	RoundStepPrecommitWait = RoundStepType(0x07) // Did receive any +2/3 precommits, start timeout
-	RoundStepCommit        = RoundStepType(0x08) // Entered commit state machine
+	RoundStepNewHeight        = RoundStepType(0x01) // Wait til CommitTime + timeoutCommit
+	RoundStepNewRound         = RoundStepType(0x02) // Setup new round and go to RoundStepPropose
+	RoundStepPropose          = RoundStepType(0x03) // Did propose, gossip proposal
+	RoundStepPrevote          = RoundStepType(0x04) // Did prevote, gossip prevotes
+	RoundStepAggPrevoteWait   = RoundStepType(0x05) // Did send prevote for aggregate, start timeout
+	RoundStepPrevoteWait      = RoundStepType(0x06) // Did receive any +2/3 prevotes, start timeout
+	RoundStepPrecommit        = RoundStepType(0x07) // Did precommit, gossip precommits
+	RoundStepAggPrecommitWait = RoundStepType(0x08) // Did send precommit for aggregate, start timeout
+	RoundStepPrecommitWait    = RoundStepType(0x09) // Did receive any +2/3 precommits, start timeout
+	RoundStepCommit           = RoundStepType(0x10) // Entered commit state machine
 	// NOTE: RoundStepNewHeight acts as RoundStepCommitWait.
 
 	NewRoundStepID      = byte(0x01)
@@ -84,6 +86,10 @@ func (rs RoundStepType) String() string {
 		return "RoundStepPrecommitWait"
 	case RoundStepCommit:
 		return "RoundStepCommit"
+	case RoundStepAggPrevoteWait:
+		return "RoundStepAggPrevoteWait"
+	case RoundStepAggPrecommitWait:
+		return "RoundStepAggPrecommitWait"
 	default:
 		return "RoundStepUnknown" // Cannot panic.
 	}
@@ -188,6 +194,7 @@ type PeerRoundState struct {
 	LastCommit         *BitArray // All commit precommits of commit for last height.
 	CatchupCommitRound int       // Round that we have commit for. Not necessarily unique. -1 if none.
 	CatchupCommit      *BitArray // All commit precommits peer has for this height & CatchupCommitRound
+	AggPrevote         bool      // True if peer has aggregate prevote for this round
 	AggPrecommit       bool      // True if peer has aggregate precommit for this round
 }
 
@@ -208,6 +215,7 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 %s  Precommits %v
 %s  LastCommit %v (round %v)
 %s  CatchupCommit %v (round %v)
+%s  AggPrevote %v
 %s  AggPrecommit %v
 %s}`,
 		indent, prs.Height, prs.Round, prs.Step, prs.StartTime,
@@ -219,6 +227,7 @@ func (prs PeerRoundState) StringIndented(indent string) string {
 		indent, prs.Precommits,
 		indent, prs.LastCommit, prs.LastCommitRound,
 		indent, prs.CatchupCommit, prs.CatchupCommitRound,
+		indent, prs.AggPrevote,
 		indent, prs.AggPrecommit,
 		indent)
 }

@@ -75,6 +75,7 @@ func (x *suiteX2Ethereum) SetupSuite() {
 	tx.Execer = []byte(types2.X2ethereumX)
 	tx.To = address.ExecAddress(types2.X2ethereumX)
 	tx.Nonce = 1
+	tx.ChainID = chainTestCfg.GetChainID()
 	tx.Sign(types.SECP256K1, privFrom)
 
 	x.action = newAction(x2eth, tx, 0)

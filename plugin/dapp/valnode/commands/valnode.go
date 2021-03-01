@@ -40,6 +40,7 @@ func ValCmd() *cobra.Command {
 		IsSyncCmd(),
 		GetBlockInfoCmd(),
 		GetNodeInfoCmd(),
+		GetPerfStatCmd(),
 		AddNodeCmd(),
 		CreateCmd(),
 	)
@@ -75,7 +76,7 @@ func GetNodeInfoCmd() *cobra.Command {
 
 func getNodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res []*vt.Validator
+	var res *vt.ValNodeInfoSet
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "valnode.GetNodeInfo", nil, &res)
 	ctx.Run()
 }
@@ -109,6 +110,41 @@ func getBlockInfo(cmd *cobra.Command, args []string) {
 	}
 
 	var res vt.TendermintBlockInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// GetPerfStatCmd get block info
+func GetPerfStatCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stat",
+		Short: "Get tendermint performance statistics",
+		Run:   getPerfStat,
+	}
+	addGetPerfStatFlags(cmd)
+	return cmd
+}
+
+func addGetPerfStatFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "start block height")
+	cmd.Flags().Int64P("end", "e", 0, "end block height")
+}
+
+func getPerfStat(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetInt64("start")
+	end, _ := cmd.Flags().GetInt64("end")
+	req := &vt.ReqPerfStat{
+		Start: start,
+		End:   end,
+	}
+	params := rpctypes.Query4Jrpc{
+		Execer:   vt.ValNodeX,
+		FuncName: "GetPerfState",
+		Payload:  types.MustPBToJSON(req),
+	}
+
+	var res vt.PerfStat
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

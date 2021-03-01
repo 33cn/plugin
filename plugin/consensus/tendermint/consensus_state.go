@@ -312,6 +312,10 @@ func (cs *ConsensusState) updateToState(state State) {
 		tendermintlog.Info("Ignoring updateToState()", "newHeight", state.LastBlockHeight+1, "oldHeight", cs.state.LastBlockHeight+1)
 		return
 	}
+	// disable gossip votes
+	if useAggSig && gossipVotes.Load().(bool) {
+		gossipVotes.Store(false)
+	}
 
 	// Reset fields based on state.
 	validators := state.Validators
@@ -361,7 +365,7 @@ func (cs *ConsensusState) updateToState(state State) {
 
 func (cs *ConsensusState) newStep() {
 	if cs.broadcastChannel != nil {
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: "", PeerIP: ""}
 	}
 	cs.nSteps++
 }
@@ -489,6 +493,10 @@ func (cs *ConsensusState) handleTimeout(ti timeoutInfo, rs ttypes.RoundState) {
 	case ttypes.RoundStepPrecommitWait:
 		cs.enterPrecommit(ti.Height, ti.Round)
 		cs.enterNewRound(ti.Height, ti.Round+1)
+	case ttypes.RoundStepAggPrevoteWait:
+		cs.enterAggPrevoteWait(ti.Height, ti.Round)
+	case ttypes.RoundStepAggPrecommitWait:
+		cs.enterAggPrecommitWait(ti.Height, ti.Round)
 	default:
 		panic(fmt.Sprintf("Invalid timeout step: %v", ti.Step))
 	}
@@ -503,10 +511,6 @@ func (cs *ConsensusState) checkTxsAvailable() {
 			tendermintlog.Debug(fmt.Sprintf("checkTxsAvailable. Current: %v/%v/%v", rs.Height, rs.Round, rs.Step), "height", height)
 			if rs.Height != height {
 				tendermintlog.Info(fmt.Sprintf("blockchain(H: %v) and consensus(H: %v) are not sync", height, rs.Height))
-				break
-			}
-			if cs.checkProposalComplete() {
-				tendermintlog.Debug("already has proposal")
 				break
 			}
 			cs.txsAvailable <- height
@@ -529,7 +533,18 @@ func (cs *ConsensusState) handleTxsAvailable(height int64) {
 	defer cs.mtx.Unlock()
 
 	// we only need to do this for round 0
-	cs.enterPropose(height, 0)
+	if cs.Round != 0 {
+		return
+	}
+
+	switch cs.Step {
+	case ttypes.RoundStepNewHeight: // timeoutCommit phase
+		// +1ms to ensure RoundStepNewRound timeout always happens after RoundStepNewHeight
+		timeoutCommit := cs.StartTime.Sub(time.Now()) + 1*time.Millisecond
+		cs.scheduleTimeout(timeoutCommit, height, 0, ttypes.RoundStepNewRound)
+	case ttypes.RoundStepNewRound: // after timeoutCommit
+		cs.enterPropose(height, 0)
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -554,6 +569,10 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 
 	tendermintlog.Info(fmt.Sprintf("enterNewRound(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
 
+	// disable gossip votes
+	if useAggSig && gossipVotes.Load().(bool) {
+		gossipVotes.Store(false)
+	}
 	// Increment validators if necessary
 	validators := cs.Validators
 	if cs.Round < round {
@@ -580,7 +599,7 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	cs.Votes.SetRound(round + 1) // also track next round (round+1) to allow round-skipping
 
 	//cs.eventBus.PublishEventNewRound(cs.RoundStateEvent())
-	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
+	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: cs.RoundStateMessage(), PeerID: "", PeerIP: ""}
 
 	// Wait for txs to be available in the mempool
 	// before we enterPropose in round 0.
@@ -619,8 +638,8 @@ func (cs *ConsensusState) proposalHeartbeat(height int64, round int) {
 			tendermintlog.Error("SignHeartbeat failed", "err", err)
 			continue
 		}
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ProposalHeartbeatID, Msg: heartbeat, PeerID: cs.ourID, PeerIP: ""}
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: cs.ourID, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ProposalHeartbeatID, Msg: heartbeat, PeerID: "", PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: "", PeerIP: ""}
 		counter++
 		time.Sleep(proposalHeartbeatIntervalSeconds * time.Second)
 	}
@@ -842,11 +861,6 @@ func (cs *ConsensusState) enterPrevote(height int64, round int) {
 		cs.newStep()
 	}()
 
-	if useAggSig {
-		// Wait for some more prevotes; enterPrecommit
-		cs.scheduleTimeout(cs.Prevote(round)*2, height, round, ttypes.RoundStepPrevoteWait)
-	}
-
 	tendermintlog.Info(fmt.Sprintf("enterPrevote(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step), "cost", types.Since(cs.begCons))
 
 	// Sign and broadcast vote as necessary
@@ -904,6 +918,18 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 	cs.signAddVote(ttypes.VoteTypePrevote, cs.ProposalBlock.Hash())
 }
 
+// Enter: send prevote for aggregate at next round.
+func (cs *ConsensusState) enterAggPrevoteWait(height int64, round int) {
+	if cs.Height != height || round < cs.Round || (cs.Round == round && ttypes.RoundStepAggPrevoteWait <= cs.Step) {
+		tendermintlog.Debug(fmt.Sprintf("enterAggPrevoteWait(%v/%v): Invalid args. Current step: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
+		return
+	}
+	tendermintlog.Info(fmt.Sprintf("enterAggPrevoteWait(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
+
+	// enable gossip votes when timeout waiting for aggregate prevote
+	gossipVotes.Store(true)
+}
+
 // Enter: any +2/3 prevotes at next round.
 func (cs *ConsensusState) enterPrevoteWait(height int64, round int) {
 	if cs.Height != height || round < cs.Round || (cs.Round == round && ttypes.RoundStepPrevoteWait <= cs.Step) {
@@ -920,6 +946,11 @@ func (cs *ConsensusState) enterPrevoteWait(height int64, round int) {
 		cs.updateRoundStep(round, ttypes.RoundStepPrevoteWait)
 		cs.newStep()
 	}()
+
+	// enable gossip votes in case other validators enterAggPrevoteWait
+	if useAggSig && !cs.isProposer() && cs.Votes.Prevotes(round).GetAggVote() == nil {
+		gossipVotes.Store(true)
+	}
 
 	// Wait for some more prevotes; enterPrecommit
 	cs.scheduleTimeout(cs.Prevote(round), height, round, ttypes.RoundStepPrevoteWait)
@@ -945,11 +976,6 @@ func (cs *ConsensusState) enterPrecommit(height int64, round int) {
 		cs.newStep()
 	}()
 
-	if useAggSig {
-		// Wait for some more precommits; enterNewRound
-		cs.scheduleTimeout(cs.Precommit(round)*2, height, round, ttypes.RoundStepPrecommitWait)
-	}
-
 	blockID, ok := cs.Votes.Prevotes(round).TwoThirdsMajority()
 
 	// If we don't have a polka, we must precommit nil
@@ -957,7 +983,7 @@ func (cs *ConsensusState) enterPrecommit(height int64, round int) {
 		if cs.LockedBlock != nil {
 			tendermintlog.Info("enterPrecommit: No +2/3 prevotes during enterPrecommit while we're locked. Precommitting nil")
 		} else {
-			tendermintlog.Info("enterPrecommit: No +2/3 prevotes during enterPrecommit. Precommitting nil.")
+			tendermintlog.Info("enterPrecommit: No +2/3 prevotes during enterPrecommit. Precommitting nil")
 		}
 		cs.signAddVote(ttypes.VoteTypePrecommit, nil)
 		return
@@ -1009,6 +1035,7 @@ func (cs *ConsensusState) enterPrecommit(height int64, round int) {
 	// Fetch that block, unlock, and precommit nil.
 	// The +2/3 prevotes for this round is the POL for our unlock.
 	// TODO: In the future save the POL prevotes for justification.
+	tendermintlog.Info("enterPrecommit: +2/3 prevotes for a block we do not have. Precommitting nil", "hash", fmt.Sprintf("%X", blockID.Hash))
 	cs.LockedRound = -1
 	cs.LockedBlock = nil
 	if !bytes.Equal(cs.ProposalBlockHash, blockID.Hash) {
@@ -1016,6 +1043,22 @@ func (cs *ConsensusState) enterPrecommit(height int64, round int) {
 		cs.ProposalBlockHash = blockID.Hash
 	}
 	cs.signAddVote(ttypes.VoteTypePrecommit, nil)
+}
+
+// Enter: send precommit for aggregate at next round.
+func (cs *ConsensusState) enterAggPrecommitWait(height int64, round int) {
+	if cs.Height != height || round < cs.Round || (cs.Round == round && ttypes.RoundStepAggPrecommitWait < cs.Step) {
+		tendermintlog.Debug(fmt.Sprintf("enterAggPrecommitWait(%v/%v): Invalid args. Current step: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
+		return
+	}
+	tendermintlog.Info(fmt.Sprintf("enterAggPrecommitWait(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
+
+	// enable gossip votes when timeout waiting for aggregate precommit
+	gossipVotes.Store(true)
+
+	//addr := cs.privValidator.GetAddress()
+	//vote := cs.Votes.Precommits(round).GetByAddress(addr)
+	//cs.broadcastChannel <- MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.ourID, PeerIP: ""}
 }
 
 // Enter: any +2/3 precommits for next round.
@@ -1035,9 +1078,13 @@ func (cs *ConsensusState) enterPrecommitWait(height int64, round int) {
 		cs.newStep()
 	}()
 
+	// enable gossip votes in case other validators enterAggPrecommitWait
+	if useAggSig && !cs.isProposer() && cs.Votes.Precommits(round).GetAggVote() == nil {
+		gossipVotes.Store(true)
+	}
+
 	// Wait for some more precommits; enterNewRound
 	cs.scheduleTimeout(cs.Precommit(round), height, round, ttypes.RoundStepPrecommitWait)
-
 }
 
 // Enter: +2/3 precommits for block
@@ -1076,22 +1123,22 @@ func (cs *ConsensusState) enterCommit(height int64, commitRound int) {
 
 	// If we don't have the block being committed, set up to get it.
 	if !cs.ProposalBlock.HashesTo(blockID.Hash) {
-		if !bytes.Equal(cs.ProposalBlockHash, blockID.Hash) {
-			tendermintlog.Info("Commit is for a block we don't know about. Set ProposalBlock=nil", "ProposalBlock-hash", fmt.Sprintf("%X", cs.ProposalBlock.Hash()),
-				"CommitBlock-hash", fmt.Sprintf("%X", blockID.Hash))
-			// We're getting the wrong block.
-			// Set up ProposalBlockHash and keep waiting.
-			cs.ProposalBlock = nil
-			cs.ProposalBlockHash = blockID.Hash
+		tendermintlog.Info("Commit is for a block we don't know about. Set ProposalBlock=nil",
+			"proposal", fmt.Sprintf("%X", cs.ProposalBlock.Hash()),
+			"ProposalBlockHash", fmt.Sprintf("%X", cs.ProposalBlockHash),
+			"commit", fmt.Sprintf("%X", blockID.Hash))
+		// We're getting the wrong block.
+		// Set up ProposalBlockHash and keep waiting.
+		cs.ProposalBlock = nil
+		cs.ProposalBlockHash = blockID.Hash
 
-			validBlockMsg := &tmtypes.ValidBlockMsg{
-				Height:    cs.Height,
-				Round:     int32(cs.Round),
-				Blockhash: cs.ProposalBlockHash,
-				IsCommit:  false,
-			}
-			cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: cs.ourID, PeerIP: ""}
+		validBlockMsg := &tmtypes.ValidBlockMsg{
+			Height:    cs.Height,
+			Round:     int32(cs.Round),
+			Blockhash: cs.ProposalBlockHash,
+			IsCommit:  true,
 		}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: "", PeerIP: ""}
 		//else {
 		// We just need to keep waiting.
 		//}
@@ -1398,7 +1445,7 @@ func (cs *ConsensusState) tryAddAggVote(aggVoteRaw *tmtypes.AggVote, peerID stri
 					Blockhash: cs.ProposalBlockHash,
 					IsCommit:  false,
 				}
-				cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: cs.ourID, PeerIP: ""}
+				cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: "", PeerIP: ""}
 			}
 		}
 
@@ -1500,7 +1547,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 			Type:   int32(vote.Type),
 			Index:  vote.ValidatorIndex,
 		}
-		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: cs.ourID, PeerIP: ""}
+		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: "", PeerIP: ""}
 
 		// if we can skip timeoutCommit and have all the votes now,
 		if skipTimeoutCommit && cs.LastCommit.HasAll() {
@@ -1536,7 +1583,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 		Type:   int32(vote.Type),
 		Index:  vote.ValidatorIndex,
 	}
-	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: cs.ourID, PeerIP: ""}
+	cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: "", PeerIP: ""}
 
 	switch vote.Type {
 	case uint32(ttypes.VoteTypePrevote):
@@ -1585,7 +1632,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 					Blockhash: cs.ProposalBlockHash,
 					IsCommit:  false,
 				}
-				cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: cs.ourID, PeerIP: ""}
+				cs.broadcastChannel <- MsgInfo{TypeID: ttypes.ValidBlockID, Msg: validBlockMsg, PeerID: "", PeerIP: ""}
 			}
 		}
 
@@ -1597,14 +1644,14 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 		case cs.Round == int(vote.Round) && ttypes.RoundStepPrevote <= cs.Step: // current round
 			blockID, ok := prevotes.TwoThirdsMajority()
 			if ok && (cs.isProposalComplete() || len(blockID.Hash) == 0) {
-				if useAggSig && prevotes.GetAggVote() == nil {
+				if useAggSig && cs.isProposer() && prevotes.GetAggVote() == nil {
 					err := prevotes.SetAggVote()
 					if err != nil {
 						tendermintlog.Error("prevotes SetAggVote fail", "err", err)
 						break
 					}
 					aggVoteMsg := prevotes.GetAggVote().AggVote
-					cs.broadcastChannel <- MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVoteMsg, PeerID: cs.ourID, PeerIP: ""}
+					cs.broadcastChannel <- MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVoteMsg, PeerID: "", PeerIP: ""}
 					tendermintlog.Info("Send aggregate prevote", "aggVote", prevotes.GetAggVote())
 				}
 				cs.enterPrecommit(height, int(vote.Round))
@@ -1628,14 +1675,14 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 			cs.enterNewRound(height, int(vote.Round))
 			cs.enterPrecommit(height, int(vote.Round))
 			if len(blockID.Hash) != 0 {
-				if useAggSig && precommits.GetAggVote() == nil {
+				if useAggSig && cs.isProposer() && precommits.GetAggVote() == nil {
 					err := precommits.SetAggVote()
 					if err != nil {
 						tendermintlog.Error("precommits SetAggVote fail", "err", err)
 						break
 					}
 					aggVoteMsg := precommits.GetAggVote().AggVote
-					cs.broadcastChannel <- MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVoteMsg, PeerID: cs.ourID, PeerIP: ""}
+					cs.broadcastChannel <- MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVoteMsg, PeerID: "", PeerIP: ""}
 					tendermintlog.Info("Send aggregate precommit", "aggVote", precommits.GetAggVote())
 				}
 				cs.enterCommit(height, int(vote.Round))
@@ -1692,6 +1739,12 @@ func (cs *ConsensusState) signAddVote(voteType byte, hash []byte) *ttypes.Vote {
 		if useAggSig {
 			// send to proposer
 			cs.unicastChannel <- MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: cs.getProposerID(), PeerIP: ""}
+			// wait for aggregate vote
+			if voteType == ttypes.VoteTypePrevote {
+				cs.scheduleTimeout(cs.Prevote(cs.Round), cs.Height, cs.Round, ttypes.RoundStepAggPrevoteWait)
+			} else if voteType == ttypes.VoteTypePrecommit {
+				cs.scheduleTimeout(cs.Precommit(cs.Round), cs.Height, cs.Round, ttypes.RoundStepAggPrecommitWait)
+			}
 		}
 		tendermintlog.Info("Sign and send vote", "height", cs.Height, "round", cs.Round, "vote", vote)
 		return vote

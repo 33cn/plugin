@@ -537,6 +537,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 		Payload: types.Encode(action),
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	tx.Signature = &types.Signature{
@@ -621,6 +622,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
@@ -711,6 +713,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 		Fee:     privacytypes.PrivacyTxFee,
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
+		ChainID: cfg.GetChainID(),
 	}
 	tx.SetExpire(cfg, time.Duration(req.Expire))
 	if !isMainetCoins {
@@ -1007,14 +1010,26 @@ func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWallet
 }
 
 func (policy *privacyPolicy) checkExpireFTXOOnTimer() {
-	operater := policy.getWalletOperate()
-
-	header := operater.GetLastHeader()
+	header := policy.getWalletOperate().GetLastHeader()
 	if header == nil {
-		bizlog.Error("checkExpireFTXOOnTimer Can not get last header.")
 		return
 	}
-	policy.store.moveFTXO2UTXOWhenFTXOExpire(header.Height, header.BlockTime)
+	curFTXOTxs, keys := policy.store.getFTXOlist()
+	if len(curFTXOTxs) == 0 {
+		return
+	}
+	dbbatch := policy.store.NewBatch(true)
+	for i, ftxo := range curFTXOTxs {
+		if !ftxo.IsExpire(header.GetHeight(), header.GetBlockTime()) {
+			continue
+		}
+		policy.store.moveFTXO2UTXO(keys[i], dbbatch)
+		bizlog.Debug("moveFTXO2UTXOWhenFTXOExpire", "moveFTXO2UTXO key", string(keys[i]), "expire ftxo", ftxo)
+	}
+	err := dbbatch.Write()
+	if err != nil {
+		bizlog.Error("checkExpireFTXOOnTimer", "db write err", err)
+	}
 }
 
 func (policy *privacyPolicy) checkWalletStoreData() {

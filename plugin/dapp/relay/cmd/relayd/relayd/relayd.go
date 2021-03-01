@@ -318,17 +318,23 @@ func (r *Relayd) syncBlockHeaders() {
 }
 
 func (r *Relayd) transaction(payload []byte) *types.Transaction {
+	var chainID int32
+	minFee := types.DefaultMinFee
+
+	//chain33的配置中获取chainID和minFee
+	if r.config.Chain33Cfg != nil {
+		chainID = r.config.Chain33Cfg.GetChainID()
+		minFee = r.config.Chain33Cfg.GetMinTxFeeRate()
+	}
+
 	tx := &types.Transaction{
 		Execer:  []byte(ty.RelayX),
 		Payload: payload,
 		Nonce:   rand.Int63(),
 		To:      address.ExecAddress(ty.RelayX),
+		ChainID: chainID,
 	}
 
-	minFee := types.DefaultMinFee
-	if r.config.Chain33Cfg != nil {
-		minFee = r.config.Chain33Cfg.GetMinTxFeeRate()
-	}
 	fee, _ := tx.GetRealFee(minFee)
 	tx.Fee = fee
 	tx.Sign(types.SECP256K1, r.privateKey)
