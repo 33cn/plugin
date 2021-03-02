@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-#1ks returner
+#1ks returner chain31
 MIX_CLI1="docker exec ${NODE1} /root/chain33-cli "
-#1jr  authorize
+#1jr  authorize chain32
 MIX_CLI2="docker exec ${NODE2} /root/chain33-cli "
-#1nl receiver
+#1nl receiver  chain30
 MIX_CLI3="docker exec ${NODE4} /root/chain33-cli "
 
 xsedfix=""

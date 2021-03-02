@@ -19,20 +19,21 @@ const (
 // 执行器的日志类型
 const (
 	// TyLogParacrossCommit commit log key
-	TyLogMixLocalDeposit         = 750
-	TyLogMixLocalNullifier       = 751
-	TyLogMixLocalAuth            = 752
-	TyLogMixLocalAuthSpend       = 753
-	TyLogMixConfigVk             = 754
-	TyLogMixConfigAuth           = 755
-	TyLogCurrentCommitTreeLeaves = 756
-	TyLogCurrentCommitTreeRoots  = 757
-	TyLogCommitTreeRootLeaves    = 758
-	TyLogCommitTreeArchiveRoots  = 759
-	TyLogNulliferSet             = 760
-	TyLogAuthorizeSet            = 761
-	TyLogAuthorizeSpendSet       = 762
-	TyLogMixConfigPaymentKey     = 763
+	TyLogMixLocalDeposit       = 750
+	TyLogMixLocalNullifier     = 751
+	TyLogMixLocalAuth          = 752
+	TyLogMixLocalAuthSpend     = 753
+	TyLogMixConfigVk           = 754
+	TyLogMixConfigAuth         = 755
+	TyLogSubLeaves             = 756
+	TyLogSubRoots              = 757
+	TyLogArchiveRootLeaves     = 758
+	TyLogCommitTreeArchiveRoot = 759
+	TyLogCommitTreeStatus      = 760
+	TyLogNulliferSet           = 761
+	TyLogAuthorizeSet          = 762
+	TyLogAuthorizeSpendSet     = 763
+	TyLogMixConfigPaymentKey   = 764
 )
 
 //action type

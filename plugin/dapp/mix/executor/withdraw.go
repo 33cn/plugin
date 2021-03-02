@@ -19,13 +19,17 @@ import (
 func spendVerify(db dbm.KV, treeRootHash, nulliferHash, authorizeSpendHash string) error {
 	//zk-proof校验
 	//check tree rootHash exist
-	if !checkTreeRootHashExist(db, transferFr2Bytes(treeRootHash)) {
+	exist, err := checkTreeRootHashExist(db, mixTy.Str2Byte(treeRootHash))
+	if err != nil {
+		return errors.Wrapf(err, "roothash=%s not found", treeRootHash)
+	}
+	if !exist {
 		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", treeRootHash)
 	}
 
 	//nullifier should not exist
 	nullifierKey := calcNullifierHashKey(nulliferHash)
-	_, err := db.Get(nullifierKey)
+	_, err = db.Get(nullifierKey)
 	if err == nil {
 		return errors.Wrapf(mixTy.ErrNulliferHashExist, "nullifier=%s", nulliferHash)
 	}

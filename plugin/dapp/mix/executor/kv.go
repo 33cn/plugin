@@ -9,27 +9,33 @@ import (
 )
 
 var (
-	verifyKeys              string
-	authPubKeys             string
-	paymentPubKey           string
+	verifyKeys    string
+	authPubKeys   string
+	paymentPubKey string
+
+	commitTreeCurrentStatus string
+	commitTreeSubRoots      string
+	commitTreeSubLeaves     string
 	commitTreeArchiveRoots  string
-	commitTreeCurrentRoots  string
-	commitTreeCurrentLeaves string
 	commitTreeRootLeaves    string
-	authorizeHash           string
-	authorizeSpendHash      string
-	nullifierHash           string
+
+	authorizeHash      string
+	authorizeSpendHash string
+	nullifierHash      string
 )
 
 func setPrefix() {
 	verifyKeys = "mavl-mix-verify-keys-"
 	authPubKeys = "mavl-mix-auth-pubkeys-"
 	paymentPubKey = "mavl-mix-payment-pubkey-"
-	commitTreeArchiveRoots = "mavl-mix-commitTree-roots-archive-"
-	commitTreeCurrentRoots = "mavl-mix-commitTree-roots-current-"
-	commitTreeCurrentLeaves = "mavl-mix-commitTree-current-leaves-"
 
-	commitTreeRootLeaves = "mavl-mix-commitTree-rootLeaves-"
+	commitTreeCurrentStatus = "mavl-mix-commitTree-current-status-"
+
+	commitTreeSubRoots = "mavl-mix-commitTree-sub-roots-"
+	commitTreeSubLeaves = "mavl-mix-commitTree-sub-leaves-"
+	commitTreeRootLeaves = "mavl-mix-commitTree-root-Leaves-"
+	commitTreeArchiveRoots = "mavl-mix-commitTree-archive-roots-"
+
 	authorizeHash = "mavl-mix-authorizeHash"
 	authorizeSpendHash = "mavl-mix-authorizeSpendHash-"
 	nullifierHash = "mavl-mix-nullifierHash"
@@ -49,16 +55,20 @@ func getPaymentPubKey(addr string) []byte {
 	return []byte(fmt.Sprintf(paymentPubKey+"%s", addr))
 }
 
-func calcCommitTreeArchiveRootsKey() []byte {
-	return []byte(fmt.Sprintf(commitTreeArchiveRoots))
+func calcCommitTreeCurrentStatusKey() []byte {
+	return []byte(fmt.Sprintf(commitTreeCurrentStatus))
 }
 
-func calcCurrentCommitRootsKey() []byte {
-	return []byte(fmt.Sprintf(commitTreeCurrentRoots))
+func calcArchiveRootsKey(seq uint64) []byte {
+	return []byte(fmt.Sprintf(commitTreeArchiveRoots+"%022d", seq))
 }
 
-func calcCurrentCommitLeavesKey() []byte {
-	return []byte(fmt.Sprintf(commitTreeCurrentLeaves))
+func calcSubRootsKey(seq int32) []byte {
+	return []byte(fmt.Sprintf(commitTreeSubRoots+"%010d", seq))
+}
+
+func calcSubLeavesKey(seq int32) []byte {
+	return []byte(fmt.Sprintf(commitTreeSubLeaves+"%010d", seq))
 }
 
 func calcCommitTreeRootLeaves(rootHash string) []byte {
