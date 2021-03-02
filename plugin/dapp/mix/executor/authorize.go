@@ -17,13 +17,17 @@ import (
 
 func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 	//check tree rootHash exist
-	if !checkTreeRootHashExist(a.db, transferFr2Bytes(input.TreeRootHash)) {
+	exist, err := checkTreeRootHashExist(a.db, mixTy.Str2Byte(input.TreeRootHash))
+	if err != nil {
+		return errors.Wrapf(err, "roothash=%s not found", input.TreeRootHash)
+	}
+	if !exist {
 		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", input.TreeRootHash)
 	}
 
 	//authorize key should not exist
 	authKey := calcAuthorizeHashKey(input.AuthorizeHash)
-	_, err := a.db.Get(authKey)
+	_, err = a.db.Get(authKey)
 	if err == nil {
 		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", input.AuthorizeHash)
 	}

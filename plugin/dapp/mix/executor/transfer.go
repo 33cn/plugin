@@ -161,7 +161,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, h := range outputs {
-		leaves = append(leaves, transferFr2Bytes(h.NoteHash))
+		leaves = append(leaves, mixTy.Str2Byte(h.NoteHash))
 	}
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {

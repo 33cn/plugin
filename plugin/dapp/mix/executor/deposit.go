@@ -110,7 +110,7 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, n := range notes {
-		leaves = append(leaves, transferFr2Bytes(n))
+		leaves = append(leaves, mixTy.Str2Byte(n))
 	}
 	rpt, err := pushTree(a.db, leaves)
 	if err != nil {

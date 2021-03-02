@@ -202,6 +202,7 @@ func QueryCmd() *cobra.Command {
 	cmd.AddCommand(GetTreePathCmd())
 	cmd.AddCommand(GetTreeLeavesCmd())
 	cmd.AddCommand(GetTreeRootsCmd())
+	cmd.AddCommand(GetTreeStatusCmd())
 	cmd.AddCommand(ShowMixTxsCmd())
 	cmd.AddCommand(ShowPaymentPubKeyCmd())
 	return cmd
@@ -267,7 +268,7 @@ func treeLeaves(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
-	params.FuncName = "Query_GetLeavesList"
+	params.FuncName = "GetLeavesList"
 	req := mixTy.TreeInfoReq{
 		RootHash: root,
 	}
@@ -285,20 +286,52 @@ func GetTreeRootsCmd() *cobra.Command {
 		Short: "Get archive roots",
 		Run:   treeRoot,
 	}
-	//addGetPathCmdFlags(cmd)
+	addGetRootsflags(cmd)
 	return cmd
+}
+
+func addGetRootsflags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("seq", "s", 0, "sequence, default 0 is for current status")
+	cmd.MarkFlagRequired("seq")
+
 }
 
 func treeRoot(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	seq, _ := cmd.Flags().GetInt64("seq")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetRootList"
 
+	params.Payload = types.MustPBToJSON(&types.ReqInt{Height: seq})
+
+	var res mixTy.RootListResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// GetTreeStatusCmd get commit leaves tree status
+func GetTreeStatusCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "status",
+		Short: "Get commit leaves tree status",
+		Run:   treeStatus,
+	}
+	//addGetRootsflags(cmd)
+	return cmd
+}
+
+func treeStatus(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = mixTy.MixX
+	params.FuncName = "GetTreeStatus"
+
 	params.Payload = types.MustPBToJSON(&types.ReqNil{})
 
-	var res mixTy.TreeListResp
+	var res mixTy.TreeStatusResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
