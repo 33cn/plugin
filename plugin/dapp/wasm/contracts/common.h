@@ -34,7 +34,7 @@ void sha256(const char* data, size_t data_len, char* sum, size_t sum_len);
 void printlog(const char* log, size_t len);
 void printint(int64_t n);
 size_t getENVSize(int64_t n);
-size_t getENV(int64_t n);
+size_t getENV(int64_t n, char* value, size_t v_len);
 
 #ifdef __cplusplus
 }
