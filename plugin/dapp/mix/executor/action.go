@@ -7,8 +7,6 @@ package executor
 import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
-	"github.com/consensys/gurvy/bn256/fr"
-
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 
@@ -79,16 +77,4 @@ func makeReceipt(key []byte, logTy int32, data proto.Message) *types.Receipt {
 			{Ty: logTy, Log: types.Encode(data)},
 		},
 	}
-}
-
-func transferFr2Bytes(v string) []byte {
-	var leaf fr.Element
-	leaf.SetString(v)
-	return leaf.Bytes()
-}
-
-func transferFr2String(val []byte) string {
-	var leaf fr.Element
-	leaf.SetBytes(val)
-	return leaf.String()
 }

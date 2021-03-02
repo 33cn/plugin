@@ -22,7 +22,7 @@ type Tree struct {
 	// tree. When a new leaf is inserted, it is inserted as a subtree of height
 	// 0. If there is another subtree of the same height, both can be removed,
 	// combined, and then inserted as a subtree of height n + 1.
-	head *subTree
+	head *SubTree
 	hash hash.Hash
 
 	// Helper variables used to construct proofs that the data at 'proofIndex'
@@ -45,8 +45,8 @@ type Tree struct {
 // A subTree contains the Merkle root of a complete (2^height leaves) subTree
 // of the Tree. 'sum' is the Merkle root of the subTree. If 'next' is not nil,
 // it will be a tree with a higher height.
-type subTree struct {
-	next   *subTree
+type SubTree struct {
+	next   *SubTree
 	height int // Int is okay because a height over 300 is physically unachievable.
 	sum    []byte
 }
@@ -81,7 +81,7 @@ func nodeSum(h hash.Hash, a, b []byte) []byte {
 }
 
 // joinSubTrees combines two equal sized subTrees into a larger subTree.
-func joinSubTrees(h hash.Hash, a, b *subTree) *subTree {
+func joinSubTrees(h hash.Hash, a, b *SubTree) *SubTree {
 	// if DEBUG {
 	// 	if b.next != a {
 	// 		panic("invalid subtree join - 'a' is not paired with 'b'")
@@ -91,7 +91,7 @@ func joinSubTrees(h hash.Hash, a, b *subTree) *subTree {
 	// 	}
 	// }
 
-	return &subTree{
+	return &SubTree{
 		next:   a.next,
 		height: a.height + 1,
 		sum:    nodeSum(h, a.sum, b.sum),
@@ -190,7 +190,7 @@ func (t *Tree) Push(data []byte) {
 	// is going to be the data for cached trees, and is going to be the result
 	// of calling leafSum() on the data for standard trees. Doing a check here
 	// prevents needing to duplicate the entire 'Push' function for the trees.
-	t.head = &subTree{
+	t.head = &SubTree{
 		next:   t.head,
 		height: 0,
 	}
@@ -244,7 +244,7 @@ func (t *Tree) PushSubTree(height int, sum []byte) error {
 	}
 
 	// Insert the cached tree as the new head.
-	t.head = &subTree{
+	t.head = &SubTree{
 		height: height,
 		next:   t.head,
 		sum:    sum,
@@ -339,4 +339,31 @@ func (t *Tree) joinAllSubTrees() {
 		// compare the new subTree to the next subTree.
 		t.head = joinSubTrees(t.hash, t.head.next, t.head)
 	}
+}
+
+func (t *Tree) GetAllSubTrees() []*SubTree {
+	var subs []*SubTree
+	if t.head == nil {
+		return nil
+	}
+	subs = append(subs, t.head)
+	head := t.head
+	for head.next != nil {
+		subs = append(subs, head.next)
+		head = head.next
+	}
+
+	//调换,从最初的开始
+	for i := 0; i < len(subs)/2; i++ {
+		subs[i], subs[len(subs)-1-i] = subs[len(subs)-1-i], subs[i]
+	}
+	return subs
+}
+
+func (t *SubTree) GetHeight() int {
+	return t.height
+}
+
+func (t *SubTree) GetSum() []byte {
+	return t.sum
 }

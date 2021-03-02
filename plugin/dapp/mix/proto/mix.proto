@@ -171,6 +171,54 @@ message ExistValue {
     bool exist = 2;
 }
 
+
+//子树用高度和hash描述，2^10=1024个叶子节点，子树高度不会超过10
+message CommitSubTree{
+    int32 height = 1;
+    bytes hash = 2;
+}
+//merkel tree由子树和叶子组成，三种场景:1,初始只一个叶子, 2,全是子树, 3,子树加一个叶子，不会有两个叶子，两个叶子一定构成子树
+message CommitSubTrees{
+    repeated CommitSubTree subTrees = 1;
+}
+
+//描述当前commitTree的状态
+//一颗merkel树1024叶子，考虑数据库读取原因，每个叶子都会存到相应seq db，待第1024次时候归档，重新开始新的merkle树，
+message CommitTreeStatus{
+    CommitSubTrees subTrees = 1;
+    //1~1024叶子的归档
+    int32 subLeavesSeq = 2;
+    //root的归档 从1开始,数据库占位，不然全空会往前搜索
+    uint64 archiveRootsSeq = 3;
+
+}
+
+message ReceiptCommitTreeStatus{
+    CommitTreeStatus prev = 1;
+    CommitTreeStatus current = 2;
+}
+
+message ReceiptCommitSubLeaves{
+    int32  seq = 1;
+    string leaf = 2;
+}
+
+message ReceiptCommitSubRoots{
+    int32  seq = 1;
+    string root = 2;
+}
+
+message ReceiptArchiveLeaves{
+    int32 count = 1;
+    string rootHash = 2;
+    string lastLeaf = 3;
+}
+message ReceiptArchiveTreeRoot{
+    uint64 seq = 1;
+    string rootHash = 2;
+}
+
+
 message CommitTreeLeaves {
     repeated bytes leaves = 1;
 }
@@ -196,6 +244,20 @@ message TreeInfoReq{
 message TreeListResp{
     repeated string leaves = 1;
 }
+message RootListResp{
+    repeated string roots = 1;
+}
+
+message SubTreeResp{
+    int32  height = 1;
+    string hash = 2;
+}
+message TreeStatusResp{
+    int32 subLeavesSeq = 1;
+    uint64 archiveRootsSeq = 2;
+    repeated SubTreeResp subTrees = 3;
+}
+
 
 // mix wallet part
 // receiverPubKey = hash(spendPriKey) for zk-snark note spend

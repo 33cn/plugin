@@ -69,12 +69,15 @@ func (p *MixType) GetName() string {
 // GetLogMap get receipt log map
 func (p *MixType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogMixConfigVk:             {Ty: reflect.TypeOf(ZkVerifyKeys{}), Name: "LogMixConfigVk"},
-		TyLogMixConfigAuth:           {Ty: reflect.TypeOf(AuthKeys{}), Name: "LogMixConfigAuthPubKey"},
-		TyLogCurrentCommitTreeLeaves: {Ty: reflect.TypeOf(CommitTreeLeaves{}), Name: "LogCommitTreeLeaves"},
-		TyLogCurrentCommitTreeRoots:  {Ty: reflect.TypeOf(CommitTreeRoots{}), Name: "LogCommitTreeRoots"},
-		TyLogMixConfigPaymentKey:     {Ty: reflect.TypeOf(PaymentKey{}), Name: "LogConfigReceivingKey"},
-		TyLogNulliferSet:             {Ty: reflect.TypeOf(ExistValue{}), Name: "LogNullifierSet"},
+		TyLogMixConfigVk:           {Ty: reflect.TypeOf(ZkVerifyKeys{}), Name: "LogMixConfigVk"},
+		TyLogMixConfigAuth:         {Ty: reflect.TypeOf(AuthKeys{}), Name: "LogMixConfigAuthPubKey"},
+		TyLogSubLeaves:             {Ty: reflect.TypeOf(ReceiptCommitSubLeaves{}), Name: "LogSubLeaves"},
+		TyLogCommitTreeStatus:      {Ty: reflect.TypeOf(ReceiptCommitTreeStatus{}), Name: "LogCommitTreeStatus"},
+		TyLogSubRoots:              {Ty: reflect.TypeOf(ReceiptCommitSubRoots{}), Name: "LogSubRoots"},
+		TyLogArchiveRootLeaves:     {Ty: reflect.TypeOf(ReceiptArchiveLeaves{}), Name: "LogArchiveRootLeaves"},
+		TyLogCommitTreeArchiveRoot: {Ty: reflect.TypeOf(ReceiptArchiveTreeRoot{}), Name: "LogCommitTreeArchiveRoot"},
+		TyLogMixConfigPaymentKey:   {Ty: reflect.TypeOf(PaymentKey{}), Name: "LogConfigReceivingKey"},
+		TyLogNulliferSet:           {Ty: reflect.TypeOf(ExistValue{}), Name: "LogNullifierSet"},
 	}
 }
 
