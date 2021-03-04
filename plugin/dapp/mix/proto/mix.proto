@@ -60,7 +60,8 @@ message MixConfigAction {
     oneof  value {
         ZkVerifyKey     verifyKey   = 3;
         string          authKey     = 4;
-        PaymentKey      paymentKey   = 5;
+        PaymentKey      paymentKey  = 5;
+
     }
 }
 
@@ -84,25 +85,34 @@ message ZkProofInfo {
 }
 
 message MixDepositAction {
-    repeated ZkProofInfo proofs = 1;
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo proofs = 3;
+
 
 }
 
 message MixTransferAction {
-    repeated ZkProofInfo inputs = 1;
-    ZkProofInfo output = 2;
-    ZkProofInfo change = 3;
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo inputs = 3;
+    ZkProofInfo output = 4;
+    ZkProofInfo change = 5;
 
 }
 
 message MixWithdrawAction {
-    uint64 amount = 1;
-    repeated ZkProofInfo proofs = 2;
+    string assetExec = 1;
+    string assetSymbol = 2;
+    uint64 amount = 3;
+    repeated ZkProofInfo proofs = 4;
 
 }
 
 message MixAuthorizeAction {
-    ZkProofInfo proof = 1;
+    string assetExec = 1;
+    string assetSymbol = 2;
+    ZkProofInfo proof = 3;
 
 }
 
@@ -190,6 +200,8 @@ message CommitTreeStatus{
     int32 subLeavesSeq = 2;
     //root的归档 从1开始,数据库占位，不然全空会往前搜索
     uint64 archiveRootsSeq = 3;
+    string assetExec = 4;
+    string assetSymbol = 5;
 
 }
 
@@ -239,6 +251,9 @@ message CommitTreeProve {
 message TreeInfoReq{
     string rootHash = 1;
     string leafHash = 2;
+    string assetExec = 3;
+    string assetSymbol = 4;
+    uint64 rootHeight = 5;
 }
 
 message TreeListResp{
@@ -295,6 +310,8 @@ message SecretData{
     string authorizeKey = 3;
     string amount = 4;
     string noteRandom = 5;
+    string assetExec = 6;
+    string assetSymbol = 7;
 }
 
 
@@ -351,17 +368,6 @@ message WithdrawTxReq{
 }
 
 
-message WithdrawProofRe{
-    SecretData      secret    = 1;
-    string          nullifierHash = 2;
-    string          authorizeSpendHash = 3;
-    string          noteHash  = 4;
-    string          spendPrivKey = 5;
-    string          spendFlag = 6;
-    string          authorizeFlag = 7;
-    TreePathProof   treeProof = 8;
-
-}
 
 //只授权一个note，超过一个，toAddr不好设置
 message AuthTxReq{
@@ -370,17 +376,6 @@ message AuthTxReq{
     string zkPath = 4;
 }
 
-message AuthProofRe{
-    SecretData      proof           = 1;
-    string          authPubKey      = 2;
-    string          authPrivKey     = 3;
-    string          authHash        = 4;
-    string          authorizeSpendHash   = 5;
-    string          noteHash        = 6;
-    string          spendFlag       = 7;
-    TreePathProof   treeProof       = 8;
-
-}
 
 message TransferInputTxReq{
     string noteHashs     = 1;
@@ -403,33 +398,7 @@ message ShieldAmount{
     string Y = 2;
 }
 
-message TransferInputProof{
-    SecretData      proof    = 1;
-    string          nullifierHash = 2;
-    string          authorizeSpendHash = 3;
-    string          noteHash  = 4;
-    string          spendPrivKey = 5;
-    string          spendFlag = 6;
-    string          authorizeFlag = 7;
-    TreePathProof   treeProof = 8;
-    ShieldAmount    shieldAmount = 9;
-    string          amountRandom = 10;
-}
 
-message TransferOutputProof{
-    SecretData      proof    = 1;
-    string          noteHash = 2;
-    DHSecretGroup   secrets  = 3;
-    ShieldAmount    shieldAmount = 4;
-    string          amountRandom = 5;
-}
-
-message TransferProofResp{
-    TransferInputProof  transferInput  = 1;
-    TransferOutputProof targetOutput = 2;
-    TransferOutputProof changeOutput = 3;
-
-}
 
 message ShieldAmountRst{
     repeated string inputRandoms = 1;
@@ -445,7 +414,7 @@ message CreateRawTxReq{
     int32  actionTy = 1;
     bytes  data = 4;
     string assetExec = 2;
-    string assetToken = 3;
+    string assetSymbol = 3;
     string title = 6; //平行链名字
     int32  privacy = 7; //1:打印隐私数据
     int32  verify = 8; //0:链上验证,1:本地验证
@@ -476,6 +445,7 @@ message WalletNoteInfo {
     string             authorizeHash        = 4;
     string             account              = 5; //账户地址
     NoteStatus         status               = 6;
+
     SecretData         secret               = 7;
 
 }
@@ -487,14 +457,14 @@ message WalletDbMixInfo {
 
 
 message WalletMixIndexReq {
-    string             noteHash       = 1;
-    string             nullifier       = 2;
+    string             noteHash             = 1;
+    string             nullifier            = 2;
     string             authorizeSpendHash   = 3;
     string             authorizeHash        = 4;
-    string             account       = 5;
-    int32              status     = 6;
-    int32              count      = 7;
-    int32              direction  = 8;
+    string             account              = 5;
+    int32              status               = 6;
+    int32              count                = 7;
+    int32              direction            = 8;
 }
 
 message WalletNoteResp {

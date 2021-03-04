@@ -31,11 +31,13 @@ func getCommitLeaves(db dbm.KV, key []byte) (*mixTy.CommitTreeLeaves, error) {
 	return &leaves, nil
 }
 
-func getCommitTreeStatus(db dbm.KV) (*mixTy.CommitTreeStatus, error) {
-	v, err := db.Get(calcCommitTreeCurrentStatusKey())
+func getCommitTreeStatus(db dbm.KV, assetExec, assetSymbol string) (*mixTy.CommitTreeStatus, error) {
+	v, err := db.Get(calcCommitTreeCurrentStatusKey(assetExec, assetSymbol))
 	if isNotFound(err) {
 		//系统初始化开始，没有任何状态，初始seq设为1，如果一个merkle树完成后，status清空状态，seq也要初始为1，作为数据库占位，不然会往前查找
 		return &mixTy.CommitTreeStatus{
+			AssetExec:       assetExec,
+			AssetSymbol:     assetSymbol,
 			SubTrees:        &mixTy.CommitSubTrees{},
 			ArchiveRootsSeq: 1}, nil
 	}
@@ -52,10 +54,10 @@ func getCommitTreeStatus(db dbm.KV) (*mixTy.CommitTreeStatus, error) {
 	return &status, nil
 }
 
-func getSubLeaves(db dbm.KV, currentSeq int32) (*mixTy.CommitTreeLeaves, error) {
+func getSubLeaves(db dbm.KV, exec, symbol string, currentSeq int32) (*mixTy.CommitTreeLeaves, error) {
 	var leaves mixTy.CommitTreeLeaves
 	for i := int32(1); i <= currentSeq; i++ {
-		l, err := getCommitLeaves(db, calcSubLeavesKey(i))
+		l, err := getCommitLeaves(db, calcSubLeavesKey(exec, symbol, i))
 		if err != nil {
 			return nil, errors.Wrapf(err, "getSubLeaves seq=%d", i)
 		}
@@ -65,8 +67,8 @@ func getSubLeaves(db dbm.KV, currentSeq int32) (*mixTy.CommitTreeLeaves, error) 
 	return &leaves, nil
 }
 
-func getCommitRootLeaves(db dbm.KV, rootHash string) (*mixTy.CommitTreeLeaves, error) {
-	return getCommitLeaves(db, calcCommitTreeRootLeaves(rootHash))
+func getCommitRootLeaves(db dbm.KV, exec, symbol, rootHash string) (*mixTy.CommitTreeLeaves, error) {
+	return getCommitLeaves(db, calcCommitTreeRootLeaves(exec, symbol, rootHash))
 }
 
 func getCommitTreeRoots(db dbm.KV, key []byte) (*mixTy.CommitTreeRoots, error) {
@@ -83,12 +85,12 @@ func getCommitTreeRoots(db dbm.KV, key []byte) (*mixTy.CommitTreeRoots, error) {
 	return &roots, nil
 }
 
-func getSubRoots(db dbm.KV, seq int32) (*mixTy.CommitTreeRoots, error) {
-	return getCommitTreeRoots(db, calcSubRootsKey(seq))
+func getSubRoots(db dbm.KV, exec, symbol string, seq int32) (*mixTy.CommitTreeRoots, error) {
+	return getCommitTreeRoots(db, calcSubRootsKey(exec, symbol, seq))
 }
 
-func getArchiveRoots(db dbm.KV, seq uint64) (*mixTy.CommitTreeRoots, error) {
-	return getCommitTreeRoots(db, calcArchiveRootsKey(seq))
+func getArchiveRoots(db dbm.KV, exec, symbol string, seq uint64) (*mixTy.CommitTreeRoots, error) {
+	return getCommitTreeRoots(db, calcArchiveRootsKey(exec, symbol, seq))
 }
 
 //TODO seed config
@@ -105,8 +107,8 @@ func calcTreeRoot(leaves *mixTy.CommitTreeLeaves) []byte {
 
 }
 
-func makeArchiveRootReceipt(seq uint64, root string) *types.Receipt {
-	key := calcArchiveRootsKey(seq)
+func makeArchiveRootReceipt(exec, symbol string, seq uint64, root string) *types.Receipt {
+	key := calcArchiveRootsKey(exec, symbol, seq)
 	log := &mixTy.ReceiptArchiveTreeRoot{
 		RootHash: root,
 		Seq:      seq,
@@ -126,9 +128,9 @@ func makeArchiveRootReceipt(seq uint64, root string) *types.Receipt {
 
 }
 
-func makeArchiveLeavesReceipt(root string, leaves *mixTy.CommitTreeLeaves) *types.Receipt {
+func makeArchiveLeavesReceipt(exec, symbol, root string, leaves *mixTy.CommitTreeLeaves) *types.Receipt {
 
-	key := calcCommitTreeRootLeaves(root)
+	key := calcCommitTreeRootLeaves(exec, symbol, root)
 	log := &mixTy.ReceiptArchiveLeaves{
 		RootHash: root,
 		Count:    int32(len(leaves.Leaves)),
@@ -148,8 +150,8 @@ func makeArchiveLeavesReceipt(root string, leaves *mixTy.CommitTreeLeaves) *type
 
 }
 
-func makeSubRootsReceipt(seq int32, root []byte) *types.Receipt {
-	key := calcSubRootsKey(seq)
+func makeSubRootsReceipt(exec, symbol string, seq int32, root []byte) *types.Receipt {
+	key := calcSubRootsKey(exec, symbol, seq)
 	log := &mixTy.ReceiptCommitSubRoots{
 		Seq:  seq,
 		Root: mixTy.Byte2Str(root),
@@ -168,8 +170,8 @@ func makeSubRootsReceipt(seq int32, root []byte) *types.Receipt {
 
 }
 
-func makeSubLeavesReceipt(seq int32, leaf []byte) *types.Receipt {
-	key := calcSubLeavesKey(seq)
+func makeSubLeavesReceipt(exec, symbol string, seq int32, leaf []byte) *types.Receipt {
+	key := calcSubLeavesKey(exec, symbol, seq)
 	log := &mixTy.ReceiptCommitSubLeaves{
 		Seq:  seq,
 		Leaf: mixTy.Byte2Str(leaf),
@@ -188,8 +190,8 @@ func makeSubLeavesReceipt(seq int32, leaf []byte) *types.Receipt {
 
 }
 
-func makeTreeStatusReceipt(prev, current *mixTy.CommitTreeStatus) *types.Receipt {
-	keyStatus := calcCommitTreeCurrentStatusKey()
+func makeTreeStatusReceipt(exec, symbol string, prev, current *mixTy.CommitTreeStatus) *types.Receipt {
+	keyStatus := calcCommitTreeCurrentStatusKey(exec, symbol)
 	log := &mixTy.ReceiptCommitTreeStatus{
 		Prev:    prev,
 		Current: current,
@@ -210,11 +212,11 @@ func makeTreeStatusReceipt(prev, current *mixTy.CommitTreeStatus) *types.Receipt
 
 }
 
-func getArchivedSubLeaves(db dbm.KV) (*mixTy.CommitTreeLeaves, error) {
+func getArchivedSubLeaves(db dbm.KV, exec, symbol string, maxTreeLeaves int32) (*mixTy.CommitTreeLeaves, error) {
 	var leaves mixTy.CommitTreeLeaves
 	//获取前1023个leaf
-	for i := int32(1); i < mixTy.MaxTreeLeaves; i++ {
-		r, err := getCommitLeaves(db, calcSubLeavesKey(i))
+	for i := int32(1); i < maxTreeLeaves; i++ {
+		r, err := getCommitLeaves(db, calcSubLeavesKey(exec, symbol, i))
 		if err != nil {
 			return nil, errors.Wrapf(err, "getArchivedSubTreeLeaves,i=%d", i)
 		}
@@ -258,14 +260,14 @@ func joinSubTrees(status *mixTy.CommitTreeStatus, leaf []byte) ([]byte, error) {
 
 }
 
-func joinLeaves(db dbm.KV, status *mixTy.CommitTreeStatus, leaf []byte) (*types.Receipt, error) {
+func joinLeaves(db dbm.KV, status *mixTy.CommitTreeStatus, leaf []byte, maxTreeLeaves int32) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk}
 
 	//seq从1开始记录前1023个叶子和root
-	if status.SubLeavesSeq < mixTy.MaxTreeLeaves {
+	if status.SubLeavesSeq < maxTreeLeaves {
 		status.SubLeavesSeq++
 
-		r := makeSubLeavesReceipt(status.SubLeavesSeq, leaf)
+		r := makeSubLeavesReceipt(status.AssetExec, status.AssetSymbol, status.SubLeavesSeq, leaf)
 		mergeReceipt(receipts, r)
 
 		//恢复并重新计算子树
@@ -273,14 +275,14 @@ func joinLeaves(db dbm.KV, status *mixTy.CommitTreeStatus, leaf []byte) (*types.
 		if err != nil {
 			return nil, errors.Wrapf(err, "joinLeaves.joinSubTrees")
 		}
-		r = makeSubRootsReceipt(status.SubLeavesSeq, root)
+		r = makeSubRootsReceipt(status.AssetExec, status.AssetSymbol, status.SubLeavesSeq, root)
 		mergeReceipt(receipts, r)
 
 		return receipts, nil
 	}
 
 	//累积到1024个叶子，需要归档
-	sumLeaves, err := getArchivedSubLeaves(db)
+	sumLeaves, err := getArchivedSubLeaves(db, status.AssetExec, status.AssetSymbol, maxTreeLeaves)
 	if err != nil {
 		return nil, errors.Wrapf(err, "pushTree.joinLeaves")
 	}
@@ -289,11 +291,11 @@ func joinLeaves(db dbm.KV, status *mixTy.CommitTreeStatus, leaf []byte) (*types.
 	//重新计算1024个叶子root，确保正确
 	root := mixTy.Byte2Str(calcTreeRoot(sumLeaves))
 	//root-leaves保存leaves
-	r := makeArchiveLeavesReceipt(root, sumLeaves)
+	r := makeArchiveLeavesReceipt(status.AssetExec, status.AssetSymbol, root, sumLeaves)
 	mergeReceipt(receipts, r)
 
 	//1024叶子的root归档到相应archiveSeq
-	r = makeArchiveRootReceipt(status.ArchiveRootsSeq, root)
+	r = makeArchiveRootReceipt(status.AssetExec, status.AssetSymbol, status.ArchiveRootsSeq, root)
 	mergeReceipt(receipts, r)
 	status.ArchiveRootsSeq++
 
@@ -309,8 +311,9 @@ func joinLeaves(db dbm.KV, status *mixTy.CommitTreeStatus, leaf []byte) (*types.
 2. 如果leaves 达到最大比如1024，则按root归档leaves，并归档相应root
 3. 归档同时初始化新的current leaves 和roots
 */
-func pushTree(db dbm.KV, leaves [][]byte) (*types.Receipt, error) {
-	status, err := getCommitTreeStatus(db)
+func pushTree(db dbm.KV, exec, symbol string, leaves [][]byte, maxTreeLeaves int32) (*types.Receipt, error) {
+
+	status, err := getCommitTreeStatus(db, exec, symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -322,13 +325,13 @@ func pushTree(db dbm.KV, leaves [][]byte) (*types.Receipt, error) {
 		if len(leaf) <= 0 {
 			return nil, errors.Wrapf(types.ErrInvalidParam, "the %d leaf is null", i)
 		}
-		r, err := joinLeaves(db, status, leaf)
+		r, err := joinLeaves(db, status, leaf, maxTreeLeaves)
 		if err != nil {
 			return nil, errors.Wrapf(err, "pushTree.joinLeaves leaf=%s", mixTy.Byte2Str(leaf))
 		}
 		mergeReceipt(receipts, r)
 	}
-	r := makeTreeStatusReceipt(prev, status)
+	r := makeTreeStatusReceipt(exec, symbol, prev, status)
 	mergeReceipt(receipts, r)
 	return receipts, nil
 
@@ -343,15 +346,15 @@ func checkExist(target []byte, list [][]byte) bool {
 	return false
 }
 
-func checkTreeRootHashExist(db dbm.KV, hash []byte) (bool, error) {
-	status, err := getCommitTreeStatus(db)
+func checkTreeRootHashExist(db dbm.KV, exec, symbol string, hash []byte) (bool, error) {
+	status, err := getCommitTreeStatus(db, exec, symbol)
 	if err != nil {
 		return false, errors.Wrapf(err, "checkTreeRootHashExist")
 	}
 
 	//查归档的subRoots,当前subSeq还未归档
 	for i := int32(1); i <= status.SubLeavesSeq; i++ {
-		subRoots, err := getSubRoots(db, i)
+		subRoots, err := getSubRoots(db, exec, symbol, i)
 		if err != nil {
 			return false, errors.Wrapf(err, "checkTreeRootHashExist.getSubRoots seq=%d", i)
 		}
@@ -362,7 +365,7 @@ func checkTreeRootHashExist(db dbm.KV, hash []byte) (bool, error) {
 
 	//再查归档的roots
 	for i := status.ArchiveRootsSeq; i > 0; i-- {
-		subRoots, err := getArchiveRoots(db, i)
+		subRoots, err := getArchiveRoots(db, exec, symbol, i)
 		if err != nil {
 			return false, errors.Wrapf(err, "checkTreeRootHashExist.getArchiveRoots seq=%d", i)
 		}
@@ -417,17 +420,17 @@ func getProveData(targetLeaf []byte, leaves [][]byte) (*mixTy.CommitTreeProve, e
 
 //1. 首先在当前tree查找
 //2. 如果提供了rootHash,则根据roothash+leaf查找，否则全局遍历查找
-func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, error) {
+func CalcTreeProve(db dbm.KV, exec, symbol, rootHash, leaf string) (*mixTy.CommitTreeProve, error) {
 	if len(leaf) <= 0 {
 		return nil, errors.Wrap(types.ErrInvalidParam, "leaf is null")
 	}
 
-	status, err := getCommitTreeStatus(db)
+	status, err := getCommitTreeStatus(db, exec, symbol)
 	if err != nil {
 		return nil, errors.Wrapf(err, "CalcTreeProve.getCommitTreeStatus")
 	}
 
-	leaves, err := getSubLeaves(db, status.SubLeavesSeq)
+	leaves, err := getSubLeaves(db, exec, symbol, status.SubLeavesSeq)
 	if err == nil {
 		p, err := getProveData(mixTy.Str2Byte(leaf), leaves.Leaves)
 		if err == nil {
@@ -436,7 +439,7 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, er
 	}
 
 	if len(rootHash) > 0 {
-		leaves, err := getCommitRootLeaves(db, rootHash)
+		leaves, err := getCommitRootLeaves(db, exec, symbol, rootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getCommitRootLeaves rootHash=%s", rootHash)
 		}
@@ -449,8 +452,8 @@ func CalcTreeProve(db dbm.KV, rootHash, leaf string) (*mixTy.CommitTreeProve, er
 	}
 
 	for i := status.ArchiveRootsSeq; i > 0; i-- {
-		roots, err := getArchiveRoots(db, i)
-		leaves, err := getCommitRootLeaves(db, mixTy.Byte2Str(roots.Roots[0]))
+		roots, err := getArchiveRoots(db, exec, symbol, i)
+		leaves, err := getCommitRootLeaves(db, exec, symbol, mixTy.Byte2Str(roots.Roots[0]))
 		if err == nil {
 			p, err := getProveData(mixTy.Str2Byte(leaf), leaves.Leaves)
 			if err == nil {

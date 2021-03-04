@@ -67,13 +67,18 @@ type WithdrawInput struct {
 	Valid9 string `tag:"secret"`
 }
 
-func (p *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, error) {
+func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*WithdrawInput, error) {
 	note, err := p.getNoteInfo(noteHash)
 	if err != nil {
 		return nil, err
 	}
 	if note.Status != mixTy.NoteStatus_VALID && note.Status != mixTy.NoteStatus_UNFROZEN {
 		return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
+	}
+
+	if note.Secret.AssetExec != exec || note.Secret.AssetSymbol != symbol {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "exec=%s,sym=%s not equal req's exec=%s,symbol=%s",
+			note.Secret.AssetExec, note.Secret.AssetSymbol, exec, symbol)
 	}
 
 	var input WithdrawInput
@@ -105,7 +110,7 @@ func (p *mixPolicy) getWithdrawParams(noteHash string) (*WithdrawInput, error) {
 	}
 
 	//get tree path
-	treeProof, err := p.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.Secret.AssetExec, note.Secret.AssetSymbol, note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -122,6 +127,11 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	if err != nil {
 		return nil, errors.Wrap(err, "decode req fail")
 	}
+
+	if len(req.AssetExec) == 0 || len(req.AssetSymbol) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", req.AssetExec, req.AssetSymbol)
+	}
+
 	if withdraw.TotalAmount <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "totalAmount=%d", withdraw.TotalAmount)
 	}
@@ -134,7 +144,7 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 
 	var sum uint64
 	for _, note := range notes {
-		input, err := p.getWithdrawParams(note)
+		input, err := p.getWithdrawParams(req.AssetExec, req.AssetSymbol, note)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
@@ -161,12 +171,14 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		return nil, errors.Wrapf(types.ErrInvalidParam, "amount not match req=%d,note.sum=%d", withdraw.TotalAmount, sum)
 	}
 
-	return p.getWithdrawTx(strings.TrimSpace(req.Title+mixTy.MixX), withdraw.TotalAmount, proofs)
+	return p.getWithdrawTx(strings.TrimSpace(req.Title+mixTy.MixX), req.AssetExec, req.AssetSymbol, withdraw.TotalAmount, proofs)
 
 }
 
-func (p *mixPolicy) getWithdrawTx(execName string, amount uint64, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getWithdrawTx(execName, assetExec, assetSymbol string, amount uint64, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixWithdrawAction{}
+	payload.AssetExec = assetExec
+	payload.AssetSymbol = assetSymbol
 	payload.Amount = amount
 	payload.Proofs = proofs
 

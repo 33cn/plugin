@@ -127,11 +127,11 @@ func (p *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
 	return msg.(*mixTy.PaymentKey), err
 }
 
-func (p *mixPolicy) getPathProof(leaf string) (*mixTy.CommitTreeProve, error) {
+func (p *mixPolicy) getPathProof(exec, symbol, leaf string) (*mixTy.CommitTreeProve, error) {
 	msg, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "mix",
 		FuncName: "GetTreePath",
-		Param:    types.Encode(&mixTy.TreeInfoReq{LeafHash: leaf}),
+		Param:    types.Encode(&mixTy.TreeInfoReq{AssetExec: exec, AssetSymbol: symbol, LeafHash: leaf}),
 	})
 	if err != nil {
 		return nil, err
@@ -160,11 +160,11 @@ func (p *mixPolicy) getNoteInfo(noteHash string) (*mixTy.WalletNoteInfo, error) 
 	return note, nil
 }
 
-func (p *mixPolicy) getTreeProof(leaf string) (*mixTy.TreePathProof, error) {
+func (p *mixPolicy) getTreeProof(exec, symbol, leaf string) (*mixTy.TreePathProof, error) {
 	//get tree path
-	path, err := p.getPathProof(leaf)
+	path, err := p.getPathProof(exec, symbol, leaf)
 	if err != nil {
-		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s", leaf)
+		return nil, errors.Wrapf(err, "get tree proof for noteHash=%s,exec=%s,symbol=%s", leaf, exec, symbol)
 	}
 	var proof mixTy.TreePathProof
 	proof.TreePath = path.ProofSet[1:]

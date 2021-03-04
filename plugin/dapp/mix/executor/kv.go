@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	verifyKeys    string
-	authPubKeys   string
-	paymentPubKey string
+	verifyKeys   string
+	authPubKeys  string
+	receivingKey string
 
 	commitTreeCurrentStatus string
 	commitTreeSubRoots      string
@@ -27,7 +27,7 @@ var (
 func setPrefix() {
 	verifyKeys = "mavl-mix-verify-keys-"
 	authPubKeys = "mavl-mix-auth-pubkeys-"
-	paymentPubKey = "mavl-mix-payment-pubkey-"
+	receivingKey = "mavl-mix-receiving-key-"
 
 	commitTreeCurrentStatus = "mavl-mix-commitTree-current-status-"
 
@@ -51,28 +51,28 @@ func getAuthPubKeysKey() []byte {
 	return []byte(fmt.Sprintf(authPubKeys))
 }
 
-func getPaymentPubKey(addr string) []byte {
-	return []byte(fmt.Sprintf(paymentPubKey+"%s", addr))
+func calcReceivingKey(addr string) []byte {
+	return []byte(fmt.Sprintf(receivingKey+"%s", addr))
 }
 
-func calcCommitTreeCurrentStatusKey() []byte {
-	return []byte(fmt.Sprintf(commitTreeCurrentStatus))
+func calcCommitTreeCurrentStatusKey(exec, symbol string) []byte {
+	return []byte(fmt.Sprintf(commitTreeCurrentStatus+"%s-%s", exec, symbol))
 }
 
-func calcArchiveRootsKey(seq uint64) []byte {
-	return []byte(fmt.Sprintf(commitTreeArchiveRoots+"%022d", seq))
+func calcArchiveRootsKey(exec, symbol string, seq uint64) []byte {
+	return []byte(fmt.Sprintf(commitTreeArchiveRoots+"%s-%s-%022d", exec, symbol, seq))
 }
 
-func calcSubRootsKey(seq int32) []byte {
-	return []byte(fmt.Sprintf(commitTreeSubRoots+"%010d", seq))
+func calcSubRootsKey(exec, symbol string, seq int32) []byte {
+	return []byte(fmt.Sprintf(commitTreeSubRoots+"%s-%s-%010d", exec, symbol, seq))
 }
 
-func calcSubLeavesKey(seq int32) []byte {
-	return []byte(fmt.Sprintf(commitTreeSubLeaves+"%010d", seq))
+func calcSubLeavesKey(exec, symbol string, seq int32) []byte {
+	return []byte(fmt.Sprintf(commitTreeSubLeaves+"%s-%s-%010d", exec, symbol, seq))
 }
 
-func calcCommitTreeRootLeaves(rootHash string) []byte {
-	return []byte(fmt.Sprintf(commitTreeRootLeaves+"%s", rootHash))
+func calcCommitTreeRootLeaves(exec, symbol string, rootHash string) []byte {
+	return []byte(fmt.Sprintf(commitTreeRootLeaves+"%s-%s-%s", exec, symbol, rootHash))
 }
 
 func calcAuthorizeHashKey(hash string) []byte {

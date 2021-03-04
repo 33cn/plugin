@@ -203,6 +203,17 @@ useBalance=false
 ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
 
+[exec.sub.mix]
+#私对私的交易费,交易比较大，需要多的手续费
+txFee=0
+#私对私token转账，花费token(true)还是BTY(false),
+tokenFee=false
+#curve H point
+pointHX="10190477835300927557649934238820360529458681672073866116232821892325659279502"
+pointHY="7969140283216448215269095418467361784159407896899334866715345504515077887397"
+#电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
+maxTreeLeaves=1024
+
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
 [fork.system]

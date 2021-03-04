@@ -15,11 +15,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
+func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizePublicInput) error {
 	//check tree rootHash exist
-	exist, err := checkTreeRootHashExist(a.db, mixTy.Str2Byte(input.TreeRootHash))
+	exist, err := checkTreeRootHashExist(a.db, exec, symbol, mixTy.Str2Byte(input.TreeRootHash))
 	if err != nil {
-		return errors.Wrapf(err, "roothash=%s not found", input.TreeRootHash)
+		return errors.Wrapf(err, "roothash=%s not found,exec=%s,symbol=%s", input.TreeRootHash, exec, symbol)
 	}
 	if !exist {
 		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", input.TreeRootHash)
@@ -54,7 +54,7 @@ func (a *action) authParamCheck(input *mixTy.AuthorizePublicInput) error {
 	return nil
 }
 
-func (a *action) authorizeVerify(proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePublicInput, error) {
+func (a *action) authorizeVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePublicInput, error) {
 	var input mixTy.AuthorizePublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
@@ -65,7 +65,7 @@ func (a *action) authorizeVerify(proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePubl
 		return nil, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
 	}
 
-	err = a.authParamCheck(&input)
+	err = a.authParamCheck(exec, symbol, &input)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,8 @@ func (a *action) authorizeVerify(proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePubl
 func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt, error) {
 	var inputs []*mixTy.AuthorizePublicInput
 
-	in, err := a.authorizeVerify(authorize.Proof)
+	execer, symbol := mixTy.GetAssetExecSymbol(a.api.GetConfig(), authorize.AssetExec, authorize.AssetSymbol)
+	in, err := a.authorizeVerify(execer, symbol, authorize.Proof)
 	if err != nil {
 		return nil, err
 	}
