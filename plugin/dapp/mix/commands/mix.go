@@ -205,7 +205,48 @@ func QueryCmd() *cobra.Command {
 	cmd.AddCommand(GetTreeStatusCmd())
 	cmd.AddCommand(ShowMixTxsCmd())
 	cmd.AddCommand(ShowPaymentPubKeyCmd())
+	cmd.AddCommand(mixTokenTxFeeParaCmd())
 	return cmd
+}
+
+func mixTokenTxFeeParaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "txfee",
+		Short: "query token tx fee addr",
+		Run:   createTokenTxFee,
+	}
+	addTokenTxFeeFlags(cmd)
+
+	return cmd
+}
+
+func addTokenTxFeeFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "asset exec")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.MarkFlagRequired("symbol")
+
+}
+
+func createTokenTxFee(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = mixTy.MixX
+	params.FuncName = "TokenFeeAddr"
+	req := mixTy.TokenTxFee{
+		AssetExec:   exec,
+		AssetSymbol: symbol,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+
 }
 
 // GetParaInfoCmd get para chain status by height
@@ -225,19 +266,28 @@ func addGetPathCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("leaf", "l", "", "leaf hash")
 	cmd.MarkFlagRequired("leaf")
 
+	cmd.Flags().StringP("exec", "e", "", "asset exec")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func treePath(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	root, _ := cmd.Flags().GetString("root")
 	leaf, _ := cmd.Flags().GetString("leaf")
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetTreePath"
 	req := mixTy.TreeInfoReq{
-		RootHash: root,
-		LeafHash: leaf,
+		RootHash:    root,
+		LeafHash:    leaf,
+		AssetExec:   exec,
+		AssetSymbol: symbol,
 	}
 	params.Payload = types.MustPBToJSON(&req)
 
@@ -260,17 +310,26 @@ func GetTreeLeavesCmd() *cobra.Command {
 func addGetLeavesCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("root", "r", "", "tree root hash, null means current leaves")
 
+	cmd.Flags().StringP("exec", "e", "", "asset exec")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func treeLeaves(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	root, _ := cmd.Flags().GetString("root")
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetLeavesList"
 	req := mixTy.TreeInfoReq{
-		RootHash: root,
+		RootHash:    root,
+		AssetExec:   exec,
+		AssetSymbol: symbol,
 	}
 	params.Payload = types.MustPBToJSON(&req)
 
@@ -291,20 +350,27 @@ func GetTreeRootsCmd() *cobra.Command {
 }
 
 func addGetRootsflags(cmd *cobra.Command) {
-	cmd.Flags().Int64P("seq", "s", 0, "sequence, default 0 is for current status")
+	cmd.Flags().Uint64P("seq", "q", 0, "sequence, default 0 is for current status")
 	cmd.MarkFlagRequired("seq")
 
+	cmd.Flags().StringP("exec", "e", "", "asset exec")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func treeRoot(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	seq, _ := cmd.Flags().GetInt64("seq")
+	seq, _ := cmd.Flags().GetUint64("seq")
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetRootList"
 
-	params.Payload = types.MustPBToJSON(&types.ReqInt{Height: seq})
+	params.Payload = types.MustPBToJSON(&mixTy.TreeInfoReq{RootHeight: seq, AssetExec: exec, AssetSymbol: symbol})
 
 	var res mixTy.RootListResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -318,18 +384,28 @@ func GetTreeStatusCmd() *cobra.Command {
 		Short: "Get commit leaves tree status",
 		Run:   treeStatus,
 	}
-	//addGetRootsflags(cmd)
+	addGetTreeStatusflags(cmd)
 	return cmd
+}
+
+func addGetTreeStatusflags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "asset exec")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().StringP("symbol", "s", "", "asset symbol")
+	cmd.MarkFlagRequired("symbol")
 }
 
 func treeStatus(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	exec, _ := cmd.Flags().GetString("exec")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "GetTreeStatus"
 
-	params.Payload = types.MustPBToJSON(&types.ReqNil{})
+	params.Payload = types.MustPBToJSON(&mixTy.TreeInfoReq{AssetExec: exec, AssetSymbol: symbol})
 
 	var res mixTy.TreeStatusResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
@@ -810,20 +886,24 @@ func CreateDepositRawTxCmd() *cobra.Command {
 }
 
 func depositSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("targets", "t", "", "target addrs,seperated by ','")
-	cmd.MarkFlagRequired("targets")
+	cmd.Flags().StringP("receiver", "r", "", "receiver addrs,seperated by ','")
+	cmd.MarkFlagRequired("receiver")
 
-	cmd.Flags().StringP("return", "r", "", "return addr,optional")
+	cmd.Flags().StringP("return", "f", "", "return addr,optional")
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr,optional")
 
 	cmd.Flags().StringP("amount", "m", "", "amounts,seperated by ','")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
-	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset symbol,like BTY")
+	cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token)")
+	cmd.MarkFlagRequired("exec")
 
-	cmd.Flags().StringP("path", "p", "", "deposit circuit path ")
+	cmd.Flags().StringP("path", "p", "", "deposit circuit path")
+	cmd.MarkFlagRequired("path")
+
 	cmd.Flags().Int32P("privacy", "w", 0, "get zk privacy data print, 1:print, default not")
 	cmd.Flags().Int32P("verify", "v", 0, "verify on chain:0 on local:1, default 0 ")
 
@@ -832,19 +912,19 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 func depositSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
-	targets, _ := cmd.Flags().GetString("targets")
+	receiver, _ := cmd.Flags().GetString("receiver")
 	returnAddr, _ := cmd.Flags().GetString("return")
 	authorize, _ := cmd.Flags().GetString("authorize")
 	amount, _ := cmd.Flags().GetString("amount")
 	assetExec, _ := cmd.Flags().GetString("exec")
-	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
 	privacy, _ := cmd.Flags().GetInt32("privacy")
 	verify, _ := cmd.Flags().GetInt32("verify")
 
 	deposit := &mixTy.DepositInfo{
-		ReceiverAddrs: targets,
+		ReceiverAddrs: receiver,
 		ReturnAddr:    returnAddr,
 		AuthorizeAddr: authorize,
 		Amounts:       amount,
@@ -856,13 +936,13 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:   mixTy.MixActionDeposit,
-		Data:       types.Encode(tx),
-		AssetExec:  assetExec,
-		AssetToken: token,
-		Title:      paraName,
-		Privacy:    privacy,
-		Verify:     verify,
+		ActionTy:    mixTy.MixActionDeposit,
+		Data:        types.Encode(tx),
+		AssetExec:   assetExec,
+		AssetSymbol: symbol,
+		Title:       paraName,
+		Privacy:     privacy,
+		Verify:      verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -894,8 +974,10 @@ func transferSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("amount", "m", "", "transfer amount")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
-	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset token, like BTY")
+	cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token)")
+	cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("inpath", "i", "", "input path ")
 	cmd.MarkFlagRequired("inpath")
@@ -920,7 +1002,7 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	outpath, _ := cmd.Flags().GetString("outpath")
 
 	assetExec, _ := cmd.Flags().GetString("exec")
-	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	privacy, _ := cmd.Flags().GetInt32("privacy")
 	verify, _ := cmd.Flags().GetInt32("verify")
@@ -948,13 +1030,13 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:   mixTy.MixActionTransfer,
-		Data:       types.Encode(req),
-		AssetExec:  assetExec,
-		AssetToken: token,
-		Title:      paraName,
-		Privacy:    privacy,
-		Verify:     verify,
+		ActionTy:    mixTy.MixActionTransfer,
+		Data:        types.Encode(req),
+		AssetExec:   assetExec,
+		AssetSymbol: symbol,
+		Title:       paraName,
+		Privacy:     privacy,
+		Verify:      verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -979,8 +1061,10 @@ func withdrawSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("amount", "m", 0, "total amount")
 	cmd.MarkFlagRequired("amount")
 
-	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset token, default BTY")
+	cmd.MarkFlagRequired("symbol")
 	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
+	cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("path", "p", "", "withdraw pk file ")
 	cmd.MarkFlagRequired("path")
@@ -997,7 +1081,7 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetUint64("amount")
 
 	assetExec, _ := cmd.Flags().GetString("exec")
-	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
 	privacy, _ := cmd.Flags().GetInt32("privacy")
@@ -1010,13 +1094,13 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:   mixTy.MixActionWithdraw,
-		Data:       types.Encode(req),
-		AssetExec:  assetExec,
-		AssetToken: token,
-		Title:      paraName,
-		Privacy:    privacy,
-		Verify:     verify,
+		ActionTy:    mixTy.MixActionWithdraw,
+		Data:        types.Encode(req),
+		AssetExec:   assetExec,
+		AssetSymbol: symbol,
+		Title:       paraName,
+		Privacy:     privacy,
+		Verify:      verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -1041,8 +1125,10 @@ func authSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("toKey", "a", "", "authorize to key")
 	cmd.MarkFlagRequired("toKey")
 
-	cmd.Flags().StringP("token", "s", "BTY", "asset token, default BTY")
+	cmd.Flags().StringP("symbol", "s", "BTY", "asset token, default BTY")
+	cmd.MarkFlagRequired("symbol")
 	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token, paracross), default coins")
+	cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("path", "p", "", "auth path file ")
 	cmd.MarkFlagRequired("path")
@@ -1059,7 +1145,7 @@ func authSecret(cmd *cobra.Command, args []string) {
 	toKey, _ := cmd.Flags().GetString("toKey")
 
 	assetExec, _ := cmd.Flags().GetString("exec")
-	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
 
@@ -1073,13 +1159,13 @@ func authSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:   mixTy.MixActionAuth,
-		Data:       types.Encode(req),
-		AssetExec:  assetExec,
-		AssetToken: token,
-		Title:      paraName,
-		Privacy:    privacy,
-		Verify:     verify,
+		ActionTy:    mixTy.MixActionAuth,
+		Data:        types.Encode(req),
+		AssetExec:   assetExec,
+		AssetSymbol: symbol,
+		Title:       paraName,
+		Privacy:     privacy,
+		Verify:      verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)

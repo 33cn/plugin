@@ -13,7 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	log "github.com/33cn/chain33/common/log/log15"
+	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
+	token "github.com/33cn/plugin/plugin/dapp/token/types"
 	"github.com/consensys/gurvy/bn256/fr"
 	"github.com/consensys/gurvy/bn256/twistededwards"
 )
@@ -150,12 +152,12 @@ func MulCurvePointG(val interface{}) *twistededwards.Point {
 	return &point
 }
 
-func MulCurvePointH(val string) *twistededwards.Point {
+func MulCurvePointH(pointHX, pointHY, val string) *twistededwards.Point {
 	v := fr.FromInterface(val)
 
 	var pointV, pointH twistededwards.Point
-	pointH.X.SetString(PointHX)
-	pointH.Y.SetString(PointHY)
+	pointH.X.SetString(pointHX)
+	pointH.Y.SetString(pointHY)
 
 	pointV.ScalarMul(&pointH, *v.FromMont())
 	return &pointV
@@ -215,4 +217,26 @@ func Byte2Str(v []byte) string {
 func GetFrRandom() string {
 	var f fr.Element
 	return f.SetRandom().String()
+}
+
+func GetAssetExecSymbol(cfg *types.Chain33Config, execer, symbol string) (string, string) {
+	if symbol == "" {
+		return coins.CoinsX, cfg.GetCoinSymbol()
+	}
+	if execer == "" {
+		return token.TokenX, symbol
+	}
+	return execer, symbol
+}
+
+func GetTransferTxFee(cfg *types.Chain33Config, assetExecer string) int64 {
+	conf := types.ConfSub(cfg, MixX)
+	txFee := conf.GInt("txFee")
+	tokenFee := conf.IsEnable("tokenFee")
+	//一切非coins的token资产 在tokenFee=false都不收txfee,特殊地址代扣
+	if assetExecer != coins.CoinsX && !tokenFee {
+		return 0
+	}
+	//tokenFee=true或者coins都按txfee数量收txFee
+	return txFee
 }

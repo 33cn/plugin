@@ -112,7 +112,7 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) 
 	}
 
 	//get tree path
-	treeProof, err := p.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.Secret.AssetExec, note.Secret.AssetSymbol, note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -134,6 +134,10 @@ func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction,
 		return nil, err
 	}
 
+	if len(req.AssetExec) == 0 || len(req.AssetSymbol) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", req.AssetExec, req.AssetSymbol)
+	}
+
 	proofInfo, err := getZkProofKeys(auth.ZkPath+mixTy.AuthCircuit, auth.ZkPath+mixTy.AuthPk, *input, req.Privacy)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getZkProofKeys note=%s", auth.NoteHash)
@@ -143,12 +147,14 @@ func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction,
 		return nil, errors.Wrapf(err, "verifyProof fail for note=%s", auth.NoteHash)
 	}
 
-	return p.getAuthTx(strings.TrimSpace(req.Title+mixTy.MixX), proofInfo)
+	return p.getAuthTx(strings.TrimSpace(req.Title+mixTy.MixX), req.AssetExec, req.AssetSymbol, proofInfo)
 }
 
-func (p *mixPolicy) getAuthTx(execName string, proof *mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getAuthTx(execName string, exec, symbol string, proof *mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixAuthorizeAction{}
 	payload.Proof = proof
+	payload.AssetExec = exec
+	payload.AssetSymbol = symbol
 
 	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{

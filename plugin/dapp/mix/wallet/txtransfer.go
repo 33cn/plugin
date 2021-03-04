@@ -132,7 +132,7 @@ func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferI
 		input.AuthorizeFlag = "1"
 	}
 
-	treeProof, err := p.getTreeProof(note.NoteHash)
+	treeProof, err := p.getTreeProof(note.Secret.AssetExec, note.Secret.AssetSymbol, note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
@@ -142,13 +142,13 @@ func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferI
 	return &input, nil
 }
 
-func (p *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
+func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
 	//目前只支持一个ReceiverAddr
 	if strings.Contains(req.ReceiverAddrs, ",") || strings.Contains(req.Amounts, ",") {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "only support one addr or amount,addrs=%s,amount=%s",
 			req.ReceiverAddrs, req.Amounts)
 	}
-	resp, err := p.depositParams(req.ReceiverAddrs, req.ReturnAddr, req.AuthorizeAddr, req.Amounts)
+	resp, err := p.depositParams(exec, symbol, req.ReceiverAddrs, req.ReturnAddr, req.AuthorizeAddr, req.Amounts)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "deposit toAddr=%s", req.ReceiverAddrs)
 	}
@@ -166,7 +166,7 @@ func (p *mixPolicy) getTransferOutput(req *mixTy.DepositInfo) (*TransferOutput, 
 }
 
 //input = output+找零+交易费
-func getShieldValue(inputAmounts []uint64, outAmount, change, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
+func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, change, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
 	var sum uint64
 	for _, i := range inputAmounts {
 		sum += i
@@ -227,13 +227,17 @@ func getShieldValue(inputAmounts []uint64, outAmount, change, minTxFee uint64) (
 		return nil, errors.Wrapf(types.ErrInvalidParam, "random sumIn=%s not equal sumOut=%s", rSumIn.String(), rSumOut.String())
 	}
 
+	conf := types.ConfSub(cfg, mixTy.MixX)
+	pointHX := conf.GStr("pointHX")
+	pointHY := conf.GStr("pointHY")
+
 	var inputHPoints []*twistededwards.Point
 	for _, i := range rInputs {
-		inputHPoints = append(inputHPoints, mixTy.MulCurvePointH(i.String()))
+		inputHPoints = append(inputHPoints, mixTy.MulCurvePointH(pointHX, pointHY, i.String()))
 	}
 	//noteH := mixTy.MulCurvePointH(rNote.String())
-	outH := mixTy.MulCurvePointH(rOut.String())
-	changeH := mixTy.MulCurvePointH(rChange.String())
+	outH := mixTy.MulCurvePointH(pointHX, pointHY, rOut.String())
+	changeH := mixTy.MulCurvePointH(pointHX, pointHY, rChange.String())
 	//fmt.Println("change",changeRandom.String())
 	//fmt.Println("transfer",transRandom.String())
 	//fmt.Println("note",noteRandom.String())
@@ -275,6 +279,10 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		return nil, errors.Wrap(err, "decode req fail")
 	}
 
+	if len(req.AssetExec) == 0 || len(req.AssetSymbol) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", req.AssetExec, req.AssetSymbol)
+	}
+
 	noteHashs := strings.Split(transfer.GetInput().NoteHashs, ",")
 	var notes []*mixTy.WalletNoteInfo
 	for _, h := range noteHashs {
@@ -284,6 +292,10 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		}
 		if note.Status != mixTy.NoteStatus_VALID && note.Status != mixTy.NoteStatus_UNFROZEN {
 			return nil, errors.Wrapf(types.ErrNotAllow, "wrong note status=%s", note.Status.String())
+		}
+		if note.Secret.AssetExec != req.AssetExec || note.Secret.AssetSymbol != req.AssetSymbol {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "note=%s,exec=%s,sym=%s not equal req's exec=%s,symbol=%s",
+				h, note.Secret.AssetExec, note.Secret.AssetSymbol, req.AssetExec, req.AssetSymbol)
 		}
 		notes = append(notes, note)
 	}
@@ -311,6 +323,12 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	}
 
 	//2. 获取output
+
+	//1.如果平行链，fee可以设为0
+	//2. 如果token,且不收token费，则txfee=0, 单纯扣特殊地址mixtoken的bty
+	//3. 如果token,且tokenFee=true，则按fee收token数量作为交易费
+	txFee := mixTy.GetTransferTxFee(p.walletOperate.GetAPI().GetConfig(), req.AssetExec)
+
 	outAmount, err := strconv.ParseUint(transfer.Output.Deposit.Amounts, 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "output part parseUint=%s", transfer.Output.Deposit.Amounts)
@@ -318,10 +336,10 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	if outAmount == 0 {
 		return nil, errors.Wrapf(err, "output part amount=0, parseUint=%s", transfer.Output.Deposit.Amounts)
 	}
-	if sumInput < outAmount+uint64(mixTy.Privacy2PrivacyTxFee) {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "out amount=%d big than input=%d - fee=%d", outAmount, sumInput, uint64(mixTy.Privacy2PrivacyTxFee))
+	if sumInput < outAmount+uint64(txFee) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "out amount=%d big than input=%d - fee=%d", outAmount, sumInput, uint64(txFee))
 	}
-	outPart, outDHSecret, err := p.getTransferOutput(transfer.Output.Deposit)
+	outPart, outDHSecret, err := p.getTransferOutput(req.AssetExec, req.AssetSymbol, transfer.Output.Deposit)
 	if err != nil {
 		return nil, errors.Wrap(err, "getTransferOutput for deposit")
 	}
@@ -330,19 +348,19 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	//3. 获取找零，并扣除手续费
 	//如果找零为0也需要设置，否则只有一个输入一个输出，H部分的随机数要相等，就能推测出转账值来
 	//在transfer output 部分特殊处理，如果amount是0的值则不加进tree
-	changeAmount := sumInput - outAmount - uint64(mixTy.Privacy2PrivacyTxFee)
+	changeAmount := sumInput - outAmount - uint64(txFee)
 	change := &mixTy.DepositInfo{
 		ReceiverAddrs: notes[0].Account,
 		Amounts:       strconv.FormatUint(changeAmount, 10),
 	}
-	changePart, changeDHSecret, err := p.getTransferOutput(change)
+	changePart, changeDHSecret, err := p.getTransferOutput(req.AssetExec, req.AssetSymbol, change)
 	if err != nil {
 		return nil, errors.Wrap(err, "getTransferOutput change part ")
 	}
 	bizlog.Info("transferProof deposit to change succ")
 
 	//获取shieldValue 输入输出对amount隐藏
-	shieldValue, err := getShieldValue(inputAmounts, outAmount, changeAmount, uint64(mixTy.Privacy2PrivacyTxFee))
+	shieldValue, err := getShieldValue(p.walletOperate.GetAPI().GetConfig(), inputAmounts, outAmount, changeAmount, uint64(txFee))
 	if err != nil {
 		return nil, err
 	}
@@ -396,14 +414,16 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	}
 	changeProof.Secrets = changeDHSecret
 
-	return p.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), inputProofs, outputProof, changeProof)
+	return p.getTransferTx(strings.TrimSpace(req.Title+mixTy.MixX), req.AssetExec, req.AssetSymbol, inputProofs, outputProof, changeProof)
 }
 
-func (p *mixPolicy) getTransferTx(execName string, inputProofs []*mixTy.ZkProofInfo, proofs ...*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getTransferTx(execName, assetExec, assetSymbol string, inputProofs []*mixTy.ZkProofInfo, output, change *mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixTransferAction{}
+	payload.AssetExec = assetExec
+	payload.AssetSymbol = assetSymbol
 	payload.Inputs = inputProofs
-	payload.Output = proofs[0]
-	payload.Change = proofs[1]
+	payload.Output = output
+	payload.Change = change
 
 	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{

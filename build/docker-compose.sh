@@ -91,7 +91,7 @@ function base_init() {
     sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
     #新ticket 只冻结60s 测试目的
     sed -i $sedfix 's/^ticketFrozenTime = 43200/ticketFrozenTime = 60/g' chain33.toml
-    sed -i $sedfix 's/^ticketWithdrawTime = 172800/ticketMinerWaitTime = 1000/g' chain33.toml
+    sed -i $sedfix 's/^ticketWithdrawTime = 172800/ticketWithdrawTime = 1000/g' chain33.toml
     sed -i $sedfix 's/^ticketMinerWaitTime = 7200/ticketMinerWaitTime = 600/g' chain33.toml
 
     # p2p

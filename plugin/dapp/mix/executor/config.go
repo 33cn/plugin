@@ -158,7 +158,7 @@ func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 }
 
 func makeConfigPaymentKeyReceipt(data *mixTy.PaymentKey) *types.Receipt {
-	key := getPaymentPubKey(data.Addr)
+	key := calcReceivingKey(data.Addr)
 	return &types.Receipt{
 		Ty: types.ExecOk,
 		KV: []*types.KeyValue{
@@ -172,7 +172,7 @@ func makeConfigPaymentKeyReceipt(data *mixTy.PaymentKey) *types.Receipt {
 }
 
 func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
-	key := getPaymentPubKey(addr)
+	key := calcReceivingKey(addr)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db")

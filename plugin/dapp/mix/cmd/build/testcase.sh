@@ -75,6 +75,8 @@ function mix_enable_privacy() {
 function mix_transfer() {
     echo "=========== # mix chain transfer ============="
 
+    ${CLI} send coins send_exec -a 10 -e mix -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+
     ##config mix key
     ${CLI} send coins transfer -a 10 -n transfer -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
     #authorize
@@ -95,7 +97,7 @@ function mix_transfer() {
     #1nl
     ${CLI} send mix config register -r 1499328046806813717988379826525346013601394010052157072491414645500411978017 -e 0abaa15456580365b90f84f22186f99250f4198f8df7319bcced1606085a1e01 -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115
 
-    ${CLI} send coins send_exec -a 10 -e mix -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
+    ${CLI} send mix config register -r 7166643181671374870524536201432214798965258692016821447324045928745450625215 -e a97592e700eb0f87c5738b35c8d460ce33a4a59bde6128081ddd042c3c262f76 -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71
 
     ##config deposit circuit vk
     ${CLI} send mix config vk -c 0 -z 1f8b08000000000000ff6c51795053eb15ff4e7281e0f086f5098ff7221114509692581441b4611111c160559055960b449280240842adb22b8bb2094a0551912aa853d08a452bd2a9a0b6022e55c74e519246a86804b57a04f47612c4ce74fad76fbeb3fc96efb0f509db97c96303186da533c449bbc5b2e4207a3730f90428007f600a09b00204c0946b910f4c2501235166bc449c10284bcf54c881a923842c640ad8006c9a2f98dd0096af1b30c50458be7c2d12e2c814b10158f4725d990d2c1f3760f61360f9f0bfa2408b84f09812dda060b60c2ca11b30a5045842be1609b1640e008081bf8496d23285aea70f1c4268a68c0de025576464262878b9bc8038a9342e844ee6c5cb04eecb5d0304c2a424b18cf6e2f9d112c5ff69f0f6cca604cedc2630070970e6c6b52f421631156c00cedc926e840510ae730bdb66330898436c00ee372b41bcc8e8af62fcff8a5512008020606a0921364c0d0bc0e47fe7b44d60aab5ba553add6ff5ea39ddd2595dedd7cc670eb3003891d17245865896acbd0d1811f285b261f2b55a141e0cb7b2cb5650edb824f244cad4c47a677cb79d9f3af5278f179fceaa06a59e13a140a1e16052f395a5279fe3dd5daf4b7c827f27c3965a8db9c42a568956cd1569b6966b34444bd656dd347cc6e1d5396c7655c9f5e679b762a85bf4d63b6dc6e3683e154f697e9d900d14662bd4cea71f769860daaf9e29ad7e5f4630708c2ffca3dbeb22341067b4bee93adfaa63fbebd588fb6b3f0812b1d1f042e1b5d6e66348d78f979ab3252a5cb8e831a97d193108149aced4bdfbe866f102b3cb9c573f3cd583b8c0a37d6fe391ad13e8c0bd292de84bc9224417f556fb83f4bb9ad17eec513f393a62b7f11e5e0d77e106e7d4cbd1f17ec1314596e21250382a6ee82e81db3cac1cbc6c5a6716f21794e839af0f2e6fb1409e1337356a91c24ce76e68ec3d377d7fad06472a2e5dfce870d1057d068523aedce275e812c95bb7e2674da78142faec8cc3631bcb30dc6cd9dd417ff75a0f9b2637ab0d0a6346d15594f45e31fac3351d5b8da5bd5cffb6d20377da08e61936c4b6a1cf1249596e8c4883662182ebde669272a030e7173762854fcda3d1652235ae6fbbe9306a869e4e9e3c7a60086d565c7137aec997135d58a030f183e9b0d71beb1cecf922d967b7ab780d3a58efda1059ff3210ad8397b9de342fb5060a6704ab948eaa497d0c88c813559e18106268cdcec20df6515de894f1a863ba6b8385cedf49ae6f9b5e627704ae2e6f5c5d3becf80a237f7c78e08972b0131dbb970ac63a0b95406191c86ba86ce6ed760c1f8ebfdc1013b516190ff5a6b0c6f43cfcf1d6b9e9c8a74577bfdec23fe2efe53e71337fc347ead1fec495ce6a9ceaeb332eff94db8c40e7b6557f1fa7010a8befddf68f3d7e5c8d92dc54e9ab8190f14ff9675c3ae6cb5468ec6eb0addbfe70b3cedc33bf7962cde26732c4d223e951c6b41c43db1bc2e78ff45aa1f9be36eaf829f942a0d07695fab9881e2358909fd56568726112853baa944dde45ada8d7f253dbb48745b6eef3d840e1991ddd4e752bfb3568edf95b16e768423dfee374f89e9ea43f44a3b5eb0d5159c9f81aa0f09893af2ad33d7b0be6d8d92efba567340f6d9a0ff5f23a1d2b70e96f060aa5fd7f5611a03086ebfc990afcc11e1f74da5e36ce085a8e575b8cab07bd5bab90ea0a335ac0242502856f72345b64de03121c7bffd387fb862987f19fcec985574e4def442b2b7dffe755c9095ab225bd597eff3a58a1c4c5df63a8a9e7f528d43f62ee961a96e887862396df755c3b6f0714f2df0e0cfb35f956a388256ffdf9b0751ef6ee55e9494d3e37a1e59de97fc38bde294280cd094953d0ebe2e429fa42695aa64cc1d918e21f1b16b8c99ffc270000ffff603a413108060000 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01
@@ -112,7 +114,7 @@ function mix_transfer() {
 
 function mix_deposit() {
 
-    hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/circuit/deposit/ -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -r 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/circuit/deposit/ -r 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -f 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e coins -s bty -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
@@ -124,7 +126,7 @@ function mix_deposit() {
     authHash=$(${MIX_CLI2} mix wallet notes -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -s 3 | jq -r ".notes[0].noteHash")
     authKey=$(${MIX_CLI2} mix wallet notes -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -s 3 | jq -r ".notes[0].secret.returnKey")
     echo "authHash=$authHash,authKey=$authKey"
-    hash=$(${MIX_CLI2} send mix auth -n "$authHash" -a "$authKey" -p ./gnark/circuit/authorize/ -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${MIX_CLI2} send mix auth -n "$authHash" -a "$authKey" -p ./gnark/circuit/authorize/ -e coins -s bty -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${MIX_CLI2}" "${hash}"
 
@@ -132,7 +134,7 @@ function mix_deposit() {
 
     echo "transfer to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
     transHash=$(${MIX_CLI1} mix wallet notes -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -s 1 | jq -r ".notes[0].noteHash")
-    hash=$(${MIX_CLI1} send mix transfer -m 600000000 -n "$transHash" -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -i ./gnark/circuit/transfer/input/ -o ./gnark/circuit/transfer/output/ -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${MIX_CLI1} send mix transfer -m 600000000 -n "$transHash" -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -i ./gnark/circuit/transfer/input/ -o ./gnark/circuit/transfer/output/ -e coins -s bty -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
@@ -140,7 +142,7 @@ function mix_deposit() {
 
     echo "withdraw"
     withdrawHash=$(${MIX_CLI3} mix wallet notes -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -s 1 | jq -r ".notes[0].noteHash")
-    hash=$(${MIX_CLI3} send mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/circuit/withdraw/ -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    hash=$(${MIX_CLI3} send mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/circuit/withdraw/ -e coins -s bty -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
@@ -155,6 +157,65 @@ function mix_deposit() {
 
 }
 
+function mix_token_test() {
+    echo "config token fee"
+    tokenAddr=$(${CLI} mix query txfee -e token -s GD | jq -r ".data")
+    echo "tokenAddr=$tokenAddr"
+    hash=$(${CLI} send coins transfer -a 10 -n transfer -t "$tokenAddr" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    echo "token-blacklist"
+    hash=$(${CLI} send config config_tx -o add -c "token-blacklist" -v "BTY" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    echo "precreate"
+    hash=$(${CLI} send token precreate -f 0.001 -i test -n guodunjifen -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -p 0 -s GD -t 10000 -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    echo "finishcreate"
+    hash=$(${CLI} send token finish -f 0.001 -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -s GD -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    ${CLI} token created
+
+    echo "send_exec"
+    hash=$(${CLI} send token send_exec -a 100 -e mix -s GD -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    echo "mix deposit"
+    hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/circuit/deposit/ -r 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -e token -s GD -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    query_note "${MIX_CLI3}" 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k 1
+    echo "transfer to 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
+    transHash=$(${MIX_CLI3} mix wallet notes -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -s 1 | jq -r ".notes[0].noteHash")
+    hash=$(${MIX_CLI3} send mix transfer -m 600000000 -n "$transHash" -t 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -i ./gnark/circuit/transfer/input/ -o ./gnark/circuit/transfer/output/ -e token -s GD -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    query_note "${MIX_CLI3}" 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs 1
+
+    echo "withdraw token GD"
+    withdrawHash=$(${MIX_CLI3} mix wallet notes -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -s 1 | jq -r ".notes[0].noteHash")
+    hash=$(${MIX_CLI3} send mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/circuit/withdraw/ -e token -s GD -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71)
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+
+    query_note "${MIX_CLI3}" 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs 2
+
+    ${CLI} account balance -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -e mix
+    balance=$(${CLI} asset balance -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -e mix --asset_exec token --asset_symbol GD | jq -r ".balance")
+    if [ "${balance}" != "6.0000" ]; then
+        echo "account 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs should be 6.0000, real is $balance"
+        #        exit 1
+    fi
+}
 function query_note() {
     block_wait "${1}" 1
 
@@ -201,6 +262,7 @@ function query_tx() {
 function mix_test() {
     echo "=========== # mix chain test ============="
     mix_deposit
+    mix_token_test
 }
 
 function mix() {

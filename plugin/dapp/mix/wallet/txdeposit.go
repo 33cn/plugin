@@ -32,10 +32,15 @@ type DepositInput struct {
 	NoteRandom      string `tag:"secret"`
 }
 
-func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mixTy.DepositProofResp, error) {
+func (p *mixPolicy) depositParams(exec, symbol, receiver, returner, auth, amount string) (*mixTy.DepositProofResp, error) {
 	if len(receiver) > 0 && len(returner) > 0 && (receiver == returner || receiver == auth || returner == auth) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "addrs should not be same to receiver=%s,return=%s,auth=%s",
 			receiver, returner, auth)
+	}
+
+	//deposit 产生的secret需要确定的资产符号
+	if len(exec) == 0 || len(symbol) == 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", exec, symbol)
 	}
 
 	if len(receiver) <= 0 {
@@ -49,6 +54,8 @@ func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mix
 
 	var secret mixTy.SecretData
 	secret.Amount = amount
+	secret.AssetExec = exec
+	secret.AssetSymbol = symbol
 
 	//1. nullifier 获取随机值
 	var fr fr_bn256.Element
@@ -123,14 +130,15 @@ func (p *mixPolicy) depositParams(receiver, returner, auth, amount string) (*mix
 		secret.Amount,
 		secret.NoteRandom,
 	}
+	//exec,symbol没有计算进去，不然在电路中也要引入资产，noteRandom应该足够随机区分一个note了，不然Nullifier也要区分资产
 	resp.NoteHash = mixTy.Byte2Str(mimcHashString(keys))
 	return &resp, nil
 
 }
 
-func (p *mixPolicy) getDepositProof(receiver, returner, auth, amount, zkPath string, verifyOnChain, privacyPrint int32) (*mixTy.ZkProofInfo, error) {
+func (p *mixPolicy) getDepositProof(exec, symbol, receiver, returner, auth, amount, zkPath string, verifyOnChain, privacyPrint int32) (*mixTy.ZkProofInfo, error) {
 
-	resp, err := p.depositParams(receiver, returner, auth, amount)
+	resp, err := p.depositParams(exec, symbol, receiver, returner, auth, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -180,20 +188,22 @@ func (p *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Transacti
 
 	var proofs []*mixTy.ZkProofInfo
 	for i, rcv := range receivers {
-		p, err := p.getDepositProof(rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath, req.Verify, req.Privacy)
+		p, err := p.getDepositProof(req.AssetExec, req.AssetSymbol, rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath, req.Verify, req.Privacy)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get Deposit proof for=%s", rcv)
 		}
 		proofs = append(proofs, p)
 	}
 
-	return p.getDepositTx(strings.TrimSpace(req.Title+mixTy.MixX), proofs)
+	return p.getDepositTx(strings.TrimSpace(req.Title+mixTy.MixX), req.AssetExec, req.AssetSymbol, proofs)
 
 }
 
-func (p *mixPolicy) getDepositTx(execName string, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
+func (p *mixPolicy) getDepositTx(execName string, assetExec, assetSymbol string, proofs []*mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixDepositAction{}
 	payload.Proofs = proofs
+	payload.AssetExec = assetExec
+	payload.AssetSymbol = assetSymbol
 
 	cfg := p.getWalletOperate().GetAPI().GetConfig()
 	action := &mixTy.MixAction{
