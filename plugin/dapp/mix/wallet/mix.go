@@ -288,7 +288,7 @@ func (p *mixPolicy) rescanNotes() {
 		// 1 先获取隐私合约地址相关交易
 		var reqInfo mixTy.MixTxListReq
 		reqInfo.Direction = 0
-		reqInfo.Count = int32(MaxTxHashsPerTime)
+		reqInfo.Count = int32(maxTxHashsPerTime)
 		if i == 0 {
 			reqInfo.Height = -1
 
@@ -327,7 +327,7 @@ func (p *mixPolicy) rescanNotes() {
 		}
 
 		p.processPrivcyTxs(&ReqHashes)
-		if txcount < int(MaxTxHashsPerTime) {
+		if txcount < int(maxTxHashsPerTime) {
 			break
 		}
 	}

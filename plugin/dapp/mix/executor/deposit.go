@@ -97,9 +97,10 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 
 	//存款
 	cfg := a.api.GetConfig()
-	accoutDb, err := createAccount(cfg, "", "", a.db)
+	execer, symbol := mixTy.GetAssetExecSymbol(cfg, deposit.AssetExec, deposit.AssetSymbol)
+	accoutDb, err := createAccount(cfg, execer, symbol, a.db)
 	if err != nil {
-		return nil, errors.Wrapf(err, "createAccount")
+		return nil, errors.Wrapf(err, "createAccount,execer=%s,symbol=%s", execer, symbol)
 	}
 	//主链上存入toAddr为mix 执行器地址，平行链上为user.p.{}.mix执行器地址,execAddr和toAddr一致
 	execAddr := address.ExecAddress(string(a.tx.Execer))
@@ -112,7 +113,9 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	for _, n := range notes {
 		leaves = append(leaves, mixTy.Str2Byte(n))
 	}
-	rpt, err := pushTree(a.db, leaves)
+	conf := types.ConfSub(cfg, mixTy.MixX)
+	maxTreeLeaves := conf.GInt("maxTreeLeaves")
+	rpt, err := pushTree(a.db, execer, symbol, leaves, int32(maxTreeLeaves))
 	if err != nil {
 		return nil, errors.Wrap(err, "pushTree")
 	}

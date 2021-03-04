@@ -15,17 +15,17 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
+	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/pkg/errors"
 )
 
 var (
 	bizlog = log15.New("module", "wallet.mix")
 	// MaxTxHashsPerTime 单词处理的最大哈希书
-	MaxTxHashsPerTime int64 = 100
-	// maxTxNumPerBlock 单个区块最大数
-	maxTxNumPerBlock int64 = types.MaxTxsPerBlock
+	maxTxHashsPerTime int64 = 100
 )
 
 func init() {
@@ -168,7 +168,10 @@ func (policy *mixPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignR
 	}
 	if action.Ty == mixTy.MixActionTransfer {
 		// 隐私交易的私对私、私对公需要进行特殊签名
-		policy.signatureTx(tx, action.GetTransfer())
+		err = policy.signatureTx(tx, action.GetTransfer())
+		if err != nil {
+			return
+		}
 	} else {
 		tx.Sign(int32(policy.getWalletOperate().GetSignType()), key)
 	}
@@ -178,14 +181,30 @@ func (policy *mixPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignR
 }
 
 func (policy *mixPolicy) signatureTx(tx *types.Transaction, transfer *mixTy.MixTransferAction) error {
+
+	if len(transfer.AssetSymbol) == 0 || len(transfer.AssetExec) == 0 {
+		return errors.Wrapf(types.ErrInvalidParam, "asset exec or symbol need be fill")
+	}
+
+	//1.如果是coins 执行器，默认符号是BTY，扣mix执行器地址的手续费
+	//2.如果token执行器, 如果tokenFee=false,则不扣token,且不以token做交易费，需要从另一个特殊地址mixtoken扣bty交易费，chain33发交易费给mixtoken地址
+	//  不然从mix执行器扣交易费会导致基于coins的隐私余额 入账和出账不平
+	//3.如果配置项tokenFee=true 则从以token扣手续费，地址是mix执行器的token资产
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	conf := types.ConfSub(cfg, mixTy.MixX)
+	tokenFee := conf.IsEnable("tokenFee")
+	payFeeAddr := mixTy.MixX
+	if transfer.AssetExec != coins.CoinsX && !tokenFee {
+		payFeeAddr = mixTy.MixX + transfer.AssetExec + transfer.AssetSymbol
+	}
+
 	mixSignData := types.Encode(transfer)
-	tx.Fee = mixTy.Privacy2PrivacyTxFee
+	tx.Fee = conf.GInt("txFee")
 	tx.Signature = &types.Signature{
 		Ty:        MixSignID,
 		Signature: common.BytesToHash(mixSignData).Bytes(),
 		// 这里填的是mix合约的公钥，让框架保持一致
-		Pubkey: address.ExecPubKey(cfg.ExecName(mixTy.MixX)),
+		Pubkey: address.ExecPubKey(payFeeAddr),
 	}
 	return nil
 }

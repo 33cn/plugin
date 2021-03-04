@@ -16,10 +16,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-func spendVerify(db dbm.KV, treeRootHash, nulliferHash, authorizeSpendHash string) error {
+func spendVerify(db dbm.KV, exec, symbol string, treeRootHash, nulliferHash, authorizeSpendHash string) error {
 	//zk-proof校验
 	//check tree rootHash exist
-	exist, err := checkTreeRootHashExist(db, mixTy.Str2Byte(treeRootHash))
+	exist, err := checkTreeRootHashExist(db, exec, symbol, mixTy.Str2Byte(treeRootHash))
 	if err != nil {
 		return errors.Wrapf(err, "roothash=%s not found", treeRootHash)
 	}
@@ -50,7 +50,7 @@ func spendVerify(db dbm.KV, treeRootHash, nulliferHash, authorizeSpendHash strin
 
 }
 
-func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error) {
+func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (string, uint64, error) {
 	var input mixTy.WithdrawPublicInput
 	data, err := hex.DecodeString(proof.PublicInput)
 	if err != nil {
@@ -65,7 +65,7 @@ func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error
 		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
 	}
 
-	err = spendVerify(a.db, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
+	err = spendVerify(a.db, exec, symbol, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
 	if err != nil {
 		return "", 0, err
 	}
@@ -85,10 +85,12 @@ func (a *action) withdrawVerify(proof *mixTy.ZkProofInfo) (string, uint64, error
 3. set nullifier exist
 */
 func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, error) {
+	exec, symbol := mixTy.GetAssetExecSymbol(a.api.GetConfig(), withdraw.AssetExec, withdraw.AssetSymbol)
+
 	var nulliferSet []string
 	var sumValue uint64
 	for _, k := range withdraw.Proofs {
-		nulfier, v, err := a.withdrawVerify(k)
+		nulfier, v, err := a.withdrawVerify(exec, symbol, k)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +104,7 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 
 	//withdraw value
 	cfg := a.api.GetConfig()
-	accoutDb, err := createAccount(cfg, "", "", a.db)
+	accoutDb, err := createAccount(cfg, exec, symbol, a.db)
 	if err != nil {
 		return nil, err
 	}
