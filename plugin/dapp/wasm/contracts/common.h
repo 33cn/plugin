@@ -35,6 +35,7 @@ void printlog(const char* log, size_t len);
 void printint(int64_t n);
 size_t getENVSize(int64_t n);
 size_t getENV(int64_t n, char* value, size_t v_len);
+size_t totalENV();
 
 #ifdef __cplusplus
 }

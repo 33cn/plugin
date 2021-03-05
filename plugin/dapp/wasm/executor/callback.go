@@ -178,3 +178,7 @@ func getENVSize(n int) int {
 func getENV(n int) string {
 	return wasmCB.ENV[n]
 }
+
+func totalENV() int {
+	return len(wasmCB.ENV)
+}
