@@ -302,6 +302,10 @@ func (r *Resolver) ResolveFunc(module, field string) exec.FunctionImport {
 				copy(vm.Memory[valuePtr:valuePtr+valueLen], value)
 				return int64(len(value))
 			}
+		case "totalENV":
+			return func(vm *exec.VirtualMachine) int64 {
+				return int64(totalENV())
+			}
 
 		default:
 			log.Error("ResolveFunc", "unknown field", field)
