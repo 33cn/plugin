@@ -59,3 +59,7 @@ func GetName() string {
 func (w *Wasm) GetDriverName() string {
 	return driverName
 }
+
+func (w *Wasm) ExecutorOrder() int64 {
+	return drivers.ExecLocalSameTime
+}
