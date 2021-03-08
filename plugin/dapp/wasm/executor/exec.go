@@ -114,6 +114,10 @@ func (w *Wasm) Exec_Call(payload *types2.WasmCall, tx *types.Transaction, index 
 	w.tx = tx
 	w.execAddr = address.ExecAddress(string(types.GetRealExecName(tx.Execer)))
 	w.ENV = make(map[int]string)
+	w.localCache = nil
+	w.kvs = nil
+	w.receiptLogs = nil
+	w.customLogs = nil
 	for i, v := range payload.Env {
 		w.ENV[i] = v
 	}
