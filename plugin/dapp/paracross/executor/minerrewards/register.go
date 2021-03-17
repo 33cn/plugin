@@ -14,7 +14,7 @@ type RewardPolicy interface {
 
 var MinerRewards = make(map[string]RewardPolicy)
 
-func register(ty string, policy RewardPolicy) {
+func Register(ty string, policy RewardPolicy) {
 	if _, ok := MinerRewards[ty]; ok {
 		panic(fmt.Sprintf("paracross minerreward ty=%s registered", ty))
 	}

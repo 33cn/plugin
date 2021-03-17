@@ -8,7 +8,7 @@ import (
 type normal struct{}
 
 func init() {
-	register("normal", &normal{})
+	Register("normal", &normal{})
 }
 
 //获取配置的奖励数值
