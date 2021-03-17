@@ -99,7 +99,7 @@ function run_testcases() {
 
     ticket_SetAutoMining 0
     ticket_GetTicketCount
-    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
+#    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
     ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
     ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
