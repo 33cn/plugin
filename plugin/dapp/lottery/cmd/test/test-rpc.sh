@@ -258,7 +258,7 @@ function main() {
     echo "main_ip=$MAIN_HTTP"
 
     init
-    run_testcases
+    #run_testcases
     chain33_RpcTestRst lottery "$CASE_ERR"
 }
 
