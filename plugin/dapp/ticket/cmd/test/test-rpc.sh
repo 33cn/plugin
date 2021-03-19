@@ -56,9 +56,9 @@ ticket_TicketList() {
     chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
     ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
-    echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
+    #echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
     ticketId=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0].ticketId")
-    echo -e "######\\n  ticketId is $ticketId  \\n######"
+    #echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
 ticket_MinerAddress() {
@@ -99,7 +99,7 @@ function run_testcases() {
 
     ticket_SetAutoMining 0
     ticket_GetTicketCount
-    # ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
+    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
     ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
     ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
