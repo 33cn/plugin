@@ -17,8 +17,8 @@ gID=""
 lottExecAddr=""
 luckyNumber=""
 
-purNum=200
-drawNum=220
+purNum=60
+drawNum=90
 opRatio=5
 devRatio=5
 
