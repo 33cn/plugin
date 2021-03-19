@@ -55,7 +55,7 @@ ticket_TicketList() {
     resok='(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')'
     chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
-    ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
+    #ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
     #echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
     ticketId=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0].ticketId")
     #echo -e "######\\n  ticketId is $ticketId  \\n######"
