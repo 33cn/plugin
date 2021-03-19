@@ -222,68 +222,46 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 		bizlog.Error("procPrivacyTransactionList", "invalid sendrecvflag ", param.SendRecvFlag)
 		return nil, types.ErrInvalidParam
 	}
-	var txbytes [][]byte
+
 	list := store.NewListHelper()
-	if len(param.Seedtxhash) == 0 {
+	var txKeyBytes [][]byte
+	if len(param.StartTxHeightIndex) == 0 {
 		var keyPrefix []byte
 		if param.SendRecvFlag == sendTx {
-			keyPrefix = calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
+			keyPrefix = calcSendPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, "")
 		} else {
-			keyPrefix = calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
+			keyPrefix = calcRecvPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, "")
 		}
-		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
-		for _, keybyte := range txkeybytes {
-			value, err := store.Get(keybyte)
-			if err != nil {
-				bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
-				continue
-			}
-			if nil == value {
-				continue
-			}
-			txbytes = append(txbytes, value)
-		}
+		txKeyBytes = list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
 
 	} else {
-		list := store.NewListHelper()
-		var txkeybytes [][]byte
 		if param.SendRecvFlag == sendTx {
-			txkeybytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
+			txKeyBytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, param.StartTxHeightIndex), param.Count, param.Direction)
 		} else {
-			txkeybytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
-		}
-		for _, keybyte := range txkeybytes {
-			value, err := store.Get(keybyte)
-			if err != nil {
-				bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
-				continue
-			}
-			if nil == value {
-				continue
-			}
-			txbytes = append(txbytes, value)
+			txKeyBytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, param.StartTxHeightIndex), param.Count, param.Direction)
 		}
 	}
+	txDetails := &types.WalletTxDetails{}
+	for _, keyByte := range txKeyBytes {
+		value, err := store.Get(keyByte)
+		if err != nil || value == nil {
+			bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
+			continue
+		}
 
-	txDetails := new(types.WalletTxDetails)
-	txDetails.TxDetails = make([]*types.WalletTxDetail, len(txbytes))
-	for index, txdetailbyte := range txbytes {
-		var txdetail types.WalletTxDetail
-		err := proto.Unmarshal(txdetailbyte, &txdetail)
+		txDetail := &types.WalletTxDetail{}
+		err = types.Decode(value, txDetail)
 		if err != nil {
 			bizlog.Error("getWalletPrivacyTxDetails", "proto.Unmarshal err:", err)
 			return nil, types.ErrUnmarshal
 		}
-		txhash := txdetail.GetTx().Hash()
-		txdetail.Txhash = txhash
-		if txdetail.GetTx().IsWithdraw() {
+		txDetail.Txhash = txDetail.GetTx().Hash()
+		if txDetail.GetTx().IsWithdraw() {
 			//swap from and to
-			txdetail.Fromaddr, txdetail.Tx.To = txdetail.Tx.To, txdetail.Fromaddr
+			txDetail.Fromaddr, txDetail.Tx.To = txDetail.Tx.To, txDetail.Fromaddr
 		}
-
-		txDetails.TxDetails[index] = &txdetail
+		txDetails.TxDetails = append(txDetails.TxDetails, txDetail)
 	}
-
 	return txDetails, nil
 }
 

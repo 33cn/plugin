@@ -14,7 +14,7 @@ privacy_CreateRawTransaction() {
 }
 
 privacy_GetPrivacyTxByAddr() {
-    chain33_Http '{"method":"privacy.GetPrivacyTxByAddr","params":[{"assetExec":"coins", "tokenname":"BTY","sendRecvFlag":0,"from":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", "direction":1, "count":1}]}' ${MAIN_HTTP} '.error|not' "$FUNCNAME"
+    chain33_Http '{"method":"privacy.GetPrivacyTxByAddr","params":[{"assetExec":"coins", "assetSymbol":"BTY","sendRecvFlag":0,"address":"12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", "direction":1, "count":1}]}' ${MAIN_HTTP} '.error|not' "$FUNCNAME"
 }
 
 privacy_ShowPrivacyKey() {
