@@ -344,16 +344,21 @@ message ReqCreateCacheTxKey {
 
 // get privacy transaction list in wallet
 message ReqPrivacyTransactionList {
-    // support BTY
-    string tokenname = 1;
+
     // 1:sendtx  2:recvtx
     int32  sendRecvFlag = 2;
+    // 列表顺序，0降1升
     int32  direction    = 3;
+    // 单次列表数量
     int32  count        = 4;
-    string from         = 5;
+    // 交易相关的地址，发送方或接收方
     string address      = 6;
-    bytes  seedtxhash   = 7;
+    // 资产执行器
     string assetExec    = 8;
+    // 资产符号
+    string assetSymbol = 9;
+    // 指定列表请求开始位置
+    string startTxHeightIndex = 10;
 }
 
 message ReqRescanUtxos {
