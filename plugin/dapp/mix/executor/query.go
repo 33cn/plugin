@@ -120,7 +120,7 @@ func (m *Mix) Query_VerifyProof(req *mixTy.VerifyProofInfo) (types.Message, erro
 }
 
 // Query_TokenFeeAddr 私对私token转账，代扣地址查询， 需预先转账主代币到相应资产地址下面才能完成私对私的转账，代扣地址coins不能提回
-func (m *Mix) Query_TokenFeeAddr(req *mixTy.TokenTxFee) (types.Message, error) {
+func (m *Mix) Query_TokenFeeAddr(req *mixTy.TokenTxFeeAddrReq) (types.Message, error) {
 	if req == nil || len(req.AssetExec) == 0 || len(req.AssetSymbol) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec or symbol not filled")
 	}
