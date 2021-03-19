@@ -642,7 +642,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 							}
 
 							utxos = append(utxos, utxoCreated)
-							store.setUTXO(info.Addr, &txhash, indexoutput, info2store, newbatch)
+							store.setUTXO(info2store, txhash, newbatch)
 						}
 					}
 				}
@@ -671,25 +671,17 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 //UTXO---->moveUTXO2FTXO---->FTXO---->moveFTXO2STXO---->STXO
 //1.calcUTXOKey------------>types.PrivacyDBStore 该kv值在db中的存储一旦写入就不再改变，除非产生该UTXO的交易被撤销
 //2.calcUTXOKey4TokenAddr-->calcUTXOKey，创建kv，方便查询现在某个地址下某种token的可用utxo
-func (store *privacyStore) setUTXO(addr, txhash *string, outindex int, dbStore *privacytypes.PrivacyDBStore, newbatch db.Batch) error {
-	if 0 == len(*addr) || 0 == len(*txhash) {
-		bizlog.Error("setUTXO addr or txhash is nil")
-		return types.ErrInvalidParam
-	}
-	if dbStore == nil {
-		bizlog.Error("setUTXO privacy is nil")
-		return types.ErrInvalidParam
-	}
+func (store *privacyStore) setUTXO(utxoInfo *privacytypes.PrivacyDBStore, txHash string, newbatch db.Batch) error {
 
-	privacyStorebyte, err := proto.Marshal(dbStore)
+	privacyStorebyte, err := proto.Marshal(utxoInfo)
 	if err != nil {
 		bizlog.Error("setUTXO proto.Marshal err!", "err", err)
 		return types.ErrMarshal
 	}
-
-	utxoKey := calcUTXOKey(*txhash, outindex)
-	bizlog.Debug("setUTXO", "addr", *addr, "tx with hash", *txhash, "amount:", dbStore.Amount/types.Coin)
-	newbatch.Set(calcUTXOKey4TokenAddr(dbStore.AssetExec, dbStore.Tokenname, *addr, *txhash, outindex), utxoKey)
+	outIndex := int(utxoInfo.OutIndex)
+	utxoKey := calcUTXOKey(txHash, outIndex)
+	bizlog.Debug("setUTXO", "addr", utxoInfo.Owner, "tx with hash", txHash, "amount:", utxoInfo.Amount/types.Coin)
+	newbatch.Set(calcUTXOKey4TokenAddr(utxoInfo.AssetExec, utxoInfo.Tokenname, utxoInfo.Owner, txHash, outIndex), utxoKey)
 	newbatch.Set(utxoKey, privacyStorebyte)
 	return nil
 }

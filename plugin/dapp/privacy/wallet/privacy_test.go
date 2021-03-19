@@ -181,7 +181,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 					}
 
 					utxos = append(utxos, utxoCreated)
-					mock.store.setUTXO(info.Addr, &txhashstr, indexoutput, info2store, dbbatch)
+					mock.store.setUTXO(info2store, txhashstr, dbbatch)
 				}
 			}
 		}
