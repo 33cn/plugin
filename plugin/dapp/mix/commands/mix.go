@@ -237,7 +237,7 @@ func createTokenTxFee(cmd *cobra.Command, args []string) {
 	var params rpctypes.Query4Jrpc
 	params.Execer = mixTy.MixX
 	params.FuncName = "TokenFeeAddr"
-	req := mixTy.TokenTxFee{
+	req := mixTy.TokenTxFeeAddrReq{
 		AssetExec:   exec,
 		AssetSymbol: symbol,
 	}

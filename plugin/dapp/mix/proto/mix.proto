@@ -36,6 +36,11 @@ message PaymentKey{
     string encryptKey = 3;
 }
 
+message TokenTxFeeAddrReq{
+    string assetExec = 1;
+    string assetSymbol = 2;
+}
+
 enum MixConfigType{
     Verify = 0;
     //register unify authorize pubkey
