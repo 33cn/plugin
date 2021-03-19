@@ -8,12 +8,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 	"unsafe"
+
+	"github.com/33cn/chain33/system/dapp"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -965,46 +966,42 @@ func (policy *privacyPolicy) signatureTx(tx *types.Transaction, privacyInput *pr
 }
 
 func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWalletTxDetailParam) {
-	blockheight := param.block.Block.Height*maxTxNumPerBlock + int64(param.index)
-	heightstr := fmt.Sprintf("%018d", blockheight)
-	bizlog.Debug("buildAndStoreWalletTxDetail", "heightstr", heightstr, "addDelType", param.addDelType)
-	if AddTx == param.addDelType {
+
+	txInfo := param.txInfo
+	heightstr := dapp.HeightIndexStr(txInfo.blockHeight, int64(txInfo.txIndex))
+	bizlog.Debug("buildAndStoreWalletTxDetail", "heightstr", heightstr, "isRollBack", txInfo.isRollBack)
+	if !txInfo.isRollBack {
 		var txdetail types.WalletTxDetail
 		key := calcTxKey(heightstr)
-		txdetail.Tx = param.tx
-		txdetail.Height = param.block.Block.Height
-		txdetail.Index = int64(param.index)
-		txdetail.Receipt = param.block.Receipts[param.index]
-		txdetail.Blocktime = param.block.Block.BlockTime
+		txdetail.Tx = txInfo.tx
+		txdetail.Height = txInfo.blockHeight
+		txdetail.Index = int64(txInfo.txIndex)
+		txdetail.Receipt = txInfo.blockDetail.Receipts[txInfo.txIndex]
+		txdetail.Blocktime = txInfo.blockDetail.Block.BlockTime
 
-		txdetail.ActionName = txdetail.Tx.ActionName()
-		txdetail.Amount, _ = param.tx.Amount()
-		txdetail.Fromaddr = param.senderRecver
-		//txdetail.Spendrecv = param.utxos
+		txdetail.ActionName = txInfo.actionName
+		txdetail.Amount, _ = txInfo.tx.Amount()
+		txdetail.Fromaddr = param.addr
 
 		txdetailbyte, err := proto.Marshal(&txdetail)
 		if err != nil {
-			bizlog.Error("buildAndStoreWalletTxDetail err", "Height", param.block.Block.Height, "index", param.index)
+			bizlog.Error("buildAndStoreWalletTxDetail err", "Height", txInfo.blockHeight, "txHash", txInfo.txHashHex)
 			return
 		}
 
-		param.newbatch.Set(key, txdetailbyte)
-		if param.isprivacy {
-			//额外存储可以快速定位到接收隐私的交易
-			if sendTx == param.sendRecvFlag {
-				param.newbatch.Set(calcSendPrivacyTxKey(param.assetExec, param.tokenname, param.senderRecver, heightstr), key)
-			} else if recvTx == param.sendRecvFlag {
-				param.newbatch.Set(calcRecvPrivacyTxKey(param.assetExec, param.tokenname, param.senderRecver, heightstr), key)
-			}
+		txInfo.batch.Set(key, txdetailbyte)
+		//额外存储可以快速定位到接收隐私的交易
+		if sendTx == param.sendRecvFlag {
+			txInfo.batch.Set(calcSendPrivacyTxKey(txInfo.assetExec, txInfo.assetSymbol, param.addr, heightstr), key)
+		} else if recvTx == param.sendRecvFlag {
+			txInfo.batch.Set(calcRecvPrivacyTxKey(txInfo.assetExec, txInfo.assetSymbol, param.addr, heightstr), key)
 		}
 	} else {
-		param.newbatch.Delete(calcTxKey(heightstr))
-		if param.isprivacy {
-			if sendTx == param.sendRecvFlag {
-				param.newbatch.Delete(calcSendPrivacyTxKey(param.assetExec, param.tokenname, param.senderRecver, heightstr))
-			} else if recvTx == param.sendRecvFlag {
-				param.newbatch.Delete(calcRecvPrivacyTxKey(param.assetExec, param.tokenname, param.senderRecver, heightstr))
-			}
+		txInfo.batch.Delete(calcTxKey(heightstr))
+		if sendTx == param.sendRecvFlag {
+			txInfo.batch.Delete(calcSendPrivacyTxKey(txInfo.assetExec, txInfo.assetSymbol, param.addr, heightstr))
+		} else if recvTx == param.sendRecvFlag {
+			txInfo.batch.Delete(calcRecvPrivacyTxKey(txInfo.assetExec, txInfo.assetSymbol, param.addr, heightstr))
 		}
 	}
 }
@@ -1055,193 +1052,229 @@ func (policy *privacyPolicy) checkWalletStoreData() {
 	}
 }
 
-func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, index int32, block *types.BlockDetail, newbatch db.Batch, addDelType int32) {
+func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, index int32, block *types.BlockDetail, batch db.Batch, addDelType int32) {
+
+	privacyPairs, err := policy.getPrivacyKeyPairs()
+	//钱包未开启隐私功能，或不存在地址直接返回
+	if len(privacyPairs) == 0 {
+		bizlog.Debug("addDelPrivacyTxsFromBlock", "getPrivacyKeyPairs err", err)
+		return
+	}
+
 	txhash := tx.Hash()
-	txhashstr := hex.EncodeToString(txhash)
-	_, err := tx.Amount()
-	if err != nil {
-		bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "index", index, "tx.Amount() error", err)
+	txhashHex := hex.EncodeToString(txhash)
+	var action privacytypes.PrivacyAction
+	if err := types.Decode(tx.GetPayload(), &action); err != nil {
+		bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashHex, "addDelType", addDelType, "index", index, "Decode tx.GetPayload() error", err)
 		return
 	}
 
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
-	txExecRes := block.Receipts[index].Ty
-	var privateAction privacytypes.PrivacyAction
-	if err := types.Decode(tx.GetPayload(), &privateAction); err != nil {
-		bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "index", index, "Decode tx.GetPayload() error", err)
-		return
-	}
-	bizlog.Info("addDelPrivacyTxsFromBlock", "Enter addDelPrivacyTxsFromBlock txhash", txhashstr, "index", index, "addDelType", addDelType)
-
-	privacyOutput := privateAction.GetOutput()
-	if privacyOutput == nil {
-		bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "index", index, "privacyOutput is", privacyOutput)
-		return
-	}
-	assetExec, tokenname := privateAction.GetAssetExecSymbol()
+	assetExec, assetSymbol := action.GetAssetExecSymbol()
 	if assetExec == "" {
 		assetExec = "coins"
 	}
-	RpubKey := privacyOutput.GetRpubKeytx()
 
-	totalUtxosLeft := len(privacyOutput.Keyoutput)
-	//处理output
-	if privacyInfo, err := policy.getPrivacyKeyPairs(); err == nil {
-		matchedCount := 0
-		utxoProcessed := make([]bool, len(privacyOutput.Keyoutput))
-		for _, info := range privacyInfo {
-			privacykeyParirs := info.PrivacyKeyPair
-			matched4addr := false
-			var utxos []*privacytypes.UTXO
-			for indexoutput, output := range privacyOutput.Keyoutput {
-				if utxoProcessed[indexoutput] {
-					continue
-				}
-				priv, err := privacy.RecoverOnetimePriKey(RpubKey, privacykeyParirs.ViewPrivKey, privacykeyParirs.SpendPrivKey, int64(indexoutput))
-				if err == nil {
-					recoverPub := priv.PubKey().Bytes()[:]
-					if bytes.Equal(recoverPub, output.Onetimepubkey) {
-						//为了避免匹配成功之后不必要的验证计算，需要统计匹配次数
-						//因为目前只会往一个隐私账户转账，
-						//1.一般情况下，只会匹配一次，如果是往其他钱包账户转账，
-						//2.但是如果是往本钱包的其他地址转账，因为可能存在的change，会匹配2次
-						matched4addr = true
-						totalUtxosLeft--
-						utxoProcessed[indexoutput] = true
-						//只有当该交易执行成功才进行相应的UTXO的处理
-						if types.ExecOk == txExecRes {
-							if AddTx == addDelType {
-								info2store := &privacytypes.PrivacyDBStore{
-									AssetExec:        assetExec,
-									Txhash:           txhash,
-									Tokenname:        tokenname,
-									Amount:           output.Amount,
-									OutIndex:         int32(indexoutput),
-									TxPublicKeyR:     RpubKey,
-									OnetimePublicKey: output.Onetimepubkey,
-									Owner:            *info.Addr,
-									Height:           block.Block.Height,
-									Txindex:          index,
-									Blockhash:        block.Block.Hash(cfg),
-								}
+	txInfo := &privacyTxInfo{
+		tx:          tx,
+		blockDetail: block,
+		blockHeight: block.GetBlock().GetHeight(),
+		actionName:  action.GetActionName(),
+		actionTy:    action.GetTy(),
+		input:       action.GetInput(),
+		output:      action.GetOutput(),
+		txIndex:     index,
+		txHash:      txhash,
+		txHashHex:   txhashHex,
+		batch:       batch,
+		assetSymbol: assetSymbol,
+		assetExec:   assetExec,
+		isRollBack:  addDelType != AddTx,
+		isExecOk:    types.ExecOk == block.Receipts[index].Ty,
+	}
 
-								utxoGlobalIndex := &privacytypes.UTXOGlobalIndex{
-									Outindex: int32(indexoutput),
-									Txhash:   txhash,
-								}
+	bizlog.Debug("addDelPrivacyTxsFromBlock", "txhash", txhashHex, "actionName", txInfo.actionName,
+		"index", index, "isRollBack", txInfo.isRollBack, "isExecOk", txInfo.isExecOk)
 
-								utxoCreated := &privacytypes.UTXO{
-									Amount: output.Amount,
-									UtxoBasic: &privacytypes.UTXOBasic{
-										UtxoGlobalIndex: utxoGlobalIndex,
-										OnetimePubkey:   output.Onetimepubkey,
-									},
-								}
+	if txInfo.actionTy == privacytypes.ActionPublic2Privacy {
 
-								utxos = append(utxos, utxoCreated)
-								policy.store.setUTXO(info.Addr, &txhashstr, indexoutput, info2store, newbatch)
-								bizlog.Info("addDelPrivacyTxsFromBlock", "add tx txhash", txhashstr, "setUTXO addr ", *info.Addr, "indexoutput", indexoutput)
-							} else {
-								policy.store.unsetUTXO(assetExec, tokenname, *info.Addr, txhashstr, indexoutput, newbatch)
-								bizlog.Info("addDelPrivacyTxsFromBlock", "delete tx txhash", txhashstr, "unsetUTXO addr ", *info.Addr, "indexoutput", indexoutput)
-							}
-						} else {
-							//对于执行失败的交易，只需要将该交易记录在钱包就行
-							bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "txExecRes", txExecRes)
-							break
-						}
-					}
-				} else {
-					bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "RecoverOnetimePriKey error", err)
-				}
-			}
-			if matched4addr {
-				matchedCount++
-				//匹配次数达到2次，不再对本钱包中的其他地址进行匹配尝试
-				bizlog.Debug("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "address", *info.Addr, "totalUtxosLeft", totalUtxosLeft, "matchedCount", matchedCount)
+		// 公对私的发送方是公开的，检测是否为本钱包地址
+		txFrom := tx.From()
+		for _, key := range privacyPairs {
+			if *key.Addr == txFrom {
 				param := &buildStoreWalletTxDetailParam{
-					assetExec:    assetExec,
-					tokenname:    tokenname,
-					block:        block,
-					tx:           tx,
-					index:        int(index),
-					newbatch:     newbatch,
-					senderRecver: *info.Addr,
-					isprivacy:    true,
-					addDelType:   addDelType,
-					sendRecvFlag: recvTx,
-					utxos:        utxos,
+					txInfo:       txInfo,
+					addr:         txInfo.tx.From(),
+					sendRecvFlag: sendTx,
 				}
 				policy.buildAndStoreWalletTxDetail(param)
-				if 2 == matchedCount || 0 == totalUtxosLeft || types.ExecOk != txExecRes {
-					bizlog.Info("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "Get matched privacy transfer for address address", *info.Addr, "totalUtxosLeft", totalUtxosLeft, "matchedCount", matchedCount)
-					break
+				break
+			}
+		}
+		policy.processOutputUtxos(txFrom, privacyPairs, txInfo)
+	} else if txInfo.actionTy == privacytypes.ActionPrivacy2Privacy {
+
+		sender := policy.processInputUtxos(txInfo)
+		policy.processOutputUtxos(sender, privacyPairs, txInfo)
+	} else if txInfo.actionTy == privacytypes.ActionPrivacy2Public {
+		sender := policy.processInputUtxos(txInfo)
+		policy.processOutputUtxos(sender, privacyPairs, txInfo)
+		// 私有到公开的接收方是公开的，检测是否为本钱包地址
+		txTo := action.GetPrivacy2Public().GetTo()
+		for _, key := range privacyPairs {
+			if *key.Addr == txTo {
+				param := &buildStoreWalletTxDetailParam{
+					txInfo:       txInfo,
+					addr:         txTo,
+					sendRecvFlag: recvTx,
 				}
+				policy.buildAndStoreWalletTxDetail(param)
+				break
 			}
 		}
 	}
+}
 
-	//处理input,对于公对私的交易类型，只会出现在output类型处理中
-	//如果该隐私交易是本钱包中的地址发送出去的，则需要对相应的utxo进行处理 TODO:处理其他节点构造并发起的隐私input(需要比较keyimage)
-	if AddTx == addDelType {
-		ftxos, keys := policy.store.getFTXOlist()
-		for i, ftxo := range ftxos {
-			//查询确认该交易是否为记录的支付交易
-			if ftxo.Txhash != txhashstr {
-				continue
-			}
-			if types.ExecOk == txExecRes && privacytypes.ActionPublic2Privacy != privateAction.Ty {
-				bizlog.Info("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "moveFTXO2STXO, key", string(keys[i]), "txExecRes", txExecRes)
-				policy.store.moveFTXO2STXO(keys[i], txhashstr, newbatch)
-			} else if types.ExecOk != txExecRes && privacytypes.ActionPublic2Privacy != privateAction.Ty {
-				//如果执行失败
-				bizlog.Info("PrivacyTrading AddDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "moveFTXO2UTXO, key", string(keys[i]), "txExecRes", txExecRes)
-				policy.store.moveFTXO2UTXO(keys[i], newbatch)
-			}
-			//该交易正常执行完毕，删除对其的关注
-			param := &buildStoreWalletTxDetailParam{
-				assetExec:    assetExec,
-				tokenname:    tokenname,
-				block:        block,
-				tx:           tx,
-				index:        int(index),
-				newbatch:     newbatch,
-				senderRecver: ftxo.Sender,
-				isprivacy:    true,
-				addDelType:   addDelType,
-				sendRecvFlag: sendTx,
-				utxos:        nil,
-			}
-			policy.buildAndStoreWalletTxDetail(param)
-		}
-	} else {
+func (policy *privacyPolicy) processInputUtxos(txInfo *privacyTxInfo) string {
+
+	bizlog.Debug("processInputUtxos", "txhash", txInfo.txHashHex, "actionName", txInfo.actionName, "isExecOk", txInfo.isExecOk, "isRollBack", txInfo.isRollBack)
+
+	// utxo发送者
+	utxoSender := ""
+	var err error
+	// 区块回滚
+	if txInfo.isRollBack {
+
 		//当发生交易回撤时，从记录的STXO中查找相关的交易，并将其重置为FTXO，因为该交易大概率会在其他区块中再次执行
 		stxosInOneTx, _, _ := policy.store.getWalletFtxoStxo(STXOs4Tx)
-		for _, ftxo := range stxosInOneTx {
-			if ftxo.Txhash == txhashstr {
-				param := &buildStoreWalletTxDetailParam{
-					assetExec:    assetExec,
-					tokenname:    tokenname,
-					block:        block,
-					tx:           tx,
-					index:        int(index),
-					newbatch:     newbatch,
-					senderRecver: "",
-					isprivacy:    true,
-					addDelType:   addDelType,
-					sendRecvFlag: sendTx,
-					utxos:        nil,
-				}
-
-				if types.ExecOk == txExecRes && privacytypes.ActionPublic2Privacy != privateAction.Ty {
-					bizlog.Info("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType, "moveSTXO2FTXO txExecRes", txExecRes)
-					policy.store.moveSTXO2FTXO(tx, txhashstr, newbatch)
-					policy.buildAndStoreWalletTxDetail(param)
-				} else if types.ExecOk != txExecRes && privacytypes.ActionPublic2Privacy != privateAction.Ty {
-					bizlog.Info("addDelPrivacyTxsFromBlock", "txhash", txhashstr, "addDelType", addDelType)
-					policy.buildAndStoreWalletTxDetail(param)
-				}
+		for _, stxo := range stxosInOneTx {
+			if stxo.Txhash != txInfo.txHashHex {
+				continue
+			}
+			if txInfo.isExecOk {
+				err = policy.store.moveSTXO2FTXO(txInfo.tx, txInfo.txHashHex, txInfo.batch)
+				utxoSender = stxo.Sender
+			}
+			if err != nil {
+				bizlog.Error("processInputUtxos", "txHash", txInfo.txHashHex, "moveSTXO2FTXO err", err)
 			}
 		}
+	} else {
+
+		ftxos, keys := policy.store.getFTXOlist()
+		for i, ftxo := range ftxos {
+			if ftxo.Txhash != txInfo.txHashHex {
+				continue
+			}
+
+			if txInfo.isExecOk {
+				err = policy.store.moveFTXO2STXO(keys[i], txInfo.txHashHex, txInfo.batch)
+			} else {
+				policy.store.moveFTXO2UTXO(keys[i], txInfo.batch)
+			}
+			utxoSender = ftxo.Sender
+			if err != nil {
+				bizlog.Error("processInputUtxos", "txHash", txInfo.txHashHex, "moveSTXO2FTXO err", err)
+			}
+
+		}
+	}
+	// 解析出发送者是本地钱包地址，记录交易
+	if utxoSender != "" {
+		param := &buildStoreWalletTxDetailParam{
+			txInfo:       txInfo,
+			addr:         utxoSender,
+			sendRecvFlag: sendTx,
+		}
+		policy.buildAndStoreWalletTxDetail(param)
+	}
+	return utxoSender
+}
+
+func (policy *privacyPolicy) processOutputUtxos(utxoSender string, keys []addrAndprivacy, txInfo *privacyTxInfo) {
+
+	bizlog.Debug("processOutputUtxos", "txhash", txInfo.txHashHex, "actionName", txInfo.actionName, "isExecOK", txInfo.isExecOk, "isRollBack", txInfo.isRollBack)
+	if txInfo.output == nil {
+		return
+	}
+	var recvUtxos []*privacytypes.PrivacyDBStore
+	// check utxo owner
+	omitCheck := false
+	owner := ""
+	receivers := make(map[string]struct{})
+	for index, out := range txInfo.output.GetKeyoutput() {
+
+		for _, key := range keys {
+			if omitCheck {
+				break
+			}
+			owner = ""
+			priv, err := privacy.RecoverOnetimePriKey(txInfo.output.GetRpubKeytx(), key.PrivacyKeyPair.ViewPrivKey, key.PrivacyKeyPair.SpendPrivKey, int64(index))
+			if err != nil {
+				bizlog.Error("addDelPrivacyTxsFromBlock", "txhash", txInfo.txHashHex, "actionName", txInfo.actionName, "RecoverOnetimePriKey error", err)
+			}
+			if bytes.Equal(priv.PubKey().Bytes()[:], out.GetOnetimepubkey()) {
+				owner = *key.Addr
+				receivers[owner] = struct{}{}
+				break
+			}
+		}
+
+		if len(owner) > 0 {
+			info2store := &privacytypes.PrivacyDBStore{
+				AssetExec:        txInfo.assetExec,
+				Txhash:           txInfo.txHash,
+				Tokenname:        txInfo.assetSymbol,
+				Amount:           out.Amount,
+				OutIndex:         int32(index),
+				TxPublicKeyR:     txInfo.output.GetRpubKeytx(),
+				OnetimePublicKey: out.Onetimepubkey,
+				Owner:            owner,
+				Height:           txInfo.blockHeight,
+				Txindex:          txInfo.txIndex,
+			}
+			recvUtxos = append(recvUtxos, info2store)
+		}
+
+		// 公对私的utxo只属于一个地址，只需检测第一个utxo
+		if txInfo.actionTy == privacytypes.ActionPublic2Privacy {
+			omitCheck = true
+		}
+	}
+
+	// add or del utxo in wallet
+	for _, utxo := range recvUtxos {
+
+		if !txInfo.isExecOk {
+			//对于执行失败的交易，只需要将该交易记录在钱包就行
+			break
+		}
+		var err error
+		if !txInfo.isRollBack {
+			err = policy.store.setUTXO(utxo, txInfo.txHashHex, txInfo.batch)
+		} else {
+			err = policy.store.unsetUTXO(utxo.AssetExec, utxo.Tokenname, utxo.Owner, txInfo.txHashHex, int(utxo.OutIndex), txInfo.batch)
+		}
+
+		if err != nil {
+			bizlog.Error("processOutputUtxos", "txHash", txInfo.txHashHex, "actionName", txInfo.actionName, "isRollBack", txInfo.isRollBack, "setUtxoErr", err)
+		}
+	}
+	// handle recv tx index
+	for receiver := range receivers {
+		// 如果utxo接收者有2个，说明发送者和接收者都是本钱包地址，且存在找零情况
+		// 这里需要过滤utxo找零接收情况，找零接收不是实际的交易接收方
+		if len(receivers) > 1 && receiver == utxoSender {
+			continue
+		}
+		// 私到公转账utxo接收者只可能是找零情况，不需要记录
+		if txInfo.actionTy == privacytypes.ActionPrivacy2Public {
+			continue
+		}
+		param := &buildStoreWalletTxDetailParam{
+			txInfo:       txInfo,
+			addr:         receiver,
+			sendRecvFlag: recvTx,
+		}
+		policy.buildAndStoreWalletTxDetail(param)
 	}
 }
