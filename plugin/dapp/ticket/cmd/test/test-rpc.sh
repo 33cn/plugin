@@ -8,7 +8,7 @@ MAIN_HTTP=""
 
 source ../dapp-test-common.sh
 
-ticketId=""
+#ticketId=""
 price=$((10000 * 100000000))
 
 ticket_CreateBindMiner() {
@@ -55,10 +55,10 @@ ticket_TicketList() {
     resok='(.error|not) and (.result.tickets | length > 0) and (.result.tickets[0].minerAddress == "'"$minerAddr"'") and (.result.tickets[0].returnAddress == "'"$returnAddr"'") and (.result.tickets[0].status == '"$status"')'
     chain33_Http "$req" ${MAIN_HTTP} "$resok" "$FUNCNAME"
 
-    #ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
-    #echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
+    ticket0=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0]")
+    echo -e "######\\n  ticket[0] is $ticket0)  \\n######"
     ticketId=$(echo "${RETURN_RESP}" | jq -r ".result.tickets[0].ticketId")
-    #echo -e "######\\n  ticketId is $ticketId  \\n######"
+    echo -e "######\\n  ticketId is $ticketId  \\n######"
 }
 
 ticket_MinerAddress() {
@@ -87,7 +87,7 @@ ticket_RandNumHash() {
 function run_testcases() {
     #账户地址
     minerAddr1="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    returnAddr1="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+    #returnAddr1="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
 
     minerAddr2="12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
 
@@ -99,8 +99,8 @@ function run_testcases() {
 
     ticket_SetAutoMining 0
     ticket_GetTicketCount
-    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
-    ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
+    #ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
+    #ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
     ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
     ticket_MinerAddress "${returnAddr2}" "${minerAddr2}"
