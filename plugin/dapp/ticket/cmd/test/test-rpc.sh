@@ -8,7 +8,7 @@ MAIN_HTTP=""
 
 source ../dapp-test-common.sh
 
-ticketId=""
+#ticketId=""
 price=$((10000 * 100000000))
 
 ticket_CreateBindMiner() {
@@ -87,7 +87,7 @@ ticket_RandNumHash() {
 function run_testcases() {
     #账户地址
     minerAddr1="1PUiGcbsccfxW3zuvHXZBJfznziph5miAo"
-    returnAddr1="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+    #returnAddr1="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
 
     minerAddr2="12HKLEn6g4FH39yUbHh4EVJWcFo5CXg22d"
 
@@ -99,8 +99,8 @@ function run_testcases() {
 
     ticket_SetAutoMining 0
     ticket_GetTicketCount
-    ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
-    ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
+    #ticket_TicketList "${minerAddr1}" "${returnAddr1}" 1
+    #ticket_TicketInfos "${ticketId}" "${minerAddr1}" "${returnAddr1}"
     #购票
     ticket_CreateBindMiner "${minerAddr2}" "${returnAddr2}" "${returnPriv2}" ${price}
     ticket_MinerAddress "${returnAddr2}" "${minerAddr2}"
