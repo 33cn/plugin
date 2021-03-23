@@ -85,6 +85,20 @@ var PrecompiledContractsYoloV1 = map[common.Address]PrecompiledContract{
 	common.BytesToAddress([]byte{18}): &bls12381MapG2{},
 }
 
+// PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
+// contracts used in the Berlin release.
+var PrecompiledContractsBerlin = map[common.Address]PrecompiledContract{
+	common.BytesToAddress([]byte{1}): &ecrecover{},
+	common.BytesToAddress([]byte{2}): &sha256hash{},
+	common.BytesToAddress([]byte{3}): &ripemd160hash{},
+	common.BytesToAddress([]byte{4}): &dataCopy{},
+	common.BytesToAddress([]byte{5}): &bigModExp{},
+	common.BytesToAddress([]byte{6}): &bn256AddIstanbul{},
+	common.BytesToAddress([]byte{7}): &bn256ScalarMulIstanbul{},
+	common.BytesToAddress([]byte{8}): &bn256PairingIstanbul{},
+	common.BytesToAddress([]byte{9}): &blake2F{},
+}
+
 // RunPrecompiledContract 调用预编译的合约逻辑并返回结果
 func RunPrecompiledContract(p PrecompiledContract, input []byte, contract *Contract) (ret []byte, err error) {
 	gas := p.RequiredGas(input)
@@ -188,10 +202,14 @@ func (c *dataCopy) Run(in []byte) ([]byte, error) {
 type bigModExp struct{}
 
 var (
+	big0      = big.NewInt(0)
 	big1      = big.NewInt(1)
+	big3      = big.NewInt(3)
 	big4      = big.NewInt(4)
+	big7      = big.NewInt(7)
 	big8      = big.NewInt(8)
 	big16     = big.NewInt(16)
+	big20     = big.NewInt(20)
 	big32     = big.NewInt(32)
 	big64     = big.NewInt(64)
 	big96     = big.NewInt(96)
@@ -253,7 +271,7 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 		)
 	}
 	gas.Mul(gas, common.BigMax(adjExpLen, big1))
-	gas.Div(gas, new(big.Int).SetUint64(params.ModExpQuadCoeffDiv))
+	gas.Div(gas, big20)
 
 	if gas.BitLen() > 64 {
 		return math.MaxUint64

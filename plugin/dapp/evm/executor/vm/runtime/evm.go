@@ -5,10 +5,9 @@
 package runtime
 
 import (
+	log "github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"sync/atomic"
-
-	log "github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -32,20 +31,21 @@ type (
 )
 
 // 依据合约地址判断是否为预编译合约，如果不是，则全部通过解释器解释执行
-func run(evm *EVM, contract *Contract, input []byte) (ret []byte, err error) {
+func run(evm *EVM, contract *Contract, input []byte,readOnly bool) (ret []byte, err error) {
 	if contract.CodeAddr != nil {
 		// 预编译合约以拜占庭分支为初始版本，后继如有分叉，需要在此处理
 		precompiles := PrecompiledContractsByzantium
 		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
 		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
-			precompiles = PrecompiledContractsYoloV1
+			//precompiles = PrecompiledContractsYoloV1
 		}
+		precompiles =PrecompiledContractsBerlin
 		if p := precompiles[*contract.CodeAddr]; p != nil {
 			return RunPrecompiledContract(p, input, contract)
 		}
 	}
 	// 在此处打印下自定义合约的错误信息
-	ret, err = evm.Interpreter.Run(contract, input)
+	ret, err = evm.Interpreter.Run(contract, input,readOnly)
 	if err != nil {
 		log.Error("error occurs while run evm contract", "error info", err)
 	}
@@ -107,13 +107,14 @@ type EVM struct {
 	// CallGasTemp 此属性用于临时存储计算出来的Gas消耗值
 	// 在指令执行时，会调用指令的gasCost方法，计算出此指令需要消耗的Gas，并存放在此临时属性中
 	// 然后在执行opCall时，从此属性获取消耗的Gas值
-	CallGasTemp uint64
+	callGasTemp uint64
 
 	// 支持的最长合约代码大小
 	maxCodeSize int
 
 	// chain33配置
 	cfg *types.Chain33Config
+
 }
 
 // NewEVM 创建一个新的EVM实例对象
@@ -241,7 +242,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		evm.StateDB.TransferStateData(addr.String())
 	}
 
-	ret, err = run(evm, contract, input)
+	ret, err = run(evm, contract, input,false)
 
 	// 当合约调用出错时，操作将会回滚（对数据的变更操作会被恢复），并且会消耗掉所有的gas
 	if err != nil {
@@ -277,7 +278,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	// 正常从合约地址加载合约代码
 	contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 
-	ret, err = run(evm, contract, input)
+	ret, err = run(evm, contract, input,false)
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != model.ErrExecutionReverted {
@@ -312,7 +313,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 
 	// 其它逻辑同StaticCall
-	ret, err = run(evm, contract, input)
+	ret, err = run(evm, contract, input,true)
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != model.ErrExecutionReverted {
@@ -353,7 +354,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 
 	// 执行合约指令时如果出错，需要进行回滚，并且扣除剩余的Gas
-	ret, err = run(evm, contract, input)
+	ret, err = run(evm, contract, input,false)
 	if err != nil {
 		// 合约执行出错时进行回滚
 		// 注意，虽然内部调用合约不允许变更数据，但是可以进行生成日志等其它操作，这种情况下也是需要回滚的
@@ -391,7 +392,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	start := types.Now()
 
 	// 通过预编译指令和解释器执行合约
-	ret, err = run(evm, contract, nil)
+	ret, err = run(evm, contract, nil,false)
 
 	// 检查部署后的合约代码大小是否超限
 	maxCodeSizeExceeded := len(ret) > evm.maxCodeSize
@@ -434,3 +435,4 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 
 	return ret, snapshot, contract.Gas, err
 }
+

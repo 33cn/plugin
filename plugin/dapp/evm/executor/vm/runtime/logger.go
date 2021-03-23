@@ -13,7 +13,6 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
 )
 
 // Tracer 接口用来在合约执行过程中收集跟踪数据。
@@ -23,9 +22,9 @@ type Tracer interface {
 	// CaptureStart 开始记录
 	CaptureStart(from common.Address, to common.Address, call bool, input []byte, gas uint64, value uint64) error
 	// CaptureState 保存状态
-	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error
+	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack,  rData []byte, contract *Contract, depth int, err error) error
 	// CaptureFault 保存错误
-	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error
+	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error
 	// CaptureEnd 结束记录
 	CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) error
 }
@@ -98,7 +97,7 @@ func (logger *JSONLogger) CaptureStart(from common.Address, to common.Address, c
 }
 
 // CaptureState 输出当前虚拟机状态
-func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack,  rData []byte, contract *Contract, depth int, err error) error {
 	log := StructLog{
 		Pc:         pc,
 		Op:         op,
@@ -111,7 +110,6 @@ func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost
 	}
 	log.Memory = formatMemory(memory.Data())
 	log.Stack = formatStack(stack.Data())
-	log.ReturnStack = rStack.Data()
 	log.ReturnData = rData
 	return logger.encoder.Encode(log)
 }
@@ -131,7 +129,7 @@ func formatMemory(data []byte) (res []string) {
 }
 
 //CaptureFault 目前实现为空
-func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error {
 	return nil
 }
 
