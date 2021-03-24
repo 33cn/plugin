@@ -7,7 +7,6 @@ package executor
 import (
 	"bytes"
 	"math/big"
-
 	"os"
 
 	"reflect"
@@ -22,7 +21,7 @@ import (
 )
 
 var (
-	evmDebug = false
+	evmDebug = true
 
 	// EvmAddress 本合约地址
 	EvmAddress = ""
@@ -68,8 +67,20 @@ type EVMExecutor struct {
 func NewEVMExecutor() *EVMExecutor {
 	exec := &EVMExecutor{}
 
-	exec.vmCfg = &runtime.Config{}
-	exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	exec.vmCfg = &runtime.Config{
+	}
+	//exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	exec.vmCfg.Tracer=runtime.NewMarkdownLogger(
+		&runtime.LogConfig{
+			DisableMemory:     false,
+			DisableStack:      false,
+			DisableStorage:    false,
+			DisableReturnData: false,
+			Debug:             true,
+			Limit:             0,
+		},
+		os.Stdout,
+		)
 
 	exec.SetChild(exec)
 	return exec

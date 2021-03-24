@@ -189,7 +189,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		precompiles := PrecompiledContractsByzantium
 		// 是否是黄皮书v1分叉
 		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
-			precompiles = PrecompiledContractsYoloV1
+			precompiles = PrecompiledContractsIstanbul
 		}
 		// 合约地址在自定义合约和预编译合约中都不存在时，可能为外部账户
 		if precompiles[addr] == nil {
