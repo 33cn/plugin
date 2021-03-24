@@ -16,6 +16,7 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/issuance"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/js"             //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/lottery"        //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/mix"            //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/multisig"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/norm"           //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/oracle"         //auto gen

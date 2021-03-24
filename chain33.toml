@@ -282,6 +282,17 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.mix]
+#私对私的交易费,交易比较大，需要多的手续费
+txFee=100000000
+#私对私token转账，花费token(true)还是BTY(false),
+tokenFee=false
+#curve H point
+pointHX="10190477835300927557649934238820360529458681672073866116232821892325659279502"
+pointHY="7969140283216448215269095418467361784159407896899334866715345504515077887397"
+#电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
+maxTreeLeaves=1024
+
 [metrics]
 #是否使能发送metrics数据的发送
 enableMetrics=false

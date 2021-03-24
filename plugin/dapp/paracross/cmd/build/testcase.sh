@@ -93,9 +93,13 @@ function para_set_toml() {
 
 function para_set_wallet() {
     echo "=========== # para set wallet ============="
+    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     para_import_wallet "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
+    #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
     para_import_wallet "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" "paraAuthAccount"
+    #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
     para_import_wallet "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" "paraAuthAccount"
+    #1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
     para_import_wallet "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
 
     #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt

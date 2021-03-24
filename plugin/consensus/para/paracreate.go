@@ -326,6 +326,7 @@ func validMainBlocks(txs *types.ParaTxDetails) *types.ParaTxDetails {
 	return txs
 }
 
+//主链blockchain支持按过滤平行链交易后，此接口弃用
 func (client *client) requestTxsFromBlock(currSeq int64, preMainBlockHash []byte) (*types.ParaTxDetails, error) {
 	cfg := client.GetAPI().GetConfig()
 	blockSeq, err := client.GetBlockOnMainBySeq(currSeq)

@@ -13,9 +13,10 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta
+	github.com/consensys/gnark v0.2.1-alpha
+	github.com/consensys/gurvy v0.1.2-0.20200512111154-1662e289e29b
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
-	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.9.9
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
@@ -31,21 +32,19 @@ require (
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
 	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/prometheus/common v0.4.1
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.6.0
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.5.0
-	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
-	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
-	golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.29.1
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.3.0
 )

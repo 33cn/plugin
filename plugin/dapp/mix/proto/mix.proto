@@ -1,0 +1,537 @@
+syntax = "proto3";
+
+
+package types;
+
+import "common.proto";
+import "transaction.proto";
+
+//区分不同的验证电路
+enum VerifyType{
+    DEPOSIT         = 0;
+    WITHDRAW        = 1;
+    TRANSFERINPUT      = 2;
+    TRANSFEROUTPUT     = 3;
+    AUTHORIZE       = 4;
+}
+
+
+message ZkVerifyKey {
+    VerifyType type = 1;
+    string value = 2;
+
+}
+
+message ZkVerifyKeys{
+    repeated ZkVerifyKey data = 1;
+}
+
+message AuthKeys{
+    repeated string keys = 1;
+}
+
+message PaymentKey{
+    string addr = 1;
+    string receiverKey = 2;
+    string encryptKey = 3;
+}
+
+message TokenTxFeeAddrReq{
+    string assetExec = 1;
+    string assetSymbol = 2;
+}
+
+enum MixConfigType{
+    Verify = 0;
+    //register unify authorize pubkey
+    Auth = 1;
+    //for spender's pay pubkey register,DH secret
+    //spender注册自己的payment公钥, 用来生成DiffHellman秘钥
+    Payment = 2;
+}
+
+enum MixConfigAct{
+    Add = 0;
+    Delete = 1;
+}
+
+
+
+//config verify parameter for proof
+//当前authPk=mimc_hash(prikey),没有X,Y值
+message MixConfigAction {
+    MixConfigType Ty = 1;
+    MixConfigAct Action = 2;
+    oneof  value {
+        ZkVerifyKey     verifyKey   = 3;
+        string          authKey     = 4;
+        PaymentKey      paymentKey  = 5;
+
+    }
+}
+
+//DH one time pubkey with secret
+message DHSecret{
+    string      peerKey = 1;
+    string      secret   = 2;
+}
+
+//Diff-Helman 加密group, for spender, returner, authorizer to decrypt
+message DHSecretGroup{
+    string receiver = 1;
+    string returner = 2;
+    string authorize = 3;
+}
+
+message ZkProofInfo {
+    string proof        = 1;
+    string publicInput  = 2;
+    DHSecretGroup secrets = 3;
+}
+
+message MixDepositAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo proofs = 3;
+
+
+}
+
+message MixTransferAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo inputs = 3;
+    ZkProofInfo output = 4;
+    ZkProofInfo change = 5;
+
+}
+
+message MixWithdrawAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    uint64 amount = 3;
+    repeated ZkProofInfo proofs = 4;
+
+}
+
+message MixAuthorizeAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    ZkProofInfo proof = 3;
+
+}
+
+message MixAction {
+    int32 ty = 1;
+    oneof value {
+        MixConfigAction     config            = 2;
+        MixDepositAction    deposit           = 3;
+        MixWithdrawAction   withdraw          = 4;
+        MixTransferAction   transfer          = 5;
+        MixAuthorizeAction  authorize         = 6;
+
+    }
+
+}
+
+
+message DepositPublicInput {
+    string noteHash = 1;
+    string amount = 2;
+
+}
+
+message WithdrawPublicInput {
+    string treeRootHash  = 1;
+    string nullifierHash = 2;
+    string authorizeSpendHash = 3;
+    string amount = 4;
+
+}
+
+
+
+message TransferInputPublicInput {
+    string treeRootHash = 1;
+    string shieldAmountX = 2;
+    string shieldAmountY = 3;
+    string authorizeSpendHash = 4;
+    string nullifierHash = 5;
+}
+
+message TransferOutputPublicInput {
+    string noteHash = 1;
+    string shieldAmountX = 2;
+    string shieldAmountY = 3;
+
+}
+
+message AuthorizePublicInput {
+    string treeRootHash = 1;
+    string authorizePubKey = 2;
+    string authorizeHash = 3;
+    string authorizeSpendHash = 4;
+
+}
+
+message VerifyProofInfo{
+    VerifyType  ty = 1;
+    ZkProofInfo proof = 2;
+
+}
+
+//nullifer 存在value
+message ExistValue {
+    string nullifier = 1;
+    bool exist = 2;
+}
+
+
+//子树用高度和hash描述，2^10=1024个叶子节点，子树高度不会超过10
+message CommitSubTree{
+    int32 height = 1;
+    bytes hash = 2;
+}
+//merkel tree由子树和叶子组成，三种场景:1,初始只一个叶子, 2,全是子树, 3,子树加一个叶子，不会有两个叶子，两个叶子一定构成子树
+message CommitSubTrees{
+    repeated CommitSubTree subTrees = 1;
+}
+
+//描述当前commitTree的状态
+//一颗merkel树1024叶子，考虑数据库读取原因，每个叶子都会存到相应seq db，待第1024次时候归档，重新开始新的merkle树，
+message CommitTreeStatus{
+    CommitSubTrees subTrees = 1;
+    //1~1024叶子的归档
+    int32 subLeavesSeq = 2;
+    //root的归档 从1开始,数据库占位，不然全空会往前搜索
+    uint64 archiveRootsSeq = 3;
+    string assetExec = 4;
+    string assetSymbol = 5;
+
+}
+
+message ReceiptCommitTreeStatus{
+    CommitTreeStatus prev = 1;
+    CommitTreeStatus current = 2;
+}
+
+message ReceiptCommitSubLeaves{
+    int32  seq = 1;
+    string leaf = 2;
+}
+
+message ReceiptCommitSubRoots{
+    int32  seq = 1;
+    string root = 2;
+}
+
+message ReceiptArchiveLeaves{
+    int32 count = 1;
+    string rootHash = 2;
+    string lastLeaf = 3;
+}
+message ReceiptArchiveTreeRoot{
+    uint64 seq = 1;
+    string rootHash = 2;
+}
+
+
+message CommitTreeLeaves {
+    repeated bytes leaves = 1;
+}
+
+message CommitTreeRoots {
+    repeated bytes roots = 1;
+}
+
+
+message CommitTreeProve {
+    string rootHash = 1;
+    repeated string proofSet = 2;
+    uint32 proofIndex = 3;
+    uint32 numLeaves = 4;
+    repeated uint32 helpers = 5;
+}
+
+message TreeInfoReq{
+    string rootHash = 1;
+    string leafHash = 2;
+    string assetExec = 3;
+    string assetSymbol = 4;
+    uint64 rootHeight = 5;
+}
+
+message TreeListResp{
+    repeated string leaves = 1;
+}
+message RootListResp{
+    repeated string roots = 1;
+}
+
+message SubTreeResp{
+    int32  height = 1;
+    string hash = 2;
+}
+message TreeStatusResp{
+    int32 subLeavesSeq = 1;
+    uint64 archiveRootsSeq = 2;
+    repeated SubTreeResp subTrees = 3;
+}
+
+
+// mix wallet part
+// receiverPubKey = hash(spendPriKey) for zk-snark note spend
+message PaymentKeyPair {
+    string receiveKey  = 1;
+    string spendKey = 2;
+}
+
+// pub = priv*G for diff-helman crypto
+// out: take spender's tempPrikey*pubkey as password, tempPubkey show in note
+// spender: take self prikey*tempPubkey as password to decode
+message EncryptKeyPair {
+    string  privKey = 1;
+    string  pubKey  = 2;
+
+}
+
+//spend pair for note proof
+//crypt pair for DH crypt/decrypt
+message AccountPrivacyKey {
+    PaymentKeyPair paymentKey   = 1;
+    EncryptKeyPair encryptKey  = 2;
+}
+
+message WalletAddrPrivacy {
+    AccountPrivacyKey privacy   = 1;
+    string addr                    = 2;
+}
+
+
+
+message SecretData{
+    string receiverKey = 1;
+    string returnKey = 2;
+    string authorizeKey = 3;
+    string amount = 4;
+    string noteRandom = 5;
+    string assetExec = 6;
+    string assetSymbol = 7;
+}
+
+
+message EncryptSecretData{
+    string secret = 1;
+    string peerKey = 2;
+}
+
+message DecryptSecretData{
+    string secret = 1;
+    string priKey = 2;
+    string peerKey = 3;
+
+}
+
+
+
+//支持同时存入多个地址，多个地址具有相同的returnAddr和AuthorizeAddr,如果不同，则单个来存
+message DepositInfo{
+    string receiverAddrs = 1;
+    string returnAddr = 2;
+    string authorizeAddr = 3;
+    string amounts = 4;
+}
+
+
+//钱包生成deposit tx
+message DepositTxReq{
+    DepositInfo deposit = 1;
+    string zkPath = 2;
+
+}
+
+
+message DepositProofResp{
+    string          noteHash = 1;
+    SecretData      proof    = 2;
+    DHSecretGroup   secrets  = 3;
+
+}
+
+
+message TreePathProof{
+    string          treeRootHash    = 1;
+    repeated string treePath        = 2;
+    repeated uint32 helpers         = 3;
+}
+
+//可withdraw 多个note
+message WithdrawTxReq{
+    uint64 totalAmount = 1;
+    string noteHashs  = 2;   // seperate by ","
+    string zkPath = 3;
+}
+
+
+
+//只授权一个note，超过一个，toAddr不好设置
+message AuthTxReq{
+    string noteHash = 1;
+    string authorizeToAddr = 3;
+    string zkPath = 4;
+}
+
+
+message TransferInputTxReq{
+    string noteHashs     = 1;
+    string zkPath = 2;
+}
+
+message TransferOutputTxReq{
+    DepositInfo deposit    = 1;
+    string zkPath = 2;
+}
+
+message TransferTxReq{
+    TransferInputTxReq  input        = 1;
+    TransferOutputTxReq output       = 2;
+}
+
+//加密了的input/output amount
+message ShieldAmount{
+    string X = 1;
+    string Y = 2;
+}
+
+
+
+message ShieldAmountRst{
+    repeated string inputRandoms = 1;
+    string outputRandom = 2;
+    string changeRandom = 3;
+    repeated ShieldAmount inputs = 4;
+    ShieldAmount output = 5;
+    ShieldAmount change = 6;
+
+}
+
+message CreateRawTxReq{
+    int32  actionTy = 1;
+    bytes  data = 4;
+    string assetExec = 2;
+    string assetSymbol = 3;
+    string title = 6; //平行链名字
+    int32  privacy = 7; //1:打印隐私数据
+    int32  verify = 8; //0:链上验证,1:本地验证
+
+
+}
+
+message PaymentKeysReq{
+    string privKey = 1; //user wallet priv key
+    string addr    = 2; //user addr
+    int32 detail = 3; //获取私钥信息
+}
+
+enum NoteStatus{
+	UNDEF   = 0;
+	VALID   = 1;   //已授权可使用 相对消费者
+	USED    = 2;    //已使用
+	FROZEN  = 3;   //未授权
+	UNFROZEN  = 4;  //已授权 相对授权者
+}
+
+
+
+message WalletNoteInfo {
+    string             noteHash             = 1;
+    string             nullifier            = 2;
+    string             authorizeSpendHash   = 3;
+    string             authorizeHash        = 4;
+    string             account              = 5; //账户地址
+    NoteStatus         status               = 6;
+
+    SecretData         secret               = 7;
+
+}
+
+message WalletDbMixInfo {
+    WalletNoteInfo       info   = 1;
+    string               txIndex = 2;
+}
+
+
+message WalletMixIndexReq {
+    string             noteHash             = 1;
+    string             nullifier            = 2;
+    string             authorizeSpendHash   = 3;
+    string             authorizeHash        = 4;
+    string             account              = 5;
+    int32              status               = 6;
+    int32              count                = 7;
+    int32              direction            = 8;
+}
+
+message WalletNoteResp {
+    repeated WalletNoteInfo notes = 1;
+}
+
+
+message WalletEnablePrivacyRst{
+    string  addr = 1;
+    bool    isOK = 2;
+    string  msg = 3;
+}
+
+message WalletEnablePrivacyResp{
+    repeated WalletEnablePrivacyRst resps = 1;
+}
+
+
+
+enum MixWalletRescanStatus{
+    IDLE = 0;
+    SCANNING = 1;
+    FINISHED = 2;
+}
+///////localdb index query
+
+message LocalMixTx {
+    string hash = 1;
+    int64 height = 2;
+    int64 index = 3;
+}
+
+message MixTxListReq{
+    string  txIndex   = 1; //primary direct query
+    string  hash = 2;
+    int64   height = 3;
+    int64   index = 4;
+    int32   count      =5;
+    int32   direction  = 6;
+
+}
+
+message MixTxListResp{
+    repeated LocalMixTx txs = 1;
+}
+
+message PrivacyAddrResult{
+    string addr = 1;
+    bool isOK = 2;
+    string msg = 3;
+
+}
+
+message ReqEnablePrivacyRst{
+    repeated PrivacyAddrResult results = 1;
+}
+
+service mixPrivacy {
+    // 扫描UTXO以及获取扫描UTXO后的状态
+    rpc GetRescanStatus(ReqNil) returns (ReqString) {}
+    // 使能隐私账户
+    rpc RescanNotes(ReqNil) returns (ReqString) {}
+    // 创建隐私交易
+    rpc EnablePrivacy(ReqAddrs) returns (ReqEnablePrivacyRst) {}
+}

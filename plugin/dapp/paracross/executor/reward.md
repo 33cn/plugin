@@ -63,4 +63,114 @@
     |bindCoins|int|绑定挖矿冻结币的份额，需冻结平行链原生代币，解绑定不需要此配置|
     |targetNode|string|绑定目标共识节点，需要是共识账户组的成员|
 
+## 挖矿奖励的转出
+1.查询挖矿奖励
+>挖矿产生的奖励在平行链的paracross 执行器中
+    ```
+    {
+        "method": "Chain33.GetBalance",
+        "params": [{
+            "addresses": ["{共识账户地址}"],
+            "execer": "user.p.para.paracross"
+        }]
+    }
+
+    1. cli命令方法
+    ./chain33-cli --rpc_laddr http://localhost:8901 account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    {
+        "addr": "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+        "execAccount": [
+            {
+                "execer": "user.p.para.paracross",
+                "account": {
+                    "balance": "2227.0000",
+                    "frozen": "0.0000"
+                }
+            }
+        ]
+    }
+    
+    2. rpc方法:
+    curl -ksd '{"method":"Chain33.GetBalance","params":[{"addresses":["1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"],"execer":"user.p.para.paracross"}]}' http://172.28.0.2:8901
+    响应：
+    {
+        "result": [{
+            "currency": 0,
+            "balance": 227500000000,
+            "frozen": 0,
+            "addr": "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
+        }],
+    }
+    
+
+    
+    ```
+2.转出挖矿奖励
+>需要从平行链执行器paracross下把奖励 withdraw出到平行链coins合约的签名地址下
+```
+1. cli命令方式:
+./chain33-cli --rpc_laddr http://localhost:8801 --paraName {平行链title} send coins withdraw -a {数量} -e user.p.para.paracross -k ${私钥}
+
+例:
+./chain33-cli --rpc_laddr http://localhost:8801 --paraName user.p.para. send coins withdraw -a 2000000000 -e user.p.para.paracross -k ${私钥}
+
+响应：
+./chain33-cli --rpc_laddr http://localhost:8901 account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+{
+    "addr": "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+    "execAccount": [
+        {
+            "execer": "user.p.para.paracross",
+            "account": {
+                "balance": "1032.0000",
+                "frozen": "0.0000"
+            }
+        },
+        {
+            "execer": "user.p.para.coins",
+            "account": {
+                "balance": "2020.0000",
+                "frozen": "0.0000"
+            }
+        }
+    ]
+}
+注:user.p.para.coins下就是自己的余额
+
+rpc方法
+1.创建交易:
+{
+	"method": "Chain33.CreateRawTransaction",
+	"params": [{
+		"to": "19WJJv96nKAU4sHFWqGmsqfjxd37jazqii",
+		"amount": 2000000000,
+		"fee": 2000000,
+		"isWithdraw": true,
+		"execName": "user.p.para.paracross",
+		"execer": "user.p.para.coins"
+	}]
+}
+注释：
+    1) "to": "19WJJv96nKAU4sHFWqGmsqfjxd37jazqii", 平行链paracross执行器地址，不需要修改
+    2) amount,fee需要自己设置
+
+2.签名
+{
+	"method": "Chain33.SignRawTx",
+	"params": [{
+		"privkey": "{私钥}",
+		"txHex": "{交易数据}",
+		"expire": "120s"
+	}]
+}
+3.发送交易
+{
+	"method": "Chain33.SendTransaction",
+	"params": [{
+		"data": "{签名数据}"
+	}]
+}
+
+
+```
 
