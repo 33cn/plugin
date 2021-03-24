@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -325,7 +327,7 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 
 	keys, err := policy.getWalletOperate().GetAllPrivKeys()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "GetAllPrivKeys")
 	}
 
 	var hashes types.ReplyHashes
@@ -390,15 +392,19 @@ func (policy *ticketPolicy) getTickets(addr string, status int32) ([]*ty.Ticket,
 
 func (policy *ticketPolicy) getForceCloseTickets(addr string) ([]*ty.Ticket, error) {
 	if addr == "" {
-		return nil, nil
+		return nil, errors.Wrapf(types.ErrNotFound, "addr is nil")
 	}
 	tlist1, err1 := policy.getTickets(addr, 1)
 	if err1 != nil && err1 != types.ErrNotFound {
-		return nil, err1
+		return nil, errors.Wrap(err1, "status=1")
 	}
 	tlist2, err2 := policy.getTickets(addr, 2)
 	if err2 != nil && err2 != types.ErrNotFound {
-		return nil, err1
+		return nil, errors.Wrap(err2, "status=2")
+	}
+
+	if len(tlist1)+len(tlist2) <= 0 {
+		return nil, errors.Wrapf(types.ErrNotFound, "addr=%s no tickets in status=1&2", addr)
 	}
 
 	return append(tlist1, tlist2...), nil

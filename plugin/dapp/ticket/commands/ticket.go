@@ -216,7 +216,7 @@ func closeTicket(cmd *cobra.Command, args []string) {
 		return
 	}
 	if len(res.Hashes) == 0 {
-		fmt.Println("no ticket to be close")
+		fmt.Println("no ticket to be close or close fail,to check log")
 		return
 	}
 
