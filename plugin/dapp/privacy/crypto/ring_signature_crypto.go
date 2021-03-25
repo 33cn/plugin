@@ -21,8 +21,7 @@ import (
 )
 
 func init() {
-	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{}, false)
-	crypto.RegisterType(privacytypes.SignNameRing, privacytypes.RingBaseonED25519)
+	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{}, crypto.WithOptionTypeID(privacytypes.RingBaseonED25519))
 }
 
 // RingSignature 环签名中对于crypto.Signature接口实现
@@ -255,4 +254,9 @@ func (r *RingSignED25519) SignatureFromBytes(b []byte) (crypto.Signature, error)
 		return nil, err
 	}
 	return sign, nil
+}
+
+// Validate validate msg and signature
+func (r *RingSignED25519) Validate(msg, pub, sig []byte) error {
+	return crypto.BasicValidation(r, msg, pub, sig)
 }
