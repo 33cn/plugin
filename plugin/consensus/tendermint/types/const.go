@@ -40,7 +40,7 @@ var (
 	SignMap = map[string]int{
 		"secp256k1": types.SECP256K1,
 		"ed25519":   types.ED25519,
-		"sm2":       types.SM2,
+		"sm2":       types.AuthSM2,
 		"bls":       AuthBLS,
 	}
 )
