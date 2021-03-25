@@ -1,8 +1,6 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-github.com/33cn/chain33 v1.65.1-0.20210301070302-854c666abda3 h1:aj0v9rGxe643IDL3noRRPA+lClBb6jAVb3UetKOXurA=
-github.com/33cn/chain33 v1.65.1-0.20210301070302-854c666abda3/go.mod h1:XEhB5IOpLl42xM37TpYzFNJg48U4cYIe7dZVmNA/78Y=
-github.com/33cn/chain33 v1.65.1-0.20210318040343-ae3d3b3a4d50 h1:a2MS/B0/BsdkhK71JNYaznaS83mbkTesVa17whb/fJA=
-github.com/33cn/chain33 v1.65.1-0.20210318040343-ae3d3b3a4d50/go.mod h1:XEhB5IOpLl42xM37TpYzFNJg48U4cYIe7dZVmNA/78Y=
+github.com/33cn/chain33 v1.65.1 h1:FCXRlsYP0pL11GowNEttb6+8PqXvcRbWOAW1hEjqZMc=
+github.com/33cn/chain33 v1.65.1/go.mod h1:52miTcQYwY/ChrmFm7Lh07z8GHPTQBlZQyYrB5cnLyw=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9 h1:HD8gA2tkByhMAwYaFAX9w2l7vxvBQ5NMoxDrkhqhtn4=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
@@ -664,7 +662,6 @@ github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
 github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d h1:gZZadD8H+fF+n9CmNhYL1Y0dJB+kLOmKd7FbPJLeGHs=
 github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d/go.mod h1:9OrXJhf154huy1nPWmuSrkgjPUtUNhA+Zmy+6AESzuA=
-github.com/tjfoc/gmsm v1.3.1/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/tjfoc/gmsm v1.3.2 h1:7JVkAn5bvUJ7HtU08iW6UiD+UTmJTIToHCfeFzkcCxM=
 github.com/tjfoc/gmsm v1.3.2/go.mod h1:HaUcFuY0auTiaHB9MHFGCPx5IaLhTUd2atbCFBQXn9w=
 github.com/twitchyliquid64/golang-asm v0.0.0-20190126203739-365674df15fc h1:RTUQlKzoZZVG3umWNzOYeFecQLIh+dbxXvJp1zPQJTI=
