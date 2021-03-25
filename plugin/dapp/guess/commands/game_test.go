@@ -48,6 +48,7 @@ var (
 Title="local"
 TestNet=true
 FixTime=false
+[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "info"

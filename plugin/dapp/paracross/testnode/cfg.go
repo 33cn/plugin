@@ -6,6 +6,7 @@ Title="user.p.test."
 CoinSymbol="bty"
 # TestNet=true
 
+[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
