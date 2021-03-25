@@ -3,7 +3,7 @@ TestNet=true
 FixTime=false
 version="6.3.0"
 
-
+[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
@@ -243,8 +243,8 @@ genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
 superManager=[
-    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S", 
-    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv", 
+    "1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",
 	"16ui7XJ1VLM7YXcNhWwWsWS6CRC3ZA2sJ1",
 ]
@@ -262,7 +262,7 @@ useBalance=false
 [fork.system]
 ForkChainParamV1= 0
 ForkCheckTxDup=0
-ForkBlockHash= 1	
+ForkBlockHash= 1
 ForkMinerTime= 0
 ForkTransferExec=0
 ForkExecKey=0

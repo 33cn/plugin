@@ -37,6 +37,7 @@ validatorsAddr=["0x92c8b16afd6d423652559c6e266cbe1c29bfd84f", "0x0df9a824699bc58
 #验证人权重
 initPowers=[25, 25, 25, 25]
 
+[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
