@@ -139,18 +139,6 @@ var (
 	DurationLimit          = big.NewInt(13)     // The decision boundary on the blocktime duration used to determine whether difficulty should go up or not.
 )
 
-
-
-
-
-
-
-
-
-
-
-
-
 //package params
 //
 //import "math/big"

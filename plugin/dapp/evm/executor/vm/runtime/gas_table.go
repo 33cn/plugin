@@ -1,12 +1,9 @@
 package runtime
 
-
 import (
-
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
-
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
 // memoryGasCost calculates the quadratic gas for memory expansion. It does so
@@ -83,15 +80,15 @@ func gasSStore(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memorySi
 		y, x    = stack.Back(1), stack.Back(0)
 		current = evm.StateDB.GetState(contract.Address().String(), x.Bytes32())
 	)
-		switch {
-		case current == (common.Hash{}) && y.Sign() != 0: // 0 => non 0
-			return params.SstoreSetGas, nil
-		case current != (common.Hash{}) && y.Sign() == 0: // non 0 => 0
-			evm.StateDB.AddRefund(params.SstoreRefundGas)
-			return params.SstoreClearGas, nil
-		default: // non 0 => non 0 (or 0 => 0)
-			return params.SstoreResetGas, nil
-		}
+	switch {
+	case current == (common.Hash{}) && y.Sign() != 0: // 0 => non 0
+		return params.SstoreSetGas, nil
+	case current != (common.Hash{}) && y.Sign() == 0: // non 0 => 0
+		evm.StateDB.AddRefund(params.SstoreRefundGas)
+		return params.SstoreClearGas, nil
+	default: // non 0 => non 0 (or 0 => 0)
+		return params.SstoreResetGas, nil
+	}
 }
 
 // 0. If *gasleft* is less than or equal to 2300, fail the current call.

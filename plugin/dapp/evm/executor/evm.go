@@ -67,10 +67,9 @@ type EVMExecutor struct {
 func NewEVMExecutor() *EVMExecutor {
 	exec := &EVMExecutor{}
 
-	exec.vmCfg = &runtime.Config{
-	}
+	exec.vmCfg = &runtime.Config{}
 	//exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
-	exec.vmCfg.Tracer=runtime.NewMarkdownLogger(
+	exec.vmCfg.Tracer = runtime.NewMarkdownLogger(
 		&runtime.LogConfig{
 			DisableMemory:     false,
 			DisableStack:      false,
@@ -80,7 +79,7 @@ func NewEVMExecutor() *EVMExecutor {
 			Limit:             0,
 		},
 		os.Stdout,
-		)
+	)
 
 	exec.SetChild(exec)
 	return exec

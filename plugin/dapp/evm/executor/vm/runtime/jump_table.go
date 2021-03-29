@@ -8,20 +8,16 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
 
-
-
-
 //type (
 //	// ExecutionFunc 指令执行函数，每个操作指令对应一个实现，它实现了指令的具体操作逻辑
 //	ExecutionFunc func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error)
 //)
 
-
 type (
 	//executionFunc func(pc *uint64, interpreter *EVMInterpreter, callContext *callCtx) ([]byte, error)
 	executionFunc func(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error)
 
-	gasFunc       func(*EVM, *Contract, *Stack, *Memory, uint64) (uint64, error) // last parameter is the requested memory size as a uint64
+	gasFunc func(*EVM, *Contract, *Stack, *Memory, uint64) (uint64, error) // last parameter is the requested memory size as a uint64
 	// memorySizeFunc returns the required size, and whether the operation overflowed a uint64
 	memorySizeFunc func(*Stack) (size uint64, overflow bool)
 )
@@ -46,7 +42,6 @@ type operation struct {
 	reverts bool // determines whether the operation reverts state (implicitly halts)
 	returns bool // determines whether the operations sets the return data content
 }
-
 
 var (
 	frontierInstructionSet         = newFrontierInstructionSet()
@@ -1033,9 +1028,6 @@ func newFrontierInstructionSet() JumpTable {
 		},
 	}
 }
-
-
-
 
 ////Operation 定义指令操作的结构提
 //type Operation struct {

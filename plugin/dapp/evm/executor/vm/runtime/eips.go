@@ -59,7 +59,6 @@ package runtime
 //	}
 //}
 
-
 // enable1344 applies EIP-1344 (ChainID Opcode)
 // - Adds an opcode that returns the current chain’s EIP-155 unique identifier
 //func enable1344(jt *JumpTable) {

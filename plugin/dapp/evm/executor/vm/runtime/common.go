@@ -1,10 +1,12 @@
 package runtime
 
 import (
+	"math"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/holiman/uint256"
-	"math"
 )
+
 // calcMemSize64 calculates the required memory size, and returns
 // the size and whether the result overflowed uint64
 func calcMemSize64(off, l *uint256.Int) (uint64, bool) {

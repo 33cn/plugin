@@ -24,7 +24,7 @@ type Tracer interface {
 	// CaptureStart 开始记录
 	CaptureStart(from common.Address, to common.Address, call bool, input []byte, gas uint64, value uint64) error
 	// CaptureState 保存状态
-	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack,  rData []byte, contract *Contract, depth int, err error) error
+	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, rData []byte, contract *Contract, depth int, err error) error
 	// CaptureFault 保存错误
 	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error
 	// CaptureEnd 结束记录
@@ -99,7 +99,7 @@ func (logger *JSONLogger) CaptureStart(from common.Address, to common.Address, c
 }
 
 // CaptureState 输出当前虚拟机状态
-func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack,  rData []byte, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, rData []byte, contract *Contract, depth int, err error) error {
 	log := StructLog{
 		Pc:         pc,
 		Op:         op,
@@ -149,8 +149,6 @@ func (logger *JSONLogger) CaptureEnd(output []byte, gasUsed uint64, t time.Durat
 	}
 	return logger.encoder.Encode(endLog{common.Bytes2Hex(output), int64(gasUsed), t, ""})
 }
-
-
 
 type mdLogger struct {
 	out io.Writer

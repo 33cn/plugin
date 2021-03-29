@@ -5,8 +5,9 @@
 package runtime
 
 import (
-	"github.com/33cn/chain33/common/log/log15"
 	"sync/atomic"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 
@@ -32,8 +33,8 @@ type Config struct {
 
 // EVMInterpreter 解释器接结构定义
 type Interpreter struct {
-	evm      *EVM
-	cfg      Config
+	evm *EVM
+	cfg Config
 	// 是否允许修改数据
 	readOnly bool
 	// 合约执行返回的结果数据
@@ -44,7 +45,7 @@ type Interpreter struct {
 func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 	// 使用是否包含第一个STOP指令判断jump table是否完成初始化
 	// 需要注意，后继如果新增指令，需要在这里判断硬分叉，指定不同的指令集
-	if cfg.JumpTable[STOP]==nil{
+	if cfg.JumpTable[STOP] == nil {
 		cfg.JumpTable = berlinInstructionSet
 		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
 			//这里需要替换为最新得指令集
@@ -53,8 +54,8 @@ func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 	}
 
 	return &Interpreter{
-		evm:      evm,
-		cfg:      cfg,
+		evm: evm,
+		cfg: cfg,
 	}
 }
 
@@ -129,7 +130,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		defer func() {
 			if err != nil {
 				if !logged {
-					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, in.returnData,  contract, in.evm.depth, err)
+					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, in.returnData, contract, in.evm.depth, err)
 				} else {
 					in.cfg.Tracer.CaptureFault(in.evm, pcCopy, op, gasCopy, cost, mem, stack, contract, in.evm.depth, err)
 				}
@@ -152,7 +153,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		op = contract.GetOp(pc)
 		operation := in.cfg.JumpTable[op]
 		if operation == nil {
-			log15.Error("can't found operation:%s",op)
+			log15.Error("can't found operation:%s", op)
 			return nil, &ErrInvalidOpCode{opcode: op}
 		}
 		// Validate stack
@@ -173,7 +174,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		}
 
 		var memorySize uint64
-	    // 计算需要开辟的内存空间
+		// 计算需要开辟的内存空间
 		// Memory check needs to be done prior to evaluating the dynamic gas portion,
 		// to detect calculation overflows
 		if operation.memorySize != nil {
@@ -246,7 +247,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 	return nil, nil
 }
 
-
 // CanRun tells if the contract, passed as an argument, can be
 // run by the current interpreter.
 func (in *Interpreter) CanRun(code []byte) bool {
@@ -280,8 +280,8 @@ func fillEVM(param *params.EVMParam, evm *EVM) {
 // callCtx contains the things that are per-call, such as stack and memory,
 // but not transients like pc and gas
 type callCtx struct {
-	memory   *Memory
-	stack    *Stack
+	memory *Memory
+	stack  *Stack
 	//rstack   *ReturnStack
 	contract *Contract
 }

@@ -3,6 +3,7 @@ package runtime
 import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
+
 func minSwapStack(n int) int {
 	return minStack(n, n)
 }

@@ -59,4 +59,3 @@ func maxStack(pop, push int) int {
 func minStack(pops, push int) int {
 	return pops
 }
-

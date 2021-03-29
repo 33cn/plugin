@@ -6,13 +6,14 @@ package runtime
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 	"github.com/holiman/uint256"
-	"math/big"
 )
 
 // 加法操作
@@ -651,6 +652,7 @@ func opCreate(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	}
 	return nil, nil
 }
+
 //CREATE2
 func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	var (
@@ -680,7 +682,7 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 	// 出错时压栈0，否则压栈创建出来的合约对象的地址
 	if suberr != nil && suberr != model.ErrCodeStoreOutOfGas {
-		log15.Error("evm contract opCreate instruction error,endowment,salt", suberr, bigEndowment,salt)
+		log15.Error("evm contract opCreate instruction error,endowment,salt", suberr, bigEndowment, salt)
 		stackvalue.Clear()
 	} else {
 		stackvalue.SetBytes(addr.Bytes())
@@ -698,8 +700,6 @@ func opCreate2(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 	}
 	return nil, nil
 }
-
-
 
 // 合约调用操作
 func opCall(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
@@ -946,8 +946,7 @@ func opSelfBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 // opChainID implements CHAINID opcode
 func opChainID(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
-	chainId, _ := uint256.FromBig(big.NewInt(int64(evm.cfg.GetChainID())));
+	chainId, _ := uint256.FromBig(big.NewInt(int64(evm.cfg.GetChainID())))
 	callContext.stack.push(chainId)
 	return nil, nil
 }
-
