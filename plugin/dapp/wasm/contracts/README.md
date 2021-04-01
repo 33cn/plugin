@@ -55,7 +55,14 @@ wabt/bin/wasm2wat dice.wasm
 
 ### 发布合约
 ```bash
+# 若合约已存在则会创建失败，可以换一个合约名发布
 ./chain33-cli send wasm create -n 指定合约名 -p wasm合约路径 -k 用户私钥
+```
+
+### 更新合约
+```bash
+# 更新合约要求合约已存在，且只有合约创建者有更新权限
+./chain33-cli send wasm update -n 指定合约名 -p wasm合约路径 -k 用户私钥
 ```
 
 ### 调用合约

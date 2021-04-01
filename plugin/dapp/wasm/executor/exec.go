@@ -48,7 +48,7 @@ func (w *Wasm) Exec_Create(payload *types2.WasmCreate, tx *types.Transaction, in
 		return nil, types2.ErrInvalidWasm
 	}
 
-	kvc := dapp.NewKVCreator(w.GetStateDB(), nil, nil)
+	kvc := dapp.NewKVCreator(w.GetStateDB(), types.CalcStatePrefix(tx.Execer), nil)
 	_, err := kvc.GetNoPrefix(contractKey(name))
 	if err == nil {
 		return nil, types2.ErrContractExist
@@ -57,10 +57,58 @@ func (w *Wasm) Exec_Create(payload *types2.WasmCreate, tx *types.Transaction, in
 		return nil, err
 	}
 	kvc.AddNoPrefix(contractKey(name), code)
+	kvc.AddNoPrefix(contractCreatorKey(name), []byte(tx.From()))
 
 	receiptLog := &types.ReceiptLog{
 		Ty: types2.TyLogWasmCreate,
 		Log: types.Encode(&types2.CreateContractLog{
+			Name: name,
+			Code: hex.EncodeToString(code),
+		}),
+	}
+
+	return &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   kvc.KVList(),
+		Logs: []*types.ReceiptLog{receiptLog},
+	}, nil
+}
+
+func (w *Wasm) Exec_Update(payload *types2.WasmUpdate, tx *types.Transaction, index int) (*types.Receipt, error) {
+	if payload == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if !w.checkTxExec(string(tx.Execer), types2.WasmX) {
+		return nil, types.ErrExecNameNotMatch
+	}
+
+	name := payload.Name
+	kvc := dapp.NewKVCreator(w.GetStateDB(), types.CalcStatePrefix(tx.Execer), nil)
+	creator, err := kvc.GetNoPrefix(contractCreatorKey(name))
+	if err != nil {
+		return nil, types2.ErrContractNotExist
+	}
+	_, err = kvc.GetNoPrefix(contractKey(name))
+	if err != nil {
+		return nil, types2.ErrContractNotExist
+	}
+	if tx.From() != string(creator) {
+		return nil, types2.ErrInvalidCreator
+	}
+
+	code := payload.Code
+	if len(code) > types2.MaxCodeSize {
+		return nil, types2.ErrCodeOversize
+	}
+	if err := validation.ValidateWasm(code); err != nil {
+		return nil, types2.ErrInvalidWasm
+	}
+
+	kvc.AddNoPrefix(contractKey(name), code)
+
+	receiptLog := &types.ReceiptLog{
+		Ty: types2.TyLogWasmUpdate,
+		Log: types.Encode(&types2.UpdateContractLog{
 			Name: name,
 			Code: hex.EncodeToString(code),
 		}),

@@ -10,6 +10,11 @@ func contractKey(name string) []byte {
 	return append([]byte("mavl-"+types2.WasmX+"-code-"), []byte(name)...)
 }
 
+// "mavl-wasm-creator-{name}"
+func contractCreatorKey(name string) []byte {
+	return append([]byte("mavl-"+types2.WasmX+"-creator-"), []byte(name)...)
+}
+
 // "mavl-wasm-{contract}-"
 func calcStatePrefix(contract string) []byte {
 	var prefix []byte

@@ -23,6 +23,7 @@ func Cmd() *cobra.Command {
 	cmd.AddCommand(
 		cmdCheckContract(),
 		cmdCreateContract(),
+		cmdUpdateContract(),
 		cmdCallContract(),
 	)
 
@@ -45,6 +46,19 @@ func cmdCreateContract() *cobra.Command {
 		Use:   "create",
 		Short: "publish a new contract on chain33",
 		Run:   createContract,
+	}
+	cmd.Flags().StringP("name", "n", "", "contract name")
+	cmd.Flags().StringP("path", "p", "", "path of the wasm file, such as ./test.wasm")
+	_ = cmd.MarkFlagRequired("name")
+	_ = cmd.MarkFlagRequired("path")
+	return cmd
+}
+
+func cmdUpdateContract() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "update an existing contract on chain33",
+		Run:   updateContract,
 	}
 	cmd.Flags().StringP("name", "n", "", "contract name")
 	cmd.Flags().StringP("path", "p", "", "path of the wasm file, such as ./test.wasm")
@@ -104,6 +118,31 @@ func createContract(cmd *cobra.Command, args []string) {
 	params := rpctypes.CreateTxIn{
 		Execer:     wasmtypes.WasmX,
 		ActionName: "Create",
+		Payload:    types.MustPBToJSON(&payload),
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func updateContract(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	name, _ := cmd.Flags().GetString("name")
+	path, _ := cmd.Flags().GetString("path")
+
+	// Read WebAssembly *.wasm file.
+	code, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+
+	payload := wasmtypes.WasmUpdate{
+		Name: name,
+		Code: code,
+	}
+	params := rpctypes.CreateTxIn{
+		Execer:     wasmtypes.WasmX,
+		ActionName: "Update",
 		Payload:    types.MustPBToJSON(&payload),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)

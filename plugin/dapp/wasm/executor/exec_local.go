@@ -9,6 +9,10 @@ func (w *Wasm) ExecLocal_Create(payload *types2.WasmCreate, tx *types.Transactio
 	return &types.LocalDBSet{}, nil
 }
 
+func (w *Wasm) ExecLocal_Update(payload *types2.WasmUpdate, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return &types.LocalDBSet{}, nil
+}
+
 func (w *Wasm) ExecLocal_Call(payload *types2.WasmCall, tx *types.Transaction, receipt *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if receipt.Ty != types.ExecOk {
 		return &types.LocalDBSet{}, nil
