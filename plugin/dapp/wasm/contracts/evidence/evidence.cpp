@@ -33,15 +33,7 @@ int DelStateTx()
         printlog(info, string_size(info));
         return -1;
     }
-    //size_t getStateDB(const char* key, size_t k_len, char* value, size_t v_len);
-    char ChValue[128] = {0};
-    getStateDB(ChKey, string_size(ChKey), ChValue, sizeof(ChValue));
-    if(string_size(ChValue) == 0) {
-        //记录存在，但是之前删除过了
-        const char info[128] = "DelStateTx::getStateDB Has Been Deleted\0";
-        printlog(info, string_size(info));
-        return -1;
-    }
+
     char ChNull[128] = {0};
     setStateDB(ChKey, string_size(ChKey), ChNull, string_size(ChNull));
     const char info[128] = "DelStateTx::Exec setStateDB Del OK\0";
@@ -57,17 +49,9 @@ int ModStateTx()
     getENV(0, ChKey, getENVSize(0));
     getENV(1, ChValue, getENVSize(1));
     if ((string_size(ChKey) == 0) || (string_size(ChValue) == 0)) return -1;
-    //查询旧值，非空为存在旧值，为空则表示这个记录已经被删除过
+    //查询旧值，非空为存在旧值
     if(getStateDBSize(ChKey, string_size(ChKey)) == 0) {
         const char info[128] = "ModStateTx::getStateDBSize failed\0";
-        printlog(info, string_size(info));
-        return -1;
-    }
-    //在判断这条记录value是否为空，如果是则为已经被删除的记录，如此修改操作不允许
-    char value[128] = {0};
-    getStateDB(ChKey, string_size(ChKey), value, sizeof(value));
-    if(string_size(value) == 0) {
-        const char info[128] = "ModStateTx::getStateDB Has Been Deleted\0";
         printlog(info, string_size(info));
         return -1;
     }
@@ -104,14 +88,6 @@ int DelLocalTx()
         printlog(info, string_size(info));
         return -1;
     }
-    char ChValue[128] = {0};
-    getLocalDB(ChKey, string_size(ChKey), ChValue, sizeof(ChValue));
-    if(string_size(ChValue) == 0) {
-        //记录存在，但是之前删除过了
-        const char info[128] = "DelLocalTx::getLocalDB Has Been Deleted\0";
-        printlog(info, string_size(info));
-        return -1;
-    }
     char ChNull[128] = {0};
     setLocalDB(ChKey, string_size(ChKey), ChNull, string_size(ChNull));
     const char info[128] = "DelLocalTx::Exec Delete OK\0";
@@ -133,13 +109,7 @@ int ModLocalTx()
         printlog(info, string_size(info));
         return -1;
     }
-    char value[128] = {0};
-    getLocalDB(ChKey, string_size(ChKey), value, sizeof(value));
-    if(string_size(value) == 0) {
-        const char info[128] = "ModLocalTx::getLocalDB Has Been Deleted\0";
-        printlog(info, string_size(info));
-        return -1;
-    }
+
     setLocalDB(ChKey, string_size(ChKey), ChValue, string_size(ChValue));
     const char info[128] = "ModLocalTx::Exec setLocalDB Update OK\0";
     printlog(info, string_size(info));
