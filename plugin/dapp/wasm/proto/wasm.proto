@@ -5,12 +5,18 @@ package types;
 message wasmAction {
   oneof value {
     wasmCreate create = 1;
-    wasmCall call = 2;
+    wasmUpdate update = 2;
+    wasmCall call = 3;
   }
-  int32 ty = 3;
+  int32 ty = 4;
 }
 
 message wasmCreate {
+  string name = 1;
+  bytes code = 2;
+}
+
+message wasmUpdate {
   string name = 1;
   bytes code = 2;
 }
@@ -31,6 +37,11 @@ message customLog {
 }
 
 message createContractLog {
+  string name = 1;
+  string code = 2;
+}
+
+message updateContractLog {
   string name = 1;
   string code = 2;
 }
