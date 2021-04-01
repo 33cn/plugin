@@ -32,6 +32,11 @@ message queryCheckContract {
   string name = 1;
 }
 
+message queryContractDB {
+  string contract = 1;
+  string key = 2;
+}
+
 message customLog {
   repeated string info = 1;
 }
