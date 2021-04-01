@@ -9,6 +9,7 @@
 ```bash
 git clone https://github.com/juj/emsdk.git
 cd emsdk
+git checkout 6adb624e04b0c6a0f4c5c06d3685f4ca2be7691d # 用旧版本
 ./emsdk install latest
 ./emsdk activate latest
 
@@ -59,6 +60,12 @@ wabt/bin/wasm2wat dice.wasm
 ./chain33-cli send wasm create -n 指定合约名 -p wasm合约路径 -k 用户私钥
 ```
 
+### 检查合约发布结果
+```bash
+# 检查链上是否存在该合约
+./chain33-cli wasm check -n 合约名
+```
+
 ### 更新合约
 ```bash
 # 更新合约要求合约已存在，且只有合约创建者有更新权限
@@ -69,6 +76,15 @@ wabt/bin/wasm2wat dice.wasm
 ```bash
 #其中参数为用逗号分隔的数字列表，字符串参数为逗号分隔的字符串列表
 ./chain33-cli send wasm call -n 发布合约时指定的合约 -m 调用合约方法名 -p 参数 -v 字符串参数 -k 用户私钥  
+```
+
+### 查询合约数据
+```bash
+# 查询statedb
+./chain33-cli wasm query state -n 合约名 -k 数据库key  
+
+# 查询localdb
+./chain33-cli wasm query local -n 合约名 -k 数据库key  
 ```
 
 ### 转账及提款
