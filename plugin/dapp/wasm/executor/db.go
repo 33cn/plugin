@@ -32,11 +32,3 @@ func calcLocalPrefix(contract string) []byte {
 	prefix = append(prefix, '-')
 	return prefix
 }
-
-func (w *Wasm) contractExist(name string) bool {
-	_, err := w.GetStateDB().Get(contractKey(name))
-	if err != nil && err != types.ErrNotFound {
-		panic(err)
-	}
-	return err == nil
-}

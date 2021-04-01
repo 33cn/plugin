@@ -25,6 +25,7 @@ func Cmd() *cobra.Command {
 		cmdCreateContract(),
 		cmdUpdateContract(),
 		cmdCallContract(),
+		cmdQueryContract(),
 	)
 
 	return cmd
@@ -82,21 +83,45 @@ func cmdCallContract() *cobra.Command {
 	return cmd
 }
 
-func checkContract(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	name, _ := cmd.Flags().GetString("name")
-
-	params := rpctypes.Query4Jrpc{
-		Execer:   wasmtypes.WasmX,
-		FuncName: "Check",
-		Payload: types.MustPBToJSON(&wasmtypes.QueryCheckContract{
-			Name: name,
-		}),
+func cmdQueryContract() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query wasm contract",
+		Args:  cobra.MinimumNArgs(1),
 	}
 
-	var resp types.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
+	cmd.AddCommand(
+		cmdQueryStateDB(),
+		cmdQueryLocalDB(),
+	)
+
+	return cmd
+}
+
+func cmdQueryStateDB() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "state",
+		Short: "query kv in state db",
+		Run:   queryStateDB,
+	}
+	cmd.Flags().StringP("contract", "n", "", "contract name")
+	cmd.Flags().StringP("key", "k", "", "key of state db")
+	_ = cmd.MarkFlagRequired("contract")
+	_ = cmd.MarkFlagRequired("key")
+	return cmd
+}
+
+func cmdQueryLocalDB() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "local",
+		Short: "query kv in local db",
+		Run:   queryLocalDB,
+	}
+	cmd.Flags().StringP("contract", "n", "", "contract name")
+	cmd.Flags().StringP("key", "k", "", "key of local db")
+	_ = cmd.MarkFlagRequired("contract")
+	_ = cmd.MarkFlagRequired("key")
+	return cmd
 }
 
 func createContract(cmd *cobra.Command, args []string) {
@@ -173,4 +198,59 @@ func callContract(cmd *cobra.Command, args []string) {
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
+}
+
+func checkContract(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	name, _ := cmd.Flags().GetString("name")
+
+	params := rpctypes.Query4Jrpc{
+		Execer:   wasmtypes.WasmX,
+		FuncName: "Check",
+		Payload: types.MustPBToJSON(&wasmtypes.QueryCheckContract{
+			Name: name,
+		}),
+	}
+
+	var resp types.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func queryStateDB(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contract, _ := cmd.Flags().GetString("contract")
+	key, _ := cmd.Flags().GetString("key")
+
+	params := rpctypes.Query4Jrpc{
+		Execer:   wasmtypes.WasmX,
+		FuncName: "QueryStateDB",
+		Payload: types.MustPBToJSON(&wasmtypes.QueryContractDB{
+			Contract: contract,
+			Key:      key,
+		}),
+	}
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func queryLocalDB(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contract, _ := cmd.Flags().GetString("contract")
+	key, _ := cmd.Flags().GetString("key")
+
+	params := rpctypes.Query4Jrpc{
+		Execer:   wasmtypes.WasmX,
+		FuncName: "QueryLocalDB",
+		Payload: types.MustPBToJSON(&wasmtypes.QueryContractDB{
+			Contract: contract,
+			Key:      key,
+		}),
+	}
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }
