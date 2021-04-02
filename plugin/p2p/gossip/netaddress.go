@@ -191,7 +191,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	}
 
 	if err != nil {
-		log.Debug("grpc DialCon Uncompressor", "did not connect", err)
+		log.Debug("grpc DialCon Uncompressor", "connect err", err)
 		if conn != nil {
 			errs := conn.Close()
 			if errs != nil {
