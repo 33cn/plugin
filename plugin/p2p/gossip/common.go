@@ -115,7 +115,7 @@ func (c Comm) dialPeer(addr *NetAddress, node *Node) (*Peer, error) {
 	}
 	peer, err := c.dialPeerWithAddress(addr, persistent, node)
 	if err != nil {
-		log.Error("dialPeer", "nodeListenAddr", node.nodeInfo.listenAddr.str, "peerAddr", addr.str, "err", err)
+		log.Error("dialPeer", "peerAddr", addr.str, "err", err)
 		return nil, err
 	}
 	//获取远程节点的信息 peer
