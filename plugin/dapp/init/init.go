@@ -22,6 +22,7 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/paracross"      //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/pokerbull"      //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/privacy"        //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/qbftNode"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/relay"          //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/retrieve"       //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/storage"        //auto gen
