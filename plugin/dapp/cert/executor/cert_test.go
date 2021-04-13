@@ -75,7 +75,7 @@ func manageKeySet(key string, value string, db dbm.KV) {
 }
 
 func initEnv() (*execEnv, error) {
-	cfg := types.NewChain33Config(types.ReadFile("./test/chain33.toml"))
+	cfg := types.NewChain33Config(types.ReadFile("./test/chain33.auth.test.toml"))
 	cfg.SetTitleOnlyForTest("chain33")
 
 	sub := cfg.GetSubConfig()
