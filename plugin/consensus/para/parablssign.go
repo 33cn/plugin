@@ -272,7 +272,7 @@ func (b *blsClient) checkCommitTx(txs []*types.Transaction) ([]*pt.ParacrossComm
 	var commits []*pt.ParacrossCommitAction
 	for _, tx := range txs {
 		//验签
-		if !tx.CheckSign() {
+		if !tx.CheckSign(b.paraClient.GetCurrentHeight()) {
 			return nil, errors.Wrapf(types.ErrSign, "hash=%s", common.ToHex(tx.Hash()))
 		}
 		var act pt.ParacrossAction
