@@ -97,10 +97,14 @@ func TestVote_ExecLocal_UpdateGroup(t *testing.T) {
 		index:   0,
 		payload: &vty.CreateGroup{Name: "test"},
 	}, {
-		index:   1,
-		payload: &vty.UpdateGroup{GroupID: groupID, RemoveAdmins: []string{testAddrs[0]}, AddAdmins: []string{testAddrs[1]}},
+		index: 1,
+		payload: &vty.CreateVote{Name: "v1", GroupID: groupID, VoteOptions: []string{"A", "B"},
+			BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1},
 	}, {
 		index:   2,
+		payload: &vty.UpdateGroup{GroupID: groupID, RemoveAdmins: []string{testAddrs[0]}, AddAdmins: []string{testAddrs[1]}},
+	}, {
+		index:   3,
 		priv:    privKeys[1],
 		payload: &vty.UpdateGroup{GroupID: groupID, RemoveMembers: testAddrs, AddMembers: members},
 	}}
@@ -122,7 +126,7 @@ func TestVote_ExecLocal_UpdateGroup(t *testing.T) {
 	testTableData(t, table, tcArr1, "check member groupIDs")
 	table = newGroupTable(mock.exec.GetLocalDB())
 	expectInfo := &vty.GroupInfo{ID: groupID, Name: "test", Admins: []string{testAddrs[1]},
-		Members: members, MemberNum: 1, Creator: testAddrs[0]}
+		Members: members, MemberNum: 1, Creator: testAddrs[0], VoteNum: 1}
 	testTableData(t, table, []*tableCase{{
 		index:      0,
 		key:        []byte(groupID),
@@ -136,7 +140,8 @@ func TestVote_ExecLocal_UpdateGroup(t *testing.T) {
 	tx := util.CreateNoneTx(mock.cfg, privKeys[0])
 	group, err := newAction(mock.exec, tx, 0).getGroupInfo(groupID)
 	require.Nil(t, err)
-	require.Equal(t, group.String(), expectInfo.String())
+	group.VoteNum = 1
+	require.Equal(t, expectInfo.String(), group.String())
 }
 
 func TestVote_ExecLocal_CreateVote(t *testing.T) {
