@@ -149,18 +149,26 @@ func TestVote_ExecLocal_CreateVote(t *testing.T) {
 	options := []*vty.VoteOption{{Option: "A"}, {Option: "B"}}
 	tcArr := []*testcase{{
 		index:   0,
-		payload: &vty.CreateGroup{Name: "test"},
+		payload: &vty.CreateGroup{Name: "g1"},
 	}, {
 		index: 1,
-		payload: &vty.CreateVote{Name: "test", GroupID: groupID, VoteOptions: []string{"A", "B"},
+		payload: &vty.CreateVote{Name: "v1", GroupID: groupID, VoteOptions: []string{"A", "B"},
+			BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1},
+	}, {
+		index: 2,
+		payload: &vty.CreateVote{Name: "v2", GroupID: groupID, VoteOptions: []string{"A", "B"},
+			BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1},
+	}, {
+		index: 3,
+		payload: &vty.CreateVote{Name: "v3", GroupID: groupID, VoteOptions: []string{"A", "B"},
 			BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1},
 	}}
 	testExec(t, mock, testTypeExecLocal, tcArr, privKeys[0])
 
 	table := newVoteTable(mock.exec.GetLocalDB())
 	expectVoteInfo := &vty.VoteInfo{
-		Name: "test", VoteOptions: options, BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1,
-		GroupID: groupID, ID: voteID, Creator: testAddrs[0],
+		Name: "v1", VoteOptions: options, BeginTimestamp: testBlockTime, EndTimestamp: testBlockTime + 1,
+		GroupID: groupID, ID: voteID, Creator: testAddrs[0], GroupName: "g1",
 	}
 	testTableData(t, table, []*tableCase{{
 		index:      0,
@@ -172,11 +180,10 @@ func TestVote_ExecLocal_CreateVote(t *testing.T) {
 	row, err := table.GetData([]byte(groupID))
 	require.Nil(t, err)
 	info, _ := row.Data.(*vty.GroupInfo)
-	require.Equal(t, uint32(1), info.VoteNum)
 	tx := util.CreateNoneTx(mock.cfg, privKeys[0])
 	group, err := newAction(mock.exec, tx, 0).getGroupInfo(groupID)
 	require.Nil(t, err)
-	group.VoteNum = info.VoteNum
+	group.VoteNum = 3
 	require.Equal(t, group.String(), info.String())
 }
 
@@ -208,6 +215,7 @@ func TestVote_ExecLocal_CloseVote(t *testing.T) {
 	tx := util.CreateNoneTx(mock.cfg, privKeys[0])
 	vote, err := newAction(mock.exec, tx, 0).getVoteInfo(voteID)
 	require.Nil(t, err)
+	vote.GroupName = "test"
 	require.Equal(t, vote.String(), info.String())
 }
 
@@ -243,6 +251,7 @@ func TestVote_ExecLocal_CommitVote(t *testing.T) {
 	require.Nil(t, err)
 	vote.CommitInfos[0].TxHash = info.CommitInfos[0].TxHash
 	vote.CommitInfos[0].VoteWeight = info.CommitInfos[0].VoteWeight
+	vote.GroupName = "test"
 	require.Equal(t, vote.String(), info.String())
 }
 
