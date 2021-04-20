@@ -104,6 +104,7 @@ message VoteInfo {
     repeated CommitInfo commitInfos    = 8;  //已投票的提交信息
     string              description    = 9;  //描述信息
     uint32              status         = 10; //状态，1即将开始，2正在进行，3已经结束，4已关闭
+    string              groupName      = 11; //所属投票组名称
 }
 
 message VoteInfos {
