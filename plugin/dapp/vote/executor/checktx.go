@@ -37,7 +37,7 @@ func (v *vote) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	if err != nil {
-		elog.Error("vote CheckTx", "txHash", txHash, "actionName", tx.ActionName(), "err", err, "actionData", action)
+		elog.Error("vote CheckTx", "txHash", txHash, "actionName", tx.ActionName(), "err", err, "actionData", action.String())
 	}
 	return err
 }
@@ -150,13 +150,6 @@ func (v *vote) checkCommitVote(commit *vty.CommitVote, tx *types.Transaction, in
 	voteInfo, err := action.getVoteInfo(commit.GetVoteID())
 	if err != nil {
 		return err
-	}
-
-	if voteInfo.BeginTimestamp > action.blockTime {
-		return errVoteNotStarted
-	}
-	if voteInfo.EndTimestamp <= action.blockTime {
-		return errVoteAlreadyFinished
 	}
 
 	if voteInfo.Status == voteStatusClosed {
