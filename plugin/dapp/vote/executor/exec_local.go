@@ -44,6 +44,14 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 	dbSet := &types.LocalDBSet{}
 	groupInfo := decodeGroupInfo(receiptData.Logs[0].Log)
 	table := newGroupTable(v.GetLocalDB())
+	row, err := table.GetData([]byte(groupInfo.ID))
+	if err != nil {
+		elog.Error("execLocal updateGroup", "txHash", hex.EncodeToString(tx.Hash()), "groupTable get", err)
+		return nil, err
+	}
+	oldInfo, _ := row.Data.(*vty.GroupInfo)
+	// 状态数据中未保存投票个数信息，需要进行赋值
+	groupInfo.VoteNum = oldInfo.VoteNum
 	kvs, err := v.updateAndSaveTable(table.Replace, table.Save, groupInfo, tx, vty.NameUpdateGroupAction, "group")
 	if err != nil {
 		return nil, err
@@ -88,7 +96,7 @@ func (v *vote) ExecLocal_CreateVote(payload *vty.CreateVote, tx *types.Transacti
 	gTable := newGroupTable(v.GetLocalDB())
 	row, err := gTable.GetData([]byte(voteInfo.GroupID))
 	if err != nil {
-		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
+		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "groupTable get", err)
 		return nil, err
 	}
 	groupInfo, _ := row.Data.(*vty.GroupInfo)
