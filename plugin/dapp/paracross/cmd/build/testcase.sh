@@ -61,6 +61,8 @@ function para_set_toml() {
         echo "${1} blssign=$3"
         sed -i $xsedfix '/types=\["dht"\]/!b;n;cenable=true' "${1}"
         sed -i $xsedfix '/emptyBlockInterval=/!b;n;cblsSign=true' "${1}"
+        sed -i $xsedfix '/blsSign=/!b;n;cblsLeaderSwitchIntval=10000' "${1}"
+
     fi
 
     #blockchain
