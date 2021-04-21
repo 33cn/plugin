@@ -312,7 +312,7 @@ func (cs *ConsensusState) updateToState(state State) {
 		return
 	}
 	// disable gossip votes
-	if useAggSig && gossipVotes.Load().(bool) {
+	if UseAggSig() && gossipVotes.Load().(bool) {
 		gossipVotes.Store(false)
 	}
 
@@ -582,7 +582,7 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 	qbftlog.Info(fmt.Sprintf("enterNewRound(%v/%v). Current: %v/%v/%v", height, round, cs.Height, cs.Round, cs.Step))
 
 	// disable gossip votes
-	if useAggSig && gossipVotes.Load().(bool) {
+	if UseAggSig() && gossipVotes.Load().(bool) {
 		gossipVotes.Store(false)
 	}
 	// Increment validators if necessary
@@ -614,10 +614,10 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 
 	// Wait for txs to be available in the mempool
 	// before we enterPropose in round 0.
-	waitForTxs := cs.WaitForTxs() && round == getStartRound(cs.state)
+	waitForTxs := round == getStartRound(cs.state)
 	if waitForTxs {
-		if createEmptyBlocksInterval > 0 {
-			cs.scheduleTimeout(cs.EmptyBlocksInterval(), height, round, ttypes.RoundStepNewRound)
+		if emptyBlockInterval.Load().(int32) > 0 {
+			cs.scheduleTimeout(cs.EmptyBlockInterval(), height, round, ttypes.RoundStepNewRound)
 		}
 		go cs.proposalHeartbeat(height, round)
 	} else {
@@ -731,7 +731,7 @@ func (cs *ConsensusState) defaultDecideProposal(height int64, round int) {
 
 	// Decide on block
 	if cs.ValidBlock != nil {
-		if preExec {
+		if preExec.Load().(bool) {
 			// If there is valid block, PreExec that.
 			pblockNew := cs.client.PreExecBlock(cs.ValidBlock.Data, false)
 			if pblockNew == nil {
@@ -826,7 +826,7 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.QbftBlock) {
 	}
 
 	block.Data.TxHash = merkle.CalcMerkleRoot(cfg, block.Data.Height, block.Data.Txs)
-	if preExec {
+	if preExec.Load().(bool) {
 		pblockNew := cs.client.PreExecBlock(block.Data, false)
 		if pblockNew == nil {
 			qbftlog.Error("createProposalBlock PreExecBlock fail")
@@ -905,7 +905,7 @@ func (cs *ConsensusState) defaultDoPrevote(height int64, round int) {
 		return
 	}
 
-	if preExec && !cs.isProposer() {
+	if preExec.Load().(bool) && !cs.isProposer() {
 		// PreExec proposal block
 		blockCopy := *cs.ProposalBlock.Data
 		blockNew := cs.client.PreExecBlock(&blockCopy, true)
@@ -959,7 +959,7 @@ func (cs *ConsensusState) enterPrevoteWait(height int64, round int) {
 	}()
 
 	// enable gossip votes in case other validators enterAggPrevoteWait
-	if useAggSig && !cs.isProposer() && cs.Votes.Prevotes(round).GetAggVote() == nil {
+	if UseAggSig() && !cs.isProposer() && cs.Votes.Prevotes(round).GetAggVote() == nil {
 		gossipVotes.Store(true)
 	}
 
@@ -1090,7 +1090,7 @@ func (cs *ConsensusState) enterPrecommitWait(height int64, round int) {
 	}()
 
 	// enable gossip votes in case other validators enterAggPrecommitWait
-	if useAggSig && !cs.isProposer() && cs.Votes.Precommits(round).GetAggVote() == nil {
+	if UseAggSig() && !cs.isProposer() && cs.Votes.Precommits(round).GetAggVote() == nil {
 		gossipVotes.Store(true)
 	}
 
@@ -1528,7 +1528,7 @@ func (cs *ConsensusState) tryAddAggVote(aggVoteRaw *tmtypes.QbftAggVote, peerID 
 			cs.enterPrecommit(height, int(aggVote.Round))
 			if len(blockID.Hash) != 0 {
 				cs.enterCommit(height, int(aggVote.Round))
-				if skipTimeoutCommit && precommits.HasAll() {
+				if skipTimeoutCommit.Load().(bool) && precommits.HasAll() {
 					cs.enterNewRound(cs.Height, 0)
 				}
 			} else {
@@ -1601,7 +1601,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 		cs.broadcastChannel <- MsgInfo{TypeID: ttypes.HasVoteID, Msg: hasVoteMsg, PeerID: "", PeerIP: ""}
 
 		// if we can skip timeoutCommit and have all the votes now,
-		if skipTimeoutCommit && cs.LastCommit.HasAll() {
+		if skipTimeoutCommit.Load().(bool) && cs.LastCommit.HasAll() {
 			// go straight to new round (skip timeout commit)
 			// cs.scheduleTimeout(time.Duration(0), cs.Height, 0, cstypes.RoundStepNewHeight)
 			cs.enterNewRound(cs.Height, 0)
@@ -1696,7 +1696,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 			blockID, ok := prevotes.TwoThirdsMajority()
 			if ok {
 				if ttypes.RoundStepPrevote <= cs.Step && (cs.isProposalComplete() || len(blockID.Hash) == 0) {
-					if useAggSig && cs.isProposer() && prevotes.GetAggVote() == nil {
+					if UseAggSig() && cs.isProposer() && prevotes.GetAggVote() == nil {
 						err := prevotes.SetAggVote()
 						if err != nil {
 							qbftlog.Error("prevotes SetAggVote fail", "err", err)
@@ -1734,7 +1734,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 			// Executed as TwoThirdsMajority could be from a higher round
 			cs.enterNewRound(height, int(vote.Round))
 			cs.enterPrecommit(height, int(vote.Round))
-			if useAggSig && cs.isProposer() && precommits.GetAggVote() == nil {
+			if UseAggSig() && cs.isProposer() && precommits.GetAggVote() == nil {
 				err := precommits.SetAggVote()
 				if err != nil {
 					qbftlog.Error("precommits SetAggVote fail", "err", err)
@@ -1746,7 +1746,7 @@ func (cs *ConsensusState) addVote(vote *ttypes.Vote, peerID string, peerIP strin
 			}
 			if len(blockID.Hash) != 0 {
 				cs.enterCommit(height, int(vote.Round))
-				if skipTimeoutCommit && precommits.HasAll() {
+				if skipTimeoutCommit.Load().(bool) && precommits.HasAll() {
 					cs.enterNewRound(cs.Height, 0)
 				}
 			} else {
@@ -1779,7 +1779,7 @@ func (cs *ConsensusState) signVote(voteType byte, hash []byte) (*ttypes.Vote, er
 			Type:             uint32(voteType),
 			BlockID:          &tmtypes.QbftBlockID{Hash: hash},
 			Signature:        nil,
-			UseAggSig:        useAggSig,
+			UseAggSig:        UseAggSig(),
 		},
 	}
 	err := cs.privValidator.SignVote(cs.state.ChainID, vote)
@@ -1797,7 +1797,7 @@ func (cs *ConsensusState) signAddVote(voteType byte, hash []byte) *ttypes.Vote {
 	if err == nil {
 		// send to self
 		cs.sendInternalMessage(MsgInfo{TypeID: ttypes.VoteID, Msg: vote.QbftVote, PeerID: cs.ourID, PeerIP: ""})
-		if useAggSig {
+		if UseAggSig() {
 			// send to proposer
 			cs.unicastChannel <- MsgInfo{TypeID: ttypes.VoteID, Msg: vote.QbftVote, PeerID: cs.getProposerID(), PeerIP: ""}
 			// wait for aggregate vote
@@ -1837,32 +1837,27 @@ func CompareHRS(h1 int64, r1 int, s1 ttypes.RoundStepType, h2 int64, r2 int, s2 
 
 // Commit returns the amount of time to wait for straggler votes after receiving +2/3 precommits for a single block (ie. a commit).
 func (cs *ConsensusState) Commit(t time.Time) time.Time {
-	return t.Add(time.Duration(timeoutCommit) * time.Millisecond)
+	return t.Add(time.Duration(timeoutCommit.Load().(int32)) * time.Millisecond)
 }
 
 // Propose returns the amount of time to wait for a proposal
 func (cs *ConsensusState) Propose(round int) time.Duration {
-	return time.Duration(timeoutPropose+timeoutProposeDelta*int32(round)) * time.Millisecond
+	return time.Duration(timeoutPropose.Load().(int32)+timeoutProposeDelta.Load().(int32)*int32(round)) * time.Millisecond
 }
 
 // Prevote returns the amount of time to wait for straggler votes after receiving any +2/3 prevotes
 func (cs *ConsensusState) Prevote(round int) time.Duration {
-	return time.Duration(timeoutPrevote+timeoutPrevoteDelta*int32(round)) * time.Millisecond
+	return time.Duration(timeoutPrevote.Load().(int32)+timeoutPrevoteDelta.Load().(int32)*int32(round)) * time.Millisecond
 }
 
 // Precommit returns the amount of time to wait for straggler votes after receiving any +2/3 precommits
 func (cs *ConsensusState) Precommit(round int) time.Duration {
-	return time.Duration(timeoutPrecommit+timeoutPrecommitDelta*int32(round)) * time.Millisecond
+	return time.Duration(timeoutPrecommit.Load().(int32)+timeoutPrecommitDelta.Load().(int32)*int32(round)) * time.Millisecond
 }
 
-// WaitForTxs returns true if the consensus should wait for transactions before entering the propose step
-func (cs *ConsensusState) WaitForTxs() bool {
-	return !createEmptyBlocks || createEmptyBlocksInterval > 0
-}
-
-// EmptyBlocksInterval returns the amount of time to wait before proposing an empty block or starting the propose timer if there are no txs available
-func (cs *ConsensusState) EmptyBlocksInterval() time.Duration {
-	return time.Duration(createEmptyBlocksInterval) * time.Second
+// EmptyBlockInterval returns the amount of time to wait before proposing an empty block or starting the propose timer if there are no txs available
+func (cs *ConsensusState) EmptyBlockInterval() time.Duration {
+	return time.Duration(emptyBlockInterval.Load().(int32)) * time.Second
 }
 
 // PeerGossipSleep returns the amount of time to sleep if there is nothing to send from the ConsensusReactor

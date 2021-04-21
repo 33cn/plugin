@@ -398,25 +398,15 @@ func (pc *peerConn) TrySend(msg MsgInfo) bool {
 // PickSendVote picks a vote and sends it to the peer.
 // Returns true if vote was sent.
 func (pc *peerConn) PickSendVote(votes ttypes.VoteSetReader) bool {
-	if useAggSig {
-		aggVote := votes.GetAggVote()
-		if aggVote != nil {
-			if votes.IsCommit() {
-				pc.state.ensureCatchupCommitRound(votes.Height(), votes.Round(), votes.Size())
-			}
-			if pc.state.Height != aggVote.Height ||
-				(pc.state.Round != int(aggVote.Round) && pc.state.CatchupCommitRound != int(aggVote.Round)) {
-				return false
-			}
-			if (aggVote.Type == uint32(ttypes.VoteTypePrevote) && pc.state.AggPrevote) ||
-				(aggVote.Type == uint32(ttypes.VoteTypePrecommit) && pc.state.AggPrecommit) {
-				return false
-			}
-			msg := MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVote.QbftAggVote, PeerID: pc.id, PeerIP: pc.ip.String()}
-			qbftlog.Debug("Sending aggregate vote message", "msg", msg)
-			if pc.Send(msg) {
-				pc.state.SetHasAggVote(aggVote)
-				return true
+	if UseAggSig() {
+		if votes.GetAggVote() != nil {
+			if aggVote, ok := pc.state.PickAggVoteToSend(votes); ok {
+				msg := MsgInfo{TypeID: ttypes.AggVoteID, Msg: aggVote.QbftAggVote, PeerID: pc.id, PeerIP: pc.ip.String()}
+				qbftlog.Debug("Sending aggregate vote message", "msg", msg)
+				if pc.Send(msg) {
+					pc.state.SetHasAggVote(aggVote)
+					return true
+				}
 			}
 			return false
 		}
@@ -575,6 +565,7 @@ FOR_LOOP:
 				} else if pkt.TypeID == ttypes.AggVoteID {
 					aggVote := &ttypes.AggVote{QbftAggVote: realMsg.(*tmtypes.QbftAggVote)}
 					qbftlog.Debug("Receiving aggregate vote", "aggVote-height", aggVote.Height, "peerip", pc.ip.String())
+					pc.state.SetHasAggVote(aggVote)
 				}
 			} else if pkt.TypeID == ttypes.ProposalHeartbeatID {
 				pc.heartbeatQueue <- realMsg.(*tmtypes.QbftHeartbeat)
@@ -689,7 +680,7 @@ OUTER_LOOP:
 		}
 
 		rs := pc.myState.GetRoundState()
-		prs := pc.state
+		prs := pc.state.GetRoundState()
 
 		// If the peer is on a previous height, help catch up.
 		if (0 < prs.Height) && (prs.Height < rs.Height) {
@@ -713,7 +704,7 @@ OUTER_LOOP:
 					"selfHeight", rs.Height, "peer(H/R/S)", fmt.Sprintf("%v/%v/%v", prs.Height, prs.Round, prs.Step),
 					"block(H/R/hash)", fmt.Sprintf("%v/%v/%X", proposalBlock.Header.Height, proposalBlock.Header.Round, newBlock.Hash()))
 				if pc.Send(msg) {
-					prs.SetHasProposalBlock(newBlock)
+					pc.state.SetHasProposalBlock(newBlock)
 				}
 				continue OUTER_LOOP
 			}
@@ -738,7 +729,7 @@ OUTER_LOOP:
 				qbftlog.Debug(fmt.Sprintf("Sending proposal. Self state: %v/%v/%v", rs.Height, rs.Round, rs.Step),
 					"peerip", pc.ip.String(), "proposal-height", rs.Proposal.Height, "proposal-round", rs.Proposal.Round)
 				if pc.Send(msg) {
-					prs.SetHasProposal(rs.Proposal)
+					pc.state.SetHasProposal(rs.Proposal)
 				}
 			}
 			// ProposalPOL: lets peer know which POL votes we have so far.
@@ -764,7 +755,7 @@ OUTER_LOOP:
 				qbftlog.Debug(fmt.Sprintf("Sending proposal block. Self state: %v/%v/%v", rs.Height, rs.Round, rs.Step),
 					"peerip", pc.ip.String(), "block-height", rs.ProposalBlock.Header.Height, "block-round", rs.ProposalBlock.Header.Round)
 				if pc.Send(msg) {
-					prs.SetHasProposalBlock(rs.ProposalBlock)
+					pc.state.SetHasProposalBlock(rs.ProposalBlock)
 				}
 				continue OUTER_LOOP
 			}
@@ -789,7 +780,7 @@ OUTER_LOOP:
 		}
 
 		rs := pc.myState.GetRoundState()
-		prs := pc.state
+		prs := pc.state.GetRoundState()
 
 		switch sleeping {
 		case 1: // First sleep
@@ -800,8 +791,8 @@ OUTER_LOOP:
 
 		// If height matches, then send LastCommit, Prevotes, Precommits.
 		if rs.Height == prs.Height {
-			if !useAggSig || gossipVotes.Load().(bool) {
-				if pc.gossipVotesForHeight(rs, prs.GetRoundState()) {
+			if !UseAggSig() || gossipVotes.Load().(bool) {
+				if pc.gossipVotesForHeight(rs, prs) {
 					continue OUTER_LOOP
 				}
 			}
@@ -917,7 +908,7 @@ OUTER_LOOP:
 		// Maybe send Height/Round/Prevotes
 		{
 			rs := pc.myState.GetRoundState()
-			prs := pc.state
+			prs := pc.state.GetRoundState()
 			if rs.Height == prs.Height {
 				if maj23, ok := rs.Votes.Prevotes(prs.Round).TwoThirdsMajority(); ok {
 					msg := MsgInfo{TypeID: ttypes.VoteSetMaj23ID, Msg: &tmtypes.QbftVoteSetMaj23Msg{
@@ -1029,7 +1020,7 @@ func (ps *PeerConnState) SetHasProposal(proposal *tmtypes.QbftProposal) {
 	if ps.Proposal {
 		return
 	}
-	qbftlog.Debug("Peer set proposal", "peerip", ps.ip.String(),
+	qbftlog.Debug("Peer set proposal", "peerIP", ps.ip.String(),
 		"peer-state", fmt.Sprintf("%v/%v/%v", ps.Height, ps.Round, ps.Step),
 		"proposal(H/R/Hash)", fmt.Sprintf("%v/%v/%X", proposal.Height, proposal.Round, proposal.Blockhash))
 	ps.Proposal = true
@@ -1078,6 +1069,30 @@ func (ps *PeerConnState) SetHasAggVote(aggVote *ttypes.AggVote) {
 	} else if aggVote.Type == uint32(ttypes.VoteTypePrecommit) {
 		ps.AggPrecommit = true
 	}
+}
+
+// PickAggVoteToSend picks aggregate vote to send to the peer.
+// Returns true if a vote was picked.
+func (ps *PeerConnState) PickAggVoteToSend(votes ttypes.VoteSetReader) (vote *ttypes.AggVote, ok bool) {
+	ps.mtx.Lock()
+	defer ps.mtx.Unlock()
+
+	aggVote := votes.GetAggVote()
+	if aggVote == nil {
+		return nil, false
+	}
+	if votes.IsCommit() {
+		ps.ensureCatchupCommitRound(votes.Height(), votes.Round(), votes.Size())
+	}
+	if ps.Height != aggVote.Height ||
+		(ps.Round != int(aggVote.Round) && ps.CatchupCommitRound != int(aggVote.Round)) {
+		return nil, false
+	}
+	if (aggVote.Type == uint32(ttypes.VoteTypePrevote) && ps.AggPrevote) ||
+		(aggVote.Type == uint32(ttypes.VoteTypePrecommit) && ps.AggPrecommit) {
+		return nil, false
+	}
+	return aggVote, true
 }
 
 // PickVoteToSend picks a vote to send to the peer.

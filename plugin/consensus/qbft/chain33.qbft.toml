@@ -1,4 +1,4 @@
-Title="qbft"
+Title="local"
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
@@ -86,8 +86,7 @@ timeoutPrecommit=2000
 timeoutPrecommitDelta=500
 timeoutCommit=500
 skipTimeoutCommit=false
-createEmptyBlocks=true
-createEmptyBlocksInterval=2
+emptyBlockInterval=2
 genesisFile="genesis_file.json"
 privFile="priv_validator_0.json"
 dbPath="datadir/qbft"

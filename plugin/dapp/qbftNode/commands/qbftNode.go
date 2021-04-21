@@ -316,7 +316,7 @@ func createFiles(cmd *cobra.Command, args []string) {
 	for i := 0; i < n; i++ {
 		// create private validator file
 		pvFileName := pvFile + strconv.Itoa(i) + ".json"
-		privValidator := ttypes.GenPrivValidatorImp(pvFileName)
+		privValidator := ttypes.LoadOrGenPrivValidatorFS(pvFileName)
 		if privValidator == nil {
 			fmt.Println("create priv_validator file fail")
 			break

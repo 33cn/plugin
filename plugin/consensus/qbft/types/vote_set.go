@@ -281,8 +281,8 @@ func (voteSet *VoteSet) addVerifiedVote(vote *Vote, blockKey string, votingPower
 	if origSum < quorum && quorum <= votesByBlock.sum {
 		// Only consider the first quorum reached
 		if voteSet.maj23 == nil {
-			maj23BlockID := *vote.BlockID
-			voteSet.maj23 = &maj23BlockID
+			voteSet.maj23 = &tmtypes.QbftBlockID{Hash: make([]byte, len(vote.BlockID.Hash))}
+			copy(voteSet.maj23.Hash, vote.BlockID.Hash)
 			// And also copy votes over to voteSet.votes
 			for i, vote := range votesByBlock.votes {
 				if vote != nil {
@@ -356,7 +356,8 @@ func (voteSet *VoteSet) AddAggVote(vote *AggVote) (bool, error) {
 
 	voteSet.votesBitArray = arr.copy()
 	voteSet.aggVote = vote
-	voteSet.maj23 = vote.BlockID
+	voteSet.maj23 = &tmtypes.QbftBlockID{Hash: make([]byte, len(vote.BlockID.Hash))}
+	copy(voteSet.maj23.Hash, vote.BlockID.Hash)
 	voteSet.sum = sum
 	votesByBlock := newBlockVotes(false, voteSet.valSet.Size())
 	votesByBlock.bitArray = arr.copy()
@@ -560,14 +561,16 @@ func (voteSet *VoteSet) HasAll() bool {
 
 // TwoThirdsMajority Returns either a blockhash (or nil) that received +2/3 majority.
 // If there exists no such majority, returns (nil, PartSetHeader{}, false).
-func (voteSet *VoteSet) TwoThirdsMajority() (blockID tmtypes.QbftBlockID, ok bool) {
+func (voteSet *VoteSet) TwoThirdsMajority() (tmtypes.QbftBlockID, bool) {
 	if voteSet == nil {
 		return tmtypes.QbftBlockID{}, false
 	}
 	voteSet.mtx.Lock()
 	defer voteSet.mtx.Unlock()
 	if voteSet.maj23 != nil {
-		return *voteSet.maj23, true
+		blockID := tmtypes.QbftBlockID{Hash: make([]byte, len(voteSet.maj23.Hash))}
+		copy(blockID.Hash, voteSet.maj23.Hash)
+		return blockID, true
 	}
 	return tmtypes.QbftBlockID{}, false
 }

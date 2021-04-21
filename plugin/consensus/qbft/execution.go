@@ -74,7 +74,7 @@ func updateState(s State, blockID ttypes.BlockID, block *ttypes.QbftBlock) (Stat
 
 	seq := s.Sequence + 1
 	// include situation multiBlock=1
-	if seq == multiBlocks {
+	if seq == multiBlocks.Load().(int64) {
 		// Update validator accums and set state variables
 		nextValSet.IncrementAccum(1)
 		seq = 0
