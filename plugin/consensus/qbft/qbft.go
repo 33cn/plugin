@@ -35,34 +35,33 @@ const (
 var (
 	qbftlog = log15.New("module", "qbft")
 
-	genesis                   string
-	genesisAmount             int64 = 1e8
-	genesisBlockTime          int64
-	timeoutTxAvail            int32 = 1000
-	timeoutPropose            int32 = 3000 // millisecond
-	timeoutProposeDelta       int32 = 500
-	timeoutPrevote            int32 = 1000
-	timeoutPrevoteDelta       int32 = 500
-	timeoutPrecommit          int32 = 1000
-	timeoutPrecommitDelta     int32 = 500
-	timeoutCommit             int32 = 1000
-	skipTimeoutCommit               = false
-	createEmptyBlocks               = false
-	createEmptyBlocksInterval int32 // second
-	genesisFile                     = "genesis.json"
-	privFile                        = "priv_validator.json"
-	dbPath                          = fmt.Sprintf("datadir%sqbft", string(os.PathSeparator))
-	port                      int32 = DefaultQbftPort
-	validatorNodes                  = []string{"127.0.0.1:33001"}
-	fastSync                        = false
-	preExec                         = false
-	signName                        = "ed25519"
-	useAggSig                       = false
-	multiBlocks               int64 = 1
+	genesis               string
+	genesisAmount         int64 = 1e8
+	genesisBlockTime      int64
+	timeoutTxAvail        atomic.Value // 1000  millisecond
+	timeoutPropose        atomic.Value // 3000
+	timeoutProposeDelta   atomic.Value // 500
+	timeoutPrevote        atomic.Value // 1000
+	timeoutPrevoteDelta   atomic.Value // 500
+	timeoutPrecommit      atomic.Value // 1000
+	timeoutPrecommitDelta atomic.Value // 500
+	timeoutCommit         atomic.Value // 1000
+	skipTimeoutCommit     atomic.Value // false
+	emptyBlockInterval    atomic.Value // 0  second
+	genesisFile                        = "genesis.json"
+	privFile                           = "priv_validator.json"
+	dbPath                             = fmt.Sprintf("datadir%sqbft", string(os.PathSeparator))
+	port                  int32        = DefaultQbftPort
+	validatorNodes                     = []string{"127.0.0.1:33001"}
+	fastSync                           = false
+	preExec               atomic.Value // false
+	signName              atomic.Value // "ed25519"
+	useAggSig             atomic.Value // false
+	multiBlocks           atomic.Value // 1
+	gossipVotes           atomic.Value
 
 	zeroHash                    [32]byte
 	random                      *rand.Rand
-	gossipVotes                 atomic.Value
 	peerGossipSleepDuration     int32 = 100
 	peerQueryMaj23SleepDuration int32 = 2000
 )
@@ -89,30 +88,29 @@ type Client struct {
 }
 
 type subConfig struct {
-	Genesis                   string   `json:"genesis"`
-	GenesisAmount             int64    `json:"genesisAmount"`
-	GenesisBlockTime          int64    `json:"genesisBlockTime"`
-	TimeoutTxAvail            int32    `json:"timeoutTxAvail"`
-	TimeoutPropose            int32    `json:"timeoutPropose"`
-	TimeoutProposeDelta       int32    `json:"timeoutProposeDelta"`
-	TimeoutPrevote            int32    `json:"timeoutPrevote"`
-	TimeoutPrevoteDelta       int32    `json:"timeoutPrevoteDelta"`
-	TimeoutPrecommit          int32    `json:"timeoutPrecommit"`
-	TimeoutPrecommitDelta     int32    `json:"timeoutPrecommitDelta"`
-	TimeoutCommit             int32    `json:"timeoutCommit"`
-	SkipTimeoutCommit         bool     `json:"skipTimeoutCommit"`
-	CreateEmptyBlocks         bool     `json:"createEmptyBlocks"`
-	CreateEmptyBlocksInterval int32    `json:"createEmptyBlocksInterval"`
-	GenesisFile               string   `json:"genesisFile"`
-	PrivFile                  string   `json:"privFile"`
-	DbPath                    string   `json:"dbPath"`
-	Port                      int32    `json:"port"`
-	ValidatorNodes            []string `json:"validatorNodes"`
-	FastSync                  bool     `json:"fastSync"`
-	PreExec                   bool     `json:"preExec"`
-	SignName                  string   `json:"signName"`
-	UseAggregateSignature     bool     `json:"useAggregateSignature"`
-	MultiBlocks               int64    `json:"multiBlocks"`
+	Genesis               string   `json:"genesis"`
+	GenesisAmount         int64    `json:"genesisAmount"`
+	GenesisBlockTime      int64    `json:"genesisBlockTime"`
+	TimeoutTxAvail        int32    `json:"timeoutTxAvail"`
+	TimeoutPropose        int32    `json:"timeoutPropose"`
+	TimeoutProposeDelta   int32    `json:"timeoutProposeDelta"`
+	TimeoutPrevote        int32    `json:"timeoutPrevote"`
+	TimeoutPrevoteDelta   int32    `json:"timeoutPrevoteDelta"`
+	TimeoutPrecommit      int32    `json:"timeoutPrecommit"`
+	TimeoutPrecommitDelta int32    `json:"timeoutPrecommitDelta"`
+	TimeoutCommit         int32    `json:"timeoutCommit"`
+	SkipTimeoutCommit     bool     `json:"skipTimeoutCommit"`
+	EmptyBlockInterval    int32    `json:"emptyBlockInterval"`
+	GenesisFile           string   `json:"genesisFile"`
+	PrivFile              string   `json:"privFile"`
+	DbPath                string   `json:"dbPath"`
+	Port                  int32    `json:"port"`
+	ValidatorNodes        []string `json:"validatorNodes"`
+	FastSync              bool     `json:"fastSync"`
+	PreExec               bool     `json:"preExec"`
+	SignName              string   `json:"signName"`
+	UseAggregateSignature bool     `json:"useAggregateSignature"`
+	MultiBlocks           int64    `json:"multiBlocks"`
 }
 
 func applyConfig(sub []byte) {
@@ -120,44 +118,20 @@ func applyConfig(sub []byte) {
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
 	}
-	if subcfg.Genesis != "" {
-		genesis = subcfg.Genesis
-	}
-	if subcfg.GenesisAmount > 0 {
-		genesisAmount = subcfg.GenesisAmount
-	}
-	if subcfg.GenesisBlockTime > 0 {
-		genesisBlockTime = subcfg.GenesisBlockTime
-	}
-	if subcfg.TimeoutTxAvail > 0 {
-		timeoutTxAvail = subcfg.TimeoutTxAvail
-	}
-	if subcfg.TimeoutPropose > 0 {
-		timeoutPropose = subcfg.TimeoutPropose
-	}
-	if subcfg.TimeoutProposeDelta > 0 {
-		timeoutProposeDelta = subcfg.TimeoutProposeDelta
-	}
-	if subcfg.TimeoutPrevote > 0 {
-		timeoutPrevote = subcfg.TimeoutPrevote
-	}
-	if subcfg.TimeoutPrevoteDelta > 0 {
-		timeoutPrevoteDelta = subcfg.TimeoutPrevoteDelta
-	}
-	if subcfg.TimeoutPrecommit > 0 {
-		timeoutPrecommit = subcfg.TimeoutPrecommit
-	}
-	if subcfg.TimeoutPrecommitDelta > 0 {
-		timeoutPrecommitDelta = subcfg.TimeoutPrecommitDelta
-	}
-	if subcfg.TimeoutCommit > 0 {
-		timeoutCommit = subcfg.TimeoutCommit
-	}
-	skipTimeoutCommit = subcfg.SkipTimeoutCommit
-	createEmptyBlocks = subcfg.CreateEmptyBlocks
-	if subcfg.CreateEmptyBlocksInterval > 0 {
-		createEmptyBlocksInterval = subcfg.CreateEmptyBlocksInterval
-	}
+	genesis = subcfg.Genesis
+	genesisAmount = subcfg.GenesisAmount
+	genesisBlockTime = subcfg.GenesisBlockTime
+
+	timeoutTxAvail.Store(subcfg.TimeoutTxAvail)
+	timeoutPropose.Store(subcfg.TimeoutPropose)
+	timeoutProposeDelta.Store(subcfg.TimeoutProposeDelta)
+	timeoutPrevote.Store(subcfg.TimeoutPrevote)
+	timeoutPrevoteDelta.Store(subcfg.TimeoutPrevoteDelta)
+	timeoutPrecommit.Store(subcfg.TimeoutPrecommit)
+	timeoutPrecommitDelta.Store(subcfg.TimeoutPrecommitDelta)
+	timeoutCommit.Store(subcfg.TimeoutCommit)
+	skipTimeoutCommit.Store(subcfg.SkipTimeoutCommit)
+	emptyBlockInterval.Store(subcfg.EmptyBlockInterval)
 	if subcfg.GenesisFile != "" {
 		genesisFile = subcfg.GenesisFile
 	}
@@ -174,19 +148,26 @@ func applyConfig(sub []byte) {
 		validatorNodes = subcfg.ValidatorNodes
 	}
 	fastSync = subcfg.FastSync
-	preExec = subcfg.PreExec
+	preExec.Store(subcfg.PreExec)
+	signName.Store("ed25519")
 	if subcfg.SignName != "" {
-		signName = subcfg.SignName
+		signName.Store(subcfg.SignName)
 	}
-	useAggSig = subcfg.UseAggregateSignature
-	gossipVotes.Store(true)
+	useAggSig.Store(subcfg.UseAggregateSignature)
+	multiBlocks.Store(int64(1))
 	if subcfg.MultiBlocks > 0 {
-		multiBlocks = subcfg.MultiBlocks
+		multiBlocks.Store(subcfg.MultiBlocks)
 	}
+
+	gossipVotes.Store(true)
 }
 
-// DefaultDBProvider returns a database using the DBBackend and DBDir
-// specified in the ctx.Config.
+// UseAggSig returns whether use aggregate signature
+func UseAggSig() bool {
+	return useAggSig.Load().(bool)
+}
+
+// DefaultDBProvider returns a database
 func DefaultDBProvider(name string) dbm.DB {
 	return dbm.NewDB(name, "leveldb", dbPath, 0)
 }
@@ -207,7 +188,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	//init rand
 	ttypes.Init()
 
-	signType, ok := ttypes.SignMap[signName]
+	signType, ok := ttypes.SignMap[signName.Load().(string)]
 	if !ok {
 		qbftlog.Error("invalid sign name")
 		return nil
@@ -221,7 +202,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 	ttypes.ConsensusCrypto = cr
 
-	if useAggSig {
+	if UseAggSig() {
 		_, err = crypto.ToAggregate(ttypes.ConsensusCrypto)
 		if err != nil {
 			qbftlog.Error("qbft crypto not support aggregate signature", "name", ttypes.CryptoName)
@@ -475,7 +456,7 @@ func (client *Client) ProcEvent(msg *queue.Message) bool {
 
 // CreateBlock trigger consensus forward when tx available
 func (client *Client) CreateBlock() {
-	ticker := time.NewTicker(time.Duration(timeoutTxAvail) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(timeoutTxAvail.Load().(int32)) * time.Millisecond)
 	defer ticker.Stop()
 
 	for {

@@ -464,7 +464,7 @@ func CreateBlockInfoTx(priv crypto.PrivKey, state *tmtypes.QbftState, block *tmt
 	tx := &types.Transaction{Execer: []byte("qbftNode"), Payload: types.Encode(action), Fee: fee}
 	tx.To = address.ExecAddress("qbftNode")
 	tx.Nonce = random.Int63()
-	tx.Sign(int32(ttypes.SignMap[signName]), priv)
+	tx.Sign(int32(ttypes.SignMap[signName.Load().(string)]), priv)
 
 	return tx
 }

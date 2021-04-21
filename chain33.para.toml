@@ -337,8 +337,8 @@ Enable=0
 Enable=0
 ForkStorageLocalDB=0
 
-
-
+[fork.sub.qbftNode]
+Enable=0
 
 [fork.sub.multisig]
 Enable=0

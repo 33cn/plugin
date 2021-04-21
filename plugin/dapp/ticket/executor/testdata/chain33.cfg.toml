@@ -253,3 +253,5 @@ ForkParaAssetTransferRbk=0
 #仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
 ForkParaFullMinerHeight=0
 
+[fork.sub.qbftNode]
+Enable=0
