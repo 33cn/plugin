@@ -275,10 +275,142 @@ ForkRootHash=1
 [fork.sub.coins]
 Enable=0
 
+
+[fork.sub.ticket]
+Enable=0
+ForkTicketId =0
+ForkTicketVrf =0
+
+[fork.sub.retrieve]
+Enable=0
+ForkRetrive=0
+ForkRetriveAsset=0
+
+[fork.sub.hashlock]
+Enable=0
+ForkBadRepeatSecret=0
+
 [fork.sub.manage]
 Enable=0
 ForkManageExec=100000
 
+[fork.sub.token]
+Enable=0
+ForkTokenBlackList= 0
+ForkBadTokenSymbol= 0
+ForkTokenPrice=0
+ForkTokenSymbolWithNumber=0
+ForkTokenCheck= 0
+
+[fork.sub.trade]
+Enable=0
+ForkTradeBuyLimit= 0
+ForkTradeAsset= 0
+ForkTradeID = 0
+ForkTradeFixAssetDB = 0
+ForkTradePrice = 0
+
+[fork.sub.paracross]
+Enable=0
+ForkParacrossWithdrawFromParachain=0
+ForkParacrossCommitTx=0
+ForkLoopCheckCommitTxDone=0
+#仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7200000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
+ForkParaSelfConsStages=0
+ForkParaAssetTransferRbk=0
+#仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
+ForkParaFullMinerHeight=0
+
+[fork.sub.evm]
+Enable=0
+ForkEVMState=0
+ForkEVMABI=0
+ForkEVMFrozen=0
+ForkEVMKVHash=0
+ForkEVMYoloV1=0
+ForkEVMTxGroup=0
+
+[fork.sub.blackwhite]
+Enable=0
+ForkBlackWhiteV2=0
+
+[fork.sub.cert]
+Enable=0
+
+[fork.sub.guess]
+Enable=0
+
+[fork.sub.lottery]
+Enable=0
+
+[fork.sub.oracle]
+Enable=0
+
+[fork.sub.relay]
+Enable=0
+
+[fork.sub.norm]
+Enable=0
+
+[fork.sub.pokerbull]
+Enable=0
+
+[fork.sub.privacy]
+Enable=0
+
+[fork.sub.game]
+Enable=0
+
+[fork.sub.vote]
+Enable=0
+
+[fork.sub.accountmanager]
+Enable=0
+
+[fork.sub.exchange]
+Enable=0
+
+[fork.sub.wasm]
+Enable=0
+
+[fork.sub.x2ethereum]
+Enable=0
+
+
+[fork.sub.valnode]
+Enable=0
+[fork.sub.dpos]
+Enable=0
+[fork.sub.echo]
+Enable=0
+[fork.sub.storage]
+Enable=0
+ForkStorageLocalDB=0
+
+
+[fork.sub.multisig]
+Enable=0
+
+[fork.sub.unfreeze]
+Enable=0
+ForkTerminatePart=0
+ForkUnfreezeIDX= 0
+
+[fork.sub.autonomy]
+Enable=0
+
+[fork.sub.jsvm]
+Enable=0
+
+[fork.sub.issuance]
+Enable=0
+ForkIssuanceTableUpdate=0
+
+[fork.sub.collateralize]
+Enable=0
+ForkCollateralizeTableUpdate=0
+
+#对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=1
 
