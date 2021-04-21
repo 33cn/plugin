@@ -311,6 +311,35 @@ Enable=0
 [fork.sub.game]
 Enable=0
 
+[fork.sub.vote]
+Enable=0
+
+[fork.sub.accountmanager]
+Enable=0
+
+[fork.sub.exchange]
+Enable=0
+
+[fork.sub.wasm]
+Enable=0
+
+[fork.sub.x2ethereum]
+Enable=0
+
+
+[fork.sub.valnode]
+Enable=0
+[fork.sub.dpos]
+Enable=0
+[fork.sub.echo]
+Enable=0
+[fork.sub.storage]
+Enable=0
+ForkStorageLocalDB=0
+
+
+
+
 [fork.sub.multisig]
 Enable=0
 
