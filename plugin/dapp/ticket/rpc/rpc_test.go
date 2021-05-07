@@ -410,6 +410,9 @@ ForkIssuanceTableUpdate=0
 Enable=0
 ForkCollateralizeTableUpdate=0
 
+[fork.sub.qbftNode]
+Enable=0
+
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=1

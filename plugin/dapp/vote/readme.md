@@ -34,7 +34,7 @@ message GroupMember {
 
 ##### 交易回执
 ```proto
- 
+
 // 投票组信息
 message GroupInfo {
 
@@ -79,7 +79,7 @@ message GroupMember {
 ```
 ##### 交易回执
 ```proto
- 
+
 // 投票组信息
 message GroupInfo {
 
@@ -223,6 +223,7 @@ message VoteInfo {
     repeated CommitInfo commitInfos    = 8;  //已投票的提交信息
     string              description    = 9;  //描述信息
     uint32              status         = 10; //状态，1即将开始，2正在进行，3已经结束，4已关闭
+    string              groupName      = 11; //所属投票组名称
 }
 ```
 
@@ -339,7 +340,7 @@ message ReqStrings {
 message MemberInfos {
     repeated MemberInfo memberList = 1; //投票组成员信息列表
 }
- 
+
 message MemberInfo {
     string   addr            = 1; //地址
     string   name            = 2; //用户名称
@@ -351,7 +352,7 @@ message MemberInfo {
 
 - 通用查询json rpc接口，Chain33.Query
 - funcName: GetMembers
-- 
+-
 ```bash
 curl -kd  '{"method":"Chain33.Query","params":[{"execer":"vote","funcName":"GetMembers","payload":{"items":["1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"]}}],"id":0}' http://localhost:8801
 ```

@@ -44,6 +44,14 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 	dbSet := &types.LocalDBSet{}
 	groupInfo := decodeGroupInfo(receiptData.Logs[0].Log)
 	table := newGroupTable(v.GetLocalDB())
+	row, err := table.GetData([]byte(groupInfo.ID))
+	if err != nil {
+		elog.Error("execLocal updateGroup", "txHash", hex.EncodeToString(tx.Hash()), "groupTable get", err)
+		return nil, err
+	}
+	oldInfo, _ := row.Data.(*vty.GroupInfo)
+	// 状态数据中未保存投票个数信息，需要进行赋值
+	groupInfo.VoteNum = oldInfo.VoteNum
 	kvs, err := v.updateAndSaveTable(table.Replace, table.Save, groupInfo, tx, vty.NameUpdateGroupAction, "group")
 	if err != nil {
 		return nil, err
@@ -84,21 +92,21 @@ func (v *vote) ExecLocal_UpdateGroup(update *vty.UpdateGroup, tx *types.Transact
 func (v *vote) ExecLocal_CreateVote(payload *vty.CreateVote, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	voteInfo := decodeVoteInfo(receiptData.Logs[0].Log)
-	table := newVoteTable(v.GetLocalDB())
-	kvs, err := v.updateAndSaveTable(table.Add, table.Save, voteInfo, tx, vty.NameCreateVoteAction, "vote")
+	vTable := newVoteTable(v.GetLocalDB())
+	gTable := newGroupTable(v.GetLocalDB())
+	row, err := gTable.GetData([]byte(voteInfo.GroupID))
 	if err != nil {
-		return nil, err
-	}
-	dbSet.KV = kvs
-	table = newGroupTable(v.GetLocalDB())
-	row, err := table.GetData([]byte(voteInfo.GroupID))
-	if err != nil {
-		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "voteTable get", err)
+		elog.Error("execLocal createVote", "txHash", hex.EncodeToString(tx.Hash()), "groupTable get", err)
 		return nil, err
 	}
 	groupInfo, _ := row.Data.(*vty.GroupInfo)
 	groupInfo.VoteNum++
-	kvs, err = v.updateAndSaveTable(table.Replace, table.Save, groupInfo, tx, vty.NameCreateVoteAction, "group")
+	voteInfo.GroupName = groupInfo.GetName()
+	dbSet.KV, err = v.updateAndSaveTable(vTable.Add, vTable.Save, voteInfo, tx, vty.NameCreateVoteAction, "vote")
+	if err != nil {
+		return nil, err
+	}
+	kvs, err := v.updateAndSaveTable(gTable.Replace, gTable.Save, groupInfo, tx, vty.NameCreateVoteAction, "group")
 	if err != nil {
 		return nil, err
 	}

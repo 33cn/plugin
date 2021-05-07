@@ -165,9 +165,21 @@ func (a *action) commitVote(commit *vty.CommitVote) (*types.Receipt, error) {
 	receipt := &types.Receipt{Ty: types.ExecOk}
 	vote, err := a.getVoteInfo(commit.VoteID)
 	if err != nil {
-		elog.Error("vote exec commitVote", "txHash", a.txHash, "get vote err", err)
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "vid", commit.VoteID, "get vote err", err)
 		return nil, errStateDBGet
 	}
+	// 由于目前底层检测交易阶段提供区块时间可能不是最新区块的，依赖区块时间的比较需要放在执行阶段处理
+	if vote.BeginTimestamp > a.blockTime {
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "vid", commit.VoteID,
+			"beginTime", vote.BeginTimestamp, "blockTime", a.blockTime, "err", errVoteNotStarted)
+		return nil, errVoteNotStarted
+	}
+	if vote.EndTimestamp <= a.blockTime {
+		elog.Error("vote exec commitVote", "txHash", a.txHash, "vid", commit.VoteID,
+			"endTime", vote.EndTimestamp, "blockTime", a.blockTime, "err", errVoteAlreadyFinished)
+		return nil, errVoteAlreadyFinished
+	}
+
 	group, err := a.getGroupInfo(vote.GroupID)
 	if err != nil {
 		elog.Error("vote exec commitVote", "txHash", a.txHash, "get group err", err)
