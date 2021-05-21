@@ -429,6 +429,7 @@ func initEnvGuess() (queue.Queue, *blockchain.BlockChain, queue.Module, queue.Mo
 	var q = queue.New("channel")
 	q.SetConfig(chain33Cfg)
 	cfg := chain33Cfg.GetModuleConfig()
+	cfg.Log.LogFile = ""
 	sub := chain33Cfg.GetSubConfig()
 	chain := blockchain.New(chain33Cfg)
 	chain.SetQueueClient(q.Client())

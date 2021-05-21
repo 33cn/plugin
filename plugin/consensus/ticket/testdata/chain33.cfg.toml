@@ -41,7 +41,7 @@ enableTxQuickIndex=false
 
 [p2p]
 types=["dht"]
-enable=true
+enable=false
 msgCacheSize=10240
 driver="memdb"
 dbPath="datadir/addrbook"
