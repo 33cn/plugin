@@ -559,6 +559,7 @@ func initEnvDpos1(configName string) (queue.Queue, *blockchain.BlockChain, queue
 	var q = queue.New("channel")
 	q.SetConfig(chain33Cfg)
 	cfg := chain33Cfg.GetModuleConfig()
+	cfg.Log.LogFile = ""
 	sub := chain33Cfg.GetSubConfig()
 	rpc.InitCfg(cfg.RPC)
 
