@@ -4,6 +4,7 @@ package testnode
 var DefaultConfig = `
 Title="user.p.test."
 CoinSymbol="bty"
+ChainID=33
 # TestNet=true
 
 [crypto]
