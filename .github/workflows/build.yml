@@ -141,23 +141,23 @@ jobs:
           make docker-compose dapp=paracross
           make docker-compose-down dapp=paracross
 
-#  ci_paracross_bls:
-#    name: ci_paracross_bls
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Set up Golang
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: 1.13
-#        id: go
-#      - name: set go env
-#        run: export PATH=${PATH}:`go env GOPATH`/bin
-#      - name: checkout
-#        uses: actions/checkout@v2
-#      - name: deploy
-#        run: |
-#          make docker-compose dapp=paracross extra=1
-#          make docker-compose-down dapp=paracross
+  ci_paracross_bls:
+    name: ci_paracross_bls
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.13
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=paracross extra=1
+          make docker-compose-down dapp=paracross
 
   ci_x2ethereum:
     name: ci_x2ethereum
