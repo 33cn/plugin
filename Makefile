@@ -26,7 +26,7 @@ build: depends
 
 
 build_ci: depends ## Build the binary file for CI
-	@go build -v -i -o $(CLI) $(SRC_CLI)
+	@go build -v -o $(CLI) $(SRC_CLI)
 	@go build $(BUILD_FLAGS) -v -o $(APP)
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
