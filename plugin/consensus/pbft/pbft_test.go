@@ -66,6 +66,7 @@ func initEnvPbft() (queue.Queue, *blockchain.BlockChain, *p2p.Manager, queue.Mod
 	var q = queue.New("channel")
 	q.SetConfig(chain33Cfg)
 	cfg := chain33Cfg.GetModuleConfig()
+	cfg.Log.LogFile = ""
 	sub := chain33Cfg.GetSubConfig()
 
 	chain := blockchain.New(chain33Cfg)
