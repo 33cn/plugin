@@ -64,7 +64,7 @@ func (privkey *RingSignPrivateKey) Bytes() []byte {
 }
 
 // Sign signature trasaction
-func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
+func (privkey *RingSignPrivateKey) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 	emptySign := &RingSignature{}
 	if len(msg) <= 0 {
 		return emptySign
@@ -115,7 +115,7 @@ func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
 }
 
 // PubKey convert to public key
-func (privkey *RingSignPrivateKey) PubKey() crypto.PubKey {
+func (privkey *RingSignPrivateKey) PubKey(_ ...interface{}) crypto.PubKey {
 	publicKey := new(RingSignPublicKey)
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(&privkey.key))
 	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(&privkey.key))
