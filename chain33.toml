@@ -48,15 +48,15 @@ enablePushSubscribe=false
 # 关闭分片存储,默认false为开启分片存储;平行链不需要分片需要修改此默认参数为true
 disableShard=false
 # 分片存储中每个大块包含的区块数
-chunkblockNum=1000
+chunkblockNum=100
 # 使能从P2pStore中获取数据
-enableFetchP2pstore=false
+enableFetchP2pstore=true
 # 使能假设已删除已归档数据后,获取数据情况
 enableIfDelLocalChunk=false
 
 [p2p]
 # p2p类型
-types=["dht", "gossip"]
+types=["dht"]
 # 是否启动P2P服务
 enable=true
 # 使用的数据库类型
@@ -86,12 +86,7 @@ maxConnectNum=100
 # 禁止通过局域网发现节点
 disableFindLANPeers=false
 # 配置为全节点模式，全节点保存所有分片数据
-isFullNode=true
-# 若本节点不是全节点，则需要配置全节点地址，当在分片网络中查不到数据时，会到全节点上获取数据
-# 格式: "/ip4/139.196.46.175/tcp/13803/p2p/16Uiu2HAkvnDRF8HQTTU5Uu5GmtbLDrgPxCwgVsn2QQ9VEU7Eiwjw"
-fullNodes=[]
-
-
+isFullNode=false
 
 [rpc]
 jrpcBindAddr="localhost:8801"
