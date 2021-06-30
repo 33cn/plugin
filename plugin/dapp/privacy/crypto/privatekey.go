@@ -22,7 +22,7 @@ func (privKey PrivKeyPrivacy) Bytes() []byte {
 }
 
 // Sign signature trasaction
-func (privKey PrivKeyPrivacy) Sign(msg []byte) crypto.Signature {
+func (privKey PrivKeyPrivacy) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 
 	temp := new([64]byte)
 	randomScalar := new([32]byte)
@@ -51,7 +51,7 @@ func (privKey PrivKeyPrivacy) Sign(msg []byte) crypto.Signature {
 }
 
 // PubKey get public key
-func (privKey PrivKeyPrivacy) PubKey() crypto.PubKey {
+func (privKey PrivKeyPrivacy) PubKey(_ ...interface{}) crypto.PubKey {
 
 	var pubKeyPrivacy PubKeyPrivacy
 

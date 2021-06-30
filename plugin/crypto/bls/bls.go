@@ -197,14 +197,14 @@ func (privKey PrivKeyBLS) Bytes() []byte {
 }
 
 // Sign create signature
-func (privKey PrivKeyBLS) Sign(msg []byte) crypto.Signature {
+func (privKey PrivKeyBLS) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 	priv := g1pubs.DeserializeSecretKey(privKey)
 	sig := g1pubs.Sign(msg, priv)
 	return SignatureBLS(sig.Serialize())
 }
 
 // PubKey convert to public key
-func (privKey PrivKeyBLS) PubKey() crypto.PubKey {
+func (privKey PrivKeyBLS) PubKey(_ ...interface{}) crypto.PubKey {
 	priv := g1pubs.DeserializeSecretKey(privKey)
 	return PubKeyBLS(g1pubs.PrivToPub(priv).Serialize())
 }
