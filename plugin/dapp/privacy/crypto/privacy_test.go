@@ -64,11 +64,11 @@ func (mock *privKeyMock) Bytes() []byte {
 	return formatByte32([]byte("1234"))
 }
 
-func (mock *privKeyMock) Sign(msg []byte) crypto.Signature {
+func (mock *privKeyMock) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 	return &signatureMock{}
 }
 
-func (mock *privKeyMock) PubKey() crypto.PubKey {
+func (mock *privKeyMock) PubKey(_ ...interface{}) crypto.PubKey {
 	return &pubKeyMock{}
 }
 
