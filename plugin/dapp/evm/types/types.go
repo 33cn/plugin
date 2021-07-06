@@ -24,6 +24,8 @@ const (
 	TyLogCallContract = 603
 	// TyLogEVMStateChangeItem  合约状态数据变更项日志
 	TyLogEVMStateChangeItem = 604
+	// TyLogEVMEventData 合约生成新的event日志数据
+	TyLogEVMEventData = 605
 
 	// MaxGasLimit  最大Gas消耗上限
 	MaxGasLimit = 10000000

@@ -76,7 +76,7 @@ type EVMStateDB interface {
 	AddPreimage(common.Hash, []byte)
 
 	// CanTransfer 当前账户余额是否足够转账
-	CanTransfer(sender, recipient string, amount uint64) bool
+	CanTransfer(sender string, amount uint64) bool
 	// Transfer 转账交易
 	Transfer(sender, recipient string, amount uint64) bool
 

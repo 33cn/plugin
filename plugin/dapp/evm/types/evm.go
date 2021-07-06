@@ -147,10 +147,6 @@ func createEvmTx(cfg *types.Chain33Config, param *CreateCallTx) (*types.Transact
 		Note:     param.Note,
 		Alias:    param.Alias,
 	}
-	// Abi数据和二进制代码必须指定一个，优先判断ABI
-	if len(param.Abi) > 0 {
-		action.Abi = strings.TrimSpace(param.Abi)
-	}
 	if len(param.Code) > 0 {
 		bCode, err := common.FromHex(param.Code)
 		if err != nil {
@@ -160,8 +156,17 @@ func createEvmTx(cfg *types.Chain33Config, param *CreateCallTx) (*types.Transact
 		action.Code = bCode
 	}
 
+	if len(param.Para) > 0 {
+		para, err := common.FromHex(param.Para)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Para = para
+	}
+
 	if param.IsCreate {
-		if len(action.Abi) > 0 && len(action.Code) == 0 {
+		if len(action.Code) == 0 {
 			elog.Error("create evm Tx error, code is empty")
 			return nil, errors.New("code must be set in create tx")
 		}

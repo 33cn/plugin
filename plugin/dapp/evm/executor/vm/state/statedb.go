@@ -10,6 +10,7 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
@@ -33,6 +34,9 @@ type MemoryStateDB struct {
 
 	// CoinsAccount Coins账户操作对象，从执行器框架传入
 	CoinsAccount *account.DB
+
+	//evm 平台账户地址
+	evmPlatformAddr string
 
 	// 缓存账户对象
 	accounts map[string]*ContractAccount
@@ -70,18 +74,20 @@ type MemoryStateDB struct {
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
 func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
 	mdb := &MemoryStateDB{
-		StateDB:      StateDB,
-		LocalDB:      LocalDB,
-		CoinsAccount: CoinsAccount,
-		accounts:     make(map[string]*ContractAccount),
-		logs:         make(map[common.Hash][]*model.ContractLog),
-		preimages:    make(map[common.Hash][]byte),
-		stateDirty:   make(map[string]interface{}),
-		dataDirty:    make(map[string]interface{}),
-		blockHeight:  blockHeight,
-		refund:       0,
-		txIndex:      0,
-		api:          api,
+		StateDB:         StateDB,
+		LocalDB:         LocalDB,
+		CoinsAccount:    CoinsAccount,
+		evmPlatformAddr: address.GetExecAddress(api.GetConfig().ExecName("evm")).String(),
+		accounts:        make(map[string]*ContractAccount),
+		logs:            make(map[common.Hash][]*model.ContractLog),
+		logSize:         0,
+		preimages:       make(map[common.Hash][]byte),
+		stateDirty:      make(map[string]interface{}),
+		dataDirty:       make(map[string]interface{}),
+		blockHeight:     blockHeight,
+		refund:          0,
+		txIndex:         0,
+		api:             api,
 	}
 	return mdb
 }
@@ -91,6 +97,7 @@ func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, 
 func (mdb *MemoryStateDB) Prepare(txHash common.Hash, txIndex int) {
 	mdb.txHash = txHash
 	mdb.txIndex = txIndex
+	log15.Info("MemoryStateDB::Prepare", "txHash", txHash.Hex(), "txIndex", txIndex, "logSize", mdb.logSize)
 }
 
 // CreateAccount 创建一个新的合约账户对象
@@ -125,36 +132,10 @@ func (mdb *MemoryStateDB) AddBalance(addr, caddr string, value uint64) {
 	log15.Debug("transfer result", "from", addr, "to", caddr, "amount", value, "result", res)
 }
 
-// GetBalance 这里需要区分对待，如果是合约账户，则查看合约账户所有者地址在此合约下的余额；
-// 如果是外部账户，则直接返回外部账户的余额
+// GetBalance
 func (mdb *MemoryStateDB) GetBalance(addr string) uint64 {
-	if mdb.CoinsAccount == nil {
-		return 0
-	}
-	isExec := mdb.Exist(addr)
-	var ac *types.Account
-	if isExec {
-		cfg := mdb.api.GetConfig()
-		if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
-			ac = mdb.CoinsAccount.LoadExecAccount(addr, addr)
-		} else {
-			contract := mdb.GetAccount(addr)
-			if contract == nil {
-				return 0
-			}
-			creator := contract.GetCreator()
-			if len(creator) == 0 {
-				return 0
-			}
-			ac = mdb.CoinsAccount.LoadExecAccount(creator, addr)
-		}
-	} else {
-		ac = mdb.CoinsAccount.LoadAccount(addr)
-	}
-	if ac != nil {
-		return uint64(ac.Balance)
-	}
-	return 0
+	ac := mdb.CoinsAccount.LoadExecAccount(addr, mdb.evmPlatformAddr)
+	return uint64(ac.Balance)
 }
 
 // GetNonce 目前chain33中没有保留账户的nonce信息，这里临时添加到合约账户中；
@@ -186,6 +167,10 @@ func (mdb *MemoryStateDB) GetCodeHash(addr string) common.Hash {
 
 // GetCode 获取代码内容
 func (mdb *MemoryStateDB) GetCode(addr string) []byte {
+	//if "15wDXJKYxTq3FvfL5uK4MCZXdQfcSTGUtt" == addr {
+	//	panic("MemoryStateDB::debugCall::GetCode")
+	//}
+	log15.Debug("MemoryStateDB::debugCall::GetCode", "addr", addr)
 	acc := mdb.GetAccount(addr)
 	if acc != nil {
 		return acc.Data.GetCode()
@@ -195,6 +180,7 @@ func (mdb *MemoryStateDB) GetCode(addr string) []byte {
 
 // SetCode 设置代码内容
 func (mdb *MemoryStateDB) SetCode(addr string, code []byte) {
+	log15.Debug("MemoryStateDB::debugCall::SetCode", "addr", addr)
 	acc := mdb.GetAccount(addr)
 	if acc != nil {
 		mdb.dataDirty[addr] = true
@@ -375,6 +361,7 @@ func (mdb *MemoryStateDB) Snapshot() int {
 	mdb.versionID++
 	mdb.currentVer = &Snapshot{id: id, statedb: mdb}
 	mdb.snapshots = append(mdb.snapshots, mdb.currentVer)
+	log15.Debug("MemoryStateDB::Snapshot", "mdb.versionID", mdb.versionID)
 	return id
 }
 
@@ -410,7 +397,7 @@ func (mdb *MemoryStateDB) GetReceiptLogs(addr string) (logs []*types.ReceiptLog)
 // 这里获取的应该是从0到目前快照的所有变更；
 // 另外，因为合约内部会调用其它合约，也会产生数据变更，所以这里返回的数据，不止是一个合约的数据。
 func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, logs []*types.ReceiptLog) {
-	if version < 0 {
+	if version < 0 || version >= len(mdb.snapshots) {
 		return
 	}
 
@@ -419,87 +406,21 @@ func (mdb *MemoryStateDB) GetChangedData(version int) (kvSet []*types.KeyValue, 
 		if kv != nil {
 			kvSet = append(kvSet, kv...)
 		}
-
 		if log != nil {
 			logs = append(logs, log...)
 		}
 	}
+
 	return
 }
 
 // CanTransfer 借助coins执行器进行转账相关操作
-func (mdb *MemoryStateDB) CanTransfer(sender, recipient string, amount uint64) bool {
+func (mdb *MemoryStateDB) CanTransfer(sender string, amount uint64) bool {
+	senderAcc := mdb.CoinsAccount.LoadExecAccount(sender, mdb.evmPlatformAddr)
+	log15.Info("CanTransfer", "balance", senderAcc.Balance, "sender", sender, "evmPlatformAddr", mdb.evmPlatformAddr,
+		"mdb.CoinsAccount", mdb.CoinsAccount)
 
-	log15.Debug("check CanTransfer", "sender", sender, "recipient", recipient, "amount", amount)
-
-	tType, errInfo := mdb.checkTransfer(sender, recipient, amount)
-
-	if errInfo != nil {
-		log15.Error("check transfer error", "sender", sender, "recipient", recipient, "amount", amount, "err info", errInfo)
-		return false
-	}
-
-	value := int64(amount)
-	if value < 0 {
-		return false
-	}
-
-	switch tType {
-	case NoNeed:
-		return true
-	case ToExec:
-		// 无论其它账户还是创建者向合约地址转账，都需要检查其当前合约账户活动余额是否充足
-		accFrom := mdb.CoinsAccount.LoadExecAccount(sender, recipient)
-		b := accFrom.GetBalance() - value
-		if b < 0 {
-			log15.Error("check transfer error", "error info", types.ErrNoBalance)
-			return false
-		}
-		return true
-	case FromExec:
-		return mdb.checkExecAccount(sender, value)
-	default:
-		return false
-	}
-}
-func (mdb *MemoryStateDB) checkExecAccount(execAddr string, value int64) bool {
-	var err error
-	defer func() {
-		if err != nil {
-			log15.Error("checkExecAccount error", "error info", err)
-		}
-	}()
-	// 如果是合约地址，则需要判断创建者在本合约中的余额是否充足
-	if !types.CheckAmount(value) {
-		err = types.ErrAmount
-		return false
-	}
-	contract := mdb.GetAccount(execAddr)
-	if contract == nil {
-		err = model.ErrAddrNotExists
-		return false
-	}
-	creator := contract.GetCreator()
-	if len(creator) == 0 {
-		err = model.ErrNoCreator
-		return false
-	}
-
-	var accFrom *types.Account
-	cfg := mdb.api.GetConfig()
-	if cfg.IsDappFork(mdb.GetBlockHeight(), "evm", evmtypes.ForkEVMFrozen) {
-		// 分叉后，需要检查合约地址下的金额是否足够
-		accFrom = mdb.CoinsAccount.LoadExecAccount(execAddr, execAddr)
-	} else {
-		accFrom = mdb.CoinsAccount.LoadExecAccount(creator, execAddr)
-	}
-	balance := accFrom.GetBalance()
-	remain := balance - value
-	if remain < 0 {
-		err = types.ErrNoBalance
-		return false
-	}
-	return true
+	return senderAcc.Balance >= int64(amount)
 }
 
 // TransferType 定义转账类型
@@ -517,52 +438,9 @@ const (
 	Error
 )
 
-func (mdb *MemoryStateDB) checkTransfer(sender, recipient string, amount uint64) (tType TransferType, err error) {
-	if amount == 0 {
-		return NoNeed, nil
-	}
-	if mdb.CoinsAccount == nil {
-		log15.Error("no coinsaccount exists", "sender", sender, "recipient", recipient, "amount", amount)
-		return Error, model.ErrNoCoinsAccount
-	}
-
-	// 首先需要检查转账双方的信息，是属于合约账户还是外部账户
-	execSender := mdb.Exist(sender)
-	execRecipient := mdb.Exist(recipient)
-
-	if execRecipient && execSender {
-		// 双方均为合约账户，不支持
-		err = model.ErrTransferBetweenContracts
-		tType = Error
-	} else if execSender {
-		// 从合约账户到外部账户转账 （这里调用外部账户从合约账户取钱接口）
-		tType = FromExec
-		err = nil
-	} else if execRecipient {
-		// 从外部账户到合约账户转账
-		tType = ToExec
-		err = nil
-	} else {
-		// 双方都是外部账户，不支持
-		err = model.ErrTransferBetweenEOA
-		tType = Error
-	}
-
-	return tType, err
-}
-
 // Transfer 借助coins执行器进行转账相关操作
-// 只支持 合约账户到合约账户，其它情况不支持
 func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool {
 	log15.Debug("transfer from contract to external(contract)", "sender", sender, "recipient", recipient, "amount", amount)
-
-	tType, errInfo := mdb.checkTransfer(sender, recipient, amount)
-
-	if errInfo != nil {
-		log15.Error("transfer error", "sender", sender, "recipient", recipient, "amount", amount, "err info", errInfo)
-		return false
-	}
-
 	var (
 		ret *types.Receipt
 		err error
@@ -573,17 +451,11 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 		return false
 	}
 
-	switch tType {
-	case NoNeed:
+	if 0 == value {
 		return true
-	case ToExec:
-		ret, err = mdb.transfer2Contract(sender, recipient, value)
-	case FromExec:
-		ret, err = mdb.transfer2External(sender, recipient, value)
-	default:
-		return false
 	}
 
+	ret, err = mdb.CoinsAccount.ExecTransfer(sender, recipient, mdb.evmPlatformAddr, int64(amount))
 	// 这种情况下转账失败并不进行处理，也不会从sender账户扣款，打印日志即可
 	if err != nil {
 		log15.Error("transfer error", "sender", sender, "recipient", recipient, "amount", amount, "err info", err)
@@ -597,6 +469,9 @@ func (mdb *MemoryStateDB) Transfer(sender, recipient string, amount uint64) bool
 			logs:       ret.Logs,
 		})
 	}
+	log15.Info("transfer successful", "balance", mdb.CoinsAccount.LoadExecAccount(recipient, mdb.evmPlatformAddr).Balance,
+		"mdb.CoinsAccount", mdb.CoinsAccount)
+
 	return true
 }
 
@@ -694,11 +569,30 @@ func (mdb *MemoryStateDB) mergeResult(one, two *types.Receipt) (ret *types.Recei
 // AddLog LOG0-4 指令对应的具体操作
 // 生成对应的日志信息，目前这些生成的日志信息会在合约执行后打印到日志文件中
 func (mdb *MemoryStateDB) AddLog(log *model.ContractLog) {
-	mdb.addChange(addLogChange{txhash: mdb.txHash})
+	newEvmLog := &types.EVMLog{
+		Topic: [][]byte{log.Topics[0].Bytes()},
+		Data:  log.Data,
+	}
+	if len(log.Topics) > 0 {
+		for i := 1; i < len(log.Topics); i++ {
+			newEvmLog.Topic = append(newEvmLog.Topic, log.Topics[i].Bytes())
+		}
+	}
+	receiptLog := &types.ReceiptLog{
+		Ty:  evmtypes.TyLogEVMEventData,
+		Log: types.Encode(newEvmLog),
+	}
+
+	mdb.addChange(addLogChange{
+		txhash: mdb.txHash,
+		logs:   []*types.ReceiptLog{receiptLog}})
+
 	log.TxHash = mdb.txHash
 	log.Index = int(mdb.logSize)
 	mdb.logs[mdb.txHash] = append(mdb.logs[mdb.txHash], log)
 	mdb.logSize++
+	log15.Info("MemoryStateDB::AddLog", "txhash", mdb.txHash.Hex(), "blockHeight", mdb.blockHeight, "txIndex", mdb.txIndex,
+		"mdb.logSize", mdb.logSize, "topic", log.Topics[0].Hex())
 }
 
 // AddPreimage 存储sha3指令对应的数据
@@ -716,6 +610,7 @@ func (mdb *MemoryStateDB) AddPreimage(hash common.Hash, data []byte) {
 // 这里不保证当前区块可以打包成功，只是在执行区块中的交易时，如果交易执行成功，就会打印合约日志
 func (mdb *MemoryStateDB) PrintLogs() {
 	items := mdb.logs[mdb.txHash]
+	log15.Debug("PrintLogs", "item number:", len(items), "txhash", mdb.txHash.Hex())
 	for _, item := range items {
 		item.PrintLog()
 	}

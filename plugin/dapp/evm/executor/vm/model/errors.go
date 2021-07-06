@@ -12,11 +12,14 @@ var (
 	// ErrCodeStoreOutOfGas        contract creation code storage out of gas
 	ErrCodeStoreOutOfGas = errors.New("contract creation code storage out of gas")
 	// ErrDepth                    max call depth exceeded
-	ErrDepth = errors.New("max call depth exceeded")
-	// ErrInsufficientBalance      insufficient balance for transfer
+	ErrDepth               = errors.New("max call depth exceeded")
 	ErrInsufficientBalance = errors.New("insufficient balance for transfer")
 	// ErrContractAddressCollision contract address collision
 	ErrContractAddressCollision = errors.New("contract address collision")
+
+	ErrContractNotExist = errors.New("contract not exist")
+
+	ErrABINotExist = errors.New("ABI not exist")
 	// ErrGasUintOverflow          gas uint64 overflow
 	ErrGasUintOverflow = errors.New("gas uint64 overflow")
 	// ErrAddrNotExists            address not exists

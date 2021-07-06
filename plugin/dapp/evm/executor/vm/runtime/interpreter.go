@@ -5,15 +5,14 @@
 package runtime
 
 import (
-	"fmt"
 	"sync/atomic"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/gas"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/params"
 )
@@ -29,44 +28,42 @@ type Config struct {
 	// EnablePreimageRecording SHA3/keccak 操作时是否保存数据
 	EnablePreimageRecording bool
 	// JumpTable 指令跳转表
-	JumpTable [256]Operation
+	JumpTable [256]*operation
 }
 
-// Interpreter 解释器接结构定义
+// EVMInterpreter 解释器接结构定义
 type Interpreter struct {
-	evm      *EVM
-	cfg      Config
-	gasTable gas.Table
+	evm *EVM
+	cfg Config
 	// 是否允许修改数据
 	readOnly bool
 	// 合约执行返回的结果数据
-	ReturnData []byte
+	returnData []byte
 }
 
 // NewInterpreter 新创建一个解释器
 func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
 	// 使用是否包含第一个STOP指令判断jump table是否完成初始化
 	// 需要注意，后继如果新增指令，需要在这里判断硬分叉，指定不同的指令集
-	if !cfg.JumpTable[STOP].Valid {
-		cfg.JumpTable = ConstantinopleInstructionSet
+	if cfg.JumpTable[STOP] == nil {
+		cfg.JumpTable = berlinInstructionSet
 		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
 			//这里需要替换为最新得指令集
-			cfg.JumpTable = YoloV1InstructionSet
+			cfg.JumpTable = berlinInstructionSet
 		}
 	}
 
 	return &Interpreter{
-		evm:      evm,
-		cfg:      cfg,
-		gasTable: evm.GasTable(evm.BlockNumber),
+		evm: evm,
+		cfg: cfg,
 	}
 }
 
-func (in *Interpreter) enforceRestrictions(op OpCode, operation Operation, stack *mm.Stack) error {
+func (in *Interpreter) enforceRestrictions(op OpCode, operation *operation, stack *Stack) error {
 	if in.readOnly {
 		// 在只读状态下如果包含了写操作，
 		// 也不允许进行转账操作（通过第二个条件可以判断）
-		if operation.Writes || (op == CALL && stack.Back(2).BitLen() > 0) {
+		if operation.writes || (op == CALL && stack.Back(2).BitLen() > 0) {
 			return model.ErrWriteProtection
 		}
 	}
@@ -76,7 +73,7 @@ func (in *Interpreter) enforceRestrictions(op OpCode, operation Operation, stack
 // Run 合约代码的解释执行主逻辑
 // 需要注意的是，如果返回执行出错，依然会扣除剩余的Gas
 // （除非返回的是ErrExecutionReverted，这种情况下会保留剩余的Gas）
-func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err error) {
+func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
 	//TODO 切换为最新的管理方式,合约涉及转账报错？
 	// 每次递归调用，深度加1
 	in.evm.depth++
@@ -84,12 +81,13 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 
 	// Make sure the readOnly is only set if we aren't in readOnly yet.
 	// This makes also sure that the readOnly flag isn't removed for child calls.
-	//if !in.readOnly {
-	//	in.readOnly = true
-	//	defer func() { in.readOnly = false }()
-	//}
+	if readOnly && !in.readOnly {
+		in.readOnly = true
+		defer func() { in.readOnly = false }()
+	}
+
 	// 执行前讲返回数据置空
-	in.ReturnData = nil
+	in.returnData = nil
 
 	// 无合约代码直接返回
 	if len(contract.Code) == 0 {
@@ -100,15 +98,14 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		// 当前操作指令码
 		op OpCode
 		// 内存空间
-		mem = mm.NewMemory()
+		mem = NewMemory()
 		// 本地栈空间
-		stack = mm.NewStack()
+		stack = newstack()
 		// 本地返回的栈
-		returns     = mm.NewReturnStack() // local returns stack
+		//returns     = mm.NewReturnStack() // local returns stack
 		callContext = &callCtx{
 			memory:   mem,
 			stack:    stack,
-			rstack:   returns,
 			contract: contract,
 		}
 		// 指令计数器
@@ -126,17 +123,16 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 
 	// 执行结束后，返还堆栈
 	defer func() {
-		mm.Returnstack(stack)
-		mm.ReturnRStack(returns)
+		returnStack(stack)
 	}()
 
 	if in.cfg.Debug {
 		defer func() {
 			if err != nil {
 				if !logged {
-					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, returns, in.ReturnData, contract, in.evm.depth, err)
+					in.cfg.Tracer.CaptureState(in.evm, pcCopy, op, gasCopy, cost, mem, stack, in.returnData, contract, in.evm.depth, err)
 				} else {
-					in.cfg.Tracer.CaptureFault(in.evm, pcCopy, op, gasCopy, cost, mem, stack, returns, contract, in.evm.depth, err)
+					in.cfg.Tracer.CaptureFault(in.evm, pcCopy, op, gasCopy, cost, mem, stack, contract, in.evm.depth, err)
 				}
 			}
 		}()
@@ -156,67 +152,102 @@ func (in *Interpreter) Run(contract *Contract, input []byte) (ret []byte, err er
 		// 从合约代码中获取具体操作指令
 		op = contract.GetOp(pc)
 		operation := in.cfg.JumpTable[op]
-		if !operation.Valid {
-			return nil, fmt.Errorf("invalid OpCode 0x%x", int(op))
+		if operation == nil {
+			log15.Error("can't found operation:%s", op)
+			return nil, &ErrInvalidOpCode{opcode: op}
 		}
-		if err := operation.ValidateStack(stack); err != nil {
-			return nil, err
+		// Validate stack
+		if sLen := stack.len(); sLen < operation.minStack {
+			return nil, &ErrStackUnderflow{stackLen: sLen, required: operation.minStack}
+		} else if sLen > operation.maxStack {
+			return nil, &ErrStackOverflow{stackLen: sLen, limit: operation.maxStack}
 		}
 		// 检查写约束
 		if err := in.enforceRestrictions(op, operation, stack); err != nil {
 			return nil, err
 		}
+
+		// Static portion of gas
+		cost = operation.constantGas // For tracing
+		if !contract.UseGas(operation.constantGas) {
+			log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
+				"CallerAddress=", contract.CallerAddress.String(),
+				"caller=", contract.caller.Address().String())
+			return nil, ErrOutOfGas
+		}
+
 		var memorySize uint64
 		// 计算需要开辟的内存空间
-		if operation.MemorySize != nil {
-			memSize, overflow := operation.MemorySize(stack)
+		// Memory check needs to be done prior to evaluating the dynamic gas portion,
+		// to detect calculation overflows
+		if operation.memorySize != nil {
+			memSize, overflow := operation.memorySize(stack)
 			if overflow {
-				return nil, model.ErrGasUintOverflow
+				return nil, ErrGasUintOverflow
 			}
 			// memory is expanded in words of 32 bytes. Gas
 			// is also calculated in words.
-			if memorySize, overflow = math.SafeMul(common.ToWordSize(memSize), 32); overflow {
-				return nil, model.ErrGasUintOverflow
+			if memorySize, overflow = math.SafeMul(toWordSize(memSize), 32); overflow {
+				return nil, ErrGasUintOverflow
 			}
 		}
+		// Dynamic portion of gas
+		// consume the gas and return an error if not enough gas is available.
+		// cost is explicitly set so that the capture state defer method can get the proper cost
 		// 计算本操作具体需要消耗的Gas
-		evmParam := buildEVMParam(in.evm)
-		gasParam := buildGasParam(contract)
-		cost, err = operation.GasCost(in.gasTable, evmParam, gasParam, stack, mem, memorySize)
-		fillEVM(evmParam, in.evm)
+		if operation.dynamicGas != nil {
+			var dynamicCost uint64
+			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
+			cost += dynamicCost // total cost, for debug tracing
 
-		if err != nil || !contract.UseGas(cost) {
-			return nil, model.ErrOutOfGas
+			log15.Info("(in *Interpreter) Run", "op=", op.String(), "contract.Gas", contract.Gas, "dynamicCost", dynamicCost, "err", err)
+
+			if err != nil || !contract.UseGas(dynamicCost) {
+				log15.Error("Run:outOfGas", "op=", op.String(), "contract addr=", contract.self.Address().String(),
+					"CallerAddress=", contract.CallerAddress.String(),
+					"caller=", contract.caller.Address().String())
+				panic("Run:outOfGas:__line__:207")
+				return nil, ErrOutOfGas
+			}
 		}
 		if memorySize > 0 {
-			// 开辟内存
 			mem.Resize(memorySize)
 		}
 
 		if in.cfg.Debug {
-			in.cfg.Tracer.CaptureState(in.evm, pc, op, gasCopy, cost, mem, stack, returns, in.ReturnData, contract, in.evm.depth, err)
+			in.cfg.Tracer.CaptureState(in.evm, pc, op, gasCopy, cost, mem, stack, in.returnData, contract, in.evm.depth, err)
 			logged = true
 		}
 
+		log15.Info("operation.execute", "op=", op.String(), "contract addr=", contract.self.Address().String(),
+			"CallerAddress=", contract.CallerAddress.String(),
+			"caller=", contract.caller.Address().String())
+
 		// 执行具体的指令操作逻辑（合约执行的核心）
-		res, err = operation.Execute(&pc, in.evm, callContext)
+		res, err = operation.execute(&pc, in.evm, callContext)
 		// 如果本操作需要返回，则讲操作返回的结果最为合约执行的结果
-		if operation.Returns {
-			in.ReturnData = common.CopyBytes(res)
+		if operation.returns {
+			in.returnData = common.CopyBytes(res)
 		}
 
 		switch {
 		case err != nil:
 			return nil, err
-		case operation.Reverts:
+		case operation.reverts:
 			return res, model.ErrExecutionReverted
-		case operation.Halts:
+		case operation.halts:
 			return res, nil
-		case !operation.Jumps:
+		case !operation.jumps:
 			pc++
 		}
 	}
 	return nil, nil
+}
+
+// CanRun tells if the contract, passed as an argument, can be
+// run by the current interpreter.
+func (in *Interpreter) CanRun(code []byte) bool {
+	return true
 }
 
 // 从Contract构造参数传递给GasFunc逻辑使用
@@ -232,7 +263,7 @@ func buildGasParam(contract *Contract) *params.GasParam {
 func buildEVMParam(evm *EVM) *params.EVMParam {
 	return &params.EVMParam{
 		StateDB:     evm.StateDB,
-		CallGasTemp: evm.CallGasTemp,
+		CallGasTemp: evm.callGasTemp,
 		BlockNumber: evm.BlockNumber,
 	}
 }
@@ -240,14 +271,14 @@ func buildEVMParam(evm *EVM) *params.EVMParam {
 // 使用操作结果反向填充EVM中的参数
 // 之所以只设置CallGasTemp，是因为其它参数均为指针引用，参数中可以直接修改EVM中的状态
 func fillEVM(param *params.EVMParam, evm *EVM) {
-	evm.CallGasTemp = param.CallGasTemp
+	evm.callGasTemp = param.CallGasTemp
 }
 
 // callCtx contains the things that are per-call, such as stack and memory,
 // but not transients like pc and gas
 type callCtx struct {
-	memory   *mm.Memory
-	stack    *mm.Stack
-	rstack   *mm.ReturnStack
+	memory *Memory
+	stack  *Stack
+	//rstack   *ReturnStack
 	contract *Contract
 }

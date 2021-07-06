@@ -8,6 +8,8 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/types"
@@ -24,13 +26,13 @@ func ValidateSignatureValues(r, s *big.Int) bool {
 	return true
 }
 
-// Ecrecover 根据压缩消息和签名，返回未压缩的公钥信息
+// Ecrecover 根据压缩消息和签名，返回压缩的公钥信息
 func Ecrecover(hash, sig []byte) ([]byte, error) {
-	pub, err := SigToPub(hash, sig)
+	unpressedPub, err := ethCrypto.SigToPub(hash, sig)
 	if err != nil {
 		return nil, err
 	}
-	bytes := (*btcec.PublicKey)(pub).SerializeUncompressed()
+	bytes := (*btcec.PublicKey)(unpressedPub).SerializeCompressed()
 	return bytes, err
 }
 
@@ -78,4 +80,10 @@ func Keccak256Hash(data ...[]byte) (h common.Hash) {
 	}
 	d.Sum(h[:0])
 	return h
+}
+
+// CreateAddress2 creates an ethereum address given the address bytes, initial
+// contract code hash and a salt.
+func CreateAddress2(b common.Address, salt [32]byte, inithash []byte) common.Address {
+	return common.BytesToAddress(Keccak256([]byte{0xff}, b.Bytes(), salt[:], inithash))
 }
