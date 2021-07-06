@@ -6,14 +6,15 @@ package runtime
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/holiman/uint256"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/mm"
 )
 
 // Tracer 接口用来在合约执行过程中收集跟踪数据。
@@ -23,9 +24,9 @@ type Tracer interface {
 	// CaptureStart 开始记录
 	CaptureStart(from common.Address, to common.Address, call bool, input []byte, gas uint64, value uint64) error
 	// CaptureState 保存状态
-	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error
+	CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, rData []byte, contract *Contract, depth int, err error) error
 	// CaptureFault 保存错误
-	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error
+	CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error
 	// CaptureEnd 结束记录
 	CaptureEnd(output []byte, gasUsed uint64, t time.Duration, err error) error
 }
@@ -98,7 +99,7 @@ func (logger *JSONLogger) CaptureStart(from common.Address, to common.Address, c
 }
 
 // CaptureState 输出当前虚拟机状态
-func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, rData []byte, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, rData []byte, contract *Contract, depth int, err error) error {
 	log := StructLog{
 		Pc:         pc,
 		Op:         op,
@@ -111,7 +112,6 @@ func (logger *JSONLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost
 	}
 	log.Memory = formatMemory(memory.Data())
 	log.Stack = formatStack(stack.Data())
-	log.ReturnStack = rStack.Data()
 	log.ReturnData = rData
 	return logger.encoder.Encode(log)
 }
@@ -131,7 +131,7 @@ func formatMemory(data []byte) (res []string) {
 }
 
 //CaptureFault 目前实现为空
-func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *mm.Memory, stack *mm.Stack, rStack *mm.ReturnStack, contract *Contract, depth int, err error) error {
+func (logger *JSONLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error {
 	return nil
 }
 
@@ -148,4 +148,70 @@ func (logger *JSONLogger) CaptureEnd(output []byte, gasUsed uint64, t time.Durat
 		return logger.encoder.Encode(endLog{common.Bytes2Hex(output), int64(gasUsed), t, err.Error()})
 	}
 	return logger.encoder.Encode(endLog{common.Bytes2Hex(output), int64(gasUsed), t, ""})
+}
+
+type mdLogger struct {
+	out io.Writer
+	cfg *LogConfig
+}
+
+// NewMarkdownLogger creates a logger which outputs information in a format adapted
+// for human readability, and is also a valid markdown table
+func NewMarkdownLogger(cfg *LogConfig, writer io.Writer) *mdLogger {
+	l := &mdLogger{writer, cfg}
+	if l.cfg == nil {
+		l.cfg = &LogConfig{}
+	}
+	return l
+}
+
+func (t *mdLogger) CaptureStart(from common.Address, to common.Address, create bool, input []byte, gas uint64, value uint64) error {
+	if !create {
+		fmt.Fprintf(t.out, "From: `%v`\nTo: `%v`\nData: `0x%x`\nGas: `%d`\nValue `%v` wei\n",
+			from.String(), to.String(),
+			input, gas, value)
+	} else {
+		fmt.Fprintf(t.out, "From: `%v`\nCreate at: `%v`\nData: `0x%x`\nGas: `%d`\nValue `%v` wei\n",
+			from.String(), to.String(),
+			input, gas, value)
+	}
+
+	fmt.Fprintf(t.out, `
+|  Pc   |      Op     | Cost |   Stack   |   RStack  |  Refund |
+|-------|-------------|------|-----------|-----------|---------|
+`)
+	return nil
+}
+
+func (t *mdLogger) CaptureState(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, rData []byte, contract *Contract, depth int, err error) error {
+	fmt.Fprintf(t.out, "| %4d  | %10v  |  %3d |", pc, op, cost)
+
+	if !t.cfg.DisableStack {
+		// format stack
+		var a []string
+		for _, elem := range stack.data {
+			a = append(a, fmt.Sprintf("%v", elem.String()))
+		}
+		b := fmt.Sprintf("[%v]", strings.Join(a, ","))
+		fmt.Fprintf(t.out, "%10v |", b)
+	}
+	fmt.Fprintf(t.out, "%10v |", env.StateDB.GetRefund())
+	fmt.Fprintln(t.out, "")
+	if err != nil {
+		fmt.Fprintf(t.out, "Error: %v\n", err)
+	}
+	return nil
+}
+
+func (t *mdLogger) CaptureFault(env *EVM, pc uint64, op OpCode, gas, cost uint64, memory *Memory, stack *Stack, contract *Contract, depth int, err error) error {
+
+	fmt.Fprintf(t.out, "\nError: at pc=%d, op=%v: %v\n", pc, op, err)
+
+	return nil
+}
+
+func (t *mdLogger) CaptureEnd(output []byte, gasUsed uint64, tm time.Duration, err error) error {
+	fmt.Fprintf(t.out, "\nOutput: `0x%x`\nConsumed gas: `%d`\nError: `%v`\n",
+		output, gasUsed, err)
+	return nil
 }

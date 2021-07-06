@@ -7,6 +7,8 @@ package state
 import (
 	"sort"
 
+	"github.com/33cn/chain33/common/log/log15"
+
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
@@ -84,7 +86,6 @@ func (ver *Snapshot) getData() (kvSet []*types.KeyValue, logs []*types.ReceiptLo
 }
 
 type (
-
 	// 基础变更对象，用于封装默认操作
 	baseChange struct {
 	}
@@ -149,6 +150,7 @@ type (
 	addLogChange struct {
 		baseChange
 		txhash common.Hash
+		logs   []*types.ReceiptLog
 	}
 
 	// 合约生成sha3事件
@@ -298,7 +300,18 @@ func (ch addLogChange) revert(mdb *MemoryStateDB) {
 	} else {
 		mdb.logs[ch.txhash] = logs[:len(logs)-1]
 	}
+
 	mdb.logSize--
+	log15.Info("addLogChange::revert", "mdb.logSize", mdb.logSize)
+}
+
+func (ch addLogChange) getLog(mdb *MemoryStateDB) []*types.ReceiptLog {
+	cfg := mdb.api.GetConfig()
+	if !cfg.IsDappFork(mdb.blockHeight, "evm", evmtypes.ForkEVMState) {
+		return nil
+	}
+
+	return ch.logs
 }
 
 func (ch addPreimageChange) revert(mdb *MemoryStateDB) {

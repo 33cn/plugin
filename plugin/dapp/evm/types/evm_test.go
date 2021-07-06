@@ -104,5 +104,4 @@ func TestEvmType_CreateTx(t *testing.T) {
 			assert.EqualValues(t, address.ExecAddress(cfg.ExecName(test.Name)), tx.To)
 		}
 	}
-
 }
