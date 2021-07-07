@@ -8,17 +8,19 @@ import (
 	"context"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
 // EvmCreateTx 创建Evm合约接口
-func (c *Jrpc) EvmCreateTx(parm *evm.EvmContractCreateReq, result *interface{}) error {
+func (c *Jrpc) CreateDeployTx(parm *evm.EvmContractCreateReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
 
-	reply, err := c.cli.Create(context.Background(), *parm)
+	reply, err := c.cli.CreateDeployTx(context.Background(), *parm)
 	if err != nil {
 		return err
 	}
@@ -26,13 +28,13 @@ func (c *Jrpc) EvmCreateTx(parm *evm.EvmContractCreateReq, result *interface{}) 
 	return nil
 }
 
-// EvmCallTx 调用Evm合约接口
-func (c *Jrpc) EvmCallTx(parm *evm.EvmContractCallReq, result *interface{}) error {
+// CreateCallTx 创建调用EVM合约交易
+func (c *Jrpc) CreateCallTx(parm *evm.EvmContractCallReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
 
-	reply, err := c.cli.Call(context.Background(), *parm)
+	reply, err := c.cli.CreateCallTx(context.Background(), *parm)
 	if err != nil {
 		return err
 	}
@@ -40,32 +42,26 @@ func (c *Jrpc) EvmCallTx(parm *evm.EvmContractCallReq, result *interface{}) erro
 	return nil
 }
 
-// EvmTransferTx Evm转账接口
-func (c *Jrpc) EvmTransferTx(parm *evm.EvmContractTransferReq, result *interface{}) error {
+// CreateTransferOnlyTx 创建只进行evm内部转账的交易
+func (c *Jrpc) CreateTransferOnlyTx(parm *evm.EvmTransferOnlyReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
 
-	reply, err := c.cli.Transfer(context.Background(), *parm, false)
+	reply, err := c.cli.CreateTransferOnlyTx(context.Background(), *parm)
 	if err != nil {
 		return err
 	}
-
 	*result = hex.EncodeToString(reply.Data)
 	return nil
 }
 
-// EvmWithdrawTx Evm转账接口
-func (c *Jrpc) EvmWithdrawTx(parm *evm.EvmContractTransferReq, result *interface{}) error {
+// CalcNewContractAddr Evm部署合约的地址
+func (c *Jrpc) CalcNewContractAddr(parm *evm.EvmCalcNewContractAddrReq, result *interface{}) error {
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-
-	reply, err := c.cli.Transfer(context.Background(), *parm, true)
-	if err != nil {
-		return err
-	}
-
-	*result = hex.EncodeToString(reply.Data)
+	newContractAddr := address.GetExecAddress(parm.Caller + parm.Txhash)
+	*result = newContractAddr.String()
 	return nil
 }

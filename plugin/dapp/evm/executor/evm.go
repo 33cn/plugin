@@ -7,7 +7,6 @@ package executor
 import (
 	"bytes"
 	"math/big"
-
 	"os"
 
 	"reflect"
@@ -22,7 +21,7 @@ import (
 )
 
 var (
-	evmDebug = false
+	evmDebug = true
 
 	// EvmAddress 本合约地址
 	EvmAddress = ""
@@ -69,9 +68,21 @@ func NewEVMExecutor() *EVMExecutor {
 	exec := &EVMExecutor{}
 
 	exec.vmCfg = &runtime.Config{}
-	exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	//exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	exec.vmCfg.Tracer = runtime.NewMarkdownLogger(
+		&runtime.LogConfig{
+			DisableMemory:     false,
+			DisableStack:      false,
+			DisableStorage:    false,
+			DisableReturnData: false,
+			Debug:             true,
+			Limit:             0,
+		},
+		os.Stdout,
+	)
 
 	exec.SetChild(exec)
+	exec.SetExecutorType(types.LoadExecutorType(driverName))
 	return exec
 }
 
@@ -139,6 +150,11 @@ func (evm *EVMExecutor) CheckReceiptExecOk() bool {
 func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
 	cfg := evm.GetAPI().GetConfig()
 	return common.NewAddress(cfg, txHash)
+}
+
+// createContractAddress creates an ethereum address given the bytes and the nonce
+func (evm *EVMExecutor) createContractAddress(b common.Address, txHash []byte) common.Address {
+	return common.NewContractAddress(b, txHash)
 }
 
 // CheckTx 校验交易

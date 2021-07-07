@@ -145,6 +145,13 @@ chain33_SignAndSendTx() {
     fi
 
     local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"'"$expire"'"}]'
+    if [ -n "$5" ]; then
+        fee=$5
+        req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"'"$expire"'","fee":'$fee'}]'
+    else
+        req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"'"$expire"'"}]'
+    fi
+
     signedTx=$(curl -ksd "{$req}" "${MAIN_HTTP}" | jq -r ".result")
 
     if [ "$signedTx" != null ]; then

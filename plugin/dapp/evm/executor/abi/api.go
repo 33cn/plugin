@@ -1,15 +1,15 @@
 package abi
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"errors"
-
+	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/golang-collections/collections/stack"
 )
@@ -22,6 +22,7 @@ import (
 func Pack(param, abiData string, readOnly bool) (methodName string, packData []byte, err error) {
 	// 首先解析参数字符串，分析出方法名以及个参数取值
 	methodName, params, err := procFuncCall(param)
+
 	if err != nil {
 		return methodName, packData, err
 	}
@@ -69,11 +70,50 @@ func Pack(param, abiData string, readOnly bool) (methodName string, packData []b
 	return methodName, packData, err
 }
 
+func PackContructorPara(param, abiStr string) (packData []byte, err error) {
+	_, params, err := procFuncCall(param)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedAbi, err := JSON(strings.NewReader(abiStr))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "parse evm code error", err)
+		return
+	}
+
+	method := parsedAbi.Constructor
+
+	paramVals := []interface{}{}
+	if len(params) != 0 {
+		// 首先检查参数个数和ABI中定义的是否一致
+		if method.Inputs.LengthNonIndexed() != len(params) {
+			err = fmt.Errorf("function Params count error: %v", param)
+			return nil, err
+		}
+
+		for i, v := range method.Inputs.NonIndexed() {
+			paramVal, err := str2GoValue(v.Type, params[i])
+			if err != nil {
+				return nil, err
+			}
+			paramVals = append(paramVals, paramVal)
+		}
+	}
+	packData, err = parsedAbi.Constructor.Inputs.Pack(paramVals...)
+	if err != nil {
+		return nil, err
+	}
+	return packData, nil
+
+}
+
 // Unpack 将调用返回结果按照ABI的格式序列化为json
 // data 合约方法返回值
 // abiData 完整的ABI定义
-func Unpack(data []byte, methodName, abiData string) (output string, err error) {
+func Unpack(data []byte, methodName, abiData string) (output []*Param, err error) {
 	if len(data) == 0 {
+		log.Info("Unpack", "Data len", 0, "methodName", methodName)
 		return output, err
 	}
 	// 解析ABI数据结构，获取本次调用的方法对象
@@ -97,19 +137,20 @@ func Unpack(data []byte, methodName, abiData string) (output string, err error) 
 		return output, err
 	}
 
-	outputs := []*Param{}
+	output = []*Param{}
 
 	for i, v := range values {
 		arg := method.Outputs[i]
 		pval := &Param{Name: arg.Name, Type: arg.Type.String(), Value: v}
-		outputs = append(outputs, pval)
+		if arg.Type.String() == "address" {
+			pval.Value = v.(common.Hash160Address).ToAddress().String()
+			log.Info("Unpack address", "address", pval.Value)
+		}
+
+		output = append(output, pval)
 	}
 
-	jsondata, err := json.Marshal(outputs)
-	if err != nil {
-		return output, err
-	}
-	return string(jsondata), err
+	return
 }
 
 // Param 返回值参数结构定义
@@ -196,7 +237,37 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 		for idx, sub := range subs {
 			subVal, er := str2GoValue(*typ.Elem, sub)
 			if er != nil {
-				return res, er
+				//return res, er
+				subparams, err := procArrayItem(sub) //解析复合类型中的多个元素
+				if err != nil {
+					return res, er
+				}
+				fmt.Println("subparams len", len(subparams), "subparams", subparams)
+				//获取符合类型对应的参数类型(address,bytes)
+				abityps := strings.Split(typ.Elem.stringKind[1:len(typ.Elem.stringKind)-1], ",") //解析为[address, bytes]
+				fmt.Println("abityps", abityps)
+				//复合类型，继续解析参数
+
+				for i := 0; i < len(subparams); i++ {
+					tp, err := NewType(abityps[i], "", nil)
+					if err != nil {
+						fmt.Println("NewType", err.Error())
+						continue
+					}
+					fmt.Println("tp", tp.stringKind, "types", tp.T)
+					subVal, err = str2GoValue(tp, subparams[i]) //处理对应的元素
+					if err != nil {
+						fmt.Println("str2GoValue err ", err.Error())
+						continue
+					}
+
+					fmt.Println("subVal", subVal)
+					rval.Index(idx).Field(i).Set(reflect.ValueOf(subVal))
+
+				}
+
+				return rval.Interface(), nil
+
 			}
 			rval.Index(idx).Set(reflect.ValueOf(subVal))
 		}
