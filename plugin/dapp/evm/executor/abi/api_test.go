@@ -2,6 +2,7 @@ package abi
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -77,7 +78,10 @@ func TestABI_Unpack(t *testing.T) {
 
 		data, err := Unpack(common.FromHex(test.input), test.method, abiData)
 		assert.NoError(t, err)
-		assert.EqualValues(t, test.output, data)
+		jsondata, err := json.Marshal(data)
+		assert.NoError(t, err)
+		jsonStr := string(jsondata)
+		assert.EqualValues(t, test.output, jsonStr)
 	}
 }
 
