@@ -40,7 +40,6 @@ func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte,
 		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
 			//precompiles = PrecompiledContractsYoloV1
 		}
-		precompiles = PrecompiledContractsBerlin
 		if p := precompiles[contract.CodeAddr.ToHash160()]; p != nil {
 			ret, contract.Gas, err = RunPrecompiledContract(p, input, contract.Gas)
 			return
@@ -425,7 +424,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 			gas = 0
 		}
 	}
-	return ret, contract.Gas, err
+	return ret, gas, err
 }
 
 // Create 此方法提供合约外部创建入口；
