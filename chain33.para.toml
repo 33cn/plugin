@@ -194,6 +194,10 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.evm]
+#平行链evm合约ETH资产映射的合约和资产类型（symbol）
+ethMapFromExecutor="paracross"
+ethMapFromSymbol="coins.bty"
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
