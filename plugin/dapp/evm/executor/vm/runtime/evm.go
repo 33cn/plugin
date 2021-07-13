@@ -34,12 +34,7 @@ type (
 // 依据合约地址判断是否为预编译合约，如果不是，则全部通过解释器解释执行
 func run(evm *EVM, contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
 	if contract.CodeAddr != nil {
-		// 预编译合约以拜占庭分支为初始版本，后继如有分叉，需要在此处理
 		precompiles := PrecompiledContractsBerlin
-		//预编译分叉处理： chain33中目前只存在拜占庭和最新的黄皮书v1版本（兼容伊斯坦布尔版本）
-		if evm.cfg.IsDappFork(evm.StateDB.GetBlockHeight(), "evm", evmtypes.ForkEVMYoloV1) {
-			//precompiles = PrecompiledContractsYoloV1
-		}
 		if p := precompiles[contract.CodeAddr.ToHash160()]; p != nil {
 			ret, contract.Gas, err = RunPrecompiledContract(p, input, contract.Gas)
 			return
