@@ -19,7 +19,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/state"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
-	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 )
 
 // Exec 本合约执行逻辑
@@ -180,7 +179,13 @@ func (evm *EVMExecutor) CheckInit() {
 		return
 	}
 	//平行链
-	accountDB, _ := account.NewAccountDB(evm.GetAPI().GetConfig(), pt.ParaX, "coins.bty", evm.GetStateDB())
+	conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+	ethMapFromExecutor := conf.GStr("ethMapFromExecutor")
+	ethMapFromSymbol := conf.GStr("ethMapFromSymbol")
+	if "" == ethMapFromExecutor || "" == ethMapFromSymbol {
+		panic("Both ethMapFromExecutor and ethMapFromSymbol should be configured, " + "ethMapFromExecutor=" + ethMapFromExecutor + ", ethMapFromSymbol=" + ethMapFromSymbol)
+	}
+	accountDB, _ := account.NewAccountDB(evm.GetAPI().GetConfig(), ethMapFromExecutor, ethMapFromSymbol, evm.GetStateDB())
 	evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), accountDB, evm.GetHeight(), evm.GetAPI())
 }
 
