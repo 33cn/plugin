@@ -11,7 +11,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
-	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	token "github.com/33cn/plugin/plugin/dapp/token/types"
@@ -315,7 +314,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		Note:        string(transfer.Note),
 		ToAddr:      transfer.To,
 	}
-	adaptNullAssetExec(tr)
+	adaptNullAssetExec(a.api.GetConfig(), tr)
 	return a.mainAssetTransfer(tr, a.tx)
 }
 
@@ -332,7 +331,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 	if withdraw.Cointoken != "" {
 		tr.AssetExec = token.TokenX
 	}
-	adaptNullAssetExec(tr)
+	adaptNullAssetExec(a.api.GetConfig(), tr)
 	return a.mainAssetWithdraw(tr, withdrawTx)
 }
 
@@ -388,9 +387,9 @@ func (a *action) createAccount(cfg *types.Chain33Config, db db.KV, exec, symbol 
 	return account.NewAccountDB(cfg, exec, symbol, db)
 }
 
-func adaptNullAssetExec(transfer *pt.CrossAssetTransfer) {
+func adaptNullAssetExec(cfg *types.Chain33Config, transfer *pt.CrossAssetTransfer) {
 	if transfer.AssetSymbol == "" {
-		transfer.AssetExec = coins.CoinsX
+		transfer.AssetExec = cfg.GetCoinExec()
 		transfer.AssetSymbol = SymbolBty
 		return
 	}

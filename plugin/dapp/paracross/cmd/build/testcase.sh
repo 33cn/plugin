@@ -11,6 +11,7 @@ PARANAME="para"
 PARANAME_GAME="game"
 PARA_COIN_FROZEN="5.0000"
 MainLoopCheckForkHeight="60"
+COINSEXEC="coinsx"
 
 BLSPUB_E5="8920442cf306fccd11e7bde3cfffe183a138a941f471df0818edff5580b3ad7df42850a5cec15e09aef0fdd4489f7c12"
 BLSPUB_KS="a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
@@ -384,7 +385,7 @@ function para_cross_transfer_withdraw() {
     local times=200
     while true; do
         acc=$(${CLI} account balance -e paracross -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv | jq -r ".balance")
-        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty | jq -r ".balance")
+        acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol "${COINSEXEC}".bty | jq -r ".balance")
         echo "account balance is ${acc}, expect 9.3, para acct balance is ${acc_para},expect 0.7 "
         if [ "${acc}" != "9.3000" ] || [ "${acc_para}" != "0.7000" ]; then
             block_wait "${CLI}" 2
@@ -393,7 +394,7 @@ function para_cross_transfer_withdraw() {
                 echo "para_cross_transfer_withdraw failed"
                 ${CLI} tx query -s "$hash2"
                 ${PARA_CLI} tx query -s "$hash2"
-                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol coins.bty
+                ${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_exec paracross --asset_symbol "${COINSEXEC}".bty
                 exit 1
             fi
         else
@@ -536,7 +537,7 @@ function para_create_nodegroup_gamechain() {
 function para_cross_transfer_from_parachain() {
     echo "=========== # para cross transfer from parachain test ============="
 
-    balance=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.coins | jq -r ".balance")
+    balance=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game."${COINSEXEC}" | jq -r ".balance")
     if [ "${balance}" != "1000.0000" ]; then
         echo "para account 1BM2xhBk should be 1000, real is $balance"
         exit 1
@@ -553,25 +554,25 @@ function para_cross_transfer_from_parachain() {
     fi
 
     echo "========== #1. user.p.game chain transfer to main chain 300 user.p.game.coins.para, remain=0 ==========="
-    hash=$(${PARA_CLI5} send para cross_transfer -a 300 -e user.p.game.coins -s para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    hash=$(${PARA_CLI5} send para cross_transfer -a 300 -e user.p.game."${COINSEXEC}" -s para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${PARA_CLI5}" "${hash}"
     check_cross_transfer_game_balance "300.0000" "0.0000" "${hash}"
 
     echo "========== #2. main transfer 200 user.p.game.coins.para game chain asset to para chain, main remain=100, parachain=200 ===="
-    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 200 -e paracross -s user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 200 -e paracross -s user.p.game."${COINSEXEC}".para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     check_cross_transfer_para_balance "100.0000" "200.0000" "${hash}"
 
     echo "========== #3. withdraw game chain asset to main chain from para chain 50 user.p.game.coins.para,parachain=150,main=150 ===="
-    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 50 -e user.p.para.paracross -s paracross.user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    hash=$(${CLI} --paraName=user.p.para. send para cross_transfer -a 50 -e user.p.para.paracross -s paracross.user.p.game."${COINSEXEC}".para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     check_cross_transfer_para_balance "150.0000" "150.0000" "${hash}"
 
     echo "========== #4. withdraw game chain asset to game chain from main chain 50 user.p.game.coins.para,parachain=150,main=100,game=50 ======"
-    hash=$(${CLI} --paraName=user.p.game. send para cross_transfer -a 50 -e paracross -s user.p.game.coins.para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
+    hash=$(${CLI} --paraName=user.p.game. send para cross_transfer -a 50 -e paracross -s user.p.game."${COINSEXEC}".para -t 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -k 0x128de4afa7c061c00d854a1bca51b58e80a2c292583739e5aebf4c0f778959e1)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
     check_cross_transfer_game_balance "100.0000" "50.0000" "${hash}"
@@ -581,8 +582,8 @@ function check_cross_transfer_para_balance() {
     local times=200
     local hash="$3"
     while true; do
-        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
-        acc_para=$(${PARA_CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol paracross.user.p.game.coins.para -e paracross | jq -r ".balance")
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game."${COINSEXEC}".para -e paracross | jq -r ".balance")
+        acc_para=$(${PARA_CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol paracross.user.p.game."${COINSEXEC}".para -e paracross | jq -r ".balance")
         res=$(${CLI} para asset_txinfo -s "${hash}")
         echo "$res"
         succ=$(jq -r ".success" <<<"$res")
@@ -608,7 +609,7 @@ function check_cross_transfer_game_balance() {
     local times=200
     local hash="$3"
     while true; do
-        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game.coins.para -e paracross | jq -r ".balance")
+        acc=$(${CLI} asset balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu --asset_exec paracross --asset_symbol user.p.game."${COINSEXEC}".para -e paracross | jq -r ".balance")
         acc_para=$(${PARA_CLI5} account balance -a 1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu -e user.p.game.paracross | jq -r ".balance")
         res=$(${CLI} para asset_txinfo -s "${hash}")
         echo "$res"
@@ -1067,22 +1068,22 @@ function privacy_transfer_test() {
     block_wait "${1}" 2
 
     echo "#privacy pub2priv, to=14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-    ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e coins -s BTY -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
+    ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e "${COINSEXEC}" -s BTY -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     ${1} send privacy pub2priv -a 9 -p fcbb75f2b96b6d41f301f2d1abc853d697818427819f412f8e4b4e12cacc0814d2c3914b27bea9151b8968ed1732bd241c8788a332b295b731aee8d39a060388 -e token -s GD -k 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt token GD 9.0000
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt coins BTY 9.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt "${COINSEXEC}" BTY 9.0000
 
     echo "#privacy priv2priv, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e "${COINSEXEC}" -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${1} send privacy priv2priv -a 3 -p 5b0ff936ec2d2825a67a270e34d741d96bf6afe5d4b5692de0a1627f635fd0b3d7b14e44d3f8f7526030a7c59de482084161b441a5d66b483d80316e3b91482b -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 token GD 3.0000
-    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 coins BTY 3.0000
+    check_privacy_utxo "${1}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 "${COINSEXEC}" BTY 3.0000
 
     echo "#privacy priv2pub, to=1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"
-    ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e coins -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e "${COINSEXEC}" -s BTY -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${1} send privacy priv2pub -a 6 -t 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -f 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -e token -s GD -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt token GD 0.0000
-    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt coins BTY 0.0000
+    check_privacy_utxo "${1}" 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt "${COINSEXEC}" BTY 0.0000
 }
 
 function para_test() {

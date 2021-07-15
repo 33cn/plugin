@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package types;
+
+import "transaction.proto";
+
+option go_package = "types";
+
+// message for execs.coinsx
+message CoinsxAction {
+    oneof value {
+        AssetsTransfer       transfer       = 1;
+        AssetsWithdraw       withdraw       = 4;
+        AssetsGenesis        genesis        = 2;
+        AssetsTransferToExec transferToExec = 5;
+        CoinsConfig          config         = 6;
+    }
+    int32 ty = 3;
+}
+
+//kvmvcc statedb not support 0 value
+enum TransferFlag {
+    NONE = 0;
+    ENABLE  = 1;
+    DISABLE = 2;
+}
+
+
+message TransferFlagConfig {
+    TransferFlag  flag = 1;
+}
+
+
+message ManagerStatus {
+    TransferFlag    transferFlag = 1;
+    repeated string managerAccounts = 2;
+}
+
+message ReceiptManagerStatus {
+    ManagerStatus prev = 2;
+    ManagerStatus curr = 3;
+}
+
+enum AccountOp {
+    ADD = 0;
+    DEL = 1;
+}
+
+
+message ManagerAccountsConfig {
+    AccountOp op = 1;
+    string accounts = 2;
+}
+
+
+
+enum ConfigType {
+    INVALID  = 0;
+    TRANSFER = 1;
+    ACCOUNTS = 2;
+}
+
+message CoinsConfig {
+    ConfigType ty = 1;
+    oneof  value {
+        TransferFlagConfig transferFlag  = 2;
+        ManagerAccountsConfig   managerAccounts   = 3;
+    }
+}

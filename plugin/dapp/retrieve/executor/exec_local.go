@@ -105,7 +105,7 @@ func (c *Retrieve) ExecLocal_Perform(perf *rt.PerformRetrieve, tx *types.Transac
 	cfg := c.GetAPI().GetConfig()
 	if cfg.IsDappFork(c.GetHeight(), rt.RetrieveX, rt.ForkRetriveAssetX) {
 		if len(perf.Assets) == 0 {
-			perf.Assets = append(perf.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: cfg.GetCoinSymbol()})
+			perf.Assets = append(perf.Assets, &rt.AssetSymbol{Exec: cfg.GetCoinExec(), Symbol: cfg.GetCoinSymbol()})
 		}
 	}
 	for _, asset := range perf.Assets {

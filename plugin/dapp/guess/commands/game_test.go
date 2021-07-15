@@ -544,7 +544,7 @@ func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) 
 	v := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount, Note: []byte(""), To: to}}
 	transfer.Value = v
 	transfer.Ty = cty.CoinsActionTransfer
-	execer := []byte("coins")
+	execer := []byte(cfg.GetCoinExec())
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: to, Fee: fee}
 	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {
@@ -579,7 +579,7 @@ func sendTransferToExecTx(cfg *types.Chain33Config, fromKey, execName string, am
 	v := &cty.CoinsAction_TransferToExec{TransferToExec: &types.AssetsTransferToExec{Amount: amount, Note: []byte(""), ExecName: execName, To: execAddr}}
 	transfer.Value = v
 	transfer.Ty = cty.CoinsActionTransferToExec
-	execer := []byte("coins")
+	execer := []byte(cfg.GetCoinExec())
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: address.ExecAddress("guess"), Fee: fee}
 	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {

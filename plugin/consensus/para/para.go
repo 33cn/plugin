@@ -314,7 +314,7 @@ func (client *client) GetStartMainHash(height int64) []byte {
 func (client *client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
 	cfg := client.GetAPI().GetConfig()
-	tx.Execer = []byte(cfg.ExecName(cty.CoinsX))
+	tx.Execer = []byte(cfg.ExecName(cfg.GetCoinExec()))
 	tx.To = client.Cfg.Genesis
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}

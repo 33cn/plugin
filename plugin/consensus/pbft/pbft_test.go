@@ -130,7 +130,7 @@ func createReplyList(cfg *types.Chain33Config, account string) {
 		//tx := &types.Transaction{}
 		val := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: 10}}
 		action := &cty.CoinsAction{Value: val, Ty: cty.CoinsActionTransfer}
-		tx := &types.Transaction{Execer: []byte("coins"), Payload: types.Encode(action), Fee: 0}
+		tx := &types.Transaction{Execer: []byte(cfg.GetCoinExec()), Payload: types.Encode(action), Fee: 0}
 		tx.To = "14qViLJfdGaP4EeHnDyJbEGQysnCpwn1gZ"
 
 		tx.Nonce = random.Int63()
