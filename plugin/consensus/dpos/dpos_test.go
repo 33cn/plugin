@@ -585,7 +585,7 @@ func sendTransferTx(cfg *types.Chain33Config, fromKey, to string, amount int64) 
 	v := &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount, Note: []byte(""), To: to}}
 	transfer.Value = v
 	transfer.Ty = cty.CoinsActionTransfer
-	execer := []byte("coins")
+	execer := []byte(cfg.GetCoinExec())
 	tx = &types.Transaction{Execer: execer, Payload: types.Encode(transfer), To: to, Fee: fee}
 	tx, err := types.FormatTx(cfg, string(execer), tx)
 	if err != nil {

@@ -25,6 +25,8 @@ type Signatory struct {
 	Privkey string
 }
 
+const coinExec = "coins"
+
 // Echo echo
 func (*Signatory) Echo(in *string, out *interface{}) error {
 	if in == nil {
@@ -97,7 +99,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte("coins"),
+		Execer:  []byte(coinExec),
 		Payload: types.Encode(transfer),
 		To:      *in,
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),

@@ -177,10 +177,10 @@ enableStat=false
 enableMVCC=false
 
 [exec.sub.relay]
-genesis="1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
+genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
-superManager=["1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"]
+superManager=["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"]
 
 [exec.sub.token]
 saveTokenTxList=true
@@ -228,6 +228,9 @@ ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
 ForkRootHash=7200000
 [fork.sub.coins]
+Enable=0
+
+[fork.sub.coinsx]
 Enable=0
 
 [fork.sub.ticket]

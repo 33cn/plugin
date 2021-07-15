@@ -159,11 +159,12 @@ func (a *action) procChain33ToEth_lock(msgLock *x2eTy.Chain33ToEth) (*types.Rece
 
 	var accDB *account.DB
 	exec, symbol, _ := x2eTy.DivideDot(msgLock.IssuerDotSymbol)
-	if exec == "coins" {
-		accDB = account.NewCoinsAccount(a.api.GetConfig())
+	cfg := a.api.GetConfig()
+	if exec == cfg.GetCoinExec() {
+		accDB = account.NewCoinsAccount(cfg)
 		accDB.SetDB(a.db)
 	} else {
-		accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)
+		accDB, err = account.NewAccountDB(cfg, exec, strings.ToLower(symbol), a.db)
 		if err != nil {
 			return nil, errors.Wrap(err, "newAccountDB")
 		}
@@ -233,11 +234,12 @@ func (a *action) procEth2Chain33_burn(withdrawEth *x2eTy.Eth2Chain33) (*types.Re
 
 		var accDB *account.DB
 		exec, symbol, _ := x2eTy.DivideDot(withdrawEth.IssuerDotSymbol)
-		if exec == "coins" {
-			accDB = account.NewCoinsAccount(a.api.GetConfig())
+		cfg := a.api.GetConfig()
+		if exec == cfg.GetCoinExec() {
+			accDB = account.NewCoinsAccount(cfg)
 			accDB.SetDB(a.db)
 		} else {
-			accDB, err = account.NewAccountDB(a.api.GetConfig(), exec, strings.ToLower(symbol), a.db)
+			accDB, err = account.NewAccountDB(cfg, exec, strings.ToLower(symbol), a.db)
 			if err != nil {
 				return nil, errors.Wrap(err, "newAccountDB")
 			}
