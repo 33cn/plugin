@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	minBlockNum = 100 //min block number startHeight before lastHeight in mainchain
+	defaultWaitMinBlockNum = 100 //min block number startHeight before lastHeight in mainchain
 
 	defaultGenesisBlockTime int64 = 1514533390
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
@@ -73,6 +73,7 @@ type subConfig struct {
 	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
 	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64    `json:"startHeight,omitempty"`
+	WaitMainBlockNum        int64    `json:"waitMainBlockNum,omitempty"`
 	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
 	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
 	AuthAccount             string   `json:"authAccount,omitempty"`
@@ -107,6 +108,11 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 
 	if subcfg.WriteBlockSeconds <= 0 {
 		subcfg.WriteBlockSeconds = poolMainBlockSec
+	}
+
+	//WaitMainBlockNum 配置最小为1，因为genesis块是startHeight-1， wait=1和startHeight相等
+	if subcfg.WaitMainBlockNum <= 0 {
+		subcfg.WaitMainBlockNum = defaultWaitMinBlockNum
 	}
 
 	//最初平行链toml GenesisBlockTime=1514533394，但是未被使用，一直使用的内置的1514533390,最新版本开始适配cfg.GenesisBlockTime,并且
@@ -287,7 +293,7 @@ func (client *client) GetStartMainHash(height int64) []byte {
 
 	if height > 0 {
 		hint := time.NewTicker(time.Second * time.Duration(client.subCfg.WriteBlockSeconds))
-		for lastHeight < height+minBlockNum {
+		for lastHeight < height+client.subCfg.WaitMainBlockNum {
 			select {
 			case <-hint.C:
 				plog.Info("Waiting lastHeight increase......", "lastHeight", lastHeight, "startHeight", height)
@@ -300,7 +306,7 @@ func (client *client) GetStartMainHash(height int64) []byte {
 			}
 		}
 		hint.Stop()
-		plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", minBlockNum), "lastHeight", lastHeight, "startHeight", height)
+		plog.Info(fmt.Sprintf("lastHeight more than %d blocks after startHeight", client.subCfg.WaitMainBlockNum), "lastHeight", lastHeight, "startHeight", height)
 	}
 
 	hash, err := client.GetHashByHeightOnMainChain(height)
