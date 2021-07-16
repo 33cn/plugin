@@ -110,14 +110,14 @@ halvePeriod=1000
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
+#主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
+#waitMainBlockNum=100
 #打包时间间隔，单位秒
 writeBlockSeconds=2
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#创世区块时间，新部署链可以修改，缺省2017/12/29
-#genesisBlockTime=1514533390
 #主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,209186是bityuan主链对应高度， ycc或其他按实际修改
 mainBlockHashForkHeight=209186
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
