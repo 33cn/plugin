@@ -275,6 +275,8 @@ ForkRootHash=1
 [fork.sub.coins]
 Enable=0
 
+[fork.sub.coinsx]
+Enable=0
 
 [fork.sub.ticket]
 Enable=0

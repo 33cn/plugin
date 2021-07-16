@@ -219,6 +219,8 @@ ForkTicketFundAddrV1=-1 #fork6.3
 ForkRootHash =1
 [fork.sub.coins]
 Enable=0
+[fork.sub.coinsx]
+Enable=0
 [fork.sub.ticket]
 Enable=0
 ForkTicketId = 1600000

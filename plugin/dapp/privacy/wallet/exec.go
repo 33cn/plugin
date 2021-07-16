@@ -39,7 +39,7 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	//为空时增加自动设置
-	if req.GetAssetExec() == "coins" && req.GetTokenname() == "" {
+	if req.GetAssetExec() == cfg.GetCoinExec() && req.GetTokenname() == "" {
 		req.Tokenname = cfg.GetCoinSymbol()
 	}
 

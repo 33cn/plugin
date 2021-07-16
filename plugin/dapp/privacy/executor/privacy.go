@@ -270,7 +270,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 
 	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
 	cfg := p.GetAPI().GetConfig()
-	if !cfg.IsPara() && (assertExec == "" || assertExec == "coins") {
+	if !cfg.IsPara() && (assertExec == "" || assertExec == cfg.GetCoinExec()) {
 
 		totalOutput := int64(0)
 		for _, output := range output.GetKeyoutput() {
