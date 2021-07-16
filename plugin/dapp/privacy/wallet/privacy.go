@@ -652,7 +652,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	//需要燃烧的utxo
 	var utxoBurnedAmount int64
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
-	isMainetCoins := !cfg.IsPara() && (req.AssetExec == "coins")
+	isMainetCoins := !cfg.IsPara() && (req.AssetExec == cfg.GetCoinExec())
 	if isMainetCoins {
 		utxoBurnedAmount = privacytypes.PrivacyTxFee
 	}
@@ -1071,7 +1071,7 @@ func (policy *privacyPolicy) addDelPrivacyTxsFromBlock(tx *types.Transaction, in
 
 	assetExec, assetSymbol := action.GetAssetExecSymbol()
 	if assetExec == "" {
-		assetExec = "coins"
+		assetExec = policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec()
 	}
 
 	txInfo := &privacyTxInfo{

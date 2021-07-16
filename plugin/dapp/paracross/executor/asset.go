@@ -314,7 +314,7 @@ func (a *action) assetTransfer(transfer *types.AssetsTransfer) (*types.Receipt, 
 		Note:        string(transfer.Note),
 		ToAddr:      transfer.To,
 	}
-	adaptNullAssetExec(a.api.GetConfig(), tr)
+	adaptNullAssetExec(tr)
 	return a.mainAssetTransfer(tr, a.tx)
 }
 
@@ -331,7 +331,7 @@ func (a *action) assetWithdraw(withdraw *types.AssetsWithdraw, withdrawTx *types
 	if withdraw.Cointoken != "" {
 		tr.AssetExec = token.TokenX
 	}
-	adaptNullAssetExec(a.api.GetConfig(), tr)
+	adaptNullAssetExec(tr)
 	return a.mainAssetWithdraw(tr, withdrawTx)
 }
 
@@ -387,9 +387,12 @@ func (a *action) createAccount(cfg *types.Chain33Config, db db.KV, exec, symbol 
 	return account.NewAccountDB(cfg, exec, symbol, db)
 }
 
-func adaptNullAssetExec(cfg *types.Chain33Config, transfer *pt.CrossAssetTransfer) {
+//对于旧的assetTransfer,assetWithdraw资产转移接口，没有填AssetExec，这里只支持coins，如果主链是coinsx执行器，则旧接口会失败，需要用新接口。
+//新接口必须填AssetExec,主链和平行链从跨链交易资产参数上会保持一致，目的资产不依赖目标的toml配置文件
+//比如主链是coinsx 平行链也会铸造coinsx.bty资产，withdraw到主链也是coinsx
+func adaptNullAssetExec(transfer *pt.CrossAssetTransfer) {
 	if transfer.AssetSymbol == "" {
-		transfer.AssetExec = cfg.GetCoinExec()
+		transfer.AssetExec = "coins"
 		transfer.AssetSymbol = SymbolBty
 		return
 	}

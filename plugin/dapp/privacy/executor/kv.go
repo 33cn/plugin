@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/types"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 //计算隐私资产utxo的前缀, 和exec,token相关
 func calcUtxoAssetPrefix(exec, token string) string {
 	//只有coins资产的key不加exec前缀, 主要考虑是不加分叉兼容历史隐私交易
-	if exec == "" || exec == "coins" {
+	if exec == "" || exec == types.DefaultCoinsExec || exec == types.DefaultCoinsXExec {
 		return token
 	}
 	return exec + ":" + token

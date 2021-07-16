@@ -214,7 +214,7 @@ func (action *Action) RetrievePerformAssets(perfRet *rt.PerformRetrieve, default
 	cfg := action.api.GetConfig()
 	// 兼容原来的找回， 在不指定的情况下，找回主币
 	if len(perfRet.Assets) == 0 {
-		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: "coins", Symbol: cfg.GetCoinSymbol()})
+		perfRet.Assets = append(perfRet.Assets, &rt.AssetSymbol{Exec: cfg.GetCoinExec(), Symbol: cfg.GetCoinSymbol()})
 		//return nil, nil
 	}
 

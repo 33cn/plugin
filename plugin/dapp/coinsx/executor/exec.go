@@ -58,7 +58,7 @@ func (c *Coinsx) Exec_Withdraw(withdraw *types.AssetsWithdraw, tx *types.Transac
 	from := tx.From()
 	to := tx.GetRealToAddr()
 	if !checkTransferEnable(cfg, c.GetStateDB(), from, to) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "transfer is limited from=%s to=%s", from, to)
+		return nil, errors.Wrapf(types.ErrNotAllow, "withdraw is limited from=%s to=%s", from, to)
 	}
 	//to 是 execs 合约地址
 	if drivers.IsDriverAddress(tx.GetRealToAddr(), c.GetHeight()) || isExecAddrMatch(withdraw.ExecName, tx.GetRealToAddr()) {
