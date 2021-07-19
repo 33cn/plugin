@@ -21,7 +21,6 @@ import (
 const (
 	// PRIVACYDBVERSION 隐私交易数据库版本号
 	PRIVACYDBVERSION int64 = 1
-	COINSEXEC              = "coins"
 )
 
 func newStore(db db.DB, coinsExec string) *privacyStore {
@@ -557,7 +556,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 	}
 
 	if assetExec == "" {
-		assetExec = COINSEXEC
+		assetExec = store.coinsExec
 	}
 
 	//处理output
