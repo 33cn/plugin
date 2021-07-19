@@ -111,6 +111,7 @@ func (a *action) configTransfer(config *coinTy.TransferFlagConfig) (*types.Recei
 
 }
 
+//过滤重复地址
 func filterAddrs(addrs []string) []string {
 	f := make(map[string]bool)
 	var newAddrs []string
@@ -143,6 +144,7 @@ func (a *action) addAccounts(addrs []string) (*types.Receipt, error) {
 
 }
 
+//删除掉指定地址
 func filterByAddrs(curr, del []string) []string {
 	f := make(map[string]bool)
 	for _, k := range del {
