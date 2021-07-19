@@ -24,7 +24,7 @@ const (
 //计算隐私资产utxo的前缀, 和exec,token相关
 func calcUtxoAssetPrefix(exec, token string) string {
 	//只有coins资产的key不加exec前缀, 主要考虑是不加分叉兼容历史隐私交易
-	if exec == "" || exec == types.DefaultCoinsExec || exec == types.DefaultCoinsXExec {
+	if exec == "" || exec == types.DefaultCoinsExec {
 		return token
 	}
 	return exec + ":" + token
