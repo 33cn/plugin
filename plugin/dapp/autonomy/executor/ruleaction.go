@@ -256,11 +256,11 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 	cfg := a.api.GetConfig()
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.Vote {
-		case auty.VoteOption_APPROVE:
+		case auty.AutonomyVoteOption_APPROVE:
 			cur.VoteResult.ApproveVotes += vtCouts
-		case auty.VoteOption_OPPOSE:
+		case auty.AutonomyVoteOption_OPPOSE:
 			cur.VoteResult.OpposeVotes += vtCouts
-		case auty.VoteOption_QUIT:
+		case auty.AutonomyVoteOption_QUIT:
 			cur.VoteResult.QuitVotes += vtCouts
 		default:
 			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong vote value=%d", voteProb.Vote)

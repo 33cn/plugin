@@ -396,6 +396,7 @@ ForkUnfreezeIDX= 0
 
 [fork.sub.autonomy]
 Enable=0
+ForkAutonomyDelRule=0
 
 [fork.sub.jsvm]
 Enable=0

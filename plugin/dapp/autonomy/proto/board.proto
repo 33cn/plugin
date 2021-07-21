@@ -67,7 +67,7 @@ message VoteProposalBoard {
     //真正投票地址
     repeated string originAddr = 3;
     //代替approve，并增加了弃权选项
-    VoteOption voteOption      = 4;
+    AutonomyVoteOption voteOption      = 4;
 }
 
 message TerminateProposalBoard {

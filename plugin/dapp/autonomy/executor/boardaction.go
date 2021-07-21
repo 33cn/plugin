@@ -92,7 +92,7 @@ func filterPropBoard(boards []string) (map[string]struct{}, error) {
 	mpBd := make(map[string]struct{})
 	for _, board := range boards {
 		if err := address.CheckAddress(board); err != nil {
-			return nil, errors.Wrapf(types.ErrInvalidAddress, "addr", board)
+			return nil, errors.Wrapf(types.ErrInvalidAddress, "addr=%s", board)
 		}
 		// 提案board重复地址去重复
 		if _, ok := mpBd[board]; ok {
@@ -302,11 +302,11 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	//fork之后增加了弃权选项
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.VoteOption {
-		case auty.VoteOption_APPROVE:
+		case auty.AutonomyVoteOption_APPROVE:
 			cur.VoteResult.ApproveVotes += vtCouts
-		case auty.VoteOption_OPPOSE:
+		case auty.AutonomyVoteOption_OPPOSE:
 			cur.VoteResult.OpposeVotes += vtCouts
-		case auty.VoteOption_QUIT:
+		case auty.AutonomyVoteOption_QUIT:
 			cur.VoteResult.QuitVotes += vtCouts
 		default:
 			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.VoteOption)

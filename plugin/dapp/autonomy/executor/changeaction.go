@@ -217,11 +217,11 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.Vote {
-		case auty.VoteOption_APPROVE:
+		case auty.AutonomyVoteOption_APPROVE:
 			cur.VoteResult.ApproveVotes++
-		case auty.VoteOption_OPPOSE:
+		case auty.AutonomyVoteOption_OPPOSE:
 			cur.VoteResult.OpposeVotes++
-		case auty.VoteOption_QUIT:
+		case auty.AutonomyVoteOption_QUIT:
 			cur.VoteResult.QuitVotes++
 		default:
 			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.Vote)
@@ -365,7 +365,7 @@ func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*au
 
 	//只允许替换，不允许恢复操作
 	if !change[0].Cancel || len(change[0].Addr) <= 0 {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "cancel=%d not allow to addr=%s", change[0].Cancel, change[0].Addr)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "cancel=false not allow to addr=%s", change[0].Addr)
 	}
 
 	mpBd := make(map[string]struct{})

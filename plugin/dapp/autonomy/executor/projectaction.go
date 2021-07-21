@@ -222,11 +222,11 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	// 更新投票结果
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.Vote {
-		case auty.VoteOption_APPROVE:
+		case auty.AutonomyVoteOption_APPROVE:
 			cur.BoardVoteRes.ApproveVotes++
-		case auty.VoteOption_OPPOSE:
+		case auty.AutonomyVoteOption_OPPOSE:
 			cur.BoardVoteRes.OpposeVotes++
-		case auty.VoteOption_QUIT:
+		case auty.AutonomyVoteOption_QUIT:
 			cur.BoardVoteRes.QuitVotes++
 		default:
 			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.Vote)

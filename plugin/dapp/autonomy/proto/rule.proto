@@ -44,7 +44,7 @@ message VoteProposalRule {
     string   proposalID        = 1;
     bool     approve           = 2;
     repeated string originAddr = 3;
-    VoteOption vote            = 4;
+    AutonomyVoteOption vote            = 4;
 }
 
 message TerminateProposalRule {

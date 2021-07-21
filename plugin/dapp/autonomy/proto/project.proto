@@ -59,7 +59,7 @@ message RevokeProposalProject {
 message VoteProposalProject {
     string proposalID = 1;
     bool   approve    = 2;
-    VoteOption vote   = 3;
+    AutonomyVoteOption vote   = 3;
 }
 
 message PubVoteProposalProject {
