@@ -32,7 +32,7 @@ func (t *trade) Upgrade() (*types.LocalDBSet, error) {
 	localDB := t.GetLocalDB()
 	// 获得默认的coins symbol， 更新数据时用
 	coinSymbol := t.GetAPI().GetConfig().GetCoinSymbol()
-	kvs, err := UpgradeLocalDBV2(localDB, coinSymbol)
+	kvs, err := UpgradeLocalDBV2(localDB, t.GetAPI().GetConfig().GetCoinExec(), coinSymbol)
 	if err != nil {
 		tradelog.Error("Upgrade failed", "err", err)
 		return nil, errors.Cause(err)
@@ -42,7 +42,7 @@ func (t *trade) Upgrade() (*types.LocalDBSet, error) {
 
 // UpgradeLocalDBV2 trade 本地数据库升级
 // from 1 to 2
-func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) (*types.LocalDBSet, error) {
+func UpgradeLocalDBV2(localDB dbm.KVDB, coinExec, coinSymbol string) (*types.LocalDBSet, error) {
 	toVersion := 2
 	tradelog.Info("UpgradeLocalDBV2 upgrade start", "to_version", toVersion)
 	version, err := getVersion(localDB)
@@ -55,7 +55,7 @@ func UpgradeLocalDBV2(localDB dbm.KVDB, coinSymbol string) (*types.LocalDBSet, e
 	}
 
 	var kvset types.LocalDBSet
-	kvs, err := UpgradeLocalDBPart2(localDB, coinSymbol)
+	kvs, err := UpgradeLocalDBPart2(localDB, coinExec, coinSymbol)
 	if err != nil {
 		return nil, errors.Wrap(err, "UpgradeLocalDBV2 UpgradeLocalDBPart2")
 	}
@@ -138,11 +138,11 @@ func delOnePrefix(localDB dbm.KVDB, prefix string) ([]*types.KeyValue, error) {
 // UpgradeLocalDBPart2 升级order
 // order 从 v1 升级到 v2
 // 通过tableV1 删除， 通过tableV2 添加, 无需通过每个区块扫描对应的交易
-func UpgradeLocalDBPart2(kvdb dbm.KVDB, coinSymbol string) ([]*types.KeyValue, error) {
-	return upgradeOrder(kvdb, coinSymbol)
+func UpgradeLocalDBPart2(kvdb dbm.KVDB, coinExec, coinSymbol string) ([]*types.KeyValue, error) {
+	return upgradeOrder(kvdb, coinExec, coinSymbol)
 }
 
-func upgradeOrder(kvdb dbm.KVDB, coinSymbol string) ([]*types.KeyValue, error) {
+func upgradeOrder(kvdb dbm.KVDB, coinExec, coinSymbol string) ([]*types.KeyValue, error) {
 	tab2 := NewOrderTableV2(kvdb)
 	tab := NewOrderTable(kvdb)
 	q1 := tab.GetQuery(kvdb)
@@ -164,7 +164,7 @@ func upgradeOrder(kvdb dbm.KVDB, coinSymbol string) ([]*types.KeyValue, error) {
 		}
 
 		o2 := types.Clone(o1).(*pty.LocalOrder)
-		upgradeLocalOrder(o2, coinSymbol)
+		upgradeLocalOrder(o2, coinExec, coinSymbol)
 		err = tab2.Add(o2)
 		if err != nil {
 			return nil, errors.Wrap(err, "upgradeOrder add to order v2 table")
@@ -200,12 +200,12 @@ func upgradeOrder(kvdb dbm.KVDB, coinSymbol string) ([]*types.KeyValue, error) {
 // upgradeLocalOrder 处理两个fork前的升级数据
 // 1. 支持任意资产
 // 2. 支持任意资产定价
-func upgradeLocalOrder(order *pty.LocalOrder, coinSymbol string) {
+func upgradeLocalOrder(order *pty.LocalOrder, coinExec, coinSymbol string) {
 	if order.AssetExec == "" {
 		order.AssetExec = defaultAssetExec
 	}
 	if order.PriceExec == "" {
-		order.PriceExec = defaultPriceExec
+		order.PriceExec = coinExec
 		order.PriceSymbol = coinSymbol
 	}
 }
