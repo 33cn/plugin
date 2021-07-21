@@ -23,6 +23,7 @@ import (
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -195,43 +196,43 @@ func TestPropBoard(t *testing.T) {
 
 	opts := []*auty.ProposalBoard{
 		{ // ErrRepeatAddr
-			Update:           true,
+			BoardUpdate:      auty.BoardUpdate_ADD,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrRepeatAddr
-			Update:           true,
+			BoardUpdate:      auty.BoardUpdate_ADD,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			Update:           true,
+			BoardUpdate:      auty.BoardUpdate_ADD,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			Update:           true,
+			BoardUpdate:      auty.BoardUpdate_ADD,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 
 		{ // ErrRepeatAddr
-			Update:           false,
+			BoardUpdate:      auty.BoardUpdate_WHOLE,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			Update:           false,
+			BoardUpdate:      auty.BoardUpdate_WHOLE,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			Update:           false,
+			BoardUpdate:      auty.BoardUpdate_WHOLE,
 			Boards:           boards,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -256,7 +257,8 @@ func TestPropBoard(t *testing.T) {
 		pbtx, err = signTx(pbtx, PrivKeyA)
 		assert.NoError(t, err)
 		_, err = exec.Exec(pbtx, i)
-		assert.Equal(t, err, result[i])
+		assert.Equal(t, errors.Cause(err), result[i])
+
 	}
 }
 
@@ -290,6 +292,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 		Month:            7,
 		Day:              10,
 		Boards:           boards,
+		BoardUpdate:      auty.BoardUpdate_WHOLE,
 		StartBlockHeight: env.blockHeight + 5,
 		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
@@ -423,19 +426,19 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	// 4人参与投票，3人赞成票，1人反对票
 	type record struct {
 		priv   string
-		appr   bool
+		vote   auty.AutonomyVoteOption
 		origin []string
 	}
 	records := []record{
-		{priv: PrivKeyA, appr: false},
-		{priv: PrivKey1, appr: true, origin: []string{AddrB, AddrC, AddrD}},
+		{priv: PrivKeyA, vote: auty.AutonomyVoteOption_OPPOSE},
+		{priv: PrivKey1, vote: auty.AutonomyVoteOption_APPROVE, origin: []string{AddrB, AddrC, AddrD}},
 	}
 	InitMinerAddr(stateDB, []string{AddrB, AddrC, AddrD}, Addr1)
 
 	for i, record := range records {
 		opt := &auty.VoteProposalBoard{
 			ProposalID: proposalID,
-			Approve:    record.appr,
+			VoteOption: record.vote,
 			OriginAddr: record.origin,
 		}
 		tx, err := voteProposalBoardTx(opt)
