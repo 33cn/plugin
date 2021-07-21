@@ -74,7 +74,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
 
-    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' "${1}"
+    sed -i $xsedfix 's/^genesis="12qyocayNF7Lv6C9qW4avxs2E7.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' "${1}"
     # shellcheck disable=SC1004
     sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
                                                         "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
