@@ -62,7 +62,7 @@ func createTransferFlagTx(cmd *cobra.Command, args []string) {
 
 	config := &coinsTy.CoinsConfig{}
 	config.Ty = coinsTy.ConfigType_TRANSFER
-	config.Value = &coinsTy.CoinsConfig_TransferFlag{&coinsTy.TransferFlagConfig{Flag: coinsTy.TransferFlag(flag)}}
+	config.Value = &coinsTy.CoinsConfig_TransferFlag{TransferFlag: &coinsTy.TransferFlagConfig{Flag: coinsTy.TransferFlag(flag)}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, coinsTy.CoinsxX),
@@ -101,7 +101,7 @@ func createManageAccountsTx(cmd *cobra.Command, args []string) {
 	config := &coinsTy.CoinsConfig{}
 	config.Ty = coinsTy.ConfigType_ACCOUNTS
 	config.Value = &coinsTy.CoinsConfig_ManagerAccounts{
-		&coinsTy.ManagerAccountsConfig{
+		ManagerAccounts: &coinsTy.ManagerAccountsConfig{
 			Op:       coinsTy.AccountOp(op),
 			Accounts: accounts,
 		},
