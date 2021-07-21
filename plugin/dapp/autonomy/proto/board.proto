@@ -25,6 +25,16 @@ message AutonomyProposalBoard {
     string proposalID = 9;
 }
 
+enum BoardUpdate {
+    INV = 0;
+    //新增
+    ADD = 1;
+    //剔除
+    DEL = 2;
+    //整体替换
+    WHOLE = 3;
+}
+
 // action
 message ProposalBoard {
     // 提案时间
@@ -41,6 +51,10 @@ message ProposalBoard {
     int64 startBlockHeight   = 6; // 提案开始投票高度
     int64 endBlockHeight     = 7; // 提案结束投票高度
     int64 realEndBlockHeight = 8; // 实际提案结束投票高度
+
+    //代替update,并扩展
+    BoardUpdate boardUpdate = 9;
+
 }
 
 message RevokeProposalBoard {
@@ -50,7 +64,10 @@ message RevokeProposalBoard {
 message VoteProposalBoard {
     string   proposalID        = 1;
     bool     approve           = 2;
+    //真正投票地址
     repeated string originAddr = 3;
+    //代替approve，并增加了弃权选项
+    VoteOption voteOption      = 4;
 }
 
 message TerminateProposalBoard {

@@ -54,6 +54,7 @@ message RevokeProposalChange {
 message VoteProposalChange {
     string proposalID = 1;
     bool   approve    = 2;
+    VoteOption vote   = 3;
 }
 
 message TerminateProposalChange {

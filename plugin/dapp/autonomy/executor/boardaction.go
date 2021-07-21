@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/common/address"
 	ticket "github.com/33cn/plugin/plugin/dapp/ticket/executor"
@@ -51,6 +52,57 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 		a.GetBlockTime(), a.GetHeight(), index, dapp.ExecAddress(string(tx.Execer))}
 }
 
+func (a *action) getPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, error) {
+	mpBd, err := filterPropBoard(prob.Boards)
+	if err != nil {
+		return nil, err
+	}
+
+	switch prob.BoardUpdate {
+	case auty.BoardUpdate_WHOLE:
+		return &auty.ActiveBoard{Boards: prob.Boards}, nil
+	case auty.BoardUpdate_ADD:
+		return a.addPropBoard(prob, mpBd)
+	case auty.BoardUpdate_DEL:
+		return a.delPropBoard(prob, mpBd)
+	default:
+		return nil, errors.Wrapf(types.ErrInvalidParam, "board update param=%d", prob.BoardUpdate)
+	}
+
+}
+
+func (a *action) getOldPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, error) {
+	mpBd, err := filterPropBoard(prob.Boards)
+	if err != nil {
+		return nil, err
+	}
+
+	//replace all
+	if !prob.Update {
+		return &auty.ActiveBoard{
+			Boards: prob.Boards,
+		}, nil
+	}
+
+	// only add member
+	return a.addPropBoard(prob, mpBd)
+}
+
+func filterPropBoard(boards []string) (map[string]struct{}, error) {
+	mpBd := make(map[string]struct{})
+	for _, board := range boards {
+		if err := address.CheckAddress(board); err != nil {
+			return nil, errors.Wrapf(types.ErrInvalidAddress, "addr", board)
+		}
+		// 提案board重复地址去重复
+		if _, ok := mpBd[board]; ok {
+			return nil, errors.Wrapf(auty.ErrRepeatAddr, "propBoard addr=%s repeated", board)
+		}
+		mpBd[board] = struct{}{}
+	}
+	return mpBd, nil
+}
+
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
@@ -63,48 +115,13 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, auty.ErrBoardNumber
 	}
 
-	mpBd := make(map[string]struct{})
-	for _, board := range prob.Boards {
-		if err := address.CheckAddress(board); err != nil {
-			alog.Error("propBoard ", "addr", board, "check toAddr error", err)
-			return nil, types.ErrInvalidAddress
-		}
-		// 提案board重复地址去重复
-		if _, ok := mpBd[board]; ok {
-			err := auty.ErrRepeatAddr
-			alog.Error("propBoard ", "addr", board, "propBoard have repeat addr ", err)
-			return nil, err
-		}
-		mpBd[board] = struct{}{}
-	}
-
 	var act *auty.ActiveBoard
 	var err error
-	if prob.Update {
-		act, err = a.getActiveBoard()
-		if err != nil {
-			alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
-			return nil, err
-		}
-		for _, board := range act.Boards {
-			if _, ok := mpBd[board]; ok {
-				err := auty.ErrRepeatAddr
-				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in boards", err)
-				return nil, err
-			}
-		}
-		for _, board := range act.Revboards {
-			if _, ok := mpBd[board]; ok {
-				err := auty.ErrRepeatAddr
-				alog.Error("propBoard ", "addr", board, "propBoard update have repeat addr in revboards ", err)
-				return nil, err
-			}
-		}
-		act.Boards = append(act.Boards, prob.Boards...)
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		act, err = a.getPropBoard(prob)
 	} else {
-		act = &auty.ActiveBoard{
-			Boards: prob.Boards,
-		}
+		act, err = a.getOldPropBoard(prob)
 	}
 
 	if len(act.Boards) > maxBoards || len(act.Boards) < minBoards {
@@ -280,10 +297,27 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
-	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes += vtCouts
+
+	cfg := a.api.GetConfig()
+	//fork之后增加了弃权选项
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		switch voteProb.VoteOption {
+		case auty.VoteOption_APPROVE:
+			cur.VoteResult.ApproveVotes += vtCouts
+		case auty.VoteOption_OPPOSE:
+			cur.VoteResult.OpposeVotes += vtCouts
+		case auty.VoteOption_QUIT:
+			cur.VoteResult.QuitVotes += vtCouts
+		default:
+			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.VoteOption)
+
+		}
 	} else {
-		cur.VoteResult.OpposeVotes += vtCouts
+		if voteProb.Approve {
+			cur.VoteResult.ApproveVotes += vtCouts
+		} else {
+			cur.VoteResult.OpposeVotes += vtCouts
+		}
 	}
 
 	var logs []*types.ReceiptLog
@@ -300,12 +334,20 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 		kv = append(kv, receipt.KV...)
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
-		cur.PropBoard.RealEndBlockHeight = a.height
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio) {
+			cur.VoteResult.Pass = true
+			cur.PropBoard.RealEndBlockHeight = a.height
+		}
+	} else {
+		if cur.VoteResult.TotalVotes != 0 &&
+			cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropBoard.RealEndBlockHeight = a.height
+		}
 	}
 
 	key := propBoardID(voteProb.ProposalID)
@@ -320,8 +362,14 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		if !cur.PropBoard.Update { // 非update才进行高度重写
-			cur.Board.StartHeight = a.height
+		if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_WHOLE {
+				cur.Board.StartHeight = a.height
+			}
+		} else {
+			if !cur.PropBoard.Update { // 非update才进行高度重写
+				cur.Board.StartHeight = a.height
+			}
 		}
 		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
@@ -334,6 +382,26 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	logs = append(logs, receiptLog)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
+}
+
+//统计参与率的时候，计算弃权票，但是统计赞成率的时候，忽略弃权票。比如10票，4票赞成，3票反对，2票弃权，那么参与率是 90%， 赞成 4/7 反对 3/7
+func isApproved(totalVotes, approveVotes, opposeVotes, quitVotes, attendRation, approveRatio int32) bool {
+	if attendRation <= 0 {
+		attendRation = pubAttendRatio
+	}
+	if approveRatio <= 0 {
+		approveRatio = pubApproveRatio
+	}
+	//参与率计算弃权票
+	attendVotes := approveVotes + opposeVotes + quitVotes
+	//赞成率，忽略弃权票
+	validVotes := approveVotes + opposeVotes
+	if totalVotes != 0 && attendVotes != 0 &&
+		attendVotes*100 > attendRation*totalVotes &&
+		approveVotes*100 > approveRatio*validVotes {
+		return true
+	}
+	return false
 }
 
 func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.Receipt, error) {
@@ -371,11 +439,16 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		cur.VoteResult.Pass = isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio)
 	} else {
-		cur.VoteResult.Pass = false
+		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	}
 	cur.PropBoard.RealEndBlockHeight = a.height
 
@@ -399,8 +472,14 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
-		if !cur.PropBoard.Update { // 非update才进行高度重写
-			cur.Board.StartHeight = a.height
+		if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_WHOLE {
+				cur.Board.StartHeight = a.height
+			}
+		} else {
+			if !cur.PropBoard.Update { // 非update才进行高度重写
+				cur.Board.StartHeight = a.height
+			}
 		}
 		kv = append(kv, &types.KeyValue{Key: activeBoardID(), Value: types.Encode(cur.Board)})
 	}
@@ -507,6 +586,7 @@ func (a *action) getProposalBoard(ID string) (*auty.AutonomyProposalBoard, error
 }
 
 func (a *action) getActiveRule() (*auty.RuleConfig, error) {
+	cfg := a.api.GetConfig()
 	// 获取当前生效提案规则,并且将不修改的规则补齐
 	rule := &auty.RuleConfig{}
 	value, err := a.db.Get(activeRuleID())
@@ -516,12 +596,28 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+		//在fork之前可能有修改了规则，但是这两个值没有修改到
+		if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+			if rule.PubApproveRatio <= 0 {
+				rule.PubApproveRatio = pubApproveRatio
+			}
+			if rule.PubAttendRatio <= 0 {
+				rule.PubAttendRatio = pubAttendRatio
+			}
+		}
+
 	} else { // 载入系统默认值
 		rule.BoardApproveRatio = boardApproveRatio
 		rule.PubOpposeRatio = pubOpposeRatio
 		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
 		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
 		rule.PublicPeriod = publicPeriod
+
+		if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+			rule.PubAttendRatio = pubAttendRatio
+			rule.PubApproveRatio = pubApproveRatio
+		}
+
 	}
 	return rule, nil
 }
@@ -548,6 +644,77 @@ func (a *action) checkVotesRecord(addrs []string, key []byte) (*auty.VotesRecord
 		}
 	}
 	return &votes, nil
+}
+
+//新增addr场景，任一probAddr在当前board里即返回true
+func checkAddrInBoard(act *auty.ActiveBoard, probAddrs map[string]struct{}) bool {
+	for _, board := range act.Boards {
+		if _, ok := probAddrs[board]; ok {
+			alog.Info("propBoard repeated addr in boards", "addr", board)
+			return true
+		}
+	}
+	for _, board := range act.Revboards {
+		if _, ok := probAddrs[board]; ok {
+			alog.Info("propBoard repeated addr in revboards", "addr", board)
+			return true
+		}
+	}
+	return false
+}
+
+func (a *action) addPropBoard(prob *auty.ProposalBoard, mpBd map[string]struct{}) (*auty.ActiveBoard, error) {
+	// only add member
+	act, err := a.getActiveBoard()
+	if err != nil {
+		alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
+		return nil, err
+	}
+	if checkAddrInBoard(act, mpBd) {
+		return nil, errors.Wrap(auty.ErrRepeatAddr, "repeated addr in current boards")
+	}
+
+	act.Boards = append(act.Boards, prob.Boards...)
+	return act, nil
+}
+
+//删除addr场景，若任一proposal addr不存在 则返回true,
+func checkAddrNotInBoard(act *auty.ActiveBoard, prob *auty.ProposalBoard) error {
+	actBoards := make(map[string]bool)
+	for _, board := range act.Boards {
+		actBoards[board] = true
+	}
+
+	for _, addr := range prob.Boards {
+		if !actBoards[addr] {
+			return errors.Wrapf(types.ErrNotFound, "addr=%s not in boards", addr)
+		}
+	}
+
+	return nil
+}
+
+//这里只考虑Board，不考虑revBoard
+func (a *action) delPropBoard(prob *auty.ProposalBoard, mpBd map[string]struct{}) (*auty.ActiveBoard, error) {
+	act, err := a.getActiveBoard()
+	if err != nil {
+		alog.Error("propBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
+		return nil, err
+	}
+	err = checkAddrNotInBoard(act, prob)
+	if err != nil {
+		return nil, err
+	}
+
+	var newBoard []string
+	for _, board := range act.Boards {
+		if _, ok := mpBd[board]; !ok {
+			newBoard = append(newBoard, board)
+		}
+	}
+
+	act.Boards = newBoard
+	return act, nil
 }
 
 // getReceiptLog 根据提案信息获取log
