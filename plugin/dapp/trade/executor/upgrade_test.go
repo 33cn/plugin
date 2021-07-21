@@ -77,7 +77,7 @@ func Test_Upgrade(t *testing.T) {
 }
 
 func callUpgradeLocalDBV2(localdb dbm.KVDB) (*types.LocalDBSet, error) {
-	return UpgradeLocalDBV2(localdb, "bty")
+	return UpgradeLocalDBV2(localdb, "coins", "bty")
 }
 
 // 测试更新后是否删除完全， asset 设置

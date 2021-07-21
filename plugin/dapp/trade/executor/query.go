@@ -93,7 +93,7 @@ func fmtReply(cfg *types.Chain33Config, order *pty.LocalOrder) *pty.ReplyTradeOr
 	priceExec := order.PriceExec
 	priceSymbol := order.PriceSymbol
 	if priceExec == "" {
-		priceExec = defaultPriceExec
+		priceExec = cfg.GetCoinExec()
 		priceSymbol = cfg.GetCoinSymbol()
 	}
 
