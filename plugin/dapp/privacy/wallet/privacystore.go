@@ -23,12 +23,13 @@ const (
 	PRIVACYDBVERSION int64 = 1
 )
 
-func newStore(db db.DB) *privacyStore {
-	return &privacyStore{Store: wcom.NewStore(db)}
+func newStore(db db.DB, coinsExec string) *privacyStore {
+	return &privacyStore{Store: wcom.NewStore(db), coinsExec: coinsExec}
 }
 
 // privacyStore 隐私交易数据库存储操作类
 type privacyStore struct {
+	coinsExec string
 	*wcom.Store
 }
 
@@ -256,7 +257,7 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 			return nil, types.ErrUnmarshal
 		}
 		txDetail.Txhash = txDetail.GetTx().Hash()
-		if txDetail.GetTx().IsWithdraw() {
+		if txDetail.GetTx().IsWithdraw(store.coinsExec) {
 			//swap from and to
 			txDetail.Fromaddr, txDetail.Tx.To = txDetail.Tx.To, txDetail.Fromaddr
 		}
