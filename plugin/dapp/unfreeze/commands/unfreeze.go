@@ -67,7 +67,7 @@ func createFlag(cmd *cobra.Command) *cobra.Command {
 }
 
 func checkAmount(amount float64) error {
-	if amount < 0 || amount > float64(types.MaxCoin/types.Coin) {
+	if amount < 0 || amount > float64(types.MaxCoin) {
 		return types.ErrAmount
 	}
 	return nil

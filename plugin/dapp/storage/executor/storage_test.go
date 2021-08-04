@@ -67,7 +67,7 @@ func TestStorage(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(oty.StorageX, cfg, nil)
 	cfg.RegisterDappFork(oty.StorageX, oty.ForkStorageLocalDB, 0)
-	total := 100 * types.Coin
+	total := 100 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,

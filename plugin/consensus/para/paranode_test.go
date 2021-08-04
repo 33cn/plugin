@@ -26,23 +26,23 @@ func TestParaNode(t *testing.T) {
 	genesisKey := para.Main.GetGenesisKey()
 	block := para.Main.GetBlock(0)
 	acc := para.Main.GetAccount(block.StateHash, genesis)
-	assert.Equal(t, acc.Balance, 100000000*types.Coin)
+	assert.Equal(t, acc.Balance, 100000000*types.DefaultCoinPrecision)
 
 	//super acc
-	tx := util.CreateCoinsTx(cfg, genesisKey, para.Main.GetHotAddress(), 10*types.Coin)
+	tx := util.CreateCoinsTx(cfg, genesisKey, para.Main.GetHotAddress(), 10*types.DefaultCoinPrecision)
 	para.Main.SendTx(tx)
 	para.Main.Wait()
 	block = para.Main.GetLastBlock()
 	acc = para.Main.GetAccount(block.StateHash, para.Main.GetHotAddress())
-	assert.Equal(t, acc.Balance, 10*types.Coin)
+	assert.Equal(t, acc.Balance, 10*types.DefaultCoinPrecision)
 
 	//auth acc
-	tx = util.CreateCoinsTx(cfg, genesisKey, authAcc, 10*types.Coin)
+	tx = util.CreateCoinsTx(cfg, genesisKey, authAcc, 10*types.DefaultCoinPrecision)
 	para.Main.SendTx(tx)
 	para.Main.Wait()
 	block = para.Main.GetLastBlock()
 	acc = para.Main.GetAccount(block.StateHash, authAcc)
-	assert.Equal(t, acc.Balance, 10*types.Coin)
+	assert.Equal(t, acc.Balance, 10*types.DefaultCoinPrecision)
 
 	//create manage config
 	tx = util.CreateManageTx(cfg, para.Main.GetHotKey(), "paracross-nodes-user.p.guodun.", "add", "1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF")

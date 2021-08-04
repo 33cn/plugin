@@ -49,7 +49,7 @@ func (policy *privacyPolicy) On_CreateTransaction(req *privacytypes.ReqCreatePri
 		return nil, types.ErrInvalidParam
 	}
 
-	if !checkAmountValid(req.Amount) {
+	if !checkAmountValid(req.Amount, cfg.GetCoinPrecision()) {
 		err = types.ErrAmount
 		bizlog.Error("createTransaction", "isRescanUtxosFlagScaning cause error.", err)
 		return nil, err

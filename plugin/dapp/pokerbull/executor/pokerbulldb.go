@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/client"
 	"sort"
 	"strconv"
 
@@ -21,6 +22,7 @@ import (
 
 // Action 斗牛action结构
 type Action struct {
+	api          client.QueueProtocolAPI
 	coinsAccount *account.DB
 	db           dbm.KV
 	txhash       []byte
@@ -37,7 +39,7 @@ func NewAction(pb *PokerBull, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 
-	return &Action{pb.GetCoinsAccount(), pb.GetStateDB(), hash, fromaddr,
+	return &Action{pb.GetAPI(), pb.GetCoinsAccount(), pb.GetStateDB(), hash, fromaddr,
 		pb.GetBlockTime(), pb.GetHeight(), dapp.ExecAddress(string(tx.Execer)), pb.GetLocalDB(), index}
 }
 
@@ -45,7 +47,7 @@ func NewAction(pb *PokerBull, tx *types.Transaction, index int) *Action {
 func (action *Action) CheckExecAccountBalance(fromAddr string, ToFrozen, ToActive int64) bool {
 	// 赌注为零，按照最小赌注冻结
 	if ToFrozen == 0 {
-		ToFrozen = pkt.MinPlayValue
+		ToFrozen = pkt.MinPlayValue * action.api.GetConfig().GetCoinPrecision()
 	}
 
 	acc := action.coinsAccount.LoadExecAccount(fromAddr, action.execaddr)
@@ -406,15 +408,16 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 		}
 	}
 
+	coinPrecision := action.api.GetConfig().GetCoinPrecision()
 	// 扣除开发者佣金
-	receipt := action.defaultFeeTransfer(result.Winner, pkt.DeveloperAddress, pkt.DeveloperFee, game.GetValue())
+	receipt := action.defaultFeeTransfer(result.Winner, pkt.DeveloperAddress, int64(pkt.DeveloperFee*float64(coinPrecision)), game.GetValue())
 	if receipt != nil {
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
 	}
 
 	// 扣除平台佣金
-	receipt = action.defaultFeeTransfer(result.Winner, pkt.PlatformAddress, pkt.PlatformFee, game.GetValue())
+	receipt = action.defaultFeeTransfer(result.Winner, pkt.PlatformAddress, int64(pkt.PlatformFee*float64(coinPrecision)), game.GetValue())
 	if receipt != nil {
 		logs = append(logs, receipt.Logs...)
 		kv = append(kv, receipt.KV...)
@@ -425,11 +428,12 @@ func (action *Action) settleDefaultAccount(lastAddress string, game *pkt.PokerBu
 
 // 佣金扣除
 func (action *Action) defaultFeeTransfer(winner string, feeAddr string, fee int64, value int64) *types.Receipt {
-	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/types.Coin)*fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
+	coinPrecision := action.api.GetConfig().GetCoinPrecision()
+	receipt, err := action.coinsAccount.ExecTransfer(winner, feeAddr, action.execaddr, (value/coinPrecision)*fee /**int64(result.Leverage)*/) //TODO Dealer:暂时不支持倍数
 	if err != nil {
-		action.coinsAccount.ExecFrozen(winner, action.execaddr, (value/types.Coin)*fee) // rollback
+		action.coinsAccount.ExecFrozen(winner, action.execaddr, (value/coinPrecision)*fee) // rollback
 		logger.Error("GameSettleDefault.ExecTransfer", "addr", winner, "execaddr", action.execaddr, "amount",
-			(value/types.Coin)*fee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
+			(value/coinPrecision)*fee /**int64(result.Leverage)*/, "err", err) //TODO Dealer:暂时不支持倍数
 		return nil
 	}
 
@@ -495,7 +499,7 @@ func (action *Action) newGame(gameID string, start *pkt.PBGameStart) (*pkt.Poker
 
 	// 不指定赌注，默认按照最低赌注
 	if start.GetValue() == 0 {
-		start.Value = pkt.MinPlayValue
+		start.Value = pkt.MinPlayValue * action.api.GetConfig().GetCoinPrecision()
 	}
 
 	//TODO 庄家检查闲家数量倍数的资金
@@ -551,7 +555,7 @@ func (action *Action) selectGameFromIds(ids []string, value int64) *pkt.PokerBul
 		}
 
 		//选择合适赌注的游戏
-		if value == 0 && game.GetValue() != pkt.MinPlayValue {
+		if value == 0 && game.GetValue() != (pkt.MinPlayValue*action.api.GetConfig().GetCoinPrecision()) {
 			if !action.CheckExecAccountBalance(action.fromaddr, game.GetValue(), 0) {
 				logger.Error("GameStart", "GameID", id, "addr", action.fromaddr, "execaddr", action.execaddr,
 					"err", types.ErrNoBalance)

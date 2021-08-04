@@ -36,7 +36,7 @@ func TestTicketPrice(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	//test price
 	ti := &executor.DB{}
-	assert.Equal(t, ti.GetRealPrice(cfg), 10000*types.Coin)
+	assert.Equal(t, ti.GetRealPrice(cfg), 10000*types.DefaultCoinPrecision)
 
 	ti = &executor.DB{}
 	ti.Price = 10
@@ -47,13 +47,13 @@ func TestCheckFork(t *testing.T) {
 	cfg := mock33.GetAPI().GetConfig()
 	assert.Equal(t, int64(1), cfg.GetFork("ForkChainParamV2"))
 	p1 := ty.GetTicketMinerParam(cfg, 0)
-	assert.Equal(t, 10000*types.Coin, p1.TicketPrice)
+	assert.Equal(t, 10000*types.DefaultCoinPrecision, p1.TicketPrice)
 	p1 = ty.GetTicketMinerParam(cfg, 1)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
+	assert.Equal(t, 3000*types.DefaultCoinPrecision, p1.TicketPrice)
 	p1 = ty.GetTicketMinerParam(cfg, 2)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
+	assert.Equal(t, 3000*types.DefaultCoinPrecision, p1.TicketPrice)
 	p1 = ty.GetTicketMinerParam(cfg, 3)
-	assert.Equal(t, 3000*types.Coin, p1.TicketPrice)
+	assert.Equal(t, 3000*types.DefaultCoinPrecision, p1.TicketPrice)
 }
 
 func TestTicket(t *testing.T) {
@@ -71,7 +71,7 @@ func TestTicket(t *testing.T) {
 	assert.Nil(t, err)
 	//assert.Equal(t, accounts[0].Balance, int64(1000000000000))
 	//send to address
-	tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), mock33.GetGenesisAddress(), types.Coin/100)
+	tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), mock33.GetGenesisAddress(), types.DefaultCoinPrecision/100)
 	mock33.SendTx(tx)
 	mock33.Wait()
 	//bind miner
@@ -116,7 +116,7 @@ func TestTicket(t *testing.T) {
 				list := ticketList(t, mock33, &ty.TicketList{Addr: tx.Fromaddr, Status: 1})
 				for _, ti := range list.GetTickets() {
 					if strings.Contains(ti.TicketId, hex.EncodeToString(tx.Txhash)) {
-						assert.Equal(t, 3000*types.Coin, ti.Price)
+						assert.Equal(t, 3000*types.DefaultCoinPrecision, ti.Price)
 					}
 				}
 			}

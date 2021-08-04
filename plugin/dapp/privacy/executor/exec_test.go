@@ -157,7 +157,7 @@ func TestPrivacy_Exec_Public2Privacy(t *testing.T) {
 			payload: &pty.ReqCreatePrivacyTx{
 				AssetExec:  "btc-coins",
 				Tokenname:  "btc",
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 			expectExecErr: types.ErrExecNameNotAllow,
@@ -165,7 +165,7 @@ func TestPrivacy_Exec_Public2Privacy(t *testing.T) {
 		{
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
-				Amount:     types.Coin * 10001,
+				Amount:     types.DefaultCoinPrecision * 10001,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 			expectExecErr: types.ErrNoBalance,
@@ -173,7 +173,7 @@ func TestPrivacy_Exec_Public2Privacy(t *testing.T) {
 		{
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
@@ -197,14 +197,14 @@ func TestPrivacy_Exec_Privacy2Privacy(t *testing.T) {
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPublic2Privacy,
-				Amount:     types.Coin * 9,
+				Amount:     types.DefaultCoinPrecision * 9,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
 		{
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 			},
@@ -231,14 +231,14 @@ func TestPrivacy_Exec_Privacy2Public(t *testing.T) {
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPublic2Privacy,
-				Amount:     types.Coin * 9,
+				Amount:     types.DefaultCoinPrecision * 9,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
 		{
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 				To:         testAddrs[1],
@@ -266,7 +266,7 @@ func TestPrivacy_ExecLocal(t *testing.T) {
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPublic2Privacy,
-				Amount:     types.Coin * 9,
+				Amount:     types.DefaultCoinPrecision * 9,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
@@ -274,7 +274,7 @@ func TestPrivacy_ExecLocal(t *testing.T) {
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPrivacy2Privacy,
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 			},
@@ -283,7 +283,7 @@ func TestPrivacy_ExecLocal(t *testing.T) {
 			index: 3,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPrivacy2Public,
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 				To:         testAddrs[1],
@@ -307,7 +307,7 @@ func TestPrivacy_ExecDelLocal(t *testing.T) {
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPublic2Privacy,
-				Amount:     types.Coin * 9,
+				Amount:     types.DefaultCoinPrecision * 9,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
@@ -315,7 +315,7 @@ func TestPrivacy_ExecDelLocal(t *testing.T) {
 			index: 2,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPrivacy2Privacy,
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 			},
@@ -324,7 +324,7 @@ func TestPrivacy_ExecDelLocal(t *testing.T) {
 			index: 3,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPrivacy2Public,
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[1],
 				From:       testAddrs[0],
 				To:         testAddrs[1],

@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	initBalance = types.Coin * 10000
+	initBalance = types.DefaultCoinPrecision * 10000
 	initHeight  = int64(100)
 
 	// 测试的私钥

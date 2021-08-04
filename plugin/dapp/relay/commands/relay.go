@@ -7,8 +7,9 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -163,6 +164,13 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	creator, _ := cmd.Flags().GetString("creator")
 	coin, _ := cmd.Flags().GetString("coin")
 	coins := strings.Split(coin, " ")
+
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var reqAddrCoins ty.ReqRelayAddrCoins
 	reqAddrCoins.Status = ty.RelayOrderStatus_pending
 	reqAddrCoins.Addr = creator
@@ -187,7 +195,7 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	parseRelayOrders(res)
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
 // ShowOnesAcceptRelayOrdersCmd show ones accepted orders
@@ -236,8 +244,12 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-
-	parseRelayOrders(res)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
 // ShowOnesStatusOrdersCmd show ones order's status
@@ -291,21 +303,25 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-
-	parseRelayOrders(res)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
-func parseRelayOrders(res ty.ReplyRelayOrders) {
+func parseRelayOrders(res ty.ReplyRelayOrders, coinPrecision int64) {
 	for _, order := range res.Relayorders {
 		var show relayOrder2Show
 		show.OrderID = order.Id
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
 		show.CoinOperation = order.Operation
-		show.Amount = strconv.FormatFloat(float64(order.LocalCoinAmount)/float64(types.Coin), 'f', 4, 64)
+		show.Amount = types.GetFormatFloat(int64(order.LocalCoinAmount), coinPrecision, true)
 		show.Coin = order.XCoin
 		show.CoinAddr = order.XAddr
-		show.CoinAmount = strconv.FormatFloat(float64(order.XAmount)/float64(types.Coin), 'f', 4, 64)
+		show.CoinAmount = types.GetFormatFloat(int64(order.XAmount), coinPrecision, true)
 		show.CoinWaits = order.XBlockWaits
 		show.CreateTime = order.CreateTime
 		show.AcceptAddr = order.AcceptAddr

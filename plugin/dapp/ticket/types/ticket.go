@@ -163,10 +163,10 @@ type TicketMinerParam struct {
 func GetTicketMinerParam(cfg *types.Chain33Config, height int64) *TicketMinerParam {
 	conf := types.Conf(cfg, "mver.consensus.ticket")
 	c := &TicketMinerParam{}
-	c.CoinDevFund = conf.MGInt("coinDevFund", height) * types.Coin
-	c.CoinReward = conf.MGInt("coinReward", height) * types.Coin
+	c.CoinDevFund = conf.MGInt("coinDevFund", height) * cfg.GetCoinPrecision()
+	c.CoinReward = conf.MGInt("coinReward", height) * cfg.GetCoinPrecision()
 	c.FutureBlockTime = conf.MGInt("futureBlockTime", height)
-	c.TicketPrice = conf.MGInt("ticketPrice", height) * types.Coin
+	c.TicketPrice = conf.MGInt("ticketPrice", height) * cfg.GetCoinPrecision()
 	c.TicketFrozenTime = conf.MGInt("ticketFrozenTime", height)
 	c.TicketWithdrawTime = conf.MGInt("ticketWithdrawTime", height)
 	c.TicketMinerWaitTime = conf.MGInt("ticketMinerWaitTime", height)

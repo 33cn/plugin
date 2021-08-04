@@ -6,6 +6,8 @@ package commands
 
 import (
 	"fmt"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 	"math"
 	"os"
 	"strconv"
@@ -513,7 +515,7 @@ func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	if float64(types.MaxCoin/types.Coin) < amount {
+	if float64(types.MaxCoin) < amount {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
@@ -569,7 +571,7 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	if float64(types.MaxCoin/types.Coin) < amount {
+	if float64(types.MaxCoin) < amount {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
@@ -676,6 +678,11 @@ func getMultiSigAccountInfoFlags(cmd *cobra.Command) {
 func getMultiSigAccountInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
 	req := mty.ReqMultiSigAccInfo{
 		MultiSigAccAddr: addr,
@@ -689,18 +696,18 @@ func getMultiSigAccountInfo(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.MultiSig{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
-	ctx.SetResultCb(parseAccInfo)
-	ctx.Run()
+	ctx.SetResultCbExt(parseAccInfo)
+	ctx.RunExt(cfg)
 }
 
-func parseAccInfo(view interface{}) (interface{}, error) {
-	res := view.(*mty.MultiSig)
+func parseAccInfo(view ...interface{}) (interface{}, error) {
+	res := view[0].(*mty.MultiSig)
+	cfg := view[1].(*rpctypes.ChainConfigInfo)
 	var dailyLimitResults []*mty.DailyLimitResult
 
 	for _, dailyLimit := range res.DailyLimits {
-		dailyLimt := strconv.FormatFloat(float64(dailyLimit.DailyLimit)/float64(types.Coin), 'f', 4, 64)
-		spentToday := strconv.FormatFloat(float64(dailyLimit.SpentToday)/float64(types.Coin), 'f', 4, 64)
-
+		dailyLimt := types.GetFormatFloat(int64(dailyLimit.DailyLimit), cfg.CoinPrecision, true)
+		spentToday := types.GetFormatFloat(int64(dailyLimit.SpentToday), cfg.CoinPrecision, true)
 		dailyLimitResult := &mty.DailyLimitResult{
 			Symbol:     dailyLimit.Symbol,
 			Execer:     dailyLimit.Execer,
@@ -933,6 +940,11 @@ func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
 	addr, _ := cmd.Flags().GetString("addr")
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
 	isallBool := true
 	assets := &mty.Assets{}
@@ -962,16 +974,17 @@ func getMultiSigAccUnSpentToday(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyUnSpentAssets{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
-	ctx.SetResultCb(parseUnSpentToday)
-	ctx.Run()
+	ctx.SetResultCbExt(parseUnSpentToday)
+	ctx.RunExt(cfg)
 }
 
-func parseUnSpentToday(view interface{}) (interface{}, error) {
-	res := view.(*mty.ReplyUnSpentAssets)
+func parseUnSpentToday(view ...interface{}) (interface{}, error) {
+	res := view[0].(*mty.ReplyUnSpentAssets)
+	cfg := view[1].(*rpctypes.ChainConfigInfo)
 	var result []*mty.UnSpentAssetsResult
 
 	for _, unSpentAssets := range res.UnSpentAssets {
-		amountResult := strconv.FormatFloat(float64(unSpentAssets.Amount)/float64(types.Coin), 'f', 4, 64)
+		amountResult := types.GetFormatFloat(int64(unSpentAssets.Amount), cfg.CoinPrecision, true)
 		unSpentAssetsResult := &mty.UnSpentAssetsResult{
 			Execer:  unSpentAssets.Assets.Execer,
 			Symbol:  unSpentAssets.Assets.Symbol,
@@ -1006,7 +1019,11 @@ func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
 	addr, _ := cmd.Flags().GetString("addr")
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
-
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	isallBool := true
 	assets := &mty.Assets{}
 	//获取指定资产信息时，execer和symbol不能为空
@@ -1035,18 +1052,19 @@ func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyAccAssets{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
-	ctx.SetResultCb(parseAccAssets)
-	ctx.Run()
+	ctx.RunExt(parseAccAssets)
+	ctx.RunExt(cfg)
 }
 
-func parseAccAssets(view interface{}) (interface{}, error) {
-	res := view.(*mty.ReplyAccAssets)
+func parseAccAssets(view ...interface{}) (interface{}, error) {
+	res := view[0].(*mty.ReplyAccAssets)
+	cfg := view[1].(*rpctypes.ChainConfigInfo)
 	var result []*mty.AccAssetsResult
 
 	for _, accAssets := range res.AccAssets {
-		balanceResult := strconv.FormatFloat(float64(accAssets.Account.Balance)/float64(types.Coin), 'f', 4, 64)
-		frozenResult := strconv.FormatFloat(float64(accAssets.Account.Frozen)/float64(types.Coin), 'f', 4, 64)
-		receiverResult := strconv.FormatFloat(float64(accAssets.RecvAmount)/float64(types.Coin), 'f', 4, 64)
+		balanceResult := types.GetFormatFloat(accAssets.Account.Balance, cfg.CoinPrecision, true)
+		frozenResult := types.GetFormatFloat(accAssets.Account.Frozen, cfg.CoinPrecision, true)
+		receiverResult := types.GetFormatFloat(accAssets.RecvAmount, cfg.CoinPrecision, true)
 
 		accAssetsResult := &mty.AccAssetsResult{
 			Execer:   accAssets.Assets.Execer,
@@ -1096,7 +1114,7 @@ func getMultiSigAccAllAddress(cmd *cobra.Command, args []string) {
 }
 
 func isValidDailylimit(dailylimit float64) error {
-	if dailylimit < 0 || float64(types.MaxCoin/types.Coin) < dailylimit {
+	if dailylimit < 0 || float64(types.MaxCoin) < dailylimit {
 		return mty.ErrInvalidDailyLimit
 	}
 	return nil

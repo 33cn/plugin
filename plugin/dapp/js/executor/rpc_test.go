@@ -122,11 +122,11 @@ func TestJsGame(t *testing.T) {
 	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
 	block := mocker.GetLastBlock()
 	balance := mocker.GetAccount(block.StateHash, mocker.GetHotAddress()).Balance
-	assert.Equal(t, balance, 10000*types.Coin)
+	assert.Equal(t, balance, 10000*types.DefaultCoinPrecision)
 	//2.1 充值到合约
 	reqtx := &rpctypes.CreateTx{
 		To:          address.ExecAddress("user.jsvm." + contractName),
-		Amount:      100 * types.Coin,
+		Amount:      100 * types.DefaultCoinPrecision,
 		Note:        "12312",
 		IsWithdraw:  false,
 		IsToken:     false,
@@ -142,11 +142,11 @@ func TestJsGame(t *testing.T) {
 	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
 	block = mocker.GetLastBlock()
 	balance = mocker.GetExecAccount(block.StateHash, "user.jsvm."+contractName, mocker.GetHotAddress()).Balance
-	assert.Equal(t, 100*types.Coin, balance)
+	assert.Equal(t, 100*types.DefaultCoinPrecision, balance)
 
 	reqtx = &rpctypes.CreateTx{
 		To:          address.ExecAddress("user.jsvm." + contractName),
-		Amount:      100 * types.Coin,
+		Amount:      100 * types.DefaultCoinPrecision,
 		Note:        "12312",
 		IsWithdraw:  false,
 		IsToken:     false,
@@ -162,7 +162,7 @@ func TestJsGame(t *testing.T) {
 	assert.Equal(t, txinfo.Receipt.Ty, int32(2))
 	block = mocker.GetLastBlock()
 	balance = mocker.GetExecAccount(block.StateHash, "user.jsvm."+contractName, mocker.GetGenesisAddress()).Balance
-	assert.Equal(t, 100*types.Coin, balance)
+	assert.Equal(t, 100*types.DefaultCoinPrecision, balance)
 	t.Log(mocker.GetGenesisAddress())
 	//2.2 调用 hello 函数(随机数，用nonce)
 	privhash := common.Sha256(mocker.GetHotKey().Bytes())
@@ -174,7 +174,7 @@ func TestJsGame(t *testing.T) {
 	call := &jsproto.Call{
 		Funcname: "NewGame",
 		Name:     contractName,
-		Args:     fmt.Sprintf(`{"bet": %d, "randhash" : "%s"}`, 100*types.Coin, myhash),
+		Args:     fmt.Sprintf(`{"bet": %d, "randhash" : "%s"}`, 100*types.DefaultCoinPrecision, myhash),
 	}
 	req = &rpctypes.CreateTxIn{
 		Execer:     "user." + ptypes.JsX + "." + contractName,
@@ -193,7 +193,7 @@ func TestJsGame(t *testing.T) {
 	call = &jsproto.Call{
 		Funcname: "Guess",
 		Name:     contractName,
-		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.Coin, gameid, num),
+		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.DefaultCoinPrecision, gameid, num),
 	}
 	req = &rpctypes.CreateTxIn{
 		Execer:     "user." + ptypes.JsX + "." + contractName,
@@ -212,7 +212,7 @@ func TestJsGame(t *testing.T) {
 	call = &jsproto.Call{
 		Funcname: "Guess",
 		Name:     contractName,
-		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.Coin, gameid, num+1),
+		Args:     fmt.Sprintf(`{"bet": %d, "gameid" : "%d", "num" : %d}`, 1*types.DefaultCoinPrecision, gameid, num+1),
 	}
 	req = &rpctypes.CreateTxIn{
 		Execer:     "user." + ptypes.JsX + "." + contractName,
