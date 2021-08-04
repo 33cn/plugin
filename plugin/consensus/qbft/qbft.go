@@ -387,7 +387,7 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = genesisAmount * types.Coin
+	g.Genesis.Amount = genesisAmount * client.GetAPI().GetConfig().GetCoinPrecision()
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return

@@ -35,7 +35,7 @@ func TestPokerbull(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(pkt.PokerBullX, cfg, nil)
-	total := 1000 * types.Coin
+	total := 1000 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -70,7 +70,7 @@ func TestPokerbull(t *testing.T) {
 
 	// start game
 	p1 := &pkt.PBGameStart{
-		Value:     5 * types.Coin,
+		Value:     5 * types.DefaultCoinPrecision,
 		PlayerNum: 2,
 	}
 	createTx, err := types.CallCreateTransaction(pkt.PokerBullX, "Start", p1)

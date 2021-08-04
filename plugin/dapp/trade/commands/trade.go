@@ -6,8 +6,9 @@ package commands
 
 import (
 	"fmt"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 	"os"
-	"strconv"
 	"strings"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
@@ -70,6 +71,13 @@ func showOnesSellOrders(cmd *cobra.Command, args []string) {
 	seller, _ := cmd.Flags().GetString("seller")
 	token, _ := cmd.Flags().GetString("token")
 	tokens := strings.Split(token, " ")
+
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var reqAddrtokens pty.ReqAddrAssets
 	//reqAddrtokens.Status = types.TradeOrderStatusOnSale
 	reqAddrtokens.Addr = seller
@@ -83,8 +91,8 @@ func showOnesSellOrders(cmd *cobra.Command, args []string) {
 	}
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseSellOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseSellOrders)
+	ctx.RunExt(cfg)
 }
 
 // ShowOnesSellOrdersStatusCmd : show one's sell order with status
@@ -114,6 +122,11 @@ func showOnesSellOrdersStatus(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrInvalidParam)
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	var reqAddrtokens pty.ReqAddrAssets
 	reqAddrtokens.Status = statusInt
 	reqAddrtokens.Addr = addr
@@ -124,8 +137,8 @@ func showOnesSellOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseSellOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseSellOrders)
+	ctx.RunExt(cfg)
 }
 
 // ShowTokenSellOrdersStatusCmd : show token sell order with status
@@ -165,6 +178,12 @@ func showTokenSellOrdersStatus(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "direction must be 0 (previous-page) or 1(next-page)")
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var req pty.ReqTokenSellOrder
 	req.TokenSymbol = token
 	req.Count = count
@@ -177,12 +196,13 @@ func showTokenSellOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseSellOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseSellOrders)
+	ctx.RunExt(cfg)
 }
 
-func parseSellOrders(arg interface{}) (interface{}, error) {
-	res := arg.(*pty.ReplyTradeOrders)
+func parseSellOrders(arg ...interface{}) (interface{}, error) {
+	res := arg[0].(*pty.ReplyTradeOrders)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
 	var result replySellOrdersResult
 	for _, o := range res.Orders {
 		order := &tradeOrderResult{
@@ -200,8 +220,8 @@ func parseSellOrders(arg interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = strconv.FormatFloat(float64(o.AmountPerBoardlot)/float64(types.Coin), 'f', 4, 64)
-		order.PricePerBoardlot = strconv.FormatFloat(float64(o.PricePerBoardlot)/float64(types.Coin), 'f', 4, 64)
+		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.SellOrders = append(result.SellOrders, order)
 	}
 	return result, nil
@@ -229,6 +249,11 @@ func showOnesBuyOrders(cmd *cobra.Command, args []string) {
 	buyer, _ := cmd.Flags().GetString("buyer")
 	token, _ := cmd.Flags().GetString("token")
 	tokens := strings.Split(token, " ")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	var reqAddrtokens pty.ReqAddrAssets
 	reqAddrtokens.Addr = buyer
 	if 0 != len(tokens) {
@@ -240,8 +265,8 @@ func showOnesBuyOrders(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseBuyOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseBuyOrders)
+	ctx.RunExt(cfg)
 }
 
 // ShowOnesBuyOrdersStatusCmd : show one's buy order with status
@@ -271,6 +296,11 @@ func showOnesBuyOrdersStatus(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrInvalidParam)
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	var reqAddrtokens pty.ReqAddrAssets
 	reqAddrtokens.Addr = buyer
 	reqAddrtokens.Status = statusInt
@@ -280,8 +310,8 @@ func showOnesBuyOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseBuyOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseBuyOrders)
+	ctx.RunExt(cfg)
 }
 
 // ShowTokenBuyOrdersStatusCmd : show token buy order with status
@@ -321,6 +351,11 @@ func showTokenBuyOrdersStatus(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "direction must be 0 (previous-page) or 1(next-page)")
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	var req pty.ReqTokenBuyOrder
 	req.TokenSymbol = token
 	req.Count = count
@@ -333,12 +368,13 @@ func showTokenBuyOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseBuyOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseBuyOrders)
+	ctx.RunExt(cfg)
 }
 
-func parseBuyOrders(arg interface{}) (interface{}, error) {
-	res := arg.(*pty.ReplyTradeOrders)
+func parseBuyOrders(arg ...interface{}) (interface{}, error) {
+	res := arg[0].(*pty.ReplyTradeOrders)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
 	var result replyBuyOrdersResult
 	for _, o := range res.Orders {
 		order := &tradeOrderResult{
@@ -356,8 +392,8 @@ func parseBuyOrders(arg interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = strconv.FormatFloat(float64(o.AmountPerBoardlot)/float64(types.Coin), 'f', 4, 64)
-		order.PricePerBoardlot = strconv.FormatFloat(float64(o.PricePerBoardlot)/float64(types.Coin), 'f', 4, 64)
+		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.BuyOrders = append(result.BuyOrders, order)
 	}
 	return result, nil
@@ -395,6 +431,11 @@ func showOnesOrdersStatus(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrInvalidParam)
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	var reqAddrtokens pty.ReqAddrAssets
 	reqAddrtokens.Addr = addr
 	reqAddrtokens.Count = count
@@ -407,12 +448,13 @@ func showOnesOrdersStatus(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&reqAddrtokens)
 	var res pty.ReplyTradeOrders
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseTradeOrders)
-	ctx.Run()
+	ctx.SetResultCbExt(parseTradeOrders)
+	ctx.RunExt(cfg)
 }
 
-func parseTradeOrders(arg interface{}) (interface{}, error) {
-	res := arg.(*pty.ReplyTradeOrders)
+func parseTradeOrders(arg ...interface{}) (interface{}, error) {
+	res := arg[0].(*pty.ReplyTradeOrders)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
 	var result replyTradeOrdersResult
 	for _, o := range res.Orders {
 		order := &tradeOrderResult{
@@ -430,8 +472,8 @@ func parseTradeOrders(arg interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = strconv.FormatFloat(float64(o.AmountPerBoardlot)/float64(types.Coin), 'f', 4, 64)
-		order.PricePerBoardlot = strconv.FormatFloat(float64(o.PricePerBoardlot)/float64(types.Coin), 'f', 4, 64)
+		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.Orders = append(result.Orders, order)
 	}
 	return result, nil
@@ -696,11 +738,20 @@ func buyRevoke(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	buyID, _ := cmd.Flags().GetString("buy_id")
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
-	feeInt64 := int64(fee * 1e4)
+	feeInt64, err := types.TransferFloat(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "TransferFloat"))
+		return
+	}
 	params := &pty.TradeRevokeBuyTx{
 		BuyID: buyID,
-		Fee:   feeInt64 * 1e4,
+		Fee:   feeInt64,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeRevokeBuyTx", params, nil)

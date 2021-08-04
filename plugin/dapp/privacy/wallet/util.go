@@ -14,13 +14,13 @@ import (
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
 )
 
-func checkAmountValid(amount int64) bool {
+func checkAmountValid(amount, coinPrecision int64) bool {
 	if amount <= 0 {
 		return false
 	}
 	// 隐私交易中，交易金额必须是types.Coin的整数倍
 	// 后续调整了隐私交易中手续费计算以后需要修改
-	if (int64(float64(amount)/float64(types.Coin)) * types.Coin) != amount {
+	if (int64(float64(amount)/float64(coinPrecision)) * coinPrecision) != amount {
 		return false
 	}
 	return true
@@ -160,13 +160,13 @@ func parseViewSpendPubKeyPair(in string) (viewPubKey, spendPubKey []byte, err er
 //最后构造完成的utxo依次是2种类型，不构造交易费utxo，使其直接燃烧消失
 //1.进行实际转账utxo
 //2.进行找零转账utxo
-func generateOuts(viewpubTo, spendpubto, viewpubChangeto, spendpubChangeto *[32]byte, transAmount, selectedAmount, fee int64) (*privacytypes.PrivacyOutput, error) {
-	decomDigit := decomposeAmount2digits(transAmount, privacytypes.BTYDustThreshold)
+func generateOuts(viewpubTo, spendpubto, viewpubChangeto, spendpubChangeto *[32]byte, transAmount, selectedAmount, fee, coinPrecision int64) (*privacytypes.PrivacyOutput, error) {
+	decomDigit := decomposeAmount2digits(transAmount, privacytypes.BTYDustThreshold*coinPrecision)
 	//计算找零
 	changeAmount := selectedAmount - transAmount - fee
 	var decomChange []int64
 	if 0 < changeAmount {
-		decomChange = decomposeAmount2digits(changeAmount, privacytypes.BTYDustThreshold)
+		decomChange = decomposeAmount2digits(changeAmount, privacytypes.BTYDustThreshold*coinPrecision)
 	}
 	bizlog.Info("generateOuts", "decompose digit for amount", selectedAmount-fee, "decomDigit", decomDigit)
 

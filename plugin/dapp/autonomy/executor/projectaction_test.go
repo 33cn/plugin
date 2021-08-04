@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	testProjectAmount int64 = types.Coin * 100  // 工程需要资金
-	testFundAmount    int64 = types.Coin * 1000 // 工程需要资金
+	testProjectAmount int64 = types.DefaultCoinPrecision * 100  // 工程需要资金
+	testFundAmount    int64 = types.DefaultCoinPrecision * 1000 // 工程需要资金
 )
 
 func InitBoard(stateDB dbm.KV) {
@@ -37,8 +37,8 @@ func InitRule(stateDB dbm.KV) {
 	rule := &auty.RuleConfig{
 		BoardApproveRatio:  boardApproveRatio,
 		PubOpposeRatio:     pubOpposeRatio,
-		ProposalAmount:     proposalAmount,
-		LargeProjectAmount: types.Coin * 100,
+		ProposalAmount:     proposalAmount * types.DefaultCoinPrecision,
+		LargeProjectAmount: 100 * types.DefaultCoinPrecision,
 		PublicPeriod:       publicPeriod,
 	}
 	stateDB.Set(activeRuleID(), types.Encode(rule))
@@ -109,7 +109,7 @@ func TestPropProject(t *testing.T) {
 		if i == 4 {
 			act := &auty.ActiveBoard{
 				Boards: boards,
-				Amount: maxBoardPeriodAmount,
+				Amount: maxBoardPeriodAmount * types.DefaultCoinPrecision,
 			}
 			err := stateDB.Set(activeBoardID(), types.Encode(act))
 			assert.NoError(t, err)
@@ -172,7 +172,7 @@ func TestBoardPeriodAmount(t *testing.T) {
 	InitFund(stateDB, testProjectAmount)
 	act := &auty.ActiveBoard{
 		Boards:      boards,
-		Amount:      maxBoardPeriodAmount - 100,
+		Amount:      maxBoardPeriodAmount*types.DefaultCoinPrecision - 100,
 		StartHeight: 10,
 	}
 	stateDB.Set(activeBoardID(), types.Encode(act))
@@ -254,7 +254,7 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
 }
 
 func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
@@ -441,7 +441,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 	account = accCoin.LoadExecAccount(AddrD, autonomyAddr)
 	assert.Equal(t, testProjectAmount, account.Balance)
 	// 更新董事会累计审批金
@@ -561,7 +561,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	account = accCoin.LoadExecAccount(AddrD, autonomyAddr)
 	assert.Equal(t, int64(0), account.Balance)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())

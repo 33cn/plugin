@@ -111,7 +111,7 @@ var (
 		Addr16,
 		Addr17,
 	}
-	total = types.Coin * 30000
+	total = types.DefaultCoinPrecision * 30000
 )
 
 func init() {
@@ -329,7 +329,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -488,7 +488,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
 	assert.NoError(t, err)
@@ -596,7 +596,7 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 
 	acc := &types.Account{
 		Currency: 0,
-		Balance:  types.Coin,
+		Balance:  types.DefaultCoinPrecision,
 	}
 	val := types.Encode(acc)
 	values := [][]byte{val}
@@ -608,7 +608,7 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 	account, err := action.getStartHeightVoteAccount(addr, "", 0)
 	assert.NoError(t, err)
 	assert.NotNil(t, account)
-	assert.Equal(t, types.Coin, account.Balance)
+	assert.Equal(t, types.DefaultCoinsExec, account.Balance)
 }
 
 func TestGetReceiptLog(t *testing.T) {

@@ -6,6 +6,10 @@ package commands
 
 import (
 	"encoding/json"
+	"fmt"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
+	"os"
 
 	"strings"
 
@@ -53,10 +57,9 @@ func addProposalProjectFlags(cmd *cobra.Command) {
 }
 
 func proposalProject(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
 	year, _ := cmd.Flags().GetInt32("year")
 	month, _ := cmd.Flags().GetInt32("month")
 	day, _ := cmd.Flags().GetInt32("day")
@@ -76,6 +79,12 @@ func proposalProject(cmd *cobra.Command, args []string) {
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
 	projectNeedBlockNum, _ := cmd.Flags().GetInt32("projectNeedBlockNum")
 
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	params := &auty.ProposalProject{
 		Year:                year,
 		Month:               month,
@@ -85,7 +94,7 @@ func proposalProject(cmd *cobra.Command, args []string) {
 		Production:          production,
 		Description:         description,
 		Contractor:          contractor,
-		Amount:              amount * types.Coin,
+		Amount:              amount * cfg.CoinPrecision,
 		AmountDetail:        amountDetail,
 		ToAddr:              toAddr,
 		StartBlockHeight:    startBlock,
@@ -98,7 +107,7 @@ func proposalProject(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "PropProject",
 		Payload:    payLoad,
 	}

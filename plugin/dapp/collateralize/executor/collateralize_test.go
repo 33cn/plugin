@@ -42,8 +42,8 @@ var (
 		[]byte("1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR"),
 		[]byte("12evczYyX9ZKPYvwSEvRkRyTjpSrJuLudg"),
 	}
-	total      = 10000 * types.Coin
-	totalToken = 100000 * types.Coin
+	total      = 10000 * types.DefaultCoinPrecision
+	totalToken = 100000 * types.DefaultCoinPrecision
 )
 
 func manageKeySet(key string, value string, db dbm.KV) {
@@ -97,7 +97,7 @@ func initEnv() *execEnv {
 		Addr:    string(Nodes[1]),
 	}
 	accountBToken := types.Account{
-		Balance: types.Coin / 10,
+		Balance: types.DefaultCoinPrecision / 10,
 		Frozen:  0,
 		Addr:    string(Nodes[1]),
 	}
@@ -313,7 +313,7 @@ func TestCollateralize(t *testing.T) {
 	res, err = exec.Query("CollateralizeUserBalance",
 		types.Encode(&pkt.ReqCollateralizeRecordByAddr{Addr: string(Nodes[1]), Status: 1}))
 	assert.Nil(t, err)
-	assert.Equal(t, int64(100)*types.Coin, res.(*pkt.RepCollateralizeUserBalance).Balance)
+	assert.Equal(t, int64(100)*types.DefaultCoinPrecision, res.(*pkt.RepCollateralizeUserBalance).Balance)
 
 	// collateralize append
 	p5 := &pkt.CollateralizeAppendTx{

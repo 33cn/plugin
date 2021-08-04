@@ -323,6 +323,7 @@ func (a *action) bindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 		return nil, errors.Wrap(err, "getBindAddrInfo")
 	}
 
+	coinPrecision := a.api.GetConfig().GetCoinPrecision()
 	//found, 修改当前的绑定
 	if current != nil && current.BindStatus == opBind {
 		var receipt *types.Receipt
@@ -333,13 +334,13 @@ func (a *action) bindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 
 		//释放一部分coins
 		if cmd.BindCoins < current.BindCoins {
-			receipt, err = a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, (current.BindCoins-cmd.BindCoins)*types.Coin)
+			receipt, err = a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, (current.BindCoins-cmd.BindCoins)*coinPrecision)
 			if err != nil {
 				return nil, errors.Wrapf(err, "bindOp Active addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, current.BindCoins-cmd.BindCoins)
 			}
 		} else {
 			//冻结更多
-			receipt, err = a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, (cmd.BindCoins-current.BindCoins)*types.Coin)
+			receipt, err = a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, (cmd.BindCoins-current.BindCoins)*coinPrecision)
 			if err != nil {
 				return nil, errors.Wrapf(err, "bindOp frozen more addr=%s,execaddr=%s,coins=%d", a.fromaddr, a.execaddr, cmd.BindCoins-current.BindCoins)
 			}
@@ -352,7 +353,7 @@ func (a *action) bindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	}
 
 	//not bind, 增加新绑定
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, cmd.BindCoins*types.Coin)
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, cmd.BindCoins*coinPrecision)
 	if err != nil {
 		return nil, errors.Wrapf(err, "bindOp frozen addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, cmd.BindCoins)
 	}
@@ -396,7 +397,7 @@ func (a *action) unBindOp(cmd *pt.ParaBindMinerCmd) (*types.Receipt, error) {
 	}
 
 	//unfrozen
-	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, acct.BindCoins*types.Coin)
+	receipt, err := a.coinsAccount.ExecActive(a.fromaddr, a.execaddr, acct.BindCoins*cfg.GetCoinPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(err, "unBindOp addr=%s,execaddr=%s,count=%d", a.fromaddr, a.execaddr, acct.BindCoins)
 	}

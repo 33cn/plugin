@@ -127,6 +127,7 @@ func (a *Autonomy) listProposalRule(req *auty.ReqQueryProposalRule) (types.Messa
 func (a *Autonomy) getActiveRule() (types.Message, error) {
 	rule := &auty.RuleConfig{}
 	value, err := a.GetStateDB().Get(activeRuleID())
+	cfg := a.GetAPI().GetConfig()
 	if err == nil {
 		err = types.Decode(value, rule)
 		if err != nil {
@@ -135,8 +136,8 @@ func (a *Autonomy) getActiveRule() (types.Message, error) {
 	} else { // 载入系统默认值
 		rule.BoardApproveRatio = boardApproveRatio
 		rule.PubOpposeRatio = pubOpposeRatio
-		rule.ProposalAmount = proposalAmount
-		rule.LargeProjectAmount = largeProjectAmount
+		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
+		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
 		rule.PublicPeriod = publicPeriod
 	}
 	return rule, nil

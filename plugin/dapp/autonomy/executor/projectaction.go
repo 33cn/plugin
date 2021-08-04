@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	maxBoardPeriodAmount = types.Coin * 10000 * 300 // 每个时期董事会审批最大额度300万
-	boardPeriod          = 17280 * 30 * 1           // 时期为一个月
+	maxBoardPeriodAmount = 10000 * 300    // 每个时期董事会审批最大额度300万
+	boardPeriod          = 17280 * 30 * 1 // 时期为一个月
 )
 
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
@@ -572,7 +572,7 @@ func (a *action) checkPeriodAmount(act *auty.ActiveBoard, amount int64) bool {
 	if act == nil {
 		return false
 	}
-	if act.Amount+amount > maxBoardPeriodAmount {
+	if act.Amount+amount > maxBoardPeriodAmount*a.api.GetConfig().GetCoinPrecision() {
 		return false
 	}
 	return true

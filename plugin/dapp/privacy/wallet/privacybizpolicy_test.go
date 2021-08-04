@@ -215,7 +215,7 @@ func (mock *testDataMock) initAccounts() {
 	accCoin.SetDB(wallet.GetDBStore())
 	accounts, _ := mock.accdb.LoadAccounts(wallet.GetAPI(), testAddrs)
 	for _, account := range accounts {
-		account.Balance = 1000 * types.Coin
+		account.Balance = 1000 * types.DefaultCoinPrecision
 		accCoin.SaveAccount(account)
 	}
 }
@@ -340,7 +340,7 @@ func Test_CreateTransaction(t *testing.T) {
 	privacyMock := privacy.PrivacyMock{}
 	privacyMock.Init(mock.wallet, mock.password)
 	// 创建几条可用UTXO
-	privacyMock.CreateUTXOs(testAddrs[0], testPubkeyPairs[0], 17*types.Coin, 10000, 5)
+	privacyMock.CreateUTXOs(testAddrs[0], testPubkeyPairs[0], 17*types.DefaultCoinPrecision, 10000, 5)
 	mock.setBlockChainHeight(10020)
 
 	testCases := []struct {
@@ -356,7 +356,7 @@ func Test_CreateTransaction(t *testing.T) {
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				ActionType: ty.ActionPublic2Privacy,
-				Amount:     100 * types.Coin,
+				Amount:     100 * types.DefaultCoinPrecision,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
 			},
@@ -367,7 +367,7 @@ func Test_CreateTransaction(t *testing.T) {
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				ActionType: ty.ActionPrivacy2Privacy,
-				Amount:     10 * types.Coin,
+				Amount:     10 * types.DefaultCoinPrecision,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[1],
 			},
@@ -378,7 +378,7 @@ func Test_CreateTransaction(t *testing.T) {
 				AssetExec:  "coins",
 				Tokenname:  types.BTY,
 				ActionType: ty.ActionPrivacy2Public,
-				Amount:     10 * types.Coin,
+				Amount:     10 * types.DefaultCoinPrecision,
 				From:       testAddrs[0],
 				Pubkeypair: testPubkeyPairs[0],
 			},

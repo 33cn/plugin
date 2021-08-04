@@ -193,12 +193,12 @@ func (action *Action) GameCreate(create *gt.GameCreate) (*types.Receipt, error) 
 	var kv []*types.KeyValue
 	cfg := action.api.GetConfig()
 	maxGameAmount := getConfValue(cfg, action.db, ConfNameMaxGameAmount, MaxGameAmount)
-	if create.GetValue() > maxGameAmount*types.Coin {
+	if create.GetValue() > maxGameAmount*cfg.GetCoinPrecision() {
 		glog.Error("Create the game, the deposit is too big  ", "value", create.GetValue(), "err", gt.ErrGameCreateAmount.Error())
 		return nil, gt.ErrGameCreateAmount
 	}
 	minGameAmount := getConfValue(cfg, action.db, ConfNameMinGameAmount, MinGameAmount)
-	if create.GetValue() < minGameAmount*types.Coin || math.Remainder(float64(create.GetValue()), 2) != 0 {
+	if create.GetValue() < minGameAmount*cfg.GetCoinPrecision() || math.Remainder(float64(create.GetValue()), 2) != 0 {
 		return nil, fmt.Errorf("%s", "The amount you participate in cannot be less than 2 and must be an even number!")
 	}
 	if !action.checkExecAccountBalance(action.fromaddr, create.GetValue(), 0) {

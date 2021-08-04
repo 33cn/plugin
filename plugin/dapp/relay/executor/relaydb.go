@@ -59,6 +59,7 @@ func (r *relayLog) getKVSet() (kvSet []*types.KeyValue) {
 func (r *relayLog) receiptLog(relayLogType int32) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = relayLogType
+
 	receipt := &ty.ReceiptRelayLog{
 		OrderId:         r.Id,
 		CurStatus:       r.Status.String(),
