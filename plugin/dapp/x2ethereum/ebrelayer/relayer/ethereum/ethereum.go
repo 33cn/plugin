@@ -607,9 +607,9 @@ func (ethRelayer *Relayer4Ethereum) prePareSubscribeEvent() {
 	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
 	ethRelayer.bridgeBankAbi = contactAbi
 	eventName = events.LogLock.String()
-	ethRelayer.bridgeBankEventLockSig = contactAbi.Events[eventName].ID().Hex()
+	ethRelayer.bridgeBankEventLockSig = contactAbi.Events[eventName].ID.Hex()
 	eventName = events.LogChain33TokenBurn.String()
-	ethRelayer.bridgeBankEventBurnSig = contactAbi.Events[eventName].ID().Hex()
+	ethRelayer.bridgeBankEventBurnSig = contactAbi.Events[eventName].ID.Hex()
 	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
 }
 

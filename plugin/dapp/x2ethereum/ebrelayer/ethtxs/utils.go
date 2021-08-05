@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
 //EthTxStatus ...
@@ -47,7 +47,7 @@ func SignClaim4Eth(hash common.Hash, privateKey *ecdsa.PrivateKey) ([]byte, erro
 }
 
 func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) {
-	prefixed := solsha3.SoliditySHA3WithPrefix(message[:])
+	prefixed := utils.SoliditySHA3WithPrefix(message[:])
 	sig, err := secp256k1.Sign(prefixed, math.PaddedBigBytes(key.D, 32))
 	if err != nil {
 		panic(err)

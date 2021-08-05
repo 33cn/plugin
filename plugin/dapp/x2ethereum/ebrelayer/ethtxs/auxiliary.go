@@ -34,7 +34,7 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *O
 	//订阅事件
 	eventName := "LogNewBridgeToken"
 	bridgeBankABI := LoadABI(BridgeBankABI)
-	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID().Hex()
+	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID.Hex()
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{x2EthDeployInfo.BridgeBank.Address},
 	}
@@ -90,7 +90,7 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *O
 		if vLog.Topics[0].Hex() == logNewBridgeTokenSig {
 			txslog.Debug("CreateBrigeToken", "Witnessed new event", eventName, "Block number", vLog.BlockNumber)
 
-			err = bridgeBankABI.Unpack(logEvent, eventName, vLog.Data)
+			err = bridgeBankABI.UnpackIntoInterface(logEvent, eventName, vLog.Data)
 			if nil != err {
 				return "", err
 			}

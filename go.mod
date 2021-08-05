@@ -17,13 +17,13 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/ethereum/go-ethereum v1.9.9
+	github.com/ethereum/go-ethereum v1.10.0
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.4.3
-	github.com/hashicorp/golang-lru v0.5.4
+	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/holiman/uint256 v1.1.1
-	github.com/huin/goupnp v1.0.0
+	github.com/huin/goupnp v1.0.1-0.20200620063722-49508fba0031
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0
@@ -31,12 +31,11 @@ require (
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
 	github.com/phoreproject/bls v0.0.0-20200525203911-a88a5ae26844
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v0.9.2 // indirect
-	github.com/prometheus/common v0.4.1
+	github.com/prometheus/common v0.6.0
 	github.com/prometheus/procfs v0.0.3 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
-	github.com/rs/cors v1.6.0
-	github.com/spf13/cobra v0.0.5
+	github.com/rs/cors v1.7.0
+	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.5.0
@@ -46,5 +45,6 @@ require (
 	golang.org/x/sys v0.0.0-20210426080607-c94f62235c83
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.33.2
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )

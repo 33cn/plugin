@@ -29,7 +29,8 @@ func EthereumRelayerCmd() *cobra.Command {
 		ShowEthereumTxsHashCmd(),
 		IsValidatorActiveCmd(),
 		ShowOperatorCmd(),
-		DeployContrctsCmd(),
+		DeployContrcts2Chain33Cmd(),
+		DeployContrcts2EthCmd(),
 		ShowTxReceiptCmd(),
 		//////auxiliary///////
 		CreateBridgeTokenCmd(),
@@ -209,11 +210,20 @@ func ShowOperator(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//DeployContrctsCmd ...
-func DeployContrctsCmd() *cobra.Command {
+func DeployContrcts2Chain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deploy",
-		Short: "deploy the corresponding Ethereum contracts",
+		Use:   "deploy2chain33",
+		Short: "deploy contracts to chain33",
+		Run:   DeployContrcts2Chain33,
+	}
+	return cmd
+}
+
+//DeployContrctsCmd ...
+func DeployContrcts2EthCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deploy2eth",
+		Short: "deploy contracts to ethereum",
 		Run:   DeployContrcts,
 	}
 	return cmd
@@ -224,6 +234,13 @@ func DeployContrcts(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployContrcts", nil, &res)
+	ctx.Run()
+}
+
+func DeployContrcts2Chain33(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Deploy2Chain33", nil, &res)
 	ctx.Run()
 }
 
