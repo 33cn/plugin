@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethinterface"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -47,7 +46,9 @@ func SignClaim4Eth(hash common.Hash, privateKey *ecdsa.PrivateKey) ([]byte, erro
 }
 
 func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) {
-	prefixed := utils.SoliditySHA3WithPrefix(message[:])
+	//只是为保留代码在此处
+	//prefixed := utils.SoliditySHA3WithPrefix(message[:])
+	var prefixed []byte
 	sig, err := secp256k1.Sign(prefixed, math.PaddedBigBytes(key.D, 32))
 	if err != nil {
 		panic(err)
