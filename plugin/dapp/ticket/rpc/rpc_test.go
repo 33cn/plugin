@@ -375,10 +375,6 @@ Enable=0
 [fork.sub.wasm]
 Enable=0
 
-[fork.sub.x2ethereum]
-Enable=0
-
-
 [fork.sub.valnode]
 Enable=0
 [fork.sub.dpos]
