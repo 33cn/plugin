@@ -5,9 +5,8 @@ package types
 
 import (
 	fmt "fmt"
-	math "math"
-
 	proto "github.com/golang/protobuf/proto"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -170,8 +169,9 @@ func (m *EVMContractData) GetAbi() string {
 type EVMContractState struct {
 	Nonce                uint64            `protobuf:"varint,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	Suicided             bool              `protobuf:"varint,2,opt,name=suicided,proto3" json:"suicided,omitempty"`
-	StorageHash          []byte            `protobuf:"bytes,3,opt,name=storageHash,proto3" json:"storageHash,omitempty"`
-	Storage              map[string][]byte `protobuf:"bytes,4,rep,name=storage,proto3" json:"storage,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Frozen               uint64            `protobuf:"varint,3,opt,name=frozen,proto3" json:"frozen,omitempty"`
+	StorageHash          []byte            `protobuf:"bytes,4,opt,name=storageHash,proto3" json:"storageHash,omitempty"`
+	Storage              map[string][]byte `protobuf:"bytes,5,rep,name=storage,proto3" json:"storage,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -216,6 +216,13 @@ func (m *EVMContractState) GetSuicided() bool {
 	return false
 }
 
+func (m *EVMContractState) GetFrozen() uint64 {
+	if m != nil {
+		return m.Frozen
+	}
+	return 0
+}
+
 func (m *EVMContractState) GetStorageHash() []byte {
 	if m != nil {
 		return m.StorageHash
@@ -230,27 +237,18 @@ func (m *EVMContractState) GetStorage() map[string][]byte {
 	return nil
 }
 
-// 创建/调用合约的请求结构
 type EVMContractAction struct {
-	// 转账金额
-	Amount uint64 `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
-	// 消耗限制，默认为Transaction.Fee
-	GasLimit uint64 `protobuf:"varint,2,opt,name=gasLimit,proto3" json:"gasLimit,omitempty"`
-	// gas价格，默认为1
-	GasPrice uint32 `protobuf:"varint,3,opt,name=gasPrice,proto3" json:"gasPrice,omitempty"`
-	// 合约数据
-	Code []byte `protobuf:"bytes,4,opt,name=code,proto3" json:"code,omitempty"`
-	//交易参数
-	Para []byte `protobuf:"bytes,5,opt,name=para,proto3" json:"para,omitempty"`
-	// 合约别名，方便识别
-	Alias string `protobuf:"bytes,6,opt,name=alias,proto3" json:"alias,omitempty"`
-	// 交易备注
-	Note string `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
-	// 调用合约地址
-	ContractAddr         string   `protobuf:"bytes,8,opt,name=contractAddr,proto3" json:"contractAddr,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	// Types that are valid to be assigned to Value:
+	//	*EVMContractAction_Exec
+	//	*EVMContractAction_Destroy
+	//	*EVMContractAction_Freeze
+	//	*EVMContractAction_Release
+	//	*EVMContractAction_Update
+	Value                isEVMContractAction_Value `protobuf_oneof:"value"`
+	Ty                   int32                     `protobuf:"varint,6,opt,name=ty,proto3" json:"ty,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
 }
 
 func (m *EVMContractAction) Reset()         { *m = EVMContractAction{} }
@@ -278,58 +276,556 @@ func (m *EVMContractAction) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EVMContractAction proto.InternalMessageInfo
 
-func (m *EVMContractAction) GetAmount() uint64 {
+type isEVMContractAction_Value interface {
+	isEVMContractAction_Value()
+}
+
+type EVMContractAction_Exec struct {
+	Exec *EVMContractExec `protobuf:"bytes,1,opt,name=exec,proto3,oneof"`
+}
+
+type EVMContractAction_Destroy struct {
+	Destroy *EVMContractDestroy `protobuf:"bytes,2,opt,name=destroy,proto3,oneof"`
+}
+
+type EVMContractAction_Freeze struct {
+	Freeze *EVMContractFreeze `protobuf:"bytes,3,opt,name=freeze,proto3,oneof"`
+}
+
+type EVMContractAction_Release struct {
+	Release *EVMContractRelease `protobuf:"bytes,4,opt,name=release,proto3,oneof"`
+}
+
+type EVMContractAction_Update struct {
+	Update *EVMContractUpdate `protobuf:"bytes,5,opt,name=update,proto3,oneof"`
+}
+
+func (*EVMContractAction_Exec) isEVMContractAction_Value() {}
+
+func (*EVMContractAction_Destroy) isEVMContractAction_Value() {}
+
+func (*EVMContractAction_Freeze) isEVMContractAction_Value() {}
+
+func (*EVMContractAction_Release) isEVMContractAction_Value() {}
+
+func (*EVMContractAction_Update) isEVMContractAction_Value() {}
+
+func (m *EVMContractAction) GetValue() isEVMContractAction_Value {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetExec() *EVMContractExec {
+	if x, ok := m.GetValue().(*EVMContractAction_Exec); ok {
+		return x.Exec
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetDestroy() *EVMContractDestroy {
+	if x, ok := m.GetValue().(*EVMContractAction_Destroy); ok {
+		return x.Destroy
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetFreeze() *EVMContractFreeze {
+	if x, ok := m.GetValue().(*EVMContractAction_Freeze); ok {
+		return x.Freeze
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetRelease() *EVMContractRelease {
+	if x, ok := m.GetValue().(*EVMContractAction_Release); ok {
+		return x.Release
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetUpdate() *EVMContractUpdate {
+	if x, ok := m.GetValue().(*EVMContractAction_Update); ok {
+		return x.Update
+	}
+	return nil
+}
+
+func (m *EVMContractAction) GetTy() int32 {
+	if m != nil {
+		return m.Ty
+	}
+	return 0
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*EVMContractAction) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*EVMContractAction_Exec)(nil),
+		(*EVMContractAction_Destroy)(nil),
+		(*EVMContractAction_Freeze)(nil),
+		(*EVMContractAction_Release)(nil),
+		(*EVMContractAction_Update)(nil),
+	}
+}
+
+// 创建和调用合约的请求结构
+type EVMContractExec struct {
+	// 转账金额
+	Amount uint64 `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
+	// 消耗限制，默认为Transaction.Fee
+	GasLimit uint64 `protobuf:"varint,2,opt,name=gasLimit,proto3" json:"gasLimit,omitempty"`
+	// gas价格，默认为1
+	GasPrice uint32 `protobuf:"varint,3,opt,name=gasPrice,proto3" json:"gasPrice,omitempty"`
+	// 合约数据
+	Code []byte `protobuf:"bytes,4,opt,name=code,proto3" json:"code,omitempty"`
+	//交易参数
+	Para []byte `protobuf:"bytes,5,opt,name=para,proto3" json:"para,omitempty"`
+	// 合约别名，方便识别
+	Alias string `protobuf:"bytes,6,opt,name=alias,proto3" json:"alias,omitempty"`
+	// 交易备注
+	Note string `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+	// 调用合约地址
+	ContractAddr         string   `protobuf:"bytes,8,opt,name=contractAddr,proto3" json:"contractAddr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EVMContractExec) Reset()         { *m = EVMContractExec{} }
+func (m *EVMContractExec) String() string { return proto.CompactTextString(m) }
+func (*EVMContractExec) ProtoMessage()    {}
+func (*EVMContractExec) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{4}
+}
+
+func (m *EVMContractExec) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractExec.Unmarshal(m, b)
+}
+func (m *EVMContractExec) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractExec.Marshal(b, m, deterministic)
+}
+func (m *EVMContractExec) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractExec.Merge(m, src)
+}
+func (m *EVMContractExec) XXX_Size() int {
+	return xxx_messageInfo_EVMContractExec.Size(m)
+}
+func (m *EVMContractExec) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractExec.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractExec proto.InternalMessageInfo
+
+func (m *EVMContractExec) GetAmount() uint64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *EVMContractAction) GetGasLimit() uint64 {
+func (m *EVMContractExec) GetGasLimit() uint64 {
 	if m != nil {
 		return m.GasLimit
 	}
 	return 0
 }
 
-func (m *EVMContractAction) GetGasPrice() uint32 {
+func (m *EVMContractExec) GetGasPrice() uint32 {
 	if m != nil {
 		return m.GasPrice
 	}
 	return 0
 }
 
-func (m *EVMContractAction) GetCode() []byte {
+func (m *EVMContractExec) GetCode() []byte {
 	if m != nil {
 		return m.Code
 	}
 	return nil
 }
 
-func (m *EVMContractAction) GetPara() []byte {
+func (m *EVMContractExec) GetPara() []byte {
 	if m != nil {
 		return m.Para
 	}
 	return nil
 }
 
-func (m *EVMContractAction) GetAlias() string {
+func (m *EVMContractExec) GetAlias() string {
 	if m != nil {
 		return m.Alias
 	}
 	return ""
 }
 
-func (m *EVMContractAction) GetNote() string {
+func (m *EVMContractExec) GetNote() string {
 	if m != nil {
 		return m.Note
 	}
 	return ""
 }
 
-func (m *EVMContractAction) GetContractAddr() string {
+func (m *EVMContractExec) GetContractAddr() string {
 	if m != nil {
 		return m.ContractAddr
+	}
+	return ""
+}
+
+// 更新合约的请求结构
+type EVMContractUpdate struct {
+	// 待更新的合约地址
+	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	// 转账金额
+	Amount uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	// 消耗限制，默认为Transaction.Fee
+	GasLimit uint64 `protobuf:"varint,3,opt,name=gasLimit,proto3" json:"gasLimit,omitempty"`
+	// gas价格，默认为1
+	GasPrice uint32 `protobuf:"varint,4,opt,name=gasPrice,proto3" json:"gasPrice,omitempty"`
+	// 合约数据
+	Code []byte `protobuf:"bytes,5,opt,name=code,proto3" json:"code,omitempty"`
+	// 合约别名，方便识别
+	Alias string `protobuf:"bytes,6,opt,name=alias,proto3" json:"alias,omitempty"`
+	// 交易备注
+	Note                 string   `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EVMContractUpdate) Reset()         { *m = EVMContractUpdate{} }
+func (m *EVMContractUpdate) String() string { return proto.CompactTextString(m) }
+func (*EVMContractUpdate) ProtoMessage()    {}
+func (*EVMContractUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{5}
+}
+
+func (m *EVMContractUpdate) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractUpdate.Unmarshal(m, b)
+}
+func (m *EVMContractUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractUpdate.Marshal(b, m, deterministic)
+}
+func (m *EVMContractUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractUpdate.Merge(m, src)
+}
+func (m *EVMContractUpdate) XXX_Size() int {
+	return xxx_messageInfo_EVMContractUpdate.Size(m)
+}
+func (m *EVMContractUpdate) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractUpdate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractUpdate proto.InternalMessageInfo
+
+func (m *EVMContractUpdate) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *EVMContractUpdate) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *EVMContractUpdate) GetGasLimit() uint64 {
+	if m != nil {
+		return m.GasLimit
+	}
+	return 0
+}
+
+func (m *EVMContractUpdate) GetGasPrice() uint32 {
+	if m != nil {
+		return m.GasPrice
+	}
+	return 0
+}
+
+func (m *EVMContractUpdate) GetCode() []byte {
+	if m != nil {
+		return m.Code
+	}
+	return nil
+}
+
+func (m *EVMContractUpdate) GetAlias() string {
+	if m != nil {
+		return m.Alias
+	}
+	return ""
+}
+
+func (m *EVMContractUpdate) GetNote() string {
+	if m != nil {
+		return m.Note
+	}
+	return ""
+}
+
+type EVMContractDestroy struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EVMContractDestroy) Reset()         { *m = EVMContractDestroy{} }
+func (m *EVMContractDestroy) String() string { return proto.CompactTextString(m) }
+func (*EVMContractDestroy) ProtoMessage()    {}
+func (*EVMContractDestroy) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{6}
+}
+
+func (m *EVMContractDestroy) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractDestroy.Unmarshal(m, b)
+}
+func (m *EVMContractDestroy) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractDestroy.Marshal(b, m, deterministic)
+}
+func (m *EVMContractDestroy) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractDestroy.Merge(m, src)
+}
+func (m *EVMContractDestroy) XXX_Size() int {
+	return xxx_messageInfo_EVMContractDestroy.Size(m)
+}
+func (m *EVMContractDestroy) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractDestroy.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractDestroy proto.InternalMessageInfo
+
+func (m *EVMContractDestroy) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+type EVMContractFreeze struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EVMContractFreeze) Reset()         { *m = EVMContractFreeze{} }
+func (m *EVMContractFreeze) String() string { return proto.CompactTextString(m) }
+func (*EVMContractFreeze) ProtoMessage()    {}
+func (*EVMContractFreeze) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{7}
+}
+
+func (m *EVMContractFreeze) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractFreeze.Unmarshal(m, b)
+}
+func (m *EVMContractFreeze) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractFreeze.Marshal(b, m, deterministic)
+}
+func (m *EVMContractFreeze) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractFreeze.Merge(m, src)
+}
+func (m *EVMContractFreeze) XXX_Size() int {
+	return xxx_messageInfo_EVMContractFreeze.Size(m)
+}
+func (m *EVMContractFreeze) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractFreeze.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractFreeze proto.InternalMessageInfo
+
+func (m *EVMContractFreeze) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+type EVMContractRelease struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EVMContractRelease) Reset()         { *m = EVMContractRelease{} }
+func (m *EVMContractRelease) String() string { return proto.CompactTextString(m) }
+func (*EVMContractRelease) ProtoMessage()    {}
+func (*EVMContractRelease) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{8}
+}
+
+func (m *EVMContractRelease) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractRelease.Unmarshal(m, b)
+}
+func (m *EVMContractRelease) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractRelease.Marshal(b, m, deterministic)
+}
+func (m *EVMContractRelease) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractRelease.Merge(m, src)
+}
+func (m *EVMContractRelease) XXX_Size() int {
+	return xxx_messageInfo_EVMContractRelease.Size(m)
+}
+func (m *EVMContractRelease) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractRelease.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractRelease proto.InternalMessageInfo
+
+func (m *EVMContractRelease) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+// 存放合约统计数据
+type EVMContractStatistic struct {
+	CallTimes            uint64            `protobuf:"varint,1,opt,name=callTimes,proto3" json:"callTimes,omitempty"`
+	Caller               []string          `protobuf:"bytes,2,rep,name=caller,proto3" json:"caller,omitempty"`
+	SuccseccTimes        uint64            `protobuf:"varint,3,opt,name=succseccTimes,proto3" json:"succseccTimes,omitempty"`
+	FailReason           map[string]uint64 `protobuf:"bytes,4,rep,name=failReason,proto3" json:"failReason,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	PrevAddr             string            `protobuf:"bytes,5,opt,name=prevAddr,proto3" json:"prevAddr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *EVMContractStatistic) Reset()         { *m = EVMContractStatistic{} }
+func (m *EVMContractStatistic) String() string { return proto.CompactTextString(m) }
+func (*EVMContractStatistic) ProtoMessage()    {}
+func (*EVMContractStatistic) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{9}
+}
+
+func (m *EVMContractStatistic) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EVMContractStatistic.Unmarshal(m, b)
+}
+func (m *EVMContractStatistic) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EVMContractStatistic.Marshal(b, m, deterministic)
+}
+func (m *EVMContractStatistic) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EVMContractStatistic.Merge(m, src)
+}
+func (m *EVMContractStatistic) XXX_Size() int {
+	return xxx_messageInfo_EVMContractStatistic.Size(m)
+}
+func (m *EVMContractStatistic) XXX_DiscardUnknown() {
+	xxx_messageInfo_EVMContractStatistic.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EVMContractStatistic proto.InternalMessageInfo
+
+func (m *EVMContractStatistic) GetCallTimes() uint64 {
+	if m != nil {
+		return m.CallTimes
+	}
+	return 0
+}
+
+func (m *EVMContractStatistic) GetCaller() []string {
+	if m != nil {
+		return m.Caller
+	}
+	return nil
+}
+
+func (m *EVMContractStatistic) GetSuccseccTimes() uint64 {
+	if m != nil {
+		return m.SuccseccTimes
+	}
+	return 0
+}
+
+func (m *EVMContractStatistic) GetFailReason() map[string]uint64 {
+	if m != nil {
+		return m.FailReason
+	}
+	return nil
+}
+
+func (m *EVMContractStatistic) GetPrevAddr() string {
+	if m != nil {
+		return m.PrevAddr
+	}
+	return ""
+}
+
+// 合约统计数据日志
+type ReceiptEvmStatistic struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	CallTimes            uint64   `protobuf:"varint,2,opt,name=callTimes,proto3" json:"callTimes,omitempty"`
+	Caller               string   `protobuf:"bytes,3,opt,name=caller,proto3" json:"caller,omitempty"`
+	SuccseccTimes        uint64   `protobuf:"varint,4,opt,name=succseccTimes,proto3" json:"succseccTimes,omitempty"`
+	PreAddr              string   `protobuf:"bytes,5,opt,name=preAddr,proto3" json:"preAddr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReceiptEvmStatistic) Reset()         { *m = ReceiptEvmStatistic{} }
+func (m *ReceiptEvmStatistic) String() string { return proto.CompactTextString(m) }
+func (*ReceiptEvmStatistic) ProtoMessage()    {}
+func (*ReceiptEvmStatistic) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{10}
+}
+
+func (m *ReceiptEvmStatistic) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptEvmStatistic.Unmarshal(m, b)
+}
+func (m *ReceiptEvmStatistic) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptEvmStatistic.Marshal(b, m, deterministic)
+}
+func (m *ReceiptEvmStatistic) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptEvmStatistic.Merge(m, src)
+}
+func (m *ReceiptEvmStatistic) XXX_Size() int {
+	return xxx_messageInfo_ReceiptEvmStatistic.Size(m)
+}
+func (m *ReceiptEvmStatistic) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptEvmStatistic.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReceiptEvmStatistic proto.InternalMessageInfo
+
+func (m *ReceiptEvmStatistic) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+func (m *ReceiptEvmStatistic) GetCallTimes() uint64 {
+	if m != nil {
+		return m.CallTimes
+	}
+	return 0
+}
+
+func (m *ReceiptEvmStatistic) GetCaller() string {
+	if m != nil {
+		return m.Caller
+	}
+	return ""
+}
+
+func (m *ReceiptEvmStatistic) GetSuccseccTimes() uint64 {
+	if m != nil {
+		return m.SuccseccTimes
+	}
+	return 0
+}
+
+func (m *ReceiptEvmStatistic) GetPreAddr() string {
+	if m != nil {
+		return m.PreAddr
 	}
 	return ""
 }
@@ -353,7 +849,7 @@ func (m *ReceiptEVMContract) Reset()         { *m = ReceiptEVMContract{} }
 func (m *ReceiptEVMContract) String() string { return proto.CompactTextString(m) }
 func (*ReceiptEVMContract) ProtoMessage()    {}
 func (*ReceiptEVMContract) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{4}
+	return fileDescriptor_74353de561acd7c6, []int{11}
 }
 
 func (m *ReceiptEVMContract) XXX_Unmarshal(b []byte) error {
@@ -430,7 +926,7 @@ func (m *EVMStateChangeItem) Reset()         { *m = EVMStateChangeItem{} }
 func (m *EVMStateChangeItem) String() string { return proto.CompactTextString(m) }
 func (*EVMStateChangeItem) ProtoMessage()    {}
 func (*EVMStateChangeItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{5}
+	return fileDescriptor_74353de561acd7c6, []int{12}
 }
 
 func (m *EVMStateChangeItem) XXX_Unmarshal(b []byte) error {
@@ -489,7 +985,7 @@ func (m *EVMContractDataCmd) Reset()         { *m = EVMContractDataCmd{} }
 func (m *EVMContractDataCmd) String() string { return proto.CompactTextString(m) }
 func (*EVMContractDataCmd) ProtoMessage()    {}
 func (*EVMContractDataCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{6}
+	return fileDescriptor_74353de561acd7c6, []int{13}
 }
 
 func (m *EVMContractDataCmd) XXX_Unmarshal(b []byte) error {
@@ -567,7 +1063,7 @@ func (m *EVMContractStateCmd) Reset()         { *m = EVMContractStateCmd{} }
 func (m *EVMContractStateCmd) String() string { return proto.CompactTextString(m) }
 func (*EVMContractStateCmd) ProtoMessage()    {}
 func (*EVMContractStateCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{7}
+	return fileDescriptor_74353de561acd7c6, []int{14}
 }
 
 func (m *EVMContractStateCmd) XXX_Unmarshal(b []byte) error {
@@ -634,7 +1130,7 @@ func (m *ReceiptEVMContractCmd) Reset()         { *m = ReceiptEVMContractCmd{} }
 func (m *ReceiptEVMContractCmd) String() string { return proto.CompactTextString(m) }
 func (*ReceiptEVMContractCmd) ProtoMessage()    {}
 func (*ReceiptEVMContractCmd) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{8}
+	return fileDescriptor_74353de561acd7c6, []int{15}
 }
 
 func (m *ReceiptEVMContractCmd) XXX_Unmarshal(b []byte) error {
@@ -701,7 +1197,7 @@ func (m *CheckEVMAddrReq) Reset()         { *m = CheckEVMAddrReq{} }
 func (m *CheckEVMAddrReq) String() string { return proto.CompactTextString(m) }
 func (*CheckEVMAddrReq) ProtoMessage()    {}
 func (*CheckEVMAddrReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{9}
+	return fileDescriptor_74353de561acd7c6, []int{16}
 }
 
 func (m *CheckEVMAddrReq) XXX_Unmarshal(b []byte) error {
@@ -743,7 +1239,7 @@ func (m *CheckEVMAddrResp) Reset()         { *m = CheckEVMAddrResp{} }
 func (m *CheckEVMAddrResp) String() string { return proto.CompactTextString(m) }
 func (*CheckEVMAddrResp) ProtoMessage()    {}
 func (*CheckEVMAddrResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{10}
+	return fileDescriptor_74353de561acd7c6, []int{17}
 }
 
 func (m *CheckEVMAddrResp) XXX_Unmarshal(b []byte) error {
@@ -806,7 +1302,7 @@ func (m *EstimateEVMGasReq) Reset()         { *m = EstimateEVMGasReq{} }
 func (m *EstimateEVMGasReq) String() string { return proto.CompactTextString(m) }
 func (*EstimateEVMGasReq) ProtoMessage()    {}
 func (*EstimateEVMGasReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{11}
+	return fileDescriptor_74353de561acd7c6, []int{18}
 }
 
 func (m *EstimateEVMGasReq) XXX_Unmarshal(b []byte) error {
@@ -866,7 +1362,7 @@ func (m *EstimateEVMGasResp) Reset()         { *m = EstimateEVMGasResp{} }
 func (m *EstimateEVMGasResp) String() string { return proto.CompactTextString(m) }
 func (*EstimateEVMGasResp) ProtoMessage()    {}
 func (*EstimateEVMGasResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{12}
+	return fileDescriptor_74353de561acd7c6, []int{19}
 }
 
 func (m *EstimateEVMGasResp) XXX_Unmarshal(b []byte) error {
@@ -906,7 +1402,7 @@ func (m *EvmDebugReq) Reset()         { *m = EvmDebugReq{} }
 func (m *EvmDebugReq) String() string { return proto.CompactTextString(m) }
 func (*EvmDebugReq) ProtoMessage()    {}
 func (*EvmDebugReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{13}
+	return fileDescriptor_74353de561acd7c6, []int{20}
 }
 
 func (m *EvmDebugReq) XXX_Unmarshal(b []byte) error {
@@ -945,7 +1441,7 @@ func (m *EvmDebugResp) Reset()         { *m = EvmDebugResp{} }
 func (m *EvmDebugResp) String() string { return proto.CompactTextString(m) }
 func (*EvmDebugResp) ProtoMessage()    {}
 func (*EvmDebugResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{14}
+	return fileDescriptor_74353de561acd7c6, []int{21}
 }
 
 func (m *EvmDebugResp) XXX_Unmarshal(b []byte) error {
@@ -984,7 +1480,7 @@ func (m *EvmQueryAbiReq) Reset()         { *m = EvmQueryAbiReq{} }
 func (m *EvmQueryAbiReq) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryAbiReq) ProtoMessage()    {}
 func (*EvmQueryAbiReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{15}
+	return fileDescriptor_74353de561acd7c6, []int{22}
 }
 
 func (m *EvmQueryAbiReq) XXX_Unmarshal(b []byte) error {
@@ -1024,7 +1520,7 @@ func (m *EvmQueryAbiResp) Reset()         { *m = EvmQueryAbiResp{} }
 func (m *EvmQueryAbiResp) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryAbiResp) ProtoMessage()    {}
 func (*EvmQueryAbiResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{16}
+	return fileDescriptor_74353de561acd7c6, []int{23}
 }
 
 func (m *EvmQueryAbiResp) XXX_Unmarshal(b []byte) error {
@@ -1072,7 +1568,7 @@ func (m *EvmQueryReq) Reset()         { *m = EvmQueryReq{} }
 func (m *EvmQueryReq) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryReq) ProtoMessage()    {}
 func (*EvmQueryReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{17}
+	return fileDescriptor_74353de561acd7c6, []int{24}
 }
 
 func (m *EvmQueryReq) XXX_Unmarshal(b []byte) error {
@@ -1129,7 +1625,7 @@ func (m *EvmQueryResp) Reset()         { *m = EvmQueryResp{} }
 func (m *EvmQueryResp) String() string { return proto.CompactTextString(m) }
 func (*EvmQueryResp) ProtoMessage()    {}
 func (*EvmQueryResp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{18}
+	return fileDescriptor_74353de561acd7c6, []int{25}
 }
 
 func (m *EvmQueryResp) XXX_Unmarshal(b []byte) error {
@@ -1204,7 +1700,7 @@ func (m *EvmContractCreateReq) Reset()         { *m = EvmContractCreateReq{} }
 func (m *EvmContractCreateReq) String() string { return proto.CompactTextString(m) }
 func (*EvmContractCreateReq) ProtoMessage()    {}
 func (*EvmContractCreateReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{19}
+	return fileDescriptor_74353de561acd7c6, []int{26}
 }
 
 func (m *EvmContractCreateReq) XXX_Unmarshal(b []byte) error {
@@ -1306,7 +1802,7 @@ func (m *EvmContractCallReq) Reset()         { *m = EvmContractCallReq{} }
 func (m *EvmContractCallReq) String() string { return proto.CompactTextString(m) }
 func (*EvmContractCallReq) ProtoMessage()    {}
 func (*EvmContractCallReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{20}
+	return fileDescriptor_74353de561acd7c6, []int{27}
 }
 
 func (m *EvmContractCallReq) XXX_Unmarshal(b []byte) error {
@@ -1397,7 +1893,7 @@ func (m *EvmTransferOnlyReq) Reset()         { *m = EvmTransferOnlyReq{} }
 func (m *EvmTransferOnlyReq) String() string { return proto.CompactTextString(m) }
 func (*EvmTransferOnlyReq) ProtoMessage()    {}
 func (*EvmTransferOnlyReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{21}
+	return fileDescriptor_74353de561acd7c6, []int{28}
 }
 
 func (m *EvmTransferOnlyReq) XXX_Unmarshal(b []byte) error {
@@ -1457,7 +1953,7 @@ func (m *EvmGetNonceReq) Reset()         { *m = EvmGetNonceReq{} }
 func (m *EvmGetNonceReq) String() string { return proto.CompactTextString(m) }
 func (*EvmGetNonceReq) ProtoMessage()    {}
 func (*EvmGetNonceReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{22}
+	return fileDescriptor_74353de561acd7c6, []int{29}
 }
 
 func (m *EvmGetNonceReq) XXX_Unmarshal(b []byte) error {
@@ -1496,7 +1992,7 @@ func (m *EvmGetNonceRespose) Reset()         { *m = EvmGetNonceRespose{} }
 func (m *EvmGetNonceRespose) String() string { return proto.CompactTextString(m) }
 func (*EvmGetNonceRespose) ProtoMessage()    {}
 func (*EvmGetNonceRespose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{23}
+	return fileDescriptor_74353de561acd7c6, []int{30}
 }
 
 func (m *EvmGetNonceRespose) XXX_Unmarshal(b []byte) error {
@@ -1524,6 +2020,140 @@ func (m *EvmGetNonceRespose) GetNonce() int64 {
 	return 0
 }
 
+type EvmQueryStatisticReq struct {
+	Addr                 string   `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EvmQueryStatisticReq) Reset()         { *m = EvmQueryStatisticReq{} }
+func (m *EvmQueryStatisticReq) String() string { return proto.CompactTextString(m) }
+func (*EvmQueryStatisticReq) ProtoMessage()    {}
+func (*EvmQueryStatisticReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{31}
+}
+
+func (m *EvmQueryStatisticReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EvmQueryStatisticReq.Unmarshal(m, b)
+}
+func (m *EvmQueryStatisticReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EvmQueryStatisticReq.Marshal(b, m, deterministic)
+}
+func (m *EvmQueryStatisticReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryStatisticReq.Merge(m, src)
+}
+func (m *EvmQueryStatisticReq) XXX_Size() int {
+	return xxx_messageInfo_EvmQueryStatisticReq.Size(m)
+}
+func (m *EvmQueryStatisticReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_EvmQueryStatisticReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EvmQueryStatisticReq proto.InternalMessageInfo
+
+func (m *EvmQueryStatisticReq) GetAddr() string {
+	if m != nil {
+		return m.Addr
+	}
+	return ""
+}
+
+type EvmQueryStatisticRep struct {
+	Amount               uint64   `protobuf:"varint,1,opt,name=amount,proto3" json:"amount,omitempty"`
+	Callers              uint64   `protobuf:"varint,2,opt,name=callers,proto3" json:"callers,omitempty"`
+	SuccessTimes         uint64   `protobuf:"varint,3,opt,name=successTimes,proto3" json:"successTimes,omitempty"`
+	Ratio                float32  `protobuf:"fixed32,4,opt,name=ratio,proto3" json:"ratio,omitempty"`
+	FailedTimes          uint64   `protobuf:"varint,5,opt,name=failedTimes,proto3" json:"failedTimes,omitempty"`
+	GasErrNum            uint64   `protobuf:"varint,6,opt,name=gasErrNum,proto3" json:"gasErrNum,omitempty"`
+	ExecErrNum           uint64   `protobuf:"varint,7,opt,name=execErrNum,proto3" json:"execErrNum,omitempty"`
+	EvmErrNum            uint64   `protobuf:"varint,8,opt,name=evmErrNum,proto3" json:"evmErrNum,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *EvmQueryStatisticRep) Reset()         { *m = EvmQueryStatisticRep{} }
+func (m *EvmQueryStatisticRep) String() string { return proto.CompactTextString(m) }
+func (*EvmQueryStatisticRep) ProtoMessage()    {}
+func (*EvmQueryStatisticRep) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74353de561acd7c6, []int{32}
+}
+
+func (m *EvmQueryStatisticRep) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_EvmQueryStatisticRep.Unmarshal(m, b)
+}
+func (m *EvmQueryStatisticRep) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_EvmQueryStatisticRep.Marshal(b, m, deterministic)
+}
+func (m *EvmQueryStatisticRep) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EvmQueryStatisticRep.Merge(m, src)
+}
+func (m *EvmQueryStatisticRep) XXX_Size() int {
+	return xxx_messageInfo_EvmQueryStatisticRep.Size(m)
+}
+func (m *EvmQueryStatisticRep) XXX_DiscardUnknown() {
+	xxx_messageInfo_EvmQueryStatisticRep.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EvmQueryStatisticRep proto.InternalMessageInfo
+
+func (m *EvmQueryStatisticRep) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetCallers() uint64 {
+	if m != nil {
+		return m.Callers
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetSuccessTimes() uint64 {
+	if m != nil {
+		return m.SuccessTimes
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetRatio() float32 {
+	if m != nil {
+		return m.Ratio
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetFailedTimes() uint64 {
+	if m != nil {
+		return m.FailedTimes
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetGasErrNum() uint64 {
+	if m != nil {
+		return m.GasErrNum
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetExecErrNum() uint64 {
+	if m != nil {
+		return m.ExecErrNum
+	}
+	return 0
+}
+
+func (m *EvmQueryStatisticRep) GetEvmErrNum() uint64 {
+	if m != nil {
+		return m.EvmErrNum
+	}
+	return 0
+}
+
 type EvmCalcNewContractAddrReq struct {
 	Caller               string   `protobuf:"bytes,1,opt,name=caller,proto3" json:"caller,omitempty"`
 	Txhash               string   `protobuf:"bytes,2,opt,name=txhash,proto3" json:"txhash,omitempty"`
@@ -1536,7 +2166,7 @@ func (m *EvmCalcNewContractAddrReq) Reset()         { *m = EvmCalcNewContractAdd
 func (m *EvmCalcNewContractAddrReq) String() string { return proto.CompactTextString(m) }
 func (*EvmCalcNewContractAddrReq) ProtoMessage()    {}
 func (*EvmCalcNewContractAddrReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{24}
+	return fileDescriptor_74353de561acd7c6, []int{33}
 }
 
 func (m *EvmCalcNewContractAddrReq) XXX_Unmarshal(b []byte) error {
@@ -1583,7 +2213,7 @@ func (m *EvmGetPackDataReq) Reset()         { *m = EvmGetPackDataReq{} }
 func (m *EvmGetPackDataReq) String() string { return proto.CompactTextString(m) }
 func (*EvmGetPackDataReq) ProtoMessage()    {}
 func (*EvmGetPackDataReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{25}
+	return fileDescriptor_74353de561acd7c6, []int{34}
 }
 
 func (m *EvmGetPackDataReq) XXX_Unmarshal(b []byte) error {
@@ -1629,7 +2259,7 @@ func (m *EvmGetPackDataRespose) Reset()         { *m = EvmGetPackDataRespose{} }
 func (m *EvmGetPackDataRespose) String() string { return proto.CompactTextString(m) }
 func (*EvmGetPackDataRespose) ProtoMessage()    {}
 func (*EvmGetPackDataRespose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{26}
+	return fileDescriptor_74353de561acd7c6, []int{35}
 }
 
 func (m *EvmGetPackDataRespose) XXX_Unmarshal(b []byte) error {
@@ -1670,7 +2300,7 @@ func (m *EvmGetUnpackDataReq) Reset()         { *m = EvmGetUnpackDataReq{} }
 func (m *EvmGetUnpackDataReq) String() string { return proto.CompactTextString(m) }
 func (*EvmGetUnpackDataReq) ProtoMessage()    {}
 func (*EvmGetUnpackDataReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{27}
+	return fileDescriptor_74353de561acd7c6, []int{36}
 }
 
 func (m *EvmGetUnpackDataReq) XXX_Unmarshal(b []byte) error {
@@ -1723,7 +2353,7 @@ func (m *EvmGetUnpackDataRespose) Reset()         { *m = EvmGetUnpackDataRespose
 func (m *EvmGetUnpackDataRespose) String() string { return proto.CompactTextString(m) }
 func (*EvmGetUnpackDataRespose) ProtoMessage()    {}
 func (*EvmGetUnpackDataRespose) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74353de561acd7c6, []int{28}
+	return fileDescriptor_74353de561acd7c6, []int{37}
 }
 
 func (m *EvmGetUnpackDataRespose) XXX_Unmarshal(b []byte) error {
@@ -1757,6 +2387,14 @@ func init() {
 	proto.RegisterType((*EVMContractState)(nil), "types.EVMContractState")
 	proto.RegisterMapType((map[string][]byte)(nil), "types.EVMContractState.StorageEntry")
 	proto.RegisterType((*EVMContractAction)(nil), "types.EVMContractAction")
+	proto.RegisterType((*EVMContractExec)(nil), "types.EVMContractExec")
+	proto.RegisterType((*EVMContractUpdate)(nil), "types.EVMContractUpdate")
+	proto.RegisterType((*EVMContractDestroy)(nil), "types.EVMContractDestroy")
+	proto.RegisterType((*EVMContractFreeze)(nil), "types.EVMContractFreeze")
+	proto.RegisterType((*EVMContractRelease)(nil), "types.EVMContractRelease")
+	proto.RegisterType((*EVMContractStatistic)(nil), "types.EVMContractStatistic")
+	proto.RegisterMapType((map[string]uint64)(nil), "types.EVMContractStatistic.FailReasonEntry")
+	proto.RegisterType((*ReceiptEvmStatistic)(nil), "types.ReceiptEvmStatistic")
 	proto.RegisterType((*ReceiptEVMContract)(nil), "types.ReceiptEVMContract")
 	proto.RegisterType((*EVMStateChangeItem)(nil), "types.EVMStateChangeItem")
 	proto.RegisterType((*EVMContractDataCmd)(nil), "types.EVMContractDataCmd")
@@ -1778,6 +2416,8 @@ func init() {
 	proto.RegisterType((*EvmTransferOnlyReq)(nil), "types.EvmTransferOnlyReq")
 	proto.RegisterType((*EvmGetNonceReq)(nil), "types.EvmGetNonceReq")
 	proto.RegisterType((*EvmGetNonceRespose)(nil), "types.EvmGetNonceRespose")
+	proto.RegisterType((*EvmQueryStatisticReq)(nil), "types.EvmQueryStatisticReq")
+	proto.RegisterType((*EvmQueryStatisticRep)(nil), "types.EvmQueryStatisticRep")
 	proto.RegisterType((*EvmCalcNewContractAddrReq)(nil), "types.EvmCalcNewContractAddrReq")
 	proto.RegisterType((*EvmGetPackDataReq)(nil), "types.EvmGetPackDataReq")
 	proto.RegisterType((*EvmGetPackDataRespose)(nil), "types.EvmGetPackDataRespose")
@@ -1785,81 +2425,105 @@ func init() {
 	proto.RegisterType((*EvmGetUnpackDataRespose)(nil), "types.EvmGetUnpackDataRespose")
 }
 
-func init() {
-	proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6)
-}
+func init() { proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6) }
 
 var fileDescriptor_74353de561acd7c6 = []byte{
-	// 1129 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x57, 0x4f, 0x6f, 0x1b, 0x45,
-	0x14, 0xd7, 0x7a, 0xd7, 0x8e, 0xf7, 0x25, 0x34, 0xc9, 0xb6, 0x4d, 0x4d, 0x54, 0xa1, 0x68, 0x44,
-	0x21, 0x8a, 0x44, 0x84, 0xda, 0x0b, 0x54, 0x02, 0x29, 0x72, 0xad, 0x80, 0x20, 0x69, 0xd9, 0xd2,
-	0x48, 0x1c, 0x27, 0xeb, 0x89, 0xb3, 0x8d, 0xf7, 0x4f, 0x77, 0xc6, 0x69, 0x7d, 0xe5, 0xcc, 0x91,
-	0x23, 0x37, 0x8e, 0x7c, 0x03, 0xbe, 0x09, 0x1c, 0x39, 0xf1, 0x31, 0xd0, 0x7b, 0x33, 0xbb, 0x3b,
-	0xbb, 0xb6, 0x23, 0x81, 0x2a, 0xd4, 0x93, 0xe7, 0x37, 0xf3, 0x66, 0xde, 0xfb, 0xcd, 0xfb, 0xbd,
-	0x79, 0x6b, 0xd8, 0x16, 0xd7, 0x49, 0x94, 0xa5, 0xaa, 0xe0, 0x91, 0x3a, 0xcc, 0x8b, 0x4c, 0x65,
-	0x41, 0x57, 0xcd, 0x73, 0x21, 0xd9, 0x8f, 0x0e, 0x6c, 0x8f, 0xce, 0x4e, 0x86, 0x66, 0xf1, 0xe9,
-	0xf9, 0x4b, 0x11, 0xa9, 0x20, 0x00, 0x8f, 0x8f, 0xc7, 0xc5, 0xc0, 0xd9, 0x73, 0xf6, 0xfd, 0x90,
-	0xc6, 0xc1, 0x01, 0x78, 0x63, 0xae, 0xf8, 0xa0, 0xb3, 0xe7, 0xec, 0xaf, 0x3f, 0xdc, 0x39, 0xa4,
-	0xfd, 0x87, 0xd6, 0xde, 0x27, 0x5c, 0xf1, 0x90, 0x6c, 0x82, 0x4f, 0xa0, 0x2b, 0x15, 0x57, 0x62,
-	0xe0, 0x92, 0xf1, 0xbd, 0x45, 0xe3, 0xe7, 0xb8, 0x1c, 0x6a, 0x2b, 0xf6, 0x9b, 0x03, 0x9b, 0xad,
-	0x83, 0x82, 0x01, 0xac, 0x45, 0x85, 0xe0, 0x2a, 0x2b, 0xa3, 0x28, 0x21, 0x06, 0x97, 0xf2, 0x44,
-	0x50, 0x20, 0x7e, 0x48, 0xe3, 0xe0, 0x0e, 0x74, 0xf9, 0x34, 0xe6, 0x92, 0x1c, 0xfa, 0xa1, 0x06,
-	0x15, 0x0d, 0xcf, 0xa2, 0x11, 0x80, 0x17, 0x65, 0x63, 0x31, 0xe8, 0xee, 0x39, 0xfb, 0x1b, 0x21,
-	0x8d, 0x83, 0x5d, 0xe8, 0xe3, 0xef, 0x57, 0x5c, 0x5e, 0x0e, 0x7a, 0x34, 0x5f, 0xe1, 0x60, 0x0b,
-	0x5c, 0x7e, 0x1e, 0x0f, 0xd6, 0xe8, 0x08, 0x1c, 0xb2, 0xbf, 0x1c, 0xd8, 0x6a, 0x33, 0xc1, 0x00,
-	0xd2, 0x2c, 0x8d, 0x04, 0x05, 0xeb, 0x85, 0x1a, 0xe0, 0xc1, 0x72, 0x16, 0x47, 0xf1, 0x58, 0x8c,
-	0x29, 0xdc, 0x7e, 0x58, 0xe1, 0x60, 0x0f, 0xd6, 0xa5, 0xca, 0x0a, 0x3e, 0xd1, 0x7e, 0x5d, 0xf2,
-	0x6b, 0x4f, 0x05, 0x5f, 0xc2, 0x9a, 0x81, 0x03, 0x6f, 0xcf, 0xdd, 0x5f, 0x7f, 0xf8, 0xe1, 0x8a,
-	0x7b, 0x3c, 0x7c, 0xae, 0xcd, 0x46, 0xa9, 0x2a, 0xe6, 0x61, 0xb9, 0x69, 0xf7, 0x31, 0x6c, 0xd8,
-	0x0b, 0x48, 0xe5, 0x4a, 0xcc, 0xcd, 0x75, 0xe2, 0x10, 0xa3, 0xbe, 0xe6, 0xd3, 0x99, 0xbe, 0xcb,
-	0x8d, 0x50, 0x83, 0xc7, 0x9d, 0xcf, 0x1c, 0xf6, 0x47, 0x53, 0x17, 0x47, 0x91, 0x8a, 0xb3, 0x34,
-	0xd8, 0x81, 0x1e, 0x4f, 0xb2, 0x59, 0xaa, 0x0c, 0x4d, 0x83, 0x90, 0xe7, 0x84, 0xcb, 0x6f, 0xe3,
-	0x24, 0x56, 0x74, 0x94, 0x17, 0x56, 0xd8, 0xac, 0x3d, 0x2b, 0xe2, 0x48, 0xcb, 0xe1, 0xbd, 0xb0,
-	0xc2, 0x55, 0x32, 0x3c, 0x2b, 0x19, 0x01, 0x78, 0x39, 0x2f, 0x78, 0x99, 0x20, 0x1c, 0xd7, 0xe9,
-	0xed, 0xb5, 0xd2, 0x9b, 0x66, 0x4a, 0x98, 0xdc, 0xd0, 0x38, 0x60, 0xb0, 0x51, 0x0a, 0xfd, 0x08,
-	0x53, 0xdf, 0xa7, 0xb5, 0xc6, 0x1c, 0xfb, 0xdd, 0x81, 0x20, 0x14, 0x91, 0x88, 0x73, 0x65, 0x51,
-	0x44, 0x72, 0x11, 0x9f, 0x4e, 0x45, 0x29, 0x38, 0x83, 0xec, 0x23, 0x4f, 0x6b, 0xdd, 0x35, 0xe6,
-	0x16, 0xdc, 0xba, 0x8b, 0x6e, 0x51, 0xd1, 0x33, 0x29, 0xc6, 0xc7, 0x5c, 0x12, 0x5f, 0x2f, 0x2c,
-	0x21, 0x26, 0xa6, 0x10, 0xca, 0x30, 0xc6, 0x21, 0xda, 0xbe, 0x94, 0x59, 0x1a, 0x0a, 0x65, 0x28,
-	0x97, 0x90, 0x5d, 0x40, 0x30, 0x3a, 0x3b, 0xa1, 0xb4, 0x0f, 0x2f, 0x79, 0x3a, 0x11, 0x5f, 0x2b,
-	0x91, 0x2c, 0x49, 0xed, 0x2e, 0xf4, 0xf3, 0x42, 0x9c, 0x59, 0xd9, 0xad, 0x30, 0x45, 0x3b, 0x2b,
-	0x0a, 0x91, 0x2a, 0xbd, 0xae, 0xb5, 0xd7, 0x98, 0x63, 0xbf, 0x38, 0xe4, 0xc8, 0xae, 0xc9, 0x61,
-	0x32, 0xfe, 0x5f, 0xca, 0xd2, 0x5f, 0x51, 0x96, 0x7e, 0x5d, 0x96, 0xec, 0x6f, 0x07, 0x6e, 0xb7,
-	0xcb, 0x00, 0xe3, 0x7b, 0x2b, 0x75, 0xe8, 0x37, 0xeb, 0xf0, 0xa8, 0x5d, 0x87, 0x1f, 0xaf, 0xa8,
-	0xc3, 0x61, 0x32, 0x7e, 0x3b, 0xa5, 0xe8, 0xdb, 0xa5, 0xf8, 0xab, 0x03, 0x77, 0x17, 0xe5, 0x8a,
-	0x64, 0xdf, 0x09, 0xc5, 0xfa, 0xa4, 0x58, 0xf6, 0x00, 0x36, 0x87, 0x97, 0x22, 0xba, 0x1a, 0x9d,
-	0x9d, 0xe0, 0xde, 0x50, 0xbc, 0x5a, 0xd6, 0x45, 0xd8, 0xcf, 0x0e, 0x6c, 0x35, 0xed, 0x64, 0xae,
-	0x13, 0xad, 0xfd, 0x92, 0x71, 0x3f, 0xac, 0xf0, 0x42, 0x9c, 0x9d, 0x25, 0x71, 0xb6, 0xf9, 0xba,
-	0x4b, 0xf8, 0xde, 0x07, 0x9f, 0xd4, 0x47, 0x06, 0x5a, 0x79, 0xf5, 0x04, 0x9b, 0xc0, 0xf6, 0x48,
-	0xaa, 0x38, 0xe1, 0x4a, 0x8c, 0xce, 0x4e, 0x8e, 0xb9, 0xc4, 0xf8, 0x6f, 0x41, 0x47, 0x65, 0x26,
-	0xfa, 0x8e, 0xca, 0xaa, 0x97, 0xa9, 0x63, 0xbd, 0x4c, 0x75, 0x0a, 0xdc, 0x46, 0x0a, 0xea, 0x97,
-	0xd2, 0xb3, 0x5f, 0x4a, 0xf6, 0x11, 0x04, 0x6d, 0x47, 0x32, 0xc7, 0xeb, 0x9c, 0x70, 0x69, 0x34,
-	0x8b, 0x43, 0xf6, 0x00, 0xd6, 0x47, 0xd7, 0xc9, 0x13, 0x71, 0x3e, 0x9b, 0x60, 0x28, 0x3b, 0xd0,
-	0xcb, 0x72, 0x14, 0x1d, 0xd9, 0x74, 0x43, 0x83, 0xd8, 0xa7, 0xb0, 0x51, 0x9b, 0xc9, 0x1c, 0xc5,
-	0x3c, 0x46, 0x80, 0x72, 0x9c, 0x49, 0x13, 0xbb, 0x3d, 0xc5, 0x0e, 0xe0, 0xd6, 0xe8, 0x3a, 0xf9,
-	0x6e, 0x26, 0x8a, 0xf9, 0xd1, 0x79, 0x8c, 0x67, 0x0f, 0x60, 0x0d, 0x53, 0x23, 0x64, 0x69, 0x5f,
-	0x42, 0xf6, 0x05, 0x6c, 0x36, 0x6c, 0x65, 0xbe, 0xda, 0xb8, 0x6c, 0x94, 0x9d, 0xba, 0x51, 0xbe,
-	0x20, 0x0e, 0xb4, 0xfd, 0x46, 0x3f, 0xa8, 0xfd, 0x38, 0xcd, 0x67, 0xaa, 0xd4, 0x3e, 0x81, 0x55,
-	0x57, 0xcb, 0x7e, 0x72, 0x88, 0xb4, 0x39, 0xf7, 0xc6, 0x98, 0xfe, 0xd5, 0xc1, 0x78, 0x4e, 0xc1,
-	0x5f, 0xe3, 0x4b, 0x67, 0x04, 0x52, 0x42, 0x14, 0x28, 0xbe, 0xbf, 0xb4, 0xa4, 0x35, 0x5f, 0x61,
-	0xfc, 0x1c, 0xb8, 0x33, 0xba, 0x4e, 0xaa, 0xba, 0xc4, 0xe7, 0x50, 0x18, 0xf9, 0xd3, 0x93, 0xe6,
-	0x58, 0x4f, 0xda, 0xc2, 0x25, 0xe1, 0xcc, 0x85, 0xd0, 0x92, 0x75, 0x43, 0x1c, 0x56, 0x6d, 0xcd,
-	0xb3, 0xda, 0x5a, 0xf5, 0x90, 0x76, 0xed, 0x87, 0xf4, 0x3e, 0xf8, 0x28, 0xc2, 0x44, 0x28, 0x51,
-	0x98, 0x17, 0xb2, 0x9e, 0x40, 0x9a, 0xe2, 0x4d, 0x1e, 0x17, 0x65, 0x83, 0x34, 0x88, 0x3a, 0x03,
-	0x2f, 0x38, 0x15, 0x82, 0x6e, 0x8f, 0x15, 0xb6, 0x64, 0xeb, 0x53, 0x40, 0xa5, 0x6c, 0xff, 0xc4,
-	0x6e, 0x60, 0x91, 0xe4, 0xd3, 0xa9, 0x91, 0xa5, 0xf5, 0x3d, 0x50, 0x99, 0x97, 0xa4, 0x3a, 0x8b,
-	0xa4, 0x5c, 0x8b, 0x54, 0x23, 0x7c, 0xaf, 0x1d, 0x7e, 0xbb, 0xf0, 0xbb, 0x4b, 0x0a, 0xbf, 0xa6,
-	0xd8, 0x5b, 0x49, 0x71, 0xad, 0x45, 0xd1, 0xa4, 0xa0, 0x5f, 0xeb, 0x74, 0x4a, 0xdc, 0xbe, 0x2f,
-	0x78, 0x2a, 0x2f, 0x44, 0xf1, 0x34, 0x9d, 0xce, 0x97, 0x55, 0x7f, 0xcd, 0xb5, 0xd3, 0xe0, 0x6a,
-	0xfb, 0x72, 0x5b, 0xbe, 0x96, 0xa4, 0xd2, 0x14, 0xe0, 0xb1, 0x50, 0xa7, 0xd8, 0x9a, 0x6e, 0x2e,
-	0xc0, 0x03, 0x8a, 0xac, 0xb6, 0x95, 0x79, 0x26, 0x5b, 0xdf, 0x9a, 0xae, 0xe9, 0x71, 0xec, 0x1b,
-	0x78, 0x1f, 0x33, 0xc4, 0xa7, 0xd1, 0xa9, 0x78, 0x3d, 0xb4, 0x6e, 0xc9, 0x24, 0x6a, 0x69, 0xa7,
-	0xd8, 0x81, 0x9e, 0x7a, 0x73, 0x89, 0x7d, 0x4f, 0x4b, 0xd2, 0x20, 0x36, 0x84, 0x6d, 0xed, 0xf8,
-	0x19, 0x8f, 0xae, 0xe8, 0xc3, 0x5e, 0xbc, 0x2a, 0x6f, 0xce, 0xa9, 0xc5, 0xdb, 0xc8, 0x60, 0xa7,
-	0x95, 0x41, 0xf6, 0x08, 0xee, 0xb6, 0x0f, 0xd1, 0x04, 0xe8, 0xca, 0xf4, 0x94, 0x39, 0xad, 0xc2,
-	0xec, 0x07, 0xb8, 0xad, 0x37, 0xbd, 0x48, 0xf3, 0xff, 0xee, 0x1b, 0x6f, 0x9e, 0xfe, 0xad, 0x18,
-	0xbd, 0xe1, 0x98, 0x7d, 0x0e, 0xf7, 0x16, 0x8f, 0xd6, 0x11, 0x7d, 0x00, 0x30, 0x4b, 0xad, 0x98,
-	0xdc, 0x7d, 0x3f, 0xb4, 0x66, 0xce, 0x7b, 0xf4, 0xa7, 0xe9, 0xd1, 0x3f, 0x01, 0x00, 0x00, 0xff,
-	0xff, 0xc7, 0xa0, 0xa2, 0xb0, 0x49, 0x0d, 0x00, 0x00,
+	// 1541 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0x4f, 0x6f, 0xdc, 0x44,
+	0x14, 0xaf, 0xbd, 0xde, 0x6c, 0xf6, 0x25, 0x6d, 0x1a, 0xb7, 0x4d, 0xb7, 0x55, 0x55, 0x45, 0x56,
+	0x4b, 0xa3, 0x00, 0x11, 0x6a, 0x85, 0x04, 0x95, 0x8a, 0x14, 0xd2, 0x6d, 0x83, 0x4a, 0xd3, 0xe2,
+	0xb6, 0x91, 0x38, 0x4e, 0xbc, 0x93, 0x8d, 0xdb, 0xf5, 0x9f, 0x7a, 0x66, 0xb7, 0xd9, 0x9e, 0x10,
+	0x67, 0x8e, 0x9c, 0x10, 0x12, 0x07, 0x8e, 0x5c, 0xb8, 0x70, 0xe1, 0x8b, 0x20, 0x71, 0xe4, 0xc4,
+	0x67, 0xe0, 0x84, 0xde, 0x9b, 0xb1, 0x3d, 0xf6, 0x7a, 0x03, 0x45, 0x08, 0x71, 0xda, 0x79, 0x6f,
+	0xde, 0xcc, 0xfc, 0xde, 0x9b, 0xdf, 0x7b, 0x6f, 0xbc, 0xb0, 0xca, 0x27, 0x51, 0x90, 0xc4, 0x32,
+	0x63, 0x81, 0xdc, 0x4a, 0xb3, 0x44, 0x26, 0x6e, 0x5b, 0x4e, 0x53, 0x2e, 0xbc, 0x2f, 0x2d, 0x58,
+	0xed, 0xef, 0x3f, 0xdc, 0xd1, 0x93, 0x8f, 0x0e, 0x9e, 0xf3, 0x40, 0xba, 0x2e, 0x38, 0x6c, 0x30,
+	0xc8, 0x7a, 0xd6, 0xba, 0xb5, 0xd1, 0xf5, 0x69, 0xec, 0x6e, 0x82, 0x33, 0x60, 0x92, 0xf5, 0xec,
+	0x75, 0x6b, 0x63, 0xe9, 0xe6, 0xda, 0x16, 0xad, 0xdf, 0x32, 0xd6, 0xde, 0x65, 0x92, 0xf9, 0x64,
+	0xe3, 0xbe, 0x0b, 0x6d, 0x21, 0x99, 0xe4, 0xbd, 0x16, 0x19, 0x5f, 0x9c, 0x35, 0x7e, 0x82, 0xd3,
+	0xbe, 0xb2, 0xf2, 0x7e, 0xb0, 0x60, 0xa5, 0xb6, 0x91, 0xdb, 0x83, 0x4e, 0x90, 0x71, 0x26, 0x93,
+	0x1c, 0x45, 0x2e, 0x22, 0xb8, 0x98, 0x45, 0x9c, 0x80, 0x74, 0x7d, 0x1a, 0xbb, 0xe7, 0xa1, 0xcd,
+	0x46, 0x21, 0x13, 0x74, 0x60, 0xd7, 0x57, 0x42, 0xe1, 0x86, 0x63, 0xb8, 0xe1, 0x82, 0x13, 0x24,
+	0x03, 0xde, 0x6b, 0xaf, 0x5b, 0x1b, 0xcb, 0x3e, 0x8d, 0xdd, 0xcb, 0xb0, 0x88, 0xbf, 0xbb, 0x4c,
+	0x1c, 0xf5, 0x16, 0x48, 0x5f, 0xc8, 0xee, 0x59, 0x68, 0xb1, 0x83, 0xb0, 0xd7, 0xa1, 0x2d, 0x70,
+	0xe8, 0xfd, 0x61, 0xc1, 0xd9, 0xba, 0x27, 0x08, 0x20, 0x4e, 0xe2, 0x80, 0x13, 0x58, 0xc7, 0x57,
+	0x02, 0x6e, 0x2c, 0xc6, 0x61, 0x10, 0x0e, 0xf8, 0x80, 0xe0, 0x2e, 0xfa, 0x85, 0xec, 0xae, 0xc1,
+	0xc2, 0x61, 0x96, 0xbc, 0xe6, 0x31, 0x61, 0x76, 0x7c, 0x2d, 0xb9, 0xeb, 0xb0, 0x24, 0x64, 0x92,
+	0xb1, 0xa1, 0xc2, 0xe3, 0x10, 0x1e, 0x53, 0xe5, 0x7e, 0x04, 0x1d, 0x2d, 0xf6, 0xda, 0xeb, 0xad,
+	0x8d, 0xa5, 0x9b, 0xd7, 0xe6, 0xc4, 0x77, 0xeb, 0x89, 0x32, 0xeb, 0xc7, 0x32, 0x9b, 0xfa, 0xf9,
+	0xa2, 0xcb, 0xb7, 0x61, 0xd9, 0x9c, 0x40, 0x17, 0x5f, 0xf0, 0xa9, 0x0e, 0x33, 0x0e, 0xd1, 0x9b,
+	0x09, 0x1b, 0x8d, 0x55, 0x8c, 0x97, 0x7d, 0x25, 0xdc, 0xb6, 0x3f, 0xb0, 0xbc, 0x1f, 0xed, 0x0a,
+	0x5f, 0xb6, 0x03, 0x19, 0x26, 0xb1, 0xfb, 0x0e, 0x38, 0xfc, 0x98, 0x07, 0xb4, 0x45, 0x23, 0x37,
+	0xfa, 0xc7, 0x3c, 0xd8, 0x3d, 0xe5, 0x93, 0x95, 0xfb, 0x3e, 0x74, 0x06, 0x5c, 0xc8, 0x2c, 0x99,
+	0x6a, 0x32, 0x5d, 0x6a, 0x20, 0x93, 0x32, 0xd8, 0x3d, 0xe5, 0xe7, 0xb6, 0xee, 0x4d, 0x0c, 0x18,
+	0xe7, 0xaf, 0x73, 0x56, 0xf5, 0x66, 0x57, 0xdd, 0xa3, 0xf9, 0xdd, 0x53, 0xbe, 0xb6, 0xc4, 0xa3,
+	0x32, 0x3e, 0xe2, 0x4c, 0x70, 0x0a, 0x64, 0xe3, 0x51, 0xbe, 0x32, 0xc0, 0xa3, 0xb4, 0x2d, 0x1e,
+	0x35, 0x4e, 0x07, 0x48, 0xe0, 0xf6, 0xbc, 0xa3, 0x9e, 0xd1, 0x3c, 0x1e, 0xa5, 0x2c, 0xdd, 0x33,
+	0x60, 0xcb, 0x29, 0xd1, 0xa7, 0xed, 0xdb, 0x72, 0xfa, 0x71, 0x47, 0xc7, 0xd0, 0xfb, 0xa5, 0xca,
+	0x6e, 0x0c, 0x05, 0x5e, 0x3e, 0x8b, 0x92, 0x71, 0x2c, 0x35, 0x5f, 0xb4, 0x84, 0x84, 0x19, 0x32,
+	0xf1, 0x69, 0x18, 0x85, 0x92, 0x62, 0xe3, 0xf8, 0x85, 0xac, 0xe7, 0x1e, 0x67, 0x61, 0xa0, 0x22,
+	0x70, 0xda, 0x2f, 0xe4, 0x82, 0xd5, 0x8e, 0xc1, 0x6a, 0x17, 0x9c, 0x94, 0x65, 0x2c, 0x67, 0x3a,
+	0x8e, 0xcb, 0x3c, 0x59, 0xa8, 0xe5, 0x49, 0x9c, 0x48, 0xae, 0x49, 0x4e, 0x63, 0xd7, 0x83, 0xe5,
+	0xbc, 0x62, 0x6c, 0x63, 0x0e, 0x2d, 0xd2, 0x5c, 0x45, 0xe7, 0xfd, 0x54, 0x2d, 0x1e, 0x2a, 0x24,
+	0x8d, 0xc5, 0xa3, 0xf4, 0xd7, 0x9e, 0xeb, 0x6f, 0xeb, 0x04, 0x7f, 0x9d, 0x39, 0xfe, 0x9a, 0x59,
+	0xfc, 0xb7, 0x7d, 0xf3, 0x36, 0xc0, 0x9d, 0xa5, 0x5a, 0x13, 0x6e, 0xef, 0x46, 0xc5, 0x41, 0x45,
+	0xaf, 0x46, 0xc3, 0xea, 0x96, 0x9a, 0x52, 0x8d, 0x96, 0xdf, 0xd8, 0x70, 0xbe, 0x96, 0xa8, 0xa1,
+	0x90, 0x61, 0xe0, 0x5e, 0x81, 0x6e, 0xc0, 0x46, 0xa3, 0xa7, 0x61, 0xc4, 0x85, 0xa6, 0x45, 0xa9,
+	0xc0, 0x08, 0xa2, 0xc0, 0xb3, 0x9e, 0xbd, 0xde, 0xda, 0xe8, 0xfa, 0x5a, 0x72, 0xaf, 0xc1, 0x69,
+	0x31, 0x0e, 0x02, 0xc1, 0x83, 0x40, 0xad, 0x54, 0x61, 0xac, 0x2a, 0xdd, 0x07, 0x00, 0x87, 0x2c,
+	0x1c, 0xf9, 0x9c, 0x89, 0x24, 0xee, 0x39, 0x54, 0x35, 0xde, 0x6e, 0xae, 0x1a, 0x04, 0x66, 0xeb,
+	0x5e, 0x61, 0xad, 0x8a, 0x87, 0xb1, 0x1c, 0x2f, 0x26, 0xcd, 0xf8, 0x84, 0x68, 0xd1, 0x26, 0xcf,
+	0x0a, 0xf9, 0xf2, 0x1d, 0x58, 0xa9, 0x2d, 0xfd, 0xab, 0xf2, 0xe2, 0x98, 0xe5, 0xe5, 0x3b, 0x0b,
+	0xce, 0xf9, 0x3c, 0xe0, 0x61, 0x2a, 0xfb, 0x93, 0xa8, 0x8c, 0x4d, 0x13, 0xa7, 0x2a, 0xf1, 0xb2,
+	0xe7, 0xc7, 0x4b, 0xb5, 0x84, 0xb9, 0xf1, 0x72, 0x9a, 0xe2, 0xd5, 0x83, 0x4e, 0x9a, 0x71, 0xc3,
+	0xc3, 0x5c, 0xf4, 0x7e, 0xb6, 0xc0, 0xcd, 0x11, 0x96, 0x81, 0x33, 0x8e, 0xb3, 0x2a, 0xc7, 0x19,
+	0x69, 0xb4, 0x57, 0x36, 0xad, 0x8a, 0x6e, 0x26, 0xd5, 0x5a, 0xb3, 0xa9, 0x86, 0x80, 0xc6, 0x82,
+	0x0f, 0xee, 0xb3, 0x1c, 0x70, 0x2e, 0x62, 0x78, 0x33, 0x2e, 0x75, 0x26, 0xe0, 0x10, 0x6d, 0x9f,
+	0x8b, 0x24, 0xf6, 0xb9, 0xd4, 0xa9, 0x90, 0x8b, 0xde, 0x21, 0xb1, 0x94, 0x7a, 0xc3, 0xce, 0x11,
+	0x8b, 0x87, 0xfc, 0x13, 0xc9, 0xa3, 0x86, 0x0b, 0x52, 0x37, 0xbc, 0x6f, 0xb4, 0x80, 0x42, 0x26,
+	0xb4, 0xe3, 0x2c, 0xe3, 0xb1, 0x54, 0xf3, 0x2d, 0x9a, 0xaf, 0xe8, 0xbc, 0x6f, 0xad, 0x6a, 0x86,
+	0x31, 0xc9, 0x76, 0xa2, 0xc1, 0x7f, 0xd2, 0xd3, 0xbb, 0x73, 0x7a, 0x7a, 0xb7, 0xec, 0xe9, 0xde,
+	0xef, 0x16, 0x9c, 0xab, 0xf7, 0x4a, 0xc4, 0xf7, 0xe6, 0x4d, 0xbc, 0xd6, 0xac, 0x15, 0xd2, 0x4a,
+	0xb3, 0xde, 0x2e, 0x9b, 0xb5, 0x4a, 0xbb, 0x1b, 0x73, 0x9a, 0xf5, 0x4e, 0x34, 0xf8, 0x77, 0xfa,
+	0x75, 0xd7, 0x4c, 0xa8, 0xef, 0x2d, 0xb8, 0x30, 0x4b, 0x57, 0x74, 0xf6, 0x7f, 0xc1, 0xd8, 0x2e,
+	0x31, 0xd6, 0xbb, 0x0e, 0x2b, 0x3b, 0x47, 0x3c, 0x78, 0xd1, 0xdf, 0x7f, 0x88, 0x6b, 0x7d, 0xfe,
+	0xb2, 0xb1, 0x74, 0x7e, 0x6d, 0xc1, 0xd9, 0xaa, 0x9d, 0x48, 0xd5, 0x45, 0xab, 0x73, 0xc9, 0x78,
+	0xd1, 0x2f, 0xe4, 0x19, 0x9c, 0x76, 0x03, 0xce, 0xba, 0xbf, 0xad, 0x06, 0x7f, 0xaf, 0x40, 0x97,
+	0xd8, 0x47, 0x06, 0x8a, 0x79, 0xa5, 0xc2, 0x1b, 0xc2, 0x6a, 0x5f, 0xc8, 0x30, 0x62, 0x92, 0xf7,
+	0xf7, 0x1f, 0xde, 0x67, 0x02, 0xf1, 0xe3, 0x73, 0x20, 0xd1, 0xe8, 0x6d, 0x99, 0x14, 0xdd, 0xd8,
+	0x36, 0xba, 0xf1, 0xbc, 0x1a, 0x55, 0x76, 0x4b, 0xc7, 0xec, 0x96, 0xde, 0x5b, 0xe0, 0xd6, 0x0f,
+	0x12, 0x29, 0x86, 0x73, 0xc8, 0xf2, 0x8e, 0x81, 0x43, 0xef, 0x3a, 0x2c, 0xf5, 0x27, 0xd1, 0x5d,
+	0x7e, 0x30, 0x1e, 0x22, 0x94, 0x35, 0x58, 0x48, 0x52, 0x24, 0x1d, 0xd9, 0xb4, 0x7d, 0x2d, 0x79,
+	0xef, 0xc1, 0x72, 0x69, 0x26, 0x52, 0x24, 0xf3, 0x00, 0x05, 0xa4, 0xe3, 0x58, 0x68, 0xec, 0xa6,
+	0xca, 0xdb, 0x84, 0x33, 0xfd, 0x49, 0xf4, 0xd9, 0x98, 0x67, 0xd3, 0xed, 0x83, 0x10, 0xf7, 0xee,
+	0x41, 0x07, 0xaf, 0x86, 0x8b, 0xdc, 0x3e, 0x17, 0xbd, 0x3b, 0xb0, 0x52, 0xb1, 0x15, 0xe9, 0x7c,
+	0xe3, 0xfc, 0x95, 0x6d, 0x97, 0xaf, 0xec, 0x67, 0xe4, 0x03, 0x2d, 0x3f, 0xf1, 0x1c, 0xe4, 0x7e,
+	0x18, 0xa7, 0x63, 0x99, 0x73, 0x9f, 0x84, 0x79, 0xa1, 0xf5, 0xbe, 0xb2, 0xc8, 0x69, 0xbd, 0xef,
+	0x89, 0x98, 0xde, 0x68, 0x63, 0xdc, 0x27, 0x63, 0xaf, 0xb0, 0xd2, 0x69, 0x82, 0xe4, 0x22, 0x12,
+	0x14, 0xeb, 0x2f, 0x4d, 0xe9, 0x76, 0x99, 0xcb, 0xde, 0x6f, 0x16, 0x9c, 0xef, 0x4f, 0xa2, 0x22,
+	0x2f, 0xb1, 0x1c, 0x72, 0x4d, 0x7f, 0x2a, 0x69, 0x96, 0x51, 0xd2, 0x66, 0x82, 0x84, 0x9a, 0x43,
+	0xae, 0x28, 0xdb, 0xf2, 0x71, 0x58, 0x3c, 0x77, 0x1c, 0xe3, 0x29, 0x57, 0x14, 0xd2, 0xb6, 0x59,
+	0x48, 0xaf, 0x40, 0x17, 0x49, 0x18, 0x71, 0xc9, 0x33, 0x5d, 0x21, 0x4b, 0x05, 0xba, 0xc9, 0x8f,
+	0xd3, 0x30, 0xcb, 0x1f, 0x4e, 0x5a, 0xa2, 0xce, 0xc0, 0x32, 0x46, 0x89, 0xb0, 0xa8, 0x7b, 0xbf,
+	0x96, 0x0d, 0xda, 0x76, 0x09, 0x50, 0x4e, 0xdb, 0x5f, 0xb1, 0x1b, 0x18, 0x4e, 0xb2, 0xd1, 0x48,
+	0xd3, 0xd2, 0x78, 0x03, 0x17, 0xe6, 0xb9, 0x53, 0xf6, 0xac, 0x53, 0x2d, 0xc3, 0xa9, 0x0a, 0x7c,
+	0xa7, 0x0e, 0xbf, 0x9e, 0xf8, 0xed, 0x86, 0xc4, 0x2f, 0x5d, 0x5c, 0x98, 0xeb, 0x62, 0xa7, 0xe6,
+	0xa2, 0xbe, 0x82, 0xc5, 0x92, 0xa7, 0x23, 0xf2, 0xed, 0x69, 0xc6, 0x62, 0x71, 0xc8, 0xb3, 0x47,
+	0xf1, 0x68, 0xda, 0x94, 0xfd, 0xd5, 0xf7, 0x6f, 0xcb, 0x7c, 0xff, 0x16, 0x67, 0xb5, 0x6a, 0x67,
+	0x35, 0x5c, 0xa5, 0x4e, 0xc0, 0xfb, 0x5c, 0xee, 0x61, 0x6b, 0x3a, 0x39, 0x01, 0x37, 0x09, 0x59,
+	0x69, 0x2b, 0xd2, 0x44, 0xd4, 0x3e, 0x54, 0x5b, 0xba, 0xc7, 0x79, 0x9b, 0x44, 0x43, 0xca, 0x8a,
+	0xe2, 0xd1, 0x35, 0xaf, 0x0a, 0x7f, 0x61, 0x37, 0x1a, 0xa7, 0x73, 0x3f, 0x6a, 0xb0, 0xed, 0x53,
+	0x92, 0xe4, 0xcf, 0xb4, 0x5c, 0xc4, 0x6b, 0xc2, 0x77, 0x17, 0x17, 0xc2, 0x7c, 0xbb, 0x56, 0x74,
+	0x08, 0x38, 0x63, 0x32, 0x4c, 0x28, 0x0e, 0xb6, 0xaf, 0x04, 0xac, 0x55, 0xf8, 0x22, 0xe5, 0x03,
+	0xb5, 0xb0, 0x4d, 0x0b, 0x4d, 0x15, 0x12, 0x64, 0xc8, 0x44, 0x3f, 0xcb, 0xf6, 0xc6, 0x11, 0xdd,
+	0xb0, 0xe3, 0x97, 0x0a, 0xf7, 0x2a, 0x00, 0x7e, 0x8b, 0xea, 0xe9, 0x0e, 0x4d, 0x1b, 0x1a, 0x5c,
+	0xcd, 0x27, 0x91, 0x9e, 0x5e, 0x54, 0xab, 0x0b, 0x85, 0xf7, 0x00, 0x2e, 0x21, 0xa1, 0xd9, 0x28,
+	0xd8, 0xe3, 0xaf, 0x76, 0x0c, 0x52, 0x69, 0x5e, 0x37, 0x36, 0xd6, 0x35, 0x58, 0x90, 0xc7, 0x47,
+	0xf8, 0x4c, 0x50, 0x19, 0xac, 0x25, 0x6f, 0x07, 0x56, 0xd5, 0x3d, 0x3d, 0x66, 0xc1, 0x0b, 0xfa,
+	0x13, 0x85, 0xbf, 0xcc, 0x89, 0x66, 0x95, 0xb9, 0x5e, 0x21, 0xbc, 0x5d, 0x23, 0xbc, 0x77, 0x0b,
+	0x2e, 0xd4, 0x37, 0x51, 0xf7, 0x4d, 0x0c, 0x53, 0x2a, 0xbd, 0x5b, 0x21, 0x7b, 0x9f, 0xc3, 0x39,
+	0xb5, 0xe8, 0x59, 0x9c, 0xfe, 0xf3, 0xb3, 0x91, 0x24, 0xf4, 0xcf, 0x90, 0x4e, 0x4f, 0x1c, 0x7b,
+	0x1f, 0xc2, 0xc5, 0xd9, 0xad, 0x15, 0xa2, 0xab, 0x00, 0xe3, 0xd8, 0xc0, 0x84, 0x5f, 0x33, 0x86,
+	0xe6, 0x60, 0x81, 0xfe, 0xa0, 0xba, 0xf5, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5c, 0x04, 0x70,
+	0xe5, 0xb5, 0x12, 0x00, 0x00,
 }

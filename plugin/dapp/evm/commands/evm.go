@@ -7,6 +7,7 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/compiler"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -50,6 +51,11 @@ func EvmCmd() *cobra.Command {
 		evmToolsCmd(),
 		getNonceCmd(),
 		showTimeNowCmd(),
+		destroyContractTxCmd(),
+		freezeContractTxCmd(),
+		releaseContractTxCmd(),
+		updateContractCmd(),
+		queryContractStatCmd(),
 	)
 	cmd.PersistentFlags().Int32("chainID", 0, "chain ID")
 
@@ -230,11 +236,12 @@ func createContractCmd() *cobra.Command {
 }
 
 func addCreateContractFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("code", "c", "", "contract binary code")
-	_ = cmd.MarkFlagRequired("code")
+	cmd.Flags().StringP("code", "", "", "contract binary code")
+
+	cmd.Flags().StringP("caller", "c", "", "the caller address")
+	cmd.MarkFlagRequired("caller")
 
 	cmd.Flags().StringP("abi", "b", "", "abi string used for create constructor parameter ")
-	_ = cmd.MarkFlagRequired("abi")
 
 	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
 
@@ -245,31 +252,71 @@ func addCreateContractFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name")
 
 	cmd.Flags().StringP("parameter", "p", "", "parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
+
+	cmd.Flags().StringP("sol", "", "", "sol file path")
+
+	cmd.Flags().StringP("solc", "", "solc", "solc compiler")
 }
 
 func createContract(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
 
+	caller, _ := cmd.Flags().GetString("caller")
+	expire, _ := cmd.Flags().GetString("expire")
 	code, _ := cmd.Flags().GetString("code")
 	note, _ := cmd.Flags().GetString("note")
 	alias, _ := cmd.Flags().GetString("alias")
 	fee, _ := cmd.Flags().GetFloat64("fee")
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	abi, _ := cmd.Flags().GetString("abi")
 	constructorPara, _ := cmd.Flags().GetString("parameter")
+	sol, _ := cmd.Flags().GetString("sol")
+	solc, _ := cmd.Flags().GetString("solc")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
 	feeInt64 := uint64(fee*1e4) * 1e4
 
-	var action evmtypes.EVMContractAction
-	bCode, err := common.FromHex(code)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "parse evm code error", err)
+	if !strings.EqualFold(sol, "") && !strings.EqualFold(code, "") && !strings.EqualFold(abi, "") {
+		fmt.Fprintln(os.Stderr, "--sol, --code and --abi shouldn't be used at the same time.")
 		return
 	}
+
 	exector := cfg.ExecName(paraName + "evm")
-	action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, ContractAddr: address.ExecAddress(exector)}
+	var action *evmtypes.EVMContractExec
+	if !strings.EqualFold(sol, "") {
+		if _, err := os.Stat(sol); os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, "Sol file is not exist.")
+			return
+		}
+		contracts, err := compiler.CompileSolidity(solc, sol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
+			return
+		}
+
+		if len(contracts) > 1 {
+			fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
+			return
+		}
+
+		for _, contract := range contracts {
+			bCode, err := common.FromHex(contract.Code)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "parse evm code error", err)
+				return
+			}
+			action = &evmtypes.EVMContractExec{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, ContractAddr: address.ExecAddress(exector)}
+		}
+	} else {
+		bCode, err := common.FromHex(code)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "parse evm code error", err)
+			return
+		}
+		action = &evmtypes.EVMContractExec{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, ContractAddr: address.ExecAddress(exector)}
+	}
 
 	if "" != constructorPara {
 		packData, err := evmAbi.PackContructorPara(constructorPara, abi)
@@ -281,18 +328,25 @@ func createContract(cmd *cobra.Command, args []string) {
 		action.Code = append(action.Code, packData...)
 	}
 
-	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: action.ContractAddr, ChainID: chainID}
-	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
-	fmt.Println("feeInt64 is", feeInt64)
-	if tx.Fee < int64(feeInt64) {
-		tx.Fee += int64(feeInt64)
+	exec := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
 	}
 
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tx.Nonce = random.Int63()
-	txHex := types.Encode(tx)
-	rawTx := hex.EncodeToString(txHex)
-	fmt.Println(rawTx)
+	toAddr := address.ExecAddress(exector)
+	//name表示发给哪个执行器
+	data, err := createEvmTx(cfg, exec, exector, caller, toAddr, expire, rpcLaddr, feeInt64, chainID)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "create contract error:", err)
+		return
+	}
+
+	params := rpctypes.RawParm{
+		Data: data,
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller, toAddr, expire, rpcLaddr string, fee uint64, chainID int32) (string, error) {
@@ -375,12 +429,16 @@ func callContract(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	action := evmtypes.EVMContractAction{Amount: amountInt64, GasLimit: 0, GasPrice: 0, Note: note, Para: packedParameter, ContractAddr: contractAddr}
+	action := &evmtypes.EVMContractExec{Amount: amountInt64, GasLimit: 0, GasPrice: 0, Note: note, Para: packedParameter, ContractAddr: contractAddr}
+	call := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
+	}
 
 	exector := cfg.ExecName(paraName + "evm")
 	toAddr := address.ExecAddress(exector)
 	//name表示发给哪个执行器
-	data, err := createEvmTx(cfg, &action, exector, caller, toAddr, expire, rpcLaddr, feeInt64, chainID)
+	data, err := createEvmTx(cfg, call, exector, caller, toAddr, expire, rpcLaddr, feeInt64, chainID)
 
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "call contract error", err)
@@ -508,7 +566,7 @@ func estimateContract(cmd *cobra.Command, args []string) {
 
 	toAddr := address.ExecAddress("evm")
 	if len(name) > 0 {
-		toAddr = address.ExecAddress(name)
+		toAddr = name
 	}
 
 	amountInt64 := uint64(amount*1e4) * 1e4
@@ -699,17 +757,22 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 
 	exector := cfg.ExecName(paraName + "evm")
 	toAddr := address.ExecAddress(exector)
-	action := &evmtypes.EVMContractAction{
-		Amount:       uint64(amountInt64),
-		GasLimit:     0,
-		GasPrice:     0,
-		Code:         nil,
-		Para:         r_addr.Hash160[:],
-		Alias:        "",
-		Note:         fmt.Sprintf("transfer from:"+caller+" to:"+receiver+" for amount: %s", amount),
+	action := &evmtypes.EVMContractExec{
+		Amount:   uint64(amountInt64),
+		GasLimit: 0,
+		GasPrice: 0,
+		Code:     nil,
+		Para:     r_addr.Hash160[:],
+		Alias:    "",
+		Note:     fmt.Sprintf("transfer from:"+caller+" to:"+receiver+" for amount: %s", amount),
 		ContractAddr: toAddr,
 	}
-	data, err := createEvmTx(cfg, action, exector, caller, toAddr, expire, rpcLaddr, 0, chainID)
+
+	exec := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
+	}
+	data, err := createEvmTx(cfg, exec, exector, caller, toAddr, expire, rpcLaddr, 0, chainID)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "create transfer tx error:", err)
 		return
@@ -815,6 +878,271 @@ func showTimeNowCmd() *cobra.Command {
 
 func showNow(cmd *cobra.Command, args []string) {
 	fmt.Println(time.Now().Unix())
+}
+
+// destroyContractTxCmd 生成开始交易命令行
+func destroyContractTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "destroy",
+		Short: "destroy a contract",
+		Run:   EvmDestroy,
+	}
+	addEvmDestroyFlags(cmd)
+	return cmd
+}
+
+func addEvmDestroyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("contractAddr", "a", "", "contract address")
+	cmd.MarkFlagRequired("contractAddr")
+}
+
+//EvmDestroy ...
+func EvmDestroy(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contractAddr, _ := cmd.Flags().GetString("contractAddr")
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     cfg.ExecName(evmtypes.ExecutorName),
+		ActionName: "Destroy",
+		Payload:    []byte(fmt.Sprintf("{\"addr\":\"%s\"}", contractAddr)),
+	}
+
+	var res string
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// freezeContractTxCmd 生成开始交易命令行
+func freezeContractTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "freeze",
+		Short: "freeze a contract",
+		Run:   EvmFreeze,
+	}
+	addEvmFreezeFlags(cmd)
+	return cmd
+}
+
+func addEvmFreezeFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("contractAddr", "a", "", "contract address")
+	cmd.MarkFlagRequired("contractAddr")
+}
+
+//EvmFreeze ...
+func EvmFreeze(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contractAddr, _ := cmd.Flags().GetString("contractAddr")
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     cfg.ExecName(evmtypes.ExecutorName),
+		ActionName: "Freeze",
+		Payload:    []byte(fmt.Sprintf("{\"addr\":\"%s\"}", contractAddr)),
+	}
+
+	var res string
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+// releaseContractTxCmd 生成解冻合约交易命令行
+func releaseContractTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "release",
+		Short: "release a contract",
+		Run:   EvmRelease,
+	}
+	addEvmReleaseFlags(cmd)
+	return cmd
+}
+
+func addEvmReleaseFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("contractAddr", "a", "", "contract address")
+	cmd.MarkFlagRequired("contractAddr")
+}
+
+//EvmRelease ...
+func EvmRelease(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+	if cfg == nil {
+		panic(fmt.Sprintln("can not find CliSysParam title", title))
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contractAddr, _ := cmd.Flags().GetString("contractAddr")
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     cfg.ExecName(evmtypes.ExecutorName),
+		ActionName: "Release",
+		Payload:    []byte(fmt.Sprintf("{\"addr\":\"%s\"}", contractAddr)),
+	}
+
+	var res string
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, &res)
+	ctx.RunWithoutMarshal()
+}
+
+func updateContractCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "update a new EVM contract",
+		Run:   updateContract,
+	}
+	addupdateContractFlags(cmd)
+	return cmd
+}
+
+func addupdateContractFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
+
+	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
+
+	cmd.Flags().StringP("caller", "c", "", "the caller address")
+	cmd.MarkFlagRequired("caller")
+	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name")
+	cmd.Flags().StringP("abi", "b", "", "bind the abi data")
+	cmd.Flags().StringP("parameter", "p", "", "parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
+
+	cmd.Flags().StringP("sol", "", "", "sol file path")
+	cmd.Flags().StringP("solc", "", "solc", "solc compiler")
+	cmd.Flags().StringP("addr", "a", "", "contract addr")
+
+}
+
+func updateContract(cmd *cobra.Command, args []string) {
+	title, _ := cmd.Flags().GetString("title")
+	cfg := types.GetCliSysParam(title)
+
+	code, _ := cmd.Flags().GetString("code")
+	note, _ := cmd.Flags().GetString("note")
+	expire, _ := cmd.Flags().GetString("expire")
+	caller, _ := cmd.Flags().GetString("caller")
+	alias, _ := cmd.Flags().GetString("alias")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	abi, _ := cmd.Flags().GetString("abi")
+	sol, _ := cmd.Flags().GetString("sol")
+	solc, _ := cmd.Flags().GetString("solc")
+	constructorPara, _ := cmd.Flags().GetString("parameter")
+	contractAddr, _ := cmd.Flags().GetString("addr")
+	chainID, _ := cmd.Flags().GetInt32("chainID")
+
+
+	feeInt64 := uint64(fee*1e4) * 1e4
+
+	if !strings.EqualFold(sol, "") && !strings.EqualFold(abi, "") {
+		fmt.Fprintln(os.Stderr, "--sol, --code and --abi shouldn't be used at the same time.")
+		return
+	}
+
+	var action *evmtypes.EVMContractUpdate
+	if !strings.EqualFold(sol, "") {
+		if _, err := os.Stat(sol); os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, "Sol file is not exist.")
+			return
+		}
+		contracts, err := compiler.CompileSolidity(solc, sol)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to build Solidity contract", err)
+			return
+		}
+
+		if len(contracts) > 1 {
+			fmt.Fprintln(os.Stderr, "There are too many contracts in the sol file.")
+			return
+		}
+
+		for _, contract := range contracts {
+			bCode, err := common.FromHex(contract.Code)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "parse evm code error", err)
+				return
+			}
+			action = &evmtypes.EVMContractUpdate{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Addr: contractAddr}
+		}
+	} else {
+		bCode, err := common.FromHex(code)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "parse evm code error", err)
+			return
+		}
+		action = &evmtypes.EVMContractUpdate{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, Addr: contractAddr}
+	}
+
+	if "" != constructorPara {
+		packData, err := evmAbi.PackContructorPara(constructorPara, abi)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Pack Contructor Para error:", err)
+			return
+		}
+
+		action.Code = append(action.Code, packData...)
+	}
+
+	exec := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Update{Update:action},
+		Ty:                   evmtypes.EvmUpdateAction,
+	}
+	data, err := createEvmTx(cfg, exec, cfg.ExecName(paraName+"evm"), caller, address.ExecAddress(cfg.ExecName(paraName+"evm")), expire, rpcLaddr, feeInt64, chainID)
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "update contract error:", err)
+		return
+	}
+
+	params := rpctypes.RawParm{
+		Data: data,
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+
+func queryContractStatCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query contract statistic",
+		Run:   queryContractStat,
+	}
+	addqueryContractStatFlags(cmd)
+	return cmd
+}
+
+func addqueryContractStatFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "contract addr")
+	cmd.MarkFlagRequired("addr")
+
+}
+
+func queryContractStat(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	contractAddr, _ := cmd.Flags().GetString("addr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = evmtypes.ExecutorName
+	params.FuncName = "QueryStatistic"
+
+	req := &evmtypes.EvmQueryStatisticReq{Addr: contractAddr}
+	params.Payload = types.MustPBToJSON(req)
+	var res evmtypes.EvmQueryStatisticRep
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
 }
 
 func readFile(fileName string) (string, error) {

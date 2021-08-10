@@ -34,23 +34,16 @@ func (c *channelClient) CreateDeployTx(ctx context.Context, in evmtypes.EvmContr
 		if err != nil {
 			return nil, err
 		}
-
 		bCode = append(bCode, packData...)
 	}
-
-	action := evmtypes.EVMContractAction{
-		Amount:       uint64(amountInt64),
-		GasLimit:     0,
-		GasPrice:     0,
-		Code:         bCode,
-		Para:         nil,
-		Alias:        in.Alias,
-		Note:         in.Note,
-		ContractAddr: toAddr,
+	action := &evmtypes.EVMContractExec{Amount: uint64(amountInt64), Code: bCode, GasLimit: 0, GasPrice: 0, Note: in.Note, ContractAddr: toAddr}
+	execAction := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
 	}
 
+	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
 	cfg := c.GetConfig()
-	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(&action), Fee: 0, To: toAddr}
 
 	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
 	if tx.Fee < in.Fee {
@@ -76,18 +69,12 @@ func (c *channelClient) CreateCallTx(ctx context.Context, in evmtypes.EvmContrac
 		return nil, err
 	}
 
-	action := evmtypes.EVMContractAction{
-		Amount:       uint64(amountInt64),
-		GasLimit:     0,
-		GasPrice:     0,
-		Code:         nil,
-		Para:         packedParameter,
-		Alias:        "",
-		Note:         in.Note,
-		ContractAddr: in.ContractAddr,
+	action := &evmtypes.EVMContractExec{Amount: uint64(amountInt64), Code: nil, GasLimit: 0, GasPrice: 0, Note: in.Note, Para: packedParameter, ContractAddr: in.ContractAddr}
+	execAction := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
 	}
-
-	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(&action), Fee: 0, To: toAddr}
+	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
 
 	cfg := c.GetConfig()
 	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
@@ -112,7 +99,7 @@ func (c *channelClient) CreateTransferOnlyTx(ctx context.Context, in evmtypes.Ev
 		return nil, err
 	}
 
-	action := evmtypes.EVMContractAction{
+	action := &evmtypes.EVMContractExec{
 		Amount:       uint64(in.Amount),
 		GasLimit:     0,
 		GasPrice:     0,
@@ -122,7 +109,11 @@ func (c *channelClient) CreateTransferOnlyTx(ctx context.Context, in evmtypes.Ev
 		Note:         in.Note,
 		ContractAddr: toAddr,
 	}
-	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(&action), Fee: 0, To: toAddr}
+	execAction := &evmtypes.EVMContractAction{
+		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
+		Ty:                   evmtypes.EvmExecAction,
+	}
+	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
 
 	cfg := c.GetConfig()
 	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())

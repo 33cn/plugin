@@ -5,19 +5,24 @@
 package types
 
 import (
-	"strings"
-
+	"encoding/json"
+	"errors"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
 	elog = log.New("module", "exectype.evm")
 
 	actionName = map[string]int32{
-		"EvmCreate": EvmCreateAction,
-		"EvmCall":   EvmCallAction,
+		"Exec":  EvmExecAction,
+		"Update": EvmUpdateAction,
+		"Destroy": EvmDestroyAction,
+		"Freeze":  EvmFreezeAction,
+		"Release": EvmReleaseAction,
 	}
 )
 
@@ -72,17 +77,6 @@ func (evm *EvmType) GetPayload() types.Message {
 	return &EVMContractAction{}
 }
 
-// ActionName 获取ActionName
-func (evm EvmType) ActionName(tx *types.Transaction) string {
-	// 这个需要通过合约交易目标地址来判断Action
-	// 如果目标地址为空，或为evm的固定合约地址，则为创建合约，否则为调用合约
-	cfg := evm.GetConfig()
-	if strings.EqualFold(tx.To, address.ExecAddress(cfg.ExecName(ExecutorName))) {
-		return "createEvmContract"
-	}
-	return "callEvmContract"
-}
-
 // GetTypeMap 获取类型映射
 func (evm *EvmType) GetTypeMap() map[string]int32 {
 	return actionName
@@ -106,7 +100,184 @@ func (evm EvmType) Amount(tx *types.Transaction) (int64, error) {
 	return 0, nil
 }
 
+// CreateTx 创建交易对象
+func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Transaction, error) {
+	elog.Debug("evm.CreateTx", "action", action)
+	if action == "Exec" {
+		var param CreateCallTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			elog.Error("CreateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+		return createEvmTx(evm.GetConfig(), &param)
+	} else if action == "Update" {
+		var param UpdateTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			elog.Error("UpdateTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+
+		return createEvmUpdateTx(evm.GetConfig(), &param)
+	} else if action == "Destroy" {
+		var param DestroyTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			elog.Error("DestroyTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+
+		v := &EVMContractDestroy{
+			Addr:     param.Addr,
+		}
+		destroy := &EVMContractAction{
+			Ty:    EvmDestroyAction,
+			Value: &EVMContractAction_Destroy{v},
+		}
+
+		return createRawTx(evm.GetConfig(), destroy, "", param.Fee)
+	} else if action == "Freeze" {
+		var param FreezeTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			elog.Error("FreezeTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+
+		v := &EVMContractFreeze{
+			Addr:     param.Addr,
+		}
+		freeze := &EVMContractAction{
+			Ty:    EvmFreezeAction,
+			Value: &EVMContractAction_Freeze{v},
+		}
+		return createRawTx(evm.GetConfig(), freeze, "", param.Fee)
+	}  else if action == "Release" {
+		var param ReleaseTx
+		err := json.Unmarshal(message, &param)
+		if err != nil {
+			elog.Error("ReleaseTx", "Error", err)
+			return nil, types.ErrInvalidParam
+		}
+
+		v := &EVMContractRelease{
+			Addr:     param.Addr,
+		}
+		release := &EVMContractAction{
+			Ty:    EvmReleaseAction,
+			Value: &EVMContractAction_Release{v},
+		}
+		return createRawTx(evm.GetConfig(), release, "", param.Fee)
+	}
+
+	return nil, types.ErrNotSupport
+}
+
 // GetLogMap 获取日志类型映射
 func (evm *EvmType) GetLogMap() map[int64]*types.LogInfo {
 	return logInfo
+}
+
+func createEvmTx(cfg *types.Chain33Config, param *CreateCallTx) (*types.Transaction, error) {
+	if param == nil {
+		elog.Error("createEvmTx", "param", param)
+		return nil, types.ErrInvalidParam
+	}
+
+	// 调用格式判断规则：
+	// 十六进制格式默认使用原方式调用，其它格式，使用ABI方式调用
+	// 为了方便区分，在ABI格式前加0x00000000
+
+	action := &EVMContractExec{
+		Amount:   param.Amount,
+		GasLimit: param.GasLimit,
+		GasPrice: param.GasPrice,
+		Note:     param.Note,
+		Alias:    param.Alias,
+	}
+	if len(param.Code) > 0 {
+		bCode, err := common.FromHex(param.Code)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Code = bCode
+	}
+
+	if len(param.Para) > 0 {
+		para, err := common.FromHex(param.Para)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Para = para
+	}
+
+	if param.IsCreate {
+		if len(action.Code) == 0 {
+			elog.Error("create evm Tx error, code is empty")
+			return nil, errors.New("code must be set in create tx")
+		}
+
+		return createRawTx(cfg, action, "", param.Fee)
+	}
+	return createRawTx(cfg, action, param.Name, param.Fee)
+}
+
+func createEvmUpdateTx(cfg *types.Chain33Config, param *UpdateTx) (*types.Transaction, error) {
+	if param == nil {
+		elog.Error("createEvmUpdateTx", "param", param)
+		return nil, types.ErrInvalidParam
+	}
+
+	// 调用格式判断规则：
+	// 十六进制格式默认使用原方式调用，其它格式，使用ABI方式调用
+	// 为了方便区分，在ABI格式前加0x00000000
+
+	action := &EVMContractUpdate{
+		Addr:     param.Addr,
+		Amount:   param.Amount,
+		GasLimit: param.GasLimit,
+		GasPrice: param.GasPrice,
+		Note:     param.Note,
+		Alias:    param.Alias,
+	}
+	if len(param.Code) > 0 {
+		bCode, err := common.FromHex(param.Code)
+		if err != nil {
+			elog.Error("create evm Tx error, code is invalid", "param.Code", param.Code)
+			return nil, err
+		}
+		action.Code = bCode
+	}
+
+	return createRawTx(cfg, action, "", param.Fee)
+}
+
+func createRawTx(cfg *types.Chain33Config, action proto.Message, name string, fee int64) (*types.Transaction, error) {
+	tx := &types.Transaction{}
+	if len(name) == 0 {
+		tx = &types.Transaction{
+			Execer:  []byte(cfg.ExecName(ExecutorName)),
+			Payload: types.Encode(action),
+			To:      address.ExecAddress(cfg.ExecName(ExecutorName)),
+		}
+	} else {
+		tx = &types.Transaction{
+			Execer:  []byte(cfg.ExecName(name)),
+			Payload: types.Encode(action),
+			To:      address.ExecAddress(cfg.ExecName(name)),
+		}
+	}
+	tx, err := types.FormatTx(cfg, string(tx.Execer), tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if tx.Fee < fee {
+		tx.Fee = fee
+	}
+
+	return tx, nil
 }

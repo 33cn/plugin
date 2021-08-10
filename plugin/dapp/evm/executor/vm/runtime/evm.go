@@ -205,6 +205,11 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, -1, gas, model.ErrDestruct
 	}
 
+	// 冻结状态的合约不允许调用
+	if evm.StateDB.HasFrozen(addr.String()) {
+		return nil, -1, gas, model.ErrFrozen
+	}
+
 	// 打快照，开始处理逻辑
 	snapshot = evm.StateDB.Snapshot()
 	to := AccountRef(addr)
@@ -271,6 +276,11 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		return nil, gas, model.ErrDestruct
 	}
 
+	// 冻结状态的合约不允许调用
+	if evm.StateDB.HasFrozen(addr.String()) {
+		return nil, gas, model.ErrFrozen
+	}
+
 	var (
 		snapshot = evm.StateDB.Snapshot()
 		to       = AccountRef(caller.Address())
@@ -310,6 +320,11 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	// 如果是已经销毁状态的合约是不允许调用的
 	if evm.StateDB.HasSuicided(addr.String()) {
 		return nil, gas, model.ErrDestruct
+	}
+
+	// 冻结状态的合约不允许调用
+	if evm.StateDB.HasFrozen(addr.String()) {
+		return nil, gas, model.ErrFrozen
 	}
 
 	var (
@@ -385,6 +400,11 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	// 如果是已经销毁状态的合约是不允许调用的
 	if evm.StateDB.HasSuicided(addr.String()) {
 		return nil, gas, model.ErrDestruct
+	}
+
+	// 冻结状态的合约不允许调用
+	if evm.StateDB.HasFrozen(addr.String()) {
+		return nil, gas, model.ErrFrozen
 	}
 
 	// 如果指令解释器没有设置成只读，需要在这里强制设置，并在本操作结束后恢复
@@ -489,4 +509,31 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
 	p, ok := PrecompiledContractsBerlin[addr.ToHash160()]
 	return p, ok
+}
+
+func (evm *EVM) Destroy(caller ContractRef, addr common.Address) error {
+	evm.StateDB.Snapshot()
+
+	balance := evm.StateDB.GetBalance(addr.String())
+	// 合约自毁后，将剩余金额返还给创建者
+	evm.StateDB.AddBalance(caller.Address().String(), addr.String(), balance)
+	evm.StateDB.Suicide(addr.String())
+
+	return nil
+}
+
+func (evm *EVM) Freeze(addr common.Address) error {
+	evm.StateDB.Snapshot()
+
+	evm.StateDB.Freeze(addr.String())
+
+	return nil
+}
+
+func (evm *EVM) Release(addr common.Address) error {
+	evm.StateDB.Snapshot()
+
+	evm.StateDB.Release(addr.String())
+
+	return nil
 }

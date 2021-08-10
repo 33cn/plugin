@@ -103,6 +103,20 @@ type (
 		prev    bool // whether account had already suicided
 	}
 
+	// 冻结事件
+	freezeChange struct {
+		baseChange
+		account string
+		prev    uint64 // whether account had already suicided
+	}
+
+	// 解冻事件
+	releaseChange struct {
+		baseChange
+		account string
+		prev    uint64 // whether account had already suicided
+	}
+
 	// nonce变更事件
 	nonceChange struct {
 		baseChange
@@ -202,6 +216,52 @@ func (ch suicideChange) revert(mdb *MemoryStateDB) {
 func (ch suicideChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
 	// 如果已经自杀过了，不处理
 	if ch.prev {
+		return nil
+	}
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		return acc.GetStateKV()
+	}
+	return nil
+}
+
+func (ch freezeChange) revert(mdb *MemoryStateDB) {
+	// 如果已经冻结过了，不处理
+	if ch.prev == ContractStatusFreeze {
+		return
+	}
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		acc.State.Frozen = ch.prev
+	}
+}
+
+func (ch freezeChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
+	// 如果已经冻结过了，不处理
+	if ch.prev == ContractStatusFreeze {
+		return nil
+	}
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		return acc.GetStateKV()
+	}
+	return nil
+}
+
+func (ch releaseChange) revert(mdb *MemoryStateDB) {
+	// 如果已经解冻过了，不处理
+	if ch.prev == ContractStatusRelease {
+		return
+	}
+	acc := mdb.accounts[ch.account]
+	if acc != nil {
+		acc.State.Frozen = ch.prev
+	}
+}
+
+func (ch releaseChange) getData(mdb *MemoryStateDB) []*types.KeyValue {
+	// 如果已经解冻过了，不处理
+	if ch.prev == ContractStatusRelease {
 		return nil
 	}
 	acc := mdb.accounts[ch.account]

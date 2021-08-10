@@ -16,10 +16,11 @@ type Message struct {
 	gasPrice uint32
 	data     []byte
 	para     []byte
+	preAddr  string
 }
 
 // NewMessage 新建消息结构
-func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit uint64, gasPrice uint32, data, para []byte, alias string) *Message {
+func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit uint64, gasPrice uint32, data, para []byte, alias string, preAddr string) *Message {
 	return &Message{
 		from:     from,
 		to:       to,
@@ -30,6 +31,7 @@ func NewMessage(from Address, to *Address, nonce int64, amount uint64, gasLimit 
 		data:     data,
 		alias:    alias,
 		para:     para,
+		preAddr:  preAddr,
 	}
 }
 
@@ -59,3 +61,6 @@ func (m Message) Alias() string { return m.alias }
 
 // Para 合约参数
 func (m Message) Para() []byte { return m.para }
+
+// PreAddr 上一个合约地址，更新合约使用
+func (m Message) PreAddr() string { return m.preAddr }

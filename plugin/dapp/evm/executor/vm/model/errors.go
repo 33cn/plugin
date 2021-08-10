@@ -33,6 +33,11 @@ var (
 	// ErrDestruct                 contract has been destructed
 	ErrDestruct = errors.New("contract has been destructed")
 
+	// ErrFrozen
+	ErrFrozen = errors.New("contract has been frozen")
+	ErrOperation = errors.New("action not support")
+	ErrPermission = errors.New("no permission")
+
 	// ErrWriteProtection       evm: write protection
 	ErrWriteProtection = errors.New("evm: write protection")
 	// ErrReturnDataOutOfBounds evm: return data out of bounds

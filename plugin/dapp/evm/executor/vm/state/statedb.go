@@ -304,6 +304,47 @@ func (mdb *MemoryStateDB) HasSuicided(addr string) bool {
 	return false
 }
 
+// Freeze 合约冻结，不可调用
+func (mdb *MemoryStateDB) Freeze(addr string) bool {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		mdb.addChange(freezeChange{
+			baseChange: baseChange{},
+			account:    addr,
+			prev:       acc.State.GetFrozen(),
+		})
+		mdb.stateDirty[addr] = true
+		return acc.Freeze()
+	}
+	return false
+}
+
+// Release 合约解冻，可调用
+func (mdb *MemoryStateDB) Release(addr string) bool {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		mdb.addChange(releaseChange{
+			baseChange: baseChange{},
+			account:    addr,
+			prev:       acc.State.GetFrozen(),
+		})
+		mdb.stateDirty[addr] = true
+		return acc.Release()
+	}
+	return false
+}
+
+// HasFrozen 判断合约是否冻结
+func (mdb *MemoryStateDB) HasFrozen(addr string) bool {
+	acc := mdb.GetAccount(addr)
+	if acc != nil {
+		if acc.HasFrozen() {
+			return true
+		}
+	}
+	return false
+}
+
 // Exist 判断合约对象是否存在
 func (mdb *MemoryStateDB) Exist(addr string) bool {
 	return mdb.GetAccount(addr) != nil

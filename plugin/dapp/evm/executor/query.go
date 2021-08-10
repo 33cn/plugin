@@ -74,7 +74,7 @@ func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types
 	if to == nil {
 		to = evmCommon.StringToAddress(EvmAddress)
 	}
-	msg := evmCommon.NewMessage(caller, to, 0, in.Amount, evmtypes.MaxGasLimit, 1, nil, in.Para, "estimateGas")
+	msg := evmCommon.NewMessage(caller, to, 0, in.Amount, evmtypes.MaxGasLimit, 1, nil, in.Para, "estimateGas", "")
 	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
 
 	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, false)
@@ -155,13 +155,13 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 		caller = evmCommon.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
 	}
 
-	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas")
+	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas", "")
 	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
 
 	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, true)
 	if err != nil {
 		ret.JsonData = fmt.Sprintf("%v", err)
-		return ret, nil
+		return ret, err
 	}
 	if receipt.Ty == types.ExecOk {
 		callData := getCallReceipt(receipt.GetLogs())
@@ -215,4 +215,71 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 		ret.UnpackData = append(ret.UnpackData, fmt.Sprintf("%v", v.Value))
 	}
 	return &ret, nil
+}
+
+func calcAddressCount(callers []string) uint64 {
+	tmp := make([]string, 0)
+	for i := 0; i < len(callers); i++ {
+		repeat := false
+		for j := i + 1; j < len(callers); j++ {
+			if callers[i] == callers[j] {
+				repeat = true
+				break
+			}
+		}
+		if !repeat {
+			tmp = append(tmp, callers[i])
+		}
+	}
+	return uint64(len(tmp))
+}
+
+func (evm *EVMExecutor) Query_QueryStatistic(in *evmtypes.EvmQueryStatisticReq) (types.Message, error) {
+	evm.CheckInit();
+
+	addr := evmCommon.StringToAddress(in.GetAddr())
+	if addr == nil {
+		return nil, fmt.Errorf("invalid address: %v", in.GetAddr())
+	}
+
+	var totalStatisticData evmtypes.EVMContractStatistic
+	totalStatisticData.FailReason = make(map[string]uint64, 3)
+	var statKey = GetStatisticKey(addr.String())
+	for {
+		statisticDataByte, err := evm.mStateDB.LocalDB.Get(statKey)
+		if err != nil {
+			return nil, fmt.Errorf("QueryStatistic.get address: %v, error:%s", in.GetAddr(), err.Error())
+		}
+
+		var statisticData evmtypes.EVMContractStatistic
+		err = types.Decode(statisticDataByte, &statisticData)
+		if err != nil {
+			return nil, fmt.Errorf("QueryStatistic.decode address: %v, error:%s", in.GetAddr(), err.Error())
+		}
+
+		totalStatisticData.CallTimes += statisticData.CallTimes
+		totalStatisticData.SuccseccTimes += statisticData.SuccseccTimes
+		totalStatisticData.Caller = append(totalStatisticData.Caller, statisticData.Caller...)
+		totalStatisticData.FailReason[model.StatisticEVMError] += statisticData.FailReason[model.StatisticEVMError]
+		totalStatisticData.FailReason[model.StatisticExecError] += statisticData.FailReason[model.StatisticExecError]
+		totalStatisticData.FailReason[model.StatisticGasError] += statisticData.FailReason[model.StatisticGasError]
+		if statisticData.PrevAddr == "" {
+			break
+		}
+
+		statKey = GetStatisticKey(statisticData.PrevAddr)
+	}
+
+
+	var res evmtypes.EvmQueryStatisticRep
+	res.Amount = totalStatisticData.CallTimes
+	res.Callers = calcAddressCount(totalStatisticData.Caller)
+	res.SuccessTimes = totalStatisticData.SuccseccTimes
+	res.Ratio = float32(res.SuccessTimes)/float32(res.Amount)
+	res.FailedTimes = res.Amount - res.SuccessTimes
+	res.EvmErrNum = totalStatisticData.FailReason[model.StatisticEVMError]
+	res.ExecErrNum = totalStatisticData.FailReason[model.StatisticExecError]
+	res.GasErrNum = totalStatisticData.FailReason[model.StatisticGasError]
+
+	return &res, nil
 }

@@ -58,6 +58,13 @@ type EVMStateDB interface {
 	// HasSuicided 合约是否已经销毁
 	HasSuicided(string) bool
 
+	// Freeze 合约冻结
+	Freeze(string) bool
+	// Release 合约解冻
+	Release(string) bool
+	// HasFrozon 合约是否冻结
+	HasFrozen(string) bool
+
 	// Exist 判断一个合约地址是否存在（已经销毁的合约地址对象依然存在）
 	Exist(string) bool
 	// Empty 判断一个合约地址是否为空（不包含任何代码、也没有余额的合约为空）

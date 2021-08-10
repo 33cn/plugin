@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"strings"
 
 	"github.com/33cn/chain33/account"
@@ -21,11 +22,12 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
 
-// Exec 本合约执行逻辑
-func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {
+// Exec_EvmExec 创建或调用合约
+func (evm *EVMExecutor) Exec_Exec(payload *evmtypes.EVMContractExec, tx *types.Transaction, index int) (*types.Receipt, error) {
 	evm.CheckInit()
 	// 先转换消息
-	msg, err := evm.GetMessage(tx, index)
+
+	msg, err := evm.GetMessageExec(payload, tx, index)
 	if err != nil {
 		return nil, err
 	}
@@ -33,9 +35,75 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 	return evm.innerExec(msg, tx.Hash(), index, evm.GetTxFee(tx, index), false)
 }
 
+// Exec_EvmExec 创建或调用合约
+func (evm *EVMExecutor) Exec_Update(payload *evmtypes.EVMContractUpdate, tx *types.Transaction, index int) (*types.Receipt, error) {
+	evm.CheckInit()
+	// 先转换消息
+
+	msg, err := evm.GetMessageUpdate(payload, tx, index)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt, err := evm.innerExec(msg, tx.Hash(), index, evm.GetTxFee(tx, index), false)
+	if err != nil {
+		return nil, err
+	}
+
+	msgDestory := common.NewMessage(msg.From(), common.StringToAddress(payload.Addr), tx.Nonce, payload.Amount, msg.GasLimit(), msg.GasPrice(), payload.Code, nil, payload.GetAlias(), "")
+	receiptDestory, err := evm.contractLifecycle(msgDestory, tx.Hash(), evmtypes.EvmDestroyAction)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt.KV = append(receipt.KV, receiptDestory.KV...)
+	receipt.Logs = append(receipt.Logs, receiptDestory.Logs...)
+
+	return receipt, nil
+}
+
+// Exec_EvmDestroy 销毁合约
+func (evm *EVMExecutor) Exec_Destroy(payload *evmtypes.EVMContractDestroy, tx *types.Transaction, index int) (*types.Receipt, error) {
+	evm.CheckInit()
+	// 先转换消息
+	msg, err := evm.GetMessageLifecycle(payload.Addr, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return evm.contractLifecycle(msg, tx.Hash(), evmtypes.EvmDestroyAction)
+}
+
+// Exec_Freeze 冻结合约
+func (evm *EVMExecutor) Exec_Freeze(payload *evmtypes.EVMContractFreeze, tx *types.Transaction, index int) (*types.Receipt, error) {
+	evm.CheckInit()
+	// 先转换消息
+	msg, err := evm.GetMessageLifecycle(payload.Addr, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return evm.contractLifecycle(msg, tx.Hash(), evmtypes.EvmFreezeAction)
+}
+
+// Exec_EvmRelease 解冻合约
+func (evm *EVMExecutor) Exec_Release(payload *evmtypes.EVMContractRelease, tx *types.Transaction, index int) (*types.Receipt, error) {
+	evm.CheckInit()
+	// 先转换消息
+	msg, err := evm.GetMessageLifecycle(payload.Addr, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return evm.contractLifecycle(msg, tx.Hash(), evmtypes.EvmReleaseAction)
+}
+
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee int64, readOnly bool) (receipt *types.Receipt, err error) {
+	var logs []*types.ReceiptLog
+	var kvSet []*types.KeyValue
+
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg)
 	cfg := evm.GetAPI().GetConfig()
@@ -43,6 +111,8 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
+	isUpdate := isCreate && ( len(msg.PreAddr()) != 0 )
+
 	var (
 		ret             []byte
 		vmerr           error
@@ -64,7 +134,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		env.StateDB.Snapshot()
 		env.Transfer(env.StateDB, caller, receiver, msg.Value())
 		curVer := evm.mStateDB.GetLastSnapshot()
-		kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
+		kvSet, logs = evm.mStateDB.GetChangedData(curVer.GetID())
 		receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
 		return receipt, nil
 	} else if isCreate {
@@ -108,7 +178,12 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
-		vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		if ret != nil {
+			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		} else {
+			vmerr = errors.New(fmt.Sprintf("%s", vmerr.Error()))
+		}
+
 		return receipt, vmerr
 	}
 
@@ -128,7 +203,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		return receipt, nil
 	}
 	// 从状态机中获取数据变更和变更日志
-	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
+	kvSet, logs = evm.mStateDB.GetChangedData(curVer.GetID())
 	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: execName, ContractAddr: contractAddrStr, UsedGas: usedGas, Ret: ret}
 	//// 这里进行ABI调用结果格式化
 	//if len(methodName) > 0 && len(msg.Para()) > 0 && cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMABI) {
@@ -141,6 +216,22 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	//}
 	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
 	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddrStr)...)
+
+	if isCreate {
+		var evmstat evmtypes.ReceiptEvmStatistic
+		evmstat.Addr = contractAddrStr
+		if isUpdate {
+			evmstat.PreAddr = msg.PreAddr()
+		}
+		logs = append(logs,  &types.ReceiptLog{Ty: evmtypes.TyLogEVMStatisticDataInit, Log: types.Encode(&evmstat)})
+	} else {
+		var evmstat evmtypes.ReceiptEvmStatistic
+		evmstat.Addr = contractAddrStr
+		evmstat.CallTimes = 1
+		evmstat.Caller = msg.From().String()
+		evmstat.SuccseccTimes = 1
+		logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogEVMStatisticData, Log: types.Encode(&evmstat)})
+	}
 
 	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMKVHash) {
 		// 将执行时生成的合约状态数据变更信息也计算哈希并保存
@@ -170,6 +261,84 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	return receipt, nil
 }
 
+func isSuperManager(cfg *types.Chain33Config, addr string) bool {
+	confManager := types.ConfSub(cfg, manager.ManageX)
+	for _, m := range confManager.GStrList("superManager") {
+		if addr == m {
+			return true
+		}
+	}
+	return false
+}
+
+func (evm *EVMExecutor)checkAccessPermission(cfg *types.Chain33Config, contractAddr, addr string) bool {
+	contractAccount := evm.mStateDB.GetAccount(contractAddr)
+	if contractAccount.GetCreator() == addr {
+		return true
+	}
+
+	return isSuperManager(cfg, addr)
+}
+
+func (evm *EVMExecutor) contractLifecycle(msg *common.Message, txHash []byte, flag int) (receipt *types.Receipt, err error) {
+	// 获取当前区块的上下文信息构造EVM上下文
+	context := evm.NewEVMContext(msg)
+	cfg := evm.GetAPI().GetConfig()
+	// 创建EVM运行时对象
+	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
+
+	contractAddr := *msg.To()
+	contractAddrStr := contractAddr.String()
+	if !env.StateDB.Exist(contractAddrStr) {
+		log.Error("contractLifecycle", "Contract not exist for address", contractAddrStr)
+		return nil, model.ErrContractNotExist
+	}
+
+	if !evm.checkAccessPermission(cfg, contractAddrStr, msg.From().String()) {
+		log.Error("contractLifecycle", "no permission for from address", msg.From().String())
+		return nil, model.ErrPermission
+	}
+
+	switch flag {
+	case evmtypes.EvmDestroyAction:
+		env.Destroy(runtime.AccountRef(msg.From()), *msg.To())
+		break
+	case evmtypes.EvmFreezeAction:
+		env.Freeze(*msg.To())
+		break
+	case evmtypes.EvmReleaseAction:
+		env.Release(*msg.To())
+		break
+	default:
+		return nil, model.ErrOperation
+	}
+
+	// 从状态机中获取数据变更和变更日志
+	curVer := evm.mStateDB.GetLastSnapshot()
+	kvSet, logs := evm.mStateDB.GetChangedData(curVer.GetID())
+	contractReceipt := &evmtypes.ReceiptEVMContract{Caller: msg.From().String(), ContractName: "", ContractAddr: contractAddrStr, UsedGas: 0, Ret: nil}
+
+	logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogCallContract, Log: types.Encode(contractReceipt)})
+	logs = append(logs, evm.mStateDB.GetReceiptLogs(contractAddrStr)...)
+
+	if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMKVHash) {
+		// 将执行时生成的合约状态数据变更信息也计算哈希并保存
+		hashKV := evm.calcKVHash(contractAddr, logs)
+		if hashKV != nil {
+			kvSet = append(kvSet, hashKV)
+		}
+	}
+
+	receipt = &types.Receipt{Ty: types.ExecOk, KV: kvSet, Logs: logs}
+
+	// 替换导致分叉的执行数据信息
+	state.ProcessFork(cfg, evm.GetHeight(), txHash, receipt)
+
+	evm.collectEvmTxLog(txHash, contractReceipt, receipt)
+
+	return receipt, nil
+}
+
 // CheckInit 检查是否初始化数据库
 func (evm *EVMExecutor) CheckInit() {
 	cfg := evm.GetAPI().GetConfig()
@@ -189,22 +358,17 @@ func (evm *EVMExecutor) CheckInit() {
 	evm.mStateDB = state.NewMemoryStateDB(evm.GetStateDB(), evm.GetLocalDB(), accountDB, evm.GetHeight(), evm.GetAPI())
 }
 
-// GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
-func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int) (msg *common.Message, err error) {
-	var action evmtypes.EVMContractAction
-	err = types.Decode(tx.Payload, &action)
-	if err != nil {
-		return msg, err
-	}
+// GetMessageExec 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
+func (evm *EVMExecutor) GetMessageExec(payload *evmtypes.EVMContractExec, tx *types.Transaction, index int) (msg *common.Message, err error) {
 	// 此处暂时不考虑消息发送签名的处理，chain33在mempool中对签名做了检查
 	from := getCaller(tx)
-	to := getReceiver(&action)
+	to := getReceiver(payload.ContractAddr)
 	if to == nil {
 		return msg, types.ErrInvalidAddress
 	}
 
-	gasLimit := action.GasLimit
-	gasPrice := action.GasPrice
+	gasLimit := payload.GasLimit
+	gasPrice := payload.GasPrice
 	if gasLimit == 0 {
 		gasLimit = uint64(evm.GetTxFee(tx, index))
 	}
@@ -213,7 +377,44 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int) (msg *commo
 	}
 
 	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
-	msg = common.NewMessage(from, to, tx.Nonce, action.Amount, gasLimit, gasPrice, action.Code, action.Para, action.GetAlias())
+	msg = common.NewMessage(from, to, tx.Nonce, payload.Amount, gasLimit, gasPrice, payload.Code, payload.Para, payload.GetAlias(), "")
+	return msg, err
+}
+
+// GetMessageUpdate 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
+func (evm *EVMExecutor) GetMessageUpdate(payload *evmtypes.EVMContractUpdate, tx *types.Transaction, index int) (msg *common.Message, err error) {
+	// 此处暂时不考虑消息发送签名的处理，chain33在mempool中对签名做了检查
+	from := getCaller(tx)
+	to := getReceiver(tx.To)
+	if to == nil {
+		return msg, types.ErrInvalidAddress
+	}
+
+	gasLimit := payload.GasLimit
+	gasPrice := payload.GasPrice
+	if gasLimit == 0 {
+		gasLimit = uint64(evm.GetTxFee(tx, index))
+	}
+	if gasPrice == 0 {
+		gasPrice = uint32(1)
+	}
+
+	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
+	msg = common.NewMessage(from, to, tx.Nonce, payload.Amount, gasLimit, gasPrice, payload.Code, nil, payload.GetAlias(), payload.Addr)
+	return msg, err
+}
+
+// GetMessageLifecycle 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
+func (evm *EVMExecutor) GetMessageLifecycle(addr string, tx *types.Transaction) (msg *common.Message, err error) {
+	// 此处暂时不考虑消息发送签名的处理，chain33在mempool中对签名做了检查
+	from := getCaller(tx)
+	to := common.StringToAddress(addr)
+	if to == nil {
+		return msg, types.ErrInvalidAddress
+	}
+
+	// 合约的GasLimit即为调用者为本次合约调用准备支付的手续费
+	msg = common.NewMessage(from, to, tx.Nonce, 0, 0, 0, nil, nil, "", "")
 	return msg, err
 }
 
@@ -275,9 +476,9 @@ func getCaller(tx *types.Transaction) common.Address {
 }
 
 // 从交易信息中获取交易目标地址，在创建合约交易中，此地址为空
-func getReceiver(action *evmtypes.EVMContractAction) *common.Address {
-	if action.ContractAddr == "" {
+func getReceiver(contractAddr string) *common.Address {
+	if contractAddr == "" {
 		return nil
 	}
-	return common.StringToAddress(action.ContractAddr)
+	return common.StringToAddress(contractAddr)
 }

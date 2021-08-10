@@ -309,6 +309,31 @@ func (ca *ContractAccount) HasSuicided() bool {
 	return ca.State.GetSuicided()
 }
 
+const (
+	ContractStatusFreeze = 1
+	ContractStatusRelease = 2
+)
+
+// Freeze 冻结
+func (ca *ContractAccount) Freeze() bool {
+	ca.State.Frozen = ContractStatusFreeze
+	return true
+}
+
+// Release 解冻
+func (ca *ContractAccount) Release() bool {
+	ca.State.Frozen = ContractStatusRelease
+	return true
+}
+
+// HasFrozen 是否已经冻结
+func (ca *ContractAccount) HasFrozen() bool {
+	if ca.State.GetFrozen() == ContractStatusFreeze {
+		return true
+	}
+	return false
+}
+
 // Empty 是否为空对象
 func (ca *ContractAccount) Empty() bool {
 	return ca.Data.GetCodeHash() == nil || len(ca.Data.GetCodeHash()) == 0
