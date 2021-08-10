@@ -310,7 +310,7 @@ func (ca *ContractAccount) HasSuicided() bool {
 }
 
 const (
-	ContractStatusFreeze = 1
+	ContractStatusFreeze  = 1
 	ContractStatusRelease = 2
 )
 

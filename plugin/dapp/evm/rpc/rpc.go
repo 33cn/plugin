@@ -38,8 +38,8 @@ func (c *channelClient) CreateDeployTx(ctx context.Context, in evmtypes.EvmContr
 	}
 	action := &evmtypes.EVMContractExec{Amount: uint64(amountInt64), Code: bCode, GasLimit: 0, GasPrice: 0, Note: in.Note, ContractAddr: toAddr}
 	execAction := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 
 	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
@@ -71,8 +71,8 @@ func (c *channelClient) CreateCallTx(ctx context.Context, in evmtypes.EvmContrac
 
 	action := &evmtypes.EVMContractExec{Amount: uint64(amountInt64), Code: nil, GasLimit: 0, GasPrice: 0, Note: in.Note, Para: packedParameter, ContractAddr: in.ContractAddr}
 	execAction := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
 
@@ -110,8 +110,8 @@ func (c *channelClient) CreateTransferOnlyTx(ctx context.Context, in evmtypes.Ev
 		ContractAddr: toAddr,
 	}
 	execAction := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 	tx := &types.Transaction{Execer: []byte(exec), Payload: types.Encode(execAction), Fee: 0, To: toAddr}
 

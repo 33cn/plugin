@@ -5,8 +5,9 @@ package types
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -2425,7 +2426,9 @@ func init() {
 	proto.RegisterType((*EvmGetUnpackDataRespose)(nil), "types.EvmGetUnpackDataRespose")
 }
 
-func init() { proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6) }
+func init() {
+	proto.RegisterFile("evmcontract.proto", fileDescriptor_74353de561acd7c6)
+}
 
 var fileDescriptor_74353de561acd7c6 = []byte{
 	// 1541 bytes of a gzipped FileDescriptorProto

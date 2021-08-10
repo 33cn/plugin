@@ -8,8 +8,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"strings"
+
+	manager "github.com/33cn/chain33/system/dapp/manage/types"
 
 	"github.com/33cn/chain33/account"
 
@@ -111,7 +112,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
 	isTransferOnly := strings.Compare(msg.To().String(), EvmAddress) == 0 && 0 == len(msg.Data())
-	isUpdate := isCreate && ( len(msg.PreAddr()) != 0 )
+	isUpdate := isCreate && (len(msg.PreAddr()) != 0)
 
 	var (
 		ret             []byte
@@ -223,7 +224,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 		if isUpdate {
 			evmstat.PreAddr = msg.PreAddr()
 		}
-		logs = append(logs,  &types.ReceiptLog{Ty: evmtypes.TyLogEVMStatisticDataInit, Log: types.Encode(&evmstat)})
+		logs = append(logs, &types.ReceiptLog{Ty: evmtypes.TyLogEVMStatisticDataInit, Log: types.Encode(&evmstat)})
 	} else {
 		var evmstat evmtypes.ReceiptEvmStatistic
 		evmstat.Addr = contractAddrStr
@@ -271,7 +272,7 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func (evm *EVMExecutor)checkAccessPermission(cfg *types.Chain33Config, contractAddr, addr string) bool {
+func (evm *EVMExecutor) checkAccessPermission(cfg *types.Chain33Config, contractAddr, addr string) bool {
 	contractAccount := evm.mStateDB.GetAccount(contractAddr)
 	if contractAccount.GetCreator() == addr {
 		return true

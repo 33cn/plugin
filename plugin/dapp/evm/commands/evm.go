@@ -7,11 +7,12 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common/compiler"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/compiler"
 
 	"encoding/json"
 	"strconv"
@@ -329,8 +330,8 @@ func createContract(cmd *cobra.Command, args []string) {
 	}
 
 	exec := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 
 	toAddr := address.ExecAddress(exector)
@@ -431,8 +432,8 @@ func callContract(cmd *cobra.Command, args []string) {
 
 	action := &evmtypes.EVMContractExec{Amount: amountInt64, GasLimit: 0, GasPrice: 0, Note: note, Para: packedParameter, ContractAddr: contractAddr}
 	call := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 
 	exector := cfg.ExecName(paraName + "evm")
@@ -758,19 +759,19 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 	exector := cfg.ExecName(paraName + "evm")
 	toAddr := address.ExecAddress(exector)
 	action := &evmtypes.EVMContractExec{
-		Amount:   uint64(amountInt64),
-		GasLimit: 0,
-		GasPrice: 0,
-		Code:     nil,
-		Para:     r_addr.Hash160[:],
-		Alias:    "",
-		Note:     fmt.Sprintf("transfer from:"+caller+" to:"+receiver+" for amount: %s", amount),
+		Amount:       uint64(amountInt64),
+		GasLimit:     0,
+		GasPrice:     0,
+		Code:         nil,
+		Para:         r_addr.Hash160[:],
+		Alias:        "",
+		Note:         fmt.Sprintf("transfer from:"+caller+" to:"+receiver+" for amount: %s", amount),
 		ContractAddr: toAddr,
 	}
 
 	exec := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Exec{Exec:action},
-		Ty:                   evmtypes.EvmExecAction,
+		Value: &evmtypes.EVMContractAction_Exec{Exec: action},
+		Ty:    evmtypes.EvmExecAction,
 	}
 	data, err := createEvmTx(cfg, exec, exector, caller, toAddr, expire, rpcLaddr, 0, chainID)
 	if err != nil {
@@ -1042,7 +1043,6 @@ func updateContract(cmd *cobra.Command, args []string) {
 	contractAddr, _ := cmd.Flags().GetString("addr")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
-
 	feeInt64 := uint64(fee*1e4) * 1e4
 
 	if !strings.EqualFold(sol, "") && !strings.EqualFold(abi, "") {
@@ -1095,8 +1095,8 @@ func updateContract(cmd *cobra.Command, args []string) {
 	}
 
 	exec := &evmtypes.EVMContractAction{
-		Value:                &evmtypes.EVMContractAction_Update{Update:action},
-		Ty:                   evmtypes.EvmUpdateAction,
+		Value: &evmtypes.EVMContractAction_Update{Update: action},
+		Ty:    evmtypes.EvmUpdateAction,
 	}
 	data, err := createEvmTx(cfg, exec, cfg.ExecName(paraName+"evm"), caller, address.ExecAddress(cfg.ExecName(paraName+"evm")), expire, rpcLaddr, feeInt64, chainID)
 
@@ -1112,7 +1112,6 @@ func updateContract(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
-
 
 func queryContractStatCmd() *cobra.Command {
 	cmd := &cobra.Command{

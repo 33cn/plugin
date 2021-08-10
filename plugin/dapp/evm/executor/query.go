@@ -235,7 +235,7 @@ func calcAddressCount(callers []string) uint64 {
 }
 
 func (evm *EVMExecutor) Query_QueryStatistic(in *evmtypes.EvmQueryStatisticReq) (types.Message, error) {
-	evm.CheckInit();
+	evm.CheckInit()
 
 	addr := evmCommon.StringToAddress(in.GetAddr())
 	if addr == nil {
@@ -270,12 +270,11 @@ func (evm *EVMExecutor) Query_QueryStatistic(in *evmtypes.EvmQueryStatisticReq) 
 		statKey = GetStatisticKey(statisticData.PrevAddr)
 	}
 
-
 	var res evmtypes.EvmQueryStatisticRep
 	res.Amount = totalStatisticData.CallTimes
 	res.Callers = calcAddressCount(totalStatisticData.Caller)
 	res.SuccessTimes = totalStatisticData.SuccseccTimes
-	res.Ratio = float32(res.SuccessTimes)/float32(res.Amount)
+	res.Ratio = float32(res.SuccessTimes) / float32(res.Amount)
 	res.FailedTimes = res.Amount - res.SuccessTimes
 	res.EvmErrNum = totalStatisticData.FailReason[model.StatisticEVMError]
 	res.ExecErrNum = totalStatisticData.FailReason[model.StatisticExecError]

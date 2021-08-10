@@ -7,6 +7,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -18,8 +19,8 @@ var (
 	elog = log.New("module", "exectype.evm")
 
 	actionName = map[string]int32{
-		"Exec":  EvmExecAction,
-		"Update": EvmUpdateAction,
+		"Exec":    EvmExecAction,
+		"Update":  EvmUpdateAction,
 		"Destroy": EvmDestroyAction,
 		"Freeze":  EvmFreezeAction,
 		"Release": EvmReleaseAction,
@@ -129,7 +130,7 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 		}
 
 		v := &EVMContractDestroy{
-			Addr:     param.Addr,
+			Addr: param.Addr,
 		}
 		destroy := &EVMContractAction{
 			Ty:    EvmDestroyAction,
@@ -146,14 +147,14 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 		}
 
 		v := &EVMContractFreeze{
-			Addr:     param.Addr,
+			Addr: param.Addr,
 		}
 		freeze := &EVMContractAction{
 			Ty:    EvmFreezeAction,
 			Value: &EVMContractAction_Freeze{v},
 		}
 		return createRawTx(evm.GetConfig(), freeze, "", param.Fee)
-	}  else if action == "Release" {
+	} else if action == "Release" {
 		var param ReleaseTx
 		err := json.Unmarshal(message, &param)
 		if err != nil {
@@ -162,7 +163,7 @@ func (evm EvmType) CreateTx(action string, message json.RawMessage) (*types.Tran
 		}
 
 		v := &EVMContractRelease{
-			Addr:     param.Addr,
+			Addr: param.Addr,
 		}
 		release := &EVMContractAction{
 			Ty:    EvmReleaseAction,

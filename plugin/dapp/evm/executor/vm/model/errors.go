@@ -34,8 +34,8 @@ var (
 	ErrDestruct = errors.New("contract has been destructed")
 
 	// ErrFrozen
-	ErrFrozen = errors.New("contract has been frozen")
-	ErrOperation = errors.New("action not support")
+	ErrFrozen     = errors.New("contract has been frozen")
+	ErrOperation  = errors.New("action not support")
 	ErrPermission = errors.New("no permission")
 
 	// ErrWriteProtection       evm: write protection
