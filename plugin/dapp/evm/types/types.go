@@ -27,8 +27,8 @@ const (
 	// TyLogEVMEventData 合约生成新的event日志数据
 	TyLogEVMEventData = 605
 
-	// MaxGasLimit  最大Gas消耗上限
-	MaxGasLimit = 10000000
+	// MaxGasLimit  最大Gas消耗上限 100
+	MaxGasLimit = (100000000 * 100)
 )
 
 const (

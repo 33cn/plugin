@@ -54,6 +54,11 @@ func (m Message) Data() []byte { return m.data }
 // GasLimit Gas限制
 func (m Message) GasLimit() uint64 { return m.gasLimit }
 
+// GasLimit Gas限制
+func (m Message) SetGasLimit(gasLimit uint64) {
+	m.gasLimit = gasLimit
+}
+
 // Alias 合约别名
 func (m Message) Alias() string { return m.alias }
 
