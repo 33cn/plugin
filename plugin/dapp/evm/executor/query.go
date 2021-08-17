@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -54,11 +55,25 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 }
 
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
-func (evm *EVMExecutor) Query_EstimateGas(tx *types.Transaction) (types.Message, error) {
+func (evm *EVMExecutor) Query_EstimateGas(txInfo *types.ReqString) (types.Message, error) {
 	evm.CheckInit()
 
+	txBytes, err := hex.DecodeString(txInfo.Data)
+	if nil != err {
+		return nil, err
+	}
+	var tx types.Transaction
+	err = types.Decode(txBytes, &tx)
+	if nil != err {
+		return nil, err
+	}
+
+	if nil == tx.Signature {
+		return nil, errors.New("Tx should be signatured")
+	}
+
 	index := 0
-	msg, err := evm.GetMessage(tx, index)
+	msg, err := evm.GetMessage(&tx, index)
 	if err != nil {
 		return nil, err
 	}

@@ -42,7 +42,7 @@ func EvmCmd() *cobra.Command {
 		createContractCmd(),
 		callContractCmd(),
 		abiCmd(),
-		estimateContractCmd(),
+		estimateGasCmd(),
 		checkContractAddrCmd(),
 		evmDebugCmd(),
 		evmTransferCmd(),
@@ -283,7 +283,6 @@ func createContract(cmd *cobra.Command, args []string) {
 
 	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: action.ContractAddr, ChainID: chainID}
 	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
-	fmt.Println("feeInt64 is", feeInt64)
 	if tx.Fee < int64(feeInt64) {
 		tx.Fee += int64(feeInt64)
 	}
@@ -499,38 +498,15 @@ func callAbi(cmd *cobra.Command, args []string) {
 	}
 }
 
-func estimateContract(cmd *cobra.Command, args []string) {
-	input, _ := cmd.Flags().GetString("input")
-	name, _ := cmd.Flags().GetString("exec")
-	caller, _ := cmd.Flags().GetString("caller")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	path, _ := cmd.Flags().GetString("path")
-
-	toAddr := address.ExecAddress("evm")
-	if len(name) > 0 {
-		toAddr = address.ExecAddress(name)
-	}
-
-	amountInt64 := uint64(amount*1e4) * 1e4
-
-	abiFileName := path + name + ".abi"
-	abiStr, err := readFile(abiFileName)
-	if nil != err {
-		_, _ = fmt.Fprintln(os.Stderr, "Can't read abi info, Pls set correct abi path and provide abi file as", abiFileName)
-		return
-	}
-
-	_, packedParameter, err := evmAbi.Pack(input, abiStr, false)
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, "Failed to do para pack", err.Error())
-		return
-	}
-
-	var estGasReq = evmtypes.EstimateEVMGasReq{To: toAddr, Para: packedParameter, Caller: caller, Amount: amountInt64}
-	var estGasResp evmtypes.EstimateEVMGasResp
+func estimateGas(cmd *cobra.Command, args []string) {
+	txStr, _ := cmd.Flags().GetString("tx")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	query := sendQuery(rpcLaddr, "EstimateGas", &estGasReq, &estGasResp)
+	txInfo := &types.ReqString{
+		Data: txStr,
+	}
 
+	var estGasResp evmtypes.EstimateEVMGasResp
+	query := sendQuery(rpcLaddr, "EstimateGas", txInfo, &estGasResp)
 	if query {
 		fmt.Fprintf(os.Stdout, "gas cost estimate %v\n", estGasResp.Gas)
 	} else {
@@ -538,27 +514,19 @@ func estimateContract(cmd *cobra.Command, args []string) {
 	}
 }
 
-func addEstimateFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("input", "i", "", "input contract binary code")
-	cmd.MarkFlagRequired("input")
-
-	cmd.Flags().StringP("exec", "e", "", "evm contract name (like user.evm.xxxxx)")
-
-	cmd.Flags().StringP("caller", "c", "", "the caller address")
-
-	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
-
-	cmd.Flags().Float64P("amount", "a", 0, "the amount transfer to the contract (optional)")
+func addEstimateGasFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("tx", "x", "", "tx string(should be signatured)")
+	_ = cmd.MarkFlagRequired("tx")
 }
 
 // 估算合约消耗
-func estimateContractCmd() *cobra.Command {
+func estimateGasCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "estimate",
 		Short: "Estimate the gas cost of calling or creating a contract",
-		Run:   estimateContract,
+		Run:   estimateGas,
 	}
-	addEstimateFlags(cmd)
+	addEstimateGasFlags(cmd)
 	return cmd
 }
 
