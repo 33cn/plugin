@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.14
 
 require (
-	github.com/33cn/chain33 v1.65.3-0.20210803094350-8a745164df6c
+	github.com/33cn/chain33 v1.65.3-0.20210818071203-29aff1b4c056
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
