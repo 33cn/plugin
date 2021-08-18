@@ -64,5 +64,6 @@ var (
 		TyLogContractData:       {Ty: reflect.TypeOf(EVMContractData{}), Name: "LogContractData"},
 		TyLogContractState:      {Ty: reflect.TypeOf(EVMContractState{}), Name: "LogContractState"},
 		TyLogEVMStateChangeItem: {Ty: reflect.TypeOf(EVMStateChangeItem{}), Name: "LogEVMStateChangeItem"},
+		TyLogEVMEventData:       {Ty: reflect.TypeOf(types.EVMLog{}), Name: "LogEVMEventData"},
 	}
 )
