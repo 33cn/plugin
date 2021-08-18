@@ -65,7 +65,11 @@ func (n *Node) processSendP2P(rawData interface{}, peerVersion int32, pid, peerA
 	} else if ping, ok := rawData.(*types.P2PPing); ok {
 		doSend = true
 		sendData.Value = &types.BroadCastData_Ping{Ping: ping}
+	} else {
+		//没有合适的类型
+		log.Error("processSendP2P", "rawdata:", rawData)
 	}
+
 	log.Debug("ProcessSendP2PEnd", "peerAddr", peerAddr, "doSend", doSend)
 	return
 }

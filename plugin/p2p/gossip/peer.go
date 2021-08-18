@@ -35,6 +35,7 @@ func (p *Peer) Close() {
 		//unsub all topics
 		p.node.pubsub.Unsub(p.taskChan)
 	}
+	p.node.peerStore.Delete(p.Addr())
 	log.Info("Peer", "closed", p.Addr())
 
 }
@@ -138,18 +139,7 @@ func (p *Peer) heartBeat() {
 		if !p.GetRunning() {
 			return
 		}
-		peername, err := pcli.SendVersion(p, p.node.nodeInfo)
-		P2pComm.CollectPeerStat(err, p)
-		if err != nil || peername == "" {
-			//版本不对，直接关掉
-			log.Error("PeerHeartBeatSendVersion", "peerName", peername, "err", err)
-			p.Close()
-			return
-		}
-
-		log.Debug("sendVersion", "peer name", peername)
-		p.SetPeerName(peername) //设置连接的远程节点的节点名称
-		p.taskChan = p.node.pubsub.Sub("block", "tx", peername)
+		p.taskChan = p.node.pubsub.Sub("block", "tx", p.name)
 		go p.sendStream()
 		go p.readStream()
 		break
@@ -309,7 +299,7 @@ func (p *Peer) readStream() {
 			log.Error("readStream", "err:", err.Error(), "peerIp", p.Addr())
 			continue
 		}
-		resp, err := p.mconn.gcli.ServerStreamSend(context.Background(), ping)
+		resp, err := p.mconn.gcli.ServerStreamSend(context.Background(), ping, grpc.WaitForReady(true))
 		P2pComm.CollectPeerStat(err, p)
 		if err != nil {
 			log.Error("readStream", "serverstreamsend,err:", err, "peer", p.Addr())
@@ -330,17 +320,11 @@ func (p *Peer) readStream() {
 			data, err := resp.Recv()
 			if err != nil {
 				P2pComm.CollectPeerStat(err, p)
-				log.Error("readStream", "recv,err:", err.Error(), "peerAddr", p.Addr())
+				log.Error("readStream", "recv err", err.Error(), "peerAddr", p.Addr(), "data:", data)
 				errs := resp.CloseSend()
 				if errs != nil {
 					log.Error("CloseSend", "err", errs)
 				}
-
-				if status.Code(err) == codes.Unavailable {
-					break //重新创建新的流
-				}
-
-				log.Error("readStream", "recv,err:", err.Error(), "peerIp", p.Addr())
 
 				if status.Code(err) == codes.Unimplemented { //maybe order peers delete peer to BlackList
 					p.node.nodeInfo.blacklist.Add(p.Addr(), 3600)
@@ -353,8 +337,9 @@ func (p *Peer) readStream() {
 					P2pComm.CollectPeerStat(err, p)
 					return
 				}
-				time.Sleep(time.Second) //have a rest
 
+				//其他stream 错误全部break ,重新创建新的stream
+				break
 			}
 
 			p.node.processRecvP2P(data, p.GetPeerName(), p.node.pubToPeer, p.Addr())

@@ -25,7 +25,7 @@ func (n *Node) destroyPeer(peer *Peer) {
 		"version support", peer.version.IsSupport())
 
 	n.nodeInfo.addrBook.RemoveAddr(peer.Addr())
-	n.remove(peer.Addr())
+	n.remove(peer.GetPeerName())
 
 }
 
@@ -44,10 +44,7 @@ func (n *Node) monitorErrPeer() {
 			n.nodeInfo.blacklist.Add(peer.Addr(), int64(3600*12))
 			continue
 		}
-		if peer.IsMaxInbouds {
-			n.destroyPeer(peer)
-		}
-		if !peer.GetRunning() {
+		if peer.IsMaxInbouds || !peer.GetRunning() {
 			n.destroyPeer(peer)
 			continue
 		}
@@ -151,79 +148,61 @@ func (n *Node) getAddrFromOnline() {
 
 		peers, _ := n.GetActivePeers()
 		for _, peer := range peers { //向其他节点发起请求，获取地址列表
-
-			var addrlist []string
-			var addrlistMap map[string]int64
-
-			var err error
-
-			addrlistMap, err = pcli.GetAddrList(peer)
-
+			peerInfoList, err := pcli.GetAddrList(peer)
 			P2pComm.CollectPeerStat(err, peer)
 			if err != nil {
 				log.Error("getAddrFromOnline", "ERROR", err.Error())
 				continue
 			}
 
-			for addr := range addrlistMap {
-				addrlist = append(addrlist, addr)
-			}
-
-			for _, addr := range addrlist {
-
+			for _, info := range peerInfoList {
 				if !n.needMore() {
-
 					//如果已经达到25个节点，则优先删除种子节点
 					localBlockHeight, err := pcli.GetBlockHeight(n.nodeInfo)
 					if err != nil {
 						continue
 					}
 					//查询对方的高度，如果不小于自己的高度,或高度差在一定范围内，则剔除一个种子
-					if peerHeight, ok := addrlistMap[addr]; ok {
-
-						if localBlockHeight-peerHeight < 1024 {
-							if _, ok := seedsMap[addr]; ok {
-								continue
+					if localBlockHeight-info.GetHeader().GetHeight() < 1024 {
+						//随机删除连接的一个种子
+						n.innerSeeds.Range(func(k, v interface{}) bool {
+							if _, ok := n.cfgSeeds.Load(k.(string)); ok {
+								return true
 							}
-
-							//随机删除连接的一个种子
-
-							n.innerSeeds.Range(func(k, v interface{}) bool {
-								if n.Has(k.(string)) {
-									//不能包含在cfgseed中
-									if _, ok := n.cfgSeeds.Load(k.(string)); ok {
-										return true
-									}
-									n.remove(k.(string))
+							//remove inner seed
+							for _, peerInfo := range n.nodeInfo.peerInfos.GetPeerInfos() {
+								if peerInfo.Addr == k.(string) {
+									n.remove(peerInfo.GetName())
 									n.nodeInfo.addrBook.RemoveAddr(k.(string))
 									return false
 								}
-								return true
-							})
-						}
+							}
+							return false
+
+						})
 					}
-					time.Sleep(MonitorPeerInfoInterval)
+
 					continue
 				}
 
-				if !n.nodeInfo.blacklist.Has(addr) || !peerAddrFilter.Contains(addr) {
-					if ticktimes < 10 {
-						//如果连接了其他节点，优先不连接种子节点
-						if _, ok := n.innerSeeds.Load(addr); !ok {
-							//先把seed 排除在外
-							n.pubsub.FIFOPub(addr, "addr")
-
-						}
-					} else {
-						n.pubsub.FIFOPub(addr, "addr")
-					}
-
-				}
 			}
 
+			if !n.nodeInfo.blacklist.Has(peer.Addr()) || !peerAddrFilter.Contains(peer.Addr()) || !n.Has(peer.GetPeerName()) {
+				if ticktimes < 10 {
+					//如果连接了其他节点，优先不连接种子节点
+					if _, ok := n.innerSeeds.Load(peer.Addr()); !ok {
+						//先把seed 排除在外
+						n.pubsub.FIFOPub(peer.Addr(), "addr")
+					}
+				} else {
+					n.pubsub.FIFOPub(peer.Addr(), "addr")
+				}
+
+			}
 		}
 
 	}
+
 }
 
 func (n *Node) getAddrFromAddrBook() {
@@ -249,7 +228,7 @@ func (n *Node) getAddrFromAddrBook() {
 		addrNetArr := n.nodeInfo.addrBook.GetPeers()
 
 		for _, addr := range addrNetArr {
-			if !n.Has(addr.String()) && !n.nodeInfo.blacklist.Has(addr.String()) {
+			if !n.nodeInfo.blacklist.Has(addr.String()) {
 				log.Debug("GetAddrFromOffline", "Add addr", addr.String())
 
 				if n.needMore() || n.CacheBoundsSize() < maxOutBoundNum {
@@ -303,7 +282,7 @@ func (n *Node) nodeReBalance() {
 		for _, peer := range cachePeers {
 			inbounds, err := p2pcli.GetInPeersNum(peer)
 			if err != nil {
-				n.RemoveCachePeer(peer.Addr())
+				n.RemoveCachePeer(peer.GetPeerName())
 				peer.Close()
 				continue
 			}
@@ -326,14 +305,14 @@ func (n *Node) nodeReBalance() {
 
 		//如果连接的节点最大负载量小于当前缓存节点的最大负载量
 		if MaxInBounds < MaxCacheInBounds {
-			n.RemoveCachePeer(MaxCacheInBoundPeer.Addr())
+			n.RemoveCachePeer(MaxCacheInBoundPeer.GetPeerName())
 			MaxCacheInBoundPeer.Close()
 		}
 		//如果最大的负载量比缓存中负载最小的小，则删除缓存中所有的节点
 		if MaxInBounds < MinCacheInBounds {
 			cachePeers := n.GetCacheBounds()
 			for _, peer := range cachePeers {
-				n.RemoveCachePeer(peer.Addr())
+				n.RemoveCachePeer(peer.GetPeerName())
 				peer.Close()
 			}
 
@@ -347,7 +326,7 @@ func (n *Node) nodeReBalance() {
 		if MinCacheInBoundPeer != nil {
 			info, err := MinCacheInBoundPeer.GetPeerInfo()
 			if err != nil {
-				n.RemoveCachePeer(MinCacheInBoundPeer.Addr())
+				n.RemoveCachePeer(MinCacheInBoundPeer.GetPeerName())
 				MinCacheInBoundPeer.Close()
 				continue
 			}
@@ -361,8 +340,8 @@ func (n *Node) nodeReBalance() {
 				n.addPeer(MinCacheInBoundPeer)
 				n.nodeInfo.addrBook.AddAddress(MinCacheInBoundPeer.peerAddr, nil)
 
-				n.remove(MaxInBoundPeer.Addr())
-				n.RemoveCachePeer(MinCacheInBoundPeer.Addr())
+				n.remove(MaxInBoundPeer.GetPeerName())
+				n.RemoveCachePeer(MinCacheInBoundPeer.GetPeerName())
 			}
 		}
 	}
@@ -392,18 +371,18 @@ func (n *Node) monitorPeers() {
 			paddr := pinfo.GetAddr()
 			if name == selfName && !pinfo.GetSelf() { //发现连接到自己，立即删除
 				//删除节点数过低的节点
-				n.remove(pinfo.GetAddr())
+				n.remove(pinfo.GetName())
 				n.nodeInfo.addrBook.RemoveAddr(paddr)
 				n.nodeInfo.blacklist.Add(paddr, 0)
 			}
 
 			if localBlockHeight-peerheight > 2048 {
 				//删除比自己较低的节点
-				if addrMap, err := p2pcli.GetAddrList(peers[paddr]); err == nil {
+				if peerList, err := p2pcli.GetAddrList(peers[paddr]); err == nil {
 
-					for addr := range addrMap {
-						if !n.Has(addr) && !n.nodeInfo.blacklist.Has(addr) {
-							n.pubsub.FIFOPub(addr, "addr")
+					for peerName, info := range peerList {
+						if !n.Has(peerName) && !n.nodeInfo.blacklist.Has(info.Addr) {
+							n.pubsub.FIFOPub(info.Addr, "addr")
 						}
 					}
 
@@ -417,7 +396,7 @@ func (n *Node) monitorPeers() {
 					continue
 				}
 				//删除节点数过低的节点
-				n.remove(paddr)
+				n.remove(pinfo.GetName())
 				n.nodeInfo.addrBook.RemoveAddr(paddr)
 			}
 
@@ -459,7 +438,10 @@ func (n *Node) monitorDialPeers() {
 			//先查询有没有注册进去，避免同时重复连接相同的地址
 			continue
 		}
-
+		if _,ok:= n.peerStore.Load(addr.(string));ok{
+			//不对已经创建peer的ip发起重复连接
+			continue
+		}
 		netAddr, err := NewNetAddressString(addr.(string))
 		if err != nil {
 			continue
@@ -470,7 +452,7 @@ func (n *Node) monitorDialPeers() {
 		}
 
 		//不对已经连接上的地址或者黑名单地址发起连接 TODO:连接足够时,对于连入的地址也不再去重复连接(客户端服务端只维护一条连接, 后续优化)
-		if n.Has(netAddr.String()) || n.nodeInfo.blacklist.Has(netAddr.String()) || n.HasCacheBound(netAddr.String()) {
+		if n.nodeInfo.blacklist.Has(netAddr.String()) {
 			log.Debug("DialPeers", "find hash", netAddr.String())
 			continue
 		}
@@ -593,27 +575,23 @@ func (n *Node) monitorCfgSeeds() {
 		<-ticker.C
 		n.cfgSeeds.Range(func(k, v interface{}) bool {
 
-			if !n.Has(k.(string)) {
-				//尝试连接此节点
-				if n.needMore() { //如果需要更多的节点
-					n.pubsub.FIFOPub(k.(string), "addr")
-				} else {
-					//腾笼换鸟
-					peers, _ := n.GetActivePeers()
-					//选出当前连接的节点中，负载最大的节点
-					var MaxInBounds int32
-					MaxInBoundPeer := &Peer{}
-					for _, peer := range peers {
-						if peer.GetInBouns() > MaxInBounds {
-							MaxInBounds = peer.GetInBouns()
-							MaxInBoundPeer = peer
-						}
+			//尝试连接此节点
+			if n.needMore() { //如果需要更多的节点
+				n.pubsub.FIFOPub(k.(string), "addr")
+			} else {
+				peers, _ := n.GetActivePeers()
+				//选出当前连接的节点中，负载最大的节点
+				var maxInBounds int32
+				maxInBoundPeer := &Peer{}
+				for _, peer := range peers {
+					if peer.GetInBouns() > maxInBounds {
+						maxInBounds = peer.GetInBouns()
+						maxInBoundPeer = peer
 					}
-
-					n.remove(MaxInBoundPeer.Addr())
-					n.pubsub.FIFOPub(k.(string), "addr")
-
 				}
+
+				n.remove(maxInBoundPeer.GetPeerName())
+				n.pubsub.FIFOPub(k.(string), "addr")
 
 			}
 			return true

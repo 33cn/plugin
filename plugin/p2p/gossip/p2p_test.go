@@ -199,15 +199,16 @@ func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 
 	t.Log(localP2P.node.CacheBoundsSize())
 	t.Log(localP2P.node.GetCacheBounds())
-
+	_, localPeerName := localP2P.node.nodeInfo.addrBook.GetPrivPubKey()
 	localP2P.node.RemoveCachePeer("localhost:12345")
 	assert.False(t, localP2P.node.HasCacheBound("localhost:12345"))
 	peer, err := P2pComm.dialPeer(remote, localP2P.node)
+	t.Log("peerName", peer.GetPeerName(), "self peerName", localPeerName)
 	assert.Nil(t, err)
 	defer peer.Close()
 	peer.MakePersistent()
 	localP2P.node.addPeer(peer)
-	_, localPeerName := localP2P.node.nodeInfo.addrBook.GetPrivPubKey()
+
 	var info *innerpeer
 	t.Log("WaitRegisterPeerStart...")
 	trytime := 0
@@ -247,7 +248,7 @@ func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 
 	localP2P.node.nodeInfo.peerInfos.SetPeerInfo(nil)
 	localP2P.node.nodeInfo.peerInfos.GetPeerInfo("1222")
-	t.Log(p2p.node.GetRegisterPeer("localhost:43802"))
+	t.Log(p2p.node.GetRegisterPeer(localPeerName))
 	//测试发送Ping消息
 	err = p2pcli.SendPing(peer, localP2P.node.nodeInfo)
 	assert.Nil(t, err)
@@ -302,7 +303,7 @@ func testPeer(t *testing.T, p2p *P2p, q queue.Queue) {
 	localP2P.node.addPeer(peer)
 	assert.True(t, localP2P.node.needMore())
 	peer.Close()
-	localP2P.node.remove(peer.peerAddr.String())
+	localP2P.node.remove(peer.GetPeerName())
 }
 
 //测试grpc 多连接
