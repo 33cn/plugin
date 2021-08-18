@@ -236,6 +236,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrRingSign
 	}
 
+	cfg := p.GetAPI().GetConfig()
 	totalInput := int64(0)
 	keyinput := input.GetKeyinput()
 	keyImages := make([][]byte, len(keyinput))
@@ -253,7 +254,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	if !res {
 		if errIndex >= 0 && errIndex < int32(len(keyinput)) {
 			input := keyinput[errIndex]
-			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/types.Coin, "utxo keyimage", common.ToHex(input.KeyImage))
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/cfg.GetCoinPrecision(), "utxo keyimage", common.ToHex(input.KeyImage))
 		}
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "err", "checkUTXOValid failed ")
 		return pty.ErrDoubleSpendOccur
@@ -269,7 +270,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
-	cfg := p.GetAPI().GetConfig()
+
 	if !cfg.IsPara() && (assertExec == "" || assertExec == cfg.GetCoinExec()) {
 
 		totalOutput := int64(0)

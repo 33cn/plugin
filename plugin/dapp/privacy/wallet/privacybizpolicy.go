@@ -61,7 +61,7 @@ func (policy *privacyPolicy) getWalletOperate() wcom.WalletOperate {
 // Init 初始化处理
 func (policy *privacyPolicy) Init(walletOperate wcom.WalletOperate, sub []byte) {
 	policy.setWalletOperate(walletOperate)
-	policy.store = newStore(walletOperate.GetDBStore(), walletOperate.GetAPI().GetConfig().GetCoinExec())
+	policy.store = newStore(walletOperate.GetDBStore(), walletOperate.GetAPI().GetConfig())
 	// 启动定时检查超期FTXO的协程
 	walletOperate.GetWaitGroup().Add(1)
 	go policy.checkWalletStoreData()

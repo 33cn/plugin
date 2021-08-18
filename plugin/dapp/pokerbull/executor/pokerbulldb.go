@@ -6,9 +6,10 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/client"
 	"sort"
 	"strconv"
+
+	"github.com/33cn/chain33/client"
 
 	"strings"
 

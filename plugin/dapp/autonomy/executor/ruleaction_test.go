@@ -22,8 +22,8 @@ import (
 const (
 	testBoardApproveRatio  int32 = 60
 	testPubOpposeRatio     int32 = 35
-	testProposalAmount           = minProposalAmount * 2
-	testLargeProjectAmount       = minLargeProjectAmount * 2
+	testProposalAmount           = minProposalAmount * types.DefaultCoinPrecision * 2
+	testLargeProjectAmount       = minLargeProjectAmount * 2 * types.DefaultCoinPrecision
 	testPublicPeriod             = minPublicPeriod
 )
 
@@ -39,8 +39,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  maxBoardApproveRatio,
 				PubOpposeRatio:     maxPubOpposeRatio,
-				ProposalAmount:     maxProposalAmount,
-				LargeProjectAmount: maxLargeProjectAmount,
+				ProposalAmount:     maxProposalAmount * types.DefaultCoinPrecision,
+				LargeProjectAmount: maxLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       maxPublicPeriod,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -50,8 +50,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  minBoardApproveRatio,
 				PubOpposeRatio:     minPubOpposeRatio,
-				ProposalAmount:     minProposalAmount,
-				LargeProjectAmount: minLargeProjectAmount,
+				ProposalAmount:     minProposalAmount * types.DefaultCoinPrecision,
+				LargeProjectAmount: minLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       minPublicPeriod,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -61,8 +61,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  minBoardApproveRatio - 1,
 				PubOpposeRatio:     minPubOpposeRatio - 1,
-				ProposalAmount:     minProposalAmount - 1,
-				LargeProjectAmount: minLargeProjectAmount - 1,
+				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision - 1,
+				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision - 1,
 				PublicPeriod:       minPublicPeriod - 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -72,8 +72,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  maxBoardApproveRatio + 1,
 				PubOpposeRatio:     maxPubOpposeRatio + 1,
-				ProposalAmount:     maxProposalAmount + 1,
-				LargeProjectAmount: maxLargeProjectAmount + 1,
+				ProposalAmount:     maxProposalAmount*types.DefaultCoinPrecision + 1,
+				LargeProjectAmount: maxLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       maxPublicPeriod + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -83,8 +83,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  1,
 				PubOpposeRatio:     minPubOpposeRatio + 1,
-				ProposalAmount:     minProposalAmount + 1,
-				LargeProjectAmount: minLargeProjectAmount + 1,
+				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision + 1,
+				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       minPublicPeriod + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,

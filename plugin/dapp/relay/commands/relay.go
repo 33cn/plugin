@@ -7,10 +7,11 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
-	"github.com/pkg/errors"
 	"os"
 	"strings"
+
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -318,10 +319,10 @@ func parseRelayOrders(res ty.ReplyRelayOrders, coinPrecision int64) {
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
 		show.CoinOperation = order.Operation
-		show.Amount = types.GetFormatFloat(int64(order.LocalCoinAmount), coinPrecision, true)
+		show.Amount = types.FormatAmount2FloatDisplay(int64(order.LocalCoinAmount), coinPrecision, true)
 		show.Coin = order.XCoin
 		show.CoinAddr = order.XAddr
-		show.CoinAmount = types.GetFormatFloat(int64(order.XAmount), coinPrecision, true)
+		show.CoinAmount = types.FormatAmount2FloatDisplay(int64(order.XAmount), coinPrecision, true)
 		show.CoinWaits = order.XBlockWaits
 		show.CreateTime = order.CreateTime
 		show.AcceptAddr = order.AcceptAddr

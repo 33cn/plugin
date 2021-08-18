@@ -76,7 +76,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 	}
 
 	cfg := g.GetAPI().GetConfig()
-	winnerReturn := int64((pkt.DeveloperFee + pkt.PlatformFee) * float64(cfg.GetCoinPrecision()))
+	winnerReturn := int64((1 - (pkt.DeveloperFee + pkt.PlatformFee)) * float64(cfg.GetCoinPrecision()))
 	gameInfo := &pkt.ReplyPBGameByRound{
 		GameId:    game.GameId,
 		Status:    game.Status,
@@ -84,7 +84,7 @@ func (g *PokerBull) Query_QueryGameByRound(in *pkt.QueryPBGameByRound) (types.Me
 		IsWaiting: game.IsWaiting,
 		Value:     game.Value,
 		Players:   roundPlayers,
-		Return:    (game.Value / cfg.GetCoinPrecision()) * (cfg.GetCoinPrecision() - winnerReturn),
+		Return:    (game.Value / cfg.GetCoinPrecision()) * winnerReturn,
 	}
 
 	return gameInfo, nil

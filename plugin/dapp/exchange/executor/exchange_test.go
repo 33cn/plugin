@@ -895,7 +895,7 @@ func TestKV(t *testing.T) {
 }
 
 func TestSafeMul(t *testing.T) {
-	t.Log(SafeMul(1e8, 1e7))
-	t.Log(SafeMul(1e10, 1e16))
-	t.Log(SafeMul(1e7, 1e6))
+	t.Log(SafeMul(1e8, 1e7, types.DefaultCoinPrecision))
+	t.Log(SafeMul(1e10, 1e16, types.DefaultCoinPrecision))
+	t.Log(SafeMul(1e7, 1e6, types.DefaultCoinPrecision))
 }

@@ -269,7 +269,7 @@ func testPlaceLimitOrder(t *testing.T, req *et.LimitOrder, addr string, privkey 
 	assert.Nil(t, err)
 	t.Log(tokenAfter)
 
-	cost := executor.CalcActualCost(req.Op, req.Amount, req.Price)
+	cost := executor.CalcActualCost(req.Op, req.Amount, req.Price, types.DefaultCoinPrecision)
 	t.Log(req.Amount, req.Price, cost)
 	// bty/ccny
 	if req.Op == et.OpBuy {
@@ -315,7 +315,7 @@ func testRevokeLimitOrder(t *testing.T, orderID int64, addr string, privkey stri
 	assert.Nil(t, err)
 	t.Log(tokenAfter)
 
-	cost := executor.CalcActualCost(lo.Op, order.Balance, lo.Price)
+	cost := executor.CalcActualCost(lo.Op, order.Balance, lo.Price, types.DefaultCoinPrecision)
 	// bty/ccny
 	if lo.Op == et.OpBuy {
 		// bty

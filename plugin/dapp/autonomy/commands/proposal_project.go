@@ -7,9 +7,10 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/pkg/errors"
-	"os"
 
 	"strings"
 
