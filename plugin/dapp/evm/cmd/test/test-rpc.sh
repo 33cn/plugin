@@ -23,25 +23,13 @@ gas=0
 evm_SignTxAndEstimate() {
     gas=0
     local txHex="$1"
-    local priKey="$2"
+    local from=$2
     local MAIN_HTTP=$3
-    local expire="120s"
-    if [ -n "$4" ]; then
-        expire=$4
-    fi
 
-    local req='"method":"Chain33.SignRawTx","params":[{"privkey":"'"$priKey"'","txHex":"'"$txHex"'","expire":"'"$expire"'"}]'
-
-    signedTx=$(curl -ksd "{$req}" "${MAIN_HTTP}" | jq -r ".result")
-
-    if [ "$signedTx" != null ]; then
-        req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"EstimateGas","payload":{"data":"'${signedTx}'"}}]}'
-        chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "EstimateGas" ".result.gas"
-        gas=$((RETURN_RESP + 10000))
-        echo "the estimate gas is = ${gas}"
-    else
-        echo "signedTx null error"
-    fi
+    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"EstimateGas","payload":{"tx":"'${txHex}'", "from":"'${from}'"}}]}'
+    chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "EstimateGas" ".result.gas"
+    gas=$((RETURN_RESP + 10000))
+    echo "the estimate gas is = ${gas}"
 }
 
 #上述未签名交易使用以下指令进行创建
@@ -49,7 +37,7 @@ evm_SignTxAndEstimate() {
 function evm_createContract() {
     expire="120s"
     tx=$(curl -ksd '{"method":"evm.CreateDeployTx","params":[{"code":"'${erc20_code}'", "abi":"'"${erc20_abi}"'", "note": "deploy erc20", "alias": "zbc", "parameter": "constructor(zbc, zbc, 3300, '${evm_creatorAddr}')", "expire":"'${expire}'", "paraName":"'"${paraName}"'", "amount":0}]}' "${MAIN_HTTP}" | jq -r ".result")
-    evm_SignTxAndEstimate "${tx}" "${evm_creatorAddr_key}" "$MAIN_HTTP" "${expire}"
+    evm_SignTxAndEstimate "${tx}" "${evm_creatorAddr}" "$MAIN_HTTP"
 
     echo "evm_createContract :: the estimate gas is = ${gas}"
     tx=$(curl -ksd '{"method":"evm.CreateDeployTx","params":[{"code":"'${erc20_code}'", "abi":"'"${erc20_abi}"'", "fee":'${gas}', "note": "deploy erc20", "alias": "zbc", "parameter": "constructor(zbc, zbc, 3300, '${evm_creatorAddr}')", "expire":"'${expire}'", "paraName":"'"${paraName}"'", "amount":0}]}' "${MAIN_HTTP}" | jq -r ".result")
@@ -96,7 +84,7 @@ function evm_transfer() {
     expire="120s"
 
     tx=$(curl -ksd '{"method":"evm.CreateCallTx","params":[{"abi":"'"${erc20_abi}"'", "note": "evm transfer rpc test", "parameter": "transfer('${evm_transferAddr}', 20)", "expire":"'${expire}'", "contractAddr":"'"${evm_contractAddr}"'", "paraName":"'"${paraName}"'"}]}' "${MAIN_HTTP}" | jq -r ".result")
-    evm_SignTxAndEstimate "${tx}" "${evm_creatorAddr_key}" "$MAIN_HTTP" "${expire}"
+    evm_SignTxAndEstimate "${tx}" "${evm_creatorAddr}" "$MAIN_HTTP"
 
     # shellcheck disable=SC2090
     tx=$(curl -ksd '{"method":"evm.CreateCallTx","params":[{"abi":"'"${erc20_abi}"'", "fee":'${gas}', "note": "evm transfer rpc test", "parameter": "transfer('${evm_transferAddr}', 20)", "expire":"'${expire}'", "contractAddr":"'"${evm_contractAddr}"'", "paraName":"'"${paraName}"'"}]}' "${MAIN_HTTP}" | jq -r ".result")
