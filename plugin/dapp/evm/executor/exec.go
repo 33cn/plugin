@@ -25,7 +25,7 @@ import (
 func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, error) {
 	evm.CheckInit()
 	// 先转换消息
-	msg, err := evm.GetMessage(tx, index)
+	msg, err := evm.GetMessage(tx, index, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -190,14 +190,20 @@ func (evm *EVMExecutor) CheckInit() {
 }
 
 // GetMessage 目前的交易中，如果是coins交易，金额是放在payload的，但是合约不行，需要修改Transaction结构
-func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int) (msg *common.Message, err error) {
+func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *common.Address) (msg *common.Message, err error) {
 	var action evmtypes.EVMContractAction
 	err = types.Decode(tx.Payload, &action)
 	if err != nil {
 		return msg, err
 	}
 	// 此处暂时不考虑消息发送签名的处理，chain33在mempool中对签名做了检查
-	from := getCaller(tx)
+	var from common.Address
+	if fromPtr == nil {
+		from = getCaller(tx)
+	} else {
+		from = *fromPtr
+	}
+
 	to := getReceiver(&action)
 	if to == nil {
 		return msg, types.ErrInvalidAddress

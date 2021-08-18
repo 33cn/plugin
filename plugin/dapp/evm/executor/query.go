@@ -55,10 +55,10 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 }
 
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
-func (evm *EVMExecutor) Query_EstimateGas(txInfo *types.ReqString) (types.Message, error) {
+func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (types.Message, error) {
 	evm.CheckInit()
 
-	txBytes, err := hex.DecodeString(txInfo.Data)
+	txBytes, err := hex.DecodeString(req.Tx)
 	if nil != err {
 		return nil, err
 	}
@@ -68,12 +68,9 @@ func (evm *EVMExecutor) Query_EstimateGas(txInfo *types.ReqString) (types.Messag
 		return nil, err
 	}
 
-	if nil == tx.Signature {
-		return nil, errors.New("Tx should be signatured")
-	}
-
 	index := 0
-	msg, err := evm.GetMessage(&tx, index)
+	from := evmCommon.StringToAddress(req.From)
+	msg, err := evm.GetMessage(&tx, index, from)
 	if err != nil {
 		return nil, err
 	}
