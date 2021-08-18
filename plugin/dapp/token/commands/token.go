@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -146,6 +148,13 @@ func GetTokensPreCreatedCmd() *cobra.Command {
 func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
+
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusPreCreated
 	reqtokens.QueryAll = true
@@ -166,8 +175,8 @@ func getPreCreatedTokens(cmd *cobra.Command, args []string) {
 	}
 
 	for _, preCreatedToken := range res.Tokens {
-		preCreatedToken.Price = preCreatedToken.Price / types.Coin
-		preCreatedToken.Total = preCreatedToken.Total / types.TokenPrecision
+		preCreatedToken.Price = preCreatedToken.Price / cfg.CoinPrecision
+		preCreatedToken.Total = preCreatedToken.Total / cfg.TokenPrecision
 
 		data, err := json.MarshalIndent(preCreatedToken, "", "    ")
 		if err != nil {
@@ -192,6 +201,13 @@ func GetTokensCreatedCmd() *cobra.Command {
 func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
+
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var reqtokens tokenty.ReqTokens
 	reqtokens.Status = tokenty.TokenStatusCreated
 	reqtokens.QueryAll = true
@@ -212,8 +228,8 @@ func getFinishCreatedTokens(cmd *cobra.Command, args []string) {
 	}
 
 	for _, createdToken := range res.Tokens {
-		createdToken.Price = createdToken.Price / types.Coin
-		createdToken.Total = createdToken.Total / types.TokenPrecision
+		createdToken.Price = createdToken.Price / cfg.CoinPrecision
+		createdToken.Total = createdToken.Total / cfg.TokenPrecision
 
 		//fmt.Printf("---The %dth Finish Created token is below--------------------\n", i)
 		data, err := json.MarshalIndent(createdToken, "", "    ")
@@ -250,6 +266,13 @@ func tokenAssets(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	addr, _ := cmd.Flags().GetString("addr")
 	execer, _ := cmd.Flags().GetString("exec")
+
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	execer = getRealExecName(paraName, execer)
 	req := tokenty.ReqAccountTokenAssets{
 		Address: addr,
@@ -262,16 +285,18 @@ func tokenAssets(cmd *cobra.Command, args []string) {
 
 	var res tokenty.ReplyAccountTokenAssets
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
-	ctx.SetResultCb(parseTokenAssetsRes)
-	ctx.Run()
+	ctx.SetResultCbExt(parseTokenAssetsRes)
+	ctx.RunExt(cfg)
 }
 
-func parseTokenAssetsRes(arg interface{}) (interface{}, error) {
-	res := arg.(*tokenty.ReplyAccountTokenAssets)
+func parseTokenAssetsRes(arg ...interface{}) (interface{}, error) {
+	res := arg[0].(*tokenty.ReplyAccountTokenAssets)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
+
 	var result []*tokenty.TokenAccountResult
 	for _, ta := range res.TokenAssets {
-		balanceResult := strconv.FormatFloat(float64(ta.Account.Balance)/float64(types.TokenPrecision), 'f', 4, 64)
-		frozenResult := strconv.FormatFloat(float64(ta.Account.Frozen)/float64(types.TokenPrecision), 'f', 4, 64)
+		balanceResult := types.FormatAmount2FloatDisplay(ta.Account.Balance, cfg.TokenPrecision, true)
+		frozenResult := types.FormatAmount2FloatDisplay(ta.Account.Frozen, cfg.TokenPrecision, true)
 		tokenAccount := &tokenty.TokenAccountResult{
 			Token:    ta.Symbol,
 			Addr:     ta.Account.Addr,
@@ -312,6 +337,12 @@ func tokenBalance(cmd *cobra.Command, args []string) {
 	token, _ := cmd.Flags().GetString("symbol")
 	execer, _ := cmd.Flags().GetString("exec")
 	paraName, _ := cmd.Flags().GetString("paraName")
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	execer = getRealExecName(paraName, execer)
 	addresses := strings.Split(addr, " ")
 	params := tokenty.ReqTokenBalance{
@@ -321,16 +352,18 @@ func tokenBalance(cmd *cobra.Command, args []string) {
 	}
 	var res []*rpctypes.Account
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.GetTokenBalance", params, &res)
-	ctx.SetResultCb(parseTokenBalanceRes)
-	ctx.Run()
+	ctx.SetResultCbExt(parseTokenBalanceRes)
+	ctx.RunExt(cfg)
 }
 
-func parseTokenBalanceRes(arg interface{}) (interface{}, error) {
-	res := arg.(*[]*rpctypes.Account)
+func parseTokenBalanceRes(arg ...interface{}) (interface{}, error) {
+	res := arg[0].(*[]*rpctypes.Account)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
+
 	var result []*tokenty.TokenAccountResult
 	for _, one := range *res {
-		balanceResult := strconv.FormatFloat(float64(one.Balance)/float64(types.TokenPrecision), 'f', 4, 64)
-		frozenResult := strconv.FormatFloat(float64(one.Frozen)/float64(types.TokenPrecision), 'f', 4, 64)
+		balanceResult := types.FormatAmount2FloatDisplay(one.Balance, cfg.TokenPrecision, true)
+		frozenResult := types.FormatAmount2FloatDisplay(one.Frozen, cfg.TokenPrecision, true)
 		tokenAccount := &tokenty.TokenAccountResult{
 			Token:    tokenSymbol,
 			Addr:     one.Addr,
@@ -388,14 +421,24 @@ func tokenPrecreated(cmd *cobra.Command, args []string) {
 	total, _ := cmd.Flags().GetInt64("total")
 	category, _ := cmd.Flags().GetInt32("category")
 
-	priceInt64 := int64((price + 0.000001) * 1e4)
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
+	priceInt64, err := types.FormatFloatDisplay2Value(price, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value"))
+		return
+	}
 	params := &tokenty.TokenPreCreate{
-		Price:        priceInt64 * 1e4,
+		Price:        priceInt64,
 		Name:         name,
 		Symbol:       symbol,
 		Introduction: introduction,
 		Owner:        ownerAddr,
-		Total:        total * types.TokenPrecision,
+		Total:        total * cfg.TokenPrecision,
 		Category:     category,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenPreCreateTx", params, nil)

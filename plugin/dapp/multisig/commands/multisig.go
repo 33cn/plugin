@@ -6,13 +6,14 @@ package commands
 
 import (
 	"fmt"
-	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
-	"github.com/pkg/errors"
 	"math"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -706,8 +707,8 @@ func parseAccInfo(view ...interface{}) (interface{}, error) {
 	var dailyLimitResults []*mty.DailyLimitResult
 
 	for _, dailyLimit := range res.DailyLimits {
-		dailyLimt := types.GetFormatFloat(int64(dailyLimit.DailyLimit), cfg.CoinPrecision, true)
-		spentToday := types.GetFormatFloat(int64(dailyLimit.SpentToday), cfg.CoinPrecision, true)
+		dailyLimt := types.FormatAmount2FloatDisplay(int64(dailyLimit.DailyLimit), cfg.CoinPrecision, true)
+		spentToday := types.FormatAmount2FloatDisplay(int64(dailyLimit.SpentToday), cfg.CoinPrecision, true)
 		dailyLimitResult := &mty.DailyLimitResult{
 			Symbol:     dailyLimit.Symbol,
 			Execer:     dailyLimit.Execer,
@@ -984,7 +985,7 @@ func parseUnSpentToday(view ...interface{}) (interface{}, error) {
 	var result []*mty.UnSpentAssetsResult
 
 	for _, unSpentAssets := range res.UnSpentAssets {
-		amountResult := types.GetFormatFloat(int64(unSpentAssets.Amount), cfg.CoinPrecision, true)
+		amountResult := types.FormatAmount2FloatDisplay(int64(unSpentAssets.Amount), cfg.CoinPrecision, true)
 		unSpentAssetsResult := &mty.UnSpentAssetsResult{
 			Execer:  unSpentAssets.Assets.Execer,
 			Symbol:  unSpentAssets.Assets.Symbol,
@@ -1052,7 +1053,7 @@ func getMultiSigAccAssets(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(&req)
 	rep = &mty.ReplyAccAssets{}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, rep)
-	ctx.RunExt(parseAccAssets)
+	ctx.SetResultCbExt(parseAccAssets)
 	ctx.RunExt(cfg)
 }
 
@@ -1062,9 +1063,9 @@ func parseAccAssets(view ...interface{}) (interface{}, error) {
 	var result []*mty.AccAssetsResult
 
 	for _, accAssets := range res.AccAssets {
-		balanceResult := types.GetFormatFloat(accAssets.Account.Balance, cfg.CoinPrecision, true)
-		frozenResult := types.GetFormatFloat(accAssets.Account.Frozen, cfg.CoinPrecision, true)
-		receiverResult := types.GetFormatFloat(accAssets.RecvAmount, cfg.CoinPrecision, true)
+		balanceResult := types.FormatAmount2FloatDisplay(accAssets.Account.Balance, cfg.CoinPrecision, true)
+		frozenResult := types.FormatAmount2FloatDisplay(accAssets.Account.Frozen, cfg.CoinPrecision, true)
+		receiverResult := types.FormatAmount2FloatDisplay(accAssets.RecvAmount, cfg.CoinPrecision, true)
 
 		accAssetsResult := &mty.AccAssetsResult{
 			Execer:   accAssets.Assets.Execer,

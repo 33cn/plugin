@@ -6,10 +6,11 @@ package commands
 
 import (
 	"fmt"
-	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
-	"github.com/pkg/errors"
 	"os"
 	"strings"
+
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -220,8 +221,8 @@ func parseSellOrders(arg ...interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
-		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
+		order.AmountPerBoardlot = types.FormatAmount2FloatDisplay(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.FormatAmount2FloatDisplay(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.SellOrders = append(result.SellOrders, order)
 	}
 	return result, nil
@@ -392,8 +393,8 @@ func parseBuyOrders(arg ...interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
-		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
+		order.AmountPerBoardlot = types.FormatAmount2FloatDisplay(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.FormatAmount2FloatDisplay(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.BuyOrders = append(result.BuyOrders, order)
 	}
 	return result, nil
@@ -472,8 +473,8 @@ func parseTradeOrders(arg ...interface{}) (interface{}, error) {
 			TotalBoardlot:  o.TotalBoardlot,
 			TradedBoardlot: o.TradedBoardlot,
 		}
-		order.AmountPerBoardlot = types.GetFormatFloat(o.AmountPerBoardlot, cfg.CoinPrecision, true)
-		order.PricePerBoardlot = types.GetFormatFloat(o.PricePerBoardlot, cfg.CoinPrecision, true)
+		order.AmountPerBoardlot = types.FormatAmount2FloatDisplay(o.AmountPerBoardlot, cfg.CoinPrecision, true)
+		order.PricePerBoardlot = types.FormatAmount2FloatDisplay(o.PricePerBoardlot, cfg.CoinPrecision, true)
 		result.Orders = append(result.Orders, order)
 	}
 	return result, nil
@@ -744,9 +745,9 @@ func buyRevoke(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	feeInt64, err := types.TransferFloat(fee, cfg.CoinPrecision)
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "TransferFloat"))
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value"))
 		return
 	}
 	params := &pty.TradeRevokeBuyTx{

@@ -26,17 +26,18 @@ const (
 	minPublicPeriod int32 = 17280 * 7
 	// 最大公示周期
 	maxPublicPeriod int32 = 17280 * 14
-	// 最小重大项目阈值
-	minLargeProjectAmount = types.Coin * 100 * 10000
-	// 最大重大项目阈值
-	maxLargeProjectAmount = types.Coin * 300 * 10000
-	// 最小提案金
-	minProposalAmount = types.Coin * 20
-	// 最大提案金
-	maxProposalAmount = types.Coin * 2000
+	// 最小重大项目阈值(coin)
+	minLargeProjectAmount = 100 * 10000
+	// 最大重大项目阈值(coin)
+	maxLargeProjectAmount = 300 * 10000
+	// 最小提案金(coin)
+	minProposalAmount = 20
+	// 最大提案金(coin)
+	maxProposalAmount = 2000
 )
 
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
 	//如果全小于等于0,则说明该提案规则参数不正确
 	if prob.RuleCfg == nil || prob.RuleCfg.BoardApproveRatio <= 0 && prob.RuleCfg.PubOpposeRatio <= 0 &&
 		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0 {
@@ -46,8 +47,8 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	if (prob.RuleCfg.BoardApproveRatio > 0 && (prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio)) ||
 		(prob.RuleCfg.PubOpposeRatio > 0 && (prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio || prob.RuleCfg.PubOpposeRatio < minPubOpposeRatio)) ||
 		(prob.RuleCfg.PublicPeriod > 0 && (prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod)) ||
-		(prob.RuleCfg.LargeProjectAmount > 0 && (prob.RuleCfg.LargeProjectAmount > maxLargeProjectAmount || prob.RuleCfg.LargeProjectAmount < minLargeProjectAmount)) ||
-		(prob.RuleCfg.ProposalAmount > 0 && (prob.RuleCfg.ProposalAmount > maxProposalAmount || prob.RuleCfg.ProposalAmount < minProposalAmount)) {
+		(prob.RuleCfg.LargeProjectAmount > 0 && (prob.RuleCfg.LargeProjectAmount > maxLargeProjectAmount*cfg.GetCoinPrecision() || prob.RuleCfg.LargeProjectAmount < minLargeProjectAmount*cfg.GetCoinPrecision())) ||
+		(prob.RuleCfg.ProposalAmount > 0 && (prob.RuleCfg.ProposalAmount > maxProposalAmount*cfg.GetCoinPrecision() || prob.RuleCfg.ProposalAmount < minProposalAmount*cfg.GetCoinPrecision())) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}

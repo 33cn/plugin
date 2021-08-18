@@ -12,8 +12,10 @@ import (
 	"os"
 	"time"
 
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
+
 	"encoding/json"
-	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/common"
@@ -154,6 +156,12 @@ func evmBalance(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var addrs []string
 	addrs = append(addrs, addr)
 	params := types.ReqBalance{
@@ -163,8 +171,8 @@ func evmBalance(cmd *cobra.Command, args []string) {
 	}
 	var res []*rpctypes.Account
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetBalance", params, &res)
-	ctx.SetResultCb(parseGetBalanceRes)
-	ctx.Run()
+	ctx.SetResultCbExt(parseGetBalanceRes)
+	ctx.RunExt(cfg)
 }
 
 // AccountResult 账户余额查询出来之后进行单位转换
@@ -179,10 +187,11 @@ type AccountResult struct {
 	Addr string `json:"addr,omitempty"`
 }
 
-func parseGetBalanceRes(arg interface{}) (interface{}, error) {
-	res := *arg.(*[]*rpctypes.Account)
-	balanceResult := strconv.FormatFloat(float64(res[0].Balance)/float64(types.Coin), 'f', 4, 64)
-	frozenResult := strconv.FormatFloat(float64(res[0].Frozen)/float64(types.Coin), 'f', 4, 64)
+func parseGetBalanceRes(arg ...interface{}) (interface{}, error) {
+	res := *arg[0].(*[]*rpctypes.Account)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
+	balanceResult := types.FormatAmount2FloatDisplay(res[0].Balance, cfg.CoinPrecision, true)
+	frozenResult := types.FormatAmount2FloatDisplay(res[0].Frozen, cfg.CoinPrecision, true)
 	result := &AccountResult{
 		Addr:     res[0].Addr,
 		Currency: res[0].Currency,

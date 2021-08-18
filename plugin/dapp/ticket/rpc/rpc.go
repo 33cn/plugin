@@ -61,7 +61,7 @@ func (g *channelClient) CreateBindMiner(ctx context.Context, in *ty.ReqBindMiner
 		if len(balances) == 0 {
 			return nil, types.ErrInvalidParam
 		}
-		if balances[0].Balance < in.Amount+2*types.Coin {
+		if balances[0].Balance < in.Amount+2*cfg.GetCoinPrecision() {
 			return nil, types.ErrNoBalance
 		}
 	}

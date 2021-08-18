@@ -27,8 +27,7 @@ const (
 
 //setting
 const (
-	Coin                      = types.Coin      // 1e8
-	DefaultDebtCeiling        = 10000 * Coin    // 默认借贷限额
+	DefaultDebtCeiling        = 10000           // 默认借贷限额
 	DefaultLiquidationRatio   = 0.4 * 1e4       // 默认质押比
 	DefaultStabilityFeeRation = 0.08 * 1e4      // 默认稳定费
 	DefaultPeriod             = 3600 * 24 * 365 // 默认合约限期
@@ -255,9 +254,10 @@ func (action *Action) CollateralizeManage(manage *pty.CollateralizeManage) (*typ
 	}
 
 	manConfig, _ := getCollateralizeConfig(action.db)
+	cfg := action.Collateralize.GetAPI().GetConfig()
 	if manConfig == nil {
 		manConfig = &pty.CollateralizeManage{
-			DebtCeiling:       DefaultDebtCeiling,
+			DebtCeiling:       DefaultDebtCeiling * cfg.GetCoinPrecision(),
 			LiquidationRatio:  DefaultLiquidationRatio,
 			StabilityFeeRatio: DefaultStabilityFeeRation,
 			Period:            DefaultPeriod,

@@ -7,8 +7,6 @@ package executor
 import (
 	"time"
 
-	"strconv"
-
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
@@ -28,10 +26,11 @@ const (
 
 type relayLog struct {
 	ty.RelayOrder
+	*types.Chain33Config
 }
 
-func newRelayLog(order *ty.RelayOrder) *relayLog {
-	return &relayLog{*order}
+func newRelayLog(order *ty.RelayOrder, cfg *types.Chain33Config) *relayLog {
+	return &relayLog{RelayOrder: *order, Chain33Config: cfg}
 }
 
 func (r *relayLog) save(db dbm.KV) []*types.KeyValue {
@@ -65,10 +64,10 @@ func (r *relayLog) receiptLog(relayLogType int32) *types.ReceiptLog {
 		CurStatus:       r.Status.String(),
 		PreStatus:       r.PreStatus.String(),
 		CreaterAddr:     r.CreaterAddr,
-		LocalCoinAmount: strconv.FormatFloat(float64(r.LocalCoinAmount)/float64(types.Coin), 'f', 4, 64),
+		LocalCoinAmount: types.FormatAmount2FloatDisplay(int64(r.LocalCoinAmount), r.GetCoinPrecision(), true),
 		CoinOperation:   r.Operation,
 		XCoin:           r.XCoin,
-		XAmount:         strconv.FormatFloat(float64(r.XAmount)/float64(types.Coin), 'f', 4, 64),
+		XAmount:         types.FormatAmount2FloatDisplay(int64(r.XAmount), r.GetCoinPrecision(), true),
 		XAddr:           r.XAddr,
 		XTxHash:         r.XTxHash,
 		XBlockWaits:     r.XBlockWaits,
@@ -200,7 +199,7 @@ func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	relayLog := newRelayLog(uOrder)
+	relayLog := newRelayLog(uOrder, action.api.GetConfig())
 	sellOrderKV := relayLog.save(action.db)
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayCreate))
 	kv = append(kv, sellOrderKV...)
@@ -305,7 +304,7 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 		order.Status = ty.RelayOrderStatus_canceled
 	}
 
-	relayLog := newRelayLog(order)
+	relayLog := newRelayLog(order, action.api.GetConfig())
 	orderKV := relayLog.save(action.db)
 
 	var logs []*types.ReceiptLog
@@ -382,7 +381,7 @@ func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	relayLog := newRelayLog(order)
+	relayLog := newRelayLog(order, action.api.GetConfig())
 	sellOrderKV := relayLog.save(action.db)
 
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayAccept))
@@ -461,7 +460,7 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 		logs = append(logs, receiptTransfer.Logs...)
 		kv = append(kv, receiptTransfer.KV...)
 	}
-	relayLog := newRelayLog(order)
+	relayLog := newRelayLog(order, action.api.GetConfig())
 	sellOrderKV := relayLog.save(action.db)
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayRevokeAccept))
 	kv = append(kv, sellOrderKV...)
@@ -518,7 +517,7 @@ func (action *relayDB) confirmTx(confirm *ty.RelayConfirmTx) (*types.Receipt, er
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
-	relayLog := newRelayLog(order)
+	relayLog := newRelayLog(order, action.api.GetConfig())
 	sellOrderKV := relayLog.save(action.db)
 	logs = append(logs, relayLog.receiptLog(ty.TyLogRelayConfirmTx))
 	kv = append(kv, sellOrderKV...)
@@ -591,7 +590,7 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 	order.FinishTime = action.blockTime
 	order.FinishTxHash = common.ToHex(action.txHash)
 
-	relayLog := newRelayLog(order)
+	relayLog := newRelayLog(order, action.api.GetConfig())
 	orderKV := relayLog.save(action.db)
 
 	var logs []*types.ReceiptLog
