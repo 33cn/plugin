@@ -275,6 +275,8 @@ ForkRootHash=1
 [fork.sub.coins]
 Enable=0
 
+[fork.sub.coinsx]
+Enable=0
 
 [fork.sub.ticket]
 Enable=0
@@ -372,10 +374,6 @@ Enable=0
 
 [fork.sub.wasm]
 Enable=0
-
-[fork.sub.x2ethereum]
-Enable=0
-
 
 [fork.sub.valnode]
 Enable=0

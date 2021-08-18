@@ -108,11 +108,11 @@ func CheckStatus(status int32) bool {
 }
 
 //CheckExchangeAsset 检查交易得资产是否合法
-func CheckExchangeAsset(left, right *et.Asset) bool {
+func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
 		return false
 	}
-	if (left.Execer == "coins" && right.Execer == "coins") || (left.Symbol == right.Symbol) {
+	if (left.Execer == coinExec && right.Execer == coinExec) || (left.Symbol == right.Symbol) {
 		return false
 	}
 	return true
@@ -124,7 +124,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	rightAsset := payload.GetRightAsset()
 	//TODO 参数要合法，必须有严格的校验，后面统一加入到checkTx里面
 	//coins执行器下面只有bty
-	if !CheckExchangeAsset(leftAsset, rightAsset) {
+	if !CheckExchangeAsset(a.api.GetConfig().GetCoinExec(), leftAsset, rightAsset) {
 		return nil, et.ErrAsset
 	}
 	if !CheckAmount(payload.GetAmount()) {

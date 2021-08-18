@@ -562,7 +562,7 @@ func (policy *ticketPolicy) closeTicket(height int64) (int, error) {
 func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
 	operater := policy.getWalletOperate()
-	acc1, err := operater.GetBalance(addr, "coins")
+	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
 	if err != nil {
 		return err
 	}
@@ -638,7 +638,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	//ticket balance and coins balance
 	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
 	operater := policy.getWalletOperate()
-	acc1, err := operater.GetBalance(addr, "coins")
+	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
 	if err != nil {
 		return nil, 0, err
 	}

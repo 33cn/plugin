@@ -10,7 +10,7 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 	if !CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
-	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
+	if !CheckExchangeAsset(s.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
 
@@ -22,7 +22,7 @@ func (s *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 
 //查询已经完成得订单
 func (s *exchange) Query_QueryHistoryOrderList(in *et.QueryHistoryOrderList) (types.Message, error) {
-	if !CheckExchangeAsset(in.LeftAsset, in.RightAsset) {
+	if !CheckExchangeAsset(s.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
 	if !CheckCount(in.Count) {

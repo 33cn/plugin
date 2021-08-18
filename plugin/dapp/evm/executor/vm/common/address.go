@@ -6,6 +6,9 @@ package common
 
 import (
 	"math/big"
+	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"encoding/hex"
 
@@ -97,6 +100,11 @@ func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
 	return Address{Addr: execAddr}
 }
 
+func NewContractAddress(b Address, txHash []byte) Address {
+	execAddr := address.GetExecAddress(b.String() + common.Bytes2Hex(txHash))
+	return Address{Addr: execAddr}
+}
+
 // ExecAddress 返回合约地址
 func ExecAddress(execName string) Address {
 	execAddr := address.GetExecAddress(execName)
@@ -122,6 +130,15 @@ func BytesToHash160Address(b []byte) Hash160Address {
 func StringToAddress(s string) *Address {
 	addr, err := address.NewAddrFromString(s)
 	if err != nil {
+		//检查是否是十六进制地址数据
+		hbytes, err := hex.DecodeString(strings.TrimPrefix(s, "0x"))
+		if err == nil {
+			if len(hbytes) == 20 {
+				var addr address.Address
+				addr.SetBytes(hbytes)
+				return &Address{Addr: &addr}
+			}
+		}
 		log15.Error("create address form string error", "string:", s)
 		return nil
 	}
@@ -160,6 +177,7 @@ func Uint256ToAddress(b *uint256.Int) Address {
 	a := new(address.Address)
 	a.Version = 0
 	out := make([]byte, 20)
+
 	copy(out[:], b.Bytes())
 	a.SetBytes(out)
 	return Address{Addr: a}

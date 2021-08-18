@@ -269,7 +269,7 @@ func (a *Action) Apply(payload *et.Apply) (*types.Receipt, error) {
 		accountM.Status = et.Normal
 		//TODO 这里只做coins主笔资产得自动划转，token资产转移,放在转transfer中执行 fromAccountID == toAccountID
 		cfg := a.api.GetConfig()
-		coinsAssetDB, err := account.NewAccountDB(cfg, "coins", cfg.GetCoinSymbol(), a.statedb)
+		coinsAssetDB, err := account.NewAccountDB(cfg, cfg.GetCoinExec(), cfg.GetCoinSymbol(), a.statedb)
 		if err != nil {
 			return nil, err
 		}

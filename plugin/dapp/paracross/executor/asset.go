@@ -11,7 +11,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/db"
-	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	token "github.com/33cn/plugin/plugin/dapp/token/types"
@@ -388,9 +387,12 @@ func (a *action) createAccount(cfg *types.Chain33Config, db db.KV, exec, symbol 
 	return account.NewAccountDB(cfg, exec, symbol, db)
 }
 
+//对于旧的assetTransfer,assetWithdraw资产转移接口，没有填AssetExec，这里只支持coins，如果主链是coinsx执行器，则旧接口会失败，需要用新接口。
+//新接口必须填AssetExec,主链和平行链从跨链交易资产参数上会保持一致，目的资产不依赖目标的toml配置文件
+//比如主链是coinsx 平行链也会铸造coinsx.bty资产，withdraw到主链也是coinsx
 func adaptNullAssetExec(transfer *pt.CrossAssetTransfer) {
 	if transfer.AssetSymbol == "" {
-		transfer.AssetExec = coins.CoinsX
+		transfer.AssetExec = "coins"
 		transfer.AssetSymbol = SymbolBty
 		return
 	}

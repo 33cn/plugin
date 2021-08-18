@@ -366,6 +366,7 @@ function transfer() {
     hashes=()
     for ((i = 0; i < 10; i++)); do
         hash=$(${1} send coins transfer -a 1 -n test -t 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+        echo "hash=$hash"
         hashes=("${hashes[@]}" "$hash")
     done
     block_wait "${1}" 1
@@ -383,7 +384,7 @@ function transfer() {
         fi
     done
 
-    echo "=========== # withdraw ============="
+    echo "=========== # transfer 2 ============="
     hash=$(${1} send coins transfer -a 2 -n deposit -t 1wvmD6RNHzwhY4eN75WnM6JcaAvNQ4nHx -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash}"
     #    block_wait "${1}" 2
@@ -394,6 +395,7 @@ function transfer() {
         exit 1
     fi
 
+    echo "=========== # withdraw ============="
     hash=$(${1} send coins withdraw -a 1 -n withdraw -e retrieve -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     echo "${hash}"
     #    block_wait "${1}" 1

@@ -55,7 +55,7 @@ type LogNewBridgeToken struct {
 func UnpackLogLock(contractAbi abi.ABI, eventName string, eventData []byte) (lockEvent *LockEvent, err error) {
 	event := &LockEvent{}
 	// Parse the event's attributes as Ethereum network variables
-	err = contractAbi.Unpack(event, eventName, eventData)
+	err = contractAbi.UnpackIntoInterface(event, eventName, eventData)
 	if err != nil {
 		eventsLog.Error("UnpackLogLock", "Failed to unpack abi due to:", err.Error())
 		return nil, ebrelayerTypes.ErrUnpack
@@ -72,7 +72,7 @@ func UnpackLogLock(contractAbi abi.ABI, eventName string, eventData []byte) (loc
 func UnpackLogBurn(contractAbi abi.ABI, eventName string, eventData []byte) (burnEvent *BurnEvent, err error) {
 	event := &BurnEvent{}
 	// Parse the event's attributes as Ethereum network variables
-	err = contractAbi.Unpack(event, eventName, eventData)
+	err = contractAbi.UnpackIntoInterface(event, eventName, eventData)
 	if err != nil {
 		eventsLog.Error("UnpackLogBurn", "Failed to unpack abi due to:", err.Error())
 		return nil, ebrelayerTypes.ErrUnpack

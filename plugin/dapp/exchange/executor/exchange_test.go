@@ -724,7 +724,12 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
+	q := queue.New("channel")
+	q.SetConfig(cfg)
+	api, _ := client.New(q.Client(), nil)
+	exec.SetAPI(api)
 	e := exec.(*exchange)
+
 	for index, tx := range txs {
 		err := e.CheckTx(tx, index)
 		if err != nil {
@@ -733,10 +738,7 @@ func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...
 		}
 
 	}
-	q := queue.New("channel")
-	q.SetConfig(cfg)
-	api, _ := client.New(q.Client(), nil)
-	exec.SetAPI(api)
+
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
 	env.blockHeight = env.blockHeight + 1

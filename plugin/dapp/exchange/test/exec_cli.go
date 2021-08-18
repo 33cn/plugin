@@ -147,7 +147,9 @@ func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 		return nil, err
 	}
 
+	api, _ := client.New(c.q.Client(), nil)
 	exec := executor.NewExchange()
+	exec.SetAPI(api)
 	if err := exec.CheckTx(tx, int(1)); err != nil {
 		return nil, err
 	}
@@ -155,8 +157,7 @@ func (c *ExecCli) Send(tx *types.Transaction, hexKey string) ([]*types.ReceiptLo
 	c.height++
 	c.blockTime += 10
 	c.difficulty++
-	api, _ := client.New(c.q.Client(), nil)
-	exec.SetAPI(api)
+
 	exec.SetStateDB(c.sdb)
 	exec.SetLocalDB(c.ldb)
 	exec.SetEnv(c.height, c.blockTime, c.difficulty)

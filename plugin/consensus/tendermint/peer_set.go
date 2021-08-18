@@ -423,6 +423,10 @@ func (pc *peerConn) PickSendVote(votes ttypes.VoteSetReader) bool {
 		}
 	}
 	if vote, ok := pc.state.PickVoteToSend(votes); ok {
+		if vote == nil {
+			tendermintlog.Warn("Pick nil vote", "aggVote", votes.GetAggVote(), "vote", votes)
+			return false
+		}
 		msg := MsgInfo{TypeID: ttypes.VoteID, Msg: vote.Vote, PeerID: pc.id, PeerIP: pc.ip.String()}
 		tendermintlog.Debug("Sending vote message", "msg", msg)
 		if pc.Send(msg) {
