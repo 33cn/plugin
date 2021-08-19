@@ -217,6 +217,11 @@ func createRawCommitTx(cfg *types.Chain33Config, commit *ParacrossCommitAction, 
 
 // CreateRawAssetTransferTx create asset transfer tx
 func CreateRawAssetTransferTx(cfg *types.Chain33Config, param *types.CreateTx) (*types.Transaction, error) {
+	return CreateRawAssetTransferTxExt(cfg.GetChainID(), cfg.GetMinTxFeeRate(), param)
+}
+
+// CreateRawAssetTransferTxExt create asset transfer tx
+func CreateRawAssetTransferTxExt(chainID int32, minFee int64, param *types.CreateTx) (*types.Transaction, error) {
 	// 跨链交易需要在主链和平行链上执行， 所以应该可以在主链和平行链上构建
 	if !types.IsParaExecName(param.GetExecName()) {
 		tlog.Error("CreateRawAssetTransferTx", "exec", param.GetExecName())
@@ -235,13 +240,13 @@ func CreateRawAssetTransferTx(cfg *types.Chain33Config, param *types.CreateTx) (
 		transfer.Value = v
 		transfer.Ty = ParacrossActionAssetWithdraw
 	}
-	tx := &types.Transaction{
+	rawtx := &types.Transaction{
 		Execer:  []byte(param.GetExecName()),
 		Payload: types.Encode(transfer),
 		To:      address.ExecAddress(param.GetExecName()),
 		Fee:     param.Fee,
 	}
-	tx, err := types.FormatTx(cfg, param.GetExecName(), tx)
+	tx, err := types.FormatTxExt(chainID, true, minFee, param.GetExecName(), rawtx)
 	if err != nil {
 		return nil, err
 	}

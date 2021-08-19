@@ -539,10 +539,19 @@ func tokenMint(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetFloat64("amount")
-
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
 	params := &tokenty.TokenMint{
 		Symbol: symbol,
-		Amount: int64((amount+0.000001)*1e4) * 1e4,
+		Amount: amountInt64,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenMintTx", params, nil)
@@ -574,10 +583,19 @@ func tokenBurn(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetFloat64("amount")
-
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
 	params := &tokenty.TokenBurn{
 		Symbol: symbol,
-		Amount: int64((amount+0.000001)*1e4) * 1e4,
+		Amount: amountInt64,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenBurnTx", params, nil)

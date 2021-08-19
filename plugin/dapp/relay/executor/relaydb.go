@@ -21,7 +21,7 @@ import (
 const (
 	lockingTime   = 12 * time.Hour //as currently one BTC tx may need wait quite long time
 	lockBtcHeight = 12 * 6
-	lockBtyAmount = 100 * 1e8
+	lockBtyAmount = 100 //coins
 )
 
 type relayLog struct {
@@ -151,6 +151,7 @@ func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 	var receipt *types.Receipt
 	var err error
 
+	cfg := action.api.GetConfig()
 	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
 	if err != nil {
 		return nil, errors.Wrapf(err, "relay create,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
@@ -164,7 +165,7 @@ func (action *relayDB) create(order *ty.RelayCreate) (*types.Receipt, error) {
 		}
 
 	} else {
-		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("account.ExecFrozen relay ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -270,6 +271,7 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 		return nil, ty.ErrRelayReturnAddr
 	}
 
+	cfg := action.api.GetConfig()
 	accDb, err := action.createAccount(order.LocalCoinExec, order.LocalCoinSymbol)
 	if err != nil {
 		return nil, errors.Wrapf(err, "relay revokeCreate,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
@@ -290,7 +292,7 @@ func (action *relayDB) revokeCreate(revoke *ty.RelayRevoke) (*types.Receipt, err
 			return nil, err
 		}
 
-		receiptTransfer, err = accDb.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecTransferFrozen(order.CreaterAddr, order.AcceptAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("revokeAccept", "from", order.AcceptAddr, "to", order.CreaterAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -340,9 +342,10 @@ func (action *relayDB) accept(accept *ty.RelayAccept) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "relay accept,exec=%s,sym=%s", order.LocalCoinExec, order.LocalCoinSymbol)
 	}
 
+	cfg := action.api.GetConfig()
 	var receipt *types.Receipt
 	if order.Operation == ty.RelayOrderBuy {
-		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, int64(lockBtyAmount))
+		receipt, err = accDb.ExecFrozen(action.fromAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("relay accept frozen fail ", "addrFrom", action.fromAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -412,6 +415,7 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 		return nil, ty.ErrRelayOrderFinished
 	}
 
+	cfg := action.api.GetConfig()
 	err = action.checkRevokeOrder(order)
 	if err != nil {
 		return nil, err
@@ -438,7 +442,7 @@ func (action *relayDB) revokeAccept(revoke *ty.RelayRevoke) (*types.Receipt, err
 
 	var receiptTransfer *types.Receipt
 	if order.Operation == ty.RelayOrderBuy {
-		receiptTransfer, err = accDb.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecTransferFrozen(order.AcceptAddr, order.CreaterAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("revokeAccept", "from", order.AcceptAddr, "to", order.CreaterAddr, "execAddr", action.execAddr, "amount", lockBtyAmount)
 			return nil, err
@@ -543,6 +547,7 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 		return nil, ty.ErrRelayOrderOnSell
 	}
 
+	cfg := action.api.GetConfig()
 	err = action.btc.verifyBtcTx(verify, order)
 	if err != nil {
 		return nil, err
@@ -571,14 +576,14 @@ func (action *relayDB) verifyTx(verify *ty.RelayVerify) (*types.Receipt, error) 
 
 	var receiptTransfer *types.Receipt
 	if order.Operation == ty.RelayOrderBuy {
-		receiptTransfer, err = accDb.ExecActive(order.AcceptAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecActive(order.AcceptAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("verify exec active", "from", order.AcceptAddr, "amount", lockBtyAmount)
 			return nil, err
 		}
 
 	} else {
-		receiptTransfer, err = accDb.ExecActive(order.CreaterAddr, action.execAddr, int64(lockBtyAmount))
+		receiptTransfer, err = accDb.ExecActive(order.CreaterAddr, action.execAddr, lockBtyAmount*cfg.GetCoinPrecision())
 		if err != nil {
 			relaylog.Error("verify exec active", "from", order.CreaterAddr, "amount", lockBtyAmount)
 			return nil, err

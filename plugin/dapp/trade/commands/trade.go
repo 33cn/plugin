@@ -526,17 +526,30 @@ func tokenSell(cmd *cobra.Command, args []string) {
 	if exec == "" {
 		exec = "token"
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
-	priceInt64 := int64(price * 1e4)
-	feeInt64 := int64(fee * 1e4)
+	priceInt64, err := types.FormatFloatDisplay2Value(price, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.price"))
+		return
+	}
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	totalInt64 := int64(total * 1e8 / 1e6)
 	params := &pty.TradeSellTx{
 		TokenSymbol:       symbol,
 		AmountPerBoardlot: 1e6,
 		MinBoardlot:       min,
-		PricePerBoardlot:  priceInt64 * 1e4,
+		PricePerBoardlot:  priceInt64,
 		TotalBoardlot:     totalInt64,
-		Fee:               feeInt64 * 1e4,
+		Fee:               feeInt64,
 		AssetExec:         exec,
 		PriceExec:         priceExec,
 		PriceSymbol:       priceSymbol,
@@ -568,14 +581,23 @@ func addTokenBuyFlags(cmd *cobra.Command) {
 func tokenBuy(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	sellID, _ := cmd.Flags().GetString("sell_id")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 	count, _ := cmd.Flags().GetInt64("count")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
-	feeInt64 := int64(fee * 1e4)
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	params := &pty.TradeBuyTx{
 		SellID:      sellID,
 		BoardlotCnt: count,
-		Fee:         feeInt64 * 1e4,
+		Fee:         feeInt64,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeBuyTx", params, nil)
@@ -603,12 +625,22 @@ func addTokenSellRevokeFlags(cmd *cobra.Command) {
 func tokenSellRevoke(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	sellID, _ := cmd.Flags().GetString("sell_id")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 
-	feeInt64 := int64(fee * 1e4)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	params := &pty.TradeRevokeTx{
 		SellID: sellID,
-		Fee:    feeInt64 * 1e4,
+		Fee:    feeInt64,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeRevokeTx", params, nil)
@@ -662,16 +694,30 @@ func tokenBuyLimit(cmd *cobra.Command, args []string) {
 		exec = "token"
 	}
 
-	priceInt64 := int64(price * 1e4)
-	feeInt64 := int64(fee * 1e4)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
+	priceInt64, err := types.FormatFloatDisplay2Value(price, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.price"))
+		return
+	}
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	totalInt64 := int64(total * 1e8 / 1e6)
 	params := &pty.TradeBuyLimitTx{
 		TokenSymbol:       symbol,
 		AmountPerBoardlot: 1e6,
 		MinBoardlot:       min,
-		PricePerBoardlot:  priceInt64 * 1e4,
+		PricePerBoardlot:  priceInt64,
 		TotalBoardlot:     totalInt64,
-		Fee:               feeInt64 * 1e4,
+		Fee:               feeInt64,
 		AssetExec:         exec,
 		PriceExec:         priceExec,
 		PriceSymbol:       priceSymbol,
@@ -703,14 +749,22 @@ func addSellMarketFlags(cmd *cobra.Command) {
 func sellMarket(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	buyID, _ := cmd.Flags().GetString("buy_id")
-	fee, _ := cmd.Flags().GetFloat64("fee")
 	count, _ := cmd.Flags().GetInt64("count")
-
-	feeInt64 := int64(fee * 1e4)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	params := &pty.TradeSellMarketTx{
 		BuyID:       buyID,
 		BoardlotCnt: count,
-		Fee:         feeInt64 * 1e4,
+		Fee:         feeInt64,
 	}
 
 	ctx := jsonrpc.NewRPCCtx(rpcLaddr, "trade.CreateRawTradeSellMarketTx", params, nil)

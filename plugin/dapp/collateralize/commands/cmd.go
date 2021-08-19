@@ -51,17 +51,12 @@ func addCollateralizeCreateFlags(cmd *cobra.Command) {
 
 //CollateralizeCreate ...
 func CollateralizeCreate(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	balance, _ := cmd.Flags().GetFloat64("balance")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeCreate",
 		Payload:    []byte(fmt.Sprintf("{\"totalBalance\":%f}", balance)),
 	}
@@ -91,18 +86,13 @@ func addCollateralizeBorrowFlags(cmd *cobra.Command) {
 
 //CollateralizeBorrow ...
 func CollateralizeBorrow(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	value, _ := cmd.Flags().GetFloat64("value")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeBorrow",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"value\":%f}", collateralizeID, value)),
 	}
@@ -134,19 +124,14 @@ func addCollateralizeAppendFlags(cmd *cobra.Command) {
 
 //CollateralizeAppend ...
 func CollateralizeAppend(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	recordID, _ := cmd.Flags().GetString("recordID")
 	value, _ := cmd.Flags().GetFloat64("value")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeAppend",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"recordID\":\"%s\", \"value\":%f}", collateralizeID, recordID, value)),
 	}
@@ -176,18 +161,13 @@ func addCollateralizeRepayFlags(cmd *cobra.Command) {
 
 //CollateralizeRepay ...
 func CollateralizeRepay(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	recordID, _ := cmd.Flags().GetString("recordID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeRepay",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\",\"recordID\":\"%s\"}", collateralizeID, recordID)),
 	}
@@ -217,18 +197,13 @@ func addCollateralizePriceFeedFlags(cmd *cobra.Command) {
 
 //CollateralizePriceFeed ...
 func CollateralizePriceFeed(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	price, _ := cmd.Flags().GetFloat64("price")
 	volume, _ := cmd.Flags().GetUint64("volume")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizePriceFeed",
 		Payload:    []byte(fmt.Sprintf("{\"price\":[ %f ], \"volume\":[ %d ]}", price, volume)),
 	}
@@ -258,18 +233,13 @@ func addCollateralizeRetrieveFlags(cmd *cobra.Command) {
 
 //CollateralizeRetrieve ...
 func CollateralizeRetrieve(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	collateralizeID, _ := cmd.Flags().GetString("collateralizeID")
 	balance, _ := cmd.Flags().GetFloat64("balance")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeRetrieve",
 		Payload:    []byte(fmt.Sprintf("{\"collateralizeID\":\"%s\", \"balance\": %f}", collateralizeID, balance)),
 	}
@@ -300,12 +270,7 @@ func addCollateralizeManageFlags(cmd *cobra.Command) {
 
 //CollateralizeManage ...
 func CollateralizeManage(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-	if cfg == nil {
-		panic(fmt.Sprintln("can not find CliSysParam title", title))
-	}
-
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	debtCeiling, _ := cmd.Flags().GetFloat64("debtCeiling")
 	liquidationRatio, _ := cmd.Flags().GetFloat64("liquidationRatio")
@@ -314,7 +279,7 @@ func CollateralizeManage(cmd *cobra.Command, args []string) {
 	totalBalance, _ := cmd.Flags().GetFloat64("totalBalance")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.CollateralizeX),
+		Execer:     types.GetExecName(pkt.CollateralizeX, paraName),
 		ActionName: "CollateralizeManage",
 		Payload: []byte(fmt.Sprintf("{\"debtCeiling\":%f, \"liquidationRatio\":%f, \"stabilityFeeRatio\":%f, \"period\":%d, \"totalBalance\":%f}",
 			debtCeiling, liquidationRatio, stabilityFeeRatio, period, totalBalance)),

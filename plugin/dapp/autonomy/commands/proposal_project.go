@@ -135,8 +135,7 @@ func addRevokeProposalProjectFlags(cmd *cobra.Command) {
 }
 
 func revokeProposalProject(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -149,7 +148,7 @@ func revokeProposalProject(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "RvkPropProject",
 		Payload:    payLoad,
 	}
@@ -176,8 +175,7 @@ func addVoteProposalProjectFlags(cmd *cobra.Command) {
 }
 
 func voteProposalProject(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -198,7 +196,7 @@ func voteProposalProject(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "VotePropProject",
 		Payload:    payLoad,
 	}
@@ -226,8 +224,7 @@ func addPubVoteProposalProjectFlags(cmd *cobra.Command) {
 }
 
 func pubVoteProposalProject(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -256,7 +253,7 @@ func pubVoteProposalProject(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "PubVotePropProject",
 		Payload:    payLoad,
 	}
@@ -282,8 +279,7 @@ func addTerminateProposalProjectFlags(cmd *cobra.Command) {
 }
 
 func terminateProposalProject(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -296,7 +292,7 @@ func terminateProposalProject(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "TmintPropProject",
 		Payload:    payLoad,
 	}

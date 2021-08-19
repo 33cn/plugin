@@ -97,14 +97,12 @@ func addPokerbullContinueFlags(cmd *cobra.Command) {
 }
 
 func pokerbullContinue(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreateContinueTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
@@ -131,14 +129,12 @@ func addPokerbullQuitFlags(cmd *cobra.Command) {
 }
 
 func pokerbullQuit(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreateQuitTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}

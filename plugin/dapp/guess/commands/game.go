@@ -65,10 +65,8 @@ func addGuessStartFlags(cmd *cobra.Command) {
 }
 
 func guessStart(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	topic, _ := cmd.Flags().GetString("topic")
 	category, _ := cmd.Flags().GetString("category")
 	options, _ := cmd.Flags().GetString("options")
@@ -83,7 +81,7 @@ func guessStart(cmd *cobra.Command, args []string) {
 
 	payload := fmt.Sprintf("{\"topic\":\"%s\", \"options\":\"%s\", \"category\":\"%s\", \"maxBetHeight\":%d, \"maxBetsOneTime\":%d,\"maxBetsNumber\":%d,\"devFeeFactor\":%d,\"platFeeFactor\":%d,\"expireHeight\":%d,\"devFeeAddr\":\"%s\",\"platFeeAddr\":\"%s\"}", topic, options, category, maxBetHeight, maxBetsOneTime, maxBetsNumber, devFeeFactor, platFeeFactor, expireHeight, devFeeAddr, platFeeAddr)
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(gty.GuessX),
+		Execer:     types.GetExecName(gty.GuessX, paraName),
 		ActionName: gty.CreateStartTx,
 		Payload:    []byte(payload),
 	}
@@ -115,17 +113,15 @@ func addGuessBetFlags(cmd *cobra.Command) {
 }
 
 func guessBet(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	option, _ := cmd.Flags().GetString("option")
 	betsNumber, _ := cmd.Flags().GetInt64("betsNumber")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\", \"option\":\"%s\", \"betsNum\":%d}", gameID, option, betsNumber)
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(gty.GuessX),
+		Execer:     types.GetExecName(gty.GuessX, paraName),
 		ActionName: gty.CreateBetTx,
 		Payload:    []byte(payload),
 	}
@@ -152,15 +148,13 @@ func addGuessStopBetFlags(cmd *cobra.Command) {
 }
 
 func guessStopBet(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameId")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(gty.GuessX),
+		Execer:     types.GetExecName(gty.GuessX, paraName),
 		ActionName: gty.CreateStopBetTx,
 		Payload:    []byte(payload),
 	}
@@ -187,15 +181,13 @@ func addGuessAbortFlags(cmd *cobra.Command) {
 }
 
 func guessAbort(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameId")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\"}", gameID)
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(gty.GuessX),
+		Execer:     types.GetExecName(gty.GuessX, paraName),
 		ActionName: gty.CreateAbortTx,
 		Payload:    []byte(payload),
 	}
@@ -225,16 +217,14 @@ func addGuessPublishFlags(cmd *cobra.Command) {
 }
 
 func guessPublish(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameId")
 	result, _ := cmd.Flags().GetString("result")
 
 	payload := fmt.Sprintf("{\"gameID\":\"%s\",\"result\":\"%s\"}", gameID, result)
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(gty.GuessX),
+		Execer:     types.GetExecName(gty.GuessX, paraName),
 		ActionName: gty.CreatePublishTx,
 		Payload:    []byte(payload),
 	}
