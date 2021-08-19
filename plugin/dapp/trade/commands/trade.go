@@ -542,10 +542,16 @@ func tokenSell(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
 		return
 	}
-	totalInt64 := int64(total * 1e8 / 1e6)
+	//缺省一手是0.01个coin，如果精度小于100，就是1
+	oneHand := int64(1)
+	if cfg.CoinPrecision > 1e2 {
+		oneHand = cfg.CoinPrecision / 1e2
+	}
+
+	totalInt64 := int64(total * float64(cfg.CoinPrecision) / float64(oneHand))
 	params := &pty.TradeSellTx{
 		TokenSymbol:       symbol,
-		AmountPerBoardlot: 1e6,
+		AmountPerBoardlot: oneHand,
 		MinBoardlot:       min,
 		PricePerBoardlot:  priceInt64,
 		TotalBoardlot:     totalInt64,
@@ -710,10 +716,16 @@ func tokenBuyLimit(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
 		return
 	}
-	totalInt64 := int64(total * 1e8 / 1e6)
+	//缺省一手是0.01个coin，如果精度小于100，就是1
+	oneHand := int64(1)
+	if cfg.CoinPrecision > 1e2 {
+		oneHand = cfg.CoinPrecision / 1e2
+	}
+
+	totalInt64 := int64(total * float64(cfg.CoinPrecision) / float64(oneHand))
 	params := &pty.TradeBuyLimitTx{
 		TokenSymbol:       symbol,
-		AmountPerBoardlot: 1e6,
+		AmountPerBoardlot: oneHand,
 		MinBoardlot:       min,
 		PricePerBoardlot:  priceInt64,
 		TotalBoardlot:     totalInt64,

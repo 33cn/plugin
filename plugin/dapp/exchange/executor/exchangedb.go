@@ -85,7 +85,7 @@ func CheckCount(count int32) bool {
 
 //CheckAmount 最小交易 1coin
 func CheckAmount(amount, coinPrecision int64) bool {
-	if amount < coinPrecision || amount >= types.MaxCoin {
+	if amount < coinPrecision || amount >= types.MaxCoin*coinPrecision {
 		return false
 	}
 	return true
