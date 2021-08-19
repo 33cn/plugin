@@ -41,8 +41,8 @@ func NewMainAccount(cfg *types.Chain33Config, paraTitle, paraExecName, paraSymbo
 }
 
 func assetDepositBalance(acc *account.DB, addr string, amount int64) (*types.Receipt, error) {
-	if err := acc.CheckAmount(amount); err != nil {
-		return nil, err
+	if !acc.CheckAmount(amount) {
+		return nil, types.ErrAmount
 	}
 	acc1 := acc.LoadAccount(addr)
 	copyacc := *acc1
@@ -66,8 +66,8 @@ func assetDepositBalance(acc *account.DB, addr string, amount int64) (*types.Rec
 }
 
 func assetWithdrawBalance(acc *account.DB, addr string, amount int64) (*types.Receipt, error) {
-	if err := acc.CheckAmount(amount); err != nil {
-		return nil, err
+	if !acc.CheckAmount(amount) {
+		return nil, types.ErrAmount
 	}
 	acc1 := acc.LoadAccount(addr)
 	if acc1.Balance-amount < 0 {
