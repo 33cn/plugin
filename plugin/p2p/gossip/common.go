@@ -113,15 +113,15 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 	//check remote peer is self or  duplicate peer
 	_, pub := node.nodeInfo.addrBook.GetPrivPubKey()
 
-	if node.Has(resp.UserAgent) ||resp.UserAgent == pub{
+	if node.Has(resp.UserAgent) || resp.UserAgent == pub {
 		//发现同一个peerID 下有两个不同的ip，则把新连接的ip加入黑名单5分钟
-		prepeer:= node.GetRegisterPeer(resp.UserAgent)
-		log.Info("dialPeerWithAddress","duplicate connect:",prepeer.Addr(),addr.String(),resp.GetUserAgent())
+		prepeer := node.GetRegisterPeer(resp.UserAgent)
+		log.Info("dialPeerWithAddress", "duplicate connect:", prepeer.Addr(), addr.String(), resp.GetUserAgent())
 		peer.Close()
-		return nil, errors.New(fmt.Sprintf("duplicate connect %v",resp.UserAgent))
+		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
 	}
 
-	node.peerStore.Store(addr.String(),resp.UserAgent)
+	node.peerStore.Store(addr.String(), resp.UserAgent)
 	peer.SetPeerName(resp.UserAgent)
 	return peer, nil
 }

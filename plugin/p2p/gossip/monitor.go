@@ -438,7 +438,7 @@ func (n *Node) monitorDialPeers() {
 			//先查询有没有注册进去，避免同时重复连接相同的地址
 			continue
 		}
-		if _,ok:= n.peerStore.Load(addr.(string));ok{
+		if _, ok := n.peerStore.Load(addr.(string)); ok {
 			//不对已经创建peer的ip发起重复连接
 			continue
 		}

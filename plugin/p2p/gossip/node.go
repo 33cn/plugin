@@ -80,7 +80,7 @@ type Node struct {
 	listenPort int
 	innerSeeds sync.Map
 	cfgSeeds   sync.Map
-	peerStore  sync.Map//peerIp-->PeerName
+	peerStore  sync.Map //peerIp-->PeerName
 	closed     int32
 	pubsub     *pubsub.PubSub
 	chainCfg   *types.Chain33Config
@@ -246,8 +246,8 @@ func (n *Node) AddCachePeer(pr *Peer) {
 func (n *Node) RemoveCachePeer(peerName string) {
 	n.cmtx.Lock()
 	defer n.cmtx.Unlock()
-	peer,ok:= n.cacheBound[peerName]
-	if ok{
+	peer, ok := n.cacheBound[peerName]
+	if ok {
 		peer.Close()
 	}
 
