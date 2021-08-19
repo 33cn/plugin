@@ -1,6 +1,6 @@
 title="x2Ethereum_relayer"
 #用于cli向该relayer进行配置
-ChainID4Chain33=33
+ChainID4Chain33=0
 ChainName=""  #链的名称，用来区分主链和平行链,如user.p.xxx.,必须包含最后一个点
 JrpcBindAddr="localhost:9901"
 EthProviderCli="http://127.0.0.1:7545"

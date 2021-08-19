@@ -33,7 +33,7 @@ multisignChain33Addr=""
 multisignEthAddr=""
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 # shellcheck disable=SC2034
 {

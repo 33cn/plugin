@@ -27,7 +27,7 @@ ethBridgeToeknYccAddr=""
 chain33YccErc20Addr=""
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 function set_offline_token_Bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"

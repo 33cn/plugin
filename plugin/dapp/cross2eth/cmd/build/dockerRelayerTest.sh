@@ -42,7 +42,7 @@ chain33ZBCErc20Addr=""
 ethBridgeToeknZBCAddr=""
 multisignChain33Addr=""
 multisignEthAddr=""
-chain33ID=33
+chain33ID=0
 
 # validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 #ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"

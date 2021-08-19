@@ -31,7 +31,7 @@ ethBridgeToeknYccAddr=""
 chain33YccErc20Addr=""
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 chain33BridgeBank=16A3uxgPqCv5pVkKqtdVnv2As6DbfRVZRH
 multisignChain33Addr=1b193HbfvVUunUL2DVXrqt9jnbAWwLjcT

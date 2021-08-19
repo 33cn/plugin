@@ -33,7 +33,7 @@ chain33YccTokenAddr=""
 ethereumYccTokenAddr=""
 chain33ZBCErc20Addr=""
 ethBridgeToeknZBCAddr=""
-chain33ID=33
+chain33ID=0
 
 CLIA="./ebcli_A"
 

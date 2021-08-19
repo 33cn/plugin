@@ -60,7 +60,7 @@ function InitAndOfflineDeploy() {
 
     # 在 chain33 上部署合约
     # shellcheck disable=SC2154
-    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33ValidatorA}, [${chain33ValidatorA}, ${chain33ValidatorB}, ${chain33ValidatorC}, ${chain33ValidatorD}], [25, 25, 25, 25]" --chainID 33
+    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33ValidatorA}, [${chain33ValidatorA}, ${chain33ValidatorB}, ${chain33ValidatorC}, ${chain33ValidatorD}], [25, 25, 25, 25]" --chainID "${chain33ID}"
     result=$(${Boss4xCLI} chain33 offline send -f "deployCrossX2Chain33.txt")
 
     for i in {0..7}; do
@@ -140,7 +140,7 @@ function offline_create_bridge_token_chain33_YCC() {
 function offline_deploy_erc20_chain33_YCC() {
     # chain33 token create YCC
     echo -e "${GRE}======= 在 chain33 上创建 ERC20 YCC ======${NOC}"
-    ${Boss4xCLI} chain33 offline create_erc20 -s YCC -k "${chain33DeployKey}" -o "${chain33DeployAddr}" --chainID 33
+    ${Boss4xCLI} chain33 offline create_erc20 -s YCC -k "${chain33DeployKey}" -o "${chain33DeployAddr}" --chainID "${chain33ID}"
     result=$(${Boss4xCLI} chain33 offline send -f "deployErc20YCCChain33.txt")
     hash=$(echo "${result}" | jq -r ".[0].TxHash")
     check_tx "${Chain33Cli}" "${hash}"
@@ -159,7 +159,7 @@ function offline_deploy_erc20_chain33_YCC() {
 function offline_deploy_erc20_chain33_ZBC() {
     # chain33 token create ZBC
     echo -e "${GRE}======= 在 chain33 上创建 ERC20 ZBC ======${NOC}"
-    ${Boss4xCLI} chain33 offline create_erc20 -s ZBC -k "${chain33DeployKey}" -o "${chain33DeployAddr}" --chainID 33
+    ${Boss4xCLI} chain33 offline create_erc20 -s ZBC -k "${chain33DeployKey}" -o "${chain33DeployAddr}" --chainID "${chain33ID}"
     result=$(${Boss4xCLI} chain33 offline send -f "deployErc20ZBCChain33.txt")
     hash=$(echo "${result}" | jq -r ".[0].TxHash")
     check_tx "${Chain33Cli}" "${hash}"

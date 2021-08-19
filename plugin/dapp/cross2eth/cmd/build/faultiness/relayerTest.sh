@@ -27,7 +27,7 @@ maturityDegree=10
 Chain33Cli="../../chain33-cli"
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 #BridgeRegistryOnChain33=""
 chain33BridgeBank=""
 #BridgeRegistryOnEth=""

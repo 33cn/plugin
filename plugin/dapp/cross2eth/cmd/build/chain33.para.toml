@@ -2,7 +2,7 @@ Title="user.p.para."
 TestNet=false
 CoinSymbol="para"
 EnableParaFork=true
-ChainID=33
+ChainID=0
 
 [crypto]
 
@@ -117,8 +117,6 @@ writeBlockSeconds=2
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#创世区块时间，新部署链可以修改，缺省2017/12/29
-#genesisBlockTime=1514533390
 #主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,209186是bityuan主链对应高度， ycc或其他按实际修改
 mainBlockHashForkHeight=209186
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
@@ -178,10 +176,10 @@ enableStat=false
 enableMVCC=false
 
 [exec.sub.relay]
-genesis="1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
+genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
-superManager=["1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"]
+superManager=["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"]
 
 [exec.sub.token]
 saveTokenTxList=true
@@ -195,6 +193,10 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.evm]
+#平行链evm合约ETH资产映射的合约和资产类型（symbol）
+ethMapFromExecutor="paracross"
+ethMapFromSymbol="coins.bty"
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换

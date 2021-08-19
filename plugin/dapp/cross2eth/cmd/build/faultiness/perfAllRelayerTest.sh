@@ -36,7 +36,7 @@ chain33YccTokenAddr=""
 ethereumYccTokenAddr=""
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 # chain33 lock BTY, eth burn BTY
 function LockTestChain33ToEthAssets() {

@@ -61,7 +61,7 @@ chain33YccTokenAddr=""
 ethereumYccTokenAddr=""
 
 CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 function loop_send_lock_bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"

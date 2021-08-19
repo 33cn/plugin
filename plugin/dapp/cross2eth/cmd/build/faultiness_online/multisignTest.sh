@@ -28,7 +28,7 @@ source "./multisignPublicTest.sh"
 #chain33YccErc20Addr=""
 #
 #CLIA="./ebcli_A"
-chain33ID=33
+chain33ID=0
 
 function mainTest() {
     if [[ $# -ge 1 && "${1}" != "" ]]; then
