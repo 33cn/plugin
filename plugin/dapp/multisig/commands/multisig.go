@@ -6,7 +6,6 @@ package commands
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -141,6 +140,12 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	//将字符转权重转换成uint64的值
 	var weights []uint64
 	var totalweight uint64
@@ -182,10 +187,16 @@ func createMultiSigAccTransfer(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
+	dailylimitInt64, err := types.FormatFloatDisplay2Value(dailylimit, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.dailylimit"))
+		return
+	}
+
 	symboldailylimit := &mty.SymbolDailyLimit{
 		Symbol:     symbol,
 		Execer:     execer,
-		DailyLimit: uint64(math.Trunc((dailylimit+0.0000001)*1e4)) * 1e4,
+		DailyLimit: uint64(dailylimitInt64),
 	}
 
 	params := &mty.MultiSigAccCreate{
@@ -415,16 +426,26 @@ func createMultiSigAccDailyLimitModifyTransfer(cmd *cobra.Command, args []string
 	execer, _ := cmd.Flags().GetString("execer")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	dailylimit, _ := cmd.Flags().GetFloat64("daily_limit")
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
-	err := isValidDailylimit(dailylimit)
+	err = isValidDailylimit(dailylimit)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	dailylimitInt64, err := types.FormatFloatDisplay2Value(dailylimit, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.dailylimit"))
 		return
 	}
 	assetsDailyLimit := &mty.SymbolDailyLimit{
 		Symbol:     symbol,
 		Execer:     execer,
-		DailyLimit: uint64(math.Trunc((dailylimit+0.0000001)*1e4)) * 1e4,
+		DailyLimit: uint64(dailylimitInt64),
 	}
 	params := &mty.MultiSigAccOperate{
 		MultiSigAccAddr: multiSigAddr,
@@ -520,9 +541,19 @@ func createMultiSigAccTransferIn(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 	params := &mty.MultiSigExecTransferTo{
 		Symbol:   symbol,
-		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
+		Amount:   amountInt64,
 		Note:     note,
 		Execname: execer,
 		To:       to,
@@ -576,9 +607,19 @@ func createMultiSigAccTransferOut(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, types.ErrAmount)
 		return
 	}
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
 	params := &mty.MultiSigExecTransferFrom{
 		Symbol:   symbol,
-		Amount:   int64(math.Trunc((amount+0.0000001)*1e4)) * 1e4,
+		Amount:   amountInt64,
 		Note:     note,
 		Execname: execer,
 		From:     from,

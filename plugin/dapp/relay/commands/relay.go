@@ -390,28 +390,39 @@ func addExchangeFlags(cmd *cobra.Command) {
 }
 
 func relayOrder(cmd *cobra.Command, args []string) {
-
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	oper, _ := cmd.Flags().GetUint32("operation")
 	coin, _ := cmd.Flags().GetString("coin")
 	coinamount, _ := cmd.Flags().GetFloat64("coin_amount")
 	coinaddr, _ := cmd.Flags().GetString("coin_addr")
 	coinwait, _ := cmd.Flags().GetUint32("coin_wait")
 	btyamount, _ := cmd.Flags().GetFloat64("bty_amount")
-
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	if coinwait == 0 {
 		coinwait = 1
 	}
-
-	btyUInt64 := uint64(btyamount * 1e4)
-	coinUInt64 := uint64(coinamount * 1e4)
+	btyInt64, err := types.FormatFloatDisplay2Value(btyamount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.btyamount"))
+		return
+	}
+	coinInt64, err := types.FormatFloatDisplay2Value(coinamount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.coinamount"))
+		return
+	}
 
 	params := &ty.RelayCreate{
 		Operation:       oper,
-		XAmount:         coinUInt64 * 1e4,
+		XAmount:         uint64(coinInt64),
 		XCoin:           coin,
 		XAddr:           coinaddr,
 		XBlockWaits:     coinwait,
-		LocalCoinAmount: btyUInt64 * 1e4,
+		LocalCoinAmount: uint64(btyInt64),
 	}
 
 	payLoad, err := json.Marshal(params)
@@ -424,12 +435,11 @@ func relayOrder(cmd *cobra.Command, args []string) {
 }
 
 func createTx(cmd *cobra.Command, payLoad []byte, action string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(ty.RelayX),
+		Execer:     types.GetExecName(ty.RelayX, paraName),
 		ActionName: action,
 		Payload:    payLoad,
 	}
