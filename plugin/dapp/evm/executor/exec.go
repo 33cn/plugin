@@ -37,7 +37,7 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 // readOnly 是否只读调用，仅执行evm abi查询时为true
 func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee int64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
-	context := evm.NewEVMContext(msg)
+	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)

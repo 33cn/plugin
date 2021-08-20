@@ -182,7 +182,7 @@ func (evm *EVMExecutor) GetVMConfig() *runtime.Config {
 }
 
 // NewEVMContext 构造一个新的EVM上下文对象
-func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
+func (evm *EVMExecutor) NewEVMContext(msg *common.Message, txHash []byte) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
@@ -194,5 +194,6 @@ func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 		Difficulty:  new(big.Int).SetUint64(evm.GetDifficulty()),
 		GasLimit:    msg.GasLimit(),
 		GasPrice:    msg.GasPrice(),
+		TxHash:      txHash,
 	}
 }
