@@ -148,6 +148,7 @@ Retry:
 		opts = append(opts, grpc.Creds(node.nodeInfo.servCreds))
 
 	}
+
 	dl.server = grpc.NewServer(opts...)
 	dl.p2pserver = pServer
 	pb.RegisterP2PgserviceServer(dl.server, pServer)

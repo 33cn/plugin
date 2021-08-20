@@ -404,7 +404,6 @@ func (network *P2p) subP2pMsg() {
 }
 
 func (network *P2p) processEvent(msg *queue.Message, taskIdx int64, eventFunc p2pEventFunc) {
-
 	network.lock.Lock()
 	defer network.lock.Unlock()
 	if network.isClose() {

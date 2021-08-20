@@ -162,6 +162,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	} else {
 		secOpt = grpc.WithTransportCredentials(creds)
 	}
+	//grpc.WithPerRPCCredentials
 	conn, err := grpc.Dial(na.String(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),

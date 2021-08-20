@@ -42,7 +42,7 @@ type NormalInterface interface {
 	SendPing(peer *Peer, nodeinfo *NodeInfo) error
 	GetBlockHeight(nodeinfo *NodeInfo) (int64, error)
 	CheckPeerNatOk(addr string, nodeInfo *NodeInfo) bool
-	GetAddrList(peer *Peer) (map[string]int64, error)
+	GetAddrList(peer *Peer) (map[string]*pb.P2PPeerInfo, error)
 	GetInPeersNum(peer *Peer) (int, error)
 	CheckSelf(addr string, nodeinfo *NodeInfo) bool
 }
@@ -199,9 +199,9 @@ func (m *Cli) GetInPeersNum(peer *Peer) (int, error) {
 }
 
 // GetAddrList return a map for address-prot
-func (m *Cli) GetAddrList(peer *Peer) (map[string]int64, error) {
+func (m *Cli) GetAddrList(peer *Peer) (map[string]*pb.P2PPeerInfo, error) {
 
-	var addrlist = make(map[string]int64)
+	var addrlist = make(map[string]*pb.P2PPeerInfo)
 	if peer == nil {
 		return addrlist, fmt.Errorf("pointer is nil")
 	}
@@ -229,9 +229,11 @@ func (m *Cli) GetAddrList(peer *Peer) (map[string]int64, error) {
 	peerinfos := resp.GetPeerinfo()
 
 	for _, peerinfo := range peerinfos {
+		if peerinfo == nil {
+			continue
+		}
 		if localBlockHeight-peerinfo.GetHeader().GetHeight() < 2048 {
-
-			addrlist[fmt.Sprintf("%v:%v", peerinfo.GetAddr(), peerinfo.GetPort())] = peerinfo.GetHeader().GetHeight()
+			addrlist[peerinfo.GetName()] = peerinfo
 		}
 	}
 	return addrlist, nil
