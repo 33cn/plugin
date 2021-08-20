@@ -387,7 +387,7 @@ function offline_create_bridge_token_chain33_YCC() {
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken YCC ======${NOC}"
 #    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
-    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s YCC -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s YCC -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:YCC"
     chain33_offline_send "create_bridge_token.txt"
 
     chain33YccTokenAddr=$(${Chain33Cli} evm abi call -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
@@ -459,7 +459,7 @@ function offline_create_bridge_token_chain33_ETH() {
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
 #    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
-    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s ETH -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s ETH -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:ETH"
     chain33_offline_send "create_bridge_token.txt"
 
     chain33EthTokenAddr=$(${Chain33Cli} evm abi call -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")

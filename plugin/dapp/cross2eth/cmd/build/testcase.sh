@@ -2,7 +2,7 @@
 # shellcheck disable=SC2128
 # shellcheck source=/dev/null
 
-source "./dockerRelayerTestInfinite.sh"
+source "./dockerRelayerTest.sh"
 source "./paracrosstestcase.sh"
 
 function cross2eth() {

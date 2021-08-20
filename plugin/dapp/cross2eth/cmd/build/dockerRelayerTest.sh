@@ -612,7 +612,7 @@ function StartDockerRelayerDeploy() {
     docker cp "${chain33YccErc20Addr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccErc20Addr}.abi
     docker cp "${ethBridgeToeknYccAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeToeknYccAddr}.abi
 
-    # 重启
+    # 重启,因为relayerA的验证人地址和部署人的地址是一样的,所以需要重新启动relayer,更新nonce
     restart_ebrelayerA
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

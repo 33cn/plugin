@@ -188,7 +188,7 @@ function offline_create_bridge_token_eth_BTY() {
 function offline_create_bridge_token_chain33_ETH() {
     # 在 chain33 上创建 bridgeToken ETH
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
-    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s ETH -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s ETH -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:ETH"
     chain33_offline_send "create_bridge_token.txt"
 
     chain33EthTokenAddr=$(${Chain33Cli} evm abi call -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
