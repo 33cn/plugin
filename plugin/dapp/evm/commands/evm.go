@@ -233,8 +233,7 @@ func addCreateContractFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("code", "c", "", "contract binary code")
 	_ = cmd.MarkFlagRequired("code")
 
-	cmd.Flags().StringP("abi", "b", "", "abi string used for create constructor parameter ")
-	_ = cmd.MarkFlagRequired("abi")
+	cmd.Flags().StringP("abi", "b", "", "abi string used for create constructor parameter(optional, not needed if no parameter for constructor)")
 
 	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
 
@@ -242,9 +241,9 @@ func addCreateContractFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
 
-	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name")
+	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name(optional)")
 
-	cmd.Flags().StringP("parameter", "p", "", "parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
+	cmd.Flags().StringP("parameter", "p", "", "(optional)parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
 }
 
 func createContract(cmd *cobra.Command, args []string) {
@@ -500,9 +499,11 @@ func callAbi(cmd *cobra.Command, args []string) {
 
 func estimateGas(cmd *cobra.Command, args []string) {
 	txStr, _ := cmd.Flags().GetString("tx")
+	caller, _ := cmd.Flags().GetString("caller")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	txInfo := &types.ReqString{
-		Data: txStr,
+	txInfo := &evmtypes.EstimateEVMGasReq{
+		Tx:   txStr,
+		From: caller,
 	}
 
 	var estGasResp evmtypes.EstimateEVMGasResp
@@ -517,6 +518,9 @@ func estimateGas(cmd *cobra.Command, args []string) {
 func addEstimateGasFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("tx", "x", "", "tx string(should be signatured)")
 	_ = cmd.MarkFlagRequired("tx")
+
+	cmd.Flags().StringP("caller", "c", "", "contract creator or caller")
+	_ = cmd.MarkFlagRequired("caller")
 }
 
 // 估算合约消耗
