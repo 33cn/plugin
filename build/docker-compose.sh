@@ -89,6 +89,10 @@ function base_init() {
     sed -i $sedfix 's/^targetTimePerBlock=.*/targetTimePerBlock=1/g' chain33.toml
     sed -i $sedfix 's/^targetTimespan=.*/targetTimespan=10000000/g' chain33.toml
     sed -i $sedfix 's/^isLevelFee=.*/isLevelFee=false/g' chain33.toml
+    #新ticket 只冻结60s 测试目的
+    sed -i $sedfix 's/^ticketFrozenTime = 43200/ticketFrozenTime = 60/g' chain33.toml
+    sed -i $sedfix 's/^ticketWithdrawTime = 172800/ticketWithdrawTime = 1000/g' chain33.toml
+    sed -i $sedfix 's/^ticketMinerWaitTime = 7200/ticketMinerWaitTime = 600/g' chain33.toml
 
     # p2p
     sed -i $sedfix '0,/^seeds=.*/s//seeds=["chain33:13802","chain32:13802","chain31:13802"]/g' chain33.toml
@@ -97,6 +101,7 @@ function base_init() {
     sed -i $sedfix 's/^isSeed=.*/isSeed=true/g' chain33.toml
     sed -i $sedfix 's/^innerSeedEnable=.*/innerSeedEnable=false/g' chain33.toml
     sed -i $sedfix 's/^useGithub=.*/useGithub=false/g' chain33.toml
+    sed -i $sedfix 's/^disableShard=false/disableShard=true/g' chain33.toml
 
     # rpc
     sed -i $sedfix 's/^jrpcBindAddr=.*/jrpcBindAddr="0.0.0.0:8801"/g' chain33.toml
@@ -233,7 +238,7 @@ function miner() {
         exit 1
     fi
 
-    echo "=========== # close auto mining ============="
+    echo "=========== # open auto mining ============="
     result=$(${1} wallet auto_mine -f 1 | jq ".isok")
     if [ "${result}" = "false" ]; then
         exit 1
@@ -405,6 +410,10 @@ function transfer() {
         echo "withdraw cannot find tx"
         exit 1
     fi
+
+    echo "=========== # cold bind mining ============="
+    hash=$(${CLI} send ticket bind -b 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -o 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    echo "${hash}"
 
     hash=$(${1} send coins transfer -a 1000 -n transfer -t 1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
