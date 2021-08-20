@@ -70,6 +70,9 @@ type Context struct {
 	// GasLimit 指令，当前交易的GasLimit
 	GasLimit uint64
 
+	// TxHash
+	TxHash []byte
+
 	// BlockNumber NUMBER 指令，当前区块高度
 	BlockNumber *big.Int
 	// Time 指令， 当前区块打包时间
