@@ -15,7 +15,7 @@ import (
 type SignCakeToken struct {
 }
 
-func (s *SignCakeToken) reWriteDeployCakeToken(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey,params... interface{}) (signedTx, hash  string, err error) {
+func (s *SignCakeToken) reWriteDeployCakeToken(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey, params ...interface{}) (signedTx, hash string, err error) {
 	parsed, err := abi.JSON(strings.NewReader(cakeToken.CakeTokenABI))
 	if err != nil {
 		return
@@ -33,12 +33,10 @@ func (s *SignCakeToken) reWriteDeployCakeToken(nonce uint64, gasPrice *big.Int, 
 
 }
 
-
 type signsyrupBar struct {
-
 }
 
-func  (s *signsyrupBar)reWriteDeploysyrupBar(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey,cakeAddress  common.Address)(signedTx, hash  string, err error){
+func (s *signsyrupBar) reWriteDeploysyrupBar(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey, cakeAddress common.Address) (signedTx, hash string, err error) {
 	parsed, err := abi.JSON(strings.NewReader(syrupBar.SyrupBarABI))
 	if err != nil {
 		return
@@ -51,20 +49,19 @@ func  (s *signsyrupBar)reWriteDeploysyrupBar(nonce uint64, gasPrice *big.Int, ke
 	data := append(common.FromHex(abiBin), input...)
 
 	var amount = new(big.Int)
-	ntx:=types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
+	ntx := types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
 	return SignTx(key, ntx)
 }
 
-type signMasterChef struct{
-
+type signMasterChef struct {
 }
 
-func (s *signMasterChef)reWriteDeployMasterChef(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey,cakeAddress,syruBarAddress ,fromaddr common.Address,reward,_startBlock *big.Int)(signedTx, hash  string, err error){
+func (s *signMasterChef) reWriteDeployMasterChef(nonce uint64, gasPrice *big.Int, key *ecdsa.PrivateKey, cakeAddress, syruBarAddress, fromaddr common.Address, reward, _startBlock *big.Int) (signedTx, hash string, err error) {
 	parsed, err := abi.JSON(strings.NewReader(masterChef.MasterChefABI))
 	if err != nil {
 		return
 	}
-	input, err := parsed.Pack("", cakeAddress,syruBarAddress,fromaddr,reward,_startBlock)
+	input, err := parsed.Pack("", cakeAddress, syruBarAddress, fromaddr, reward, _startBlock)
 	if err != nil {
 		return
 	}
