@@ -59,7 +59,7 @@ chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966
 
 #CLIA="./ebcli_A"
 
-ethUrl=""
+#ethUrl=""
 
 
 function start_docker_ebrelayerA() {
@@ -121,7 +121,7 @@ function StartDockerRelayerDeploy() {
 
     # change EthProvider url
     dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-    ethUrl="http://${dockerAddr}:8545"
+#    ethUrl="http://${dockerAddr}:8545"
 
     # 修改 relayer.toml 配置文件
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
