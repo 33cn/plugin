@@ -70,6 +70,7 @@ func blackwhiteCreate(cmd *cobra.Command, args []string) {
 	gameName, _ := cmd.Flags().GetString("gameName")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 
+	//如果配置精度不是1e8，需要做相应修改，这里不明白fee的意思，使用时候再做修改
 	feeInt64 := int64(fee * 1e4)
 
 	if timeout == 0 {
