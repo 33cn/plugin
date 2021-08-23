@@ -28,8 +28,7 @@ const (
 )
 
 func init() {
-	crypto.Register(MixSignName, &MixSignZkSnark{}, false)
-	crypto.RegisterType(MixSignName, MixSignID)
+	crypto.Register(MixSignName, &MixSignZkSnark{}, crypto.WithRegOptionTypeID(MixSignID))
 }
 
 // MixSignature mix签名中对于crypto.Signature接口实现
@@ -71,12 +70,12 @@ func (privkey *MixSignPrivateKey) Bytes() []byte {
 }
 
 // Sign signature trasaction
-func (privkey *MixSignPrivateKey) Sign(msg []byte) crypto.Signature {
+func (privkey *MixSignPrivateKey) Sign(msg []byte, opts ...interface{}) crypto.Signature {
 	return &MixSignature{}
 }
 
 // PubKey convert to public key
-func (privkey *MixSignPrivateKey) PubKey() crypto.PubKey {
+func (privkey *MixSignPrivateKey) PubKey(opts ...interface{}) crypto.PubKey {
 	publicKey := new(MixSignPublicKey)
 	return publicKey
 }
@@ -218,4 +217,9 @@ func (r *MixSignZkSnark) SignatureFromBytes(b []byte) (crypto.Signature, error) 
 	mixSig.sign = append(mixSig.sign, b...)
 
 	return &mixSig, nil
+}
+
+// Validate validate msg and signature
+func (r *MixSignZkSnark) Validate(msg, pub, sig []byte) error {
+	return crypto.BasicValidation(r, msg, pub, sig)
 }
