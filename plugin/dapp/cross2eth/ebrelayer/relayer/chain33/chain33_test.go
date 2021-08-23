@@ -38,7 +38,7 @@ var (
 	passphrase    = "123456hzj"
 )
 
-func Test_ImportPrivateKey(t *testing.T) {
+func Test_ImportRestorePrivateKey(t *testing.T) {
 	mock33 := newMock33()
 	defer mock33.Close()
 	_, _, _, x2EthDeployInfo, err := setup.DeployContracts()
@@ -60,17 +60,8 @@ func Test_ImportPrivateKey(t *testing.T) {
 
 	key, _, _ = chain33Relayer.GetAccount(passphrase)
 	assert.Equal(t, key, privateKeyStr)
-}
 
-func Test_RestorePrivateKeys(t *testing.T) {
-	mock33 := newMock33()
-	defer mock33.Close()
-	_, _, _, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	chain33Relayer := newChain33Relayer(x2EthDeployInfo, "127.0.0.1:60003")
-	err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
-	assert.NoError(t, err)
-
+	//////////////restore part//////////
 	go func() {
 		for range chain33Relayer.unlockChan {
 		}
@@ -91,8 +82,6 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	err = chain33Relayer.RestorePrivateKeys("new123")
 	assert.Equal(t, chain33Common.ToHex(chain33Relayer.privateKey4Chain33.Bytes()), privateKeyStr)
 	assert.NoError(t, err)
-
-	time.Sleep(200 * time.Millisecond)
 }
 
 func newChain33Relayer(x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string) *Relayer4Chain33 {
