@@ -30,6 +30,8 @@ github.com/33cn/chain33 v1.65.3-0.20210803094350-8a745164df6c h1:nEB/Z0vp9ChFEqf
 github.com/33cn/chain33 v1.65.3-0.20210803094350-8a745164df6c/go.mod h1:dLHHc1HwIy1YKmluXIJYGbv/Bet7yR2fyjinXWqLgV4=
 github.com/33cn/chain33 v1.65.3-0.20210818071203-29aff1b4c056 h1:DT/PvvZe0BTM6qZSchzW7yVhr8HZHdd8QZJkOc04ogQ=
 github.com/33cn/chain33 v1.65.3-0.20210818071203-29aff1b4c056/go.mod h1:o7AmHzUybvbBjswIJ3Be/+bOEd4LR0pRIFNb7NZ4QF4=
+github.com/33cn/chain33 v1.65.3-0.20210823062002-c3d9f3806543 h1:D4Zily9dvFnkKYDYcUHDXKDkVY0JB9kSglBwxXNBDfw=
+github.com/33cn/chain33 v1.65.3-0.20210823062002-c3d9f3806543/go.mod h1:82/Y5u+8arrXk+o83R9PusqGPNc33PDMwfB/zk77+6E=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 h1:cTp8I5+VIoKjsnZuH8vjyaysT/ses3EvZeaV/1UkF2M=
@@ -955,6 +957,8 @@ github.com/segmentio/kafka-go v0.2.0/go.mod h1:X6itGqS9L4jDletMsxZ7Dz+JFWxM6JHfP
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/shirou/gopsutil v2.20.5+incompatible h1:tYH07UPoQt0OCQdgWWMgYHy3/a9bcxNpBIysykNIP7I=
 github.com/shirou/gopsutil v2.20.5+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
+github.com/shopspring/decimal v1.2.0 h1:abSATXmQEYyShuxI4/vyW3tV1MrKAJzCZ/0zLUXYbsQ=
+github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/shurcooL/component v0.0.0-20170202220835-f88ec8f54cc4/go.mod h1:XhFIlyj5a1fBNx5aJTbKoIq0mNaPvOagO+HjB3EtxrY=
 github.com/shurcooL/events v0.0.0-20181021180414-410e4ca65f48/go.mod h1:5u70Mqkb5O5cxEA8nxTsgrgLehJeAw6Oc4Ab1c/P1HM=
 github.com/shurcooL/github_flavored_markdown v0.0.0-20181002035957-2122de532470/go.mod h1:2dOwnU2uBioM+SGy2aZoq1f/Sd1l9OkAeAUvjSyvgU0=
