@@ -39,7 +39,7 @@ multisignChain33Addr=1b193HbfvVUunUL2DVXrqt9jnbAWwLjcT
 function lockBty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 #    echo '2:#配置自动转离线钱包(bty, 100, 50%)'
-    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,10000000000,50)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,10000000000,50)" --khainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
@@ -81,7 +81,7 @@ function lockBty() {
 function lockChain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
-    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     lock_chain33_ycc_multisign 30 30 0
@@ -94,18 +94,18 @@ function lockChain33Ycc() {
     hash=$(${CLIA} chain33 multisign transfer -a 10 -r "${chain33BridgeBank}" -t "${chain33YccErc20Addr}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
     check_tx "${Chain33Cli}" "${hash}"
     sleep 2
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "6200000000"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
     is_equal "${result}" "30800000000"
 
     # shellcheck disable=SC2154
     hash=$(${CLIA} chain33 multisign transfer -a 5 -r "${chain33MultisignA}" -t "${chain33YccErc20Addr}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
     check_tx "${Chain33Cli}" "${hash}"
     sleep 2
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${chain33MultisignA}" -b "balanceOf(${chain33MultisignA})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${chain33MultisignA}" -b "balanceOf(${chain33MultisignA})")
     is_equal "${result}" "500000000"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
     is_equal "${result}" "30300000000"
 
     # 判断 ETH 这端是否金额一致

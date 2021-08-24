@@ -79,7 +79,7 @@ function deployMultisign() {
     balance_ret "${result}" "10.0000"
 
     # shellcheck disable=SC2154
-    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${multisignChain33Addr})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${multisignChain33Addr})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
 #    echo -e "${GRE}=========== 部署 ETH 离线钱包合约 ===========${NOC}"
@@ -251,7 +251,7 @@ function mainTest() {
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
     cp BridgeRegistry.abi "${BridgeRegistryOnChain33}.abi"
-    chain33BridgeBank=$(${Chain33Cli} evm abi call -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
+    chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
     cp Chain33BridgeBank.abi "${chain33BridgeBank}.abi"
 
     # 在 Eth 上部署合约
