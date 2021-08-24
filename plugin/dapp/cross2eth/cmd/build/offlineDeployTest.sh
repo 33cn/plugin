@@ -72,7 +72,7 @@ function TestChain33ToEthAssets() {
 #    balance=$(cli_ret "${result}" "balance" ".balance")
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} evm call -f 1 -a 5 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
@@ -131,15 +131,15 @@ function TestChain33ToEthZBCAssets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
-    result=$(${Chain33Cli} evm abi call -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "0"
 
     # chain33 lock ZBC
-    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33ZBCErc20Addr}, 900000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33ZBCErc20Addr}, 900000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # chain33BridgeBank 是否增加了 9
-    result=$(${Chain33Cli} evm abi call -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "900000000"
 
     eth_block_wait 10
@@ -161,11 +161,11 @@ function TestChain33ToEthZBCAssets() {
     sleep ${maturityDegree}
 
      # 接收的地址金额 变成了 8
-     result=$(${Chain33Cli} evm abi call -a "${chain33ZBCErc20Addr}" -c "${chain33ReceiverAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+     result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33ReceiverAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "800000000"
 
     # chain33BridgeBank 是否减少了 1
-    result=$(${Chain33Cli} evm abi call -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "100000000"
 
     # eth burn
@@ -175,7 +175,7 @@ function TestChain33ToEthZBCAssets() {
     eth_block_wait 10
     sleep ${maturityDegree}
 
-    result=$(${Chain33Cli} evm abi call -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "0"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -203,7 +203,7 @@ function TestETH2Chain33Assets() {
     sleep ${maturityDegree}
 
     # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm abi call -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
     is_equal "${result}" "1100000000"
 
@@ -217,7 +217,7 @@ function TestETH2Chain33Assets() {
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm abi call -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11-5 * le8
     is_equal "${result}" "600000000"
 
@@ -260,7 +260,7 @@ function TestETH2Chain33Ycc() {
     sleep ${maturityDegree}
 
     # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7 * le8
     is_equal "${result}" "700000000"
 
@@ -274,7 +274,7 @@ function TestETH2Chain33Ycc() {
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "200000000"
 
@@ -330,7 +330,7 @@ function InitAndOfflineDeploy() {
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
     cp BridgeRegistry.abi "${BridgeRegistryOnChain33}.abi"
-    chain33BridgeBank=$(${Chain33Cli} evm abi call -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
+    chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
     cp Chain33BridgeBank.abi "${chain33BridgeBank}.abi"
 
     # 在 Eth 上部署合约
@@ -385,16 +385,16 @@ function offline_deploy_erc20_eth_YCC() {
 function offline_create_bridge_token_chain33_YCC() {
     # 在chain33上创建bridgeToken YCC
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken YCC ======${NOC}"
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s YCC -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:YCC"
     chain33_offline_send "create_bridge_token.txt"
 
-    chain33YccTokenAddr=$(${Chain33Cli} evm abi call -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
+    chain33YccTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
     echo "YCC Token Addr = ${chain33YccTokenAddr}"
     cp BridgeToken.abi "${chain33YccTokenAddr}.abi"
 
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccTokenAddr}" -c "${chain33YccTokenAddr}" -b "symbol()")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33YccTokenAddr}" -b "symbol()")
     is_equal "${result}" "YCC"
 }
 
@@ -409,13 +409,13 @@ function offline_deploy_erc20_chain33_YCC() {
     cp ERC20.abi "${chain33YccErc20Addr}.abi"
 
     # echo 'YCC.1:增加allowance的设置,或者使用relayer工具进行'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33YccErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33YccErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${chain33BridgeBank}" -c "${chain33YccErc20Addr}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "approve_erc20.txt"
 
     # echo 'YCC.2:#执行add lock操作:addToken2LockList'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccErc20Addr}, YCC)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccErc20Addr}, YCC)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline create_add_lock_list -c "${chain33BridgeBank}" -s YCC -t "${chain33YccErc20Addr}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "create_add_lock_list.txt"
@@ -432,13 +432,13 @@ function offline_deploy_erc20_chain33_ZBC() {
     cp ERC20.abi "${chain33ZBCErc20Addr}.abi"
 
     # echo 'ZBC.1:增加allowance的设置,或者使用relayer工具进行'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33ZBCErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33ZBCErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${chain33BridgeBank}" -c "${chain33ZBCErc20Addr}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "approve_erc20.txt"
 
     # echo 'ZBC.2:#执行add lock操作:addToken2LockList'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZBCErc20Addr}, ZBC)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZBCErc20Addr}, ZBC)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline create_add_lock_list -c "${chain33BridgeBank}" -s ZBC -t "${chain33ZBCErc20Addr}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "create_add_lock_list.txt"
@@ -457,16 +457,16 @@ function offline_create_bridge_token_eth_BTY() {
 function offline_create_bridge_token_chain33_ETH() {
     # 在 chain33 上创建 bridgeToken ETH
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s ETH -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:ETH"
     chain33_offline_send "create_bridge_token.txt"
 
-    chain33EthTokenAddr=$(${Chain33Cli} evm abi call -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
+    chain33EthTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
     echo "ETH Token Addr= ${chain33EthTokenAddr}"
     cp BridgeToken.abi "${chain33EthTokenAddr}.abi"
 
-    result=$(${Chain33Cli} evm abi call -a "${chain33EthTokenAddr}" -c "${chain33EthTokenAddr}" -b "symbol()")
+    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33EthTokenAddr}" -b "symbol()")
     is_equal "${result}" "ETH"
 }
 
@@ -684,7 +684,7 @@ function offline_set_offline_token_Bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave BTY ======${NOC}"
 #    echo '2:#配置自动转离线钱包(bty, 1000, 50%)'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,100000000000,50)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,100000000000,50)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
     ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -s BTY -m 100000000000 -p 50 -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "chain33_set_offline_token.txt"
@@ -726,7 +726,7 @@ function offline_set_offline_token_Chain33Ycc() {
 
     echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave ERC20 YCC ======${NOC}"
 #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
-#    hash=$(${Chain33Cli} evm call -f 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
 #    check_tx "${Chain33Cli}" "${hash}"
 
     ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -t "${chain33YccErc20Addr}" -s YCC -m 10000000000 -p 60 -k "${chain33DeployKey}" --chainID "${chain33ID}"
@@ -745,9 +745,9 @@ function offline_transfer_multisign_Chain33Ycc_test() {
     ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" --chainID "${chain33ID}"
     chain33_offline_send "multisign_transfer.txt"
     sleep 10
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "6200000000"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
     is_equal "${result}" "30800000000"
 
 #    hash=$(${CLIA} chain33 multisign transfer -a 5 -r "${chain33MultisignA}" -t "${chain33YccErc20Addr}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
@@ -756,9 +756,9 @@ function offline_transfer_multisign_Chain33Ycc_test() {
     ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" --chainID "${chain33ID}"
     chain33_offline_send "multisign_transfer.txt"
     sleep 10
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${chain33MultisignA}" -b "balanceOf(${chain33MultisignA})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${chain33MultisignA}" -b "balanceOf(${chain33MultisignA})")
     is_equal "${result}" "500000000"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
     is_equal "${result}" "30300000000"
 
     # 判断 ETH 这端是否金额一致

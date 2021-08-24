@@ -170,7 +170,7 @@ function TestChain33ToEthAssets() {
 #    balance=$(cli_ret "${result}" "balance" ".balance")
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} evm call -f 1 -a 5 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
@@ -235,7 +235,7 @@ function TestETH2Chain33Assets() {
     sleep ${maturityDegree}
 
     # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm abi call -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
     is_equal "${result}" "1100000000"
 
@@ -249,7 +249,7 @@ function TestETH2Chain33Assets() {
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm abi call -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11-5 * le8
     is_equal "${result}" "600000000"
 
@@ -285,7 +285,7 @@ function TestETH2Chain33Ycc() {
     sleep ${maturityDegree}
 
     # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7 * le8
     is_equal "${result}" "700000000"
 
@@ -299,7 +299,7 @@ function TestETH2Chain33Ycc() {
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm abi call -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "200000000"
 
