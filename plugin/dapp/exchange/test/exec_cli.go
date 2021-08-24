@@ -61,7 +61,7 @@ func NewExecCli() *ExecCli {
 	cfg.SetTitleOnlyForTest("chain33")
 
 	executor.Init(et.ExchangeX, cfg, nil)
-	total := 100000000 * types.Coin
+	total := 100000000 * types.DefaultCoinPrecision
 	accountA := &types.Account{
 		Balance: total,
 		Frozen:  0,
