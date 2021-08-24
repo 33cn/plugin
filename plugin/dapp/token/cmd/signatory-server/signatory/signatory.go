@@ -26,6 +26,7 @@ type Signatory struct {
 }
 
 const coinExec = "coins"
+const coinPrecision = int64(1e8)
 
 // Echo echo
 func (*Signatory) Echo(in *string, out *interface{}) error {
@@ -88,7 +89,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 		return types.ErrInvalidParam
 	}
 
-	amount := 1 * types.Coin
+	amount := 1 * coinPrecision
 	v := &types.AssetsTransfer{
 		Amount: amount,
 		Note:   []byte("transfer 1 bty by signatory-server"),

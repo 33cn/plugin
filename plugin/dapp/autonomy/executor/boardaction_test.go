@@ -608,7 +608,7 @@ func TestGetStartHeightVoteAccount(t *testing.T) {
 	account, err := action.getStartHeightVoteAccount(addr, "", 0)
 	assert.NoError(t, err)
 	assert.NotNil(t, account)
-	assert.Equal(t, types.DefaultCoinsExec, account.Balance)
+	assert.Equal(t, types.DefaultCoinPrecision, account.Balance)
 }
 
 func TestGetReceiptLog(t *testing.T) {

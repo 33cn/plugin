@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.14
 
 require (
-	github.com/33cn/chain33 v1.65.3-0.20210823062002-c3d9f3806543
+	github.com/33cn/chain33 v1.65.3-0.20210824024448-c73616b9f5de
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -15,7 +15,6 @@ require (
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
-	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.10.0
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
@@ -25,7 +24,6 @@ require (
 	github.com/holiman/uint256 v1.1.1
 	github.com/huin/goupnp v1.0.1-0.20200620063722-49508fba0031
 	github.com/jackpal/go-nat-pmp v1.0.2
-	github.com/miguelmota/go-solidity-sha3 v0.1.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
@@ -39,10 +37,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmsm v1.3.2
 	github.com/valyala/fasthttp v1.5.0
-	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/net v0.0.0-20210423184538-5f58ad60dda6
-	golang.org/x/sys v0.0.0-20210426080607-c94f62235c83
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.33.2
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
