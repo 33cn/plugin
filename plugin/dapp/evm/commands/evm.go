@@ -41,14 +41,13 @@ func EvmCmd() *cobra.Command {
 		calcNewContractAddrCmd(),
 		createContractCmd(),
 		callContractCmd(),
-		abiCmd(),
+		queryCmd(),
 		estimateGasCmd(),
 		checkContractAddrCmd(),
 		evmDebugCmd(),
 		evmTransferCmd(),
 		getEvmBalanceCmd(),
 		evmToolsCmd(),
-		getNonceCmd(),
 		showTimeNowCmd(),
 	)
 	cmd.PersistentFlags().Int32("chainID", 0, "chain ID")
@@ -333,7 +332,7 @@ func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller,
 func callContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
-		Short: "Call the EVM contract",
+		Short: "create tx to Call the EVM contract",
 		Run:   callContract,
 	}
 	addCallContractFlags(cmd)
@@ -344,15 +343,11 @@ func callContract(cmd *cobra.Command, args []string) {
 	title, _ := cmd.Flags().GetString("title")
 	cfg := types.GetCliSysParam(title)
 
-	//code, _ := cmd.Flags().GetString("input")
-	caller, _ := cmd.Flags().GetString("caller")
-	expire, _ := cmd.Flags().GetString("expire")
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	contractAddr, _ := cmd.Flags().GetString("exec")
 	parameter, _ := cmd.Flags().GetString("parameter")
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	path, _ := cmd.Flags().GetString("path")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
@@ -377,62 +372,44 @@ func callContract(cmd *cobra.Command, args []string) {
 
 	exector := cfg.ExecName(paraName + "evm")
 	toAddr := address.ExecAddress(exector)
-	//name表示发给哪个执行器
-	data, err := createEvmTx(cfg, &action, exector, caller, toAddr, expire, rpcLaddr, feeInt64, chainID)
 
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, "call contract error", err)
-		return
+	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: toAddr, ChainID: chainID}
+
+	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
+	if tx.Fee < int64(feeInt64) {
+		tx.Fee += int64(feeInt64)
 	}
 
-	params := rpctypes.RawParm{
-		Data: data,
-	}
-
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tx.Nonce = random.Int63()
+	//tx.ChainID = cfg.GetChainID()
+	txHex := types.Encode(tx)
+	rawTx := hex.EncodeToString(txHex)
+	fmt.Println(rawTx)
 }
 
 func addCallContractFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("caller", "c", "", "the caller address")
-	cmd.MarkFlagRequired("caller")
-
-	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
-
 	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
 
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
-	cmd.MarkFlagRequired("fee")
 
 	cmd.Flags().StringP("exec", "e", "", "evm contract address")
-	cmd.MarkFlagRequired("exec")
+	_ = cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
 
 	cmd.Flags().Float64P("amount", "a", 0, "the amount transfer to the contract (optional)")
 
 	cmd.Flags().StringP("parameter", "p", "", "tx input parameter as:approve(13nBqpmC4VaJpEZ6J6G9NUM1Y55FQvw558, 100000000)")
+	_ = cmd.MarkFlagRequired("parameter")
 }
 
 // abi命令
-func abiCmd() *cobra.Command {
+func queryCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "abi",
-		Short: "EVM ABI commands",
-		Args:  cobra.MinimumNArgs(1),
-	}
-
-	cmd.AddCommand(
-		callAbiCmd(),
-	)
-	return cmd
-}
-
-func callAbiCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "call",
-		Short: "send query call by abi format",
-		Run:   callAbi,
+		Use:   "query",
+		Short: "evm query call",
+		Run:   evmQueryCall,
 	}
 
 	cmd.Flags().StringP("address", "a", "", "evm contract address")
@@ -448,7 +425,7 @@ func callAbiCmd() *cobra.Command {
 	return cmd
 }
 
-func callAbi(cmd *cobra.Command, args []string) {
+func evmQueryCall(cmd *cobra.Command, args []string) {
 	addr, _ := cmd.Flags().GetString("address")
 	input, _ := cmd.Flags().GetString("input")
 	caller, _ := cmd.Flags().GetString("caller")
@@ -736,44 +713,6 @@ func checksumAddr(address []byte) string {
 		}
 	}
 	return "0x" + string(result)
-}
-
-func getNonceCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "nonce",
-		Short: "Get user's nonce",
-		Run:   getNonce,
-	}
-	getNonceFlags(cmd)
-	return cmd
-}
-
-func getNonceFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("addr", "a", "", "account addr")
-	cmd.MarkFlagRequired("addr")
-}
-
-func getNonce(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	err := address.CheckAddress(addr)
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, types.ErrInvalidAddress)
-		return
-	}
-
-	params := evmtypes.EvmGetNonceReq{
-		Address: addr,
-	}
-
-	var resp evmtypes.EvmGetNonceRespose
-	query := sendQuery(rpcLaddr, "GetNonce", &params, &resp)
-
-	if query {
-		fmt.Println("Nonce=", resp.Nonce)
-	} else {
-		_, _ = fmt.Fprintln(os.Stderr, "Failed to get nonce!")
-	}
 }
 
 func showTimeNowCmd() *cobra.Command {
