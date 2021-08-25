@@ -365,6 +365,7 @@ func callContract(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
@@ -402,9 +403,9 @@ func callContract(cmd *cobra.Command, args []string) {
 
 	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: toAddr, ChainID: chainID}
 
-	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
-	if tx.Fee < int64(feeInt64) {
-		tx.Fee += int64(feeInt64)
+	tx.Fee, _ = tx.GetRealFee(cfg.MinTxFeeRate)
+	if tx.Fee < feeInt64 {
+		tx.Fee += feeInt64
 	}
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
