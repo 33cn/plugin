@@ -590,7 +590,6 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	// 获取当前生效提案规则,并且将不修改的规则补齐
 	rule := &auty.RuleConfig{}
 	value, err := a.db.Get(activeRuleID())
-	cfg := a.api.GetConfig()
 	if err == nil {
 		err = types.Decode(value, rule)
 		if err != nil {
