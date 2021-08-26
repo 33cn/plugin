@@ -215,7 +215,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			logged = true
 		}
 
-		log15.Info("operation.execute", "op=", op.String(), "contract addr=", contract.self.Address().String(),
+		log15.Debug("operation.execute", "op=", op.String(), "contract addr=", contract.self.Address().String(),
 			"CallerAddress=", contract.CallerAddress.String(),
 			"caller=", contract.caller.Address().String())
 
