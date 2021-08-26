@@ -3,6 +3,7 @@ syntax = "proto3";
 import "x2ethereum.proto";
 
 package types;
+option go_package = "../types";
 
 // EthBridgeClaim is a structure that contains all the data for a particular bridge claim
 message OracleClaim {

@@ -1,5 +1,6 @@
 syntax = "proto3";
 package types;
+option go_package = "../types";
 
 import "common.proto";
 import "qbft.proto";

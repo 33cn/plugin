@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package types;
+option go_package = "../types";
 
 // CandidatorInfo 候选节点信息
 message CandidatorInfo {
