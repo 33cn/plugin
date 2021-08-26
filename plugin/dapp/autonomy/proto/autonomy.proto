@@ -11,6 +11,7 @@ import "rule.proto";
 import "change.proto";
 
 package types;
+option go_package = "../types";
 
 // message for execs.Autonomy
 message AutonomyAction {
