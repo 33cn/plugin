@@ -215,10 +215,6 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			logged = true
 		}
 
-		log15.Debug("operation.execute", "op=", op.String(), "contract addr=", contract.self.Address().String(),
-			"CallerAddress=", contract.CallerAddress.String(),
-			"caller=", contract.caller.Address().String())
-
 		// 执行具体的指令操作逻辑（合约执行的核心）
 		res, err = operation.execute(&pc, in.evm, callContext)
 		// 如果本操作需要返回，则讲操作返回的结果最为合约执行的结果
