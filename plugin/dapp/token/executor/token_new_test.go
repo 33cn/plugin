@@ -56,11 +56,11 @@ var (
 	tokenSym    = "NEW"
 	tokenIntro  = "newtoken"
 	tokenPrice  int64
-	tokenAmount int64 = 1000 * 1e4 * 1e4
+	tokenAmount int64 = 1000 * types.DefaultCoinPrecision
 	execName          = "user.p.guodun.token"
 	feeForToken int64 = 1e6
 	transToAddr       = "1NYxhca2zVMzxFqMRJdMcZfrSFnqbqotKe"
-	transAmount int64 = 100 * 1e4 * 1e4
+	transAmount int64 = 100 * types.DefaultCoinPrecision
 	walletPass        = "fzm123"
 )
 

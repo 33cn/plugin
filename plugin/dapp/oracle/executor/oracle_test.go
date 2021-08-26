@@ -49,7 +49,7 @@ func init() {
 func TestOrace(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(oty.OracleX, cfg, nil)
-	total := 100 * types.Coin
+	total := 100 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,

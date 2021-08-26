@@ -24,9 +24,9 @@ func (n *normal) GetConfigReward(cfg *types.Chain33Config, height int64) (int64,
 	//decimalMode=false,意味着精简模式，需要乘1e8
 	decimalMode := cfg.MIsEnable("mver.consensus.paracross.decimalMode", height)
 	if !decimalMode {
-		coinReward *= types.Coin
-		fundReward *= types.Coin
-		coinBaseReward *= types.Coin
+		coinReward *= cfg.GetCoinPrecision()
+		fundReward *= cfg.GetCoinPrecision()
+		coinBaseReward *= cfg.GetCoinPrecision()
 	}
 	//防止coinBaseReward 设置出错场景， coinBaseReward 一定要比coinReward小
 	if coinBaseReward >= coinReward {

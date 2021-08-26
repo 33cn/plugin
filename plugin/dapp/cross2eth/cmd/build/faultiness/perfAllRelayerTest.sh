@@ -42,7 +42,7 @@ chain33ID=0
 function LockTestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # chain33 lock bty
-    hash=$(${Chain33Cli} evm call -f 1 -a 1 -c "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethSendAddress}, ${chain33BtyTokenAddr}, 100000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethSendAddress}, ${chain33BtyTokenAddr}, 100000000)" --khainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

@@ -408,8 +408,8 @@ func (client *commitMsgClient) isSync() bool {
 
 func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*types.Transaction, int64) {
 	count := endHeight - startHeight
-	if count > types.TxGroupMaxCount {
-		count = types.TxGroupMaxCount
+	if count > int64(types.MaxTxGroupSize) {
+		count = int64(types.MaxTxGroupSize)
 	}
 	status, err := client.getNodeStatus(startHeight+1, startHeight+count)
 	if err != nil {
@@ -706,7 +706,7 @@ func (client *commitMsgClient) getNodeStatus(start, end int64) ([]*pt.ParacrossN
 	//2,如果20个块都是 commit tx的空块，20个块打包一次发送，尽量减少commit tx造成的空块
 	//3,如果形如xxoxx的块排列，x代表commit空块，o代表实际的块，即只要不全部是commit块，也要全部打包一起发出去
 	//如果=0 意味着全部是paracross commit tx，延迟发送
-	if needSentTxs == 0 && len(ret) < types.TxGroupMaxCount {
+	if needSentTxs == 0 && len(ret) < int(types.MaxTxGroupSize) {
 		plog.Debug("para commitmsg all self-consensus commit tx,send delay", "start", start, "end", end)
 		return nil, nil
 	}

@@ -28,7 +28,7 @@ func sell() {
 		LeftAsset:  &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"},
 		Price:      1,
-		Amount:     types.Coin,
+		Amount:     types.DefaultCoinPrecision,
 		Op:         et.OpSell,
 	}
 	ety := types.LoadExecutorType(et.ExchangeX)
@@ -48,7 +48,7 @@ func buy() {
 		LeftAsset:  &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"},
 		Price:      1,
-		Amount:     types.Coin,
+		Amount:     types.DefaultCoinPrecision,
 		Op:         et.OpBuy,
 	}
 	ety := types.LoadExecutorType(et.ExchangeX)

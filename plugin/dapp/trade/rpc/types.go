@@ -43,7 +43,7 @@ func (jrpc *Jrpc) GetLastMemPool(in types.ReqNil, result *interface{}) error {
 		var txlist rpctypes.ReplyTxList
 		txs := reply.GetTxs()
 		for _, tx := range txs {
-			tran, err := rpctypes.DecodeTx(tx)
+			tran, err := rpctypes.DecodeTx(tx, jrpc.cli.GetConfig().GetCoinPrecision())
 			if err != nil {
 				continue
 			}

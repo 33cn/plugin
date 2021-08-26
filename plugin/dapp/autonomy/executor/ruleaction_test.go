@@ -22,8 +22,8 @@ import (
 const (
 	testBoardApproveRatio  int32 = 60
 	testPubOpposeRatio     int32 = 35
-	testProposalAmount           = minProposalAmount * 2
-	testLargeProjectAmount       = minLargeProjectAmount * 2
+	testProposalAmount           = minProposalAmount * types.DefaultCoinPrecision * 2
+	testLargeProjectAmount       = minLargeProjectAmount * 2 * types.DefaultCoinPrecision
 	testPublicPeriod             = minPublicPeriod
 )
 
@@ -39,8 +39,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  maxBoardApproveRatio,
 				PubOpposeRatio:     maxPubOpposeRatio,
-				ProposalAmount:     maxProposalAmount,
-				LargeProjectAmount: maxLargeProjectAmount,
+				ProposalAmount:     maxProposalAmount * types.DefaultCoinPrecision,
+				LargeProjectAmount: maxLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       maxPublicPeriod,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -50,8 +50,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  minBoardApproveRatio,
 				PubOpposeRatio:     minPubOpposeRatio,
-				ProposalAmount:     minProposalAmount,
-				LargeProjectAmount: minLargeProjectAmount,
+				ProposalAmount:     minProposalAmount * types.DefaultCoinPrecision,
+				LargeProjectAmount: minLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       minPublicPeriod,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -61,8 +61,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  minBoardApproveRatio - 1,
 				PubOpposeRatio:     minPubOpposeRatio - 1,
-				ProposalAmount:     minProposalAmount - 1,
-				LargeProjectAmount: minLargeProjectAmount - 1,
+				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision - 1,
+				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision - 1,
 				PublicPeriod:       minPublicPeriod - 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -72,8 +72,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  maxBoardApproveRatio + 1,
 				PubOpposeRatio:     maxPubOpposeRatio + 1,
-				ProposalAmount:     maxProposalAmount + 1,
-				LargeProjectAmount: maxLargeProjectAmount + 1,
+				ProposalAmount:     maxProposalAmount*types.DefaultCoinPrecision + 1,
+				LargeProjectAmount: maxLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       maxPublicPeriod + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -83,8 +83,8 @@ func TestPropRule(t *testing.T) {
 			RuleCfg: &auty.RuleConfig{
 				BoardApproveRatio:  1,
 				PubOpposeRatio:     minPubOpposeRatio + 1,
-				ProposalAmount:     minProposalAmount + 1,
-				LargeProjectAmount: minLargeProjectAmount + 1,
+				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision + 1,
+				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       minPublicPeriod + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
@@ -186,7 +186,7 @@ func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.K
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
 }
 
 func propRuleTx(parm *auty.ProposalRule) (*types.Transaction, error) {
@@ -246,8 +246,8 @@ func revokeProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	assert.NoError(t, err)
 	assert.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
 	assert.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
-	assert.Equal(t, rule.ProposalAmount, proposalAmount)
-	assert.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
+	assert.Equal(t, rule.ProposalAmount, proposalAmount*types.DefaultCoinPrecision)
+	assert.Equal(t, rule.LargeProjectAmount, largeProjectAmount*types.DefaultCoinPrecision)
 	assert.Equal(t, rule.PublicPeriod, publicPeriod)
 }
 
@@ -357,7 +357,7 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 	// status
 	value, err := stateDB.Get(propRuleID(proposalID))
 	assert.NoError(t, err)
@@ -447,7 +447,7 @@ func terminateProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 
 	// check rule
 	au := newTestAutonomy()
@@ -458,8 +458,8 @@ func terminateProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	assert.NoError(t, err)
 	assert.Equal(t, rule.BoardApproveRatio, boardApproveRatio)
 	assert.Equal(t, rule.PubOpposeRatio, pubOpposeRatio)
-	assert.Equal(t, rule.ProposalAmount, proposalAmount)
-	assert.Equal(t, rule.LargeProjectAmount, largeProjectAmount)
+	assert.Equal(t, rule.ProposalAmount, proposalAmount*types.DefaultCoinPrecision)
+	assert.Equal(t, rule.LargeProjectAmount, largeProjectAmount*types.DefaultCoinPrecision)
 	assert.Equal(t, rule.PublicPeriod, publicPeriod)
 }
 
@@ -568,7 +568,7 @@ func TestTransfer(t *testing.T) {
 	env, exec, stateDB, _ := InitEnv()
 
 	opt1 := &auty.TransferFund{
-		Amount: types.Coin * 190,
+		Amount: types.DefaultCoinPrecision * 190,
 	}
 	pbtx, err := transferFundTx(opt1)
 	assert.NoError(t, err)
@@ -587,9 +587,9 @@ func TestTransfer(t *testing.T) {
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, total-types.Coin*190, account.Balance)
+	assert.Equal(t, total-types.DefaultCoinPrecision*190, account.Balance)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, types.Coin*190, account.Balance)
+	assert.Equal(t, types.DefaultCoinPrecision*190, account.Balance)
 }
 
 func transferFundTx(parm *auty.TransferFund) (*types.Transaction, error) {

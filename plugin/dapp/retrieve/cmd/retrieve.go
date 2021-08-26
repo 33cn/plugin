@@ -6,6 +6,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -64,25 +68,31 @@ func addBakupCmdFlags(cmd *cobra.Command) {
 }
 
 func backupCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 	delay, _ := cmd.Flags().GetInt64("delay")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
 	}
 
 	if delay < 60 {
 		fmt.Println("delay period changed to 60")
 		delay = 60
 	}
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := rpc.RetrieveBackupTx{
 		BackupAddr:  backup,
 		DefaultAddr: defaultAddr,
@@ -126,20 +136,26 @@ func addPerformCmdFlags(cmd *cobra.Command) {
 }
 
 func prepareCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
 	}
 
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
+	}
+
 	params := rpc.RetrievePrepareTx{
 		BackupAddr:  backup,
 		DefaultAddr: defaultAddr,
@@ -161,23 +177,29 @@ func PerformCmd() *cobra.Command {
 }
 
 func performCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
 	}
 
 	execs, _ := cmd.Flags().GetStringArray("exec")
 	symbols, _ := cmd.Flags().GetStringArray("symbol")
 
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
 	params := rpc.RetrievePerformTx{
 		BackupAddr:  backup,
 		DefaultAddr: defaultAddr,
@@ -208,20 +230,26 @@ func CancelCmd() *cobra.Command {
 }
 
 func cancelCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	backup, _ := cmd.Flags().GetString("backup")
 	defaultAddr, _ := cmd.Flags().GetString("default")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
 	}
 
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
+	}
+
 	params := rpc.RetrieveCancelTx{
 		BackupAddr:  backup,
 		DefaultAddr: defaultAddr,

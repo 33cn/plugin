@@ -4,8 +4,6 @@
 
 package types
 
-import "github.com/33cn/chain33/types"
-
 //game action ty
 const (
 	PBGameActionStart = iota + 1
@@ -75,19 +73,17 @@ const (
 	// MinPlayerNum 最小玩家数
 	MinPlayerNum = 2
 	// MinPlayValue 最小赌注
-	MinPlayValue = 10 * types.Coin
+	MinPlayValue = 10
 	// DefaultStyle 默认游戏类型
 	DefaultStyle = PlayStyleDefault
 	// PlatformAddress 平台地址
 	PlatformAddress = "1PHtChNt3UcfssR7v7trKSk3WJtAWjKjjX"
 	// PlatformFee 平台佣金
-	PlatformFee = int64(0.005 * float64(types.Coin))
+	PlatformFee = 0.005
 	// DeveloperAddress 开发着地址
 	DeveloperAddress = "1D6RFZNp2rh6QdbcZ1d7RWuBUz61We6SD7"
 	// DeveloperFee 开发者佣金
-	DeveloperFee = int64(0.005 * float64(types.Coin))
-	// WinnerReturn 赢家回报率
-	WinnerReturn = types.Coin - DeveloperFee - PlatformFee
+	DeveloperFee = 0.005
 	// PlatformSignAddress 平台签名地址
 	PlatformSignAddress = "1Geb4ppNiAwMKKyrJgcis3JA57FkqsXvdR"
 )

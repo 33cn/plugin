@@ -7,6 +7,10 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -59,9 +63,6 @@ func addHashlockLockCmdFlags(cmd *cobra.Command) {
 }
 
 func hashlockLockCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 	toAddr, _ := cmd.Flags().GetString("to")
@@ -69,18 +70,31 @@ func hashlockLockCmd(cmd *cobra.Command, args []string) {
 	delay, _ := cmd.Flags().GetInt64("delay")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
 	}
+
+	fee, _ := cmd.Flags().GetFloat64("fee")
 
 	if delay < 60 {
 		fmt.Println("delay period changed to 60")
 		delay = 60
 	}
-	amountInt64 := int64(amount*types.InputPrecision) * types.Multiple1E4
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
+	}
 	params := pty.HashlockLockTx{
 		Secret:     secret,
 		Amount:     amountInt64,
@@ -123,19 +137,25 @@ func addHashlockCmdFlags(cmd *cobra.Command) {
 }
 
 func hashlockUnlockCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
 	}
 
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
+	}
+
 	params := pty.HashlockUnlockTx{
 		Secret: secret,
 		Fee:    feeInt64,
@@ -166,19 +186,24 @@ func HashlockSendCmd() *cobra.Command {
 }
 
 func hashlockSendCmd(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 
-	defaultFee := float64(cfg.GetMinTxFeeRate()) / float64(types.Coin)
-	fee, _ := cmd.Flags().GetFloat64("fee")
-	if fee < defaultFee {
-		fee = defaultFee
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
 	}
 
-	feeInt64 := int64(fee*types.InputPrecision) * types.Multiple1E4
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
+	if feeInt64 < cfg.MinTxFeeRate {
+		feeInt64 = cfg.MinTxFeeRate
+	}
 	params := pty.HashlockSendTx{
 		Secret: secret,
 		Fee:    feeInt64,

@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -219,19 +221,18 @@ func addNodeFlags(cmd *cobra.Command) {
 }
 
 func addNode(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	power, _ := cmd.Flags().GetInt64("power")
 
 	value := &vt.QbftNodeAction_Node{Node: &vt.QbftNode{PubKey: pubkey, Power: power}}
 	action := &vt.QbftNodeAction{Value: value, Ty: vt.QbftNodeActionUpdate}
-	tx := &types.Transaction{Payload: types.Encode(action)}
-	tx, err := types.FormatTx(cfg, vt.QbftNodeX, tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+		Nonce:   rand.Int63(),
+		Execer:  []byte(vt.QbftNodeX),
 	}
+	tx.To = address.ExecAddress(string(tx.Execer))
+
 	txHex := types.Encode(tx)
 	fmt.Println(hex.EncodeToString(txHex))
 }

@@ -27,7 +27,7 @@ import (
 // para-exec addr on para 16zsMh7mvNDKPG6E9NVrPhw6zL93gWsTpR
 
 var (
-	Amount = types.Coin
+	Amount = types.DefaultCoinPrecision
 )
 
 //func para_init(title string) {
@@ -129,7 +129,7 @@ func (suite *AssetTransferTestSuite) TestExecTransfer() {
 
 	toB := Nodes[1]
 
-	total := 1000 * types.Coin
+	total := 1000 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -239,7 +239,7 @@ func (suite *AssetTransferTestSuite) TestExecTransferToken() {
 
 	toB := Nodes[1]
 
-	total := 1000 * types.Coin
+	total := 1000 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,

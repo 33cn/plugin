@@ -27,7 +27,7 @@ func createStore(t *testing.T) *privacyStore {
 	util.ResetDatadir(mcfg, "$TEMP/")
 	cfgWallet := mcfg.Wallet
 	walletStoreDB := dbm.NewDB("wallet", cfgWallet.Driver, cfgWallet.DbPath, cfgWallet.DbCache)
-	store := newStore(walletStoreDB, "coins")
+	store := newStore(walletStoreDB, cfg)
 	assert.NotNil(t, store)
 	return store
 }
