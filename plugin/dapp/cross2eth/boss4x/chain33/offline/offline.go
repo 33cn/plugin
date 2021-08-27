@@ -3,12 +3,13 @@ package offline
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/33cn/plugin/plugin/dapp/dex/utils"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"os"
 )
 
 var crossXfileName = "deployCrossX2Chain33.txt"

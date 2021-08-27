@@ -51,7 +51,7 @@ function LockTestChain33ToEthAssets() {
 function BurnTestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # eth burn
-    result=$(${CLIA} ethereum burn -m 1 -k "${ethSendPrivateKeys}" -r "${chain33DeployAddr}" -t "${ethereumBtyTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 1 -k "${ethSendPrivateKeys}" -r "${chain33DeployAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -96,14 +96,14 @@ function mainTest() {
 
     ${CLIA} ethereum token token_transfer -k "${ethDeployKey}" -m 10000 -r "${ethSendAddress}" -t "${ethereumYccTokenAddr}"
 
-    for (( i = 0; i < 10; i++ )); do
+    for ((i = 0; i < 10; i++)); do
         LockTestChain33ToEthAssets
         LockTestETH2Chain33Assets
         LockTestETH2Chain33Ycc
         sleep 1
     done
 
-    while true ; do
+    while true; do
         LockTestChain33ToEthAssets
         LockTestETH2Chain33Assets
         LockTestETH2Chain33Ycc
@@ -119,4 +119,3 @@ function mainTest() {
 }
 
 mainTest
-

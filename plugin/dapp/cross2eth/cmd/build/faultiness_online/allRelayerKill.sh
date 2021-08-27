@@ -66,7 +66,7 @@ function TestChain33ToEthAssetsKill() {
     kill_ebrelayerC
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     eth_block_wait 2
@@ -81,7 +81,7 @@ function TestChain33ToEthAssetsKill() {
     start_ebrelayerC
     start_ebrelayerD
 
-     # 接收的地址金额 变成了 3
+    # 接收的地址金额 变成了 3
     result=$(${Chain33Cli} account balance -a "${chain33ReceiverAddr}" -e evm)
     balance_ret "${result}" "3.0000"
 
@@ -129,7 +129,7 @@ function TestChain33ToEthZBCAssetsKill() {
     kill_ebrelayerC
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 8 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethBridgeToeknZBCAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 8 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethBridgeToeknZBCAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     eth_block_wait 2
@@ -161,7 +161,7 @@ function TestChain33ToEthZBCAssetsKill() {
 function TestETH2Chain33AssetsKill() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     kill_ebrelayerC
@@ -171,11 +171,11 @@ function TestETH2Chain33AssetsKill() {
     result=$(${CLIA} ethereum lock -m 11 -k "${ethValidatorAddrKeyA}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-     # eth 等待 10 个区块
+    # eth 等待 10 个区块
     eth_block_wait 2
 
     # 查询 ETH 这端 bridgeBank 地址 11
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "11"
 
     sleep ${maturityDegree}
@@ -220,7 +220,7 @@ function TestETH2Chain33AssetsKill() {
     is_equal "${result}" "600000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "6"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -239,7 +239,7 @@ function TestETH2Chain33YccKill() {
     result=$(${CLIA} ethereum lock -m 7 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
     cli_ret "${result}" "lock"
 
-     # eth 等待 10 个区块
+    # eth 等待 10 个区块
     eth_block_wait 2
     sleep ${maturityDegree}
 
@@ -295,7 +295,7 @@ function TestETH2Chain33YccKill() {
 
 # shellcheck disable=SC2120
 function mainTest() {
-    if [[ $# -ge 1 && "${1}" != "" ]]; then
+    if [[ $# -ge 1 && ${1} != "" ]]; then
         chain33ID="${1}"
     fi
     StartChain33

@@ -2,10 +2,11 @@ package qbft
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"

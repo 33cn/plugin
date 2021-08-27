@@ -2,6 +2,7 @@ package offline
 
 import (
 	"fmt"
+
 	eoff "github.com/33cn/plugin/plugin/dapp/dex/boss/deploy/ethereum/offline"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

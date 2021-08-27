@@ -28,4 +28,3 @@ function mainTest() {
 }
 
 mainTest "${1}"
-
