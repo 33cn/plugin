@@ -354,8 +354,10 @@ func (s *suiteRelay) TestExec_9_QryStatus5() {
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Twice()
 	msg, err := s.relay.Query_GetBTCHeaderCurHeight(addrCoins)
 	s.Nil(err)
-	//s.T().Log(msg)
-	s.Contains(msg.String(), "curHeight:10 baseHeight:10")
+	height, ok := msg.(*ty.ReplayRelayQryBTCHeadHeight)
+	s.True(ok)
+	s.Equal(int64(10), height.CurHeight)
+	s.Equal(int64(10), height.BaseHeight)
 }
 
 func TestRunSuiteRelay(t *testing.T) {
