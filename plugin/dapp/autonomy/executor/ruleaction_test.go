@@ -157,23 +157,23 @@ func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.K
 	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(pbtx, int(1))
+	receipt, err := exec.Exec(pbtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
+	set, err := exec.ExecLocal(pbtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 
@@ -185,8 +185,8 @@ func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.K
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Frozen)
 }
 
 func propRuleTx(parm *auty.ProposalRule) (*types.Transaction, error) {
@@ -210,33 +210,33 @@ func revokeProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	rtx, err = signTx(rtx, PrivKeyA)
 	assert.NoError(t, err)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(rtx, int(1))
+	receipt, err := exec.Exec(rtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(rtx, receiptData, int(1))
+	set, err := exec.ExecLocal(rtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 	// del
-	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
+	set, err = exec.ExecDelLocal(rtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
 	// check rule
 	au := newTestAutonomy()
 	au.SetStateDB(stateDB)
@@ -304,8 +304,13 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	for i, record := range records {
 		opt := &auty.VoteProposalRule{
 			ProposalID: proposalID,
-			Approve:    record.appr,
+			//Approve:    record.appr,
 			OriginAddr: record.origin,
+		}
+		if record.appr {
+			opt.Vote = auty.AutonomyVoteOption_APPROVE
+		} else {
+			opt.Vote = auty.AutonomyVoteOption_OPPOSE
 		}
 		tx, err := voteProposalRuleTx(opt)
 		assert.NoError(t, err)
@@ -314,25 +319,25 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
-		receipt, err := exec.Exec(tx, int(1))
+		receipt, err := exec.Exec(tx, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
-				stateDB.Set(kv.Key, kv.Value)
+				_ = stateDB.Set(kv.Key, kv.Value)
 			}
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-		set, err := exec.ExecLocal(tx, receiptData, int(1))
+		set, err := exec.ExecLocal(tx, receiptData, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
-				kvdb.Set(kv.Key, kv.Value)
+				_ = kvdb.Set(kv.Key, kv.Value)
 			}
 		}
 		// del
-		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+		set, err = exec.ExecDelLocal(tx, receiptData, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 
@@ -354,10 +359,10 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	// balance
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 	// status
 	value, err := stateDB.Get(propRuleID(proposalID))
 	assert.NoError(t, err)
@@ -419,35 +424,35 @@ func terminateProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stat
 	tx, err = signTx(tx, PrivKeyA)
 	assert.NoError(t, err)
 	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(tx, int(1))
+	receipt, err := exec.Exec(tx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(tx, receiptData, int(1))
+	set, err := exec.ExecLocal(tx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 	// del
-	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+	set, err = exec.ExecDelLocal(tx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 
 	// check rule
 	au := newTestAutonomy()
@@ -524,8 +529,8 @@ func TestCopyAutonomyProposalRule(t *testing.T) {
 }
 
 func TestUpgradeRule(t *testing.T) {
-	new := upgradeRule(nil, &auty.RuleConfig{})
-	assert.Nil(t, new)
+	newRule := upgradeRule(nil, &auty.RuleConfig{})
+	assert.Nil(t, newRule)
 	cur := &auty.RuleConfig{
 		BoardApproveRatio:  2,
 		PubOpposeRatio:     3,
@@ -540,13 +545,13 @@ func TestUpgradeRule(t *testing.T) {
 		LargeProjectAmount: 0,
 		PublicPeriod:       0,
 	}
-	new = upgradeRule(cur, modify)
-	assert.NotNil(t, new)
-	assert.Equal(t, new.BoardApproveRatio, cur.BoardApproveRatio)
-	assert.Equal(t, new.PubOpposeRatio, cur.PubOpposeRatio)
-	assert.Equal(t, new.ProposalAmount, cur.ProposalAmount)
-	assert.Equal(t, new.LargeProjectAmount, cur.LargeProjectAmount)
-	assert.Equal(t, new.PublicPeriod, cur.PublicPeriod)
+	newRule = upgradeRule(cur, modify)
+	assert.NotNil(t, newRule)
+	assert.Equal(t, newRule.BoardApproveRatio, cur.BoardApproveRatio)
+	assert.Equal(t, newRule.PubOpposeRatio, cur.PubOpposeRatio)
+	assert.Equal(t, newRule.ProposalAmount, cur.ProposalAmount)
+	assert.Equal(t, newRule.LargeProjectAmount, cur.LargeProjectAmount)
+	assert.Equal(t, newRule.PublicPeriod, cur.PublicPeriod)
 
 	modify = &auty.RuleConfig{
 		BoardApproveRatio:  20,
@@ -555,13 +560,13 @@ func TestUpgradeRule(t *testing.T) {
 		LargeProjectAmount: 50,
 		PublicPeriod:       60,
 	}
-	new = upgradeRule(cur, modify)
-	assert.NotNil(t, new)
-	assert.Equal(t, new.BoardApproveRatio, modify.BoardApproveRatio)
-	assert.Equal(t, new.PubOpposeRatio, modify.PubOpposeRatio)
-	assert.Equal(t, new.ProposalAmount, modify.ProposalAmount)
-	assert.Equal(t, new.LargeProjectAmount, modify.LargeProjectAmount)
-	assert.Equal(t, new.PublicPeriod, modify.PublicPeriod)
+	newRule = upgradeRule(cur, modify)
+	assert.NotNil(t, newRule)
+	assert.Equal(t, newRule.BoardApproveRatio, modify.BoardApproveRatio)
+	assert.Equal(t, newRule.PubOpposeRatio, modify.PubOpposeRatio)
+	assert.Equal(t, newRule.ProposalAmount, modify.ProposalAmount)
+	assert.Equal(t, newRule.LargeProjectAmount, modify.LargeProjectAmount)
+	assert.Equal(t, newRule.PublicPeriod, modify.PublicPeriod)
 }
 
 func TestTransfer(t *testing.T) {
@@ -576,20 +581,20 @@ func TestTransfer(t *testing.T) {
 	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(pbtx, int(1))
+	receipt, err := exec.Exec(pbtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 
 	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
+		_ = stateDB.Set(kv.Key, kv.Value)
 	}
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, total-types.DefaultCoinPrecision*190, account.Balance)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, types.DefaultCoinPrecision*190, account.Balance)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, total-types.DefaultCoinPrecision*190, accountAddr.Balance)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, types.DefaultCoinPrecision*190, accountAddr.Balance)
 }
 
 func transferFundTx(parm *auty.TransferFund) (*types.Transaction, error) {
@@ -620,20 +625,20 @@ func TestComment(t *testing.T) {
 	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(pbtx, int(1))
+	receipt, err := exec.Exec(pbtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 
 	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
+		_ = stateDB.Set(kv.Key, kv.Value)
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
+	set, err := exec.ExecLocal(pbtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
+		_ = kvdb.Set(kv.Key, kv.Value)
 	}
 
 	// check

@@ -86,24 +86,24 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	assert.NoError(t, err)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(pbtx, int(1))
+	receipt, err := exec.Exec(pbtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	// local
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(pbtx, receiptData, int(1))
+	set, err := exec.ExecLocal(pbtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 
@@ -115,8 +115,8 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Frozen)
 }
 
 func propChangeTx(parm *auty.ProposalChange) (*types.Transaction, error) {
@@ -140,33 +140,33 @@ func revokeProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, state
 	rtx, err = signTx(rtx, PrivKeyA)
 	assert.NoError(t, err)
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(rtx, int(1))
+	receipt, err := exec.Exec(rtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(rtx, receiptData, int(1))
+	set, err := exec.ExecLocal(rtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 	// del
-	set, err = exec.ExecDelLocal(rtx, receiptData, int(1))
+	set, err = exec.ExecDelLocal(rtx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
 }
 
 func revokeProposalChangeTx(parm *auty.RevokeProposalChange) (*types.Transaction, error) {
@@ -182,6 +182,11 @@ func revokeProposalChangeTx(parm *auty.RevokeProposalChange) (*types.Transaction
 
 func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
+	//chainCfg := types.NewChain33Config(cfgstring)
+	//chainCfg.SetDappFork("autonomy","Enable",1)
+	//chainCfg.SetDappFork("autonomy","ForkAutonomyDelRule",100)
+	//api.On("GetConfig", mock.Anything).Return(chainCfg, nil)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
@@ -233,7 +238,12 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	for _, record := range records {
 		opt := &auty.VoteProposalChange{
 			ProposalID: proposalID,
-			Approve:    record.appr,
+			//Approve:    record.appr,
+		}
+		if record.appr {
+			opt.Vote = auty.AutonomyVoteOption_APPROVE
+		} else {
+			opt.Vote = auty.AutonomyVoteOption_OPPOSE
 		}
 		tx, err := voteProposalChangeTx(opt)
 		assert.NoError(t, err)
@@ -242,25 +252,25 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
-		receipt, err := exec.Exec(tx, int(1))
+		receipt, err := exec.Exec(tx, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, receipt)
 		if save {
 			for _, kv := range receipt.KV {
-				stateDB.Set(kv.Key, kv.Value)
+				_ = stateDB.Set(kv.Key, kv.Value)
 			}
 		}
 		receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-		set, err := exec.ExecLocal(tx, receiptData, int(1))
+		set, err := exec.ExecLocal(tx, receiptData, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 		if save {
 			for _, kv := range set.KV {
-				kvdb.Set(kv.Key, kv.Value)
+				_ = kvdb.Set(kv.Key, kv.Value)
 			}
 		}
 		// del
-		set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+		set, err = exec.ExecDelLocal(tx, receiptData, 1)
 		assert.NoError(t, err)
 		assert.NotNil(t, set)
 
@@ -278,10 +288,10 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	// balance
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
 	assert.NoError(t, err)
@@ -297,12 +307,13 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	act := &auty.ActiveBoard{}
 	err = types.Decode(value, act)
 	assert.NoError(t, err)
-	assert.Equal(t, act.Revboards[0], AddrA)
+	assert.Equal(t, act.Revboards[0], Addr18)
 	assert.Equal(t, len(act.Boards), len(boards))
 }
 
 func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
+	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
 	hear := &types.Header{StateHash: []byte("")}
@@ -356,7 +367,12 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	for i, record := range records {
 		opt := &auty.VoteProposalChange{
 			ProposalID: proposalID,
-			Approve:    record.appr,
+			//Approve:    record.appr,
+		}
+		if record.appr {
+			opt.Vote = auty.AutonomyVoteOption_APPROVE
+		} else {
+			opt.Vote = auty.AutonomyVoteOption_OPPOSE
 		}
 		tx, err := voteProposalChangeTx(opt)
 		assert.NoError(t, err)
@@ -365,7 +381,7 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 		// 设定当前高度为投票高度
 		exec.SetEnv(env.startHeight, env.blockTime, env.difficulty)
 
-		receipt, err := exec.Exec(tx, int(1))
+		receipt, err := exec.Exec(tx, 1)
 		if i < 2 {
 			assert.Equal(t, err, auty.ErrNoActiveBoard)
 		} else {
@@ -373,20 +389,20 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 			assert.NotNil(t, receipt)
 			if save {
 				for _, kv := range receipt.KV {
-					stateDB.Set(kv.Key, kv.Value)
+					_ = stateDB.Set(kv.Key, kv.Value)
 				}
 			}
 			receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-			set, err := exec.ExecLocal(tx, receiptData, int(1))
+			set, err := exec.ExecLocal(tx, receiptData, 1)
 			assert.NoError(t, err)
 			assert.NotNil(t, set)
 			if save {
 				for _, kv := range set.KV {
-					kvdb.Set(kv.Key, kv.Value)
+					_ = kvdb.Set(kv.Key, kv.Value)
 				}
 			}
 			// del
-			set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+			set, err = exec.ExecDelLocal(tx, receiptData, 1)
 			assert.NoError(t, err)
 			assert.NotNil(t, set)
 
@@ -405,10 +421,10 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	// balance
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
 	assert.NoError(t, err)
@@ -424,7 +440,7 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	act := &auty.ActiveBoard{}
 	err = types.Decode(value, act)
 	assert.NoError(t, err)
-	assert.Equal(t, act.Revboards[0], AddrA)
+	assert.Equal(t, act.Revboards[0], Addr18)
 	assert.Equal(t, len(act.Boards), len(boards))
 }
 
@@ -465,35 +481,35 @@ func terminateProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	tx, err = signTx(tx, PrivKeyA)
 	assert.NoError(t, err)
 	exec.SetEnv(env.endHeight+1, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(tx, int(1))
+	receipt, err := exec.Exec(tx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	if save {
 		for _, kv := range receipt.KV {
-			stateDB.Set(kv.Key, kv.Value)
+			_ = stateDB.Set(kv.Key, kv.Value)
 		}
 	}
 
 	receiptData := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(tx, receiptData, int(1))
+	set, err := exec.ExecLocal(tx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	if save {
 		for _, kv := range set.KV {
-			kvdb.Set(kv.Key, kv.Value)
+			_ = kvdb.Set(kv.Key, kv.Value)
 		}
 	}
 	// del
-	set, err = exec.ExecDelLocal(tx, receiptData, int(1))
+	set, err = exec.ExecDelLocal(tx, receiptData, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, set)
 	// check
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
-	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
-	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, int64(0), account.Frozen)
+	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
+	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
+	assert.Equal(t, int64(0), accountAddr.Frozen)
 }
 
 func terminateProposalChangeTx(parm *auty.TerminateProposalChange) (*types.Transaction, error) {
