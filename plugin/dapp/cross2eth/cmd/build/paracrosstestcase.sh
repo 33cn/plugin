@@ -289,29 +289,28 @@ function query_tx() {
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
         exit 1
-#        exit_cp_file
+        #        exit_cp_file
     fi
 
-#    block_wait "${1}" 1
-#
-#    local times=200
-#    while true; do
-#        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
-#        echo "query hash is ${2}, return ${ret} "
-#        if [ "${ret}" != "${2}" ]; then
-#            block_wait "${1}" 1
-#            times=$((times - 1))
-#            if [ $times -le 0 ]; then
-#                echo "query tx=$2 failed"
-#                exit 1
-#            fi
-#        else
-#            echo "query tx=$2  success"
-#            break
-#        fi
-#    done
+    #    block_wait "${1}" 1
+    #
+    #    local times=200
+    #    while true; do
+    #        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
+    #        echo "query hash is ${2}, return ${ret} "
+    #        if [ "${ret}" != "${2}" ]; then
+    #            block_wait "${1}" 1
+    #            times=$((times - 1))
+    #            if [ $times -le 0 ]; then
+    #                echo "query tx=$2 failed"
+    #                exit 1
+    #            fi
+    #        else
+    #            echo "query tx=$2  success"
+    #            break
+    #        fi
+    #    done
 }
-
 
 function para_cross_transfer_from_parachain() {
     echo "=========== # para cross transfer from parachain test ============="
@@ -414,16 +413,16 @@ function check_cross_transfer_game_balance() {
 function para_create_nodegroup() {
     echo "=========== # para chain create node group again ============="
     ##apply
-    txhash=$(${PARA_CLI} send para nodegroup apply -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"  -c 6 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
+    txhash=$(${PARA_CLI} send para nodegroup apply -a "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4,1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR,1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k,1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -c 6 -k 0xd165c84ed37c2a427fea487470ee671b7a0495d68d82607cafbc6348bf23bec5)
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     id=$txhash
 
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
-#    if [ "$balance" != "30.0000" ]; then
-#        echo "apply coinfrozen error balance=$balance"
-##        exit 1
-#    fi
+    #    if [ "$balance" != "30.0000" ]; then
+    #        echo "apply coinfrozen error balance=$balance"
+    ##        exit 1
+    #    fi
 
     echo "=========== # para chain approve node group ============="
     ##approve
