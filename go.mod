@@ -2,8 +2,10 @@ module github.com/33cn/plugin
 
 go 1.14
 
+replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20210827090037-1f2096d05f59
+
 require (
-	github.com/33cn/chain33 v1.65.3-0.20210824024448-c73616b9f5de
+	github.com/33cn/chain33 v1.65.3-0.20210826085651-6e4ee1a6f30f
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -42,6 +44,7 @@ require (
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0 // indirect
 	google.golang.org/grpc v1.33.2
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
