@@ -2,6 +2,7 @@ package qbft
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 	"time"
@@ -42,7 +43,8 @@ func TestQbft(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	configTx := configManagerTx()
-	mock33.GetAPI().SendTx(configTx)
+	_, err := mock33.GetAPI().SendTx(configTx)
+	require.Nil(t, err)
 	mock33.WaitTx(configTx.Hash())
 
 	addTx := addNodeTx()
