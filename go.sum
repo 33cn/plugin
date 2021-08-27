@@ -26,8 +26,6 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
-github.com/33cn/chain33 v1.65.3-0.20210824024448-c73616b9f5de h1:woC60/W9oVPPzWO+yRp8C6fkpNEym/M2cojEAnWAsa0=
-github.com/33cn/chain33 v1.65.3-0.20210824024448-c73616b9f5de/go.mod h1:82/Y5u+8arrXk+o83R9PusqGPNc33PDMwfB/zk77+6E=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 h1:cTp8I5+VIoKjsnZuH8vjyaysT/ses3EvZeaV/1UkF2M=
@@ -124,6 +122,10 @@ github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792 h1:R8vQdOQdZ9Y3
 github.com/btcsuite/websocket v0.0.0-20150119174127-31079b680792/go.mod h1:ghJtEyQwv5/p4Mg4C0fgbePVuGr935/5ddU9Z3TmDRY=
 github.com/btcsuite/winsvc v1.0.0/go.mod h1:jsenWakMcC0zFBFurPLEAyrnc/teJEM1O46fmI40EZs=
 github.com/buger/jsonparser v0.0.0-20181115193947-bf1c66bbce23/go.mod h1:bbYlZJ7hK1yFx9hf58LP0zeX7UjIGs20ufpu3evjr+s=
+github.com/bysomeone/chain33 v0.0.0-20210827030112-50486969a08b h1:Pa00VShNSAoy6cy7sj9/BNa66y7LWQwwjTJZvefYlgE=
+github.com/bysomeone/chain33 v0.0.0-20210827030112-50486969a08b/go.mod h1:Dpr4UhVgIzqB/5RBUa7Qoq39JQ5kKRN+PjTEWfucN3o=
+github.com/bysomeone/chain33 v0.0.0-20210827090037-1f2096d05f59 h1:G+26z2KtqkQZ+8zecqykuQ4YGXesDoHPSAzBXRo0TAs=
+github.com/bysomeone/chain33 v0.0.0-20210827090037-1f2096d05f59/go.mod h1:Dpr4UhVgIzqB/5RBUa7Qoq39JQ5kKRN+PjTEWfucN3o=
 github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
 github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX3MzVl8=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
