@@ -31,7 +31,7 @@ source "./multisignPublicTest.sh"
 chain33ID=0
 
 function mainTest() {
-    if [[ $# -ge 1 && "${1}" != "" ]]; then
+    if [[ $# -ge 1 && ${1} != "" ]]; then
         # shellcheck disable=SC2034
         chain33ID="${1}"
     fi

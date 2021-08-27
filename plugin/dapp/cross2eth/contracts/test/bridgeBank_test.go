@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
 	"github.com/stretchr/testify/assert"
 
