@@ -123,6 +123,9 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 	} else {
 		act, err = a.getOldPropBoard(prob)
 	}
+	if err != nil {
+		return nil, errors.Wrap(err, "getPropBoard")
+	}
 
 	if len(act.Boards) > maxBoards || len(act.Boards) < minBoards {
 		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))

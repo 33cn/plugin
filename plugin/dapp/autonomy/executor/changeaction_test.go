@@ -76,7 +76,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 		Year:             2019,
 		Month:            7,
 		Day:              10,
-		Changes:          []*auty.Change{{Cancel: true, Addr: AddrA}, {Cancel: false, Addr: Addr18}},
+		Changes:          []*auty.Change{{Cancel: true, Addr: Addr19}},
 		StartBlockHeight: env.blockHeight + 5,
 		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
