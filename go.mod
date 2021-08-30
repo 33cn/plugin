@@ -2,10 +2,8 @@ module github.com/33cn/plugin
 
 go 1.14
 
-replace github.com/33cn/chain33 => github.com/bysomeone/chain33 v0.0.0-20210827090037-1f2096d05f59
-
 require (
-	github.com/33cn/chain33 v1.65.3-0.20210826085651-6e4ee1a6f30f
+	github.com/33cn/chain33 v1.65.3-0.20210830065901-18ab4c8e07ae
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
