@@ -21,12 +21,12 @@
 package mpt
 
 import (
+	"github.com/33cn/chain33/types"
 	"hash"
 	"sync"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto/sha3"
-	proto "github.com/golang/protobuf/proto"
 )
 
 type hasher struct {
@@ -179,10 +179,7 @@ func (h *hasher) store(n node, db *Database, force bool) (node, error) {
 		return n, nil // Nodes smaller than 64 bytes are stored inside their parent
 	}
 	nn := n.create()
-	data, err := proto.Marshal(nn)
-	if err != nil {
-		panic("encode error: " + err.Error())
-	}
+	data := types.Encode(nn)
 	// Larger nodes are replaced by their hash and stored in the database.
 	hash, _ := n.cache()
 	if hash.HashNode == nil {

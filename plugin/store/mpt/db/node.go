@@ -22,6 +22,7 @@ package mpt
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/types"
 	"io"
 	"strings"
 
@@ -75,12 +76,8 @@ type valueNode struct {
 
 // EncodeRLP encodes a full node into the consensus RLP format.
 func (n *fullNode) EncodeProto(w io.Writer) error {
-	node := n.create()
-	data, err := proto.Marshal(node)
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(data)
+	data := types.Encode(n.create())
+	_, err := w.Write(data)
 	return err
 }
 
