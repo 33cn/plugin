@@ -25,16 +25,16 @@
 交易5: 转移所有权: 将SyrupBar的所有权转移给masterchef
 
 
-./boss offline chain33 farm masterChef -f 1 -k 0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944 -n "deploy farm to chain33" -d 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -s 10 -m 5000000000000000000 --chainID 33
+./boss offline chain33 farm masterChef -f 1 -k 0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944 -n "deploy farm to chain33" -d 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt -s 10 -m 5000000000000000000 --paraName user.p.para.
 生成交易文件：farm.txt
 ```
 
 ##步骤三: 离线创建多笔增加lp token的交易
 ```
-./boss offline chain33 farm addPool -f 1 -k 0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944 -p 1000 -l 1HEp4BiA54iaKx5LrgN9iihkgmd3YxC2xM -m 13YwvpqTatoFepe31c5TUXvi26SbNpC3Qq --chainID 33
+./boss offline chain33 farm addPool -f 1 -k 0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944 -p 1000 -l 1HEp4BiA54iaKx5LrgN9iihkgmd3YxC2xM -m 13YwvpqTatoFepe31c5TUXvi26SbNpC3Qq --paraName user.p.para.
 ```
 
 ##步骤四: 串行发送交易文件中的交易
 ```
-./boss4x chain33 offline send -f xxx.txt
+./boss offline chain33 send -f xxx.txt
 ```
