@@ -118,11 +118,7 @@ func (ca *ContractAccount) updateStorageHash() {
 	for k, v := range ca.State.GetStorage() {
 		state.Storage[k] = v
 	}
-	ret, err := proto.Marshal(state)
-	if err != nil {
-		log15.Error("marshal contract state data error", "error", err)
-		return
-	}
+	ret := types.Encode(state)
 
 	ca.State.StorageHash = common.ToHash(ret).Bytes()
 }
@@ -242,43 +238,27 @@ func (ca *ContractAccount) GetExecName() string {
 // GetDataKV 合约固定数据，包含合约代码，以及代码哈希
 func (ca *ContractAccount) GetDataKV() (kvSet []*types.KeyValue) {
 	ca.Data.Addr = ca.Addr
-	datas, err := proto.Marshal(&ca.Data)
-	if err != nil {
-		log15.Error("marshal contract data error!", "addr", ca.Addr, "error", err)
-		return
-	}
+	datas := types.Encode(&ca.Data)
 	kvSet = append(kvSet, &types.KeyValue{Key: ca.GetDataKey(), Value: datas})
 	return
 }
 
 // GetStateKV 获取合约状态数据，包含nonce、是否自杀、存储哈希、存储数据
 func (ca *ContractAccount) GetStateKV() (kvSet []*types.KeyValue) {
-	datas, err := proto.Marshal(&ca.State)
-	if err != nil {
-		log15.Error("marshal contract state error!", "addr", ca.Addr, "error", err)
-		return
-	}
+	datas := types.Encode(&ca.State)
 	kvSet = append(kvSet, &types.KeyValue{Key: ca.GetStateKey(), Value: datas})
 	return
 }
 
 // BuildDataLog 构建变更日志
 func (ca *ContractAccount) BuildDataLog() (log *types.ReceiptLog) {
-	datas, err := proto.Marshal(&ca.Data)
-	if err != nil {
-		log15.Error("marshal contract data error!", "addr", ca.Addr, "error", err)
-		return
-	}
+	datas := types.Encode(&ca.Data)
 	return &types.ReceiptLog{Ty: evmtypes.TyLogContractData, Log: datas}
 }
 
 // BuildStateLog 构建变更日志
 func (ca *ContractAccount) BuildStateLog() (log *types.ReceiptLog) {
-	datas, err := proto.Marshal(&ca.State)
-	if err != nil {
-		log15.Error("marshal contract state log error!", "addr", ca.Addr, "error", err)
-		return
-	}
+	datas := types.Encode(&ca.State)
 
 	return &types.ReceiptLog{Ty: evmtypes.TyLogContractState, Log: datas}
 }
