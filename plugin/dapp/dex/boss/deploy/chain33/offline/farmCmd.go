@@ -125,7 +125,7 @@ func TransferOwnerShip(cmd *cobra.Command, from common.Address, masterChef, cont
 		return nil, err
 	}
 
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: contractAddr}
 	content, txHash, err := utils.CallContractAndSign(info, action, contractAddr)
 	if nil != err {
 		return nil, err

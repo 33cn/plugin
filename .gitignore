@@ -47,4 +47,4 @@ build/parawallet/
 build/sendstock
 build/sendstock.toml
 build/*.csv
-
+plugin/dapp/dex/boss/build/
