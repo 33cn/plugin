@@ -459,7 +459,8 @@ func (node *Node) addPeer(pc *peerConn) error {
 	}
 
 	qbftlog.Info("Added peer", "peer", pc.ip)
-	stateMsg := MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: node.state.RoundStateMessage(), PeerID: pc.id, PeerIP: pc.ip.String()}
+	rs := node.state.GetRoundState()
+	stateMsg := MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: pc.id, PeerIP: pc.ip.String()}
 	pc.Send(stateMsg)
 	qbftlog.Info("Send state msg", "msg", stateMsg, "ourIP", node.IP, "ourID", node.ID)
 	return nil
