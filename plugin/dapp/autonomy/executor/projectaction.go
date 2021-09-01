@@ -185,8 +185,8 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	start := cur.GetPropProject().StartBlockHeight
 	end := cur.GetPropProject().EndBlockHeight
-	real := cur.GetPropProject().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropProject().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)

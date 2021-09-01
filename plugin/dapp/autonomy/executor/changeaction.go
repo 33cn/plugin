@@ -34,15 +34,15 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	}
 
 	// 检查是否符合提案修改
-	var new *auty.ActiveBoard
+	var newBoard *auty.ActiveBoard
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		//替换成员方案
-		new, err = a.replaceBoard(act, prob.Changes)
+		newBoard, err = a.replaceBoard(act, prob.Changes)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		new, err = a.checkChangeable(act, prob.Changes)
+		newBoard, err = a.checkChangeable(act, prob.Changes)
 		if err != nil {
 			alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkChangeable failed", err)
 			return nil, err
@@ -71,7 +71,7 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	cur := &auty.AutonomyProposalChange{
 		PropChange: prob,
 		CurRule:    rule,
-		Board:      new,
+		Board:      newBoard,
 		VoteResult: &auty.VoteResult{TotalVotes: int32(len(act.Boards))},
 		Status:     auty.AutonomyStatusProposalChange,
 		Address:    a.fromaddr,
@@ -163,8 +163,8 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	start := cur.GetPropChange().StartBlockHeight
 	end := cur.GetPropChange().EndBlockHeight
-	real := cur.GetPropChange().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropChange().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -431,19 +431,19 @@ func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (
 	if len(mpBd) > maxBoards || len(mpBd) < minBoards {
 		return nil, auty.ErrBoardNumber
 	}
-	new := &auty.ActiveBoard{
+	newBoard := &auty.ActiveBoard{
 		Amount:      act.Amount,
 		StartHeight: act.StartHeight,
 	}
 	for k := range mpBd {
-		new.Boards = append(new.Boards, k)
+		newBoard.Boards = append(newBoard.Boards, k)
 	}
-	sort.Strings(new.Boards)
+	sort.Strings(newBoard.Boards)
 	for k := range mpRbd {
-		new.Revboards = append(new.Revboards, k)
+		newBoard.Revboards = append(newBoard.Revboards, k)
 	}
-	sort.Strings(new.Revboards)
-	return new, nil
+	sort.Strings(newBoard.Revboards)
+	return newBoard, nil
 }
 
 // getReceiptLog 根据提案信息获取log

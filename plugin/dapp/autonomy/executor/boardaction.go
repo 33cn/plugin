@@ -244,8 +244,8 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	start := cur.GetPropBoard().StartBlockHeight
 	end := cur.GetPropBoard().EndBlockHeight
-	real := cur.GetPropBoard().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropBoard().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropBoard ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -498,11 +498,11 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	if subcfg.Total != "" {
 		addr = subcfg.Total
 	}
-	account, err := a.getStartHeightVoteAccount(addr, "", height)
+	voteAccount, err := a.getStartHeightVoteAccount(addr, "", height)
 	if err != nil {
 		return 0, err
 	}
-	return int32(account.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
+	return int32(voteAccount.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
@@ -539,13 +539,13 @@ func (a *action) batchGetAddressVotes(addrs []string, height int64) (int32, erro
 }
 
 func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
-	account, err := a.getStartHeightVoteAccount(addr, ticketName, height)
+	voteAccount, err := a.getStartHeightVoteAccount(addr, ticketName, height)
 	if err != nil {
 		return 0, err
 	}
-	amount := account.Frozen
+	amount := voteAccount.Frozen
 	if subcfg.UseBalance {
-		amount = account.Balance
+		amount = voteAccount.Balance
 	}
 	return int32(amount / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
@@ -563,16 +563,16 @@ func (a *action) getStartHeightVoteAccount(addr, execer string, height int64) (*
 
 	stateHash := common.ToHex(head.Items[0].StateHash)
 
-	account, err := a.coinsAccount.GetBalance(a.api, &types.ReqBalance{
+	accounts, err := a.coinsAccount.GetBalance(a.api, &types.ReqBalance{
 		Addresses: []string{addr},
 		Execer:    execer,
 		StateHash: stateHash,
 	})
-	if err != nil || len(account) == 0 {
+	if err != nil || len(accounts) == 0 {
 		alog.Error("GetStartVoteAccount ", "addr", addr, "height", height, "GetBalance failed", err)
 		return nil, err
 	}
-	return account[0], nil
+	return accounts[0], nil
 }
 
 func (a *action) getProposalBoard(ID string) (*auty.AutonomyProposalBoard, error) {

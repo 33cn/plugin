@@ -196,8 +196,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	start := cur.GetPropRule().StartBlockHeight
 	end := cur.GetPropRule().EndBlockHeight
-	real := cur.GetPropRule().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropRule().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -500,28 +500,28 @@ func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
 	if cur == nil || modify == nil {
 		return nil
 	}
-	new := *cur
+	newConfig := *cur
 	if modify.BoardApproveRatio > 0 {
-		new.BoardApproveRatio = modify.BoardApproveRatio
+		newConfig.BoardApproveRatio = modify.BoardApproveRatio
 	}
 	if modify.PubOpposeRatio > 0 {
-		new.PubOpposeRatio = modify.PubOpposeRatio
+		newConfig.PubOpposeRatio = modify.PubOpposeRatio
 	}
 	if modify.ProposalAmount > 0 {
-		new.ProposalAmount = modify.ProposalAmount
+		newConfig.ProposalAmount = modify.ProposalAmount
 	}
 	if modify.LargeProjectAmount > 0 {
-		new.LargeProjectAmount = modify.LargeProjectAmount
+		newConfig.LargeProjectAmount = modify.LargeProjectAmount
 	}
 	if modify.PublicPeriod > 0 {
-		new.PublicPeriod = modify.PublicPeriod
+		newConfig.PublicPeriod = modify.PublicPeriod
 	}
 	if modify.PubAttendRatio > 0 {
-		new.PubAttendRatio = modify.PubAttendRatio
+		newConfig.PubAttendRatio = modify.PubAttendRatio
 	}
 	if modify.PubApproveRatio > 0 {
-		new.PubApproveRatio = modify.PubApproveRatio
+		newConfig.PubApproveRatio = modify.PubApproveRatio
 	}
 
-	return &new
+	return &newConfig
 }
