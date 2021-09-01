@@ -3,6 +3,7 @@ syntax = "proto3";
 import "blockchain.proto";
 
 package types;
+option go_package = "../types";
 
 message QbftBlockID {
     bytes hash = 1;

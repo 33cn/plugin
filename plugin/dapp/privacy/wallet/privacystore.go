@@ -140,11 +140,7 @@ func (store *privacyStore) setWalletAccountPrivacy(addr string, privacy *privacy
 		return types.ErrInvalidParam
 	}
 
-	privacybyte, err := proto.Marshal(privacy)
-	if err != nil {
-		bizlog.Error("SetWalletAccountPrivacy proto.Marshal err!", "err", err)
-		return types.ErrMarshal
-	}
+	privacybyte := types.Encode(privacy)
 
 	newbatch := store.NewBatch(true)
 	newbatch.Set(calcPrivacyAddrKey(addr), privacybyte)
@@ -652,11 +648,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 //2.calcUTXOKey4TokenAddr-->calcUTXOKey，创建kv，方便查询现在某个地址下某种token的可用utxo
 func (store *privacyStore) setUTXO(utxoInfo *privacytypes.PrivacyDBStore, txHash string, newbatch db.Batch) error {
 
-	privacyStorebyte, err := proto.Marshal(utxoInfo)
-	if err != nil {
-		bizlog.Error("setUTXO proto.Marshal err!", "err", err)
-		return types.ErrMarshal
-	}
+	privacyStorebyte := types.Encode(utxoInfo)
 	outIndex := int(utxoInfo.OutIndex)
 	utxoKey := calcUTXOKey(txHash, outIndex)
 	bizlog.Debug("setUTXO", "addr", utxoInfo.Owner, "tx with hash", txHash, "amount:", utxoInfo.Amount/store.GetCoinPrecision())

@@ -32,7 +32,7 @@ chain33ID=0
 function set_offline_token_Bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave BTY ======${NOC}"
-#    echo '2:#配置自动转离线钱包(bty, 1000, 50%)'
+    #    echo '2:#配置自动转离线钱包(bty, 1000, 50%)'
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,100000000000,50)" --khainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -86,7 +86,7 @@ function set_offline_token_Chain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave ERC20 YCC ======${NOC}"
-#    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
+    #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -123,7 +123,7 @@ function transfer_multisign_Chain33Ycc_test() {
     is_equal "${result}" "30300000000"
 
     # 判断 ETH 这端是否金额一致
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknYccAddr}" )
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknYccAddr}")
     cli_ret "${result}" "balance" ".balance" "370"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -150,9 +150,9 @@ function set_offline_token_Eth() {
 
 function lock_multisign_Eth_test() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
-    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" )
+    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     lock_eth_multisign 19 19 0
@@ -224,7 +224,7 @@ function transfer_multisign_EthYcc() {
     ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
     sleep 2
 
-     # transfer
+    # transfer
     ${CLIA} ethereum multisign transfer -a 8 -r "${ethBridgeBank}" -t "${ethereumYccTokenAddr}" -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
     sleep 2
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
