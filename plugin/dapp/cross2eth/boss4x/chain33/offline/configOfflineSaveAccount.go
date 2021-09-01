@@ -2,6 +2,7 @@ package offline
 
 import (
 	"fmt"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/spf13/cobra"

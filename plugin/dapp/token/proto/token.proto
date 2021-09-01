@@ -4,6 +4,7 @@ import "transaction.proto";
 import "account.proto";
 
 package types;
+option go_package = "../types";
 
 // action
 message TokenAction {

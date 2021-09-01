@@ -2,6 +2,8 @@ package offline
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
@@ -10,7 +12,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 /*

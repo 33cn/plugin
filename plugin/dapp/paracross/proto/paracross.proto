@@ -5,6 +5,7 @@ import "common.proto";
 import "blockchain.proto";
 
 package types;
+option go_package = "../types";
 
 // stateDB
 message ParacrossStatusDetails {

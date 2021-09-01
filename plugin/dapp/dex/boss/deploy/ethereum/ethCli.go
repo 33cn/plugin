@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/dex/boss/deploy/ethereum/offline"
@@ -13,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
-	"math/big"
-	"strings"
 )
 
 func EthCmd() *cobra.Command {

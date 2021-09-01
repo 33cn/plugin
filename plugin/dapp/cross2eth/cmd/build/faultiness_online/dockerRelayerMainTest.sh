@@ -42,25 +42,24 @@ ethBridgeToeknYccAddr=""
 #ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 # shellcheck disable=SC2034
 {
-ethValidatorAddrKeyb="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-ethValidatorAddrKeyc="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-ethValidatorAddrKeyd="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
+    ethValidatorAddrKeyb="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
+    ethValidatorAddrKeyc="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
+    ethValidatorAddrKeyd="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 
-# 新增地址 chain33 需要导入地址 转入 10 bty当收费费
-chain33Validatora="1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ"
-chain33Validatorb="155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6"
-chain33Validatorc="13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv"
-chain33Validatord="113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"
-#chain33ValidatorKeya="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
-chain33ValidatorKeyb="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
-chain33ValidatorKeyc="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
-chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
+    # 新增地址 chain33 需要导入地址 转入 10 bty当收费费
+    chain33Validatora="1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ"
+    chain33Validatorb="155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6"
+    chain33Validatorc="13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv"
+    chain33Validatord="113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"
+    #chain33ValidatorKeya="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
+    chain33ValidatorKeyb="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
+    chain33ValidatorKeyc="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
+    chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
 }
 
 #CLIA="./ebcli_A"
 
 #ethUrl=""
-
 
 function start_docker_ebrelayerA() {
     # shellcheck disable=SC2154
@@ -121,7 +120,7 @@ function StartDockerRelayerDeploy() {
 
     # change EthProvider url
     dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-#    ethUrl="http://${dockerAddr}:8545"
+    #    ethUrl="http://${dockerAddr}:8545"
 
     # 修改 relayer.toml 配置文件
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
@@ -141,7 +140,7 @@ function StartDockerRelayerDeploy() {
     # kill ebrelayer A
     kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
     sleep 1
-#    kill_ebrelayer ebrelayer
+    #    kill_ebrelayer ebrelayer
     start_docker_ebrelayerA
 
     result=$(${CLIA} unlock -p 123456hzj)
@@ -167,7 +166,7 @@ function TestChain33ToEthAssets() {
 
     # 原来的地址金额
     result=$(${Chain33Cli} account balance -a "${chain33DeployAddr}" -e evm)
-#    balance=$(cli_ret "${result}" "balance" ".balance")
+    #    balance=$(cli_ret "${result}" "balance" ".balance")
 
     # chain33 lock bty
     hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)")
@@ -175,7 +174,7 @@ function TestChain33ToEthAssets() {
 
     # 原来的地址金额 减少了 5
     result=$(${Chain33Cli} account balance -a "${chain33DeployAddr}" -e evm)
-#    cli_ret "${result}" "balance" ".balance" "$(echo "${balance}-5" | bc)"
+    #    cli_ret "${result}" "balance" ".balance" "$(echo "${balance}-5" | bc)"
     #balance_ret "${result}" "195.0000"
 
     # chain33BridgeBank 是否增加了 5
@@ -183,18 +182,18 @@ function TestChain33ToEthAssets() {
     balance_ret "${result}" "5.0000"
 
     sleep 2
-#    eth_block_wait 2 "${ethUrl}"
+    #    eth_block_wait 2 "${ethUrl}"
 
     # eth 这端 金额是否增加了 5
     result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 2
-#    eth_block_wait 2 "${ethUrl}"
+    #    eth_block_wait 2 "${ethUrl}"
 
     # eth 这端 金额是否减少了 3
     result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
@@ -202,7 +201,7 @@ function TestChain33ToEthAssets() {
 
     sleep ${maturityDegree}
 
-     # 接收的地址金额 变成了 3
+    # 接收的地址金额 变成了 3
     result=$(${Chain33Cli} account balance -a "${chain33ReceiverAddr}" -e evm)
     balance_ret "${result}" "3.0000"
 
@@ -217,19 +216,19 @@ function TestChain33ToEthAssets() {
 function TestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 11个
     result=$(${CLIA} ethereum lock -m 11 -k "${ethValidatorAddrKeyA}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
-     # eth 等待 10 个区块
+    # eth 等待 10 个区块
     sleep 2
-#    eth_block_wait 2 "${ethUrl}"
+    #    eth_block_wait 2 "${ethUrl}"
 
     # 查询 ETH 这端 bridgeBank 地址 11
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "11"
 
     sleep ${maturityDegree}
@@ -254,7 +253,7 @@ function TestETH2Chain33Assets() {
     is_equal "${result}" "600000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "6"
 
     # 比之前多 5
@@ -274,9 +273,9 @@ function TestETH2Chain33Ycc() {
     result=$(${CLIA} ethereum lock -m 7 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
     cli_ret "${result}" "lock"
 
-     # eth 等待 10 个区块
+    # eth 等待 10 个区块
     sleep 2
-#    eth_block_wait 2 "${ethUrl}"
+    #    eth_block_wait 2 "${ethUrl}"
 
     # 查询 ETH 这端 bridgeBank 地址 7 YCC
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")

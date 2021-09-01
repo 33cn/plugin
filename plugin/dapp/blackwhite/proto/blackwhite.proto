@@ -3,6 +3,7 @@ syntax = "proto3";
 import "transaction.proto";
 
 package types;
+option go_package = "../types";
 
 message AddressResult {
     string   addr             = 1;

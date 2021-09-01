@@ -7,6 +7,7 @@ syntax = "proto3";
 import "common.proto";
 
 package types;
+option go_package = "../types";
 
 message Unfreeze {
     //解冻交易ID（唯一识别码）

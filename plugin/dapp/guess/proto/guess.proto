@@ -3,6 +3,7 @@ syntax = "proto3";
 import "transaction.proto";
 
 package types;
+option go_package = "../types";
 
 // GuessGame 竞猜游戏详情
 message GuessGame {

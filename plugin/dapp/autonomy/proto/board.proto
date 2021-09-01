@@ -7,6 +7,7 @@ syntax = "proto3";
 import "lcommon.proto";
 
 package types;
+option go_package = "../types";
 
 message AutonomyProposalBoard {
     ProposalBoard propBoard = 1;
