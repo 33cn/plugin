@@ -25,6 +25,7 @@ const (
 	// 最大全体持票人否决率
 	maxPubOpposeRatio = 50
 
+	// 可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80% ???  最低 50.1% ????
 	//不能设置太低和太高，太低就容易作弊，太高则有可能很难达到
 	// 最小全体持票人参与率
 	minPubAttendRatio = 50
@@ -51,7 +52,7 @@ const (
 )
 
 func checkParaInvalid(param, min, max int64) bool {
-	if param > 0 && ((param > max) || param < min) {
+	if param > max || param < min {
 		return true
 	}
 	return false
@@ -60,8 +61,7 @@ func checkParaInvalid(param, min, max int64) bool {
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardApproveRatio <= 0 && prob.RuleCfg.PubOpposeRatio <= 0 &&
-		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0 {
+	if prob.RuleCfg == nil {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
