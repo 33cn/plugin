@@ -80,3 +80,7 @@ func (p *mixPolicy) On_DecryptSecretData(req *mixTy.DecryptSecretData) (types.Me
 func (p *mixPolicy) On_CreateRawTransaction(req *mixTy.CreateRawTxReq) (types.Message, error) {
 	return p.createRawTx(req)
 }
+
+func (p *mixPolicy) On_CreateZkKeyFile(req *mixTy.CreateZkKeyFileReq) (types.Message, error) {
+	return p.createZkKeyFile(req)
+}

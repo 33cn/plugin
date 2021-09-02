@@ -5,6 +5,7 @@
 package wallet
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/33cn/chain33/common/address"
@@ -15,59 +16,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
-type AuthorizeInput struct {
-	//public
-	TreeRootHash       string `tag:"public"`
-	AuthorizeHash      string `tag:"public"`
-	AuthorizeSpendHash string `tag:"public"`
-
-	//secret
-	ReceiverPubKey  string `tag:"secret"`
-	ReturnPubKey    string `tag:"secret"`
-	AuthorizePubKey string `tag:"secret"`
-	AuthorizePriKey string `tag:"secret"`
-	NoteRandom      string `tag:"secret"`
-
-	Amount    string `tag:"secret"`
-	SpendFlag string `tag:"secret"`
-	NoteHash  string `tag:"secret"`
-
-	//tree path info
-	Path0 string `tag:"secret"`
-	Path1 string `tag:"secret"`
-	Path2 string `tag:"secret"`
-	Path3 string `tag:"secret"`
-	Path4 string `tag:"secret"`
-	Path5 string `tag:"secret"`
-	Path6 string `tag:"secret"`
-	Path7 string `tag:"secret"`
-	Path8 string `tag:"secret"`
-	Path9 string `tag:"secret"`
-
-	Helper0 string `tag:"secret"`
-	Helper1 string `tag:"secret"`
-	Helper2 string `tag:"secret"`
-	Helper3 string `tag:"secret"`
-	Helper4 string `tag:"secret"`
-	Helper5 string `tag:"secret"`
-	Helper6 string `tag:"secret"`
-	Helper7 string `tag:"secret"`
-	Helper8 string `tag:"secret"`
-	Helper9 string `tag:"secret"`
-
-	Valid0 string `tag:"secret"`
-	Valid1 string `tag:"secret"`
-	Valid2 string `tag:"secret"`
-	Valid3 string `tag:"secret"`
-	Valid4 string `tag:"secret"`
-	Valid5 string `tag:"secret"`
-	Valid6 string `tag:"secret"`
-	Valid7 string `tag:"secret"`
-	Valid8 string `tag:"secret"`
-	Valid9 string `tag:"secret"`
-}
-
-func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) {
+func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*mixTy.AuthorizeCircuit, error) {
 	note, err := p.getNoteInfo(req.NoteHash)
 	if err != nil {
 		return nil, err
@@ -90,25 +39,25 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) 
 			note.Secret.AuthorizeKey, privacyKey.Privacy.PaymentKey.ReceiveKey, note.Account)
 	}
 
-	var input AuthorizeInput
-	initTreePath(&input)
+	var input mixTy.AuthorizeCircuit
 
-	input.NoteHash = note.NoteHash
-	input.Amount = note.Secret.Amount
-	input.ReceiverPubKey = note.Secret.ReceiverKey
-	input.ReturnPubKey = note.Secret.ReturnKey
-	input.AuthorizePubKey = note.Secret.AuthorizeKey
-	input.NoteRandom = note.Secret.NoteRandom
+	input.NoteHash.Assign(note.NoteHash)
+	input.Amount.Assign(note.Secret.Amount)
+	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
+	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
+	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
+	input.NoteRandom.Assign(note.Secret.NoteRandom)
 
-	input.AuthorizePriKey = privacyKey.Privacy.PaymentKey.SpendKey
-	input.AuthorizeHash = mixTy.Byte2Str(mimcHashString([]string{input.AuthorizePubKey, note.Secret.NoteRandom}))
-	input.AuthorizeSpendHash = mixTy.Byte2Str(mimcHashString([]string{req.AuthorizeToAddr, note.Secret.Amount, note.Secret.NoteRandom}))
+	input.AuthorizePriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
+	input.AuthorizeHash.Assign(mixTy.Byte2Str(mimcHashString([]string{note.Secret.AuthorizeKey, note.Secret.NoteRandom})))
+	input.AuthorizeSpendHash.Assign(mixTy.Byte2Str(mimcHashString([]string{req.AuthorizeToAddr, note.Secret.Amount, note.Secret.NoteRandom})))
 
 	//default auto to receiver
-	input.SpendFlag = "1"
-	if input.ReturnPubKey != "0" && input.ReturnPubKey == req.AuthorizeToAddr {
+	if note.Secret.ReturnKey != "0" && note.Secret.ReturnKey == req.AuthorizeToAddr {
 		//auth to returner
-		input.SpendFlag = "0"
+		input.SpendFlag.Assign("0")
+	} else {
+		input.SpendFlag.Assign("1")
 	}
 
 	//get tree path
@@ -116,9 +65,8 @@ func (p *mixPolicy) getAuthParms(req *mixTy.AuthTxReq) (*AuthorizeInput, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash = treeProof.TreeRootHash
+	input.TreeRootHash.Assign(treeProof.TreeRootHash)
 	updateTreePath(&input, treeProof)
-
 	return &input, nil
 
 }
@@ -138,12 +86,13 @@ func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction,
 		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", req.AssetExec, req.AssetSymbol)
 	}
 
-	proofInfo, err := getZkProofKeys(auth.ZkPath+mixTy.AuthCircuit, auth.ZkPath+mixTy.AuthPk, *input, req.Privacy)
+	proofInfo, err := getZkProofKeys(mixTy.VerifyType_AUTHORIZE, auth.ZkPath, mixTy.AuthPk, input, req.ZkProof)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getZkProofKeys note=%s", auth.NoteHash)
 	}
 	//verify
-	if err := p.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, auth.ZkPath+mixTy.AuthVk, req.Verify); err != nil {
+	vkFile := filepath.Join(auth.ZkPath, mixTy.AuthVk)
+	if err := p.verifyProofOnChain(mixTy.VerifyType_AUTHORIZE, proofInfo, vkFile, req.VerifyOnChain); err != nil {
 		return nil, errors.Wrapf(err, "verifyProof fail for note=%s", auth.NoteHash)
 	}
 
@@ -152,7 +101,7 @@ func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction,
 
 func (p *mixPolicy) getAuthTx(execName string, exec, symbol string, proof *mixTy.ZkProofInfo) (*types.Transaction, error) {
 	payload := &mixTy.MixAuthorizeAction{}
-	payload.Proof = proof
+	payload.ProofInfo = proof
 	payload.AssetExec = exec
 	payload.AssetSymbol = symbol
 

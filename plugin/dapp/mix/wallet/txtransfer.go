@@ -6,6 +6,9 @@ package wallet
 
 import (
 	"fmt"
+	"github.com/consensys/gnark/frontend"
+	"path/filepath"
+
 	"strconv"
 	"strings"
 
@@ -17,82 +20,11 @@ import (
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 
-	fr_bn256 "github.com/consensys/gurvy/bn256/fr"
-	"github.com/consensys/gurvy/bn256/twistededwards"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 )
 
-type TransferInput struct {
-	//public
-	TreeRootHash       string `tag:"public"`
-	AuthorizeSpendHash string `tag:"public"`
-	NullifierHash      string `tag:"public"`
-	ShieldAmountX      string `tag:"public"`
-	ShieldAmountY      string `tag:"public"`
-
-	//secret
-	ReceiverPubKey  string `tag:"secret"`
-	ReturnPubKey    string `tag:"secret"`
-	AuthorizePubKey string `tag:"secret"`
-	NoteRandom      string `tag:"secret"`
-
-	Amount        string `tag:"secret"`
-	AmountRandom  string `tag:"secret"`
-	SpendPriKey   string `tag:"secret"`
-	SpendFlag     string `tag:"secret"`
-	AuthorizeFlag string `tag:"secret"`
-	NoteHash      string `tag:"secret"`
-
-	//tree path info
-	Path0 string `tag:"secret"`
-	Path1 string `tag:"secret"`
-	Path2 string `tag:"secret"`
-	Path3 string `tag:"secret"`
-	Path4 string `tag:"secret"`
-	Path5 string `tag:"secret"`
-	Path6 string `tag:"secret"`
-	Path7 string `tag:"secret"`
-	Path8 string `tag:"secret"`
-	Path9 string `tag:"secret"`
-
-	Helper0 string `tag:"secret"`
-	Helper1 string `tag:"secret"`
-	Helper2 string `tag:"secret"`
-	Helper3 string `tag:"secret"`
-	Helper4 string `tag:"secret"`
-	Helper5 string `tag:"secret"`
-	Helper6 string `tag:"secret"`
-	Helper7 string `tag:"secret"`
-	Helper8 string `tag:"secret"`
-	Helper9 string `tag:"secret"`
-
-	Valid0 string `tag:"secret"`
-	Valid1 string `tag:"secret"`
-	Valid2 string `tag:"secret"`
-	Valid3 string `tag:"secret"`
-	Valid4 string `tag:"secret"`
-	Valid5 string `tag:"secret"`
-	Valid6 string `tag:"secret"`
-	Valid7 string `tag:"secret"`
-	Valid8 string `tag:"secret"`
-	Valid9 string `tag:"secret"`
-}
-
-type TransferOutput struct {
-	//public
-	NoteHash      string `tag:"public"`
-	ShieldAmountX string `tag:"public"`
-	ShieldAmountY string `tag:"public"`
-
-	//secret
-	ReceiverPubKey  string `tag:"secret"`
-	ReturnPubKey    string `tag:"secret"`
-	AuthorizePubKey string `tag:"secret"`
-	NoteRandom      string `tag:"secret"`
-	Amount          string `tag:"secret"`
-	AmountRandom    string `tag:"secret"`
-}
-
-func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferInput, error) {
+func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*mixTy.TransferInputCircuit, error) {
 	//get spend privacy key
 	privacyKey, err := p.getAccountPrivacyKey(note.Account)
 	if err != nil {
@@ -104,45 +36,43 @@ func (p *mixPolicy) getTransferInputPart(note *mixTy.WalletNoteInfo) (*TransferI
 			note.Secret.ReceiverKey, privacyKey.Privacy.PaymentKey.ReceiveKey, note.Account)
 	}
 
-	var input TransferInput
-	initTreePath(&input)
+	var input mixTy.TransferInputCircuit
+	input.NoteHash.Assign(note.NoteHash)
 
-	input.NoteHash = note.NoteHash
-
-	input.Amount = note.Secret.Amount
-	input.ReceiverPubKey = note.Secret.ReceiverKey
-	input.ReturnPubKey = note.Secret.ReturnKey
-	input.AuthorizePubKey = note.Secret.AuthorizeKey
-	input.NoteRandom = note.Secret.NoteRandom
+	input.Amount.Assign(note.Secret.Amount)
+	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
+	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
+	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
+	input.NoteRandom.Assign(note.Secret.NoteRandom)
 
 	//自己是payment 还是returner已经在解析note时候算好了，authSpendHash也对应算好了，如果note valid,则就用本地即可
-	input.AuthorizeSpendHash = note.AuthorizeSpendHash
-	input.NullifierHash = note.Nullifier
+	input.AuthorizeSpendHash.Assign(note.AuthorizeSpendHash)
+	input.NullifierHash.Assign(note.Nullifier)
 
-	input.SpendPriKey = privacyKey.Privacy.PaymentKey.SpendKey
+	input.SpendPriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
 
-	//default auto to receiver
-	input.SpendFlag = "1"
 	//self is returner auth to returner
 	if privacyKey.Privacy.PaymentKey.ReceiveKey == note.Secret.ReturnKey {
-		input.SpendFlag = "0"
+		input.SpendFlag.Assign("0")
+	} else {
+		input.SpendFlag.Assign("1")
 	}
-	input.AuthorizeFlag = "0"
-	if len(input.AuthorizeSpendHash) > LENNULLKEY {
-		input.AuthorizeFlag = "1"
+	if len(note.AuthorizeSpendHash) > LENNULLKEY {
+		input.AuthorizeFlag.Assign("1")
+	} else {
+		input.AuthorizeFlag.Assign("0")
 	}
 
 	treeProof, err := p.getTreeProof(note.Secret.AssetExec, note.Secret.AssetSymbol, note.NoteHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash = treeProof.TreeRootHash
+	input.TreeRootHash.Assign(treeProof.TreeRootHash)
 	updateTreePath(&input, treeProof)
-
 	return &input, nil
 }
 
-func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInfo) (*TransferOutput, *mixTy.DHSecretGroup, error) {
+func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInfo) (*mixTy.TransferOutputCircuit, *mixTy.DHSecretGroup, error) {
 	//目前只支持一个ReceiverAddr
 	if strings.Contains(req.ReceiverAddrs, ",") || strings.Contains(req.Amounts, ",") {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "only support one addr or amount,addrs=%s,amount=%s",
@@ -153,13 +83,13 @@ func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInf
 		return nil, nil, errors.Wrapf(err, "deposit toAddr=%s", req.ReceiverAddrs)
 	}
 
-	var input TransferOutput
-	input.NoteHash = resp.NoteHash
-	input.Amount = resp.Proof.Amount
-	input.ReceiverPubKey = resp.Proof.ReceiverKey
-	input.AuthorizePubKey = resp.Proof.AuthorizeKey
-	input.ReturnPubKey = resp.Proof.ReturnKey
-	input.NoteRandom = resp.Proof.NoteRandom
+	var input mixTy.TransferOutputCircuit
+	input.NoteHash.Assign(resp.NoteHash)
+	input.Amount.Assign(resp.Proof.Amount)
+	input.ReceiverPubKey.Assign(resp.Proof.ReceiverKey)
+	input.AuthorizePubKey.Assign(resp.Proof.AuthorizeKey)
+	input.ReturnPubKey.Assign(resp.Proof.ReturnKey)
+	input.NoteRandom.Assign(resp.Proof.NoteRandom)
 
 	return &input, resp.Secrets, nil
 
@@ -177,7 +107,7 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 	}
 	//get amount*G point
 	//note = transfer + change + minTxFee
-	var inputGPoints []*twistededwards.Point
+	var inputGPoints []*twistededwards.PointAffine
 	for _, i := range inputAmounts {
 		inputGPoints = append(inputGPoints, mixTy.MulCurvePointG(i))
 	}
@@ -193,31 +123,40 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 
 	//三个混淆随机值可以随机获取，这里noteRandom和为了Nullifier计算的NoteRandom不同。
 	//获取随机值，截取一半给change和transfer,和值给Note,直接用完整的random值会溢出
-	var rChange, rOut, v fr_bn256.Element
-	random := v.SetRandom().String()
+	var rChange, rOut, v fr.Element
+	_, err := v.SetRandom()
+	if err != nil {
+		return nil, errors.Wrapf(err, "getRandom")
+	}
+
+	random := v.String()
 	rChange.SetString(random[0 : len(random)/2])
 	rOut.SetString(random[len(random)/2:])
 	fmt.Println("rOut", rOut.String())
 	fmt.Println("rChange", rChange.String())
 
-	var rSumIn, rSumOut fr_bn256.Element
+	var rSumIn, rSumOut fr.Element
 	rSumIn.SetZero()
 	rSumOut.Add(&rChange, &rOut)
 
-	var rInputs []fr_bn256.Element
+	var rInputs []fr.Element
 	rInputs = append(rInputs, rSumOut)
 
 	//len(inputAmounts)>1场景,每个input的随机值设为随机值的1/3长度，这样加起来不会超过rOut+rChange
 	for i := 1; i < len(inputAmounts); i++ {
-		var a, v fr_bn256.Element
-		rv := v.SetRandom().String()
+		var a, v fr.Element
+		_, err := v.SetRandom()
+		if err != nil {
+			return nil, errors.Wrapf(err, "getRandom")
+		}
+		rv := v.String()
 		a.SetString(rv[0 : len(random)/3])
 		rInputs = append(rInputs, a)
 		rSumIn.Add(&rSumIn, &a)
 	}
 	//如果len(inputAmounts)>1，则把rInputs[0]替换为rrSumOut-rSumIn,rSumIn都是1/3的随机值长度，减法应该不会溢出
 	if len(rInputs) > 1 {
-		var sub fr_bn256.Element
+		var sub fr.Element
 		sub.Sub(&rSumOut, &rSumIn)
 		rInputs[0] = sub
 	}
@@ -231,7 +170,7 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 	pointHX := conf.GStr("pointHX")
 	pointHY := conf.GStr("pointHY")
 
-	var inputHPoints []*twistededwards.Point
+	var inputHPoints []*twistededwards.PointAffine
 	for _, i := range rInputs {
 		inputHPoints = append(inputHPoints, mixTy.MulCurvePointH(pointHX, pointHY, i.String()))
 	}
@@ -301,7 +240,7 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	}
 
 	//1.获取Input
-	var inputParts []*TransferInput
+	var inputParts []*mixTy.TransferInputCircuit
 	for _, n := range notes {
 		input, err := p.getTransferInputPart(n)
 		if err != nil {
@@ -314,12 +253,9 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	var inputAmounts []uint64
 	var sumInput uint64
 	for _, i := range inputParts {
-		amount, err := strconv.ParseUint(i.Amount, 10, 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "input part parseUint=%s", i.Amount)
-		}
-		inputAmounts = append(inputAmounts, amount)
-		sumInput += amount
+		amount := frontend.FromInterface(frontend.GetAssignedValue(i.Amount))
+		inputAmounts = append(inputAmounts, amount.Uint64())
+		sumInput += amount.Uint64()
 	}
 
 	//2. 获取output
@@ -368,48 +304,59 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 
 	//noteCommitX, transferX, changeX
 	for i, input := range inputParts {
-		input.ShieldAmountX = shieldValue.Inputs[i].X
-		input.ShieldAmountY = shieldValue.Inputs[i].Y
-		input.AmountRandom = shieldValue.InputRandoms[i]
+		input.ShieldAmountX.Assign(shieldValue.Inputs[i].X)
+		input.ShieldAmountY.Assign(shieldValue.Inputs[i].Y)
+		input.AmountRandom.Assign(shieldValue.InputRandoms[i])
 	}
 
-	outPart.ShieldAmountX = shieldValue.Output.X
-	outPart.ShieldAmountY = shieldValue.Output.Y
-	outPart.AmountRandom = shieldValue.OutputRandom
+	outPart.ShieldAmountX.Assign(shieldValue.Output.X)
+	outPart.ShieldAmountY.Assign(shieldValue.Output.Y)
+	outPart.AmountRandom.Assign(shieldValue.OutputRandom)
 
-	changePart.ShieldAmountX = shieldValue.Change.X
-	changePart.ShieldAmountY = shieldValue.Change.Y
-	changePart.AmountRandom = shieldValue.ChangeRandom
+	changePart.ShieldAmountX.Assign(shieldValue.Change.X)
+	changePart.ShieldAmountY.Assign(shieldValue.Change.Y)
+	changePart.AmountRandom.Assign(shieldValue.ChangeRandom)
+
+	//输入的proof，CI测试目的，正常情况下为空，需输入pk路径
+	proofs := make([]string, len(inputParts)+2)
+	if len(req.ZkProof) > 0 {
+		proofs = strings.Split(req.ZkProof, "-")
+		if len(proofs) != len(inputParts)+2 {
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong proof num=%d, inputs=%d", len(proofs), len(inputParts)+2)
+		}
+	}
 
 	//verify input
 	var inputProofs []*mixTy.ZkProofInfo
+	vkFile := filepath.Join(transfer.ZkPath, mixTy.TransInputVk)
 	for i, input := range inputParts {
-		inputProof, err := getZkProofKeys(transfer.Input.ZkPath+mixTy.TransInputCircuit, transfer.Input.ZkPath+mixTy.TransInputPk, *input, req.Privacy)
+		inputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFERINPUT, transfer.ZkPath, mixTy.TransInputPk, input, proofs[i])
 		if err != nil {
 			return nil, errors.Wrapf(err, "verify.input getZkProofKeys,the i=%d", i)
 		}
-		if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, transfer.Input.ZkPath+mixTy.TransInputVk, req.Verify); err != nil {
+		if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFERINPUT, inputProof, vkFile, req.VerifyOnChain); err != nil {
 			return nil, errors.Wrapf(err, "input verifyProof fail,the i=%d", i)
 		}
 		inputProofs = append(inputProofs, inputProof)
 	}
 
 	//verify output
-	outputProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *outPart, req.Privacy)
+	vkOutFile := filepath.Join(transfer.ZkPath, mixTy.TransOutputVk)
+	outputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, outPart, proofs[len(inputParts)])
 	if err != nil {
 		return nil, errors.Wrapf(err, "output getZkProofKeys")
 	}
-	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, transfer.Output.ZkPath+mixTy.TransOutputVk, req.Verify); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, outputProof, vkOutFile, req.VerifyOnChain); err != nil {
 		return nil, errors.Wrapf(err, "output verifyProof fail")
 	}
 	outputProof.Secrets = outDHSecret
 
 	//verify change
-	changeProof, err := getZkProofKeys(transfer.Output.ZkPath+mixTy.TransOutputCircuit, transfer.Output.ZkPath+mixTy.TransOutputPk, *changePart, req.Privacy)
+	changeProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, changePart, proofs[len(inputParts)+1])
 	if err != nil {
 		return nil, errors.Wrapf(err, "change getZkProofKeys")
 	}
-	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, transfer.Output.ZkPath+mixTy.TransOutputVk, req.Verify); err != nil {
+	if err := p.verifyProofOnChain(mixTy.VerifyType_TRANSFEROUTPUT, changeProof, vkOutFile, req.VerifyOnChain); err != nil {
 		return nil, errors.Wrapf(err, "change verifyProof fail")
 	}
 	changeProof.Secrets = changeDHSecret

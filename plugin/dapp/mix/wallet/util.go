@@ -7,15 +7,16 @@ package wallet
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/backend/witness"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 
-	backend_bn256 "github.com/consensys/gnark/backend/bn256"
-	"github.com/consensys/gnark/encoding/gob"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gurvy"
+
 	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/common"
@@ -24,41 +25,9 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 
 	"github.com/consensys/gnark/backend"
-	groth16_bn256 "github.com/consensys/gnark/backend/bn256/groth16"
 
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 )
-
-//对secretData 编码为string,同时增加随机值
-//func encodeSecretData(secret *mixTy.SecretData) (*mixTy.EncodedSecretData, error) {
-//	if secret == nil {
-//		return nil, errors.Wrap(types.ErrInvalidParam, "para is nil")
-//	}
-//	if len(secret.ReceiverKey) <= 0 {
-//		return nil, errors.Wrap(types.ErrInvalidParam, "spendPubKey is nil")
-//	}
-//	var val big.Int
-//	ret, succ := val.SetString(secret.Amount, 10)
-//	if !succ {
-//		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount = %s", secret.Amount)
-//	}
-//	if ret.Sign() <= 0 {
-//		return nil, errors.Wrapf(types.ErrInvalidParam, "amount = %s, need bigger than 0", secret.Amount)
-//	}
-//
-//	//获取随机值
-//	var fr fr_bn256.Element
-//	fr.SetRandom()
-//	secret.NoteRandom = fr.String()
-//	code := types.Encode(secret)
-//	var resp mixTy.EncodedSecretData
-//
-//	resp.Encoded = common.ToHex(code)
-//	resp.RawData = secret
-//
-//	return &resp, nil
-//
-//}
 
 //产生随机秘钥和receivingPk对data DH加密，返回随机秘钥的公钥
 func encryptSecretData(req *mixTy.EncryptSecretData) (*mixTy.DHSecret, error) {
@@ -87,17 +56,14 @@ func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) 
 	return &raw, nil
 }
 
-func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string, verifyOnChain int32) error {
+func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProofInfo, vkPath string, verifyOnChain bool) error {
 	//vkpath verify
-	if verifyOnChain > 0 && len(vkPath) > 0 {
-		vk, err := getVerifyKey(vkPath)
+	if !verifyOnChain && len(vkPath) > 0 {
+		verifyKey, err := readZkKeyFile(vkPath)
 		if err != nil {
 			return errors.Wrapf(err, "getVerifyKey path=%s", vkPath)
 		}
-		verifyKey, err := serializeObj(vk)
-		if err != nil {
-			return errors.Wrapf(err, "serial vk path=%s", vkPath)
-		}
+
 		pass, err := zksnark.Verify(verifyKey, proof.Proof, proof.PublicInput)
 		if err != nil || !pass {
 			return errors.Wrapf(err, "zk verify fail")
@@ -115,7 +81,7 @@ func (p *mixPolicy) verifyProofOnChain(ty mixTy.VerifyType, proof *mixTy.ZkProof
 	return err
 }
 
-func (p *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
+func (p *mixPolicy) getPaymentKey(addr string) (*mixTy.NoteAccountKey, error) {
 	msg, err := p.walletOperate.GetAPI().QueryChain(&types.ChainExecutor{
 		Driver:   "mix",
 		FuncName: "PaymentPubKey",
@@ -124,7 +90,7 @@ func (p *mixPolicy) getPaymentKey(addr string) (*mixTy.PaymentKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	return msg.(*mixTy.PaymentKey), err
+	return msg.(*mixTy.NoteAccountKey), err
 }
 
 func (p *mixPolicy) getPathProof(exec, symbol, leaf string) (*mixTy.CommitTreeProve, error) {
@@ -173,176 +139,138 @@ func (p *mixPolicy) getTreeProof(exec, symbol, leaf string) (*mixTy.TreePathProo
 	return &proof, nil
 }
 
-//文件信息过大，pk文件超过1M，作为参数传递不合适，这里传路径信息
-func getCircuit(path string) (*backend_bn256.R1CS, error) {
-	var bigIntR1cs frontend.R1CS
-	if err := gob.Read(path, &bigIntR1cs, gurvy.BN256); err != nil {
-		return nil, errors.Wrapf(err, "getCircuit path=%s", path)
+func getCircuit(circuitTy mixTy.VerifyType) (frontend.CompiledConstraintSystem, error) {
+	switch circuitTy {
+	case mixTy.VerifyType_DEPOSIT:
+		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.DepositCircuit{})
+	case mixTy.VerifyType_WITHDRAW:
+		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.WithdrawCircuit{})
+	case mixTy.VerifyType_TRANSFERINPUT:
+		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.TransferInputCircuit{})
+	case mixTy.VerifyType_TRANSFEROUTPUT:
+		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.TransferOutputCircuit{})
+	case mixTy.VerifyType_AUTHORIZE:
+		return frontend.Compile(ecc.BN254, backend.GROTH16, &mixTy.AuthorizeCircuit{})
+	default:
+		return nil, errors.Wrapf(types.ErrInvalidParam, "ty=%d", circuitTy)
 	}
-	r1cs := backend_bn256.Cast(&bigIntR1cs)
-	return &r1cs, nil
 }
 
-func getProveKey(path string) (*groth16_bn256.ProvingKey, error) {
-	var pk groth16_bn256.ProvingKey
-	if err := gob.Read(path, &pk, gurvy.BN256); err != nil {
-		return nil, errors.Wrapf(err, "getProveKey path=%s", path)
+func getCircuitKeyFileName(circuitTy mixTy.VerifyType) (string, string, error) {
+	switch circuitTy {
+	case mixTy.VerifyType_DEPOSIT:
+		return mixTy.DepositPk, mixTy.DepositVk, nil
+	case mixTy.VerifyType_WITHDRAW:
+		return mixTy.WithdrawPk, mixTy.WithdrawVk, nil
+	case mixTy.VerifyType_TRANSFERINPUT:
+		return mixTy.TransInputPk, mixTy.TransInputVk, nil
+	case mixTy.VerifyType_TRANSFEROUTPUT:
+		return mixTy.TransOutputPk, mixTy.TransOutputVk, nil
+	case mixTy.VerifyType_AUTHORIZE:
+		return mixTy.AuthPk, mixTy.AuthVk, nil
+	default:
+		return "", "", errors.Wrapf(types.ErrInvalidParam, "ty=%d", circuitTy)
 	}
-
-	return &pk, nil
 }
 
-func getVerifyKey(path string) (*groth16_bn256.VerifyingKey, error) {
-	var vk groth16_bn256.VerifyingKey
-	if err := gob.Read(path, &vk, gurvy.BN256); err != nil {
-		return nil, errors.Wrapf(err, "zk.verify.Deserize.VK=%s", path)
-	}
-
-	return &vk, nil
-}
-
-func createProof(circuit *backend_bn256.R1CS, pk *groth16_bn256.ProvingKey, inputs backend.Assignments) (*groth16_bn256.Proof, error) {
-	return groth16_bn256.Prove(circuit, pk, inputs)
-
-}
-
-func verifyProof(proof *groth16_bn256.Proof, vk *groth16_bn256.VerifyingKey, input backend.Assignments) bool {
-	ok, err := groth16_bn256.Verify(proof, vk, input)
+func readZkKeyFile(path string) (string, error) {
+	f, err := os.Open(path)
 	if err != nil {
-		fmt.Println("err", err)
-		return false
+		return "", errors.Wrapf(err, "open file=%s", path)
 	}
-	return ok
-}
-
-func getAssignments(obj interface{}) (backend.Assignments, error) {
-	ty := reflect.TypeOf(obj)
-	tv := reflect.ValueOf(obj)
-	n := ty.NumField()
-	assigns := backend.NewAssignment()
-	for i := 0; i < n; i++ {
-		name := ty.Field(i).Name
-		v, ok := ty.Field(i).Tag.Lookup("tag")
-		if !ok {
-			return nil, errors.Wrapf(types.ErrNotFound, "fieldname=%s not set tag", ty.Field(i).Name)
-		}
-
-		if v != string(backend.Secret) && v != string(backend.Public) {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "tag=%s not correct", v)
-		}
-		assigns.Assign(backend.Visibility(v), name, tv.FieldByName(name).Interface())
-	}
-	return assigns, nil
-
-}
-
-func serializeObj(from interface{}) (string, error) {
 	var buf bytes.Buffer
-
-	err := gob.Serialize(&buf, from, gurvy.BN256)
+	_, err = buf.ReadFrom(f)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "read file=%s", path)
 	}
-	return hex.EncodeToString(buf.Bytes()), nil
+
+	return buf.String(), nil
+}
+
+func createProof(circuit frontend.CompiledConstraintSystem, pk groth16.ProvingKey, witness frontend.Circuit) (groth16.Proof, error) {
+	return groth16.Prove(circuit, pk, witness)
 
 }
 
-func serialInputs(assignments backend.Assignments) (string, error) {
-	rst := make(map[string]interface{})
-	publics := assignments.DiscardSecrets()
-	for k, v := range publics {
-		rst[k] = v.Value.String()
-	}
-
-	out, err := json.Marshal(rst)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(out), nil
-}
-
-func initTreePath(obj interface{}) {
-	tv := reflect.ValueOf(obj)
-	for i := 0; i < mixTy.TreeLevel; i++ {
-		tv.Elem().FieldByName(fmt.Sprintf("Path%d", i)).SetString("0")
-		tv.Elem().FieldByName(fmt.Sprintf("Helper%d", i)).SetString("0")
-		tv.Elem().FieldByName(fmt.Sprintf("Valid%d", i)).SetString("0")
-	}
-
-}
 func updateTreePath(obj interface{}, treeProof *mixTy.TreePathProof) {
 	tv := reflect.ValueOf(obj)
+	if tv.Kind() == reflect.Ptr {
+		tv = tv.Elem()
+	}
+	index := 0
 	for i, t := range treeProof.TreePath {
-		tv.Elem().FieldByName("Path" + strconv.Itoa(i)).SetString(t)
-		tv.Elem().FieldByName("Helper" + strconv.Itoa(i)).SetString(strconv.Itoa(int(treeProof.Helpers[i])))
-		tv.Elem().FieldByName("Valid" + strconv.Itoa(i)).SetString("1")
+		tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign(t)
+		tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign(strconv.Itoa(int(treeProof.Helpers[i])))
+		tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("1")
+		index = i + 1
 	}
-}
 
-func printObj(obj interface{}) {
-	ty := reflect.TypeOf(obj)
-	tv := reflect.ValueOf(obj)
-	n := ty.NumField()
+	//电路变量必须设置
+	for i := index; i < mixTy.TreeLevel; i++ {
+		tv.FieldByName("Path" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
+		tv.FieldByName("Helper" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
+		tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
 
-	for i := 0; i < n; i++ {
-		name := ty.Field(i).Name
-		v, ok := ty.Field(i).Tag.Lookup("tag")
-		if !ok {
-			fmt.Println("fieldname=", ty.Field(i).Name, "not set tag")
-		}
-
-		fmt.Println("fieldname=", ty.Field(i).Name, "| value=", tv.FieldByName(name).Interface(), "| tag=", v)
 	}
 
 }
 
-func getZkProofKeys(circuitFile, pkFile string, inputs interface{}, privacyPrint int32) (*mixTy.ZkProofInfo, error) {
-	if privacyPrint > 0 {
-		fmt.Println("--output zk parameters for circuit:", circuitFile)
-		rst, err := json.MarshalIndent(inputs, "", "    ")
+func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs frontend.Circuit, proof string) (*mixTy.ZkProofInfo, error) {
+	var proofKey bytes.Buffer
+
+	//是Pk file, 需要生成proof
+	if len(proof) > 0 {
+		//直接读proof
+		pkBuf, err := mixTy.GetByteBuff(proof)
 		if err != nil {
-			fmt.Println(err)
-
+			return nil, err
 		}
-		fmt.Println(string(rst))
-	}
 
-	assignments, err := getAssignments(inputs)
-	if err != nil {
-		return nil, err
-	}
+		proofKey.Write(pkBuf.Bytes())
 
-	//从电路文件获取电路约束
-	circuit, err := getCircuit(circuitFile)
-	if err != nil {
-		return nil, err
-	}
-	//从pv 文件读取Pk结构
-	pk, err := getProveKey(pkFile)
-	if err != nil {
-		return nil, err
-	}
-	//产生zk 证明
-	proof, err := createProof(circuit, pk, assignments)
-	if err != nil {
-		return nil, err
+	} else {
+
+		//从电路文件获取电路约束
+		circuit, err := getCircuit(circuitTy)
+		if err != nil {
+			return nil, err
+		}
+		//从pv 文件读取Pk结构
+		pkFile := filepath.Join(path, file)
+		pkStr, err := readZkKeyFile(pkFile)
+		if err != nil {
+			return nil, errors.Wrapf(err, "readZkKeyFile")
+		}
+		pkBuf, err := mixTy.GetByteBuff(pkStr)
+		if err != nil {
+			return nil, err
+		}
+
+		pk := groth16.NewProvingKey(ecc.BN254)
+		if _, err := pk.ReadFrom(pkBuf); err != nil {
+			return nil, errors.Wrapf(err, "read pk")
+		}
+		//产生zk 证明
+		proof, err := createProof(circuit, pk, inputs)
+		if err != nil {
+			return nil, errors.Wrapf(err, "create proof to %s", pkFile)
+		}
+
+		if _, err := proof.WriteRawTo(&proofKey); err != nil {
+			return nil, errors.Wrapf(err, "write proof")
+		}
+
 	}
 
 	//序列号成字符串
-	proofKey, err := serializeObj(proof)
+	var pubBuf bytes.Buffer
+	_, err := witness.WritePublicTo(&pubBuf, ecc.BN254, inputs)
 	if err != nil {
-		return nil, err
-	}
-
-	//序列号成字符串
-	proofInput, err := serialInputs(assignments)
-	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "write public input")
 	}
 
 	return &mixTy.ZkProofInfo{
-		Proof:       proofKey,
-		PublicInput: proofInput,
+		Proof:       hex.EncodeToString(proofKey.Bytes()),
+		PublicInput: hex.EncodeToString(pubBuf.Bytes()),
 	}, nil
 }
