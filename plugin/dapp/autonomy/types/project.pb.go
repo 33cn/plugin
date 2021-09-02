@@ -382,7 +382,7 @@ func (m *VoteProposalProject) GetVote() AutonomyVoteOption {
 	if m != nil {
 		return m.Vote
 	}
-	return AutonomyVoteOption_INVALID
+	return AutonomyVoteOption_NOJOIN
 }
 
 type PubVoteProposalProject struct {

@@ -28,11 +28,11 @@ message AutonomyProposalBoard {
 enum BoardUpdate {
     INV = 0;
     //新增
-    ADD = 1;
+    ADDBoard = 1;
     //剔除
-    DEL = 2;
+    DELBoard = 2;
     //整体替换
-    WHOLE = 3;
+    REPLACEALL = 3;
 }
 
 // action

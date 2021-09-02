@@ -59,11 +59,11 @@ func (a *action) getPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, erro
 	}
 
 	switch prob.BoardUpdate {
-	case auty.BoardUpdate_WHOLE:
+	case auty.BoardUpdate_REPLACEALL:
 		return &auty.ActiveBoard{Boards: prob.Boards}, nil
-	case auty.BoardUpdate_ADD:
+	case auty.BoardUpdate_ADDBoard:
 		return a.addPropBoard(prob, mpBd)
-	case auty.BoardUpdate_DEL:
+	case auty.BoardUpdate_DELBoard:
 		return a.delPropBoard(prob, mpBd)
 	default:
 		return nil, errors.Wrapf(types.ErrInvalidParam, "board update param=%d", prob.BoardUpdate)
@@ -366,7 +366,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
 		if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_WHOLE {
+			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_REPLACEALL {
 				cur.Board.StartHeight = a.height
 			}
 		} else {
@@ -476,7 +476,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 	// 更新当前具有权利的董事会成员
 	if cur.VoteResult.Pass {
 		if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_WHOLE {
+			if cur.PropBoard.BoardUpdate == auty.BoardUpdate_REPLACEALL {
 				cur.Board.StartHeight = a.height
 			}
 		} else {

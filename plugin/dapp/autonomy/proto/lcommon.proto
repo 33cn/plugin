@@ -55,7 +55,7 @@ message RuleConfig {
 
 //三种投票选项
 enum AutonomyVoteOption {
-    INVALID = 0;
+    NOJOIN = 0;
     //支持
     APPROVE = 1;
     //反对

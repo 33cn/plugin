@@ -196,43 +196,43 @@ func TestPropBoard(t *testing.T) {
 
 	opts := []*auty.ProposalBoard{
 		{ // ErrRepeatAddr
-			BoardUpdate:      auty.BoardUpdate_ADD,
+			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrRepeatAddr
-			BoardUpdate:      auty.BoardUpdate_ADD,
+			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			BoardUpdate:      auty.BoardUpdate_ADD,
+			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			BoardUpdate:      auty.BoardUpdate_ADD,
+			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 
 		{ // ErrRepeatAddr
-			BoardUpdate:      auty.BoardUpdate_WHOLE,
+			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
-			BoardUpdate:      auty.BoardUpdate_WHOLE,
+			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
 		{ // 正常
-			BoardUpdate:      auty.BoardUpdate_WHOLE,
+			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           boards,
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -292,7 +292,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 		Month:            7,
 		Day:              10,
 		Boards:           boards,
-		BoardUpdate:      auty.BoardUpdate_WHOLE,
+		BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 		StartBlockHeight: env.blockHeight + 5,
 		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 	}
