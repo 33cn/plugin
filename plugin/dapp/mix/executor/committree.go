@@ -12,7 +12,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark/crypto/hash/mimc/bn256"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 )
@@ -95,7 +95,7 @@ func getArchiveRoots(db dbm.KV, exec, symbol string, seq uint64) (*mixTy.CommitT
 
 //TODO seed config
 func getNewTree() *merkletree.Tree {
-	return merkletree.New(bn256.NewMiMC("seed"))
+	return merkletree.New(mimc.NewMiMC("seed"))
 }
 
 func calcTreeRoot(leaves *mixTy.CommitTreeLeaves) []byte {

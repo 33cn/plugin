@@ -34,6 +34,7 @@ func MixCmd() *cobra.Command {
 		CreateAuthRawTxCmd(),
 
 		CreateConfigCmd(),
+		CreateParamsCmd(),
 
 		QueryCmd(),
 		WalletCmd(),
@@ -106,6 +107,52 @@ func createConfigVerify(cmd *cobra.Command, args []string) {
 
 }
 
+// CreateParamsCmd create raw asset transfer tx
+func CreateParamsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "create parameters",
+	}
+	cmd.AddCommand(mixCreateZkKeyCmd())
+
+	return cmd
+}
+
+func mixCreateZkKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "keys",
+		Short: "create pk and vk for circuit",
+		Run:   createZkKeys,
+	}
+	addCreateKeyFlags(cmd)
+
+	return cmd
+}
+
+func addCreateKeyFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("circuit", "t", 0, "mix circuit type,0:deposit,1:withdraw,2:tansferinput,3:transferoutput,4:authorize")
+	cmd.MarkFlagRequired("circuit")
+
+	cmd.Flags().StringP("path", "p", "", "key save path")
+	cmd.MarkFlagRequired("path")
+
+}
+
+func createZkKeys(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	circuit, _ := cmd.Flags().GetInt32("circuit")
+	path, _ := cmd.Flags().GetString("path")
+
+	var params mixTy.CreateZkKeyFileReq
+	params.Ty = circuit
+	params.SavePath = path
+
+	var req types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateZkKeyFile", &params, &req)
+	ctx.Run()
+
+}
+
 func mixConfigAuthPubKeyParaCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
@@ -161,14 +208,14 @@ func mixConfigPaymentPubKeyParaCmd() *cobra.Command {
 }
 
 func addPayPubKeyConfigFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("addr", "a", "", "register for addr ")
+	cmd.Flags().StringP("addr", "a", "", "chain addr ")
 	cmd.MarkFlagRequired("addr")
 
-	cmd.Flags().StringP("receiver", "r", "", "receiver key")
+	cmd.Flags().StringP("receiver", "r", "", "note receiver addr")
 	cmd.MarkFlagRequired("receiver")
 
-	cmd.Flags().StringP("encryptKey", "e", "", "encrypt key for secret")
-	cmd.MarkFlagRequired("encryptKey")
+	cmd.Flags().StringP("secretKey", "e", "", "key for note secret info")
+	cmd.MarkFlagRequired("secretKey")
 
 }
 
@@ -176,12 +223,12 @@ func createConfigPayPubKey(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	addr, _ := cmd.Flags().GetString("addr")
 	receiver, _ := cmd.Flags().GetString("receiver")
-	encryptKey, _ := cmd.Flags().GetString("encryptKey")
+	secretKey, _ := cmd.Flags().GetString("secretKey")
 
 	payload := &mixTy.MixConfigAction{}
 	payload.Ty = mixTy.MixConfigType_Payment
 
-	payload.Value = &mixTy.MixConfigAction_PaymentKey{PaymentKey: &mixTy.PaymentKey{Addr: addr, ReceiverKey: receiver, EncryptKey: encryptKey}}
+	payload.Value = &mixTy.MixConfigAction_NoteAccountKey{NoteAccountKey: &mixTy.NoteAccountKey{Addr: addr, NoteReceiveAddr: receiver, SecretReceiveKey: secretKey}}
 
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, mixTy.MixX),
@@ -473,7 +520,7 @@ func showMixTxs(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-// ShowProposalBoardCmd 显示提案查询信息
+// ShowPaymentPubKeyCmd 显示
 func ShowPaymentPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "peer",
@@ -501,7 +548,7 @@ func showPayment(cmd *cobra.Command, args []string) {
 	params.FuncName = "PaymentPubKey"
 	params.Payload = types.MustPBToJSON(&types.ReqString{Data: addr})
 
-	var resp mixTy.PaymentKey
+	var resp mixTy.NoteAccountKey
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -699,49 +746,49 @@ func SecretCmd() *cobra.Command {
 	cmd.AddCommand(DecodeSecretDataCmd())
 	cmd.AddCommand(EncryptSecretDataCmd())
 	cmd.AddCommand(DecryptSecretDataCmd())
-	cmd.AddCommand(DecodePubInputDataCmd())
+	//cmd.AddCommand(DecodePubInputDataCmd())
 
 	return cmd
 }
 
 // DecodePublicInputDataCmd decode zk public data
-func DecodePubInputDataCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "parse",
-		Short: "parse zk public input data",
-		Run:   decodePubInput,
-	}
-	decodePubInputCmdFlags(cmd)
-	return cmd
-}
-
-func decodePubInputCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("data", "d", "", "public input data")
-	cmd.MarkFlagRequired("data")
-
-	cmd.Flags().Int32P("type", "t", 0, "type 0:deposit,1:withdraw,2:transIn,3:transOut,4:auth")
-	cmd.MarkFlagRequired("type")
-
-}
-
-func decodePubInput(cmd *cobra.Command, args []string) {
-	//rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	data, _ := cmd.Flags().GetString("data")
-	ty, _ := cmd.Flags().GetInt32("type")
-
-	v, err := mixTy.DecodePubInput(mixTy.VerifyType(ty), data)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-
-	rst, err := json.MarshalIndent(v, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	fmt.Println(string(rst))
-}
+//func DecodePubInputDataCmd() *cobra.Command {
+//	cmd := &cobra.Command{
+//		Use:   "parse",
+//		Short: "parse zk public input data",
+//		Run:   decodePubInput,
+//	}
+//	decodePubInputCmdFlags(cmd)
+//	return cmd
+//}
+//
+//func decodePubInputCmdFlags(cmd *cobra.Command) {
+//	cmd.Flags().StringP("data", "d", "", "public input data")
+//	cmd.MarkFlagRequired("data")
+//
+//	cmd.Flags().Int32P("type", "t", 0, "type 0:deposit,1:withdraw,2:transIn,3:transOut,4:auth")
+//	cmd.MarkFlagRequired("type")
+//
+//}
+//
+//func decodePubInput(cmd *cobra.Command, args []string) {
+//	//rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+//	data, _ := cmd.Flags().GetString("data")
+//	ty, _ := cmd.Flags().GetInt32("type")
+//
+//	v, err := mixTy.DecodePubInput(mixTy.VerifyType(ty), data)
+//	if err != nil {
+//		fmt.Fprintln(os.Stderr, err)
+//		return
+//	}
+//
+//	rst, err := json.MarshalIndent(v, "", "    ")
+//	if err != nil {
+//		fmt.Fprintln(os.Stderr, err)
+//		return
+//	}
+//	fmt.Println(string(rst))
+//}
 
 // EncodeSecretDataCmd get para chain status by height
 func DecodeSecretDataCmd() *cobra.Command {
@@ -886,10 +933,10 @@ func CreateDepositRawTxCmd() *cobra.Command {
 }
 
 func depositSecretCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("receiver", "r", "", "receiver addrs,seperated by ','")
+	cmd.Flags().StringP("receiver", "t", "", "receiver addrs,seperated by ','")
 	cmd.MarkFlagRequired("receiver")
 
-	cmd.Flags().StringP("return", "f", "", "return addr,optional")
+	cmd.Flags().StringP("return", "r", "", "return addr,optional")
 
 	cmd.Flags().StringP("authorize", "a", "", "authorize addr,optional")
 
@@ -904,8 +951,8 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "deposit circuit path")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().Int32P("privacy", "w", 0, "get zk privacy data print, 1:print, default not")
-	cmd.Flags().Int32P("verify", "v", 0, "verify on chain:0 on local:1, default 0 ")
+	cmd.Flags().StringP("proof", "w", "", "proof string to test")
+	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false ")
 
 }
 
@@ -920,8 +967,8 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
-	privacy, _ := cmd.Flags().GetInt32("privacy")
-	verify, _ := cmd.Flags().GetInt32("verify")
+	proof, _ := cmd.Flags().GetString("proof")
+	verify, _ := cmd.Flags().GetBool("verify")
 
 	deposit := &mixTy.DepositInfo{
 		ReceiverAddrs: receiver,
@@ -936,13 +983,13 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:    mixTy.MixActionDeposit,
-		Data:        types.Encode(tx),
-		AssetExec:   assetExec,
-		AssetSymbol: symbol,
-		Title:       paraName,
-		Privacy:     privacy,
-		Verify:      verify,
+		ActionTy:      mixTy.MixActionDeposit,
+		Data:          types.Encode(tx),
+		AssetExec:     assetExec,
+		AssetSymbol:   symbol,
+		Title:         paraName,
+		ZkProof:       proof,
+		VerifyOnChain: verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -979,13 +1026,11 @@ func transferSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("exec", "e", "coins", "asset executor(coins, token)")
 	cmd.MarkFlagRequired("exec")
 
-	cmd.Flags().StringP("inpath", "i", "", "input path ")
-	cmd.MarkFlagRequired("inpath")
+	cmd.Flags().StringP("path", "p", "", "input path ")
+	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().StringP("outpath", "o", "", "output pk file ")
-	cmd.MarkFlagRequired("outpath")
-	cmd.Flags().Int32P("privacy", "w", 0, "get zk privacy data print, 1:print, default not")
-	cmd.Flags().Int32P("verify", "v", 0, "verify on chain:0 on local:1, default 0 ")
+	cmd.Flags().StringP("proof", "w", "", "proof string to test")
+	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
 
@@ -998,18 +1043,16 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	returner, _ := cmd.Flags().GetString("returner")
 	amount, _ := cmd.Flags().GetString("amount")
 
-	inpath, _ := cmd.Flags().GetString("inpath")
-	outpath, _ := cmd.Flags().GetString("outpath")
+	path, _ := cmd.Flags().GetString("path")
 
 	assetExec, _ := cmd.Flags().GetString("exec")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	privacy, _ := cmd.Flags().GetInt32("privacy")
-	verify, _ := cmd.Flags().GetInt32("verify")
+	proof, _ := cmd.Flags().GetString("proof")
+	verify, _ := cmd.Flags().GetBool("verify")
 
 	input := &mixTy.TransferInputTxReq{
 		NoteHashs: noteHash,
-		ZkPath:    inpath,
 	}
 
 	deposit := &mixTy.DepositInfo{
@@ -1021,22 +1064,22 @@ func transferSecret(cmd *cobra.Command, args []string) {
 
 	output := &mixTy.TransferOutputTxReq{
 		Deposit: deposit,
-		ZkPath:  outpath,
 	}
 
 	req := &mixTy.TransferTxReq{
 		Input:  input,
 		Output: output,
+		ZkPath: path,
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:    mixTy.MixActionTransfer,
-		Data:        types.Encode(req),
-		AssetExec:   assetExec,
-		AssetSymbol: symbol,
-		Title:       paraName,
-		Privacy:     privacy,
-		Verify:      verify,
+		ActionTy:      mixTy.MixActionTransfer,
+		Data:          types.Encode(req),
+		AssetExec:     assetExec,
+		AssetSymbol:   symbol,
+		Title:         paraName,
+		ZkProof:       proof,
+		VerifyOnChain: verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -1069,8 +1112,8 @@ func withdrawSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "withdraw pk file ")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().Int32P("privacy", "w", 0, "get zk privacy data print, 1:print, default not")
-	cmd.Flags().Int32P("verify", "v", 0, "verify on chain:0 on local:1, default 0 ")
+	cmd.Flags().StringP("proof", "w", "", "proof string to test")
+	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
 
@@ -1084,8 +1127,8 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
-	privacy, _ := cmd.Flags().GetInt32("privacy")
-	verify, _ := cmd.Flags().GetInt32("verify")
+	proof, _ := cmd.Flags().GetString("proof")
+	verify, _ := cmd.Flags().GetBool("verify")
 
 	req := &mixTy.WithdrawTxReq{
 		TotalAmount: amount,
@@ -1094,13 +1137,13 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:    mixTy.MixActionWithdraw,
-		Data:        types.Encode(req),
-		AssetExec:   assetExec,
-		AssetSymbol: symbol,
-		Title:       paraName,
-		Privacy:     privacy,
-		Verify:      verify,
+		ActionTy:      mixTy.MixActionWithdraw,
+		Data:          types.Encode(req),
+		AssetExec:     assetExec,
+		AssetSymbol:   symbol,
+		Title:         paraName,
+		ZkProof:       proof,
+		VerifyOnChain: verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)
@@ -1133,8 +1176,8 @@ func authSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "auth path file ")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().Int32P("privacy", "w", 0, "get zk privacy data print, 1:print, default not")
-	cmd.Flags().Int32P("verify", "v", 0, "verify on chain:0 on local:1, default 0 ")
+	cmd.Flags().StringP("proof", "w", "", "proof string to test")
+	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
 
@@ -1149,8 +1192,8 @@ func authSecret(cmd *cobra.Command, args []string) {
 
 	path, _ := cmd.Flags().GetString("path")
 
-	privacy, _ := cmd.Flags().GetInt32("privacy")
-	verify, _ := cmd.Flags().GetInt32("verify")
+	proof, _ := cmd.Flags().GetString("proof")
+	verify, _ := cmd.Flags().GetBool("verify")
 
 	req := &mixTy.AuthTxReq{
 		AuthorizeToAddr: toKey,
@@ -1159,13 +1202,13 @@ func authSecret(cmd *cobra.Command, args []string) {
 	}
 
 	params := &mixTy.CreateRawTxReq{
-		ActionTy:    mixTy.MixActionAuth,
-		Data:        types.Encode(req),
-		AssetExec:   assetExec,
-		AssetSymbol: symbol,
-		Title:       paraName,
-		Privacy:     privacy,
-		Verify:      verify,
+		ActionTy:      mixTy.MixActionAuth,
+		Data:          types.Encode(req),
+		AssetExec:     assetExec,
+		AssetSymbol:   symbol,
+		Title:         paraName,
+		ZkProof:       proof,
+		VerifyOnChain: verify,
 	}
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateRawTransaction", params, nil)

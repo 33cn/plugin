@@ -46,23 +46,18 @@ const (
 
 //circuits default file name
 const (
-	DepositCircuit = "circuit_deposit.r1cs"
-	DepositPk      = "circuit_deposit.pk"
-	DepositVk      = "circuit_deposit.vk"
+	DepositPk = "circuit_deposit.pk"
+	DepositVk = "circuit_deposit.vk"
 
-	WithdrawCircuit = "circuit_withdraw.r1cs"
-	WithdrawPk      = "circuit_withdraw.pk"
-	WithdrawVk      = "circuit_withdraw.vk"
+	WithdrawPk = "circuit_withdraw.pk"
+	WithdrawVk = "circuit_withdraw.vk"
 
-	AuthCircuit = "circuit_auth.r1cs"
-	AuthPk      = "circuit_auth.pk"
-	AuthVk      = "circuit_auth.vk"
+	AuthPk = "circuit_auth.pk"
+	AuthVk = "circuit_auth.vk"
 
-	TransInputCircuit = "circuit_transfer_input.r1cs"
-	TransInputPk      = "circuit_transfer_input.pk"
-	TransInputVk      = "circuit_transfer_input.vk"
+	TransInputPk = "circuit_transfer_input.pk"
+	TransInputVk = "circuit_transfer_input.vk"
 
-	TransOutputCircuit = "circuit_transfer_output.r1cs"
-	TransOutputPk      = "circuit_transfer_output.pk"
-	TransOutputVk      = "circuit_transfer_output.vk"
+	TransOutputPk = "circuit_transfer_output.pk"
+	TransOutputVk = "circuit_transfer_output.vk"
 )

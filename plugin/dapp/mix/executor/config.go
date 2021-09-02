@@ -45,7 +45,7 @@ func (a *action) Config(config *mixTy.MixConfigAction) (*types.Receipt, error) {
 		}
 	case mixTy.MixConfigType_Payment:
 		//个人配置，个人负责，可重配
-		return a.ConfigPaymentPubKey(config.GetPaymentKey())
+		return a.ConfigPaymentPubKey(config.GetNoteAccountKey())
 	}
 	return nil, errors.Wrapf(types.ErrNotFound, "ty=%d", config.Ty)
 
@@ -157,7 +157,7 @@ func (a *action) ConfigDeleteAuthPubKey(key string) (*types.Receipt, error) {
 	return makeConfigAuthKeyReceipt(&newKeys), nil
 }
 
-func makeConfigPaymentKeyReceipt(data *mixTy.PaymentKey) *types.Receipt {
+func makeConfigPaymentKeyReceipt(data *mixTy.NoteAccountKey) *types.Receipt {
 	key := calcReceivingKey(data.Addr)
 	return &types.Receipt{
 		Ty: types.ExecOk,
@@ -171,13 +171,13 @@ func makeConfigPaymentKeyReceipt(data *mixTy.PaymentKey) *types.Receipt {
 
 }
 
-func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
+func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.NoteAccountKey, error) {
 	key := calcReceivingKey(addr)
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db")
 	}
-	var keys mixTy.PaymentKey
+	var keys mixTy.NoteAccountKey
 	err = types.Decode(v, &keys)
 	if err != nil {
 		return nil, errors.Wrapf(err, "decode db key")
@@ -186,8 +186,8 @@ func GetPaymentPubKey(db dbm.KV, addr string) (*mixTy.PaymentKey, error) {
 	return &keys, nil
 }
 
-func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, error) {
-	if paykey == nil || len(paykey.ReceiverKey) == 0 || len(paykey.EncryptKey) == 0 || len(paykey.Addr) == 0 {
+func (a *action) ConfigPaymentPubKey(paykey *mixTy.NoteAccountKey) (*types.Receipt, error) {
+	if paykey == nil || len(paykey.NoteReceiveAddr) == 0 || len(paykey.SecretReceiveKey) == 0 || len(paykey.Addr) == 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey=%v", paykey)
 	}
 	//检查用户使用对应的addr的key，但不能确保key就是对应addr
@@ -195,9 +195,9 @@ func (a *action) ConfigPaymentPubKey(paykey *mixTy.PaymentKey) (*types.Receipt, 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "register addr=%s not match with sign=%s", paykey.Addr, a.fromaddr)
 	}
 	//直接覆盖
-	return makeConfigPaymentKeyReceipt(&mixTy.PaymentKey{
-		Addr:        a.fromaddr,
-		ReceiverKey: paykey.ReceiverKey,
-		EncryptKey:  paykey.EncryptKey}), nil
+	return makeConfigPaymentKeyReceipt(&mixTy.NoteAccountKey{
+		Addr:             a.fromaddr,
+		NoteReceiveAddr:  paykey.NoteReceiveAddr,
+		SecretReceiveKey: paykey.SecretReceiveKey}), nil
 
 }

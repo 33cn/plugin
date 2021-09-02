@@ -5,15 +5,10 @@
 package executor
 
 import (
-	"encoding/hex"
-	"encoding/json"
-	"strconv"
-
 	"github.com/33cn/chain33/common/address"
-	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/consensys/gnark/frontend"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/pkg/errors"
@@ -24,55 +19,20 @@ func makeNullifierSetReceipt(hash string, data proto.Message) *types.Receipt {
 
 }
 
-func zkProofVerify(db dbm.KV, proof *mixTy.ZkProofInfo, ty mixTy.VerifyType) error {
-	keys, err := getVerifyKeys(db, int32(ty))
-	if err != nil {
-		return err
-	}
+func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (*mixTy.DepositCircuit, error) {
+	var input mixTy.DepositCircuit
 
-	var pass bool
-	for _, verifyKey := range keys.Data {
-		ok, err := zksnark.Verify(verifyKey.Value, proof.Proof, proof.PublicInput)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			continue
-		}
-		pass = true
-		break
-	}
-	if !pass {
-		return errors.Wrap(mixTy.ErrZkVerifyFail, "verify")
-	}
-
-	return nil
-}
-
-func (a *action) depositVerify(proof *mixTy.ZkProofInfo) (string, uint64, error) {
-	var input mixTy.DepositPublicInput
-	data, err := hex.DecodeString(proof.PublicInput)
+	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
-		return "", 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
-	}
-	err = json.Unmarshal(data, &input)
-	if err != nil {
-		return "", 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
-	}
-	val, err := strconv.ParseUint(input.Amount, 10, 64)
-	if err != nil {
-		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
-	}
-	if val <= 0 {
-		return "", 0, errors.Wrapf(err, "amount=%d should >0", val)
+		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
 	err = zkProofVerify(a.db, proof, mixTy.VerifyType_DEPOSIT)
 	if err != nil {
-		return "", 0, err
+		return nil, errors.Wrapf(err, "verify fail for input=%s", proof.PublicInput)
 	}
 
-	return input.NoteHash, val, nil
+	return &input, nil
 
 }
 
@@ -87,12 +47,14 @@ func (a *action) Deposit(deposit *mixTy.MixDepositAction) (*types.Receipt, error
 	var sum uint64
 	//1. zk-proof校验
 	for _, p := range deposit.Proofs {
-		noteHash, amount, err := a.depositVerify(p)
+		input, err := a.depositVerify(p)
 		if err != nil {
-			return nil, errors.Wrapf(err, "verify fail for input=%s", p.PublicInput)
+			return nil, errors.Wrap(err, "get pub input")
 		}
-		sum += amount
-		notes = append(notes, noteHash)
+		v := frontend.FromInterface(frontend.GetAssignedValue(input.Amount))
+		sum += v.Uint64()
+		noteHash := frontend.FromInterface(frontend.GetAssignedValue(input.NoteHash))
+		notes = append(notes, noteHash.String())
 	}
 
 	//存款

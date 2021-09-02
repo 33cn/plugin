@@ -6,6 +6,7 @@ package wallet
 
 import (
 	"encoding/hex"
+	"github.com/consensys/gnark/frontend"
 
 	"github.com/33cn/chain33/common"
 
@@ -61,12 +62,14 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 	case mixTy.MixActionWithdraw:
 		var nulls []string
 		for _, m := range v.GetWithdraw().Proofs {
-			out, err := mixTy.DecodePubInput(mixTy.VerifyType_WITHDRAW, m.PublicInput)
+			var v mixTy.WithdrawCircuit
+			err := mixTy.ConstructCircuitPubInput(m.PublicInput, &v)
 			if err != nil {
 				bizlog.Error("processWithdraw decode", "pubInput", m.PublicInput)
 				continue
 			}
-			nulls = append(nulls, out.(*mixTy.WithdrawPublicInput).NullifierHash)
+			nullHash := frontend.FromInterface(frontend.GetAssignedValue(v.NullifierHash))
+			nulls = append(nulls, nullHash.String())
 		}
 		p.processNullifiers(nulls, table)
 
@@ -92,13 +95,14 @@ func (p *mixPolicy) processMixTx(tx *types.Transaction, height, index int64) (*t
 
 func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex string, table *table.Table) {
 	for _, proof := range deposit.Proofs {
-		data, err := mixTy.DecodePubInput(mixTy.VerifyType_DEPOSIT, proof.PublicInput)
+		var v mixTy.DepositCircuit
+		err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &v)
 		if err != nil {
 			bizlog.Error("processDeposit decode", "pubInput", proof.PublicInput)
 			return
 		}
-		input := data.(*mixTy.DepositPublicInput)
-		p.processSecretGroup(input.NoteHash, proof.Secrets, heightIndex, table)
+		noteHash := frontend.FromInterface(frontend.GetAssignedValue(v.NoteHash))
+		p.processSecretGroup(noteHash.String(), proof.Secrets, heightIndex, table)
 	}
 
 }
@@ -106,45 +110,51 @@ func (p *mixPolicy) processDeposit(deposit *mixTy.MixDepositAction, heightIndex 
 func (p *mixPolicy) processTransfer(transfer *mixTy.MixTransferAction, heightIndex string, table *table.Table) {
 	var nulls []string
 	for _, in := range transfer.Inputs {
-		data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFERINPUT, in.PublicInput)
+		var v mixTy.TransferInputCircuit
+		err := mixTy.ConstructCircuitPubInput(in.PublicInput, &v)
 		if err != nil {
 			bizlog.Error("processTransfer.input decode", "pubInput", in.PublicInput)
 			return
 		}
-		input := data.(*mixTy.TransferInputPublicInput)
-		nulls = append(nulls, input.NullifierHash)
+		nullHash := frontend.FromInterface(frontend.GetAssignedValue(v.NullifierHash))
+		nulls = append(nulls, nullHash.String())
 	}
 	p.processNullifiers(nulls, table)
 
 	//out
-	data, err := mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Output.PublicInput)
+	var out mixTy.TransferOutputCircuit
+	err := mixTy.ConstructCircuitPubInput(transfer.Output.PublicInput, &out)
 	if err != nil {
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Output.PublicInput)
 		return
 	}
-	outInput := data.(*mixTy.TransferOutputPublicInput)
-	p.processSecretGroup(outInput.NoteHash, transfer.Output.Secrets, heightIndex, table)
+	noteHash := frontend.FromInterface(frontend.GetAssignedValue(out.NoteHash))
+	p.processSecretGroup(noteHash.String(), transfer.Output.Secrets, heightIndex, table)
 
 	//change
-	data, err = mixTy.DecodePubInput(mixTy.VerifyType_TRANSFEROUTPUT, transfer.Change.PublicInput)
+	var change mixTy.TransferOutputCircuit
+	err = mixTy.ConstructCircuitPubInput(transfer.Change.PublicInput, &change)
 	if err != nil {
 		bizlog.Error("processTransfer.output decode", "pubInput", transfer.Change.PublicInput)
 		return
 	}
-	changeInput := data.(*mixTy.TransferOutputPublicInput)
-	p.processSecretGroup(changeInput.NoteHash, transfer.Change.Secrets, heightIndex, table)
+	changeNoteHash := frontend.FromInterface(frontend.GetAssignedValue(change.NoteHash))
+	p.processSecretGroup(changeNoteHash.String(), transfer.Change.Secrets, heightIndex, table)
 
 }
 
 func (p *mixPolicy) processAuth(auth *mixTy.MixAuthorizeAction, table *table.Table) {
-	out, err := mixTy.DecodePubInput(mixTy.VerifyType_AUTHORIZE, auth.Proof.PublicInput)
+	var v mixTy.AuthorizeCircuit
+	err := mixTy.ConstructCircuitPubInput(auth.ProofInfo.PublicInput, &v)
 	if err != nil {
-		bizlog.Error("processAuth decode", "pubInput", auth.Proof.PublicInput)
+		bizlog.Error("processAuth decode", "pubInput", auth.ProofInfo.PublicInput)
 		return
 	}
-	input := out.(*mixTy.AuthorizePublicInput)
-	updateAuthSpend(table, input.AuthorizeSpendHash)
-	updateAuthHash(table, input.AuthorizeHash)
+	authNullHash := frontend.FromInterface(frontend.GetAssignedValue(v.AuthorizeHash))
+	updateAuthHash(table, authNullHash.String())
+
+	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(v.AuthorizeSpendHash))
+	updateAuthSpend(table, authSpendHash.String())
 
 }
 
@@ -347,7 +357,7 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 		if err != nil {
 			return nil, errors.Wrapf(err, "decode for notehash=%s,crypt=%s", noteHash, dhSecret.Secret)
 		}
-		decryptData, err := decryptData(key.Privacy.EncryptKey.PrivKey, dhSecret.PeerKey, cryptData)
+		decryptData, err := decryptData(key.Privacy.EncryptKey.PrivKey, dhSecret.OneTimePubKey, cryptData)
 		if err != nil {
 			bizlog.Debug("processSecret.decryptData fail", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
 			continue
@@ -359,7 +369,9 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 			bizlog.Debug("processSecret.decode rawData fail", "addr", key.Addr, "err", err)
 			continue
 		}
-		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr)
+		bizlog.Info("processSecret.decode rawData OK", "notehash", noteHash, "addr", key.Addr, "receiver", key.Privacy.PaymentKey.ReceiveKey, "recv", rawData.ReceiverKey,
+			"return", rawData.ReturnKey, "auth", rawData.AuthorizeKey)
+
 		//wallet产生deposit tx时候 确保了三个key不同，除非自己构造相同key的交易
 		if rawData.ReceiverKey == key.Privacy.PaymentKey.ReceiveKey ||
 			rawData.ReturnKey == key.Privacy.PaymentKey.ReceiveKey ||

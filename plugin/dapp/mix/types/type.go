@@ -5,19 +5,12 @@
 package types
 
 import (
-	"bytes"
-	"encoding/hex"
-	"encoding/json"
 	"reflect"
-
-	"github.com/pkg/errors"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	coins "github.com/33cn/chain33/system/dapp/coins/types"
 	"github.com/33cn/chain33/types"
 	token "github.com/33cn/plugin/plugin/dapp/token/types"
-	"github.com/consensys/gurvy/bn256/fr"
-	"github.com/consensys/gurvy/bn256/twistededwards"
 )
 
 var (
@@ -78,7 +71,7 @@ func (p *MixType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogSubRoots:              {Ty: reflect.TypeOf(ReceiptCommitSubRoots{}), Name: "LogSubRoots"},
 		TyLogArchiveRootLeaves:     {Ty: reflect.TypeOf(ReceiptArchiveLeaves{}), Name: "LogArchiveRootLeaves"},
 		TyLogCommitTreeArchiveRoot: {Ty: reflect.TypeOf(ReceiptArchiveTreeRoot{}), Name: "LogCommitTreeArchiveRoot"},
-		TyLogMixConfigPaymentKey:   {Ty: reflect.TypeOf(PaymentKey{}), Name: "LogConfigReceivingKey"},
+		TyLogMixConfigPaymentKey:   {Ty: reflect.TypeOf(NoteAccountKey{}), Name: "LogConfigReceivingKey"},
 		TyLogNulliferSet:           {Ty: reflect.TypeOf(ExistValue{}), Name: "LogNullifierSet"},
 	}
 }
@@ -97,126 +90,6 @@ func (p *MixType) GetTypeMap() map[string]int32 {
 // GetPayload mix get action payload
 func (p *MixType) GetPayload() types.Message {
 	return &MixAction{}
-}
-
-func DecodePubInput(ty VerifyType, input string) (interface{}, error) {
-	data, err := hex.DecodeString(input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "decode string=%s", input)
-	}
-	switch ty {
-	case VerifyType_DEPOSIT:
-		var v DepositPublicInput
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-		}
-		return &v, nil
-	case VerifyType_WITHDRAW:
-		var v WithdrawPublicInput
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-		}
-		return &v, nil
-	case VerifyType_TRANSFERINPUT:
-		var v TransferInputPublicInput
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-		}
-		return &v, nil
-	case VerifyType_TRANSFEROUTPUT:
-		var v TransferOutputPublicInput
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-		}
-		return &v, nil
-	case VerifyType_AUTHORIZE:
-		var v AuthorizePublicInput
-		err = json.Unmarshal(data, &v)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal string=%s", input)
-		}
-		return &v, nil
-	}
-	return nil, types.ErrInvalidParam
-}
-
-func MulCurvePointG(val interface{}) *twistededwards.Point {
-	v := fr.FromInterface(val)
-	var point twistededwards.Point
-	ed := twistededwards.GetEdwardsCurve()
-	point.ScalarMul(&ed.Base, *v.FromMont())
-	return &point
-}
-
-func MulCurvePointH(pointHX, pointHY, val string) *twistededwards.Point {
-	v := fr.FromInterface(val)
-
-	var pointV, pointH twistededwards.Point
-	pointH.X.SetString(pointHX)
-	pointH.Y.SetString(pointHY)
-
-	pointV.ScalarMul(&pointH, *v.FromMont())
-	return &pointV
-}
-
-func GetCurveSum(points ...*twistededwards.Point) *twistededwards.Point {
-
-	//Add之前需初始化pointSum,不能空值，不然会等于0
-	pointSum := twistededwards.NewPoint(points[0].X, points[0].Y)
-	for _, a := range points[1:] {
-		pointSum.Add(&pointSum, a)
-	}
-
-	return &pointSum
-}
-
-//A=B+C
-func CheckSumEqual(points ...*twistededwards.Point) bool {
-	if len(points) < 2 {
-		return false
-	}
-	//Add之前需初始化pointSum,不能空值，不然会等于0
-	pointSum := twistededwards.NewPoint(points[1].X, points[1].Y)
-	for _, a := range points[2:] {
-		pointSum.Add(&pointSum, a)
-	}
-
-	if pointSum.X.Equal(&points[0].X) && pointSum.Y.Equal(&points[0].Y) {
-		return true
-	}
-	return false
-
-}
-
-func GetByteBuff(input string) (*bytes.Buffer, error) {
-	var buffInput bytes.Buffer
-	res, err := hex.DecodeString(input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getByteBuff to %s", input)
-	}
-	buffInput.Write(res)
-	return &buffInput, nil
-
-}
-
-func Str2Byte(v string) []byte {
-	var fr fr.Element
-	fr.SetString(v)
-	return fr.Bytes()
-}
-func Byte2Str(v []byte) string {
-	var f fr.Element
-	f.SetBytes(v)
-	return f.String()
-}
-
-func GetFrRandom() string {
-	var f fr.Element
-	return f.SetRandom().String()
 }
 
 func GetAssetExecSymbol(cfg *types.Chain33Config, execer, symbol string) (string, string) {

@@ -1,24 +1,25 @@
 syntax = "proto3";
 
-
-package types;
-
 import "common.proto";
 import "transaction.proto";
+
+package types;
+option go_package = "../types";
+
 
 //区分不同的验证电路
 enum VerifyType{
     DEPOSIT         = 0;
     WITHDRAW        = 1;
-    TRANSFERINPUT      = 2;
-    TRANSFEROUTPUT     = 3;
+    TRANSFERINPUT   = 2;
+    TRANSFEROUTPUT  = 3;
     AUTHORIZE       = 4;
 }
 
 
 message ZkVerifyKey {
     VerifyType type = 1;
-    string value = 2;
+    string value    = 2;
 
 }
 
@@ -30,15 +31,18 @@ message AuthKeys{
     repeated string keys = 1;
 }
 
-message PaymentKey{
-    string addr = 1;
-    string receiverKey = 2;
-    string encryptKey = 3;
+message NoteAccountKey{
+    //链上地址
+    string addr         = 1;
+    //支票收款地址
+    string noteReceiveAddr  = 2;
+    //note秘密信息接收key
+    string secretReceiveKey   = 3;
 }
 
 message TokenTxFeeAddrReq{
-    string assetExec = 1;
-    string assetSymbol = 2;
+    string assetExec    = 1;
+    string assetSymbol  = 2;
 }
 
 enum MixConfigType{
@@ -65,14 +69,14 @@ message MixConfigAction {
     oneof  value {
         ZkVerifyKey     verifyKey   = 3;
         string          authKey     = 4;
-        PaymentKey      paymentKey  = 5;
+        NoteAccountKey      noteAccountKey  = 5;
 
     }
 }
 
 //DH one time pubkey with secret
 message DHSecret{
-    string      peerKey = 1;
+    string      oneTimePubKey = 1;
     string      secret   = 2;
 }
 
@@ -115,9 +119,9 @@ message MixWithdrawAction {
 }
 
 message MixAuthorizeAction {
-    string assetExec = 1;
-    string assetSymbol = 2;
-    ZkProofInfo proof = 3;
+    string assetExec        = 1;
+    string assetSymbol      = 2;
+    ZkProofInfo proofInfo   = 3;
 
 }
 
@@ -135,44 +139,6 @@ message MixAction {
 }
 
 
-message DepositPublicInput {
-    string noteHash = 1;
-    string amount = 2;
-
-}
-
-message WithdrawPublicInput {
-    string treeRootHash  = 1;
-    string nullifierHash = 2;
-    string authorizeSpendHash = 3;
-    string amount = 4;
-
-}
-
-
-
-message TransferInputPublicInput {
-    string treeRootHash = 1;
-    string shieldAmountX = 2;
-    string shieldAmountY = 3;
-    string authorizeSpendHash = 4;
-    string nullifierHash = 5;
-}
-
-message TransferOutputPublicInput {
-    string noteHash = 1;
-    string shieldAmountX = 2;
-    string shieldAmountY = 3;
-
-}
-
-message AuthorizePublicInput {
-    string treeRootHash = 1;
-    string authorizePubKey = 2;
-    string authorizeHash = 3;
-    string authorizeSpendHash = 4;
-
-}
 
 message VerifyProofInfo{
     VerifyType  ty = 1;
@@ -384,17 +350,23 @@ message AuthTxReq{
 
 message TransferInputTxReq{
     string noteHashs     = 1;
-    string zkPath = 2;
+
 }
 
 message TransferOutputTxReq{
     DepositInfo deposit    = 1;
-    string zkPath = 2;
 }
 
 message TransferTxReq{
     TransferInputTxReq  input        = 1;
     TransferOutputTxReq output       = 2;
+    string              zkPath       = 3;
+}
+
+message CreateZkKeyFileReq{
+    int32   ty          = 1;
+    string  savePath    = 2;
+
 }
 
 //加密了的input/output amount
@@ -416,13 +388,13 @@ message ShieldAmountRst{
 }
 
 message CreateRawTxReq{
-    int32  actionTy = 1;
-    bytes  data = 4;
-    string assetExec = 2;
-    string assetSymbol = 3;
-    string title = 6; //平行链名字
-    int32  privacy = 7; //1:打印隐私数据
-    int32  verify = 8; //0:链上验证,1:本地验证
+    int32   actionTy = 1;
+    bytes   data = 4;
+    string  assetExec = 2;
+    string  assetSymbol = 3;
+    string  title = 6;          //平行链名字
+    string  zkProof = 7;        //输入证明内容,方便测试，空:读pk文件产生proof
+    bool    verifyOnChain = 8; //true:链上验证,false:本地验证
 
 
 }

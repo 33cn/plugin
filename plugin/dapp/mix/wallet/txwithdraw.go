@@ -5,7 +5,8 @@
 package wallet
 
 import (
-	"strconv"
+	"github.com/consensys/gnark/frontend"
+	"path/filepath"
 	"strings"
 
 	"github.com/33cn/chain33/common/address"
@@ -15,59 +16,7 @@ import (
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 )
 
-type WithdrawInput struct {
-	//public
-	TreeRootHash       string `tag:"public"`
-	AuthorizeSpendHash string `tag:"public"`
-	NullifierHash      string `tag:"public"`
-	Amount             string `tag:"public"`
-
-	//secret
-	ReceiverPubKey  string `tag:"secret"`
-	ReturnPubKey    string `tag:"secret"`
-	AuthorizePubKey string `tag:"secret"`
-	NoteRandom      string `tag:"secret"`
-	SpendPriKey     string `tag:"secret"`
-	SpendFlag       string `tag:"secret"`
-	AuthorizeFlag   string `tag:"secret"`
-
-	//tree path info
-	NoteHash string `tag:"secret"`
-	Path0    string `tag:"secret"`
-	Path1    string `tag:"secret"`
-	Path2    string `tag:"secret"`
-	Path3    string `tag:"secret"`
-	Path4    string `tag:"secret"`
-	Path5    string `tag:"secret"`
-	Path6    string `tag:"secret"`
-	Path7    string `tag:"secret"`
-	Path8    string `tag:"secret"`
-	Path9    string `tag:"secret"`
-
-	Helper0 string `tag:"secret"`
-	Helper1 string `tag:"secret"`
-	Helper2 string `tag:"secret"`
-	Helper3 string `tag:"secret"`
-	Helper4 string `tag:"secret"`
-	Helper5 string `tag:"secret"`
-	Helper6 string `tag:"secret"`
-	Helper7 string `tag:"secret"`
-	Helper8 string `tag:"secret"`
-	Helper9 string `tag:"secret"`
-
-	Valid0 string `tag:"secret"`
-	Valid1 string `tag:"secret"`
-	Valid2 string `tag:"secret"`
-	Valid3 string `tag:"secret"`
-	Valid4 string `tag:"secret"`
-	Valid5 string `tag:"secret"`
-	Valid6 string `tag:"secret"`
-	Valid7 string `tag:"secret"`
-	Valid8 string `tag:"secret"`
-	Valid9 string `tag:"secret"`
-}
-
-func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*WithdrawInput, error) {
+func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*mixTy.WithdrawCircuit, error) {
 	note, err := p.getNoteInfo(noteHash)
 	if err != nil {
 		return nil, err
@@ -81,21 +30,21 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*WithdrawI
 			note.Secret.AssetExec, note.Secret.AssetSymbol, exec, symbol)
 	}
 
-	var input WithdrawInput
-	initTreePath(&input)
-	input.NullifierHash = note.Nullifier
-	input.NoteHash = note.NoteHash
-	input.AuthorizeSpendHash = note.AuthorizeSpendHash
+	var input mixTy.WithdrawCircuit
+	input.NullifierHash.Assign(note.Nullifier)
+	input.NoteHash.Assign(note.NoteHash)
+	input.AuthorizeSpendHash.Assign(note.AuthorizeSpendHash)
 
-	input.Amount = note.Secret.Amount
-	input.ReceiverPubKey = note.Secret.ReceiverKey
-	input.ReturnPubKey = note.Secret.ReturnKey
-	input.AuthorizePubKey = note.Secret.AuthorizeKey
-	input.NoteRandom = note.Secret.NoteRandom
+	input.Amount.Assign(note.Secret.Amount)
+	input.ReceiverPubKey.Assign(note.Secret.ReceiverKey)
+	input.ReturnPubKey.Assign(note.Secret.ReturnKey)
+	input.AuthorizePubKey.Assign(note.Secret.AuthorizeKey)
+	input.NoteRandom.Assign(note.Secret.NoteRandom)
 
-	input.AuthorizeFlag = "0"
-	if len(input.AuthorizeSpendHash) > LENNULLKEY {
-		input.AuthorizeFlag = "1"
+	if len(note.AuthorizeSpendHash) > LENNULLKEY {
+		input.AuthorizeFlag.Assign("1")
+	} else {
+		input.AuthorizeFlag.Assign("0")
 	}
 
 	//get spend privacy key
@@ -103,10 +52,11 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*WithdrawI
 	if err != nil {
 		return nil, errors.Wrapf(err, "getAccountPrivacyKey addr=%s", note.Account)
 	}
-	input.SpendPriKey = privacyKey.Privacy.PaymentKey.SpendKey
-	input.SpendFlag = "1"
-	if privacyKey.Privacy.PaymentKey.ReceiveKey == input.ReturnPubKey {
-		input.SpendFlag = "0"
+	input.SpendPriKey.Assign(privacyKey.Privacy.PaymentKey.SpendKey)
+	if privacyKey.Privacy.PaymentKey.ReceiveKey == note.Secret.ReturnKey {
+		input.SpendFlag.Assign("0")
+	} else {
+		input.SpendFlag.Assign("1")
 	}
 
 	//get tree path
@@ -114,7 +64,7 @@ func (p *mixPolicy) getWithdrawParams(exec, symbol, noteHash string) (*WithdrawI
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTreeProof for hash=%s", note.NoteHash)
 	}
-	input.TreeRootHash = treeProof.TreeRootHash
+	input.TreeRootHash.Assign(treeProof.TreeRootHash)
 	updateTreePath(&input, treeProof)
 
 	return &input, nil
@@ -148,21 +98,18 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		if err != nil {
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
-
-		proofInfo, err := getZkProofKeys(withdraw.ZkPath+mixTy.WithdrawCircuit, withdraw.ZkPath+mixTy.WithdrawPk, *input, req.Privacy)
+		proofInfo, err := getZkProofKeys(mixTy.VerifyType_WITHDRAW, withdraw.ZkPath, mixTy.WithdrawPk, input, req.ZkProof)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getZkProofKeys note=%s", note)
 		}
 		//verify
-		if err := p.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, withdraw.ZkPath+mixTy.WithdrawVk, req.Verify); err != nil {
+		vkFile := filepath.Join(withdraw.ZkPath, mixTy.WithdrawVk)
+		if err := p.verifyProofOnChain(mixTy.VerifyType_WITHDRAW, proofInfo, vkFile, req.VerifyOnChain); err != nil {
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
-		v, err := strconv.Atoi(input.Amount)
-		if err != nil {
-			return nil, errors.Wrapf(err, "atoi fail for note=%s,amount=%s", note, input.Amount)
-		}
-		sum += uint64(v)
+		v := frontend.FromInterface(frontend.GetAssignedValue(input.Amount))
+		sum += v.Uint64()
 		proofs = append(proofs, proofInfo)
 	}
 

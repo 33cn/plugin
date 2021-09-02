@@ -139,3 +139,12 @@ func (c *Jrpc) CreateRawTransaction(in *mixTy.CreateRawTxReq, result *interface{
 	*result = hex.EncodeToString(types.Encode(reply))
 	return err
 }
+
+func (c *Jrpc) CreateZkKeyFile(in *mixTy.CreateZkKeyFileReq, result *interface{}) error {
+	reply, err := c.cli.ExecWalletFunc(mixTy.MixX, "CreateZkKeyFile", in)
+	if err != nil {
+		return err
+	}
+	*result, err = types.PBToJSON(reply)
+	return err
+}

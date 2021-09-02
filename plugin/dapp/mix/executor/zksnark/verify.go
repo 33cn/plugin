@@ -18,11 +18,8 @@ package zksnark
 
 import (
 	"encoding/json"
-
-	"github.com/consensys/gnark/backend"
-	groth16_bn256 "github.com/consensys/gnark/backend/bn256/groth16"
-	"github.com/consensys/gnark/encoding/gob"
-	"github.com/consensys/gurvy"
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
@@ -44,42 +41,78 @@ func deserializeInput(input string) (map[string]interface{}, error) {
 }
 
 func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
-	curveID := gurvy.BN256
-
-	output, err := mixTy.GetByteBuff(verifyKeyStr)
+	vkBuf, err := mixTy.GetByteBuff(verifyKeyStr)
 	if err != nil {
-		return false, errors.Wrapf(err, "zkVerify.GetByteBuff")
+		return false, errors.Wrapf(err, "zkVerify.vk.GetByteBuff")
 	}
-	var vk groth16_bn256.VerifyingKey
-	if err := gob.Deserialize(output, &vk, curveID); err != nil {
-		return false, errors.Wrapf(err, "zkVerify.Deserize.VK=%s", verifyKeyStr[:10])
-	}
-
-	// parse input file
-	assigns, err := deserializeInput(pubInputStr)
-	if err != nil {
-		return false, err
-	}
-	r1csInput := backend.NewAssignment()
-	for k, v := range assigns {
-		r1csInput.Assign(backend.Public, k, v)
+	vk := groth16.NewVerifyingKey(ecc.BN254)
+	if _, err := vk.ReadFrom(vkBuf); err != nil {
+		return false, errors.Wrapf(err, "zkVerify.read.vk=%s", verifyKeyStr[:10])
 	}
 
 	// load proof
-	output, err = mixTy.GetByteBuff(proofStr)
+	proofBuf, err := mixTy.GetByteBuff(proofStr)
 	if err != nil {
-		return false, errors.Wrapf(err, "zkVerify.proof")
+		return false, errors.Wrapf(err, "zkVerify.get.proof")
 	}
-	var proof groth16_bn256.Proof
-	if err := gob.Deserialize(output, &proof, curveID); err != nil {
-		return false, errors.Wrapf(err, "zkVerify.deserial.proof=%s", proofStr[:10])
+	proof := groth16.NewProof(ecc.BN254)
+	if _, err = proof.ReadFrom(proofBuf); err != nil {
+		return false, errors.Wrapf(err, "zkVerify.read.proof=%s", proofStr[:10])
+	}
+
+	// decode pub input hex string
+	pubBuf, err := mixTy.GetByteBuff(pubInputStr)
+	if err != nil {
+		return false, errors.Wrapf(err, "zkVerify.pub.GetByteBuff")
 	}
 
 	// verify proof
 	//start := time.Now()
-	result, err := groth16_bn256.Verify(&proof, &vk, r1csInput)
+	err = groth16.ReadAndVerify(proof, vk, pubBuf)
 	if err != nil {
 		return false, errors.Wrapf(err, "zkVerify.verify")
 	}
-	return result, nil
+	return true, nil
 }
+
+//
+//func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
+//	curveID := gurvy.BN256
+//
+//	output, err := mixTy.GetByteBuff(verifyKeyStr)
+//	if err != nil {
+//		return false, errors.Wrapf(err, "zkVerify.GetByteBuff")
+//	}
+//	var vk groth16_bn256.VerifyingKey
+//	if err := gob.Deserialize(output, &vk, curveID); err != nil {
+//		return false, errors.Wrapf(err, "zkVerify.Deserize.VK=%s", verifyKeyStr[:10])
+//	}
+//
+//	// parse input file
+//	assigns, err := deserializeInput(pubInputStr)
+//	if err != nil {
+//		return false, err
+//	}
+//	r1csInput := backend.NewAssignment()
+//	for k, v := range assigns {
+//		r1csInput.Assign(backend.Public, k, v)
+//	}
+//
+//	// load proof
+//	output, err = mixTy.GetByteBuff(proofStr)
+//	if err != nil {
+//		return false, errors.Wrapf(err, "zkVerify.proof")
+//	}
+//	var proof groth16_bn256.Proof
+//	if err := gob.Deserialize(output, &proof, curveID); err != nil {
+//		return false, errors.Wrapf(err, "zkVerify.deserial.proof=%s", proofStr[:10])
+//	}
+//
+//	// verify proof
+//	//start := time.Now()
+//	result, err := groth16_bn256.Verify(&proof, &vk, r1csInput)
+//	if err != nil {
+//		return false, errors.Wrapf(err, "zkVerify.verify")
+//	}
+//	return result, nil
+//}

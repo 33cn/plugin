@@ -41,7 +41,7 @@ func TestNewPrivacyWithPrivKey(t *testing.T) {
 	assert.Nil(t, err)
 	crypData, err := common.FromHex(data.Secret)
 	assert.Nil(t, err)
-	decryData1, err := decryptData(pairs.EncryptKey.PrivKey, data.PeerKey, crypData)
+	decryData1, err := decryptData(pairs.EncryptKey.PrivKey, data.OneTimePubKey, crypData)
 	assert.Nil(t, err)
 	var val mixTy.SecretData
 	err = types.Decode(decryData1, &val)
@@ -101,7 +101,7 @@ func TestEncodeSecretData(t *testing.T) {
 
 	data, err := common.FromHex(dhSecret.Secret)
 	assert.Nil(t, err)
-	rawData, err := decryptData(privacy.EncryptKey.PrivKey, dhSecret.PeerKey, data)
+	rawData, err := decryptData(privacy.EncryptKey.PrivKey, dhSecret.OneTimePubKey, data)
 	assert.Nil(t, err)
 	var rawSecret mixTy.SecretData
 	types.Decode(rawData, &rawSecret)

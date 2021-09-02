@@ -5,14 +5,13 @@
 package executor
 
 import (
-	"encoding/hex"
-	"encoding/json"
+	"github.com/consensys/gnark/frontend"
 
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gurvy/bn256/twistededwards"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/pkg/errors"
@@ -23,18 +22,17 @@ import (
 2. check if exist in authorize pool and nullifier pool
 
 */
-func transferInputVerify(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.TransferInputPublicInput, error) {
-	var input mixTy.TransferInputPublicInput
-	data, err := hex.DecodeString(proof.PublicInput)
+func transferInput(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.TransferInputCircuit, error) {
+	var input mixTy.TransferInputCircuit
+	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "transferInput verify decode string=%s", proof.PublicInput)
-	}
-	err = json.Unmarshal(data, &input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "transferInput verify unmarshal string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
 
-	err = spendVerify(db, execer, symbol, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
+	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
+	nullifierHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
+	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+	err = spendVerify(db, execer, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify spendVerify")
 	}
@@ -53,17 +51,12 @@ func transferInputVerify(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofI
 2. check if exist in authorize pool and nullifier pool
 
 */
-func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputPublicInput, error) {
-	var input mixTy.TransferOutputPublicInput
-	data, err := hex.DecodeString(proof.PublicInput)
+func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputCircuit, error) {
+	var input mixTy.TransferOutputCircuit
+	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Output verify decode string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
-	err = json.Unmarshal(data, &input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Output verify  unmarshal string=%s", proof.PublicInput)
-	}
-
 	err = zkProofVerify(db, proof, mixTy.VerifyType_TRANSFEROUTPUT)
 	if err != nil {
 		return nil, errors.Wrap(err, "Output verify proof verify")
@@ -73,19 +66,19 @@ func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferO
 
 }
 
-func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mixTy.TransferOutputPublicInput, txFee uint64) bool {
-	var inputPoints, outputPoints []*twistededwards.Point
+func VerifyCommitValues(inputs []*mixTy.TransferInputCircuit, outputs []*mixTy.TransferOutputCircuit, txFee uint64) bool {
+	var inputPoints, outputPoints []*twistededwards.PointAffine
 	for _, in := range inputs {
-		var p twistededwards.Point
-		p.X.SetString(in.ShieldAmountX)
-		p.Y.SetString(in.ShieldAmountY)
+		var p twistededwards.PointAffine
+		p.X.SetInterface(frontend.GetAssignedValue(in.ShieldAmountX))
+		p.Y.SetInterface(frontend.GetAssignedValue(in.ShieldAmountY))
 		inputPoints = append(inputPoints, &p)
 	}
 
 	for _, out := range outputs {
-		var p twistededwards.Point
-		p.X.SetString(out.ShieldAmountX)
-		p.Y.SetString(out.ShieldAmountY)
+		var p twistededwards.PointAffine
+		p.X.SetInterface(frontend.GetAssignedValue(out.ShieldAmountX))
+		p.Y.SetInterface(frontend.GetAssignedValue(out.ShieldAmountY))
 		outputPoints = append(outputPoints, &p)
 	}
 	//out value add fee
@@ -109,19 +102,20 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputPublicInput, outputs []*mix
 	return false
 }
 
-func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputPublicInput, []*mixTy.TransferOutputPublicInput, error) {
-	var inputs []*mixTy.TransferInputPublicInput
-	var outputs []*mixTy.TransferOutputPublicInput
+func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.MixTransferAction) ([]*mixTy.TransferInputCircuit, []*mixTy.TransferOutputCircuit, error) {
+	var inputs []*mixTy.TransferInputCircuit
+	var outputs []*mixTy.TransferOutputCircuit
 
 	execer, symbol := mixTy.GetAssetExecSymbol(cfg, transfer.AssetExec, transfer.AssetSymbol)
 	txFee := mixTy.GetTransferTxFee(cfg, execer)
 	//inputs
 	for _, i := range transfer.Inputs {
-		in, err := transferInputVerify(db, execer, symbol, i)
+		in, err := transferInput(db, execer, symbol, i)
 		if err != nil {
 			return nil, nil, err
 		}
 		inputs = append(inputs, in)
+
 	}
 
 	//output
@@ -196,14 +190,16 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	mergeReceipt(receipt, rTxFee)
 
 	for _, k := range inputs {
-		r := makeNullifierSetReceipt(k.NullifierHash, &mixTy.ExistValue{Nullifier: k.NullifierHash, Exist: true})
+		nullHash := frontend.FromInterface(frontend.GetAssignedValue(k.NullifierHash))
+		r := makeNullifierSetReceipt(nullHash.String(), &mixTy.ExistValue{Nullifier: nullHash.String(), Exist: true})
 		mergeReceipt(receipt, r)
 	}
 
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, h := range outputs {
-		leaves = append(leaves, mixTy.Str2Byte(h.NoteHash))
+		noteHash := frontend.FromInterface(frontend.GetAssignedValue(h.NoteHash))
+		leaves = append(leaves, mixTy.Str2Byte(noteHash.String()))
 	}
 
 	conf := types.ConfSub(a.api.GetConfig(), mixTy.MixX)

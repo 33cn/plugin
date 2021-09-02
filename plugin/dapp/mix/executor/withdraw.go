@@ -5,14 +5,11 @@
 package executor
 
 import (
-	"encoding/hex"
-	"encoding/json"
-	"strconv"
-
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
 )
 
@@ -50,32 +47,28 @@ func spendVerify(db dbm.KV, exec, symbol string, treeRootHash, nulliferHash, aut
 
 }
 
-func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (string, uint64, error) {
-	var input mixTy.WithdrawPublicInput
-	data, err := hex.DecodeString(proof.PublicInput)
+func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.WithdrawCircuit, error) {
+	var input mixTy.WithdrawCircuit
+	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
-		return "", 0, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
-	}
-	err = json.Unmarshal(data, &input)
-	if err != nil {
-		return "", 0, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
-	}
-	val, err := strconv.ParseUint(input.Amount, 10, 64)
-	if err != nil {
-		return "", 0, errors.Wrapf(err, "parseUint=%s", input.Amount)
+		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
-	err = spendVerify(a.db, exec, symbol, input.TreeRootHash, input.NullifierHash, input.AuthorizeSpendHash)
+	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
+	nullifierHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
+	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+
+	err = spendVerify(a.db, exec, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
-		return "", 0, err
+		return nil, err
 	}
 
 	err = zkProofVerify(a.db, proof, mixTy.VerifyType_WITHDRAW)
 	if err != nil {
-		return "", 0, err
+		return nil, err
 	}
 
-	return input.NullifierHash, val, nil
+	return &input, nil
 
 }
 
@@ -90,12 +83,14 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 	var nulliferSet []string
 	var sumValue uint64
 	for _, k := range withdraw.Proofs {
-		nulfier, v, err := a.withdrawVerify(exec, symbol, k)
+		input, err := a.withdrawVerify(exec, symbol, k)
 		if err != nil {
 			return nil, err
 		}
-		sumValue += v
-		nulliferSet = append(nulliferSet, nulfier)
+		v := frontend.FromInterface(frontend.GetAssignedValue(input.Amount))
+		sumValue += v.Uint64()
+		nullHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
+		nulliferSet = append(nulliferSet, nullHash.String())
 	}
 
 	if sumValue != withdraw.Amount {

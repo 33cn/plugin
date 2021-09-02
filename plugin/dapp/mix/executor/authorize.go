@@ -5,8 +5,7 @@
 package executor
 
 import (
-	"encoding/hex"
-	"encoding/json"
+	"github.com/consensys/gnark/frontend"
 
 	"github.com/33cn/chain33/types"
 
@@ -15,63 +14,39 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizePublicInput) error {
+func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizeCircuit) error {
 	//check tree rootHash exist
-	exist, err := checkTreeRootHashExist(a.db, exec, symbol, mixTy.Str2Byte(input.TreeRootHash))
+	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
+	exist, err := checkTreeRootHashExist(a.db, exec, symbol, mixTy.Str2Byte(treeRootHash.String()))
 	if err != nil {
-		return errors.Wrapf(err, "roothash=%s not found,exec=%s,symbol=%s", input.TreeRootHash, exec, symbol)
+		return errors.Wrapf(err, "roothash=%s not found,exec=%s,symbol=%s", treeRootHash.String(), exec, symbol)
 	}
 	if !exist {
-		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", input.TreeRootHash)
+		return errors.Wrapf(mixTy.ErrTreeRootHashNotFound, "roothash=%s", treeRootHash.String())
 	}
 
 	//authorize key should not exist
-	authKey := calcAuthorizeHashKey(input.AuthorizeHash)
+	authHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeHash))
+	authKey := calcAuthorizeHashKey(authHash.String())
 	_, err = a.db.Get(authKey)
 	if err == nil {
-		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", input.AuthorizeHash)
+		return errors.Wrapf(mixTy.ErrAuthorizeHashExist, "auth=%s", authHash.String())
 	}
 	if !isNotFound(err) {
-		return errors.Wrapf(err, "get auth=%s", input.AuthorizeHash)
+		return errors.Wrapf(err, "get auth=%s", authHash.String())
 	}
 
-	//authPubKeys, err := a.getAuthKeys()
-	//if err != nil {
-	//	return errors.Wrap(err, "get AuthPubkey")
-	//}
-	//
-	////authorize pubkey hash should be configured already
-	//var found bool
-	//for _, k := range authPubKeys.Keys {
-	//	if input.AuthorizePubKey == k {
-	//		found = true
-	//		break
-	//	}
-	//}
-	//if !found {
-	//	return errors.Wrapf(types.ErrNotFound, "authPubkey=%s", input.AuthorizePubKey)
-	//}
 	return nil
 }
 
-func (a *action) authorizeVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.AuthorizePublicInput, error) {
-	var input mixTy.AuthorizePublicInput
-	data, err := hex.DecodeString(proof.PublicInput)
+func (a *action) authorizePubInputs(exec, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.AuthorizeCircuit, error) {
+	var input mixTy.AuthorizeCircuit
+	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
-	}
-	err = json.Unmarshal(data, &input)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unmarshal string=%s", proof.PublicInput)
+		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
 	err = a.authParamCheck(exec, symbol, &input)
-	if err != nil {
-		return nil, err
-	}
-
-	//zk-proof校验
-	err = zkProofVerify(a.db, proof, mixTy.VerifyType_AUTHORIZE)
 	if err != nil {
 		return nil, err
 	}
@@ -88,25 +63,26 @@ func (a *action) authorizeVerify(exec, symbol string, proof *mixTy.ZkProofInfo) 
 5. set authorize hash and authorize_spend hash
 */
 func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt, error) {
-	var inputs []*mixTy.AuthorizePublicInput
 
 	execer, symbol := mixTy.GetAssetExecSymbol(a.api.GetConfig(), authorize.AssetExec, authorize.AssetSymbol)
-	in, err := a.authorizeVerify(execer, symbol, authorize.Proof)
+	input, err := a.authorizePubInputs(execer, symbol, authorize.ProofInfo)
 	if err != nil {
 		return nil, err
 	}
-	inputs = append(inputs, in)
+
+	//zk-proof校验
+	err = zkProofVerify(a.db, authorize.ProofInfo, mixTy.VerifyType_AUTHORIZE)
+	if err != nil {
+		return nil, err
+	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	var auths, authSpends []string
-	for _, in := range inputs {
-		r := makeReceipt(calcAuthorizeHashKey(in.AuthorizeHash), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Nullifier: in.AuthorizeHash, Exist: true})
-		mergeReceipt(receipt, r)
-		r = makeReceipt(calcAuthorizeSpendHashKey(in.AuthorizeSpendHash), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Nullifier: in.AuthorizeSpendHash, Exist: true})
-		mergeReceipt(receipt, r)
-		auths = append(auths, in.AuthorizeHash)
-		authSpends = append(authSpends, in.AuthorizeSpendHash)
-	}
+	authNullHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeHash))
+	r := makeReceipt(calcAuthorizeHashKey(authNullHash.String()), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Nullifier: authNullHash.String(), Exist: true})
+	mergeReceipt(receipt, r)
+	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+	r = makeReceipt(calcAuthorizeSpendHashKey(authSpendHash.String()), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Nullifier: authSpendHash.String(), Exist: true})
+	mergeReceipt(receipt, r)
 
 	return receipt, nil
 

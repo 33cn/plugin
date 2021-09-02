@@ -3,7 +3,6 @@
 package merkletree
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash"
@@ -198,7 +197,7 @@ func (t *Tree) Push(data []byte) {
 		t.head.sum = data
 	} else {
 		t.head.sum = leafSum(t.hash, data)
-		fmt.Println("leaf hash", hex.EncodeToString(t.head.sum))
+		//fmt.Println("leaf hash", mixTy.Byte2Str(t.head.sum))
 	}
 
 	// Join subTrees if possible.
