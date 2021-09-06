@@ -38,49 +38,49 @@ multisignChain33Addr=1b193HbfvVUunUL2DVXrqt9jnbAWwLjcT
 
 function lockBty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo '2:#配置自动转离线钱包(bty, 100, 50%)'
+    #    echo '2:#配置自动转离线钱包(bty, 100, 50%)'
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33BtyTokenAddr},BTY,10000000000,50)" --khainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
-#    balance_ret "${result}" "0"
+    #    balance_ret "${result}" "0"
     result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
-#    balance_ret "${result}" "0"
+    #    balance_ret "${result}" "0"
 
-    for (( i = 0; i < 1000; i++ )); do
+    for ((i = 0; i < 1000; i++)); do
         echo "${i}"
         lock_bty_multisign 1
         sleep 1
     done
 
     result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
-#    balance_ret "${result}" "50"
+    #    balance_ret "${result}" "50"
     result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
-#    balance_ret "${result}" "950"
+    #    balance_ret "${result}" "950"
 
-#    # transfer test
-#    hash=$(${CLIA} chain33 multisign transfer -a 100 -r "${chain33BridgeBank}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
-#    check_tx "${Chain33Cli}" "${hash}"
-#    sleep 2
-#    result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
-#    balance_ret "${result}" "997.5000"
-#    result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
-#    balance_ret "${result}" "632.5000"
-#
-#    hash=$(${CLIA} chain33 multisign transfer -a 100 -r "${chain33MultisignA}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
-#    check_tx "${Chain33Cli}" "${hash}"
-#    sleep 2
-#    result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
-#    balance_ret "${result}" "897.5000"
-#    result=$(${Chain33Cli} account balance -a "${chain33MultisignA}" -e evm)
-#    balance_ret "${result}" "100.0000"
+    #    # transfer test
+    #    hash=$(${CLIA} chain33 multisign transfer -a 100 -r "${chain33BridgeBank}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
+    #    check_tx "${Chain33Cli}" "${hash}"
+    #    sleep 2
+    #    result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
+    #    balance_ret "${result}" "997.5000"
+    #    result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
+    #    balance_ret "${result}" "632.5000"
+    #
+    #    hash=$(${CLIA} chain33 multisign transfer -a 100 -r "${chain33MultisignA}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
+    #    check_tx "${Chain33Cli}" "${hash}"
+    #    sleep 2
+    #    result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
+    #    balance_ret "${result}" "897.5000"
+    #    result=$(${Chain33Cli} account balance -a "${chain33MultisignA}" -e evm)
+    #    balance_ret "${result}" "100.0000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function lockChain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
+    #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e ${chain33BridgeBank} -p "configLockedTokenOfflineSave(${chain33YccErc20Addr},YCC,10000000000,60)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
@@ -89,7 +89,7 @@ function lockChain33Ycc() {
     lock_chain33_ycc_multisign 260 120 240
     lock_chain33_ycc_multisign 10 52 318
 
-     # transfer test
+    # transfer test
     # shellcheck disable=SC2154
     hash=$(${CLIA} chain33 multisign transfer -a 10 -r "${chain33BridgeBank}" -t "${chain33YccErc20Addr}" -k "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" | jq -r ".msg")
     check_tx "${Chain33Cli}" "${hash}"
@@ -109,7 +109,7 @@ function lockChain33Ycc() {
     is_equal "${result}" "30300000000"
 
     # 判断 ETH 这端是否金额一致
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknYccAddr}" )
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknYccAddr}")
     cli_ret "${result}" "balance" ".balance" "370"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -121,9 +121,9 @@ function lockEth() {
     result=$(${CLIA} ethereum multisign set_offline_token -s ETH -m 20)
     cli_ret "${result}" "set_offline_token -s ETH -m 20"
 
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
-    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" )
+    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     lock_eth_multisign 19 19 0
@@ -170,7 +170,7 @@ function lockEthYcc() {
     # multisignEthAddr 要有手续费
     ./ebcli_A ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
 
-     # transfer
+    # transfer
     ${CLIA} ethereum multisign transfer -a 8 -r "${ethBridgeBank}" -t "${ethereumYccTokenAddr}" -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
     sleep 2
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
@@ -190,7 +190,7 @@ function lockEthYcc() {
 
 # shellcheck disable=SC2120
 function mainTest() {
-    if [[ $# -ge 1 && "${1}" != "" ]]; then
+    if [[ $# -ge 1 && ${1} != "" ]]; then
         chain33ID="${1}"
     fi
     StartChain33
@@ -200,9 +200,9 @@ function mainTest() {
     deployMultisign
 
     lockBty
-#    lockChain33Ycc
-#    lockEth
-#    lockEthYcc
+    #    lockChain33Ycc
+    #    lockEth
+    #    lockEthYcc
 }
 
 mainTest "${1}"

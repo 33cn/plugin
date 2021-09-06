@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package types;
+option go_package = "../types";
 
 message Game {
     //默认是由创建这局游戏的txHash作为gameId

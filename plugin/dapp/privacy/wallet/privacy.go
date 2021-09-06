@@ -24,7 +24,6 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
-	"github.com/golang/protobuf/proto"
 )
 
 func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {
@@ -984,11 +983,7 @@ func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWallet
 		txdetail.Amount, _ = txInfo.tx.Amount()
 		txdetail.Fromaddr = param.addr
 
-		txdetailbyte, err := proto.Marshal(&txdetail)
-		if err != nil {
-			bizlog.Error("buildAndStoreWalletTxDetail err", "Height", txInfo.blockHeight, "txHash", txInfo.txHashHex)
-			return
-		}
+		txdetailbyte := types.Encode(&txdetail)
 
 		txInfo.batch.Set(key, txdetailbyte)
 		//额外存储可以快速定位到接收隐私的交易

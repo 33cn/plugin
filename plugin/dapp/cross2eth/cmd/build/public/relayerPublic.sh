@@ -14,14 +14,14 @@ ethDeployKey="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 #ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 # shellcheck disable=SC2034
 {
-ethValidatorAddrA="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
-ethValidatorAddrB="0x0df9a824699bc5878232c9e612fe1a5346a5a368"
-ethValidatorAddrC="0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1"
-ethValidatorAddrD="0xd9dab021e74ecf475788ed7b61356056b2095830"
-ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
-ethValidatorAddrKeyB="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-ethValidatorAddrKeyC="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-ethValidatorAddrKeyD="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
+    ethValidatorAddrA="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
+    ethValidatorAddrB="0x0df9a824699bc5878232c9e612fe1a5346a5a368"
+    ethValidatorAddrC="0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1"
+    ethValidatorAddrD="0xd9dab021e74ecf475788ed7b61356056b2095830"
+    ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
+    ethValidatorAddrKeyB="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
+    ethValidatorAddrKeyC="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
+    ethValidatorAddrKeyD="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 }
 
 # chain33 部署合约者的私钥 用于部署合约时签名使用
@@ -41,10 +41,10 @@ chain33ValidatorC="13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv"
 chain33ValidatorD="113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"
 # shellcheck disable=SC2034
 {
-chain33ValidatorKeyA="0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae"
-chain33ValidatorKeyB="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
-chain33ValidatorKeyC="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
-chain33ValidatorKeyD="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
+    chain33ValidatorKeyA="0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae"
+    chain33ValidatorKeyB="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
+    chain33ValidatorKeyC="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
+    chain33ValidatorKeyD="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
 }
 
 maturityDegree=10
@@ -85,7 +85,7 @@ function kill_ebrelayerD() {
 }
 
 function start_ebrelayerC() {
-    nohup ./relayer_C/ebrelayer ./relayer_C/relayer.toml > ./relayer_C/cross2eth_C.log 2>&1 &
+    nohup ./relayer_C/ebrelayer ./relayer_C/relayer.toml >./relayer_C/cross2eth_C.log 2>&1 &
     sleep 2
     ${CLIC} unlock -p 123456hzj
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
@@ -95,7 +95,7 @@ function start_ebrelayerC() {
 }
 
 function start_ebrelayerD() {
-    nohup ./relayer_D/ebrelayer ./relayer_D/relayer.toml > ./relayer_D/cross2eth_D.log 2>&1 &
+    nohup ./relayer_D/ebrelayer ./relayer_D/relayer.toml >./relayer_D/cross2eth_D.log 2>&1 &
     sleep 2
     ${CLID} unlock -p 123456hzj
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
@@ -264,7 +264,7 @@ function InitTokenAddr() {
 }
 
 function start_ebrelayerA() {
-    nohup ./ebrelayer ./relayer.toml > cross2ethA.log 2>&1 &
+    nohup ./ebrelayer ./relayer.toml >cross2ethA.log 2>&1 &
     sleep 2
 }
 
@@ -300,7 +300,7 @@ function updata_toml_start_BCD() {
         sleep 1
         pushNameChange "./relayer_$name/relayer.toml"
 
-        nohup ./relayer_$name/ebrelayer ./relayer_$name/relayer.toml > ./relayer_$name/cross2eth_$name.log 2>&1 &
+        nohup ./relayer_$name/ebrelayer ./relayer_$name/relayer.toml >./relayer_$name/cross2eth_$name.log 2>&1 &
         sleep 2
 
         CLI="./ebcli_$name"
@@ -325,27 +325,27 @@ function updata_toml_start_BCD() {
 function validators_config() {
     # 修改 relayer.toml 配置文件 initPowers
     # shellcheck disable=SC2155
-    line=$(delete_line_show "./relayer.toml" "initPowers=\\[96, 1, 1, 1\\]")
+    line=$(delete_line_show "./relayer.toml" 'initPowers=\[96, 1, 1, 1\]')
     if [ "${line}" ]; then
         sed -i ''"${line}"' a initPowers=[25, 25, 25, 25]' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" "initPowers=\\[96, 1, 1, 1\\]")
+    line=$(delete_line_show "./relayer.toml" 'initPowers=\[96, 1, 1, 1\]')
     if [ "${line}" ]; then
         sed -i ''"${line}"' a initPowers=[25, 25, 25, 25]' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" "operatorAddr=\"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt\"")
+    line=$(delete_line_show "./relayer.toml" 'operatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"')
     if [ "${line}" ]; then
         sed -i ''"${line}"' a operatorAddr='\""${chain33DeployAddr}"\"'' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" "deployerPrivateKey=\"0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944\"")
+    line=$(delete_line_show "./relayer.toml" 'deployerPrivateKey="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"')
     if [ "${line}" ]; then
         sed -i ''"${line}"' a deployerPrivateKey='\""${chain33DeployKey}"\"'' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" "validatorsAddr=\\[\"14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+    line=$(delete_line_show "./relayer.toml" 'validatorsAddr=\["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt')
     if [ "${line}" ]; then
         sed -i ''"${line}"' a validatorsAddr=['\""${chain33ValidatorA}"\"', '\""${chain33ValidatorB}"\"', '\""${chain33ValidatorC}"\"', '\""${chain33ValidatorD}"\"']' "./relayer.toml"
     fi
@@ -385,11 +385,11 @@ function InitChain33() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     # init
-    ${Chain33Cli}  seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib"
-    ${Chain33Cli}  wallet unlock -p 1314fuzamei -t 0
-    ${Chain33Cli}  account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr
-    ${Chain33Cli}  account import_key -k "${chain33ReceiverAddrKey}" -l minerAddr
-    hash=$(${Chain33Cli}  send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    ${Chain33Cli} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib"
+    ${Chain33Cli} wallet unlock -p 1314fuzamei -t 0
+    ${Chain33Cli} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr
+    ${Chain33Cli} account import_key -k "${chain33ReceiverAddrKey}" -l minerAddr
+    hash=$(${Chain33Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
     check_tx "${Chain33Cli}" "${hash}"
 
     InitChain33Validator
@@ -404,7 +404,7 @@ function InitChain33Validator() {
     # 转帐到 DeployAddr
     result=$(${Chain33Cli} account import_key -k "${chain33DeployKey}" -l "DeployAddr")
     check_addr "${result}" "${chain33DeployAddr}"
-    hash=$(${Chain33Cli}  send coins transfer -a 6000 -n test -t "${chain33DeployAddr}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
+    hash=$(${Chain33Cli} send coins transfer -a 6000 -n test -t "${chain33DeployAddr}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
     check_tx "${Chain33Cli}" "${hash}"
 
     # 转账到 EVM  合约中
@@ -412,7 +412,7 @@ function InitChain33Validator() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} account balance -a "${chain33DeployAddr}" -e evm)
-#    balance_ret "${result}" "4000.0000"
+    #    balance_ret "${result}" "4000.0000"
 
     # 导入 chain33Validators 私钥生成地址
     for name in B C D; do
@@ -425,8 +425,8 @@ function InitChain33Validator() {
         # chain33Validator 要有手续费
         hash=$(${Chain33Cli} send coins transfer -a 100 -t "${chain33Validator}" -k "${chain33DeployAddr}")
         check_tx "${Chain33Cli}" "${hash}"
-#        result=$(${Chain33Cli} account balance -a "${chain33Validator}" -e coins)
-#        balance_ret "${result}" "100.0000"
+        #        result=$(${Chain33Cli} account balance -a "${chain33Validator}" -e coins)
+        #        balance_ret "${result}" "100.0000"
     done
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -439,7 +439,7 @@ function StartChain33() {
     # delete chain33 datadir
     rm ../../datadir ../../logs -rf
 
-    nohup ../../chain33 -f ./ci/cross2eth/test.toml > chain33log.log 2>&1 &
+    nohup ../../chain33 -f ./ci/cross2eth/test.toml >chain33log.log 2>&1 &
 
     sleep 1
 
@@ -488,25 +488,24 @@ function StartRelayerOnRopsten() {
 
 # shellcheck disable=SC2034
 {
-chain33MultisignA="168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9"
-chain33MultisignB="13KTf57aCkVVJYNJBXBBveiA5V811SrLcT"
-chain33MultisignC="1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe"
-chain33MultisignD="1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"
-chain33MultisignKeyA="0xcd284cd17456b73619fa609bb9e3105e8eff5d059c5e0b6eb1effbebd4d64144"
-chain33MultisignKeyB="0xe892212221b3b58211b90194365f4662764b6d5474ef2961ef77c909e31eeed3"
-chain33MultisignKeyC="0x9d19a2e9a440187010634f4f08ce36e2bc7b521581436a99f05568be94dc66ea"
-chain33MultisignKeyD="0x45d4ce009e25e6d5e00d8d3a50565944b2e3604aa473680a656b242d9acbff35"
+    chain33MultisignA="168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9"
+    chain33MultisignB="13KTf57aCkVVJYNJBXBBveiA5V811SrLcT"
+    chain33MultisignC="1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe"
+    chain33MultisignD="1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"
+    chain33MultisignKeyA="0xcd284cd17456b73619fa609bb9e3105e8eff5d059c5e0b6eb1effbebd4d64144"
+    chain33MultisignKeyB="0xe892212221b3b58211b90194365f4662764b6d5474ef2961ef77c909e31eeed3"
+    chain33MultisignKeyC="0x9d19a2e9a440187010634f4f08ce36e2bc7b521581436a99f05568be94dc66ea"
+    chain33MultisignKeyD="0x45d4ce009e25e6d5e00d8d3a50565944b2e3604aa473680a656b242d9acbff35"
 
-ethMultisignA=0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf
-ethMultisignB=0x6F163E6daf0090D897AD7016484f10e0cE844994
-ethMultisignC=0xbc333839E37bc7fAAD0137aBaE2275030555101f
-ethMultisignD=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
-ethMultisignKeyA=0x5e8aadb91eaa0fce4df0bcc8bd1af9e703a1d6db78e7a4ebffd6cf045e053574
-ethMultisignKeyB=0x0504bcb22b21874b85b15f1bfae19ad62fc2ad89caefc5344dc669c57efa60db
-ethMultisignKeyC=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
-ethMultisignKeyD=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
+    ethMultisignA=0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf
+    ethMultisignB=0x6F163E6daf0090D897AD7016484f10e0cE844994
+    ethMultisignC=0xbc333839E37bc7fAAD0137aBaE2275030555101f
+    ethMultisignD=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
+    ethMultisignKeyA=0x5e8aadb91eaa0fce4df0bcc8bd1af9e703a1d6db78e7a4ebffd6cf045e053574
+    ethMultisignKeyB=0x0504bcb22b21874b85b15f1bfae19ad62fc2ad89caefc5344dc669c57efa60db
+    ethMultisignKeyC=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
+    ethMultisignKeyD=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
 }
-
 
 function initMultisignChain33Addr() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
@@ -594,7 +593,7 @@ function deployMultisign() {
 }
 
 # lock bty 判断是否转入多签地址金额是否正确
-function lock_bty_multisign () {
+function lock_bty_multisign() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
     hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
@@ -612,7 +611,7 @@ function lock_bty_multisign () {
 }
 
 # lock chain33 ycc erc20 判断是否转入多签地址金额是否正确
-function lock_chain33_ycc_multisign () {
+function lock_chain33_ycc_multisign() {
     local lockAmount="${1}00000000"
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33YccErc20Addr}, ${lockAmount})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
@@ -620,7 +619,7 @@ function lock_chain33_ycc_multisign () {
     if [[ $# -eq 3 ]]; then
         local bridgeBankBalance="${2}00000000"
         local multisignBalance="${3}00000000"
-        if [[ "${3}" == "0" ]]; then
+        if [[ ${3} == "0" ]]; then
             multisignBalance="0"
         fi
 
@@ -642,11 +641,11 @@ function lock_eth_multisign() {
         local multisignBalance=$3
         # eth 等待 2 个区块
         sleep 4
-#        eth_block_wait 2
+        #        eth_block_wait 2
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" )
+        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" )
+        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
@@ -663,7 +662,7 @@ function lock_ethereum_ycc_multisign() {
 
         # eth 等待 2 个区块
         sleep 4
-#        eth_block_wait 2
+        #        eth_block_wait 2
 
         result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"

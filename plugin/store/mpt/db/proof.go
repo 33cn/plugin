@@ -23,10 +23,10 @@ package mpt
 import (
 	"bytes"
 	"fmt"
+	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
-	proto "github.com/golang/protobuf/proto"
 )
 
 // Prove constructs a merkle proof for key. The result contains all encoded nodes
@@ -79,7 +79,7 @@ func (t *Trie) Prove(key []byte, fromLevel uint, proofDb dbm.DB) error {
 			if fromLevel > 0 {
 				fromLevel--
 			} else {
-				enc, _ := proto.Marshal(n.create())
+				enc := types.Encode(n.create())
 				if !ok {
 					hash = createHashNode(common.Sha3(enc))
 				}

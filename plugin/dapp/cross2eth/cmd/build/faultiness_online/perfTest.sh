@@ -75,7 +75,7 @@ function loop_send_lock_bty() {
         hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethAddress[i]}, ${chain33BtyTokenAddr}, 100000000)" --chainID "${chain33ID}")
         check_tx "${Chain33Cli}" "${hash}"
 
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     eth_block_wait $((maturityDegree + 2))
@@ -86,7 +86,7 @@ function loop_send_lock_bty() {
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
-        i=$((i+1))
+        i=$((i + 1))
     done
     nowChain33Balance=$(${Chain33Cli} account balance -a "${chain33DeployAddr}" -e evm | jq -r ".balance" | sed 's/\"//g')
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
@@ -103,9 +103,9 @@ function loop_send_burn_bty() {
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyTokenAddr}" | jq -r ".balance")
-        result=$(${CLIA} ethereum burn -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}" )
+        result=$(${CLIA} ethereum burn -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}")
         cli_ret "${result}" "burn"
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     eth_block_wait $((maturityDegree + 2))
@@ -116,7 +116,7 @@ function loop_send_burn_bty() {
         res=$((preEthBalance[i] - nowEthBalance))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
-        i=$((i+1))
+        i=$((i + 1))
     done
     nowChain33Balance=$(${Chain33Cli} account balance -a "${chain33ReceiverAddr}" -e evm | jq -r ".balance" | sed 's/\"//g')
     diff=$(echo "$nowChain33Balance - $preChain33Balance" | bc)
@@ -135,7 +135,7 @@ function loop_send_lock_eth() {
         preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" | jq -r ".balance")
         result=$(${CLIA} ethereum lock -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}")
         cli_ret "${result}" "lock"
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     eth_block_wait $((maturityDegree + 2))
@@ -145,12 +145,12 @@ function loop_send_lock_eth() {
         nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" | jq -r ".balance")
         res=$(echo "${preEthBalance[i]} - $nowEthBalance" | bc)
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" "${res}"
-        diff=$(echo "$res >= 1"| bc) # 浮点数比较 判断是否大于1 大于返回1 小于返回0
+        diff=$(echo "$res >= 1" | bc) # 浮点数比较 判断是否大于1 大于返回1 小于返回0
         if [ "${diff}" -ne 1 ]; then
             echo -e "${RED}error number, expect greater than 1, get ${res}${NOC}"
             exit 1
         fi
-        i=$((i+1))
+        i=$((i + 1))
     done
     nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$nowChain33Balance - $preChain33Balance" | bc)
@@ -170,7 +170,7 @@ function loop_send_burn_eth() {
         preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" | jq -r ".balance")
         ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33EthTokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     eth_block_wait $((maturityDegree + 2))
@@ -180,12 +180,12 @@ function loop_send_burn_eth() {
         nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" | jq -r ".balance")
         res=$(echo "$nowEthBalance - ${preEthBalance[i]}" | bc)
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" "${res}"
-        diff=$(echo "$res >= 1"| bc) # 浮点数比较 判断是否大于1 大于返回1 小于返回0
+        diff=$(echo "$res >= 1" | bc) # 浮点数比较 判断是否大于1 大于返回1 小于返回0
         if [ "${diff}" -ne 1 ]; then
             echo -e "${RED}error number, expect greater than 1, get ${res}${NOC}"
             exit 1
         fi
-        i=$((i+1))
+        i=$((i + 1))
     done
     nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
@@ -205,7 +205,7 @@ function loop_send_lock_ycc() {
     while [[ i -lt ${#privateKeys[@]} ]]; do
         ethTxHash=$(${CLIA} ethereum transfer -m 10 -k "${ethDeployKey}" -r "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     sleep 2
@@ -215,7 +215,7 @@ function loop_send_lock_ycc() {
         preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
         ethTxHash=$(${CLIA} ethereum lock -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}" | jq -r ".msg")
         echo ${i} "lock ycc tx hash:" "${ethTxHash}"
-        i=$((i+1))
+        i=$((i + 1))
     done
     eth_block_wait $((maturityDegree + 2))
 
@@ -225,7 +225,7 @@ function loop_send_lock_ycc() {
         res=$(echo "${preEthBalance[i]} - $nowEthBalance" | bc)
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" "${res}"
         check_number "${res}" 1
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
@@ -246,7 +246,7 @@ function loop_send_burn_ycc() {
         preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
         ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33YccTokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
-        i=$((i+1))
+        i=$((i + 1))
     done
 
     eth_block_wait $((maturityDegree + 2))
@@ -257,7 +257,7 @@ function loop_send_burn_ycc() {
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
-        i=$((i+1))
+        i=$((i + 1))
     done
     nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
