@@ -213,6 +213,15 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 	gasPrice := action.GasPrice
 	if gasLimit == 0 {
 		gasLimit = uint64(evm.GetTxFee(tx, index))
+		//如果未设置交易费，则尝试读取免交易费联盟链模式下的gas设置
+		if 0 == gasLimit {
+			cfg := evm.GetAPI().GetConfig()
+			conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+			gasLimit = uint64(conf.GInt("evmGasLimit"))
+			if 0 == gasLimit {
+				panic("evmGasLimit is not configured for permission blockchain")
+			}
+		}
 	}
 	if gasPrice == 0 {
 		gasPrice = uint32(1)
