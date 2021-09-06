@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/33cn/chain33/common/address"
+	chain33Types "github.com/33cn/chain33/types"
+
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-farm/src/masterChef"
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-farm/src/syrupBar"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
@@ -104,9 +107,10 @@ func AddPool2Farm(cmd *cobra.Command, args []string) {
 		fmt.Println("AddPool2FarmHandle", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	exector := chain33Types.GetExecName("evm", paraName)
+	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: address.ExecAddress(exector)}
 
-	data, err := createEvmTx(chainID, &action, paraName+"evm", caller, masterChefAddrStr, expire, rpcLaddr, feeInt64)
+	data, err := createEvmTx(chainID, &action, exector, caller, masterChefAddrStr, expire, rpcLaddr, feeInt64)
 	if err != nil {
 		fmt.Println("AddPool2FarmHandle", "Failed to do createEvmTx due to:", err.Error())
 		return
@@ -170,9 +174,10 @@ func UpdateAllocPoint(cmd *cobra.Command, args []string) {
 		fmt.Println("UpdateAllocPoint", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	exector := chain33Types.GetExecName("evm", paraName)
+	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: address.ExecAddress(exector)}
 
-	data, err := createEvmTx(chainID, &action, paraName+"evm", caller, masterChefAddrStr, expire, rpcLaddr, feeInt64)
+	data, err := createEvmTx(chainID, &action, exector, caller, masterChefAddrStr, expire, rpcLaddr, feeInt64)
 	if err != nil {
 		fmt.Println("UpdateAllocPoint", "Failed to do createEvmTx due to:", err.Error())
 		return
@@ -229,9 +234,10 @@ func TransferOwnerShip(cmd *cobra.Command, args []string) {
 		fmt.Println("TransferOwnerShip", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	exector := chain33Types.GetExecName("evm", paraName)
+	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: address.ExecAddress(exector)}
 
-	data, err := createEvmTx(chainID, &action, paraName+"evm", caller, contract, expire, rpcLaddr, feeInt64)
+	data, err := createEvmTx(chainID, &action, exector, caller, contract, expire, rpcLaddr, feeInt64)
 	if err != nil {
 		fmt.Println("TransferOwnerShip", "Failed to do createEvmTx due to:", err.Error())
 		return
