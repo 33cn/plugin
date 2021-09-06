@@ -7,6 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-swap-periphery/src/pancakeFactory"
+
+	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	"github.com/golang/protobuf/proto"
@@ -23,9 +28,64 @@ func Chain33Cmd() *cobra.Command {
 		deployMulticallCmd(),
 		deployERC20ContractCmd(),
 		deployPancakeContractCmd(),
+		setFeeToCmd(),
 		farmCmd(),
 	)
 	return cmd
+}
+
+func setFeeToCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "setFeeTo",
+		Short: "set FeeTo address to factory",
+		Run:   setFeeTo,
+	}
+	addSetFeeToFlags(cmd)
+	return cmd
+}
+
+func addSetFeeToFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("factory", "f", "", "factory Addr ")
+	_ = cmd.MarkFlagRequired("factory")
+
+	cmd.Flags().StringP("feeTo", "t", "", "feeTo Addr ")
+	_ = cmd.MarkFlagRequired("feeTo")
+	cmd.Flags().StringP("key", "k", "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944", "private key of feetoSetter")
+}
+
+func setFeeTo(cmd *cobra.Command, args []string) {
+	factroy, _ := cmd.Flags().GetString("factory")
+	feeTo, _ := cmd.Flags().GetString("feeTo")
+
+	chainID, _ := cmd.Flags().GetInt32("chainID")
+	caller, _ := cmd.Flags().GetString("caller")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	expire, _ := cmd.Flags().GetString("expire")
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	fee, _ := cmd.Flags().GetFloat64("fee")
+	feeInt64 := uint64(fee*1e4) * 1e4
+
+	//function add(uint256 _allocPoint, IBEP20 _lpToken, bool _withUpdate) public onlyOwner
+	parameter := fmt.Sprintf("setFeeTo(%s)", feeTo)
+	_, packData, err := evmAbi.Pack(parameter, pancakeFactory.PancakeFactoryABI, true)
+	if nil != err {
+		fmt.Println("AddPool2FarmHandle", "Failed to do abi.Pack due to:", err.Error())
+		return
+	}
+	action := evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: factroy}
+
+	data, err := createEvmTx(chainID, &action, paraName+"evm", caller, factroy, expire, rpcLaddr, feeInt64)
+	if err != nil {
+		fmt.Println("AddPool2FarmHandle", "Failed to do createEvmTx due to:", err.Error())
+		return
+	}
+
+	txhex, err := sendTransactionRpc(data, rpcLaddr)
+	if err != nil {
+		fmt.Println("AddPool2FarmHandle", "Failed to do sendTransactionRpc due to:", err.Error())
+		return
+	}
+	fmt.Println(txhex)
 }
 
 func deployMulticallCmd() *cobra.Command {
