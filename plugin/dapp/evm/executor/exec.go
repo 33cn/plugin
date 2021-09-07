@@ -30,12 +30,12 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		return nil, err
 	}
 
-	return evm.innerExec(msg, tx.Hash(), index, evm.GetTxFee(tx, index), false)
+	return evm.innerExec(msg, tx.Hash(), index, msg.GasLimit(), false)
 }
 
 // 通用的EVM合约执行逻辑封装
 // readOnly 是否只读调用，仅执行evm abi查询时为true
-func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee int64, readOnly bool) (receipt *types.Receipt, err error) {
+func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int, txFee uint64, readOnly bool) (receipt *types.Receipt, err error) {
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
@@ -115,7 +115,7 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	// 计算消耗了多少费用（实际消耗的费用）
 	usedFee, overflow := common.SafeMul(usedGas, uint64(msg.GasPrice()))
 	// 费用消耗溢出，执行失败
-	if overflow || usedFee > uint64(txFee) {
+	if overflow || usedFee > txFee {
 		// 如果操作没有回滚，则在这里处理
 		if curVer != nil && snapshot >= curVer.GetID() && curVer.GetID() > -1 {
 			evm.mStateDB.RevertToSnapshot(snapshot)
@@ -209,11 +209,20 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 		return msg, types.ErrInvalidAddress
 	}
 
-	gasLimit := action.GasLimit
 	gasPrice := action.GasPrice
-	if gasLimit == 0 {
-		gasLimit = uint64(evm.GetTxFee(tx, index))
+	//gasLimit 直接从交易费1:1转化而来，忽略action.GasLimit
+	gasLimit := uint64(evm.GetTxFee(tx, index))
+	//如果未设置交易费，则尝试读取免交易费联盟链模式下的gas设置
+	if 0 == gasLimit {
+		cfg := evm.GetAPI().GetConfig()
+		conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+		gasLimit = uint64(conf.GInt("evmGasLimit"))
+		if 0 == gasLimit {
+			return nil, model.ErrNoGasConfigured
+		}
+		log.Info("GetMessage", "gasLimit is set to for permission blockchain", gasLimit)
 	}
+
 	if gasPrice == 0 {
 		gasPrice = uint32(1)
 	}

@@ -52,4 +52,6 @@ var (
 	ErrInvalidJump = errors.New("invalid jump destination")
 	// ErrInvalidRetsub invalid retsub
 	ErrInvalidRetsub = errors.New("invalid retsub")
+	// 没有配置gas
+	ErrNoGasConfigured = errors.New("ErrNoGasConfigured")
 )
