@@ -39,6 +39,11 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
+	if !evmDebugInited {
+		conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+		evm.vmCfg.Debug = conf.IsEnable("evmDebugEnable")
+		evmDebugInited = true
+	}
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
