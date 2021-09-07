@@ -220,6 +220,7 @@ func (evm *EVMExecutor) GetMessage(tx *types.Transaction, index int, fromPtr *co
 		if 0 == gasLimit {
 			return nil, model.ErrNoGasConfigured
 		}
+		log.Info("GetMessage", "gasLimit is set to for permission blockchain", gasLimit)
 	}
 
 	if gasPrice == 0 {
