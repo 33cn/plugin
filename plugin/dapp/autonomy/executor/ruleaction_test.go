@@ -25,6 +25,8 @@ const (
 	testProposalAmount           = minProposalAmount * types.DefaultCoinPrecision * 2
 	testLargeProjectAmount       = minLargeProjectAmount * 2 * types.DefaultCoinPrecision
 	testPublicPeriod             = minPublicPeriod
+	testPubAttendRatio     int32 = maxPubAttendRatio
+	testPubApproveRatio    int32 = minPubApproveRatio
 )
 
 func TestPropRule(t *testing.T) {
@@ -42,6 +44,8 @@ func TestPropRule(t *testing.T) {
 				ProposalAmount:     maxProposalAmount * types.DefaultCoinPrecision,
 				LargeProjectAmount: maxLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       maxPublicPeriod,
+				PubAttendRatio:     maxPubAttendRatio,
+				PubApproveRatio:    maxPubApproveRatio,
 			},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -53,6 +57,8 @@ func TestPropRule(t *testing.T) {
 				ProposalAmount:     minProposalAmount * types.DefaultCoinPrecision,
 				LargeProjectAmount: minLargeProjectAmount * types.DefaultCoinPrecision,
 				PublicPeriod:       minPublicPeriod,
+				PubAttendRatio:     minPubAttendRatio,
+				PubApproveRatio:    minPubApproveRatio,
 			},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -64,6 +70,8 @@ func TestPropRule(t *testing.T) {
 				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision - 1,
 				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision - 1,
 				PublicPeriod:       minPublicPeriod - 1,
+				PubAttendRatio:     minPubAttendRatio - 1,
+				PubApproveRatio:    minPubApproveRatio - 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -75,6 +83,8 @@ func TestPropRule(t *testing.T) {
 				ProposalAmount:     maxProposalAmount*types.DefaultCoinPrecision + 1,
 				LargeProjectAmount: maxLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       maxPublicPeriod + 1,
+				PubAttendRatio:     maxPubAttendRatio + 1,
+				PubApproveRatio:    maxPubApproveRatio + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -86,6 +96,8 @@ func TestPropRule(t *testing.T) {
 				ProposalAmount:     minProposalAmount*types.DefaultCoinPrecision + 1,
 				LargeProjectAmount: minLargeProjectAmount*types.DefaultCoinPrecision + 1,
 				PublicPeriod:       minPublicPeriod + 1,
+				PubAttendRatio:     minPubAttendRatio + 1,
+				PubApproveRatio:    minPubApproveRatio + 1,
 			},
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -147,6 +159,8 @@ func testPropRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.K
 			ProposalAmount:     testProposalAmount,
 			LargeProjectAmount: testLargeProjectAmount,
 			PublicPeriod:       testPublicPeriod,
+			PubAttendRatio:     testPubAttendRatio,
+			PubApproveRatio:    testPubApproveRatio,
 		},
 		StartBlockHeight: env.blockHeight + 5,
 		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
@@ -384,6 +398,8 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	assert.Equal(t, rule.ProposalAmount, testProposalAmount)
 	assert.Equal(t, rule.LargeProjectAmount, testLargeProjectAmount)
 	assert.Equal(t, rule.PublicPeriod, testPublicPeriod)
+	assert.Equal(t, rule.PubAttendRatio, testPubAttendRatio)
+	assert.Equal(t, rule.PubApproveRatio, testPubApproveRatio)
 }
 
 func voteProposalRuleTx(parm *auty.VoteProposalRule) (*types.Transaction, error) {
