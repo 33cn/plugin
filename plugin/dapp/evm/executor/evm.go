@@ -21,8 +21,6 @@ import (
 )
 
 var (
-	evmDebug = true
-
 	// EvmAddress 本合约地址
 	EvmAddress = ""
 )
@@ -52,7 +50,10 @@ func GetName() string {
 
 func newEVMDriver() drivers.Driver {
 	evm := NewEVMExecutor()
-	evm.vmCfg.Debug = evmDebug
+	cfg := evm.GetAPI().GetConfig()
+	conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+	evmDebugEnable := conf.IsEnable("evmDebugEnable")
+	evm.vmCfg.Debug = evmDebugEnable
 	return evm
 }
 
