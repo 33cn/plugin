@@ -118,11 +118,12 @@ func (evm *EVMExecutor) Query_EvmDebug(in *evmtypes.EvmDebugReq) (types.Message,
 	optype := in.Optype
 
 	if optype < 0 {
-		evmDebug = false
+		evm.vmCfg.Debug = false
 	} else if optype > 0 {
-		evmDebug = true
+		evm.vmCfg.Debug = true
 	}
-	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evmDebug)}
+
+	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evm.vmCfg.Debug)}
 	return ret, nil
 }
 
