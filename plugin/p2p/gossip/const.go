@@ -25,6 +25,12 @@ var (
 	CheckActivePeersInterVal    = 5 * time.Second
 	CheckBlackListInterVal      = 30 * time.Second
 	CheckCfgSeedsInterVal       = 1 * time.Minute
+
+	unitTime = map[string]int64{
+		"hour":   3600,
+		"min":    60,
+		"second": 1,
+	}
 )
 
 const (

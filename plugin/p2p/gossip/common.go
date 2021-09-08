@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +28,34 @@ var P2pComm Comm
 
 // Comm information
 type Comm struct{}
+
+//CheckNetAddr check addr or ip  format
+func (Comm) CheckNetAddr(addr string) error {
+	//check peerAddr
+	if !strings.Contains(addr, ":") { //only ip
+		if net.ParseIP(addr) == nil {
+			return errors.New("invalid ip")
+		}
+		return nil
+	}
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return err
+	}
+
+	iport, err := strconv.ParseInt(port, 10, 32)
+	if err != nil || iport > 65535 {
+		return errors.New("invalid port")
+	}
+
+	if net.ParseIP(host) == nil {
+		return errors.New("invalid ip")
+	}
+
+	return nil
+
+}
 
 // AddrRouteble address router ,return enbale address
 func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials) []string {
