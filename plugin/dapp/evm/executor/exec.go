@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 
 	"github.com/33cn/chain33/account"
 
@@ -30,6 +31,13 @@ func (evm *EVMExecutor) Exec(tx *types.Transaction, index int) (*types.Receipt, 
 		return nil, err
 	}
 
+	cfg := evm.GetAPI().GetConfig()
+	if !evmDebugInited {
+		conf := types.ConfSub(cfg, evmtypes.ExecutorName)
+		atomic.StoreInt32(&evm.vmCfg.Debug, int32(conf.GInt("evmDebugEnable")))
+		evmDebugInited = true
+	}
+
 	return evm.innerExec(msg, tx.Hash(), index, msg.GasLimit(), false)
 }
 
@@ -39,11 +47,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	// 获取当前区块的上下文信息构造EVM上下文
 	context := evm.NewEVMContext(msg, txHash)
 	cfg := evm.GetAPI().GetConfig()
-	if !evmDebugInited {
-		conf := types.ConfSub(cfg, evmtypes.ExecutorName)
-		evm.vmCfg.Debug = conf.IsEnable("evmDebugEnable")
-		evmDebugInited = true
-	}
 	// 创建EVM运行时对象
 	env := runtime.NewEVM(context, evm.mStateDB, *evm.vmCfg, cfg)
 	isCreate := strings.Compare(msg.To().String(), EvmAddress) == 0 && len(msg.Data()) > 0
