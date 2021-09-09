@@ -25,7 +25,6 @@ var (
 	CheckActivePeersInterVal    = 5 * time.Second
 	CheckBlackListInterVal      = 30 * time.Second
 	CheckCfgSeedsInterVal       = 1 * time.Minute
-
 )
 
 const (

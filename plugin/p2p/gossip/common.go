@@ -30,30 +30,30 @@ var P2pComm Comm
 type Comm struct{}
 
 //CheckNetAddr check addr or ip  format
-func (Comm) CheckNetAddr(addr string) ( string, int64, error) {
+func (Comm) CheckNetAddr(addr string) (string, int64, error) {
 	//check peerAddr
 	if !strings.Contains(addr, ":") { //only ip
 		if net.ParseIP(addr) == nil {
-			return "", 0,errors.New("invalid ip")
+			return "", 0, errors.New("invalid ip")
 		}
-		return addr,0,nil
+		return addr, 0, nil
 	}
 
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
-		return "",0, err
+		return "", 0, err
 	}
 
 	iport, err := strconv.ParseInt(port, 10, 32)
 	if err != nil || iport > 65535 {
-		return "",0,errors.New("invalid port")
+		return "", 0, errors.New("invalid port")
 	}
 
 	if net.ParseIP(host) == nil {
-		return "",0,errors.New("invalid ip")
+		return "", 0, errors.New("invalid ip")
 	}
 
-	return host,iport ,nil
+	return host, iport, nil
 
 }
 
