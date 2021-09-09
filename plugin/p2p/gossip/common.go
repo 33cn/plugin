@@ -30,7 +30,7 @@ var P2pComm Comm
 type Comm struct{}
 
 //CheckNetAddr check addr or ip  format
-func (Comm) CheckNetAddr(addr string) (string, int64, error) {
+func (Comm) ParaseNetAddr(addr string) (string, int64, error) {
 	//check peerAddr
 	if !strings.Contains(addr, ":") { //only ip
 		if net.ParseIP(addr) == nil {
