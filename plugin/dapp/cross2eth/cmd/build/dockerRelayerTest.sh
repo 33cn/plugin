@@ -8,22 +8,7 @@ set +e
 
 source "./offlinePublic.sh"
 
-# ETH 部署合约者的私钥 用于部署合约时签名使用
-ethDeployAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
-ethDeployKey="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 
-# validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
-ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
-
-# chain33 部署合约者的私钥 用于部署合约时签名使用
-chain33DeployAddr="1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ"
-chain33DeployKey="0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae"
-
-chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
-
-ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
-#ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
 
 maturityDegree=10
 
@@ -44,10 +29,23 @@ multisignChain33Addr=""
 multisignEthAddr=""
 chain33ID=0
 
-# validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
-#ethValidatorAddrKeyA="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 # shellcheck disable=SC2034
 {
+    # ETH 部署合约者的私钥 用于部署合约时签名使用
+    ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
+    ethDeployKey="0x8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
+
+    # chain33 部署合约者的私钥 用于部署合约时签名使用
+    chain33DeployAddr="1JxhYLYsrscjTaQfaMoVUrnSdrejP7XRQD"
+    chain33DeployKey="0x9ef82623a5e9aac58d3a6b06392af66ec77289522b28896aed66abaaede66903"
+
+    # validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]# shellcheck disable=SC2034
+    # eth 验证者私钥
+    ethValidatorAddra="0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
+    ethValidatorAddrb="0x0df9a824699bc5878232c9e612fe1a5346a5a368"
+    ethValidatorAddrc="0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1"
+    ethValidatorAddrd="0xd9dab021e74ecf475788ed7b61356056b2095830"
+    ethValidatorAddrKeya="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
     ethValidatorAddrKeyb="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
     ethValidatorAddrKeyc="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
     ethValidatorAddrKeyd="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
@@ -57,10 +55,26 @@ chain33ID=0
     chain33Validatorb="155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6"
     chain33Validatorc="13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv"
     chain33Validatord="113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"
-    #chain33ValidatorKeya="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
+    chain33ValidatorKeya="0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae"
     chain33ValidatorKeyb="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
     chain33ValidatorKeyc="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
     chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
+
+    ethTestAddr1=0xbc333839E37bc7fAAD0137aBaE2275030555101f
+    ethTestAddrKey1=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
+    ethTestAddr2=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
+    ethTestAddrKey2=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
+
+    ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
+    #ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
+
+    chain33TestAddr1="1Cj1rqUenPmkeD6A8MGEzkBKQFN2H9yL3x"
+    chain33TestAddrKey1="0x7269a7a87d476310da37a9ca1ddc9333c9d7a0dfe1f2998b84758843a895433b"
+    chain33TestAddr2="1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu"
+    chain33TestAddrKey2="0xb74acfd4eebbbd07bcae212baa7f094235ab8dc04f2f1d828681477b98b24008"
+
+    chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
 function start_docker_ebrelayerA() {
@@ -126,19 +140,19 @@ function restart_ebrelayerA() {
 function TestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== chain33 lock BTY, eth burn BTY ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
-    result=$(${Chain33Cli} asset balance -a "${chain33DeployAddr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
     is_equal "${result}" "500.0000"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyTokenAddr}, 500000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
-    result=$(${Chain33Cli} asset balance -a "${chain33DeployAddr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
     is_equal "${result}" "495.0000"
 
     # chain33BridgeBank 是否增加了 5
@@ -148,17 +162,17 @@ function TestChain33ToEthAssets() {
     sleep 4
 
     # eth 这端 金额是否增加了 5
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 3 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 4
 
     # eth 这端 金额是否减少了 3
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "2"
 
     sleep ${maturityDegree}
@@ -172,13 +186,13 @@ function TestChain33ToEthAssets() {
     is_equal "${result}" "2.0000"
 
     # eth burn 2
-    result=$(${CLIA} ethereum burn -m 2 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 2 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 4
 
     # eth 这端 金额是否减少了
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     sleep ${maturityDegree}
@@ -198,7 +212,7 @@ function TestChain33ToEthAssets() {
 function TestChain33ToEthZBCAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== chain33 lock ZBC, eth burn ZBC ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethBridgeToeknZBCAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
@@ -206,7 +220,7 @@ function TestChain33ToEthZBCAssets() {
     is_equal "${result}" "0"
 
     # chain33 lock ZBC
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33ZBCErc20Addr}, 900000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33ZBCErc20Addr}, 900000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # chain33BridgeBank 是否增加了 9
@@ -216,17 +230,17 @@ function TestChain33ToEthZBCAssets() {
     sleep 4
 
     # eth 这端 金额是否增加了 9
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethBridgeToeknZBCAddr}")
     cli_ret "${result}" "balance" ".balance" "9"
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 8 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethBridgeToeknZBCAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 8 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethBridgeToeknZBCAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 4
 
     # eth 这端 金额是否减少了 1
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethBridgeToeknZBCAddr}")
     cli_ret "${result}" "balance" ".balance" "1"
 
     sleep ${maturityDegree}
@@ -251,7 +265,7 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 11个
-    result=$(${CLIA} ethereum lock -m 11 -k "${ethValidatorAddrKeyA}" -r "${chain33ReceiverAddr}")
+    result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
@@ -269,11 +283,12 @@ function TestETH2Chain33Assets() {
     is_equal "${result}" "1100000000"
 
     # 原来的数额
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}")
-    cli_ret "${result}" "balance" ".balance" "100"
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
+    cli_ret "${result}" "balance" ".balance" "1000"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthTokenAddr}"
+    result=$(${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthTokenAddr}")
+    cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
@@ -287,11 +302,12 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "6"
 
     # 比之前多 5
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}")
-    cli_ret "${result}" "balance" ".balance" "105"
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
+    cli_ret "${result}" "balance" ".balance" "1005"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    ${CLIA} chain33 burn -m 6 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthTokenAddr}"
+    result=$(${CLIA} chain33 burn -m 6 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthTokenAddr}")
+    cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
@@ -305,8 +321,8 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 比之前多 5
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}")
-    cli_ret "${result}" "balance" ".balance" "111"
+    result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
+    cli_ret "${result}" "balance" ".balance" "1011"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -319,7 +335,7 @@ function TestETH2Chain33Ycc() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 7个 YCC
-    result=$(${CLIA} ethereum lock -m 7 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum lock -m 7 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
@@ -332,21 +348,22 @@ function TestETH2Chain33Ycc() {
     sleep ${maturityDegree}
 
     # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7 * le8
     is_equal "${result}" "700000000"
 
     # 原来的数额 0
     result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumYccTokenAddr}")
-    #    cli_ret "${result}" "balance" ".balance" "0"
+    cli_ret "${result}" "balance" ".balance" "0"
 
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}"
+    result=$(${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}")
+    cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "200000000"
 
@@ -359,12 +376,13 @@ function TestETH2Chain33Ycc() {
     cli_ret "${result}" "balance" ".balance" "5"
 
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}"
+    result=$(${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}")
+    cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "0"
 
@@ -416,6 +434,30 @@ function offline_transfer_multisign_Bty_test() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function coins_cross_transfer() {
+    local key="${1}"
+    local addr="${2}"
+    local amount="${3}"
+    local para_amount="${4}"
+    local evm_amount="${5}"
+    # 先把 bty 转入到 paracross 合约中
+    hash=$(${MainCli} send coins send_exec -e paracross -a "${amount}" -k "${key}")
+    check_tx "${MainCli}" "${hash}"
+
+    # 主链中的 bty 夸链到 平行链中
+    hash=$(${Para8801Cli} send para cross_transfer -a "${para_amount}" -e coins -s bty -t "${addr}" -k "${key}")
+    check_tx "${Para8801Cli}" "${hash}"
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty | jq -r .balance)
+    is_equal "${result}" "${para_amount}.0000"
+
+    # 把平行链中的 bty 转入 平行链中的 evm 合约
+    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e user.p.para.evm -s coins.bty -k "${key}")
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    is_equal "${result}" "${evm_amount}.0000"
+}
+
 function initPara() {
     # para add
     hash=$(${Para8901Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
@@ -424,29 +466,16 @@ function initPara() {
     Chain33Cli=${Para8901Cli}
     InitChain33Validator
 
-    # 先把 bty 转入到 paracross 合约中
-    hash=$(${MainCli} send coins send_exec -e paracross -a 1000 -k "${chain33DeployKey}")
-    check_tx "${MainCli}" "${hash}"
-
-    # 主链中的 bty 夸链到 平行链中
-    hash=$(${Para8801Cli} send para cross_transfer -a 800 -e coins -s bty -t "${chain33DeployAddr}" -k "${chain33DeployKey}")
-    check_tx "${Para8801Cli}" "${hash}"
-    check_tx "${Para8901Cli}" "${hash}"
-    result=$(${Para8901Cli} asset balance -a "${chain33DeployAddr}" --asset_exec paracross --asset_symbol coins.bty | jq -r .balance)
-    is_equal "${result}" "800.0000"
-
-    # 把平行链中的 bty 转入 平行链中的 evm 合约
-    hash=$(${Para8901Cli} send para transfer_exec -a 500 -e user.p.para.evm -s coins.bty -k "${chain33DeployKey}")
-    check_tx "${Para8901Cli}" "${hash}"
-    result=$(${Para8901Cli} asset balance -a "${chain33DeployAddr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
-    is_equal "${result}" "500.0000"
+    coins_cross_transfer "${chain33DeployKey}" "${chain33DeployAddr}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey1}" "${chain33TestAddr1}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey2}" "${chain33TestAddr2}" 1000 800 500
 }
 
 # lock bty 判断是否转入多签地址金额是否正确
 function lock_bty_multisign_docker() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
-    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyTokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -618,6 +647,43 @@ function StartDockerRelayerDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function echo_addrs() {
+    echo -e "${GRE}=========== echo contract addrs ===========${NOC}"
+    echo -e "${GRE}BridgeRegistryOnChain33: ${BridgeRegistryOnChain33} ${NOC}"
+    echo -e "${GRE}BridgeRegistryOnEth: ${BridgeRegistryOnEth} ${NOC}"
+    echo -e "${GRE}chain33BridgeBank: ${chain33BridgeBank} ${NOC}"
+    echo -e "${GRE}ethBridgeBank: ${ethBridgeBank} ${NOC}"
+    echo -e "${GRE}chain33BtyTokenAddr: ${chain33BtyTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33EthTokenAddr: ${chain33EthTokenAddr} ${NOC}"
+    echo -e "${GRE}ethereumBtyTokenAddr: ${ethereumBtyTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33YccTokenAddr: ${chain33YccTokenAddr} ${NOC}"
+    echo -e "${GRE}ethereumYccTokenAddr: ${ethereumYccTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33YccErc20Addr: ${chain33YccErc20Addr} ${NOC}"
+    echo -e "${GRE}ethBridgeToeknYccAddr: ${ethBridgeToeknYccAddr} ${NOC}"
+    echo -e "${GRE}chain33ZBCErc20Addr: ${chain33ZBCErc20Addr} ${NOC}"
+    echo -e "${GRE}ethBridgeToeknZBCAddr: ${ethBridgeToeknZBCAddr} ${NOC}"
+    echo -e "${GRE}multisignChain33Addr: ${multisignChain33Addr} ${NOC}"
+    echo -e "${GRE}multisignEthAddr: ${multisignEthAddr} ${NOC}"
+
+    echo -e "${GRE}=========== echo don't use addrs ===========${NOC}"
+    echo -e "${GRE}ethDeployAddr: ${ethDeployAddr} ${NOC}"
+    echo -e "${GRE}chain33DeployAddr: ${chain33DeployAddr} ${NOC}"
+    echo -e "${GRE}chain33ValidatorA: ${chain33Validatora} ${NOC}"
+    echo -e "${GRE}chain33ValidatorB: ${chain33Validatorb} ${NOC}"
+    echo -e "${GRE}chain33ValidatorC: ${chain33Validatorc} ${NOC}"
+    echo -e "${GRE}chain33ValidatorD: ${chain33Validatord} ${NOC}"
+    echo -e "${GRE}ethValidatorAddrA: ${ethValidatorAddra} ${NOC}"
+    echo -e "${GRE}ethValidatorAddrB: ${ethValidatorAddrb} ${NOC}"
+    echo -e "${GRE}ethValidatorAddrC: ${ethValidatorAddrc} ${NOC}"
+    echo -e "${GRE}ethValidatorAddrD: ${ethValidatorAddrd} ${NOC}"
+
+    echo -e "${GRE}=========== echo use test addrs and keys===========${NOC}"
+    echo -e "${GRE}ethTestAddr1: ${ethTestAddr1} ${NOC}"
+    echo -e "${GRE}ethTestAddrKey1: ${ethTestAddrKey1} ${NOC}"
+    echo -e "${GRE}chain33TestAddr1: ${chain33TestAddr1} ${NOC}"
+    echo -e "${GRE}chain33TestAddrKey1: ${chain33TestAddrKey1} ${NOC}"
+}
+
 function AllRelayerMainTest() {
     set +e
     docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
@@ -662,8 +728,8 @@ function AllRelayerMainTest() {
     # test
     Chain33Cli=${Para8901Cli}
     TestChain33ToEthAssets
-    TestChain33ToEthZBCAssets
     TestETH2Chain33Assets
+    TestChain33ToEthZBCAssets
     TestETH2Chain33Ycc
 
     Chain33Cli=${Para8901Cli}
@@ -672,5 +738,6 @@ function AllRelayerMainTest() {
     lockEth
     lockEthYcc
 
+    echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
