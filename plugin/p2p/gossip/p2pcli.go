@@ -675,12 +675,12 @@ func (m *Cli) AddPeerToBlacklist(msg *queue.Message, taskindex int64) {
 
 	if blackPeer.PeerAddr != "" { //把IP或者IP:PORT加入 黑名单
 		//check peerAddr
-		err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
+		ip,_,err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
 		if err != nil {
 			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
 			return
 		}
-
+		m.network.node.nodeInfo.blacklist.Add(ip, int64(lifetime.Seconds()))
 		m.network.node.nodeInfo.blacklist.Add(blackPeer.PeerAddr, int64(lifetime.Seconds()))
 		peerName, ok := m.network.node.peerStore.Load(blackPeer.PeerAddr)
 		if ok {
@@ -691,7 +691,10 @@ func (m *Cli) AddPeerToBlacklist(msg *queue.Message, taskindex int64) {
 	} else if blackPeer.PeerName != "" {
 		peer := m.network.node.GetRegisterPeer(blackPeer.PeerName)
 		if peer != nil {
+			ip,_,_ := P2pComm.CheckNetAddr(peer.Addr())
+			m.network.node.nodeInfo.blacklist.Add(ip, int64(lifetime.Seconds()))
 			m.network.node.nodeInfo.blacklist.Add(peer.Addr(), int64(lifetime.Seconds()))
+
 			m.network.node.nodeInfo.blacklist.addPeerStore(peer.Addr(), blackPeer.PeerName)
 			m.network.node.nodeInfo.blacklist.addPeerStore(blackPeer.PeerName, peer.Addr())
 			m.network.node.remove(blackPeer.PeerName) //close peer
@@ -716,18 +719,20 @@ func (m *Cli) DelPeerFromBlacklist(msg *queue.Message, taskindex int64) {
 	blackPeer := msg.GetData().(*pb.BlackPeer)
 	if blackPeer.PeerAddr != "" {
 		//check peerAddr
-		err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
+		ip,_,err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
 		if err != nil {
 			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
 			return
 		}
-
+		m.network.node.nodeInfo.blacklist.Delete(ip)
 		m.network.node.nodeInfo.blacklist.Delete(blackPeer.PeerAddr)
 		m.network.node.nodeInfo.blacklist.deletePeerStore(blackPeer.PeerAddr)
 	} else if blackPeer.PeerName != "" {
 		//通过pid 获取remoteAddr
 		remoteAddr, ok := m.network.node.nodeInfo.blacklist.getpeerStore(blackPeer.PeerName)
 		if ok {
+			ip,_,_ := P2pComm.CheckNetAddr(remoteAddr)
+			m.network.node.nodeInfo.blacklist.Delete(ip)
 			m.network.node.nodeInfo.blacklist.Delete(remoteAddr)
 			m.network.node.nodeInfo.blacklist.deletePeerStore(remoteAddr)
 		}
