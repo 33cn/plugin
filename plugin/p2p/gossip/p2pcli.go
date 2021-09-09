@@ -675,7 +675,7 @@ func (m *Cli) AddPeerToBlacklist(msg *queue.Message, taskindex int64) {
 
 	if blackPeer.PeerAddr != "" { //把IP或者IP:PORT加入 黑名单
 		//check peerAddr
-		ip, _, err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
+		ip, _, err := P2pComm.ParaseNetAddr(blackPeer.GetPeerAddr())
 		if err != nil {
 			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
 			return
@@ -691,7 +691,7 @@ func (m *Cli) AddPeerToBlacklist(msg *queue.Message, taskindex int64) {
 	} else if blackPeer.PeerName != "" {
 		peer := m.network.node.GetRegisterPeer(blackPeer.PeerName)
 		if peer != nil {
-			ip, _, _ := P2pComm.CheckNetAddr(peer.Addr())
+			ip, _, _ := P2pComm.ParaseNetAddr(peer.Addr())
 			m.network.node.nodeInfo.blacklist.Add(ip, int64(lifetime.Seconds()))
 			m.network.node.nodeInfo.blacklist.Add(peer.Addr(), int64(lifetime.Seconds()))
 
@@ -719,7 +719,7 @@ func (m *Cli) DelPeerFromBlacklist(msg *queue.Message, taskindex int64) {
 	blackPeer := msg.GetData().(*pb.BlackPeer)
 	if blackPeer.PeerAddr != "" {
 		//check peerAddr
-		ip, _, err := P2pComm.CheckNetAddr(blackPeer.GetPeerAddr())
+		ip, _, err := P2pComm.ParaseNetAddr(blackPeer.GetPeerAddr())
 		if err != nil {
 			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
 			return
@@ -731,7 +731,7 @@ func (m *Cli) DelPeerFromBlacklist(msg *queue.Message, taskindex int64) {
 		//通过pid 获取remoteAddr
 		remoteAddr, ok := m.network.node.nodeInfo.blacklist.getpeerStore(blackPeer.PeerName)
 		if ok {
-			ip, _, _ := P2pComm.CheckNetAddr(remoteAddr)
+			ip, _, _ := P2pComm.ParaseNetAddr(remoteAddr)
 			m.network.node.nodeInfo.blacklist.Delete(ip)
 			m.network.node.nodeInfo.blacklist.Delete(remoteAddr)
 			m.network.node.nodeInfo.blacklist.deletePeerStore(remoteAddr)

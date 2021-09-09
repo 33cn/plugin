@@ -493,18 +493,18 @@ func TestBytesToInt32(t *testing.T) {
 }
 
 func TestComm_CheckNetAddr(t *testing.T) {
-	_, _, err := P2pComm.CheckNetAddr("192.16666.0.1")
+	_, _, err := P2pComm.ParaseNetAddr("192.16666.0.1")
 	assert.NotNil(t, err)
 	assert.Equal(t, "invalid ip", err.Error())
-	_, _, err = P2pComm.CheckNetAddr("192.169.0.1:899999")
+	_, _, err = P2pComm.ParaseNetAddr("192.169.0.1:899999")
 	assert.NotNil(t, err)
 	assert.Equal(t, "invalid port", err.Error())
-	_, _, err = P2pComm.CheckNetAddr("192.169.257.1:899")
+	_, _, err = P2pComm.ParaseNetAddr("192.169.257.1:899")
 	assert.NotNil(t, err)
 	assert.Equal(t, "invalid ip", err.Error())
-	_, _, err = P2pComm.CheckNetAddr("192.169.1.1")
+	_, _, err = P2pComm.ParaseNetAddr("192.169.1.1")
 	assert.Nil(t, err)
-	_, _, err = P2pComm.CheckNetAddr("192.169.1.1:123")
+	_, _, err = P2pComm.ParaseNetAddr("192.169.1.1:123")
 	assert.Nil(t, err)
 
 }
