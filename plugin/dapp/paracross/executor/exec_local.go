@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"math/big"
 
 	"encoding/hex"
 
@@ -230,12 +231,27 @@ func setMinerTxResult(cfg *types.Chain33Config, payload *pt.ParacrossMinerAction
 	return nil
 }
 
+//带版本号编码的bitmap，版本号占4bit位，除去版本号位，最高位为跨链交易个数，后面的则是交易结果bitmap
+//比如00011110， 版本号为0001,1110的最高位1索引为3，代表后面3个交易，三个交易110代表第0个交易是失败的，其余的是ok的
+//如果没有数量表示，在所有跨链交易都是失败的时候，返回的是个空值,无法区分是失败还是无交易
+func getCrossAssetTxBitMap(crossAssetTxHashs, allTxHashs [][]byte, receipts []*types.ReceiptData) string {
+	rst := pt.ParaCrossStatusBitMapVer1
+	if len(crossAssetTxHashs) > 0 {
+		crossTxBitmap := util.CalcBitMap(crossAssetTxHashs, allTxHashs, receipts)
+		val := big.NewInt(0)
+		val.SetBytes(crossTxBitmap)
+		val.SetBit(val, len(crossAssetTxHashs), 1)
+		rst += val.Text(2)
+	}
+	return rst
+}
+
 func setMinerTxResultFork(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus, txs []*types.Transaction, receipts []*types.ReceiptData) error {
 	isCommitTx := make(map[string]bool)
-	var curTxHashs [][]byte
+	var allTxHashs [][]byte
 	for _, tx := range txs {
 		hash := tx.Hash()
-		curTxHashs = append(curTxHashs, hash)
+		allTxHashs = append(allTxHashs, hash)
 
 		if cfg.IsMyParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
 			var payload pt.ParacrossAction
@@ -250,23 +266,29 @@ func setMinerTxResultFork(cfg *types.Chain33Config, status *pt.ParacrossNodeStat
 		}
 	}
 
-	//有tx且全部是user.p.x.paracross的commit tx时候设为0
+	//有tx且全部是user.p.x.paracross的commit tx时候是空块，发送时候需要等有实际交易时候再发
 	status.NonCommitTxCounts = 1
-	if len(curTxHashs) != 0 && len(curTxHashs) == len(isCommitTx) {
+	if len(allTxHashs) != 0 && len(allTxHashs) == len(isCommitTx) {
 		status.NonCommitTxCounts = 0
 	}
 
 	//主链自己过滤平行链tx， 对平行链执行失败的tx主链无法识别，主链和平行链需要获取相同的最初的tx map
 	//全部平行链tx结果
-	status.TxResult = []byte(hex.EncodeToString(util.CalcSingleBitMap(curTxHashs, receipts)))
-	clog.Debug("setMinerTxResultFork", "height", status.Height, "txResult", string(status.TxResult))
+	status.TxResult = []byte(hex.EncodeToString(util.CalcSingleBitMap(allTxHashs, receipts)))
+
+	//获取跨链资产转移交易信息
+	crossAssetTxHashs, err := FilterParaCrossAssetTxHashes(txs)
+	if err != nil {
+		return err
+	}
+	status.CrossTxResult = []byte(getCrossAssetTxBitMap(crossAssetTxHashs, allTxHashs, receipts))
 
 	//ForkLoopCheckCommitTxDone 后只保留全部txreseult 结果
 	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
 		//跨链tx结果
 		crossTxHashs := FilterParaCrossTxHashes(txs)
-		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, curTxHashs, receipts)))
-		status.TxHashs = [][]byte{CalcTxHashsHash(curTxHashs)}
+		status.CrossTxResult = []byte(hex.EncodeToString(util.CalcBitMap(crossTxHashs, allTxHashs, receipts)))
+		status.TxHashs = [][]byte{CalcTxHashsHash(allTxHashs)}
 		status.CrossTxHashs = [][]byte{CalcTxHashsHash(crossTxHashs)}
 	}
 
