@@ -8,8 +8,6 @@ set +e
 
 source "./offlinePublic.sh"
 
-
-
 maturityDegree=10
 
 chain33BridgeBank=""
@@ -679,7 +677,6 @@ function StartDockerRelayerDeploy() {
         docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
         docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
     }
-
 
     # 重启
     restart_ebrelayerA
