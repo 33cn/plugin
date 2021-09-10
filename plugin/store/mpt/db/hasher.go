@@ -21,9 +21,10 @@
 package mpt
 
 import (
-	"github.com/33cn/chain33/types"
 	"hash"
 	"sync"
+
+	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto/sha3"

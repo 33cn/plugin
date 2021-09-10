@@ -22,9 +22,10 @@ package mpt
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/types"
 	"sync"
 	"time"
+
+	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
