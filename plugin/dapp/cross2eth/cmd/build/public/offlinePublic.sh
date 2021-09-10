@@ -243,22 +243,6 @@ function offline_setupEthMultisign() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function offline_set_offline_token_Eth() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
-    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m 20 -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-    ethereum_offline_sign_send "set_offline_token.txt"
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
-function offline_set_offline_token_EthYcc() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    ${Boss4xCLI} ethereum offline set_offline_token -s YCC -m 100 -p 40 -t "${ethereumYccTokenAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-    ethereum_offline_sign_send "set_offline_token.txt"
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
 function offline_transfer_multisign_Eth_test() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # transfer
@@ -320,16 +304,6 @@ function offline_transfer_multisign_EthYcc() {
     cli_ret "${result}" "balance" ".balance" "10"
     result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumYccTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "70"
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
-function offline_set_offline_token_Chain33Ycc() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave ERC20 YCC ======${NOC}"
-    #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
-    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -t "${chain33YccErc20Addr}" -s YCC -m 10000000000 -p 60 -k "${chain33DeployKey}" --chainID "${chain33ID}"
-    chain33_offline_send "chain33_set_offline_token.txt"
-
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
