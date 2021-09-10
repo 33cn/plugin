@@ -397,12 +397,70 @@ function TestETH2Chain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+# shellcheck disable=SC2120
 function offline_set_offline_token_Bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave BTY ======${NOC}"
     #    echo '2:#配置自动转离线钱包(bty, 100, 50%)'
-    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -s BTY -m 10000000000 -p 50 -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    local threshold=10000000000
+    local percents=50
+    if [[ $# -eq 2 ]]; then
+        threshold=$1
+        percents=$2
+    fi
+    # shellcheck disable=SC2086
+    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -s BTY -m ${threshold} -p ${percents} -k "${chain33DeployKey}" --chainID "${chain33ID}"
     chain33_offline_send "chain33_set_offline_token.txt"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+# shellcheck disable=SC2120
+function offline_set_offline_token_Chain33Ycc() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    echo -e "${GRE}===== chain33 端 configLockedTokenOfflineSave ERC20 YCC ======${NOC}"
+    #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
+    local threshold=10000000000
+    local percents=60
+    if [[ $# -eq 2 ]]; then
+        threshold=$1
+        percents=$2
+    fi
+    # shellcheck disable=SC2086
+    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -t "${chain33YccErc20Addr}" -s YCC -m ${threshold} -p ${percents} -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    chain33_offline_send "chain33_set_offline_token.txt"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+# shellcheck disable=SC2120
+function offline_set_offline_token_Eth() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
+    local threshold=20
+    local percents=50
+    if [[ $# -eq 2 ]]; then
+        threshold=$1
+        percents=$2
+    fi
+    # shellcheck disable=SC2086
+    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ethereum_offline_sign_send "set_offline_token.txt"
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+# shellcheck disable=SC2120
+function offline_set_offline_token_EthYcc() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    local threshold=100
+    local percents=40
+    if [[ $# -eq 2 ]]; then
+        threshold=$1
+        percents=$2
+    fi
+    # shellcheck disable=SC2086
+    ${Boss4xCLI} ethereum offline set_offline_token -s YCC -m ${threshold} -p ${percents} -t "${ethereumYccTokenAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ethereum_offline_sign_send "set_offline_token.txt"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -614,10 +672,14 @@ function StartDockerRelayerDeploy() {
     transferChain33MultisignFee
     Chain33Cli=${Para8901Cli}
 
-    docker cp "${BridgeRegistryOnChain33}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnChain33}.abi
-    docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-    docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
-    docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
+    # shellcheck disable=SC2086
+    {
+        docker cp "${BridgeRegistryOnChain33}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnChain33}.abi
+        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
+        docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
+        docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
+    }
+
 
     # 重启
     restart_ebrelayerA
@@ -636,10 +698,13 @@ function StartDockerRelayerDeploy() {
     offline_deploy_erc20_chain33_ZBC
     offline_create_bridge_token_eth_ZBC
 
-    docker cp "${chain33EthTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthTokenAddr}.abi
-    docker cp "${chain33YccTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccTokenAddr}.abi
-    docker cp "${chain33YccErc20Addr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccErc20Addr}.abi
-    docker cp "${ethBridgeToeknYccAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeToeknYccAddr}.abi
+    # shellcheck disable=SC2086
+    {
+        docker cp "${chain33EthTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthTokenAddr}.abi
+        docker cp "${chain33YccTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccTokenAddr}.abi
+        docker cp "${chain33YccErc20Addr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccErc20Addr}.abi
+        docker cp "${ethBridgeToeknYccAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeToeknYccAddr}.abi
+    }
 
     # 重启,因为relayerA的验证人地址和部署人的地址是一样的,所以需要重新启动relayer,更新nonce
     restart_ebrelayerA
@@ -737,6 +802,12 @@ function AllRelayerMainTest() {
     lockChain33Ycc
     lockEth
     lockEthYcc
+
+    # 离线多签地址转入阈值设大
+    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_EthYcc 100000000000000 10
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
