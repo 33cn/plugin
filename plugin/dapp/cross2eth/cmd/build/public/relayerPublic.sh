@@ -401,7 +401,7 @@ function Chain33ImportKey() {
     hash=$(${Chain33Cli} send coins send_exec -e evm -a "${evm_amount}" -k "${addr}")
     check_tx "${Chain33Cli}" "${hash}"
     result=$(${Chain33Cli} account balance -a "${addr}" -e evm)
-#    balance_ret "${result}" "${evm_amount}.0000" # 平行链查询方式不一样 直接去掉金额匹配
+    #    balance_ret "${result}" "${evm_amount}.0000" # 平行链查询方式不一样 直接去掉金额匹配
 }
 
 # chian33 初始化准备
@@ -430,7 +430,7 @@ function InitChain33Validator() {
         hash=$(${Chain33Cli} send coins transfer -a 100 -t "${chain33Validator}" -k 4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01)
         check_tx "${Chain33Cli}" "${hash}"
         result=$(${Chain33Cli} account balance -a "${chain33Validator}" -e coins)
-#        balance_ret "${result}" "100.0000" # 平行链查询方式不一样 直接去掉金额匹配
+        #        balance_ret "${result}" "100.0000" # 平行链查询方式不一样 直接去掉金额匹配
     done
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

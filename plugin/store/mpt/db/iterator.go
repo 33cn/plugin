@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"container/heap"
 	"errors"
+
 	"github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33/common"
