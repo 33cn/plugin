@@ -984,7 +984,7 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
 	//支持带版本号的跨链交易bitmap
 	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
-	if len(status.CrossTxResult) == pt.ParaCrossStatusBitMapVerLen {
+	if len(string(status.CrossTxResult)) == pt.ParaCrossStatusBitMapVerLen {
 		return nil, nil, nil
 	}
 
