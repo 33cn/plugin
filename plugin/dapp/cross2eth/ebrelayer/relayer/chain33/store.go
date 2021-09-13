@@ -3,7 +3,6 @@ package chain33
 import (
 	"errors"
 	"fmt"
-	"sync/atomic"
 
 	dbm "github.com/33cn/chain33/common/db"
 	chain33Types "github.com/33cn/chain33/types"
@@ -16,7 +15,8 @@ import (
 var (
 	lastSyncHeightPrefix               = []byte("chain33-lastSyncHeight:")
 	eth2Chain33BurnLockTxStaticsPrefix = "chain33-eth2chain33BurnLockStatics"
-	chain33ToEthBurnLockTxTotalAmount  = []byte("chain33-chain33ToEthBurnLockTxTotalAmount")
+	eth2Chain33BurnLockTxFinished      = "chain33-eth2Chain33BurnLockTxFinished"
+	relayEthBurnLockTxTotalAmount      = []byte("chain33-relayEthBurnLockTxTotalAmount")
 	chain33BurnTxUpdateTxIndex         = []byte("chain33-chain33BurnTxUpdateTxIndx")
 	chain33LockTxUpdateTxIndex         = []byte("chain33-chain33LockTxUpdateTxIndex")
 	bridgeRegistryAddrOnChain33        = []byte("chain33-x2EthBridgeRegistryAddrOnChain33")
@@ -32,20 +32,29 @@ func calcRelayFromEthStaticsKey(txindex int64, claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-%012d", eth2Chain33BurnLockTxStaticsPrefix, claimType, txindex))
 }
 
+//未完成，处在pending状态
 func calcRelayFromEthStaticsList(claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-", eth2Chain33BurnLockTxStaticsPrefix, claimType))
 }
 
-func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(total int64) error {
-	totalTx := &chain33Types.Int64{
-		Data: atomic.LoadInt64(&chain33Relayer.totalTx4Chain33ToEth),
-	}
-	//更新成功见证的交易数
-	return chain33Relayer.db.Set(chain33ToEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
+func calcFromEthFinishedStaticsKey(txindex int64, claimType int32) []byte {
+	return []byte(fmt.Sprintf("%s-%d-%012d", eth2Chain33BurnLockTxFinished, claimType, txindex))
 }
 
-func (chain33Relayer *Relayer4Chain33) getTotalTxAmount2Eth() int64 {
-	totalTx, _ := utils.LoadInt64FromDB(chain33ToEthBurnLockTxTotalAmount, chain33Relayer.db)
+func calcFromEthFinishedStaticsList(claimType int32) []byte {
+	return []byte(fmt.Sprintf("%s-%d-", eth2Chain33BurnLockTxFinished, claimType))
+}
+
+func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(txIndex int64) error {
+	totalTx := &chain33Types.Int64{
+		Data: txIndex,
+	}
+	//更新成功见证的交易数
+	return chain33Relayer.db.Set(relayEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
+}
+
+func (chain33Relayer *Relayer4Chain33) getTotalTxAmount() int64 {
+	totalTx, _ := utils.LoadInt64FromDB(relayEthBurnLockTxTotalAmount, chain33Relayer.db)
 	return totalTx
 }
 
@@ -54,18 +63,19 @@ func (chain33Relayer *Relayer4Chain33) setLastestRelay2Chain33TxStatics(txIndex 
 	return chain33Relayer.db.Set(key, data)
 }
 
-func (chain33Relayer *Relayer4Chain33) getStatics(claimType int32, txIndex int64) ([][]byte, error) {
+func (chain33Relayer *Relayer4Chain33) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
+	//第一步：获取处在pending状态的
 	keyPrefix := calcRelayFromEthStaticsList(claimType)
-
 	keyFrom := calcRelayFromEthStaticsKey(txIndex, claimType)
 	helper := dbm.NewListHelper(chain33Relayer.db)
-	datas := helper.List(keyPrefix, keyFrom, 20, dbm.ListASC)
+	datas := helper.List(keyPrefix, keyFrom, count, dbm.ListASC)
 	if nil == datas {
 		return nil, errors.New("Not found")
 	}
 
 	return datas, nil
 }
+
 func (chain33Relayer *Relayer4Chain33) setChain33UpdateTxIndex(txindex int64, claimType events.ClaimType) error {
 	txIndexWrapper := &chain33Types.Int64{
 		Data: txindex,

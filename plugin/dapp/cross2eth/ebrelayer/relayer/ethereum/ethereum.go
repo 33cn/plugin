@@ -50,29 +50,29 @@ type Relayer4Ethereum struct {
 	privateKey4Ethereum *ecdsa.PrivateKey
 	ethSender           common.Address
 
-	ethValidator           common.Address
-	unlockchan             chan int
-	maturityDegree         int32
-	fetchHeightPeriodMs    int32
-	eventLogIndex          ebTypes.EventLogIndex
-	clientSpec             ethinterface.EthClientSpec
-	bridgeBankAddr         common.Address
-	bridgeBankSub          ethereum.Subscription
-	bridgeBankLog          chan types.Log
-	bridgeBankEventLockSig string
-	bridgeBankEventBurnSig string
-	bridgeBankAbi          abi.ABI
-	deployInfo             *ebTypes.Deploy
-	x2EthDeployInfo        *ethtxs.X2EthDeployInfo
-	deployPara             *ethtxs.DeployPara
-	operatorInfo           *ethtxs.OperatorInfo
-	x2EthContracts         *ethtxs.X2EthContracts
-	ethBridgeClaimChan     chan<- *ebTypes.EthBridgeClaim
-	chain33MsgChan         <-chan *events.Chain33Msg
-	totalTx4Eth2Chain33    int64
-	symbol2Addr            map[string]common.Address
-	symbol2LockAddr        map[string]common.Address
-	mulSignAddr            string
+	ethValidator            common.Address
+	unlockchan              chan int
+	maturityDegree          int32
+	fetchHeightPeriodMs     int32
+	eventLogIndex           ebTypes.EventLogIndex
+	clientSpec              ethinterface.EthClientSpec
+	bridgeBankAddr          common.Address
+	bridgeBankSub           ethereum.Subscription
+	bridgeBankLog           chan types.Log
+	bridgeBankEventLockSig  string
+	bridgeBankEventBurnSig  string
+	bridgeBankAbi           abi.ABI
+	deployInfo              *ebTypes.Deploy
+	x2EthDeployInfo         *ethtxs.X2EthDeployInfo
+	deployPara              *ethtxs.DeployPara
+	operatorInfo            *ethtxs.OperatorInfo
+	x2EthContracts          *ethtxs.X2EthContracts
+	ethBridgeClaimChan      chan<- *ebTypes.EthBridgeClaim
+	chain33MsgChan          <-chan *events.Chain33Msg
+	totalTxRelayFromChain33 int64
+	symbol2Addr             map[string]common.Address
+	symbol2LockAddr         map[string]common.Address
+	mulSignAddr             string
 }
 
 var (
@@ -100,18 +100,18 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		startPara.BlockInterval = DefaultBlockPeriod
 	}
 	ethRelayer := &Relayer4Ethereum{
-		provider:            startPara.EthProvider,
-		db:                  startPara.DbHandle,
-		unlockchan:          make(chan int, 2),
-		bridgeRegistryAddr:  common.HexToAddress(startPara.BridgeRegistryAddr),
-		deployInfo:          startPara.DeployInfo,
-		maturityDegree:      startPara.Degree,
-		fetchHeightPeriodMs: startPara.BlockInterval,
-		ethBridgeClaimChan:  startPara.EthBridgeClaimChan,
-		chain33MsgChan:      startPara.Chain33MsgChan,
-		totalTx4Eth2Chain33: 0,
-		symbol2Addr:         make(map[string]common.Address),
-		symbol2LockAddr:     make(map[string]common.Address),
+		provider:                startPara.EthProvider,
+		db:                      startPara.DbHandle,
+		unlockchan:              make(chan int, 2),
+		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
+		deployInfo:              startPara.DeployInfo,
+		maturityDegree:          startPara.Degree,
+		fetchHeightPeriodMs:     startPara.BlockInterval,
+		ethBridgeClaimChan:      startPara.EthBridgeClaimChan,
+		chain33MsgChan:          startPara.Chain33MsgChan,
+		totalTxRelayFromChain33: 0,
+		symbol2Addr:             make(map[string]common.Address),
+		symbol2LockAddr:         make(map[string]common.Address),
 	}
 
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
@@ -142,6 +142,13 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		panic(errinfo)
 	}
 	ethRelayer.clientChainID = clientChainID
+	ethRelayer.totalTxRelayFromChain33 = ethRelayer.getTotalTxAmount2Eth()
+	if 0 == ethRelayer.totalTxRelayFromChain33 {
+		statics := &ebTypes.Ethereum2Chain33Statics{}
+		data := chain33Types.Encode(statics)
+		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeLock), 0, data)
+		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeBurn), 0, data)
+	}
 
 	go ethRelayer.proc()
 	return ethRelayer
@@ -466,7 +473,9 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
 	var tokenAddr common.Address
 	exist := false
+	operationType := ""
 	if chain33Msg.ClaimType == events.ClaimTypeLock {
+		operationType = "lock"
 		tokenAddr, exist = ethRelayer.symbol2Addr[prophecyClaim.Symbol]
 		if !exist {
 			relayerLog.Info("handleChain33Msg", "Query address from ethereum for symbol", prophecyClaim.Symbol)
@@ -488,6 +497,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			tokenAddr = common.HexToAddress(addr)
 		}
 	} else {
+		operationType = "burn"
 		tokenAddr, exist = ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
@@ -516,8 +526,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	relayerLog.Info("handleChain33Msg", "RelayOracleClaimToEthereum with tx hash", txhash)
 
 	//保存交易hash，方便查询
-	atomic.AddInt64(&ethRelayer.totalTx4Eth2Chain33, 1)
-	txIndex := atomic.LoadInt64(&ethRelayer.totalTx4Eth2Chain33)
+	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
 	if err = ethRelayer.updateTotalTxAmount2chain33(txIndex); nil != err {
 		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
@@ -533,12 +542,22 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 		Amount:           chain33Msg.Amount.String(),
 		Nonce:            chain33Msg.Nonce,
 		TxIndex:          txIndex,
+		OperationType:    operationType,
 	}
 	data := chain33Types.Encode(statics)
 	if err = ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data); nil != err {
 		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
 	}
+	relayerLog.Info("RelayOracleClaimToEthereum::successful",
+		"txIndex", txIndex,
+		"Chain33Txhash", statics.Chain33Txhash,
+		"EthereumTxhash", statics.EthereumTxhash,
+		"type", operationType,
+		"Symbol", chain33Msg.Symbol,
+		"Amount", chain33Msg.Amount,
+		"EthereumReceiver", statics.EthereumReceiver,
+		"Chain33Sender", statics.Chain33Sender)
 }
 
 func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context, continueFailCount *int32) {
@@ -889,10 +908,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogBurnEvent(clientChainID *big.Int, c
 	return nil
 }
 
-func (ethRelayer *Relayer4Ethereum) ShowStatics(request ebTypes.TokenStaticsRequest) (*ebTypes.TokenStaticsResponse, error) {
+func (ethRelayer *Relayer4Ethereum) ShowStatics(request *ebTypes.TokenStaticsRequest) (*ebTypes.TokenStaticsResponse, error) {
 	res := &ebTypes.TokenStaticsResponse{}
 
-	datas, err := ethRelayer.getStatics(request.Operation, request.TxIndex)
+	datas, err := ethRelayer.getStatics(request.Operation, request.TxIndex, request.Count)
 	if nil != err {
 		return nil, err
 	}
@@ -900,10 +919,11 @@ func (ethRelayer *Relayer4Ethereum) ShowStatics(request ebTypes.TokenStaticsRequ
 	for _, data := range datas {
 		var statics ebTypes.Chain33ToEthereumStatics
 		_ = chain33Types.Decode(data, &statics)
-		if request.Status != 0 {
-			if ebTypes.Tx_Status_Map[request.Status] != statics.EthTxstatus {
-				continue
-			}
+		if request.Status != 0 && ebTypes.Tx_Status_Map[request.Status] != statics.EthTxstatus {
+			continue
+		}
+		if len(request.Symbol) > 0 && request.Symbol != statics.Symbol {
+			continue
 		}
 		res.C2Estatics = append(res.C2Estatics, &statics)
 	}
@@ -917,11 +937,9 @@ func (ethRelayer *Relayer4Ethereum) updateTxStatus() {
 
 func (ethRelayer *Relayer4Ethereum) updateSingleTxStatus(claimType events.ClaimType) {
 	txIndex := ethRelayer.getEthLockTxUpdateTxIndex(claimType)
-	if ebTypes.Invalid_Tx_Index == txIndex {
-		return
-	}
-	datas, _ := ethRelayer.getStatics(int32(claimType), txIndex)
+	datas, _ := ethRelayer.getStatics(int32(claimType), txIndex, 0)
 	if nil == datas {
+		relayerLog.Debug("ethRelayer::updateSingleTxStatus", "no new tx need to be update status for claimType", claimType, "from tx index", txIndex)
 		return
 	}
 	for _, data := range datas {
