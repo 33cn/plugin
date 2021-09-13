@@ -168,6 +168,9 @@ func testP2PEvent(t *testing.T, p2p *P2p) {
 	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventPeerInfo, nil))
 	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventGetNetInfo, nil))
 	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventFetchBlockHeaders, &types.ReqBlocks{}))
+	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventAddBlacklist, &types.BlackPeer{PeerAddr: "192.168.1.1:13802"}))
+	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventDelBlacklist, &types.BlackPeer{PeerAddr: "192.168.1.1:13802"}))
+	msgs = append(msgs, p2p.client.NewMessage("p2p", types.EventShowBlacklist, &types.ReqNil{}))
 
 	for _, msg := range msgs {
 		p2p.mgr.PubSub.Pub(msg, P2PTypeName)
@@ -487,6 +490,46 @@ func TestBytesToInt32(t *testing.T) {
 
 	t.Log(P2pComm.BytesToInt32([]byte{0xff}))
 	t.Log(P2pComm.Int32ToBytes(255))
+}
+
+func TestComm_CheckNetAddr(t *testing.T) {
+	_, _, err := P2pComm.ParaseNetAddr("192.16666.0.1")
+	assert.NotNil(t, err)
+	assert.Equal(t, "invalid ip", err.Error())
+	_, _, err = P2pComm.ParaseNetAddr("192.169.0.1:899999")
+	assert.NotNil(t, err)
+	assert.Equal(t, "invalid port", err.Error())
+	_, _, err = P2pComm.ParaseNetAddr("192.169.257.1:899")
+	assert.NotNil(t, err)
+	assert.Equal(t, "invalid ip", err.Error())
+	_, _, err = P2pComm.ParaseNetAddr("192.169.1.1")
+	assert.Nil(t, err)
+	_, _, err = P2pComm.ParaseNetAddr("192.169.1.1:123")
+	assert.Nil(t, err)
+
+}
+
+func TestBlackList_Add(t *testing.T) {
+	bl := &BlackList{badPeers: make(map[string]int64)}
+	bl.Add("192.168.1.1:13802", 3600)
+	assert.True(t, bl.Has("192.168.1.1:13802"))
+	pid := "0306c47d6b4e2abbacbf2285b083a1218b89ec70092ed0f0232577d111e9d94d6c"
+	bl.addPeerStore(pid, "192.168.1.1:13802")
+	_, ok := bl.getpeerStore(pid)
+	assert.True(t, ok)
+}
+
+func TestBlackList_Delete(t *testing.T) {
+	bl := &BlackList{badPeers: make(map[string]int64)}
+	bl.Add("192.168.1.1:13802", 3600)
+	pid := "0306c47d6b4e2abbacbf2285b083a1218b89ec70092ed0f0232577d111e9d94d6c"
+	bl.addPeerStore(pid, "192.168.1.1:13802")
+	bl.Delete("192.168.2.1")
+	assert.True(t, bl.Has("192.168.1.1:13802"))
+	assert.Equal(t, 1, len(bl.GetBadPeers()))
+	bl.Delete("192.168.1.1:13802")
+	assert.Equal(t, 0, len(bl.GetBadPeers()))
+	bl.deletePeerStore(pid)
 }
 
 func TestSortArr(t *testing.T) {
