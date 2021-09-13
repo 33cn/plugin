@@ -100,21 +100,21 @@ func newChain33Relayer(x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string)
 	var wg sync.WaitGroup
 
 	relayer := &Relayer4Chain33{
-		rpcLaddr:             cfg.SyncTxConfig.Chain33Host,
-		fetchHeightPeriodMs:  cfg.SyncTxConfig.FetchHeightPeriodMs,
-		db:                   db,
-		ctx:                  ctx,
-		bridgeRegistryAddr:   x2EthDeployInfo.BridgeRegistry.Address.String(),
-		chainName:            "",
-		chainID:              0,
-		unlockChan:           make(chan int),
-		deployInfo:           cfg.Deploy,
-		ethBridgeClaimChan:   ethBridgeClaimchan,
-		chain33MsgChan:       chain33Msgchan,
-		totalTx4Chain33ToEth: 0,
-		symbol2Addr:          make(map[string]string),
-		oracleAddr:           x2EthDeployInfo.Oracle.Address.String(),
-		bridgeBankAddr:       x2EthDeployInfo.BridgeBank.Address.String(),
+		rpcLaddr:                cfg.SyncTxConfig.Chain33Host,
+		fetchHeightPeriodMs:     cfg.SyncTxConfig.FetchHeightPeriodMs,
+		db:                      db,
+		ctx:                     ctx,
+		bridgeRegistryAddr:      x2EthDeployInfo.BridgeRegistry.Address.String(),
+		chainName:               "",
+		chainID:                 0,
+		unlockChan:              make(chan int),
+		deployInfo:              cfg.Deploy,
+		ethBridgeClaimChan:      ethBridgeClaimchan,
+		chain33MsgChan:          chain33Msgchan,
+		totalTx4RelayEth2chai33: 0,
+		symbol2Addr:             make(map[string]string),
+		oracleAddr:              x2EthDeployInfo.Oracle.Address.String(),
+		bridgeBankAddr:          x2EthDeployInfo.BridgeBank.Address.String(),
 	}
 
 	//err := relayer.setStatusCheckedIndex(1)
