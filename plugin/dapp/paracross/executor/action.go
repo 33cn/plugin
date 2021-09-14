@@ -1174,6 +1174,10 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 		return nil, err
 	}
 
+	if len(crossTxHashs) > 0 {
+		clog.Debug("paracross.Commit commitDone.title", "title", status.Title, "height", status.Height, "mainExecHeight", a.height)
+	}
+
 	for i := 0; i < len(crossTxHashs); i++ {
 		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxHashs[i]),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
