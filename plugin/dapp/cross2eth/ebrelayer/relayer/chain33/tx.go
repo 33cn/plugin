@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
+
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
 
@@ -77,9 +79,8 @@ func createEvmTx(privateKey chain33Crypto.PrivKey, action proto.Message, execer,
 }
 
 func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, rpcURL, oracleAddr string) (string, error) {
-	note := fmt.Sprintf("relayEvmTx2Chain33 by validator:%s with nonce:%d",
-		address.PubKeyToAddr(privateKey.PubKey().Bytes()),
-		claim.Nonce)
+	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%d, ethTxHash:%s",
+		events.ClaimType(claim.ClaimType).String(), claim.Chain33Receiver, claim.EthereumSender, claim.Symbol, claim.Amount, claim.EthTxHash)
 	_, packData, err := evmAbi.Pack(parameter, generated.OracleABI, false)
 	if nil != err {
 		chain33txLog.Info("relayEvmTx2Chain33", "Failed to do abi.Pack due to:", err.Error())
