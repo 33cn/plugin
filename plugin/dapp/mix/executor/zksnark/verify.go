@@ -17,28 +17,12 @@ limitations under the License.
 package zksnark
 
 import (
-	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
 )
-
-func deserializeInput(input string) (map[string]interface{}, error) {
-	buff, err := mixTy.GetByteBuff(input)
-	if err != nil {
-		return nil, err
-	}
-
-	decoder := json.NewDecoder(buff)
-	toRead := make(map[string]interface{})
-	if err := decoder.Decode(&toRead); err != nil {
-		return nil, errors.Wrapf(err, "deserializeInput %s", input)
-	}
-
-	return toRead, nil
-}
 
 func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	vkBuf, err := mixTy.GetByteBuff(verifyKeyStr)
@@ -74,45 +58,3 @@ func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
 	}
 	return true, nil
 }
-
-//
-//func Verify(verifyKeyStr, proofStr, pubInputStr string) (bool, error) {
-//	curveID := gurvy.BN256
-//
-//	output, err := mixTy.GetByteBuff(verifyKeyStr)
-//	if err != nil {
-//		return false, errors.Wrapf(err, "zkVerify.GetByteBuff")
-//	}
-//	var vk groth16_bn256.VerifyingKey
-//	if err := gob.Deserialize(output, &vk, curveID); err != nil {
-//		return false, errors.Wrapf(err, "zkVerify.Deserize.VK=%s", verifyKeyStr[:10])
-//	}
-//
-//	// parse input file
-//	assigns, err := deserializeInput(pubInputStr)
-//	if err != nil {
-//		return false, err
-//	}
-//	r1csInput := backend.NewAssignment()
-//	for k, v := range assigns {
-//		r1csInput.Assign(backend.Public, k, v)
-//	}
-//
-//	// load proof
-//	output, err = mixTy.GetByteBuff(proofStr)
-//	if err != nil {
-//		return false, errors.Wrapf(err, "zkVerify.proof")
-//	}
-//	var proof groth16_bn256.Proof
-//	if err := gob.Deserialize(output, &proof, curveID); err != nil {
-//		return false, errors.Wrapf(err, "zkVerify.deserial.proof=%s", proofStr[:10])
-//	}
-//
-//	// verify proof
-//	//start := time.Now()
-//	result, err := groth16_bn256.Verify(&proof, &vk, r1csInput)
-//	if err != nil {
-//		return false, errors.Wrapf(err, "zkVerify.verify")
-//	}
-//	return result, nil
-//}
