@@ -57,7 +57,6 @@ type BurnEventOnChain33 struct {
 	Nonce            *big.Int
 }
 
-// UnpackChain33LogLock UnpackLogLock : Handles new LogLock events
 func UnpackChain33LogLock(contractAbi abi.ABI, eventName string, eventData []byte) (lockEvent *LockEventOnChain33, err error) {
 	lockEvent = &LockEventOnChain33{}
 	// Parse the event's attributes as Ethereum network variables

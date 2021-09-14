@@ -14,7 +14,7 @@ func Test_UnpackLogLock(t *testing.T) {
 	abiJSON := generated.BridgeBankABI
 	contractABI, err := abi.JSON(strings.NewReader(abiJSON))
 	require.Nil(t, err)
-	eventName := LogLock.String()
+	eventName := LogLockFromETH.String()
 	eventData := []byte("nil")
 
 	_, err = UnpackLogLock(contractABI, eventName, eventData)
