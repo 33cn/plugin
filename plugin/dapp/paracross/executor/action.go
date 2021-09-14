@@ -1021,6 +1021,24 @@ func isInNoHeightCrossAsseList(list string, status *pt.ParacrossNodeStatus) (boo
 	return false, nil
 }
 
+func checkIsInIgnoreHeightList(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) (bool, error) {
+	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
+	heightListStr := conf.GStr("paraNoCrossAssetHeightList")
+	if len(heightListStr) > 0 {
+		in, err := isInNoHeightCrossAsseList(heightListStr, status)
+		if err != nil {
+			clog.Error("getCrossTxHashs decode NoHeightCrossAsseList", "err", err)
+			return false, err
+		}
+		//在配置的无资产跨链高度列表中，则直接退出
+		if in {
+			clog.Debug("getCrossTxHashs NoHeightCrossAsseList", "str", heightListStr, "height", status.Height, "title", status.Title)
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
 	//支持带版本号的跨链交易bitmap
 	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
@@ -1040,19 +1058,14 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 			return nil, nil, nil
 		}
 	}
-	conf := types.ConfSub(cfg, pt.ParaX)
-	heightListStr := conf.GStr("paraNoCrossAssetHeightList")
-	if len(heightListStr) > 0 {
-		in, err := isInNoHeightCrossAsseList(heightListStr, status)
-		if err != nil {
-			clog.Error("getCrossTxHashs decode NoHeightCrossAsseList", "err", err)
-			return nil, nil, err
-		}
-		//在配置的无资产跨链高度列表中，则直接退出
-		if in {
-			clog.Debug("getCrossTxHashs NoHeightCrossAsseList", "str", heightListStr, "height", status.Height, "title", status.Title)
-			return nil, nil, nil
-		}
+
+	//此平行链高度在忽略检查跨链交易列表中,则直接退出
+	ignore, err := checkIsInIgnoreHeightList(api, status)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ignore {
+		return nil, nil, nil
 	}
 
 	blockDetail, err := GetBlock(api, status.MainBlockHash)
@@ -1085,6 +1098,15 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 		clog.Error("getCrossTxHashs len=0", "paraHeight", status.Height,
 			"mainHeight", status.MainBlockHeight, "mainHash", common.ToHex(status.MainBlockHash))
 		return nil, nil, types.ErrCheckTxHash
+	}
+
+	//此平行链高度在忽略检查跨链交易列表中,则直接退出
+	ignore, err := checkIsInIgnoreHeightList(api, status)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ignore {
+		return nil, nil, nil
 	}
 
 	blockDetail, err := GetBlock(api, status.MainBlockHash)
