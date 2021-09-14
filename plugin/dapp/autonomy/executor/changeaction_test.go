@@ -5,8 +5,9 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/util"
 	"testing"
+
+	"github.com/33cn/chain33/util"
 
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
