@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/util"
 	"testing"
 
 	"github.com/33cn/chain33/account"
@@ -591,6 +592,43 @@ func TestCheckChangeable(t *testing.T) {
 	}
 	_, err = action.checkChangeable(act, changes)
 	assert.Equal(t, err, auty.ErrChangeBoardAddr)
+}
+
+func TestReplaceBoard(t *testing.T) {
+	at := newTestAutonomy()
+	signer := util.HexToPrivkey(PrivKeyA)
+	tx := &types.Transaction{}
+	tx.Sign(types.SECP256K1, signer)
+	action := newAction(at, tx, 0)
+
+	act := &auty.ActiveBoard{
+		Boards: boards,
+	}
+
+	// 一个成员只允许替换一个新的
+	changes := []*auty.Change{
+		{Cancel: true, Addr: Addr18},
+		{Cancel: true, Addr: Addr19},
+	}
+	_, err := action.replaceBoard(act, changes)
+	assert.ErrorIs(t, err, types.ErrInvalidParam)
+
+	// 只允许替换，不允许恢复操作
+	changes = []*auty.Change{{Cancel: false, Addr: Addr18}}
+	_, err = action.replaceBoard(act, changes)
+	assert.ErrorIs(t, err, types.ErrInvalidParam)
+
+	// 替换一个不存在地址
+	changes = []*auty.Change{{Cancel: true, Addr: "0x1111111111"}}
+	_, err = action.replaceBoard(act, changes)
+	assert.NotNil(t, err)
+
+	// 正常替换一个地址
+	changes = []*auty.Change{{Cancel: true, Addr: Addr18}}
+	cur, err := action.replaceBoard(act, changes)
+	assert.NoError(t, err)
+	assert.Equal(t, cur.Boards[0], Addr18)
+	assert.Equal(t, cur.Revboards[0], AddrA)
 }
 
 func TestCopyAutonomyProposalChange(t *testing.T) {

@@ -7,11 +7,11 @@ package executor
 import (
 	"sort"
 
-	"github.com/pkg/errors"
-
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/pkg/errors"
 )
 
 func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
@@ -366,6 +366,10 @@ func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*au
 	//只允许替换，不允许恢复操作
 	if !change[0].Cancel || len(change[0].Addr) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "cancel=false not allow to addr=%s", change[0].Addr)
+	}
+
+	if err := address.CheckAddress(change[0].Addr); err != nil {
+		return nil, err
 	}
 
 	mpBd := make(map[string]struct{})

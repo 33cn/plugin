@@ -237,16 +237,55 @@ func TestPropBoard(t *testing.T) {
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
+
+		{ // ErrNotFound
+			BoardUpdate:      auty.BoardUpdate_DELBoard,
+			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrNotFound
+			BoardUpdate:      auty.BoardUpdate_DELBoard,
+			Boards:           []string{Addr17, "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrBoardNumber
+			BoardUpdate:      auty.BoardUpdate_DELBoard,
+			Boards:           []string{Addr16, Addr17},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // ErrRepeatAddr
+			BoardUpdate:      auty.BoardUpdate_DELBoard,
+			Boards:           []string{Addr17, Addr17},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
+		{ // 正常
+			BoardUpdate:      auty.BoardUpdate_DELBoard,
+			Boards:           []string{Addr17},
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		},
 	}
 	result := []error{
 		auty.ErrRepeatAddr,
 		auty.ErrRepeatAddr,
 		auty.ErrBoardNumber,
 		nil,
+
 		auty.ErrRepeatAddr,
 		auty.ErrBoardNumber,
 		nil,
+
+		types.ErrNotFound,
+		types.ErrNotFound,
+		auty.ErrBoardNumber,
+		auty.ErrRepeatAddr,
+		nil,
 	}
+	lenBoards := []int{0, 0, 0, 22, 0, 0, 21, 0, 0, 0, 0, 20}
 
 	InitBoard(stateDB)
 	exec.SetStateDB(stateDB)
@@ -256,9 +295,14 @@ func TestPropBoard(t *testing.T) {
 		assert.NoError(t, err)
 		pbtx, err = signTx(pbtx, PrivKeyA)
 		assert.NoError(t, err)
-		_, err = exec.Exec(pbtx, i)
+		receipt, err := exec.Exec(pbtx, i)
 		assert.Equal(t, errors.Cause(err), result[i])
-
+		if receipt != nil {
+			var stat auty.AutonomyProposalBoard
+			err := types.Decode(receipt.KV[1].Value, &stat)
+			assert.NoError(t, err)
+			assert.Equal(t, len(stat.Board.Boards), lenBoards[i])
+		}
 	}
 }
 
