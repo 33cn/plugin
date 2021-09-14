@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync/atomic"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -112,17 +115,18 @@ func getCallReceipt(logs []*types.ReceiptLog) *evmtypes.ReceiptEVMContract {
 	return nil
 }
 
-// Query_EvmDebug 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
+// Query_EvmDebug 此方法用来控制evm调试打印开关
 func (evm *EVMExecutor) Query_EvmDebug(in *evmtypes.EvmDebugReq) (types.Message, error) {
 	evm.CheckInit()
 	optype := in.Optype
 
 	if optype < 0 {
-		evmDebug = false
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOff)
 	} else if optype > 0 {
-		evmDebug = true
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOn)
 	}
-	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evmDebug)}
+
+	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evm.vmCfg.Debug)}
 	return ret, nil
 }
 

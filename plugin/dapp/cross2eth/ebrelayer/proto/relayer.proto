@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package types;
+option go_package = "../types";
 
 //以太坊账户信息
 // 	 privkey : 账户地址对应的私钥
@@ -159,6 +160,7 @@ message Chain33ToEthereumStatics {
     string amount = 8;
     int64 nonce   = 9;
     int64 txIndex = 10;
+    string operationType = 11;
 }
 
 message Ethereum2Chain33Statics {
@@ -174,6 +176,7 @@ message Ethereum2Chain33Statics {
     string amount = 8;
     int64 nonce   = 9;
     int64 txIndex = 10;
+    string operationType = 11;
 }
 
 message TokenAddress {
@@ -192,6 +195,7 @@ message TokenStaticsRequest {
     int32 operation = 3;
     int32 status = 4;
     int64 txIndex = 5;
+    int32 count   = 6;
 }
 
 message TokenStaticsResponse {

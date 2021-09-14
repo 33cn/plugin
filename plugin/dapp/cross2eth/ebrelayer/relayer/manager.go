@@ -848,7 +848,7 @@ func (manager *Manager) checkPermission() error {
 }
 
 // ShowTokenStatics ShowEthRelayer2Chain33Txs ...
-func (manager *Manager) ShowTokenStatics(request relayerTypes.TokenStaticsRequest, result *interface{}) error {
+func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsRequest, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {

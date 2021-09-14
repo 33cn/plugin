@@ -125,7 +125,7 @@ func TransferOwnerShip(cmd *cobra.Command, from common.Address, masterChef, cont
 		return nil, err
 	}
 
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: contractAddr}
 	content, txHash, err := utils.CallContractAndSign(info, action, contractAddr)
 	if nil != err {
 		return nil, err
@@ -328,7 +328,7 @@ func addPool(cmd *cobra.Command, args []string) {
 		fmt.Println("AddPool2FarmHandle", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: masterChefAddrStr}
 	content, txHash, err := utils.CallContractAndSign(info, action, masterChefAddrStr)
 	if nil != err {
 		fmt.Println("Failed to create master chef due to cause:", err.Error())
@@ -414,7 +414,7 @@ func updateAllocPoint(cmd *cobra.Command, args []string) {
 		fmt.Println("UpdateAllocPoint", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData}
+	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: parameter, Para: packData, ContractAddr: masterChefAddrStr}
 	content, txHash, err := utils.CallContractAndSign(info, action, masterChefAddrStr)
 	if nil != err {
 		fmt.Println("Failed to create master chef due to cause:", err.Error())

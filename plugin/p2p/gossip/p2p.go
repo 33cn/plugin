@@ -374,6 +374,7 @@ func (network *P2p) subP2pMsg() {
 					network.otherFactory <- struct{}{}
 				}
 			}
+
 			switch msg.Ty {
 
 			case types.EventTxBroadcast: //广播tx
@@ -390,6 +391,13 @@ func (network *P2p) subP2pMsg() {
 				network.processEvent(msg, taskIndex, network.p2pCli.GetHeaders)
 			case types.EventGetNetInfo:
 				network.processEvent(msg, taskIndex, network.p2pCli.GetNetInfo)
+			case types.EventAddBlacklist:
+				network.processEvent(msg, taskIndex, network.p2pCli.AddPeerToBlacklist)
+			case types.EventDelBlacklist:
+				network.processEvent(msg, taskIndex, network.p2pCli.DelPeerFromBlacklist)
+			case types.EventShowBlacklist:
+				network.processEvent(msg, taskIndex, network.p2pCli.ShowBlacklist)
+
 			default:
 				log.Warn("unknown msgtype", "msg", msg)
 				msg.Reply(network.client.NewMessage("", msg.Ty, types.Reply{Msg: []byte("unknown msgtype")}))

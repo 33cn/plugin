@@ -402,7 +402,6 @@ func callContract(cmd *cobra.Command, args []string) {
 	toAddr := address.ExecAddress(exector)
 
 	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: toAddr, ChainID: chainID}
-
 	tx.Fee, _ = tx.GetRealFee(cfg.MinTxFeeRate)
 	if tx.Fee < feeInt64 {
 		tx.Fee += feeInt64

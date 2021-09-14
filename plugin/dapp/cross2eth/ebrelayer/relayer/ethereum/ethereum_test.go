@@ -406,15 +406,15 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	chain33Msgchan := make(chan *events.Chain33Msg, 100)
 
 	relayer := &Relayer4Ethereum{
-		provider:            cfg.EthProvider,
-		db:                  db,
-		unlockchan:          make(chan int, 2),
-		bridgeRegistryAddr:  x2EthDeployInfo.BridgeRegistry.Address,
-		maturityDegree:      cfg.EthMaturityDegree,
-		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
-		totalTx4Eth2Chain33: 0,
-		symbol2Addr:         make(map[string]common.Address),
-		symbol2LockAddr:     make(map[string]common.Address),
+		provider:                cfg.EthProvider,
+		db:                      db,
+		unlockchan:              make(chan int, 2),
+		bridgeRegistryAddr:      x2EthDeployInfo.BridgeRegistry.Address,
+		maturityDegree:          cfg.EthMaturityDegree,
+		fetchHeightPeriodMs:     cfg.EthBlockFetchPeriod,
+		totalTxRelayFromChain33: 0,
+		symbol2Addr:             make(map[string]common.Address),
+		symbol2LockAddr:         make(map[string]common.Address),
 
 		ethBridgeClaimChan: ethBridgeClaimchan,
 		chain33MsgChan:     chain33Msgchan,
@@ -447,6 +447,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.x2EthDeployInfo = x2EthDeployInfo
 	relayer.rwLock.Unlock()
 
+	relayer.totalTxRelayFromChain33 = relayer.getTotalTxAmount2Eth()
 	go relayer.proc()
 	return relayer
 }

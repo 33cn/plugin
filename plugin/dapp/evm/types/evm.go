@@ -77,8 +77,13 @@ func (evm EvmType) ActionName(tx *types.Transaction) string {
 	// 这个需要通过合约交易目标地址来判断Action
 	// 如果目标地址为空，或为evm的固定合约地址，则为创建合约，否则为调用合约
 	cfg := evm.GetConfig()
-	if strings.EqualFold(tx.To, address.ExecAddress(cfg.ExecName(ExecutorName))) {
-		return "createEvmContract"
+
+	var action EVMContractAction
+	err := types.Decode(tx.Payload, &action)
+	if err == nil {
+		if strings.EqualFold(tx.To, address.ExecAddress(cfg.ExecName(ExecutorName))) && len(action.Code) > 0 {
+			return "createEvmContract"
+		}
 	}
 	return "callEvmContract"
 }

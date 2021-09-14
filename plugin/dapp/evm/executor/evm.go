@@ -21,13 +21,11 @@ import (
 )
 
 var (
-	evmDebug = true
-
+	evmDebugInited = false
 	// EvmAddress 本合约地址
 	EvmAddress = ""
+	driverName = evmtypes.ExecutorName
 )
-
-var driverName = evmtypes.ExecutorName
 
 // Init 初始化本合约对象
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -52,7 +50,6 @@ func GetName() string {
 
 func newEVMDriver() drivers.Driver {
 	evm := NewEVMExecutor()
-	evm.vmCfg.Debug = evmDebug
 	return evm
 }
 

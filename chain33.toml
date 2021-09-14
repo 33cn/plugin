@@ -278,6 +278,13 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.evm]
+#免交易费模式联盟链允许的最大gas，该配置只对不收取交易费部署方式有效，其他部署方式下该配置不会产生作用
+#当前最大为200万
+evmGasLimit=2000000
+#evm内部调试输出，指令级的，默认关闭,0：关闭；1：打开
+evmDebugEnable=0
+
 [metrics]
 #是否使能发送metrics数据的发送
 enableMetrics=false

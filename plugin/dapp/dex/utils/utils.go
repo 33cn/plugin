@@ -43,7 +43,7 @@ func CreateContractAndSign(txCreateInfo *TxCreateInfo, code, abi, parameter, con
 	var action evmtypes.EVMContractAction
 	bCode, err := common.FromHex(code)
 
-	exector := txCreateInfo.ParaName + "evm"
+	exector := types.GetExecName("evm", txCreateInfo.ParaName)
 	to := address.ExecAddress(exector)
 
 	if err != nil {
@@ -58,6 +58,7 @@ func CreateContractAndSign(txCreateInfo *TxCreateInfo, code, abi, parameter, con
 		}
 		action.Code = append(action.Code, packData...)
 	}
+
 	data, txHash, err := CreateAndSignEvmTx(txCreateInfo.ChainID, &action, exector, txCreateInfo.PrivateKey, txCreateInfo.Expire, txCreateInfo.Fee)
 	if err != nil {
 		return "", nil, errors.New(contractName + " create contract error:" + err.Error())
@@ -119,7 +120,8 @@ func WriteContractFile(fileName string, content string) {
 }
 
 func CallContractAndSign(txCreateInfo *TxCreateInfo, action *evmtypes.EVMContractAction, contractAddr string) (string, []byte, error) {
-	data, txHash, err := CreateAndSignEvmTx(txCreateInfo.ChainID, action, txCreateInfo.ParaName+"evm", txCreateInfo.PrivateKey, txCreateInfo.Expire, txCreateInfo.Fee)
+	exector := types.GetExecName("evm", txCreateInfo.ParaName)
+	data, txHash, err := CreateAndSignEvmTx(txCreateInfo.ChainID, action, exector, txCreateInfo.PrivateKey, txCreateInfo.Expire, txCreateInfo.Fee)
 	if err != nil {
 		return "", nil, errors.New(contractAddr + " call contract error:" + err.Error())
 	}

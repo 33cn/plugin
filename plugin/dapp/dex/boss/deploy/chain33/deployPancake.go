@@ -11,6 +11,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	chain33Types "github.com/33cn/chain33/types"
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/multicall/multicall"
 	"github.com/33cn/plugin/plugin/dapp/dex/contracts/pancake-swap-periphery/src/pancakeFactory"
@@ -45,7 +46,7 @@ func DeployMulticall(cmd *cobra.Command) error {
 				} else if data != "2" {
 					return errors.New("Deploy Multicall failed due to" + ", ty = " + data)
 				}
-				fmt.Println("Succeed to deploy Multicall with address =", getContractAddr(caller, txMulticall), "\\n")
+				fmt.Println("Succeed to deploy Multicall with address =", getContractAddr(caller, txMulticall))
 				return nil
 
 			}
@@ -218,7 +219,8 @@ func deployContract(cmd *cobra.Command, code, abi, parameter, contractName strin
 	if err != nil {
 		return "", errors.New(contractName + " parse evm code error " + err.Error())
 	}
-	action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: "PancakeFactory"}
+	exector := chain33Types.GetExecName("evm", paraName)
+	action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, ContractAddr: address.ExecAddress(exector)}
 	if parameter != "" {
 		constructorPara := "constructor(" + parameter + ")"
 		packData, err := evmAbi.PackContructorPara(constructorPara, abi)

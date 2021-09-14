@@ -20,7 +20,7 @@ import (
 // Config 解释器的配置模型
 type Config struct {
 	// Debug 调试开关
-	Debug bool
+	Debug int32
 	// Tracer 记录操作日志
 	Tracer Tracer
 	// NoRecursion 不允许使用Call, CallCode, DelegateCall
@@ -40,6 +40,11 @@ type Interpreter struct {
 	// 合约执行返回的结果数据
 	returnData []byte
 }
+
+const (
+	EVMDebugOn  = int32(1)
+	EVMDebugOff = int32(0)
+)
 
 // NewInterpreter 新创建一个解释器
 func NewInterpreter(evm *EVM, cfg Config) *Interpreter {
@@ -126,7 +131,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		returnStack(stack)
 	}()
 
-	if in.cfg.Debug {
+	if EVMDebugOn == in.cfg.Debug {
 		defer func() {
 			if err != nil {
 				if !logged {
@@ -144,7 +149,7 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 		if steps%1000 == 0 && atomic.LoadInt32(&in.evm.abort) != 0 {
 			break
 		}
-		if in.cfg.Debug {
+		if EVMDebugOn == in.cfg.Debug {
 			// 记录当前指令执行前的状态数据
 			logged, pcCopy, gasCopy = false, pc, contract.Gas
 		}
@@ -210,14 +215,10 @@ func (in *Interpreter) Run(contract *Contract, input []byte, readOnly bool) (ret
 			mem.Resize(memorySize)
 		}
 
-		if in.cfg.Debug {
+		if EVMDebugOn == in.cfg.Debug {
 			in.cfg.Tracer.CaptureState(in.evm, pc, op, gasCopy, cost, mem, stack, in.returnData, contract, in.evm.depth, err)
 			logged = true
 		}
-
-		log15.Info("operation.execute", "op=", op.String(), "contract addr=", contract.self.Address().String(),
-			"CallerAddress=", contract.CallerAddress.String(),
-			"caller=", contract.caller.Address().String())
 
 		// 执行具体的指令操作逻辑（合约执行的核心）
 		res, err = operation.execute(&pc, in.evm, callContext)
