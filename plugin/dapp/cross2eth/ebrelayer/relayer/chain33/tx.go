@@ -79,7 +79,7 @@ func createEvmTx(privateKey chain33Crypto.PrivKey, action proto.Message, execer,
 }
 
 func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, rpcURL, oracleAddr string) (string, error) {
-	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%d, ethTxHash:%s",
+	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%s, ethTxHash:%s",
 		events.ClaimType(claim.ClaimType).String(), claim.Chain33Receiver, claim.EthereumSender, claim.Symbol, claim.Amount, claim.EthTxHash)
 	_, packData, err := evmAbi.Pack(parameter, generated.OracleABI, false)
 	if nil != err {
