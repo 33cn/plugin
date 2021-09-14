@@ -877,3 +877,70 @@ func TestVerifyBlsSign(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 }
+
+func TestIsInNoHeightCrossAsseList(t *testing.T) {
+	status1 := &pt.ParacrossNodeStatus{
+		Title:  "user.p.mc.",
+		Height: 1000,
+	}
+	str := "mc.10-100"
+	isIn, err := isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	status1.Height = 100
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	str = "mc.10-100.200-300#guodun.50-60.300-400"
+	status1.Height = 200
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	status1.Title = "user.p.guodun."
+	status1.Height = 61
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	status1.Height = 60
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	str = "mc.10-100.200-300#guodun.50-60.300-400#guo.80-90.300-400"
+	status1.Title = "user.p.Guo."
+	status1.Height = 60
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	status1.Height = 300
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	//异常情况
+	str = "mc.10-100.200-300#guodun.50-60.300-400#guo.80.300-400"
+	status1.Title = "user.p.Guo."
+	status1.Height = 300
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.NotNil(t, err)
+	assert.Equal(t, false, isIn)
+
+	str = "mc.10-100.200-300#guodun.50-60.300-400#guo"
+	status1.Title = "user.p.Guo."
+	status1.Height = 300
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	str = "mc.10-100.200-300#guodun.50-60.300-400#"
+	status1.Title = "user.p.Guo."
+	status1.Height = 300
+	isIn, err = isInNoHeightCrossAsseList(str, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+}
