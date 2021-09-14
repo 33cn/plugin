@@ -8,25 +8,6 @@ set +e
 
 source "./offlinePublic.sh"
 
-maturityDegree=10
-
-chain33BridgeBank=""
-ethBridgeBank=""
-chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
-chain33EthBridgeTokenAddr=""
-ethereumBtyBridgeTokenAddr=""
-chain33BycBridgeTokenAddr=""
-ethereumBycERC20TokenAddr=""
-BridgeRegistryOnChain33=""
-chain33YccERC20TokenAddr=""
-BridgeRegistryOnEth=""
-ethereumYccBridgeTokenAddr=""
-chain33ZbcERC20TokenAddr=""
-ethereumZbcBridgeTokenAddr=""
-multisignChain33Addr=""
-multisignEthAddr=""
-chain33ID=0
-
 # shellcheck disable=SC2034
 {
     # ETH 部署合约者的私钥 用于部署合约时签名使用
@@ -73,6 +54,27 @@ chain33ID=0
 
     chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
+
+    chain33BridgeBank=""
+    ethBridgeBank=""
+    chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+    chain33EthBridgeTokenAddr=""
+    ethereumBtyBridgeTokenAddr=""
+    chain33BycBridgeTokenAddr=""
+    ethereumBycERC20TokenAddr=""
+    BridgeRegistryOnChain33=""
+    chain33YccERC20TokenAddr=""
+    BridgeRegistryOnEth=""
+    ethereumYccBridgeTokenAddr=""
+    chain33ZbcERC20TokenAddr=""
+    ethereumZbcBridgeTokenAddr=""
+    multisignChain33Addr=""
+    multisignEthAddr=""
+
+    Chain33Cli=""
+
+    maturityDegree=10
+    chain33ID=0
 }
 
 # shellcheck disable=SC2120
@@ -177,6 +179,7 @@ function MainTest() {
         echo "${Boss4xCLI}"
     }
 
+    # shellcheck disable=SC2034
     Chain33Cli=${Para8901Cli}
 
     # 离线多签地址转入阈值设大
