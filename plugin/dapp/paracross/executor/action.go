@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/account"
@@ -981,6 +982,45 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 
 }
 
+//无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
+//mc.10-100.200-300#guodun.50-60.300-400#game.10-50.70-90
+func isInNoHeightCrossAsseList(list string, status *pt.ParacrossNodeStatus) (bool, error) {
+	paraChains := strings.Split(list, "#")
+	for _, chain := range paraChains {
+		paras := strings.Split(chain, ".")
+		//compare title
+		if strings.ToLower("user.p."+paras[0]+".") != strings.ToLower(status.Title) {
+			continue
+		}
+		//check para height
+		heights := paras[1:]
+		for _, h := range heights {
+			p := strings.Split(h, "-")
+			if len(p) != 2 {
+				return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
+			}
+			s, err := strconv.Atoi(p[0])
+			if err != nil {
+				return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
+			}
+			e, err := strconv.Atoi(p[1])
+			if err != nil {
+				return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
+			}
+			if s > e {
+				return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
+			}
+
+			//共识的平行链高度(不是主链高度）落在范围内，说明此高度没有跨链资产交易，可以忽略
+			if status.Height >= int64(s) && status.Height <= int64(e) {
+				return true, nil
+			}
+		}
+
+	}
+	return false, nil
+}
+
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
 	//支持带版本号的跨链交易bitmap
 	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
@@ -997,6 +1037,20 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 	cfg := api.GetConfig()
 	if !cfg.IsDappFork(status.MainBlockHeight, pt.ParaX, pt.ForkParaAssetTransferRbk) {
 		if len(rst) == 0 {
+			return nil, nil, nil
+		}
+	}
+	conf := types.ConfSub(cfg, pt.ParaX)
+	heightListStr := conf.GStr("paraNoCrossAssetHeightList")
+	if len(heightListStr) > 0 {
+		in, err := isInNoHeightCrossAsseList(heightListStr, status)
+		if err != nil {
+			clog.Error("getCrossTxHashs decode NoHeightCrossAsseList", "err", err)
+			return nil, nil, err
+		}
+		//在配置的无资产跨链高度列表中，则直接退出
+		if in {
+			clog.Debug("getCrossTxHashs NoHeightCrossAsseList", "str", heightListStr, "height", status.Height, "title", status.Title)
 			return nil, nil, nil
 		}
 	}

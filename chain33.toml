@@ -273,6 +273,9 @@ superManager=[
 nodeGroupFrozenCoins=0
 #平行链共识停止后主链等待的高度
 paraConsensusStopBlocks=30000
+#配置平行链无资产跨链交易的高度列表，title不用加user.p,不同title使用#分割，不同高度序列使用.分割，高度为平行链自身的高度，不是主链高度
+#mc.10-100.200-300#guodun.50-60.300-400#game.10-50.70-90
+paraNoCrossAssetHeightList=""
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
