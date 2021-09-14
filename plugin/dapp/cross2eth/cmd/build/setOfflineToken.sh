@@ -75,7 +75,6 @@ chain33ID=0
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
 
-
 # shellcheck disable=SC2120
 function offline_set_offline_token_Bty() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
@@ -149,20 +148,20 @@ function MainTest() {
     chain33ID=0
     chain33BridgeBank=15Myyvq97WinTWto8zcEdm838zXmvJKfnX
     ethBridgeBank=0xC65B02a22B714b55D708518E2426a22ffB79113d
-#    ethereumBtyBridgeTokenAddr=0x9c3d40a44a2f61ef8d46fa8c7a731c08fb16ccef
-#    chain33EthBridgeTokenAddr=1JVFbJhFUWUNH41PxbV7NqwUd3F9BJ3nqV
+    #    ethereumBtyBridgeTokenAddr=0x9c3d40a44a2f61ef8d46fa8c7a731c08fb16ccef
+    #    chain33EthBridgeTokenAddr=1JVFbJhFUWUNH41PxbV7NqwUd3F9BJ3nqV
 
     ethereumBycERC20TokenAddr=0x20a32A5680EBf55740B0C98B54cDE8e6FD5a4FB0
-#    ethereumYccBridgeTokenAddr=0x05f3f31c7d53bcb71a6487dff3115d86370698bd
-#    chain33BycBridgeTokenAddr=1BdREGqsjbcKkvRheXWYKRq37vJHMs22Uy
+    #    ethereumYccBridgeTokenAddr=0x05f3f31c7d53bcb71a6487dff3115d86370698bd
+    #    chain33BycBridgeTokenAddr=1BdREGqsjbcKkvRheXWYKRq37vJHMs22Uy
     chain33YccERC20TokenAddr=17yu1yULdGFddUz26PEeaHpJtkFGEpzYrA
-#    chain33ZbcERC20TokenAddr=1AqRwUa4T3q9DuCyUwn5ucHgtUhbUP2yfu
-#    ethereumZbcBridgeTokenAddr=0x89bb32184e466a9c8ea50c31174b575c2bcd64c2
+    #    chain33ZbcERC20TokenAddr=1AqRwUa4T3q9DuCyUwn5ucHgtUhbUP2yfu
+    #    ethereumZbcBridgeTokenAddr=0x89bb32184e466a9c8ea50c31174b575c2bcd64c2
 
     dockerNamePrefix="build"
     docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-#    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-#    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+    #    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+    #    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
 
     # shellcheck disable=SC2034
