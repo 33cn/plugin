@@ -23,11 +23,11 @@ chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 Chain33Cli="../../chain33-cli"
 chain33BridgeBank=""
 ethBridgeBank=""
-#chain33BtyTokenAddr="1111111111111111111114oLvT2"
-#chain33EthTokenAddr=""
-#ethereumBtyTokenAddr=""
-#chain33YccTokenAddr=""
-ethereumYccTokenAddr=""
+#chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+#chain33EthBridgeTokenAddr=""
+#ethereumBtyBridgeTokenAddr=""
+#chain33BycBridgeTokenAddr=""
+ethereumBycERC20TokenAddr=""
 multisignChain33Addr=""
 multisignEthAddr=""
 
@@ -146,15 +146,15 @@ function lock_eth_ycc_balance() {
     local bridgeBankBalance=$2
     local multisignBalance=$3
 
-    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 10 个区块
     eth_block_wait 2
 
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
 }
 
@@ -162,12 +162,12 @@ function lockEthYcc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     # echo '2:#配置自动转离线钱包(ycc, 100, 40%)'
-    result=$(${CLIA} ethereum multisign set_offline_token -s YCC -m 100 -p 40 -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum multisign set_offline_token -s BYC -m 100 -p 40 -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "set_offline_token -s YCC -m 100"
 
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
-    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     lock_eth_ycc_balance 70 70 0

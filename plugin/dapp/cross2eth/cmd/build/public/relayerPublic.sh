@@ -34,19 +34,19 @@ BridgeRegistryOnChain33=""
 chain33BridgeBank=""
 BridgeRegistryOnEth=""
 ethBridgeBank=""
-chain33BtyTokenAddr="1111111111111111111114oLvT2"
+chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
 
 #
-chain33EthTokenAddr=""
-ethereumBtyTokenAddr=""
+chain33EthBridgeTokenAddr=""
+ethereumBtyBridgeTokenAddr=""
 
 # etheruem erc20 ycc
-ethereumYccTokenAddr=""
-chain33YccTokenAddr=""
+ethereumBycERC20TokenAddr=""
+chain33BycBridgeTokenAddr=""
 
 # chain33 erc20 ycc
-chain33YccErc20Addr=""
-ethBridgeToeknYccAddr=""
+chain33YccERC20TokenAddr=""
+ethereumYccBridgeTokenAddr=""
 
 CLIA="./ebcli_A"
 # shellcheck disable=SC2034
@@ -140,7 +140,7 @@ function create_bridge_token_eth_BTY() {
     result=$(${CLIA} ethereum token create-bridge-token -s BTY)
     cli_ret "${result}" "ethereum token create-bridge-token -s BTY"
     # shellcheck disable=SC2034
-    ethereumBtyTokenAddr=$(echo "${result}" | jq -r .addr)
+    ethereumBtyBridgeTokenAddr=$(echo "${result}" | jq -r .addr)
 }
 
 function create_bridge_token_chain33_ETH() {
@@ -148,23 +148,23 @@ function create_bridge_token_chain33_ETH() {
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
-    chain33EthTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
-    echo "ETH Token Addr= ${chain33EthTokenAddr}"
-    cp BridgeToken.abi "${chain33EthTokenAddr}.abi"
+    chain33EthBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
+    echo "ETH Token Addr= ${chain33EthBridgeTokenAddr}"
+    cp BridgeToken.abi "${chain33EthBridgeTokenAddr}.abi"
 
-    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33EthTokenAddr}" -b "symbol()")
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33EthBridgeTokenAddr}" -b "symbol()")
     is_equal "${result}" "ETH"
 }
 
-function deploy_erc20_eth_YCC() {
+function deploy_erc20_eth_BYC() {
     # eth 上 铸币 YCC
     echo -e "${GRE}======= 在 ethereum 上创建 ERC20 ycc ======${NOC}"
     # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum deploy_erc20 -c "${ethDeployAddr}" -n YCC -s YCC -m 33000000000000000000)
-    cli_ret "${result}" "ethereum deploy_erc20 -s YCC"
-    ethereumYccTokenAddr=$(echo "${result}" | jq -r .msg)
+    result=$(${CLIA} ethereum deploy_erc20 -c "${ethDeployAddr}" -n BYC -s BYC -m 33000000000000000000)
+    cli_ret "${result}" "ethereum deploy_erc20 -s BYC"
+    ethereumBycERC20TokenAddr=$(echo "${result}" | jq -r .msg)
 
-    result=$(${CLIA} ethereum token add_lock_list -s YCC -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum token add_lock_list -s BYC -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "add_lock_list"
 }
 
@@ -173,11 +173,11 @@ function create_bridge_token_chain33_YCC() {
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken YCC ======${NOC}"
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
-    chain33YccTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
-    echo "YCC Token Addr = ${chain33YccTokenAddr}"
-    cp BridgeToken.abi "${chain33YccTokenAddr}.abi"
+    chain33BycBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
+    echo "YCC Token Addr = ${chain33BycBridgeTokenAddr}"
+    cp BridgeToken.abi "${chain33BycBridgeTokenAddr}.abi"
 
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33YccTokenAddr}" -b "symbol()")
+    result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33BycBridgeTokenAddr}" -b "symbol()")
     is_equal "${result}" "YCC"
 }
 
@@ -186,15 +186,15 @@ function deploy_erc20_chain33_YCC() {
     echo -e "${GRE}======= 在 chain33 上创建 ERC20 YCC ======${NOC}"
     result=$(${CLIA} chain33 token create -s YCC -o "${chain33DeployAddr}")
     cli_ret "${result}" "chain33 token create -s YCC"
-    chain33YccErc20Addr=$(echo "${result}" | jq -r .msg)
-    cp ERC20.abi "${chain33YccErc20Addr}.abi"
+    chain33YccERC20TokenAddr=$(echo "${result}" | jq -r .msg)
+    cp ERC20.abi "${chain33YccERC20TokenAddr}.abi"
 
     # echo 'YCC.1:增加allowance的设置,或者使用relayer工具进行'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33YccErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33YccERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # echo 'YCC.2:#执行add lock操作:addToken2LockList'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccErc20Addr}, YCC)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccERC20TokenAddr}, YCC)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 }
 
@@ -203,8 +203,8 @@ function create_bridge_token_eth_YCC() {
     echo -e "${GRE}======= 在 ethereum 上创建 bridgeToken ycc ======${NOC}"
     result=$(${CLIA} ethereum token create-bridge-token -s YCC)
     cli_ret "${result}" "ethereum token create -s YCC"
-    ethBridgeToeknYccAddr=$(echo "${result}" | jq -r .addr)
-    cp BridgeToken.abi "${ethBridgeToeknYccAddr}.abi"
+    ethereumYccBridgeTokenAddr=$(echo "${result}" | jq -r .addr)
+    cp BridgeToken.abi "${ethereumYccBridgeTokenAddr}.abi"
 }
 
 function deploy_erc20_chain33_ZBC() {
@@ -212,15 +212,15 @@ function deploy_erc20_chain33_ZBC() {
     echo -e "${GRE}======= 在 chain33 上创建 ERC20 ZBC ======${NOC}"
     result=$(${CLIA} chain33 token create -s ZBC -o "${chain33DeployAddr}")
     cli_ret "${result}" "chain33 token create -s ZBC"
-    chain33ZBCErc20Addr=$(echo "${result}" | jq -r .msg)
-    cp ERC20.abi "${chain33ZBCErc20Addr}.abi"
+    chain33ZbcERC20TokenAddr=$(echo "${result}" | jq -r .msg)
+    cp ERC20.abi "${chain33ZbcERC20TokenAddr}.abi"
 
     # echo 'ZBC.1:增加allowance的设置,或者使用relayer工具进行'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33ZBCErc20Addr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33ZbcERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # echo 'ZBC.2:#执行add lock操作:addToken2LockList'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZBCErc20Addr}, ZBC)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZbcERC20TokenAddr}, ZBC)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 }
 
@@ -229,8 +229,8 @@ function create_bridge_token_eth_ZBC() {
     echo -e "${GRE}======= 在 ethereum 上创建 bridgeToken ZBC ======${NOC}"
     result=$(${CLIA} ethereum token create-bridge-token -s ZBC)
     cli_ret "${result}" "ethereum token create -s ZBC"
-    ethBridgeToeknZBCAddr=$(echo "${result}" | jq -r .addr)
-    cp BridgeToken.abi "${ethBridgeToeknZBCAddr}.abi"
+    ethereumZbcBridgeTokenAddr=$(echo "${result}" | jq -r .addr)
+    cp BridgeToken.abi "${ethereumZbcBridgeTokenAddr}.abi"
 }
 
 # shellcheck disable=SC2120
@@ -579,7 +579,7 @@ function deployMultisign() {
 function lock_bty_multisign() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
-    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -597,7 +597,7 @@ function lock_bty_multisign() {
 function lock_chain33_ycc_multisign() {
     local lockAmount="${1}00000000"
     # shellcheck disable=SC2154
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33YccErc20Addr}, ${lockAmount})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33YccERC20TokenAddr}, ${lockAmount})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -607,9 +607,9 @@ function lock_chain33_ycc_multisign() {
             multisignBalance="0"
         fi
 
-        result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+        result=$(${Chain33Cli} evm query -a "${chain33YccERC20TokenAddr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
         is_equal "${result}" "${bridgeBankBalance}"
-        result=$(${Chain33Cli} evm query -a "${chain33YccErc20Addr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+        result=$(${Chain33Cli} evm query -a "${chain33YccERC20TokenAddr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
         is_equal "${result}" "${multisignBalance}"
     fi
 }
@@ -638,7 +638,7 @@ function lock_eth_multisign() {
 # lock ethereum ycc erc20 判断是否转入多签地址金额是否正确
 function lock_ethereum_ycc_multisign() {
     local lockAmount=$1
-    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
     if [[ $# -eq 3 ]]; then
@@ -649,9 +649,9 @@ function lock_ethereum_ycc_multisign() {
         sleep 4
         #        eth_block_wait 2
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumYccTokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }

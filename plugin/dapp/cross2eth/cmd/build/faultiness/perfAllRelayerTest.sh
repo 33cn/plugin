@@ -29,11 +29,11 @@ chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c
 Chain33Cli="../../chain33-cli"
 chain33BridgeBank=""
 #ethBridgeBank=""
-chain33BtyTokenAddr="1111111111111111111114oLvT2"
-chain33EthTokenAddr=""
-ethereumBtyTokenAddr=""
-chain33YccTokenAddr=""
-ethereumYccTokenAddr=""
+chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+chain33EthBridgeTokenAddr=""
+ethereumBtyBridgeTokenAddr=""
+chain33BycBridgeTokenAddr=""
+ethereumBycERC20TokenAddr=""
 
 CLIA="./ebcli_A"
 chain33ID=0
@@ -42,7 +42,7 @@ chain33ID=0
 function LockTestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # chain33 lock bty
-    hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethSendAddress}, ${chain33BtyTokenAddr}, 100000000)" --khainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethSendAddress}, ${chain33BtyERC20TokenAddr}, 100000000)" --khainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -51,7 +51,7 @@ function LockTestChain33ToEthAssets() {
 function BurnTestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # eth burn
-    result=$(${CLIA} ethereum burn -m 1 -k "${ethSendPrivateKeys}" -r "${chain33DeployAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 1 -k "${ethSendPrivateKeys}" -r "${chain33DeployAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -68,15 +68,15 @@ function LockTestETH2Chain33Assets() {
 # eth to chain33 在以太坊上锁定 ETH 资产,然后在 chain33 上 burn
 function BurnTestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    result=$(${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethSendAddress}" -t "${chain33EthTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethSendAddress}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function LockTestETH2Chain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    # ETH 这端 lock 7个 YCC
-    result=$(${CLIA} ethereum lock -m 3 -k "${ethSendPrivateKeys}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
+    # ETH 这端 lock 3个 BYC
+    result=$(${CLIA} ethereum lock -m 3 -k "${ethSendPrivateKeys}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -84,7 +84,7 @@ function LockTestETH2Chain33Ycc() {
 function BurnTestETH2Chain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 3 -k "${chain33ReceiverAddrKey}" -r "${ethSendAddress}" -t "${chain33YccTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 3 -k "${chain33ReceiverAddrKey}" -r "${ethSendAddress}" -t "${chain33BycBridgeTokenAddr}")
     cli_ret "${result}" "burn"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -94,7 +94,7 @@ function mainTest() {
     start_trufflesuite
     AllRelayerStart
 
-    ${CLIA} ethereum token token_transfer -k "${ethDeployKey}" -m 10000 -r "${ethSendAddress}" -t "${ethereumYccTokenAddr}"
+    ${CLIA} ethereum token token_transfer -k "${ethDeployKey}" -m 10000 -r "${ethSendAddress}" -t "${ethereumBycERC20TokenAddr}"
 
     for ((i = 0; i < 10; i++)); do
         LockTestChain33ToEthAssets
