@@ -1174,10 +1174,6 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 		return nil, err
 	}
 
-	if len(crossTxHashs) > 0 {
-		clog.Debug("paracross.Commit commitDone.title", "title", status.Title, "height", status.Height, "mainExecHeight", a.height)
-	}
-
 	for i := 0; i < len(crossTxHashs); i++ {
 		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxHashs[i]),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
@@ -1191,6 +1187,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 			if receiptCross == nil {
 				continue
 			}
+			clog.Debug("paracross.Commit commitDone.title ok ", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
 			receipt.KV = append(receipt.KV, receiptCross.KV...)
 			receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 		} else {
@@ -1207,6 +1204,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 				if receiptCross == nil {
 					continue
 				}
+				clog.Debug("paracross.Commit commitDone.title rbk", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
 				receipt.KV = append(receipt.KV, receiptCross.KV...)
 				receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 			}
