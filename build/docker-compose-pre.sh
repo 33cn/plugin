@@ -100,7 +100,7 @@ function main() {
             echo "============ run main end ================="
 
             find . -maxdepth 1 -type d -name "*-ci" -exec rm -rf {} \;
-            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . ! -name cross2eth| sed 's/^\.\///')
+            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . ! -name cross2eth | sed 's/^\.\///')
             for app in $dir; do
                 run_single_app "${app}" "$TESTCASEFILE" "down"
             done
