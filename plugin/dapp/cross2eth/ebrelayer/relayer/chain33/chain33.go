@@ -370,10 +370,9 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 	}
 
 	var tokenAddr string
-	operationType := ""
+	operationType := events.ClaimType(claim.ClaimType).String()
 	if int32(events.ClaimTypeBurn) == claim.ClaimType {
 		//burn 分支
-		operationType = "Burn"
 		if ebTypes.SYMBOL_BTY == claim.Symbol {
 			tokenAddr = ebTypes.BTYAddrChain33
 		} else {
@@ -385,7 +384,6 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		}
 	} else {
 		//lock 分支
-		operationType = "Lock"
 		var exist bool
 		tokenAddr, exist = chain33Relayer.symbol2Addr[claim.Symbol]
 		if !exist {

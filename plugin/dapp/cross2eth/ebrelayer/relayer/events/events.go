@@ -10,8 +10,9 @@ type Event int
 var eventsLog = log.New("module", "cross2eth_relayer")
 
 const (
-	ClaimTypeBurn = ClaimType(1)
-	ClaimTypeLock = ClaimType(2)
+	ClaimTypeUnknown = ClaimType(0)
+	ClaimTypeBurn    = ClaimType(1)
+	ClaimTypeLock    = ClaimType(2)
 )
 
 const (
