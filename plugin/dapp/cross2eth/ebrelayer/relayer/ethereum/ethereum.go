@@ -473,9 +473,8 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
 	var tokenAddr common.Address
 	exist := false
-	operationType := ""
+	operationType := chain33Msg.ClaimType.String()
 	if chain33Msg.ClaimType == events.ClaimTypeLock {
-		operationType = "lock"
 		tokenAddr, exist = ethRelayer.symbol2Addr[prophecyClaim.Symbol]
 		if !exist {
 			relayerLog.Info("handleChain33Msg", "Query address from ethereum for symbol", prophecyClaim.Symbol)
@@ -497,7 +496,6 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			tokenAddr = common.HexToAddress(addr)
 		}
 	} else {
-		operationType = "burn"
 		tokenAddr, exist = ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
