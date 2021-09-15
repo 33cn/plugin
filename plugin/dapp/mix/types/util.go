@@ -78,19 +78,20 @@ func leafSum(mimc *mimc.MiMC, data frontend.Variable) frontend.Variable {
 	return mimc.Sum()
 }
 
-func CommitValueVerify(cs *frontend.ConstraintSystem, amount, amountRandom, shieldAmountX, shieldAmountY frontend.Variable) {
+func CommitValueVerify(cs *frontend.ConstraintSystem, amount, amountRandom,
+	shieldAmountX, shieldAmountY, shieldPointHX, shieldPointHY frontend.Variable) {
 	cs.AssertIsLessOrEqual(amount, 9000000000000000000)
 
 	curve, _ := twistededwards.NewEdCurve(ecc.BN254)
 	var pointAmount twistededwards.Point
 	pointAmount.ScalarMulFixedBase(cs, curve.BaseX, curve.BaseY, amount, curve)
 
-	var pointH bn254.PointAffine
-	pointH.X.SetString("9252662952969393856711468743327022054484546162727338092576697495684140272191")
-	pointH.Y.SetString("8220002160263982499510761441032261960817037857915665984040705585999508400744")
+	var pointH twistededwards.Point
+	pointH.X = shieldPointHX
+	pointH.Y = shieldPointHY
 
 	var pointRandom twistededwards.Point
-	pointRandom.ScalarMulFixedBase(cs, pointH.X, pointH.Y, amountRandom, curve)
+	pointRandom.ScalarMulNonFixedBase(cs, &pointH, amountRandom, curve)
 
 	var pointSum twistededwards.Point
 	pointSum.AddGeneric(cs, &pointAmount, &pointRandom, curve)

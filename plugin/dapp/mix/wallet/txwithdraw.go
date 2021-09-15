@@ -98,7 +98,7 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		if err != nil {
 			return nil, errors.Wrapf(err, "getWithdrawParams note=%s", note)
 		}
-		proofInfo, err := getZkProofKeys(mixTy.VerifyType_WITHDRAW, withdraw.ZkPath, mixTy.WithdrawPk, input, req.ZkProof)
+		proofInfo, err := getZkProofKeys(mixTy.VerifyType_WITHDRAW, withdraw.ZkPath, mixTy.WithdrawPk, input)
 		if err != nil {
 			return nil, errors.Wrapf(err, "getZkProofKeys note=%s", note)
 		}

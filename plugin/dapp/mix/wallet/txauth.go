@@ -86,7 +86,7 @@ func (p *mixPolicy) createAuthTx(req *mixTy.CreateRawTxReq) (*types.Transaction,
 		return nil, errors.Wrapf(types.ErrInvalidParam, "asset exec=%s or symbol=%s not filled", req.AssetExec, req.AssetSymbol)
 	}
 
-	proofInfo, err := getZkProofKeys(mixTy.VerifyType_AUTHORIZE, auth.ZkPath, mixTy.AuthPk, input, req.ZkProof)
+	proofInfo, err := getZkProofKeys(mixTy.VerifyType_AUTHORIZE, auth.ZkPath, mixTy.AuthPk, input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getZkProofKeys note=%s", auth.NoteHash)
 	}

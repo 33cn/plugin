@@ -212,59 +212,44 @@ func updateTreePath(obj interface{}, treeProof *mixTy.TreePathProof) {
 		tv.FieldByName("Valid" + strconv.Itoa(i)).Addr().Interface().(*frontend.Variable).Assign("0")
 
 	}
-
 }
 
-func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs frontend.Circuit, proof string) (*mixTy.ZkProofInfo, error) {
-	var proofKey bytes.Buffer
-
-	//是Pk file, 需要生成proof
-	if len(proof) > 0 {
-		//直接读proof
-		pkBuf, err := mixTy.GetByteBuff(proof)
-		if err != nil {
-			return nil, err
-		}
-
-		proofKey.Write(pkBuf.Bytes())
-
-	} else {
-
-		//从电路文件获取电路约束
-		circuit, err := getCircuit(circuitTy)
-		if err != nil {
-			return nil, err
-		}
-		//从pv 文件读取Pk结构
-		pkFile := filepath.Join(path, file)
-		pkStr, err := readZkKeyFile(pkFile)
-		if err != nil {
-			return nil, errors.Wrapf(err, "readZkKeyFile")
-		}
-		pkBuf, err := mixTy.GetByteBuff(pkStr)
-		if err != nil {
-			return nil, err
-		}
-
-		pk := groth16.NewProvingKey(ecc.BN254)
-		if _, err := pk.ReadFrom(pkBuf); err != nil {
-			return nil, errors.Wrapf(err, "read pk")
-		}
-		//产生zk 证明
-		proof, err := createProof(circuit, pk, inputs)
-		if err != nil {
-			return nil, errors.Wrapf(err, "create proof to %s", pkFile)
-		}
-
-		if _, err := proof.WriteRawTo(&proofKey); err != nil {
-			return nil, errors.Wrapf(err, "write proof")
-		}
-
+func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs frontend.Circuit) (*mixTy.ZkProofInfo, error) {
+	//从电路文件获取电路约束
+	circuit, err := getCircuit(circuitTy)
+	if err != nil {
+		return nil, err
+	}
+	//从pv 文件读取Pk结构
+	pkFile := filepath.Join(path, file)
+	pkStr, err := readZkKeyFile(pkFile)
+	if err != nil {
+		return nil, errors.Wrapf(err, "readZkKeyFile")
+	}
+	pkBuf, err := mixTy.GetByteBuff(pkStr)
+	if err != nil {
+		return nil, err
 	}
 
-	//序列号成字符串
+	pk := groth16.NewProvingKey(ecc.BN254)
+	if _, err := pk.ReadFrom(pkBuf); err != nil {
+		return nil, errors.Wrapf(err, "read pk")
+	}
+
+	//产生zk 证明
+	proof, err := createProof(circuit, pk, inputs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "create proof to %s", pkFile)
+	}
+
+	var proofKey bytes.Buffer
+	if _, err := proof.WriteRawTo(&proofKey); err != nil {
+		return nil, errors.Wrapf(err, "write proof")
+	}
+
+	//公开输入序列化
 	var pubBuf bytes.Buffer
-	_, err := witness.WritePublicTo(&pubBuf, ecc.BN254, inputs)
+	_, err = witness.WritePublicTo(&pubBuf, ecc.BN254, inputs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "write public input")
 	}

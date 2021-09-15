@@ -12,6 +12,8 @@ type TransferInputCircuit struct {
 	NullifierHash      frontend.Variable `gnark:",public"`
 	ShieldAmountX      frontend.Variable `gnark:",public"`
 	ShieldAmountY      frontend.Variable `gnark:",public"`
+	ShieldPointHX      frontend.Variable `gnark:",public"`
+	ShieldPointHY      frontend.Variable `gnark:",public"`
 
 	//secret
 	ReceiverPubKey  frontend.Variable
@@ -130,7 +132,7 @@ func (circuit *TransferInputCircuit) Define(curveID ecc.ID, cs *frontend.Constra
 	valid = append(valid, circuit.Valid8)
 	valid = append(valid, circuit.Valid9)
 
-	CommitValueVerify(cs, circuit.Amount, circuit.AmountRandom, circuit.ShieldAmountX, circuit.ShieldAmountY)
+	CommitValueVerify(cs, circuit.Amount, circuit.AmountRandom, circuit.ShieldAmountX, circuit.ShieldAmountY, circuit.ShieldPointHX, circuit.ShieldPointHY)
 	VerifyMerkleProof(cs, mimc, circuit.TreeRootHash, proofSet, helper, valid)
 
 	return nil
