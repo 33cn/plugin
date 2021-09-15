@@ -126,7 +126,7 @@ func (p *mixPolicy) depositParams(exec, symbol, receiver, returner, auth, amount
 
 }
 
-func (p *mixPolicy) getDepositProof(exec, symbol, receiver, returner, auth, amount, zkPath string, verifyOnChain bool, proof string) (*mixTy.ZkProofInfo, error) {
+func (p *mixPolicy) getDepositProof(exec, symbol, receiver, returner, auth, amount, zkPath string, verifyOnChain bool) (*mixTy.ZkProofInfo, error) {
 
 	resp, err := p.depositParams(exec, symbol, receiver, returner, auth, amount)
 	if err != nil {
@@ -141,7 +141,7 @@ func (p *mixPolicy) getDepositProof(exec, symbol, receiver, returner, auth, amou
 	input.ReturnPubKey.Assign(resp.Proof.ReturnKey)
 	input.NoteRandom.Assign(resp.Proof.NoteRandom)
 
-	proofInfo, err := getZkProofKeys(mixTy.VerifyType_DEPOSIT, zkPath, mixTy.DepositPk, &input, proof)
+	proofInfo, err := getZkProofKeys(mixTy.VerifyType_DEPOSIT, zkPath, mixTy.DepositPk, &input)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (p *mixPolicy) createDepositTx(req *mixTy.CreateRawTxReq) (*types.Transacti
 
 	var proofs []*mixTy.ZkProofInfo
 	for i, rcv := range receivers {
-		p, err := p.getDepositProof(req.AssetExec, req.AssetSymbol, rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath, req.VerifyOnChain, req.ZkProof)
+		p, err := p.getDepositProof(req.AssetExec, req.AssetSymbol, rcv, deposit.Deposit.ReturnAddr, deposit.Deposit.AuthorizeAddr, amounts[i], deposit.ZkPath, req.VerifyOnChain)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get Deposit proof for=%s", rcv)
 		}

@@ -22,7 +22,7 @@ import (
 2. check if exist in authorize pool and nullifier pool
 
 */
-func transferInput(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.TransferInputCircuit, error) {
+func transferInput(cfg *types.Chain33Config, db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (*mixTy.TransferInputCircuit, error) {
 	var input mixTy.TransferInputCircuit
 	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
@@ -35,6 +35,16 @@ func transferInput(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (
 	err = spendVerify(db, execer, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify spendVerify")
+	}
+
+	//确保用户使用的和链配置的一致，不能私自篡改
+	conf := types.ConfSub(cfg, mixTy.MixX)
+	pointHX := conf.GStr("pointHX")
+	pointHY := conf.GStr("pointHY")
+	inputHX := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHX))
+	inputHY := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHY))
+	if pointHX != inputHX.String() || pointHY != inputHY.String() {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "input circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
 	}
 
 	err = zkProofVerify(db, proof, mixTy.VerifyType_TRANSFERINPUT)
@@ -51,12 +61,23 @@ func transferInput(db dbm.KV, execer, symbol string, proof *mixTy.ZkProofInfo) (
 2. check if exist in authorize pool and nullifier pool
 
 */
-func transferOutputVerify(db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputCircuit, error) {
+func transferOutputVerify(cfg *types.Chain33Config, db dbm.KV, proof *mixTy.ZkProofInfo) (*mixTy.TransferOutputCircuit, error) {
 	var input mixTy.TransferOutputCircuit
 	err := mixTy.ConstructCircuitPubInput(proof.PublicInput, &input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
+
+	//确保用户使用的和链配置的一致，不能私自篡改
+	conf := types.ConfSub(cfg, mixTy.MixX)
+	pointHX := conf.GStr("pointHX")
+	pointHY := conf.GStr("pointHY")
+	inputHX := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHX))
+	inputHY := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHY))
+	if pointHX != inputHX.String() || pointHY != inputHY.String() {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "output circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
+	}
+
 	err = zkProofVerify(db, proof, mixTy.VerifyType_TRANSFEROUTPUT)
 	if err != nil {
 		return nil, errors.Wrap(err, "Output verify proof verify")
@@ -110,7 +131,7 @@ func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.
 	txFee := mixTy.GetTransferTxFee(cfg, execer)
 	//inputs
 	for _, i := range transfer.Inputs {
-		in, err := transferInput(db, execer, symbol, i)
+		in, err := transferInput(cfg, db, execer, symbol, i)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -119,14 +140,14 @@ func MixTransferInfoVerify(cfg *types.Chain33Config, db dbm.KV, transfer *mixTy.
 	}
 
 	//output
-	out, err := transferOutputVerify(db, transfer.Output)
+	out, err := transferOutputVerify(cfg, db, transfer.Output)
 	if err != nil {
 		return nil, nil, err
 	}
 	outputs = append(outputs, out)
 
 	//change
-	change, err := transferOutputVerify(db, transfer.Change)
+	change, err := transferOutputVerify(cfg, db, transfer.Change)
 	if err != nil {
 		return nil, nil, err
 	}

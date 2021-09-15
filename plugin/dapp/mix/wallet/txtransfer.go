@@ -5,7 +5,6 @@
 package wallet
 
 import (
-	"fmt"
 	"github.com/consensys/gnark/frontend"
 	"path/filepath"
 
@@ -96,7 +95,7 @@ func (p *mixPolicy) getTransferOutput(exec, symbol string, req *mixTy.DepositInf
 }
 
 //input = output+找零+交易费
-func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, change, minTxFee uint64) (*mixTy.ShieldAmountRst, error) {
+func getShieldValue(inputAmounts []uint64, outAmount, change, minTxFee uint64, pointHX, pointHY string) (*mixTy.ShieldAmountRst, error) {
 	var sum uint64
 	for _, i := range inputAmounts {
 		sum += i
@@ -132,8 +131,6 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 	random := v.String()
 	rChange.SetString(random[0 : len(random)/2])
 	rOut.SetString(random[len(random)/2:])
-	fmt.Println("rOut", rOut.String())
-	fmt.Println("rChange", rChange.String())
 
 	var rSumIn, rSumOut fr.Element
 	rSumIn.SetZero()
@@ -166,10 +163,6 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "random sumIn=%s not equal sumOut=%s", rSumIn.String(), rSumOut.String())
 	}
 
-	conf := types.ConfSub(cfg, mixTy.MixX)
-	pointHX := conf.GStr("pointHX")
-	pointHY := conf.GStr("pointHY")
-
 	var inputHPoints []*twistededwards.PointAffine
 	for _, i := range rInputs {
 		inputHPoints = append(inputHPoints, mixTy.MulCurvePointH(pointHX, pointHY, i.String()))
@@ -177,9 +170,6 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 	//noteH := mixTy.MulCurvePointH(rNote.String())
 	outH := mixTy.MulCurvePointH(pointHX, pointHY, rOut.String())
 	changeH := mixTy.MulCurvePointH(pointHX, pointHY, rChange.String())
-	//fmt.Println("change",changeRandom.String())
-	//fmt.Println("transfer",transRandom.String())
-	//fmt.Println("note",noteRandom.String())
 	sumPointH := mixTy.GetCurveSum(inputHPoints...)
 	if !mixTy.CheckSumEqual(sumPointH, outH, changeH) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "random sum error")
@@ -203,7 +193,6 @@ func getShieldValue(cfg *types.Chain33Config, inputAmounts []uint64, outAmount, 
 	}
 	for _, r := range rInputs {
 		rst.InputRandoms = append(rst.InputRandoms, r.String())
-		fmt.Println("inputRandom", r.String())
 	}
 	for _, p := range inputGPoints {
 		rst.Inputs = append(rst.Inputs, &mixTy.ShieldAmount{X: p.X.String(), Y: p.Y.String()})
@@ -295,8 +284,12 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	}
 	bizlog.Info("transferProof deposit to change succ")
 
+	conf := types.ConfSub(p.walletOperate.GetAPI().GetConfig(), mixTy.MixX)
+	pointHX := conf.GStr("pointHX")
+	pointHY := conf.GStr("pointHY")
+
 	//获取shieldValue 输入输出对amount隐藏
-	shieldValue, err := getShieldValue(p.walletOperate.GetAPI().GetConfig(), inputAmounts, outAmount, changeAmount, uint64(txFee))
+	shieldValue, err := getShieldValue(inputAmounts, outAmount, changeAmount, uint64(txFee), pointHX, pointHY)
 	if err != nil {
 		return nil, err
 	}
@@ -307,30 +300,27 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 		input.ShieldAmountX.Assign(shieldValue.Inputs[i].X)
 		input.ShieldAmountY.Assign(shieldValue.Inputs[i].Y)
 		input.AmountRandom.Assign(shieldValue.InputRandoms[i])
+		input.ShieldPointHX.Assign(pointHX)
+		input.ShieldPointHY.Assign(pointHY)
 	}
 
 	outPart.ShieldAmountX.Assign(shieldValue.Output.X)
 	outPart.ShieldAmountY.Assign(shieldValue.Output.Y)
 	outPart.AmountRandom.Assign(shieldValue.OutputRandom)
+	outPart.ShieldPointHX.Assign(pointHX)
+	outPart.ShieldPointHY.Assign(pointHY)
 
 	changePart.ShieldAmountX.Assign(shieldValue.Change.X)
 	changePart.ShieldAmountY.Assign(shieldValue.Change.Y)
 	changePart.AmountRandom.Assign(shieldValue.ChangeRandom)
-
-	//输入的proof，CI测试目的，正常情况下为空，需输入pk路径
-	proofs := make([]string, len(inputParts)+2)
-	if len(req.ZkProof) > 0 {
-		proofs = strings.Split(req.ZkProof, "-")
-		if len(proofs) != len(inputParts)+2 {
-			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong proof num=%d, inputs=%d", len(proofs), len(inputParts)+2)
-		}
-	}
+	changePart.ShieldPointHX.Assign(pointHX)
+	changePart.ShieldPointHY.Assign(pointHY)
 
 	//verify input
 	var inputProofs []*mixTy.ZkProofInfo
 	vkFile := filepath.Join(transfer.ZkPath, mixTy.TransInputVk)
 	for i, input := range inputParts {
-		inputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFERINPUT, transfer.ZkPath, mixTy.TransInputPk, input, proofs[i])
+		inputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFERINPUT, transfer.ZkPath, mixTy.TransInputPk, input)
 		if err != nil {
 			return nil, errors.Wrapf(err, "verify.input getZkProofKeys,the i=%d", i)
 		}
@@ -342,7 +332,7 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 
 	//verify output
 	vkOutFile := filepath.Join(transfer.ZkPath, mixTy.TransOutputVk)
-	outputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, outPart, proofs[len(inputParts)])
+	outputProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, outPart)
 	if err != nil {
 		return nil, errors.Wrapf(err, "output getZkProofKeys")
 	}
@@ -352,7 +342,7 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	outputProof.Secrets = outDHSecret
 
 	//verify change
-	changeProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, changePart, proofs[len(inputParts)+1])
+	changeProof, err := getZkProofKeys(mixTy.VerifyType_TRANSFEROUTPUT, transfer.ZkPath, mixTy.TransOutputPk, changePart)
 	if err != nil {
 		return nil, errors.Wrapf(err, "change getZkProofKeys")
 	}

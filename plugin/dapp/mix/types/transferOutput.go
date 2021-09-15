@@ -11,6 +11,8 @@ type TransferOutputCircuit struct {
 	NoteHash      frontend.Variable `gnark:",public"`
 	ShieldAmountX frontend.Variable `gnark:",public"`
 	ShieldAmountY frontend.Variable `gnark:",public"`
+	ShieldPointHX frontend.Variable `gnark:",public"`
+	ShieldPointHY frontend.Variable `gnark:",public"`
 
 	//secret
 	ReceiverPubKey  frontend.Variable
@@ -29,7 +31,7 @@ func (circuit *TransferOutputCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
 	cs.AssertIsEqual(circuit.NoteHash, mimc.Sum())
 
-	CommitValueVerify(cs, circuit.Amount, circuit.AmountRandom, circuit.ShieldAmountX, circuit.ShieldAmountY)
+	CommitValueVerify(cs, circuit.Amount, circuit.AmountRandom, circuit.ShieldAmountX, circuit.ShieldAmountY, circuit.ShieldPointHX, circuit.ShieldPointHY)
 
 	return nil
 }
