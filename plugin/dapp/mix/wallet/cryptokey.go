@@ -140,7 +140,7 @@ func mimcHashByte(params [][]byte) []byte {
 }
 
 func mimcHashCalc(sum []byte) []byte {
-	h := mimc.NewMiMC("seed")
+	h := mimc.NewMiMC(mixTy.MimcHashSeed)
 	h.Write(sum)
 	return h.Sum(nil)
 }

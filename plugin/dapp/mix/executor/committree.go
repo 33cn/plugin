@@ -95,7 +95,7 @@ func getArchiveRoots(db dbm.KV, exec, symbol string, seq uint64) (*mixTy.CommitT
 
 //TODO seed config
 func getNewTree() *merkletree.Tree {
-	return merkletree.New(mimc.NewMiMC("seed"))
+	return merkletree.New(mimc.NewMiMC(mixTy.MimcHashSeed))
 }
 
 func calcTreeRoot(leaves *mixTy.CommitTreeLeaves) []byte {

@@ -19,7 +19,7 @@ type DepositCircuit struct {
 
 func (circuit *DepositCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// hash function
-	mimc, _ := mimc.NewMiMC("seed", curveID, cs)
+	mimc, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
 
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
 	cs.AssertIsEqual(circuit.NoteHash, mimc.Sum())

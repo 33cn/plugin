@@ -69,7 +69,7 @@ func (circuit *TransferInputCircuit) Define(curveID ecc.ID, cs *frontend.Constra
 	cs.AssertIsBoolean(circuit.AuthorizeFlag)
 
 	// hash function
-	h, _ := mimc.NewMiMC("seed", curveID, cs)
+	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
 	mimc := &h
 
 	//verify spend private key
