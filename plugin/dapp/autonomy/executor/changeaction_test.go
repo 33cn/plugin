@@ -597,7 +597,7 @@ func TestCheckChangeable(t *testing.T) {
 
 func TestReplaceBoard(t *testing.T) {
 	at := newTestAutonomy()
-	signer := util.HexToPrivkey(PrivKeyA)
+	signer := util.HexToPrivkey(PrivKey17)
 	tx := &types.Transaction{}
 	tx.Sign(types.SECP256K1, signer)
 	action := newAction(at, tx, 0)
@@ -628,8 +628,8 @@ func TestReplaceBoard(t *testing.T) {
 	changes = []*auty.Change{{Cancel: true, Addr: Addr18}}
 	cur, err := action.replaceBoard(act, changes)
 	assert.NoError(t, err)
-	assert.Equal(t, cur.Boards[0], Addr18)
-	assert.Equal(t, cur.Revboards[0], AddrA)
+	assert.Equal(t, cur.Boards[20], Addr18)
+	assert.Equal(t, cur.Revboards[0], Addr17)
 }
 
 func TestCopyAutonomyProposalChange(t *testing.T) {
