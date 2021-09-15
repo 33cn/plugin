@@ -58,7 +58,7 @@ type AuthorizeCircuit struct {
 // Define declares the circuit's constraints
 func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// hash function
-	h, _ := mimc.NewMiMC("seed", curveID, cs)
+	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
 	mimc := &h
 	mimc.Write(circuit.AuthorizePriKey)
 	cs.AssertIsEqual(circuit.AuthorizePubKey, mimc.Sum())

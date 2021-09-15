@@ -64,7 +64,7 @@ func (circuit *WithdrawCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSy
 	cs.AssertIsBoolean(circuit.AuthorizeFlag)
 
 	// hash function
-	h, _ := mimc.NewMiMC("seed", curveID, cs)
+	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
 	mimc := &h
 	mimc.Write(circuit.SpendPriKey)
 	targetSpendKey := cs.Select(circuit.SpendFlag, circuit.ReceiverPubKey, circuit.ReturnPubKey)

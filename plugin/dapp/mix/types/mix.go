@@ -13,6 +13,8 @@ var tlog = log15.New("module", MixX)
 const (
 	//MaxTreeLeaves = 1024
 	TreeLevel = 10
+	//MimcHashSeed 电路不支持作为公共输入，设为全局常数
+	MimcHashSeed = "19172955941344617222923168298456110557655645809646772800021167670156933290312"
 )
 
 // 执行器的日志类型
