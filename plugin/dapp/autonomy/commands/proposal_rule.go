@@ -47,6 +47,8 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("proposalAmount", "p", 0, "proposal cost amount")
 	cmd.Flags().Int64P("largeProjectAmount", "l", 0, "large project amount threshold")
 	cmd.Flags().Int32P("publicPeriod", "u", 0, "public time")
+	cmd.Flags().Int32P("pubAttendRatio", "a", 0, "public Attend")
+	cmd.Flags().Int32P("pubApproveRatio", "v", 0, "public Approve")
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
@@ -65,6 +67,8 @@ func proposalRule(cmd *cobra.Command, args []string) {
 	proposalAmount, _ := cmd.Flags().GetInt64("proposalAmount")
 	largeProjectAmount, _ := cmd.Flags().GetInt64("largeProjectAmount")
 	publicPeriod, _ := cmd.Flags().GetInt32("publicPeriod")
+	pubAttendRatio, _ := cmd.Flags().GetInt32("pubAttendRatio")
+	pubApproveRatio, _ := cmd.Flags().GetInt32("pubApproveRatio")
 
 	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
 	if err != nil {
@@ -82,6 +86,8 @@ func proposalRule(cmd *cobra.Command, args []string) {
 			ProposalAmount:     proposalAmount * cfg.CoinPrecision,
 			LargeProjectAmount: largeProjectAmount * cfg.CoinPrecision,
 			PublicPeriod:       publicPeriod,
+			PubAttendRatio:     pubAttendRatio,
+			PubApproveRatio:    pubApproveRatio,
 		},
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,
