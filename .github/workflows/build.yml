@@ -143,25 +143,4 @@ jobs:
 
 
 
-  ci_cross2eth:
-    name: ci_cross2eth
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Golang
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.14
-        id: go
-      - name: checkout
-        uses: actions/checkout@v2
-      - name: deploy
-        run: |
-          export GOPATH=$HOME/go
-          export PATH=${PATH}:`go env GOPATH`/bin
-          echo $GOPATH
-          make
-          make docker-compose dapp=cross2eth
-          make docker-compose-down dapp=cross2eth
-
-
 
