@@ -127,7 +127,7 @@ function mix_deposit() {
     authKey=$(${MIX_CLI32} mix wallet notes -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -s 3 | jq -r ".notes[0].secret.returnKey")
     echo "authHash=$authHash,authKey=$authKey"
     proof="1c33f86a705d387a191d598cdf5a4d97d839e49013ec8b73fb265a62bafc03fc17e9b34a36c6f015f49d1e944c945ff16bc3c7b4886591578c780fa829f140560fea4be7ddf3a98a5a620010f7a210456158e3f20b88a5a120980c8b960d15fb1c50a4d93b78c3cb3bc729152e1cd0b1574b3cc63a4ce6fb5f8e51828320df861d70f529eab34712c213a605dda2f05eda7fc4b0aefc99adb2817eb10548489d12591f64709a5ad3dd32a1ebfcdb70c50288af1185b4fa3e9a25636b9cc9df0c22880ab3541018fa25a9fb232ed4dd47e0aa92de0c4ee2f0fab57fe95df096fc01fc054d1331088bb57efd36df79ab36686df37dcb9284943d2047df96bd7635"
-    rawData=$(${MIX_CLI32} mix auth -n "$authHash" -a "$authKey" -p ./gnark/  -w "" -v true -e coins -s bty)
+    rawData=$(${MIX_CLI32} mix auth -n "$authHash" -a "$authKey" -p ./gnark/ -w "" -v true -e coins -s bty)
     signData=$(${CLI} wallet sign -d $rawData -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
@@ -149,7 +149,7 @@ function mix_deposit() {
     echo "withdraw"
     withdrawHash=$(${MIX_CLI30} mix wallet notes -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -s 1 | jq -r ".notes[0].noteHash")
     proof="152d166b3cbf1863f9da7ebb478a99d170544653d870a48533a48da8c484f2590fc795d9db67816b39a3dec2562dccfc5920b88236b766b8c3879e1d991121aa1b28801f92fac0597d397dc605b1e479742dbc3354bd1f33c8b52fac95cf047c29302a139eef9c948d148641e91d8b122785570d4a6c753c289e61bba96860c719fad87bb0954fc6ed3616f32af3f978aa26aeb03d123d312f569be901057c64123a2fed3890d5c0e59b3cff0e527dfe23b3f069227fd975a11c41133772cd311aa1b7ab4ff4849e01d7475c99e6e5fbc3fb0c1817e5f0a3ae98a7dc513af1e011aadc35e47b0359e39d89a50ff585b436fd27f5bc0bc973047c5b2fd52cd606"
-    rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/  -w "" -v true -e coins -s bty)
+    rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/ -w "" -v true -e coins -s bty)
     signData=$(${CLI} wallet sign -d $rawData -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     hash=$(${CLI} wallet send -d "$signData")
 
@@ -199,7 +199,7 @@ function mix_token_test() {
 
     echo "mix deposit"
     proof="12c840fed692d2f38e6d227e6b4dfe46f0107075035adbb035c652f9e00a662b2ce53546477aff0fc320dd8c505cab2861d494a173be2fdfb6ddb033542a8bb10826dce453a6aa7c728e821b67a7c0dac14dd76135c04d71985e6682a4a4e0ca033be19ce61562235ae9d62cb8409599331da4b11718169fdddde4b6e4642f60031f64e90a2c37f627059af4db30e92ce9d3f45a7f4683088f048ed2e34d331a0966758a7849abfe4a15d2f7df52a1be3270bd13b2c87d559cfd85c3e12aed911627413fb9e99be990e0b4ea9c61ef68ba655bf003cbc050d92febfc337c32b52e7c30942536885d0b62ea3b44261f557d12ef4c24cc3728d4ea91d39b19ebf5"
-    hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/ -w ""  -v true -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -e token -s GD -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/ -w "" -v true -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -e token -s GD -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
@@ -218,7 +218,7 @@ function mix_token_test() {
     echo "withdraw token GD"
     withdrawHash=$(${MIX_CLI30} mix wallet notes -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -s 1 | jq -r ".notes[0].noteHash")
     proof="2ae76d20889a6be8c9173bd7fa93883a4d3f018b01d083f80809e363b954fab626327fc97e34d830a8101fa6c6fce2fcbc613a8794776488a9acad7983af189f225e1b7284f40ab265092524c20219da32ccf4ac6dc2a8b2de924e43e8763c421bf55d90f6615e15aa228549b09f48f7072af6f768528da8a7b13611950b8e611513ec503c0ea0a0782106eb85dc0493a117f699465cff63d44beec2668ab368207bab40cf1867e11fbc947408339f04cd991eda2b1a250fb181080f575cfe650cc4e1144a6f02e997d49269c0406a373913bc2530fd96fa2856c459de596da71d12b0e8aef76d33d4e862879636c9f9d21ff49789d93f9f671013c9e0489774"
-    rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/ -w ""  -v true -e token -s GD)
+    rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/ -w "" -v true -e token -s GD)
     signData=$(${CLI} wallet sign -d $rawData -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"

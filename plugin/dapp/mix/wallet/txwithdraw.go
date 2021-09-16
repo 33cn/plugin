@@ -5,9 +5,10 @@
 package wallet
 
 import (
-	"github.com/consensys/gnark/frontend"
 	"path/filepath"
 	"strings"
+
+	"github.com/consensys/gnark/frontend"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"

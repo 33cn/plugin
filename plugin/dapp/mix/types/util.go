@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"io"
+	"math/big"
+	"reflect"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	bn254 "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"github.com/consensys/gnark/frontend"
 	"github.com/pkg/errors"
-	"io"
-	"math/big"
-	"reflect"
 
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"

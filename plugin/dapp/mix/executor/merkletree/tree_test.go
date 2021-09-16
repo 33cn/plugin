@@ -6,8 +6,9 @@ package merkletree
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
