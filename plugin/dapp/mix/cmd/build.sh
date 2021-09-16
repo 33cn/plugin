@@ -11,6 +11,6 @@ mkdir -p "${OUT_DIR}"/gnark
 cp ./build/* "${OUT_DIR}"
 cp -r ./gnark/* "${OUT_DIR}"/gnark
 
-OUT_TESTDIR="${1}/dapptest/$strapp"
-mkdir -p "${OUT_TESTDIR}"
-cp ./test/* "${OUT_TESTDIR}"
+#OUT_TESTDIR="${1}/dapptest/$strapp"
+#mkdir -p "${OUT_TESTDIR}"
+#cp ./test/* "${OUT_TESTDIR}"

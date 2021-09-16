@@ -1,0 +1,28 @@
+name: build
+on: [push,pull_request]
+
+jobs:
+  ci_mix:
+    name: ci_mix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: download zk key file
+        run: |
+          pwd&&cd ./plugin/dapp/mix/cmd/
+          wget https://github.com/mdj33/gnark/blob/main/chain33key.tar.gz
+          tar -xzvf chain33key.tar.gz
+          cp chain33key/* ./gnark/
+          cd -
+      - name: deploy
+        run: |
+          make docker-compose dapp=mix
+          make docker-compose-down dapp=mix
