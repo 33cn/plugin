@@ -5,8 +5,6 @@
 package commands
 
 import (
-	"strings"
-
 	"encoding/json"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
@@ -36,8 +34,8 @@ func addProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
 	cmd.MarkFlagRequired("endBlock")
 
-	cmd.Flags().StringP("changes", "c", "", "addr1-true*addr2-false*addr3-true*......*addrN-false (1<=N<20)")
-	cmd.MarkFlagRequired("changes")
+	cmd.Flags().StringP("change", "c", "", "addr")
+	cmd.MarkFlagRequired("change")
 }
 
 func proposalChange(cmd *cobra.Command, args []string) {
@@ -49,29 +47,12 @@ func proposalChange(cmd *cobra.Command, args []string) {
 
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
 	endBlock, _ := cmd.Flags().GetInt64("endBlock")
-	changestr, _ := cmd.Flags().GetString("changes")
-
-	changeStr := strings.Split(changestr, "*")
+	changeAddrstr, _ := cmd.Flags().GetString("change")
 
 	var changes []*auty.Change
-	for _, chStr := range changeStr {
-		per := strings.Split(chStr, "-")
-		if len(per) == 2 {
-			if per[1] == "true" {
-				change := &auty.Change{
-					Cancel: true,
-					Addr:   per[0],
-				}
-				changes = append(changes, change)
-			} else if per[1] == "false" {
-				change := &auty.Change{
-					Cancel: false,
-					Addr:   per[0],
-				}
-				changes = append(changes, change)
-			}
-		}
-	}
+	change := &auty.Change{Cancel: true, Addr: changeAddrstr}
+	changes = append(changes, change)
+
 	params := &auty.ProposalChange{
 		Year:             year,
 		Month:            month,
@@ -148,7 +129,7 @@ func VoteProposalChangeCmd() *cobra.Command {
 func addVoteProposalChangeFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
+	cmd.Flags().Int32P("approve", "r", 1, "1:approve, 2:oppose, 3:quit, default 1")
 }
 
 func voteProposalChange(cmd *cobra.Command, args []string) {
@@ -157,16 +138,9 @@ func voteProposalChange(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
 
-	var isapp bool
-	if approve == 0 {
-		isapp = false
-	} else {
-		isapp = true
-	}
-
 	params := &auty.VoteProposalChange{
 		ProposalID: ID,
-		Approve:    isapp,
+		Vote:       auty.AutonomyVoteOption(approve),
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {

@@ -47,8 +47,8 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("proposalAmount", "p", 0, "proposal cost amount")
 	cmd.Flags().Int64P("largeProjectAmount", "l", 0, "large project amount threshold")
 	cmd.Flags().Int32P("publicPeriod", "u", 0, "public time")
-	cmd.Flags().Int32P("pubAttendRatio", "a", 0, "public Attend")
-	cmd.Flags().Int32P("pubApproveRatio", "v", 0, "public Approve")
+	cmd.Flags().Int32P("pubAttendRatio", "a", 0, "public attend ratio(unit is %)")
+	cmd.Flags().Int32P("pubApproveRatio", "v", 0, "public approve ratio(unit is %)")
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
@@ -160,7 +160,7 @@ func VoteProposalRuleCmd() *cobra.Command {
 func addVoteProposalRuleFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("proposalID", "p", "", "proposal ID")
 	cmd.MarkFlagRequired("proposalID")
-	cmd.Flags().Int32P("approve", "r", 1, "is approve, default true")
+	cmd.Flags().Int32P("approve", "r", 1, "1:approve, 2:oppose, 3:quit, default 1")
 	cmd.Flags().StringP("originAddr", "o", "", "origin address: addr1-addr2......addrN")
 }
 
@@ -171,12 +171,6 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 	ID, _ := cmd.Flags().GetString("proposalID")
 	approve, _ := cmd.Flags().GetInt32("approve")
 	originAddr, _ := cmd.Flags().GetString("originAddr")
-	var isapp bool
-	if approve == 0 {
-		isapp = false
-	} else {
-		isapp = true
-	}
 
 	var originAddrs []string
 	if len(originAddr) > 0 {
@@ -185,8 +179,8 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 
 	params := &auty.VoteProposalRule{
 		ProposalID: ID,
-		Approve:    isapp,
 		OriginAddr: originAddrs,
+		Vote:       auty.AutonomyVoteOption(approve),
 	}
 	payLoad, err := json.Marshal(params)
 	if err != nil {
