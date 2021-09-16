@@ -453,6 +453,9 @@ func CalcTreeProve(db dbm.KV, exec, symbol, rootHash, leaf string) (*mixTy.Commi
 
 	for i := status.ArchiveRootsSeq; i > 0; i-- {
 		roots, err := getArchiveRoots(db, exec, symbol, i)
+		if err != nil {
+			return nil, errors.Wrapf(err, "getArchiveRoots,i=%d", i)
+		}
 		leaves, err := getCommitRootLeaves(db, exec, symbol, mixTy.Byte2Str(roots.Roots[0]))
 		if err == nil {
 			p, err := getProveData(mixTy.Str2Byte(leaf), leaves.Leaves)
