@@ -22,13 +22,14 @@ func StaticsCmd() *cobra.Command {
 
 //ShowLockStaticsFlags ...
 func ShowStaticsFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("symbol", "s", "", "token symbol(optional)")
 	cmd.Flags().Int32P("from", "f", 0, "source chain, 0=ethereum, and 1=chain33")
 	_ = cmd.MarkFlagRequired("from")
 	cmd.Flags().Int32P("operation", "o", 0, "operation type, 1=burn, and 2=lock")
 	_ = cmd.MarkFlagRequired("operation")
-	cmd.Flags().Int32P("status", "u", 0, "show with specified status, default to show all, 1=pending, 2=failed, 3=successful")
+	cmd.Flags().Int32P("status", "u", 0, "show with specified status, default to show all, 1=pending, 2=successful, 3=failed")
+	cmd.Flags().Int32P("count", "n", 0, "count to show, default to show all")
+	cmd.Flags().Int32P("index", "i", 0, "tx index(optional, exclude, default from 0)")
 }
 
 //ShowLockStatics ...
@@ -38,6 +39,8 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 	from, _ := cmd.Flags().GetInt32("from")
 	operation, _ := cmd.Flags().GetInt32("operation")
 	status, _ := cmd.Flags().GetInt32("status")
+	count, _ := cmd.Flags().GetInt32("count")
+	index, _ := cmd.Flags().GetInt32("index")
 
 	if from != 0 && 1 != from {
 		fmt.Println("Pls set correct source chain flag, 0=ethereum, and 1=chain33")
@@ -50,15 +53,17 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 	}
 
 	if status < 0 || status > 3 {
-		fmt.Println("Pls set correct status, default 0 to show all, 1=pending, 2=failed, 3=successful")
+		fmt.Println("Pls set correct status, default 0 to show all, 1=pending, 2=successful, 3=failed")
 		return
 	}
 
-	para := ebTypes.TokenStaticsRequest{
+	para := &ebTypes.TokenStaticsRequest{
 		Symbol:    symbol,
 		From:      from,
 		Operation: operation,
 		Status:    status,
+		TxIndex:   int64(index),
+		Count:     count,
 	}
 	var res ebTypes.TokenStaticsResponse
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowTokenStatics", para, &res)

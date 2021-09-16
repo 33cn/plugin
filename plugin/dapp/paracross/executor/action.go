@@ -982,15 +982,19 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 }
 
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
-	//只获取跨链tx
-	cfg := api.GetConfig()
+	//支持带版本号的跨链交易bitmap
+	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
+	if len(string(status.CrossTxResult)) == pt.ParaCrossStatusBitMapVerLen {
+		return nil, nil, nil
+	}
+
 	rst, err := hex.DecodeString(string(status.TxResult))
 	if err != nil {
 		clog.Error("getCrossTxHashs decode rst", "CrossTxResult", string(status.TxResult), "paraHeight", status.Height)
 		return nil, nil, types.ErrInvalidParam
 	}
-	clog.Debug("getCrossTxHashsByRst", "height", status.Height, "txResult", string(status.TxResult))
 
+	cfg := api.GetConfig()
 	if !cfg.IsDappFork(status.MainBlockHeight, pt.ParaX, pt.ForkParaAssetTransferRbk) {
 		if len(rst) == 0 {
 			return nil, nil, nil
@@ -1010,8 +1014,6 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 	}
 	paraCrossHashs := FilterParaCrossTxHashes(paraAllTxs)
 	crossRst := util.CalcBitMapByBitMap(paraCrossHashs, baseHashs, rst)
-	clog.Debug("getCrossTxHashsByRst.crossRst", "height", status.Height, "txResult", common.ToHex(crossRst), "len", len(paraCrossHashs))
-
 	return paraCrossHashs, crossRst, nil
 
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -50,12 +49,12 @@ func calcRelayFromChain33ListPrefix(claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-", chain33ToEthStaticsPrefix, claimType))
 }
 
-func (ethRelayer *Relayer4Ethereum) getStatics(claimType int32, txIndex int64) ([][]byte, error) {
+func (ethRelayer *Relayer4Ethereum) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
 	keyPrefix := calcRelayFromChain33ListPrefix(claimType)
 
 	keyFrom := calcRelayFromChain33Key(claimType, txIndex)
 	helper := dbm.NewListHelper(ethRelayer.db)
-	datas := helper.List(keyPrefix, keyFrom, 20, dbm.ListASC)
+	datas := helper.List(keyPrefix, keyFrom, count, dbm.ListASC)
 	if nil == datas {
 		return nil, errors.New("Not found")
 	}
@@ -106,12 +105,17 @@ func (ethRelayer *Relayer4Ethereum) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2chain33(total int64) error {
+func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2chain33(totalIndex int64) error {
 	totalTx := &chain33Types.Int64{
-		Data: atomic.LoadInt64(&ethRelayer.totalTx4Eth2Chain33),
+		Data: totalIndex,
 	}
 	//更新成功见证的交易数
 	return ethRelayer.db.Set(chain33ToEthTxTotalAmount, chain33Types.Encode(totalTx))
+}
+
+func (ethRelayer *Relayer4Ethereum) getTotalTxAmount2Eth() int64 {
+	totalTx, _ := utils.LoadInt64FromDB(chain33ToEthTxTotalAmount, ethRelayer.db)
+	return totalTx
 }
 
 func (ethRelayer *Relayer4Ethereum) setLastestStatics(claimType int32, txIndex int64, data []byte) error {

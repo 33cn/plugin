@@ -113,6 +113,28 @@ func FilterParaCrossTxHashes(txs []*types.Transaction) [][]byte {
 	return txHashs
 }
 
+// FilterParaCrossAssetTxHashes 只过滤跨链资产转移的类型
+func FilterParaCrossAssetTxHashes(txs []*types.Transaction) ([][]byte, error) {
+	var txHashs [][]byte
+	for _, tx := range txs {
+		if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			var payload pt.ParacrossAction
+			err := types.Decode(tx.Payload, &payload)
+			if err != nil {
+				clog.Error("FilterParaCrossAssetTxHashes decode tx", "txhash", hex.EncodeToString(tx.Hash()), "err", err.Error())
+				return nil, err
+			}
+			if payload.Ty == pt.ParacrossActionAssetTransfer ||
+				payload.Ty == pt.ParacrossActionAssetWithdraw ||
+				payload.Ty >= pt.ParacrossActionCrossAssetTransfer {
+				txHashs = append(txHashs, tx.Hash())
+			}
+
+		}
+	}
+	return txHashs, nil
+}
+
 //经para filter之后， 交易组会存在如下几种tx：
 // 1, 主链	paracross	+  	平行链  user.p.xx.paracross  跨链兑换合约
 // 2, 主链   paracross	+  	平行链  user.p.xx.other 		混合交易组合

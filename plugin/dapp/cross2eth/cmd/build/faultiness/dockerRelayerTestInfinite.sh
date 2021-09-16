@@ -32,17 +32,17 @@ maturityDegree=10
 
 chain33BridgeBank=""
 ethBridgeBank=""
-chain33BtyTokenAddr="1111111111111111111114oLvT2"
-chain33EthTokenAddr=""
-ethereumBtyTokenAddr=""
-chain33YccTokenAddr=""
-ethereumYccTokenAddr=""
+chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+chain33EthBridgeTokenAddr=""
+ethereumBtyBridgeTokenAddr=""
+chain33BycBridgeTokenAddr=""
+ethereumBycERC20TokenAddr=""
 #BridgeRegistryOnChain33=""
-#chain33YccErc20Addr=""
+#chain33YccERC20TokenAddr=""
 #BridgeRegistryOnEth=""
-#ethBridgeToeknYccAddr=""
-chain33ZBCErc20Addr=""
-ethBridgeToeknZBCAddr=""
+#ethereumYccBridgeTokenAddr=""
+chain33ZbcERC20TokenAddr=""
+ethereumZbcBridgeTokenAddr=""
 multisignChain33Addr=""
 multisignEthAddr=""
 chain33ID=0
@@ -129,7 +129,7 @@ function restart_ebrelayerA() {
 function TestChain33ToEthAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== chain33 lock BTY, eth burn BTY ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
@@ -137,7 +137,7 @@ function TestChain33ToEthAssets() {
     is_equal "${result}" "50.0000"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33PerfAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33PerfAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyERC20TokenAddr}, 500000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
@@ -151,27 +151,27 @@ function TestChain33ToEthAssets() {
     sleep 4
 
     # eth 这端 金额是否增加了 5
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 5 -k "${ethDeployKey}" -r "${chain33PerfAddr}" -t "${ethereumBtyTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 5 -k "${ethDeployKey}" -r "${chain33PerfAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 4
 
     # eth 这端 金额是否减少了 3
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     #    # eth burn
-    #    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    #    result=$(${CLIA} ethereum burn -m 3 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     #    cli_ret "${result}" "burn"
     #
     #    sleep 4
     #
     #    # eth 这端 金额是否减少了 3
-    #    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    #    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyBridgeTokenAddr}")
     #    cli_ret "${result}" "balance" ".balance" "2"
     #
     #    sleep ${maturityDegree}
@@ -185,13 +185,13 @@ function TestChain33ToEthAssets() {
     #    is_equal "${result}" "2.0000"
     #
     #    # eth burn 2
-    #    result=$(${CLIA} ethereum burn -m 2 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    #    result=$(${CLIA} ethereum burn -m 2 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}" ) #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     #    cli_ret "${result}" "burn"
     #
     #    sleep 4
     #
     #    # eth 这端 金额是否减少了
-    #    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyTokenAddr}")
+    #    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumBtyBridgeTokenAddr}")
     #    cli_ret "${result}" "balance" ".balance" "0"
     #
     #    sleep ${maturityDegree}
@@ -211,45 +211,45 @@ function TestChain33ToEthAssets() {
 function TestChain33ToEthZBCAssets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== chain33 lock ZBC, eth burn ZBC ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumZbcBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
-    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZbcERC20TokenAddr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "0"
 
     # chain33 lock ZBC
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33ZBCErc20Addr}, 900000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33ZbcERC20TokenAddr}, 900000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     # chain33BridgeBank 是否增加了 9
-    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZbcERC20TokenAddr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "900000000"
 
     sleep 4
 
     # eth 这端 金额是否增加了 9
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumZbcBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "9"
 
     # eth burn
-    result=$(${CLIA} ethereum burn -m 8 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethBridgeToeknZBCAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
+    result=$(${CLIA} ethereum burn -m 8 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumZbcBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
     sleep 4
 
     # eth 这端 金额是否减少了 1
-    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethBridgeToeknZBCAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethDeployAddr}" -t "${ethereumZbcBridgeTokenAddr}")
     cli_ret "${result}" "balance" ".balance" "1"
 
     sleep ${maturityDegree}
 
     # 接收的地址金额 变成了 8
-    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33ReceiverAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZbcERC20TokenAddr}" -c "${chain33ReceiverAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "800000000"
 
     # chain33BridgeBank 是否减少了 1
-    result=$(${Chain33Cli} evm query -a "${chain33ZBCErc20Addr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
+    result=$(${Chain33Cli} evm query -a "${chain33ZbcERC20TokenAddr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
     is_equal "${result}" "100000000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -276,8 +276,8 @@ function TestETH2Chain33Assets() {
 
     sleep ${maturityDegree}
 
-    # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
     is_equal "${result}" "1100000000"
 
@@ -286,12 +286,12 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "100"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthTokenAddr}"
+    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthBridgeTokenAddr}"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11-5 * le8
     is_equal "${result}" "600000000"
 
@@ -304,12 +304,12 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "balance" ".balance" "105"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    ${CLIA} chain33 burn -m 6 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthTokenAddr}"
+    ${CLIA} chain33 burn -m 6 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33EthBridgeTokenAddr}"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11-5 * le8
     is_equal "${result}" "0"
 
@@ -328,65 +328,65 @@ function TestETH2Chain33Ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== eth to chain33 在以太坊上锁定 ycc 资产,然后在 chain33 上 burn ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 7个 YCC
-    result=$(${CLIA} ethereum lock -m 7 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum lock -m 7 -k "${ethDeployKey}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 7 YCC
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "7"
 
     sleep ${maturityDegree}
 
-    # chain33 chain33EthTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
+    result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7 * le8
     is_equal "${result}" "700000000"
 
     # 原来的数额 0
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumBycERC20TokenAddr}")
     #    cli_ret "${result}" "balance" ".balance" "0"
 
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}"
+    ${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33BycBridgeTokenAddr}"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "200000000"
 
     # 查询 ETH 这端 bridgeBank 地址 2
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "2"
 
     # 更新后的金额 5
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "5"
 
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
-    ${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33YccTokenAddr}"
+    ${CLIA} chain33 burn -m 2 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33BycBridgeTokenAddr}"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7-5 * le8
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 更新后的金额 5
-    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumYccTokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "7"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -488,7 +488,7 @@ function initPara() {
 function lock_bty_multisign_docker() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
-    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyTokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -642,17 +642,17 @@ function StartDockerRelayerDeploy() {
     #    InitTokenAddr
     offline_create_bridge_token_eth_BTY
     #    offline_create_bridge_token_chain33_ETH
-    #    offline_deploy_erc20_eth_YCC
-    #    offline_create_bridge_token_chain33_YCC
+    #    offline_deploy_erc20_eth_BYC
+    #    offline_create_bridge_token_chain33_BYC
     #    offline_deploy_erc20_chain33_YCC
     #    offline_create_bridge_token_eth_YCC
     #    offline_deploy_erc20_chain33_ZBC
     #    offline_create_bridge_token_eth_ZBC
 
-    #    docker cp "${chain33EthTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthTokenAddr}.abi
-    #    docker cp "${chain33YccTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccTokenAddr}.abi
-    #    docker cp "${chain33YccErc20Addr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccErc20Addr}.abi
-    #    docker cp "${ethBridgeToeknYccAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeToeknYccAddr}.abi
+    #    docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
+    #    docker cp "${chain33BycBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BycBridgeTokenAddr}.abi
+    #    docker cp "${chain33YccERC20TokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccERC20TokenAddr}.abi
+    #    docker cp "${ethereumYccBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumYccBridgeTokenAddr}.abi
 
     # 重启
     restart_ebrelayerA

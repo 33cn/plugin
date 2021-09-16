@@ -22,9 +22,10 @@ package mpt
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/types"
 	"io"
 	"strings"
+
+	"github.com/33cn/chain33/types"
 
 	proto "github.com/golang/protobuf/proto"
 )

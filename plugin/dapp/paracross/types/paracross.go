@@ -72,19 +72,31 @@ const (
 	//paraCrossTransferActionTypeEnd   = 10100
 )
 
+//跨链转移类型是特别执行跨链资产转移的处理，在共识通过后，会做相应处理，其他类型都认为是普通paracross类型
+//跨链资产转移的类型都放到paraCrossTransferActionTypeStart之后，方便管理
+//这里NodeConfig,NodeGroupApply和SelfStageConfig虽然都是跨链类型，但是不算跨链资产转移，实际上不应该放这一类，历史版本就不修改了。
 const (
 	// ParacrossActionAssetTransfer mainchain paracross asset transfer key
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
 	// ParacrossActionAssetWithdraw mainchain paracross asset withdraw key
 	ParacrossActionAssetWithdraw
+
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
 	//ParacrossActionNodeGroupApply apply for node group initially
 	ParacrossActionNodeGroupApply
 	//ParacrossActionSelfStageConfig apply for self consensus stage config
 	ParacrossActionSelfStageConfig
+
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
+	//注意: 此类型之后的一定也需要是跨链资产转移类型，方便代码计算，也就是在共识完成后，execCrossTx()处理到的类型。
 	ParacrossActionCrossAssetTransfer
+)
+
+//跨链共识交易crossResult bitmap版本，支持多版本的bitmap管理
+const (
+	ParaCrossStatusBitMapVerLen = 4
+	ParaCrossStatusBitMapVer1   = "0001"
 )
 
 //paracross asset porcess
