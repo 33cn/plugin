@@ -30,7 +30,6 @@ cp ./build/* "${OUT_DIR}"
 cp ./build/abi/* "${OUT_DIR}"
 cp ./build/public/* "${OUT_DIR}"
 
-
 OUT_TESTDIR="${1}/dapptest/$strapp"
 mkdir -p "${OUT_TESTDIR}"
 cp ./test/* "${OUT_TESTDIR}"
