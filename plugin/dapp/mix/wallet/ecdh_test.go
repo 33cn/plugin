@@ -42,13 +42,6 @@ func ExampleX25519() {
 	// Output:
 }
 
-func ExampleX25519_Params() {
-	c25519 := X25519()
-	p := c25519.Params()
-	fmt.Printf("Name: %s BitSize: %d", p.Name, p.BitSize)
-	// Output: Name: Curve25519 BitSize: 255
-}
-
 func TestX25519(t *testing.T) {
 	dh := X25519()
 

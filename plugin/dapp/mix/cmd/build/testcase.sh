@@ -7,11 +7,6 @@ MIX_CLI32="docker exec ${NODE2} /root/chain33-cli "
 #1nl receiver  chain30
 MIX_CLI30="docker exec ${NODE4} /root/chain33-cli "
 
-xsedfix=""
-if [ "$(uname)" == "Darwin" ]; then
-    xsedfix=".bak"
-fi
-
 # shellcheck source=/dev/null
 #source test-rpc.sh
 
@@ -113,7 +108,6 @@ function mix_transfer() {
 }
 
 function mix_deposit() {
-    proof="0e420e0a8963195ab7fc4a610d8cd758a04be4950317c1c0cdfff701e207d03c0f72b5c669058434b3db24ef57f9a0d9e443d78a3b661e1cd2a1f6c1cdbdb855081c95f92a68286a0aa4d17615f9e61ed073ecb9aa4cbb86feaf4007dc86de8f139e1ff01ff5a6ff5e46db1ede026243c47755cfc33c3dbe4f8871fc62322a3a230ffd865b7b5bfc0e99677877517f562245cdda012e28941b4bad8a25d5edb427152ca0948940a12f489aa259377b0eb0cd1f084faf4dd9ae08c43aba780a6a0245a3a5d13253523272bc7b82ed16ecbcfa94fce8f3033fcf863240134265b70e2ff0b31a35ce0c5d0cba7efb7a4ede29e884da05ee3ede095433c9bfd6fea5"
     hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/ -w "" -v true -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -r 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e coins -s bty -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -126,9 +120,8 @@ function mix_deposit() {
     authHash=$(${MIX_CLI32} mix wallet notes -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -s 3 | jq -r ".notes[0].noteHash")
     authKey=$(${MIX_CLI32} mix wallet notes -a 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR -s 3 | jq -r ".notes[0].secret.returnKey")
     echo "authHash=$authHash,authKey=$authKey"
-    proof="1c33f86a705d387a191d598cdf5a4d97d839e49013ec8b73fb265a62bafc03fc17e9b34a36c6f015f49d1e944c945ff16bc3c7b4886591578c780fa829f140560fea4be7ddf3a98a5a620010f7a210456158e3f20b88a5a120980c8b960d15fb1c50a4d93b78c3cb3bc729152e1cd0b1574b3cc63a4ce6fb5f8e51828320df861d70f529eab34712c213a605dda2f05eda7fc4b0aefc99adb2817eb10548489d12591f64709a5ad3dd32a1ebfcdb70c50288af1185b4fa3e9a25636b9cc9df0c22880ab3541018fa25a9fb232ed4dd47e0aa92de0c4ee2f0fab57fe95df096fc01fc054d1331088bb57efd36df79ab36686df37dcb9284943d2047df96bd7635"
     rawData=$(${MIX_CLI32} mix auth -n "$authHash" -a "$authKey" -p ./gnark/ -w "" -v true -e coins -s bty)
-    signData=$(${CLI} wallet sign -d $rawData -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -137,9 +130,8 @@ function mix_deposit() {
 
     echo "transfer to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"
     transHash=$(${MIX_CLI31} mix wallet notes -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -s 1 | jq -r ".notes[0].noteHash")
-    proof="1c33f86a705d387a191d598cdf5a4d97d839e49013ec8b73fb265a62bafc03fc17e9b34a36c6f015f49d1e944c945ff16bc3c7b4886591578c780fa829f140560fea4be7ddf3a98a5a620010f7a210456158e3f20b88a5a120980c8b960d15fb1c50a4d93b78c3cb3bc729152e1cd0b1574b3cc63a4ce6fb5f8e51828320df861d70f529eab34712c213a605dda2f05eda7fc4b0aefc99adb2817eb10548489d12591f64709a5ad3dd32a1ebfcdb70c50288af1185b4fa3e9a25636b9cc9df0c22880ab3541018fa25a9fb232ed4dd47e0aa92de0c4ee2f0fab57fe95df096fc01fc054d1331088bb57efd36df79ab36686df37dcb9284943d2047df96bd7635-172b267f5d1d1a629b364388c803405485aee2d5a86c4438dddba011c5ce77b42d7e5f12179642372f325af5d6fca46d169a2437e732461c4f4993a4ac3938a92c89038d4ba4434dacf7113c59e7be32a1952e0a452bd23621fa7159af74eb351a5ca048e591be47db5d45d54505c8924c7c1c5ec3d4df8e5b7c6e7f3ccf563d1acf12ad74b6985d9ba676a3db5abb69f0d4b687f8f11d019479ef22671b1cc90511e3fa819ad60f07d20329af3bfc0344f1a96b61e3f77c50885c5701be8e480482a58a06b3469b2d5821fca30e8d283c2e8e26c2106604709280e00c3df77f2ea8d9b4263ddedeab056d206c4665ed2caa28d4af67f09f32922239e1e5e572-1b66ecc95b8caf448d3bd235662c24a218a5c75ab42d41a8def3310424ac2d4515dfe9c9c77ad041e76ca2175d7e91de608cd39dea0194dc4eed7304d3126b230041306b465e74397b104db0303d87e0b02d052f6c7486d249a4dd5635f268ed1cd9180c6603351d1d74ed3f64283b0bfb75736d391892818f037b2549cb7e6d0b139b88edbf530fc3711e5c9235fa0e5b10af2fd03ac5993a6936d52ed51f250cfc84d3a379b9caa41ce9bf911259c1d7da73f8551032af8e3939c4d03e9cb125d0871b2e7a4ed474b87376188fd2fc463d0807d9bd701a6339c82489b523e022151dc964977616cc1d12176aad27d596b3e5caa4538d8716f93bfcaa2f2588"
     rawData=$(${MIX_CLI31} mix transfer -m 600000000 -n "$transHash" -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -p ./gnark/ -w "" -v true -e coins -s bty)
-    signData=$(${CLI} wallet sign -d $rawData -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -148,9 +140,8 @@ function mix_deposit() {
 
     echo "withdraw"
     withdrawHash=$(${MIX_CLI30} mix wallet notes -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -s 1 | jq -r ".notes[0].noteHash")
-    proof="152d166b3cbf1863f9da7ebb478a99d170544653d870a48533a48da8c484f2590fc795d9db67816b39a3dec2562dccfc5920b88236b766b8c3879e1d991121aa1b28801f92fac0597d397dc605b1e479742dbc3354bd1f33c8b52fac95cf047c29302a139eef9c948d148641e91d8b122785570d4a6c753c289e61bba96860c719fad87bb0954fc6ed3616f32af3f978aa26aeb03d123d312f569be901057c64123a2fed3890d5c0e59b3cff0e527dfe23b3f069227fd975a11c41133772cd311aa1b7ab4ff4849e01d7475c99e6e5fbc3fb0c1817e5f0a3ae98a7dc513af1e011aadc35e47b0359e39d89a50ff585b436fd27f5bc0bc973047c5b2fd52cd606"
     rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/ -w "" -v true -e coins -s bty)
-    signData=$(${CLI} wallet sign -d $rawData -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     hash=$(${CLI} wallet send -d "$signData")
 
     echo "${hash}"
@@ -162,7 +153,7 @@ function mix_deposit() {
     balance=$(${CLI} account balance -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -e mix | jq -r ".balance")
     if [ "${balance}" != "6.0000" ]; then
         echo "account 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k should be 6.0000, real is $balance"
-        #        exit 1
+        exit 1
     fi
 
 }
@@ -198,7 +189,6 @@ function mix_token_test() {
     query_tx "${CLI}" "${hash}"
 
     echo "mix deposit"
-    proof="12c840fed692d2f38e6d227e6b4dfe46f0107075035adbb035c652f9e00a662b2ce53546477aff0fc320dd8c505cab2861d494a173be2fdfb6ddb033542a8bb10826dce453a6aa7c728e821b67a7c0dac14dd76135c04d71985e6682a4a4e0ca033be19ce61562235ae9d62cb8409599331da4b11718169fdddde4b6e4642f60031f64e90a2c37f627059af4db30e92ce9d3f45a7f4683088f048ed2e34d331a0966758a7849abfe4a15d2f7df52a1be3270bd13b2c87d559cfd85c3e12aed911627413fb9e99be990e0b4ea9c61ef68ba655bf003cbc050d92febfc337c32b52e7c30942536885d0b62ea3b44261f557d12ef4c24cc3728d4ea91d39b19ebf5"
     hash=$(${CLI} send mix deposit -m 1000000000 -p ./gnark/ -w "" -v true -t 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -e token -s GD -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -206,9 +196,8 @@ function mix_token_test() {
     query_note "${MIX_CLI30}" 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k 1
     echo "transfer to 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"
     transHash=$(${MIX_CLI30} mix wallet notes -a 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k -s 1 | jq -r ".notes[0].noteHash")
-    proof="19af0372674c7a4b2ab9126abe97862a75c0359998c02846fc9e43c6a75ef93d100b12a6f0caefb55d45407b8fee49271a20be3fe1615ca535635cf58a20625922cb46d5f9c41054f6d85b4c7df1ac5d308d3c0187f2b787befe5fcf80f790351a200124cdde88299fa3b6bdf9e88969607ea4816066f51f05d77b2034b5676817a8ece901f5df1993b242d1cf2bfd0f91d4478b33ff0994d6ea70830feaecf40d12f855ccd1cf73e2c7e27f5cf1df357c25293decc91d8cc252bbb5e19cd3741a90834263874d77ca79e6e69e6711cc4d73f1045942448eb3600dd58a1e084b1960fe8bf0dbfcb54dfdbed79f3c3c9b5a22469a7aa4e195b247bfd26f1fca73-17b4593758ceed61ac96cba435d5bfe6b7cdcdc8e2e4deab88aeadf433e37542131a1c2f4f5383a57387b2de3b5767e91d301b9e42da4858513bf897c8441ce205284b694309a57dc8dcdea27922742c446c94413054de7451f6f21d0425fecb1ce6b7a52d044fdbf52f842cd8fb2c4539a0cfa7973293fa78b0c5e656df40650ad4d041ecc9f50c72c4de2db6f917a5e08dff6f59e7a48bdd9f74667193fa7218ec30659bc1409354f58ae3fc98be3b0810dc83a39a4ee84e586487747b62e61e5f07914c2e94bd86128944106239ba523377d87216cb2c91191e1ac3c1a7382a3e9ee7868da53d20fdef596008c4641b48ca2b052a3c569ff5a2364aab5aa5-234cd13277ef10f2ffe28cd56964411b70040e2bec022e00ac068c9a5c94ed510b2f04e1a4377efd2e83f543cdfdfae0b1bd70595b5b6ea0db15b6c161354dd90e0028c5ae061cb46e10cbdd58d7558798350956777981178a3a08ad4f8513af06fb315045f3f438358206e543ad7b5caa93e9b9d82f7452a7d57dbf48ebd4c42f8583c62a050bd2b143340bdcbeb641679a49a607ee13e7fde5d1eba0217a1b0384ff474d6d5f041b1eba24b70b8f807b4bc45a4751a7cba10d806fef6ba6f122fa1928ba8328e89f82c2281330460931a69324e14fe584e0a9ab851b069a6304e0178f04a0bc89ffb50e7755328ba8ef84ca830424bed6ef3a8142c567ff2b"
     rawData=$(${MIX_CLI30} mix transfer -m 600000000 -n "$transHash" -t 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -p ./gnark/ -w "" -v true -e token -s GD)
-    signData=$(${CLI} wallet sign -d $rawData -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -217,9 +206,8 @@ function mix_token_test() {
 
     echo "withdraw token GD"
     withdrawHash=$(${MIX_CLI30} mix wallet notes -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -s 1 | jq -r ".notes[0].noteHash")
-    proof="2ae76d20889a6be8c9173bd7fa93883a4d3f018b01d083f80809e363b954fab626327fc97e34d830a8101fa6c6fce2fcbc613a8794776488a9acad7983af189f225e1b7284f40ab265092524c20219da32ccf4ac6dc2a8b2de924e43e8763c421bf55d90f6615e15aa228549b09f48f7072af6f768528da8a7b13611950b8e611513ec503c0ea0a0782106eb85dc0493a117f699465cff63d44beec2668ab368207bab40cf1867e11fbc947408339f04cd991eda2b1a250fb181080f575cfe650cc4e1144a6f02e997d49269c0406a373913bc2530fd96fa2856c459de596da71d12b0e8aef76d33d4e862879636c9f9d21ff49789d93f9f671013c9e0489774"
     rawData=$(${MIX_CLI30} mix withdraw -m 600000000 -n "$withdrawHash" -p ./gnark/ -w "" -v true -e token -s GD)
-    signData=$(${CLI} wallet sign -d $rawData -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
@@ -230,7 +218,7 @@ function mix_token_test() {
     balance=$(${CLI} asset balance -a 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs -e mix --asset_exec token --asset_symbol GD | jq -r ".balance")
     if [ "${balance}" != "6.0000" ]; then
         echo "account 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs should be 6.0000, real is $balance"
-        #        exit 1
+        exit 1
     fi
 }
 function query_note() {
@@ -289,9 +277,7 @@ function mix() {
         mix_set_wallet
         mix_transfer
 
-    elif
-        [ "${2}" == "test" ]
-    then
+    elif [ "${2}" == "test" ]; then
         mix_test "${1}"
     fi
 
