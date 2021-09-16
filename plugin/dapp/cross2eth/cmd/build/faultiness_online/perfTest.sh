@@ -54,11 +54,11 @@ maturityDegree=10
 
 Chain33Cli="../../chain33-cli"
 chain33BridgeBank=""
-chain33BtyTokenAddr="1111111111111111111114oLvT2"
-chain33EthTokenAddr=""
-ethereumBtyTokenAddr=""
-chain33YccTokenAddr=""
-ethereumYccTokenAddr=""
+chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+chain33EthBridgeTokenAddr=""
+ethereumBtyBridgeTokenAddr=""
+chain33BycBridgeTokenAddr=""
+ethereumBycERC20TokenAddr=""
 
 CLIA="./ebcli_A"
 chain33ID=0
@@ -70,9 +70,9 @@ function loop_send_lock_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyTokenAddr}" | jq -r ".balance")
+        preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyBridgeTokenAddr}" | jq -r ".balance")
 
-        hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethAddress[i]}, ${chain33BtyTokenAddr}, 100000000)" --chainID "${chain33ID}")
+        hash=$(${Chain33Cli} send evm call -f 1 -a 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethAddress[i]}, ${chain33BtyERC20TokenAddr}, 100000000)" --chainID "${chain33ID}")
         check_tx "${Chain33Cli}" "${hash}"
 
         i=$((i + 1))
@@ -82,7 +82,7 @@ function loop_send_lock_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyTokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyBridgeTokenAddr}" | jq -r ".balance")
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
@@ -102,8 +102,8 @@ function loop_send_burn_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyTokenAddr}" | jq -r ".balance")
-        result=$(${CLIA} ethereum burn -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyTokenAddr}")
+        preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyBridgeTokenAddr}" | jq -r ".balance")
+        result=$(${CLIA} ethereum burn -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}")
         cli_ret "${result}" "burn"
         i=$((i + 1))
     done
@@ -112,7 +112,7 @@ function loop_send_burn_bty() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyTokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBtyBridgeTokenAddr}" | jq -r ".balance")
         res=$((preEthBalance[i] - nowEthBalance))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
@@ -128,7 +128,7 @@ function loop_send_burn_bty() {
 function loop_send_lock_eth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
@@ -152,7 +152,7 @@ function loop_send_lock_eth() {
         fi
         i=$((i + 1))
     done
-    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$nowChain33Balance - $preChain33Balance" | bc)
     diff=$(echo "$diff / 100000000" | bc)
     check_number "${diff}" "${#privateKeys[@]}"
@@ -163,12 +163,12 @@ function loop_send_lock_eth() {
 function loop_send_burn_eth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
         preEthBalance[$i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" | jq -r ".balance")
-        ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33EthTokenAddr}" | jq -r ".msg")
+        ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33EthBridgeTokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         i=$((i + 1))
     done
@@ -187,7 +187,7 @@ function loop_send_burn_eth() {
         fi
         i=$((i + 1))
     done
-    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
     diff=$(echo "$diff / 100000000" | bc)
     check_number "${diff}" "${#privateKeys[@]}"
@@ -198,12 +198,12 @@ function loop_send_burn_eth() {
 function loop_send_lock_ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     # 先往每个ETH地址中导入token
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        ethTxHash=$(${CLIA} ethereum transfer -m 10 -k "${ethDeployKey}" -r "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".msg")
+        ethTxHash=$(${CLIA} ethereum transfer -m 10 -k "${ethDeployKey}" -r "${ethAddress[i]}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         i=$((i + 1))
     done
@@ -212,8 +212,8 @@ function loop_send_lock_ycc() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
-        ethTxHash=$(${CLIA} ethereum lock -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumYccTokenAddr}" | jq -r ".msg")
+        preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".balance")
+        ethTxHash=$(${CLIA} ethereum lock -m 1 -k "${privateKeys[i]}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".msg")
         echo ${i} "lock ycc tx hash:" "${ethTxHash}"
         i=$((i + 1))
     done
@@ -221,14 +221,14 @@ function loop_send_lock_ycc() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".balance")
         res=$(echo "${preEthBalance[i]} - $nowEthBalance" | bc)
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" "${res}"
         check_number "${res}" 1
         i=$((i + 1))
     done
 
-    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$((nowChain33Balance - preChain33Balance))
     diff=$(echo "$diff / 100000000" | bc)
     check_number "${diff}" "${#privateKeys[@]}"
@@ -239,12 +239,12 @@ function loop_send_lock_ycc() {
 function loop_send_burn_ycc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    preChain33Balance=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
-        ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33YccTokenAddr}" | jq -r ".msg")
+        preEthBalance[i]=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".balance")
+        ethTxHash=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethAddress[i]}" -t "${chain33BycBridgeTokenAddr}" | jq -r ".msg")
         echo ${i} "burn chain33 tx hash:" "${ethTxHash}"
         i=$((i + 1))
     done
@@ -253,13 +253,13 @@ function loop_send_burn_ycc() {
 
     i=0
     while [[ i -lt ${#privateKeys[@]} ]]; do
-        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumYccTokenAddr}" | jq -r ".balance")
+        nowEthBalance=$(${CLIA} ethereum balance -o "${ethAddress[i]}" -t "${ethereumBycERC20TokenAddr}" | jq -r ".balance")
         res=$((nowEthBalance - preEthBalance[i]))
         echo ${i} "preBalance" "${preEthBalance[i]}" "nowBalance" "${nowEthBalance}" "diff" ${res}
         check_number "${res}" 1
         i=$((i + 1))
     done
-    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33YccTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    nowChain33Balance=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     diff=$(echo "$preChain33Balance - $nowChain33Balance" | bc)
     diff=$(echo "$diff / 100000000" | bc)
     check_number "${diff}" "${#privateKeys[@]}"

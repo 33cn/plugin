@@ -111,7 +111,7 @@ function main() {
         fi
     elif [ "${OP}" == "down" ]; then
         if [ "${DAPP}" == "all" ] || [ "${DAPP}" == "ALL" ]; then
-            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . | sed 's/^\.\///')
+            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . ! -name cross2eth | sed 's/^\.\///')
             for app in $dir; do
                 down_dapp "${app}"
             done
