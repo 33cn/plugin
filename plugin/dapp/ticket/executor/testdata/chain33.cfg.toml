@@ -256,3 +256,6 @@ ForkParaFullMinerHeight=0
 
 [fork.sub.qbftNode]
 Enable=0
+
+[fork.sub.mix]
+Enable=0
