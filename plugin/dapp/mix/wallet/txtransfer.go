@@ -5,8 +5,9 @@
 package wallet
 
 import (
-	"github.com/consensys/gnark/frontend"
 	"path/filepath"
+
+	"github.com/consensys/gnark/frontend"
 
 	"strconv"
 	"strings"

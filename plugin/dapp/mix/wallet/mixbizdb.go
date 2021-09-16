@@ -6,6 +6,7 @@ package wallet
 
 import (
 	"encoding/hex"
+
 	"github.com/consensys/gnark/frontend"
 
 	"github.com/33cn/chain33/common"

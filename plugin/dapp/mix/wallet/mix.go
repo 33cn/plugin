@@ -7,9 +7,10 @@ package wallet
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/consensys/gnark/backend/groth16"
 	"os"
 	"path/filepath"
+
+	"github.com/consensys/gnark/backend/groth16"
 
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/pkg/errors"

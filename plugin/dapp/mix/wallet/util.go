@@ -7,13 +7,14 @@ package wallet
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/backend/witness"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strconv"
+
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/backend/witness"
 
 	"github.com/consensys/gnark/frontend"
 

@@ -7,6 +7,7 @@ package wallet
 import (
 	"bytes"
 	"encoding/hex"
+
 	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/common"
