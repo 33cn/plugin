@@ -24,10 +24,12 @@ go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_D" -ldflags "-X ${SRC_EBCLI}/buildfl
 # shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 
+cp ../../../../chain33.para.toml ./build/
 cp ../ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"
 cp ./build/* "${OUT_DIR}"
 cp ./build/abi/* "${OUT_DIR}"
 cp ./build/public/* "${OUT_DIR}"
+
 
 OUT_TESTDIR="${1}/dapptest/$strapp"
 mkdir -p "${OUT_TESTDIR}"

@@ -1,6 +1,5 @@
 Title="user.p.para."
 TestNet=false
-#symbol需要大小
 CoinSymbol="para"
 EnableParaFork=true
 
