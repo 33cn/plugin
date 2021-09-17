@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+
+package types;
+option go_package = "../types";
+
+
+
+//DH one time pubkey with secret
+message DHSecret{
+    string      oneTimePubKey = 1;
+    string      secret   = 2;
+}
+
+//Diff-Helman 加密group, for spender, returner, authorizer to decrypt
+message DHSecretGroup{
+    string receiver = 1;
+    string returner = 2;
+    string authorize = 3;
+}
+
+
+
+// note payment account
+// receiveKey = hash(spendKey)
+message NoteKeyPair {
+    string receiveKey   = 1;
+    string spendKey     = 2;
+}
+
+// diff-hellman crypto key pair
+// secretPrivKey = wallet private key * G_25519
+// secretPubKey  = secretPrivKey * G_25519
+message EncryptSecretKeyPair {
+    string  secretPrivKey = 1;
+    string  secretPubKey  = 2;
+
+}
+
+//spend pair for note proof
+//crypt pair for DH crypt/decrypt
+message AccountPrivacyKey {
+    NoteKeyPair             paymentKey  = 1;
+    EncryptSecretKeyPair    secretKey  = 2;
+}
+
+message WalletAddrPrivacy {
+    AccountPrivacyKey privacy   = 1;
+    string addr                    = 2;
+}
+
+
+
+message SecretData{
+    string receiverKey = 1;
+    string returnKey = 2;
+    string authorizeKey = 3;
+    string amount = 4;
+    string noteRandom = 5;
+    string assetExec = 6;
+    string assetSymbol = 7;
+}
+
+
+message EncryptSecretData{
+    string secret = 1;
+    string peerSecretPubKey = 2;
+}
+
+message DecryptSecretData{
+    string secret = 1;
+    string secretPriKey = 2;
+    string oneTimePubKey = 3;
+
+}
+
