@@ -983,60 +983,120 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 }
 
 //无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
-//mc.10-100.200-300#guodun.50-60.300-400#game.10-50.70-90
-func isInNoHeightCrossAsseList(list string, status *pt.ParacrossNodeStatus) (bool, error) {
-	paraChains := strings.Split(list, "#")
-	for _, chain := range paraChains {
-		paras := strings.Split(chain, ".")
-		//compare title
-		if strings.ToLower("user.p."+paras[0]+".") != strings.ToLower(status.Title) {
-			continue
-		}
-		//check para height
-		heights := paras[1:]
-		for _, h := range heights {
-			p := strings.Split(h, "-")
-			if len(p) != 2 {
-				return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
-			}
-			s, err := strconv.Atoi(p[0])
-			if err != nil {
-				return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
-			}
-			e, err := strconv.Atoi(p[1])
-			if err != nil {
-				return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
-			}
-			if s > e {
-				return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", chain, h)
-			}
-
-			//共识的平行链高度(不是主链高度）落在范围内，说明此高度没有跨链资产交易，可以忽略
-			if status.Height >= int64(s) && status.Height <= int64(e) {
-				return true, nil
-			}
-		}
-
+//para.ignore.10-100.200-300
+func isInIgnoreHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(str) <= 0 {
+		return false, nil
 	}
-	return false, nil
-}
+	e := strings.Split(str, ".")
+	if len(e) <= 2 {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
+	}
+	if strings.ToLower("user.p."+e[0]+".") != strings.ToLower(status.Title) {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
+	}
 
-func checkIsInIgnoreHeightList(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) (bool, error) {
-	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
-	heightListStr := conf.GStr("paraNoCrossAssetHeightList")
-	if len(heightListStr) > 0 {
-		in, err := isInNoHeightCrossAsseList(heightListStr, status)
-		if err != nil {
-			clog.Error("getCrossTxHashs decode NoHeightCrossAsseList", "err", err)
-			return false, err
+	if e[1] != pt.ParaCrossAssetTxIgnoreKey {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong ignore str=%s,title=%s", str, status.Title)
+	}
+
+	for _, h := range e[2:] {
+		p := strings.Split(h, "-")
+		if len(p) != 2 {
+			return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
 		}
-		//在配置的无资产跨链高度列表中，则直接退出
-		if in {
-			clog.Debug("getCrossTxHashs NoHeightCrossAsseList", "str", heightListStr, "height", status.Height, "title", status.Title)
+		s, err := strconv.Atoi(p[0])
+		if err != nil {
+			return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+		e, err := strconv.Atoi(p[1])
+		if err != nil {
+			return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+		if s > e {
+			return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+
+		//共识的平行链高度(不是主链高度）落在范围内，说明此高度没有跨链资产交易，可以忽略
+		if status.Height >= int64(s) && status.Height <= int64(e) {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+// "para.hit.10.100.200"
+func isInHitHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(str) <= 0 {
+		return false, nil
+	}
+
+	e := strings.Split(str, ".")
+	if len(e) <= 2 {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
+	}
+	if strings.ToLower("user.p."+e[0]+".") != strings.ToLower(status.Title) {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
+	}
+	if e[1] != pt.ParaCrossAssetTxHitKey {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong hit str=%s,title=%s", str, status.Title)
+	}
+
+	for _, hStr := range e[2:] {
+		h, err := strconv.Atoi(hStr)
+		if err != nil {
+			return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s in %s,title=%s", str, hStr, status.Title)
+		}
+		//高度命中
+		if status.Height == int64(h) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+//命中高度
+//s: para.hit.10.100, title=user.p.para.
+func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(heightList) <= 0 {
+		return false, nil
+	}
+
+	var hitStr, ignoreStr string
+	hitPrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxHitKey)
+	ignorePrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxIgnoreKey)
+
+	for _, s := range heightList {
+		desStr := pt.ParaPrefix + strings.ToLower(s)
+		if strings.HasPrefix(desStr, hitPrefix) {
+			if len(hitStr) > 0 {
+				return false, errors.Wrapf(types.ErrInvalidParam, "checkIsInIgnoreHeightList repeate=%s", hitPrefix)
+			}
+			hitStr = s
+		}
+		if strings.HasPrefix(desStr, ignorePrefix) {
+			if len(ignoreStr) > 0 {
+				return false, errors.Wrapf(types.ErrInvalidParam, "checkIsInIgnoreHeightList repeate=%s", ignorePrefix)
+			}
+			ignoreStr = s
+		}
+		if len(hitStr) > 0 && len(ignoreStr) > 0 {
+			break
+		}
+
+	}
+
+	in, err := isInHitHeightList(hitStr, status)
+	if err != nil {
+		return false, err
+	}
+	//如果在hit 列表中，不忽略
+	if in {
+		return false, nil
+	}
+
+	return isInIgnoreHeightList(ignoreStr, status)
+
 }
 
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
@@ -1059,8 +1119,12 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 		}
 	}
 
+	//para.hit.6.8, para.ignore.1-10, 比如高度7， 如果命中则继续处理，如果没命中，检查是否在ignore列表，如果在直接退出，否则继续处理
+	//零散的命中列表可以减少忽略高度列表的范围
 	//此平行链高度在忽略检查跨链交易列表中,则直接退出
-	ignore, err := checkIsInIgnoreHeightList(api, status)
+	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
+	heightList := conf.GStrList("paraCrossAssetTxHeightList")
+	ignore, err := checkIsIgnoreHeight(heightList, status)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1100,8 +1164,12 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 		return nil, nil, types.ErrCheckTxHash
 	}
 
-	//此平行链高度在忽略检查跨链交易列表中,则直接退出
-	ignore, err := checkIsInIgnoreHeightList(api, status)
+	//para.hit.6.8, para.ignore.1-10, 比如高度7， 如果命中则继续处理，如果没命中，检查是否在ignore列表，如果在直接退出，否则继续处理
+	//零散的命中列表可以减少忽略高度列表的范围
+	//比如高度6，命中，则继续处理，高度7，未命中，但是在ignore scope,退出，高度11，未命中，也不在ignore scope,继续处理
+	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
+	heightList := conf.GStrList("paraCrossAssetTxHeightList")
+	ignore, err := checkIsIgnoreHeight(heightList, status)
 	if err != nil {
 		return nil, nil, err
 	}
