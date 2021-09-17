@@ -37,7 +37,7 @@ func encryptSecretData(req *mixTy.EncryptSecretData) (*mixTy.DHSecret, error) {
 		return nil, errors.Wrap(err, "decode secret")
 	}
 
-	return encryptData(req.PeerKey, secret)
+	return encryptData(req.PeerSecretPubKey, secret)
 }
 
 func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) {
@@ -45,7 +45,7 @@ func decryptSecretData(req *mixTy.DecryptSecretData) (*mixTy.SecretData, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "decode req.secret")
 	}
-	decrypt, err := decryptData(req.PriKey, req.PeerKey, secret)
+	decrypt, err := decryptData(req.SecretPriKey, req.OneTimePubKey, secret)
 	if err != nil {
 		return nil, errors.Wrap(err, "decrypt secret")
 	}

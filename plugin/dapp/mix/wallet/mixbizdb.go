@@ -358,7 +358,7 @@ func (p *mixPolicy) decodeSecret(noteHash string, secretData string, privacyKeys
 		if err != nil {
 			return nil, errors.Wrapf(err, "decode for notehash=%s,crypt=%s", noteHash, dhSecret.Secret)
 		}
-		decryptData, err := decryptData(key.Privacy.EncryptKey.PrivKey, dhSecret.OneTimePubKey, cryptData)
+		decryptData, err := decryptData(key.Privacy.SecretKey.SecretPrivKey, dhSecret.OneTimePubKey, cryptData)
 		if err != nil {
 			bizlog.Debug("processSecret.decryptData fail", "decrypt for notehash", noteHash, "secret", secretData, "addr", key.Addr, "err", err)
 			continue

@@ -584,7 +584,7 @@ func accountPrivacyCmdFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("priv", "p", "", "user wallet addr's privacy key,option")
 
-	cmd.Flags().Uint32P("detail", "d", 0, "if get keys' privacy keys,option")
+	cmd.Flags().BoolP("detail", "d", false, "if get keys' privacy keys,option")
 
 }
 
@@ -592,7 +592,7 @@ func accountPrivacy(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	priv, _ := cmd.Flags().GetString("priv")
 	addr, _ := cmd.Flags().GetString("addr")
-	detail, _ := cmd.Flags().GetUint32("detail")
+	detail, _ := cmd.Flags().GetBool("detail")
 
 	if len(priv) == 0 && len(addr) == 0 {
 		fmt.Println("err: one of addr or priv should be fill")
@@ -600,7 +600,7 @@ func accountPrivacy(cmd *cobra.Command, args []string) {
 	}
 
 	var res mixTy.WalletAddrPrivacy
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountPrivacyInfo", &mixTy.PaymentKeysReq{PrivKey: priv, Addr: addr, Detail: int32(detail)}, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.ShowAccountPrivacyInfo", &mixTy.PaymentKeysReq{PrivKey: priv, Addr: addr, Detail: detail}, &res)
 	ctx.Run()
 }
 
@@ -831,7 +831,7 @@ func decodeSecret(cmd *cobra.Command, args []string) {
 	fmt.Println(string(rst))
 }
 
-// ShowAccountPrivacyInfo get para chain status by height
+// EncryptSecretDataCmd encrypt secret data
 func EncryptSecretDataCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "encrypt",
@@ -846,19 +846,19 @@ func encryptSecrettCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("secret", "s", "", "raw secret data")
 	cmd.MarkFlagRequired("secret")
 
-	cmd.Flags().StringP("peerKey", "a", "", "peer pub key ")
-	cmd.MarkFlagRequired("peerKey")
+	cmd.Flags().StringP("peerPubKey", "u", "", "peer secret pub key ")
+	cmd.MarkFlagRequired("peerPubKey")
 
 }
 
 func encryptSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
-	peerKey, _ := cmd.Flags().GetString("peerKey")
+	peerPubKey, _ := cmd.Flags().GetString("peerPubKey")
 
 	req := mixTy.EncryptSecretData{
-		Secret:  secret,
-		PeerKey: peerKey,
+		Secret:           secret,
+		PeerSecretPubKey: peerPubKey,
 	}
 
 	var res mixTy.DHSecret
@@ -881,11 +881,11 @@ func decryptSecrettCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("secret", "s", "", "raw secret data")
 	cmd.MarkFlagRequired("secret")
 
-	cmd.Flags().StringP("pri", "p", "", "receiving pri key")
+	cmd.Flags().StringP("pri", "p", "", "self secret private key")
 	cmd.MarkFlagRequired("pri")
 
-	cmd.Flags().StringP("peerKey", "a", "", "ephemeral pub key X")
-	cmd.MarkFlagRequired("peerKey")
+	cmd.Flags().StringP("oneTimePubKey", "u", "", "peer one time pub key")
+	cmd.MarkFlagRequired("oneTimePubKey")
 
 }
 
@@ -893,12 +893,12 @@ func decryptSecret(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	secret, _ := cmd.Flags().GetString("secret")
 	pri, _ := cmd.Flags().GetString("pri")
-	peerKey, _ := cmd.Flags().GetString("peerKey")
+	oneTimePubKey, _ := cmd.Flags().GetString("oneTimePubKey")
 
 	req := mixTy.DecryptSecretData{
-		Secret:  secret,
-		PeerKey: peerKey,
-		PriKey:  pri,
+		Secret:        secret,
+		OneTimePubKey: oneTimePubKey,
+		SecretPriKey:  pri,
 	}
 
 	var res mixTy.SecretData
@@ -951,7 +951,6 @@ func depositSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "deposit circuit path")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().StringP("proof", "w", "", "proof string to test")
 	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false ")
 
 }
@@ -967,7 +966,6 @@ func depositSecret(cmd *cobra.Command, args []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
-	proof, _ := cmd.Flags().GetString("proof")
 	verify, _ := cmd.Flags().GetBool("verify")
 
 	deposit := &mixTy.DepositInfo{
@@ -988,7 +986,6 @@ func depositSecret(cmd *cobra.Command, args []string) {
 		AssetExec:     assetExec,
 		AssetSymbol:   symbol,
 		Title:         paraName,
-		ZkProof:       proof,
 		VerifyOnChain: verify,
 	}
 
@@ -1029,7 +1026,6 @@ func transferSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "input path ")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().StringP("proof", "w", "", "proof string to test")
 	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
@@ -1048,7 +1044,6 @@ func transferSecret(cmd *cobra.Command, args []string) {
 	assetExec, _ := cmd.Flags().GetString("exec")
 	symbol, _ := cmd.Flags().GetString("symbol")
 
-	proof, _ := cmd.Flags().GetString("proof")
 	verify, _ := cmd.Flags().GetBool("verify")
 
 	input := &mixTy.TransferInputTxReq{
@@ -1078,7 +1073,6 @@ func transferSecret(cmd *cobra.Command, args []string) {
 		AssetExec:     assetExec,
 		AssetSymbol:   symbol,
 		Title:         paraName,
-		ZkProof:       proof,
 		VerifyOnChain: verify,
 	}
 
@@ -1112,7 +1106,6 @@ func withdrawSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "withdraw pk file ")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().StringP("proof", "w", "", "proof string to test")
 	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
@@ -1127,7 +1120,6 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 
 	path, _ := cmd.Flags().GetString("path")
-	proof, _ := cmd.Flags().GetString("proof")
 	verify, _ := cmd.Flags().GetBool("verify")
 
 	req := &mixTy.WithdrawTxReq{
@@ -1142,7 +1134,6 @@ func withdrawSecret(cmd *cobra.Command, args []string) {
 		AssetExec:     assetExec,
 		AssetSymbol:   symbol,
 		Title:         paraName,
-		ZkProof:       proof,
 		VerifyOnChain: verify,
 	}
 
@@ -1176,7 +1167,6 @@ func authSecretCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("path", "p", "", "auth path file ")
 	cmd.MarkFlagRequired("path")
 
-	cmd.Flags().StringP("proof", "w", "", "proof string to test")
 	cmd.Flags().BoolP("verify", "v", false, "verify on chain:true on local:false, default false ")
 
 }
@@ -1192,7 +1182,6 @@ func authSecret(cmd *cobra.Command, args []string) {
 
 	path, _ := cmd.Flags().GetString("path")
 
-	proof, _ := cmd.Flags().GetString("proof")
 	verify, _ := cmd.Flags().GetBool("verify")
 
 	req := &mixTy.AuthTxReq{
@@ -1207,7 +1196,6 @@ func authSecret(cmd *cobra.Command, args []string) {
 		AssetExec:     assetExec,
 		AssetSymbol:   symbol,
 		Title:         paraName,
-		ZkProof:       proof,
 		VerifyOnChain: verify,
 	}
 

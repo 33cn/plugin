@@ -24,8 +24,8 @@ func (p *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (types.
 		}
 		var ret mixTy.WalletAddrPrivacy
 		ret.Privacy = newPrivacyKey(prikeybyte)
-		if req.Detail <= 0 {
-			ret.Privacy.EncryptKey.PrivKey = ""
+		if !req.Detail {
+			ret.Privacy.SecretKey.SecretPrivKey = ""
 			ret.Privacy.PaymentKey.SpendKey = ""
 		}
 		return &ret, nil
@@ -36,8 +36,8 @@ func (p *mixPolicy) On_ShowAccountPrivacyInfo(req *mixTy.PaymentKeysReq) (types.
 	if err != nil {
 		return nil, errors.Wrapf(err, "get account =%s privacy key", req.Addr)
 	}
-	if req.Detail <= 0 {
-		keys.Privacy.EncryptKey.PrivKey = ""
+	if !req.Detail {
+		keys.Privacy.SecretKey.SecretPrivKey = ""
 		keys.Privacy.PaymentKey.SpendKey = ""
 	}
 	return keys, nil
@@ -64,10 +64,6 @@ func (p *mixPolicy) On_RescanNotes(in *types.ReqNil) (types.Message, error) {
 func (p *mixPolicy) On_EnablePrivacy(req *types.ReqAddrs) (types.Message, error) {
 	return p.enablePrivacy(req.Addrs)
 }
-
-//func (p *mixPolicy) On_EncodeSecretData(req *mixTy.SecretData) (types.Message, error) {
-//	return encodeSecretData(req)
-//}
 
 func (p *mixPolicy) On_EncryptSecretData(req *mixTy.EncryptSecretData) (types.Message, error) {
 	return encryptSecretData(req)

@@ -24,6 +24,7 @@ const CECBLOCKSIZE = 32
  从secp256k1根私钥创建支票需要的私钥和公钥
  payPrivKey = rootPrivKey *G_X25519 这样很难泄露rootPrivKey
 
+ 支票花费key:  payPrivKey
  支票收款key： ReceiveKey= hash(payPrivKey)  --或者*G的X坐标值, 看哪个电路少？
  DH加解密key: encryptPubKey= payPrivKey *G_X25519, 也是很安全的，只是电路里面目前不支持x25519
 */
@@ -35,20 +36,20 @@ func newPrivacyKey(rootPrivKey []byte) *mixTy.AccountPrivacyKey {
 	//payPrivKey := mimcHashByte([][]byte{rootPrivKey})
 	//payPrivKey 可能超出fr的模，spendKey是payPrivKey对fr取的模，有可能和payPrivKey不相等，这里用spendKey取hash
 	//mimcHashByte 会对输入参数对fr取模，在电路上不会影响ReceiveKey
-	paymentKey := &mixTy.PaymentKeyPair{}
+	paymentKey := &mixTy.NoteKeyPair{}
 	paymentKey.SpendKey = mixTy.Byte2Str(payPrivKey[:])
 	paymentKey.ReceiveKey = mixTy.Byte2Str(mimcHashByte([][]byte{mixTy.Str2Byte(paymentKey.SpendKey)}))
 
-	encryptKeyPair := &mixTy.EncryptKeyPair{}
+	encryptKeyPair := &mixTy.EncryptSecretKeyPair{}
 	pubkey := ecdh.PublicKey(payPrivKey)
 	//加解密是在x25519域，需要Hex编码，不要使用fr.string, 模范围不同
-	encryptKeyPair.PrivKey = hex.EncodeToString(payPrivKey[:])
+	encryptKeyPair.SecretPrivKey = hex.EncodeToString(payPrivKey[:])
 	pubData := pubkey.([32]byte)
-	encryptKeyPair.PubKey = hex.EncodeToString(pubData[:])
+	encryptKeyPair.SecretPubKey = hex.EncodeToString(pubData[:])
 
 	privacy := &mixTy.AccountPrivacyKey{}
 	privacy.PaymentKey = paymentKey
-	privacy.EncryptKey = encryptKeyPair
+	privacy.SecretKey = encryptKeyPair
 
 	return privacy
 }
