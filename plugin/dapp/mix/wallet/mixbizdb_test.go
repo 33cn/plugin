@@ -20,7 +20,7 @@ func TestNewPrivacyWithPrivKey(t *testing.T) {
 	pairs := newPrivacyKey(keyByte)
 
 	t.Log("payPri", pairs.PaymentKey.SpendKey, "payPub", pairs.PaymentKey.ReceiveKey)
-	t.Log("crytoPub", pairs.EncryptKey.PubKey, "crytoPri", pairs.EncryptKey.PrivKey)
+	t.Log("crytoPub", pairs.SecretKey.SecretPubKey, "crytoPri", pairs.SecretKey.SecretPrivKey)
 
 	//prikey2 := "1257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01"
 	//keyByte2, err := hex.DecodeString(prikey2)
@@ -37,11 +37,11 @@ func TestNewPrivacyWithPrivKey(t *testing.T) {
 		Amount:       "28242048",
 	}
 
-	data, err := encryptData(pairs.EncryptKey.PubKey, types.Encode(secret1))
+	data, err := encryptData(pairs.SecretKey.SecretPubKey, types.Encode(secret1))
 	assert.Nil(t, err)
 	crypData, err := common.FromHex(data.Secret)
 	assert.Nil(t, err)
-	decryData1, err := decryptData(pairs.EncryptKey.PrivKey, data.OneTimePubKey, crypData)
+	decryData1, err := decryptData(pairs.SecretKey.SecretPrivKey, data.OneTimePubKey, crypData)
 	assert.Nil(t, err)
 	var val mixTy.SecretData
 	err = types.Decode(decryData1, &val)
@@ -94,14 +94,14 @@ func TestEncodeSecretData(t *testing.T) {
 	hexRet := hex.EncodeToString(ret)
 	//assert.Nil(t,err)
 
-	req := &mixTy.EncryptSecretData{PeerKey: privacy.EncryptKey.PubKey, Secret: hexRet}
+	req := &mixTy.EncryptSecretData{PeerSecretPubKey: privacy.SecretKey.SecretPubKey, Secret: hexRet}
 	dhSecret, err := encryptSecretData(req)
 	assert.Nil(t, err)
 	//t.Log(dhSecret)
 
 	data, err := common.FromHex(dhSecret.Secret)
 	assert.Nil(t, err)
-	rawData, err := decryptData(privacy.EncryptKey.PrivKey, dhSecret.OneTimePubKey, data)
+	rawData, err := decryptData(privacy.SecretKey.SecretPrivKey, dhSecret.OneTimePubKey, data)
 	assert.Nil(t, err)
 	var rawSecret mixTy.SecretData
 	types.Decode(rawData, &rawSecret)
