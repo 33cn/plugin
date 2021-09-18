@@ -880,7 +880,7 @@ func TestVerifyBlsSign(t *testing.T) {
 
 func TestCheckIsIgnoreHeight(t *testing.T) {
 	status1 := &pt.ParacrossNodeStatus{
-		Title:  "user.p.mc.",
+		Title:  "user.p.MC.",
 		Height: 1000,
 	}
 	strList := []string{"mcc.hit.260", "mc.hit.7.9.250", "mc.ignore.1-100.200-300"}
