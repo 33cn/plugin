@@ -992,7 +992,7 @@ func isInIgnoreHeightList(str string, status *pt.ParacrossNodeStatus) (bool, err
 	if len(e) <= 2 {
 		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
 	}
-	if strings.ToLower("user.p."+e[0]+".") != strings.ToLower(status.Title) {
+	if strings.ToLower(pt.ParaPrefix+e[0]+".") != strings.ToLower(status.Title) {
 		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
 	}
 
@@ -1035,7 +1035,7 @@ func isInHitHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error)
 	if len(e) <= 2 {
 		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
 	}
-	if strings.ToLower("user.p."+e[0]+".") != strings.ToLower(status.Title) {
+	if strings.ToLower(pt.ParaPrefix+e[0]+".") != strings.ToLower(status.Title) {
 		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
 	}
 	if e[1] != pt.ParaCrossAssetTxHitKey {
@@ -1063,11 +1063,11 @@ func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (b
 	}
 
 	var hitStr, ignoreStr string
-	hitPrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxHitKey)
-	ignorePrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxIgnoreKey)
+	hitPrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxHitKey)[len(pt.ParaPrefix):]
+	ignorePrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxIgnoreKey)[len(pt.ParaPrefix):]
 
 	for _, s := range heightList {
-		desStr := pt.ParaPrefix + strings.ToLower(s)
+		desStr := strings.ToLower(s)
 		if strings.HasPrefix(desStr, hitPrefix) {
 			if len(hitStr) > 0 {
 				return false, errors.Wrapf(types.ErrInvalidParam, "checkIsInIgnoreHeightList repeate=%s", hitPrefix)
