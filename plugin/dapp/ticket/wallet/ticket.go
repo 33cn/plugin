@@ -562,7 +562,8 @@ func (policy *ticketPolicy) closeTicket(height int64) (int, error) {
 func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
 	operater := policy.getWalletOperate()
-	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	acc1, err := operater.GetBalance(addr, cfg.GetCoinExec())
 	if err != nil {
 		return err
 	}
@@ -572,8 +573,9 @@ func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	}
 	toaddr := address.ExecAddress(ty.TicketX)
 	//如果acc2 的余额足够，那题withdraw 部分钱做手续费
-	if (acc1.Balance < (types.Coin / 2)) && (acc2.Balance > types.Coin) {
-		_, err := operater.SendToAddress(priv, toaddr, -types.Coin, "ticket->coins", false, "")
+	coinPrecision := cfg.GetCoinPrecision()
+	if (acc1.Balance < (coinPrecision / 2)) && (acc2.Balance > coinPrecision) {
+		_, err := operater.SendToAddress(priv, toaddr, -coinPrecision, "ticket->coins", false, "")
 		if err != nil {
 			return err
 		}
@@ -650,7 +652,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	//判断手续费是否足够，如果不足要及时补充。
 	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
 	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
-	fee := types.Coin
+	fee := chain33Cfg.GetCoinPrecision()
 	if acc1.Balance+acc2.Balance-2*fee >= cfg.TicketPrice {
 		// 如果可用余额+冻结余额，可以凑成新票，则转币到冻结余额
 		if (acc1.Balance+acc2.Balance-2*fee)/cfg.TicketPrice > acc2.Balance/cfg.TicketPrice {

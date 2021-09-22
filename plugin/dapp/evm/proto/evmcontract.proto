@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package types;
+option go_package = "../types";
 
 //合约对象信息
 message EVMContractObject {
@@ -108,10 +109,8 @@ message CheckEVMAddrResp {
 }
 
 message EstimateEVMGasReq {
-    string to     = 1;
-    bytes para   = 2;
-    string caller = 3;
-    uint64 amount = 4;
+    string tx     = 1;
+    string from   = 2;
 }
 message EstimateEVMGasResp {
     uint64 gas = 1;

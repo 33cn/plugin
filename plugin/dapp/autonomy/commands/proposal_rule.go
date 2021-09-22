@@ -6,11 +6,16 @@ package commands
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/pkg/errors"
 
 	"strings"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
 	"github.com/spf13/cobra"
@@ -45,10 +50,8 @@ func addProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func proposalRule(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	year, _ := cmd.Flags().GetInt32("year")
 	month, _ := cmd.Flags().GetInt32("month")
 	day, _ := cmd.Flags().GetInt32("day")
@@ -63,6 +66,12 @@ func proposalRule(cmd *cobra.Command, args []string) {
 	largeProjectAmount, _ := cmd.Flags().GetInt64("largeProjectAmount")
 	publicPeriod, _ := cmd.Flags().GetInt32("publicPeriod")
 
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	params := &auty.ProposalRule{
 		Year:  year,
 		Month: month,
@@ -70,8 +79,8 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		RuleCfg: &auty.RuleConfig{
 			BoardApproveRatio:  boardApproveRatio,
 			PubOpposeRatio:     pubOpposeRatio,
-			ProposalAmount:     proposalAmount * types.Coin,
-			LargeProjectAmount: largeProjectAmount * types.Coin,
+			ProposalAmount:     proposalAmount * cfg.CoinPrecision,
+			LargeProjectAmount: largeProjectAmount * cfg.CoinPrecision,
 			PublicPeriod:       publicPeriod,
 		},
 		StartBlockHeight: startBlock,
@@ -82,7 +91,7 @@ func proposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "PropRule",
 		Payload:    payLoad,
 	}
@@ -109,8 +118,7 @@ func addRevokeProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func revokeProposalRule(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -123,7 +131,7 @@ func revokeProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "RvkPropRule",
 		Payload:    payLoad,
 	}
@@ -151,8 +159,7 @@ func addVoteProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func voteProposalRule(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -180,7 +187,7 @@ func voteProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "VotePropRule",
 		Payload:    payLoad,
 	}
@@ -206,8 +213,7 @@ func addTerminateProposalRuleFlags(cmd *cobra.Command) {
 }
 
 func terminateProposalRule(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ID, _ := cmd.Flags().GetString("proposalID")
@@ -220,7 +226,7 @@ func terminateProposalRule(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "TmintPropRule",
 		Payload:    payLoad,
 	}
@@ -333,15 +339,19 @@ func addTransferFundflags(cmd *cobra.Command) {
 }
 
 func transferFund(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	amount, _ := cmd.Flags().GetInt64("amount")
 	note, _ := cmd.Flags().GetString("note")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
 	params := &auty.TransferFund{
-		Amount: amount * types.Coin,
+		Amount: amount * cfg.CoinPrecision,
 		Note:   note,
 	}
 	payLoad, err := json.Marshal(params)
@@ -349,7 +359,7 @@ func transferFund(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "Transfer",
 		Payload:    payLoad,
 	}
@@ -378,8 +388,7 @@ func addCommentProposalflags(cmd *cobra.Command) {
 }
 
 func commentProposal(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	proposalID, _ := cmd.Flags().GetString("proposalID")
@@ -396,7 +405,7 @@ func commentProposal(cmd *cobra.Command, args []string) {
 		return
 	}
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(auty.AutonomyX),
+		Execer:     types.GetExecName(auty.AutonomyX, paraName),
 		ActionName: "CommentProp",
 		Payload:    payLoad,
 	}

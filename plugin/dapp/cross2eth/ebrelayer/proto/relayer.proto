@@ -1,0 +1,236 @@
+syntax = "proto3";
+
+package types;
+option go_package = "../types";
+
+//以太坊账户信息
+// 	 privkey : 账户地址对应的私钥
+//	 addr :账户地址
+message Account4Relayer {
+    bytes privkey    = 1;
+    string addr      = 2;
+}
+
+message ValidatorAddr4EthRelayer {
+    string ethereumValidator  = 1;
+}
+
+message Txhashes {
+    repeated string txhash = 1;
+}
+
+message ReqChangePasswd {
+    string oldPassphase = 1;
+    string newPassphase = 2;
+}
+
+message ReqSetPasswd {
+    string Passphase = 1;
+}
+
+message Account4Show {
+    string privkey    = 1;
+    string addr      = 2;
+}
+
+message assetType {
+    string chain         = 1;
+    string issueContract = 2;
+    string symbol        = 3;
+}
+
+message EthBridgeClaim {
+    int64 ethereumChainID = 1;
+    string bridgeBrankAddr = 2;
+    int64 nonce = 3;
+    string tokenAddr = 4;
+    string symbol        = 5;
+    string ethereumSender = 6;
+    string chain33Receiver = 7;
+    //因为考虑到eth是以wei单位的，需要更大的计数范围，所以使用string类型
+    string amount = 9;
+    int32 claimType = 10;
+    string chainName = 11;
+    int64 decimal = 12;
+    string ethTxHash = 13;
+}
+
+message ImportKeyReq {
+    string privateKey = 1;
+}
+
+message RelayerRunStatus {
+    int32 status = 1;
+    string details = 2;
+}
+
+message NewProphecyClaim {
+    uint32 claimType = 1;
+    string chain33Sender = 2;
+    string tokenAddr = 3;
+    string symbol = 4;
+    string ethReceiver = 5;
+    string  amount = 6;
+    string txHash = 7;
+}
+
+message BalanceAddr  {
+    string owner      = 1;
+    string tokenAddr  = 2;
+}
+
+message MintToken {
+    string owner      = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+}
+
+message ApproveAllowance {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+}
+
+message LockEthErc20 {
+    string ownerKey        = 1;
+    string tokenAddr       = 2;
+    string amount           = 3;
+    //将lock住的资产跨链转移到chain33的该账户名下
+    string chain33Receiver = 4;
+}
+
+message LockBTY {
+    string ownerKey        = 1;
+    string amount          = 2;
+    //将lock住的资产跨链转移到ethereum的该账户名下
+    string etherumReceiver = 3;
+}
+
+message ReplyAddr {
+    bool isOK       =1;
+    string addr     =2;
+}
+
+message ReplyBalance {
+    bool isOK       =1;
+    string balance  =2;
+}
+
+message Burn {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+    string chain33Receiver = 4;
+}
+
+message BurnFromChain33 {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+    string ethereumReceiver = 4;
+}
+
+
+message TransferToken {
+    string tokenAddr = 1;
+    string fromKey = 2;
+    string toAddr = 3;
+    string amount = 4;
+}
+
+message Uint64 {
+    uint64 data = 1;
+}
+
+message EventLogIndex {
+    uint64 height = 1;
+    uint32 index = 2;
+}
+
+message Chain33ToEthereumStatics {
+    string ethTxstatus = 1;
+    string chain33Txhash = 2;
+    string EthereumTxhash = 3;
+    int32  burnLock = 4;
+    //该笔lock或者burn交易的chain33发起人
+    string chain33Sender = 5;
+    string ethereumReceiver = 6;
+    string symbol = 7;
+    //因为考虑到,eth的单位是以wei计算的，所以使用string类型
+    string amount = 8;
+    int64 nonce   = 9;
+    int64 txIndex = 10;
+    string operationType = 11;
+}
+
+message Ethereum2Chain33Statics {
+    string chain33Txstatus = 1;
+    string chain33Txhash = 2;
+    string EthereumTxhash = 3;
+    int32  burnLock = 4;
+    //该笔lock或者burn交易的chain33发起人
+    string ethereumSender = 5;
+    string chain33Receiver = 6;
+    string symbol = 7;
+    //因为考虑到,eth的单位是以wei计算的，所以使用string类型
+    string amount = 8;
+    int64 nonce   = 9;
+    int64 txIndex = 10;
+    string operationType = 11;
+}
+
+message TokenAddress {
+    string address = 1;
+    string symbol  = 2;
+    string chainName = 3;
+}
+
+message TokenAddressArray {
+    repeated TokenAddress tokenAddress = 1;
+}
+
+message TokenStaticsRequest {
+    string symbol = 1;
+    int32 from = 2;
+    int32 operation = 3;
+    int32 status = 4;
+    int64 txIndex = 5;
+    int32 count   = 6;
+}
+
+message TokenStaticsResponse {
+    repeated Ethereum2Chain33Statics e2Cstatics = 1;
+    repeated Chain33ToEthereumStatics c2Estatics = 2;
+}
+
+message SetupMulSign {
+    string operatorPrivateKey = 1;
+    repeated string owners = 2;
+}
+
+message safeTransfer {
+    string to = 1;
+    string token = 2;
+    double amount = 3;
+    string operatorPrivateKey = 4;
+    repeated string ownerPrivateKeys = 5;
+}
+
+message ERC20Token {
+    string owner  = 1;
+    string name   = 2;
+    string symbol = 3;
+    string amount = 4;
+}
+
+message ETHTokenLockAddress {
+    string address = 1;
+    string symbol  = 2;
+}
+
+message ETHConfigLockedTokenOffline {
+    string address   = 1;
+    string symbol    = 2;
+    string threshold = 3;
+    uint32 percents  = 4;
+}

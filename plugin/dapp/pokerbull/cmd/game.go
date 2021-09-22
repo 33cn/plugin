@@ -6,7 +6,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strconv"
+
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	jsonrpc "github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -54,17 +58,21 @@ func addPokerbullStartFlags(cmd *cobra.Command) {
 }
 
 func pokerbullStart(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	value, _ := cmd.Flags().GetUint64("value")
 	playerCount, _ := cmd.Flags().GetUint32("playerCount")
 
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreateStartTx,
-		Payload:    []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value)*types.Coin, int32(playerCount))),
+		Payload:    []byte(fmt.Sprintf("{\"value\":%d,\"playerNum\":%d}", int64(value)*cfg.CoinPrecision, int32(playerCount))),
 	}
 
 	var res string
@@ -89,14 +97,12 @@ func addPokerbullContinueFlags(cmd *cobra.Command) {
 }
 
 func pokerbullContinue(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreateContinueTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
@@ -123,14 +129,12 @@ func addPokerbullQuitFlags(cmd *cobra.Command) {
 }
 
 func pokerbullQuit(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	gameID, _ := cmd.Flags().GetString("gameID")
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreateQuitTx,
 		Payload:    []byte(fmt.Sprintf("{\"gameId\":\"%s\"}", gameID)),
 	}
@@ -163,25 +167,29 @@ func addPokerbullPlayFlags(cmd *cobra.Command) {
 }
 
 func pokerbullPlay(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	gameID, _ := cmd.Flags().GetString("gameID")
 	round, _ := cmd.Flags().GetUint32("round")
 	value, _ := cmd.Flags().GetUint64("value")
 	address, _ := cmd.Flags().GetStringArray("address")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 
 	payload := &pkt.PBGamePlay{
 		GameId: gameID,
-		Value:  int64(value) * types.Coin,
+		Value:  int64(value) * cfg.CoinPrecision,
 		Round:  int32(round),
 	}
 	payload.Address = make([]string, len(address))
 	copy(payload.Address, address)
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(pkt.PokerBullX),
+		Execer:     types.GetExecName(pkt.PokerBullX, paraName),
 		ActionName: pkt.CreatePlayTx,
 		Payload:    types.MustPBToJSON(payload),
 	}

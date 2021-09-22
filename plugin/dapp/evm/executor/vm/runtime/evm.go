@@ -70,6 +70,9 @@ type Context struct {
 	// GasLimit 指令，当前交易的GasLimit
 	GasLimit uint64
 
+	// TxHash
+	TxHash []byte
+
 	// BlockNumber NUMBER 指令，当前区块高度
 	BlockNumber *big.Int
 	// Time 指令， 当前区块打包时间
@@ -186,7 +189,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			// 只有一种情况会走到这里来，就是合约账户向外部账户转账的情况
 			if len(input) > 0 || value == 0 {
 				// 其它情况要求地址必须存在，所以需要报错
-				if evm.VMConfig.Debug && evm.depth == 0 {
+				if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 					evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
 					evm.VMConfig.Tracer.CaptureEnd(ret, 0, 0, nil)
 				}
@@ -235,7 +238,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 			start := types.Now()
 
 			// 调试模式下启用跟踪
-			if evm.VMConfig.Debug && evm.depth == 0 {
+			if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 				evm.VMConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
 
 				defer func() {
@@ -442,7 +445,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 	snapshot = evm.StateDB.Snapshot()
 	evm.StateDB.CreateAccount(contractAddr.String(), contract.CallerAddress.String(), execName, alias)
 
-	if evm.VMConfig.Debug && evm.depth == 0 {
+	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 		evm.VMConfig.Tracer.CaptureStart(caller.Address(), contractAddr, true, code, gas, 0)
 	}
 	start := types.Now()
@@ -479,7 +482,7 @@ func (evm *EVM) Create(caller ContractRef, contractAddr common.Address, code []b
 		err = model.ErrMaxCodeSizeExceeded
 	}
 
-	if evm.VMConfig.Debug && evm.depth == 0 {
+	if EVMDebugOn == evm.VMConfig.Debug && evm.depth == 0 {
 		evm.VMConfig.Tracer.CaptureEnd(ret, gas-contract.Gas, types.Since(start), err)
 	}
 

@@ -27,8 +27,8 @@ const (
 	// TyLogEVMEventData 合约生成新的event日志数据
 	TyLogEVMEventData = 605
 
-	// MaxGasLimit  最大Gas消耗上限
-	MaxGasLimit = 10000000
+	// MaxGasLimit  最大Gas消耗上限 5
+	MaxGasLimit = (100000000 * 5)
 )
 
 const (
@@ -64,5 +64,6 @@ var (
 		TyLogContractData:       {Ty: reflect.TypeOf(EVMContractData{}), Name: "LogContractData"},
 		TyLogContractState:      {Ty: reflect.TypeOf(EVMContractState{}), Name: "LogContractState"},
 		TyLogEVMStateChangeItem: {Ty: reflect.TypeOf(EVMStateChangeItem{}), Name: "LogEVMStateChangeItem"},
+		TyLogEVMEventData:       {Ty: reflect.TypeOf(types.EVMLog{}), Name: "LogEVMEventData"},
 	}
 )

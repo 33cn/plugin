@@ -1,10 +1,9 @@
 syntax = "proto3";
 
 package types;
+option go_package = "../types";
 
 import "transaction.proto";
-
-option go_package = "types";
 
 // message for execs.coinsx
 message CoinsxAction {

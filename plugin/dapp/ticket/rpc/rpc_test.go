@@ -42,7 +42,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	head := &types.Header{Height: 2, StateHash: []byte("sdfadasds")}
 	api.On("GetLastHeader").Return(head, nil).Times(4)
 
-	var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100000 * types.Coin}
+	var acc = &types.Account{Addr: "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt", Balance: 100000 * types.DefaultCoinPrecision}
 	accv := types.Encode(acc)
 	storevalue := &types.StoreReplyValue{}
 	storevalue.Values = append(storevalue.Values, accv)
@@ -53,7 +53,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	var in = &ty.ReqBindMiner{
 		BindAddr:     "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
-		Amount:       10000 * types.Coin,
+		Amount:       10000 * types.DefaultCoinPrecision,
 		CheckBalance: false,
 	}
 	_, err := client.CreateBindMiner(context.Background(), in)
@@ -62,7 +62,7 @@ func TestChannelClient_BindMiner(t *testing.T) {
 	var in2 = &ty.ReqBindMiner{
 		BindAddr:     "",
 		OriginAddr:   "1Jn2qu84Z1SUUosWjySggBS9pKWdAP3tZt",
-		Amount:       10000 * types.Coin,
+		Amount:       10000 * types.DefaultCoinPrecision,
 		CheckBalance: false,
 	}
 	_, err = client.CreateBindMiner(context.Background(), in2)
@@ -387,6 +387,9 @@ ForkStorageLocalDB=0
 
 
 [fork.sub.multisig]
+Enable=0
+
+[fork.sub.mix]
 Enable=0
 
 [fork.sub.unfreeze]

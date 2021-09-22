@@ -25,8 +25,9 @@ import (
 	"container/heap"
 	"errors"
 
+	"github.com/33cn/chain33/types"
+
 	"github.com/33cn/chain33/common"
-	proto "github.com/golang/protobuf/proto"
 )
 
 // Iterator is a key-value trie iterator that traverses a Trie.
@@ -192,7 +193,7 @@ func (it *nodeIterator) LeafProof() [][]byte {
 				node, _, _ := hasher.hashChildren(item.node, nil)
 				hashed, _ := hasher.store(node, nil, false)
 				if _, ok := hashed.(hashNode); ok || i == 0 {
-					enc, _ := proto.Marshal(node.create())
+					enc := types.Encode(node.create())
 					proofs = append(proofs, enc)
 				}
 			}

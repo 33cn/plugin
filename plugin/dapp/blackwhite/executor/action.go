@@ -7,6 +7,8 @@ package executor
 import (
 	"math"
 
+	"github.com/pkg/errors"
+
 	"bytes"
 	"strconv"
 
@@ -20,14 +22,14 @@ import (
 )
 
 const (
-	maxAmount      int64 = 100 * types.Coin
-	minAmount      int64 = 1 * types.Coin
+	maxAmount      int64 = 100
+	minAmount      int64 = 1
 	minPlayerCount int32 = 3
 	maxPlayerCount int32 = 100000
-	lockAmount     int64 = types.Coin / 100 //创建者锁定金额
-	showTimeout    int64 = 60 * 5           // 公布密钥超时时间
-	maxPlayTimeout int64 = 60 * 60 * 24     // 创建交易之后最大超时时间
-	minPlayTimeout int64 = 60 * 10          // 创建交易之后最小超时时间
+	lockAmount     int64 = 100          //创建者锁定金额 types.coins/lockAmount
+	showTimeout    int64 = 60 * 5       // 公布密钥超时时间
+	maxPlayTimeout int64 = 60 * 60 * 24 // 创建交易之后最大超时时间
+	minPlayTimeout int64 = 60 * 10      // 创建交易之后最小超时时间
 
 	white = "0"
 	black = "1"
@@ -65,7 +67,8 @@ func newAction(t *Blackwhite, tx *types.Transaction, index int32) *action {
 }
 
 func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
-	if create.PlayAmount < minAmount || create.PlayAmount > maxAmount {
+	cfg := a.api.GetConfig()
+	if create.PlayAmount < minAmount*cfg.GetCoinPrecision() || create.PlayAmount > maxAmount*cfg.GetCoinPrecision() {
 		return nil, types.ErrAmount
 	}
 	if create.PlayerCount < minPlayerCount || create.PlayerCount > maxPlayerCount {
@@ -75,9 +78,13 @@ func (a *action) Create(create *gt.BlackwhiteCreate) (*types.Receipt, error) {
 		return nil, types.ErrInvalidParam
 	}
 
-	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, lockAmount)
+	if cfg.GetCoinPrecision() < lockAmount {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "coinPrecison=%d < lockAmount=100", cfg.GetCoinPrecision())
+	}
+
+	receipt, err := a.coinsAccount.ExecFrozen(a.fromaddr, a.execaddr, cfg.GetCoinPrecision()/lockAmount)
 	if err != nil {
-		clog.Error("blackwhite create ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", lockAmount)
+		clog.Error("blackwhite create ", "addr", a.fromaddr, "execaddr", a.execaddr, "ExecFrozen amount", cfg.GetCoinPrecision()/lockAmount)
 		return nil, err
 	}
 
@@ -296,6 +303,7 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 	var logs []*types.ReceiptLog
 	var kv []*types.KeyValue
 
+	cfg := a.api.GetConfig()
 	// 检查当前状态
 	if gt.BlackwhiteStatusPlay == round.Status {
 		if a.blocktime >= round.Timeout+round.CreateTime {
@@ -317,13 +325,16 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 				logs = append(logs, receipt.Logs...)
 				kv = append(kv, receipt.KV...)
 			}
+			if cfg.GetCoinPrecision() < lockAmount {
+				return nil, errors.Wrapf(types.ErrInvalidParam, "coinPrecison=%d < lockAmount=100", cfg.GetCoinPrecision())
+			}
 			// 将创建游戏者解冻
-			receipt, err := a.coinsAccount.ExecActive(round.CreateAddr, a.execaddr, lockAmount)
+			receipt, err := a.coinsAccount.ExecActive(round.CreateAddr, a.execaddr, cfg.GetCoinPrecision()/lockAmount)
 			if err != nil {
 				for _, addrR := range round.AddrResult {
 					a.coinsAccount.ExecFrozen(addrR.Addr, a.execaddr, addrR.Amount)
 				}
-				clog.Error("blackwhite timeout done", "addr", round.CreateAddr, "execaddr", a.execaddr, "execActive create lockAmount", lockAmount, "err", err)
+				clog.Error("blackwhite timeout done", "addr", round.CreateAddr, "execaddr", a.execaddr, "execActive create lockAmount", cfg.GetCoinPrecision()/lockAmount, "err", err)
 				return nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -364,7 +375,6 @@ func (a *action) TimeoutDone(done *gt.BlackwhiteTimeoutDone) (*types.Receipt, er
 
 	key1 := calcMavlRoundKey(round.GameID)
 	value1 := types.Encode(&round)
-	cfg := a.api.GetConfig()
 	if cfg.IsDappFork(a.height, gt.BlackwhiteX, "ForkBlackWhiteV2") {
 		//将当前游戏状态保存，便于同一区块中游戏参数的累加
 		a.db.Set(key1, value1)
@@ -492,8 +502,12 @@ func (a *action) StatTransfer(round *gt.BlackwhiteRound) (*types.Receipt, error)
 		round.Winner = append(round.Winner, winer.addr)
 	}
 
+	cfg := a.api.GetConfig()
+	if cfg.GetCoinPrecision() < lockAmount {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "coinPrecison=%d < lockAmount=100", cfg.GetCoinPrecision())
+	}
 	// 将创建游戏者解冻
-	receipt, err := a.coinsAccount.ExecActive(round.CreateAddr, a.execaddr, lockAmount)
+	receipt, err := a.coinsAccount.ExecActive(round.CreateAddr, a.execaddr, cfg.GetCoinPrecision()/lockAmount)
 	if err != nil {
 		// rollback
 		if len(winers) == 0 {
@@ -512,7 +526,7 @@ func (a *action) StatTransfer(round *gt.BlackwhiteRound) (*types.Receipt, error)
 				a.coinsAccount.ExecFrozen(loser.addr, a.execaddr, loser.amount)
 			}
 		}
-		clog.Error("StatTransfer ExecActive create ExecFrozen ", "addr", round.CreateAddr, "execaddr", a.execaddr, "amount", lockAmount)
+		clog.Error("StatTransfer ExecActive create ExecFrozen ", "addr", round.CreateAddr, "execaddr", a.execaddr, "amount", cfg.GetCoinPrecision()/lockAmount)
 		return nil, err
 	}
 	logs = append(logs, receipt.Logs...)

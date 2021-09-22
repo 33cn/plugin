@@ -383,7 +383,7 @@ func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 		if err != nil {
 			errorCount++
 		}
-		assert.Equal(t, isSynced, i == 3 || i == 6)
+		assert.Equalf(t, isSynced, i == 3 || i == 6, "i=%d", i)
 	}
 
 	switch testLoopCount {

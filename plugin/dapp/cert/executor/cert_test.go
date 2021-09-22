@@ -44,7 +44,7 @@ var (
 	Nodes    = [][]byte{
 		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
 	}
-	total    = 100 * types.Coin
+	total    = 100 * types.DefaultCoinPrecision
 	USERNAME = "user1"
 	ORGNAME  = "org1"
 	SIGNTYPE = ct.AuthSM2

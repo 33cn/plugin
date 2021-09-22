@@ -116,7 +116,7 @@ func testPropChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Frozen)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
 }
 
 func propChangeTx(parm *auty.ProposalChange) (*types.Transaction, error) {
@@ -281,7 +281,7 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
 	assert.NoError(t, err)
@@ -408,7 +408,7 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount, account.Balance)
+	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
 	// status
 	value, err := stateDB.Get(propChangeID(proposalID))
 	assert.NoError(t, err)

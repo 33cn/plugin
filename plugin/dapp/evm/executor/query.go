@@ -5,10 +5,14 @@
 package executor
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"sync/atomic"
+
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -54,43 +58,43 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 }
 
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
-func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types.Message, error) {
+func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (types.Message, error) {
 	evm.CheckInit()
-	var (
-		caller evmCommon.Address
-	)
-	cfg := evm.GetAPI().GetConfig()
-	// 如果未指定调用地址，则直接使用一个虚拟的地址发起调用
-	if len(in.Caller) > 0 {
-		callAddr := evmCommon.StringToAddress(in.Caller)
-		if callAddr != nil {
-			caller = *callAddr
-		}
-	} else {
-		caller = evmCommon.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
+
+	txBytes, err := hex.DecodeString(req.Tx)
+	if nil != err {
+		return nil, err
+	}
+	var tx types.Transaction
+	err = types.Decode(txBytes, &tx)
+	if nil != err {
+		return nil, err
 	}
 
-	to := evmCommon.StringToAddress(in.To)
-	if to == nil {
-		to = evmCommon.StringToAddress(EvmAddress)
-	}
-	msg := evmCommon.NewMessage(caller, to, 0, in.Amount, evmtypes.MaxGasLimit, 1, nil, in.Para, "estimateGas")
-	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
-
-	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, false)
+	index := 0
+	from := evmCommon.StringToAddress(req.From)
+	msg, err := evm.GetMessage(&tx, index, from)
 	if err != nil {
 		return nil, err
 	}
 
-	if receipt.Ty == types.ExecOk {
-		callData := getCallReceipt(receipt.GetLogs())
-		if callData != nil {
-			result := &evmtypes.EstimateEVMGasResp{}
-			result.Gas = callData.UsedGas
-			return result, nil
-		}
+	msg.SetGasLimit(evmtypes.MaxGasLimit)
+	receipt, err := evm.innerExec(msg, tx.Hash(), index, evmtypes.MaxGasLimit, true)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("contract call error")
+
+	if receipt.Ty != types.ExecOk {
+		return nil, errors.New("contract call error")
+	}
+
+	callData := getCallReceipt(receipt.GetLogs())
+	if callData == nil {
+		return nil, errors.New("nil receipt")
+	}
+	result := &evmtypes.EstimateEVMGasResp{}
+	result.Gas = callData.UsedGas
+	return result, nil
 }
 
 // 从日志中查找调用结果
@@ -111,17 +115,18 @@ func getCallReceipt(logs []*types.ReceiptLog) *evmtypes.ReceiptEVMContract {
 	return nil
 }
 
-// Query_EvmDebug 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
+// Query_EvmDebug 此方法用来控制evm调试打印开关
 func (evm *EVMExecutor) Query_EvmDebug(in *evmtypes.EvmDebugReq) (types.Message, error) {
 	evm.CheckInit()
 	optype := in.Optype
 
 	if optype < 0 {
-		evmDebug = false
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOff)
 	} else if optype > 0 {
-		evmDebug = true
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOn)
 	}
-	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evmDebug)}
+
+	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evm.vmCfg.Debug)}
 	return ret, nil
 }
 

@@ -21,15 +21,15 @@ import (
 const (
 	minBoards                 = 20
 	maxBoards                 = 40
-	publicPeriod        int32 = 17280 * 7                // 公示一周时间，以区块高度计算
-	ticketPrice               = types.Coin * 3000        // 单张票价
-	largeProjectAmount        = types.Coin * 100 * 10000 // 重大项目公示金额阈值
-	proposalAmount            = types.Coin * 500         // 创建者消耗金额
-	boardApproveRatio   int32 = 51                       // 董事会成员赞成率，以%计，可修改
-	pubAttendRatio      int32 = 75                       // 全体持票人参与率，以%计
-	pubApproveRatio     int32 = 66                       // 全体持票人赞成率，以%计
-	pubOpposeRatio      int32 = 33                       // 全体持票人否决率，以%计
-	startEndBlockPeriod       = 720                      // 提案开始结束最小周期
+	publicPeriod        int32 = 17280 * 7   // 公示一周时间，以区块高度计算
+	ticketPrice               = 3000        // 单张票价
+	largeProjectAmount        = 100 * 10000 // 重大项目公示金额阈值
+	proposalAmount            = 500         // 创建者消耗金额
+	boardApproveRatio   int32 = 51          // 董事会成员赞成率，以%计，可修改
+	pubAttendRatio      int32 = 75          // 全体持票人参与率，以%计
+	pubApproveRatio     int32 = 66          // 全体持票人赞成率，以%计
+	pubOpposeRatio      int32 = 33          // 全体持票人否决率，以%计
+	startEndBlockPeriod       = 720         // 提案开始结束最小周期
 )
 
 type action struct {
@@ -420,7 +420,7 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int32(account.Balance / ticketPrice), nil
+	return int32(account.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
@@ -465,7 +465,7 @@ func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
 	if subcfg.UseBalance {
 		amount = account.Balance
 	}
-	return int32(amount / ticketPrice), nil
+	return int32(amount / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
 func (a *action) getStartHeightVoteAccount(addr, execer string, height int64) (*types.Account, error) {
@@ -510,6 +510,7 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	// 获取当前生效提案规则,并且将不修改的规则补齐
 	rule := &auty.RuleConfig{}
 	value, err := a.db.Get(activeRuleID())
+	cfg := a.api.GetConfig()
 	if err == nil {
 		err = types.Decode(value, rule)
 		if err != nil {
@@ -518,8 +519,8 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	} else { // 载入系统默认值
 		rule.BoardApproveRatio = boardApproveRatio
 		rule.PubOpposeRatio = pubOpposeRatio
-		rule.ProposalAmount = proposalAmount
-		rule.LargeProjectAmount = largeProjectAmount
+		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
+		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
 		rule.PublicPeriod = publicPeriod
 	}
 	return rule, nil

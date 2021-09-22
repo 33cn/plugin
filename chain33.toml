@@ -273,10 +273,33 @@ superManager=[
 nodeGroupFrozenCoins=0
 #平行链共识停止后主链等待的高度
 paraConsensusStopBlocks=30000
+#配置平行链资产跨链交易的高度列表，title省略user.p,不同title使用,分割，不同hit高度使用"."分割，
+#不同ignore范围高度使用"-"分割，hit高度在ignore范围内，为平行链自身的高度，不是主链高度
+#para.hit.10.50.250, para.ignore.1-100.200-300
+paraCrossAssetTxHeightList=[]
 
 [exec.sub.autonomy]
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
+
+[exec.sub.evm]
+#免交易费模式联盟链允许的最大gas，该配置只对不收取交易费部署方式有效，其他部署方式下该配置不会产生作用
+#当前最大为200万
+evmGasLimit=2000000
+#evm内部调试输出，指令级的，默认关闭,0：关闭；1：打开
+evmDebugEnable=0
+
+[exec.sub.mix]
+#私对私的交易费,交易比较大，需要多的手续费
+txFee=100000000
+#私对私token转账，花费token(true)还是BTY(false),
+tokenFee=false
+#curve H point
+pointHX="19172955941344617222923168298456110557655645809646772800021167670156933290312"
+pointHY="21116962883761739586121793871108889864627195706475546685847911817475098399811"
+#电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
+maxTreeLeaves=1024
+
 
 [metrics]
 #是否使能发送metrics数据的发送

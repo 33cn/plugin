@@ -10,9 +10,6 @@ import (
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/33cn/chain33/common/address"
-	"github.com/33cn/chain33/common/crypto"
-	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/btcsuite/btcd/btcec"
 	"golang.org/x/crypto/sha3"
@@ -44,22 +41,6 @@ func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
 
 	pub, _, err := btcec.RecoverCompact(btcec.S256(), btcsig, hash)
 	return (*ecdsa.PublicKey)(pub), err
-}
-
-// RandomContractAddress 随机生成一个新的地址，给新创建的合约地址使用
-func RandomContractAddress() *common.Address {
-	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
-	if err != nil {
-		return nil
-	}
-	key, err := c.GenKey()
-	if err != nil {
-		return nil
-	}
-
-	acc := address.PubKeyToAddress(key.PubKey().Bytes())
-	ret := common.StringToAddress(address.ExecAddress(acc.String()))
-	return ret
 }
 
 // Keccak256 计算并返回 Keccak256 哈希

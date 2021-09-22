@@ -50,7 +50,6 @@ const (
 
 const (
 	luckyNumMol = 100000
-	decimal     = types.Coin //1e8
 	blockNum    = 5
 )
 
@@ -358,7 +357,7 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 	Once ExecTransfer succeed, ExecFrozen succeed, no roolback needed
 	**********/
 
-	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, lott.CreateAddr, action.execaddr, buy.GetAmount()*decimal)
+	receipt, err := action.coinsAccount.ExecTransfer(action.fromaddr, lott.CreateAddr, action.execaddr, buy.GetAmount()*cfg.GetCoinPrecision())
 	if err != nil {
 		llog.Error("LotteryBuy.ExecTransfer", "addr", action.fromaddr, "execaddr", action.execaddr, "amount", buy.GetAmount())
 		return nil, err
@@ -366,7 +365,7 @@ func (action *Action) LotteryBuy(buy *pty.LotteryBuy) (*types.Receipt, error) {
 	logs = append(logs, receipt.Logs...)
 	kv = append(kv, receipt.KV...)
 
-	receipt, err = action.coinsAccount.ExecFrozen(lott.CreateAddr, action.execaddr, buy.GetAmount()*decimal)
+	receipt, err = action.coinsAccount.ExecFrozen(lott.CreateAddr, action.execaddr, buy.GetAmount()*cfg.GetCoinPrecision())
 
 	if err != nil {
 		llog.Error("LotteryBuy.Frozen", "addr", lott.CreateAddr, "execaddr", action.execaddr, "amount", buy.GetAmount())
@@ -503,16 +502,17 @@ func (action *Action) LotteryClose(draw *pty.LotteryClose) (*types.Receipt, erro
 	}
 	llog.Debug("LotteryClose", "totalReturn", totalReturn)
 
+	cfg := action.api.GetConfig()
 	if totalReturn > 0 {
 
-		if !action.CheckExecAccount(lott.CreateAddr, decimal*totalReturn, true) {
+		if !action.CheckExecAccount(lott.CreateAddr, cfg.GetCoinPrecision()*totalReturn, true) {
 			return nil, pty.ErrLotteryFundNotEnough
 		}
 
 		for _, recs := range lott.PurRecords {
 			if recs.AmountOneRound > 0 {
 				receipt, err := action.coinsAccount.ExecTransferFrozen(lott.CreateAddr, recs.Addr, action.execaddr,
-					decimal*recs.AmountOneRound)
+					cfg.GetCoinPrecision()*recs.AmountOneRound)
 				if err != nil {
 					return nil, err
 				}
@@ -621,11 +621,11 @@ func (action *Action) checkDraw(lott *LotteryDB) (*types.Receipt, *pty.LotteryUp
 	}
 	llog.Debug("checkDraw", "lenofupdate", len(updateInfo.BuyInfo), "update", updateInfo.BuyInfo)
 
-	var factor = decimal
+	var factor = action.api.GetConfig().GetCoinPrecision()
 	if totalFund > 0 {
 		if totalFund > lott.GetFund()/2 {
 			llog.Debug("checkDraw ajust fund", "lott.Fund", lott.Fund, "totalFund", totalFund)
-			factor = decimal * (lott.GetFund()) / 2 / (totalFund)
+			factor = action.api.GetConfig().GetCoinPrecision() * (lott.GetFund()) / 2 / (totalFund)
 			lott.Fund = lott.Fund / 2
 		} else {
 			lott.Fund -= totalFund

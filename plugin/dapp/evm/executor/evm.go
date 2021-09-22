@@ -21,13 +21,11 @@ import (
 )
 
 var (
-	evmDebug = true
-
+	evmDebugInited = false
 	// EvmAddress 本合约地址
 	EvmAddress = ""
+	driverName = evmtypes.ExecutorName
 )
-
-var driverName = evmtypes.ExecutorName
 
 // Init 初始化本合约对象
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -52,7 +50,6 @@ func GetName() string {
 
 func newEVMDriver() drivers.Driver {
 	evm := NewEVMExecutor()
-	evm.vmCfg.Debug = evmDebug
 	return evm
 }
 
@@ -182,7 +179,7 @@ func (evm *EVMExecutor) GetVMConfig() *runtime.Config {
 }
 
 // NewEVMContext 构造一个新的EVM上下文对象
-func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
+func (evm *EVMExecutor) NewEVMContext(msg *common.Message, txHash []byte) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
@@ -194,5 +191,6 @@ func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 		Difficulty:  new(big.Int).SetUint64(evm.GetDifficulty()),
 		GasLimit:    msg.GasLimit(),
 		GasPrice:    msg.GasPrice(),
+		TxHash:      txHash,
 	}
 }

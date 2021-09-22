@@ -198,7 +198,7 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 	amount := req.GetAmount()
 	viewPublic := (*[32]byte)(unsafe.Pointer(&viewPubSlice[0]))
 	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPubSlice[0]))
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0)
+	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0, types.DefaultCoinPrecision)
 	if err != nil {
 		return nil
 	}

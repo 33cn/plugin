@@ -46,12 +46,11 @@ func markRequired(cmd *cobra.Command, params ...string) {
 }
 
 func sendCreateTxRPC(cmd *cobra.Command, actionName string, req types.Message) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
 	rpcAddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	payLoad := types.MustPBToJSON(req)
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(vty.VoteX),
+		Execer:     types.GetExecName(vty.VoteX, paraName),
 		ActionName: actionName,
 		Payload:    payLoad,
 	}
@@ -62,12 +61,11 @@ func sendCreateTxRPC(cmd *cobra.Command, actionName string, req types.Message) {
 }
 
 func sendQueryRPC(cmd *cobra.Command, funcName string, req, reply types.Message) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
 	rpcAddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
 	payLoad := types.MustPBToJSON(req)
 	query := &rpctypes.Query4Jrpc{
-		Execer:   cfg.ExecName(vty.VoteX),
+		Execer:   types.GetExecName(vty.VoteX, paraName),
 		FuncName: funcName,
 		Payload:  payLoad,
 	}

@@ -12,8 +12,10 @@ import (
 	"os"
 	"time"
 
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
+
 	"encoding/json"
-	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/common"
@@ -41,14 +43,13 @@ func EvmCmd() *cobra.Command {
 		calcNewContractAddrCmd(),
 		createContractCmd(),
 		callContractCmd(),
-		abiCmd(),
-		estimateContractCmd(),
+		queryCmd(),
+		estimateGasCmd(),
 		checkContractAddrCmd(),
 		evmDebugCmd(),
 		evmTransferCmd(),
 		getEvmBalanceCmd(),
 		evmToolsCmd(),
-		getNonceCmd(),
 		showTimeNowCmd(),
 	)
 	cmd.PersistentFlags().Int32("chainID", 0, "chain ID")
@@ -155,6 +156,12 @@ func evmBalance(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var addrs []string
 	addrs = append(addrs, addr)
 	params := types.ReqBalance{
@@ -164,8 +171,8 @@ func evmBalance(cmd *cobra.Command, args []string) {
 	}
 	var res []*rpctypes.Account
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetBalance", params, &res)
-	ctx.SetResultCb(parseGetBalanceRes)
-	ctx.Run()
+	ctx.SetResultCbExt(parseGetBalanceRes)
+	ctx.RunExt(cfg)
 }
 
 // AccountResult 账户余额查询出来之后进行单位转换
@@ -180,10 +187,11 @@ type AccountResult struct {
 	Addr string `json:"addr,omitempty"`
 }
 
-func parseGetBalanceRes(arg interface{}) (interface{}, error) {
-	res := *arg.(*[]*rpctypes.Account)
-	balanceResult := strconv.FormatFloat(float64(res[0].Balance)/float64(types.Coin), 'f', 4, 64)
-	frozenResult := strconv.FormatFloat(float64(res[0].Frozen)/float64(types.Coin), 'f', 4, 64)
+func parseGetBalanceRes(arg ...interface{}) (interface{}, error) {
+	res := *arg[0].(*[]*rpctypes.Account)
+	cfg := arg[1].(*rpctypes.ChainConfigInfo)
+	balanceResult := types.FormatAmount2FloatDisplay(res[0].Balance, cfg.CoinPrecision, true)
+	frozenResult := types.FormatAmount2FloatDisplay(res[0].Frozen, cfg.CoinPrecision, true)
 	result := &AccountResult{
 		Addr:     res[0].Addr,
 		Currency: res[0].Currency,
@@ -233,8 +241,7 @@ func addCreateContractFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("code", "c", "", "contract binary code")
 	_ = cmd.MarkFlagRequired("code")
 
-	cmd.Flags().StringP("abi", "b", "", "abi string used for create constructor parameter ")
-	_ = cmd.MarkFlagRequired("abi")
+	cmd.Flags().StringP("abi", "b", "", "abi string used for create constructor parameter(optional, not needed if no parameter for constructor)")
 
 	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
 
@@ -242,15 +249,13 @@ func addCreateContractFlags(cmd *cobra.Command) {
 
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
 
-	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name")
+	cmd.Flags().StringP("alias", "s", "", "human readable contract alias name(optional)")
 
-	cmd.Flags().StringP("parameter", "p", "", "parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
+	cmd.Flags().StringP("parameter", "p", "", "(optional)parameter for constructor and should be input as constructor(xxx,xxx,xxx)")
 }
 
 func createContract(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	code, _ := cmd.Flags().GetString("code")
 	note, _ := cmd.Flags().GetString("note")
 	alias, _ := cmd.Flags().GetString("alias")
@@ -260,7 +265,16 @@ func createContract(cmd *cobra.Command, args []string) {
 	constructorPara, _ := cmd.Flags().GetString("parameter")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
-	feeInt64 := uint64(fee*1e4) * 1e4
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 
 	var action evmtypes.EVMContractAction
 	bCode, err := common.FromHex(code)
@@ -268,7 +282,7 @@ func createContract(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, "parse evm code error", err)
 		return
 	}
-	exector := cfg.ExecName(paraName + "evm")
+	exector := types.GetExecName("evm", paraName)
 	action = evmtypes.EVMContractAction{Amount: 0, Code: bCode, GasLimit: 0, GasPrice: 0, Note: note, Alias: alias, ContractAddr: address.ExecAddress(exector)}
 
 	if "" != constructorPara {
@@ -282,10 +296,9 @@ func createContract(cmd *cobra.Command, args []string) {
 	}
 
 	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: action.ContractAddr, ChainID: chainID}
-	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
-	fmt.Println("feeInt64 is", feeInt64)
-	if tx.Fee < int64(feeInt64) {
-		tx.Fee += int64(feeInt64)
+	tx.Fee, _ = tx.GetRealFee(cfg.MinTxFeeRate)
+	if tx.Fee < feeInt64 {
+		tx.Fee += feeInt64
 	}
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -295,12 +308,12 @@ func createContract(cmd *cobra.Command, args []string) {
 	fmt.Println(rawTx)
 }
 
-func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller, toAddr, expire, rpcLaddr string, fee uint64, chainID int32) (string, error) {
+func createEvmTx(cfg *rpctypes.ChainConfigInfo, action proto.Message, execer, caller, toAddr, expire, rpcLaddr string, fee int64, chainID int32) (string, error) {
 	tx := &types.Transaction{Execer: []byte(execer), Payload: types.Encode(action), Fee: 0, To: toAddr, ChainID: chainID}
 
-	tx.Fee, _ = tx.GetRealFee(cfg.GetMinTxFeeRate())
-	if tx.Fee < int64(fee) {
-		tx.Fee += int64(fee)
+	tx.Fee, _ = tx.GetRealFee(cfg.MinTxFeeRate)
+	if tx.Fee < fee {
+		tx.Fee += fee
 	}
 
 	random := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -335,7 +348,7 @@ func createEvmTx(cfg *types.Chain33Config, action proto.Message, execer, caller,
 func callContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "call",
-		Short: "Call the EVM contract",
+		Short: "create tx to Call the EVM contract",
 		Run:   callContract,
 	}
 	addCallContractFlags(cmd)
@@ -343,24 +356,32 @@ func callContractCmd() *cobra.Command {
 }
 
 func callContract(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
-	//code, _ := cmd.Flags().GetString("input")
-	caller, _ := cmd.Flags().GetString("caller")
-	expire, _ := cmd.Flags().GetString("expire")
 	note, _ := cmd.Flags().GetString("note")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	contractAddr, _ := cmd.Flags().GetString("exec")
 	parameter, _ := cmd.Flags().GetString("parameter")
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	path, _ := cmd.Flags().GetString("path")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
-	amountInt64 := uint64(amount*1e4) * 1e4
-	feeInt64 := uint64(fee*1e4) * 1e4
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
+	feeInt64, err := types.FormatFloatDisplay2Value(fee, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.fee"))
+		return
+	}
 
 	abiFileName := path + contractAddr + ".abi"
 	abiStr, err := readFile(abiFileName)
@@ -375,66 +396,47 @@ func callContract(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	action := evmtypes.EVMContractAction{Amount: amountInt64, GasLimit: 0, GasPrice: 0, Note: note, Para: packedParameter, ContractAddr: contractAddr}
+	action := evmtypes.EVMContractAction{Amount: uint64(amountInt64), GasLimit: 0, GasPrice: 0, Note: note, Para: packedParameter, ContractAddr: contractAddr}
 
-	exector := cfg.ExecName(paraName + "evm")
+	exector := types.GetExecName("evm", paraName)
 	toAddr := address.ExecAddress(exector)
-	//name表示发给哪个执行器
-	data, err := createEvmTx(cfg, &action, exector, caller, toAddr, expire, rpcLaddr, feeInt64, chainID)
 
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, "call contract error", err)
-		return
+	tx := &types.Transaction{Execer: []byte(exector), Payload: types.Encode(&action), Fee: 0, To: toAddr, ChainID: chainID}
+	tx.Fee, _ = tx.GetRealFee(cfg.MinTxFeeRate)
+	if tx.Fee < feeInt64 {
+		tx.Fee += feeInt64
 	}
 
-	params := rpctypes.RawParm{
-		Data: data,
-	}
-
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, nil)
-	ctx.RunWithoutMarshal()
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	tx.Nonce = random.Int63()
+	//tx.ChainID = cfg.GetChainID()
+	txHex := types.Encode(tx)
+	rawTx := hex.EncodeToString(txHex)
+	fmt.Println(rawTx)
 }
 
 func addCallContractFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("caller", "c", "", "the caller address")
-	cmd.MarkFlagRequired("caller")
-
-	cmd.Flags().StringP("expire", "", "120s", "transaction expire time (optional)")
-
 	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
 
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
-	cmd.MarkFlagRequired("fee")
 
 	cmd.Flags().StringP("exec", "e", "", "evm contract address")
-	cmd.MarkFlagRequired("exec")
+	_ = cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
 
 	cmd.Flags().Float64P("amount", "a", 0, "the amount transfer to the contract (optional)")
 
 	cmd.Flags().StringP("parameter", "p", "", "tx input parameter as:approve(13nBqpmC4VaJpEZ6J6G9NUM1Y55FQvw558, 100000000)")
+	_ = cmd.MarkFlagRequired("parameter")
 }
 
 // abi命令
-func abiCmd() *cobra.Command {
+func queryCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "abi",
-		Short: "EVM ABI commands",
-		Args:  cobra.MinimumNArgs(1),
-	}
-
-	cmd.AddCommand(
-		callAbiCmd(),
-	)
-	return cmd
-}
-
-func callAbiCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "call",
-		Short: "send query call by abi format",
-		Run:   callAbi,
+		Use:   "query",
+		Short: "evm query call",
+		Run:   evmQueryCall,
 	}
 
 	cmd.Flags().StringP("address", "a", "", "evm contract address")
@@ -450,7 +452,7 @@ func callAbiCmd() *cobra.Command {
 	return cmd
 }
 
-func callAbi(cmd *cobra.Command, args []string) {
+func evmQueryCall(cmd *cobra.Command, args []string) {
 	addr, _ := cmd.Flags().GetString("address")
 	input, _ := cmd.Flags().GetString("input")
 	caller, _ := cmd.Flags().GetString("caller")
@@ -499,38 +501,17 @@ func callAbi(cmd *cobra.Command, args []string) {
 	}
 }
 
-func estimateContract(cmd *cobra.Command, args []string) {
-	input, _ := cmd.Flags().GetString("input")
-	name, _ := cmd.Flags().GetString("exec")
+func estimateGas(cmd *cobra.Command, args []string) {
+	txStr, _ := cmd.Flags().GetString("tx")
 	caller, _ := cmd.Flags().GetString("caller")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	path, _ := cmd.Flags().GetString("path")
-
-	toAddr := address.ExecAddress("evm")
-	if len(name) > 0 {
-		toAddr = address.ExecAddress(name)
-	}
-
-	amountInt64 := uint64(amount*1e4) * 1e4
-
-	abiFileName := path + name + ".abi"
-	abiStr, err := readFile(abiFileName)
-	if nil != err {
-		_, _ = fmt.Fprintln(os.Stderr, "Can't read abi info, Pls set correct abi path and provide abi file as", abiFileName)
-		return
-	}
-
-	_, packedParameter, err := evmAbi.Pack(input, abiStr, false)
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, "Failed to do para pack", err.Error())
-		return
-	}
-
-	var estGasReq = evmtypes.EstimateEVMGasReq{To: toAddr, Para: packedParameter, Caller: caller, Amount: amountInt64}
-	var estGasResp evmtypes.EstimateEVMGasResp
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	query := sendQuery(rpcLaddr, "EstimateGas", &estGasReq, &estGasResp)
+	txInfo := &evmtypes.EstimateEVMGasReq{
+		Tx:   txStr,
+		From: caller,
+	}
 
+	var estGasResp evmtypes.EstimateEVMGasResp
+	query := sendQuery(rpcLaddr, "EstimateGas", txInfo, &estGasResp)
 	if query {
 		fmt.Fprintf(os.Stdout, "gas cost estimate %v\n", estGasResp.Gas)
 	} else {
@@ -538,27 +519,22 @@ func estimateContract(cmd *cobra.Command, args []string) {
 	}
 }
 
-func addEstimateFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("input", "i", "", "input contract binary code")
-	cmd.MarkFlagRequired("input")
+func addEstimateGasFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("tx", "x", "", "tx string(should be signatured)")
+	_ = cmd.MarkFlagRequired("tx")
 
-	cmd.Flags().StringP("exec", "e", "", "evm contract name (like user.evm.xxxxx)")
-
-	cmd.Flags().StringP("caller", "c", "", "the caller address")
-
-	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
-
-	cmd.Flags().Float64P("amount", "a", 0, "the amount transfer to the contract (optional)")
+	cmd.Flags().StringP("caller", "c", "", "contract creator or caller")
+	_ = cmd.MarkFlagRequired("caller")
 }
 
 // 估算合约消耗
-func estimateContractCmd() *cobra.Command {
+func estimateGasCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "estimate",
 		Short: "Estimate the gas cost of calling or creating a contract",
-		Run:   estimateContract,
+		Run:   estimateGas,
 	}
-	addEstimateFlags(cmd)
+	addEstimateGasFlags(cmd)
 	return cmd
 }
 
@@ -678,18 +654,25 @@ func addEvmTransferFlags(cmd *cobra.Command) {
 }
 
 func evmTransfer(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
-
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	caller, _ := cmd.Flags().GetString("caller")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	expire, _ := cmd.Flags().GetString("expire")
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	chainID, _ := cmd.Flags().GetInt32("chainID")
 
-	amountInt64 := int64(amount*1e4) * 1e4
+	cfg, err := cmdtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
+	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.amount"))
+		return
+	}
 
 	r_addr, err := address.NewAddrFromString(receiver)
 	if nil != err {
@@ -697,7 +680,7 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	exector := cfg.ExecName(paraName + "evm")
+	exector := types.GetExecName("evm", paraName)
 	toAddr := address.ExecAddress(exector)
 	action := &evmtypes.EVMContractAction{
 		Amount:       uint64(amountInt64),
@@ -764,44 +747,6 @@ func checksumAddr(address []byte) string {
 		}
 	}
 	return "0x" + string(result)
-}
-
-func getNonceCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "nonce",
-		Short: "Get user's nonce",
-		Run:   getNonce,
-	}
-	getNonceFlags(cmd)
-	return cmd
-}
-
-func getNonceFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("addr", "a", "", "account addr")
-	cmd.MarkFlagRequired("addr")
-}
-
-func getNonce(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("addr")
-	err := address.CheckAddress(addr)
-	if err != nil {
-		_, _ = fmt.Fprintln(os.Stderr, types.ErrInvalidAddress)
-		return
-	}
-
-	params := evmtypes.EvmGetNonceReq{
-		Address: addr,
-	}
-
-	var resp evmtypes.EvmGetNonceRespose
-	query := sendQuery(rpcLaddr, "GetNonce", &params, &resp)
-
-	if query {
-		fmt.Println("Nonce=", resp.Nonce)
-	} else {
-		_, _ = fmt.Fprintln(os.Stderr, "Failed to get nonce!")
-	}
 }
 
 func showTimeNowCmd() *cobra.Command {

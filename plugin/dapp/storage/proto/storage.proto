@@ -1,5 +1,6 @@
 syntax = "proto3";
 package types;
+option go_package = "../types";
 //后面如果有其他数据模型可继续往上面添加
 message Storage {
     oneof value {

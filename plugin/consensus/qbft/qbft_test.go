@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -42,7 +44,8 @@ func TestQbft(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	configTx := configManagerTx()
-	mock33.GetAPI().SendTx(configTx)
+	_, err := mock33.GetAPI().SendTx(configTx)
+	require.Nil(t, err)
 	mock33.WaitTx(configTx.Hash())
 
 	addTx := addNodeTx()

@@ -24,7 +24,6 @@ import (
 	wcom "github.com/33cn/chain33/wallet/common"
 	privacy "github.com/33cn/plugin/plugin/dapp/privacy/crypto"
 	privacytypes "github.com/33cn/plugin/plugin/dapp/privacy/types"
-	"github.com/golang/protobuf/proto"
 )
 
 func (policy *privacyPolicy) rescanAllTxAddToUpdateUTXOs() {
@@ -507,6 +506,7 @@ func (policy *privacyPolicy) createTransaction(req *privacytypes.ReqCreatePrivac
 }
 
 func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreatePrivacyTx) (*types.Transaction, error) {
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "parse view spend public key pair failed.  err ", err)
@@ -515,7 +515,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 	amount := req.GetAmount()
 	viewPublic := (*[32]byte)(unsafe.Pointer(&viewPubSlice[0]))
 	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPubSlice[0]))
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0)
+	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0, cfg.GetCoinPrecision())
 	if err != nil {
 		bizlog.Error("createPublic2PrivacyTx", "generate output failed.  err ", err)
 		return nil, err
@@ -528,7 +528,7 @@ func (policy *privacyPolicy) createPublic2PrivacyTx(req *privacytypes.ReqCreateP
 		Output:    privacyOutput,
 		AssetExec: req.GetAssetExec(),
 	}
-	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+
 	action := &privacytypes.PrivacyAction{
 		Ty:    privacytypes.ActionPublic2Privacy,
 		Value: &privacytypes.PrivacyAction_Public2Privacy{Public2Privacy: value},
@@ -562,7 +562,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	isMainetCoins := !cfg.IsPara() && (req.AssetExec == cfg.GetCoinExec())
 	if isMainetCoins {
-		utxoBurnedAmount = privacytypes.PrivacyTxFee
+		utxoBurnedAmount = privacytypes.PrivacyTxFee * cfg.GetCoinPrecision()
 	}
 	buildInfo := &buildInputInfo{
 		assetExec:   req.GetAssetExec(),
@@ -599,7 +599,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 		selectedAmounTotal += input.Amount
 	}
 	//构造输出UTXO
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, viewPub4chgPtr, spendPub4chgPtr, req.GetAmount(), selectedAmounTotal, utxoBurnedAmount)
+	privacyOutput, err := generateOuts(viewPublic, spendPublic, viewPub4chgPtr, spendPub4chgPtr, req.GetAmount(), selectedAmounTotal, utxoBurnedAmount, cfg.GetCoinPrecision())
 	if err != nil {
 		return nil, err
 	}
@@ -620,7 +620,7 @@ func (policy *privacyPolicy) createPrivacy2PrivacyTx(req *privacytypes.ReqCreate
 	tx := &types.Transaction{
 		Execer:  []byte(cfg.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
-		Fee:     privacytypes.PrivacyTxFee,
+		Fee:     privacytypes.PrivacyTxFee * cfg.GetCoinPrecision(),
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
 		ChainID: cfg.GetChainID(),
@@ -654,7 +654,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	isMainetCoins := !cfg.IsPara() && (req.AssetExec == cfg.GetCoinExec())
 	if isMainetCoins {
-		utxoBurnedAmount = privacytypes.PrivacyTxFee
+		utxoBurnedAmount = privacytypes.PrivacyTxFee * cfg.GetCoinPrecision()
 	}
 	buildInfo := &buildInputInfo{
 		assetExec:   req.GetAssetExec(),
@@ -689,7 +689,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	changeAmount := selectedAmounTotal - req.GetAmount()
 	//step 2,generateOuts
 	//构造输出UTXO,只生成找零的UTXO
-	privacyOutput, err := generateOuts(nil, nil, viewPub4chgPtr, spendPub4chgPtr, 0, changeAmount, utxoBurnedAmount)
+	privacyOutput, err := generateOuts(nil, nil, viewPub4chgPtr, spendPub4chgPtr, 0, changeAmount, utxoBurnedAmount, cfg.GetCoinPrecision())
 	if err != nil {
 		return nil, err
 	}
@@ -711,7 +711,7 @@ func (policy *privacyPolicy) createPrivacy2PublicTx(req *privacytypes.ReqCreateP
 	tx := &types.Transaction{
 		Execer:  []byte(cfg.ExecName(privacytypes.PrivacyX)),
 		Payload: types.Encode(action),
-		Fee:     privacytypes.PrivacyTxFee,
+		Fee:     privacytypes.PrivacyTxFee * cfg.GetCoinPrecision(),
 		Nonce:   policy.getWalletOperate().Nonce(),
 		To:      address.ExecAddress(cfg.ExecName(privacytypes.PrivacyX)),
 		ChainID: cfg.GetChainID(),
@@ -983,11 +983,7 @@ func (policy *privacyPolicy) buildAndStoreWalletTxDetail(param *buildStoreWallet
 		txdetail.Amount, _ = txInfo.tx.Amount()
 		txdetail.Fromaddr = param.addr
 
-		txdetailbyte, err := proto.Marshal(&txdetail)
-		if err != nil {
-			bizlog.Error("buildAndStoreWalletTxDetail err", "Height", txInfo.blockHeight, "txHash", txInfo.txHashHex)
-			return
-		}
+		txdetailbyte := types.Encode(&txdetail)
 
 		txInfo.batch.Set(key, txdetailbyte)
 		//额外存储可以快速定位到接收隐私的交易

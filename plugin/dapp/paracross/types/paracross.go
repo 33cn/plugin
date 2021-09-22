@@ -72,19 +72,39 @@ const (
 	//paraCrossTransferActionTypeEnd   = 10100
 )
 
+//跨链转移类型是特别执行跨链资产转移的处理，在共识通过后，会做相应处理，其他类型都认为是普通paracross类型
+//跨链资产转移的类型都放到paraCrossTransferActionTypeStart之后，方便管理
+//这里NodeConfig,NodeGroupApply和SelfStageConfig虽然都是跨链类型，但是不算跨链资产转移，实际上不应该放这一类，历史版本就不修改了。
 const (
 	// ParacrossActionAssetTransfer mainchain paracross asset transfer key
 	ParacrossActionAssetTransfer = iota + paraCrossTransferActionTypeStart
 	// ParacrossActionAssetWithdraw mainchain paracross asset withdraw key
 	ParacrossActionAssetWithdraw
+
 	//ParacrossActionNodeConfig para super node config
 	ParacrossActionNodeConfig
 	//ParacrossActionNodeGroupApply apply for node group initially
 	ParacrossActionNodeGroupApply
 	//ParacrossActionSelfStageConfig apply for self consensus stage config
 	ParacrossActionSelfStageConfig
+
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
+	//注意: 此类型之后的一定也需要是跨链资产转移类型，方便代码计算，也就是在共识完成后，execCrossTx()处理到的类型。
 	ParacrossActionCrossAssetTransfer
+)
+
+//跨链共识交易crossResult bitmap版本，支持多版本的bitmap管理
+const (
+	ParaCrossStatusBitMapVerLen = 4
+	ParaCrossStatusBitMapVer1   = "0001"
+)
+
+const ParaPrefix = "user.p."
+
+//配置跨链交易高度列表的prefix 比如hit.para.100.200,ignore.para.100-300
+const (
+	ParaCrossAssetTxHitKey    = "hit"
+	ParaCrossAssetTxIgnoreKey = "ignore"
 )
 
 //paracross asset porcess
@@ -217,6 +237,11 @@ func createRawCommitTx(cfg *types.Chain33Config, commit *ParacrossCommitAction, 
 
 // CreateRawAssetTransferTx create asset transfer tx
 func CreateRawAssetTransferTx(cfg *types.Chain33Config, param *types.CreateTx) (*types.Transaction, error) {
+	return CreateRawAssetTransferTxExt(cfg.GetChainID(), cfg.GetMinTxFeeRate(), param)
+}
+
+// CreateRawAssetTransferTxExt create asset transfer tx
+func CreateRawAssetTransferTxExt(chainID int32, minFee int64, param *types.CreateTx) (*types.Transaction, error) {
 	// 跨链交易需要在主链和平行链上执行， 所以应该可以在主链和平行链上构建
 	if !types.IsParaExecName(param.GetExecName()) {
 		tlog.Error("CreateRawAssetTransferTx", "exec", param.GetExecName())
@@ -235,13 +260,13 @@ func CreateRawAssetTransferTx(cfg *types.Chain33Config, param *types.CreateTx) (
 		transfer.Value = v
 		transfer.Ty = ParacrossActionAssetWithdraw
 	}
-	tx := &types.Transaction{
+	rawtx := &types.Transaction{
 		Execer:  []byte(param.GetExecName()),
 		Payload: types.Encode(transfer),
 		To:      address.ExecAddress(param.GetExecName()),
 		Fee:     param.Fee,
 	}
-	tx, err := types.FormatTx(cfg, param.GetExecName(), tx)
+	tx, err := types.FormatTxExt(chainID, true, minFee, param.GetExecName(), rawtx)
 	if err != nil {
 		return nil, err
 	}

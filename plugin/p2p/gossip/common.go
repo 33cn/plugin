@@ -6,10 +6,14 @@ package gossip
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"math/rand"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +28,34 @@ var P2pComm Comm
 
 // Comm information
 type Comm struct{}
+
+//CheckNetAddr check addr or ip  format
+func (Comm) ParaseNetAddr(addr string) (string, int64, error) {
+	//check peerAddr
+	if !strings.Contains(addr, ":") { //only ip
+		if net.ParseIP(addr) == nil {
+			return "", 0, errors.New("invalid ip")
+		}
+		return addr, 0, nil
+	}
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", 0, err
+	}
+
+	iport, err := strconv.ParseInt(port, 10, 32)
+	if err != nil || iport > 65535 {
+		return "", 0, errors.New("invalid port")
+	}
+
+	if net.ParseIP(host) == nil {
+		return "", 0, errors.New("invalid ip")
+	}
+
+	return host, iport, nil
+
+}
 
 // AddrRouteble address router ,return enbale address
 func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials) []string {
@@ -95,7 +127,31 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 	if persistent {
 		peer.MakePersistent()
 	}
+	//Set peer Name 在启动peer对象之前，获取节点对象的peerName,即pid
+	resp, err := peer.mconn.gcli.Version2(context.Background(), &types.P2PVersion{
+		Nonce:    time.Now().Unix(),
+		Version:  node.nodeInfo.channelVersion,
+		AddrFrom: node.nodeInfo.GetExternalAddr().String(),
+		AddrRecv: addr.String(),
+	})
+	if err != nil {
+		peer.Close()
+		return nil, err
+	}
 
+	//check remote peer is self or  duplicate peer
+	_, pub := node.nodeInfo.addrBook.GetPrivPubKey()
+
+	if node.Has(resp.UserAgent) || resp.UserAgent == pub {
+		//发现同一个peerID 下有两个不同的ip，则把新连接的ip加入黑名单5分钟
+		prepeer := node.GetRegisterPeer(resp.UserAgent)
+		log.Info("dialPeerWithAddress", "duplicate connect:", prepeer.Addr(), addr.String(), resp.GetUserAgent())
+		peer.Close()
+		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
+	}
+
+	node.peerStore.Store(addr.String(), resp.UserAgent)
+	peer.SetPeerName(resp.UserAgent)
 	return peer, nil
 }
 
