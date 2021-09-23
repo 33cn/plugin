@@ -7,6 +7,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/account"
@@ -981,6 +982,123 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 
 }
 
+//无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
+//para.ignore.10-100.200-300
+func isInIgnoreHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(str) <= 0 {
+		return false, nil
+	}
+	e := strings.Split(str, ".")
+	if len(e) <= 2 {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
+	}
+	if strings.ToLower(pt.ParaPrefix+e[0]+".") != strings.ToLower(status.Title) {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
+	}
+
+	if e[1] != pt.ParaCrossAssetTxIgnoreKey {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong ignore str=%s,title=%s", str, status.Title)
+	}
+
+	for _, h := range e[2:] {
+		p := strings.Split(h, "-")
+		if len(p) != 2 {
+			return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+		s, err := strconv.Atoi(p[0])
+		if err != nil {
+			return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+		e, err := strconv.Atoi(p[1])
+		if err != nil {
+			return false, errors.Wrapf(err, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+		if s > e {
+			return false, errors.Wrapf(types.ErrInvalidParam, "check NoHeightCrossAsseList title=%s,height=%s", status.Title, h)
+		}
+
+		//共识的平行链高度(不是主链高度）落在范围内，说明此高度没有跨链资产交易，可以忽略
+		if status.Height >= int64(s) && status.Height <= int64(e) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// "para.hit.10.100.200"
+func isInHitHeightList(str string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(str) <= 0 {
+		return false, nil
+	}
+
+	e := strings.Split(str, ".")
+	if len(e) <= 2 {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s,title=%s", str, status.Title)
+	}
+	if strings.ToLower(pt.ParaPrefix+e[0]+".") != strings.ToLower(status.Title) {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong title str=%s,title=%s", str, status.Title)
+	}
+	if e[1] != pt.ParaCrossAssetTxHitKey {
+		return false, errors.Wrapf(types.ErrInvalidParam, "wrong hit str=%s,title=%s", str, status.Title)
+	}
+
+	for _, hStr := range e[2:] {
+		h, err := strconv.Atoi(hStr)
+		if err != nil {
+			return false, errors.Wrapf(types.ErrInvalidParam, "wrong config str=%s in %s,title=%s", str, hStr, status.Title)
+		}
+		//高度命中
+		if status.Height == int64(h) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+//命中高度
+//s: para.hit.10.100, title=user.p.para.
+func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (bool, error) {
+	if len(heightList) <= 0 {
+		return false, nil
+	}
+
+	var hitStr, ignoreStr string
+	hitPrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxHitKey)[len(pt.ParaPrefix):]
+	ignorePrefix := strings.ToLower(status.Title + pt.ParaCrossAssetTxIgnoreKey)[len(pt.ParaPrefix):]
+
+	for _, s := range heightList {
+		desStr := strings.ToLower(s)
+		if strings.HasPrefix(desStr, hitPrefix) {
+			if len(hitStr) > 0 {
+				return false, errors.Wrapf(types.ErrInvalidParam, "checkIsInIgnoreHeightList repeate=%s", hitPrefix)
+			}
+			hitStr = s
+		}
+		if strings.HasPrefix(desStr, ignorePrefix) {
+			if len(ignoreStr) > 0 {
+				return false, errors.Wrapf(types.ErrInvalidParam, "checkIsInIgnoreHeightList repeate=%s", ignorePrefix)
+			}
+			ignoreStr = s
+		}
+		if len(hitStr) > 0 && len(ignoreStr) > 0 {
+			break
+		}
+
+	}
+
+	in, err := isInHitHeightList(hitStr, status)
+	if err != nil {
+		return false, err
+	}
+	//如果在hit 列表中，不忽略
+	if in {
+		return false, nil
+	}
+
+	return isInIgnoreHeightList(ignoreStr, status)
+
+}
+
 func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
 	//支持带版本号的跨链交易bitmap
 	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
@@ -999,6 +1117,19 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 		if len(rst) == 0 {
 			return nil, nil, nil
 		}
+	}
+
+	//para.hit.6.8, para.ignore.1-10, 比如高度7， 如果命中则继续处理，如果没命中，检查是否在ignore列表，如果在直接退出，否则继续处理
+	//零散的命中列表可以减少忽略高度列表的范围
+	//此平行链高度在忽略检查跨链交易列表中,则直接退出
+	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
+	heightList := conf.GStrList("paraCrossAssetTxHeightList")
+	ignore, err := checkIsIgnoreHeight(heightList, status)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ignore {
+		return nil, nil, nil
 	}
 
 	blockDetail, err := GetBlock(api, status.MainBlockHash)
@@ -1031,6 +1162,19 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 		clog.Error("getCrossTxHashs len=0", "paraHeight", status.Height,
 			"mainHeight", status.MainBlockHeight, "mainHash", common.ToHex(status.MainBlockHash))
 		return nil, nil, types.ErrCheckTxHash
+	}
+
+	//para.hit.6.8, para.ignore.1-10, 比如高度7， 如果命中则继续处理，如果没命中，检查是否在ignore列表，如果在直接退出，否则继续处理
+	//零散的命中列表可以减少忽略高度列表的范围
+	//比如高度6，命中，则继续处理，高度7，未命中，但是在ignore scope,退出，高度11，未命中，也不在ignore scope,继续处理
+	conf := types.ConfSub(api.GetConfig(), pt.ParaX)
+	heightList := conf.GStrList("paraCrossAssetTxHeightList")
+	ignore, err := checkIsIgnoreHeight(heightList, status)
+	if err != nil {
+		return nil, nil, err
+	}
+	if ignore {
+		return nil, nil, nil
 	}
 
 	blockDetail, err := GetBlock(api, status.MainBlockHash)
@@ -1111,6 +1255,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 			if receiptCross == nil {
 				continue
 			}
+			clog.Debug("paracross.Commit commitDone.title ok ", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
 			receipt.KV = append(receipt.KV, receiptCross.KV...)
 			receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 		} else {
@@ -1127,6 +1272,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 				if receiptCross == nil {
 					continue
 				}
+				clog.Debug("paracross.Commit commitDone.title rbk", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
 				receipt.KV = append(receipt.KV, receiptCross.KV...)
 				receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 			}

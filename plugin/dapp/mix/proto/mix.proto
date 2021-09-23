@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+import "cryptokey.proto";
+
+package types;
+option go_package = "../types";
+
+
+//区分不同的验证电路
+enum VerifyType{
+    DEPOSIT         = 0;
+    WITHDRAW        = 1;
+    TRANSFERINPUT   = 2;
+    TRANSFEROUTPUT  = 3;
+    AUTHORIZE       = 4;
+}
+
+
+message ZkVerifyKey {
+    VerifyType type = 1;
+    string value    = 2;
+
+}
+
+message ZkVerifyKeys{
+    repeated ZkVerifyKey data = 1;
+}
+
+message AuthKeys{
+    repeated string keys = 1;
+}
+
+message NoteAccountKey{
+    //链上地址
+    string addr         = 1;
+    //支票收款地址
+    string noteReceiveAddr  = 2;
+    //note秘密信息接收key
+    string secretReceiveKey   = 3;
+}
+
+message TokenTxFeeAddrReq{
+    string assetExec    = 1;
+    string assetSymbol  = 2;
+}
+
+enum MixConfigType{
+    Verify = 0;
+    //register unify authorize pubkey
+    Auth = 1;
+    //for spender's pay pubkey register,DH secret
+    //spender注册自己的payment公钥, 用来生成DiffHellman秘钥
+    Payment = 2;
+}
+
+enum MixConfigAct{
+    Add = 0;
+    Delete = 1;
+}
+
+
+
+//config verify parameter for proof
+//当前authPk=mimc_hash(prikey),没有X,Y值
+message MixConfigAction {
+    MixConfigType Ty = 1;
+    MixConfigAct Action = 2;
+    oneof  value {
+        ZkVerifyKey     verifyKey   = 3;
+        string          authKey     = 4;
+        NoteAccountKey      noteAccountKey  = 5;
+
+    }
+}
+
+
+
+message ZkProofInfo {
+    string proof        = 1;
+    string publicInput  = 2;
+    DHSecretGroup secrets = 3;
+}
+
+message MixDepositAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo proofs = 3;
+
+
+}
+
+message MixTransferAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    repeated ZkProofInfo inputs = 3;
+    ZkProofInfo output = 4;
+    ZkProofInfo change = 5;
+
+}
+
+message MixWithdrawAction {
+    string assetExec = 1;
+    string assetSymbol = 2;
+    uint64 amount = 3;
+    repeated ZkProofInfo proofs = 4;
+
+}
+
+message MixAuthorizeAction {
+    string assetExec        = 1;
+    string assetSymbol      = 2;
+    ZkProofInfo proofInfo   = 3;
+
+}
+
+message MixAction {
+    int32 ty = 1;
+    oneof value {
+        MixConfigAction     config            = 2;
+        MixDepositAction    deposit           = 3;
+        MixWithdrawAction   withdraw          = 4;
+        MixTransferAction   transfer          = 5;
+        MixAuthorizeAction  authorize         = 6;
+
+    }
+
+}
+
+
+
+message VerifyProofInfo{
+    VerifyType  ty = 1;
+    ZkProofInfo proof = 2;
+
+}
+
+//nullifer 存在value
+message ExistValue {
+    string nullifier = 1;
+    bool exist = 2;
+}
+
+
+///////localdb index query
+
+message LocalMixTx {
+    string hash = 1;
+    int64 height = 2;
+    int64 index = 3;
+}
+
+message MixTxListReq{
+    string  txIndex   = 1; //primary direct query
+    string  hash = 2;
+    int64   height = 3;
+    int64   index = 4;
+    int32   count      =5;
+    int32   direction  = 6;
+
+}
+
+message MixTxListResp{
+    repeated LocalMixTx txs = 1;
+}

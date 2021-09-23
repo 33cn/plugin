@@ -245,6 +245,7 @@ function miner() {
     fi
 
 }
+
 function block_wait() {
     if [ "$#" -lt 2 ]; then
         echo "wrong block_wait params"

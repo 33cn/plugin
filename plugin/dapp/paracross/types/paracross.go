@@ -99,6 +99,14 @@ const (
 	ParaCrossStatusBitMapVer1   = "0001"
 )
 
+const ParaPrefix = "user.p."
+
+//配置跨链交易高度列表的prefix 比如hit.para.100.200,ignore.para.100-300
+const (
+	ParaCrossAssetTxHitKey    = "hit"
+	ParaCrossAssetTxIgnoreKey = "ignore"
+)
+
 //paracross asset porcess
 const (
 	ParacrossNoneTransfer = iota

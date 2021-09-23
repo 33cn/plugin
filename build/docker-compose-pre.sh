@@ -47,11 +47,12 @@ function run_dapp() {
         mv docker-compose-metrics.yml docker-compose-paracross.yml
         app="paracross"
     else
-        rm -rf "${app}"-ci && mkdir -p "${app}"-ci && cp ./"${app}"/* ./"${app}"-ci && echo $?
+        rm -rf "${app}"-ci && mkdir -p "${app}"-ci && cp -r ./"${app}"/* ./"${app}"-ci && echo $?
         cp -n ./* ./"${app}"-ci/ && echo $?
         if [ "$app" == "paracross" ]; then
             cp -r dapptest/ "${app}"-ci/ && echo $?
         fi
+
         cd "${app}"-ci/ && pwd
     fi
 
@@ -100,7 +101,7 @@ function main() {
             echo "============ run main end ================="
 
             find . -maxdepth 1 -type d -name "*-ci" -exec rm -rf {} \;
-            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . ! -name cross2eth | sed 's/^\.\///')
+            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . | sed 's/^\.\///')
             for app in $dir; do
                 run_single_app "${app}" "$TESTCASEFILE" "down"
             done
@@ -111,7 +112,7 @@ function main() {
         fi
     elif [ "${OP}" == "down" ]; then
         if [ "${DAPP}" == "all" ] || [ "${DAPP}" == "ALL" ]; then
-            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . ! -name cross2eth | sed 's/^\.\///')
+            dir=$(find . -maxdepth 1 -type d ! -name system ! -name . | sed 's/^\.\///')
             for app in $dir; do
                 down_dapp "${app}"
             done

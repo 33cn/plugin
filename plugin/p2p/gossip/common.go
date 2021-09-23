@@ -145,7 +145,9 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 	if node.Has(resp.UserAgent) || resp.UserAgent == pub {
 		//发现同一个peerID 下有两个不同的ip，则把新连接的ip加入黑名单5分钟
 		prepeer := node.GetRegisterPeer(resp.UserAgent)
-		log.Info("dialPeerWithAddress", "duplicate connect:", prepeer.Addr(), addr.String(), resp.GetUserAgent())
+		if prepeer != nil {
+			log.Info("dialPeerWithAddress", "duplicate connect:", prepeer.Addr(), addr.String(), resp.GetUserAgent())
+		}
 		peer.Close()
 		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
 	}

@@ -389,6 +389,9 @@ ForkStorageLocalDB=0
 [fork.sub.multisig]
 Enable=0
 
+[fork.sub.mix]
+Enable=0
+
 [fork.sub.unfreeze]
 Enable=0
 ForkTerminatePart=0

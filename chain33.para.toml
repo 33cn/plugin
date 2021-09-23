@@ -72,6 +72,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="para"
 poolCacheSize=10240
+#联盟链没有交易费，对应平行链minTxFeeRate需要设为0
 minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
@@ -118,11 +119,13 @@ writeBlockSeconds=2
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,209186是bityuan主链对应高度， ycc或其他按实际修改
-mainBlockHashForkHeight=209186
+#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,1是bityuan主链对应高度， ycc或其他按实际修改
+mainBlockHashForkHeight=1
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
+#不可为0，主链Local时候需特殊配置
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
+#不可为0，主链Local时候需特殊配置
 mainLoopCheckCommitTxDoneForkHeight=4320000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
@@ -198,6 +201,17 @@ useBalance=false
 #平行链evm合约ETH资产映射的合约和资产类型（symbol）
 ethMapFromExecutor="paracross"
 ethMapFromSymbol="coins.bty"
+
+[exec.sub.mix]
+#私对私的交易费,交易比较大，需要多的手续费
+txFee=0
+#私对私token转账，花费token(true)还是BTY(false),
+tokenFee=false
+#curve H point
+pointHX="19172955941344617222923168298456110557655645809646772800021167670156933290312"
+pointHY="21116962883761739586121793871108889864627195706475546685847911817475098399811"
+#电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
+maxTreeLeaves=1024
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -344,6 +358,9 @@ ForkStorageLocalDB=0
 Enable=0
 
 [fork.sub.multisig]
+Enable=0
+
+[fork.sub.mix]
 Enable=0
 
 [fork.sub.unfreeze]

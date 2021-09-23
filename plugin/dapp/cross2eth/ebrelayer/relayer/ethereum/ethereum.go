@@ -473,9 +473,8 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
 	var tokenAddr common.Address
 	exist := false
-	operationType := ""
+	operationType := chain33Msg.ClaimType.String()
 	if chain33Msg.ClaimType == events.ClaimTypeLock {
-		operationType = "lock"
 		tokenAddr, exist = ethRelayer.symbol2Addr[prophecyClaim.Symbol]
 		if !exist {
 			relayerLog.Info("handleChain33Msg", "Query address from ethereum for symbol", prophecyClaim.Symbol)
@@ -497,7 +496,6 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			tokenAddr = common.HexToAddress(addr)
 		}
 	} else {
-		operationType = "burn"
 		tokenAddr, exist = ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
@@ -665,7 +663,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 
 	//lock,用于捕捉 (ETH/ERC20----->chain33) 跨链转移
 	if vLog.Topics[0].Hex() == ethRelayer.bridgeBankEventLockSig {
-		eventName := events.LogLock.String()
+		eventName := events.LogLockFromETH.String()
 		relayerLog.Info("Relayer4Ethereum proc", "Going to process", eventName,
 			"Block number:", vLog.BlockNumber, "Tx hash:", vLog.TxHash.Hex())
 		err := ethRelayer.handleLogLockEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, vLog)
@@ -676,7 +674,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 		}
 	} else if vLog.Topics[0].Hex() == ethRelayer.bridgeBankEventBurnSig {
 		//burn,用于捕捉 (chain33 token----->chain33) 实现chain33资产withdraw操作，之后在chain33上实现unlock操作
-		eventName := events.LogChain33TokenBurn.String()
+		eventName := events.LogBurnFromETH.String()
 		relayerLog.Info("Relayer4Ethereum proc", "Going to process", eventName,
 			"Block number:", vLog.BlockNumber, "Tx hash:", vLog.TxHash.Hex())
 		err := ethRelayer.handleLogBurnEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, vLog)
@@ -782,9 +780,9 @@ func (ethRelayer *Relayer4Ethereum) prePareSubscribeEvent() {
 	//bridgeBank处理
 	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
 	ethRelayer.bridgeBankAbi = contactAbi
-	eventName = events.LogLock.String()
+	eventName = events.LogLockFromETH.String()
 	ethRelayer.bridgeBankEventLockSig = contactAbi.Events[eventName].ID.Hex()
-	eventName = events.LogChain33TokenBurn.String()
+	eventName = events.LogBurnFromETH.String()
 	ethRelayer.bridgeBankEventBurnSig = contactAbi.Events[eventName].ID.Hex()
 	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
 }

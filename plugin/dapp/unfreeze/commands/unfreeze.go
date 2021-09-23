@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+
 	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/pkg/errors"
 
@@ -355,7 +357,7 @@ func show(cmd *cobra.Command, args []string) {
 }
 
 func getRealExecName(paraName string, name string) string {
-	if strings.HasPrefix(name, "user.p.") {
+	if strings.HasPrefix(name, pt.ParaPrefix) {
 		return name
 	}
 	return paraName + name
