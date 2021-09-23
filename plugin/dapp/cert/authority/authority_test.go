@@ -54,7 +54,8 @@ var (
 	}
 )
 
-var USERNAME = "User"
+var USERNAME = "user1"
+var ORGNAME = "org1"
 var SIGNTYPE = ct.AuthSM2
 
 func signtx(tx *types.Transaction, priv crypto.PrivKey, cert []byte) {
@@ -98,7 +99,7 @@ func initEnv() (*types.Chain33Config, error) {
 		return nil, err
 	}
 
-	user, err := userLoader.Get(USERNAME)
+	user, err := userLoader.Get(USERNAME, ORGNAME)
 	if err != nil {
 		fmt.Printf("Get user failed")
 		return nil, err
@@ -124,10 +125,7 @@ func TestChckSign(t *testing.T) {
 	}
 	cfg.SetMinFee(0)
 
-	if !tx1.CheckSign() {
-		t.Error("check signature failed")
-		return
-	}
+	assert.Equal(t, true, tx1.CheckSign(0))
 }
 
 /**
@@ -142,7 +140,7 @@ func TestChckSigns(t *testing.T) {
 	cfg.SetMinFee(0)
 
 	for i, tx := range txs {
-		if !tx.CheckSign() {
+		if !tx.CheckSign(0) {
 			t.Error(fmt.Sprintf("error check tx[%d]", i+1))
 			return
 		}
@@ -180,7 +178,7 @@ func TestChckSignWithNoneAuth(t *testing.T) {
 	cfg.SetMinFee(0)
 
 	tx14.Sign(types.SECP256K1, privKey)
-	if !tx14.CheckSign() {
+	if !tx14.CheckSign(0) {
 		t.Error("check signature failed")
 		return
 	}
@@ -205,7 +203,7 @@ func TestChckSignWithSm2(t *testing.T) {
 	cfg.SetMinFee(0)
 
 	tx15.Sign(ct.AuthSM2, privKeysm2)
-	if !tx15.CheckSign() {
+	if !tx15.CheckSign(0) {
 		t.Error("check signature failed")
 		return
 	}
@@ -229,7 +227,7 @@ func TestChckSignWithEcdsa(t *testing.T) {
 	cfg.SetMinFee(0)
 
 	tx16.Sign(ct.AuthECDSA, privKeyecdsa)
-	if !tx16.CheckSign() {
+	if !tx16.CheckSign(0) {
 		t.Error("check signature failed")
 		return
 	}

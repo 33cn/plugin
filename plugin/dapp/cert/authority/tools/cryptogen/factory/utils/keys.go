@@ -13,6 +13,9 @@ import (
 	"encoding/pem"
 	"fmt"
 
+	pkecdsa "github.com/33cn/chain33/system/crypto/secp256r1"
+	pkesm2 "github.com/33cn/chain33/system/crypto/sm2"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"
 )
@@ -42,6 +45,21 @@ func oidFromNamedCurve(curve elliptic.Curve) (asn1.ObjectIdentifier, bool) {
 		return oidNamedCurveP256, true
 	}
 	return nil, false
+}
+
+func PrivateKeyToByte(privateKey interface{}) ([]byte, error) {
+	if privateKey == nil {
+		return nil, errors.New("Invalid key. It must be different from nil")
+	}
+
+	switch k := privateKey.(type) {
+	case *ecdsa.PrivateKey:
+		return []byte(common.Bytes2Hex(pkecdsa.SerializePrivateKey(k))), nil
+	case *sm2.PrivateKey:
+		return []byte(common.Bytes2Hex(pkesm2.SerializePrivateKey(k))), nil
+	default:
+		return nil, errors.New("Invalid key type. It must be *ecdsa.PrivateKey or *rsa.PrivateKey")
+	}
 }
 
 // PrivateKeyToPEM 私钥转pem

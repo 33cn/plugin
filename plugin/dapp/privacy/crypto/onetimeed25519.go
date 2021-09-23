@@ -16,7 +16,7 @@ import (
 type oneTimeEd25519 struct{}
 
 func init() {
-	crypto.Register(privacytypes.SignNameOnetimeED25519, &oneTimeEd25519{}, false)
+	crypto.Register(privacytypes.SignNameOnetimeED25519, &oneTimeEd25519{})
 }
 
 func (onetime *oneTimeEd25519) GenKey() (crypto.PrivKey, error) {
@@ -72,4 +72,9 @@ func (onetime *oneTimeEd25519) SignatureFromBytes(b []byte) (sig crypto.Signatur
 	sigBytes := new([64]byte)
 	copy(sigBytes[:], b[:])
 	return SignatureOnetime(*sigBytes), nil
+}
+
+// Validate validate msg and signature
+func (onetime *oneTimeEd25519) Validate(msg, pub, sig []byte) error {
+	return crypto.BasicValidation(onetime, msg, pub, sig)
 }

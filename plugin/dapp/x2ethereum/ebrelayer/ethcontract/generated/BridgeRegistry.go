@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -28,7 +27,7 @@ var (
 )
 
 // BridgeRegistryABI is the input ABI used to generate the binding from.
-const BridgeRegistryABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"bridgeBank\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"deployHeight\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"oracle\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"valset\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain33Bridge\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_chain33Bridge\",\"type\":\"address\"},{\"name\":\"_bridgeBank\",\"type\":\"address\"},{\"name\":\"_oracle\",\"type\":\"address\"},{\"name\":\"_valset\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_chain33Bridge\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_bridgeBank\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_oracle\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_valset\",\"type\":\"address\"}],\"name\":\"LogContractsRegistered\",\"type\":\"event\"}]"
+const BridgeRegistryABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_chain33Bridge\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_bridgeBank\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_oracle\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_valset\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_chain33Bridge\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_bridgeBank\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_oracle\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_valset\",\"type\":\"address\"}],\"name\":\"LogContractsRegistered\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[],\"name\":\"bridgeBank\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"chain33Bridge\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"deployHeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"oracle\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"valset\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // BridgeRegistryFuncSigs maps the 4-byte function signature to its string representation.
 var BridgeRegistryFuncSigs = map[string]string{
@@ -40,7 +39,7 @@ var BridgeRegistryFuncSigs = map[string]string{
 }
 
 // BridgeRegistryBin is the compiled bytecode used for deploying new contracts.
-var BridgeRegistryBin = "0x608060405234801561001057600080fd5b506040516080806102b78339810180604052608081101561003057600080fd5b50805160208083015160408085015160609586015160008054600160a060020a03808916600160a060020a031992831617928390556001805482891690841617908190556002805483881690851617908190556003805484881695169490941793849055436004558751948316855290821698840198909852968716828601529095169685019690965290519394919390927f039b733f31259b106f1d278c726870d5b28c7db22957d63df8dbaa70bd3a032a919081900360800190a1505050506101b7806101006000396000f3fe60806040526004361061006c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416630e41f373811461007157806353d953b5146100af5780637dc0d1d0146100d65780637f54af0c146100eb578063eb35535214610100575b600080fd5b34801561007d57600080fd5b50610086610115565b6040805173ffffffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b3480156100bb57600080fd5b506100c4610131565b60408051918252519081900360200190f35b3480156100e257600080fd5b50610086610137565b3480156100f757600080fd5b50610086610153565b34801561010c57600080fd5b5061008661016f565b60015473ffffffffffffffffffffffffffffffffffffffff1681565b60045481565b60025473ffffffffffffffffffffffffffffffffffffffff1681565b60035473ffffffffffffffffffffffffffffffffffffffff1681565b60005473ffffffffffffffffffffffffffffffffffffffff168156fea165627a7a72305820bb308a31657002b318d16d39a635d309141c0cc5aef32e8c33b53192d1df4cbc0029"
+var BridgeRegistryBin = "0x608060405234801561001057600080fd5b5060405161021b38038061021b8339818101604052608081101561003357600080fd5b508051602080830151604080850151606095860151600080546001600160a01b038089166001600160a01b031992831617928390556001805482891690841617908190556002805483881690851617908190556003805484881695169490941793849055436004558751948316855290821698840198909852968716828601529095169685019690965290519394919390927f039b733f31259b106f1d278c726870d5b28c7db22957d63df8dbaa70bd3a032a919081900360800190a150505050610118806101036000396000f3fe6080604052348015600f57600080fd5b506004361060505760003560e01c80630e41f37314605557806353d953b51460775780637dc0d1d014608f5780637f54af0c146095578063eb35535214609b575b600080fd5b605b60a1565b604080516001600160a01b039092168252519081900360200190f35b607d60b0565b60408051918252519081900360200190f35b605b60b6565b605b60c5565b605b60d4565b6001546001600160a01b031681565b60045481565b6002546001600160a01b031681565b6003546001600160a01b031681565b6000546001600160a01b03168156fea265627a7a723158203d23ad42796300416cdb8a5444c4d338cbdd2d7edbe7f7a2ddc16cb07690454164736f6c63430005100032"
 
 // DeployBridgeRegistry deploys a new Ethereum contract, binding an instance of BridgeRegistry to it.
 func DeployBridgeRegistry(auth *bind.TransactOpts, backend bind.ContractBackend, _chain33Bridge common.Address, _bridgeBank common.Address, _oracle common.Address, _valset common.Address) (common.Address, *types.Transaction, *BridgeRegistry, error) {
@@ -164,7 +163,7 @@ func bindBridgeRegistry(address common.Address, caller bind.ContractCaller, tran
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BridgeRegistry *BridgeRegistryRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BridgeRegistry *BridgeRegistryRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BridgeRegistry.Contract.BridgeRegistryCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -183,7 +182,7 @@ func (_BridgeRegistry *BridgeRegistryRaw) Transact(opts *bind.TransactOpts, meth
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BridgeRegistry *BridgeRegistryCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BridgeRegistry *BridgeRegistryCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BridgeRegistry.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -200,130 +199,155 @@ func (_BridgeRegistry *BridgeRegistryTransactorRaw) Transact(opts *bind.Transact
 
 // BridgeBank is a free data retrieval call binding the contract method 0x0e41f373.
 //
-// Solidity: function bridgeBank() constant returns(address)
+// Solidity: function bridgeBank() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCaller) BridgeBank(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BridgeRegistry.contract.Call(opts, out, "bridgeBank")
-	return *ret0, err
+	var out []interface{}
+	err := _BridgeRegistry.contract.Call(opts, &out, "bridgeBank")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // BridgeBank is a free data retrieval call binding the contract method 0x0e41f373.
 //
-// Solidity: function bridgeBank() constant returns(address)
+// Solidity: function bridgeBank() view returns(address)
 func (_BridgeRegistry *BridgeRegistrySession) BridgeBank() (common.Address, error) {
 	return _BridgeRegistry.Contract.BridgeBank(&_BridgeRegistry.CallOpts)
 }
 
 // BridgeBank is a free data retrieval call binding the contract method 0x0e41f373.
 //
-// Solidity: function bridgeBank() constant returns(address)
+// Solidity: function bridgeBank() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCallerSession) BridgeBank() (common.Address, error) {
 	return _BridgeRegistry.Contract.BridgeBank(&_BridgeRegistry.CallOpts)
 }
 
 // Chain33Bridge is a free data retrieval call binding the contract method 0xeb355352.
 //
-// Solidity: function chain33Bridge() constant returns(address)
+// Solidity: function chain33Bridge() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCaller) Chain33Bridge(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BridgeRegistry.contract.Call(opts, out, "chain33Bridge")
-	return *ret0, err
+	var out []interface{}
+	err := _BridgeRegistry.contract.Call(opts, &out, "chain33Bridge")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Chain33Bridge is a free data retrieval call binding the contract method 0xeb355352.
 //
-// Solidity: function chain33Bridge() constant returns(address)
+// Solidity: function chain33Bridge() view returns(address)
 func (_BridgeRegistry *BridgeRegistrySession) Chain33Bridge() (common.Address, error) {
 	return _BridgeRegistry.Contract.Chain33Bridge(&_BridgeRegistry.CallOpts)
 }
 
 // Chain33Bridge is a free data retrieval call binding the contract method 0xeb355352.
 //
-// Solidity: function chain33Bridge() constant returns(address)
+// Solidity: function chain33Bridge() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCallerSession) Chain33Bridge() (common.Address, error) {
 	return _BridgeRegistry.Contract.Chain33Bridge(&_BridgeRegistry.CallOpts)
 }
 
 // DeployHeight is a free data retrieval call binding the contract method 0x53d953b5.
 //
-// Solidity: function deployHeight() constant returns(uint256)
+// Solidity: function deployHeight() view returns(uint256)
 func (_BridgeRegistry *BridgeRegistryCaller) DeployHeight(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BridgeRegistry.contract.Call(opts, out, "deployHeight")
-	return *ret0, err
+	var out []interface{}
+	err := _BridgeRegistry.contract.Call(opts, &out, "deployHeight")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DeployHeight is a free data retrieval call binding the contract method 0x53d953b5.
 //
-// Solidity: function deployHeight() constant returns(uint256)
+// Solidity: function deployHeight() view returns(uint256)
 func (_BridgeRegistry *BridgeRegistrySession) DeployHeight() (*big.Int, error) {
 	return _BridgeRegistry.Contract.DeployHeight(&_BridgeRegistry.CallOpts)
 }
 
 // DeployHeight is a free data retrieval call binding the contract method 0x53d953b5.
 //
-// Solidity: function deployHeight() constant returns(uint256)
+// Solidity: function deployHeight() view returns(uint256)
 func (_BridgeRegistry *BridgeRegistryCallerSession) DeployHeight() (*big.Int, error) {
 	return _BridgeRegistry.Contract.DeployHeight(&_BridgeRegistry.CallOpts)
 }
 
 // Oracle is a free data retrieval call binding the contract method 0x7dc0d1d0.
 //
-// Solidity: function oracle() constant returns(address)
+// Solidity: function oracle() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCaller) Oracle(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BridgeRegistry.contract.Call(opts, out, "oracle")
-	return *ret0, err
+	var out []interface{}
+	err := _BridgeRegistry.contract.Call(opts, &out, "oracle")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Oracle is a free data retrieval call binding the contract method 0x7dc0d1d0.
 //
-// Solidity: function oracle() constant returns(address)
+// Solidity: function oracle() view returns(address)
 func (_BridgeRegistry *BridgeRegistrySession) Oracle() (common.Address, error) {
 	return _BridgeRegistry.Contract.Oracle(&_BridgeRegistry.CallOpts)
 }
 
 // Oracle is a free data retrieval call binding the contract method 0x7dc0d1d0.
 //
-// Solidity: function oracle() constant returns(address)
+// Solidity: function oracle() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCallerSession) Oracle() (common.Address, error) {
 	return _BridgeRegistry.Contract.Oracle(&_BridgeRegistry.CallOpts)
 }
 
 // Valset is a free data retrieval call binding the contract method 0x7f54af0c.
 //
-// Solidity: function valset() constant returns(address)
+// Solidity: function valset() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCaller) Valset(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BridgeRegistry.contract.Call(opts, out, "valset")
-	return *ret0, err
+	var out []interface{}
+	err := _BridgeRegistry.contract.Call(opts, &out, "valset")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Valset is a free data retrieval call binding the contract method 0x7f54af0c.
 //
-// Solidity: function valset() constant returns(address)
+// Solidity: function valset() view returns(address)
 func (_BridgeRegistry *BridgeRegistrySession) Valset() (common.Address, error) {
 	return _BridgeRegistry.Contract.Valset(&_BridgeRegistry.CallOpts)
 }
 
 // Valset is a free data retrieval call binding the contract method 0x7f54af0c.
 //
-// Solidity: function valset() constant returns(address)
+// Solidity: function valset() view returns(address)
 func (_BridgeRegistry *BridgeRegistryCallerSession) Valset() (common.Address, error) {
 	return _BridgeRegistry.Contract.Valset(&_BridgeRegistry.CallOpts)
 }
@@ -461,5 +485,6 @@ func (_BridgeRegistry *BridgeRegistryFilterer) ParseLogContractsRegistered(log t
 	if err := _BridgeRegistry.contract.UnpackLog(event, "LogContractsRegistered", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

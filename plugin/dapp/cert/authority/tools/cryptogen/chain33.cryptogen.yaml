@@ -1,0 +1,37 @@
+
+SignType: auth_sm2
+
+Root:
+  Name: ca
+  CA:
+    CommonName: Chain33CA
+    Country: China
+    Province: Zhejiang
+    Locality: Hangzhou
+    Expire: 100
+  User:
+    - Name: org1
+    - Name: org2
+
+Organizations:
+  - Name: org1
+    CA:
+      CommonName: org1CA
+      Country: China
+      Province: Zhejiang
+      Locality: Hangzhou
+      Expire: 100
+    User:
+      - Name: user1
+      - Name: user2
+
+  - Name: org2
+    CA:
+      CommonName: org2CA
+      Country: China
+      Province: Zhejiang
+      Locality: Hangzhou
+      Expire: 100
+    User:
+      - Name: user1
+      - Name: user2

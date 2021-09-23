@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+import "blockchain.proto";
+
+package types;
+option go_package = "../types";
+
+message QbftBlockID {
+    bytes hash = 1;
+}
+
+message QbftBitArray {
+    int32    bits         = 1;
+    repeated uint64 elems = 2;
+}
+
+message QbftVote {
+    bytes       validatorAddress = 1;
+    int32       validatorIndex   = 2;
+    int64       height           = 3;
+    int32       round            = 4;
+    int64       timestamp        = 5;
+    uint32      type             = 6;
+    QbftBlockID blockID          = 7;
+    bytes       signature        = 8;
+    bool        useAggSig        = 9;
+}
+
+message QbftCommit {
+    QbftBlockID       blockID    = 1;
+    repeated QbftVote prevotes   = 2;
+    repeated QbftVote precommits = 3;
+    QbftAggVote       aggVote    = 4;
+    uint32            voteType   = 5;
+}
+
+message QbftBlockInfo {
+    QbftState    state    = 1;
+    QbftProposal proposal = 2;
+    QbftBlock    block    = 3;
+}
+
+message QbftBlockSize {
+    int32 maxBytes = 1;
+    int32 maxTxs   = 2;
+    int64 maxGas   = 3;
+}
+
+message QbftTxSize {
+    int32 maxBytes = 1;
+    int64 maxGas   = 2;
+}
+
+message QbftBlockGossip {
+    int32 blockPartSizeBytes = 1;
+}
+
+message QbftEvidenceParams {
+    int64 maxAge = 1;
+}
+message QbftConsensusParams {
+    QbftBlockSize      blockSize      = 1;
+    QbftTxSize         txSize         = 2;
+    QbftBlockGossip    blockGossip    = 3;
+    QbftEvidenceParams evidenceParams = 4;
+}
+
+message QbftValidator {
+    string address     = 1;
+    string pubKey      = 2;
+    int64  votingPower = 3;
+    int64  accum       = 4;
+}
+
+message QbftValidatorSet {
+    repeated QbftValidator validators = 1;
+    QbftValidator          proposer   = 2;
+}
+
+message QbftState {
+    string              chainID                          = 1;
+    int64               lastBlockHeight                  = 2;
+    int64               lastBlockTotalTx                 = 3;
+    QbftBlockID         lastBlockID                      = 4;
+    int64               lastBlockTime                    = 5;
+    QbftValidatorSet    validators                       = 6;
+    QbftValidatorSet    lastValidators                   = 7;
+    int64               lastHeightValidatorsChanged      = 8;
+    QbftConsensusParams consensusParams                  = 9;
+    int64               lastHeightConsensusParamsChanged = 10;
+    bytes               lastResultsHash                  = 11;
+    bytes               appHash                          = 12;
+    int64               sequence                         = 13;
+    int64               lastSequence                     = 14;
+    int64               lastCommitRound                  = 15;
+}
+
+message QbftBlockHeader {
+    string      chainID         = 1;
+    int64       height          = 2;
+    int64       round           = 3;
+    int64       time            = 4;
+    int64       numTxs          = 5;
+    QbftBlockID lastBlockID     = 6;
+    int64       totalTxs        = 7;
+    bytes       lastCommitHash  = 8;
+    bytes       validatorsHash  = 9;
+    bytes       consensusHash   = 10;
+    bytes       appHash         = 11;
+    bytes       lastResultsHash = 12;
+    bytes       proposerAddr    = 13;
+    int64       sequence        = 14;
+    int64       lastSequence    = 15;
+}
+
+message QbftBlock {
+    QbftBlockHeader header     = 1;
+    Block           data       = 2;
+    QbftCommit      lastCommit = 4;
+}
+
+message QbftProposal {
+    int64       height     = 1;
+    int32       round      = 2;
+    int64       timestamp  = 3;
+    int32       POLRound   = 4;
+    QbftBlockID POLBlockID = 5;
+    bytes       signature  = 6;
+    bytes       blockhash  = 7;
+    int64       sequence   = 8;
+}
+
+message QbftNewRoundStepMsg {
+    int64 height                = 1;
+    int32 round                 = 2;
+    int32 step                  = 3;
+    int32 secondsSinceStartTime = 4;
+    int32 lastCommitRound       = 5;
+}
+
+message QbftValidBlockMsg {
+    int64 height    = 1;
+    int32 round     = 2;
+    bytes blockhash = 3;
+    bool  isCommit  = 4;
+}
+
+message QbftProposalPOLMsg {
+    int64        height           = 1;
+    int32        proposalPOLRound = 2;
+    QbftBitArray proposalPOL      = 3;
+}
+
+message QbftHasVoteMsg {
+    int64 height = 1;
+    int32 round  = 2;
+    int32 type   = 3;
+    int32 index  = 4;
+}
+
+message QbftVoteSetMaj23Msg {
+    int64       height  = 1;
+    int32       round   = 2;
+    int32       type    = 3;
+    QbftBlockID blockID = 4;
+}
+
+message QbftVoteSetBitsMsg {
+    int64        height  = 1;
+    int32        round   = 2;
+    int32        type    = 3;
+    QbftBlockID  blockID = 4;
+    QbftBitArray votes   = 5;
+}
+
+message QbftHeartbeat {
+    bytes validatorAddress = 1;
+    int32 validatorIndex   = 2;
+    int64 height           = 3;
+    int32 round            = 4;
+    int32 sequence         = 5;
+    bytes signature        = 6;
+}
+
+message QbftIsHealthy {
+    bool isHealthy = 1;
+}
+
+message QbftAggVote {
+    bytes        validatorAddress = 1;
+    QbftBitArray validatorArray   = 2;
+    int64        height           = 3;
+    int32        round            = 4;
+    int64        timestamp        = 5;
+    uint32       type             = 6;
+    QbftBlockID  blockID          = 7;
+    bytes        signature        = 8;
+}

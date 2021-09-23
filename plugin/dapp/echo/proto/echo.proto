@@ -1,5 +1,6 @@
 syntax = "proto3";
 package echo;
+option go_package = "../types";
 
 // ping操作action
 message Ping {

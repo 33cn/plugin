@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"math/rand"
 
+	"google.golang.org/grpc/credentials"
+
 	"github.com/33cn/chain33/p2p"
 
 	//"strings"
@@ -72,12 +74,13 @@ type Node struct {
 	omtx       sync.Mutex
 	nodeInfo   *NodeInfo
 	cmtx       sync.Mutex
-	cacheBound map[string]*Peer
-	outBound   map[string]*Peer
+	cacheBound map[string]*Peer //peerId-->peer
+	outBound   map[string]*Peer //peerId-->peer
 	server     *listener
 	listenPort int
 	innerSeeds sync.Map
 	cfgSeeds   sync.Map
+	peerStore  sync.Map //peerIp-->PeerName
 	closed     int32
 	pubsub     *pubsub.PubSub
 	chainCfg   *types.Chain33Config
@@ -120,10 +123,21 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 		node.cfgSeeds.Store(seed, "cfg")
 	}
 	node.nodeInfo = NewNodeInfo(cfg.GetModuleConfig().P2P, mcfg)
+	node.chainCfg = cfg
+	if mcfg.EnableTls { //读取证书，初始化tls客户端
+		var err error
+		node.nodeInfo.cliCreds, err = credentials.NewClientTLSFromFile(cfg.GetModuleConfig().RPC.CertFile, "")
+		if err != nil {
+			panic(err)
+		}
+		node.nodeInfo.servCreds, err = credentials.NewServerTLSFromFile(cfg.GetModuleConfig().RPC.CertFile, cfg.GetModuleConfig().RPC.KeyFile)
+		if err != nil {
+			panic(err)
+		}
+	}
 	if mcfg.ServerStart {
 		node.server = newListener(protocol, node)
 	}
-	node.chainCfg = cfg
 	return node, nil
 }
 
@@ -157,7 +171,7 @@ func (n *Node) doNat() {
 	}
 	testExaddr := fmt.Sprintf("%v:%v", n.nodeInfo.GetExternalAddr().IP.String(), n.listenPort)
 	log.Info("TestNetAddr", "testExaddr", testExaddr)
-	if len(P2pComm.AddrRouteble([]string{testExaddr}, n.nodeInfo.channelVersion)) != 0 {
+	if len(P2pComm.AddrRouteble([]string{testExaddr}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds)) != 0 {
 		log.Info("node outside")
 		n.nodeInfo.SetNetSide(true)
 		if netexaddr, err := NewNetAddressString(testExaddr); err == nil {
@@ -208,15 +222,16 @@ func (n *Node) doNat() {
 func (n *Node) addPeer(pr *Peer) {
 	n.omtx.Lock()
 	defer n.omtx.Unlock()
-	if peer, ok := n.outBound[pr.Addr()]; ok {
+	if peer, ok := n.outBound[pr.GetPeerName()]; ok {
 		log.Info("AddPeer", "delete peer", pr.Addr())
 		n.nodeInfo.addrBook.RemoveAddr(peer.Addr())
-		delete(n.outBound, pr.Addr())
+		delete(n.outBound, pr.GetPeerName())
 		peer.Close()
 
 	}
-	log.Debug("AddPeer", "peer", pr.Addr())
-	n.outBound[pr.Addr()] = pr
+
+	log.Debug("AddPeer", "peer", pr.Addr(), "pid:", pr.GetPeerName())
+	n.outBound[pr.GetPeerName()] = pr
 	pr.Start()
 }
 
@@ -224,21 +239,26 @@ func (n *Node) addPeer(pr *Peer) {
 func (n *Node) AddCachePeer(pr *Peer) {
 	n.cmtx.Lock()
 	defer n.cmtx.Unlock()
-	n.cacheBound[pr.Addr()] = pr
+	n.cacheBound[pr.GetPeerName()] = pr
 }
 
 // RemoveCachePeer remove cacheBound by addr
-func (n *Node) RemoveCachePeer(addr string) {
+func (n *Node) RemoveCachePeer(peerName string) {
 	n.cmtx.Lock()
 	defer n.cmtx.Unlock()
-	delete(n.cacheBound, addr)
+	peer, ok := n.cacheBound[peerName]
+	if ok {
+		peer.Close()
+	}
+
+	delete(n.cacheBound, peerName)
 }
 
 // HasCacheBound peer whether exists according to address
-func (n *Node) HasCacheBound(addr string) bool {
+func (n *Node) HasCacheBound(peerName string) bool {
 	n.cmtx.Lock()
 	defer n.cmtx.Unlock()
-	_, ok := n.cacheBound[addr]
+	_, ok := n.cacheBound[peerName]
 	return ok
 
 }
@@ -272,18 +292,18 @@ func (n *Node) Size() int {
 }
 
 // Has peer whether exists according to address
-func (n *Node) Has(paddr string) bool {
+func (n *Node) Has(peerName string) bool {
 	n.omtx.Lock()
 	defer n.omtx.Unlock()
-	_, ok := n.outBound[paddr]
+	_, ok := n.outBound[peerName]
 	return ok
 }
 
 // GetRegisterPeer return one peer according to paddr
-func (n *Node) GetRegisterPeer(paddr string) *Peer {
+func (n *Node) GetRegisterPeer(peerName string) *Peer {
 	n.omtx.Lock()
 	defer n.omtx.Unlock()
-	if peer, ok := n.outBound[paddr]; ok {
+	if peer, ok := n.outBound[peerName]; ok {
 		return peer
 	}
 	return nil
@@ -311,21 +331,22 @@ func (n *Node) GetActivePeers() (map[string]*Peer, map[string]*types.Peer) {
 
 	var peers = make(map[string]*Peer)
 	for _, peer := range regPeers {
-		name := peer.GetPeerName()
-		if _, ok := infos[name]; ok {
+		peerName := peer.GetPeerName()
+		if _, ok := infos[peerName]; ok {
 
-			peers[name] = peer
+			peers[peerName] = peer
 		}
 	}
 	return peers, infos
 }
-func (n *Node) remove(peerAddr string) {
+func (n *Node) remove(peerName string) {
 
 	n.omtx.Lock()
 	defer n.omtx.Unlock()
-	peer, ok := n.outBound[peerAddr]
+
+	peer, ok := n.outBound[peerName]
 	if ok {
-		delete(n.outBound, peerAddr)
+		delete(n.outBound, peerName)
 		peer.Close()
 	}
 }
@@ -333,8 +354,8 @@ func (n *Node) remove(peerAddr string) {
 func (n *Node) removeAll() {
 	n.omtx.Lock()
 	defer n.omtx.Unlock()
-	for addr, peer := range n.outBound {
-		delete(n.outBound, addr)
+	for peerName, peer := range n.outBound {
+		delete(n.outBound, peerName)
 		peer.Close()
 	}
 }
@@ -382,7 +403,7 @@ func (n *Node) detectNodeAddr() {
 		}
 
 		//如果nat,getSelfExternalAddr 无法发现自己的外网地址，则把localaddr 赋值给外网地址
-		if len(externalIP) == 0 {
+		if externalIP == "" {
 			externalIP = laddr
 		}
 
@@ -433,7 +454,7 @@ func (n *Node) natMapPort() {
 		time.Sleep(time.Second)
 	}
 	var err error
-	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()}, n.nodeInfo.channelVersion)) != 0 { //判断能否连通要映射的端口
+	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds)) != 0 { //判断能否连通要映射的端口
 		log.Info("natMapPort", "addr", "routeble")
 		p2pcli := NewNormalP2PCli() //检查要映射的IP地址是否已经被映射成功
 		ok := p2pcli.CheckSelf(n.nodeInfo.GetExternalAddr().String(), n.nodeInfo)

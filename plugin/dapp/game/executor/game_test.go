@@ -40,7 +40,7 @@ func TestGame(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(pty.GameX, cfg, nil)
-	total := 100 * types.Coin
+	total := 100 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -84,7 +84,7 @@ func TestGame(t *testing.T) {
 	}
 
 	// create game
-	createParam := &pty.GamePreCreateTx{Amount: 2 * types.Coin,
+	createParam := &pty.GamePreCreateTx{Amount: 2 * types.DefaultCoinPrecision,
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("harrylee" + string(Rock))),
 		Fee:       100000}
@@ -212,7 +212,7 @@ func TestGame(t *testing.T) {
 	assert.Equal(t, IsCreatorWin, reply.Game.Result)
 
 	// create game
-	createParam = &pty.GamePreCreateTx{Amount: 2 * types.Coin,
+	createParam = &pty.GamePreCreateTx{Amount: 2 * types.DefaultCoinPrecision,
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}
@@ -282,7 +282,7 @@ func TestGame(t *testing.T) {
 	assert.Equal(t, int32(pty.GameActionCancel), reply.Game.Status)
 
 	//create game
-	createParam = &pty.GamePreCreateTx{Amount: 2 * types.Coin,
+	createParam = &pty.GamePreCreateTx{Amount: 2 * types.DefaultCoinPrecision,
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}
@@ -380,7 +380,7 @@ func TestGame(t *testing.T) {
 	assert.Equal(t, int32(pty.GameActionClose), reply.Game.Status)
 	assert.Equal(t, IsDraw, reply.Game.Result)
 	//create game
-	createParam = &pty.GamePreCreateTx{Amount: 2 * types.Coin,
+	createParam = &pty.GamePreCreateTx{Amount: 2 * types.DefaultCoinPrecision,
 		HashType:  "sha256",
 		HashValue: common.Sha256([]byte("123456" + string(Rock))),
 		Fee:       100000}

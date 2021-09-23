@@ -107,9 +107,8 @@ func calcFTXOsKeyPrefix(assetExec, token, addr string) []byte {
 
 // calcSendPrivacyTxKey 计算以指定地址作为发送地址的交易信息索引
 // addr为发送地址
-// key为通过calcTxKey(heightstr)计算出来的值
-func calcSendPrivacyTxKey(assetExec, tokenname, addr, key string) []byte {
-	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", SendPrivacyTx, assetExec, tokenname, addr, key))
+func calcSendPrivacyTxKey(assetExec, assetSymbol, addr, txHeightIndex string) []byte {
+	return []byte(fmt.Sprintf("%s:%s-%s-%s-%s", SendPrivacyTx, assetExec, assetSymbol, addr, txHeightIndex))
 }
 
 // calcRecvPrivacyTxKey 计算以指定地址作为接收地址的交易信息索引

@@ -94,6 +94,8 @@ function para_set_toml() {
         echo "${1} blssign=$3"
         sed -i $xsedfix '/types=\["dht"\]/!b;n;cenable=true' "${1}"
         sed -i $xsedfix '/emptyBlockInterval=/!b;n;cblsSign=true' "${1}"
+        sed -i $xsedfix '/blsSign=/!b;n;cblsLeaderSwitchIntval=10' "${1}"
+
     fi
 
     #blockchain
@@ -105,7 +107,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^whitelist=.*/whitelist=["localhost","127.0.0.1","0.0.0.0"]/g' "${1}"
     sed -i $xsedfix 's/^ParaRemoteGrpcClient=.*/ParaRemoteGrpcClient="nginx:8803"/g' "${1}"
 
-    sed -i $xsedfix 's/^genesis="1JmFaA6unrCFYEWP.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' "${1}"
+    sed -i $xsedfix 's/^genesis="12qyocayNF7Lv6C9qW4avxs2E7.*/genesis="1G5Cjy8LuQex2fuYv3gzb7B8MxAnxLEqt3"/g' "${1}"
     # shellcheck disable=SC1004
     sed -i $xsedfix 's/^superManager=.*/superManager=["1Bsg9j6gW83sShoee1fZAt9TkUjcrCgA9S",\
                                                         "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",\
@@ -126,9 +128,13 @@ function para_set_toml() {
 
 function para_set_wallet() {
     echo "=========== # para set wallet ============="
+    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
     para_import_wallet "${PARA_CLI}" "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" "paraAuthAccount"
+    #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
     para_import_wallet "${PARA_CLI2}" "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" "paraAuthAccount"
+    #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
     para_import_wallet "${PARA_CLI1}" "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" "paraAuthAccount"
+    #1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
     para_import_wallet "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
     para_import_wallet "${PARA_CLI6}" "0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f" "paraAuthAccount"
     para_import_wallet "${PARA_CLI7}" "0xb9548ee4d37a4dcbfa0b21cbfe1ac95121e2850225cf7d8eb1e50c52996b1b83" "paraAuthAccount"

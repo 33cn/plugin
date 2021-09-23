@@ -18,7 +18,7 @@ var (
 			index: 1,
 			payload: &pty.ReqCreatePrivacyTx{
 				ActionType: pty.ActionPublic2Privacy,
-				Amount:     types.Coin,
+				Amount:     types.DefaultCoinPrecision,
 				Pubkeypair: testPubkeyPairs[0],
 			},
 		},
@@ -72,7 +72,7 @@ func TestPrivacy_Query_ShowAmountsOfUTXO(t *testing.T) {
 			},
 			expectReply: &pty.ReplyPrivacyAmounts{
 				AmountDetail: []*pty.AmountDetail{
-					{Amount: types.Coin, Count: 1},
+					{Amount: types.DefaultCoinPrecision, Count: 1},
 				},
 			},
 		},
@@ -109,7 +109,7 @@ func TestPrivacy_Query_ShowUTXOs4SpecifiedAmount(t *testing.T) {
 			index: 2,
 			params: &pty.ReqPrivacyToken{
 				AssetSymbol: "bty",
-				Amount:      types.Coin,
+				Amount:      types.DefaultCoinPrecision,
 			},
 			disableReplyCheck: true,
 		},
@@ -145,7 +145,7 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 			params: &pty.ReqUTXOGlobalIndex{
 				AssetSymbol: "btc",
 				MixCount:    1,
-				Amount:      []int64{types.Coin},
+				Amount:      []int64{types.DefaultCoinPrecision},
 			},
 			disableReplyCheck: true,
 			expectErr:         types.ErrNotFound,
@@ -155,7 +155,7 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 			params: &pty.ReqUTXOGlobalIndex{
 				AssetSymbol: "bty",
 				MixCount:    1,
-				Amount:      []int64{types.Coin, types.Coin * 2},
+				Amount:      []int64{types.DefaultCoinPrecision, types.DefaultCoinPrecision * 2},
 			},
 			disableReplyCheck: true,
 			expectErr:         types.ErrNotFound,
@@ -165,7 +165,7 @@ func TestPrivacy_Query_GetUTXOGlobalIndex(t *testing.T) {
 			params: &pty.ReqUTXOGlobalIndex{
 				AssetSymbol: "bty",
 				MixCount:    1,
-				Amount:      []int64{types.Coin},
+				Amount:      []int64{types.DefaultCoinPrecision},
 			},
 			disableReplyCheck: true,
 		},

@@ -23,12 +23,13 @@ const (
 	PRIVACYDBVERSION int64 = 1
 )
 
-func newStore(db db.DB) *privacyStore {
-	return &privacyStore{Store: wcom.NewStore(db)}
+func newStore(db db.DB, cfg *types.Chain33Config) *privacyStore {
+	return &privacyStore{Store: wcom.NewStore(db), Chain33Config: cfg}
 }
 
 // privacyStore 隐私交易数据库存储操作类
 type privacyStore struct {
+	*types.Chain33Config
 	*wcom.Store
 }
 
@@ -139,11 +140,7 @@ func (store *privacyStore) setWalletAccountPrivacy(addr string, privacy *privacy
 		return types.ErrInvalidParam
 	}
 
-	privacybyte, err := proto.Marshal(privacy)
-	if err != nil {
-		bizlog.Error("SetWalletAccountPrivacy proto.Marshal err!", "err", err)
-		return types.ErrMarshal
-	}
+	privacybyte := types.Encode(privacy)
 
 	newbatch := store.NewBatch(true)
 	newbatch.Set(calcPrivacyAddrKey(addr), privacybyte)
@@ -222,68 +219,46 @@ func (store *privacyStore) getWalletPrivacyTxDetails(param *privacytypes.ReqPriv
 		bizlog.Error("procPrivacyTransactionList", "invalid sendrecvflag ", param.SendRecvFlag)
 		return nil, types.ErrInvalidParam
 	}
-	var txbytes [][]byte
+
 	list := store.NewListHelper()
-	if len(param.Seedtxhash) == 0 {
+	var txKeyBytes [][]byte
+	if len(param.StartTxHeightIndex) == 0 {
 		var keyPrefix []byte
 		if param.SendRecvFlag == sendTx {
-			keyPrefix = calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
+			keyPrefix = calcSendPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, "")
 		} else {
-			keyPrefix = calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, "")
+			keyPrefix = calcRecvPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, "")
 		}
-		txkeybytes := list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
-		for _, keybyte := range txkeybytes {
-			value, err := store.Get(keybyte)
-			if err != nil {
-				bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
-				continue
-			}
-			if nil == value {
-				continue
-			}
-			txbytes = append(txbytes, value)
-		}
+		txKeyBytes = list.IteratorScanFromLast(keyPrefix, param.Count, db.ListDESC)
 
 	} else {
-		list := store.NewListHelper()
-		var txkeybytes [][]byte
 		if param.SendRecvFlag == sendTx {
-			txkeybytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
+			txKeyBytes = list.IteratorScan([]byte(SendPrivacyTx), calcSendPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, param.StartTxHeightIndex), param.Count, param.Direction)
 		} else {
-			txkeybytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.AssetExec, param.Tokenname, param.Address, string(param.Seedtxhash)), param.Count, param.Direction)
-		}
-		for _, keybyte := range txkeybytes {
-			value, err := store.Get(keybyte)
-			if err != nil {
-				bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
-				continue
-			}
-			if nil == value {
-				continue
-			}
-			txbytes = append(txbytes, value)
+			txKeyBytes = list.IteratorScan([]byte(RecvPrivacyTx), calcRecvPrivacyTxKey(param.AssetExec, param.AssetSymbol, param.Address, param.StartTxHeightIndex), param.Count, param.Direction)
 		}
 	}
+	txDetails := &types.WalletTxDetails{}
+	for _, keyByte := range txKeyBytes {
+		value, err := store.Get(keyByte)
+		if err != nil || value == nil {
+			bizlog.Error("getWalletPrivacyTxDetails", "db Get error", err)
+			continue
+		}
 
-	txDetails := new(types.WalletTxDetails)
-	txDetails.TxDetails = make([]*types.WalletTxDetail, len(txbytes))
-	for index, txdetailbyte := range txbytes {
-		var txdetail types.WalletTxDetail
-		err := proto.Unmarshal(txdetailbyte, &txdetail)
+		txDetail := &types.WalletTxDetail{}
+		err = types.Decode(value, txDetail)
 		if err != nil {
 			bizlog.Error("getWalletPrivacyTxDetails", "proto.Unmarshal err:", err)
 			return nil, types.ErrUnmarshal
 		}
-		txhash := txdetail.GetTx().Hash()
-		txdetail.Txhash = txhash
-		if txdetail.GetTx().IsWithdraw() {
+		txDetail.Txhash = txDetail.GetTx().Hash()
+		if txDetail.GetTx().IsWithdraw(store.Chain33Config.GetCoinExec()) {
 			//swap from and to
-			txdetail.Fromaddr, txdetail.Tx.To = txdetail.Tx.To, txdetail.Fromaddr
+			txDetail.Fromaddr, txDetail.Tx.To = txDetail.Tx.To, txDetail.Fromaddr
 		}
-
-		txDetails.TxDetails[index] = &txdetail
+		txDetails.TxDetails = append(txDetails.TxDetails, txDetail)
 	}
-
 	return txDetails, nil
 }
 
@@ -577,7 +552,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 	}
 
 	if assetExec == "" {
-		assetExec = "coins"
+		assetExec = store.Chain33Config.GetCoinExec()
 	}
 
 	//处理output
@@ -642,7 +617,7 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 							}
 
 							utxos = append(utxos, utxoCreated)
-							store.setUTXO(info.Addr, &txhash, indexoutput, info2store, newbatch)
+							store.setUTXO(info2store, txhash, newbatch)
 						}
 					}
 				}
@@ -671,25 +646,13 @@ func (store *privacyStore) selectCurrentWalletPrivacyTx(txDetal *types.Transacti
 //UTXO---->moveUTXO2FTXO---->FTXO---->moveFTXO2STXO---->STXO
 //1.calcUTXOKey------------>types.PrivacyDBStore 该kv值在db中的存储一旦写入就不再改变，除非产生该UTXO的交易被撤销
 //2.calcUTXOKey4TokenAddr-->calcUTXOKey，创建kv，方便查询现在某个地址下某种token的可用utxo
-func (store *privacyStore) setUTXO(addr, txhash *string, outindex int, dbStore *privacytypes.PrivacyDBStore, newbatch db.Batch) error {
-	if 0 == len(*addr) || 0 == len(*txhash) {
-		bizlog.Error("setUTXO addr or txhash is nil")
-		return types.ErrInvalidParam
-	}
-	if dbStore == nil {
-		bizlog.Error("setUTXO privacy is nil")
-		return types.ErrInvalidParam
-	}
+func (store *privacyStore) setUTXO(utxoInfo *privacytypes.PrivacyDBStore, txHash string, newbatch db.Batch) error {
 
-	privacyStorebyte, err := proto.Marshal(dbStore)
-	if err != nil {
-		bizlog.Error("setUTXO proto.Marshal err!", "err", err)
-		return types.ErrMarshal
-	}
-
-	utxoKey := calcUTXOKey(*txhash, outindex)
-	bizlog.Debug("setUTXO", "addr", *addr, "tx with hash", *txhash, "amount:", dbStore.Amount/types.Coin)
-	newbatch.Set(calcUTXOKey4TokenAddr(dbStore.AssetExec, dbStore.Tokenname, *addr, *txhash, outindex), utxoKey)
+	privacyStorebyte := types.Encode(utxoInfo)
+	outIndex := int(utxoInfo.OutIndex)
+	utxoKey := calcUTXOKey(txHash, outIndex)
+	bizlog.Debug("setUTXO", "addr", utxoInfo.Owner, "tx with hash", txHash, "amount:", utxoInfo.Amount/store.GetCoinPrecision())
+	newbatch.Set(calcUTXOKey4TokenAddr(utxoInfo.AssetExec, utxoInfo.Tokenname, utxoInfo.Owner, txHash, outIndex), utxoKey)
 	newbatch.Set(utxoKey, privacyStorebyte)
 	return nil
 }
@@ -883,7 +846,7 @@ func (store *privacyStore) moveFTXO2UTXO(key1 []byte, newbatch db.Batch) {
 		outindex := int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex)
 		key := calcUTXOKey4TokenAddr(ftxosInOneTx.AssetExec, ftxosInOneTx.Tokenname, ftxosInOneTx.Sender, utxohash, outindex)
 		value := calcUTXOKey(utxohash, int(ftxo.UtxoBasic.UtxoGlobalIndex.Outindex))
-		bizlog.Debug("moveFTXO2UTXO", "addr", ftxosInOneTx.Sender, "tx with hash", utxohash, "amount", ftxo.Amount/types.Coin)
+		bizlog.Debug("moveFTXO2UTXO", "addr", ftxosInOneTx.Sender, "tx with hash", utxohash, "amount", ftxo.Amount/store.GetCoinPrecision())
 		newbatch.Set(key, value)
 	}
 	bizlog.Debug("moveFTXO2UTXO", "addr", ftxosInOneTx.Sender, "tx with hash", ftxosInOneTx.Txhash)
@@ -962,17 +925,4 @@ func (store *privacyStore) moveSTXO2FTXO(tx *types.Transaction, txhash string, n
 
 	newbatch.Write()
 	return nil
-}
-
-func (store *privacyStore) moveFTXO2UTXOWhenFTXOExpire(blockheight, blocktime int64) {
-	dbbatch := store.NewBatch(true)
-	curFTXOTxs, keys := store.getFTXOlist()
-	for i, ftxo := range curFTXOTxs {
-		if !ftxo.IsExpire(blockheight, blocktime) {
-			continue
-		}
-		store.moveFTXO2UTXO(keys[i], dbbatch)
-		bizlog.Debug("moveFTXO2UTXOWhenFTXOExpire", "moveFTXO2UTXO key", string(keys[i]), "ftxo.IsExpire", ftxo.IsExpire(blockheight, blocktime))
-	}
-	dbbatch.Write()
 }

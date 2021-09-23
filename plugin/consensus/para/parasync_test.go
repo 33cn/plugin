@@ -350,13 +350,13 @@ func testCreateGenesisBlock(t *testing.T, para *client, testLoopCount int32) {
 
 //测试清理localdb缓存数据
 func testClearLocalOldBlocks(t *testing.T, para *client, testLoopCount int32) {
-	isCleaned, err := para.blockSyncClient.clearLocalOldBlocks()
+	err := para.blockSyncClient.clearLocalOldBlocks()
 
 	switch testLoopCount {
 	case 0:
 		assert.Nil(t, err)
 	case 1:
-		assert.Equal(t, true, !isCleaned && err == nil)
+		assert.Equal(t, true, err == nil)
 	default: //2
 		assert.Error(t, err)
 	}
@@ -383,7 +383,7 @@ func testSyncBlocksIfNeed(t *testing.T, para *client, testLoopCount int32) {
 		if err != nil {
 			errorCount++
 		}
-		assert.Equal(t, isSynced, i == 3 || i == 6)
+		assert.Equalf(t, isSynced, i == 3 || i == 6, "i=%d", i)
 	}
 
 	switch testLoopCount {

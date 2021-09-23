@@ -809,3 +809,45 @@ func TestVerifyBlsSign(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 }
+
+func TestCheckIsIgnoreHeight(t *testing.T) {
+	status1 := &pt.ParacrossNodeStatus{
+		Title:  "user.p.MC.",
+		Height: 1000,
+	}
+	strList := []string{"mcc.hit.260", "mc.hit.7.9.250", "mc.ignore.1-100.200-300"}
+	isIn, err := checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	status1.Height = 9
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+	status1.Height = 250
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, false, isIn)
+
+	status1.Height = 1
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	status1.Height = 10
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	status1.Height = 251
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+	//mc和mcc不能混淆
+	status1.Height = 260
+	isIn, err = checkIsIgnoreHeight(strList, status1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, isIn)
+
+}

@@ -181,7 +181,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 					}
 
 					utxos = append(utxos, utxoCreated)
-					mock.store.setUTXO(info.Addr, &txhashstr, indexoutput, info2store, dbbatch)
+					mock.store.setUTXO(info2store, txhashstr, dbbatch)
 				}
 			}
 		}
@@ -190,6 +190,7 @@ func (mock *PrivacyMock) CreateUTXOs(sender string, pubkeypair string, amount in
 }
 
 func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *types.Transaction {
+	cfg := mock.walletOp.GetAPI().GetConfig()
 	viewPubSlice, spendPubSlice, err := parseViewSpendPubKeyPair(req.GetPubkeypair())
 	if err != nil {
 		return nil
@@ -197,7 +198,7 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 	amount := req.GetAmount()
 	viewPublic := (*[32]byte)(unsafe.Pointer(&viewPubSlice[0]))
 	spendPublic := (*[32]byte)(unsafe.Pointer(&spendPubSlice[0]))
-	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0)
+	privacyOutput, err := generateOuts(viewPublic, spendPublic, nil, nil, amount, amount, 0, types.DefaultCoinPrecision)
 	if err != nil {
 		return nil
 	}
@@ -217,8 +218,8 @@ func (mock *PrivacyMock) createPublic2PrivacyTx(req *ty.ReqCreatePrivacyTx) *typ
 		Payload: types.Encode(action),
 		Nonce:   mock.walletOp.Nonce(),
 		To:      address.ExecAddress(ty.PrivacyX),
+		ChainID: cfg.GetChainID(),
 	}
-	cfg := mock.walletOp.GetAPI().GetConfig()
 	txSize := types.Size(tx) + ty.SignatureSize
 	realFee := int64((txSize+1023)>>ty.Size1Kshiftlen) * cfg.GetMinTxFeeRate()
 	tx.Fee = realFee

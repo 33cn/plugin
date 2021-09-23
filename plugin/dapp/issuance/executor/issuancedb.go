@@ -25,8 +25,7 @@ const (
 
 //setting
 const (
-	Coin                    = types.Coin      // 1e8
-	DefaultDebtCeiling      = 100000 * Coin   // 默认借贷限额
+	DefaultDebtCeiling      = 100000          // 默认借贷限额
 	DefaultLiquidationRatio = 0.25 * 1e4      // 默认质押比
 	DefaultPeriod           = 3600 * 24 * 365 // 默认合约限期
 	PriceWarningRate        = 1.3 * 1e4       // 价格提前预警率
@@ -355,6 +354,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	var kv []*types.KeyValue
 	var receipt *types.Receipt
 
+	cfg := action.Issuance.GetAPI().GetConfig()
 	// 是否配置管理用户
 	if !isRightAddr(pty.FundKey, action.fromaddr, action.db) {
 		clog.Error("IssuanceCreate", "addr", action.fromaddr, "error", "Address has no permission to create")
@@ -405,7 +405,7 @@ func (action *Action) IssuanceCreate(create *pty.IssuanceCreate) (*types.Receipt
 	if create.DebtCeiling != 0 {
 		issu.DebtCeiling = create.DebtCeiling
 	} else {
-		issu.DebtCeiling = DefaultDebtCeiling
+		issu.DebtCeiling = DefaultDebtCeiling * cfg.GetCoinPrecision()
 	}
 	if create.Period != 0 {
 		issu.Period = create.Period

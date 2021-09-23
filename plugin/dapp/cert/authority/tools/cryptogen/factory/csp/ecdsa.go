@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"math/big"
 
-	auth "github.com/33cn/plugin/plugin/crypto/ecdsa"
+	auth "github.com/33cn/chain33/system/crypto/secp256r1"
 )
 
 type ecdsaSigner struct{}

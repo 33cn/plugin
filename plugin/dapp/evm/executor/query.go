@@ -5,14 +5,19 @@
 package executor
 
 import (
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
+	"sync/atomic"
 
-	"errors"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/runtime"
 
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
+	evmCommon "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/model"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 )
@@ -25,14 +30,14 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 		return nil, model.ErrAddrNotExists
 	}
 
-	var addr common.Address
+	var addr evmCommon.Address
 	// 合约名称
 	cfg := evm.GetAPI().GetConfig()
 	if strings.HasPrefix(addrStr, cfg.ExecName(evmtypes.EvmPrefix)) {
-		addr = common.ExecAddress(addrStr)
+		addr = evmCommon.ExecAddress(addrStr)
 	} else {
 		// 合约地址
-		nAddr := common.StringToAddress(addrStr)
+		nAddr := evmCommon.StringToAddress(addrStr)
 		if nAddr == nil {
 			return nil, model.ErrAddrNotExists
 		}
@@ -53,43 +58,43 @@ func (evm *EVMExecutor) Query_CheckAddrExists(in *evmtypes.CheckEVMAddrReq) (typ
 }
 
 // Query_EstimateGas 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
-func (evm *EVMExecutor) Query_EstimateGas(in *evmtypes.EstimateEVMGasReq) (types.Message, error) {
+func (evm *EVMExecutor) Query_EstimateGas(req *evmtypes.EstimateEVMGasReq) (types.Message, error) {
 	evm.CheckInit()
-	var (
-		caller common.Address
-	)
-	cfg := evm.GetAPI().GetConfig()
-	// 如果未指定调用地址，则直接使用一个虚拟的地址发起调用
-	if len(in.Caller) > 0 {
-		callAddr := common.StringToAddress(in.Caller)
-		if callAddr != nil {
-			caller = *callAddr
-		}
-	} else {
-		caller = common.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
+
+	txBytes, err := hex.DecodeString(req.Tx)
+	if nil != err {
+		return nil, err
+	}
+	var tx types.Transaction
+	err = types.Decode(txBytes, &tx)
+	if nil != err {
+		return nil, err
 	}
 
-	to := common.StringToAddress(in.To)
-	if to == nil {
-		to = common.StringToAddress(EvmAddress)
-	}
-	msg := common.NewMessage(caller, to, 0, in.Amount, evmtypes.MaxGasLimit, 1, in.Code, "estimateGas", in.Abi)
-	txHash := common.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
-
-	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, false)
+	index := 0
+	from := evmCommon.StringToAddress(req.From)
+	msg, err := evm.GetMessage(&tx, index, from)
 	if err != nil {
 		return nil, err
 	}
 
-	if receipt.Ty == types.ExecOk {
-		callData := getCallReceipt(receipt.GetLogs())
-		if callData != nil {
-			result := &evmtypes.EstimateEVMGasResp{}
-			result.Gas = callData.UsedGas
-			return result, nil
-		}
+	msg.SetGasLimit(evmtypes.MaxGasLimit)
+	receipt, err := evm.innerExec(msg, tx.Hash(), index, evmtypes.MaxGasLimit, true)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("contract call error")
+
+	if receipt.Ty != types.ExecOk {
+		return nil, errors.New("contract call error")
+	}
+
+	callData := getCallReceipt(receipt.GetLogs())
+	if callData == nil {
+		return nil, errors.New("nil receipt")
+	}
+	result := &evmtypes.EstimateEVMGasResp{}
+	result.Gas = callData.UsedGas
+	return result, nil
 }
 
 // 从日志中查找调用结果
@@ -110,17 +115,18 @@ func getCallReceipt(logs []*types.ReceiptLog) *evmtypes.ReceiptEVMContract {
 	return nil
 }
 
-// Query_EvmDebug 此方法用来估算合约消耗的Gas，不能修改原有执行器的状态数据
+// Query_EvmDebug 此方法用来控制evm调试打印开关
 func (evm *EVMExecutor) Query_EvmDebug(in *evmtypes.EvmDebugReq) (types.Message, error) {
 	evm.CheckInit()
 	optype := in.Optype
 
 	if optype < 0 {
-		evmDebug = false
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOff)
 	} else if optype > 0 {
-		evmDebug = true
+		atomic.StoreInt32(&evm.vmCfg.Debug, runtime.EVMDebugOn)
 	}
-	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evmDebug)}
+
+	ret := &evmtypes.EvmDebugResp{DebugStatus: fmt.Sprintf("%v", evm.vmCfg.Debug)}
 	return ret, nil
 }
 
@@ -134,10 +140,10 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	ret.Caller = in.Caller
 
 	var (
-		caller common.Address
+		caller evmCommon.Address
 	)
 
-	to := common.StringToAddress(in.Address)
+	to := evmCommon.StringToAddress(in.Address)
 	if to == nil {
 		ret.JsonData = fmt.Sprintf("invalid address:%v", in.Address)
 		return ret, nil
@@ -146,16 +152,16 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	// 如果未指定调用地址，则直接使用一个虚拟的地址发起调用
 	cfg := evm.GetAPI().GetConfig()
 	if len(in.Caller) > 0 {
-		callAddr := common.StringToAddress(in.Caller)
+		callAddr := evmCommon.StringToAddress(in.Caller)
 		if callAddr != nil {
 			caller = *callAddr
 		}
 	} else {
-		caller = common.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
+		caller = evmCommon.ExecAddress(cfg.ExecName(evmtypes.ExecutorName))
 	}
 
-	msg := common.NewMessage(caller, common.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, "estimateGas", in.Input)
-	txHash := common.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
+	msg := evmCommon.NewMessage(caller, evmCommon.StringToAddress(in.Address), 0, 0, evmtypes.MaxGasLimit, 1, nil, evmCommon.FromHex(in.Input), "estimateGas")
+	txHash := evmCommon.BigToHash(big.NewInt(evmtypes.MaxGasLimit)).Bytes()
 
 	receipt, err := evm.innerExec(msg, txHash, 1, evmtypes.MaxGasLimit, true)
 	if err != nil {
@@ -165,7 +171,7 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	if receipt.Ty == types.ExecOk {
 		callData := getCallReceipt(receipt.GetLogs())
 		if callData != nil {
-			ret.RawData = common.Bytes2Hex(callData.Ret)
+			ret.RawData = evmCommon.Bytes2Hex(callData.Ret)
 			ret.JsonData = callData.JsonRet
 			return ret, nil
 		}
@@ -173,16 +179,45 @@ func (evm *EVMExecutor) Query_Query(in *evmtypes.EvmQueryReq) (types.Message, er
 	return ret, nil
 }
 
-// Query_QueryABI 此方法用来查询合约绑定的ABI数据，不修改原有执行器的状态数据
-func (evm *EVMExecutor) Query_QueryABI(in *evmtypes.EvmQueryAbiReq) (types.Message, error) {
+func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Message, error) {
 	evm.CheckInit()
+	nonce := evm.mStateDB.GetNonce(in.Address)
 
-	addr := common.StringToAddress(in.GetAddress())
-	if addr == nil {
-		return nil, fmt.Errorf("invalid address: %v", in.GetAddress())
+	return &evmtypes.EvmGetNonceRespose{Nonce: int64(nonce)}, nil
+}
+
+func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types.Message, error) {
+	evm.CheckInit()
+	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, true)
+	if nil != err {
+		return nil, errors.New("Failed to do evmAbi.Pack" + err.Error())
+	}
+	packStr := common.ToHex(packData)
+
+	return &evmtypes.EvmGetPackDataRespose{PackData: packStr}, nil
+}
+
+func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (types.Message, error) {
+	evm.CheckInit()
+	methodName, _, err := evmAbi.Pack(in.Parameter, in.Abi, true)
+	if nil != err {
+		return nil, errors.New("Failed to do evmAbi.Pack" + err.Error())
 	}
 
-	abiData := evm.mStateDB.GetAbi(addr.String())
+	data, err := common.FromHex(in.Data)
+	if nil != err {
+		return nil, errors.New("common.FromHex failed due to:" + err.Error())
+	}
 
-	return &evmtypes.EvmQueryAbiResp{Address: in.GetAddress(), Abi: abiData}, nil
+	outputs, err := evmAbi.Unpack(data, methodName, in.Abi)
+	if err != nil {
+		return nil, errors.New("unpack evm return error" + err.Error())
+	}
+
+	ret := evmtypes.EvmGetUnpackDataRespose{}
+
+	for _, v := range outputs {
+		ret.UnpackData = append(ret.UnpackData, fmt.Sprintf("%v", v.Value))
+	}
+	return &ret, nil
 }

@@ -19,8 +19,8 @@ import (
 	"crypto/ecdsa"
 
 	log "github.com/33cn/chain33/common/log/log15"
+	ecdsa_util "github.com/33cn/chain33/system/crypto/secp256r1"
 	"github.com/33cn/chain33/types"
-	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority/utils"
 )
 
@@ -148,7 +148,7 @@ func (validator *ecdsaValidator) Validate(certByte []byte, pubKey []byte) error 
 		return fmt.Errorf("Error publick key type in transaction. expect ECDSA")
 	}
 
-	if !bytes.Equal(pubKey, ecdsa_util.SerializePublicKey(certPubKey)) {
+	if !bytes.Equal(pubKey, ecdsa_util.SerializePublicKeyCompressed(certPubKey)) {
 		return fmt.Errorf("Invalid public key")
 	}
 

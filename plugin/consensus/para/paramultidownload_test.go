@@ -5,6 +5,7 @@
 package para
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/33cn/chain33/types"
@@ -20,13 +21,13 @@ func getTestInv(height int64, isDone bool) *inventory {
 	headDetail := &types.ParaTxDetail{
 		Type: types.AddBlock,
 		Header: &types.Header{
-			ParentHash: []byte(string(height - 1)),
-			Hash:       []byte(string(height))}}
+			ParentHash: []byte(fmt.Sprint(height - 1)),
+			Hash:       []byte(fmt.Sprint(height))}}
 	endDetail := &types.ParaTxDetail{
 		Type: types.AddBlock,
 		Header: &types.Header{
-			ParentHash: []byte(string(height + count - 2)),
-			Hash:       []byte(string(height + count - 1))}}
+			ParentHash: []byte(fmt.Sprint(height + count - 2)),
+			Hash:       []byte(fmt.Sprint(height + count - 1))}}
 	txs1 := &types.ParaTxDetails{Items: []*types.ParaTxDetail{headDetail, endDetail, endDetail}}
 	return &inventory{
 		start:  height,
@@ -78,7 +79,7 @@ func TestVerifyInvs(t *testing.T) {
 
 	preBlock := &types.ParaTxDetail{
 		Type:   types.AddBlock,
-		Header: &types.Header{Hash: []byte(string(start - 1))},
+		Header: &types.Header{Hash: []byte(fmt.Sprint(start - 1))},
 	}
 	d := &downloadJob{
 		parentBlock: preBlock,

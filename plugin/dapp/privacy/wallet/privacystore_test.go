@@ -27,7 +27,7 @@ func createStore(t *testing.T) *privacyStore {
 	util.ResetDatadir(mcfg, "$TEMP/")
 	cfgWallet := mcfg.Wallet
 	walletStoreDB := dbm.NewDB("wallet", cfgWallet.Driver, cfgWallet.DbPath, cfgWallet.DbCache)
-	store := newStore(walletStoreDB)
+	store := newStore(walletStoreDB, cfg)
 	assert.NotNil(t, store)
 	return store
 }
@@ -117,16 +117,11 @@ func testStore_storeScanPrivacyInputUTXO(t *testing.T) {
 }
 
 func testStore_setUTXO(t *testing.T) {
-	var addr, txhash string
+	var txhash string
 	store := createStore(t)
 	dbbatch := store.NewBatch(true)
-	err := store.setUTXO(&addr, &txhash, 0, nil, dbbatch)
-	assert.NotNil(t, err)
-
-	addr = "setUTXO"
-	txhash = "TXHASH"
-	err = store.setUTXO(&addr, &txhash, 0, nil, dbbatch)
-	assert.NotNil(t, err)
+	err := store.setUTXO(&pt.PrivacyDBStore{}, txhash, dbbatch)
+	assert.Nil(t, err)
 }
 
 func testStore_selectPrivacyTransactionToWallet(t *testing.T) {

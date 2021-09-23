@@ -397,12 +397,11 @@ func queryRelayerBalance(cmd *cobra.Command, args []string) {
 }
 
 func createTx(cmd *cobra.Command, payLoad []byte, action string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	pm := &types2.CreateTxIn{
-		Execer:     cfg.ExecName(types3.X2ethereumX),
+		Execer:     types.GetExecName(types3.X2ethereumX, paraName),
 		ActionName: action,
 		Payload:    payLoad,
 	}

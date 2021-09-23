@@ -412,12 +412,12 @@ func (client *Client) GetGenesisBlockTime() int64 {
 // CreateGenesisTx ...
 func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 	var tx types.Transaction
-	tx.Execer = []byte("coins")
+	tx.Execer = []byte(client.GetAPI().GetConfig().GetCoinExec())
 	tx.To = genesis
 	//gen payload
 	g := &cty.CoinsAction_Genesis{}
 	g.Genesis = &types.AssetsGenesis{}
-	g.Genesis.Amount = 1e8 * types.Coin
+	g.Genesis.Amount = 1e8 * client.GetAPI().GetConfig().GetCoinPrecision()
 	tx.Payload = types.Encode(&cty.CoinsAction{Value: g, Ty: cty.CoinsActionGenesis})
 	ret = append(ret, &tx)
 	return

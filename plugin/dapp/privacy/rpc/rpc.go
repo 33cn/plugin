@@ -95,7 +95,8 @@ func (c *Jrpc) GetPrivacyTxByAddr(in *pty.ReqPrivacyTransactionList, result *int
 		return err
 	}
 	var txdetails rpctypes.WalletTxDetails
-	err = rpctypes.ConvertWalletTxDetailToJSON(reply.(*types.WalletTxDetails), &txdetails)
+	cfg := c.cli.GetConfig()
+	err = rpctypes.ConvertWalletTxDetailToJSON(reply.(*types.WalletTxDetails), &txdetails, cfg.GetCoinExec(), cfg.GetCoinPrecision())
 	if err != nil {
 		return err
 	}

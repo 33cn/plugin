@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+
+	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -163,6 +165,13 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 	creator, _ := cmd.Flags().GetString("creator")
 	coin, _ := cmd.Flags().GetString("coin")
 	coins := strings.Split(coin, " ")
+
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+
 	var reqAddrCoins ty.ReqRelayAddrCoins
 	reqAddrCoins.Status = ty.RelayOrderStatus_pending
 	reqAddrCoins.Addr = creator
@@ -187,7 +196,7 @@ func showOnesRelayOrders(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	parseRelayOrders(res)
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
 // ShowOnesAcceptRelayOrdersCmd show ones accepted orders
@@ -236,8 +245,12 @@ func showRelayAcceptOrders(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-
-	parseRelayOrders(res)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
 // ShowOnesStatusOrdersCmd show ones order's status
@@ -291,21 +304,25 @@ func showCoinRelayOrders(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-
-	parseRelayOrders(res)
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
+	parseRelayOrders(res, cfg.CoinPrecision)
 }
 
-func parseRelayOrders(res ty.ReplyRelayOrders) {
+func parseRelayOrders(res ty.ReplyRelayOrders, coinPrecision int64) {
 	for _, order := range res.Relayorders {
 		var show relayOrder2Show
 		show.OrderID = order.Id
 		show.Status = order.Status.String()
 		show.Creator = order.CreaterAddr
 		show.CoinOperation = order.Operation
-		show.Amount = strconv.FormatFloat(float64(order.LocalCoinAmount)/float64(types.Coin), 'f', 4, 64)
+		show.Amount = types.FormatAmount2FloatDisplay(int64(order.LocalCoinAmount), coinPrecision, true)
 		show.Coin = order.XCoin
 		show.CoinAddr = order.XAddr
-		show.CoinAmount = strconv.FormatFloat(float64(order.XAmount)/float64(types.Coin), 'f', 4, 64)
+		show.CoinAmount = types.FormatAmount2FloatDisplay(int64(order.XAmount), coinPrecision, true)
 		show.CoinWaits = order.XBlockWaits
 		show.CreateTime = order.CreateTime
 		show.AcceptAddr = order.AcceptAddr
@@ -373,28 +390,39 @@ func addExchangeFlags(cmd *cobra.Command) {
 }
 
 func relayOrder(cmd *cobra.Command, args []string) {
-
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	oper, _ := cmd.Flags().GetUint32("operation")
 	coin, _ := cmd.Flags().GetString("coin")
 	coinamount, _ := cmd.Flags().GetFloat64("coin_amount")
 	coinaddr, _ := cmd.Flags().GetString("coin_addr")
 	coinwait, _ := cmd.Flags().GetUint32("coin_wait")
 	btyamount, _ := cmd.Flags().GetFloat64("bty_amount")
-
+	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
+		return
+	}
 	if coinwait == 0 {
 		coinwait = 1
 	}
-
-	btyUInt64 := uint64(btyamount * 1e4)
-	coinUInt64 := uint64(coinamount * 1e4)
+	btyInt64, err := types.FormatFloatDisplay2Value(btyamount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.btyamount"))
+		return
+	}
+	coinInt64, err := types.FormatFloatDisplay2Value(coinamount, cfg.CoinPrecision)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.coinamount"))
+		return
+	}
 
 	params := &ty.RelayCreate{
 		Operation:       oper,
-		XAmount:         coinUInt64 * 1e4,
+		XAmount:         uint64(coinInt64),
 		XCoin:           coin,
 		XAddr:           coinaddr,
 		XBlockWaits:     coinwait,
-		LocalCoinAmount: btyUInt64 * 1e4,
+		LocalCoinAmount: uint64(btyInt64),
 	}
 
 	payLoad, err := json.Marshal(params)
@@ -407,12 +435,11 @@ func relayOrder(cmd *cobra.Command, args []string) {
 }
 
 func createTx(cmd *cobra.Command, payLoad []byte, action string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
+	paraName, _ := cmd.Flags().GetString("paraName")
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 
 	pm := &rpctypes.CreateTxIn{
-		Execer:     cfg.ExecName(ty.RelayX),
+		Execer:     types.GetExecName(ty.RelayX, paraName),
 		ActionName: action,
 		Payload:    payLoad,
 	}

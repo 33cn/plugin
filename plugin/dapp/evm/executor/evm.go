@@ -7,7 +7,6 @@ package executor
 import (
 	"bytes"
 	"math/big"
-
 	"os"
 
 	"reflect"
@@ -22,13 +21,11 @@ import (
 )
 
 var (
-	evmDebug = false
-
+	evmDebugInited = false
 	// EvmAddress 本合约地址
 	EvmAddress = ""
+	driverName = evmtypes.ExecutorName
 )
-
-var driverName = evmtypes.ExecutorName
 
 // Init 初始化本合约对象
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -53,7 +50,6 @@ func GetName() string {
 
 func newEVMDriver() drivers.Driver {
 	evm := NewEVMExecutor()
-	evm.vmCfg.Debug = evmDebug
 	return evm
 }
 
@@ -69,9 +65,21 @@ func NewEVMExecutor() *EVMExecutor {
 	exec := &EVMExecutor{}
 
 	exec.vmCfg = &runtime.Config{}
-	exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	//exec.vmCfg.Tracer = runtime.NewJSONLogger(os.Stdout)
+	exec.vmCfg.Tracer = runtime.NewMarkdownLogger(
+		&runtime.LogConfig{
+			DisableMemory:     false,
+			DisableStack:      false,
+			DisableStorage:    false,
+			DisableReturnData: false,
+			Debug:             true,
+			Limit:             0,
+		},
+		os.Stdout,
+	)
 
 	exec.SetChild(exec)
+	exec.SetExecutorType(types.LoadExecutorType(driverName))
 	return exec
 }
 
@@ -141,6 +149,11 @@ func (evm *EVMExecutor) getNewAddr(txHash []byte) common.Address {
 	return common.NewAddress(cfg, txHash)
 }
 
+// createContractAddress creates an ethereum address given the bytes and the nonce
+func (evm *EVMExecutor) createContractAddress(b common.Address, txHash []byte) common.Address {
+	return common.NewContractAddress(b, txHash)
+}
+
 // CheckTx 校验交易
 func (evm *EVMExecutor) CheckTx(tx *types.Transaction, index int) error {
 	return nil
@@ -166,7 +179,7 @@ func (evm *EVMExecutor) GetVMConfig() *runtime.Config {
 }
 
 // NewEVMContext 构造一个新的EVM上下文对象
-func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
+func (evm *EVMExecutor) NewEVMContext(msg *common.Message, txHash []byte) runtime.Context {
 	return runtime.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
@@ -178,5 +191,6 @@ func (evm *EVMExecutor) NewEVMContext(msg *common.Message) runtime.Context {
 		Difficulty:  new(big.Int).SetUint64(evm.GetDifficulty()),
 		GasLimit:    msg.GasLimit(),
 		GasPrice:    msg.GasPrice(),
+		TxHash:      txHash,
 	}
 }

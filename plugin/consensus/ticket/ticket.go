@@ -120,7 +120,7 @@ func (client *Client) CreateGenesisTx() (ret []*types.Transaction) {
 //316190000 coins
 func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count int32, height int64) (ret []*types.Transaction) {
 	tx1 := types.Transaction{}
-	tx1.Execer = []byte("coins")
+	tx1.Execer = []byte(cfg.GetCoinExec())
 
 	//给hotkey 10000 个币，作为miner的手续费
 	tx1.To = minerAddr
@@ -132,7 +132,7 @@ func createTicket(cfg *types.Chain33Config, minerAddr, returnAddr string, count 
 
 	tx2 := types.Transaction{}
 
-	tx2.Execer = []byte("coins")
+	tx2.Execer = []byte(cfg.GetCoinExec())
 	tx2.To = driver.ExecAddress("ticket")
 	//gen payload
 	g = &cty.CoinsAction_Genesis{}

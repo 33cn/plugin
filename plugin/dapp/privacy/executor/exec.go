@@ -138,17 +138,16 @@ func (p *privacy) Exec_Privacy2Public(payload *ty.Privacy2Public, tx *types.Tran
 }
 
 func (p *privacy) createAccountDB(exec, symbol string) (*account.DB, error) {
-
-	if exec == "" || exec == "coins" {
+	cfg := p.GetAPI().GetConfig()
+	if exec == "" || exec == cfg.GetCoinExec() {
 		return p.GetCoinsAccount(), nil
 	}
-	cfg := p.GetAPI().GetConfig()
 	return account.NewAccountDB(cfg, exec, symbol, p.GetStateDB())
 }
 
 func (p *privacy) buildPrivacyReceiptLog(assetExec, assetSymbol string, output *ty.PrivacyOutput) *ty.ReceiptPrivacyOutput {
 	if assetExec == "" {
-		assetExec = "coins"
+		assetExec = p.GetAPI().GetConfig().GetCoinExec()
 	}
 	receipt := &ty.ReceiptPrivacyOutput{
 		AssetExec:   assetExec,

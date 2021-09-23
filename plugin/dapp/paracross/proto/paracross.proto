@@ -5,6 +5,7 @@ import "common.proto";
 import "blockchain.proto";
 
 package types;
+option go_package = "../types";
 
 // stateDB
 message ParacrossStatusDetails {
@@ -324,6 +325,12 @@ message ParacrossCommitAction {
 message ParacrossMinerAction {
     ParacrossNodeStatus status          = 1;
     bool                isSelfConsensus = 2;
+    int64               addIssueCoins   = 3;
+}
+
+message ParaMinerReward{
+    string addr = 1;
+    int64 amount = 2;
 }
 
 message CrossAssetTransfer {

@@ -63,15 +63,16 @@ func TestChannelClient_GetNodeInfo(t *testing.T) {
 	client := newGrpc(api)
 	client.Init("valnode", nil, nil, nil)
 	req := &types.ReqNil{}
-	node := &vt.Validator{
-		Address:     []byte("aaa"),
-		PubKey:      []byte("bbb"),
+	node := &vt.ValNodeInfo{
+		NodeIP:      "127.0.0.1",
+		NodeID:      "001",
+		Address:     "aaa",
+		PubKey:      "bbb",
 		VotingPower: 10,
 		Accum:       -1,
 	}
-	set := &vt.ValidatorSet{
-		Validators: []*vt.Validator{node},
-		Proposer:   node,
+	set := &vt.ValNodeInfoSet{
+		Nodes: []*vt.ValNodeInfo{node},
 	}
 	api.On("QueryConsensusFunc", "tendermint", "NodeInfo", req).Return(set, nil)
 	result, err := client.GetNodeInfo(context.Background(), req)
@@ -84,18 +85,19 @@ func TestJrpc_GetNodeInfo(t *testing.T) {
 	J := newJrpc(api)
 	req := &types.ReqNil{}
 	var result interface{}
-	node := &vt.Validator{
-		Address:     []byte("aaa"),
-		PubKey:      []byte("bbb"),
+	node := &vt.ValNodeInfo{
+		NodeIP:      "127.0.0.1",
+		NodeID:      "001",
+		Address:     "aaa",
+		PubKey:      "bbb",
 		VotingPower: 10,
 		Accum:       -1,
 	}
-	set := &vt.ValidatorSet{
-		Validators: []*vt.Validator{node},
-		Proposer:   node,
+	set := &vt.ValNodeInfoSet{
+		Nodes: []*vt.ValNodeInfo{node},
 	}
 	api.On("QueryConsensusFunc", "tendermint", "NodeInfo", req).Return(set, nil)
 	err := J.GetNodeInfo(req, &result)
 	assert.Nil(t, err)
-	assert.EqualValues(t, set.Validators, result)
+	assert.EqualValues(t, set, result)
 }

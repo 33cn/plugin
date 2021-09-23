@@ -43,7 +43,7 @@ func TestAccountManager(t *testing.T) {
 	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(et.AccountmanagerX, cfg, nil)
-	total := 100 * types.Coin
+	total := 100 * types.DefaultCoinPrecision
 	accountA := types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -158,7 +158,7 @@ func TestAccountManager(t *testing.T) {
 	assert.Equal(t, err, nil)
 	balance, err := Exec_QueryBalanceByID(&et.QueryBalanceByID{AccountID: "harrylee2015", Asset: &types.Asset{Symbol: "bty", Exec: "coins"}}, stateDB, kvdb)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, balance.Balance, 199*types.Coin)
+	assert.Equal(t, balance.Balance, 199*types.DefaultCoinPrecision)
 
 	//将某个账户冻结
 	tx8, _ := CreateSupervise(&et.Supervise{

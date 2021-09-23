@@ -201,7 +201,7 @@ func (h *Header) StringIndented(indent string) string {
 %s  LastCommit:     %v
 %s  Validators:     %v
 %s  App:            %v
-%s  Conensus:       %v
+%s  Consensus:      %v
 %s  Results:        %v
 %s}#%v`,
 		indent, h.ChainID,
@@ -304,7 +304,7 @@ func (commit *Commit) IsCommit() bool {
 
 // GetAggVote ...
 func (commit *Commit) GetAggVote() *AggVote {
-	if commit == nil {
+	if commit == nil || commit.AggVote == nil {
 		return nil
 	}
 	aggVote := &AggVote{commit.AggVote}

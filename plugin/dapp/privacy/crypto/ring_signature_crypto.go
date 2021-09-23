@@ -21,8 +21,7 @@ import (
 )
 
 func init() {
-	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{}, false)
-	crypto.RegisterType(privacytypes.SignNameRing, privacytypes.RingBaseonED25519)
+	crypto.Register(privacytypes.SignNameRing, &RingSignED25519{}, crypto.WithRegOptionTypeID(privacytypes.RingBaseonED25519))
 }
 
 // RingSignature 环签名中对于crypto.Signature接口实现
@@ -65,7 +64,7 @@ func (privkey *RingSignPrivateKey) Bytes() []byte {
 }
 
 // Sign signature trasaction
-func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
+func (privkey *RingSignPrivateKey) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 	emptySign := &RingSignature{}
 	if len(msg) <= 0 {
 		return emptySign
@@ -116,7 +115,7 @@ func (privkey *RingSignPrivateKey) Sign(msg []byte) crypto.Signature {
 }
 
 // PubKey convert to public key
-func (privkey *RingSignPrivateKey) PubKey() crypto.PubKey {
+func (privkey *RingSignPrivateKey) PubKey(_ ...interface{}) crypto.PubKey {
 	publicKey := new(RingSignPublicKey)
 	addr32 := (*[KeyLen32]byte)(unsafe.Pointer(&privkey.key))
 	addr64 := (*[privateKeyLen]byte)(unsafe.Pointer(&privkey.key))
@@ -255,4 +254,9 @@ func (r *RingSignED25519) SignatureFromBytes(b []byte) (crypto.Signature, error)
 		return nil, err
 	}
 	return sign, nil
+}
+
+// Validate validate msg and signature
+func (r *RingSignED25519) Validate(msg, pub, sig []byte) error {
+	return crypto.BasicValidation(r, msg, pub, sig)
 }

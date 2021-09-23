@@ -25,9 +25,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/33cn/chain33/types"
+
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
-	proto "github.com/golang/protobuf/proto"
 )
 
 // secureKeyPrefix is the database key prefix used to store trie node preimages.
@@ -98,11 +99,7 @@ type cachedNode struct {
 }
 
 func (n *cachedNode) proto() []byte {
-	blob, err := proto.Marshal(n.node.create())
-	if err != nil {
-		panic(err)
-	}
-	return blob
+	return types.Encode(n.node.create())
 }
 
 // expandNode traverses the node hierarchy of a collapsed storage node and converts

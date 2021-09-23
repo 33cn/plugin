@@ -12,6 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -325,7 +327,7 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 
 	keys, err := policy.getWalletOperate().GetAllPrivKeys()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "GetAllPrivKeys")
 	}
 
 	var hashes types.ReplyHashes
@@ -390,15 +392,19 @@ func (policy *ticketPolicy) getTickets(addr string, status int32) ([]*ty.Ticket,
 
 func (policy *ticketPolicy) getForceCloseTickets(addr string) ([]*ty.Ticket, error) {
 	if addr == "" {
-		return nil, nil
+		return nil, errors.Wrapf(types.ErrNotFound, "addr is nil")
 	}
 	tlist1, err1 := policy.getTickets(addr, 1)
 	if err1 != nil && err1 != types.ErrNotFound {
-		return nil, err1
+		return nil, errors.Wrap(err1, "status=1")
 	}
 	tlist2, err2 := policy.getTickets(addr, 2)
 	if err2 != nil && err2 != types.ErrNotFound {
-		return nil, err1
+		return nil, errors.Wrap(err2, "status=2")
+	}
+
+	if len(tlist1)+len(tlist2) <= 0 {
+		return nil, errors.Wrapf(types.ErrNotFound, "addr=%s no tickets in status=1&2", addr)
 	}
 
 	return append(tlist1, tlist2...), nil
@@ -556,7 +562,8 @@ func (policy *ticketPolicy) closeTicket(height int64) (int, error) {
 func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
 	operater := policy.getWalletOperate()
-	acc1, err := operater.GetBalance(addr, "coins")
+	cfg := policy.getWalletOperate().GetAPI().GetConfig()
+	acc1, err := operater.GetBalance(addr, cfg.GetCoinExec())
 	if err != nil {
 		return err
 	}
@@ -566,8 +573,9 @@ func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
 	}
 	toaddr := address.ExecAddress(ty.TicketX)
 	//如果acc2 的余额足够，那题withdraw 部分钱做手续费
-	if (acc1.Balance < (types.Coin / 2)) && (acc2.Balance > types.Coin) {
-		_, err := operater.SendToAddress(priv, toaddr, -types.Coin, "ticket->coins", false, "")
+	coinPrecision := cfg.GetCoinPrecision()
+	if (acc1.Balance < (coinPrecision / 2)) && (acc2.Balance > coinPrecision) {
+		_, err := operater.SendToAddress(priv, toaddr, -coinPrecision, "ticket->coins", false, "")
 		if err != nil {
 			return err
 		}
@@ -632,7 +640,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	//ticket balance and coins balance
 	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
 	operater := policy.getWalletOperate()
-	acc1, err := operater.GetBalance(addr, "coins")
+	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -644,7 +652,7 @@ func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]b
 	//判断手续费是否足够，如果不足要及时补充。
 	chain33Cfg := policy.walletOperate.GetAPI().GetConfig()
 	cfg := ty.GetTicketMinerParam(chain33Cfg, height)
-	fee := types.Coin
+	fee := chain33Cfg.GetCoinPrecision()
 	if acc1.Balance+acc2.Balance-2*fee >= cfg.TicketPrice {
 		// 如果可用余额+冻结余额，可以凑成新票，则转币到冻结余额
 		if (acc1.Balance+acc2.Balance-2*fee)/cfg.TicketPrice > acc2.Balance/cfg.TicketPrice {

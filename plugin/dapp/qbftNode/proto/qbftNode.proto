@@ -1,0 +1,62 @@
+syntax = "proto3";
+package types;
+option go_package = "../types";
+
+import "common.proto";
+import "qbft.proto";
+
+message QbftNode {
+    string pubKey = 1;
+    int64  power  = 2;
+}
+
+message QbftNodes {
+    repeated QbftNode nodes = 1;
+}
+
+message QbftNodeAction {
+    oneof value {
+        QbftNode      node      = 1;
+        QbftBlockInfo blockInfo = 2;
+    }
+    int32 Ty = 3;
+}
+
+message ReqQbftNodes {
+    int64 height = 1;
+}
+
+message ReqQbftBlockInfo {
+    int64 height = 1;
+}
+
+message QbftNodeInfo {
+    string nodeIP      = 1;
+    string nodeID      = 2;
+    string address     = 3;
+    string pubKey      = 4;
+    int64  votingPower = 5;
+    int64  accum       = 6;
+}
+
+message QbftNodeInfoSet {
+    repeated QbftNodeInfo nodes = 1;
+}
+
+message QbftPerfStat {
+    int64  totalTx     = 1;
+    int64  totalBlock  = 2;
+    int64  txPerBlock  = 3;
+    int64  totalSecond = 4;
+    int64  txPerSecond = 5;
+}
+
+message ReqQbftPerfStat {
+    int64 start = 1;
+    int64 end   = 2;
+}
+
+service qbftNode {
+    rpc IsSync(ReqNil) returns (QbftIsHealthy) {}
+    rpc GetNodeInfo(ReqNil) returns (QbftNodeInfoSet) {}
+}

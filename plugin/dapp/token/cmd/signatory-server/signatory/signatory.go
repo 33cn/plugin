@@ -25,6 +25,9 @@ type Signatory struct {
 	Privkey string
 }
 
+const coinExec = "coins"
+const coinPrecision = int64(1e8)
+
 // Echo echo
 func (*Signatory) Echo(in *string, out *interface{}) error {
 	if in == nil {
@@ -86,7 +89,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 		return types.ErrInvalidParam
 	}
 
-	amount := 1 * types.Coin
+	amount := 1 * coinPrecision
 	v := &types.AssetsTransfer{
 		Amount: amount,
 		Note:   []byte("transfer 1 bty by signatory-server"),
@@ -97,7 +100,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 	}
 
 	tx := &types.Transaction{
-		Execer:  []byte("coins"),
+		Execer:  []byte(coinExec),
 		Payload: types.Encode(transfer),
 		To:      *in,
 		Nonce:   rand.New(rand.NewSource(time.Now().UnixNano())).Int63(),

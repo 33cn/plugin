@@ -161,7 +161,7 @@ func (t *trade) setQueryAsset(order *pty.LocalOrder, tokenSymbol string) {
 	order.AssetSymbol = tokenSymbol
 	order.AssetExec = defaultAssetExec
 	order.PriceSymbol = t.GetAPI().GetConfig().GetCoinSymbol()
-	order.PriceExec = defaultPriceExec
+	order.PriceExec = t.GetAPI().GetConfig().GetCoinExec()
 }
 
 // 转换数据结构， 输出前调用

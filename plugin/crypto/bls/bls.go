@@ -70,6 +70,11 @@ func (d Driver) SignatureFromBytes(b []byte) (sig crypto.Signature, err error) {
 	return SignatureBLS(*sigBytes), nil
 }
 
+// Validate validate msg and signature
+func (d Driver) Validate(msg, pub, sig []byte) error {
+	return crypto.BasicValidation(d, msg, pub, sig)
+}
+
 //Aggregate aggregates signatures together into a new signature.
 func (d Driver) Aggregate(sigs []crypto.Signature) (crypto.Signature, error) {
 	if len(sigs) == 0 {
@@ -192,14 +197,14 @@ func (privKey PrivKeyBLS) Bytes() []byte {
 }
 
 // Sign create signature
-func (privKey PrivKeyBLS) Sign(msg []byte) crypto.Signature {
+func (privKey PrivKeyBLS) Sign(msg []byte, _ ...interface{}) crypto.Signature {
 	priv := g1pubs.DeserializeSecretKey(privKey)
 	sig := g1pubs.Sign(msg, priv)
 	return SignatureBLS(sig.Serialize())
 }
 
 // PubKey convert to public key
-func (privKey PrivKeyBLS) PubKey() crypto.PubKey {
+func (privKey PrivKeyBLS) PubKey(_ ...interface{}) crypto.PubKey {
 	priv := g1pubs.DeserializeSecretKey(privKey)
 	return PubKeyBLS(g1pubs.PrivToPub(priv).Serialize())
 }
@@ -304,6 +309,5 @@ const Name = "bls"
 const ID = 259
 
 func init() {
-	crypto.Register(Name, &Driver{}, false)
-	crypto.RegisterType(Name, ID)
+	crypto.Register(Name, &Driver{}, crypto.WithRegOptionTypeID(ID))
 }

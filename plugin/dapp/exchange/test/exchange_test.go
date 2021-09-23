@@ -33,7 +33,7 @@ func init() {
 
 func TestLimitOrder(t *testing.T) {
 	//A 挂买 4x10
-	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 10 * types.Coin, Op: et.OpBuy}
+	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 10 * types.DefaultCoinPrecision, Op: et.OpBuy}
 	testPlaceLimitOrder(t, req, Nodes[0], PrivKeyA)
 }
 
@@ -57,7 +57,7 @@ func TestMarketDepth(t *testing.T) {
 
 func TestMatch(t *testing.T) {
 	//B 挂卖 4x5
-	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 5 * types.Coin, Op: et.OpSell}
+	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 5 * types.DefaultCoinPrecision, Op: et.OpSell}
 	doLimitOrder(req, PrivKeyB)
 }
 
@@ -90,7 +90,7 @@ func TestSample0(t *testing.T) {
 //3.最后撤销未成交部分的买单
 func TestCase1(t *testing.T) {
 	//先挂数量是10的买单
-	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 10 * types.Coin, Op: et.OpBuy}
+	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 10 * types.DefaultCoinPrecision, Op: et.OpBuy}
 	_, err := doLimitOrder(req, PrivKeyA)
 	assert.Nil(t, err)
 
@@ -102,16 +102,16 @@ func TestCase1(t *testing.T) {
 	order, err := getOrder(orderID1)
 	assert.Nil(t, err)
 	assert.Equal(t, int32(et.Ordered), order.Status)
-	assert.Equal(t, 10*types.Coin, order.GetBalance())
+	assert.Equal(t, 10*types.DefaultCoinPrecision, order.GetBalance())
 
 	//根据op查询市场深度
 	q := &et.QueryMarketDepth{LeftAsset: leftAsset, RightAsset: rightAsset, Op: et.OpBuy}
 	marketDepthList, err := getMarketDepth(q)
 	assert.Nil(t, err)
-	assert.Equal(t, 10*types.Coin, marketDepthList.List[0].GetAmount())
+	assert.Equal(t, 10*types.DefaultCoinPrecision, marketDepthList.List[0].GetAmount())
 
 	//然后再挂数量是5的吃单
-	req = &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 5 * types.Coin, Op: et.OpSell}
+	req = &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 4, Amount: 5 * types.DefaultCoinPrecision, Op: et.OpSell}
 	_, err = doLimitOrder(req, PrivKeyB)
 	assert.Nil(t, err)
 
@@ -124,7 +124,7 @@ func TestCase1(t *testing.T) {
 	assert.Nil(t, err)
 	//订单1的状态应该还是ordered
 	assert.Equal(t, int32(et.Ordered), order.Status)
-	assert.Equal(t, 5*types.Coin, order.Balance)
+	assert.Equal(t, 5*types.DefaultCoinPrecision, order.Balance)
 
 	//order2状态是completed
 	order, err = getOrder(orderID2)
@@ -136,7 +136,7 @@ func TestCase1(t *testing.T) {
 	marketDepthList, err = getMarketDepth(q)
 	assert.Nil(t, err)
 	//市场深度应该改变
-	assert.Equal(t, 5*types.Coin, marketDepthList.List[0].GetAmount())
+	assert.Equal(t, 5*types.DefaultCoinPrecision, marketDepthList.List[0].GetAmount())
 
 	//查询历史成交
 	q2 := &et.QueryHistoryOrderList{LeftAsset: leftAsset, RightAsset: rightAsset}
@@ -153,7 +153,7 @@ func TestCase1(t *testing.T) {
 	assert.Nil(t, err)
 	//订单1的状态应该Revoked
 	assert.Equal(t, int32(et.Revoked), order.Status)
-	assert.Equal(t, 5*types.Coin, order.Balance)
+	assert.Equal(t, 5*types.DefaultCoinPrecision, order.Balance)
 
 	//根据op查询市场深度
 	q = &et.QueryMarketDepth{LeftAsset: leftAsset, RightAsset: rightAsset, Op: et.OpBuy}
@@ -167,7 +167,7 @@ func TestCase1(t *testing.T) {
 }
 
 func BenchmarkOrder(b *testing.B) {
-	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 1, Amount: 10 * types.Coin, Op: et.OpSell}
+	req := &et.LimitOrder{LeftAsset: leftAsset, RightAsset: rightAsset, Price: 1, Amount: 10 * types.DefaultCoinPrecision, Op: et.OpSell}
 	ety := types.LoadExecutorType(et.ExchangeX)
 	tx, _ := ety.Create("LimitOrder", req)
 	for i := 0; i < b.N; i++ {
@@ -269,7 +269,7 @@ func testPlaceLimitOrder(t *testing.T, req *et.LimitOrder, addr string, privkey 
 	assert.Nil(t, err)
 	t.Log(tokenAfter)
 
-	cost := executor.CalcActualCost(req.Op, req.Amount, req.Price)
+	cost := executor.CalcActualCost(req.Op, req.Amount, req.Price, types.DefaultCoinPrecision)
 	t.Log(req.Amount, req.Price, cost)
 	// bty/ccny
 	if req.Op == et.OpBuy {
@@ -315,7 +315,7 @@ func testRevokeLimitOrder(t *testing.T, orderID int64, addr string, privkey stri
 	assert.Nil(t, err)
 	t.Log(tokenAfter)
 
-	cost := executor.CalcActualCost(lo.Op, order.Balance, lo.Price)
+	cost := executor.CalcActualCost(lo.Op, order.Balance, lo.Price, types.DefaultCoinPrecision)
 	// bty/ccny
 	if lo.Op == et.OpBuy {
 		// bty

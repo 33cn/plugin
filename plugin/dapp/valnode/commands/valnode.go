@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/33cn/chain33/common/address"
+
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -40,6 +42,7 @@ func ValCmd() *cobra.Command {
 		IsSyncCmd(),
 		GetBlockInfoCmd(),
 		GetNodeInfoCmd(),
+		GetPerfStatCmd(),
 		AddNodeCmd(),
 		CreateCmd(),
 	)
@@ -75,7 +78,7 @@ func GetNodeInfoCmd() *cobra.Command {
 
 func getNodeInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res []*vt.Validator
+	var res *vt.ValNodeInfoSet
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "valnode.GetNodeInfo", nil, &res)
 	ctx.Run()
 }
@@ -113,6 +116,41 @@ func getBlockInfo(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+// GetPerfStatCmd get block info
+func GetPerfStatCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stat",
+		Short: "Get tendermint performance statistics",
+		Run:   getPerfStat,
+	}
+	addGetPerfStatFlags(cmd)
+	return cmd
+}
+
+func addGetPerfStatFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "start block height")
+	cmd.Flags().Int64P("end", "e", 0, "end block height")
+}
+
+func getPerfStat(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetInt64("start")
+	end, _ := cmd.Flags().GetInt64("end")
+	req := &vt.ReqPerfStat{
+		Start: start,
+		End:   end,
+	}
+	params := rpctypes.Query4Jrpc{
+		Execer:   vt.ValNodeX,
+		FuncName: "GetPerfState",
+		Payload:  types.MustPBToJSON(req),
+	}
+
+	var res vt.PerfStat
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
 // AddNodeCmd add validator node
 func AddNodeCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -132,8 +170,6 @@ func addNodeFlags(cmd *cobra.Command) {
 }
 
 func addNode(cmd *cobra.Command, args []string) {
-	title, _ := cmd.Flags().GetString("title")
-	cfg := types.GetCliSysParam(title)
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	power, _ := cmd.Flags().GetInt64("power")
 
@@ -144,12 +180,12 @@ func addNode(cmd *cobra.Command, args []string) {
 	}
 	value := &vt.ValNodeAction_Node{Node: &vt.ValNode{PubKey: pubkeybyte, Power: power}}
 	action := &vt.ValNodeAction{Value: value, Ty: vt.ValNodeActionUpdate}
-	tx := &types.Transaction{Payload: types.Encode(action)}
-	tx, err = types.FormatTx(cfg, vt.ValNodeX, tx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
+	tx := &types.Transaction{
+		Payload: types.Encode(action),
+		Nonce:   rand.Int63(),
+		Execer:  []byte(vt.ValNodeX),
 	}
+	tx.To = address.ExecAddress(string(tx.Execer))
 	txHex := types.Encode(tx)
 	fmt.Println(hex.EncodeToString(txHex))
 }

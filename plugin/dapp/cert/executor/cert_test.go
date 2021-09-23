@@ -44,8 +44,9 @@ var (
 	Nodes    = [][]byte{
 		[]byte("1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"),
 	}
-	total    = 100 * types.Coin
-	USERNAME = "User"
+	total    = 100 * types.DefaultCoinPrecision
+	USERNAME = "user1"
+	ORGNAME  = "org1"
 	SIGNTYPE = ct.AuthSM2
 
 	transfer1 = &ct.CertAction{Value: &ct.CertAction_Normal{Normal: &ct.CertNormal{Key: "", Value: nil}}, Ty: ct.CertActionNormal}
@@ -74,7 +75,7 @@ func manageKeySet(key string, value string, db dbm.KV) {
 }
 
 func initEnv() (*execEnv, error) {
-	cfg := types.NewChain33Config(types.ReadFile("./test/chain33.toml"))
+	cfg := types.NewChain33Config(types.ReadFile("./test/chain33.auth.test.toml"))
 	cfg.SetTitleOnlyForTest("chain33")
 
 	sub := cfg.GetSubConfig()
@@ -91,7 +92,7 @@ func initEnv() (*execEnv, error) {
 		return nil, err
 	}
 
-	user, err := userLoader.Get(USERNAME)
+	user, err := userLoader.Get(USERNAME, ORGNAME)
 	if err != nil {
 		fmt.Printf("Get user failed")
 		return nil, err

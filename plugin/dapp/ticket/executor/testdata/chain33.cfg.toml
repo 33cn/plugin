@@ -2,6 +2,7 @@ Title="bityuan"
 TestNet=true
 FixTime=false
 
+[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
@@ -218,7 +219,40 @@ ForkTicketFundAddrV1=-1 #fork6.3
 ForkRootHash =1
 [fork.sub.coins]
 Enable=0
+
 [fork.sub.ticket]
 Enable=0
 ForkTicketId = 1600000
 ForkTicketVrf = 2070000
+
+[fork.sub.token]
+Enable=0
+ForkTokenBlackList= 0
+ForkBadTokenSymbol= 0
+ForkTokenPrice=0
+ForkTokenSymbolWithNumber=0
+ForkTokenCheck= 0
+
+[fork.sub.manage]
+Enable=0
+ForkManageExec=0
+
+[fork.sub.valnode]
+Enable=0
+
+[fork.sub.dpos]
+Enable=0
+
+[fork.sub.paracross]
+Enable=0
+ForkParacrossWithdrawFromParachain=0
+ForkParacrossCommitTx=0
+ForkLoopCheckCommitTxDone=0
+#仅平行链适用，自共识分阶段开启，缺省是0，若对应主链高度7200000之前开启过自共识，需要重新配置此分叉，并为之前自共识设置selfConsensEnablePreContract配置项
+ForkParaSelfConsStages=0
+ForkParaAssetTransferRbk=0
+#仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
+ForkParaFullMinerHeight=0
+
+[fork.sub.qbftNode]
+Enable=0

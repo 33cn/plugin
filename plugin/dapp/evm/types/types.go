@@ -24,9 +24,11 @@ const (
 	TyLogCallContract = 603
 	// TyLogEVMStateChangeItem  合约状态数据变更项日志
 	TyLogEVMStateChangeItem = 604
+	// TyLogEVMEventData 合约生成新的event日志数据
+	TyLogEVMEventData = 605
 
-	// MaxGasLimit  最大Gas消耗上限
-	MaxGasLimit = 10000000
+	// MaxGasLimit  最大Gas消耗上限 5
+	MaxGasLimit = (100000000 * 5)
 )
 
 const (
@@ -42,6 +44,8 @@ const (
 	ForkEVMFrozen = "ForkEVMFrozen"
 	// ForkEVMYoloV1 YoloV1虚拟机指令分叉
 	ForkEVMYoloV1 = "ForkEVMYoloV1"
+	//ForkEVMTxGroup 交易组中的交易通过GAS检查
+	ForkEVMTxGroup = "ForkEVMTxGroup"
 )
 
 var (
@@ -60,5 +64,6 @@ var (
 		TyLogContractData:       {Ty: reflect.TypeOf(EVMContractData{}), Name: "LogContractData"},
 		TyLogContractState:      {Ty: reflect.TypeOf(EVMContractState{}), Name: "LogContractState"},
 		TyLogEVMStateChangeItem: {Ty: reflect.TypeOf(EVMStateChangeItem{}), Name: "LogEVMStateChangeItem"},
+		TyLogEVMEventData:       {Ty: reflect.TypeOf(types.EVMLog{}), Name: "LogEVMEventData"},
 	}
 )

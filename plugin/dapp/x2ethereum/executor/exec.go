@@ -166,7 +166,7 @@ func checkTxSignBySpecificAddr(tx *types.Transaction, addrs []string) error {
 		return x2eTy.ErrInvalidAdminAddress
 	}
 
-	if !tx.CheckSign() {
+	if !tx.CheckSign(0) {
 		return types.ErrSign
 	}
 	return nil

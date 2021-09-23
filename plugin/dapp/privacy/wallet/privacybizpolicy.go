@@ -61,7 +61,7 @@ func (policy *privacyPolicy) getWalletOperate() wcom.WalletOperate {
 // Init 初始化处理
 func (policy *privacyPolicy) Init(walletOperate wcom.WalletOperate, sub []byte) {
 	policy.setWalletOperate(walletOperate)
-	policy.store = newStore(walletOperate.GetDBStore())
+	policy.store = newStore(walletOperate.GetDBStore(), walletOperate.GetAPI().GetConfig())
 	// 启动定时检查超期FTXO的协程
 	walletOperate.GetWaitGroup().Add(1)
 	go policy.checkWalletStoreData()
@@ -170,18 +170,28 @@ func (policy *privacyPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqS
 	return
 }
 
+type privacyTxInfo struct {
+	tx          *types.Transaction
+	blockDetail *types.BlockDetail
+	actionTy    int32
+	actionName  string
+	input       *privacytypes.PrivacyInput
+	output      *privacytypes.PrivacyOutput
+	txIndex     int32
+	blockHeight int64
+	isExecOk    bool
+	isRollBack  bool
+	txHash      []byte
+	txHashHex   string
+	assetExec   string
+	assetSymbol string
+	batch       db.Batch
+}
+
 type buildStoreWalletTxDetailParam struct {
-	assetExec    string
-	tokenname    string
-	block        *types.BlockDetail
-	tx           *types.Transaction
-	index        int
-	newbatch     db.Batch
-	senderRecver string
-	isprivacy    bool
-	addDelType   int32
+	txInfo       *privacyTxInfo
+	addr         string
 	sendRecvFlag int32
-	utxos        []*privacytypes.UTXO
 }
 
 // OnAddBlockTx 响应区块交易添加的处理

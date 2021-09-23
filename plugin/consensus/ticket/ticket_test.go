@@ -52,7 +52,7 @@ func testTicket(t *testing.T) {
 	assert.Nil(t, err)
 	//assert.Equal(t, accounts[0].Balance, int64(1000000000000))
 	//send to address
-	tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), mock33.GetGenesisAddress(), types.Coin/100)
+	tx := util.CreateCoinsTx(cfg, mock33.GetHotKey(), mock33.GetGenesisAddress(), types.DefaultCoinPrecision/100)
 	mock33.SendTx(tx)
 	mock33.Wait()
 	//bind miner

@@ -139,6 +139,7 @@ func (s *suiteRelay) TestExec_1() {
 	tx.Execer = []byte(ty.RelayX)
 	tx.To = address.ExecAddress(ty.RelayX)
 	tx.Nonce = 1 //for different order id
+	tx.ChainID = chainTestCfg.GetChainID()
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 
@@ -353,8 +354,10 @@ func (s *suiteRelay) TestExec_9_QryStatus5() {
 	s.kvdb.On("Get", mock.Anything).Return(heightBytes, nil).Twice()
 	msg, err := s.relay.Query_GetBTCHeaderCurHeight(addrCoins)
 	s.Nil(err)
-	//s.T().Log(msg)
-	s.Contains(msg.String(), "curHeight:10 baseHeight:10")
+	height, ok := msg.(*ty.ReplayRelayQryBTCHeadHeight)
+	s.True(ok)
+	s.Equal(int64(10), height.CurHeight)
+	s.Equal(int64(10), height.BaseHeight)
 }
 
 func TestRunSuiteRelay(t *testing.T) {
@@ -489,6 +492,8 @@ func (s *suiteBtcHeader) TestSaveBtcHead_1() {
 	tx.Execer = []byte(ty.RelayX)
 	tx.To = address.ExecAddress(ty.RelayX)
 	tx.Nonce = 2 //for different order id
+	tx.ChainID = chainTestCfg.GetChainID()
+
 	tx.Payload = types.Encode(sell)
 	tx.Sign(types.SECP256K1, privFrom)
 

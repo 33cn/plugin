@@ -8,6 +8,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"google.golang.org/grpc/credentials"
+
 	"github.com/33cn/chain33/p2p/utils"
 
 	"github.com/33cn/chain33/queue"
@@ -32,6 +34,8 @@ type NodeInfo struct {
 	outSide        int32
 	ServiceType    int32
 	channelVersion int32
+	cliCreds       credentials.TransportCredentials
+	servCreds      credentials.TransportCredentials
 }
 
 // NewNodeInfo new a node object
@@ -49,6 +53,7 @@ func NewNodeInfo(p2pCfg *types.P2P, subCfg *subConfig) *NodeInfo {
 	nodeInfo.listenAddr = new(NetAddress)
 	nodeInfo.addrBook = NewAddrBook(p2pCfg, subCfg)
 	nodeInfo.channelVersion = utils.CalcChannelVersion(subCfg.Channel, VERSION)
+
 	return nodeInfo
 }
 
@@ -113,8 +118,9 @@ func (p *PeerInfos) GetPeerInfo(peerName string) *types.Peer {
 
 // BlackList badpeers list
 type BlackList struct {
-	mtx      sync.Mutex
-	badPeers map[string]int64
+	mtx       sync.Mutex
+	badPeers  map[string]int64
+	peerstore sync.Map
 }
 
 // FetchPeerInfo get peerinfo by node
@@ -252,8 +258,24 @@ func (nf *NodeInfo) OutSide() bool {
 func (bl *BlackList) Add(addr string, deadline int64) {
 	bl.mtx.Lock()
 	defer bl.mtx.Unlock()
+	if deadline == 0 { //默认1年
+		deadline = 365 * 24 * 3600
+	}
+
 	bl.badPeers[addr] = types.Now().Unix() + deadline
 
+}
+
+func (bl *BlackList) addPeerStore(peerName, remoteAddr string) {
+	bl.peerstore.Store(peerName, remoteAddr)
+}
+
+func (bl *BlackList) getpeerStore(key string) (string, bool) {
+	v, ok := bl.peerstore.Load(key)
+	if ok {
+		return v.(string), ok
+	}
+	return "", ok
 }
 
 // Delete delete badpeer
@@ -261,6 +283,10 @@ func (bl *BlackList) Delete(addr string) {
 	bl.mtx.Lock()
 	defer bl.mtx.Unlock()
 	delete(bl.badPeers, addr)
+}
+
+func (bl *BlackList) deletePeerStore(peerName string) {
+	bl.peerstore.Delete(peerName)
 }
 
 // Has the badpeer true and false

@@ -24,7 +24,7 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	}
 	err := authority.Author.Init(&scfg)
 	if err != nil {
-		clog.Error("error to initialize authority", err)
+		clog.Error("error to initialize authority", "error", err)
 		return
 	}
 	drivers.Register(cfg, driverName, newCert, cfg.GetDappFork(driverName, "Enable"))

@@ -236,6 +236,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 		return pty.ErrRingSign
 	}
 
+	cfg := p.GetAPI().GetConfig()
 	totalInput := int64(0)
 	keyinput := input.GetKeyinput()
 	keyImages := make([][]byte, len(keyinput))
@@ -253,7 +254,7 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	if !res {
 		if errIndex >= 0 && errIndex < int32(len(keyinput)) {
 			input := keyinput[errIndex]
-			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/types.Coin, "utxo keyimage", common.ToHex(input.KeyImage))
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "UTXO spent already errindex", errIndex, "utxo amout", input.Amount/cfg.GetCoinPrecision(), "utxo keyimage", common.ToHex(input.KeyImage))
 		}
 		privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "err", "checkUTXOValid failed ")
 		return pty.ErrDoubleSpendOccur
@@ -269,15 +270,15 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 	}
 
 	//只有主链coins隐私转账才收取特殊交易费, assertExec空情况适配老版本
-	cfg := p.GetAPI().GetConfig()
-	if !cfg.IsPara() && (assertExec == "" || assertExec == "coins") {
+
+	if !cfg.IsPara() && (assertExec == "" || assertExec == cfg.GetCoinExec()) {
 
 		totalOutput := int64(0)
 		for _, output := range output.GetKeyoutput() {
 			totalOutput += output.GetAmount()
 		}
-		if tx.Fee < pty.PrivacyTxFee {
-			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee, " error ErrPrivacyTxFeeNotEnough")
+		if tx.Fee < pty.PrivacyTxFee*cfg.GetCoinPrecision() {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee set:", tx.Fee, "required:", pty.PrivacyTxFee*cfg.GetCoinPrecision(), " error ErrPrivacyTxFeeNotEnough")
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
 		//如果是私到私 或者私到公，交易费扣除则需要utxo实现,交易费并不生成真正的UTXO,也是即时燃烧掉而已
@@ -288,8 +289,8 @@ func (p *privacy) CheckTx(tx *types.Transaction, index int) error {
 			feeAmount = totalInput - totalOutput - action.GetPrivacy2Public().Amount
 		}
 
-		if feeAmount < pty.PrivacyTxFee {
-			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee)
+		if feeAmount < pty.PrivacyTxFee*cfg.GetCoinPrecision() {
+			privacylog.Error("PrivacyTrading CheckTx", "txhash", txhashstr, "fee available:", feeAmount, "required:", pty.PrivacyTxFee*cfg.GetCoinPrecision())
 			return pty.ErrPrivacyTxFeeNotEnough
 		}
 	}

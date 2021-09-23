@@ -20,11 +20,11 @@ func Test_checkAmountValid(t *testing.T) {
 	}{
 		{amount: 0, actual: false},
 		{amount: -1, actual: false},
-		{amount: 1*types.Coin + 100, actual: false},
-		{amount: 5 * types.Coin, actual: true},
+		{amount: 1*types.DefaultCoinPrecision + 100, actual: false},
+		{amount: 5 * types.DefaultCoinPrecision, actual: true},
 	}
 	for _, test := range testCases {
-		ret := checkAmountValid(test.amount)
+		ret := checkAmountValid(test.amount, types.DefaultCoinPrecision)
 		require.Equal(t, ret, test.actual)
 	}
 }
@@ -120,7 +120,7 @@ func Test_decomposeAmount2digits(t *testing.T) {
 		},
 		{
 			amount:        62387455827,
-			dustThreshold: pty.BTYDustThreshold,
+			dustThreshold: pty.BTYDustThreshold * types.DefaultCoinPrecision,
 			actual:        []int64{87455827, 1e8, 2e8, 2e9, 5e10, 1e10},
 		},
 	}
@@ -156,17 +156,17 @@ func Test_generateOuts(t *testing.T) {
 			spendpubto:       &spendpubto,
 			viewpubChangeto:  &viewpubChangeto,
 			spendpubChangeto: &spendpubChangeto,
-			transAmount:      10 * types.Coin,
-			selectedAmount:   100 * types.Coin,
+			transAmount:      10 * types.DefaultCoinPrecision,
+			selectedAmount:   100 * types.DefaultCoinPrecision,
 		},
 		{
 			viewPubTo:        &viewPubTo,
 			spendpubto:       &spendpubto,
 			viewpubChangeto:  &viewpubChangeto,
 			spendpubChangeto: &spendpubChangeto,
-			transAmount:      10 * types.Coin,
-			selectedAmount:   100 * types.Coin,
-			fee:              1 * types.Coin,
+			transAmount:      10 * types.DefaultCoinPrecision,
+			selectedAmount:   100 * types.DefaultCoinPrecision,
+			fee:              1 * types.DefaultCoinPrecision,
 		},
 		{
 			viewPubTo:        &viewPubTo,
@@ -178,7 +178,7 @@ func Test_generateOuts(t *testing.T) {
 	}
 
 	for _, test := range testCase {
-		_, err := generateOuts(test.viewPubTo, test.spendpubto, test.viewpubChangeto, test.spendpubChangeto, test.transAmount, test.selectedAmount, test.fee)
+		_, err := generateOuts(test.viewPubTo, test.spendpubto, test.viewpubChangeto, test.spendpubChangeto, test.transAmount, test.selectedAmount, test.fee, types.DefaultCoinPrecision)
 		require.Equal(t, err, test.actualErr)
 	}
 }

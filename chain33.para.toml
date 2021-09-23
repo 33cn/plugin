@@ -3,6 +3,8 @@ TestNet=false
 CoinSymbol="para"
 EnableParaFork=true
 
+[crypto]
+
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"
@@ -43,7 +45,7 @@ enableTxQuickIndex=true
 # 升级storedb是否重新执行localdb，bityuan主链升级不需要开启，平行链升级需要开启
 enableReExecLocal=true
 # 使能精简localdb
-enableReduceLocaldb=true
+enableReduceLocaldb=false
 enablePushSubscribe=false
 
 [p2p]
@@ -70,6 +72,7 @@ grpcFuncWhitelist=["*"]
 [mempool]
 name="para"
 poolCacheSize=10240
+#联盟链没有交易费，对应平行链minTxFeeRate需要设为0
 minTxFeeRate=100000
 maxTxNumPerAccount=10000
 
@@ -94,8 +97,13 @@ coinDevFund=12
 coinBaseReward=3
 #委托账户最少解绑定时间(按小时)
 unBindTime=24
-#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置
-#decimalMode=true
+#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即coinReward=1800000000
+decimalMode=false
+#挖矿模式， normal：缺省挖矿，其他自定义，注册名字需要和配置名字保持一致
+minerMode="normal"
+#挖矿减半周期,按高度减半
+halvePeriod=1000
+
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
@@ -103,19 +111,21 @@ unBindTime=24
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
+#主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
+#waitMainBlockNum=100
 #打包时间间隔，单位秒
 writeBlockSeconds=2
 #验证账户，验证节点需要配置自己的账户，并且钱包导入对应种子，非验证节点留空
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#创世区块时间，新部署链可以修改，缺省2017/12/29
-#genesisBlockTime=1514533390
-#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,209186是bityuan主链对应高度， ycc或其他按实际修改
-mainBlockHashForkHeight=209186
+#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,1是bityuan主链对应高度， ycc或其他按实际修改
+mainBlockHashForkHeight=1
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
+#不可为0，主链Local时候需特殊配置
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
+#不可为0，主链Local时候需特殊配置
 mainLoopCheckCommitTxDoneForkHeight=4320000
 #mainForkParaSupervision=10400000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
@@ -171,10 +181,10 @@ enableStat=false
 enableMVCC=false
 
 [exec.sub.relay]
-genesis="1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"
+genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
-superManager=["1JmFaA6unrCFYEWPGRi7uuXY1KthTJxJEP"]
+superManager=["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"]
 
 [exec.sub.token]
 saveTokenTxList=true
@@ -188,6 +198,21 @@ paraConsensusStopBlocks=30000
 total="16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 useBalance=false
 
+[exec.sub.evm]
+#平行链evm合约ETH资产映射的合约和资产类型（symbol）
+ethMapFromExecutor="paracross"
+ethMapFromSymbol="coins.bty"
+
+[exec.sub.mix]
+#私对私的交易费,交易比较大，需要多的手续费
+txFee=0
+#私对私token转账，花费token(true)还是BTY(false),
+tokenFee=false
+#curve H point
+pointHX="19172955941344617222923168298456110557655645809646772800021167670156933290312"
+pointHY="21116962883761739586121793871108889864627195706475546685847911817475098399811"
+#电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
+maxTreeLeaves=1024
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -218,6 +243,9 @@ ForkTicketFundAddrV1=-1 #fork6.3
 #主链和平行链都使用同一个fork高度
 ForkRootHash=7200000
 [fork.sub.coins]
+Enable=0
+
+[fork.sub.coinsx]
 Enable=0
 
 [fork.sub.ticket]
@@ -263,6 +291,8 @@ ForkLoopCheckCommitTxDone=0
 ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
 ForkParaSupervision=0
+#仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
+ForkParaFullMinerHeight=0
 
 [fork.sub.evm]
 Enable=0
@@ -271,6 +301,7 @@ ForkEVMABI=0
 ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
+ForkEVMTxGroup=0
 
 [fork.sub.blackwhite]
 Enable=0
@@ -303,7 +334,35 @@ Enable=0
 [fork.sub.game]
 Enable=0
 
+[fork.sub.vote]
+Enable=0
+
+[fork.sub.accountmanager]
+Enable=0
+
+[fork.sub.exchange]
+Enable=0
+
+[fork.sub.wasm]
+Enable=0
+
+[fork.sub.valnode]
+Enable=0
+[fork.sub.dpos]
+Enable=0
+[fork.sub.echo]
+Enable=0
+[fork.sub.storage]
+Enable=0
+ForkStorageLocalDB=0
+
+[fork.sub.qbftNode]
+Enable=0
+
 [fork.sub.multisig]
+Enable=0
+
+[fork.sub.mix]
 Enable=0
 
 [fork.sub.unfreeze]

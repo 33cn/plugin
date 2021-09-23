@@ -55,9 +55,9 @@ func (a *Action) OpSwap(op int32) int32 {
 }
 
 //CalcActualCost 计算实际花费
-func CalcActualCost(op int32, amount int64, price int64) int64 {
+func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
 	if op == et.OpBuy {
-		return SafeMul(amount, price)
+		return SafeMul(amount, price, coinPrecision)
 	}
 	return amount
 }
@@ -83,9 +83,9 @@ func CheckCount(count int32) bool {
 	return count <= 20 && count >= 0
 }
 
-//CheckAmount 最小交易1e8
-func CheckAmount(amount int64) bool {
-	if amount < types.Coin || amount >= types.MaxCoin {
+//CheckAmount 最小交易 1coin
+func CheckAmount(amount, coinPrecision int64) bool {
+	if amount < coinPrecision || amount >= types.MaxCoin*coinPrecision {
 		return false
 	}
 	return true
@@ -108,11 +108,11 @@ func CheckStatus(status int32) bool {
 }
 
 //CheckExchangeAsset 检查交易得资产是否合法
-func CheckExchangeAsset(left, right *et.Asset) bool {
+func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
 		return false
 	}
-	if (left.Execer == "coins" && right.Execer == "coins") || (left.Symbol == right.Symbol) {
+	if (left.Execer == coinExec && right.Execer == coinExec) || (left.Symbol == right.Symbol) {
 		return false
 	}
 	return true
@@ -124,10 +124,11 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	rightAsset := payload.GetRightAsset()
 	//TODO 参数要合法，必须有严格的校验，后面统一加入到checkTx里面
 	//coins执行器下面只有bty
-	if !CheckExchangeAsset(leftAsset, rightAsset) {
+	cfg := a.api.GetConfig()
+	if !CheckExchangeAsset(cfg.GetCoinExec(), leftAsset, rightAsset) {
 		return nil, et.ErrAsset
 	}
-	if !CheckAmount(payload.GetAmount()) {
+	if !CheckAmount(payload.GetAmount(), cfg.GetCoinPrecision()) {
 		return nil, et.ErrAssetAmount
 	}
 	if !CheckPrice(payload.GetPrice()) {
@@ -137,7 +138,6 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 		return nil, et.ErrAssetOp
 	}
 	//TODO 这里symbol
-	cfg := a.api.GetConfig()
 	leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 	}
 	//先检查账户余额
 	if payload.GetOp() == et.OpBuy {
-		amount := SafeMul(payload.GetAmount(), payload.GetPrice())
+		amount := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if rightAccount.Balance < amount {
 			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", rightAccount.Balance, "need", amount)
@@ -197,7 +197,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		if err != nil {
 			return nil, err
 		}
-		amount := CalcActualCost(et.OpBuy, balance, price)
+		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if rightAccount.Frozen < amount {
 			elog.Error("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount)
@@ -216,7 +216,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		if err != nil {
 			return nil, err
 		}
-		amount := CalcActualCost(et.OpSell, balance, price)
+		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
 		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
 		if leftAccount.Frozen < amount {
 			elog.Error("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount)
@@ -259,6 +259,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 	var priceKey string
 	var count int
 
+	cfg := a.api.GetConfig()
 	or := &et.Order{
 		OrderID:    a.GetIndex(),
 		Value:      &et.Order_LimitOrder{LimitOrder: payload},
@@ -355,7 +356,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 
 	//未完成的订单需要冻结剩余未成交的资金
 	if payload.Op == et.OpBuy {
-		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price)
+		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("LimitOrder.ExecFrozen", "addr", a.fromaddr, "amount", amount, "err", err.Error())
@@ -365,7 +366,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		kvs = append(kvs, receipt.KV...)
 	}
 	if payload.Op == et.OpSell {
-		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price)
+		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("LimitOrder.ExecFrozen", "addr", a.fromaddr, "amount", amount, "err", err.Error())
@@ -398,9 +399,10 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	elog.Info("try match", "activeId", or.OrderID, "passiveId", matchorder.OrderID, "activeAddr", or.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", payload.Price)
 
+	cfg := a.api.GetConfig()
 	if payload.Op == et.OpSell {
 		//转移冻结资产
-		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, payload.Price)
+		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err)
@@ -410,7 +412,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		kvs = append(kvs, receipt.KV...)
 		//解冻多余资金
 		if payload.Price < matchorder.GetLimitOrder().Price {
-			amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price-payload.Price)
+			amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price-payload.Price, cfg.GetCoinPrecision())
 			receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, amount)
 			if err != nil {
 				elog.Error("matchModel.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error())
@@ -420,7 +422,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 		//将达成交易的相应资产结算
-		amount = CalcActualCost(payload.Op, matched, payload.Price)
+		amount = CalcActualCost(payload.Op, matched, payload.Price, cfg.GetCoinPrecision())
 		receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransfer", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
@@ -436,7 +438,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	}
 	if payload.Op == et.OpBuy {
 		//转移冻结资产
-		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price)
+		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen2", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err.Error())
@@ -445,7 +447,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 		//将达成交易的相应资产结算
-		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price)
+		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
@@ -681,9 +683,9 @@ func queryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, price int
 }
 
 //SafeMul math库中的安全大数乘法，防溢出
-func SafeMul(x, y int64) int64 {
+func SafeMul(x, y, coinPrecision int64) int64 {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
-	res = big.NewInt(0).Div(res, big.NewInt(types.Coin))
+	res = big.NewInt(0).Div(res, big.NewInt(coinPrecision))
 	return res.Int64()
 }
 

@@ -254,32 +254,33 @@ func (t *trade) rollBackSellLimit(tx *types.Transaction, sell *pty.ReceiptSellBa
 	return order
 }
 
-func parseOrderAmountFloat(s string) int64 {
+func parseOrderAmountFloat(s string, tokenPrecision int64) int64 {
 	x, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		tradelog.Error("parseOrderAmountFloat", "decode receipt", err)
 		return 0
 	}
-	return int64(x * float64(types.TokenPrecision))
+	return int64(x * float64(tokenPrecision))
 }
 
-func parseOrderPriceFloat(s string) int64 {
+func parseOrderPriceFloat(s string, coinPrecision int64) int64 {
 	x, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		tradelog.Error("parseOrderPriceFloat", "decode receipt", err)
 		return 0
 	}
-	return int64(x * float64(types.Coin))
+	return int64(x * float64(coinPrecision))
 }
 
 func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, txIndex string) *pty.LocalOrder {
+	cfg := t.GetAPI().GetConfig()
 	order := &pty.LocalOrder{
 		AssetSymbol:       sell.TokenSymbol,
 		TxIndex:           txIndex,
 		Owner:             sell.Owner,
-		AmountPerBoardlot: parseOrderAmountFloat(sell.AmountPerBoardlot),
+		AmountPerBoardlot: parseOrderAmountFloat(sell.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       sell.MinBoardlot,
-		PricePerBoardlot:  parseOrderPriceFloat(sell.PricePerBoardlot),
+		PricePerBoardlot:  parseOrderPriceFloat(sell.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     sell.TotalBoardlot,
 		TradedBoardlot:    sell.SoldBoardlot,
 		BuyID:             sell.BuyID,
@@ -300,13 +301,14 @@ func (t *trade) genSellMarket(tx *types.Transaction, sell *pty.ReceiptSellBase, 
 }
 
 func (t *trade) genBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIndex string) *pty.LocalOrder {
+	cfg := t.GetAPI().GetConfig()
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
 		TxIndex:           txIndex,
 		Owner:             buy.Owner,
-		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot),
+		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       buy.MinBoardlot,
-		PricePerBoardlot:  parseOrderPriceFloat(buy.PricePerBoardlot),
+		PricePerBoardlot:  parseOrderPriceFloat(buy.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     buy.TotalBoardlot,
 		TradedBoardlot:    buy.BoughtBoardlot,
 		BuyID:             buy.BuyID,
@@ -374,13 +376,14 @@ func (t *trade) rollbackBuyLimit(tx *types.Transaction, buy *pty.ReceiptBuyBase,
 }
 
 func (t *trade) genBuyMarket(tx *types.Transaction, buy *pty.ReceiptBuyBase, txIndex string) *pty.LocalOrder {
+	cfg := t.GetAPI().GetConfig()
 	order := &pty.LocalOrder{
 		AssetSymbol:       buy.TokenSymbol,
 		TxIndex:           txIndex,
 		Owner:             buy.Owner,
-		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot),
+		AmountPerBoardlot: parseOrderAmountFloat(buy.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       buy.MinBoardlot,
-		PricePerBoardlot:  parseOrderPriceFloat(buy.PricePerBoardlot),
+		PricePerBoardlot:  parseOrderPriceFloat(buy.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     buy.TotalBoardlot,
 		TradedBoardlot:    buy.BoughtBoardlot,
 		BuyID:             calcTokenBuyID(hex.EncodeToString(tx.Hash())),

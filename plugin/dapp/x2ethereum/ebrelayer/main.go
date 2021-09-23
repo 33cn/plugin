@@ -25,7 +25,6 @@ import (
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/btcsuite/btcd/limits"
-	"github.com/prometheus/common/log"
 )
 
 var (
@@ -54,19 +53,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Info("current dir:", "dir", d)
+	mainlog.Info("current dir:", "dir", d)
 	err = limits.SetLimits()
 	if err != nil {
 		panic(err)
 	}
 	cfg := initCfg(*configPath)
-	log.Info("Starting FUZAMEI Chain33-X-Ethereum relayer software:", "\n     Name: ", cfg.Title)
+	mainlog.Info("Starting FUZAMEI Chain33-X-Ethereum relayer software:", "\n     Name: ", cfg.Title)
 	logf.SetFileLog(convertLogCfg(cfg.Log))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
-	log.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
-	log.Info("deploy info:", "BridgeRegistry", cfg.BridgeRegistry)
+	mainlog.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
+	mainlog.Info("deploy info:", "BridgeRegistry", cfg.BridgeRegistry)
 	mainlog.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
 	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
 
@@ -75,7 +74,7 @@ func main() {
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerService, db)
 
-	log.Info("cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
+	mainlog.Info("cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)
 
 	ch := make(chan os.Signal, 1)
@@ -149,10 +148,10 @@ type RPCServer struct {
 
 //ServeHTTP ...
 func (r *RPCServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Info("ServeHTTP", "request address", req.RemoteAddr)
+	mainlog.Info("ServeHTTP", "request address", req.RemoteAddr)
 	if !IsIPWhiteListEmpty() {
 		if !IsInIPWhitelist(req.RemoteAddr) {
-			log.Info("ServeHTTP", "refuse connect address", req.RemoteAddr)
+			mainlog.Info("ServeHTTP", "refuse connect address", req.RemoteAddr)
 			w.WriteHeader(401)
 			return
 		}
@@ -196,7 +195,7 @@ func startRPCServer(address string, api interface{}) {
 			w.WriteHeader(200)
 			err := srv.ServeRequest(serverCodec)
 			if err != nil {
-				log.Debug("http", "Error while serving JSON request: %v", err)
+				mainlog.Debug("http", "Error while serving JSON request: %v", err)
 				return
 			}
 		}

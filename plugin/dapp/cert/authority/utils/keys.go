@@ -17,8 +17,8 @@ import (
 
 	"fmt"
 
+	ecdsa_util "github.com/33cn/chain33/system/crypto/secp256r1"
 	sm2_util "github.com/33cn/chain33/system/crypto/sm2"
-	ecdsa_util "github.com/33cn/plugin/plugin/crypto/ecdsa"
 	ty "github.com/33cn/plugin/plugin/dapp/cert/types"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"

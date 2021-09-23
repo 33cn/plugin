@@ -10,11 +10,12 @@ import (
 	"io"
 	"math/rand"
 	"net"
-
-	"github.com/33cn/chain33/p2p/utils"
-
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/chain33/system/p2p/dht/protocol/peer"
+
+	"github.com/33cn/chain33/p2p/utils"
 
 	"github.com/33cn/chain33/queue"
 	pb "github.com/33cn/chain33/types"
@@ -33,6 +34,9 @@ type EventInterface interface {
 	GetBlocks(msg *queue.Message, taskindex int64)
 	BlockBroadcast(msg *queue.Message, taskindex int64)
 	GetNetInfo(msg *queue.Message, taskindex int64)
+	AddPeerToBlacklist(msg *queue.Message, taskindex int64)
+	DelPeerFromBlacklist(msg *queue.Message, taskindex int64)
+	ShowBlacklist(msg *queue.Message, taskindex int64)
 }
 
 // NormalInterface subscribe to the event hander interface
@@ -42,7 +46,7 @@ type NormalInterface interface {
 	SendPing(peer *Peer, nodeinfo *NodeInfo) error
 	GetBlockHeight(nodeinfo *NodeInfo) (int64, error)
 	CheckPeerNatOk(addr string, nodeInfo *NodeInfo) bool
-	GetAddrList(peer *Peer) (map[string]int64, error)
+	GetAddrList(peer *Peer) (map[string]*pb.P2PPeerInfo, error)
 	GetInPeersNum(peer *Peer) (int, error)
 	CheckSelf(addr string, nodeinfo *NodeInfo) bool
 }
@@ -199,9 +203,9 @@ func (m *Cli) GetInPeersNum(peer *Peer) (int, error) {
 }
 
 // GetAddrList return a map for address-prot
-func (m *Cli) GetAddrList(peer *Peer) (map[string]int64, error) {
+func (m *Cli) GetAddrList(peer *Peer) (map[string]*pb.P2PPeerInfo, error) {
 
-	var addrlist = make(map[string]int64)
+	var addrlist = make(map[string]*pb.P2PPeerInfo)
 	if peer == nil {
 		return addrlist, fmt.Errorf("pointer is nil")
 	}
@@ -229,9 +233,11 @@ func (m *Cli) GetAddrList(peer *Peer) (map[string]int64, error) {
 	peerinfos := resp.GetPeerinfo()
 
 	for _, peerinfo := range peerinfos {
+		if peerinfo == nil {
+			continue
+		}
 		if localBlockHeight-peerinfo.GetHeader().GetHeight() < 2048 {
-
-			addrlist[fmt.Sprintf("%v:%v", peerinfo.GetAddr(), peerinfo.GetPort())] = peerinfo.GetHeader().GetHeight()
+			addrlist[peerinfo.GetName()] = peerinfo
 		}
 	}
 	return addrlist, nil
@@ -267,7 +273,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 	resp, err := peer.mconn.gcli.Version2(context.Background(), &pb.P2PVersion{Version: nodeinfo.channelVersion, Service: int64(nodeinfo.ServiceTy()), Timestamp: pb.Now().Unix(),
 		AddrRecv: peer.Addr(), AddrFrom: addrfrom, Nonce: int64(rand.Int31n(102040)),
 		UserAgent: hex.EncodeToString(in.Sign.GetPubkey()), StartHeight: blockheight}, grpc.FailFast(true))
-	log.Debug("SendVersion", "resp", resp, "addrfrom", addrfrom, "sendto", peer.Addr())
+	log.Debug("SendVersion", "resp", resp, "from", addrfrom, "to", peer.Addr())
 	if err != nil {
 		log.Error("SendVersion", "Verson", err.Error(), "peer", peer.Addr())
 		if err == pb.ErrVersion {
@@ -278,7 +284,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 	}
 
 	P2pComm.CollectPeerStat(err, peer)
-	log.Debug("SHOW VERSION BACK", "VersionBack", resp, "peer", peer.Addr())
+	log.Debug("SHOW VERSION BACK", "VersionBack", resp, "remote peer", peer.Addr())
 	_, ver := utils.DecodeChannelVersion(resp.GetVersion())
 	peer.version.SetVersion(ver)
 
@@ -286,7 +292,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 	if err == nil {
 		if ip != nodeinfo.GetExternalAddr().IP.String() {
 
-			log.Debug("sendVersion", "externalip", ip)
+			log.Debug("sendVersion", "expect ip", ip, "pre externalip", nodeinfo.GetExternalAddr().IP.String())
 			if peer.IsPersistent() {
 				//永久加入黑名单
 				nodeinfo.blacklist.Add(ip, 0)
@@ -561,7 +567,7 @@ func (m *Cli) GetNetInfo(msg *queue.Message, taskindex int64) {
 // CheckPeerNatOk check peer is ok or not
 func (m *Cli) CheckPeerNatOk(addr string, info *NodeInfo) bool {
 	//连接自己的地址信息做测试
-	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion)) == 0)
+	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion, info.cliCreds)) == 0)
 
 }
 
@@ -572,7 +578,8 @@ func (m *Cli) CheckSelf(addr string, nodeinfo *NodeInfo) bool {
 		log.Error("AddrRouteble", "NewNetAddressString", err.Error())
 		return false
 	}
-	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion)
+
+	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion, nodeinfo.cliCreds)
 	if err != nil {
 		return false
 	}
@@ -648,4 +655,116 @@ func (m *Cli) getLocalPeerInfo() (*pb.P2PPeerInfo, error) {
 	}
 
 	return &localpeerinfo, nil
+}
+
+// AddPeerToBlacklist  add peer to blacklist
+func (m *Cli) AddPeerToBlacklist(msg *queue.Message, taskindex int64) {
+	defer func() {
+		<-m.network.otherFactory
+		log.Debug("GetNetInfo", "task complete:", taskindex)
+	}()
+
+	blackPeer := msg.GetData().(*pb.BlackPeer)
+	//parase lifetime，min,hour,seconds
+	lifetime, err := peer.CaculateLifeTime(blackPeer.GetLifetime())
+	if err != nil {
+		log.Error("AddPeerToBlacklist", "CaculateLifeTime", err)
+		msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte("invalid lifetime")}))
+		return
+	}
+
+	if blackPeer.PeerAddr != "" { //把IP或者IP:PORT加入 黑名单
+		//check peerAddr
+		ip, _, err := P2pComm.ParaseNetAddr(blackPeer.GetPeerAddr())
+		if err != nil {
+			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
+			return
+		}
+		m.network.node.nodeInfo.blacklist.Add(ip, int64(lifetime.Seconds()))
+		m.network.node.nodeInfo.blacklist.Add(blackPeer.PeerAddr, int64(lifetime.Seconds()))
+		peerName, ok := m.network.node.peerStore.Load(blackPeer.PeerAddr)
+		if ok {
+			m.network.node.nodeInfo.blacklist.addPeerStore(blackPeer.PeerAddr, peerName.(string))
+			m.network.node.nodeInfo.blacklist.addPeerStore(peerName.(string), blackPeer.PeerAddr)
+			m.network.node.remove(peerName.(string)) //close peer
+		}
+	} else if blackPeer.PeerName != "" {
+		peer := m.network.node.GetRegisterPeer(blackPeer.PeerName)
+		if peer != nil {
+			ip, _, _ := P2pComm.ParaseNetAddr(peer.Addr())
+			m.network.node.nodeInfo.blacklist.Add(ip, int64(lifetime.Seconds()))
+			m.network.node.nodeInfo.blacklist.Add(peer.Addr(), int64(lifetime.Seconds()))
+
+			m.network.node.nodeInfo.blacklist.addPeerStore(peer.Addr(), blackPeer.PeerName)
+			m.network.node.nodeInfo.blacklist.addPeerStore(blackPeer.PeerName, peer.Addr())
+			m.network.node.remove(blackPeer.PeerName) //close peer
+		} else {
+			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte("no this peer name")}))
+			return
+		}
+
+	}
+
+	msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: true, Msg: []byte("success")}))
+
+}
+
+func (m *Cli) DelPeerFromBlacklist(msg *queue.Message, taskindex int64) {
+	defer func() {
+		<-m.network.otherFactory
+		log.Debug("GetNetInfo", "task complete:", taskindex)
+
+	}()
+
+	blackPeer := msg.GetData().(*pb.BlackPeer)
+	if blackPeer.PeerAddr != "" {
+		//check peerAddr
+		ip, _, err := P2pComm.ParaseNetAddr(blackPeer.GetPeerAddr())
+		if err != nil {
+			msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: false, Msg: []byte(err.Error())}))
+			return
+		}
+		m.network.node.nodeInfo.blacklist.Delete(ip)
+		m.network.node.nodeInfo.blacklist.Delete(blackPeer.PeerAddr)
+		m.network.node.nodeInfo.blacklist.deletePeerStore(blackPeer.PeerAddr)
+	} else if blackPeer.PeerName != "" {
+		//通过pid 获取remoteAddr
+		remoteAddr, ok := m.network.node.nodeInfo.blacklist.getpeerStore(blackPeer.PeerName)
+		if ok {
+			ip, _, _ := P2pComm.ParaseNetAddr(remoteAddr)
+			m.network.node.nodeInfo.blacklist.Delete(ip)
+			m.network.node.nodeInfo.blacklist.Delete(remoteAddr)
+			m.network.node.nodeInfo.blacklist.deletePeerStore(remoteAddr)
+		}
+		m.network.node.nodeInfo.blacklist.deletePeerStore(blackPeer.PeerName)
+
+	}
+
+	msg.Reply(m.network.client.NewMessage("rpc", pb.EventReply, &pb.Reply{IsOk: true, Msg: []byte("success")}))
+
+}
+
+func (m *Cli) ShowBlacklist(msg *queue.Message, taskindex int64) {
+	defer func() {
+		<-m.network.otherFactory
+		log.Debug("GetNetInfo", "task complete:", taskindex)
+	}()
+
+	peers := m.network.node.nodeInfo.blacklist.GetBadPeers()
+	var list pb.Blacklist
+	now := time.Now().Unix()
+	for remoteAddr, span := range peers {
+		lifetime := span - now
+		if lifetime < 0 {
+			lifetime = 0
+		}
+		info := &pb.BlackInfo{RemoteAddr: remoteAddr, Lifetime: lifetime}
+		peerName, ok := m.network.node.nodeInfo.blacklist.getpeerStore(remoteAddr)
+		if ok {
+			info.PeerName = peerName
+		}
+		list.Blackinfo = append(list.Blackinfo, info)
+	}
+
+	msg.Reply(m.network.client.NewMessage("rpc", pb.EventShowBlacklist, &list))
 }

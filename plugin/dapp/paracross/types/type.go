@@ -32,6 +32,8 @@ var (
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
 	// ForkParaSupervision 平行链新增监督节点
 	ForkParaSupervision = "ForkParaSupervision"
+	// ForkParaFullMinerHeight 平行链全挖矿开启高度
+	ForkParaFullMinerHeight = "ForkParaFullMinerHeight"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -64,6 +66,7 @@ func InitFork(cfg *types.Chain33Config) {
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
+	cfg.RegisterDappFork(ParaX, ForkParaFullMinerHeight, types.MaxHeight)
 }
 
 //InitExecutor ...

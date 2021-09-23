@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/33cn/chain33/client"
@@ -39,15 +38,15 @@ func (selldb *sellDB) save(db dbm.KV) []*types.KeyValue {
 	return set
 }
 
-func (selldb *sellDB) getSellLogs(tradeType int32, txhash string) *types.ReceiptLog {
+func (selldb *sellDB) getSellLogs(tradeType int32, txhash string, cfg *types.Chain33Config) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = tradeType
 	base := &pty.ReceiptSellBase{
 		TokenSymbol:       selldb.TokenSymbol,
 		Owner:             selldb.Address,
-		AmountPerBoardlot: strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		AmountPerBoardlot: types.FormatAmount2FixPrecisionDisplay(selldb.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       selldb.MinBoardlot,
-		PricePerBoardlot:  strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		PricePerBoardlot:  types.FormatAmount2FixPrecisionDisplay(selldb.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     selldb.TotalBoardlot,
 		SoldBoardlot:      selldb.SoldBoardlot,
 		Starttime:         selldb.Starttime,
@@ -74,15 +73,15 @@ func (selldb *sellDB) getSellLogs(tradeType int32, txhash string) *types.Receipt
 	return log
 }
 
-func (selldb *sellDB) getBuyLogs(buyerAddr string, boardlotcnt int64, txhash string) *types.ReceiptLog {
+func (selldb *sellDB) getBuyLogs(buyerAddr string, boardlotcnt int64, txhash string, cfg *types.Chain33Config) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogTradeBuyMarket
 	base := &pty.ReceiptBuyBase{
 		TokenSymbol:       selldb.TokenSymbol,
 		Owner:             buyerAddr,
-		AmountPerBoardlot: strconv.FormatFloat(float64(selldb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		AmountPerBoardlot: types.FormatAmount2FixPrecisionDisplay(selldb.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       selldb.MinBoardlot,
-		PricePerBoardlot:  strconv.FormatFloat(float64(selldb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		PricePerBoardlot:  types.FormatAmount2FixPrecisionDisplay(selldb.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     boardlotcnt,
 		BoughtBoardlot:    boardlotcnt,
 		BuyID:             "",
@@ -147,15 +146,15 @@ func (buydb *buyDB) getKVSet() (kvset []*types.KeyValue) {
 	return kvset
 }
 
-func (buydb *buyDB) getBuyLogs(tradeType int32, txhash string) *types.ReceiptLog {
+func (buydb *buyDB) getBuyLogs(tradeType int32, txhash string, cfg *types.Chain33Config) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = tradeType
 	base := &pty.ReceiptBuyBase{
 		TokenSymbol:       buydb.TokenSymbol,
 		Owner:             buydb.Address,
-		AmountPerBoardlot: strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		AmountPerBoardlot: types.FormatAmount2FixPrecisionDisplay(buydb.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       buydb.MinBoardlot,
-		PricePerBoardlot:  strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		PricePerBoardlot:  types.FormatAmount2FixPrecisionDisplay(buydb.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     buydb.TotalBoardlot,
 		BoughtBoardlot:    buydb.BoughtBoardlot,
 		BuyID:             buydb.BuyID,
@@ -194,15 +193,15 @@ func getBuyOrderFromID(buyID []byte, db dbm.KV) (*pty.BuyLimitOrder, error) {
 	return &buy, nil
 }
 
-func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt int64, txhash string) *types.ReceiptLog {
+func (buydb *buyDB) getSellLogs(sellerAddr string, sellID string, boardlotCnt int64, txhash string, cfg *types.Chain33Config) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = pty.TyLogTradeSellMarket
 	base := &pty.ReceiptSellBase{
 		TokenSymbol:       buydb.TokenSymbol,
 		Owner:             sellerAddr,
-		AmountPerBoardlot: strconv.FormatFloat(float64(buydb.AmountPerBoardlot)/float64(types.TokenPrecision), 'f', 8, 64),
+		AmountPerBoardlot: types.FormatAmount2FixPrecisionDisplay(buydb.AmountPerBoardlot, cfg.GetTokenPrecision()),
 		MinBoardlot:       buydb.MinBoardlot,
-		PricePerBoardlot:  strconv.FormatFloat(float64(buydb.PricePerBoardlot)/float64(types.Coin), 'f', 8, 64),
+		PricePerBoardlot:  types.FormatAmount2FixPrecisionDisplay(buydb.PricePerBoardlot, cfg.GetCoinPrecision()),
 		TotalBoardlot:     boardlotCnt,
 		SoldBoardlot:      boardlotCnt,
 		Starttime:         0,
@@ -292,7 +291,7 @@ func (action *tradeAction) tradeSell(sell *pty.TradeForSell) (*types.Receipt, er
 	tokendb := newSellDB(sellOrder)
 	sellOrderKV := tokendb.save(action.db)
 	logs = append(logs, receipt.Logs...)
-	logs = append(logs, tokendb.getSellLogs(pty.TyLogTradeSellLimit, action.txhash))
+	logs = append(logs, tokendb.getSellLogs(pty.TyLogTradeSellLimit, action.txhash, cfg))
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, sellOrderKV...)
 
@@ -373,8 +372,8 @@ func (action *tradeAction) tradeBuy(buyOrder *pty.TradeForBuy) (*types.Receipt, 
 
 	logs = append(logs, receiptFromAcc.Logs...)
 	logs = append(logs, receiptFromExecAcc.Logs...)
-	logs = append(logs, sellTokendb.getSellLogs(pty.TyLogTradeSellLimit, action.txhash))
-	logs = append(logs, sellTokendb.getBuyLogs(action.fromaddr, buyOrder.BoardlotCnt, action.txhash))
+	logs = append(logs, sellTokendb.getSellLogs(pty.TyLogTradeSellLimit, action.txhash, cfg))
+	logs = append(logs, sellTokendb.getBuyLogs(action.fromaddr, buyOrder.BoardlotCnt, action.txhash, cfg))
 	kv = append(kv, receiptFromAcc.KV...)
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
@@ -425,7 +424,7 @@ func (action *tradeAction) tradeRevokeSell(revoke *pty.TradeForRevokeSell) (*typ
 	sellOrderKV := tokendb.save(action.db)
 
 	logs = append(logs, receiptFromExecAcc.Logs...)
-	logs = append(logs, tokendb.getSellLogs(pty.TyLogTradeSellRevoke, action.txhash))
+	logs = append(logs, tokendb.getSellLogs(pty.TyLogTradeSellRevoke, action.txhash, cfg))
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
@@ -505,7 +504,7 @@ func (action *tradeAction) tradeBuyLimit(buy *pty.TradeForBuyLimit) (*types.Rece
 	tokendb := newBuyDB(buyOrder)
 	buyOrderKV := tokendb.save(action.db)
 	logs = append(logs, receipt.Logs...)
-	logs = append(logs, tokendb.getBuyLogs(pty.TyLogTradeBuyLimit, action.txhash))
+	logs = append(logs, tokendb.getBuyLogs(pty.TyLogTradeBuyLimit, action.txhash, cfg))
 	kv = append(kv, receipt.KV...)
 	kv = append(kv, buyOrderKV...)
 
@@ -585,8 +584,8 @@ func (action *tradeAction) tradeSellMarket(sellOrder *pty.TradeForSellMarket) (*
 
 	logs = append(logs, receiptFromAcc.Logs...)
 	logs = append(logs, receiptFromExecAcc.Logs...)
-	logs = append(logs, buyTokendb.getBuyLogs(pty.TyLogTradeBuyLimit, action.txhash))
-	logs = append(logs, buyTokendb.getSellLogs(action.fromaddr, action.txhash, sellOrder.BoardlotCnt, action.txhash))
+	logs = append(logs, buyTokendb.getBuyLogs(pty.TyLogTradeBuyLimit, action.txhash, cfg))
+	logs = append(logs, buyTokendb.getSellLogs(action.fromaddr, action.txhash, sellOrder.BoardlotCnt, action.txhash, cfg))
 	kv = append(kv, receiptFromAcc.KV...)
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
@@ -637,7 +636,7 @@ func (action *tradeAction) tradeRevokeBuyLimit(revoke *pty.TradeForRevokeBuy) (*
 	sellOrderKV := tokendb.save(action.db)
 
 	logs = append(logs, receiptFromExecAcc.Logs...)
-	logs = append(logs, tokendb.getBuyLogs(pty.TyLogTradeBuyRevoke, action.txhash))
+	logs = append(logs, tokendb.getBuyLogs(pty.TyLogTradeBuyRevoke, action.txhash, cfg))
 	kv = append(kv, receiptFromExecAcc.KV...)
 	kv = append(kv, sellOrderKV...)
 	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: logs}, nil
