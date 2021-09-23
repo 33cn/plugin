@@ -1,0 +1,180 @@
+syntax = "proto3";
+
+import "common.proto";
+import "transaction.proto";
+import "cryptokey.proto";
+
+package types;
+option go_package = "../types";
+
+
+//支持同时存入多个地址，多个地址具有相同的returnAddr和AuthorizeAddr,如果不同，则单个来存
+message DepositInfo{
+    string receiverAddrs = 1;
+    string returnAddr = 2;
+    string authorizeAddr = 3;
+    string amounts = 4;
+}
+
+
+//钱包生成deposit tx
+message DepositTxReq{
+    DepositInfo deposit = 1;
+    string zkPath = 2;
+
+}
+
+
+message DepositProofResp{
+    string          noteHash = 1;
+    SecretData      proof    = 2;
+    DHSecretGroup   secrets  = 3;
+}
+
+
+//可withdraw 多个note
+message WithdrawTxReq{
+    uint64 totalAmount = 1;
+    string noteHashs  = 2;   // seperate by ","
+    string zkPath = 3;
+}
+
+
+//只授权一个note，超过一个，toAddr不好设置
+message AuthTxReq{
+    string noteHash = 1;
+    string authorizeToAddr = 2;
+    string zkPath = 3;
+}
+
+
+message TransferInputTxReq{
+    string noteHashs     = 1;
+}
+
+message TransferOutputTxReq{
+    DepositInfo deposit    = 1;
+}
+
+message TransferTxReq{
+    TransferInputTxReq  input        = 1;
+    TransferOutputTxReq output       = 2;
+    string              zkPath       = 3;
+}
+
+message CreateZkKeyFileReq{
+    int32   ty          = 1;
+    string  savePath    = 2;
+
+}
+
+//加密了的input/output amount
+message ShieldAmount{
+    string X = 1;
+    string Y = 2;
+}
+
+message ShieldAmountRst{
+    repeated string inputRandoms = 1;
+    string outputRandom = 2;
+    string changeRandom = 3;
+    repeated ShieldAmount inputs = 4;
+    ShieldAmount output = 5;
+    ShieldAmount change = 6;
+
+}
+
+message CreateRawTxReq{
+    int32   actionTy = 1;
+    bytes   data = 4;
+    string  assetExec = 2;
+    string  assetSymbol = 3;
+    string  title = 6;          //平行链名字
+    bool    verifyOnChain = 7; //true:链上验证,false:本地验证
+}
+
+message PaymentKeysReq{
+    string privKey = 1; //user wallet priv key
+    string addr    = 2; //user addr
+    bool   detail = 3; //获取私钥信息
+}
+
+enum NoteStatus{
+	UNDEF   = 0;
+	VALID   = 1;   //已授权可使用 相对消费者
+	USED    = 2;    //已使用
+	FROZEN  = 3;   //未授权
+	UNFROZEN  = 4;  //已授权 相对授权者
+}
+
+
+message WalletNoteInfo {
+    string             noteHash             = 1;
+    string             nullifier            = 2;
+    string             authorizeSpendHash   = 3;
+    string             authorizeHash        = 4;
+    string             account              = 5; //账户地址
+    NoteStatus         status               = 6;
+    SecretData         secret               = 7;
+}
+
+message WalletDbMixInfo {
+    WalletNoteInfo       info   = 1;
+    string               txIndex = 2;
+}
+
+
+message WalletMixIndexReq {
+    string             noteHash             = 1;
+    string             nullifier            = 2;
+    string             authorizeSpendHash   = 3;
+    string             authorizeHash        = 4;
+    string             account              = 5;
+    int32              status               = 6;
+    int32              count                = 7;
+    int32              direction            = 8;
+}
+
+message WalletNoteResp {
+    repeated WalletNoteInfo notes = 1;
+}
+
+
+message WalletEnablePrivacyRst{
+    string  addr = 1;
+    bool    isOK = 2;
+    string  msg = 3;
+}
+
+message WalletEnablePrivacyResp{
+    repeated WalletEnablePrivacyRst resps = 1;
+}
+
+
+
+enum MixWalletRescanStatus{
+    IDLE = 0;
+    SCANNING = 1;
+    FINISHED = 2;
+}
+
+
+message PrivacyAddrResult{
+    string addr = 1;
+    bool isOK = 2;
+    string msg = 3;
+
+}
+
+message ReqEnablePrivacyRst{
+    repeated PrivacyAddrResult results = 1;
+}
+
+service mixPrivacy {
+    // 扫描UTXO以及获取扫描UTXO后的状态
+    rpc GetRescanStatus(ReqNil) returns (ReqString) {}
+    // 使能隐私账户
+    rpc RescanNotes(ReqNil) returns (ReqString) {}
+    // 创建隐私交易
+    rpc EnablePrivacy(ReqAddrs) returns (ReqEnablePrivacyRst) {}
+}

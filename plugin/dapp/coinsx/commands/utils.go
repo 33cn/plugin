@@ -7,6 +7,8 @@ package commands
 import (
 	"strings"
 
+	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 )
@@ -23,7 +25,7 @@ func GetExecAddr(exec string) (string, error) {
 }
 
 func getRealExecName(paraName string, name string) string {
-	if strings.HasPrefix(name, "user.p.") {
+	if strings.HasPrefix(name, pt.ParaPrefix) {
 		return name
 	}
 	return paraName + name
