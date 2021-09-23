@@ -372,7 +372,6 @@ func voteProposalProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateD
 	for _, record := range records {
 		opt := &auty.VoteProposalProject{
 			ProposalID: proposalID,
-			//Approve:    record.appr,
 		}
 		if record.appr {
 			opt.Vote = auty.AutonomyVoteOption_APPROVE

@@ -54,7 +54,6 @@ func addProposalProjectFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("endBlock", "e", 0, "end block height")
 	cmd.MarkFlagRequired("endBlock")
 	cmd.Flags().Int32P("projectNeedBlockNum", "n", 0, "project complete need time(unit is block number)")
-	//cmd.MarkFlagRequired("projectNeedBlockNum")
 }
 
 func proposalProject(cmd *cobra.Command, args []string) {

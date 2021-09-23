@@ -10,8 +10,6 @@ source "./publicTest.sh"
 {
     propKey="0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
     propAddr="15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
-    #votePrKey="1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
-    #voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
 
     votePrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 

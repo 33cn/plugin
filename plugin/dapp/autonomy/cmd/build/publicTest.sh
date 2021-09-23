@@ -10,8 +10,7 @@ RED='\033[1;31m'
 GRE='\033[1;32m'
 NOC='\033[0m'
 
-# 出错退出前拷贝日志文件
-function exit_cp_file() {
+function exit_test() {
     exit 1
 }
 
@@ -21,95 +20,6 @@ function get_docker_addr() {
     echo "${dockerAddr}"
 }
 
-# 杀死进程ebrelayer 进程 $1进程名称
-function kill_ebrelayer() {
-    # shellcheck disable=SC2009
-    ps -ef | grep "${1}"
-    # shellcheck disable=SC2009
-    pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    if [ "${pid}" == "" ]; then
-        echo "not find ${1} pid"
-        return
-    fi
-
-    kill -9 "${pid}"
-    sleep 1
-    # shellcheck disable=SC2009
-    pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    if [ "${pid}" != "" ]; then
-        echo "kill ${1} failed"
-        kill -9 "${pid}"
-    fi
-    sleep 1
-}
-
-# 判断结果是否正确
-function cli_ret() {
-    set +x
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
-    fi
-
-    ok=$(echo "${1}" | jq -r .isOK)
-    if [[ ${ok} != "true" ]]; then
-        echo -e "${RED}failed to ${2}${NOC}"
-        exit_cp_file
-    fi
-
-    local jqMsg=".msg"
-    if [[ $# -ge 3 ]]; then
-        jqMsg="${3}"
-    fi
-
-    msg=$(echo "${1}" | jq -r "${jqMsg}")
-    if [[ $# -eq 4 ]]; then
-        if [ "$(echo "$msg < $4" | bc)" -eq 1 ] || [ "$(echo "$msg > $4" | bc)" -eq 1 ]; then
-            echo -e "${RED}The balance is not correct${NOC}"
-            exit_cp_file
-        fi
-    fi
-
-    set -x
-    echo "${msg}"
-}
-
-# 判断 chain33 金额是否正确
-function balance_ret() {
-    set +x
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
-    fi
-
-    local balance=$(echo "${1}" | jq -r ".balance")
-    if [ "$(echo "$balance < $2" | bc)" -eq 1 ] || [ "$(echo "$balance > $2" | bc)" -eq 1 ]; then
-        echo -e "${RED}The balance is not correct${NOC}"
-        exit_cp_file
-    fi
-
-    set -x
-    echo "${balance}"
-}
-
-# 查询关键字所在行然后删除 ${1}文件名称 ${2}关键字
-function delete_line() {
-    line=$(cat -n "${1}" | grep "${2}" | awk '{print $1}' | xargs | awk '{print $1}')
-    if [ "${line}" ]; then
-        sed -i "${line}"'d' "${1}" # 删除行
-    fi
-}
-
-# 查询关键字所在行然后删除 ${1}文件名称 ${2}关键字
-function delete_line_show() {
-    local line=$(cat -n "${1}" | grep "${2}" | awk '{print $1}' | xargs | awk '{print $1}')
-    if [ "${line}" ]; then
-        sed -i "${line}"'d' "${1}" # 删除行
-        line=$((line - 1))
-    fi
-    echo "${line}"
-}
-
 # chain33 区块等待 $1:cli 路径  $2:等待高度
 function block_wait() {
     set +x
@@ -117,7 +27,7 @@ function block_wait() {
 
     if [[ $# -lt 1 ]]; then
         echo -e "${RED}wrong block_wait parameter${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     local cur_height=$(${CLI} block last_header | jq ".height")
@@ -145,12 +55,12 @@ function check_tx() {
 
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong check_tx parameters${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     if [[ ${2} == "" ]]; then
         echo -e "${RED}wrong check_tx txHash is empty${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     local count=0
@@ -174,19 +84,7 @@ function check_tx() {
     ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
-        exit_cp_file
-    fi
-}
-
-function check_number() {
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong check number parameters${NOC}"
-        exit_cp_file
-    fi
-
-    if [ "$(echo "$1 < $2" | bc)" -eq 1 ] || [ "$(echo "$1 > $2" | bc)" -eq 1 ]; then
-        echo -e "${RED}error number, expect ${1}, get ${2}${NOC}"
-        exit_cp_file
+        exit_test
     fi
 }
 
@@ -194,13 +92,13 @@ function check_number() {
 function check_addr() {
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong check number parameters${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     addr=$(echo "${1}" | jq -r ".acc.addr")
     if [[ ${addr} != "${2}" ]]; then
         echo -e "${RED}error addr, expect ${1}, get ${2}${NOC}"
-        exit_cp_file
+        exit_test
     fi
 }
 
@@ -209,12 +107,12 @@ function is_equal() {
     set +x
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     if [[ $1 != "$2" ]]; then
         echo -e "${RED}$1 != ${2}${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     set -x
@@ -225,12 +123,12 @@ function is_not_equal() {
     set +x
     if [[ $# -lt 2 ]]; then
         echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     if [[ $1 == "$2" ]]; then
         echo -e "${RED}$1 == ${2}${NOC}"
-        exit_cp_file
+        exit_test
     fi
 
     set -x
@@ -254,18 +152,13 @@ function import_addr() {
 
 function InitChain33Account() {
     # shellcheck disable=SC2154
-    import_addr "${propKey}" "prop" "${propAddr}" 1000
-    # shellcheck disable=SC2154
-    import_addr "${votePrKey2}" "vote2" "${voteAddr2}" 100
-    # shellcheck disable=SC2154
-    import_addr "${votePrKey3}" "vote3" "${voteAddr3}" 100
-    #    import_addr "${votePrKey}" "vote" "${voteAddr}" 3200
-
-    # shellcheck disable=SC2154
-    import_addr "${changeKey}" "changeTest" "${changeAddr}" 10
-
+    {
+        import_addr "${propKey}" "prop" "${propAddr}" 1000
+        import_addr "${votePrKey2}" "vote2" "${voteAddr2}" 100
+        import_addr "${votePrKey3}" "vote3" "${voteAddr3}" 100
+        import_addr "${changeKey}" "changeTest" "${changeAddr}" 10
+    }
     autonomyAddr=$(${Chain33Cli} exec addr -e autonomy)
-
     hash=$(${Chain33Cli} send coins transfer -a 900 -n test -t "${autonomyAddr}" -k "${propKey}")
     check_tx "${Chain33Cli}" "${hash}"
 

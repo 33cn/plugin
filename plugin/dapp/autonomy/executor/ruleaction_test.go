@@ -318,7 +318,6 @@ func voteProposalRule(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB d
 	for i, record := range records {
 		opt := &auty.VoteProposalRule{
 			ProposalID: proposalID,
-			//Approve:    record.appr,
 			OriginAddr: record.origin,
 		}
 		if record.appr {

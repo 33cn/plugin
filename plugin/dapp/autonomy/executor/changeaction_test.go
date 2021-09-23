@@ -184,10 +184,6 @@ func revokeProposalChangeTx(parm *auty.RevokeProposalChange) (*types.Transaction
 
 func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.KV, kvdb dbm.KVDB, save bool) {
 	api := new(apimock.QueueProtocolAPI)
-	//chainCfg := types.NewChain33Config(cfgstring)
-	//chainCfg.SetDappFork("autonomy","Enable",1)
-	//chainCfg.SetDappFork("autonomy","ForkAutonomyDelRule",100)
-	//api.On("GetConfig", mock.Anything).Return(chainCfg, nil)
 	api.On("GetConfig", mock.Anything).Return(chainTestCfg, nil)
 	api.On("StoreList", mock.Anything).Return(&types.StoreListReply{}, nil)
 	api.On("GetLastHeader", mock.Anything).Return(&types.Header{StateHash: []byte("")}, nil)
@@ -240,7 +236,6 @@ func voteProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB
 	for _, record := range records {
 		opt := &auty.VoteProposalChange{
 			ProposalID: proposalID,
-			//Approve:    record.appr,
 		}
 		if record.appr {
 			opt.Vote = auty.AutonomyVoteOption_APPROVE
@@ -369,7 +364,6 @@ func voteErrorProposalChange(t *testing.T, env *ExecEnv, exec drivers.Driver, st
 	for i, record := range records {
 		opt := &auty.VoteProposalChange{
 			ProposalID: proposalID,
-			//Approve:    record.appr,
 		}
 		if record.appr {
 			opt.Vote = auty.AutonomyVoteOption_APPROVE
