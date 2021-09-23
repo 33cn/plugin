@@ -21,19 +21,6 @@ function get_docker_addr() {
     echo "${dockerAddr}"
 }
 
-#function block_wait() {
-#    set +x
-#    set +x
-#    local block=$1
-#    for((i=1;i<=block;i++));do
-#        hash=$(${Chain33Cli} send coins transfer -a 0.001 -n test -t "${propAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
-#        check_tx "${Chain33Cli}" "${hash}"
-#        echo "这是第 $i 次调用";
-#    done;
-#    set -x
-#    set -x
-#}
-
 # 杀死进程ebrelayer 进程 $1进程名称
 function kill_ebrelayer() {
     # shellcheck disable=SC2009
@@ -278,16 +265,9 @@ function InitChain33Account() {
     import_addr "${changeKey}" "changeTest" "${changeAddr}" 10
 
     autonomyAddr=$(${Chain33Cli} exec addr -e autonomy)
-    #    ticketAddr=$(${Chain33Cli} exec addr -e ticket)
 
     hash=$(${Chain33Cli} send coins transfer -a 900 -n test -t "${autonomyAddr}" -k "${propKey}")
     check_tx "${Chain33Cli}" "${hash}"
-    #    hash=$(${Chain33Cli} send coins transfer -a 3100 -n test -t "${ticketAddr}" -k "${votePrKey}")
-    #    check_tx "${Chain33Cli}" "${hash}"
-
-    # shellcheck disable=SC2154
-    #    hash=$(${Chain33Cli} send coins transfer -a 10 -n test -t "${voteAddr2}" -k "${minerAddr}")
-    #    check_tx "${Chain33Cli}" "${hash}"
 
     local count=0
     # shellcheck disable=SC2154
@@ -298,30 +278,3 @@ function InitChain33Account() {
     done
 }
 
-# chian33 初始化准备
-function InitChain33() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    # init
-    #    ${Chain33Cli} seed save -p 1314fuzamei -s "tortoise main civil member grace happy century convince father cage beach hip maid merry rib"
-    #    ${Chain33Cli} wallet unlock -p 1314fuzamei -t 0
-    #    ${Chain33Cli} account import_key -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944 -l returnAddr
-
-    InitChain33Account
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
-function StartChain33() {
-    #    kill_ebrelayer chain33
-    #    sleep 2
-    #
-    #    # delete chain33 datadir
-    #    rm ../../datadir ../../logs -rf
-    #
-    #    nohup ../../chain33 -f ./ci/autonomy/test.toml >chain33log.log 2>&1 &
-    #
-    #    sleep 1
-
-    InitChain33
-}

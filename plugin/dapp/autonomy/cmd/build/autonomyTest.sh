@@ -379,7 +379,7 @@ function mainTest() {
     # shellcheck disable=SC2154
     docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
     Chain33Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-    StartChain33
+    InitChain33Account
 
     testProposalRule
     testProposalBoard
@@ -387,10 +387,3 @@ function mainTest() {
     testProposalChange
     testProposalTerminate
 }
-
-#Chain33Cli="../../../../../build/chain33-cli --rpc_laddr http://172.20.0.2:8801"
-#testProposalProject
-
-#testProposalChange
-#testProposalTerminate
-#testProposalChange
