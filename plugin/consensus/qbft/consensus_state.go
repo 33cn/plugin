@@ -1862,7 +1862,7 @@ func (cs *ConsensusState) EmptyBlockInterval() time.Duration {
 
 // PeerGossipSleep returns the amount of time to sleep if there is nothing to send from the ConsensusReactor
 func (cs *ConsensusState) PeerGossipSleep() time.Duration {
-	return time.Duration(peerGossipSleepDuration) * time.Millisecond
+	return time.Duration(peerGossipSleepDuration.Load().(int32)) * time.Millisecond
 }
 
 // PeerQueryMaj23Sleep returns the amount of time to sleep after each VoteSetMaj23Message is sent in the ConsensusReactor

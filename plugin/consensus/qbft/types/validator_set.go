@@ -144,6 +144,9 @@ func (valSet *ValidatorSet) IncrementAccum(times int) {
 
 // Copy ...
 func (valSet *ValidatorSet) Copy() *ValidatorSet {
+	if valSet == nil {
+		return nil
+	}
 	validators := make([]*Validator, len(valSet.Validators))
 	for i, val := range valSet.Validators {
 		// NOTE: must copy, since IncrementAccum updates in place.

@@ -27,6 +27,7 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/log/log15"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/system/crypto/none"
 	"github.com/33cn/chain33/types"
 	ty "github.com/33cn/plugin/plugin/dapp/valnode/types"
 	"google.golang.org/grpc"
@@ -58,6 +59,12 @@ func main() {
 			return
 		}
 		Perf(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
+	case "perfV2":
+		if len(argsWithoutProg) != 4 {
+			fmt.Print(errors.New("参数错误").Error())
+			return
+		}
+		PerfV2(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3])
 	case "put":
 		if len(argsWithoutProg) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
@@ -88,9 +95,10 @@ func main() {
 // LoadHelp ...
 func LoadHelp() {
 	fmt.Println("Available Commands:")
-	fmt.Println("perf [host, size, num, interval, duration]                   : 写数据性能测试，interval单位为100毫秒，host形式为ip:port")
-	fmt.Println("put  [ip, size]                                              : 写数据")
-	fmt.Println("get  [ip, hash]                                              : 读数据")
+	fmt.Println("perf    [host, size, num, interval, duration]                : 写数据性能测试，interval单位为100毫秒，host形式为ip:port")
+	fmt.Println("perfV2  [host, size, duration]                               : 写数据性能测试，host形式为ip:port")
+	fmt.Println("put     [ip, size]                                           : 写数据")
+	fmt.Println("get     [ip, hash]                                           : 读数据")
 	fmt.Println("valnode [ip, pubkey, power]                                  : 增加/删除/修改tendermint节点")
 	fmt.Println("perfOld [ip, size, num, interval, duration]                  : 不推荐使用，写数据性能测试，interval单位为100毫秒")
 }
@@ -217,6 +225,119 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 	for k := 0; k < numThread*2; k++ {
 		<-chSend
 	}
+	//打印发送的交易总数
+	log.Info("sendtx total tx", "total", total)
+	//打印成功发送的交易总数
+	log.Info("sendtx success tx", "success", success)
+}
+
+// PerfV2
+func PerfV2(host, txsize, duration string) {
+	durInt, _ := strconv.Atoi(duration)
+	sizeInt, _ := strconv.Atoi(txsize)
+	numCPU := runtime.NumCPU()
+	numThread := numCPU * 2
+	numSend := numCPU * 3
+	ch := make(chan struct{}, numThread)
+	chSend := make(chan struct{}, numSend)
+	numInt := 10000
+	batchNum := 200
+	txChan := make(chan *types.Transaction, numInt)
+	var blockHeight int64
+	total := int64(0)
+	success := int64(0)
+	start := time.Now()
+
+	go func() {
+		ch <- struct{}{}
+		conn := newGrpcConn(host)
+		defer conn.Close()
+		gcli := types.NewChain33Client(conn)
+		for {
+			height, err := getHeight(gcli)
+			if err != nil {
+				log.Error("getHeight", "err", err)
+				time.Sleep(time.Second)
+			} else {
+				atomic.StoreInt64(&blockHeight, height)
+			}
+			time.Sleep(time.Millisecond * 500)
+		}
+	}()
+	<-ch
+
+	for i := 0; i < numThread; i++ {
+		go func() {
+			ticker := time.NewTicker(time.Duration(durInt) * time.Second)
+			defer ticker.Stop()
+
+			_, priv := genaddress()
+			beg := time.Now()
+		OuterLoop:
+			for {
+				select {
+				case <-ticker.C:
+					log.Info("thread duration", "cost", time.Since(beg))
+					break OuterLoop
+				default:
+					//txHeight := atomic.LoadInt64(&blockHeight) + types.LowAllowPackHeight
+					for txs := 0; txs < batchNum; txs++ {
+						//构造存证交易
+						tx := &types.Transaction{Execer: []byte("user.write")}
+						tx.To = execAddr
+						tx.Fee = 1e6
+						tx.Nonce = time.Now().UnixNano()
+						//tx.Expire = types.TxHeightFlag + txHeight
+						tx.Expire = 0
+						tx.Payload = RandStringBytes(sizeInt)
+						//交易签名
+						//tx.Sign(types.SECP256K1, priv)
+						tx.Signature = &types.Signature{Ty: none.ID, Pubkey: priv.PubKey().Bytes()}
+						txChan <- tx
+					}
+				}
+			}
+			ch <- struct{}{}
+		}()
+	}
+
+	for i := 0; i < numSend; i++ {
+		go func() {
+			conn := newGrpcConn(host)
+			defer conn.Close()
+			gcli := types.NewChain33Client(conn)
+			txs := &types.Transactions{Txs: make([]*types.Transaction, 0, batchNum)}
+
+			for tx := range txChan {
+				txs.Txs = append(txs.Txs, tx)
+				if len(txs.Txs) == batchNum {
+					_, err := gcli.SendTransactions(context.Background(), txs)
+					atomic.AddInt64(&total, int64(batchNum))
+					txs.Txs = txs.Txs[:0]
+					if err != nil {
+						if strings.Contains(err.Error(), "ErrChannelClosed") {
+							return
+						}
+						log.Error("sendtx", "err", err.Error())
+						time.Sleep(time.Second)
+						continue
+					}
+					atomic.AddInt64(&success, int64(batchNum))
+				}
+
+			}
+			chSend <- struct{}{}
+		}()
+	}
+
+	for j := 0; j < numThread; j++ {
+		<-ch
+	}
+	close(txChan)
+	for k := 0; k < numSend; k++ {
+		<-chSend
+	}
+	log.Info("sendtx duration", "cost", time.Since(start))
 	//打印发送的交易总数
 	log.Info("sendtx total tx", "total", total)
 	//打印成功发送的交易总数

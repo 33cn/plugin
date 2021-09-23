@@ -28,6 +28,8 @@ var (
 	ErrBaseExecErr = errors.New("ErrBaseExecErr")
 	// ErrLastBlockID error type
 	ErrLastBlockID = errors.New("ErrLastBlockID")
+	// ErrConsensusState error type
+	ErrConsensusState = errors.New("ErrConsensusState")
 )
 
 var (
