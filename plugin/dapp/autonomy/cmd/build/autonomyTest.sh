@@ -8,20 +8,20 @@ source "./publicTest.sh"
 
 # shellcheck disable=SC2034
 {
-propKey="0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
-propAddr="15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
-#votePrKey="1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
-#voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
+    propKey="0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
+    propAddr="15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
+    #votePrKey="1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
+    #voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
 
-votePrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+    votePrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
 
-voteAddr2="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
-votePrKey2="B0BB75BC49A787A71F4834DA18614763B53A18291ECE6B5EDEC3AD19D150C3E7" #1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF
+    voteAddr2="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+    votePrKey2="B0BB75BC49A787A71F4834DA18614763B53A18291ECE6B5EDEC3AD19D150C3E7" #1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF
 
-voteAddr3="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
-votePrKey3="2AFF1981291355322C7A6308D46A9C9BA311AA21D94F36B43FC6A6021A1334CF"
+    voteAddr3="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
+    votePrKey3="2AFF1981291355322C7A6308D46A9C9BA311AA21D94F36B43FC6A6021A1334CF"
 
-boardsAddr="1N578zmVzVR7RxLfnp7XAeDmAy499Jw3q2
+    boardsAddr="1N578zmVzVR7RxLfnp7XAeDmAy499Jw3q2
 , 1DZ1kL9x3rRwz7EZjcLt1kMYu6Zdp3MjGR
 , 1HUYR1Mzb91m3dmsEE1vPrv7BsAHmEtVzM
 , 1JHmVgchSLjszN9LAYa3gds811c4BH2J51
@@ -46,17 +46,17 @@ boardsAddr="1N578zmVzVR7RxLfnp7XAeDmAy499Jw3q2
 , 13KTf57aCkVVJYNJBXBBveiA5V811SrLcT
 , 1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe
 , 1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"
-# shellcheck disable=SC2206
-arrayAddr=(${boardsAddr//,/ })
+    # shellcheck disable=SC2206
+    arrayAddr=(${boardsAddr//,/ })
 
     lenAddr=${#arrayAddr[@]}
     for ((i = 0; i < lenAddr - 1; i++)); do
         boards=$(echo "${boards}${arrayAddr[i]}-")
     done
     # shellcheck disable=SC2116
-    boards=$(echo "${boards}${arrayAddr[lenAddr-1]}")
+    boards=$(echo "${boards}${arrayAddr[lenAddr - 1]}")
 
-boardsPrKey="fa54751118c8159ade22c253f85945a4dd2030b1cf2502eaf785d0a4f5ad7e35
+    boardsPrKey="fa54751118c8159ade22c253f85945a4dd2030b1cf2502eaf785d0a4f5ad7e35
 ,da9371ea52f1fc9d72e75dbc9836774895cd0966fd53c83f5e2c92d878903693
 ,ad9731261c40c68fee96f7b846408fa33d1f3dc2a27bdb3694ec8f3aa153a98b
 ,e902d23ad26052cec64e9ed9055853327787b3bf26eb4646a6d6c1bb516f9fcd
@@ -81,23 +81,23 @@ boardsPrKey="fa54751118c8159ade22c253f85945a4dd2030b1cf2502eaf785d0a4f5ad7e35
 ,e892212221b3b58211b90194365f4662764b6d5474ef2961ef77c909e31eeed3
 ,9d19a2e9a440187010634f4f08ce36e2bc7b521581436a99f05568be94dc66ea
 ,45d4ce009e25e6d5e00d8d3a50565944b2e3604aa473680a656b242d9acbff35"
-# shellcheck disable=SC2206
-arrayKey=(${boardsPrKey//,/ })
+    # shellcheck disable=SC2206
+    arrayKey=(${boardsPrKey//,/ })
 
-changeKey="0x7503333e74190abdfa10b9e5e3a225136ea7ed1f5beeeb710b1f3933a083b2c5"
-changeAddr="15MP8oQXW9UuzbfMsUyVy4ThStm9ZH7hgG"
-changeKey2="0x38d12b36d8d84a80131db15f2a067e2706f8367c933c075b3b3cefa3a864ad15"
-changeAddr2="1Kubv93zSatYRq6eHdBa4BkMBwtB2UpQum"
+    changeKey="0x7503333e74190abdfa10b9e5e3a225136ea7ed1f5beeeb710b1f3933a083b2c5"
+    changeAddr="15MP8oQXW9UuzbfMsUyVy4ThStm9ZH7hgG"
+    changeKey2="0x38d12b36d8d84a80131db15f2a067e2706f8367c933c075b3b3cefa3a864ad15"
+    changeAddr2="1Kubv93zSatYRq6eHdBa4BkMBwtB2UpQum"
 
-minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+    minerAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
-Chain33Cli="../../chain33-cli"
-proposalRuleID=""
-proposalBoardID=""
-proposalProjectID=""
-start=0
-end=0
-last_header=0
+    Chain33Cli="../../chain33-cli"
+    proposalRuleID=""
+    proposalBoardID=""
+    proposalProjectID=""
+    start=0
+    end=0
+    last_header=0
 
     boardApproveRatio=50
     pubOpposeRatio=33
@@ -388,13 +388,9 @@ function mainTest() {
     testProposalTerminate
 }
 
-
 #Chain33Cli="../../../../../build/chain33-cli --rpc_laddr http://172.20.0.2:8801"
 #testProposalProject
 
 #testProposalChange
 #testProposalTerminate
 #testProposalChange
-
-
-
