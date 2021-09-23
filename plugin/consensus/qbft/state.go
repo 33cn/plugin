@@ -65,6 +65,9 @@ type State struct {
 
 // Copy makes a copy of the QbftState for mutating.
 func (s State) Copy() State {
+	if &s == nil {
+		return State{}
+	}
 	return State{
 		ChainID: s.ChainID,
 

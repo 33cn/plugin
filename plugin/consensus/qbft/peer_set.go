@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"github.com/33cn/chain33/types"
 	"io"
 	"net"
 	"reflect"
@@ -20,6 +21,7 @@ import (
 	ttypes "github.com/33cn/plugin/plugin/consensus/qbft/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/qbftNode/types"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/snappy"
 	"github.com/pkg/errors"
 )
 
@@ -273,7 +275,7 @@ func (pc *peerConn) SetTransferChannel(transferChannel chan MsgInfo) {
 
 func (pc *peerConn) String() string {
 	return fmt.Sprintf("PeerConn{outbound:%v persistent:%v ip:%s id:%s started:%v stopped:%v}",
-		pc.outbound, pc.persistent, pc.ip.String(), pc.id, pc.started, pc.stopped)
+		pc.outbound, pc.persistent, pc.ip.String(), pc.id, atomic.LoadUint32(&pc.started), atomic.LoadUint32(&pc.stopped))
 }
 
 func (pc *peerConn) CloseConn() {
@@ -480,30 +482,38 @@ func (pc *peerConn) stopForError(r interface{}) {
 	}
 }
 
+// 数据压缩后发送， 内部对相关数组进行重复利用
+func encodeMsg(msg types.Message, pbuf *[]byte, typeID byte) []byte {
+	buf := *pbuf
+	buf = buf[:cap(buf)]
+	raw := types.Encode(msg)
+	buf = snappy.Encode(buf, raw)
+	if len(raw) > MaxMsgPacketPayloadSize {
+		qbftlog.Info("packet exceed max size", "old", len(raw), "new", len(buf))
+	}
+	*pbuf = buf
+	// 复用raw数组作为压缩数据返回， 需要比较容量是否够大
+	if cap(raw) >= len(buf)+5 {
+		raw = raw[:len(buf)+5]
+	} else {
+		raw = make([]byte, len(buf)+5)
+	}
+	raw[0] = typeID
+	bytelen := make([]byte, 4)
+	binary.BigEndian.PutUint32(bytelen, uint32(len(buf)))
+	copy(raw[1:5], bytelen)
+	copy(raw[5:], buf)
+	return raw
+}
+
 func (pc *peerConn) sendRoutine() {
+	buf := make([]byte, 0)
 FOR_LOOP:
 	for {
 		select {
 		case msg := <-pc.sendQueue:
-			bytes, err := proto.Marshal(msg.Msg)
-			if err != nil {
-				qbftlog.Error("peerConn sendroutine marshal data failed", "error", err)
-				pc.stopForError(err)
-				break FOR_LOOP
-			}
-
-			len := len(bytes)
-			bytelen := make([]byte, 4)
-			binary.BigEndian.PutUint32(bytelen, uint32(len))
-			pc.sendBuffer = pc.sendBuffer[:0]
-			pc.sendBuffer = append(pc.sendBuffer, msg.TypeID)
-			pc.sendBuffer = append(pc.sendBuffer, bytelen...)
-
-			pc.sendBuffer = append(pc.sendBuffer, bytes...)
-			if len+5 > MaxMsgPacketPayloadSize {
-				qbftlog.Info("packet exceed max size", "len", len+5)
-			}
-			_, err = pc.bufWriter.Write(pc.sendBuffer[:len+5])
+			raw := encodeMsg(msg.Msg, &buf, msg.TypeID)
+			_, err := pc.bufWriter.Write(raw)
 			if err != nil {
 				qbftlog.Error("peerConn sendroutine write data failed", "error", err)
 				pc.stopForError(err)
@@ -531,17 +541,25 @@ FOR_LOOP:
 			pc.stopForError(err)
 			break FOR_LOOP
 		}
+
 		pkt := msgPacket{}
+
 		pkt.TypeID = buf[0]
 		len := binary.BigEndian.Uint32(buf[1:])
 		if len > 0 {
 			buf2 := make([]byte, len)
 			_, err = io.ReadFull(pc.bufReader, buf2)
 			if err != nil {
-				qbftlog.Error("Connection failed @ recvRoutine", "conn", pc, "err", err)
+				qbftlog.Error("recvRoutine read data fail", "conn", pc, "err", err)
 				pc.stopForError(err)
 			}
-			pkt.Bytes = buf2
+			buf3 := make([]byte, len)
+			buf3, err = snappy.Decode(buf3, buf2)
+			if err != nil {
+				qbftlog.Error("recvRoutine snappy decode fail", "conn", pc, "err", err)
+				pc.stopForError(err)
+			}
+			pkt.Bytes = buf3
 		}
 
 		if v, ok := ttypes.MsgMap[pkt.TypeID]; ok {
