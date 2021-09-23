@@ -8,13 +8,20 @@ HTTP=""
 
 EXECTOR=""
 EXECTOR_ADDR=""
-TICKET_EXECTOR=""
-TICKET_ADDR=""
 
 propKey="0xfd0c4a8a1efcd221ee0f36b7d4f57d8ff843cb8bc193b39c7863332d355acafa"
 propAddr="15VUiygdxMSZ3rykwe742yomp2cPJ9Tfve"
-votePrKey="1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
-voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
+#votePrKey="1c3e6cac2f887e1ab9180e2d5772dc4ba01accb8d4df434faba097003eb35482"
+#voteAddr="1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"
+
+voteAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
+votePrKey="CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
+
+voteAddr2="1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF"
+votePrKey2="B0BB75BC49A787A71F4834DA18614763B53A18291ECE6B5EDEC3AD19D150C3E7" #1EbDHAXpoiewjPLX9uqoz38HsKqMXayZrF
+
+voteAddr3="1KcCVZLSQYRUwE5EXTsAoQs9LuJW6xwfQa"
+votePrKey3="2AFF1981291355322C7A6308D46A9C9BA311AA21D94F36B43FC6A6021A1334CF"
 
 proposalRuleID=""
 proposalBoardID=""
@@ -100,11 +107,7 @@ boards='
 "'${boardsAddr[19]}'",
 "'${boardsAddr[20]}'"
 '
-chain33_para_init() {
-    ip=$1
-    chain33_ImportPrivkey "${votePrKey}" "${voteAddr}" "autonomytest" "${ip}"
-    chain33_SendToAddress "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv" "$voteAddr" 630000000000 "${ip}"
-}
+
 chain33_applyCoinsNOLimit() {
     echo "chain33_getMainChainCoins"
     if [ "$#" -lt 3 ]; then
@@ -117,6 +120,7 @@ chain33_applyCoinsNOLimit() {
 
     local poolAddr="1PcGKYYoLn1PLLJJodc1UpgWGeFAQasAkx"
     chain33_SendToAddress "${poolAddr}" "${targetAddr}" "$count" "${ip}"
+    chain33_QueryBalance "${targetAddr}" "${ip}"
 }
 
 handleBoards() {
@@ -220,6 +224,7 @@ testProposalBoard() {
     #vote
     chain33_BlockWait 100 "$HTTP"
     voteBoardTx "${proposalBoardID}" "${votePrKey}"
+    voteBoardTx "${proposalBoardID}" "${votePrKey2}"
     #query
     queryProposal "${proposalBoardID}" "GetProposalBoard"
     listProposal 4 "ListProposalBoard"
@@ -276,6 +281,8 @@ testProposalRule() {
     #vote
     chain33_BlockWait 100 "$HTTP"
     voteRuleTx "${proposalRuleID}" ${votePrKey}
+    voteRuleTx "${proposalRuleID}" "${votePrKey2}"
+    voteRuleTx "${proposalRuleID}" "${votePrKey3}"
     #query
     queryProposal "${proposalRuleID}" "GetProposalRule"
     listProposal 4 "ListProposalRule"
@@ -457,45 +464,43 @@ init() {
     if [ "$ispara" == true ]; then
         EXECTOR_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.autonomy"}]}' "${HTTP}" | jq -r ".result")
         EXECTOR="user.p.para.autonomy"
-        TICKET_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.ticket"}]}' "${HTTP}" | jq -r ".result")
-        TICKET_EXECTOR="user.p.para.ticket"
     else
         EXECTOR_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"autonomy"}]}' "${HTTP}" | jq -r ".result")
         EXECTOR="autonomy"
-        TICKET_ADDR=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"ticket"}]}' "${HTTP}" | jq -r ".result")
-        TICKET_EXECTOR="ticket"
     fi
     echo "EXECTOR_ADDR=$EXECTOR_ADDR"
 
     local main_ip=${HTTP//8901/8801}
     chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "${main_ip}"
+    chain33_ImportPrivkey "${votePrKey2}" "${voteAddr2}" "voteAddr2" "${main_ip}"
+    chain33_ImportPrivkey "${votePrKey3}" "${voteAddr3}" "voteAddr3" "${main_ip}"
 
     if [ "$ispara" == false ]; then
         chain33_applyCoinsNOLimit "$propAddr" 100000000000 "${main_ip}"
-        chain33_QueryBalance "${propAddr}" "$main_ip"
-
+        chain33_applyCoinsNOLimit "${voteAddr}" 10000000000 "${main_ip}"
+        chain33_applyCoinsNOLimit "${voteAddr2}" 10000000000 "${main_ip}"
+        chain33_applyCoinsNOLimit "${voteAddr3}" 10000000000 "${main_ip}"
     else
-        chain33_applyCoins "$propAddr" 1000000000 "${main_ip}"
-        chain33_QueryBalance "${propAddr}" "$main_ip"
+        chain33_applyCoinsNOLimit "$propAddr" 1000000000 "${main_ip}"
         #主链投票账户转帐
         handleBoards "$main_ip"
 
         local para_ip="${HTTP}"
         chain33_ImportPrivkey "${propKey}" "${propAddr}" "prop" "$para_ip"
+        chain33_ImportPrivkey "${votePrKey2}" "${voteAddr2}" "voteAddr2" "${para_ip}"
+        chain33_ImportPrivkey "${votePrKey3}" "${voteAddr3}" "voteAddr3" "${para_ip}"
 
         #平行链中账户转帐
         chain33_applyCoinsNOLimit "$propAddr" 100000000000 "$para_ip"
-        chain33_QueryBalance "$propAddr" "$para_ip"
-        chain33_para_init "$para_ip"
+        chain33_applyCoinsNOLimit "${voteAddr}" 10000000000 "${para_ip}"
+        chain33_applyCoinsNOLimit "${voteAddr2}" 10000000000 "${para_ip}"
+        chain33_applyCoinsNOLimit "${voteAddr3}" 10000000000 "${para_ip}"
     fi
 
     # 往合约中转
     chain33_SendToAddress "$propAddr" "$EXECTOR_ADDR" 90000000000 "$HTTP"
     chain33_QueryExecBalance "$propAddr" "$EXECTOR" "$HTTP"
 
-    # 往ticket合约中转帐
-    chain33_SendToAddress "$voteAddr" "$TICKET_ADDR" 300100000000 "$HTTP"
-    chain33_QueryExecBalance "$voteAddr" "$TICKET_EXECTOR" "$HTTP"
     # 往投票账户中转帐
     handleBoards "$HTTP"
 }

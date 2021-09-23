@@ -499,6 +499,7 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 		addr = subcfg.Total
 	}
 	voteAccount, err := a.getStartHeightVoteAccount(addr, "", height)
+
 	if err != nil {
 		return 0, err
 	}
@@ -539,7 +540,11 @@ func (a *action) batchGetAddressVotes(addrs []string, height int64) (int32, erro
 }
 
 func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
-	voteAccount, err := a.getStartHeightVoteAccount(addr, ticketName, height)
+	execer := ticketName
+	if subcfg.Execer != "" {
+		execer = subcfg.Execer
+	}
+	voteAccount, err := a.getStartHeightVoteAccount(addr, execer, height)
 	if err != nil {
 		return 0, err
 	}
