@@ -277,4 +277,3 @@ function InitChain33Account() {
         count=$((count + 1))
     done
 }
-
