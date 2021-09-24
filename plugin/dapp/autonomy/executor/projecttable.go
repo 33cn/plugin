@@ -27,11 +27,11 @@ var projectOpt = &table.Option{
 //NewProjectTable 新建表
 func NewProjectTable(kvdb db.KV) *table.Table {
 	rowmeta := NewProjectRow()
-	table, err := table.NewTable(rowmeta, kvdb, projectOpt)
+	newTable, err := table.NewTable(rowmeta, kvdb, projectOpt)
 	if err != nil {
 		panic(err)
 	}
-	return table
+	return newTable
 }
 
 //ProjectRow table meta 结构

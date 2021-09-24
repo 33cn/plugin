@@ -407,7 +407,6 @@ func checkExecLocalBoard(t *testing.T, kvdb db.KVDB, cur *auty.AutonomyProposalB
 	assert.Equal(t, prop.Address, cur.Address)
 	assert.Equal(t, prop.Height, cur.Height)
 	assert.Equal(t, prop.Index, cur.Index)
-
 }
 
 func saveKvs(sdb db.DB, kvs []*types.KeyValue) {

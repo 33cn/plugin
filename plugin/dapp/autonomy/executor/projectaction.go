@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/common/address"
 )
@@ -184,8 +185,8 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	start := cur.GetPropProject().StartBlockHeight
 	end := cur.GetPropProject().EndBlockHeight
-	real := cur.GetPropProject().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropProject().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropProject ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -217,11 +218,25 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 
 	// 更新已经投票地址
 	votes.Address = append(votes.Address, a.fromaddr)
+
 	// 更新投票结果
-	if voteProb.Approve {
-		cur.BoardVoteRes.ApproveVotes++
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		switch voteProb.Vote {
+		case auty.AutonomyVoteOption_APPROVE:
+			cur.BoardVoteRes.ApproveVotes++
+		case auty.AutonomyVoteOption_OPPOSE:
+			cur.BoardVoteRes.OpposeVotes++
+		case auty.AutonomyVoteOption_QUIT:
+			cur.BoardVoteRes.QuitVotes++
+		default:
+			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.Vote)
+		}
 	} else {
-		cur.BoardVoteRes.OpposeVotes++
+		if voteProb.Approve {
+			cur.BoardVoteRes.ApproveVotes++
+		} else {
+			cur.BoardVoteRes.OpposeVotes++
+		}
 	}
 
 	var logs []*types.ReceiptLog
