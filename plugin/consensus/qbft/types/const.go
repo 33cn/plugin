@@ -29,7 +29,7 @@ var (
 	// ErrLastBlockID error type
 	ErrLastBlockID = errors.New("ErrLastBlockID")
 	// ErrConsensusState error type
-	ErrConsensusState = errors.New("ErrConsensusState")
+	ErrConsensusQuery = errors.New("Consensus is busy, please try again!")
 )
 
 var (
