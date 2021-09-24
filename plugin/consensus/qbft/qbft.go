@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	qbftVersion = "0.1.0"
+	qbftVersion = "0.2.0"
 
 	// DefaultQbftPort 默认端口
 	DefaultQbftPort = 33001
@@ -665,26 +665,31 @@ func (client *Client) LoadProposalBlock(height int64) *tmtypes.QbftBlock {
 // Query_IsHealthy query whether consensus is sync
 func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) {
 	isHealthy := false
-	if client.IsCaughtUp() && client.GetCurrentHeight() <= client.csState.GetRoundState().Height+1 {
-		isHealthy = true
+	if client.IsCaughtUp() {
+		rs := client.csState.QueryRoundState()
+		if rs != nil && client.GetCurrentHeight() <= rs.Height+1 {
+			isHealthy = true
+		}
 	}
 	return &tmtypes.QbftIsHealthy{IsHealthy: isHealthy}, nil
 }
 
 // Query_CurrentState query current consensus state
 func (client *Client) Query_CurrentState(req *types.ReqNil) (types.Message, error) {
-	if client.csState == nil {
-		return nil, ttypes.ErrConsensusState
+	state := client.csState.QueryState()
+	if state == nil {
+		return nil, ttypes.ErrConsensusQuery
 	}
-	return SaveState(client.csState.GetState()), nil
+	return SaveState(*state), nil
 }
 
 // Query_NodeInfo query validator node info
 func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
-	if client.csState == nil {
-		return nil, ttypes.ErrConsensusState
+	rs := client.csState.QueryRoundState()
+	if rs == nil {
+		return nil, ttypes.ErrConsensusQuery
 	}
-	vals := client.csState.GetRoundState().Validators.Validators
+	vals := rs.Validators.Validators
 	nodes := make([]*tmtypes.QbftNodeInfo, 0)
 	for _, val := range vals {
 		if val == nil {

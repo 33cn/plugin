@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/types"
-
 	ttypes "github.com/33cn/plugin/plugin/consensus/qbft/types"
 	tmtypes "github.com/33cn/plugin/plugin/dapp/qbftNode/types"
 	"github.com/golang/protobuf/proto"
