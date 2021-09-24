@@ -16,6 +16,8 @@ message VoteResult {
     int32 opposeVotes = 3;
     // 是否通过
     bool pass = 4;
+    //弃权票
+    int32 quitVotes = 5;
 }
 
 message PublicVote {
@@ -44,6 +46,22 @@ message RuleConfig {
     int64 largeProjectAmount = 4;
     // 重大项目公示时间（以区块数为单位）
     int32 publicPeriod = 5;
+   
+    // 全体持票人参与率
+    int32 pubAttendRatio = 6;
+    // 全体持票人赞成率
+    int32 pubApproveRatio = 7;
+}
+
+//三种投票选项
+enum AutonomyVoteOption {
+    NOJOIN = 0;
+    //支持
+    APPROVE = 1;
+    //反对
+    OPPOSE  = 2;
+    //弃权
+    QUIT    = 3;
 }
 
 message ActiveBoard {

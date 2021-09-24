@@ -12,6 +12,11 @@ import (
 
 var name string
 
+var (
+	//ForkAutonomyDelRule fork for delete boards member rules
+	ForkAutonomyDelRule = "ForkAutonomyDelRule"
+)
+
 func init() {
 	name = AutonomyX
 	types.AllowUserExec = append(types.AllowUserExec, []byte(name))
@@ -22,6 +27,7 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(AutonomyX, "Enable", 0)
+	cfg.RegisterDappFork(AutonomyX, ForkAutonomyDelRule, 9500000)
 }
 
 //InitExecutor ...

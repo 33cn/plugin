@@ -8,8 +8,10 @@ import (
 	"sort"
 
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/pkg/errors"
 )
 
 func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
@@ -30,11 +32,21 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
 		return nil, err
 	}
+
 	// 检查是否符合提案修改
-	new, err := a.checkChangeable(act, prob.Changes)
-	if err != nil {
-		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkChangeable failed", err)
-		return nil, err
+	var newBoard *auty.ActiveBoard
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		//替换成员方案
+		newBoard, err = a.replaceBoard(act, prob.Changes)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		newBoard, err = a.checkChangeable(act, prob.Changes)
+		if err != nil {
+			alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkChangeable failed", err)
+			return nil, err
+		}
 	}
 
 	// 获取当前生效提案规则,并且将不修改的规则补齐
@@ -59,7 +71,7 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 	cur := &auty.AutonomyProposalChange{
 		PropChange: prob,
 		CurRule:    rule,
-		Board:      new,
+		Board:      newBoard,
 		VoteResult: &auty.VoteResult{TotalVotes: int32(len(act.Boards))},
 		Status:     auty.AutonomyStatusProposalChange,
 		Address:    a.fromaddr,
@@ -151,8 +163,8 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 
 	start := cur.GetPropChange().StartBlockHeight
 	end := cur.GetPropChange().EndBlockHeight
-	real := cur.GetPropChange().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropChange().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -167,20 +179,32 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 		return nil, err
 	}
 
-	// 董事会成员验证
+	cfg := a.api.GetConfig()
+	// 董事会成员验证,把剔除的原成员放回来
 	mpBd := make(map[string]struct{})
-	for _, b := range cur.Board.Boards {
-		mpBd[b] = struct{}{}
-	}
-	for _, ch := range cur.PropChange.Changes {
-		if ch.Cancel {
-			mpBd[ch.Addr] = struct{}{}
-		} else {
-			if _, ok := mpBd[ch.Addr]; ok {
-				delete(mpBd, ch.Addr)
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		for _, b := range cur.Board.Boards {
+			if b == cur.PropChange.Changes[0].Addr {
+				mpBd[cur.Address] = struct{}{}
+				continue
+			}
+			mpBd[b] = struct{}{}
+		}
+	} else {
+		for _, b := range cur.Board.Boards {
+			mpBd[b] = struct{}{}
+		}
+		for _, ch := range cur.PropChange.Changes {
+			if ch.Cancel {
+				mpBd[ch.Addr] = struct{}{}
+			} else {
+				if _, ok := mpBd[ch.Addr]; ok {
+					delete(mpBd, ch.Addr)
+				}
 			}
 		}
 	}
+
 	if _, ok := mpBd[a.fromaddr]; !ok {
 		err = auty.ErrNoActiveBoard
 		alog.Error("votePropChange ", "addr", a.fromaddr, "this addr is not active board member",
@@ -191,10 +215,23 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 	// 更新投票记录
 	votes.Address = append(votes.Address, a.fromaddr)
 
-	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes++
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		switch voteProb.Vote {
+		case auty.AutonomyVoteOption_APPROVE:
+			cur.VoteResult.ApproveVotes++
+		case auty.AutonomyVoteOption_OPPOSE:
+			cur.VoteResult.OpposeVotes++
+		case auty.AutonomyVoteOption_QUIT:
+			cur.VoteResult.QuitVotes++
+		default:
+			return nil, errors.Wrapf(types.ErrInvalidParam, "vote option=%d", voteProb.Vote)
+		}
 	} else {
-		cur.VoteResult.OpposeVotes++
+		if voteProb.Approve {
+			cur.VoteResult.ApproveVotes++
+		} else {
+			cur.VoteResult.OpposeVotes++
+		}
 	}
 
 	var logs []*types.ReceiptLog
@@ -319,6 +356,56 @@ func (a *action) getProposalChange(ID string) (*auty.AutonomyProposalChange, err
 	return cur, nil
 }
 
+//新的方案只允许替换board里面的成员，而且是本用户申请，不允许从revBoard恢复
+func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*auty.ActiveBoard, error) {
+	//一个成员只允许替换一个新的
+	if len(change) > 1 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "only allow one addr to be replaced,change=%d", len(change))
+	}
+
+	//只允许替换，不允许恢复操作
+	if !change[0].Cancel || len(change[0].Addr) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "cancel=false not allow to addr=%s", change[0].Addr)
+	}
+
+	if err := address.CheckAddress(change[0].Addr); err != nil {
+		return nil, err
+	}
+
+	mpBd := make(map[string]struct{})
+	mpRbd := make(map[string]struct{})
+	for _, b := range act.Boards {
+		mpBd[b] = struct{}{}
+	}
+	for _, b := range act.Revboards {
+		mpRbd[b] = struct{}{}
+	}
+
+	//发起者必须是董事会成员
+	if _, ok := mpBd[a.fromaddr]; !ok {
+		return nil, errors.Wrap(types.ErrNotAllow, "from addr should be in boards")
+	}
+
+	//待替换地址不能在board和revBoard里面
+	if _, ok := mpBd[change[0].Addr]; ok {
+		return nil, errors.Wrapf(types.ErrNotAllow, "new addr=%s in boards", change[0].Addr)
+	}
+	if _, ok := mpRbd[change[0].Addr]; ok {
+		return nil, errors.Wrapf(types.ErrNotAllow, "new addr=%s in rev boards", change[0].Addr)
+	}
+
+	//替换board
+	for i, k := range act.Boards {
+		if k == a.fromaddr {
+			act.Boards[i] = change[0].Addr
+			break
+		}
+	}
+	//当前地址追加到revBoards
+	act.Revboards = append(act.Revboards, a.fromaddr)
+	return act, nil
+}
+
 func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (*auty.ActiveBoard, error) {
 	mpBd := make(map[string]struct{})
 	mpRbd := make(map[string]struct{})
@@ -348,19 +435,19 @@ func (a *action) checkChangeable(act *auty.ActiveBoard, change []*auty.Change) (
 	if len(mpBd) > maxBoards || len(mpBd) < minBoards {
 		return nil, auty.ErrBoardNumber
 	}
-	new := &auty.ActiveBoard{
+	newBoard := &auty.ActiveBoard{
 		Amount:      act.Amount,
 		StartHeight: act.StartHeight,
 	}
 	for k := range mpBd {
-		new.Boards = append(new.Boards, k)
+		newBoard.Boards = append(newBoard.Boards, k)
 	}
-	sort.Strings(new.Boards)
+	sort.Strings(newBoard.Boards)
 	for k := range mpRbd {
-		new.Revboards = append(new.Revboards, k)
+		newBoard.Revboards = append(newBoard.Revboards, k)
 	}
-	sort.Strings(new.Revboards)
-	return new, nil
+	sort.Strings(newBoard.Revboards)
+	return newBoard, nil
 }
 
 // getReceiptLog 根据提案信息获取log

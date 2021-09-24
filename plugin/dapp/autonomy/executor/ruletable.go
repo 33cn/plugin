@@ -27,11 +27,11 @@ var ruleOpt = &table.Option{
 //NewRuleTable 新建表
 func NewRuleTable(kvdb db.KV) *table.Table {
 	rowmeta := NewRuleRow()
-	table, err := table.NewTable(rowmeta, kvdb, ruleOpt)
+	newTable, err := table.NewTable(rowmeta, kvdb, ruleOpt)
 	if err != nil {
 		panic(err)
 	}
-	return table
+	return newTable
 }
 
 //RuleRow table meta 结构

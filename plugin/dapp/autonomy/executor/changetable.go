@@ -27,11 +27,11 @@ var changeOpt = &table.Option{
 //NewChangeTable 新建表
 func NewChangeTable(kvdb db.KV) *table.Table {
 	rowmeta := NewChangeRow()
-	table, err := table.NewTable(rowmeta, kvdb, changeOpt)
+	newTable, err := table.NewTable(rowmeta, kvdb, changeOpt)
 	if err != nil {
 		panic(err)
 	}
-	return table
+	return newTable
 }
 
 //ChangeRow table meta 结构
