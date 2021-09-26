@@ -552,6 +552,8 @@ func TestUpgradeRule(t *testing.T) {
 		ProposalAmount:     4,
 		LargeProjectAmount: 5,
 		PublicPeriod:       6,
+		PubAttendRatio:     7,
+		PubApproveRatio:    8,
 	}
 	modify := &auty.RuleConfig{
 		BoardApproveRatio:  -1,
@@ -559,6 +561,8 @@ func TestUpgradeRule(t *testing.T) {
 		ProposalAmount:     -1,
 		LargeProjectAmount: 0,
 		PublicPeriod:       0,
+		PubAttendRatio:     -1,
+		PubApproveRatio:    0,
 	}
 	newRule = upgradeRule(cur, modify)
 	assert.NotNil(t, newRule)
@@ -567,6 +571,8 @@ func TestUpgradeRule(t *testing.T) {
 	assert.Equal(t, newRule.ProposalAmount, cur.ProposalAmount)
 	assert.Equal(t, newRule.LargeProjectAmount, cur.LargeProjectAmount)
 	assert.Equal(t, newRule.PublicPeriod, cur.PublicPeriod)
+	assert.Equal(t, newRule.PubAttendRatio, cur.PubAttendRatio)
+	assert.Equal(t, newRule.PubApproveRatio, cur.PubApproveRatio)
 
 	modify = &auty.RuleConfig{
 		BoardApproveRatio:  20,
@@ -574,6 +580,8 @@ func TestUpgradeRule(t *testing.T) {
 		ProposalAmount:     40,
 		LargeProjectAmount: 50,
 		PublicPeriod:       60,
+		PubAttendRatio:     70,
+		PubApproveRatio:    80,
 	}
 	newRule = upgradeRule(cur, modify)
 	assert.NotNil(t, newRule)
@@ -582,6 +590,8 @@ func TestUpgradeRule(t *testing.T) {
 	assert.Equal(t, newRule.ProposalAmount, modify.ProposalAmount)
 	assert.Equal(t, newRule.LargeProjectAmount, modify.LargeProjectAmount)
 	assert.Equal(t, newRule.PublicPeriod, modify.PublicPeriod)
+	assert.Equal(t, newRule.PubAttendRatio, modify.PubAttendRatio)
+	assert.Equal(t, newRule.PubApproveRatio, modify.PubApproveRatio)
 }
 
 func TestTransfer(t *testing.T) {
