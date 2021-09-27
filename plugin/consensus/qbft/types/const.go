@@ -28,6 +28,8 @@ var (
 	ErrBaseExecErr = errors.New("ErrBaseExecErr")
 	// ErrLastBlockID error type
 	ErrLastBlockID = errors.New("ErrLastBlockID")
+	// ErrConsensusState error type
+	ErrConsensusQuery = errors.New("Consensus is busy, please try again!")
 )
 
 var (

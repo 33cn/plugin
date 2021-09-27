@@ -27,11 +27,11 @@ var boardOpt = &table.Option{
 //NewBoardTable 新建表
 func NewBoardTable(kvdb db.KV) *table.Table {
 	rowmeta := NewBoardRow()
-	table, err := table.NewTable(rowmeta, kvdb, boardOpt)
+	newTable, err := table.NewTable(rowmeta, kvdb, boardOpt)
 	if err != nil {
 		panic(err)
 	}
-	return table
+	return newTable
 }
 
 //BoardRow table meta 结构

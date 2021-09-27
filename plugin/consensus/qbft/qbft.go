@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	qbftVersion = "0.1.0"
+	qbftVersion = "0.2.0"
 
 	// DefaultQbftPort 默认端口
 	DefaultQbftPort = 33001
@@ -62,7 +62,7 @@ var (
 
 	zeroHash                    [32]byte
 	random                      *rand.Rand
-	peerGossipSleepDuration     int32 = 100
+	peerGossipSleepDuration     atomic.Value
 	peerQueryMaj23SleepDuration int32 = 2000
 )
 
@@ -111,6 +111,7 @@ type subConfig struct {
 	SignName              string   `json:"signName"`
 	UseAggregateSignature bool     `json:"useAggregateSignature"`
 	MultiBlocks           int64    `json:"multiBlocks"`
+	MessageInterval       int32    `json:"messageInterval"`
 }
 
 func applyConfig(sub []byte) {
@@ -157,6 +158,10 @@ func applyConfig(sub []byte) {
 	multiBlocks.Store(int64(1))
 	if subcfg.MultiBlocks > 0 {
 		multiBlocks.Store(subcfg.MultiBlocks)
+	}
+	peerGossipSleepDuration.Store(int32(100))
+	if subcfg.MessageInterval > 0 {
+		peerGossipSleepDuration.Store(subcfg.MessageInterval)
 	}
 
 	gossipVotes.Store(true)
@@ -221,7 +226,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		return nil
 	}
 
-	qbftlog.Info("show qbft info", "sign", ttypes.CryptoName, "useAggSig", useAggSig, "genesisFile", genesisFile,
+	qbftlog.Info("show qbft info", "sign", ttypes.CryptoName, "useAggSig", UseAggSig(), "genesisFile", genesisFile,
 		"privFile", privFile)
 
 	ttypes.InitMessageMap()
@@ -570,7 +575,7 @@ func (client *Client) WaitBlock(height int64) bool {
 			if err == nil && newHeight >= height {
 				return true
 			}
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }
@@ -624,11 +629,13 @@ func (client *Client) LoadBlockCommit(height int64) *tmtypes.QbftCommit {
 		qbftlog.Error("LoadBlockCommit GetBlockInfo fail", "err", err)
 		return nil
 	}
-	seq, voteType := blockInfo.State.LastSequence, blockInfo.Block.LastCommit.VoteType
-	if (seq == 0 && voteType != uint32(ttypes.VoteTypePrecommit)) ||
-		(seq > 0 && voteType != uint32(ttypes.VoteTypePrevote)) {
-		qbftlog.Error("LoadBlockCommit wrong VoteType", "seq", seq, "voteType", voteType)
-		return nil
+	if height > 1 {
+		seq, voteType := blockInfo.State.LastSequence, blockInfo.Block.LastCommit.VoteType
+		if (seq == 0 && voteType != uint32(ttypes.VoteTypePrecommit)) ||
+			(seq > 0 && voteType != uint32(ttypes.VoteTypePrevote)) {
+			qbftlog.Error("LoadBlockCommit wrong VoteType", "seq", seq, "voteType", voteType)
+			return nil
+		}
 	}
 	return blockInfo.GetBlock().GetLastCommit()
 }
@@ -658,20 +665,31 @@ func (client *Client) LoadProposalBlock(height int64) *tmtypes.QbftBlock {
 // Query_IsHealthy query whether consensus is sync
 func (client *Client) Query_IsHealthy(req *types.ReqNil) (types.Message, error) {
 	isHealthy := false
-	if client.IsCaughtUp() && client.GetCurrentHeight() <= client.csState.GetRoundState().Height+1 {
-		isHealthy = true
+	if client.IsCaughtUp() {
+		rs := client.csState.QueryRoundState()
+		if rs != nil && client.GetCurrentHeight() <= rs.Height+1 {
+			isHealthy = true
+		}
 	}
 	return &tmtypes.QbftIsHealthy{IsHealthy: isHealthy}, nil
 }
 
 // Query_CurrentState query current consensus state
 func (client *Client) Query_CurrentState(req *types.ReqNil) (types.Message, error) {
-	return SaveState(client.csState.GetState()), nil
+	state := client.csState.QueryState()
+	if state == nil {
+		return nil, ttypes.ErrConsensusQuery
+	}
+	return SaveState(*state), nil
 }
 
 // Query_NodeInfo query validator node info
 func (client *Client) Query_NodeInfo(req *types.ReqNil) (types.Message, error) {
-	vals := client.csState.GetRoundState().Validators.Validators
+	rs := client.csState.QueryRoundState()
+	if rs == nil {
+		return nil, ttypes.ErrConsensusQuery
+	}
+	vals := rs.Validators.Validators
 	nodes := make([]*tmtypes.QbftNodeInfo, 0)
 	for _, val := range vals {
 		if val == nil {

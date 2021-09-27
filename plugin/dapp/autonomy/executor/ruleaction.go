@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	auty "github.com/33cn/plugin/plugin/dapp/autonomy/types"
+	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/dapp"
@@ -18,10 +19,24 @@ const (
 	minBoardApproveRatio = 50
 	// 最大董事会赞成率
 	maxBoardApproveRatio = 66
+
 	// 最小全体持票人否决率
 	minPubOpposeRatio = 33
 	// 最大全体持票人否决率
 	maxPubOpposeRatio = 50
+
+	// 可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80% ???  最低 50.1% ????
+	//不能设置太低和太高，太低就容易作弊，太高则有可能很难达到
+	// 最小全体持票人参与率
+	minPubAttendRatio = 50
+	// 最大全体持票人参与率
+	maxPubAttendRatio = 80
+
+	// 最小全体持票人赞成率
+	minPubApproveRatio = 50
+	// 最大全体持票人赞成率
+	maxPubApproveRatio = 80
+
 	// 最小公示周期
 	minPublicPeriod int32 = 17280 * 7
 	// 最大公示周期
@@ -36,19 +51,27 @@ const (
 	maxProposalAmount = 2000
 )
 
+func checkParaInvalid(param, min, max int64) bool {
+	if param > max || param < min {
+		return true
+	}
+	return false
+}
+
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	//如果全小于等于0,则说明该提案规则参数不正确
-	if prob.RuleCfg == nil || prob.RuleCfg.BoardApproveRatio <= 0 && prob.RuleCfg.PubOpposeRatio <= 0 &&
-		prob.RuleCfg.ProposalAmount <= 0 && prob.RuleCfg.LargeProjectAmount <= 0 && prob.RuleCfg.PublicPeriod <= 0 {
+	if prob.RuleCfg == nil {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
-	if (prob.RuleCfg.BoardApproveRatio > 0 && (prob.RuleCfg.BoardApproveRatio > maxBoardApproveRatio || prob.RuleCfg.BoardApproveRatio < minBoardApproveRatio)) ||
-		(prob.RuleCfg.PubOpposeRatio > 0 && (prob.RuleCfg.PubOpposeRatio > maxPubOpposeRatio || prob.RuleCfg.PubOpposeRatio < minPubOpposeRatio)) ||
-		(prob.RuleCfg.PublicPeriod > 0 && (prob.RuleCfg.PublicPeriod > maxPublicPeriod || prob.RuleCfg.PublicPeriod < minPublicPeriod)) ||
-		(prob.RuleCfg.LargeProjectAmount > 0 && (prob.RuleCfg.LargeProjectAmount > maxLargeProjectAmount*cfg.GetCoinPrecision() || prob.RuleCfg.LargeProjectAmount < minLargeProjectAmount*cfg.GetCoinPrecision())) ||
-		(prob.RuleCfg.ProposalAmount > 0 && (prob.RuleCfg.ProposalAmount > maxProposalAmount*cfg.GetCoinPrecision() || prob.RuleCfg.ProposalAmount < minProposalAmount*cfg.GetCoinPrecision())) {
+	if checkParaInvalid(int64(prob.RuleCfg.BoardApproveRatio), minBoardApproveRatio, maxBoardApproveRatio) ||
+		checkParaInvalid(int64(prob.RuleCfg.PubOpposeRatio), minPubOpposeRatio, maxPubOpposeRatio) ||
+		checkParaInvalid(int64(prob.RuleCfg.PublicPeriod), int64(minPublicPeriod), int64(maxPublicPeriod)) ||
+		checkParaInvalid(prob.RuleCfg.LargeProjectAmount, minLargeProjectAmount*cfg.GetCoinPrecision(), maxLargeProjectAmount*cfg.GetCoinPrecision()) ||
+		checkParaInvalid(prob.RuleCfg.ProposalAmount, minProposalAmount*cfg.GetCoinPrecision(), maxProposalAmount*cfg.GetCoinPrecision()) ||
+		checkParaInvalid(int64(prob.RuleCfg.PubAttendRatio), minPubAttendRatio, maxPubAttendRatio) ||
+		checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), minPubApproveRatio, maxPubApproveRatio) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
@@ -173,8 +196,8 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	start := cur.GetPropRule().StartBlockHeight
 	end := cur.GetPropRule().EndBlockHeight
-	real := cur.GetPropRule().RealEndBlockHeight
-	if a.height < start || a.height > end || real != 0 {
+	realHeight := cur.GetPropRule().RealEndBlockHeight
+	if a.height < start || a.height > end || realHeight != 0 {
 		err := auty.ErrVotePeriod
 		alog.Error("votePropRule ", "addr", a.fromaddr, "execaddr", a.execaddr, "ProposalID",
 			voteProb.ProposalID, "err", err)
@@ -230,10 +253,24 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 			voteProb.ProposalID, "err", err)
 		return nil, err
 	}
-	if voteProb.Approve {
-		cur.VoteResult.ApproveVotes += vtCouts
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		switch voteProb.Vote {
+		case auty.AutonomyVoteOption_APPROVE:
+			cur.VoteResult.ApproveVotes += vtCouts
+		case auty.AutonomyVoteOption_OPPOSE:
+			cur.VoteResult.OpposeVotes += vtCouts
+		case auty.AutonomyVoteOption_QUIT:
+			cur.VoteResult.QuitVotes += vtCouts
+		default:
+			return nil, errors.Wrapf(types.ErrInvalidParam, "wrong vote value=%d", voteProb.Vote)
+		}
 	} else {
-		cur.VoteResult.OpposeVotes += vtCouts
+		if voteProb.Approve {
+			cur.VoteResult.ApproveVotes += vtCouts
+		} else {
+			cur.VoteResult.OpposeVotes += vtCouts
+		}
 	}
 
 	var logs []*types.ReceiptLog
@@ -250,12 +287,20 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 		kv = append(kv, receipt.KV...)
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
-		cur.PropRule.RealEndBlockHeight = a.height
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio) {
+			cur.VoteResult.Pass = true
+			cur.PropRule.RealEndBlockHeight = a.height
+		}
+	} else {
+		if cur.VoteResult.TotalVotes != 0 &&
+			cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropRule.RealEndBlockHeight = a.height
+		}
 	}
 
 	key := propRuleID(voteProb.ProposalID)
@@ -320,11 +365,16 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 		cur.VoteResult.TotalVotes = vtCouts
 	}
 
-	if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		cur.VoteResult.Pass = isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio)
 	} else {
-		cur.VoteResult.Pass = false
+		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	}
 	cur.PropRule.RealEndBlockHeight = a.height
 
@@ -450,21 +500,28 @@ func upgradeRule(cur, modify *auty.RuleConfig) *auty.RuleConfig {
 	if cur == nil || modify == nil {
 		return nil
 	}
-	new := *cur
+	newConfig := *cur
 	if modify.BoardApproveRatio > 0 {
-		new.BoardApproveRatio = modify.BoardApproveRatio
+		newConfig.BoardApproveRatio = modify.BoardApproveRatio
 	}
 	if modify.PubOpposeRatio > 0 {
-		new.PubOpposeRatio = modify.PubOpposeRatio
+		newConfig.PubOpposeRatio = modify.PubOpposeRatio
 	}
 	if modify.ProposalAmount > 0 {
-		new.ProposalAmount = modify.ProposalAmount
+		newConfig.ProposalAmount = modify.ProposalAmount
 	}
 	if modify.LargeProjectAmount > 0 {
-		new.LargeProjectAmount = modify.LargeProjectAmount
+		newConfig.LargeProjectAmount = modify.LargeProjectAmount
 	}
 	if modify.PublicPeriod > 0 {
-		new.PublicPeriod = modify.PublicPeriod
+		newConfig.PublicPeriod = modify.PublicPeriod
 	}
-	return &new
+	if modify.PubAttendRatio > 0 {
+		newConfig.PubAttendRatio = modify.PubAttendRatio
+	}
+	if modify.PubApproveRatio > 0 {
+		newConfig.PubApproveRatio = modify.PubApproveRatio
+	}
+
+	return &newConfig
 }

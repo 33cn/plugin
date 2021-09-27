@@ -70,12 +70,12 @@ func (privkey *MixSignPrivateKey) Bytes() []byte {
 }
 
 // Sign signature trasaction
-func (privkey *MixSignPrivateKey) Sign(msg []byte, opts ...interface{}) crypto.Signature {
+func (privkey *MixSignPrivateKey) Sign(msg []byte) crypto.Signature {
 	return &MixSignature{}
 }
 
 // PubKey convert to public key
-func (privkey *MixSignPrivateKey) PubKey(opts ...interface{}) crypto.PubKey {
+func (privkey *MixSignPrivateKey) PubKey() crypto.PubKey {
 	publicKey := new(MixSignPublicKey)
 	return publicKey
 }

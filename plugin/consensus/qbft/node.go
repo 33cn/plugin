@@ -27,7 +27,7 @@ const (
 	maxSendQueueSize       = 1024
 	defaultSendTimeout     = 60 * time.Second
 	//MaxMsgPacketPayloadSize define
-	MaxMsgPacketPayloadSize            = 10 * 1024 * 1024
+	MaxMsgPacketPayloadSize            = 2 * 1024 * 1024
 	defaultDialTimeout                 = 3 * time.Second
 	dialRandomizerIntervalMilliseconds = 3000
 	// repeatedly try to reconnect for a few minutes
