@@ -49,6 +49,8 @@ const (
 	TyLogParaCrossAssetTransfer = 670
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
+
+	TyLogParaSuperNodeBindMiner = 673
 )
 
 // action type

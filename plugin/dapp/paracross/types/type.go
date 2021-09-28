@@ -31,6 +31,9 @@ var (
 	// ForkParaFullMinerHeight 平行链全挖矿开启高度
 	ForkParaFullMinerHeight = "ForkParaFullMinerHeight"
 
+	// ForkParaSuperNodeBindMiner 平行链共识节点委托挖矿
+	ForkParaSuperNodeBindMiner = "ForkParaSuperNodeBindMiner"
+
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
 	//ParaPrefixConsSubConf prefix
@@ -62,6 +65,8 @@ func InitFork(cfg *types.Chain33Config) {
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 	cfg.RegisterDappFork(ParaX, ForkParaFullMinerHeight, types.MaxHeight)
+
+	cfg.RegisterDappFork(ParaX, ForkParaSuperNodeBindMiner, 12500000)
 }
 
 //InitExecutor ...

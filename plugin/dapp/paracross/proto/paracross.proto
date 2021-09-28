@@ -513,3 +513,14 @@ message BlsPubKey{
 service paracross {
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}
 }
+
+message ParaSuperNodeBindMiner{
+    string superAddress = 1;
+    string minerAddress = 2;
+}
+
+message ReceiptParaSuperNodeBindMiner {
+    string superAddress    = 1;
+    string oldMinerAddress = 2;
+    string newMinerAddress = 3;
+}
