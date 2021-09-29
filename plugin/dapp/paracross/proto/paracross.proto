@@ -515,12 +515,20 @@ service paracross {
 }
 
 message ParaSuperNodeBindMiner{
-    string superAddress = 1;
-    string minerAddress = 2;
+    string superAddress   = 1;
+    string minerAddress   = 2;
+    string minerBlsPubKey = 3;
 }
 
-message ReceiptParaSuperNodeBindMiner {
+message ReceiptParaSuperNodeBindReturn {
     string superAddress    = 1;
     string oldMinerAddress = 2;
     string newMinerAddress = 3;
+}
+
+message ReceiptParaSuperNodeBindMiner {
+    string MinerAddress    = 1;
+    string minerBlsPubKey  = 2;
+    string oldSuperAddress = 3;
+    string newSuperAddress = 4;
 }

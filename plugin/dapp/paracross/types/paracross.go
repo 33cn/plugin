@@ -50,7 +50,8 @@ const (
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
 
-	TyLogParaSuperNodeBindMiner = 673
+	TyLogParaSuperNodeBindReturn = 673
+	TyLogParaSuperNodeBindMiner  = 674
 )
 
 // action type

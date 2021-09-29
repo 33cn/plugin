@@ -39,6 +39,7 @@ var (
 	paraBindMinderAddr string
 	paraBindMinderNode string
 
+	paraSuperNodeBindReturnAddr string
 	paraSuperNodeBindMinderAddr string
 )
 
@@ -69,6 +70,7 @@ func setPrefix() {
 
 	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
+	paraSuperNodeBindReturnAddr = "mavl-paracross-supernodebindreturnaddr-"
 	paraSuperNodeBindMinderAddr = "mavl-paracross-supernodebindmineraddr-"
 }
 
@@ -199,6 +201,10 @@ func calcParaBindMinerNode() []byte {
 	return []byte(paraBindMinderNode)
 }
 
-func calcParaSuperNodeBindMinerAddr(node string) []byte {
-	return []byte(fmt.Sprintf(paraSuperNodeBindMinderAddr+"%s", node))
+func calcParaSuperNodeBindReturnAddr(node string) []byte {
+	return []byte(fmt.Sprintf(paraSuperNodeBindReturnAddr+"%s", node))
+}
+
+func calcParaSuperNodeBindMinerAddr(miner string) []byte {
+	return []byte(fmt.Sprintf(paraSuperNodeBindMinderAddr+"%s", miner))
 }
