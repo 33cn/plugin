@@ -427,18 +427,18 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 	}
 	//挖矿固定难度
 	newBlock.Difficulty = cfg.GetP(0).PowLimitBits
-
-	//需要首先对交易进行排序然后再计算TxHash
-	if cfg.IsFork(newBlock.GetMainHeight(), "ForkRootHash") {
-		newBlock.Txs = types.TransactionSort(newBlock.Txs)
-	}
-	newBlock.TxHash = merkle.CalcMerkleRoot(cfg, newBlock.GetMainHeight(), newBlock.Txs)
 	newBlock.BlockTime = localBlock.BlockTime
 	newBlock.MainHash = localBlock.MainHash
 	newBlock.MainHeight = localBlock.MainHeight
 	if newBlock.Height == 1 && newBlock.BlockTime < client.paraClient.cfg.GenesisBlockTime {
 		panic("genesisBlockTime　bigger than the 1st block time, need rmv db and reset genesisBlockTime")
 	}
+	//需要首先对交易进行排序然后再计算TxHash
+	if cfg.IsFork(newBlock.GetMainHeight(), "ForkRootHash") {
+		newBlock.Txs = types.TransactionSort(newBlock.Txs)
+	}
+	newBlock.TxHash = merkle.CalcMerkleRoot(cfg, newBlock.GetMainHeight(), newBlock.Txs)
+
 	err = client.writeBlock(lastBlock.StateHash, &newBlock)
 
 	client.printDebugInfo("Para sync - create new Block",
