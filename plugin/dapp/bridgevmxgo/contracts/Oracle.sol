@@ -11,7 +11,7 @@ contract Oracle {
     /*
     * @dev: Public variable declarations
     */
-    GoAssetBridge public GoAssetBridge;
+    GoAssetBridge public goAssetBridge;
     Valset public valset;
     address public operator;
 

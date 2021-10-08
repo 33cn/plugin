@@ -140,12 +140,7 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
      * @param _goAssetTokenAddress: The currency type
      * @param _amount: number of goAsset tokens to be burned
      */
-    function burnBridgeTokens(
-    　　　address  _goAssetReceiver,
-        address _goAssetTokenAddress,
-        uint256 _amount
-    )
-        public
+    function burnBridgeTokens(address _goAssetReceiver, address _goAssetTokenAddress, uint256 _amount) public
     {
         return burnGoAssetTokens(
             msg.sender,
@@ -328,7 +323,7 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
     )
         public
         view
-        returns(bytes memory, address payable, address, uint256)
+        returns(address, address payable, address, uint256)
     {
         return getGoAssetDeposit(_id);
     }

@@ -120,7 +120,7 @@ contract GoAssetBank {
     * @return: The newly created GoAssetSenderDeposit's unique id.
     */
     function newGoAssetDeposit(
-        address memory _goAssetSender,
+        address _goAssetSender,
         address payable _chain33Recipient,
         address _token,
         uint256 _amount
@@ -362,7 +362,7 @@ contract GoAssetBank {
     )
         internal
         view
-        returns(bytes memory, address payable, address, uint256)
+        returns(address, address payable, address, uint256)
     {
         GoAssetDeposit memory deposit = goAssetDeposits[_id];
 
