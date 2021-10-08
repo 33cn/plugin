@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/common/address"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/pkg/errors"
@@ -30,30 +31,49 @@ func getMinerLog(parabind *pt.ParaSuperNodeBindMiner, old string) *types.Receipt
 	return log
 }
 
-func (a *action) getBind(addr string) (string, string) {
+func (a *action) getBind(addr string) (string, string, error) {
 	value, err := a.db.Get(calcParaSuperNodeBindReturnAddr(addr))
 	if err != nil || value == nil {
-		return "", ""
+		return "", "", types.ErrNotFound
 	}
 	var bind pt.ParaSuperNodeBindMiner
 	err = types.Decode(value, &bind)
 	if err != nil {
-		panic(err)
+		return "", "", err
 	}
-	return bind.MinerAddress, bind.MinerBlsPubKey
+	return bind.MinerAddress, bind.MinerBlsPubKey, nil
 }
 
-func (a *action) getSuper(addr string) string {
-	value, err := a.db.Get(calcParaSuperNodeBindMinerAddr(addr))
+func getSuper(db dbm.KV, addr string) (*pt.ParaSuperNodeBindMiner, error) {
+	value, err := db.Get(calcParaSuperNodeBindMinerAddr(addr))
 	if err != nil || value == nil {
-		return ""
+		return nil, types.ErrNotFound
 	}
 	var bind pt.ParaSuperNodeBindMiner
 	err = types.Decode(value, &bind)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return bind.SuperAddress
+	return &bind, nil
+}
+
+func getBindSuperNode(db dbm.KV, addr, title string) (string, error) {
+	bindMiner, err := getSuper(db, addr)
+	if err != nil && err != types.ErrNotFound {
+		return "", err
+	}
+	if bindMiner != nil {
+		nodes, _, err := getParacrossNodes(db, title)
+		if err != nil {
+			return "", errors.Wrapf(err, "getNodes for title:%s", title)
+		}
+		if !validNode(bindMiner.SuperAddress, nodes) {
+			return "", errors.Wrapf(pt.ErrParaNodeAddrNotExisted, "invalid node=%s", bindMiner.SuperAddress)
+		}
+
+		return bindMiner.SuperAddress, nil
+	}
+	return "", nil
 }
 
 func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types.Receipt, error) {
@@ -84,7 +104,10 @@ func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types
 
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	oldbind, oldBls := a.getBind(parabind.SuperAddress)
+	oldbind, oldBls, err := a.getBind(parabind.SuperAddress)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
 	if oldbind == parabind.MinerAddress && oldBls == parabind.MinerBlsPubKey {
 		// 这两次绑定的地址都一样 不做处理
 		return nil, errors.Wrapf(types.ErrSendSameToRecv, "minerAddress=%s is same", parabind.MinerAddress)
@@ -92,9 +115,14 @@ func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types
 
 	log := getBindLog(parabind, oldbind)
 	logs = append(logs, log)
-	oldSuper := a.getSuper(parabind.MinerAddress)
-	log2 := getMinerLog(parabind, oldSuper)
-	logs = append(logs, log2)
+	oldSuper, err := getSuper(a.db, parabind.MinerAddress)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
+	if oldSuper != nil {
+		log2 := getMinerLog(parabind, oldSuper.SuperAddress)
+		logs = append(logs, log2)
+	}
 
 	value := types.Encode(parabind)
 	kvs = append(kvs, &types.KeyValue{Key: calcParaSuperNodeBindReturnAddr(parabind.SuperAddress), Value: value})

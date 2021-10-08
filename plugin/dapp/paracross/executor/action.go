@@ -445,6 +445,41 @@ func (a *action) procBlsSign(nodesArry []string, commit *pt.ParacrossCommitActio
 	return signAddrs, nil
 }
 
+//bls签名共识交易验证 大约平均耗时3ms (2~4ms)
+func (a *action) procBindMinerBlsSign(nodesArry []string, commit *pt.ParacrossCommitAction) ([]string, error) {
+	signAddrs := util.GetAddrsByBitMap(nodesArry, commit.Bls.AddrsMap)
+	var pubs []string
+	for i, addr := range signAddrs {
+		isSuperNode := a.isValidSuperNode(addr)
+		if isSuperNode == nil {
+			// 是超级节点 按照之前的方式获取聚合签名公钥
+			pub, err := getAddrBlsPubKey(a.db, commit.Status.Title, addr)
+			if err != nil {
+				return nil, errors.Wrapf(err, "pubkey not exist to addr=%s", addr)
+			}
+			pubs = append(pubs, pub)
+		} else {
+			// 委托挖矿节点
+			bindMiner, err := getSuper(a.db, addr)
+			if bindMiner == nil || bindMiner.MinerBlsPubKey == "" {
+				return nil, errors.Wrapf(err, "getSuper pubkey not exist to addr=%s", addr)
+			}
+			pubs = append(pubs, bindMiner.MinerBlsPubKey)
+
+			clog.Debug("paracross.Commit bls sign verify getSuper", "addr", addr, "SuperAddress", bindMiner.SuperAddress)
+
+			// 获取真正的超级节点
+			signAddrs[i] = bindMiner.SuperAddress
+		}
+	}
+	err := verifyBlsSign(a.exec.cryptoCli, pubs, commit)
+	if err != nil {
+		clog.Error("paracross.Commit bls sign verify", "addr", signAddrs, "nodes", nodesArry, "from", a.fromaddr)
+		return nil, err
+	}
+	return signAddrs, nil
+}
+
 func verifyBlsSign(cryptoCli crypto.Crypto, pubs []string, commit *pt.ParacrossCommitAction) error {
 	t1 := types.Now()
 	//1. 获取addr对应的bls 公钥
@@ -502,13 +537,37 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	//获取commitAddrs, bls sign 包含多个账户的聚合签名
-	commitAddrs := []string{a.fromaddr}
-	if commit.Bls != nil {
-		addrs, err := a.procBlsSign(nodesArry, commit)
+	commitAddrs := []string{}
+	isForkParaSuperNodeBindMiner := false
+	if cfg.IsFork(a.height, pt.ForkParaSuperNodeBindMiner) {
+		bindSuperNode, err := getBindSuperNode(a.db, a.fromaddr, commit.Status.Title)
 		if err != nil {
-			return nil, errors.Wrap(err, "procBlsSign")
+			return nil, err
 		}
-		commitAddrs = addrs
+
+		// a.fromaddr 是授权挖矿地址
+		if bindSuperNode != "" {
+			isForkParaSuperNodeBindMiner = true
+			commitAddrs = []string{bindSuperNode}
+			if commit.Bls != nil {
+				addrs, err := a.procBindMinerBlsSign(nodesArry, commit)
+				if err != nil {
+					return nil, errors.Wrap(err, "procBindMinerBlsSign")
+				}
+				commitAddrs = addrs
+			}
+		}
+	}
+
+	if !isForkParaSuperNodeBindMiner {
+		commitAddrs = []string{a.fromaddr}
+		if commit.Bls != nil {
+			addrs, err := a.procBlsSign(nodesArry, commit)
+			if err != nil {
+				return nil, errors.Wrap(err, "procBlsSign")
+			}
+			commitAddrs = addrs
+		}
 	}
 
 	validAddrs := getValidAddrs(nodesMap, commitAddrs)
