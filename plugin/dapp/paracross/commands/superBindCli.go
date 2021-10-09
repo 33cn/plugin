@@ -2,13 +2,14 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
 )
 
 func superNodeBindCmd() *cobra.Command {
