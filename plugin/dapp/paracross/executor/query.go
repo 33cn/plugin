@@ -594,3 +594,31 @@ func (p *Paracross) Query_GetNodeBindMinerList(in *pt.ParaNodeBindOne) (types.Me
 	//获取所有
 	return getMinerListResp(p.GetStateDB(), list)
 }
+
+//Query_GetSuperNodeBindInfo get super node bind info
+func (p *Paracross) Query_GetSuperNodeBindInfo(in *types.ReqString) (types.Message, error) {
+	if in == nil || in.GetData() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	bindMiner, err := getBind(p.GetStateDB(), in.GetData())
+	if err != nil {
+		return nil, err
+	}
+
+	return bindMiner, nil
+}
+
+//Query_GetAuthorizedNodeBindSuperNodeInfo get authorized node bind super info
+func (p *Paracross) Query_GetAuthorizedNodeBindSuperNodeInfo(in *types.ReqString) (types.Message, error) {
+	if in == nil || in.GetData() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	bindMiner, err := getSuper(p.GetStateDB(), in.GetData())
+	if err != nil {
+		return nil, err
+	}
+
+	return bindMiner, nil
+}

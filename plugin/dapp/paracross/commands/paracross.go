@@ -344,6 +344,10 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(getNodeListCmd())
 	cmd.AddCommand(nodeModifyCmd())
 	cmd.AddCommand(getNodeBindListCmd())
+
+	cmd.AddCommand(superNodeBindCmd())
+	cmd.AddCommand(getSuperNodeBindInfoCmd())
+	cmd.AddCommand(getAuthorizedNodeBindSuperNodeInfoCmd())
 	return cmd
 }
 

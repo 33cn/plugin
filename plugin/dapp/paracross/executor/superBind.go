@@ -31,17 +31,17 @@ func getMinerLog(parabind *pt.ParaSuperNodeBindMiner, old string) *types.Receipt
 	return log
 }
 
-func (a *action) getBind(addr string) (string, string, error) {
-	value, err := a.db.Get(calcParaSuperNodeBindReturnAddr(addr))
+func getBind(db dbm.KV, addr string) (*pt.ParaSuperNodeBindMiner, error) {
+	value, err := db.Get(calcParaSuperNodeBindReturnAddr(addr))
 	if err != nil || value == nil {
-		return "", "", types.ErrNotFound
+		return nil, types.ErrNotFound
 	}
 	var bind pt.ParaSuperNodeBindMiner
 	err = types.Decode(value, &bind)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-	return bind.MinerAddress, bind.MinerBlsPubKey, nil
+	return &bind, nil
 }
 
 func getSuper(db dbm.KV, addr string) (*pt.ParaSuperNodeBindMiner, error) {
@@ -104,16 +104,22 @@ func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types
 
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	oldbind, oldBls, err := a.getBind(parabind.SuperAddress)
+	oldbind, err := getBind(a.db, parabind.SuperAddress)
 	if err != nil && err != types.ErrNotFound {
 		return nil, err
 	}
-	if oldbind == parabind.MinerAddress && oldBls == parabind.MinerBlsPubKey {
+	oldbindMiner := ""
+	oldbindBls := ""
+	if oldbind != nil {
+		oldbindMiner = oldbind.MinerAddress
+		oldbindBls = oldbind.MinerBlsPubKey
+	}
+	if oldbindMiner == parabind.MinerAddress && oldbindBls == parabind.MinerBlsPubKey {
 		// 这两次绑定的地址都一样 不做处理
 		return nil, errors.Wrapf(types.ErrSendSameToRecv, "minerAddress=%s is same", parabind.MinerAddress)
 	}
 
-	log := getBindLog(parabind, oldbind)
+	log := getBindLog(parabind, oldbindMiner)
 	logs = append(logs, log)
 	oldSuper, err := getSuper(a.db, parabind.MinerAddress)
 	if err != nil && err != types.ErrNotFound {
@@ -128,7 +134,7 @@ func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types
 	kvs = append(kvs, &types.KeyValue{Key: calcParaSuperNodeBindReturnAddr(parabind.SuperAddress), Value: value})
 	kvs = append(kvs, &types.KeyValue{Key: calcParaSuperNodeBindMinerAddr(parabind.MinerAddress), Value: value})
 	if len(parabind.MinerAddress) <= 0 {
-		kvs = append(kvs, &types.KeyValue{Key: calcParaSuperNodeBindMinerAddr(oldbind), Value: nil})
+		kvs = append(kvs, &types.KeyValue{Key: calcParaSuperNodeBindMinerAddr(oldbindMiner), Value: nil})
 	}
 
 	for i := 0; i < len(kvs); i++ {
