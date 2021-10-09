@@ -34,6 +34,8 @@ var (
 	ForkParaSupervision = "ForkParaSupervision"
 	// ForkParaFullMinerHeight 平行链全挖矿开启高度
 	ForkParaFullMinerHeight = "ForkParaFullMinerHeight"
+	// ForkParaRootHash 平行链按照ForkRootHash计算rootHash高度,在之前版本中平行链侧计算txRootHash没有提供正确的主链高度计算，需要分叉
+	ForkParaRootHash = "ForkParaRootHash"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -67,6 +69,7 @@ func InitFork(cfg *types.Chain33Config) {
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 	cfg.RegisterDappFork(ParaX, ForkParaFullMinerHeight, types.MaxHeight)
+	cfg.RegisterDappFork(ParaX, ForkParaRootHash, types.MaxHeight)
 }
 
 //InitExecutor ...
