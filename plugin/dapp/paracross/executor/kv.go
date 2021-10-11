@@ -38,6 +38,11 @@ var (
 
 	paraBindMinderAddr string
 	paraBindMinderNode string
+
+	//监督节点
+	paraSupervisionNodes            string
+	paraSupervisionNodeIDPrefix     string
+	localSupervisionNodeStatusTitle string
 )
 
 func setPrefix() {
@@ -67,6 +72,9 @@ func setPrefix() {
 
 	localNodeGroupStatusTitle = "LODB-paracross-nodegroupStatusTitle-"
 
+	paraSupervisionNodes = "mavl-paracross-supervision-nodes-title-"
+	paraSupervisionNodeIDPrefix = "mavl-paracross-title-nodeid-supervision-"
+	localSupervisionNodeStatusTitle = "LODB-paracross-supervision-nodeStatusTitle-"
 }
 
 func calcTitleKey(t string) []byte {
@@ -194,4 +202,24 @@ func calcParaBindMinerAddr(node, bind string) []byte {
 
 func calcParaBindMinerNode() []byte {
 	return []byte(paraBindMinderNode)
+}
+
+func calcParaSupervisionNodeGroupAddrsKey(title string) []byte {
+	return []byte(fmt.Sprintf(paraSupervisionNodes+"%s", title))
+}
+
+func calcParaSupervisionNodeIDKey(title, hash string) string {
+	return fmt.Sprintf(paraSupervisionNodeIDPrefix+"%s-%s", title, hash)
+}
+
+func calcLocalSupervisionNodeStatusTitle(title string, status int32, addr, id string) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s-%s", title, status, addr, id))
+}
+
+func calcLocalSupervisionNodeStatusTitlePrefix(title string, status int32) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d", title, status))
+}
+
+func calcLocalSupervisionNodeStatusTitleAllPrefix(title string) []byte {
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-", title))
 }

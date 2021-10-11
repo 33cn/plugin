@@ -30,6 +30,26 @@ services:
     environment:
       PARAFILE: "/root/chain33.para29.toml"
 
+  chain28:
+    entrypoint: /root/entrypoint.sh
+    environment:
+      PARAFILE: "/root/chain33.para28.toml"
+
+  chain27:
+    entrypoint: /root/entrypoint.sh
+    environment:
+      PARAFILE: "/root/chain33.para27.toml"
+
+  chain26:
+    entrypoint: /root/entrypoint.sh
+    environment:
+      PARAFILE: "/root/chain33.para26.toml"
+
+  chain25:
+    entrypoint: /root/entrypoint.sh
+    environment:
+      PARAFILE: "/root/chain33.para25.toml"
+
   nginx:
     image: nginx:latest
     depends_on:

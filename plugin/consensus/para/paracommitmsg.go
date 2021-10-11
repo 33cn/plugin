@@ -341,10 +341,14 @@ func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 
 func (client *commitMsgClient) checkAuthAccountIn() {
 	nodeStr, err := client.getNodeGroupAddrs()
-	if err != nil {
+	nodeSupervisionStr, errSupervision := client.getSupervisionNodeGroupAddrs() // 判断是否是监督节点
+	if err != nil && errSupervision != nil {
 		return
 	}
-	authExist := strings.Contains(nodeStr, client.authAccount)
+
+	authExist1 := strings.Contains(nodeStr, client.authAccount)
+	authExist2 := strings.Contains(nodeSupervisionStr, client.authAccount)
+	authExist := authExist1 || authExist2
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -403,7 +407,6 @@ func (client *commitMsgClient) isSync() bool {
 	}
 
 	return true
-
 }
 
 func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*types.Transaction, int64) {
@@ -927,6 +930,27 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 	resp, ok := ret.(*types.ReplyConfig)
 	if !ok {
 		plog.Error("commitmsg.getNodeGroupAddrs rsp nok")
+		return "", err
+	}
+
+	return resp.Value, nil
+}
+
+//Supervision node group会在主链和平行链都同时配置,只本地查询就可以
+func (client *commitMsgClient) getSupervisionNodeGroupAddrs() (string, error) {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetSupervisionNodeGroupAddrs",
+		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs ", "err", err.Error())
+		return "", err
+	}
+	resp, ok := ret.(*types.ReplyConfig)
+	if !ok {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs rsp nok")
 		return "", err
 	}
 

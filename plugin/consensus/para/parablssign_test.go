@@ -34,7 +34,6 @@ func TestIntegrateCommits(t *testing.T) {
 	assert.Equal(t, len(pool[0].Signs), 2)
 	assert.Equal(t, pool[0].Addrs[0], "aa")
 	assert.Equal(t, pool[0].Addrs[1], "bb")
-
 }
 
 func TestBlsSignMain(t *testing.T) {
@@ -126,7 +125,7 @@ func testVerifyBlsSign(t *testing.T, cryptCli crypto.Crypto) {
 	data := "0x1a0c757365722e702e706172612e"
 	msg, err := common.FromHex(data)
 	assert.NoError(t, err)
-	types.Decode(msg, status)
+	_ = types.Decode(msg, status)
 	commit.Status = status
 	commit.Bls = blsInfo
 	err = client.verifyBlsSign(KS, commit)
