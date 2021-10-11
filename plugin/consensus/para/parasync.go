@@ -438,7 +438,7 @@ func (client *blockSyncClient) addBlock(lastBlock *types.Block, localBlock *pt.P
 		newBlock.Txs = types.TransactionSort(newBlock.Txs)
 	}
 	//在之前版本中CalcMerkleRoot的height是未初始化的MainHeight，等于0，在这个平行链的分叉ForkParaRootHash高度后统一采用新高度
-	if cfg.IsFork(newBlock.Height, pt.ForkParaRootHash) {
+	if cfg.IsDappFork(newBlock.Height, pt.ParaX, pt.ForkParaRootHash) {
 		newBlock.TxHash = merkle.CalcMerkleRoot(cfg, newBlock.GetMainHeight(), newBlock.Txs)
 	} else {
 		newBlock.TxHash = merkle.CalcMerkleRoot(cfg, 0, newBlock.Txs)
