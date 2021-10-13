@@ -85,4 +85,3 @@ make push b=branch_dev_name m="hello world"
 testcase的规则参考plugin/dapp/testcase_compose_rule.md
 
 用户可以在travis自己工程里面设置自己plugin的DAPP变量，如DAPP设置为relay，则travis里面run relay的testcase
-
