@@ -167,10 +167,9 @@ function start() {
 
     # query node run status
     check_docker_status
-    ${CLI} block last_header
     ${CLI} net info
-
     ${CLI} net peer
+    ${CLI} block last_header
     local count=1000
     while [ $count -gt 0 ]; do
         peersCount=$(${CLI} net peer | jq '.[] | length')
