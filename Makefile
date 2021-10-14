@@ -32,6 +32,48 @@ build_ci: depends ## Build the binary file for CI
 	@cp chain33.para.toml build/ci/paracross/
 
 
+PLATFORM_LIST = \
+	darwin-amd64 \
+	darwin-arm64 \
+	linux-amd64 \
+
+WINDOWS_ARCH_LIST = \
+	windows-amd64
+
+GOBUILD=go build $(BUILD_FLAGS) $(LDFLAGS)
+
+darwin-amd64:
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml build/ && cd build && \
+	chmod +x chain33-darwin-amd64 && \
+	chmod +x chain33-cli-darwin-amd64 && \
+	tar -zcvf chain33-darwin-amd64.tar chain33-darwin-amd64 chain33-cli-darwin-amd64 chain33.para.toml chain33.toml
+
+darwin-arm64:
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml build/ && cd build && \
+	chmod +x chain33-darwin-arm64 && \
+	chmod +x chain33-cli-darwin-arm64 && \
+	tar -zcvf chain33-darwin-arm64.tar chain33-darwin-arm64 chain33-cli-darwin-arm64 chain33.toml chain33.para.toml
+
+linux-amd64:
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml build/ && cd build && \
+	chmod +x chain33-linux-amd64 && \
+	chmod +x chain33-cli-linux-amd64 && \
+	tar -zcvf chain33-linux-amd64.tar chain33-linux-amd64 chain33-cli-linux-amd64 chain33.para.toml chain33.toml
+
+windows-amd64:
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(APP)-$@.exe $(SRC)
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(CLI)-$@.exe $(SRC_CLI)
+	cp chain33.para.toml chain33.toml build/ && cd build && \
+	tar -zcvf  chain33-windows-amd64.tar chain33-windows-amd64.exe chain33-cli-windows-amd64.exe chain33.para.toml chain33.toml
+
+all-arch: $(PLATFORM_LIST) $(WINDOWS_ARCH_LIST)
+
 para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)
 
