@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/util/testnode"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 	"github.com/stretchr/testify/assert"
+
 	// 注册system和plugin 包
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	_ "github.com/33cn/chain33/system"

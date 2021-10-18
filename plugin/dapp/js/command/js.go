@@ -14,6 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	jsty "github.com/33cn/plugin/plugin/dapp/js/types"
 	"github.com/33cn/plugin/plugin/dapp/js/types/jsproto"
+
 	//"github.com/gojson"
 	"github.com/spf13/cobra"
 )

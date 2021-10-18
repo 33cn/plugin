@@ -10,6 +10,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/ticket/executor"
 	"github.com/33cn/plugin/plugin/dapp/ticket/rpc"
 	"github.com/33cn/plugin/plugin/dapp/ticket/types"
+
 	// init wallet
 	_ "github.com/33cn/plugin/plugin/dapp/ticket/wallet"
 )
