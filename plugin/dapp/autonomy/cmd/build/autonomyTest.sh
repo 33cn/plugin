@@ -159,7 +159,7 @@ function check_activeRule() {
 function testProposalRule() {
     # proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header 50
     proposalRuleTx
 
     #vote
@@ -213,7 +213,7 @@ function check_activeBoard() {
 function testProposalBoard() {
     #proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header 50
     proposalBoardTx
 
     #vote
@@ -253,7 +253,7 @@ function showProject_status() {
 function testProposalProject() {
     # proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header 50
     proposalProjectTx
 
     #vote
@@ -304,7 +304,7 @@ function testProposalChange() {
     hash=$(${Chain33Cli} send coins transfer -a 20 -n test -t "${autonomyAddr}" -k "${arrayKey[21]}")
     check_tx "${Chain33Cli}" "${hash}"
 
-    update_last_header 10
+    update_last_header 50
     proposalChangeTx "${changeAddr}" "${arrayKey[20]}"
 
     ret=$(${Chain33Cli} autonomy showActiveBoard | jq -r ".boards[20]")
@@ -341,16 +341,16 @@ function testProposalChange() {
 function testProposalTerminate() {
     #test terminate
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header 50
     proposalRuleTx
 
-    update_last_header 10
+    update_last_header 50
     proposalBoardTx
 
-    update_last_header 10
+    update_last_header 50
     proposalProjectTx
 
-    update_last_header 10
+    update_last_header 50
     proposalChangeTx "${changeAddr2}" "${arrayKey[21]}"
 
     block_wait "${Chain33Cli}" 850
