@@ -10,8 +10,14 @@
       # "@semantic-release/github", #Default 4
       [
           "@semantic-release/github",
-          {"assets": ["build/*.tar"]}
+          {"assets": ["build/*.tar.gz","build/*.zip"]}
       ],
       "@semantic-release/git",
-    ] 
+      [
+        "@semantic-release/exec", {
+        "prepareCmd": "make all-arch"
+        }
+      ]
+  ]
 }
+

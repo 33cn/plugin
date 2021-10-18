@@ -40,37 +40,37 @@ PLATFORM_LIST = \
 WINDOWS_ARCH_LIST = \
 	windows-amd64
 
-GOBUILD=go build $(BUILD_FLAGS) $(LDFLAGS)
+GOBUILD=go build $(BUILD_FLAGS)" -w -s"
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
 	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
-	cp chain33.para.toml chain33.toml build/ && cd build && \
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
 	chmod +x chain33-darwin-amd64 && \
 	chmod +x chain33-cli-darwin-amd64 && \
-	tar -zcvf chain33-darwin-amd64.tar chain33-darwin-amd64 chain33-cli-darwin-amd64 chain33.para.toml chain33.toml
+	tar -zcvf chain33-darwin-amd64.tar.gz chain33-darwin-amd64 chain33-cli-darwin-amd64 chain33.para.toml chain33.toml CHANGELOG.md
 
 darwin-arm64:
 	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
 	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
-	cp chain33.para.toml chain33.toml build/ && cd build && \
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
 	chmod +x chain33-darwin-arm64 && \
 	chmod +x chain33-cli-darwin-arm64 && \
-	tar -zcvf chain33-darwin-arm64.tar chain33-darwin-arm64 chain33-cli-darwin-arm64 chain33.toml chain33.para.toml
+	tar -zcvf chain33-darwin-arm64.tar.gz chain33-darwin-arm64 chain33-cli-darwin-arm64 chain33.toml chain33.para.toml CHANGELOG.md
 
 linux-amd64:
 	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(APP)-$@ $(SRC)
 	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
-	cp chain33.para.toml chain33.toml build/ && cd build && \
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
 	chmod +x chain33-linux-amd64 && \
 	chmod +x chain33-cli-linux-amd64 && \
-	tar -zcvf chain33-linux-amd64.tar chain33-linux-amd64 chain33-cli-linux-amd64 chain33.para.toml chain33.toml
+	tar -zcvf chain33-linux-amd64.tar.gz chain33-linux-amd64 chain33-cli-linux-amd64 chain33.para.toml chain33.toml CHANGELOG.md
 
 windows-amd64:
 	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(APP)-$@.exe $(SRC)
 	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(CLI)-$@.exe $(SRC_CLI)
-	cp chain33.para.toml chain33.toml build/ && cd build && \
-	tar -zcvf  chain33-windows-amd64.tar chain33-windows-amd64.exe chain33-cli-windows-amd64.exe chain33.para.toml chain33.toml
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
+	zip -j  chain33-windows-amd64.zip chain33-windows-amd64.exe chain33-cli-windows-amd64.exe chain33.para.toml chain33.toml CHANGELOG.md
 
 all-arch: $(PLATFORM_LIST) $(WINDOWS_ARCH_LIST)
 
