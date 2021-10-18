@@ -782,15 +782,18 @@ function para_create_nodegroup() {
 # $1 status, $2 hash
 function check_supervision_node_group_list() {
     local idcount=0
-    if [ "$#" -eq 3 ]; then
-        idcount=$3
-    fi
-    newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[$idcount].id")
-    if [ "$newid" != "$2" ]; then
-        ${PARA_CLI} para supervision_node id_list -s "$1"
-        echo "cancel status error "
-        exit 1
-    fi
+    while true; do
+        newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[$idcount].id")
+        if [ "$newid" == null ]; then
+            ${PARA_CLI} para supervision_node id_list -s "$1"
+            echo "cancel status error "
+            exit 1
+        fi
+        if [ "$newid" == "$2" ]; then
+            break
+        fi
+        idcount=$((idcount + 1))
+    done
 }
 
 # $1 status $2 addr
