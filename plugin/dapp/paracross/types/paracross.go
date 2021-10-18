@@ -50,8 +50,12 @@ const (
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
 
-	TyLogParaSuperNodeBindReturn = 673
-	TyLogParaSuperNodeBindMiner  = 674
+	TyLogParaSuperNodeBindReturnNew    = 673
+	TyLogParaSuperNodeBindReturnUpdate = 674
+	TyLogParaSuperNodeBindReturnUnBind = 675
+	TyLogParaSuperNodeBindMinerNew     = 676
+	TyLogParaSuperNodeBindMinerUpdate  = 677
+	TyLogParaSuperNodeBindMinerUnBind  = 678
 )
 
 // action type
@@ -68,6 +72,8 @@ const (
 	ParacrossActionTransferToExec
 	// ParacrossActionParaBindMiner  para chain bind super node miner
 	ParacrossActionParaBindMiner
+	// ParacrossActionSuperNodeBindMiner
+	ParacrossActionSuperNodeBindMiner
 )
 
 const (

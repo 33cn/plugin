@@ -539,7 +539,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	//获取commitAddrs, bls sign 包含多个账户的聚合签名
 	commitAddrs := []string{}
 	isForkParaSuperNodeBindMiner := false
-	if cfg.IsFork(a.height, pt.ForkParaSuperNodeBindMiner) {
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSuperNodeBindMiner) {
 		bindSuperNode, err := getBindSuperNode(a.db, a.fromaddr, commit.Status.Title)
 		if err != nil {
 			return nil, err
@@ -547,6 +547,7 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 		// a.fromaddr 是授权挖矿地址
 		if bindSuperNode != "" {
+
 			isForkParaSuperNodeBindMiner = true
 			commitAddrs = []string{bindSuperNode}
 			if commit.Bls != nil {

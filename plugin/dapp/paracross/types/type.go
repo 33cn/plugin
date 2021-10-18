@@ -51,7 +51,6 @@ func init() {
 	types.AllowUserExec = append(types.AllowUserExec, []byte(ParaX))
 	types.RegFork(ParaX, InitFork)
 	types.RegExec(ParaX, InitExecutor)
-
 }
 
 //InitFork ...
@@ -66,7 +65,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 	cfg.RegisterDappFork(ParaX, ForkParaFullMinerHeight, types.MaxHeight)
 
-	cfg.RegisterDappFork(ParaX, ForkParaSuperNodeBindMiner, 12500000)
+	cfg.RegisterDappFork(ParaX, ForkParaSuperNodeBindMiner, 0)
 }
 
 //InitExecutor ...
@@ -100,25 +99,31 @@ func (p *ParacrossType) GetName() string {
 // GetLogMap get receipt log map
 func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogParacrossCommit:           {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
-		TyLogParacrossCommitDone:       {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
-		TyLogParacrossCommitRecord:     {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
-		TyLogParaAssetWithdraw:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
-		TyLogParaAssetTransfer:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
-		TyLogParaAssetDeposit:          {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
-		TyLogParaCrossAssetTransfer:    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
-		TyLogParacrossMiner:            {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
-		TyLogParaNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
-		TyLogParaNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
-		TyLogParaNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
-		TyLogParaNodeVoteDone:          {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
-		TyLogParaNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
-		TyLogParaNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
-		TyLogParaSelfConsStageConfig:   {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
-		TyLogParaStageVoteDone:         {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
-		TyLogParaStageGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
-		TyLogParaBindMinerAddr:         {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
-		TyLogParaBindMinerNode:         {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParacrossCommit:               {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
+		TyLogParacrossCommitDone:           {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
+		TyLogParacrossCommitRecord:         {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
+		TyLogParaAssetWithdraw:             {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
+		TyLogParaAssetTransfer:             {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
+		TyLogParaAssetDeposit:              {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParaCrossAssetTransfer:        {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
+		TyLogParacrossMiner:                {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
+		TyLogParaNodeConfig:                {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
+		TyLogParaNodeStatusUpdate:          {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
+		TyLogParaNodeGroupAddrsUpdate:      {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
+		TyLogParaNodeVoteDone:              {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
+		TyLogParaNodeGroupConfig:           {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
+		TyLogParaNodeGroupStatusUpdate:     {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
+		TyLogParaSelfConsStageConfig:       {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
+		TyLogParaStageVoteDone:             {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
+		TyLogParaStageGroupUpdate:          {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
+		TyLogParaBindMinerAddr:             {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
+		TyLogParaBindMinerNode:             {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParaSuperNodeBindReturnNew:    {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindReturnNew{}), Name: "TyLogParaSuperNodeBindReturnNew"},
+		TyLogParaSuperNodeBindReturnUpdate: {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindReturnUpdate{}), Name: "TyLogParaSuperNodeBindReturnUpdate"},
+		TyLogParaSuperNodeBindReturnUnBind: {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindReturnUnBind{}), Name: "TyLogParaSuperNodeBindReturnUnBind"},
+		TyLogParaSuperNodeBindMinerNew:     {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindMinerNew{}), Name: "TyLogParaSuperNodeBindMinerNew"},
+		TyLogParaSuperNodeBindMinerUpdate:  {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindMinerUpdate{}), Name: "TyLogParaSuperNodeBindMinerUpdate"},
+		TyLogParaSuperNodeBindMinerUnBind:  {Ty: reflect.TypeOf(ReceiptParaSuperNodeBindMinerUnBind{}), Name: "TyLogParaSuperNodeBindMinerUnBind"},
 	}
 }
 
@@ -137,6 +142,7 @@ func (p *ParacrossType) GetTypeMap() map[string]int32 {
 		"NodeGroupConfig":    ParacrossActionNodeGroupApply,
 		"SelfStageConfig":    ParacrossActionSelfStageConfig,
 		"ParaBindMiner":      ParacrossActionParaBindMiner,
+		"SuperNodeBindMiner": ParacrossActionSuperNodeBindMiner,
 	}
 }
 

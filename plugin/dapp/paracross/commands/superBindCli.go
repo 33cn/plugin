@@ -78,7 +78,7 @@ func superNodeBindInfo(cmd *cobra.Command, args []string) {
 	req := types.ReqString{Data: addr}
 	params.Payload = types.MustPBToJSON(&req)
 
-	var res pt.ParaNodeAddrIdStatus
+	var res pt.ParaSuperNodeBindMiner
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
@@ -109,7 +109,7 @@ func authorizedNodeBindSuperNodeInfo(cmd *cobra.Command, args []string) {
 	req := types.ReqString{Data: addr}
 	params.Payload = types.MustPBToJSON(&req)
 
-	var res pt.ParaNodeAddrIdStatus
+	var res pt.ParaSuperNodeBindMiner
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

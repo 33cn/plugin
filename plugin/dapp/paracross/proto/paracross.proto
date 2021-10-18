@@ -353,6 +353,7 @@ message ParacrossAction {
         ParaStageConfig       selfStageConfig = 11;
         CrossAssetTransfer    crossAssetTransfer = 12;
         ParaBindMinerCmd      paraBindMiner   = 13;
+        ParaSuperNodeBindMiner      superNodeBindMiner   = 14;
     }
     int32 ty = 2;
 }
@@ -520,15 +521,40 @@ message ParaSuperNodeBindMiner{
     string minerBlsPubKey = 3;
 }
 
-message ReceiptParaSuperNodeBindReturn {
-    string superAddress    = 1;
-    string oldMinerAddress = 2;
-    string newMinerAddress = 3;
+message ReceiptParaSuperNodeBindReturnNew {
+    string superAddress      = 1;
+    string newMinerAddress   = 2;
+    string newMinerBlsPubKey = 3;
 }
 
-message ReceiptParaSuperNodeBindMiner {
-    string MinerAddress    = 1;
+message ReceiptParaSuperNodeBindReturnUpdate {
+    string superAddress      = 1;
+    string oldMinerAddress   = 2;
+    string oldMinerBlsPubKey = 3;
+    string newMinerAddress   = 4;
+    string newMinerBlsPubKey = 5;
+}
+
+message ReceiptParaSuperNodeBindReturnUnBind {
+    string superAddress      = 1;
+    string oldMinerAddress   = 2;
+    string oldMinerBlsPubKey = 3;
+}
+
+message ReceiptParaSuperNodeBindMinerNew {
+    string minerAddress    = 1;
     string minerBlsPubKey  = 2;
-    string oldSuperAddress = 3;
-    string newSuperAddress = 4;
+    string newSuperAddress = 3;
+}
+
+message ReceiptParaSuperNodeBindMinerUpdate {
+    string minerAddress       = 1;
+    string superAddress       = 2;
+    string oldMinerBlsPubKey  = 3;
+    string newMinerBlsPubKey  = 4;
+}
+
+message ReceiptParaSuperNodeBindMinerUnBind {
+    string minerAddress    = 1;
+    string oldSuperAddress = 2;
 }

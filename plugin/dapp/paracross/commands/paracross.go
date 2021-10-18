@@ -1149,12 +1149,15 @@ func blsPubKeyCmd() *cobra.Command {
 		Short: "get bls pub key by secp256 prikey or current wallet bls pubkey",
 		Run:   blsPubKey,
 	}
+	addBlsPubKeyCmdFlags(cmd)
 	return cmd
 }
 
-func blsPubKey(cmd *cobra.Command, args []string) {
+func addBlsPubKeyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("prikey", "p", "", "secp256 private key")
+}
 
+func blsPubKey(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	prikey, _ := cmd.Flags().GetString("prikey")
 	req := &types.ReqString{Data: prikey}
