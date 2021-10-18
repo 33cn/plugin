@@ -33,12 +33,6 @@ CLI5="docker exec ${NODE5} /root/chain33-cli"
 
 # shellcheck disable=SC2034
 NODE6="${1}_chain28_1"
-# shellcheck disable=SC2034
-NODE7="${1}_chain27_1"
-# shellcheck disable=SC2034
-NODE8="${1}_chain26_1"
-# shellcheck disable=SC2034
-NODE9="${1}_chain25_1"
 
 containers=("${NODE1}" "${NODE2}" "${NODE3}" "${NODE4}")
 export COMPOSE_PROJECT_NAME="$1"

@@ -9,9 +9,6 @@ PARA_CLI1="docker exec ${NODE1} /root/chain33-cli --paraName user.p.para. --rpc_
 PARA_CLI4="docker exec ${NODE4} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 PARA_CLI5="docker exec ${NODE5} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
 PARA_CLI6="docker exec ${NODE6} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
-PARA_CLI7="docker exec ${NODE7} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
-PARA_CLI8="docker exec ${NODE8} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
-PARA_CLI9="docker exec ${NODE9} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
@@ -27,13 +24,7 @@ BLSPUB_MC="980287e26d4d44f8c57944ffc096f7d98a460c97dadbffaed14ff0de901fa7f8afc59
 
 # 监督节点
 ADDR_28="15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h"
-ADDR_27="13Q5qkhpAMKSQkcZLdrW2watv6A1zYau8U"
-ADDR_26="1bVrfkMkr67nppZcoZNNbhpvHVB3FJdnb"
-ADDR_25="1P5fmCYpzZ5hbKbjmSGYVKxbrtzJ9Pyu1V"
 BLSPUB_28="80e713aae96a44607ba6e0f1acfe88641ac72b789e81696cb646b1e1ae5335bd92011593eee303f9e909fd752c762db3"
-BLSPUB_27="a007c19e2ffb9e6e555c1d3b6599c9e62394153aa36920bbe12c90bde796972b8de72d74da98c65b51b767ccf0f44ca3"
-BLSPUB_26="95af65564ac8f159d456940926726a266956281929004d5aad89a680830a8eda5dad527f9aa22d2b110367347c1bc3c5"
-BLSPUB_25="80fd0544816faea8d973d11e57ce28bdd9aa70551f7e77ca2543aa5daa8675aaa9936e5d1cda5ad93cec7cae1fd34278"
 
 # 超级节点私钥
 SUPER_KEY="0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc"
@@ -69,9 +60,6 @@ function para_init() {
     para_set_toml chain33.para26.toml "$PARANAME" "$1"
     para_set_toml chain33.para25.toml "$PARANAME" "$1"
     sed -i $xsedfix 's/^authAccount=.*/authAccount="'"$ADDR_28"'"/g' chain33.para28.toml # 0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f
-    sed -i $xsedfix 's/^authAccount=.*/authAccount="'"$ADDR_27"'"/g' chain33.para27.toml # 0xb9548ee4d37a4dcbfa0b21cbfe1ac95121e2850225cf7d8eb1e50c52996b1b83
-    sed -i $xsedfix 's/^authAccount=.*/authAccount="'"$ADDR_26"'"/g' chain33.para26.toml # 0x515c1d4aa106bee952437247aa9907c6ef1322485cf36f312fdca988464e0871
-    sed -i $xsedfix 's/^authAccount=.*/authAccount="'"$ADDR_25"'"/g' chain33.para25.toml # 0xdd11ba1060534f07e0353b302ff4a3a9210dc55782aca1b30b56d7fa63df8c66
 }
 
 function para_set_toml() {
@@ -137,9 +125,6 @@ function para_set_wallet() {
     #1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
     para_import_wallet "${PARA_CLI4}" "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" "paraAuthAccount"
     para_import_wallet "${PARA_CLI6}" "0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f" "paraAuthAccount"
-    para_import_wallet "${PARA_CLI7}" "0xb9548ee4d37a4dcbfa0b21cbfe1ac95121e2850225cf7d8eb1e50c52996b1b83" "paraAuthAccount"
-    para_import_wallet "${PARA_CLI8}" "0x515c1d4aa106bee952437247aa9907c6ef1322485cf36f312fdca988464e0871" "paraAuthAccount"
-    para_import_wallet "${PARA_CLI9}" "0xdd11ba1060534f07e0353b302ff4a3a9210dc55782aca1b30b56d7fa63df8c66" "paraAuthAccount"
 
     #14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     para_import_key "${PARA_CLI}" "0xCC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944" "genesis"
@@ -220,9 +205,6 @@ function para_transfer() {
     main_transfer2account "1BM2xhBk95qoae8zKNDWwAVGgBERhb7DQu"
     # superversion node
     main_transfer2account "$ADDR_28"
-    main_transfer2account "$ADDR_27"
-    main_transfer2account "$ADDR_26"
-    main_transfer2account "$ADDR_25"
     # super node test
     main_transfer2account "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
     main_transfer2account "1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj"
@@ -799,7 +781,11 @@ function para_create_nodegroup() {
 
 # $1 status, $2 hash
 function check_supervision_node_group_list() {
-    newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[0].id")
+    local idcount=0
+    if [ "$#" -eq 3 ]; then
+        idcount=$3
+    fi
+    newid=$(${PARA_CLI} para supervision_node id_list -s "$1" | jq -r ".ids[$idcount].id")
     if [ "$newid" != "$2" ]; then
         ${PARA_CLI} para supervision_node id_list -s "$1"
         echo "cancel status error "
@@ -852,35 +838,35 @@ function para_create_supervision_nodegroup_cancel() {
 
 function para_create_supervision_nodegroup_quit() {
     echo "=========== # ${FUNCNAME} begin ============="
-    echo "=========== # para chain apply supervision node group 25 ============="
+    echo "=========== # para chain apply supervision node group 28 ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
     ##apply
-    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_25" -c 6 -p "$BLSPUB_25" -k "${ADDR_1KA_KEY}")
+    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_28" -c 6 -p "$BLSPUB_28" -k "${ADDR_1KA_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
     id=$txhash
 
     check_balance_1ka "$balancePre" 6
 
-    echo "=========== # para chain approve supervision node group 25 ============="
+    echo "=========== # para chain approve supervision node group 28 ============="
     ##approve
     txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
-    check_supervision_node_addr_status 2 "$ADDR_25"
+    check_supervision_node_addr_status 2 "$ADDR_28"
     check_supervision_node_group_list 2 "$id"
-    check_supervision_node_addrs "$ADDR_25"
+    check_supervision_node_addrs "$ADDR_28"
 
     echo "=========== # para chain quit supervision node group 25 ============="
     balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    txhash=$(${PARA_CLI} send para supervision_node quit -a "$ADDR_25" -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para supervision_node quit -a "$ADDR_28" -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
     check_balance_1ka "$balancePre" -6
     check_supervision_node_group_list 3 "$id"
-    check_supervision_node_addr_status 3 "$ADDR_25"
+    check_supervision_node_addr_status 3 "$ADDR_28"
     check_supervision_node_addrs null
     echo "=========== # ${FUNCNAME} end ============="
 }
@@ -906,64 +892,6 @@ function para_create_supervision_nodegroup_approve() {
     check_supervision_node_group_list 2 "$id"
     check_supervision_node_addr_status 2 "$ADDR_28"
     check_supervision_node_addrs "$ADDR_28"
-
-    echo "=========== # para chain apply supervision node group 27 ============="
-    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    ##apply
-    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_27" -c 6 -p "$BLSPUB_27" -k "${ADDR_1KA_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-    id=$txhash
-
-    check_balance_1ka "$balancePre" 6
-
-    echo "=========== # para chain approve supervision node group 27 ============="
-    ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-
-    check_supervision_node_addr_status 2 "$ADDR_27"
-    check_supervision_node_addrs "$ADDR_28,$ADDR_27"
-
-    echo "=========== # para chain apply supervision node group 26 ============="
-    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    ##apply
-    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_26" -c 6 -p "$BLSPUB_26" -k "${ADDR_1KA_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-    id=$txhash
-
-    check_balance_1ka "$balancePre" 6
-
-    echo "=========== # para chain approve supervision node group 26 ============="
-    ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-
-    check_supervision_node_addr_status 2 "$ADDR_26"
-    check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26"
-
-    echo "=========== # para chain apply supervision node group 25 again ============="
-    balancePre=$(${CLI} account balance -a 1Ka7EPFRqs3v9yreXG6qA4RQbNmbPJCZPj -e paracross | jq -r ".frozen")
-    ##apply
-    txhash=$(${PARA_CLI} send para supervision_node apply -a "$ADDR_25" -c 6 -p "$BLSPUB_25" -k "${ADDR_1KA_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-    id=$txhash
-
-    check_balance_1ka "$balancePre" 6
-
-    echo "=========== # para chain approve supervision node group 25 again ============="
-    ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
-    echo "tx=$txhash"
-    query_tx "${PARA_CLI}" "${txhash}"
-
-    check_supervision_node_addr_status 2 "$ADDR_25"
-    check_supervision_node_addrs "$ADDR_28,$ADDR_27,$ADDR_26,$ADDR_25"
-
     echo "=========== # ${FUNCNAME} end ============="
 }
 
@@ -972,7 +900,6 @@ function para_create_supervision_nodegroup() {
     para_create_supervision_nodegroup_cancel
     para_create_supervision_nodegroup_quit
     para_create_supervision_nodegroup_approve
-    docker stop "${NODE9}"
     echo "=========== # ${FUNCNAME} end ============="
 }
 
