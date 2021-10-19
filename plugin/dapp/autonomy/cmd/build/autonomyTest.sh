@@ -104,6 +104,8 @@ source "./publicTest.sh"
     publicPeriod=172800
     pubAttendRatio=60
     pubApproveRatio=65
+
+    start_block=50
 }
 
 function update_last_header() {
@@ -159,11 +161,11 @@ function check_activeRule() {
 function testProposalRule() {
     # proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalRuleTx
 
     #vote
-    block_wait "${Chain33Cli}" 10
+    block_wait "${Chain33Cli}" "${start_block}"
     raw=$(${Chain33Cli} autonomy voteRule -r 1 -p "${proposalRuleID}")
     sign_and_send "${raw}" "${votePrKey}"
     raw=$(${Chain33Cli} autonomy voteRule -r 1 -p "${proposalRuleID}")
@@ -213,11 +215,11 @@ function check_activeBoard() {
 function testProposalBoard() {
     #proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalBoardTx
 
     #vote
-    block_wait "${Chain33Cli}" 10
+    block_wait "${Chain33Cli}" "${start_block}"
     raw=$(${Chain33Cli} autonomy voteBoard -r 1 -p "${proposalBoardID}")
     sign_and_send "${raw}" "${votePrKey}"
     raw=$(${Chain33Cli} autonomy voteBoard -r 1 -p "${proposalBoardID}")
@@ -253,11 +255,11 @@ function showProject_status() {
 function testProposalProject() {
     # proposal
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalProjectTx
 
     #vote
-    block_wait "${Chain33Cli}" 10
+    block_wait "${Chain33Cli}" "${start_block}"
     for ((i = 0; i < 13; i++)); do
         raw=$(${Chain33Cli} autonomy voteProject -r 1 -p "${proposalProjectID}")
         sign_and_send "${raw}" "${arrayKey[$i]}"
@@ -304,7 +306,7 @@ function testProposalChange() {
     hash=$(${Chain33Cli} send coins transfer -a 20 -n test -t "${autonomyAddr}" -k "${arrayKey[21]}")
     check_tx "${Chain33Cli}" "${hash}"
 
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalChangeTx "${changeAddr}" "${arrayKey[20]}"
 
     ret=$(${Chain33Cli} autonomy showActiveBoard | jq -r ".boards[20]")
@@ -313,7 +315,7 @@ function testProposalChange() {
     fi
 
     #vote
-    block_wait "${Chain33Cli}" 10
+    block_wait "${Chain33Cli}" "${start_block}"
     for ((i = 0; i < 13; i++)); do
         raw=$(${Chain33Cli} autonomy voteChange -r 1 -p "${proposalChangeID}")
         sign_and_send "${raw}" "${arrayKey[$i]}"
@@ -341,19 +343,19 @@ function testProposalChange() {
 function testProposalTerminate() {
     #test terminate
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalRuleTx
 
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalBoardTx
 
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalProjectTx
 
-    update_last_header 10
+    update_last_header "${start_block}"
     proposalChangeTx "${changeAddr2}" "${arrayKey[21]}"
 
-    block_wait "${Chain33Cli}" 850
+    block_wait "${Chain33Cli}" 900
 
     raw=$(${Chain33Cli} autonomy terminateRule -p "${proposalRuleID}")
     sign_and_send "${raw}" "${propKey}"
