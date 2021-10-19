@@ -8,8 +8,14 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
-LDFLAGS := -ldflags "-w -s"
+LDFLAGS := ' -w -s'
+BUILDTIME:=$(shell date +"%Y-%m-%d %H:%M:%S %A")
+VERSION=$(shell git describe --tags || git rev-parse --short=8 HEAD)
+GitCommit=$(shell git rev-parse --short=8 HEAD)
+BUILD_FLAGS := -ldflags '-X "github.com/33cn/plugin/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" \
+                         -X "github.com/33cn/plugin/version.BuildTime=$(BUILDTIME)"'
+
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
