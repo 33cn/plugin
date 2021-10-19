@@ -29,6 +29,7 @@ jobs:
         with:
           branch: master
           extra_plugins: |
+            @google/semantic-release-replace-plugin
             @semantic-release/exec
             @semantic-release/changelog
             @semantic-release/git

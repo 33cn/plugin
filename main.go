@@ -12,11 +12,27 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+
+	frameVersion "github.com/33cn/chain33/common/version"
 	_ "github.com/33cn/chain33/system"
 	"github.com/33cn/chain33/util/cli"
 	_ "github.com/33cn/plugin/plugin"
+	"github.com/33cn/plugin/version"
+)
+
+var (
+	versionCmd = flag.Bool("version", false, "detail version")
 )
 
 func main() {
+	flag.Parse()
+	if *versionCmd {
+		fmt.Println(fmt.Sprintf("build time: %s", version.BuildTime))
+		fmt.Println(fmt.Sprintf("plugin version: %s", version.GetVersion()))
+		fmt.Println(fmt.Sprintf("chain33 frame version: %s", frameVersion.GetVersion()))
+		return
+	}
 	cli.RunChain33("", "")
 }
