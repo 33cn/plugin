@@ -113,13 +113,13 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds, node.nodeInfo.blacklist)
 
 	if err != nil {
-		log.Error("dialPeerWithAddress","DialTimeoutErr",err.Error())
+		log.Error("dialPeerWithAddress", "DialTimeoutErr", err.Error())
 		return nil, err
 	}
 
 	peer, err := c.newPeerFromConn(conn, addr, node)
 	if err != nil {
-		log.Error("dialPeerWithAddress","newPeerFromConn",err)
+		log.Error("dialPeerWithAddress", "newPeerFromConn", err)
 		err = conn.Close()
 
 		return nil, err

@@ -7,11 +7,12 @@ package gossip
 import (
 	"context"
 	"fmt"
-	pr "google.golang.org/grpc/peer"
-	"google.golang.org/grpc/status"
 	"net"
 	"strconv"
 	"time"
+
+	pr "google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 
 	"google.golang.org/grpc/credentials"
 
@@ -172,7 +173,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 		if err != nil {
 			return err
 		}
-		log.Info("interceptor client","remoteAddr",na.String())
+		log.Info("interceptor client", "remoteAddr", na.String())
 
 		if bList != nil && bList.Has(ip) {
 			return fmt.Errorf("blacklist peer  %v no authorized", ip)
@@ -188,7 +189,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 		if err != nil {
 			return nil, err
 		}
-		log.Info("interceptorStream client","remoteAddr",na.String())
+		log.Info("interceptorStream client", "remoteAddr", na.String())
 		if bList.Has(ip) {
 			return nil, fmt.Errorf("blacklist peer %v  no authorized", ip)
 		}
@@ -197,18 +198,18 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	}
 
 	//grpc.WithPerRPCCredentials
-	tcpAddr,err:= net.ResolveTCPAddr("tcp",na.String())
-	if err!=nil{
+	tcpAddr, err := net.ResolveTCPAddr("tcp", na.String())
+	if err != nil {
 		return nil, err
 	}
 	peer := &pr.Peer{
-		Addr:tcpAddr,
+		Addr:     tcpAddr,
 		AuthInfo: nil,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	ctxV:= pr.NewContext(ctx,peer)
+	ctxV := pr.NewContext(ctx, peer)
 	conn, err := grpc.DialContext(ctxV, na.String(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),

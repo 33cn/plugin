@@ -55,7 +55,7 @@ type Peer struct {
 	taskChan     chan interface{} //tx block
 	inBounds     int32            //连接此节点的客户端节点数量
 	IsMaxInbouds bool
-	serialNnum string
+	serialNnum   string
 }
 
 // NewPeer produce a peer object
