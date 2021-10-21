@@ -6,13 +6,14 @@ package gossip
 
 import (
 	"bytes"
+	"github.com/33cn/chain33/rpc/jsonclient"
 	"io"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/33cn/chain33/p2p/utils"
-
 	"github.com/33cn/chain33/types"
 )
 
@@ -596,6 +597,93 @@ func (n *Node) monitorCfgSeeds() {
 			}
 			return true
 		})
+	}
+
+}
+
+func (n *Node) monitorCerts() {
+	if !n.nodeInfo.cfg.EnableTls {
+		return
+	}
+	ticker := time.NewTicker(CheckCfgCertInterVal)
+	defer ticker.Stop()
+	jcli, err := jsonclient.New("chain33-ca-server",n.nodeInfo.caServer , false)
+	if err != nil {
+		log.Error("monitorCerts", "rpc call err", err)
+		return
+	}
+	delayT:=time.Now().Add(time.Minute*2)
+	for {
+		select {
+		case <-ticker.C:
+			//check serialNum
+			if !time.Now().After(delayT){
+				continue
+			}
+			var resp []string
+			var s Serial
+			s.Serials =getSerialNums()
+			if len(s.Serials) == 0 {
+				continue
+			}
+			log.Debug("check cert serialNum++++++","certNum.",len(s.Serials ))
+			err = jcli.Call("Validate", s, &resp)
+			if err != nil {
+				log.Error("monitorCerts", "rpc call err", err)
+				continue
+			}
+
+			log.Debug("monitorCerts","resp", resp)
+			tempCerts := getSerials()
+
+			for _, serialNum := range resp {
+				//被吊销的证书序列号
+				var ok bool
+				sNum := big.NewInt(1)
+				sNum, ok = sNum.SetString(serialNum, 10)
+				if !ok {
+					log.Error("monitorCerts", "big.Int Setstring err", serialNum)
+					continue
+				}
+				//设置证书序列号状态
+				certinfo := updateCertSerial(sNum, true)
+				delete(tempCerts, sNum.String())
+				if certinfo != nil {
+					//断开节点连接
+					//if ip-->serialNum == sNum{
+					// close connect
+					//}else{
+					// }
+					//log.Info("monitorCerts","add blacklist",certinfo.ip)
+					//n.nodeInfo.blacklist.Add(certinfo.ip, 60)
+					for pname,peer:=range n.nodeInfo.peerInfos.GetPeerInfos(){
+						if peer.GetAddr()==certinfo.ip  {
+							v,ok:= latestSerials.Load(certinfo.ip)
+							if ok && v.(string)==serialNum{
+								n.remove(pname)//断开已经连接的节点
+							}
+						}
+					}
+				}
+
+			}
+			log.Debug("monitorCert","tempCerts",tempCerts)
+			//处理解除吊销的节点
+			for serialNum, info := range tempCerts {
+				if info.revoke {
+					// 被撤销的证书恢复正常
+					sNum := big.NewInt(1)
+					sNum, _ = sNum.SetString(serialNum, 10)
+					updateCertSerial(sNum, !info.revoke)
+				}
+				/*
+				//拉入黑名单的节点 恢复正常
+				if n.nodeInfo.blacklist.Has(info.ip) {
+					n.nodeInfo.blacklist.Delete(info.ip)
+				}*/
+			}
+
+		}
 	}
 
 }

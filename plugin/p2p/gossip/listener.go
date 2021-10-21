@@ -6,6 +6,7 @@ package gossip
 
 import (
 	"fmt"
+	"math/big"
 	"math/rand"
 	"net"
 	"sync"
@@ -91,7 +92,13 @@ Retry:
 		if err != nil {
 			return nil, err
 		}
-		if pServer.node.nodeInfo.blacklist.Has(ip) {
+		if serialNum,ok:= latestSerials.Load(ip);ok{
+			bn,_:=big.NewInt(1).SetString(serialNum.(string),10)
+			if isRevoke(bn){//证书被吊销 拒绝接口请求
+				return nil, fmt.Errorf("cert %v revoked", serialNum.(string))
+			}
+		}
+		if pServer.node.nodeInfo.blacklist.Has(ip)  {
 			return nil, fmt.Errorf("blacklist %v no authorized", ip)
 		}
 
@@ -116,6 +123,13 @@ Retry:
 		if err != nil {
 			return err
 		}
+		if serialNum,ok:= latestSerials.Load(ip);ok{
+			bn,_:=big.NewInt(1).SetString(serialNum.(string),10)
+			if isRevoke(bn){//证书被吊销 拒绝接口请求
+				return   fmt.Errorf("cert %v revoked", serialNum.(string))
+			}
+		}
+
 		if pServer.node.nodeInfo.blacklist.Has(ip) {
 			return fmt.Errorf("blacklist %v  no authorized", ip)
 		}
@@ -146,12 +160,12 @@ Retry:
 	opts = append(opts, msgRecvOp, msgSendOp, grpc.KeepaliveEnforcementPolicy(kaep), keepOp, maxStreams, StatsOp)
 	if node.nodeInfo.servCreds != nil {
 		opts = append(opts, grpc.Creds(node.nodeInfo.servCreds))
-
 	}
 
 	dl.server = grpc.NewServer(opts...)
 	dl.p2pserver = pServer
 	pb.RegisterP2PgserviceServer(dl.server, pServer)
+
 	return dl
 }
 

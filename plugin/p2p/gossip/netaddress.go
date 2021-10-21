@@ -7,6 +7,8 @@ package gossip
 import (
 	"context"
 	"fmt"
+	pr "google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 	"net"
 	"strconv"
 	"time"
@@ -136,14 +138,14 @@ func (na *NetAddress) Copy() *NetAddress {
 // DialTimeout calls net.DialTimeout on the address.
 func isCompressSupport(err error) bool {
 	var errstr = `grpc: Decompressor is not installed for grpc-encoding "gzip"`
-	if grpc.Code(err) == codes.Unimplemented && grpc.ErrorDesc(err) == errstr {
+	if status.Code(err) == codes.Unimplemented && status.Convert(err).Message() == errstr {
 		return false
 	}
 	return true
 }
 
 // DialTimeout dial timeout
-func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCredentials) (*grpc.ClientConn, error) {
+func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCredentials, bList *BlackList) (*grpc.ClientConn, error) {
 	ch := make(chan grpc.ServiceConfig, 1)
 	ch <- P2pComm.GrpcConfig()
 
@@ -152,8 +154,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	cliparm.Timeout = 10 * time.Second //ping后的获取ack消息超时时间
 	cliparm.PermitWithoutStream = true //启动keepalive 进行检查
 	keepaliveOp := grpc.WithKeepaliveParams(cliparm)
-	timeoutOp := grpc.WithTimeout(time.Second * 3)
-	log.Debug("NetAddress", "Dial", na.String())
+	log.Info("NetAddress", "Dial------------->", na.String())
 	maxMsgSize := pb.MaxBlockSize + 1024*1024
 	//配置SSL连接
 	var secOpt grpc.DialOption
@@ -162,16 +163,63 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	} else {
 		secOpt = grpc.WithTransportCredentials(creds)
 	}
+	//接口拦截器
+	interceptor := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		// 黑名单校验
+		//checkAuth
+		log.Info("client interceptor")
+		ip, _, err := net.SplitHostPort(na.String())
+		if err != nil {
+			return err
+		}
+		log.Info("interceptor client","remoteAddr",na.String())
+
+		if bList != nil && bList.Has(ip) {
+			return fmt.Errorf("blacklist peer  %v no authorized", ip)
+		}
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+
+	//流拦截器
+	interceptorStream := func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		log.Info("client interceptorStream")
+		ip, _, err := net.SplitHostPort(na.String())
+		if err != nil {
+			return nil, err
+		}
+		log.Info("interceptorStream client","remoteAddr",na.String())
+		if bList.Has(ip) {
+			return nil, fmt.Errorf("blacklist peer %v  no authorized", ip)
+		}
+
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+
 	//grpc.WithPerRPCCredentials
-	conn, err := grpc.Dial(na.String(),
+	tcpAddr,err:= net.ResolveTCPAddr("tcp",na.String())
+	if err!=nil{
+		return nil, err
+	}
+	peer := &pr.Peer{
+		Addr:tcpAddr,
+		AuthInfo: nil,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	ctxV:= pr.NewContext(ctx,peer)
+	conn, err := grpc.DialContext(ctxV, na.String(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(maxMsgSize)),
-		grpc.WithServiceConfig(ch), keepaliveOp, timeoutOp, secOpt)
+		grpc.WithServiceConfig(ch), keepaliveOp, secOpt,
+		grpc.WithUnaryInterceptor(interceptor), grpc.WithStreamInterceptor(interceptorStream))
 	if err != nil {
-		log.Debug("grpc DialCon", "did not connect", err, "addr", na.String())
+		log.Error("grpc DialCon", "did not connect", err, "addr", na.String())
 		return nil, err
 	}
+
 	//p2p version check 通过版本协议，获取通信session
 
 	//判断是否对方是否支持压缩
@@ -187,7 +235,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 		ch2 := make(chan grpc.ServiceConfig, 1)
 		ch2 <- P2pComm.GrpcConfig()
 		log.Debug("NetAddress", "Dial with unCompressor", na.String())
-		conn, err = grpc.Dial(na.String(), secOpt, grpc.WithServiceConfig(ch2), keepaliveOp, timeoutOp)
+		conn, err = grpc.DialContext(ctx, na.String(), secOpt, grpc.WithServiceConfig(ch2), keepaliveOp)
 
 	}
 
