@@ -31,21 +31,19 @@
             "countMatches": true
           },
           {
-            {
-              "files": [ "README.md" ],
-              "from": "# chain33 官方插件系统（.*）",
-              "to": "# chain33 官方插件系统（v${nextRelease.version}）",
-              "results": [
-                {
-                  "file": "README.md",
-                  "hasChanged": true,
-                  "numMatches": 1,
-                  "numReplacements": 1
-                }
-              ],
-              "countMatches": true
-            },
-          }
+            "files": ["README.md"],
+            "from": "# chain33 官方插件系统（.*）",
+            "to":   "# chain33 官方插件系统（v${nextRelease.version}）",
+            "results": [
+              {
+                "file": "README.md",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
+          },
         ]
       }
     ],

@@ -1,10 +1,19 @@
 package version
 
+import (
+	"fmt"
+	"runtime"
+)
+
 //var version control
 var (
-	Version   = "master"
+	Version   = "1.65.3"
 	GitCommit string
 	BuildTime string
+	// GoVersion system go version
+	GoVersion = runtime.Version()
+	// Platform info
+	Platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 )
 
 //GetVersion 获取版本信息
