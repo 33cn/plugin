@@ -1,6 +1,10 @@
+# 平行链名字，不可重复
 Title="user.p.para."
+#是否测试网，平行链不需要
 TestNet=false
+# 平行链原生代币符号，符号最好大写
 CoinSymbol="para"
+# 平行链支持Fork配置，非缺省配置
 EnableParaFork=true
 
 [crypto]
@@ -78,6 +82,7 @@ maxTxNumPerAccount=10000
 
 [consensus]
 name="para"
+#平行链创世块时间
 genesisBlockTime=1514533390
 genesis="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 minerExecs=["paracross"]    #配置挖矿合约
@@ -107,13 +112,13 @@ halvePeriod=1000
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
-#ParaRemoteGrpcClient="118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#ParaRemoteGrpcClient="cloud.bityuan.com,jiedian2.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
 #主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
 #waitMainBlockNum=100
-#打包时间间隔，单位秒
+#检索主链最新区块时间间隔，单位秒
 writeBlockSeconds=2
 #共识节点账户，共识节点需要配置自己的账户，并且钱包导入对应种子，非共识节点留空
 authAccount=""
