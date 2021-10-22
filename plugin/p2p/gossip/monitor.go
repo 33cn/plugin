@@ -612,14 +612,14 @@ func (n *Node) monitorCerts() {
 		log.Error("monitorCerts", "rpc call err", err)
 		return
 	}
-	delayT:=time.Now().Add(time.Minute*2)
+	//delayT:=time.Now().Add(time.Minute*2)
 	for {
 		select {
 		case <-ticker.C:
 			//check serialNum
-			if !time.Now().After(delayT){
-				continue
-			}
+		//	if !time.Now().After(delayT){
+		//		continue
+		//	}
 			var resp []string
 			var s Serial
 			s.Serials =getSerialNums()

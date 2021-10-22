@@ -372,7 +372,7 @@ func testGrpcStreamConns(t *testing.T, p2p *P2p) {
 
 func testP2pComm(t *testing.T, p2p *P2p) {
 
-	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION), nil)
+	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION), nil,nil)
 	t.Log(addrs)
 	i32 := P2pComm.BytesToInt32([]byte{0xff})
 	t.Log(i32)
