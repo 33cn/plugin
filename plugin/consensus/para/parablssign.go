@@ -269,7 +269,7 @@ func (b *blsClient) isValidNodes(id string) bool {
 }
 
 func (b *blsClient) clearDonePool(consensHeight int64) {
-	for h, _ := range b.commitsPool {
+	for h := range b.commitsPool {
 		if h <= consensHeight {
 			delete(b.commitsPool, h)
 		}
