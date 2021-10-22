@@ -193,7 +193,7 @@ func (client *commitMsgClient) createCommitTx() {
 		return
 	}
 	//如果配置了blsSign 则发送到p2p的leader节点来聚合发送，否则发送到主链
-	if client.paraClient.subCfg.Bls.BlsSign {
+	if client.paraClient.blsSignCli.blsSignOn {
 		plog.Debug("bls.event.para bls commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
 		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
 		client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
@@ -260,7 +260,7 @@ func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitActio
 	//如果当前正在发送交易，则取消此次发送，待发送被确认或取消后再触发. 考虑到已经聚合共识成功，又收到某节点消息场景，会多发送交易
 	curTx := client.getCurrentTx()
 	if curTx != nil {
-		plog.Info("paracommitmsg isSendingCommitMsg, cancel this operation", "sending.tx", common.ToHex(curTx.Hash()))
+		plog.Info("bls.event.paracommitmsg isSendingCommitMsg, cancel this operation", "sending.tx", common.ToHex(curTx.Hash()))
 		return
 	}
 
@@ -268,7 +268,7 @@ func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitActio
 	if err != nil {
 		return
 	}
-	plog.Info("paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
+	plog.Info("bls.event.paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
 	for i, msg := range acts {
 		plog.Debug("paracommitmsg sendCommitActions", "idx", i, "height", msg.Status.Height, "mainheight", msg.Status.MainBlockHeight,
 			"blockhash", common.HashHex(msg.Status.BlockHash), "mainHash", common.HashHex(msg.Status.MainBlockHash),
@@ -436,7 +436,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		commits = append(commits, &pt.ParacrossCommitAction{Status: stat})
 	}
 
-	if client.paraClient.subCfg.Bls.BlsSign {
+	if client.paraClient.blsSignCli.blsSignOn {
 		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
 			plog.Error("paracommitmsg bls sign", "err", err)

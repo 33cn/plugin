@@ -2,7 +2,7 @@ name: ci_paracross
 on: [push,pull_request]
 
 jobs:
-  ci_paracross:
+  paracross:
     name: ci_paracross
     runs-on: ubuntu-latest
     steps:
@@ -18,4 +18,22 @@ jobs:
       - name: deploy
         run: |
           make docker-compose dapp=paracross
+          make docker-compose-down dapp=paracross
+
+  bls:
+    name: bls
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+        id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: deploy
+        run: |
+          make docker-compose dapp=paracross extra=1
           make docker-compose-down dapp=paracross

@@ -50,6 +50,7 @@ type blsClient struct {
 	peersBlsPubKey             map[string]crypto.PubKey
 	commitsPool                map[int64]*pt.ParaBlsSignSumDetails
 	rcvCommitTxCh              chan []*pt.ParacrossCommitAction
+	blsSignOn                  bool
 	leaderOffset               int32
 	leaderSwitchInt            int32
 	leaderHeardTickInt         int32
@@ -74,23 +75,27 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b.rcvCommitTxCh = make(chan []*pt.ParacrossCommitAction, maxRcvTxCount)
 	b.quit = make(chan struct{})
 	b.leaderSwitchInt = defLeaderSwitchInt
-	if cfg.Bls.LeaderSwitchInt > 0 {
-		b.leaderSwitchInt = cfg.Bls.LeaderSwitchInt
-	}
 	b.leaderHeardTickInt = defLeaderHeardTickInt
-	if cfg.Bls.LeaderHeardTickInt > 0 {
-		b.leaderHeardTickInt = cfg.Bls.LeaderHeardTickInt
-	}
 	b.watchLeaderSyncInt = defWatchLeaderSyncInt
-	if cfg.Bls.WatchLeaderSyncInt > 0 {
-		b.watchLeaderSyncInt = cfg.Bls.WatchLeaderSyncInt
-	}
 	b.consensHeightDiffThreshold = defConsensHeightThreshold
-	if cfg.Bls.ConsensHeightDiffThreshold > 0 {
-		b.consensHeightDiffThreshold = cfg.Bls.ConsensHeightDiffThreshold
-	}
-	if cfg.Bls.PartNodeGroup > 0 {
-		b.partNodeGroup = cfg.Bls.PartNodeGroup
+
+	if cfg.Bls != nil {
+		b.blsSignOn = cfg.Bls.BlsSign
+		if cfg.Bls.LeaderSwitchInt > 0 {
+			b.leaderSwitchInt = cfg.Bls.LeaderSwitchInt
+		}
+		if cfg.Bls.LeaderHeardTickInt > 0 {
+			b.leaderHeardTickInt = cfg.Bls.LeaderHeardTickInt
+		}
+		if cfg.Bls.WatchLeaderSyncInt > 0 {
+			b.watchLeaderSyncInt = cfg.Bls.WatchLeaderSyncInt
+		}
+		if cfg.Bls.ConsensHeightDiffThreshold > 0 {
+			b.consensHeightDiffThreshold = cfg.Bls.ConsensHeightDiffThreshold
+		}
+		if cfg.Bls.PartNodeGroup > 0 {
+			b.partNodeGroup = cfg.Bls.PartNodeGroup
+		}
 	}
 
 	b.typeNode = pt.ParaCommitNode
@@ -107,7 +112,7 @@ func newBlsClient(para *client, cfg *subConfig) *blsClient {
 */
 func (b *blsClient) procLeaderSync() {
 	defer b.paraClient.wg.Done()
-	if len(b.selfID) <= 0 {
+	if len(b.selfID) <= 0 || !b.blsSignOn {
 		return
 	}
 
@@ -279,7 +284,7 @@ func (b *blsClient) clearDonePool(consensHeight int64) {
 //1. 要等到达成共识了才发送，不然处理未达成共识的各种场景会比较复杂，而且浪费手续费
 func (b *blsClient) procAggregateTxs() {
 	defer b.paraClient.wg.Done()
-	if len(b.selfID) <= 0 {
+	if len(b.selfID) <= 0 || !b.blsSignOn {
 		return
 	}
 
