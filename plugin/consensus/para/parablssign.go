@@ -182,7 +182,7 @@ func (b *blsClient) rcvLeaderSyncTx(sync *pt.LeaderSyncInfo) error {
 	if len(nodes) <= 0 {
 		return errors.Wrapf(pt.ErrParaNodeGroupNotSet, "id=%s", b.selfID)
 	}
-	plog.Info("bls.event.rcvLeaderSyncTx", "from.leader", sync.ID, "self", b.selfID,
+	plog.Info("bls.event.rcvLeaderSync", "from.leader", sync.ID, "self", b.selfID,
 		"fromBase", sync.BaseIdx, "selfBase", base, "from.Off", sync.Offset, "selfOff", off, "count", sync.Count)
 	//接受同步数据需要两个节点基本的共识高度相同, 两个共同leader需相同
 	if sync.BaseIdx != base {
@@ -299,17 +299,17 @@ out:
 			b.clearDonePool(consensHeight)
 
 			//支持可配的只部分nodegroup地址参与聚合，另一部分直接发送
-			calcNodes := len(nodes)
-			if b.partNodeGroup > 0 && int(b.partNodeGroup) < calcNodes {
-				calcNodes = int(b.partNodeGroup)
+			doneNodes := len(nodes)
+			if b.partNodeGroup > 0 && int(b.partNodeGroup) < doneNodes {
+				doneNodes = int(b.partNodeGroup)
 			}
 			//commitsPool里面任一高度满足共识，则认为done
-			if !isMostCommitDone(calcNodes, b.commitsPool, isLeader, leader) {
+			if !isMostCommitDone(doneNodes, b.commitsPool, isLeader, leader) {
 				continue
 			}
 			//自己是Leader,或共识高度超过阈值则聚合并发送交易
 			if isLeader || int32(math.Abs(float64(b.paraClient.commitMsgClient.chainHeight-consensHeight))) > b.consensHeightDiffThreshold {
-				_ = b.sendAggregateTx(nodes)
+				_ = b.sendAggregateTx(nodes, doneNodes)
 			}
 
 		case <-b.quit:
@@ -318,8 +318,8 @@ out:
 	}
 }
 
-func (b *blsClient) sendAggregateTx(nodes []string) error {
-	dones := filterDoneCommits(len(nodes), b.commitsPool)
+func (b *blsClient) sendAggregateTx(nodes []string, doneNodes int) error {
+	dones := filterDoneCommits(doneNodes, b.commitsPool)
 	if len(dones) <= 0 {
 		return nil
 	}
@@ -440,11 +440,11 @@ func isMostCommitDone(nodes int, txsBuff map[int64]*pt.ParaBlsSignSumDetails, is
 }
 
 //找出共识并达到2/3的commits， 并去除与共识不同的commits,为后面聚合签名做准备
-func filterDoneCommits(peers int, pool map[int64]*pt.ParaBlsSignSumDetails) []*pt.ParaBlsSignSumDetails {
+func filterDoneCommits(nodes int, pool map[int64]*pt.ParaBlsSignSumDetails) []*pt.ParaBlsSignSumDetails {
 	var seq []int64
 	for i, v := range pool {
 		most, hash := util.GetMostCommit(v.Msgs)
-		if !util.IsCommitDone(peers, most) {
+		if !util.IsCommitDone(nodes, most) {
 			continue
 		}
 		seq = append(seq, i)
