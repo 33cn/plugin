@@ -340,6 +340,10 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 				return true
 			}
 			plog.Info("paracross ProcEvent", "from", req.GetFrom(), "topic:", req.GetTopic(), "ty", sub.GetTy())
+			if !client.blsSignCli.blsSignOn {
+				plog.Error("paracross ProcEvent bls is closed")
+				return true
+			}
 			switch sub.GetTy() {
 			case P2pSubCommitTx:
 				go client.blsSignCli.rcvCommitTx(sub.GetCommitTx())

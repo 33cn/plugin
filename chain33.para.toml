@@ -131,7 +131,9 @@ mainLoopCheckCommitTxDoneForkHeight=4320000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
 
+#平行链共识节点聚合签名配置
 [consensus.sub.para.bls]
+#是否开启聚合签名，缺省不开启
 blsSign=false
 
 
