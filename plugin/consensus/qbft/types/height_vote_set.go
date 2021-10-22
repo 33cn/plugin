@@ -5,6 +5,7 @@
 package types
 
 import (
+	"bytes"
 	"errors"
 	"strings"
 	"sync"
@@ -37,6 +38,7 @@ One for their LastCommit round, and another for the official commit round.
 type HeightVoteSet struct {
 	chainID string
 	height  int64
+	seq     int64
 	valSet  *ValidatorSet
 
 	mtx               sync.Mutex
@@ -46,9 +48,10 @@ type HeightVoteSet struct {
 }
 
 // NewHeightVoteSet ...
-func NewHeightVoteSet(chainID string, height int64, valSet *ValidatorSet) *HeightVoteSet {
+func NewHeightVoteSet(chainID string, height int64, valSet *ValidatorSet, seq int64) *HeightVoteSet {
 	hvs := &HeightVoteSet{
 		chainID: chainID,
+		seq:     seq,
 	}
 	hvs.Reset(height, valSet)
 	return hvs
@@ -82,15 +85,25 @@ func (hvs *HeightVoteSet) Round() int {
 	return hvs.round
 }
 
+// SetValSet update ValidatorSet
+func (hvs *HeightVoteSet) SetValSet(valSet *ValidatorSet) {
+	hvs.mtx.Lock()
+	defer hvs.mtx.Unlock()
+	hvs.valSet = valSet
+}
+
 // SetRound Create more RoundVoteSets up to round.
 func (hvs *HeightVoteSet) SetRound(round int) {
 	hvs.mtx.Lock()
 	defer hvs.mtx.Unlock()
-	if hvs.round != 0 && (round < hvs.round+1) {
-		panic(Fmt("Panicked on a Sanity Check: %v", "SetRound() must increment hvs.round"))
+	if hvs.round != 0 && (round < hvs.round-1) {
+		panic(Fmt("SetRound() must increment hvs.round %v, round %v", hvs.round, round))
 	}
-	for r := hvs.round + 1; r <= round; r++ {
-		if _, ok := hvs.roundVoteSets[r]; ok {
+	for r := hvs.round - 1; r <= round; r++ {
+		if rvs, ok := hvs.roundVoteSets[r]; ok {
+			if r == round-1 {
+				hvs.updateValSet(rvs)
+			}
 			continue // Already exists because peerCatchupRounds.
 		}
 		hvs.addRound(r)
@@ -102,11 +115,23 @@ func (hvs *HeightVoteSet) addRound(round int) {
 	if _, ok := hvs.roundVoteSets[round]; ok {
 		panic("addRound() for an existing round")
 	}
-	prevotes := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrevote, hvs.valSet)
-	precommits := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrecommit, hvs.valSet)
+	prevotes := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrevote, hvs.valSet, hvs.seq)
+	precommits := NewVoteSet(hvs.chainID, hvs.height, round, VoteTypePrecommit, hvs.valSet, hvs.seq)
 	hvs.roundVoteSets[round] = RoundVoteSet{
 		Prevotes:   prevotes,
 		Precommits: precommits,
+	}
+	ttlog.Debug("addRound", "round", round, "proposer", hvs.valSet.Proposer.String())
+}
+
+func (hvs *HeightVoteSet) updateValSet(rvs RoundVoteSet) {
+	hvsAddr := hvs.valSet.GetProposer().Address
+	rvsAddr := rvs.Prevotes.valSet.GetProposer().Address
+	if !bytes.Equal(hvsAddr, rvsAddr) {
+		ttlog.Info("update RoundVoteSet proposer", "round", rvs.Prevotes.Round(),
+			"old", Fmt("%X", Fingerprint(rvsAddr)), "new", Fmt("%X", Fingerprint(hvsAddr)))
+		rvs.Prevotes.valSet = hvs.valSet
+		rvs.Precommits.valSet = hvs.valSet
 	}
 }
 
