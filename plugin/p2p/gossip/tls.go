@@ -6,13 +6,14 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"math/big"
 	"net"
 	"net/url"
 	"strings"
 	"sync"
 	"syscall"
+
+	"google.golang.org/grpc/credentials"
 )
 
 var serials = make(map[string]*certInfo)
@@ -30,22 +31,22 @@ type certInfo struct {
 type Serial struct {
 	Serials []string `json:"serials,omitempty"`
 }
+
 //serialNum -->ip
 func addCertSerial(serial *big.Int, ip string) {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
-	serials[serial.String()] = &certInfo{false, ip,serial.String()}
-
+	serials[serial.String()] = &certInfo{false, ip, serial.String()}
 
 }
-func  updateCertSerial(serial *big.Int, revoke bool) *certInfo {
+func updateCertSerial(serial *big.Int, revoke bool) *certInfo {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
 	v, ok := serials[serial.String()]
 	if ok {
 
 		v.revoke = revoke
-	}else{
+	} else {
 		return nil
 	}
 	serials[serial.String()] = v
@@ -53,7 +54,7 @@ func  updateCertSerial(serial *big.Int, revoke bool) *certInfo {
 	return v
 }
 
-func  isRevoke(serial *big.Int) bool {
+func isRevoke(serial *big.Int) bool {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
 	if r, ok := serials[serial.String()]; ok {
@@ -62,12 +63,12 @@ func  isRevoke(serial *big.Int) bool {
 	return false
 }
 
-func   removeCertSerial(serial *big.Int) {
+func removeCertSerial(serial *big.Int) {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
 	delete(serials, serial.String())
 }
-func  getSerialNums() []string {
+func getSerialNums() []string {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
 	var certs []string
@@ -77,7 +78,7 @@ func  getSerialNums() []string {
 	return certs
 }
 
-func  getSerials() map[string]*certInfo {
+func getSerials() map[string]*certInfo {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
 	var certs = make(map[string]*certInfo)
@@ -144,14 +145,14 @@ func (c *Tls) ClientHandshake(ctx context.Context, authority string, rawConn net
 		log.Debug("ClientHandshake", "peerSerialNum", peerSerialNum, "certificate Num", certNum, "remoteAddr", rawConn.RemoteAddr(), "tlsInfo", tlsInfo)
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		//检查证书是否被吊销
-		if isRevoke(peerSerialNum){
+		if isRevoke(peerSerialNum) {
 			conn.Close()
-			return nil,nil,errors.New(fmt.Sprintf("tls ClientHandshake %v revoked",peerSerialNum.String()))
+			return nil, nil, errors.New(fmt.Sprintf("tls ClientHandshake %v revoked", peerSerialNum.String()))
 		}
 
 		if len(addrSplites) > 0 { //服务端证书的序列号，已经其IP地址
 			addCertSerial(peerSerialNum, addrSplites[0])
-			latestSerials.Store(addrSplites[0],peerSerialNum.String())//ip --->serialNum
+			latestSerials.Store(addrSplites[0], peerSerialNum.String()) //ip --->serialNum
 		}
 	}
 
@@ -181,16 +182,16 @@ func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo,
 	if certNum != 0 {
 		peerSerialNum := peerCert[0].SerialNumber
 		//log.Info("ServerHandshake","certinfo",string(tlsInfo.State.PeerCertificates[0].Raw))
-		log.Debug("ServerHandshake", "peerSerialNum", peerSerialNum, "certificate Num", certNum, "remoteAddr", rawConn.RemoteAddr(), "tlsinfo", tlsInfo,"remoteAddr",conn.RemoteAddr())
+		log.Debug("ServerHandshake", "peerSerialNum", peerSerialNum, "certificate Num", certNum, "remoteAddr", rawConn.RemoteAddr(), "tlsinfo", tlsInfo, "remoteAddr", conn.RemoteAddr())
 
-		if  isRevoke(peerSerialNum) {
+		if isRevoke(peerSerialNum) {
 			rawConn.Close()
-			return nil, nil, errors.New(fmt.Sprintf( "tls ServerHandshake  %s  revoked", peerSerialNum.String()))
+			return nil, nil, errors.New(fmt.Sprintf("tls ServerHandshake  %s  revoked", peerSerialNum.String()))
 		}
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		if len(addrSplites) > 0 {
-			 addCertSerial(peerSerialNum, addrSplites[0])
-			latestSerials.Store(addrSplites[0],peerSerialNum.String())//ip --->serialNum
+			addCertSerial(peerSerialNum, addrSplites[0])
+			latestSerials.Store(addrSplites[0], peerSerialNum.String()) //ip --->serialNum
 		}
 
 	} else {

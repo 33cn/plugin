@@ -159,7 +159,7 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 			ServerName:   "",
 			RootCAs:      certPool,
 		})
-		node.nodeInfo.caServer=mcfg.CaServer
+		node.nodeInfo.caServer = mcfg.CaServer
 
 	}
 	if mcfg.ServerStart {
