@@ -6,6 +6,7 @@ package para
 
 import (
 	"context"
+	"encoding/hex"
 	"time"
 
 	"strings"
@@ -191,10 +192,9 @@ func (client *commitMsgClient) createCommitTx() {
 	if tx == nil {
 		return
 	}
-	//bls sign, send to p2p
-	if client.paraClient.subCfg.BlsSign {
-		//send to p2p pubsub
-		plog.Info("para commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
+	//如果配置了blsSign 则发送到p2p的leader节点来聚合发送，否则发送到主链
+	if client.paraClient.subCfg.Bls.BlsSign {
+		plog.Debug("bls.event.para bls commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
 		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
 		client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
 		return
@@ -255,16 +255,24 @@ func (client *commitMsgClient) pushCommitTx(signTx *types.Transaction) {
 	client.sendMsgCh <- signTx
 }
 
+//根据收集的commit action，签名发送, 比如BLS签名后的commit msg
 func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitAction) {
+	//如果当前正在发送交易，则取消此次发送，待发送被确认或取消后再触发. 考虑到已经聚合共识成功，又收到某节点消息场景，会多发送交易
+	curTx := client.getCurrentTx()
+	if curTx != nil {
+		plog.Info("paracommitmsg isSendingCommitMsg, cancel this operation", "sending.tx", common.ToHex(curTx.Hash()))
+		return
+	}
+
 	txs, _, err := client.createCommitMsgTxs(acts)
 	if err != nil {
 		return
 	}
-	plog.Debug("paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
+	plog.Info("paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
 	for i, msg := range acts {
 		plog.Debug("paracommitmsg sendCommitActions", "idx", i, "height", msg.Status.Height, "mainheight", msg.Status.MainBlockHeight,
 			"blockhash", common.HashHex(msg.Status.BlockHash), "mainHash", common.HashHex(msg.Status.MainBlockHash),
-			"addrsmap", common.ToHex(msg.Bls.AddrsMap), "sign", common.ToHex(msg.Bls.Sign))
+			"addrsmap", hex.EncodeToString(msg.Bls.AddrsMap), "sign", common.ToHex(msg.Bls.Sign))
 	}
 	client.pushCommitTx(txs)
 }
@@ -428,7 +436,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		commits = append(commits, &pt.ParacrossCommitAction{Status: stat})
 	}
 
-	if client.paraClient.subCfg.BlsSign {
+	if client.paraClient.subCfg.Bls.BlsSign {
 		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
 			plog.Error("paracommitmsg bls sign", "err", err)

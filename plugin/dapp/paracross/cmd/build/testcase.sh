@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
-set -x
+set +x
 
 PARA_CLI="docker exec ${NODE3} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 
@@ -51,14 +51,12 @@ function para_init() {
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"/g' chain33.para31.toml
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"/g' chain33.para30.toml
 
-    para_set_toml chain33.para29.toml "$PARANAME_GAME" "$1"
+    # 一个节点不配置 blsSign
+    para_set_toml chain33.para29.toml "$PARANAME_GAME"
     sed -i $xsedfix 's/^authAccount=.*/authAccount="1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"/g' chain33.para29.toml
 
     # 监督节点
-    para_set_toml chain33.para28.toml "$PARANAME" "$1"
-    para_set_toml chain33.para27.toml "$PARANAME" "$1"
-    para_set_toml chain33.para26.toml "$PARANAME" "$1"
-    para_set_toml chain33.para25.toml "$PARANAME" "$1"
+    para_set_toml chain33.para28.toml "$PARANAME"
     sed -i $xsedfix 's/^authAccount=.*/authAccount="'"$ADDR_28"'"/g' chain33.para28.toml # 0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f
 }
 
@@ -81,8 +79,7 @@ function para_set_toml() {
     if [ -n "$3" ]; then
         echo "${1} blssign=$3"
         sed -i $xsedfix '/types=\["dht"\]/!b;n;cenable=true' "${1}"
-        sed -i $xsedfix '/emptyBlockInterval=/!b;n;cblsSign=true' "${1}"
-        sed -i $xsedfix '/blsSign=/!b;n;cblsLeaderSwitchIntval=10' "${1}"
+        sed -i $xsedfix 's/^blsSign=.*/blsSign=true/g' "${1}"
 
     fi
 
@@ -518,7 +515,7 @@ function para_cross_transfer_withdraw_for_token() {
     echo "=========== # 3.asset_withdraw from parachain ============="
     ${CLI} send para asset_withdraw --paraName user.p.para. -a 111 -s FZM -n test -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv
 
-    local times=100
+    local times=200
     while true; do
         acc=$(${CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol FZM --asset_exec token -e paracross | jq -r ".balance")
         acc_para=$(${PARA_CLI} asset balance -a 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv --asset_symbol token.FZM --asset_exec paracross -e paracross | jq -r ".balance")
@@ -528,7 +525,7 @@ function para_cross_transfer_withdraw_for_token() {
             times=$((times - 1))
             if [ $times -le 0 ]; then
                 echo "para_cross_transfer_withdraw failed"
-                #                exit 1
+                exit 1
             fi
         else
             echo "para_cross_transfer_withdraw success"
@@ -1253,7 +1250,6 @@ function para_test() {
 }
 
 function paracross() {
-    set -x
     if [ "${2}" == "init" ]; then
         para_init "${3}"
     elif [ "${2}" == "config" ]; then

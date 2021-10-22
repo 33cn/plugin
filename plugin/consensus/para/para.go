@@ -70,29 +70,28 @@ type client struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds       int64    `json:"writeBlockSeconds,omitempty"`
-	ParaRemoteGrpcClient    string   `json:"paraRemoteGrpcClient,omitempty"`
-	StartHeight             int64    `json:"startHeight,omitempty"`
-	WaitMainBlockNum        int64    `json:"waitMainBlockNum,omitempty"`
-	GenesisStartHeightSame  bool     `json:"genesisStartHeightSame,omitempty"`
-	EmptyBlockInterval      []string `json:"emptyBlockInterval,omitempty"`
-	AuthAccount             string   `json:"authAccount,omitempty"`
-	WaitBlocks4CommitMsg    int32    `json:"waitBlocks4CommitMsg,omitempty"`
-	GenesisAmount           int64    `json:"genesisAmount,omitempty"`
-	MainBlockHashForkHeight int64    `json:"mainBlockHashForkHeight,omitempty"`
-	WaitConsensStopTimes    uint32   `json:"waitConsensStopTimes,omitempty"`
-	MaxCacheCount           int64    `json:"maxCacheCount,omitempty"`
-	MaxSyncErrCount         int32    `json:"maxSyncErrCount,omitempty"`
-	BatchFetchBlockCount    int64    `json:"batchFetchBlockCount,omitempty"`
-	ParaConsensStartHeight  int64    `json:"paraConsensStartHeight,omitempty"`
-	MultiDownloadOpen       bool     `json:"multiDownloadOpen,omitempty"`
-	MultiDownInvNumPerJob   int64    `json:"multiDownInvNumPerJob,omitempty"`
-	MultiDownJobBuffNum     uint32   `json:"multiDownJobBuffNum,omitempty"`
-	MultiDownServerRspTime  uint32   `json:"multiDownServerRspTime,omitempty"`
-	RmCommitParamMainHeight int64    `json:"rmCommitParamMainHeight,omitempty"`
-	JumpDownloadClose       bool     `json:"jumpDownloadClose,omitempty"`
-	BlsSign                 bool     `json:"blsSign,omitempty"`
-	BlsLeaderSwitchIntval   int32    `json:"blsLeaderSwitchIntval,omitempty"`
+	WriteBlockSeconds       int64      `json:"writeBlockSeconds,omitempty"`
+	ParaRemoteGrpcClient    string     `json:"paraRemoteGrpcClient,omitempty"`
+	StartHeight             int64      `json:"startHeight,omitempty"`
+	WaitMainBlockNum        int64      `json:"waitMainBlockNum,omitempty"`
+	GenesisStartHeightSame  bool       `json:"genesisStartHeightSame,omitempty"`
+	EmptyBlockInterval      []string   `json:"emptyBlockInterval,omitempty"`
+	AuthAccount             string     `json:"authAccount,omitempty"`
+	WaitBlocks4CommitMsg    int32      `json:"waitBlocks4CommitMsg,omitempty"`
+	GenesisAmount           int64      `json:"genesisAmount,omitempty"`
+	MainBlockHashForkHeight int64      `json:"mainBlockHashForkHeight,omitempty"`
+	WaitConsensStopTimes    uint32     `json:"waitConsensStopTimes,omitempty"`
+	MaxCacheCount           int64      `json:"maxCacheCount,omitempty"`
+	MaxSyncErrCount         int32      `json:"maxSyncErrCount,omitempty"`
+	BatchFetchBlockCount    int64      `json:"batchFetchBlockCount,omitempty"`
+	ParaConsensStartHeight  int64      `json:"paraConsensStartHeight,omitempty"`
+	MultiDownloadOpen       bool       `json:"multiDownloadOpen,omitempty"`
+	MultiDownInvNumPerJob   int64      `json:"multiDownInvNumPerJob,omitempty"`
+	MultiDownJobBuffNum     uint32     `json:"multiDownJobBuffNum,omitempty"`
+	MultiDownServerRspTime  uint32     `json:"multiDownServerRspTime,omitempty"`
+	RmCommitParamMainHeight int64      `json:"rmCommitParamMainHeight,omitempty"`
+	JumpDownloadClose       bool       `json:"jumpDownloadClose,omitempty"`
+	Bls                     *blsConfig `json:"bls,omitempty"`
 }
 
 // New function to init paracross env
@@ -347,7 +346,7 @@ func (client *client) ProcEvent(msg *queue.Message) bool {
 			case P2pSubLeaderSyncMsg:
 				err := client.blsSignCli.rcvLeaderSyncTx(sub.GetSyncMsg())
 				if err != nil {
-					plog.Error("paracross ProcEvent leader sync msg", "err", err)
+					plog.Error("bls.event.paracross ProcEvent leader sync msg", "err", err)
 				}
 			default:
 				plog.Error("paracross ProcEvent not support", "ty", sub.GetTy())

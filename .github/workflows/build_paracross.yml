@@ -1,4 +1,4 @@
-name: build
+name: ci_paracross
 on: [push,pull_request]
 
 jobs:
