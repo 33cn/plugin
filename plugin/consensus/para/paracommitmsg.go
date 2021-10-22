@@ -194,9 +194,7 @@ func (client *commitMsgClient) createCommitTx() {
 	}
 	//如果配置了blsSign 则发送到p2p的leader节点来聚合发送，否则发送到主链
 	if client.paraClient.blsSignCli.blsSignOn {
-		plog.Debug("bls.event.para bls commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
-		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
-		client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
+		client.pushCommitTx2P2P(tx)
 		return
 	}
 	client.pushCommitTx(tx)
@@ -253,6 +251,19 @@ func (client *commitMsgClient) pushCommitTx(signTx *types.Transaction) {
 	client.checkTxCommitTimes = 0
 	client.setCurrentTx(signTx)
 	client.sendMsgCh <- signTx
+}
+
+//仍旧setCurrentTx， 这样在几个块之后仍旧会触发重发，重发只是广播，不然发送p2p之后，如果共识没增加，也没有其他触发的条件了
+func (client *commitMsgClient) pushCommitTx2P2P(signTx *types.Transaction) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	client.checkTxCommitTimes = 0
+	client.setCurrentTx(signTx)
+
+	plog.Debug("bls.event.para bls commitMs send to p2p", "hash", common.ToHex(signTx.Hash()))
+	act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: signTx}}
+	client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
 }
 
 //根据收集的commit action，签名发送, 比如BLS签名后的commit msg
