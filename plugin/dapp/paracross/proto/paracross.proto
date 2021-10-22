@@ -495,7 +495,7 @@ message LeaderSyncInfo {
     string ID       = 1;   //self id
     int32 baseIdx   = 2; //calculated by corrent consensus height and remainder by len(nodes)
     int32 offset    = 3;
-
+    uint32 count    = 4; //发送计数器
 }
 
 message ParaP2PSubMsg {

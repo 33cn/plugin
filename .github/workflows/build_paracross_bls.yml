@@ -1,9 +1,9 @@
-name: ci_cross2eth
+name: ci_paracross_bls
 on: [push,pull_request]
 
 jobs:
-  ci_cross2eth:
-    name: ci_cross2eth
+  ci_paracross:
+    name: ci_paracross_bls
     runs-on: ubuntu-latest
     steps:
       - name: Set up Golang
@@ -11,13 +11,11 @@ jobs:
         with:
           go-version: 1.15
         id: go
+      - name: set go env
+        run: export PATH=${PATH}:`go env GOPATH`/bin
       - name: checkout
         uses: actions/checkout@v2
       - name: deploy
         run: |
-          export GOPATH=$HOME/go
-          export PATH=${PATH}:`go env GOPATH`/bin
-          echo $GOPATH
-          make
-          make docker-compose dapp=cross2eth
-          make docker-compose-down dapp=cross2eth
+          make docker-compose dapp=paracross extra=1
+          make docker-compose-down dapp=paracross
