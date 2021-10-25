@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	c, _       = crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	c, _       = crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	hex        = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 	a, _       = common.FromHex(hex)
 	privKey, _ = c.PrivKeyFromBytes(a)

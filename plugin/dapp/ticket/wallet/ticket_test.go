@@ -63,7 +63,7 @@ func TestCloseTicketsByAddr(t *testing.T) {
 
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
-	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
@@ -100,7 +100,7 @@ func TestBuyTicketOne(t *testing.T) {
 	ticket.walletOperate = wallet
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
-	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)
@@ -117,7 +117,7 @@ func TestBuyMinerAddrTicketOne(t *testing.T) {
 
 	pk, err := hex.DecodeString("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	assert.Nil(t, err)
-	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.Nil(t, err)
 	priKey, err := secp.PrivKeyFromBytes(pk)
 	assert.Nil(t, err)

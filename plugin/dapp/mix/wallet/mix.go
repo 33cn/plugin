@@ -41,7 +41,7 @@ func (p *mixPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, error) {
 	password := []byte(operater.GetPassword())
 	privkey := wcom.CBCDecrypterPrivkey(password, prikeybyte)
 	//通过privkey生成一个pubkey然后换算成对应的addr
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		bizlog.Error("ProcSendToAddress", "err", err)
 		return nil, err

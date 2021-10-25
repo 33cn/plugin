@@ -377,7 +377,7 @@ func SaveState(state State) *tmtypes.State {
 }
 
 func getprivkey(key string) crypto.PrivKey {
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		panic(err)
 	}

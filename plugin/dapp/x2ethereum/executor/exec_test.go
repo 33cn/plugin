@@ -383,7 +383,7 @@ func (x *suiteX2Ethereum) queryGetEthProphecy(id string, statusTest types2.EthBr
 }
 
 func getprivkey(key string) crypto.PrivKey {
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		panic(err)
 	}

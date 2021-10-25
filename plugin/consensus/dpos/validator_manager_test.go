@@ -27,7 +27,7 @@ var (
 
 func init() {
 	//为了使用VRF，需要使用SECP256K1体系的公私钥
-	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		panic("init ConsensusCrypto failed.")
 	}
