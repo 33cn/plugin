@@ -1021,7 +1021,7 @@ func getSecpPriKey(key string) (crypto.PrivKey, error) {
 		return nil, errors.Wrapf(err, "fromhex=%s", key)
 	}
 
-	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
 	if err != nil {
 		return nil, errors.Wrapf(err, "crypto=%s", key)
 	}

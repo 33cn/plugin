@@ -104,7 +104,7 @@ func Test_Exec_Bind_Unbind(t *testing.T) {
 
 func FromPrivkey(hexPrivKey string) (crypto.PrivKey, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("ticket", signType))
+	c, err := crypto.Load(types.GetSignName("ticket", signType), -1)
 	if err != nil {
 		return nil, err
 	}

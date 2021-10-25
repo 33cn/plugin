@@ -611,7 +611,7 @@ MAIN_LOOP:
 }
 
 func initCryptoImpl() error {
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		fmt.Printf("New crypto impl failed err: %v", err)
 		return err

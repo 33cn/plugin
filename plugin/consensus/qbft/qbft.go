@@ -203,7 +203,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	ttypes.CryptoName = types.GetSignName("", signType)
-	cr, err := crypto.New(ttypes.CryptoName)
+	cr, err := crypto.Load(ttypes.CryptoName, -1)
 	if err != nil {
 		qbftlog.Error("load qbft crypto fail", "err", err)
 		return nil

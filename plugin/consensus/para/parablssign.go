@@ -65,7 +65,7 @@ type blsClient struct {
 func newBlsClient(para *client, cfg *subConfig) *blsClient {
 	b := &blsClient{paraClient: para}
 	b.selfID = cfg.AuthAccount
-	cli, err := crypto.New("bls")
+	cli, err := crypto.Load("bls", para.GetCurrentHeight())
 	if err != nil {
 		panic("new bls crypto fail")
 	}

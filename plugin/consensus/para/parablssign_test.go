@@ -37,7 +37,7 @@ func TestIntegrateCommits(t *testing.T) {
 }
 
 func TestBlsSignMain(t *testing.T) {
-	cryptoCli, err := crypto.New("bls")
+	cryptoCli, err := crypto.Load("bls", -1)
 	assert.NoError(t, err)
 
 	testSecpPrikey2BlsPub(t, cryptoCli)

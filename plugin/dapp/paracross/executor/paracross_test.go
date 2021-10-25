@@ -215,7 +215,7 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 
 func signTx(s suite.Suite, tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		s.T().Error("TestExec", "new crypto failed", err)
 		return tx, err
@@ -239,7 +239,7 @@ func signTx(s suite.Suite, tx *types.Transaction, hexPrivKey string) (*types.Tra
 
 func getPrivKey(s suite.Suite, hexPrivKey string) (crypto.PrivKey, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		s.T().Error("TestExec", "new crypto failed", err)
 		return nil, err
@@ -760,7 +760,7 @@ func TestValidParaCrossExec(t *testing.T) {
 }
 
 func TestVerifyBlsSign(t *testing.T) {
-	cryptoCli, err := crypto.New("bls")
+	cryptoCli, err := crypto.Load("bls", -1)
 	assert.NoError(t, err)
 
 	status := &pt.ParacrossNodeStatus{}

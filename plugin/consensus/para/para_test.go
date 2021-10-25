@@ -155,7 +155,7 @@ func TestAddMinerTx(t *testing.T) {
 	pk, err := hex.DecodeString(minerPrivateKey)
 	assert.Nil(t, err)
 
-	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
 	assert.Nil(t, err)
 
 	priKey, err := secp.PrivKeyFromBytes(pk)
