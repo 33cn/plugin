@@ -51,7 +51,7 @@ func newParacross() drivers.Driver {
 	c := &Paracross{}
 	c.SetChild(c)
 	c.SetExecutorType(types.LoadExecutorType(driverName))
-	cli, err := crypto.New("bls")
+	cli, err := crypto.Load("bls", -1)
 	if err != nil {
 		panic("paracross need bls sign register")
 	}

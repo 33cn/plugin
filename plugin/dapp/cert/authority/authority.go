@@ -362,7 +362,7 @@ func (loader *UserLoader) loadUsers() error {
 }
 
 func (loader *UserLoader) genCryptoPriv(keyBytes []byte) (crypto.PrivKey, error) {
-	cr, err := crypto.New(types.GetSignName("cert", loader.signType))
+	cr, err := crypto.Load(types.GetSignName("cert", loader.signType), -1)
 	if err != nil {
 		return nil, fmt.Errorf("create crypto %s failed, error:%s", types.GetSignName("cert", loader.signType), err)
 	}

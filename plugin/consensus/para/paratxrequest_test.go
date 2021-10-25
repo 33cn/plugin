@@ -33,7 +33,7 @@ func getPrivKey(t *testing.T) crypto.PrivKey {
 	pk, err := common.FromHex("6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b")
 	assert.Nil(t, err)
 
-	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
 	assert.Nil(t, err)
 
 	priKey, err := secp.PrivKeyFromBytes(pk)
