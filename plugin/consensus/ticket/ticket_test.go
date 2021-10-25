@@ -170,7 +170,7 @@ func TestProcEvent(t *testing.T) {
 }
 
 func Test_genPrivHash(t *testing.T) {
-	c, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	c, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.NoError(t, err)
 	priv, _ := c.GenKey()
 
@@ -198,7 +198,7 @@ func Test_getNextRequiredDifficulty(t *testing.T) {
 }
 
 func Test_vrfVerify(t *testing.T) {
-	c, err := crypto.Load(types.GetSignName("", types.SECP256K1),  -1)
+	c, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.NoError(t, err)
 	priv, err := c.GenKey()
 	assert.NoError(t, err)
