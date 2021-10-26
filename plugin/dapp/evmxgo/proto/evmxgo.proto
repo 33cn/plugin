@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+import "transaction.proto";
+import "account.proto";
+
+package types;
+option go_package = "../types";
+
+// action
+message EvmxgoAction {
+    oneof value {
+        AssetsTransfer       transfer       = 1;
+        AssetsWithdraw       withdraw       = 2;
+        AssetsTransferToExec transferToExec = 3;
+        EvmxgoMint                 mint     = 4;
+        EvmxgoBurn                 burn     = 5;
+    }
+    int32 Ty = 6;
+}
+
+message EvmxgoMint {
+    string symbol = 1;
+    int64  amount = 2;
+}
+
+message EvmxgoBurn {
+    string symbol = 1;
+    int64  amount = 2;
+}
+
+// state db
+message Evmxgo {
+    string symbol       = 1;
+    string introduction = 2;
+    int64  total        = 3;
+}
+
+// config mint synbol
+message EvmxgoMintConfig {
+    string address      =1;
+    int32 precision     =2;
+    string introduction =3;
+}
+
+// log
+message ReceiptEvmxgo {
+    string symbol = 1;
+}
+
+message ReceiptEvmxgoAmount {
+    Evmxgo prev    = 1;
+    Evmxgo current = 2;
+}
+
+// local
+message LocalEvmxgo {
+    string symbol              = 1;
+    string introduction        = 2;
+    int64  total               = 3;
+    int32  precision           = 4;
+}
+
+message LocalEvmxgoLogs {
+    string symbol     = 1;
+    string txIndex    = 2;
+    int32  actionType = 3;
+    string txHash     = 4;
+}
+
+// query
+message ReqEvmxgos {
+    bool     queryAll          = 1;
+    repeated string tokens     = 2;
+}
+
+message ReplyEvmxgos {
+    repeated LocalEvmxgo tokens = 1;
+}
+
+message EvmxgoRecv {
+    string evmxgo = 1;
+    int64  recv  = 2;
+}
+message ReplyAddrRecvForEvmxgos {
+    repeated EvmxgoRecv evmxgoRecvs = 1;
+}
+
+message ReplyAccounts {
+    repeated Account accounts =1;
+}
+
+message ReqAccountEvmxgoAssets {
+    string address = 1;
+    string execer  = 2;
+}
+
+message EvmxgoAsset {
+    string  symbol  = 1;
+    Account account = 2;
+}
+
+message ReplyAccountEvmxgoAssets {
+    repeated EvmxgoAsset evmxgoAssets = 1;
+}
+
+message ReqAddrEvmxgos {
+    string   addr             = 1;
+    int32    status           = 2;
+    repeated string evmxgo    = 3;
+    int32           direction = 4;
+    int32           count     = 5;
+    string          fromKey   = 6;
+}
+
+message ReqEvmxgoTx {
+    string symbol    = 1;
+    //表示取所有/from/to/其他的hash列表
+    int32  flag      = 2;
+    int32  count     = 3;
+    int32  direction = 4;
+    int64  height    = 5;
+    int64  index     = 6;
+    string addr      = 7;
+}
+
+message ReplyEvmxgoLogs {
+    repeated LocalEvmxgoLogs logs = 1;
+}
+
+service evmxgo {}
+
