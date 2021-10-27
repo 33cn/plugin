@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "transaction.proto";
+
+
+package types;
+option go_package = "../types";
+
+message ParaBlsSignSumDetails {
+    int64 height             = 1;
+    repeated string addrs    = 2;
+    repeated bytes msgs      = 3;
+    repeated bytes signs     = 4;
+
+}
+
+message ParaBlsSignSumDetailsShow {
+    int64 height             = 1;
+    repeated string addrs    = 2;
+    repeated string msgs     = 3;
+
+}
+message ParaBlsSignSumInfo {
+    repeated ParaBlsSignSumDetailsShow info = 1;
+    repeated string topics = 2;
+}
+
+message LeaderSyncInfo {
+    string ID       = 1;   //self id
+    int32 baseIdx   = 2; //calculated by corrent consensus height and remainder by len(nodes)
+    int32 offset    = 3;
+    uint32 count    = 4; //发送计数器
+}
+
+message ParaP2PSubMsg {
+    int32 ty = 1;
+    oneof value {
+        Transaction    commitTx          = 10;
+        LeaderSyncInfo  syncMsg          = 11;
+    }
+
+}
+
+//bls sign leader info
+message ElectionStatus {
+    bool   isLeader       = 1;
+    LeaderSyncInfo leader = 2;
+}
+
+message BlsPubKey{
+    string key = 1;
+}

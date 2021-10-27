@@ -4,6 +4,9 @@ import "transaction.proto";
 import "common.proto";
 import "blockchain.proto";
 
+import "paraminer.proto";
+import "paranodegroup.proto";
+
 package types;
 option go_package = "../types";
 
@@ -58,152 +61,6 @@ message ParacrossConsensusStatus {
     string consensBlockHash = 4;
 }
 
-message ParaNodeAddrConfig {
-    string title       = 1;
-    uint32 op          = 2;
-    string id          = 3;
-    string addr        = 4;
-    uint32 value       = 5;
-    int64  coinsFrozen = 6;
-    string blsPubKey   = 7; //本地址私钥对应的bls聚合签名的公钥
-}
-
-message ParaNodeVoteDetail {
-    repeated string addrs = 1;
-    repeated string votes = 2;
-}
-
-message ParaNodeAddrIdStatus {
-    string addr       = 1;
-    string proposalId = 2;
-    string quitId     = 3;
-    int32  status     = 4;
-    string title      = 5;
-    string blsPubKey  = 6;
-}
-
-message ParaNodeIdStatus {
-    string             id          = 1;
-    int32              status      = 2;
-    string             title       = 3;
-    string             targetAddr  = 4;
-    int64              coinsFrozen = 5;
-    ParaNodeVoteDetail votes       = 6;
-    string             fromAddr    = 7;
-    int64              height      = 8;
-    string             blsPubKey   = 9;
-}
-
-message ReceiptParaNodeConfig {
-    string             addr    = 1;
-    ParaNodeAddrConfig config  = 2;
-    ParaNodeIdStatus   prev    = 3;
-    ParaNodeIdStatus   current = 4;
-}
-
-message ReceiptParaNodeAddrStatUpdate {
-    string               fromAddr = 1;
-    ParaNodeAddrIdStatus prev     = 2;
-    ParaNodeAddrIdStatus current  = 3;
-}
-
-message ReceiptParaNodeVoteDone {
-    string id         = 1;
-    string title      = 2;
-    string targetAddr = 3;
-    int32  totalNodes = 4;
-    int32  totalVote  = 5;
-    int32  mostVote   = 6;
-    string voteRst    = 7;
-    int32  doneStatus = 8;
-}
-
-message ParaNodeGroupConfig {
-    string title       = 1;
-    uint32 op          = 2;
-    string id          = 3;
-    string addrs       = 4;
-    int64  coinsFrozen = 5;
-    string blsPubKeys  = 6;
-    string autonomyItemID = 7;
-}
-
-message ParaNodeGroupStatus {
-    string id          = 1;
-    int32  status      = 2;
-    string title       = 3;
-    string targetAddrs = 4;
-    int64  coinsFrozen = 5;
-    string fromAddr    = 6;
-    int64  height      = 7;
-    string blsPubKeys  = 8;
-}
-
-message ReceiptParaNodeGroupConfig {
-    string              addr    = 1;
-    ParaNodeGroupConfig config  = 2;
-    ParaNodeGroupStatus prev    = 3;
-    ParaNodeGroupStatus current = 4;
-}
-
-// node query
-message ReqParacrossNodeInfo {
-    string title  = 1;
-    string id     = 2;
-    string addr   = 3;
-    int32  status = 4;
-    string blsPubKey  = 5;
-}
-
-message RespParacrossNodeAddrs {
-    repeated ParaNodeIdStatus ids = 1;
-}
-
-message RespParacrossNodeGroups {
-    repeated ParaNodeGroupStatus ids = 1;
-}
-
-//para bind miner
-message ParaBindMinerCmd{
-    int32  bindAction   = 1;  // 1: bind, 2:unbind
-    int64  bindCoins    = 2;  // bind coins count
-    string targetNode   = 3;  // super node addr
-}
-
-message ParaBindMinerInfo{
-    string addr         = 1;  // miner addr
-    int32  bindStatus   = 2;  // 1: bind, 2:unbind
-    int64  bindCoins    = 3;  // bind coins count
-    string targetNode   = 4;  // super node addr
-    int64  blockTime    = 5;  // action bind block time
-    int64  blockHeight  = 6;  // action bind block height
-}
-
-message ReceiptParaBindMinerInfo{
-    string addr         = 1;  // miner addr
-    ParaBindMinerInfo prev = 2;
-    ParaBindMinerInfo current = 3;
-}
-
-message ParaNodeBindOne{
-    string superNode = 1;
-    string miner = 2;
-}
-
-message ParaNodeBindList{
-    string title = 1;
-    repeated ParaNodeBindOne miners = 2;
-}
-
-message ReceiptParaNodeBindListUpdate{
-    ParaNodeBindList prev = 1;
-    ParaNodeBindList current = 2;
-}
-
-message RespParaNodeBindList{
-    ParaNodeBindList list = 1;
-    repeated ParaBindMinerInfo details = 2;
-}
 
 message ParaBlock2MainMap {
     int64  height     = 1;
@@ -454,69 +311,6 @@ message ParacrossAsset {
     bool  success          = 23;
 }
 
-
-message ParaLocalDbBlock {
-    int64    height          = 1;
-    bytes    mainHash        = 2;
-    int64    mainHeight      = 3;
-    bytes    parentMainHash  = 4;
-    int64    blockTime       = 5;
-    repeated Transaction txs = 6;
-}
-
-message ParaLocalDbBlockInfo {
-    int64    height         = 1;
-    string   mainHash       = 2;
-    int64    mainHeight     = 3;
-    string   parentMainHash = 4;
-    int64    blockTime      = 5;
-    repeated string txs     = 6;
-}
-
-message ParaBlsSignSumDetails {
-    int64 height             = 1;
-    repeated string addrs    = 2;
-    repeated bytes msgs      = 3;
-    repeated bytes signs     = 4;
-
-}
-
-message ParaBlsSignSumDetailsShow {
-    int64 height             = 1;
-    repeated string addrs    = 2;
-    repeated string msgs     = 3;
-
-}
-message ParaBlsSignSumInfo {
-    repeated ParaBlsSignSumDetailsShow info = 1;
-    repeated string topics = 2;
-}
-
-message LeaderSyncInfo {
-    string ID       = 1;   //self id
-    int32 baseIdx   = 2; //calculated by corrent consensus height and remainder by len(nodes)
-    int32 offset    = 3;
-    uint32 count    = 4; //发送计数器
-}
-
-message ParaP2PSubMsg {
-    int32 ty = 1;
-    oneof value {
-        Transaction    commitTx          = 10;
-        LeaderSyncInfo  syncMsg          = 11;
-    }
-
-}
-
-//bls sign leader info
-message ElectionStatus {
-    bool   isLeader       = 1;
-    LeaderSyncInfo leader = 2;
-}
-
-message BlsPubKey{
-    string key = 1;
-}
 
 service paracross {
     rpc IsSync(ReqNil) returns (IsCaughtUp) {}

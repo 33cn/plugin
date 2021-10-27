@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+import "transaction.proto";
+import "common.proto";
+import "blockchain.proto";
+
+package types;
+option go_package = "../types";
+
+
+//para bind miner
+message ParaBindMinerCmd{
+    int32  bindAction   = 1;  // 1: bind, 2:unbind
+    int64  bindCoins    = 2;  // bind coins count
+    string targetNode   = 3;  // consensus node addr
+}
+
+message ParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    int32  bindStatus   = 2;  // 1: bind, 2:unbind
+    int64  bindCoins    = 3;  // bind coins count
+    string consensusNode   = 4;  // consensus node addr
+    int64  blockTime    = 5;  // action bind block time
+    int64  blockHeight  = 6;  // action bind block height
+    int64  globalIndex  = 7;  // bind global only index to the consensus node
+}
+
+
+message ReceiptParaBindMinerInfo{
+    string addr         = 1;  // miner addr
+    ParaBindMinerInfo prev = 2;
+    ParaBindMinerInfo current = 3;
+}
+
+//共识节点绑定全局状态
+message ParaBindNodeInfo{
+    int64  bindTotalCount       = 1;  // total bind count to the consensus node
+}
+
+message ReceiptParaBindConsensusNodeInfo{
+    string nodeAddr                     = 1;  // node addr
+    ParaBindNodeInfo prev      = 2;
+    ParaBindNodeInfo current   = 3;
+}
+
+//共识节点索引绑定挖矿地址
+message ParaBindAddr{
+    string addr  = 1;  // bind addr
+}
+
+message ParaMinerBindNodes{
+    repeated string nodes  = 1;  // bind nodes
+}
+
+message ReceiptParaMinerBindNodeList{
+    string miner                = 1;  // node addr
+    string node                 = 2;
+    ParaMinerBindNodes  current = 3;
+}
+
+message ReceiptParaBindIndex{
+    string selfAddr     = 1;  // self addr
+    string bindAddr     = 2;
+    int64  index        = 3;
+}
+
+
+message ParaNodeMinerListReq{
+    string node         = 1; //共识节点
+    string miner        = 2; //唯一miner 地址
+    bool   withUnBind   = 3; //是否也查询未绑定的
+}
+
+message ParaBindMinerList{
+    repeated ParaBindMinerInfo list = 1;
+}
+
+//
+//message ParaNodeBindList{
+//    string title = 1;
+//    repeated ParaNodeBindOne miners = 2;
+//}
+
+//message ReceiptParaNodeBindListUpdate{
+//    ParaNodeBindList prev = 1;
+//    ParaNodeBindList current = 2;
+//}
+//
+//message RespParaNodeBindList{
+//    ParaNodeBindList list = 1;
+//    repeated ParaBindMinerInfo details = 2;
+//}
