@@ -36,8 +36,8 @@ var (
 	paraSelfConsensStages        string
 	paraSelfConsensStageIDPrefix string
 
-	paraBindMinderAddr string
 	paraBindMinderNode string
+	paraBindMinderAddr string
 
 	//监督节点
 	paraSupervisionNodes            string
@@ -58,9 +58,9 @@ func setPrefix() {
 	paraSelfConsensStages = "mavl-paracross-selfconsens-stages-"
 	paraSelfConsensStageIDPrefix = "mavl-paracross-selfconsens-id-"
 
-	//bind miner
-	paraBindMinderAddr = "mavl-paracross-bindmineraddr-"
+	//bind miner,node和miner角色要区分开，不然如果miner也是node，就会混淆
 	paraBindMinderNode = "mavl-paracross-bindminernode-"
+	paraBindMinderAddr = "mavl-paracross-bindmineraddr-"
 
 	localTx = "LODB-paracross-titleHeightAddr-"
 	localTitle = "LODB-paracross-title-"
@@ -195,15 +195,32 @@ func calcLocalNodeGroupAllPrefix() []byte {
 	return []byte(fmt.Sprintf(localNodeGroupStatusTitle))
 }
 
-//bind miner
-func calcParaBindMinerAddr(node, bind string) []byte {
-	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s-%s", node, bind))
+/////bind miner
+
+//统计共识节点绑定挖矿地址总数量
+//key: prefix-nodeAddr  val: bindTotalCount
+func calcParaNodeBindMinerCount(node string) []byte {
+	return []byte(fmt.Sprintf(paraBindMinderNode+"%s", node))
 }
 
-func calcParaBindMinerNode() []byte {
-	return []byte(paraBindMinderNode)
+//记录共识节点某一索引绑定的挖矿地址，一一对应，以此地址获取更详细信息
+//key: prefix-nodeAddr-index   val:bindMinerAddr
+func calcParaNodeBindMinerIndex(node string, index int64) []byte {
+	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%d", node, index))
 }
 
+//记录node和miner bind详细信息
+//key: prefix-nodeAddr-miner  val:miner detail info
+func calcParaBindMinerAddr(node, miner string) []byte {
+	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%s", node, miner))
+}
+
+//key: prefix-minerAddr  val: node list
+func calcParaMinerBindNodeList(miner string) []byte {
+	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s", miner))
+}
+
+/////supervision
 func calcParaSupervisionNodeGroupAddrsKey(title string) []byte {
 	return []byte(fmt.Sprintf(paraSupervisionNodes+"%s", title))
 }
