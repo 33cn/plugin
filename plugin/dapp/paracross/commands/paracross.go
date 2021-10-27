@@ -345,6 +345,7 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(getNodeListCmd())
 	cmd.AddCommand(nodeModifyCmd())
 	cmd.AddCommand(getNodeBindListCmd())
+	cmd.AddCommand(getMinerBindListCmd())
 	return cmd
 }
 
@@ -599,8 +600,44 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 
 func getNodeBindListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bind_list",
+		Use:   "miner_list",
 		Short: "Get node bind miner account list",
+		Run:   minerBindInfo,
+	}
+	addMinerBindCmdFlags(cmd)
+	return cmd
+}
+
+func addMinerBindCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
+	cmd.MarkFlagRequired("node")
+
+	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
+	cmd.Flags().BoolP("unbind", "u", false, "query with unbinded miner,default false")
+
+}
+
+func minerBindInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	node, _ := cmd.Flags().GetString("node")
+	miner, _ := cmd.Flags().GetString("miner")
+	unbind, _ := cmd.Flags().GetBool("unbind")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeBindMinerList"
+
+	params.Payload = types.MustPBToJSON(&pt.ParaNodeMinerListReq{Node: node, Miner: miner, WithUnBind: unbind})
+
+	var res pt.ParaBindMinerList
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+func getMinerBindListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "node_list",
+		Short: "Get miner bind consensus node account list",
 		Run:   nodeBindInfo,
 	}
 	addNodeBindCmdFlags(cmd)
@@ -608,22 +645,21 @@ func getNodeBindListCmd() *cobra.Command {
 }
 
 func addNodeBindCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
 	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
+	cmd.MarkFlagRequired("miner")
 }
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	node, _ := cmd.Flags().GetString("node")
 	miner, _ := cmd.Flags().GetString("miner")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
-	params.FuncName = "GetNodeBindMinerList"
+	params.FuncName = "GetMinerBindNodeList"
 
-	params.Payload = types.MustPBToJSON(&pt.ParaNodeBindOne{SuperNode: node, Miner: miner})
+	params.Payload = types.MustPBToJSON(&types.ReqString{Data: miner})
 
-	var res pt.RespParaNodeBindList
+	var res types.ReplyStrings
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

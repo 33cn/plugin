@@ -49,6 +49,8 @@ const (
 	TyLogParaCrossAssetTransfer = 670
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
+	TyLogParaBindMinerIndex     = 673
+	TyLogParaMinerBindNodeList  = 674
 	// Supervision Node
 	TyLogParaSupervisionNodeConfig           = 680
 	TyLogParaSupervisionNodeGroupAddrsUpdate = 681
@@ -69,6 +71,8 @@ const (
 	ParacrossActionTransferToExec
 	// ParacrossActionParaBindMiner  para chain bind super node miner
 	ParacrossActionParaBindMiner
+	// ParacrossActionSupervisionNodeConfig
+	ParacrossActionSupervisionNodeConfig
 )
 
 const (
@@ -95,8 +99,6 @@ const (
 	// ParacrossActionCrossAssetTransfer crossChain asset transfer key
 	//注意: 此类型之后的一定也需要是跨链资产转移类型，方便代码计算，也就是在共识完成后，execCrossTx()处理到的类型。
 	ParacrossActionCrossAssetTransfer
-	// ParacrossActionSupervisionNodeConfig
-	ParacrossActionSupervisionNodeConfig
 )
 
 //跨链共识交易crossResult bitmap版本，支持多版本的bitmap管理
