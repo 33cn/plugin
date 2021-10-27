@@ -238,6 +238,15 @@ func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue
 	return kv
 }
 
+// 同时比较配置symbol与address参数，和parse返回值是否一致
+func check() (address, symbol string, amount int64, err error) {
+	return "", "", 0, err
+}
+
+func parse() (address, symbol string, amount int64, err error) {
+	// 上一个交易是否lock执行成功，如果是，返回实际参数，不是返回error
+	return "", "", 0, err
+}
 
 // 铸币不可控， 也是麻烦。 2选1
 // 1. 谁可以发起
@@ -251,7 +260,9 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint) (*types.Receipt, 
 		return nil, types.ErrInvalidParam
 	}
 	cfg := action.api.GetConfig()
+	parse()
 
+	// TODO check()
 	evmxgodb, err := loadEvmxgoDB(action.db, mint.GetSymbol())
 	if err != nil && err != evmxgotypes.ErrEvmxgoSymbolNotExist {
 		return nil, err
