@@ -49,6 +49,8 @@ const (
 	TyLogParaCrossAssetTransfer = 670
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
+	TyLogParaBindMinerIndex     = 673
+	TyLogParaMinerBindNodeList  = 674
 	// Supervision Node
 	TyLogParaSupervisionNodeConfig           = 680
 	TyLogParaSupervisionNodeGroupAddrsUpdate = 681

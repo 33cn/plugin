@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+import "transaction.proto";
+import "common.proto";
+import "blockchain.proto";
+
+package types;
+option go_package = "../types";
+
+message ParaNodeAddrConfig {
+    string title       = 1;
+    uint32 op          = 2;
+    string id          = 3;
+    string addr        = 4;
+    uint32 value       = 5;
+    int64  coinsFrozen = 6;
+    string blsPubKey   = 7; //本地址私钥对应的bls聚合签名的公钥
+}
+
+message ParaNodeVoteDetail {
+    repeated string addrs = 1;
+    repeated string votes = 2;
+}
+
+message ParaNodeAddrIdStatus {
+    string addr       = 1;
+    string proposalId = 2;
+    string quitId     = 3;
+    int32  status     = 4;
+    string title      = 5;
+    string blsPubKey  = 6;
+}
+
+message ParaNodeIdStatus {
+    string             id          = 1;
+    int32              status      = 2;
+    string             title       = 3;
+    string             targetAddr  = 4;
+    int64              coinsFrozen = 5;
+    ParaNodeVoteDetail votes       = 6;
+    string             fromAddr    = 7;
+    int64              height      = 8;
+    string             blsPubKey   = 9;
+}
+
+message ReceiptParaNodeConfig {
+    string             addr    = 1;
+    ParaNodeAddrConfig config  = 2;
+    ParaNodeIdStatus   prev    = 3;
+    ParaNodeIdStatus   current = 4;
+}
+
+message ReceiptParaNodeAddrStatUpdate {
+    string               fromAddr = 1;
+    ParaNodeAddrIdStatus prev     = 2;
+    ParaNodeAddrIdStatus current  = 3;
+}
+
+message ReceiptParaNodeVoteDone {
+    string id         = 1;
+    string title      = 2;
+    string targetAddr = 3;
+    int32  totalNodes = 4;
+    int32  totalVote  = 5;
+    int32  mostVote   = 6;
+    string voteRst    = 7;
+    int32  doneStatus = 8;
+}
+
+message ParaNodeGroupConfig {
+    string title       = 1;
+    uint32 op          = 2;
+    string id          = 3;
+    string addrs       = 4;
+    int64  coinsFrozen = 5;
+    string blsPubKeys  = 6;
+}
+
+message ParaNodeGroupStatus {
+    string id          = 1;
+    int32  status      = 2;
+    string title       = 3;
+    string targetAddrs = 4;
+    int64  coinsFrozen = 5;
+    string fromAddr    = 6;
+    int64  height      = 7;
+    string blsPubKeys  = 8;
+}
+
+message ReceiptParaNodeGroupConfig {
+    string              addr    = 1;
+    ParaNodeGroupConfig config  = 2;
+    ParaNodeGroupStatus prev    = 3;
+    ParaNodeGroupStatus current = 4;
+}
+
+// node query
+message ReqParacrossNodeInfo {
+    string title  = 1;
+    string id     = 2;
+    string addr   = 3;
+    int32  status = 4;
+    string blsPubKey  = 5;
+}
+
+message RespParacrossNodeAddrs {
+    repeated ParaNodeIdStatus ids = 1;
+}
+
+message RespParacrossNodeGroups {
+    repeated ParaNodeGroupStatus ids = 1;
+}
