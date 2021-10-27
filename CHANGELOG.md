@@ -1,5 +1,14 @@
 changelog
 
+<a name="1.65.4"></a>
+## [1.65.4](https://github.com/33cn/plugin/compare/v1.65.3...v1.65.4) (2021-10-27)
+
+
+### Bug Fixes
+
+* adjust semantic-release commit message conventions to jshint ([a0eade8](https://github.com/33cn/plugin/commit/a0eade8))
+* Fixed semantic-release-replace-plugin config ([6c79cfd](https://github.com/33cn/plugin/commit/6c79cfd))
+
 ## [1.65.3](https://github.com/33cn/plugin/compare/v1.65.2...v1.65.3) (2021-10-19)
 
 
