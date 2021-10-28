@@ -539,8 +539,8 @@ paracross_testBind() {
     chain33_SignAndSendTxWait "$rawtx" "${priv1q9}" "${para_ip}"
 
     echo "2. get bind"
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
+    #    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"Node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
 }
 
 paracross_testUnBind() {
@@ -559,8 +559,8 @@ paracross_testUnBind() {
     #    superNode=$(jq -r ".result.List.SuperNode" <<<"$resp")
     #    miners=$(jq -r ".result.List.Miners" <<<"$resp")
 
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),false])' "$FUNCNAME" '(.result.List)'
+    #    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"Node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4","Miner":"${addr1q9}"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
 }
 
 paracross_testBindMiner() {
