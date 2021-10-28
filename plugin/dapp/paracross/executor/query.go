@@ -639,17 +639,30 @@ func (p *Paracross) Query_GetNodeBindMinerList(in *pt.ParaNodeMinerListReq) (typ
 }
 
 // Query_GetMinerBindNodeList query get miner bind super node list
-func (p *Paracross) Query_GetMinerBindNodeList(in *types.ReqString) (types.Message, error) {
-	if in == nil || len(in.Data) <= 0 {
+func (p *Paracross) Query_GetMinerBindNodeList(in *pt.ParaNodeMinerListReq) (types.Message, error) {
+	if in == nil || len(in.Miner) <= 0 {
 		return nil, types.ErrInvalidParam
 	}
 
 	db := p.GetStateDB()
-	nodeInfo, err := getMinerBindNodeList(db, in.Data)
+	nodeInfo, err := getMinerBindNodeList(db, in.Miner)
 	if err != nil {
-		return nil, errors.Wrapf(err, "getBindNodeCount miner=%s", in.Data)
+		return nil, errors.Wrapf(err, "getBindNodeCount miner=%s", in.Miner)
 	}
 	var nodeAddrs types.ReplyStrings
-	nodeAddrs.Datas = append(nodeAddrs.Datas, nodeInfo.Nodes...)
+	if in.WithUnBind {
+		nodeAddrs.Datas = append(nodeAddrs.Datas, nodeInfo.Nodes...)
+		return &nodeAddrs, nil
+	}
+
+	for _, n := range nodeInfo.Nodes {
+		minerInfo, err := getBindAddrInfo(db, in.Node, in.Miner)
+		if err != nil {
+			return nil, err
+		}
+		if minerInfo.BindStatus == opBind {
+			nodeAddrs.Datas = append(nodeAddrs.Datas, n)
+		}
+	}
 	return &nodeAddrs, nil
 }

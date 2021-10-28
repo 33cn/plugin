@@ -265,7 +265,7 @@ func (a *action) addNodeBindMinerCount(node, miner string) (*types.Receipt, int6
 		return nil, 0, err
 	}
 
-	//new index --> target
+	//new index --> miner
 	rIdx := makeNodeBindMinerIndexReceipt(node, miner, bindInfo.BindTotalCount)
 	mergeReceipt(receipt, rIdx)
 
