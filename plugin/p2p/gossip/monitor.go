@@ -603,7 +603,7 @@ func (n *Node) monitorCfgSeeds() {
 }
 
 func (n *Node) monitorCerts() {
-	if !n.nodeInfo.cfg.EnableTls {
+	if !n.nodeInfo.cfg.EnableTls || n.nodeInfo.cfg.CaServer == "" {
 		return
 	}
 	ticker := time.NewTicker(CheckCfgCertInterVal)
@@ -619,7 +619,9 @@ func (n *Node) monitorCerts() {
 		case <-ticker.C:
 			//check serialNum
 			var resp []string
-			var s Serial
+			var s struct {
+				Serials []string `json:"serials,omitempty"`
+			}
 			s.Serials = getSerialNums()
 			if len(s.Serials) == 0 {
 				continue
@@ -647,13 +649,6 @@ func (n *Node) monitorCerts() {
 				certinfo := updateCertSerial(sNum, true)
 				delete(tempCerts, sNum.String())
 				if certinfo != nil {
-					//断开节点连接
-					//if ip-->serialNum == sNum{
-					// close connect
-					//}else{
-					// }
-					//log.Info("monitorCerts","add blacklist",certinfo.ip)
-					//n.nodeInfo.blacklist.Add(certinfo.ip, 60)
 					for pname, peer := range n.nodeInfo.peerInfos.GetPeerInfos() {
 						if peer.GetAddr() == certinfo.ip {
 							v, ok := latestSerials.Load(certinfo.ip)

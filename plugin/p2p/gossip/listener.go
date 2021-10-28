@@ -95,7 +95,7 @@ Retry:
 		if serialNum, ok := latestSerials.Load(ip); ok {
 			bn, _ := big.NewInt(1).SetString(serialNum.(string), 10)
 			if isRevoke(bn) { //证书被吊销 拒绝接口请求
-				return nil, fmt.Errorf("cert %v revoked", serialNum.(string))
+				return nil, fmt.Errorf("interceptor: authentication interceptor faild Certificate SerialNumber %v revoked", serialNum.(string))
 			}
 		}
 		if pServer.node.nodeInfo.blacklist.Has(ip) {
@@ -126,7 +126,7 @@ Retry:
 		if serialNum, ok := latestSerials.Load(ip); ok {
 			bn, _ := big.NewInt(1).SetString(serialNum.(string), 10)
 			if isRevoke(bn) { //证书被吊销 拒绝接口请求
-				return fmt.Errorf("cert %v revoked", serialNum.(string))
+				return fmt.Errorf("interceptor: authentication Stream faild Certificate SerialNumber %v revoked", serialNum.(string))
 			}
 		}
 

@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	pr "google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
 	"google.golang.org/grpc/credentials"
@@ -155,7 +154,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	cliparm.Timeout = 10 * time.Second //ping后的获取ack消息超时时间
 	cliparm.PermitWithoutStream = true //启动keepalive 进行检查
 	keepaliveOp := grpc.WithKeepaliveParams(cliparm)
-	log.Info("NetAddress", "Dial------------->", na.String())
+	log.Debug("DialTimeout", "Dial------------->", na.String())
 	maxMsgSize := pb.MaxBlockSize + 1024*1024
 	//配置SSL连接
 	var secOpt grpc.DialOption
@@ -168,15 +167,14 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 	interceptor := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// 黑名单校验
 		//checkAuth
-		log.Info("client interceptor")
+		log.Debug("interceptor client", "remoteAddr", na.String())
 		ip, _, err := net.SplitHostPort(na.String())
 		if err != nil {
 			return err
 		}
-		log.Info("interceptor client", "remoteAddr", na.String())
 
-		if bList != nil && bList.Has(ip) {
-			return fmt.Errorf("blacklist peer  %v no authorized", ip)
+		if bList != nil && bList.Has(ip)|| bList!=nil &&bList.Has(na.String()) {
+			return fmt.Errorf("interceptor blacklist peer  %v no authorized", na.String())
 		}
 
 		return invoker(ctx, method, req, reply, cc, opts...)
@@ -184,33 +182,23 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 
 	//流拦截器
 	interceptorStream := func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-		log.Info("client interceptorStream")
 		ip, _, err := net.SplitHostPort(na.String())
 		if err != nil {
 			return nil, err
 		}
-		log.Info("interceptorStream client", "remoteAddr", na.String())
+
 		if bList.Has(ip) {
+
 			return nil, fmt.Errorf("blacklist peer %v  no authorized", ip)
 		}
 
 		return streamer(ctx, desc, cc, method, opts...)
 	}
 
-	//grpc.WithPerRPCCredentials
-	tcpAddr, err := net.ResolveTCPAddr("tcp", na.String())
-	if err != nil {
-		return nil, err
-	}
-	peer := &pr.Peer{
-		Addr:     tcpAddr,
-		AuthInfo: nil,
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	ctxV := pr.NewContext(ctx, peer)
-	conn, err := grpc.DialContext(ctxV, na.String(),
+	conn, err := grpc.DialContext(ctx, na.String(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor("gzip")),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 		grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(maxMsgSize)),
@@ -225,7 +213,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 
 	//判断是否对方是否支持压缩
 	cli := pb.NewP2PgserviceClient(conn)
-	_, err = cli.GetHeaders(context.Background(), &pb.P2PGetHeaders{StartHeight: 0, EndHeight: 0, Version: version}, grpc.FailFast(true))
+	_, err = cli.GetHeaders(context.Background(), &pb.P2PGetHeaders{StartHeight: 0, EndHeight: 0, Version: version}, grpc.WaitForReady(true))
 	if err != nil && !isCompressSupport(err) {
 		//compress not support
 		log.Error("compress not supprot , rollback to uncompress version", "addr", na.String())

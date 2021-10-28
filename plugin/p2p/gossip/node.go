@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"math/rand"
 
@@ -86,7 +87,6 @@ type Node struct {
 	pubsub     *pubsub.PubSub
 	chainCfg   *types.Chain33Config
 	p2pMgr     *p2p.Manager
-	//tls *Tls
 }
 
 // SetQueueClient return client for nodeinfo
@@ -129,37 +129,49 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 	node.chainCfg = cfg
 	if mcfg.EnableTls { //读取证书，初始化tls客户端
 		var err error
+		if mcfg.CaCert == "" {
+			//不需要CA
+			node.nodeInfo.cliCreds, err = credentials.NewClientTLSFromFile(mcfg.CertFile, "")
+			if err != nil {
+				panic(err)
+			}
+			node.nodeInfo.servCreds, err = credentials.NewServerTLSFromFile(mcfg.CertFile, mcfg.KeyFile)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			//CA
+			cert, err := tls.LoadX509KeyPair(mcfg.CertFile, mcfg.KeyFile)
+			if err != nil {
+				panic(err)
+			}
+			certPool := x509.NewCertPool()
+			//添加CA校验
+			//把CA证书读进去，动态更新CA中的吊销列表
+			ca, err := ioutil.ReadFile(mcfg.CaCert)
+			if err != nil {
+				panic(err)
+			}
 
-		cert, err := tls.LoadX509KeyPair(mcfg.CertFile, mcfg.KeyFile)
-		if err != nil {
-			panic(err)
+			if ok := certPool.AppendCertsFromPEM(ca); !ok {
+				panic("certPool.AppendCertsFromPEM err")
+			}
+
+			node.nodeInfo.servCreds = newTLS(&tls.Config{
+				Certificates: []tls.Certificate{cert},
+				ClientAuth:   tls.RequireAndVerifyClientCert, //校验客户端证书,用ca.pem校验
+				ClientCAs:    certPool,
+			})
+
+			// 构建基于 TLS 的 TransportCredentials 选项
+			// 在 Client 请求 Server 端时，Client 端会使用根证书和 ServerName 去对 Server 端进行校验
+			node.nodeInfo.cliCreds = newTLS(&tls.Config{
+				Certificates: []tls.Certificate{cert},
+				ServerName:   "",
+				RootCAs:      certPool,
+			})
+			node.nodeInfo.caServer = mcfg.CaServer
 		}
-		certPool := x509.NewCertPool()
-		//添加CA校验
-		//把CA证书读进去，尝试动态更新CA中的吊销列表
-		ca, err := ioutil.ReadFile(mcfg.CaCert)
-		if err != nil {
-			panic(err)
-		}
-
-		if ok := certPool.AppendCertsFromPEM(ca); !ok {
-			panic("certPool.AppendCertsFromPEM err")
-		}
-
-		node.nodeInfo.servCreds = newTLS(&tls.Config{
-			Certificates: []tls.Certificate{cert},
-			ClientAuth:   tls.RequireAndVerifyClientCert, //校验客户端证书,用ca.pem校验
-			ClientCAs:    certPool,
-		})
-
-		// 构建基于 TLS 的 TransportCredentials 选项
-		// 在 Client 请求 Server 端时，Client 端会使用根证书和 ServerName 去对 Server 端进行校验
-		node.nodeInfo.cliCreds = newTLS(&tls.Config{
-			Certificates: []tls.Certificate{cert},
-			ServerName:   "",
-			RootCAs:      certPool,
-		})
-		node.nodeInfo.caServer = mcfg.CaServer
 
 	}
 	if mcfg.ServerStart {

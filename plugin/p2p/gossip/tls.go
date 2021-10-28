@@ -16,22 +16,24 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-var serials = make(map[string]*certInfo)
-var latestSerials sync.Map
-var revokeLock sync.Mutex
 
+
+//Tls defines the specific interface for all the live gRPC wire
+// protocols and supported transport security protocols (e.g., TLS, SSL).
 type Tls struct {
 	config *tls.Config
 }
+
 type certInfo struct {
 	revoke bool
 	ip     string
 	serial string
 }
-type Serial struct {
-	Serials []string `json:"serials,omitempty"`
-}
-
+var(
+	serials = make(map[string]*certInfo)
+	revokeLock sync.Mutex
+	latestSerials sync.Map
+)
 //serialNum -->ip
 func addCertSerial(serial *big.Int, ip string) {
 	revokeLock.Lock()
@@ -68,6 +70,7 @@ func removeCertSerial(serial *big.Int) {
 	defer revokeLock.Unlock()
 	delete(serials, serial.String())
 }
+
 func getSerialNums() []string {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
@@ -142,12 +145,12 @@ func (c *Tls) ClientHandshake(ctx context.Context, authority string, rawConn net
 	certNum := len(peerCert)
 	if certNum > 0 {
 		peerSerialNum := peerCert[0].SerialNumber
-		log.Debug("ClientHandshake", "peerSerialNum", peerSerialNum, "certificate Num", certNum, "remoteAddr", rawConn.RemoteAddr(), "tlsInfo", tlsInfo)
+		log.Debug("ClientHandshake", "Certificate SerialNumber", peerSerialNum, "Certificate Number", certNum, "RemoteAddr", rawConn.RemoteAddr(), "tlsInfo", tlsInfo)
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		//检查证书是否被吊销
 		if isRevoke(peerSerialNum) {
 			conn.Close()
-			return nil, nil, errors.New(fmt.Sprintf("tls ClientHandshake %v revoked", peerSerialNum.String()))
+			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ClientHandshake Certificate SerialNumber %v revoked", peerSerialNum.String()))
 		}
 
 		if len(addrSplites) > 0 { //服务端证书的序列号，已经其IP地址
@@ -181,12 +184,11 @@ func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo,
 	certNum := len(peerCert)
 	if certNum != 0 {
 		peerSerialNum := peerCert[0].SerialNumber
-		//log.Info("ServerHandshake","certinfo",string(tlsInfo.State.PeerCertificates[0].Raw))
-		log.Debug("ServerHandshake", "peerSerialNum", peerSerialNum, "certificate Num", certNum, "remoteAddr", rawConn.RemoteAddr(), "tlsinfo", tlsInfo, "remoteAddr", conn.RemoteAddr())
+		log.Debug("ServerHandshake", "peerSerialNum", peerSerialNum, "Certificate Number", certNum, "RemoteAddr", rawConn.RemoteAddr(), "tlsinfo", tlsInfo, "remoteAddr", conn.RemoteAddr())
 
 		if isRevoke(peerSerialNum) {
 			rawConn.Close()
-			return nil, nil, errors.New(fmt.Sprintf("tls ServerHandshake  %s  revoked", peerSerialNum.String()))
+			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ServerHandshake  %s  revoked", peerSerialNum.String()))
 		}
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		if len(addrSplites) > 0 {
@@ -214,18 +216,6 @@ func newTLS(c *tls.Config) credentials.TransportCredentials {
 	tc.config.NextProtos = AppendH2ToNextProtos(tc.config.NextProtos)
 	return tc
 }
-
-//func upgradeTls(c *tls.Config,tc *Tls)credentials.TransportCredentials{
-//
-//	tc.config=CloneTLSConfig(c)
-//	if tc.server{
-//		tc.serConf=tc.config
-//	}else{
-//		tc.cliConf=tc.config
-//	}
-//	tc.config.NextProtos = AppendH2ToNextProtos(tc.config.NextProtos)
-//	return tc
-//}
 
 func (c *Tls) Clone() credentials.TransportCredentials {
 	return newTLS(c.config)
