@@ -338,12 +338,22 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(nodeVoteCmd())
 	cmd.AddCommand(nodeQuitCmd())
 	cmd.AddCommand(nodeCancelCmd())
-	cmd.AddCommand(nodeBindCmd())
-
 	cmd.AddCommand(getNodeInfoCmd())
 	cmd.AddCommand(getNodeIDInfoCmd())
 	cmd.AddCommand(getNodeListCmd())
 	cmd.AddCommand(nodeModifyCmd())
+
+	cmd.AddCommand(nodeMinerCmd())
+	return cmd
+}
+
+func nodeMinerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "miner",
+		Short: "super node bind miner cmd",
+	}
+
+	cmd.AddCommand(nodeBindCmd())
 	cmd.AddCommand(getNodeBindListCmd())
 	cmd.AddCommand(getMinerBindListCmd())
 	return cmd
@@ -560,7 +570,7 @@ func nodeBindCmd() *cobra.Command {
 }
 
 func addNodeBindFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("action", "a", 1, "action bind:1 or unbind:2")
+	cmd.Flags().Uint32P("action", "a", 1, "action bind:1, unbind:2, modify:3")
 	_ = cmd.MarkFlagRequired("action")
 
 	cmd.Flags().Uint64P("coins", "c", 0, "bind coins, unbind not needed")
@@ -647,17 +657,20 @@ func getMinerBindListCmd() *cobra.Command {
 func addNodeBindCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
 	cmd.MarkFlagRequired("miner")
+
+	cmd.Flags().BoolP("unbind", "u", false, "query with unbinded miner,default false")
 }
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	miner, _ := cmd.Flags().GetString("miner")
+	unbind, _ := cmd.Flags().GetBool("unbind")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
 	params.FuncName = "GetMinerBindNodeList"
 
-	params.Payload = types.MustPBToJSON(&types.ReqString{Data: miner})
+	params.Payload = types.MustPBToJSON(&pt.ParaNodeMinerListReq{Miner: miner, WithUnBind: unbind})
 
 	var res types.ReplyStrings
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
