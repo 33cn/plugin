@@ -16,8 +16,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-
-
 //Tls defines the specific interface for all the live gRPC wire
 // protocols and supported transport security protocols (e.g., TLS, SSL).
 type Tls struct {
@@ -29,11 +27,13 @@ type certInfo struct {
 	ip     string
 	serial string
 }
-var(
-	serials = make(map[string]*certInfo)
-	revokeLock sync.Mutex
+
+var (
+	serials       = make(map[string]*certInfo)
+	revokeLock    sync.Mutex
 	latestSerials sync.Map
 )
+
 //serialNum -->ip
 func addCertSerial(serial *big.Int, ip string) {
 	revokeLock.Lock()

@@ -295,7 +295,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 			log.Debug("sendVersion", "expect ip", ip, "pre externalip", nodeinfo.GetExternalAddr().IP.String())
 			if peer.IsPersistent() {
 				//永久加入黑名单
-				nodeinfo.blacklist.Add(resp.GetAddrRecv(), 0)//把自己的IP:PORT 加入黑名单，防止连接到自己
+				nodeinfo.blacklist.Add(resp.GetAddrRecv(), 0) //把自己的IP:PORT 加入黑名单，防止连接到自己
 			}
 		}
 	}

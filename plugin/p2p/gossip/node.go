@@ -8,9 +8,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"math/rand"
+
+	"google.golang.org/grpc/credentials"
 
 	"github.com/33cn/chain33/p2p"
 

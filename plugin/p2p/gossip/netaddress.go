@@ -173,7 +173,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 			return err
 		}
 
-		if bList != nil && bList.Has(ip)|| bList!=nil &&bList.Has(na.String()) {
+		if bList != nil && bList.Has(ip) || bList != nil && bList.Has(na.String()) {
 			return fmt.Errorf("interceptor blacklist peer  %v no authorized", na.String())
 		}
 
@@ -194,7 +194,6 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 
 		return streamer(ctx, desc, cc, method, opts...)
 	}
-
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
