@@ -6,12 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/33cn/chain33/common/pubsub"
-	"google.golang.org/grpc/credentials"
 	"net"
 	"sort"
 	"sync/atomic"
 	"time"
+
+	"github.com/33cn/chain33/common/pubsub"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/33cn/chain33/p2p"
 
@@ -690,12 +691,12 @@ uZ+EF9dHu0nEBcdZFJnAdMWf6MhTCHRQR9wSf9M8CJ5TQKNHpIFLUWJU
 
 	node.listenPort = 13332
 	node.nodeInfo.servCreds = servCreds
-	node.pubsub= pubsub.NewPubSub(10200)
-	l:= newListener("tcp", &node)
+	node.pubsub = pubsub.NewPubSub(10200)
+	l := newListener("tcp", &node)
 	assert.NotNil(t, l)
 	go l.Start()
 	defer l.Close()
-	netAddr, err := NewNetAddressString(fmt.Sprintf("127.0.0.1:%v",node.listenPort))
+	netAddr, err := NewNetAddressString(fmt.Sprintf("127.0.0.1:%v", node.listenPort))
 	assert.Nil(t, err)
 
 	conn, err := grpc.Dial(netAddr.String(), grpc.WithTransportCredentials(cliCreds))
