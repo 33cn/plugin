@@ -656,7 +656,7 @@ func (p *Paracross) Query_GetMinerBindNodeList(in *pt.ParaNodeMinerListReq) (typ
 	}
 
 	for _, n := range nodeInfo.Nodes {
-		minerInfo, err := getBindAddrInfo(db, in.Node, in.Miner)
+		minerInfo, err := getBindAddrInfo(db, n, in.Miner)
 		if err != nil {
 			return nil, err
 		}
