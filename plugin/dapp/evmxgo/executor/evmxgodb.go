@@ -62,12 +62,21 @@ func loadEvmxgoDB(db dbm.KV, symbol string) (*evmxgoDB, error) {
 	return &evmxgoDB{e}, nil
 }
 
-func (e *evmxgoDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	if e.evmxgo.Total+amount > types.MaxTokenBalance {
-		return nil, nil, types.ErrAmount
+func safeAdd(balance, amount int64) (int64, error) {
+	if balance+amount < amount || balance+amount > types.MaxTokenBalance {
+		return balance, types.ErrAmount
 	}
+	return balance + amount, nil
+}
+
+func (e *evmxgoDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	newTotal, err := safeAdd(e.evmxgo.Total, amount)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	prevEvmxgo := e.evmxgo
-	e.evmxgo.Total += amount
+	e.evmxgo.Total = newTotal
 
 	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
 	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMint, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
@@ -264,11 +273,11 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint) (*types.Receipt, 
 
 	// TODO check()
 	evmxgodb, err := loadEvmxgoDB(action.db, mint.GetSymbol())
-	if err != nil && err != evmxgotypes.ErrEvmxgoSymbolNotExist {
-		return nil, err
-	}
-	// evmxgo合约，只要配置了就可以铸币
-	if err == evmxgotypes.ErrEvmxgoSymbolNotExist {
+	if err != nil {
+		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
+			return nil, err
+		}
+		// evmxgo合约，只要配置了就可以铸币
 		configSynbol, err := loadEvmxgoMintConfig(action.db, mint.GetSymbol())
 		if err != nil || configSynbol == nil {
 			elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
