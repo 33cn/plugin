@@ -711,7 +711,7 @@ uZ+EF9dHu0nEBcdZFJnAdMWf6MhTCHRQR9wSf9M8CJ5TQKNHpIFLUWJU
 	assert.Nil(t, err)
 	assert.NotNil(t, conn)
 
-	gcon, err := netAddr.DialTimeout(0, cliCreds, nil)
+	_, err = netAddr.DialTimeout(0, cliCreds, nil)
 	assert.NotNil(t, err)
 	t.Log(err.Error())
 
@@ -720,8 +720,7 @@ uZ+EF9dHu0nEBcdZFJnAdMWf6MhTCHRQR9wSf9M8CJ5TQKNHpIFLUWJU
 		return
 	}
 	cliCreds = credentials.NewClientTLSFromCert(cp, "")
-	gcon, err = netAddr.DialTimeout(0, cliCreds, nil)
+	_, err = netAddr.DialTimeout(0, cliCreds, nil)
 	assert.NotNil(t, err)
-	assert.Nil(t, gcon)
 
 }
