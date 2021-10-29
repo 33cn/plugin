@@ -47,7 +47,7 @@ func newAction(t *Paracross, tx *types.Transaction) *action {
 func getNodes(db dbm.KV, key []byte) (map[string]struct{}, []string, error) {
 	item, err := db.Get(key)
 	if err != nil {
-		clog.Info("getNodes", "get db key", string(key), "failed", err)
+		//clog.Info("getNodes", "get db key", string(key), "failed", err)
 		if isNotFound(err) {
 			err = pt.ErrTitleNotExist
 		}
@@ -1367,7 +1367,7 @@ func crossTxProc(a *action, txHash []byte, fn func(*action, *types.TransactionDe
 		clog.Crit("paracross.Commit Load Tx failed", "error", err, "txHash", common.ToHex(txHash))
 		return nil, err
 	}
-	if tx == nil {
+	if tx == nil || tx.Tx == nil {
 		clog.Error("paracross.Commit Load Tx nil", "error", err, "txHash", common.ToHex(txHash))
 		return nil, types.ErrHashNotExist
 	}
