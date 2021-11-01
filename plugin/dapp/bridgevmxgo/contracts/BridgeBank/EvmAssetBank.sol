@@ -34,7 +34,7 @@ contract EvmAssetBank {
     */
     event LogLock(
         address _from,
-        bytes _to,
+        address _to,
         address _token,
         string _symbol,
         uint256 _value,
@@ -183,7 +183,7 @@ contract EvmAssetBank {
     */
     function lockFunds(
         address payable _sender,
-        bytes memory _recipient,
+        address _recipient,
         address _token,
         string memory _symbol,
         uint256 _amount

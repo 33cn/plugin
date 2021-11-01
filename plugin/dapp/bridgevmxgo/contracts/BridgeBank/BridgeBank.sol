@@ -213,7 +213,7 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
     * @param _amount: value of deposit
     */
     function lock(
-        bytes memory _recipient,
+        address _recipient,
         address _token,
         uint256 _amount
     )

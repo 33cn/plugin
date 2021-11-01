@@ -95,7 +95,6 @@ func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.Re
 	return kvs, logs, nil
 }
 
-
 type evmxgoAction struct {
 	coinsAccount *account.DB
 	db           dbm.KV
@@ -114,7 +113,6 @@ func newEvmxgoAction(e *evmxgo, toaddr string, tx *types.Transaction) *evmxgoAct
 	return &evmxgoAction{e.GetCoinsAccount(), e.GetStateDB(), hash, fromaddr, toaddr,
 		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetAPI()}
 }
-
 
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
 	manageKey := types.ManageKey(key)
@@ -183,7 +181,6 @@ func loadEvmxgoMintConfig(db dbm.KV, symbol string) (*evmxgotypes.EvmxgoMintConf
 		return nil, err // types.ErrBadConfigValue
 	}
 
-
 	configValue := item.GetArr().Value
 	if len(configValue) <= 0 {
 		return nil, evmxgotypes.ErrEvmxgoSymbolNotConfigValue
@@ -247,21 +244,11 @@ func AddTokenToAssets(addr string, db dbm.KVDB, symbol string) []*types.KeyValue
 	return kv
 }
 
-// 同时比较配置symbol与address参数，和parse返回值是否一致
-func check() (address, symbol string, amount int64, err error) {
-	return "", "", 0, err
-}
-
-func parse() (address, symbol string, amount int64, err error) {
-	// 上一个交易是否lock执行成功，如果是，返回实际参数，不是返回error
-	return "", "", 0, err
-}
-
 // 铸币不可控， 也是麻烦。 2选1
 // 1. 谁可以发起
 // 2. 是否需要审核  这个会增加管理的成本
 // 现在实现选择 1
-func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint) (*types.Receipt, error) {
+func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) (*types.Receipt, error) {
 	if mint == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -269,7 +256,9 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint) (*types.Receipt, 
 		return nil, types.ErrInvalidParam
 	}
 	cfg := action.api.GetConfig()
-	parse()
+	if err := checkMinePara(mint, tx2lock); nil != err {
+		return nil, err
+	}
 
 	// TODO check()
 	evmxgodb, err := loadEvmxgoDB(action.db, mint.GetSymbol())
@@ -343,4 +332,3 @@ func (action *evmxgoAction) burn(burn *evmxgotypes.EvmxgoBurn) (*types.Receipt, 
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
 }
-

@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"errors"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
@@ -60,11 +62,18 @@ func (e *evmxgo) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *ty
 }
 
 func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action:= newEvmxgoAction(e, "", tx)
-	return action.mint(payload)
+	action := newEvmxgoAction(e, "", tx)
+	txGroup, err := e.GetTxGroup(index)
+	if nil != err {
+		return nil, err
+	}
+	if len(txGroup) < 2 {
+		return nil, errors.New("Mint tx should be included in lock tx group")
+	}
+	return action.mint(payload, txGroup[0])
 }
 
 func (e *evmxgo) Exec_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action:= newEvmxgoAction(e, "", tx)
+	action := newEvmxgoAction(e, "", tx)
 	return action.burn(payload)
 }
