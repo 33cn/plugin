@@ -19,10 +19,10 @@ message EvmxgoAction {
 }
 
 message EvmxgoMint {
-    string symbol = 1;
-    int64  amount = 2;
-    string address =3;
-    string token   =4;
+    string symbol        = 1;
+    int64  amount        = 2;
+    string bridgeToken   = 3;
+    string recipient     = 4;
 }
 
 message EvmxgoBurn {

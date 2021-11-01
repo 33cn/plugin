@@ -14,6 +14,7 @@ const (
 )
 
 //solidity interface: function lock(address _recipient, address _token, uint256 _amount)
+//铸币交易的接收人必须与发起lock交易时填写的接收地址一致
 func checkMinePara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) error {
 	unpack, err := chain33Abi.Unpack(tx2lock.Payload, LockMethod, bridgevmxgo.BridgeBankABI)
 	if err != nil {
@@ -22,7 +23,7 @@ func checkMinePara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) err
 	for _, para := range unpack {
 		switch para.Name {
 		case "_recipient":
-			if mint.Address != para.Value {
+			if mint.Recipient != para.Value {
 				return errors.New("Not consitent recipient address")
 			}
 		case "_amount":
@@ -31,7 +32,7 @@ func checkMinePara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) err
 			}
 
 		case "_token":
-			if mint.Token != para.Value {
+			if mint.BridgeToken != para.Value {
 				return errors.New("Not consitent token Address")
 			}
 		}

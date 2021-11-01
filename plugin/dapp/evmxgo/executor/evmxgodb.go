@@ -16,7 +16,7 @@ type evmxgoDB struct {
 	evmxgo evmxgotypes.Evmxgo
 }
 
-func newEvmxgoDB(cfg *types.Chain33Config, mint *evmxgotypes.EvmxgoMint, creator string, height int64) *evmxgoDB {
+func newEvmxgoDB(mint *evmxgotypes.EvmxgoMint) *evmxgoDB {
 	e := &evmxgoDB{}
 	e.evmxgo.Symbol = mint.GetSymbol()
 	return e
@@ -69,7 +69,7 @@ func safeAdd(balance, amount int64) (int64, error) {
 	return balance + amount, nil
 }
 
-func (e *evmxgoDB) mint(db dbm.KV, addr string, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
 	newTotal, err := safeAdd(e.evmxgo.Total, amount)
 	if err != nil {
 		return nil, nil, err
@@ -273,10 +273,10 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 			return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
 		}
 
-		evmxgodb = newEvmxgoDB(cfg, mint, action.fromaddr, action.height)
+		evmxgodb = newEvmxgoDB(mint)
 	}
 
-	kvs, logs, err := evmxgodb.mint(action.db, action.fromaddr, mint.Amount)
+	kvs, logs, err := evmxgodb.mint(mint.Amount)
 	if err != nil {
 		elog.Error("evmxgo mint ", "symbol", mint.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
@@ -287,7 +287,7 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 		return nil, err
 	}
 	elog.Debug("mint", "evmxgo.Symbol", mint.Symbol, "evmxgo.Amount", mint.Amount)
-	receipt, err := evmxgoAccount.Mint(action.fromaddr, mint.Amount)
+	receipt, err := evmxgoAccount.Mint(mint.Recipient, mint.Amount)
 	if err != nil {
 		return nil, err
 	}
