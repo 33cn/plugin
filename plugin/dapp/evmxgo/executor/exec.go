@@ -67,10 +67,11 @@ func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transactio
 	if nil != err {
 		return nil, err
 	}
-	if len(txGroup) < 2 {
+	if len(txGroup) < 2 || index == 0 {
 		return nil, errors.New("Mint tx should be included in lock tx group")
 	}
-	return action.mint(payload, txGroup[0])
+	txs := e.GetTxs()
+	return action.mint(payload, txs[index-1])
 }
 
 func (e *evmxgo) Exec_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
