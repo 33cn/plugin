@@ -119,15 +119,6 @@ func createBridgevmxgo(cmd *cobra.Command, args []string) {
 	}
 	txs = append(txs, createBridgeRegistryTx)
 
-	fmt.Printf("%d: Going to create MulSign2chain33 \n", i)
-	i += 1
-	createMulSign2chain33Tx, err := createMulSignAndSign(cmd, from)
-	if nil != err {
-		fmt.Println("Failed to createMulSign2chain33Tx due to cause:", err.Error())
-		return
-	}
-	txs = append(txs, createMulSign2chain33Tx)
-
 	fmt.Printf("%d: Write all the txs to file:   %s \n", i, crossXfileName)
 	utils.WriteToFileInJson(crossXfileName, txs)
 }
