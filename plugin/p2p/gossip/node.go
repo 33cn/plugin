@@ -134,24 +134,24 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 			//不需要CA
 			node.nodeInfo.cliCreds, err = credentials.NewClientTLSFromFile(mcfg.CertFile, "")
 			if err != nil {
-				panic(err)
+				panic(fmt.Sprintf("NewClientTLSFromFile panic:%v", err.Error()))
 			}
 			node.nodeInfo.servCreds, err = credentials.NewServerTLSFromFile(mcfg.CertFile, mcfg.KeyFile)
 			if err != nil {
-				panic(err)
+				panic(fmt.Sprintf("NewServerTLSFromFile panic:%v", err.Error()))
 			}
 		} else {
 			//CA
 			cert, err := tls.LoadX509KeyPair(mcfg.CertFile, mcfg.KeyFile)
 			if err != nil {
-				panic(err)
+				panic(fmt.Sprintf("LoadX509KeyPair panic:%v", err.Error()))
 			}
 			certPool := x509.NewCertPool()
 			//添加CA校验
 			//把CA证书读进去，动态更新CA中的吊销列表
 			ca, err := ioutil.ReadFile(mcfg.CaCert)
 			if err != nil {
-				panic(err)
+				panic(fmt.Sprintf("readFile ca panic:%v", err.Error()))
 			}
 
 			if ok := certPool.AppendCertsFromPEM(ca); !ok {

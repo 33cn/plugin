@@ -212,7 +212,7 @@ func (na *NetAddress) DialTimeout(version int32, creds credentials.TransportCred
 
 	//判断是否对方是否支持压缩
 	cli := pb.NewP2PgserviceClient(conn)
-	_, err = cli.GetHeaders(context.Background(), &pb.P2PGetHeaders{StartHeight: 0, EndHeight: 0, Version: version}, grpc.WaitForReady(true))
+	_, err = cli.GetHeaders(context.Background(), &pb.P2PGetHeaders{StartHeight: 0, EndHeight: 0, Version: version}, grpc.WaitForReady(false))
 	if err != nil && !isCompressSupport(err) {
 		//compress not support
 		log.Error("compress not supprot , rollback to uncompress version", "addr", na.String())

@@ -7,7 +7,6 @@ package gossip
 import (
 	"bytes"
 	"io"
-	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -635,41 +634,26 @@ func (n *Node) monitorCerts() {
 
 			log.Debug("monitorCerts", "resp", resp)
 			tempCerts := getSerials()
-
 			for _, serialNum := range resp {
-				//被吊销的证书序列号
-				var ok bool
-				sNum := big.NewInt(1)
-				sNum, ok = sNum.SetString(serialNum, 10)
-				if !ok {
-					log.Error("monitorCerts", "big.Int Setstring err", serialNum)
-					continue
-				}
 				//设置证书序列号状态
-				certinfo := updateCertSerial(sNum, true)
-				delete(tempCerts, sNum.String())
-				if certinfo != nil {
-					for pname, peer := range n.nodeInfo.peerInfos.GetPeerInfos() {
-						if peer.GetAddr() == certinfo.ip {
-							v, ok := latestSerials.Load(certinfo.ip)
-							if ok && v.(string) == serialNum {
-								n.remove(pname) //断开已经连接的节点
-							}
+				certinfo := updateCertSerial(serialNum, true)
+				delete(tempCerts, serialNum)
+				for pname, peer := range n.nodeInfo.peerInfos.GetPeerInfos() {
+					if peer.GetAddr() == certinfo.ip {
+						v, ok := latestSerials.Load(certinfo.ip)
+						if ok && v.(string) == serialNum {
+							n.remove(pname) //断开已经连接的节点
 						}
 					}
 				}
-
 			}
 			log.Debug("monitorCert", "tempCerts", tempCerts)
 			//处理解除吊销的节点
 			for serialNum, info := range tempCerts {
 				if info.revoke {
 					// 被撤销的证书恢复正常
-					sNum := big.NewInt(1)
-					sNum, _ = sNum.SetString(serialNum, 10)
-					updateCertSerial(sNum, !info.revoke)
+					updateCertSerial(serialNum, !info.revoke)
 				}
-
 			}
 
 		}

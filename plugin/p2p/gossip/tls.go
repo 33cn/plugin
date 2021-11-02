@@ -41,19 +41,17 @@ func addCertSerial(serial *big.Int, ip string) {
 	serials[serial.String()] = &certInfo{false, ip, serial.String()}
 
 }
-func updateCertSerial(serial *big.Int, revoke bool) *certInfo {
+func updateCertSerial(serial string, revoke bool) certInfo {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
-	v, ok := serials[serial.String()]
+	v, ok := serials[serial]
 	if ok {
-
 		v.revoke = revoke
-	} else {
-		return nil
+		return *v
 	}
-	serials[serial.String()] = v
 
-	return v
+	//serials[serial.String()] = v
+	return certInfo{}
 }
 
 func isRevoke(serial *big.Int) bool {
