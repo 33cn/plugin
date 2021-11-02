@@ -267,10 +267,15 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 			return nil, err
 		}
 		// evmxgo合约，只要配置了就可以铸币
-		configSynbol, err := loadEvmxgoMintConfig(action.db, mint.GetSymbol())
-		if err != nil || configSynbol == nil {
+		configSymbol, err := loadEvmxgoMintConfig(action.db, mint.GetSymbol())
+		if err != nil || configSymbol == nil {
 			elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
 			return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+		}
+
+		if mint.BridgeToken != configSymbol.Address {
+			elog.Error("evmxgo mint ", "NotCorrectBridgeTokenAddress with address by manager", configSymbol.Address, "mint.BridgeToken", mint.BridgeToken)
+			return nil, evmxgotypes.ErrNotCorrectBridgeTokenAddress
 		}
 
 		evmxgodb = newEvmxgoDB(mint)

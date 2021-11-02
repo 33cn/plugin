@@ -9,4 +9,6 @@ var (
 	ErrEvmxgoSymbolNotAllowedMint = errors.New("ErrEvmxgoSymbolNotAllowedMint")
 	// ErrEvmxgoSymbolNotConfigValue error evmxgo symbol not config value
 	ErrEvmxgoSymbolNotConfigValue = errors.New("ErrEvmxgoSymbolNotConfigValue")
+	// ErrNotCorrectBridgeTokenAddress error Not Correct BridgeToken Address
+	ErrNotCorrectBridgeTokenAddress = errors.New("ErrNotCorrectBridgeTokenAddress")
 )
