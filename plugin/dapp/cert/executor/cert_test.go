@@ -138,7 +138,7 @@ func signCertTx(tx *types.Transaction, priv crypto.PrivKey, cert []byte) {
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(pkt.CollateralizeX, signType))
+	c, err := crypto.Load(types.GetSignName(pkt.CollateralizeX, signType), -1)
 	if err != nil {
 		return tx, err
 	}

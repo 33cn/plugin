@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	qbftVersion = "0.2.0"
+	qbftVersion = "0.2.1"
 
 	// DefaultQbftPort 默认端口
 	DefaultQbftPort = 33001
@@ -114,7 +114,7 @@ type subConfig struct {
 	MessageInterval       int32    `json:"messageInterval"`
 }
 
-func applyConfig(sub []byte) {
+func applyConfig(cfg *types.Consensus, sub []byte) {
 	var subcfg subConfig
 	if sub != nil {
 		types.MustDecode(sub, &subcfg)
@@ -122,6 +122,9 @@ func applyConfig(sub []byte) {
 	genesis = subcfg.Genesis
 	genesisAmount = subcfg.GenesisAmount
 	genesisBlockTime = subcfg.GenesisBlockTime
+	if !cfg.Minerstart {
+		return
+	}
 
 	timeoutTxAvail.Store(subcfg.TimeoutTxAvail)
 	timeoutPropose.Store(subcfg.TimeoutPropose)
@@ -182,6 +185,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	qbftlog.Info("create qbft client")
 	genesis = cfg.Genesis
 	genesisBlockTime = cfg.GenesisBlockTime
+	applyConfig(cfg, sub)
 	if !cfg.Minerstart {
 		qbftlog.Info("This node only sync block")
 		c := drivers.NewBaseClient(cfg)
@@ -189,7 +193,6 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		c.SetChild(client)
 		return client
 	}
-	applyConfig(sub)
 	//init rand
 	ttypes.Init()
 
@@ -200,7 +203,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	ttypes.CryptoName = types.GetSignName("", signType)
-	cr, err := crypto.New(ttypes.CryptoName)
+	cr, err := crypto.Load(ttypes.CryptoName, -1)
 	if err != nil {
 		qbftlog.Error("load qbft crypto fail", "err", err)
 		return nil
@@ -226,8 +229,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		return nil
 	}
 
-	qbftlog.Info("show qbft info", "sign", ttypes.CryptoName, "useAggSig", UseAggSig(), "genesisFile", genesisFile,
-		"privFile", privFile)
+	qbftlog.Info("show qbft info", "version", qbftVersion, "sign", ttypes.CryptoName, "useAggSig", UseAggSig(),
+		"genesisFile", genesisFile, "privFile", privFile)
 
 	ttypes.InitMessageMap()
 

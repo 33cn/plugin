@@ -21,23 +21,26 @@ message ParacrossStatusBlockDetails {
 
 message ParacrossHeightStatus {
     // ing, done
-    int32                       status       = 1;
-    string                      title        = 2;
-    int64                       height       = 3;
-    ParacrossStatusDetails      details      = 4;
-    int64                       mainHeight   = 5;
-    bytes                       mainHash     = 6;
-    ParacrossStatusBlockDetails blockDetails = 7;
+    int32                       status              = 1;
+    string                      title               = 2;
+    int64                       height              = 3;
+    ParacrossStatusDetails      details             = 4;
+    int64                       mainHeight          = 5;
+    bytes                       mainHash            = 6;
+    ParacrossStatusBlockDetails blockDetails        = 7;
+    ParacrossStatusDetails      supervisionDetails  = 8;
 }
 
 message ParacrossHeightStatusRsp {
-    int32    status                 = 1;
-    string   title                  = 2;
-    int64    height                 = 3;
-    int64    mainHeight             = 4;
-    string   mainHash               = 5;
-    repeated string commitAddrs     = 6;
-    repeated string commitBlockHash = 7;
+    int32    status                            = 1;
+    string   title                             = 2;
+    int64    height                            = 3;
+    int64    mainHeight                        = 4;
+    string   mainHash                          = 5;
+    repeated string commitAddrs                = 6;
+    repeated string commitBlockHash            = 7;
+    repeated string commitSupervisionAddrs     = 8;
+    repeated string commitSupervisionBlockHash = 9;
 }
 
 message ParacrossStatus {
@@ -351,8 +354,9 @@ message ParacrossAction {
         ParaNodeAddrConfig    nodeConfig      = 9;
         ParaNodeGroupConfig   nodeGroupConfig = 10;
         ParaStageConfig       selfStageConfig = 11;
-        CrossAssetTransfer    crossAssetTransfer = 12;
-        ParaBindMinerCmd      paraBindMiner   = 13;
+        CrossAssetTransfer    crossAssetTransfer    = 12;
+        ParaBindMinerCmd      paraBindMiner         = 13;
+        ParaNodeAddrConfig    supervisionNodeConfig = 14;
     }
     int32 ty = 2;
 }
@@ -385,6 +389,9 @@ message ReceiptParacrossDone {
     bytes          mainBlockHash   = 13;
     int64          mainBlockHeight = 14;
     int64          chainExecHeight = 15;
+    int32 totalSupervisionNodes    = 16;
+    int32 totalSupervisionCommit   = 17;
+    int32 mostSupervisionCommit    = 18;
 }
 
 message ReceiptParacrossRecord {
@@ -488,7 +495,7 @@ message LeaderSyncInfo {
     string ID       = 1;   //self id
     int32 baseIdx   = 2; //calculated by corrent consensus height and remainder by len(nodes)
     int32 offset    = 3;
-
+    uint32 count    = 4; //发送计数器
 }
 
 message ParaP2PSubMsg {

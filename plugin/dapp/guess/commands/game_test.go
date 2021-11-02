@@ -306,9 +306,9 @@ func init() {
 	log.SetLogLevel("info")
 	random = rand.New(rand.NewSource(types.Now().UnixNano()))
 
-	cr2, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr2, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
-		fmt.Println("crypto.New failed for types.ED25519")
+		fmt.Println("crypto.Load failed for types.ED25519")
 		return
 	}
 	secp = cr2

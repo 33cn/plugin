@@ -24,12 +24,18 @@ var (
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
+
+	//MainForkParaSupervision = "mainForkParaSupervision"
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
 	ForkParaSelfConsStages = "ForkParaSelfConsStages"
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
+	// ForkParaSupervision 平行链新增监督节点
+	ForkParaSupervision = "ForkParaSupervision"
 	// ForkParaFullMinerHeight 平行链全挖矿开启高度
 	ForkParaFullMinerHeight = "ForkParaFullMinerHeight"
+	// ForkParaRootHash 平行链按照ForkRootHash计算rootHash高度,在之前版本中平行链侧计算txRootHash没有提供正确的主链高度计算，需要分叉
+	ForkParaRootHash = "ForkParaRootHash"
 
 	// ParaConsSubConf sub
 	ParaConsSubConf = "consensus.sub.para"
@@ -58,10 +64,12 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
+	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 6000000)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
 	cfg.RegisterDappFork(ParaX, ForkParaFullMinerHeight, types.MaxHeight)
+	cfg.RegisterDappFork(ParaX, ForkParaRootHash, types.MaxHeight)
 }
 
 //InitExecutor ...
@@ -95,43 +103,47 @@ func (p *ParacrossType) GetName() string {
 // GetLogMap get receipt log map
 func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 	return map[int64]*types.LogInfo{
-		TyLogParacrossCommit:           {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
-		TyLogParacrossCommitDone:       {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
-		TyLogParacrossCommitRecord:     {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
-		TyLogParaAssetWithdraw:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
-		TyLogParaAssetTransfer:         {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
-		TyLogParaAssetDeposit:          {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
-		TyLogParaCrossAssetTransfer:    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
-		TyLogParacrossMiner:            {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
-		TyLogParaNodeConfig:            {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
-		TyLogParaNodeStatusUpdate:      {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
-		TyLogParaNodeGroupAddrsUpdate:  {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
-		TyLogParaNodeVoteDone:          {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
-		TyLogParaNodeGroupConfig:       {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
-		TyLogParaNodeGroupStatusUpdate: {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
-		TyLogParaSelfConsStageConfig:   {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
-		TyLogParaStageVoteDone:         {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
-		TyLogParaStageGroupUpdate:      {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
-		TyLogParaBindMinerAddr:         {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
-		TyLogParaBindMinerNode:         {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParacrossCommit:                     {Ty: reflect.TypeOf(ReceiptParacrossCommit{}), Name: "LogParacrossCommit"},
+		TyLogParacrossCommitDone:                 {Ty: reflect.TypeOf(ReceiptParacrossDone{}), Name: "LogParacrossCommitDone"},
+		TyLogParacrossCommitRecord:               {Ty: reflect.TypeOf(ReceiptParacrossRecord{}), Name: "LogParacrossCommitRecord"},
+		TyLogParaAssetWithdraw:                   {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetWithdraw"},
+		TyLogParaAssetTransfer:                   {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetTransfer"},
+		TyLogParaAssetDeposit:                    {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaAssetDeposit"},
+		TyLogParaCrossAssetTransfer:              {Ty: reflect.TypeOf(types.ReceiptAccountTransfer{}), Name: "LogParaCrossAssetTransfer"},
+		TyLogParacrossMiner:                      {Ty: reflect.TypeOf(ReceiptParacrossMiner{}), Name: "LogParacrossMiner"},
+		TyLogParaNodeConfig:                      {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaNodeConfig"},
+		TyLogParaNodeStatusUpdate:                {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaNodeAddrStatUpdate"},
+		TyLogParaNodeGroupAddrsUpdate:            {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaNodeGroupAddrsUpdate"},
+		TyLogParaNodeVoteDone:                    {Ty: reflect.TypeOf(ReceiptParaNodeVoteDone{}), Name: "LogParaNodeVoteDone"},
+		TyLogParaNodeGroupConfig:                 {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupConfig"},
+		TyLogParaNodeGroupStatusUpdate:           {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaNodeGroupStatusUpdate"},
+		TyLogParaSelfConsStageConfig:             {Ty: reflect.TypeOf(ReceiptSelfConsStageConfig{}), Name: "LogParaSelfConsStageConfig"},
+		TyLogParaStageVoteDone:                   {Ty: reflect.TypeOf(ReceiptSelfConsStageVoteDone{}), Name: "LogParaSelfConfStageVoteDoen"},
+		TyLogParaStageGroupUpdate:                {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
+		TyLogParaBindMinerAddr:                   {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
+		TyLogParaBindMinerNode:                   {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
+		TyLogParaSupervisionNodeConfig:           {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaSupervisionNodeConfig"},
+		TyLogParaSupervisionNodeGroupAddrsUpdate: {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaSupervisionNodeGroupAddrsUpdate"},
+		TyLogParaSupervisionNodeStatusUpdate:     {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaSupervisionNodeStatusUpdate"},
 	}
 }
 
 // GetTypeMap get action type
 func (p *ParacrossType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Commit":             ParacrossActionCommit,
-		"Miner":              ParacrossActionMiner,
-		"AssetTransfer":      ParacrossActionAssetTransfer,
-		"AssetWithdraw":      ParacrossActionAssetWithdraw,
-		"Transfer":           ParacrossActionTransfer,
-		"Withdraw":           ParacrossActionWithdraw,
-		"TransferToExec":     ParacrossActionTransferToExec,
-		"CrossAssetTransfer": ParacrossActionCrossAssetTransfer,
-		"NodeConfig":         ParacrossActionNodeConfig,
-		"NodeGroupConfig":    ParacrossActionNodeGroupApply,
-		"SelfStageConfig":    ParacrossActionSelfStageConfig,
-		"ParaBindMiner":      ParacrossActionParaBindMiner,
+		"Commit":                ParacrossActionCommit,
+		"Miner":                 ParacrossActionMiner,
+		"AssetTransfer":         ParacrossActionAssetTransfer,
+		"AssetWithdraw":         ParacrossActionAssetWithdraw,
+		"Transfer":              ParacrossActionTransfer,
+		"Withdraw":              ParacrossActionWithdraw,
+		"TransferToExec":        ParacrossActionTransferToExec,
+		"CrossAssetTransfer":    ParacrossActionCrossAssetTransfer,
+		"NodeConfig":            ParacrossActionNodeConfig,
+		"NodeGroupConfig":       ParacrossActionNodeGroupApply,
+		"SelfStageConfig":       ParacrossActionSelfStageConfig,
+		"ParaBindMiner":         ParacrossActionParaBindMiner,
+		"SupervisionNodeConfig": ParacrossActionSupervisionNodeConfig,
 	}
 }
 

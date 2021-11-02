@@ -60,8 +60,8 @@ func (client *client) Query_LeaderInfo(req *types.ReqNil) (types.Message, error)
 	if client == nil {
 		return nil, fmt.Errorf("%s", "client not bind message queue.")
 	}
-	nodes, leader, base, off, isLeader := client.blsSignCli.getLeaderInfo()
-	return &pt.ElectionStatus{IsLeader: isLeader, Leader: &pt.LeaderSyncInfo{ID: nodes[leader], BaseIdx: base, Offset: off}}, nil
+	_, leader, base, off, isLeader, _ := client.blsSignCli.getLeaderInfo()
+	return &pt.ElectionStatus{IsLeader: isLeader, Leader: &pt.LeaderSyncInfo{ID: leader, BaseIdx: base, Offset: off}}, nil
 }
 
 func (client *client) Query_CommitTxInfo(req *types.ReqNil) (types.Message, error) {

@@ -84,6 +84,8 @@ function check_tx() {
     ty=$(${CLI} tx query -s "${2}" | jq .receipt.ty)
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
+        hashInfo=$(${CLI} tx query -s "${2}")
+        echo -e "${RED}query tx: ${hashInfo}${NOC}"
         exit_test
     fi
 }

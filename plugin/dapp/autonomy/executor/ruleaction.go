@@ -69,11 +69,17 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 		checkParaInvalid(int64(prob.RuleCfg.PubOpposeRatio), minPubOpposeRatio, maxPubOpposeRatio) ||
 		checkParaInvalid(int64(prob.RuleCfg.PublicPeriod), int64(minPublicPeriod), int64(maxPublicPeriod)) ||
 		checkParaInvalid(prob.RuleCfg.LargeProjectAmount, minLargeProjectAmount*cfg.GetCoinPrecision(), maxLargeProjectAmount*cfg.GetCoinPrecision()) ||
-		checkParaInvalid(prob.RuleCfg.ProposalAmount, minProposalAmount*cfg.GetCoinPrecision(), maxProposalAmount*cfg.GetCoinPrecision()) ||
-		checkParaInvalid(int64(prob.RuleCfg.PubAttendRatio), minPubAttendRatio, maxPubAttendRatio) ||
-		checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), minPubApproveRatio, maxPubApproveRatio) {
+		checkParaInvalid(prob.RuleCfg.ProposalAmount, minProposalAmount*cfg.GetCoinPrecision(), maxProposalAmount*cfg.GetCoinPrecision()) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
+	}
+
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if checkParaInvalid(int64(prob.RuleCfg.PubAttendRatio), minPubAttendRatio, maxPubAttendRatio) ||
+			checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), minPubApproveRatio, maxPubApproveRatio) {
+			alog.Error("propRule RuleCfg invaild", "PubAttendRatio", prob.RuleCfg.PubAttendRatio, "PubApproveRatio", prob.RuleCfg.PubApproveRatio)
+			return nil, types.ErrInvalidParam
+		}
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||

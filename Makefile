@@ -8,8 +8,14 @@ export GO111MODULE=on
 CLI := build/chain33-cli
 SRC_CLI := github.com/33cn/plugin/cli
 APP := build/chain33
-BUILD_FLAGS = -ldflags "-X github.com/33cn/chain33/common/version.GitCommit=`git rev-parse --short=8 HEAD`"
-LDFLAGS := -ldflags "-w -s"
+LDFLAGS := ' -w -s'
+BUILDTIME:=$(shell date +"%Y-%m-%d %H:%M:%S %A")
+VERSION=$(shell git describe --tags || git rev-parse --short=8 HEAD)
+GitCommit=$(shell git rev-parse --short=8 HEAD)
+BUILD_FLAGS := -ldflags '-X "github.com/33cn/plugin/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" \
+                         -X "github.com/33cn/plugin/version.BuildTime=$(BUILDTIME)"'
+
 MKPATH=$(abspath $(lastword $(MAKEFILE_LIST)))
 MKDIR=$(dir $(MKPATH))
 proj := "build"
@@ -31,6 +37,48 @@ build_ci: depends ## Build the binary file for CI
 	@cp chain33.toml build/
 	@cp chain33.para.toml build/ci/paracross/
 
+
+PLATFORM_LIST = \
+	darwin-amd64 \
+	darwin-arm64 \
+	linux-amd64 \
+
+WINDOWS_ARCH_LIST = \
+	windows-amd64
+
+GOBUILD=go build $(BUILD_FLAGS)" -w -s"
+
+darwin-amd64:
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=amd64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
+	chmod +x chain33-darwin-amd64 && \
+	chmod +x chain33-cli-darwin-amd64 && \
+	tar -zcvf chain33-darwin-amd64.tar.gz chain33-darwin-amd64 chain33-cli-darwin-amd64 chain33.para.toml chain33.toml CHANGELOG.md
+
+darwin-arm64:
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=arm64 GOOS=darwin $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
+	chmod +x chain33-darwin-arm64 && \
+	chmod +x chain33-cli-darwin-arm64 && \
+	tar -zcvf chain33-darwin-arm64.tar.gz chain33-darwin-arm64 chain33-cli-darwin-arm64 chain33.toml chain33.para.toml CHANGELOG.md
+
+linux-amd64:
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(APP)-$@ $(SRC)
+	GOARCH=amd64 GOOS=linux $(GOBUILD) -o $(CLI)-$@ $(SRC_CLI)
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
+	chmod +x chain33-linux-amd64 && \
+	chmod +x chain33-cli-linux-amd64 && \
+	tar -zcvf chain33-linux-amd64.tar.gz chain33-linux-amd64 chain33-cli-linux-amd64 chain33.para.toml chain33.toml CHANGELOG.md
+
+windows-amd64:
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(APP)-$@.exe $(SRC)
+	GOARCH=amd64 GOOS=windows $(GOBUILD) -o $(CLI)-$@.exe $(SRC_CLI)
+	cp chain33.para.toml chain33.toml CHANGELOG.md build/ && cd build && \
+	zip -j  chain33-windows-amd64.zip chain33-windows-amd64.exe chain33-cli-windows-amd64.exe chain33.para.toml chain33.toml CHANGELOG.md
+
+all-arch: $(PLATFORM_LIST) $(WINDOWS_ARCH_LIST)
 
 para:
 	@go build -v -o build/$(NAME) -ldflags "-X $(SRC_CLI)/buildflags.ParaName=user.p.$(NAME). -X $(SRC_CLI)/buildflags.RPCAddr=http://localhost:8901" $(SRC_CLI)

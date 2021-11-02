@@ -439,7 +439,7 @@ func Exec_QueryExpiredAccounts(expiredtime int64, stateDB db.KV, kvdb db.KVDB) (
 }
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		return tx, err
 	}
