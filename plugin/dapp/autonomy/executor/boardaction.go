@@ -398,7 +398,7 @@ func isApproved(totalVotes, approveVotes, opposeVotes, quitVotes, attendRation, 
 	//参与率计算弃权票
 	attendVotes := approveVotes + opposeVotes + quitVotes
 	//赞成率，忽略弃权票
-	validVotes := approveVotes + opposeVotes
+	validVotes := totalVotes - quitVotes
 	if totalVotes != 0 && attendVotes != 0 &&
 		attendVotes*100 > attendRation*totalVotes &&
 		approveVotes*100 > approveRatio*validVotes {
