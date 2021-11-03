@@ -115,7 +115,6 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	log.Debug(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
-		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
 		if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMRevertErrFormat) {
 			var visiableOut []byte
 			for i := 0; i < len(ret); i++ {
@@ -125,10 +124,12 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 				}
 				visiableOut = append(visiableOut, ret[i])
 			}
-			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(visiableOut)))
+			ret = visiableOut
+			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
 		} else {
 			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
 		}
+		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
 
 		return receipt, vmerr
 	}
