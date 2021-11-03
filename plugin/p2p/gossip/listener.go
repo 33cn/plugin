@@ -6,7 +6,6 @@ package gossip
 
 import (
 	"fmt"
-	"math/big"
 	"math/rand"
 	"net"
 	"sync"
@@ -93,8 +92,7 @@ Retry:
 			return nil, err
 		}
 		if serialNum, ok := latestSerials.Load(ip); ok {
-			bn, _ := big.NewInt(1).SetString(serialNum.(string), 10)
-			if isRevoke(bn) { //证书被吊销 拒绝接口请求
+			if isRevoke(serialNum.(string)) { //证书被吊销 拒绝接口请求
 				return nil, fmt.Errorf("interceptor: authentication interceptor faild Certificate SerialNumber %v revoked", serialNum.(string))
 			}
 		}
@@ -124,8 +122,7 @@ Retry:
 			return err
 		}
 		if serialNum, ok := latestSerials.Load(ip); ok {
-			bn, _ := big.NewInt(1).SetString(serialNum.(string), 10)
-			if isRevoke(bn) { //证书被吊销 拒绝接口请求
+			if isRevoke(serialNum.(string)) { //证书被吊销 拒绝接口请求
 				return fmt.Errorf("interceptor: authentication Stream faild Certificate SerialNumber %v revoked", serialNum.(string))
 			}
 		}

@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"math/big"
 	"net"
 	"net/url"
 	"strings"
@@ -35,10 +34,10 @@ var (
 )
 
 //serialNum -->ip
-func addCertSerial(serial *big.Int, ip string) {
+func addCertSerial(serial string, ip string) {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
-	serials[serial.String()] = &certInfo{false, ip, serial.String()}
+	serials[serial] = &certInfo{false, ip, serial}
 
 }
 func updateCertSerial(serial string, revoke bool) certInfo {
@@ -50,23 +49,22 @@ func updateCertSerial(serial string, revoke bool) certInfo {
 		return *v
 	}
 
-	//serials[serial.String()] = v
 	return certInfo{}
 }
 
-func isRevoke(serial *big.Int) bool {
+func isRevoke(serial string) bool {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
-	if r, ok := serials[serial.String()]; ok {
+	if r, ok := serials[serial]; ok {
 		return r.revoke
 	}
 	return false
 }
 
-func removeCertSerial(serial *big.Int) {
+func removeCertSerial(serial string) {
 	revokeLock.Lock()
 	defer revokeLock.Unlock()
-	delete(serials, serial.String())
+	delete(serials, serial)
 }
 
 func getSerialNums() []string {
@@ -146,13 +144,13 @@ func (c *Tls) ClientHandshake(ctx context.Context, authority string, rawConn net
 		log.Debug("ClientHandshake", "Certificate SerialNumber", peerSerialNum, "Certificate Number", certNum, "RemoteAddr", rawConn.RemoteAddr(), "tlsInfo", tlsInfo)
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		//检查证书是否被吊销
-		if isRevoke(peerSerialNum) {
+		if isRevoke(peerSerialNum.String()) {
 			conn.Close()
 			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ClientHandshake Certificate SerialNumber %v revoked", peerSerialNum.String()))
 		}
 
 		if len(addrSplites) > 0 { //服务端证书的序列号，已经其IP地址
-			addCertSerial(peerSerialNum, addrSplites[0])
+			addCertSerial(peerSerialNum.String(), addrSplites[0])
 			latestSerials.Store(addrSplites[0], peerSerialNum.String()) //ip --->serialNum
 		}
 	}
@@ -184,13 +182,13 @@ func (c *Tls) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthInfo,
 		peerSerialNum := peerCert[0].SerialNumber
 		log.Debug("ServerHandshake", "peerSerialNum", peerSerialNum, "Certificate Number", certNum, "RemoteAddr", rawConn.RemoteAddr(), "tlsinfo", tlsInfo, "remoteAddr", conn.RemoteAddr())
 
-		if isRevoke(peerSerialNum) {
+		if isRevoke(peerSerialNum.String()) {
 			rawConn.Close()
 			return nil, nil, errors.New(fmt.Sprintf("transport: authentication handshake failed: ServerHandshake  %s  revoked", peerSerialNum.String()))
 		}
 		addrSplites := strings.Split(rawConn.RemoteAddr().String(), ":")
 		if len(addrSplites) > 0 {
-			addCertSerial(peerSerialNum, addrSplites[0])
+			addCertSerial(peerSerialNum.String(), addrSplites[0])
 			latestSerials.Store(addrSplites[0], peerSerialNum.String()) //ip --->serialNum
 		}
 
