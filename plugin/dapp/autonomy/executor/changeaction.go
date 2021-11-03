@@ -248,10 +248,18 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 		kv = append(kv, receipt.KV...)
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
-		cur.PropChange.RealEndBlockHeight = a.height
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes-cur.VoteResult.QuitVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropChange.RealEndBlockHeight = a.height
+		}
+	} else {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropChange.RealEndBlockHeight = a.height
+		}
 	}
 
 	key := propChangeID(voteProb.ProposalID)
@@ -306,12 +314,23 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 		return nil, err
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes-cur.VoteResult.QuitVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	} else {
-		cur.VoteResult.Pass = false
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	}
+
 	cur.PropChange.RealEndBlockHeight = a.height
 
 	var logs []*types.ReceiptLog
