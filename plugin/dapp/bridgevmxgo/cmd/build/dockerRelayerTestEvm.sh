@@ -807,8 +807,8 @@ function TestETH2EVMToChain33() {
     # 结果是 11 * le8
     is_equal "${result}" "1100000000"
 
-    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
-    chain33_offline_send_evm "approve_erc20.txt"
+#    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
+#    chain33_offline_send_evm "approve_erc20.txt"
 
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33EthBridgeTokenAddr}, 500000000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
@@ -868,17 +868,17 @@ function AllRelayerMainTest() {
     TestChain33ToEthZBCAssets
     TestETH2Chain33Ycc
 
-#    Chain33Cli=${Para8901Cli}
-#    lockBty
-#    lockChain33Ycc
-#    lockEth
-#    lockEthYcc
-#
-#    # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Chain33Ycc 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10
-#    offline_set_offline_token_EthYcc 100000000000000 10
+    Chain33Cli=${Para8901Cli}
+    lockBty
+    lockChain33Ycc
+    lockEth
+    lockEthYcc
+
+    # 离线多签地址转入阈值设大
+    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_EthYcc 100000000000000 10
 
     EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
