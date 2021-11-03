@@ -116,7 +116,20 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
 		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
-		vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		if cfg.IsDappFork(evm.GetHeight(), "evm", evmtypes.ForkEVMRevertErrFormat) {
+			var visiableOut []byte
+			for i := 0; i < len(ret); i++ {
+				//显示[32,126]之间的字符
+				if ret[i] < 32 || ret[i] > 126 {
+					continue
+				}
+				visiableOut = append(visiableOut, ret[i])
+			}
+			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(visiableOut)))
+		} else {
+			vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		}
+
 		return receipt, vmerr
 	}
 
