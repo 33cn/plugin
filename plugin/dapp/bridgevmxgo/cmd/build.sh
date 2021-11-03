@@ -29,7 +29,7 @@ go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 go build -i ${FLAG} -v -o "${OUT_DIR}/evmxgoboss4x" "${SRC_EVMXGOBOSS4XCLI}"
 
 cp ../../../../chain33.para.toml "${OUT_DIR}"
-cp ../ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"
+cp ../../cross2eth/ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"
 cp ./build/* "${OUT_DIR}"
 cp ./build/abi/* "${OUT_DIR}"
 cp ./build/public/* "${OUT_DIR}"
