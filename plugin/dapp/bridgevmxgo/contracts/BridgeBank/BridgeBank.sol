@@ -17,7 +17,7 @@ import "../GoAssetBridge.sol";
 contract BridgeBank is GoAssetBank, EvmAssetBank {
 
     using SafeMath for uint256;
-    
+
     address public operator;
     Oracle public oracle;
     GoAssetBridge public goAssetBridge;
@@ -82,8 +82,19 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
         );
         _;
     }
+    /*
+     * @dev: Modifier to make sure this symbol not created now
+     */
+    modifier onlyBridgeToken(address _token)
+    {
+        require(
+            (address(0) == _token) && (msg.value == 0),
+            "Only bridge token could be locked and tranfer to contract:evmxgo"
+        );
+        _;
+    }
 
-   /*
+    /*
     * @dev: Fallback function allows operator to send funds to the bank directly
     *       This feature is used for testing and is available at the operator's own risk.
     */
@@ -219,36 +230,20 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
     )
         public
         availableNonce()
+        onlyBridgeToken(_token)
         payable
     {
         string memory symbol;
-
-        // Chain33 deposit
-        if (msg.value > 0) {
-          require(
-              _token == address(0),
-              "BTY deposits require the 'token' address to be the null address"
-            );
-          require(
-              msg.value == _amount,
-              "The transactions value must be equal the specified amount(BTY decimal is 8)"
-            );
-
-          // Set the the symbol to BTY
-          symbol = "BTY";
-          // ERC20 deposit
-        } else {
-          require(
-              BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
-              "Contract token allowances insufficient to complete this lock request"
-          );
-          // Set symbol to the ERC20 token's symbol
-          symbol = BridgeToken(_token).symbol();
-          require(
-              tokenAllow2Lock[keccak256(abi.encodePacked(symbol))] == _token,
+        require(
+            BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
+            "Contract token allowances insufficient to complete this lock request"
+        );
+        // Set symbol to the ERC20 token's symbol
+        symbol = BridgeToken(_token).symbol();
+        require(
+           tokenAllow2Lock[keccak256(abi.encodePacked(symbol))] == _token,
               'The token is not allowed to be locked from Chain33.'
-          );
-        }
+        );
 
         lockFunds(
             msg.sender,
