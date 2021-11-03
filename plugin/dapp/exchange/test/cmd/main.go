@@ -17,10 +17,34 @@ var (
 
 // 批量测试前，先确保测试账户有足够的币和钱
 func main() {
-	cli = test.NewGRPCCli("localhost:8802")
-	go buy()
-	go sell()
+	cli = test.NewGRPCCli("172.16.101.123:8802")
+	onesell()
+	//go buy()
+	//go sell()
 	select {}
+}
+func onesell() {
+	req := &et.LimitOrder{
+		LeftAsset:  &et.Asset{Symbol: "bty", Execer: "coins"},
+		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"},
+		Price:      1,
+		Amount:     types.DefaultCoinPrecision,
+		Op:         et.OpSell,
+	}
+	ety := types.LoadExecutorType(et.ExchangeX)
+	// 卖 2000 次，需 2000*1=2000 个 bty
+
+	fmt.Println("one sell ")
+	tx, err := ety.Create("LimitOrder", req)
+	if err != nil {
+		panic(err)
+	}
+	reply, err := cli.SendTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("send err", err)
+	}
+	fmt.Println("reply", reply.IsOk)
+	fmt.Println("reply", string(reply.GetMsg()))
 }
 
 func sell() {
