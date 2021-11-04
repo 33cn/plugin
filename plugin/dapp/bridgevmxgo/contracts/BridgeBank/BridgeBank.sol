@@ -88,7 +88,7 @@ contract BridgeBank is GoAssetBank, EvmAssetBank {
     modifier onlyBridgeToken(address _token)
     {
         require(
-            (address(0) == _token) && (msg.value == 0),
+            (address(0) != _token) && (msg.value == 0),
             "Only bridge token could be locked and tranfer to contract:evmxgo"
         );
         _;
