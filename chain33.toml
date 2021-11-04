@@ -78,6 +78,14 @@ serverStart=true
 innerSeedEnable=true
 useGithub=true
 innerBounds=300
+#是否启用ssl/tls 通信，默认不开启
+enableTLS=false
+#如果需要CA配合认证，则需要配置caCert,caServer
+caCert=""
+certFile=""
+keyFile=""
+# ca服务端接口http://ip:port
+caServer=""
 
 [p2p.sub.dht]
 seeds=[]
