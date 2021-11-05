@@ -905,10 +905,10 @@ function AllRelayerMainTest() {
     DeployEvmxgo
     TestETH2EVMToChain33
 
-    send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
-    send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
-    send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
-    send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
