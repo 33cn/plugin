@@ -7,17 +7,17 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"os"
 	"strings"
-
-	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
-	"github.com/pkg/errors"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/system/dapp/commands"
+	cmdtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	"github.com/33cn/chain33/types"
 	pt "github.com/33cn/plugin/plugin/dapp/paracross/types"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +37,7 @@ func ParcCmd() *cobra.Command {
 		CreateRawCrossAssetTransferCmd(),
 		superNodeCmd(),
 		nodeGroupCmd(),
+		supervisionNodeCmd(),
 		paraConfigCmd(),
 		GetParaInfoCmd(),
 		GetParaListCmd(),
@@ -64,10 +65,10 @@ func CreateRawAssetTransferCmd() *cobra.Command {
 
 func addCreateAssetTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
-	cmd.MarkFlagRequired("to")
+	_ = cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
@@ -77,7 +78,7 @@ func addCreateAssetTransferFlags(cmd *cobra.Command) {
 func createAssetTransfer(cmd *cobra.Command, args []string) {
 	txHex, err := createAssetTx(cmd, false)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	fmt.Println(txHex)
@@ -96,12 +97,12 @@ func CreateRawAssetWithdrawCmd() *cobra.Command {
 
 func addCreateAssetWithdrawFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0, "withdraw amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
-	cmd.MarkFlagRequired("to")
+	_ = cmd.MarkFlagRequired("to")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
 }
@@ -109,7 +110,7 @@ func addCreateAssetWithdrawFlags(cmd *cobra.Command) {
 func createAssetWithdraw(cmd *cobra.Command, args []string) {
 	txHex, err := createAssetTx(cmd, true)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	fmt.Println(txHex)
@@ -138,7 +139,7 @@ func createAssetTx(cmd *cobra.Command, isWithdraw bool) (string, error) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "title is not right, title format like `user.p.guodun.`")
 		return "", types.ErrInvalidParam
 	}
 
@@ -174,15 +175,15 @@ func CreateRawTransferCmd() *cobra.Command {
 
 func addCreateTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("to", "t", "", "receiver account address")
-	cmd.MarkFlagRequired("to")
+	_ = cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("symbol")
 }
 
 func createTransfer(cmd *cobra.Command, args []string) {
@@ -202,15 +203,15 @@ func CreateRawTransferToExecCmd() *cobra.Command {
 
 func addCreateTransferToExecFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().StringP("symbol", "s", "coins.bty", "default for bty, symbol for token")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
-	cmd.MarkFlagRequired("exec")
+	_ = cmd.MarkFlagRequired("exec")
 }
 
 func createTransferToExec(cmd *cobra.Command, args []string) {
@@ -230,15 +231,15 @@ func CreateRawWithdrawCmd() *cobra.Command {
 
 func addCreateWithdrawFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("amount", "a", 0, "withdraw amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
 	cmd.Flags().StringP("symbol", "s", "", "default for bty, symbol for token")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("exec", "e", "", "asset deposit exec")
-	cmd.MarkFlagRequired("exec")
+	_ = cmd.MarkFlagRequired("exec")
 }
 
 func createWithdraw(cmd *cobra.Command, args []string) {
@@ -258,16 +259,16 @@ func CreateRawCrossAssetTransferCmd() *cobra.Command {
 
 func addCreateCrossAssetTransferFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("exec", "e", "", "exec of asset resident")
-	cmd.MarkFlagRequired("exec")
+	_ = cmd.MarkFlagRequired("exec")
 
 	cmd.Flags().StringP("symbol", "s", "", "asset symbol like bty")
-	cmd.MarkFlagRequired("symbol")
+	_ = cmd.MarkFlagRequired("symbol")
 
 	cmd.Flags().StringP("to", "t", "", "transfer to account")
-	cmd.MarkFlagRequired("to")
+	_ = cmd.MarkFlagRequired("to")
 
 	cmd.Flags().Float64P("amount", "a", 0, "transaction amount")
-	cmd.MarkFlagRequired("amount")
+	_ = cmd.MarkFlagRequired("amount")
 
 	cmd.Flags().StringP("note", "n", "", "transaction note info")
 
@@ -287,7 +288,7 @@ func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
 	}
 
 	if amount < 0 {
-		fmt.Fprintln(os.Stderr, "amount < 0")
+		_, _ = fmt.Fprintln(os.Stderr, "amount < 0")
 		return
 	}
 	amountInt64, err := types.FormatFloatDisplay2Value(amount, cfg.CoinPrecision)
@@ -298,7 +299,7 @@ func createCrossAssetTransfer(cmd *cobra.Command, args []string) {
 
 	paraName, _ := cmd.Flags().GetString("paraName")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	execName := paraName + pt.ParaX
@@ -363,10 +364,10 @@ func nodeJoinCmd() *cobra.Command {
 
 func addNodeJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "target join addr")
-	cmd.MarkFlagRequired("addr")
+	_ = cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().Float64P("coins", "c", 0, "frozen coins amount, should not less nodegroup's setting")
-	cmd.MarkFlagRequired("coins")
+	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -375,7 +376,7 @@ func createNodeJoinTx(cmd *cobra.Command, args []string) {
 	coins, _ := cmd.Flags().GetFloat64("coins")
 	paraName, _ := cmd.Flags().GetString("paraName")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -413,10 +414,10 @@ func nodeVoteCmd() *cobra.Command {
 
 func addNodeVoteFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "operating target apply id")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
-	cmd.MarkFlagRequired("value")
+	_ = cmd.MarkFlagRequired("value")
 }
 
 func createNodeVoteTx(cmd *cobra.Command, args []string) {
@@ -424,7 +425,7 @@ func createNodeVoteTx(cmd *cobra.Command, args []string) {
 	id, _ := cmd.Flags().GetString("id")
 	val, _ := cmd.Flags().GetUint32("value")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, Value: val}
@@ -452,7 +453,7 @@ func nodeQuitCmd() *cobra.Command {
 
 func addNodeQuitFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "target quit addr")
-	cmd.MarkFlagRequired("addr")
+	_ = cmd.MarkFlagRequired("addr")
 
 }
 
@@ -460,7 +461,7 @@ func createNodeQuitTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	opAddr, _ := cmd.Flags().GetString("addr")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
@@ -488,7 +489,7 @@ func nodeCancelCmd() *cobra.Command {
 
 func addNodeCancelFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "operating target apply id")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 }
 
@@ -496,7 +497,7 @@ func createNodeCancelTx(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
@@ -524,9 +525,9 @@ func nodeModifyCmd() *cobra.Command {
 
 func addNodeModifyFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "operating target apply id")
-	cmd.MarkFlagRequired("addr")
+	_ = cmd.MarkFlagRequired("addr")
 	cmd.Flags().StringP("pubkey", "p", "", "operating target apply id")
-	cmd.MarkFlagRequired("pubkey")
+	_ = cmd.MarkFlagRequired("pubkey")
 
 }
 
@@ -535,7 +536,7 @@ func createNodeModifyTx(cmd *cobra.Command, args []string) {
 	addr, _ := cmd.Flags().GetString("addr")
 	pubkey, _ := cmd.Flags().GetString("pubkey")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: pt.ParaOpModify, Addr: addr, BlsPubKey: pubkey}
@@ -563,12 +564,12 @@ func nodeBindCmd() *cobra.Command {
 
 func addNodeBindFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("action", "a", 1, "action bind:1 or unbind:2")
-	cmd.MarkFlagRequired("action")
+	_ = cmd.MarkFlagRequired("action")
 
 	cmd.Flags().Uint64P("coins", "c", 0, "bind coins, unbind not needed")
 
 	cmd.Flags().StringP("node", "n", "", "target node to bind/unbind miner")
-	cmd.MarkFlagRequired("node")
+	_ = cmd.MarkFlagRequired("node")
 
 }
 
@@ -579,12 +580,12 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 	coins, _ := cmd.Flags().GetUint64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 
 	if action == 1 && coins == 0 {
-		fmt.Fprintln(os.Stderr, "coins should bigger than 0")
+		_, _ = fmt.Fprintln(os.Stderr, "coins should bigger than 0")
 	}
 
 	payload := &pt.ParaBindMinerCmd{BindAction: int32(action), BindCoins: int64(coins), TargetNode: node}
@@ -613,7 +614,6 @@ func getNodeBindListCmd() *cobra.Command {
 func addNodeBindCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
 	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
-
 }
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
@@ -645,7 +645,7 @@ func getNodeInfoCmd() *cobra.Command {
 
 func addNodeBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
-	cmd.MarkFlagRequired("addr")
+	_ = cmd.MarkFlagRequired("addr")
 
 }
 
@@ -681,7 +681,7 @@ func getNodeIDInfoCmd() *cobra.Command {
 
 func addNodeIDBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "id apply for super user")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 }
 
@@ -717,7 +717,7 @@ func getNodeListCmd() *cobra.Command {
 
 func addNodeListCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("status", "s", 0, "status:0:all,1:joining,2:quiting,3:closed,4:canceled")
-	cmd.MarkFlagRequired("status")
+	_ = cmd.MarkFlagRequired("status")
 
 }
 
@@ -742,10 +742,10 @@ func nodeList(cmd *cobra.Command, args []string) {
 
 func addSelfConsStageCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("height", "g", 0, "height apply for self consensus enable or not ")
-	cmd.MarkFlagRequired("height")
+	_ = cmd.MarkFlagRequired("height")
 
 	cmd.Flags().Uint32P("enable", "e", 0, "if self consensus enable at height,1:enable,2:disable")
-	cmd.MarkFlagRequired("enable")
+	_ = cmd.MarkFlagRequired("enable")
 
 }
 
@@ -782,10 +782,10 @@ func selfConsStageCmd() *cobra.Command {
 
 func addVoteFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "operating target apply id")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 	cmd.Flags().Uint32P("value", "v", 1, "vote value: 1:yes,2:no")
-	cmd.MarkFlagRequired("value")
+	_ = cmd.MarkFlagRequired("value")
 }
 
 func createVoteTx(cmd *cobra.Command, args []string) {
@@ -848,7 +848,7 @@ func configCancelCmd() *cobra.Command {
 		Run:   stageCancelTx,
 	}
 	cmd.Flags().StringP("id", "i", "", "operating target apply id")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 	return cmd
 }
 
@@ -907,12 +907,12 @@ func nodeGroupApplyCmd() *cobra.Command {
 
 func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("addrs", "a", "", "addrs apply for super node,split by ',' ")
-	cmd.MarkFlagRequired("addrs")
+	_ = cmd.MarkFlagRequired("addrs")
 
 	cmd.Flags().StringP("blspubs", "p", "", "bls sign pub key for addr's private key,split by ',' (optional)")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	cmd.MarkFlagRequired("coins")
+	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -923,7 +923,7 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 
@@ -952,10 +952,10 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 
 func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "apply id for nodegroup ")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	cmd.MarkFlagRequired("coins")
+	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -965,7 +965,7 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -1002,7 +1002,7 @@ func nodeGroupApproveCmd() *cobra.Command {
 
 func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "apply quit id for nodegroup ")
-	cmd.MarkFlagRequired("id")
+	_ = cmd.MarkFlagRequired("id")
 
 }
 
@@ -1010,7 +1010,7 @@ func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 3, Id: id}
@@ -1037,7 +1037,7 @@ func nodeGroupQuitCmd() *cobra.Command {
 
 func addNodeGroupModifyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("coins", "c", 0, "modify coins amount to frozen, not less config")
-	cmd.MarkFlagRequired("coins")
+	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -1045,7 +1045,7 @@ func nodeGroupModify(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 	if !strings.HasPrefix(paraName, "user.p") {
-		fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -1193,10 +1193,10 @@ func GetHeightCmd() *cobra.Command {
 
 func addBlockBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("start", "s", 0, "block start height")
-	cmd.MarkFlagRequired("start")
+	_ = cmd.MarkFlagRequired("start")
 
 	cmd.Flags().Int64P("end", "e", 0, "block end height")
-	cmd.MarkFlagRequired("end")
+	_ = cmd.MarkFlagRequired("end")
 }
 
 func blockInfo(cmd *cobra.Command, args []string) {
@@ -1231,8 +1231,7 @@ func GetBlockInfoCmd() *cobra.Command {
 
 func addLocalBlockBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("start", "t", 0, "block height,-1:latest height")
-	cmd.MarkFlagRequired("start")
-
+	_ = cmd.MarkFlagRequired("start")
 }
 
 func localBlockInfo(cmd *cobra.Command, args []string) {
@@ -1261,8 +1260,7 @@ func GetLocalBlockInfoCmd() *cobra.Command {
 
 func addParaBodyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
-	cmd.MarkFlagRequired("height")
-
+	_ = cmd.MarkFlagRequired("height")
 }
 
 func paraInfo(cmd *cobra.Command, args []string) {
@@ -1332,7 +1330,7 @@ func getNodeGroupAddrsCmd() *cobra.Command {
 
 func addParaAssetTranCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("hash", "s", "", "asset transfer tx hash")
-	cmd.MarkFlagRequired("hash")
+	_ = cmd.MarkFlagRequired("hash")
 
 }
 
@@ -1419,7 +1417,7 @@ func nodeGroupListCmd() *cobra.Command {
 
 func getNodeGroupListCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int32P("status", "s", 0, "status:1:apply,2:approve,3:quit")
-	cmd.MarkFlagRequired("status")
+	_ = cmd.MarkFlagRequired("status")
 }
 
 func nodeGroupList(cmd *cobra.Command, args []string) {
@@ -1487,7 +1485,7 @@ func GetSelfConsOneStageCmd() *cobra.Command {
 		Run:   stageOneInfo,
 	}
 	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
-	cmd.MarkFlagRequired("height")
+	_ = cmd.MarkFlagRequired("height")
 	return cmd
 }
 
@@ -1521,7 +1519,7 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 	index, _ := cmd.Flags().GetInt32("index")
 
 	if id == "" && status == 0 {
-		fmt.Fprintln(os.Stderr, "should fill id or status in")
+		_, _ = fmt.Fprintln(os.Stderr, "should fill id or status in")
 		return
 	}
 
@@ -1545,7 +1543,7 @@ func showSelfStages(cmd *cobra.Command, args []string) {
 
 func addConsensDoneCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64P("height", "g", 0, "height to para chain")
-	cmd.MarkFlagRequired("height")
+	_ = cmd.MarkFlagRequired("height")
 
 }
 
@@ -1592,7 +1590,6 @@ func issueCoinsCmd() *cobra.Command {
 func addIssueCoinsFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("amount", "a", 0, "new issue amount")
 	cmd.MarkFlagRequired("amount")
-
 }
 
 func createIssueCoinsTx(cmd *cobra.Command, args []string) {
@@ -1618,5 +1615,306 @@ func createIssueCoinsTx(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
+}
 
+func supervisionNodeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "supervision_node",
+		Short: "supervision node manage cmd",
+	}
+	cmd.AddCommand(supervisionNodeApplyCmd())
+	cmd.AddCommand(supervisionNodeApproveCmd())
+	cmd.AddCommand(supervisionNodeQuitCmd())
+	cmd.AddCommand(supervisionNodeCancelCmd())
+
+	cmd.AddCommand(getSupervisionNodeGroupAddrsCmd())
+	cmd.AddCommand(supervisionNodeListInfoCmd())
+	cmd.AddCommand(getSupervisionNodeInfoCmd())
+	cmd.AddCommand(supervisionNodeModifyCmd())
+
+	return cmd
+}
+
+func supervisionNodeApplyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "apply",
+		Short: "apply for para chain's supervision node",
+		Run:   supervisionNodeApply,
+	}
+	addSupervisionNodeApplyCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeApplyCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "addr apply for supervision node")
+	_ = cmd.MarkFlagRequired("addr")
+
+	cmd.Flags().StringP("blspub", "p", "", "bls sign pub key for addr's private key")
+
+	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
+	_ = cmd.MarkFlagRequired("coins")
+}
+
+func supervisionNodeApply(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+	blspub, _ := cmd.Flags().GetString("blspub")
+	coins, _ := cmd.Flags().GetFloat64("coins")
+
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 1, Addr: addr, BlsPubKey: blspub, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func supervisionNodeApproveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "approve",
+		Short: "approve for para chain's supervision node application",
+		Run:   supervisionNodeApprove,
+	}
+	addSupervisionNodeApproveCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeApproveCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("id", "i", "", "apply id for supervision node ")
+	_ = cmd.MarkFlagRequired("id")
+
+	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
+	_ = cmd.MarkFlagRequired("coins")
+}
+
+func supervisionNodeApprove(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	id, _ := cmd.Flags().GetString("id")
+	coins, _ := cmd.Flags().GetFloat64("coins")
+
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func supervisionNodeQuitCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "quit",
+		Short: "quit for para chain's supervision node application",
+		Run:   supervisionNodeQuit,
+	}
+	addSupervisionNodeQuitCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeQuitCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "apply quit id for supervision node")
+	_ = cmd.MarkFlagRequired("addr")
+}
+
+func supervisionNodeQuit(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	opAddr, _ := cmd.Flags().GetString("addr")
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func supervisionNodeCancelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cancel",
+		Short: "cancel for para chain's supervision node application",
+		Run:   supervisionNodeCancel,
+	}
+	addSupervisionNodeCancelCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeCancelCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("id", "i", "", "apply cancel id for supervision node")
+	_ = cmd.MarkFlagRequired("id")
+}
+
+func supervisionNodeCancel(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	id, _ := cmd.Flags().GetString("id")
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func getSupervisionNodeGroupAddrsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "addrs",
+		Short: "Query supervision node group's current addrs by title",
+		Run:   supervisionNodeGroup,
+	}
+	return cmd
+}
+
+func supervisionNodeGroup(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetSupervisionNodeGroupAddrs"
+	req := pt.ReqParacrossNodeInfo{Title: paraName}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res types.ReplyConfig
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// supervisionNodeListInfoCmd get node list by status
+func supervisionNodeListInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "id_list",
+		Short: "Get supervision node apply id list info by status",
+		Run:   supervisionNodeListInfo,
+	}
+	getSupervisionNodeListInfoCmdFlags(cmd)
+	return cmd
+}
+
+func getSupervisionNodeListInfoCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().Int32P("status", "s", 0, "status:0:all,1:joining,2:quiting,3:closed,4:canceled")
+	_ = cmd.MarkFlagRequired("status")
+
+}
+
+func supervisionNodeListInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	status, _ := cmd.Flags().GetInt32("status")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "ListSupervisionNodeStatusInfo"
+	req := pt.ReqParacrossNodeInfo{
+		Title:  paraName,
+		Status: status,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res pt.RespParacrossNodeAddrs
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+// getNodeInfoCmd get node current status
+func getSupervisionNodeInfoCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "addr_status",
+		Short: "Get node current status:2:approve, 3:quit from supervision group",
+		Run:   supervisionNodeInfo,
+	}
+	addSupervisionNodeInfoCmdFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeInfoCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "addr apply for super user")
+	_ = cmd.MarkFlagRequired("addr")
+
+}
+
+func supervisionNodeInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeAddrInfo"
+	req := pt.ReqParacrossNodeInfo{
+		Title: paraName,
+		Addr:  addr,
+	}
+	params.Payload = types.MustPBToJSON(&req)
+
+	var res pt.ParaNodeAddrIdStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+func supervisionNodeModifyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "modify",
+		Short: "supervision node modify parameters",
+		Run:   createSupervisionNodeModifyTx,
+	}
+	addSupervisionNodeModifyFlags(cmd)
+	return cmd
+}
+
+func addSupervisionNodeModifyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("addr", "a", "", "operating target apply id")
+	_ = cmd.MarkFlagRequired("addr")
+	cmd.Flags().StringP("pubkey", "p", "", "operating target apply id")
+	_ = cmd.MarkFlagRequired("pubkey")
+
+}
+
+func createSupervisionNodeModifyTx(cmd *cobra.Command, args []string) {
+	paraName, _ := cmd.Flags().GetString("paraName")
+	addr, _ := cmd.Flags().GetString("addr")
+	pubkey, _ := cmd.Flags().GetString("pubkey")
+	if !strings.HasPrefix(paraName, "user.p") {
+		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
+		return
+	}
+	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: pt.ParacrossSupervisionNodeModify, Addr: addr, BlsPubKey: pubkey}
+	params := &rpctypes.CreateTxIn{
+		Execer:     getRealExecName(paraName, pt.ParaX),
+		ActionName: "SupervisionNodeConfig",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }

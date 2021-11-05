@@ -166,7 +166,7 @@ func (mock *testExecMock) addBlockTx(tx *types.Transaction, receipt *types.Recei
 
 func createTx(mock *testExecMock, payload types.Message, priv string, systemCreate bool) (*types.Transaction, error) {
 
-	c, err := crypto.New(crypto.GetName(types.SECP256K1))
+	c, err := crypto.Load(crypto.GetName(types.SECP256K1), -1)
 	if err != nil {
 		return nil, err
 	}

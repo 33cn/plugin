@@ -1,4 +1,4 @@
-name: build
+name: ci_cross2eth
 on: [push,pull_request]
 
 jobs:

@@ -110,7 +110,7 @@ func (m *Cli) GetMemPool(msg *queue.Message, taskindex int64) {
 	for _, peer := range peers {
 		//获取远程 peer invs
 		resp, err := peer.mconn.gcli.GetMemPool(context.Background(),
-			&pb.P2PGetMempool{Version: m.network.node.nodeInfo.channelVersion}, grpc.FailFast(true))
+			&pb.P2PGetMempool{Version: m.network.node.nodeInfo.channelVersion}, grpc.WaitForReady(false))
 		P2pComm.CollectPeerStat(err, peer)
 		if err != nil {
 			if err == pb.ErrVersion {
@@ -142,7 +142,7 @@ func (m *Cli) GetMemPool(msg *queue.Message, taskindex int64) {
 		}
 		//获取真正的交易Tx call GetData
 		datacli, dataerr := peer.mconn.gcli.GetData(context.Background(),
-			&pb.P2PGetData{Invs: ableInv, Version: m.network.node.nodeInfo.channelVersion}, grpc.FailFast(true))
+			&pb.P2PGetData{Invs: ableInv, Version: m.network.node.nodeInfo.channelVersion}, grpc.WaitForReady(false))
 		P2pComm.CollectPeerStat(dataerr, peer)
 		if dataerr != nil {
 			continue
@@ -174,7 +174,7 @@ func (m *Cli) GetMemPool(msg *queue.Message, taskindex int64) {
 func (m *Cli) GetAddr(peer *Peer) ([]string, error) {
 
 	resp, err := peer.mconn.gcli.GetAddr(context.Background(), &pb.P2PGetAddr{Nonce: int64(rand.Int31n(102040))},
-		grpc.FailFast(true))
+		grpc.WaitForReady(false))
 	P2pComm.CollectPeerStat(err, peer)
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (m *Cli) GetInPeersNum(peer *Peer) (int, error) {
 	}
 
 	resp, err := peer.mconn.gcli.CollectInPeers(context.Background(), ping,
-		grpc.FailFast(true))
+		grpc.WaitForReady(false))
 
 	P2pComm.CollectPeerStat(err, peer)
 	if err != nil {
@@ -210,7 +210,7 @@ func (m *Cli) GetAddrList(peer *Peer) (map[string]*pb.P2PPeerInfo, error) {
 		return addrlist, fmt.Errorf("pointer is nil")
 	}
 	resp, err := peer.mconn.gcli.GetAddrList(context.Background(), &pb.P2PGetAddr{Nonce: int64(rand.Int31n(102040))},
-		grpc.FailFast(true))
+		grpc.WaitForReady(false))
 
 	P2pComm.CollectPeerStat(err, peer)
 	if err != nil {
@@ -272,7 +272,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 
 	resp, err := peer.mconn.gcli.Version2(context.Background(), &pb.P2PVersion{Version: nodeinfo.channelVersion, Service: int64(nodeinfo.ServiceTy()), Timestamp: pb.Now().Unix(),
 		AddrRecv: peer.Addr(), AddrFrom: addrfrom, Nonce: int64(rand.Int31n(102040)),
-		UserAgent: hex.EncodeToString(in.Sign.GetPubkey()), StartHeight: blockheight}, grpc.FailFast(true))
+		UserAgent: hex.EncodeToString(in.Sign.GetPubkey()), StartHeight: blockheight}, grpc.WaitForReady(false))
 	log.Debug("SendVersion", "resp", resp, "from", addrfrom, "to", peer.Addr())
 	if err != nil {
 		log.Error("SendVersion", "Verson", err.Error(), "peer", peer.Addr())
@@ -295,7 +295,7 @@ func (m *Cli) SendVersion(peer *Peer, nodeinfo *NodeInfo) (string, error) {
 			log.Debug("sendVersion", "expect ip", ip, "pre externalip", nodeinfo.GetExternalAddr().IP.String())
 			if peer.IsPersistent() {
 				//永久加入黑名单
-				nodeinfo.blacklist.Add(ip, 0)
+				nodeinfo.blacklist.Add(resp.GetAddrRecv(), 0) //把自己的IP:PORT 加入黑名单，防止连接到自己
 			}
 		}
 	}
@@ -317,7 +317,7 @@ func (m *Cli) SendPing(peer *Peer, nodeinfo *NodeInfo) error {
 		return err
 	}
 
-	r, err := peer.mconn.gcli.Ping(context.Background(), ping, grpc.FailFast(true))
+	r, err := peer.mconn.gcli.Ping(context.Background(), ping, grpc.WaitForReady(false))
 	P2pComm.CollectPeerStat(err, peer)
 	if err != nil {
 		return err
@@ -395,7 +395,7 @@ func (m *Cli) GetHeaders(msg *queue.Message, taskindex int64) {
 	if peer, ok := peers[pid[0]]; ok && peer != nil {
 		var err error
 		headers, err := peer.mconn.gcli.GetHeaders(context.Background(), &pb.P2PGetHeaders{StartHeight: req.GetStart(), EndHeight: req.GetEnd(),
-			Version: m.network.node.nodeInfo.channelVersion}, grpc.FailFast(true))
+			Version: m.network.node.nodeInfo.channelVersion}, grpc.WaitForReady(false))
 		P2pComm.CollectPeerStat(err, peer)
 		if err != nil {
 			log.Error("GetBlocks", "Err", err.Error())
@@ -567,7 +567,7 @@ func (m *Cli) GetNetInfo(msg *queue.Message, taskindex int64) {
 // CheckPeerNatOk check peer is ok or not
 func (m *Cli) CheckPeerNatOk(addr string, info *NodeInfo) bool {
 	//连接自己的地址信息做测试
-	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion, info.cliCreds)) == 0)
+	return !(len(P2pComm.AddrRouteble([]string{addr}, info.channelVersion, info.cliCreds, info.blacklist)) == 0)
 
 }
 
@@ -579,7 +579,7 @@ func (m *Cli) CheckSelf(addr string, nodeinfo *NodeInfo) bool {
 		return false
 	}
 
-	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion, nodeinfo.cliCreds)
+	conn, err := netaddr.DialTimeout(nodeinfo.channelVersion, nodeinfo.cliCreds, nodeinfo.blacklist)
 	if err != nil {
 		return false
 	}
@@ -587,7 +587,7 @@ func (m *Cli) CheckSelf(addr string, nodeinfo *NodeInfo) bool {
 
 	cli := pb.NewP2PgserviceClient(conn)
 	resp, err := cli.GetPeerInfo(context.Background(),
-		&pb.P2PGetPeerInfo{Version: nodeinfo.channelVersion}, grpc.FailFast(true))
+		&pb.P2PGetPeerInfo{Version: nodeinfo.channelVersion}, grpc.WaitForReady(false))
 	if err != nil {
 		return false
 	}

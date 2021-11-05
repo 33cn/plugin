@@ -190,7 +190,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	//为了使用VRF，需要使用SECP256K1体系的公私钥
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		dposlog.Error("NewDPosClient", "err", err)
 		return nil
@@ -199,7 +199,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	ttypes.ConsensusCrypto = cr
 
 	//安全连接仍然要使用ed25519
-	cr2, err := crypto.New(types.GetSignName("", types.ED25519))
+	cr2, err := crypto.Load(types.GetSignName("", types.ED25519), -1)
 	if err != nil {
 		dposlog.Error("NewDPosClient", "err", err)
 		return nil

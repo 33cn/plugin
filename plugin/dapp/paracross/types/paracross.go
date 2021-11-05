@@ -50,12 +50,18 @@ const (
 	TyLogParaBindMinerAddr      = 671
 	TyLogParaBindMinerNode      = 672
 
-	TyLogParaSuperNodeBindReturnNew    = 673
-	TyLogParaSuperNodeBindReturnUpdate = 674
-	TyLogParaSuperNodeBindReturnUnBind = 675
-	TyLogParaSuperNodeBindMinerNew     = 676
-	TyLogParaSuperNodeBindMinerUpdate  = 677
-	TyLogParaSuperNodeBindMinerUnBind  = 678
+	// Supervision Node
+	TyLogParaSupervisionNodeConfig           = 680
+	TyLogParaSupervisionNodeGroupAddrsUpdate = 681
+	TyLogParaSupervisionNodeStatusUpdate     = 682
+
+	// SuperNode Bind
+	TyLogParaSuperNodeBindReturnNew    = 691
+	TyLogParaSuperNodeBindReturnUpdate = 692
+	TyLogParaSuperNodeBindReturnUnBind = 693
+	TyLogParaSuperNodeBindMinerNew     = 694
+	TyLogParaSuperNodeBindMinerUpdate  = 695
+	TyLogParaSuperNodeBindMinerUnBind  = 696
 )
 
 // action type
@@ -74,6 +80,8 @@ const (
 	ParacrossActionParaBindMiner
 	// ParacrossActionSuperNodeBindMiner
 	ParacrossActionSuperNodeBindMiner
+	// ParacrossActionSupervisionNodeConfig
+	ParacrossActionSupervisionNodeConfig
 )
 
 const (
@@ -191,6 +199,21 @@ const (
 	ParacrossNodeGroupQuit
 	//ParacrossNodeGroupModify applyer modify some parameters
 	ParacrossNodeGroupModify
+)
+
+const (
+	ParacrossSupervisionNodeApply = iota + 1
+	ParacrossSupervisionNodeApprove
+	ParacrossSupervisionNodeQuit
+	ParacrossSupervisionNodeCancel
+	ParacrossSupervisionNodeModify
+)
+
+// 0 普通节点共识  1 授权节点正在共识  2 监督节点正在共识
+const (
+	ParaCommitNode = iota
+	ParaCommitSuperNode
+	ParaCommitSupervisionNode
 )
 
 var (
@@ -347,6 +370,7 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
 		}
+
 	} else {
 		forkHeight = cfg.GetDappFork(ParaX, forkKey)
 

@@ -126,6 +126,12 @@ func (e *Paracross) Exec_ParaBindMiner(payload *pt.ParaBindMinerCmd, tx *types.T
 	return a.bindMiner(payload)
 }
 
+//Exec_SupervisionNodeConfig exec Supervision node config
+func (e *Paracross) Exec_SupervisionNodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := newAction(e, tx)
+	return a.SupervisionNodeConfig(payload)
+}
+
 //Exec_SuperNodeBindMiner 超级节点委托给普通节点挖矿
 func (e *Paracross) Exec_SuperNodeBindMiner(payload *pt.ParaSuperNodeBindMiner, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := newAction(e, tx)

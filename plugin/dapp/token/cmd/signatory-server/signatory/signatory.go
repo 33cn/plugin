@@ -124,7 +124,7 @@ func (signatory *Signatory) SignTransfer(in *string, out *interface{}) error {
 }
 
 func signTx(tx *types.Transaction, hexPrivKey string) error {
-	c, _ := crypto.New(types.GetSignName("", types.SECP256K1))
+	c, _ := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 
 	bytes, err := common.FromHex(hexPrivKey)
 	if err != nil {

@@ -138,7 +138,7 @@ func TestTicketMap(t *testing.T) {
 	}
 	privmap := make(map[string]crypto.PrivKey)
 	//通过privkey生成一个pubkey然后换算成对应的addr
-	cr, _ := crypto.New("secp256k1")
+	cr, _ := crypto.Load("secp256k1", -1)
 	priv, _ := cr.PrivKeyFromBytes([]byte("2116459C0EC8ED01AA0EEAE35CAC5C96F94473F7816F114873291217303F6989"))
 	privmap["1111"] = priv
 	privmap["2222"] = priv
@@ -170,7 +170,7 @@ func TestProcEvent(t *testing.T) {
 }
 
 func Test_genPrivHash(t *testing.T) {
-	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	c, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.NoError(t, err)
 	priv, _ := c.GenKey()
 
@@ -198,7 +198,7 @@ func Test_getNextRequiredDifficulty(t *testing.T) {
 }
 
 func Test_vrfVerify(t *testing.T) {
-	c, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	c, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	assert.NoError(t, err)
 	priv, err := c.GenKey()
 	assert.NoError(t, err)

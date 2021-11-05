@@ -763,7 +763,7 @@ func TestVerifyMinerAddr(t *testing.T) {
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(auty.AutonomyX, signType))
+	c, err := crypto.Load(types.GetSignName(auty.AutonomyX, signType), -1)
 	if err != nil {
 		return tx, err
 	}

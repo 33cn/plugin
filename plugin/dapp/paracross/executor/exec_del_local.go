@@ -97,7 +97,6 @@ func (e *Paracross) ExecDelLocal_NodeConfig(payload *pt.ParaNodeAddrConfig, tx *
 				}
 				set.KV = append(set.KV, r.KV...)
 			}
-
 		}
 	}
 	return &set, nil
@@ -120,8 +119,7 @@ func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig
 
 			set.KV = append(set.KV, &types.KeyValue{
 				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: nil})
-		}
-		if log.Ty == pt.TyLogParaNodeConfig {
+		} else if log.Ty == pt.TyLogParaNodeConfig {
 			var g pt.ReceiptParaNodeConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
@@ -134,6 +132,27 @@ func (e *Paracross) ExecDelLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig
 
 			set.KV = append(set.KV, &types.KeyValue{
 				Key: calcLocalNodeTitleStatus(g.Current.Title, g.Current.Status, g.Current.Id), Value: nil})
+		}
+	}
+	return &set, nil
+}
+
+func (e *Paracross) ExecDelLocal_SupervisionNodeConfig(payload *pt.ParaNodeAddrConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaSupervisionNodeConfig {
+			var g pt.ReceiptParaNodeConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Prev.Status, g.Current.TargetAddr, g.Current.Id), Value: types.Encode(g.Prev)})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Current.Status, g.Current.TargetAddr, g.Current.Id), Value: nil})
 		}
 	}
 	return &set, nil

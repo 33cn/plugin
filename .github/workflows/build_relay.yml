@@ -1,4 +1,4 @@
-name: build
+name: ci_relay
 on: [push,pull_request]
 
 jobs:

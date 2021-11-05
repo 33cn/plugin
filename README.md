@@ -6,12 +6,13 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/33cn/plugin?svg=true&branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20failed&pendingText=Windows%20-%20pending)](https://ci.appveyor.com/project/33cn/plugin)
 [![codecov](https://codecov.io/gh/33cn/plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/33cn/plugin)
 
-# chain33 官方插件系统（v6.4.0）
+# chain33 官方插件系统（v1.65.4）
 
 * chain33地址: https://github.com/33cn/chain33
 * chain33官网: https://chain.33.cn
 
 ### 环境
+
 
 ```
 需要安装golang1.13 or latest
@@ -85,4 +86,3 @@ make push b=branch_dev_name m="hello world"
 testcase的规则参考plugin/dapp/testcase_compose_rule.md
 
 用户可以在travis自己工程里面设置自己plugin的DAPP变量，如DAPP设置为relay，则travis里面run relay的testcase
-

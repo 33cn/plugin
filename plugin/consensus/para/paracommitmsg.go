@@ -6,6 +6,7 @@ package para
 
 import (
 	"context"
+	"encoding/hex"
 	"time"
 
 	"strings"
@@ -191,12 +192,9 @@ func (client *commitMsgClient) createCommitTx() {
 	if tx == nil {
 		return
 	}
-	//bls sign, send to p2p
-	if client.paraClient.subCfg.BlsSign {
-		//send to p2p pubsub
-		plog.Info("para commitMs send to p2p", "hash", common.ToHex(tx.Hash()))
-		act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: tx}}
-		client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
+	//如果配置了blsSign 则发送到p2p的leader节点来聚合发送，否则发送到主链
+	if client.paraClient.blsSignCli.blsSignOn {
+		client.pushCommitTx2P2P(tx)
 		return
 	}
 	client.pushCommitTx(tx)
@@ -255,16 +253,37 @@ func (client *commitMsgClient) pushCommitTx(signTx *types.Transaction) {
 	client.sendMsgCh <- signTx
 }
 
+//仍旧setCurrentTx， 这样在几个块之后仍旧会触发重发，重发只是广播，不然发送p2p之后，如果共识没增加，也没有其他触发的条件了
+func (client *commitMsgClient) pushCommitTx2P2P(signTx *types.Transaction) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	client.checkTxCommitTimes = 0
+	client.setCurrentTx(signTx)
+
+	plog.Debug("bls.event.para bls commitMs send to p2p", "hash", common.ToHex(signTx.Hash()))
+	act := &pt.ParaP2PSubMsg{Ty: P2pSubCommitTx, Value: &pt.ParaP2PSubMsg_CommitTx{CommitTx: signTx}}
+	client.paraClient.SendPubP2PMsg(paraBlsSignTopic, types.Encode(act))
+}
+
+//根据收集的commit action，签名发送, 比如BLS签名后的commit msg
 func (client *commitMsgClient) sendCommitActions(acts []*pt.ParacrossCommitAction) {
+	//如果当前正在发送交易，则取消此次发送，待发送被确认或取消后再触发. 考虑到已经聚合共识成功，又收到某节点消息场景，会多发送交易
+	curTx := client.getCurrentTx()
+	if curTx != nil {
+		plog.Info("bls.event.paracommitmsg isSendingCommitMsg, cancel this operation", "sending.tx", common.ToHex(curTx.Hash()))
+		return
+	}
+
 	txs, _, err := client.createCommitMsgTxs(acts)
 	if err != nil {
 		return
 	}
-	plog.Debug("paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
+	plog.Info("bls.event.paracommitmsg sendCommitActions", "txhash", common.ToHex(txs.Hash()))
 	for i, msg := range acts {
 		plog.Debug("paracommitmsg sendCommitActions", "idx", i, "height", msg.Status.Height, "mainheight", msg.Status.MainBlockHeight,
 			"blockhash", common.HashHex(msg.Status.BlockHash), "mainHash", common.HashHex(msg.Status.MainBlockHash),
-			"addrsmap", common.ToHex(msg.Bls.AddrsMap), "sign", common.ToHex(msg.Bls.Sign))
+			"addrsmap", hex.EncodeToString(msg.Bls.AddrsMap), "sign", common.ToHex(msg.Bls.Sign))
 	}
 	client.pushCommitTx(txs)
 }
@@ -341,10 +360,14 @@ func (client *commitMsgClient) checkConsensusStop(checks *commitCheckParams) {
 
 func (client *commitMsgClient) checkAuthAccountIn() {
 	nodeStr, err := client.getNodeGroupAddrs()
-	if err != nil {
+	nodeSupervisionStr, errSupervision := client.getSupervisionNodeGroupAddrs() // 判断是否是监督节点
+	if err != nil && errSupervision != nil {
 		return
 	}
-	authExist := strings.Contains(nodeStr, client.authAccount)
+
+	authExist1 := strings.Contains(nodeStr, client.authAccount)
+	authExist2 := strings.Contains(nodeSupervisionStr, client.authAccount)
+	authExist := authExist1 || authExist2
 
 	cfg := client.paraClient.GetAPI().GetConfig()
 	if !authExist && cfg.IsDappFork(client.chainHeight, pt.ParaX, pt.ForkParaSuperNodeBindMiner) {
@@ -412,7 +435,6 @@ func (client *commitMsgClient) isSync() bool {
 	}
 
 	return true
-
 }
 
 func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*types.Transaction, int64) {
@@ -434,7 +456,7 @@ func (client *commitMsgClient) getSendingTx(startHeight, endHeight int64) (*type
 		commits = append(commits, &pt.ParacrossCommitAction{Status: stat})
 	}
 
-	if client.paraClient.subCfg.BlsSign {
+	if client.paraClient.blsSignCli.blsSignOn {
 		err = client.paraClient.blsSignCli.blsSign(commits)
 		if err != nil {
 			plog.Error("paracommitmsg bls sign", "err", err)
@@ -963,6 +985,27 @@ func (client *commitMsgClient) getAuthorizedNodeBindSuperNodeInfo(addr string) (
 	return resp.SuperAddress, nil
 }
 
+//Supervision node group会在主链和平行链都同时配置,只本地查询就可以
+func (client *commitMsgClient) getSupervisionNodeGroupAddrs() (string, error) {
+	cfg := client.paraClient.GetAPI().GetConfig()
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetSupervisionNodeGroupAddrs",
+		Param:    types.Encode(&pt.ReqParacrossNodeInfo{Title: cfg.GetTitle()}),
+	})
+	if err != nil {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs ", "err", err.Error())
+		return "", err
+	}
+	resp, ok := ret.(*types.ReplyConfig)
+	if !ok {
+		plog.Error("commitmsg.getSupervisionNodeGroupAddrs rsp nok")
+		return "", err
+	}
+
+	return resp.Value, nil
+}
+
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {
 	if status == nil || client.authAccount == "" {
 		plog.Info("para onWalletStatus", "status", status == nil, "auth", client.authAccount == "")
@@ -1008,7 +1051,7 @@ func getSecpPriKey(key string) (crypto.PrivKey, error) {
 		return nil, errors.Wrapf(err, "fromhex=%s", key)
 	}
 
-	secp, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	secp, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		return nil, errors.Wrapf(err, "crypto=%s", key)
 	}

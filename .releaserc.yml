@@ -1,0 +1,72 @@
+{ "branches": ["master", "next"],
+  "plugins": [
+    [
+        "@semantic-release/commit-analyzer",
+      {
+        "preset": "jshint"
+      }
+    ],
+    [
+        "@semantic-release/release-notes-generator",
+      {
+        "preset": "jshint"
+      }
+    ],
+    [
+      "@google/semantic-release-replace-plugin",
+      {
+        "replacements": [
+          {
+            "files": ["version/version.go"],
+            "from": 'Version   =.*',
+            "to":   'Version   = "${nextRelease.version}"',
+            "results": [
+              {
+                "file": "version/version.go",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
+          },
+          {
+            "files": ["README.md"],
+            "from": "# chain33 官方插件系统（.*）",
+            "to":   "# chain33 官方插件系统（v${nextRelease.version}）",
+            "results": [
+              {
+                "file": "README.md",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
+          },
+        ]
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      { "changelogFile": "CHANGELOG.md", "changelogTitle": "changelog" },
+    ],
+    # "@semantic-release/npm", #Default 3
+    # "@semantic-release/github", #Default 4
+    [
+      "@semantic-release/github",
+      {"assets": ["build/*.tar.gz","build/*.zip"]}
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["version/version.go","CHANGELOG.md","README.md"],
+      }
+    ],
+    [
+      "@semantic-release/exec", {
+      "prepareCmd": "make all-arch VERSION=${nextRelease.version}"
+    }
+    ]
+  ]
+}
