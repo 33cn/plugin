@@ -222,7 +222,7 @@ func (client *commitMsgClient) getCommitTx() *types.Transaction {
 
 	isSync := client.isSync()
 	plog.Info("para commitMsg---status", "chainHeight", chainHeight, "sendingHeight", sendingHeight,
-		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync)
+		"consensHeight", consensHeight, "isSendingTx", client.isSendingCommitMsg(), "sync", isSync, "client.authAccount", client.authAccount)
 
 	if !isSync {
 		return nil
@@ -345,6 +345,15 @@ func (client *commitMsgClient) checkAuthAccountIn() {
 		return
 	}
 	authExist := strings.Contains(nodeStr, client.authAccount)
+
+	cfg := client.paraClient.GetAPI().GetConfig()
+	if !authExist && cfg.IsDappFork(client.chainHeight, pt.ParaX, pt.ForkParaSuperNodeBindMiner) {
+		superNode, _ := client.getAuthorizedNodeBindSuperNodeInfo(client.authAccount)
+		if superNode != "" {
+			authExist = strings.Contains(nodeStr, superNode)
+			plog.Info("superNode is band getAuthorizedNodeBindSuperNodeInfo", "superNode", superNode, "authExist", authExist, "client.authAccount", client.authAccount)
+		}
+	}
 
 	//如果授权节点重新加入，需要从当前共识高度重新发送
 	if !client.authAccountIn && authExist {
@@ -931,6 +940,27 @@ func (client *commitMsgClient) getNodeGroupAddrs() (string, error) {
 	}
 
 	return resp.Value, nil
+}
+
+//node group会在主链和平行链都同时配置,只本地查询就可以
+func (client *commitMsgClient) getAuthorizedNodeBindSuperNodeInfo(addr string) (string, error) {
+	//cfg := client.paraClient.GetAPI().GetConfig()
+	ret, err := client.paraClient.GetAPI().QueryChain(&types.ChainExecutor{
+		Driver:   "paracross",
+		FuncName: "GetAuthorizedNodeBindSuperNodeInfo",
+		Param:    types.Encode(&types.ReqString{Data: addr}),
+	})
+	if err != nil {
+		plog.Error("commitmsg.getAuthorizedNodeBindSuperNodeInfo ", "err", err.Error())
+		return "", err
+	}
+	resp, ok := ret.(*pt.ParaSuperNodeBindMiner)
+	if !ok {
+		plog.Error("commitmsg.getAuthorizedNodeBindSuperNodeInfo rsp nok")
+		return "", err
+	}
+
+	return resp.SuperAddress, nil
 }
 
 func (client *commitMsgClient) onWalletStatus(status *types.WalletStatus) {

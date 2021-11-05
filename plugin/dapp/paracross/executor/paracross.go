@@ -355,6 +355,11 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 				return nil
 			}
 		}
+		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkParaSuperNodeBindMiner) {
+			if payload.Ty == pt.ParacrossActionSuperNodeBindMiner {
+				return nil
+			}
+		}
 	}
 	return types.ErrNotAllow
 }

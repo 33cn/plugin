@@ -115,9 +115,6 @@ func getBindSuperNode(db dbm.KV, addr, title string) (string, error) {
 }
 
 func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types.Receipt, error) {
-	clog.Debug("==================== superNodeBindMiner =======================", "parabind.MinerAddress", parabind.MinerAddress,
-		"parabind.MinerBlsPubKey", parabind.MinerBlsPubKey, "parabind.SuperAddress", parabind.SuperAddress)
-
 	// 只允许平行链操作
 	if !types.IsParaExecName(string(a.tx.Execer)) {
 		clog.Error("superNodeBindMiner", "string(a.tx.Execer)", string(a.tx.Execer))
@@ -138,20 +135,6 @@ func (a *action) superNodeBindMiner(parabind *pt.ParaSuperNodeBindMiner) (*types
 	if a.fromaddr != parabind.SuperAddress {
 		clog.Error("superNodeBindMiner", "a.fromaddr != parabind.SuperAddress", a.fromaddr)
 		return nil, types.ErrFromAddr
-	}
-
-	// 发起者必须是共识节点
-	err := a.isValidSuperNode(a.fromaddr)
-	if err != nil {
-		clog.Error("superNodeBindMiner", "a.fromaddr not isValidSuperNode", a.fromaddr)
-		return nil, err
-	}
-
-	// 委托地址不能是 共识节点
-	err = a.isValidSuperNode(parabind.MinerAddress)
-	if err == nil {
-		clog.Error("superNodeBindMiner", "parabind.MinerAddress is super node", parabind.MinerAddress)
-		return nil, err
 	}
 
 	oldbind, err := getBind(a.db, parabind.SuperAddress)
