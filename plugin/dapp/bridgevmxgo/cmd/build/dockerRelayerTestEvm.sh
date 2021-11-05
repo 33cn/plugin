@@ -787,6 +787,21 @@ function DeployEvmxgo() {
     restart_ebrelayerA
 }
 
+# $1 symbol $2 bridgeTokenAddr
+function updateConfig() {
+    local symbol=$1
+    local bridgeTokenAddr=$2
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"evmxgo-mint-'"${symbol}"'","value":"{\"address\":\"'"${bridgeTokenAddr}"'\",\"precision\":8,\"introduction\":\"symbol:'"${symbol}"', bridgeTokenAddr:'"${bridgeTokenAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    if [ "${tx}" == "" ]; then
+        echo -e "${RED}update config create tx 1${NOC}"
+        exit 1
+    fi
+
+    sign=$(${Chain33Cli} wallet sign -k "$chain33ReceiverAddrKey" -d "${tx}")
+    hash=$(${Chain33Cli} wallet send -d "${sign}")
+    check_tx "${Chain33Cli}" "${hash}"
+}
+
 function TestETH2EVMToChain33() {
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
@@ -810,6 +825,8 @@ function TestETH2EVMToChain33() {
     # 结果是 11 * le8
 #    is_equal "${result}" "4700000000"
 
+    updateConfig "ETH" "${chain33EthBridgeTokenAddr}"
+
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
     chain33_offline_send_evm "approve_erc20.txt"
 
@@ -825,6 +842,7 @@ function TestETH2EVMToChain33() {
 
 function AllRelayerMainTest() {
     set +e
+
     docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
     MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
     Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
@@ -886,6 +904,11 @@ function AllRelayerMainTest() {
     EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
     TestETH2EVMToChain33
+
+    send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
+    send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
+    send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
+    send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
