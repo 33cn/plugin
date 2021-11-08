@@ -46,8 +46,6 @@ const (
 	ForkEVMYoloV1 = "ForkEVMYoloV1"
 	//ForkEVMTxGroup 交易组中的交易通过GAS检查
 	ForkEVMTxGroup = "ForkEVMTxGroup"
-	//ForkEVMRevertErrFormat 执行失败错误信息格式
-	ForkEVMRevertErrFormat = "ForkEVMRevertErrFormat"
 )
 
 var (
