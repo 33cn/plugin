@@ -27,6 +27,13 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		return nil, auty.ErrSetBlockHeight
 	}
 
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
+	}
+
 	act, err := a.getActiveBoard()
 	if err != nil {
 		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
