@@ -42,8 +42,6 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExecutorName, ForkEVMYoloV1, 9500000)
 	// EVM合约支持交易组
 	cfg.RegisterDappFork(ExecutorName, ForkEVMTxGroup, 0)
-	// EVM交易执行失败错误信息改进
-	cfg.RegisterDappFork(ExecutorName, ForkEVMRevertErrFormat, 0)
 }
 
 //InitExecutor ...
