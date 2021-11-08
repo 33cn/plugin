@@ -89,6 +89,12 @@ func TestPropProject(t *testing.T) {
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
+		{ // ErrSetBlockHeight
+			Amount:           100,
+			ToAddr:           AddrA,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + propEndBlockPeriod + 10,
+		},
 	}
 
 	result := []error{
@@ -97,6 +103,7 @@ func TestPropProject(t *testing.T) {
 		auty.ErrSetBlockHeight,
 		types.ErrNotFound,
 		auty.ErrNoPeriodAmount,
+		auty.ErrSetBlockHeight,
 	}
 
 	exec.SetStateDB(stateDB)

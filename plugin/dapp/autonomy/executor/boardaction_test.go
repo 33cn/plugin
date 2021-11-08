@@ -268,6 +268,13 @@ func TestPropBoard(t *testing.T) {
 			StartBlockHeight: env.blockHeight + 5,
 			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
 		},
+
+		{ // ErrSetBlockHeight
+			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
+			Boards:           boards,
+			StartBlockHeight: env.blockHeight + 5,
+			EndBlockHeight:   env.blockHeight + propEndBlockPeriod + 10,
+		},
 	}
 	result := []error{
 		auty.ErrRepeatAddr,
@@ -284,8 +291,9 @@ func TestPropBoard(t *testing.T) {
 		auty.ErrBoardNumber,
 		auty.ErrRepeatAddr,
 		nil,
+		auty.ErrSetBlockHeight,
 	}
-	lenBoards := []int{0, 0, 0, 22, 0, 0, 21, 0, 0, 0, 0, 20}
+	lenBoards := []int{0, 0, 0, 22, 0, 0, 21, 0, 0, 0, 0, 20, 0}
 
 	InitBoard(stateDB)
 	exec.SetStateDB(stateDB)
