@@ -31,6 +31,7 @@ const (
 	pubApproveRatio     int32 = 66          // 全体持票人赞成率，以%计
 	pubOpposeRatio      int32 = 33          // 全体持票人否决率，以%计
 	startEndBlockPeriod       = 720         // 提案开始结束最小周期
+	propEndBlockPeriod        = 1000000     // 提案高度 结束高度最大周期 100W
 )
 
 type action struct {
@@ -110,6 +111,14 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
 	}
+
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
+	}
+
 	if len(prob.Boards) == 0 {
 		alog.Error("propBoard ", "proposal boards number is zero", len(prob.Boards))
 		return nil, auty.ErrBoardNumber

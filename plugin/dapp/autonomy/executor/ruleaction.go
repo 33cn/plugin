@@ -80,6 +80,11 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 			alog.Error("propRule RuleCfg invaild", "PubAttendRatio", prob.RuleCfg.PubAttendRatio, "PubApproveRatio", prob.RuleCfg.PubApproveRatio)
 			return nil, types.ErrInvalidParam
 		}
+
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||

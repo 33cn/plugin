@@ -31,6 +31,13 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return nil, auty.ErrSetBlockHeight
 	}
 
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
+	}
+
 	if prob.Amount <= 0 {
 		err := types.ErrInvalidParam
 		alog.Error("propProject amount invaild", "amount", prob.Amount, "error", err)
