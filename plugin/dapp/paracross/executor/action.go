@@ -589,7 +589,9 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 	}
 
 	//获取commitAddrs, bls sign 包含多个账户的聚合签名
-	commitAddrs := []string{}
+	var validAddrs, supervisionValidAddrs []string
+	bIsCommitSuperNode := false
+	bIsCommitSupervisionNode := false
 	isForkParaSuperNodeBindMiner := false
 	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaSuperNodeBindMiner) {
 		bindSuperNode, err := getBindSuperNode(a.db, a.fromaddr, commit.Status.Title)
@@ -599,41 +601,30 @@ func (a *action) Commit(commit *pt.ParacrossCommitAction) (*types.Receipt, error
 
 		// a.fromaddr 是授权挖矿地址
 		if bindSuperNode != "" {
-
 			isForkParaSuperNodeBindMiner = true
-			commitAddrs = []string{bindSuperNode}
-			if commit.Bls != nil {
-				addrs, err := a.procBindMinerBlsSign(nodesArry, commit)
-				if err != nil {
-					return nil, errors.Wrap(err, "procBindMinerBlsSign")
+			if _, exist := nodesMap[bindSuperNode]; exist {
+				validAddrs = []string{bindSuperNode}
+				if commit.Bls != nil {
+					addrs, err := a.procBindMinerBlsSign(nodesArry, commit)
+					if err != nil {
+						return nil, errors.Wrap(err, "procBindMinerBlsSign")
+					}
+					validAddrs = addrs
 				}
-				commitAddrs = addrs
+				bIsCommitSuperNode = true
 			}
 		}
 	}
 
 	if !isForkParaSuperNodeBindMiner {
-		commitAddrs = []string{a.fromaddr}
-		if commit.Bls != nil {
-			addrs, err := a.procBlsSign(nodesArry, commit)
+		if _, exist := nodesMap[a.fromaddr]; exist {
+			validAddrs, err = a.getValidCommitAddrs(commit, nodesMap, nodesArry)
 			if err != nil {
-				return nil, errors.Wrap(err, "procBlsSign")
+				return nil, errors.Wrap(err, "getValidCommitAddrs")
 			}
-			commitAddrs = addrs
+
+			bIsCommitSuperNode = true
 		}
-	}
-
-	var validAddrs, supervisionValidAddrs []string
-
-	bIsCommitSuperNode := false
-	bIsCommitSupervisionNode := false
-	if _, exist := nodesMap[a.fromaddr]; exist {
-		validAddrs, err = a.getValidCommitAddrs(commit, nodesMap, nodesArry)
-		if err != nil {
-			return nil, errors.Wrap(err, "getValidCommitAddrs")
-		}
-
-		bIsCommitSuperNode = true
 	}
 
 	// 获取监督节点的数据
@@ -676,7 +667,6 @@ func (a *action) proCommitMsg(commit *pt.ParacrossNodeStatus, nodes map[string]s
 	if err != nil {
 		return nil, errors.Wrapf(err, "getTitle:%s", commit.Title)
 	}
-
 	// 在完成共识之后来的， 增加 record log， 只记录不修改已经达成的共识
 	if commit.Height <= titleStatus.Height {
 		clog.Debug("paracross.Commit record", "node", commitAddrs, "titile", commit.Title, "height", commit.Height)
