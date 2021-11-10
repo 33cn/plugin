@@ -1,8 +1,11 @@
 package executor
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
+	"reflect"
+	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -30,8 +33,17 @@ type Action struct {
 func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-	return &Action{e.GetStateDB(), hash, fromaddr,
-		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetLocalDB(), index, e.GetAPI()}
+	return &Action{
+		statedb:   e.GetStateDB(),
+		txhash:    hash,
+		fromaddr:  fromaddr,
+		blocktime: e.GetBlockTime(),
+		height:    e.GetHeight(),
+		execaddr:  dapp.ExecAddress(string(tx.Execer)),
+		localDB:   e.GetLocalDB(),
+		index:     index,
+		api:       e.GetAPI(),
+	}
 }
 
 //GetIndex get index
@@ -234,6 +246,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	//更新order状态
 	order.Status = et.Revoked
 	order.UpdateTime = a.blocktime
+	order.RevokeHash = hex.EncodeToString(a.txhash)
 	kvs = append(kvs, a.GetKVSet(order)...)
 	re := &et.ReceiptExchange{
 		Order: order,
@@ -251,7 +264,6 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 //1.买单高于市场价，按价格由低往高撮合。
 //2.卖单低于市场价，按价格由高往低进行撮合。
 //3.价格相同按先进先出的原则进行撮合
-//4.买家获利得原则
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -260,6 +272,11 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 	var count int
 
 	cfg := a.api.GetConfig()
+	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
+	if err != nil {
+		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
+		return nil, err
+	}
 	or := &et.Order{
 		OrderID:    a.GetIndex(),
 		Value:      &et.Order_LimitOrder{LimitOrder: payload},
@@ -271,6 +288,10 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		Addr:       a.fromaddr,
 		UpdateTime: a.blocktime,
 		Index:      a.GetIndex(),
+		Rate:       tCfg.GetRate(payload),
+		MinFee:     tCfg.GetMinFee(payload),
+		Hash:       hex.EncodeToString(a.txhash),
+		CreateTime: a.blocktime,
 	}
 	re := &et.ReceiptExchange{
 		Order: or,
@@ -322,7 +343,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 						continue
 					}
 					//撮合,指针传递
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re) // payload, or redundant
+					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr()) // payload, or redundant
 					if err != nil {
 						return nil, err
 					}
@@ -359,7 +380,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			elog.Error("LimitOrder.ExecFrozen OpBuy", "addr", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -369,7 +390,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			elog.Error("LimitOrder.ExecFrozen OpSell", "addr", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, err
 		}
 		logs = append(logs, receipt.Logs...)
@@ -385,7 +406,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 }
 
 //交易撮合模型
-func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, feeAddr string) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var matched int64
@@ -402,7 +423,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	cfg := a.api.GetConfig()
 	if payload.Op == et.OpSell {
 		//转移冻结资产
-		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, payload.Price, cfg.GetCoinPrecision())
+		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		receipt, err := rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err)
@@ -410,19 +431,23 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		}
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
-		//解冻多余资金
-		if payload.Price < matchorder.GetLimitOrder().Price {
-			amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price-payload.Price, cfg.GetCoinPrecision())
-			receipt, err := rightAccountDB.ExecActive(matchorder.Addr, a.execaddr, amount)
+
+		//收取手续费
+		activeFee := calcMtfFee(amount, or.GetRate()) //主动成交方的手续费
+		if activeFee != 0 {
+			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, feeAddr, a.execaddr, activeFee)
 			if err != nil {
-				elog.Error("matchModel.ExecActive", "addr", matchorder.Addr, "amount", amount, "err", err.Error())
+				elog.Error("matchModel.ExecTransfer sell", "from", a.fromaddr, "to", feeAddr,
+					"amount", amount, "rate", or.GetRate(), "activeFee", activeFee, "err", err.Error())
 				return nil, nil, err
 			}
+			or.DigestedFee += activeFee
 			logs = append(logs, receipt.Logs...)
 			kvs = append(kvs, receipt.KV...)
 		}
+
 		//将达成交易的相应资产结算
-		amount = CalcActualCost(payload.Op, matched, payload.Price, cfg.GetCoinPrecision())
+		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransfer", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
@@ -431,10 +456,23 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 
-		//卖单成交得平均价格始终与自身挂单价格相同
-		or.AVGPrice = payload.Price
+		//收取手续费
+		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费
+		if passiveFee != 0 {
+			receipt, err = leftAccountDB.ExecTransfer(matchorder.Addr, feeAddr, a.execaddr, passiveFee)
+			if err != nil {
+				elog.Error("matchModel.ExecTransfer sell", "from", matchorder.Addr, "to", feeAddr,
+					"amount", amount, "rate", matchorder.GetRate(), "passiveFee", passiveFee, "err", err.Error())
+				return nil, nil, err
+			}
+			matchorder.DigestedFee += passiveFee
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+
+		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
 		//计算matchOrder平均成交价格
-		matchorder.AVGPrice = caclAVGPrice(matchorder, payload.Price, matched) //TODO
+		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
 	}
 	if payload.Op == et.OpBuy {
 		//转移冻结资产
@@ -446,6 +484,21 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		}
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
+
+		//收取手续费
+		activeFee := calcMtfFee(amount, or.GetRate()) //主动成交方的手续费
+		if activeFee != 0 {
+			receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, feeAddr, a.execaddr, activeFee)
+			if err != nil {
+				elog.Error("matchModel.ExecTransfer buy", "from", a.fromaddr, "to", feeAddr,
+					"amount", amount, "rate", or.GetRate(), "activeFee", activeFee, "err", err.Error())
+				return nil, nil, err
+			}
+			or.DigestedFee += activeFee
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+
 		//将达成交易的相应资产结算
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
@@ -456,11 +509,26 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 
-		//买单得话，价格选取卖单的价格
-		or.AVGPrice = matchorder.GetLimitOrder().Price
+		//收取手续费
+		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费
+		if passiveFee != 0 {
+			receipt, err = rightAccountDB.ExecTransfer(matchorder.Addr, feeAddr, a.execaddr, passiveFee)
+			if err != nil {
+				elog.Error("matchModel.ExecTransfer buy", "from", matchorder.Addr, "to", feeAddr,
+					"amount", amount, "rate", matchorder.GetRate(), "passiveFee", passiveFee, "err", err.Error())
+				return nil, nil, err
+			}
+			matchorder.DigestedFee += passiveFee
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+
+		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
 		//计算matchOrder平均成交价格
-		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched) //TODO
+		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
 	}
+
+	matchorder.UpdateTime = a.blocktime
 
 	if matched == matchorder.GetBalance() {
 		matchorder.Status = et.Completed
@@ -515,10 +583,12 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Orde
 			elog.Error("findOrderByOrderID.Decode", "orderID", orderID, "err", err.Error())
 			return nil, err
 		}
+		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		return &order, nil
 	}
-	return row.Data.(*et.Order), nil
-
+	order := row.Data.(*et.Order)
+	order.Executed = order.GetLimitOrder().Amount - order.Balance
+	return order, nil
 }
 
 func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, op, direction int32, primaryKey string) (*et.OrderList, error) {
@@ -697,4 +767,79 @@ func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
 	div := big.NewInt(0).Add(big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()), big.NewInt(amount))
 	avg := big.NewInt(0).Div(total, div)
 	return avg.Int64()
+}
+
+//计算手续费
+func calcMtfFee(cost int64, rate int32) int64 {
+	fee := big.NewInt(0).Mul(big.NewInt(cost), big.NewInt(int64(rate)))
+	fee = big.NewInt(0).Div(fee, big.NewInt(types.DefaultCoinPrecision))
+	return fee.Int64()
+}
+
+func ParseConfig(cfg *types.Chain33Config, height int64) (*et.TradeConfig, error) {
+	banks, err := ParseStrings(cfg, "banks", height)
+	if err != nil || len(banks) == 0 {
+		return nil, err
+	}
+	coins, err := ParseCoins(cfg, "coins", height)
+	if err != nil {
+		return nil, err
+	}
+	return &et.TradeConfig{
+		Banks: banks,
+		Coins: coins,
+	}, nil
+}
+
+func ParseStrings(cfg *types.Chain33Config, tradeKey string, height int64) (ret []string, err error) {
+	val, err := cfg.MG(et.MverPrefix+"."+tradeKey, height)
+	if err != nil {
+		return nil, err
+	}
+
+	datas, ok := val.([]interface{})
+	if !ok {
+		elog.Error("invalid val", "val", val, "key", tradeKey)
+		return nil, et.ErrCfgFmt
+	}
+
+	for _, v := range datas {
+		one, ok := v.(string)
+		if !ok {
+			elog.Error("invalid one", "one", one, "key", tradeKey)
+			return nil, et.ErrCfgFmt
+		}
+		ret = append(ret, one)
+	}
+	return
+}
+
+func ParseCoins(cfg *types.Chain33Config, tradeKey string, height int64) (coins map[string]et.Coin, err error) {
+	coins = make(map[string]et.Coin)
+
+	val, err := cfg.MG(et.MverPrefix+"."+tradeKey, height)
+	if err != nil {
+		return nil, err
+	}
+
+	datas, ok := val.([]interface{})
+	if !ok {
+		elog.Error("invalid coins", "val", val, "type", reflect.TypeOf(val))
+		return nil, et.ErrCfgFmt
+	}
+
+	for _, e := range datas {
+		v, ok := e.(map[string]interface{})
+		if !ok {
+			elog.Error("invalid one", "one", v, "key", tradeKey)
+			return nil, et.ErrCfgFmt
+		}
+		name := strings.ToUpper(v["name"].(string))
+		coins[name] = et.Coin{
+			Name:   name,
+			Rate:   int32(v["rate"].(int64)),
+			MinFee: v["minFee"].(int64),
+		}
+	}
+	return
 }
