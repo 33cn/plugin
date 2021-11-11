@@ -204,7 +204,7 @@ func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (t
 		return nil, errors.New("common.FromHex failed due to:" + err.Error())
 	}
 
-	outputs, err := evmAbi.Unpack(data, in.MethodName, in.Abi)
+	outputs, err := evmAbi.UnpackOutputOrEvent(data, in.Name, in.Abi)
 	if err != nil {
 		return nil, errors.New("unpack evm return error" + err.Error())
 	}
