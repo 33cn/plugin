@@ -39,9 +39,14 @@ message Evmxgo {
 
 // config mint synbol
 message EvmxgoMintConfig {
-    string address      =1;
-    int32 precision     =2;
-    string introduction =3;
+    string address      = 1;
+    int32 precision     = 2;
+    string introduction = 3;
+}
+
+// config bridgevmxgo contract address
+message BridgevmxgoConfig {
+    string address      = 1;
 }
 
 // log

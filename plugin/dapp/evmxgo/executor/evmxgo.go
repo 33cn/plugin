@@ -15,8 +15,9 @@ import (
  */
 
 const (
-	mintPrefix = "evmxgo-mint-"
-	evmxgoAssetsPrefix = "LODB-evmxgo-assets:"
+	mintPrefix            = "evmxgo-mint-"
+	evmxgoAssetsPrefix    = "LODB-evmxgo-assets:"
+	bridgevmxgoAddrPrefix = "bridgevmxgo-contract-addr"
 )
 
 var (
@@ -199,4 +200,3 @@ func (e *evmxgo) getBalance(req *types.ReqBalance) ([]*types.Account, error) {
 		return accounts, nil
 	}
 }
-

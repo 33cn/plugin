@@ -802,6 +802,21 @@ function updateConfig() {
     check_tx "${Chain33Cli}" "${hash}"
 }
 
+function configbridgevmxgoAddr() {
+    local bridgevmxgoAddr=$1
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"bridgevmxgo-contract-addr","value":"{\"address\":\"'"${bridgevmxgoAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    if [ "${tx}" == "" ]; then
+        echo -e "${RED}update config create tx 1${NOC}"
+        exit 1
+    fi
+
+    sign=$(${Chain33Cli} wallet sign -k "$chain33ReceiverAddrKey" -d "${tx}")
+    hash=$(${Chain33Cli} wallet send -d "${sign}")
+    check_tx "${Chain33Cli}" "${hash}"
+}
+
+
+
 function TestETH2EVMToChain33() {
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
@@ -826,6 +841,7 @@ function TestETH2EVMToChain33() {
 #    is_equal "${result}" "4700000000"
 
     updateConfig "ETH" "${chain33EthBridgeTokenAddr}"
+    configbridgevmxgoAddr "${XgoChain33BridgeBank}"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
     chain33_offline_send_evm "approve_erc20.txt"

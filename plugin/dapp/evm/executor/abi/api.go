@@ -1,6 +1,7 @@
 package abi
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/big"
@@ -141,6 +142,54 @@ func Unpack(data []byte, methodName, abiData string) (output []*Param, err error
 
 	for i, v := range values {
 		arg := method.Outputs[i]
+		pval := &Param{Name: arg.Name, Type: arg.Type.String(), Value: v}
+		if arg.Type.String() == "address" {
+			pval.Value = v.(common.Hash160Address).ToAddress().String()
+			log.Info("Unpack address", "address", pval.Value)
+		}
+
+		output = append(output, pval)
+	}
+
+	return
+}
+
+func UnpackInput(data []byte, methodName, abiData string) (output []*Param, err error) {
+	if len(data) <= 4 {
+		log.Info("UnpackInput", "Data len is not correct", len(data), "methodName", methodName)
+		return output, err
+	}
+	// 解析ABI数据结构，获取本次调用的方法对象
+	abi, err := JSON(strings.NewReader(abiData))
+	if err != nil {
+		return output, err
+	}
+
+	var method Method
+	var ok bool
+	if method, ok = abi.Methods[methodName]; !ok {
+		return output, fmt.Errorf("function %v not exists", methodName)
+	}
+
+	if bytes.Compare(method.ID, data[:4]) != 0 {
+		log.Info("UnpackInput", "methodID is not consistent method.ID", common.Bytes2Hex(method.ID),
+			"data[:4]", common.Bytes2Hex(data[:4]))
+		return output, errors.New("Not consistent method")
+	}
+
+	if method.Inputs.LengthNonIndexed() == 0 {
+		return output, err
+	}
+
+	values, err := method.Inputs.UnpackValues(data[4:])
+	if err != nil {
+		return output, err
+	}
+
+	output = []*Param{}
+
+	for i, v := range values {
+		arg := method.Inputs[i]
 		pval := &Param{Name: arg.Name, Type: arg.Type.String(), Value: v}
 		if arg.Type.String() == "address" {
 			pval.Value = v.(common.Hash160Address).ToAddress().String()

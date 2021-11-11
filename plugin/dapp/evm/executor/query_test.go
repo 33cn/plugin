@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/33cn/chain33/common"
@@ -82,4 +83,43 @@ func Test_UnpackEventLockOfBridgevmxgo(t *testing.T) {
 	for i, info := range outputs {
 		fmt.Println(i, "th info = ", info)
 	}
+}
+
+//'lock(1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu, 195ycckxqnxyaQeLYTQvgETr1vsEp4NYmP, 500000000)'
+//"7750c9f0": "lock(address,address,uint256)",
+func Test_UnpackInputLockOfBridgevmxgo(t *testing.T) {
+	methodName, packDataOrigin, err := evmAbi.Pack("lock(1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu, 195ycckxqnxyaQeLYTQvgETr1vsEp4NYmP, 500000000)", BridgeBankABIBridgevmxgo, false)
+	assert.Equal(t, nil, err)
+	fmt.Println("methodName", methodName)
+	fmt.Println("packDataOrigin", common.ToHex(packDataOrigin))
+
+	//event TransferToken(address owner, address to, uint256 tokenId, uint256 amount);
+	packData, err := common.FromHex("0x7750c9f00000000000000000000000006fd2a3693c289b6c3c211f5d2f85ce145d1afaeb00000000000000000000000058b1edde0fc37c0f7f4a23d1c2df488ec5df0fe1000000000000000000000000000000000000000000000000000000001dcd6500")
+	//7750c9f0
+	//0000000000000000000000006fd2a3693c289b6c3c211f5d2f85ce145d1afaeb
+	//00000000000000000000000058b1edde0fc37c0f7f4a23d1c2df488ec5df0fe1
+	//000000000000000000000000000000000000000000000000000000001dcd6500
+	assert.Equal(t, nil, err)
+
+	outputs, err := evmAbi.UnpackInput(packData, "lock", BridgeBankABIBridgevmxgo)
+	assert.Equal(t, nil, err)
+	for i, info := range outputs {
+		fmt.Println(i, "th info = ", info)
+	}
+
+	correct := 0
+	for _, para := range outputs {
+		switch para.Name {
+		case "_recipient":
+			assert.Equal(t, para.Value, "1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu")
+			correct++
+		case "_amount":
+			assert.Equal(t, para.Value.(*big.Int).Int64(), int64(500000000))
+			correct++
+		case "_token":
+			assert.Equal(t, para.Value, "195ycckxqnxyaQeLYTQvgETr1vsEp4NYmP")
+			correct++
+		}
+	}
+	assert.Equal(t, correct, 3)
 }

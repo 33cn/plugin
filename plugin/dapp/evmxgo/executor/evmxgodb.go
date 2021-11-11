@@ -256,7 +256,7 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 		return nil, types.ErrInvalidParam
 	}
 	cfg := action.api.GetConfig()
-	if err := checkMintPara(mint, tx2lock); nil != err {
+	if err := checkMintPara(mint, tx2lock, action.db); nil != err {
 		return nil, err
 	}
 
