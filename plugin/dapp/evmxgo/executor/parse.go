@@ -16,7 +16,7 @@ const (
 
 //solidity interface: function lock(address _recipient, address _token, uint256 _amount)
 //铸币交易的接收人必须与发起lock交易时填写的接收地址一致
-func checkMinePara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) error {
+func checkMintPara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction) error {
 	var action evmtypes.EVMContractAction
 	if err := types.Decode(tx2lock.Payload, &action); nil != err {
 		return err
