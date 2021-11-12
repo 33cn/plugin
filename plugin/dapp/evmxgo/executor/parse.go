@@ -40,27 +40,35 @@ func checkMintPara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction, db 
 		return err
 	}
 
+	var recipient, bridgeToken string
+	var amount int64
 	correct := 0
 	for _, para := range unpack {
 		switch para.Name {
 		case "_recipient":
-			if mint.Recipient != para.Value {
+			recipient = para.Value.(string)
+			if mint.Recipient != recipient {
 				return errors.New("Not consitent recipient address")
 			}
 			correct++
+
 		case "_amount":
-			if mint.Amount != para.Value.(*big.Int).Int64() {
+			amount = para.Value.(*big.Int).Int64()
+			if mint.Amount != amount {
 				return errors.New("Not consitent Amount")
 			}
 			correct++
+
 		case "_token":
-			if mint.BridgeToken != para.Value {
+			bridgeToken = para.Value.(string)
+			if mint.BridgeToken != bridgeToken {
 				return errors.New("Not consitent token Address")
 			}
 			correct++
 		}
 	}
-	elog.Info("checkMintPara", "lock parameter unpacked ", unpack)
+	elog.Info("checkMintPara", "lock parameter unpacked _recipient ", recipient, "bridgeToken", bridgeToken,
+		"amount", amount)
 	if correct != 3 {
 		return errors.New("not check all the points: _recipient, _amount, _token")
 	}
