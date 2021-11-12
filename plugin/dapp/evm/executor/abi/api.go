@@ -177,8 +177,8 @@ func UnpackInput(data []byte, methodName, abiData string) (output []*Param, err 
 		return output, errors.New("Not consistent method")
 	}
 
-	if method.Inputs.LengthNonIndexed() == 0 {
-		return output, err
+	if len(data[4:])%32 != 0 {
+		return output, errors.New("UnpackOutputOrEvent: improperly formatted output")
 	}
 
 	values, err := method.Inputs.UnpackValues(data[4:])
@@ -202,7 +202,8 @@ func UnpackInput(data []byte, methodName, abiData string) (output []*Param, err 
 	return
 }
 
-func UnpackOutputOrEvent(data []byte, name, abiData string) (output []*Param, err error) {
+//同时支持input,output和event三种数据的unpack
+func UnpackAllTypes(data []byte, name, abiData string) (output []*Param, err error) {
 	if len(data) == 0 {
 		log.Info("Unpack", "Data len", 0, "name", name)
 		return output, err
@@ -216,16 +217,20 @@ func UnpackOutputOrEvent(data []byte, name, abiData string) (output []*Param, er
 	values := []interface{}{}
 	var arguments Arguments
 	if method, ok := abi.Methods[name]; ok {
-		if len(data)%32 != 0 {
-			return output, errors.New("UnpackOutputOrEvent: improperly formatted output")
+		if len(data)%32 == 0 {
+			values, err = method.Outputs.UnpackValues(data)
+			arguments = method.Outputs
+		} else if len(data[4:])%32 == 0 {
+			values, err = method.Inputs.UnpackValues(data[4:])
+			arguments = method.Inputs
+		} else {
+			return output, errors.New("UnpackAllTypes: improperly formatted data")
 		}
-		values, err = method.Outputs.UnpackValues(data)
-		arguments = method.Outputs
 	} else if event, ok := abi.Events[name]; ok {
 		values, err = event.Inputs.UnpackValues(data)
 		arguments = event.Inputs
 	} else {
-		return output, errors.New("UnpackOutputOrEvent: could not locate named method or event")
+		return output, errors.New("UnpackAllTypes: could not locate named method or event")
 	}
 
 	if err != nil {
