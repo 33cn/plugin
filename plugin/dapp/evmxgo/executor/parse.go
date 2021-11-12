@@ -60,6 +60,7 @@ func checkMintPara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction, db 
 			correct++
 		}
 	}
+	elog.Info("checkMintPara", "lock parameter unpacked ", unpack)
 	if correct != 3 {
 		return errors.New("not check all the points: _recipient, _amount, _token")
 	}
