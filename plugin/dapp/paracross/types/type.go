@@ -26,12 +26,17 @@ var (
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
 
 	//MainForkParaSupervision = "mainForkParaSupervision"
-	// ForkParaSelfConsStages 平行链自共识分阶段共识
-	ForkParaSelfConsStages = "ForkParaSelfConsStages"
+
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
 	// ForkParaSupervision 平行链新增监督节点
 	ForkParaSupervision = "ForkParaSupervision"
+	//ForkParaAutonomySuperGroup 分叉之后autonomy授权共识账户组，之前是配置超级管理员授权
+	ForkParaAutonomySuperGroup = "ForkParaAutonomySuperGroup"
+
+	//只在平行链开启的分叉
+	// ForkParaSelfConsStages 平行链自共识分阶段共识
+	ForkParaSelfConsStages = "ForkParaSelfConsStages"
 	// ForkParaFullMinerHeight 平行链全挖矿开启高度
 	ForkParaFullMinerHeight = "ForkParaFullMinerHeight"
 	// ForkParaRootHash 平行链按照ForkRootHash计算rootHash高度,在之前版本中平行链侧计算txRootHash没有提供正确的主链高度计算，需要分叉
@@ -65,6 +70,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
 	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 6000000)
+	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 10000000)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)

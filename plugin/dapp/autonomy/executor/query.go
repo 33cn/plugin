@@ -63,3 +63,8 @@ func (a *Autonomy) Query_GetProposalChange(in *types.ReqString) (types.Message, 
 func (a *Autonomy) Query_ListProposalChange(in *auty.ReqQueryProposalChange) (types.Message, error) {
 	return a.listProposalChange(in)
 }
+
+// Query_GetProposalChange 查询提案修改董事会成员
+func (a *Autonomy) Query_IsAutonomyApprovedItem(in *types.ReqStrings) (types.Message, error) {
+	return IsAutonomyApprovedItem(a.GetStateDB(), in)
+}

@@ -30,6 +30,11 @@ const (
 	AutonomyActionVotePropChange
 	AutonomyActionTmintPropChange
 
+	AutonomyActionPropItem
+	AutonomyActionRvkPropItem
+	AutonomyActionVotePropItem
+	AutonomyActionTmintPropItem
+
 	//log for autonomy
 	TyLogPropBoard      = 2101
 	TyLogRvkPropBoard   = 2102
@@ -53,6 +58,11 @@ const (
 	TyLogRvkPropChange   = 2142
 	TyLogVotePropChange  = 2143
 	TyLogTmintPropChange = 2144
+
+	TyLogPropItem      = 2161
+	TyLogRvkPropItem   = 2162
+	TyLogVotePropItem  = 2163
+	TyLogTmintPropItem = 2164
 )
 
 // Board status
@@ -86,6 +96,14 @@ const (
 	AutonomyStatusRvkPropChange
 	AutonomyStatusVotePropChange
 	AutonomyStatusTmintPropChange
+)
+
+// Item status
+const (
+	AutonomyStatusProposalItem = iota + 1
+	AutonomyStatusRvkPropItem
+	AutonomyStatusVotePropItem
+	AutonomyStatusTmintPropItem
 )
 
 const (

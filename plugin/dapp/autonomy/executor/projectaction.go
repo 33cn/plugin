@@ -261,7 +261,7 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 	}
 
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if cur.BoardVoteRes.TotalVotes != 0 &&
+		if cur.BoardVoteRes.TotalVotes != 0 && cur.BoardVoteRes.TotalVotes > cur.BoardVoteRes.QuitVotes &&
 			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 			cur.BoardVoteRes.Pass = true
 			cur.PropProject.RealEndBlockHeight = a.height
@@ -463,7 +463,7 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 		return nil, err
 	}
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if cur.BoardVoteRes.TotalVotes != 0 &&
+		if cur.BoardVoteRes.TotalVotes != 0 && cur.BoardVoteRes.TotalVotes > cur.BoardVoteRes.QuitVotes &&
 			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
 			cur.BoardVoteRes.Pass = true
 		} else {

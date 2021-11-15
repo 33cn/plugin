@@ -125,6 +125,7 @@ message ParaNodeGroupConfig {
     string addrs       = 4;
     int64  coinsFrozen = 5;
     string blsPubKeys  = 6;
+    string autonomyItemID = 7;
 }
 
 message ParaNodeGroupStatus {
