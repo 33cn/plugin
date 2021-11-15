@@ -960,9 +960,29 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	//只在主链检查
-	if !cfg.IsPara() && !isSuperManager(cfg, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+
+	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
+	if !cfg.IsPara() {
+		//fork之后采用 autonomy 检查模式
+		if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAutonomySuperGroup) {
+			confManager := types.ConfSub(cfg, manager.ManageX)
+			autonomyExec := confManager.GStr("autonomyExec")
+			if len(autonomyExec) <= 0 {
+				return nil, errors.Wrapf(types.ErrNotFound, "manager autonomy key not config")
+			}
+			//去autonomy 合约检验是否id approved, 成功 err返回nil
+			_, err := a.api.QueryChain(&types.ChainExecutor{
+				Driver:   autonomyExec,
+				FuncName: "IsAutonomyApprovedItem",
+				Param:    types.Encode(&types.ReqStrings{Datas: []string{config.AutonomyItemID, config.Id}}),
+			})
+			if err != nil {
+				return nil, errors.Wrapf(err, "query autonomy,approveid=%s,hashId=%s", config.AutonomyItemID, config.Id)
+			}
+
+		} else if !isSuperManager(cfg, a.fromaddr) {
+			return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+		}
 	}
 
 	id, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)

@@ -9,6 +9,7 @@ import "board.proto";
 import "project.proto";
 import "rule.proto";
 import "change.proto";
+import "item.proto";
 
 package types;
 option go_package = "../types";
@@ -40,6 +41,13 @@ message AutonomyAction {
         RevokeProposalChange    rvkPropChange   = 17;
         VoteProposalChange      votePropChange  = 18;
         TerminateProposalChange tmintPropChange = 19;
+
+        //提案事项审核相关
+        ProposalItem            propItem        = 21;
+        RevokeProposalItem      rvkPropItem     = 22;
+        VoteProposalItem        votePropItem    = 23;
+        TerminateProposalItem   tmintPropItem   = 24;
+
     }
     int32 ty = 20;
 }
