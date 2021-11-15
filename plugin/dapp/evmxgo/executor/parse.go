@@ -35,7 +35,7 @@ func checkMintPara(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Transaction, db 
 		return errors.New("Not consistent bridgevmxgo address configured by manager")
 	}
 
-	unpack, err := chain33Abi.UnpackInput(action.Para, LockMethod, bridgevmxgo.BridgeBankABI)
+	unpack, err := chain33Abi.UnpackAllTypes(action.Para, LockMethod, bridgevmxgo.BridgeBankABI)
 	if err != nil {
 		return err
 	}
