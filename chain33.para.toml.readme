@@ -118,8 +118,8 @@ ParaRemoteGrpcClient="localhost:8802"
 startHeight=345850
 #主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
 #waitMainBlockNum=100
-#检索主链最新区块时间间隔，单位秒
-writeBlockSeconds=2
+#等待打包主链区块时间间隔，单位毫秒
+writeBlockMsec=2000
 #共识节点账户，共识节点需要配置自己的账户，并且钱包导入对应种子，非共识节点留空
 authAccount=""
 #创世地址额度
@@ -385,6 +385,7 @@ ForkUnfreezeIDX= 0
 [fork.sub.autonomy]
 Enable=0
 ForkAutonomyDelRule=0
+ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
 Enable=0

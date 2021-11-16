@@ -35,7 +35,6 @@ message ProposalItem {
     // 项目相关
     string itemTxHash   = 4;  // item tx hash
     string exec     = 5;      // 合约执行器
-    int64  itemTxBlockHeight = 6; //需要设置区块高度，太久的item不处理
     string description  = 7;  // 简述
 
     // 投票相关

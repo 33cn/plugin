@@ -964,17 +964,14 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
 	if !cfg.IsPara() {
 		//fork之后采用 autonomy 检查模式
-		if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAutonomySuperGroup) {
-			confManager := types.ConfSub(cfg, manager.ManageX)
-			autonomyExec := confManager.GStr("autonomyExec")
-			if len(autonomyExec) <= 0 {
-				return nil, errors.Wrapf(types.ErrNotFound, "manager autonomy key not config")
-			}
+		confManager := types.ConfSub(cfg, manager.ManageX)
+		autonomyExec := confManager.GStr(types.AutonomyCfgKey)
+		if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAutonomySuperGroup) && len(autonomyExec) > 0 {
 			//去autonomy 合约检验是否id approved, 成功 err返回nil
 			_, err := a.api.QueryChain(&types.ChainExecutor{
 				Driver:   autonomyExec,
 				FuncName: "IsAutonomyApprovedItem",
-				Param:    types.Encode(&types.ReqStrings{Datas: []string{config.AutonomyItemID, config.Id}}),
+				Param:    types.Encode(&types.ReqMultiStrings{Datas: []string{config.AutonomyItemID, config.Id}}),
 			})
 			if err != nil {
 				return nil, errors.Wrapf(err, "query autonomy,approveid=%s,hashId=%s", config.AutonomyItemID, config.Id)

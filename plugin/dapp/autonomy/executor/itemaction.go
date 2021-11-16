@@ -16,11 +16,7 @@ const (
 )
 
 func (a *action) propItem(prob *auty.ProposalItem) (*types.Receipt, error) {
-	//itemTx 不能等待太久，太久需要重新申请
-	if a.height > prob.ItemTxBlockHeight+itemWaitBlockNumber {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "itemTx wait too long, curHeight=%d,itemTx=%d", a.height, prob.ItemTxBlockHeight)
-	}
-
+	//start和end之间不能小于720高度，end不能超过当前高度+100w
 	if prob.StartBlockHeight < a.height || prob.StartBlockHeight >= prob.EndBlockHeight ||
 		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight ||
 		prob.EndBlockHeight > a.height+propEndBlockPeriod ||
@@ -179,7 +175,7 @@ func (a *action) votePropItem(voteProb *auty.VoteProposalItem) (*types.Receipt, 
 	if err != nil {
 		alog.Error("votePropItem ", "addr", a.fromaddr, "execaddr", a.execaddr, "checkVotesRecord boardVotesRecord failed",
 			voteProb.ProposalID, "err", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "check votes record from addr=%s", a.fromaddr)
 	}
 
 	// 更新已经投票地址
@@ -242,7 +238,7 @@ func (a *action) tmintPropItem(tmintProb *auty.TerminateProposalItem) (*types.Re
 	if err != nil {
 		alog.Error("tmintPropItem ", "addr", a.fromaddr, "execaddr", a.execaddr, "getProposalItem failed",
 			tmintProb.ProposalID, "err", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "get item id=%s", tmintProb.ProposalID)
 	}
 	pre := copyAutonomyProposalItem(cur)
 
@@ -252,7 +248,7 @@ func (a *action) tmintPropItem(tmintProb *auty.TerminateProposalItem) (*types.Re
 		err := auty.ErrProposalStatus
 		alog.Error("tmintPropItem ", "addr", a.fromaddr, "status", cur.Status, "status is not match",
 			tmintProb.ProposalID, "err", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "cur status=%d", cur.Status)
 	}
 
 	// 董事会投票期间不能终止
@@ -261,7 +257,7 @@ func (a *action) tmintPropItem(tmintProb *auty.TerminateProposalItem) (*types.Re
 		err := auty.ErrTerminatePeriod
 		alog.Error("tmintPropItem ", "addr", a.fromaddr, "status", cur.Status, "height", a.height,
 			"in board vote period can not terminate", tmintProb.ProposalID, "err", err)
-		return nil, err
+		return nil, errors.Wrapf(err, "vote period not should be terminated")
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 && cur.BoardVoteRes.TotalVotes > cur.BoardVoteRes.QuitVotes &&

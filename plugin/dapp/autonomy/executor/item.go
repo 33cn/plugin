@@ -5,7 +5,6 @@
 package executor
 
 import (
-	"fmt"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -108,7 +107,7 @@ func (a *Autonomy) listProposalItem(req *auty.ReqQueryProposalItem) (types.Messa
 	return &rep, nil
 }
 
-func getProposalItemDb(db dbm.KV, req *types.ReqString) (*auty.ReplyQueryProposalItem, error) {
+func getProposalItem(db dbm.KV, req *types.ReqString) (*auty.ReplyQueryProposalItem, error) {
 	if req == nil || len(req.Data) <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "invalid parameter")
 	}
@@ -127,48 +126,38 @@ func getProposalItemDb(db dbm.KV, req *types.ReqString) (*auty.ReplyQueryProposa
 }
 
 // IsAutonomyApprovedItem get 2 parameters: autonomyItemID, applyTxHash
-func IsAutonomyApprovedItem(db dbm.KV, req *types.ReqStrings) (types.Message, error) {
-	rep := &types.Reply{IsOk: false}
+func IsAutonomyApprovedItem(db dbm.KV, req *types.ReqMultiStrings) (types.Message, error) {
 	if req == nil {
-		rep.Msg = []byte("req is nill")
-		return rep, types.ErrInvalidParam
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req is nil")
 	}
 
 	if len(req.Datas) < 2 {
-		rep.Msg = []byte("req datas less 2 parameters")
-		return rep, types.ErrInvalidParam
+		return nil, errors.Wrapf(types.ErrInvalidParam, "req datas less 2 parameters")
 	}
 
 	autonomyItemID := req.Datas[0]
 	applyTxHash := req.Datas[1]
-	res, err := getProposalItemDb(db, &types.ReqString{Data: autonomyItemID})
+	res, err := getProposalItem(db, &types.ReqString{Data: autonomyItemID})
 	if err != nil {
-		rep.Msg = []byte(err.Error())
-		return rep, err
+		return nil, err
 	}
 	if len(res.GetPropItems()) <= 0 {
-		rep.Msg = []byte("not found item")
-		return rep, types.ErrNotFound
+		return nil, errors.Wrapf(types.ErrNotFound, "not get item")
 	}
 	if res.PropItems[0].ProposalID != autonomyItemID {
-		rep.Msg = []byte(fmt.Sprintf("res prop id=%s not equal query=%s", res.PropItems[0].ProposalID, autonomyItemID))
-		return rep, errors.Wrapf(types.ErrInvalidParam, "item id=%s,req=%s", res.PropItems[0].ProposalID, autonomyItemID)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "get prop id=%s not equal req=%s", res.PropItems[0].ProposalID, autonomyItemID)
 	}
 	if res.PropItems[0].PropItem.ItemTxHash != applyTxHash {
-		rep.Msg = []byte(fmt.Sprintf("res item tx id=%s not equal query=%s", res.PropItems[0].PropItem.ItemTxHash, applyTxHash))
-		return rep, errors.Wrapf(types.ErrInvalidParam, "item txHash=%s,req=%s", res.PropItems[0].PropItem.ItemTxHash, applyTxHash)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "get item id=%s != req=%s", res.PropItems[0].PropItem.ItemTxHash, applyTxHash)
 	}
 
 	if res.PropItems[0].Status == auty.AutonomyStatusTmintPropItem && res.PropItems[0].BoardVoteRes.Pass {
-		rep.IsOk = true
-		return rep, nil
+		return &types.Reply{IsOk: true}, nil
 	}
 
 	if res.PropItems[0].Status != auty.AutonomyStatusTmintPropItem {
-		rep.Msg = []byte(fmt.Sprintf("item status =%d not terminate", res.PropItems[0].Status))
-		return rep, errors.Wrapf(types.ErrNotAllow, "item status =%d not terminate", res.PropItems[0].Status)
+		return nil, errors.Wrapf(types.ErrNotAllow, "item status =%d not terminate", res.PropItems[0].Status)
 	}
 
-	rep.Msg = []byte(fmt.Sprintf("item vote status not pass = %v", res.PropItems[0].BoardVoteRes.Pass))
-	return rep, errors.Wrap(types.ErrNotAllow, "item vote status not pass")
+	return nil, errors.Wrapf(types.ErrNotAllow, "item vote status not pass = %v", res.PropItems[0].BoardVoteRes.Pass)
 }

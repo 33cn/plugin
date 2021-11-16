@@ -537,7 +537,7 @@ out:
 				if err == nil {
 					continue
 				}
-				time.Sleep(time.Second * time.Duration(client.subCfg.WriteBlockSeconds))
+				time.Sleep(time.Millisecond * time.Duration(client.subCfg.WriteBlockMsec))
 				continue
 			}
 

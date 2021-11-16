@@ -64,7 +64,17 @@ func (a *Autonomy) Query_ListProposalChange(in *auty.ReqQueryProposalChange) (ty
 	return a.listProposalChange(in)
 }
 
+// Query_GetProposalItem 查询提案
+func (a *Autonomy) Query_GetProposalItem(in *types.ReqString) (types.Message, error) {
+	return getProposalItem(a.GetStateDB(), in)
+}
+
+// Query_ListProposalItem 批量查询
+func (a *Autonomy) Query_ListProposalItem(in *auty.ReqQueryProposalItem) (types.Message, error) {
+	return a.listProposalItem(in)
+}
+
 // Query_GetProposalChange 查询提案修改董事会成员
-func (a *Autonomy) Query_IsAutonomyApprovedItem(in *types.ReqStrings) (types.Message, error) {
+func (a *Autonomy) Query_IsAutonomyApprovedItem(in *types.ReqMultiStrings) (types.Message, error) {
 	return IsAutonomyApprovedItem(a.GetStateDB(), in)
 }

@@ -70,7 +70,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
 	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 6000000)
-	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 10000000)
+	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 10200000)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
