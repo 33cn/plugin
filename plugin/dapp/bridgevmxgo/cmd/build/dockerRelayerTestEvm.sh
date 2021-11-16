@@ -783,6 +783,9 @@ function DeployEvmxgo() {
     ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s ETH -t "${chain33EthBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
     chain33_offline_send_evm "create_add_lock_list.txt"
 
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s BYC -t "${chain33BycBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
+    chain33_offline_send_evm "create_add_lock_list.txt"
+
     # 重启,需要重新启动relayer,更新nonce
     restart_ebrelayerA
 }
