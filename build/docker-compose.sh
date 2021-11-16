@@ -132,6 +132,10 @@ function base_init() {
         sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
         sed -i $sedfix 's/^enablePushSubscribe=.*/enablePushSubscribe=true/g' chain33.toml
     fi
+
+    #autonomy config
+    sed -i $sedfix 's/^autonomyExec =.*/autonomyExec=""/g' chain33.toml
+
 }
 
 function start() {

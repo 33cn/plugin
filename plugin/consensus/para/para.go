@@ -35,7 +35,7 @@ const (
 	//current miner tx take any privatekey for unify all nodes sign purpose, and para chain is free
 	minerPrivateKey                      = "6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b"
 	defaultGenesisAmount           int64 = 1e8
-	poolMainBlockSec               int64 = 5
+	poolMainBlockMsec              int64 = 5000
 	defaultEmptyBlockInterval      int64 = 50 //write empty block every interval blocks in mainchain
 	defaultSearchMatchedBlockDepth int32 = 10000
 )
@@ -70,7 +70,7 @@ type client struct {
 }
 
 type subConfig struct {
-	WriteBlockSeconds       int64      `json:"writeBlockSeconds,omitempty"`
+	WriteBlockMsec          int64      `json:"writeBlockMsec,omitempty"`
 	ParaRemoteGrpcClient    string     `json:"paraRemoteGrpcClient,omitempty"`
 	StartHeight             int64      `json:"startHeight,omitempty"`
 	WaitMainBlockNum        int64      `json:"waitMainBlockNum,omitempty"`
@@ -105,8 +105,8 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 		subcfg.GenesisAmount = defaultGenesisAmount
 	}
 
-	if subcfg.WriteBlockSeconds <= 0 {
-		subcfg.WriteBlockSeconds = poolMainBlockSec
+	if subcfg.WriteBlockMsec <= 0 {
+		subcfg.WriteBlockMsec = poolMainBlockMsec
 	}
 
 	//WaitMainBlockNum 配置最小为1，因为genesis块是startHeight-1， wait=1和startHeight相等
@@ -291,7 +291,7 @@ func (client *client) GetStartMainHash(height int64) []byte {
 	}
 
 	if height > 0 {
-		hint := time.NewTicker(time.Second * time.Duration(client.subCfg.WriteBlockSeconds))
+		hint := time.NewTicker(time.Second)
 		for lastHeight < height+client.subCfg.WaitMainBlockNum {
 			select {
 			case <-hint.C:
