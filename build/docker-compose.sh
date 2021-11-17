@@ -134,7 +134,7 @@ function base_init() {
     fi
 
     #autonomy config
-    sed -i $sedfix 's/^autonomyExec =.*/autonomyExec=""/g' chain33.toml
+    sed -i $sedfix 's/^autonomyExec=.*/autonomyExec=""/g' chain33.toml
 
 }
 
