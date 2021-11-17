@@ -1,7 +1,7 @@
 module github.com/33cn/plugin
 
 go 1.15
-replace github.com/33cn/chain33 => /home/pony/go/src/github.com/33cn/chain33
+
 require (
 	github.com/33cn/chain33 v1.65.6-0.20211025083411-82c4406c6701
 	github.com/BurntSushi/toml v0.3.1
