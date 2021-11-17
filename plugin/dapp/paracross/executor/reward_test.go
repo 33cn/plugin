@@ -87,7 +87,7 @@ func (suite *RewardTestSuite) TestRewardBindAddr() {
 	list = append(list, newer)
 	list = append(list, &new2)
 
-	recp, change, err := suite.action.rewardBindAddr(50000005, list, 1)
+	recp, change, err := suite.action.rewardBindAddrList(50000005, node, list, 1)
 	suite.Nil(err)
 	suite.Equal(int64(5), change)
 	suite.Equal(int32(types.ExecOk), recp.Ty)

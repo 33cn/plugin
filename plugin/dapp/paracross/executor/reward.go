@@ -40,14 +40,56 @@ func (a *action) rewardDeposit(rewards []*pt.ParaMinerReward, statusHeight int64
 }
 
 //奖励委托挖矿账户
-func (a *action) rewardBindAddr(coinReward int64, bindAddrList []*pt.ParaBindMinerInfo, statusHeight int64) (*types.Receipt, int64, error) {
-	if coinReward <= 0 {
+func (a *action) rewardBindAddr(coinReward int64, nodes []string, bindNodeList map[string][]*pt.ParaBindMinerInfo, statusHeight int64) (*types.Receipt, int64, error) {
+	if coinReward <= 0 || len(bindNodeList) <= 0 {
+		return nil, 0, nil
+	}
+
+	//分配给矿工的单位奖励
+	nodeUnit := coinReward / int64(len(bindNodeList))
+	var nodeUnitChange int64
+	receipt := &types.Receipt{Ty: types.ExecOk}
+	if nodeUnit > 0 {
+		//如果不等分转到发展基金
+		nodeUnitChange = coinReward % nodeUnit
+		//需要nodes遍历，不然用map会导致分叉
+		for _, node := range nodes {
+			//如果node没有bind，则奖励都分给node
+			if len(bindNodeList[node]) <= 0 {
+				rwd := &pt.ParaMinerReward{Addr: node, Amount: nodeUnit}
+				r, err := a.rewardDeposit([]*pt.ParaMinerReward{rwd}, statusHeight)
+				if err != nil {
+					return nil, 0, err
+				}
+				receipt = mergeReceipt(receipt, r)
+				continue
+			}
+			//如果node有binder，则奖励平均分给binder
+			r, change, err := a.rewardBindAddrList(nodeUnit, node, bindNodeList[node], statusHeight)
+			if err != nil {
+				clog.Error("paracross bind miner reward deposit err", "node", node)
+				return nil, 0, err
+			}
+			receipt = mergeReceipt(receipt, r)
+			nodeUnitChange += change
+		}
+	}
+	return receipt, nodeUnitChange, nil
+}
+
+func (a *action) rewardBindAddrList(coinReward int64, node string, bindAddrList []*pt.ParaBindMinerInfo, statusHeight int64) (*types.Receipt, int64, error) {
+	if coinReward <= 0 || len(bindAddrList) <= 0 {
 		return nil, 0, nil
 	}
 
 	var totalCoins int64
 	for _, addr := range bindAddrList {
 		totalCoins += addr.BindCoins
+	}
+
+	if totalCoins <= 0 {
+		clog.Info("paracross bind miner reward deposit total zero", "node", node)
+		return nil, 0, nil
 	}
 
 	//分配给矿工的单位奖励
@@ -89,7 +131,7 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	//超级节点地址
 	nodeAddrs := getSuperNodes(stat.Details, nodeStatus.BlockHash)
 	//委托地址
-	bindAddrs, err := a.getBindAddrs(nodeAddrs, nodeStatus.Height)
+	foundBinder, bindAddrs, err := a.getBindAddrs(nodeAddrs, nodeStatus.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -101,10 +143,10 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	}
 
 	//奖励超级节点
-	minderRewards := coinReward
+	superNodeRewards := coinReward
 	//如果有委托挖矿地址，则超级节点分baseReward部分，否则全部
-	if len(bindAddrs) > 0 {
-		minderRewards = coinBaseReward
+	if foundBinder {
+		superNodeRewards = coinBaseReward
 	}
 	receipt := &types.Receipt{Ty: types.ExecOk}
 
@@ -112,7 +154,7 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	for _, addr := range supervisionAddrs {
 		miners = append(miners, addr)
 	}
-	r, change, err := a.rewardSuperNode(minderRewards, miners, nodeStatus.Height)
+	r, change, err := a.rewardSuperNode(superNodeRewards, miners, nodeStatus.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +162,8 @@ func (a *action) reward(nodeStatus *pt.ParacrossNodeStatus, stat *pt.ParacrossHe
 	mergeReceipt(receipt, r)
 
 	//奖励委托挖矿地址
-	r, change, err = a.rewardBindAddr(coinReward-minderRewards, bindAddrs, nodeStatus.Height)
+	//为了统一处理，若无委托挖矿地址，则不影响当前版本，若部分节点有委托挖矿，则委托挖矿地址平分节点的奖励，无绑定挖矿的节点，再补上本来给委托挖矿的奖励
+	r, change, err = a.rewardBindAddr(coinReward-superNodeRewards, nodeAddrs, bindAddrs, nodeStatus.Height)
 	if err != nil {
 		return nil, err
 	}
