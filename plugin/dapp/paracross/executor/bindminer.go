@@ -14,50 +14,29 @@ const (
 	opModify = 3
 )
 
-//根据挖矿共识节点地址 过滤整体共识节点映射列表， 获取委托挖矿地址
-//func (a *action) getBindAddrs(nodes []string, statusHeight int64) ([]*pt.ParaBindMinerInfo, error) {
-//	nodesMap := make(map[string]bool)
-//	for _, n := range nodes {
-//		nodesMap[n] = true
-//	}
-//
-//	var newLists pt.ParaNodeBindList
-//	list, err := getBindNodeInfo(a.db)
-//	if err != nil {
-//		clog.Error("paracross getBindAddrs err", "height", statusHeight)
-//		return nil, err
-//	}
-//	//这样检索是按照list的映射顺序，不是按照nodes的顺序(需要循环嵌套)
-//	for _, m := range list.Miners {
-//		if nodesMap[m.SuperNode] {
-//			newLists.Miners = append(newLists.Miners, m)
-//		}
-//	}
-//
-//	return &newLists, nil
-//
-//}
-
 //从内存中获取bin状态的miner list
-func (a *action) getBindAddrs(nodes []string, statusHeight int64) ([]*pt.ParaBindMinerInfo, error) {
-	var minerList []*pt.ParaBindMinerInfo
+func (a *action) getBindAddrs(nodes []string, statusHeight int64) (bool, map[string][]*pt.ParaBindMinerInfo, error) {
+	nodeBinders := make(map[string][]*pt.ParaBindMinerInfo)
+	var foundBinder bool
 	for _, node := range nodes {
+		var minerList []*pt.ParaBindMinerInfo
 		list, err := getBindMinerList(a.db, node)
 		if err != nil {
 			clog.Error("paracross getBindAddrs err", "height", statusHeight, "err", err)
-			return nil, err
+			return false, nil, err
 		}
 		for _, l := range list {
 			//过滤所有bind状态的miner
 			if l.BindStatus == opBind {
+				foundBinder = true
 				minerList = append(minerList, l)
 			}
 		}
+		nodeBinders[node] = minerList
 	}
-	return minerList, nil
+	return foundBinder, nodeBinders, nil
 }
 
-//
 func mergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
 	if receipt2 != nil {
 		receipt1.KV = append(receipt1.KV, receipt2.KV...)
