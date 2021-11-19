@@ -544,7 +544,7 @@ function para_create_nodegroup_gamechain() {
 
     echo "=========== # game para chain approve node group ============="
     ##approve
-    txhash=$(${CLI} --paraName user.p.game. send para nodegroup approve -i "$id" -c 5 -k "${SUPER_KEY}")
+    txhash=$(${CLI} --paraName user.p.game. send para nodegroup approve -i "$id" -a "" -c 5 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI5}" "${txhash}"
 
@@ -718,7 +718,7 @@ function para_create_nodegroup() {
 
     echo "=========== # para chain approve node group ============="
     ##approve
-    txhash=$(${PARA_CLI} send para nodegroup approve -i "$id" -c 6 -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para nodegroup approve -i "$id" -a "" -c 6 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
@@ -758,7 +758,7 @@ function para_create_nodegroup() {
     fi
 
     ##approve
-    txhash=$(${PARA_CLI} send para nodegroup approve -i "$modifyid" -c 5 -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para nodegroup approve -i "$modifyid" -a "" -c 5 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
@@ -850,7 +850,7 @@ function para_create_supervision_nodegroup_quit() {
 
     echo "=========== # para chain approve supervision node group 28 ============="
     ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -a "" -c 6 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
@@ -865,7 +865,7 @@ function para_create_supervision_nodegroup_quit() {
     query_tx "${PARA_CLI}" "${txhash}"
 
     check_balance_1ka "$balancePre" -6
-    check_supervision_node_group_list 3 "$id"
+    check_supervision_node_group_list 3 "$txhash"
     check_supervision_node_addr_status 3 "$ADDR_28"
     check_supervision_node_addrs null
     echo "=========== # ${FUNCNAME} end ============="
@@ -885,7 +885,7 @@ function para_create_supervision_nodegroup_approve() {
 
     echo "=========== # para chain approve supervision node group 28 ============="
     ##approve
-    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -c 6 -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para supervision_node approve -i "$id" -a "" -c 6 -k "${SUPER_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
