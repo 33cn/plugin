@@ -13,9 +13,8 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 ### 环境
 
-
 ```
-需要安装golang1.13 or latest
+需要安装 golang1.13 or latest
 ```
 
 #### 支持make file的平台
@@ -32,7 +31,7 @@ make
 就可以完成编译安装
 
 ```
-注意：国内用户需要导入一下代理，才能获取依赖包，mod功能在Makefile中默认开启
+注意：国内用户需要导入一下代理，才能获取依赖包，mod 功能在 Makefile 中默认开启
 ```
 
 ## 运行
@@ -40,7 +39,7 @@ make
 ```
 ./chain33 -f chain33.toml
 ```
-注意，默认配置会连接chain33 测试网络
+注意，默认配置会连接 chain33 测试网络
 
 ## 注意:
 
@@ -55,11 +54,11 @@ make
 
 #### 准备阶段:
 
-* 首先点击 右上角的 fork 图标， 把chain33 fork 到自己的分支 比如我的是 vipwzw/plugin
+* 首先点击 右上角的 fork 图标， 把 chain33 fork 到自己的分支 比如我的是 vipwzw/plugin
 * `git clone https://github.com/vipwzw/plugin.git $GOPATH/src/github.com/33cn/plugin`
 
 ```
-注意：这里要 clone 到 $GOPATH/src/github.com/33cn/plugin, 否则go 包路径会找不到
+注意：这里要 clone 到 $GOPATH/src/github.com/33cn/plugin, 否则 go 包路径会找不到
 ```
 
 clone 完成后，执行
@@ -80,8 +79,8 @@ make push b=branch_dev_name m="hello world"
 如果m不设置，那么不会执行 git commit 的命令
 
 #### 测试代码
-类似plugin/dapp/relay,在cmd目录下编写自己插件的Makefile和build.sh
-在build目录下写testcase和相关的Dockerfile和docker-compose配置文件,
-testcase的规则参考plugin/dapp/testcase_compose_rule.md
+类似 plugin/dapp/relay, 在 cmd 目录下编写自己插件的 Makefile 和 build.sh
+在 build 目录下写 testcase 和相关的 Dockerfile 和 docker-compose 配置文件,
+testcase 的规则参考 plugin/dapp/testcase_compose_rule.md
 
-用户可以在travis自己工程里面设置自己plugin的DAPP变量，如DAPP设置为relay，则travis里面run relay的testcase
+用户可以在 travis 自己工程里面设置自己 plugin 的 DAPP 变量，如 DAPP 设置为 relay，则 travisf 里面 run relay 的 testcase
