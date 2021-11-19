@@ -91,6 +91,11 @@ Retry:
 		if err != nil {
 			return nil, err
 		}
+		if serialNum, ok := latestSerials.Load(ip); ok {
+			if isRevoke(serialNum.(string)) { //证书被吊销 拒绝接口请求
+				return nil, fmt.Errorf("interceptor: authentication interceptor faild Certificate SerialNumber %v revoked", serialNum.(string))
+			}
+		}
 		if pServer.node.nodeInfo.blacklist.Has(ip) {
 			return nil, fmt.Errorf("blacklist %v no authorized", ip)
 		}
@@ -116,6 +121,12 @@ Retry:
 		if err != nil {
 			return err
 		}
+		if serialNum, ok := latestSerials.Load(ip); ok {
+			if isRevoke(serialNum.(string)) { //证书被吊销 拒绝接口请求
+				return fmt.Errorf("interceptor: authentication Stream faild Certificate SerialNumber %v revoked", serialNum.(string))
+			}
+		}
+
 		if pServer.node.nodeInfo.blacklist.Has(ip) {
 			return fmt.Errorf("blacklist %v  no authorized", ip)
 		}
@@ -146,12 +157,12 @@ Retry:
 	opts = append(opts, msgRecvOp, msgSendOp, grpc.KeepaliveEnforcementPolicy(kaep), keepOp, maxStreams, StatsOp)
 	if node.nodeInfo.servCreds != nil {
 		opts = append(opts, grpc.Creds(node.nodeInfo.servCreds))
-
 	}
 
 	dl.server = grpc.NewServer(opts...)
 	dl.p2pserver = pServer
 	pb.RegisterP2PgserviceServer(dl.server, pServer)
+
 	return dl
 }
 

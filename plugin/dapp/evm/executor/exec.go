@@ -115,8 +115,18 @@ func (evm *EVMExecutor) innerExec(msg *common.Message, txHash []byte, index int,
 	log.Debug(logMsg, "caller address", msg.From().String(), "contract address", contractAddrStr, "exec name", execName, "alias name", msg.Alias(), "usedGas", usedGas, "return data", common.Bytes2Hex(ret))
 	curVer := evm.mStateDB.GetLastSnapshot()
 	if vmerr != nil {
-		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
+		var visiableOut []byte
+		for i := 0; i < len(ret); i++ {
+			//显示[32,126]之间的字符
+			if ret[i] < 32 || ret[i] > 126 {
+				continue
+			}
+			visiableOut = append(visiableOut, ret[i])
+		}
+		ret = visiableOut
 		vmerr = errors.New(fmt.Sprintf("%s,detail: %s", vmerr.Error(), string(ret)))
+		log.Error("evm contract exec error", "error info", vmerr, "ret", string(ret))
+
 		return receipt, vmerr
 	}
 
