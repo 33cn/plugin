@@ -39,7 +39,7 @@ make
 ```
 ./chain33 -f chain33.toml
 ```
-注意，默认配置会连接 chain33 测试网络
+注意，默认配置会连接 chain33 测试 SOLO 网络
 
 ## 注意:
 
