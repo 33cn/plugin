@@ -329,7 +329,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 		contract.SetCallCode(&addr, evm.StateDB.GetCodeHash(addr.String()), evm.StateDB.GetCode(addr.String()))
 
 		// 其它逻辑同StaticCall
-		ret, err = run(evm, contract, input, true)
+		ret, err = run(evm, contract, input, false)
 
 	}
 

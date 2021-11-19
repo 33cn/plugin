@@ -277,6 +277,13 @@ func gasDelegateCall(evm *EVM, contract *Contract, stack *Stack, mem *Memory, me
 	if err != nil {
 		return 0, err
 	}
+
+	evm.callGasTemp, err = callGas(true, contract.Gas, gas, stack.Back(0))
+	if err != nil {
+		return 0, err
+	}
+	log15.Info("gasDelegateCall", "gas", gas, "evm.callGasTemp", evm.callGasTemp)
+
 	var overflow bool
 	if gas, overflow = math.SafeAdd(gas, evm.callGasTemp); overflow {
 		return 0, ErrGasUintOverflow
