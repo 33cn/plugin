@@ -19,13 +19,12 @@ var (
 	// ForkCommitTx main chain support paracross commit tx
 	ForkCommitTx = "ForkParacrossCommitTx"
 	// MainForkParacrossCommitTx 平行链配置项对应主链的ForkCommitTx 高度
+	// 同一个fork，同一份代码在主链和平行链需要执行高度一致，需要平行链配置主链fork高度
 	MainForkParacrossCommitTx = "mainForkParacrossCommitTx"
 	// ForkLoopCheckCommitTxDone 循环检查共识交易done的fork
 	ForkLoopCheckCommitTxDone = "ForkLoopCheckCommitTxDone"
 	// MainLoopCheckCommitTxDoneForkHeight 平行链的配置项，对应主链的ForkLoopCheckCommitTxDone高度
 	MainLoopCheckCommitTxDoneForkHeight = "mainLoopCheckCommitTxDoneForkHeight"
-
-	//MainForkParaSupervision = "mainForkParaSupervision"
 
 	// ForkParaAssetTransferRbk 平行链资产转移平行链失败主链回滚
 	ForkParaAssetTransferRbk = "ForkParaAssetTransferRbk"
@@ -128,7 +127,7 @@ func (p *ParacrossType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogParaStageGroupUpdate:                {Ty: reflect.TypeOf(ReceiptSelfConsStagesUpdate{}), Name: "LogParaSelfConfStagesUpdate"},
 		TyLogParaBindMinerAddr:                   {Ty: reflect.TypeOf(ReceiptParaBindMinerInfo{}), Name: "TyLogParaBindMinerAddrUpdate"},
 		TyLogParaBindMinerNode:                   {Ty: reflect.TypeOf(ReceiptParaNodeBindListUpdate{}), Name: "TyLogParaBindNodeListUpdate"},
-		TyLogParaSupervisionNodeConfig:           {Ty: reflect.TypeOf(ReceiptParaNodeConfig{}), Name: "LogParaSupervisionNodeConfig"},
+		TyLogParaSupervisionNodeConfig:           {Ty: reflect.TypeOf(ReceiptParaNodeGroupConfig{}), Name: "LogParaSupervisionNodeConfig"},
 		TyLogParaSupervisionNodeGroupAddrsUpdate: {Ty: reflect.TypeOf(types.ReceiptConfig{}), Name: "LogParaSupervisionNodeGroupAddrsUpdate"},
 		TyLogParaSupervisionNodeStatusUpdate:     {Ty: reflect.TypeOf(ReceiptParaNodeAddrStatUpdate{}), Name: "LogParaSupervisionNodeStatusUpdate"},
 	}
