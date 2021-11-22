@@ -188,7 +188,7 @@ func (evm *EVMExecutor) Query_GetNonce(in *evmtypes.EvmGetNonceReq) (types.Messa
 
 func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types.Message, error) {
 	evm.CheckInit()
-	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, true)
+	_, packData, err := evmAbi.Pack(in.Parameter, in.Abi, false)
 	if nil != err {
 		return nil, errors.New("Failed to do evmAbi.Pack" + err.Error())
 	}
@@ -199,17 +199,12 @@ func (evm *EVMExecutor) Query_GetPackData(in *evmtypes.EvmGetPackDataReq) (types
 
 func (evm *EVMExecutor) Query_GetUnpackData(in *evmtypes.EvmGetUnpackDataReq) (types.Message, error) {
 	evm.CheckInit()
-	methodName, _, err := evmAbi.Pack(in.Parameter, in.Abi, true)
-	if nil != err {
-		return nil, errors.New("Failed to do evmAbi.Pack" + err.Error())
-	}
-
 	data, err := common.FromHex(in.Data)
 	if nil != err {
 		return nil, errors.New("common.FromHex failed due to:" + err.Error())
 	}
 
-	outputs, err := evmAbi.Unpack(data, methodName, in.Abi)
+	outputs, err := evmAbi.Unpack(data, in.MethodName, in.Abi)
 	if err != nil {
 		return nil, errors.New("unpack evm return error" + err.Error())
 	}
