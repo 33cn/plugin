@@ -5,7 +5,10 @@
 package gossip
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 
 	"google.golang.org/grpc/credentials"
@@ -102,6 +105,7 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 		pubsub:     pubsub.NewPubSub(10200),
 		p2pMgr:     mgr,
 	}
+	//node.tls = &Tls{serials:make(map[*big.Int]*certInfo)}
 	node.listenPort = 13802
 	if mcfg.Port != 0 && mcfg.Port <= 65535 && mcfg.Port > 1024 {
 		node.listenPort = int(mcfg.Port)
@@ -126,18 +130,55 @@ func NewNode(mgr *p2p.Manager, mcfg *subConfig) (*Node, error) {
 	node.chainCfg = cfg
 	if mcfg.EnableTls { //读取证书，初始化tls客户端
 		var err error
-		node.nodeInfo.cliCreds, err = credentials.NewClientTLSFromFile(cfg.GetModuleConfig().RPC.CertFile, "")
-		if err != nil {
-			panic(err)
+		if mcfg.CaCert == "" {
+			//不需要CA
+			node.nodeInfo.cliCreds, err = credentials.NewClientTLSFromFile(mcfg.CertFile, "")
+			if err != nil {
+				panic(fmt.Sprintf("NewClientTLSFromFile panic:%v", err.Error()))
+			}
+			node.nodeInfo.servCreds, err = credentials.NewServerTLSFromFile(mcfg.CertFile, mcfg.KeyFile)
+			if err != nil {
+				panic(fmt.Sprintf("NewServerTLSFromFile panic:%v", err.Error()))
+			}
+		} else {
+			//CA
+			cert, err := tls.LoadX509KeyPair(mcfg.CertFile, mcfg.KeyFile)
+			if err != nil {
+				panic(fmt.Sprintf("LoadX509KeyPair panic:%v", err.Error()))
+			}
+			certPool := x509.NewCertPool()
+			//添加CA校验
+			//把CA证书读进去，动态更新CA中的吊销列表
+			ca, err := ioutil.ReadFile(mcfg.CaCert)
+			if err != nil {
+				panic(fmt.Sprintf("readFile ca panic:%v", err.Error()))
+			}
+
+			if ok := certPool.AppendCertsFromPEM(ca); !ok {
+				panic("certPool.AppendCertsFromPEM err")
+			}
+
+			node.nodeInfo.servCreds = newTLS(&tls.Config{
+				Certificates: []tls.Certificate{cert},
+				ClientAuth:   tls.RequireAndVerifyClientCert, //校验客户端证书,用ca.pem校验
+				ClientCAs:    certPool,
+			})
+
+			// 构建基于 TLS 的 TransportCredentials 选项
+			// 在 Client 请求 Server 端时，Client 端会使用根证书和 ServerName 去对 Server 端进行校验
+			node.nodeInfo.cliCreds = newTLS(&tls.Config{
+				Certificates: []tls.Certificate{cert},
+				ServerName:   "",
+				RootCAs:      certPool,
+			})
+			node.nodeInfo.caServer = mcfg.CaServer
 		}
-		node.nodeInfo.servCreds, err = credentials.NewServerTLSFromFile(cfg.GetModuleConfig().RPC.CertFile, cfg.GetModuleConfig().RPC.KeyFile)
-		if err != nil {
-			panic(err)
-		}
+
 	}
 	if mcfg.ServerStart {
 		node.server = newListener(protocol, node)
 	}
+
 	return node, nil
 }
 
@@ -171,7 +212,7 @@ func (n *Node) doNat() {
 	}
 	testExaddr := fmt.Sprintf("%v:%v", n.nodeInfo.GetExternalAddr().IP.String(), n.listenPort)
 	log.Info("TestNetAddr", "testExaddr", testExaddr)
-	if len(P2pComm.AddrRouteble([]string{testExaddr}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds)) != 0 {
+	if len(P2pComm.AddrRouteble([]string{testExaddr}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds, n.nodeInfo.blacklist)) != 0 {
 		log.Info("node outside")
 		n.nodeInfo.SetNetSide(true)
 		if netexaddr, err := NewNetAddressString(testExaddr); err == nil {
@@ -374,6 +415,7 @@ func (n *Node) monitor() {
 	go n.monitorFilter()
 	go n.monitorPeers()
 	go n.nodeReBalance()
+	go n.monitorCerts()
 }
 
 func (n *Node) needMore() bool {
@@ -454,7 +496,7 @@ func (n *Node) natMapPort() {
 		time.Sleep(time.Second)
 	}
 	var err error
-	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds)) != 0 { //判断能否连通要映射的端口
+	if len(P2pComm.AddrRouteble([]string{n.nodeInfo.GetExternalAddr().String()}, n.nodeInfo.channelVersion, n.nodeInfo.cliCreds, n.nodeInfo.blacklist)) != 0 { //判断能否连通要映射的端口
 		log.Info("natMapPort", "addr", "routeble")
 		p2pcli := NewNormalP2PCli() //检查要映射的IP地址是否已经被映射成功
 		ok := p2pcli.CheckSelf(n.nodeInfo.GetExternalAddr().String(), n.nodeInfo)

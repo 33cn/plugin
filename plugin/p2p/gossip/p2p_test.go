@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/33cn/chain33/common/pubsub"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/33cn/chain33/p2p"
@@ -372,7 +373,7 @@ func testGrpcStreamConns(t *testing.T, p2p *P2p) {
 
 func testP2pComm(t *testing.T, p2p *P2p) {
 
-	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION), nil)
+	addrs := P2pComm.AddrRouteble([]string{"localhost:53802"}, utils.CalcChannelVersion(testChannel, VERSION), nil, nil)
 	t.Log(addrs)
 	i32 := P2pComm.BytesToInt32([]byte{0xff})
 	t.Log(i32)
@@ -623,5 +624,104 @@ RObdAoGBALP9HK7KuX7xl0cKBzOiXqnAyoMUfxvO30CsMI3DS0SrPc1p95OHswdu
 	conn, err = grpc.Dial(netAddr.String(), grpc.WithInsecure())
 	assert.Nil(t, err)
 	assert.NotNil(t, conn)
+
+}
+
+func TestCaCreds(t *testing.T) {
+
+	ca := `-----BEGIN CERTIFICATE-----
+MIIDKDCCAhCgAwIBAgIQMKlTasMav0IcCFxNKBlKlzANBgkqhkiG9w0BAQsFADAS
+MRAwDgYDVQQKEwdBY21lIENvMB4XDTIxMTAxMTA3MzkwN1oXDTIyMTAxMTA3Mzkw
+N1owEjEQMA4GA1UEChMHQWNtZSBDbzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCC
+AQoCggEBAOYK2OA6jsIWGK1faMZHdCMGKcc2SqErBcU/Sqis455B+9DCfZjesnut
+5YgopQmvPKHF4ZROAJYtaLaodnEK7uMH2nYDU8Cy6+zXHG0c4FCnZxTiNlplYlrP
+qSeDX/Ms2b1XmHAl8i289+4BbxWIj6JbMwPX7iQ68o4xo/D/FG+yfRs3xFEdwB6p
+tC2TUNMBzaY/f1e43fC71AFd3xk5iUWRr2FPCqdQHpi5tHRYZ3SMxc630B/ISaDg
+/DMCYzUdU7XfgehpeUrfVszMrIggwN3SM6bKGI7Zkt+mHMngAT5v0VdI3W8c6lI7
+WFEsPq2n55XXDfzt9enbGQEIsv7mZC8CAwEAAaN6MHgwDgYDVR0PAQH/BAQDAgKk
+MBMGA1UdJQQMMAoGCCsGAQUFBwMBMA8GA1UdEwEB/wQFMAMBAf8wHQYDVR0OBBYE
+FOfRwVXYMI6PvtWOxoLVI5OZCC4NMCEGA1UdEQQaMBiHBMCoAFiHBMCoAKSHBMCo
+AHmHBMCoAKIwDQYJKoZIhvcNAQELBQADggEBAFGTcaltmP0pTPSZD/bvfnO2fUDp
+OPG5ka0zeg6wNtUNQK43CACHSXtdlKtuaqZAJ1c8S/Ocsac9LJsXnI8NX75uCxf4
+sdaEJN7mEN4lrqqrfihqbdeuDysbwUcoFjg7dzYIGZtMm2BR4kMaSqOHHWHoiUup
+ylt2x864WHRvfHx53L8l2u3ZgnxHNZ+rk4VODGcpsnun1poHmfW+xJhkhc9U/lGw
+GctxUtk6NUse9nZNxZG6ieSOD2+o5NSwUXliksPXzPkGQSx7VVXfG+4szBeXD+9x
+mtQaeUpsIJdxsGcc0Zmu6v5XrBZ5xsZbCt8nMVA6rsGPYhczSXuBnVY6zu8=
+-----END CERTIFICATE-----`
+
+	cert := `-----BEGIN CERTIFICATE-----
+MIIBzTCCAXSgAwIBAgIRAKA1R7bK7YPXBjHgoYqi+J0wCgYIKoZIzj0EAwIwQzEL
+MAkGA1UEBhMCQ04xCzAJBgNVBAgTAlpKMQswCQYDVQQHEwJIWjEaMBgGA1UEAxMR
+Y2hhaW4zMy1jYS1zZXJ2ZXIwHhcNMjExMDIyMDgwMTUyWhcNMjIwMTMwMDgwMTUy
+WjBDMQswCQYDVQQGEwJDTjELMAkGA1UECBMCWkoxCzAJBgNVBAcTAkhaMRowGAYD
+VQQDExFjaGFpbjMzLWNhLXNlcnZlcjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA
+BMJSLzYghkU4SpHvguL2pzwzg8GOcBG5n4QX10e7ScQFx1kUmcB0xZ/oyFMIdFBH
+3BJ/0zwInlNAo0ekgUtRYlSjSTBHMA4GA1UdDwEB/wQEAwIHgDAMBgNVHRMBAf8E
+AjAAMCcGA1UdEQQgMB6HBMCoAFiHBMCoAHmHBMCoAKKHBMCoAKSHBMCoADswCgYI
+KoZIzj0EAwIDRwAwRAIgBulQxbARTa9q6nA2ypZ5mX20dTactlPmLamI2xvaTU4C
+ICQov1WBMv+P/pEL/CR8yKaVqggLa0B4KzDMji5u0zXd
+-----END CERTIFICATE-----`
+
+	key := `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgBabS0GvOURbOoP+u
+mErJlKF2YVZfEwb2rjObA1q/hxqhRANCAATCUi82IIZFOEqR74Li9qc8M4PBjnAR
+uZ+EF9dHu0nEBcdZFJnAdMWf6MhTCHRQR9wSf9M8CJ5TQKNHpIFLUWJU
+-----END PRIVATE KEY-----`
+
+	certificate, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	assert.Nil(t, err)
+	cp := x509.NewCertPool()
+	var node Node
+	node.nodeInfo = &NodeInfo{}
+	certPool := x509.NewCertPool()
+	if ok := certPool.AppendCertsFromPEM([]byte(ca)); !ok {
+		assert.True(t, ok)
+	}
+
+	servCreds := newTLS(&tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		ClientAuth:   tls.RequireAndVerifyClientCert, //校验客户端证书,用ca.pem校验
+		ClientCAs:    certPool,
+	})
+	cliCreds := newTLS(&tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		ServerName:   "",
+		RootCAs:      certPool,
+	})
+
+	node.listenPort = 13332
+	node.nodeInfo.servCreds = servCreds
+	node.pubsub = pubsub.NewPubSub(10200)
+	l := newListener("tcp", &node)
+	assert.NotNil(t, l)
+	go l.Start()
+	defer l.Close()
+	netAddr, err := NewNetAddressString(fmt.Sprintf("127.0.0.1:%v", node.listenPort))
+	assert.Nil(t, err)
+
+	conn, err := grpc.Dial(netAddr.String(), grpc.WithTransportCredentials(cliCreds))
+	assert.Nil(t, err)
+	assert.NotNil(t, conn)
+	conn.Close()
+
+	conn, err = grpc.Dial(netAddr.String())
+	assert.NotNil(t, err)
+	t.Log("without creds", err)
+	assert.Nil(t, conn)
+	conn, err = grpc.Dial(netAddr.String(), grpc.WithInsecure())
+	assert.Nil(t, err)
+	assert.NotNil(t, conn)
+
+	_, err = netAddr.DialTimeout(0, cliCreds, nil)
+	assert.NotNil(t, err)
+	t.Log(err.Error())
+
+	cp = x509.NewCertPool()
+	if !cp.AppendCertsFromPEM([]byte(cert)) {
+		return
+	}
+	cliCreds = credentials.NewClientTLSFromCert(cp, "")
+	_, err = netAddr.DialTimeout(0, cliCreds, nil)
+	assert.NotNil(t, err)
 
 }

@@ -54,6 +54,7 @@ function evm_callQuery() {
     local parameter=$1
     local callerAddr=$2
     local resok=$3
+    local methodName=$4
 
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetPackData","payload":{"abi":"'${erc20_abi}'","parameter":"'${parameter}'"}}]}'
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "GetPackData" ".result.packData"
@@ -63,7 +64,7 @@ function evm_callQuery() {
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "Query" ".result.rawData"
     echo "$RETURN_RESP"
 
-    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetUnpackData","payload":{"abi":"'${erc20_abi}'","parameter":"'${parameter}'","data":"'${RETURN_RESP}'"}}]}'
+    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetUnpackData","payload":{"abi":"'${erc20_abi}'","methodName":"'${methodName}'","data":"'${RETURN_RESP}'"}}]}'
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "GetUnpackData" ".result.unpackData[0]"
     echo "$RETURN_RESP"
 
@@ -77,7 +78,7 @@ function evm_addressCheck() {
     resok='(.result.contract == true) and (.result.contractAddr == "'"$evm_contractAddr"'")'
     chain33_Http "$req" "${MAIN_HTTP}" "${resok}" "CheckAddrExists"
 
-    evm_callQuery "symbol()" "${evm_creatorAddr}" "zbc"
+    evm_callQuery "symbol()" "${evm_creatorAddr}" "zbc" "symbol"
 }
 
 function evm_transfer() {
@@ -90,8 +91,8 @@ function evm_transfer() {
     tx=$(curl -ksd '{"method":"evm.CreateCallTx","params":[{"abi":"'"${erc20_abi}"'", "fee":'${gas}', "note": "evm transfer rpc test", "parameter": "transfer('${evm_transferAddr}', 20)", "expire":"'${expire}'", "contractAddr":"'"${evm_contractAddr}"'", "paraName":"'"${paraName}"'"}]}' "${MAIN_HTTP}" | jq -r ".result")
     chain33_SignAndSendTx "${tx}" "${evm_creatorAddr_key}" "$MAIN_HTTP" "${expire}" "${gas}"
 
-    evm_callQuery "balanceOf(${evm_creatorAddr})" "${evm_creatorAddr}" "3280"
-    evm_callQuery "balanceOf(${evm_transferAddr})" "${evm_transferAddr}" "20"
+    evm_callQuery "balanceOf(${evm_creatorAddr})" "${evm_creatorAddr}" "3280" "balanceOf"
+    evm_callQuery "balanceOf(${evm_transferAddr})" "${evm_transferAddr}" "20" "balanceOf"
 }
 
 # 查询交易的执行结果
