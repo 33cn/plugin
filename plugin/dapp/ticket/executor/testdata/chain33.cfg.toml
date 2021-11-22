@@ -236,6 +236,7 @@ ForkTokenCheck= 0
 [fork.sub.manage]
 Enable=0
 ForkManageExec=0
+ForkManageAutonomyEnable=-1
 
 [fork.sub.valnode]
 Enable=0
@@ -255,6 +256,7 @@ ForkParaAssetTransferRbk=0
 ForkParaFullMinerHeight=0
 ForkParaSupervision=0
 ForkParaRootHash=0
-
+#nodegroup approve需要经过autonomy board成员审批,平行链不开启
+ForkParaAutonomySuperGroup=-1
 [fork.sub.qbftNode]
 Enable=0
