@@ -58,7 +58,7 @@ func (Comm) ParaseNetAddr(addr string) (string, int64, error) {
 }
 
 // AddrRouteble address router ,return enbale address
-func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials) []string {
+func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials, blist *BlackList) []string {
 	var enableAddrs []string
 
 	for _, addr := range addrs {
@@ -67,7 +67,7 @@ func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.Transp
 			log.Error("AddrRouteble", "NewNetAddressString", err.Error())
 			continue
 		}
-		conn, err := netaddr.DialTimeout(version, creds)
+		conn, err := netaddr.DialTimeout(version, creds, blist)
 		if err != nil {
 			//log.Error("AddrRouteble", "DialTimeout", err.Error())
 			continue
@@ -110,15 +110,18 @@ func (c Comm) GetLocalAddr() string {
 
 func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node) (*Peer, error) {
 	log.Debug("dialPeerWithAddress")
-	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds)
+	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds, node.nodeInfo.blacklist)
 
 	if err != nil {
+		log.Error("dialPeerWithAddress", "DialTimeoutErr", err.Error())
 		return nil, err
 	}
 
 	peer, err := c.newPeerFromConn(conn, addr, node)
 	if err != nil {
+		log.Error("dialPeerWithAddress", "newPeerFromConn", err)
 		err = conn.Close()
+
 		return nil, err
 	}
 	peer.SetAddr(addr)
@@ -151,7 +154,6 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 		peer.Close()
 		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
 	}
-
 	node.peerStore.Store(addr.String(), resp.UserAgent)
 	peer.SetPeerName(resp.UserAgent)
 	return peer, nil

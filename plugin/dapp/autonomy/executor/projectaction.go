@@ -31,6 +31,13 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 		return nil, auty.ErrSetBlockHeight
 	}
 
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
+	}
+
 	if prob.Amount <= 0 {
 		err := types.ErrInvalidParam
 		alog.Error("propProject amount invaild", "amount", prob.Amount, "error", err)
@@ -253,10 +260,18 @@ func (a *action) votePropProject(voteProb *auty.VoteProposalProject) (*types.Rec
 		kv = append(kv, receipt.KV...)
 	}
 
-	if cur.BoardVoteRes.TotalVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.BoardVoteRes.Pass = true
-		cur.PropProject.RealEndBlockHeight = a.height
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.BoardVoteRes.TotalVotes != 0 &&
+			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.BoardVoteRes.Pass = true
+			cur.PropProject.RealEndBlockHeight = a.height
+		}
+	} else {
+		if cur.BoardVoteRes.TotalVotes != 0 &&
+			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.BoardVoteRes.Pass = true
+			cur.PropProject.RealEndBlockHeight = a.height
+		}
 	}
 
 	key := propProjectID(voteProb.ProposalID)
@@ -447,12 +462,20 @@ func (a *action) tmintPropProject(tmintProb *auty.TerminateProposalProject) (*ty
 			"in board vote period can not terminate", tmintProb.ProposalID, "err", err)
 		return nil, err
 	}
-
-	if cur.BoardVoteRes.TotalVotes != 0 &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.BoardVoteRes.Pass = true
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.BoardVoteRes.TotalVotes != 0 &&
+			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.BoardVoteRes.Pass = true
+		} else {
+			cur.BoardVoteRes.Pass = false
+		}
 	} else {
-		cur.BoardVoteRes.Pass = false
+		if cur.BoardVoteRes.TotalVotes != 0 &&
+			float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.BoardVoteRes.Pass = true
+		} else {
+			cur.BoardVoteRes.Pass = false
+		}
 	}
 
 	if cur.PubVote.Publicity {

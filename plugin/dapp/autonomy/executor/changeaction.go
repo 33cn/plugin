@@ -27,6 +27,13 @@ func (a *action) propChange(prob *auty.ProposalChange) (*types.Receipt, error) {
 		return nil, auty.ErrSetBlockHeight
 	}
 
+	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
+		}
+	}
+
 	act, err := a.getActiveBoard()
 	if err != nil {
 		alog.Error("propChange ", "addr", a.fromaddr, "execaddr", a.execaddr, "getActiveBoard failed", err)
@@ -248,10 +255,18 @@ func (a *action) votePropChange(voteProb *auty.VoteProposalChange) (*types.Recei
 		kv = append(kv, receipt.KV...)
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
-		cur.PropChange.RealEndBlockHeight = a.height
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes-cur.VoteResult.QuitVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropChange.RealEndBlockHeight = a.height
+		}
+	} else {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+			cur.PropChange.RealEndBlockHeight = a.height
+		}
 	}
 
 	key := propChangeID(voteProb.ProposalID)
@@ -306,12 +321,23 @@ func (a *action) tmintPropChange(tmintProb *auty.TerminateProposalChange) (*type
 		return nil, err
 	}
 
-	if cur.VoteResult.TotalVotes != 0 &&
-		float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
-		cur.VoteResult.Pass = true
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes-cur.VoteResult.QuitVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	} else {
-		cur.VoteResult.Pass = false
+		if cur.VoteResult.TotalVotes != 0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.TotalVotes) > float32(cur.CurRule.BoardApproveRatio)/100.0 {
+			cur.VoteResult.Pass = true
+		} else {
+			cur.VoteResult.Pass = false
+		}
 	}
+
 	cur.PropChange.RealEndBlockHeight = a.height
 
 	var logs []*types.ReceiptLog
