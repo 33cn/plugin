@@ -269,10 +269,8 @@ banks = [
     "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
 ]
 coins = [
-    {name = "BTY",  rate = 100000, minFee = 1000000},
-    {name = "USDT", rate = 100000, minFee = 1000000},
-    {name = "bty",  rate = 100000, minFee = 1000000},
-    {name = "CCNY",  rate = 100000, minFee = 1000000},
+    {name = "bty",  rate = 100000, minFee = 0},
+    {name = "CCNY",  rate = 100000, minFee = 0},
 ]
 
 #[mver.exec.sub.exchange.ForkParamV1]
@@ -280,8 +278,8 @@ coins = [
 #    "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
 #]
 #coins = [
-#    {name = "BTY",  rate = 100000, minFee = 1000000},
-#    {name = "USDT", rate = 100000, minFee = 1000000},
+#    {name = "bty",  rate = 100000, minFee = 1000000},
+#    {name = "CCNY", rate = 100000, minFee = 1000000},
 #]
 
 
