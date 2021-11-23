@@ -1,3 +1,6 @@
+package types
+
+var cfgstring = `
 # Title为local，表示此配置文件为本地单节点的配置。此时本地节点所在的链上只有这一个节点，共识模块一般采用solo模式。
 Title="local"
 TestNet=true
@@ -46,7 +49,6 @@ isRecordBlockSequence=true
 isParaChain=false
 # 是否开启交易快速查询索引
 enableTxQuickIndex=false
-
 [p2p]
 types=["dht"]
 msgCacheSize=10240
@@ -54,7 +56,6 @@ driver="leveldb"
 dbPath="datadir/addrbook"
 dbCache=4
 grpcLogFile="grpc33.log"
-
 [rpc]
 # jrpc绑定地址
 jrpcBindAddr="localhost:8801"
@@ -76,7 +77,6 @@ enableTLS=false
 certFile="cert.pem"
 # 私钥文件
 keyFile="key.pem"
-
 [mempool]
 # mempool队列名称，可配，timeline，score，price
 name="timeline"
@@ -87,7 +87,6 @@ minTxFee=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 # timeline 是默认的先来先进的按时间排序
-
 [mempool.sub.timeline]
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
@@ -96,7 +95,6 @@ minTxFee=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
 # score是分数队列模式(分数=常量a*手续费/交易字节数-常量b*时间*定量c，按分数排队，高的优先，常量a，b和定量c可配置)，按分数来排序
-
 [mempool.sub.score]
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
@@ -111,7 +109,6 @@ priceConstant=1544
 # 常量比例
 pricePower=1
 # price是价格队列模式(价格=手续费/交易字节数，价格高者优先，同价则时间早优先)
-
 [mempool.sub.price]
 # mempool缓存容量大小，默认10240
 poolCacheSize=10240
@@ -119,7 +116,6 @@ poolCacheSize=10240
 minTxFee=100000
 # 每个账户在mempool中得最大交易数量，默认100
 maxTxNumPerAccount=10000
-
 [consensus]
 #共识名,可选项有solo,ticket,raft,tendermint,para
 name="solo"
@@ -128,8 +124,7 @@ minerstart=true
 #创世区块时间(UTC时间)
 genesisBlockTime=1514533394
 #创世交易地址
-genesis="1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs"
-
+genesis="1McRuWgLN7daKTFfZyibb5eK769NVgNH22"
 [mver.consensus]
 #基金账户地址
 fundKeyAddr = "1BQXS6TxaYYG5mADaWij4AxhZZUTpw95a5"
@@ -156,15 +151,13 @@ targetTimespan = 2304
 #每个区块打包的目标时间
 targetTimePerBlock = 16
 # 仅保留这一项，其他consensus相关的配置全部删除
-
 [consensus.sub.solo]
 #创世交易地址
-genesis="1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs"
+genesis="1McRuWgLN7daKTFfZyibb5eK769NVgNH22"
 #创世区块时间(UTC时间)
 genesisBlockTime=1514533394
 #获取交易间隔时长,单位纳秒
 waitTxMs=10
-
 [store]
 # 数据存储格式名称，目前支持mavl,kvdb,kvmvcc,mpt
 name="mavl"
@@ -176,7 +169,6 @@ dbPath="datadir/mavltree"
 dbCache=128
 # 数据库版本
 localdbVersion="1.0.0"
-
 [store.sub.mavl]
 # 是否使能mavl加前缀
 enableMavlPrefix=false
@@ -186,7 +178,6 @@ enableMVCC=false
 enableMavlPrune=false
 # 裁剪高度间隔
 pruneHeight=10000
-
 [wallet]
 # 交易发送最低手续费，单位0.00000001BTY(1e-8),默认100000，即0.001BTY
 minFee=100000
@@ -197,14 +188,12 @@ dbPath="wallet"
 # walletdb缓存大小
 dbCache=16
 # 钱包发送交易签名方式
-
 signType="secp256k1"
 [wallet.sub.ticket]
 # 是否关闭ticket自动挖矿，默认false
 minerdisable=false
 # 允许购买ticket挖矿的白名单地址，默认配置“*”，允许所有地址购买
 minerwhitelist=["*"]
-
 [exec]
 #执行器执行是否免费
 isFree=false
@@ -215,20 +204,18 @@ enableStat=false
 #是否开启MVCC插件
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
-
 [exec.sub.token]
 #是否保存token交易信息
 saveTokenTxList=true
 #token审批人地址
 tokenApprs = [
-    "1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs",
+    "1McRuWgLN7daKTFfZyibb5eK769NVgNH22",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK",
     "1LY8GFia5EiyoTodMLfkB5PHNNpXRqxhyB",
     "1GCzJDS6HbgTQ2emade7mEJGGWFfA15pS9",
     "1JYB8sxi4He5pZWHCd3Zi2nypQ4JMB6AxN",
     "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
 ]
-
 [exec.sub.cert]
 # 是否启用证书验证和签名
 enable=false
@@ -236,25 +223,21 @@ enable=false
 cryptoPath="authdir/crypto"
 # 带证书签名类型，支持"auth_ecdsa", "auth_sm2"
 signType="auth_ecdsa"
-
 [exec.sub.relay]
 #relay执行器保存BTC头执行权限地址
-genesis="1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs"
-
+genesis="1McRuWgLN7daKTFfZyibb5eK769NVgNH22"
 [exec.sub.manage]
 #manage执行器超级管理员地址
 superManager=[
-    "1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs",
+    "1McRuWgLN7daKTFfZyibb5eK769NVgNH22",
     "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv",
     "1Q8hGLfoGe63efeWa8fJ4Pnukhkngt6poK"
 ]
-
 [metrics]
 #是否使能发送metrics数据的发送
 enableMetrics=false
 #数据保存模式
 dataEmitMode="influxdb"
-
 [metrics.sub.influxdb]
 #以纳秒为单位的发送间隔
 duration=1000000000
@@ -263,26 +246,30 @@ database="chain33metrics"
 username=""
 password=""
 namespace=""
-
 [mver.exec.sub.exchange]
 banks = [
     "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
 ]
 coins = [
-    {name = "bty",  rate = 100000, minFee = 0},
-    {name = "CCNY",  rate = 100000, minFee = 0},
+    {name = "BTY",  rate = 100000, minFee = 1000000},
+    {name = "USDT", rate = 100000, minFee = 1000000},
+    {name = "bty",  rate = 100000, minFee = 1000000},
+    {name = "CCNY",  rate = 100000, minFee = 1000000},
 ]
-
 #[mver.exec.sub.exchange.ForkParamV1]
 #banks = [
 #    "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
 #]
 #coins = [
-#    {name = "bty",  rate = 100000, minFee = 1000000},
-#    {name = "CCNY", rate = 100000, minFee = 1000000},
+#    {name = "BTY",  rate = 100000, minFee = 1000000},
+#    {name = "USDT", rate = 100000, minFee = 1000000},
 #]
-
-
 [fork.sub.exchange]
 Enable=0
 #ForkParamV1=1
+`
+
+//GetDefaultCfgstring ...
+func GetDefaultCfgstring() string {
+	return cfgstring
+}
