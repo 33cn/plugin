@@ -432,16 +432,5 @@ coins = [
     { name = "USDT", rate = 100000, minFee = 0 },
 ]
 
-#exchange合约相关配置更新，命名规则ForkParamV+数字
-[mver.exec.sub.exchange.ForkParamV1]
-banks = ["1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"]
-coins = [
-    { name = "bty", rate = 100000, minFee = 0 },
-    { name = "ETH", rate = 100000, minFee = 0 },
-    { name = "USDT", rate = 100000, minFee = 0 },
-]
-
 [fork.sub.exchange]
 Enable = 0
-#ForkParamV1生效高度
-ForkParamV1 = 5
