@@ -79,3 +79,12 @@ var (
 func propChangeID(txHash string) []byte {
 	return []byte(fmt.Sprintf("%s%s", changePrefix, txHash))
 }
+
+var (
+	//item
+	itemPrefix = idPrefix + "item-"
+)
+
+func propItemID(txHash string) []byte {
+	return []byte(fmt.Sprintf("%s%s", itemPrefix, txHash))
+}

@@ -15,6 +15,8 @@ var name string
 var (
 	//ForkAutonomyDelRule fork for delete boards member rules
 	ForkAutonomyDelRule = "ForkAutonomyDelRule"
+	//ForkAutonomyEnableItem fork for add autonomy item support
+	ForkAutonomyEnableItem = "ForkAutonomyEnableItem"
 )
 
 func init() {
@@ -28,6 +30,7 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(AutonomyX, "Enable", 0)
 	cfg.RegisterDappFork(AutonomyX, ForkAutonomyDelRule, 9500000)
+	cfg.RegisterDappFork(AutonomyX, ForkAutonomyEnableItem, 10000000)
 }
 
 //InitExecutor ...
@@ -78,6 +81,11 @@ func (a *AutonomyType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogRvkPropChange:   {Ty: reflect.TypeOf(ReceiptProposalChange{}), Name: "LogRvkPropChange"},
 		TyLogVotePropChange:  {Ty: reflect.TypeOf(ReceiptProposalChange{}), Name: "LogVotePropChange"},
 		TyLogTmintPropChange: {Ty: reflect.TypeOf(ReceiptProposalChange{}), Name: "LogTmintPropChange"},
+
+		TyLogPropItem:      {Ty: reflect.TypeOf(ReceiptProposalItem{}), Name: "LogPropItem"},
+		TyLogRvkPropItem:   {Ty: reflect.TypeOf(ReceiptProposalItem{}), Name: "LogRvkPropItem"},
+		TyLogVotePropItem:  {Ty: reflect.TypeOf(ReceiptProposalItem{}), Name: "LogVotePropItem"},
+		TyLogTmintPropItem: {Ty: reflect.TypeOf(ReceiptProposalItem{}), Name: "LogTmintPropItem"},
 	}
 }
 
@@ -112,5 +120,10 @@ func (a *AutonomyType) GetTypeMap() map[string]int32 {
 		"RvkPropChange":   AutonomyActionRvkPropChange,
 		"VotePropChange":  AutonomyActionVotePropChange,
 		"TmintPropChange": AutonomyActionTmintPropChange,
+
+		"PropItem":      AutonomyActionPropItem,
+		"RvkPropItem":   AutonomyActionRvkPropItem,
+		"VotePropItem":  AutonomyActionVotePropItem,
+		"TmintPropItem": AutonomyActionTmintPropItem,
 	}
 }

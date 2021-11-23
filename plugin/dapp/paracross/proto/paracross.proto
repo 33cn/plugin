@@ -125,6 +125,7 @@ message ParaNodeGroupConfig {
     string addrs       = 4;
     int64  coinsFrozen = 5;
     string blsPubKeys  = 6;
+    string autonomyItemID = 7;
 }
 
 message ParaNodeGroupStatus {
@@ -356,7 +357,7 @@ message ParacrossAction {
         ParaStageConfig       selfStageConfig = 11;
         CrossAssetTransfer    crossAssetTransfer    = 12;
         ParaBindMinerCmd      paraBindMiner         = 13;
-        ParaNodeAddrConfig    supervisionNodeConfig = 14;
+        ParaNodeGroupConfig   supervisionNodeConfig = 14;
     }
     int32 ty = 2;
 }

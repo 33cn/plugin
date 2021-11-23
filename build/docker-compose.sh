@@ -114,7 +114,6 @@ function base_init() {
     # wallet
     sed -i $sedfix 's/^minerdisable=.*/minerdisable=false/g' chain33.toml
 
-    sed -i $sedfix 's/^nodeGroupFrozenCoins=.*/nodeGroupFrozenCoins=20/g' chain33.toml
     sed -i $sedfix 's/^paraConsensusStopBlocks=.*/paraConsensusStopBlocks=100/g' chain33.toml
 
     # blockchain
@@ -132,6 +131,10 @@ function base_init() {
         sed -i $sedfix 's/^enableReduceLocaldb=.*/enableReduceLocaldb=false/g' chain33.toml
         sed -i $sedfix 's/^enablePushSubscribe=.*/enablePushSubscribe=true/g' chain33.toml
     fi
+
+    #autonomy config
+    sed -i $sedfix 's/^autonomyExec=.*/autonomyExec=""/g' chain33.toml
+
 }
 
 function start() {

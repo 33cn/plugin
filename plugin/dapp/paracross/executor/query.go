@@ -281,12 +281,12 @@ func (p *Paracross) Query_ListSupervisionNodeStatusInfo(in *pt.ReqParacrossNodeI
 		prefix = calcLocalSupervisionNodeStatusTitlePrefix(in.Title, in.Status)
 	}
 
-	resp, err := listNodeStatus(p.GetLocalDB(), prefix)
+	resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
 	if err != nil {
 		return resp, err
 	}
 
-	addrs := resp.(*pt.RespParacrossNodeAddrs)
+	addrs := resp.(*pt.RespParacrossNodeGroups)
 	for _, id := range addrs.Ids {
 		id.Id = getParaNodeIDSuffix(id.Id)
 	}
