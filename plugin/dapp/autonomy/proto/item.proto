@@ -34,8 +34,7 @@ message ProposalItem {
 
     // 项目相关
     string itemTxHash   = 4;  // item tx hash
-    string exec     = 5;      // 合约执行器
-    string description  = 7;  // 简述
+    string description  = 5;  // 简述
 
     // 投票相关
     int64 startBlockHeight    = 12; // 提案开始投票高度

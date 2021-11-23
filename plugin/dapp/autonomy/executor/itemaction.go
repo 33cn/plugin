@@ -208,7 +208,7 @@ func (a *action) votePropItem(voteProb *auty.VoteProposalItem) (*types.Receipt, 
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 && cur.BoardVoteRes.TotalVotes > cur.BoardVoteRes.QuitVotes &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		cur.BoardVoteRes.ApproveVotes*100 >= (cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes)*cur.CurRule.BoardApproveRatio {
 		cur.BoardVoteRes.Pass = true
 		cur.PropItem.RealEndBlockHeight = a.height
 	}
@@ -261,7 +261,7 @@ func (a *action) tmintPropItem(tmintProb *auty.TerminateProposalItem) (*types.Re
 	}
 
 	if cur.BoardVoteRes.TotalVotes != 0 && cur.BoardVoteRes.TotalVotes > cur.BoardVoteRes.QuitVotes &&
-		float32(cur.BoardVoteRes.ApproveVotes)/float32(cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes) >= float32(cur.CurRule.BoardApproveRatio)/100.0 {
+		cur.BoardVoteRes.ApproveVotes*100 >= (cur.BoardVoteRes.TotalVotes-cur.BoardVoteRes.QuitVotes)*cur.CurRule.BoardApproveRatio {
 		cur.BoardVoteRes.Pass = true
 	} else {
 		cur.BoardVoteRes.Pass = false
