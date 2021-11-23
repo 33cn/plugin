@@ -32,7 +32,6 @@ func addProposalItemFlags(cmd *cobra.Command) {
 
 	cmd.Flags().StringP("itemTxHash", "i", "", "the tx to apply check")
 	cmd.MarkFlagRequired("itemTxHash")
-	cmd.Flags().StringP("exec", "x", "", "last stage proposal ID")
 	cmd.Flags().StringP("description", "p", "", "description item")
 
 	cmd.Flags().Int64P("startBlock", "s", 0, "start block height")
@@ -50,7 +49,6 @@ func proposalItem(cmd *cobra.Command, args []string) {
 	day, _ := cmd.Flags().GetInt32("day")
 
 	txHash, _ := cmd.Flags().GetString("itemTxHash")
-	exec, _ := cmd.Flags().GetString("exec")
 	description, _ := cmd.Flags().GetString("description")
 
 	startBlock, _ := cmd.Flags().GetInt64("startBlock")
@@ -61,7 +59,6 @@ func proposalItem(cmd *cobra.Command, args []string) {
 		Month:            month,
 		Day:              day,
 		ItemTxHash:       txHash,
-		Exec:             exec,
 		Description:      description,
 		StartBlockHeight: startBlock,
 		EndBlockHeight:   endBlock,
