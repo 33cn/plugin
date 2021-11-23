@@ -339,6 +339,3 @@ coins = [
 	{ name = "ETH", rate = 100000, minFee = 0 },
 	{ name = "USDT", rate = 100000, minFee = 0 },
 ]
-
-[fork.sub.exchange]
-Enable = 0
