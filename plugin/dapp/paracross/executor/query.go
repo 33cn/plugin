@@ -33,7 +33,7 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 	}
 	stat, err := p.paracrossGetStateTitleHeight(in.Title, in.Height)
 	if err != nil {
-		clog.Error("paracross.GetTitleHeight", "title", title, "height", in.Height, "err", err.Error())
+		clog.Error("paracross.GetTitleHeight", "title", in.Title, "height", in.Height, "err", err.Error())
 		return nil, err
 	}
 	status := stat.(*pt.ParacrossHeightStatus)
@@ -47,6 +47,10 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 	for i, addr := range status.Details.Addrs {
 		res.CommitAddrs = append(res.CommitAddrs, addr)
 		res.CommitBlockHash = append(res.CommitBlockHash, common.ToHex(status.Details.BlockHash[i]))
+	}
+	for i, addr := range status.SupervisionDetails.Addrs {
+		res.CommitSupervisionAddrs = append(res.CommitSupervisionAddrs, addr)
+		res.CommitSupervisionBlockHash = append(res.CommitSupervisionBlockHash, common.ToHex(status.SupervisionDetails.BlockHash[i]))
 	}
 	return res, nil
 }
@@ -78,6 +82,37 @@ func (p *Paracross) Query_GetNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.
 	}
 
 	_, nodesArry, key, err := getConfigNodes(p.GetStateDB(), in.GetTitle())
+	if err != nil {
+		return nil, err
+	}
+	var nodes string
+	for _, k := range nodesArry {
+		if len(nodes) == 0 {
+			nodes = k
+			continue
+		}
+		nodes = nodes + "," + k
+	}
+	var reply types.ReplyConfig
+	reply.Key = string(key)
+	reply.Value = nodes
+	return &reply, nil
+}
+
+//Query_GetNodeGroupAddrs get node group addrs
+func (p *Paracross) Query_GetSupervisionNodeGroupAddrs(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	cfg := p.GetAPI().GetConfig()
+	if cfg.IsPara() {
+		in.Title = cfg.GetTitle()
+	} else if in.Title == "" {
+		return nil, errors.Wrap(types.ErrInvalidParam, "title is null")
+	}
+
+	_, nodesArry, key, err := getSupervisionNodeGroupAddrs(p.GetStateDB(), in.GetTitle())
 	if err != nil {
 		return nil, err
 	}
@@ -213,6 +248,7 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
+
 	resp, err := listLocalNodeGroupStatus(p.GetLocalDB(), in.Status)
 	if err != nil {
 		return resp, err
@@ -229,6 +265,31 @@ func (p *Paracross) Query_ListNodeGroupStatus(in *pt.ReqParacrossNodeInfo) (type
 		}
 	}
 
+	return resp, nil
+}
+
+//Query_ListSupervisionNodeStatusInfo list node info by status
+func (p *Paracross) Query_ListSupervisionNodeStatusInfo(in *pt.ReqParacrossNodeInfo) (types.Message, error) {
+	if in == nil || in.Title == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	var prefix []byte
+	if in.Status == 0 {
+		prefix = calcLocalSupervisionNodeStatusTitleAllPrefix(in.Title)
+	} else {
+		prefix = calcLocalSupervisionNodeStatusTitlePrefix(in.Title, in.Status)
+	}
+
+	resp, err := listNodeGroupStatus(p.GetLocalDB(), prefix)
+	if err != nil {
+		return resp, err
+	}
+
+	addrs := resp.(*pt.RespParacrossNodeGroups)
+	for _, id := range addrs.Ids {
+		id.Id = getParaNodeIDSuffix(id.Id)
+	}
 	return resp, nil
 }
 
@@ -504,9 +565,12 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 			return nil, errors.Wrap(types.ErrInvalidParam, "req invalid")
 		}
 	}
-	reqTitle := req.Data
+
+	var reqTitle string
 	if cfg.IsPara() {
 		reqTitle = cfg.GetTitle()
+	} else if req != nil {
+		reqTitle = req.Data
 	}
 	res, err := p.paracrossGetHeight(reqTitle)
 	if err != nil {
@@ -534,63 +598,71 @@ func (p *Paracross) Query_GetHeight(req *types.ReqString) (*pt.ParacrossConsensu
 	return nil, types.ErrDecode
 }
 
-func getMinerListResp(db dbm.KV, list *pt.ParaNodeBindList) (types.Message, error) {
-	var resp pt.RespParaNodeBindList
-	resp.List = list
-
-	for _, n := range list.Miners {
-		info, err := getBindAddrInfo(db, n.SuperNode, n.Miner)
-		if err != nil {
-			clog.Error("Query_GetNodeBindMinerList get addr", "err", err, "node", n.SuperNode, "addr", n.Miner)
-			return nil, errors.Cause(err)
-		}
-		resp.Details = append(resp.Details, info)
-	}
-	return &resp, nil
-}
-
 // Query_GetNodeBindMinerList query get super node bind miner list
-func (p *Paracross) Query_GetNodeBindMinerList(in *pt.ParaNodeBindOne) (types.Message, error) {
-	if in == nil {
+func (p *Paracross) Query_GetNodeBindMinerList(in *pt.ParaNodeMinerListReq) (types.Message, error) {
+	if in == nil || len(in.Node) <= 0 {
 		return nil, types.ErrInvalidParam
 	}
 
-	list, err := getBindNodeInfo(p.GetStateDB())
+	db := p.GetStateDB()
+	var lists pt.ParaBindMinerList
+
+	//单独查询 node-miner 绑定
+	if len(in.Miner) > 0 {
+		minerInfo, err := getBindAddrInfo(db, in.Node, in.Miner)
+		if err != nil {
+			return nil, err
+		}
+		lists.List = append(lists.List, minerInfo)
+		return &lists, nil
+	}
+
+	//按node query all
+	//从内存获取
+	miners, err := getBindMinerList(db, in.Node)
 	if err != nil {
-		clog.Error("Query_GetNodeBindMinerList get node", "err", err)
-		return nil, errors.Cause(err)
+		return nil, err
 	}
 
-	var newList pt.ParaNodeBindList
-	//按node query
-	if len(in.SuperNode) != 0 && len(in.Miner) == 0 {
-		for _, n := range list.Miners {
-			if n.SuperNode == in.SuperNode {
-				newList.Miners = append(newList.Miners, n)
+	if in.WithUnBind {
+		lists.List = append(lists.List, miners...)
+	} else {
+		for _, m := range miners {
+			if m.BindStatus == opBind {
+				lists.List = append(lists.List, m)
 			}
 		}
-		return getMinerListResp(p.GetStateDB(), &newList)
 	}
 
-	//按miner query
-	if len(in.SuperNode) == 0 && len(in.Miner) != 0 {
-		for _, n := range list.Miners {
-			if n.Miner == in.Miner {
-				newList.Miners = append(newList.Miners, n)
-			}
-		}
-		return getMinerListResp(p.GetStateDB(), &newList)
-	}
-	//按唯一绑定查询
-	if len(in.SuperNode) != 0 && len(in.Miner) != 0 {
-		for _, n := range list.Miners {
-			if n.SuperNode == in.SuperNode && n.Miner == in.Miner {
-				newList.Miners = append(newList.Miners, n)
-			}
-		}
-		return getMinerListResp(p.GetStateDB(), &newList)
+	return &lists, nil
+
+}
+
+// Query_GetMinerBindNodeList query get miner bind super node list
+func (p *Paracross) Query_GetMinerBindNodeList(in *pt.ParaNodeMinerListReq) (types.Message, error) {
+	if in == nil || len(in.Miner) <= 0 {
+		return nil, types.ErrInvalidParam
 	}
 
-	//获取所有
-	return getMinerListResp(p.GetStateDB(), list)
+	db := p.GetStateDB()
+	nodeInfo, err := getMinerBindNodeList(db, in.Miner)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getBindNodeCount miner=%s", in.Miner)
+	}
+	var nodeAddrs types.ReplyStrings
+	if in.WithUnBind {
+		nodeAddrs.Datas = append(nodeAddrs.Datas, nodeInfo.Nodes...)
+		return &nodeAddrs, nil
+	}
+
+	for _, n := range nodeInfo.Nodes {
+		minerInfo, err := getBindAddrInfo(db, n, in.Miner)
+		if err != nil {
+			return nil, err
+		}
+		if minerInfo.BindStatus == opBind {
+			nodeAddrs.Datas = append(nodeAddrs.Datas, n)
+		}
+	}
+	return &nodeAddrs, nil
 }

@@ -15,4 +15,6 @@ var (
 	ErrDirection    = fmt.Errorf("%s", "The direction only 0 or 1!")
 	ErrStatus       = fmt.Errorf("%s", "The status only in  0 , 1, 2!")
 	ErrOrderID      = fmt.Errorf("%s", "Wrong OrderID!")
+
+	ErrCfgFmt = fmt.Errorf("%s", "ErrCfgFmt")
 )

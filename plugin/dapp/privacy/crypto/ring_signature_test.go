@@ -90,7 +90,7 @@ func TestGenerateKeyImage1(t *testing.T) {
 
 func TestGenerateKeyImage2(t *testing.T) {
 
-	c, err := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
+	c, err := crypto.Load(types.GetSignName("privacy", privacytypes.OnetimeED25519), -1)
 	if err != nil {
 		t.Errorf("create Crypto failed. %v\n", err)
 	}
@@ -335,7 +335,7 @@ func testRingSignatureOncetime(maxCount int, t *testing.T) {
 	// 初始化测试数据
 	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 
-	c, err := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
+	c, err := crypto.Load(types.GetSignName("privacy", privacytypes.OnetimeED25519), -1)
 	if err != nil {
 		t.Errorf("create Crypto failed. %v\n", err)
 	}
@@ -385,7 +385,7 @@ func TestGenerateRingSignatureAPI(t *testing.T) {
 
 	rand.Seed(time.Now().Unix())
 	// step1. init params
-	c, err := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
+	c, err := crypto.Load(types.GetSignName("privacy", privacytypes.OnetimeED25519), -1)
 	if err != nil {
 		t.Errorf("create Crypto failed. %v\n", err)
 	}
@@ -442,7 +442,7 @@ func benchRingSignatureOncetime(maxCount int) {
 	// 初始化测试数据
 	prefixHash, _ := common.FromHex("fd1f64844a7d6a9f74fc2141bceba9d9d69b1fd6104f93bfa42a6d708a6ab22c")
 
-	c, _ := crypto.New(types.GetSignName("privacy", privacytypes.OnetimeED25519))
+	c, _ := crypto.Load(types.GetSignName("privacy", privacytypes.OnetimeED25519), -1)
 	for i := 0; i < maxCount; i++ {
 		pub := PubKeyPrivacy{}
 		sign := Sign{}

@@ -63,6 +63,7 @@ func (j *jumpDldClient) getParaHeightList(startHeight, endHeight int64) ([]*type
 			return heightList, nil
 		}
 		//分页查找，只获取范围内的高度
+		plog.Info("jumpDld.getParaTxHeightList", "start", heights.Items[0].GetHeight(), "end", heights.Items[len(heights.Items)-1].GetHeight())
 		for _, h := range heights.Items {
 			if h.Height >= startHeight && h.Height <= endHeight {
 				heightList = append(heightList, h)
@@ -280,17 +281,20 @@ func (j *jumpDldClient) getParaTxs(startHeight, endHeight int64, heights []*type
 		//获取每一排1000个paraTxBlocks
 		paraBlocks, err := j.getParaTxsBlocks(row, title)
 		if err != nil {
+			plog.Error("jumpDld.getParaTxsBlocks", "err", err)
 			return err
 		}
 		//根据1000个paraTxBlocks的头尾高度获取header的头尾高度，header的高度要包含paraTxBlocks高度
 		headerStart, headerEnd := getHeaderStartEndRange(startHeight, endHeight, heightsRows, i)
-		plog.Debug("jumpDld.getParaTxs", "headerStart", headerStart, "headerEnd", headerEnd, "i", i)
+		plog.Info("jumpDld.getParaTxs", "headerStart", headerStart, "headerEnd", headerEnd, "i", i)
 		err = j.procParaTxHeaders(headerStart, headerEnd, paraBlocks, jobCh)
 		if err != nil {
+			plog.Error("jumpDld.procParaTxHeaders", "err", err)
 			return err
 		}
 
 		if atomic.LoadInt32(&j.downFail) != 0 || j.paraClient.isCancel() {
+			plog.Error("jumpDld.downFail", "downfail", atomic.LoadInt32(&j.downFail))
 			return errors.New("verify fail or main thread cancel")
 		}
 	}

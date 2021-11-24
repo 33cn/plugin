@@ -30,6 +30,9 @@ sleep 1
 #D -- 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
 ./chain33-cli account import_key -k 0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71 -l D
 
+#Fee -- 1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN
+./chain33-cli account import_key -k 0xa691ceceadb1f6878c39702a057b09077971d2995b29f18ccba1e09cd9619b7f -l Fee
+
 ## config token
 ./chain33-cli send config config_tx -c token-finisher -o add -v 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs -k 1CbEVT9RnM5oZhWMj4fxUrJX94VtRotzvs
 sleep 1

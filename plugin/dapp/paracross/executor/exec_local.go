@@ -6,9 +6,8 @@ package executor
 
 import (
 	"bytes"
-	"math/big"
-
 	"encoding/hex"
+	"math/big"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -123,8 +122,7 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 
 			set.KV = append(set.KV, &types.KeyValue{
 				Key: calcLocalNodeGroupStatusTitle(g.Current.Status, g.Current.Title, g.Current.Id), Value: types.Encode(g.Current)})
-		}
-		if log.Ty == pt.TyLogParaNodeConfig {
+		} else if log.Ty == pt.TyLogParaNodeConfig {
 			var g pt.ReceiptParaNodeConfig
 			err := types.Decode(log.Log, &g)
 			if err != nil {
@@ -138,6 +136,27 @@ func (e *Paracross) ExecLocal_NodeGroupConfig(payload *pt.ParaNodeGroupConfig, t
 			set.KV = append(set.KV, &types.KeyValue{
 				Key:   calcLocalNodeTitleStatus(g.Current.Title, g.Current.Status, g.Current.Id),
 				Value: types.Encode(g.Current)})
+		}
+	}
+	return &set, nil
+}
+
+func (e *Paracross) ExecLocal_SupervisionNodeConfig(payload *pt.ParaNodeGroupConfig, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	var set types.LocalDBSet
+	for _, log := range receiptData.Logs {
+		if log.Ty == pt.TyLogParaSupervisionNodeConfig {
+			var g pt.ReceiptParaNodeGroupConfig
+			err := types.Decode(log.Log, &g)
+			if err != nil {
+				return nil, err
+			}
+			if g.Prev != nil {
+				set.KV = append(set.KV, &types.KeyValue{
+					Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Prev.Status, g.Current.TargetAddrs, g.Current.Id), Value: nil})
+			}
+
+			set.KV = append(set.KV, &types.KeyValue{
+				Key: calcLocalSupervisionNodeStatusTitle(g.Current.Title, g.Current.Status, g.Current.TargetAddrs, g.Current.Id), Value: types.Encode(g.Current)})
 		}
 	}
 	return &set, nil

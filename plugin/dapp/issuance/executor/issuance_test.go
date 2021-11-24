@@ -705,7 +705,7 @@ func TestIssuance(t *testing.T) {
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(pkt.IssuanceX, signType))
+	c, err := crypto.Load(types.GetSignName(pkt.IssuanceX, signType), -1)
 	if err != nil {
 		return tx, err
 	}

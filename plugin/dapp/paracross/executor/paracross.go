@@ -51,7 +51,7 @@ func newParacross() drivers.Driver {
 	c := &Paracross{}
 	c.SetChild(c)
 	c.SetExecutorType(types.LoadExecutorType(driverName))
-	cli, err := crypto.New("bls")
+	cli, err := crypto.Load("bls", -1)
 	if err != nil {
 		panic("paracross need bls sign register")
 	}
@@ -352,6 +352,11 @@ func (c *Paracross) allow(tx *types.Transaction, index int) error {
 		}
 		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkParaAssetTransferRbk) {
 			if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+				return nil
+			}
+		}
+		if cfg.IsDappFork(c.GetHeight(), pt.ParaX, pt.ForkParaSupervision) {
+			if payload.Ty == pt.ParacrossActionSupervisionNodeConfig {
 				return nil
 			}
 		}

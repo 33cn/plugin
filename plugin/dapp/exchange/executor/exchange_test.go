@@ -39,7 +39,7 @@ var (
 
 func TestExchange(t *testing.T) {
 	//环境准备
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	Init(et.ExchangeX, cfg, nil)
 	total := 100 * types.DefaultCoinPrecision
@@ -263,9 +263,9 @@ func TestExchange(t *testing.T) {
 	order, err = Exec_QueryOrder(orderID7, stateDB, kvdb)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int32(et.Ordered), order.Status)
-	//查看账户余额,按卖方价格成交
+	//查看账户余额,按被动方买单的价格成交
 	acc := accD1.LoadExecAccount(Nodes[3], execAddr)
-	assert.Equal(t, 85*types.DefaultCoinPrecision, acc.Balance)
+	assert.Equal(t, 80*types.DefaultCoinPrecision, acc.Balance)
 
 	Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
 		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 400000000, Amount: 5 * types.DefaultCoinPrecision, Op: et.OpSell}, PrivKeyC, stateDB, kvdb, env)
@@ -298,8 +298,8 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, 5*types.DefaultCoinPrecision, order.Balance)
 	//余额检查
 	acc = accD1.LoadExecAccount(Nodes[3], execAddr)
-	// 100-3*10-5*4-4.5*5   = 27.5
-	assert.Equal(t, int64(2750000000), acc.Balance)
+	//100-5*4-(10-5)*3-5*4-(15-5-5)*4.5 = 22.5
+	assert.Equal(t, int64(2250000000), acc.Balance)
 	acc = accC.LoadExecAccount(Nodes[2], execAddr)
 	assert.Equal(t, 80*types.DefaultCoinPrecision, acc.Balance)
 
@@ -316,8 +316,8 @@ func TestExchange(t *testing.T) {
 	assert.Equal(t, 5*types.DefaultCoinPrecision, orderList.List[0].Balance)
 	//余额检查
 	acc = accD1.LoadExecAccount(Nodes[3], execAddr)
-	// 100-3*10-5*4-1*5   = 45
-	assert.Equal(t, 45*types.DefaultCoinPrecision, acc.Balance)
+	// Nodes[3]为成交  Nodes[2]冻结10
+	assert.Equal(t, int64(2250000000), acc.Balance)
 	acc = accC.LoadExecAccount(Nodes[2], execAddr)
 	assert.Equal(t, 70*types.DefaultCoinPrecision, acc.Balance)
 	//orderID9和order10未成交
@@ -688,7 +688,7 @@ func CreateLimitOrder(limitOrder *et.LimitOrder, privKey string) (tx *types.Tran
 	if err != nil {
 		return nil, err
 	}
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	if err != nil {
@@ -706,7 +706,7 @@ func CreateRevokeOrder(orderID int64, privKey string) (tx *types.Transaction, er
 	if err != nil {
 		return nil, err
 	}
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	tx, err = types.FormatTx(cfg, et.ExchangeX, tx)
 	if err != nil {
@@ -721,7 +721,7 @@ func CreateRevokeOrder(orderID int64, privKey string) (tx *types.Transaction, er
 
 //模拟区块中交易得执行过程
 func Exec_Block(t *testing.T, stateDB db.DB, kvdb db.KVDB, env *execEnv, txs ...*types.Transaction) error {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
 	q := queue.New("channel")
@@ -786,7 +786,7 @@ func Exec_RevokeOrder(t *testing.T, orderID int64, privKey string, stateDB db.DB
 }
 
 func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
 	q := queue.New("channel")
@@ -803,7 +803,7 @@ func Exec_QueryOrderList(status int32, addr string, primaryKey string, stateDB d
 	return msg.(*et.OrderList), nil
 }
 func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, error) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
 	q := queue.New("channel")
@@ -821,7 +821,7 @@ func Exec_QueryOrder(orderID int64, stateDB db.KV, kvdb db.KVDB) (*et.Order, err
 }
 
 func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KVDB) (*et.MarketDepthList, error) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
 	q := queue.New("channel")
@@ -839,7 +839,7 @@ func Exec_QueryMarketDepth(query *et.QueryMarketDepth, stateDB db.KV, kvdb db.KV
 }
 
 func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.KV, kvdb db.KVDB) (*et.OrderList, error) {
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 	exec := NewExchange()
 	q := queue.New("channel")
@@ -854,7 +854,7 @@ func Exec_QueryHistoryOrder(query *et.QueryHistoryOrderList, stateDB db.KV, kvdb
 }
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		return tx, err
 	}

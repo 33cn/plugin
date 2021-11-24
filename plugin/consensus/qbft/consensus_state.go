@@ -299,7 +299,15 @@ func (cs *ConsensusState) reconstructLastCommit(state State) {
 	seenCommit := cs.client.csStore.LoadSeenCommit(state.LastBlockHeight)
 	commit := ttypes.Commit{QbftCommit: seenCommit}
 	voteType := byte(commit.VoteType)
-	lastCommit := ttypes.NewVoteSet(state.ChainID, state.LastBlockHeight, commit.Round(), voteType, state.LastValidators)
+	round := commit.Round()
+	validators := state.LastValidators
+	// Increment validators if necessary
+	if round > 0 {
+		validators.IncrementAccum(round)
+		qbftlog.Info("reconstructLastCommit validator change", "round", round,
+			"proposer", fmt.Sprintf("%X", ttypes.Fingerprint(validators.Proposer.Address)))
+	}
+	lastCommit := ttypes.NewVoteSet(state.ChainID, state.LastBlockHeight, round, voteType, validators, state.LastSequence)
 	if state.LastSequence == 0 {
 		if voteType != ttypes.VoteTypePrecommit {
 			panic("reconstructLastCommit: voteType not Precommit")
@@ -391,7 +399,7 @@ func (cs *ConsensusState) updateToState(state State) {
 	cs.LockedBlock = nil
 	cs.ValidRound = -1
 	cs.ValidBlock = nil
-	cs.Votes = ttypes.NewHeightVoteSet(state.ChainID, height, validators)
+	cs.Votes = ttypes.NewHeightVoteSet(state.ChainID, height, validators, state.Sequence)
 	cs.CommitRound = -1
 	cs.LastCommit = lastCommit
 	cs.LastValidators = state.LastValidators
@@ -635,6 +643,7 @@ func (cs *ConsensusState) enterNewRound(height int64, round int) {
 		cs.ProposalBlock = nil
 		cs.ProposalBlockHash = nil
 	}
+	cs.Votes.SetValSet(validators)
 	cs.Votes.SetRound(round + 1) // also track next round (round+1) to allow round-skipping
 
 	//cs.eventBus.PublishEventNewRound(cs.RoundStateEvent())

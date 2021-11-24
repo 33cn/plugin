@@ -43,7 +43,7 @@ var (
 
 	privRaw, _  = common.FromHex("CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944")
 	tr          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: int64(1e8)}}
-	secpp256, _ = crypto.New(types.GetSignName("", types.SECP256K1))
+	secpp256, _ = crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	privKey, _  = secpp256.PrivKeyFromBytes(privRaw)
 	tx14        = &types.Transaction{
 		Execer:  []byte("coins"),
@@ -188,7 +188,7 @@ func TestChckSignWithNoneAuth(t *testing.T) {
 TestCase04 不带证书，SM2签名验证
 */
 func TestChckSignWithSm2(t *testing.T) {
-	sm2, err := crypto.New(types.GetSignName("cert", ct.AuthSM2))
+	sm2, err := crypto.Load(types.GetSignName("cert", ct.AuthSM2), -1)
 	assert.Nil(t, err)
 	privKeysm2, _ := sm2.PrivKeyFromBytes(privRaw)
 	tx15 := &types.Transaction{Execer: []byte("coins"),
@@ -213,7 +213,7 @@ func TestChckSignWithSm2(t *testing.T) {
 TestCase05 不带证书，secp256r1签名验证
 */
 func TestChckSignWithEcdsa(t *testing.T) {
-	ecdsacrypto, _ := crypto.New(types.GetSignName("cert", ct.AuthECDSA))
+	ecdsacrypto, _ := crypto.Load(types.GetSignName("cert", ct.AuthECDSA), -1)
 	privKeyecdsa, _ := ecdsacrypto.PrivKeyFromBytes(privRaw)
 	tx16 := &types.Transaction{Execer: []byte("coins"),
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),

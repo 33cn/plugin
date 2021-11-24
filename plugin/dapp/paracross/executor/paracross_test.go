@@ -26,21 +26,14 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// 构造一个4个节点的平行链数据， 进行测试
-const (
-	SignedType = types.SECP256K1
-)
-
 var (
 	MainBlockHash10 = []byte("main block hash 10")
 	MainBlockHeight = int64(10)
 	CurHeight       = int64(10)
-	Title           = string("user.p.test.")
+	Title           = "user.p.test."
 	TitleHeight     = int64(10)
 	PerBlock        = []byte("block-hash-9")
 	CurBlock        = []byte("block-hash-10")
-	PerState        = []byte("state-hash-9")
-	CurState        = []byte("state-hash-10")
 
 	PrivKeyA = "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" // 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4
 	PrivKeyB = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
@@ -53,10 +46,15 @@ var (
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
 
-	TokenSymbol                = "X"
-	MainBlockHeightForTransfer = int64(9)
-	chain33TestCfg             = types.NewChain33Config(testnode.DefaultConfig)
-	chain33TestMainCfg         = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
+	PrivKeyE         = "0x3a35610ba6e1e72d7878f4c819e6a6768668cb5481f423ef04b6a11e0e16e44f" // 15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h
+	PrivKeyF         = "0xaffa90b6a897c798e63890312b2ec9fb5a3c156dac290479ccb67c25c78e9413" // 1JQjqDChawMYfG3yyxByrhJ467HorPVfFZ
+	SupervisionNodes = [][]byte{
+		[]byte("15HmJz2abkExxgcmSRt2Q5D4hZg6zJUD1h"),
+		[]byte("1JQjqDChawMYfG3yyxByrhJ467HorPVfFZ"),
+	}
+
+	chain33TestCfg     = types.NewChain33Config(testnode.DefaultConfig)
+	chain33TestMainCfg = types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"test\"", 1))
 )
 
 type CommitTestSuite struct {
@@ -85,6 +83,28 @@ func makeNodeInfo(key, addr string, cnt int) *types.ConfigItem {
 	return &item
 }
 
+func makeSupervisionNodeInfo(suite *CommitTestSuite) {
+	SupervisionNodeKey := calcParaSupervisionNodeGroupAddrsKey(Title)
+	var item types.ConfigItem
+	item.Key = Title
+	item.Addr = Title
+	item.Ty = mty.ConfigItemArrayConfig
+	emptyValue := &types.ArrayConfig{Value: make([]string, 0)}
+	arr := types.ConfigItem_Arr{Arr: emptyValue}
+	item.Value = &arr
+	for _, n := range SupervisionNodes {
+		item.GetArr().Value = append(item.GetArr().Value, string(n))
+	}
+
+	_ = suite.stateDB.Set(SupervisionNodeKey, types.Encode(&item))
+	value, err := suite.stateDB.Get(SupervisionNodeKey)
+	if err != nil {
+		suite.T().Error("get setup title failed", err)
+		return
+	}
+	assert.Equal(suite.T(), value, types.Encode(&item))
+}
+
 func init() {
 	log.SetFileLog(nil)
 	log.SetLogLevel("debug")
@@ -92,7 +112,6 @@ func init() {
 }
 
 func (suite *CommitTestSuite) SetupSuite() {
-
 	suite.stateDB, _ = dbm.NewGoMemDB("state", "state", 1024)
 	// memdb 不支持KVDB接口， 等测试完Exec ， 再扩展 memdb
 	//suite.localDB, _ = dbm.NewGoMemDB("local", "local", 1024)
@@ -118,7 +137,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	// setup title nodes : len = 4
 	nodeConfigKey := calcManageConfigNodesKey(Title)
 	nodeValue := makeNodeInfo(Title, Title, 4)
-	suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
+	_ = suite.stateDB.Set(nodeConfigKey, types.Encode(nodeValue))
 	value, err := suite.stateDB.Get(nodeConfigKey)
 	if err != nil {
 		suite.T().Error("get setup title failed", err)
@@ -126,10 +145,12 @@ func (suite *CommitTestSuite) SetupSuite() {
 	}
 	assert.Equal(suite.T(), value, types.Encode(nodeValue))
 
+	makeSupervisionNodeInfo(suite)
+
 	stageKey := calcParaSelfConsStagesKey()
 	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
 	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
-	suite.stateDB.Set(stageKey, types.Encode(stages))
+	_ = suite.stateDB.Set(stageKey, types.Encode(stages))
 	value, err = suite.stateDB.Get(stageKey)
 	if err != nil {
 		suite.T().Error("get setup stages failed", err)
@@ -142,7 +163,7 @@ func (suite *CommitTestSuite) SetupSuite() {
 	titleStatus.Title = Title
 	titleStatus.Height = CurHeight - 1
 	titleStatus.BlockHash = PerBlock
-	saveTitle(suite.stateDB, calcTitleKey(Title), &titleStatus)
+	_ = saveTitle(suite.stateDB, calcTitleKey(Title), &titleStatus)
 
 	// setup api
 	hashes := &types.ReqHashes{Hashes: [][]byte{MainBlockHash10}}
@@ -194,19 +215,19 @@ func fillRawCommitTx(suite suite.Suite) (*types.Transaction, error) {
 
 func signTx(s suite.Suite, tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		s.T().Error("TestExec", "new crypto failed", err)
 		return tx, err
 	}
 
-	bytes, err := common.FromHex(hexPrivKey[:])
+	bytesData, err := common.FromHex(hexPrivKey[:])
 	if err != nil {
 		s.T().Error("TestExec", "Hex2Bytes privkey faiiled", err)
 		return tx, err
 	}
 
-	privKey, err := c.PrivKeyFromBytes(bytes)
+	privKey, err := c.PrivKeyFromBytes(bytesData)
 	if err != nil {
 		s.T().Error("TestExec", "PrivKeyFromBytes failed", err)
 		return tx, err
@@ -218,19 +239,19 @@ func signTx(s suite.Suite, tx *types.Transaction, hexPrivKey string) (*types.Tra
 
 func getPrivKey(s suite.Suite, hexPrivKey string) (crypto.PrivKey, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		s.T().Error("TestExec", "new crypto failed", err)
 		return nil, err
 	}
 
-	bytes, err := common.FromHex(hexPrivKey[:])
+	bytesData, err := common.FromHex(hexPrivKey[:])
 	if err != nil {
 		s.T().Error("TestExec", "Hex2Bytes privkey faiiled", err)
 		return nil, err
 	}
 
-	privKey, err := c.PrivKeyFromBytes(bytes)
+	privKey, err := c.PrivKeyFromBytes(bytesData)
 	if err != nil {
 		s.T().Error("TestExec", "PrivKeyFromBytes failed", err)
 		return nil, err
@@ -256,7 +277,7 @@ func commitOnceImpl(suite suite.Suite, exec *Paracross, privkeyStr string) (rece
 	return
 }
 
-func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCnt int) {
+func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCnt int, commitSupervisionCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 	assert.Len(suite.T(), receipt.KV, 1)
 	assert.Len(suite.T(), receipt.Logs, 1)
@@ -274,12 +295,15 @@ func checkCommitReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 	assert.Equal(suite.T(), int32(pt.ParacrossStatusCommiting), titleHeight.Status)
 	assert.Equal(suite.T(), Title, titleHeight.Title)
 	assert.Equal(suite.T(), commitCnt, len(titleHeight.Details.Addrs))
+	if commitSupervisionCnt > 0 {
+		assert.Equal(suite.T(), commitSupervisionCnt, len(titleHeight.SupervisionDetails.Addrs))
+	}
 }
 
 func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) {
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
-	assert.Len(suite.T(), receipt.KV, 6)
-	assert.Len(suite.T(), receipt.Logs, 6)
+	assert.Len(suite.T(), receipt.KV, 8)
+	assert.Len(suite.T(), receipt.Logs, 8)
 
 	key := calcTitleHeightKey(Title, TitleHeight)
 	suite.T().Log("title height key", string(key))
@@ -311,6 +335,7 @@ func checkDoneReceipt(suite suite.Suite, receipt *types.Receipt, commitCnt int) 
 }
 
 func checkRecordReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCnt int) {
+	_ = commitCnt
 	assert.Equal(suite.T(), receipt.Ty, int32(types.ExecOk))
 	assert.Len(suite.T(), receipt.KV, 0)
 	assert.Len(suite.T(), receipt.Logs, 1)
@@ -327,16 +352,22 @@ func checkRecordReceipt(suite *CommitTestSuite, receipt *types.Receipt, commitCn
 
 func (suite *CommitTestSuite) TestExec() {
 	receipt := commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 1)
+	checkCommitReceipt(suite, receipt, 1, 0)
 
 	receipt = commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 1)
+	checkCommitReceipt(suite, receipt, 1, 0)
 
 	receipt = commitOnce(suite, PrivKeyB)
-	checkCommitReceipt(suite, receipt, 2)
+	checkCommitReceipt(suite, receipt, 2, 0)
 
 	receipt = commitOnce(suite, PrivKeyA)
-	checkCommitReceipt(suite, receipt, 2)
+	checkCommitReceipt(suite, receipt, 2, 0)
+
+	receipt = commitOnce(suite, PrivKeyE)
+	checkCommitReceipt(suite, receipt, 2, 1)
+
+	receipt = commitOnce(suite, PrivKeyF)
+	checkCommitReceipt(suite, receipt, 2, 2)
 
 	receipt = commitOnce(suite, PrivKeyC)
 	checkDoneReceipt(suite.Suite, receipt, 3)
@@ -362,105 +393,6 @@ func TestGetTitle(t *testing.T) {
 	}
 	assert.Equal(t, titleExpect, title)
 }
-
-/*
-func TestCrossLimits(t *testing.T) {
-	stateDB, _ := dbm.NewGoMemDB("state", "state", 1024)
-	localDB := new(dbmock.KVDB)
-	api := new(apimock.QueueProtocolAPI)
-
-	exec := newParacross().(*Paracross)
-	exec.SetLocalDB(localDB)
-	exec.SetStateDB(stateDB)
-	exec.SetEnv(0, 0, 0)
-	exec.SetAPI(api)
-
-func (s *VoteTestSuite) TestFilterTxsForPara() {
-	tx1, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
-	s.Nil(err)
-	tx2, err := createParaNormalTx(s.Suite, PrivKeyB, nil)
-	s.Nil(err)
-	tx3, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
-	s.Nil(err)
-	tx4, err := createCrossParaTx(s.Suite, []byte("toB"))
-	s.Nil(err)
-	tx5, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toB"))
-	s.Nil(err)
-	tx345 := []*types.Transaction{tx3, tx4,tx5}
-	txGroup345, err := createTxsGroup(s.Suite, tx345)
-	s.Nil(err)
-
-	tx6, err := createCrossParaTx(s.Suite, nil)
-	s.Nil(err)
-	tx7, err := createCrossParaTx(s.Suite, nil)
-	s.Nil(err)
-	tx67 := []*types.Transaction{tx6, tx7}
-	txGroup67, err := createTxsGroup(s.Suite, tx67)
-	s.Nil(err)
-
-	tx71, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toA"))
-	s.Nil(err)
-	tx72, err := createCrossParaTx(s.Suite, []byte("toB"))
-	s.Nil(err)
-	tx73, err := createParaNormalTx(s.Suite,PrivKeyA,[]byte("toB"))
-	s.Nil(err)
-	tx777 := []*types.Transaction{tx71, tx72,tx73}
-	txGroup777, err := createTxsGroup(s.Suite, tx777)
-	s.Nil(err)
-
-	tx8, err := createAssetTransferTx(s.Suite, PrivKeyA, nil)
-	s.Nil(err)
-	tx9, err := createAssetTransferTx(s.Suite, PrivKeyC, nil)
-	s.Nil(err)
-
-	txs := []*types.Transaction{tx1, tx2}
-	txs = append(txs, txGroup345...)
-	txs = append(txs, txGroup67...)
-	txs = append(txs, txGroup777...)
-	txs = append(txs, tx8)
-	txs = append(txs, tx9)
-
-	errlog := &types.ReceiptLog{Ty: types.TyLogErr, Log: []byte("")}
-	feelog := &types.Receipt{}
-	feelog.Logs = append(feelog.Logs, errlog)
-
-	recpt1 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
-	recpt2 := &types.ReceiptData{Ty: types.ExecPack}
-
-	recpt3 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt4 := &types.ReceiptData{Ty: types.ExecOk}
-	recpt5 := &types.ReceiptData{Ty: types.ExecOk}
-
-	recpt6 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
-	recpt7 := &types.ReceiptData{Ty: types.ExecPack}
-
-	recpt71 := &types.ReceiptData{Ty: types.ExecPack}
-	recpt72 := &types.ReceiptData{Ty: types.ExecPack}
-	recpt73 := &types.ReceiptData{Ty: types.ExecPack}
-
-	recpt8 := &types.ReceiptData{Ty: types.ExecPack,Logs:feelog.Logs}
-	recpt9 := &types.ReceiptData{Ty: types.ExecOk}
-	receipts := []*types.ReceiptData{recpt1, recpt2, recpt3, recpt4, recpt5, recpt6, recpt7, recpt71,recpt72, recpt73, recpt8,recpt9}
-
-	block := &types.Block{Txs: txs}
-	detail := &types.BlockDetail{
-		Block:    block,
-		Receipts: receipts,
-	}
-
-	rst := FilterTxsForPara(Title, detail)
-	filterTxs := []*types.Transaction{ tx2,tx3, tx4, tx5,tx71,tx72,tx73,tx9}
-	s.Equal( filterTxs, rst)
-
-
-}
-
-	tx := &types.Transaction{Execer: []byte("p.user.test.paracross")}
-	res := exec.CrossLimits(tx, 1)
-	assert.True(t, res)
-
-}
-*/
 
 type VoteTestSuite struct {
 	suite.Suite
@@ -489,7 +421,7 @@ func (s *VoteTestSuite) SetupSuite() {
 	stageKey := calcParaSelfConsStagesKey()
 	stage := &pt.SelfConsensStage{StartHeight: 0, Enable: pt.ParaConfigYes}
 	stages := &pt.SelfConsensStages{Items: []*pt.SelfConsensStage{stage}}
-	s.stateDB.Set(stageKey, types.Encode(stages))
+	_ = s.stateDB.Set(stageKey, types.Encode(stages))
 	value, err := s.stateDB.Get(stageKey)
 	if err != nil {
 		s.T().Error("get setup stages failed", err)
@@ -565,7 +497,7 @@ func (s *VoteTestSuite) TestVoteTx() {
 		//s.T().Log(string(kv.GetKey()))
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
-			types.Decode(kv.GetValue(), &rst)
+			_ = types.Decode(kv.GetValue(), &rst)
 			s.Equal([]byte{0x4d}, rst.TxResult)
 			s.Equal([]byte{0x25}, rst.CrossTxResult)
 			s.Equal(7, len(rst.TxHashs))
@@ -662,7 +594,7 @@ func (s *VoteTestSuite) TestVoteTxFork() {
 		//s.T().Log(string(kv.GetKey()))
 		if bytes.Equal(key, kv.Key) {
 			var rst pt.ParacrossNodeStatus
-			types.Decode(kv.GetValue(), &rst)
+			_ = types.Decode(kv.GetValue(), &rst)
 			s.Equal([]byte("8e"), rst.TxResult)
 			s.Equal([]byte("22"), rst.CrossTxResult)
 			s.Equal(1, len(rst.TxHashs))
@@ -739,7 +671,7 @@ func createTxsGroup(s suite.Suite, txs []*types.Transaction) ([]*types.Transacti
 	}
 	privKey, _ := getPrivKey(s, PrivKeyA)
 	for i := range group.Txs {
-		group.SignN(i, int32(types.SECP256K1), privKey)
+		_ = group.SignN(i, int32(types.SECP256K1), privKey)
 	}
 	return group.Txs, nil
 }
@@ -794,11 +726,11 @@ func TestUpdateCommitBlockHashs(t *testing.T) {
 	}
 
 	updateCommitBlockHashs(stat, commit)
-	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, 1, len(stat.BlockDetails.BlockHashs))
 	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
 
 	updateCommitBlockHashs(stat, commit)
-	assert.Equal(t, int(1), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, 1, len(stat.BlockDetails.BlockHashs))
 	assert.Equal(t, commit.BlockHash, stat.BlockDetails.BlockHashs[0])
 
 	commit2 := &pt.ParacrossNodeStatus{
@@ -812,7 +744,7 @@ func TestUpdateCommitBlockHashs(t *testing.T) {
 		CrossTxHashs:    [][]byte{[]byte("hash2")},
 	}
 	updateCommitBlockHashs(stat, commit2)
-	assert.Equal(t, int(2), len(stat.BlockDetails.BlockHashs))
+	assert.Equal(t, 2, len(stat.BlockDetails.BlockHashs))
 	assert.Equal(t, commit2.BlockHash, stat.BlockDetails.BlockHashs[1])
 
 }
@@ -828,7 +760,7 @@ func TestValidParaCrossExec(t *testing.T) {
 }
 
 func TestVerifyBlsSign(t *testing.T) {
-	cryptoCli, err := crypto.New("bls")
+	cryptoCli, err := crypto.Load("bls", -1)
 	assert.NoError(t, err)
 
 	status := &pt.ParacrossNodeStatus{}

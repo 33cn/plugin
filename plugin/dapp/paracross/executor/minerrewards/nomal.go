@@ -30,7 +30,7 @@ func (n *normal) GetConfigReward(cfg *types.Chain33Config, height int64) (int64,
 	}
 	//防止coinBaseReward 设置出错场景， coinBaseReward 一定要比coinReward小
 	if coinBaseReward >= coinReward {
-		coinBaseReward = coinReward / 10
+		panic("mver.consensus.paracross.coinBaseReward should < coinReward")
 	}
 	return coinReward, fundReward, coinBaseReward
 }

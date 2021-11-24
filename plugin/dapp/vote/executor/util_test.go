@@ -104,7 +104,7 @@ func (mock *testExecMock) initExec() {
 }
 
 func decodePrivKey(priv string) (crypto.PrivKey, error) {
-	c, err := crypto.New(crypto.GetName(types.SECP256K1))
+	c, err := crypto.Load(crypto.GetName(types.SECP256K1), -1)
 	if err != nil {
 		return nil, err
 	}

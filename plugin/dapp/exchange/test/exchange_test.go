@@ -17,6 +17,7 @@ var (
 	PrivKeyB   = "0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4" // 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR
 	PrivKeyC   = "0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115" // 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k
 	PrivKeyD   = "0xcacb1f5d51700aea07fca2246ab43b0917d70405c65edea9b5063d72eb5c6b71" // 1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs
+	PrivKeyFee = "0xa691ceceadb1f6878c39702a057b09077971d2995b29f18ccba1e09cd9619b7f" // 1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN
 	coin       = "bty"
 	token      = "CCNY"
 	leftAsset  = &et.Asset{Symbol: coin, Execer: "coins"}

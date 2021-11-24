@@ -58,7 +58,7 @@ func (Comm) ParaseNetAddr(addr string) (string, int64, error) {
 }
 
 // AddrRouteble address router ,return enbale address
-func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials) []string {
+func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.TransportCredentials, blist *BlackList) []string {
 	var enableAddrs []string
 
 	for _, addr := range addrs {
@@ -67,7 +67,7 @@ func (Comm) AddrRouteble(addrs []string, version int32, creds credentials.Transp
 			log.Error("AddrRouteble", "NewNetAddressString", err.Error())
 			continue
 		}
-		conn, err := netaddr.DialTimeout(version, creds)
+		conn, err := netaddr.DialTimeout(version, creds, blist)
 		if err != nil {
 			//log.Error("AddrRouteble", "DialTimeout", err.Error())
 			continue
@@ -110,15 +110,18 @@ func (c Comm) GetLocalAddr() string {
 
 func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node) (*Peer, error) {
 	log.Debug("dialPeerWithAddress")
-	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds)
+	conn, err := addr.DialTimeout(node.nodeInfo.channelVersion, node.nodeInfo.cliCreds, node.nodeInfo.blacklist)
 
 	if err != nil {
+		log.Error("dialPeerWithAddress", "DialTimeoutErr", err.Error())
 		return nil, err
 	}
 
 	peer, err := c.newPeerFromConn(conn, addr, node)
 	if err != nil {
+		log.Error("dialPeerWithAddress", "newPeerFromConn", err)
 		err = conn.Close()
+
 		return nil, err
 	}
 	peer.SetAddr(addr)
@@ -151,7 +154,6 @@ func (c Comm) dialPeerWithAddress(addr *NetAddress, persistent bool, node *Node)
 		peer.Close()
 		return nil, errors.New(fmt.Sprintf("duplicate connect %v", resp.UserAgent))
 	}
-
 	node.peerStore.Store(addr.String(), resp.UserAgent)
 	peer.SetPeerName(resp.UserAgent)
 	return peer, nil
@@ -183,7 +185,7 @@ func (c Comm) dialPeer(addr *NetAddress, node *Node) (*Peer, error) {
 
 // GenPrivPubkey return key and pubkey in bytes
 func (c Comm) GenPrivPubkey() ([]byte, []byte, error) {
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		log.Error("CryPto Error", "Error", err.Error())
 		return nil, nil, err
@@ -200,7 +202,7 @@ func (c Comm) GenPrivPubkey() ([]byte, []byte, error) {
 // Pubkey get pubkey by priv key
 func (c Comm) Pubkey(key string) (string, error) {
 
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		log.Error("CryPto Error", "Error", err.Error())
 		return "", err
@@ -239,7 +241,7 @@ func (c Comm) NewPingData(nodeInfo *NodeInfo) (*types.P2PPing, error) {
 func (c Comm) Signature(key string, in *types.P2PPing) (*types.P2PPing, error) {
 
 	data := types.Encode(in)
-	cr, err := crypto.New(types.GetSignName("", types.SECP256K1))
+	cr, err := crypto.Load(types.GetSignName("", types.SECP256K1), -1)
 	if err != nil {
 		log.Error("CryPto Error", "Error", err.Error())
 		return nil, err
@@ -271,9 +273,9 @@ func (c Comm) CheckSign(in *types.P2PPing) bool {
 		return false
 	}
 
-	cr, err := crypto.New(types.GetSignName("", int(sign.Ty)))
+	cr, err := crypto.Load(types.GetSignName("", int(sign.Ty)), -1)
 	if err != nil {
-		log.Error("CheckSign", "crypto.New err", err.Error())
+		log.Error("CheckSign", "crypto.Load err", err.Error())
 		return false
 	}
 	pub, err := cr.PubKeyFromBytes(sign.Pubkey)
