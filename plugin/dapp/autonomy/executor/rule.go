@@ -139,6 +139,8 @@ func (a *Autonomy) getActiveRule() (types.Message, error) {
 		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
 		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
 		rule.PublicPeriod = publicPeriod
+		rule.PubAttendRatio = pubAttendRatio
+		rule.PubApproveRatio = pubApproveRatio
 	}
 	return rule, nil
 }

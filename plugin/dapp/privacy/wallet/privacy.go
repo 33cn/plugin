@@ -137,7 +137,7 @@ func (policy *privacyPolicy) getPrivKeyByAddr(addr string) (crypto.PrivKey, erro
 	password := []byte(operater.GetPassword())
 	privkey := wcom.CBCDecrypterPrivkey(password, prikeybyte)
 	//通过privkey生成一个pubkey然后换算成对应的addr
-	cr, err := crypto.New(types.GetSignName("privacy", operater.GetSignType()))
+	cr, err := crypto.Load(types.GetSignName("privacy", operater.GetSignType()), -1)
 	if err != nil {
 		bizlog.Error("ProcSendToAddress", "err", err)
 		return nil, err

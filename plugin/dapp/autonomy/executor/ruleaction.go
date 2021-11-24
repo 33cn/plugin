@@ -25,7 +25,7 @@ const (
 	// 最大全体持票人否决率
 	maxPubOpposeRatio = 50
 
-	// 可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80% ???  最低 50.1% ????
+	// 可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80%
 	//不能设置太低和太高，太低就容易作弊，太高则有可能很难达到
 	// 最小全体持票人参与率
 	minPubAttendRatio = 50
@@ -79,6 +79,11 @@ func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 			checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), minPubApproveRatio, maxPubApproveRatio) {
 			alog.Error("propRule RuleCfg invaild", "PubAttendRatio", prob.RuleCfg.PubAttendRatio, "PubApproveRatio", prob.RuleCfg.PubApproveRatio)
 			return nil, types.ErrInvalidParam
+		}
+
+		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
+			return nil, auty.ErrSetBlockHeight
 		}
 	}
 

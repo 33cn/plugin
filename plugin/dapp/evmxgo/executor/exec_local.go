@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"

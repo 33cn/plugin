@@ -933,7 +933,7 @@ func testMultiSigAccExecTransferFrom(t *testing.T, driver drivers.Driver, env ex
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(mty.MultiSigX, signType))
+	c, err := crypto.Load(types.GetSignName(mty.MultiSigX, signType), -1)
 	if err != nil {
 		return tx, err
 	}

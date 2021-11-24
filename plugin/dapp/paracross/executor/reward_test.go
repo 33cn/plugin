@@ -58,12 +58,12 @@ func (suite *RewardTestSuite) TestRewardBindAddr() {
 	addr := "1E5saiXVb9mW8wcWUUZjsHJPZs5GmdzuSY"
 	key := calcParaBindMinerAddr(node, addr)
 	newer := &pt.ParaBindMinerInfo{
-		Addr:        addr,
-		BindStatus:  opBind,
-		BindCoins:   100,
-		BlockTime:   100,
-		BlockHeight: 1,
-		TargetNode:  node,
+		Addr:          addr,
+		BindStatus:    opBind,
+		BindCoins:     100,
+		BlockTime:     100,
+		BlockHeight:   1,
+		ConsensusNode: node,
 	}
 	data := types.Encode(newer)
 	suite.stateDB.Set(key, data)
@@ -83,14 +83,11 @@ func (suite *RewardTestSuite) TestRewardBindAddr() {
 	key = calcParaBindMinerAddr(node, addr2)
 	suite.stateDB.Set(key, data)
 
-	node1 := &pt.ParaNodeBindOne{SuperNode: node, Miner: addr}
-	node2 := &pt.ParaNodeBindOne{SuperNode: node, Miner: addr2}
+	var list []*pt.ParaBindMinerInfo
+	list = append(list, newer)
+	list = append(list, &new2)
 
-	list := &pt.ParaNodeBindList{}
-	list.Miners = append(list.Miners, node1)
-	list.Miners = append(list.Miners, node2)
-
-	recp, change, err := suite.action.rewardBindAddr(50000005, list, 1)
+	recp, change, err := suite.action.rewardBindAddrList(50000005, node, list, 1)
 	suite.Nil(err)
 	suite.Equal(int64(5), change)
 	suite.Equal(int32(types.ExecOk), recp.Ty)

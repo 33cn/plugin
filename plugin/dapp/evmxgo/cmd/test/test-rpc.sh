@@ -18,7 +18,6 @@ function updateConfig() {
     signRawTxAndQuery "$FUNCNAME" "$privateKey" "${unsignedTx}"
 }
 
-
 function evmxgo_mint() {
     local data='{"jsonrpc":"2.0","id":1,"method":"Chain33.CreateTransaction","params":[{"execer":"evmxgo","actionName":"Mint","payload":{"symbol":"DOG","amount":10000000}}]}'
     unsignedTx=$(curl -s --data-binary "$data" -H 'content-type:text/plain;' ${MAIN_HTTP} | jq -r ".result")
@@ -74,8 +73,6 @@ function evmxgo_withdraw() {
     fi
     signRawTxAndQuery "$FUNCNAME" "$privateKey" "${unsignedTx}"
 }
-
-
 
 # 查询交易的执行结果
 # 根据传入的规则，校验查询的结果 （参数1: 校验规则 参数2: 预期匹配结果）

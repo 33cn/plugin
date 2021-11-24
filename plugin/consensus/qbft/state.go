@@ -129,6 +129,7 @@ func (s State) StringIndented(indent string) string {
 %s  LastBlockTotalTx:  %v
 %s  LastBlockID:       %X
 %s  Validators:        %v
+%s  LastProposer:      %v
 %s  Sequence:          %v
 %s  LastSequence:      %v
 %s  LastCommitRound:   %v
@@ -138,6 +139,7 @@ func (s State) StringIndented(indent string) string {
 		indent, s.LastBlockTotalTx,
 		indent, s.LastBlockID,
 		indent, s.Validators.StringIndented(indent),
+		indent, s.LastValidators.GetProposer().String(),
 		indent, s.Sequence,
 		indent, s.LastSequence,
 		indent, s.LastCommitRound,

@@ -36,6 +36,7 @@ type NodeInfo struct {
 	channelVersion int32
 	cliCreds       credentials.TransportCredentials
 	servCreds      credentials.TransportCredentials
+	caServer       string
 }
 
 // NewNodeInfo new a node object

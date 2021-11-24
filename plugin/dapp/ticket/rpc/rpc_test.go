@@ -295,6 +295,7 @@ ForkBadRepeatSecret=0
 [fork.sub.manage]
 Enable=0
 ForkManageExec=100000
+ForkManageAutonomyEnable=-1
 
 [fork.sub.token]
 Enable=0
@@ -322,6 +323,9 @@ ForkParaSelfConsStages=0
 ForkParaAssetTransferRbk=0
 #仅平行链适用，开启挖矿交易的高度，已有代码版本可能未在0高度开启挖矿，需要设置这个高度，新版本默认从0开启挖矿，通过交易配置分阶段奖励
 ForkParaFullMinerHeight=0
+ForkParaSupervision=0
+ForkParaRootHash=0
+ForkParaAutonomySuperGroup=-1
 
 [fork.sub.evm]
 Enable=0
@@ -331,6 +335,9 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+
+[fork.sub.evmxgo]
+Enable=0
 
 [fork.sub.blackwhite]
 Enable=0
@@ -400,6 +407,7 @@ ForkUnfreezeIDX= 0
 [fork.sub.autonomy]
 Enable=0
 ForkAutonomyDelRule=0
+ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
 Enable=0

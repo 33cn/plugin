@@ -478,7 +478,7 @@ func TestOrace(t *testing.T) {
 
 func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error) {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName(oty.OracleX, signType))
+	c, err := crypto.Load(types.GetSignName(oty.OracleX, signType), -1)
 	if err != nil {
 		return tx, err
 	}

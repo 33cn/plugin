@@ -1,8 +1,8 @@
-name: build
+name: ci_paracross
 on: [push,pull_request]
 
 jobs:
-  ci_paracross:
+  paracross:
     name: ci_paracross
     runs-on: ubuntu-latest
     steps:

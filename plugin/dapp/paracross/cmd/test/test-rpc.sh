@@ -233,6 +233,11 @@ function paracross_ListNodeStatus() {
     chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListNodeStatusInfo","payload":{"title":"user.p.para.","status":3}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "$FUNCNAME"
 }
 
+function paracross_GetSupervisionInfo() {
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetSupervisionNodeGroupAddrs","payload":{"title":"user.p.para."}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("key","value"),true])' "GetSupervisionNodeGroupAddrs"
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"ListSupervisionNodeStatusInfo","payload":{"title":"user.p.para.","status":0}}]}' ${UNIT_HTTP} '(.error|not) and (.result| [has("status"),true])' "ListSupervisionNodeStatusInfo status:0"
+}
+
 para_test_addr="1MAuE8QSbbech3bVKK2JPJJxYxNtT95oSU"
 para_test_prikey="0x24d1fad138be98eebee31440f144aa38c404533f40862995282162bc538e91c8"
 
@@ -534,8 +539,8 @@ paracross_testBind() {
     chain33_SignAndSendTxWait "$rawtx" "${priv1q9}" "${para_ip}"
 
     echo "2. get bind"
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
+    #    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"Node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
 }
 
 paracross_testUnBind() {
@@ -554,8 +559,7 @@ paracross_testUnBind() {
     #    superNode=$(jq -r ".result.List.SuperNode" <<<"$resp")
     #    miners=$(jq -r ".result.List.Miners" <<<"$resp")
 
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1KSBd17H7Z"),true])' "$FUNCNAME" '(.result.List)'
-    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"superNode":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),false])' "$FUNCNAME" '(.result.List)'
+    chain33_Http '{"method":"Chain33.Query","params":[{ "execer":"paracross", "funcName":"GetNodeBindMinerList","payload":{"node":"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4","miner":"1Q9sQwothzM1gKSzkVZ8Dt1tqKX1uzSagx"}}]}' "${para_ip}" '(.error|not) and (.result.List| [has("1Q9sQw"),true])' "$FUNCNAME" '(.result.List)'
 }
 
 paracross_testBindMiner() {
@@ -563,9 +567,6 @@ paracross_testBindMiner() {
     paracross_testBind "$1"
     #unbind
     paracross_testUnBind "$1"
-
-    #bind agin
-    paracross_testBind "$1"
 }
 
 function apply_coins() {
@@ -585,7 +586,6 @@ function apply_coins() {
     para_exec_addr=$(curl -ksd '{"method":"Chain33.ConvertExectoAddr","params":[{"execname":"user.p.para.paracross"}]}' ${para_ip} | jq -r ".result")
     chain33_SendToAddress "$addr1q9" "${para_exec_addr}" 900000000 "${para_ip}"
     chain33_QueryExecBalance "${addr1q9}" "user.p.para.paracross" "$para_ip"
-
 }
 
 function run_testcases() {
@@ -597,12 +597,12 @@ function run_testcases() {
     paracross_GetNodeGroupStatus
     paracross_ListNodeGroupStatus
     paracross_ListNodeStatus
+    paracross_GetSupervisionInfo
     paracross_Transfer_Withdraw
     paracross_testBindMiner "$UNIT_HTTP"
 
     paracross_testTxGroup "$UNIT_HTTP"
     paracross_testTxGroupFail "$UNIT_HTTP"
-    #paracross_testParaAssetWithdrawFail "$UNIT_HTTP"
     paracross_testSelfConsensStages "$UNIT_HTTP"
 }
 

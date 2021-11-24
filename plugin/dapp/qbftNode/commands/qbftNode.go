@@ -280,7 +280,7 @@ MAIN_LOOP:
 
 func initCryptoImpl(signType int) error {
 	ttypes.CryptoName = types.GetSignName("", signType)
-	cr, err := crypto.New(ttypes.CryptoName)
+	cr, err := crypto.Load(ttypes.CryptoName, -1)
 	if err != nil {
 		fmt.Printf("init crypto fail: %v", err)
 		return err

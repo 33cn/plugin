@@ -351,7 +351,7 @@ func initAccount(db db.KV) *account.DB {
 
 func signTx(tx *types.Transaction, hexPrivKey string) error {
 	signType := types.SECP256K1
-	c, err := crypto.New(types.GetSignName("", signType))
+	c, err := crypto.Load(types.GetSignName("", signType), -1)
 	if err != nil {
 		return err
 	}

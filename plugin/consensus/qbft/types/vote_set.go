@@ -56,6 +56,7 @@ type VoteSet struct {
 	height   int64
 	round    int
 	voteType byte
+	seq      int64
 
 	mtx           sync.Mutex
 	valSet        *ValidatorSet
@@ -69,7 +70,7 @@ type VoteSet struct {
 }
 
 // NewVoteSet Constructs a new VoteSet struct used to accumulate votes for given height/round.
-func NewVoteSet(chainID string, height int64, round int, voteType byte, valSet *ValidatorSet) *VoteSet {
+func NewVoteSet(chainID string, height int64, round int, voteType byte, valSet *ValidatorSet, seq int64) *VoteSet {
 	if height == 0 {
 		PanicSanity("Cannot make VoteSet for height == 0, doesn't make sense.")
 	}
@@ -78,6 +79,7 @@ func NewVoteSet(chainID string, height int64, round int, voteType byte, valSet *
 		height:        height,
 		round:         round,
 		voteType:      voteType,
+		seq:           seq,
 		valSet:        valSet,
 		votesBitArray: NewBitArray(valSet.Size()),
 		votes:         make([]*Vote, valSet.Size()),
@@ -323,9 +325,8 @@ func (voteSet *VoteSet) AddAggVote(vote *AggVote) (bool, error) {
 	// Ensure that signer is proposer
 	propAddr := valset.Proposer.Address
 	if !bytes.Equal(valAddr, propAddr) {
-		return false, errors.Wrapf(ErrVoteInvalidValidatorAddress,
-			"aggVote.ValidatorAddress (%X) does not match proposer address (%X)",
-			valAddr, propAddr)
+		ttlog.Info("odd aggregate vote", "reason",
+			Fmt("ValidatorAddress: %X; Proposer: %X", Fingerprint(valAddr), Fingerprint(propAddr)))
 	}
 	// If we already know of this vote, return false
 	if voteSet.aggVote != nil {
@@ -536,7 +537,7 @@ func (voteSet *VoteSet) IsCommit() bool {
 	if voteSet == nil {
 		return false
 	}
-	if voteSet.voteType != VoteTypePrecommit {
+	if (voteSet.voteType != VoteTypePrevote || voteSet.seq == 0) && voteSet.voteType != VoteTypePrecommit {
 		return false
 	}
 	voteSet.mtx.Lock()
