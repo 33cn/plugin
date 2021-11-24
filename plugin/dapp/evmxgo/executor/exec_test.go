@@ -565,7 +565,7 @@ func evmxgo_Exec_Burn_Local(exec dapp.Driver, receipt *types.Receipt) (*types.Lo
 
 	Tx1, err := signTx(tx, PrivKeyA)
 	if err != nil {
-		fmt.Println("RPC_Default_Process sign", "err", err)
+		fmt.Println("RPC_Default_Process sign test", "err", err)
 		return nil, err
 	}
 	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
