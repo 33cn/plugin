@@ -538,6 +538,10 @@ func evmxgo_Exec_Burn(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
 		Amount: burnAmount,
 	}
 	tx, err := types.CallCreateTransaction(pty.EvmxgoX, "Burn", p4)
+	if err != nil {
+		fmt.Println("RPC_Default_Process CallCreateTransaction", "err", err)
+		return nil, err
+	}
 
 	Tx1, err := signTx(tx, PrivKeyA)
 	if err != nil {
@@ -554,6 +558,10 @@ func evmxgo_Exec_Burn_Local(exec dapp.Driver, receipt *types.Receipt) (*types.Lo
 		Amount: burnAmount,
 	}
 	tx, err := types.CallCreateTransaction(pty.EvmxgoX, "Burn", p4)
+	if err != nil {
+		fmt.Println("RPC_Default_Process CallCreateTransaction", "err", err)
+		return nil, err
+	}
 
 	Tx1, err := signTx(tx, PrivKeyA)
 	if err != nil {
