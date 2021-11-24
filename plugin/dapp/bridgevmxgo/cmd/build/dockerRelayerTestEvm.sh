@@ -821,25 +821,25 @@ function configbridgevmxgoAddr() {
 function TestETH2EVMToChain33() {
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-#    cli_ret "${result}" "balance" ".balance" "16"
+    #    cli_ret "${result}" "balance" ".balance" "16"
 
     # ETH 这端 lock 11个
     result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
-#    cli_ret "${result}" "lock"
+    #    cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 11 原来16
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-#    cli_ret "${result}" "balance" ".balance" "27"
+    #    cli_ret "${result}" "balance" ".balance" "27"
 
     sleep ${maturityDegree}
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
-#    is_equal "${result}" "4700000000"
+    #    is_equal "${result}" "4700000000"
 
     updateConfig "ETH" "${chain33EthBridgeTokenAddr}"
     configbridgevmxgoAddr "${XgoChain33BridgeBank}"
@@ -851,16 +851,16 @@ function TestETH2EVMToChain33() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "4200000000"
+    #    is_equal "${result}" "4200000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-#    is_equal "${result}" "500000000"
+    #    is_equal "${result}" "500000000"
 }
 
 function Testethereum2EVMToChain33_byc() {
     # 查询 ETH 这端 bridgeBank 地址原来是
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
+    #    cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 7个
     result=$(${CLIA} ethereum lock -m 7 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
@@ -871,14 +871,14 @@ function Testethereum2EVMToChain33_byc() {
 
     # 查询 ETH 这端 bridgeBank 地址 7
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "7"
+    #    cli_ret "${result}" "balance" ".balance" "7"
 
     sleep ${maturityDegree}
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 7 * le8
-#    is_equal "${result}" "700000000"
+    #    is_equal "${result}" "700000000"
 
     updateConfig "BYC" "${chain33BycBridgeTokenAddr}"
     configbridgevmxgoAddr "${XgoChain33BridgeBank}"
@@ -890,10 +890,10 @@ function Testethereum2EVMToChain33_byc() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "4200000000"
+    #    is_equal "${result}" "4200000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-#    is_equal "${result}" "500000000"
+    #    is_equal "${result}" "500000000"
 }
 
 function AllRelayerMainTest() {
@@ -968,7 +968,7 @@ function AllRelayerMainTest() {
     ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
 
     echo_addrs
-    
+
     Testethereum2EVMToChain33_byc
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

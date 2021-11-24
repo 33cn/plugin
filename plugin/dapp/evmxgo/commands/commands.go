@@ -4,6 +4,8 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/system/dapp/commands"
@@ -12,7 +14,6 @@ import (
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 /*
@@ -31,7 +32,7 @@ func Cmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
-	//add sub command
+		//add sub command
 		CreateTokenTransferCmd(),
 		CreateTokenWithdrawCmd(),
 		GetTokensCreatedCmd(),
@@ -45,7 +46,6 @@ func Cmd() *cobra.Command {
 	)
 	return cmd
 }
-
 
 // CreateTokenTransferCmd create raw transfer tx
 func CreateTokenTransferCmd() *cobra.Command {
@@ -127,7 +127,6 @@ func addCreateTokenWithdrawFlags(cmd *cobra.Command) {
 func createTokenWithdraw(cmd *cobra.Command, args []string) {
 	commands.CreateAssetWithdraw(cmd, args, evmxgotypes.EvmxgoX)
 }
-
 
 // GetTokensCreatedCmd get finish created tokens
 func GetTokensCreatedCmd() *cobra.Command {
@@ -248,7 +247,6 @@ func parseTokenAssetsRes(arg ...interface{}) (interface{}, error) {
 	}
 	return result, nil
 }
-
 
 // CreateRawTokenMintTxCmd create raw token  mintage transaction
 func CreateRawTokenMintTxCmd() *cobra.Command {

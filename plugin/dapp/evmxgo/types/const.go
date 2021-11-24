@@ -19,7 +19,6 @@ const (
 	EvmxgoActionBurn = 13
 )
 
-
 const (
 	// TyLogEvmxgoTransfer log for token tranfer
 	TyLogEvmxgoTransfer = 313
