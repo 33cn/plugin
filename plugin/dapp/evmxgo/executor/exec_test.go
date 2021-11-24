@@ -7,7 +7,9 @@ import (
 	"github.com/33cn/chain33/account"
 	apimock "github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/util"
+	bridgevmxgo "github.com/33cn/plugin/plugin/dapp/bridgevmxgo/contracts/generated"
 	"github.com/stretchr/testify/mock"
 	"math/rand"
 	"strconv"
@@ -21,6 +23,8 @@ import (
 	"github.com/33cn/chain33/common/crypto"
 	manageTypes "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
+	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
+	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	pty "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -53,14 +57,13 @@ const (
 )
 
 var (
-	mintAmount      int64 = 1000 * types.DefaultCoinPrecision
-	burnAmount      int64 = 200 * types.DefaultCoinPrecision
+	burnAmount      int64 = 200
 	execName              = "evmxgo"
 	transExecName         = "token"
 	mananerexecName       = "manage"
 	transToAddr           = "17EVv6tW2HzE73TVB6YXQYThQJxa7kuZb8"
 	transToExecAddr       = "12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa"
-	transAmount     int64 = 100 * types.DefaultCoinPrecision
+	transAmount     int64 = 100
 	walletPass            = "test1234"
 )
 
@@ -78,15 +81,30 @@ var (
 		[]byte("1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k"),
 		[]byte("1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs"),
 	}
-
-	MintBridgeToken = "BridgeTEST"
-	MintRecipient   = string(Nodes[0])
 )
+
+var (
+	contractAddr = "1AdSxpZKKbdaFNuydxvGktBtUYHmcuP6C5"
+	lockAmt   int64  = 2000
+	bridgeToken = string(Nodes[0])
+	recipient   = string(Nodes[0])
+	// DefaultFeeRate 默认手续费率
+	DefaultFeeRate int64 = 100000
+
+)
+
+const BridgeBankABIBridgevmxgo = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operatorAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_oracleAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_goAssetBridgeAddress\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_beneficiary\",\"type\":\"address\"}],\"name\":\"LogBridgeTokenMint\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_ownerFrom\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_goAssetReceiver\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\"}],\"name\":\"LogGoAssetTokenBurn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\"}],\"name\":\"LogLock\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"LogNewBridgeToken\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"LogUnlock\",\"type\":\"event\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"addToken2LockList\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"bridgeTokenCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"bridgeTokenCreated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"bridgeTokenWhitelist\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_goAssetReceiver\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_goAssetTokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"burnBridgeTokens\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"_percents\",\"type\":\"uint8\"}],\"name\":\"configLockedTokenOfflineSave\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_offlineSave\",\"type\":\"address\"}],\"name\":\"configOfflineSaveAccount\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"createNewBridgeToken\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"getGoAssetDepositStatus\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"getLockedTokenAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"getToken2address\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"}],\"name\":\"getofflineSaveCfg\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"goAssetBridge\",\"outputs\":[{\"internalType\":\"contractGoAssetBridge\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"}],\"name\":\"hasBridgeTokenCreated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"highThreshold\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"lock\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lockNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockedFunds\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lowThreshold\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_goAssetSender\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"_intendedRecipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_bridgeTokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"mintBridgeTokens\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"offlineSave\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"offlineSaveCfgs\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_threshold\",\"type\":\"uint256\"},{\"internalType\":\"uint8\",\"name\":\"_percents\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"operator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"oracle\",\"outputs\":[{\"internalType\":\"contractOracle\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"token2address\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"tokenAllow2Lock\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"_recipient\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"}],\"name\":\"unlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_id\",\"type\":\"bytes32\"}],\"name\":\"viewGoAssetDeposit\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+
 
 type execEnv struct {
 	blockTime   int64
 	blockHeight int64
 	difficulty  uint64
+}
+
+func (e *execEnv) incr()  {
+	e.blockTime += 1
+	e.blockHeight += 1
 }
 
 func init() {
@@ -145,6 +163,8 @@ func genaddress() (string, crypto.PrivKey) {
 	}
 	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
 	fmt.Println("addr:", addrto.String())
+
+	fmt.Println(bridgevmxgo.BridgeBankBin)
 	return addrto.String(), privto
 }
 
@@ -240,9 +260,7 @@ func Test_InitAccount(t *testing.T) {
 func Test_Token(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(pty.EvmxgoX, cfg, nil)
-	tokenTotal := int64(10000 * 1e8)
-	tokenBurn := int64(10 * 1e8)
-	tokenMint := int64(20 * 1e8)
+	tokenTotal := int64(10000)
 	total := int64(100000)
 	accountA := types.Account{
 		Balance: total,
@@ -265,7 +283,7 @@ func Test_Token(t *testing.T) {
 	accB, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
 	accB.SaveExecAccount(execAddr, &accountB)
 
-	env := execEnv{
+	env := &execEnv{
 		10,
 		0,
 		1539918074,
@@ -275,10 +293,18 @@ func Test_Token(t *testing.T) {
 	item := &types.ConfigItem{
 		Key: fmt.Sprintf("mavl-manage-evmxgo-mint-%s", Symbol),
 		Value: &types.ConfigItem_Arr{
-			Arr: &types.ArrayConfig{Value: []string{"{\"address\":\"address1234\",\"precision\":4,\"introduction\":\"介绍\"}"}},
+			Arr: &types.ArrayConfig{Value: []string{fmt.Sprintf("{\"address\":\"%s\",\"precision\":4,\"introduction\":\"介绍\"}", bridgeToken)}},
 		},
 	}
 	stateDB.Set([]byte(item.Key), types.Encode(item))
+
+	itemBridgevmxgoConfig := &types.ConfigItem{
+		Key: "mavl-manage-bridgevmxgo-contract-addr",
+		Value: &types.ConfigItem_Arr{
+			Arr: &types.ArrayConfig{Value: []string{fmt.Sprintf("{\"address\":\"%s\"}", contractAddr)}},
+		},
+	}
+	stateDB.Set([]byte(itemBridgevmxgoConfig.Key), types.Encode(itemBridgevmxgoConfig))
 
 	exec := newEvmxgo()
 	api := new(apimock.QueueProtocolAPI)
@@ -288,75 +314,310 @@ func Test_Token(t *testing.T) {
 	exec.SetLocalDB(kvdb)
 	accDB, _ := account.NewAccountDB(cfg, pty.EvmxgoX, Symbol, stateDB)
 
+
+	receipt, err := evmxgo_Exec_Mint(exec, env)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	//t.Log(receipt)
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+
+	accCheck := accDB.LoadAccount(recipient)
+	assert.Equal(t, tokenTotal+lockAmt, accCheck.Balance)
+
+	set, err := evmxgo_Exec_Mint_Local(exec, receipt)
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	env.incr()
+	receipt, err = evmxgo_Exec_Transfer(exec, env)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	//t.Log(receipt)
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	set, err = evmxgo_Exec_Transfer_Local(exec, receipt)
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	env.incr()
+	receipt, err = evmxgo_Exec_Transfer_Exec(exec, env)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	//t.Log(receipt)
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	set, err = evmxgo_Exec_Transfer_Exec_Local(exec, receipt)
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	env.incr()
+	receipt, err = evmxgo_Exec_Withdraw(exec, env)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	//t.Log(receipt)
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	set, err = evmxgo_Exec_Withdraw_Local(exec, receipt)
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+
+	env.incr()
+	receipt, err = evmxgo_Exec_Burn(exec, env)
+	assert.Nil(t, err)
+	assert.NotNil(t, receipt)
+	//t.Log(receipt)
+	for _, kv := range receipt.KV {
+		stateDB.Set(kv.Key, kv.Value)
+	}
+	set, err = evmxgo_Exec_Burn_Local(exec, receipt)
+	assert.Nil(t, err)
+	assert.NotNil(t, set)
+	for _, kv := range set.KV {
+		kvdb.Set(kv.Key, kv.Value)
+	}
+}
+
+func evmxgo_Exec_Mint(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
 	// evmxgo mint
+	// lock
+	parameter := fmt.Sprintf("lock(%s, %s, %d)", recipient, bridgeToken, lockAmt)
+	_, packData, err := evmAbi.Pack(parameter, BridgeBankABIBridgevmxgo, false)
+	if nil != err {
+		fmt.Println("evmAbi.Pack", "Failed to do abi.Pack: ", err.Error())
+		return nil, ErrTest
+	}
+	evmAction := &evmtypes.EVMContractAction{
+		Amount:       0,
+		GasLimit:     0,
+		GasPrice:     0,
+		Para:         packData,
+		Note:         "",
+		ContractAddr: contractAddr,
+	}
+
+	evmTx := &types.Transaction{Execer: []byte(evmtypes.ExecutorName), Payload: types.Encode(evmAction), Fee: fee}
+
+	evmTx.Nonce = r.Int63()
+
 	// 创建
 	pMint := &pty.EvmxgoMint{
 		Symbol:      Symbol,
-		Amount:      tokenMint,
-		BridgeToken: MintBridgeToken,
-		Recipient:   MintRecipient,
+		Amount:      lockAmt,
+		BridgeToken: bridgeToken,
+		Recipient:   recipient,
 	}
-	//v, _ := types.PBToJSON(p1)
 	createTxMint, err := types.CallCreateTransaction(pty.EvmxgoX, "Mint", pMint)
 	if err != nil {
-		t.Error("RPC_Default_Process", "err", err)
+		fmt.Println("RPC_Default_Process", "err", err)
 	}
-	createTxMint, err = signTx(createTxMint, PrivKeyA)
+
+	txGroup := []*types.Transaction{evmTx, createTxMint}
+	createTx, err := types.CreateTxGroup(txGroup, DefaultFeeRate)
 	if err != nil {
-		t.Error("RPC_Default_Process sign", "err", err)
+		fmt.Println("RPC_Default_Process", "err", err)
 	}
+	_ = createTx.SignN(0, 1, privkey)
+	_ = createTx.SignN(1, 1, privkey)
 
 	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
-	receipt, err := exec.Exec(createTxMint, int(1))
-	assert.Nil(t, err)
-	assert.NotNil(t, receipt)
-	//t.Log(receipt)
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
+
+	value, ok := exec.(*evmxgo)
+	if  !ok {
+		fmt.Println("type error")
+		return nil, ErrTest
 	}
+	value.SetTxs(txGroup)
 
-	accCheck := accDB.LoadAccount(MintRecipient)
-	assert.Equal(t, tokenTotal+tokenMint, accCheck.Balance)
+	receipt, err := value.Exec_Mint(pMint, createTx.Tx(), 1)
+	return receipt, err
+}
 
+func evmxgo_Exec_Mint_Local(exec dapp.Driver, receipt *types.Receipt) (*types.LocalDBSet, error) {
+	pMint := &pty.EvmxgoMint{
+		Symbol:      Symbol,
+		Amount:      lockAmt,
+		BridgeToken: bridgeToken,
+		Recipient:   recipient,
+	}
+	createTxMint, err := types.CallCreateTransaction(pty.EvmxgoX, "Mint", pMint)
+	if err != nil {
+		fmt.Println("RPC_Default_Process", "err", err)
+		return nil, err
+	}
 	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err := exec.ExecLocal(createTxMint, receiptDate, int(1))
-	assert.Nil(t, err)
-	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
-	}
+	return exec.ExecLocal(createTxMint, receiptDate, int(1))
+}
 
-	p4 := &pty.EvmxgoBurn{
-		Symbol: Symbol,
-		Amount: tokenBurn,
-	}
-	createTx4, err := types.CallCreateTransaction(pty.EvmxgoX, "Burn", p4)
+func evmxgo_Exec_Transfer(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
+	v := &pty.EvmxgoAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: Symbol, Amount: transAmount, Note: []byte(""), To: transToAddr}}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionTransfer}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
 	if err != nil {
-		t.Error("RPC_Default_Process", "err", err)
-	}
-	createTx4, err = signTx(createTx4, PrivKeyA)
-	if err != nil {
-		t.Error("RPC_Default_Process sign", "err", err)
+		fmt.Println("RPC_Default_Process sign", "err", err)
+		return nil, err
 	}
 
 	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
-	receipt, err = exec.Exec(createTx4, int(1))
-	assert.Nil(t, err)
-	assert.NotNil(t, receipt)
-	//t.Log(receipt)
-	for _, kv := range receipt.KV {
-		stateDB.Set(kv.Key, kv.Value)
-	}
-	accCheck = accDB.LoadAccount(string(Nodes[0]))
-	assert.Equal(t, tokenTotal+tokenMint-tokenBurn, accCheck.Balance)
+	return exec.Exec(Tx1, int(1))
+}
 
-	receiptDate = &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
-	set, err = exec.ExecLocal(createTx4, receiptDate, int(1))
-	assert.Nil(t, err)
-	assert.NotNil(t, set)
-	for _, kv := range set.KV {
-		kvdb.Set(kv.Key, kv.Value)
+func evmxgo_Exec_Transfer_Local(exec dapp.Driver, receipt *types.Receipt) (*types.LocalDBSet, error) {
+	v := &pty.EvmxgoAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: Symbol, Amount: transAmount, Note: []byte(""), To: transToAddr}}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionTransfer}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+		return nil, err
 	}
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	return exec.ExecLocal(Tx1, receiptDate,int(1))
+}
+
+func evmxgo_Exec_Transfer_Exec(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
+	v := &pty.EvmxgoAction_TransferToExec{TransferToExec: &types.AssetsTransferToExec{
+		Cointoken: Symbol,
+		Amount:    transAmount,
+		Note:      []byte(""),
+		ExecName:  transExecName,
+		To:        address.ExecAddress(transExecName)},
+	}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionTransferToExec}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+	}
+
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	return exec.Exec(Tx1, int(1))
+}
+
+func evmxgo_Exec_Transfer_Exec_Local(exec dapp.Driver, receipt *types.Receipt) (*types.LocalDBSet, error) {
+	v := &pty.EvmxgoAction_TransferToExec{TransferToExec: &types.AssetsTransferToExec{
+		Cointoken: Symbol,
+		Amount:    transAmount,
+		Note:      []byte(""),
+		ExecName:  transExecName,
+		To:        address.ExecAddress(transExecName)},
+	}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionTransferToExec}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+		return nil, err
+	}
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	return exec.ExecLocal(Tx1, receiptDate,int(1))
+}
+
+
+func evmxgo_Exec_Withdraw(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
+	v := &pty.EvmxgoAction_Withdraw{Withdraw: &types.AssetsWithdraw{
+		Cointoken: Symbol,
+		Amount:    transAmount,
+		Note:      []byte(""),
+		ExecName:  transExecName,
+		To:        address.ExecAddress(transExecName)},
+	}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionWithdraw}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+	}
+
+	exec.SetEnv(env.blockHeight+1, env.blockTime+1, env.difficulty)
+	return exec.Exec(Tx1, int(1))
+}
+
+func evmxgo_Exec_Withdraw_Local(exec dapp.Driver, receipt *types.Receipt) (*types.LocalDBSet, error) {
+	v := &pty.EvmxgoAction_Withdraw{Withdraw: &types.AssetsWithdraw{
+		Cointoken: Symbol,
+		Amount:    transAmount,
+		Note:      []byte(""),
+		ExecName:  transExecName,
+		To:        address.ExecAddress(transExecName)},
+	}
+	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionWithdraw}
+
+	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
+	tx.Nonce = r.Int63()
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+		return nil, err
+	}
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	return exec.ExecLocal(Tx1, receiptDate,int(1))
+}
+
+
+func evmxgo_Exec_Burn(exec dapp.Driver, env *execEnv) (*types.Receipt, error) {
+	p4 := &pty.EvmxgoBurn{
+		Symbol: Symbol,
+		Amount: burnAmount,
+	}
+	tx, err := types.CallCreateTransaction(pty.EvmxgoX, "Burn", p4)
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+	}
+
+	exec.SetEnv(env.blockHeight, env.blockTime, env.difficulty)
+	return exec.Exec(Tx1, int(1))
+}
+
+func evmxgo_Exec_Burn_Local(exec dapp.Driver, receipt *types.Receipt) (*types.LocalDBSet, error) {
+	p4 := &pty.EvmxgoBurn{
+		Symbol: Symbol,
+		Amount: burnAmount,
+	}
+	tx, err := types.CallCreateTransaction(pty.EvmxgoX, "Burn", p4)
+
+	Tx1, err := signTx(tx, PrivKeyA)
+	if err != nil {
+		fmt.Println("RPC_Default_Process sign", "err", err)
+		return nil, err
+	}
+	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
+	return exec.ExecLocal(Tx1, receiptDate,int(1))
 }
 
 func Test_AddConfig(t *testing.T) {
@@ -409,9 +670,9 @@ func Test_EvmxgoMint(t *testing.T) {
 
 	v := &pty.EvmxgoAction_Mint{Mint: &pty.EvmxgoMint{
 		Symbol:      Symbol,
-		Amount:      mintAmount,
-		BridgeToken: MintBridgeToken,
-		Recipient:   MintRecipient,
+		Amount:      lockAmt,
+		BridgeToken: bridgeToken,
+		Recipient:   recipient,
 	}}
 	mint := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionMint}
 
@@ -594,3 +855,4 @@ func Test_Withdraw(t *testing.T) {
 		return
 	}
 }
+
