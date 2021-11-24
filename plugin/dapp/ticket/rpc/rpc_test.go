@@ -332,6 +332,9 @@ ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
 
+[fork.sub.evmxgo]
+Enable=0
+
 [fork.sub.blackwhite]
 Enable=0
 ForkBlackWhiteV2=0
