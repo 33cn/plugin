@@ -12,7 +12,6 @@ import (
 	bridgevmxgo "github.com/33cn/plugin/plugin/dapp/bridgevmxgo/contracts/generated"
 	"github.com/stretchr/testify/mock"
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
-	manageTypes "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
@@ -62,7 +60,6 @@ var (
 	transExecName         = "token"
 	mananerexecName       = "manage"
 	transToAddr           = "17EVv6tW2HzE73TVB6YXQYThQJxa7kuZb8"
-	transToExecAddr       = "12hpJBHybh1mSyCijQ2MQJPk7z7kZ7jnQa"
 	transAmount     int64 = 100
 	walletPass            = "test1234"
 )
@@ -210,57 +207,9 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 	return tx, nil
 }
 
-func Test_InitAccount(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("TestInitAccount start")
-	defer fmt.Println("TestInitAccount end")
-
-	//need update to fixed addr here
-	//addr = ""
-	//privkey = ""
-	//addr, privkey = genaddress()
-	privkey = getprivkey(PrivKeyA)
-	label := strconv.Itoa(int(types.Now().UnixNano()))
-	params := types.ReqWalletImportPrivkey{Privkey: common.ToHex(privkey.Bytes()), Label: label}
-
-	unlock := types.WalletUnLock{Passwd: walletPass, Timeout: 0, WalletOrTicket: false}
-	_, err := mainClient.UnLock(context.Background(), &unlock)
-	if err != nil {
-		fmt.Println(err)
-		t.Error(err)
-		return
-	}
-	time.Sleep(5 * time.Second)
-
-	_, err = mainClient.ImportPrivkey(context.Background(), &params)
-	if err != nil && err != types.ErrPrivkeyExist {
-		fmt.Println(err)
-		t.Error(err)
-		return
-	}
-	time.Sleep(5 * time.Second)
-	/*
-		txhash, err := sendtoaddress(mainClient, privGenesis, addr, defaultAmount)
-
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if !waitTx(txhash) {
-			t.Error(ErrTest)
-			return
-		}
-
-		time.Sleep(5 * time.Second)
-	*/
-}
-
 func Test_Token(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
 	Init(pty.EvmxgoX, cfg, nil)
-	tokenTotal := int64(10000)
 	total := int64(100000)
 	accountA := types.Account{
 		Balance: total,
@@ -277,7 +226,7 @@ func Test_Token(t *testing.T) {
 	stateDB, _ := dbm.NewGoMemDB("1", "2", 100)
 	_, _, kvdb := util.CreateTestDB()
 
-	accA, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
+	accA, _ := account.NewAccountDB(cfg, pty.EvmxgoX, Symbol, stateDB)
 	accA.SaveExecAccount(execAddr, &accountA)
 
 	accB, _ := account.NewAccountDB(cfg, AssetExecPara, Symbol, stateDB)
@@ -312,7 +261,6 @@ func Test_Token(t *testing.T) {
 	exec.SetAPI(api)
 	exec.SetStateDB(stateDB)
 	exec.SetLocalDB(kvdb)
-	accDB, _ := account.NewAccountDB(cfg, pty.EvmxgoX, Symbol, stateDB)
 
 
 	receipt, err := evmxgo_Exec_Mint(exec, env)
@@ -323,8 +271,8 @@ func Test_Token(t *testing.T) {
 		stateDB.Set(kv.Key, kv.Value)
 	}
 
-	accCheck := accDB.LoadAccount(recipient)
-	assert.Equal(t, tokenTotal+lockAmt, accCheck.Balance)
+	accCheck := accA.LoadAccount(recipient)
+	assert.Equal(t, lockAmt, accCheck.Balance)
 
 	set, err := evmxgo_Exec_Mint_Local(exec, receipt)
 	assert.Nil(t, err)
@@ -619,240 +567,3 @@ func evmxgo_Exec_Burn_Local(exec dapp.Driver, receipt *types.Receipt) (*types.Lo
 	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	return exec.ExecLocal(Tx1, receiptDate,int(1))
 }
-
-func Test_AddConfig(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_AddConfig start")
-	defer fmt.Println("Test_AddConfig end")
-
-	v := &manageTypes.ManageAction_Modify{Modify: &types.ModifyConfig{
-		Key:   fmt.Sprintf("evmxgo-mint-%s", Symbol),
-		Value: "{\"address\":\"address1234\",\"precision\":4,\"introduction\":\"介绍\"}",
-		Op:    "add",
-		//Op: "delete",
-		Addr: "",
-	}}
-	action := &manageTypes.ManageAction{Value: v, Ty: manageTypes.ManageActionModifyConfig}
-
-	tx := &types.Transaction{Execer: []byte(mananerexecName), Payload: types.Encode(action), Fee: fee, To: manageaddrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkeySupper)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-	fmt.Println("err = ", reply.GetMsg())
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
-func Test_EvmxgoMint(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_EvmxgoMint start")
-	defer fmt.Println("Test_EvmxgoMint end")
-
-	v := &pty.EvmxgoAction_Mint{Mint: &pty.EvmxgoMint{
-		Symbol:      Symbol,
-		Amount:      lockAmt,
-		BridgeToken: bridgeToken,
-		Recipient:   recipient,
-	}}
-	mint := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionMint}
-
-	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(mint), Fee: fee, To: addrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkey)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-	fmt.Println("err = ", reply.GetMsg())
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
-func Test_EvmxgoBurn(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_EvmxgoBurn start")
-	defer fmt.Println("Test_EvmxgoBurn end")
-
-	v := &pty.EvmxgoAction_Burn{Burn: &pty.EvmxgoBurn{
-		Symbol: Symbol,
-		Amount: burnAmount,
-	}}
-	burn := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionBurn}
-
-	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(burn), Fee: fee, To: addrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkey)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
-func Test_Transfer(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_Transfer start")
-	defer fmt.Println("Test_Transfer end")
-
-	v := &pty.EvmxgoAction_Transfer{Transfer: &types.AssetsTransfer{Cointoken: Symbol, Amount: transAmount, Note: []byte(""), To: transToAddr}}
-	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionTransfer}
-
-	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkey)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
-func Test_TransferExec(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_TransferExec start")
-	defer fmt.Println("Test_TransferExec end")
-
-	v := &pty.EvmxgoAction_TransferToExec{TransferToExec: &types.AssetsTransferToExec{
-		Cointoken: Symbol,
-		Amount:    transAmount,
-		Note:      []byte(""),
-		ExecName:  transExecName,
-		To:        transToExecAddr},
-	}
-	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.EvmxgoActionTransferToExec}
-
-	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkey)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
-func Test_Withdraw(t *testing.T) {
-	if !isMainNetTest {
-		return
-	}
-	fmt.Println("Test_Withdraw start")
-	defer fmt.Println("Test_Withdraw end")
-
-	v := &pty.EvmxgoAction_Withdraw{Withdraw: &types.AssetsWithdraw{
-		Cointoken: Symbol,
-		Amount:    transAmount,
-		Note:      []byte(""),
-		ExecName:  transExecName,
-		To:        transToExecAddr},
-	}
-	transfer := &pty.EvmxgoAction{Value: v, Ty: pty.ActionWithdraw}
-
-	tx := &types.Transaction{Execer: []byte(execName), Payload: types.Encode(transfer), Fee: fee, To: addrexec}
-	tx.Nonce = r.Int63()
-
-	version, _ := mainClient.Version(context.Background(), nil)
-	tx.ChainID = version.GetChainID()
-	tx.Sign(types.SECP256K1, privkey)
-
-	reply, err := mainClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		fmt.Println("err", err)
-		t.Error(err)
-		return
-	}
-	if !reply.IsOk {
-		fmt.Println("err = ", reply.GetMsg())
-		t.Error(ErrTest)
-		return
-	}
-
-	if !waitTx(tx.Hash()) {
-		t.Error(ErrTest)
-		return
-	}
-}
-
