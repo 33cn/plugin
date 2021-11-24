@@ -571,3 +571,4 @@ func evmxgo_Exec_Burn_Local(exec dapp.Driver, receipt *types.Receipt) (*types.Lo
 	receiptDate := &types.ReceiptData{Ty: receipt.Ty, Logs: receipt.Logs}
 	return exec.ExecLocal(Tx1, receiptDate, int(1))
 }
+
