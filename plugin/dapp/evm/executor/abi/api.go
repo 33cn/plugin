@@ -165,7 +165,7 @@ func UnpackAllTypes(data []byte, name, abiData string) (output []*Param, err err
 		return output, err
 	}
 
-	values := []interface{}{}
+	values := make([]interface{}, 0)
 	var arguments Arguments
 	if method, ok := abi.Methods[name]; ok {
 		if len(data)%32 == 0 {
