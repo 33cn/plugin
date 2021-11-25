@@ -175,6 +175,7 @@ func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Mo
 func (kvmMavls *KVmMavlStore) Close() {
 	quit = true
 	wg.Wait()
+	kmlog.Info("store wait group done")
 	kvmMavls.KVMVCCStore.Close()
 	kvmMavls.MavlStore.Close()
 	kvmMavls.BaseStore.Close()
