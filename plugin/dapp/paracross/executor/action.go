@@ -836,7 +836,7 @@ func isHaveCrossTxs(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus) bo
 func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if enableParacrossTransfer && status.Height > 0 && isHaveCrossTxs(cfg, status) {
-		clog.Debug("paracross.Commit commitDone do cross", "height", status.Height)
+		clog.Info("paracross.Commit commitDone do cross", "height", status.Height)
 		crossTxReceipt, err := a.execCrossTxs(status)
 		if err != nil {
 			return nil, err
@@ -1021,25 +1021,25 @@ func (a *action) isAllowConsensJump(commit *pt.ParacrossNodeStatus, titleStatus 
 	return a.isAllowMainConsensJump(commit, titleStatus), nil
 }
 
-func execCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
-	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
+func execCrossTxNew(a *action, cross *types.Transaction, crossTxHash []byte) (*types.Receipt, error) {
+	if !bytes.HasSuffix(cross.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
 	var payload pt.ParacrossAction
-	err := types.Decode(cross.Tx.Payload, &payload)
+	err := types.Decode(cross.Payload, &payload)
 	if err != nil {
 		clog.Crit("paracross.Commit Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 		return nil, err
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
 		}
 		if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
-			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, cross.Tx)
+			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, cross)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
 				return nil, err
@@ -1052,7 +1052,7 @@ func execCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) 
 
 	//主链共识后，执行主链资产withdraw, 在支持CrossAssetTransfer之前使用此action
 	if payload.Ty == pt.ParacrossActionAssetWithdraw {
-		receiptWithdraw, err := a.assetWithdraw(payload.GetAssetWithdraw(), cross.Tx)
+		receiptWithdraw, err := a.assetWithdraw(payload.GetAssetWithdraw(), cross)
 		if err != nil {
 			clog.Crit("paracross.Commit withdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, errors.Cause(err)
@@ -1064,26 +1064,69 @@ func execCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) 
 	return nil, nil
 }
 
-func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
-	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
+//func execCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+//	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
+//		return nil, nil
+//	}
+//	var payload pt.ParacrossAction
+//	err := types.Decode(cross.Tx.Payload, &payload)
+//	if err != nil {
+//		clog.Crit("paracross.Commit Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//		return nil, err
+//	}
+//
+//	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+//		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
+//		if err != nil {
+//			clog.Crit("paracross.Commit getCrossAction Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//			return nil, err
+//		}
+//		if act == pt.ParacrossMainAssetWithdraw || act == pt.ParacrossParaAssetTransfer {
+//			receipt, err := a.crossAssetTransfer(payload.GetCrossAssetTransfer(), act, cross.Tx)
+//			if err != nil {
+//				clog.Crit("paracross.Commit crossAssetTransfer Tx failed", "error", err, "act", act, "txHash", common.ToHex(crossTxHash))
+//				return nil, err
+//			}
+//			clog.Debug("paracross.Commit crossAssetTransfer done", "act", act, "txHash", common.ToHex(crossTxHash))
+//			return receipt, nil
+//		}
+//
+//	}
+//
+//	//主链共识后，执行主链资产withdraw, 在支持CrossAssetTransfer之前使用此action
+//	if payload.Ty == pt.ParacrossActionAssetWithdraw {
+//		receiptWithdraw, err := a.assetWithdraw(payload.GetAssetWithdraw(), cross.Tx)
+//		if err != nil {
+//			clog.Crit("paracross.Commit withdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//			return nil, errors.Cause(err)
+//		}
+//
+//		clog.Debug("paracross.Commit WithdrawCoins", "txHash", common.ToHex(crossTxHash))
+//		return receiptWithdraw, nil
+//	}
+//	return nil, nil
+//}
+
+func rollbackCrossTxNew(a *action, cross *types.Transaction, crossTxHash []byte) (*types.Receipt, error) {
+	if !bytes.HasSuffix(cross.Execer, []byte(pt.ParaX)) {
 		return nil, nil
 	}
 	var payload pt.ParacrossAction
-	err := types.Decode(cross.Tx.Payload, &payload)
+	err := types.Decode(cross.Payload, &payload)
 	if err != nil {
 		clog.Crit("paracross.Commit.rollbackCrossTx Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 		return nil, err
 	}
 
 	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
-		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
+		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Execer))
 		if err != nil {
 			clog.Crit("paracross.Commit.rollbackCrossTx getCrossAction failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, err
 		}
 		//主链共识后，平行链执行出错的主链资产transfer回滚
 		if act == pt.ParacrossMainAssetTransfer {
-			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), cross.Tx)
+			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), cross)
 			if err != nil {
 				clog.Crit("paracross.Commit crossAssetTransfer rbk failed", "error", err, "txHash", common.ToHex(crossTxHash))
 				return nil, errors.Cause(err)
@@ -1094,7 +1137,7 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 		}
 		//主链共识后，平行链执行出错的平行链资产withdraw回滚
 		if act == pt.ParacrossParaAssetWithdraw {
-			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), cross.Tx)
+			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), cross)
 			if err != nil {
 				clog.Crit("paracross.Commit rbk paraAssetWithdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 				return nil, errors.Cause(err)
@@ -1115,7 +1158,7 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 			ToAddr:      cfg.To,
 		}
 
-		receipt, err := a.assetTransferRollback(transfer, cross.Tx)
+		receipt, err := a.assetTransferRollback(transfer, cross)
 		if err != nil {
 			clog.Crit("paracross.Commit rbk asset transfer Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
 			return nil, errors.Cause(err)
@@ -1127,6 +1170,70 @@ func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []by
 	return nil, nil
 
 }
+
+//func rollbackCrossTx(a *action, cross *types.TransactionDetail, crossTxHash []byte) (*types.Receipt, error) {
+//	if !bytes.HasSuffix(cross.Tx.Execer, []byte(pt.ParaX)) {
+//		return nil, nil
+//	}
+//	var payload pt.ParacrossAction
+//	err := types.Decode(cross.Tx.Payload, &payload)
+//	if err != nil {
+//		clog.Crit("paracross.Commit.rollbackCrossTx Decode Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//		return nil, err
+//	}
+//
+//	if payload.Ty == pt.ParacrossActionCrossAssetTransfer {
+//		act, err := getCrossAction(payload.GetCrossAssetTransfer(), string(cross.Tx.Execer))
+//		if err != nil {
+//			clog.Crit("paracross.Commit.rollbackCrossTx getCrossAction failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//			return nil, err
+//		}
+//		//主链共识后，平行链执行出错的主链资产transfer回滚
+//		if act == pt.ParacrossMainAssetTransfer {
+//			receipt, err := a.assetTransferRollback(payload.GetCrossAssetTransfer(), cross.Tx)
+//			if err != nil {
+//				clog.Crit("paracross.Commit crossAssetTransfer rbk failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//				return nil, errors.Cause(err)
+//			}
+//
+//			clog.Debug("paracross.Commit crossAssetTransfer rollbackCrossTx", "txHash", common.ToHex(crossTxHash), "mainHeight", a.height)
+//			return receipt, nil
+//		}
+//		//主链共识后，平行链执行出错的平行链资产withdraw回滚
+//		if act == pt.ParacrossParaAssetWithdraw {
+//			receipt, err := a.paraAssetWithdrawRollback(payload.GetCrossAssetTransfer(), cross.Tx)
+//			if err != nil {
+//				clog.Crit("paracross.Commit rbk paraAssetWithdraw Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//				return nil, errors.Cause(err)
+//			}
+//
+//			clog.Debug("paracross.Commit paraAssetWithdraw rollbackCrossTx", "txHash", common.ToHex(crossTxHash), "mainHeight", a.height)
+//			return receipt, nil
+//		}
+//	}
+//
+//	//主链共识后，平行链执行出错的主链资产transfer回滚
+//	if payload.Ty == pt.ParacrossActionAssetTransfer {
+//		cfg := payload.GetAssetTransfer()
+//		transfer := &pt.CrossAssetTransfer{
+//			AssetSymbol: cfg.Cointoken,
+//			Amount:      cfg.Amount,
+//			Note:        string(cfg.Note),
+//			ToAddr:      cfg.To,
+//		}
+//
+//		receipt, err := a.assetTransferRollback(transfer, cross.Tx)
+//		if err != nil {
+//			clog.Crit("paracross.Commit rbk asset transfer Tx failed", "error", err, "txHash", common.ToHex(crossTxHash))
+//			return nil, errors.Cause(err)
+//		}
+//
+//		clog.Debug("paracross.Commit assetTransfer rollbackCrossTx", "txHash", common.ToHex(crossTxHash), "mainHeight", a.height)
+//		return receipt, nil
+//	}
+//	return nil, nil
+//
+//}
 
 //无跨链交易高度列表是人为配置的，是确认的历史高度，是一种特殊处理，不会影响区块状态hash
 //para.ignore.10-100.200-300
@@ -1245,7 +1352,7 @@ func checkIsIgnoreHeight(heightList []string, status *pt.ParacrossNodeStatus) (b
 
 }
 
-func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
+func getCrossTxsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([]*types.Transaction, []byte, error) {
 	//支持带版本号的跨链交易bitmap
 	//1.如果等于0，是老版本的平行链，按老的方式处理. 2. 如果大于0等于ver，新版本且没有跨链交易，不需要处理. 3. 大于ver，说明有跨链交易按老的方式处理
 	if len(string(status.CrossTxResult)) == pt.ParaCrossStatusBitMapVerLen {
@@ -1289,19 +1396,19 @@ func getCrossTxHashsByRst(api client.QueueProtocolAPI, status *pt.ParacrossNodeS
 	for _, tx := range paraAllTxs {
 		baseHashs = append(baseHashs, tx.Hash())
 	}
-	paraCrossHashs := FilterParaCrossTxHashes(paraAllTxs)
+	paraCrossTxs := FilterParaCrossTxs(paraAllTxs)
+	var paraCrossHashs [][]byte
+	for _, tx := range paraCrossTxs {
+		paraCrossHashs = append(paraCrossHashs, tx.Hash())
+	}
 	crossRst := util.CalcBitMapByBitMap(paraCrossHashs, baseHashs, rst)
-	return paraCrossHashs, crossRst, nil
-
+	return paraCrossTxs, crossRst, nil
 }
 
-func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
+func getCrossTxs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([]*types.Transaction, []byte, error) {
 	cfg := api.GetConfig()
 	if pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkLoopCheckCommitTxDone) {
-		return getCrossTxHashsByRst(api, status)
-	}
-	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) {
-		return status.CrossTxHashs, status.CrossTxResult, nil
+		return getCrossTxsByRst(api, status)
 	}
 
 	if len(status.CrossTxHashs) == 0 {
@@ -1327,12 +1434,34 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 	if err != nil {
 		return nil, nil, err
 	}
+	if !pt.IsParaForkHeight(cfg, status.MainBlockHeight, pt.ForkCommitTx) {
+		// 直接按照status.CrossTxHashs指定的哈希列表查找交易
+		paraCrossTxs := make([]*types.Transaction, len(status.CrossTxHashs))
+		txs := blockDetail.Block.Txs
+		for i, hash := range status.CrossTxHashs {
+			for j, tx := range txs {
+				if bytes.Equal(hash, tx.Hash()) {
+					paraCrossTxs[i] = tx
+					txs = txs[j:]
+					break
+				}
+			}
+		}
+		if len(paraCrossTxs) != len(status.CrossTxHashs) {
+			return nil, nil, types.ErrTxNotExist
+		}
+		return paraCrossTxs, status.CrossTxResult, nil
+	}
 	//校验
 	paraBaseTxs := FilterTxsForPara(cfg, blockDetail.FilterParaTxsByTitle(cfg, status.Title))
-	paraCrossHashs := FilterParaCrossTxHashes(paraBaseTxs)
+	paraCrossTxs := FilterParaCrossTxs(paraBaseTxs)
 	var baseHashs [][]byte
 	for _, tx := range paraBaseTxs {
 		baseHashs = append(baseHashs, tx.Hash())
+	}
+	var paraCrossHashs [][]byte
+	for _, tx := range paraCrossTxs {
+		paraCrossHashs = append(paraCrossHashs, tx.Hash())
 	}
 	baseCheckTxHash := CalcTxHashsHash(baseHashs)
 	crossCheckHash := CalcTxHashsHash(paraCrossHashs)
@@ -1357,42 +1486,32 @@ func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus
 		return nil, nil, types.ErrInvalidParam
 	}
 
-	return paraCrossHashs, rst, nil
-
+	return paraCrossTxs, rst, nil
 }
 
-func crossTxProc(a *action, txHash []byte, fn func(*action, *types.TransactionDetail, []byte) (*types.Receipt, error)) (*types.Receipt, error) {
-	tx, err := GetTx(a.api, txHash)
-	if err != nil {
-		clog.Crit("paracross.Commit Load Tx failed", "error", err, "txHash", common.ToHex(txHash))
-		return nil, err
+func getCrossTxHashs(api client.QueueProtocolAPI, status *pt.ParacrossNodeStatus) ([][]byte, []byte, error) {
+	txs, crossRst, err := getCrossTxs(api, status)
+	var crossTxHashs [][]byte
+	for _, tx := range txs {
+		crossTxHashs = append(crossTxHashs, tx.Hash())
 	}
-	if tx == nil || tx.Tx == nil {
-		clog.Error("paracross.Commit Load Tx nil", "error", err, "txHash", common.ToHex(txHash))
-		return nil, types.ErrHashNotExist
-	}
-	receiptCross, err := fn(a, tx, txHash)
-	if err != nil {
-		clog.Error("paracross.Commit execCrossTx", "error", err)
-		return nil, errors.Cause(err)
-	}
-	return receiptCross, nil
+	return crossTxHashs, crossRst, err
 }
 
 func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	var receipt types.Receipt
-
-	crossTxHashs, crossTxResult, err := getCrossTxHashs(a.api, status)
+	crossTxs, crossTxResult, err := getCrossTxs(a.api, status)
 	if err != nil {
 		clog.Error("paracross.Commit getCrossTxHashs", "err", err.Error())
 		return nil, err
 	}
 
-	for i := 0; i < len(crossTxHashs); i++ {
-		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxHashs[i]),
+	for i := 0; i < len(crossTxs); i++ {
+		clog.Debug("paracross.Commit commitDone", "do cross number", i, "hash", common.ToHex(crossTxs[i].Hash()),
 			"res", util.BitMapBit(crossTxResult, uint32(i)))
 		if util.BitMapBit(crossTxResult, uint32(i)) {
-			receiptCross, err := crossTxProc(a, crossTxHashs[i], execCrossTx)
+			//receiptCross, err := crossTxProc(a, crossTxHashs[i], execCrossTx)
+			receiptCross, err := execCrossTxNew(a, crossTxs[i], crossTxs[i].Hash())
 			if err != nil {
 				clog.Error("paracross.Commit execCrossTx", "para title", status.Title, "para height", status.Height,
 					"para tx index", i, "error", err)
@@ -1401,15 +1520,16 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 			if receiptCross == nil {
 				continue
 			}
-			clog.Debug("paracross.Commit commitDone.title ok ", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
+			clog.Debug("paracross.Commit commitDone.title ok ", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxs[i].Hash()))
 			receipt.KV = append(receipt.KV, receiptCross.KV...)
 			receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 		} else {
 			clog.Error("paracross.Commit commitDone", "do cross number", i, "hash",
-				common.ToHex(crossTxHashs[i]), "para res", util.BitMapBit(crossTxResult, uint32(i)))
+				common.ToHex(crossTxs[i].Hash()), "para res", util.BitMapBit(crossTxResult, uint32(i)))
 			cfg := a.api.GetConfig()
 			if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAssetTransferRbk) {
-				receiptCross, err := crossTxProc(a, crossTxHashs[i], rollbackCrossTx)
+				//receiptCross, err := crossTxProc(a, crossTxHashs[i], rollbackCrossTx)
+				receiptCross, err := rollbackCrossTxNew(a, crossTxs[i], crossTxs[i].Hash())
 				if err != nil {
 					clog.Error("paracross.Commit rollbackCrossTx", "para title", status.Title, "para height", status.Height,
 						"para tx index", i, "error", err)
@@ -1418,7 +1538,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 				if receiptCross == nil {
 					continue
 				}
-				clog.Debug("paracross.Commit commitDone.title rbk", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxHashs[i]))
+				clog.Debug("paracross.Commit commitDone.title rbk", "title", status.Title, "height", status.Height, "main", a.height, "i", i, "hash", common.ToHex(crossTxs[i].Hash()))
 				receipt.KV = append(receipt.KV, receiptCross.KV...)
 				receipt.Logs = append(receipt.Logs, receiptCross.Logs...)
 			}
@@ -1426,6 +1546,7 @@ func (a *action) execCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, e
 	}
 
 	return &receipt, nil
+
 }
 
 func (a *action) assetTransferMainCheck(cfg *types.Chain33Config, transfer *types.AssetsTransfer) error {
