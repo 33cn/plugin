@@ -338,13 +338,24 @@ func superNodeCmd() *cobra.Command {
 	cmd.AddCommand(nodeVoteCmd())
 	cmd.AddCommand(nodeQuitCmd())
 	cmd.AddCommand(nodeCancelCmd())
-	cmd.AddCommand(nodeBindCmd())
-
 	cmd.AddCommand(getNodeInfoCmd())
 	cmd.AddCommand(getNodeIDInfoCmd())
 	cmd.AddCommand(getNodeListCmd())
 	cmd.AddCommand(nodeModifyCmd())
+
+	cmd.AddCommand(nodeMinerCmd())
+	return cmd
+}
+
+func nodeMinerCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "miner",
+		Short: "super node bind miner cmd",
+	}
+
+	cmd.AddCommand(nodeBindCmd())
 	cmd.AddCommand(getNodeBindListCmd())
+	cmd.AddCommand(getMinerBindListCmd())
 	return cmd
 }
 
@@ -363,7 +374,6 @@ func addNodeJoinFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("addr")
 
 	cmd.Flags().Float64P("coins", "c", 0, "frozen coins amount, should not less nodegroup's setting")
-	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -559,7 +569,7 @@ func nodeBindCmd() *cobra.Command {
 }
 
 func addNodeBindFlags(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("action", "a", 1, "action bind:1 or unbind:2")
+	cmd.Flags().Uint32P("action", "a", 1, "action bind:1, unbind:2, modify:3")
 	_ = cmd.MarkFlagRequired("action")
 
 	cmd.Flags().Uint64P("coins", "c", 0, "bind coins, unbind not needed")
@@ -599,8 +609,44 @@ func createNodeBindTx(cmd *cobra.Command, args []string) {
 
 func getNodeBindListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bind_list",
+		Use:   "miner_list",
 		Short: "Get node bind miner account list",
+		Run:   minerBindInfo,
+	}
+	addMinerBindCmdFlags(cmd)
+	return cmd
+}
+
+func addMinerBindCmdFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
+	cmd.MarkFlagRequired("node")
+
+	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
+	cmd.Flags().BoolP("unbind", "u", false, "query with unbinded miner,default false")
+
+}
+
+func minerBindInfo(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	node, _ := cmd.Flags().GetString("node")
+	miner, _ := cmd.Flags().GetString("miner")
+	unbind, _ := cmd.Flags().GetBool("unbind")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = pt.ParaX
+	params.FuncName = "GetNodeBindMinerList"
+
+	params.Payload = types.MustPBToJSON(&pt.ParaNodeMinerListReq{Node: node, Miner: miner, WithUnBind: unbind})
+
+	var res pt.ParaBindMinerList
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
+	ctx.Run()
+}
+
+func getMinerBindListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "node_list",
+		Short: "Get miner bind consensus node account list",
 		Run:   nodeBindInfo,
 	}
 	addNodeBindCmdFlags(cmd)
@@ -608,22 +654,24 @@ func getNodeBindListCmd() *cobra.Command {
 }
 
 func addNodeBindCmdFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("node", "n", "", "super node addr to bind miner")
 	cmd.Flags().StringP("miner", "m", "", "bind miner addr")
+	cmd.MarkFlagRequired("miner")
+
+	cmd.Flags().BoolP("unbind", "u", false, "query with unbinded miner,default false")
 }
 
 func nodeBindInfo(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	node, _ := cmd.Flags().GetString("node")
 	miner, _ := cmd.Flags().GetString("miner")
+	unbind, _ := cmd.Flags().GetBool("unbind")
 
 	var params rpctypes.Query4Jrpc
 	params.Execer = pt.ParaX
-	params.FuncName = "GetNodeBindMinerList"
+	params.FuncName = "GetMinerBindNodeList"
 
-	params.Payload = types.MustPBToJSON(&pt.ParaNodeBindOne{SuperNode: node, Miner: miner})
+	params.Payload = types.MustPBToJSON(&pt.ParaNodeMinerListReq{Miner: miner, WithUnBind: unbind})
 
-	var res pt.RespParaNodeBindList
+	var res types.ReplyStrings
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }
@@ -908,7 +956,6 @@ func addNodeGroupApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("blspubs", "p", "", "bls sign pub key for addr's private key,split by ',' (optional)")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -946,12 +993,24 @@ func nodeGroupApply(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
+func nodeGroupApproveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "approve",
+		Short: "approve for para chain's super node group application",
+		Run:   nodeGroupApprove,
+	}
+	addNodeGroupApproveCmdFlags(cmd)
+	return cmd
+}
+
 func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "apply id for nodegroup ")
 	_ = cmd.MarkFlagRequired("id")
 
+	cmd.Flags().StringP("autonomyId", "a", "", "autonomy approved id ")
+	_ = cmd.MarkFlagRequired("autonomyId")
+
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	_ = cmd.MarkFlagRequired("coins")
 
 }
 
@@ -959,6 +1018,7 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
 	coins, _ := cmd.Flags().GetFloat64("coins")
+	autonomyId, _ := cmd.Flags().GetString("autonomyId")
 
 	if !strings.HasPrefix(paraName, "user.p") {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
@@ -975,7 +1035,7 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "FormatFloatDisplay2Value.coins"))
 		return
 	}
-	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: coinsInt64}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: coinsInt64, AutonomyItemID: autonomyId}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "NodeGroupConfig",
@@ -986,13 +1046,13 @@ func nodeGroupApprove(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func nodeGroupApproveCmd() *cobra.Command {
+func nodeGroupQuitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "approve",
-		Short: "approve for para chain's super node group application",
-		Run:   nodeGroupApprove,
+		Use:   "quit",
+		Short: "quit for para chain's super node group application",
+		Run:   nodeGroupQuit,
 	}
-	addNodeGroupApproveCmdFlags(cmd)
+	addNodeGroupQuitCmdFlags(cmd)
 	return cmd
 }
 
@@ -1005,6 +1065,7 @@ func addNodeGroupQuitCmdFlags(cmd *cobra.Command) {
 func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
+
 	if !strings.HasPrefix(paraName, "user.p") {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
@@ -1021,13 +1082,13 @@ func nodeGroupQuit(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func nodeGroupQuitCmd() *cobra.Command {
+func nodeGroupModifyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "quit",
-		Short: "quit for para chain's super node group application",
-		Run:   nodeGroupQuit,
+		Use:   "modify",
+		Short: "modify for para chain's super node group parameters",
+		Run:   nodeGroupModify,
 	}
-	addNodeGroupQuitCmdFlags(cmd)
+	addNodeGroupModifyCmdFlags(cmd)
 	return cmd
 }
 
@@ -1064,16 +1125,6 @@ func nodeGroupModify(cmd *cobra.Command, args []string) {
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
-}
-
-func nodeGroupModifyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "modify",
-		Short: "modify for para chain's super node group parameters",
-		Run:   nodeGroupModify,
-	}
-	addNodeGroupModifyCmdFlags(cmd)
-	return cmd
 }
 
 // IsSyncCmd query parachain is sync
@@ -1645,7 +1696,6 @@ func addSupervisionNodeApplyCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("blspub", "p", "", "bls sign pub key for addr's private key")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	_ = cmd.MarkFlagRequired("coins")
 }
 
 func supervisionNodeApply(cmd *cobra.Command, args []string) {
@@ -1658,7 +1708,7 @@ func supervisionNodeApply(cmd *cobra.Command, args []string) {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
-	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 1, Addr: addr, BlsPubKey: blspub, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 1, Addrs: addr, BlsPubKeys: blspub, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "SupervisionNodeConfig",
@@ -1684,13 +1734,16 @@ func addSupervisionNodeApproveCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("id", "i", "", "apply id for supervision node ")
 	_ = cmd.MarkFlagRequired("id")
 
+	cmd.Flags().StringP("autonomyId", "a", "", "autonomy approved id ")
+	_ = cmd.MarkFlagRequired("autonomyId")
+
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
-	_ = cmd.MarkFlagRequired("coins")
 }
 
 func supervisionNodeApprove(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	id, _ := cmd.Flags().GetString("id")
+	autonomyId, _ := cmd.Flags().GetString("autonomyId")
 	coins, _ := cmd.Flags().GetFloat64("coins")
 
 	if !strings.HasPrefix(paraName, "user.p") {
@@ -1698,7 +1751,7 @@ func supervisionNodeApprove(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 2, Id: id, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 2, Id: id, AutonomyItemID: autonomyId, CoinsFrozen: int64(math.Trunc((coins+0.0000001)*1e4)) * 1e4}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "SupervisionNodeConfig",
@@ -1732,7 +1785,7 @@ func supervisionNodeQuit(cmd *cobra.Command, args []string) {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
-	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 3, Addr: opAddr}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 3, Addrs: opAddr}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "SupervisionNodeConfig",
@@ -1766,7 +1819,7 @@ func supervisionNodeCancel(cmd *cobra.Command, args []string) {
 		_, _ = fmt.Fprintln(os.Stderr, "paraName is not right, paraName format like `user.p.guodun.`")
 		return
 	}
-	payload := &pt.ParaNodeAddrConfig{Title: paraName, Op: 4, Id: id}
+	payload := &pt.ParaNodeGroupConfig{Title: paraName, Op: 4, Id: id}
 	params := &rpctypes.CreateTxIn{
 		Execer:     getRealExecName(paraName, pt.ParaX),
 		ActionName: "SupervisionNodeConfig",
@@ -1833,7 +1886,7 @@ func supervisionNodeListInfo(cmd *cobra.Command, args []string) {
 	}
 	params.Payload = types.MustPBToJSON(&req)
 
-	var res pt.RespParacrossNodeAddrs
+	var res pt.RespParacrossNodeGroups
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
 }

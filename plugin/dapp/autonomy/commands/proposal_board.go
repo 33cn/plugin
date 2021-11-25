@@ -69,6 +69,15 @@ func AutonomyCmd() *cobra.Command {
 		ShowProposalChangeCmd(),
 	)
 
+	// item
+	cmd.AddCommand(
+		ProposalItemCmd(),
+		RevokeProposalItemCmd(),
+		VoteProposalItemCmd(),
+		TerminateProposalItemCmd(),
+		ShowProposalItemCmd(),
+	)
+
 	return cmd
 }
 

@@ -295,6 +295,7 @@ ForkBadRepeatSecret=0
 [fork.sub.manage]
 Enable=0
 ForkManageExec=100000
+ForkManageAutonomyEnable=-1
 
 [fork.sub.token]
 Enable=0
@@ -324,6 +325,7 @@ ForkParaAssetTransferRbk=0
 ForkParaFullMinerHeight=0
 ForkParaSupervision=0
 ForkParaRootHash=0
+ForkParaAutonomySuperGroup=-1
 
 [fork.sub.evm]
 Enable=0
@@ -333,6 +335,9 @@ ForkEVMFrozen=0
 ForkEVMKVHash=0
 ForkEVMYoloV1=0
 ForkEVMTxGroup=0
+
+[fork.sub.evmxgo]
+Enable=0
 
 [fork.sub.blackwhite]
 Enable=0
@@ -402,6 +407,7 @@ ForkUnfreezeIDX= 0
 [fork.sub.autonomy]
 Enable=0
 ForkAutonomyDelRule=0
+ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
 Enable=0

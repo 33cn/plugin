@@ -8,6 +8,7 @@ strapp=${strcmd%/cmd*}
 SRC_EBCLI=github.com/33cn/plugin/plugin/dapp/cross2eth/ebcli
 SRC_EBRELAYER=github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer
 SRC_BOSS4XCLI=github.com/33cn/plugin/plugin/dapp/cross2eth/boss4x
+
 OUT_DIR="${1}/$strapp"
 FLAG=$2
 

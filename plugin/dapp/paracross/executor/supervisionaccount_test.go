@@ -7,7 +7,7 @@ import (
 )
 
 // createRawSupervisionNodeConfigTx create raw tx for node config
-func createRawSupervisionNodeConfigTx(config *pt.ParaNodeAddrConfig) *types.Transaction {
+func createRawSupervisionNodeConfigTx(config *pt.ParaNodeGroupConfig) *types.Transaction {
 	action := &pt.ParacrossAction{
 		Ty:    pt.ParacrossActionSupervisionNodeConfig,
 		Value: &pt.ParacrossAction_SupervisionNodeConfig{SupervisionNodeConfig: config},
@@ -32,10 +32,10 @@ func (suite *NodeManageTestSuite) testSupervisionExec() {
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel(addr, privKey string) {
 	// Apply
-	config := &pt.ParaNodeAddrConfig{
+	config := &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  addr,
+		Addrs: addr,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, privKey, tx)
@@ -46,7 +46,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel(addr, privKey 
 	suite.Nil(err)
 
 	// cancel
-	config = &pt.ParaNodeAddrConfig{
+	config = &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeCancel,
 		Id:    getParaNodeIDSuffix(g.Current.Id),
@@ -57,10 +57,10 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigCancel(addr, privKey 
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove(addr, privKey string) {
-	config := &pt.ParaNodeAddrConfig{
+	config := &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  addr,
+		Addrs: addr,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, privKey, tx)
@@ -70,7 +70,7 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove(addr, privKey
 	err := types.Decode(receipt.Logs[0].Log, &g)
 	suite.Nil(err)
 
-	config = &pt.ParaNodeAddrConfig{
+	config = &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Id:    getParaNodeIDSuffix(g.Current.Id),
 		Op:    pt.ParacrossSupervisionNodeApprove,
@@ -81,20 +81,20 @@ func (suite *NodeManageTestSuite) testSupervisionNodeConfigApprove(addr, privKey
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeError() {
-	config := &pt.ParaNodeAddrConfig{
+	config := &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  Account1M3,
+		Addrs: Account1M3,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
 	tx, _ = signTx(suite.Suite, tx, PrivKey1M3)
 	_, err := suite.exec.Exec(tx, 0)
 	suite.NotNil(err)
 
-	config = &pt.ParaNodeAddrConfig{
+	config = &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeApply,
-		Addr:  "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+		Addrs: "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
 	}
 	tx = createRawSupervisionNodeConfigTx(config)
 	tx, _ = signTx(suite.Suite, tx, PrivKey1KS)
@@ -103,10 +103,10 @@ func (suite *NodeManageTestSuite) testSupervisionNodeError() {
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeQuit() {
-	config := &pt.ParaNodeAddrConfig{
+	config := &pt.ParaNodeGroupConfig{
 		Title: chain33TestCfg.GetTitle(),
 		Op:    pt.ParacrossSupervisionNodeQuit,
-		Addr:  Account1Ku,
+		Addrs: Account1Ku,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, PrivKey1Ku, tx)
@@ -123,11 +123,11 @@ func (suite *NodeManageTestSuite) testSupervisionNodeQuit() {
 }
 
 func (suite *NodeManageTestSuite) testSupervisionNodeModify() {
-	config := &pt.ParaNodeAddrConfig{
-		Title:     chain33TestCfg.GetTitle(),
-		Op:        pt.ParacrossSupervisionNodeModify,
-		Addr:      Account14K,
-		BlsPubKey: Bls14K,
+	config := &pt.ParaNodeGroupConfig{
+		Title:      chain33TestCfg.GetTitle(),
+		Op:         pt.ParacrossSupervisionNodeModify,
+		Addrs:      Account14K,
+		BlsPubKeys: Bls14K,
 	}
 	tx := createRawSupervisionNodeConfigTx(config)
 	receipt := nodeCommit(suite, PrivKey14K, tx)

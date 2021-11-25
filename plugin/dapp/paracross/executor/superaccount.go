@@ -957,12 +957,42 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	return receipt, nil
 }
 
+func (a *action) checkApproveOp(config *pt.ParaNodeGroupConfig) error {
+	cfg := a.api.GetConfig()
+	//fork之后采用 autonomy 检查模式
+	confManager := types.ConfSub(cfg, manager.ManageX)
+	autonomyExec := confManager.GStr(types.AutonomyCfgKey)
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaAutonomySuperGroup) && len(autonomyExec) > 0 {
+		//去autonomy 合约检验是否id approved, 成功 err返回nil
+		_, err := a.api.QueryChain(&types.ChainExecutor{
+			Driver:   autonomyExec,
+			FuncName: "IsAutonomyApprovedItem",
+			Param:    types.Encode(&types.ReqMultiStrings{Datas: []string{config.AutonomyItemID, config.Id}}),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "query autonomy,approveid=%s,hashId=%s", config.AutonomyItemID, config.Id)
+		}
+
+		return nil
+	}
+
+	//fork之前检查是否from superManager
+	if !isSuperManager(cfg, a.fromaddr) {
+		return errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+	}
+	return nil
+}
+
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	//只在主链检查
-	if !cfg.IsPara() && !isSuperManager(cfg, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "node group approve not super manager:%s", a.fromaddr)
+
+	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
+	if !cfg.IsPara() {
+		err := a.checkApproveOp(config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	id, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)

@@ -40,6 +40,8 @@ type ExecCli struct {
 	accC1 *account.DB
 	accD  *account.DB
 	accD1 *account.DB
+	accF  *account.DB
+	accF1 *account.DB
 }
 
 //Nodes ...
@@ -49,6 +51,7 @@ var (
 		"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
 		"1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k",
 		"1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs",
+		"1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN",
 	}
 )
 
@@ -57,7 +60,7 @@ func NewExecCli() *ExecCli {
 	dir, sdb, ldb := util.CreateTestDB()
 	log.Println(dir)
 
-	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+	cfg := types.NewChain33Config(et.GetDefaultCfgstring())
 	cfg.SetTitleOnlyForTest("chain33")
 
 	executor.Init(et.ExchangeX, cfg, nil)
@@ -72,7 +75,6 @@ func NewExecCli() *ExecCli {
 		Frozen:  0,
 		Addr:    Nodes[1],
 	}
-
 	accountC := &types.Account{
 		Balance: total,
 		Frozen:  0,
@@ -82,6 +84,11 @@ func NewExecCli() *ExecCli {
 		Balance: total,
 		Frozen:  0,
 		Addr:    Nodes[3],
+	}
+	accountFee := &types.Account{
+		Balance: 0,
+		Frozen:  0,
+		Addr:    Nodes[4],
 	}
 
 	execAddr := address.ExecAddress(et.ExchangeX)
@@ -98,6 +105,9 @@ func NewExecCli() *ExecCli {
 	accD, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
 	accD.SaveExecAccount(execAddr, accountD)
 
+	accF, _ := account.NewAccountDB(cfg, "coins", "bty", sdb)
+	accF.SaveExecAccount(execAddr, accountFee)
+
 	accA1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
 	accA1.SaveExecAccount(execAddr, accountA)
 
@@ -109,6 +119,9 @@ func NewExecCli() *ExecCli {
 
 	accD1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
 	accD1.SaveExecAccount(execAddr, accountD)
+
+	accF1, _ := account.NewAccountDB(cfg, "token", "CCNY", sdb)
+	accF1.SaveExecAccount(execAddr, accountFee)
 
 	q := queue.New("channel")
 	q.SetConfig(cfg)
@@ -131,6 +144,8 @@ func NewExecCli() *ExecCli {
 		accC1: accC1,
 		accD:  accD,
 		accD1: accD1,
+		accF:  accF,
+		accF1: accF1,
 	}
 }
 

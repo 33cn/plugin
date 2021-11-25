@@ -97,7 +97,7 @@ coinDevFund=12
 coinBaseReward=3
 #委托账户最少解绑定时间(按小时)
 unBindTime=24
-#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即coinReward=1800000000
+#支持挖矿奖励的1e8小数模式，比如18coin 需要配置成1800000000 以支持小数位后的配置,如果true，意味着已经打开即须配置coinReward=1800000000
 decimalMode=false
 #挖矿模式， normal：缺省挖矿，其他自定义，注册名字需要和配置名字保持一致
 minerMode="normal"
@@ -107,27 +107,24 @@ halvePeriod=1000
 
 [consensus.sub.para]
 #主链节点的grpc服务器ip，当前可以支持多ip负载均衡，如“118.31.177.1:8802,39.97.2.127:8802”
-#ParaRemoteGrpcClient="118.31.177.1:8802,39.97.2.127:8802,120.77.111.44:8802,jiedian2.bityuan.com,cloud.bityuan.com"
+#ParaRemoteGrpcClient="jiedian2.bityuan.com,cloud.bityuan.com"
 ParaRemoteGrpcClient="localhost:8802"
 #主链指定高度的区块开始同步
 startHeight=345850
 #主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
 #waitMainBlockNum=100
-#打包时间间隔，单位秒
-writeBlockSeconds=2
+#等待打包主链区块时间间隔，单位毫秒
+writeBlockMsec=2000
 #共识节点账户，共识节点需要配置自己的账户，并且钱包导入对应种子，非共识节点留空
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,1是bityuan主链对应高度， ycc或其他按实际修改
-mainBlockHashForkHeight=1
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
 #不可为0，主链Local时候需特殊配置
 mainForkParacrossCommitTx=2270000
 #主链开启循环检查共识交易done的fork高度,需要和主链保持严格一致,不可修改,4320000是bityuan主链对应高度， ycc或其他按实际修改
 #不可为0，主链Local时候需特殊配置
 mainLoopCheckCommitTxDoneForkHeight=4320000
-#mainForkParaSupervision=10400000
 #无平行链交易的主链区块间隔，平行链产生一个空块，从高度0开始，配置[blockHeight:interval],比如["0:50","1000:100"]
 emptyBlockInterval=["0:50"]
 
@@ -190,6 +187,8 @@ genesis="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
 
 [exec.sub.manage]
 superManager=["12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"]
+#autonomy执行器名字,空则不开启,使用superManager list
+autonomyExec=""
 
 [exec.sub.token]
 saveTokenTxList=true
@@ -218,6 +217,8 @@ pointHX="19172955941344617222923168298456110557655645809646772800021167670156933
 pointHY="21116962883761739586121793871108889864627195706475546685847911817475098399811"
 #电路最大支持1024个叶子hash，10 level， 配置可以小于1024,但不能大于
 maxTreeLeaves=1024
+#管理员列表
+mixApprs=[]
 
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
@@ -270,6 +271,8 @@ ForkBadRepeatSecret=0
 [fork.sub.manage]
 Enable=0
 ForkManageExec=0
+#manage增加配置需要经过autonomy board成员审批，平行链不开启
+ForkManageAutonomyEnable=-1
 
 [fork.sub.token]
 Enable=0
@@ -300,6 +303,8 @@ ForkParaSupervision=0
 ForkParaFullMinerHeight=0
 #仅平行链适用，在旧的版本中计算blockTxHash输入高度为0，需要在此高度后统一采用新的主链高度值，旧的版本需要设置此分叉高度，新版本缺省为0即可
 ForkParaRootHash=0
+#nodegroup approve需要经过autonomy board成员审批,平行链不开启
+ForkParaAutonomySuperGroup=-1
 
 [fork.sub.evm]
 Enable=0
@@ -347,9 +352,6 @@ Enable=0
 [fork.sub.accountmanager]
 Enable=0
 
-[fork.sub.exchange]
-Enable=0
-
 [fork.sub.wasm]
 Enable=0
 
@@ -380,8 +382,12 @@ ForkUnfreezeIDX= 0
 [fork.sub.autonomy]
 Enable=0
 ForkAutonomyDelRule=0
+ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
+Enable=0
+
+[fork.sub.evmxgo]
 Enable=0
 
 [fork.sub.issuance]
@@ -413,3 +419,19 @@ database="chain33metrics"
 username=""
 password=""
 namespace=""
+
+#exchange合约相关配置
+[mver.exec.sub.exchange]
+#银行帐户列表（现第一个地址用来收取手续费）
+banks = ["1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"]#Fee
+#币种配置，
+#rate每笔手续费率,配置时需*1e8(如：收取每笔交易千分之一的手续费，rate=100000)
+#minFee最小手续费,配置时需*1e8(如：最小手续费收取1个，minFee=100000000)
+coins = [
+    { name = "bty", rate = 100000, minFee = 0 },
+    { name = "ETH", rate = 100000, minFee = 0 },
+    { name = "USDT", rate = 100000, minFee = 0 },
+]
+
+[fork.sub.exchange]
+Enable=0

@@ -118,13 +118,13 @@ ParaRemoteGrpcClient="localhost:8802"
 startHeight=345850
 #主链指定高度后等待块数，防止主链回滚，联盟链最小为1，小于1则采用缺省高度100
 #waitMainBlockNum=100
-#检索主链最新区块时间间隔，单位秒
-writeBlockSeconds=2
+#等待打包主链区块时间间隔，单位毫秒
+writeBlockMsec=2000
 #共识节点账户，共识节点需要配置自己的账户，并且钱包导入对应种子，非共识节点留空
 authAccount=""
 #创世地址额度
 genesisAmount=100000000
-#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,1是bityuan主链对应高度， ycc或其他按实际修改
+#主链计算blockhash forkheight，需要和主链保持严格一致,不可修改,1是bityuan主链对应高度， ycc或其他按实际修改 --此参数弃用
 mainBlockHashForkHeight=1
 #主链支持平行链共识tx分叉高度，需要和主链保持严格一致,不可修改,2270000是bityuan主链对应高度， ycc或其他按实际修改
 #不可为0，主链Local时候需特殊配置
@@ -275,6 +275,8 @@ ForkBadRepeatSecret=0
 [fork.sub.manage]
 Enable=0
 ForkManageExec=0
+#manage增加配置需要autonomy审批
+ForkManageAutonomyEnable=0
 
 [fork.sub.token]
 Enable=0
@@ -305,6 +307,8 @@ ForkParaSupervision=0
 ForkParaFullMinerHeight=0
 #仅平行链适用，在旧的版本中计算blockTxHash输入高度为0，需要在此高度后统一采用新的主链高度值，旧的版本需要设置此分叉高度，新版本缺省为0即可
 ForkParaRootHash=0
+#nodegroup approve需要经过autonomy board成员审批
+ForkParaAutonomySuperGroup=0
 
 [fork.sub.evm]
 Enable=0
@@ -352,9 +356,6 @@ Enable=0
 [fork.sub.accountmanager]
 Enable=0
 
-[fork.sub.exchange]
-Enable=0
-
 [fork.sub.wasm]
 Enable=0
 
@@ -385,6 +386,7 @@ ForkUnfreezeIDX= 0
 [fork.sub.autonomy]
 Enable=0
 ForkAutonomyDelRule=0
+ForkAutonomyEnableItem=0
 
 [fork.sub.jsvm]
 Enable=0
@@ -418,3 +420,19 @@ database="chain33metrics"
 username=""
 password=""
 namespace=""
+
+#exchange合约相关配置
+[mver.exec.sub.exchange]
+#银行帐户列表（现第一个地址用来收取手续费）
+banks = ["1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"]#Fee
+#币种配置，
+#rate每笔手续费率,配置时需*1e8(如：收取每笔交易千分之一的手续费，rate=100000)
+#minFee最小手续费,配置时需*1e8(如：最小手续费收取1个，minFee=100000000)
+coins = [
+    { name = "bty", rate = 100000, minFee = 0 },
+    { name = "ETH", rate = 100000, minFee = 0 },
+    { name = "USDT", rate = 100000, minFee = 0 },
+]
+
+[fork.sub.exchange]
+Enable=0

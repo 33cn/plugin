@@ -6,7 +6,6 @@ package executor
 
 import (
 	dbm "github.com/33cn/chain33/common/db"
-	manager "github.com/33cn/chain33/system/dapp/manage/types"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	"github.com/pkg/errors"
@@ -14,8 +13,8 @@ import (
 
 // IsSuperManager is supper manager or not
 func isSuperManager(cfg *types.Chain33Config, addr string) bool {
-	confManager := types.ConfSub(cfg, manager.ManageX)
-	for _, m := range confManager.GStrList("superManager") {
+	confMix := types.ConfSub(cfg, mixTy.MixX)
+	for _, m := range confMix.GStrList("mixApprs") {
 		if addr == m {
 			return true
 		}

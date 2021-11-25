@@ -127,3 +127,51 @@ func (e *ExchangeType) GetTypeMap() map[string]int32 {
 func (e *ExchangeType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
 }
+
+var MverPrefix = "mver.exec.sub." + ExchangeX // [mver.exec.sub.exchange]
+
+type TradeConfig struct {
+	Banks []string
+	Coins map[string]Coin
+}
+
+// 交易对配置
+type Coin struct {
+	Name   string
+	Rate   int32
+	MinFee int64
+}
+
+func (f *TradeConfig) GetFeeAddr() string {
+	return f.Banks[0]
+}
+
+func (f *TradeConfig) GetRate(or *LimitOrder) int32 {
+	var symbol = or.GetRightAsset().GetSymbol()
+
+	if or.GetOp() == OpBuy {
+		symbol = or.GetLeftAsset().GetSymbol()
+	}
+
+	c, ok := f.Coins[symbol]
+	if !ok {
+		return 0
+	}
+
+	return c.Rate
+}
+
+func (f *TradeConfig) GetMinFee(or *LimitOrder) int64 {
+	var symbol = or.GetRightAsset().GetSymbol()
+
+	if or.GetOp() == OpBuy {
+		symbol = or.GetLeftAsset().GetSymbol()
+	}
+
+	c, ok := f.Coins[symbol]
+	if !ok {
+		return 0
+	}
+
+	return c.MinFee
+}
