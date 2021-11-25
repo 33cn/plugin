@@ -153,6 +153,63 @@ func Unpack(data []byte, methodName, abiData string) (output []*Param, err error
 	return
 }
 
+//同时支持input,output和event三种数据的unpack
+func UnpackAllTypes(data []byte, name, abiData string) (output []*Param, err error) {
+	if len(data) == 0 {
+		log.Info("Unpack", "Data len", 0, "name", name)
+		return output, err
+	}
+	// 解析ABI数据结构，获取本次调用的方法对象
+	abi, err := JSON(strings.NewReader(abiData))
+	if err != nil {
+		return output, err
+	}
+
+	var values []interface{}
+	var arguments Arguments
+	if method, ok := abi.Methods[name]; ok {
+		if len(data)%32 == 0 {
+			values, err = method.Outputs.UnpackValues(data)
+			arguments = method.Outputs
+		} else if len(data[4:])%32 == 0 {
+			values, err = method.Inputs.UnpackValues(data[4:])
+			arguments = method.Inputs
+		} else {
+			return output, errors.New("UnpackAllTypes: improperly formatted data")
+		}
+		if arguments.LengthNonIndexed() == 0 {
+			return output, nil
+		}
+	} else if event, ok := abi.Events[name]; ok {
+		values, err = event.Inputs.UnpackValues(data)
+		arguments = event.Inputs
+	} else {
+		return output, errors.New("UnpackAllTypes: could not locate named method or event")
+	}
+
+	if err != nil {
+		return output, err
+	}
+
+	if len(arguments) == 0 || len(values) != len(arguments) {
+		return output, errors.New("wrong data to unpack")
+	}
+
+	output = []*Param{}
+	for i, v := range values {
+		arg := arguments[i]
+		pval := &Param{Name: arg.Name, Type: arg.Type.String(), Value: v}
+		if arg.Type.String() == "address" {
+			pval.Value = v.(common.Hash160Address).ToAddress().String()
+			log.Info("Unpack address", "address", pval.Value)
+		}
+
+		output = append(output, pval)
+	}
+
+	return
+}
+
 // Param 返回值参数结构定义
 type Param struct {
 	// Name 参数名称

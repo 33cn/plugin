@@ -387,6 +387,9 @@ ForkAutonomyEnableItem=0
 [fork.sub.jsvm]
 Enable=0
 
+[fork.sub.evmxgo]
+Enable=0
+
 [fork.sub.issuance]
 Enable=0
 ForkIssuanceTableUpdate=0

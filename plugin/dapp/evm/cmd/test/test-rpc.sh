@@ -54,7 +54,7 @@ function evm_callQuery() {
     local parameter=$1
     local callerAddr=$2
     local resok=$3
-    local methodName=$4
+    local name=$4
 
     req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetPackData","payload":{"abi":"'${erc20_abi}'","parameter":"'${parameter}'"}}]}'
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "GetPackData" ".result.packData"
@@ -64,7 +64,7 @@ function evm_callQuery() {
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "Query" ".result.rawData"
     echo "$RETURN_RESP"
 
-    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetUnpackData","payload":{"abi":"'${erc20_abi}'","methodName":"'${methodName}'","data":"'${RETURN_RESP}'"}}]}'
+    req='{"method":"Chain33.Query","params":[{"execer":"evm","funcName":"GetUnpackData","payload":{"abi":"'${erc20_abi}'","name":"'${name}'","data":"'${RETURN_RESP}'"}}]}'
     chain33_Http "$req" "${MAIN_HTTP}" '(.result != null)' "GetUnpackData" ".result.unpackData[0]"
     echo "$RETURN_RESP"
 
