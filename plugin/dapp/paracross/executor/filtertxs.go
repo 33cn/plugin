@@ -102,6 +102,17 @@ func FilterTxsForPara(cfg *types.Chain33Config, main *types.ParaTxDetail) []*typ
 	return txs
 }
 
+// FilterParaCrossTxs only all para chain cross txs like xx.paracross exec
+func FilterParaCrossTxs(txs []*types.Transaction) []*types.Transaction {
+	var paraCrossTxs []*types.Transaction
+	for _, tx := range txs {
+		if types.IsParaExecName(string(tx.Execer)) && bytes.HasSuffix(tx.Execer, []byte(pt.ParaX)) {
+			paraCrossTxs = append(paraCrossTxs, tx)
+		}
+	}
+	return paraCrossTxs
+}
+
 // FilterParaCrossTxHashes only all para chain cross txs like xx.paracross exec
 func FilterParaCrossTxHashes(txs []*types.Transaction) [][]byte {
 	var txHashs [][]byte
