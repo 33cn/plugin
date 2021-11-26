@@ -278,7 +278,7 @@ function offline_transfer_multisign_Eth_test() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function offline_transfer_multisign_EthYcc() {
+function offline_transfer_multisign_EthByc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # transfer
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 8 -r "${ethBridgeBank}" -c "${multisignEthAddr}" -d "${ethTestAddr1}" -t "${ethereumBycERC20TokenAddr}"

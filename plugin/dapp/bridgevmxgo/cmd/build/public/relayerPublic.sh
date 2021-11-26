@@ -636,7 +636,7 @@ function lock_eth_multisign() {
 }
 
 # lock ethereum ycc erc20 判断是否转入多签地址金额是否正确
-function lock_ethereum_ycc_multisign() {
+function lock_ethereum_byc_multisign() {
     local lockAmount=$1
     result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"

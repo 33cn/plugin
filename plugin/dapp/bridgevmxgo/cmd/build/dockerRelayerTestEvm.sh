@@ -332,7 +332,7 @@ function TestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function TestETH2Chain33Ycc() {
+function TestETH2Chain33Byc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== eth to chain33 在以太坊上锁定 ycc 资产,然后在 chain33 上 burn ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
@@ -455,7 +455,7 @@ function offline_set_offline_token_Eth() {
 }
 
 # shellcheck disable=SC2120
-function offline_set_offline_token_EthYcc() {
+function offline_set_offline_token_EthByc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     local threshold=100
     local percents=40
@@ -602,24 +602,24 @@ function lockEth() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function lockEthYcc() {
+function lockEthByc() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    echo -e "${GRE}===== ethereum 端 lock ERC20 YCC ======${NOC}"
+    echo -e "${GRE}===== ethereum 端 lock ERC20 Byc ======${NOC}"
     # echo '2:#配置自动转离线钱包(ycc, 100, 40%)'
-    offline_set_offline_token_EthYcc
+    offline_set_offline_token_EthByc
     # 重启 nonce 会不统一 要重启一下
     restart_ebrelayerA
 
-    lock_ethereum_ycc_multisign 70 70 0
-    lock_ethereum_ycc_multisign 30 60 40
-    lock_ethereum_ycc_multisign 60 72 88
+    lock_ethereum_byc_multisign 70 70 0
+    lock_ethereum_byc_multisign 30 60 40
+    lock_ethereum_byc_multisign 60 72 88
 
     # multisignEthAddr 要有手续费
     ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
     sleep 10
 
     # transfer
-    offline_transfer_multisign_EthYcc
+    offline_transfer_multisign_EthByc
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -943,13 +943,13 @@ function AllRelayerMainTest() {
     TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestChain33ToEthZBCAssets
-    TestETH2Chain33Ycc
+    TestETH2Chain33Byc
 
     Chain33Cli=${Para8901Cli}
     lockBty
     lockChain33Ycc
     lockEth
-    lockEthYcc
+    lockEthByc
 
     # 离线多签地址转入阈值设大
     offline_set_offline_token_Bty 100000000000000 10
@@ -960,6 +960,7 @@ function AllRelayerMainTest() {
     EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
     TestETH2EVMToChain33
+    Testethereum2EVMToChain33_byc
 
     # 平行链共识节点增加测试币
     ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
@@ -968,7 +969,5 @@ function AllRelayerMainTest() {
     ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
 
     echo_addrs
-
-    Testethereum2EVMToChain33_byc
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
