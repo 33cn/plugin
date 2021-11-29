@@ -656,10 +656,10 @@ function lock_ethereum_byc_multisign() {
     fi
 }
 
-function lock_ethereum_ustd_multisign() {
+function lock_ethereum_usdt_multisign() {
     local lockAmount=$1
     # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSTDERC20TokenAddr}")
+    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "lock"
 
     if [[ $# -eq 3 ]]; then
@@ -669,9 +669,9 @@ function lock_ethereum_ustd_multisign() {
         # eth 等待 2 个区块
         sleep 4
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSTDERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumUSTDERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
