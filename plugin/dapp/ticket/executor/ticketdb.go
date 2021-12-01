@@ -30,7 +30,7 @@ var tlog = log.New("module", "ticket.db")
 //var addrSeed = []byte("address seed bytes for public key")
 
 var (
-	ticketKeyPrefix 	= []byte("mavl-ticket-")
+	ticketKeyPrefix     = []byte("mavl-ticket-")
 	ticketBindKeyPrefix = []byte("mavl-ticket-tbind-")
 )
 

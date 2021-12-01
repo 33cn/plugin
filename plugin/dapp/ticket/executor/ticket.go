@@ -198,7 +198,7 @@ func (t *Ticket) CheckReceiptExecOk() bool {
 
 // 自定义接口，用于删除不再需要保存的kv
 // 比如 ticket 已经 close 之后就废弃了，可以删除
-func expiredKVChecker(key ,value []byte) bool {
+func expiredKVChecker(key, value []byte) bool {
 	// 由于 ticketBindKeyPrefix 包含了 ticketKeyPrefix，所以需要多做一次检查
 	if bytes.HasPrefix(key, ticketBindKeyPrefix) {
 		return false
