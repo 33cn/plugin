@@ -2,9 +2,7 @@
 # shellcheck disable=SC2128
 # shellcheck source=/dev/null
 
-#source "./dockerRelayerTest.sh"
-source "./dockerRelayerTestEvm.sh"
-#source "./dockerRelayerTestInfinite.sh"
+source "./dockerRelayerTestBsc.sh"
 source "./paracrosstestcase.sh"
 
 function bridgevmxgo() {
