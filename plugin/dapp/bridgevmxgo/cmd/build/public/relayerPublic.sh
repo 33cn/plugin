@@ -636,7 +636,7 @@ function lock_eth_multisign() {
 }
 
 # lock ethereum ycc erc20 判断是否转入多签地址金额是否正确
-function lock_ethereum_ycc_multisign() {
+function lock_ethereum_byc_multisign() {
     local lockAmount=$1
     result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
@@ -652,6 +652,26 @@ function lock_ethereum_ycc_multisign() {
         result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
         result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
+        cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
+    fi
+}
+
+function lock_ethereum_usdt_multisign() {
+    local lockAmount=$1
+    # shellcheck disable=SC2154
+    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
+    cli_ret "${result}" "lock"
+
+    if [[ $# -eq 3 ]]; then
+        local bridgeBankBalance=$2
+        local multisignBalance=$3
+
+        # eth 等待 2 个区块
+        sleep 4
+
+        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+        cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
+        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
