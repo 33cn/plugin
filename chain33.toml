@@ -95,6 +95,8 @@ maxConnectNum=100
 disableFindLANPeers=false
 # 配置为全节点模式，全节点保存所有分片数据
 isFullNode=false
+# 分片数据默认保存比例，最低可配置为10
+percentage=30
 
 [rpc]
 jrpcBindAddr="localhost:8801"
@@ -214,13 +216,16 @@ enableMemVal=true
 tkCloseCacheLen=100000
 
 [store.sub.kvmvccmavl]
+# 开启该配置可以方便遍历最新的状态数据，节省磁盘空间可以关闭该配置项
 enableMVCCIter=true
 enableMavlPrefix=false
 enableMVCC=false
 enableMavlPrune=false
 pruneMavlHeight=10000
+# 开启该配置项会精简mvcc历史高度的数据，默认不精简
 enableMVCCPrune=false
-pruneMVCCHeight=10000
+# 每次精简mvcc的间隔高度，默认每100w高度精简一次
+pruneMVCCHeight=1000000
 # 是否使能mavl数据载入内存
 enableMemTree=true
 # 是否使能mavl叶子节点数据载入内存
@@ -248,6 +253,12 @@ rescanMultisigAddr=false
 enableStat=false
 enableMVCC=false
 alias=["token1:token","token2:token","token3:token"]
+# 记录地址相关的交易列表，便于按地址查询交易
+disableAddrIndex=false
+# 记录每个高度总的手续费消耗量
+disableFeeIndex=false
+# 开启后会进一步精简localdb，用户查询合约功能会受影响，纯挖矿节点可以开启节省磁盘空间
+disableExecLocal=false
 
 [exec.sub.token]
 saveTokenTxList=true
