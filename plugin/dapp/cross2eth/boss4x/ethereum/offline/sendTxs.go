@@ -81,7 +81,7 @@ func checkTxStatus(client *ethclient.Client, txhash, txName string) bool {
 		case <-checkticket.C:
 			receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(txhash))
 			if err == ethereum.NotFound {
-				fmt.Println("\n No receipt received yet for "+txName, " tx and continue to wait")
+				//fmt.Println("\n No receipt received yet for "+txName, " tx and continue to wait")
 				continue
 			} else if err != nil {
 				panic("failed due to" + err.Error())

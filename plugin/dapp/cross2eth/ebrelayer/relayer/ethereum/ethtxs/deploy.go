@@ -196,7 +196,7 @@ func DeployAndInit(client ethinterface.EthClientSpec, para *DeployPara) (*X2EthC
 			case <-oneSecondtimeout.C:
 				_, err := client.TransactionReceipt(context.Background(), common.HexToHash(deployInfo.Valset.TxHash))
 				if err == ethereum.NotFound {
-					fmt.Println("\n No receipt received yet for DeployValset tx and continue to wait")
+					//fmt.Println("\n No receipt received yet for DeployValset tx and continue to wait")
 					continue
 				} else if err != nil {
 					panic("DeployValset failed due to" + err.Error())
