@@ -800,7 +800,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	// Filter by contract and event, write results to logs
 	sub, err := ethRelayer.clientSpec.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s", err.Error())
+		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
 		panic(errinfo)
 	}
 	relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
