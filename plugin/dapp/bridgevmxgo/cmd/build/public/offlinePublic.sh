@@ -217,17 +217,17 @@ function offline_create_bridge_token_eth_BTY() {
 function offline_create_bridge_token_chain33_ETH() {
     # 在 chain33 上创建 bridgeToken ETH
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
-    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s BNB -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:BNB"
+    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s HT -k "${chain33DeployKey}" --chainID "${chain33ID}" -n "create_bridge_token:HT"
     chain33_offline_send "create_bridge_token.txt"
 
-    chain33EthBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(BNB)")
-    echo "BNB Token Addr= ${chain33EthBridgeTokenAddr}"
+    chain33EthBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(HT)")
+    echo "HT Token Addr= ${chain33EthBridgeTokenAddr}"
     cp BridgeToken.abi "${chain33EthBridgeTokenAddr}.abi"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33EthBridgeTokenAddr}" -b "symbol()")
-    is_equal "${result}" "BNB"
+    is_equal "${result}" "HT"
 
-    ${CLIA} chain33 token set -t "${chain33EthBridgeTokenAddr}" -s BNB
+    ${CLIA} chain33 token set -t "${chain33EthBridgeTokenAddr}" -s HT
 }
 
 function offline_create_bridge_token_eth_YCC() {

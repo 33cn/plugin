@@ -36,8 +36,10 @@ multisignEthAddr=""
 chain33ID=0
 
 EvmxgoBoss4xCLI="./evmxgoboss4x"
-BscProvider="wss://data-seed-prebsc-1-s1.binance.org:8545"
-BscProviderUrl="https://data-seed-prebsc-1-s1.binance.org:8545"
+#BscProvider="wss://data-seed-prebsc-1-s1.binance.org:8545"
+#BscProviderUrl="https://data-seed-prebsc-1-s1.binance.org:8545"
+BscProvider="wss://ws-testnet.hecochain.com"
+BscProviderUrl="https://http-testnet.hecochain.com"
 
 # shellcheck disable=SC2034
 {
@@ -741,7 +743,7 @@ function StartDockerRelayerDeploy() {
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" 'EthProvider="ws:')
-    sed -i ''"${line}"' a EthProvider="'"${BscProviderUrl}"'"' "./relayer.toml"
+    sed -i ''"${line}"' a EthProvider="'"${BscProvider}"'"' "./relayer.toml"
 
     line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
     sed -i ''"${line}"' a EthProviderCli="'"${BscProviderUrl}"'"' "./relayer.toml"
@@ -895,7 +897,7 @@ function DeployEvmxgo() {
     XgoChain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${XgoBridgeRegistryOnChain33}")
     cp XgoChain33BridgeBank.abi "${XgoChain33BridgeBank}.abi"
 
-    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s BNB -t "${chain33EthBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s HT -t "${chain33EthBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
     chain33_offline_send_evm "create_add_lock_list.txt"
 
     ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s BYC -t "${chain33BycBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
@@ -959,7 +961,7 @@ function TestETH2EVMToChain33() {
     # 结果是 11 * le8
     #    is_equal "${result}" "4700000000"
 
-    updateConfig "BNB" "${chain33EthBridgeTokenAddr}"
+    updateConfig "HT" "${chain33EthBridgeTokenAddr}"
     configbridgevmxgoAddr "${XgoChain33BridgeBank}"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
