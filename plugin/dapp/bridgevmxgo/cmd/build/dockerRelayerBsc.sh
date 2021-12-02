@@ -36,7 +36,7 @@ multisignEthAddr=""
 chain33ID=0
 
 EvmxgoBoss4xCLI="./evmxgoboss4x"
-BscProvider="ws://data-seed-prebsc-1-s1.binance.org:8545"
+BscProvider="wss://data-seed-prebsc-1-s1.binance.org:8545"
 BscProviderUrl="https://data-seed-prebsc-1-s1.binance.org:8545"
 
 # shellcheck disable=SC2034
@@ -739,8 +739,12 @@ function StartDockerRelayerDeploy() {
 
     # 修改 relayer.toml 配置文件
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
-    sed -i 's/^EthProvider=.*/EthProvider="'"${BscProvider}"'"/g' "./relayer.toml"
-    sed -i 's/^EthProviderCli=.*/EthProviderCli="'"${BscProviderUrl}"'"/g' "./relayer.toml"
+    # shellcheck disable=SC2155
+    local line=$(delete_line_show "./relayer.toml" 'EthProvider="ws:')
+    sed -i ''"${line}"' a EthProvider="'"${BscProvider}"'"' "./relayer.toml"
+
+    line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
+    sed -i ''"${line}"' a EthProviderCli="'"${BscProviderUrl}"'"' "./relayer.toml"
 
     # 删除私钥
     delete_line "./relayer.toml" "deployerPrivateKey="
