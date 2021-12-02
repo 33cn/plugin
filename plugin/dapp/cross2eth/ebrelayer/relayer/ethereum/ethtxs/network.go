@@ -29,9 +29,9 @@ func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
 		return nil, nil
 	}
 
-	if !isWebsocketURL(ethURL) {
-		return nil, fmt.Errorf("invalid websocket eth client URL: %v", ethURL)
-	}
+	//if !isWebsocketURL(ethURL) {
+	//	return nil, fmt.Errorf("invalid websocket eth client URL: %v", ethURL)
+	//}
 
 	client, err := ethclient.Dial(ethURL)
 	if err != nil {

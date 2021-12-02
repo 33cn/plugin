@@ -741,7 +741,7 @@ function StartDockerRelayerDeploy() {
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" 'EthProvider="ws:')
-    sed -i ''"${line}"' a EthProvider="'"${BscProvider}"'"' "./relayer.toml"
+    sed -i ''"${line}"' a EthProvider="'"${BscProviderUrl}"'"' "./relayer.toml"
 
     line=$(delete_line_show "./relayer.toml" 'EthProviderCli="http:')
     sed -i ''"${line}"' a EthProviderCli="'"${BscProviderUrl}"'"' "./relayer.toml"

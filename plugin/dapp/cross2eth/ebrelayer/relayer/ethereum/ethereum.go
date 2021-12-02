@@ -139,9 +139,12 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	clientChainID, err := client.NetworkID(ctx)
 	if err != nil {
 		errinfo := fmt.Sprintf("Failed to get NetworkID due to:%s", err.Error())
-		panic(errinfo)
+		//panic(errinfo)
+		relayerLog.Info("QM_NetworkID", "errinfo :", errinfo)
+		ethRelayer.clientChainID = big.NewInt(97)
+	} else {
+		ethRelayer.clientChainID = clientChainID
 	}
-	ethRelayer.clientChainID = clientChainID
 	ethRelayer.totalTxRelayFromChain33 = ethRelayer.getTotalTxAmount2Eth()
 	if 0 == ethRelayer.totalTxRelayFromChain33 {
 		statics := &ebTypes.Ethereum2Chain33Statics{}
