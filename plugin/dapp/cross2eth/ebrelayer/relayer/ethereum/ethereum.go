@@ -14,7 +14,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	dexDeploy "github.com/33cn/plugin/plugin/dapp/dex/boss/deploy/ethereum"
 	"math/big"
 	"regexp"
 	"sync"
@@ -130,8 +129,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
-	//client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
-	client, err := dexDeploy.SetupWebsocketEthClient(ethRelayer.provider)
+	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
 	if err != nil {
 		panic(err)
 	}
