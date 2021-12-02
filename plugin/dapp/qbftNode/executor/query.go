@@ -111,7 +111,7 @@ func (val *QbftNode) Query_GetPerfStat(in *pty.ReqQbftPerfStat) (types.Message, 
 
 	startHeader := startInfo.Block.Header
 	endHeader := endInfo.Block.Header
-	totalTx := endHeader.TotalTxs - startHeader.TotalTxs
+	totalTx := endHeader.TotalTxs - startHeader.TotalTxs + startHeader.NumTxs
 	totalBlock := endHeader.Height - startHeader.Height + 1
 	totalSecond := endHeader.Time - startHeader.Time + 1
 	return &pty.QbftPerfStat{

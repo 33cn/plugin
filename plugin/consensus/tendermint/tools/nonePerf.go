@@ -60,11 +60,11 @@ func main() {
 		}
 		Perf(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4], argsWithoutProg[5])
 	case "perfV2":
-		if len(argsWithoutProg) != 4 {
+		if len(argsWithoutProg) != 5 {
 			fmt.Print(errors.New("参数错误").Error())
 			return
 		}
-		PerfV2(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3])
+		PerfV2(argsWithoutProg[1], argsWithoutProg[2], argsWithoutProg[3], argsWithoutProg[4])
 	case "put":
 		if len(argsWithoutProg) != 3 {
 			fmt.Print(errors.New("参数错误").Error())
@@ -96,7 +96,7 @@ func main() {
 func LoadHelp() {
 	fmt.Println("Available Commands:")
 	fmt.Println("perf    [host, size, num, interval, duration]                : 写数据性能测试，interval单位为100毫秒，host形式为ip:port")
-	fmt.Println("perfV2  [host, size, duration]                               : 写数据性能测试，host形式为ip:port")
+	fmt.Println("perfV2  [host, size, interval, duration]                     : 写数据性能测试，interval单位为秒,host形式为ip:port")
 	fmt.Println("put     [ip, size]                                           : 写数据")
 	fmt.Println("get     [ip, hash]                                           : 读数据")
 	fmt.Println("valnode [ip, pubkey, power]                                  : 增加/删除/修改tendermint节点")
@@ -232,16 +232,17 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 }
 
 // PerfV2
-func PerfV2(host, txsize, duration string) {
+func PerfV2(host, txsize, sleepinterval, duration string) {
 	durInt, _ := strconv.Atoi(duration)
 	sizeInt, _ := strconv.Atoi(txsize)
+	sleep, _ := strconv.Atoi(sleepinterval)
 	numCPU := runtime.NumCPU()
-	numThread := numCPU * 2
-	numSend := numCPU * 3
+	numThread := numCPU
+	numSend := numCPU * 2
 	ch := make(chan struct{}, numThread)
 	chSend := make(chan struct{}, numSend)
 	numInt := 10000
-	batchNum := 200
+	batchNum := 100
 	txChan := make(chan *types.Transaction, numInt)
 	var blockHeight int64
 	total := int64(0)
@@ -307,24 +308,42 @@ func PerfV2(host, txsize, duration string) {
 			defer conn.Close()
 			gcli := types.NewChain33Client(conn)
 			txs := &types.Transactions{Txs: make([]*types.Transaction, 0, batchNum)}
+			retryTxs := make([]*types.Transaction, 0, batchNum*2)
 
 			for tx := range txChan {
 				txs.Txs = append(txs.Txs, tx)
-				if len(txs.Txs) == batchNum {
-					_, err := gcli.SendTransactions(context.Background(), txs)
-					atomic.AddInt64(&total, int64(batchNum))
-					txs.Txs = txs.Txs[:0]
-					if err != nil {
-						if strings.Contains(err.Error(), "ErrChannelClosed") {
-							return
-						}
-						log.Error("sendtx", "err", err.Error())
-						time.Sleep(time.Second)
-						continue
-					}
-					atomic.AddInt64(&success, int64(batchNum))
+				if len(retryTxs) > 0 {
+					txs.Txs = append(txs.Txs, retryTxs...)
+					retryTxs = retryTxs[:0]
 				}
 
+				if len(txs.Txs) >= batchNum {
+					reps, err := gcli.SendTransactions(context.Background(), txs)
+					if err != nil {
+						log.Error("sendtxs", "err", err)
+						return
+					}
+					atomic.AddInt64(&total, int64(len(txs.Txs)))
+
+					// retry failed txs
+					for index, reply := range reps.GetReplyList() {
+						if reply.IsOk {
+							continue
+						}
+						if string(reply.GetMsg()) == types.ErrChannelClosed.Error() {
+							return
+						}
+						if string(reply.GetMsg()) == types.ErrMemFull.Error() ||
+							string(reply.GetMsg()) == types.ErrManyTx.Error() {
+							retryTxs = append(retryTxs, txs.Txs[index])
+						}
+					}
+					atomic.AddInt64(&success, int64(len(txs.Txs)-len(retryTxs)))
+					if len(retryTxs) > 0 {
+						time.Sleep(time.Second * time.Duration(sleep))
+					}
+					txs.Txs = txs.Txs[:0]
+				}
 			}
 			chSend <- struct{}{}
 		}()
