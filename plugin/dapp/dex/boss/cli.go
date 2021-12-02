@@ -21,8 +21,8 @@ func main() {
 	buildFlags.RPCAddr4Chain33 = testTLS(buildFlags.RPCAddr4Chain33)
 
 	if buildFlags.RPCAddr4Ethereum == "" {
-		//buildFlags.RPCAddr4Ethereum = "https://data-seed-prebsc-1-s1.binance.org:8545"
-		buildFlags.RPCAddr4Ethereum = "wss://ws-testnet.huobichain.com"
+		buildFlags.RPCAddr4Ethereum = "https://data-seed-prebsc-1-s1.binance.org:8545"
+		//buildFlags.RPCAddr4Ethereum = "wss://ws-testnet.huobichain.com"
 	}
 
 	rootCmd := RootCmd()

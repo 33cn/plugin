@@ -14,6 +14,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	dexDeploy "github.com/33cn/plugin/plugin/dapp/dex/boss/deploy/ethereum"
 	"math/big"
 	"regexp"
 	"sync"
@@ -129,7 +130,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
-	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
+	//client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
+	client, err := dexDeploy.SetupWebsocketEthClient(ethRelayer.provider)
 	if err != nil {
 		panic(err)
 	}
@@ -139,12 +141,9 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	clientChainID, err := client.NetworkID(ctx)
 	if err != nil {
 		errinfo := fmt.Sprintf("Failed to get NetworkID due to:%s", err.Error())
-		//panic(errinfo)
-		relayerLog.Info("QM_NetworkID", "errinfo :", errinfo)
-		ethRelayer.clientChainID = big.NewInt(97)
-	} else {
-		ethRelayer.clientChainID = clientChainID
+		panic(errinfo)
 	}
+	ethRelayer.clientChainID = clientChainID
 	ethRelayer.totalTxRelayFromChain33 = ethRelayer.getTotalTxAmount2Eth()
 	if 0 == ethRelayer.totalTxRelayFromChain33 {
 		statics := &ebTypes.Ethereum2Chain33Statics{}
