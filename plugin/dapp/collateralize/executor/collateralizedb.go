@@ -5,9 +5,10 @@
 package executor
 
 import (
+	"math"
+
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/shopspring/decimal"
-	"math"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
@@ -575,7 +576,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 	// token精度转成精度8
 	valueReal := borrow.GetValue()
 	cfg := action.Collateralize.GetAPI().GetConfig()
-	if(cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision)) {
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision) {
 		precisionNum := int(math.Log10(float64(cfg.GetTokenPrecision())))
 		valueReal = decimal.NewFromInt(valueReal).Shift(int32(-precisionNum)).Shift(8).IntPart()
 	}
@@ -586,7 +587,7 @@ func (action *Action) CollateralizeBorrow(borrow *pty.CollateralizeBorrow) (*typ
 		return nil, err
 	}
 	// bty精度8转成coins精度
-	if(cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision)) {
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision) {
 		precisionNum := int(math.Log10(float64(cfg.GetCoinPrecision())))
 		btyFrozen = decimal.NewFromInt(btyFrozen).Shift(-8).Shift(int32(precisionNum)).IntPart()
 	}
@@ -699,14 +700,14 @@ func (action *Action) CollateralizeRepay(repay *pty.CollateralizeRepay) (*types.
 	// token精度转成精度8
 	cfg := action.Collateralize.GetAPI().GetConfig()
 	valueReal := borrowRecord.DebtValue
-	if(cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision)) {
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision) {
 		precisionNum := int(math.Log10(float64(cfg.GetTokenPrecision())))
 		valueReal = decimal.NewFromInt(valueReal).Shift(int32(-precisionNum)).Shift(8).IntPart()
 	}
 	// 借贷金额+利息
 	fee := ((valueReal * coll.StabilityFeeRatio) / 1e8) * 1e4
-    // 精度8转成token精度
-	if(cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision)) {
+	// 精度8转成token精度
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision) {
 		precisionNum := int(math.Log10(float64(cfg.GetTokenPrecision())))
 		fee = decimal.NewFromInt(fee).Shift(-8).Shift(int32(precisionNum)).IntPart()
 	}
@@ -847,7 +848,7 @@ func (action *Action) CollateralizeAppend(cAppend *pty.CollateralizeAppend) (*ty
 	cfg := action.Collateralize.GetAPI().GetConfig()
 	debtValueReal := borrowRecord.DebtValue
 	collateralValueReal := borrowRecord.CollateralValue
-	if(cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision)) {
+	if cfg.IsDappFork(action.Collateralize.GetHeight(), pty.CollateralizeX, pty.ForkCollateralizePrecision) {
 		precisionNum := int(math.Log10(float64(cfg.GetTokenPrecision())))
 		debtValueReal = decimal.NewFromInt(debtValueReal).Shift(int32(-precisionNum)).Shift(8).IntPart()
 		collateralValueReal = decimal.NewFromInt(collateralValueReal).Shift(int32(-precisionNum)).Shift(8).IntPart()
