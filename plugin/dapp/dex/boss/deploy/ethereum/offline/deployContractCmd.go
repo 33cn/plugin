@@ -274,7 +274,8 @@ func (s *SignPanCakeRout) reWriteDeployPanCakeRout(nonce uint64, gasPrice *big.I
 }
 
 func SignTx(key *ecdsa.PrivateKey, tx *types.Transaction) (signedTx, hash string, err error) {
-	signer := types.HomesteadSigner{}
+	//signer := types.HomesteadSigner{}
+	signer := types.NewEIP155Signer(big.NewInt(256))
 	txhash := signer.Hash(tx)
 	signature, err := crypto.Sign(txhash.Bytes(), key)
 	if err != nil {
