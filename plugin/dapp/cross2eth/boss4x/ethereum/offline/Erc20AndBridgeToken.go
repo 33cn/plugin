@@ -57,7 +57,6 @@ func DeployERC20(cmd *cobra.Command, _ []string) {
 	owner, _ := cmd.Flags().GetString("owner")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetString("amount")
-	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	bnAmount := big.NewInt(1)
 	bnAmount, _ = bnAmount.SetString(utils.TrimZeroAndDot(amount), 10)
 	client, err := ethclient.Dial(url)
@@ -97,7 +96,7 @@ func DeployERC20(cmd *cobra.Command, _ []string) {
 	}
 	infos = append(infos, &deployInfo)
 	fileName := fmt.Sprintf("deployErc20%s.txt", symbol)
-	err = NewTxWrite(infos, common.HexToAddress(deployerAddr), url, fileName, chainEthId)
+	err = NewTxWrite(infos, common.HexToAddress(deployerAddr), url, fileName)
 	if err != nil {
 		fmt.Println("NewTxWrite error", err.Error())
 		return

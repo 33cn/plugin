@@ -275,41 +275,40 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    result=$(${CLIA} ethereum lock -m 0.02 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
+    result=$(${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "0.02"
+    cli_ret "${result}" "balance" ".balance" "0.002"
 
     sleep ${maturityDegree}
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    is_equal "${result}" "2000000"
+#    is_equal "${result}" "200000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
-    cli_ret "${result}" "balance" ".balance" "1000"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 0.003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    is_equal "${result}" "1700000"
+#    is_equal "${result}" "170000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "0.017"
+    cli_ret "${result}" "balance" ".balance" "0.0017"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    result=$(${CLIA} chain33 burn -m 0.017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
@@ -941,25 +940,21 @@ function configbridgevmxgoAddr() {
 function TestETH2EVMToChain33() {
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    #    cli_ret "${result}" "balance" ".balance" "16"
 
-    # ETH 这端 lock 11个
-    result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
-    #    cli_ret "${result}" "lock"
+    # ETH 这端 lock
+    result=$(${CLIA} ethereum lock -m 0.001 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
+    cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 11 原来16
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    #    cli_ret "${result}" "balance" ".balance" "27"
 
     sleep ${maturityDegree}
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # 结果是 11 * le8
-    #    is_equal "${result}" "4700000000"
 
     updateConfig "HT" "${chain33EthBridgeTokenAddr}"
     configbridgevmxgoAddr "${XgoChain33BridgeBank}"
@@ -967,14 +962,12 @@ function TestETH2EVMToChain33() {
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
     chain33_offline_send_evm "approve_erc20.txt"
 
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33EthBridgeTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33EthBridgeTokenAddr}, 100000)" --chainID "${chain33ID}")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "4200000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-    #    is_equal "${result}" "500000000"
 }
 
 function Testethereum2EVMToChain33_byc() {
@@ -1101,29 +1094,29 @@ function AllRelayerMainTest() {
     Chain33Cli=${Para8901Cli}
     TestChain33ToEthAssets
     TestETH2Chain33Assets
-#    TestChain33ToEthZBCAssets
-#    TestETH2Chain33Byc
-#    TestETH2Chain33USDT
-#
-#    Chain33Cli=${Para8901Cli}
-#    lockBty
-#    lockChain33Ycc
+    TestChain33ToEthZBCAssets
+    TestETH2Chain33Byc
+    TestETH2Chain33USDT
+
+    Chain33Cli=${Para8901Cli}
+    lockBty
+    lockChain33Ycc
 #    lockEth
-#    lockEthByc
-#    lockEthUSDT
+    lockEthByc
+    lockEthUSDT
 
     # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Chain33Ycc 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10
-#    offline_set_offline_token_EthByc 100000000000000 10
-#    offline_set_offline_token_EthUSDT 100000000000000 10
+    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_EthByc 100000000000000 10
+    offline_set_offline_token_EthUSDT 100000000000000 10
 
-#    EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-#    DeployEvmxgo
-#    TestETH2EVMToChain33
-#    Testethereum2EVMToChain33_byc
-#    Testethereum2EVMToChain33_usdt
+    EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+    DeployEvmxgo
+    TestETH2EVMToChain33
+    Testethereum2EVMToChain33_byc
+    Testethereum2EVMToChain33_usdt
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
