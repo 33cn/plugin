@@ -67,7 +67,7 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
+	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 0)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation

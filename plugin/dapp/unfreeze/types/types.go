@@ -30,8 +30,8 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	name = UnfreezeX
 	cfg.RegisterDappFork(name, "Enable", 0)
-	cfg.RegisterDappFork(name, ForkTerminatePartX, 1298600)
-	cfg.RegisterDappFork(name, ForkUnfreezeIDX, 1450000)
+	cfg.RegisterDappFork(name, ForkTerminatePartX, 0)
+	cfg.RegisterDappFork(name, ForkUnfreezeIDX, 0)
 }
 
 //InitExecutor ...

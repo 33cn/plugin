@@ -29,17 +29,17 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(ExecutorName, EVMEnable, 500000)
+	cfg.RegisterDappFork(ExecutorName, EVMEnable, 0)
 	// EVM合约中的数据分散存储，支持大数据量
-	cfg.RegisterDappFork(ExecutorName, ForkEVMState, 650000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMState, 0)
 	// EVM合约状态数据生成哈希，保存在主链的StateDB中
-	cfg.RegisterDappFork(ExecutorName, ForkEVMKVHash, 1000000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMKVHash, 0)
 	// EVM合约支持ABI绑定和调用
-	cfg.RegisterDappFork(ExecutorName, ForkEVMABI, 1250000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMABI, 0)
 	// EEVM合约用户金额冻结
-	cfg.RegisterDappFork(ExecutorName, ForkEVMFrozen, 1300000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMFrozen, 0)
 	// EEVM 黄皮v1分叉高度
-	cfg.RegisterDappFork(ExecutorName, ForkEVMYoloV1, 9500000)
+	cfg.RegisterDappFork(ExecutorName, ForkEVMYoloV1, 0)
 	// EVM合约支持交易组
 	cfg.RegisterDappFork(ExecutorName, ForkEVMTxGroup, 0)
 }

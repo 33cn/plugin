@@ -30,8 +30,8 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(BlackwhiteX, "ForkBlackWhiteV2", 900000)
-	cfg.RegisterDappFork(BlackwhiteX, "Enable", 850000)
+	cfg.RegisterDappFork(BlackwhiteX, "ForkBlackWhiteV2", 0)
+	cfg.RegisterDappFork(BlackwhiteX, "Enable", 0)
 }
 
 //InitExecutor ...

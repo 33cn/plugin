@@ -46,6 +46,7 @@ var (
 
 func TestToken(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
+	cfg.SetDappFork(pty.TokenX, pty.ForkTokenCheckX, 1600000)
 	Init(pty.TokenX, cfg, nil)
 	tokenTotal := int64(10000 * 1e8)
 	tokenBurn := int64(10 * 1e8)
