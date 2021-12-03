@@ -415,10 +415,12 @@ Enable=0
 [fork.sub.issuance]
 Enable=0
 ForkIssuanceTableUpdate=0
+ForkIssuancePrecision=0
 
 [fork.sub.collateralize]
 Enable=0
 ForkCollateralizeTableUpdate=0
+ForkCollateralizePrecision=0
 
 [fork.sub.qbftNode]
 Enable=0
