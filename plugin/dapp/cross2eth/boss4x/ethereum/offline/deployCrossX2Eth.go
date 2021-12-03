@@ -50,6 +50,7 @@ func createTx(cmd *cobra.Command, _ []string) {
 	validatorsAddrs, _ := cmd.Flags().GetString("validatorsAddrs")
 	initpowers, _ := cmd.Flags().GetString("initPowers")
 	owner, _ := cmd.Flags().GetString("owner")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	deployerAddr := common.HexToAddress(owner)
 	validatorsAddrsArray := strings.Split(validatorsAddrs, ",")
 	initPowersArray := strings.Split(initpowers, ",")
@@ -78,13 +79,13 @@ func createTx(cmd *cobra.Command, _ []string) {
 		initPowers = append(initPowers, big.NewInt(vint64))
 	}
 
-	err := createDeployTxs(url, deployerAddr, validators, initPowers)
+	err := createDeployTxs(url, deployerAddr, validators, initPowers, chainEthId)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func createDeployTxs(url string, deployerAddr common.Address, validators []common.Address, initPowers []*big.Int) error {
+func createDeployTxs(url string, deployerAddr common.Address, validators []common.Address, initPowers []*big.Int, chainEthId int64) error {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return err
@@ -156,10 +157,10 @@ func createDeployTxs(url string, deployerAddr common.Address, validators []commo
 	mulSignAddr := crypto.CreateAddress(deployerAddr, startNonce+7)
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: mulSignAddr, Name: "mulSignAddr", Nonce: startNonce + 7, To: nil})
 
-	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt")
+	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt", chainEthId)
 }
 
-func NewTxWrite(infos []*DeployInfo, deployerAddr common.Address, url, fileName string) error {
+func NewTxWrite(infos []*DeployInfo, deployerAddr common.Address, url, fileName string, chainId int64) error {
 	ctx := context.Background()
 	client, err := ethclient.Dial(url)
 	if err != nil {
@@ -184,7 +185,8 @@ func NewTxWrite(infos []*DeployInfo, deployerAddr common.Address, url, fileName 
 		if gasLimit < 100*10000 {
 			gasLimit = 100 * 10000
 		}
-		ntx := types.NewTx(&types.LegacyTx{
+		ntx := types.NewTx(&types.AccessListTx{
+			ChainID:  big.NewInt(chainId),
 			Nonce:    info.Nonce,
 			Gas:      gasLimit,
 			GasPrice: price,
@@ -327,6 +329,7 @@ func addCreateWithFileFlags(cmd *cobra.Command) {
 func createWithFileTx(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	cfgpath, _ := cmd.Flags().GetString("conf")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	var deployCfg DeployConfigInfo
 	InitCfg(cfgpath, &deployCfg)
 	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(deployCfg.DeployerPrivateKey))
@@ -351,7 +354,7 @@ func createWithFileTx(cmd *cobra.Command, _ []string) {
 		initPowers = append(initPowers, big.NewInt(deployCfg.InitPowers[i]))
 	}
 
-	err = createDeployTxs(url, deployerAddr, validators, initPowers)
+	err = createDeployTxs(url, deployerAddr, validators, initPowers, chainEthId)
 	if err != nil {
 		fmt.Println("createDeployTxs Err:", err)
 		return

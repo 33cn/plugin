@@ -4,25 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	//"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
-	//erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	//"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
-	tml "github.com/BurntSushi/toml"
-	"github.com/ethereum/go-ethereum"
-
-	//"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"math/big"
 	"os"
 
+	tml "github.com/BurntSushi/toml"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
-	//"strings"
-	//"time"
 )
 
 type DeployContractRet struct {
