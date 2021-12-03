@@ -23,12 +23,12 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(TokenX, "Enable", 100899)
-	cfg.RegisterDappFork(TokenX, ForkTokenBlackListX, 190000)
-	cfg.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 184000)
-	cfg.RegisterDappFork(TokenX, ForkTokenPriceX, 560000)
-	cfg.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 1298600)
-	cfg.RegisterDappFork(TokenX, ForkTokenCheckX, 1600000)
+	cfg.RegisterDappFork(TokenX, "Enable", 0)
+	cfg.RegisterDappFork(TokenX, ForkTokenBlackListX, 0)
+	cfg.RegisterDappFork(TokenX, ForkBadTokenSymbolX, 0)
+	cfg.RegisterDappFork(TokenX, ForkTokenPriceX, 0)
+	cfg.RegisterDappFork(TokenX, ForkTokenSymbolWithNumberX, 0)
+	cfg.RegisterDappFork(TokenX, ForkTokenCheckX, 0)
 }
 
 //InitExecutor ...

@@ -59,12 +59,12 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(TradeX, "Enable", 100899)
-	cfg.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 301000)
-	cfg.RegisterDappFork(TradeX, ForkTradeAssetX, 1010000)
-	cfg.RegisterDappFork(TradeX, ForkTradeIDX, 1450000)
-	cfg.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 2500000)
-	cfg.RegisterDappFork(TradeX, ForkTradePriceX, 3150000)
+	cfg.RegisterDappFork(TradeX, "Enable", 0)
+	cfg.RegisterDappFork(TradeX, ForkTradeBuyLimitX, 0)
+	cfg.RegisterDappFork(TradeX, ForkTradeAssetX, 0)
+	cfg.RegisterDappFork(TradeX, ForkTradeIDX, 0)
+	cfg.RegisterDappFork(TradeX, ForkTradeFixAssetDBX, 0)
+	cfg.RegisterDappFork(TradeX, ForkTradePriceX, 0)
 }
 
 //InitExecutor ...

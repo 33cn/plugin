@@ -20,8 +20,8 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(RetrieveX, "Enable", 0)
-	cfg.RegisterDappFork(RetrieveX, ForkRetriveX, 180000)
-	cfg.RegisterDappFork(RetrieveX, ForkRetriveAssetX, 3150000)
+	cfg.RegisterDappFork(RetrieveX, ForkRetriveX, 0)
+	cfg.RegisterDappFork(RetrieveX, ForkRetriveAssetX, 0)
 }
 
 //InitExecutor ...
