@@ -30,6 +30,7 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(IssuanceX, "Enable", 0)
 	cfg.RegisterDappFork(IssuanceX, ForkIssuanceTableUpdate, 0)
+	cfg.RegisterDappFork(IssuanceX, ForkIssuancePrecision, 0)
 }
 
 //InitExecutor ...
@@ -148,11 +149,11 @@ func CreateRawIssuanceCreateTx(cfg *types.Chain33Config, parm *IssuanceCreateTx)
 		return nil, types.ErrInvalidParam
 	}
 
-	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetCoinPrecision())
+	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.totalBalance")
 	}
-	debtCeilingInt64, err := types.FormatFloatDisplay2Value(parm.DebtCeiling, cfg.GetCoinPrecision())
+	debtCeilingInt64, err := types.FormatFloatDisplay2Value(parm.DebtCeiling, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.DebtCeiling")
 	}
@@ -187,7 +188,7 @@ func CreateRawIssuanceDebtTx(cfg *types.Chain33Config, parm *IssuanceDebtTx) (*t
 		llog.Error("CreateRawIssuanceBorrowTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	valueInt64, err := types.FormatFloatDisplay2Value(parm.Value, cfg.GetCoinPrecision())
+	valueInt64, err := types.FormatFloatDisplay2Value(parm.Value, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.Value")
 	}

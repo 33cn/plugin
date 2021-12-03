@@ -33,6 +33,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/rs/cors v1.7.0
+	github.com/shopspring/decimal v1.2.0
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmsm v1.3.2
