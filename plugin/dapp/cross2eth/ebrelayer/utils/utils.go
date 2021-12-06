@@ -242,7 +242,7 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	var ok bool
 	bn := big.NewInt(1)
 	if decimal > 4 {
-		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(math.Trunc(amount*1e4), decimal-4))), 10)
+		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(math.Trunc(amount*1e4+0.0000000000001), decimal-4))), 10)
 	} else {
 		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(amount, decimal))), 10)
 	}

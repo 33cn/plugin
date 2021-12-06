@@ -294,21 +294,21 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 0.0004 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "1600000000000000"
+#    is_equal "${result}" "1700000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "0.0016"
+    cli_ret "${result}" "balance" ".balance" "0.0017"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    result=$(${CLIA} chain33 burn -m 0.0016 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
@@ -503,14 +503,14 @@ function offline_set_offline_token_Chain33Ycc() {
 function offline_set_offline_token_Eth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
-    local threshold=20
+    local threshold=0.002
     local percents=50
     if [[ $# -eq 2 ]]; then
         threshold=$1
         percents=$2
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline set_offline_token -s HT -m ${threshold} -p ${percents} -c "${ethBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_offline_token.txt"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -670,14 +670,18 @@ function lockEth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== ethereum 端 lock ETH ======${NOC}"
     # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
-    offline_set_offline_token_Eth
+    offline_set_offline_token_Eth 0.002 50
 
     # 重启 nonce 会不统一 要重启一下
     restart_ebrelayerA
 
-    lock_eth_multisign 19 19 0
-    lock_eth_multisign 1 10 10
-    lock_eth_multisign 16 13 23
+    lock_eth_multisign 0.001 0.001 0
+    lock_eth_multisign 0.001 0.001 0.001
+    lock_eth_multisign 0.001 0.001 0.002
+
+    # multisignEthAddr 要有手续费
+    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 0.0001 -r "${multisignEthAddr}"
+    sleep 10
 
     # transfer
     # shellcheck disable=SC2154
@@ -698,7 +702,7 @@ function lockEthByc() {
     lock_ethereum_byc_multisign 60 72 88
 
     # multisignEthAddr 要有手续费
-    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
+    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 0.0001 -r "${multisignEthAddr}"
     sleep 10
 
     # transfer
@@ -719,7 +723,7 @@ function lockEthUSDT() {
     lock_ethereum_usdt_multisign 60 72 88
 
     # multisignEthAddr 要有手续费
-    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
+    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 0.0001 -r "${multisignEthAddr}"
     sleep 10
 
     # transfer
@@ -1107,18 +1111,18 @@ function AllRelayerMainTest() {
 
     # test
     Chain33Cli=${Para8901Cli}
-    TestETH2Chain33Assets
-    TestChain33ToEthAssets
-    TestChain33ToEthZBCAssets
-    TestETH2Chain33Byc
-    TestETH2Chain33USDT
+#    TestETH2Chain33Assets
+#    TestChain33ToEthAssets
+#    TestChain33ToEthZBCAssets
+#    TestETH2Chain33Byc
+#    TestETH2Chain33USDT
 
     Chain33Cli=${Para8901Cli}
-    lockBty
-    lockChain33Ycc
-    lockEth
+#    lockBty
+#    lockChain33Ycc
     lockEthByc
     lockEthUSDT
+    lockEth
 
     # 离线多签地址转入阈值设大
     offline_set_offline_token_Bty 100000000000000 10

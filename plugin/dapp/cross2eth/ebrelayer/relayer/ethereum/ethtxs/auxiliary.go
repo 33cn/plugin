@@ -359,7 +359,7 @@ func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethin
 
 	prepareDone = true
 
-	gasLimit := uint64(21000)
+	gasLimit := uint64(21100)
 
 	toAddress := common.HexToAddress(toAddr)
 	//var data []byte
