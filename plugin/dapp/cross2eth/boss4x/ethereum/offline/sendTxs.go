@@ -58,7 +58,7 @@ func sendTxs(cmd *cobra.Command, _ []string) {
 		ret := &DeployContractRet{ContractAddr: deployInfo.ContractorAddr.String(), TxHash: tx.Hash().String(), ContractName: deployInfo.Name}
 		respData = append(respData, ret)
 		if !checkTxStatus(client, tx.Hash().String(), deployInfo.Name) {
-			fmt.Println("FATAL ERROR! DEPLOY CONTRACTOR TERMINATION……:-(")
+			//fmt.Println("FATAL ERROR! DEPLOY CONTRACTOR TERMINATION……:-(")
 			break
 		}
 	}

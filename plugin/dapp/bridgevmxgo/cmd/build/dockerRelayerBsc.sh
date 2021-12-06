@@ -1093,24 +1093,24 @@ function AllRelayerMainTest() {
     # test
     Chain33Cli=${Para8901Cli}
     TestChain33ToEthAssets
-#    TestETH2Chain33Assets
+    TestETH2Chain33Assets
     TestChain33ToEthZBCAssets
     TestETH2Chain33Byc
     TestETH2Chain33USDT
 
-    Chain33Cli=${Para8901Cli}
-    lockBty
-    lockChain33Ycc
+#    Chain33Cli=${Para8901Cli}
+#    lockBty
+#    lockChain33Ycc
 #    lockEth
-    lockEthByc
-    lockEthUSDT
+#    lockEthByc
+#    lockEthUSDT
 
     # 离线多签地址转入阈值设大
-    offline_set_offline_token_Bty 100000000000000 10
-    offline_set_offline_token_Chain33Ycc 100000000000000 10
+#    offline_set_offline_token_Bty 100000000000000 10
+#    offline_set_offline_token_Chain33Ycc 100000000000000 10
 #    offline_set_offline_token_Eth 100000000000000 10
-    offline_set_offline_token_EthByc 100000000000000 10
-    offline_set_offline_token_EthUSDT 100000000000000 10
+#    offline_set_offline_token_EthByc 100000000000000 10
+#    offline_set_offline_token_EthUSDT 100000000000000 10
 
     EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
