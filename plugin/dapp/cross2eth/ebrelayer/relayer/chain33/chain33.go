@@ -407,7 +407,7 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 	}
 
 	//因为发行的合约的精度为8，所以需要缩小，在进行burn的时候，再进行倍乘,在函数ParseBurnLock4chain33进行
-	if ebTypes.SYMBOL_ETH == claim.Symbol {
+	if 18 == claim.Decimal {
 		bigAmount.Div(bigAmount, big.NewInt(int64(1e10)))
 		claim.Amount = bigAmount.String()
 	}

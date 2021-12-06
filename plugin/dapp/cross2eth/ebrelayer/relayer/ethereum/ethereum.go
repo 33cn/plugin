@@ -514,6 +514,9 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			}
 			tokenAddr = common.HexToAddress(addr)
 		}
+		if ebTypes.EthNilAddr == tokenAddr.String() {
+			prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
+		}
 	}
 
 	// Relay the Chain33Msg to the Ethereum network
