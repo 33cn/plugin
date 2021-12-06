@@ -777,6 +777,9 @@ function StartDockerRelayerDeploy() {
     # 部署合约 设置 bridgeRegistry 地址
     InitAndOfflineDeploy
 
+    result=$(${CLIA} ethereum multisign set_symbol -s "HT")
+    cli_ret "${result}" "set_symbol"
+
     # 设置离线多签数据
     Chain33Cli=${MainCli}
     initMultisignChain33Addr
@@ -913,7 +916,7 @@ function DeployEvmxgo() {
 function updateConfig() {
     local symbol=$1
     local bridgeTokenAddr=$2
-    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"evmxgo-mint-'"${symbol}"'","value":"{\"address\":\"'"${bridgeTokenAddr}"'\",\"precision\":8,\"introduction\":\"symbol:'"${symbol}"', bridgeTokenAddr:'"${bridgeTokenAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"evmxgo-mint-'"${symbol}"'","value":"{\"address\":\"'"${bridgeTokenAddr}"'\",\"precision\":8,\"introduction\":\"symbol:'"${symbol}"', bridgeTokenAddr:'"${bridgeTokenAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://${docker_chain33_ip}:8901" | jq -r ".result")
     if [ "${tx}" == "" ]; then
         echo -e "${RED}update config create tx 1${NOC}"
         exit 1
@@ -926,7 +929,7 @@ function updateConfig() {
 
 function configbridgevmxgoAddr() {
     local bridgevmxgoAddr=$1
-    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"bridgevmxgo-contract-addr","value":"{\"address\":\"'"${bridgevmxgoAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"bridgevmxgo-contract-addr","value":"{\"address\":\"'"${bridgevmxgoAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://${docker_chain33_ip}:8901" | jq -r ".result")
     if [ "${tx}" == "" ]; then
         echo -e "${RED}update config create tx 1${NOC}"
         exit 1
@@ -1098,23 +1101,23 @@ function AllRelayerMainTest() {
     TestETH2Chain33Byc
     TestETH2Chain33USDT
 
-#    Chain33Cli=${Para8901Cli}
-#    lockBty
-#    lockChain33Ycc
-#    lockEth
-#    lockEthByc
-#    lockEthUSDT
+    Chain33Cli=${Para8901Cli}
+    lockBty
+    lockChain33Ycc
+    lockEth
+    lockEthByc
+    lockEthUSDT
 
     # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Chain33Ycc 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10
-#    offline_set_offline_token_EthByc 100000000000000 10
-#    offline_set_offline_token_EthUSDT 100000000000000 10
+    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_EthByc 100000000000000 10
+    offline_set_offline_token_EthUSDT 100000000000000 10
 
     EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
-#    TestETH2EVMToChain33
+    TestETH2EVMToChain33
     Testethereum2EVMToChain33_byc
     Testethereum2EVMToChain33_usdt
 

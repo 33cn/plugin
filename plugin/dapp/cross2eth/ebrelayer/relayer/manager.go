@@ -996,6 +996,23 @@ func (manager *Manager) ConfigOfflineSaveAccount(addr string, result *interface{
 	return nil
 }
 
+func (manager *Manager) ConfigplatformTokenSymbol(symbol string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.ethRelayer.ConfigplatformTokenSymbol(symbol)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
+	}
+	return nil
+}
+
 func (manager *Manager) ConfigLockedTokenOfflineSave(config relayerTypes.ETHConfigLockedTokenOffline, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()

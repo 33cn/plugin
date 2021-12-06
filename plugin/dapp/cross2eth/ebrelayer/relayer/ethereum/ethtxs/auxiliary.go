@@ -760,6 +760,48 @@ func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, pa
 	return tx.Hash().String(), nil
 }
 
+func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
+	txslog.Info("ConfigplatformTokenSymbol", "symbol", symbol)
+	if nil == para {
+		return "", errors.New("no operator private key configured")
+	}
+
+	var prepareDone bool
+	var err error
+
+	defer func() {
+		if err != nil && prepareDone {
+			_, _ = revokeNonce(para.Address)
+		}
+	}()
+
+	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
+	if nil != err {
+		return "", err
+	}
+
+	prepareDone = true
+
+	tx, err := x2EthContracts.BridgeBank.BridgeBankTransactor.ConfigplatformTokenSymbol(auth, symbol)
+	if nil != err {
+		return "", err
+	}
+
+	sim, isSim := client.(*ethinterface.SimExtend)
+	if isSim {
+		fmt.Println("Use the simulator")
+		sim.Commit()
+	}
+
+	txslog.Info("ConfigplatformTokenSymbol", "tx.Hash()", tx.Hash().String())
+	err = waitEthTxFinished(client, tx.Hash(), "ConfigplatformTokenSymbol")
+	if nil != err {
+		return "", err
+	}
+
+	return tx.Hash().String(), nil
+}
+
 func ConfigLockedTokenOfflineSave(addr, symbol string, threshold *big.Int, percents uint8, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
 	txslog.Info("ConfigLockedTokenOfflineSave", "addr", addr, "symbol", symbol, "threshold", threshold, "percents", percents)
 	if nil == para {

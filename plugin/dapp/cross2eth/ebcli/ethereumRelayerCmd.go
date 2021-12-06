@@ -46,6 +46,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		TokenCmd(),
 		MultiSignEthCmd(),
 		TransferEthCmd(),
+		ConfigplatformTokenSymbolCmd(),
 	)
 
 	return cmd
@@ -968,6 +969,33 @@ func ConfigOfflineSaveAccount(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", addr, &res)
+	ctx.Run()
+}
+
+//ConfigplatformTokenSymbolCmd ...
+func ConfigplatformTokenSymbolCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set_symbol",
+		Short: "save config symbol",
+		Run:   ConfigplatformTokenSymbol,
+	}
+	ConfigplatformTokenSymbolFlags(cmd)
+	return cmd
+}
+
+//ConfigplatformTokenSymbolFlags ...
+func ConfigplatformTokenSymbolFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "ETH", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+//ConfigplatformTokenSymbol ...
+func ConfigplatformTokenSymbol(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("address")
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", addr, &res)
 	ctx.Run()
 }
 

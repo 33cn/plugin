@@ -995,6 +995,11 @@ func (ethRelayer *Relayer4Ethereum) ConfigOfflineSaveAccount(addr string) (strin
 	return txhash, err
 }
 
+func (ethRelayer *Relayer4Ethereum) ConfigplatformTokenSymbol(symbol string) (string, error) {
+	txhash, err := ethtxs.ConfigplatformTokenSymbol(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+	return txhash, err
+}
+
 func (ethRelayer *Relayer4Ethereum) ConfigLockedTokenOfflineSave(addr, symbol, threshold string, percents uint32) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(threshold), 10)
