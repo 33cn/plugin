@@ -794,7 +794,7 @@ function DeployEvmxgo() {
 function updateConfig() {
     local symbol=$1
     local bridgeTokenAddr=$2
-    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"evmxgo-mint-'"${symbol}"'","value":"{\"address\":\"'"${bridgeTokenAddr}"'\",\"precision\":8,\"introduction\":\"symbol:'"${symbol}"', bridgeTokenAddr:'"${bridgeTokenAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"evmxgo-mint-'"${symbol}"'","value":"{\"address\":\"'"${bridgeTokenAddr}"'\",\"precision\":8,\"introduction\":\"symbol:'"${symbol}"', bridgeTokenAddr:'"${bridgeTokenAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://${docker_chain33_ip}:8901" | jq -r ".result")
     if [ "${tx}" == "" ]; then
         echo -e "${RED}update config create tx 1${NOC}"
         exit 1
@@ -807,7 +807,7 @@ function updateConfig() {
 
 function configbridgevmxgoAddr() {
     local bridgevmxgoAddr=$1
-    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"bridgevmxgo-contract-addr","value":"{\"address\":\"'"${bridgevmxgoAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://127.0.0.1:8901" | jq -r ".result")
+    tx=$(curl -s --data-binary '{"jsonrpc":"2.0","id":2,"method":"Chain33.CreateTransaction","params":[{"execer":"manage","actionName":"Modify","payload":{"key":"bridgevmxgo-contract-addr","value":"{\"address\":\"'"${bridgevmxgoAddr}"'\"}","op":"add","addr":""}}]}' -H 'content-type:text/plain;' "http://${docker_chain33_ip}:8901" | jq -r ".result")
     if [ "${tx}" == "" ]; then
         echo -e "${RED}update config create tx 1${NOC}"
         exit 1

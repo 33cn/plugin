@@ -4,15 +4,15 @@ services:
   ganachetest:
     entrypoint: ["node", "/app/ganache-core.docker.cli.js", "-a", "20", "-b", "2", "--debug", "-m", "coast bar giraffe art venue decide symbol law visual crater vital fold", "-e", "1000"]
     image: trufflesuite/ganache-cli:latest
-    ports:
-      - "8545:8545"
+    #ports:
+    #  - "8545:8545"
 
   ebrelayera:
     build:
       context: .
       dockerfile: Dockerfile-bridgevmxgo
-    ports:
-      - "9901:9901"
+    #ports:
+    #  - "9901:9901"
 
   ebrelayerb:
     build:
@@ -35,9 +35,9 @@ services:
       PARAFILE: "/root/chain33.para33.toml"
     expose:
       - "8802"
-    ports:
-      - "8801:8801"
-      - "8901:8901"
+    #ports:
+    #  - "8801:8801"
+    #  - "8901:8901"
 
   chain32:
     entrypoint: /root/entrypoint.sh
