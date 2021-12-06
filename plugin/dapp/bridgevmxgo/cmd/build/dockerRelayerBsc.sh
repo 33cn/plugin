@@ -288,27 +288,27 @@ function TestETH2Chain33Assets() {
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "200000"
+#    is_equal "${result}" "2000000000000000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0004 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "170000"
+#    is_equal "${result}" "1600000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "0.0017"
+    cli_ret "${result}" "balance" ".balance" "0.0016"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0016 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
@@ -805,7 +805,6 @@ function StartDockerRelayerDeploy() {
     updata_toml_start_bcd
 
     # 设置 token 地址
-    #    InitTokenAddr
     offline_create_bridge_token_eth_BTY
     offline_deploy_erc20_eth_BYC
     offline_deploy_erc20_eth_USDT
@@ -1108,8 +1107,8 @@ function AllRelayerMainTest() {
 
     # test
     Chain33Cli=${Para8901Cli}
-    TestChain33ToEthAssets
     TestETH2Chain33Assets
+    TestChain33ToEthAssets
     TestChain33ToEthZBCAssets
     TestETH2Chain33Byc
     TestETH2Chain33USDT
