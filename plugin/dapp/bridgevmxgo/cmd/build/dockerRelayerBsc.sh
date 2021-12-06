@@ -883,6 +883,7 @@ function chain33_offline_send_evm() {
 }
 
 function DeployEvmxgo() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 在 chain33 上部署合约
     # shellcheck disable=SC2154
     ${EvmxgoBoss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [96, 1, 1, 1]" --chainID "${chain33ID}"
@@ -910,6 +911,8 @@ function DeployEvmxgo() {
 
     # 重启,需要重新启动relayer,更新nonce
     restart_ebrelayerA
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 # $1 symbol $2 bridgeTokenAddr
@@ -941,6 +944,7 @@ function configbridgevmxgoAddr() {
 }
 
 function TestETH2EVMToChain33() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
 
@@ -971,9 +975,12 @@ function TestETH2EVMToChain33() {
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function Testethereum2EVMToChain33_byc() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
     #    cli_ret "${result}" "balance" ".balance" "0"
@@ -1010,9 +1017,13 @@ function Testethereum2EVMToChain33_byc() {
 
     result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
     #    is_equal "${result}" "500000000"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function Testethereum2EVMToChain33_usdt() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
     # 查询 ETH 这端 bridgeBank 地址原来是
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     #    cli_ret "${result}" "balance" ".balance" "0"
@@ -1049,6 +1060,8 @@ function Testethereum2EVMToChain33_usdt() {
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
     #    is_equal "${result}" "500000000"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function AllRelayerMainTest() {
