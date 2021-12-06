@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	ety "github.com/33cn/plugin/plugin/dapp/exchange/types"
@@ -191,10 +192,10 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 			}
 		}
 		//删除原有状态orderID
-		order.Status = ety.Ordered
-		err = orderTable.DelRow(order)
+		primaryKey := []byte(fmt.Sprintf("%022d", order.OrderID))
+		err = orderTable.Del(primaryKey)
 		if err != nil {
-			elog.Error("updateIndex", "orderTable.DelRow", err.Error())
+			elog.Error("updateIndex", "orderTable.Del", err.Error())
 			return err
 		}
 		order.Status = ety.Revoked

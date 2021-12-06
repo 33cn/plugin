@@ -273,16 +273,5 @@ coins = [
     {name = "CCNY",  rate = 100000, minFee = 0},
 ]
 
-#[mver.exec.sub.exchange.ForkParamV1]
-#banks = [
-#    "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
-#]
-#coins = [
-#    {name = "bty",  rate = 100000, minFee = 1000000},
-#    {name = "CCNY", rate = 100000, minFee = 1000000},
-#]
-
-
 [fork.sub.exchange]
 Enable=0
-#ForkParamV1=1
