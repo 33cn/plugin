@@ -992,10 +992,10 @@ func ConfigplatformTokenSymbolFlags(cmd *cobra.Command) {
 //ConfigplatformTokenSymbol ...
 func ConfigplatformTokenSymbol(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	addr, _ := cmd.Flags().GetString("address")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", addr, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", symbol, &res)
 	ctx.Run()
 }
 
