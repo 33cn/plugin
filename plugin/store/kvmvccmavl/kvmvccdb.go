@@ -32,8 +32,8 @@ var (
 var (
 	//同common/db中的mvcc相关的定义保持一致
 	mvccPrefix = []byte(".-mvcc-.")
-	mvccMeta               = append(mvccPrefix, []byte("m.")...)
-	mvccData = append(mvccPrefix, []byte("d.")...)
+	mvccMeta   = append(mvccPrefix, []byte("m.")...)
+	mvccData   = append(mvccPrefix, []byte("d.")...)
 	//mvccLast               = append(mvccPrefix, []byte("l.")...)
 	mvccMetaVersion        = append(mvccMeta, []byte("version.")...)
 	mvccMetaVersionKeyList = append(mvccMeta, []byte("versionkl.")...)
@@ -130,7 +130,7 @@ func (mvccs *KVMVCCStore) MemSet(datas *types.StoreSet, hash []byte, sync bool) 
 	mvccs.sync = sync
 	// 进行裁剪
 	if mvccs.kvmvccCfg != nil && mvccs.kvmvccCfg.EnableMVCCPrune &&
-		!isPruning() && datas.Height%int64(mvccs.kvmvccCfg.PruneHeight) == 0  {
+		!isPruning() && datas.Height%int64(mvccs.kvmvccCfg.PruneHeight) == 0 {
 		wg.Add(1)
 		go mvccs.pruningMVCC(datas.Height)
 	}
@@ -500,7 +500,7 @@ func pruneDapp(db dbm.DB, name string, safeHeight int64) {
 	}
 	var prefix []byte
 	prefix = append(prefix, mvccData...)
-	prefix = append(prefix, "mavl-" + name...)
+	prefix = append(prefix, "mavl-"+name...)
 	it := db.Iterator(prefix, nil, true)
 	defer it.Close()
 	for it.Rewind(); it.Valid(); it.Next() {
