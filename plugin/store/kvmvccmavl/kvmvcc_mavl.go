@@ -81,9 +81,9 @@ type KVmMavlStore struct {
 type subKVMVCCConfig struct {
 	EnableMVCCIter         bool  `json:"enableMVCCIter"`
 	EnableMVCCPrune        bool  `json:"enableMVCCPrune"`
-	PruneHeight            int32 `json:"pruneHeight"`       //每PruneHeight高度做一次状态精简
+	PruneHeight            int32 `json:"pruneHeight"` //每PruneHeight高度做一次状态精简
 	EnableEmptyBlockHandle bool  `json:"enableEmptyBlockHandle"`
-	ReservedHeight         int64  `json:"reservedHeight"`   //保留最新的ReservedHeight个区块的状态数据
+	ReservedHeight         int64 `json:"reservedHeight"` //保留最新的ReservedHeight个区块的状态数据
 }
 
 type subMavlConfig struct {
@@ -116,7 +116,7 @@ type subConfig struct {
 	// 使能空块处理
 	EnableEmptyBlockHandle bool `json:"enableEmptyBlockHandle"`
 	//保留的状态数据的高度
-	ReservedHeight int64  `json:"reservedHeight"`
+	ReservedHeight int64 `json:"reservedHeight"`
 }
 
 // New construct KVMVCCStore module
