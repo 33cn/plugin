@@ -514,7 +514,18 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			}
 			tokenAddr = common.HexToAddress(addr)
 		}
-		if ebTypes.EthNilAddr == tokenAddr.String() {
+
+		bridgeToken, _ := generated.NewBridgeToken(tokenAddr, ethRelayer.clientSpec)
+		opts := &bind.CallOpts{
+			Pending: true,
+			Context: context.Background(),
+		}
+		decimal, err := bridgeToken.Decimals(opts)
+		if err != nil {
+			panic(fmt.Sprintf("Can't fetch decimal from remote for symbol:%s", prophecyClaim.Symbol))
+		}
+
+		if decimal == 18 {
 			prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
 		}
 	}
