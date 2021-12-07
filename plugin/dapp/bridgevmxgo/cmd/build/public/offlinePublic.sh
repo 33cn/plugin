@@ -164,6 +164,23 @@ function offline_create_bridge_token_chain33_USDT() {
     ${CLIA} chain33 token set -t "${chain33USDTBridgeTokenAddr}" -s USDT
 }
 
+function offline_create_bridge_token_chain33_BUSD() {
+    # 在chain33上创建bridgeToken BUSD
+    echo -e "${GRE}======= 在 chain33 上创建 bridgeToken BUSD ======${NOC}"
+    # shellcheck disable=SC2154
+    ${Boss4xCLI} chain33 offline create_bridge_token -c "${chain33BridgeBank}" -s BUSD -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    chain33_offline_send "create_bridge_token.txt"
+
+    chain33BUSDBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(BUSD)")
+    echo "BUSD Bridge Token Addr = ${chain33BUSDBridgeTokenAddr}"
+    cp BridgeToken.abi "${chain33BUSDBridgeTokenAddr}.abi"
+
+    result=$(${Chain33Cli} evm query -a "${chain33BUSDBridgeTokenAddr}" -c "${chain33BUSDBridgeTokenAddr}" -b "symbol()")
+    is_equal "${result}" "BUSD"
+
+    ${CLIA} chain33 token set -t "${chain33BUSDBridgeTokenAddr}" -s BUSD
+}
+
 function offline_deploy_erc20_chain33_YCC() {
     # chain33 token create YCC
     echo -e "${GRE}======= 在 chain33 上创建 ERC20 YCC ======${NOC}"
