@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	bep20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/bep20/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -75,7 +76,7 @@ func IsProphecyPending(claimID [32]byte, validator common.Address, chain33Bridge
 func GetBalance(client ethinterface.EthClientSpec, tokenAddr, owner string) (string, error) {
 	//查询ERC20余额
 	if tokenAddr != "" {
-		bridgeToken, err := generated.NewBridgeToken(common.HexToAddress(tokenAddr), client)
+		bep20Token, err := bep20.NewBEP20Token(common.HexToAddress(tokenAddr), client)
 		if nil != err {
 			txslog.Error("GetBalance", "generated.NewBridgeToken err:", err.Error(), "tokenAddr", tokenAddr, "owner", owner)
 			return "", err
@@ -86,7 +87,7 @@ func GetBalance(client ethinterface.EthClientSpec, tokenAddr, owner string) (str
 			From:    ownerAddr,
 			Context: context.Background(),
 		}
-		balance, err := bridgeToken.BalanceOf(opts, ownerAddr)
+		balance, err := bep20Token.BalanceOf(opts, ownerAddr)
 		if nil != err {
 			txslog.Error("GetBalance", "bridgeToken.BalanceOf err:", err.Error(), "tokenAddr", tokenAddr, "owner", owner)
 			return "", err

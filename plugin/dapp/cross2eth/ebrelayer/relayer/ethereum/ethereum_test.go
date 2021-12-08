@@ -414,7 +414,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		fetchHeightPeriodMs:     cfg.EthBlockFetchPeriod,
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
-		symbol2LockAddr:         make(map[string]common.Address),
+		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
 
 		ethBridgeClaimChan: ethBridgeClaimchan,
 		chain33MsgChan:     chain33Msgchan,

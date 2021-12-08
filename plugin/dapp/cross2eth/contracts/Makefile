@@ -1,7 +1,7 @@
 ##
 ##编译solidity，并产生bin文件，abi文件，和相应的go文件
 
-
+SRC_BEP := bep20
 SRC_CONTRACT0 := contracts4chain33
 SRC_CONTRACT1 := contracts4eth
 SRC_MULTISIGN := gnosis/safe-contracts/contracts
@@ -9,6 +9,7 @@ SRC_MULTISIGN := gnosis/safe-contracts/contracts
 GO_OUT0 := ${SRC_CONTRACT0}/generated
 GO_OUT1 := ${SRC_CONTRACT1}/generated
 GO_OUT_MULTISIGN := gnosis/generated
+GO_OUT_BEP20 := bep20/generated
 PACKAGE := generated
 
 proj := "build"
@@ -21,9 +22,13 @@ build: depends
 	@abigen --sol $(SRC_CONTRACT0)/BridgeBank/BridgeBank.sol --pkg $(PACKAGE) --out $(GO_OUT0)/BridgeBank.go
 	@abigen --sol $(SRC_CONTRACT1)/BridgeRegistry.sol --pkg $(PACKAGE) --out $(GO_OUT1)/BridgeRegistry.go
 	@abigen --sol $(SRC_CONTRACT1)/BridgeBank/BridgeBank.sol --pkg $(PACKAGE) --out $(GO_OUT1)/BridgeBank.go
+	@abigen --sol $(SRC_BEP)/BEP20.sol --pkg $(PACKAGE) --out $(GO_OUT_BEP20)/bep20.go
 
 multisign:
 	@abigen --sol $(SRC_MULTISIGN)/GnosisSafe.sol --pkg $(PACKAGE) --out $(GO_OUT_MULTISIGN)/gnosisSafe.go
+
+bep20Bin:
+	@abigen --sol $(SRC_BEP)/BEP20.sol --pkg $(PACKAGE) --out $(GO_OUT_BEP20)/bep20.go
 
 
 clean:

@@ -183,6 +183,7 @@ message TokenAddress {
     string address = 1;
     string symbol  = 2;
     string chainName = 3;
+    int32 decimal    = 4;
 }
 
 message TokenAddressArray {
