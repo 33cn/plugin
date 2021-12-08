@@ -5,6 +5,16 @@
 * 在线创建交易 `./boss4x ethereum offline create ...` 需要在线查询 nonce 等信息
 * 离线签名交易 `./boss4x ethereum offline sign -f xxx.txt -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230`
 * 在线发送签名后文件 `./boss4x ethereum offline send -f deploysigntxs.txt` 默认签名后的文件名称都是 deploysigntxs.txt
+
+```
+Global Flags:
+      --chainEthId int              ethereum chain id, default to 0 (default 56 is bsc)
+      --chainID int32               chain id, default to 0
+      --expire string               transaction expire time (optional) (default "120m")
+      --paraName string             para chain name,Eg:user.p.fzm.
+      --rpc_laddr string            http url (default "https://localhost:8801")
+      --rpc_laddr_ethereum string   ethereum http url (default "http://localhost:7545")
+```
 *** 
 
 #### 离线部署 ethereum 跨链合约
@@ -49,6 +59,32 @@ tx is written to file:  deploytxs.txt
 ./boss4x ethereum offline send -f deploysigntxs.txt
 ```
 ***
+
+#### 设置 symbol
+* 在线创建交易
+```
+命令：
+./boss4x ethereum offline set_symbol -s "BNB" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+
+参数说明：
+  -c, --contract string     bridgebank合约地址
+  -d, --deployAddr string   部署合约的地址
+  -s, --symbol string       要设置的 symbol, 默认为 ETH
+
+输出
+tx is written to file:  set_symbol.txt
+```
+
+* 离线签名交易
+```
+./boss4x ethereum offline sign -f set_symbol.txt -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230
+```
+
+* 发送签名后文件
+```
+./boss4x ethereum offline send -f deploysigntxs.txt
+```
+
 #### 离线部署 ERC20 跨链合约
 * 在线创建交易
 ```
@@ -77,6 +113,7 @@ tx is written to file:  deployErc20YCC.txt
 ```
 
 ***
+
 #### create_add_lock_list
 * 在线创建交易
 ```
@@ -94,6 +131,7 @@ tx is written to file:  create_add_lock_list.txt
 ```
 
 ***
+
 #### 创建 bridge token
 * 在线创建交易
 ```
@@ -110,6 +148,7 @@ tx is written to file:  create_bridge_token.txt
 ```
 
 ***
+
 #### 设置离线多签地址信息
 * 在线创建交易
 ```
@@ -126,6 +165,7 @@ tx is written to file:  multisign_setup.txt
 ```
 
 ***
+
 #### 设置离线多签地址
 * 在线创建交易
 ```
@@ -142,6 +182,7 @@ tx is written to file:  set_offline_addr.txt
 ```
 
 ***
+
 #### 离线多签设置
 * 在线创建交易
 ```
@@ -161,6 +202,7 @@ tx is written to file:  set_offline_token.txt
 ```
 
 ***
+
 #### 离线多签转帐
 * 转帐预备交易--在线操作
 ```
