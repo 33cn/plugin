@@ -312,6 +312,8 @@ func DeployERC20Flags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("symbol")
 	cmd.Flags().StringP("amount", "m", "0", "amount")
 	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Uint8P("decimals", "d", 8, "default set to 8, and can't be greater than 18")
 }
 
 func DeployERC20(cmd *cobra.Command, args []string) {
@@ -320,12 +322,19 @@ func DeployERC20(cmd *cobra.Command, args []string) {
 	name, _ := cmd.Flags().GetString("name")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetString("amount")
+	decimals, _ := cmd.Flags().GetUint8("decimals")
+
+	if decimals > 18 {
+		fmt.Println("decimals can't be greater than 18")
+		return
+	}
 
 	para := ebTypes.ERC20Token{
-		Owner:  owner,
-		Name:   name,
-		Symbol: symbol,
-		Amount: amount,
+		Owner:    owner,
+		Name:     name,
+		Symbol:   symbol,
+		Amount:   amount,
+		Decimals: int32(decimals),
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployERC20", para, &res)

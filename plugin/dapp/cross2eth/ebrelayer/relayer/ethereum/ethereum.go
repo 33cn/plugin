@@ -332,12 +332,12 @@ func (ethRelayer *Relayer4Ethereum) AddToken2LockList(symbol, token string) (str
 }
 
 //DeployERC20 ...
-func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string) (string, error) {
+func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string, decimals uint8) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	ethRelayer.rwLock.RLock()
 	defer ethRelayer.rwLock.RUnlock()
-	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, ethRelayer.clientSpec, ethRelayer.operatorInfo)
+	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, decimals, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
 //ApproveAllowance ...

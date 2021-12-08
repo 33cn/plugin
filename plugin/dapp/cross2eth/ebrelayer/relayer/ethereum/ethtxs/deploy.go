@@ -499,7 +499,7 @@ finished:
 	return x2EthContracts, deployInfo, nil
 }
 
-func DeployERC20(ownerAddr, name, symbol string, amount *big.Int, client ethinterface.EthClientSpec, para *OperatorInfo) (string, error) {
+func DeployERC20(ownerAddr, name, symbol string, amount *big.Int, decimals uint8, client ethinterface.EthClientSpec, para *OperatorInfo) (string, error) {
 	if nil == para {
 		return "", errors.New("no operator private key configured")
 	}
@@ -523,7 +523,7 @@ func DeployERC20(ownerAddr, name, symbol string, amount *big.Int, client ethinte
 	txslog.Info("DeployERC20", "ownerAddr", ownerAddr, "name", name, "symbol", symbol, "amount", amount, "client", client)
 
 	Erc20OwnerAddr := common.HexToAddress(ownerAddr)
-	Erc20Addr, deployTx, _, err := erc20.DeployERC20(operatorAuth, client, name, symbol, amount, Erc20OwnerAddr)
+	Erc20Addr, deployTx, _, err := erc20.DeployERC20(operatorAuth, client, name, symbol, amount, Erc20OwnerAddr, decimals)
 	if nil != err {
 		txslog.Error("DeployERC20", "Failed to DeployErc20 with err:", err.Error())
 		return "", err
