@@ -39,58 +39,10 @@ multisignEthAddr=""
 chain33ID=0
 
 EvmxgoBoss4xCLI="./evmxgoboss4x"
-#BscProvider="wss://data-seed-prebsc-1-s1.binance.org:8545"
-#BscProviderUrl="https://data-seed-prebsc-1-s1.binance.org:8545"
-BscProvider="wss://bsc-dataseed.binance.org/"
+BscProvider="wss://bsc-ws-node.nariox.org:443"
 BscProviderUrl="https://bsc-dataseed.binance.org/"
-
-# shellcheck disable=SC2034
-{
-    # ETH 部署合约者的私钥 用于部署合约时签名使用
-    ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
-    ethDeployKey="0x8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
-
-    # chain33 部署合约者的私钥 用于部署合约时签名使用
-    chain33DeployAddr="1JxhYLYsrscjTaQfaMoVUrnSdrejP7XRQD"
-    chain33DeployKey="0x9ef82623a5e9aac58d3a6b06392af66ec77289522b28896aed66abaaede66903"
-
-    # validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]# shellcheck disable=SC2034
-    # eth 验证者私钥
-    ethValidatorAddra="0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
-    ethValidatorAddrb="0x0df9a824699bc5878232c9e612fe1a5346a5a368"
-    ethValidatorAddrc="0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1"
-    ethValidatorAddrd="0xd9dab021e74ecf475788ed7b61356056b2095830"
-    ethValidatorAddrKeya="3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-    ethValidatorAddrKeyb="a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-    ethValidatorAddrKeyc="bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-    ethValidatorAddrKeyd="c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
-
-    # 新增地址 chain33 需要导入地址 转入 10 bty当收费费
-    chain33Validatora="1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ"
-    chain33Validatorb="155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6"
-    chain33Validatorc="13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv"
-    chain33Validatord="113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"
-    chain33ValidatorKeya="0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae"
-    chain33ValidatorKeyb="0x9d539bc5fd084eb7fe86ad631dba9aa086dba38418725c38d9751459f567da66"
-    chain33ValidatorKeyc="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
-    chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
-
-    ethTestAddr1=0xbc333839E37bc7fAAD0137aBaE2275030555101f
-    ethTestAddrKey1=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
-    ethTestAddr2=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
-    ethTestAddrKey2=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
-
-    ethReceiverAddr1="0xa4ea64a583f6e51c3799335b28a8f0529570a635"
-    #ethReceiverAddrKey1="355b876d7cbcb930d5dfab767f66336ce327e082cbaa1877210c1bae89b1df71"
-
-    chain33TestAddr1="1Cj1rqUenPmkeD6A8MGEzkBKQFN2H9yL3x"
-    chain33TestAddrKey1="0x7269a7a87d476310da37a9ca1ddc9333c9d7a0dfe1f2998b84758843a895433b"
-    chain33TestAddr2="1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu"
-    chain33TestAddrKey2="0xb74acfd4eebbbd07bcae212baa7f094235ab8dc04f2f1d828681477b98b24008"
-
-    chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
-    chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
-}
+#BscProvider="wss://ws-testnet.hecochain.com"
+#BscProviderUrl="https://http-testnet.hecochain.com"
 
 function start_docker_ebrelayerA() {
     # shellcheck disable=SC2154
@@ -646,49 +598,6 @@ function offline_transfer_multisign_Bty_test() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function coins_cross_transfer() {
-    local key="${1}"
-    local addr="${2}"
-    local amount="${3}"
-    local para_amount="${4}"
-    local evm_amount="${5}"
-    # 先把 bty 转入到 paracross 合约中
-    hash=$(${MainCli} send coins send_exec -e paracross -a "${amount}" -k "${key}")
-    check_tx "${MainCli}" "${hash}"
-
-    # 主链中的 bty 夸链到 平行链中
-    hash=$(${Para8801Cli} send para cross_transfer -a "${para_amount}" -e coins -s bty -t "${addr}" -k "${key}")
-    check_tx "${Para8801Cli}" "${hash}"
-    check_tx "${Para8901Cli}" "${hash}"
-    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty | jq -r .balance)
-    is_equal "${result}" "${para_amount}.0000"
-
-    # 把平行链中的 bty 转入 平行链中的 evm 合约
-    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e user.p.para.evm -s coins.bty -k "${key}")
-    check_tx "${Para8901Cli}" "${hash}"
-    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
-    is_equal "${result}" "${evm_amount}.0000"
-}
-
-function initPara() {
-    # para add
-    hash=$(${Para8901Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
-    check_tx "${Para8901Cli}" "${hash}"
-
-    Chain33Cli=${Para8901Cli}
-    InitChain33Validator
-
-    coins_cross_transfer "${chain33DeployKey}" "${chain33DeployAddr}" 1000 800 500
-    coins_cross_transfer "${chain33TestAddrKey1}" "${chain33TestAddr1}" 1000 800 500
-    coins_cross_transfer "${chain33TestAddrKey2}" "${chain33TestAddr2}" 1000 800 500
-
-    # 平行链共识节点增加测试币
-    ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
-}
-
 # lock bty 判断是否转入多签地址金额是否正确
 function lock_bty_multisign_docker() {
     local lockAmount=$1
@@ -799,9 +708,7 @@ function lockEthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function StartDockerRelayerDeploy() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
+function up_relayer_toml() {
     # 修改 relayer.toml 配置文件 pushName 字段
     pushNameChange "./relayer.toml"
     # 修改 relayer.toml 配置文件 initPowers
@@ -835,13 +742,20 @@ function StartDockerRelayerDeploy() {
     # 在第 line 行后面 新增合约地址
     sed -i ''"${line}"' a ChainName="user.p.para."' "./relayer.toml"
 
-    # shellcheck disable=SC2155
+#    # shellcheck disable=SC2155
 #    local line=$(delete_line_show "./relayer.toml" "maturityDegree=10")
 #    sed -i ''"${line}"' a maturityDegree=1' "./relayer.toml"
-
-    # shellcheck disable=SC2155
+#
+#    # shellcheck disable=SC2155
 #    local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
 #    sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
+}
+
+function StartDockerRelayerDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    # 修改 relayer.toml 配置文件
+    up_relayer_toml
 
     # 启动 ebrelayer
     start_docker_ebrelayerA
@@ -849,6 +763,7 @@ function StartDockerRelayerDeploy() {
     # 部署合约 设置 bridgeRegistry 地址
     InitAndOfflineDeploy
 
+    # 设置 ethereum symbol
     ${Boss4xCLI} ethereum offline set_symbol -s "BNB" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_symbol.txt"
 
@@ -890,6 +805,9 @@ function StartDockerRelayerDeploy() {
 #    offline_create_bridge_token_chain33_USDT
 
     offline_create_bridge_token_chain33_BUSD
+
+    ${Boss4xCLI} ethereum offline create_add_lock_list -s BUSD -t "${chain33BUSDBridgeTokenAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ethereum_offline_sign_send "create_add_lock_list.txt"
 
     # shellcheck disable=SC2086
     {
@@ -1140,28 +1058,63 @@ function Testethereum2EVMToChain33_usdt() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function AllRelayerMainTest() {
-    set +e
+function test_all() {
+#    TestETH2Chain33Assets
+#    TestChain33ToEthAssets
+#    TestChain33ToEthZBCAssets
+#    TestETH2Chain33Byc
+#    TestETH2Chain33USDT
+    TestETH2Chain33BUSD
 
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-    Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+#    lockBty
+#    lockChain33Ycc
+#    lockEth
+#    lockEthByc
+#    lockEthUSDT
+#
+#    # 离线多签地址转入阈值设大
+#    offline_set_offline_token_Bty 100000000000000 10
+#    offline_set_offline_token_Chain33Ycc 100000000000000 10
+#    offline_set_offline_token_Eth 100000000000000 10
+#    offline_set_offline_token_EthByc 100000000000000 10
+#    offline_set_offline_token_EthUSDT 100000000000000 10
 
+#    DeployEvmxgo
+#    TestETH2EVMToChain33
+#    Testethereum2EVMToChain33_byc
+#    Testethereum2EVMToChain33_usdt
+}
+
+function get_cli() {
     # shellcheck disable=SC2034
     {
+        docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+        MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
 #        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum ${BscProviderUrl} --paraName user.p.para."
-
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum ${BscProviderUrl} --paraName user.p.para. --chainEthId 56"
         echo "${Boss4xCLI}"
+
+        EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     }
+}
+
+function AllRelayerMainTest() {
+    set +e
 
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    # 获取配置地址
+    init_read_address "./addrTestConfig.toml"
+
+    get_cli
 
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
@@ -1179,38 +1132,14 @@ function AllRelayerMainTest() {
     # para add
     initPara
 
+    # 部署
     Chain33Cli=${Para8901Cli}
     StartDockerRelayerDeploy
 
     # test
-    Chain33Cli=${Para8901Cli}
-#    TestETH2Chain33Assets
-#    TestChain33ToEthAssets
-#    TestChain33ToEthZBCAssets
-#    TestETH2Chain33Byc
-#    TestETH2Chain33USDT
-    TestETH2Chain33BUSD
-
-#    Chain33Cli=${Para8901Cli}
-#    lockBty
-#    lockChain33Ycc
-#    lockEth
-#    lockEthByc
-#    lockEthUSDT
-#
-#    # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Chain33Ycc 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10
-#    offline_set_offline_token_EthByc 100000000000000 10
-#    offline_set_offline_token_EthUSDT 100000000000000 10
-
-#    EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-#    DeployEvmxgo
-#    TestETH2EVMToChain33
-#    Testethereum2EVMToChain33_byc
-#    Testethereum2EVMToChain33_usdt
+    test_all
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
+

@@ -436,6 +436,52 @@ function InitChain33Validator() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function coins_cross_transfer() {
+    local key="${1}"
+    local addr="${2}"
+    local amount="${3}"
+    local para_amount="${4}"
+    local evm_amount="${5}"
+    # 先把 bty 转入到 paracross 合约中
+    # shellcheck disable=SC2154
+    hash=$(${MainCli} send coins send_exec -e paracross -a "${amount}" -k "${key}")
+    check_tx "${MainCli}" "${hash}"
+
+    # 主链中的 bty 夸链到 平行链中
+    # shellcheck disable=SC2154
+    hash=$(${Para8801Cli} send para cross_transfer -a "${para_amount}" -e coins -s bty -t "${addr}" -k "${key}")
+    check_tx "${Para8801Cli}" "${hash}"
+    # shellcheck disable=SC2154
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty | jq -r .balance)
+    is_equal "${result}" "${para_amount}.0000"
+
+    # 把平行链中的 bty 转入 平行链中的 evm 合约
+    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e user.p.para.evm -s coins.bty -k "${key}")
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    is_equal "${result}" "${evm_amount}.0000"
+}
+
+function initPara() {
+    # para add
+    hash=$(${Para8901Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    check_tx "${Para8901Cli}" "${hash}"
+
+    Chain33Cli=${Para8901Cli}
+    InitChain33Validator
+
+    coins_cross_transfer "${chain33DeployKey}" "${chain33DeployAddr}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey1}" "${chain33TestAddr1}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey2}" "${chain33TestAddr2}" 1000 800 500
+
+    # 平行链共识节点增加测试币
+    ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
+}
+
 function StartChain33() {
     kill_ebrelayer chain33
     sleep 2
