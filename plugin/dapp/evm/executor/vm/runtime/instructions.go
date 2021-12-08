@@ -422,7 +422,7 @@ func opExtCodeHash(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
 
 // 获取当前区块的GasPrice
 func opGasprice(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
-	v := uint256.NewInt().SetUint64(uint64(evm.GasPrice))
+	v := uint256.NewInt(uint64(evm.GasPrice))
 	callContext.stack.push(v)
 	return nil, nil
 }
@@ -954,7 +954,7 @@ func makeSwap(size int64) executionFunc {
 
 // 获取自身余额
 func opSelfBalance(pc *uint64, evm *EVM, callContext *callCtx) ([]byte, error) {
-	balance := uint256.NewInt().SetUint64(evm.StateDB.GetBalance(callContext.contract.Address().String()))
+	balance := uint256.NewInt(evm.StateDB.GetBalance(callContext.contract.Address().String()))
 	callContext.stack.push(balance)
 	return nil, nil
 }

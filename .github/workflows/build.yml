@@ -33,6 +33,7 @@ jobs:
           make largefile-check
           make checkgofmt && make fmt_go
           make linter
+          make
 
   unit-test:
     name: unit-test
