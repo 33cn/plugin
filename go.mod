@@ -17,13 +17,13 @@ require (
 	github.com/coreos/etcd v3.3.15+incompatible
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/davecgh/go-spew v1.1.1
-	github.com/ethereum/go-ethereum v1.10.0
+	github.com/ethereum/go-ethereum v1.10.13
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.5.2
-	github.com/golang/snappy v0.0.3-0.20201103224600-674baa8c7fc3
+	github.com/golang/snappy v0.0.4
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
-	github.com/holiman/uint256 v1.1.1
+	github.com/holiman/uint256 v1.2.0
 	github.com/huin/goupnp v1.0.2
 	github.com/jackpal/go-nat-pmp v1.0.2
 	github.com/mr-tron/base58 v1.2.0
