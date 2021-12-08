@@ -406,10 +406,25 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		}
 	}
 
-	//因为发行的合约的精度为8，所以需要缩小，在进行burn的时候，再进行倍乘,在函数ParseBurnLock4chain33进行
-	if 18 == claim.Decimal {
-		bigAmount.Div(bigAmount, big.NewInt(int64(1e10)))
-		claim.Amount = bigAmount.String()
+	//因为发行的合约的精度为8，所以需要进行相应的缩放
+	if 8 != claim.Decimal {
+		if claim.Decimal > 8 {
+			dist := claim.Decimal - 8
+			value, exist := utils.Decimal2value[int(dist)]
+			if !exist {
+				panic(fmt.Sprintf("does support for decimal, %d", claim.Decimal))
+			}
+			bigAmount.Div(bigAmount, big.NewInt(value))
+			claim.Amount = bigAmount.String()
+		} else {
+			dist := 8 - claim.Decimal
+			value, exist := utils.Decimal2value[int(dist)]
+			if !exist {
+				panic(fmt.Sprintf("does support for decimal, %d", claim.Decimal))
+			}
+			bigAmount.Mul(bigAmount, big.NewInt(value))
+			claim.Amount = bigAmount.String()
+		}
 	}
 
 	parameter := fmt.Sprintf("newOracleClaim(%d, %s, %s, %s, %s, %s, %s, %s)",

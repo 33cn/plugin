@@ -496,16 +496,34 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			tokenAddr = common.HexToAddress(addr)
 		}
 	} else {
-		lockedTokenInfo, exist := ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
+		burnFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
 			relayerLog.Error("handleChain33Msg", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
 			return
 		}
 
-		tokenAddr = common.HexToAddress(lockedTokenInfo.Address)
-		if lockedTokenInfo.Decimal == 18 {
-			prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
+		tokenAddr = common.HexToAddress(burnFromChain33TokenInfo.Address)
+		//if lockedTokenInfo.Decimal == 18 {
+		//	prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
+		//}
+		//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
+		if 8 != burnFromChain33TokenInfo.Decimal {
+			if burnFromChain33TokenInfo.Decimal > 8 {
+				dist := burnFromChain33TokenInfo.Decimal - 8
+				value, exist := utils.Decimal2value[int(dist)]
+				if !exist {
+					panic(fmt.Sprintf("does support for decimal, %d", burnFromChain33TokenInfo.Decimal))
+				}
+				prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(value))
+			} else {
+				dist := 8 - burnFromChain33TokenInfo.Decimal
+				value, exist := utils.Decimal2value[int(dist)]
+				if !exist {
+					panic(fmt.Sprintf("does support for decimal, %d", burnFromChain33TokenInfo.Decimal))
+				}
+				prophecyClaim.Amount.Div(prophecyClaim.Amount, big.NewInt(value))
+			}
 		}
 	}
 
