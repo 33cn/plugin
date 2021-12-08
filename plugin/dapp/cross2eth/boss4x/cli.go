@@ -28,7 +28,7 @@ func main() {
 	rootCmd.PersistentFlags().String("paraName", "", "para chain name,Eg:user.p.fzm.")
 	rootCmd.PersistentFlags().String("expire", "120m", "transaction expire time (optional)")
 	rootCmd.PersistentFlags().Int32("chainID", 0, "chain id, default to 0")
-	rootCmd.PersistentFlags().Int64("chainEthId", 256, "ethereum chain id, default to 0")
+	rootCmd.PersistentFlags().Int64("chainEthId", 56, "ethereum chain id, default to 0")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
