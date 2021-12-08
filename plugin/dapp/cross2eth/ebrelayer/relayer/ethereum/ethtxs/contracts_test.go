@@ -251,7 +251,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {
 		}
 		alloc[addr] = account
 	}
-	gasLimit := uint64(100000000)
+	gasLimit := uint64(1300000)
 	sim := new(ethinterface.SimExtend)
 	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
 

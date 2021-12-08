@@ -53,7 +53,7 @@ func Test_GetAddressFromBridgeRegistry(t *testing.T) {
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
-	gasLimit := uint64(100000000)
+	gasLimit := uint64(1300000)
 	sim := new(ethinterface.SimExtend)
 	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
 
@@ -158,7 +158,7 @@ func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []st
 		alloc[addr] = account
 	}
 
-	gasLimit := uint64(100000000)
+	gasLimit := uint64(1300000)
 	sim := backends.NewSimulatedBackend(alloc, gasLimit)
 
 	InitPowers := []*big.Int{big.NewInt(80), big.NewInt(10), big.NewInt(10), big.NewInt(10)}
