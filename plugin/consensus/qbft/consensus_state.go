@@ -834,7 +834,7 @@ func (cs *ConsensusState) createProposalBlock() (block *ttypes.QbftBlock) {
 
 	// Mempool validated transactions
 	beg := time.Now()
-	pblock := cs.client.BuildBlock()
+	pblock := cs.client.BuildBlock(cs.Height - 1)
 	if pblock == nil {
 		qbftlog.Error("createProposalBlock BuildBlock fail")
 		return nil
@@ -1252,7 +1252,9 @@ func (cs *ConsensusState) finalizeCommit(height int64) {
 
 	// commit block
 	commitBlock := cs.ProposalBlock.Data
-	cs.client.CommitBlock(commitBlock)
+	if !DetachExec() {
+		cs.client.CommitBlock(commitBlock.Clone())
+	}
 	if bytes.Equal(cs.privValidator.GetAddress(), block.QbftBlock.Header.ProposerAddr) {
 		qbftlog.Info(fmt.Sprintf("Proposer reach consensus. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
 			"CommitRound", cs.CommitRound, "tx-len", len(commitBlock.Txs), "cost", types.Since(cs.begCons),
@@ -1264,10 +1266,7 @@ func (cs *ConsensusState) finalizeCommit(height int64) {
 			"proposer-addr", fmt.Sprintf("%X", ttypes.Fingerprint(block.QbftBlock.Header.ProposerAddr)),
 			"seq", block.Header.Sequence)
 	}
-	reqblock, err := cs.client.RequestBlock(height)
-	if err != nil {
-		panic(fmt.Sprintf("finalizeCommit RequestBlock fail: %v", err))
-	}
+	reqblock := cs.client.WaitBlock(height)
 	stateCopy.LastResultsHash = reqblock.Hash(cs.client.GetAPI().GetConfig())
 
 	//check whether need update validator nodes
@@ -1427,6 +1426,11 @@ func (cs *ConsensusState) addProposalBlock(proposalBlock *tmtypes.QbftBlock) (er
 	// NOTE: it's possible to receive proposal block for future rounds without having the proposal
 	qbftlog.Info(fmt.Sprintf("Consensus set proposal block. Current: %v/%v/%v", cs.Height, cs.Round, cs.Step),
 		"ProposalBlockHash", fmt.Sprintf("%X", cs.ProposalBlockHash), "cost", types.Since(cs.begCons))
+
+	if DetachExec() {
+		qbftlog.Info("write proposal block in advance")
+		go cs.client.CommitBlock(cs.ProposalBlock.Data.Clone())
+	}
 
 	// Update Valid* if we can.
 	prevotes := cs.Votes.Prevotes(cs.Round)

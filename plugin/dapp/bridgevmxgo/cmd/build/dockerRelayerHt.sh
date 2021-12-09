@@ -1020,6 +1020,45 @@ function Testethereum2EVMToChain33_usdt() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function Testethereum2EVMToChain33_usdt() {
+    # 查询 ETH 这端 bridgeBank 地址原来是
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    #    cli_ret "${result}" "balance" ".balance" "0"
+
+    # ETH 这端 lock 12个
+    result=$(${CLIA} ethereum lock -m 12 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
+    cli_ret "${result}" "lock"
+
+    # eth 等待 2 个区块
+    sleep 4
+
+    # 查询 ETH 这端 bridgeBank 地址 12
+    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    #    cli_ret "${result}" "balance" ".balance" "12"
+
+    sleep ${maturityDegree}
+
+    # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
+    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
+    # 结果是 7 * le8
+    #    is_equal "${result}" "700000000"
+
+    updateConfig "USDT" "${chain33USDTBridgeTokenAddr}"
+    configbridgevmxgoAddr "${XgoChain33BridgeBank}"
+
+    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
+    chain33_offline_send_evm "approve_erc20.txt"
+
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33USDTBridgeTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    check_tx "${Chain33Cli}" "${hash}"
+
+    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    #    is_equal "${result}" "4200000000"
+
+    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
+    #    is_equal "${result}" "500000000"
+}
+
 function AllRelayerMainTest() {
     set +e
 

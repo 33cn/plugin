@@ -47,7 +47,7 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(PrivacyX, "Enable", 980000)
+	cfg.RegisterDappFork(PrivacyX, "Enable", 0)
 }
 
 //InitExecutor ...

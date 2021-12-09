@@ -5,6 +5,8 @@
 package executor
 
 import (
+	"math"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"
 	dbm "github.com/33cn/chain33/common/db"
@@ -13,6 +15,7 @@ import (
 	"github.com/33cn/chain33/types"
 	pty "github.com/33cn/plugin/plugin/dapp/issuance/types"
 	tokenE "github.com/33cn/plugin/plugin/dapp/token/executor"
+	"github.com/shopspring/decimal"
 )
 
 // List control
@@ -536,11 +539,24 @@ func (action *Action) IssuanceDebt(debt *pty.IssuanceDebt) (*types.Receipt, erro
 		return nil, err
 	}
 
+	// 精度转换 #1024
+	// 先将token由token精度转成精度8
+	valueReal := debt.GetValue()
+	cfg := action.Issuance.GetAPI().GetConfig()
+	if cfg.IsDappFork(action.Issuance.GetHeight(), pty.IssuanceX, pty.ForkIssuancePrecision) {
+		precisionNum := int(math.Log10(float64(cfg.GetTokenPrecision())))
+		valueReal = decimal.NewFromInt(valueReal).Shift(int32(-precisionNum)).Shift(8).IntPart()
+	}
 	// 根据价格和需要借贷的金额，计算需要质押的抵押物数量
-	btyFrozen, err := getBtyNumToFrozen(debt.Value, lastPrice, issu.LiquidationRatio)
+	btyFrozen, err := getBtyNumToFrozen(valueReal, lastPrice, issu.LiquidationRatio)
 	if err != nil {
 		clog.Error("IssuanceDebt.getBtyNumToFrozen", "CollID", issu.IssuanceId, "addr", action.fromaddr, "execaddr", action.execaddr, "error", err)
 		return nil, err
+	}
+	// 再将bty由精度8转成coins精度
+	if cfg.IsDappFork(action.Issuance.GetHeight(), pty.IssuanceX, pty.ForkIssuancePrecision) {
+		precisionNum := int(math.Log10(float64(cfg.GetCoinPrecision())))
+		btyFrozen = decimal.NewFromInt(btyFrozen).Shift(-8).Shift(int32(precisionNum)).IntPart()
 	}
 
 	// 检查抵押物账户余额

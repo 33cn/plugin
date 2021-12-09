@@ -59,6 +59,7 @@ var (
 	useAggSig             atomic.Value // false
 	multiBlocks           atomic.Value // 1
 	gossipVotes           atomic.Value
+	detachExec            atomic.Value // false
 
 	zeroHash                    [32]byte
 	random                      *rand.Rand
@@ -112,6 +113,7 @@ type subConfig struct {
 	UseAggregateSignature bool     `json:"useAggregateSignature"`
 	MultiBlocks           int64    `json:"multiBlocks"`
 	MessageInterval       int32    `json:"messageInterval"`
+	DetachExecution       bool     `json:"detachExecution"`
 }
 
 func applyConfig(cfg *types.Consensus, sub []byte) {
@@ -166,6 +168,7 @@ func applyConfig(cfg *types.Consensus, sub []byte) {
 	if subcfg.MessageInterval > 0 {
 		peerGossipSleepDuration.Store(subcfg.MessageInterval)
 	}
+	detachExec.Store(subcfg.DetachExecution)
 
 	gossipVotes.Store(true)
 }
@@ -173,6 +176,11 @@ func applyConfig(cfg *types.Consensus, sub []byte) {
 // UseAggSig returns whether use aggregate signature
 func UseAggSig() bool {
 	return useAggSig.Load().(bool)
+}
+
+// DetachExec returns whether detach Execution from Consensus
+func DetachExec() bool {
+	return detachExec.Load().(bool)
 }
 
 // DefaultDBProvider returns a database
@@ -230,7 +238,7 @@ func New(cfg *types.Consensus, sub []byte) queue.Module {
 	}
 
 	qbftlog.Info("show qbft info", "version", qbftVersion, "sign", ttypes.CryptoName, "useAggSig", UseAggSig(),
-		"genesisFile", genesisFile, "privFile", privFile)
+		"detachExec", DetachExec(), "genesisFile", genesisFile, "privFile", privFile)
 
 	ttypes.InitMessageMap()
 
@@ -526,12 +534,8 @@ func (client *Client) CheckTxDup(txs []*types.Transaction, height int64) (transa
 }
 
 // BuildBlock build a new block
-func (client *Client) BuildBlock() *types.Block {
-	lastBlock, err := client.RequestLastBlock()
-	if err != nil {
-		qbftlog.Error("BuildBlock fail", "err", err)
-		return nil
-	}
+func (client *Client) BuildBlock(height int64) *types.Block {
+	lastBlock := client.WaitBlock(height)
 	cfg := client.GetAPI().GetConfig()
 	txs := client.RequestTx(int(cfg.GetP(lastBlock.Height+1).MaxTxNumber)-1, nil)
 	// placeholder
@@ -561,7 +565,7 @@ func (client *Client) CommitBlock(block *types.Block) {
 }
 
 // WaitBlock by height
-func (client *Client) WaitBlock(height int64) bool {
+func (client *Client) WaitBlock(height int64) *types.Block {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
@@ -570,13 +574,16 @@ func (client *Client) WaitBlock(height int64) bool {
 		select {
 		case <-client.ctx.Done():
 			qbftlog.Info("WaitBlock quit")
-			return false
+			return nil
 		case <-ticker.C:
 			qbftlog.Info("Still waiting block......", "height", height, "cost", time.Since(beg))
 		default:
 			newHeight, err := client.getLastHeight()
 			if err == nil && newHeight >= height {
-				return true
+				block, err := client.RequestBlock(height)
+				if err == nil {
+					return block
+				}
 			}
 			time.Sleep(50 * time.Millisecond)
 		}

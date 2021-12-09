@@ -9,9 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"testing"
-
 	"strings"
+	"testing"
 
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -250,6 +249,8 @@ func TestExecDelLocalBackup(t *testing.T) {
 func constructRetrieveInstance() drivers.Driver {
 	cfgstring := strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1)
 	chainTestCfg := types.NewChain33Config(cfgstring)
+	chainTestCfg.SetDappFork(rt.RetrieveX, rt.ForkRetriveX, 180000)
+	chainTestCfg.SetDappFork(rt.RetrieveX, rt.ForkRetriveAssetX, 3150000)
 	Init(rt.RetrieveX, chainTestCfg, nil)
 	q := queue.New("channel")
 	q.SetConfig(chainTestCfg)

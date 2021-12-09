@@ -5,8 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-bridgevmxgo
-    ports:
-      - "9901:9901"
+    #ports:
+    #  - "9901:9901"
 
   ebrelayerb:
     build:
@@ -29,9 +29,9 @@ services:
       PARAFILE: "/root/chain33.para33.toml"
     expose:
       - "8802"
-    ports:
-      - "8801:8801"
-      - "8901:8901"
+    #ports:
+    #  - "8801:8801"
+    #  - "8901:8901"
 
   chain32:
     entrypoint: /root/entrypoint.sh

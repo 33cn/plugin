@@ -67,7 +67,7 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 187*10000)
+	cfg.RegisterDappFork("store-kvmvccmavl", "ForkKvmvccmavl", 0)
 }
 
 // KVmMavlStore provide kvmvcc and mavl store interface implementation
@@ -81,8 +81,9 @@ type KVmMavlStore struct {
 type subKVMVCCConfig struct {
 	EnableMVCCIter         bool  `json:"enableMVCCIter"`
 	EnableMVCCPrune        bool  `json:"enableMVCCPrune"`
-	PruneHeight            int32 `json:"pruneHeight"`
+	PruneHeight            int32 `json:"pruneHeight"` //每PruneHeight高度做一次状态精简
 	EnableEmptyBlockHandle bool  `json:"enableEmptyBlockHandle"`
+	ReservedHeight         int64 `json:"reservedHeight"` //保留最新的ReservedHeight个区块的状态数据
 }
 
 type subMavlConfig struct {
@@ -114,6 +115,8 @@ type subConfig struct {
 	TkCloseCacheLen int32 `json:"tkCloseCacheLen"`
 	// 使能空块处理
 	EnableEmptyBlockHandle bool `json:"enableEmptyBlockHandle"`
+	//保留的状态数据的高度
+	ReservedHeight int64 `json:"reservedHeight"`
 }
 
 // New construct KVMVCCStore module
@@ -128,6 +131,7 @@ func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Mo
 		subKVMVCCcfg.EnableMVCCPrune = subcfg.EnableMVCCPrune
 		subKVMVCCcfg.PruneHeight = subcfg.PruneMVCCHeight
 		subKVMVCCcfg.EnableEmptyBlockHandle = subcfg.EnableEmptyBlockHandle
+		subKVMVCCcfg.ReservedHeight = subcfg.ReservedHeight
 
 		subMavlcfg.EnableMavlPrefix = subcfg.EnableMavlPrefix
 		subMavlcfg.EnableMVCC = subcfg.EnableMVCC
@@ -171,6 +175,7 @@ func New(cfg *types.Store, sub []byte, chain33cfg *types.Chain33Config) queue.Mo
 func (kvmMavls *KVmMavlStore) Close() {
 	quit = true
 	wg.Wait()
+	kmlog.Info("store wait group done")
 	kvmMavls.KVMVCCStore.Close()
 	kvmMavls.MavlStore.Close()
 	kvmMavls.BaseStore.Close()
