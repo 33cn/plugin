@@ -232,7 +232,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {
 	alloc := make(core.GenesisAlloc)
 	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
 	genesisAccount := core.GenesisAccount{
-		Balance:    big.NewInt(10000000000 * 10000),
+		Balance:    big.NewInt(1000000000000 * 10000),
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
@@ -246,7 +246,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {
 		ValidatorPriKey = append(ValidatorPriKey, key)
 
 		account := core.GenesisAccount{
-			Balance:    big.NewInt(100000000 * 100),
+			Balance:    big.NewInt(1000000000000 * 10000),
 			PrivateKey: crypto.FromECDSA(key),
 		}
 		alloc[addr] = account

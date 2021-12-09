@@ -49,7 +49,7 @@ func Test_GetAddressFromBridgeRegistry(t *testing.T) {
 	alloc := make(core.GenesisAlloc)
 	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
 	genesisAccount := core.GenesisAccount{
-		Balance:    big.NewInt(10000000000 * 10000),
+		Balance:    big.NewInt(1000000000000 * 10000),
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
@@ -138,7 +138,7 @@ func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []st
 	alloc := make(core.GenesisAlloc)
 	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
 	genesisAccount := core.GenesisAccount{
-		Balance:    big.NewInt(10000000000 * 10000),
+		Balance:    big.NewInt(1000000000000 * 10000),
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
@@ -152,7 +152,7 @@ func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []st
 		ValidatorPriKey = append(ValidatorPriKey, key)
 
 		account := core.GenesisAccount{
-			Balance:    big.NewInt(100000000 * 100),
+			Balance:    big.NewInt(1000000000000 * 10000),
 			PrivateKey: crypto.FromECDSA(key),
 		}
 		alloc[addr] = account
