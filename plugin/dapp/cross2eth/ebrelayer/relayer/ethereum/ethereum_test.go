@@ -209,7 +209,7 @@ func Test_CreateBridgeToken(t *testing.T) {
 
 	balance, err := ethRelayer.GetBalance("", para.InitValidators[0].String())
 	require.Nil(t, err)
-	assert.Equal(t, balance, "10000000000")
+	assert.Equal(t, balance, "1000000000000000")
 
 	tokenAddrbty, err := ethRelayer.CreateBridgeToken("BTY")
 	require.Nil(t, err)
