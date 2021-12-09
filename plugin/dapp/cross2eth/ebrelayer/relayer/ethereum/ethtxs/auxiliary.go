@@ -359,7 +359,7 @@ func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethin
 
 	prepareDone = true
 
-	gasLimit := uint64(21000)
+	gasLimit := uint64(21100)
 
 	toAddress := common.HexToAddress(toAddr)
 	//var data []byte
@@ -753,6 +753,48 @@ func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, pa
 
 	txslog.Info("ConfigOfflineSaveAccount", "tx.Hash()", tx.Hash().String())
 	err = waitEthTxFinished(client, tx.Hash(), "ConfigOfflineSaveAccount")
+	if nil != err {
+		return "", err
+	}
+
+	return tx.Hash().String(), nil
+}
+
+func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
+	txslog.Info("ConfigplatformTokenSymbol", "symbol", symbol)
+	if nil == para {
+		return "", errors.New("no operator private key configured")
+	}
+
+	var prepareDone bool
+	var err error
+
+	defer func() {
+		if err != nil && prepareDone {
+			_, _ = revokeNonce(para.Address)
+		}
+	}()
+
+	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
+	if nil != err {
+		return "", err
+	}
+
+	prepareDone = true
+
+	tx, err := x2EthContracts.BridgeBank.BridgeBankTransactor.ConfigplatformTokenSymbol(auth, symbol)
+	if nil != err {
+		return "", err
+	}
+
+	sim, isSim := client.(*ethinterface.SimExtend)
+	if isSim {
+		fmt.Println("Use the simulator")
+		sim.Commit()
+	}
+
+	txslog.Info("ConfigplatformTokenSymbol", "tx.Hash()", tx.Hash().String())
+	err = waitEthTxFinished(client, tx.Hash(), "ConfigplatformTokenSymbol")
 	if nil != err {
 		return "", err
 	}

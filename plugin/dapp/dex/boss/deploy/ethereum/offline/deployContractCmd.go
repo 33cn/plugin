@@ -53,7 +53,6 @@ func (s *SignCmd) addFlags(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("nonce")
 	cmd.Flags().Int64P("gasprice", "g", 1000000000, "gas price") // 1Gwei=1e9wei
 	cmd.MarkFlagRequired("gasprice")
-
 }
 
 func (s *SignCmd) signContract(cmd *cobra.Command, args []string) {
@@ -270,11 +269,30 @@ func (s *SignPanCakeRout) reWriteDeployPanCakeRout(nonce uint64, gasPrice *big.I
 	var amount = new(big.Int)
 	ntx := types.NewContractCreation(nonce, amount, gasLimit, gasPrice, data)
 	return SignTx(key, ntx)
-
 }
 
 func SignTx(key *ecdsa.PrivateKey, tx *types.Transaction) (signedTx, hash string, err error) {
 	signer := types.HomesteadSigner{}
+	txhash := signer.Hash(tx)
+	signature, err := crypto.Sign(txhash.Bytes(), key)
+	if err != nil {
+		return
+	}
+	tx, err = tx.WithSignature(signer, signature)
+	if err != nil {
+		return
+	}
+	txBinary, err := tx.MarshalBinary()
+	if err != nil {
+		return
+	}
+	hash = tx.Hash().String()
+	signedTx = common.Bytes2Hex(txBinary[:])
+	return
+}
+
+func SignEIP155Tx(key *ecdsa.PrivateKey, tx *types.Transaction, chainEthId int64) (signedTx, hash string, err error) {
+	signer := types.NewEIP155Signer(big.NewInt(chainEthId))
 	txhash := signer.Hash(tx)
 	signature, err := crypto.Sign(txhash.Bytes(), key)
 	if err != nil {

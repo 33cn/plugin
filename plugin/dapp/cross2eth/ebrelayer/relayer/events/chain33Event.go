@@ -132,9 +132,6 @@ func ParseBurnLock4chain33(evmEventType Chain33EvmEvent, data []byte, bridgeBank
 			TxHash:               chain33TxHash,
 			Nonce:                burnEvent.Nonce.Int64(),
 		}
-		if ebrelayerTypes.SYMBOL_ETH == burnEvent.Symbol {
-			chain33Msg.Amount = chain33Msg.Amount.Mul(chain33Msg.Amount, big.NewInt(int64(1e10)))
-		}
 		return chain33Msg, nil
 	}
 

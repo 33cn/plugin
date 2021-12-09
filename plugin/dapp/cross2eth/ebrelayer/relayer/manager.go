@@ -485,7 +485,7 @@ func (manager *Manager) DeployERC20(Erc20Token relayerTypes.ERC20Token, result *
 		return err
 	}
 
-	Erc20Addr, err := manager.ethRelayer.DeployERC20(Erc20Token.Owner, Erc20Token.Name, Erc20Token.Symbol, Erc20Token.Amount)
+	Erc20Addr, err := manager.ethRelayer.DeployERC20(Erc20Token.Owner, Erc20Token.Name, Erc20Token.Symbol, Erc20Token.Amount, uint8(Erc20Token.Decimals))
 	if nil != err {
 		return err
 	}
@@ -986,6 +986,23 @@ func (manager *Manager) ConfigOfflineSaveAccount(addr string, result *interface{
 		return err
 	}
 	txhash, err := manager.ethRelayer.ConfigOfflineSaveAccount(addr)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
+	}
+	return nil
+}
+
+func (manager *Manager) ConfigplatformTokenSymbol(symbol string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.ethRelayer.ConfigplatformTokenSymbol(symbol)
 	if nil != err {
 		return err
 	}

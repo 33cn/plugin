@@ -34,6 +34,20 @@ const (
 	nullAddress = "0x0000000000000000000000000000000000000000"
 )
 
+var Decimal2value = map[int]int64{
+	1:  1e1,
+	2:  1e2,
+	3:  1e3,
+	4:  1e4,
+	5:  1e5,
+	6:  1e6,
+	7:  1e7,
+	8:  1e8,
+	9:  1e9,
+	10: 1e10,
+	11: 1e11,
+}
+
 var log = log15.New("module", "utils")
 
 // IsZeroAddress : checks an Ethereum address and returns a bool which indicates if it is the null address
@@ -242,7 +256,7 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	var ok bool
 	bn := big.NewInt(1)
 	if decimal > 4 {
-		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(math.Trunc(amount*1e4), decimal-4))), 10)
+		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(math.Trunc(amount*1e4+0.0000000000001), decimal-4))), 10)
 	} else {
 		bn, ok = bn.SetString(TrimZeroAndDot(fmt.Sprintf("%.0f", MultiplySpecifyTimes(amount, decimal))), 10)
 	}

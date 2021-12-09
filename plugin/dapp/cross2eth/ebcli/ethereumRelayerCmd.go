@@ -46,6 +46,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		TokenCmd(),
 		MultiSignEthCmd(),
 		TransferEthCmd(),
+		ConfigplatformTokenSymbolCmd(),
 	)
 
 	return cmd
@@ -311,6 +312,8 @@ func DeployERC20Flags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("symbol")
 	cmd.Flags().StringP("amount", "m", "0", "amount")
 	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Uint8P("decimals", "d", 8, "default set to 8, and can't be greater than 18")
 }
 
 func DeployERC20(cmd *cobra.Command, args []string) {
@@ -319,12 +322,19 @@ func DeployERC20(cmd *cobra.Command, args []string) {
 	name, _ := cmd.Flags().GetString("name")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetString("amount")
+	decimals, _ := cmd.Flags().GetUint8("decimals")
+
+	if decimals > 18 {
+		fmt.Println("decimals can't be greater than 18")
+		return
+	}
 
 	para := ebTypes.ERC20Token{
-		Owner:  owner,
-		Name:   name,
-		Symbol: symbol,
-		Amount: amount,
+		Owner:    owner,
+		Name:     name,
+		Symbol:   symbol,
+		Amount:   amount,
+		Decimals: int32(decimals),
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployERC20", para, &res)
@@ -968,6 +978,33 @@ func ConfigOfflineSaveAccount(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", addr, &res)
+	ctx.Run()
+}
+
+//ConfigplatformTokenSymbolCmd ...
+func ConfigplatformTokenSymbolCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set_symbol",
+		Short: "save config symbol",
+		Run:   ConfigplatformTokenSymbol,
+	}
+	ConfigplatformTokenSymbolFlags(cmd)
+	return cmd
+}
+
+//ConfigplatformTokenSymbolFlags ...
+func ConfigplatformTokenSymbolFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "ETH", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+//ConfigplatformTokenSymbol ...
+func ConfigplatformTokenSymbol(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", symbol, &res)
 	ctx.Run()
 }
 

@@ -102,7 +102,7 @@ func main() {
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerService, db)
 
-	mainlog.Info("cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
+	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)
 
 	ch := make(chan os.Signal, 1)

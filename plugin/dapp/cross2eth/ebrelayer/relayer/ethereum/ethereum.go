@@ -71,7 +71,7 @@ type Relayer4Ethereum struct {
 	chain33MsgChan          <-chan *events.Chain33Msg
 	totalTxRelayFromChain33 int64
 	symbol2Addr             map[string]common.Address
-	symbol2LockAddr         map[string]common.Address
+	symbol2LockAddr         map[string]ebTypes.TokenAddress
 	mulSignAddr             string
 }
 
@@ -111,7 +111,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		chain33MsgChan:          startPara.Chain33MsgChan,
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
-		symbol2LockAddr:         make(map[string]common.Address),
+		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
 	}
 
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
@@ -332,12 +332,12 @@ func (ethRelayer *Relayer4Ethereum) AddToken2LockList(symbol, token string) (str
 }
 
 //DeployERC20 ...
-func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string) (string, error) {
+func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string, decimals uint8) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	ethRelayer.rwLock.RLock()
 	defer ethRelayer.rwLock.RUnlock()
-	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, ethRelayer.clientSpec, ethRelayer.operatorInfo)
+	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, decimals, ethRelayer.clientSpec, ethRelayer.operatorInfo)
 }
 
 //ApproveAllowance ...
@@ -496,23 +496,34 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			tokenAddr = common.HexToAddress(addr)
 		}
 	} else {
-		tokenAddr, exist = ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
+		burnFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
-			addr, err := ethRelayer.ShowLockedTokenAddress(prophecyClaim.Symbol)
-			if err != nil {
-				panic(fmt.Sprintf("Pls create lock token in advance for token:%s", prophecyClaim.Symbol))
+			relayerLog.Error("handleChain33Msg", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
+			return
+		}
+
+		tokenAddr = common.HexToAddress(burnFromChain33TokenInfo.Address)
+		//if lockedTokenInfo.Decimal == 18 {
+		//	prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
+		//}
+		//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
+		if 8 != burnFromChain33TokenInfo.Decimal {
+			if burnFromChain33TokenInfo.Decimal > 8 {
+				dist := burnFromChain33TokenInfo.Decimal - 8
+				value, exist := utils.Decimal2value[int(dist)]
+				if !exist {
+					panic(fmt.Sprintf("does support for decimal, %d", burnFromChain33TokenInfo.Decimal))
+				}
+				prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(value))
+			} else {
+				dist := 8 - burnFromChain33TokenInfo.Decimal
+				value, exist := utils.Decimal2value[int(dist)]
+				if !exist {
+					panic(fmt.Sprintf("does support for decimal, %d", burnFromChain33TokenInfo.Decimal))
+				}
+				prophecyClaim.Amount.Div(prophecyClaim.Amount, big.NewInt(value))
 			}
-			token2set := ebTypes.TokenAddress{
-				Address:   addr,
-				Symbol:    prophecyClaim.Symbol,
-				ChainName: ebTypes.EthereumBlockChainName,
-			}
-			err = ethRelayer.SetLockedTokenAddress(token2set)
-			if nil != err {
-				relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
-			}
-			tokenAddr = common.HexToAddress(addr)
 		}
 	}
 
@@ -800,7 +811,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	// Filter by contract and event, write results to logs
 	sub, err := ethRelayer.clientSpec.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
-		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s", err.Error())
+		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
 		panic(errinfo)
 	}
 	relayerLog.Info("subscribeEvent", "Subscribed to contract at address:", targetAddress.Hex())
@@ -857,6 +868,21 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 		decimal, err = bridgeToken.Decimals(opts)
 		if err != nil {
 			return err
+		}
+	}
+
+	tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
+	if nil == tokenLocked {
+		token2set := &ebTypes.TokenAddress{
+			Address:   event.Token.String(),
+			Symbol:    event.Symbol,
+			ChainName: ebTypes.EthereumBlockChainName,
+			Decimal:   int32(decimal),
+		}
+		err = ethRelayer.SetLockedTokenAddress(token2set)
+		if nil != err {
+			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
+			return errors.New("Failed ")
 		}
 	}
 
@@ -992,6 +1018,11 @@ func (ethRelayer *Relayer4Ethereum) SafeTransfer(para ebTypes.SafeTransfer) (str
 
 func (ethRelayer *Relayer4Ethereum) ConfigOfflineSaveAccount(addr string) (string, error) {
 	txhash, err := ethtxs.ConfigOfflineSaveAccount(addr, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+	return txhash, err
+}
+
+func (ethRelayer *Relayer4Ethereum) ConfigplatformTokenSymbol(symbol string) (string, error) {
+	txhash, err := ethtxs.ConfigplatformTokenSymbol(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
 	return txhash, err
 }
 

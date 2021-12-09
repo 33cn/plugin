@@ -185,6 +185,8 @@ func NewTxWrite(infos []*DeployInfo, deployerAddr common.Address, url, fileName 
 			gasLimit = 100 * 10000
 		}
 		ntx := types.NewTx(&types.LegacyTx{
+			//ntx := types.NewTx(&types.AccessListTx{
+			//	ChainID:  big.NewInt(chainId),
 			Nonce:    info.Nonce,
 			Gas:      gasLimit,
 			GasPrice: price,

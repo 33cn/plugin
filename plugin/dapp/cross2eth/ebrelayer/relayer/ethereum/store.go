@@ -244,20 +244,32 @@ func (ethRelayer *Relayer4Ethereum) SetTokenAddress(token2set ebTypes.TokenAddre
 	return ethRelayer.db.Set(ethTokenSymbol2AddrKey(token2set.Symbol), bytes)
 }
 
-func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set ebTypes.TokenAddress) error {
-	addr := common.HexToAddress(token2set.Address)
-	bytes := chain33Types.Encode(&token2set)
+func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.TokenAddress) error {
+	bytes := chain33Types.Encode(token2set)
 	ethRelayer.rwLock.Lock()
-	ethRelayer.symbol2LockAddr[token2set.Symbol] = addr
+	ethRelayer.symbol2LockAddr[token2set.Symbol] = *token2set
 	ethRelayer.rwLock.Unlock()
 	return ethRelayer.db.Set(ethTokenSymbol2LockAddrKey(token2set.Symbol), bytes)
+}
+
+func (ethRelayer *Relayer4Ethereum) GetLockedTokenAddress(symbol string) (*ebTypes.TokenAddress, error) {
+	ethRelayer.rwLock.RLock()
+	data, err := ethRelayer.db.Get(ethTokenSymbol2LockAddrKey(symbol))
+	ethRelayer.rwLock.RUnlock()
+	if nil != err {
+		return nil, err
+	}
+	var token2set ebTypes.TokenAddress
+	if err := chain33Types.Decode(data, &token2set); nil != err {
+		return nil, err
+	}
+	return &token2set, err
 }
 
 func (ethRelayer *Relayer4Ethereum) RestoreTokenAddress() error {
 	ethRelayer.rwLock.Lock()
 	defer ethRelayer.rwLock.Unlock()
 
-	ethRelayer.symbol2LockAddr[ebTypes.SYMBOL_ETH] = common.HexToAddress(ebTypes.EthNilAddr)
 	helper := dbm.NewListHelper(ethRelayer.db)
 
 	datas := helper.List(ethTokenSymbol2AddrPrefix, nil, 100, dbm.ListASC)
@@ -273,13 +285,13 @@ func (ethRelayer *Relayer4Ethereum) RestoreTokenAddress() error {
 
 	datas = helper.List(ethTokenSymbol2LockAddrPrefix, nil, 100, dbm.ListASC)
 	for _, data := range datas {
-		var token2set ebTypes.TokenAddress
-		err := chain33Types.Decode(data, &token2set)
+		var tokenLocked ebTypes.TokenAddress
+		err := chain33Types.Decode(data, &tokenLocked)
 		if nil != err {
 			return err
 		}
-		relayerLog.Info("RestoreTokenAddress", "symbol", token2set.Symbol, "address", token2set.Address)
-		ethRelayer.symbol2LockAddr[token2set.Symbol] = common.HexToAddress(token2set.Address)
+		relayerLog.Info("RestoreTokenAddress", "symbol", tokenLocked.Symbol, "address", tokenLocked.Address)
+		ethRelayer.symbol2LockAddr[tokenLocked.Symbol] = tokenLocked
 	}
 	return nil
 }

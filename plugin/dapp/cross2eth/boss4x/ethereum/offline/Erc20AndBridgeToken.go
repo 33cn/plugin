@@ -81,7 +81,7 @@ func DeployERC20(cmd *cobra.Command, _ []string) {
 	}
 	bin := common.FromHex(erc20.ERC20Bin)
 	Erc20OwnerAddr := common.HexToAddress(owner)
-	packdata, err := parsed.Pack("", symbol, symbol, bnAmount, Erc20OwnerAddr)
+	packdata, err := parsed.Pack("", symbol, symbol, bnAmount, Erc20OwnerAddr, uint8(8))
 	if err != nil {
 		fmt.Println("Pack error", err.Error())
 		return

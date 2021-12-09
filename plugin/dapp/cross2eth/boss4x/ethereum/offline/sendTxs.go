@@ -58,7 +58,7 @@ func sendTxs(cmd *cobra.Command, _ []string) {
 		ret := &DeployContractRet{ContractAddr: deployInfo.ContractorAddr.String(), TxHash: tx.Hash().String(), ContractName: deployInfo.Name}
 		respData = append(respData, ret)
 		if !checkTxStatus(client, tx.Hash().String(), deployInfo.Name) {
-			fmt.Println("FATAL ERROR! DEPLOY CONTRACTOR TERMINATION……:-(")
+			//fmt.Println("FATAL ERROR! DEPLOY CONTRACTOR TERMINATION……:-(")
 			break
 		}
 	}
@@ -81,7 +81,7 @@ func checkTxStatus(client *ethclient.Client, txhash, txName string) bool {
 		case <-checkticket.C:
 			receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(txhash))
 			if err == ethereum.NotFound {
-				fmt.Println("\n No receipt received yet for "+txName, " tx and continue to wait")
+				//fmt.Println("\n No receipt received yet for "+txName, " tx and continue to wait")
 				continue
 			} else if err != nil {
 				panic("failed due to" + err.Error())

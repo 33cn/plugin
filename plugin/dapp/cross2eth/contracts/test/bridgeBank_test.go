@@ -252,6 +252,12 @@ func TestBridgeDepositLock(t *testing.T) {
 	sim.Commit()
 	t.Logf("The new creaded symbol:%s, address:%s", symbol, bridgeTokenAddr.String())
 
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
+
 	operatorAuth, err = ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
 	require.Nil(t, err)
 	_, err = x2EthContracts.BridgeBank.AddToken2LockList(operatorAuth, bridgeTokenAddr, symbol)
@@ -354,6 +360,12 @@ func TestBridgeBankUnlock(t *testing.T) {
 	ethAddr := common.Address{}
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
+
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
 
 	ethLockAmount := big.NewInt(150)
 	userOneAuth.Value = ethLockAmount
@@ -498,6 +510,12 @@ func TestBridgeBankSecondUnlockEth(t *testing.T) {
 	//1st部署相关合约
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
+
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
 
 	//1.lockEth资产
 	ethAddr := common.Address{}
@@ -646,6 +664,12 @@ func TestBridgeBankSedondUnlockErc20(t *testing.T) {
 	//1st部署相关合约
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
+
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
 
 	//1.lockEth资产
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
