@@ -813,7 +813,7 @@ function StartDockerRelayerDeploy() {
     # 设置 token 地址
     #    InitTokenAddr
     offline_create_bridge_token_eth_BTY
-    offline_create_bridge_token_chain33_ETH
+    offline_create_bridge_token_chain33_ETH "ETH"
     offline_deploy_erc20_eth_BYC
     offline_create_bridge_token_chain33_BYC
     offline_deploy_erc20_chain33_YCC
