@@ -665,6 +665,10 @@ function StartDockerRelayerDeploy() {
     # 部署合约 设置 bridgeRegistry 地址
     InitAndOfflineDeploy
 
+    # 设置 ethereum symbol
+    ${Boss4xCLI} ethereum offline set_symbol -s "ETH" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ethereum_offline_sign_send "set_symbol.txt"
+
     # 设置离线多签数据
     Chain33Cli=${MainCli}
     initMultisignChain33Addr
