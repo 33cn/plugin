@@ -49,4 +49,3 @@ build/sendstock.toml
 build/*.csv
 build/CHANGELOG.md
 plugin/dapp/dex/boss/build/
-plugin/dapp/bridgevmxgo/cmd/build/addrTestConfig.toml
