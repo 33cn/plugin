@@ -204,7 +204,7 @@ protobuf: ## Generate protbuf file of types package
 	@find ./plugin/dapp -maxdepth 2 -type d  -name proto -exec make -C {} \;
 
 depends: ## Generate depends file of types package
-	@find ./plugin/dapp -maxdepth 2 -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
+	@find ./plugin/dapp -maxdepth 2 -print -type d  -name cmd -exec make -C {} OUT="$(MKDIR)build/ci" FLAG= \;
 
 
 help: ## Display this help screen
