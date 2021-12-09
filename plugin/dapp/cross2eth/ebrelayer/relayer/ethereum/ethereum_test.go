@@ -245,6 +245,12 @@ func Test_LockEth(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, bridgeBankBalance.Int64(), int64(0))
 
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
+
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
 
