@@ -334,6 +334,17 @@ function validators_config() {
         # shellcheck disable=SC2154
         sed -i ''"${line}"' a validatorsAddr=['\""${chain33Validatora}"\"', '\""${chain33Validatorb}"\"', '\""${chain33Validatorc}"\"', '\""${chain33Validatord}"\"']' "./relayer.toml"
     fi
+
+    line=$(delete_line_show "./relayer.toml" 'operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"')
+    if [ "${line}" ]; then
+        sed -i ''"${line}"' a operatorAddr='\""${ethDeployAddr}"\"'' "./relayer.toml"
+    fi
+
+    line=$(delete_line_show "./relayer.toml" 'validatorsAddr=\["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f')
+    if [ "${line}" ]; then
+        # shellcheck disable=SC2154
+        sed -i ''"${line}"' a validatorsAddr=['\""${ethValidatorAddra}"\"', '\""${ethValidatorAddrb}"\"', '\""${ethValidatorAddrc}"\"', '\""${ethValidatorAddrd}"\"']' "./relayer.toml"
+    fi
 }
 
 function StartRelayerAndDeploy() {
