@@ -7,11 +7,13 @@ import (
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common"
+	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +28,7 @@ func EthereumRelayerCmd() *cobra.Command {
 	cmd.AddCommand(
 		ImportEthPrivateKeyCmd(),
 		GenEthPrivateKeyCmd(),
+		GetAddressFromPrivateKeyCmd(),
 		ShowValidatorsAddrCmd(),
 		ShowChain33TxsHashCmd(),
 		IsValidatorActiveCmd(),
@@ -165,6 +168,34 @@ func importEthereumPrivatekey(cmd *cobra.Command, args []string) {
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportEthereumPrivateKey4EthRelayer", params, &res)
 	ctx.Run()
+}
+
+func GetAddressFromPrivateKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_eth_addr",
+		Short: "get addr from private key",
+		Run:   getAddressFromPrivateKey,
+	}
+	cmd.Flags().StringP("key", "k", "", "ethereum private key")
+	_ = cmd.MarkFlagRequired("key")
+	return cmd
+}
+
+func getAddressFromPrivateKey(cmd *cobra.Command, args []string) {
+	key, _ := cmd.Flags().GetString("key")
+	privateKeySlice, err := chain33Common.FromHex(key)
+	if nil != err {
+		fmt.Println("private key error: ", err)
+		return
+	}
+	privateKey, err := crypto.ToECDSA(privateKeySlice)
+	if nil != err {
+		fmt.Println("private key error: ", err)
+		return
+	}
+
+	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
+	fmt.Println("addr: ", addr)
 }
 
 //GenEthPrivateKeyCmd ...
