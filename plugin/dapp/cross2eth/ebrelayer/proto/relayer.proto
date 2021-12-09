@@ -222,6 +222,7 @@ message ERC20Token {
     string name   = 2;
     string symbol = 3;
     string amount = 4;
+    int32 decimals = 5;
 }
 
 message ETHTokenLockAddress {

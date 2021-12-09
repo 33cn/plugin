@@ -2,8 +2,9 @@ package offline
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/spf13/cobra"

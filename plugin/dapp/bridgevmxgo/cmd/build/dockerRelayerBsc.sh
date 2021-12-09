@@ -243,7 +243,7 @@ function TestETH2Chain33Assets() {
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "2000000000000000"
+    #    is_equal "${result}" "2000000000000000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
@@ -256,7 +256,7 @@ function TestETH2Chain33Assets() {
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "1700000000000000"
+    #    is_equal "${result}" "1700000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
@@ -441,11 +441,11 @@ function TestETH2Chain33BUSD() {
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33BUSDBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12 * le8
-#    is_equal "${result}" "3000000000000000000"
+    #    is_equal "${result}" "3000000000000000000"
 
     # 原来的数额 0
     result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumBUSDERC20TokenAddr}")
-#    cli_ret "${result}" "balance" ".balance" "0"
+    #    cli_ret "${result}" "balance" ".balance" "0"
 
     echo '#5.burn YCC from Chain33 YCC(Chain33)-----> Ethereum'
     result=$(${CLIA} chain33 burn -m 1 -k "${chain33ReceiverAddrKey}" -r "${ethReceiverAddr1}" -t "${chain33BUSDBridgeTokenAddr}")
@@ -456,7 +456,7 @@ function TestETH2Chain33BUSD() {
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33BUSDBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12-5 * le8
-#    is_equal "${result}" "2000000000000000000"
+    #    is_equal "${result}" "2000000000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 7
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBUSDERC20TokenAddr}")
@@ -742,13 +742,13 @@ function up_relayer_toml() {
     # 在第 line 行后面 新增合约地址
     sed -i ''"${line}"' a ChainName="user.p.para."' "./relayer.toml"
 
-#    # shellcheck disable=SC2155
-#    local line=$(delete_line_show "./relayer.toml" "maturityDegree=10")
-#    sed -i ''"${line}"' a maturityDegree=1' "./relayer.toml"
-#
-#    # shellcheck disable=SC2155
-#    local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
-#    sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
+    #    # shellcheck disable=SC2155
+    #    local line=$(delete_line_show "./relayer.toml" "maturityDegree=10")
+    #    sed -i ''"${line}"' a maturityDegree=1' "./relayer.toml"
+    #
+    #    # shellcheck disable=SC2155
+    #    local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
+    #    sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
 }
 
 function StartDockerRelayerDeploy() {
@@ -792,17 +792,17 @@ function StartDockerRelayerDeploy() {
     updata_toml_start_bcd
 
     # 设置 token 地址
-#    offline_create_bridge_token_eth_BTY
-#    offline_deploy_erc20_eth_BYC
-#    offline_deploy_erc20_eth_USDT
-#    offline_create_bridge_token_eth_YCC
-#    offline_create_bridge_token_eth_ZBC
-#
-#    offline_create_bridge_token_chain33_ETH "BNB"
-#    offline_create_bridge_token_chain33_BYC
-#    offline_deploy_erc20_chain33_YCC
-#    offline_deploy_erc20_chain33_ZBC
-#    offline_create_bridge_token_chain33_USDT
+    #    offline_create_bridge_token_eth_BTY
+    #    offline_deploy_erc20_eth_BYC
+    #    offline_deploy_erc20_eth_USDT
+    #    offline_create_bridge_token_eth_YCC
+    #    offline_create_bridge_token_eth_ZBC
+    #
+    #    offline_create_bridge_token_chain33_ETH "BNB"
+    #    offline_create_bridge_token_chain33_BYC
+    #    offline_deploy_erc20_chain33_YCC
+    #    offline_deploy_erc20_chain33_ZBC
+    #    offline_create_bridge_token_chain33_USDT
 
     offline_create_bridge_token_chain33_BUSD
 
@@ -811,12 +811,12 @@ function StartDockerRelayerDeploy() {
 
     # shellcheck disable=SC2086
     {
-#        docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
-#        docker cp "${chain33BycBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BycBridgeTokenAddr}.abi
-#        docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
+        #        docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
+        #        docker cp "${chain33BycBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BycBridgeTokenAddr}.abi
+        #        docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
         docker cp "${chain33BUSDBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BUSDBridgeTokenAddr}.abi
-#        docker cp "${chain33YccERC20TokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccERC20TokenAddr}.abi
-#        docker cp "${ethereumYccBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumYccBridgeTokenAddr}.abi
+        #        docker cp "${chain33YccERC20TokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccERC20TokenAddr}.abi
+        #        docker cp "${ethereumYccBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumYccBridgeTokenAddr}.abi
     }
 
     # 重启,因为relayerA的验证人地址和部署人的地址是一样的,所以需要重新启动relayer,更新nonce
@@ -1059,30 +1059,30 @@ function Testethereum2EVMToChain33_usdt() {
 }
 
 function test_all() {
-#    TestETH2Chain33Assets
-#    TestChain33ToEthAssets
-#    TestChain33ToEthZBCAssets
-#    TestETH2Chain33Byc
-#    TestETH2Chain33USDT
+    #    TestETH2Chain33Assets
+    #    TestChain33ToEthAssets
+    #    TestChain33ToEthZBCAssets
+    #    TestETH2Chain33Byc
+    #    TestETH2Chain33USDT
     TestETH2Chain33BUSD
 
-#    lockBty
-#    lockChain33Ycc
-#    lockEth
-#    lockEthByc
-#    lockEthUSDT
-#
-#    # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Chain33Ycc 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10
-#    offline_set_offline_token_EthByc 100000000000000 10
-#    offline_set_offline_token_EthUSDT 100000000000000 10
+    #    lockBty
+    #    lockChain33Ycc
+    #    lockEth
+    #    lockEthByc
+    #    lockEthUSDT
+    #
+    #    # 离线多签地址转入阈值设大
+    #    offline_set_offline_token_Bty 100000000000000 10
+    #    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    #    offline_set_offline_token_Eth 100000000000000 10
+    #    offline_set_offline_token_EthByc 100000000000000 10
+    #    offline_set_offline_token_EthUSDT 100000000000000 10
 
-#    DeployEvmxgo
-#    TestETH2EVMToChain33
-#    Testethereum2EVMToChain33_byc
-#    Testethereum2EVMToChain33_usdt
+    #    DeployEvmxgo
+    #    TestETH2EVMToChain33
+    #    Testethereum2EVMToChain33_byc
+    #    Testethereum2EVMToChain33_usdt
 }
 
 function get_cli() {
@@ -1098,7 +1098,7 @@ function get_cli() {
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
-#        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+        #        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
         Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum ${BscProviderUrl} --paraName user.p.para. --chainEthId 56"
         echo "${Boss4xCLI}"
 
@@ -1142,4 +1142,3 @@ function AllRelayerMainTest() {
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
-

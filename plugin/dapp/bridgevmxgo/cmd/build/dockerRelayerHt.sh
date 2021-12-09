@@ -288,7 +288,7 @@ function TestETH2Chain33Assets() {
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "2000000000000000"
+    #    is_equal "${result}" "2000000000000000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
@@ -301,7 +301,7 @@ function TestETH2Chain33Assets() {
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-#    is_equal "${result}" "1700000000000000"
+    #    is_equal "${result}" "1700000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
@@ -1075,7 +1075,7 @@ function AllRelayerMainTest() {
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
-#        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+        #        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
         Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum ${BscProviderUrl} --paraName user.p.para. --chainEthId 256"
 
         echo "${Boss4xCLI}"
