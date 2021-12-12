@@ -91,6 +91,7 @@ func main() {
 	ethStartPara := &ethRelayer.EthereumStartPara{
 		DbHandle:           db,
 		EthProvider:        cfg.EthProvider,
+		EthProviderHttp:    cfg.EthProviderCli,
 		BridgeRegistryAddr: cfg.BridgeRegistry,
 		DeployInfo:         cfg.Deploy,
 		Degree:             cfg.EthMaturityDegree,
