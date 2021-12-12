@@ -42,6 +42,7 @@ import (
 //Relayer4Ethereum ...
 type Relayer4Ethereum struct {
 	provider           string
+	providerHttp       string
 	clientChainID      *big.Int
 	bridgeRegistryAddr common.Address
 	db                 dbm.DB
@@ -56,6 +57,7 @@ type Relayer4Ethereum struct {
 	fetchHeightPeriodMs     int32
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
+	clientWss              ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
 	bridgeBankLog           chan types.Log
@@ -86,6 +88,7 @@ const (
 type EthereumStartPara struct {
 	DbHandle           dbm.DB
 	EthProvider        string
+	EthProviderHttp    string
 	BridgeRegistryAddr string
 	DeployInfo         *ebTypes.Deploy
 	Degree             int32
@@ -101,6 +104,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	}
 	ethRelayer := &Relayer4Ethereum{
 		provider:                startPara.EthProvider,
+		providerHttp:            startPara.EthProviderHttp,
 		db:                      startPara.DbHandle,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
@@ -129,11 +133,16 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
-	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
+	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
 	if err != nil {
 		panic(err)
 	}
 	ethRelayer.clientSpec = client
+
+	ethRelayer.clientWss, err = ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
+	if err != nil {
+		panic(err)
+	}
 
 	ctx := context.Background()
 	clientChainID, err := client.NetworkID(ctx)
@@ -809,7 +818,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	// We will check logs for new events
 	logs := make(chan types.Log, 10)
 	// Filter by contract and event, write results to logs
-	sub, err := ethRelayer.clientSpec.SubscribeFilterLogs(context.Background(), query, logs)
+	sub, err := ethRelayer.clientWss.SubscribeFilterLogs(context.Background(), query, logs)
 	if err != nil {
 		errinfo := fmt.Sprintf("Failed to SubscribeFilterLogs due to:%s, bridgeBankAddr:%s", err.Error(), ethRelayer.bridgeBankAddr)
 		panic(errinfo)
