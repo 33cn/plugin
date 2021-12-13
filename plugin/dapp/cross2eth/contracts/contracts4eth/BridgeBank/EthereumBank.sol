@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../../openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./BridgeToken.sol";
+import "./TransferHelper.sol";
 
   /*
    *  @title: EthereumBank
@@ -16,6 +17,7 @@ contract EthereumBank {
     address payable public offlineSave;
     mapping(address => uint256) public lockedFunds;
     mapping(bytes32 => address) public tokenAllow2Lock;
+    mapping(address => string) public tokenAddrAllow2symbol;
     mapping(address => OfflineSaveCfg) public offlineSaveCfgs;
     uint8 public lowThreshold  = 5;
     uint8 public highThreshold = 80;
@@ -153,7 +155,7 @@ contract EthereumBank {
         if (address(0) == _token) {
             offlineSave.transfer(amount);
         } else {
-            require(BridgeToken(_token).transfer(offlineSave, amount), "Erc20 Token Transfer to offline Save account failed");
+            TransferHelper.safeTransfer(_token, offlineSave, amount);
         }
         return;
     }
@@ -182,10 +184,7 @@ contract EthereumBank {
         if (_token == address(0)) {
           _recipient.transfer(_amount);
         } else {
-            require(
-                BridgeToken(_token).transfer(_recipient, _amount),
-                "Token transfer failed"
-            );
+            TransferHelper.safeTransfer(_token, _recipient, _amount);
         }
 
         emit LogUnlock(
@@ -213,6 +212,7 @@ contract EthereumBank {
          address tokenQuery = tokenAllow2Lock[symHash];
          require(tokenQuery == address(0), 'The token with the same symbol has been added to lock allow list already.');
          tokenAllow2Lock[symHash] = _token;
+         tokenAddrAllow2symbol[_token] = _symbol;
      }
 
      /*

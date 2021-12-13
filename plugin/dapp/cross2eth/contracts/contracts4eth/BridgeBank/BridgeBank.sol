@@ -2,8 +2,10 @@ pragma solidity ^0.5.0;
 
 import "./Chain33Bank.sol";
 import "./EthereumBank.sol";
+import "./TransferHelper.sol";
 import "../Oracle.sol";
 import "../Chain33Bridge.sol";
+
 
 /**
  * @title BridgeBank
@@ -257,12 +259,9 @@ contract BridgeBank is Chain33Bank, EthereumBank {
           symbol = platformTokenSymbol;
           // ERC20 deposit
         } else {
-            require(
-                BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
-                "Contract token allowances insufficient to complete this lock request"
-            );
-            // Set symbol to the ERC20 token's symbol
-            symbol = BridgeToken(_token).symbol();
+
+            TransferHelper.safeTransferFrom(_token, msg.sender, address(this), _amount);
+            symbol = tokenAddrAllow2symbol[_token];
 
             require(
                 tokenAllow2Lock[keccak256(abi.encodePacked(symbol))] == _token,
