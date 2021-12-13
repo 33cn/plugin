@@ -57,7 +57,7 @@ type Relayer4Ethereum struct {
 	fetchHeightPeriodMs     int32
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
-	clientWss              ethinterface.EthClientSpec
+	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
 	bridgeBankLog           chan types.Log
