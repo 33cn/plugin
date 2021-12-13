@@ -46,6 +46,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		SignCmd(),                               // 签名交易 sign deploy contract tx
 		SendTxsCmd(),                            // 发送交易 send all kinds of tx
 		ConfigplatformTokenSymbolCmd(),
+		CreateEthBridgeBankRelatedCmd(), //构造交易
 	)
 
 	return cmd
