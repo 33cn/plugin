@@ -3,6 +3,7 @@
 
 SRC_BEP := bep20
 SRC_ERC20 := erc20
+SRC_USDT := usdt
 SRC_CONTRACT0 := contracts4chain33
 SRC_CONTRACT1 := contracts4eth
 SRC_MULTISIGN := gnosis/safe-contracts/contracts
@@ -12,6 +13,7 @@ GO_OUT1 := ${SRC_CONTRACT1}/generated
 GO_OUT_MULTISIGN := gnosis/generated
 GO_OUT_BEP20 := bep20/generated
 GO_OUT_ERC20 := erc20/generated
+GO_OUT_USDT := usdt/generated
 PACKAGE := generated
 
 proj := "build"
@@ -34,6 +36,9 @@ bep20Bin:
 
 erc20Bin:
 	@abigen --sol $(SRC_ERC20)/ERC20.sol --pkg $(PACKAGE) --out $(GO_OUT_ERC20)/erc20.go
+
+usdtBin:
+	@abigen --alias _totalSupply=_totalSupply4usdt --sol $(SRC_USDT)/USDT.sol --pkg $(PACKAGE) --out $(GO_OUT_USDT)/usdt.go
 
 
 clean:
