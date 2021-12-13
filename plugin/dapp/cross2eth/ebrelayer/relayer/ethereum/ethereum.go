@@ -57,7 +57,7 @@ type Relayer4Ethereum struct {
 	fetchHeightPeriodMs     int32
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
-	clientWss              ethinterface.EthClientSpec
+	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
 	bridgeBankLog           chan types.Log
@@ -466,7 +466,9 @@ latter:
 		case <-timer.C:
 			ethRelayer.procNewHeight(ctx, &continueFailCount)
 		case err := <-ethRelayer.bridgeBankSub.Err():
-			panic("bridgeBankSub" + err.Error())
+			relayerLog.Error("proc", "bridgeBankSub err", err.Error())
+			ethRelayer.subscribeEvent()
+
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
@@ -582,12 +584,22 @@ func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context, continueF
 	head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
 	if nil != err {
 		*continueFailCount++
-		if *continueFailCount >= (12 * 5) {
-			panic(err.Error())
+		if *continueFailCount >= 5 {
+			ethRelayer.clientSpec, err = ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
+			if err != nil {
+				relayerLog.Error("SetupWebsocketEthClient", "err", err)
+				return
+			}
+
 		}
-		relayerLog.Error("Failed to get ethereum height", "provider", ethRelayer.provider,
-			"continueFailCount", continueFailCount)
-		return
+		//retry
+		head, err = ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
+		if err != nil {
+			relayerLog.Error("Failed to get ethereum height", "provider", ethRelayer.provider,
+				"continueFailCount", continueFailCount, "err", err.Error())
+			return
+		}
+
 	}
 	ethRelayer.updateTxStatus()
 	*continueFailCount = 0
