@@ -39,9 +39,6 @@ func addCreateEthBridgeBankRelatedFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "the deployer address")
 	_ = cmd.MarkFlagRequired("owner")
 
-	cmd.Flags().StringP("chain33BridgeAddr", "c", "", "chain33Bridge Address")
-	_ = cmd.MarkFlagRequired("chain33BridgeAddr")
-
 	cmd.Flags().StringP("oracleAddr", "a", "", "oracle address")
 	_ = cmd.MarkFlagRequired("oracleAddr")
 
@@ -52,12 +49,10 @@ func addCreateEthBridgeBankRelatedFlags(cmd *cobra.Command) {
 func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	owner, _ := cmd.Flags().GetString("owner")
-	chain33BridgeAddrStr, _ := cmd.Flags().GetString("chain33BridgeAddr")
 	oracleAddrStr, _ := cmd.Flags().GetString("oracleAddr")
 	valSetAddrStr, _ := cmd.Flags().GetString("valSetAddr")
 
 	deployerAddr := common.HexToAddress(owner)
-	chain33BridgeAddr := common.HexToAddress(chain33BridgeAddrStr)
 	oracleAddr := common.HexToAddress(oracleAddrStr)
 	valSetAddr := common.HexToAddress(valSetAddrStr)
 
@@ -74,35 +69,47 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 
 	var infos []*DeployInfo
 
-	//step1 bridgebank
-	packData, err := deployBridgeBankPackData(deployerAddr, chain33BridgeAddr, oracleAddr)
+	packData, err := deploychain33BridgePackData(deployerAddr, valSetAddr)
 	if err != nil {
 		panic(err.Error())
 	}
-	bridgeBankAddr := crypto.CreateAddress(deployerAddr, startNonce+3)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce + 3, To: nil})
+	chain33BridgeAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: chain33BridgeAddr, Name: "chain33Bridge", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
+
+	//step1 bridgebank
+	packData, err = deployBridgeBankPackData(deployerAddr, chain33BridgeAddr, oracleAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	bridgeBankAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
 
 	//step5
 	packData, err = callSetBridgeBank(bridgeBankAddr)
 	if err != nil {
 		panic(err.Error())
 	}
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce + 4, To: &chain33BridgeAddr})
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce = startNonce + 1
 
 	//step6
 	packData, err = callSetOracal(oracleAddr)
 	if err != nil {
 		panic(err.Error())
 	}
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce + 5, To: &chain33BridgeAddr})
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce = startNonce + 1
 
 	//step7 bridgeRegistry
 	packData, err = deployBridgeRegistry(chain33BridgeAddr, bridgeBankAddr, oracleAddr, valSetAddr)
 	if err != nil {
 		panic(err.Error())
 	}
-	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce+6)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce + 6, To: nil})
+	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
 
 	err = NewTxWrite(infos, deployerAddr, url, "deployBridgeBank4Ethtxs.txt")
 	if err != nil {
