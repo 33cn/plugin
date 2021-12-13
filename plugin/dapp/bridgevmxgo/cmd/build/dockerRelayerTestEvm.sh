@@ -820,7 +820,7 @@ function StartDockerRelayerDeploy() {
     offline_create_bridge_token_eth_YCC
     offline_deploy_erc20_chain33_ZBC
     offline_create_bridge_token_eth_ZBC
-#    offline_deploy_erc20_eth_USDT
+    #    offline_deploy_erc20_eth_USDT
     offline_deploy_erc20_create_tether_usdt_USDT
     offline_create_bridge_token_chain33_USDT
 
