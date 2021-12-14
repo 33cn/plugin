@@ -728,7 +728,7 @@ func ShowBalanceLockedCmd() *cobra.Command {
 func ShowBalanceLockedFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("bridgeBank", "b", "", "bridgeBank address")
 	_ = cmd.MarkFlagRequired("bridgeBank")
-	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for Eth")
+	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for platform token(Eth)")
 }
 
 //GetBalance ...
@@ -736,6 +736,10 @@ func ShowBalanceLocked(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	bridgeBank, _ := cmd.Flags().GetString("bridgeBank")
 	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")
+
+	if tokenAddr == "" {
+		tokenAddr = "0x0000000000000000000000000000000000000000"
+	}
 
 	para := &ebTypes.BalanceLockedReq{
 		BridgeBank: bridgeBank,
