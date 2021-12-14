@@ -1,7 +1,7 @@
 package types
 
 //Version4Relayer ...
-const Version4Relayer = "0.1.0"
+const Version4Relayer = "0.1.1"
 
 const (
 	Chain33BlockChainName    = "Chain33-mainchain"
