@@ -106,17 +106,11 @@ func (syncTx *EVMTxLogs) SaveAndSyncTxs2Relayer() {
 
 // 处理输入流程
 func (syncTx *EVMTxLogs) dealEVMTxLogs(evmTxLogsInBlks *types.EVMTxLogsInBlks) {
-	count, start, evmTxLogsParsed, err := parseEvmTxLogsInBlks(evmTxLogsInBlks)
+	count, start, evmTxLogsParsed, err := parseEvmTxLogsInBlks(evmTxLogsInBlks, syncTx.seqNum)
 	if err != nil {
 		resultCh <- err
 	}
 
-	//正常情况下，本次开始的的seq不能小于上次结束的seq
-	if start < syncTx.seqNum {
-		log.Error("dealEVMTxLogs err: the tx and receipt pushed is old", "start", start, "current_seq", syncTx.seqNum)
-		resultCh <- errors.New("The tx and receipt pushed is old")
-		return
-	}
 	var height int64
 	for i := 0; i < count; i++ {
 		txsPerBlock := evmTxLogsParsed[i]
@@ -134,10 +128,9 @@ func (syncTx *EVMTxLogs) dealEVMTxLogs(evmTxLogsInBlks *types.EVMTxLogsInBlks) {
 			syncTx.setBlockHeight(height)
 		}
 	}
-	//syncTx.syncReceiptChan <- height
 	//发送回复，确认接收成功
 	resultCh <- nil
-	log.Debug("dealEVMTxLogs", "seqStart", start, "count", count, "maxBlockHeight", height)
+	log.Debug("dealEVMTxLogs", "seqStart", start, "count", count, "maxBlockHeight", height, "syncTx.seqNum", syncTx.seqNum)
 }
 
 func (syncTx *EVMTxLogs) loadBlockLastSequence() (int64, error) {
@@ -213,7 +206,7 @@ func (syncTx *EVMTxLogs) delTxReceipts(height int64) {
 }
 
 // 检查输入是否有问题, 并解析输入
-func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks) (count int, start int64, txsWithReceipt []*types.EVMTxLogPerBlk, err error) {
+func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks, seqNumLast int64) (count int, start int64, txsWithReceipt []*types.EVMTxLogPerBlk, err error) {
 	count = len(evmTxLogs.Logs4EVMPerBlk)
 	txsWithReceipt = make([]*types.EVMTxLogPerBlk, 0)
 	start = math.MaxInt64
@@ -221,6 +214,12 @@ func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks) (count int, start in
 		if evmTxLogs.Logs4EVMPerBlk[i].AddDelType != SeqTypeAdd && evmTxLogs.Logs4EVMPerBlk[i].AddDelType != SeqTypeDel {
 			log.Error("parseEvmTxLogsInBlks seq op not support", "seq", evmTxLogs.Logs4EVMPerBlk[i].SeqNum,
 				"height", evmTxLogs.Logs4EVMPerBlk[i].Height, "seqOp", evmTxLogs.Logs4EVMPerBlk[i].AddDelType)
+			continue
+		}
+		//过滤掉老的信息, 正常情况下，本次开始的的seq不能小于上次结束的seq
+		if seqNumLast >= evmTxLogs.Logs4EVMPerBlk[i].SeqNum {
+			log.Error("parseEvmTxLogsInBlks err: the tx and receipt pushed is old", "seqNumLast", seqNumLast,
+				"evmTxLogs.Logs4EVMPerBlk[i].SeqNum", evmTxLogs.Logs4EVMPerBlk[i].SeqNum, "i", i)
 			continue
 		}
 		txsWithReceipt = append(txsWithReceipt, evmTxLogs.Logs4EVMPerBlk[i])
