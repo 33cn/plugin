@@ -468,7 +468,7 @@ latter:
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
-
+			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
@@ -718,6 +718,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 	}
 }
 
+//因为订阅事件的功能只会推送在订阅生效的高度之后的事件，之前订阅停止～当前订阅生效高度的这一段只能通过FilterLogs来获取事件信息，否则就会遗漏
 func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
 	deployHeight, _ := ethtxs.GetDeployHeight(ethRelayer.clientSpec, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address)
 	height4BridgeBankLogAt := int64(ethRelayer.getHeight4BridgeBankLogAt())
@@ -756,6 +757,7 @@ func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
 	}
 }
 
+//因为订阅事件的功能只会推送在订阅生效的高度之后的事件，之前订阅停止～当前订阅生效高度的这一段只能通过FilterLogs来获取事件信息，否则就会遗漏
 func (ethRelayer *Relayer4Ethereum) filterLogEventsProc(logchan chan<- types.Log, done chan<- int, title string, curHeight, heightLogProcAt int64, contractAddr common.Address, eventSig map[string]bool) {
 	relayerLog.Info(title, "eventSig", eventSig, "heightLogProcAt", heightLogProcAt, "curHeight", curHeight)
 
@@ -823,6 +825,7 @@ func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
 	targetAddress := ethRelayer.bridgeBankAddr
 
 	// We need the target address in bytes[] for the query
+	//因为订阅事件的功能只会推送在订阅生效的高度之后的事件，所以FromBlock只需要填写１就可以了
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{targetAddress},
 		FromBlock: big.NewInt(int64(1)),
