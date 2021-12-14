@@ -7,12 +7,11 @@
 package types
 
 import (
-	reflect "reflect"
-	sync "sync"
-
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -2330,6 +2329,61 @@ func (x *ETHConfigLockedTokenOffline) GetPercents() uint32 {
 	return 0
 }
 
+type BalanceLockedReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	BridgeBank string `protobuf:"bytes,1,opt,name=bridgeBank,proto3" json:"bridgeBank,omitempty"`
+	TokenAddr  string `protobuf:"bytes,2,opt,name=tokenAddr,proto3" json:"tokenAddr,omitempty"`
+}
+
+func (x *BalanceLockedReq) Reset() {
+	*x = BalanceLockedReq{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relayer_proto_msgTypes[34]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BalanceLockedReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BalanceLockedReq) ProtoMessage() {}
+
+func (x *BalanceLockedReq) ProtoReflect() protoreflect.Message {
+	mi := &file_relayer_proto_msgTypes[34]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BalanceLockedReq.ProtoReflect.Descriptor instead.
+func (*BalanceLockedReq) Descriptor() ([]byte, []int) {
+	return file_relayer_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *BalanceLockedReq) GetBridgeBank() string {
+	if x != nil {
+		return x.BridgeBank
+	}
+	return ""
+}
+
+func (x *BalanceLockedReq) GetTokenAddr() string {
+	if x != nil {
+		return x.TokenAddr
+	}
+	return ""
+}
+
 var File_relayer_proto protoreflect.FileDescriptor
 
 var file_relayer_proto_rawDesc = []byte{
@@ -2598,9 +2652,14 @@ var file_relayer_proto_rawDesc = []byte{
 	0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x68, 0x72, 0x65, 0x73, 0x68, 0x6f,
 	0x6c, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x68, 0x72, 0x65, 0x73, 0x68,
 	0x6f, 0x6c, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x73, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x08, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x73, 0x42,
-	0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x04, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x08, 0x70, 0x65, 0x72, 0x63, 0x65, 0x6e, 0x74, 0x73, 0x22,
+	0x50, 0x0a, 0x10, 0x42, 0x61, 0x6c, 0x61, 0x6e, 0x63, 0x65, 0x4c, 0x6f, 0x63, 0x6b, 0x65, 0x64,
+	0x52, 0x65, 0x71, 0x12, 0x1e, 0x0a, 0x0a, 0x62, 0x72, 0x69, 0x64, 0x67, 0x65, 0x42, 0x61, 0x6e,
+	0x6b, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x62, 0x72, 0x69, 0x64, 0x67, 0x65, 0x42,
+	0x61, 0x6e, 0x6b, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x41, 0x64, 0x64, 0x72,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x41, 0x64, 0x64,
+	0x72, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2615,7 +2674,7 @@ func file_relayer_proto_rawDescGZIP() []byte {
 	return file_relayer_proto_rawDescData
 }
 
-var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_relayer_proto_goTypes = []interface{}{
 	(*Account4Relayer)(nil),             // 0: types.Account4Relayer
 	(*ValidatorAddr4EthRelayer)(nil),    // 1: types.ValidatorAddr4EthRelayer
@@ -2651,6 +2710,7 @@ var file_relayer_proto_goTypes = []interface{}{
 	(*ERC20Token)(nil),                  // 31: types.ERC20Token
 	(*ETHTokenLockAddress)(nil),         // 32: types.ETHTokenLockAddress
 	(*ETHConfigLockedTokenOffline)(nil), // 33: types.ETHConfigLockedTokenOffline
+	(*BalanceLockedReq)(nil),            // 34: types.BalanceLockedReq
 }
 var file_relayer_proto_depIdxs = []int32{
 	25, // 0: types.TokenAddressArray.tokenAddress:type_name -> types.TokenAddress
@@ -3077,6 +3137,18 @@ func file_relayer_proto_init() {
 				return nil
 			}
 		}
+		file_relayer_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BalanceLockedReq); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3084,7 +3156,7 @@ func file_relayer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_relayer_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   35,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

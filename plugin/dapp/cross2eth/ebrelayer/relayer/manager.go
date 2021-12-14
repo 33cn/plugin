@@ -668,6 +668,21 @@ func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{})
 	return nil
 }
 
+func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.BalanceLockedReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	balance, err := manager.ethRelayer.ShowBalanceLocked(BalanceLockedReq.TokenAddr, BalanceLockedReq.BridgeBank)
+	if nil != err {
+		return err
+	}
+
+	*result = relayerTypes.ReplyBalance{
+		IsOK:    true,
+		Balance: balance,
+	}
+	return nil
+}
+
 //GetBalance ...
 func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()

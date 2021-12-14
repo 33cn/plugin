@@ -252,6 +252,25 @@ func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err
 }
 
 //GetBalance ：获取某一个币种的余额
+func (ethRelayer *Relayer4Ethereum) ShowBalanceLocked(tokenAddr, bridgeBank string) (string, error) {
+	bridgeBankAddrInt := common.HexToAddress(bridgeBank)
+	bridgeBankHandle, err := generated.NewBridgeBank(bridgeBankAddrInt, ethRelayer.clientSpec)
+	if nil != err {
+		return "", errors.New("failed to NewBridgeBank")
+	}
+	opts := &bind.CallOpts{
+		Pending: true,
+		From:    common.HexToAddress(bridgeBank),
+		Context: context.Background(),
+	}
+	balance, err := bridgeBankHandle.LockedFunds(opts, common.HexToAddress(tokenAddr))
+	if nil != err {
+		return "", err
+	}
+
+	return balance.String(), nil
+}
+
 func (ethRelayer *Relayer4Ethereum) GetBalance(tokenAddr, owner string) (string, error) {
 	return ethtxs.GetBalance(ethRelayer.clientSpec, tokenAddr, owner)
 }
