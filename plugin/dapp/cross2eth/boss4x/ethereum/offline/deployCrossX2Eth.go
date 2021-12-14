@@ -39,9 +39,6 @@ func addCreateEthBridgeBankRelatedFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("owner", "o", "", "the deployer address")
 	_ = cmd.MarkFlagRequired("owner")
 
-	cmd.Flags().StringP("oracleAddr", "a", "", "oracle address")
-	_ = cmd.MarkFlagRequired("oracleAddr")
-
 	cmd.Flags().StringP("valSetAddr", "v", "", "valSet address")
 	_ = cmd.MarkFlagRequired("valSetAddr")
 }
@@ -49,11 +46,9 @@ func addCreateEthBridgeBankRelatedFlags(cmd *cobra.Command) {
 func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	owner, _ := cmd.Flags().GetString("owner")
-	oracleAddrStr, _ := cmd.Flags().GetString("oracleAddr")
 	valSetAddrStr, _ := cmd.Flags().GetString("valSetAddr")
 
 	deployerAddr := common.HexToAddress(owner)
-	oracleAddr := common.HexToAddress(oracleAddrStr)
 	valSetAddr := common.HexToAddress(valSetAddrStr)
 
 	client, err := ethclient.Dial(url)
@@ -69,6 +64,7 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 
 	var infos []*DeployInfo
 
+	//step1 chain33bridge
 	packData, err := deploychain33BridgePackData(deployerAddr, valSetAddr)
 	if err != nil {
 		panic(err.Error())
@@ -77,7 +73,16 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: chain33BridgeAddr, Name: "chain33Bridge", Nonce: startNonce, To: nil})
 	startNonce = startNonce + 1
 
-	//step1 bridgebank
+	//step2 oracle
+	packData, err = deployOraclePackData(deployerAddr, valSetAddr, chain33BridgeAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	oracleAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: oracleAddr, Name: "oracle", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
+
+	//step3 bridgebank
 	packData, err = deployBridgeBankPackData(deployerAddr, chain33BridgeAddr, oracleAddr)
 	if err != nil {
 		panic(err.Error())
@@ -86,7 +91,7 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce, To: nil})
 	startNonce = startNonce + 1
 
-	//step5
+	//step4
 	packData, err = callSetBridgeBank(bridgeBankAddr)
 	if err != nil {
 		panic(err.Error())
@@ -94,7 +99,7 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce, To: &chain33BridgeAddr})
 	startNonce = startNonce + 1
 
-	//step6
+	//step5
 	packData, err = callSetOracal(oracleAddr)
 	if err != nil {
 		panic(err.Error())
@@ -102,7 +107,7 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce, To: &chain33BridgeAddr})
 	startNonce = startNonce + 1
 
-	//step7 bridgeRegistry
+	//step6 bridgeRegistry
 	packData, err = deployBridgeRegistry(chain33BridgeAddr, bridgeBankAddr, oracleAddr, valSetAddr)
 	if err != nil {
 		panic(err.Error())
