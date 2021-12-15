@@ -45,6 +45,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		LockAsyncCmd(),
 		ShowBridgeBankAddrCmd(),
 		ShowBridgeRegistryAddrCmd(),
+		ShowBalanceLockedCmd(),
 		DeployERC20Cmd(),
 		TokenCmd(),
 		MultiSignEthCmd(),
@@ -684,6 +685,42 @@ func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	var res ebTypes.ReplyAddr
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBridgeRegistryAddr", nil, &res)
+	ctx.Run()
+}
+
+//GetBalanceCmd ...
+func ShowBalanceLockedCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showBalanceLocked",
+		Short: "show Balance Locked in BridgeBank",
+		Run:   ShowBalanceLocked,
+	}
+	ShowBalanceLockedFlags(cmd)
+	return cmd
+}
+
+func ShowBalanceLockedFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("bridgeBank", "b", "", "bridgeBank address")
+	_ = cmd.MarkFlagRequired("bridgeBank")
+	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for platform token(Eth)")
+}
+
+//GetBalance ...
+func ShowBalanceLocked(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	bridgeBank, _ := cmd.Flags().GetString("bridgeBank")
+	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")
+
+	if tokenAddr == "" {
+		tokenAddr = "0x0000000000000000000000000000000000000000"
+	}
+
+	para := &ebTypes.BalanceLockedReq{
+		BridgeBank: bridgeBank,
+		TokenAddr:  tokenAddr,
+	}
+	var res ebTypes.ReplyBalance
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBalanceLocked", para, &res)
 	ctx.Run()
 }
 

@@ -41,7 +41,7 @@ func TestQbft(t *testing.T) {
 	mock33.Listen()
 	t.Log(mock33.GetGenesisAddress())
 	go startNode(t)
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	configTx := configManagerTx()
 	_, err := mock33.GetAPI().SendTx(configTx)
@@ -79,6 +79,8 @@ func startNode(t *testing.T) {
 	assert.Nil(t, err)
 	sub.Consensus["qbft"] = qcfg
 	mock33_2 := testnode.NewWithConfig(cfg2, nil)
+	mock33_2.Listen()
+	time.Sleep(3 * time.Second)
 	defer clearQbftData("datadir2")
 	defer mock33_2.Close()
 

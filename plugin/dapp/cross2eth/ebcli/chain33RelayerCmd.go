@@ -30,6 +30,7 @@ func Chain33RelayerCmd() *cobra.Command {
 		ShowBridgeRegistryAddr4chain33Cmd(),
 		TokenAddressCmd(),
 		MultiSignCmd(),
+		ResendChain33EventCmd(),
 	)
 
 	return cmd
@@ -386,4 +387,31 @@ func showChain33Relayer2EthTxs(cmd *cobra.Command, args []string) {
 	for _, hash := range res.Txhash {
 		fmt.Println(hash)
 	}
+}
+
+func ResendChain33EventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resendChain33Event",
+		Short: "resend Chain33Event to ethereum process goroutine",
+		Run:   resendChain33Event,
+	}
+	addResendChain33EventFlags(cmd)
+	return cmd
+}
+
+func addResendChain33EventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height begin to resend chain33 event ")
+	_ = cmd.MarkFlagRequired("height")
+}
+
+func resendChain33Event(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetInt64("height")
+	resendChain33EventReq := &ebTypes.ResendChain33EventReq{
+		Height: height,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendChain33Event", resendChain33EventReq, &res)
+	ctx.Run()
 }

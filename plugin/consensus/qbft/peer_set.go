@@ -140,8 +140,9 @@ func (ps *PeerSet) Add(peer Peer) error {
 // peerKey, otherwise false.
 func (ps *PeerSet) Has(peerKey ID) bool {
 	ps.mtx.Lock()
+	defer ps.mtx.Unlock()
+
 	_, ok := ps.lookup[peerKey]
-	ps.mtx.Unlock()
 	return ok
 }
 
@@ -435,7 +436,7 @@ func (pc *peerConn) IsRunning() bool {
 func (pc *peerConn) Start() error {
 	if atomic.CompareAndSwapUint32(&pc.started, 0, 1) {
 		if atomic.LoadUint32(&pc.stopped) == 1 {
-			qbftlog.Error("peerConn already stoped can not start", "peerIP", pc.ip.String())
+			qbftlog.Error("peerConn already stopped", "peerIP", pc.ip.String())
 			return nil
 		}
 		pc.bufReader = bufio.NewReaderSize(pc.conn, minReadBufferSize)
@@ -525,13 +526,13 @@ FOR_LOOP:
 			raw := encodeMsg(msg.Msg, msg.TypeID)
 			_, err := pc.bufWriter.Write(raw)
 			if err != nil {
-				qbftlog.Error("peerConn sendroutine write data failed", "error", err)
+				qbftlog.Error("sendRoutine buffer write fail", "peer", pc, "err", err)
 				pc.stopForError(err)
 				break FOR_LOOP
 			}
 			err = pc.bufWriter.Flush()
 			if err != nil {
-				qbftlog.Error("peerConn sendroutine flush buffer failed", "error", err)
+				qbftlog.Error("sendRoutine buffer flush fail", "peer", pc, "err", err)
 				pc.stopForError(err)
 				break FOR_LOOP
 			}
@@ -547,7 +548,7 @@ FOR_LOOP:
 		var buf [6]byte
 		_, err := io.ReadFull(pc.bufReader, buf[:])
 		if err != nil {
-			qbftlog.Error("recvRoutine read byte fail", "conn", pc, "err", err)
+			qbftlog.Error("recvRoutine read byte fail", "peer", pc, "err", err)
 			pc.stopForError(err)
 			break FOR_LOOP
 		}
