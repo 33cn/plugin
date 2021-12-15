@@ -10,33 +10,33 @@ source "./offlinePublic.sh"
 
 # shellcheck disable=SC2034
 {
-  chain33BridgeBank=""
-ethBridgeBank=""
+    chain33BridgeBank=""
+    ethBridgeBank=""
 
-chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
-ethereumBtyBridgeTokenAddr=""
-chain33EthBridgeTokenAddr=""
+    chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+    ethereumBtyBridgeTokenAddr=""
+    chain33EthBridgeTokenAddr=""
 
-ethereumBycERC20TokenAddr=""
-chain33BycBridgeTokenAddr=""
+    ethereumBycERC20TokenAddr=""
+    chain33BycBridgeTokenAddr=""
 
-ethereumUSDTERC20TokenAddr=""
-chain33USDTBridgeTokenAddr=""
+    ethereumUSDTERC20TokenAddr=""
+    chain33USDTBridgeTokenAddr=""
 
-chain33YccERC20TokenAddr=""
-ethereumYccBridgeTokenAddr=""
+    chain33YccERC20TokenAddr=""
+    ethereumYccBridgeTokenAddr=""
 
-chain33ZbcERC20TokenAddr=""
-ethereumZbcBridgeTokenAddr=""
+    chain33ZbcERC20TokenAddr=""
+    ethereumZbcBridgeTokenAddr=""
 
-BridgeRegistryOnChain33=""
-BridgeRegistryOnEth=""
+    BridgeRegistryOnChain33=""
+    BridgeRegistryOnEth=""
 
-multisignChain33Addr=""
-multisignEthAddr=""
+    multisignChain33Addr=""
+    multisignEthAddr=""
 
-chain33ID=0
-maturityDegree=10
+    chain33ID=0
+    maturityDegree=10
 
     # ETH 部署合约者的私钥 用于部署合约时签名使用
     ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
@@ -890,22 +890,22 @@ function echo_addrs() {
 }
 
 function get_cli() {
-      # shellcheck disable=SC2034
-      {
-          docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-          MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-          Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-          Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+    # shellcheck disable=SC2034
+    {
+        docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+        MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
 
-          CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
-          CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
-          CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
-          CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
+        CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
+        CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
+        CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
+        CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
-          docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-          Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para."
-          echo "${Boss4xCLI}"
-      }
+        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para."
+        echo "${Boss4xCLI}"
+    }
 }
 
 function test_all() {
@@ -931,4 +931,3 @@ function test_all() {
     offline_set_offline_token_EthByc 100000000000000 10
     offline_set_offline_token_EthUSDT 100000000000000 10
 }
-
