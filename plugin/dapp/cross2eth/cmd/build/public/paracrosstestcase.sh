@@ -6,26 +6,15 @@ PARA_CLI2="docker exec ${NODE2} /root/chain33-cli --paraName user.p.para. --rpc_
 PARA_CLI1="docker exec ${NODE1} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 PARA_CLI4="docker exec ${NODE4} /root/chain33-cli --paraName user.p.para. --rpc_laddr http://localhost:8901"
 PARA_CLI5="docker exec ${NODE5} /root/chain33-cli --paraName user.p.game. --rpc_laddr http://localhost:8901"
-#MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 
 PARANAME="para"
 PARANAME_GAME="game"
-#PARA_COIN_FROZEN="5.0000"
 MainLoopCheckForkHeight="60"
-
-#BLSPUB_E5="8920442cf306fccd11e7bde3cfffe183a138a941f471df0818edff5580b3ad7df42850a5cec15e09aef0fdd4489f7c12"
-#BLSPUB_KS="a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
-#BLSPUB_JR="81307df1fdde8f0e846ed1542c859c1e9daba2553e62e48db0877329c5c63fb86e70b9e2e83263da0eb7fcad275857f8"
-#BLSPUB_NL="ad1d9ff67d790581fa3659c1817985eeec7c65206e8a873147cd5b6bfe1356d5cd4ed1089462bd11e51705e100c95a6b"
-#BLSPUB_MC="980287e26d4d44f8c57944ffc096f7d98a460c97dadbffaed14ff0de901fa7f8afc59fcb1805a0b031e5eae5601df1c2"
 
 xsedfix=""
 if [ "$(uname)" == "Darwin" ]; then
     xsedfix=".bak"
 fi
-
-# shellcheck source=/dev/null
-#source test-rpc.sh
 
 function para_init() {
     para_set_toml chain33.para33.toml "$PARANAME" "$1"
@@ -289,27 +278,7 @@ function query_tx() {
     if [[ ${ty} != 2 ]]; then
         echo -e "${RED}check tx error, hash is ${2}${NOC}"
         exit 1
-        #        exit_cp_file
     fi
-
-    #    block_wait "${1}" 1
-    #
-    #    local times=200
-    #    while true; do
-    #        ret=$(${1} tx query -s "${2}" | jq -r ".tx.hash")
-    #        echo "query hash is ${2}, return ${ret} "
-    #        if [ "${ret}" != "${2}" ]; then
-    #            block_wait "${1}" 1
-    #            times=$((times - 1))
-    #            if [ $times -le 0 ]; then
-    #                echo "query tx=$2 failed"
-    #                exit 1
-    #            fi
-    #        else
-    #            echo "query tx=$2  success"
-    #            break
-    #        fi
-    #    done
 }
 
 function para_cross_transfer_from_parachain() {
@@ -419,12 +388,8 @@ function para_create_nodegroup() {
     id=$txhash
 
     balance=$(${CLI} account balance -a 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 -e paracross | jq -r ".frozen")
-    #    if [ "$balance" != "30.0000" ]; then
-    #        echo "apply coinfrozen error balance=$balance"
-    ##        exit 1
-    #    fi
 
-    echo "=========== # bridgevmxgo para chain approve node group ============="
+    echo "=========== # para chain approve node group ============="
     ##approve
     txhash=$(${PARA_CLI} send para nodegroup approve -i "$id" -a "" -c 6 -k 0xc34b5d9d44ac7b754806f761d3d4d2c4fe5214f6b074c19f069c4f5c2a29c8cc)
     echo "tx=$txhash"
