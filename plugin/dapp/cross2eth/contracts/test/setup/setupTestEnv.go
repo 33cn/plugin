@@ -44,7 +44,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *ethtxs.DeployPara) {
 		}
 		alloc[addr] = account
 	}
-	gasLimit := uint64(1300000)
+	gasLimit := uint64(100000000)
 	sim := new(ethinterface.SimExtend)
 	sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
 
@@ -87,7 +87,7 @@ func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []st
 		alloc[addr] = account
 	}
 
-	gasLimit := uint64(1300000)
+	gasLimit := uint64(100000000)
 	//sim := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(params.Ether)}}, 10000000)
 	sim := backends.NewSimulatedBackend(alloc, gasLimit)
 
