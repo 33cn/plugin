@@ -10,33 +10,33 @@ source "./mainPubilcRelayerTest.sh"
 
 # shellcheck disable=SC2034
 {
-  chain33BridgeBank=""
-ethBridgeBank=""
+    chain33BridgeBank=""
+    ethBridgeBank=""
 
-chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
-ethereumBtyBridgeTokenAddr=""
-chain33EthBridgeTokenAddr=""
+    chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+    ethereumBtyBridgeTokenAddr=""
+    chain33EthBridgeTokenAddr=""
 
-ethereumBycERC20TokenAddr=""
-chain33BycBridgeTokenAddr=""
+    ethereumBycERC20TokenAddr=""
+    chain33BycBridgeTokenAddr=""
 
-ethereumUSDTERC20TokenAddr=""
-chain33USDTBridgeTokenAddr=""
+    ethereumUSDTERC20TokenAddr=""
+    chain33USDTBridgeTokenAddr=""
 
-chain33YccERC20TokenAddr=""
-ethereumYccBridgeTokenAddr=""
+    chain33YccERC20TokenAddr=""
+    ethereumYccBridgeTokenAddr=""
 
-chain33ZbcERC20TokenAddr=""
-ethereumZbcBridgeTokenAddr=""
+    chain33ZbcERC20TokenAddr=""
+    ethereumZbcBridgeTokenAddr=""
 
-BridgeRegistryOnChain33=""
-BridgeRegistryOnEth=""
+    BridgeRegistryOnChain33=""
+    BridgeRegistryOnEth=""
 
-multisignChain33Addr=""
-multisignEthAddr=""
+    multisignChain33Addr=""
+    multisignEthAddr=""
 
-chain33ID=0
-maturityDegree=10
+    chain33ID=0
+    maturityDegree=10
 
     # ETH 部署合约者的私钥 用于部署合约时签名使用
     ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
@@ -83,7 +83,6 @@ maturityDegree=10
     chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 }
-
 
 function chain33_offline_send_evm() {
     # shellcheck disable=SC2154
@@ -269,7 +268,7 @@ function Testethereum2EVMToChain33_usdt() {
 }
 
 function get_evm_cli() {
-  # shellcheck disable=SC2034
+    # shellcheck disable=SC2034
     {
         # shellcheck disable=SC2154
         docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
