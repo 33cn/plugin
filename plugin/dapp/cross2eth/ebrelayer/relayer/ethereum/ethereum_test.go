@@ -171,6 +171,7 @@ func Test_DeployContrcts(t *testing.T) {
 		deployInfo:          cfg.Deploy,
 	}
 	relayer.clientSpec = sim
+	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1)
 
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
@@ -439,6 +440,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
 	relayer.initBridgeBankTx()
 	relayer.clientSpec = sim
+	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1337)
 
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
