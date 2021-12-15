@@ -127,8 +127,6 @@ function offline_create_bridge_token_chain33_BYC() {
 
     result=$(${Chain33Cli} evm query -a "${chain33BycBridgeTokenAddr}" -c "${chain33BycBridgeTokenAddr}" -b "symbol()")
     is_equal "${result}" "BYC"
-
-    ${CLIA} chain33 token set -t "${chain33BycBridgeTokenAddr}" -s BYC
 }
 
 function offline_deploy_erc20_chain33_YCC() {
@@ -178,7 +176,6 @@ function offline_create_bridge_token_eth_BTY() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumBtyBridgeTokenAddr=$(${CLIA} ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ${CLIA} ethereum token set -t "${ethereumBtyBridgeTokenAddr}" -s BTY
 }
 
 function offline_create_bridge_token_chain33_ETH() {
@@ -193,8 +190,6 @@ function offline_create_bridge_token_chain33_ETH() {
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33EthBridgeTokenAddr}" -b "symbol()")
     is_equal "${result}" "ETH"
-
-    ${CLIA} chain33 token set -t "${chain33EthBridgeTokenAddr}" -s ETH
 }
 
 function offline_create_bridge_token_eth_YCC() {
@@ -204,7 +199,6 @@ function offline_create_bridge_token_eth_YCC() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumYccBridgeTokenAddr=$(${CLIA} ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ${CLIA} ethereum token set -t "${ethereumYccBridgeTokenAddr}" -s YCC
     cp BridgeToken.abi "${ethereumYccBridgeTokenAddr}.abi"
 }
 
@@ -215,7 +209,6 @@ function offline_create_bridge_token_eth_ZBC() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumZbcBridgeTokenAddr=$(${CLIA} ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ${CLIA} ethereum token set -t "${ethereumZbcBridgeTokenAddr}" -s ZBC
     cp BridgeToken.abi "${ethereumZbcBridgeTokenAddr}.abi"
 }
 

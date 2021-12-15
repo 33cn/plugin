@@ -59,43 +59,17 @@ func EthereumRelayerCmd() *cobra.Command {
 func TokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "create bridgeToken, ERC20 Token, show or set token address and it's corresponding symbol",
+		Short: "create bridgeToken, ERC20 Token, show token address and it's corresponding symbol",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
 		CreateBridgeTokenCmd(),
-		SetTokenAddress4EthCmd(),
 		ShowTokenAddress4EthCmd(),
 		AddToken2LockListCmd(),
 		ShowTokenAddress4LockEthCmd(),
 		TransferTokenCmd(),
 	)
 	return cmd
-}
-
-func SetTokenAddress4EthCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set",
-		Short: "set token address and it's corresponding symbol",
-		Run:   SetTokenAddress4Eth,
-	}
-	SetTokenFlags(cmd)
-	return cmd
-}
-
-func SetTokenAddress4Eth(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	token, _ := cmd.Flags().GetString("token")
-
-	var res rpctypes.Reply
-	para := ebTypes.TokenAddress{
-		Symbol:    symbol,
-		Address:   token,
-		ChainName: ebTypes.EthereumBlockChainName,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetTokenAddress", para, &res)
-	ctx.Run()
 }
 
 func ShowTokenAddress4EthCmd() *cobra.Command {

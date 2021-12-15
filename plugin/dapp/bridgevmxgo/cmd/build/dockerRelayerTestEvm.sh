@@ -738,9 +738,8 @@ function lockEthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function StartDockerRelayerDeploy() {
+function up_relayer_toml() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
     # 修改 relayer.toml 配置文件 pushName 字段
     pushNameChange "./relayer.toml"
     # 修改 relayer.toml 配置文件 initPowers
@@ -775,6 +774,15 @@ function StartDockerRelayerDeploy() {
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
     sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+function StartDockerRelayerDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    # 修改 relayer.toml
+    up_relayer_toml
 
     # 启动 ebrelayer
     start_docker_ebrelayerA
@@ -1063,16 +1071,14 @@ function Testethereum2EVMToChain33_usdt() {
     #    is_equal "${result}" "500000000"
 }
 
-function AllRelayerMainTest() {
-    set +e
-
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-    Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-
+function get_cli() {
     # shellcheck disable=SC2034
     {
+        docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+        MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
@@ -1080,31 +1086,12 @@ function AllRelayerMainTest() {
 
         docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
         Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para."
-
         echo "${Boss4xCLI}"
+        EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     }
+}
 
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    if [[ ${1} != "" ]]; then
-        maturityDegree=${1}
-        echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
-    fi
-
-    # shellcheck disable=SC2120
-    if [[ $# -ge 2 ]]; then
-        chain33ID="${2}"
-    fi
-
-    # init
-    Chain33Cli=${MainCli}
-    InitChain33Validator
-    # para add
-    initPara
-
-    Chain33Cli=${Para8901Cli}
-    StartDockerRelayerDeploy
-
+function test_all() {
     # test
     Chain33Cli=${Para8901Cli}
     TestChain33ToEthAssets
@@ -1127,11 +1114,38 @@ function AllRelayerMainTest() {
     offline_set_offline_token_EthByc 100000000000000 10
     offline_set_offline_token_EthUSDT 100000000000000 10
 
-    EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
     DeployEvmxgo
     TestETH2EVMToChain33
     Testethereum2EVMToChain33_byc
     Testethereum2EVMToChain33_usdt
+}
+
+function AllRelayerMainTest() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    set +e
+    get_cli
+
+    if [[ ${1} != "" ]]; then
+        maturityDegree=${1}
+        echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
+    fi
+
+    # shellcheck disable=SC2120
+    if [[ $# -ge 2 ]]; then
+        chain33ID="${2}"
+    fi
+
+    # init
+    Chain33Cli=${MainCli}
+    InitChain33Validator
+    # para add
+    initPara
+
+    Chain33Cli=${Para8901Cli}
+    StartDockerRelayerDeploy
+
+    test_all
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
