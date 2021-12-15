@@ -374,6 +374,23 @@ func (manager *Manager) Deploy2Chain33(param interface{}, result *interface{}) e
 	return nil
 }
 
+func (manager *Manager) ResendChain33Event(param *relayerTypes.ResendChain33EventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	err := manager.chain33Relayer.ResendChain33Event(param.Height)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Successful to ResendChain33Event",
+	}
+	return nil
+}
+
 func (manager *Manager) CreateERC20ToChain33(param relayerTypes.ERC20Token, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -664,6 +681,21 @@ func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{})
 	}
 	*result = rpctypes.Reply{
 		IsOk: active,
+	}
+	return nil
+}
+
+func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.BalanceLockedReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	balance, err := manager.ethRelayer.ShowBalanceLocked(BalanceLockedReq.TokenAddr, BalanceLockedReq.BridgeBank)
+	if nil != err {
+		return err
+	}
+
+	*result = relayerTypes.ReplyBalance{
+		IsOK:    true,
+		Balance: balance,
 	}
 	return nil
 }

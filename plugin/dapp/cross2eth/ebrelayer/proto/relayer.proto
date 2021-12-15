@@ -236,3 +236,13 @@ message ETHConfigLockedTokenOffline {
     string threshold = 3;
     uint32 percents  = 4;
 }
+
+message BalanceLockedReq  {
+    string bridgeBank = 1;
+    string tokenAddr  = 2;
+}
+
+message ResendChain33EventReq  {
+    int64 height = 1;
+}
+

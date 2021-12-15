@@ -25,6 +25,102 @@ import (
 ./boss4x ethereum offline send -f deploysigntxs.txt
 */
 
+func CreateEthBridgeBankRelatedCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "createEthBridgeBankRelated", //first step
+		Short: "create and sign all the offline bridgeBank to ethereum contracts(inclue bridgeBank and bridgeRegistry)",
+		Run:   CreateEthBridgeBankRelated, //对要部署的factory合约进行签名
+	}
+	addCreateEthBridgeBankRelatedFlags(cmd)
+	return cmd
+}
+
+func addCreateEthBridgeBankRelatedFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("owner", "o", "", "the deployer address")
+	_ = cmd.MarkFlagRequired("owner")
+
+	cmd.Flags().StringP("valSetAddr", "v", "", "valSet address")
+	_ = cmd.MarkFlagRequired("valSetAddr")
+}
+
+func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
+	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
+	owner, _ := cmd.Flags().GetString("owner")
+	valSetAddrStr, _ := cmd.Flags().GetString("valSetAddr")
+
+	deployerAddr := common.HexToAddress(owner)
+	valSetAddr := common.HexToAddress(valSetAddrStr)
+
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	ctx := context.Background()
+	startNonce, err := client.PendingNonceAt(ctx, deployerAddr)
+	if nil != err {
+		panic(err.Error())
+	}
+
+	var infos []*DeployInfo
+
+	//step1 chain33bridge
+	packData, err := deploychain33BridgePackData(deployerAddr, valSetAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	chain33BridgeAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: chain33BridgeAddr, Name: "chain33Bridge", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
+
+	//step2 oracle
+	packData, err = deployOraclePackData(deployerAddr, valSetAddr, chain33BridgeAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	oracleAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: oracleAddr, Name: "oracle", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
+
+	//step3 bridgebank
+	packData, err = deployBridgeBankPackData(deployerAddr, chain33BridgeAddr, oracleAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	bridgeBankAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce, To: nil})
+	startNonce = startNonce + 1
+
+	//step4
+	packData, err = callSetBridgeBank(bridgeBankAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce = startNonce + 1
+
+	//step5
+	packData, err = callSetOracal(oracleAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce = startNonce + 1
+
+	//step6 bridgeRegistry
+	packData, err = deployBridgeRegistry(chain33BridgeAddr, bridgeBankAddr, oracleAddr, valSetAddr)
+	if err != nil {
+		panic(err.Error())
+	}
+	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce, To: nil})
+
+	err = NewTxWrite(infos, deployerAddr, url, "deployBridgeBank4Ethtxs.txt")
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
 // CreateCmd 查询deploy 私钥的nonce信息，并输出到文件中
 func CreateCmd() *cobra.Command {
 	cmd := &cobra.Command{

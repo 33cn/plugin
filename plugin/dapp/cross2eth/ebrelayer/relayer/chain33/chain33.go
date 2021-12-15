@@ -266,6 +266,60 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockEvent(evmEventType events.C
 }
 
 //DeployContrcts 部署以太坊合约
+func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {
+	txLogs, err := chain33Relayer.syncEvmTxLogs.GetNextValidEvmTxLogs(height)
+	if nil == txLogs || nil != err {
+		if err != nil {
+			relayerLog.Error("ResendChain33Event", "Failed to GetNextValidTxReceipts due to:", err.Error())
+			return err
+		}
+		return nil
+	}
+	relayerLog.Debug("ResendChain33Event", "lastHeight4Tx", chain33Relayer.lastHeight4Tx, "valid tx receipt with height:", txLogs.Height)
+
+	txAndLogs := txLogs.TxAndLogs
+	for _, txAndLog := range txAndLogs {
+		tx := txAndLog.Tx
+
+		//确认订阅的evm交易类型和合约地址
+		if !strings.Contains(string(tx.Execer), "evm") {
+			relayerLog.Error("ResendChain33Event received logs not from evm tx", "tx.Execer", string(tx.Execer))
+			continue
+		}
+
+		var evmAction evmtypes.EVMContractAction
+		err := chain33Types.Decode(tx.Payload, &evmAction)
+		if nil != err {
+			relayerLog.Error("ResendChain33Event", "Failed to decode action for tx with hash", common.ToHex(tx.Hash()))
+			continue
+		}
+
+		//确认监听的合约地址
+		if evmAction.ContractAddr != chain33Relayer.bridgeBankAddr {
+			relayerLog.Error("ResendChain33Event received logs not from bridgeBank", "evmAction.ContractAddr", evmAction.ContractAddr)
+			continue
+		}
+
+		for _, evmlog := range txAndLog.LogsPerTx.Logs {
+			var evmEventType events.Chain33EvmEvent
+			if chain33Relayer.bridgeBankEventBurnSig == common.ToHex(evmlog.Topic[0]) {
+				evmEventType = events.Chain33EventLogBurn
+			} else if chain33Relayer.bridgeBankEventLockSig == common.ToHex(evmlog.Topic[0]) {
+				evmEventType = events.Chain33EventLogLock
+			} else {
+				continue
+			}
+
+			if err := chain33Relayer.handleBurnLockEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+//DeployContrcts 部署以太坊合约
 func (chain33Relayer *Relayer4Chain33) DeployContracts() (bridgeRegistry string, err error) {
 	bridgeRegistry = ""
 	if nil == chain33Relayer.deployInfo {

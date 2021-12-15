@@ -207,7 +207,7 @@ func (node *Node) Start() {
 				randomSleep(0)
 				err := node.DialPeerWithAddress(addr)
 				if err != nil {
-					qbftlog.Debug("Error dialing peer", "err", err)
+					qbftlog.Error("Error dialing peer", "err", err)
 				}
 			}(i)
 		}
@@ -366,8 +366,19 @@ func (node *Node) StopPeerForError(peer Peer, reason interface{}) {
 	}
 }
 
+func (node *Node) isSeed(addr string) bool {
+	ip, _ := splitHostPort(addr)
+	for _, seed := range node.seeds {
+		host, _ := splitHostPort(seed)
+		if host == ip {
+			return true
+		}
+	}
+	return false
+}
+
 func (node *Node) addInboundPeer(conn net.Conn) error {
-	peerConn, err := newInboundPeerConn(conn, node.privKey, node.StopPeerForError, node.state)
+	peerConn, err := newInboundPeerConn(conn, node.isSeed(conn.RemoteAddr().String()), node.privKey, node.StopPeerForError, node.state)
 	if err != nil {
 		if er := conn.Close(); er != nil {
 			qbftlog.Error("addInboundPeer close conn failed", "er", er)
@@ -458,7 +469,7 @@ func (node *Node) addPeer(pc *peerConn) error {
 		return err
 	}
 
-	qbftlog.Info("Added peer", "peer", pc.ip)
+	qbftlog.Info("Added peer", "ip", pc.ip, "peer", pc)
 	rs := node.state.GetRoundState()
 	stateMsg := MsgInfo{TypeID: ttypes.NewRoundStepID, Msg: rs.RoundStateMessage(), PeerID: pc.id, PeerIP: pc.ip.String()}
 	pc.Send(stateMsg)
@@ -685,6 +696,7 @@ func newOutboundPeerConn(addr string, ourNodePrivKey crypto.PrivKey, onPeerError
 
 func newInboundPeerConn(
 	conn net.Conn,
+	persistent bool,
 	ourNodePrivKey crypto.PrivKey,
 	onPeerError func(Peer, interface{}),
 	state *ConsensusState,
@@ -692,7 +704,7 @@ func newInboundPeerConn(
 
 	// TODO: issue PoW challenge
 
-	return newPeerConn(conn, false, false, ourNodePrivKey, onPeerError, state)
+	return newPeerConn(conn, false, persistent, ourNodePrivKey, onPeerError, state)
 }
 
 func newPeerConn(
