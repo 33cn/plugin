@@ -315,9 +315,9 @@ function offline_transfer_multisign_Eth_test() {
     sleep 10
 
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-        cli_ret "${result}" "balance" ".balance" "16"
+    cli_ret "${result}" "balance" ".balance" "16"
     result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
-        cli_ret "${result}" "balance" ".balance" "20"
+    cli_ret "${result}" "balance" ".balance" "20"
 
     # transfer
     # shellcheck disable=SC2154
@@ -329,9 +329,9 @@ function offline_transfer_multisign_Eth_test() {
     sleep 10
 
     result=$(${CLIA} ethereum balance -o "${ethMultisignA}")
-        cli_ret "${result}" "balance" ".balance" "1005"
+    cli_ret "${result}" "balance" ".balance" "1005"
     result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
-        cli_ret "${result}" "balance" ".balance" "15"
+    cli_ret "${result}" "balance" ".balance" "15"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
