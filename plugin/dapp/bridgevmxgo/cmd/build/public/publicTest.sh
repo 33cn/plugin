@@ -593,3 +593,65 @@ function kill_all_ebrelayer() {
         cp ./ebrelayer relayer_${name}/ebrelayer
     done
 }
+
+function get_config() {
+    local fileName=$1
+    local param=$2
+    value=$(sed -E '/^#.*|^ *$/d' "${fileName}" | awk -F "${param}=" "/${param}=/{print \$2}" | tail -n1)
+    echo "${value}"
+}
+
+function init_read_address() {
+    local fileName=$1
+    # shellcheck disable=SC2034
+    {
+        ethDeployAddr=$(get_config "${fileName}" "ethDeployAddr")
+        ethDeployKey=$(get_config "${fileName}" "ethDeployKey")
+        ethValidatorAddra=$(get_config "${fileName}" "ethValidatorAddra")
+        ethValidatorAddrb=$(get_config "${fileName}" "ethValidatorAddrb")
+        ethValidatorAddrc=$(get_config "${fileName}" "ethValidatorAddrc")
+        ethValidatorAddrd=$(get_config "${fileName}" "ethValidatorAddrd")
+        ethValidatorAddrKeya=$(get_config "${fileName}" "ethValidatorAddrKeya")
+        ethValidatorAddrKeyb=$(get_config "${fileName}" "ethValidatorAddrKeyb")
+        ethValidatorAddrKeyc=$(get_config "${fileName}" "ethValidatorAddrKeyc")
+        ethValidatorAddrKeyd=$(get_config "${fileName}" "ethValidatorAddrKeyd")
+        ethTestAddr1=$(get_config "${fileName}" "ethTestAddr1")
+        ethTestAddrKey1=$(get_config "${fileName}" "ethTestAddrKey1")
+        ethTestAddr2=$(get_config "${fileName}" "ethTestAddr2")
+        ethTestAddrKey2=$(get_config "${fileName}" "ethTestAddrKey2")
+        ethReceiverAddr1=$(get_config "${fileName}" "ethReceiverAddr1")
+        ethMultisignA=$(get_config "${fileName}" "ethMultisignA")
+        ethMultisignB=$(get_config "${fileName}" "ethMultisignB")
+        ethMultisignC=$(get_config "${fileName}" "ethMultisignC")
+        ethMultisignD=$(get_config "${fileName}" "ethMultisignD")
+        ethMultisignKeyA=$(get_config "${fileName}" "ethMultisignKeyA")
+        ethMultisignKeyB=$(get_config "${fileName}" "ethMultisignKeyB")
+        ethMultisignKeyC=$(get_config "${fileName}" "ethMultisignKeyC")
+        ethMultisignKeyD=$(get_config "${fileName}" "ethMultisignKeyD")
+
+        chain33DeployAddr=$(get_config "${fileName}" "chain33DeployAddr")
+        chain33DeployKey=$(get_config "${fileName}" "chain33DeployKey")
+        chain33Validatora=$(get_config "${fileName}" "chain33Validatora")
+        chain33Validatorb=$(get_config "${fileName}" "chain33Validatorb")
+        chain33Validatorc=$(get_config "${fileName}" "chain33Validatorc")
+        chain33Validatord=$(get_config "${fileName}" "chain33Validatord")
+        chain33ValidatorKeya=$(get_config "${fileName}" "chain33ValidatorKeya")
+        chain33ValidatorKeyb=$(get_config "${fileName}" "chain33ValidatorKeyb")
+        chain33ValidatorKeyc=$(get_config "${fileName}" "chain33ValidatorKeyc")
+        chain33ValidatorKeyd=$(get_config "${fileName}" "chain33ValidatorKeyd")
+        chain33TestAddr1=$(get_config "${fileName}" "chain33TestAddr1")
+        chain33TestAddrKey1=$(get_config "${fileName}" "chain33TestAddrKey1")
+        chain33TestAddr2=$(get_config "${fileName}" "chain33TestAddr2")
+        chain33TestAddrKey2=$(get_config "${fileName}" "chain33TestAddrKey2")
+        chain33ReceiverAddr=$(get_config "${fileName}" "ethDeployAddr")
+        chain33ReceiverAddrKey=$(get_config "${fileName}" "ethDeployAddr")
+        chain33MultisignA=$(get_config "${fileName}" "chain33MultisignA")
+        chain33MultisignB=$(get_config "${fileName}" "chain33MultisignB")
+        chain33MultisignC=$(get_config "${fileName}" "chain33MultisignC")
+        chain33MultisignD=$(get_config "${fileName}" "chain33MultisignD")
+        chain33MultisignKeyA=$(get_config "${fileName}" "chain33MultisignKeyA")
+        chain33MultisignKeyB=$(get_config "${fileName}" "chain33MultisignKeyB")
+        chain33MultisignKeyC=$(get_config "${fileName}" "chain33MultisignKeyC")
+        chain33MultisignKeyD=$(get_config "${fileName}" "chain33MultisignKeyD")
+    }
+}

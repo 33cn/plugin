@@ -23,6 +23,5 @@ func prefixMessage(message common.Hash, key *ecdsa.PrivateKey) ([]byte, []byte) 
 	if err != nil {
 		panic(err)
 	}
-
 	return sig, prefixed
 }

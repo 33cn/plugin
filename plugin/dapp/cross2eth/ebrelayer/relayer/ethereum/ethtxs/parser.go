@@ -10,12 +10,9 @@ package ethtxs
 // --------------------------------------------------------
 
 import (
-	"strings"
-
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // LogLockToEthBridgeClaim : parses and packages a LockEvent struct with a validator address in an EthBridgeClaim msg
@@ -23,11 +20,6 @@ func LogLockToEthBridgeClaim(event *events.LockEvent, ethereumChainID int64, bri
 	recipient := event.To
 	if 0 == len(recipient) {
 		return nil, ebrelayerTypes.ErrEmptyAddress
-	}
-	// Symbol formatted to lowercase
-	symbol := strings.ToLower(event.Symbol)
-	if symbol == "eth" && event.Token != common.HexToAddress("0x0000000000000000000000000000000000000000") {
-		return nil, ebrelayerTypes.ErrAddress4Eth
 	}
 
 	chain33Receiver := new(address.Address)

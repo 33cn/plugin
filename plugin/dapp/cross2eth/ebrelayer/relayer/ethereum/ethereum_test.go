@@ -171,6 +171,7 @@ func Test_DeployContrcts(t *testing.T) {
 		deployInfo:          cfg.Deploy,
 	}
 	relayer.clientSpec = sim
+	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1)
 
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
@@ -244,6 +245,12 @@ func Test_LockEth(t *testing.T) {
 	bridgeBankBalance, err := sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
 	require.Nil(t, err)
 	assert.Equal(t, bridgeBankBalance.Int64(), int64(0))
+
+	userAuth, err := ethtxs.PrepareAuth(sim, para.DeployPrivateKey, para.Operator)
+	require.Nil(t, err)
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(userAuth, "ETH")
+	require.Nil(t, err)
+	sim.Commit()
 
 	userOneAuth, err := ethtxs.PrepareAuth(sim, para.ValidatorPriKey[0], para.InitValidators[0])
 	require.Nil(t, err)
@@ -414,7 +421,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		fetchHeightPeriodMs:     cfg.EthBlockFetchPeriod,
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
-		symbol2LockAddr:         make(map[string]common.Address),
+		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
 
 		ethBridgeClaimChan: ethBridgeClaimchan,
 		chain33MsgChan:     chain33Msgchan,
@@ -433,6 +440,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
 	relayer.initBridgeBankTx()
 	relayer.clientSpec = sim
+	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1337)
 
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))

@@ -8,6 +8,7 @@ import (
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	tetherUSDT "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/usdt/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -81,7 +82,7 @@ func DeployERC20(cmd *cobra.Command, _ []string) {
 	}
 	bin := common.FromHex(erc20.ERC20Bin)
 	Erc20OwnerAddr := common.HexToAddress(owner)
-	packdata, err := parsed.Pack("", symbol, symbol, bnAmount, Erc20OwnerAddr)
+	packdata, err := parsed.Pack("", symbol, symbol, bnAmount, Erc20OwnerAddr, uint8(8))
 	if err != nil {
 		fmt.Println("Pack error", err.Error())
 		return
@@ -96,6 +97,76 @@ func DeployERC20(cmd *cobra.Command, _ []string) {
 	}
 	infos = append(infos, &deployInfo)
 	fileName := fmt.Sprintf("deployErc20%s.txt", symbol)
+	err = NewTxWrite(infos, common.HexToAddress(deployerAddr), url, fileName)
+	if err != nil {
+		fmt.Println("NewTxWrite error", err.Error())
+		return
+	}
+}
+
+func DeployTetherUSDTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create_tether_usdt",
+		Short: "create tether usdt contracts",
+		Run:   DeployTetherUSDT,
+	}
+	DeployTetherUSDTFlags(cmd)
+	return cmd
+}
+
+func DeployTetherUSDTFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("deployAddr", "d", "", "deploy contract addr")
+	_ = cmd.MarkFlagRequired("deployAddr")
+	cmd.Flags().StringP("symbol", "s", "", "erc20 symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("amount", "m", "0", "amount")
+	_ = cmd.MarkFlagRequired("amount")
+}
+
+func DeployTetherUSDT(cmd *cobra.Command, _ []string) {
+	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
+	deployerAddr, _ := cmd.Flags().GetString("deployAddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetString("amount")
+	bnAmount := big.NewInt(1e6 * 1e6)
+	bnAmount, _ = bnAmount.SetString(utils.TrimZeroAndDot(amount), 10)
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		fmt.Println("ethclient Dial error", err.Error())
+		return
+	}
+
+	ctx := context.Background()
+	startNonce, err := client.PendingNonceAt(ctx, common.HexToAddress(deployerAddr))
+	if nil != err {
+		fmt.Println("PendingNonceAt error", err.Error())
+		return
+	}
+
+	var infos []*DeployInfo
+
+	parsed, err := abi.JSON(strings.NewReader(tetherUSDT.TetherTokenABI))
+	if err != nil {
+		fmt.Println("abi.JSON(strings.NewReader(tetherUSDT.TetherTokenABI)) error", err.Error())
+		return
+	}
+	bin := common.FromHex(tetherUSDT.TetherTokenBin)
+	//function TetherToken(uint _initialSupply, string _name, string _symbol, uint _decimals)
+	packdata, err := parsed.Pack("", bnAmount, symbol, symbol, big.NewInt(6))
+	if err != nil {
+		fmt.Println("Pack error", err.Error())
+		return
+	}
+	Erc20Addr := crypto.CreateAddress(common.HexToAddress(deployerAddr), startNonce)
+	deployInfo := DeployInfo{
+		PackData:       append(bin, packdata...),
+		ContractorAddr: Erc20Addr,
+		Name:           "Erc20: " + symbol,
+		Nonce:          startNonce,
+		To:             nil,
+	}
+	infos = append(infos, &deployInfo)
+	fileName := "deployTetherUSDT.txt"
 	err = NewTxWrite(infos, common.HexToAddress(deployerAddr), url, fileName)
 	if err != nil {
 		fmt.Println("NewTxWrite error", err.Error())
