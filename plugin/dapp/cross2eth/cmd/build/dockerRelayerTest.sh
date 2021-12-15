@@ -621,7 +621,7 @@ function lockEthYcc() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function StartDockerRelayerDeploy() {
+function up_relayer_toml() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     # 修改 relayer.toml 配置文件 pushName 字段
@@ -658,6 +658,15 @@ function StartDockerRelayerDeploy() {
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
     sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+function StartDockerRelayerDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    # 修改 relayer.toml 配置文件
+    up_relayer_toml
 
     # 启动 ebrelayer
     start_docker_ebrelayerA
@@ -755,15 +764,15 @@ function echo_addrs() {
     echo -e "${GRE}chain33TestAddrKey1: ${chain33TestAddrKey1} ${NOC}"
 }
 
-function AllRelayerMainTest() {
-    set +e
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-    Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+function get_cli() {
 
     # shellcheck disable=SC2034
     {
+        docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+        MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
@@ -774,8 +783,34 @@ function AllRelayerMainTest() {
 
         echo "${Boss4xCLI}"
     }
+}
 
+function test_all() {
+    # test
+    Chain33Cli=${Para8901Cli}
+    TestChain33ToEthAssets
+    TestETH2Chain33Assets
+    TestChain33ToEthZBCAssets
+    TestETH2Chain33Ycc
+
+    Chain33Cli=${Para8901Cli}
+    lockBty
+    lockChain33Ycc
+    lockEth
+    lockEthYcc
+
+    # 离线多签地址转入阈值设大
+    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Chain33Ycc 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_EthYcc 100000000000000 10
+}
+
+function AllRelayerMainTest() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    set +e
+
+    get_cli
 
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
@@ -796,24 +831,7 @@ function AllRelayerMainTest() {
     Chain33Cli=${Para8901Cli}
     StartDockerRelayerDeploy
 
-    # test
-    Chain33Cli=${Para8901Cli}
-    TestChain33ToEthAssets
-    TestETH2Chain33Assets
-    TestChain33ToEthZBCAssets
-    TestETH2Chain33Ycc
-
-    Chain33Cli=${Para8901Cli}
-    lockBty
-    lockChain33Ycc
-    lockEth
-    lockEthYcc
-
-    # 离线多签地址转入阈值设大
-    offline_set_offline_token_Bty 100000000000000 10
-    offline_set_offline_token_Chain33Ycc 100000000000000 10
-    offline_set_offline_token_Eth 100000000000000 10
-    offline_set_offline_token_EthYcc 100000000000000 10
+    test_all
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

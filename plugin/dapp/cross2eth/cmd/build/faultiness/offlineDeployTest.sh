@@ -451,7 +451,6 @@ function offline_create_bridge_token_eth_BTY() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumBtyBridgeTokenAddr=$(./ebcli_A ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ./ebcli_A ethereum token set -t "${ethereumBtyBridgeTokenAddr}" -s BTY
 }
 
 function offline_create_bridge_token_chain33_ETH() {
@@ -477,7 +476,6 @@ function offline_create_bridge_token_eth_YCC() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumYccBridgeTokenAddr=$(./ebcli_A ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ./ebcli_A ethereum token set -t "${ethereumYccBridgeTokenAddr}" -s YCC
     cp BridgeToken.abi "${ethereumYccBridgeTokenAddr}.abi"
 }
 
@@ -488,7 +486,6 @@ function offline_create_bridge_token_eth_ZBC() {
     ethereum_offline_sign_send "create_bridge_token.txt"
 
     ethereumZbcBridgeTokenAddr=$(./ebcli_A ethereum receipt -s "${hash}" | jq -r .logs[0].address)
-    ./ebcli_A ethereum token set -t "${ethereumZbcBridgeTokenAddr}" -s ZBC
     cp BridgeToken.abi "${ethereumZbcBridgeTokenAddr}.abi"
 }
 
