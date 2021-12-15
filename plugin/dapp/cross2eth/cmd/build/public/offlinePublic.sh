@@ -175,6 +175,7 @@ function offline_create_bridge_token_eth_BTY() {
     ${Boss4xCLI} ethereum offline create_bridge_token -s BTY -c "${ethBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "create_bridge_token.txt"
 
+    # shellcheck disable=SC2034
     ethereumBtyBridgeTokenAddr=$(${CLIA} ethereum receipt -s "${hash}" | jq -r .logs[0].address)
 }
 
