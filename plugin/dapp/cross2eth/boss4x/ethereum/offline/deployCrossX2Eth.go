@@ -114,7 +114,6 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 	}
 	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce)
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce, To: nil})
-	startNonce = startNonce + 1
 
 	err = NewTxWrite(infos, deployerAddr, url, "deployBridgeBank4Ethtxs.txt")
 	if err != nil {
