@@ -269,7 +269,6 @@ func createDeployTxs(url string, deployerAddr common.Address, validators []commo
 	packData = common.FromHex(gnosis.GnosisSafeBin)
 	mulSignAddr := crypto.CreateAddress(deployerAddr, startNonce)
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: mulSignAddr, Name: "mulSignAddr", Nonce: startNonce, To: nil})
-	startNonce += 1
 
 	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt")
 }
