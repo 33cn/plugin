@@ -780,8 +780,8 @@ function StartDockerRelayerDeploy() {
     InitAndOfflineDeploy
 
     # 设置 ethereum symbol
-#    ${Boss4xCLI} ethereum offline set_symbol -s "ETH" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-#    ethereum_offline_sign_send "set_symbol.txt"
+    #    ${Boss4xCLI} ethereum offline set_symbol -s "ETH" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    #    ethereum_offline_sign_send "set_symbol.txt"
 
     # 设置离线多签数据
     Chain33Cli=${MainCli}
@@ -811,12 +811,12 @@ function StartDockerRelayerDeploy() {
     #    InitTokenAddr
     offline_create_bridge_token_eth_BTY
     offline_create_bridge_token_chain33_ETH "ETH"
-#    offline_deploy_erc20_eth_BYC
-#    offline_create_bridge_token_chain33_BYC
-#    offline_deploy_erc20_chain33_YCC
-#    offline_create_bridge_token_eth_YCC
-#    offline_deploy_erc20_chain33_ZBC
-#    offline_create_bridge_token_eth_ZBC
+    #    offline_deploy_erc20_eth_BYC
+    #    offline_create_bridge_token_chain33_BYC
+    #    offline_deploy_erc20_chain33_YCC
+    #    offline_create_bridge_token_eth_YCC
+    #    offline_deploy_erc20_chain33_ZBC
+    #    offline_create_bridge_token_eth_ZBC
     #    offline_deploy_erc20_eth_USDT
     offline_deploy_erc20_create_tether_usdt_USDT
     offline_create_bridge_token_chain33_USDT
@@ -824,10 +824,10 @@ function StartDockerRelayerDeploy() {
     # shellcheck disable=SC2086
     {
         docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
-#        docker cp "${chain33BycBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BycBridgeTokenAddr}.abi
+        #        docker cp "${chain33BycBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BycBridgeTokenAddr}.abi
         docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
-#        docker cp "${chain33YccERC20TokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccERC20TokenAddr}.abi
-#        docker cp "${ethereumYccBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumYccBridgeTokenAddr}.abi
+        #        docker cp "${chain33YccERC20TokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33YccERC20TokenAddr}.abi
+        #        docker cp "${ethereumYccBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumYccBridgeTokenAddr}.abi
     }
 
     # 重启,因为relayerA的验证人地址和部署人的地址是一样的,所以需要重新启动relayer,更新nonce
