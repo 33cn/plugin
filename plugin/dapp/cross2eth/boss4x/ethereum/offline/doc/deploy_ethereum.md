@@ -3,17 +3,15 @@
 
 #### 基础步骤
 * 在线创建交易 `./boss4x ethereum offline create ...` 需要在线查询 nonce 等信息
-* 离线签名交易 `./boss4x ethereum offline sign -f xxx.txt -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230 --chainEthId xxx`
+* 离线签名交易 `./boss4x ethereum offline sign -f xxx.txt -k ... --chainEthId xxx`
 * 在线发送签名后文件 `./boss4x ethereum offline send -f deploysigntxs.txt` 默认签名后的文件名称都是 deploysigntxs.txt
 
+> 拼凑 boss4x 命令
+
+./boss4x --rpc_laddr_ethereum http://139.9.219.183:8545 --chainEthId 1
 ```
-Global Flags:
-      --chainEthId int              ethereum chain id, default to 0 (default 56 is bsc)
-      --chainID int32               chain id, default to 0
-      --expire string               transaction expire time (optional) (default "120m")
-      --paraName string             para chain name,Eg:user.p.fzm.
-      --rpc_laddr string            http url (default "https://localhost:8801")
-      --rpc_laddr_ethereum string   ethereum http url (default "http://localhost:7545")
+--chainEthId int              chainId, 如果是Bsc, chainId为56, 如果是ethereum, chainId为1, 查询链接:https://chainlist.org/
+--rpc_laddr_ethereum string   ethereum http url (default "http://localhost:7545")
 ```
 *** 
 
@@ -26,11 +24,12 @@ Global Flags:
 交易4: 部署合约: BridgeBank
 交易5: 在合约EthereumBridge中设置BridgeBank合约地址
 交易6: 在合约EthereumBridge中设置Oracle合约地址
-交易7: 部署合约: BridgeRegistry
-交易7: 部署合约: MulSign
+交易7: 设置 symbol
+交易8: 部署合约: BridgeRegistry
+交易9: 部署合约: MulSign
 
 命令：
-./boss4x ethereum offline create -p 25,25,25,25 -o 0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a -v 0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a,0x0df9a824699bc5878232c9e612fe1a5346a5a368,0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1,0xd9dab021e74ecf475788ed7b61356056b2095830 --paraName xxx --rpc_laddr xxx --rpc_laddr_ethereum xxx
+./boss4x ethereum offline create -s ETH -p 25,25,25,25 -o 0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a -v 0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a,0x0df9a824699bc5878232c9e612fe1a5346a5a368,0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1,0xd9dab021e74ecf475788ed7b61356056b2095830 --paraName xxx --rpc_laddr xxx --rpc_laddr_ethereum xxx
 
 参数说明：
   -p, --initPowers string        验证者权重, as: '25,25,25,25'
@@ -47,12 +46,11 @@ tx is written to file:  deploytxs.txt
 
 * 离线签名交易
 ```
-./boss4x ethereum offline sign -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230  --chainEthId xxx
+./boss4x ethereum offline sign -k ...
 
 参数说明：
   -f, --file string   需要签名的文件, 默认:deploytxs.txt (default "deploytxs.txt")
   -k, --key string    部署者的私钥
-  --chainEthId        chainId, 如果是Bsc, chainId为56, 如果是ethereum, chainId为1, 查询链接:https://chainlist.org/
 ```
 
 * 发送签名后文件
@@ -61,29 +59,11 @@ tx is written to file:  deploytxs.txt
 ```
 ***
 
-#### 设置 symbol
-* 在线创建交易
+* 输出
 ```
-命令：
-./boss4x ethereum offline set_symbol -s "BNB" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-
-参数说明：
-  -c, --contract string     bridgebank合约地址
-  -d, --deployAddr string   部署合约的地址
-  -s, --symbol string       要设置的 symbol, 默认为 ETH
-
-输出
-tx is written to file:  set_symbol.txt
-```
-
-* 离线签名交易
-```
-./boss4x ethereum offline sign -f set_symbol.txt -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230
-```
-
-* 发送签名后文件
-```
-./boss4x ethereum offline send -f deploysigntxs.txt
+交易4: 部署合约: BridgeBank
+交易8: 部署合约: BridgeRegistry
+交易9: 部署合约: MulSign
 ```
 
 #### 离线部署 ERC20 跨链合约
@@ -119,7 +99,7 @@ tx is written to file:  deployErc20YCC.txt
 * 在线创建交易
 ```
 命令：
-./boss4x ethereum offline create_add_lock_list -s YCC -t 0x20a32A5680EBf55740B0C98B54cDE8e6FD5a4FB0 -c 0xC65B02a22B714b55D708518E2426a22ffB79113d -d 0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a
+./boss4x ethereum offline create_add_lock_list -s YCC -t ... -c ... -d ...
 
 参数说明：
   -c, --contract string     bridgebank 合约地址

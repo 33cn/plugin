@@ -162,10 +162,9 @@ func Test_DeployContrcts(t *testing.T) {
 	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
 
 	relayer := &Relayer4Ethereum{
-		provider:   cfg.EthProvider,
-		db:         db,
-		unlockchan: make(chan int, 2),
-		//rpcURL2Chain33:      cfg.SyncTxConfig.Chain33Host,
+		provider:            cfg.EthProvider,
+		db:                  db,
+		unlockchan:          make(chan int, 2),
 		maturityDegree:      cfg.EthMaturityDegree,
 		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
 		deployInfo:          cfg.Deploy,
@@ -174,6 +173,7 @@ func Test_DeployContrcts(t *testing.T) {
 	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1)
 
+	relayer.deployInfo.DeployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
 	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
 	relayer.operatorInfo = &ethtxs.OperatorInfo{
