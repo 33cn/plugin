@@ -70,17 +70,17 @@ function InitAndOfflineDeploy() {
 
     # 在 Eth 上部署合约
     # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline create -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}"
+    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}"
     ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
     result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
     for i in {0..7}; do
         hash=$(echo "${result}" | jq -r ".[$i].TxHash")
         check_eth_tx "${hash}"
     done
-    BridgeRegistryOnEth=$(echo "${result}" | jq -r ".[6].ContractAddr")
     ethBridgeBank=$(echo "${result}" | jq -r ".[3].ContractAddr")
+    BridgeRegistryOnEth=$(echo "${result}" | jq -r ".[7].ContractAddr")
     # shellcheck disable=SC2034
-    multisignEthAddr=$(echo "${result}" | jq -r ".[7].ContractAddr")
+    multisignEthAddr=$(echo "${result}" | jq -r ".[8].ContractAddr")
     ${CLIA} ethereum multisign set_multiSign -a "${multisignEthAddr}"
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi

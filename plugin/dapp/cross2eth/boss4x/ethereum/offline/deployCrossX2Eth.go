@@ -125,7 +125,7 @@ func CreateEthBridgeBankRelated(cmd *cobra.Command, _ []string) {
 func CreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create", //first step
-		Short: "create and sign all the offline cross to ethereum contracts(inclue valset,ethereumBridge,bridgeBank,oracle,bridgeRegistry,mulSign)",
+		Short: "create all the offline cross to ethereum contracts(inclue valset,ethereumBridge,bridgeBank,oracle,bridgeRegistry,mulSign), set symbol",
 		Run:   createTx, //对要部署的factory合约进行签名
 	}
 	addCreateFlags(cmd)
@@ -139,6 +139,8 @@ func addCreateFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("initPowers")
 	cmd.Flags().StringP("owner", "o", "", "the deployer address")
 	_ = cmd.MarkFlagRequired("owner")
+	cmd.Flags().StringP("symbol", "s", "", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
 }
 
 func createTx(cmd *cobra.Command, _ []string) {
@@ -149,6 +151,7 @@ func createTx(cmd *cobra.Command, _ []string) {
 	deployerAddr := common.HexToAddress(owner)
 	validatorsAddrsArray := strings.Split(validatorsAddrs, ",")
 	initPowersArray := strings.Split(initpowers, ",")
+	symbol, _ := cmd.Flags().GetString("symbol")
 
 	if len(validatorsAddrsArray) != len(initPowersArray) {
 		fmt.Println("input validatorsAddrs initPowers error!")
@@ -174,13 +177,13 @@ func createTx(cmd *cobra.Command, _ []string) {
 		initPowers = append(initPowers, big.NewInt(vint64))
 	}
 
-	err := createDeployTxs(url, deployerAddr, validators, initPowers)
+	err := createDeployTxs(url, deployerAddr, validators, initPowers, symbol)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func createDeployTxs(url string, deployerAddr common.Address, validators []common.Address, initPowers []*big.Int) error {
+func createDeployTxs(url string, deployerAddr common.Address, validators []common.Address, initPowers []*big.Int, symbol string) error {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return err
@@ -200,57 +203,73 @@ func createDeployTxs(url string, deployerAddr common.Address, validators []commo
 	}
 	valSetAddr := crypto.CreateAddress(deployerAddr, startNonce)
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: valSetAddr, Name: "valSet", Nonce: startNonce, To: nil})
+	startNonce += 1
 
 	//step2 chain33bridge
 	packData, err = deploychain33BridgePackData(deployerAddr, valSetAddr)
 	if err != nil {
 		return err
 	}
-	chain33BridgeAddr := crypto.CreateAddress(deployerAddr, startNonce+1)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: chain33BridgeAddr, Name: "chain33Bridge", Nonce: startNonce + 1, To: nil})
+	chain33BridgeAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: chain33BridgeAddr, Name: "chain33Bridge", Nonce: startNonce, To: nil})
+	startNonce += 1
 
 	//step3 oracle
 	packData, err = deployOraclePackData(deployerAddr, valSetAddr, chain33BridgeAddr)
 	if err != nil {
 		return err
 	}
-	oracleAddr := crypto.CreateAddress(deployerAddr, startNonce+2)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: oracleAddr, Name: "oracle", Nonce: startNonce + 2, To: nil})
+	oracleAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: oracleAddr, Name: "oracle", Nonce: startNonce, To: nil})
+	startNonce += 1
 
 	//step4 bridgebank
 	packData, err = deployBridgeBankPackData(deployerAddr, chain33BridgeAddr, oracleAddr)
 	if err != nil {
 		return err
 	}
-	bridgeBankAddr := crypto.CreateAddress(deployerAddr, startNonce+3)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce + 3, To: nil})
+	bridgeBankAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeBankAddr, Name: "bridgebank", Nonce: startNonce, To: nil})
+	startNonce += 1
 
 	//step5
 	packData, err = callSetBridgeBank(bridgeBankAddr)
 	if err != nil {
 		return err
 	}
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce + 4, To: &chain33BridgeAddr})
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setbridgebank", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce += 1
 
 	//step6
 	packData, err = callSetOracal(oracleAddr)
 	if err != nil {
 		return err
 	}
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce + 5, To: &chain33BridgeAddr})
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setoracle", Nonce: startNonce, To: &chain33BridgeAddr})
+	startNonce += 1
 
-	//step7 bridgeRegistry
+	//step7 set symbol
+	packData, err = setSymbol(symbol)
+	if err != nil {
+		return err
+	}
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "setsymbol", Nonce: startNonce, To: &bridgeBankAddr})
+	startNonce += 1
+
+	//step8 bridgeRegistry
 	packData, err = deployBridgeRegistry(chain33BridgeAddr, bridgeBankAddr, oracleAddr, valSetAddr)
 	if err != nil {
 		return err
 	}
-	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce+6)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce + 6, To: nil})
+	bridgeRegAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: bridgeRegAddr, Name: "bridgeRegistry", Nonce: startNonce, To: nil})
+	startNonce += 1
 
-	//step8 bridgeRegistry
+	//step9 mulSign
 	packData = common.FromHex(gnosis.GnosisSafeBin)
-	mulSignAddr := crypto.CreateAddress(deployerAddr, startNonce+7)
-	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: mulSignAddr, Name: "mulSignAddr", Nonce: startNonce + 7, To: nil})
+	mulSignAddr := crypto.CreateAddress(deployerAddr, startNonce)
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: mulSignAddr, Name: "mulSignAddr", Nonce: startNonce, To: nil})
+	startNonce += 1
 
 	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt")
 }
@@ -407,6 +426,19 @@ func deployBridgeRegistry(chain33BridgeAddr, bridgeBankAddr, oracleAddr, valSetA
 	return append(bin, packData...), nil
 }
 
+//step 8
+func setSymbol(symbol string) ([]byte, error) {
+	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
+	if err != nil {
+		return nil, err
+	}
+	abiData, err := bridgeAbi.Pack("configplatformTokenSymbol", symbol)
+	if err != nil {
+		return nil, err
+	}
+	return abiData, nil
+}
+
 func CreateWithFileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create_file", //first step
@@ -449,7 +481,7 @@ func createWithFileTx(cmd *cobra.Command, _ []string) {
 		initPowers = append(initPowers, big.NewInt(deployCfg.InitPowers[i]))
 	}
 
-	err = createDeployTxs(url, deployerAddr, validators, initPowers)
+	err = createDeployTxs(url, deployerAddr, validators, initPowers, deployCfg.Symbol)
 	if err != nil {
 		fmt.Println("createDeployTxs Err:", err)
 		return
