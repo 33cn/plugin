@@ -45,7 +45,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
 		SendTxsCmd(),                            // 发送交易 send all kinds of tx
-		ConfigplatformTokenSymbolCmd(),
+		//ConfigplatformTokenSymbolCmd(),
 		CreateEthBridgeBankRelatedCmd(), //构造交易
 	)
 
@@ -67,6 +67,7 @@ type DeployConfigInfo struct {
 	DeployerPrivateKey string   `toml:"deployerPrivateKey"`
 	ValidatorsAddr     []string `toml:"validatorsAddr"`
 	InitPowers         []int64  `toml:"initPowers"`
+	Symbol             string   `toml:"symbol"`
 }
 
 func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string) {
