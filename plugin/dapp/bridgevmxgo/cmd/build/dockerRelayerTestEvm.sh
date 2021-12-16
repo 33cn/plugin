@@ -141,18 +141,18 @@ function DeployEvmxgo() {
 function TestETH2EVMToChain33() {
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-        cli_ret "${result}" "balance" ".balance" "0"
+    cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 11个
     result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
-        cli_ret "${result}" "lock"
+    cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 11
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-        cli_ret "${result}" "balance" ".balance" "11"
+    cli_ret "${result}" "balance" ".balance" "11"
 
     sleep ${maturityDegree}
 
@@ -177,7 +177,7 @@ function TestETH2EVMToChain33() {
 function Testethereum2EVMToChain33_usdt() {
     # 查询 ETH 这端 bridgeBank 地址原来是
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-        cli_ret "${result}" "balance" ".balance" "0"
+    cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 12个
     result=$(${CLIA} ethereum lock -m 12 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
@@ -188,7 +188,7 @@ function Testethereum2EVMToChain33_usdt() {
 
     # 查询 ETH 这端 bridgeBank 地址 12
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-        cli_ret "${result}" "balance" ".balance" "12"
+    cli_ret "${result}" "balance" ".balance" "12"
 
     sleep ${maturityDegree}
 
