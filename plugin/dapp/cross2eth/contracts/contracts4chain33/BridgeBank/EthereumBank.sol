@@ -232,6 +232,7 @@ contract EthereumBank {
         bridgeTokenCreated[symHash] = true;
         depositBurnWithdrawCounts[newBridgeTokenAddress] = DepositBurnWithdrawCount(
             uint256(0),
+            uint256(0),
             uint256(0));
         token2address[symHash] = newBridgeTokenAddress;
 

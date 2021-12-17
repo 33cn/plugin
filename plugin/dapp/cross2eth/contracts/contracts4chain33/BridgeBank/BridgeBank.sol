@@ -181,10 +181,10 @@ contract BridgeBank is EthereumBank, Chain33Bank {
     )
     public
     {
-        return burnEthereumTokens(
+        return withdrawEthereumTokens(
             msg.sender,
             _ethereumReceiver,
-            _ethereumTokenAddress,
+            _bridgeTokenAddress,
             _amount
         );
     }
