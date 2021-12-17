@@ -287,6 +287,7 @@ func createDeployTxs(url string, deployerAddr common.Address, validators, multis
 		return err
 	}
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "configOfflineSaveAccount", Nonce: startNonce, To: &bridgeBankAddr})
+	startNonce += 1
 
 	//step11 multisignSetup
 	packData, err = multisignSetup(multisigns)
@@ -294,7 +295,6 @@ func createDeployTxs(url string, deployerAddr common.Address, validators, multis
 		return err
 	}
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "multisignSetup", Nonce: startNonce, To: &mulSignAddr})
-	startNonce += 1
 
 	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt")
 }
