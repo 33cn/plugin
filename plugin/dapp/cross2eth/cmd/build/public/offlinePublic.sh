@@ -70,7 +70,7 @@ function InitAndOfflineDeploy() {
 
     # 在 Eth 上部署合约
     # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}"
+    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
     ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
     result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
     for i in {0..7}; do
@@ -289,17 +289,17 @@ function offline_setupChain33Multisign() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function offline_setupEthMultisign() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    echo -e "${GRE}=========== 设置 ETH 离线钱包合约 ===========${NOC}"
-    # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline multisign_setup -m "${multisignEthAddr}" -d "${ethDeployAddr}" -o "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
-    ethereum_offline_sign_send "multisign_setup.txt"
-
-    ${Boss4xCLI} ethereum offline set_offline_addr -a "${multisignEthAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-    ethereum_offline_sign_send "set_offline_addr.txt"
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
+#function offline_setupEthMultisign() {
+#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+#    echo -e "${GRE}=========== 设置 ETH 离线钱包合约 ===========${NOC}"
+#    # shellcheck disable=SC2154
+#    ${Boss4xCLI} ethereum offline multisign_setup -m "${multisignEthAddr}" -d "${ethDeployAddr}" -o "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
+#    ethereum_offline_sign_send "multisign_setup.txt"
+#
+#    ${Boss4xCLI} ethereum offline set_offline_addr -a "${multisignEthAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+#    ethereum_offline_sign_send "set_offline_addr.txt"
+#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+#}
 
 function offline_transfer_multisign_Eth_test() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"

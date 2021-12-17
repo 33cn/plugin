@@ -26,22 +26,45 @@
 交易7: 设置 symbol
 交易8: 部署合约: BridgeRegistry
 交易9: 部署合约: MulSign
-
+交易10: 设置 bridgebank 合约地址可以转到多签合约地址
+交易11: 设置离线多签地址信息
+```
+##### 命令部署
+```
 命令：
-./boss4x ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}"
+./boss4x ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}"  -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
     
 参数说明：
   -p, --initPowers string        验证者权重, as: '25,25,25,25'
+  -m, --multisignAddrs string    离线多签地址, as: 'addr,addr,addr,addr'
   -o, --owner string             部署者地址
   -s, --symbol string            symbol
   -v, --validatorsAddrs string   验证者地址, as: 'addr,addr,addr,addr'
-
+ 
   --rpc_laddr_ethereum string    ethereum url 地址 (默认 "http://localhost:7545")
 
 输出:
 tx is written to file:  deploytxs.txt
 
 把交易信息写入文件中
+```
+##### 文件部署
+把要部署需要的数据写入 deploy.toml 配置文件
+```toml
+# 合约部署人
+operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
+# 验证人地址，至少配置３个以上，即大于等于３个
+validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
+# 验证人权重
+initPowers=[96, 1, 1, 1]
+# 主链symbol
+symbol="ETH"
+# 离线多签地址
+multisignAddrs=["0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf", "0x6F163E6daf0090D897AD7016484f10e0cE844994", "0xbc333839E37bc7fAAD0137aBaE2275030555101f", "0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5"]
+```
+命令:
+```shell
+./boss4x ethereum offline create_file -c deploy.toml
 ```
 
 * 离线签名交易
@@ -57,45 +80,12 @@ tx is written to file:  deploytxs.txt
 ```
 ./boss4x ethereum offline send -f deploysigntxs.txt
 ```
-***
 
 * 输出
 ```
 交易4: 部署合约: BridgeBank
 交易8: 部署合约: BridgeRegistry
 交易9: 部署合约: MulSign
-```
-
-#### 设置离线多签地址信息
-* 在线创建交易
-```
-命令：
-./boss4x ethereum offline multisign_setup -m "${multisignEthAddr}" -d "${ethDeployAddr}" -o "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
-
-参数说明：
-  -d, --deployAddr string   部署者地址
-  -m, --multisign string    离线多签合约地址
-  -o, --owner string        多签的地址, 用','分隔
-
-输出
-tx is written to file:  multisign_setup.txt
-```
-
-***
-
-#### 设置 bridgebank 合约地址可以转到多签合约地址
-* 在线创建交易
-```
-命令：
-./boss4x ethereum offline set_offline_addr -a "${multisignEthAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
-
-参数说明：
-  -a, --address string      离线多签地址
-  -c, --contract string     bridgebank 合约地址
-  -d, --deployAddr string   部署合约地址
-
-输出
-tx is written to file:  set_offline_addr.txt
 ```
 
 ***
