@@ -3,6 +3,7 @@ package offline
 import (
 	"encoding/json"
 	"fmt"
+	tml "github.com/BurntSushi/toml"
 	"io/ioutil"
 	"os"
 	"time"
@@ -22,6 +23,7 @@ func Boss4xOfflineCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		CreateCrossBridgeCmd(),
+		CreateContractsWithFileCmd(),
 		SendSignTxs2Chain33Cmd(),
 		CreateERC20Cmd(),
 		ApproveErc20Cmd(),
@@ -107,9 +109,9 @@ func paraseFile(file string, result interface{}) error {
 	return json.Unmarshal(b, result)
 }
 
-func createOfflineTx(cmd *cobra.Command, para []byte, contractAddr, name string, interval time.Duration) (*utils.Chain33OfflineTx, error) {
+func createOfflineTx(txCreateInfo *utils.TxCreateInfo, para []byte, contractAddr, name string, interval time.Duration) (*utils.Chain33OfflineTx, error) {
 	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: name, Para: para, ContractAddr: contractAddr}
-	content, txHash, err := utils.CallContractAndSign(getTxInfo(cmd), action, contractAddr)
+	content, txHash, err := utils.CallContractAndSign(txCreateInfo, action, contractAddr)
 	if nil != err {
 		return nil, err
 	}
@@ -126,7 +128,7 @@ func createOfflineTx(cmd *cobra.Command, para []byte, contractAddr, name string,
 }
 
 func callContractAndSignWrite(cmd *cobra.Command, para []byte, contractAddr, name string) {
-	Tx, err := createOfflineTx(cmd, para, contractAddr, name, 0)
+	Tx, err := createOfflineTx(getTxInfo(cmd), para, contractAddr, name, 0)
 	if nil != err {
 		fmt.Println("CallContractAndSign", "Failed", err.Error(), "name", name)
 		return
@@ -144,4 +146,12 @@ func callContractAndSignWrite(cmd *cobra.Command, para []byte, contractAddr, nam
 	fileName := fmt.Sprintf(Tx.OperationName + ".txt")
 	fmt.Printf("Write all the txs to file:   %s \n", fileName)
 	utils.WriteToFileInJson(fileName, txs)
+}
+
+func InitCfg(filepath string, cfg interface{}) {
+	if _, err := tml.DecodeFile(filepath, cfg); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	return
 }

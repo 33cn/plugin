@@ -108,7 +108,6 @@ func DeployContrcts(cmd *cobra.Command, args []string) {
 }
 
 func InitCfg(filepath string, cfg interface{}) {
-
 	if _, err := tml.DecodeFile(filepath, cfg); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

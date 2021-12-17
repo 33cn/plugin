@@ -50,7 +50,7 @@ tx is written to file:  deploytxs.txt
 把交易信息写入文件中
 ```
 ##### 文件部署
-把要部署需要的数据写入 deploy.toml 配置文件
+把要部署需要的数据写入 deploy_ethereum.toml 配置文件
 ```toml
 # 合约部署人
 operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
@@ -65,7 +65,7 @@ multisignAddrs=["0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf", "0x6F163E6daf0090D
 ```
 命令:
 ```shell
-./boss4x ethereum offline create_file -c deploy.toml
+./boss4x ethereum offline create_file -c deploy_ethereum.toml
 ```
 
 * 离线签名交易

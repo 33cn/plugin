@@ -505,7 +505,7 @@ func CreateWithFileCmd() *cobra.Command {
 }
 
 func addCreateWithFileFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("conf", "c", "", "config file")
+	cmd.Flags().StringP("conf", "f", "", "config file")
 	_ = cmd.MarkFlagRequired("conf")
 }
 
