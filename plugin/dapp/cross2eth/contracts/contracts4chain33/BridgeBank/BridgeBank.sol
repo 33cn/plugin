@@ -106,6 +106,18 @@ contract BridgeBank is EthereumBank, Chain33Bank {
     }
 
     /*
+    * @dev: set a proxy address to receive and it's transfer asset on Ethereum
+    *
+    * @param _proxyReceiver: The address to receive asset
+    * @return: indicate whether set successfully or not
+    */
+    function setWithdrawProxy(address payable _proxyReceiver) public onlyOperator returns(bool)
+    {
+        proxyReceiver = _proxyReceiver;
+        return true;
+    }
+
+    /*
      * @dev: Mints new BankTokens
      *
      * @param _ethereumSender: The sender's Ethereum address in bytes.
@@ -137,7 +149,7 @@ contract BridgeBank is EthereumBank, Chain33Bank {
      * @dev: Burns bank tokens
      *
      * @param _ethereumReceiver: The _ethereum receiver address in bytes.
-     * @param _ethereumTokenAddress: The currency type
+     * @param _ethereumTokenAddress: The token address mint on chain33 and it's origin from Ethereum
      * @param _amount: number of ethereum tokens to be burned
      */
     function burnBridgeTokens(
@@ -152,6 +164,28 @@ contract BridgeBank is EthereumBank, Chain33Bank {
             _ethereumReceiver,
             _ethereumTokenAddress,
              _amount
+        );
+    }
+
+    /*
+     * @dev: withdraw asset via Proxy
+     *
+     * @param _ethereumReceiver: The _ethereum receiver address in bytes.
+     * @param _bridgeTokenAddress: The bridge Token Address issued in chain33 and it's origin from Ethereum/BSC
+     * @param _amount: number of bridge tokens to be transferred to proxy address
+     */
+    function withdrawViaProxy(
+        bytes memory _ethereumReceiver,
+        address _bridgeTokenAddress,
+        uint256 _amount
+    )
+    public
+    {
+        return burnEthereumTokens(
+            msg.sender,
+            _ethereumReceiver,
+            _ethereumTokenAddress,
+            _amount
         );
     }
 

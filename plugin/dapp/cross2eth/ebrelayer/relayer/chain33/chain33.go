@@ -51,6 +51,7 @@ type Relayer4Chain33 struct {
 	unlockChan               chan int
 	bridgeBankEventLockSig   string
 	bridgeBankEventBurnSig   string
+	bridgeBankEventWithdrawSig   string
 	bridgeBankAbi            abi.ABI
 	deployInfo               *ebTypes.Deploy
 	totalTx4RelayEth2chai33  int64
@@ -235,12 +236,14 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 					evmEventType = events.Chain33EventLogBurn
 				} else if chain33Relayer.bridgeBankEventLockSig == common.ToHex(evmlog.Topic[0]) {
 					evmEventType = events.Chain33EventLogLock
+				} else if chain33Relayer.bridgeBankEventWithdrawSig == common.ToHex(evmlog.Topic[0]) {
+					evmEventType = events.Chain33EventLogWithdraw
 				} else {
 					continue
 				}
 
-				if err := chain33Relayer.handleBurnLockEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
-					errInfo := fmt.Sprintf("Failed to handleBurnLockEvent due to:%s", err.Error())
+				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+					errInfo := fmt.Sprintf("Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 					panic(errInfo)
 				}
 			}
@@ -251,8 +254,8 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 }
 
 // handleBurnLockMsg : parse event data as a Chain33Msg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
-func (chain33Relayer *Relayer4Chain33) handleBurnLockEvent(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) error {
-	relayerLog.Info("handleBurnLockEvent", "Received tx with hash", ethCommon.Bytes2Hex(chain33TxHash))
+func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) error {
+	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", ethCommon.Bytes2Hex(chain33TxHash))
 
 	// Parse the witnessed event's data into a new Chain33Msg
 	chain33Msg, err := events.ParseBurnLock4chain33(evmEventType, data, chain33Relayer.bridgeBankAbi, chain33TxHash)
@@ -306,11 +309,13 @@ func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err err
 				evmEventType = events.Chain33EventLogBurn
 			} else if chain33Relayer.bridgeBankEventLockSig == common.ToHex(evmlog.Topic[0]) {
 				evmEventType = events.Chain33EventLogLock
+			} else if chain33Relayer.bridgeBankEventWithdrawSig == common.ToHex(evmlog.Topic[0]) {
+				evmEventType = events.Chain33EventLogWithdraw
 			} else {
 				continue
 			}
 
-			if err := chain33Relayer.handleBurnLockEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+			if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
 				return err
 			}
 		}

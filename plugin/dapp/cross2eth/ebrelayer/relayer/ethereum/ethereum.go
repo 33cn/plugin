@@ -50,8 +50,8 @@ type Relayer4Ethereum struct {
 
 	privateKey4Ethereum *ecdsa.PrivateKey
 	ethSender           common.Address
+	processWithDraw     bool
 
-	ethValidator            common.Address
 	unlockchan              chan int
 	maturityDegree          int32
 	fetchHeightPeriodMs     int32
@@ -95,6 +95,7 @@ type EthereumStartPara struct {
 	BlockInterval      int32
 	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
 	Chain33MsgChan     <-chan *events.Chain33Msg
+	ProcessWithDraw    bool
 }
 
 //StartEthereumRelayer ///
@@ -108,6 +109,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		db:                      startPara.DbHandle,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
+		processWithDraw:         startPara.ProcessWithDraw,
 		deployInfo:              startPara.DeployInfo,
 		maturityDegree:          startPara.Degree,
 		fetchHeightPeriodMs:     startPara.BlockInterval,
@@ -278,7 +280,7 @@ func (ethRelayer *Relayer4Ethereum) GetBalance(tokenAddr, owner string) (string,
 func (ethRelayer *Relayer4Ethereum) ShowMultiBalance(tokenAddr, owner string) (string, error) {
 	relayerLog.Info("ShowMultiBalance", "tokenAddr", tokenAddr, "owner", owner)
 	opts := &bind.CallOpts{
-		From:    ethRelayer.ethValidator,
+		From:    ethRelayer.ethSender,
 		Context: context.Background(),
 	}
 
@@ -334,7 +336,7 @@ func (ethRelayer *Relayer4Ethereum) ShowLockedTokenAddress(tokenSymbol string) (
 
 //IsProphecyPending ...
 func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, error) {
-	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethValidator, ethRelayer.x2EthContracts.Chain33Bridge)
+	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethSender, ethRelayer.x2EthContracts.Chain33Bridge)
 }
 
 //CreateBridgeToken ...
@@ -453,9 +455,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		}
 		ethRelayer.rwLock.Unlock()
 		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
-		//if nil != ethRelayer.recoverDeployPara() {
-		//	panic("Failed to recoverDeployPara")
-		//}
+
 		ethRelayer.unlockchan <- start
 	}
 
@@ -497,7 +497,57 @@ latter:
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
-	relayerLog.Info("handleChain33Msg", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	if chain33Msg.ClaimType == events.ClaimTypeWithdraw {
+		ethRelayer.handleLogWithdraw(chain33Msg)
+		return
+	}
+
+	ethRelayer.handleLogLockBurn(chain33Msg)
+	return
+}
+
+func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
+	if !ethRelayer.processWithDraw {
+		relayerLog.Info("handleLogWithdraw", "Needn't process withdraw for this relay validator", ethRelayer.ethSender)
+		return
+	}
+	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	withdrawFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[chain33Msg.Symbol]
+	if !exist {
+		//因为是withdraw操作，必须从允许lock的token地址中进行查询
+		relayerLog.Error("handleLogWithdraw", "Failed to fetch locked Token Info for symbol", chain33Msg.Symbol)
+		return
+	}
+
+	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
+	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
+	if 8 != withdrawFromChain33TokenInfo.Decimal {
+		if withdrawFromChain33TokenInfo.Decimal > 8 {
+			dist := withdrawFromChain33TokenInfo.Decimal - 8
+			value, exist := utils.Decimal2value[int(dist)]
+			if !exist {
+				relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+				return
+			}
+			chain33Msg.Amount.Mul(chain33Msg.Amount, big.NewInt(value))
+		} else {
+			dist := 8 - withdrawFromChain33TokenInfo.Decimal
+			value, exist := utils.Decimal2value[int(dist)]
+			if !exist {
+				relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+				return
+			}
+			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
+		}
+	}
+	relayerLog.Info("handleLogWithdraw","token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
+		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
+
+	//TODO:此处需要完成在以太坊发送以太或者ERC20数字资产的操作
+
+}
+func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33Msg) {
+	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
 
 	// Parse the Chain33Msg into a ProphecyClaim for relay to Ethereum
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
@@ -507,7 +557,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	if chain33Msg.ClaimType == events.ClaimTypeLock {
 		tokenAddr, exist = ethRelayer.symbol2Addr[prophecyClaim.Symbol]
 		if !exist {
-			relayerLog.Info("handleChain33Msg", "Query address from ethereum for symbol", prophecyClaim.Symbol)
+			relayerLog.Info("handleLogLockBurn", "Query address from ethereum for symbol", prophecyClaim.Symbol)
 			//因为是lock操作，则需要从创建的bridgeToken中进行查询
 			addr, err := ethRelayer.ShowTokenAddrBySymbol(prophecyClaim.Symbol)
 			if err != nil {
@@ -521,7 +571,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			err = ethRelayer.SetTokenAddress(token2set)
 			if nil != err {
 				// 尽管设置数据失败，但是不影响运行，只是relayer启动时，每次从节点远程获取bridge token地址而已
-				relayerLog.Error("handleChain33Msg", "Failed to SetTokenAddress due to", err.Error())
+				relayerLog.Error("handleLogLockBurn", "Failed to SetTokenAddress due to", err.Error())
 			}
 			tokenAddr = common.HexToAddress(addr)
 		}
@@ -529,14 +579,11 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 		burnFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
-			relayerLog.Error("handleChain33Msg", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
+			relayerLog.Error("handleLogLockBurn", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
 			return
 		}
 
 		tokenAddr = common.HexToAddress(burnFromChain33TokenInfo.Address)
-		//if lockedTokenInfo.Decimal == 18 {
-		//	prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
-		//}
 		//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 		if 8 != burnFromChain33TokenInfo.Decimal {
 			if burnFromChain33TokenInfo.Decimal > 8 {
@@ -562,12 +609,12 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	if nil != err {
 		panic("RelayOracleClaimToEthereum failed due to" + err.Error())
 	}
-	relayerLog.Info("handleChain33Msg", "RelayOracleClaimToEthereum with tx hash", txhash)
+	relayerLog.Info("handleLogLockBurn", "RelayOracleClaimToEthereum with tx hash", txhash)
 
 	//保存交易hash，方便查询
 	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
 	if err = ethRelayer.updateTotalTxAmount2chain33(txIndex); nil != err {
-		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
+		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
 	}
 	statics := &ebTypes.Chain33ToEthereumStatics{
@@ -585,7 +632,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	}
 	data := chain33Types.Encode(statics)
 	if err = ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data); nil != err {
-		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
+		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
 	}
 	relayerLog.Info("RelayOracleClaimToEthereum::successful",
@@ -876,7 +923,7 @@ func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error)
 
 //ShowOperator ...
 func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
-	operator, err := ethtxs.GetOperator(ethRelayer.clientSpec, ethRelayer.ethValidator, ethRelayer.bridgeBankAddr)
+	operator, err := ethtxs.GetOperator(ethRelayer.clientSpec, ethRelayer.ethSender, ethRelayer.bridgeBankAddr)
 	if nil != err {
 		return "", err
 	}

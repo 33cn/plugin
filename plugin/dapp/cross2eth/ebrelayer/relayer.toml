@@ -11,6 +11,7 @@ EthMaturityDegree=10
 EthBlockFetchPeriod=5000
 BridgeRegistryOnChain33=""
 BridgeRegistry=""
+ProcessWithDraw=false
 
 [SyncTxConfig]
 chain33Host="http://localhost:8801"

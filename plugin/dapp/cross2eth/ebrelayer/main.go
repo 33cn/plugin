@@ -98,6 +98,7 @@ func main() {
 		BlockInterval:      cfg.EthBlockFetchPeriod,
 		EthBridgeClaimChan: ethBridgeClaimChan,
 		Chain33MsgChan:     chain33MsgChan,
+		ProcessWithDraw:    cfg.ProcessWithDraw,
 	}
 	ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
 
