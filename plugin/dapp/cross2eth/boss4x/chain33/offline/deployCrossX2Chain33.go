@@ -2,6 +2,8 @@ package offline
 
 import (
 	"fmt"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"strings"
 	"time"
 
 	"github.com/33cn/chain33/common/address"
@@ -10,7 +12,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/dex/utils"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
-	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,8 @@ func addCreateCrossBridgeFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
 	cmd.Flags().StringP("valset", "r", "", "contruct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
 	_ = cmd.MarkFlagRequired("valset")
+	cmd.Flags().StringP("multisignAddrs", "m", "", "multisign address")
+	_ = cmd.MarkFlagRequired("multisignAddrs")
 }
 
 func createCrossBridge(cmd *cobra.Command, args []string) {
@@ -57,6 +60,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 	i := 1
 	fmt.Printf("%d: Going to create Valset\n", i)
 	i += 1
+	// 0
 	valsetTx, err := createValsetTxAndSign(cmd, from)
 	if nil != err {
 		fmt.Println("Failed to createValsetTxAndSign due to cause:", err.Error())
@@ -66,6 +70,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to create EthereumBridge\n", i)
 	i += 1
+	// 1
 	ethereumBridgeTx, err := createEthereumBridgeAndSign(cmd, from, valsetTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to createEthereumBridgeAndSign due to cause:", err.Error())
@@ -75,6 +80,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to create Oracle\n", i)
 	i += 1
+	// 2
 	oracleTx, err := createOracleTxAndSign(cmd, from, valsetTx.ContractAddr, ethereumBridgeTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to createOracleTxAndSign due to cause:", err.Error())
@@ -84,6 +90,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to create BridgeBank\n", i)
 	i += 1
+	// 3
 	bridgeBankTx, err := createBridgeBankTxAndSign(cmd, from, valsetTx.ContractAddr, ethereumBridgeTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to createBridgeBankTxAndSign due to cause:", err.Error())
@@ -93,6 +100,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to set BridgeBank to EthBridge \n", i)
 	i += 1
+	// 4
 	setBridgeBank2EthBridgeTx, err := setBridgeBank2EthBridgeTxAndSign(cmd, ethereumBridgeTx.ContractAddr, bridgeBankTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to setBridgeBank2EthBridgeTxAndSign due to cause:", err.Error())
@@ -102,6 +110,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to set Oracle to EthBridge \n", i)
 	i += 1
+	// 5
 	setOracle2EthBridgeTx, err := setOracle2EthBridgeTxAndSign(cmd, ethereumBridgeTx.ContractAddr, oracleTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to setOracle2EthBridgeTxAndSign due to cause:", err.Error())
@@ -111,6 +120,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to create BridgeRegistry \n", i)
 	i += 1
+	// 6
 	createBridgeRegistryTx, err := createBridgeRegistryTxAndSign(cmd, from, ethereumBridgeTx.ContractAddr, valsetTx.ContractAddr, bridgeBankTx.ContractAddr, oracleTx.ContractAddr)
 	if nil != err {
 		fmt.Println("Failed to createBridgeRegistryTxAndSign due to cause:", err.Error())
@@ -120,12 +130,33 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%d: Going to create MulSign2chain33 \n", i)
 	i += 1
+	// 7
 	createMulSign2chain33Tx, err := createMulSignAndSign(cmd, from)
 	if nil != err {
 		fmt.Println("Failed to createMulSign2chain33Tx due to cause:", err.Error())
 		return
 	}
 	txs = append(txs, createMulSign2chain33Tx)
+
+	fmt.Printf("%d: Going to save multisign contract config offline account \n", i)
+	i += 1
+	// 8
+	configMultisignOfflineSaveAccountTx, err := configMultisignOfflineSaveAccount(cmd, createMulSign2chain33Tx.ContractAddr, bridgeBankTx.ContractAddr)
+	if nil != err {
+		fmt.Println("Failed to configMultisignOfflineSaveAccountTx due to cause:", err.Error())
+		return
+	}
+	txs = append(txs, configMultisignOfflineSaveAccountTx)
+
+	fmt.Printf("%d: Going to Setup multisignAddrs to contract \n", i)
+	i += 1
+	// 9
+	multisignSetupTx, err := multisignSetup(cmd, createMulSign2chain33Tx.ContractAddr)
+	if nil != err {
+		fmt.Println("Failed to configMultisignOfflineSaveAccountTx due to cause:", err.Error())
+		return
+	}
+	txs = append(txs, multisignSetupTx)
 
 	fmt.Printf("%d: Write all the txs to file:   %s \n", i, crossXfileName)
 	utils.WriteToFileInJson(crossXfileName, txs)
@@ -156,20 +187,8 @@ func setOracle2EthBridgeTxAndSign(cmd *cobra.Command, ethbridge, oracle string) 
 		fmt.Println("setOracle2EthBridge", "Failed to do abi.Pack due to:", err.Error())
 		return nil, err
 	}
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: "setOracle2EthBridge", Para: packData, ContractAddr: ethbridge}
-	content, txHash, err := utils.CallContractAndSign(getTxInfo(cmd), action, ethbridge)
-	if nil != err {
-		return nil, err
-	}
 
-	setOracle2EthBridgeTx := &utils.Chain33OfflineTx{
-		ContractAddr:  ethbridge,
-		TxHash:        common.Bytes2Hex(txHash),
-		SignedRawTx:   content,
-		OperationName: "setOracle2EthBridge",
-		Interval:      time.Second * 5,
-	}
-	return setOracle2EthBridgeTx, nil
+	return createOfflineTx(cmd, packData, ethbridge, "setOracle2EthBridge", time.Second*5)
 }
 
 func setBridgeBank2EthBridgeTxAndSign(cmd *cobra.Command, ethbridge, bridgebank string) (*utils.Chain33OfflineTx, error) {
@@ -179,20 +198,7 @@ func setBridgeBank2EthBridgeTxAndSign(cmd *cobra.Command, ethbridge, bridgebank 
 		fmt.Println("setBridgeBank2EthBridge", "Failed to do abi.Pack due to:", err.Error())
 		return nil, err
 	}
-	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: "setBridgeBank2EthBridge", Para: packData, ContractAddr: ethbridge}
-	content, txHash, err := utils.CallContractAndSign(getTxInfo(cmd), action, ethbridge)
-	if nil != err {
-		return nil, err
-	}
-
-	setBridgeBank2EthBridgeTx := &utils.Chain33OfflineTx{
-		ContractAddr:  ethbridge,
-		TxHash:        common.Bytes2Hex(txHash),
-		SignedRawTx:   content,
-		OperationName: "setBridgeBank2EthBridge",
-		Interval:      time.Second * 5,
-	}
-	return setBridgeBank2EthBridgeTx, nil
+	return createOfflineTx(cmd, packData, ethbridge, "setBridgeBank2EthBridge", time.Second*5)
 }
 
 func createBridgeBankTxAndSign(cmd *cobra.Command, from common.Address, oracle, ethereumBridge string) (*utils.Chain33OfflineTx, error) {
@@ -286,4 +292,35 @@ func createMulSignAndSign(cmd *cobra.Command, from common.Address) (*utils.Chain
 		Interval:      time.Second * 5,
 	}
 	return mulSign2chain33Tx, nil
+}
+
+func configMultisignOfflineSaveAccount(cmd *cobra.Command, multisignContract, bridgebank string) (*utils.Chain33OfflineTx, error) {
+	parameter := fmt.Sprintf("configOfflineSaveAccount(%s)", multisignContract)
+	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
+	if nil != err {
+		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		return nil, err
+	}
+	return createOfflineTx(cmd, packData, bridgebank, "configOfflineSaveAccount", time.Second*5)
+}
+
+func multisignSetup(cmd *cobra.Command, multisignContract string) (*utils.Chain33OfflineTx, error) {
+	multisignAddrs, _ := cmd.Flags().GetString("multisignAddrs")
+	owners := strings.Split(multisignAddrs, ",")
+
+	BTYAddrChain33 := ebTypes.BTYAddrChain33
+	parameter := "setup(["
+	parameter += fmt.Sprintf("%s", owners[0])
+	for _, owner := range owners[1:] {
+		parameter += fmt.Sprintf(",%s", owner)
+	}
+	parameter += "], "
+	parameter += fmt.Sprintf("%d, %s, 0102, %s, %s, 0, %s)", len(owners), BTYAddrChain33, BTYAddrChain33, BTYAddrChain33, BTYAddrChain33)
+	_, packData, err := evmAbi.Pack(parameter, generated.GnosisSafeABI, false)
+	if nil != err {
+		fmt.Println("multisign_setup", "Failed to do abi.Pack due to:", err.Error())
+		return nil, err
+	}
+
+	return createOfflineTx(cmd, packData, multisignContract, "multisign_setup", time.Second*5)
 }

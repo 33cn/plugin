@@ -7,6 +7,7 @@
 * 在线发送签名后文件 `./boss4x ethereum offline send -f deploysigntxs.txt` 默认签名后的文件名称都是 deploysigntxs.txt
 
 拼凑 boss4x 命令
+
 ./boss4x --rpc_laddr_ethereum http://139.9.219.183:8545 --chainEthId 1
 ```
 --chainEthId int              chainId, 如果是Bsc, chainId为56, 如果是ethereum, chainId为1, 查询链接:https://chainlist.org/

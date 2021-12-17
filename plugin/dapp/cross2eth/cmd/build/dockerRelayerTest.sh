@@ -12,8 +12,6 @@ function AllRelayerMainTest() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     set +e
 
-    get_cli
-
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
         echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
@@ -25,16 +23,16 @@ function AllRelayerMainTest() {
         chain33ID="${2}"
     fi
 
+    get_cli
+
     # init
     # shellcheck disable=SC2154
+    # shellcheck disable=SC2034
     Chain33Cli=${MainCli}
     InitChain33Validator
     # para add
     initPara
 
-    # shellcheck disable=SC2154
-    # shellcheck disable=SC2034
-    Chain33Cli=${Para8901Cli}
     StartDockerRelayerDeploy
 
     test_all
