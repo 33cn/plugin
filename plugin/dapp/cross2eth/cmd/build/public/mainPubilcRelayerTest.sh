@@ -143,7 +143,7 @@ function TestChain33ToEthAssets() {
     is_equal "${result}" "500.0000"
 
     # chain33 lock bty
-    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyERC20TokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a 5 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyERC20TokenAddr}, 500000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
@@ -215,7 +215,7 @@ function TestChain33ToEthAssets() {
 #    is_equal "${result}" "0"
 #
 #    # chain33 lock ZBC
-#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33ZbcERC20TokenAddr}, 900000000)" --chainID "${chain33ID}")
+#    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33ZbcERC20TokenAddr}, 900000000)")
 #    check_tx "${Chain33Cli}" "${hash}"
 #
 #    # chain33BridgeBank 是否增加了 9
@@ -474,7 +474,7 @@ function offline_set_offline_token_Bty() {
         percents=$2
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -s BTY -m ${threshold} -p ${percents} -k "${chain33DeployKey}" --chainID "${chain33ID}"
+    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -s BTY -m ${threshold} -p ${percents} -k "${chain33DeployKey}"
     chain33_offline_send "chain33_set_offline_token.txt"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -492,7 +492,7 @@ function offline_set_offline_token_Bty() {
 #        percents=$2
 #    fi
 #    # shellcheck disable=SC2086
-#    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -t "${chain33YccERC20TokenAddr}" -s YCC -m ${threshold} -p ${percents} -k "${chain33DeployKey}" --chainID "${chain33ID}"
+#    ${Boss4xCLI} chain33 offline set_offline_token -c "${chain33BridgeBank}" -t "${chain33YccERC20TokenAddr}" -s YCC -m ${threshold} -p ${percents} -k "${chain33DeployKey}"
 #    chain33_offline_send "chain33_set_offline_token.txt"
 #
 #    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -553,7 +553,7 @@ function offline_set_offline_token_EthUSDT() {
 #    # shellcheck disable=SC2154
 #    ${Boss4xCLI} chain33 offline create_multisign_transfer -a 50 -r "${chain33BridgeBank}" -m "${multisignChain33Addr}"
 #    # shellcheck disable=SC2154
-#    ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" --chainID "${chain33ID}"
+#    ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}"
 #    chain33_offline_send "multisign_transfer.txt"
 #    sleep 10
 #    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
@@ -564,7 +564,7 @@ function offline_set_offline_token_EthUSDT() {
 #    # shellcheck disable=SC2154
 #    ${Boss4xCLI} chain33 offline create_multisign_transfer -a 10 -r "${chain33MultisignA}" -m "${multisignChain33Addr}"
 #    # shellcheck disable=SC2154
-#    ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}" --chainID "${chain33ID}"
+#    ${Boss4xCLI} chain33 offline multisign_transfer -k "${chain33DeployKey}" -s "${chain33MultisignKeyA},${chain33MultisignKeyB},${chain33MultisignKeyC},${chain33MultisignKeyD}"
 #    chain33_offline_send "multisign_transfer.txt"
 #    sleep 10
 #    result=$(${Chain33Cli} asset balance -a "${chain33MultisignA}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
@@ -621,7 +621,7 @@ function initPara() {
 function lock_bty_multisign_docker() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
-    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -854,8 +854,7 @@ function get_cli() {
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
         docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID}"
-
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID} --chainEthId 0"
     }
 }
 
