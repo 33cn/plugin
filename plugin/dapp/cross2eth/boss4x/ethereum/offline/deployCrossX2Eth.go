@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"math/big"
 	"strconv"
 	"strings"
@@ -141,11 +142,15 @@ func addCreateFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("owner")
 	cmd.Flags().StringP("symbol", "s", "", "symbol")
 	_ = cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("multisignAddrs", "m", "", "multisignAddrs, as: 'addr,addr,addr,addr'")
+	_ = cmd.MarkFlagRequired("multisignAddrs")
 }
 
 func createTx(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	validatorsAddrs, _ := cmd.Flags().GetString("validatorsAddrs")
+	multisignAddrs, _ := cmd.Flags().GetString("multisignAddrs")
+	multisignAddrsArray := strings.Split(multisignAddrs, ",")
 	initpowers, _ := cmd.Flags().GetString("initPowers")
 	owner, _ := cmd.Flags().GetString("owner")
 	deployerAddr := common.HexToAddress(owner)
@@ -163,7 +168,7 @@ func createTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	var validators []common.Address
+	var validators, multisigns []common.Address
 	var initPowers []*big.Int
 	for _, v := range validatorsAddrsArray {
 		validators = append(validators, common.HexToAddress(v))
@@ -177,13 +182,17 @@ func createTx(cmd *cobra.Command, _ []string) {
 		initPowers = append(initPowers, big.NewInt(vint64))
 	}
 
-	err := createDeployTxs(url, deployerAddr, validators, initPowers, symbol)
+	for _, v := range multisignAddrsArray {
+		multisigns = append(multisigns, common.HexToAddress(v))
+	}
+
+	err := createDeployTxs(url, deployerAddr, validators, multisigns, initPowers, symbol)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func createDeployTxs(url string, deployerAddr common.Address, validators []common.Address, initPowers []*big.Int, symbol string) error {
+func createDeployTxs(url string, deployerAddr common.Address, validators, multisigns []common.Address, initPowers []*big.Int, symbol string) error {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		return err
@@ -269,6 +278,22 @@ func createDeployTxs(url string, deployerAddr common.Address, validators []commo
 	packData = common.FromHex(gnosis.GnosisSafeBin)
 	mulSignAddr := crypto.CreateAddress(deployerAddr, startNonce)
 	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: mulSignAddr, Name: "mulSignAddr", Nonce: startNonce, To: nil})
+	startNonce += 1
+
+	//step10 multisign configOfflineSaveAccount
+	packData, err = offlineSaveAccount(mulSignAddr)
+	if err != nil {
+		return err
+	}
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "configOfflineSaveAccount", Nonce: startNonce, To: &bridgeBankAddr})
+
+	//step11 multisignSetup
+	packData, err = multisignSetup(multisigns)
+	if err != nil {
+		return err
+	}
+	infos = append(infos, &DeployInfo{PackData: packData, ContractorAddr: common.Address{}, Name: "multisignSetup", Nonce: startNonce, To: &mulSignAddr})
+	startNonce += 1
 
 	return NewTxWrite(infos, deployerAddr, url, "deploytxs.txt")
 }
@@ -438,6 +463,36 @@ func setSymbol(symbol string) ([]byte, error) {
 	return abiData, nil
 }
 
+//step 10
+func offlineSaveAccount(multisignContract common.Address) ([]byte, error) {
+	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
+	if err != nil {
+		return nil, err
+	}
+
+	abiData, err := bridgeAbi.Pack("configOfflineSaveAccount", multisignContract)
+	if err != nil {
+		return nil, err
+	}
+	return abiData, nil
+}
+
+//step 11
+func multisignSetup(multisigns []common.Address) ([]byte, error) {
+	AddressZero := common.HexToAddress(ebTypes.EthNilAddr)
+	gnoAbi, err := abi.JSON(strings.NewReader(gnosis.GnosisSafeABI))
+	if err != nil {
+		return nil, err
+	}
+
+	abiData, err := gnoAbi.Pack("setup", multisigns, big.NewInt(int64(len(multisigns))), AddressZero, []byte{'0', 'x'},
+		AddressZero, AddressZero, big.NewInt(int64(0)), AddressZero)
+	if err != nil {
+		return nil, err
+	}
+	return abiData, nil
+}
+
 func CreateWithFileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create_file", //first step
@@ -458,13 +513,6 @@ func createWithFileTx(cmd *cobra.Command, _ []string) {
 	cfgpath, _ := cmd.Flags().GetString("conf")
 	var deployCfg DeployConfigInfo
 	InitCfg(cfgpath, &deployCfg)
-	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(deployCfg.DeployerPrivateKey))
-	if err != nil {
-		fmt.Println("crypto.ToECDSA Err:", err)
-		return
-	}
-
-	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
 	if len(deployCfg.InitPowers) != len(deployCfg.ValidatorsAddr) {
 		panic("not same number for validator address and power")
 	}
@@ -473,14 +521,18 @@ func createWithFileTx(cmd *cobra.Command, _ []string) {
 		panic("the number of validator must be not less than 3")
 	}
 
-	var validators []common.Address
+	var validators, multisigns []common.Address
 	var initPowers []*big.Int
 	for i, addr := range deployCfg.ValidatorsAddr {
 		validators = append(validators, common.HexToAddress(addr))
 		initPowers = append(initPowers, big.NewInt(deployCfg.InitPowers[i]))
 	}
 
-	err = createDeployTxs(url, deployerAddr, validators, initPowers, deployCfg.Symbol)
+	for _, addr := range deployCfg.MultisignAddrs {
+		multisigns = append(multisigns, common.HexToAddress(addr))
+	}
+
+	err := createDeployTxs(url, common.HexToAddress(deployCfg.OperatorAddr), validators, multisigns, initPowers, deployCfg.Symbol)
 	if err != nil {
 		fmt.Println("createDeployTxs Err:", err)
 		return

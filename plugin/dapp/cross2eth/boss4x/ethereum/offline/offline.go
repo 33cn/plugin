@@ -35,8 +35,8 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateWithFileCmd(),
 		DeployERC20Cmd(),
 		DeployTetherUSDTCmd(),
-		CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
-		SetupCmd(),
+		//CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
+		//SetupCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateAddToken2LockListTxCmd(),
 		CreateBridgeTokenTxCmd(),
@@ -64,10 +64,11 @@ type DeployInfo struct {
 }
 
 type DeployConfigInfo struct {
-	DeployerPrivateKey string   `toml:"deployerPrivateKey"`
-	ValidatorsAddr     []string `toml:"validatorsAddr"`
-	InitPowers         []int64  `toml:"initPowers"`
-	Symbol             string   `toml:"symbol"`
+	OperatorAddr   string   `toml:"operatorAddr"`
+	ValidatorsAddr []string `toml:"validatorsAddr"`
+	InitPowers     []int64  `toml:"initPowers"`
+	Symbol         string   `toml:"symbol"`
+	MultisignAddrs []string `toml:"multisignAddrs"`
 }
 
 func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string) {
