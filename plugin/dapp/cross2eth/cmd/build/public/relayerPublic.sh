@@ -324,11 +324,6 @@ function validators_config() {
         sed -i ''"${line}"' a operatorAddr='\""${chain33DeployAddr}"\"'' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" 'deployerPrivateKey="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"')
-    if [ "${line}" ]; then
-        sed -i ''"${line}"' a deployerPrivateKey='\""${chain33DeployKey}"\"'' "./relayer.toml"
-    fi
-
     line=$(delete_line_show "./relayer.toml" 'validatorsAddr=\["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt')
     if [ "${line}" ]; then
         # shellcheck disable=SC2154
