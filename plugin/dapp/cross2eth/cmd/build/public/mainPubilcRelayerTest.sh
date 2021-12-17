@@ -780,7 +780,7 @@ function StartDockerRelayerDeploy() {
     initMultisignChain33Addr
     Chain33Cli=${Para8901Cli}
     offline_setupChain33Multisign
-#    offline_setupEthMultisign
+    #    offline_setupEthMultisign
     Chain33Cli=${MainCli}
     transferChain33MultisignFee
     Chain33Cli=${Para8901Cli}

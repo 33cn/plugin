@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"math/big"
 	"strconv"
 	"strings"
+
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
