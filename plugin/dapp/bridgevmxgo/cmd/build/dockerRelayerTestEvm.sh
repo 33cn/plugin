@@ -160,7 +160,7 @@ function TestETH2EVMToChain33() {
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
-        is_equal "${result}" "1100000000"
+    is_equal "${result}" "1100000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
@@ -169,10 +169,10 @@ function TestETH2EVMToChain33() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-        is_equal "${result}" "600000000"
+    is_equal "${result}" "600000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-        is_equal "${result}" "500000000"
+    is_equal "${result}" "500000000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -198,7 +198,7 @@ function Testethereum2EVMToChain33_usdt() {
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-        is_equal "${result}" "1200000000"
+    is_equal "${result}" "1200000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
@@ -207,10 +207,10 @@ function Testethereum2EVMToChain33_usdt() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-        is_equal "${result}" "700000000"
+    is_equal "${result}" "700000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-        is_equal "${result}" "500000000"
+    is_equal "${result}" "500000000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
