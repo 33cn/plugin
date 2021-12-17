@@ -43,7 +43,7 @@ func addCreateContractsWithFileFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
-	cmd.Flags().StringP("conf", "f", "", "config file")
+	cmd.Flags().StringP("conf", "c", "", "config file")
 	_ = cmd.MarkFlagRequired("conf")
 }
 
