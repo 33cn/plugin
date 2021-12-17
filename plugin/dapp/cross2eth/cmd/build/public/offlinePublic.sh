@@ -31,8 +31,48 @@ function ethereum_offline_sign_send() {
     check_eth_tx "${hash}"
 }
 
+function OfflineDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    # 在 chain33 上部署合约
+    # shellcheck disable=SC2154
+    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" -m "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}" --chainID "${chain33ID}"
+    result=$(${Boss4xCLI} chain33 offline send -f "deployCrossX2Chain33.txt")
+
+    for i in {0..9}; do
+        hash=$(echo "${result}" | jq -r ".[$i].TxHash")
+        check_tx "${Chain33Cli}" "${hash}"
+    done
+    BridgeRegistryOnChain33=$(echo "${result}" | jq -r ".[6].ContractAddr")
+    # shellcheck disable=SC2034
+    multisignChain33Addr=$(echo "${result}" | jq -r ".[7].ContractAddr")
+
+    # 在 Eth 上部署合约
+    # shellcheck disable=SC2154
+    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
+    ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
+    result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
+    for i in {0..7}; do
+        hash=$(echo "${result}" | jq -r ".[$i].TxHash")
+        check_eth_tx "${hash}"
+    done
+    ethBridgeBank=$(echo "${result}" | jq -r ".[3].ContractAddr")
+    BridgeRegistryOnEth=$(echo "${result}" | jq -r ".[7].ContractAddr")
+    # shellcheck disable=SC2034
+    multisignEthAddr=$(echo "${result}" | jq -r ".[8].ContractAddr")
+
+    # 修改 relayer.toml 字段
+    updata_relayer "BridgeRegistryOnChain33" "${BridgeRegistryOnChain33}" "./relayer.toml"
+
+    line=$(delete_line_show "./relayer.toml" "BridgeRegistry=")
+    if [ "${line}" ]; then
+        sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistryOnEth}"'"' "./relayer.toml"
+    fi
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
 # shellcheck disable=SC2120
-function InitAndOfflineDeploy() {
+function InitRelayerA() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     result=$(${CLIA} set_pwd -p 123456hzj)
@@ -49,18 +89,6 @@ function InitAndOfflineDeploy() {
     result=$(${CLIA} ethereum import_privatekey -k "${ethValidatorAddrKeya}")
     cli_ret "${result}" "ethereum import_privatekey"
 
-    # 在 chain33 上部署合约
-    # shellcheck disable=SC2154
-    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" --chainID "${chain33ID}"
-    result=$(${Boss4xCLI} chain33 offline send -f "deployCrossX2Chain33.txt")
-
-    for i in {0..7}; do
-        hash=$(echo "${result}" | jq -r ".[$i].TxHash")
-        check_tx "${Chain33Cli}" "${hash}"
-    done
-    BridgeRegistryOnChain33=$(echo "${result}" | jq -r ".[6].ContractAddr")
-    # shellcheck disable=SC2034
-    multisignChain33Addr=$(echo "${result}" | jq -r ".[7].ContractAddr")
     ${CLIA} chain33 multisign set_multiSign -a "${multisignChain33Addr}"
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
@@ -68,33 +96,11 @@ function InitAndOfflineDeploy() {
     chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
     cp Chain33BridgeBank.abi "${chain33BridgeBank}.abi"
 
-    # 在 Eth 上部署合约
-    # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
-    ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
-    result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
-    for i in {0..7}; do
-        hash=$(echo "${result}" | jq -r ".[$i].TxHash")
-        check_eth_tx "${hash}"
-    done
-    ethBridgeBank=$(echo "${result}" | jq -r ".[3].ContractAddr")
-    BridgeRegistryOnEth=$(echo "${result}" | jq -r ".[7].ContractAddr")
-    # shellcheck disable=SC2034
-    multisignEthAddr=$(echo "${result}" | jq -r ".[8].ContractAddr")
     ${CLIA} ethereum multisign set_multiSign -a "${multisignEthAddr}"
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
     cp BridgeRegistry.abi "${BridgeRegistryOnEth}.abi"
     cp EthBridgeBank.abi "${ethBridgeBank}.abi"
-
-    # 修改 relayer.toml 字段
-    updata_relayer "BridgeRegistryOnChain33" "${BridgeRegistryOnChain33}" "./relayer.toml"
-
-    line=$(delete_line_show "./relayer.toml" "BridgeRegistry=")
-    if [ "${line}" ]; then
-        sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistryOnEth}"'"' "./relayer.toml"
-    fi
-
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -277,17 +283,17 @@ function offline_create_bridge_token_eth_ZBC() {
     cp BridgeToken.abi "${ethereumZbcBridgeTokenAddr}.abi"
 }
 
-function offline_setupChain33Multisign() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    echo -e "${GRE}=========== 设置 chain33 离线钱包合约 ===========${NOC}"
-    # shellcheck disable=SC2154
-    ${Boss4xCLI} chain33 offline multisign_setup -m "${multisignChain33Addr}" -o "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
-    chain33_offline_send "multisign_setup.txt"
-
-    ${Boss4xCLI} chain33 offline set_offline_addr -a "${multisignChain33Addr}" -c "${chain33BridgeBank}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
-    chain33_offline_send "chain33_set_offline_addr.txt"
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
+#function offline_setupChain33Multisign() {
+#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+#    echo -e "${GRE}=========== 设置 chain33 离线钱包合约 ===========${NOC}"
+#    # shellcheck disable=SC2154
+#    ${Boss4xCLI} chain33 offline multisign_setup -m "${multisignChain33Addr}" -o "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
+#    chain33_offline_send "multisign_setup.txt"
+#
+#    ${Boss4xCLI} chain33 offline set_offline_addr -a "${multisignChain33Addr}" -c "${chain33BridgeBank}" -k "${chain33DeployKey}" --chainID "${chain33ID}"
+#    chain33_offline_send "chain33_set_offline_addr.txt"
+#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+#}
 
 #function offline_setupEthMultisign() {
 #    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"

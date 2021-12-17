@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/33cn/plugin/plugin/dapp/dex/utils"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
@@ -26,8 +27,8 @@ func Boss4xOfflineCmd() *cobra.Command {
 		ApproveErc20Cmd(),
 		AddToken2LockListCmd(),
 		CreateNewBridgeTokenCmd(),
-		SetupCmd(),
-		ConfigOfflineSaveAccountCmd(),
+		//SetupCmd(),
+		//ConfigOfflineSaveAccountCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateMultisignTransferCmd(),
 		MultisignTransferCmd(),
@@ -106,12 +107,11 @@ func paraseFile(file string, result interface{}) error {
 	return json.Unmarshal(b, result)
 }
 
-func callContractAndSignWrite(cmd *cobra.Command, para []byte, contractAddr, name string) {
+func createOfflineTx(cmd *cobra.Command, para []byte, contractAddr, name string, interval time.Duration) (*utils.Chain33OfflineTx, error) {
 	action := &evmtypes.EVMContractAction{Amount: 0, GasLimit: 0, GasPrice: 0, Note: name, Para: para, ContractAddr: contractAddr}
 	content, txHash, err := utils.CallContractAndSign(getTxInfo(cmd), action, contractAddr)
 	if nil != err {
-		fmt.Println("CallContractAndSign", "Failed", err.Error())
-		return
+		return nil, err
 	}
 
 	Tx := &utils.Chain33OfflineTx{
@@ -119,6 +119,17 @@ func callContractAndSignWrite(cmd *cobra.Command, para []byte, contractAddr, nam
 		TxHash:        common.Bytes2Hex(txHash),
 		SignedRawTx:   content,
 		OperationName: name,
+		Interval:      interval,
+	}
+
+	return Tx, nil
+}
+
+func callContractAndSignWrite(cmd *cobra.Command, para []byte, contractAddr, name string) {
+	Tx, err := createOfflineTx(cmd, para, contractAddr, name, 0)
+	if nil != err {
+		fmt.Println("CallContractAndSign", "Failed", err.Error(), "name", name)
+		return
 	}
 
 	_, err = json.MarshalIndent(Tx, "", "    ")

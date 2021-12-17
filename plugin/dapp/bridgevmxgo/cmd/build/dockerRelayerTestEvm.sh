@@ -110,7 +110,7 @@ function configbridgevmxgoAddr() {
 function DeployEvmxgo() {
     # 在 chain33 上部署合约
     # shellcheck disable=SC2154
-    ${EvmxgoBoss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [96, 1, 1, 1]" --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [96, 1, 1, 1]"
     result=$(${EvmxgoBoss4xCLI} chain33 offline send -f "deployBridgevmxgo2Chain33.txt")
 
     for i in {0..6}; do
@@ -124,10 +124,10 @@ function DeployEvmxgo() {
     XgoChain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${XgoBridgeRegistryOnChain33}")
     cp XgoChain33BridgeBank.abi "${XgoChain33BridgeBank}.abi"
 
-    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s ETH -t "${chain33EthBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s ETH -t "${chain33EthBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1
     chain33_offline_send_evm "create_add_lock_list.txt"
 
-    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s USDT -t "${chain33USDTBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1 --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s USDT -t "${chain33USDTBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1
     chain33_offline_send_evm "create_add_lock_list.txt"
 
     updateConfig "ETH" "${chain33EthBridgeTokenAddr}"
@@ -161,10 +161,10 @@ function TestETH2EVMToChain33() {
     # 结果是 11 * le8
     #    is_equal "${result}" "4700000000"
 
-    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
 
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33EthBridgeTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33EthBridgeTokenAddr}, 500000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
@@ -196,10 +196,10 @@ function Testethereum2EVMToChain33_usdt() {
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     #    is_equal "${result}" "700000000"
 
-    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1 --chainID "${chain33ID}"
+    ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
 
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33USDTBridgeTokenAddr}, 500000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33ReceiverAddr}" -e "${XgoChain33BridgeBank}" -p "lock(${chain33TestAddr2}, ${chain33USDTBridgeTokenAddr}, 500000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
@@ -224,8 +224,8 @@ function get_evm_cli() {
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
         docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para."
-        EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID}"
+        EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para. --chainID ${chain33ID}"
     }
 }
 
@@ -245,8 +245,6 @@ function AllRelayerMainTest() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     set +e
-    get_evm_cli
-
     if [[ ${1} != "" ]]; then
         maturityDegree=${1}
         echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
@@ -256,6 +254,8 @@ function AllRelayerMainTest() {
     if [[ $# -ge 2 ]]; then
         chain33ID="${2}"
     fi
+
+    get_evm_cli
 
     # init
     Chain33Cli=${MainCli}

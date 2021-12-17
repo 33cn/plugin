@@ -766,41 +766,22 @@ function up_relayer_toml() {
 function StartDockerRelayerDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    # 修改 relayer.toml
-    up_relayer_toml
-
-    # 启动 ebrelayer
-    start_docker_ebrelayerA
-
     # 部署合约 设置 bridgeRegistry 地址
-    InitAndOfflineDeploy
+    OfflineDeploy
 
-    # 设置离线多签数据
+    # 向离线多签地址打点手续费
     Chain33Cli=${MainCli}
     initMultisignChain33Addr
-    Chain33Cli=${Para8901Cli}
-    offline_setupChain33Multisign
-    #    offline_setupEthMultisign
-    Chain33Cli=${MainCli}
     transferChain33MultisignFee
     Chain33Cli=${Para8901Cli}
 
-    # shellcheck disable=SC2086
-    {
-        docker cp "${BridgeRegistryOnChain33}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnChain33}.abi
-        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-        docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
-        docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
-    }
-
-    # 重启
-    restart_ebrelayerA
-
-    # start ebrelayer B C D
-    updata_toml_start_bcd
+    # 修改 relayer.toml
+    up_relayer_toml
+    # 启动 ebrelayer
+    start_docker_ebrelayerA
+    InitRelayerA
 
     # 设置 token 地址
-    #    InitTokenAddr
     offline_create_bridge_token_eth_BTY
     offline_create_bridge_token_chain33_ETH "ETH"
     offline_deploy_erc20_create_tether_usdt_USDT
@@ -808,12 +789,16 @@ function StartDockerRelayerDeploy() {
 
     # shellcheck disable=SC2086
     {
+        docker cp "${BridgeRegistryOnChain33}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnChain33}.abi
+        docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
+        docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
+        docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
         docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
         docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
     }
 
-    # 重启,因为relayerA的验证人地址和部署人的地址是一样的,所以需要重新启动relayer,更新nonce
-    restart_ebrelayerA
+    # start ebrelayer B C D
+    updata_toml_start_bcd
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -869,8 +854,8 @@ function get_cli() {
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
         docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para."
-        echo "${Boss4xCLI}"
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID}"
+
     }
 }
 
