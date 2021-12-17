@@ -740,10 +740,6 @@ function up_relayer_toml() {
     # 修改 relayer.toml 配置文件
     updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
 
-    # 删除私钥
-    delete_line "./relayer.toml" "deployerPrivateKey="
-    delete_line "./relayer.toml" "deployerPrivateKey="
-
     # para
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" "chain33Host")

@@ -16,7 +16,7 @@
 交易5: 在合约chain33Bridge中设置BridgeBank合约地址
 交易6: 在合约chain33Bridge中设置Oracle合约地址
 交易7: 部署合约: BridgeRegistry
-交易7: 部署合约: MulSign
+交易8: 部署合约: MulSign
 
 命令：
 ./boss4x chain33 offline create -f 1 -k 0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae -n 'deploy crossx to chain33' -r '1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ, [1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ, 155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6, 13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv, 113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG], [25, 25, 25, 25]' --chainID 33
