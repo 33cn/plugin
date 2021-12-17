@@ -38,7 +38,7 @@ func addCreateCrossBridgeFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
 	cmd.Flags().StringP("valset", "r", "", "contruct parameter for valset, as: 'addr, [addr, addr, addr, addr], [25, 25, 25, 25]'")
 	_ = cmd.MarkFlagRequired("valset")
-	cmd.Flags().StringP("multisignAddrs", "m", "", "multisign address")
+	cmd.Flags().StringP("multisignAddrs", "m", "", "multisign address, as: 'addr, addr, addr, addr'")
 	_ = cmd.MarkFlagRequired("multisignAddrs")
 }
 

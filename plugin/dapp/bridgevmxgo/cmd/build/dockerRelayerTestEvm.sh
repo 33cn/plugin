@@ -139,6 +139,7 @@ function DeployEvmxgo() {
 }
 
 function TestETH2EVMToChain33() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -159,7 +160,7 @@ function TestETH2EVMToChain33() {
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 11 * le8
-    #    is_equal "${result}" "4700000000"
+        is_equal "${result}" "1100000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33EthBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
@@ -168,13 +169,16 @@ function TestETH2EVMToChain33() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "4200000000"
+        is_equal "${result}" "600000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-    #    is_equal "${result}" "500000000"
+        is_equal "${result}" "500000000"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function Testethereum2EVMToChain33_usdt() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
@@ -194,7 +198,7 @@ function Testethereum2EVMToChain33_usdt() {
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "700000000"
+        is_equal "${result}" "1200000000"
 
     ${EvmxgoBoss4xCLI} chain33 offline approve_erc20 -a 330000000000 -s "${XgoChain33BridgeBank}" -c "${chain33USDTBridgeTokenAddr}" -k "${chain33ReceiverAddrKey}" -f 1
     chain33_offline_send_evm "approve_erc20.txt"
@@ -203,10 +207,12 @@ function Testethereum2EVMToChain33_usdt() {
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "4200000000"
+        is_equal "${result}" "700000000"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
-    #    is_equal "${result}" "500000000"
+        is_equal "${result}" "500000000"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
 function get_evm_cli() {
@@ -224,7 +230,7 @@ function get_evm_cli() {
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
         docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID}"
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID} --chainEthId 0"
         EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para. --chainID ${chain33ID}"
     }
 }
