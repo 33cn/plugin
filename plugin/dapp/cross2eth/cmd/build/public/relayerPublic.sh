@@ -53,7 +53,6 @@ CLIA="./ebcli_A"
 CLIB="./ebcli_B"
 CLIC="./ebcli_C"
 CLID="./ebcli_D"
-chain33ID=0
 
 function kill_ebrelayerC() {
     kill_ebrelayer ./relayer_C/ebrelayer

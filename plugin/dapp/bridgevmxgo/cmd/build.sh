@@ -34,6 +34,8 @@ cp ./build/* "${OUT_DIR}"
 cp ./build/abi/* "${OUT_DIR}"
 cp ../../cross2eth/cmd/build/public/* "${OUT_DIR}"
 cp ../../cross2eth/cmd/build/abi/* "${OUT_DIR}"
+cp ../../cross2eth/boss4x/chain33/deploy_chain33.toml "${OUT_DIR}"
+cp ../../cross2eth/boss4x/ethereum/deploy_ethereum.toml "${OUT_DIR}"
 
 OUT_TESTDIR="${1}/dapptest/$strapp"
 mkdir -p "${OUT_TESTDIR}"
