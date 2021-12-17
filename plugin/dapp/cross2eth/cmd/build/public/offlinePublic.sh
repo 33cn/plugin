@@ -35,7 +35,7 @@ function OfflineDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 在 chain33 上部署合约
     # shellcheck disable=SC2154
-#    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" -m "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}"
+    #    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" -m "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}"
     ${Boss4xCLI} chain33 offline create_file -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -c "./deploy_chain33.toml"
     result=$(${Boss4xCLI} chain33 offline send -f "deployCrossX2Chain33.txt")
 
@@ -49,7 +49,7 @@ function OfflineDeploy() {
 
     # 在 Eth 上部署合约
     # shellcheck disable=SC2154
-#    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
+    #    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
     ${Boss4xCLI} ethereum offline create_file -f "./deploy_ethereum.toml"
     ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
     result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
