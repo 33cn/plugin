@@ -3,10 +3,11 @@ package offline
 import (
 	"encoding/json"
 	"fmt"
-	tml "github.com/BurntSushi/toml"
 	"io/ioutil"
 	"os"
 	"time"
+
+	tml "github.com/BurntSushi/toml"
 
 	"github.com/33cn/plugin/plugin/dapp/dex/utils"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
