@@ -14,6 +14,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"math/big"
 	"regexp"
 	"strings"
@@ -552,8 +553,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	//TODO:此处需要完成在以太坊发送以太或者ERC20数字资产的操作
 
 	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
-	if err := ethRelayer.checkReceiverPermission(toAddr, chain33Msg.Amount, chain33Msg.Symbol); err != nil {
-		relayerLog.Error("handleLogWithdraw", "checkReceiverPermission", err.Error())
+	if ok, err := ethRelayer.checkReceiverPermission(toAddr, chain33Msg.Amount, chain33Msg.Symbol); !ok {
+		relayerLog.Error("handleLogWithdraw", "checkReceiverPermission,resion:", err.Error())
 		return
 	}
 
@@ -562,7 +563,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	defer cancel()
 	var intputdata []byte
 	var err error
-	if tokenAddr.String() != "" {
+	if tokenAddr.String() != "" { //判断是否要Pack EVM数据
 		intputdata, err = ethRelayer.CallEvmData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
 		relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
 		return
@@ -574,13 +575,13 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		return
 	}
+
 	//交易签名
 	signedTx, err := ethRelayer.signTx(tx, ethRelayer.privateKey4Ethereum)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "SignTx err", err)
 		return
 	}
-
 	//交易发送
 	err = ethRelayer.clientSpec.SendTransaction(timeout, signedTx)
 	if err != nil {
@@ -590,9 +591,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", signedTx.Hash())
 }
 
-func (ethRelayer *Relayer4Ethereum) checkReceiverPermission(addr common.Address, amount *big.Int, symbol string) error {
+func (ethRelayer *Relayer4Ethereum) checkReceiverPermission(addr common.Address, amount *big.Int, symbol string) (bool,error) {
 	//TODO 检测提币用户下累计提币额度是否达到上限
-	return errors.New("permission denied")
+	return true,nil
+	//return errors.New("permission denied")
 }
 
 func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
