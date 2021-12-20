@@ -14,7 +14,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
-	"github.com/Workiva/go-datastructures/threadsafe/err"
 	"math/big"
 	"regexp"
 	"strings"
@@ -556,7 +555,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 
 	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
 	if ok, err := ethRelayer.checkReceiverPermission(toAddr, chain33Msg.Amount, chain33Msg.Symbol); !ok {
-		relayerLog.Error("handleLogWithdraw", "checkReceiverPermission,resion:", err.Error())
+		relayerLog.Error("handleLogWithdraw", "checkReceiverPermission,reason", err)
 		return
 	}
 
