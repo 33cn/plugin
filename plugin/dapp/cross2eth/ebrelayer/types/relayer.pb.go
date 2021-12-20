@@ -2431,6 +2431,108 @@ func (x *ResendChain33EventReq) GetHeight() int64 {
 	return 0
 }
 
+type CfgWithdrawReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Symbol    string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	FeeAmount int64  `protobuf:"varint,2,opt,name=feeAmount,proto3" json:"feeAmount,omitempty"`
+}
+
+func (x *CfgWithdrawReq) Reset() {
+	*x = CfgWithdrawReq{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relayer_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CfgWithdrawReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CfgWithdrawReq) ProtoMessage() {}
+
+func (x *CfgWithdrawReq) ProtoReflect() protoreflect.Message {
+	mi := &file_relayer_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CfgWithdrawReq.ProtoReflect.Descriptor instead.
+func (*CfgWithdrawReq) Descriptor() ([]byte, []int) {
+	return file_relayer_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *CfgWithdrawReq) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *CfgWithdrawReq) GetFeeAmount() int64 {
+	if x != nil {
+		return x.FeeAmount
+	}
+	return 0
+}
+
+type WithdrawSymbol2Fee struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Symbol2Fee map[string]int64 `protobuf:"bytes,1,rep,name=symbol2Fee,proto3" json:"symbol2Fee,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+}
+
+func (x *WithdrawSymbol2Fee) Reset() {
+	*x = WithdrawSymbol2Fee{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relayer_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WithdrawSymbol2Fee) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WithdrawSymbol2Fee) ProtoMessage() {}
+
+func (x *WithdrawSymbol2Fee) ProtoReflect() protoreflect.Message {
+	mi := &file_relayer_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WithdrawSymbol2Fee.ProtoReflect.Descriptor instead.
+func (*WithdrawSymbol2Fee) Descriptor() ([]byte, []int) {
+	return file_relayer_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *WithdrawSymbol2Fee) GetSymbol2Fee() map[string]int64 {
+	if x != nil {
+		return x.Symbol2Fee
+	}
+	return nil
+}
+
 var File_relayer_proto protoreflect.FileDescriptor
 
 var file_relayer_proto_rawDesc = []byte{
@@ -2708,8 +2810,22 @@ var file_relayer_proto_rawDesc = []byte{
 	0x72, 0x22, 0x2f, 0x0a, 0x15, 0x52, 0x65, 0x73, 0x65, 0x6e, 0x64, 0x43, 0x68, 0x61, 0x69, 0x6e,
 	0x33, 0x33, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65,
 	0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67,
-	0x68, 0x74, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x68, 0x74, 0x22, 0x46, 0x0a, 0x0e, 0x43, 0x66, 0x67, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61,
+	0x77, 0x52, 0x65, 0x71, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x12, 0x1c, 0x0a, 0x09,
+	0x66, 0x65, 0x65, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52,
+	0x09, 0x66, 0x65, 0x65, 0x41, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x9e, 0x01, 0x0a, 0x12, 0x57,
+	0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65,
+	0x65, 0x12, 0x49, 0x0a, 0x0a, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65, 0x65, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x57, 0x69,
+	0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65, 0x65,
+	0x2e, 0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79,
+	0x52, 0x0a, 0x73, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65, 0x65, 0x1a, 0x3d, 0x0a, 0x0f,
+	0x53, 0x79, 0x6d, 0x62, 0x6f, 0x6c, 0x32, 0x46, 0x65, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
+	0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65,
+	0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x42, 0x0a, 0x5a, 0x08, 0x2e,
+	0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2724,7 +2840,7 @@ func file_relayer_proto_rawDescGZIP() []byte {
 	return file_relayer_proto_rawDescData
 }
 
-var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_relayer_proto_goTypes = []interface{}{
 	(*Account4Relayer)(nil),             // 0: types.Account4Relayer
 	(*ValidatorAddr4EthRelayer)(nil),    // 1: types.ValidatorAddr4EthRelayer
@@ -2762,16 +2878,20 @@ var file_relayer_proto_goTypes = []interface{}{
 	(*ETHConfigLockedTokenOffline)(nil), // 33: types.ETHConfigLockedTokenOffline
 	(*BalanceLockedReq)(nil),            // 34: types.BalanceLockedReq
 	(*ResendChain33EventReq)(nil),       // 35: types.ResendChain33EventReq
+	(*CfgWithdrawReq)(nil),              // 36: types.CfgWithdrawReq
+	(*WithdrawSymbol2Fee)(nil),          // 37: types.WithdrawSymbol2Fee
+	nil,                                 // 38: types.WithdrawSymbol2Fee.Symbol2FeeEntry
 }
 var file_relayer_proto_depIdxs = []int32{
 	25, // 0: types.TokenAddressArray.tokenAddress:type_name -> types.TokenAddress
 	24, // 1: types.TokenStaticsResponse.e2Cstatics:type_name -> types.Ethereum2Chain33Statics
 	23, // 2: types.TokenStaticsResponse.c2Estatics:type_name -> types.Chain33ToEthereumStatics
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	38, // 3: types.WithdrawSymbol2Fee.symbol2Fee:type_name -> types.WithdrawSymbol2Fee.Symbol2FeeEntry
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_relayer_proto_init() }
@@ -3212,6 +3332,30 @@ func file_relayer_proto_init() {
 				return nil
 			}
 		}
+		file_relayer_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CfgWithdrawReq); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_relayer_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WithdrawSymbol2Fee); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3219,7 +3363,7 @@ func file_relayer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_relayer_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

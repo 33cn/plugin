@@ -27,6 +27,7 @@ var (
 	ethLockTxUpdateTxIndex         = []byte("eth-ethLockTxUpdateTxIndex")
 	ethBurnTxUpdateTxIndex         = []byte("eth-ethBurnTxUpdateTxIndex")
 	multiSignAddressPrefix         = []byte("eth-multiSignAddress")
+	withdrawFeeKey                 = []byte("eth-withdrawFee")
 )
 
 func ethTokenSymbol2AddrKey(symbol string) []byte {
@@ -382,4 +383,29 @@ func (ethRelayer *Relayer4Ethereum) getMultiSignAddress() string {
 		return ""
 	}
 	return string(bytes)
+}
+
+func (ethRelayer *Relayer4Ethereum) setWithdrawFee(symbol2Fee map[string]int64) error {
+	withdrawSymbol2Fee := &ebTypes.WithdrawSymbol2Fee{
+		Symbol2Fee: symbol2Fee,
+	}
+
+	bytes := chain33Types.Encode(withdrawSymbol2Fee)
+	return ethRelayer.db.Set(withdrawFeeKey, bytes)
+}
+
+func (ethRelayer *Relayer4Ethereum) restoreWithdrawFee() map[string]int64 {
+	bytes, _ := ethRelayer.db.Get(withdrawFeeKey)
+	if 0 == len(bytes) {
+		result := make(map[string]int64)
+		return result
+	}
+
+	var withdrawSymbol2Fee ebTypes.WithdrawSymbol2Fee
+	if err := chain33Types.Decode(bytes, &withdrawSymbol2Fee); nil != err {
+		result := make(map[string]int64)
+		return result
+	}
+
+	return withdrawSymbol2Fee.Symbol2Fee
 }

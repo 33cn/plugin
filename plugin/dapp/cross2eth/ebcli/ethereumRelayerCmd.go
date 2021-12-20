@@ -51,6 +51,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		MultiSignEthCmd(),
 		TransferEthCmd(),
 		ConfigplatformTokenSymbolCmd(),
+		CfgWithdrawCmd(),
 	)
 
 	return cmd
@@ -1185,5 +1186,37 @@ func SetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
 	address, _ := cmd.Flags().GetString("address")
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetEthMultiSignAddr", address, &res)
+	ctx.Run()
+}
+
+func CfgWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cfgWithdraw",
+		Short: "cfg withdraw fee",
+		Run:   CfgWithdraw,
+	}
+	addCfgWithdrawFlags(cmd)
+	return cmd
+}
+
+func addCfgWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+	cmd.Flags().Int64P("fee", "f", 0, "fee amount")
+	_ = cmd.MarkFlagRequired("fee")
+}
+
+func CfgWithdraw(cmd *cobra.Command, _ []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	fee, _ := cmd.Flags().GetInt64("fee")
+
+	req := &ebTypes.CfgWithdrawReq{
+		Symbol:    symbol,
+		FeeAmount: fee,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CfgWithdraw", req, &res)
 	ctx.Run()
 }
