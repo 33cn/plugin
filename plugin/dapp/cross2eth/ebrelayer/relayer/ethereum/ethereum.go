@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -518,8 +519,13 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		relayerLog.Error("handleLogWithdraw", "Failed to fetch locked Token Info for symbol", chain33Msg.Symbol)
 		return
 	}
-
+	var toAddr common.Address
 	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
+	if tokenAddr.String() != "" {
+		toAddr = tokenAddr
+	} else { //如果tokenAddr为空，则把toAddr设置为用户指定的地址
+		toAddr = chain33Msg.EthereumReceiver
+	}
 	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 	if 8 != withdrawFromChain33TokenInfo.Decimal {
 		if withdrawFromChain33TokenInfo.Decimal > 8 {
@@ -540,12 +546,119 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
 		}
 	}
-	relayerLog.Info("handleLogWithdraw","token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
+	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
 		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
 
 	//TODO:此处需要完成在以太坊发送以太或者ERC20数字资产的操作
 
+	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
+	if err := ethRelayer.checkReceiverPermission(toAddr, chain33Msg.Amount, chain33Msg.Symbol); err != nil {
+		relayerLog.Error("handleLogWithdraw", "checkReceiverPermission", err.Error())
+		return
+	}
+
+	ctx := context.Background()
+	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
+	defer cancel()
+	var intputdata []byte
+	var err error
+	if tokenAddr.String() != "" {
+		intputdata, err = ethRelayer.CallEvmData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
+		relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
+		return
+	}
+	//param: from,to,evm-packdata,amount
+	//交易构造
+	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputdata, chain33Msg.Amount)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "newTx err", err)
+		return
+	}
+	//交易签名
+	signedTx, err := ethRelayer.signTx(tx, ethRelayer.privateKey4Ethereum)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "SignTx err", err)
+		return
+	}
+
+	//交易发送
+	err = ethRelayer.clientSpec.SendTransaction(timeout, signedTx)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+		return
+	}
+	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", signedTx.Hash())
 }
+
+func (ethRelayer *Relayer4Ethereum) checkReceiverPermission(addr common.Address, amount *big.Int, symbol string) error {
+	//TODO 检测提币用户下累计提币额度是否达到上限
+	return errors.New("permission denied")
+}
+
+func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
+	signer := types.NewEIP155Signer(ethRelayer.clientChainID)
+	txhash := signer.Hash(tx)
+	signature, err := crypto.Sign(txhash.Bytes(), key)
+	if err != nil {
+		return nil, err
+	}
+	tx, err = tx.WithSignature(signer, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+func (ethRelayer *Relayer4Ethereum) CallEvmData(_to common.Address, _value *big.Int) ([]byte, error) {
+	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
+	if err != nil {
+		return nil, err
+	}
+	abidata, err := parsed.Pack("transfer", _to, _value)
+	if err != nil {
+		return nil, err
+	}
+	return abidata, nil
+}
+func (ethRelayer *Relayer4Ethereum) newTx(from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
+
+	price, err := ethRelayer.clientSpec.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := ethRelayer.clientSpec.PendingNonceAt(context.Background(), from)
+	if err != nil {
+		return nil, err
+	}
+	var gas uint64 = 21000
+	if input != nil {
+		var msg ethereum.CallMsg
+		msg.To = &to
+		msg.Data = input
+		gas, err = ethRelayer.clientSpec.EstimateGas(context.Background(), msg)
+		if err != nil {
+			//return nil,err
+			relayerLog.Error("handleLogWithdraw", "EstimateGas err", err)
+			gas = 80000
+		}
+		//略微增加gas数量，>=120%
+		gas = uint64(float64(gas) * 1.2)
+	}
+
+	ntx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		GasPrice: price,
+		To:       &to,
+		Data:     input,
+		Value:    value,
+		Gas:      gas,
+	})
+
+	return ntx, nil
+
+}
+
 func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33Msg) {
 	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
 
