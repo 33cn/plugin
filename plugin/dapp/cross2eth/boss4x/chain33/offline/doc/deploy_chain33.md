@@ -6,9 +6,9 @@
 * 在线发送签名后文件 `./boss4x chain33 offline send -f XXX.txt` 
 
 拼凑 boss4x 命令
-
+```shell
 ./boss4x --rpc_laddr http://${chain33_ip}:8901 --rpc_laddr_ethereum --paraName user.p.para. --chainID 0
-```
+
 --chainID int32               chain id, default to 0
 --expire string               transaction expire time (optional) (default "120m")
 --paraName string             para chain name,Eg:user.p.fzm.
@@ -52,6 +52,21 @@
 ./boss4x chain33 offline send -f deployCrossX2Chain33.txt
 ```
 ***
+
+#### 文件部署
+把要部署需要的数据写入 chain33_ethereum.toml 配置文件
+```toml
+# 验证人地址，至少配置３个以上，即大于等于３个
+validatorsAddr=["1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ", "155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6", "13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv", "113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"]
+# 验证人权重
+initPowers=[25, 25, 25, 25]
+# 离线多签地址
+multisignAddrs=["168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
+```
+命令:
+```shell
+./boss4x chain33 offline create_file -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -c "./deploy_chain33.toml"
+```
 
 #### 离线部署 ERC20 跨链合约
 * 离线创建交易

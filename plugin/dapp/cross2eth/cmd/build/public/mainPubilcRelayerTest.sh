@@ -766,6 +766,11 @@ function up_relayer_toml() {
 function StartDockerRelayerDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
+    # 修改 relayer.toml
+    up_relayer_toml
+    # 启动 ebrelayer
+    start_docker_ebrelayerA
+    
     docker cp "./deploy_chain33.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_chain33.toml
     docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_ethereum.toml
 
@@ -778,10 +783,6 @@ function StartDockerRelayerDeploy() {
     transferChain33MultisignFee
     Chain33Cli=${Para8901Cli}
 
-    # 修改 relayer.toml
-    up_relayer_toml
-    # 启动 ebrelayer
-    start_docker_ebrelayerA
     InitRelayerA
 
     # 设置 token 地址
