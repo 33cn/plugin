@@ -766,6 +766,9 @@ function up_relayer_toml() {
 function StartDockerRelayerDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
+    docker cp "./deploy_chain33.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_chain33.toml
+    docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_ethereum.toml
+
     # 部署合约 设置 bridgeRegistry 地址
     OfflineDeploy
 
