@@ -53,7 +53,6 @@ CLIA="./ebcli_A"
 CLIB="./ebcli_B"
 CLIC="./ebcli_C"
 CLID="./ebcli_D"
-chain33ID=0
 
 function kill_ebrelayerC() {
     kill_ebrelayer ./relayer_C/ebrelayer
@@ -146,7 +145,7 @@ function create_bridge_token_eth_BTY() {
 function create_bridge_token_chain33_ETH() {
     # 在 chain33 上创建 bridgeToken ETH
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)")
     check_tx "${Chain33Cli}" "${hash}"
     chain33EthBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
     echo "ETH Token Addr= ${chain33EthBridgeTokenAddr}"
@@ -171,7 +170,7 @@ function deploy_erc20_eth_BYC() {
 function create_bridge_token_chain33_YCC() {
     # 在chain33上创建bridgeToken YCC
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken YCC ======${NOC}"
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(YCC)")
     check_tx "${Chain33Cli}" "${hash}"
     chain33BycBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(YCC)")
     echo "YCC Token Addr = ${chain33BycBridgeTokenAddr}"
@@ -190,11 +189,11 @@ function deploy_erc20_chain33_YCC() {
     cp ERC20.abi "${chain33YccERC20TokenAddr}.abi"
 
     # echo 'YCC.1:增加allowance的设置,或者使用relayer工具进行'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33YccERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33YccERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     # echo 'YCC.2:#执行add lock操作:addToken2LockList'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccERC20TokenAddr}, YCC)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33YccERC20TokenAddr}, YCC)")
     check_tx "${Chain33Cli}" "${hash}"
 }
 
@@ -216,11 +215,11 @@ function deploy_erc20_chain33_ZBC() {
     cp ERC20.abi "${chain33ZbcERC20TokenAddr}.abi"
 
     # echo 'ZBC.1:增加allowance的设置,或者使用relayer工具进行'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33ZbcERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33ZbcERC20TokenAddr}" -p "approve(${chain33BridgeBank}, 330000000000)")
     check_tx "${Chain33Cli}" "${hash}"
 
     # echo 'ZBC.2:#执行add lock操作:addToken2LockList'
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZbcERC20TokenAddr}, ZBC)" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "addToken2LockList(${chain33ZbcERC20TokenAddr}, ZBC)")
     check_tx "${Chain33Cli}" "${hash}"
 }
 
@@ -324,15 +323,21 @@ function validators_config() {
         sed -i ''"${line}"' a operatorAddr='\""${chain33DeployAddr}"\"'' "./relayer.toml"
     fi
 
-    line=$(delete_line_show "./relayer.toml" 'deployerPrivateKey="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"')
-    if [ "${line}" ]; then
-        sed -i ''"${line}"' a deployerPrivateKey='\""${chain33DeployKey}"\"'' "./relayer.toml"
-    fi
-
     line=$(delete_line_show "./relayer.toml" 'validatorsAddr=\["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt')
     if [ "${line}" ]; then
         # shellcheck disable=SC2154
         sed -i ''"${line}"' a validatorsAddr=['\""${chain33Validatora}"\"', '\""${chain33Validatorb}"\"', '\""${chain33Validatorc}"\"', '\""${chain33Validatord}"\"']' "./relayer.toml"
+    fi
+
+    line=$(delete_line_show "./relayer.toml" 'operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"')
+    if [ "${line}" ]; then
+        sed -i ''"${line}"' a operatorAddr='\""${ethDeployAddr}"\"'' "./relayer.toml"
+    fi
+
+    line=$(delete_line_show "./relayer.toml" 'validatorsAddr=\["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f')
+    if [ "${line}" ]; then
+        # shellcheck disable=SC2154
+        sed -i ''"${line}"' a validatorsAddr=['\""${ethValidatorAddra}"\"', '\""${ethValidatorAddrb}"\"', '\""${ethValidatorAddrc}"\"', '\""${ethValidatorAddrd}"\"']' "./relayer.toml"
     fi
 }
 
@@ -436,6 +441,52 @@ function InitChain33Validator() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+function coins_cross_transfer() {
+    local key="${1}"
+    local addr="${2}"
+    local amount="${3}"
+    local para_amount="${4}"
+    local evm_amount="${5}"
+    # 先把 bty 转入到 paracross 合约中
+    # shellcheck disable=SC2154
+    hash=$(${MainCli} send coins send_exec -e paracross -a "${amount}" -k "${key}")
+    check_tx "${MainCli}" "${hash}"
+
+    # 主链中的 bty 夸链到 平行链中
+    # shellcheck disable=SC2154
+    hash=$(${Para8801Cli} send para cross_transfer -a "${para_amount}" -e coins -s bty -t "${addr}" -k "${key}")
+    check_tx "${Para8801Cli}" "${hash}"
+    # shellcheck disable=SC2154
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty | jq -r .balance)
+    is_equal "${result}" "${para_amount}.0000"
+
+    # 把平行链中的 bty 转入 平行链中的 evm 合约
+    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e user.p.para.evm -s coins.bty -k "${key}")
+    check_tx "${Para8901Cli}" "${hash}"
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    is_equal "${result}" "${evm_amount}.0000"
+}
+
+function initPara() {
+    # para add
+    hash=$(${Para8901Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
+    check_tx "${Para8901Cli}" "${hash}"
+
+    Chain33Cli=${Para8901Cli}
+    InitChain33Validator
+
+    coins_cross_transfer "${chain33DeployKey}" "${chain33DeployAddr}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey1}" "${chain33TestAddr1}" 1000 800 500
+    coins_cross_transfer "${chain33TestAddrKey2}" "${chain33TestAddr2}" 1000 800 500
+
+    # 平行链共识节点增加测试币
+    ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
+    ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
+}
+
 function StartChain33() {
     kill_ebrelayer chain33
     sleep 2
@@ -534,7 +585,7 @@ function setupChain33Multisign() {
     result=$(${CLIA} chain33 multisign setup -k "${chain33DeployKey}" -o "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}")
     cli_ret "${result}" "chain33 multisign setup"
 
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${multisignChain33Addr})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${multisignChain33Addr})")
     check_tx "${Chain33Cli}" "${hash}"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -579,7 +630,7 @@ function deployMultisign() {
 function lock_bty_multisign() {
     local lockAmount=$1
     local lockAmount2="${1}00000000"
-    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -a "${lockAmount}" -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "lock(${ethDeployAddr}, ${chain33BtyERC20TokenAddr}, ${lockAmount2})")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -597,7 +648,7 @@ function lock_bty_multisign() {
 function lock_chain33_ycc_multisign() {
     local lockAmount="${1}00000000"
     # shellcheck disable=SC2154
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33YccERC20TokenAddr}, ${lockAmount})" --chainID "${chain33ID}")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33TestAddr1}" -e "${chain33BridgeBank}" -p "lock(${ethTestAddr1}, ${chain33YccERC20TokenAddr}, ${lockAmount})")
     check_tx "${Chain33Cli}" "${hash}"
 
     if [[ $# -eq 3 ]]; then
@@ -636,7 +687,7 @@ function lock_eth_multisign() {
 }
 
 # lock ethereum ycc erc20 判断是否转入多签地址金额是否正确
-function lock_ethereum_ycc_multisign() {
+function lock_ethereum_byc_multisign() {
     local lockAmount=$1
     result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBycERC20TokenAddr}")
     cli_ret "${result}" "lock"
@@ -652,6 +703,26 @@ function lock_ethereum_ycc_multisign() {
         result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
         result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
+        cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
+    fi
+}
+
+function lock_ethereum_usdt_multisign() {
+    local lockAmount=$1
+    # shellcheck disable=SC2154
+    result=$(${CLIA} ethereum lock -m "${lockAmount}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumUSDTERC20TokenAddr}")
+    cli_ret "${result}" "lock"
+
+    if [[ $# -eq 3 ]]; then
+        local bridgeBankBalance=$2
+        local multisignBalance=$3
+
+        # eth 等待 2 个区块
+        sleep 4
+
+        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+        cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
+        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }

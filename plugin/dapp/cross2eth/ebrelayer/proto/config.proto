@@ -16,7 +16,6 @@ message SyncTxConfig {
   int64 startSyncHeight     = 10;
   int64 startSyncSequence   = 11;
   string startSyncHash      = 12;
-  repeated string contracts = 13;
 }
 
 message Log {
