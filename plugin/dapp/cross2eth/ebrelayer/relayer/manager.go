@@ -1092,3 +1092,20 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	}
 	return nil
 }
+
+func (manager *Manager) WithdrawFromChain33(burn relayerTypes.BurnFromChain33, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.chain33Relayer.WithdrawFromChain33(burn.OwnerKey, burn.TokenAddr, burn.EthereumReceiver, burn.Amount)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
+	}
+	return nil
+}

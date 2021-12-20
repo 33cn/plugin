@@ -255,5 +255,11 @@ message WithdrawSymbol2Fee  {
     map<string, int64> symbol2Fee = 1;
 }
 
+message WithdrawFromChain33 {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+    string ethereumReceiver = 4;
+}
 
 
