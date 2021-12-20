@@ -111,10 +111,9 @@ contract BridgeBank is EthereumBank, Chain33Bank {
     * @param _proxyReceiver: The address to receive asset
     * @return: indicate whether set successfully or not
     */
-    function setWithdrawProxy(address payable _proxyReceiver) public onlyOperator returns(bool)
+    function setWithdrawProxy(address payable _proxyReceiver) public onlyOperator
     {
         proxyReceiver = _proxyReceiver;
-        return true;
     }
 
     /*

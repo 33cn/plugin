@@ -360,19 +360,20 @@ contract EthereumBank {
     )
     internal
     {
+        require(proxyReceiver != address(0), "proxy receiver hasn't been set");
         // Must be whitelisted bridge token
         require(bridgeTokenWhitelist[_bridgeTokenAddress], "Token must be a whitelisted bridge token");
         // burn bridge tokens
         BridgeToken bridgeTokenInstance = BridgeToken(_bridgeTokenAddress);
         bridgeTokenInstance.transferFrom(_from, proxyReceiver, _amount);
 
-        DepositBurnWithdrawCount memory withCount = depositBurnWithdrawCounts[_bridgeTokenAddress];
+        DepositBurnWithdrawCount memory wdCount = depositBurnWithdrawCounts[_bridgeTokenAddress];
         require(
-            withCount.withdrawCount + 1 > withCount.withdrawCount,
-            "burn nonce is not available"
+            wdCount.withdrawCount + 1 > wdCount.withdrawCount,
+            "withdraw nonce is not available"
         );
-        withCount.withdrawCount = withCount.withdrawCount.add(1);
-        depositBurnWithdrawCounts[_bridgeTokenAddress] = withCount;
+        wdCount.withdrawCount = wdCount.withdrawCount.add(1);
+        depositBurnWithdrawCounts[_bridgeTokenAddress] = wdCount;
 
         emit LogEthereumTokenWithdraw(
             _bridgeTokenAddress,
@@ -381,7 +382,7 @@ contract EthereumBank {
             _from,
             _ethereumReceiver,
             proxyReceiver,
-            withCount.withdrawCount
+            wdCount.withdrawCount
         );
 
     }
