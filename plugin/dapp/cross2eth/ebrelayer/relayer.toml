@@ -5,8 +5,6 @@ ChainName=""  #链的名称，用来区分主链和平行链,如user.p.xxx.,必�
 JrpcBindAddr="localhost:9901"
 EthProviderCli="http://127.0.0.1:7545"
 EthProvider="ws://127.0.0.1:7545/"
-#EthProvider="wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270"
-#EthProvider="wss://ropsten.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270"
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
 BridgeRegistryOnChain33=""
@@ -23,11 +21,7 @@ dbdriver="leveldb"
 dbPath="datadir"
 dbCache=64
 fetchHeightPeriodMs=5000
-contracts=["165UZpSHske8hryahjM91kAWMJRW47Hn7E"]
 #如果需要配置起始的块的信息，则为了保持一致性，三项缺一不可，或者都不配置
-#startSyncHeight=24531
-#startSyncSequence=24531
-#startSyncHash="0xb96168940ceebc12dcf4a4911ec8f509344f5c8591af37a49f4fb5f433093d2e"
 startSyncHeight=0
 startSyncSequence=0
 startSyncHash=""
@@ -35,8 +29,6 @@ startSyncHash=""
 [deploy4chain33]
 #合约部署人员私钥，用于部署合约时签名使用
 operatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-#合约部署人员私钥，用于部署合约时签名使用
-deployerPrivateKey="0xcc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
 #验证人地址，至少配置３个以上，即大于等于３个
 validatorsAddr=["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
 #验证人权重
@@ -45,8 +37,6 @@ initPowers=[96, 1, 1, 1]
 [deploy]
 #合约部署人员私钥，用于部署合约时签名使用
 operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
-#合约部署人员私钥，用于部署合约时签名使用
-deployerPrivateKey="8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 #验证人地址，至少配置３个以上，即大于等于３个
 validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 #验证人权重
