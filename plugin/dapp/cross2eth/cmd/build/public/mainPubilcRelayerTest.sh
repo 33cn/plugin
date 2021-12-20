@@ -770,7 +770,7 @@ function StartDockerRelayerDeploy() {
     up_relayer_toml
     # 启动 ebrelayer
     start_docker_ebrelayerA
-    
+
     docker cp "./deploy_chain33.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_chain33.toml
     docker cp "./deploy_ethereum.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_ethereum.toml
 
