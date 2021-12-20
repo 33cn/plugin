@@ -786,33 +786,6 @@ func (manager *Manager) ShowBridgeRegistryAddr4chain33(para interface{}, result 
 	return nil
 }
 
-//SetTokenAddress ...
-func (manager *Manager) SetTokenAddress(token2set relayerTypes.TokenAddress, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-
-	if relayerTypes.EthereumBlockChainName == token2set.ChainName {
-		err := manager.ethRelayer.SetTokenAddress(token2set)
-		if nil != err {
-			return err
-		}
-	} else {
-		err := manager.chain33Relayer.SetTokenAddress(token2set)
-		if nil != err {
-			return err
-		}
-	}
-
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  "",
-	}
-	return nil
-}
-
 //ShowTokenAddress ...
 func (manager *Manager) ShowTokenAddress(token2show relayerTypes.TokenAddress, result *interface{}) error {
 	manager.mtx.Lock()
