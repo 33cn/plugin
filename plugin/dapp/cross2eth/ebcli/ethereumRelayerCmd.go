@@ -1204,16 +1204,20 @@ func addCfgWithdrawFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("symbol")
 	cmd.Flags().Int64P("fee", "f", 0, "fee amount")
 	_ = cmd.MarkFlagRequired("fee")
+	cmd.Flags().Int64P("amount", "a", 0, "accumulative amount allowed to be withdrew per day")
+	_ = cmd.MarkFlagRequired("amount")
 }
 
 func CfgWithdraw(cmd *cobra.Command, _ []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	fee, _ := cmd.Flags().GetInt64("fee")
+	amount, _ := cmd.Flags().GetInt64("amount")
 
 	req := &ebTypes.CfgWithdrawReq{
-		Symbol:    symbol,
-		FeeAmount: fee,
+		Symbol:       symbol,
+		FeeAmount:    fee,
+		AmountPerDay: amount,
 	}
 
 	var res rpctypes.Reply

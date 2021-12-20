@@ -1109,7 +1109,7 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount)
+	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount, cfgWithdrawReq.AmountPerDay)
 	resultCfg := true
 	if err != nil {
 		resultCfg = false
