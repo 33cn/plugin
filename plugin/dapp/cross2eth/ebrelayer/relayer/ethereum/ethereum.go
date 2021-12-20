@@ -566,7 +566,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	var intputdata []byte
 	var err error
 	if tokenAddr.String() != "" { //判断是否要Pack EVM数据
-		intputdata, err = ethRelayer.CallEvmData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
+		intputdata, err = ethRelayer.callEvmData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
 		relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
 		return
 	}
@@ -613,7 +613,7 @@ func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.Pri
 
 	return tx, nil
 }
-func (ethRelayer *Relayer4Ethereum) CallEvmData(_to common.Address, _value *big.Int) ([]byte, error) {
+func (ethRelayer *Relayer4Ethereum) callEvmData(_to common.Address, _value *big.Int) ([]byte, error) {
 	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
 	if err != nil {
 		return nil, err
