@@ -1102,3 +1102,20 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr string, result *interf
 	}
 	return nil
 }
+
+func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount)
+	resultCfg := true
+	if err != nil {
+		resultCfg = false
+	}
+	*result = rpctypes.Reply{
+		IsOk: resultCfg,
+	}
+	return nil
+}

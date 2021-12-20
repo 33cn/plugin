@@ -77,6 +77,7 @@ type Relayer4Ethereum struct {
 	symbol2Addr             map[string]common.Address
 	symbol2LockAddr         map[string]ebTypes.TokenAddress
 	mulSignAddr             string
+	withdrawFee             map[string]int64
 }
 
 var (
@@ -134,6 +135,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.eventLogIndex = ethRelayer.getLastBridgeBankProcessedHeight()
 	ethRelayer.initBridgeBankTx()
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
+	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFee()
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
@@ -1244,4 +1246,12 @@ func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {
 	ethRelayer.rwLock.Unlock()
 
 	ethRelayer.setMultiSignAddress(address)
+}
+
+func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount int64) error {
+	ethRelayer.rwLock.Lock()
+	ethRelayer.withdrawFee[symbol] = feeAmount
+	ethRelayer.rwLock.Unlock()
+
+	return ethRelayer.setWithdrawFee(ethRelayer.withdrawFee)
 }
