@@ -202,7 +202,7 @@ function start_ebrelayer_and_unlock() {
     local CLI="./ebcli_$1"
     local count=0
     while true; do
-        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
+        result=$(${CLI} relayer unlock -p ${validatorPwd} | jq -r .isOK)
         if [[ ${result} == "true" ]]; then
             break
         fi
@@ -225,7 +225,7 @@ function start_ebrelayer_and_setpwd_unlock() {
     local CLI="./ebcli_$1"
     local count=0
     while true; do
-        result=$(${CLI} relayer set_pwd -p 123456hzj | jq -r .isOK)
+        result=$(${CLI} relayer set_pwd -p ${validatorPwd} | jq -r .isOK)
         if [[ ${result} == "true" ]]; then
             break
         fi
@@ -241,7 +241,7 @@ function start_ebrelayer_and_setpwd_unlock() {
 
     count=0
     while true; do
-        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
+        result=$(${CLI} relayer unlock -p ${validatorPwd} | jq -r .isOK)
         if [[ ${result} == "true" ]]; then
             break
         fi
