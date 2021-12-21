@@ -472,17 +472,21 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		ethRelayer.rwLock.RUnlock()
 		if nil != privateKey4Ethereum && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
+			if ethRelayer.processWithDraw {
+				//对于是提币代理中继器，则不需要订阅相关的日志事件
+				goto withdrawProc
+			}
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-			goto latter
+			goto burnLockProc
 		}
 	}
 
-latter:
+burnLockProc:
 	for {
 		select {
 		case <-timer.C:
@@ -493,6 +497,16 @@ latter:
 			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
+		case chain33Msg := <-ethRelayer.chain33MsgChan:
+			ethRelayer.handleChain33Msg(chain33Msg)
+		}
+	}
+
+withdrawProc:
+	for {
+		select {
+		case <-timer.C:
+			ethRelayer.procNewHeight4Withdraw(ctx)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
 			ethRelayer.handleChain33Msg(chain33Msg)
 		}
@@ -735,6 +749,11 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 		}
 		return head.Number.Uint64(), nil
 	}
+}
+
+func (ethRelayer *Relayer4Ethereum) procNewHeight4Withdraw(ctx context.Context) {
+	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
+	relayerLog.Info("procNewHeight4Withdraw", "currentHeight", currentHeight)
 }
 
 func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context) {
