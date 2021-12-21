@@ -204,7 +204,7 @@ function AllRelayerMainTest() {
     initPara
 
     StartDockerRelayerDeploy
-    test_all
+#    test_all
 
     TestRelayerProxy
 
