@@ -29,7 +29,8 @@ var (
 	ethBurnTxUpdateTxIndex         = []byte("eth-ethBurnTxUpdateTxIndex")
 	multiSignAddressPrefix         = []byte("eth-multiSignAddress")
 	withdrawParaKey                = []byte("eth-withdrawPara")
-	withdrawTokenPrefix            = []byte("eth-withdrawTokenPrefix")
+	withdrawTokenPrefix            = []byte("eth-withdrawToken")
+	withdrawTokenListPrefix        = []byte("eth-withdrawTokenList")
 )
 
 func ethTokenSymbol2AddrKey(symbol string) []byte {
@@ -434,6 +435,10 @@ func calcWithdrawKeyPrefix(chain33Sender, symbol string, year, month, day int) [
 	return []byte(fmt.Sprintf("%s-%s-%s-%d-%d-%d", withdrawTokenPrefix, chain33Sender, symbol, year, month, day))
 }
 
+func calcWithdrawListKey(nonce int64) []byte {
+	return []byte(fmt.Sprintf("%s-%d", withdrawTokenListPrefix, nonce))
+}
+
 func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) error {
 	chain33Sender := withdrawTx.Chain33Sender
 	symbol := withdrawTx.Symbol
@@ -442,8 +447,8 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	day := withdrawTx.Day
 
 	key := calcWithdrawKey(chain33Sender, symbol, int(year), int(month), int(day), withdrawTx.Nonce)
-
 	bytes := chain33Types.Encode(withdrawTx)
+
 	return ethRelayer.db.Set(key, bytes)
 }
 
