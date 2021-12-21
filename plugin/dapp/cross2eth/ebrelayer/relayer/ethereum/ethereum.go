@@ -476,6 +476,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		ethRelayer.rwLock.RUnlock()
 		if nil != privateKey4Ethereum && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
+			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			if ethRelayer.processWithDraw {
 				//对于是提币代理中继器，则不需要订阅相关的日志事件
 				goto withdrawProc
@@ -485,7 +486,6 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			ethRelayer.subscribeEvent()
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
-			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 			goto burnLockProc
 		}
 	}
