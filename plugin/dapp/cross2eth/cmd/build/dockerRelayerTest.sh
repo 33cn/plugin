@@ -60,7 +60,7 @@ function TestETH2Chain33Assets_proxy() {
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "2000000000"
 
-    ${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})"
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
     is_equal "${result}" "0"
     # 原来的数额
     # shellcheck disable=SC2154
@@ -85,7 +85,7 @@ function TestETH2Chain33Assets_proxy() {
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
 
-    ${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})"
+    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
     is_equal "${result}" "2000000000"
 
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
