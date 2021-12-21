@@ -23,9 +23,6 @@ source "./offlinePublic.sh"
     ethereumUSDTERC20TokenAddr=""
     chain33USDTBridgeTokenAddr=""
 
-    chain33ID=0
-    maturityDegree=10
-
     # ETH 部署合约者的私钥 用于部署合约时签名使用
     ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
     ethDeployKey="0x8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
@@ -70,6 +67,15 @@ source "./offlinePublic.sh"
 
     chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
+
+    chain33Validatorp="1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
+    chain33ValidatorKeyp="0xd627968e445f2a41c92173225791bae1ba42126ae96c32f28f97ff8f226e5c68"
+    ethValidatorAddrp="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
+    ethValidatorAddrKeyp="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
+
+    chain33ID=0
+    maturityDegree=10
+    validatorPwd="123456"
 }
 
 function start_docker_ebrelayerA() {
@@ -102,22 +108,26 @@ function updata_toml_start_bcd() {
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
 
+        # shellcheck disable=SC2034
         CLI="docker exec ${dockerNamePrefix}_ebrelayer${name}_1 /root/ebcli_A"
-        result=$(${CLI} set_pwd -p 123456hzj)
-        cli_ret "${result}" "set_pwd"
-
-        result=$(${CLI} unlock -p 123456hzj)
-        cli_ret "${result}" "unlock"
-
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
-        # shellcheck disable=SC2154
-        result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
-        cli_ret "${result}" "chain33 import_privatekey"
-
         eval ethValidatorAddrKey=\$ethValidatorAddrKey${name}
         # shellcheck disable=SC2154
-        result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
-        cli_ret "${result}" "ethereum import_privatekey"
+        init_validator_relayer "${CLI}" "${validatorPwd}" "${chain33ValidatorKey}" "${ethValidatorAddrKey}"
+
+#        result=$(${CLI} set_pwd -p 123456hzj)
+#        cli_ret "${result}" "set_pwd"
+#
+#        result=$(${CLI} unlock -p 123456hzj)
+#        cli_ret "${result}" "unlock"
+#
+#        # shellcheck disable=SC2154
+#        result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
+#        cli_ret "${result}" "chain33 import_privatekey"
+#
+#        # shellcheck disable=SC2154
+#        result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
+#        cli_ret "${result}" "ethereum import_privatekey"
     done
 }
 
@@ -127,7 +137,7 @@ function restart_ebrelayerA() {
     sleep 1
     start_docker_ebrelayerA
 
-    result=$(${CLIA} unlock -p 123456hzj)
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 }
 
@@ -841,6 +851,7 @@ function get_cli() {
         Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
         Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
 
+        CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"

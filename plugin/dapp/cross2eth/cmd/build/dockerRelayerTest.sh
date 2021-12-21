@@ -8,6 +8,32 @@ set +e
 
 source "./mainPubilcRelayerTest.sh"
 
+function start_docker_ebrelayerProxy() {
+    # shellcheck disable=SC2154
+    cp './relayer.toml' "./relayerproxy.toml"
+
+    # 删除配置文件中不需要的字段
+    for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
+        delete_line "./relayerproxy.toml" "${deleteName}"
+    done
+
+    pushNameChange "./relayerproxy.toml"
+
+    sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
+
+    # shellcheck disable=SC2154
+    docker cp "./relayerproxy.toml" "${dockerNamePrefix}_ebrelayerproxy_1":/root/relayer.toml
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerproxy_1" "/root/ebrelayer" "./ebrelayerproxy.log"
+    sleep 1
+
+    # shellcheck disable=SC2154
+    init_validator_relayer CLIP "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
+}
+
+function setWithdraw() {
+    start_docker_ebrelayerProxy
+}
+
 function AllRelayerMainTest() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     set +e

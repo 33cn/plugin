@@ -73,23 +73,45 @@ function OfflineDeploy() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+# init $1 CLI $2 pwd $3 chain33ValidatorKey $4 ethValidatorAddrKey
+function init_validator_relayer() {
+    local CLI=$1
+    local pwd=$2
+    local chain33ValidatorKey=$3
+    local ethValidatorAddrKey=$4
+    result=$(${CLI} set_pwd -p "${pwd}")
+    cli_ret "${result}" "set_pwd"
+
+    result=$(${CLI} unlock -p "${pwd}")
+    cli_ret "${result}" "unlock"
+
+    result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
+    cli_ret "${result}" "chain33 import_privatekey"
+
+    result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
+    cli_ret "${result}" "ethereum import_privatekey"
+}
+
 # shellcheck disable=SC2120
 function InitRelayerA() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    result=$(${CLIA} set_pwd -p 123456hzj)
-    cli_ret "${result}" "set_pwd"
-
-    result=$(${CLIA} unlock -p 123456hzj)
-    cli_ret "${result}" "unlock"
-
     # shellcheck disable=SC2154
-    result=$(${CLIA} chain33 import_privatekey -k "${chain33ValidatorKeya}")
-    cli_ret "${result}" "chain33 import_privatekey"
+    init_validator_relayer "${CLI}" "${validatorPwd}" "${chain33ValidatorKeya}" "${ethValidatorAddrKeya}"
 
-    # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum import_privatekey -k "${ethValidatorAddrKeya}")
-    cli_ret "${result}" "ethereum import_privatekey"
+#    result=$(${CLIA} set_pwd -p 123456hzj)
+#    cli_ret "${result}" "set_pwd"
+#
+#    result=$(${CLIA} unlock -p 123456hzj)
+#    cli_ret "${result}" "unlock"
+#
+#    # shellcheck disable=SC2154
+#    result=$(${CLIA} chain33 import_privatekey -k "${chain33ValidatorKeya}")
+#    cli_ret "${result}" "chain33 import_privatekey"
+#
+#    # shellcheck disable=SC2154
+#    result=$(${CLIA} ethereum import_privatekey -k "${ethValidatorAddrKeya}")
+#    cli_ret "${result}" "ethereum import_privatekey"
 
     ${CLIA} chain33 multisign set_multiSign -a "${multisignChain33Addr}"
 
