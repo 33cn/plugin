@@ -132,7 +132,7 @@ func bindOrResumePush(cfg *relayerTypes.SyncTxReceiptConfig) {
 		LastSequence:  cfg.StartSyncSequence,
 		LastHeight:    cfg.StartSyncHeight,
 		LastBlockHash: cfg.StartSyncHash,
-		Type:          blockchain.PushTxReceipt,
+		Type:          int32(blockchain.PushTxReceipt),
 		Contract:      contract,
 	}
 	var res types.ReplySubscribePush
