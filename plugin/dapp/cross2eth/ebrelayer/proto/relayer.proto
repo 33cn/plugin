@@ -247,14 +247,14 @@ message ResendChain33EventReq  {
 }
 
 message CfgWithdrawReq  {
-    string symbol      = 1;
-    int64  feeAmount   = 2;
-    int64 amountPerDay = 3;
+    string symbol       = 1;
+    string feeAmount    = 2;
+    string amountPerDay = 3;
 }
 
 message withdrawPara  {
-    int64 fee = 1;
-    int64 amountPerDay = 2;
+    string fee = 1;
+    string amountPerDay = 2;
 }
 
 message WithdrawSymbol2Para  {
@@ -265,7 +265,7 @@ message WithdrawTx  {
     string chain33Sender         = 1;
     string ethereumReceiver      = 2;
     string symbol                = 4;
-    int64 amount                 = 5;
+    string amount                 = 5;
     int64 nonce                  = 6;
     string txHashOnChain33       = 7;
     string txHashOnEthereum      = 8;

@@ -76,7 +76,7 @@ type Relayer4Ethereum struct {
 	symbol2Addr             map[string]common.Address
 	symbol2LockAddr         map[string]ebTypes.TokenAddress
 	mulSignAddr             string
-	withdrawFee             map[string]*ebTypes.WithdrawPara
+	withdrawFee             map[string]*WithdrawFeeAndQuota
 }
 
 var (
@@ -98,6 +98,11 @@ type EthereumStartPara struct {
 	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
 	Chain33MsgChan     <-chan *events.Chain33Msg
 	ProcessWithDraw    bool
+}
+
+type WithdrawFeeAndQuota struct {
+	Fee          *big.Int
+	AmountPerDay *big.Int
 }
 
 //StartEthereumRelayer ///
@@ -134,7 +139,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.eventLogIndex = ethRelayer.getLastBridgeBankProcessedHeight()
 	ethRelayer.initBridgeBankTx()
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
-	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFee()
+	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
@@ -522,20 +527,22 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	return
 }
 
-func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) (int64, error) {
+func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
 	totalAlready, err := ethRelayer.getWithdrawsWithinSameDay(withdrawTx)
 	if nil != err {
 		relayerLog.Error("checkPermissionWithinOneDay", "Failed to getWithdrawsWithinSameDay due to", err.Error())
-		return 0, errors.New("ErrGetWithdrawsWithinSameDay")
+		return nil, errors.New("ErrGetWithdrawsWithinSameDay")
 	}
 	withdrawPara, ok := ethRelayer.withdrawFee[withdrawTx.Symbol]
 	if !ok {
 		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
-		return 0, errors.New("ErrNoWithdrawParaCfged")
+		return nil, errors.New("ErrNoWithdrawParaCfged")
 	}
-	if totalAlready+withdrawTx.Amount > withdrawPara.AmountPerDay {
+	AmountInt, _ := big.NewInt(0).SetString(withdrawTx.Amount, 0)
+	totalAlready.Add(totalAlready, AmountInt)
+	if totalAlready.Cmp(withdrawPara.AmountPerDay) > 0 {
 		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
-		return 0, errors.New("ErrWithdrawAmountTooBig")
+		return nil, errors.New("ErrWithdrawAmountTooBig")
 	}
 	relayerLog.Info("checkPermissionWithinOneDay", "total withdraw already", totalAlready, "Chain33Sender", withdrawTx.Chain33Sender,
 		"Symbol", withdrawTx.Symbol)
@@ -562,7 +569,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
 		Symbol:           chain33Msg.Symbol,
-		Amount:           chain33Msg.Amount.Int64(),
+		Amount:           chain33Msg.Amount.String(),
 		TxHashOnChain33:  common.Bytes2Hex(chain33Msg.TxHash),
 		Nonce:            chain33Msg.Nonce,
 		Year:             int32(year),
@@ -571,7 +578,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 
 	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
-	var feeAmount int64
+	var feeAmount *big.Int
 	var err error
 	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
 		withdrawTx.Status = err.Error()
@@ -605,8 +612,11 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
 		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
-
-	amount2transfer := big.NewInt(chain33Msg.Amount.Int64() - feeAmount)
+	if chain33Msg.Amount.Cmp(feeAmount) < 0 {
+		relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+		return
+	}
+	amount2transfer := chain33Msg.Amount.Sub(chain33Msg.Amount, feeAmount)
 	value := big.NewInt(0)
 
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
@@ -1382,14 +1392,22 @@ func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {
 	ethRelayer.setMultiSignAddress(address)
 }
 
-func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amountPerDay int64) error {
-	withdrawPara := &ebTypes.WithdrawPara{
-		Fee:          feeAmount,
-		AmountPerDay: amountPerDay,
+func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amountPerDay string) error {
+	fee, _ := big.NewInt(0).SetString(feeAmount, 10)
+	amountPerDayInt, _ := big.NewInt(0).SetString(amountPerDay, 10)
+	withdrawPara := &WithdrawFeeAndQuota{
+		Fee:          fee,
+		AmountPerDay: amountPerDayInt,
 	}
 	ethRelayer.rwLock.Lock()
 	ethRelayer.withdrawFee[symbol] = withdrawPara
 	ethRelayer.rwLock.Unlock()
 
-	return ethRelayer.setWithdrawFee(ethRelayer.withdrawFee)
+	WithdrawPara := ethRelayer.restoreWithdrawFee()
+	WithdrawPara[symbol] = &ebTypes.WithdrawPara{
+		Fee:          feeAmount,
+		AmountPerDay: amountPerDay,
+	}
+
+	return ethRelayer.setWithdrawFee(WithdrawPara)
 }

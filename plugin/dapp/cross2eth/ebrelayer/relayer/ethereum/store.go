@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -411,6 +412,20 @@ func (ethRelayer *Relayer4Ethereum) restoreWithdrawFee() map[string]*ebTypes.Wit
 	return withdrawSymbol2Para.Symbol2Para
 }
 
+func (ethRelayer *Relayer4Ethereum) restoreWithdrawFeeInINt() map[string]*WithdrawFeeAndQuota {
+	withdrawPara := ethRelayer.restoreWithdrawFee()
+	res := make(map[string]*WithdrawFeeAndQuota)
+	for symbol, para := range withdrawPara {
+		feeInt, _ := big.NewInt(0).SetString(para.Fee, 10)
+		amountPerDayInt, _ := big.NewInt(0).SetString(para.AmountPerDay, 10)
+		res[symbol] = &WithdrawFeeAndQuota{
+			Fee:          feeInt,
+			AmountPerDay: amountPerDayInt,
+		}
+	}
+	return res
+}
+
 func calcWithdrawKey(chain33Sender, symbol string, year, month, day int, nonce int64) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%s-%d-%d-%d-%d", withdrawTokenPrefix, chain33Sender, symbol, year, month, day, nonce))
 }
@@ -432,7 +447,7 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	return ethRelayer.db.Set(key, bytes)
 }
 
-func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebTypes.WithdrawTx) (int64, error) {
+func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
 	chain33Sender := withdrawTx.Chain33Sender
 	symbol := withdrawTx.Symbol
 	year := withdrawTx.Year
@@ -443,17 +458,18 @@ func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebType
 	helper := dbm.NewListHelper(ethRelayer.db)
 	datas := helper.List(prefix, nil, 100, dbm.ListASC)
 	if nil == datas {
-		return 0, nil
+		return big.NewInt(0), nil
 	}
 
-	withdrawTotal := int64(0)
+	withdrawTotal := big.NewInt(0)
 	for _, data := range datas {
 		var info ebTypes.WithdrawTx
 		err := chain33Types.Decode(data, &info)
 		if nil != err {
-			return 0, err
+			return big.NewInt(0), err
 		}
-		withdrawTotal += info.Amount
+		AmountInt, _ := big.NewInt(0).SetString(info.Amount, 0)
+		withdrawTotal.Add(withdrawTotal, AmountInt)
 	}
 	return withdrawTotal, nil
 }
