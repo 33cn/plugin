@@ -27,8 +27,16 @@ function start_docker_ebrelayerProxy() {
     sleep 1
 
     # shellcheck disable=SC2154
-    init_validator_relayer CLIP "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
+    init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
 }
+
+#1.通过以下命令设置代理提币
+#./ebcli_A ethereum cfgWithdraw
+#./ebcli_A ethereum cfgWithdraw 设置的数量是以wei为单位的 USDT 精度为６ eth/bnb　或者ｈｔ就是１８
+#
+#２．在chain33上的bridgeBank合约中设置proxyReceiver
+#
+#3.将其中代理转账中继器中的标志位ProcessWithDraw设置为true，其余中继器保持false
 
 function setWithdraw() {
     start_docker_ebrelayerProxy

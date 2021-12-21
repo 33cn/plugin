@@ -97,7 +97,7 @@ function InitRelayerA() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
     # shellcheck disable=SC2154
-    init_validator_relayer "${CLI}" "${validatorPwd}" "${chain33ValidatorKeya}" "${ethValidatorAddrKeya}"
+    init_validator_relayer "${CLIA}" "${validatorPwd}" "${chain33ValidatorKeya}" "${ethValidatorAddrKeya}"
 
 #    result=$(${CLIA} set_pwd -p 123456hzj)
 #    cli_ret "${result}" "set_pwd"
