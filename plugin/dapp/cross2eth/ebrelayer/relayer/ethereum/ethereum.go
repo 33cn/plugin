@@ -572,7 +572,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	defer func() {
 		if err != nil {
-			withdrawTx.Status = err.Error()
+			withdrawTx.ErrorDescription = err.Error()
 			relayerLog.Error("handleLogWithdraw", "Failed to withdraw due to:", err.Error())
 		}
 
@@ -690,7 +690,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", signedTx.Hash())
 
-	withdrawTx.Status = "Withdraw Tx has been sent to Ethereum"
+	withdrawTx.StatusDescription = "Withdraw Tx has been sent to Ethereum"
 	withdrawTx.TxHashOnEthereum = signedTx.Hash().String()
 	return
 }

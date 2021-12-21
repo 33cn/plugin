@@ -273,7 +273,7 @@ message WithdrawTx  {
     int32 month                  = 10;
     int32 day                    = 11;
     int32 status                 = 12;
-    int32 statusDescription      = 13;
+    string statusDescription      = 13;
     string errorDescription      = 14;
 }
 
