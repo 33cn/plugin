@@ -477,20 +477,17 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		if nil != privateKey4Ethereum && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-			if ethRelayer.processWithDraw {
-				//对于是提币代理中继器，则不需要订阅相关的日志事件
-				goto withdrawProc
-			}
+
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
-			goto burnLockProc
+			goto burnLockWithProc
 		}
 	}
 
-burnLockProc:
+burnLockWithProc:
 	for {
 		select {
 		case <-timer.C:
@@ -506,15 +503,15 @@ burnLockProc:
 		}
 	}
 
-withdrawProc:
-	for {
-		select {
-		case <-timer.C:
-			ethRelayer.procNewHeight4Withdraw(ctx)
-		case chain33Msg := <-ethRelayer.chain33MsgChan:
-			ethRelayer.handleChain33Msg(chain33Msg)
-		}
-	}
+	//withdrawProc:
+	//	for {
+	//		select {
+	//		case <-timer.C:
+	//			ethRelayer.procNewHeight4Withdraw(ctx)
+	//		case chain33Msg := <-ethRelayer.chain33MsgChan:
+	//			ethRelayer.handleChain33Msg(chain33Msg)
+	//		}
+	//	}
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
@@ -1219,24 +1216,24 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	}
 
 	var decimal uint8
-	if event.Token.String() == "" || event.Token.String() == "0x0000000000000000000000000000000000000000" {
-		decimal = 18
-	} else {
-		opts := &bind.CallOpts{
-			Pending: true,
-			From:    common.HexToAddress(event.Token.String()),
-			Context: context.Background(),
-		}
-		bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
-
-		decimal, err = bridgeToken.Decimals(opts)
-		if err != nil {
-			return err
-		}
-	}
-
 	tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
 	if nil == tokenLocked {
+		//如果在本地没有找到该币种，则进行信息的收集和保存
+		if event.Token.String() == "" || event.Token.String() == "0x0000000000000000000000000000000000000000" {
+			decimal = 18
+		} else {
+			opts := &bind.CallOpts{
+				Pending: true,
+				From:    common.HexToAddress(event.Token.String()),
+				Context: context.Background(),
+			}
+			bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
+			decimal, err = bridgeToken.Decimals(opts)
+			if err != nil {
+				return err
+			}
+		}
+
 		token2set := &ebTypes.TokenAddress{
 			Address:   event.Token.String(),
 			Symbol:    event.Symbol,
@@ -1248,6 +1245,13 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
 			return errors.New("Failed ")
 		}
+	} else {
+		decimal = uint8(tokenLocked.Decimal)
+	}
+
+	if ethRelayer.processWithDraw {
+		//如果是代理提币中继器，则不进行消息的转发，该中继器只需要collect info related to locked token
+		return nil
 	}
 
 	// Parse the LogLock event's payload into a struct
@@ -1263,6 +1267,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 
 // handleLogBurnEvent : unpacks a burn event, converts it to a ProphecyClaim, and relays a tx to chain33
 func (ethRelayer *Relayer4Ethereum) handleLogBurnEvent(clientChainID *big.Int, contractABI abi.ABI, eventName string, log types.Log) error {
+	if ethRelayer.processWithDraw {
+		//如果是代理提币中继器，则不进行消息的转发
+		return nil
+	}
 	event, err := events.UnpackLogBurn(contractABI, eventName, log.Data)
 	if nil != err {
 		return err
