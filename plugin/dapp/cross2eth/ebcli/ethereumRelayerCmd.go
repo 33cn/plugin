@@ -1118,19 +1118,21 @@ func TransferEthFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("to")
 	cmd.Flags().Float64P("amount", "m", 0, "amount")
 	_ = cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("token", "t", "", "token address")
 }
 
 func TransferEth(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
+	token, _ := cmd.Flags().GetString("token")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 
 	d := int64(18)
 
 	realAmount := utils.ToWei(amount, d)
 	para := ebTypes.TransferToken{
-		TokenAddr: "",
+		TokenAddr: token,
 		FromKey:   from,
 		ToAddr:    to,
 		Amount:    realAmount.String(),
