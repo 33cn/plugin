@@ -43,14 +43,14 @@ function TestETH2Chain33Assets_proxy() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
+    result=$(${CLIA} ethereum lock -m 20 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "0.002"
+    cli_ret "${result}" "balance" ".balance" "20"
 
     # shellcheck disable=SC2086
     sleep "${maturityDegree}"
@@ -58,33 +58,38 @@ function TestETH2Chain33Assets_proxy() {
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "2000000000000000"
+    is_equal "${result}" "2000000000"
 
     ${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})"
+    is_equal "${result}" "0"
     # 原来的数额
     # shellcheck disable=SC2154
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
+    cli_ret "${result}" "balance" ".balance" "1000"
+
     # shellcheck disable=SC2154
     result=$(${CLIA} ethereum balance -o "${ethValidatorAddrp}")
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
     # shellcheck disable=SC2154
-    result=$(${CLIA} chain33 withdraw -m 0.002 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 withdraw -m 20 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
     sleep "${maturityDegree}"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-#    cli_ret "${result}" "balance" ".balance" "0"
+    cli_ret "${result}" "balance" ".balance" "20"
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
 
     ${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})"
+    is_equal "${result}" "2000000000"
 
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
+    cli_ret "${result}" "balance" ".balance" "1019"
 
     result=$(${CLIA} ethereum balance -o "${ethValidatorAddrp}")
 
