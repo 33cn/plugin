@@ -730,6 +730,7 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 	if balance.Cmp(amount) > 0 {
 		return true, nil
 	}
+	relayerLog.Error("Insufficient balance", "balance", balance, "amount", amount)
 	return false, errors.New("Insufficient balance")
 
 }
