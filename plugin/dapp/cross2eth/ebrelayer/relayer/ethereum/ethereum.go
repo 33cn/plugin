@@ -522,19 +522,6 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	return
 }
 
-//type WithdrawTx struct {
-//	Chain33Sender        chain33EvmCommon.Address
-//	EthereumReceiver     common.Address
-//	TokenContractAddress chain33EvmCommon.Address
-//	Symbol               string
-//	Amount               *big.Int
-//	TxHash               []byte
-//	Nonce                int64
-//	year                 int
-//	month                int
-//	day                  int
-//}
-
 func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) error {
 	totalAlready, err := ethRelayer.getWithdrawsWithinSameDay(withdrawTx)
 	if nil != err {
