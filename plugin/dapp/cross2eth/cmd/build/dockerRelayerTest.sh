@@ -128,7 +128,7 @@ function TestETH2Chain33USDT_proxy() {
     # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12 * le8
-#    is_equal "${result}" "1200000000"
+    is_equal "${result}" "1200000000"
 
      result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")
      is_equal "${result}" "0"
@@ -151,11 +151,11 @@ function TestETH2Chain33USDT_proxy() {
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")
-#     is_equal "${result}" "1200000000"
+     is_equal "${result}" "1200000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-    cli_ret "${result}" "balance" ".balance" "0"
+    cli_ret "${result}" "balance" ".balance" "12"
     # 更新后的金额 12
     result=$(${CLIA} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "11"

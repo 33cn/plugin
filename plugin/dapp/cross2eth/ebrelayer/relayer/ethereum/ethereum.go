@@ -588,12 +588,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 
-	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
-	var feeAmount *big.Int
-	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
-		return
-	}
-
 	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
 	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 	if 8 != withdrawFromChain33TokenInfo.Decimal {
@@ -617,8 +611,15 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
 		}
 	}
+	withdrawTx.Amount = chain33Msg.Amount.String()
 	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
 		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
+	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
+	var feeAmount *big.Int
+	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
+		return
+	}
+
 	if chain33Msg.Amount.Cmp(feeAmount) < 0 {
 		relayerLog.Error("handleLogWithdraw", "ErrWithdrawAmountLessThanFee feeAmount", feeAmount.String(), "Withdraw Amount", chain33Msg.Amount.String())
 		err = errors.New("ErrWithdrawAmountLessThanFee")
