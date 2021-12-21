@@ -33,5 +33,13 @@
 //6）董事会成员可以对提案进行评论，评论将以交易的形式提出并且与提案相关联，显示到提案区，参与评论的截止时间以实际提案结束投票高度为准。
 //
 //（3）提案投票自治系统参数修改，如达成董事会投票的参与率/通过率，全体持票人重大项目的否决率，提案费用，重大项目金额阈值的修改。
+/*
+Item项目提案:
+Item是针对系统配置项的自治合约管理，用户需要在配置项修改合约提交申请交易，在Autonomy自治合约提交包含申请交易id的item申请，社区委员会投票
+满足设定成员投票通过后，在原合约提交approve交易，附带autonomy合约申请id，原合约查询Autonomy合约后完成配置项的修改
+1. manage合约 增加新的配置项申请交易，在Autonomy提交item申请，board投票通过，manager合约提交附带item id的approve交易，完成配置项修改
+2. paracross nodegroup申请。首先在paracross 提交nodegroup申请交易，在Autonomy提交item申请，board投票通过，paracross合约提交approve申请完成注册。
+
+*/
 
 package autonomy
