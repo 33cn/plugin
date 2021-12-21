@@ -88,10 +88,9 @@ function start_docker_ebrelayerA() {
     sleep 5
 }
 
-# start ebrelayer B C D
-function updata_toml_start_bcd() {
-    for name in b c d; do
-        local file="./relayer$name.toml"
+function updata_toml() {
+  local name=$1
+    local file="./relayer$name.toml"
         cp './relayer.toml' "${file}"
 
         # 删除配置文件中不需要的字段
@@ -107,6 +106,12 @@ function updata_toml_start_bcd() {
 
         line=$(delete_line_show "${file}" "pushBind")
         sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+}
+
+# start ebrelayer B C D
+function updata_toml_start_bcd() {
+    for name in b c d; do
+        updata_toml $name
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
@@ -117,20 +122,6 @@ function updata_toml_start_bcd() {
         eval ethValidatorAddrKey=\$ethValidatorAddrKey${name}
         # shellcheck disable=SC2154
         init_validator_relayer "${CLI}" "${validatorPwd}" "${chain33ValidatorKey}" "${ethValidatorAddrKey}"
-
-#        result=$(${CLI} set_pwd -p 123456hzj)
-#        cli_ret "${result}" "set_pwd"
-#
-#        result=$(${CLI} unlock -p 123456hzj)
-#        cli_ret "${result}" "unlock"
-#
-#        # shellcheck disable=SC2154
-#        result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
-#        cli_ret "${result}" "chain33 import_privatekey"
-#
-#        # shellcheck disable=SC2154
-#        result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
-#        cli_ret "${result}" "ethereum import_privatekey"
     done
 }
 

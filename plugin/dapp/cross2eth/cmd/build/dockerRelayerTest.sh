@@ -9,16 +9,7 @@ set +e
 source "./mainPubilcRelayerTest.sh"
 
 function start_docker_ebrelayerProxy() {
-    # shellcheck disable=SC2154
-    cp './relayer.toml' "./relayerproxy.toml"
-
-    # 删除配置文件中不需要的字段
-    for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
-        delete_line "./relayerproxy.toml" "${deleteName}"
-    done
-
-    pushNameChange "./relayerproxy.toml"
-
+    updata_toml proxy
     # 代理转账中继器中的标志位ProcessWithDraw设置为true
     sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
 
@@ -183,7 +174,7 @@ function TestETH2Chain33USDT_proxy() {
 }
 
 function TestRelayerProxy() {
-    start_docker_ebrelayerProxy
+#    start_docker_ebrelayerProxy
     setWithdraw
 
     TestETH2Chain33Assets_proxy
@@ -219,7 +210,7 @@ function AllRelayerMainTest() {
     test_all
 
     TestRelayerProxy
-    
+
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

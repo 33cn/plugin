@@ -99,20 +99,6 @@ function InitRelayerA() {
     # shellcheck disable=SC2154
     init_validator_relayer "${CLIA}" "${validatorPwd}" "${chain33ValidatorKeya}" "${ethValidatorAddrKeya}"
 
-#    result=$(${CLIA} set_pwd -p 123456hzj)
-#    cli_ret "${result}" "set_pwd"
-#
-#    result=$(${CLIA} unlock -p 123456hzj)
-#    cli_ret "${result}" "unlock"
-#
-#    # shellcheck disable=SC2154
-#    result=$(${CLIA} chain33 import_privatekey -k "${chain33ValidatorKeya}")
-#    cli_ret "${result}" "chain33 import_privatekey"
-#
-#    # shellcheck disable=SC2154
-#    result=$(${CLIA} ethereum import_privatekey -k "${ethValidatorAddrKeya}")
-#    cli_ret "${result}" "ethereum import_privatekey"
-
     ${CLIA} chain33 multisign set_multiSign -a "${multisignChain33Addr}"
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
