@@ -50,9 +50,7 @@ Enable=0
 [fork.sub.coinsx]
 Enable=0
 
-[fork.sub.collateralize]
-Enable=0
-ForkCollateralizeTableUpdate=0
+
 
 [fork.sub.dpos]
 Enable=0
@@ -94,6 +92,12 @@ ForkBadRepeatSecret=2715575
 [fork.sub.issuance]
 Enable=0
 ForkIssuanceTableUpdate=0
+ForkIssuancePrecision=0
+
+[fork.sub.collateralize]
+Enable=0
+ForkCollateralizeTableUpdate=0
+ForkCollateralizePrecision=0
 
 [fork.sub.jsvm]
 Enable=0
@@ -107,7 +111,7 @@ Enable=0
 [fork.sub.multisig]
 Enable=0
 
-[fork.sub.NormX]
+[fork.sub.norm]
 Enable=0
 
 [fork.sub.oracle]
@@ -120,6 +124,7 @@ ForkParacrossCommitTx=1850000
 ForkLoopCheckCommitTxDone=3230000
 ForkParaAssetTransferRbk=4500000
 ForkParaSupervision=6000000
+ForkParaAutonomySuperGroup=10200000
 #以下仅平行链适用
 ForkParaSelfConsStages=-1
 ForkParaFullMinerHeight=-1
@@ -181,8 +186,6 @@ Enable=0
 [fork.sub.wasm]
 Enable=0
 
-[fork.sub.x2ethereum]
-Enable=0
 
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=1870000
