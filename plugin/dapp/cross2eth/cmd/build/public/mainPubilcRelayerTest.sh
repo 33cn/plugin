@@ -112,7 +112,7 @@ function updata_toml() {
 function updata_toml_start_bcd() {
     for name in b c d; do
         updata_toml $name
-    local file="./relayer$name.toml"
+        local file="./relayer$name.toml"
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
