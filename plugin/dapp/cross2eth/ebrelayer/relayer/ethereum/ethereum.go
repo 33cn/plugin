@@ -538,7 +538,7 @@ func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTy
 	totalAlready.Add(totalAlready, AmountInt)
 	if totalAlready.Cmp(withdrawPara.AmountPerDay) > 0 {
 		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
-		return nil, errors.New("ErrWithdrawAmountTooBig")
+		return nil, errors.New("ErrWithdrawAmountBigThanQuota")
 	}
 	relayerLog.Info("checkPermissionWithinOneDay", "total withdraw already", totalAlready, "Chain33Sender", withdrawTx.Chain33Sender,
 		"Symbol", withdrawTx.Symbol)
@@ -554,7 +554,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
 		Symbol:           chain33Msg.Symbol,
-		Amount:           chain33Msg.Amount.String(),
 		TxHashOnChain33:  common.Bytes2Hex(chain33Msg.TxHash),
 		Nonce:            chain33Msg.Nonce,
 		Year:             int32(year),
@@ -589,12 +588,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 
-	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
-	var feeAmount *big.Int
-	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
-		return
-	}
-
 	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
 	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 	if 8 != withdrawFromChain33TokenInfo.Decimal {
@@ -618,11 +611,17 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
 		}
 	}
-	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
+	withdrawTx.Amount = chain33Msg.Amount.String()
+	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", withdrawTx.Amount,
 		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
+	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
+	var feeAmount *big.Int
+	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
+		return
+	}
 	if chain33Msg.Amount.Cmp(feeAmount) < 0 {
 		relayerLog.Error("handleLogWithdraw", "ErrWithdrawAmountLessThanFee feeAmount", feeAmount.String(), "Withdraw Amount", chain33Msg.Amount.String())
-		err = errors.New("ErrWithdrawAmountLessThanFee")
+		err = errors.New("ErrWithdrawAmountCan'tPay4Fee")
 		return
 	}
 	amount2transfer := chain33Msg.Amount.Sub(chain33Msg.Amount, feeAmount)
