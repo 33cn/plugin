@@ -22,13 +22,10 @@ function start_docker_ebrelayerProxy() {
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
 }
 
-#strle18="000000000000000000"
-#strle6="000000"
-
 function setWithdraw() {
-    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s ETH -a "500000000000000000000")
+    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s ETH -a 500 -d 18)
     cli_ret "${result}" "cfgWithdraw"
-    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s USDT -a "500000000")
+    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s USDT -a 500 -d 6)
     cli_ret "${result}" "cfgWithdraw"
 
     # 在chain33上的bridgeBank合约中设置proxyReceiver
@@ -174,7 +171,7 @@ function TestETH2Chain33USDT_proxy() {
 }
 
 function TestRelayerProxy() {
-#    start_docker_ebrelayerProxy
+    start_docker_ebrelayerProxy
     setWithdraw
 
     TestETH2Chain33Assets_proxy
