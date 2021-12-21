@@ -424,7 +424,7 @@ function InitChain33Validator() {
     }
 
     # 导入 chain33Validators 私钥生成地址
-    for name in a b c d p; do
+    for name in a b c d p sp; do
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
         eval chain33Validator=\$chain33Validator${name}
         result=$(${Chain33Cli} account import_key -k "${chain33ValidatorKey}" -l validator$name)

@@ -239,8 +239,8 @@ func SetWithdrawProxy(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("setWithdrawProxy(%s)", withdrawAddr)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("setWithdrawProxy", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
-	callContractAndSignWrite(cmd, packData, contract, "create_bridge_token")
+	callContractAndSignWrite(cmd, packData, contract, "set_withdraw_proxy")
 }
