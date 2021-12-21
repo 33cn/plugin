@@ -29,7 +29,7 @@ import (
 var (
 	chain33Addr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
 	//ethAddr      = "0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
-	ethTokenAddr = "0x0000000000000000000000000000000000000000"
+	EthNullAddr = "0x0000000000000000000000000000000000000000"
 )
 
 type suiteContracts struct {
@@ -81,7 +81,7 @@ func (c *suiteContracts) Test_LogLockToEthBridgeClaim() {
 	event := &events.LockEvent{
 		From:   c.para.InitValidators[0],
 		To:     to,
-		Token:  common.HexToAddress(ethTokenAddr),
+		Token:  common.HexToAddress(EthNullAddr),
 		Symbol: "eth",
 		Value:  big.NewInt(10000 * 10000 * 10000),
 		Nonce:  big.NewInt(1),
@@ -91,7 +91,7 @@ func (c *suiteContracts) Test_LogLockToEthBridgeClaim() {
 	assert.NotEmpty(c.T(), witnessClaim)
 	assert.Equal(c.T(), witnessClaim.EthereumChainID, int64(1))
 	assert.Equal(c.T(), witnessClaim.BridgeBrankAddr, c.x2EthDeployInfo.BridgeBank.Address.String())
-	assert.Equal(c.T(), witnessClaim.TokenAddr, ethTokenAddr)
+	assert.Equal(c.T(), witnessClaim.TokenAddr, EthNullAddr)
 	assert.Equal(c.T(), witnessClaim.Symbol, event.Symbol)
 	assert.Equal(c.T(), witnessClaim.EthereumSender, event.From.String())
 	//assert.Equal(c.T(), witnessClaim.Chain33Receiver, string(event.To))
@@ -110,7 +110,7 @@ func (c *suiteContracts) Test_LogBurnToEthBridgeClaim() {
 	event := &events.BurnEvent{
 		OwnerFrom:       c.para.InitValidators[0],
 		Chain33Receiver: to,
-		Token:           common.HexToAddress(ethTokenAddr),
+		Token:           common.HexToAddress(EthNullAddr),
 		Symbol:          "bty",
 		Amount:          big.NewInt(100),
 		Nonce:           big.NewInt(2),
@@ -120,7 +120,7 @@ func (c *suiteContracts) Test_LogBurnToEthBridgeClaim() {
 	assert.NotEmpty(c.T(), witnessClaim)
 	assert.Equal(c.T(), witnessClaim.EthereumChainID, int64(1))
 	assert.Equal(c.T(), witnessClaim.BridgeBrankAddr, c.x2EthDeployInfo.BridgeBank.Address.String())
-	assert.Equal(c.T(), witnessClaim.TokenAddr, ethTokenAddr)
+	assert.Equal(c.T(), witnessClaim.TokenAddr, EthNullAddr)
 	assert.Equal(c.T(), witnessClaim.Symbol, event.Symbol)
 	assert.Equal(c.T(), witnessClaim.EthereumSender, event.OwnerFrom.String())
 	//assert.Equal(c.T(), witnessClaim.Chain33Receiver, string(event.Chain33Receiver))
