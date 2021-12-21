@@ -449,7 +449,15 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	key := calcWithdrawKey(chain33Sender, symbol, int(year), int(month), int(day), withdrawTx.Nonce)
 	bytes := chain33Types.Encode(withdrawTx)
 
-	return ethRelayer.db.Set(key, bytes)
+	if err := ethRelayer.db.Set(key, bytes); nil != err {
+		return err
+	}
+
+	//保存按照次序提币的交易，方便查询
+	listKey := calcWithdrawListKey(withdrawTx.Nonce)
+	listData := key
+
+	return ethRelayer.db.Set(listKey, listData)
 }
 
 func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {

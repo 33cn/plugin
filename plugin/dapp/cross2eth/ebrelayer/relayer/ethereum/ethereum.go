@@ -476,18 +476,17 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		ethRelayer.rwLock.RUnlock()
 		if nil != privateKey4Ethereum && nilAddr != ethRelayer.bridgeRegistryAddr {
 			relayerLog.Info("Ethereum relayer starts to run...")
-			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-
 			ethRelayer.prePareSubscribeEvent()
 			//向bridgeBank订阅事件
 			ethRelayer.subscribeEvent()
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
-			goto burnLockWithProc
+			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+			goto burnLockWithdrawProc
 		}
 	}
 
-burnLockWithProc:
+burnLockWithdrawProc:
 	for {
 		select {
 		case <-timer.C:
@@ -562,13 +561,15 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		Month:            int32(month),
 		Day:              int32(day),
 	}
-
+	//非代理提币人模式，则不处理代理提币
 	if !ethRelayer.processWithDraw {
 		relayerLog.Info("handleLogWithdraw", "Needn't process withdraw for this relay validator", ethRelayer.ethSender)
 		return
 	}
 	defer func() {
 		if err != nil {
+			withdrawTx.Status = int32(ethtxs.WDError)
+			withdrawTx.StatusDescription = ethtxs.WDError.String()
 			withdrawTx.ErrorDescription = err.Error()
 			relayerLog.Error("handleLogWithdraw", "Failed to withdraw due to:", err.Error())
 		}
@@ -687,7 +688,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", signedTx.Hash())
 
-	withdrawTx.StatusDescription = "Withdraw Tx has been sent to Ethereum"
+	withdrawTx.Status = int32(ethtxs.WDPending)
+	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = signedTx.Hash().String()
 	return
 }
