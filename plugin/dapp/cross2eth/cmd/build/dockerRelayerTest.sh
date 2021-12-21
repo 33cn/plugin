@@ -216,10 +216,10 @@ function AllRelayerMainTest() {
     initPara
 
     StartDockerRelayerDeploy
+    test_all
+
     TestRelayerProxy
-
-#    test_all
-
+    
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

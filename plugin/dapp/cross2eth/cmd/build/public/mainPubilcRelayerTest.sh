@@ -78,7 +78,7 @@ source "./offlinePublic.sh"
 
     chain33ID=0
     maturityDegree=10
-    validatorPwd="123456"
+    validatorPwd="123456fzm"
 }
 
 function start_docker_ebrelayerA() {
