@@ -275,5 +275,11 @@ message WithdrawTx  {
     string status                = 12;
 }
 
+message WithdrawFromChain33 {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+    string ethereumReceiver = 4;
+}
 
 

@@ -31,6 +31,7 @@ func Chain33RelayerCmd() *cobra.Command {
 		TokenAddressCmd(),
 		MultiSignCmd(),
 		ResendChain33EventCmd(),
+		WithdrawFromChain33Cmd(),
 	)
 
 	return cmd
@@ -40,11 +41,10 @@ func Chain33RelayerCmd() *cobra.Command {
 func TokenAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "show or set token address and it's corresponding symbol",
+		Short: "show token address and it's corresponding symbol",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
-		SetTokenAddressCmd(),
 		ShowTokenAddressCmd(),
 		CreateERC20Cmd(),
 	)
@@ -88,39 +88,6 @@ func CreateERC20(cmd *cobra.Command, args []string) {
 		Amount: fmt.Sprintf("%d", amountInt64),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateERC20ToChain33", para, &res)
-	ctx.Run()
-}
-
-func SetTokenAddressCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set",
-		Short: "set token address and it's corresponding symbol",
-		Run:   SetTokenAddress,
-	}
-	SetTokenFlags(cmd)
-	return cmd
-}
-
-//SetTokenFlags ...
-func SetTokenFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("token", "t", "", "token address")
-	_ = cmd.MarkFlagRequired("token")
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-}
-
-func SetTokenAddress(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	token, _ := cmd.Flags().GetString("token")
-
-	var res rpctypes.Reply
-	para := ebTypes.TokenAddress{
-		Symbol:    symbol,
-		Address:   token,
-		ChainName: ebTypes.Chain33BlockChainName,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetTokenAddress", para, &res)
 	ctx.Run()
 }
 
@@ -447,5 +414,50 @@ func resendChain33Event(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendChain33Event", resendChain33EventReq, &res)
+	ctx.Run()
+}
+
+func WithdrawFromChain33Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "async withdraw the asset from chain33 to make it unlocked on ethereum",
+		Run:   WithdrawFromChain33,
+	}
+	addWithdrawFromChain33Flags(cmd)
+	return cmd
+}
+
+//addWithdrawFromChain33CmdFlags ...
+func addWithdrawFromChain33Flags(cmd *cobra.Command) {
+	cmd.Flags().StringP("key", "k", "", "owner private key for chain33")
+	_ = cmd.MarkFlagRequired("key")
+	cmd.Flags().StringP("token", "t", "", "token address")
+	_ = cmd.MarkFlagRequired("token")
+	cmd.Flags().StringP("receiver", "r", "", "receiver address on Ethereum")
+	_ = cmd.MarkFlagRequired("receiver")
+	cmd.Flags().Float64P("amount", "m", float64(0), "amount")
+	_ = cmd.MarkFlagRequired("amount")
+}
+
+func WithdrawFromChain33(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	key, _ := cmd.Flags().GetString("key")
+	tokenAddr, _ := cmd.Flags().GetString("token")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+	receiver, _ := cmd.Flags().GetString("receiver")
+
+	d, err := utils.SimpleGetDecimals(tokenAddr)
+	if err != nil {
+		fmt.Println("get decimals err")
+		return
+	}
+	para := ebTypes.WithdrawFromChain33{
+		OwnerKey:         key,
+		TokenAddr:        tokenAddr,
+		Amount:           utils.ToWei(amount, d).String(),
+		EthereumReceiver: receiver,
+	}
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.WithdrawFromChain33", para, &res)
 	ctx.Run()
 }

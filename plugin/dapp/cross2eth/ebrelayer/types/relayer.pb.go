@@ -2723,6 +2723,77 @@ func (x *WithdrawTx) GetStatus() string {
 	return ""
 }
 
+type WithdrawFromChain33 struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OwnerKey         string `protobuf:"bytes,1,opt,name=ownerKey,proto3" json:"ownerKey,omitempty"`
+	TokenAddr        string `protobuf:"bytes,2,opt,name=tokenAddr,proto3" json:"tokenAddr,omitempty"`
+	Amount           string `protobuf:"bytes,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	EthereumReceiver string `protobuf:"bytes,4,opt,name=ethereumReceiver,proto3" json:"ethereumReceiver,omitempty"`
+}
+
+func (x *WithdrawFromChain33) Reset() {
+	*x = WithdrawFromChain33{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relayer_proto_msgTypes[40]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WithdrawFromChain33) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WithdrawFromChain33) ProtoMessage() {}
+
+func (x *WithdrawFromChain33) ProtoReflect() protoreflect.Message {
+	mi := &file_relayer_proto_msgTypes[40]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WithdrawFromChain33.ProtoReflect.Descriptor instead.
+func (*WithdrawFromChain33) Descriptor() ([]byte, []int) {
+	return file_relayer_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *WithdrawFromChain33) GetOwnerKey() string {
+	if x != nil {
+		return x.OwnerKey
+	}
+	return ""
+}
+
+func (x *WithdrawFromChain33) GetTokenAddr() string {
+	if x != nil {
+		return x.TokenAddr
+	}
+	return ""
+}
+
+func (x *WithdrawFromChain33) GetAmount() string {
+	if x != nil {
+		return x.Amount
+	}
+	return ""
+}
+
+func (x *WithdrawFromChain33) GetEthereumReceiver() string {
+	if x != nil {
+		return x.EthereumReceiver
+	}
+	return ""
+}
+
 var File_relayer_proto protoreflect.FileDescriptor
 
 var file_relayer_proto_rawDesc = []byte{
@@ -3044,8 +3115,17 @@ var file_relayer_proto_rawDesc = []byte{
 	0x52, 0x05, 0x6d, 0x6f, 0x6e, 0x74, 0x68, 0x12, 0x10, 0x0a, 0x03, 0x64, 0x61, 0x79, 0x18, 0x0b,
 	0x20, 0x01, 0x28, 0x05, 0x52, 0x03, 0x64, 0x61, 0x79, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61,
 	0x74, 0x75, 0x73, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75,
-	0x73, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x73, 0x22, 0x93, 0x01, 0x0a, 0x13, 0x57, 0x69, 0x74, 0x68, 0x64, 0x72, 0x61, 0x77, 0x46, 0x72,
+	0x6f, 0x6d, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x33, 0x33, 0x12, 0x1a, 0x0a, 0x08, 0x6f, 0x77, 0x6e,
+	0x65, 0x72, 0x4b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6f, 0x77, 0x6e,
+	0x65, 0x72, 0x4b, 0x65, 0x79, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x41, 0x64,
+	0x64, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x41,
+	0x64, 0x64, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x2a, 0x0a, 0x10, 0x65,
+	0x74, 0x68, 0x65, 0x72, 0x65, 0x75, 0x6d, 0x52, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x18,
+	0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x10, 0x65, 0x74, 0x68, 0x65, 0x72, 0x65, 0x75, 0x6d, 0x52,
+	0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79,
+	0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -3060,7 +3140,7 @@ func file_relayer_proto_rawDescGZIP() []byte {
 	return file_relayer_proto_rawDescData
 }
 
-var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_relayer_proto_goTypes = []interface{}{
 	(*Account4Relayer)(nil),             // 0: types.Account4Relayer
 	(*ValidatorAddr4EthRelayer)(nil),    // 1: types.ValidatorAddr4EthRelayer
@@ -3102,13 +3182,14 @@ var file_relayer_proto_goTypes = []interface{}{
 	(*WithdrawPara)(nil),                // 37: types.withdrawPara
 	(*WithdrawSymbol2Para)(nil),         // 38: types.WithdrawSymbol2Para
 	(*WithdrawTx)(nil),                  // 39: types.WithdrawTx
-	nil,                                 // 40: types.WithdrawSymbol2Para.Symbol2ParaEntry
+	(*WithdrawFromChain33)(nil),         // 40: types.WithdrawFromChain33
+	nil,                                 // 41: types.WithdrawSymbol2Para.Symbol2ParaEntry
 }
 var file_relayer_proto_depIdxs = []int32{
 	25, // 0: types.TokenAddressArray.tokenAddress:type_name -> types.TokenAddress
 	24, // 1: types.TokenStaticsResponse.e2Cstatics:type_name -> types.Ethereum2Chain33Statics
 	23, // 2: types.TokenStaticsResponse.c2Estatics:type_name -> types.Chain33ToEthereumStatics
-	40, // 3: types.WithdrawSymbol2Para.symbol2Para:type_name -> types.WithdrawSymbol2Para.Symbol2ParaEntry
+	41, // 3: types.WithdrawSymbol2Para.symbol2Para:type_name -> types.WithdrawSymbol2Para.Symbol2ParaEntry
 	37, // 4: types.WithdrawSymbol2Para.Symbol2ParaEntry.value:type_name -> types.withdrawPara
 	5,  // [5:5] is the sub-list for method output_type
 	5,  // [5:5] is the sub-list for method input_type
@@ -3603,6 +3684,18 @@ func file_relayer_proto_init() {
 				return nil
 			}
 		}
+		file_relayer_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WithdrawFromChain33); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -3610,7 +3703,7 @@ func file_relayer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_relayer_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   41,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

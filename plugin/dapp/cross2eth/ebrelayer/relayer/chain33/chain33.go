@@ -44,17 +44,17 @@ type Relayer4Chain33 struct {
 	lastHeight4Tx       int64 //等待被处理的具有相应的交易回执的高度
 	matDegree           int32 //成熟度         heightSync2App    matDegress   height
 
-	privateKey4Chain33       chain33Crypto.PrivKey
-	privateKey4Chain33_ecdsa *ecdsa.PrivateKey
-	ctx                      context.Context
-	rwLock                   sync.RWMutex
-	unlockChan               chan int
-	bridgeBankEventLockSig   string
-	bridgeBankEventBurnSig   string
-	bridgeBankEventWithdrawSig   string
-	bridgeBankAbi            abi.ABI
-	deployInfo               *ebTypes.Deploy
-	totalTx4RelayEth2chai33  int64
+	privateKey4Chain33         chain33Crypto.PrivKey
+	privateKey4Chain33_ecdsa   *ecdsa.PrivateKey
+	ctx                        context.Context
+	rwLock                     sync.RWMutex
+	unlockChan                 chan int
+	bridgeBankEventLockSig     string
+	bridgeBankEventBurnSig     string
+	bridgeBankEventWithdrawSig string
+	bridgeBankAbi              abi.ABI
+	deployInfo                 *ebTypes.Deploy
+	totalTx4RelayEth2chai33    int64
 	//新增//
 	ethBridgeClaimChan <-chan *ebTypes.EthBridgeClaim
 	chain33MsgChan     chan<- *events.Chain33Msg
@@ -638,4 +638,10 @@ func (chain33Relayer *Relayer4Chain33) SetMultiSignAddr(address string) {
 	chain33Relayer.rwLock.Unlock()
 
 	chain33Relayer.setMultiSignAddress(address)
+}
+
+func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
+	bn := big.NewInt(1)
+	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
