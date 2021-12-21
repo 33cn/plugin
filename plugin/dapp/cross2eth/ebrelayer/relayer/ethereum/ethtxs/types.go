@@ -12,6 +12,7 @@ const (
 	X2Eth      = "x2ethereum"
 	BurnAction = "Chain33ToEthBurn"
 	LockAction = "Chain33ToEthLock"
+	EthNullAddr = "0x0000000000000000000000000000000000000000"
 )
 
 // OracleClaim : contains data required to make an OracleClaim

@@ -591,14 +591,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 
-	var toAddr common.Address
 	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
-	if tokenAddr.String() != "" {
-		toAddr = tokenAddr
-	} else {
-		//如果tokenAddr为空，则把toAddr设置为用户指定的地址
-		toAddr = chain33Msg.EthereumReceiver
-	}
 	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 	if 8 != withdrawFromChain33TokenInfo.Decimal {
 		if withdrawFromChain33TokenInfo.Decimal > 8 {
@@ -626,16 +619,38 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	ctx := context.Background()
 	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
-	var intputdata []byte
+	var intputData []byte  // ERC20 or BEP20 token transfer pack data
 	var err error
-	if tokenAddr.String() != "" { //判断是否要Pack EVM数据
-		intputdata, err = ethRelayer.callEvmData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
-		relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
+	var toAddr common.Address
+	var balanceOfData []byte // ERC20 or BEP20 token balanceof pack data
+
+	if tokenAddr.String() != ethtxs.EthNullAddr { //判断是否要Pack EVM数据
+		toAddr = tokenAddr
+		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
+		if err != nil {
+			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
+			return
+		}
+		//用签名的账户地址作为pack参数，toAddr作为合约地址
+		balanceOfData, err = ethRelayer.packBalanceOfData(chain33Msg.EthereumReceiver)
+		if err != nil {
+			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err)
+			return
+		}
+
+	} else {
+		//如果tokenAddr为空，则把toAddr设置为用户指定的地址
+		toAddr = chain33Msg.EthereumReceiver
+	}
+
+	//校验余额是否充足
+	if ok, err := ethRelayer.checkBalanceEnough(toAddr, chain33Msg.Amount, balanceOfData); !ok {
+		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
 		return
 	}
 	//param: from,to,evm-packdata,amount
 	//交易构造
-	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputdata, chain33Msg.Amount)
+	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputData, chain33Msg.Amount)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		return
@@ -664,10 +679,45 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	return
 }
 
-func (ethRelayer *Relayer4Ethereum) checkReceiverPermission(addr common.Address, amount *big.Int, symbol string) (bool, error) {
-	//TODO 检测提币用户下累计提币额度是否达到上限
-	return true, nil
-	//return errors.New("permission denied")
+func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) (bool, error) {
+	//检测地址余额
+	var balance *big.Int
+	var err error
+	if inputdata == nil {
+		balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
+		if err != nil {
+			//retry
+			balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
+			if err != nil {
+				return false, err
+			}
+		}
+	} else {
+		var msg ethereum.CallMsg
+		msg.To = &addr //合约地址
+		msg.Data = inputdata
+		result, err := ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
+		if err != nil {
+			//retry
+			result, err = ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
+			if err != nil {
+				return false, err
+			}
+		}
+		var ok bool
+		balance, ok = big.NewInt(1).SetString(common.Bytes2Hex(result), 16)
+		if !ok {
+			return false, errors.New(fmt.Sprintf("token balance err:%v", common.Bytes2Hex(result)))
+		}
+
+	}
+
+	//与要发动的金额大小进行比较
+	if balance.Cmp(amount) > 0 {
+		return true, nil
+	}
+	return false, errors.New("Insufficient balance")
+
 }
 
 func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
@@ -684,12 +734,24 @@ func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.Pri
 
 	return tx, nil
 }
-func (ethRelayer *Relayer4Ethereum) callEvmData(_to common.Address, _value *big.Int) ([]byte, error) {
+func (ethRelayer *Relayer4Ethereum) packTransferData(_to common.Address, _value *big.Int) ([]byte, error) {
 	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
 	if err != nil {
 		return nil, err
 	}
 	abidata, err := parsed.Pack("transfer", _to, _value)
+	if err != nil {
+		return nil, err
+	}
+	return abidata, nil
+}
+
+func (ethRelayer *Relayer4Ethereum) packBalanceOfData(_to common.Address) ([]byte, error) {
+	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
+	if err != nil {
+		return nil, err
+	}
+	abidata, err := parsed.Pack("balanceOf", _to)
 	if err != nil {
 		return nil, err
 	}
