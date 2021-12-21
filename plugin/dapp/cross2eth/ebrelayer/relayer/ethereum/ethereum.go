@@ -522,22 +522,24 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	return
 }
 
-func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) error {
+func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) (int64, error) {
 	totalAlready, err := ethRelayer.getWithdrawsWithinSameDay(withdrawTx)
 	if nil != err {
 		relayerLog.Error("checkPermissionWithinOneDay", "Failed to getWithdrawsWithinSameDay due to", err.Error())
-		return errors.New("ErrGetWithdrawsWithinSameDay")
+		return 0, errors.New("ErrGetWithdrawsWithinSameDay")
 	}
 	withdrawPara, ok := ethRelayer.withdrawFee[withdrawTx.Symbol]
 	if !ok {
 		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
-		return errors.New("ErrNoWithdrawParaCfged")
+		return 0, errors.New("ErrNoWithdrawParaCfged")
 	}
 	if totalAlready+withdrawTx.Amount > withdrawPara.AmountPerDay {
 		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
-		return errors.New("ErrWithdrawAmountTooBig")
+		return 0, errors.New("ErrWithdrawAmountTooBig")
 	}
-	return nil
+	relayerLog.Info("checkPermissionWithinOneDay", "total withdraw already", totalAlready, "Chain33Sender", withdrawTx.Chain33Sender,
+		"Symbol", withdrawTx.Symbol)
+	return withdrawPara.Fee, nil
 }
 
 func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
@@ -569,7 +571,9 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 
 	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
-	if err := ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
+	var feeAmount int64
+	var err error
+	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
 		withdrawTx.Status = err.Error()
 		err := ethRelayer.setWithdraw(withdrawTx)
 		if nil != err {
@@ -602,18 +606,20 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", chain33Msg.Amount.String(),
 		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
 
+	amount2transfer := big.NewInt(chain33Msg.Amount.Int64() - feeAmount)
+	value := big.NewInt(0)
+
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
 	ctx := context.Background()
 	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
-	var intputData []byte  // ERC20 or BEP20 token transfer pack data
-	var err error
+	var intputData []byte // ERC20 or BEP20 token transfer pack data
 	var toAddr common.Address
 	var balanceOfData []byte // ERC20 or BEP20 token balanceof pack data
 
 	if tokenAddr.String() != ethtxs.EthNullAddr { //判断是否要Pack EVM数据
 		toAddr = tokenAddr
-		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, chain33Msg.Amount)
+		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, amount2transfer)
 		if err != nil {
 			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
 			return
@@ -624,20 +630,20 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err)
 			return
 		}
-
 	} else {
 		//如果tokenAddr为空，则把toAddr设置为用户指定的地址
 		toAddr = chain33Msg.EthereumReceiver
+		value = amount2transfer
 	}
 
 	//校验余额是否充足
-	if ok, err := ethRelayer.checkBalanceEnough(toAddr, chain33Msg.Amount, balanceOfData); !ok {
+	if ok, err := ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData); !ok {
 		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
 		return
 	}
 	//param: from,to,evm-packdata,amount
 	//交易构造
-	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputData, chain33Msg.Amount)
+	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputData, value)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		return
