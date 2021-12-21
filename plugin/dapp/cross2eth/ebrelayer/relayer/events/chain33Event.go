@@ -51,13 +51,13 @@ type LockEventOnChain33 struct {
 
 // 发生在chain33 evm上的withdraw事件，当用户发起通过代理人提币交易时，则弹射出该事件信息
 type WithdrawEventOnChain33 struct {
-	BridgeToken   chain33EvmCommon.Hash160Address
-	Symbol string
-	Amount  *big.Int
-	OwnerFrom  chain33EvmCommon.Hash160Address
-	EthereumReceiver     []byte
-	ProxyReceiver  chain33EvmCommon.Hash160Address
-	Nonce  *big.Int
+	BridgeToken      chain33EvmCommon.Hash160Address
+	Symbol           string
+	Amount           *big.Int
+	OwnerFrom        chain33EvmCommon.Hash160Address
+	EthereumReceiver []byte
+	ProxyReceiver    chain33EvmCommon.Hash160Address
+	Nonce            *big.Int
 }
 
 // 发生在chain33evm上的burn事件，当eth/erc20资产需要提币回到以太坊链上时，会发生该种事件
@@ -125,8 +125,6 @@ func UnpackLogWithdraw(contractAbi abi.ABI, eventName string, eventData []byte) 
 	return withdrawEvent, nil
 }
 
-
-
 // ParseBurnLock4chain33 ParseBurnLockTxReceipt : parses data from a Burn/Lock/Withdraw event witnessed on chain33 into a Chain33Msg struct
 func ParseBurnLock4chain33(evmEventType Chain33EvmEvent, data []byte, bridgeBankAbi abi.ABI, chain33TxHash []byte) (*Chain33Msg, error) {
 	if Chain33EventLogLock == evmEventType {
@@ -171,7 +169,7 @@ func ParseBurnLock4chain33(evmEventType Chain33EvmEvent, data []byte, bridgeBank
 		}
 
 		chain33Msg := &Chain33Msg{
-			ClaimType:            ClaimTypeBurn,
+			ClaimType:            ClaimTypeWithdraw,
 			Chain33Sender:        burnEvent.OwnerFrom.ToAddress(),
 			EthereumReceiver:     common.BytesToAddress(burnEvent.EthereumReceiver),
 			TokenContractAddress: burnEvent.BridgeToken.ToAddress(),

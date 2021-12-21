@@ -814,7 +814,7 @@ func (ethRelayer *Relayer4Ethereum) newTx(from, to common.Address, input []byte,
 func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33Msg) {
 	//对于通过代理人登录的中继器，不处理lock和burn事件
 	if ethRelayer.processWithDraw {
-		relayerLog.Info("handleLogWithdraw", "Needn't process lock and burn for this withdraw process specified validator", ethRelayer.ethSender)
+		relayerLog.Info("handleLogLockBurn", "Needn't process lock and burn for this withdraw process specified validator", ethRelayer.ethSender)
 		return
 	}
 	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))

@@ -31,5 +31,5 @@ func (d Event) String() string {
 }
 
 func (d ClaimType) String() string {
-	return [...]string{"unknown-LOG", "burn", "lock"}[d]
+	return [...]string{"unknown-LOG", "burn", "lock", "withdraw"}[d]
 }
