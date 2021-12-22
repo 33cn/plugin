@@ -644,7 +644,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 			return
 		}
 		//用签名的账户地址作为pack参数，toAddr作为合约地址
-		balanceOfData, err = ethRelayer.packBalanceOfData(chain33Msg.EthereumReceiver)
+		balanceOfData, err = ethRelayer.packBalanceOfData(ethRelayer.ethSender)
 		if err != nil {
 			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err)
 			err = errors.New("ErrPackBalanceOfData")
@@ -730,6 +730,7 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 	if balance.Cmp(amount) > 0 {
 		return true, nil
 	}
+	relayerLog.Error("Insufficient balance", "balance", balance, "amount", amount)
 	return false, errors.New("Insufficient balance")
 
 }
