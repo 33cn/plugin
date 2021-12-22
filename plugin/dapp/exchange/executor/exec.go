@@ -24,3 +24,30 @@ func (e *exchange) Exec_RevokeOrder(payload *exchangetypes.RevokeOrder, tx *type
 	action := NewAction(e, tx, index)
 	return action.RevokeOrder(payload)
 }
+
+func (e *exchange) Exec_Deposit(payload *exchangetypes.Deposit, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.Deposit(payload)
+}
+
+func (e *exchange) Exec_Withdraw(payload *exchangetypes.Withdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.Withdraw(payload)
+}
+
+func (e *exchange) Exec_Transfer(payload *exchangetypes.Transfer, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.Transfer(payload)
+}
+
+func (e *exchange) Exec_TransferToNew(payload *exchangetypes.TransferToNew, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.TransferToNew(payload)
+}
+
+func (e *exchange) Exec_ForceQuit(payload *exchangetypes.ForceQuit, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.ForceQuit(payload)
+}
+
+

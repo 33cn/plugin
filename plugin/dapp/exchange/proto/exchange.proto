@@ -161,4 +161,98 @@ message ReceiptExchange {
   repeated Order matchOrders = 2;
   int64          index = 3;
 }
+
+//某条链上的代币余额
+message ChainBalance {
+  string chainType = 1; //BTY ETH
+  map<int32, int32> tokenBalanceMap = 2;//<tokenId, index>
+  repeated TokenBalance tokenBalances = 3;
+  bytes rootHash = 4; //Balance Tree的hash
+}
+
+//某个token的余额
+message TokenBalance {
+  int32 tokenId = 1;
+  int64 balance = 2;
+}
+
+message AccountTree {
+  int32 index = 1;//当前的叶子索引
+  int32 totalIndex = 2;  //总计叶子索引
+  int32 maxCurrentIndex = 3;  //当前索引最大值，超过最大值会进行归档
+  map<string, RootInfo> rootMap = 4;//历史归档的所有roots,key=root hash,value = rootInfo
+  map<int32, bytes> rootIndexMap = 5;//历史归档的所有roots索引，index = RootInfo.startIndex / 1024
+  map<string, int32> addressMap  = 6;
+  map <int32, Leaf> leaveMap = 7; //当前未归档的叶子
+  repeated SubTree subTrees = 8; //当前未归档的子树
+  bytes merkleRootHash = 9; //当前的总rootHash
+}
+
+message Leaf {
+  bytes rootHash = 1; //归档Merkle Tree的根hash
+  int32 accountId = 2; //accountId其实就是叶子的totalIndex
+  map<string, int32> chainBalanceMap = 3;
+  repeated ChainBalance chainBalances = 4;
+  string ethAddress = 5; //账户对应的以太坊地址
+  PubKey publicKey = 6; //twistededwards pubKey
+}
+
+message PubKey {
+  string x = 1;
+  string y = 2;
+}
+
+message RootInfo {
+  int32 height = 1; //归档的高度
+  int32 startIndex = 2; //开始的全局index
+}
+
+message SubTree {
+  int32 height = 1;
+  bytes rootHash = 2; //子树的根hash
+}
+
+message AccountTreeProof {
+  bytes rootHash = 1;
+  repeated bytes proofSet = 2;
+  uint64 proofIndex = 3;
+  uint64 numLeaves = 4;
+}
+
+message Deposit {
+  string chainType = 1;
+  int32 tokenId = 2;
+  uint64 amount = 3;
+}
+
+message Withdraw {
+  string chainType = 1;
+  int32 tokenId = 2;
+  uint64 amount = 3;
+}
+
+message Transfer {
+  string chainType = 1;
+  int32 tokenId = 2;
+  uint64 amount = 3;
+}
+
+message TransferToNew {
+  string chainType = 1;
+  int32 tokenId = 2;
+  uint64 amount = 3;
+}
+
+message ForceQuit {
+  string chainType = 2;
+  int32 tokenId = 3;
+}
+
+// account变动执行票据日志
+message ReceiptAccount {
+  int32 accountId = 1;
+  uint64 balance = 2;
+  int64  index = 3;
+}
+
 service exchange {}

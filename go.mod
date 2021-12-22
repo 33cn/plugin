@@ -44,4 +44,9 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools v2.2.0+incompatible
+)
+
+replace (
+	github.com/33cn/chain33  => ../chain33
 )

@@ -1,4 +1,4 @@
-package sync
+ package sync
 
 //HandleRequest ...
 func HandleRequest(body []byte) error {
