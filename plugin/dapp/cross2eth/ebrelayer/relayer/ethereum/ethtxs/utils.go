@@ -148,7 +148,7 @@ func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) strin
 	return status
 }
 
-func NewTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
+func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
 	price, err := clientSpec.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
@@ -160,17 +160,17 @@ func NewTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input
 	}
 	var gas uint64 = 21000
 	if input != nil {
-		var msg ethereum.CallMsg
-		msg.To = &to
-		msg.Data = input
-		gas, err = clientSpec.EstimateGas(context.Background(), msg)
-		if err != nil {
-			//return nil,err
-			txslog.Error("handleLogWithdraw", "EstimateGas err", err)
-			gas = 80000
-		}
-		//略微增加gas数量，>=120%
-		gas = uint64(float64(gas) * 1.2)
+		//var msg ethereum.CallMsg
+		//msg.To = &to
+		//msg.Data = input
+		//gas, err = clientSpec.EstimateGas(context.Background(), msg)
+		//if err != nil {
+		//	//return nil,err
+		//	txslog.Error("handleLogWithdraw", "EstimateGas err", err)
+		//	gas = 80000
+		//}
+		//实际测试"cumulativeGasUsed": "0xdc82",
+		gas = uint64(80000)
 	}
 
 	ntx := types.NewTx(&types.LegacyTx{

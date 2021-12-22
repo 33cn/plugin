@@ -664,7 +664,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	//param: from,to,evm-packdata,amount
 	//交易构造
-	tx, err := ethtxs.NewTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value)
+	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		err = errors.New("ErrNewTx")
