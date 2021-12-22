@@ -664,7 +664,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	//param: from,to,evm-packdata,amount
 	//交易构造
-	tx, err := ethRelayer.newTx(ethRelayer.ethSender, toAddr, intputData, value)
+	tx, err := ethtxs.NewTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		err = errors.New("ErrNewTx")
@@ -770,43 +770,6 @@ func (ethRelayer *Relayer4Ethereum) packBalanceOfData(_to common.Address) ([]byt
 		return nil, err
 	}
 	return abidata, nil
-}
-func (ethRelayer *Relayer4Ethereum) newTx(from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
-
-	price, err := ethRelayer.clientSpec.SuggestGasPrice(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	nonce, err := ethRelayer.clientSpec.PendingNonceAt(context.Background(), from)
-	if err != nil {
-		return nil, err
-	}
-	var gas uint64 = 21000
-	if input != nil {
-		var msg ethereum.CallMsg
-		msg.To = &to
-		msg.Data = input
-		gas, err = ethRelayer.clientSpec.EstimateGas(context.Background(), msg)
-		if err != nil {
-			//return nil,err
-			relayerLog.Error("handleLogWithdraw", "EstimateGas err", err)
-			gas = 80000
-		}
-		//略微增加gas数量，>=120%
-		gas = uint64(float64(gas) * 1.2)
-	}
-
-	ntx := types.NewTx(&types.LegacyTx{
-		Nonce:    nonce,
-		GasPrice: price,
-		To:       &to,
-		Data:     input,
-		Value:    value,
-		Gas:      gas,
-	})
-
-	return ntx, nil
 }
 
 func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33Msg) {

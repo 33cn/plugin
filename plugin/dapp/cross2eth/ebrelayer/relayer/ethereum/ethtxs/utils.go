@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -144,4 +146,41 @@ func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) strin
 	}
 
 	return status
+}
+
+func NewTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
+	price, err := clientSpec.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	nonce, err := getNonce(from, clientSpec)
+	if err != nil {
+		return nil, err
+	}
+	var gas uint64 = 21000
+	if input != nil {
+		var msg ethereum.CallMsg
+		msg.To = &to
+		msg.Data = input
+		gas, err = clientSpec.EstimateGas(context.Background(), msg)
+		if err != nil {
+			//return nil,err
+			txslog.Error("handleLogWithdraw", "EstimateGas err", err)
+			gas = 80000
+		}
+		//略微增加gas数量，>=120%
+		gas = uint64(float64(gas) * 1.2)
+	}
+
+	ntx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce.Uint64(),
+		GasPrice: price,
+		To:       &to,
+		Data:     input,
+		Value:    value,
+		Gas:      gas,
+	})
+
+	return ntx, nil
 }
