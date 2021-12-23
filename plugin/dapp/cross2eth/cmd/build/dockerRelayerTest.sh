@@ -214,7 +214,7 @@ function TestETH2Chain33Assets_proxy_excess() {
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 超额了金额跟之前一样${NOC}"
     result=$(${CLIA} ethereum balance -o "${ethValidatorAddrp}" | jq -r ".balance")
     is_equal "${result}" "${ethPBalancebf}"
-    
+
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -431,7 +431,7 @@ function AllRelayerMainTest() {
     initPara
 
     StartDockerRelayerDeploy
-#    test_all
+    test_all
 
     TestRelayerProxy
 

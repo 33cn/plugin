@@ -29,7 +29,7 @@ startSyncHash=""
 [deploy4chain33]
 #合约部署人员私钥，用于部署合约时签名使用
 operatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-#验证人地址，至少配置３个以上，即大于等于３个
+#验证人地址，至少配置3个以上，即大于等于3个
 validatorsAddr=["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
 #验证人权重
 initPowers=[96, 1, 1, 1]
@@ -37,7 +37,7 @@ initPowers=[96, 1, 1, 1]
 [deploy]
 #合约部署人员私钥，用于部署合约时签名使用
 operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
-#验证人地址，至少配置３个以上，即大于等于３个
+#验证人地址，至少配置3个以上，即大于等于3个
 validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 #验证人权重
 initPowers=[96, 1, 1, 1]
