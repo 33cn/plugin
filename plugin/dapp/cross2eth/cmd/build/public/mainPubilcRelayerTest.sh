@@ -89,23 +89,23 @@ function start_docker_ebrelayerA() {
 }
 
 function updata_toml() {
-  local name=$1
+    local name=$1
     local file="./relayer$name.toml"
-        cp './relayer.toml' "${file}"
+    cp './relayer.toml' "${file}"
 
-        # 删除配置文件中不需要的字段
-        for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
-            delete_line "${file}" "${deleteName}"
-        done
+    # 删除配置文件中不需要的字段
+    for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
+        delete_line "${file}" "${deleteName}"
+    done
 
-        pushNameChange "${file}"
+    pushNameChange "${file}"
 
-        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
-        line=$(delete_line_show "${file}" "pushHost")
-        sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+    pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+    line=$(delete_line_show "${file}" "pushHost")
+    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
 
-        line=$(delete_line_show "${file}" "pushBind")
-        sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+    line=$(delete_line_show "${file}" "pushBind")
+    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 }
 
 # start ebrelayer B C D
