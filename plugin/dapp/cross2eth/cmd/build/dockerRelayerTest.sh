@@ -121,7 +121,7 @@ function TestETH2Chain33Assets_proxy() {
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" | jq -r ".balance")
 
-    if [[ $(echo "${ethPBalancebf}-${lockAmount1}+1 < $result" | bc) == 1  ]]; then
+    if [[ $(echo "${ethPBalancebf}-${lockAmount1}+1 < $result" | bc) == 1 ]]; then
         echo -e "${RED}error $ethPBalanceEnd 小于 $result, 应该大于 $ethPBalanceEnd 扣了一点点手续费 ${NOC}"
         exit 1
     fi
