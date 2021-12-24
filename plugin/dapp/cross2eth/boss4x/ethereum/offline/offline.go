@@ -34,6 +34,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateCmd(), //构造交易
 		CreateWithFileCmd(),
 		DeployERC20Cmd(),
+		DeployBEP20Cmd(),
 		DeployTetherUSDTCmd(),
 		//CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
 		//SetupCmd(),
