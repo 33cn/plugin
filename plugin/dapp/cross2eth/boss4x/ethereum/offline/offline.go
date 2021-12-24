@@ -102,7 +102,7 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	if chainEthId == 1337 {
 		gasLimit = uint64(500 * 10000)
 	} else {
-		gasLimit, err := client.EstimateGas(context.Background(), msg)
+		gasLimit, err = client.EstimateGas(context.Background(), msg)
 		if err != nil {
 			fmt.Println("EstimateGas Err:", err)
 			return
