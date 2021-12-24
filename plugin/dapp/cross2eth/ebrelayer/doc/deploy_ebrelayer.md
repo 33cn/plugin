@@ -64,7 +64,6 @@ done
 
 ```
 
-
 *** 
 
 ### 启动 relayer B C D
@@ -91,4 +90,41 @@ done
 ./ebcli_A ethereum import_privatekey -k "${ethValidatorAddrKeya}"
 ```
 
-#### 运行持续启动 relayer B C D
+***
+
+### 启动代理 relayer proxy
+#### 修改 relayer.toml 配置文件
+先 cp relayerA 的配置文件, 然后修改以下字段:
+
+|字段|说明|
+|----|----|
+|pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
+|ProcessWithDraw|改为 true|
+|chain33Host|平行链的 host 地址, 默认: http://localhost:8801, 选任意一个 chain33 平行链地址就可以|
+|deploy4chain33|[deploy4chain33] 下字段全部删除, 只需 relayer A 配置一次就可以|
+|deploy|[deploy] 下字段全部删除, 只需 relayer A 配置一次就可以|
+
+#### 首次启动 relayer 进行设置
+同上...
+
+#### 设置 chain33 代理地址, 及手续费设置
+```shell
+# 设置 withdraw 的手续费及每日转帐最大值
+result=$(${CLIP} ethereum cfgWithdraw -f 1 -s ETH -a 100 -d 18)
+
+Flags:
+  -a, --amount float    每日最大值
+  -d, --decimal int8    token 精度
+  -f, --fee float       手续费
+  -s, --symbol string   symbol
+  
+# 设置 chain33 代理地址
+${Boss4xCLI} chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
+Flags:
+  -a, --address string    withdraw address
+  -c, --contract string   bridgebank contract address
+  -f, --fee float         contract gas fee (optional)
+  -k, --key string        the deployer private key
+  -n, --note string       transaction note info (optional)
+```
+    

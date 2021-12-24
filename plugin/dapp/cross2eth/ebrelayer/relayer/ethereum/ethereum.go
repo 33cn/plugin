@@ -14,6 +14,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"regexp"
 	"strings"
@@ -591,23 +592,17 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
 	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 	if 8 != withdrawFromChain33TokenInfo.Decimal {
+		dist := math.Abs(float64(withdrawFromChain33TokenInfo.Decimal - 8))
+		value, exist := utils.Decimal2value[int(dist)]
+		if !exist {
+			relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+			err = errors.New("ErrDecimalNotSupport")
+			return
+		}
+
 		if withdrawFromChain33TokenInfo.Decimal > 8 {
-			dist := withdrawFromChain33TokenInfo.Decimal - 8
-			value, exist := utils.Decimal2value[int(dist)]
-			if !exist {
-				relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
-				err = errors.New("ErrDecimalNotSupport")
-				return
-			}
 			chain33Msg.Amount.Mul(chain33Msg.Amount, big.NewInt(value))
 		} else {
-			dist := 8 - withdrawFromChain33TokenInfo.Decimal
-			value, exist := utils.Decimal2value[int(dist)]
-			if !exist {
-				relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
-				err = errors.New("ErrDecimalNotSupport")
-				return
-			}
 			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
 		}
 	}
