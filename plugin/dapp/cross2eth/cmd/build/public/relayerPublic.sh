@@ -19,12 +19,12 @@ source "./publicTest.sh"
 
     ethMultisignA=0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf
     ethMultisignB=0x6F163E6daf0090D897AD7016484f10e0cE844994
-    ethMultisignC=0xbc333839E37bc7fAAD0137aBaE2275030555101f
-    ethMultisignD=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
+    ethMultisignC=0x0921948C0d25BBbe85285CB5975677503319F02A
+    ethMultisignD=0x69921517970a28b73ac5E4C8ac8Fd135A80D2be1
     ethMultisignKeyA=0x5e8aadb91eaa0fce4df0bcc8bd1af9e703a1d6db78e7a4ebffd6cf045e053574
     ethMultisignKeyB=0x0504bcb22b21874b85b15f1bfae19ad62fc2ad89caefc5344dc669c57efa60db
-    ethMultisignKeyC=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
-    ethMultisignKeyD=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
+    ethMultisignKeyC=0x5a43f2c8724f60ea5d6b87ad424daa73639a5fc76702edd3e5eaed37aaffdf49
+    ethMultisignKeyD=0x03b28c0fc78c6ebae719b559b0781db24644b655d4bd58e5cf2311c9f03baa3d
 }
 
 maturityDegree=10
