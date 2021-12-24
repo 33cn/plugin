@@ -96,14 +96,7 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	msg.To = &contracAddr
 	msg.Value = big.NewInt(0)
 	//估算gas
-	gasLimit, err := client.EstimateGas(context.Background(), msg)
-	if err != nil {
-		fmt.Println("EstimateGas Err:", err)
-		return
-	}
-	if gasLimit < 100*10000 {
-		gasLimit = 100 * 10000
-	}
+	gasLimit := uint64(500 * 10000)
 
 	ntx := types.NewTx(&types.LegacyTx{
 		Nonce:    nonce,
