@@ -66,7 +66,8 @@ function kill_ebrelayerD() {
 function start_ebrelayerC() {
     nohup ./relayer_C/ebrelayer ./relayer_C/relayer.toml >./relayer_C/cross2eth_C.log 2>&1 &
     sleep 2
-    ${CLIC} unlock -p ${validatorPwd}
+    # shellcheck disable=SC2154
+    ${CLIC} unlock -p "${validatorPwd}"
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     sleep ${maturityDegree}
@@ -76,7 +77,7 @@ function start_ebrelayerC() {
 function start_ebrelayerD() {
     nohup ./relayer_D/ebrelayer ./relayer_D/relayer.toml >./relayer_D/cross2eth_D.log 2>&1 &
     sleep 2
-    ${CLID} unlock -p ${validatorPwd}
+    ${CLID} unlock -p "${validatorPwd}"
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     sleep ${maturityDegree}
@@ -86,10 +87,10 @@ function start_ebrelayerD() {
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    result=$(${CLIA} set_pwd -p ${validatorPwd})
+    result=$(${CLIA} set_pwd -p "${validatorPwd}")
     cli_ret "${result}" "set_pwd"
 
-    result=$(${CLIA} unlock -p ${validatorPwd})
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # shellcheck disable=SC2154
@@ -287,10 +288,10 @@ function updata_toml_start_BCD() {
         sleep 2
 
         CLI="./ebcli_$name"
-        result=$(${CLI} set_pwd -p ${validatorPwd})
+        result=$(${CLI} set_pwd -p "${validatorPwd}")
         cli_ret "${result}" "set_pwd"
 
-        result=$(${CLI} unlock -p ${validatorPwd})
+        result=$(${CLI} unlock -p "${validatorPwd}")
         cli_ret "${result}" "unlock"
 
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
@@ -358,7 +359,7 @@ function StartRelayerAndDeploy() {
     kill_ebrelayer ebrelayer
     start_ebrelayerA
 
-    result=$(${CLIA} unlock -p ${validatorPwd})
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # start ebrelayer B C D
@@ -526,7 +527,7 @@ function StartOneRelayer() {
     kill_ebrelayer ebrelayer
     start_ebrelayerA
 
-    result=$(${CLIA} unlock -p ${validatorPwd})
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # 设置 token 地址
