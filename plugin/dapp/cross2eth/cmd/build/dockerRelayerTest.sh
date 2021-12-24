@@ -115,8 +115,7 @@ function TestETH2Chain33Assets_proxy() {
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址 withdraw 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethTestAddr2}" | jq -r ".balance")
-    # shellcheck disable=SC2219
-    let ethT2BalanceEnd=ethT2Balancebf+lockAmount1-1
+    ethT2BalanceEnd=$(echo "${ethT2Balancebf}+${lockAmount1}-1" | bc)
     is_equal "${result}" "${ethT2BalanceEnd}"
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 ${NOC}"
@@ -124,7 +123,7 @@ function TestETH2Chain33Assets_proxy() {
 
     if [[ $(echo "${ethPBalancebf}-${lockAmount1}+1 < $result" | bc) ]]; then
         echo -e "${RED}error $ethPBalanceEnd 小于 $result, 应该大于 $ethPBalanceEnd 扣了一点点手续费 ${NOC}"
-        #        exit 1
+        exit 1
     fi
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
