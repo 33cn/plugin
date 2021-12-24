@@ -80,6 +80,9 @@ var (
 		TyRevokeOrderLog: {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
 	}
 	//tlog = log.New("module", "exchange.types")
+
+	//ForkFix1 Forks
+	ForkFix1 = "ForkFix1"
 )
 
 // init defines a register function

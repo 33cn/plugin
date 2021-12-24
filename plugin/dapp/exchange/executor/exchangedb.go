@@ -338,6 +338,13 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 					if count >= et.MaxMatchCount {
 						break
 					}
+					//没有fork 前, 同地址不能交易
+					if !cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) {
+						if matchorder.Addr == a.fromaddr {
+							continue
+						}
+					}
+
 					//撮合,指针传递
 					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr()) // payload, or redundant
 					if err != nil {
