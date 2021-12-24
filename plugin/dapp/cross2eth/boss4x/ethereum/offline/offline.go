@@ -71,7 +71,7 @@ type DeployConfigInfo struct {
 	MultisignAddrs []string `toml:"multisignAddrs"`
 }
 
-func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string) {
+func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string, chainEthId int64) {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		fmt.Println("Dial Err:", err)
@@ -96,7 +96,21 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	msg.To = &contracAddr
 	msg.Value = big.NewInt(0)
 	//估算gas
-	gasLimit := uint64(500 * 10000)
+	var gasLimit uint64
+	// 模拟节点测试
+	if chainEthId == 1337 {
+		gasLimit = uint64(500 * 10000)
+	} else {
+		gasLimit, err := client.EstimateGas(context.Background(), msg)
+		if err != nil {
+			fmt.Println("EstimateGas Err:", err)
+			return
+		}
+		gasLimit = uint64(1.2 * float64(gasLimit))
+		if gasLimit < 100*10000 {
+			gasLimit = 100 * 10000
+		}
+	}
 
 	ntx := types.NewTx(&types.LegacyTx{
 		Nonce:    nonce,

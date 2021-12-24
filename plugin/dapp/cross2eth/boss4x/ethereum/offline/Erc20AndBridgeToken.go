@@ -201,6 +201,7 @@ func AddToken2LockListTx(cmd *cobra.Command, _ []string) {
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	token, _ := cmd.Flags().GetString("token")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -214,7 +215,7 @@ func AddToken2LockListTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_add_lock_list", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_add_lock_list", url, chainEthId)
 }
 
 func CreateBridgeTokenTxCmd() *cobra.Command {
@@ -241,6 +242,7 @@ func CreateBridgeTokenTx(cmd *cobra.Command, _ []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -253,5 +255,5 @@ func CreateBridgeTokenTx(cmd *cobra.Command, _ []string) {
 		fmt.Println("bridgeAbi.Pack createNewBridgeToken Err:", err)
 		return
 	}
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_bridge_token", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_bridge_token", url, chainEthId)
 }

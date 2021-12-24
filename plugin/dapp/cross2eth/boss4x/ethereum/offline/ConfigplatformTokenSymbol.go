@@ -34,6 +34,7 @@ func ConfigplatformTokenSymbol(cmd *cobra.Command, _ []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -46,5 +47,5 @@ func ConfigplatformTokenSymbol(cmd *cobra.Command, _ []string) {
 		panic(err)
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_symbol", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_symbol", url, chainEthId)
 }

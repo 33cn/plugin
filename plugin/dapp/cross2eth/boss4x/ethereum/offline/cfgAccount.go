@@ -58,6 +58,7 @@ func cfgAccountTx(cmd *cobra.Command, _ []string) {
 	address, _ := cmd.Flags().GetString("address")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -70,7 +71,7 @@ func cfgAccountTx(cmd *cobra.Command, _ []string) {
 		panic(err)
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_offline_addr", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_offline_addr", url, chainEthId)
 }
 
 func SetupCmd() *cobra.Command {
@@ -96,6 +97,7 @@ func SetupOwner(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	multisign, _ := cmd.Flags().GetString("multisign")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	owner, _ := cmd.Flags().GetString("owner")
 	owners := strings.Split(owner, ",")
 
@@ -118,6 +120,6 @@ func SetupOwner(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, multisign, "multisign_setup", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, multisign, "multisign_setup", url, chainEthId)
 
 }
