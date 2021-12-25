@@ -18,10 +18,12 @@ const (
 	TyLimitOrderAction
 	TyMarketOrderAction
 	TyRevokeOrderAction
+	TyExchangeBindAction
 
-	NameLimitOrderAction  = "LimitOrder"
-	NameMarketOrderAction = "MarketOrder"
-	NameRevokeOrderAction = "RevokeOrder"
+	NameLimitOrderAction   = "LimitOrder"
+	NameMarketOrderAction  = "MarketOrder"
+	NameRevokeOrderAction  = "RevokeOrder"
+	NameExchangeBindAction = "Ebind"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -35,6 +37,8 @@ const (
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
+
+	TyExchangeBindLog
 )
 
 // OP
@@ -69,15 +73,17 @@ var (
 	ExchangeX = "exchange"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameLimitOrderAction:  TyLimitOrderAction,
-		NameMarketOrderAction: TyMarketOrderAction,
-		NameRevokeOrderAction: TyRevokeOrderAction,
+		NameLimitOrderAction:   TyLimitOrderAction,
+		NameMarketOrderAction:  TyMarketOrderAction,
+		NameRevokeOrderAction:  TyRevokeOrderAction,
+		NameExchangeBindAction: TyExchangeBindAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		TyLimitOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
-		TyMarketOrderLog: {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
-		TyRevokeOrderLog: {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
+		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
 	}
 	//tlog = log.New("module", "exchange.types")
 )

@@ -131,7 +131,7 @@ func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 }
 
 //LimitOrder ...
-func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
+func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.Receipt, error) {
 	leftAsset := payload.GetLeftAsset()
 	rightAsset := payload.GetRightAsset()
 	//TODO 参数要合法，必须有严格的校验，后面统一加入到checkTx里面
@@ -166,7 +166,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", rightAccount.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB)
+		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB, entrustAddr)
 
 	}
 	if payload.GetOp() == et.OpSell {
@@ -176,7 +176,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder) (*types.Receipt, error) {
 			elog.Error("limit check left balance", "addr", a.fromaddr, "avail", leftAccount.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB)
+		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB, entrustAddr)
 	}
 	return nil, fmt.Errorf("unknow op")
 }
@@ -264,7 +264,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 //1.买单高于市场价，按价格由低往高撮合。
 //2.卖单低于市场价，按价格由高往低进行撮合。
 //3.价格相同按先进先出的原则进行撮合
-func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB) (*types.Receipt, error) {
+func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var orderKey string
@@ -278,20 +278,21 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		return nil, err
 	}
 	or := &et.Order{
-		OrderID:    a.GetIndex(),
-		Value:      &et.Order_LimitOrder{LimitOrder: payload},
-		Ty:         et.TyLimitOrderAction,
-		Executed:   0,
-		AVGPrice:   0,
-		Balance:    payload.GetAmount(),
-		Status:     et.Ordered,
-		Addr:       a.fromaddr,
-		UpdateTime: a.blocktime,
-		Index:      a.GetIndex(),
-		Rate:       tCfg.GetRate(payload),
-		MinFee:     tCfg.GetMinFee(payload),
-		Hash:       hex.EncodeToString(a.txhash),
-		CreateTime: a.blocktime,
+		OrderID:     a.GetIndex(),
+		Value:       &et.Order_LimitOrder{LimitOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     payload.GetAmount(),
+		Status:      et.Ordered,
+		EntrustAddr: entrustAddr,
+		Addr:        a.fromaddr,
+		UpdateTime:  a.blocktime,
+		Index:       a.GetIndex(),
+		Rate:        tCfg.GetRate(payload),
+		MinFee:      tCfg.GetMinFee(payload),
+		Hash:        hex.EncodeToString(a.txhash),
+		CreateTime:  a.blocktime,
 	}
 	re := &et.ReceiptExchange{
 		Order: or,

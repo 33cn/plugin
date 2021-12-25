@@ -9,9 +9,13 @@ message ExchangeAction {
     LimitOrder  limitOrder = 1;
     MarketOrder marketOrder = 2;
     RevokeOrder revokeOrder = 3;
+    ExchangeBind exchangeBind = 4;
+    EntrustOrder entrustOrder = 5;
+    EntrustRevokeOrder entrustRevokeOrder = 6;
   }
-  int32 ty = 6;
+  int32 ty = 7;
 }
+
 //限价订单
 message LimitOrder {
   //交易对
@@ -36,6 +40,37 @@ message MarketOrder {
   int64 amount = 3;
   //操作， 1为买，2为卖
   int32 op = 4;
+}
+
+message ExchangeBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string entrustAddress = 2;
+}
+
+//委托限价订单
+message EntrustOrder {
+  //交易对
+  asset leftAsset = 1;
+  //交易对
+  asset rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  //交易地址
+  string addr = 6;
+}
+
+//委托撤回订单
+message EntrustRevokeOrder {
+  //订单号
+  int64 orderID = 1;
+  //交易地址
+  string addr = 2;
 }
 
 //撤回订单
@@ -68,22 +103,24 @@ message Order {
   int32 status = 8;
   //用户地址
   string addr = 9;
+  //委托地址
+  string entrustAddr = 10;
   //更新时间
-  int64 updateTime = 10;
+  int64 updateTime = 11;
   //索引
-  int64 index = 11;
+  int64 index = 12;
   //手续费率
-  int32 rate = 12;
+  int32 rate = 13;
   //手续费
-  int64 digestedFee = 13;
+  int64 digestedFee = 14;
   //最小手续费
-  int64 minFee = 14;
+  int64 minFee = 15;
   //挂单hash
-  string hash = 15;
+  string hash = 16;
   //撤单hash
-  string revokeHash = 16;
+  string revokeHash = 17;
   //创建时间
-  int64 createTime = 17;
+  int64 createTime = 18;
 }
 
 //查询接口
@@ -161,4 +198,14 @@ message ReceiptExchange {
   repeated Order matchOrders = 2;
   int64          index = 3;
 }
+
+message ReceiptExchangeBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string newEntrustAddress = 2;
+  //委托地址
+  string oldEntrustAddress = 3;
+}
+
 service exchange {}
