@@ -111,6 +111,6 @@ func saveBind(db dbm.KV, payload *et.ExchangeBind) {
 
 func getBindKV(payload *et.ExchangeBind) (kvset []*types.KeyValue) {
 	value := types.Encode(payload)
-	kvset = append(kvset, &types.KeyValue{Key: bindKey(payload.EntrustAddress), Value: value})
+	kvset = append(kvset, &types.KeyValue{Key: bindKey(payload.ExchangeAddress), Value: value})
 	return kvset
 }
