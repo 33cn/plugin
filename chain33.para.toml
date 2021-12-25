@@ -438,3 +438,4 @@ coins = [
 
 [fork.sub.exchange]
 Enable=0
+ForkFix1=50
