@@ -86,6 +86,9 @@ var (
 		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
 	}
 	//tlog = log.New("module", "exchange.types")
+
+	//ForkFix1 Forks
+	ForkFix1 = "ForkFix1"
 )
 
 // init defines a register function
