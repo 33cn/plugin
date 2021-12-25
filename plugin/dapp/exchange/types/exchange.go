@@ -81,8 +81,8 @@ var (
 		NameMarketOrderAction:  TyMarketOrderAction,
 		NameRevokeOrderAction:  TyRevokeOrderAction,
 		NameExchangeBindAction: TyExchangeBindAction,
-		NameEntrustOrderAction:  TyRevokeOrderAction,
-		NameEntrustRevokeOrderAction: TyExchangeBindAction,
+		NameEntrustOrderAction:  TyEntrustOrderAction,
+		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
