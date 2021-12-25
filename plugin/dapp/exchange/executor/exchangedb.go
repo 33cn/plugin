@@ -277,6 +277,16 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
+	rate := tCfg.GetRate(payload)
+	//fork1 后, 手续费默认为千分之一
+	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) {
+		if rate == 0 {
+			rate = 100000
+		} else if rate == 1 {
+			rate = 0
+		}
+	}
+
 	or := &et.Order{
 		OrderID:     a.GetIndex(),
 		Value:       &et.Order_LimitOrder{LimitOrder: payload},
@@ -289,7 +299,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		Addr:        a.fromaddr,
 		UpdateTime:  a.blocktime,
 		Index:       a.GetIndex(),
-		Rate:        tCfg.GetRate(payload),
+		Rate:        rate,
 		MinFee:      tCfg.GetMinFee(payload),
 		Hash:        hex.EncodeToString(a.txhash),
 		CreateTime:  a.blocktime,
@@ -489,11 +499,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	if payload.Op == et.OpBuy {
 		//转移冻结资产
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
-		if a.fromaddr != matchorder.Addr {
-			receipt, err = leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
-		} else {
-			receipt, err = leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
-		}
+		receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen2", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, nil, err
@@ -517,15 +523,13 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 
 		//将达成交易的相应资产结算
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
-		if a.fromaddr != matchorder.Addr {
-			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
-				return nil, nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
+		receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
+		if err != nil {
+			elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
+			return nil, nil, err
 		}
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
 
 		//收取手续费
 		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费
