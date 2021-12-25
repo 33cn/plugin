@@ -11,9 +11,9 @@ message ExchangeAction {
     RevokeOrder revokeOrder = 3;
     ExchangeBind exchangeBind = 4;
     EntrustOrder entrustOrder = 5;
-    EntrustRevokeOrder entrustRevokeOrder = 6;
+    EntrustRevokeOrder entrustRevokeOrder = 7;
   }
-  int32 ty = 7;
+  int32 ty = 6;
 }
 
 //限价订单
@@ -103,24 +103,24 @@ message Order {
   int32 status = 8;
   //用户地址
   string addr = 9;
-  //委托地址
-  string entrustAddr = 10;
   //更新时间
-  int64 updateTime = 11;
+  int64 updateTime = 10;
   //索引
-  int64 index = 12;
+  int64 index = 11;
   //手续费率
-  int32 rate = 13;
+  int32 rate = 12;
   //手续费
-  int64 digestedFee = 14;
+  int64 digestedFee = 13;
   //最小手续费
-  int64 minFee = 15;
+  int64 minFee = 14;
   //挂单hash
-  string hash = 16;
+  string hash = 15;
   //撤单hash
-  string revokeHash = 17;
+  string revokeHash = 16;
   //创建时间
-  int64 createTime = 18;
+  int64 createTime = 17;
+  //委托地址
+  string entrustAddr = 18;
 }
 
 //查询接口

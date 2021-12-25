@@ -278,7 +278,9 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		return nil, err
 	}
 	rate := tCfg.GetRate(payload)
-	//fork1 后, 手续费默认为千分之一
+	//fork1 后, 手续费默认值有变动
+	//rate=0  未配置的币种手续费默认为千分之一
+	//rate=1  与未配置返回0做出区分 配置1的代表真实手续费为0，
 	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) {
 		if rate == 0 {
 			rate = 100000
@@ -499,7 +501,11 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	if payload.Op == et.OpBuy {
 		//转移冻结资产
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
-		receipt, err := leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
+		if a.fromaddr != matchorder.Addr {
+			receipt, err = leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
+		} else {
+			receipt, err = leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
+		}
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen2", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, nil, err
@@ -523,13 +529,15 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 
 		//将达成交易的相应资产结算
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
-		receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
-		if err != nil {
-			elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
-			return nil, nil, err
+		if a.fromaddr != matchorder.Addr {
+			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("matchModel.ExecTransfer2", "from", a.fromaddr, "to", matchorder.Addr, "amount", amount, "err", err.Error())
+				return nil, nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
 		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
 
 		//收取手续费
 		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费

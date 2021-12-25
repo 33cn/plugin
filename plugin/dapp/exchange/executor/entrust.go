@@ -15,6 +15,7 @@ func (a *Action) ExchangeBind(payload *et.ExchangeBind) (*types.Receipt, error) 
 	if a.fromaddr != payload.GetExchangeAddress() {
 		return nil, types.ErrFromAddr
 	}
+	// 为空时代表解除绑定，不为空时校验地址格式
 	if len(payload.GetEntrustAddress()) > 0 {
 		if err := address.CheckAddress(payload.GetEntrustAddress()); err != nil {
 			return nil, err
@@ -68,11 +69,7 @@ func (a *Action) EntrustRevokeOrder(payload *et.EntrustRevokeOrder) (*types.Rece
 }
 
 func (a *Action) checkBind(entrustAddr, addr string) bool {
-	bind := a.getBind(addr)
-	if bind != entrustAddr {
-		return false
-	}
-	return true
+	return a.getBind(addr) == entrustAddr
 }
 
 func (a *Action) getBind(addr string) string {
