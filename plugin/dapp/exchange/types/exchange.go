@@ -19,11 +19,15 @@ const (
 	TyMarketOrderAction
 	TyRevokeOrderAction
 	TyExchangeBindAction
+	TyEntrustOrderAction
+	TyEntrustRevokeOrderAction
 
 	NameLimitOrderAction   = "LimitOrder"
 	NameMarketOrderAction  = "MarketOrder"
 	NameRevokeOrderAction  = "RevokeOrder"
-	NameExchangeBindAction = "Ebind"
+	NameExchangeBindAction = "ExchangeBind"
+	NameEntrustOrderAction = "EntrustOrder"
+	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -77,6 +81,8 @@ var (
 		NameMarketOrderAction:  TyMarketOrderAction,
 		NameRevokeOrderAction:  TyRevokeOrderAction,
 		NameExchangeBindAction: TyExchangeBindAction,
+		NameEntrustOrderAction:  TyEntrustOrderAction,
+		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -102,6 +108,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
 }
 
 // InitExecutor defines register executor

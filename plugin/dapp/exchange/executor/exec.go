@@ -29,7 +29,7 @@ func (e *exchange) Exec_RevokeOrder(payload *exchangetypes.RevokeOrder, tx *type
 }
 
 // 绑定委托交易地址
-func (e *exchange) Exec_Ebind(payload *exchangetypes.ExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *exchange) Exec_ExchangeBind(payload *exchangetypes.ExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewAction(e, tx, index)
 	return actiondb.ExchangeBind(payload)
 }
