@@ -50,14 +50,6 @@ var opt_exchange_history = &table.Option{
 	Index:   []string{"name", "addr_status"},
 }
 
-
-var opt_account_tree = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "tree",
-	Primary: "accountId",
-	Index:   []string{"root_hash", "eth_address"},
-}
-
 //NewMarketDepthTable 新建表
 func NewMarketDepthTable(kvdb db.KV) *table.Table {
 	rowmeta := NewMarketDepthRow()
@@ -82,16 +74,6 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 	rowmeta := NewHistoryOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_history)
-	if err != nil {
-		panic(err)
-	}
-	return table
-}
-
-// NewAccountTreeTable ...
-func NewAccountTreeTable(kvdb db.KV) *table.Table {
-	rowmeta := NewAccountTreeRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_account_tree)
 	if err != nil {
 		panic(err)
 	}
@@ -200,43 +182,4 @@ func (m *MarketDepthRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%s:%s:%d:%016d", m.LeftAsset.GetSymbol(), m.RightAsset.GetSymbol(), m.Op, m.Price)), nil
 	}
 	return nil, types.ErrNotFound
-}
-
-// AccountTreeRow table meta 结构
-type AccountTreeRow struct {
-	*ety.Leaf
-}
-
-func NewAccountTreeRow() *AccountTreeRow {
-	return &AccountTreeRow{Leaf: &ety.Leaf{}}
-}
-
-//CreateRow 新建数据行
-func (r *AccountTreeRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.Leaf{}}
-}
-
-//SetPayload 设置数据
-func (r *AccountTreeRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.Leaf); ok {
-		r.Leaf = txdata
-		return nil
-	}
-	return types.ErrTypeAsset
-}
-
-//Get 按照indexName 查询 indexValue
-func (r *AccountTreeRow) Get(key string) ([]byte, error) {
-	if key == "accountId" {
-		return GetAccountIdPrimaryKey(r.GetAccountId()), nil
-	} else if key == "root_hash" {
-		return []byte(fmt.Sprintf("%s", r.GetRootHash())), nil
-	} else if key == "eth_address" {
-		return []byte(fmt.Sprintf("%s", r.GetEthAddress())), nil
-	}
-	return nil, types.ErrNotFound
-}
-
-func GetAccountIdPrimaryKey(accountId int32) []byte {
-	return []byte(fmt.Sprintf("%022d", accountId))
 }
