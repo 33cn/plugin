@@ -44,16 +44,17 @@ type Relayer4Chain33 struct {
 	lastHeight4Tx       int64 //等待被处理的具有相应的交易回执的高度
 	matDegree           int32 //成熟度         heightSync2App    matDegress   height
 
-	privateKey4Chain33       chain33Crypto.PrivKey
-	privateKey4Chain33_ecdsa *ecdsa.PrivateKey
-	ctx                      context.Context
-	rwLock                   sync.RWMutex
-	unlockChan               chan int
-	bridgeBankEventLockSig   string
-	bridgeBankEventBurnSig   string
-	bridgeBankAbi            abi.ABI
-	deployInfo               *ebTypes.Deploy
-	totalTx4RelayEth2chai33  int64
+	privateKey4Chain33         chain33Crypto.PrivKey
+	privateKey4Chain33_ecdsa   *ecdsa.PrivateKey
+	ctx                        context.Context
+	rwLock                     sync.RWMutex
+	unlockChan                 chan int
+	bridgeBankEventLockSig     string
+	bridgeBankEventBurnSig     string
+	bridgeBankEventWithdrawSig string
+	bridgeBankAbi              abi.ABI
+	deployInfo                 *ebTypes.Deploy
+	totalTx4RelayEth2chai33    int64
 	//新增//
 	ethBridgeClaimChan <-chan *ebTypes.EthBridgeClaim
 	chain33MsgChan     chan<- *events.Chain33Msg
@@ -235,12 +236,14 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 					evmEventType = events.Chain33EventLogBurn
 				} else if chain33Relayer.bridgeBankEventLockSig == common.ToHex(evmlog.Topic[0]) {
 					evmEventType = events.Chain33EventLogLock
+				} else if chain33Relayer.bridgeBankEventWithdrawSig == common.ToHex(evmlog.Topic[0]) {
+					evmEventType = events.Chain33EventLogWithdraw
 				} else {
 					continue
 				}
 
-				if err := chain33Relayer.handleBurnLockEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
-					errInfo := fmt.Sprintf("Failed to handleBurnLockEvent due to:%s", err.Error())
+				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+					errInfo := fmt.Sprintf("Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 					panic(errInfo)
 				}
 			}
@@ -251,8 +254,8 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 }
 
 // handleBurnLockMsg : parse event data as a Chain33Msg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
-func (chain33Relayer *Relayer4Chain33) handleBurnLockEvent(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) error {
-	relayerLog.Info("handleBurnLockEvent", "Received tx with hash", ethCommon.Bytes2Hex(chain33TxHash))
+func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) error {
+	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", ethCommon.Bytes2Hex(chain33TxHash))
 
 	// Parse the witnessed event's data into a new Chain33Msg
 	chain33Msg, err := events.ParseBurnLock4chain33(evmEventType, data, chain33Relayer.bridgeBankAbi, chain33TxHash)
@@ -306,11 +309,13 @@ func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err err
 				evmEventType = events.Chain33EventLogBurn
 			} else if chain33Relayer.bridgeBankEventLockSig == common.ToHex(evmlog.Topic[0]) {
 				evmEventType = events.Chain33EventLogLock
+			} else if chain33Relayer.bridgeBankEventWithdrawSig == common.ToHex(evmlog.Topic[0]) {
+				evmEventType = events.Chain33EventLogWithdraw
 			} else {
 				continue
 			}
 
-			if err := chain33Relayer.handleBurnLockEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+			if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
 				return err
 			}
 		}
@@ -633,4 +638,10 @@ func (chain33Relayer *Relayer4Chain33) SetMultiSignAddr(address string) {
 	chain33Relayer.rwLock.Unlock()
 
 	chain33Relayer.setMultiSignAddress(address)
+}
+
+func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
+	bn := big.NewInt(1)
+	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }

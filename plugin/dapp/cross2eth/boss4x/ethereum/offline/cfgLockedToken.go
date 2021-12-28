@@ -53,6 +53,7 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 	percents, _ := cmd.Flags().GetUint8("percents")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	d, err := utils.GetDecimalsFromNode(token, url)
 	if err != nil {
@@ -86,5 +87,5 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 		panic(err)
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_offline_token", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "set_offline_token", url, chainEthId)
 }

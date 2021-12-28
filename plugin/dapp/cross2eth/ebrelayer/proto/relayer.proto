@@ -246,3 +246,42 @@ message ResendChain33EventReq  {
     int64 height = 1;
 }
 
+message CfgWithdrawReq  {
+    string symbol       = 1;
+    string feeAmount    = 2;
+    string amountPerDay = 3;
+}
+
+message withdrawPara  {
+    string fee = 1;
+    string amountPerDay = 2;
+}
+
+message WithdrawSymbol2Para  {
+    map<string, withdrawPara> symbol2Para = 1;
+}
+
+message WithdrawTx  {
+    string chain33Sender         = 1;
+    string ethereumReceiver      = 2;
+    string symbol                = 4;
+    string amount                 = 5;
+    int64 nonce                  = 6;
+    string txHashOnChain33       = 7;
+    string txHashOnEthereum      = 8;
+    int32 year                   = 9;
+    int32 month                  = 10;
+    int32 day                    = 11;
+    int32 status                 = 12;
+    string statusDescription      = 13;
+    string errorDescription      = 14;
+}
+
+message WithdrawFromChain33 {
+    string ownerKey   = 1;
+    string tokenAddr  = 2;
+    string amount      = 3;
+    string ethereumReceiver = 4;
+}
+
+

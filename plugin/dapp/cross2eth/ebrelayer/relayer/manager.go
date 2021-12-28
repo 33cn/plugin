@@ -1075,3 +1075,37 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr string, result *interf
 	}
 	return nil
 }
+
+func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount, cfgWithdrawReq.AmountPerDay)
+	resultCfg := true
+	if err != nil {
+		resultCfg = false
+	}
+	*result = rpctypes.Reply{
+		IsOk: resultCfg,
+	}
+	return nil
+}
+
+func (manager *Manager) WithdrawFromChain33(burn relayerTypes.BurnFromChain33, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.chain33Relayer.WithdrawFromChain33(burn.OwnerKey, burn.TokenAddr, burn.EthereumReceiver, burn.Amount)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
+	}
+	return nil
+}
