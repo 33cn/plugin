@@ -151,7 +151,7 @@ message Chain33ToEthereumStatics {
     string ethTxstatus = 1;
     string chain33Txhash = 2;
     string EthereumTxhash = 3;
-    int32  burnLock = 4;
+    int32  burnLockWithdraw = 4;
     //该笔lock或者burn交易的chain33发起人
     string chain33Sender = 5;
     string ethereumReceiver = 6;

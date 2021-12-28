@@ -25,7 +25,7 @@ func ShowStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol(optional)")
 	cmd.Flags().Int32P("from", "f", 0, "source chain, 0=ethereum, and 1=chain33")
 	_ = cmd.MarkFlagRequired("from")
-	cmd.Flags().Int32P("operation", "o", 0, "operation type, 1=burn, 2=lock, 3=withdraw")
+	cmd.Flags().StringP("operation", "o", "b", "operation type, b=burn, l=lock, w=withdraw")
 	_ = cmd.MarkFlagRequired("operation")
 	cmd.Flags().Int32P("status", "u", 0, "show with specified status, default to show all, 1=pending, 2=successful, 3=failed")
 	cmd.Flags().Int32P("count", "n", 0, "count to show, default to show all")
@@ -37,7 +37,7 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	from, _ := cmd.Flags().GetInt32("from")
-	operation, _ := cmd.Flags().GetInt32("operation")
+	operation, _ := cmd.Flags().GetString("operation")
 	status, _ := cmd.Flags().GetInt32("status")
 	count, _ := cmd.Flags().GetInt32("count")
 	index, _ := cmd.Flags().GetInt32("index")
@@ -47,8 +47,8 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if operation != 2 && 1 != operation && operation != 3 {
-		fmt.Println("Pls set correct operation type, 1=burn, 2=lock, 3=withdraw")
+	if operation != "b" && "l" != operation && operation != "w" {
+		fmt.Println("Pls set correct operation type, b=burn, l=lock, w=withdraw")
 		return
 	}
 
@@ -57,10 +57,19 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	var operationInt int32
+	if operation == "b" {
+		operationInt = 1
+	} else if operation == "l" {
+		operationInt = 2
+	} else if operation == "w" {
+		operationInt = 3
+	}
+
 	para := &ebTypes.TokenStaticsRequest{
 		Symbol:    symbol,
 		From:      from,
-		Operation: operation,
+		Operation: operationInt,
 		Status:    status,
 		TxIndex:   int64(index),
 		Count:     count,

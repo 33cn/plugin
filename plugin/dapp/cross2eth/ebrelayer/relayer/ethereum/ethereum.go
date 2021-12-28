@@ -579,6 +579,11 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		if nil != err {
 			relayerLog.Error("handleLogWithdraw", "Failed to setWithdraw due to:", err.Error())
 		}
+
+		err = ethRelayer.setWithdrawStatics(withdrawTx, chain33Msg)
+		if nil != err {
+			relayerLog.Error("handleLogWithdraw", "Failed to setWithdrawStatics due to:", err.Error())
+		}
 	}()
 
 	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
@@ -653,7 +658,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 
 	//校验余额是否充足
-	if ok, err := ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData); !ok {
+	err = ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData)
+	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
 		err = errors.New("ErrBalanceNotEnough")
 		return
@@ -687,40 +693,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = signedTx.Hash().String()
 
-	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
-	operationType := chain33Msg.ClaimType.String()
-	statics := &ebTypes.Chain33ToEthereumStatics{
-		EthTxstatus:      ebTypes.Tx_Status_Pending,
-		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
-		EthereumTxhash:   withdrawTx.TxHashOnEthereum,
-		BurnLock:         int32(chain33Msg.ClaimType),
-		Chain33Sender:    chain33Msg.Chain33Sender.String(),
-		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
-		Symbol:           chain33Msg.Symbol,
-		Amount:           chain33Msg.Amount.String(),
-		Nonce:            chain33Msg.Nonce,
-		TxIndex:          txIndex,
-		OperationType:    operationType,
-	}
-	data := chain33Types.Encode(statics)
-	if err = ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data); nil != err {
-		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
-		return
-	}
-	relayerLog.Info("RelayOracleClaimToEthereum::successful",
-		"txIndex", txIndex,
-		"Chain33Txhash", statics.Chain33Txhash,
-		"EthereumTxhash", statics.EthereumTxhash,
-		"type", operationType,
-		"Symbol", chain33Msg.Symbol,
-		"Amount", chain33Msg.Amount,
-		"EthereumReceiver", statics.EthereumReceiver,
-		"Chain33Sender", statics.Chain33Sender)
-
 	return
 }
 
-func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) (bool, error) {
+func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) error {
 	//检测地址余额
 	var balance *big.Int
 	var err error
@@ -730,7 +706,7 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 			//retry
 			balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
 			if err != nil {
-				return false, err
+				return err
 			}
 		}
 	} else {
@@ -742,24 +718,22 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 			//retry
 			result, err = ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
 			if err != nil {
-				return false, err
+				return err
 			}
 		}
 		var ok bool
 		balance, ok = big.NewInt(1).SetString(common.Bytes2Hex(result), 16)
 		if !ok {
-			return false, errors.New(fmt.Sprintf("token balance err:%v", common.Bytes2Hex(result)))
+			return errors.New(fmt.Sprintf("token balance err:%v", common.Bytes2Hex(result)))
 		}
-
 	}
 
 	//与要发动的金额大小进行比较
 	if balance.Cmp(amount) > 0 {
-		return true, nil
+		return nil
 	}
 	relayerLog.Error("Insufficient balance", "balance", balance, "amount", amount)
-	return false, errors.New("Insufficient balance")
-
+	return errors.New("Insufficient balance")
 }
 
 func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
@@ -880,7 +854,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		EthTxstatus:      ebTypes.Tx_Status_Pending,
 		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
 		EthereumTxhash:   txhash,
-		BurnLock:         int32(chain33Msg.ClaimType),
+		BurnLockWithdraw: int32(chain33Msg.ClaimType),
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
 		Symbol:           chain33Msg.Symbol,
