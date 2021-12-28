@@ -352,14 +352,24 @@ contract BEP20Token is Context, IBEP20, Ownable {
     string private _symbol;
     string private _name;
 
-    constructor() public {
-        _name = "BUSD Token";
-        _symbol = "BUSD";
-        _decimals = 18;
-        _totalSupply = 31000000000000000000000000;
-        _balances[msg.sender] = _totalSupply;
+//    constructor() public {
+//        _name = "BUSD Token";
+//        _symbol = "BUSD";
+//        _decimals = 18;
+//        _totalSupply = 31000000000000000000000000;
+//        _balances[msg.sender] = _totalSupply;
+//
+//        emit Transfer(address(0), msg.sender, _totalSupply);
+//    }
 
-        emit Transfer(address(0), msg.sender, _totalSupply);
+    constructor (string memory name_, string memory symbol_,uint256 totalSupply_, uint8 decimals_, address owner_) public {
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals_;
+        _totalSupply = totalSupply_;
+        _balances[owner_] = totalSupply_;
+
+        emit Transfer(address(0), owner_, totalSupply_);
     }
 
     /**

@@ -8,7 +8,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
-	"github.com/pkg/errors"
 )
 
 // SeqType
@@ -106,13 +105,17 @@ func (syncTx *EVMTxLogs) SaveAndSyncTxs2Relayer() {
 
 // 处理输入流程
 func (syncTx *EVMTxLogs) dealEVMTxLogs(evmTxLogsInBlks *types.EVMTxLogsInBlks) {
-	count, start, evmTxLogsParsed, err := parseEvmTxLogsInBlks(evmTxLogsInBlks, syncTx.seqNum)
-	if err != nil {
-		resultCh <- err
+	count, start, evmTxLogsParsed := parseEvmTxLogsInBlks(evmTxLogsInBlks, syncTx.seqNum)
+	txReceiptCount := len(evmTxLogsParsed)
+	//重复注册推送接收保护，允许同一个中继服务在使用一段时间后，使用不同的推送名字重新进行注册，这样重复推送忽略就可以
+	//需要进行ack，否则该节点的推送将会停止
+	if 0 == txReceiptCount {
+		resultCh <- nil
+		return
 	}
 
 	var height int64
-	for i := 0; i < count; i++ {
+	for i := 0; i < txReceiptCount; i++ {
 		txsPerBlock := evmTxLogsParsed[i]
 		if txsPerBlock.AddDelType == SeqTypeAdd {
 			syncTx.setTxLogsPerBlock(txsPerBlock)
@@ -206,7 +209,7 @@ func (syncTx *EVMTxLogs) delTxReceipts(height int64) {
 }
 
 // 检查输入是否有问题, 并解析输入
-func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks, seqNumLast int64) (count int, start int64, txsWithReceipt []*types.EVMTxLogPerBlk, err error) {
+func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks, seqNumLast int64) (count int, start int64, txsWithReceipt []*types.EVMTxLogPerBlk) {
 	count = len(evmTxLogs.Logs4EVMPerBlk)
 	txsWithReceipt = make([]*types.EVMTxLogPerBlk, 0)
 	start = math.MaxInt64
@@ -230,9 +233,9 @@ func parseEvmTxLogsInBlks(evmTxLogs *types.EVMTxLogsInBlks, seqNumLast int64) (c
 			"height", evmTxLogs.Logs4EVMPerBlk[i].Height, "seqOpType", seqOperationType[evmTxLogs.Logs4EVMPerBlk[i].AddDelType-1])
 
 	}
-	if len(txsWithReceipt) != count {
-		err = errors.New("duplicate block's tx logs")
-		return
+	if 0 == len(txsWithReceipt) {
+		log.Error("parseEvmTxLogsInBlks", "the valid number of tx receipt is", 0)
 	}
+
 	return
 }

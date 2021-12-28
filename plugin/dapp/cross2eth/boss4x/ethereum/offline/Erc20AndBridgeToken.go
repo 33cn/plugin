@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 
+	bep20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/bep20/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	tetherUSDT "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/usdt/generated"
@@ -30,6 +31,86 @@ import (
 ./boss4x ethereum offline sign -f create_bridge_token.txt -k 8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230
 ./boss4x ethereum offline send -f deploysigntxs.txt
 */
+
+func DeployBEP20Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deploy_bep20",
+		Short: "deploy BEP20 contracts",
+		Run:   DeployBEP20,
+	}
+	DeployBEP20Flags(cmd)
+	return cmd
+}
+
+func DeployBEP20Flags(cmd *cobra.Command) {
+	cmd.Flags().StringP("deployAddr", "a", "", "addr to deploy contract ")
+	_ = cmd.MarkFlagRequired("deployAddr")
+	cmd.Flags().StringP("owner", "o", "", "owner address")
+	_ = cmd.MarkFlagRequired("owner")
+	cmd.Flags().StringP("symbol", "s", "", "BEP20 symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+	cmd.Flags().StringP("totalSupply", "m", "0", "total supply")
+	_ = cmd.MarkFlagRequired("totalSupply")
+	cmd.Flags().IntP("decimal", "d", 8, "decimal")
+	_ = cmd.MarkFlagRequired("decimal")
+
+}
+
+func DeployBEP20(cmd *cobra.Command, _ []string) {
+	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
+	deployerAddr, _ := cmd.Flags().GetString("deployAddr")
+	owner, _ := cmd.Flags().GetString("owner")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	totalSupply, _ := cmd.Flags().GetString("totalSupply")
+	decimal, _ := cmd.Flags().GetInt("decimal")
+	bnAmount := big.NewInt(1)
+	bnAmount, _ = bnAmount.SetString(utils.TrimZeroAndDot(totalSupply), 10)
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		fmt.Println("ethclient Dial error", err.Error())
+		return
+	}
+	symbol = strings.ToUpper(symbol)
+
+	ctx := context.Background()
+	startNonce, err := client.PendingNonceAt(ctx, common.HexToAddress(deployerAddr))
+	if nil != err {
+		fmt.Println("PendingNonceAt error", err.Error())
+		return
+	}
+
+	var infos []*DeployInfo
+
+	parsed, err := abi.JSON(strings.NewReader(bep20.BEP20TokenABI))
+	if err != nil {
+		fmt.Println("abi.JSON(strings.NewReader(erc20.ERC20ABI)) error", err.Error())
+		return
+	}
+	bin := common.FromHex(bep20.BEP20TokenBin)
+	BEP20OwnerAddr := common.HexToAddress(owner)
+	//constructor (string memory name_, string memory symbol_,uint256 totalSupply_, uint8 decimals_, address owner_) public {
+	tokenName := symbol + " Token"
+	packdata, err := parsed.Pack("", tokenName, symbol, bnAmount, uint8(decimal), BEP20OwnerAddr)
+	if err != nil {
+		fmt.Println("Pack error", err.Error())
+		return
+	}
+	BEP20Addr := crypto.CreateAddress(common.HexToAddress(deployerAddr), startNonce)
+	deployInfo := DeployInfo{
+		PackData:       append(bin, packdata...),
+		ContractorAddr: BEP20Addr,
+		Name:           "BEP20: " + symbol,
+		Nonce:          startNonce,
+		To:             nil,
+	}
+	infos = append(infos, &deployInfo)
+	fileName := fmt.Sprintf("deployBEP20%s.txt", symbol)
+	err = NewTxWrite(infos, common.HexToAddress(deployerAddr), url, fileName)
+	if err != nil {
+		fmt.Println("NewTxWrite error", err.Error())
+		return
+	}
+}
 
 func DeployERC20Cmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -201,6 +282,7 @@ func AddToken2LockListTx(cmd *cobra.Command, _ []string) {
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	token, _ := cmd.Flags().GetString("token")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -214,7 +296,7 @@ func AddToken2LockListTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_add_lock_list", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_add_lock_list", url, chainEthId)
 }
 
 func CreateBridgeTokenTxCmd() *cobra.Command {
@@ -241,6 +323,7 @@ func CreateBridgeTokenTx(cmd *cobra.Command, _ []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 
 	bridgeAbi, err := abi.JSON(strings.NewReader(generated.BridgeBankABI))
 	if err != nil {
@@ -253,5 +336,5 @@ func CreateBridgeTokenTx(cmd *cobra.Command, _ []string) {
 		fmt.Println("bridgeAbi.Pack createNewBridgeToken Err:", err)
 		return
 	}
-	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_bridge_token", url)
+	CreateTxInfoAndWrite(abiData, deployAddr, contract, "create_bridge_token", url, chainEthId)
 }

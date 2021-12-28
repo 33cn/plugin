@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -27,6 +28,9 @@ var (
 	ethLockTxUpdateTxIndex         = []byte("eth-ethLockTxUpdateTxIndex")
 	ethBurnTxUpdateTxIndex         = []byte("eth-ethBurnTxUpdateTxIndex")
 	multiSignAddressPrefix         = []byte("eth-multiSignAddress")
+	withdrawParaKey                = []byte("eth-withdrawPara")
+	withdrawTokenPrefix            = []byte("eth-withdrawToken")
+	withdrawTokenListPrefix        = []byte("eth-withdrawTokenList")
 )
 
 func ethTokenSymbol2AddrKey(symbol string) []byte {
@@ -382,4 +386,103 @@ func (ethRelayer *Relayer4Ethereum) getMultiSignAddress() string {
 		return ""
 	}
 	return string(bytes)
+}
+
+func (ethRelayer *Relayer4Ethereum) setWithdrawFee(symbol2Para map[string]*ebTypes.WithdrawPara) error {
+	withdrawSymbol2Fee := &ebTypes.WithdrawSymbol2Para{
+		Symbol2Para: symbol2Para,
+	}
+
+	bytes := chain33Types.Encode(withdrawSymbol2Fee)
+	return ethRelayer.db.Set(withdrawParaKey, bytes)
+}
+
+func (ethRelayer *Relayer4Ethereum) restoreWithdrawFee() map[string]*ebTypes.WithdrawPara {
+	bytes, _ := ethRelayer.db.Get(withdrawParaKey)
+	if 0 == len(bytes) {
+		result := make(map[string]*ebTypes.WithdrawPara)
+		return result
+	}
+
+	var withdrawSymbol2Para ebTypes.WithdrawSymbol2Para
+	if err := chain33Types.Decode(bytes, &withdrawSymbol2Para); nil != err {
+		result := make(map[string]*ebTypes.WithdrawPara)
+		return result
+	}
+
+	return withdrawSymbol2Para.Symbol2Para
+}
+
+func (ethRelayer *Relayer4Ethereum) restoreWithdrawFeeInINt() map[string]*WithdrawFeeAndQuota {
+	withdrawPara := ethRelayer.restoreWithdrawFee()
+	res := make(map[string]*WithdrawFeeAndQuota)
+	for symbol, para := range withdrawPara {
+		feeInt, _ := big.NewInt(0).SetString(para.Fee, 10)
+		amountPerDayInt, _ := big.NewInt(0).SetString(para.AmountPerDay, 10)
+		res[symbol] = &WithdrawFeeAndQuota{
+			Fee:          feeInt,
+			AmountPerDay: amountPerDayInt,
+		}
+	}
+	return res
+}
+
+func calcWithdrawKey(chain33Sender, symbol string, year, month, day int, nonce int64) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%d-%d-%d-%d", withdrawTokenPrefix, chain33Sender, symbol, year, month, day, nonce))
+}
+
+func calcWithdrawKeyPrefix(chain33Sender, symbol string, year, month, day int) []byte {
+	return []byte(fmt.Sprintf("%s-%s-%s-%d-%d-%d", withdrawTokenPrefix, chain33Sender, symbol, year, month, day))
+}
+
+func calcWithdrawListKey(nonce int64) []byte {
+	return []byte(fmt.Sprintf("%s-%d", withdrawTokenListPrefix, nonce))
+}
+
+func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) error {
+	chain33Sender := withdrawTx.Chain33Sender
+	symbol := withdrawTx.Symbol
+	year := withdrawTx.Year
+	month := withdrawTx.Month
+	day := withdrawTx.Day
+
+	key := calcWithdrawKey(chain33Sender, symbol, int(year), int(month), int(day), withdrawTx.Nonce)
+	bytes := chain33Types.Encode(withdrawTx)
+
+	if err := ethRelayer.db.Set(key, bytes); nil != err {
+		return err
+	}
+
+	//保存按照次序提币的交易，方便查询
+	listKey := calcWithdrawListKey(withdrawTx.Nonce)
+	listData := key
+
+	return ethRelayer.db.Set(listKey, listData)
+}
+
+func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
+	chain33Sender := withdrawTx.Chain33Sender
+	symbol := withdrawTx.Symbol
+	year := withdrawTx.Year
+	month := withdrawTx.Month
+	day := withdrawTx.Day
+
+	prefix := calcWithdrawKeyPrefix(chain33Sender, symbol, int(year), int(month), int(day))
+	helper := dbm.NewListHelper(ethRelayer.db)
+	datas := helper.List(prefix, nil, 100, dbm.ListASC)
+	if nil == datas {
+		return big.NewInt(0), nil
+	}
+
+	withdrawTotal := big.NewInt(0)
+	for _, data := range datas {
+		var info ebTypes.WithdrawTx
+		err := chain33Types.Decode(data, &info)
+		if nil != err {
+			return big.NewInt(0), err
+		}
+		AmountInt, _ := big.NewInt(0).SetString(info.Amount, 0)
+		withdrawTotal.Add(withdrawTotal, AmountInt)
+	}
+	return withdrawTotal, nil
 }

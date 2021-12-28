@@ -35,6 +35,7 @@ func Boss4xOfflineCmd() *cobra.Command {
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateMultisignTransferCmd(),
 		MultisignTransferCmd(),
+		SetWithdrawProxyCmd(),
 	)
 	return cmd
 }

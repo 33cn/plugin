@@ -46,6 +46,7 @@ message RelayerConfig {
   string bridgeRegistryOnChain33 = 12;
   string chainName               = 13;
   int32  chainID4Chain33         = 14;
+  bool processWithDraw         = 15;
 }
 
 message SyncTxReceiptConfig {

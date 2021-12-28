@@ -10,9 +10,10 @@ type Event int
 var eventsLog = log.New("module", "cross2eth_relayer")
 
 const (
-	ClaimTypeUnknown = ClaimType(0)
-	ClaimTypeBurn    = ClaimType(1)
-	ClaimTypeLock    = ClaimType(2)
+	ClaimTypeUnknown  = ClaimType(0)
+	ClaimTypeBurn     = ClaimType(1)
+	ClaimTypeLock     = ClaimType(2)
+	ClaimTypeWithdraw = ClaimType(3)
 )
 
 const (
@@ -30,5 +31,5 @@ func (d Event) String() string {
 }
 
 func (d ClaimType) String() string {
-	return [...]string{"unknown-LOG", "burn", "lock"}[d]
+	return [...]string{"unknown-LOG", "burn", "lock", "withdraw"}[d]
 }
