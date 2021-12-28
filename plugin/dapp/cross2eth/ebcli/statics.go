@@ -47,8 +47,8 @@ func ShowStatics(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if operation != 2 && 1 != operation {
-		fmt.Println("Pls set correct operation type, 1=burn, and 2=lock")
+	if operation != 2 && 1 != operation && operation != 3 {
+		fmt.Println("Pls set correct operation type, 1=burn, 2=lock, 3=withdraw")
 		return
 	}
 
