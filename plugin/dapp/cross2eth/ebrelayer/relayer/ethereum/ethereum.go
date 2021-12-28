@@ -168,6 +168,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		data := chain33Types.Encode(statics)
 		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeLock), 0, data)
 		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeBurn), 0, data)
+		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeWithdraw), 0, data)
 	}
 
 	go ethRelayer.proc()
@@ -685,6 +686,37 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	withdrawTx.Status = int32(ethtxs.WDPending)
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = signedTx.Hash().String()
+
+	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
+	operationType := chain33Msg.ClaimType.String()
+	statics := &ebTypes.Chain33ToEthereumStatics{
+		EthTxstatus:      ebTypes.Tx_Status_Pending,
+		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
+		EthereumTxhash:   withdrawTx.TxHashOnEthereum,
+		BurnLock:         int32(chain33Msg.ClaimType),
+		Chain33Sender:    chain33Msg.Chain33Sender.String(),
+		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
+		Symbol:           chain33Msg.Symbol,
+		Amount:           chain33Msg.Amount.String(),
+		Nonce:            chain33Msg.Nonce,
+		TxIndex:          txIndex,
+		OperationType:    operationType,
+	}
+	data := chain33Types.Encode(statics)
+	if err = ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data); nil != err {
+		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
+		return
+	}
+	relayerLog.Info("RelayOracleClaimToEthereum::successful",
+		"txIndex", txIndex,
+		"Chain33Txhash", statics.Chain33Txhash,
+		"EthereumTxhash", statics.EthereumTxhash,
+		"type", operationType,
+		"Symbol", chain33Msg.Symbol,
+		"Amount", chain33Msg.Amount,
+		"EthereumReceiver", statics.EthereumReceiver,
+		"Chain33Sender", statics.Chain33Sender)
+
 	return
 }
 
@@ -1289,6 +1321,7 @@ func (ethRelayer *Relayer4Ethereum) ShowStatics(request *ebTypes.TokenStaticsReq
 func (ethRelayer *Relayer4Ethereum) updateTxStatus() {
 	ethRelayer.updateSingleTxStatus(events.ClaimTypeBurn)
 	ethRelayer.updateSingleTxStatus(events.ClaimTypeLock)
+	ethRelayer.updateSingleTxStatus(events.ClaimTypeWithdraw)
 }
 
 func (ethRelayer *Relayer4Ethereum) updateSingleTxStatus(claimType events.ClaimType) {

@@ -25,7 +25,7 @@ func ShowStaticsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("symbol", "s", "", "token symbol(optional)")
 	cmd.Flags().Int32P("from", "f", 0, "source chain, 0=ethereum, and 1=chain33")
 	_ = cmd.MarkFlagRequired("from")
-	cmd.Flags().Int32P("operation", "o", 0, "operation type, 1=burn, and 2=lock")
+	cmd.Flags().Int32P("operation", "o", 0, "operation type, 1=burn, 2=lock, 3=withdraw")
 	_ = cmd.MarkFlagRequired("operation")
 	cmd.Flags().Int32P("status", "u", 0, "show with specified status, default to show all, 1=pending, 2=successful, 3=failed")
 	cmd.Flags().Int32P("count", "n", 0, "count to show, default to show all")
