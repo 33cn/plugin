@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"math/big"
+	"sync/atomic"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -458,6 +460,32 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	listData := key
 
 	return ethRelayer.db.Set(listKey, listData)
+}
+
+func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.WithdrawTx, chain33Msg *events.Chain33Msg) error {
+	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
+	operationType := chain33Msg.ClaimType.String()
+	statics := &ebTypes.Chain33ToEthereumStatics{
+		EthTxstatus:      ebTypes.Tx_Status_Pending,
+		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
+		EthereumTxhash:   withdrawTx.TxHashOnEthereum,
+		BurnLockWithdraw: int32(chain33Msg.ClaimType),
+		Chain33Sender:    chain33Msg.Chain33Sender.String(),
+		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
+		Symbol:           chain33Msg.Symbol,
+		Amount:           chain33Msg.Amount.String(),
+		Nonce:            chain33Msg.Nonce,
+		TxIndex:          txIndex,
+		OperationType:    operationType,
+	}
+	if withdrawTx.Status == int32(ethtxs.WDError) {
+		statics.EthTxstatus = ebTypes.Tx_Status_Failed
+	}
+	relayerLog.Info("setWithdrawStatics::successful", "txIndex", txIndex, "Chain33Txhash", statics.Chain33Txhash, "EthereumTxhash", statics.EthereumTxhash, "type", operationType,
+		"Symbol", chain33Msg.Symbol, "Amount", chain33Msg.Amount, "EthereumReceiver", statics.EthereumReceiver, "Chain33Sender", statics.Chain33Sender)
+
+	data := chain33Types.Encode(statics)
+	return ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
