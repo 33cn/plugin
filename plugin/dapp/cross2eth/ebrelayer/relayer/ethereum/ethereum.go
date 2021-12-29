@@ -43,6 +43,7 @@ import (
 
 //Relayer4Ethereum ...
 type Relayer4Ethereum struct {
+	name               string //链的名字，用于区分不同的链
 	provider           string
 	providerHttp       string
 	clientChainID      *big.Int
@@ -66,7 +67,6 @@ type Relayer4Ethereum struct {
 	bridgeBankEventLockSig  string
 	bridgeBankEventBurnSig  string
 	bridgeBankAbi           abi.ABI
-	deployInfo              *ebTypes.Deploy
 	x2EthDeployInfo         *ethtxs.X2EthDeployInfo
 	deployPara              *ethtxs.DeployPara
 	operatorInfo            *ethtxs.OperatorInfo
@@ -93,12 +93,12 @@ type EthereumStartPara struct {
 	EthProvider        string
 	EthProviderHttp    string
 	BridgeRegistryAddr string
-	DeployInfo         *ebTypes.Deploy
 	Degree             int32
 	BlockInterval      int32
 	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
 	Chain33MsgChan     <-chan *events.Chain33Msg
 	ProcessWithDraw    bool
+	Name               string
 }
 
 type WithdrawFeeAndQuota struct {
@@ -112,13 +112,13 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		startPara.BlockInterval = DefaultBlockPeriod
 	}
 	ethRelayer := &Relayer4Ethereum{
+		name:                    startPara.Name,
 		provider:                startPara.EthProvider,
 		providerHttp:            startPara.EthProviderHttp,
 		db:                      startPara.DbHandle,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
 		processWithDraw:         startPara.ProcessWithDraw,
-		deployInfo:              startPara.DeployInfo,
 		maturityDegree:          startPara.Degree,
 		fetchHeightPeriodMs:     startPara.BlockInterval,
 		ethBridgeClaimChan:      startPara.EthBridgeClaimChan,
@@ -173,94 +173,6 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 
 	go ethRelayer.proc()
 	return ethRelayer
-}
-
-func (ethRelayer *Relayer4Ethereum) recoverDeployPara() (err error) {
-	if nil == ethRelayer.deployInfo {
-		return nil
-	}
-	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(ethRelayer.deployInfo.DeployerPrivateKey))
-	if nil != err {
-		return err
-	}
-	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
-	ethRelayer.rwLock.Lock()
-	ethRelayer.operatorInfo = &ethtxs.OperatorInfo{
-		PrivateKey: deployPrivateKey,
-		Address:    deployerAddr,
-	}
-	ethRelayer.rwLock.Unlock()
-
-	return nil
-}
-
-//DeployContrcts 部署以太坊合约
-func (ethRelayer *Relayer4Ethereum) DeployContrcts() (bridgeRegistry string, err error) {
-	bridgeRegistry = ""
-	if nil == ethRelayer.deployInfo {
-		return bridgeRegistry, errors.New("no deploy info configured yet")
-	}
-	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(ethRelayer.deployInfo.DeployerPrivateKey))
-	if nil != err {
-		return bridgeRegistry, err
-	}
-	if len(ethRelayer.deployInfo.ValidatorsAddr) != len(ethRelayer.deployInfo.InitPowers) {
-		return bridgeRegistry, errors.New("not same number for validator address and power")
-	}
-	if len(ethRelayer.deployInfo.ValidatorsAddr) < 3 {
-		return bridgeRegistry, errors.New("the number of validator must be not less than 3")
-	}
-
-	nilAddr := common.Address{}
-
-	//已经设置了注册合约地址，说明已经部署了相关的合约，不再重复部署
-	if ethRelayer.bridgeRegistryAddr != nilAddr {
-		return bridgeRegistry, errors.New("contract deployed already")
-	}
-
-	var validators []common.Address
-	var initPowers []*big.Int
-
-	for i, addr := range ethRelayer.deployInfo.ValidatorsAddr {
-		validators = append(validators, common.HexToAddress(addr))
-		initPowers = append(initPowers, big.NewInt(ethRelayer.deployInfo.InitPowers[i]))
-	}
-	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
-	para := &ethtxs.DeployPara{
-		DeployPrivateKey: deployPrivateKey,
-		Deployer:         deployerAddr,
-		Operator:         deployerAddr,
-		InitValidators:   validators,
-		ValidatorPriKey:  []*ecdsa.PrivateKey{deployPrivateKey},
-		InitPowers:       initPowers,
-	}
-
-	for i, power := range para.InitPowers {
-		relayerLog.Info("deploy", "the validator address ", para.InitValidators[i].String(),
-			"power", power.String())
-	}
-
-	x2EthContracts, x2EthDeployInfo, err := ethtxs.DeployAndInit(ethRelayer.clientSpec, para)
-	if err != nil {
-		return bridgeRegistry, err
-	}
-	ethRelayer.rwLock.Lock()
-	ethRelayer.operatorInfo = &ethtxs.OperatorInfo{
-		PrivateKey: deployPrivateKey,
-		Address:    deployerAddr,
-	}
-	ethRelayer.deployPara = para
-	ethRelayer.x2EthDeployInfo = x2EthDeployInfo
-	ethRelayer.x2EthContracts = x2EthContracts
-	bridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
-	_ = ethRelayer.setBridgeRegistryAddr(bridgeRegistry)
-	//设置注册合约地址，同时设置启动中继服务的信号
-	ethRelayer.bridgeRegistryAddr = x2EthDeployInfo.BridgeRegistry.Address
-	ethRelayer.rwLock.Unlock()
-	ethRelayer.unlockchan <- start
-	relayerLog.Info("deploy", "the BridgeRegistry address is", bridgeRegistry)
-
-	return bridgeRegistry, nil
 }
 
 //GetBalance ：获取某一个币种的余额
@@ -503,16 +415,6 @@ burnLockWithdrawProc:
 			ethRelayer.handleChain33Msg(chain33Msg)
 		}
 	}
-
-	//withdrawProc:
-	//	for {
-	//		select {
-	//		case <-timer.C:
-	//			ethRelayer.procNewHeight4Withdraw(ctx)
-	//		case chain33Msg := <-ethRelayer.chain33MsgChan:
-	//			ethRelayer.handleChain33Msg(chain33Msg)
-	//		}
-	//	}
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
@@ -1167,12 +1069,6 @@ func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
 	return operator.String(), nil
 }
 
-//QueryTxhashRelay2Chain33 ...
-func (ethRelayer *Relayer4Ethereum) QueryTxhashRelay2Chain33() ebTypes.Txhashes {
-	txhashs := ethRelayer.queryTxhashes([]byte(chain33ToEthStaticsPrefix))
-	return ebTypes.Txhashes{Txhash: txhashs}
-}
-
 // handleLogLockEvent : unpacks a LogLock event, converts it to a ProphecyClaim, and relays a tx to chain33
 func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, contractABI abi.ABI, eventName string, log types.Log) error {
 	// Unpack the LogLock event using its unique event signature from the contract's ABI
@@ -1398,4 +1294,8 @@ func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amount
 	}
 
 	return ethRelayer.setWithdrawFee(WithdrawPara)
+}
+
+func (ethRelayer *Relayer4Ethereum) GetName() string {
+	return ethRelayer.name
 }

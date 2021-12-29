@@ -159,7 +159,7 @@ func Test_DeployContrcts(t *testing.T) {
 	cfg := initCfg(*configPath)
 	cfg.SyncTxConfig.Dbdriver = "memdb"
 
-	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
+	db := dbm.NewDB("relayer_db_service", cfg.Dbdriver, cfg.DbPath, cfg.DbCache)
 
 	relayer := &Relayer4Ethereum{
 		provider:            cfg.EthProvider,
@@ -167,13 +167,11 @@ func Test_DeployContrcts(t *testing.T) {
 		unlockchan:          make(chan int, 2),
 		maturityDegree:      cfg.EthMaturityDegree,
 		fetchHeightPeriodMs: cfg.EthBlockFetchPeriod,
-		deployInfo:          cfg.Deploy,
 	}
 	relayer.clientSpec = sim
 	relayer.clientWss = sim
 	relayer.clientChainID = big.NewInt(1)
 
-	relayer.deployInfo.DeployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
 	deployPrivateKey, _ := crypto.ToECDSA(common.FromHex(relayer.deployInfo.DeployerPrivateKey))
 	deployerAddr := crypto.PubkeyToAddress(deployPrivateKey.PublicKey)
 	relayer.operatorInfo = &ethtxs.OperatorInfo{
@@ -181,7 +179,6 @@ func Test_DeployContrcts(t *testing.T) {
 		Address:    deployerAddr,
 	}
 
-	_, err = relayer.DeployContrcts()
 	require.NoError(t, err)
 }
 
@@ -427,7 +424,6 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		chain33MsgChan:     chain33Msgchan,
 	}
 
-	relayer.deployInfo = &ebTypes.Deploy{}
 	relayer.deployInfo.DeployerPrivateKey = hexutil.Encode(crypto.FromECDSA(para.DeployPrivateKey))
 	relayer.deployInfo.OperatorAddr = para.Operator.String()
 	for _, v := range para.InitValidators {

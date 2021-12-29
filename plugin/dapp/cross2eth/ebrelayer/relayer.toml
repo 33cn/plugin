@@ -1,48 +1,44 @@
-title="x2Ethereum_relayer"
-#用于cli向该relayer进行配置
-ChainID4Chain33=0
-ChainName=""  #链的名称，用来区分主链和平行链,如user.p.xxx.,必须包含最后一个点
-JrpcBindAddr="localhost:9901"
-EthProviderCli="http://127.0.0.1:7545"
-EthProvider="ws://127.0.0.1:7545/"
-EthMaturityDegree=10
-EthBlockFetchPeriod=5000
-BridgeRegistryOnChain33=""
-BridgeRegistry=""
-ProcessWithDraw=false
+title = "x2Ethereum_relayer"
+JrpcBindAddr = "localhost:9901" #用于relay响应的cli的设置与查询
+dbdriver = "leveldb"
+dbPath = "datadir"
+dbCache = 64
+#以太坊链1的配置
+[[EthRelayerCfg]]
+EthChainName        = "Ethereum"
+ethProvider         = "ws://127.0.0.1:7545/"
+EthProviderCli      = "http://127.0.0.1:7545"
+BridgeRegistry      = "4;"
+EthMaturityDegree   = 10
+EthBlockFetchPeriod = 5000
+ProcessWithDraw     = false
+#以太坊链2的配置
+[[EthRelayerCfg]]
+EthChainName        = "Binance"
+ethProvider         = "ws://127.0.0.1:7545/"
+EthProviderCli      = "http://127.0.0.1:7545"
+BridgeRegistry      = "4;"
+EthMaturityDegree   = 10
+EthBlockFetchPeriod = 5000
+ProcessWithDraw     = false
+#chain33的配置
+[Chain33RelayerCfg]
+ChainID4Chain33 = 0
+ChainName = ""  #链的名称，用来区分主链和平行链,如user.p.xxx.,必须包含最后一个点
+BridgeRegistryOnChain33 = ""
 
 [SyncTxConfig]
-chain33Host="http://localhost:8801"
-pushHost="http://localhost:20000"
-pushName="x2eth"
-pushBind="0.0.0.0:20000"
-maturityDegree=10
-dbdriver="leveldb"
-dbPath="datadir"
-dbCache=64
-fetchHeightPeriodMs=5000
+chain33Host = "http://localhost:8801"
+pushHost = "http://localhost:20000"
+pushName = "x2eth"
+pushBind = "0.0.0.0:20000"
+maturityDegree = 10
+fetchHeightPeriodMs = 5000
 #如果需要配置起始的块的信息，则为了保持一致性，三项缺一不可，或者都不配置
-startSyncHeight=0
-startSyncSequence=0
-startSyncHash=""
+startSyncHeight = 0
+startSyncSequence = 0
+startSyncHash = ""
 
-[deploy4chain33]
-#合约部署人员私钥，用于部署合约时签名使用
-operatorAddr="14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-#验证人地址，至少配置3个以上，即大于等于3个
-validatorsAddr=["14KEKbYtKKQm4wMthSK9J4La4nAiidGozt", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
-#验证人权重
-initPowers=[96, 1, 1, 1]
-
-[deploy]
-#合约部署人员私钥，用于部署合约时签名使用
-operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
-#验证人地址，至少配置3个以上，即大于等于3个
-validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
-#验证人权重
-initPowers=[96, 1, 1, 1]
-
-[crypto]
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit
 loglevel = "debug"

@@ -97,7 +97,7 @@ func main() {
 		buildflags.RPCAddr = "http://localhost:9901"
 	}
 	if buildflags.NodeAddr == "" {
-		buildflags.NodeAddr = cfg.EthProviderCli
+		buildflags.NodeAddr = cfg.EthRelayerCfg[0].EthProviderCli
 	}
 	run(buildflags.RPCAddr, buildflags.NodeAddr)
 }

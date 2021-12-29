@@ -32,7 +32,7 @@ const (
 //Manager ...
 type Manager struct {
 	chain33Relayer *chain33.Relayer4Chain33
-	ethRelayer     *ethereum.Relayer4Ethereum
+	ethRelayer     map[string]*ethereum.Relayer4Ethereum
 	store          *Store
 	isLocked       int32
 	mtx            sync.Mutex
@@ -44,11 +44,11 @@ type Manager struct {
 //NewRelayerManager ...
 //1.验证人的私钥需要通过cli命令行进行导入，且chain33和ethereum两种不同的验证人需要分别导入
 //2.显示或者重新替换原有的私钥首先需要通过passpin进行unlock的操作
-func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayer *ethereum.Relayer4Ethereum, db dbm.DB) *Manager {
+func NewRelayerManager(chain33Relayer *chain33.Relayer4Chain33, ethRelayers map[string]*ethereum.Relayer4Ethereum, db dbm.DB) *Manager {
 	l, _ := lru.New(4096)
 	manager := &Manager{
 		chain33Relayer: chain33Relayer,
-		ethRelayer:     ethRelayer,
+		ethRelayer:     ethRelayers,
 		store:          NewStore(db),
 		isLocked:       Locked,
 		mtx:            sync.Mutex{},
@@ -151,11 +151,14 @@ func (manager *Manager) ChangePassphase(setPasswdReq relayerTypes.ReqChangePassw
 		mlog.Error("ChangePassphase", "SetEncryptionFlag err", err)
 		return err
 	}
-
-	err = manager.ethRelayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
-	if err != nil {
-		mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
-		return err
+	//因为不同的以太坊中继器使用同一个私钥，则只需要处理一次就可以
+	for _, ethInt := range manager.ethRelayer {
+		err = ethInt.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
+		if err != nil {
+			mlog.Error("ChangePassphase", "StoreAccountWithNewPassphase err", err)
+			return err
+		}
+		break
 	}
 
 	err = manager.chain33Relayer.StoreAccountWithNewPassphase(setPasswdReq.NewPassphase, setPasswdReq.OldPassphase)
@@ -198,9 +201,12 @@ func (manager *Manager) Unlock(passphase string, result *interface{}) error {
 		info := fmt.Sprintf("Failed to RestorePrivateKeys for chain33Relayer due to:%s", err.Error())
 		return errors.New(info)
 	}
-	if err := manager.ethRelayer.RestorePrivateKeys(passphase); nil != err {
-		info := fmt.Sprintf("Failed to RestorePrivateKeys for ethRelayer due to:%s", err.Error())
-		return errors.New(info)
+
+	for _, ethInt := range manager.ethRelayer {
+		if err := ethInt.RestorePrivateKeys(passphase); err != nil {
+			info := fmt.Sprintf("Failed to RestorePrivateKeys for ethRelayer:", ethInt.GetName(), " due to:%s", err.Error())
+			return errors.New(info)
+		}
 	}
 
 	manager.isLocked = Unlocked
@@ -259,10 +265,13 @@ func (manager *Manager) GenerateEthereumPrivateKey(param interface{}, result *in
 	}
 	account4Show := relayerTypes.Account4Show{}
 	var err error
-	account4Show.Privkey, account4Show.Addr, err = manager.ethRelayer.NewAccount(manager.passphase)
-	if nil != err {
+
+	account4Show.Privkey, account4Show.Addr, err = ethereum.NewAccount()
+	if err != nil {
+		mlog.Error("GenerateEthereumPrivateKey", "err", err)
 		return err
 	}
+
 	*result = account4Show
 	return nil
 }
@@ -274,10 +283,14 @@ func (manager *Manager) ImportEthereumPrivateKey4EthRelayer(privateKey string, r
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	addr, err := manager.ethRelayer.ImportPrivateKey(manager.passphase, privateKey)
-	if err != nil {
-		mlog.Error("ImportEthereumPrivateKey4EthRelayer", "Failed due to cause:", err.Error())
-		return err
+	var addr string
+	var err error
+	for _, ethInt := range manager.ethRelayer {
+		addr, err = ethInt.ImportPrivateKey(manager.passphase, privateKey)
+		if err != nil {
+			mlog.Error("ImportEthereumPrivateKey4EthRelayer", "Failed due to cause:", err.Error())
+			return err
+		}
 	}
 
 	*result = rpctypes.Reply{
@@ -300,79 +313,62 @@ func (manager *Manager) ShowChain33RelayerValidator(param interface{}, result *i
 	return nil
 }
 
-//ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
-func (manager *Manager) ShowEthRelayerValidator(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	var err error
-	*result, err = manager.ethRelayer.GetValidatorAddr()
-	if nil != err {
-		return err
-	}
-	return nil
-}
-
-//IsValidatorActive ...
-func (manager *Manager) IsValidatorActive(vallidatorAddr string, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	active, err := manager.ethRelayer.IsValidatorActive(vallidatorAddr)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: active,
-		Msg:  "",
-	}
-	return nil
-}
-
-//ShowOperator ...
-func (manager *Manager) ShowOperator(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	operator, err := manager.ethRelayer.ShowOperator()
-	if nil != err {
-		return err
-	}
-	*result = operator
-	return nil
-}
-
-//DeployContrcts ...
-func (manager *Manager) DeployContrcts(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	bridgeRegistry, err := manager.ethRelayer.DeployContrcts()
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  bridgeRegistry,
-	}
-	return nil
-}
-
-func (manager *Manager) Deploy2Chain33(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	bridgeRegistry, err := manager.chain33Relayer.DeployContracts()
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  bridgeRegistry,
-	}
-	return nil
-}
+////ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
+//func (manager *Manager) ShowEthRelayerValidator(param interface{}, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	var err error
+//	*result, err = manager.ethRelayer.GetValidatorAddr()
+//	if nil != err {
+//		return err
+//	}
+//	return nil
+//}
+//
+////IsValidatorActive ...
+//func (manager *Manager) IsValidatorActive(vallidatorAddr string, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	active, err := manager.ethRelayer.IsValidatorActive(vallidatorAddr)
+//	if nil != err {
+//		return err
+//	}
+//	*result = rpctypes.Reply{
+//		IsOk: active,
+//		Msg:  "",
+//	}
+//	return nil
+//}
+//
+////ShowOperator ...
+//func (manager *Manager) ShowOperator(param interface{}, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	operator, err := manager.ethRelayer.ShowOperator()
+//	if nil != err {
+//		return err
+//	}
+//	*result = operator
+//	return nil
+//}
+//
+////DeployContrcts ...
+//func (manager *Manager) DeployContrcts(param interface{}, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//	bridgeRegistry, err := manager.ethRelayer.DeployContrcts()
+//	if nil != err {
+//		return err
+//	}
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  bridgeRegistry,
+//	}
+//	return nil
+//}
 
 func (manager *Manager) ResendChain33Event(param *relayerTypes.ResendChain33EventReq, result *interface{}) error {
 	manager.mtx.Lock()
@@ -387,40 +383,6 @@ func (manager *Manager) ResendChain33Event(param *relayerTypes.ResendChain33Even
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  "Successful to ResendChain33Event",
-	}
-	return nil
-}
-
-func (manager *Manager) CreateERC20ToChain33(param relayerTypes.ERC20Token, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	bridgeRegistry, err := manager.chain33Relayer.CreateERC20ToChain33(param)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  bridgeRegistry,
-	}
-	return nil
-}
-
-func (manager *Manager) DeployMulsign2Chain33(_ interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	mulSign, err := manager.chain33Relayer.DeployMulsign()
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  mulSign,
 	}
 	return nil
 }
@@ -459,50 +421,20 @@ func (manager *Manager) SafeTransfer4Chain33(para relayerTypes.SafeTransfer, res
 	return nil
 }
 
-//CreateBridgeToken ...
-func (manager *Manager) CreateBridgeToken(symbol string, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	tokenAddr, err := manager.ethRelayer.CreateBridgeToken(symbol)
-	if nil != err {
-		return err
-	}
-	*result = relayerTypes.ReplyAddr{
-		IsOK: true,
-		Addr: tokenAddr,
-	}
-	return nil
-}
-
-func (manager *Manager) AddToken2LockList(token relayerTypes.ETHTokenLockAddress, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	txhash, err := manager.ethRelayer.AddToken2LockList(token.Symbol, token.Address)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  txhash,
-	}
-	return nil
-}
-
 //DeployERC20 ...
-func (manager *Manager) DeployERC20(Erc20Token relayerTypes.ERC20Token, result *interface{}) error {
+func (manager *Manager) DeployERC20(erc20Token2deploy *relayerTypes.ERC20Token, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
 
-	Erc20Addr, err := manager.ethRelayer.DeployERC20(Erc20Token.Owner, Erc20Token.Name, Erc20Token.Symbol, Erc20Token.Amount, uint8(Erc20Token.Decimals))
+	ethInt, ok := manager.ethRelayer[erc20Token2deploy.Chain2Deploy]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+
+	Erc20Addr, err := ethInt.DeployERC20(erc20Token2deploy.Owner, erc20Token2deploy.Name, erc20Token2deploy.Symbol, erc20Token2deploy.Amount, uint8(erc20Token2deploy.Decimals))
 	if nil != err {
 		return err
 	}
@@ -520,7 +452,11 @@ func (manager *Manager) ApproveAllowance(approveAllowance relayerTypes.ApproveAl
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.ApproveAllowance(approveAllowance.OwnerKey, approveAllowance.TokenAddr, approveAllowance.Amount)
+	ethInt, ok := manager.ethRelayer[approveAllowance.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.ApproveAllowance(approveAllowance.OwnerKey, approveAllowance.TokenAddr, approveAllowance.Amount)
 	if nil != err {
 		return err
 	}
@@ -538,7 +474,11 @@ func (manager *Manager) Burn(burn relayerTypes.Burn, result *interface{}) error 
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.Burn(burn.OwnerKey, burn.TokenAddr, burn.Chain33Receiver, burn.Amount)
+	ethInt, ok := manager.ethRelayer[burn.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.Burn(burn.OwnerKey, burn.TokenAddr, burn.Chain33Receiver, burn.Amount)
 	if nil != err {
 		return err
 	}
@@ -556,7 +496,11 @@ func (manager *Manager) BurnAsync(burn relayerTypes.Burn, result *interface{}) e
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.BurnAsync(burn.OwnerKey, burn.TokenAddr, burn.Chain33Receiver, burn.Amount)
+	ethInt, ok := manager.ethRelayer[burn.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.BurnAsync(burn.OwnerKey, burn.TokenAddr, burn.Chain33Receiver, burn.Amount)
 	if nil != err {
 		return err
 	}
@@ -574,7 +518,11 @@ func (manager *Manager) SimBurnFromEth(burn relayerTypes.Burn, result *interface
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	err := manager.ethRelayer.SimBurnFromEth(burn)
+	ethInt, ok := manager.ethRelayer[burn.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	err := ethInt.SimBurnFromEth(burn)
 	if nil != err {
 		return err
 	}
@@ -591,7 +539,11 @@ func (manager *Manager) SimLockFromEth(lock relayerTypes.LockEthErc20, result *i
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	err := manager.ethRelayer.SimLockFromEth(lock)
+	ethInt, ok := manager.ethRelayer[lock.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	err := ethInt.SimLockFromEth(lock)
 	if nil != err {
 		return err
 	}
@@ -642,7 +594,11 @@ func (manager *Manager) LockEthErc20AssetAsync(lockEthErc20Asset relayerTypes.Lo
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.LockEthErc20AssetAsync(lockEthErc20Asset.OwnerKey, lockEthErc20Asset.TokenAddr, lockEthErc20Asset.Amount, lockEthErc20Asset.Chain33Receiver)
+	ethInt, ok := manager.ethRelayer[lockEthErc20Asset.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.LockEthErc20AssetAsync(lockEthErc20Asset.OwnerKey, lockEthErc20Asset.TokenAddr, lockEthErc20Asset.Amount, lockEthErc20Asset.Chain33Receiver)
 	if nil != err {
 		return err
 	}
@@ -660,7 +616,11 @@ func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEth
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.LockEthErc20Asset(lockEthErc20Asset.OwnerKey, lockEthErc20Asset.TokenAddr, lockEthErc20Asset.Amount, lockEthErc20Asset.Chain33Receiver)
+	ethInt, ok := manager.ethRelayer[lockEthErc20Asset.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.LockEthErc20Asset(lockEthErc20Asset.OwnerKey, lockEthErc20Asset.TokenAddr, lockEthErc20Asset.Amount, lockEthErc20Asset.Chain33Receiver)
 	if nil != err {
 		return err
 	}
@@ -671,24 +631,14 @@ func (manager *Manager) LockEthErc20Asset(lockEthErc20Asset relayerTypes.LockEth
 	return nil
 }
 
-//IsProphecyPending ...
-func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	active, err := manager.ethRelayer.IsProphecyPending(claimID)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: active,
-	}
-	return nil
-}
-
 func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.BalanceLockedReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	balance, err := manager.ethRelayer.ShowBalanceLocked(BalanceLockedReq.TokenAddr, BalanceLockedReq.BridgeBank)
+	ethInt, ok := manager.ethRelayer[BalanceLockedReq.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	balance, err := ethInt.ShowBalanceLocked(BalanceLockedReq.TokenAddr, BalanceLockedReq.BridgeBank)
 	if nil != err {
 		return err
 	}
@@ -704,7 +654,11 @@ func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.Balance
 func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	balance, err := manager.ethRelayer.GetBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
+	ethInt, ok := manager.ethRelayer[balanceAddr.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	balance, err := ethInt.GetBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
 	if nil != err {
 		return err
 	}
@@ -713,7 +667,7 @@ func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result 
 	if balanceAddr.TokenAddr == "" || balanceAddr.TokenAddr == "0x0000000000000000000000000000000000000000" {
 		d = 18
 	} else {
-		d, err = manager.GetDecimals(balanceAddr.TokenAddr)
+		d, err = manager.GetDecimals(balanceAddr.ChainName, balanceAddr.TokenAddr)
 		if err != nil {
 			return errors.New("get decimals error")
 		}
@@ -729,7 +683,11 @@ func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result 
 func (manager *Manager) ShowMultiBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	balance, err := manager.ethRelayer.ShowMultiBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
+	ethInt, ok := manager.ethRelayer[balanceAddr.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	balance, err := ethInt.ShowMultiBalance(balanceAddr.TokenAddr, balanceAddr.Owner)
 	if nil != err {
 		return err
 	}
@@ -745,13 +703,21 @@ func (manager *Manager) ShowMultiBalance(balanceAddr relayerTypes.BalanceAddr, r
 func (manager *Manager) ShowBridgeBankAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	addr, err := manager.ethRelayer.ShowBridgeBankAddr()
-	if nil != err {
-		return err
+	if 0 == len(manager.ethRelayer) {
+		return errors.New("No ethRelayer has been started yet")
+	}
+	addrinfo := ""
+	for name, ethInt := range manager.ethRelayer {
+		addr, err := ethInt.ShowBridgeBankAddr()
+		if nil != err {
+			return err
+		}
+		addrinfo += fmt.Sprintf(" chain:%s's bridgebank = %s\n", name, addr)
+
 	}
 	*result = relayerTypes.ReplyAddr{
 		IsOK: true,
-		Addr: addr,
+		Addr: addrinfo,
 	}
 	return nil
 }
@@ -760,13 +726,21 @@ func (manager *Manager) ShowBridgeBankAddr(para interface{}, result *interface{}
 func (manager *Manager) ShowBridgeRegistryAddr(para interface{}, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	addr, err := manager.ethRelayer.ShowBridgeRegistryAddr()
-	if nil != err {
-		return err
+	if 0 == len(manager.ethRelayer) {
+		return errors.New("No ethRelayer has been started yet")
+	}
+	addrinfo := ""
+	for name, ethInt := range manager.ethRelayer {
+		addr, err := ethInt.ShowBridgeRegistryAddr()
+		if nil != err {
+			return err
+		}
+		addrinfo += fmt.Sprintf(" chain:%s's bridgeRegistry = %s\n", name, addr)
+
 	}
 	*result = relayerTypes.ReplyAddr{
 		IsOK: true,
-		Addr: addr,
+		Addr: addrinfo,
 	}
 	return nil
 }
@@ -796,8 +770,9 @@ func (manager *Manager) ShowTokenAddress(token2show relayerTypes.TokenAddress, r
 
 	var res *relayerTypes.TokenAddressArray
 	var err error
-	if relayerTypes.EthereumBlockChainName == token2show.ChainName {
-		res, err = manager.ethRelayer.ShowTokenAddress(token2show)
+
+	if ethINt, ok := manager.ethRelayer[token2show.ChainName]; ok {
+		res, err = ethINt.ShowTokenAddress(token2show)
 		if nil != err {
 			return err
 		}
@@ -820,7 +795,12 @@ func (manager *Manager) ShowETHLockTokenAddress(token2show relayerTypes.TokenAdd
 		return err
 	}
 
-	res, err := manager.ethRelayer.ShowETHLockTokenAddress(token2show)
+	ethINt, ok := manager.ethRelayer[token2show.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+
+	res, err := ethINt.ShowETHLockTokenAddress(token2show)
 	if nil != err {
 		return err
 	}
@@ -831,10 +811,14 @@ func (manager *Manager) ShowETHLockTokenAddress(token2show relayerTypes.TokenAdd
 }
 
 //ShowTxReceipt ...
-func (manager *Manager) ShowTxReceipt(txhash string, result *interface{}) error {
+func (manager *Manager) ShowTxReceipt(txReceiptReq *relayerTypes.TxReceiptReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	receipt, err := manager.ethRelayer.ShowTxReceipt(txhash)
+	ethINt, ok := manager.ethRelayer[txReceiptReq.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	receipt, err := ethINt.ShowTxReceipt(txReceiptReq.TxHash)
 	if nil != err {
 		return err
 	}
@@ -873,11 +857,16 @@ func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsReque
 	}
 
 	if relayerTypes.Source_Chain_Chain33 == request.From {
-		res, err := manager.ethRelayer.ShowStatics(request)
-		if nil != err {
-			return err
+		resFinal := &relayerTypes.TokenStaticsResponse{}
+		for _, ethInt := range manager.ethRelayer {
+			res, err := ethInt.ShowStatics(request)
+			if nil != err {
+				return err
+			}
+			resFinal.C2Estatics = append(resFinal.C2Estatics, res.C2Estatics...)
 		}
-		*result = *res
+
+		*result = *resFinal
 	} else {
 		res, err := manager.chain33Relayer.ShowStatics(request)
 		if nil != err {
@@ -892,7 +881,11 @@ func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsReque
 func (manager *Manager) TransferToken(transfer relayerTypes.TransferToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	txhash, err := manager.ethRelayer.TransferToken(transfer.TokenAddr, transfer.FromKey, transfer.ToAddr, transfer.Amount)
+	ethINt, ok := manager.ethRelayer[transfer.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethINt.TransferToken(transfer.TokenAddr, transfer.FromKey, transfer.ToAddr, transfer.Amount)
 	if nil != err {
 		return err
 	}
@@ -904,7 +897,7 @@ func (manager *Manager) TransferToken(transfer relayerTypes.TransferToken, resul
 }
 
 //GetDecimals ...
-func (manager *Manager) GetDecimals(tokenAddr string) (int64, error) {
+func (manager *Manager) GetDecimals(chainName, tokenAddr string) (int64, error) {
 	if d, ok := manager.decimalLru.Get(tokenAddr); ok {
 		mlog.Info("GetDecimals", "from cache", d)
 		return d.(int64), nil
@@ -921,7 +914,12 @@ func (manager *Manager) GetDecimals(tokenAddr string) (int64, error) {
 		return decimal, nil
 	}
 
-	d, err := manager.ethRelayer.GetDecimals(tokenAddr)
+	ethINt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return 0, errors.New("No Ethereum chain named as you configured")
+	}
+
+	d, err := ethINt.GetDecimals(tokenAddr)
 	if err != nil {
 		return 0, err
 	}
@@ -939,13 +937,19 @@ func (manager *Manager) DeployMulsign2Eth(param interface{}, result *interface{}
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	mulSign, err := manager.ethRelayer.DeployMulsign()
-	if nil != err {
-		return err
+
+	var msg string
+	for name, ethInt := range manager.ethRelayer {
+		mulSign, err := ethInt.DeployMulsign()
+		if nil != err {
+			return err
+		}
+		msg += fmt.Sprintf("multisign addr:%s for chain:%s\n", mulSign, name)
 	}
+
 	*result = rpctypes.Reply{
 		IsOk: true,
-		Msg:  mulSign,
+		Msg:  msg,
 	}
 	return nil
 }
@@ -956,13 +960,18 @@ func (manager *Manager) SetupOwner4Eth(setupMulSign relayerTypes.SetupMulSign, r
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	mulSign, err := manager.ethRelayer.SetupMulSign(setupMulSign)
-	if nil != err {
-		return err
+	var msg string
+	for name, ethInt := range manager.ethRelayer {
+		txhash, err := ethInt.SetupMulSign(setupMulSign)
+		if nil != err {
+			return err
+		}
+		msg += fmt.Sprintf("SetupOwner4Eth tx hash:%s for chain:%s\n", txhash, name)
 	}
+
 	*result = rpctypes.Reply{
 		IsOk: true,
-		Msg:  mulSign,
+		Msg:  msg,
 	}
 	return nil
 }
@@ -973,7 +982,11 @@ func (manager *Manager) SafeTransfer4Eth(para relayerTypes.SafeTransfer, result 
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	mulSign, err := manager.ethRelayer.SafeTransfer(para)
+	ethINt, ok := manager.ethRelayer[para.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	mulSign, err := ethINt.SafeTransfer(para)
 	if nil != err {
 		return err
 	}
@@ -984,13 +997,17 @@ func (manager *Manager) SafeTransfer4Eth(para relayerTypes.SafeTransfer, result 
 	return nil
 }
 
-func (manager *Manager) ConfigOfflineSaveAccount(addr string, result *interface{}) error {
+func (manager *Manager) ConfigOfflineSaveAccount(para *relayerTypes.CfgOfflineSaveAccountReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.ConfigOfflineSaveAccount(addr)
+	ethINt, ok := manager.ethRelayer[para.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethINt.ConfigOfflineSaveAccount(para.Address)
 	if nil != err {
 		return err
 	}
@@ -1001,13 +1018,17 @@ func (manager *Manager) ConfigOfflineSaveAccount(addr string, result *interface{
 	return nil
 }
 
-func (manager *Manager) ConfigplatformTokenSymbol(symbol string, result *interface{}) error {
+func (manager *Manager) ConfigplatformTokenSymbol(para *relayerTypes.CfgPlatformTokenSymbolReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.ConfigplatformTokenSymbol(symbol)
+	ethINt, ok := manager.ethRelayer[para.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethINt.ConfigplatformTokenSymbol(para.Symbol)
 	if nil != err {
 		return err
 	}
@@ -1024,7 +1045,12 @@ func (manager *Manager) ConfigLockedTokenOfflineSave(config relayerTypes.ETHConf
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	txhash, err := manager.ethRelayer.ConfigLockedTokenOfflineSave(config.Address, config.Symbol, config.Threshold, config.Percents)
+	ethINt, ok := manager.ethRelayer[config.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+
+	txhash, err := ethINt.ConfigLockedTokenOfflineSave(config.Address, config.Symbol, config.Threshold, config.Percents)
 	if nil != err {
 		return err
 	}
@@ -1039,7 +1065,11 @@ func (manager *Manager) ConfigLockedTokenOfflineSave(config relayerTypes.ETHConf
 func (manager *Manager) TransferEth(transfer relayerTypes.TransferToken, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
-	txhash, err := manager.ethRelayer.TransferEth(transfer.FromKey, transfer.ToAddr, transfer.Amount)
+	ethInt, ok := manager.ethRelayer[transfer.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	txhash, err := ethInt.TransferEth(transfer.FromKey, transfer.ToAddr, transfer.Amount)
 	if nil != err {
 		return err
 	}
@@ -1063,13 +1093,17 @@ func (manager *Manager) SetChain33MultiSignAddr(multiSignAddr string, result *in
 	return nil
 }
 
-func (manager *Manager) SetEthMultiSignAddr(multiSignAddr string, result *interface{}) error {
+func (manager *Manager) SetEthMultiSignAddr(multiSignAddr *relayerTypes.CfgMultiSignAddr, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	manager.ethRelayer.SetMultiSignAddr(multiSignAddr)
+	ethInt, ok := manager.ethRelayer[multiSignAddr.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+	ethInt.SetMultiSignAddr(multiSignAddr.MultiSignAddr)
 	*result = rpctypes.Reply{
 		IsOk: true,
 	}
@@ -1082,7 +1116,12 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	if err := manager.checkPermission(); nil != err {
 		return err
 	}
-	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount, cfgWithdrawReq.AmountPerDay)
+	ethInt, ok := manager.ethRelayer[cfgWithdrawReq.ChainName]
+	if !ok {
+		return errors.New("No Ethereum chain named as you configured")
+	}
+
+	err := ethInt.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount, cfgWithdrawReq.AmountPerDay)
 	resultCfg := true
 	if err != nil {
 		resultCfg = false

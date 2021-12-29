@@ -77,6 +77,7 @@ message NewProphecyClaim {
 message BalanceAddr  {
     string owner      = 1;
     string tokenAddr  = 2;
+    string chainName  = 3;
 }
 
 message MintToken {
@@ -89,6 +90,7 @@ message ApproveAllowance {
     string ownerKey   = 1;
     string tokenAddr  = 2;
     string amount      = 3;
+    string chainName   = 4;
 }
 
 message LockEthErc20 {
@@ -97,6 +99,7 @@ message LockEthErc20 {
     string amount           = 3;
     //将lock住的资产跨链转移到chain33的该账户名下
     string chain33Receiver = 4;
+    string chainName       = 5;
 }
 
 message LockBTY {
@@ -121,6 +124,7 @@ message Burn {
     string tokenAddr  = 2;
     string amount      = 3;
     string chain33Receiver = 4;
+    string chainName       = 5;
 }
 
 message BurnFromChain33 {
@@ -136,6 +140,7 @@ message TransferToken {
     string fromKey = 2;
     string toAddr = 3;
     string amount = 4;
+    string chainName = 5;
 }
 
 message Uint64 {
@@ -209,12 +214,13 @@ message SetupMulSign {
     repeated string owners = 2;
 }
 
-message safeTransfer {
+message SafeTransfer {
     string to = 1;
     string token = 2;
     double amount = 3;
     string operatorPrivateKey = 4;
     repeated string ownerPrivateKeys = 5;
+    string chainName                 = 6;
 }
 
 message ERC20Token {
@@ -223,6 +229,7 @@ message ERC20Token {
     string symbol = 3;
     string amount = 4;
     int32 decimals = 5;
+    string chain2deploy = 6;
 }
 
 message ETHTokenLockAddress {
@@ -235,11 +242,13 @@ message ETHConfigLockedTokenOffline {
     string symbol    = 2;
     string threshold = 3;
     uint32 percents  = 4;
+    string chainName = 5;
 }
 
 message BalanceLockedReq  {
     string bridgeBank = 1;
     string tokenAddr  = 2;
+    string chainName  = 3;
 }
 
 message ResendChain33EventReq  {
@@ -250,6 +259,7 @@ message CfgWithdrawReq  {
     string symbol       = 1;
     string feeAmount    = 2;
     string amountPerDay = 3;
+    string chainName    = 4;
 }
 
 message withdrawPara  {
@@ -283,5 +293,27 @@ message WithdrawFromChain33 {
     string amount      = 3;
     string ethereumReceiver = 4;
 }
+
+message TxReceiptReq  {
+    string txHash     = 1;
+    string chainName  = 2;
+}
+
+message CfgOfflineSaveAccountReq  {
+    string address     = 1;
+    string chainName   = 2;
+}
+
+message CfgPlatformTokenSymbolReq  {
+    string symbol      = 1;
+    string chainName   = 2;
+}
+
+message CfgMultiSignAddr  {
+    string multiSignAddr   = 1;
+    string chainName       = 2;
+}
+
+
 
 
