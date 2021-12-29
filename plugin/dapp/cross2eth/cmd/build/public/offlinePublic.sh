@@ -31,8 +31,9 @@ function ethereum_offline_sign_send() {
     check_eth_tx "${hash}"
 }
 
-function OfflineDeploy() {
+function OfflineDeploy_chain33() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
     # 在 chain33 上部署合约
     # shellcheck disable=SC2154
     #    ${Boss4xCLI} chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" -m "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}"
@@ -47,12 +48,20 @@ function OfflineDeploy() {
     # shellcheck disable=SC2034
     multisignChain33Addr=$(echo "${result}" | jq -r ".[7].ContractAddr")
 
+    # 修改 relayer.toml 字段
+    updata_relayer "BridgeRegistryOnChain33" "${BridgeRegistryOnChain33}" "./relayer.toml"
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+function OfflineDeploy_ethereum() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+
+    local Boss4xCli=$1
     # 在 Eth 上部署合约
-    # shellcheck disable=SC2154
-    #    ${Boss4xCLI} ethereum offline create -s "ETH" -p "25,25,25,25" -o "${ethDeployAddr}" -v "${ethValidatorAddra},${ethValidatorAddrb},${ethValidatorAddrc},${ethValidatorAddrd}" -m "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
-    ${Boss4xCLI} ethereum offline create_file -f "./deploy_ethereum.toml"
-    ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
-    result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
+    ${Boss4xCli} ethereum offline create_file -f "./deploy_ethereum.toml"
+    ${Boss4xCli} ethereum offline sign -k "${ethDeployKey}"
+    result=$(${Boss4xCli} ethereum offline send -f "deploysigntxs.txt")
     for i in {0..7}; do
         hash=$(echo "${result}" | jq -r ".[$i].TxHash")
         check_eth_tx "${hash}"
@@ -62,13 +71,20 @@ function OfflineDeploy() {
     # shellcheck disable=SC2034
     multisignEthAddr=$(echo "${result}" | jq -r ".[8].ContractAddr")
 
-    # 修改 relayer.toml 字段
-    updata_relayer "BridgeRegistryOnChain33" "${BridgeRegistryOnChain33}" "./relayer.toml"
-
     line=$(delete_line_show "./relayer.toml" "BridgeRegistry=")
     if [ "${line}" ]; then
         sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistryOnEth}"'"' "./relayer.toml"
     fi
+
+    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
+}
+
+function OfflineDeploy() {
+    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    OfflineDeploy_chain33
+    OfflineDeploy_ethereum "${Boss4xCLI}"
+    # shellcheck disable=SC2154
+    OfflineDeploy_ethereum "${Boss4xCLIbsc}"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
