@@ -33,11 +33,9 @@ func EthereumRelayerCmd() *cobra.Command {
 		ShowChain33TxsHashCmd(),
 		IsValidatorActiveCmd(),
 		ShowOperatorCmd(),
-		DeployContrctsCmd(),
 		ShowTxReceiptCmd(),
 		//////auxiliary///////
 		GetBalanceCmd(),
-		IsProphecyPendingCmd(),
 		ApproveCmd(),
 		BurnCmd(),
 		BurnAsyncCmd(),
@@ -65,9 +63,7 @@ func TokenCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
-		CreateBridgeTokenCmd(),
 		ShowTokenAddress4EthCmd(),
-		AddToken2LockListCmd(),
 		ShowTokenAddress4LockEthCmd(),
 		TransferTokenCmd(),
 	)
@@ -281,24 +277,6 @@ func ShowOperator(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//DeployContrctsCmd ...
-func DeployContrctsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "deploy",
-		Short: "deploy the corresponding Ethereum contracts",
-		Run:   DeployContrcts,
-	}
-	return cmd
-}
-
-//DeployContrcts ...
-func DeployContrcts(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployContrcts", nil, &res)
-	ctx.Run()
-}
-
 // DeployERC20Cmd ...
 func DeployERC20Cmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -372,65 +350,6 @@ func ShowTxReceipt(cmd *cobra.Command, args []string) {
 	para := txhash
 	var res ethTypes.Receipt
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowTxReceipt", para, &res)
-	ctx.Run()
-}
-
-//CreateBridgeTokenCmd ...
-func CreateBridgeTokenCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create-bridge-token",
-		Short: "create new token as chain33 asset on Ethereum, and it's should be done by operator",
-		Run:   CreateBridgeToken,
-	}
-	CreateBridgeTokenFlags(cmd)
-	return cmd
-}
-
-//CreateBridgeTokenFlags ...
-func CreateBridgeTokenFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-}
-
-//CreateBridgeToken ...
-func CreateBridgeToken(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	token, _ := cmd.Flags().GetString("symbol")
-	para := token
-	var res ebTypes.ReplyAddr
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateBridgeToken", para, &res)
-	ctx.Run()
-}
-
-//AddToken2LockListCmd ...
-func AddToken2LockListCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "add_lock_list",
-		Short: "add token to lock list",
-		Run:   AddToken2LockList,
-	}
-	AddToken2LockListFlags(cmd)
-	return cmd
-}
-
-func AddToken2LockListFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-	cmd.Flags().StringP("token", "t", "", "token addr")
-	_ = cmd.MarkFlagRequired("token")
-}
-
-func AddToken2LockList(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	token, _ := cmd.Flags().GetString("token")
-
-	para := ebTypes.ETHTokenLockAddress{
-		Symbol:  symbol,
-		Address: token,
-	}
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.AddToken2LockList", para, &res)
 	ctx.Run()
 }
 
@@ -755,34 +674,6 @@ func GetBalance(cmd *cobra.Command, args []string) {
 	}
 	var res ebTypes.ReplyBalance
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetBalance", para, &res)
-	ctx.Run()
-}
-
-//IsProphecyPendingCmd ...
-func IsProphecyPendingCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "ispending",
-		Short: "check whether the Prophecy is pending or not",
-		Run:   IsProphecyPending,
-	}
-	IsProphecyPendingFlags(cmd)
-	return cmd
-}
-
-//IsProphecyPendingFlags ...
-func IsProphecyPendingFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("id", "i", "", "claim prophecy id")
-	_ = cmd.MarkFlagRequired("id")
-}
-
-//IsProphecyPending ...
-func IsProphecyPending(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	id, _ := cmd.Flags().GetString("id")
-	para := common.HexToHash(id)
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.IsProphecyPending", para, &res)
 	ctx.Run()
 }
 

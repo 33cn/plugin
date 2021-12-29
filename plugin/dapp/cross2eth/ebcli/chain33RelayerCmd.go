@@ -22,7 +22,6 @@ func Chain33RelayerCmd() *cobra.Command {
 		ImportPrivateKeyCmd(),
 		ShowValidatorAddrCmd(),
 		ShowTxsHashCmd(),
-		DeployContrcts2Chain33Cmd(),
 		LockAsyncFromChain33Cmd(),
 		BurnfromChain33Cmd(),
 		simBurnFromEthCmd(),
@@ -46,49 +45,8 @@ func TokenAddressCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		ShowTokenAddressCmd(),
-		CreateERC20Cmd(),
 	)
 	return cmd
-}
-
-func CreateERC20Cmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "create erc20 for test,default 3300*1e8 to be minted",
-		Run:   CreateERC20,
-	}
-	CreateERC20Flags(cmd)
-	return cmd
-}
-
-//CreateERC20Flags ...
-func CreateERC20Flags(cmd *cobra.Command) {
-	cmd.Flags().StringP("owner", "o", "", "owner address")
-	_ = cmd.MarkFlagRequired("owner")
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-	cmd.Flags().Float64P("amount", "a", 0, "amount to be minted(optional),default to 3300*1e8")
-}
-
-func CreateERC20(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	owner, _ := cmd.Flags().GetString("owner")
-	amount, _ := cmd.Flags().GetFloat64("amount")
-	amountInt64 := int64(3300 * 1e8)
-	if 0 != int64(amount) {
-		amountInt64 = int64(amount)
-	}
-
-	var res rpctypes.Reply
-	para := ebTypes.ERC20Token{
-		Symbol: symbol,
-		Name:   symbol,
-		Owner:  owner,
-		Amount: fmt.Sprintf("%d", amountInt64),
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateERC20ToChain33", para, &res)
-	ctx.Run()
 }
 
 func ShowTokenAddressCmd() *cobra.Command {
@@ -120,7 +78,6 @@ func ShowTokenAddress(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-//ShowBridgeRegistryAddrCmd ...
 func ShowBridgeRegistryAddr4chain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridgeRegistry",
@@ -304,22 +261,6 @@ func BurnAsyncFromChain33(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-func DeployContrcts2Chain33Cmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "deploy",
-		Short: "deploy contracts to chain33",
-		Run:   DeployContrcts2Chain33,
-	}
-	return cmd
-}
-
-func DeployContrcts2Chain33(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Deploy2Chain33", nil, &res)
-	ctx.Run()
-}
-
 //ImportPrivateKeyCmd SetPwdCmd set password
 func ImportPrivateKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -333,7 +274,7 @@ func ImportPrivateKeyCmd() *cobra.Command {
 
 func addImportPrivateKeyFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("key", "k", "", "chain33 private key")
-	cmd.MarkFlagRequired("key")
+	_ = cmd.MarkFlagRequired("key")
 }
 
 func importPrivatekey(cmd *cobra.Command, args []string) {
