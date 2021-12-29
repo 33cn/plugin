@@ -86,6 +86,9 @@ var (
 
 const (
 	DefaultBlockPeriod = 5000
+	EthereumChain      = "Ethereum"
+	BinanceChain       = "Binance"
+	USDT               = "USDT"
 )
 
 type EthereumStartPara struct {
@@ -1120,6 +1123,12 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), log.TxHash.String(), int64(decimal))
 	if err != nil {
 		return err
+	}
+	prophecyClaim.ChainName = ethRelayer.name
+	//如果不是以太坊的USDT,则需要将其铸币为XUSD,如Binance的USDT，则铸币为BUSD
+	if prophecyClaim.Symbol == "USDT" && EthereumChain != ethRelayer.name {
+		prophecyClaim.Symbol = ethRelayer.name[0:1] + "USD"
+		prophecyClaim.Symbol = strings.ToUpper(prophecyClaim.Symbol)
 	}
 
 	ethRelayer.ethBridgeClaimChan <- prophecyClaim

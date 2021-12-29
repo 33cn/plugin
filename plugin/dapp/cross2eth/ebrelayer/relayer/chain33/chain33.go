@@ -154,6 +154,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptCo
 	chain33Relayer.syncEvmTxLogs = syncTx.StartSyncEvmTxLogs(syncCfg, chain33Relayer.db)
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 	chain33Relayer.mulSignAddr = chain33Relayer.getMultiSignAddress()
+	chain33Relayer.bridgeSymbol2EthChainName = chain33Relayer.restoreSymbol2chainName()
 	chain33Relayer.prePareSubscribeEvent()
 	timer := time.NewTicker(time.Duration(chain33Relayer.fetchHeightPeriodMs) * time.Millisecond)
 	for {
@@ -371,6 +372,11 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 				relayerLog.Info("relayLockBurnToChain33", "Failed to SetTokenAddress due to", err.Error())
 			}
 		}
+		if _, ok := chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol]; !ok {
+			chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol] = claim.ChainName
+			chain33Relayer.storeSymbol2chainName(chain33Relayer.bridgeSymbol2EthChainName)
+		}
+
 	}
 
 	//因为发行的合约的精度为8，所以需要进行相应的缩放

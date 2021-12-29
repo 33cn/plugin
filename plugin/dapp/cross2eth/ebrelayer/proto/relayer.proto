@@ -314,6 +314,10 @@ message CfgMultiSignAddr  {
     string chainName       = 2;
 }
 
+message Symbol2EthChain  {
+    map<string, string> symbol2name = 1;
+}
+
 
 
 
