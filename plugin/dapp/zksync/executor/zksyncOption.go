@@ -1,7 +1,9 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
+	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -48,7 +50,7 @@ func (a *Action) GetIndex() int64 {
 	return a.height*types.MaxTxsPerBlock + int64(a.index)
 }
 
-func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
+func (a *Action)  Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var err error
@@ -57,7 +59,7 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "db.getAccountTree")
 	}
 
-	leaf,err := GetLeafByEthAddress(a.localDB, payload.GetEthAddress())
+	leaf, err := GetLeafByEthAddress(a.localDB, payload.GetEthAddress())
 	//leaf不存在就添加
 	if leaf == nil {
 		//添加之前先计算证明
@@ -65,10 +67,10 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		receiptLog := &types.ReceiptLog{Ty: et.TyDepositLog, Log: types.Encode(receipt)}
+		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(receipt)}
 		logs = append(logs, receiptLog)
 
-		leaf , err =  AddNewLeaf(a.localDB, payload.GetEthAddress(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+		leaf, err = AddNewLeaf(a.localDB, payload.GetEthAddress(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.AddNewLeaf")
 		}
@@ -76,17 +78,17 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		receiptLog = &types.ReceiptLog{Ty: et.TyDepositLog, Log: types.Encode(receipt)}
+		receiptLog = &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(receipt)}
 		logs = append(logs, receiptLog)
 	} else {
 		receipt, err := calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		receiptLog := &types.ReceiptLog{Ty: et.TyDepositLog, Log: types.Encode(receipt)}
+		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(receipt)}
 		logs = append(logs, receiptLog)
 
-		leaf , err =  UpdateLeaf(a.localDB, leaf.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+		leaf, err = UpdateLeaf(a.localDB, leaf.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.AddNewLeaf")
 		}
@@ -94,7 +96,7 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		receiptLog = &types.ReceiptLog{Ty: et.TyDepositLog, Log: types.Encode(receipt)}
+		receiptLog = &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(receipt)}
 		logs = append(logs, receiptLog)
 	}
 
@@ -122,28 +124,28 @@ func (a *Action) Withdraw(payload *zt.Withdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	receiptLog := &types.ReceiptLog{Ty: et.TyDepositLog, Log: types.Encode(receipt)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(receipt)}
 	logs = append(logs, receiptLog)
 
-	err = UpdateAccountBalance(a.localDB, payload.GetAccountId(), payload.GetTokenId(), -int64(payload.GetAmount()), payload.GetChainType())
+	leaf, err = UpdateLeaf(a.localDB, payload.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), -int64(payload.GetAmount()))
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateAccountBalance")
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
-	accountLog := &et.ReceiptAccount{
-		AccountId: payload.GetAccountId(),
-		Balance:   payload.GetAmount(),
-		Index:     a.GetIndex(),
+	//取款之后计算证明
+	receipt, err = calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
 	}
-	receiptlog := &types.ReceiptLog{Ty: et.TyWithdrawLog, Log: types.Encode(accountLog)}
-	logs = append(logs, receiptlog)
+	receiptLog = &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
 func checkAmount(leaf *zt.Leaf, amount int64, tokenId int32, chainType string) error {
-	if v, ok := leaf.GetChainBalanceMap()[chainType];ok{
+	if v, ok := leaf.GetChainBalanceMap()[chainType]; ok {
 		chainBalance := leaf.GetChainBalances()[v]
-		if v, ok = chainBalance.GetTokenBalanceMap()[tokenId];ok {
+		if v, ok = chainBalance.GetTokenBalanceMap()[tokenId]; ok {
 			tokenBalance := chainBalance.GetTokenBalances()[v]
 			if tokenBalance.GetBalance() >= amount {
 				return nil
@@ -156,110 +158,285 @@ func checkAmount(leaf *zt.Leaf, amount int64, tokenId int32, chainType string) e
 	return errors.New("balance not enough")
 }
 
-func (a *Action) Transfer(payload *et.Transfer) (*types.Receipt, error) {
+func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	err := checkAmount(payload.GetFromAccountId(), int64(payload.GetAmount()), a.localDB, payload.GetTokenId(), payload.GetChainType())
+
+	leaf, err := GetLeafByAccountId(a.localDB, payload.GetAccountId())
 	if err != nil {
-		return nil, errors.Wrapf(err, "checkAmount")
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
-	err = UpdateAccountBalance(a.localDB, payload.GetFromAccountId(), payload.GetTokenId(), -int64(payload.GetAmount()), payload.GetChainType())
+	if leaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	err = checkAmount(leaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateAccountBalance")
-	}
-	fromAccountLog := &et.ReceiptAccount{
-		AccountId: payload.GetFromAccountId(),
-		Balance:   -payload.GetAmount(),
-		Index:     a.GetIndex(),
-	}
-	fromReceiptLog := &types.ReceiptLog{Ty: et.TyTransferLog, Log: types.Encode(fromAccountLog)}
-	logs = append(logs, fromReceiptLog)
-	err = UpdateAccountBalance(a.localDB, payload.GetToAccountId(), payload.GetTokenId(), int64(payload.GetAmount()), payload.GetChainType())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateAccountBalance")
+		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	toAccountLog := &et.ReceiptAccount{
-		AccountId: payload.GetToAccountId(),
-		Balance:   payload.GetAmount(),
-		Index:     a.GetIndex(),
+	//更新之前先计算证明
+	receipt, err := calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
 	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToLeafLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
 
-	toReceiptLog := &types.ReceiptLog{Ty: et.TyWithdrawLog, Log: types.Encode(toAccountLog)}
-	logs = append(logs, toReceiptLog)
+	leaf, err = UpdateLeaf(a.localDB, payload.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新合约账户
+	err = a.UpdateContractAccount(a.fromaddr, -int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+	}
+	//取款之后计算证明
+	receipt, err = calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyContractToLeafLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
-func (a *Action) TransferToNew(payload *et.TransferToNew) (*types.Receipt, error) {
+func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	err := checkAmount(payload.GetFromAccountId(), int64(payload.GetAmount()), a.localDB, payload.GetTokenId(), payload.GetChainType())
+	leaf, err := GetLeafByAccountId(a.localDB, payload.GetAccountId())
 	if err != nil {
-		return nil, errors.Wrapf(err, "checkAmount")
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
-	err = UpdateAccountBalance(a.localDB, payload.GetFromAccountId(), payload.GetTokenId(), -int64(payload.GetAmount()), payload.GetChainType())
+	if leaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	err = checkAmount(leaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateAccountBalance")
-	}
-	fromAccountLog := &et.ReceiptAccount{
-		AccountId: payload.GetFromAccountId(),
-		Balance:   -payload.GetAmount(),
-		Index:     a.GetIndex(),
-	}
-	fromReceiptLog := &types.ReceiptLog{Ty: et.TyTransferToNewLog, Log: types.Encode(fromAccountLog)}
-	logs = append(logs, fromReceiptLog)
-	toAccountId, err := CreateNewContractAccount(a.localDB, a.fromaddr)
-	err = UpdateAccountBalance(a.localDB, toAccountId, payload.GetTokenId(), int64(payload.GetAmount()), payload.GetChainType())
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateAccountBalance")
-	}
-	toAccountLog := &et.ReceiptAccount{
-		AccountId: toAccountId,
-		Balance:   payload.GetAmount(),
-		Index:     a.GetIndex(),
+		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
 
-	toReceiptLog := &types.ReceiptLog{Ty: et.TyTransferToNewLog, Log: types.Encode(toAccountLog)}
-	logs = append(logs, toReceiptLog)
+	//更新之前先计算证明
+	receipt, err := calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyLeafToContractLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	leaf, err = UpdateLeaf(a.localDB, payload.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), -int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新合约账户
+	err = a.UpdateContractAccount(a.fromaddr, int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+	}
+	//取款之后计算证明
+	receipt, err = calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyLeafToContractLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
-func (a *Action) ForceQuit(payload *et.ForceQuit) (*types.Receipt, error) {
+
+func (a *Action) UpdateContractAccount(addr string, amount int64) error {
+	execAddr := address.ExecAddress(et.ExchangeX)
+
+	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), "coins", "bty", a.statedb)
+	contractAccount := accountdb.LoadExecAccount(addr, execAddr)
+	if contractAccount.Balance + amount < 0 {
+		return errors.New("balance not enough")
+	} else {
+		contractAccount.Balance += amount
+		accountdb.SaveExecAccount(execAddr, contractAccount)
+	}
+	return nil
+}
+
+func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	account, err := getAccount(a.localDB, payload.GetAccountId())
+	fromLeaf, err := GetLeafByAccountId(a.localDB, payload.GetFromAccountId())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	err = checkAmount(fromLeaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.checkAmount")
+	}
+	toLeaf, err := GetLeafByAccountId(a.localDB, payload.GetToAccountId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if toLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	//更新之前先计算证明
+	receipt, err := calProof(a.localDB, fromLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//更新fromLeaf
+	fromLeaf, err = UpdateLeaf(a.localDB, payload.GetFromAccountId(), payload.GetChainType(), payload.GetTokenId(), -int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新之后计算证明
+	receipt, err = calProof(a.localDB, fromLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//更新之前先计算证明
+	receipt, err = calProof(a.localDB, toLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//更新toLeaf
+	toLeaf, err = UpdateLeaf(a.localDB, payload.GetFromAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新之后计算证明
+	receipt, err = calProof(a.localDB, toLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+
+func (a *Action) TransferToNew(payload *zt.TransferToNew) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	fromLeaf, err := GetLeafByAccountId(a.localDB, payload.GetFromAccountId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	err = checkAmount(fromLeaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.checkAmount")
+	}
+	toLeaf, err := GetLeafByEthAddress(a.localDB, payload.GetToEthAddress())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if toLeaf != nil {
+		return nil, errors.New("to account already exist")
+	}
+	//更新之前先计算证明
+	receipt, err := calProof(a.localDB, fromLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//更新fromLeaf
+	fromLeaf, err = UpdateLeaf(a.localDB, payload.GetFromAccountId(), payload.GetChainType(), payload.GetTokenId(), -int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新之后计算证明
+	receipt, err = calProof(a.localDB, fromLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//更新之前先计算证明
+	receipt, err = calProof(a.localDB, nil, 0, "")
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	//新增toLeaf
+	toLeaf, err = AddNewLeaf(a.localDB, payload.GetToEthAddress(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.AddNewLeaf")
+	}
+	//新增之后计算证明
+	receipt, err = calProof(a.localDB, toLeaf, payload.GetTokenId(), payload.GetChainType())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	receiptLog = &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(receipt)}
+	logs = append(logs, receiptLog)
+
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+
+func (a *Action) ForceQuit(payload *zt.ForceQuit) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	leaf, err := GetLeafByEthAddress(a.localDB, payload.GetEthAddress())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	for _, v := range account.ChainBalances {
-		if payload.GetChainType() == v.ChainType {
-			for _, token := range v.GetTokenBalances() {
-				if token.TokenId == payload.GetTokenId() {
-					balance := token.GetBalance()
-					token.Balance = 0
-					accountLog := &et.ReceiptAccount{
-						AccountId: payload.GetAccountId(),
-						Balance:   uint64(balance),
-						Index:     a.GetIndex(),
-					}
-
-					toReceiptLog := &types.ReceiptLog{Ty: et.TyForceExitLog, Log: types.Encode(accountLog)}
-					logs = append(logs, toReceiptLog)
-					receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-					return receipts, nil
-				}
+	//首先找到token
+	if idx, ok := leaf.ChainBalanceMap[payload.GetChainType()]; ok {
+		chainBalance := leaf.GetChainBalances()[idx]
+		if idx, ok = chainBalance.GetTokenBalanceMap()[payload.GetTokenId()]; ok {
+			tokenBalance := chainBalance.GetTokenBalances()[idx]
+			//更新之前先计算证明
+			receipt, err := calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+			if err != nil {
+				return nil, errors.Wrapf(err, "calProof")
 			}
-			break
+			receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(receipt)}
+			logs = append(logs, receiptLog)
+
+			//更新fromLeaf
+			leaf, err = UpdateLeaf(a.localDB, leaf.GetAccountId(), payload.GetChainType(), payload.GetTokenId(), -tokenBalance.GetBalance())
+			if err != nil {
+				return nil, errors.Wrapf(err, "db.UpdateLeaf")
+			}
+			//更新之后计算证明
+			receipt, err = calProof(a.localDB, leaf, payload.GetTokenId(), payload.GetChainType())
+			if err != nil {
+				return nil, errors.Wrapf(err, "calProof")
+			}
+			receiptLog = &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(receipt)}
+			logs = append(logs, receiptLog)
+			receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+			return receipts, nil
 		}
 	}
 
+	//上面没返回就是没找到token
 	return nil, errors.New("token not find")
 }
 
-func calProof(db dbm.KV, leaf *zt.Leaf, tokenId int32, chainType string) (*zt.ReceiptLeaf,error) {
+func calProof(db dbm.KV, leaf *zt.Leaf, tokenId int32, chainType string) (*zt.ReceiptLeaf, error) {
 	receipt := &zt.ReceiptLeaf{AccountId: leaf.GetAccountId()}
 	if leaf == nil {
 		//leaf之前不存在时，不会有token，直接返回leaf的子树即可
@@ -275,7 +452,7 @@ func calProof(db dbm.KV, leaf *zt.Leaf, tokenId int32, chainType string) (*zt.Re
 		return nil, errors.Wrapf(err, "CalLeafProof")
 	}
 	receipt.TreeProof = leafProof
-	if index,ok:= leaf.GetChainBalanceMap()[chainType];ok {
+	if index, ok := leaf.GetChainBalanceMap()[chainType]; ok {
 		tokenProof, err := CalTokenProof(db, leaf.GetChainBalances()[index], tokenId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "CalLeafProof")
@@ -284,6 +461,3 @@ func calProof(db dbm.KV, leaf *zt.Leaf, tokenId int32, chainType string) (*zt.Re
 	}
 	return receipt, nil
 }
-
-
-

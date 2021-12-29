@@ -17,12 +17,12 @@ func (e *zksync) Exec_Withdraw(payload *zt.Withdraw, tx *types.Transaction, inde
 
 func (e *zksync) Exec_Contract_To_Leaf(payload *zt.ContractToLeaf, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(e, tx, index)
-	return action.Withdraw(payload)
+	return action.ContractToLeaf(payload)
 }
 
 func (e *zksync) Exec_Leaf_To_Leaf(payload *zt.LeafToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(e, tx, index)
-	return action.Withdraw(payload)
+	return action.LeafToContract(payload)
 }
 
 func (e *zksync) Exec_Transfer(payload *zt.Transfer, tx *types.Transaction, index int) (*types.Receipt, error) {

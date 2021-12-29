@@ -230,7 +230,7 @@ func SaveAccountTreeTable(db dbm.KV, table *table.Table) error {
 
 func GetLeafByAccountId(db dbm.KV, accountId int32) (*zt.Leaf, error) {
 	if accountId <= 0 {
-		return nil,	nil
+		return nil, nil
 	}
 	tree, err := getAccountTree(db)
 	if err != nil {

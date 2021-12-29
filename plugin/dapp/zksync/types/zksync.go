@@ -57,25 +57,25 @@ var (
 
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameNoopAction:          TyNoopAction,
-		NameDepositAction:       TyDepositAction,
-		NameWithdrawAction:      TyWithdrawAction,
+		NameNoopAction:           TyNoopAction,
+		NameDepositAction:        TyDepositAction,
+		NameWithdrawAction:       TyWithdrawAction,
 		NameContractToLeafAction: TyContractToLeafAction,
 		NameLeafToContractAction: TyLeafToContractAction,
-		NameTransferAction:      TyTransferAction,
-		NameTransferToNewAction: TyTransferToNewAction,
-		NameForceExitAction:     TyForceExitAction,
+		NameTransferAction:       TyTransferAction,
+		NameTransferToNewAction:  TyTransferToNewAction,
+		NameForceExitAction:      TyForceExitAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		TyNoopLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyDepositLog"},
-		TyWithdrawLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyWithdrawLog"},
+		TyNoopLog:           {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyNoopLog"},
+		TyDepositLog:        {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyDepositLog"},
+		TyWithdrawLog:       {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyWithdrawLog"},
 		TyContractToLeafLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyContractToLeafLog"},
-		TyLeafToContractLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyLeafToContractLog"},
-		TyTransferLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferLog"},
-		TyTransferToNewLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyForceExitLog"},
+		TyLeafToContractLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyLeafToContractLog"},
+		TyTransferLog:       {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferToNewLog"},
+		TyForceExitLog:      {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyForceExitLog"},
 	}
 )
 

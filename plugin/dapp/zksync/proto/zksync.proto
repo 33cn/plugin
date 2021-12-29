@@ -69,7 +69,7 @@ message MerkleTreeProof {
   repeated bytes proofSet = 2;
   uint64 proofIndex = 3;
   uint64 numLeaves = 4;
-  repeated uint32 helpers   =5;
+  repeated uint32 helpers = 5;
 }
 
 message Deposit {
@@ -90,29 +90,36 @@ message ContractToLeaf {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
+  int32 accountId = 4;
 }
 
 message LeafToContract {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
+  int32 accountId = 4;
 }
 
 message Transfer {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
+  int32 fromAccountId = 4;
+  int32 toAccountId = 5;
 }
 
 message TransferToNew {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
+  int32 fromAccountId = 4;
+  string toEthAddress = 5;
 }
 
 message ForceQuit {
-  string chainType = 2;
-  int32 tokenId = 3;
+  string chainType = 1;
+  int32 tokenId = 2;
+  string ethAddress = 3;
 }
 
 // leaf merkle proof票据日志

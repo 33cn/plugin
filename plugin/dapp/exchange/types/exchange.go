@@ -14,25 +14,15 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyNoopAction          = iota + 200
-	TyTransferAction      //转账
-	TyTransferToNewAction //向新地址转账
-	TyWithdrawAction      //取款
-	TyDepositAction       //存款
-	TyForceExitAction     //强制退出
+	TyNoopAction = iota + 200
 	TyLimitOrderAction
 	TyMarketOrderAction
 	TyRevokeOrderAction
 
-	NameNoopAction          = "Noop"
-	NameTransferAction      = "Transfer"
-	NameTransferToNewAction = "TransferToNew"
-	NameWithdrawAction      = "Withdraw"
-	NameDepositAction       = "Deposit"
-	NameForceExitAction     = "ForceExit"
-	NameLimitOrderAction    = "LimitOrder"
-	NameMarketOrderAction   = "MarketOrder"
-	NameRevokeOrderAction   = "RevokeOrder"
+	NameNoopAction        = "Noop"
+	NameLimitOrderAction  = "LimitOrder"
+	NameMarketOrderAction = "MarketOrder"
+	NameRevokeOrderAction = "RevokeOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -43,11 +33,6 @@ const (
 // log类型id值
 const (
 	TyNoopLog = iota + 200
-	TyTransferLog     //转账
-	TyTransferToNewLog //向新地址转账
-	TyWithdrawLog      //取款
-	TyDepositLog       //存款
-	TyForceExitLog     //强制退出
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
@@ -85,15 +70,10 @@ var (
 	ExchangeX = "exchange"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameNoopAction:          TyNoopAction,
-		NameTransferAction:      TyTransferAction,
-		NameTransferToNewAction: TyTransferToNewAction,
-		NameWithdrawAction:      TyWithdrawAction,
-		NameDepositAction:       TyDepositAction,
-		NameForceExitAction:     TyForceExitAction,
-		NameLimitOrderAction:    TyLimitOrderAction,
-		NameMarketOrderAction:   TyMarketOrderAction,
-		NameRevokeOrderAction:   TyRevokeOrderAction,
+		NameNoopAction:        TyNoopAction,
+		NameLimitOrderAction:  TyLimitOrderAction,
+		NameMarketOrderAction: TyMarketOrderAction,
+		NameRevokeOrderAction: TyRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
