@@ -195,7 +195,7 @@ func TestVote_Query_ListMember(t *testing.T) {
 	require.Equal(t, 1, len(list.MemberList))
 	require.Equal(t, testAddrs[0], list.MemberList[0].Addr)
 	require.Equal(t, []string{groupID}, list.MemberList[0].GroupIDs)
-	data, err = exec.Query(funcName, types.Encode(&vty.ReqListItem{StartItemID: "addr"}))
+	data, err = exec.Query(funcName, types.Encode(&vty.ReqListItem{StartItemID: "addr", Direction: 1}))
 	require.Equal(t, nil, err)
 	list = data.(*vty.MemberInfos)
 	require.Equal(t, &vty.MemberInfos{}, list)
