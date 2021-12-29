@@ -537,23 +537,23 @@ function lockEthUSDT() {
 
 function up_relayer_toml() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    relaye_file="./relayer.toml"
+
     # 修改 relayer.toml 配置文件 pushName 字段
-    pushNameChange "./relayer.toml"
-    # 修改 relayer.toml 配置文件 initPowers
-    validators_config
+    sed -i 's/^pushName=.*/pushName="x2ethA"/' "${relaye_file}"
 
-    # change EthProvider url
-    dockerAddr=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+    # 替换7到15行
+    sed -i '7,15s/ethProvider=.*/ethProvider="ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"/g' "${relaye_file}"
+    sed -i '17,24s/ethProvider=.*/ethProvider="ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"/g' "${relaye_file}"
+    sed -i '7,15s/EthProviderCli=.*/EthProviderCli="http:\/\/'"${docker_ganachetesteth_ip}"':8545\/"/g' "${relaye_file}"
+    sed -i '17,24s/EthProviderCli=.*/EthProviderCli="http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"/g' "${relaye_file}"
+    sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
+    sed -i 's/^pushBind=.*/pushBind="'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
+    sed -i 's/^chain33Host=.*/chain33Host="http:\/\/'"${docker_chain33_ip}"':8901"/' "${relaye_file}"
 
-    # 修改 relayer.toml 配置文件
-    updata_relayer_a_toml "${dockerAddr}" "${dockerNamePrefix}_ebrelayera_1" "./relayer.toml"
+    sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${relaye_file}"
+    sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${relaye_file}"
 
-    # para
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./relayer.toml" "chain33Host")
-    # 在第 line 行后面 新增合约地址
-    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    sed -i ''"${line}"' a chain33Host="http://'"${docker_chain33_ip}"':8901"' "./relayer.toml"
 
     # shellcheck disable=SC2155
     local line=$(delete_line_show "./relayer.toml" "ChainName")
@@ -662,6 +662,7 @@ function get_cli() {
         Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
         Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
 
+        docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
         CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
