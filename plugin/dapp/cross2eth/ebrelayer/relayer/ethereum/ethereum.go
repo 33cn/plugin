@@ -178,7 +178,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	return ethRelayer
 }
 
-//GetBalance ：获取某一个币种的余额
+// ShowBalanceLocked 获取某一个币种的余额
 func (ethRelayer *Relayer4Ethereum) ShowBalanceLocked(tokenAddr, bridgeBank string) (string, error) {
 	bridgeBankAddrInt := common.HexToAddress(bridgeBank)
 	bridgeBankHandle, err := generated.NewBridgeBank(bridgeBankAddrInt, ethRelayer.clientSpec)
@@ -275,7 +275,7 @@ func (ethRelayer *Relayer4Ethereum) CreateBridgeToken(symbol string) (string, er
 			Symbol:    symbol,
 			ChainName: ebTypes.EthereumBlockChainName,
 		}
-		_ = ethRelayer.SetTokenAddress(token2set)
+		_ = ethRelayer.SetTokenAddress(&token2set)
 	}
 	return tokenAddr, err
 }
@@ -638,7 +638,7 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 		return nil
 	}
 	relayerLog.Error("Insufficient balance", "balance", balance, "amount", amount)
-	return errors.New("Insufficient balance")
+	return errors.New("insufficient balance")
 }
 
 func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
@@ -706,7 +706,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 				Symbol:    prophecyClaim.Symbol,
 				ChainName: ebTypes.EthereumBlockChainName,
 			}
-			err = ethRelayer.SetTokenAddress(token2set)
+			err = ethRelayer.SetTokenAddress(&token2set)
 			if nil != err {
 				// 尽管设置数据失败，但是不影响运行，只是relayer启动时，每次从节点远程获取bridge token地址而已
 				relayerLog.Error("handleLogLockBurn", "Failed to SetTokenAddress due to", err.Error())
@@ -1099,7 +1099,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 			}
 		}
 
-		token2set := &ebTypes.TokenAddress{
+		token2set := ebTypes.TokenAddress{
 			Address:   event.Token.String(),
 			Symbol:    event.Symbol,
 			ChainName: ebTypes.EthereumBlockChainName,
@@ -1244,7 +1244,7 @@ func (ethRelayer *Relayer4Ethereum) DeployMulsign() (mulsign string, err error) 
 	return mulsign, nil
 }
 
-func (ethRelayer *Relayer4Ethereum) SetupMulSign(setupMulSign ebTypes.SetupMulSign) (string, error) {
+func (ethRelayer *Relayer4Ethereum) SetupMulSign(setupMulSign *ebTypes.SetupMulSign) (string, error) {
 	if "" == ethRelayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
@@ -1252,7 +1252,7 @@ func (ethRelayer *Relayer4Ethereum) SetupMulSign(setupMulSign ebTypes.SetupMulSi
 	return ethtxs.SetupMultiSign(setupMulSign.OperatorPrivateKey, ethRelayer.mulSignAddr, setupMulSign.Owners, ethRelayer.clientSpec)
 }
 
-func (ethRelayer *Relayer4Ethereum) SafeTransfer(para ebTypes.SafeTransfer) (string, error) {
+func (ethRelayer *Relayer4Ethereum) SafeTransfer(para *ebTypes.SafeTransfer) (string, error) {
 	if "" == ethRelayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}

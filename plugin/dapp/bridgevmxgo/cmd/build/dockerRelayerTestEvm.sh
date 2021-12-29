@@ -229,7 +229,7 @@ function get_evm_cli() {
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
         CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
-        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetest_1")
+        docker_ganachetest_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetesteth_1")
         Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetest_ip}:8545 --paraName user.p.para. --chainID ${chain33ID} --chainEthId 1337"
         EvmxgoBoss4xCLI="./evmxgoboss4x --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para. --chainID ${chain33ID}"
     }

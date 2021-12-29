@@ -63,7 +63,7 @@ func (ethRelayer *Relayer4Ethereum) getStatics(claimType int32, txIndex int64, c
 	helper := dbm.NewListHelper(ethRelayer.db)
 	datas := helper.List(keyPrefix, keyFrom, count, dbm.ListASC)
 	if nil == datas {
-		return nil, errors.New("Not found")
+		return nil, errors.New("not found")
 	}
 
 	return datas, nil
@@ -249,19 +249,19 @@ func (ethRelayer *Relayer4Ethereum) initBridgeBankTx() {
 	_ = ethRelayer.setEthTxEvent(types.Log{})
 }
 
-func (ethRelayer *Relayer4Ethereum) SetTokenAddress(token2set ebTypes.TokenAddress) error {
+func (ethRelayer *Relayer4Ethereum) SetTokenAddress(token2set *ebTypes.TokenAddress) error {
 	addr := common.HexToAddress(token2set.Address)
-	bytes := chain33Types.Encode(&token2set)
+	bytes := chain33Types.Encode(token2set)
 	ethRelayer.rwLock.Lock()
 	ethRelayer.symbol2Addr[token2set.Symbol] = addr
 	ethRelayer.rwLock.Unlock()
 	return ethRelayer.db.Set(ethTokenSymbol2AddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
-func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.TokenAddress) error {
-	bytes := chain33Types.Encode(token2set)
+func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set ebTypes.TokenAddress) error {
+	bytes := chain33Types.Encode(&token2set)
 	ethRelayer.rwLock.Lock()
-	ethRelayer.symbol2LockAddr[token2set.Symbol] = *token2set
+	ethRelayer.symbol2LockAddr[token2set.Symbol] = token2set
 	ethRelayer.rwLock.Unlock()
 	return ethRelayer.db.Set(ethTokenSymbol2LockAddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
@@ -312,7 +312,7 @@ func (ethRelayer *Relayer4Ethereum) RestoreTokenAddress() error {
 	return nil
 }
 
-func (ethRelayer *Relayer4Ethereum) ShowTokenAddress(token2show ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
+func (ethRelayer *Relayer4Ethereum) ShowTokenAddress(token2show *ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
 	res := &ebTypes.TokenAddressArray{}
 
 	if len(token2show.Symbol) > 0 {
@@ -341,7 +341,7 @@ func (ethRelayer *Relayer4Ethereum) ShowTokenAddress(token2show ebTypes.TokenAdd
 	prefix := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, ethTokenSymbol2AddrPrefix))
 	datas := helper.List(prefix, nil, 100, dbm.ListASC)
 	if nil == datas {
-		return nil, errors.New("Not found")
+		return nil, errors.New("not found")
 	}
 
 	for _, data := range datas {
@@ -355,7 +355,7 @@ func (ethRelayer *Relayer4Ethereum) ShowTokenAddress(token2show ebTypes.TokenAdd
 	return res, nil
 }
 
-func (ethRelayer *Relayer4Ethereum) ShowETHLockTokenAddress(token2show ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
+func (ethRelayer *Relayer4Ethereum) ShowETHLockTokenAddress(token2show *ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
 	res := &ebTypes.TokenAddressArray{}
 
 	if len(token2show.Symbol) > 0 {
@@ -375,7 +375,7 @@ func (ethRelayer *Relayer4Ethereum) ShowETHLockTokenAddress(token2show ebTypes.T
 	prefix := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, ethTokenSymbol2LockAddrPrefix))
 	datas := helper.List(prefix, nil, 100, dbm.ListASC)
 	if nil == datas {
-		return nil, errors.New("Not found")
+		return nil, errors.New("not found")
 	}
 
 	for _, data := range datas {

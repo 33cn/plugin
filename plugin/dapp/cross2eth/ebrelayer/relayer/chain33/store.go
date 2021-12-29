@@ -166,7 +166,7 @@ func (chain33Relayer *Relayer4Chain33) RestoreTokenAddress() error {
 	return nil
 }
 
-func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
+func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show *ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
 	res := &ebTypes.TokenAddressArray{}
 
 	if len(token2show.Symbol) > 0 {

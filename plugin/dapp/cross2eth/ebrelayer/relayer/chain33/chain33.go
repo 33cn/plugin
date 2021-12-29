@@ -529,7 +529,7 @@ func (chain33Relayer *Relayer4Chain33) updateSingleTxStatus(claimType events.Cla
 	}
 }
 
-func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign ebTypes.SetupMulSign) (string, error) {
+func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign *ebTypes.SetupMulSign) (string, error) {
 	if "" == chain33Relayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
@@ -537,7 +537,7 @@ func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign ebTypes.SetupMu
 	return setupMultiSign(setupMulSign.OperatorPrivateKey, chain33Relayer.mulSignAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr, setupMulSign.Owners)
 }
 
-func (chain33Relayer *Relayer4Chain33) SafeTransfer(para ebTypes.SafeTransfer) (string, error) {
+func (chain33Relayer *Relayer4Chain33) SafeTransfer(para *ebTypes.SafeTransfer) (string, error) {
 	if "" == chain33Relayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
