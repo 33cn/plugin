@@ -87,9 +87,7 @@ function OfflineDeploy() {
 
         sed -i '7,15s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
 
-        # shellcheck disable=SC2154
         Boss4xCLI=${Boss4xCLIbsc}
-        # shellcheck disable=SC2154
         CLIA=${CLIAbsc}
         sed -i 's/^symbol=.*/symbol="BNB"/g' "./deploy_ethereum.toml"
         OfflineDeploy_ethereum
@@ -292,7 +290,7 @@ function offline_create_bridge_token_eth_BTY() {
     ethereumBtyBridgeTokenAddr=$(${CLIA} ethereum receipt -s "${hash}" | jq -r .logs[0].address)
 }
 
-function offline_create_bridge_token_chain33_ETH() {
+function offline_create_bridge_token_chain33_symbol() {
     # 在 chain33 上创建 bridgeToken ETH
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken $1 ======${NOC}"
     local symbolName="$1"

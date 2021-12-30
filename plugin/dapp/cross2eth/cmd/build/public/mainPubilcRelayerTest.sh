@@ -15,6 +15,7 @@ source "./offlinePublic.sh"
     chain33MultisignAddr=""
     chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
     chain33USDTBridgeTokenAddr=""
+
     chain33MainBridgeTokenAddr=""
     chain33MainBridgeTokenAddrETH=""
     chain33MainBridgeTokenAddrBNB=""
@@ -357,12 +358,14 @@ function offline_set_offline_token_Eth() {
     # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
     local threshold=20
     local percents=50
-    if [[ $# -eq 2 ]]; then
+    local symbol="ETH"
+    if [[ $# -eq 3 ]]; then
         threshold=$1
         percents=$2
+        symbol=$3
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline set_offline_token -s ${symbol} -m ${threshold} -p ${percents} -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_offline_token.txt"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -462,7 +465,8 @@ function lockEth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== ethereum 端 lock ETH ======${NOC}"
     # echo '2:#配置自动转离线钱包(eth, 20, 50%)'
-    offline_set_offline_token_Eth
+    local symbol="${1}"
+    offline_set_offline_token_Eth 20 50 "${symbol}"
 
     # 重启 nonce 会不统一 要重启一下
     restart_ebrelayerA
@@ -548,20 +552,52 @@ function StartDockerRelayerDeploy() {
     InitRelayerA
 
     # 设置 token 地址
-    offline_create_bridge_token_chain33_USDT
+    # shellcheck disable=SC2154
+    # shellcheck disable=SC2034
+    {
+    #    offline_create_bridge_token_chain33_USDT
+        offline_create_bridge_token_chain33_symbol "USDT"
+        chain33USDTBridgeTokenAddr="${chain33MainBridgeTokenAddr}"
 
-    offline_create_bridge_token_eth_BTY
-    offline_create_bridge_token_chain33_ETH "ETH"
-    offline_deploy_erc20_create_tether_usdt_USDT
+        Boss4xCLI=${Boss4xCLIeth}
+        CLIA=${CLIAeth}
+        ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+        offline_create_bridge_token_chain33_symbol "ETH"
+        offline_create_bridge_token_eth_BTY
+        offline_deploy_erc20_create_tether_usdt_USDT
+        chain33MainBridgeTokenAddrETH="${chain33MainBridgeTokenAddr}"
+        ethereumBtyBridgeTokenAddrOnETH="${ethereumBtyBridgeTokenAddr}"
+        ethereumUSDTERC20TokenAddrOnETH="${ethereumUSDTERC20TokenAddr}"
+
+        Boss4xCLI=${Boss4xCLIbsc}
+        CLIA=${CLIAbsc}
+        ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+        offline_create_bridge_token_chain33_symbol "BNB"
+        offline_create_bridge_token_eth_BTY
+        offline_deploy_erc20_create_tether_usdt_USDT
+        chain33MainBridgeTokenAddrBNB="${chain33MainBridgeTokenAddr}"
+        ethereumBtyBridgeTokenAddrOnBSC="${ethereumBtyBridgeTokenAddr}"
+        ethereumUSDTERC20TokenAddrOnBSC="${ethereumUSDTERC20TokenAddr}"
+    }
 
     # shellcheck disable=SC2086
     {
-        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
         docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-        docker cp "${ethereumBridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistry}.abi
-        docker cp "${ethereumBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBank}.abi
-        docker cp "${chain33MainBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddr}.abi
+        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
+        docker cp "${chain33MultisignAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MultisignAddr}.abi
         docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
+        docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrETH}.abi
+        docker cp "${chain33MainBridgeTokenAddrBNB}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrBNB}.abi
+        docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnETH}.abi
+        docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnETH}.abi
+        docker cp "${ethereumMultisignAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumMultisignAddrOnETH}.abi
+        docker cp "${ethereumUSDTERC20TokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumUSDTERC20TokenAddrOnETH}.abi
+        docker cp "${ethereumBtyBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBtyBridgeTokenAddrOnETH}.abi
+        docker cp "${ethereumBridgeBankOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnBSC}.abi
+        docker cp "${ethereumBridgeRegistryOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnBSC}.abi
+        docker cp "${ethereumMultisignAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumMultisignAddrOnBSC}.abi
+        docker cp "${ethereumUSDTERC20TokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumUSDTERC20TokenAddrOnBSC}.abi
+        docker cp "${ethereumBtyBridgeTokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBtyBridgeTokenAddrOnBSC}.abi
     }
 
     # start ebrelayer B C D
@@ -573,17 +609,23 @@ function StartDockerRelayerDeploy() {
 
 function echo_addrs() {
     echo -e "${GRE}=========== echo contract addrs ===========${NOC}"
-    echo -e "${GRE}chain33BridgeRegistry: ${chain33BridgeRegistry} ${NOC}"
-    echo -e "${GRE}ethereumBridgeRegistry: ${ethereumBridgeRegistry} ${NOC}"
     echo -e "${GRE}chain33BridgeBank: ${chain33BridgeBank} ${NOC}"
-    echo -e "${GRE}ethereumBridgeBank: ${ethereumBridgeBank} ${NOC}"
-    echo -e "${GRE}chain33BtyERC20TokenAddr: ${chain33BtyERC20TokenAddr} ${NOC}"
-    echo -e "${GRE}chain33MainBridgeTokenAddr: ${chain33MainBridgeTokenAddr} ${NOC}"
-    echo -e "${GRE}ethereumBtyBridgeTokenAddr: ${ethereumBtyBridgeTokenAddr} ${NOC}"
-    echo -e "${GRE}ethereumUSDTERC20TokenAddr: ${ethereumUSDTERC20TokenAddr} ${NOC}"
-    echo -e "${GRE}chain33USDTBridgeTokenAddr: ${chain33USDTBridgeTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33BridgeRegistry: ${chain33BridgeRegistry} ${NOC}"
     echo -e "${GRE}chain33MultisignAddr: ${chain33MultisignAddr} ${NOC}"
-    echo -e "${GRE}ethereumMultisignAddr: ${ethereumMultisignAddr} ${NOC}"
+    echo -e "${GRE}chain33USDTBridgeTokenAddr: ${chain33USDTBridgeTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33MainBridgeTokenAddrETH: ${chain33MainBridgeTokenAddrETH} ${NOC}"
+    echo -e "${GRE}chain33MainBridgeTokenAddrBNB: ${chain33MainBridgeTokenAddrBNB} ${NOC}"
+    echo -e "${GRE}ethereumBridgeBankOnETH: ${ethereumBridgeBankOnETH} ${NOC}"
+    echo -e "${GRE}ethereumBridgeRegistryOnETH: ${ethereumBridgeRegistryOnETH} ${NOC}"
+    echo -e "${GRE}ethereumMultisignAddrOnETH: ${ethereumMultisignAddrOnETH} ${NOC}"
+    echo -e "${GRE}ethereumUSDTERC20TokenAddrOnETH: ${ethereumUSDTERC20TokenAddrOnETH} ${NOC}"
+    echo -e "${GRE}ethereumBtyBridgeTokenAddrOnETH: ${ethereumBtyBridgeTokenAddrOnETH} ${NOC}"
+    echo -e "${GRE}ethereumBridgeBankOnBSC: ${ethereumBridgeBankOnBSC} ${NOC}"
+    echo -e "${GRE}ethereumBridgeRegistryOnBSC: ${ethereumBridgeRegistryOnBSC} ${NOC}"
+    echo -e "${GRE}ethereumMultisignAddrOnBSC: ${ethereumMultisignAddrOnBSC} ${NOC}"
+    echo -e "${GRE}ethereumUSDTERC20TokenAddrOnBSC: ${ethereumUSDTERC20TokenAddrOnBSC} ${NOC}"
+    echo -e "${GRE}ethereumBtyBridgeTokenAddrOnBSC: ${ethereumBtyBridgeTokenAddrOnBSC} ${NOC}"
+
     # shellcheck disable=SC2154
     echo -e "${GRE}XgoBridgeRegistryOnChain33: ${XgoBridgeRegistryOnChain33} ${NOC}"
     # shellcheck disable=SC2154
@@ -636,20 +678,40 @@ function get_cli() {
     }
 }
 
-function test_all() {
+function test_lock_and_burn() {
+    local symbol="${1}"
     # test
     Chain33Cli=${Para8901Cli}
     TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-    Chain33Cli=${Para8901Cli}
     lockBty
-    lockEth
+    lockEth "${symbol}"
     lockEthUSDT
 
     # 离线多签地址转入阈值设大
     offline_set_offline_token_Bty 100000000000000 10
-    offline_set_offline_token_Eth 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
     offline_set_offline_token_EthUSDT 100000000000000 10
+}
+
+function test_all() {
+    Boss4xCLI=${Boss4xCLIeth}
+    CLIA=${CLIAeth}
+    ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+    ethereumMultisignAddr="${ethereumMultisignAddrOnETH}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
+    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+    test_lock_and_burn "ETH"
+
+    Boss4xCLI=${Boss4xCLIbsc}
+    CLIA=${CLIAbsc}
+    ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+    ethereumMultisignAddr="${ethereumMultisignAddrOnBSC}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
+    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+    test_lock_and_burn "BNB"
 }
