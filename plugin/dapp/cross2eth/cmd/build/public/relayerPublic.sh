@@ -30,14 +30,14 @@ source "./publicTest.sh"
 maturityDegree=10
 
 Chain33Cli="../../chain33-cli"
-BridgeRegistryOnChain33=""
+chain33BridgeRegistry=""
 chain33BridgeBank=""
-BridgeRegistryOnEth=""
-ethBridgeBank=""
+ethereumBridgeRegistry=""
+ethereumBridgeBank=""
 chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
 
 #
-chain33EthBridgeTokenAddr=""
+chain33MainBridgeTokenAddr=""
 ethereumBtyBridgeTokenAddr=""
 
 # etheruem erc20 ycc
@@ -104,31 +104,31 @@ function InitAndDeploy() {
     # 在 chain33 上部署合约
     result=$(${CLIA} chain33 deploy)
     cli_ret "${result}" "chain33 deploy"
-    BridgeRegistryOnChain33=$(echo "${result}" | jq -r ".msg")
+    chain33BridgeRegistry=$(echo "${result}" | jq -r ".msg")
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
-    cp BridgeRegistry.abi "${BridgeRegistryOnChain33}.abi"
+    cp BridgeRegistry.abi "${chain33BridgeRegistry}.abi"
     # shellcheck disable=SC2154
-    chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${BridgeRegistryOnChain33}")
+    chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${chain33BridgeRegistry}")
     cp Chain33BridgeBank.abi "${chain33BridgeBank}.abi"
 
     # 在 Eth 上部署合约
     result=$(${CLIA} ethereum deploy)
     cli_ret "${result}" "ethereum deploy"
-    BridgeRegistryOnEth=$(echo "${result}" | jq -r ".msg")
+    ethereumBridgeRegistry=$(echo "${result}" | jq -r ".msg")
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
-    cp BridgeRegistry.abi "${BridgeRegistryOnEth}.abi"
+    cp BridgeRegistry.abi "${ethereumBridgeRegistry}.abi"
     result=$(${CLIA} ethereum bridgeBankAddr)
-    ethBridgeBank=$(echo "${result}" | jq -r ".addr")
-    cp EthBridgeBank.abi "${ethBridgeBank}.abi"
+    ethereumBridgeBank=$(echo "${result}" | jq -r ".addr")
+    cp EthBridgeBank.abi "${ethereumBridgeBank}.abi"
 
     # 修改 relayer.toml 字段
-    updata_relayer "BridgeRegistryOnChain33" "${BridgeRegistryOnChain33}" "./relayer.toml"
+    updata_relayer "chain33BridgeRegistry" "${chain33BridgeRegistry}" "./relayer.toml"
 
     line=$(delete_line_show "./relayer.toml" "BridgeRegistry=")
     if [ "${line}" ]; then
-        sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistryOnEth}"'"' "./relayer.toml"
+        sed -i ''"${line}"' a BridgeRegistry="'"${ethereumBridgeRegistry}"'"' "./relayer.toml"
     fi
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -148,24 +148,12 @@ function create_bridge_token_chain33_ETH() {
     echo -e "${GRE}======= 在 chain33 上创建 bridgeToken ETH ======${NOC}"
     hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "createNewBridgeToken(ETH)")
     check_tx "${Chain33Cli}" "${hash}"
-    chain33EthBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
-    echo "ETH Token Addr= ${chain33EthBridgeTokenAddr}"
-    cp BridgeToken.abi "${chain33EthBridgeTokenAddr}.abi"
+    chain33MainBridgeTokenAddr=$(${Chain33Cli} evm query -a "${chain33BridgeBank}" -c "${chain33DeployAddr}" -b "getToken2address(ETH)")
+    echo "ETH Token Addr= ${chain33MainBridgeTokenAddr}"
+    cp BridgeToken.abi "${chain33MainBridgeTokenAddr}.abi"
 
-    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33EthBridgeTokenAddr}" -b "symbol()")
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33MainBridgeTokenAddr}" -b "symbol()")
     is_equal "${result}" "ETH"
-}
-
-function deploy_erc20_eth_BYC() {
-    # eth 上 铸币 YCC
-    echo -e "${GRE}======= 在 ethereum 上创建 ERC20 ycc ======${NOC}"
-    # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum deploy_erc20 -c "${ethDeployAddr}" -n BYC -s BYC -m 33000000000000000000)
-    cli_ret "${result}" "ethereum deploy_erc20 -s BYC"
-    ethereumBycERC20TokenAddr=$(echo "${result}" | jq -r .msg)
-
-    result=$(${CLIA} ethereum token add_lock_list -s BYC -t "${ethereumBycERC20TokenAddr}")
-    cli_ret "${result}" "add_lock_list"
 }
 
 function create_bridge_token_chain33_YCC() {
@@ -507,35 +495,6 @@ function AllRelayerStart() {
     StartRelayerAndDeploy
 }
 
-function StartOneRelayer() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    kill_ebrelayer ebrelayer
-    sleep 10
-    rm datadir/ logs/ -rf
-
-    # 修改 relayer.toml 配置文件 pushName 字段
-    pushNameChange "./relayer.toml"
-
-    # 启动 ebrelayer
-    start_ebrelayerA
-
-    # 导入私钥 部署合约 设置 bridgeRegistry 地址
-    InitAndDeploy
-
-    # 重启
-    kill_ebrelayer ebrelayer
-    start_ebrelayerA
-
-    result=$(${CLIA} unlock -p "${validatorPwd}")
-    cli_ret "${result}" "unlock"
-
-    # 设置 token 地址
-    InitTokenAddr
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
 function StartRelayerOnRopsten() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
@@ -569,12 +528,12 @@ function deployChain33AndEthMultisign() {
     echo -e "${GRE}=========== 部署 chain33 离线钱包合约 ===========${NOC}"
     result=$(${CLIA} chain33 multisign deploy)
     cli_ret "${result}" "chain33 multisign deploy"
-    multisignChain33Addr=$(echo "${result}" | jq -r ".msg")
+    chain33MultisignAddr=$(echo "${result}" | jq -r ".msg")
 
     echo -e "${GRE}=========== 部署 ETH 离线钱包合约 ===========${NOC}"
     result=$(${CLIA} ethereum multisign deploy)
     cli_ret "${result}" "ethereum multisign deploy"
-    multisignEthAddr=$(echo "${result}" | jq -r ".msg")
+    ethereumMultisignAddr=$(echo "${result}" | jq -r ".msg")
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -586,7 +545,7 @@ function setupChain33Multisign() {
     result=$(${CLIA} chain33 multisign setup -k "${chain33DeployKey}" -o "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}")
     cli_ret "${result}" "chain33 multisign setup"
 
-    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${multisignChain33Addr})")
+    hash=$(${Chain33Cli} send evm call -f 1 -k "${chain33DeployAddr}" -e "${chain33BridgeBank}" -p "configOfflineSaveAccount(${chain33MultisignAddr})")
     check_tx "${Chain33Cli}" "${hash}"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -599,7 +558,7 @@ function setupEthMultisign() {
     result=$(${CLIA} ethereum multisign setup -k "${ethDeployKey}" -o "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}")
     cli_ret "${result}" "ethereum multisign setup"
 
-    result=$(${CLIA} ethereum multisign set_offline_addr -s "${multisignEthAddr}")
+    result=$(${CLIA} ethereum multisign set_offline_addr -s "${ethereumMultisignAddr}")
     cli_ret "${result}" "set_offline_addr"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -608,10 +567,10 @@ function setupEthMultisign() {
 function transferChain33MultisignFee() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    # multisignChain33Addr 要有手续费
-    hash=$(${Chain33Cli} send coins transfer -a 10 -t "${multisignChain33Addr}" -k "${chain33DeployAddr}")
+    # chain33MultisignAddr 要有手续费
+    hash=$(${Chain33Cli} send coins transfer -a 10 -t "${chain33MultisignAddr}" -k "${chain33DeployAddr}")
     check_tx "${Chain33Cli}" "${hash}"
-    result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e coins)
+    result=$(${Chain33Cli} account balance -a "${chain33MultisignAddr}" -e coins)
     balance_ret "${result}" "10.0000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -640,7 +599,7 @@ function lock_bty_multisign() {
 
         result=$(${Chain33Cli} account balance -a "${chain33BridgeBank}" -e evm)
         balance_ret "${result}" "${bridgeBankBalance}"
-        result=$(${Chain33Cli} account balance -a "${multisignChain33Addr}" -e evm)
+        result=$(${Chain33Cli} account balance -a "${chain33MultisignAddr}" -e evm)
         balance_ret "${result}" "${multisignBalance}"
     fi
 }
@@ -661,7 +620,7 @@ function lock_chain33_ycc_multisign() {
 
         result=$(${Chain33Cli} evm query -a "${chain33YccERC20TokenAddr}" -c "${chain33BridgeBank}" -b "balanceOf(${chain33BridgeBank})")
         is_equal "${result}" "${bridgeBankBalance}"
-        result=$(${Chain33Cli} evm query -a "${chain33YccERC20TokenAddr}" -c "${multisignChain33Addr}" -b "balanceOf(${multisignChain33Addr})")
+        result=$(${Chain33Cli} evm query -a "${chain33YccERC20TokenAddr}" -c "${chain33MultisignAddr}" -b "balanceOf(${chain33MultisignAddr})")
         is_equal "${result}" "${multisignBalance}"
     fi
 }
@@ -680,9 +639,9 @@ function lock_eth_multisign() {
         sleep 4
         #        eth_block_wait 2
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+        result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
@@ -701,9 +660,9 @@ function lock_ethereum_byc_multisign() {
         sleep 4
         #        eth_block_wait 2
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumBycERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}" -t "${ethereumBycERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }
@@ -721,9 +680,9 @@ function lock_ethereum_usdt_multisign() {
         # eth 等待 2 个区块
         sleep 4
 
-        result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
-        result=$(${CLIA} ethereum balance -o "${multisignEthAddr}" -t "${ethereumUSDTERC20TokenAddr}")
+        result=$(${CLIA} ethereum balance -o "${ethereumMultisignAddr}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${multisignBalance}"
     fi
 }

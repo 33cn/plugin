@@ -3,7 +3,7 @@
 
 ### 启动 relayer A
 #### 完成 ethererum 和 chain33 相关合约的部署
-得到 BridgeRegistryOnChain33, BridgeRegistryOnEth, multisignChain33Addr, multisignEthAddr 4个合约地址。
+得到 chain33BridgeRegistry, ethereumBridgeRegistry, chain33MultisignAddr, ethereumMultisignAddr 4个合约地址。
 #### 修改 relayer.toml 配置文件
 |字段|说明|
 |----|----|
@@ -12,7 +12,7 @@
 |ChainName|链的名称, 用来区分主链和平行链, 如user.p.xxx., 必须包含最后一个点|
 |EthProvider|ethereum 的 socket 通信地址, 例如: wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270|
 |EthProviderCli|ethereum 的 http url 地址, 例如: https://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270|
-|BridgeRegistryOnChain33|部署在 chain33 的 BridgeRegistry 地址|
+|chain33BridgeRegistry|部署在 chain33 的 BridgeRegistry 地址|
 |BridgeRegistry|部署在 ethereum 的 BridgeRegistry 地址|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801|
 |pushHost|relayer 的 host 地址, 默认: http://localhost:20000|
@@ -34,9 +34,9 @@
 ./ebcli_A ethereum import_privatekey -k "${ethValidatorAddrKeya}"
 
 # 设置 chain33 多签合约地址
-./ebcli_A chain33 multisign set_multiSign -a "${multisignChain33Addr}"
+./ebcli_A chain33 multisign set_multiSign -a "${chain33MultisignAddr}"
 # 设置 ethereum 多签合约地址
-./ebcli_A ethereum multisign set_multiSign -a "${multisignEthAddr}"
+./ebcli_A ethereum multisign set_multiSign -a "${ethereumMultisignAddr}"
 ```
 
 #### 运行持续启动 relayer

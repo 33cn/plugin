@@ -11,11 +11,11 @@ source "./mainPubilcRelayerTest.sh"
 # shellcheck disable=SC2034
 {
     chain33BridgeBank=""
-    ethBridgeBank=""
-    BridgeRegistryOnChain33=""
-    BridgeRegistryOnEth=""
-    multisignChain33Addr=""
-    multisignEthAddr=""
+    ethereumBridgeBank=""
+    chain33BridgeRegistry=""
+    ethereumBridgeRegistry=""
+    chain33MultisignAddr=""
+    ethereumMultisignAddr=""
     chain33EthBridgeTokenAddr=""
     ethereumUSDTERC20TokenAddr=""
     chain33USDTBridgeTokenAddr=""
@@ -141,7 +141,7 @@ function DeployEvmxgo() {
 function TestETH2EVMToChain33() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 11个
@@ -152,7 +152,7 @@ function TestETH2EVMToChain33() {
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 11
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "11"
 
     sleep ${maturityDegree}
@@ -180,7 +180,7 @@ function TestETH2EVMToChain33() {
 function Testethereum2EVMToChain33_usdt() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 12个
@@ -191,7 +191,7 @@ function Testethereum2EVMToChain33_usdt() {
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 12
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "12"
 
     sleep ${maturityDegree}

@@ -11,17 +11,31 @@ source "./offlinePublic.sh"
 # shellcheck disable=SC2034
 {
     chain33BridgeBank=""
-    ethBridgeBank=""
-    BridgeRegistryOnChain33=""
-    BridgeRegistryOnEth=""
-    multisignChain33Addr=""
-    multisignEthAddr=""
-
+    chain33BridgeRegistry=""
+    chain33MultisignAddr=""
     chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
-    ethereumBtyBridgeTokenAddr=""
-    chain33EthBridgeTokenAddr=""
-    ethereumUSDTERC20TokenAddr=""
     chain33USDTBridgeTokenAddr=""
+    chain33MainBridgeTokenAddr=""
+    chain33MainBridgeTokenAddrETH=""
+    chain33MainBridgeTokenAddrBNB=""
+
+    ethereumBridgeBank=""
+    ethereumBridgeRegistry=""
+    ethereumMultisignAddr=""
+    ethereumUSDTERC20TokenAddr=""
+    ethereumBtyBridgeTokenAddr=""
+
+    ethereumBridgeBankOnETH=""
+    ethereumBridgeRegistryOnETH=""
+    ethereumMultisignAddrOnETH=""
+    ethereumUSDTERC20TokenAddrOnETH=""
+    ethereumBtyBridgeTokenAddrOnETH=""
+
+    ethereumBridgeBankOnBSC=""
+    ethereumBridgeRegistryOnBSC=""
+    ethereumMultisignAddrOnBSC=""
+    ethereumUSDTERC20TokenAddrOnBSC=""
+    ethereumBtyBridgeTokenAddrOnBSC=""
 
     # ETH 部署合约者的私钥 用于部署合约时签名使用
     ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
@@ -88,31 +102,17 @@ function start_docker_ebrelayerA() {
     sleep 5
 }
 
-function updata_toml() {
-    local name=$1
-    local file="./relayer$name.toml"
-    cp './relayer.toml' "${file}"
-
-    # 删除配置文件中不需要的字段
-    for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
-        delete_line "${file}" "${deleteName}"
-    done
-
-    pushNameChange "${file}"
-
-    pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
-    line=$(delete_line_show "${file}" "pushHost")
-    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
-
-    line=$(delete_line_show "${file}" "pushBind")
-    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
-}
-
 # start ebrelayer B C D
 function updata_toml_start_bcd() {
     for name in b c d; do
-        updata_toml $name
         local file="./relayer$name.toml"
+        cp './relayer.toml' "${file}"
+
+        # 修改 relayer.toml 配置文件 pushName 字段
+        sed -i 's/^pushName=.*/pushName="x2eth'"${name}"'"/g' "${file}"
+        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+        sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "${file}"
+        sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "${file}"
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
@@ -144,7 +144,7 @@ function TestChain33ToEthAssets() {
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 原来的地址金额
-    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "500.0000"
 
     # chain33 lock bty
@@ -152,11 +152,11 @@ function TestChain33ToEthAssets() {
     check_tx "${Chain33Cli}" "${hash}"
 
     # 原来的地址金额 减少了 5
-    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33TestAddr1}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "495.0000"
 
     # chain33BridgeBank 是否增加了 5
-    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "5.0000"
 
     sleep 4
@@ -178,11 +178,11 @@ function TestChain33ToEthAssets() {
     sleep ${maturityDegree}
 
     # 接收的地址金额 变成了 3
-    result=$(${Chain33Cli} asset balance -a "${chain33ReceiverAddr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33ReceiverAddr}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "3.0000"
 
     # chain33BridgeBank 是否减少了 3
-    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "2.0000"
 
     # eth burn 2
@@ -198,11 +198,11 @@ function TestChain33ToEthAssets() {
     sleep ${maturityDegree}
 
     # 接收的地址金额 变成了 5
-    result=$(${Chain33Cli} asset balance -a "${chain33ReceiverAddr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33ReceiverAddr}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "5.0000"
 
     # chain33BridgeBank 是否减少了 3
-    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "0.0000"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -211,7 +211,7 @@ function TestChain33ToEthAssets() {
 function TestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== eth to chain33 在以太坊上锁定 ETH 资产,然后在 chain33 上 burn ===========${NOC}"
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     result=$(${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
@@ -220,44 +220,44 @@ function TestETH2Chain33Assets() {
     # eth 等待 2 个区块
     sleep 4
 
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
 
     sleep ${maturityDegree}
 
-    # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
-    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     #    is_equal "${result}" "2000000000000000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     #    is_equal "${result}" "1700000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.0017"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
-    result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
@@ -269,7 +269,7 @@ function TestETH2Chain33USDT() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== eth to chain33 在以太坊上锁定 USDT 资产,然后在 chain33 上 burn ===========${NOC}"
     # 查询 ETH 这端 bridgeBank 地址原来是 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # ETH 这端 lock 12个 USDT
@@ -280,12 +280,12 @@ function TestETH2Chain33USDT() {
     sleep 4
 
     # 查询 ETH 这端 bridgeBank 地址 12 USDT
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "12"
 
     sleep ${maturityDegree}
 
-    # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
+    # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
     # 结果是 12 * le8
     is_equal "${result}" "1200000000"
@@ -306,7 +306,7 @@ function TestETH2Chain33USDT() {
     is_equal "${result}" "700000000"
 
     # 查询 ETH 这端 bridgeBank 地址 7
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "7"
 
     # 更新后的金额 5
@@ -324,7 +324,7 @@ function TestETH2Chain33USDT() {
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
-    result=$(${CLIA} ethereum balance -o "${ethBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "0"
 
     # 更新后的金额 12
@@ -362,7 +362,7 @@ function offline_set_offline_token_Eth() {
         percents=$2
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_offline_token.txt"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -376,7 +376,7 @@ function offline_set_offline_token_EthUSDT() {
         percents=$2
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} ethereum offline set_offline_token -s USDT -m ${threshold} -p ${percents} -t "${ethereumUSDTERC20TokenAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline set_offline_token -s USDT -m ${threshold} -p ${percents} -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_offline_token.txt"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -400,9 +400,9 @@ function coins_cross_transfer() {
     is_equal "${result}" "${para_amount}.0000"
 
     # 把平行链中的 bty 转入 平行链中的 evm 合约
-    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e user.p.para.evm -s coins.bty -k "${key}")
+    hash=$(${Para8901Cli} send para transfer_exec -a "${evm_amount}" -e "${paraName}evm" -s coins.bty -k "${key}")
     check_tx "${Para8901Cli}" "${hash}"
-    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+    result=$(${Para8901Cli} asset balance -a "${addr}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "${evm_amount}.0000"
 }
 
@@ -436,9 +436,9 @@ function lock_bty_multisign_docker() {
         local bridgeBankBalance=$2
         local multisignBalance=$3
 
-        result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+        result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
         is_equal "${result}" "${bridgeBankBalance}"
-        result=$(${Chain33Cli} asset balance -a "${multisignChain33Addr}" --asset_exec paracross --asset_symbol coins.bty -e user.p.para.evm | jq -r .balance)
+        result=$(${Chain33Cli} asset balance -a "${chain33MultisignAddr}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
         is_equal "${result}" "${multisignBalance}"
     fi
 }
@@ -457,22 +457,6 @@ function lockBty() {
     offline_transfer_multisign_Bty_test
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
-
-#function lockChain33Ycc() {
-#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo -e "${GRE}===== chain33 端 lock ERC20 YCC ======${NOC}"
-#    #    echo '2:#配置自动转离线钱包(YCC, 100, 60%)'
-#    offline_set_offline_token_Chain33Ycc
-#
-#    lock_chain33_ycc_multisign 30 30 0
-#    lock_chain33_ycc_multisign 70 40 60
-#    lock_chain33_ycc_multisign 260 120 240
-#    lock_chain33_ycc_multisign 10 52 318
-#
-#    # transfer test
-#    offline_transfer_multisign_Chain33Ycc_test
-#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-#}
 
 function lockEth() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
@@ -493,27 +477,6 @@ function lockEth() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-#function lockEthByc() {
-#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo -e "${GRE}===== ethereum 端 lock ERC20 Byc ======${NOC}"
-#    # echo '2:#配置自动转离线钱包(ycc, 100, 40%)'
-#    offline_set_offline_token_EthByc
-#    # 重启 nonce 会不统一 要重启一下
-#    restart_ebrelayerA
-#
-#    lock_ethereum_byc_multisign 70 70 0
-#    lock_ethereum_byc_multisign 30 60 40
-#    lock_ethereum_byc_multisign 60 72 88
-#
-#    # multisignEthAddr 要有手续费
-#    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
-#    sleep 10
-#
-#    # transfer
-#    offline_transfer_multisign_EthByc
-#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-#}
-
 function lockEthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== ethereum 端 lock ERC20 USDT ======${NOC}"
@@ -526,8 +489,8 @@ function lockEthUSDT() {
     lock_ethereum_usdt_multisign 30 60 40
     lock_ethereum_usdt_multisign 60 72 88
 
-    # multisignEthAddr 要有手续费
-    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${multisignEthAddr}"
+    # ethereumMultisignAddr 要有手续费
+    ${CLIA} ethereum transfer -k "${ethDeployKey}" -m 10 -r "${ethereumMultisignAddr}"
     sleep 10
 
     # transfer
@@ -540,7 +503,7 @@ function up_relayer_toml() {
     relaye_file="./relayer.toml"
 
     # 修改 relayer.toml 配置文件 pushName 字段
-    sed -i 's/^pushName=.*/pushName="x2ethA"/' "${relaye_file}"
+    sed -i 's/^pushName=.*/pushName="x2ethA"/g' "${relaye_file}"
 
     # 替换7到15行
     sed -i '7,15s/ethProvider=.*/ethProvider="ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"/g' "${relaye_file}"
@@ -554,19 +517,9 @@ function up_relayer_toml() {
     sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${relaye_file}"
     sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${relaye_file}"
 
-
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./relayer.toml" "ChainName")
-    # 在第 line 行后面 新增合约地址
-    sed -i ''"${line}"' a ChainName="user.p.para."' "./relayer.toml"
-
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./relayer.toml" "maturityDegree=10")
-    sed -i ''"${line}"' a maturityDegree=1' "./relayer.toml"
-
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "./relayer.toml" "EthMaturityDegree=10")
-    sed -i ''"${line}"' a EthMaturityDegree=1' "./relayer.toml"
+    sed -i 's/^ChainName=.*/ChainName="'"${paraName}"'"/g' "${relaye_file}"
+    sed -i 's/^maturityDegree=.*/maturityDegree=1/g' "${relaye_file}"
+    sed -i 's/^EthMaturityDegree=.*/EthMaturityDegree=1/g' "${relaye_file}"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -595,18 +548,19 @@ function StartDockerRelayerDeploy() {
     InitRelayerA
 
     # 设置 token 地址
+    offline_create_bridge_token_chain33_USDT
+
     offline_create_bridge_token_eth_BTY
     offline_create_bridge_token_chain33_ETH "ETH"
     offline_deploy_erc20_create_tether_usdt_USDT
-    offline_create_bridge_token_chain33_USDT
 
     # shellcheck disable=SC2086
     {
-        docker cp "${BridgeRegistryOnChain33}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnChain33}.abi
+        docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
         docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
-        docker cp "${BridgeRegistryOnEth}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${BridgeRegistryOnEth}.abi
-        docker cp "${ethBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethBridgeBank}.abi
-        docker cp "${chain33EthBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33EthBridgeTokenAddr}.abi
+        docker cp "${ethereumBridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistry}.abi
+        docker cp "${ethereumBridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBank}.abi
+        docker cp "${chain33MainBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddr}.abi
         docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
     }
 
@@ -619,17 +573,17 @@ function StartDockerRelayerDeploy() {
 
 function echo_addrs() {
     echo -e "${GRE}=========== echo contract addrs ===========${NOC}"
-    echo -e "${GRE}BridgeRegistryOnChain33: ${BridgeRegistryOnChain33} ${NOC}"
-    echo -e "${GRE}BridgeRegistryOnEth: ${BridgeRegistryOnEth} ${NOC}"
+    echo -e "${GRE}chain33BridgeRegistry: ${chain33BridgeRegistry} ${NOC}"
+    echo -e "${GRE}ethereumBridgeRegistry: ${ethereumBridgeRegistry} ${NOC}"
     echo -e "${GRE}chain33BridgeBank: ${chain33BridgeBank} ${NOC}"
-    echo -e "${GRE}ethBridgeBank: ${ethBridgeBank} ${NOC}"
+    echo -e "${GRE}ethereumBridgeBank: ${ethereumBridgeBank} ${NOC}"
     echo -e "${GRE}chain33BtyERC20TokenAddr: ${chain33BtyERC20TokenAddr} ${NOC}"
-    echo -e "${GRE}chain33EthBridgeTokenAddr: ${chain33EthBridgeTokenAddr} ${NOC}"
+    echo -e "${GRE}chain33MainBridgeTokenAddr: ${chain33MainBridgeTokenAddr} ${NOC}"
     echo -e "${GRE}ethereumBtyBridgeTokenAddr: ${ethereumBtyBridgeTokenAddr} ${NOC}"
     echo -e "${GRE}ethereumUSDTERC20TokenAddr: ${ethereumUSDTERC20TokenAddr} ${NOC}"
     echo -e "${GRE}chain33USDTBridgeTokenAddr: ${chain33USDTBridgeTokenAddr} ${NOC}"
-    echo -e "${GRE}multisignChain33Addr: ${multisignChain33Addr} ${NOC}"
-    echo -e "${GRE}multisignEthAddr: ${multisignEthAddr} ${NOC}"
+    echo -e "${GRE}chain33MultisignAddr: ${chain33MultisignAddr} ${NOC}"
+    echo -e "${GRE}ethereumMultisignAddr: ${ethereumMultisignAddr} ${NOC}"
     # shellcheck disable=SC2154
     echo -e "${GRE}XgoBridgeRegistryOnChain33: ${XgoBridgeRegistryOnChain33} ${NOC}"
     # shellcheck disable=SC2154
@@ -657,10 +611,11 @@ function echo_addrs() {
 function get_cli() {
     # shellcheck disable=SC2034
     {
+        paraName="user.p.para."
         docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
         MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
-        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
+        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
+        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
 
         docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
         CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
@@ -671,8 +626,13 @@ function get_cli() {
 
         docker_ganachetesteth_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetesteth_1")
         docker_ganachetestbsc_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetestbsc_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName user.p.para. --chainID ${chain33ID} --chainEthId 1337"
-        Boss4xCLIbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName user.p.para. --chainID ${chain33ID} --chainEthId 1337"
+        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+
+        Boss4xCLIeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+        Boss4xCLIbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+
+        CLIAeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545"
+        CLIAbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545"
     }
 }
 
