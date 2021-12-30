@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.66.0"></a>
+# [1.66.0](https://github.com/33cn/plugin/compare/v1.65.4...v1.66.0) (2021-12-30)
+
+
+### Features
+
+* release 1.66 ([b94376e](https://github.com/33cn/plugin/commit/b94376e))
+
 <a name="1.65.4"></a>
 ## [1.65.4](https://github.com/33cn/plugin/compare/v1.65.3...v1.65.4) (2021-10-27)
 
