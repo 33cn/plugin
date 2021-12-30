@@ -864,7 +864,7 @@ func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsReque
 		return errors.New("wrong source chain flag")
 	}
 
-	if request.Operation != 2 && 1 != request.Operation {
+	if request.Operation != 2 && 1 != request.Operation && 3 != request.Operation {
 		return errors.New("wrong Operation flag")
 	}
 
