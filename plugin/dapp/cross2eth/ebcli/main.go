@@ -71,6 +71,7 @@ func run(RPCAddr, NodeAddr string) {
 	log.SetLogLevel("error")
 	rootCmd.PersistentFlags().String("rpc_laddr", RPCAddr, "http url")
 	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "eth node url")
+	rootCmd.PersistentFlags().String("eth_chain_name", "Ethereum", "eth chain name")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -99,5 +100,6 @@ func main() {
 	if buildflags.NodeAddr == "" {
 		buildflags.NodeAddr = cfg.EthRelayerCfg[0].EthProviderCli
 	}
+
 	run(buildflags.RPCAddr, buildflags.NodeAddr)
 }

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/33cn/chain33/common/address"
-
 	"github.com/33cn/chain33/common"
 	chain33Common "github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -346,8 +346,14 @@ func ShowTxReceiptFlags(cmd *cobra.Command) {
 //ShowTxReceipt ...
 func ShowTxReceipt(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	txhash, _ := cmd.Flags().GetString("hash")
-	para := txhash
+
+	para := &relayerTypes.TxReceiptReq{
+		TxHash:    txhash,
+		ChainName: ethChainName,
+	}
+
 	var res ethTypes.Receipt
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowTxReceipt", para, &res)
 	ctx.Run()
@@ -436,6 +442,7 @@ func BurnAsyncCmd() *cobra.Command {
 // Burn ...
 func Burn(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	key, _ := cmd.Flags().GetString("key")
 	tokenAddr, _ := cmd.Flags().GetString("token")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -452,6 +459,7 @@ func Burn(cmd *cobra.Command, args []string) {
 		TokenAddr:       tokenAddr,
 		Amount:          utils.ToWei(amount, d).String(),
 		Chain33Receiver: receiver,
+		ChainName:       ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.Burn", para, &res)
@@ -703,6 +711,7 @@ func TransferTokenFlags(cmd *cobra.Command) {
 //TransferToken ...
 func TransferToken(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	tokenAddr, _ := cmd.Flags().GetString("token")
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
@@ -721,6 +730,7 @@ func TransferToken(cmd *cobra.Command, args []string) {
 		FromKey:   from,
 		ToAddr:    to,
 		Amount:    realAmount.String(),
+		ChainName: ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.TransferToken", para, &res)
@@ -758,8 +768,9 @@ func GetSelfBalanceCmd() *cobra.Command {
 //showMultiBalance ...
 func showMultiBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	para := ebTypes.BalanceAddr{}
+	para := ebTypes.BalanceAddr{ChainName: ethChainName}
 	var res ebTypes.ReplyBalance
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowMultiBalance", para, &res)
 	ctx.Run()
@@ -868,6 +879,7 @@ func SafeTransferEthFlags(cmd *cobra.Command) {
 
 func SafeTransferEth(cmd *cobra.Command, _ []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	tokenAddr, _ := cmd.Flags().GetString("token")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -882,6 +894,7 @@ func SafeTransferEth(cmd *cobra.Command, _ []string) {
 		Amount:             amount,
 		OperatorPrivateKey: operatorKey,
 		OwnerPrivateKeys:   keys,
+		ChainName:          ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SafeTransfer4Eth", para, &res)
@@ -908,10 +921,16 @@ func ConfigOfflineSaveAccountFlags(cmd *cobra.Command) {
 //ConfigOfflineSaveAccount ...
 func ConfigOfflineSaveAccount(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	addr, _ := cmd.Flags().GetString("address")
 
+	para := &relayerTypes.CfgOfflineSaveAccountReq{
+		ChainName: ethChainName,
+		Address:   addr,
+	}
+
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", addr, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", para, &res)
 	ctx.Run()
 }
 
@@ -968,6 +987,7 @@ func ConfigLockedTokenOfflineSaveFlags(cmd *cobra.Command) {
 //ConfigLockedTokenOfflineSave ...
 func ConfigLockedTokenOfflineSave(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	token, _ := cmd.Flags().GetString("token")
 	threshold, _ := cmd.Flags().GetFloat64("threshold")
@@ -986,6 +1006,7 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, args []string) {
 		Address:   token,
 		Threshold: realAmount.String(),
 		Percents:  percents,
+		ChainName: ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigLockedTokenOfflineSave", para, &res)
@@ -1013,6 +1034,7 @@ func TransferEthFlags(cmd *cobra.Command) {
 
 func TransferEth(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -1025,6 +1047,7 @@ func TransferEth(cmd *cobra.Command, args []string) {
 		FromKey:   from,
 		ToAddr:    to,
 		Amount:    realAmount.String(),
+		ChainName: ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.TransferEth", para, &res)
@@ -1048,9 +1071,14 @@ func SetEthMultiSignAddrCmdFlags(cmd *cobra.Command) {
 
 func SetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	address, _ := cmd.Flags().GetString("address")
+	para := &relayerTypes.CfgMultiSignAddr{
+		ChainName:     ethChainName,
+		MultiSignAddr: address,
+	}
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetEthMultiSignAddr", address, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetEthMultiSignAddr", para, &res)
 	ctx.Run()
 }
 
@@ -1077,6 +1105,7 @@ func addCfgWithdrawFlags(cmd *cobra.Command) {
 
 func CfgWithdraw(cmd *cobra.Command, _ []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -1086,6 +1115,7 @@ func CfgWithdraw(cmd *cobra.Command, _ []string) {
 		Symbol:       symbol,
 		FeeAmount:    utils.ToWei(fee, int64(decimal)).String(),
 		AmountPerDay: utils.ToWei(amount, int64(decimal)).String(),
+		ChainName:    ethChainName,
 	}
 
 	var res rpctypes.Reply
