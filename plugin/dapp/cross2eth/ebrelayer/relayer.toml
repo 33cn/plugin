@@ -7,8 +7,8 @@ dbCache=64
 #以太坊链1的配置
 [[EthRelayerCfg]]
 EthChainName="Ethereum"
-ethProvider="ws://127.0.0.1:7545/"
-EthProviderCli="http://127.0.0.1:7545"
+ethProvider="ws://172.18.0.2:8545/"
+EthProviderCli="http://172.18.0.2:8545"
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
@@ -16,8 +16,8 @@ ProcessWithDraw=false
 #以太坊链2的配置
 [[EthRelayerCfg]]
 EthChainName="Binance"
-ethProvider="ws://127.0.0.1:7545/"
-EthProviderCli="http://127.0.0.1:7545"
+ethProvider="ws://172.18.0.2:8545/"
+EthProviderCli="http://172.18.0.2:8545"
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
@@ -29,7 +29,7 @@ ChainID4Chain33=0
 ChainName=""
 BridgeRegistryOnChain33=""
 
-[SyncTxConfig]
+[Chain33RelayerCfg.SyncTxConfig]
 chain33Host="http://localhost:8801"
 pushHost="http://localhost:20000"
 pushName="x2eth"
