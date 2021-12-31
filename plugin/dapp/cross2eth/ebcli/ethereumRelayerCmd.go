@@ -527,6 +527,7 @@ func LockEthErc20AssetFlags(cmd *cobra.Command) {
 //LockEthErc20Asset ...
 func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	key, _ := cmd.Flags().GetString("key")
 	tokenAddr, _ := cmd.Flags().GetString("token")
 	amount, _ := cmd.Flags().GetFloat64("amount")
@@ -546,6 +547,7 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 		TokenAddr:       tokenAddr,
 		Amount:          realAmount.String(),
 		Chain33Receiver: receiver,
+		ChainName:       ethChainName,
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20Asset", para, &res)
@@ -673,12 +675,14 @@ func GetBalanceFlags(cmd *cobra.Command) {
 //GetBalance ...
 func GetBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 	owner, _ := cmd.Flags().GetString("owner")
 	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")
 
 	para := ebTypes.BalanceAddr{
 		Owner:     owner,
 		TokenAddr: tokenAddr,
+		ChainName: ethChainName,
 	}
 	var res ebTypes.ReplyBalance
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetBalance", para, &res)

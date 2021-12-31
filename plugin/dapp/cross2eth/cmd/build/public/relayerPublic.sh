@@ -84,56 +84,6 @@ function start_ebrelayerD() {
     eth_block_wait 12
 }
 
-function InitAndDeploy() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    result=$(${CLIA} set_pwd -p "${validatorPwd}")
-    cli_ret "${result}" "set_pwd"
-
-    result=$(${CLIA} unlock -p "${validatorPwd}")
-    cli_ret "${result}" "unlock"
-
-    # shellcheck disable=SC2154
-    result=$(${CLIA} chain33 import_privatekey -k "${chain33DeployKey}")
-    cli_ret "${result}" "chain33 import_privatekey"
-
-    # shellcheck disable=SC2154
-    result=$(${CLIA} ethereum import_privatekey -k "${ethDeployKey}")
-    cli_ret "${result}" "ethereum import_privatekey"
-
-    # 在 chain33 上部署合约
-    result=$(${CLIA} chain33 deploy)
-    cli_ret "${result}" "chain33 deploy"
-    chain33BridgeRegistry=$(echo "${result}" | jq -r ".msg")
-
-    # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
-    cp BridgeRegistry.abi "${chain33BridgeRegistry}.abi"
-    # shellcheck disable=SC2154
-    chain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${chain33BridgeRegistry}")
-    cp Chain33BridgeBank.abi "${chain33BridgeBank}.abi"
-
-    # 在 Eth 上部署合约
-    result=$(${CLIA} ethereum deploy)
-    cli_ret "${result}" "ethereum deploy"
-    ethereumBridgeRegistry=$(echo "${result}" | jq -r ".msg")
-
-    # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
-    cp BridgeRegistry.abi "${ethereumBridgeRegistry}.abi"
-    result=$(${CLIA} ethereum bridgeBankAddr)
-    ethereumBridgeBank=$(echo "${result}" | jq -r ".addr")
-    cp EthBridgeBank.abi "${ethereumBridgeBank}.abi"
-
-    # 修改 relayer.toml 字段
-    updata_relayer "chain33BridgeRegistry" "${chain33BridgeRegistry}" "./relayer.toml"
-
-    line=$(delete_line_show "./relayer.toml" "BridgeRegistry=")
-    if [ "${line}" ]; then
-        sed -i ''"${line}"' a BridgeRegistry="'"${ethereumBridgeRegistry}"'"' "./relayer.toml"
-    fi
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
 function create_bridge_token_eth_BTY() {
     # 在 Ethereum 上创建 bridgeToken BTY
     echo -e "${GRE}======= 在 Ethereum 上创建 bridgeToken BTY ======${NOC}"
@@ -330,35 +280,6 @@ function validators_config() {
     fi
 }
 
-function StartRelayerAndDeploy() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-
-    # 修改 relayer.toml 配置文件 pushName 字段
-    pushNameChange "./relayer.toml"
-    validators_config
-
-    # 启动 ebrelayer
-    start_ebrelayerA
-
-    # 导入私钥 部署合约 设置 bridgeRegistry 地址
-    InitAndDeploy
-
-    # 重启
-    kill_ebrelayer ebrelayer
-    start_ebrelayerA
-
-    result=$(${CLIA} unlock -p "${validatorPwd}")
-    cli_ret "${result}" "unlock"
-
-    # start ebrelayer B C D
-    updata_toml_start_BCD
-
-    # 设置 token 地址
-    InitTokenAddr
-
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
 # chian33 初始化准备
 function InitChain33() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
@@ -490,11 +411,6 @@ function StartChain33() {
     InitChain33
 }
 
-function AllRelayerStart() {
-    kill_all_ebrelayer
-    StartRelayerAndDeploy
-}
-
 function StartRelayerOnRopsten() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
@@ -573,16 +489,6 @@ function transferChain33MultisignFee() {
     result=$(${Chain33Cli} account balance -a "${chain33MultisignAddr}" -e coins)
     balance_ret "${result}" "10.0000"
 
-    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-}
-
-function deployMultisign() {
-    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-    initMultisignChain33Addr
-    deployChain33AndEthMultisign
-    setupChain33Multisign
-    setupEthMultisign
-    transferChain33MultisignFee
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
