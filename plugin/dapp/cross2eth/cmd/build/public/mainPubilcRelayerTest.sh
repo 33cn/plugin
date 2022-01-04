@@ -370,6 +370,7 @@ function offline_set_offline_token_Eth() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
+# shellcheck disable=SC2120
 function offline_set_offline_token_EthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     local threshold=100
