@@ -22,11 +22,11 @@ const (
 	TyEntrustOrderAction
 	TyEntrustRevokeOrderAction
 
-	NameLimitOrderAction   = "LimitOrder"
-	NameMarketOrderAction  = "MarketOrder"
-	NameRevokeOrderAction  = "RevokeOrder"
-	NameExchangeBindAction = "ExchangeBind"
-	NameEntrustOrderAction = "EntrustOrder"
+	NameLimitOrderAction         = "LimitOrder"
+	NameMarketOrderAction        = "MarketOrder"
+	NameRevokeOrderAction        = "RevokeOrder"
+	NameExchangeBindAction       = "ExchangeBind"
+	NameEntrustOrderAction       = "EntrustOrder"
 	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
@@ -77,11 +77,11 @@ var (
 	ExchangeX = "exchange"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameLimitOrderAction:   TyLimitOrderAction,
-		NameMarketOrderAction:  TyMarketOrderAction,
-		NameRevokeOrderAction:  TyRevokeOrderAction,
-		NameExchangeBindAction: TyExchangeBindAction,
-		NameEntrustOrderAction:  TyEntrustOrderAction,
+		NameLimitOrderAction:         TyLimitOrderAction,
+		NameMarketOrderAction:        TyMarketOrderAction,
+		NameRevokeOrderAction:        TyRevokeOrderAction,
+		NameExchangeBindAction:       TyExchangeBindAction,
+		NameEntrustOrderAction:       TyEntrustOrderAction,
 		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
@@ -93,8 +93,9 @@ var (
 	}
 	//tlog = log.New("module", "exchange.types")
 
-	//ForkFix1 Forks
+	//ForkFix Forks
 	ForkFix1 = "ForkFix1"
+	ForkFix2 = "ForkFix2"
 )
 
 // init defines a register function
@@ -109,6 +110,7 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
 	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix2, 0)
 }
 
 // InitExecutor defines register executor

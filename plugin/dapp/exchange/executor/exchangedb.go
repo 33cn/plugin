@@ -265,6 +265,13 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 //2.卖单低于市场价，按价格由高往低进行撮合。
 //3.价格相同按先进先出的原则进行撮合
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix2) {
+		return a.matchLimitOrder_Fix2(payload, leftAccountDB, rightAccountDB, entrustAddr)
+	}
+	return a.matchLimitOrder_Fix1(payload, leftAccountDB, rightAccountDB)
+}
+func (a *Action) matchLimitOrder_Fix1(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var orderKey string
@@ -277,34 +284,21 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
-	rate := tCfg.GetRate(payload)
-	//fork1 后, 手续费默认值有变动
-	//rate=0  未配置的币种手续费默认为千分之一
-	//rate=1  与未配置返回0做出区分 配置1的代表真实手续费为0，
-	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) {
-		if rate == 0 {
-			rate = 100000
-		} else if rate == 1 {
-			rate = 0
-		}
-	}
-
 	or := &et.Order{
-		OrderID:     a.GetIndex(),
-		Value:       &et.Order_LimitOrder{LimitOrder: payload},
-		Ty:          et.TyLimitOrderAction,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
-		EntrustAddr: entrustAddr,
-		Addr:        a.fromaddr,
-		UpdateTime:  a.blocktime,
-		Index:       a.GetIndex(),
-		Rate:        rate,
-		MinFee:      tCfg.GetMinFee(payload),
-		Hash:        hex.EncodeToString(a.txhash),
-		CreateTime:  a.blocktime,
+		OrderID:    a.GetIndex(),
+		Value:      &et.Order_LimitOrder{LimitOrder: payload},
+		Ty:         et.TyLimitOrderAction,
+		Executed:   0,
+		AVGPrice:   0,
+		Balance:    payload.GetAmount(),
+		Status:     et.Ordered,
+		Addr:       a.fromaddr,
+		UpdateTime: a.blocktime,
+		Index:      a.GetIndex(),
+		Rate:       tCfg.GetRate(payload),
+		MinFee:     tCfg.GetMinFee(payload),
+		Hash:       hex.EncodeToString(a.txhash),
+		CreateTime: a.blocktime,
 	}
 	re := &et.ReceiptExchange{
 		Order: or,
@@ -336,13 +330,20 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 				continue
 			}
 			//根据价格进行迭代
+			var hasOrder bool
 			for {
 				//当撮合深度大于等于最大深度时跳出
 				if count >= et.MaxMatchCount {
 					break
 				}
 				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
+				if orderList != nil && !hasOrder {
+					hasOrder = true
+				}
 				if err == types.ErrNotFound {
+					if !hasOrder {
+						elog.Warn("LimitOrder find dirty deep", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount, "err", err.Error())
+					}
 					break
 				}
 
@@ -351,13 +352,10 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 					if count >= et.MaxMatchCount {
 						break
 					}
-					//没有fork 前, 同地址不能交易
-					if !cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) {
-						if matchorder.Addr == a.fromaddr {
-							continue
-						}
+					//同地址不能交易
+					if matchorder.Addr == a.fromaddr {
+						continue
 					}
-
 					//撮合,指针传递
 					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr()) // payload, or redundant
 					if err != nil {
@@ -381,6 +379,192 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 					break
 				}
 				orderKey = orderList.PrimaryKey
+			}
+			if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) && !hasOrder {
+				var matchorder et.Order
+				matchorder.UpdateTime = a.blocktime
+				matchorder.Status = et.Completed
+				matchorder.Balance = 0
+				matchorder.Executed = 0
+				matchorder.AVGPrice = marketDepth.Price
+				elog.Info("make empty match to del depth", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount)
+				re.MatchOrders = append(re.MatchOrders, &matchorder)
+			}
+		}
+
+		//查询的数据如果没有primaryKey说明没有后续数据了,跳出循环
+		if marketDepthList.PrimaryKey == "" {
+			break
+		}
+		priceKey = marketDepthList.PrimaryKey
+	}
+
+	//未完成的订单需要冻结剩余未成交的资金
+	if payload.Op == et.OpBuy {
+		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
+		if err != nil {
+			elog.Error("LimitOrder.ExecFrozen OpBuy", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
+	}
+	if payload.Op == et.OpSell {
+		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
+		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
+		if err != nil {
+			elog.Error("LimitOrder.ExecFrozen OpSell", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			return nil, err
+		}
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
+	}
+	//更新order状态
+	kvs = append(kvs, a.GetKVSet(or)...)
+	re.Order = or
+	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
+	logs = append(logs, receiptlog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	var orderKey string
+	var priceKey string
+	var count int
+
+	cfg := a.api.GetConfig()
+	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
+	if err != nil {
+		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
+		return nil, err
+	}
+	//fork后, 手续费默认值有变动
+	//rate=0  未配置的币种手续费默认为千分之一
+	//rate=1  与未配置返回0做出区分 配置1的代表真实手续费为0，
+	rate := tCfg.GetRate(payload)
+	if rate == 0 {
+		rate = 100000
+	} else if rate == 1 {
+		rate = 0
+	}
+
+	or := &et.Order{
+		OrderID:     a.GetIndex(),
+		Value:       &et.Order_LimitOrder{LimitOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     payload.GetAmount(),
+		Status:      et.Ordered,
+		EntrustAddr: entrustAddr,
+		Addr:        a.fromaddr,
+		UpdateTime:  a.blocktime,
+		Index:       a.GetIndex(),
+		Rate:        rate,
+		MinFee:      tCfg.GetMinFee(payload),
+		Hash:        hex.EncodeToString(a.txhash),
+		CreateTime:  a.blocktime,
+	}
+	re := &et.ReceiptExchange{
+		Order: or,
+		Index: a.GetIndex(),
+	}
+
+	//单笔交易最多撮合100笔历史订单,最大可撮合得深度，系统得自我防护
+	//迭代已有挂单价格
+	var done bool
+	for {
+		//当撮合深度大于最大深度时跳出
+		if count >= et.MaxMatchCount {
+			break
+		}
+		if done {
+			break
+		}
+		//获取现有市场挂单价格信息
+		marketDepthList, err := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
+		if err == types.ErrNotFound {
+			break
+		}
+		for _, marketDepth := range marketDepthList.List {
+			elog.Error("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
+			if count >= et.MaxMatchCount {
+				done = true
+				break
+			}
+			// 卖单价大于买单价
+			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
+				done = true
+				break
+			}
+			// 买单价小于卖单价
+			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
+				done = true
+				break
+			}
+
+			//根据价格进行迭代
+			var hasOrder bool
+			for {
+				//当撮合深度大于等于最大深度时跳出
+				if count >= et.MaxMatchCount {
+					done = true
+					break
+				}
+				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
+
+				if orderList != nil && !hasOrder {
+					hasOrder = true
+				}
+				if err == types.ErrNotFound {
+					if !hasOrder {
+						elog.Error("LimitOrder find dirty deep", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount, "err", err.Error())
+					}
+					break
+				}
+
+				for _, matchorder := range orderList.List {
+					//当撮合深度大于最大深度时跳出
+					if count >= et.MaxMatchCount {
+						done = true
+						break
+					}
+					//撮合,指针传递
+					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr()) // payload, or redundant
+					if err != nil {
+						return nil, err
+					}
+					logs = append(logs, log...)
+					kvs = append(kvs, kv...)
+					//订单完成,直接返回，如果没有完成，则继续撮合，直到count等于
+					if or.Status == et.Completed {
+						receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
+						logs = append(logs, receiptlog)
+						receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+						return receipts, nil
+					}
+					//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
+					//撮合深度计数
+					count = count + 1
+				}
+				//查询数据不满足10条说明没有了,跳出循环
+				if orderList.PrimaryKey == "" {
+					break
+				}
+				orderKey = orderList.PrimaryKey
+			}
+			if !hasOrder {
+				var matchorder et.Order
+				matchorder.UpdateTime = a.blocktime
+				matchorder.Status = et.Completed
+				matchorder.Balance = 0
+				matchorder.Executed = 0
+				matchorder.AVGPrice = marketDepth.Price
+				elog.Info("make empty match to del depth", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount)
+				re.MatchOrders = append(re.MatchOrders, &matchorder)
 			}
 		}
 
@@ -624,7 +808,9 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 		rows, err = table.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
 	}
 	if err != nil {
-		elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
+		if primaryKey == "" {
+			elog.Error("findOrderIDListByPrice.", "left", left.Symbol, "right", right.Symbol, "price", price, "err", err.Error())
+		}
 		return nil, err
 	}
 	var orderList et.OrderList
@@ -664,7 +850,7 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
 	}
 	if err != nil {
-		//elog.Error("QueryMarketDepth.", "left", left, "right", right, "err", err.Error())
+		elog.Error("QueryMarketDepth.", "left", left, "right", right, "err", err.Error())
 		return nil, err
 	}
 
@@ -763,11 +949,14 @@ func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32,
 	return &orderList, nil
 }
 
-func queryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, price int64) (*et.MarketDepth, error) {
-	table := NewMarketDepthTable(localdb)
+func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, price int64) (*et.MarketDepth, error) {
 	primaryKey := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, price))
-	row, err := table.GetData(primaryKey)
+	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
+		// 在localdb中, 同区块的执行, 删除是先设置成nil, 最后删除的
+		if err == types.ErrDecode && row == nil {
+			err = types.ErrNotFound
+		}
 		return nil, err
 	}
 	return row.Data.(*et.MarketDepth), nil
