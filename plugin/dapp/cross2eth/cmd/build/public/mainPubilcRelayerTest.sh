@@ -691,6 +691,9 @@ function get_cli() {
 
         CLIAeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
         CLIAbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
+
+        CLIPeth="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
+        CLIPbsc="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
     }
 }
 
@@ -701,12 +704,12 @@ function test_lock_and_burn() {
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-#    lockEth "${symbol}"
-#    lockEthUSDT
-#
-#    # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
-#    offline_set_offline_token_EthUSDT 100000000000000 10
+    lockEth "${symbol}"
+    lockEthUSDT
+
+    # 离线多签地址转入阈值设大
+    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
+    offline_set_offline_token_EthUSDT 100000000000000 10
 
 #    TestChain33ToEthAssets
 #    lockBty
