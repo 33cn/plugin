@@ -584,20 +584,13 @@ function StartDockerRelayerDeploy() {
     {
         docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
         docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
-        docker cp "${chain33MultisignAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MultisignAddr}.abi
         docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
         docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrETH}.abi
         docker cp "${chain33MainBridgeTokenAddrBNB}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrBNB}.abi
         docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnETH}.abi
         docker cp "${ethereumBridgeRegistryOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnETH}.abi
-        docker cp "${ethereumMultisignAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumMultisignAddrOnETH}.abi
-        docker cp "${ethereumUSDTERC20TokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumUSDTERC20TokenAddrOnETH}.abi
-        docker cp "${ethereumBtyBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBtyBridgeTokenAddrOnETH}.abi
         docker cp "${ethereumBridgeBankOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnBSC}.abi
         docker cp "${ethereumBridgeRegistryOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeRegistryOnBSC}.abi
-        docker cp "${ethereumMultisignAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumMultisignAddrOnBSC}.abi
-        docker cp "${ethereumUSDTERC20TokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumUSDTERC20TokenAddrOnBSC}.abi
-        docker cp "${ethereumBtyBridgeTokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBtyBridgeTokenAddrOnBSC}.abi
     }
 
     # start ebrelayer B C D
@@ -682,16 +675,16 @@ function test_lock_and_burn() {
     local symbol="${1}"
     # test
     Chain33Cli=${Para8901Cli}
-    TestChain33ToEthAssets
+#    TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-    lockBty
+#    lockBty
     lockEth "${symbol}"
     lockEthUSDT
 
     # 离线多签地址转入阈值设大
-    offline_set_offline_token_Bty 100000000000000 10
+#    offline_set_offline_token_Bty 100000000000000 10
     offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
     offline_set_offline_token_EthUSDT 100000000000000 10
 }

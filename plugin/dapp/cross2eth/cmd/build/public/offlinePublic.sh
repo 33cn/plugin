@@ -325,30 +325,6 @@ function offline_create_bridge_token_eth_ZBC() {
     cp BridgeToken.abi "${ethereumZbcBridgeTokenAddr}.abi"
 }
 
-#function offline_setupChain33Multisign() {
-#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo -e "${GRE}=========== 设置 chain33 离线钱包合约 ===========${NOC}"
-#    # shellcheck disable=SC2154
-#    ${Boss4xCLI} chain33 offline multisign_setup -m "${chain33MultisignAddr}" -o "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}" -k "${chain33DeployKey}"
-#    chain33_offline_send "multisign_setup.txt"
-#
-#    ${Boss4xCLI} chain33 offline set_offline_addr -a "${chain33MultisignAddr}" -c "${chain33BridgeBank}" -k "${chain33DeployKey}"
-#    chain33_offline_send "chain33_set_offline_addr.txt"
-#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-#}
-
-#function offline_setupEthMultisign() {
-#    echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
-#    echo -e "${GRE}=========== 设置 ETH 离线钱包合约 ===========${NOC}"
-#    # shellcheck disable=SC2154
-#    ${Boss4xCLI} ethereum offline multisign_setup -m "${ethereumMultisignAddr}" -d "${ethDeployAddr}" -o "${ethMultisignA},${ethMultisignB},${ethMultisignC},${ethMultisignD}"
-#    ethereum_offline_sign_send "multisign_setup.txt"
-#
-#    ${Boss4xCLI} ethereum offline set_offline_addr -a "${ethereumMultisignAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
-#    ethereum_offline_sign_send "set_offline_addr.txt"
-#    echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
-#}
-
 function offline_transfer_multisign_Eth_test() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     # transfer
