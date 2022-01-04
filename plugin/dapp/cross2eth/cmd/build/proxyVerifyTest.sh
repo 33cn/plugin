@@ -11,9 +11,18 @@ IYellow="\033[0;93m"
 le8=100000000
 
 function start_docker_ebrelayerProxy() {
-    updata_toml proxy
+    cp './relayer.toml' "./relayerproxy.toml"
+
+    sed -i 's/^pushName=.*/pushName="x2ethproxy"/g' "./relayerproxy.toml"
+
+    # shellcheck disable=SC2154
+    pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayerproxy_1")
+    sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "./relayerproxy.toml"
+    sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "./relayerproxy.toml"
+
     # 代理转账中继器中的标志位ProcessWithDraw设置为true
-    sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
+    sed -i '7,15s/ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
+    sed -i '17,24s/ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
 
     # shellcheck disable=SC2154
     docker cp "./relayerproxy.toml" "${dockerNamePrefix}_ebrelayerproxy_1":/root/relayer.toml
@@ -24,10 +33,22 @@ function start_docker_ebrelayerProxy() {
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
 }
 
-function setWithdraw() {
+function setWithdraw_ethereum() {
     result=$(${CLIP} ethereum cfgWithdraw -f 1 -s ETH -a 100 -d 18)
     cli_ret "${result}" "cfgWithdraw"
     result=$(${CLIP} ethereum cfgWithdraw -f 1 -s USDT -a 100 -d 6)
+    cli_ret "${result}" "cfgWithdraw"
+
+    # 在chain33上的bridgeBank合约中设置proxyReceiver
+    # shellcheck disable=SC2154
+    ${Boss4xCLI} chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
+    chain33_offline_send "set_withdraw_proxy.txt"
+}
+
+function setWithdraw_bsc() {
+    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s BNB -a 100 -d 18)
+    cli_ret "${result}" "cfgWithdraw"
+    result=$(${CLIP} ethereum cfgWithdraw -f 1 -s BUSDT -a 100 -d 6)
     cli_ret "${result}" "cfgWithdraw"
 
     # 在chain33上的bridgeBank合约中设置proxyReceiver
@@ -388,10 +409,7 @@ function TestETH2Chain33USDT_proxy_excess() {
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
-function TestRelayerProxy() {
-    start_docker_ebrelayerProxy
-    setWithdraw
-
+function TestProxy() {
     TestETH2Chain33Assets_proxy 20
     TestETH2Chain33Assets_proxy 30
     TestETH2Chain33Assets_proxy_excess 100
@@ -401,5 +419,28 @@ function TestRelayerProxy() {
     TestETH2Chain33USDT_proxy 20
     TestETH2Chain33USDT_proxy 40
     TestETH2Chain33USDT_proxy_excess 100
+}
+
+function TestRelayerProxy() {
+    start_docker_ebrelayerProxy
+
+    # shellcheck disable=SC2154
+    {
+        Boss4xCLI=${Boss4xCLIeth}
+        CLIP=${CLIPeth}
+        ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+        ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
+        setWithdraw_ethereum
+        TestProxy
+
+        Boss4xCLI=${Boss4xCLIbsc}
+        CLIP=${CLIPbsc}
+        ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+        ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
+        setWithdraw_bsc
+        TestProxy
+    }
 }
 
