@@ -254,8 +254,8 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
 
-    restart_ebrelayer_bcd "b"
-    restart_ebrelayer_bcd "c"
+#    restart_ebrelayer_bcd "b"
+#    restart_ebrelayer_bcd "c"
 
     sleep ${maturityDegree}
 
@@ -270,8 +270,8 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
-    restart_ebrelayer_bcd "b"
-    restart_ebrelayer_bcd "c"
+#    restart_ebrelayer_bcd "b"
+#    restart_ebrelayer_bcd "c"
 
     sleep ${maturityDegree}
 
@@ -696,14 +696,14 @@ function test_lock_and_burn() {
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-##    lockBty
-#    lockEth "${symbol}"
-#    lockEthUSDT
-#
-#    # 离线多签地址转入阈值设大
-##    offline_set_offline_token_Bty 100000000000000 10
-#    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
-#    offline_set_offline_token_EthUSDT 100000000000000 10
+#    lockBty
+    lockEth "${symbol}"
+    lockEthUSDT
+
+    # 离线多签地址转入阈值设大
+#    offline_set_offline_token_Bty 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
+    offline_set_offline_token_EthUSDT 100000000000000 10
 }
 
 function test_all() {
