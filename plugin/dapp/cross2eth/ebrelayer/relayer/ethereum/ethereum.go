@@ -1107,7 +1107,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	prophecyClaim.ChainName = ethRelayer.name
 	//如果不是以太坊的USDT,则需要将其铸币为XUSD,如Binance的USDT，则铸币为BUSD
 	if prophecyClaim.Symbol == "USDT" && EthereumChain != ethRelayer.name {
-		prophecyClaim.Symbol = ethRelayer.name[0:1] + "USD"
+		prophecyClaim.Symbol = ethRelayer.name[0:1] + "USDT"
 		prophecyClaim.Symbol = strings.ToUpper(prophecyClaim.Symbol)
 	}
 
