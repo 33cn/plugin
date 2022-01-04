@@ -63,6 +63,7 @@ type Relayer4Chain33 struct {
 	deployResult              *X2EthDeployResult
 	symbol2Addr               map[string]string
 	bridgeSymbol2EthChainName map[string]string //在chain33上发行的跨链token的名称到以太坊链的名称映射
+	processWithDraw           bool
 }
 
 type Chain33StartPara struct {
@@ -74,6 +75,7 @@ type Chain33StartPara struct {
 	EthBridgeClaimChan <-chan *ebTypes.EthBridgeClaim
 	Chain33MsgChan     map[string]chan<- *events.Chain33Msg
 	ChainID            int32
+	ProcessWithDraw    bool
 }
 
 // StartChain33Relayer : initializes a relayer which witnesses events on the chain33 network and relays them to Ethereum
@@ -91,6 +93,7 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 		chain33MsgChan:          startPara.Chain33MsgChan,
 		totalTx4RelayEth2chai33: 0,
 		symbol2Addr:             make(map[string]string),
+		processWithDraw:         startPara.ProcessWithDraw,
 	}
 
 	syncCfg := &ebTypes.SyncTxReceiptConfig{
@@ -241,8 +244,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 				}
 
 				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
-					errInfo := fmt.Sprintf("Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
-					panic(errInfo)
+					relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 				}
 			}
 		}
@@ -261,7 +263,20 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		return err
 	}
 
-	chain33Relayer.chain33MsgChan[chain33Relayer.bridgeSymbol2EthChainName[chain33Msg.Symbol]] <- chain33Msg
+	relayerLog.Info("handleBurnLockWithdrawEvent", "Going to send chain33Msg.ClaimType", chain33Msg.ClaimType.String())
+	chainName, ok := chain33Relayer.bridgeSymbol2EthChainName[chain33Msg.Symbol]
+	if !ok {
+		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chain33Msg.Symbol)
+		return errors.New("ErrNoEthChainName4BridgeSymbol")
+	}
+
+	channel, ok := chain33Relayer.chain33MsgChan[chainName]
+	if !ok {
+		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chainName)
+		return errors.New("ErrNoChain33MsgChan4EthChainName")
+	}
+
+	channel <- chain33Msg
 
 	return nil
 }
@@ -352,6 +367,15 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		}
 	} else {
 		//lock 分支
+		if _, ok := chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol]; !ok {
+			chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol] = claim.ChainName
+			chain33Relayer.storeSymbol2chainName(chain33Relayer.bridgeSymbol2EthChainName)
+		}
+		//如果是代理打币节点，则只收集symbol和chain name相关信息
+		if chain33Relayer.processWithDraw {
+			return
+		}
+
 		var exist bool
 		tokenAddr, exist = chain33Relayer.symbol2Addr[claim.Symbol]
 		if !exist {
@@ -372,11 +396,6 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 				relayerLog.Info("relayLockBurnToChain33", "Failed to SetTokenAddress due to", err.Error())
 			}
 		}
-		if _, ok := chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol]; !ok {
-			chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol] = claim.ChainName
-			chain33Relayer.storeSymbol2chainName(chain33Relayer.bridgeSymbol2EthChainName)
-		}
-
 	}
 
 	//因为发行的合约的精度为8，所以需要进行相应的缩放

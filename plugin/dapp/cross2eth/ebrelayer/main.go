@@ -107,6 +107,7 @@ func main() {
 		EthBridgeClaimChan: ethBridgeClaimChan,
 		Chain33MsgChan:     chain33MsgChan2Eths,
 		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
+		ProcessWithDraw:    cfg.EthRelayerCfg[0].ProcessWithDraw,
 	}
 	chain33RelayerService := chain33Relayer.StartChain33Relayer(chain33StartPara)
 

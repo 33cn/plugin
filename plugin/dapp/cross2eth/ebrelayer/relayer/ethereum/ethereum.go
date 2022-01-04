@@ -1079,11 +1079,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 		decimal = uint8(tokenLocked.Decimal)
 	}
 
-	if ethRelayer.processWithDraw {
-		//如果是代理提币中继器，则不进行消息的转发，该中继器只需要collect info related to locked token
-		return nil
-	}
-
 	// Parse the LogLock event's payload into a struct
 	prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), log.TxHash.String(), int64(decimal))
 	if err != nil {
