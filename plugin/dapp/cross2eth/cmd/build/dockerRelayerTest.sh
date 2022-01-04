@@ -37,7 +37,7 @@ function AllRelayerMainTest() {
     StartDockerRelayerDeploy
     test_all
 
-    TestRelayerProxy
+#    TestRelayerProxy
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
