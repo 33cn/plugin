@@ -163,7 +163,7 @@ function restart_ebrelayer_bcd() {
     start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
     sleep 5
 
-    result=$(${CLIA} unlock -p "${validatorPwd}")
+    result=$(docker exec "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebcli_A" unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 }
 

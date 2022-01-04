@@ -237,8 +237,9 @@ function OfflineDeploy_chain33() {
 
 function OfflineDeploy_ethereum() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
+    local deployfile=$1
     # 在 Eth 上部署合约
-    ${Boss4xCLI} ethereum offline create_file -f "./deploy_ethereum.toml"
+    ${Boss4xCLI} ethereum offline create_file -f "${deployfile}"
     ${Boss4xCLI} ethereum offline sign -k "${ethDeployKey}"
     result=$(${Boss4xCLI} ethereum offline send -f "deploysigntxs.txt")
     for i in {0..7}; do
@@ -264,7 +265,7 @@ function OfflineDeploy() {
     {
         Boss4xCLI=${Boss4xCLIeth}
         CLIA=${CLIAeth}
-        OfflineDeploy_ethereum
+        OfflineDeploy_ethereum "./deploy_ethereum.toml"
         ethereumBridgeBankOnETH="${ethereumBridgeBank}"
         ethereumBridgeRegistryOnETH="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnETH="${ethereumMultisignAddr}"
@@ -273,8 +274,10 @@ function OfflineDeploy() {
 
         Boss4xCLI=${Boss4xCLIbsc}
         CLIA=${CLIAbsc}
-        sed -i 's/^symbol=.*/symbol="BNB"/g' "./deploy_ethereum.toml"
-        OfflineDeploy_ethereum
+        cp "./deploy_ethereum.toml" "./deploy_bsc.toml"
+        sed -i 's/^symbol=.*/symbol="BNB"/g' "./deploy_bsc.toml"
+        docker cp "./deploy_bsc.toml" "${dockerNamePrefix}_ebrelayera_1":/root/deploy_bsc.toml
+        OfflineDeploy_ethereum "./deploy_bsc.toml"
         ethereumBridgeBankOnBSC="${ethereumBridgeBank}"
         ethereumBridgeRegistryOnBSC="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnBSC="${ethereumMultisignAddr}"
