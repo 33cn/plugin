@@ -586,19 +586,19 @@ function StartDockerRelayerDeploy() {
         chain33MainBridgeTokenAddrETH="${chain33MainBridgeTokenAddr}"
         offline_create_bridge_token_eth_BTY
         ethereumBtyBridgeTokenAddrOnETH="${ethereumBtyBridgeTokenAddr}"
-        offline_deploy_erc20_create_tether_usdt_USDT
+        offline_deploy_erc20_create_tether_usdt_USDT "USDT"
         ethereumUSDTERC20TokenAddrOnETH="${ethereumUSDTERC20TokenAddr}"
 
         Boss4xCLI=${Boss4xCLIbsc}
         CLIA=${CLIAbsc}
         ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
-        offline_create_bridge_token_chain33_symbol "USDT"
+        offline_create_bridge_token_chain33_symbol "BUSDT"
         chain33USDTBridgeTokenAddrOnBSC="${chain33MainBridgeTokenAddr}"
         offline_create_bridge_token_chain33_symbol "BNB"
         chain33MainBridgeTokenAddrBNB="${chain33MainBridgeTokenAddr}"
         offline_create_bridge_token_eth_BTY
         ethereumBtyBridgeTokenAddrOnBSC="${ethereumBtyBridgeTokenAddr}"
-        offline_deploy_erc20_create_tether_usdt_USDT
+        offline_deploy_erc20_create_tether_usdt_USDT "BUSDT"
         ethereumUSDTERC20TokenAddrOnBSC="${ethereumUSDTERC20TokenAddr}"
     }
 
