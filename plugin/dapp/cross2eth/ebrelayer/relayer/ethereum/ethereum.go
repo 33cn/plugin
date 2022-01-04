@@ -78,6 +78,7 @@ type Relayer4Ethereum struct {
 	symbol2LockAddr         map[string]ebTypes.TokenAddress
 	mulSignAddr             string
 	withdrawFee             map[string]*WithdrawFeeAndQuota
+	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
 }
 
 var (
@@ -129,6 +130,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
 		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
+		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 	}
 
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
@@ -264,70 +266,48 @@ func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, e
 	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethSender, ethRelayer.x2EthContracts.Chain33Bridge)
 }
 
-//CreateBridgeToken ...
-func (ethRelayer *Relayer4Ethereum) CreateBridgeToken(symbol string) (string, error) {
-	ethRelayer.rwLock.RLock()
-	tokenAddr, err := ethtxs.CreateBridgeToken(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts)
-	ethRelayer.rwLock.RUnlock()
-	if nil == err {
-		token2set := ebTypes.TokenAddress{
-			Address:   tokenAddr,
-			Symbol:    symbol,
-			ChainName: ebTypes.EthereumBlockChainName,
-		}
-		_ = ethRelayer.SetTokenAddress(&token2set)
-	}
-	return tokenAddr, err
-}
+//// AddToken2LockList ...
+//func (ethRelayer *Relayer4Ethereum) AddToken2LockList(symbol, token string) (string, error) {
+//	txhash, err := ethtxs.AddToken2LockList(symbol, token, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+//	return txhash, err
+//}
 
-// AddToken2LockList ...
-func (ethRelayer *Relayer4Ethereum) AddToken2LockList(symbol, token string) (string, error) {
-	txhash, err := ethtxs.AddToken2LockList(symbol, token, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
-	return txhash, err
-}
-
-//DeployERC20 ...
-func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string, decimals uint8) (string, error) {
-	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	ethRelayer.rwLock.RLock()
-	defer ethRelayer.rwLock.RUnlock()
-	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, decimals, ethRelayer.clientSpec, ethRelayer.operatorInfo)
-}
-
-//ApproveAllowance ...
-func (ethRelayer *Relayer4Ethereum) ApproveAllowance(ownerPrivateKey, tokenAddr, amount string) (string, error) {
-	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.ApproveAllowance(ownerPrivateKey, tokenAddr, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn, ethRelayer.clientSpec)
-}
+////DeployERC20 ...
+//func (ethRelayer *Relayer4Ethereum) DeployERC20(ownerAddr, name, symbol, amount string, decimals uint8) (string, error) {
+//	bn := big.NewInt(1)
+//	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+//	ethRelayer.rwLock.RLock()
+//	defer ethRelayer.rwLock.RUnlock()
+//	return ethtxs.DeployERC20(ownerAddr, name, symbol, bn, decimals, ethRelayer.clientSpec, ethRelayer.operatorInfo)
+//}
 
 //Burn ...
 func (ethRelayer *Relayer4Ethereum) Burn(ownerPrivateKey, tokenAddr, chain33Receiver, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.Burn(ownerPrivateKey, tokenAddr, chain33Receiver, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec)
+	return ethtxs.Burn(ownerPrivateKey, tokenAddr, chain33Receiver, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn,
+		ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce)
 }
 
 //BurnAsync ...
 func (ethRelayer *Relayer4Ethereum) BurnAsync(ownerPrivateKey, tokenAddr, chain33Receiver, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.BurnAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec)
+	return ethtxs.BurnAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce)
 }
 
 //TransferToken ...
 func (ethRelayer *Relayer4Ethereum) TransferToken(tokenAddr, fromKey, toAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.TransferToken(tokenAddr, fromKey, toAddr, bn, ethRelayer.clientSpec)
+	return ethtxs.TransferToken(tokenAddr, fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce)
 }
 
 //TransferEth ...
 func (ethRelayer *Relayer4Ethereum) TransferEth(fromKey, toAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.TransferEth(fromKey, toAddr, bn, ethRelayer.clientSpec)
+	return ethtxs.TransferEth(fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce)
 }
 
 //GetDecimals ...
@@ -345,14 +325,14 @@ func (ethRelayer *Relayer4Ethereum) GetDecimals(tokenAddr string) (uint8, error)
 func (ethRelayer *Relayer4Ethereum) LockEthErc20Asset(ownerPrivateKey, tokenAddr, amount string, chain33Receiver string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.LockEthErc20Asset(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.x2EthDeployInfo.BridgeBank.Address)
+	return ethtxs.LockEthErc20Asset(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.x2EthDeployInfo.BridgeBank.Address, ethRelayer.Addr2TxNonce)
 }
 
 //LockEthErc20AssetAsync ...
 func (ethRelayer *Relayer4Ethereum) LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, amount string, chain33Receiver string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank)
+	return ethtxs.LockEthErc20AssetAsync(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.Addr2TxNonce)
 }
 
 //ShowTxReceipt ...
@@ -571,7 +551,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	//param: from,to,evm-packdata,amount
 	//交易构造
-	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value)
+	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value, ethRelayer.Addr2TxNonce)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "newTx err", err)
 		err = errors.New("ErrNewTx")
@@ -743,7 +723,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	}
 
 	// Relay the Chain33Msg to the Ethereum network
-	txhash, err := ethtxs.RelayOracleClaimToEthereum(ethRelayer.x2EthContracts.Oracle, ethRelayer.clientSpec, ethRelayer.ethSender, tokenAddr, prophecyClaim, ethRelayer.privateKey4Ethereum)
+	txhash, err := ethtxs.RelayOracleClaimToEthereum(ethRelayer.x2EthContracts.Oracle, ethRelayer.clientSpec, ethRelayer.ethSender, tokenAddr, prophecyClaim, ethRelayer.privateKey4Ethereum, ethRelayer.Addr2TxNonce)
 	if nil != err {
 		panic("RelayOracleClaimToEthereum failed due to" + err.Error())
 	}
@@ -1230,52 +1210,38 @@ func (ethRelayer *Relayer4Ethereum) updateSingleTxStatus(claimType events.ClaimT
 	}
 }
 
-func (ethRelayer *Relayer4Ethereum) DeployMulsign() (mulsign string, err error) {
-	mulsign, err = ethtxs.DeployMulSign2Eth(ethRelayer.clientSpec, ethRelayer.operatorInfo)
-	if err != nil {
-		return "", err
-	}
-	ethRelayer.rwLock.Lock()
-	ethRelayer.mulSignAddr = mulsign
-	ethRelayer.rwLock.Unlock()
-
-	ethRelayer.setMultiSignAddress(mulsign)
-
-	return mulsign, nil
-}
-
-func (ethRelayer *Relayer4Ethereum) SetupMulSign(setupMulSign *ebTypes.SetupMulSign) (string, error) {
-	if "" == ethRelayer.mulSignAddr {
-		return "", ebTypes.ErrMulSignNotDeployed
-	}
-
-	return ethtxs.SetupMultiSign(setupMulSign.OperatorPrivateKey, ethRelayer.mulSignAddr, setupMulSign.Owners, ethRelayer.clientSpec)
-}
+//func (ethRelayer *Relayer4Ethereum) SetupMulSign(setupMulSign *ebTypes.SetupMulSign) (string, error) {
+//	if "" == ethRelayer.mulSignAddr {
+//		return "", ebTypes.ErrMulSignNotDeployed
+//	}
+//
+//	return ethtxs.SetupMultiSign(setupMulSign.OperatorPrivateKey, ethRelayer.mulSignAddr, setupMulSign.Owners, ethRelayer.clientSpec)
+//}
 
 func (ethRelayer *Relayer4Ethereum) SafeTransfer(para *ebTypes.SafeTransfer) (string, error) {
 	if "" == ethRelayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
 
-	return ethtxs.SafeTransfer(para.OperatorPrivateKey, ethRelayer.mulSignAddr, para.To, para.Token, para.OwnerPrivateKeys, para.Amount, ethRelayer.clientSpec)
+	return ethtxs.SafeTransfer(para.OperatorPrivateKey, ethRelayer.mulSignAddr, para.To, para.Token, para.OwnerPrivateKeys, para.Amount, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce)
 }
 
-func (ethRelayer *Relayer4Ethereum) ConfigOfflineSaveAccount(addr string) (string, error) {
-	txhash, err := ethtxs.ConfigOfflineSaveAccount(addr, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
-	return txhash, err
-}
-
-func (ethRelayer *Relayer4Ethereum) ConfigplatformTokenSymbol(symbol string) (string, error) {
-	txhash, err := ethtxs.ConfigplatformTokenSymbol(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
-	return txhash, err
-}
-
-func (ethRelayer *Relayer4Ethereum) ConfigLockedTokenOfflineSave(addr, symbol, threshold string, percents uint32) (string, error) {
-	bn := big.NewInt(1)
-	bn, _ = bn.SetString(utils.TrimZeroAndDot(threshold), 10)
-	txhash, err := ethtxs.ConfigLockedTokenOfflineSave(addr, symbol, bn, uint8(percents), ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
-	return txhash, err
-}
+//func (ethRelayer *Relayer4Ethereum) ConfigOfflineSaveAccount(addr string) (string, error) {
+//	txhash, err := ethtxs.ConfigOfflineSaveAccount(addr, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+//	return txhash, err
+//}
+//
+//func (ethRelayer *Relayer4Ethereum) ConfigplatformTokenSymbol(symbol string) (string, error) {
+//	txhash, err := ethtxs.ConfigplatformTokenSymbol(symbol, ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+//	return txhash, err
+//}
+//
+//func (ethRelayer *Relayer4Ethereum) ConfigLockedTokenOfflineSave(addr, symbol, threshold string, percents uint32) (string, error) {
+//	bn := big.NewInt(1)
+//	bn, _ = bn.SetString(utils.TrimZeroAndDot(threshold), 10)
+//	txhash, err := ethtxs.ConfigLockedTokenOfflineSave(addr, symbol, bn, uint8(percents), ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthContracts)
+//	return txhash, err
+//}
 
 func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {
 	ethRelayer.rwLock.Lock()

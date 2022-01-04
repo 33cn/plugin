@@ -19,12 +19,12 @@ import (
 //EthTxStatus ...
 type EthTxStatus int32
 
-type nonceMutex struct {
-	nonce int64
-	rw    *sync.RWMutex
+type NonceMutex struct {
+	Nonce  int64
+	RWLock *sync.RWMutex
 }
 
-var addr2Nonce = make(map[common.Address]nonceMutex)
+var addr2Nonce = make(map[common.Address]NonceMutex)
 
 //String ...
 func (ethTxStatus EthTxStatus) String() string {
@@ -37,14 +37,14 @@ const (
 	EthTxPending                = EthTxStatus(2)
 )
 
-func getNonce(sender common.Address, client ethinterface.EthClientSpec) (*big.Int, error) {
-	if nonceMutex, exist := addr2Nonce[sender]; exist {
-		nonceMutex.rw.Lock()
-		defer nonceMutex.rw.Unlock()
-		nonceMutex.nonce++
-		addr2Nonce[sender] = nonceMutex
-		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.nonce)
-		return big.NewInt(nonceMutex.nonce), nil
+func getNonce4MultiEth(sender common.Address, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (*big.Int, error) {
+	if nonceMutex, exist := addr2TxNonce[sender]; exist {
+		nonceMutex.RWLock.Lock()
+		defer nonceMutex.RWLock.Unlock()
+		nonceMutex.Nonce++
+		addr2TxNonce[sender] = nonceMutex
+		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.Nonce)
+		return big.NewInt(nonceMutex.Nonce), nil
 	}
 
 	nonce, err := client.PendingNonceAt(context.Background(), sender)
@@ -52,21 +52,55 @@ func getNonce(sender common.Address, client ethinterface.EthClientSpec) (*big.In
 		return nil, err
 	}
 	txslog.Debug("getNonce", "address", sender.String(), "nonce", nonce)
-	n := new(nonceMutex)
-	n.nonce = int64(nonce)
-	n.rw = new(sync.RWMutex)
+	n := new(NonceMutex)
+	n.Nonce = int64(nonce)
+	n.RWLock = new(sync.RWMutex)
+	addr2TxNonce[sender] = n
+	return big.NewInt(int64(nonce)), nil
+}
+
+func revokeNonce4MultiEth(sender common.Address, addr2TxNonce map[common.Address]*NonceMutex) (*big.Int, error) {
+	if nonceMutex, exist := addr2TxNonce[sender]; exist {
+		nonceMutex.RWLock.Lock()
+		defer nonceMutex.RWLock.Unlock()
+		nonceMutex.Nonce--
+		addr2TxNonce[sender] = nonceMutex
+		txslog.Debug("revokeNonce", "address", sender.String(), "nonce", nonceMutex.Nonce)
+		return big.NewInt(nonceMutex.Nonce), nil
+	}
+	return nil, errors.New("address doesn't exist tx")
+}
+
+func getNonce(sender common.Address, client ethinterface.EthClientSpec) (*big.Int, error) {
+	if nonceMutex, exist := addr2Nonce[sender]; exist {
+		nonceMutex.RWLock.Lock()
+		defer nonceMutex.RWLock.Unlock()
+		nonceMutex.Nonce++
+		addr2Nonce[sender] = nonceMutex
+		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.Nonce)
+		return big.NewInt(nonceMutex.Nonce), nil
+	}
+
+	nonce, err := client.PendingNonceAt(context.Background(), sender)
+	if nil != err {
+		return nil, err
+	}
+	txslog.Debug("getNonce", "address", sender.String(), "nonce", nonce)
+	n := new(NonceMutex)
+	n.Nonce = int64(nonce)
+	n.RWLock = new(sync.RWMutex)
 	addr2Nonce[sender] = *n
 	return big.NewInt(int64(nonce)), nil
 }
 
 func revokeNonce(sender common.Address) (*big.Int, error) {
 	if nonceMutex, exist := addr2Nonce[sender]; exist {
-		nonceMutex.rw.Lock()
-		defer nonceMutex.rw.Unlock()
-		nonceMutex.nonce--
+		nonceMutex.RWLock.Lock()
+		defer nonceMutex.RWLock.Unlock()
+		nonceMutex.Nonce--
 		addr2Nonce[sender] = nonceMutex
-		txslog.Debug("revokeNonce", "address", sender.String(), "nonce", nonceMutex.nonce)
-		return big.NewInt(nonceMutex.nonce), nil
+		txslog.Debug("revokeNonce", "address", sender.String(), "nonce", nonceMutex.Nonce)
+		return big.NewInt(nonceMutex.Nonce), nil
 	}
 	return nil, errors.New("address doesn't exist tx")
 }
@@ -112,6 +146,46 @@ func PrepareAuth(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey
 	return auth, nil
 }
 
+func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address, addr2TxNonce map[common.Address]*NonceMutex) (*bind.TransactOpts, error) {
+	if nil == privateKey || nil == client {
+		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
+		return nil, errors.New("nil input parameter")
+	}
+
+	ctx := context.Background()
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		txslog.Error("PrepareAuth", "Failed to SuggestGasPrice due to:", err.Error())
+		return nil, errors.New("failed to get suggest gas price " + err.Error())
+	}
+
+	chainID, err := client.NetworkID(ctx)
+	if err != nil {
+		txslog.Error("PrepareAuth NetworkID", "err", err)
+		return nil, err
+	}
+
+	_, isSim := client.(*ethinterface.SimExtend)
+	if isSim {
+		chainID = big.NewInt(1337)
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		txslog.Error("PrepareAuth NewKeyedTransactorWithChainID", "err", err, "chainID", chainID)
+		return nil, err
+	}
+	auth.Value = big.NewInt(0) // in wei
+	auth.GasLimit = GasLimit4Deploy
+	auth.GasPrice = gasPrice
+
+	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce); err != nil {
+		return nil, err
+	}
+
+	return auth, nil
+}
+
 func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, txName string) error {
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
@@ -148,13 +222,13 @@ func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) strin
 	return status
 }
 
-func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int) (*types.Transaction, error) {
+func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int, addr2TxNonce map[common.Address]*NonceMutex) (*types.Transaction, error) {
 	price, err := clientSpec.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	nonce, err := getNonce(from, clientSpec)
+	nonce, err := getNonce4MultiEth(from, clientSpec, addr2TxNonce)
 	if err != nil {
 		return nil, err
 	}

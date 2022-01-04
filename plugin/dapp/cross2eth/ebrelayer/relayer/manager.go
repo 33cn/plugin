@@ -402,52 +402,6 @@ func (manager *Manager) SafeTransfer4Chain33(para *relayerTypes.SafeTransfer, re
 	return nil
 }
 
-//DeployERC20 ...
-func (manager *Manager) DeployERC20(erc20Token2deploy *relayerTypes.ERC20Token, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-
-	ethInt, ok := manager.ethRelayer[erc20Token2deploy.Chain2Deploy]
-	if !ok {
-		return errors.New("no Ethereum chain named as you configured")
-	}
-
-	Erc20Addr, err := ethInt.DeployERC20(erc20Token2deploy.Owner, erc20Token2deploy.Name, erc20Token2deploy.Symbol, erc20Token2deploy.Amount, uint8(erc20Token2deploy.Decimals))
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  Erc20Addr,
-	}
-	return nil
-}
-
-//ApproveAllowance ...
-func (manager *Manager) ApproveAllowance(approveAllowance *relayerTypes.ApproveAllowance, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	ethInt, ok := manager.ethRelayer[approveAllowance.ChainName]
-	if !ok {
-		return errors.New("no Ethereum chain named as you configured")
-	}
-	txhash, err := ethInt.ApproveAllowance(approveAllowance.OwnerKey, approveAllowance.TokenAddr, approveAllowance.Amount)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  txhash,
-	}
-	return nil
-}
-
 //Burn ...
 func (manager *Manager) Burn(burn *relayerTypes.Burn, result *interface{}) error {
 	manager.mtx.Lock()
@@ -912,50 +866,50 @@ func (manager *Manager) GetDecimals(chainName, tokenAddr string) (int64, error) 
 	return int64(d), nil
 }
 
-func (manager *Manager) DeployMulsign2Eth(param interface{}, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
+//func (manager *Manager) DeployMulsign2Eth(param interface{}, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//
+//	var msg string
+//	for name, ethInt := range manager.ethRelayer {
+//		mulSign, err := ethInt.DeployMulsign()
+//		if nil != err {
+//			return err
+//		}
+//		msg += fmt.Sprintf("multisign addr:%s for chain:%s\n", mulSign, name)
+//	}
+//
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  msg,
+//	}
+//	return nil
+//}
 
-	var msg string
-	for name, ethInt := range manager.ethRelayer {
-		mulSign, err := ethInt.DeployMulsign()
-		if nil != err {
-			return err
-		}
-		msg += fmt.Sprintf("multisign addr:%s for chain:%s\n", mulSign, name)
-	}
-
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  msg,
-	}
-	return nil
-}
-
-func (manager *Manager) SetupOwner4Eth(setupMulSign *relayerTypes.SetupMulSign, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	var msg string
-	for name, ethInt := range manager.ethRelayer {
-		txhash, err := ethInt.SetupMulSign(setupMulSign)
-		if nil != err {
-			return err
-		}
-		msg += fmt.Sprintf("SetupOwner4Eth tx hash:%s for chain:%s\n", txhash, name)
-	}
-
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  msg,
-	}
-	return nil
-}
+//func (manager *Manager) SetupOwner4Eth(setupMulSign *relayerTypes.SetupMulSign, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//	var msg string
+//	for name, ethInt := range manager.ethRelayer {
+//		txhash, err := ethInt.SetupMulSign(setupMulSign)
+//		if nil != err {
+//			return err
+//		}
+//		msg += fmt.Sprintf("SetupOwner4Eth tx hash:%s for chain:%s\n", txhash, name)
+//	}
+//
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  msg,
+//	}
+//	return nil
+//}
 
 func (manager *Manager) SafeTransfer4Eth(para *relayerTypes.SafeTransfer, result *interface{}) error {
 	manager.mtx.Lock()
@@ -978,69 +932,69 @@ func (manager *Manager) SafeTransfer4Eth(para *relayerTypes.SafeTransfer, result
 	return nil
 }
 
-func (manager *Manager) ConfigOfflineSaveAccount(para *relayerTypes.CfgOfflineSaveAccountReq, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	ethINt, ok := manager.ethRelayer[para.ChainName]
-	if !ok {
-		return errors.New("no Ethereum chain named as you configured")
-	}
-	txhash, err := ethINt.ConfigOfflineSaveAccount(para.Address)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  txhash,
-	}
-	return nil
-}
+//func (manager *Manager) ConfigOfflineSaveAccount(para *relayerTypes.CfgOfflineSaveAccountReq, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//	ethINt, ok := manager.ethRelayer[para.ChainName]
+//	if !ok {
+//		return errors.New("no Ethereum chain named as you configured")
+//	}
+//	txhash, err := ethINt.ConfigOfflineSaveAccount(para.Address)
+//	if nil != err {
+//		return err
+//	}
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  txhash,
+//	}
+//	return nil
+//}
 
-func (manager *Manager) ConfigplatformTokenSymbol(para *relayerTypes.CfgPlatformTokenSymbolReq, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	ethINt, ok := manager.ethRelayer[para.ChainName]
-	if !ok {
-		return errors.New("no Ethereum chain named as you configured")
-	}
-	txhash, err := ethINt.ConfigplatformTokenSymbol(para.Symbol)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  txhash,
-	}
-	return nil
-}
+//func (manager *Manager) ConfigplatformTokenSymbol(para *relayerTypes.CfgPlatformTokenSymbolReq, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//	ethINt, ok := manager.ethRelayer[para.ChainName]
+//	if !ok {
+//		return errors.New("no Ethereum chain named as you configured")
+//	}
+//	txhash, err := ethINt.ConfigplatformTokenSymbol(para.Symbol)
+//	if nil != err {
+//		return err
+//	}
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  txhash,
+//	}
+//	return nil
+//}
 
-func (manager *Manager) ConfigLockedTokenOfflineSave(config *relayerTypes.ETHConfigLockedTokenOffline, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-	ethINt, ok := manager.ethRelayer[config.ChainName]
-	if !ok {
-		return errors.New("no Ethereum chain named as you configured")
-	}
-
-	txhash, err := ethINt.ConfigLockedTokenOfflineSave(config.Address, config.Symbol, config.Threshold, config.Percents)
-	if nil != err {
-		return err
-	}
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  txhash,
-	}
-	return nil
-}
+//func (manager *Manager) ConfigLockedTokenOfflineSave(config *relayerTypes.ETHConfigLockedTokenOffline, result *interface{}) error {
+//	manager.mtx.Lock()
+//	defer manager.mtx.Unlock()
+//	if err := manager.checkPermission(); nil != err {
+//		return err
+//	}
+//	ethINt, ok := manager.ethRelayer[config.ChainName]
+//	if !ok {
+//		return errors.New("no Ethereum chain named as you configured")
+//	}
+//
+//	txhash, err := ethINt.ConfigLockedTokenOfflineSave(config.Address, config.Symbol, config.Threshold, config.Percents)
+//	if nil != err {
+//		return err
+//	}
+//	*result = rpctypes.Reply{
+//		IsOk: true,
+//		Msg:  txhash,
+//	}
+//	return nil
+//}
 
 //TransferEth ...
 func (manager *Manager) TransferEth(transfer *relayerTypes.TransferToken, result *interface{}) error {

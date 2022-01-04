@@ -12,9 +12,7 @@ import (
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,169 +31,9 @@ type NewProphecyClaimPara struct {
 	Txhash        []byte
 }
 
-//CreateBridgeToken ...
-func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthDeployInfo *X2EthDeployInfo, x2EthContracts *X2EthContracts) (string, error) {
-	if nil == para {
-		return "", errors.New("no operator private key configured")
-	}
-	//订阅事件
-	eventName := "LogNewBridgeToken"
-	bridgeBankABI := LoadABI(BridgeBankABI)
-	logNewBridgeTokenSig := bridgeBankABI.Events[eventName].ID.Hex()
-	query := ethereum.FilterQuery{
-		Addresses: []common.Address{x2EthDeployInfo.BridgeBank.Address},
-	}
-	// We will check logs for new events
-	logs := make(chan types.Log)
-	// Filter by contract and event, write results to logs
-	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)
-	if nil != err {
-		txslog.Error("CreateBrigeToken", "failed to SubscribeFilterLogs", err.Error())
-		return "", err
-	}
-
-	var prepareDone bool
-
-	defer func() {
-		if err != nil && prepareDone {
-			_, _ = revokeNonce(para.Address)
-		}
-	}()
-
-	//创建token
-	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
-	if nil != err {
-		return "", err
-	}
-
-	prepareDone = true
-
-	tx, err := x2EthContracts.BridgeBank.BridgeBankTransactor.CreateNewBridgeToken(auth, symbol)
-	if nil != err {
-		return "", err
-	}
-
-	sim, isSim := client.(*ethinterface.SimExtend)
-	if isSim {
-		fmt.Println("Use the simulator")
-		sim.Commit()
-	}
-
-	err = waitEthTxFinished(client, tx.Hash(), "CreateBridgeToken")
-	if nil != err {
-		return "", err
-	}
-
-	logEvent := &events.LogNewBridgeToken{}
-	select {
-	// Handle any errors
-	case err := <-sub.Err():
-		return "", err
-	// vLog is raw event data
-	case vLog := <-logs:
-		// Check if the event is a 'LogLock' event
-		if vLog.Topics[0].Hex() == logNewBridgeTokenSig {
-			txslog.Debug("CreateBridgeToken", "Witnessed new event", eventName, "Block number", vLog.BlockNumber)
-
-			err = bridgeBankABI.UnpackIntoInterface(logEvent, eventName, vLog.Data)
-			if nil != err {
-				return "", err
-			}
-			if symbol != logEvent.Symbol {
-				txslog.Error("CreateBridgeToken", "symbol", symbol, "logEvent.Symbol", logEvent.Symbol)
-			}
-			txslog.Info("CreateBridgeToken", "Witnessed new event", eventName, "Block number", vLog.BlockNumber, "token address", logEvent.Token.String())
-			break
-		}
-	}
-
-	return logEvent.Token.String(), nil
-}
-
-func AddToken2LockList(symbol, token string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
-	if nil == para {
-		return "", errors.New("no operator private key configured")
-	}
-
-	var prepareDone bool
-	var err error
-
-	defer func() {
-		if err != nil && prepareDone {
-			_, _ = revokeNonce(para.Address)
-		}
-	}()
-
-	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
-	if nil != err {
-		return "", err
-	}
-
-	prepareDone = true
-
-	TokenAddr := common.HexToAddress(token)
-	tx, err := x2EthContracts.BridgeBank.BridgeBankTransactor.AddToken2LockList(auth, TokenAddr, symbol)
-	if nil != err {
-		return "", err
-	}
-
-	sim, isSim := client.(*ethinterface.SimExtend)
-	if isSim {
-		fmt.Println("Use the simulator")
-		sim.Commit()
-	}
-
-	err = waitEthTxFinished(client, tx.Hash(), "AddToken2LockList")
-	if nil != err {
-		return "", err
-	}
-
-	return tx.Hash().String(), nil
-}
-
-//ApproveAllowance ...
-func ApproveAllowance(ownerPrivateKeyStr, tokenAddr string, bridgeBank common.Address, amount *big.Int, client ethinterface.EthClientSpec) (string, error) {
-	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
-	if nil != err {
-		return "", err
-	}
-	ownerAddr := crypto.PubkeyToAddress(ownerPrivateKey.PublicKey)
-
-	var prepareDone bool
-
-	defer func() {
-		if err != nil && prepareDone {
-			_, _ = revokeNonce(ownerAddr)
-		}
-	}()
-
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
-	if nil != err {
-		return "", err
-	}
-
-	prepareDone = true
-
-	erc20TokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenAddr), client)
-	if nil != err {
-		return "", err
-	}
-
-	tx, err := erc20TokenInstance.Approve(auth, bridgeBank, amount)
-	if nil != err {
-		return "", err
-	}
-
-	err = waitEthTxFinished(client, tx.Hash(), "ApproveAllowance")
-	if nil != err {
-		return "", err
-	}
-
-	return tx.Hash().String(), nil
-}
-
 //Burn ...
-func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank common.Address, amount *big.Int, bridgeBankIns *generated.BridgeBank, client ethinterface.EthClientSpec) (string, error) {
+func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank common.Address, amount *big.Int,
+	bridgeBankIns *generated.BridgeBank, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
 		return "", err
@@ -208,7 +46,7 @@ func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank c
 			_, _ = revokeNonce(ownerAddr)
 		}
 	}()
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -234,7 +72,7 @@ func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank c
 
 	prepareDone = false
 
-	auth, err = PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err = PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -260,7 +98,8 @@ func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank c
 }
 
 //BurnAsync ...
-func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount *big.Int, bridgeBankIns *generated.BridgeBank, client ethinterface.EthClientSpec) (string, error) {
+func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount *big.Int, bridgeBankIns *generated.BridgeBank,
+	client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
 		return "", err
@@ -274,7 +113,7 @@ func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount 
 			_, _ = revokeNonce(ownerAddr)
 		}
 	}()
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -297,7 +136,7 @@ func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount 
 }
 
 //TransferToken ...
-func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int, client ethinterface.EthClientSpec) (string, error) {
+func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	tokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenAddr), client)
 	if nil != err {
 		return "", err
@@ -317,7 +156,7 @@ func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int,
 		}
 	}()
 
-	auth, err := PrepareAuth(client, fromPrivateKey, fromAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, fromPrivateKey, fromAddr, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -336,7 +175,7 @@ func TransferToken(tokenAddr, fromPrivateKeyStr, toAddr string, amount *big.Int,
 	return tx.Hash().String(), nil
 }
 
-func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethinterface.EthClientSpec) (string, error) {
+func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("TransferEth", "toAddr", toAddr, "amount", amount)
 	var prepareDone bool
 
@@ -352,7 +191,7 @@ func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethin
 		}
 	}()
 
-	auth, err := PrepareAuth(client, fromPrivateKey, fromAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, fromPrivateKey, fromAddr, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -401,7 +240,7 @@ func TransferEth(fromPrivateKeyStr, toAddr string, amount *big.Int, client ethin
 }
 
 //LockEthErc20Asset ...
-func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank, bridgeBankAddr common.Address) (string, error) {
+func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank, bridgeBankAddr common.Address, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	var prepareDone bool
 	txslog.Info("LockEthErc20Asset", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
@@ -425,7 +264,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 		if nil != err {
 			return "", err
 		}
-		auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+		auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 		if nil != err {
 			txslog.Error("LockEthErc20Asset", "PrepareAuth err", err.Error())
 			return "", err
@@ -447,7 +286,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 
 	prepareDone = false
 
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		txslog.Error("LockEthErc20Asset", "PrepareAuth err", err.Error())
 		return "", err
@@ -480,7 +319,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 }
 
 //LockEthErc20AssetAsync ...
-func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank) (string, error) {
+func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string, amount *big.Int, client ethinterface.EthClientSpec, bridgeBank *generated.BridgeBank, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("LockEthErc20AssetAsync", "ownerPrivateKeyStr", ownerPrivateKeyStr, "tokenAddrStr", tokenAddrStr, "chain33Receiver", chain33Receiver, "amount", amount.String())
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
 	if nil != err {
@@ -496,7 +335,7 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 		}
 	}()
 
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		txslog.Error("LockEthErc20AssetAsync", "PrepareAuth err", err.Error())
 		return "", err
@@ -530,7 +369,7 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 	return tx.Hash().String(), nil
 }
 
-func SetupMultiSign(ownerPrivateKeyStr, multiSignAddrstr string, owners []string, client ethinterface.EthClientSpec) (string, error) {
+func SetupMultiSign(ownerPrivateKeyStr, multiSignAddrstr string, owners []string, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("SetupMultiSign", "owners", owners, "multiSignAddrstr", multiSignAddrstr)
 
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
@@ -547,7 +386,7 @@ func SetupMultiSign(ownerPrivateKeyStr, multiSignAddrstr string, owners []string
 		}
 	}()
 
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		txslog.Error("SetupMultiSign", "PrepareAuth err", err.Error())
 		return "", err
@@ -582,7 +421,7 @@ func SetupMultiSign(ownerPrivateKeyStr, multiSignAddrstr string, owners []string
 	return setupTx.Hash().String(), nil
 }
 
-func SafeTransfer(ownerPrivateKeyStr, multiSignAddrstr, receiver, token string, privateKeys []string, amount float64, client ethinterface.EthClientSpec) (string, error) {
+func SafeTransfer(ownerPrivateKeyStr, multiSignAddrstr, receiver, token string, privateKeys []string, amount float64, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("SafeTransfer", "multiSignAddrstr", multiSignAddrstr, "receiver", receiver, "token", token, "amount", amount)
 
 	ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(ownerPrivateKeyStr))
@@ -598,7 +437,7 @@ func SafeTransfer(ownerPrivateKeyStr, multiSignAddrstr, receiver, token string, 
 		}
 	}()
 
-	auth, err := PrepareAuth(client, ownerPrivateKey, ownerAddr)
+	auth, err := PrepareAuth4MultiEthereum(client, ownerPrivateKey, ownerAddr, addr2TxNonce)
 	if nil != err {
 		txslog.Error("SafeTransfer", "PrepareAuth err", err.Error())
 		return "", err
@@ -717,7 +556,7 @@ func buildSigs(data []byte, privateKeys []string) ([]byte, error) {
 	return sigs, nil
 }
 
-func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
+func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("ConfigOfflineSaveAccount", "addr", addr)
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -732,7 +571,7 @@ func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, pa
 		}
 	}()
 
-	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
+	auth, err := PrepareAuth4MultiEthereum(client, para.PrivateKey, para.Address, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -760,7 +599,7 @@ func ConfigOfflineSaveAccount(addr string, client ethinterface.EthClientSpec, pa
 	return tx.Hash().String(), nil
 }
 
-func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
+func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("ConfigplatformTokenSymbol", "symbol", symbol)
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -775,7 +614,7 @@ func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec,
 		}
 	}()
 
-	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
+	auth, err := PrepareAuth4MultiEthereum(client, para.PrivateKey, para.Address, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
@@ -802,7 +641,7 @@ func ConfigplatformTokenSymbol(symbol string, client ethinterface.EthClientSpec,
 	return tx.Hash().String(), nil
 }
 
-func ConfigLockedTokenOfflineSave(addr, symbol string, threshold *big.Int, percents uint8, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts) (string, error) {
+func ConfigLockedTokenOfflineSave(addr, symbol string, threshold *big.Int, percents uint8, client ethinterface.EthClientSpec, para *OperatorInfo, x2EthContracts *X2EthContracts, addr2TxNonce map[common.Address]*NonceMutex) (string, error) {
 	txslog.Info("ConfigLockedTokenOfflineSave", "addr", addr, "symbol", symbol, "threshold", threshold, "percents", percents)
 	if nil == para {
 		return "", errors.New("no operator private key configured")
@@ -817,7 +656,7 @@ func ConfigLockedTokenOfflineSave(addr, symbol string, threshold *big.Int, perce
 		}
 	}()
 
-	auth, err := PrepareAuth(client, para.PrivateKey, para.Address)
+	auth, err := PrepareAuth4MultiEthereum(client, para.PrivateKey, para.Address, addr2TxNonce)
 	if nil != err {
 		return "", err
 	}
