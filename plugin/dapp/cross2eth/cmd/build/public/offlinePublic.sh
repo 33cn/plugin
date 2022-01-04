@@ -335,9 +335,10 @@ function InitRelayerA() {
 
 function offline_deploy_erc20_create_tether_usdt_USDT() {
     # eth 上 铸币 USDT
-    echo -e "${GRE}======= 在 ethereum 上创建 ERC20 USDT ======${NOC}"
+    local name=$1
+    echo -e "${GRE}======= 在 ethereum 上创建 ERC20 ${name} ======${NOC}"
     # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline create_tether_usdt -m 33000000000000000000 -s USDT -d "${ethTestAddr1}"
+    ${Boss4xCLI} ethereum offline create_tether_usdt -m 33000000000000000000 -s "${name}" -d "${ethTestAddr1}"
     # shellcheck disable=SC2154
     ${Boss4xCLI} ethereum offline sign -f "deployTetherUSDT.txt" -k "${ethTestAddrKey1}"
     sleep 10
@@ -347,7 +348,7 @@ function offline_deploy_erc20_create_tether_usdt_USDT() {
     ethereumUSDTERC20TokenAddr=$(echo "${result}" | jq -r ".[0].ContractAddr")
 
     # shellcheck disable=SC2154
-    ${Boss4xCLI} ethereum offline create_add_lock_list -s USDT -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline create_add_lock_list -s "${name}" -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "create_add_lock_list.txt"
 }
 

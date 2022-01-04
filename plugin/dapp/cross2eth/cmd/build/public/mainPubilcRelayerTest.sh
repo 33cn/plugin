@@ -14,7 +14,10 @@ source "./offlinePublic.sh"
     chain33BridgeRegistry=""
     chain33MultisignAddr=""
     chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+
     chain33USDTBridgeTokenAddr=""
+    chain33USDTBridgeTokenAddrOnETH=""
+    chain33USDTBridgeTokenAddrOnBSC=""
 
     chain33MainBridgeTokenAddr=""
     chain33MainBridgeTokenAddrETH=""
@@ -254,8 +257,8 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
 
-    restart_ebrelayer_bcd "b"
-    restart_ebrelayer_bcd "c"
+#    restart_ebrelayer_bcd "b"
+#    restart_ebrelayer_bcd "c"
 
     sleep ${maturityDegree}
 
@@ -270,8 +273,8 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
-    restart_ebrelayer_bcd "b"
-    restart_ebrelayer_bcd "c"
+#    restart_ebrelayer_bcd "b"
+#    restart_ebrelayer_bcd "c"
 
     sleep ${maturityDegree}
 
@@ -573,27 +576,29 @@ function StartDockerRelayerDeploy() {
     # shellcheck disable=SC2154
     # shellcheck disable=SC2034
     {
-        offline_create_bridge_token_chain33_symbol "USDT"
-        chain33USDTBridgeTokenAddr="${chain33MainBridgeTokenAddr}"
 
         Boss4xCLI=${Boss4xCLIeth}
         CLIA=${CLIAeth}
         ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+        offline_create_bridge_token_chain33_symbol "USDT"
+        chain33USDTBridgeTokenAddrOnETH="${chain33MainBridgeTokenAddr}"
         offline_create_bridge_token_chain33_symbol "ETH"
-        offline_create_bridge_token_eth_BTY
-        offline_deploy_erc20_create_tether_usdt_USDT
         chain33MainBridgeTokenAddrETH="${chain33MainBridgeTokenAddr}"
+        offline_create_bridge_token_eth_BTY
         ethereumBtyBridgeTokenAddrOnETH="${ethereumBtyBridgeTokenAddr}"
+        offline_deploy_erc20_create_tether_usdt_USDT "USDT"
         ethereumUSDTERC20TokenAddrOnETH="${ethereumUSDTERC20TokenAddr}"
 
         Boss4xCLI=${Boss4xCLIbsc}
         CLIA=${CLIAbsc}
         ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+        offline_create_bridge_token_chain33_symbol "BUSDT"
+        chain33USDTBridgeTokenAddrOnBSC="${chain33MainBridgeTokenAddr}"
         offline_create_bridge_token_chain33_symbol "BNB"
-        offline_create_bridge_token_eth_BTY
-        offline_deploy_erc20_create_tether_usdt_USDT
         chain33MainBridgeTokenAddrBNB="${chain33MainBridgeTokenAddr}"
+        offline_create_bridge_token_eth_BTY
         ethereumBtyBridgeTokenAddrOnBSC="${ethereumBtyBridgeTokenAddr}"
+        offline_deploy_erc20_create_tether_usdt_USDT "BUSDT"
         ethereumUSDTERC20TokenAddrOnBSC="${ethereumUSDTERC20TokenAddr}"
     }
 
@@ -601,7 +606,8 @@ function StartDockerRelayerDeploy() {
     {
         docker cp "${chain33BridgeBank}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeBank}.abi
         docker cp "${chain33BridgeRegistry}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33BridgeRegistry}.abi
-        docker cp "${chain33USDTBridgeTokenAddr}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddr}.abi
+        docker cp "${chain33USDTBridgeTokenAddrOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddrOnETH}.abi
+        docker cp "${chain33USDTBridgeTokenAddrOnBSC}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33USDTBridgeTokenAddrOnBSC}.abi
         docker cp "${chain33MainBridgeTokenAddrETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrETH}.abi
         docker cp "${chain33MainBridgeTokenAddrBNB}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${chain33MainBridgeTokenAddrBNB}.abi
         docker cp "${ethereumBridgeBankOnETH}.abi" "${dockerNamePrefix}_ebrelayera_1":/root/${ethereumBridgeBankOnETH}.abi
@@ -692,18 +698,19 @@ function test_lock_and_burn() {
     local symbol="${1}"
     # test
     Chain33Cli=${Para8901Cli}
-#    TestChain33ToEthAssets
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-##    lockBty
 #    lockEth "${symbol}"
 #    lockEthUSDT
 #
 #    # 离线多签地址转入阈值设大
-##    offline_set_offline_token_Bty 100000000000000 10
 #    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
 #    offline_set_offline_token_EthUSDT 100000000000000 10
+
+#    TestChain33ToEthAssets
+#    lockBty
+#    offline_set_offline_token_Bty 100000000000000 10
 }
 
 function test_all() {
@@ -714,6 +721,7 @@ function test_all() {
     chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
     ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
     test_lock_and_burn "ETH"
 
     Boss4xCLI=${Boss4xCLIbsc}
@@ -723,5 +731,6 @@ function test_all() {
     chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
     ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
     test_lock_and_burn "BNB"
 }

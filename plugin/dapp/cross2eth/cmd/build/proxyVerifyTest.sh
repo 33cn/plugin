@@ -69,7 +69,7 @@ function TestETH2Chain33Assets_proxy() {
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
 
-    # shellcheck disable=SC2086
+    # shellcheck disable=SC2154
     sleep "${maturityDegree}"
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
