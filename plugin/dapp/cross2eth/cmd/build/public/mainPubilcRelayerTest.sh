@@ -679,14 +679,14 @@ function test_lock_and_burn() {
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-#    lockBty
-    lockEth "${symbol}"
-    lockEthUSDT
-
-    # 离线多签地址转入阈值设大
-#    offline_set_offline_token_Bty 100000000000000 10
-    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
-    offline_set_offline_token_EthUSDT 100000000000000 10
+##    lockBty
+#    lockEth "${symbol}"
+#    lockEthUSDT
+#
+#    # 离线多签地址转入阈值设大
+##    offline_set_offline_token_Bty 100000000000000 10
+#    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
+#    offline_set_offline_token_EthUSDT 100000000000000 10
 }
 
 function test_all() {
