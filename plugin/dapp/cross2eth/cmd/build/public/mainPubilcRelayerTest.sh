@@ -414,12 +414,14 @@ function offline_set_offline_token_EthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     local threshold=100
     local percents=40
-    if [[ $# -eq 2 ]]; then
+    local symbol="USDT"
+    if [[ $# -eq 3 ]]; then
         threshold=$1
         percents=$2
+        symbol=$3
     fi
     # shellcheck disable=SC2086
-    ${Boss4xCLI} ethereum offline set_offline_token -s USDT -m ${threshold} -p ${percents} -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
+    ${Boss4xCLI} ethereum offline set_offline_token -s ${symbol} -m ${threshold} -p ${percents} -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
     ethereum_offline_sign_send "set_offline_token.txt"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
@@ -506,7 +508,8 @@ function lockEthUSDT() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}===== ethereum 端 lock ERC20 USDT ======${NOC}"
     # echo '2:#配置自动转离线钱包(ycc, 100, 40%)'
-    offline_set_offline_token_EthUSDT
+    local symbol="${1}"
+    offline_set_offline_token_EthUSDT 100 40 "${symbol}"
     # 重启 nonce 会不统一 要重启一下
     restart_ebrelayerA
 
@@ -698,18 +701,19 @@ function get_cli() {
 }
 
 function test_lock_and_burn() {
-    local symbol="${1}"
+    local symbol1="${1}"
+    local symbol2="${2}"
     # test
     Chain33Cli=${Para8901Cli}
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-    lockEth "${symbol}"
-    lockEthUSDT
+    lockEth "${symbol1}"
+    lockEthUSDT "${symbol2}"
 
     # 离线多签地址转入阈值设大
-    offline_set_offline_token_Eth 100000000000000 10 "${symbol}"
-    offline_set_offline_token_EthUSDT 100000000000000 10
+    offline_set_offline_token_Eth 100000000000000 10 "${symbol1}"
+    offline_set_offline_token_EthUSDT 100000000000000 10 "${symbol2}"
 
 #    TestChain33ToEthAssets
 #    lockBty
@@ -725,7 +729,7 @@ function test_all() {
     ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
     chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
-    test_lock_and_burn "ETH"
+    test_lock_and_burn "ETH" "USDT"
 
     Boss4xCLI=${Boss4xCLIbsc}
     CLIA=${CLIAbsc}
@@ -735,5 +739,5 @@ function test_all() {
     ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
     chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
-    test_lock_and_burn "BNB"
+    test_lock_and_burn "BNB" "BUSDT"
 }
