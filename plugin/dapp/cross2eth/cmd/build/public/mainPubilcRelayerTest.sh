@@ -67,6 +67,24 @@ source "./offlinePublic.sh"
     chain33ValidatorKeyc="0x0a6671f101e30a2cc2d79d77436b62cdf2664ed33eb631a9c9e3f3dd348a23be"
     chain33ValidatorKeyd="0x3818b257b05ee75b6e43ee0e3cfc2d8502342cf67caed533e3756966690b62a5"
 
+    chain33MultisignA="168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9"
+    chain33MultisignB="13KTf57aCkVVJYNJBXBBveiA5V811SrLcT"
+    chain33MultisignC="1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe"
+    chain33MultisignD="1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"
+    chain33MultisignKeyA="0xcd284cd17456b73619fa609bb9e3105e8eff5d059c5e0b6eb1effbebd4d64144"
+    chain33MultisignKeyB="0xe892212221b3b58211b90194365f4662764b6d5474ef2961ef77c909e31eeed3"
+    chain33MultisignKeyC="0x9d19a2e9a440187010634f4f08ce36e2bc7b521581436a99f05568be94dc66ea"
+    chain33MultisignKeyD="0x45d4ce009e25e6d5e00d8d3a50565944b2e3604aa473680a656b242d9acbff35"
+
+    ethMultisignA=0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf
+    ethMultisignB=0x6F163E6daf0090D897AD7016484f10e0cE844994
+    ethMultisignC=0x0921948C0d25BBbe85285CB5975677503319F02A
+    ethMultisignD=0x69921517970a28b73ac5E4C8ac8Fd135A80D2be1
+    ethMultisignKeyA=0x5e8aadb91eaa0fce4df0bcc8bd1af9e703a1d6db78e7a4ebffd6cf045e053574
+    ethMultisignKeyB=0x0504bcb22b21874b85b15f1bfae19ad62fc2ad89caefc5344dc669c57efa60db
+    ethMultisignKeyC=0x5a43f2c8724f60ea5d6b87ad424daa73639a5fc76702edd3e5eaed37aaffdf49
+    ethMultisignKeyD=0x03b28c0fc78c6ebae719b559b0781db24644b655d4bd58e5cf2311c9f03baa3d
+
     ethTestAddr1=0xbc333839E37bc7fAAD0137aBaE2275030555101f
     ethTestAddrKey1=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
     ethTestAddr2=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
@@ -132,6 +150,18 @@ function restart_ebrelayerA() {
     kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayera_1"
     sleep 1
     start_docker_ebrelayerA
+
+    result=$(${CLIA} unlock -p "${validatorPwd}")
+    cli_ret "${result}" "unlock"
+}
+
+function restart_ebrelayer_bcd() {
+    # 重启
+    local name=$1
+    kill_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1"
+    sleep 1
+    start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
+    sleep 5
 
     result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
@@ -224,11 +254,14 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
 
+    restart_ebrelayer_bcd "b"
+    restart_ebrelayer_bcd "c"
+
     sleep ${maturityDegree}
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "2000000000000000"
+    is_equal "${result}" "200000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
@@ -237,11 +270,14 @@ function TestETH2Chain33Assets() {
     result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
+    restart_ebrelayer_bcd "b"
+    restart_ebrelayer_bcd "c"
+
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    #    is_equal "${result}" "1700000000000000"
+    is_equal "${result}" "170000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
@@ -410,25 +446,6 @@ function coins_cross_transfer() {
     is_equal "${result}" "${evm_amount}.0000"
 }
 
-function initPara() {
-    # para add
-    hash=$(${Para8901Cli} send coins transfer -a 10000 -n test -t "${chain33ReceiverAddr}" -k CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944)
-    check_tx "${Para8901Cli}" "${hash}"
-
-    Chain33Cli=${Para8901Cli}
-    InitChain33Validator
-
-    coins_cross_transfer "${chain33DeployKey}" "${chain33DeployAddr}" 1000 800 500
-    coins_cross_transfer "${chain33TestAddrKey1}" "${chain33TestAddr1}" 1000 800 500
-    coins_cross_transfer "${chain33TestAddrKey2}" "${chain33TestAddr2}" 1000 800 500
-
-    # 平行链共识节点增加测试币
-    ${MainCli} send coins transfer -a 1000 -n test -t "1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k" -k "${chain33ReceiverAddrKey}"
-    ${MainCli} send coins transfer -a 1000 -n test -t "1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs" -k "${chain33ReceiverAddrKey}"
-}
-
 # lock bty 判断是否转入多签地址金额是否正确
 function lock_bty_multisign_docker() {
     local lockAmount=$1
@@ -556,7 +573,6 @@ function StartDockerRelayerDeploy() {
     # shellcheck disable=SC2154
     # shellcheck disable=SC2034
     {
-    #    offline_create_bridge_token_chain33_USDT
         offline_create_bridge_token_chain33_symbol "USDT"
         chain33USDTBridgeTokenAddr="${chain33MainBridgeTokenAddr}"
 
