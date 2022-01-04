@@ -90,6 +90,7 @@ func main() {
 			EthBridgeClaimChan: ethBridgeClaimChan,
 			Chain33MsgChan:     chain33MsgChan,
 			ProcessWithDraw:    cfg.EthRelayerCfg[i].ProcessWithDraw,
+			Name:               cfg.EthRelayerCfg[i].EthChainName,
 		}
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
 		ethRelayerServices[ethStartPara.Name] = ethRelayerService
