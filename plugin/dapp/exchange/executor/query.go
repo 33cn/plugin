@@ -59,5 +59,5 @@ func (e *exchange) Query_QueryOrderList(in *et.QueryOrderList) (types.Message, e
 	if in.Address == "" {
 		return nil, et.ErrAddr
 	}
-	return QueryOrderList(e.GetLocalDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
+	return QueryOrderList(e.GetStateDB(), e.GetLocalDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
 }

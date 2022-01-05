@@ -60,11 +60,6 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 	}
 	kvs = append(kvs, kv...)
 
-	// debug market deep key
-	//for _, k := range kv {
-	//	elog.Debug("debug marketTable kv update", "key", string(k.Key), "heigth", e.GetHeight(), "index", index)
-	//}
-
 	kv, err = orderTable.Save()
 	if err != nil {
 		elog.Error("updateIndex", "orderTable.Save", err.Error())
@@ -143,14 +138,12 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 			markDepth.RightAsset = right
 			markDepth.Op = op
 			markDepth.Amount = order.Balance
-			elog.Error("updateIndex marketTable 1O read1", "op", op, "Depth", 0, "price", markDepth.Price, "ordered", order.Balance, "height", e.GetHeight(), "index", index)
 		} else {
 			markDepth.Price = price
 			markDepth.LeftAsset = left
 			markDepth.RightAsset = right
 			markDepth.Op = op
 			markDepth.Amount = depth.Amount + order.Balance
-			elog.Error("updateIndex marketTable 1O read2", "op", op, "Depth", depth.Amount, "price", markDepth.Price, "ordered", order.Balance, "height", e.GetHeight(), "index", index)
 		}
 		//marketDepth
 		err = marketTable.Replace(&markDepth)
@@ -158,7 +151,6 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 			elog.Error("updateIndex", "marketTable.Replace", err.Error())
 			return err
 		}
-		elog.Error("updateIndex marketTable 1O", "op", op, "Depth", markDepth.Amount, "price", markDepth.Price, "ordered", order.Balance, "height", e.GetHeight(), "index", index)
 		err = orderTable.Replace(order)
 		if err != nil {
 			elog.Error("updateIndex", "orderTable.Replace", err.Error())
@@ -201,7 +193,6 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 				return err
 			}
 		}
-		elog.Error("updateIndex marketTable 1R", "op", op, "Depth", marketDepth.Amount, "price", marketDepth.Price, "executed", order.Balance, "height", e.GetHeight(), "index", index)
 		//删除原有状态orderID
 		primaryKey := []byte(fmt.Sprintf("%022d", order.OrderID))
 		err = orderTable.Del(primaryKey)
@@ -281,11 +272,9 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 				matchDepth.RightAsset = right
 				matchDepth.Op = OpSwap(op)
 				matchDepth.Amount = depth.Amount - executed
-				elog.Error("updateIndex marketTable 2 read", "op", OpSwap(op), "Depth", depth.Amount, "price", matchDepth.Price, "executed", executed, "result", matchDepth.Amount, "height", e.GetHeight(), "index", index)
 			}
 			//marketDepth
 			if matchDepth.Amount > 0 {
-				elog.Error("updateIndex marketTable 2replace", "op", OpSwap(op), "Depth", matchDepth.Amount, "price", matchDepth.Price, "executed", executed, "height", e.GetHeight(), "index", index)
 				err = marketTable.Replace(&matchDepth)
 				if err != nil {
 					elog.Error("updateIndex", "marketTable.Replace", err.Error())
@@ -294,7 +283,6 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 			}
 			if matchDepth.Amount <= 0 {
 				//删除
-				elog.Error("updateIndex marketTable 2delete", "op", OpSwap(op), "Depth", matchDepth.Amount, "price", matchDepth.Price, "executed", executed, "height", e.GetHeight(), "index", index)
 				err = marketTable.DelRow(&matchDepth)
 				if err != nil {
 					elog.Error("updateIndex", "marketTable.DelRow", err.Error())

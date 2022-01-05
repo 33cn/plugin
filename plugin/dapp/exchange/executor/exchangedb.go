@@ -203,6 +203,9 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	balance := order.GetBalance()
 
 	cfg := a.api.GetConfig()
+	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix2) {
+		return a.RevokeOrder_Fix2(payload)
+	}
 
 	if order.GetLimitOrder().GetOp() == et.OpBuy {
 		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
@@ -257,6 +260,84 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 
+}
+func (a *Action) RevokeOrder_Fix2(payload *et.RevokeOrder) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
+	if err != nil {
+		return nil, err
+	}
+	if order.Addr != a.fromaddr {
+		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return nil, et.ErrAddr
+	}
+	if order.Status == et.Completed || order.Status == et.Revoked {
+		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return nil, et.ErrOrderSatus
+	}
+	leftAsset := order.GetLimitOrder().GetLeftAsset()
+	rightAsset := order.GetLimitOrder().GetRightAsset()
+	price := order.GetLimitOrder().GetPrice()
+	balance := order.GetBalance()
+	cfg := a.api.GetConfig()
+
+	if order.GetLimitOrder().GetOp() == et.OpBuy {
+		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
+		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
+		if rightAccount.Frozen < amount {
+			elog.Warn("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
+			amount = rightAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := rightAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+	if order.GetLimitOrder().GetOp() == et.OpSell {
+		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
+		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
+		if leftAccount.Frozen < amount {
+			elog.Warn("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
+			amount = leftAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+
+	//更新order状态
+	order.Status = et.Revoked
+	order.UpdateTime = a.blocktime
+	order.RevokeHash = hex.EncodeToString(a.txhash)
+	kvs = append(kvs, a.GetKVSet(order)...)
+	re := &et.ReceiptExchange{
+		Order: order,
+		Index: a.GetIndex(),
+	}
+	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
+	logs = append(logs, receiptlog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
 }
 
 //撮合交易逻辑方法
@@ -431,7 +512,6 @@ func (a *Action) matchLimitOrder_Fix1(payload *et.LimitOrder, leftAccountDB, rig
 func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var orderKey string
 	var priceKey string
 	var count int
 
@@ -485,12 +565,12 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 			break
 		}
 		//获取现有市场挂单价格信息
-		marketDepthList, err := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
-		if err == types.ErrNotFound {
+		marketDepthList, _ := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
+		if marketDepthList == nil || len(marketDepthList.List) == 0 {
 			break
 		}
 		for _, marketDepth := range marketDepthList.List {
-			elog.Error("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
+			elog.Info("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
 			if count >= et.MaxMatchCount {
 				done = true
 				break
@@ -507,7 +587,8 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 			}
 
 			//根据价格进行迭代
-			var hasOrder bool
+			var hasOrder = false
+			var orderKey string
 			for {
 				//当撮合深度大于等于最大深度时跳出
 				if count >= et.MaxMatchCount {
@@ -515,26 +596,37 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 					break
 				}
 				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
-
 				if orderList != nil && !hasOrder {
 					hasOrder = true
 				}
-				if err == types.ErrNotFound {
-					if !hasOrder {
-						elog.Error("LimitOrder find dirty deep", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount, "err", err.Error())
+				if err != nil {
+					if err == types.ErrNotFound {
+						break
 					}
-					break
+					elog.Error("findOrderIDListByPrice error", "height", a.height, "symbol", payload.GetLeftAsset().Symbol, "price", marketDepth.Price, "op", a.OpSwap(payload.Op), "error", err)
+					return nil, err
 				}
-
 				for _, matchorder := range orderList.List {
 					//当撮合深度大于最大深度时跳出
 					if count >= et.MaxMatchCount {
 						done = true
 						break
 					}
+					//校验订单状态
+					order, err := findOrderByOrderID(a.statedb, a.localDB, matchorder.GetOrderID())
+					if err != nil || order.Status != et.Ordered {
+						if len(orderList.List) == 1 {
+							hasOrder = true
+						}
+						continue
+					}
 					//撮合,指针传递
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr()) // payload, or redundant
+					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr()) // payload, or redundant
 					if err != nil {
+						if err == types.ErrNoBalance {
+							_, _ = a.RevokeOrder(&et.RevokeOrder{OrderID: order.GetOrderID()})
+							continue
+						}
 						return nil, err
 					}
 					logs = append(logs, log...)
@@ -912,7 +1004,7 @@ HERE:
 }
 
 //QueryOrderList 默认展示最新的
-func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
+func QueryOrderList(statedb dbm.KV, localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
 	var table *tab.Table
 	if status == et.Completed || status == et.Revoked {
 		table = NewHistoryOrderTable(localdb)
@@ -937,7 +1029,14 @@ func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32,
 	}
 	var orderList et.OrderList
 	for _, row := range rows {
-		order := row.Data.(*et.Order)
+		order, err := findOrderByOrderID(statedb, localdb, row.Data.(*et.Order).GetOrderID())
+		if err != nil {
+			return nil, err
+		}
+		if order.Status != et.Ordered {
+			_ = table.DelRow(order)
+			continue
+		}
 		//替换已经成交得量
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
