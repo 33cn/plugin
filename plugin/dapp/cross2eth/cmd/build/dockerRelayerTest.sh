@@ -9,6 +9,32 @@ set +e
 source "./mainPubilcRelayerTest.sh"
 source "./proxyVerifyTest.sh"
 
+# shellcheck disable=SC2154
+# shellcheck disable=SC2034
+function test_test() {
+    Boss4xCLI=${Boss4xCLIeth}
+    CLIA=${CLIAeth}
+    ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+    ethereumMultisignAddr="${ethereumMultisignAddrOnETH}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
+    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
+
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+#    cli_ret "${result}" "balance" ".balance" "0"
+
+    for (( i = 0; i < 1000; i++ )); do
+        ${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}"
+    done
+
+    sleep 4
+
+    result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
+#    cli_ret "${result}" "balance" ".balance" "0.002"
+
+}
+
 function AllRelayerMainTest() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     set +e
@@ -35,9 +61,9 @@ function AllRelayerMainTest() {
     initPara
 
     StartDockerRelayerDeploy
-    test_all
-
-    TestRelayerProxy
+    test_test
+#    test_all
+#    TestRelayerProxy
 
     echo_addrs
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
