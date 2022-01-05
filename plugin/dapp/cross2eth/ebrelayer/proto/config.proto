@@ -35,7 +35,6 @@ message EthRelayerCfg {
   string bridgeRegistry          = 4;
   int32 ethMaturityDegree        = 5;
   int32 ethBlockFetchPeriod      = 6;
-  bool processWithDraw           = 7;
 }
 
 message Chain33RelayerCfg {
@@ -54,6 +53,7 @@ message RelayerConfig {
   string dbdriver                     = 6; //数据库类型
   string dbPath                       = 7;   //数据库存储目录
   int32 dbCache                       = 8;   //数据库缓存大小
+  bool processWithDraw                = 9;
 }
 
 message SyncTxReceiptConfig {

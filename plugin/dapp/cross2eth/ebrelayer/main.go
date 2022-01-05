@@ -89,7 +89,7 @@ func main() {
 			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
 			EthBridgeClaimChan: ethBridgeClaimChan,
 			Chain33MsgChan:     chain33MsgChan,
-			ProcessWithDraw:    cfg.EthRelayerCfg[i].ProcessWithDraw,
+			ProcessWithDraw:    cfg.ProcessWithDraw,
 			Name:               cfg.EthRelayerCfg[i].EthChainName,
 		}
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
@@ -107,7 +107,7 @@ func main() {
 		EthBridgeClaimChan: ethBridgeClaimChan,
 		Chain33MsgChan:     chain33MsgChan2Eths,
 		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
-		ProcessWithDraw:    cfg.EthRelayerCfg[0].ProcessWithDraw,
+		ProcessWithDraw:    cfg.ProcessWithDraw,
 	}
 	chain33RelayerService := chain33Relayer.StartChain33Relayer(chain33StartPara)
 
