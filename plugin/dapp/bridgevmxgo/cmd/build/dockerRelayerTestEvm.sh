@@ -141,7 +141,9 @@ function DeployEvmxgo() {
     cp XgoBridgeRegistryOnChain33.abi "${XgoBridgeRegistryOnChain33}.abi"
     XgoChain33BridgeBank=$(${Chain33Cli} evm query -c "${chain33DeployAddr}" -b "bridgeBank()" -a "${XgoBridgeRegistryOnChain33}")
     cp XgoChain33BridgeBank.abi "${XgoChain33BridgeBank}.abi"
+}
 
+function set_config_ethereum() {
     ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s ETH -t "${chain33MainBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1
     chain33_offline_send_evm "create_add_lock_list.txt"
 
@@ -151,9 +153,18 @@ function DeployEvmxgo() {
     updateConfig "ETH" "${chain33MainBridgeTokenAddr}"
     updateConfig "USDT" "${chain33USDTBridgeTokenAddr}"
     configbridgevmxgoAddr "${XgoChain33BridgeBank}"
+}
 
-    # 重启,需要重新启动relayer,更新nonce
-    restart_ebrelayerA
+function set_config_bsc() {
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s BNB -t "${chain33MainBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1
+    chain33_offline_send_evm "create_add_lock_list.txt"
+
+    ${EvmxgoBoss4xCLI} chain33 offline create_add_lock_list -s BUSDT -t "${chain33USDTBridgeTokenAddr}" -c "${XgoChain33BridgeBank}" -k "${chain33DeployKey}" -f 1
+    chain33_offline_send_evm "create_add_lock_list.txt"
+
+    updateConfig "BNB" "${chain33MainBridgeTokenAddr}"
+    updateConfig "BUSDT" "${chain33USDTBridgeTokenAddr}"
+    configbridgevmxgoAddr "${XgoChain33BridgeBank}"
 }
 
 function TestETH2EVMToChain33() {
@@ -263,28 +274,36 @@ function get_evm_cli() {
     }
 }
 
-function test_evm_all() {
-    # test
-    # shellcheck disable=SC2034
-    {
-        Boss4xCLI=${Boss4xCLIeth}
-        CLIA=${CLIAeth}
-        ethereumBridgeBank="${ethereumBridgeBankOnETH}"
-        ethereumMultisignAddr="${ethereumMultisignAddrOnETH}"
-        chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
-        ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
-        ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
-        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
-    }
-
-    Chain33Cli=${Para8901Cli}
-#    TestChain33ToEthAssets
+function test_xgo() {
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-    DeployEvmxgo
     TestETH2EVMToChain33
     Testethereum2EVMToChain33_usdt
+}
+
+# shellcheck disable=SC2034
+function test_evm_all() {
+    # test
+    Boss4xCLI=${Boss4xCLIeth}
+    CLIA=${CLIAeth}
+    ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
+    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
+    set_config_ethereum
+    test_xgo
+
+    Boss4xCLI=${Boss4xCLIbsc}
+    CLIA=${CLIAbsc}
+    ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
+    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
+    set_config_bsc
+    test_xgo
 }
 
 function AllRelayerMainTest() {
@@ -312,6 +331,7 @@ function AllRelayerMainTest() {
     Chain33Cli=${Para8901Cli}
     StartDockerRelayerDeploy
 
+    DeployEvmxgo
     test_evm_all
 
     echo_addrs
