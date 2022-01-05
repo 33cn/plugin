@@ -4,6 +4,7 @@ JrpcBindAddr="localhost:9901"
 dbdriver="leveldb"
 dbPath="datadir"
 dbCache=64
+ProcessWithDraw=false
 #以太坊链1的配置
 [[EthRelayerCfg]]
 EthChainName="Ethereum"
@@ -12,7 +13,6 @@ EthProviderCli="http://172.18.0.2:8545"
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
-ProcessWithDraw=false
 #以太坊链2的配置
 [[EthRelayerCfg]]
 EthChainName="Binance"
@@ -21,7 +21,6 @@ EthProviderCli="http://172.18.0.2:8545"
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
-ProcessWithDraw=false
 #chain33的配置
 [Chain33RelayerCfg]
 ChainID4Chain33=0
