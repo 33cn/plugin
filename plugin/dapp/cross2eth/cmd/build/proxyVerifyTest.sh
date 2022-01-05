@@ -21,8 +21,7 @@ function start_docker_ebrelayerProxy() {
     sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "./relayerproxy.toml"
 
     # 代理转账中继器中的标志位ProcessWithDraw设置为true
-    sed -i '7,15s/ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
-    sed -i '17,24s/ProcessWithDraw=.*/ProcessWithDraw=true/g' "./relayerproxy.toml"
+    sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/' "./relayerproxy.toml"
 
     # shellcheck disable=SC2154
     docker cp "./relayerproxy.toml" "${dockerNamePrefix}_ebrelayerproxy_1":/root/relayer.toml
