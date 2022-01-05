@@ -10,11 +10,14 @@ source "./mainPubilcRelayerTest.sh"
 
 # shellcheck disable=SC2034
 {
-  chain33BridgeBank=""
+    chain33BridgeBank=""
     chain33BridgeRegistry=""
     chain33MultisignAddr=""
     chain33BtyERC20TokenAddr="1111111111111111111114oLvT2"
+
     chain33USDTBridgeTokenAddr=""
+    chain33USDTBridgeTokenAddrOnETH=""
+    chain33USDTBridgeTokenAddrOnBSC=""
 
     chain33MainBridgeTokenAddr=""
     chain33MainBridgeTokenAddrETH=""
@@ -271,6 +274,7 @@ function test_evm_all() {
         chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
         ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnETH}"
         ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
     }
 
     Chain33Cli=${Para8901Cli}
