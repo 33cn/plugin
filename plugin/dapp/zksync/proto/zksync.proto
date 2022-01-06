@@ -4,15 +4,21 @@ option go_package = "../types";
 
 message ZksyncAction {
   oneof value {
-    Deposit  limitOrder = 1;
-    Withdraw marketOrder = 2;
-    ContractToLeaf revokeOrder = 3;
+    Deposit  deposit = 1;
+    Withdraw withdraw = 2;
+    ContractToLeaf contractToLeaf = 3;
     LeafToContract leafToContract = 4;
     Transfer transfer = 5;
     TransferToNew transferToNew = 6;
     ForceQuit ForceQuit = 7;
   }
   int32 ty = 8;
+}
+
+message EddsaSigNature {
+  bytes pubKey = 1;
+  bytes signInfo = 2;
+  ZksyncAction action = 3;
 }
 
 //某条链上的代币余额
@@ -46,12 +52,6 @@ message Leaf {
   map<string, int32> chainBalanceMap = 3;
   repeated ChainBalance chainBalances = 4;
   string ethAddress = 5; //账户对应的以太坊地址
-  PubKey publicKey = 6; //twistededwards pubKey
-}
-
-message PubKey {
-  string x = 1;
-  string y = 2;
 }
 
 message RootInfo {

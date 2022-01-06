@@ -55,7 +55,7 @@ func (e *zksync) GetDriverName() string {
 
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (e *zksync) CheckTx(tx *types.Transaction, index int) error {
-	//todo 检查交易
+
 	return nil
 }
 

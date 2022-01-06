@@ -7,9 +7,9 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 // Action action struct
@@ -187,7 +187,7 @@ func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新合约账户
-	err = a.UpdateContractAccount(a.fromaddr, -int64(payload.GetAmount()))
+	err = a.UpdateContractAccount(a.fromaddr, -int64(payload.GetAmount()), payload.GetChainType(), payload.GetTokenId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
@@ -230,7 +230,7 @@ func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新合约账户
-	err = a.UpdateContractAccount(a.fromaddr, int64(payload.GetAmount()))
+	err = a.UpdateContractAccount(a.fromaddr, int64(payload.GetAmount()), payload.GetChainType(), payload.GetTokenId())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
@@ -246,10 +246,10 @@ func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, err
 }
 
 
-func (a *Action) UpdateContractAccount(addr string, amount int64) error {
-	execAddr := address.ExecAddress(et.ExchangeX)
+func (a *Action) UpdateContractAccount(addr string, amount int64, chainType string, tokenId int32) error {
+	execAddr := address.ExecAddress(zt.Zksync)
 
-	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), "coins", "bty", a.statedb)
+	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, chainType + strconv.Itoa(int(tokenId)), a.statedb)
 	contractAccount := accountdb.LoadExecAccount(addr, execAddr)
 	if contractAccount.Balance + amount < 0 {
 		return errors.New("balance not enough")
@@ -311,7 +311,7 @@ func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 
 	//更新toLeaf
-	toLeaf, err = UpdateLeaf(a.localDB, payload.GetFromAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
+	toLeaf, err = UpdateLeaf(a.localDB, payload.GetToAccountId(), payload.GetChainType(), payload.GetTokenId(), int64(payload.GetAmount()))
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}

@@ -392,7 +392,6 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
 	hash.Write([]byte(string(leaf.GetAccountId())))
 	hash.Write([]byte(leaf.GetEthAddress()))
-	hash.Write([]byte(leaf.GetPublicKey().GetX() + leaf.GetPublicKey().GetY()))
 	for _, balance := range leaf.GetChainBalances() {
 		hash.Write(balance.GetRootHash())
 	}
@@ -466,7 +465,7 @@ func CalLeafProof(db dbm.KV, accountId int32) (*zt.MerkleTreeProof, error) {
 		proofSet := make([][]byte, len(subTrees)+1)
 		helpers := make([]uint32, len(subTrees)+1)
 		for i := len(subTrees); i > 0; i-- {
-			proofSet[i] = subTrees[i].GetSum()
+			proofSet[i] = subTrees[i - 1].GetSum()
 			helpers[i] = 1
 		}
 		proof := &zt.MerkleTreeProof{
