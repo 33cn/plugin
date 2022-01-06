@@ -768,6 +768,7 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 			relayerLog.Error("getCurrentHeight", "Failed to HeaderByNumber due to:", err.Error())
 			continue
 		}
+		relayerLog.Debug("getCurrentHeight", "clientSpec SetupWebsocketEthClient:", ethRelayer.providerHttp)
 		return head.Number.Uint64(), nil
 	}
 }
