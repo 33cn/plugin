@@ -578,3 +578,9 @@ func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, toke
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }
+
+func (chain33Relayer *Relayer4Chain33) BurnWithIncreaseAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
+	bn := big.NewInt(1)
+	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	return burnWithIncreaseAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
+}

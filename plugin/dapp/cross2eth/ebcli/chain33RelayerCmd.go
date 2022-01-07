@@ -31,6 +31,7 @@ func Chain33RelayerCmd() *cobra.Command {
 		MultiSignCmd(),
 		ResendChain33EventCmd(),
 		WithdrawFromChain33Cmd(),
+		BurnWithIncreasefromChain33Cmd(),
 	)
 
 	return cmd
@@ -258,6 +259,39 @@ func BurnAsyncFromChain33(cmd *cobra.Command, args []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.BurnAsyncFromChain33", para, &res)
+	ctx.Run()
+}
+
+func BurnWithIncreasefromChain33Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn_increase",
+		Short: "async burn the asset from chain33 to make it unlocked on ethereum",
+		Run:   BurnWithIncreaseAsyncFromChain33,
+	}
+	BurnAsyncFromChain33Flags(cmd)
+	return cmd
+}
+
+func BurnWithIncreaseAsyncFromChain33(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	key, _ := cmd.Flags().GetString("key")
+	tokenAddr, _ := cmd.Flags().GetString("token")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+	receiver, _ := cmd.Flags().GetString("receiver")
+
+	d, err := utils.SimpleGetDecimals(tokenAddr)
+	if err != nil {
+		fmt.Println("get decimals err")
+		return
+	}
+	para := ebTypes.BurnFromChain33{
+		OwnerKey:         key,
+		TokenAddr:        tokenAddr,
+		Amount:           utils.ToWei(amount, d).String(),
+		EthereumReceiver: receiver,
+	}
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.BurnWithIncreaseAsyncFromChain33", para, &res)
 	ctx.Run()
 }
 
