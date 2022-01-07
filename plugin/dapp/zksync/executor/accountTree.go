@@ -3,6 +3,8 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
@@ -11,7 +13,6 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 func NewAccountTree(db dbm.KV) *zt.AccountTree {
@@ -73,9 +74,9 @@ func AddNewLeaf(db dbm.KV, ethAddress string, chainType string, tokenId int32, b
 	tree.TotalIndex++
 
 	leaf := &zt.Leaf{
-		EthAddress: ethAddress,
-		RootHash:   []byte("current"),
-		AccountId:  tree.GetTotalIndex(),
+		EthAddress:  ethAddress,
+		RootHash:    []byte("current"),
+		AccountId:   tree.GetTotalIndex(),
 		Chain33Addr: chain33Addr,
 	}
 
@@ -469,7 +470,7 @@ func CalLeafProof(db dbm.KV, accountId int32) (*zt.MerkleTreeProof, error) {
 		proofSet := make([][]byte, len(subTrees)+1)
 		helpers := make([]uint32, len(subTrees)+1)
 		for i := len(subTrees); i > 0; i-- {
-			proofSet[i] = subTrees[i - 1].GetSum()
+			proofSet[i] = subTrees[i-1].GetSum()
 			helpers[i] = 1
 		}
 		proof := &zt.MerkleTreeProof{
@@ -561,7 +562,7 @@ func CalTokenProof(db dbm.KV, chainBalance *zt.ChainBalance, tokenId int32) (*zt
 	}
 }
 
-func UpdatePubKey(db dbm.KV, leaf *zt.Leaf, pubKey []byte) (*zt.Leaf,error) {
+func UpdatePubKey(db dbm.KV, leaf *zt.Leaf, pubKey []byte) (*zt.Leaf, error) {
 	tree, err := getAccountTree(db)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getAccountTree")

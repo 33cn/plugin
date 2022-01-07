@@ -1,10 +1,11 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/util"
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
+
+	"github.com/33cn/chain33/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccountTree(t *testing.T) {

@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
@@ -31,7 +32,6 @@ func NewAccountTreeTable(kvdb db.KV) *table.Table {
 	}
 	return table
 }
-
 
 // AccountTreeRow table meta 结构
 type AccountTreeRow struct {
@@ -71,4 +71,3 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 func GetAccountIdPrimaryKey(accountId int32) []byte {
 	return []byte(fmt.Sprintf("%022d", accountId))
 }
-

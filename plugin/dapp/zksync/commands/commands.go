@@ -3,12 +3,13 @@ package commands
 
 import (
 	"fmt"
+	"os"
+
 	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 /*
