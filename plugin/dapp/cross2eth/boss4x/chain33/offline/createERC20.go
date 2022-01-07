@@ -73,10 +73,10 @@ func CreateERC20(cmd *cobra.Command, _ []string) {
 		Addr: fromAddr,
 	}
 
-	createPara := fmt.Sprintf("%s,%s,%s,%s", symbol, symbol, fmt.Sprintf("%d", amountInt64), owner)
+	createPara := fmt.Sprintf("%s,%s,%s,%s,8", symbol, symbol, fmt.Sprintf("%d", amountInt64), owner)
 	content, txHash, err := utils.CreateContractAndSign(getTxInfo(cmd), erc20.ERC20Bin, erc20.ERC20ABI, createPara, "ERC20:"+symbol)
 	if nil != err {
-		fmt.Println("CreateContractAndSign erc20 fail")
+		fmt.Println("CreateContractAndSign erc20 fail", err.Error())
 		return
 	}
 

@@ -90,7 +90,7 @@ func TestMethodPack(t *testing.T) {
 		t.Errorf("expected %x got %x", sig, packed)
 	}
 
-	var addrA, addrB = common.Uint256ToAddress(uint256.NewInt().SetUint64(1)), common.Uint256ToAddress(uint256.NewInt().SetUint64(1))
+	var addrA, addrB = common.Uint256ToAddress(uint256.NewInt(1)), common.Uint256ToAddress(uint256.NewInt(1))
 	sig = abi.Methods["sliceAddress"].ID
 	sig = append(sig, common.LeftPadBytes([]byte{32}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{2}, 32)...)
@@ -105,7 +105,7 @@ func TestMethodPack(t *testing.T) {
 		t.Errorf("expected %x got %x", sig, packed)
 	}
 
-	var addrC, addrD = common.Uint256ToAddress(uint256.NewInt().SetUint64(3)), common.Uint256ToAddress(uint256.NewInt().SetUint64(4))
+	var addrC, addrD = common.Uint256ToAddress(uint256.NewInt(3)), common.Uint256ToAddress(uint256.NewInt(4))
 	sig = abi.Methods["sliceMultiAddress"].ID
 	sig = append(sig, common.LeftPadBytes([]byte{64}, 32)...)
 	sig = append(sig, common.LeftPadBytes([]byte{160}, 32)...)

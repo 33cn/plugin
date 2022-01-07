@@ -30,6 +30,7 @@ func Chain33RelayerCmd() *cobra.Command {
 		ShowBridgeRegistryAddr4chain33Cmd(),
 		TokenAddressCmd(),
 		MultiSignCmd(),
+		ResendChain33EventCmd(),
 	)
 
 	return cmd
@@ -39,11 +40,10 @@ func Chain33RelayerCmd() *cobra.Command {
 func TokenAddressCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "show or set token address and it's corresponding symbol",
+		Short: "show token address and it's corresponding symbol",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
-		SetTokenAddressCmd(),
 		ShowTokenAddressCmd(),
 		CreateERC20Cmd(),
 	)
@@ -87,39 +87,6 @@ func CreateERC20(cmd *cobra.Command, args []string) {
 		Amount: fmt.Sprintf("%d", amountInt64),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateERC20ToChain33", para, &res)
-	ctx.Run()
-}
-
-func SetTokenAddressCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set",
-		Short: "set token address and it's corresponding symbol",
-		Run:   SetTokenAddress,
-	}
-	SetTokenFlags(cmd)
-	return cmd
-}
-
-//SetTokenFlags ...
-func SetTokenFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("token", "t", "", "token address")
-	_ = cmd.MarkFlagRequired("token")
-	cmd.Flags().StringP("symbol", "s", "", "token symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-}
-
-func SetTokenAddress(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	token, _ := cmd.Flags().GetString("token")
-
-	var res rpctypes.Reply
-	para := ebTypes.TokenAddress{
-		Symbol:    symbol,
-		Address:   token,
-		ChainName: ebTypes.Chain33BlockChainName,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetTokenAddress", para, &res)
 	ctx.Run()
 }
 
@@ -420,4 +387,31 @@ func showChain33Relayer2EthTxs(cmd *cobra.Command, args []string) {
 	for _, hash := range res.Txhash {
 		fmt.Println(hash)
 	}
+}
+
+func ResendChain33EventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resendChain33Event",
+		Short: "resend Chain33Event to ethereum process goroutine",
+		Run:   resendChain33Event,
+	}
+	addResendChain33EventFlags(cmd)
+	return cmd
+}
+
+func addResendChain33EventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height begin to resend chain33 event ")
+	_ = cmd.MarkFlagRequired("height")
+}
+
+func resendChain33Event(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetInt64("height")
+	resendChain33EventReq := &ebTypes.ResendChain33EventReq{
+		Height: height,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendChain33Event", resendChain33EventReq, &res)
+	ctx.Run()
 }

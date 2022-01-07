@@ -99,10 +99,10 @@ func (c *suiteContracts) Test_LogLockToEthBridgeClaim() {
 	assert.Equal(c.T(), witnessClaim.Nonce, event.Nonce.Int64())
 	assert.Equal(c.T(), witnessClaim.Decimal, int64(18))
 
-	event.Token = common.HexToAddress("0x0000000000000000000000000000000000000001")
+	event.To = nil
 	_, err = LogLockToEthBridgeClaim(event, 1, c.x2EthDeployInfo.BridgeBank.Address.String(), "", 18)
 	require.NotNil(c.T(), err)
-	assert.Equal(c.T(), err, ebrelayerTypes.ErrAddress4Eth)
+	assert.Equal(c.T(), err, ebrelayerTypes.ErrEmptyAddress)
 }
 
 func (c *suiteContracts) Test_LogBurnToEthBridgeClaim() {
@@ -232,7 +232,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {
 	alloc := make(core.GenesisAlloc)
 	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
 	genesisAccount := core.GenesisAccount{
-		Balance:    big.NewInt(10000000000 * 10000),
+		Balance:    big.NewInt(1000000000000 * 10000),
 		PrivateKey: crypto.FromECDSA(genesiskey),
 	}
 	alloc[genesisAddr] = genesisAccount
@@ -246,7 +246,7 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *DeployPara) {
 		ValidatorPriKey = append(ValidatorPriKey, key)
 
 		account := core.GenesisAccount{
-			Balance:    big.NewInt(100000000 * 100),
+			Balance:    big.NewInt(1000000000000 * 10000),
 			PrivateKey: crypto.FromECDSA(key),
 		}
 		alloc[addr] = account

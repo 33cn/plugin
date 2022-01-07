@@ -4,25 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	//"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
-	//erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	//"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
-	tml "github.com/BurntSushi/toml"
-	"github.com/ethereum/go-ethereum"
-
-	//"github.com/ethereum/go-ethereum/accounts/abi"
 	"io/ioutil"
 	"math/big"
 	"os"
 
+	tml "github.com/BurntSushi/toml"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
-	//"strings"
-	//"time"
 )
 
 type DeployContractRet struct {
@@ -42,8 +34,9 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateCmd(), //构造交易
 		CreateWithFileCmd(),
 		DeployERC20Cmd(),
-		CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
-		SetupCmd(),
+		DeployTetherUSDTCmd(),
+		//CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
+		//SetupCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateAddToken2LockListTxCmd(),
 		CreateBridgeTokenTxCmd(),
@@ -52,6 +45,8 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
 		SendTxsCmd(),                            // 发送交易 send all kinds of tx
+		//ConfigplatformTokenSymbolCmd(),
+		CreateEthBridgeBankRelatedCmd(), //构造交易
 	)
 
 	return cmd
@@ -69,9 +64,11 @@ type DeployInfo struct {
 }
 
 type DeployConfigInfo struct {
-	DeployerPrivateKey string   `toml:"deployerPrivateKey"`
-	ValidatorsAddr     []string `toml:"validatorsAddr"`
-	InitPowers         []int64  `toml:"initPowers"`
+	OperatorAddr   string   `toml:"operatorAddr"`
+	ValidatorsAddr []string `toml:"validatorsAddr"`
+	InitPowers     []int64  `toml:"initPowers"`
+	Symbol         string   `toml:"symbol"`
+	MultisignAddrs []string `toml:"multisignAddrs"`
 }
 
 func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string) {

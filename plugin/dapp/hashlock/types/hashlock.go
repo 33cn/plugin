@@ -26,7 +26,7 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(HashlockX, "Enable", 0)
-	cfg.RegisterDappFork(HashlockX, ForkBadRepeatSecretX, 2715575)
+	cfg.RegisterDappFork(HashlockX, ForkBadRepeatSecretX, 0)
 }
 
 //InitExecutor ...

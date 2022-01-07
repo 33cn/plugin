@@ -30,6 +30,7 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(CollateralizeX, "Enable", 0)
 	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizeTableUpdate, 0)
+	cfg.RegisterDappFork(CollateralizeX, ForkCollateralizePrecision, 0)
 }
 
 //InitExecutor ...
@@ -157,7 +158,7 @@ func CreateRawCollateralizeCreateTx(cfg *types.Chain33Config, parm *Collateraliz
 		llog.Error("CreateRawCollateralizeCreateTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetCoinPrecision())
+	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.TotalBalance")
 	}
@@ -188,7 +189,7 @@ func CreateRawCollateralizeBorrowTx(cfg *types.Chain33Config, parm *Collateraliz
 		llog.Error("CreateRawCollateralizeBorrowTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	valueInt64, err := types.FormatFloatDisplay2Value(parm.Value, cfg.GetCoinPrecision())
+	valueInt64, err := types.FormatFloatDisplay2Value(parm.Value, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.Value")
 	}
@@ -315,7 +316,7 @@ func CreateRawCollateralizeRetrieveTx(cfg *types.Chain33Config, parm *Collateral
 		llog.Error("CreateRawCollateralizeCloseTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	balanceInt64, err := types.FormatFloatDisplay2Value(parm.Balance, cfg.GetCoinPrecision())
+	balanceInt64, err := types.FormatFloatDisplay2Value(parm.Balance, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.Balance")
 	}
@@ -348,11 +349,11 @@ func CreateRawCollateralizeManageTx(cfg *types.Chain33Config, parm *Collateraliz
 		llog.Error("CreateRawCollateralizeManageTx", "parm", parm)
 		return nil, types.ErrInvalidParam
 	}
-	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetCoinPrecision())
+	totalBalanceInt64, err := types.FormatFloatDisplay2Value(parm.TotalBalance, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.totalBalance")
 	}
-	debtCeilingInt64, err := types.FormatFloatDisplay2Value(parm.DebtCeiling, cfg.GetCoinPrecision())
+	debtCeilingInt64, err := types.FormatFloatDisplay2Value(parm.DebtCeiling, cfg.GetTokenPrecision())
 	if err != nil {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "FormatFloatDisplay2Value.DebtCeiling")
 	}

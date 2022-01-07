@@ -29,8 +29,8 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(AutonomyX, "Enable", 0)
-	cfg.RegisterDappFork(AutonomyX, ForkAutonomyDelRule, 9500000)
-	cfg.RegisterDappFork(AutonomyX, ForkAutonomyEnableItem, 10000000)
+	cfg.RegisterDappFork(AutonomyX, ForkAutonomyDelRule, 0)
+	cfg.RegisterDappFork(AutonomyX, ForkAutonomyEnableItem, 0)
 }
 
 //InitExecutor ...

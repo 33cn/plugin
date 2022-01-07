@@ -29,6 +29,11 @@ var tlog = log.New("module", "ticket.db")
 //var genesisKey = []byte("mavl-acc-genesis")
 //var addrSeed = []byte("address seed bytes for public key")
 
+var (
+	ticketKeyPrefix     = []byte("mavl-ticket-")
+	ticketBindKeyPrefix = []byte("mavl-ticket-tbind-")
+)
+
 // DB db
 type DB struct {
 	ty.Ticket
@@ -106,14 +111,14 @@ func (t *DB) Save(db dbm.KV) {
 
 //Key address to save key
 func Key(id string) (key []byte) {
-	key = append(key, []byte("mavl-ticket-")...)
+	key = append(key, ticketKeyPrefix...)
 	key = append(key, []byte(id)...)
 	return key
 }
 
 // BindKey bind key
 func BindKey(id string) (key []byte) {
-	key = append(key, []byte("mavl-ticket-tbind-")...)
+	key = append(key, ticketBindKeyPrefix...)
 	key = append(key, []byte(id)...)
 	return key
 }

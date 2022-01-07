@@ -664,7 +664,8 @@ func TestPruning(t *testing.T) {
 		hashes = append(hashes, hash)
 	}
 
-	pruningMVCC(store.GetDB(), 99, &KVMCCCConfig{PruneHeight: 10})
+	pruningMVCCData(store.GetDB(), 80)
+	pruningMVCCMeta(store.GetDB(), 80)
 
 	//check
 	getDatas := &types.StoreGet{

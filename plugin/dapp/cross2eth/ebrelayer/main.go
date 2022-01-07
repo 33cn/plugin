@@ -91,6 +91,7 @@ func main() {
 	ethStartPara := &ethRelayer.EthereumStartPara{
 		DbHandle:           db,
 		EthProvider:        cfg.EthProvider,
+		EthProviderHttp:    cfg.EthProviderCli,
 		BridgeRegistryAddr: cfg.BridgeRegistry,
 		DeployInfo:         cfg.Deploy,
 		Degree:             cfg.EthMaturityDegree,
@@ -102,7 +103,7 @@ func main() {
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerService, db)
 
-	mainlog.Info("cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
+	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)
 
 	ch := make(chan os.Signal, 1)

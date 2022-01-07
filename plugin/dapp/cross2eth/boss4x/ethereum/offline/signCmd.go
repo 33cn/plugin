@@ -29,6 +29,7 @@ func addSignFlag(cmd *cobra.Command) {
 func signTx(cmd *cobra.Command, _ []string) {
 	privatekey, _ := cmd.Flags().GetString("key")
 	txFilePath, _ := cmd.Flags().GetString("file")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(privatekey))
 	if err != nil {
 		panic(err)
@@ -47,7 +48,7 @@ func signTx(cmd *cobra.Command, _ []string) {
 		if err != nil {
 			panic(err)
 		}
-		signedTx, txHash, err := eoff.SignTx(deployPrivateKey, &tx)
+		signedTx, txHash, err := eoff.SignEIP155Tx(deployPrivateKey, &tx, chainEthId)
 		if err != nil {
 			panic(err)
 		}

@@ -567,31 +567,22 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	return logs, kvs, nil
 }
 
-//根据订单号查询，分为两步，优先去localdb中查询，如没有则再去状态数据库中查询
-// 1.挂单中得订单信会根据orderID在localdb中存储
-// 2.订单撤销，或者成交后，根据orderID在localdb中存储得数据会被删除，这时只能到状态数据库中查询
+//根据订单号去状态数据库中查询
+// 1.localdb删除顺序，先实时删除缓存，区块生成时统一修改db。会导致缓存数据被删除但查询时缓存查询不到会去db查询依旧可以查询到删除的数据
 func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Order, error) {
-	table := NewMarketOrderTable(localdb)
-	primaryKey := []byte(fmt.Sprintf("%022d", orderID))
-	row, err := table.GetData(primaryKey)
+	data, err := statedb.Get(calcOrderKey(orderID))
 	if err != nil {
-		data, err := statedb.Get(calcOrderKey(orderID))
-		if err != nil {
-			elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
-			return nil, err
-		}
-		var order et.Order
-		err = types.Decode(data, &order)
-		if err != nil {
-			elog.Error("findOrderByOrderID.Decode", "orderID", orderID, "err", err.Error())
-			return nil, err
-		}
-		order.Executed = order.GetLimitOrder().Amount - order.Balance
-		return &order, nil
+		elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
+		return nil, err
 	}
-	order := row.Data.(*et.Order)
+	var order et.Order
+	err = types.Decode(data, &order)
+	if err != nil {
+		elog.Error("findOrderByOrderID.Decode", "orderID", orderID, "err", err.Error())
+		return nil, err
+	}
 	order.Executed = order.GetLimitOrder().Amount - order.Balance
-	return order, nil
+	return &order, nil
 }
 
 func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, op, direction int32, primaryKey string) (*et.OrderList, error) {

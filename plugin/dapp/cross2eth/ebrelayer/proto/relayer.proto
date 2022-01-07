@@ -183,6 +183,7 @@ message TokenAddress {
     string address = 1;
     string symbol  = 2;
     string chainName = 3;
+    int32 decimal    = 4;
 }
 
 message TokenAddressArray {
@@ -221,6 +222,7 @@ message ERC20Token {
     string name   = 2;
     string symbol = 3;
     string amount = 4;
+    int32 decimals = 5;
 }
 
 message ETHTokenLockAddress {
@@ -234,3 +236,13 @@ message ETHConfigLockedTokenOffline {
     string threshold = 3;
     uint32 percents  = 4;
 }
+
+message BalanceLockedReq  {
+    string bridgeBank = 1;
+    string tokenAddr  = 2;
+}
+
+message ResendChain33EventReq  {
+    int64 height = 1;
+}
+

@@ -56,7 +56,7 @@ func init() {
 
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
-	cfg.RegisterDappFork(RelayX, "Enable", 570000)
+	cfg.RegisterDappFork(RelayX, "Enable", 0)
 }
 
 //InitExecutor ...

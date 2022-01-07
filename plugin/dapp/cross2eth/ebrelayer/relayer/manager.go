@@ -374,6 +374,23 @@ func (manager *Manager) Deploy2Chain33(param interface{}, result *interface{}) e
 	return nil
 }
 
+func (manager *Manager) ResendChain33Event(param *relayerTypes.ResendChain33EventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	err := manager.chain33Relayer.ResendChain33Event(param.Height)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Successful to ResendChain33Event",
+	}
+	return nil
+}
+
 func (manager *Manager) CreateERC20ToChain33(param relayerTypes.ERC20Token, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -485,7 +502,7 @@ func (manager *Manager) DeployERC20(Erc20Token relayerTypes.ERC20Token, result *
 		return err
 	}
 
-	Erc20Addr, err := manager.ethRelayer.DeployERC20(Erc20Token.Owner, Erc20Token.Name, Erc20Token.Symbol, Erc20Token.Amount)
+	Erc20Addr, err := manager.ethRelayer.DeployERC20(Erc20Token.Owner, Erc20Token.Name, Erc20Token.Symbol, Erc20Token.Amount, uint8(Erc20Token.Decimals))
 	if nil != err {
 		return err
 	}
@@ -668,6 +685,21 @@ func (manager *Manager) IsProphecyPending(claimID [32]byte, result *interface{})
 	return nil
 }
 
+func (manager *Manager) ShowBalanceLocked(BalanceLockedReq *relayerTypes.BalanceLockedReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	balance, err := manager.ethRelayer.ShowBalanceLocked(BalanceLockedReq.TokenAddr, BalanceLockedReq.BridgeBank)
+	if nil != err {
+		return err
+	}
+
+	*result = relayerTypes.ReplyBalance{
+		IsOK:    true,
+		Balance: balance,
+	}
+	return nil
+}
+
 //GetBalance ...
 func (manager *Manager) GetBalance(balanceAddr relayerTypes.BalanceAddr, result *interface{}) error {
 	manager.mtx.Lock()
@@ -750,33 +782,6 @@ func (manager *Manager) ShowBridgeRegistryAddr4chain33(para interface{}, result 
 	*result = relayerTypes.ReplyAddr{
 		IsOK: true,
 		Addr: addr,
-	}
-	return nil
-}
-
-//SetTokenAddress ...
-func (manager *Manager) SetTokenAddress(token2set relayerTypes.TokenAddress, result *interface{}) error {
-	manager.mtx.Lock()
-	defer manager.mtx.Unlock()
-	if err := manager.checkPermission(); nil != err {
-		return err
-	}
-
-	if relayerTypes.EthereumBlockChainName == token2set.ChainName {
-		err := manager.ethRelayer.SetTokenAddress(token2set)
-		if nil != err {
-			return err
-		}
-	} else {
-		err := manager.chain33Relayer.SetTokenAddress(token2set)
-		if nil != err {
-			return err
-		}
-	}
-
-	*result = rpctypes.Reply{
-		IsOk: true,
-		Msg:  "",
 	}
 	return nil
 }
@@ -986,6 +991,23 @@ func (manager *Manager) ConfigOfflineSaveAccount(addr string, result *interface{
 		return err
 	}
 	txhash, err := manager.ethRelayer.ConfigOfflineSaveAccount(addr)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
+	}
+	return nil
+}
+
+func (manager *Manager) ConfigplatformTokenSymbol(symbol string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.ethRelayer.ConfigplatformTokenSymbol(symbol)
 	if nil != err {
 		return err
 	}

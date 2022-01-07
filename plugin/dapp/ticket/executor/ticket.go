@@ -17,6 +17,7 @@ EventTransfer -> 转移资产
 //nofee transaction will not pack into block
 
 import (
+	"bytes"
 	"fmt"
 
 	log "github.com/33cn/chain33/common/log/log15"
@@ -31,6 +32,7 @@ var driverName = "ticket"
 // Init initial
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
 	drivers.Register(cfg, GetName(), newTicket, cfg.GetDappFork(driverName, "Enable"))
+	drivers.RegisterKVExpiredChecker(ty.TicketX, expiredKVChecker)
 	InitExecType()
 }
 
@@ -192,4 +194,24 @@ func (t *Ticket) CheckTx(tx *types.Transaction, index int) error {
 // CheckReceiptExecOk return true to check if receipt ty is ok
 func (t *Ticket) CheckReceiptExecOk() bool {
 	return true
+}
+
+// 自定义接口，用于删除不再需要保存的kv
+// 比如 ticket 已经 close 之后就废弃了，可以删除
+func expiredKVChecker(key, value []byte) bool {
+	// 由于 ticketBindKeyPrefix 包含了 ticketKeyPrefix，所以需要多做一次检查
+	if bytes.HasPrefix(key, ticketBindKeyPrefix) {
+		return false
+	}
+	if !bytes.HasPrefix(key, ticketKeyPrefix) {
+		return false
+	}
+	var tk ty.Ticket
+	if err := types.Decode(value, &tk); err != nil {
+		return false
+	}
+	if tk.Status == ty.TicketClosed {
+		return true
+	}
+	return false
 }

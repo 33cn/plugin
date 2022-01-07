@@ -55,4 +55,5 @@ const (
 //fork ...
 var (
 	ForkIssuanceTableUpdate = "ForkIssuanceTableUpdate"
+	ForkIssuancePrecision   = "ForkIssuancePrecision"
 )

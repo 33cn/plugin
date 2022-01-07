@@ -64,12 +64,12 @@ func init() {
 //InitFork ...
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, "Enable", 0)
-	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 1298600)
-	cfg.RegisterDappFork(ParaX, ForkCommitTx, 1850000)
-	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 3230000)
-	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 4500000)
-	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 6000000)
-	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 10200000)
+	cfg.RegisterDappFork(ParaX, "ForkParacrossWithdrawFromParachain", 0)
+	cfg.RegisterDappFork(ParaX, ForkCommitTx, 0)
+	cfg.RegisterDappFork(ParaX, ForkLoopCheckCommitTxDone, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 0)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)

@@ -215,7 +215,7 @@ func validateBlock(stateDB *CSStateDB, s State, b *ttypes.QbftBlock) error {
 
 	// validate prev block info
 	if !bytes.Equal(b.Header.LastBlockID.Hash, s.LastBlockID.Hash) {
-		return fmt.Errorf("Wrong Block.Header.LastBlockID.  Expected %v, got %v", s.LastBlockID, b.Header.LastBlockID)
+		return fmt.Errorf("Wrong Block.Header.LastBlockID.  Expected %X, got %X", s.LastBlockID.Hash, b.Header.LastBlockID.Hash)
 	}
 
 	newTxs := b.Header.NumTxs
@@ -225,16 +225,16 @@ func validateBlock(stateDB *CSStateDB, s State, b *ttypes.QbftBlock) error {
 
 	// validate app info
 	if !bytes.Equal(b.Header.AppHash, s.AppHash) {
-		return fmt.Errorf("Wrong Block.Header.AppHash.  Expected %X, got %v", s.AppHash, b.Header.AppHash)
+		return fmt.Errorf("Wrong Block.Header.AppHash.  Expected %X, got %X", s.AppHash, b.Header.AppHash)
 	}
 	if !bytes.Equal(b.Header.ConsensusHash, s.ConsensusParams.Hash()) {
-		return fmt.Errorf("Wrong Block.Header.ConsensusHash.  Expected %X, got %v", s.ConsensusParams.Hash(), b.Header.ConsensusHash)
+		return fmt.Errorf("Wrong Block.Header.ConsensusHash.  Expected %X, got %X", s.ConsensusParams.Hash(), b.Header.ConsensusHash)
 	}
 	if !bytes.Equal(b.Header.LastResultsHash, s.LastResultsHash) {
-		return fmt.Errorf("Wrong Block.Header.LastResultsHash.  Expected %X, got %v", s.LastResultsHash, b.Header.LastResultsHash)
+		return fmt.Errorf("Wrong Block.Header.LastResultsHash.  Expected %X, got %X", s.LastResultsHash, b.Header.LastResultsHash)
 	}
 	if !bytes.Equal(b.Header.ValidatorsHash, s.Validators.Hash()) {
-		return fmt.Errorf("Wrong Block.Header.ValidatorsHash.  Expected %X, got %v", s.Validators.Hash(), b.Header.ValidatorsHash)
+		return fmt.Errorf("Wrong Block.Header.ValidatorsHash.  Expected %X, got %X", s.Validators.Hash(), b.Header.ValidatorsHash)
 	}
 
 	// Validate block LastCommit.

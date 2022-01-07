@@ -140,8 +140,9 @@ func (ps *PeerSet) Add(peer Peer) error {
 // peerKey, otherwise false.
 func (ps *PeerSet) Has(peerKey ID) bool {
 	ps.mtx.Lock()
+	defer ps.mtx.Unlock()
+
 	_, ok := ps.lookup[peerKey]
-	ps.mtx.Unlock()
 	return ok
 }
 
@@ -435,7 +436,7 @@ func (pc *peerConn) IsRunning() bool {
 func (pc *peerConn) Start() error {
 	if atomic.CompareAndSwapUint32(&pc.started, 0, 1) {
 		if atomic.LoadUint32(&pc.stopped) == 1 {
-			qbftlog.Error("peerConn already stoped can not start", "peerIP", pc.ip.String())
+			qbftlog.Error("peerConn already stopped", "peerIP", pc.ip.String())
 			return nil
 		}
 		pc.bufReader = bufio.NewReaderSize(pc.conn, minReadBufferSize)
@@ -482,46 +483,56 @@ func (pc *peerConn) stopForError(r interface{}) {
 	}
 }
 
-// 数据压缩后发送， 内部对相关数组进行重复利用
-func encodeMsg(msg types.Message, pbuf *[]byte, typeID byte) []byte {
-	buf := *pbuf
-	buf = buf[:cap(buf)]
+// 数据压缩
+func encodeMsg(msg types.Message, typeID byte) []byte {
 	raw := types.Encode(msg)
-	buf = snappy.Encode(buf, raw)
+	cmp := byte(0)
 	if len(raw) > MaxMsgPacketPayloadSize {
-		qbftlog.Info("packet exceed max size", "old", len(raw), "new", len(buf))
+		buf := make([]byte, 0)
+		buf = snappy.Encode(buf, raw)
+		cmp = byte(1)
+		qbftlog.Info("compress large message", "old", len(raw), "new", len(buf))
+		raw = buf
 	}
-	*pbuf = buf
-	// 复用raw数组作为压缩数据返回， 需要比较容量是否够大
-	if cap(raw) >= len(buf)+5 {
-		raw = raw[:len(buf)+5]
-	} else {
-		raw = make([]byte, len(buf)+5)
-	}
-	raw[0] = typeID
+	ebuf := make([]byte, len(raw)+6)
+	ebuf[0] = typeID
+	ebuf[1] = cmp
 	bytelen := make([]byte, 4)
-	binary.BigEndian.PutUint32(bytelen, uint32(len(buf)))
-	copy(raw[1:5], bytelen)
-	copy(raw[5:], buf)
-	return raw
+	binary.BigEndian.PutUint32(bytelen, uint32(len(raw)))
+	copy(ebuf[2:6], bytelen)
+	copy(ebuf[6:], raw)
+	return ebuf
+}
+
+// 数据解压
+func decodeMsg(msg []byte, cmp byte) ([]byte, error) {
+	if cmp == byte(0) {
+		return msg, nil
+	}
+	buf := make([]byte, 0)
+	buf, err := snappy.Decode(buf, msg)
+	if err != nil {
+		return nil, err
+	}
+	qbftlog.Info("uncompress large message", "old", len(msg), "new", len(buf))
+	return buf, nil
 }
 
 func (pc *peerConn) sendRoutine() {
-	buf := make([]byte, 0)
 FOR_LOOP:
 	for {
 		select {
 		case msg := <-pc.sendQueue:
-			raw := encodeMsg(msg.Msg, &buf, msg.TypeID)
+			raw := encodeMsg(msg.Msg, msg.TypeID)
 			_, err := pc.bufWriter.Write(raw)
 			if err != nil {
-				qbftlog.Error("peerConn sendroutine write data failed", "error", err)
+				qbftlog.Error("sendRoutine buffer write fail", "peer", pc, "err", err)
 				pc.stopForError(err)
 				break FOR_LOOP
 			}
 			err = pc.bufWriter.Flush()
 			if err != nil {
-				qbftlog.Error("peerConn sendroutine flush buffer failed", "error", err)
+				qbftlog.Error("sendRoutine buffer flush fail", "peer", pc, "err", err)
 				pc.stopForError(err)
 				break FOR_LOOP
 			}
@@ -533,40 +544,41 @@ FOR_LOOP:
 func (pc *peerConn) recvRoutine() {
 FOR_LOOP:
 	for {
-		//typeID+msgLen+msg
-		var buf [5]byte
+		//typeID+cmp+msgLen+msg
+		var buf [6]byte
 		_, err := io.ReadFull(pc.bufReader, buf[:])
 		if err != nil {
-			qbftlog.Error("Connection failed @ recvRoutine (reading byte)", "conn", pc, "err", err)
+			qbftlog.Error("recvRoutine read byte fail", "peer", pc, "err", err)
 			pc.stopForError(err)
 			break FOR_LOOP
 		}
 
 		pkt := msgPacket{}
-
 		pkt.TypeID = buf[0]
-		len := binary.BigEndian.Uint32(buf[1:])
-		if len > 0 {
-			buf2 := make([]byte, len)
-			_, err = io.ReadFull(pc.bufReader, buf2)
-			if err != nil {
-				qbftlog.Error("recvRoutine read data fail", "conn", pc, "err", err)
-				pc.stopForError(err)
-			}
-			buf3 := make([]byte, len)
-			buf3, err = snappy.Decode(buf3, buf2)
-			if err != nil {
-				qbftlog.Error("recvRoutine snappy decode fail", "conn", pc, "err", err)
-				pc.stopForError(err)
-			}
-			pkt.Bytes = buf3
+		cmp := buf[1]
+		msgLen := binary.BigEndian.Uint32(buf[2:6])
+		if msgLen <= 0 {
+			qbftlog.Error("recvRoutine read invalid data", "msgLen", msgLen, "cmp", cmp, "peerIP", pc.ip.String())
+			continue
 		}
+		buf2 := make([]byte, msgLen)
+		_, err = io.ReadFull(pc.bufReader, buf2)
+		if err != nil {
+			qbftlog.Error("recvRoutine read data fail", "err", err, "peerIP", pc.ip.String())
+			continue
+		}
+		buf3, err := decodeMsg(buf2, cmp)
+		if err != nil {
+			qbftlog.Error("recvRoutine decode msg fail", "err", err, "peerIP", pc.ip.String())
+			continue
+		}
+		pkt.Bytes = buf3
 
 		if v, ok := ttypes.MsgMap[pkt.TypeID]; ok {
 			realMsg := reflect.New(v).Interface()
 			err := proto.Unmarshal(pkt.Bytes, realMsg.(proto.Message))
 			if err != nil {
-				qbftlog.Error("peerConn recvRoutine Unmarshal data failed", "err", err)
+				qbftlog.Error("recvRoutine Unmarshal data fail", "msgTy", pkt.TypeID, "msgLen", len(pkt.Bytes), "err", err, "peerIP", pc.ip.String())
 				continue
 			}
 			if pc.transferChannel != nil && (pkt.TypeID == ttypes.ProposalID || pkt.TypeID == ttypes.VoteID ||
@@ -595,12 +607,8 @@ FOR_LOOP:
 				pc.updateStateQueue <- MsgInfo{pkt.TypeID, realMsg.(proto.Message), pc.ID(), pc.ip.String()}
 			}
 		} else {
-			err := fmt.Errorf("Unknown message type %v", pkt.TypeID)
-			qbftlog.Error("Connection failed @ recvRoutine", "conn", pc, "err", err)
-			pc.stopForError(err)
-			break FOR_LOOP
+			qbftlog.Error("receive unknown message type", "type", pkt.TypeID, "peerIP", pc.ip.String())
 		}
-
 	}
 	pc.quitUpdate <- struct{}{}
 	pc.quitBeat <- struct{}{}

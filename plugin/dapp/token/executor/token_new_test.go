@@ -437,6 +437,8 @@ func getprivkey(key string) crypto.PrivKey {
 
 func TestToken_validSymbolWithHeight(t *testing.T) {
 	cfg := types.NewChain33Config(strings.Replace(types.GetDefaultCfgstring(), "Title=\"local\"", "Title=\"chain33\"", 1))
+	cfg.SetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX, 184000)
+	cfg.SetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX, 1298600)
 	forkBadTokenSymbol := cfg.GetDappFork(pty.TokenX, pty.ForkBadTokenSymbolX)
 	forkTokenSymbolWithNumber := cfg.GetDappFork(pty.TokenX, pty.ForkTokenSymbolWithNumberX)
 	t.Log("x", "1", forkBadTokenSymbol, "2", forkTokenSymbolWithNumber)

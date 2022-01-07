@@ -7,11 +7,13 @@ import (
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common"
+	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +28,7 @@ func EthereumRelayerCmd() *cobra.Command {
 	cmd.AddCommand(
 		ImportEthPrivateKeyCmd(),
 		GenEthPrivateKeyCmd(),
+		GetAddressFromPrivateKeyCmd(),
 		ShowValidatorsAddrCmd(),
 		ShowChain33TxsHashCmd(),
 		IsValidatorActiveCmd(),
@@ -42,10 +45,12 @@ func EthereumRelayerCmd() *cobra.Command {
 		LockAsyncCmd(),
 		ShowBridgeBankAddrCmd(),
 		ShowBridgeRegistryAddrCmd(),
+		ShowBalanceLockedCmd(),
 		DeployERC20Cmd(),
 		TokenCmd(),
 		MultiSignEthCmd(),
 		TransferEthCmd(),
+		ConfigplatformTokenSymbolCmd(),
 	)
 
 	return cmd
@@ -55,43 +60,17 @@ func EthereumRelayerCmd() *cobra.Command {
 func TokenCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "create bridgeToken, ERC20 Token, show or set token address and it's corresponding symbol",
+		Short: "create bridgeToken, ERC20 Token, show token address and it's corresponding symbol",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
 		CreateBridgeTokenCmd(),
-		SetTokenAddress4EthCmd(),
 		ShowTokenAddress4EthCmd(),
 		AddToken2LockListCmd(),
 		ShowTokenAddress4LockEthCmd(),
 		TransferTokenCmd(),
 	)
 	return cmd
-}
-
-func SetTokenAddress4EthCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set",
-		Short: "set token address and it's corresponding symbol",
-		Run:   SetTokenAddress4Eth,
-	}
-	SetTokenFlags(cmd)
-	return cmd
-}
-
-func SetTokenAddress4Eth(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-	token, _ := cmd.Flags().GetString("token")
-
-	var res rpctypes.Reply
-	para := ebTypes.TokenAddress{
-		Symbol:    symbol,
-		Address:   token,
-		ChainName: ebTypes.EthereumBlockChainName,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetTokenAddress", para, &res)
-	ctx.Run()
 }
 
 func ShowTokenAddress4EthCmd() *cobra.Command {
@@ -165,6 +144,34 @@ func importEthereumPrivatekey(cmd *cobra.Command, args []string) {
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ImportEthereumPrivateKey4EthRelayer", params, &res)
 	ctx.Run()
+}
+
+func GetAddressFromPrivateKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_eth_addr",
+		Short: "get addr from private key",
+		Run:   getAddressFromPrivateKey,
+	}
+	cmd.Flags().StringP("key", "k", "", "ethereum private key")
+	_ = cmd.MarkFlagRequired("key")
+	return cmd
+}
+
+func getAddressFromPrivateKey(cmd *cobra.Command, args []string) {
+	key, _ := cmd.Flags().GetString("key")
+	privateKeySlice, err := chain33Common.FromHex(key)
+	if nil != err {
+		fmt.Println("private key error: ", err)
+		return
+	}
+	privateKey, err := crypto.ToECDSA(privateKeySlice)
+	if nil != err {
+		fmt.Println("private key error: ", err)
+		return
+	}
+
+	addr := crypto.PubkeyToAddress(privateKey.PublicKey)
+	fmt.Println("addr: ", addr)
 }
 
 //GenEthPrivateKeyCmd ...
@@ -311,6 +318,8 @@ func DeployERC20Flags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("symbol")
 	cmd.Flags().StringP("amount", "m", "0", "amount")
 	_ = cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Uint8P("decimals", "d", 8, "default set to 8, and can't be greater than 18")
 }
 
 func DeployERC20(cmd *cobra.Command, args []string) {
@@ -319,12 +328,19 @@ func DeployERC20(cmd *cobra.Command, args []string) {
 	name, _ := cmd.Flags().GetString("name")
 	symbol, _ := cmd.Flags().GetString("symbol")
 	amount, _ := cmd.Flags().GetString("amount")
+	decimals, _ := cmd.Flags().GetUint8("decimals")
+
+	if decimals > 18 {
+		fmt.Println("decimals can't be greater than 18")
+		return
+	}
 
 	para := ebTypes.ERC20Token{
-		Owner:  owner,
-		Name:   name,
-		Symbol: symbol,
-		Amount: amount,
+		Owner:    owner,
+		Name:     name,
+		Symbol:   symbol,
+		Amount:   amount,
+		Decimals: int32(decimals),
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployERC20", para, &res)
@@ -673,6 +689,42 @@ func ShowBridgeRegistryAddr(cmd *cobra.Command, args []string) {
 }
 
 //GetBalanceCmd ...
+func ShowBalanceLockedCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "showBalanceLocked",
+		Short: "show Balance Locked in BridgeBank",
+		Run:   ShowBalanceLocked,
+	}
+	ShowBalanceLockedFlags(cmd)
+	return cmd
+}
+
+func ShowBalanceLockedFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("bridgeBank", "b", "", "bridgeBank address")
+	_ = cmd.MarkFlagRequired("bridgeBank")
+	cmd.Flags().StringP("tokenAddr", "t", "", "token address, optional, nil for platform token(Eth)")
+}
+
+//GetBalance ...
+func ShowBalanceLocked(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	bridgeBank, _ := cmd.Flags().GetString("bridgeBank")
+	tokenAddr, _ := cmd.Flags().GetString("tokenAddr")
+
+	if tokenAddr == "" {
+		tokenAddr = "0x0000000000000000000000000000000000000000"
+	}
+
+	para := &ebTypes.BalanceLockedReq{
+		BridgeBank: bridgeBank,
+		TokenAddr:  tokenAddr,
+	}
+	var res ebTypes.ReplyBalance
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowBalanceLocked", para, &res)
+	ctx.Run()
+}
+
+//GetBalanceCmd ...
 func GetBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance",
@@ -968,6 +1020,33 @@ func ConfigOfflineSaveAccount(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", addr, &res)
+	ctx.Run()
+}
+
+//ConfigplatformTokenSymbolCmd ...
+func ConfigplatformTokenSymbolCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set_symbol",
+		Short: "save config symbol",
+		Run:   ConfigplatformTokenSymbol,
+	}
+	ConfigplatformTokenSymbolFlags(cmd)
+	return cmd
+}
+
+//ConfigplatformTokenSymbolFlags ...
+func ConfigplatformTokenSymbolFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "ETH", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+//ConfigplatformTokenSymbol ...
+func ConfigplatformTokenSymbol(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", symbol, &res)
 	ctx.Run()
 }
 

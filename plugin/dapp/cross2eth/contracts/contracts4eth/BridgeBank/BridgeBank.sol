@@ -2,8 +2,10 @@ pragma solidity ^0.5.0;
 
 import "./Chain33Bank.sol";
 import "./EthereumBank.sol";
+import "./TransferHelper.sol";
 import "../Oracle.sol";
 import "../Chain33Bridge.sol";
+
 
 /**
  * @title BridgeBank
@@ -21,6 +23,8 @@ contract BridgeBank is Chain33Bank, EthereumBank {
     address public operator;
     Oracle public oracle;
     Chain33Bridge public chain33Bridge;
+    string public platformTokenSymbol;
+    bool public hasSetPlatformTokenSymbol;
 
     /*
     * @dev: Constructor, sets operator
@@ -193,9 +197,22 @@ contract BridgeBank is Chain33Bank, EthereumBank {
         if (address(0) != _token) {
             require(keccak256(bytes(BridgeToken(_token).symbol())) == keccak256(bytes(_symbol)), "token address and symbol is not consistent");
         } else {
-            require(keccak256(bytes("ETH")) == keccak256(bytes(_symbol)), "token address and symbol is not consistent");
+            require(true == hasSetPlatformTokenSymbol, "The platform Token Symbol has not been configured");
+            require(keccak256(bytes(platformTokenSymbol)) == keccak256(bytes(_symbol)), "token address and symbol is not consistent");
         }
         configOfflineSave4Lock(_token, _symbol, _threshold, _percents);
+    }
+
+    /*
+    * @dev: configplatformTokenSymbol used to config platform token symbol,and just could be configured once
+    *
+    * @param _symbol:token symbol,just used for double check that token address and symbol is consistent
+    */
+    function configplatformTokenSymbol(string memory _symbol) public onlyOperator
+    {
+        require(false == hasSetPlatformTokenSymbol, "The platform Token Symbol has been configured");
+        platformTokenSymbol = _symbol;
+        hasSetPlatformTokenSymbol = true;
     }
 
    /*
@@ -237,17 +254,14 @@ contract BridgeBank is Chain33Bank, EthereumBank {
               msg.value == _amount,
               "The transactions value must be equal the specified amount (in wei)"
             );
-
+          require(true == hasSetPlatformTokenSymbol, "The platform Token Symbol has not been configured");
           // Set the the symbol to ETH
-          symbol = "ETH";
+          symbol = platformTokenSymbol;
           // ERC20 deposit
         } else {
-            require(
-                BridgeToken(_token).transferFrom(msg.sender, address(this), _amount),
-                "Contract token allowances insufficient to complete this lock request"
-            );
-            // Set symbol to the ERC20 token's symbol
-            symbol = BridgeToken(_token).symbol();
+
+            TransferHelper.safeTransferFrom(_token, msg.sender, address(this), _amount);
+            symbol = tokenAddrAllow2symbol[_token];
 
             require(
                 tokenAllow2Lock[keccak256(abi.encodePacked(symbol))] == _token,
