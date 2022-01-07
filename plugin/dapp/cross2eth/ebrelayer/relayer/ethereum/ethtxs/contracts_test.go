@@ -25,8 +25,6 @@ import (
 
 var (
 	chain33Addr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	//ethAddr      = "0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
-	//EthNullAddr = "0x0000000000000000000000000000000000000000"
 )
 
 type suiteContracts struct {
