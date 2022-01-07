@@ -9,9 +9,7 @@ import (
 
 //const ...
 const (
-	X2Eth      = "x2ethereum"
-	BurnAction = "Chain33ToEthBurn"
-	LockAction = "Chain33ToEthLock"
+	EthNullAddr = "0x0000000000000000000000000000000000000000"
 )
 
 // OracleClaim : contains data required to make an OracleClaim
@@ -30,4 +28,18 @@ type ProphecyClaim struct {
 	Symbol               string
 	Amount               *big.Int
 	chain33TxHash        []byte
+}
+
+type WithdrawStatus int32
+
+const (
+	WDError   = WithdrawStatus(1)
+	WDPending = WithdrawStatus(2)
+	WDFailed  = WithdrawStatus(3)
+	WDSuccess = WithdrawStatus(4)
+)
+
+// 此处的名字命令不能随意改动，需要与合约event中的命名完全一致
+func (d WithdrawStatus) String() string {
+	return [...]string{"undefined", "Error,not submitted to ethereum", "Pending", "Submitted to ethereum, but Failed", "Success"}[d]
 }

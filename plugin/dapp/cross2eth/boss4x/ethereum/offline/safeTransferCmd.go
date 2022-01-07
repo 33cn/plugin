@@ -246,6 +246,7 @@ func addCreateMultisignTransferTxFlags(cmd *cobra.Command) {
 
 func CreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
 	txFilePath, _ := cmd.Flags().GetString("file")
 
 	client, err := ethclient.Dial(url)
@@ -282,7 +283,7 @@ func CreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	CreateTxInfoAndWrite(gnoData, txinfo.SendAddr, txinfo.CrontractAddr, "create_multisign_tx", url)
+	CreateTxInfoAndWrite(gnoData, txinfo.SendAddr, txinfo.CrontractAddr, "create_multisign_tx", url, chainEthId)
 }
 
 func buildSigs(data []byte, privateKeys []string) ([]byte, error) {

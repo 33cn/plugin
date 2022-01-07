@@ -864,7 +864,7 @@ func (manager *Manager) ShowTokenStatics(request *relayerTypes.TokenStaticsReque
 		return errors.New("wrong source chain flag")
 	}
 
-	if request.Operation != 2 && 1 != request.Operation {
+	if request.Operation != 2 && 1 != request.Operation && 3 != request.Operation {
 		return errors.New("wrong Operation flag")
 	}
 
@@ -1072,6 +1072,40 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr string, result *interf
 	manager.ethRelayer.SetMultiSignAddr(multiSignAddr)
 	*result = rpctypes.Reply{
 		IsOk: true,
+	}
+	return nil
+}
+
+func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	err := manager.ethRelayer.CfgWithdraw(cfgWithdrawReq.Symbol, cfgWithdrawReq.FeeAmount, cfgWithdrawReq.AmountPerDay)
+	resultCfg := true
+	if err != nil {
+		resultCfg = false
+	}
+	*result = rpctypes.Reply{
+		IsOk: resultCfg,
+	}
+	return nil
+}
+
+func (manager *Manager) WithdrawFromChain33(burn relayerTypes.BurnFromChain33, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	txhash, err := manager.chain33Relayer.WithdrawFromChain33(burn.OwnerKey, burn.TokenAddr, burn.EthereumReceiver, burn.Amount)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  txhash,
 	}
 	return nil
 }

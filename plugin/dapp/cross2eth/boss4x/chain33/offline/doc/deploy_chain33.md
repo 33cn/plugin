@@ -146,10 +146,6 @@ multisignAddrs=["168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9", "13KTf57aCkVVJYNJBXBBveiA5
   15XsGjTbV6SxQtDE1SC5oaHx8HbseQ4Lf9 -- bridge_token 地址
 ```
 
-
-
-***
-
 ***
 #### 离线多签设置
 * 离线创建交易

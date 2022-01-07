@@ -19,12 +19,12 @@ source "./publicTest.sh"
 
     ethMultisignA=0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf
     ethMultisignB=0x6F163E6daf0090D897AD7016484f10e0cE844994
-    ethMultisignC=0xbc333839E37bc7fAAD0137aBaE2275030555101f
-    ethMultisignD=0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5
+    ethMultisignC=0x0921948C0d25BBbe85285CB5975677503319F02A
+    ethMultisignD=0x69921517970a28b73ac5E4C8ac8Fd135A80D2be1
     ethMultisignKeyA=0x5e8aadb91eaa0fce4df0bcc8bd1af9e703a1d6db78e7a4ebffd6cf045e053574
     ethMultisignKeyB=0x0504bcb22b21874b85b15f1bfae19ad62fc2ad89caefc5344dc669c57efa60db
-    ethMultisignKeyC=0x0c61f5a879d70807686e43eccc1f52987a15230ae0472902834af4d1933674f2
-    ethMultisignKeyD=0x2809477ede1261da21270096776ba7dc68b89c9df5f029965eaa5fe7f0b80697
+    ethMultisignKeyC=0x5a43f2c8724f60ea5d6b87ad424daa73639a5fc76702edd3e5eaed37aaffdf49
+    ethMultisignKeyD=0x03b28c0fc78c6ebae719b559b0781db24644b655d4bd58e5cf2311c9f03baa3d
 }
 
 maturityDegree=10
@@ -66,7 +66,8 @@ function kill_ebrelayerD() {
 function start_ebrelayerC() {
     nohup ./relayer_C/ebrelayer ./relayer_C/relayer.toml >./relayer_C/cross2eth_C.log 2>&1 &
     sleep 2
-    ${CLIC} unlock -p 123456hzj
+    # shellcheck disable=SC2154
+    ${CLIC} unlock -p "${validatorPwd}"
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     sleep ${maturityDegree}
@@ -76,7 +77,7 @@ function start_ebrelayerC() {
 function start_ebrelayerD() {
     nohup ./relayer_D/ebrelayer ./relayer_D/relayer.toml >./relayer_D/cross2eth_D.log 2>&1 &
     sleep 2
-    ${CLID} unlock -p 123456hzj
+    ${CLID} unlock -p "${validatorPwd}"
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     ${Chain33Cli} send coins transfer -a 1 -n note -t 12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv -k 14KEKbYtKKQm4wMthSK9J4La4nAiidGozt
     sleep ${maturityDegree}
@@ -86,10 +87,10 @@ function start_ebrelayerD() {
 function InitAndDeploy() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
 
-    result=$(${CLIA} set_pwd -p 123456hzj)
+    result=$(${CLIA} set_pwd -p "${validatorPwd}")
     cli_ret "${result}" "set_pwd"
 
-    result=$(${CLIA} unlock -p 123456hzj)
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # shellcheck disable=SC2154
@@ -287,10 +288,10 @@ function updata_toml_start_BCD() {
         sleep 2
 
         CLI="./ebcli_$name"
-        result=$(${CLI} set_pwd -p 123456hzj)
+        result=$(${CLI} set_pwd -p "${validatorPwd}")
         cli_ret "${result}" "set_pwd"
 
-        result=$(${CLI} unlock -p 123456hzj)
+        result=$(${CLI} unlock -p "${validatorPwd}")
         cli_ret "${result}" "unlock"
 
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
@@ -358,7 +359,7 @@ function StartRelayerAndDeploy() {
     kill_ebrelayer ebrelayer
     start_ebrelayerA
 
-    result=$(${CLIA} unlock -p 123456hzj)
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # start ebrelayer B C D
@@ -424,7 +425,7 @@ function InitChain33Validator() {
     }
 
     # 导入 chain33Validators 私钥生成地址
-    for name in a b c d; do
+    for name in a b c d p sp; do
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
         eval chain33Validator=\$chain33Validator${name}
         result=$(${Chain33Cli} account import_key -k "${chain33ValidatorKey}" -l validator$name)
@@ -526,7 +527,7 @@ function StartOneRelayer() {
     kill_ebrelayer ebrelayer
     start_ebrelayerA
 
-    result=$(${CLIA} unlock -p 123456hzj)
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 
     # 设置 token 地址

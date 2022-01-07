@@ -14,8 +14,10 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"regexp"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,8 +52,8 @@ type Relayer4Ethereum struct {
 
 	privateKey4Ethereum *ecdsa.PrivateKey
 	ethSender           common.Address
+	processWithDraw     bool
 
-	ethValidator            common.Address
 	unlockchan              chan int
 	maturityDegree          int32
 	fetchHeightPeriodMs     int32
@@ -75,6 +77,7 @@ type Relayer4Ethereum struct {
 	symbol2Addr             map[string]common.Address
 	symbol2LockAddr         map[string]ebTypes.TokenAddress
 	mulSignAddr             string
+	withdrawFee             map[string]*WithdrawFeeAndQuota
 }
 
 var (
@@ -95,6 +98,12 @@ type EthereumStartPara struct {
 	BlockInterval      int32
 	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
 	Chain33MsgChan     <-chan *events.Chain33Msg
+	ProcessWithDraw    bool
+}
+
+type WithdrawFeeAndQuota struct {
+	Fee          *big.Int
+	AmountPerDay *big.Int
 }
 
 //StartEthereumRelayer ///
@@ -108,6 +117,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		db:                      startPara.DbHandle,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
+		processWithDraw:         startPara.ProcessWithDraw,
 		deployInfo:              startPara.DeployInfo,
 		maturityDegree:          startPara.Degree,
 		fetchHeightPeriodMs:     startPara.BlockInterval,
@@ -130,9 +140,10 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.eventLogIndex = ethRelayer.getLastBridgeBankProcessedHeight()
 	ethRelayer.initBridgeBankTx()
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
+	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
 	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider)
+	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider, "processWithDraw", ethRelayer.processWithDraw)
 	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
 	if err != nil {
 		panic(err)
@@ -157,6 +168,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		data := chain33Types.Encode(statics)
 		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeLock), 0, data)
 		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeBurn), 0, data)
+		_ = ethRelayer.setLastestStatics(int32(events.ClaimTypeWithdraw), 0, data)
 	}
 
 	go ethRelayer.proc()
@@ -278,7 +290,7 @@ func (ethRelayer *Relayer4Ethereum) GetBalance(tokenAddr, owner string) (string,
 func (ethRelayer *Relayer4Ethereum) ShowMultiBalance(tokenAddr, owner string) (string, error) {
 	relayerLog.Info("ShowMultiBalance", "tokenAddr", tokenAddr, "owner", owner)
 	opts := &bind.CallOpts{
-		From:    ethRelayer.ethValidator,
+		From:    ethRelayer.ethSender,
 		Context: context.Background(),
 	}
 
@@ -334,7 +346,7 @@ func (ethRelayer *Relayer4Ethereum) ShowLockedTokenAddress(tokenSymbol string) (
 
 //IsProphecyPending ...
 func (ethRelayer *Relayer4Ethereum) IsProphecyPending(claimID [32]byte) (bool, error) {
-	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethValidator, ethRelayer.x2EthContracts.Chain33Bridge)
+	return ethtxs.IsProphecyPending(claimID, ethRelayer.ethSender, ethRelayer.x2EthContracts.Chain33Bridge)
 }
 
 //CreateBridgeToken ...
@@ -453,15 +465,12 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 		}
 		ethRelayer.rwLock.Unlock()
 		relayerLog.Info("^-^ ^-^ Succeed to recover corresponding solidity contract handler")
-		//if nil != ethRelayer.recoverDeployPara() {
-		//	panic("Failed to recoverDeployPara")
-		//}
+
 		ethRelayer.unlockchan <- start
 	}
 
 	var timer *time.Ticker
 	ctx := context.Background()
-	continueFailCount := int32(0)
 	for range ethRelayer.unlockchan {
 		relayerLog.Info("Received ethRelayer.unlockchan")
 		ethRelayer.rwLock.RLock()
@@ -475,15 +484,15 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-			goto latter
+			goto burnLockWithdrawProc
 		}
 	}
 
-latter:
+burnLockWithdrawProc:
 	for {
 		select {
 		case <-timer.C:
-			ethRelayer.procNewHeight(ctx, &continueFailCount)
+			ethRelayer.procNewHeight(ctx)
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
@@ -494,10 +503,284 @@ latter:
 			ethRelayer.handleChain33Msg(chain33Msg)
 		}
 	}
+
+	//withdrawProc:
+	//	for {
+	//		select {
+	//		case <-timer.C:
+	//			ethRelayer.procNewHeight4Withdraw(ctx)
+	//		case chain33Msg := <-ethRelayer.chain33MsgChan:
+	//			ethRelayer.handleChain33Msg(chain33Msg)
+	//		}
+	//	}
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
-	relayerLog.Info("handleChain33Msg", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	if chain33Msg.ClaimType == events.ClaimTypeWithdraw {
+		ethRelayer.handleLogWithdraw(chain33Msg)
+		return
+	}
+
+	ethRelayer.handleLogLockBurn(chain33Msg)
+	return
+}
+
+func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTypes.WithdrawTx) (*big.Int, error) {
+	totalAlready, err := ethRelayer.getWithdrawsWithinSameDay(withdrawTx)
+	if nil != err {
+		relayerLog.Error("checkPermissionWithinOneDay", "Failed to getWithdrawsWithinSameDay due to", err.Error())
+		return nil, errors.New("ErrGetWithdrawsWithinSameDay")
+	}
+	withdrawPara, ok := ethRelayer.withdrawFee[withdrawTx.Symbol]
+	if !ok {
+		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
+		return nil, errors.New("ErrNoWithdrawParaCfged")
+	}
+	AmountInt, _ := big.NewInt(0).SetString(withdrawTx.Amount, 0)
+	totalAlready.Add(totalAlready, AmountInt)
+	if totalAlready.Cmp(withdrawPara.AmountPerDay) > 0 {
+		relayerLog.Error("checkPermissionWithinOneDay", "No withdraw parameter configured for symbol ", withdrawTx.Symbol)
+		return nil, errors.New("ErrWithdrawAmountBigThanQuota")
+	}
+	relayerLog.Info("checkPermissionWithinOneDay", "total withdraw already", totalAlready, "Chain33Sender", withdrawTx.Chain33Sender,
+		"Symbol", withdrawTx.Symbol)
+	return withdrawPara.Fee, nil
+}
+
+func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
+	//只有通过代理人登录的中继器，才处理提币事件
+	var err error
+	now := time.Now()
+	year, month, day := now.Date()
+	withdrawTx := &ebTypes.WithdrawTx{
+		Chain33Sender:    chain33Msg.Chain33Sender.String(),
+		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
+		Symbol:           chain33Msg.Symbol,
+		TxHashOnChain33:  common.Bytes2Hex(chain33Msg.TxHash),
+		Nonce:            chain33Msg.Nonce,
+		Year:             int32(year),
+		Month:            int32(month),
+		Day:              int32(day),
+	}
+	//非代理提币人模式，则不处理代理提币
+	if !ethRelayer.processWithDraw {
+		relayerLog.Info("handleLogWithdraw", "Needn't process withdraw for this relay validator", ethRelayer.ethSender)
+		return
+	}
+	defer func() {
+		if err != nil {
+			withdrawTx.Status = int32(ethtxs.WDError)
+			withdrawTx.StatusDescription = ethtxs.WDError.String()
+			withdrawTx.ErrorDescription = err.Error()
+			relayerLog.Error("handleLogWithdraw", "Failed to withdraw due to:", err.Error())
+		}
+
+		err := ethRelayer.setWithdraw(withdrawTx)
+		if nil != err {
+			relayerLog.Error("handleLogWithdraw", "Failed to setWithdraw due to:", err.Error())
+		}
+
+		err = ethRelayer.setWithdrawStatics(withdrawTx, chain33Msg)
+		if nil != err {
+			relayerLog.Error("handleLogWithdraw", "Failed to setWithdrawStatics due to:", err.Error())
+		}
+	}()
+
+	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	withdrawFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[chain33Msg.Symbol]
+	if !exist {
+		//因为是withdraw操作，必须从允许lock的token地址中进行查询
+		relayerLog.Error("handleLogWithdraw", "Failed to fetch locked Token Info for symbol", chain33Msg.Symbol)
+		err = errors.New("ErrFetchLockedTokenInfo")
+		return
+	}
+
+	tokenAddr := common.HexToAddress(withdrawFromChain33TokenInfo.Address)
+	//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
+	if 8 != withdrawFromChain33TokenInfo.Decimal {
+		dist := math.Abs(float64(withdrawFromChain33TokenInfo.Decimal - 8))
+		value, exist := utils.Decimal2value[int(dist)]
+		if !exist {
+			relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+			err = errors.New("ErrDecimalNotSupport")
+			return
+		}
+
+		if withdrawFromChain33TokenInfo.Decimal > 8 {
+			chain33Msg.Amount.Mul(chain33Msg.Amount, big.NewInt(value))
+		} else {
+			chain33Msg.Amount.Div(chain33Msg.Amount, big.NewInt(value))
+		}
+	}
+	withdrawTx.Amount = chain33Msg.Amount.String()
+	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", withdrawTx.Amount,
+		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
+	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
+	var feeAmount *big.Int
+	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
+		return
+	}
+	if chain33Msg.Amount.Cmp(feeAmount) < 0 {
+		relayerLog.Error("handleLogWithdraw", "ErrWithdrawAmountLessThanFee feeAmount", feeAmount.String(), "Withdraw Amount", chain33Msg.Amount.String())
+		err = errors.New("ErrWithdrawAmountCan'tPay4Fee")
+		return
+	}
+	amount2transfer := chain33Msg.Amount.Sub(chain33Msg.Amount, feeAmount)
+	value := big.NewInt(0)
+
+	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
+	ctx := context.Background()
+	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
+	defer cancel()
+	var intputData []byte // ERC20 or BEP20 token transfer pack data
+	var toAddr common.Address
+	var balanceOfData []byte // ERC20 or BEP20 token balanceof pack data
+
+	if tokenAddr.String() != ethtxs.EthNullAddr { //判断是否要Pack EVM数据
+		toAddr = tokenAddr
+		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, amount2transfer)
+		if err != nil {
+			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
+			err = errors.New("ErrPackTransferData")
+			return
+		}
+		//用签名的账户地址作为pack参数，toAddr作为合约地址
+		balanceOfData, err = ethRelayer.packBalanceOfData(ethRelayer.ethSender)
+		if err != nil {
+			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err)
+			err = errors.New("ErrPackBalanceOfData")
+			return
+		}
+	} else {
+		//如果tokenAddr为空，则把toAddr设置为用户指定的地址
+		toAddr = chain33Msg.EthereumReceiver
+		value = amount2transfer
+	}
+
+	//校验余额是否充足
+	err = ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
+		err = errors.New("ErrBalanceNotEnough")
+		return
+	}
+	//param: from,to,evm-packdata,amount
+	//交易构造
+	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "newTx err", err)
+		err = errors.New("ErrNewTx")
+		return
+	}
+
+	//交易签名
+	signedTx, err := ethRelayer.signTx(tx, ethRelayer.privateKey4Ethereum)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "SignTx err", err)
+		err = errors.New("ErrSignTx")
+		return
+	}
+	//交易发送
+	err = ethRelayer.clientSpec.SendTransaction(timeout, signedTx)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+		err = errors.New("ErrSendTransaction")
+		return
+	}
+	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", signedTx.Hash())
+
+	withdrawTx.Status = int32(ethtxs.WDPending)
+	withdrawTx.StatusDescription = ethtxs.WDPending.String()
+	withdrawTx.TxHashOnEthereum = signedTx.Hash().String()
+
+	return
+}
+
+func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) error {
+	//检测地址余额
+	var balance *big.Int
+	var err error
+	if inputdata == nil {
+		balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
+		if err != nil {
+			//retry
+			balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var msg ethereum.CallMsg
+		msg.To = &addr //合约地址
+		msg.Data = inputdata
+		result, err := ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
+		if err != nil {
+			//retry
+			result, err = ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
+			if err != nil {
+				return err
+			}
+		}
+		var ok bool
+		balance, ok = big.NewInt(1).SetString(common.Bytes2Hex(result), 16)
+		if !ok {
+			return errors.New(fmt.Sprintf("token balance err:%v", common.Bytes2Hex(result)))
+		}
+	}
+
+	//与要发动的金额大小进行比较
+	if balance.Cmp(amount) > 0 {
+		return nil
+	}
+	relayerLog.Error("Insufficient balance", "balance", balance, "amount", amount)
+	return errors.New("Insufficient balance")
+}
+
+func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.PrivateKey) (*types.Transaction, error) {
+	signer := types.NewEIP155Signer(ethRelayer.clientChainID)
+	txhash := signer.Hash(tx)
+	signature, err := crypto.Sign(txhash.Bytes(), key)
+	if err != nil {
+		return nil, err
+	}
+	tx, err = tx.WithSignature(signer, signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+func (ethRelayer *Relayer4Ethereum) packTransferData(_to common.Address, _value *big.Int) ([]byte, error) {
+	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
+	if err != nil {
+		return nil, err
+	}
+	abidata, err := parsed.Pack("transfer", _to, _value)
+	if err != nil {
+		return nil, err
+	}
+	return abidata, nil
+}
+
+func (ethRelayer *Relayer4Ethereum) packBalanceOfData(_to common.Address) ([]byte, error) {
+	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
+	if err != nil {
+		return nil, err
+	}
+	abidata, err := parsed.Pack("balanceOf", _to)
+	if err != nil {
+		return nil, err
+	}
+	return abidata, nil
+}
+
+func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33Msg) {
+	//对于通过代理人登录的中继器，不处理lock和burn事件
+	if ethRelayer.processWithDraw {
+		relayerLog.Info("handleLogLockBurn", "Needn't process lock and burn for this withdraw process specified validator", ethRelayer.ethSender)
+		return
+	}
+	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
 
 	// Parse the Chain33Msg into a ProphecyClaim for relay to Ethereum
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
@@ -507,7 +790,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	if chain33Msg.ClaimType == events.ClaimTypeLock {
 		tokenAddr, exist = ethRelayer.symbol2Addr[prophecyClaim.Symbol]
 		if !exist {
-			relayerLog.Info("handleChain33Msg", "Query address from ethereum for symbol", prophecyClaim.Symbol)
+			relayerLog.Info("handleLogLockBurn", "Query address from ethereum for symbol", prophecyClaim.Symbol)
 			//因为是lock操作，则需要从创建的bridgeToken中进行查询
 			addr, err := ethRelayer.ShowTokenAddrBySymbol(prophecyClaim.Symbol)
 			if err != nil {
@@ -521,7 +804,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 			err = ethRelayer.SetTokenAddress(token2set)
 			if nil != err {
 				// 尽管设置数据失败，但是不影响运行，只是relayer启动时，每次从节点远程获取bridge token地址而已
-				relayerLog.Error("handleChain33Msg", "Failed to SetTokenAddress due to", err.Error())
+				relayerLog.Error("handleLogLockBurn", "Failed to SetTokenAddress due to", err.Error())
 			}
 			tokenAddr = common.HexToAddress(addr)
 		}
@@ -529,14 +812,11 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 		burnFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[prophecyClaim.Symbol]
 		if !exist {
 			//因为是burn操作，必须从允许lock的token地址中进行查询
-			relayerLog.Error("handleChain33Msg", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
+			relayerLog.Error("handleLogLockBurn", "Failed to fetch locked Token Info for symbol", prophecyClaim.Symbol)
 			return
 		}
 
 		tokenAddr = common.HexToAddress(burnFromChain33TokenInfo.Address)
-		//if lockedTokenInfo.Decimal == 18 {
-		//	prophecyClaim.Amount = prophecyClaim.Amount.Mul(prophecyClaim.Amount, big.NewInt(int64(1e10)))
-		//}
 		//从chain33进行withdraw回来的token需要根据精度进行相应的缩放
 		if 8 != burnFromChain33TokenInfo.Decimal {
 			if burnFromChain33TokenInfo.Decimal > 8 {
@@ -562,19 +842,19 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	if nil != err {
 		panic("RelayOracleClaimToEthereum failed due to" + err.Error())
 	}
-	relayerLog.Info("handleChain33Msg", "RelayOracleClaimToEthereum with tx hash", txhash)
+	relayerLog.Info("handleLogLockBurn", "RelayOracleClaimToEthereum with tx hash", txhash)
 
 	//保存交易hash，方便查询
 	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
 	if err = ethRelayer.updateTotalTxAmount2chain33(txIndex); nil != err {
-		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
+		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
 	}
 	statics := &ebTypes.Chain33ToEthereumStatics{
 		EthTxstatus:      ebTypes.Tx_Status_Pending,
 		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
 		EthereumTxhash:   txhash,
-		BurnLock:         int32(chain33Msg.ClaimType),
+		BurnLockWithdraw: int32(chain33Msg.ClaimType),
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
 		Symbol:           chain33Msg.Symbol,
@@ -585,7 +865,7 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 	}
 	data := chain33Types.Encode(statics)
 	if err = ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data); nil != err {
-		relayerLog.Error("handleChain33Msg", "Failed to RelayLockToChain33 due to:", err.Error())
+		relayerLog.Error("handleLogLockBurn", "Failed to RelayLockToChain33 due to:", err.Error())
 		return
 	}
 	relayerLog.Info("RelayOracleClaimToEthereum::successful",
@@ -599,30 +879,38 @@ func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33M
 		"Chain33Sender", statics.Chain33Sender)
 }
 
-func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context, continueFailCount *int32) {
+func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint64, error) {
 	head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
-	if nil != err {
-		*continueFailCount++
-		if *continueFailCount >= 5 {
-			ethRelayer.clientSpec, err = ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
-			if err != nil {
-				relayerLog.Error("SetupWebsocketEthClient", "err", err)
-				return
-			}
-
-		}
-		//retry
-		head, err = ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
-		if err != nil {
-			relayerLog.Error("Failed to get ethereum height", "provider", ethRelayer.provider,
-				"continueFailCount", continueFailCount, "err", err.Error())
-			return
-		}
-
+	if nil == err {
+		return head.Number.Uint64(), nil
 	}
+
+	//TODO: 需要在下面添加报警处理
+	for {
+		time.Sleep(5 * time.Second)
+		ethRelayer.clientSpec, err = ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
+		if err != nil {
+			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
+			continue
+		}
+		head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
+		if nil != err {
+			relayerLog.Error("getCurrentHeight", "Failed to HeaderByNumber due to:", err.Error())
+			continue
+		}
+		return head.Number.Uint64(), nil
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) procNewHeight4Withdraw(ctx context.Context) {
+	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
+	relayerLog.Info("procNewHeight4Withdraw", "currentHeight", currentHeight)
+}
+
+func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context) {
+	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
 	ethRelayer.updateTxStatus()
-	*continueFailCount = 0
-	currentHeight := head.Number.Uint64()
+	//currentHeight := head.Number.Uint64()
 	relayerLog.Info("procNewHeight", "currentHeight", currentHeight, "ethRelayer.eventLogIndex.Height", ethRelayer.eventLogIndex.Height, "uint64(ethRelayer.maturityDegree)", uint64(ethRelayer.maturityDegree))
 
 	//一次最大只获取10个logEvent进行处理
@@ -746,12 +1034,8 @@ func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
 		height4BridgeBankLogAt = deployHeight
 	}
 
-	header, err := ethRelayer.clientSpec.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		errinfo := fmt.Sprintf("Failed to get HeaderByNumbers due to:%s", err.Error())
-		panic(errinfo)
-	}
-	curHeight := int64(header.Number.Uint64())
+	curHeightUint64, _ := ethRelayer.getCurrentHeight(context.Background())
+	curHeight := int64(curHeightUint64)
 	relayerLog.Info("filterLogEvents", "curHeight:", curHeight)
 
 	bridgeBankSig := make(map[string]bool)
@@ -876,7 +1160,7 @@ func (ethRelayer *Relayer4Ethereum) IsValidatorActive(addr string) (bool, error)
 
 //ShowOperator ...
 func (ethRelayer *Relayer4Ethereum) ShowOperator() (string, error) {
-	operator, err := ethtxs.GetOperator(ethRelayer.clientSpec, ethRelayer.ethValidator, ethRelayer.bridgeBankAddr)
+	operator, err := ethtxs.GetOperator(ethRelayer.clientSpec, ethRelayer.ethSender, ethRelayer.bridgeBankAddr)
 	if nil != err {
 		return "", err
 	}
@@ -898,24 +1182,24 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	}
 
 	var decimal uint8
-	if event.Token.String() == "" || event.Token.String() == "0x0000000000000000000000000000000000000000" {
-		decimal = 18
-	} else {
-		opts := &bind.CallOpts{
-			Pending: true,
-			From:    common.HexToAddress(event.Token.String()),
-			Context: context.Background(),
-		}
-		bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
-
-		decimal, err = bridgeToken.Decimals(opts)
-		if err != nil {
-			return err
-		}
-	}
-
 	tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
 	if nil == tokenLocked {
+		//如果在本地没有找到该币种，则进行信息的收集和保存
+		if event.Token.String() == "" || event.Token.String() == "0x0000000000000000000000000000000000000000" {
+			decimal = 18
+		} else {
+			opts := &bind.CallOpts{
+				Pending: true,
+				From:    common.HexToAddress(event.Token.String()),
+				Context: context.Background(),
+			}
+			bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
+			decimal, err = bridgeToken.Decimals(opts)
+			if err != nil {
+				return err
+			}
+		}
+
 		token2set := &ebTypes.TokenAddress{
 			Address:   event.Token.String(),
 			Symbol:    event.Symbol,
@@ -927,6 +1211,13 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
 			return errors.New("Failed ")
 		}
+	} else {
+		decimal = uint8(tokenLocked.Decimal)
+	}
+
+	if ethRelayer.processWithDraw {
+		//如果是代理提币中继器，则不进行消息的转发，该中继器只需要collect info related to locked token
+		return nil
 	}
 
 	// Parse the LogLock event's payload into a struct
@@ -942,6 +1233,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 
 // handleLogBurnEvent : unpacks a burn event, converts it to a ProphecyClaim, and relays a tx to chain33
 func (ethRelayer *Relayer4Ethereum) handleLogBurnEvent(clientChainID *big.Int, contractABI abi.ABI, eventName string, log types.Log) error {
+	if ethRelayer.processWithDraw {
+		//如果是代理提币中继器，则不进行消息的转发
+		return nil
+	}
 	event, err := events.UnpackLogBurn(contractABI, eventName, log.Data)
 	if nil != err {
 		return err
@@ -1000,6 +1295,7 @@ func (ethRelayer *Relayer4Ethereum) ShowStatics(request *ebTypes.TokenStaticsReq
 func (ethRelayer *Relayer4Ethereum) updateTxStatus() {
 	ethRelayer.updateSingleTxStatus(events.ClaimTypeBurn)
 	ethRelayer.updateSingleTxStatus(events.ClaimTypeLock)
+	ethRelayer.updateSingleTxStatus(events.ClaimTypeWithdraw)
 }
 
 func (ethRelayer *Relayer4Ethereum) updateSingleTxStatus(claimType events.ClaimType) {
@@ -1082,4 +1378,24 @@ func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {
 	ethRelayer.rwLock.Unlock()
 
 	ethRelayer.setMultiSignAddress(address)
+}
+
+func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amountPerDay string) error {
+	fee, _ := big.NewInt(0).SetString(feeAmount, 10)
+	amountPerDayInt, _ := big.NewInt(0).SetString(amountPerDay, 10)
+	withdrawPara := &WithdrawFeeAndQuota{
+		Fee:          fee,
+		AmountPerDay: amountPerDayInt,
+	}
+	ethRelayer.rwLock.Lock()
+	ethRelayer.withdrawFee[symbol] = withdrawPara
+	ethRelayer.rwLock.Unlock()
+
+	WithdrawPara := ethRelayer.restoreWithdrawFee()
+	WithdrawPara[symbol] = &ebTypes.WithdrawPara{
+		Fee:          feeAmount,
+		AmountPerDay: amountPerDay,
+	}
+
+	return ethRelayer.setWithdrawFee(WithdrawPara)
 }

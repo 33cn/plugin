@@ -23,9 +23,6 @@ source "./offlinePublic.sh"
     ethereumUSDTERC20TokenAddr=""
     chain33USDTBridgeTokenAddr=""
 
-    chain33ID=0
-    maturityDegree=10
-
     # ETH 部署合约者的私钥 用于部署合约时签名使用
     ethDeployAddr="0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a"
     ethDeployKey="0x8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
@@ -70,6 +67,18 @@ source "./offlinePublic.sh"
 
     chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
+
+    ethValidatorAddrp="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
+    ethValidatorAddrKeyp="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
+    chain33Validatorp="1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
+    chain33ValidatorKeyp="0xd627968e445f2a41c92173225791bae1ba42126ae96c32f28f97ff8f226e5c68"
+
+    chain33Validatorsp="1Hf1wnnr6XaYy5Sf3HhAfT4N8JYV4sMh9J"
+    chain33ValidatorKeysp="0x1dadb7cbad8ea3f968cfad40ac32981def6215690618e62c48e816e7c732a8c2"
+
+    chain33ID=0
+    maturityDegree=10
+    validatorPwd="123456fzm"
 }
 
 function start_docker_ebrelayerA() {
@@ -79,45 +88,41 @@ function start_docker_ebrelayerA() {
     sleep 5
 }
 
+function updata_toml() {
+    local name=$1
+    local file="./relayer$name.toml"
+    cp './relayer.toml' "${file}"
+
+    # 删除配置文件中不需要的字段
+    for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
+        delete_line "${file}" "${deleteName}"
+    done
+
+    pushNameChange "${file}"
+
+    pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
+    line=$(delete_line_show "${file}" "pushHost")
+    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
+
+    line=$(delete_line_show "${file}" "pushBind")
+    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
+}
+
 # start ebrelayer B C D
 function updata_toml_start_bcd() {
     for name in b c d; do
+        updata_toml $name
         local file="./relayer$name.toml"
-        cp './relayer.toml' "${file}"
-
-        # 删除配置文件中不需要的字段
-        for deleteName in "deploy4chain33" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers" "deploy" "deployerPrivateKey" "operatorAddr" "validatorsAddr" "initPowers"; do
-            delete_line "${file}" "${deleteName}"
-        done
-
-        pushNameChange "${file}"
-
-        pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
-        line=$(delete_line_show "${file}" "pushHost")
-        sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
-
-        line=$(delete_line_show "${file}" "pushBind")
-        sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
 
+        # shellcheck disable=SC2034
         CLI="docker exec ${dockerNamePrefix}_ebrelayer${name}_1 /root/ebcli_A"
-        result=$(${CLI} set_pwd -p 123456hzj)
-        cli_ret "${result}" "set_pwd"
-
-        result=$(${CLI} unlock -p 123456hzj)
-        cli_ret "${result}" "unlock"
-
         eval chain33ValidatorKey=\$chain33ValidatorKey${name}
-        # shellcheck disable=SC2154
-        result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
-        cli_ret "${result}" "chain33 import_privatekey"
-
         eval ethValidatorAddrKey=\$ethValidatorAddrKey${name}
         # shellcheck disable=SC2154
-        result=$(${CLI} ethereum import_privatekey -k "${ethValidatorAddrKey}")
-        cli_ret "${result}" "ethereum import_privatekey"
+        init_validator_relayer "${CLI}" "${validatorPwd}" "${chain33ValidatorKey}" "${ethValidatorAddrKey}"
     done
 }
 
@@ -127,7 +132,7 @@ function restart_ebrelayerA() {
     sleep 1
     start_docker_ebrelayerA
 
-    result=$(${CLIA} unlock -p 123456hzj)
+    result=$(${CLIA} unlock -p "${validatorPwd}")
     cli_ret "${result}" "unlock"
 }
 
@@ -252,73 +257,59 @@ function TestChain33ToEthAssets() {
 #}
 
 # eth to chain33 在以太坊上锁定 ETH 资产,然后在 chain33 上 burn
-
 function TestETH2Chain33Assets() {
     echo -e "${GRE}=========== $FUNCNAME begin ===========${NOC}"
     echo -e "${GRE}=========== eth to chain33 在以太坊上锁定 ETH 资产,然后在 chain33 上 burn ===========${NOC}"
-    # 查询 ETH 这端 bridgeBank 地址原来是 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    # ETH 这端 lock 11个
-    result=$(${CLIA} ethereum lock -m 11 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
+    result=$(${CLIA} ethereum lock -m 0.002 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
     sleep 4
 
-    # 查询 ETH 这端 bridgeBank 地址 11
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "11"
+    cli_ret "${result}" "balance" ".balance" "0.002"
 
     sleep ${maturityDegree}
 
     # chain33 chain33EthBridgeTokenAddr（ETH合约中）查询 lock 金额
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # 结果是 11 * le8
-    is_equal "${result}" "1100000000"
+    #    is_equal "${result}" "2000000000000000"
 
     # 原来的数额
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
-    cli_ret "${result}" "balance" ".balance" "1000"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum'
-    result=$(${CLIA} chain33 burn -m 5 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0003 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # 结果是 11-5 * le8
-    is_equal "${result}" "600000000"
+    #    is_equal "${result}" "1700000000000000"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
-    cli_ret "${result}" "balance" ".balance" "6"
-
-    # 比之前多 5
-    result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
-    cli_ret "${result}" "balance" ".balance" "1005"
+    cli_ret "${result}" "balance" ".balance" "0.0017"
 
     echo '#5.burn ETH from Chain33 ETH(Chain33)-----> Ethereum 6'
-    result=$(${CLIA} chain33 burn -m 6 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
+    result=$(${CLIA} chain33 burn -m 0.0017 -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33EthBridgeTokenAddr}")
     cli_ret "${result}" "burn"
 
     sleep ${maturityDegree}
 
     echo "check the balance on chain33"
     result=$(${Chain33Cli} evm query -a "${chain33EthBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # 结果是 11-5 * le8
     is_equal "${result}" "0"
 
     # 查询 ETH 这端 bridgeBank 地址 0
     result=$(${CLIA} ethereum balance -o "${ethBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0"
 
-    # 比之前多 5
     result=$(${CLIA} ethereum balance -o "${ethTestAddr2}")
-    cli_ret "${result}" "balance" ".balance" "1011"
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
@@ -854,6 +845,7 @@ function get_cli() {
         Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
         Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName user.p.para."
 
+        CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
         CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
         CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
         CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
