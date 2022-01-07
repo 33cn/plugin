@@ -24,5 +24,3 @@ func (e *exchange) Exec_RevokeOrder(payload *exchangetypes.RevokeOrder, tx *type
 	action := NewAction(e, tx, index)
 	return action.RevokeOrder(payload)
 }
-
-

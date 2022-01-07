@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/chain33/common/address"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -16,19 +17,19 @@ func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string
 	case zt.TyDepositAction:
 		action.Value = &zt.ZksyncAction_Deposit{
 			Deposit: &zt.Deposit{
-				ChainType:  "ETH",
-				TokenId:    tokenId,
-				Amount:     amount,
-				EthAddress: ethAddress,
+				ChainType:   "ETH",
+				TokenId:     tokenId,
+				Amount:      amount,
+				EthAddress:  ethAddress,
 				Chain33Addr: chain33Addr,
 			},
 		}
 	case zt.TyWithdrawAction:
 		action.Value = &zt.ZksyncAction_Withdraw{
 			Withdraw: &zt.Withdraw{
-				ChainType: "ETH",
-				TokenId:   tokenId,
-				Amount:    amount,
+				ChainType:  "ETH",
+				TokenId:    tokenId,
+				Amount:     amount,
 				EthAddress: ethAddress,
 			},
 		}
@@ -36,27 +37,27 @@ func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string
 	case zt.TyContractToLeafAction:
 		action.Value = &zt.ZksyncAction_ContractToLeaf{
 			ContractToLeaf: &zt.ContractToLeaf{
-				ChainType: "ETH",
-				TokenId:   tokenId,
-				Amount:    amount,
+				ChainType:  "ETH",
+				TokenId:    tokenId,
+				Amount:     amount,
 				EthAddress: ethAddress,
 			},
 		}
 	case zt.TyLeafToContractAction:
 		action.Value = &zt.ZksyncAction_LeafToContract{
 			LeafToContract: &zt.LeafToContract{
-				ChainType: "ETH",
-				TokenId:   tokenId,
-				Amount:    amount,
+				ChainType:  "ETH",
+				TokenId:    tokenId,
+				Amount:     amount,
 				EthAddress: ethAddress,
 			},
 		}
 	case zt.TyTransferAction:
 		action.Value = &zt.ZksyncAction_Transfer{
 			Transfer: &zt.Transfer{
-				ChainType:     "ETH",
-				TokenId:       tokenId,
-				Amount:        amount,
+				ChainType:      "ETH",
+				TokenId:        tokenId,
+				Amount:         amount,
 				FromEthAddress: ethAddress,
 				ToEthAddress:   toEthAddress,
 			},
@@ -64,11 +65,11 @@ func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string
 	case zt.TyTransferToNewAction:
 		action.Value = &zt.ZksyncAction_TransferToNew{
 			TransferToNew: &zt.TransferToNew{
-				ChainType:     "ETH",
-				TokenId:       tokenId,
-				Amount:        amount,
-				FromEthAddress: ethAddress,
-				ToEthAddress:  toEthAddress,
+				ChainType:        "ETH",
+				TokenId:          tokenId,
+				Amount:           amount,
+				FromEthAddress:   ethAddress,
+				ToEthAddress:     toEthAddress,
 				ToChain33Address: chain33Addr,
 			},
 		}

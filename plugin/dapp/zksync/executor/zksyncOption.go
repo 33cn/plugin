@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"strconv"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -9,7 +11,6 @@ import (
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
-	"strconv"
 )
 
 // Action action struct
@@ -109,7 +110,7 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-func (a *Action)checkOperateAddress(address string) bool {
+func (a *Action) checkOperateAddress(address string) bool {
 	return address == ""
 }
 
@@ -124,7 +125,7 @@ func (a *Action) Withdraw(payload *zt.Withdraw) (*types.Receipt, error) {
 		return nil, errors.New("account not exist")
 	}
 	err = authVerification(a.fromaddr, leaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 	err = checkAmount(leaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
@@ -183,7 +184,7 @@ func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, err
 		return nil, errors.New("account not exist")
 	}
 	err = authVerification(a.fromaddr, leaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 	err = checkAmount(leaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
@@ -230,7 +231,7 @@ func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, err
 		return nil, errors.New("account not exist")
 	}
 	err = authVerification(a.fromaddr, leaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 	err = checkAmount(leaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
@@ -266,13 +267,12 @@ func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, err
 	return receipts, nil
 }
 
-
 func (a *Action) UpdateContractAccount(addr string, amount int64, chainType string, tokenId int32) error {
 	execAddr := address.ExecAddress(zt.Zksync)
 
-	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, chainType + strconv.Itoa(int(tokenId)), a.statedb)
+	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, chainType+strconv.Itoa(int(tokenId)), a.statedb)
 	contractAccount := accountdb.LoadExecAccount(addr, execAddr)
-	if contractAccount.Balance + amount < 0 {
+	if contractAccount.Balance+amount < 0 {
 		return errors.New("balance not enough")
 	} else {
 		contractAccount.Balance += amount
@@ -292,7 +292,7 @@ func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
 		return nil, errors.New("account not exist")
 	}
 	err = authVerification(a.fromaddr, fromLeaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 	err = checkAmount(fromLeaf, int64(payload.GetAmount()), payload.GetTokenId(), payload.GetChainType())
@@ -363,7 +363,7 @@ func (a *Action) TransferToNew(payload *zt.TransferToNew) (*types.Receipt, error
 		return nil, errors.New("account not exist")
 	}
 	err = authVerification(a.fromaddr, fromLeaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
@@ -437,7 +437,7 @@ func (a *Action) ForceQuit(payload *zt.ForceQuit) (*types.Receipt, error) {
 	}
 
 	err = authVerification(a.fromaddr, leaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
@@ -513,7 +513,7 @@ func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
 	}
 
 	err = authVerification(a.fromaddr, leaf.GetChain33Addr())
-	if err!= nil {
+	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
@@ -547,5 +547,3 @@ func authVerification(fromAddr string, chain33Addr string) error {
 	}
 	return nil
 }
-
-
