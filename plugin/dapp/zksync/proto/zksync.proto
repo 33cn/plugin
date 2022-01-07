@@ -10,15 +10,13 @@ message ZksyncAction {
     LeafToContract leafToContract = 4;
     Transfer transfer = 5;
     TransferToNew transferToNew = 6;
-    ForceQuit ForceQuit = 7;
+    ForceQuit forceQuit = 7;
+    SetPubKey setPubKey = 8;
   }
-  int32 ty = 8;
-}
 
-message EddsaSigNature {
-  bytes pubKey = 1;
-  bytes signInfo = 2;
-  ZksyncAction action = 3;
+  int32 ty = 9;
+  bytes pubKey = 10;
+  bytes signInfo = 11;
 }
 
 //某条链上的代币余额
@@ -52,6 +50,8 @@ message Leaf {
   map<string, int32> chainBalanceMap = 3;
   repeated ChainBalance chainBalances = 4;
   string ethAddress = 5; //账户对应的以太坊地址
+  bytes pubKey = 6; //eddsa公钥，用于验证身份
+  string chain33Addr = 7; //chain33地址
 }
 
 message RootInfo {
@@ -77,49 +77,56 @@ message Deposit {
   int32 tokenId = 2;
   uint64 amount = 3;
   string ethAddress = 4;
+  string chain33Addr = 5;
 }
 
 message Withdraw {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
-  int32 accountId = 4;
+  string ethAddress = 4;
 }
 
 message ContractToLeaf {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
-  int32 accountId = 4;
+  string ethAddress = 4;
 }
 
 message LeafToContract {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
-  int32 accountId = 4;
+  string ethAddress = 4;
 }
 
 message Transfer {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
-  int32 fromAccountId = 4;
-  int32 toAccountId = 5;
+  string fromEthAddress = 4;
+  string toEthAddress = 5;
 }
 
 message TransferToNew {
   string chainType = 1;
   int32 tokenId = 2;
   uint64 amount = 3;
-  int32 fromAccountId = 4;
+  string fromEthAddress = 4;
   string toEthAddress = 5;
+  string toChain33Address = 6;
 }
 
 message ForceQuit {
   string chainType = 1;
   int32 tokenId = 2;
   string ethAddress = 3;
+}
+
+message SetPubKey {
+  string ethAddress = 1;
+  bytes  pubKey = 2;
 }
 
 // leaf merkle proof票据日志

@@ -21,6 +21,7 @@ const (
 	TyTransferAction       //转账
 	TyTransferToNewAction  //向新地址转账
 	TyForceExitAction      //强制退出
+	TySetPubKeyAction      //设置公钥
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -30,6 +31,7 @@ const (
 	NameTransferAction       = "Transfer"
 	NameTransferToNewAction  = "TransferToNew"
 	NameForceExitAction      = "ForceExit"
+	NameSetPubKeyAction      = "SetPubKey"
 )
 
 // log类型id值
@@ -42,6 +44,7 @@ const (
 	TyTransferLog       //转账
 	TyTransferToNewLog  //向新地址转账
 	TyForceExitLog      //强制退出
+	TySetPubKeyLog      //设置公钥
 )
 
 const (
@@ -65,6 +68,7 @@ var (
 		NameTransferAction:       TyTransferAction,
 		NameTransferToNewAction:  TyTransferToNewAction,
 		NameForceExitAction:      TyForceExitAction,
+		NameSetPubKeyAction:      TySetPubKeyAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -76,6 +80,7 @@ var (
 		TyTransferLog:       {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferLog"},
 		TyTransferToNewLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferToNewLog"},
 		TyForceExitLog:      {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:      {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TySetPubKeyLog"},
 	}
 )
 

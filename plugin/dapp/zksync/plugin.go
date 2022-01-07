@@ -13,7 +13,7 @@ func init() {
 		Name:     types.Zksync,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
-		Cmd:      commands.Cmd,
+		Cmd:      commands.ZksyncCmd,
 		RPC:      rpc.Init,
 	})
 }

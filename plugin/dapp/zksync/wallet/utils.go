@@ -8,101 +8,89 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
-func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string, accountId int32, toAccountId int32, toEthAddress string, cfg *rpctypes.ChainConfigInfo) (string, error) {
-	var action *zt.ZksyncAction
+func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string, toEthAddress string,
+	chain33Addr string, cfg *rpctypes.ChainConfigInfo) (string, error) {
+	action := new(zt.ZksyncAction)
+	action.Ty = actionTy
 	switch actionTy {
 	case zt.TyDepositAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_Deposit{
-				Deposit: &zt.Deposit{
-					ChainType:  "ETH",
-					TokenId:    tokenId,
-					Amount:     amount,
-					EthAddress: ethAddress,
-				},
+		action.Value = &zt.ZksyncAction_Deposit{
+			Deposit: &zt.Deposit{
+				ChainType:  "ETH",
+				TokenId:    tokenId,
+				Amount:     amount,
+				EthAddress: ethAddress,
+				Chain33Addr: chain33Addr,
 			},
 		}
 	case zt.TyWithdrawAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_Withdraw{
-				Withdraw: &zt.Withdraw{
-					ChainType: "ETH",
-					TokenId:   tokenId,
-					Amount:    amount,
-					AccountId: accountId,
-				},
+		action.Value = &zt.ZksyncAction_Withdraw{
+			Withdraw: &zt.Withdraw{
+				ChainType: "ETH",
+				TokenId:   tokenId,
+				Amount:    amount,
+				EthAddress: ethAddress,
 			},
 		}
+
 	case zt.TyContractToLeafAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_ContractToLeaf{
-				ContractToLeaf: &zt.ContractToLeaf{
-					ChainType: "ETH",
-					TokenId:   tokenId,
-					Amount:    amount,
-					AccountId: accountId,
-				},
+		action.Value = &zt.ZksyncAction_ContractToLeaf{
+			ContractToLeaf: &zt.ContractToLeaf{
+				ChainType: "ETH",
+				TokenId:   tokenId,
+				Amount:    amount,
+				EthAddress: ethAddress,
 			},
 		}
 	case zt.TyLeafToContractAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_LeafToContract{
-				LeafToContract: &zt.LeafToContract{
-					ChainType: "ETH",
-					TokenId:   tokenId,
-					Amount:    amount,
-					AccountId: accountId,
-				},
+		action.Value = &zt.ZksyncAction_LeafToContract{
+			LeafToContract: &zt.LeafToContract{
+				ChainType: "ETH",
+				TokenId:   tokenId,
+				Amount:    amount,
+				EthAddress: ethAddress,
 			},
 		}
 	case zt.TyTransferAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_Transfer{
-				Transfer: &zt.Transfer{
-					ChainType:     "ETH",
-					TokenId:       tokenId,
-					Amount:        amount,
-					FromAccountId: accountId,
-					ToAccountId:   toAccountId,
-				},
+		action.Value = &zt.ZksyncAction_Transfer{
+			Transfer: &zt.Transfer{
+				ChainType:     "ETH",
+				TokenId:       tokenId,
+				Amount:        amount,
+				FromEthAddress: ethAddress,
+				ToEthAddress:   toEthAddress,
 			},
 		}
 	case zt.TyTransferToNewAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_TransferToNew{
-				TransferToNew: &zt.TransferToNew{
-					ChainType:     "ETH",
-					TokenId:       tokenId,
-					Amount:        amount,
-					FromAccountId: accountId,
-					ToEthAddress:  toEthAddress,
-				},
+		action.Value = &zt.ZksyncAction_TransferToNew{
+			TransferToNew: &zt.TransferToNew{
+				ChainType:     "ETH",
+				TokenId:       tokenId,
+				Amount:        amount,
+				FromEthAddress: ethAddress,
+				ToEthAddress:  toEthAddress,
+				ToChain33Address: chain33Addr,
 			},
 		}
 	case zt.TyForceExitAction:
-		action = &zt.ZksyncAction{
-			Ty: actionTy,
-			Value: &zt.ZksyncAction_ForceQuit{
-				ForceQuit: &zt.ForceQuit{
-					ChainType:  "ETH",
-					TokenId:    tokenId,
-					EthAddress: ethAddress,
-				},
+		action.Value = &zt.ZksyncAction_ForceQuit{
+			ForceQuit: &zt.ForceQuit{
+				ChainType:  "ETH",
+				TokenId:    tokenId,
+				EthAddress: ethAddress,
 			},
 		}
+	case zt.TySetPubKeyAction:
+		action.Value = &zt.ZksyncAction_SetPubKey{
+			SetPubKey: &zt.SetPubKey{
+				EthAddress: ethAddress,
+			},
+		}
+	default:
+		return "", types.ErrNotSupport
 	}
 
-	sign := &zt.EddsaSigNature{
-		Action: action,
-	}
-
-	tx := &types.Transaction{Execer: []byte(zt.Zksync), Payload: types.Encode(sign), To: address.ExecAddress(zt.Zksync)}
+	tx := &types.Transaction{Execer: []byte(zt.Zksync), Payload: types.Encode(action), To: address.ExecAddress(zt.Zksync)}
 
 	tx, err := types.FormatTxExt(cfg.ChainID, false, cfg.MinTxFeeRate, zt.Zksync, tx)
 	if err != nil {
@@ -110,8 +98,4 @@ func CreateRawTx(actionTy int32, tokenId int32, amount uint64, ethAddress string
 	}
 	txHex := types.Encode(tx)
 	return hex.EncodeToString(txHex), nil
-}
-
-func Get()  {
-	
 }

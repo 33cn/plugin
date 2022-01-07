@@ -19,8 +19,6 @@ import (
 
 var (
 	bizlog = log15.New("module", "wallet.zksync")
-	// MaxTxHashsPerTime 单词处理的最大哈希书
-	MaxTxHashsPerTime int64 = 100
 	// maxTxNumPerBlock 单个区块最大数
 	maxTxNumPerBlock int64 = types.MaxTxsPerBlock
 )
@@ -32,13 +30,13 @@ func init() {
 // New 创建一盒钱包业务策略
 func New() wcom.WalletBizPolicy {
 	return &zksyncPolicy{
-		mtx:            &sync.Mutex{},
+		mtx: &sync.Mutex{},
 	}
 }
 
 type zksyncPolicy struct {
-	mtx            *sync.Mutex
-	walletOperate  wcom.WalletOperate
+	mtx           *sync.Mutex
+	walletOperate wcom.WalletOperate
 }
 
 func (policy *zksyncPolicy) setWalletOperate(walletBiz wcom.WalletOperate) {
@@ -113,34 +111,56 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		return
 	}
 
+	action := new(zt.ZksyncAction)
+	if err = types.Decode(tx.Payload, action); err != nil {
+		return
+	}
+
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
+	pk := privateKey.PublicKey.Bytes()
 	if err != nil {
 		bizlog.Error("SignTransaction", "eddsa.GenerateKey error", err)
 		return
 	}
 
-
-	sigNature := new(zt.EddsaSigNature)
-	if err = types.Decode(tx.Payload, sigNature); err != nil {
-		bizlog.Error("SignTransaction", "Decode EddsaSigNature error", err)
-		return
+	var msg []byte
+	switch action.GetTy() {
+	case zt.TyDepositAction:
+		msg = types.Encode(action.GetDeposit())
+	case zt.TyWithdrawAction:
+		msg = types.Encode(action.GetWithdraw())
+	case zt.TyContractToLeafAction:
+		msg = types.Encode(action.GetContractToLeaf())
+	case zt.TyLeafToContractAction:
+		msg = types.Encode(action.GetLeafToContract())
+	case zt.TyTransferAction:
+		msg = types.Encode(action.GetTransfer())
+	case zt.TyTransferToNewAction:
+		msg = types.Encode(action.GetTransferToNew())
+	case zt.TyForceExitAction:
+		msg = types.Encode(action.GetForceQuit())
+	case zt.TySetPubKeyAction:
+		payload := action.GetSetPubKey()
+		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
+		if action.GetTy() == zt.TySetPubKeyAction {
+			payload.PubKey = pk
+		}
+		msg = types.Encode(payload)
+	default:
+		err = types.ErrNotSupport
 	}
 
-	privateKey.PublicKey.Bytes()
-
-	sign, err := privateKey.Sign(types.Encode(sigNature.GetAction()), mimc.NewMiMC(mixTy.MimcHashSeed))
-	sigNature.SignInfo = sign
-	sigNature.PubKey = privateKey.PublicKey.Bytes()
-	tx.Payload = types.Encode(sigNature)
+	sign, err := privateKey.Sign(msg, mimc.NewMiMC(mixTy.MimcHashSeed))
+	action.SignInfo = sign
+	action.PubKey = pk
+	tx.Payload = types.Encode(action)
 	signtxhex = common.ToHex(types.Encode(tx))
 	return
 }
 
-
 // OnAddBlockTx 响应区块交易添加的处理
 func (policy *zksyncPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
-	txdetail := &types.WalletTxDetail {
-	}
+	txdetail := &types.WalletTxDetail{}
 
 	blockheight := block.Block.Height*maxTxNumPerBlock + int64(index)
 	heightstr := fmt.Sprintf("%018d", blockheight)

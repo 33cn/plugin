@@ -39,3 +39,8 @@ func (e *zksync) Exec_ForceQuit(payload *zt.ForceQuit, tx *types.Transaction, in
 	action := NewAction(e, tx, index)
 	return action.ForceQuit(payload)
 }
+
+func (e *zksync) Exec_SetPubKey(payload *zt.SetPubKey, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(e, tx, index)
+	return action.SetPubKey(payload)
+}

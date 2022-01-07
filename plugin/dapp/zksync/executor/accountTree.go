@@ -32,7 +32,7 @@ func NewAccountTree(db dbm.KV) *zt.AccountTree {
 	return tree
 }
 
-func AddNewLeaf(db dbm.KV, ethAddress string, chainType string, tokenId int32, balance int64) (*zt.Leaf, error) {
+func AddNewLeaf(db dbm.KV, ethAddress string, chainType string, tokenId int32, balance int64, chain33Addr string) (*zt.Leaf, error) {
 	tree, err := getAccountTree(db)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getAccountTree")
@@ -76,6 +76,7 @@ func AddNewLeaf(db dbm.KV, ethAddress string, chainType string, tokenId int32, b
 		EthAddress: ethAddress,
 		RootHash:   []byte("current"),
 		AccountId:  tree.GetTotalIndex(),
+		Chain33Addr: chain33Addr,
 	}
 
 	//如果有初始balance，设置
@@ -392,6 +393,9 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
 	hash.Write([]byte(string(leaf.GetAccountId())))
 	hash.Write([]byte(leaf.GetEthAddress()))
+	if len(leaf.GetPubKey()) > 0 {
+		hash.Write(leaf.GetPubKey())
+	}
 	for _, balance := range leaf.GetChainBalances() {
 		hash.Write(balance.GetRootHash())
 	}
@@ -555,4 +559,77 @@ func CalTokenProof(db dbm.KV, chainBalance *zt.ChainBalance, tokenId int32) (*zt
 			return proof, nil
 		}
 	}
+}
+
+func UpdatePubKey(db dbm.KV, leaf *zt.Leaf, pubKey []byte) (*zt.Leaf,error) {
+	tree, err := getAccountTree(db)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.getAccountTree")
+	}
+	accountId := leaf.GetAccountId()
+	leaf.PubKey = pubKey
+	if accountId > tree.GetTotalIndex()-tree.GetIndex() {
+		tree.GetLeaveMap()[accountId] = leaf
+		currentTree := getNewTree()
+		for i := int32(1); i <= tree.GetIndex(); i++ {
+			currentTree.Push(getLeafHash(tree.GetLeaveMap()[i]))
+		}
+
+		subtrees := make([]*zt.SubTree, 0)
+		for _, subtree := range currentTree.GetAllSubTrees() {
+			subtrees = append(subtrees, &zt.SubTree{
+				RootHash: subtree.GetSum(),
+				Height:   int32(subtree.GetHeight()),
+			})
+		}
+
+		tree.SubTrees = subtrees
+		err = setAccountTree(db, tree)
+		if err != nil {
+			return nil, errors.Wrapf(err, "db.setAccountTree")
+		}
+		return leaf, nil
+	}
+
+	accountTable := NewAccountTreeTable(db)
+
+	//找到对应的根
+	if rootInfo, ok := tree.GetRootMap()[hex.EncodeToString(leaf.GetRootHash())]; ok {
+		leaves, err := getLeavesByRoot(accountTable, leaf.GetRootHash())
+		if err != nil {
+			return nil, errors.Wrapf(err, "db.getLeavesByRoot")
+		}
+		oldRootHash := leaf.GetRootHash()
+		currentTree := getNewTree()
+		for _, leafVal := range leaves {
+			if leafVal.GetAccountId() == leaf.GetAccountId() {
+				leafVal.PubKey = pubKey
+			}
+			currentTree.Push(getLeafHash(leafVal))
+		}
+		rootHash := currentTree.Root()
+		for _, leafVal := range leaves {
+			leafVal.RootHash = rootHash
+		}
+		err = updateLeaves(accountTable, leaves)
+		if err != nil {
+			return nil, errors.Wrapf(err, "db.updateLeaves")
+		}
+		//落盘保存
+		err = SaveAccountTreeTable(db, accountTable)
+		if err != nil {
+			return nil, errors.Wrapf(err, "db.SaveAccountTreeTable")
+		}
+		//更新树
+		delete(tree.RootMap, hex.EncodeToString(oldRootHash))
+		tree.RootMap[hex.EncodeToString(rootHash)] = rootInfo
+		tree.RootIndexMap[rootInfo.StartIndex/tree.MaxCurrentIndex] = rootHash
+		err = setAccountTree(db, tree)
+		if err != nil {
+			return nil, errors.Wrapf(err, "db.setAccountTree")
+		}
+	} else {
+		return nil, errors.Wrapf(err, "rootMap.notFindRoot")
+	}
+	return leaf, nil
 }
