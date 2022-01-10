@@ -281,7 +281,6 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 	return nil
 }
 
-//DeployContrcts 部署以太坊合约
 func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {
 	txLogs, err := chain33Relayer.syncEvmTxLogs.GetNextValidEvmTxLogs(height)
 	if nil == txLogs || nil != err {

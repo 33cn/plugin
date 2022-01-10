@@ -94,7 +94,6 @@ func main() {
 		}
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
 		ethRelayerServices[ethStartPara.Name] = ethRelayerService
-
 	}
 
 	//启动chain33中继器
