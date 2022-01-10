@@ -376,7 +376,7 @@ func Test_BurnBty(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, balanceNew, "80")
 
-	fetchCnt := int32(1)
+	fetchCnt := int32(10)
 	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
 	require.NoError(t, err)
 	fmt.Println("logs", logs)
@@ -385,9 +385,6 @@ func Test_BurnBty(t *testing.T) {
 		fmt.Println("*vLog", *vLog)
 		ethRelayer.procBridgeBankLogs(*vLog)
 	}
-
-	fmt.Println("ethRelayer.fetchHeightPeriodMs", ethRelayer.fetchHeightPeriodMs)
-
 	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 }
 

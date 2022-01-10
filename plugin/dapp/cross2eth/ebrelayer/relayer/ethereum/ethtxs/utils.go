@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"github.com/33cn/plugin/plugin/dapp/x2ethereum/ebrelayer/ethtxs"
 	"math/big"
 	"sync"
 	"time"
@@ -186,10 +187,12 @@ func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ec
 	return auth, nil
 }
 
-func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, txName string) error {
+func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, txName, providerHttp string) error {
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
 	oneSecondtimeout := time.NewTicker(5 * time.Second)
+	count := 0
+
 	for {
 		select {
 		case <-timeout.C:
@@ -200,6 +203,14 @@ func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, tx
 			if err == ethereum.NotFound {
 				continue
 			} else if err != nil {
+				if count < 5 {
+					count++
+					client, err = ethtxs.SetupWebsocketEthClient(providerHttp)
+					if err != nil {
+						txslog.Error("waitEthTxFinished", "Failed to SetupWebsocketEthClient due to:", err.Error(), "count", count)
+						continue
+					}
+				}
 				return err
 			}
 			txslog.Info(txName, "Finished executing for tx", txhash.String())
