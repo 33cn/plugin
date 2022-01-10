@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.66.1"></a>
+## [1.66.1](https://github.com/33cn/plugin/compare/v1.66.0...v1.66.1) (2022-01-10)
+
+
+### Bug Fixes
+
+* chain33 update to 1.66.2 ([3cdb80c](https://github.com/33cn/plugin/commit/3cdb80c))
+
 <a name="1.66.0"></a>
 # [1.66.0](https://github.com/33cn/plugin/compare/v1.65.4...v1.66.0) (2021-12-30)
 
