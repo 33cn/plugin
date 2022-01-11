@@ -40,8 +40,24 @@ var (
 )
 
 func Test_ImportRestorePrivateKey(t *testing.T) {
-	mock33 := newMock33()
+	var ret = types.ReplySubscribePush{IsOk: true, Msg: ""}
+	var he = types.Header{Height: 10000}
+
+	mockapi := &mocks.QueueProtocolAPI{}
+	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
+	mockapi.On("Close").Return()
+	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
+	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
+
+	mock33 := testnode.New("", mockapi)
+	//defer mock33.Close()
+	rpcCfg := mock33.GetCfg().RPC
+	// 这里必须设置监听端口，默认的是无效值
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
+	mock33.GetRPC().Listen()
+
 	defer mock33.Close()
+
 	_, _, _, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	chain33Relayer := newChain33Relayer(x2EthDeployInfo, "127.0.0.1:60000")
@@ -161,26 +177,6 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 		os.Exit(-1)
 	}
 	return &cfg
-}
-
-func newMock33() *testnode.Chain33Mock {
-	var ret = types.ReplySubscribePush{IsOk: true, Msg: ""}
-	var he = types.Header{Height: 10000}
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
-
-	mock33 := testnode.New("", mockapi)
-	//defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
-
-	return mock33
 }
 
 func Test_getExecerName(t *testing.T) {
