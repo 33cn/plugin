@@ -48,7 +48,6 @@ func EthereumRelayerCmd() *cobra.Command {
 		TokenCmd(),
 		MultiSignEthCmd(),
 		TransferEthCmd(),
-		ConfigplatformTokenSymbolCmd(),
 		CfgWithdrawCmd(),
 	)
 
@@ -752,7 +751,6 @@ func MultiSignEthCmd() *cobra.Command {
 		SetupEthCmd(),
 		MultiSignTransferEthCmd(),
 		ShowEthAddrCmd(),
-		ConfigOfflineSaveAccountCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		GetSelfBalanceCmd(),
 		SetEthMultiSignAddrCmd(),
@@ -902,66 +900,6 @@ func SafeTransferEth(cmd *cobra.Command, _ []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SafeTransfer4Eth", para, &res)
-	ctx.Run()
-}
-
-//ConfigOfflineSaveAccountCmd ...
-func ConfigOfflineSaveAccountCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set_offline_addr",
-		Short: "save config offline account",
-		Run:   ConfigOfflineSaveAccount,
-	}
-	ConfigOfflineSaveAccountFlags(cmd)
-	return cmd
-}
-
-//ConfigOfflineSaveAccountFlags ...
-func ConfigOfflineSaveAccountFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("address", "s", "", "multisign address")
-	_ = cmd.MarkFlagRequired("address")
-}
-
-//ConfigOfflineSaveAccount ...
-func ConfigOfflineSaveAccount(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
-	addr, _ := cmd.Flags().GetString("address")
-
-	para := &relayerTypes.CfgOfflineSaveAccountReq{
-		ChainName: ethChainName,
-		Address:   addr,
-	}
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigOfflineSaveAccount", para, &res)
-	ctx.Run()
-}
-
-//ConfigplatformTokenSymbolCmd ...
-func ConfigplatformTokenSymbolCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set_symbol",
-		Short: "save config symbol",
-		Run:   ConfigplatformTokenSymbol,
-	}
-	ConfigplatformTokenSymbolFlags(cmd)
-	return cmd
-}
-
-//ConfigplatformTokenSymbolFlags ...
-func ConfigplatformTokenSymbolFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("symbol", "s", "ETH", "symbol")
-	_ = cmd.MarkFlagRequired("symbol")
-}
-
-//ConfigplatformTokenSymbol ...
-func ConfigplatformTokenSymbol(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	symbol, _ := cmd.Flags().GetString("symbol")
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ConfigplatformTokenSymbol", symbol, &res)
 	ctx.Run()
 }
 

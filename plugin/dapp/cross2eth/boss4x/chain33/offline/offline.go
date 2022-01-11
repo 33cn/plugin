@@ -30,8 +30,6 @@ func Boss4xOfflineCmd() *cobra.Command {
 		ApproveErc20Cmd(),
 		AddToken2LockListCmd(),
 		CreateNewBridgeTokenCmd(),
-		//SetupCmd(),
-		//ConfigOfflineSaveAccountCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateMultisignTransferCmd(),
 		MultisignTransferCmd(),
