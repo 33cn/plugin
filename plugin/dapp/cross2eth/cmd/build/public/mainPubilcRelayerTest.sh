@@ -104,11 +104,13 @@ source "./offlinePublic.sh"
     chain33ReceiverAddr="12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
     chain33ReceiverAddrKey="4257d8692ef7fe13c68b65d6a52f03933db2fa5ce8faf210b5b8b80c721ced01"
 
+    # 代理人地址
     ethValidatorAddrp="0x0c05ba5c230fdaa503b53702af1962e08d0c60bf"
     ethValidatorAddrKeyp="9dc6df3a8ab139a54d8a984f54958ae0661f880229bf3bdbb886b87d58b56a08"
     chain33Validatorp="1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
     chain33ValidatorKeyp="0xd627968e445f2a41c92173225791bae1ba42126ae96c32f28f97ff8f226e5c68"
 
+    # 代理收币地址
     chain33Validatorsp="1Hf1wnnr6XaYy5Sf3HhAfT4N8JYV4sMh9J"
     chain33ValidatorKeysp="0x1dadb7cbad8ea3f968cfad40ac32981def6215690618e62c48e816e7c732a8c2"
 

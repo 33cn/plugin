@@ -40,14 +40,6 @@ var (
 	chain33ReceiverAddr = "1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu"
 	passphrase          = "123456hzj"
 	chainTestCfg        = chain33Types.NewChain33Config(chain33Types.GetDefaultCfgstring())
-
-	//// 0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a
-	//deployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
-	//// 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
-	//ethValidatorAddrKeyA = "3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
-	//ethValidatorAddrKeyB = "a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
-	//ethValidatorAddrKeyC = "bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
-	//ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
 )
 
 func init() {
@@ -388,15 +380,6 @@ func Test_BurnBty(t *testing.T) {
 	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 }
 
-//func deployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
-//	ethValidatorAddrKeys := make([]string, 0)
-//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
-//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
-//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyC)
-//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyD)
-//	return setup.DeploySpecificContracts(deployerPrivateKey, ethValidatorAddrKeys)
-//}
-
 func Test_RestorePrivateKeys(t *testing.T) {
 	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
@@ -433,6 +416,95 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	assert.Equal(t, common.Bytes2Hex(crypto.FromECDSA(temp)), common.Bytes2Hex(crypto.FromECDSA(ethRelayer.privateKey4Ethereum)))
 	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
+}
+
+//genesiskey, _ := crypto.GenerateKey()
+//alloc := make(core.GenesisAlloc)
+//genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
+//genesisAccount := core.GenesisAccount{
+//	Balance:    big.NewInt(1000000000000 * 10000),
+//	PrivateKey: crypto.FromECDSA(genesiskey),
+//}
+//alloc[genesisAddr] = genesisAccount
+//
+////balance, err := ethRelayer.GetBalance("", para.InitValidators[0].String())
+////require.Nil(t, err)
+////assert.Equal(t, balance, "10000000000000000")
+//
+//gasLimit := uint64(100000000)
+//sim.SimulatedBackend = backends.NewSimulatedBackend(alloc, gasLimit)
+//
+//balance, err := ethRelayer.GetBalance("", genesisAddr.String())
+//require.Nil(t, err)
+//fmt.Println(balance)
+//assert.Equal(t, balance, "10000000000000000")
+
+func Test_Lock(t *testing.T) {
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	require.NoError(t, err)
+	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
+	ethRelayer.processWithDraw = true
+
+	_, err = ethRelayer.ImportPrivateKey(passphrase, hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[0])))
+	require.Nil(t, err)
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	ctx := context.Background()
+	bridgeBankBalance, err := sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
+	require.Nil(t, err)
+	assert.Equal(t, bridgeBankBalance.Int64(), int64(0))
+
+	//lock 50 eth
+	_, err = ethRelayer.LockEthErc20Asset(hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[0])), "", "50", "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+	require.Nil(t, err)
+	sim.Commit()
+
+	bridgeBankBalance, err = sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
+	require.Nil(t, err)
+	assert.Equal(t, bridgeBankBalance.Int64(), int64(50))
+
+	for i := 0; i < int(ethRelayer.maturityDegree+1); i++ {
+		sim.Commit()
+	}
+	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	balance, err := ethRelayer.ShowLockStatics("")
+	require.Nil(t, err)
+	assert.Equal(t, balance, "50")
+
+	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+	amount := int64(20)
+	ethReceiver := para.InitValidators[2]
+	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), big.NewInt(amount).Bytes())
+	authOracle, err := ethtxs.PrepareAuth4MultiEthereum(ethRelayer.clientSpec, para.ValidatorPriKey[0], para.InitValidators[0], ethRelayer.Addr2TxNonce)
+	require.Nil(t, err)
+	signature, err := utils.SignClaim4Evm(claimID, para.ValidatorPriKey[0])
+	require.Nil(t, err)
+
+	_, err = x2EthContracts.Oracle.NewOracleClaim(
+		authOracle,
+		uint8(events.ClaimTypeWithdraw),
+		chain33Sender,
+		ethReceiver,
+		ethRelayer.bridgeBankAddr,
+		"ETH",
+		big.NewInt(amount),
+		claimID,
+		signature)
+	require.Nil(t, err)
+	sim.Commit()
+
+	fetchCnt := int32(10)
+	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
+	require.NoError(t, err)
+	fmt.Println("logs", logs)
+
+	for _, vLog := range logs {
+		fmt.Println("*vLog", *vLog)
+		ethRelayer.procBridgeBankLogs(*vLog)
+	}
+	time.Sleep(4 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
 }
 
 func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthContracts *ethtxs.X2EthContracts, x2EthDeployInfo *ethtxs.X2EthDeployInfo) *Relayer4Ethereum {

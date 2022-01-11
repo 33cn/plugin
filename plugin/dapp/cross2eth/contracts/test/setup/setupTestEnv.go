@@ -17,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
 )
 
 //PrepareTestEnv ...
@@ -62,85 +61,10 @@ func PrepareTestEnv() (*ethinterface.SimExtend, *ethtxs.DeployPara) {
 	return sim, para
 }
 
-//PrepareTestEnvironment ...
-func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []string) (bind.ContractBackend, *ethtxs.DeployPara) {
-	genesiskey, _ := crypto.HexToECDSA(deployerPrivateKey)
-	alloc := make(core.GenesisAlloc)
-	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
-	genesisAccount := core.GenesisAccount{
-		Balance:    big.NewInt(params.Ether),
-		PrivateKey: crypto.FromECDSA(genesiskey),
-	}
-	alloc[genesisAddr] = genesisAccount
-
-	var InitValidators []common.Address
-	var ValidatorPriKey []*ecdsa.PrivateKey
-	for _, v := range ethValidatorAddrKeys {
-		key, _ := crypto.HexToECDSA(v)
-		addr := crypto.PubkeyToAddress(key.PublicKey)
-		InitValidators = append(InitValidators, addr)
-		ValidatorPriKey = append(ValidatorPriKey, key)
-
-		account := core.GenesisAccount{
-			Balance:    big.NewInt(params.Ether),
-			PrivateKey: crypto.FromECDSA(key),
-		}
-		alloc[addr] = account
-	}
-
-	gasLimit := uint64(100000000)
-	//sim := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(params.Ether)}}, 10000000)
-	sim := backends.NewSimulatedBackend(alloc, gasLimit)
-
-	InitPowers := []*big.Int{big.NewInt(80), big.NewInt(10), big.NewInt(10), big.NewInt(10)}
-
-	para := &ethtxs.DeployPara{
-		DeployPrivateKey: genesiskey,
-		Deployer:         genesisAddr,
-		Operator:         genesisAddr,
-		InitValidators:   InitValidators,
-		ValidatorPriKey:  ValidatorPriKey,
-		InitPowers:       InitPowers,
-	}
-
-	return sim, para
-}
-
 //DeployContracts ...
 func DeployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
 	ctx := context.Background()
 	sim, para := PrepareTestEnv()
-
-	opts, _ := bind.NewKeyedTransactorWithChainID(para.DeployPrivateKey, big.NewInt(1337))
-	parsed, _ := abi.JSON(strings.NewReader(generated.BridgeBankBin))
-	contractAddr, _, _, _ := bind.DeployContract(opts, parsed, common.FromHex(generated.BridgeBankBin), sim)
-	sim.Commit()
-
-	callMsg := ethereum.CallMsg{
-		From: para.Deployer,
-		To:   &contractAddr,
-		Data: common.FromHex(generated.BridgeBankBin),
-	}
-
-	_, err := sim.EstimateGas(ctx, callMsg)
-	if nil != err {
-		panic("failed to estimate gas due to:" + err.Error())
-	}
-	x2EthContracts, x2EthDeployInfo, err := DeployAndInit(sim, para)
-	if nil != err {
-		return nil, nil, nil, nil, err
-	}
-	sim.Commit()
-
-	return para, sim, x2EthContracts, x2EthDeployInfo, nil
-}
-
-//DeploySpecificContracts ...
-func DeploySpecificContracts(deployerPrivateKey string, ethValidatorAddrKeys []string) (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
-	ctx := context.Background()
-	backend, para := PrepareTestEnvironment(deployerPrivateKey, ethValidatorAddrKeys)
-	sim := new(ethinterface.SimExtend)
-	sim.SimulatedBackend = backend.(*backends.SimulatedBackend)
 
 	opts, _ := bind.NewKeyedTransactorWithChainID(para.DeployPrivateKey, big.NewInt(1337))
 	parsed, _ := abi.JSON(strings.NewReader(generated.BridgeBankBin))
@@ -352,5 +276,109 @@ func DeployAndInit(client ethinterface.EthClientSpec, para *ethtxs.DeployPara) (
 		sim.Commit()
 	}
 
+	auth, err = ethtxs.PrepareAuth(client, para.DeployPrivateKey, para.Deployer)
+	if nil != err {
+		return nil, nil, err
+	}
+	_, err = x2EthContracts.BridgeBank.ConfigplatformTokenSymbol(auth, "ETH")
+	if nil != err {
+		fmt.Println("DeployAndInit", "failed to ConfigplatformTokenSymbol due to:", err.Error())
+		return nil, nil, err
+	}
+	if isSim {
+		sim.Commit()
+	}
+
 	return x2EthContracts, deployInfo, nil
 }
+
+//// 0x8AFDADFC88a1087c9A1D6c0F5Dd04634b87F303a
+//deployerPrivateKey = "8656d2bc732a8a816a461ba5e2d8aac7c7f85c26a813df30d5327210465eb230"
+//// 0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f
+//ethValidatorAddrKeyA = "3fa21584ae2e4fd74db9b58e2386f5481607dfa4d7ba0617aaa7858e5025dc1e"
+//ethValidatorAddrKeyB = "a5f3063552f4483cfc20ac4f40f45b798791379862219de9e915c64722c1d400"
+//ethValidatorAddrKeyC = "bbf5e65539e9af0eb0cfac30bad475111054b09c11d668fc0731d54ea777471e"
+//ethValidatorAddrKeyD = "c9fa31d7984edf81b8ef3b40c761f1847f6fcd5711ab2462da97dc458f1f896b"
+
+//func deployContracts() (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
+//	ethValidatorAddrKeys := make([]string, 0)
+//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyA)
+//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyB)
+//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyC)
+//	ethValidatorAddrKeys = append(ethValidatorAddrKeys, ethValidatorAddrKeyD)
+//	return setup.DeploySpecificContracts(deployerPrivateKey, ethValidatorAddrKeys)
+//}
+//DeploySpecificContracts ...
+//func DeploySpecificContracts(deployerPrivateKey string, ethValidatorAddrKeys []string) (*ethtxs.DeployPara, *ethinterface.SimExtend, *ethtxs.X2EthContracts, *ethtxs.X2EthDeployInfo, error) {
+//	ctx := context.Background()
+//	backend, para := PrepareTestEnvironment(deployerPrivateKey, ethValidatorAddrKeys)
+//	sim := new(ethinterface.SimExtend)
+//	sim.SimulatedBackend = backend.(*backends.SimulatedBackend)
+//
+//	opts, _ := bind.NewKeyedTransactorWithChainID(para.DeployPrivateKey, big.NewInt(1337))
+//	parsed, _ := abi.JSON(strings.NewReader(generated.BridgeBankBin))
+//	contractAddr, _, _, _ := bind.DeployContract(opts, parsed, common.FromHex(generated.BridgeBankBin), sim)
+//	sim.Commit()
+//
+//	callMsg := ethereum.CallMsg{
+//		From: para.Deployer,
+//		To:   &contractAddr,
+//		Data: common.FromHex(generated.BridgeBankBin),
+//	}
+//
+//	_, err := sim.EstimateGas(ctx, callMsg)
+//	if nil != err {
+//		panic("failed to estimate gas due to:" + err.Error())
+//	}
+//	x2EthContracts, x2EthDeployInfo, err := DeployAndInit(sim, para)
+//	if nil != err {
+//		return nil, nil, nil, nil, err
+//	}
+//	sim.Commit()
+//
+//	return para, sim, x2EthContracts, x2EthDeployInfo, nil
+//}
+//PrepareTestEnvironment ...
+//func PrepareTestEnvironment(deployerPrivateKey string, ethValidatorAddrKeys []string) (bind.ContractBackend, *ethtxs.DeployPara) {
+//	genesiskey, _ := crypto.HexToECDSA(deployerPrivateKey)
+//	alloc := make(core.GenesisAlloc)
+//	genesisAddr := crypto.PubkeyToAddress(genesiskey.PublicKey)
+//	genesisAccount := core.GenesisAccount{
+//		Balance:    big.NewInt(params.Ether),
+//		PrivateKey: crypto.FromECDSA(genesiskey),
+//	}
+//	alloc[genesisAddr] = genesisAccount
+//
+//	var InitValidators []common.Address
+//	var ValidatorPriKey []*ecdsa.PrivateKey
+//	for _, v := range ethValidatorAddrKeys {
+//		key, _ := crypto.HexToECDSA(v)
+//		addr := crypto.PubkeyToAddress(key.PublicKey)
+//		InitValidators = append(InitValidators, addr)
+//		ValidatorPriKey = append(ValidatorPriKey, key)
+//
+//		account := core.GenesisAccount{
+//			Balance:    big.NewInt(params.Ether),
+//			PrivateKey: crypto.FromECDSA(key),
+//		}
+//		alloc[addr] = account
+//	}
+//
+//	gasLimit := uint64(100000000)
+//	//sim := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(params.Ether)}}, 10000000)
+//	sim := backends.NewSimulatedBackend(alloc, gasLimit)
+//
+//	InitPowers := []*big.Int{big.NewInt(80), big.NewInt(10), big.NewInt(10), big.NewInt(10)}
+//
+//	para := &ethtxs.DeployPara{
+//		DeployPrivateKey: genesiskey,
+//		Deployer:         genesisAddr,
+//		Operator:         genesisAddr,
+//		InitValidators:   InitValidators,
+//		ValidatorPriKey:  ValidatorPriKey,
+//		InitPowers:       InitPowers,
+//	}
+//
+//	return sim, para
+//}
+//}
