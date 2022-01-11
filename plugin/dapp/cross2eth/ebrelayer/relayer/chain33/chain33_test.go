@@ -50,13 +50,11 @@ func Test_ImportRestorePrivateKey(t *testing.T) {
 	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
 
 	mock33 := testnode.New("", mockapi)
-	//defer mock33.Close()
+	defer mock33.Close()
 	rpcCfg := mock33.GetCfg().RPC
 	// 这里必须设置监听端口，默认的是无效值
 	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
 	mock33.GetRPC().Listen()
-
-	defer mock33.Close()
 
 	_, _, _, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
@@ -65,7 +63,7 @@ func Test_ImportRestorePrivateKey(t *testing.T) {
 	err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	addr, err := chain33Relayer.GetAccountAddr()
 	assert.NoError(t, err)
@@ -98,6 +96,8 @@ func Test_ImportRestorePrivateKey(t *testing.T) {
 	err = chain33Relayer.RestorePrivateKeys("new123")
 	assert.Equal(t, chain33Common.ToHex(chain33Relayer.privateKey4Chain33.Bytes()), privateKeyStr)
 	assert.NoError(t, err)
+
+	time.Sleep(20 * time.Millisecond)
 }
 
 func newChain33Relayer(x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string) *Relayer4Chain33 {
