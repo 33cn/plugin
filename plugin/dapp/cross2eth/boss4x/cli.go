@@ -46,6 +46,7 @@ func RootCmd() *cobra.Command {
 		chain33.Chain33Cmd(),
 		ethereum.EthCmd(),
 		KeyManageCmd(),
+		sm2Cmd(),
 	)
 	return cmd
 }
