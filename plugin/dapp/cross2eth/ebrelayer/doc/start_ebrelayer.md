@@ -9,18 +9,15 @@
 |字段|说明|
 |----|----|
 |pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
+|ethProvider|ethereum 的 socket 通信地址, 例如: wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270, 如果有多个就根据 EthChainName 分别配置|
+|EthProviderCli|ethereum 的 http url 地址, 例如: https://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270, 如果有多个就根据 EthChainName 分别配置|
+|BridgeRegistry|部署在 ethereum 的 BridgeRegistry 地址, 如果有多个就根据 EthChainName 分别配置|
+|chain33BridgeRegistry|部署在 chain33 的 BridgeRegistry 地址|
 |ChainID4Chain33|chain33 链的 ID, 默认为 0|
 |ChainName|链的名称, 用来区分主链和平行链, 如user.p.xxx., 必须包含最后一个点|
-|EthProvider|ethereum 的 socket 通信地址, 例如: wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270|
-|EthProviderCli|ethereum 的 http url 地址, 例如: https://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270|
-|chain33BridgeRegistry|部署在 chain33 的 BridgeRegistry 地址|
-|BridgeRegistry|部署在 ethereum 的 BridgeRegistry 地址|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801|
 |pushHost|relayer 的 host 地址, 默认: http://localhost:20000|
 |pushBind|relayer 的 bind 端口, 默认: 0.0.0.0:20000|
-|operatorAddr|修改部署者地址: [deploy4chain33] operatorAddr 和 [deploy] operatorAddr|
-|validatorsAddr|修改 relayer 验证者地址: [deploy4chain33] validatorsAddr 和 [deploy] validatorsAddr|
-|initPowers|修改 relayer 验证者权重: [deploy4chain33] initPowers 和 [deploy] initPowers|
 
 #### 首次启动 relayer 进行设置
 ```shell
@@ -76,8 +73,6 @@ done
 |----|----|
 |pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801, 4 个 relayer 对应 4 个不同 chain33 平行链地址|
-|deploy4chain33|[deploy4chain33] 下字段全部删除, 只需 relayer A 配置一次就可以|
-|deploy|[deploy] 下字段全部删除, 只需 relayer A 配置一次就可以|
 
 #### 首次启动 relayer 进行设置
 ```shell
@@ -103,8 +98,6 @@ done
 |pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
 |ProcessWithDraw|改为 true|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801, 选任意一个 chain33 平行链地址就可以|
-|deploy4chain33|[deploy4chain33] 下字段全部删除, 只需 relayer A 配置一次就可以|
-|deploy|[deploy] 下字段全部删除, 只需 relayer A 配置一次就可以|
 
 #### 首次启动 relayer 进行设置
 同上...
