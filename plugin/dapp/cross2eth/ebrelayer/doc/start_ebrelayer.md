@@ -1,9 +1,10 @@
 ##  启动 relayer
-*** 
+[TOC]
 
 ### 启动 relayer A
 #### 完成 ethererum 和 chain33 相关合约的部署
-得到 chain33BridgeRegistry, ethereumBridgeRegistry, chain33MultisignAddr, ethereumMultisignAddr 4个合约地址。
+得到 BridgeRegistryOnChain33, BridgeRegistryOnEth, multisignChain33Addr, multisignEthAddr 4个合约地址。
+
 #### 修改 relayer.toml 配置文件
 |字段|说明|
 |----|----|
@@ -40,6 +41,7 @@
 ```
 
 #### 运行持续启动 relayer
+编写脚步 startRelyer.sh
 ```shell
 #!/usr/bin/env bash
 # shellcheck disable=SC2050
@@ -61,10 +63,10 @@ while [ 1 == 1 ]; do
     done
     sleep 2
 done
-
 ```
+启动脚本 `nohup ./startRelyer.sh 2>&1 &`
 
-*** 
+为了安全起见建议手动调用 `./ebcli_A unlock -p 密码`
 
 ### 启动 relayer B C D
 #### 修改 relayer.toml 配置文件
@@ -109,8 +111,8 @@ done
 
 #### 设置 chain33 代理地址, 及手续费设置
 ```shell
-# 设置 withdraw 的手续费及每日转帐最大值
-result=$(${CLIP} ethereum cfgWithdraw -f 1 -s ETH -a 100 -d 18)
+# 设置 withdraw 的手续费及每日转帐最大值, 实时变动, 价格波动大的时候重新设置
+./ebcli_A ethereum cfgWithdraw -f 0.2 -s ETH -a 100 -d 18
 
 Flags:
   -a, --amount float    每日最大值
@@ -119,7 +121,7 @@ Flags:
   -s, --symbol string   symbol
   
 # 设置 chain33 代理地址
-${Boss4xCLI} chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
+./boss4x chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
 Flags:
   -a, --address string    withdraw address
   -c, --contract string   bridgebank contract address
@@ -127,4 +129,13 @@ Flags:
   -k, --key string        the deployer private key
   -n, --note string       transaction note info (optional)
 ```
-    
+
+### 停止或升级 relayer
+直接 kill
+```shell
+ps -ef | grep ebrelayer
+root      3661 21631  0 17:58 pts/0    00:00:00 grep --color=auto ebrelayer
+root      4066  4057  0 15:47 pts/0    00:00:05 ./ebrelayer
+kill 4066
+```
+如果是用持续启动方式`nohup ./startRelyer.sh 2>&1 &`, 要先 kill startRelyer.sh, 再 kill ebrelayer
