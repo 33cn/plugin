@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+        # shellcheck disable=SC2034
+    # shellcheck disable=SC2154
 # shellcheck source=/dev/null
 set -x
 set +e
@@ -18,17 +20,13 @@ function AllRelayerMainTest() {
         echo -e "${GRE}maturityDegree is ${maturityDegree} ${NOC}"
     fi
 
-    # shellcheck disable=SC2120
     if [[ $# -ge 2 ]]; then
-        # shellcheck disable=SC2034
         chain33ID="${2}"
     fi
 
     get_cli
 
     # init
-    # shellcheck disable=SC2154
-    # shellcheck disable=SC2034
     Chain33Cli=${MainCli}
     InitChain33Validator
     # para add
