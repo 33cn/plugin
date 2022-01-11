@@ -437,4 +437,3 @@ function offline_transfer_multisign_EthUSDT() {
     cli_ret "${result}" "balance" ".balance" "70"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
-

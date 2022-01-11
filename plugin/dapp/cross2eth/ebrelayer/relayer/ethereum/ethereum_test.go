@@ -4,11 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 
 	"github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
