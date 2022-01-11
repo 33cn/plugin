@@ -120,8 +120,14 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 	if 0 == chain33Relayer.totalTx4RelayEth2chai33 {
 		statics := &ebTypes.Ethereum2Chain33Statics{}
 		data := chain33Types.Encode(statics)
-		chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeLock), data)
-		chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeBurn), data)
+		err := chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeLock), data)
+		if err != nil {
+			relayerLog.Error("StartChain33Relayer", "setLastestRelay2Chain33TxStatics ClaimTypeLock error", err.Error())
+		}
+		err = chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeBurn), data)
+		if err != nil {
+			relayerLog.Error("StartChain33Relayer", "setLastestRelay2Chain33TxStatics ClaimTypeBurn error", err.Error())
+		}
 	}
 
 	go chain33Relayer.syncProc(syncCfg)

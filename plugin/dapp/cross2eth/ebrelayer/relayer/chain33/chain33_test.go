@@ -48,7 +48,6 @@ func Test_ImportRestorePrivateKey(t *testing.T) {
 
 	err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
-	//assert.Equal(t, addr, accountAddr)
 
 	time.Sleep(50 * time.Millisecond)
 
