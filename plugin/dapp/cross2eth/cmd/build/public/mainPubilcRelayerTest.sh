@@ -638,7 +638,6 @@ function echo_addrs() {
     echo -e "${GRE}ethereumUSDTERC20TokenAddrOnBSC: ${ethereumUSDTERC20TokenAddrOnBSC} ${NOC}"
     echo -e "${GRE}ethereumBtyBridgeTokenAddrOnBSC: ${ethereumBtyBridgeTokenAddrOnBSC} ${NOC}"
 
-
     echo -e "${GRE}XgoBridgeRegistryOnChain33: ${XgoBridgeRegistryOnChain33} ${NOC}"
 
     echo -e "${GRE}XgoChain33BridgeBank: ${XgoChain33BridgeBank} ${NOC}"

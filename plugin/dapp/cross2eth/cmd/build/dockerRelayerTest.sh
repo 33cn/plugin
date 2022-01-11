@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
-        # shellcheck disable=SC2034
-    # shellcheck disable=SC2154
+# shellcheck disable=SC2034
+# shellcheck disable=SC2154
 # shellcheck source=/dev/null
 set -x
 set +e
