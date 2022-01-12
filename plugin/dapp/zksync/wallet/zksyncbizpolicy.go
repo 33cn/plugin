@@ -117,45 +117,117 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	}
 
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(key.Bytes()))
-	pk := privateKey.PublicKey.Bytes()
+
 	if err != nil {
 		bizlog.Error("SignTransaction", "eddsa.GenerateKey error", err)
 		return
 	}
 
-	var msg []byte
+	var msg *zt.Msg
 	switch action.GetTy() {
 	case zt.TyDepositAction:
-		msg = types.Encode(action.GetDeposit())
-	case zt.TyWithdrawAction:
-		msg = types.Encode(action.GetWithdraw())
-	case zt.TyContractToLeafAction:
-		msg = types.Encode(action.GetContractToLeaf())
-	case zt.TyLeafToContractAction:
-		msg = types.Encode(action.GetLeafToContract())
-	case zt.TyTransferAction:
-		msg = types.Encode(action.GetTransfer())
-	case zt.TyTransferToNewAction:
-		msg = types.Encode(action.GetTransferToNew())
-	case zt.TyForceExitAction:
-		msg = types.Encode(action.GetForceQuit())
-	case zt.TySetPubKeyAction:
-		payload := action.GetSetPubKey()
-		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
-		if action.GetTy() == zt.TySetPubKeyAction {
-			payload.PubKey = pk
+		deposit := action.GetDeposit()
+		msg = GetDepositMsg(deposit)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
 		}
-		msg = types.Encode(payload)
+		deposit.Signature = signInfo
+	case zt.TyWithdrawAction:
+		withDraw := action.GetWithdraw()
+		msg = GetWithdrawMsg(withDraw)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		withDraw.Signature = signInfo
+	case zt.TyContractToLeafAction:
+		contractToLeaf := action.GetContractToLeaf()
+		msg = GetContractToLeafMsg(contractToLeaf)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		contractToLeaf.Signature = signInfo
+	case zt.TyLeafToContractAction:
+		leafToContract := action.GetLeafToContract()
+		msg = GetLeafToContractMsg(leafToContract)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		leafToContract.Signature = signInfo
+	case zt.TyTransferAction:
+		transfer := action.GetTransfer()
+		msg = GetTransferMsg(transfer)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		transfer.Signature = signInfo
+	case zt.TyTransferToNewAction:
+		transferToNew := action.GetTransferToNew()
+		msg = GetTransferToNewMsg(transferToNew)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		transferToNew.Signature = signInfo
+	case zt.TyForceExitAction:
+		forceQuit := action.GetForceQuit()
+		msg = GetForceQuitMsg(forceQuit)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		forceQuit.Signature = signInfo
+	case zt.TySetPubKeyAction:
+		setPubKey := action.GetSetPubKey()
+		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
+		pubKey := &zt.PubKey{
+			X: privateKey.PublicKey.A.X.String(),
+			Y :privateKey.PublicKey.A.Y.String(),
+		}
+		setPubKey.PubKey = pubKey
+		msg = GetSetPubKeyMsg(setPubKey)
+		signInfo, err := signTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		setPubKey.Signature = signInfo
 	default:
 		err = types.ErrNotSupport
 	}
 
-	sign, err := privateKey.Sign(msg, mimc.NewMiMC(mixTy.MimcHashSeed))
-	action.SignInfo = sign
-	action.PubKey = pk
 	tx.Payload = types.Encode(action)
 	signtxhex = common.ToHex(types.Encode(tx))
 	return
+}
+
+func signTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.Signature, error) {
+	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
+	if err != nil {
+		bizlog.Error("SignTransaction", "privateKey.Sign error", err)
+		return nil, err
+	}
+	pubKey := &zt.PubKey{
+		X: privateKey.PublicKey.A.X.String(),
+		Y :privateKey.PublicKey.A.Y.String(),
+	}
+	sign := &zt.Signature{
+		PubKey: pubKey,
+		SignInfo: signInfo,
+		Msg: msg,
+	}
+	return sign, nil
 }
 
 // OnAddBlockTx 响应区块交易添加的处理

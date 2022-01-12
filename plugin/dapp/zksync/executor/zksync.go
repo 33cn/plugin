@@ -7,6 +7,7 @@ import (
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
@@ -63,32 +64,42 @@ func (e *zksync) CheckTx(tx *types.Transaction, index int) error {
 	if err := types.Decode(tx.Payload, action); err != nil {
 		return err
 	}
-	pubKey := eddsa.PublicKey{}
-	if _, err := pubKey.SetBytes(action.GetPubKey()); err != nil {
-		return err
-	}
-	var msg []byte
+	var signature *zt.Signature
+	var msg *zt.Msg
 	switch action.GetTy() {
 	case zt.TyDepositAction:
-		msg = types.Encode(action.GetDeposit())
+		signature = action.GetDeposit().GetSignature()
+		msg = wallet.GetDepositMsg(action.GetDeposit())
 	case zt.TyWithdrawAction:
-		msg = types.Encode(action.GetWithdraw())
+		signature = action.GetWithdraw().GetSignature()
+		msg = wallet.GetWithdrawMsg(action.GetWithdraw())
 	case zt.TyContractToLeafAction:
-		msg = types.Encode(action.GetContractToLeaf())
+		signature = action.GetContractToLeaf().GetSignature()
+		msg = wallet.GetContractToLeafMsg(action.GetContractToLeaf())
 	case zt.TyLeafToContractAction:
-		msg = types.Encode(action.GetLeafToContract())
+		signature = action.GetLeafToContract().GetSignature()
+		msg = wallet.GetLeafToContractMsg(action.GetLeafToContract())
 	case zt.TyTransferAction:
-		msg = types.Encode(action.GetTransfer())
+		signature = action.GetTransfer().GetSignature()
+		msg = wallet.GetTransferMsg(action.GetTransfer())
 	case zt.TyTransferToNewAction:
-		msg = types.Encode(action.GetTransferToNew())
+		signature = action.GetTransferToNew().GetSignature()
+		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
 	case zt.TyForceExitAction:
-		msg = types.Encode(action.GetForceQuit())
+		signature = action.GetForceQuit().GetSignature()
+		msg = wallet.GetForceQuitMsg(action.GetForceQuit())
 	case zt.TySetPubKeyAction:
-		msg = types.Encode(action.GetSetPubKey())
+		signature = action.GetSetPubKey().GetSignature()
+		msg = wallet.GetSetPubKeyMsg(action.GetSetPubKey())
 	default:
 		return types.ErrNotSupport
 	}
-	success, err := pubKey.Verify(action.GetSignInfo(), msg, mimc.NewMiMC(mixTy.MimcHashSeed))
+
+	pubKey := eddsa.PublicKey{
+	}
+	pubKey.A.X.SetString(signature.PubKey.X)
+	pubKey.A.Y.SetString(signature.PubKey.Y)
+	success, err := pubKey.Verify(signature.GetSignInfo(), wallet.GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
 	if err != nil {
 		return err
 	}

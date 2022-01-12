@@ -15,43 +15,47 @@ message ZksyncAction {
   }
 
   int32 ty = 9;
-  bytes pubKey = 10;
-  bytes signInfo = 11;
 }
 
-//某条链上的代币余额
-message ChainBalance {
-  string chainType = 1; //BTY ETH
-  map<int32, int32> tokenBalanceMap = 2;//<tokenId, index>
-  repeated TokenBalance tokenBalances = 3;
-  bytes rootHash = 4; //Balance Tree的hash
+
+message Signature {
+  PubKey pubKey = 1;
+  bytes signInfo = 2;
+  Msg msg = 3;
+}
+
+message Msg {
+  bytes first = 1;
+  bytes second = 2;
+  bytes third = 3;
+}
+
+message PubKey {
+  string  x = 1;
+  string  y = 2;
 }
 
 //某个token的余额
 message TokenBalance {
-  int32 tokenId = 1;
-  int64 balance = 2;
+  uint64 accountId = 1;
+  uint64 tokenId = 2;
+  string balance = 3;
 }
 
 message AccountTree {
-  int32 index = 1;//当前的叶子索引
-  int32 totalIndex = 2;  //总计叶子索引
-  int32 maxCurrentIndex = 3;  //当前索引最大值，超过最大值会进行归档
-  map<string, RootInfo> rootMap = 4;//历史归档的所有roots,key=root hash,value = rootInfo
-  map<int32, bytes> rootIndexMap = 5;//历史归档的所有roots索引，index = RootInfo.startIndex / 1024
-  map<string, int32> addressMap = 6;
-  map <int32, Leaf> leaveMap = 7; //当前未归档的叶子
+  uint64 index = 1;//当前的叶子索引
+  uint64 totalIndex = 2;  //总计叶子索引
+  uint64 maxCurrentIndex = 3;  //当前索引最大值，超过最大值会进行归档
   repeated SubTree subTrees = 8; //当前未归档的子树
 }
 
 message Leaf {
   bytes rootHash = 1; //归档Merkle Tree的根hash
-  int32 accountId = 2; //accountId其实就是叶子的totalIndex
-  map<string, int32> chainBalanceMap = 3;
-  repeated ChainBalance chainBalances = 4;
+  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
   string ethAddress = 5; //账户对应的以太坊地址
-  bytes pubKey = 6; //eddsa公钥，用于验证身份
+  PubKey pubKey = 6; //eddsa公钥，用于验证身份
   string chain33Addr = 7; //chain33地址
+  bytes tokenHash = 8; //叶子下token的hash
 }
 
 message RootInfo {
@@ -73,67 +77,78 @@ message MerkleTreeProof {
 }
 
 message Deposit {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string ethAddress = 4;
-  string chain33Addr = 5;
+  uint64 tokenId = 1;
+  string amount = 2;
+  string ethAddress = 3;
+  string chain33Addr = 4;
+  Signature signature = 5;
 }
 
 message Withdraw {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string ethAddress = 4;
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  Signature signature = 4;
 }
 
 message ContractToLeaf {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string ethAddress = 4;
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  Signature signature = 4;
 }
 
 message LeafToContract {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string ethAddress = 4;
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 accountId = 3;
+  Signature signature = 4;
 }
 
 message Transfer {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string fromEthAddress = 4;
-  string toEthAddress = 5;
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  uint64 toAccountId = 4;
+  Signature signature = 5;
 }
 
 message TransferToNew {
-  string chainType = 1;
-  int32 tokenId = 2;
-  uint64 amount = 3;
-  string fromEthAddress = 4;
-  string toEthAddress = 5;
-  string toChain33Address = 6;
+  uint64 tokenId = 1;
+  string amount = 2;
+  uint64 fromAccountId = 3;
+  string toEthAddress = 4;
+  string toChain33Address = 5;
+  Signature signature = 6;
 }
 
 message ForceQuit {
-  string chainType = 1;
-  int32 tokenId = 2;
-  string ethAddress = 3;
+  uint64 tokenId = 1;
+  uint64 accountId = 2;
+  Signature signature = 3;
 }
 
 message SetPubKey {
-  string ethAddress = 1;
-  bytes  pubKey = 2;
+  uint64 accountId = 1;
+  PubKey  pubKey = 2;
+  Signature signature = 3;
 }
 
 // leaf merkle proof票据日志
 message ReceiptLeaf {
-  int32 accountId = 1;
-  MerkleTreeProof treeProof = 2;
-  MerkleTreeProof tokenProof = 3;
+  uint64 accountId = 1;
+  uint64 tokenId = 2;
+  string ethAddress = 3;
+  string chain33Address = 4;
+  string amount = 5;
+  string toEthAddress = 6;
+  string toChain33Address = 7;
+
+
+  MerkleTreeProof treeProof = 8;
+  MerkleTreeProof tokenProof = 9;
+
+  Signature signature = 10;
 }
 
 service zksync{}
