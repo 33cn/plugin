@@ -87,6 +87,7 @@ func showChain33Key(cmd *cobra.Command, _ []string) {
 	_, pubKey := btcec.PrivKeyFromBytes(btcec.S256(), privateKeySlice)
 
 	uncompressedKey := pubKey.SerializeUncompressed()
+	uncompressedKey = uncompressedKey[1:]
 	compressedKey := pubKey.SerializeCompressed()
 	fmt.Println("The uncompressed pub key = "+common.Bytes2Hex(uncompressedKey), "with length=", len(uncompressedKey))
 	fmt.Println("The compressed pub key = "+common.Bytes2Hex(compressedKey), "with length=", len(compressedKey))
@@ -144,6 +145,7 @@ func showEtheremKey(cmd *cobra.Command, _ []string) {
 
 	_, pubKey := btcec.PrivKeyFromBytes(crypto.S256(), privateKeySlice)
 	uncompressedKey := pubKey.SerializeUncompressed()
+	uncompressedKey = uncompressedKey[1:]
 	compressedKey := pubKey.SerializeCompressed()
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 	fmt.Println("The uncompressed pub key = "+common.Bytes2Hex(uncompressedKey), "with length=", len(uncompressedKey))
