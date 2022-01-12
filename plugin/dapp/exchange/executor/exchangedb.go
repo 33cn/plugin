@@ -339,6 +339,80 @@ func (a *Action) RevokeOrder_Fix2(payload *et.RevokeOrder) (*types.Receipt, erro
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
+func (a *Action) RevokeOrder_match(payload *et.RevokeOrder) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
+	if err != nil {
+		return nil, err
+	}
+	if order.Status == et.Completed || order.Status == et.Revoked {
+		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return nil, et.ErrOrderSatus
+	}
+	leftAsset := order.GetLimitOrder().GetLeftAsset()
+	rightAsset := order.GetLimitOrder().GetRightAsset()
+	price := order.GetLimitOrder().GetPrice()
+	balance := order.GetBalance()
+	cfg := a.api.GetConfig()
+
+	if order.GetLimitOrder().GetOp() == et.OpBuy {
+		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
+		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
+		if rightAccount.Frozen < amount {
+			elog.Warn("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
+			amount = rightAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := rightAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+	if order.GetLimitOrder().GetOp() == et.OpSell {
+		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
+		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
+		if leftAccount.Frozen < amount {
+			elog.Warn("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
+			amount = leftAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+
+	//更新order状态
+	order.Status = et.Revoked
+	order.UpdateTime = a.blocktime
+	order.RevokeHash = hex.EncodeToString(a.txhash)
+	kvs = append(kvs, a.GetKVSet(order)...)
+	re := &et.ReceiptExchange{
+		Order: order,
+		Index: a.GetIndex(),
+	}
+	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
+	logs = append(logs, receiptlog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
 
 //撮合交易逻辑方法
 // 规则：
@@ -624,7 +698,13 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr()) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
-							_, _ = a.RevokeOrder(&et.RevokeOrder{OrderID: order.GetOrderID()})
+							if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
+								_, err = a.RevokeOrder_match(&et.RevokeOrder{OrderID: order.GetOrderID()})
+								elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
+							} else {
+								_, _ = a.RevokeOrder(&et.RevokeOrder{OrderID: order.GetOrderID()})
+								elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
+							}
 							continue
 						}
 						return nil, err
@@ -720,6 +800,8 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if matchorder.Addr != a.fromaddr {
 			receipt, err = rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
+		} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
+			receipt, err = rightAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		} else {
 			receipt, err = rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		}
@@ -779,6 +861,8 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
+		} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
+			receipt, err = leftAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		} else {
 			receipt, err = leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
 		}
