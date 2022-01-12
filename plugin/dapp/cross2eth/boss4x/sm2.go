@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/system/crypto/sm2"
 	"github.com/ethereum/go-ethereum/common"
@@ -169,14 +172,18 @@ func encryptWithSm2(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	privatKey, err := chain33Common.FromHex(privatKeyStr)
+	privateKeySlice, err := chain33Common.FromHex(privatKeyStr)
 	if nil != err {
 		fmt.Println("chain33Common.FromHex failed for cipher due to:" + err.Error())
 		return
 	}
+	if len(privateKeySlice) != 32 {
+		fmt.Println("invalid priv key length", len(privateKeySlice))
+		return
+	}
 	dst := make([]byte, 32)
-	sm4Cihpher.Encrypt(dst, privatKey)
-	sm4Cihpher.Encrypt(dst[16:], privatKey[16:])
+	sm4Cihpher.Encrypt(dst, privateKeySlice)
+	sm4Cihpher.Encrypt(dst[16:], privateKeySlice[16:])
 	fmt.Println("The encrypted privated key:"+common.Bytes2Hex(dst), "len:", len(dst))
 
 	//第二步，加密数字信封
@@ -209,5 +216,12 @@ func encryptWithSm2(cmd *cobra.Command, args []string) {
 	}
 	sm4Key = sm4Key[1:]
 
-	fmt.Println("The encrypted sm4 key:"+common.Bytes2Hex(sm4Key), "len:", len(sm4Key))
+	//第三步，计算secp256k1对应的公钥，非压缩
+	_, pubKey := btcec.PrivKeyFromBytes(crypto.S256(), privateKeySlice)
+	uncompressedKey := pubKey.SerializeUncompressed()
+	uncompressedKey = uncompressedKey[1:]
+
+	fmt.Println("随机对称密钥:"+common.Bytes2Hex(sm4Key), "len:", len(sm4Key))
+	fmt.Println("需要导入的公钥:"+common.Bytes2Hex(uncompressedKey), "len:", len(uncompressedKey))
+	fmt.Println("需要导入的私钥:"+common.Bytes2Hex(dst), "len:", len(dst))
 }
