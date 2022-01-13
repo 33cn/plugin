@@ -339,7 +339,7 @@ func (a *Action) RevokeOrder_Fix2(payload *et.RevokeOrder) (*types.Receipt, erro
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
-func (a *Action) RevokeOrder_match(payload *et.RevokeOrder) (*types.Receipt, error) {
+func (a *Action) RevokeOrder_Fix3(payload *et.RevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
@@ -392,6 +392,80 @@ func (a *Action) RevokeOrder_match(payload *et.RevokeOrder) (*types.Receipt, err
 			receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
 			if err != nil {
 				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+
+	//更新order状态
+	order.Status = et.Revoked
+	order.UpdateTime = a.blocktime
+	order.RevokeHash = hex.EncodeToString(a.txhash)
+	kvs = append(kvs, a.GetKVSet(order)...)
+	re := &et.ReceiptExchange{
+		Order: order,
+		Index: a.GetIndex(),
+	}
+	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
+	logs = append(logs, receiptlog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+func (a *Action) RevokeOrder_Fix4(payload *et.RevokeOrder) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
+	if err != nil {
+		return nil, err
+	}
+	if order.Status != et.Ordered {
+		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return nil, et.ErrOrderSatus
+	}
+	leftAsset := order.GetLimitOrder().GetLeftAsset()
+	rightAsset := order.GetLimitOrder().GetRightAsset()
+	price := order.GetLimitOrder().GetPrice()
+	balance := order.GetBalance()
+	cfg := a.api.GetConfig()
+
+	if order.GetLimitOrder().GetOp() == et.OpBuy {
+		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
+		rightAccount := rightAssetDB.LoadExecAccount(order.Addr, a.execaddr)
+		if rightAccount.Frozen < amount {
+			elog.Warn("revoke check right frozen", "addr", order.Addr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
+			amount = rightAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := rightAssetDB.ExecActive(order.Addr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", order.Addr, "amount", amount, "err", err.Error())
+				return nil, err
+			}
+			logs = append(logs, receipt.Logs...)
+			kvs = append(kvs, receipt.KV...)
+		}
+	}
+	if order.GetLimitOrder().GetOp() == et.OpSell {
+		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
+		if err != nil {
+			return nil, err
+		}
+		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
+		leftAccount := leftAssetDB.LoadExecAccount(order.Addr, a.execaddr)
+		if leftAccount.Frozen < amount {
+			elog.Warn("revoke check left frozen", "addr", order.Addr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
+			amount = leftAccount.Frozen
+		}
+		if amount != 0 {
+			receipt, err := leftAssetDB.ExecActive(order.Addr, a.execaddr, amount)
+			if err != nil {
+				elog.Error("RevokeOrder.ExecActive", "addr", order.Addr, "amount", amount, "err", err.Error())
 				return nil, err
 			}
 			logs = append(logs, receipt.Logs...)
@@ -699,8 +773,11 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 					if err != nil {
 						if err == types.ErrNoBalance {
 							if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
-								_, err = a.RevokeOrder_match(&et.RevokeOrder{OrderID: order.GetOrderID()})
-								elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
+								_, err = a.RevokeOrder_Fix3(&et.RevokeOrder{OrderID: order.GetOrderID()})
+								elog.Warn("matchModel RevokeOrder3", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
+							} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix4) {
+								_, err = a.RevokeOrder_Fix4(&et.RevokeOrder{OrderID: order.GetOrderID()})
+								elog.Warn("matchModel RevokeOrder4", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
 							} else {
 								_, _ = a.RevokeOrder(&et.RevokeOrder{OrderID: order.GetOrderID()})
 								elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)

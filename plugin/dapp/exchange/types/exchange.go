@@ -97,6 +97,7 @@ var (
 	ForkFix1 = "ForkFix1"
 	ForkFix2 = "ForkFix2"
 	ForkFix3 = "ForkFix3"
+	ForkFix4 = "ForkFix4"
 )
 
 // init defines a register function
@@ -113,6 +114,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkFix2, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkFix3, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix4, 0)
 }
 
 // InitExecutor defines register executor
