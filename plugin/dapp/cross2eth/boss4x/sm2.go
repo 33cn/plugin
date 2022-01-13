@@ -162,9 +162,6 @@ func encryptWithSm2(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	gmsm4.WriteKeyToPem("key.pem", sm4Key, nil)
-	sm4Key, err = gmsm4.ReadKeyFromPem("key.pem", nil)
-
 	//第一步，通过数字信封中的对称密钥，进行sm4对称加密
 	sm4Cihpher, err := gmsm4.NewCipher(sm4Key)
 	if err != nil {
@@ -184,7 +181,6 @@ func encryptWithSm2(cmd *cobra.Command, args []string) {
 	dst := make([]byte, 32)
 	sm4Cihpher.Encrypt(dst, privateKeySlice)
 	sm4Cihpher.Encrypt(dst[16:], privateKeySlice[16:])
-	fmt.Println("The encrypted privated key:"+common.Bytes2Hex(dst), "len:", len(dst))
 
 	//第二步，加密数字信封
 	sm2key, err := chain33Common.FromHex(sm2keyStr)
