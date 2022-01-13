@@ -10,16 +10,16 @@ import (
 
 const (
 	//KeyPrefixStateDB state db key必须前缀
-	KeyPrefixStateDB = "mavl-exchange-"
+	KeyPrefixStateDB = "mavl-zksync-"
 	//KeyPrefixLocalDB local db的key必须前缀
-	KeyPrefixLocalDB = "LODB-exchange"
+	KeyPrefixLocalDB = "LODB-zksync"
 )
 
 var opt_account_tree = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "tree",
-	Primary: "accountId",
-	Index:   []string{"root_hash", "eth_address"},
+	Primary: "address",
+	Index:   []string{"chain33_address", "eth_address"},
 }
 
 // NewAccountTreeTable ...
@@ -58,17 +58,14 @@ func (r *AccountTreeRow) SetPayload(data types.Message) error {
 
 //Get 按照indexName 查询 indexValue
 func (r *AccountTreeRow) Get(key string) ([]byte, error) {
-	if key == "accountId" {
-		return GetAccountIdPrimaryKey(r.GetAccountId()), nil
-	} else if key == "root_hash" {
-		return []byte(fmt.Sprintf("%s", r.GetRootHash())), nil
+	if key == "address" {
+		return GetLocalChain33EthPrimaryKey(r.GetChain33Addr(), r.GetEthAddress()), nil
+	} else if key == "chain33_address" {
+		return []byte(fmt.Sprintf("%s", r.GetChain33Addr())), nil
 	} else if key == "eth_address" {
 		return []byte(fmt.Sprintf("%s", r.GetEthAddress())), nil
 	}
 	return nil, types.ErrNotFound
 }
 
-func GetAccountIdPrimaryKey(accountId int32) []byte {
-	return []byte(fmt.Sprintf("%022d", accountId))
-}
 

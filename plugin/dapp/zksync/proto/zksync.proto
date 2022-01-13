@@ -37,9 +37,8 @@ message PubKey {
 
 //某个token的余额
 message TokenBalance {
-  uint64 accountId = 1;
-  uint64 tokenId = 2;
-  string balance = 3;
+  uint64 tokenId = 1;
+  string balance = 2;
 }
 
 message AccountTree {
@@ -50,17 +49,18 @@ message AccountTree {
 }
 
 message Leaf {
-  bytes rootHash = 1; //归档Merkle Tree的根hash
   uint64 accountId = 2; //accountId其实就是叶子的totalIndex
   string ethAddress = 5; //账户对应的以太坊地址
   PubKey pubKey = 6; //eddsa公钥，用于验证身份
   string chain33Addr = 7; //chain33地址
   bytes tokenHash = 8; //叶子下token的hash
+  repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
 }
 
 message RootInfo {
-  int32 height = 1; //归档的高度
-  int32 startIndex = 2; //开始的全局index
+  bytes rootHash = 1; //归档Merkle Tree的根hash
+  int32 height = 2; //归档的高度
+  uint64 startIndex = 3; //开始的全局index
 }
 
 message SubTree {
