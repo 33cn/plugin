@@ -51,26 +51,28 @@ const (
 	ListDESC = int32(0)
 	ListASC  = int32(1)
 	ListSeek = int32(2)
+
+	Add = int32(0)
+	Sub = int32(1)
 )
 
 //Zksync 执行器名称定义
 const Zksync = "zksync"
 
-
 //msg宽度
 const (
-	TxTypeBitWidth 	= 8   //1byte
+	TxTypeBitWidth  = 8   //1byte
 	AccountBitWidth = 32  //4byte
-	TokenBitWidth	= 16  //2byte
-	AmountBitWidth	= 128 //16byte
-	AddrBitWidth	= 160 //20byte
-	PubKeyBitWidth	= 256 //32byte
+	TokenBitWidth   = 16  //2byte
+	AmountBitWidth  = 128 //16byte
+	AddrBitWidth    = 160 //20byte
+	PubKeyBitWidth  = 256 //32byte
 )
 
 const (
-	MsgFirstWidth	= 252
-	MsgSecondWidth 	= 252
-	MsgThirdWidth = 248
+	MsgFirstWidth  = 252
+	MsgSecondWidth = 252
+	MsgThirdWidth  = 248
 )
 
 var (
