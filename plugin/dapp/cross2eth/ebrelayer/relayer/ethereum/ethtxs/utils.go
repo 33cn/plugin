@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -189,6 +190,13 @@ func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ec
 }
 
 func waitEthTxFinished(client ethinterface.EthClientSpec, txhash common.Hash, txName, providerHttp string) error {
+	sim, isSim := client.(*ethinterface.SimExtend)
+	if isSim {
+		fmt.Println("in waitEthTxFinished Use the simulator")
+		sim.Commit()
+		return nil
+	}
+
 	txslog.Info(txName, "Wait for tx to be finished executing with hash", txhash.String())
 	timeout := time.NewTimer(PendingDuration4TxExeuction * time.Second)
 	oneSecondtimeout := time.NewTicker(5 * time.Second)
