@@ -129,10 +129,10 @@ func test_Lock(t *testing.T) {
 	}
 	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
 
-	balance, err := ethRelayer.ShowLockStatics("")
-	require.Nil(t, err)
-	assert.Equal(t, balance, "50")
-	simCommit()
+	//balance, err := ethRelayer.ShowLockStatics("")
+	//require.Nil(t, err)
+	//assert.Equal(t, balance, "50")
+	//simCommit()
 }
 
 func test_IsValidatorActive(t *testing.T) {
