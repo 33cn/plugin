@@ -78,7 +78,19 @@ func init() {
 	simCommit()
 }
 
-func Test_GetValidatorAddr(t *testing.T) {
+func Test_All(t *testing.T) {
+	test_GetValidatorAddr(t)
+	test_Lock(t)
+	test_IsValidatorActive(t)
+	test_ShowAddr(t)
+	test_SetBridgeRegistryAddr(t)
+	test_CreateBridgeToken(t)
+	test_BurnBty(t)
+	test_RestorePrivateKeys(t)
+	test_setWithdrawFee(t)
+}
+
+func test_GetValidatorAddr(t *testing.T) {
 	_, _, err := NewAccount()
 	require.Nil(t, err)
 
@@ -97,7 +109,7 @@ func Test_GetValidatorAddr(t *testing.T) {
 	simCommit()
 }
 
-func Test_Lock(t *testing.T) {
+func test_Lock(t *testing.T) {
 	ctx := context.Background()
 	bridgeBankBalanceb, err := ethRelayer.clientSpec.BalanceAt(ctx, ethRelayer.x2EthDeployInfo.BridgeBank.Address, nil)
 	require.Nil(t, err)
@@ -123,7 +135,7 @@ func Test_Lock(t *testing.T) {
 	simCommit()
 }
 
-func Test_IsValidatorActive(t *testing.T) {
+func test_IsValidatorActive(t *testing.T) {
 	is, err := ethRelayer.IsValidatorActive(ethRelayer.deployPara.InitValidators[0].String())
 	assert.Equal(t, is, true)
 	require.Nil(t, err)
@@ -136,7 +148,7 @@ func Test_IsValidatorActive(t *testing.T) {
 	require.Error(t, err)
 }
 
-func Test_ShowAddr(t *testing.T) {
+func test_ShowAddr(t *testing.T) {
 	ethRelayer.prePareSubscribeEvent()
 
 	addr, err := ethRelayer.ShowBridgeBankAddr()
@@ -153,7 +165,7 @@ func Test_ShowAddr(t *testing.T) {
 	simCommit()
 }
 
-func Test_SetBridgeRegistryAddr(t *testing.T) {
+func test_SetBridgeRegistryAddr(t *testing.T) {
 	_ = ethRelayer.setBridgeRegistryAddr(ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String())
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
 	require.Nil(t, err)
@@ -259,7 +271,7 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *e
 	return logEvent.Token.String(), nil
 }
 
-func Test_CreateBridgeToken(t *testing.T) {
+func test_CreateBridgeToken(t *testing.T) {
 	tokenAddrbty, err := CreateBridgeToken("BTY", ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts, ethRelayer.Addr2TxNonce)
 	require.Nil(t, err)
 	require.NotEmpty(t, tokenAddrbty)
@@ -282,7 +294,7 @@ func Test_CreateBridgeToken(t *testing.T) {
 	simCommit()
 }
 
-func Test_BurnBty(t *testing.T) {
+func test_BurnBty(t *testing.T) {
 	tokenAddrbty, err := CreateBridgeToken("bty", ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts, ethRelayer.Addr2TxNonce)
 	require.Nil(t, err)
 	require.NotEmpty(t, tokenAddrbty)
@@ -367,7 +379,7 @@ func Test_BurnBty(t *testing.T) {
 	simCommit()
 }
 
-func Test_RestorePrivateKeys(t *testing.T) {
+func test_RestorePrivateKeys(t *testing.T) {
 	_, err := ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
 	require.Nil(t, err)
 	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
@@ -404,7 +416,7 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	simCommit()
 }
 
-func Test_setWithdrawFee(t *testing.T) {
+func test_setWithdrawFee(t *testing.T) {
 	WithdrawPara := make(map[string]*ebTypes.WithdrawPara)
 	WithdrawPara["ETH"] = &ebTypes.WithdrawPara{
 		Fee:          "0.5",
