@@ -9,13 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
-
 	"github.com/33cn/chain33/client/mocks"
 	dbm "github.com/33cn/chain33/common/db"
 	_ "github.com/33cn/chain33/system"
 	chain33Types "github.com/33cn/chain33/types"
 	"github.com/33cn/chain33/util/testnode"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/test/setup"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
@@ -41,6 +40,7 @@ var (
 	chain33ReceiverAddr = "1BCGLhdcdthNutQowV2YShuuN9fJRRGLxu"
 	passphrase          = "123456hzj"
 	chainTestCfg        = chain33Types.NewChain33Config(chain33Types.GetDefaultCfgstring())
+	ethRelayer          *Relayer4Ethereum
 )
 
 func init() {
@@ -64,18 +64,22 @@ func init() {
 	// 这里必须设置监听端口，默认的是无效值
 	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
 	mock33.GetRPC().Listen()
+
+	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
+	if err != nil {
+		panic(err)
+	}
+	ethRelayer = newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
+	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
+	if err != nil {
+		panic(err)
+	}
+	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+	simCommit()
 }
 
 func Test_GetValidatorAddr(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	_, _, err = NewAccount()
+	_, _, err := NewAccount()
 	require.Nil(t, err)
 
 	privateKey, _, err := ethRelayer.GetAccount("123")
@@ -90,20 +94,37 @@ func Test_GetValidatorAddr(t *testing.T) {
 	validators, err := ethRelayer.GetValidatorAddr()
 	require.Nil(t, err)
 	assert.Equal(t, validators.EthereumValidator, ethAccountAddr)
-	sim.Commit()
+	simCommit()
+}
+
+func Test_Lock(t *testing.T) {
+	ctx := context.Background()
+	bridgeBankBalanceb, err := ethRelayer.clientSpec.BalanceAt(ctx, ethRelayer.x2EthDeployInfo.BridgeBank.Address, nil)
+	require.Nil(t, err)
+	simCommit()
+
+	//lock 50 eth
+	_, err = ethRelayer.LockEthErc20Asset(hexutil.Encode(crypto.FromECDSA(ethRelayer.deployPara.ValidatorPriKey[1])), "", "50", "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+	require.Nil(t, err)
+	simCommit()
+
+	bridgeBankBalance, err := ethRelayer.clientSpec.BalanceAt(ctx, ethRelayer.x2EthDeployInfo.BridgeBank.Address, nil)
+	require.Nil(t, err)
+	assert.Equal(t, bridgeBankBalance.Int64(), bridgeBankBalanceb.Int64()+int64(50))
+
+	for i := 0; i < int(ethRelayer.maturityDegree+1); i++ {
+		simCommit()
+	}
+	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	balance, err := ethRelayer.ShowLockStatics("")
+	require.Nil(t, err)
+	assert.Equal(t, balance, "50")
+	simCommit()
 }
 
 func Test_IsValidatorActive(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	addr, err := ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	fmt.Println(addr)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	is, err := ethRelayer.IsValidatorActive(para.InitValidators[0].String())
+	is, err := ethRelayer.IsValidatorActive(ethRelayer.deployPara.InitValidators[0].String())
 	assert.Equal(t, is, true)
 	require.Nil(t, err)
 
@@ -116,90 +137,69 @@ func Test_IsValidatorActive(t *testing.T) {
 }
 
 func Test_ShowAddr(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.NoError(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
 	ethRelayer.prePareSubscribeEvent()
 
 	addr, err := ethRelayer.ShowBridgeBankAddr()
 	require.Nil(t, err)
-	assert.Equal(t, addr, x2EthDeployInfo.BridgeBank.Address.String())
+	assert.Equal(t, addr, ethRelayer.x2EthDeployInfo.BridgeBank.Address.String())
 
 	addr, err = ethRelayer.ShowBridgeRegistryAddr()
 	require.Nil(t, err)
-	assert.Equal(t, addr, x2EthDeployInfo.BridgeRegistry.Address.String())
+	assert.Equal(t, addr, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String())
 
 	addr, err = ethRelayer.ShowOperator()
 	require.Nil(t, err)
-	assert.Equal(t, addr, para.Operator.String())
-	sim.Commit()
+	assert.Equal(t, addr, ethRelayer.deployPara.Operator.String())
+	simCommit()
 }
 
 func Test_SetBridgeRegistryAddr(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	addr, err := ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	fmt.Println(addr)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	_ = ethRelayer.setBridgeRegistryAddr(x2EthDeployInfo.BridgeRegistry.Address.String())
+	_ = ethRelayer.setBridgeRegistryAddr(ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String())
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
 	require.Nil(t, err)
-	assert.Equal(t, registrAddrInDB, x2EthDeployInfo.BridgeRegistry.Address.String())
+	assert.Equal(t, registrAddrInDB, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address.String())
 }
 
-func Test_LockEth(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	addr, err := ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	fmt.Println(addr)
-	time.Sleep(2 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+//func Test_LockEth(t *testing.T) {
+//	ctx := context.Background()
+//	bridgeBankBalanceb, err := ethRelayer.clientSpec.BalanceAt(ctx, ethRelayer.x2EthDeployInfo.BridgeBank.Address, nil)
+//	require.Nil(t, err)
+//
+//	userOneAuth, err := ethtxs.PrepareAuth4MultiEthereum(ethRelayer.clientSpec, ethRelayer.deployPara.ValidatorPriKey[0], ethRelayer.deployPara.InitValidators[0], ethRelayer.Addr2TxNonce)
+//	require.Nil(t, err)
+//
+//	//lock 50 eth
+//	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
+//	ethAmount := big.NewInt(50)
+//	userOneAuth.Value = ethAmount
+//	_, err = ethRelayer.x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, common.Address{}, ethAmount)
+//	require.Nil(t, err)
+//	simCommit()
+//
+//	bridgeBankBalance, err := ethRelayer.clientSpec.BalanceAt(ctx, ethRelayer.x2EthDeployInfo.BridgeBank.Address, nil)
+//	require.Nil(t, err)
+//	assert.Equal(t, bridgeBankBalance.Int64(), bridgeBankBalanceb.Int64()+ethAmount.Int64())
+//
+//	for i := 0; i < int(ethRelayer.maturityDegree+1); i++ {
+//		simCommit()
+//	}
+//
+//	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+//
+//	balance, err := ethRelayer.ShowLockStatics("")
+//	require.Nil(t, err)
+//	assert.Equal(t, balance, "50")
+//
+//	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+//}
 
-	ctx := context.Background()
-	bridgeBankBalance, err := sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
-	require.Nil(t, err)
-	assert.Equal(t, bridgeBankBalance.Int64(), int64(0))
-
-	userOneAuth, err := ethtxs.PrepareAuth4MultiEthereum(sim, para.ValidatorPriKey[0], para.InitValidators[0], ethRelayer.Addr2TxNonce)
-	require.Nil(t, err)
-
-	//lock 50 eth
-	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-	ethAmount := big.NewInt(50)
-	userOneAuth.Value = ethAmount
-	_, err = x2EthContracts.BridgeBank.Lock(userOneAuth, chain33Sender, common.Address{}, ethAmount)
-	require.Nil(t, err)
-	sim.Commit()
-
-	bridgeBankBalance, err = sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
-	require.Nil(t, err)
-	assert.Equal(t, bridgeBankBalance.Int64(), ethAmount.Int64())
-
-	for i := 0; i < int(ethRelayer.maturityDegree+1); i++ {
+func simCommit() {
+	sim, isSim := ethRelayer.clientSpec.(*ethinterface.SimExtend)
+	if isSim {
 		sim.Commit()
 	}
-
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-
-	balance, err := ethRelayer.ShowLockStatics("")
-	require.Nil(t, err)
-	assert.Equal(t, balance, "50")
-
-	time.Sleep(2 * time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-
 }
 
-//CreateBridgeToken ...
 func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *ethtxs.OperatorInfo, x2EthDeployInfo *ethtxs.X2EthDeployInfo, x2EthContracts *ethtxs.X2EthContracts, addr2TxNonce map[common.Address]*ethtxs.NonceMutex) (string, error) {
 	//订阅事件
 	eventName := "LogNewBridgeToken"
@@ -260,23 +260,10 @@ func CreateBridgeToken(symbol string, client ethinterface.EthClientSpec, para *e
 }
 
 func Test_CreateBridgeToken(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.NoError(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	balance, err := ethRelayer.GetBalance("", para.InitValidators[0].String())
-	require.Nil(t, err)
-	assert.Equal(t, balance, "10000000000000000")
-	sim.Commit()
-
-	tokenAddrbty, err := CreateBridgeToken("BTY", sim, ethRelayer.operatorInfo, x2EthDeployInfo, x2EthContracts, ethRelayer.Addr2TxNonce)
+	tokenAddrbty, err := CreateBridgeToken("BTY", ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts, ethRelayer.Addr2TxNonce)
 	require.Nil(t, err)
 	require.NotEmpty(t, tokenAddrbty)
-	sim.Commit()
+	simCommit()
 
 	addr, err := ethRelayer.ShowTokenAddrBySymbol("BTY")
 	require.Nil(t, err)
@@ -286,28 +273,20 @@ func Test_CreateBridgeToken(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, decimals, uint8(8))
 
-	_, err = ethRelayer.Burn(para.InitValidators[0].String(), tokenAddrbty, chain33ReceiverAddr, "10")
+	_, err = ethRelayer.Burn(ethRelayer.deployPara.InitValidators[0].String(), tokenAddrbty, chain33ReceiverAddr, "10")
 	require.Error(t, err)
-	sim.Commit()
+	simCommit()
 
-	_, err = ethRelayer.BurnAsync(para.InitValidators[0].String(), tokenAddrbty, chain33ReceiverAddr, "10")
+	_, err = ethRelayer.BurnAsync(ethRelayer.deployPara.InitValidators[0].String(), tokenAddrbty, chain33ReceiverAddr, "10")
 	require.Error(t, err)
-	sim.Commit()
+	simCommit()
 }
 
 func Test_BurnBty(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	tokenAddrbty, err := CreateBridgeToken("bty", sim, ethRelayer.operatorInfo, x2EthDeployInfo, x2EthContracts, ethRelayer.Addr2TxNonce)
+	tokenAddrbty, err := CreateBridgeToken("bty", ethRelayer.clientSpec, ethRelayer.operatorInfo, ethRelayer.x2EthDeployInfo, ethRelayer.x2EthContracts, ethRelayer.Addr2TxNonce)
 	require.Nil(t, err)
 	require.NotEmpty(t, tokenAddrbty)
-	sim.Commit()
+	simCommit()
 
 	symbol := &ebTypes.TokenAddress{Symbol: "bty"}
 	token, err := ethRelayer.ShowTokenAddress(symbol)
@@ -316,14 +295,14 @@ func Test_BurnBty(t *testing.T) {
 
 	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
 	amount := int64(100)
-	ethReceiver := para.InitValidators[2]
+	ethReceiver := ethRelayer.deployPara.InitValidators[2]
 	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), big.NewInt(amount).Bytes())
-	authOracle, err := ethtxs.PrepareAuth4MultiEthereum(ethRelayer.clientSpec, para.ValidatorPriKey[0], para.InitValidators[0], ethRelayer.Addr2TxNonce)
+	authOracle, err := ethtxs.PrepareAuth4MultiEthereum(ethRelayer.clientSpec, ethRelayer.deployPara.ValidatorPriKey[0], ethRelayer.deployPara.InitValidators[0], ethRelayer.Addr2TxNonce)
 	require.Nil(t, err)
-	signature, err := utils.SignClaim4Evm(claimID, para.ValidatorPriKey[0])
+	signature, err := utils.SignClaim4Evm(claimID, ethRelayer.deployPara.ValidatorPriKey[0])
 	require.Nil(t, err)
 
-	_, err = x2EthContracts.Oracle.NewOracleClaim(
+	_, err = ethRelayer.x2EthContracts.Oracle.NewOracleClaim(
 		authOracle,
 		uint8(events.ClaimTypeLock),
 		chain33Sender,
@@ -334,15 +313,15 @@ func Test_BurnBty(t *testing.T) {
 		claimID,
 		signature)
 	require.Nil(t, err)
-	sim.Commit()
+	simCommit()
 
 	balanceNew, err := ethRelayer.GetBalance(tokenAddrbty, ethReceiver.String())
 	require.Nil(t, err)
 	require.Equal(t, balanceNew, "100")
 
-	_, err = ethRelayer.Burn(hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[2])), tokenAddrbty, chain33ReceiverAddr, "10")
+	_, err = ethRelayer.Burn(hexutil.Encode(crypto.FromECDSA(ethRelayer.deployPara.ValidatorPriKey[2])), tokenAddrbty, chain33ReceiverAddr, "10")
 	require.NoError(t, err)
-	sim.Commit()
+	simCommit()
 
 	balanceNew, err = ethRelayer.GetBalance(tokenAddrbty, ethReceiver.String())
 	require.Nil(t, err)
@@ -350,13 +329,13 @@ func Test_BurnBty(t *testing.T) {
 
 	// ApproveAllowance
 	{
-		ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[2]))))
+		ownerPrivateKey, err := crypto.ToECDSA(common.FromHex(hexutil.Encode(crypto.FromECDSA(ethRelayer.deployPara.ValidatorPriKey[2]))))
 		require.Nil(t, err)
 		ownerAddr := crypto.PubkeyToAddress(ownerPrivateKey.PublicKey)
-		auth, err := ethtxs.PrepareAuth4MultiEthereum(sim, ownerPrivateKey, ownerAddr, ethRelayer.Addr2TxNonce)
+		auth, err := ethtxs.PrepareAuth4MultiEthereum(ethRelayer.clientSpec, ownerPrivateKey, ownerAddr, ethRelayer.Addr2TxNonce)
 		require.Nil(t, err)
 
-		erc20TokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenAddrbty), sim)
+		erc20TokenInstance, err := generated.NewBridgeToken(common.HexToAddress(tokenAddrbty), ethRelayer.clientSpec)
 		require.Nil(t, err)
 
 		bn := big.NewInt(1)
@@ -364,12 +343,12 @@ func Test_BurnBty(t *testing.T) {
 		_, err = erc20TokenInstance.Approve(auth, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn)
 		require.Nil(t, err)
 
-		sim.Commit()
+		simCommit()
 	}
 
-	_, err = ethRelayer.BurnAsync(hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[2])), tokenAddrbty, chain33ReceiverAddr, "10")
+	_, err = ethRelayer.BurnAsync(hexutil.Encode(crypto.FromECDSA(ethRelayer.deployPara.ValidatorPriKey[2])), tokenAddrbty, chain33ReceiverAddr, "10")
 	require.NoError(t, err)
-	sim.Commit()
+	simCommit()
 
 	balanceNew, err = ethRelayer.GetBalance(tokenAddrbty, ethReceiver.String())
 	require.Nil(t, err)
@@ -379,23 +358,20 @@ func Test_BurnBty(t *testing.T) {
 	logs, err := ethRelayer.getNextValidEthTxEventLogs(ethRelayer.eventLogIndex.Height, ethRelayer.eventLogIndex.Index, fetchCnt)
 	require.NoError(t, err)
 	fmt.Println("logs", logs)
-	sim.Commit()
+	simCommit()
 
 	for _, vLog := range logs {
 		fmt.Println("*vLog", *vLog)
 		ethRelayer.procBridgeBankLogs(*vLog)
 	}
-	sim.Commit()
+	simCommit()
 }
 
 func Test_RestorePrivateKeys(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
+	_, err := ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
 	require.Nil(t, err)
 	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
+	simCommit()
 
 	go func() {
 		for range ethRelayer.unlockchan {
@@ -425,65 +401,22 @@ func Test_RestorePrivateKeys(t *testing.T) {
 	assert.Equal(t, common.Bytes2Hex(crypto.FromECDSA(temp)), common.Bytes2Hex(crypto.FromECDSA(ethRelayer.privateKey4Ethereum)))
 	ethRelayer.rwLock.RUnlock()
 	require.Nil(t, err)
-	sim.Commit()
-}
-
-func Test_Lock(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[0])))
-	require.Nil(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
-	ctx := context.Background()
-	bridgeBankBalance, err := sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
-	require.Nil(t, err)
-	assert.Equal(t, bridgeBankBalance.Int64(), int64(0))
-
-	//lock 50 eth
-	_, err = ethRelayer.LockEthErc20Asset(hexutil.Encode(crypto.FromECDSA(para.ValidatorPriKey[0])), "", "50", "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-	require.Nil(t, err)
-	sim.Commit()
-
-	bridgeBankBalance, err = sim.BalanceAt(ctx, x2EthDeployInfo.BridgeBank.Address, nil)
-	require.Nil(t, err)
-	assert.Equal(t, bridgeBankBalance.Int64(), int64(50))
-
-	for i := 0; i < int(ethRelayer.maturityDegree+1); i++ {
-		sim.Commit()
-	}
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-
-	balance, err := ethRelayer.ShowLockStatics("")
-	require.Nil(t, err)
-	assert.Equal(t, balance, "50")
-	sim.Commit()
+	simCommit()
 }
 
 func Test_setWithdrawFee(t *testing.T) {
-	para, sim, x2EthContracts, x2EthDeployInfo, err := setup.DeployContracts()
-	require.NoError(t, err)
-	ethRelayer := newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	ethRelayer.processWithDraw = true
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	require.Nil(t, err)
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-	sim.Commit()
-
 	WithdrawPara := make(map[string]*ebTypes.WithdrawPara)
 	WithdrawPara["ETH"] = &ebTypes.WithdrawPara{
 		Fee:          "0.5",
 		AmountPerDay: "100",
 	}
-	err = ethRelayer.setWithdrawFee(WithdrawPara)
+	err := ethRelayer.setWithdrawFee(WithdrawPara)
 	require.Nil(t, err)
 
 	WithdrawPara = ethRelayer.restoreWithdrawFee()
 	assert.Equal(t, WithdrawPara["ETH"].Fee, "0.5")
 	assert.Equal(t, WithdrawPara["ETH"].AmountPerDay, "100")
-	sim.Commit()
+	simCommit()
 }
 
 func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthContracts *ethtxs.X2EthContracts, x2EthDeployInfo *ethtxs.X2EthDeployInfo) *Relayer4Ethereum {
