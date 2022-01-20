@@ -34,9 +34,8 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateCmd(), //构造交易
 		CreateWithFileCmd(),
 		DeployERC20Cmd(),
+		DeployBEP20Cmd(),
 		DeployTetherUSDTCmd(),
-		CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
-		SetupCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateAddToken2LockListTxCmd(),
 		CreateBridgeTokenTxCmd(),
@@ -44,8 +43,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		PreliminarySignMultisignTransferTxCmd(), // 多签转帐交易 多签多个地址签名 离线
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
-		SendTxsCmd(),                            // 发送交易 send all kinds of tx
-		ConfigplatformTokenSymbolCmd(),
+		SendTxsCmd(),
 		CreateEthBridgeBankRelatedCmd(), //构造交易
 	)
 
@@ -64,12 +62,14 @@ type DeployInfo struct {
 }
 
 type DeployConfigInfo struct {
-	DeployerPrivateKey string   `toml:"deployerPrivateKey"`
-	ValidatorsAddr     []string `toml:"validatorsAddr"`
-	InitPowers         []int64  `toml:"initPowers"`
+	OperatorAddr   string   `toml:"operatorAddr"`
+	ValidatorsAddr []string `toml:"validatorsAddr"`
+	InitPowers     []int64  `toml:"initPowers"`
+	Symbol         string   `toml:"symbol"`
+	MultisignAddrs []string `toml:"multisignAddrs"`
 }
 
-func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string) {
+func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string, chainEthId int64) {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		fmt.Println("Dial Err:", err)
@@ -94,13 +94,20 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	msg.To = &contracAddr
 	msg.Value = big.NewInt(0)
 	//估算gas
-	gasLimit, err := client.EstimateGas(context.Background(), msg)
-	if err != nil {
-		fmt.Println("EstimateGas Err:", err)
-		return
-	}
-	if gasLimit < 100*10000 {
-		gasLimit = 100 * 10000
+	var gasLimit uint64
+	// 模拟节点测试
+	if chainEthId == 1337 {
+		gasLimit = uint64(500 * 10000)
+	} else {
+		gasLimit, err = client.EstimateGas(context.Background(), msg)
+		if err != nil {
+			fmt.Println("EstimateGas Err:", err)
+			return
+		}
+		gasLimit = uint64(1.2 * float64(gasLimit))
+		if gasLimit < 100*10000 {
+			gasLimit = 100 * 10000
+		}
 	}
 
 	ntx := types.NewTx(&types.LegacyTx{

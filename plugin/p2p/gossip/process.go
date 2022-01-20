@@ -461,11 +461,13 @@ func (n *Node) queryMempool(ty int64, data interface{}) (interface{}, error) {
 }
 
 func (n *Node) postBlockChain(blockHash, pid string, block *types.Block) error {
-	return n.p2pMgr.PubBroadCast(blockHash, &types.BlockPid{Pid: pid, Block: block}, types.EventBroadcastAddBlock)
+	_, err := n.p2pMgr.PubBroadCast(blockHash, &types.BlockPid{Pid: pid, Block: block}, types.EventBroadcastAddBlock)
+	return err
 }
 
 func (n *Node) postMempool(txHash string, tx *types.Transaction) error {
-	return n.p2pMgr.PubBroadCast(txHash, tx, types.EventTx)
+	_, err := n.p2pMgr.PubBroadCast(txHash, tx, types.EventTx)
+	return err
 }
 
 //检测是否冗余发送, 或者添加到发送过滤(内部存在直接修改读写保护的数据, 对filter lru的读写需要外层锁保护)

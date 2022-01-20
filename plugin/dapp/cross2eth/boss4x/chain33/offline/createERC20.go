@@ -134,7 +134,7 @@ func ApproveErc20(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("approve(%s,%d)", approve, int64(amount))
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeTokenABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("ApproveErc20", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "approve_erc20")
@@ -171,7 +171,7 @@ func AddToken2LockList(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("addToken2LockList(%s,%s)", token, symbol)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("AddToken2LockList", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "create_add_lock_list")
@@ -205,8 +205,42 @@ func CreateNewBridgeToken(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("createNewBridgeToken(%s)", symbol)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("CreateNewBridgeToken", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "create_bridge_token")
+}
+
+func SetWithdrawProxyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set_withdraw_proxy",
+		Short: "set withdraw proxy on chain33, and it's should be done by operator",
+		Run:   SetWithdrawProxy,
+	}
+	addSetWithdrawProxyFlags(cmd)
+	return cmd
+}
+
+func addSetWithdrawProxyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("address", "a", "", "withdraw address")
+	_ = cmd.MarkFlagRequired("address")
+	cmd.Flags().StringP("contract", "c", "", "bridgebank contract address")
+	_ = cmd.MarkFlagRequired("contract")
+	cmd.Flags().StringP("key", "k", "", "the deployer private key")
+	_ = cmd.MarkFlagRequired("key")
+	cmd.Flags().StringP("note", "n", "", "transaction note info (optional)")
+	cmd.Flags().Float64P("fee", "f", 0, "contract gas fee (optional)")
+}
+
+func SetWithdrawProxy(cmd *cobra.Command, _ []string) {
+	contract, _ := cmd.Flags().GetString("contract")
+	withdrawAddr, _ := cmd.Flags().GetString("address")
+
+	parameter := fmt.Sprintf("setWithdrawProxy(%s)", withdrawAddr)
+	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
+	if nil != err {
+		fmt.Println("setWithdrawProxy", "Failed to do abi.Pack due to:", err.Error())
+		return
+	}
+	callContractAndSignWrite(cmd, packData, contract, "set_withdraw_proxy")
 }

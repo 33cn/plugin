@@ -3,7 +3,6 @@
 # shellcheck source=/dev/null
 
 source "./dockerRelayerTest.sh"
-#source "./dockerRelayerTestInfinite.sh"
 source "./paracrosstestcase.sh"
 
 function cross2eth() {

@@ -14,11 +14,12 @@ contract EthereumBank {
     using SafeMath for uint256;
 
     uint256 public bridgeTokenCount;
+    address payable proxyReceiver;
     mapping(address => bool) public bridgeTokenWhitelist;
     mapping(bytes32 => bool) public bridgeTokenCreated;
     mapping(bytes32 => EthereumDeposit) ethereumDeposits;
     mapping(bytes32 => EthereumBurn) ethereumBurns;
-    mapping(address => DepositBurnCount) depositBurnCounts;
+    mapping(address => DepositBurnWithdrawCount) depositBurnWithdrawCounts;
     mapping(bytes32 => address) public token2address;
 
     struct EthereumDeposit {
@@ -30,9 +31,11 @@ contract EthereumBank {
         uint256 nonce;
     }
 
-    struct DepositBurnCount {
+    struct DepositBurnWithdrawCount {
         uint256 depositCount;
         uint256 burnCount;
+        uint256 withdrawCount;
+
     }
 
     struct EthereumBurn {
@@ -64,6 +67,16 @@ contract EthereumBank {
         uint256 _amount,
         address _ownerFrom,
         bytes _ethereumReceiver,
+        uint256 _nonce
+    );
+
+    event LogEthereumTokenWithdraw(
+        address _bridgeToken,
+        string _symbol,
+        uint256 _amount,
+        address _ownerFrom,
+        bytes _ethereumReceiver,
+        address _proxyReceiver,
         uint256 _nonce
     );
 
@@ -127,9 +140,9 @@ contract EthereumBank {
         internal
         returns(bytes32)
     {
-        DepositBurnCount memory depositBurnCount = depositBurnCounts[_token];
+        DepositBurnWithdrawCount memory depositBurnCount = depositBurnWithdrawCounts[_token];
         depositBurnCount.depositCount = depositBurnCount.depositCount.add(1);
-        depositBurnCounts[_token] = depositBurnCount;
+        depositBurnWithdrawCounts[_token] = depositBurnCount;
 
         bytes32 depositID = keccak256(
             abi.encodePacked(
@@ -217,7 +230,8 @@ contract EthereumBank {
         bridgeTokenWhitelist[newBridgeTokenAddress] = true;
         bytes32 symHash = keccak256(abi.encodePacked(_symbol));
         bridgeTokenCreated[symHash] = true;
-        depositBurnCounts[newBridgeTokenAddress] = DepositBurnCount(
+        depositBurnWithdrawCounts[newBridgeTokenAddress] = DepositBurnWithdrawCount(
+            uint256(0),
             uint256(0),
             uint256(0));
         token2address[symHash] = newBridgeTokenAddress;
@@ -284,7 +298,7 @@ contract EthereumBank {
      * @param _from: The address to be burned from
      * @param _ethereumReceiver: The receiver's Ethereum address in bytes.
      * @param _ethereumTokenAddress: The token address of ethereum asset issued on chain33
-     * @param _amount: number of ethereum tokens to be minted
+     * @param _amount: number of ethereum tokens to be burned
      */
     function burnEthereumTokens(
         address payable _from,
@@ -304,13 +318,13 @@ contract EthereumBank {
         BridgeToken bridgeTokenInstance = BridgeToken(_ethereumTokenAddress);
         bridgeTokenInstance.burnFrom(_from, _amount);
 
-        DepositBurnCount memory depositBurnCount = depositBurnCounts[_ethereumTokenAddress];
+        DepositBurnWithdrawCount memory depositBurnCount = depositBurnWithdrawCounts[_ethereumTokenAddress];
         require(
             depositBurnCount.burnCount + 1 > depositBurnCount.burnCount,
             "burn nonce is not available"
         );
         depositBurnCount.burnCount = depositBurnCount.burnCount.add(1);
-        depositBurnCounts[_ethereumTokenAddress] = depositBurnCount;
+        depositBurnWithdrawCounts[_ethereumTokenAddress] = depositBurnCount;
 
         newEthereumBurn(
             _ethereumReceiver,
@@ -328,6 +342,49 @@ contract EthereumBank {
             _ethereumReceiver,
             depositBurnCount.burnCount
         );
+    }
+
+    /*
+     * @dev:  withdraw ethereum tokens
+     *
+     * @param _from: The address to be withdrew from
+     * @param _ethereumReceiver: The receiver's Ethereum address in bytes.
+     * @param _bridgeTokenAddress: The token address of ethereum asset issued on chain33
+     * @param _amount: number of ethereum tokens to be withdrew
+     */
+    function withdrawEthereumTokens(
+        address payable _from,
+        bytes memory _ethereumReceiver,
+        address _bridgeTokenAddress,
+        uint256 _amount
+    )
+    internal
+    {
+        require(proxyReceiver != address(0), "proxy receiver hasn't been set");
+        // Must be whitelisted bridge token
+        require(bridgeTokenWhitelist[_bridgeTokenAddress], "Token must be a whitelisted bridge token");
+        // burn bridge tokens
+        BridgeToken bridgeTokenInstance = BridgeToken(_bridgeTokenAddress);
+        bridgeTokenInstance.transferFrom(_from, proxyReceiver, _amount);
+
+        DepositBurnWithdrawCount memory wdCount = depositBurnWithdrawCounts[_bridgeTokenAddress];
+        require(
+            wdCount.withdrawCount + 1 > wdCount.withdrawCount,
+            "withdraw nonce is not available"
+        );
+        wdCount.withdrawCount = wdCount.withdrawCount.add(1);
+        depositBurnWithdrawCounts[_bridgeTokenAddress] = wdCount;
+
+        emit LogEthereumTokenWithdraw(
+            _bridgeTokenAddress,
+            bridgeTokenInstance.symbol(),
+            _amount,
+            _from,
+            _ethereumReceiver,
+            proxyReceiver,
+            wdCount.withdrawCount
+        );
+
     }
 
     /*

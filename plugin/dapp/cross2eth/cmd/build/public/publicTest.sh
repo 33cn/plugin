@@ -38,29 +38,6 @@ function exit_cp_file() {
     exit 1
 }
 
-function copyErrLogs() {
-    set -x
-    if [ -n "$CASE_ERR" ]; then
-        # /var/lib/jenkins
-        # shellcheck disable=SC2116
-        dirNameFa=$(echo ~)
-        dirName="${dirNameFa}/x2ethereumlogs"
-
-        if [ ! -d "${dirName}" ]; then
-            # shellcheck disable=SC2086
-            mkdir -p ${dirName}
-        fi
-
-        for name in a b c d; do
-            # shellcheck disable=SC2154
-            docker cp "${dockerNamePrefix}_ebrelayer${name}_rpc_1":/root/logs/x2Ethereum_relayer.log "${dirName}/ebrelayer${name}_rpc.log"
-            docker exec "${dockerNamePrefix}_ebrelayer${name}_rpc_1" tail -n 1000 /root/logs/x2Ethereum_relayer.log
-        done
-        docker cp "${dockerNamePrefix}_chain33_1":/root/logs/chain33.log "${dirName}/chain33_rpc.log"
-        docker logs "${dockerNamePrefix}_chain33_1" | tail -n 1000
-    fi
-}
-
 # 判断结果是否正确
 function cli_ret() {
     set +x
@@ -110,24 +87,6 @@ function balance_ret() {
     echo "${balance}"
 }
 
-# 查询关键字所在行然后删除 ${1}文件名称 ${2}关键字
-function delete_line() {
-    line=$(cat -n "${1}" | grep "${2}" | awk '{print $1}' | xargs | awk '{print $1}')
-    if [ "${line}" ]; then
-        sed -i "${line}"'d' "${1}" # 删除行
-    fi
-}
-
-# 查询关键字所在行然后删除 ${1}文件名称 ${2}关键字
-function delete_line_show() {
-    local line=$(cat -n "${1}" | grep "${2}" | awk '{print $1}' | xargs | awk '{print $1}')
-    if [ "${line}" ]; then
-        sed -i "${line}"'d' "${1}" # 删除行
-        line=$((line - 1))
-    fi
-    echo "${line}"
-}
-
 # 后台启动 ebrelayer 进程 $1 docker 名称 $2进程名称 $3进程信息输出重定向文件
 function start_docker_ebrelayer() {
     # 参数如果小于 3 直接报错
@@ -158,104 +117,6 @@ function start_docker_ebrelayer() {
     done
 }
 
-# 后台启动 ebrelayer 进程 $1进程名称 $2进程信息输出重定向文件
-function start_ebrelayer() {
-    # 参数如果小于 2 直接报错
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
-    fi
-
-    # 判断可执行文件是否存在
-    if [ ! -x "${1}" ]; then
-        echo -e "${RED}${1} not exist${NOC}"
-        exit_cp_file
-    fi
-
-    # 后台启动程序
-    nohup "${1}" >"${2}" 2>&1 &
-    sleep 2
-
-    # shellcheck disable=SC2009
-    pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    local count=0
-    while [ "${pid}" == "" ]; do
-        nohup "${1}" >"${2}" 2>&1 &
-        sleep 2
-
-        count=$((count + 1))
-        if [[ ${count} -ge 20 ]]; then
-            echo -e "${RED}start ${1} failed${NOC}"
-            exit_cp_file
-        fi
-
-        # shellcheck disable=SC2009
-        pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    done
-}
-
-# 后台启动 ebrelayer 进程 $1 A B C D
-function start_ebrelayer_and_unlock() {
-    start_ebrelayer "./${1}/ebrelayer" "./${1}/ebrelayer.log"
-    sleep 2
-
-    local CLI="./ebcli_$1"
-    local count=0
-    while true; do
-        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
-        if [[ ${result} == "true" ]]; then
-            break
-        fi
-
-        count=$((count + 1))
-        if [[ ${count} == 5 ]]; then
-            echo -e "${RED}failed to unlock${NOC}"
-            exit_cp_file
-        fi
-
-        sleep 1
-    done
-}
-
-# 后台启动 ebrelayer 进程 $1 A B C D
-function start_ebrelayer_and_setpwd_unlock() {
-    start_ebrelayer "./${1}/ebrelayer" "./${1}/ebrelayer.log"
-    sleep 2
-
-    local CLI="./ebcli_$1"
-    local count=0
-    while true; do
-        result=$(${CLI} relayer set_pwd -p 123456hzj | jq -r .isOK)
-        if [[ ${result} == "true" ]]; then
-            break
-        fi
-
-        count=$((count + 1))
-        if [[ ${count} == 5 ]]; then
-            echo -e "${RED}failed to set_pwd${NOC}"
-            exit_cp_file
-        fi
-
-        sleep 1
-    done
-
-    count=0
-    while true; do
-        result=$(${CLI} relayer unlock -p 123456hzj | jq -r .isOK)
-        if [[ ${result} == "true" ]]; then
-            break
-        fi
-
-        count=$((count + 1))
-        if [[ ${count} == 5 ]]; then
-            echo -e "${RED}failed to unlock${NOC}"
-            exit_cp_file
-        fi
-
-        sleep 1
-    done
-}
-
 # 杀死进程 ebrelayer 进程 docker ebrelayer 名称
 function kill_docker_ebrelayer() {
     # shellcheck disable=SC2009
@@ -271,28 +132,6 @@ function kill_docker_ebrelayer() {
     if [ "${pid}" != "" ]; then
         echo "kill ${1} failed"
         docker exec "$1" kill -9 "${pid}"
-    fi
-    sleep 1
-}
-
-# 杀死进程ebrelayer 进程 $1进程名称
-function kill_ebrelayer() {
-    # shellcheck disable=SC2009
-    ps -ef | grep "${1}"
-    # shellcheck disable=SC2009
-    pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    if [ "${pid}" == "" ]; then
-        echo "not find ${1} pid"
-        return
-    fi
-
-    kill -9 "${pid}"
-    sleep 1
-    # shellcheck disable=SC2009
-    pid=$(ps -ef | grep "${1}" | grep -v 'grep' | awk '{print $2}' | xargs)
-    if [ "${pid}" != "" ]; then
-        echo "kill ${1} failed"
-        kill -9 "${pid}"
     fi
     sleep 1
 }
@@ -365,18 +204,6 @@ function check_tx() {
     fi
 }
 
-function check_number() {
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong check number parameters${NOC}"
-        exit_cp_file
-    fi
-
-    if [ "$(echo "$1 < $2" | bc)" -eq 1 ] || [ "$(echo "$1 > $2" | bc)" -eq 1 ]; then
-        echo -e "${RED}error number, expect ${1}, get ${2}${NOC}"
-        exit_cp_file
-    fi
-}
-
 # 检查地址是否匹配 $1返回结果 $2匹配地址
 function check_addr() {
     if [[ $# -lt 2 ]]; then
@@ -397,74 +224,20 @@ function get_docker_addr() {
     echo "${dockerAddr}"
 }
 
-# $1 dockerAddr; $2 docker ebrelayer name; $3 relayer.toml 地址
-function updata_relayer_a_toml() {
-    local dockerAddr=${1}
-    local ebrelayer=${2}
-    local file=${3}
-
-    # shellcheck disable=SC2155
-    local line=$(delete_line_show "${file}" 'EthProvider="ws:')
-    sed -i ''"${line}"' a EthProvider="ws://'"${dockerAddr}"':8545/"' "${file}"
-
-    line=$(delete_line_show "${file}" 'EthProviderCli="http:')
-    sed -i ''"${line}"' a EthProviderCli="http://'"${dockerAddr}"':8545"' "${file}"
-
-    pushHost=$(get_docker_addr "${ebrelayer}")
-    line=$(delete_line_show "${file}" "pushHost")
-    sed -i ''"${line}"' a pushHost="http://'"${pushHost}"':20000"' "${file}"
-
-    line=$(delete_line_show "${file}" "pushBind")
-    sed -i ''"${line}"' a pushBind="'"${pushHost}"':20000"' "${file}"
-
-    local chain33Host=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-    if [[ ${chain33Host} == "" ]]; then
-        echo -e "${RED}chain33Host is empty${NOC}"
+# 判断结果 $1 和 $2 是否相等
+function is_equal() {
+    set +x
+    if [[ $# -lt 2 ]]; then
+        echo -e "${RED}wrong parameter${NOC}"
         exit_cp_file
     fi
 
-    local line=$(delete_line_show "${file}" "chain33Host")
-    # 在第 line 行后面 新增合约地址
-    sed -i ''"${line}"' a chain33Host="http://'"${chain33Host}"':8801"' "${file}"
+    if [[ $1 != "$2" ]]; then
+        echo -e "${RED}$1 != ${2}${NOC}"
+        exit_cp_file
+    fi
 
-    sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${file}"
-    sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${file}"
-}
-
-# 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
-function updata_relayer_toml() {
-    local BridgeRegistry=${1}
-    local maturityDegree=${2}
-    local file=${3}
-
-    line=$(delete_line_show "${file}" "BridgeRegistry")
-    sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
-
-    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
-    sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
-}
-
-# 更新配置文件 $1 为 BridgeRegistry 合约地址; $2 等待区块 默认10; $3 relayer.toml 地址
-function updata_relayer_toml_ropston() {
-    local BridgeRegistry=${1}
-    local maturityDegree=${2}
-    local file=${3}
-
-    local chain33Host=127.0.0.1
-    local pushHost=127.0.0.1
-
-    local line=$(delete_line_show "${file}" "chain33Host")
-    # 在第 line 行后面 新增合约地址
-    sed -i ''"${line}"' a chain33Host="http://'${chain33Host}':8801"' "${file}"
-
-    line=$(delete_line_show "${file}" "pushHost")
-    sed -i ''"${line}"' a pushHost="http://'${pushHost}':20000"' "${file}"
-
-    line=$(delete_line_show "${file}" "BridgeRegistry")
-    sed -i ''"${line}"' a BridgeRegistry="'"${BridgeRegistry}"'"' "${file}"
-
-    sed -i 's/EthMaturityDegree=10/'EthMaturityDegree="${maturityDegree}"'/g' "${file}"
-    sed -i 's/maturityDegree=10/'maturityDegree="${maturityDegree}"'/g' "${file}"
+    set -x
 }
 
 # 获取本机 IP
@@ -540,56 +313,4 @@ function eth_block_wait() {
     sleep 1
     set -x
     echo -e "${GRE}eth wait new block $count s, cur height=$expect,old=$((cur_height))${NOC}"
-}
-
-# $1 fileName 例如:./relayer.toml
-function pushNameChange() {
-    local file=${1}
-
-    # 修改 relayer.toml 配置文件 pushName 字段
-    line=$(delete_line_show "${file}" "pushName")
-    local time=$(date "+%m-%d-%H:%M:%S")
-    sed -i ''"${line}"' a pushName="cross2eth_'"${time}"'"' "${file}"
-}
-
-# $1 keyName $2 newData $3 file
-function updata_relayer() {
-    local keyName=${1}
-    local newData=${2}
-    local file=${3}
-
-    line=$(delete_line_show "${file}" "${keyName}")
-    sed -i ''"${line}"' a '"${keyName}"'="'"${newData}"'"' "${file}"
-}
-
-# 判断结果 $1 和 $2 是否相等
-function is_equal() {
-    set +x
-    if [[ $# -lt 2 ]]; then
-        echo -e "${RED}wrong parameter${NOC}"
-        exit_cp_file
-    fi
-
-    if [[ $1 != "$2" ]]; then
-        echo -e "${RED}$1 != ${2}${NOC}"
-        exit_cp_file
-    fi
-
-    set -x
-}
-
-function kill_all_ebrelayer() {
-    kill_ebrelayer ebrelayer
-    sleep 2
-
-    rm datadir/ logs/ -rf
-
-    for name in B C D; do
-        kill_ebrelayer relayer_${name}/ebrelayer
-        sleep 2
-
-        rm relayer_${name} -rf
-        mkdir relayer_${name}
-        cp ./ebrelayer relayer_${name}/ebrelayer
-    done
 }

@@ -1,0 +1,6 @@
+# 验证人地址，至少配置３个以上，即大于等于３个
+validatorsAddr=["1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ", "155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6", "13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv", "113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"]
+# 验证人权重
+initPowers=[25, 25, 25, 25]
+# 离线多签地址
+multisignAddrs=["168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]

@@ -3,7 +3,6 @@ package ethtxs
 import (
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -12,13 +11,11 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +25,6 @@ import (
 
 var (
 	chain33Addr = "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt"
-	//ethAddr      = "0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f"
-	ethTokenAddr = "0x0000000000000000000000000000000000000000"
 )
 
 type suiteContracts struct {
@@ -81,7 +76,7 @@ func (c *suiteContracts) Test_LogLockToEthBridgeClaim() {
 	event := &events.LockEvent{
 		From:   c.para.InitValidators[0],
 		To:     to,
-		Token:  common.HexToAddress(ethTokenAddr),
+		Token:  common.HexToAddress(EthNullAddr),
 		Symbol: "eth",
 		Value:  big.NewInt(10000 * 10000 * 10000),
 		Nonce:  big.NewInt(1),
@@ -91,7 +86,7 @@ func (c *suiteContracts) Test_LogLockToEthBridgeClaim() {
 	assert.NotEmpty(c.T(), witnessClaim)
 	assert.Equal(c.T(), witnessClaim.EthereumChainID, int64(1))
 	assert.Equal(c.T(), witnessClaim.BridgeBrankAddr, c.x2EthDeployInfo.BridgeBank.Address.String())
-	assert.Equal(c.T(), witnessClaim.TokenAddr, ethTokenAddr)
+	assert.Equal(c.T(), witnessClaim.TokenAddr, EthNullAddr)
 	assert.Equal(c.T(), witnessClaim.Symbol, event.Symbol)
 	assert.Equal(c.T(), witnessClaim.EthereumSender, event.From.String())
 	//assert.Equal(c.T(), witnessClaim.Chain33Receiver, string(event.To))
@@ -110,7 +105,7 @@ func (c *suiteContracts) Test_LogBurnToEthBridgeClaim() {
 	event := &events.BurnEvent{
 		OwnerFrom:       c.para.InitValidators[0],
 		Chain33Receiver: to,
-		Token:           common.HexToAddress(ethTokenAddr),
+		Token:           common.HexToAddress(EthNullAddr),
 		Symbol:          "bty",
 		Amount:          big.NewInt(100),
 		Nonce:           big.NewInt(2),
@@ -120,7 +115,7 @@ func (c *suiteContracts) Test_LogBurnToEthBridgeClaim() {
 	assert.NotEmpty(c.T(), witnessClaim)
 	assert.Equal(c.T(), witnessClaim.EthereumChainID, int64(1))
 	assert.Equal(c.T(), witnessClaim.BridgeBrankAddr, c.x2EthDeployInfo.BridgeBank.Address.String())
-	assert.Equal(c.T(), witnessClaim.TokenAddr, ethTokenAddr)
+	assert.Equal(c.T(), witnessClaim.TokenAddr, EthNullAddr)
 	assert.Equal(c.T(), witnessClaim.Symbol, event.Symbol)
 	assert.Equal(c.T(), witnessClaim.EthereumSender, event.OwnerFrom.String())
 	//assert.Equal(c.T(), witnessClaim.Chain33Receiver, string(event.Chain33Receiver))
@@ -144,81 +139,6 @@ func (c *suiteContracts) Test_GetDeployHeight() {
 	height, err := GetDeployHeight(c.sim, c.x2EthDeployInfo.BridgeRegistry.Address, c.x2EthDeployInfo.BridgeRegistry.Address)
 	require.Nil(c.T(), err)
 	assert.True(c.T(), height > 0)
-}
-
-func (c *suiteContracts) Test_CreateBridgeToken() {
-	operatorInfo := &OperatorInfo{
-		PrivateKey: c.para.DeployPrivateKey,
-		Address:    crypto.PubkeyToAddress(c.para.DeployPrivateKey.PublicKey),
-	}
-	tokenAddr, err := CreateBridgeToken("bty", c.sim, operatorInfo, c.x2EthDeployInfo, c.x2EthContracts)
-	require.Nil(c.T(), err)
-	c.sim.Commit()
-
-	addr, err := GetToken2address(c.x2EthContracts.BridgeBank, "bty")
-	require.Nil(c.T(), err)
-	assert.Equal(c.T(), addr, tokenAddr)
-
-	chain33Sender := []byte("14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")
-	amount := int64(100)
-	ethReceiver := c.para.InitValidators[2]
-	claimID := crypto.Keccak256Hash(chain33Sender, ethReceiver.Bytes(), big.NewInt(amount).Bytes())
-	authOracle, err := PrepareAuth(c.sim, c.para.ValidatorPriKey[0], c.para.InitValidators[0])
-	require.Nil(c.T(), err)
-	signature, err := utils.SignClaim4Evm(claimID, c.para.ValidatorPriKey[0])
-	require.Nil(c.T(), err)
-
-	_, err = c.x2EthContracts.Oracle.NewOracleClaim(
-		authOracle,
-		uint8(events.ClaimTypeLock),
-		chain33Sender,
-		ethReceiver,
-		common.HexToAddress(tokenAddr),
-		"bty",
-		big.NewInt(amount),
-		claimID,
-		signature)
-	require.Nil(c.T(), err)
-	c.sim.Commit()
-
-	balanceNew, err := GetBalance(c.sim, tokenAddr, ethReceiver.String())
-	require.Nil(c.T(), err)
-	require.Equal(c.T(), balanceNew, "100")
-
-	chain33Receiver := "1GTxrmuWiXavhcvsaH5w9whgVxUrWsUMdV"
-	{
-		amount := "10"
-		bn := big.NewInt(1)
-		bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-		txhash, err := Burn(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, chain33Receiver, c.x2EthDeployInfo.BridgeBank.Address, bn, c.x2EthContracts.BridgeBank, c.sim)
-		require.NoError(c.T(), err)
-		c.sim.Commit()
-
-		balanceNew, err = GetBalance(c.sim, tokenAddr, ethReceiver.String())
-		require.Nil(c.T(), err)
-		require.Equal(c.T(), balanceNew, "90")
-
-		status := GetEthTxStatus(c.sim, common.HexToHash(txhash))
-		fmt.Println()
-		fmt.Println(status)
-	}
-
-	{
-		amount := "10"
-		bn := big.NewInt(1)
-		bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-		_, err := ApproveAllowance(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, c.x2EthDeployInfo.BridgeBank.Address, bn, c.sim)
-		require.Nil(c.T(), err)
-		c.sim.Commit()
-
-		_, err = BurnAsync(hexutil.Encode(crypto.FromECDSA(c.para.ValidatorPriKey[2])), tokenAddr, chain33Receiver, bn, c.x2EthContracts.BridgeBank, c.sim)
-		require.Nil(c.T(), err)
-		c.sim.Commit()
-
-		balanceNew, err = GetBalance(c.sim, tokenAddr, ethReceiver.String())
-		require.Nil(c.T(), err)
-		require.Equal(c.T(), balanceNew, "80")
-	}
 }
 
 func (c *suiteContracts) Test_GetLockedFunds() {

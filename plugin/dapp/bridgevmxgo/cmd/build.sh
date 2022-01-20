@@ -18,12 +18,6 @@ go build -i ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
 # shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
 # shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_B" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9902" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_C" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9903" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_D" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9904" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 # shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/evmxgoboss4x" "${SRC_EVMXGOBOSS4XCLI}"
@@ -32,7 +26,10 @@ cp ../../../../chain33.para.toml "${OUT_DIR}"
 cp ../../cross2eth/ebrelayer/relayer.toml "${OUT_DIR}/relayer.toml"
 cp ./build/* "${OUT_DIR}"
 cp ./build/abi/* "${OUT_DIR}"
-cp ./build/public/* "${OUT_DIR}"
+cp ../../cross2eth/cmd/build/public/* "${OUT_DIR}"
+cp ../../cross2eth/cmd/build/abi/* "${OUT_DIR}"
+cp ../../cross2eth/boss4x/chain33/deploy_chain33.toml "${OUT_DIR}"
+cp ../../cross2eth/boss4x/ethereum/deploy_ethereum.toml "${OUT_DIR}"
 
 OUT_TESTDIR="${1}/dapptest/$strapp"
 mkdir -p "${OUT_TESTDIR}"

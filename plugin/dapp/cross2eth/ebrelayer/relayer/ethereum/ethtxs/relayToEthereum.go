@@ -27,15 +27,21 @@ const (
 )
 
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
-func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client ethinterface.EthClientSpec, sender, tokenOnEth common.Address, claim ProphecyClaim, privateKey *ecdsa.PrivateKey) (txhash string, err error) {
+func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client ethinterface.EthClientSpec, sender, tokenOnEth common.Address, claim ProphecyClaim, privateKey *ecdsa.PrivateKey, addr2TxNonce map[common.Address]*NonceMutex) (txhash string, err error) {
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "chain33Sender", hexutil.Encode(claim.Chain33Sender), "ethereumReceiver", claim.EthereumReceiver.String(),
 		"TokenAddress", claim.TokenContractAddress.String(), "symbol", claim.Symbol, "Amount", claim.Amount.String(), "claimType", claim.ClaimType, "tokenOnEth", tokenOnEth.String())
 
-	auth, err := PrepareAuth(client, privateKey, sender)
+	auth, err := PrepareAuth4MultiEthereum(client, privateKey, sender, addr2TxNonce)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
 		return "", err
 	}
+	defer func() {
+		if nil != err {
+			_, _ = revokeNonce4MultiEth(sender, addr2TxNonce)
+		}
+	}()
+
 	auth.GasLimit = GasLimit4RelayTx
 
 	claimID := crypto.Keccak256Hash(claim.chain33TxHash, claim.Chain33Sender, claim.EthereumReceiver.Bytes(), []byte(claim.Symbol), claim.Amount.Bytes())

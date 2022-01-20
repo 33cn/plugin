@@ -1,0 +1,10 @@
+# 合约部署人
+operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
+# 验证人地址，至少配置３个以上，即大于等于３个
+validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
+# 验证人权重
+initPowers=[25, 25, 25, 25]
+# 主链symbol
+symbol="ETH"
+# 离线多签地址
+multisignAddrs=["0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf", "0x6F163E6daf0090D897AD7016484f10e0cE844994", "0x0921948C0d25BBbe85285CB5975677503319F02A", "0x69921517970a28b73ac5E4C8ac8Fd135A80D2be1"]

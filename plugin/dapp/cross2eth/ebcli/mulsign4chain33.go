@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//TokenAddressCmd...
 func MultiSignCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "multisign",
@@ -21,29 +20,12 @@ func MultiSignCmd() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
-		DeployMultiSignCmd(),
 		SetupCmd(),
 		TransferCmd(),
 		ShowAddrCmd(),
 		SetChain33MultiSignAddrCmd(),
 	)
 	return cmd
-}
-
-func DeployMultiSignCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "deploy",
-		Short: "deploy mulsign to chain33",
-		Run:   DeployMultiSign,
-	}
-	return cmd
-}
-
-func DeployMultiSign(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.DeployMulsign2Chain33", nil, &res)
-	ctx.Run()
 }
 
 func ShowAddrCmd() *cobra.Command {
@@ -165,8 +147,8 @@ func SetChain33MultiSignAddrCmdFlags(cmd *cobra.Command) {
 
 func SetChain33MultiSignAddr(cmd *cobra.Command, _ []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	address, _ := cmd.Flags().GetString("address")
+	addr, _ := cmd.Flags().GetString("address")
 	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetChain33MultiSignAddr", address, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetChain33MultiSignAddr", addr, &res)
 	ctx.Run()
 }

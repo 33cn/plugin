@@ -4,6 +4,16 @@
 #### 基础步骤
 * 离线创建交易并签名 `./boss4x chain33 offline create ...`
 * 在线发送签名后文件 `./boss4x chain33 offline send -f XXX.txt` 
+
+拼凑 boss4x 命令
+```shell
+./boss4x --rpc_laddr http://${chain33_ip}:8901 --rpc_laddr_ethereum --paraName user.p.para. --chainID 0
+
+--chainID int32               chain id, default to 0
+--expire string               transaction expire time (optional) (default "120m")
+--paraName string             para chain name,Eg:user.p.fzm.
+--rpc_laddr string            http url (default "https://localhost:8801")
+```
 *** 
 
 #### 离线部署 chain33 跨链合约
@@ -16,16 +26,19 @@
 交易5: 在合约chain33Bridge中设置BridgeBank合约地址
 交易6: 在合约chain33Bridge中设置Oracle合约地址
 交易7: 部署合约: BridgeRegistry
-交易7: 部署合约: MulSign
+交易8: 部署合约: MulSign
+交易9: 设置 bridgebank 合约地址可以转到多签合约地址
+交易10: 设置离线多签地址信息
 
 命令：
-./boss4x chain33 offline create -f 1 -k 0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae -n 'deploy crossx to chain33' -r '1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ, [1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ, 155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6, 13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv, 113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG], [25, 25, 25, 25]' --chainID 33
+./boss4x chain33 offline create -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -r "${chain33DeployAddr}, [${chain33Validatora}, ${chain33Validatorb}, ${chain33Validatorc}, ${chain33Validatord}], [25, 25, 25, 25]" -m "${chain33MultisignA},${chain33MultisignB},${chain33MultisignC},${chain33MultisignD}"
 
 参数说明：
-  -f, --fee float       交易费设置，因为只是少量几笔交易，且部署交易消耗gas较多，直接设置1个代币即可
-  -k, --key string      部署人的私钥，用于对交易签名
-  -n, --note string     备注信息 
-  -r, --valset string   构造函数参数,严格按照该格式输入'addr, [addr, addr, addr, addr], [25, 25, 25, 25]',其中第一个地址为部署人私钥对应地址，后面4个地址为不同验证人的地址，4个数字为不同验证人的权重
+  -f, --fee float               交易费设置，因为只是少量几笔交易，且部署交易消耗gas较多，直接设置1个代币即可
+  -k, --key string              部署人的私钥，用于对交易签名
+  -m, --multisignAddrs string   离线多签地址, as: 'addr,addr,addr,addr'
+  -n, --note string             备注信息 
+  -r, --valset string           构造函数参数,严格按照该格式输入'addr, [addr, addr, addr, addr], [25, 25, 25, 25]',其中第一个地址为部署人私钥对应地址，后面4个地址为不同验证人的地址，4个数字为不同验证人的权重
 
   --rpc_laddr string    chain33 url 地址 (默认 "https://localhost:8801")
   --chainID int32       平行链的chainID, 默认: 0(代表主链)
@@ -39,6 +52,22 @@
 ./boss4x chain33 offline send -f deployCrossX2Chain33.txt
 ```
 ***
+
+#### 文件部署
+把要部署需要的数据写入 chain33_ethereum.toml 配置文件
+```toml
+# 验证人地址，至少配置３个以上，即大于等于３个
+validatorsAddr=["1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ", "155ooMPBTF8QQsGAknkK7ei5D78rwDEFe6", "13zBdQwuyDh7cKN79oT2odkxYuDbgQiXFv", "113ZzVamKfAtGt9dq45fX1mNsEoDiN95HG"]
+# 验证人权重
+initPowers=[25, 25, 25, 25]
+# 离线多签地址
+multisignAddrs=["168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
+```
+命令:
+```shell
+./boss4x chain33 offline create_file -f 1 -k "${chain33DeployKey}" -n "deploy crossx to chain33" -c "./deploy_chain33.toml"
+```
+
 #### 离线部署 ERC20 跨链合约
 * 离线创建交易
 ```
@@ -115,42 +144,6 @@
 
 输出:
   15XsGjTbV6SxQtDE1SC5oaHx8HbseQ4Lf9 -- bridge_token 地址
-```
-
-
-
-***
-#### 设置离线多签地址信息
-* 离线创建交易
-```
-命令：
-./boss4x chain33 offline multisign_setup -m 1GrhufvPtnBCtfxDrFGcCoihmYMHJafuPn -o 168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9,13KTf57aCkVVJYNJBXBBveiA5V811SrLcT,1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe,1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb -k 0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae --chainID 33
-
-参数说明：
-  -k, --key string         部署人私钥
-  -m, --multisign string   离线多签合约地址
-  -o, --owner string       多签的地址, 用','分隔
-
-执行之后会将交易写入到文件：
-  multisign_setup.txt
-```
-
-***
-#### 设置离线多签地址
-* 离线创建交易
-```
-命令：
-./boss4x chain33 offline set_offline_addr -a 16skyHQA4YPPnhrDSSpZnexDzasS8BNx1R -c 1QD5pHMKZ9QWiNb9AsH3G1aG3Hashye83o -k 0x027ca96466c71c7e7c5d73b7e1f43cb889b3bd65ebd2413eefd31c6709c262ae --chainID 33
-
-参数说明：
-  -a, --address string    离线多签地址
-  -c, --contract string   bridgebank 合约地址
-  -f, --fee float         交易费
-  -k, --key string        部署者私钥
-  -n, --note string       备注
-
-执行之后会将交易写入到文件：
-  chain33_set_offline_addr.txt
 ```
 
 ***
