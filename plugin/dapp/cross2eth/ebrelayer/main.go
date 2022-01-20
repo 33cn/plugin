@@ -66,43 +66,51 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
-	mainlog.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
-	mainlog.Info("deploy info:", "BridgeRegistry", cfg.BridgeRegistry)
-	mainlog.Info("db info:", " Dbdriver = ", cfg.SyncTxConfig.Dbdriver, ", DbPath = ", cfg.SyncTxConfig.DbPath, ", DbCache = ", cfg.SyncTxConfig.DbCache)
-	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
+	mainlog.Info("db info:", " Dbdriver = ", cfg.Dbdriver, ", DbPath = ", cfg.DbPath, ", DbCache = ", cfg.DbCache)
 
+	db := dbm.NewDB("relayer_db_service", cfg.Dbdriver, cfg.DbPath, cfg.DbCache)
+
+	ethRelayerCnt := len(cfg.EthRelayerCfg)
+	chain33MsgChan2Eths := make(map[string]chan<- *events.Chain33Msg)
 	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 100)
-	chain33MsgChan := make(chan *events.Chain33Msg, 100)
 
-	mainlog.Info("deploy info for chain33:", "cfg.Deploy4Chain33", cfg.Deploy4Chain33)
+	//启动多个以太坊系中继器
+	ethRelayerServices := make(map[string]*ethRelayer.Relayer4Ethereum)
+	for i := 0; i < ethRelayerCnt; i++ {
+		chain33MsgChan := make(chan *events.Chain33Msg, 100)
+		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
+
+		ethStartPara := &ethRelayer.EthereumStartPara{
+			DbHandle:           db,
+			EthProvider:        cfg.EthRelayerCfg[i].EthProvider,
+			EthProviderHttp:    cfg.EthRelayerCfg[i].EthProviderCli,
+			BridgeRegistryAddr: cfg.EthRelayerCfg[i].BridgeRegistry,
+			Degree:             cfg.EthRelayerCfg[i].EthMaturityDegree,
+			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
+			EthBridgeClaimChan: ethBridgeClaimChan,
+			Chain33MsgChan:     chain33MsgChan,
+			ProcessWithDraw:    cfg.ProcessWithDraw,
+			Name:               cfg.EthRelayerCfg[i].EthChainName,
+		}
+		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
+		ethRelayerServices[ethStartPara.Name] = ethRelayerService
+	}
+
+	//启动chain33中继器
 	chain33StartPara := &chain33Relayer.Chain33StartPara{
-		ChainName:          cfg.ChainName,
+		ChainName:          cfg.Chain33RelayerCfg.ChainName,
 		Ctx:                ctx,
-		SyncTxConfig:       cfg.SyncTxConfig,
-		BridgeRegistryAddr: cfg.BridgeRegistryOnChain33,
-		DeployInfo:         cfg.Deploy4Chain33,
+		SyncTxConfig:       cfg.Chain33RelayerCfg.SyncTxConfig,
+		BridgeRegistryAddr: cfg.Chain33RelayerCfg.BridgeRegistryOnChain33,
 		DBHandle:           db,
 		EthBridgeClaimChan: ethBridgeClaimChan,
-		Chain33MsgChan:     chain33MsgChan,
-		ChainID:            cfg.ChainID4Chain33,
+		Chain33MsgChan:     chain33MsgChan2Eths,
+		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
+		ProcessWithDraw:    cfg.ProcessWithDraw,
 	}
 	chain33RelayerService := chain33Relayer.StartChain33Relayer(chain33StartPara)
 
-	ethStartPara := &ethRelayer.EthereumStartPara{
-		DbHandle:           db,
-		EthProvider:        cfg.EthProvider,
-		EthProviderHttp:    cfg.EthProviderCli,
-		BridgeRegistryAddr: cfg.BridgeRegistry,
-		DeployInfo:         cfg.Deploy,
-		Degree:             cfg.EthMaturityDegree,
-		BlockInterval:      cfg.EthBlockFetchPeriod,
-		EthBridgeClaimChan: ethBridgeClaimChan,
-		Chain33MsgChan:     chain33MsgChan,
-		ProcessWithDraw:    cfg.ProcessWithDraw,
-	}
-	ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
-
-	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerService, db)
+	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerServices, db)
 
 	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)

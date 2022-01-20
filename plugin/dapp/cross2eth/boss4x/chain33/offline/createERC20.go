@@ -134,7 +134,7 @@ func ApproveErc20(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("approve(%s,%d)", approve, int64(amount))
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeTokenABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("ApproveErc20", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "approve_erc20")
@@ -171,7 +171,7 @@ func AddToken2LockList(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("addToken2LockList(%s,%s)", token, symbol)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("AddToken2LockList", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "create_add_lock_list")
@@ -205,7 +205,7 @@ func CreateNewBridgeToken(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("createNewBridgeToken(%s)", symbol)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("CreateNewBridgeToken", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "create_bridge_token")

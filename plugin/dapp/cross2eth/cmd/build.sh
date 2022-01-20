@@ -17,12 +17,6 @@ go build -i ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
 # shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
 # shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_B" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9902" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_C" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9903" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_D" -ldflags "-X ${SRC_EBCLI}/buildflags.RPCAddr=http://localhost:9904" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
 go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 
 cp ../../../../chain33.para.toml "${OUT_DIR}"

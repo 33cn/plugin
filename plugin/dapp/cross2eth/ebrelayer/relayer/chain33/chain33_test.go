@@ -19,6 +19,7 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	tml "github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
@@ -39,17 +40,30 @@ var (
 )
 
 func Test_ImportRestorePrivateKey(t *testing.T) {
-	mock33 := newMock33()
+	var ret = types.ReplySubscribePush{IsOk: true, Msg: ""}
+	var he = types.Header{Height: 10000}
+
+	mockapi := &mocks.QueueProtocolAPI{}
+	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
+	mockapi.On("Close").Return()
+	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
+	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
+
+	mock33 := testnode.New("", mockapi)
 	defer mock33.Close()
+	rpcCfg := mock33.GetCfg().RPC
+	// 这里必须设置监听端口，默认的是无效值
+	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
+	mock33.GetRPC().Listen()
+
 	_, _, _, x2EthDeployInfo, err := setup.DeployContracts()
 	require.NoError(t, err)
 	chain33Relayer := newChain33Relayer(x2EthDeployInfo, "127.0.0.1:60000")
 
 	err = chain33Relayer.ImportPrivateKey(passphrase, privateKeyStr)
 	assert.NoError(t, err)
-	//assert.Equal(t, addr, accountAddr)
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	addr, err := chain33Relayer.GetAccountAddr()
 	assert.NoError(t, err)
@@ -82,56 +96,67 @@ func Test_ImportRestorePrivateKey(t *testing.T) {
 	err = chain33Relayer.RestorePrivateKeys("new123")
 	assert.Equal(t, chain33Common.ToHex(chain33Relayer.privateKey4Chain33.Bytes()), privateKeyStr)
 	assert.NoError(t, err)
+
+	time.Sleep(20 * time.Millisecond)
 }
 
 func newChain33Relayer(x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string) *Relayer4Chain33 {
 	cfg := initCfg(*configPath)
-	cfg.SyncTxConfig.Chain33Host = "http://127.0.0.1:8801"
-	cfg.BridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
-	cfg.SyncTxConfig.PushBind = pushBind
-	cfg.SyncTxConfig.FetchHeightPeriodMs = 50
-	cfg.SyncTxConfig.Dbdriver = "memdb"
 
-	db := dbm.NewDB("relayer_db_service", cfg.SyncTxConfig.Dbdriver, cfg.SyncTxConfig.DbPath, cfg.SyncTxConfig.DbCache)
+	chain33MsgChan2Eths := make(map[string]chan<- *events.Chain33Msg)
+	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 100)
+
+	for i := range cfg.EthRelayerCfg {
+		cfg.EthRelayerCfg[i].BridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
+		chain33MsgChan := make(chan *events.Chain33Msg, 100)
+		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
+	}
+	cfg.Chain33RelayerCfg.SyncTxConfig.PushBind = pushBind
+	cfg.Chain33RelayerCfg.SyncTxConfig.FetchHeightPeriodMs = 50
+	cfg.Chain33RelayerCfg.SyncTxConfig.Chain33Host = "http://127.0.0.1:8801"
+	cfg.Dbdriver = "memdb"
+
+	db := dbm.NewDB("relayer_db_service", cfg.Dbdriver, cfg.DbPath, cfg.DbCache)
 	ctx, cancel := context.WithCancel(context.Background())
-	ethBridgeClaimchan := make(chan *relayerTypes.EthBridgeClaim, 100)
-	chain33Msgchan := make(chan *events.Chain33Msg, 100)
 
 	var wg sync.WaitGroup
 
+	startPara := &Chain33StartPara{
+		ChainName:          cfg.Chain33RelayerCfg.ChainName,
+		Ctx:                ctx,
+		SyncTxConfig:       cfg.Chain33RelayerCfg.SyncTxConfig,
+		BridgeRegistryAddr: cfg.Chain33RelayerCfg.BridgeRegistryOnChain33,
+		DBHandle:           db,
+		EthBridgeClaimChan: ethBridgeClaimChan,
+		Chain33MsgChan:     chain33MsgChan2Eths,
+		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
+	}
+
 	relayer := &Relayer4Chain33{
-		rpcLaddr:                cfg.SyncTxConfig.Chain33Host,
-		fetchHeightPeriodMs:     cfg.SyncTxConfig.FetchHeightPeriodMs,
-		db:                      db,
-		ctx:                     ctx,
-		bridgeRegistryAddr:      x2EthDeployInfo.BridgeRegistry.Address.String(),
-		chainName:               "",
-		chainID:                 0,
+		rpcLaddr:                startPara.SyncTxConfig.Chain33Host,
+		chainName:               startPara.ChainName,
+		chainID:                 startPara.ChainID,
+		fetchHeightPeriodMs:     startPara.SyncTxConfig.FetchHeightPeriodMs,
 		unlockChan:              make(chan int),
-		deployInfo:              cfg.Deploy,
-		ethBridgeClaimChan:      ethBridgeClaimchan,
-		chain33MsgChan:          chain33Msgchan,
+		db:                      startPara.DBHandle,
+		ctx:                     startPara.Ctx,
+		bridgeRegistryAddr:      startPara.BridgeRegistryAddr,
+		ethBridgeClaimChan:      startPara.EthBridgeClaimChan,
+		chain33MsgChan:          startPara.Chain33MsgChan,
 		totalTx4RelayEth2chai33: 0,
 		symbol2Addr:             make(map[string]string),
-		oracleAddr:              x2EthDeployInfo.Oracle.Address.String(),
-		bridgeBankAddr:          x2EthDeployInfo.BridgeBank.Address.String(),
 	}
-
-	//err := relayer.setStatusCheckedIndex(1)
-	//assert.NoError(t, err)
-	//relayer.totalTx4Chain33ToEth = relayer.getTotalTxAmount2Eth()
-	//relayer.statusCheckedIndex = relayer.getStatusCheckedIndex()
-	//assert.Equal(t, relayer.statusCheckedIndex, int64(1))
 
 	syncCfg := &ebTypes.SyncTxReceiptConfig{
-		Chain33Host:       cfg.SyncTxConfig.Chain33Host,
-		PushHost:          cfg.SyncTxConfig.PushHost,
-		PushName:          cfg.SyncTxConfig.PushName,
-		PushBind:          pushBind,
-		StartSyncHeight:   cfg.SyncTxConfig.StartSyncHeight,
-		StartSyncSequence: cfg.SyncTxConfig.StartSyncSequence,
-		StartSyncHash:     cfg.SyncTxConfig.StartSyncHash,
+		Chain33Host:       startPara.SyncTxConfig.Chain33Host,
+		PushHost:          startPara.SyncTxConfig.PushHost,
+		PushName:          startPara.SyncTxConfig.PushName,
+		PushBind:          startPara.SyncTxConfig.PushBind,
+		StartSyncHeight:   startPara.SyncTxConfig.StartSyncHeight,
+		StartSyncSequence: startPara.SyncTxConfig.StartSyncSequence,
+		StartSyncHash:     startPara.SyncTxConfig.StartSyncHash,
 	}
+
 	go relayer.syncProc(syncCfg)
 
 	ch := make(chan os.Signal, 1)
@@ -152,26 +177,6 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 		os.Exit(-1)
 	}
 	return &cfg
-}
-
-func newMock33() *testnode.Chain33Mock {
-	var ret = types.ReplySubscribePush{IsOk: true, Msg: ""}
-	var he = types.Header{Height: 10000}
-
-	mockapi := &mocks.QueueProtocolAPI{}
-	// 这里对需要mock的方法打桩,Close是必须的，其它方法根据需要
-	mockapi.On("Close").Return()
-	mockapi.On("AddPushSubscribe", mock.Anything).Return(&ret, nil)
-	mockapi.On("GetLastHeader", mock.Anything).Return(&he, nil)
-
-	mock33 := testnode.New("", mockapi)
-	//defer mock33.Close()
-	rpcCfg := mock33.GetCfg().RPC
-	// 这里必须设置监听端口，默认的是无效值
-	rpcCfg.JrpcBindAddr = "127.0.0.1:8801"
-	mock33.GetRPC().Listen()
-
-	return mock33
 }
 
 func Test_getExecerName(t *testing.T) {

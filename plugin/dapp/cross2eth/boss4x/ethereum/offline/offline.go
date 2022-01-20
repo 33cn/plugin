@@ -36,8 +36,6 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		DeployERC20Cmd(),
 		DeployBEP20Cmd(),
 		DeployTetherUSDTCmd(),
-		//CreateCfgAccountTxCmd(), // set_offline_addr 设置离线多签地址
-		//SetupCmd(),
 		ConfigLockedTokenOfflineSaveCmd(),
 		CreateAddToken2LockListTxCmd(),
 		CreateBridgeTokenTxCmd(),
@@ -45,8 +43,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		PreliminarySignMultisignTransferTxCmd(), // 多签转帐交易 多签多个地址签名 离线
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
-		SendTxsCmd(),                            // 发送交易 send all kinds of tx
-		//ConfigplatformTokenSymbolCmd(),
+		SendTxsCmd(),
 		CreateEthBridgeBankRelatedCmd(), //构造交易
 	)
 
