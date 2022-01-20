@@ -275,7 +275,6 @@ ForkFix4=1
 
 `
 
-
 var defaultCfgstring = `
 Title="local"
 TestNet=true
@@ -503,7 +502,6 @@ useBalance=false
 [exec.sub.jvm]
 jdkPath="../../../../build/j2sdk-image"
 `
-
 
 //GetDefaultCfgstring ...
 func GetDefaultCfgstring() string {
