@@ -378,6 +378,10 @@ Enable=0
 
 [fork.sub.exchange]
 Enable=0
+ForkFix1=0
+ForkFix2=0
+ForkFix3=0
+ForkFix4=0
 
 [fork.sub.wasm]
 Enable=0

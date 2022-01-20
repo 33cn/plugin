@@ -438,7 +438,7 @@ coins = [
 
 [fork.sub.exchange]
 Enable=0
-ForkFix1=10
-ForkFix2=20
-ForkFix3=30
-ForkFix4=40
+ForkFix1=0
+ForkFix2=0
+ForkFix3=0
+ForkFix4=0
