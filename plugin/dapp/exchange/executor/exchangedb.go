@@ -602,6 +602,34 @@ func (a *Action) matchLimitOrder_Fix1(payload *et.LimitOrder, leftAccountDB, rig
 					//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
 					//撮合深度计数
 					count = count + 1
+
+					if a.height == 25101 && a.fromaddr == "16PmeytY8CU3AF4UB87xrqqwcshXpGxSg7" && count == 29 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 30285 && a.fromaddr == "16iL8geqCGWTXriWhCtUJqZUKm1tzx8uDx" && count == 20 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 40521 && a.fromaddr == "1QCGds2z4weDhFbDD3Thsro57x3S1R9ARz" && count == 5 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 46164 && a.fromaddr == "1CoZB1SGT3TCxxRayCz1Aof7MD68gYr28X" && count == 36 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 46505 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 5 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 46511 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 6 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 46525 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 11 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 48187 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 6 {
+						count = et.MaxMatchCount
+					}
+					if a.height == 48612 && a.fromaddr == "1LaZqu35kibHLMPomv5HTJ1g1RkRBEengq" && count == 7 {
+						count = et.MaxMatchCount
+					}
 				}
 				//查询数据不满足10条说明没有了,跳出循环
 				if orderList.PrimaryKey == "" {
@@ -1194,7 +1222,7 @@ func QueryOrderList(statedb dbm.KV, localdb dbm.KV, addr string, status, count, 
 		if err != nil {
 			return nil, err
 		}
-		if order.Status != et.Ordered {
+		if order.Status != status {
 			_ = table.DelRow(order)
 			continue
 		}

@@ -268,6 +268,11 @@ coins = [
 [fork.sub.exchange]
 Enable=0
 #ForkParamV1=1
+ForkFix1=1
+ForkFix2=1
+ForkFix3=1
+ForkFix4=1
+
 `
 
 
