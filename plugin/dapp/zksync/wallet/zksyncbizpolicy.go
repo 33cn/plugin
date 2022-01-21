@@ -212,7 +212,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	return
 }
 
-func signTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.Signature, error) {
+func signTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
 	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
 	if err != nil {
 		bizlog.Error("SignTransaction", "privateKey.Sign error", err)
@@ -222,7 +222,7 @@ func signTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.Signature, error) {
 		X: privateKey.PublicKey.A.X.String(),
 		Y :privateKey.PublicKey.A.Y.String(),
 	}
-	sign := &zt.Signature{
+	sign := &zt.ZkSignature{
 		PubKey: pubKey,
 		SignInfo: signInfo,
 		Msg: msg,

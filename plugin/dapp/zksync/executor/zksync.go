@@ -54,17 +54,17 @@ func GetName() string {
 }
 
 //GetDriverName ...
-func (e *zksync) GetDriverName() string {
+func (z *zksync) GetDriverName() string {
 	return driverName
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
-func (e *zksync) CheckTx(tx *types.Transaction, index int) error {
+func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	action := new(zt.ZksyncAction)
 	if err := types.Decode(tx.Payload, action); err != nil {
 		return err
 	}
-	var signature *zt.Signature
+	var signature *zt.ZkSignature
 	var msg *zt.Msg
 	switch action.GetTy() {
 	case zt.TyDepositAction:
@@ -110,11 +110,11 @@ func (e *zksync) CheckTx(tx *types.Transaction, index int) error {
 }
 
 //ExecutorOrder Exec 的时候 同时执行 ExecLocal
-func (e *zksync) ExecutorOrder() int64 {
+func (z *zksync) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
 // GetPayloadValue get payload value
-func (e *zksync) GetPayloadValue() types.Message {
+func (z *zksync) GetPayloadValue() types.Message {
 	return &zt.ZksyncAction{}
 }

@@ -69,3 +69,54 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 }
 
 
+
+var opt_zksync_info = &table.Option{
+	Prefix:  KeyPrefixLocalDB,
+	Name:    "zksync",
+	Primary: "height_index",
+	Index:   []string{"height"},
+}
+
+// NewZksyncInfoTable ...
+func NewZksyncInfoTable(kvdb db.KV) *table.Table {
+	rowmeta := NewZksyncInfoRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_zksync_info)
+	if err != nil {
+		panic(err)
+	}
+	return table
+}
+
+
+// AccountTreeRow table meta 结构
+type ZksyncInfoRow struct {
+	*zt.OperationInfo
+}
+
+func NewZksyncInfoRow() *ZksyncInfoRow {
+	return &ZksyncInfoRow{OperationInfo: &zt.OperationInfo{}}
+}
+
+//CreateRow 新建数据行
+func (r *ZksyncInfoRow) CreateRow() *table.Row {
+	return &table.Row{Data: &zt.OperationInfo{}}
+}
+
+//SetPayload 设置数据
+func (r *ZksyncInfoRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*zt.OperationInfo); ok {
+		r.OperationInfo = txdata
+		return nil
+	}
+	return types.ErrTypeAsset
+}
+
+//Get 按照indexName 查询 indexValue
+func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
+	if key == "height_index" {
+		return []byte(fmt.Sprintf("%016d.%016d", r.GetBlockHeight(), r.GetTxIndex())), nil
+	} else if key == "height" {
+		return []byte(fmt.Sprintf("%016d", r.GetBlockHeight())), nil
+	}
+	return nil, types.ErrNotFound
+}

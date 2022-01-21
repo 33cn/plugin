@@ -18,7 +18,7 @@ message ZksyncAction {
 }
 
 
-message Signature {
+message ZkSignature {
   PubKey pubKey = 1;
   bytes signInfo = 2;
   Msg msg = 3;
@@ -79,28 +79,28 @@ message Deposit {
   string amount = 2;
   string ethAddress = 3;
   string chain33Addr = 4;
-  Signature signature = 5;
+  ZkSignature signature = 5;
 }
 
 message Withdraw {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  Signature signature = 4;
+  ZkSignature signature = 4;
 }
 
 message ContractToLeaf {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  Signature signature = 4;
+  ZkSignature signature = 4;
 }
 
 message LeafToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  Signature signature = 4;
+  ZkSignature signature = 4;
 }
 
 message Transfer {
@@ -108,7 +108,7 @@ message Transfer {
   string amount = 2;
   uint64 fromAccountId = 3;
   uint64 toAccountId = 4;
-  Signature signature = 5;
+  ZkSignature signature = 5;
 }
 
 message TransferToNew {
@@ -117,19 +117,19 @@ message TransferToNew {
   uint64 fromAccountId = 3;
   string toEthAddress = 4;
   string toChain33Address = 5;
-  Signature signature = 6;
+  ZkSignature signature = 6;
 }
 
 message ForceQuit {
   uint64 tokenId = 1;
   uint64 accountId = 2;
-  Signature signature = 3;
+  ZkSignature signature = 3;
 }
 
 message SetPubKey {
   uint64 accountId = 1;
   PubKey  pubKey = 2;
-  Signature signature = 3;
+  ZkSignature signature = 3;
 }
 
 // leaf merkle proof票据日志
@@ -182,7 +182,7 @@ message OperationInfo {
   uint64    tokenID       = 5;
   string    amount        = 6;
 
-  Signature sigData       = 7;
+  ZkSignature sigData       = 7;
 
   repeated string  roots  = 8; //每个操作后的root
 
@@ -210,7 +210,7 @@ message OperationSpecialData {
   repeated uint32 chainID    = 5;
   repeated uint64 tokenID    = 6;
   repeated OrderPricePair pricePair  = 7;
-  Signature sigData         = 8;
+  ZkSignature sigData         = 8;
 
 }
 

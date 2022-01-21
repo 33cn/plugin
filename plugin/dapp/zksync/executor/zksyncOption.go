@@ -1,13 +1,17 @@
 package executor
 
 import (
+	"encoding/hex"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
 	"math/big"
 	"strconv"
@@ -27,19 +31,19 @@ type Action struct {
 }
 
 //NewAction ...
-func NewAction(e *zksync, tx *types.Transaction, index int) *Action {
+func NewAction(z *zksync, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{
-		statedb:   e.GetStateDB(),
+		statedb:   z.GetStateDB(),
 		txhash:    hash,
 		fromaddr:  fromaddr,
-		blocktime: e.GetBlockTime(),
-		height:    e.GetHeight(),
+		blocktime: z.GetBlockTime(),
+		height:    z.GetHeight(),
 		execaddr:  dapp.ExecAddress(string(tx.Execer)),
-		localDB:   e.GetLocalDB(),
+		localDB:   z.GetLocalDB(),
 		index:     index,
-		api:       e.GetAPI(),
+		api:       z.GetAPI(),
 	}
 }
 
@@ -803,6 +807,16 @@ func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
 	}
 	if leaf == nil {
 		return nil, errors.New("account not exist")
+	}
+
+	//校验预存的地址是否和公钥匹配
+	pubKey := &eddsa.PublicKey{}
+	pubKey.A.X.SetString(payload.PubKey.X)
+	pubKey.A.Y.SetString(payload.PubKey.Y)
+	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash.Write(pubKey.Bytes())
+	if hex.EncodeToString(hash.Sum(nil)) != leaf.Chain33Addr {
+		return nil, errors.New("not your account")
 	}
 
 	err = authVerification(payload.Signature.PubKey, leaf.PubKey)
