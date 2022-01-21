@@ -8,6 +8,7 @@ import (
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"math/big"
 )
@@ -125,15 +126,12 @@ func setBeBitsToVal(bits []uint) string {
 	for i := 0; i < len(bits); i++ {
 		a.SetBit(a, i, bits[i])
 	}
-	return a.String()
+	return new(fr.Element).SetBigInt(a).String()
 }
 
-func bitToByte(bits []uint) []byte {
-	a := big.NewInt(0)
-	for i := 0; i < len(bits); i++ {
-		a.SetBit(a, i, bits[i])
-	}
-	return a.Bytes()
+func stringToByte(s string) []byte {
+	byteArray := new(fr.Element).SetString(s).Bytes()
+	return byteArray[:]
 }
 
 func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
@@ -155,9 +153,9 @@ func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -176,9 +174,9 @@ func GetWithdrawMsg(payload *zt.Withdraw) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -197,9 +195,9 @@ func GetLeafToContractMsg(payload *zt.LeafToContract) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -218,9 +216,9 @@ func GetContractToLeafMsg(payload *zt.ContractToLeaf) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -241,9 +239,9 @@ func GetTransferMsg(payload *zt.Transfer) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -269,9 +267,9 @@ func GetTransferToNewMsg(payload *zt.TransferToNew) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -288,9 +286,9 @@ func GetForceQuitMsg(payload *zt.ForceQuit) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[:zt.MsgFirstWidth]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 	}
 
 }
@@ -311,17 +309,17 @@ func GetSetPubKeyMsg(payload *zt.SetPubKey) *zt.Msg {
 	copy(binaryData, pubData)
 
 	return &zt.Msg{
-		First:  bitToByte(binaryData[:zt.MsgFirstWidth]),
-		Second: bitToByte(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  bitToByte(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
 
 func GetMsgHash(msg *zt.Msg) []byte {
 	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
-	hash.Write(msg.GetFirst())
-	hash.Write(msg.GetSecond())
-	hash.Write(msg.GetThird())
+	hash.Write(stringToByte(msg.GetFirst()))
+	hash.Write(stringToByte(msg.GetSecond()))
+	hash.Write(stringToByte(msg.GetThird()))
 	return hash.Sum(nil)
 }
