@@ -47,7 +47,7 @@ func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 
 //GetIndex get index
 func (a *Action) GetIndex() int64 {
-	//扩容4个0,用于匹配多个matchorder索引时使用
+	// Add four zeros to match multiple MatchOrder indexes
 	return (a.height*types.MaxTxsPerBlock + int64(a.index)) * 1e4
 }
 
@@ -57,7 +57,7 @@ func (a *Action) GetKVSet(order *et.Order) (kvset []*types.KeyValue) {
 	return kvset
 }
 
-//OpSwap 反转
+//OpSwap reverse
 func (a *Action) OpSwap(op int32) int32 {
 	if op == et.OpBuy {
 		return et.OpSell
@@ -65,7 +65,7 @@ func (a *Action) OpSwap(op int32) int32 {
 	return et.OpBuy
 }
 
-//CalcActualCost 计算实际花费
+//CalcActualCost Calculate actual cost
 func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
 	if op == et.OpBuy {
 		return SafeMul(amount, price, coinPrecision)
@@ -73,7 +73,7 @@ func CalcActualCost(op int32, amount int64, price, coinPrecision int64) int64 {
 	return amount
 }
 
-//CheckPrice price 精度允许范围 1<=price<=1e16 整数
+//CheckPrice price  1<=price<=1e16
 func CheckPrice(price int64) bool {
 	if price > 1e16 || price < 1 {
 		return false
@@ -118,7 +118,7 @@ func CheckStatus(status int32) bool {
 	return false
 }
 
-//CheckExchangeAsset 检查交易得资产是否合法
+//CheckExchangeAsset
 func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
 		return false
@@ -133,8 +133,6 @@ func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.Receipt, error) {
 	leftAsset := payload.GetLeftAsset()
 	rightAsset := payload.GetRightAsset()
-	//TODO 参数要合法，必须有严格的校验，后面统一加入到checkTx里面
-	//coins执行器下面只有bty
 	cfg := a.api.GetConfig()
 	if !CheckExchangeAsset(cfg.GetCoinExec(), leftAsset, rightAsset) {
 		return nil, et.ErrAsset
@@ -148,7 +146,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.
 	if !CheckOp(payload.GetOp()) {
 		return nil, et.ErrAssetOp
 	}
-	//TODO 这里symbol
+
 	leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
 	if err != nil {
 		return nil, err
@@ -157,7 +155,7 @@ func (a *Action) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.
 	if err != nil {
 		return nil, err
 	}
-	//先检查账户余额
+	//Check your account balance first
 	if payload.GetOp() == et.OpBuy {
 		amount := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
 		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
@@ -200,11 +198,7 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 	rightAsset := order.GetLimitOrder().GetRightAsset()
 	price := order.GetLimitOrder().GetPrice()
 	balance := order.GetBalance()
-
 	cfg := a.api.GetConfig()
-	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix2) {
-		return a.RevokeOrder_Fix2(payload)
-	}
 
 	if order.GetLimitOrder().GetOp() == et.OpBuy {
 		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
@@ -245,234 +239,6 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 		kvs = append(kvs, receipt.KV...)
 	}
 
-	//更新order状态
-	order.Status = et.Revoked
-	order.UpdateTime = a.blocktime
-	order.RevokeHash = hex.EncodeToString(a.txhash)
-	kvs = append(kvs, a.GetKVSet(order)...)
-	re := &et.ReceiptExchange{
-		Order: order,
-		Index: a.GetIndex(),
-	}
-	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
-	logs = append(logs, receiptlog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
-
-}
-func (a *Action) RevokeOrder_Fix2(payload *et.RevokeOrder) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
-	if err != nil {
-		return nil, err
-	}
-	if order.Addr != a.fromaddr {
-		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrAddr
-	}
-	if order.Status == et.Completed || order.Status == et.Revoked {
-		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrOrderSatus
-	}
-	leftAsset := order.GetLimitOrder().GetLeftAsset()
-	rightAsset := order.GetLimitOrder().GetRightAsset()
-	price := order.GetLimitOrder().GetPrice()
-	balance := order.GetBalance()
-	cfg := a.api.GetConfig()
-
-	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if rightAccount.Frozen < amount {
-			elog.Warn("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
-			amount = rightAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := rightAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-	if order.GetLimitOrder().GetOp() == et.OpSell {
-		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
-		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if leftAccount.Frozen < amount {
-			elog.Warn("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
-			amount = leftAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-
-	//更新order状态
-	order.Status = et.Revoked
-	order.UpdateTime = a.blocktime
-	order.RevokeHash = hex.EncodeToString(a.txhash)
-	kvs = append(kvs, a.GetKVSet(order)...)
-	re := &et.ReceiptExchange{
-		Order: order,
-		Index: a.GetIndex(),
-	}
-	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
-	logs = append(logs, receiptlog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
-}
-func (a *Action) RevokeOrder_Fix3(payload *et.RevokeOrder) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
-	if err != nil {
-		return nil, err
-	}
-	if order.Status == et.Completed || order.Status == et.Revoked {
-		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrOrderSatus
-	}
-	leftAsset := order.GetLimitOrder().GetLeftAsset()
-	rightAsset := order.GetLimitOrder().GetRightAsset()
-	price := order.GetLimitOrder().GetPrice()
-	balance := order.GetBalance()
-	cfg := a.api.GetConfig()
-
-	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if rightAccount.Frozen < amount {
-			elog.Warn("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
-			amount = rightAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := rightAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-	if order.GetLimitOrder().GetOp() == et.OpSell {
-		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
-		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if leftAccount.Frozen < amount {
-			elog.Warn("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
-			amount = leftAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-
-	//更新order状态
-	order.Status = et.Revoked
-	order.UpdateTime = a.blocktime
-	order.RevokeHash = hex.EncodeToString(a.txhash)
-	kvs = append(kvs, a.GetKVSet(order)...)
-	re := &et.ReceiptExchange{
-		Order: order,
-		Index: a.GetIndex(),
-	}
-	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
-	logs = append(logs, receiptlog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
-}
-func (a *Action) RevokeOrder_Fix4(payload *et.RevokeOrder) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
-	if err != nil {
-		return nil, err
-	}
-	if order.Status != et.Ordered {
-		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrOrderSatus
-	}
-	leftAsset := order.GetLimitOrder().GetLeftAsset()
-	rightAsset := order.GetLimitOrder().GetRightAsset()
-	price := order.GetLimitOrder().GetPrice()
-	balance := order.GetBalance()
-	cfg := a.api.GetConfig()
-
-	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		rightAccount := rightAssetDB.LoadExecAccount(order.Addr, a.execaddr)
-		if rightAccount.Frozen < amount {
-			elog.Warn("revoke check right frozen", "addr", order.Addr, "avail", rightAccount.Frozen, "amount", amount, "orderID", payload.GetOrderID())
-			amount = rightAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := rightAssetDB.ExecActive(order.Addr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", order.Addr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-	if order.GetLimitOrder().GetOp() == et.OpSell {
-		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
-		leftAccount := leftAssetDB.LoadExecAccount(order.Addr, a.execaddr)
-		if leftAccount.Frozen < amount {
-			elog.Warn("revoke check left frozen", "addr", order.Addr, "avail", leftAccount.Frozen, "amount", amount, amount, "orderID", payload.GetOrderID())
-			amount = leftAccount.Frozen
-		}
-		if amount != 0 {
-			receipt, err := leftAssetDB.ExecActive(order.Addr, a.execaddr, amount)
-			if err != nil {
-				elog.Error("RevokeOrder.ExecActive", "addr", order.Addr, "amount", amount, "err", err.Error())
-				return nil, err
-			}
-			logs = append(logs, receipt.Logs...)
-			kvs = append(kvs, receipt.KV...)
-		}
-	}
-
-	//更新order状态
 	order.Status = et.Revoked
 	order.UpdateTime = a.blocktime
 	order.RevokeHash = hex.EncodeToString(a.txhash)
@@ -487,205 +253,12 @@ func (a *Action) RevokeOrder_Fix4(payload *et.RevokeOrder) (*types.Receipt, erro
 	return receipts, nil
 }
 
-//撮合交易逻辑方法
-// 规则：
-//1.买单高于市场价，按价格由低往高撮合。
-//2.卖单低于市场价，按价格由高往低进行撮合。
-//3.价格相同按先进先出的原则进行撮合
+// set the transaction logic method
+// rules:
+//1. The purchase price is higher than the market price, and the price is matched from low to high.
+//2. Sell orders are matched at prices lower than market prices.
+//3. Match the same prices on a first-in, first-out basis
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix2) {
-		return a.matchLimitOrder_Fix2(payload, leftAccountDB, rightAccountDB, entrustAddr)
-	}
-	return a.matchLimitOrder_Fix1(payload, leftAccountDB, rightAccountDB)
-}
-func (a *Action) matchLimitOrder_Fix1(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var orderKey string
-	var priceKey string
-	var count int
-
-	cfg := a.api.GetConfig()
-	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
-	if err != nil {
-		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
-		return nil, err
-	}
-	trade := tCfg.GetTrade(payload)
-	or := &et.Order{
-		OrderID:    a.GetIndex(),
-		Value:      &et.Order_LimitOrder{LimitOrder: payload},
-		Ty:         et.TyLimitOrderAction,
-		Executed:   0,
-		AVGPrice:   0,
-		Balance:    payload.GetAmount(),
-		Status:     et.Ordered,
-		Addr:       a.fromaddr,
-		UpdateTime: a.blocktime,
-		Index:      a.GetIndex(),
-		Rate:       trade.GetMaker(),
-		MinFee:     trade.GetMinFee(),
-		Hash:       hex.EncodeToString(a.txhash),
-		CreateTime: a.blocktime,
-	}
-	re := &et.ReceiptExchange{
-		Order: or,
-		Index: a.GetIndex(),
-	}
-
-	//单笔交易最多撮合100笔历史订单,最大可撮合得深度，系统得自我防护
-	//迭代已有挂单价格
-	for {
-		//当撮合深度大于最大深度时跳出
-		if count >= et.MaxMatchCount {
-			break
-		}
-		//获取现有市场挂单价格信息
-		marketDepthList, err := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
-		if err == types.ErrNotFound {
-			break
-		}
-		for _, marketDepth := range marketDepthList.List {
-			if count >= et.MaxMatchCount {
-				break
-			}
-			// 卖单价大于买单价
-			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
-				continue
-			}
-			// 买单价小于卖单价
-			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
-				continue
-			}
-			//根据价格进行迭代
-			var hasOrder bool
-			for {
-				//当撮合深度大于等于最大深度时跳出
-				if count >= et.MaxMatchCount {
-					break
-				}
-				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
-				if orderList != nil && !hasOrder {
-					hasOrder = true
-				}
-				if err == types.ErrNotFound {
-					if !hasOrder {
-						elog.Warn("LimitOrder find dirty deep", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount, "err", err.Error())
-					}
-					break
-				}
-
-				for _, matchorder := range orderList.List {
-					//当撮合深度大于最大深度时跳出
-					if count >= et.MaxMatchCount {
-						break
-					}
-					//同地址不能交易
-					if matchorder.Addr == a.fromaddr {
-						continue
-					}
-					//撮合,指针传递
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, matchorder, or, re, tCfg.GetFeeAddr(), trade.GetTaker()) // payload, or redundant
-					if err != nil {
-						return nil, err
-					}
-					logs = append(logs, log...)
-					kvs = append(kvs, kv...)
-					//订单完成,直接返回，如果没有完成，则继续撮合，直到count等于
-					if or.Status == et.Completed {
-						receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
-						logs = append(logs, receiptlog)
-						receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-						return receipts, nil
-					}
-					//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
-					//撮合深度计数
-					count = count + 1
-
-					if a.height == 25101 && a.fromaddr == "16PmeytY8CU3AF4UB87xrqqwcshXpGxSg7" && count == 29 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 30285 && a.fromaddr == "16iL8geqCGWTXriWhCtUJqZUKm1tzx8uDx" && count == 20 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 40521 && a.fromaddr == "1QCGds2z4weDhFbDD3Thsro57x3S1R9ARz" && count == 5 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 46164 && a.fromaddr == "1CoZB1SGT3TCxxRayCz1Aof7MD68gYr28X" && count == 36 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 46505 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 5 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 46511 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 6 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 46525 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 11 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 48187 && a.fromaddr == "1MwgSgsRpuMVnRLGBgs7c7VNELA4PPHM1n" && count == 6 {
-						count = et.MaxMatchCount
-					}
-					if a.height == 48612 && a.fromaddr == "1LaZqu35kibHLMPomv5HTJ1g1RkRBEengq" && count == 7 {
-						count = et.MaxMatchCount
-					}
-				}
-				//查询数据不满足10条说明没有了,跳出循环
-				if orderList.PrimaryKey == "" {
-					break
-				}
-				orderKey = orderList.PrimaryKey
-			}
-			if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) && !hasOrder {
-				var matchorder et.Order
-				matchorder.UpdateTime = a.blocktime
-				matchorder.Status = et.Completed
-				matchorder.Balance = 0
-				matchorder.Executed = 0
-				matchorder.AVGPrice = marketDepth.Price
-				elog.Info("make empty match to del depth", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount)
-				re.MatchOrders = append(re.MatchOrders, &matchorder)
-			}
-		}
-
-		//查询的数据如果没有primaryKey说明没有后续数据了,跳出循环
-		if marketDepthList.PrimaryKey == "" {
-			break
-		}
-		priceKey = marketDepthList.PrimaryKey
-	}
-
-	//未完成的订单需要冻结剩余未成交的资金
-	if payload.Op == et.OpBuy {
-		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
-		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
-		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen OpBuy", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
-	}
-	if payload.Op == et.OpSell {
-		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
-		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
-		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen OpSell", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
-	}
-	//更新order状态
-	kvs = append(kvs, a.GetKVSet(or)...)
-	re.Order = or
-	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
-	logs = append(logs, receiptlog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
-}
-func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var priceKey string
@@ -697,22 +270,7 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
-	//fork后, 手续费默认值有变动
-	//rate=0  未配置的币种手续费默认为千分之一
-	//rate=1  与未配置返回0做出区分 配置1的代表真实手续费为0，
 	trade := tCfg.GetTrade(payload)
-	taker := trade.GetTaker()
-	maker := trade.GetMaker()
-	if taker == 0 {
-		taker = 100000
-	} else if taker == 1 {
-		taker = 0
-	}
-	if maker == 0 {
-		maker = 100000
-	} else if maker == 1 {
-		maker = 0
-	}
 
 	or := &et.Order{
 		OrderID:     a.GetIndex(),
@@ -726,7 +284,7 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 		Addr:        a.fromaddr,
 		UpdateTime:  a.blocktime,
 		Index:       a.GetIndex(),
-		Rate:        maker,
+		Rate:        trade.GetMaker(),
 		MinFee:      trade.GetMinFee(),
 		Hash:        hex.EncodeToString(a.txhash),
 		CreateTime:  a.blocktime,
@@ -736,18 +294,17 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 		Index: a.GetIndex(),
 	}
 
-	//单笔交易最多撮合100笔历史订单,最大可撮合得深度，系统得自我防护
-	//迭代已有挂单价格
+	// A single transaction can match up to 100 historical orders, the maximum depth can be matched, the system has to protect itself
+	// Iteration has listing price
 	var done bool
 	for {
-		//当撮合深度大于最大深度时跳出
 		if count >= et.MaxMatchCount {
 			break
 		}
 		if done {
 			break
 		}
-		//获取现有市场挂单价格信息
+		//Obtain price information of existing market listing
 		marketDepthList, _ := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
 		if marketDepthList == nil || len(marketDepthList.List) == 0 {
 			break
@@ -758,22 +315,18 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 				done = true
 				break
 			}
-			// 卖单价大于买单价
 			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
 				done = true
 				break
 			}
-			// 买单价小于卖单价
 			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
 				done = true
 				break
 			}
 
-			//根据价格进行迭代
 			var hasOrder = false
 			var orderKey string
 			for {
-				//当撮合深度大于等于最大深度时跳出
 				if count >= et.MaxMatchCount {
 					done = true
 					break
@@ -790,12 +343,11 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 					return nil, err
 				}
 				for _, matchorder := range orderList.List {
-					//当撮合深度大于最大深度时跳出
 					if count >= et.MaxMatchCount {
 						done = true
 						break
 					}
-					//校验订单状态
+					// Check the order status
 					order, err := findOrderByOrderID(a.statedb, a.localDB, matchorder.GetOrderID())
 					if err != nil || order.Status != et.Ordered {
 						if len(orderList.List) == 1 {
@@ -803,38 +355,25 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 						}
 						continue
 					}
-					//撮合,指针传递
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), taker) // payload, or redundant
+					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), trade.GetTaker()) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
-							if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
-								_, err = a.RevokeOrder_Fix3(&et.RevokeOrder{OrderID: order.GetOrderID()})
-								elog.Warn("matchModel RevokeOrder3", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
-							} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix4) {
-								_, err = a.RevokeOrder_Fix4(&et.RevokeOrder{OrderID: order.GetOrderID()})
-								elog.Warn("matchModel RevokeOrder4", "height", a.height, "orderID", order.GetOrderID(), "activeID", or.GetOrderID(), "error", err)
-							} else {
-								_, _ = a.RevokeOrder(&et.RevokeOrder{OrderID: order.GetOrderID()})
-								elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
-							}
+							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
 							continue
 						}
 						return nil, err
 					}
 					logs = append(logs, log...)
 					kvs = append(kvs, kv...)
-					//订单完成,直接返回，如果没有完成，则继续撮合，直到count等于
 					if or.Status == et.Completed {
 						receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
 						logs = append(logs, receiptlog)
 						receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 						return receipts, nil
 					}
-					//TODO 这里得逻辑是否需要调整?当匹配的单数过多，会导致receipt日志数量激增，理论上存在日志存储攻击，需要加下最大匹配深度，防止这种攻击发生
-					//撮合深度计数
+					// match depth count
 					count = count + 1
 				}
-				//查询数据不满足10条说明没有了,跳出循环
 				if orderList.PrimaryKey == "" {
 					break
 				}
@@ -852,14 +391,13 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 			}
 		}
 
-		//查询的数据如果没有primaryKey说明没有后续数据了,跳出循环
 		if marketDepthList.PrimaryKey == "" {
 			break
 		}
 		priceKey = marketDepthList.PrimaryKey
 	}
 
-	//未完成的订单需要冻结剩余未成交的资金
+	//Outstanding orders require freezing of the remaining unclosed funds
 	if payload.Op == et.OpBuy {
 		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
 		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
@@ -880,7 +418,6 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 	}
-	//更新order状态
 	kvs = append(kvs, a.GetKVSet(or)...)
 	re.Order = or
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
@@ -889,7 +426,6 @@ func (a *Action) matchLimitOrder_Fix2(payload *et.LimitOrder, leftAccountDB, rig
 	return receipts, nil
 }
 
-//交易撮合模型
 func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, feeAddr string, taker int32) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -908,14 +444,12 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	var receipt *types.Receipt
 	var err error
 	if payload.Op == et.OpSell {
-		//转移冻结资产
+		//Transfer of frozen assets
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if matchorder.Addr != a.fromaddr {
 			receipt, err = rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
-		} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
-			receipt, err = rightAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		} else {
-			receipt, err = rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
+			receipt, err = rightAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		}
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err)
@@ -924,8 +458,8 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 
-		//收取手续费
-		activeFee := calcMtfFee(amount, taker) //主动成交方的手续费
+		//Charge fee
+		activeFee := calcMtfFee(amount, taker) //Transaction fee of the active party
 		if activeFee != 0 {
 			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, feeAddr, a.execaddr, activeFee)
 			if err != nil {
@@ -938,7 +472,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		//将达成交易的相应资产结算
+		//The settlement of the corresponding assets for the transaction to be concluded
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
@@ -950,8 +484,8 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		//收取手续费
-		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费
+		//Charge fee
+		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //Passive transaction fees
 		if passiveFee != 0 {
 			receipt, err = leftAccountDB.ExecTransfer(matchorder.Addr, feeAddr, a.execaddr, passiveFee)
 			if err != nil {
@@ -965,18 +499,15 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		}
 
 		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
-		//计算matchOrder平均成交价格
+		//Calculate the average transaction price
 		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
 	}
 	if payload.Op == et.OpBuy {
-		//转移冻结资产
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = leftAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
-		} else if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix3) {
-			receipt, err = leftAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		} else {
-			receipt, err = leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
+			receipt, err = leftAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
 		}
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen2", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err.Error())
@@ -985,8 +516,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 
-		//收取手续费
-		activeFee := calcMtfFee(amount, taker) //主动成交方的手续费
+		activeFee := calcMtfFee(amount, taker)
 		if activeFee != 0 {
 			receipt, err = leftAccountDB.ExecTransfer(a.fromaddr, feeAddr, a.execaddr, activeFee)
 			if err != nil {
@@ -999,7 +529,6 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		//将达成交易的相应资产结算
 		amount = CalcActualCost(payload.Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if a.fromaddr != matchorder.Addr {
 			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, matchorder.Addr, a.execaddr, amount)
@@ -1011,8 +540,7 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 			kvs = append(kvs, receipt.KV...)
 		}
 
-		//收取手续费
-		passiveFee := calcMtfFee(amount, matchorder.GetRate()) //被动成交方的手续费
+		passiveFee := calcMtfFee(amount, matchorder.GetRate())
 		if passiveFee != 0 {
 			receipt, err = rightAccountDB.ExecTransfer(matchorder.Addr, feeAddr, a.execaddr, passiveFee)
 			if err != nil {
@@ -1026,7 +554,6 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 		}
 
 		or.AVGPrice = caclAVGPrice(or, matchorder.GetLimitOrder().Price, matched)
-		//计算matchOrder平均成交价格
 		matchorder.AVGPrice = caclAVGPrice(matchorder, matchorder.GetLimitOrder().Price, matched)
 	}
 
@@ -1066,8 +593,9 @@ func (a *Action) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *
 	return logs, kvs, nil
 }
 
-//根据订单号去状态数据库中查询
-// 1.localdb删除顺序，先实时删除缓存，区块生成时统一修改db。会导致缓存数据被删除但查询时缓存查询不到会去db查询依旧可以查询到删除的数据
+// Query the status database according to the order number
+// Localdb deletion sequence: delete the cache in real time first, and modify the DB uniformly during block generation.
+// The cache data will be deleted. However, if the cache query fails, the deleted data can still be queried in the DB
 func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Order, error) {
 	data, err := statedb.Get(calcOrderKey(orderID))
 	if err != nil {
@@ -1090,7 +618,7 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 
 	var rows []*tab.Row
 	var err error
-	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
+	if primaryKey == "" { // First query, the default display of the latest transaction record
 		rows, err = table.ListIndex("market_order", prefix, nil, et.Count, direction)
 	} else {
 		rows, err = table.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
@@ -1104,18 +632,19 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 	var orderList et.OrderList
 	for _, row := range rows {
 		order := row.Data.(*et.Order)
-		//替换已经成交得量
+		// The replacement has been done
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 	}
-	//设置主键索引
+	// Set the primary key index
 	if len(rows) == int(et.Count) {
 		orderList.PrimaryKey = string(rows[len(rows)-1].Primary)
 	}
 	return &orderList, nil
 }
 
-//Direction 买单深度是按价格倒序，由高到低
+//Direction
+//Buying depth is in reverse order by price, from high to low
 func Direction(op int32) int32 {
 	if op == et.OpBuy {
 		return et.ListDESC
@@ -1123,7 +652,8 @@ func Direction(op int32) int32 {
 	return et.ListASC
 }
 
-//QueryMarketDepth 这里primaryKey当作主键索引来用，首次查询不需要填值,买单按价格由高往低，卖单按价格由低往高查询
+//QueryMarketDepth 这里primaryKey当作主键索引来用，
+//The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
 func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), op))
@@ -1132,7 +662,7 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 	}
 	var rows []*tab.Row
 	var err error
-	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
+	if primaryKey == "" { // First query, the default display of the latest transaction record
 		rows, err = table.ListIndex("price", prefix, nil, count, Direction(op))
 	} else {
 		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
@@ -1146,14 +676,13 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 	for _, row := range rows {
 		list.List = append(list.List, row.Data.(*et.MarketDepth))
 	}
-	//设置主键索引
 	if len(rows) == int(count) {
 		list.PrimaryKey = string(rows[len(rows)-1].Primary)
 	}
 	return &list, nil
 }
 
-//QueryHistoryOrderList 只返回成交的订单信息
+//QueryHistoryOrderList Only the order information is returned
 func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
 	table := NewHistoryOrderTable(localdb)
 	prefix := []byte(fmt.Sprintf("%s:%s", left.Symbol, right.Symbol))
@@ -1165,7 +694,7 @@ func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey str
 	var err error
 	var orderList et.OrderList
 HERE:
-	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
+	if primaryKey == "" { // First query, the default display of the latest transaction record
 		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
 	} else {
 		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
@@ -1179,15 +708,14 @@ HERE:
 	}
 	for _, row := range rows {
 		order := row.Data.(*et.Order)
-		//因为这张表里面记录了 completed,revoked 两种状态的订单，所以需要过滤
+		// This table contains orders completed,revoked so filtering is required
 		if order.Status == et.Revoked {
 			continue
 		}
-		//替换已经成交得量
+		// The replacement has been done
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 		if len(orderList.List) == int(count) {
-			//设置主键索引
 			orderList.PrimaryKey = string(row.Primary)
 			return &orderList, nil
 		}
@@ -1199,8 +727,8 @@ HERE:
 	return &orderList, nil
 }
 
-//QueryOrderList 默认展示最新的
-func QueryOrderList(statedb dbm.KV, localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
+//QueryOrderList Displays the latest by default
+func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
 	var table *tab.Table
 	if status == et.Completed || status == et.Revoked {
 		table = NewHistoryOrderTable(localdb)
@@ -1214,7 +742,7 @@ func QueryOrderList(statedb dbm.KV, localdb dbm.KV, addr string, status, count, 
 	}
 	var rows []*tab.Row
 	var err error
-	if primaryKey == "" { //第一次查询,默认展示最新得成交记录
+	if primaryKey == "" {
 		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
 	} else {
 		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
@@ -1225,19 +753,10 @@ func QueryOrderList(statedb dbm.KV, localdb dbm.KV, addr string, status, count, 
 	}
 	var orderList et.OrderList
 	for _, row := range rows {
-		order, err := findOrderByOrderID(statedb, localdb, row.Data.(*et.Order).GetOrderID())
-		if err != nil {
-			return nil, err
-		}
-		if order.Status != status {
-			_ = table.DelRow(order)
-			continue
-		}
-		//替换已经成交得量
+		order := row.Data.(*et.Order)
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 	}
-	//设置主键索引
 	if len(rows) == int(count) {
 		orderList.PrimaryKey = string(rows[len(rows)-1].Primary)
 	}
@@ -1248,7 +767,7 @@ func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, p
 	primaryKey := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, price))
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
-		// 在localdb中, 同区块的执行, 删除是先设置成nil, 最后删除的
+		// In localDB, delete is set to nil first and deleted last
 		if err == types.ErrDecode && row == nil {
 			err = types.ErrNotFound
 		}
@@ -1257,14 +776,14 @@ func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, p
 	return row.Data.(*et.MarketDepth), nil
 }
 
-//SafeMul math库中的安全大数乘法，防溢出
+//SafeMul Safe multiplication of large numbers, prevent overflow
 func SafeMul(x, y, coinPrecision int64) int64 {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
 	res = big.NewInt(0).Div(res, big.NewInt(coinPrecision))
 	return res.Int64()
 }
 
-//计算平均成交价格
+//Calculate the average transaction price
 func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
 	x := big.NewInt(0).Mul(big.NewInt(order.AVGPrice), big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()))
 	y := big.NewInt(0).Mul(big.NewInt(price), big.NewInt(amount))
@@ -1274,7 +793,7 @@ func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
 	return avg.Int64()
 }
 
-//计算手续费
+//计Calculation fee
 func calcMtfFee(cost int64, rate int32) int64 {
 	fee := big.NewInt(0).Mul(big.NewInt(cost), big.NewInt(int64(rate)))
 	fee = big.NewInt(0).Div(fee, big.NewInt(types.DefaultCoinPrecision))

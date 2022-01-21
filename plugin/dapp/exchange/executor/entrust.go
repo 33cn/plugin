@@ -15,7 +15,7 @@ func (a *Action) ExchangeBind(payload *et.ExchangeBind) (*types.Receipt, error) 
 	if a.fromaddr != payload.GetExchangeAddress() {
 		return nil, types.ErrFromAddr
 	}
-	// 为空时代表解除绑定，不为空时校验地址格式
+	// If the value is null, the binding is unbound. If the value is not null, the address format is verified
 	if len(payload.GetEntrustAddress()) > 0 {
 		if err := address.CheckAddress(payload.GetEntrustAddress()); err != nil {
 			return nil, err
