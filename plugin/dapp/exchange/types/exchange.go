@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/33cn/chain33/types"
@@ -152,48 +153,85 @@ func (e *ExchangeType) GetLogMap() map[int64]*types.LogInfo {
 
 var MverPrefix = "mver.exec.sub." + ExchangeX // [mver.exec.sub.exchange]
 
-type TradeConfig struct {
-	Banks []string
-	Coins map[string]Coin
+type Econfig struct {
+	Banks     []string
+	Coins     []CoinCfg
+	Exchanges map[string]*Trade // 现货交易、杠杠交易
+}
+
+type CoinCfg struct {
+	Coin   string
+	Execer string
+	Name   string
 }
 
 // 交易对配置
-type Coin struct {
-	Name   string
-	Rate   int32
-	MinFee int64
+type Trade struct {
+	Symbol       string
+	PriceDigits  int32
+	AmountDigits int32
+	Taker        int32
+	Maker        int32
+	MinFee       int64
 }
 
-func (f *TradeConfig) GetFeeAddr() string {
+func (f *Econfig) GetFeeAddr() string {
 	return f.Banks[0]
 }
 
-func (f *TradeConfig) GetRate(or *LimitOrder) int32 {
-	var symbol = or.GetRightAsset().GetSymbol()
-
-	if or.GetOp() == OpBuy {
-		symbol = or.GetLeftAsset().GetSymbol()
+func (f *Econfig) GetCoinName(asset *Asset) string {
+	for _, v := range f.Coins {
+		if v.Coin == asset.GetSymbol() && v.Execer == asset.GetExecer() {
+			return v.Name
+		}
 	}
-
-	c, ok := f.Coins[symbol]
-	if !ok {
-		return 0
-	}
-
-	return c.Rate
+	return asset.Symbol
 }
 
-func (f *TradeConfig) GetMinFee(or *LimitOrder) int64 {
-	var symbol = or.GetRightAsset().GetSymbol()
+func (f *Econfig) GetSymbol(left, right *Asset) string {
+	return fmt.Sprintf("%v_%v", f.GetCoinName(left), f.GetCoinName(right))
+}
 
-	if or.GetOp() == OpBuy {
-		symbol = or.GetLeftAsset().GetSymbol()
-	}
-
-	c, ok := f.Coins[symbol]
+func (f *Econfig) GetTrade(or *LimitOrder) *Trade {
+	symbol := f.GetSymbol(or.LeftAsset, or.RightAsset)
+	c, ok := f.Exchanges[symbol]
 	if !ok {
+		return nil
+	}
+	return c
+}
+
+func (t *Trade) GetPriceDigits() int32 {
+	if t == nil {
 		return 0
 	}
+	return t.PriceDigits
+}
 
-	return c.MinFee
+func (t *Trade) GetAmountDigits() int32 {
+	if t == nil {
+		return 0
+	}
+	return t.AmountDigits
+}
+
+func (t *Trade) GetTaker() int32 {
+	if t == nil {
+		return 0
+	}
+	return t.Taker
+}
+
+func (t *Trade) GetMaker() int32 {
+	if t == nil {
+		return 0
+	}
+	return t.Maker
+}
+
+func (t *Trade) GetMinFee() int64 {
+	if t == nil {
+		return 0
+	}
+	return t.MinFee
 }

@@ -264,13 +264,36 @@ username=""
 password=""
 namespace=""
 
+#exchange合约相关配置
 [mver.exec.sub.exchange]
+#银行帐户列表（现第一个地址用来收取手续费）
 banks = [
     "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
 ]
+#币种配置，
+#coin   转入exchange合约的币种名称
+#execer 转入exchange合约的币种执行器名称
+#name   执行器币种的别称
+#minFee最小手续费,配置时需*1e8(如：最小手续费收取1个，minFee=100000000)
 coins = [
-    {name = "bty",  rate = 100000, minFee = 0},
-    {name = "CCNY",  rate = 100000, minFee = 0},
+    {coin = "bty", execer = "coins", name = "BTY"},
+    {coin = "CCNY", execer = "token", name = "CCNY"},
+
+    {coin = "coins.bty", execer = "paracross", name = "BTY"},
+    {coin = "YCC", execer = "evmxgo", name = "YCC"},
+    {coin = "ETH", execer = "evmxgo", name = "ETH"},
+    {coin = "USDT", execer = "evmxgo", name = "USDT"}
+]
+#现货交易配置
+#symbol 币种对；priceDigits 价格最小位数；amountDigits 数量最小位数； minFee  最小手续费
+#taker  吃单手续费率,配置时需*1e8(如：收取每笔交易百分之一的手续费，maker=1000000)
+#maker  挂单手续费,配置时需*1e8(如：收取每笔交易千分之一的手续费，taker=100000)
+exchanges = [
+    {symbol = "BTY_CCNY", priceDigits = 4, amountDigits = 1, taker = 1000000, maker = 100000,  minFee = 0},
+
+    {symbol = "BTY_USDT", priceDigits = 4, amountDigits = 4, taker = 1000000, maker = 100000,  minFee = 0},
+    {symbol = "YCC_USDT", priceDigits = 4, amountDigits = 4, taker = 1000000, maker = 100000,  minFee = 0},
+    {symbol = "ETH_USDT", priceDigits = 4, amountDigits = 4, taker = 1000000, maker = 100000,  minFee = 0}
 ]
 
 [fork.sub.exchange]
