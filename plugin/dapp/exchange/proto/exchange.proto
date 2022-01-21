@@ -107,7 +107,7 @@ message Order {
   int64 updateTime = 10;
   //索引
   int64 index = 11;
-  //手续费率
+  //手续费率 (挂单)
   int32 rate = 12;
   //手续费
   int64 digestedFee = 13;
