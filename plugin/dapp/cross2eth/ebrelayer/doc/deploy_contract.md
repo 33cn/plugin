@@ -349,7 +349,7 @@ tx is written to file:  create_multisign_tx.txt
 * 获取 bridge_token 地址
 ```
 命令：
-./chain33-cli evm abi call -a 1JmWVu1GEdQYSN1opxS9C39aS4NvG57yTr -c 1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ -b 'getToken2address(YCC)'
+./chain33-cli evm query -a 1JmWVu1GEdQYSN1opxS9C39aS4NvG57yTr -c 1N6HstkyLFS8QCeVfdvYxx1xoryXoJtvvZ -b 'getToken2address(YCC)'
 
 参数说明：
   -a, --address string   evm 合约地址,这里是 chain33 BridgeBank 合约地址
