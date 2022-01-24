@@ -2,130 +2,176 @@ package executor
 
 import (
 	"bytes"
+	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
-//func TestZksyncOption(t *testing.T) {
-//	dir, statedb, localdb := util.CreateTestDB()
-//	defer util.CloseTestDB(dir, statedb)
-//	NewAccountTree(localdb)
-//	tree, err := getAccountTree(localdb)
-//	assert.Equal(t, nil, err)
-//	assert.NotEqual(t, nil, tree)
-//	action := &Action{localDB: localdb}
-//	deposit := &zt.Deposit{
-//		ChainType: "ETH",
-//		TokenId: 1,
-//		Amount: 10000,
-//		EthAddress: "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b",
-//	}
-//	receipt,err := action.Deposit(deposit)
-//	t.Log(receipt)
-//	for _, log := range receipt.GetLogs() {
-//		detail := &zt.ReceiptLeaf{}
-//		types.Decode(log.GetLog(), detail)
-//		t.Log(detail)
-//	}
-//
-//	assert.Equal(t, nil, err)
-//	leaf , err:= GetLeafByEthAddress(localdb, "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b")
-//	assert.Equal(t, nil, err)
-//	assert.NotEqual(t, nil, leaf)
-//	t.Log(leaf)
-//	tree, err = getAccountTree(localdb)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int32(1), tree.GetTotalIndex())
-//
-//	withdraw := &zt.Withdraw{
-//		AccountId: 1,
-//		ChainType: "ETH",
-//		TokenId: 1,
-//		Amount: 500,
-//	}
-//	receipt,err = action.Withdraw(withdraw)
-//	assert.Equal(t, nil, err)
-//	t.Log(receipt)
-//	for _, log := range receipt.GetLogs() {
-//		detail := &zt.ReceiptLeaf{}
-//		types.Decode(log.GetLog(), detail)
-//		t.Log(detail)
-//	}
-//	leaf , err= GetLeafByAccountId(localdb, 1)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(9500), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	assert.NotEqual(t, nil, leaf)
-//	t.Log(leaf)
-//
-//	transferToNew := &zt.TransferToNew{
-//		FromAccountId: 1,
-//		ChainType: "ETH",
-//		TokenId: 1,
-//		Amount: 500,
-//		ToEthAddress: "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81v",
-//	}
-//	receipt,err = action.TransferToNew(transferToNew)
-//	assert.Equal(t, nil, err)
-//	t.Log(receipt)
-//	for _, log := range receipt.GetLogs() {
-//		detail := &zt.ReceiptLeaf{}
-//		types.Decode(log.GetLog(), detail)
-//		t.Log(detail)
-//	}
-//	leaf , err= GetLeafByAccountId(localdb, 1)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(9000), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	leaf , err= GetLeafByAccountId(localdb, 2)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(500), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	assert.NotEqual(t, nil, leaf)
-//	t.Log(leaf)
-//
-//
-//	transfer := &zt.Transfer{
-//		FromAccountId: 1,
-//		ChainType: "ETH",
-//		TokenId: 1,
-//		Amount: 500,
-//		ToAccountId: 2,
-//	}
-//	receipt,err = action.Transfer(transfer)
-//	assert.Equal(t, nil, err)
-//	t.Log(receipt)
-//	for _, log := range receipt.GetLogs() {
-//		detail := &zt.ReceiptLeaf{}
-//		types.Decode(log.GetLog(), detail)
-//		t.Log(detail)
-//	}
-//	leaf , err= GetLeafByAccountId(localdb, 1)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(8500), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	leaf , err= GetLeafByAccountId(localdb, 2)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(1000), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	assert.NotEqual(t, nil, leaf)
-//	t.Log(leaf)
-//
-//	forceQuit := &zt.ForceQuit{
-//		ChainType: "ETH",
-//		TokenId: 1,
-//		EthAddress: "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b",
-//	}
-//	receipt,err = action.ForceQuit(forceQuit)
-//	assert.Equal(t, nil, err)
-//	t.Log(receipt)
-//	for _, log := range receipt.GetLogs() {
-//		detail := &zt.ReceiptLeaf{}
-//		types.Decode(log.GetLog(), detail)
-//		t.Log(detail)
-//	}
-//	leaf , err= GetLeafByAccountId(localdb, 1)
-//	assert.Equal(t, nil, err)
-//	assert.Equal(t, int64(0), leaf.ChainBalances[0].TokenBalances[0].Balance)
-//	t.Log(leaf)
-//}
+func TestZksyncOption(t *testing.T) {
+	dir, statedb, localdb := util.CreateTestDB()
+	defer util.CloseTestDB(dir, statedb)
+	NewAccountTree(localdb)
+	/*************************deposit*************************/
+	info, err := generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "operator"}
+	deposit := &zt.Deposit{
+		TokenId:     1,
+		Amount:      "10000",
+		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57",
+		Chain33Addr: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"),
+	}
+	receipt, err := action.Deposit(deposit)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+
+	assert.Equal(t, nil, err)
+	leaf, err := GetLeafByAccountId(statedb, 1, info)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, nil, leaf)
+	t.Log(leaf)
+
+	/*************************setPubKey*************************/
+	info, err = generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
+	assert.Equal(t, nil, err)
+	setPubKey := &zt.SetPubKey{
+		AccountId: 1,
+		PubKey: &zt.PubKey{
+			X: privateKey.PublicKey.A.X.String(),
+			Y: privateKey.PublicKey.A.Y.String(),
+		},
+	}
+
+	receipt, err = action.SetPubKey(setPubKey)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+
+	/*************************withdraw*************************/
+	info, err = generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	withdraw := &zt.Withdraw{
+		AccountId: 1,
+		TokenId:   1,
+		Amount:    "5000",
+	}
+	msg := wallet.GetWithdrawMsg(withdraw)
+	privateKey, err = eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
+	assert.Equal(t, nil, err)
+
+	signInfo, err := wallet.SignTx(msg, privateKey)
+	assert.Equal(t, nil, err)
+
+	withdraw.Signature = signInfo
+	receipt, err = action.Withdraw(withdraw)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+
+	tree, err := getAccountTree(statedb, info)
+	assert.Equal(t, nil, err)
+	t.Log(tree)
+
+	leaf, err = GetLeafByAccountId(statedb, 1, info)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, nil, leaf)
+	t.Log(leaf)
+
+	token, err := GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "5000", token.Balance)
+
+
+	/*************************transferToNew*************************/
+	info, err = generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	transferToNew := &zt.TransferToNew{
+		FromAccountId: 1,
+		TokenId: 1,
+		Amount: "500",
+		ToEthAddress: "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
+		ToChain33Address: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aed"),
+	}
+	t.Log(strings.ToLower(transferToNew.ToEthAddress))
+	msg = wallet.GetTransferToNewMsg(transferToNew)
+	signInfo, err = wallet.SignTx(msg, privateKey)
+	assert.Equal(t, nil, err)
+	transferToNew.Signature = signInfo
+	receipt,err = action.TransferToNew(transferToNew)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "4500", token.Balance)
+	token , err= GetTokenByAccountIdAndTokenId(statedb, 2,1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "500", token.Balance)
+
+
+	/*************************transfer*************************/
+	info, err = generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	transfer := &zt.Transfer{
+		FromAccountId: 1,
+		TokenId: 1,
+		Amount: "500",
+		ToAccountId: 2,
+	}
+	msg = wallet.GetTransferMsg(transfer)
+	signInfo, err = wallet.SignTx(msg, privateKey)
+	assert.Equal(t, nil, err)
+	transfer.Signature = signInfo
+
+	receipt,err = action.Transfer(transfer)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "4000", token.Balance)
+	token , err= GetTokenByAccountIdAndTokenId(statedb, 2,1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "1000", token.Balance)
+
+	/*************************forceQuit*************************/
+	info, err = generateTreeUpdateInfo(statedb)
+	assert.Equal(t, nil, err)
+	forceQuit := &zt.ForceQuit{
+		AccountId: 1,
+		TokenId: 1,
+	}
+	msg = wallet.GetForceQuitMsg(forceQuit)
+	signInfo, err = wallet.SignTx(msg, privateKey)
+	assert.Equal(t, nil, err)
+	forceQuit.Signature = signInfo
+	receipt,err = action.ForceQuit(forceQuit)
+	assert.Equal(t, nil, err)
+	t.Log(receipt)
+	for _, kv := range receipt.GetKV() {
+		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "0", token.Balance)
+}
 
 func TestEddsa(t *testing.T) {
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))

@@ -11,6 +11,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"math/big"
+	"strings"
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
@@ -144,10 +145,10 @@ func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(payload.EthAddress, 16)
+	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 16)
+	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr[:40], 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.AddrBitWidth)...)
 
 	copy(binaryData, pubData)
@@ -258,10 +259,11 @@ func GetTransferToNewMsg(payload *zt.TransferToNew) *zt.Msg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
 
-	ethAddress, _ := new(big.Int).SetString(payload.ToEthAddress, 16)
+	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.ToEthAddress), 16)
+
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)
+	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address[:40], 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.AddrBitWidth)...)
 
 	copy(binaryData, pubData)

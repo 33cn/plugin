@@ -110,6 +110,15 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
+		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		if err != nil {
+			return nil, errors.Wrapf(err, "hex.DecodeString")
+		}
+		kv := &types.KeyValue{
+			Key:   getHeightKey(a.height),
+			Value: rootHash,
+		}
+		kvs = append(kvs, kv)
 
 		branch := &zt.OperationPairBranch{
 			Before: before,
@@ -143,6 +152,15 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
+		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		if err != nil {
+			return nil, errors.Wrapf(err, "hex.DecodeString")
+		}
+		kv := &types.KeyValue{
+			Key:   getHeightKey(a.height),
+			Value: rootHash,
+		}
+		kvs = append(kvs, kv)
 
 		branch := &zt.OperationPairBranch{
 			Before: before,
@@ -157,7 +175,7 @@ func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
 }
 
 func (a *Action) checkOperateAddress(address string) bool {
-	return address == ""
+	return address == "operator"
 }
 
 func getBranchByReceipt(receipt *zt.ReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.PubKey, balance string) *zt.OperationMetaBranch {
@@ -274,6 +292,16 @@ func (a *Action) Withdraw(payload *zt.Withdraw) (*types.Receipt, error) {
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
 	branch := &zt.OperationPairBranch{
 		Before: before,
 		After:  after,
@@ -283,6 +311,7 @@ func (a *Action) Withdraw(payload *zt.Withdraw) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(operationInfo)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
 	return receipts, nil
 }
 
@@ -360,6 +389,15 @@ func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, err
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -434,6 +472,15 @@ func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, err
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -563,6 +610,15 @@ func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch = &zt.OperationPairBranch{
 		Before: before,
@@ -676,6 +732,15 @@ func (a *Action) TransferToNew(payload *zt.TransferToNew) (*types.Receipt, error
 	}
 
 	after = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch = &zt.OperationPairBranch{
 		Before: before,
@@ -749,6 +814,15 @@ func (a *Action) ForceQuit(payload *zt.ForceQuit) (*types.Receipt, error) {
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -819,7 +893,6 @@ func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
 		return nil, errors.New("not your account")
 	}
 
-	err = authVerification(payload.Signature.PubKey, leaf.PubKey)
 	if err != nil {
 		return nil, errors.Wrapf(err, "authVerification")
 	}
@@ -851,6 +924,15 @@ func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,

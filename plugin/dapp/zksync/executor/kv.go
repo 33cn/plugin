@@ -26,3 +26,7 @@ func GetRootIndexPrimaryKey(rootIndex uint64) []byte {
 func GetAccountTreeKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB + "accountTree"))
 }
+
+func getHeightKey(height int64) []byte {
+	return []byte(fmt.Sprintf("%022d", height))
+}

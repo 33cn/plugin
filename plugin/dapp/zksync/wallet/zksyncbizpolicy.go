@@ -129,7 +129,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyDepositAction:
 		deposit := action.GetDeposit()
 		msg = GetDepositMsg(deposit)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -138,7 +138,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyWithdrawAction:
 		withDraw := action.GetWithdraw()
 		msg = GetWithdrawMsg(withDraw)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -147,7 +147,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyContractToLeafAction:
 		contractToLeaf := action.GetContractToLeaf()
 		msg = GetContractToLeafMsg(contractToLeaf)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -156,7 +156,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyLeafToContractAction:
 		leafToContract := action.GetLeafToContract()
 		msg = GetLeafToContractMsg(leafToContract)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -165,7 +165,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyTransferAction:
 		transfer := action.GetTransfer()
 		msg = GetTransferMsg(transfer)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -174,7 +174,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyTransferToNewAction:
 		transferToNew := action.GetTransferToNew()
 		msg = GetTransferToNewMsg(transferToNew)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -183,7 +183,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TyForceExitAction:
 		forceQuit := action.GetForceQuit()
 		msg = GetForceQuitMsg(forceQuit)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -198,7 +198,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		}
 		setPubKey.PubKey = pubKey
 		msg = GetSetPubKeyMsg(setPubKey)
-		signInfo, err = signTx(msg, privateKey)
+		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
@@ -213,7 +213,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	return
 }
 
-func signTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
+func SignTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
 	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
 	if err != nil {
 		bizlog.Error("SignTransaction", "privateKey.Sign error", err)
