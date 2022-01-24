@@ -3,16 +3,15 @@ package chain33
 import (
 	"errors"
 	"fmt"
-
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/crypto"
-
 	chain33Types "github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
+	syncTx "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33/transceiver/sync"
 	x2ethTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -68,6 +67,11 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 	temp, _ := btcec_secp256k1.PrivKeyFromBytes(btcec_secp256k1.S256(), priKey.Bytes())
 	chain33Relayer.privateKey4Chain33_ecdsa = temp.ToECDSA()
 	chain33Relayer.rwLock.Unlock()
+	chain33Relayer.syncEvmTxLogs, err = syncTx.StartSyncEvmTxLogs(chain33Relayer.syncCfg, chain33Relayer.db)
+	if nil != err {
+		return err
+	}
+
 	chain33Relayer.unlockChan <- start
 	addr := address.PubKeyToAddr(priKey.PubKey().Bytes())
 

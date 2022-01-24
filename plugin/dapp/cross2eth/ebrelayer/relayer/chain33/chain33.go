@@ -64,6 +64,7 @@ type Relayer4Chain33 struct {
 	symbol2Addr               map[string]string
 	bridgeSymbol2EthChainName map[string]string //在chain33上发行的跨链token的名称到以太坊链的名称映射
 	processWithDraw           bool
+	syncCfg                   *ebTypes.SyncTxReceiptConfig
 }
 
 type Chain33StartPara struct {
@@ -105,6 +106,7 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 		StartSyncSequence: startPara.SyncTxConfig.StartSyncSequence,
 		StartSyncHash:     startPara.SyncTxConfig.StartSyncHash,
 	}
+	chain33Relayer.syncCfg = syncCfg
 
 	registrAddrInDB, err := chain33Relayer.getBridgeRegistryAddr()
 	//如果输入的registry地址非空，且和数据库保存地址不一致，则直接使用输入注册地址
@@ -136,7 +138,7 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 
 func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
 	_, _ = fmt.Fprintln(os.Stdout, "Pls unlock or import private key for Chain33 relayer")
-	<-chain33Relayer.unlockChan
+
 	_, _ = fmt.Fprintln(os.Stdout, "Chain33 relayer starts to run...")
 	if err := chain33Relayer.RestoreTokenAddress(); nil != err {
 		relayerLog.Info("Failed to RestoreTokenAddress")
@@ -160,7 +162,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptCo
 	}
 
 	syncCfg.Contracts = append(syncCfg.Contracts, chain33Relayer.bridgeBankAddr)
-	chain33Relayer.syncEvmTxLogs = syncTx.StartSyncEvmTxLogs(syncCfg, chain33Relayer.db)
+	<-chain33Relayer.unlockChan
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 	chain33Relayer.mulSignAddr = chain33Relayer.getMultiSignAddress()
 	chain33Relayer.bridgeSymbol2EthChainName = chain33Relayer.restoreSymbol2chainName()
