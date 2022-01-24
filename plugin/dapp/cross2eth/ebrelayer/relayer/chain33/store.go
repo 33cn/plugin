@@ -22,6 +22,7 @@ var (
 	bridgeRegistryAddrOnChain33        = []byte("chain33-x2EthBridgeRegistryAddrOnChain33")
 	tokenSymbol2AddrPrefix             = []byte("chain33-chain33TokenSymbol2AddrPrefix")
 	multiSignAddressPrefix             = []byte("chain33-multiSignAddress")
+	symbol2Ethchain                    = []byte("chain33-symbol2Ethchain")
 )
 
 func tokenSymbol2AddrKey(symbol string) []byte {
@@ -165,7 +166,7 @@ func (chain33Relayer *Relayer4Chain33) RestoreTokenAddress() error {
 	return nil
 }
 
-func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
+func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show *ebTypes.TokenAddress) (*ebTypes.TokenAddressArray, error) {
 	res := &ebTypes.TokenAddressArray{}
 
 	if len(token2show.Symbol) > 0 {
@@ -211,4 +212,25 @@ func (chain33Relayer *Relayer4Chain33) getMultiSignAddress() string {
 		return ""
 	}
 	return string(bytes)
+}
+
+func (chain33Relayer *Relayer4Chain33) storeSymbol2chainName(symbol2Name map[string]string) {
+	Symbol2EthChain := &ebTypes.Symbol2EthChain{
+		Symbol2Name: symbol2Name,
+	}
+	data := chain33Types.Encode(Symbol2EthChain)
+	_ = chain33Relayer.db.Set(symbol2Ethchain, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]string {
+	data, _ := chain33Relayer.db.Get(symbol2Ethchain)
+	if 0 == len(data) {
+		return make(map[string]string)
+	}
+
+	symbol2EthChain := &ebTypes.Symbol2EthChain{}
+	if err := chain33Types.Decode(data, symbol2EthChain); nil != err {
+		return make(map[string]string)
+	}
+	return symbol2EthChain.Symbol2Name
 }

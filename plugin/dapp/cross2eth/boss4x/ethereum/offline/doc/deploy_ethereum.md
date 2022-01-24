@@ -95,7 +95,7 @@ multisignAddrs=["0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf", "0x6F163E6daf0090D
 * 在线创建交易
 ```
 命令：
-./boss4x ethereum offline create_add_lock_list -s USDT -t "${ethereumUSDTERC20TokenAddr}" -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+./boss4x ethereum offline create_add_lock_list -s USDT -t "${ethereumUSDTERC20TokenAddr}" -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
 
 参数说明：
   -c, --contract string     bridgebank 合约地址
@@ -113,7 +113,7 @@ tx is written to file:  create_add_lock_list.txt
 * 在线创建交易
 ```
 命令：
-./boss4x ethereum offline create_bridge_token -s BTY -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+./boss4x ethereum offline create_bridge_token -s BTY -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
 
 参数说明：
   -c, --contract string     bridgebank 合约地址
@@ -129,7 +129,7 @@ tx is written to file:  create_bridge_token.txt
 * 在线创建交易
 ```
 命令：
-./boss4x ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethBridgeBank}" -d "${ethDeployAddr}"
+./boss4x ethereum offline set_offline_token -s ETH -m ${threshold} -p ${percents} -c "${ethereumBridgeBank}" -d "${ethDeployAddr}"
 
 参数说明：
   -c, --contract string     bridgebank 合约地址
@@ -182,7 +182,7 @@ tx is written to file:  deployErc20YCC.txt
 * 转帐预备交易--在线操作
 ```
 命令：
-./boss4x ethereum offline multisign_transfer_prepare -a 8 -r "${ethBridgeBank}" -c "${multisignEthAddr}" -d "${ethTestAddr1}" -t "${ethereumUSDTERC20TokenAddr}"
+./boss4x ethereum offline multisign_transfer_prepare -a 8 -r "${ethereumBridgeBank}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}" -t "${ethereumUSDTERC20TokenAddr}"
 
 参数说明：
   -a, --amount float      转帐金额

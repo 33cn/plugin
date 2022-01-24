@@ -179,7 +179,6 @@ func ParseBurnLock4chain33(evmEventType Chain33EvmEvent, data []byte, bridgeBank
 			Nonce:                burnEvent.Nonce.Int64(),
 		}
 		return chain33Msg, nil
-
 	}
 
 	return nil, errors.New("unknown-event")
