@@ -3,6 +3,7 @@ package chain33
 import (
 	"errors"
 	"fmt"
+
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
