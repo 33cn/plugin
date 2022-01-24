@@ -952,3 +952,20 @@ func (manager *Manager) BurnWithIncreaseAsyncFromChain33(burn *relayerTypes.Burn
 	}
 	return nil
 }
+
+//ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
+func (manager *Manager) ShowEthRelayerValidator(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	ethINt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	var err error
+	*result, err = ethINt.GetValidatorAddr()
+	if nil != err {
+		return err
+	}
+	return nil
+}

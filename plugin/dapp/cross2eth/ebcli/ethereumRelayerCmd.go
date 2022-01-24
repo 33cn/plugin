@@ -191,7 +191,7 @@ func generateEthereumPrivateKey(cmd *cobra.Command, args []string) {
 //ShowValidatorsAddrCmd ...
 func ShowValidatorsAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show_validators",
+		Use:   "show_validator",
 		Short: "show me the validators including ethereum and chain33",
 		Run:   showValidatorsAddr,
 	}
@@ -200,8 +200,10 @@ func ShowValidatorsAddrCmd() *cobra.Command {
 
 func showValidatorsAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+
 	var res ebTypes.ValidatorAddr4EthRelayer
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerValidator", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerValidator", ethChainName, &res)
 	ctx.Run()
 }
 
