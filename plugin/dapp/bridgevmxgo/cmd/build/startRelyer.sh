@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2050
+# shellcheck disable=SC2009
 # shellcheck source=/dev/null
 set -x
 set +e

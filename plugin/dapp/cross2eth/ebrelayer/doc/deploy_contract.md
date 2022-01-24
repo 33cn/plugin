@@ -2,11 +2,22 @@
 [TOC]
 
 ### 前期地址及配置文件准备
+#### ethereum 地址准备
+* ethereum 的 socket 通信地址, eg: ws://182.160.7.143:8546
+* ethereum 的 http url 地址, eg: http://182.160.7.143:8545
+
+#### 部署平行链
+得到 chain33 rcp url, eg: http://35.77.111.58:8901
+
+#### 准备4台以上的服务器部署中继器
+其中一台部署代理中继器
+剩下的部署普通中继器, 根据普通验证人个数配置, 3个以上, 一一对应
+
 #### 编译代码
 ```shell
 git clone git@github.com:33cn/plugin.git
 make
-scp plugin/build/ci/cross2eth 目标服务器
+scp plugin/build/ci/bridgevmxgo 目标服务器
 ```
 
 #### ethereum 部署配置文件

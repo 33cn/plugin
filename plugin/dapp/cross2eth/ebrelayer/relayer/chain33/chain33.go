@@ -132,11 +132,11 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 		}
 	}
 
-	go chain33Relayer.syncProc(syncCfg)
+	go chain33Relayer.syncProc()
 	return chain33Relayer
 }
 
-func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptConfig) {
+func (chain33Relayer *Relayer4Chain33) syncProc() {
 	_, _ = fmt.Fprintln(os.Stdout, "Pls unlock or import private key for Chain33 relayer")
 
 	_, _ = fmt.Fprintln(os.Stdout, "Chain33 relayer starts to run...")
@@ -161,7 +161,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptCo
 			"oracleAddr", chain33Relayer.oracleAddr, "bridgeBankAddr", chain33Relayer.bridgeBankAddr)
 	}
 
-	syncCfg.Contracts = append(syncCfg.Contracts, chain33Relayer.bridgeBankAddr)
+	chain33Relayer.syncCfg.Contracts = append(chain33Relayer.syncCfg.Contracts, chain33Relayer.bridgeBankAddr)
 	<-chain33Relayer.unlockChan
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 	chain33Relayer.mulSignAddr = chain33Relayer.getMultiSignAddress()
