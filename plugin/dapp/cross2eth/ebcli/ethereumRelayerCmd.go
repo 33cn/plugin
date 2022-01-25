@@ -49,6 +49,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		MultiSignEthCmd(),
 		TransferEthCmd(),
 		CfgWithdrawCmd(),
+		ResendEthLockEventCmd(),
 	)
 
 	return cmd
@@ -1062,5 +1063,38 @@ func CfgWithdraw(cmd *cobra.Command, _ []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CfgWithdraw", req, &res)
+	ctx.Run()
+}
+
+func ResendEthLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resendLockEvent",
+		Short: "resend lock Event to chain33 process goroutine",
+		Run:   resendLockEvent,
+	}
+	addResendLockEventFlags(cmd)
+	return cmd
+}
+
+func addResendLockEventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height begin to resend chain33 event ")
+	_ = cmd.MarkFlagRequired("height")
+	cmd.Flags().Int32P("index", "i", 0, "tx index")
+	_ = cmd.MarkFlagRequired("index")
+}
+
+func resendLockEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetInt64("height")
+	txIndex, _ := cmd.Flags().GetInt32("index")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	resendEthereumEventReq := &ebTypes.ResendEthereumEventReq{
+		Height:    height,
+		TxIndex:   txIndex,
+		ChainName: ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendEthereumLockEvent", resendEthereumEventReq, &res)
 	ctx.Run()
 }

@@ -778,6 +778,39 @@ func (ethRelayer *Relayer4Ethereum) procNewHeight4Withdraw(ctx context.Context) 
 	relayerLog.Info("procNewHeight4Withdraw", "currentHeight", currentHeight)
 }
 
+func (ethRelayer *Relayer4Ethereum) ResendLockEvent(height uint64, index uint32) (string, error) {
+	relayerLog.Info("Relayer4Ethereum::ResendEvent", "height", height, "index", index)
+
+	logs, err := ethRelayer.getNextValidEthTxEventLogs(height, index, 1)
+	if nil != err {
+		relayerLog.Error("Failed to get ethereum height", "getNextValidEthTxEventLogs err", err.Error())
+		return "", err
+	}
+
+	if 0 == len(logs) {
+		relayerLog.Info("Relayer4Ethereum::ResendEvent get nil")
+		return "No event need to be relayed to chain33", nil
+	}
+	vLog := *logs[0]
+
+	receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), vLog.TxHash)
+	if nil != err {
+		relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", vLog.TxHash.String())
+		return "", err
+	}
+
+	//检查当前的交易是否成功执行
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		relayerLog.Error("procBridgeBankLogs", "tx not successful with status", receipt.Status)
+		return "", errors.New("Tx not successful")
+	}
+
+	eventName := events.LogLockFromETH.String()
+	err = ethRelayer.handleLogLockEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, vLog)
+	info := fmt.Sprintf("Ethereum tx with hash = %s is relayed", vLog.TxHash.String())
+	return info, err
+}
+
 func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context) {
 	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
 	ethRelayer.updateTxStatus()
@@ -1087,10 +1120,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	}
 	prophecyClaim.ChainName = ethRelayer.name
 	//如果不是以太坊的USDT,则需要将其铸币为XUSD,如Binance的USDT，则铸币为BUSD
-	if prophecyClaim.Symbol == "USDT" && EthereumChain != ethRelayer.name {
-		prophecyClaim.Symbol = ethRelayer.name[0:1] + "USDT"
-		prophecyClaim.Symbol = strings.ToUpper(prophecyClaim.Symbol)
-	}
+	//if prophecyClaim.Symbol == "USDT" && EthereumChain != ethRelayer.name {
+	//	prophecyClaim.Symbol = ethRelayer.name[0:1] + "USDT"
+	//	prophecyClaim.Symbol = strings.ToUpper(prophecyClaim.Symbol)
+	//}
 
 	ethRelayer.ethBridgeClaimChan <- prophecyClaim
 
