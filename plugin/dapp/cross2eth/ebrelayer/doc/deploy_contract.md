@@ -2,14 +2,14 @@
 [TOC]
 
 ### 前期地址及配置文件准备
-#### ethereum 地址准备
+#### ethereum 地址准备 (数据来源 WL and LBZ)
 * ethereum 的 socket 通信地址, eg: ws://182.160.7.143:8546
 * ethereum 的 http url 地址, eg: http://182.160.7.143:8545
 
-#### 部署平行链
+#### 部署平行链 (数据来源 HZM)
 得到 chain33 rcp url, eg: http://35.77.111.58:8901
 
-#### 准备4台以上的服务器部署中继器
+#### 准备4台以上的服务器部署中继器 (数据来源 HZM)
 其中一台部署代理中继器
 剩下的部署普通中继器, 根据普通验证人个数配置, 3个以上, 一一对应
 
@@ -35,13 +35,13 @@ symbol="ETH"
 multisignAddrs=["0x4c85848a7E2985B76f06a7Ed338FCB3aF94a7DCf", "0x6F163E6daf0090D897AD7016484f10e0cE844994", "0xbc333839E37bc7fAAD0137aBaE2275030555101f", "0x495953A743ef169EC5D4aC7b5F786BF2Bd56aFd5"]
 ```
 
-#### ethereum 端所需地址及说明
+#### ethereum 端所需地址及说明 (数据来源管理员)
 |地址|说明|
 |----|----|
 |operatorAddr|合约部署人, 需要比较多的金额, 用于部署合约时需要的手续费|
-|validatorsAddr[]|普通验证人地址, 3个以上, 需要少量金额, 用于用户从chain33中提币时手续费, 需要监测, 地址金额不能为空否则提币失败|
-|multisignAddrs[]|离线多签地址, 3个以上, 需要少量金额, 用于多签提币时手续费|
-|validatorsAddrp|代理验证人地址, 代理打币地址, 需要较多金额, 需要监测, 每天结束后, 查看剩余金额, 金额不足继续打币|
+|validatorsAddr[]|普通验证人地址, 3个以上, 需要少量金额, 用于用户从chain33中提币时手续费, 需要监测, 地址金额不能为空否则提币失败, BNB 建议 0.1 个, 根据需求增加或减少|
+|multisignAddrs[]|离线多签地址, 3个以上, 需要少量金额, 用于多签提币时手续费, BNB 建议 0.1 个, 根据需求增加或减少|
+|validatorsAddrp|代理验证人地址, 代理打币地址, 需要较多金额, 需要监测, 每天结束后, 查看剩余金额, 金额不足继续打币, BNB 建议 0.1 个, 根据需求增加或减少|
 
 #### chain33 部署配置文件
 把要部署需要的数据写入 chain33_ethereum.toml 配置文件
@@ -54,13 +54,13 @@ initPowers=[25, 25, 25, 25]
 multisignAddrs=["168Sn1DXnLrZHTcAM9stD6t2P49fNuJfJ9", "13KTf57aCkVVJYNJBXBBveiA5V811SrLcT", "1JQwQWsShTHC4zxHzbUfYQK4kRBriUQdEe", "1NHuKqoKe3hyv52PF8XBAyaTmJWAqA2Jbb"]
 ```
 
-#### chain33 端所需地址及说明
+#### chain33 端所需地址及说明 (数据来源管理员)
 |地址|说明|
 |----|----|
 |operatorAddr|合约部署人, 需要比较多的金额, 用于部署合约时需要的手续费|
-|validatorsAddr[]|普通验证人地址, 3个以上, 需要少量金额, 用于用户从chain33中提币时手续费, 需要监测, 地址金额不能为空否则提币失败|
-|multisignAddrs[]|离线多签地址, 3个以上, 需要少量金额, 用于多签提币时手续费|
-|validatorsAddrp|代理验证人地址|
+|validatorsAddr[]|普通验证人地址, 3个以上, 需要少量金额, 用于用户从chain33中提币时手续费, 需要监测, 地址金额不能为空否则提币失败, BTY 建议 20 个, 根据需求增加或减少|
+|multisignAddrs[]|离线多签地址, 3个以上, 需要少量金额, 用于多签提币时手续费, BTY 建议 20 个, 根据需求增加或减少|
+|validatorsAddrp|代理验证人地址, BTY 建议 20 个, 根据需求增加或减少|
 |validatorsAddrsp|代理验证人地址, 代理收币地址|
 
 ###  离线部署 ethereum 跨链合约及各操作

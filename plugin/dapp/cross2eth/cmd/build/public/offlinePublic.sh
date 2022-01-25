@@ -300,6 +300,8 @@ function init_validator_relayer() {
     result=$(${CLI} unlock -p "${pwd}")
     cli_ret "${result}" "unlock"
 
+    sleep 2
+
     result=$(${CLI} chain33 import_privatekey -k "${chain33ValidatorKey}")
     cli_ret "${result}" "chain33 import_privatekey"
 
