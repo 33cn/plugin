@@ -5,8 +5,9 @@
 package wallet
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"path/filepath"
+
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"strconv"
 	"strings"
