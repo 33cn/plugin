@@ -147,6 +147,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc() {
 	setChainID(chain33Relayer.chainID)
 	//如果该中继器的bridgeRegistryAddr为空，就说明合约未部署，需要等待部署成功之后再继续
 	if "" == chain33Relayer.bridgeRegistryAddr {
+		chain33txLog.Debug("bridgeRegistryAddr empty")
 		<-chain33Relayer.unlockChan
 	}
 	//如果oracleAddr为空，则通过bridgeRegistry合约进行查询
