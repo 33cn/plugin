@@ -1,21 +1,20 @@
 package types
 
 import (
+	"github.com/consensys/gnark/test"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/frontend"
 )
 
 func TestAuthorize(t *testing.T) {
-	assert := groth16.NewAssert(t)
+	assert := test.NewAssert(t)
 
 	var authCircuit AuthorizeCircuit
 	// compiles our circuit into a R1CS
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &authCircuit)
-	assert.NoError(err)
+	//r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &authCircuit)
+	//assert.NoError(err)
 	{
 		authCircuit.TreeRootHash.Assign("18953560960857123326054550555759265877143310030168748002053709716397549796490")
 		authCircuit.AuthorizeHash.Assign("4895770928816523282558547614022568289586238930922185617307655942541278140196")
@@ -63,7 +62,9 @@ func TestAuthorize(t *testing.T) {
 		authCircuit.Valid8.Assign("0")
 		authCircuit.Valid9.Assign("0")
 
-		assert.ProverSucceeded(r1cs, &authCircuit)
+		var circuit AuthorizeCircuit
+		assert.ProverSucceeded(&circuit, &authCircuit,
+			test.WithCurves(ecc.BN254), test.WithCompileOpts(), test.WithBackends(backend.GROTH16))
 
 	}
 

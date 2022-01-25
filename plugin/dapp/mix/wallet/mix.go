@@ -312,8 +312,8 @@ func (p *mixPolicy) createZkKeyFile(req *mixTy.CreateZkKeyFileReq) (*types.Reply
 		return nil, errors.Wrapf(err, "setup")
 	}
 
-	pk.WriteRawTo(&bufPk)
-	vk.WriteRawTo(&bufVk)
+	pk.WriteTo(&bufPk)
+	vk.WriteTo(&bufVk)
 
 	file := filepath.Join(req.SavePath, pkName)
 	fPk, err := os.Create(file)

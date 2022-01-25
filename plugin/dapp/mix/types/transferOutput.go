@@ -24,7 +24,7 @@ type TransferOutputCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *TransferOutputCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *TransferOutputCircuit) Define(curveID ecc.ID, cs frontend.API) error {
 	// hash function
 	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
 	mimc := &h
