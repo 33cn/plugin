@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/consensys/gnark/test"
 	"testing"
+
+	"github.com/consensys/gnark/test"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
