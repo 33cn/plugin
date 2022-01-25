@@ -1,11 +1,11 @@
 package wallet
 
 import (
+	"github.com/consensys/gnark-crypto/ecc"
 	"testing"
 
 	"github.com/33cn/chain33/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark/frontend"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -170,14 +170,14 @@ func TestUpdateTreePath(t *testing.T) {
 
 	var input mixTy.AuthorizeCircuit
 	updateTreePath(&input, &proof)
-	ret0 := frontend.FromInterface(frontend.GetAssignedValue(input.Path0))
-	ret1 := frontend.FromInterface(frontend.GetAssignedValue(input.Path1))
+	ret0 := input.Path0.GetWitnessValue(ecc.BN254)
+	ret1 := input.Path1.GetWitnessValue(ecc.BN254)
 
 	assert.Equal(t, path0, ret0.String())
 	assert.Equal(t, path1, ret1.String())
 
 	path2 := "0"
-	ret2 := frontend.FromInterface(frontend.GetAssignedValue(input.Path2))
+	ret2 := input.Path2.GetWitnessValue(ecc.BN254)
 	assert.Equal(t, path2, ret2.String())
 
 }
