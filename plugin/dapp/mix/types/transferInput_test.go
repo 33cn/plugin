@@ -1,21 +1,20 @@
 package types
 
 import (
+	"github.com/consensys/gnark/test"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/frontend"
 )
 
 func TestTransferInput(t *testing.T) {
-	assert := groth16.NewAssert(t)
+	circuitAssert := test.NewAssert(t)
 
 	var inputCircuit TransferInputCircuit
 	// compiles our circuit into a R1CS
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &inputCircuit)
-	assert.NoError(err)
+	//r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &inputCircuit)
+	//assert.Nil(t, err)
 
 	{
 		inputCircuit.TreeRootHash.Assign("457812157273975068180144939194931372467682914013265626991402231230450012330")
@@ -70,7 +69,10 @@ func TestTransferInput(t *testing.T) {
 		inputCircuit.Valid8.Assign("0")
 		inputCircuit.Valid9.Assign("0")
 
-		assert.ProverSucceeded(r1cs, &inputCircuit)
+		var circuit TransferInputCircuit
+		circuitAssert.ProverSucceeded(&circuit, &inputCircuit,
+			test.WithCurves(ecc.BN254), test.WithCompileOpts(), test.WithBackends(backend.GROTH16))
+
 	}
 
 }
