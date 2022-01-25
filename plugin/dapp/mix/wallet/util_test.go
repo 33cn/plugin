@@ -1,8 +1,9 @@
 package wallet
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"testing"
+
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
