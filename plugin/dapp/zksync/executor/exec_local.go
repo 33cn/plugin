@@ -5,7 +5,6 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
-
 //ExecLocal_Deposit asset withdraw local db process
 func (z *zksync) ExecLocal_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
@@ -41,4 +40,3 @@ func (z *zksync) ExecLocal_ForceExit(payload *zt.ZkForceExit, tx *types.Transact
 func (z *zksync) ExecLocal_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
-

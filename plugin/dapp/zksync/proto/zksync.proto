@@ -14,6 +14,8 @@ message ZksyncAction {
     ZkTransferToNew transferToNew = 6;
     ZkForceExit forceExit = 7;
     ZkSetPubKey setPubKey = 8;
+    ZkVerifyKey         setVerifyKey = 10;
+    ZkCommitProof         commitProof  = 11;
   }
 
   int32 ty = 9;
@@ -115,6 +117,49 @@ message ZkSetPubKey {
   uint64 accountId = 1;
   ZkPubKey  pubKey = 2;
   ZkSignature signature = 3;
+}
+
+//电路验证key
+message ZkVerifyKey {
+  string key = 1;
+}
+
+message ReceiptSetVerifyKey {
+  ZkVerifyKey prev = 1;
+  ZkVerifyKey current = 2;
+}
+
+//commit proof tx data
+message ZkCommitProof {
+  uint64 blockStart  = 1;
+  uint64 blockEnd    = 2;
+  string oldTreeRoot = 3;
+  string newTreeRoot = 4;
+  //proof serialized public input
+  string publicInput = 5;
+  string proof       = 6;
+  //all tx pub datas
+  repeated string pubDatas = 7;
+}
+
+//commit proof stat, pubdata保存到localdb
+message CommitProofState {
+  uint64 blockStart  = 1;
+  uint64 blockEnd    = 2;
+  string oldTreeRoot = 3;
+  string newTreeRoot = 4;
+  string publicInput = 5;   //proof serialized public input
+  string proof       = 6;
+}
+
+message ReceiptCommitProof {
+  CommitProofState prev = 1;
+  CommitProofState current = 2;
+}
+
+//zk relayer operators
+message RelayerOperators {
+  repeated string operators   = 1;
 }
 
 // leaf merkle proof票据日志

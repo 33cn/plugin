@@ -1,8 +1,9 @@
 package types
 
 import (
-	"github.com/33cn/chain33/types"
 	"reflect"
+
+	"github.com/33cn/chain33/types"
 )
 
 /*
@@ -22,6 +23,8 @@ const (
 	TyTransferToNewAction  //向新地址转账
 	TyForceExitAction      //强制退出
 	TySetPubKeyAction      //设置公钥
+	TySetVerifyKeyAction   //设置电路验证key
+	TyCommitProofAction    //提交zk proof
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -32,6 +35,8 @@ const (
 	NameTransferToNewAction  = "TransferToNew"
 	NameForceExitAction      = "ForceExit"
 	NameSetPubKeyAction      = "SetPubKey"
+	NameSetVerifyKeyAction   = "SetVerifyKey"
+	NameCommitProofAction    = "CommitProof"
 )
 
 // log类型id值
@@ -45,6 +50,8 @@ const (
 	TyTransferToNewLog  //向新地址转账
 	TyForceExitLog      //强制退出
 	TySetPubKeyLog      //设置公钥
+	TySetVerifyKey      //设置验证key
+	TyCommitProof       //提交证明
 )
 
 const (
@@ -58,6 +65,8 @@ const (
 
 //Zksync 执行器名称定义
 const Zksync = "zksync"
+const ZkManagerKey = "manager"
+const ZkMimcHashSeed = "seed"
 
 //msg宽度
 const (
@@ -88,6 +97,8 @@ var (
 		NameTransferToNewAction:  TyTransferToNewAction,
 		NameForceExitAction:      TyForceExitAction,
 		NameSetPubKeyAction:      TySetPubKeyAction,
+		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
+		NameCommitProofAction:    TyCommitProofAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -100,6 +111,8 @@ var (
 		TyTransferToNewLog:  {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyTransferToNewLog"},
 		TyForceExitLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyForceExitLog"},
 		TySetPubKeyLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TySetPubKeyLog"},
+		TySetVerifyKey:      {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProof:       {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 	}
 )
 

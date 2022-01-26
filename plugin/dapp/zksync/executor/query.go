@@ -67,3 +67,8 @@ func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error)
 func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, error) {
 
 }
+
+// Query_GetLastCommitProof 获取最新proof信息
+func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
+	return getLastCommitProofData(z.GetStateDB())
+}

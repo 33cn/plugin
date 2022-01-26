@@ -44,3 +44,13 @@ func (z *zksync) Exec_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, 
 	action := NewAction(z, tx, index)
 	return action.SetPubKey(payload)
 }
+
+func (z *zksync) Exec_SetVerifyKey(payload *zt.ZkVerifyKey, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setVerifyKey(payload)
+}
+
+func (z *zksync) Exec_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.commitProof(payload)
+}

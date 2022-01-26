@@ -220,6 +220,10 @@ maxTreeLeaves=1024
 #管理员列表
 mixApprs=[]
 
+[exec.sub.zksync]
+#管理员列表
+managers=[]
+
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
 [fork.system]

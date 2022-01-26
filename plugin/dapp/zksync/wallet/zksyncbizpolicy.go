@@ -3,6 +3,8 @@ package wallet
 import (
 	"bytes"
 	"fmt"
+	"sync"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
@@ -14,7 +16,6 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"sync"
 )
 
 var (
@@ -194,7 +195,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
 		pubKey := &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
-			Y :privateKey.PublicKey.A.Y.String(),
+			Y: privateKey.PublicKey.A.Y.String(),
 		}
 		setPubKey.PubKey = pubKey
 		msg = GetSetPubKeyMsg(setPubKey)
@@ -221,12 +222,12 @@ func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error)
 	}
 	pubKey := &zt.ZkPubKey{
 		X: privateKey.PublicKey.A.X.String(),
-		Y :privateKey.PublicKey.A.Y.String(),
+		Y: privateKey.PublicKey.A.Y.String(),
 	}
 	sign := &zt.ZkSignature{
-		PubKey: pubKey,
+		PubKey:   pubKey,
 		SignInfo: signInfo,
-		Msg: msg,
+		Msg:      msg,
 	}
 	return sign, nil
 }

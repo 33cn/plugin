@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
@@ -31,7 +32,6 @@ func NewAccountTreeTable(kvdb db.KV) *table.Table {
 	}
 	return table
 }
-
 
 // AccountTreeRow table meta 结构
 type AccountTreeRow struct {
@@ -68,8 +68,6 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-
-
 var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
@@ -86,7 +84,6 @@ func NewZksyncInfoTable(kvdb db.KV) *table.Table {
 	}
 	return table
 }
-
 
 // AccountTreeRow table meta 结构
 type ZksyncInfoRow struct {

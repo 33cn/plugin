@@ -3,6 +3,8 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
@@ -11,7 +13,6 @@ import (
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 // TreeUpdateInfo 更新信息，用于查询

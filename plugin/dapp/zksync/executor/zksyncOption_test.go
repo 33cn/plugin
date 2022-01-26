@@ -2,14 +2,15 @@ package executor
 
 import (
 	"bytes"
+	"strings"
+	"testing"
+
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/stretchr/testify/assert"
-	"strings"
-	"testing"
 )
 
 func TestZksyncOption(t *testing.T) {
@@ -94,15 +95,14 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "5000", token.Balance)
 
-
 	/*************************transferToNew*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
-		FromAccountId: 1,
-		TokenId: 1,
-		Amount: "500",
-		ToEthAddress: "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
+		FromAccountId:    1,
+		TokenId:          1,
+		Amount:           "500",
+		ToEthAddress:     "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
 		ToChain33Address: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aed"),
 	}
 	t.Log(strings.ToLower(transferToNew.ToEthAddress))
@@ -110,44 +110,43 @@ func TestZksyncOption(t *testing.T) {
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	transferToNew.Signature = signInfo
-	receipt,err = action.TransferToNew(transferToNew)
+	receipt, err = action.TransferToNew(transferToNew)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "4500", token.Balance)
-	token , err= GetTokenByAccountIdAndTokenId(statedb, 2,1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "500", token.Balance)
-
 
 	/*************************transfer*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
 		FromAccountId: 1,
-		TokenId: 1,
-		Amount: "500",
-		ToAccountId: 2,
+		TokenId:       1,
+		Amount:        "500",
+		ToAccountId:   2,
 	}
 	msg = wallet.GetTransferMsg(transfer)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	transfer.Signature = signInfo
 
-	receipt,err = action.Transfer(transfer)
+	receipt, err = action.Transfer(transfer)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "4000", token.Balance)
-	token , err= GetTokenByAccountIdAndTokenId(statedb, 2,1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 2, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "1000", token.Balance)
 
@@ -156,19 +155,19 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 	forceQuit := &zt.ZkForceExit{
 		AccountId: 1,
-		TokenId: 1,
+		TokenId:   1,
 	}
 	msg = wallet.GetForceQuitMsg(forceQuit)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	forceQuit.Signature = signInfo
-	receipt,err = action.ForceExit(forceQuit)
+	receipt, err = action.ForceExit(forceQuit)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
-	token , err= GetTokenByAccountIdAndTokenId(statedb, 1,1, info)
+	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "0", token.Balance)
 }

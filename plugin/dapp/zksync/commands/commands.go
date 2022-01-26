@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"os"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -14,7 +16,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 /*
