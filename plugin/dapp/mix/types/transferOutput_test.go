@@ -3,20 +3,20 @@ package types
 import (
 	"testing"
 
+	"github.com/consensys/gnark/test"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/frontend"
 )
 
 func TestTransferOutput(t *testing.T) {
 
-	assert := groth16.NewAssert(t)
+	circuitAssert := test.NewAssert(t)
 	var outCircuit TransferOutputCircuit
 
 	// compiles our circuit into a R1CS
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &outCircuit)
-	assert.NoError(err)
+	//r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &outCircuit)
+	//assert.NoError(err)
 
 	{
 
@@ -32,7 +32,11 @@ func TestTransferOutput(t *testing.T) {
 		outCircuit.NoteRandom.Assign("2824204835")
 		outCircuit.Amount.Assign("28242048")
 		outCircuit.AmountRandom.Assign("282420481")
-		assert.ProverSucceeded(r1cs, &outCircuit)
+		//assert.ProverSucceeded(r1cs, &outCircuit)
+
+		var circuit TransferOutputCircuit
+		circuitAssert.ProverSucceeded(&circuit, &outCircuit,
+			test.WithCurves(ecc.BN254), test.WithCompileOpts(), test.WithBackends(backend.GROTH16))
 
 	}
 

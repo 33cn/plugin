@@ -57,7 +57,7 @@ func ConfigMultisignLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 	parameter := fmt.Sprintf("configLockedTokenOfflineSave(%s,%s,%d,%d)", token, symbol, bn, percents)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
-		fmt.Println("configOfflineSaveAccount", "Failed to do abi.Pack due to:", err.Error())
+		fmt.Println("ConfigMultisignLockedTokenOfflineSave", "Failed to do abi.Pack due to:", err.Error())
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "chain33_set_offline_token")

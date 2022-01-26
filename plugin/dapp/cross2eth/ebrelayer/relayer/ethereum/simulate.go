@@ -14,7 +14,7 @@ import (
 var clientChainID = int64(0)
 var bridgeBankAddr = "0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
 
-func (ethRelayer *Relayer4Ethereum) SimLockFromEth(lock ebTypes.LockEthErc20) error {
+func (ethRelayer *Relayer4Ethereum) SimLockFromEth(lock *ebTypes.LockEthErc20) error {
 	amount := big.NewInt(1)
 	amount, _ = amount.SetString(utils.TrimZeroAndDot(lock.Amount), 10)
 
@@ -41,7 +41,7 @@ func (ethRelayer *Relayer4Ethereum) SimLockFromEth(lock ebTypes.LockEthErc20) er
 	return nil
 }
 
-func (ethRelayer *Relayer4Ethereum) SimBurnFromEth(burn ebTypes.Burn) error {
+func (ethRelayer *Relayer4Ethereum) SimBurnFromEth(burn *ebTypes.Burn) error {
 	relayerLog.Info("SimBurnFromEth", "burn", burn)
 	amount := big.NewInt(1)
 	amount, _ = amount.SetString(utils.TrimZeroAndDot(burn.Amount), 10)

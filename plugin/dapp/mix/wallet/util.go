@@ -174,6 +174,7 @@ func getCircuitKeyFileName(circuitTy mixTy.VerifyType) (string, string, error) {
 	}
 }
 
+//文件内容存储的是hex string，读的时候直接转换为string即可
 func readZkKeyFile(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -244,7 +245,7 @@ func getZkProofKeys(circuitTy mixTy.VerifyType, path, file string, inputs fronte
 	}
 
 	var proofKey bytes.Buffer
-	if _, err := proof.WriteRawTo(&proofKey); err != nil {
+	if _, err := proof.WriteTo(&proofKey); err != nil {
 		return nil, errors.Wrapf(err, "write proof")
 	}
 

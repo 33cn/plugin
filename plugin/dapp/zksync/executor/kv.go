@@ -26,6 +26,10 @@ func GetAccountTreeKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"accountTree"))
 }
 
+func getHeightKey(height int64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"treeHeightRoot", height))
+}
+
 func getVerifyKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"verifyKey"))
 }

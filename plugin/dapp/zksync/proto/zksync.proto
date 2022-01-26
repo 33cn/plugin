@@ -4,17 +4,16 @@ option go_package = "../types";
 
 message ZksyncAction {
   oneof value {
-    Deposit  deposit = 1;
-    Withdraw withdraw = 2;
-    ContractToLeaf contractToLeaf = 3;
-    LeafToContract leafToContract = 4;
-    Transfer transfer = 5;
-    TransferToNew transferToNew = 6;
-    ForceQuit forceQuit = 7;
-    SetPubKey setPubKey = 8;
+    ZkDeposit  deposit = 1;
+    ZkWithdraw withdraw = 2;
+    ZkContractToLeaf contractToLeaf = 3;
+    ZkLeafToContract leafToContract = 4;
+    ZkTransfer transfer = 5;
+    ZkTransferToNew transferToNew = 6;
+    ZkForceExit forceExit = 7;
+    ZkSetPubKey setPubKey = 8;
     VerifyKey           setVerifyKey = 10;
     CommitProof         commitProof  = 11;
-
   }
 
   int32 ty = 9;
@@ -22,18 +21,18 @@ message ZksyncAction {
 
 
 message ZkSignature {
-  PubKey pubKey = 1;
+  ZkPubKey pubKey = 1;
   bytes signInfo = 2;
-  Msg msg = 3;
+  ZkMsg msg = 3;
 }
 
-message Msg {
+message ZkMsg {
   string first = 1;
   string second = 2;
   string third = 3;
 }
 
-message PubKey {
+message ZkPubKey {
   string  x = 1;
   string  y = 2;
 }
@@ -54,7 +53,7 @@ message AccountTree {
 message Leaf {
   uint64 accountId = 2; //accountId其实就是叶子的totalIndex
   string ethAddress = 5; //账户对应的以太坊地址
-  PubKey pubKey = 6; //eddsa公钥，用于验证身份
+  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
   string chain33Addr = 7; //chain33地址
   string tokenHash = 8; //叶子下token的hash
   repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
@@ -77,7 +76,7 @@ message MerkleTreeProof {
   repeated string helpers = 3;
 }
 
-message Deposit {
+message ZkDeposit {
   uint64 tokenId = 1;
   string amount = 2;
   string ethAddress = 3;
@@ -85,28 +84,28 @@ message Deposit {
   ZkSignature signature = 5;
 }
 
-message Withdraw {
+message ZkWithdraw {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message ContractToLeaf {
+message ZkContractToLeaf {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message LeafToContract {
+message ZkLeafToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message Transfer {
+message ZkTransfer {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 fromAccountId = 3;
@@ -114,7 +113,7 @@ message Transfer {
   ZkSignature signature = 5;
 }
 
-message TransferToNew {
+message ZkTransferToNew {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 fromAccountId = 3;
@@ -123,15 +122,15 @@ message TransferToNew {
   ZkSignature signature = 6;
 }
 
-message ForceQuit {
+message ZkForceExit {
   uint64 tokenId = 1;
   uint64 accountId = 2;
   ZkSignature signature = 3;
 }
 
-message SetPubKey {
+message ZkSetPubKey {
   uint64 accountId = 1;
-  PubKey  pubKey = 2;
+  ZkPubKey  pubKey = 2;
   ZkSignature signature = 3;
 }
 
@@ -179,7 +178,7 @@ message RelayerOperators {
 }
 
 // leaf merkle proof票据日志
-message ReceiptLeaf {
+message ZkReceiptLeaf {
   Leaf leaf = 1;
   TokenBalance token = 2;
   MerkleTreeProof treeProof = 3;

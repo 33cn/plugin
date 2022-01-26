@@ -46,7 +46,7 @@ func (witness *Witness) LimitReadFrom(r io.Reader) (int64, error) {
 	return dec.BytesRead() + 4, nil
 }
 
-func VerifyMerkleProof(cs *frontend.ConstraintSystem, mimc *mimc.MiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
+func VerifyMerkleProof(cs frontend.API, mimc *mimc.MiMC, treeRootHash frontend.Variable, proofSet, helper, valid []frontend.Variable) {
 	sum := leafSum(mimc, proofSet[0])
 
 	for i := 1; i < len(proofSet); i++ {
@@ -79,7 +79,7 @@ func leafSum(mimc *mimc.MiMC, data frontend.Variable) frontend.Variable {
 	return mimc.Sum()
 }
 
-func CommitValueVerify(cs *frontend.ConstraintSystem, amount, amountRandom,
+func CommitValueVerify(cs frontend.API, amount, amountRandom,
 	shieldAmountX, shieldAmountY, shieldPointHX, shieldPointHY frontend.Variable) {
 	cs.AssertIsLessOrEqual(amount, 9000000000000000000)
 

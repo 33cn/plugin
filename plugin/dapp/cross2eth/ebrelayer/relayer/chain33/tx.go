@@ -268,7 +268,7 @@ func sendTx2Evm(parameter []byte, rpcURL, evmContractAddr, chainName, caller str
 }
 
 func approve(privateKey chain33Crypto.PrivKey, contractAddr, spender, chainName, rpcURL string, amount int64) (string, error) {
-	note := fmt.Sprintf("approve for spender:%s ", spender)
+	note := fmt.Sprintf("approve for spender:%s, amount:%d", spender, amount)
 
 	//approve(address spender, uint256 amount)
 	parameter := fmt.Sprintf("approve(%s, %d)", spender, amount)
@@ -689,5 +689,47 @@ func withdrawViaProxy(privateKey chain33Crypto.PrivKey, contractAddr, ethereumRe
 		return "", err
 	}
 
+	return sendEvmTx(privateKey, contractAddr, chainName, rpcURL, note, packData, 0)
+}
+
+func burnWithIncreaseAsync(ownerPrivateKeyStr, tokenAddrstr, ethereumReceiver string, amount int64, bridgeBankAddr string, chainName, rpcURL string) (string, error) {
+	var driver secp256k1.Driver
+	privateKeySli, err := chain33Common.FromHex(ownerPrivateKeyStr)
+	if nil != err {
+		return "", err
+	}
+	ownerPrivateKey, err := driver.PrivKeyFromBytes(privateKeySli)
+	if nil != err {
+		return "", err
+	}
+
+	approveTxHash, err := increaseApprove(ownerPrivateKey, tokenAddrstr, bridgeBankAddr, chainName, rpcURL, amount)
+	if err != nil {
+		chain33txLog.Error("burnWithIncreaseAsync", "failed to send approve tx due to:", err.Error())
+		return "", err
+	}
+	chain33txLog.Debug("burnWithIncreaseAsync", "approve with tx hash", approveTxHash)
+
+	//privateKey chain33Crypto.PrivKey, contractAddr, ethereumReceiver, ethereumTokenAddress, chainName, rpcURL string, amount int6
+	burnTxHash, err := burn(ownerPrivateKey, bridgeBankAddr, ethereumReceiver, tokenAddrstr, chainName, rpcURL, amount)
+	if err != nil {
+		chain33txLog.Error("burnWithIncreaseAsync", "failed to send burn tx due to:", err.Error())
+		return "", err
+	}
+	chain33txLog.Debug("burnWithIncreaseAsync", "burn with tx hash", burnTxHash)
+
+	return burnTxHash, err
+}
+
+func increaseApprove(privateKey chain33Crypto.PrivKey, contractAddr, spender, chainName, rpcURL string, amount int64) (string, error) {
+	note := fmt.Sprintf("increaseAllowance for spender:%s, amount:%d", spender, amount)
+
+	//approve(address spender, uint256 amount)
+	parameter := fmt.Sprintf("increaseAllowance(%s, %d)", spender, amount)
+	_, packData, err := evmAbi.Pack(parameter, generated.BridgeTokenABI, false)
+	if nil != err {
+		chain33txLog.Info("increaseAllowance", "Failed to do abi.Pack due to:", err.Error())
+		return "", err
+	}
 	return sendEvmTx(privateKey, contractAddr, chainName, rpcURL, note, packData, 0)
 }

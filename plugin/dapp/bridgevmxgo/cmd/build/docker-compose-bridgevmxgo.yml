@@ -1,11 +1,13 @@
 version: '3'
 
 services:
-  ganachetest:
-    entrypoint: ["node", "/app/ganache-core.docker.cli.js", "-a", "20", "-b", "2", "--debug", "-m", "coast bar giraffe art venue decide symbol law visual crater vital fold", "-e", "1000"]
+  ganachetesteth:
+    entrypoint: [ "node", "/app/ganache-core.docker.cli.js", "-a", "20", "-b", "2", "--debug", "-m", "coast bar giraffe art venue decide symbol law visual crater vital fold", "-e", "1000" ]
     image: trufflesuite/ganache-cli:latest
-    #    ports:
-    #      - "8545:8545"
+
+  ganachetestbsc:
+    entrypoint: [ "node", "/app/ganache-core.docker.cli.js", "-a", "20", "-b", "2", "--debug", "-m", "coast bar giraffe art venue decide symbol law visual crater vital fold", "-e", "1000" ]
+    image: trufflesuite/ganache-cli:latest
 
   ebrelayera:
     build:

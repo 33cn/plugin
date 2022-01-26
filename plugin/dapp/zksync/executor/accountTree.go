@@ -70,17 +70,17 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 		Balance: amount,
 	}
 
-	leaf.TokenHash, err = getTokenRootHash(statedb, leaf.AccountId, leaf.TokenIds, info)
-	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getTokenRootHash")
-	}
-
 	kv := &types.KeyValue{
 		Key:   GetTokenPrimaryKey(leaf.AccountId, tokenId),
 		Value: types.Encode(tokenBalance),
 	}
 	kvs = append(kvs, kv)
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
+
+	leaf.TokenHash, err = getTokenRootHash(statedb, leaf.AccountId, leaf.TokenIds, info)
+	if err != nil {
+		return kvs, errors.Wrapf(err, "db.getTokenRootHash")
+	}
 
 	kv = &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leaf.AccountId),
@@ -536,7 +536,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 	//leaf不存在的时候，计算子树
 	if leaf == nil {
 		currentTree := getNewTree()
-		roots, err := GetAllRoots(statedb, leaf.AccountId/1024, info)
+		roots, err := GetAllRoots(statedb, tree.TotalIndex/1024, info)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.GetAllRoots")
 		}
@@ -701,7 +701,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.PubKey, accountId uint64) ([]*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {

@@ -9,9 +9,13 @@ message ExchangeAction {
     LimitOrder  limitOrder = 1;
     MarketOrder marketOrder = 2;
     RevokeOrder revokeOrder = 3;
+    ExchangeBind exchangeBind = 4;
+    EntrustOrder entrustOrder = 5;
+    EntrustRevokeOrder entrustRevokeOrder = 7;
   }
   int32 ty = 6;
 }
+
 //限价订单
 message LimitOrder {
   //交易对
@@ -36,6 +40,37 @@ message MarketOrder {
   int64 amount = 3;
   //操作， 1为买，2为卖
   int32 op = 4;
+}
+
+message ExchangeBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string entrustAddress = 2;
+}
+
+//委托限价订单
+message EntrustOrder {
+  //交易对
+  asset leftAsset = 1;
+  //交易对
+  asset rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  //交易地址
+  string addr = 6;
+}
+
+//委托撤回订单
+message EntrustRevokeOrder {
+  //订单号
+  int64 orderID = 1;
+  //交易地址
+  string addr = 2;
 }
 
 //撤回订单
@@ -84,6 +119,8 @@ message Order {
   string revokeHash = 16;
   //创建时间
   int64 createTime = 17;
+  //委托地址
+  string entrustAddr = 18;
 }
 
 //查询接口
@@ -160,6 +197,15 @@ message ReceiptExchange {
   Order    order = 1;
   repeated Order matchOrders = 2;
   int64          index = 3;
+}
+
+message ReceiptExchangeBind {
+  //交易地址
+  string exchangeAddress = 1;
+  //委托地址
+  string newEntrustAddress = 2;
+  //委托地址
+  string oldEntrustAddress = 3;
 }
 
 service exchange {}

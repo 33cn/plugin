@@ -14,15 +14,20 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyNoopAction = iota + 200
+	TyUnknowAction = iota + 200
 	TyLimitOrderAction
 	TyMarketOrderAction
 	TyRevokeOrderAction
+	TyExchangeBindAction
+	TyEntrustOrderAction
+	TyEntrustRevokeOrderAction
 
-	NameNoopAction        = "Noop"
-	NameLimitOrderAction  = "LimitOrder"
-	NameMarketOrderAction = "MarketOrder"
-	NameRevokeOrderAction = "RevokeOrder"
+	NameLimitOrderAction         = "LimitOrder"
+	NameMarketOrderAction        = "MarketOrder"
+	NameRevokeOrderAction        = "RevokeOrder"
+	NameExchangeBindAction       = "ExchangeBind"
+	NameEntrustOrderAction       = "EntrustOrder"
+	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -32,10 +37,12 @@ const (
 
 // log类型id值
 const (
-	TyNoopLog = iota + 200
+	TyUnknowLog = iota + 200
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
+
+	TyExchangeBindLog
 )
 
 // OP
@@ -70,18 +77,27 @@ var (
 	ExchangeX = "exchange"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameNoopAction:        TyNoopAction,
-		NameLimitOrderAction:  TyLimitOrderAction,
-		NameMarketOrderAction: TyMarketOrderAction,
-		NameRevokeOrderAction: TyRevokeOrderAction,
+		NameLimitOrderAction:         TyLimitOrderAction,
+		NameMarketOrderAction:        TyMarketOrderAction,
+		NameRevokeOrderAction:        TyRevokeOrderAction,
+		NameExchangeBindAction:       TyExchangeBindAction,
+		NameEntrustOrderAction:       TyEntrustOrderAction,
+		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		TyLimitOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
-		TyMarketOrderLog: {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
-		TyRevokeOrderLog: {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
+		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
 	}
 	//tlog = log.New("module", "exchange.types")
+
+	//ForkFix Forks
+	ForkFix1 = "ForkFix1"
+	ForkFix2 = "ForkFix2"
+	ForkFix3 = "ForkFix3"
+	ForkFix4 = "ForkFix4"
 )
 
 // init defines a register function
@@ -95,6 +111,10 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix2, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix3, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix4, 0)
 }
 
 // InitExecutor defines register executor

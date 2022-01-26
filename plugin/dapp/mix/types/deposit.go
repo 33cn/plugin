@@ -17,12 +17,12 @@ type DepositCircuit struct {
 	NoteRandom      frontend.Variable
 }
 
-func (circuit *DepositCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *DepositCircuit) Define(curveID ecc.ID, api frontend.API) error {
 	// hash function
-	mimc, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
+	mimc, _ := mimc.NewMiMC(MimcHashSeed, curveID, api)
 
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
-	cs.AssertIsEqual(circuit.NoteHash, mimc.Sum())
+	api.AssertIsEqual(circuit.NoteHash, mimc.Sum())
 
 	return nil
 }

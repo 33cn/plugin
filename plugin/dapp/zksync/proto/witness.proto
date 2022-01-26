@@ -1,8 +1,9 @@
 syntax = "proto3";
+import "zksync.proto";
+
 package types;
 option go_package = "../types";
 
-import "zksync.proto";
 
 message SiblingPath {
   repeated string path    = 1;
@@ -14,7 +15,7 @@ message AccountWitness {
   string ethAddr        = 2;
   string chain33Addr    = 3;
   string tokenTreeRoot  = 4; //sub chain token tree root
-  PubKey pubKey         = 5;
+  ZkPubKey pubKey         = 5;
   SiblingPath sibling   = 6;
 
 }
@@ -77,4 +78,3 @@ message OperationSpecialData {
   ZkSignature sigData         = 8;
 
 }
-

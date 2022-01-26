@@ -432,14 +432,6 @@ func TestExchange(t *testing.T) {
 		primaryKey = orderList.PrimaryKey
 	}
 	assert.Equal(t, et.MaxMatchCount, count)
-	//相同得地址不能交易,不会撮合
-	err = Exec_LimitOrder(t, &et.LimitOrder{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Price: 100000000, Amount: 100 * types.DefaultCoinPrecision, Op: et.OpSell}, PrivKeyA, stateDB, kvdb, env)
-	assert.Equal(t, nil, err)
-	marketDepthList, err = Exec_QueryMarketDepth(&et.QueryMarketDepth{LeftAsset: &et.Asset{Symbol: "bty", Execer: "coins"},
-		RightAsset: &et.Asset{Execer: "token", Symbol: "CCNY"}, Op: et.OpSell}, stateDB, kvdb)
-	assert.Equal(t, nil, err)
-	assert.Equal(t, (200-et.MaxMatchCount+100)*types.DefaultCoinPrecision, marketDepthList.List[0].GetAmount())
 	//不同的地址没有权限进行订单撤销
 	err = Exec_RevokeOrder(t, orderID, PrivKeyA, stateDB, kvdb, env)
 	assert.NotEqual(t, nil, err)

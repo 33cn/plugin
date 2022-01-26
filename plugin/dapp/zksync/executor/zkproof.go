@@ -6,7 +6,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend/groth16"
 	"math/big"
 
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
