@@ -3,14 +3,15 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"strconv"
+	"testing"
+
 	"github.com/33cn/chain33/util"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"testing"
 )
 
 func TestAccountTree(t *testing.T) {

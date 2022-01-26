@@ -2,6 +2,9 @@ package executor
 
 import (
 	"encoding/hex"
+	"math/big"
+	"strconv"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -13,8 +16,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
-	"math/big"
-	"strconv"
 )
 
 // Action action struct

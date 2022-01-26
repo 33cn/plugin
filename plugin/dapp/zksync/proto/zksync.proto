@@ -12,8 +12,8 @@ message ZksyncAction {
     ZkTransferToNew transferToNew = 6;
     ZkForceExit forceExit = 7;
     ZkSetPubKey setPubKey = 8;
-    VerifyKey           setVerifyKey = 10;
-    CommitProof         commitProof  = 11;
+    ZkVerifyKey         setVerifyKey = 10;
+    ZkCommitProof         commitProof  = 11;
   }
 
   int32 ty = 9;
@@ -135,17 +135,17 @@ message ZkSetPubKey {
 }
 
 //电路验证key
-message VerifyKey {
+message ZkVerifyKey {
   string key = 1;
 }
 
 message ReceiptSetVerifyKey {
-  VerifyKey prev = 1;
-  VerifyKey current = 2;
+  ZkVerifyKey prev = 1;
+  ZkVerifyKey current = 2;
 }
 
 //commit proof tx data
-message CommitProof {
+message ZkCommitProof {
   uint64 blockStart  = 1;
   uint64 blockEnd    = 2;
   string oldTreeRoot = 3;

@@ -2,14 +2,15 @@ package executor
 
 import (
 	"bytes"
+	"strings"
+	"testing"
+
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/stretchr/testify/assert"
-	"strings"
-	"testing"
 )
 
 func TestZksyncOption(t *testing.T) {

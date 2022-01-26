@@ -3,10 +3,11 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"math/big"
+
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc"
-	"math/big"
 
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 
@@ -18,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func makeSetVerifyKeyReceipt(old, new *zt.VerifyKey) *types.Receipt {
+func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 	key := getVerifyKey()
 	log := &zt.ReceiptSetVerifyKey{
 		Prev:    old,
@@ -74,13 +75,13 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
-func getVerifyKeyData(db dbm.KV) (*zt.VerifyKey, error) {
+func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
 	key := getVerifyKey()
 	v, err := db.Get(key)
 	if err != nil {
 		return nil, errors.Wrapf(err, "get db verify key")
 	}
-	var data zt.VerifyKey
+	var data zt.ZkVerifyKey
 	err = types.Decode(v, &data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "decode db verify key")
@@ -90,7 +91,7 @@ func getVerifyKeyData(db dbm.KV) (*zt.VerifyKey, error) {
 }
 
 //合约管理员或管理员设置在链上的管理员才可设置
-func (a *Action) setVerifyKey(payload *zt.VerifyKey) (*types.Receipt, error) {
+func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
@@ -98,14 +99,14 @@ func (a *Action) setVerifyKey(payload *zt.VerifyKey) (*types.Receipt, error) {
 
 	oldKey, err := getVerifyKeyData(a.statedb)
 	if isNotFound(errors.Cause(err)) {
-		key := &zt.VerifyKey{Key: payload.Key}
+		key := &zt.ZkVerifyKey{Key: payload.Key}
 
 		return makeSetVerifyKeyReceipt(nil, key), nil
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
 	}
-	newKey := &zt.VerifyKey{Key: payload.Key}
+	newKey := &zt.ZkVerifyKey{Key: payload.Key}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
@@ -157,7 +158,7 @@ func getByteBuff(input string) (*bytes.Buffer, error) {
 }
 
 //
-func (a *Action) commitProof(payload *zt.CommitProof) (*types.Receipt, error) {
+func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if !isValidator(cfg, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
@@ -199,7 +200,7 @@ func (a *Action) commitProof(payload *zt.CommitProof) (*types.Receipt, error) {
 
 }
 
-func verifyProof(verifyKey string, proof *zt.CommitProof) error {
+func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 
 	//decode public inputs
 	pBuff, err := getByteBuff(proof.PublicInput)
