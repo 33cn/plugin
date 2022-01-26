@@ -56,26 +56,26 @@ type AuthorizeCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, api frontend.API) error {
 	// hash function
-	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, cs)
+	h, _ := mimc.NewMiMC(MimcHashSeed, curveID, api)
 	mimc := &h
 	mimc.Write(circuit.AuthorizePriKey)
-	cs.AssertIsEqual(circuit.AuthorizePubKey, mimc.Sum())
+	api.AssertIsEqual(circuit.AuthorizePubKey, mimc.Sum())
 
 	mimc.Reset()
 	mimc.Write(circuit.AuthorizePubKey, circuit.NoteRandom)
-	cs.AssertIsEqual(circuit.AuthorizeHash, mimc.Sum())
+	api.AssertIsEqual(circuit.AuthorizeHash, mimc.Sum())
 
 	mimc.Reset()
-	cs.AssertIsBoolean(circuit.SpendFlag)
-	targetSpendKey := cs.Select(circuit.SpendFlag, circuit.ReceiverPubKey, circuit.ReturnPubKey)
+	api.AssertIsBoolean(circuit.SpendFlag)
+	targetSpendKey := api.Select(circuit.SpendFlag, circuit.ReceiverPubKey, circuit.ReturnPubKey)
 	mimc.Write(targetSpendKey, circuit.Amount, circuit.NoteRandom)
-	cs.AssertIsEqual(circuit.AuthorizeSpendHash, mimc.Sum())
+	api.AssertIsEqual(circuit.AuthorizeSpendHash, mimc.Sum())
 
 	mimc.Reset()
 	mimc.Write(circuit.ReceiverPubKey, circuit.ReturnPubKey, circuit.AuthorizePubKey, circuit.Amount, circuit.NoteRandom)
-	cs.AssertIsEqual(circuit.NoteHash, mimc.Sum())
+	api.AssertIsEqual(circuit.NoteHash, mimc.Sum())
 
 	var proofSet, helper, valid []frontend.Variable
 	proofSet = append(proofSet, circuit.NoteHash)
@@ -91,7 +91,7 @@ func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintS
 	proofSet = append(proofSet, circuit.Path9)
 
 	//helper[0],valid[0]占位， 方便接口只设置有效值
-	helper = append(helper, cs.Constant("1"))
+	helper = append(helper, api.Constant("1"))
 	helper = append(helper, circuit.Helper0)
 	helper = append(helper, circuit.Helper1)
 	helper = append(helper, circuit.Helper2)
@@ -103,7 +103,7 @@ func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintS
 	helper = append(helper, circuit.Helper8)
 	helper = append(helper, circuit.Helper9)
 
-	valid = append(valid, cs.Constant("1"))
+	valid = append(valid, api.Constant("1"))
 	valid = append(valid, circuit.Valid0)
 	valid = append(valid, circuit.Valid1)
 	valid = append(valid, circuit.Valid2)
@@ -115,7 +115,7 @@ func (circuit *AuthorizeCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintS
 	valid = append(valid, circuit.Valid8)
 	valid = append(valid, circuit.Valid9)
 
-	VerifyMerkleProof(cs, mimc, circuit.TreeRootHash, proofSet, helper, valid)
+	VerifyMerkleProof(api, mimc, circuit.TreeRootHash, proofSet, helper, valid)
 
 	return nil
 }

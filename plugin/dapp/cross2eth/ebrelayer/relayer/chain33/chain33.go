@@ -15,7 +15,6 @@ import (
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 
 	"github.com/33cn/chain33/common"
-	"github.com/33cn/chain33/common/address"
 	chain33Crypto "github.com/33cn/chain33/common/crypto"
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -53,17 +52,18 @@ type Relayer4Chain33 struct {
 	bridgeBankEventBurnSig     string
 	bridgeBankEventWithdrawSig string
 	bridgeBankAbi              abi.ABI
-	deployInfo                 *ebTypes.Deploy
 	totalTx4RelayEth2chai33    int64
 	//新增//
-	ethBridgeClaimChan <-chan *ebTypes.EthBridgeClaim
-	chain33MsgChan     chan<- *events.Chain33Msg
-	bridgeRegistryAddr string
-	oracleAddr         string
-	bridgeBankAddr     string
-	mulSignAddr        string
-	deployResult       *X2EthDeployResult
-	symbol2Addr        map[string]string
+	ethBridgeClaimChan        <-chan *ebTypes.EthBridgeClaim
+	chain33MsgChan            map[string]chan<- *events.Chain33Msg
+	bridgeRegistryAddr        string
+	oracleAddr                string
+	bridgeBankAddr            string
+	mulSignAddr               string
+	deployResult              *X2EthDeployResult
+	symbol2Addr               map[string]string
+	bridgeSymbol2EthChainName map[string]string //在chain33上发行的跨链token的名称到以太坊链的名称映射
+	processWithDraw           bool
 }
 
 type Chain33StartPara struct {
@@ -71,11 +71,11 @@ type Chain33StartPara struct {
 	Ctx                context.Context
 	SyncTxConfig       *ebTypes.SyncTxConfig
 	BridgeRegistryAddr string
-	DeployInfo         *ebTypes.Deploy
 	DBHandle           dbm.DB
 	EthBridgeClaimChan <-chan *ebTypes.EthBridgeClaim
-	Chain33MsgChan     chan<- *events.Chain33Msg
+	Chain33MsgChan     map[string]chan<- *events.Chain33Msg
 	ChainID            int32
+	ProcessWithDraw    bool
 }
 
 // StartChain33Relayer : initializes a relayer which witnesses events on the chain33 network and relays them to Ethereum
@@ -88,12 +88,12 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 		unlockChan:              make(chan int),
 		db:                      startPara.DBHandle,
 		ctx:                     startPara.Ctx,
-		deployInfo:              startPara.DeployInfo,
 		bridgeRegistryAddr:      startPara.BridgeRegistryAddr,
 		ethBridgeClaimChan:      startPara.EthBridgeClaimChan,
 		chain33MsgChan:          startPara.Chain33MsgChan,
 		totalTx4RelayEth2chai33: 0,
 		symbol2Addr:             make(map[string]string),
+		processWithDraw:         startPara.ProcessWithDraw,
 	}
 
 	syncCfg := &ebTypes.SyncTxReceiptConfig{
@@ -120,8 +120,14 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 	if 0 == chain33Relayer.totalTx4RelayEth2chai33 {
 		statics := &ebTypes.Ethereum2Chain33Statics{}
 		data := chain33Types.Encode(statics)
-		chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeLock), data)
-		chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeBurn), data)
+		err := chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeLock), data)
+		if err != nil {
+			relayerLog.Error("StartChain33Relayer", "setLastestRelay2Chain33TxStatics ClaimTypeLock error", err.Error())
+		}
+		err = chain33Relayer.setLastestRelay2Chain33TxStatics(0, int32(events.ClaimTypeBurn), data)
+		if err != nil {
+			relayerLog.Error("StartChain33Relayer", "setLastestRelay2Chain33TxStatics ClaimTypeBurn error", err.Error())
+		}
 	}
 
 	go chain33Relayer.syncProc(syncCfg)
@@ -157,6 +163,7 @@ func (chain33Relayer *Relayer4Chain33) syncProc(syncCfg *ebTypes.SyncTxReceiptCo
 	chain33Relayer.syncEvmTxLogs = syncTx.StartSyncEvmTxLogs(syncCfg, chain33Relayer.db)
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 	chain33Relayer.mulSignAddr = chain33Relayer.getMultiSignAddress()
+	chain33Relayer.bridgeSymbol2EthChainName = chain33Relayer.restoreSymbol2chainName()
 	chain33Relayer.prePareSubscribeEvent()
 	timer := time.NewTicker(time.Duration(chain33Relayer.fetchHeightPeriodMs) * time.Millisecond)
 	for {
@@ -243,8 +250,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 				}
 
 				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
-					errInfo := fmt.Sprintf("Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
-					panic(errInfo)
+					relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 				}
 			}
 		}
@@ -263,12 +269,24 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		return err
 	}
 
-	chain33Relayer.chain33MsgChan <- chain33Msg
+	relayerLog.Info("handleBurnLockWithdrawEvent", "Going to send chain33Msg.ClaimType", chain33Msg.ClaimType.String())
+	chainName, ok := chain33Relayer.bridgeSymbol2EthChainName[chain33Msg.Symbol]
+	if !ok {
+		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chain33Msg.Symbol)
+		return errors.New("ErrNoEthChainName4BridgeSymbol")
+	}
+
+	channel, ok := chain33Relayer.chain33MsgChan[chainName]
+	if !ok {
+		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chainName)
+		return errors.New("ErrNoChain33MsgChan4EthChainName")
+	}
+
+	channel <- chain33Msg
 
 	return nil
 }
 
-//DeployContrcts 部署以太坊合约
 func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {
 	txLogs, err := chain33Relayer.syncEvmTxLogs.GetNextValidEvmTxLogs(height)
 	if nil == txLogs || nil != err {
@@ -324,95 +342,6 @@ func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err err
 	return nil
 }
 
-//DeployContrcts 部署以太坊合约
-func (chain33Relayer *Relayer4Chain33) DeployContracts() (bridgeRegistry string, err error) {
-	bridgeRegistry = ""
-	if nil == chain33Relayer.deployInfo {
-		return bridgeRegistry, errors.New("no deploy info configured yet")
-	}
-	if len(chain33Relayer.deployInfo.ValidatorsAddr) != len(chain33Relayer.deployInfo.InitPowers) {
-		return bridgeRegistry, errors.New("not same number for validator address and power")
-	}
-	if len(chain33Relayer.deployInfo.ValidatorsAddr) < 3 {
-		return bridgeRegistry, errors.New("the number of validator must be not less than 3")
-	}
-
-	//已经设置了注册合约地址，说明已经部署了相关的合约，不再重复部署
-	if chain33Relayer.bridgeRegistryAddr != "" {
-		return bridgeRegistry, errors.New("contract deployed already")
-	}
-
-	var validators []address.Address
-	var initPowers []*big.Int
-
-	for i, addrStr := range chain33Relayer.deployInfo.ValidatorsAddr {
-		addr, err := address.NewAddrFromString(addrStr)
-		if nil != err {
-			panic(fmt.Sprintf("Failed to NewAddrFromString for:%s", addrStr))
-		}
-		validators = append(validators, *addr)
-		initPowers = append(initPowers, big.NewInt(chain33Relayer.deployInfo.InitPowers[i]))
-	}
-	deployerAddr, err := address.NewAddrFromString(chain33Relayer.deployInfo.OperatorAddr)
-	if nil != err {
-		panic(fmt.Sprintf("Failed to NewAddrFromString for:%s", chain33Relayer.deployInfo.OperatorAddr))
-	}
-	para4deploy := &DeployPara4Chain33{
-		Deployer:       *deployerAddr,
-		Operator:       *deployerAddr,
-		InitValidators: validators,
-		InitPowers:     initPowers,
-	}
-
-	for i, power := range para4deploy.InitPowers {
-		relayerLog.Info("deploy", "the validator address ", para4deploy.InitValidators[i].String(),
-			"power", power.String())
-	}
-
-	x2EthDeployInfo, err := deployAndInit2Chain33(chain33Relayer.rpcLaddr, chain33Relayer.chainName, para4deploy)
-	if err != nil {
-		return bridgeRegistry, err
-	}
-	chain33Relayer.rwLock.Lock()
-
-	chain33Relayer.deployResult = x2EthDeployInfo
-	bridgeRegistry = x2EthDeployInfo.BridgeRegistry.Address.String()
-	_ = chain33Relayer.setBridgeRegistryAddr(bridgeRegistry)
-	//设置注册合约地址，同时设置启动中继服务的信号
-	chain33Relayer.bridgeRegistryAddr = bridgeRegistry
-	chain33Relayer.oracleAddr = x2EthDeployInfo.Oracle.Address.String()
-	chain33Relayer.bridgeBankAddr = x2EthDeployInfo.BridgeBank.Address.String()
-	chain33Relayer.rwLock.Unlock()
-	chain33Relayer.unlockChan <- start
-	relayerLog.Info("deploy", "the BridgeRegistry address is", bridgeRegistry)
-
-	return bridgeRegistry, nil
-}
-
-//DeployContrcts 部署以太坊合约
-func (chain33Relayer *Relayer4Chain33) DeployMulsign() (mulsign string, err error) {
-	mulsign, err = deployMulSign2Chain33(chain33Relayer.rpcLaddr, chain33Relayer.chainName, chain33Relayer.deployInfo.OperatorAddr)
-	if err != nil {
-		return "", err
-	}
-	chain33Relayer.rwLock.Lock()
-	chain33Relayer.mulSignAddr = mulsign
-	chain33Relayer.rwLock.Unlock()
-
-	chain33Relayer.setMultiSignAddress(mulsign)
-
-	return mulsign, nil
-}
-
-func (chain33Relayer *Relayer4Chain33) CreateERC20ToChain33(param ebTypes.ERC20Token) (erc20 string, err error) {
-	erc20, err = deployERC20ToChain33(chain33Relayer.rpcLaddr, chain33Relayer.chainName, chain33Relayer.deployInfo.OperatorAddr, param)
-	if err != nil {
-		return "", err
-	}
-
-	return erc20, nil
-}
-
 func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.EthBridgeClaim) {
 	relayerLog.Debug("relayLockBurnToChain33", "new EthBridgeClaim received", claim)
 
@@ -443,6 +372,15 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		}
 	} else {
 		//lock 分支
+		if _, ok := chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol]; !ok {
+			chain33Relayer.bridgeSymbol2EthChainName[claim.Symbol] = claim.ChainName
+			chain33Relayer.storeSymbol2chainName(chain33Relayer.bridgeSymbol2EthChainName)
+		}
+		//如果是代理打币节点，则只收集symbol和chain name相关信息
+		if chain33Relayer.processWithDraw {
+			return
+		}
+
 		var exist bool
 		tokenAddr, exist = chain33Relayer.symbol2Addr[claim.Symbol]
 		if !exist {
@@ -615,7 +553,7 @@ func (chain33Relayer *Relayer4Chain33) updateSingleTxStatus(claimType events.Cla
 	}
 }
 
-func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign ebTypes.SetupMulSign) (string, error) {
+func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign *ebTypes.SetupMulSign) (string, error) {
 	if "" == chain33Relayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
@@ -623,7 +561,7 @@ func (chain33Relayer *Relayer4Chain33) SetupMulSign(setupMulSign ebTypes.SetupMu
 	return setupMultiSign(setupMulSign.OperatorPrivateKey, chain33Relayer.mulSignAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr, setupMulSign.Owners)
 }
 
-func (chain33Relayer *Relayer4Chain33) SafeTransfer(para ebTypes.SafeTransfer) (string, error) {
+func (chain33Relayer *Relayer4Chain33) SafeTransfer(para *ebTypes.SafeTransfer) (string, error) {
 	if "" == chain33Relayer.mulSignAddr {
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
@@ -644,4 +582,10 @@ func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, toke
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	return withdrawAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
+}
+
+func (chain33Relayer *Relayer4Chain33) BurnWithIncreaseAsyncFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
+	bn := big.NewInt(1)
+	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
+	return burnWithIncreaseAsync(ownerPrivateKey, tokenAddr, ethereumReceiver, bn.Int64(), chain33Relayer.bridgeBankAddr, chain33Relayer.chainName, chain33Relayer.rpcLaddr)
 }

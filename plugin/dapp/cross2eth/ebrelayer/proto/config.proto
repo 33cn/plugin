@@ -9,9 +9,6 @@ message SyncTxConfig {
   string pushName = 3;
   string pushBind = 4;
   int32 maturityDegree = 5;
-  string dbdriver = 6; //数据库类型
-  string dbPath = 7;   //数据库存储目录
-  int32 dbCache = 8;   //数据库缓存大小
   int64 fetchHeightPeriodMs = 9;
   int64 startSyncHeight     = 10;
   int64 startSyncSequence   = 11;
@@ -31,42 +28,41 @@ message Log {
   bool callerFunction = 10;
 }
 
+message EthRelayerCfg {
+  string ethChainName            = 1;
+  string ethProvider             = 2;
+  string ethProviderCli          = 3;
+  string bridgeRegistry          = 4;
+  int32 ethMaturityDegree        = 5;
+  int32 ethBlockFetchPeriod      = 6;
+}
+
+message Chain33RelayerCfg {
+  SyncTxConfig syncTxConfig      =  1;
+  string bridgeRegistryOnChain33 =  2;
+  string chainName               =  3;
+  int32  chainID4Chain33         =  4;
+}
+
 message RelayerConfig {
-  string title = 1;
-  SyncTxConfig syncTxConfig = 2;
-  Log log = 3;
-  string jrpcBindAddr = 4; // Jrpc服务地址
-  string ethProvider  = 5;
-  string bridgeRegistry = 6;
-  Deploy deploy = 7;
-  Deploy deploy4chain33 = 8;
-  int32 ethMaturityDegree = 9;
-  int32 ethBlockFetchPeriod = 10;
-  string ethProviderCli  = 11;
-  string bridgeRegistryOnChain33 = 12;
-  string chainName               = 13;
-  int32  chainID4Chain33         = 14;
-  bool processWithDraw         = 15;
+  string title                        = 1;
+  string jrpcBindAddr                 = 2; // Jrpc服务地址
+  repeated EthRelayerCfg ethRelayerCfg= 3;
+  Chain33RelayerCfg chain33RelayerCfg = 4;
+  Log log                             = 5;
+  string dbdriver                     = 6; //数据库类型
+  string dbPath                       = 7;   //数据库存储目录
+  int32 dbCache                       = 8;   //数据库缓存大小
+  bool processWithDraw                = 9;
 }
 
 message SyncTxReceiptConfig {
-  string chain33host = 1;
-  string pushHost = 2;
-  string pushName = 3;
-  string pushBind = 4;
+  string chain33host        = 1;
+  string pushHost           = 2;
+  string pushName           = 3;
+  string pushBind           = 4;
   int64 startSyncHeight     = 5;
   int64 startSyncSequence   = 6;
   string startSyncHash      = 7;
   repeated string contracts = 8;
-}
-
-message Deploy {
-  //操作管理员地址
-  string operatorAddr = 1;
-  //合约部署人员私钥，用于部署合约时签名使用
-  string deployerPrivateKey = 2;
-  //验证人地址
-  repeated string validatorsAddr  = 3;
-  //验证人权重
-  repeated int64 initPowers = 4;
 }

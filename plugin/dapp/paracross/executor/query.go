@@ -48,10 +48,14 @@ func (p *Paracross) Query_GetTitleHeight(in *pt.ReqParacrossTitleHeight) (types.
 		res.CommitAddrs = append(res.CommitAddrs, addr)
 		res.CommitBlockHash = append(res.CommitBlockHash, common.ToHex(status.Details.BlockHash[i]))
 	}
-	for i, addr := range status.SupervisionDetails.Addrs {
-		res.CommitSupervisionAddrs = append(res.CommitSupervisionAddrs, addr)
-		res.CommitSupervisionBlockHash = append(res.CommitSupervisionBlockHash, common.ToHex(status.SupervisionDetails.BlockHash[i]))
+
+	if status.SupervisionDetails != nil {
+		for i, addr := range status.SupervisionDetails.Addrs {
+			res.CommitSupervisionAddrs = append(res.CommitSupervisionAddrs, addr)
+			res.CommitSupervisionBlockHash = append(res.CommitSupervisionBlockHash, common.ToHex(status.SupervisionDetails.BlockHash[i]))
+		}
 	}
+
 	return res, nil
 }
 
