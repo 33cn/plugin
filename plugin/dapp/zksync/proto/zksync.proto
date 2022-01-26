@@ -1,4 +1,6 @@
 syntax = "proto3";
+import "witness.proto";
+
 package types;
 option go_package = "../types";
 
@@ -17,23 +19,6 @@ message ZksyncAction {
   int32 ty = 9;
 }
 
-
-message ZkSignature {
-  ZkPubKey pubKey = 1;
-  bytes signInfo = 2;
-  ZkMsg msg = 3;
-}
-
-message ZkMsg {
-  string first = 1;
-  string second = 2;
-  string third = 3;
-}
-
-message ZkPubKey {
-  string  x = 1;
-  string  y = 2;
-}
 
 //某个token的余额
 message TokenBalance {
@@ -138,6 +123,19 @@ message ZkReceiptLeaf {
   TokenBalance token = 2;
   MerkleTreeProof treeProof = 3;
   MerkleTreeProof tokenProof = 4;
+}
+
+message ZkQueryReq {
+  uint64 accountId = 1;
+  uint64 blockHeight = 2;
+  uint32 txIndex = 3;
+  string ethAddress = 4;
+  string chain33Addr = 5;
+}
+
+message ZkQueryResp {
+  repeated OperationInfo operationInfos = 1;
+  repeated Leaf leaves = 2;
 }
 
 service zksync{}

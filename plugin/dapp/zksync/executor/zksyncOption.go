@@ -220,17 +220,22 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 }
 
 func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
-	var tree zt.AccountTree
+	var tree *zt.AccountTree
 	updateMap := make(map[string][]byte)
 	val, err := db.Get(GetAccountTreeKey())
 	if err != nil {
-		return nil, err
+		//没查到就先初始化
+		if err == types.ErrNotFound {
+			tree =  NewAccountTree(db)
+		} else {
+			return nil, err
+		}
 	}
-	err = types.Decode(val, &tree)
+	err = types.Decode(val, tree)
 	if err != nil {
 		return nil, err
 	}
-	updateMap[string(GetAccountTreeKey())] = types.Encode(&tree)
+	updateMap[string(GetAccountTreeKey())] = types.Encode(tree)
 	return &TreeUpdateInfo{updateMap: updateMap}, nil
 }
 

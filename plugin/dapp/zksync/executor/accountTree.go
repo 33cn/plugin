@@ -153,12 +153,14 @@ func getNewTree() *merkletree.Tree {
 
 func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 	var tree zt.AccountTree
-	if val, ok := info.updateMap[string(GetAccountTreeKey())]; ok {
-		err := types.Decode(val, &tree)
-		if err != nil {
-			return nil, err
+	if info != nil {
+		if val, ok := info.updateMap[string(GetAccountTreeKey())]; ok {
+			err := types.Decode(val, &tree)
+			if err != nil {
+				return nil, err
+			}
+			return &tree, nil
 		}
-		return &tree, nil
 	}
 	val, err := db.Get(GetAccountTreeKey())
 	if err != nil {

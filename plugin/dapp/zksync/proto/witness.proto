@@ -1,9 +1,25 @@
 syntax = "proto3";
-import "zksync.proto";
 
 package types;
 option go_package = "../types";
 
+
+message ZkSignature {
+  ZkPubKey pubKey = 1;
+  bytes signInfo = 2;
+  ZkMsg msg = 3;
+}
+
+message ZkMsg {
+  string first = 1;
+  string second = 2;
+  string third = 3;
+}
+
+message ZkPubKey {
+  string  x = 1;
+  string  y = 2;
+}
 
 message SiblingPath {
   repeated string path    = 1;

@@ -12,81 +12,71 @@ import (
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
-	chain33Addr string, accountId uint64, toAccountId uint64,) ([]byte, error) {
-	action := new(zt.ZksyncAction)
-	action.Ty = actionTy
+	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
+	var payload []byte
 	switch actionTy {
 	case zt.TyDepositAction:
-		action.Value = &zt.ZksyncAction_Deposit{
-			Deposit: &zt.ZkDeposit{
-				TokenId:     tokenId,
-				Amount:      amount,
-				EthAddress:  ethAddress,
-				Chain33Addr: chain33Addr,
-			},
+		deposit := &zt.ZkDeposit{
+			TokenId:     tokenId,
+			Amount:      amount,
+			EthAddress:  ethAddress,
+			Chain33Addr: chain33Addr,
 		}
+		payload = types.MustPBToJSON(deposit)
 	case zt.TyWithdrawAction:
-		action.Value = &zt.ZksyncAction_Withdraw{
-			Withdraw: &zt.ZkWithdraw{
-				TokenId:   tokenId,
-				Amount:    amount,
-				AccountId: accountId,
-			},
+		withdraw := &zt.ZkWithdraw{
+			TokenId:   tokenId,
+			Amount:    amount,
+			AccountId: accountId,
 		}
-
+		payload = types.MustPBToJSON(withdraw)
 	case zt.TyContractToLeafAction:
-		action.Value = &zt.ZksyncAction_ContractToLeaf{
-			ContractToLeaf: &zt.ZkContractToLeaf{
-				TokenId:   tokenId,
-				Amount:    amount,
-				AccountId: accountId,
-			},
+		contractToLeaf := &zt.ZkContractToLeaf{
+			TokenId:   tokenId,
+			Amount:    amount,
+			AccountId: accountId,
 		}
+		payload = types.MustPBToJSON(contractToLeaf)
 	case zt.TyLeafToContractAction:
-		action.Value = &zt.ZksyncAction_LeafToContract{
-			LeafToContract: &zt.ZkLeafToContract{
-				TokenId:   tokenId,
-				Amount:    amount,
-				AccountId: accountId,
-			},
+		leafToContract := &zt.ZkLeafToContract{
+			TokenId:   tokenId,
+			Amount:    amount,
+			AccountId: accountId,
 		}
+		payload = types.MustPBToJSON(leafToContract)
 	case zt.TyTransferAction:
-		action.Value = &zt.ZksyncAction_Transfer{
-			Transfer: &zt.ZkTransfer{
-				TokenId:       tokenId,
-				Amount:        amount,
-				FromAccountId: accountId,
-				ToAccountId:   toAccountId,
-			},
+		transfer := &zt.ZkTransfer{
+			TokenId:       tokenId,
+			Amount:        amount,
+			FromAccountId: accountId,
+			ToAccountId:   toAccountId,
 		}
+		payload = types.MustPBToJSON(transfer)
 	case zt.TyTransferToNewAction:
-		action.Value = &zt.ZksyncAction_TransferToNew{
-			TransferToNew: &zt.ZkTransferToNew{
-				TokenId:          tokenId,
-				Amount:           amount,
-				FromAccountId:    accountId,
-				ToEthAddress:     toEthAddress,
-				ToChain33Address: chain33Addr,
-			},
+		transferToNew := &zt.ZkTransferToNew{
+			TokenId:          tokenId,
+			Amount:           amount,
+			FromAccountId:    accountId,
+			ToEthAddress:     toEthAddress,
+			ToChain33Address: chain33Addr,
 		}
+		payload = types.MustPBToJSON(transferToNew)
 	case zt.TyForceExitAction:
-		action.Value = &zt.ZksyncAction_ForceExit{
-			ForceExit: &zt.ZkForceExit{
-				TokenId:   tokenId,
-				AccountId: accountId,
-			},
+		forceExit := &zt.ZkForceExit{
+			TokenId:   tokenId,
+			AccountId: accountId,
 		}
+		payload = types.MustPBToJSON(forceExit)
 	case zt.TySetPubKeyAction:
-		action.Value = &zt.ZksyncAction_SetPubKey{
-			SetPubKey: &zt.ZkSetPubKey{
-				AccountId: accountId,
-			},
+		setPubKey := &zt.ZkSetPubKey{
+			AccountId: accountId,
 		}
+		payload = types.MustPBToJSON(setPubKey)
 	default:
 		return nil, types.ErrNotSupport
 	}
 
-	return types.MustPBToJSON(action), nil
+	return payload, nil
 }
 
 //11 => 00001011, 数组index0值为0，大端表示

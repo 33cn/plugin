@@ -1,8 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-	tlog "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"reflect"
 )
@@ -149,20 +147,4 @@ func (e *ZksyncType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (e *ZksyncType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
-}
-
-// CreateTx paracross create tx by different action
-func (e *ZksyncType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
-	data := new(ZksyncAction)
-	b, err := msg.MarshalJSON()
-	if err != nil {
-		tlog.Error(action + " MarshalJSON  error")
-		return nil, err
-	}
-	err = types.JSONToPB(b, data)
-	if err != nil {
-		tlog.Error(action + " jsontopb  error")
-		return nil, err
-	}
-	return e.CreateTransaction(action, data)
 }
