@@ -20,7 +20,7 @@ func TestZksyncOption(t *testing.T) {
 	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "operator"}
-	deposit := &zt.Deposit{
+	deposit := &zt.ZkDeposit{
 		TokenId:     1,
 		Amount:      "10000",
 		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57",
@@ -43,9 +43,9 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
-	setPubKey := &zt.SetPubKey{
+	setPubKey := &zt.ZkSetPubKey{
 		AccountId: 1,
-		PubKey: &zt.PubKey{
+		PubKey: &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
 			Y: privateKey.PublicKey.A.Y.String(),
 		},
@@ -61,7 +61,7 @@ func TestZksyncOption(t *testing.T) {
 	/*************************withdraw*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	withdraw := &zt.Withdraw{
+	withdraw := &zt.ZkWithdraw{
 		AccountId: 1,
 		TokenId:   1,
 		Amount:    "5000",
@@ -98,7 +98,7 @@ func TestZksyncOption(t *testing.T) {
 	/*************************transferToNew*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	transferToNew := &zt.TransferToNew{
+	transferToNew := &zt.ZkTransferToNew{
 		FromAccountId: 1,
 		TokenId: 1,
 		Amount: "500",
@@ -127,7 +127,7 @@ func TestZksyncOption(t *testing.T) {
 	/*************************transfer*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	transfer := &zt.Transfer{
+	transfer := &zt.ZkTransfer{
 		FromAccountId: 1,
 		TokenId: 1,
 		Amount: "500",
@@ -154,7 +154,7 @@ func TestZksyncOption(t *testing.T) {
 	/*************************forceQuit*************************/
 	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	forceQuit := &zt.ForceQuit{
+	forceQuit := &zt.ZkForceExit{
 		AccountId: 1,
 		TokenId: 1,
 	}
@@ -162,7 +162,7 @@ func TestZksyncOption(t *testing.T) {
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	forceQuit.Signature = signInfo
-	receipt,err = action.ForceQuit(forceQuit)
+	receipt,err = action.ForceExit(forceQuit)
 	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {

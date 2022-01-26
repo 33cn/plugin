@@ -701,7 +701,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.PubKey, accountId uint64) ([]*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {

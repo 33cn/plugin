@@ -1,10 +1,7 @@
 package wallet
 
 import (
-	"encoding/hex"
 	"fmt"
-	"github.com/33cn/chain33/common/address"
-	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
@@ -15,13 +12,13 @@ import (
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
-	chain33Addr string, accountId uint64, toAccountId uint64, cfg *rpctypes.ChainConfigInfo) (string, error) {
+	chain33Addr string, accountId uint64, toAccountId uint64,) ([]byte, error) {
 	action := new(zt.ZksyncAction)
 	action.Ty = actionTy
 	switch actionTy {
 	case zt.TyDepositAction:
 		action.Value = &zt.ZksyncAction_Deposit{
-			Deposit: &zt.Deposit{
+			Deposit: &zt.ZkDeposit{
 				TokenId:     tokenId,
 				Amount:      amount,
 				EthAddress:  ethAddress,
@@ -30,7 +27,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 	case zt.TyWithdrawAction:
 		action.Value = &zt.ZksyncAction_Withdraw{
-			Withdraw: &zt.Withdraw{
+			Withdraw: &zt.ZkWithdraw{
 				TokenId:   tokenId,
 				Amount:    amount,
 				AccountId: accountId,
@@ -39,7 +36,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 
 	case zt.TyContractToLeafAction:
 		action.Value = &zt.ZksyncAction_ContractToLeaf{
-			ContractToLeaf: &zt.ContractToLeaf{
+			ContractToLeaf: &zt.ZkContractToLeaf{
 				TokenId:   tokenId,
 				Amount:    amount,
 				AccountId: accountId,
@@ -47,7 +44,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 	case zt.TyLeafToContractAction:
 		action.Value = &zt.ZksyncAction_LeafToContract{
-			LeafToContract: &zt.LeafToContract{
+			LeafToContract: &zt.ZkLeafToContract{
 				TokenId:   tokenId,
 				Amount:    amount,
 				AccountId: accountId,
@@ -55,7 +52,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 	case zt.TyTransferAction:
 		action.Value = &zt.ZksyncAction_Transfer{
-			Transfer: &zt.Transfer{
+			Transfer: &zt.ZkTransfer{
 				TokenId:       tokenId,
 				Amount:        amount,
 				FromAccountId: accountId,
@@ -64,7 +61,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 	case zt.TyTransferToNewAction:
 		action.Value = &zt.ZksyncAction_TransferToNew{
-			TransferToNew: &zt.TransferToNew{
+			TransferToNew: &zt.ZkTransferToNew{
 				TokenId:          tokenId,
 				Amount:           amount,
 				FromAccountId:    accountId,
@@ -73,30 +70,23 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			},
 		}
 	case zt.TyForceExitAction:
-		action.Value = &zt.ZksyncAction_ForceQuit{
-			ForceQuit: &zt.ForceQuit{
+		action.Value = &zt.ZksyncAction_ForceExit{
+			ForceExit: &zt.ZkForceExit{
 				TokenId:   tokenId,
 				AccountId: accountId,
 			},
 		}
 	case zt.TySetPubKeyAction:
 		action.Value = &zt.ZksyncAction_SetPubKey{
-			SetPubKey: &zt.SetPubKey{
+			SetPubKey: &zt.ZkSetPubKey{
 				AccountId: accountId,
 			},
 		}
 	default:
-		return "", types.ErrNotSupport
+		return nil, types.ErrNotSupport
 	}
 
-	tx := &types.Transaction{Execer: []byte(zt.Zksync), Payload: types.Encode(action), To: address.ExecAddress(zt.Zksync)}
-
-	tx, err := types.FormatTxExt(cfg.ChainID, false, cfg.MinTxFeeRate, zt.Zksync, tx)
-	if err != nil {
-		return "", err
-	}
-	txHex := types.Encode(tx)
-	return hex.EncodeToString(txHex), nil
+	return types.MustPBToJSON(action), nil
 }
 
 //11 => 00001011, 数组index0值为0，大端表示
@@ -135,7 +125,7 @@ func stringToByte(s string) []byte {
 	return byteArray[:]
 }
 
-func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
+func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -153,7 +143,7 @@ func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -161,7 +151,7 @@ func GetDepositMsg(payload *zt.Deposit) *zt.Msg {
 
 }
 
-func GetWithdrawMsg(payload *zt.Withdraw) *zt.Msg {
+func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -174,7 +164,7 @@ func GetWithdrawMsg(payload *zt.Withdraw) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -182,7 +172,7 @@ func GetWithdrawMsg(payload *zt.Withdraw) *zt.Msg {
 
 }
 
-func GetLeafToContractMsg(payload *zt.LeafToContract) *zt.Msg {
+func GetLeafToContractMsg(payload *zt.ZkLeafToContract) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -195,7 +185,7 @@ func GetLeafToContractMsg(payload *zt.LeafToContract) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -203,7 +193,7 @@ func GetLeafToContractMsg(payload *zt.LeafToContract) *zt.Msg {
 
 }
 
-func GetContractToLeafMsg(payload *zt.ContractToLeaf) *zt.Msg {
+func GetContractToLeafMsg(payload *zt.ZkContractToLeaf) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -216,7 +206,7 @@ func GetContractToLeafMsg(payload *zt.ContractToLeaf) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -224,7 +214,7 @@ func GetContractToLeafMsg(payload *zt.ContractToLeaf) *zt.Msg {
 
 }
 
-func GetTransferMsg(payload *zt.Transfer) *zt.Msg {
+func GetTransferMsg(payload *zt.ZkTransfer) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -239,7 +229,7 @@ func GetTransferMsg(payload *zt.Transfer) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -247,7 +237,7 @@ func GetTransferMsg(payload *zt.Transfer) *zt.Msg {
 
 }
 
-func GetTransferToNewMsg(payload *zt.TransferToNew) *zt.Msg {
+func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -268,7 +258,7 @@ func GetTransferToNewMsg(payload *zt.TransferToNew) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -276,7 +266,7 @@ func GetTransferToNewMsg(payload *zt.TransferToNew) *zt.Msg {
 
 }
 
-func GetForceQuitMsg(payload *zt.ForceQuit) *zt.Msg {
+func GetForceQuitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -287,7 +277,7 @@ func GetForceQuitMsg(payload *zt.ForceQuit) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
@@ -295,7 +285,7 @@ func GetForceQuitMsg(payload *zt.ForceQuit) *zt.Msg {
 
 }
 
-func GetSetPubKeyMsg(payload *zt.SetPubKey) *zt.Msg {
+func GetSetPubKeyMsg(payload *zt.ZkSetPubKey) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, 752)
@@ -310,7 +300,7 @@ func GetSetPubKeyMsg(payload *zt.SetPubKey) *zt.Msg {
 
 	copy(binaryData, pubData)
 
-	return &zt.Msg{
+	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
 		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
@@ -318,7 +308,7 @@ func GetSetPubKeyMsg(payload *zt.SetPubKey) *zt.Msg {
 
 }
 
-func GetMsgHash(msg *zt.Msg) []byte {
+func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
 	hash.Write(stringToByte(msg.GetFirst()))
 	hash.Write(stringToByte(msg.GetSecond()))

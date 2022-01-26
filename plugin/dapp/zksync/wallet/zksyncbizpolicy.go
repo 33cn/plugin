@@ -123,7 +123,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		return
 	}
 
-	var msg *zt.Msg
+	var msg *zt.ZkMsg
 	var signInfo *zt.ZkSignature
 	switch action.GetTy() {
 	case zt.TyDepositAction:
@@ -181,7 +181,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		}
 		transferToNew.Signature = signInfo
 	case zt.TyForceExitAction:
-		forceQuit := action.GetForceQuit()
+		forceQuit := action.GetForceExit()
 		msg = GetForceQuitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
@@ -192,7 +192,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	case zt.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
 		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
-		pubKey := &zt.PubKey{
+		pubKey := &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
 			Y :privateKey.PublicKey.A.Y.String(),
 		}
@@ -213,13 +213,13 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	return
 }
 
-func SignTx(msg *zt.Msg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
+func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
 	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
 	if err != nil {
 		bizlog.Error("SignTransaction", "privateKey.Sign error", err)
 		return nil, err
 	}
-	pubKey := &zt.PubKey{
+	pubKey := &zt.ZkPubKey{
 		X: privateKey.PublicKey.A.X.String(),
 		Y :privateKey.PublicKey.A.Y.String(),
 	}

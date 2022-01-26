@@ -4,14 +4,14 @@ option go_package = "../types";
 
 message ZksyncAction {
   oneof value {
-    Deposit  deposit = 1;
-    Withdraw withdraw = 2;
-    ContractToLeaf contractToLeaf = 3;
-    LeafToContract leafToContract = 4;
-    Transfer transfer = 5;
-    TransferToNew transferToNew = 6;
-    ForceQuit forceQuit = 7;
-    SetPubKey setPubKey = 8;
+    ZkDeposit  deposit = 1;
+    ZkWithdraw withdraw = 2;
+    ZkContractToLeaf contractToLeaf = 3;
+    ZkLeafToContract leafToContract = 4;
+    ZkTransfer transfer = 5;
+    ZkTransferToNew transferToNew = 6;
+    ZkForceExit forceExit = 7;
+    ZkSetPubKey setPubKey = 8;
   }
 
   int32 ty = 9;
@@ -19,18 +19,18 @@ message ZksyncAction {
 
 
 message ZkSignature {
-  PubKey pubKey = 1;
+  ZkPubKey pubKey = 1;
   bytes signInfo = 2;
-  Msg msg = 3;
+  ZkMsg msg = 3;
 }
 
-message Msg {
+message ZkMsg {
   string first = 1;
   string second = 2;
   string third = 3;
 }
 
-message PubKey {
+message ZkPubKey {
   string  x = 1;
   string  y = 2;
 }
@@ -51,7 +51,7 @@ message AccountTree {
 message Leaf {
   uint64 accountId = 2; //accountId其实就是叶子的totalIndex
   string ethAddress = 5; //账户对应的以太坊地址
-  PubKey pubKey = 6; //eddsa公钥，用于验证身份
+  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
   string chain33Addr = 7; //chain33地址
   string tokenHash = 8; //叶子下token的hash
   repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
@@ -74,7 +74,7 @@ message MerkleTreeProof {
   repeated string helpers = 3;
 }
 
-message Deposit {
+message ZkDeposit {
   uint64 tokenId = 1;
   string amount = 2;
   string ethAddress = 3;
@@ -82,28 +82,28 @@ message Deposit {
   ZkSignature signature = 5;
 }
 
-message Withdraw {
+message ZkWithdraw {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message ContractToLeaf {
+message ZkContractToLeaf {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message LeafToContract {
+message ZkLeafToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
   ZkSignature signature = 4;
 }
 
-message Transfer {
+message ZkTransfer {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 fromAccountId = 3;
@@ -111,7 +111,7 @@ message Transfer {
   ZkSignature signature = 5;
 }
 
-message TransferToNew {
+message ZkTransferToNew {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 fromAccountId = 3;
@@ -120,99 +120,24 @@ message TransferToNew {
   ZkSignature signature = 6;
 }
 
-message ForceQuit {
+message ZkForceExit {
   uint64 tokenId = 1;
   uint64 accountId = 2;
   ZkSignature signature = 3;
 }
 
-message SetPubKey {
+message ZkSetPubKey {
   uint64 accountId = 1;
-  PubKey  pubKey = 2;
+  ZkPubKey  pubKey = 2;
   ZkSignature signature = 3;
 }
 
 // leaf merkle proof票据日志
-message ReceiptLeaf {
+message ZkReceiptLeaf {
   Leaf leaf = 1;
   TokenBalance token = 2;
   MerkleTreeProof treeProof = 3;
   MerkleTreeProof tokenProof = 4;
 }
-
-message SiblingPath {
-  repeated string path    = 1;
-  repeated string helper  = 2;
-}
-
-message AccountWitness {
-  uint64 ID             = 1;
-  string ethAddr        = 2;
-  string chain33Addr    = 3;
-  string tokenTreeRoot  = 4; //sub chain token tree root
-  PubKey pubKey         = 5;
-  SiblingPath sibling   = 6;
-
-}
-
-message TokenWitness {
-  uint64 ID     = 1; //eth contract define token ID
-  string balance        = 2; //eth balance u128
-  SiblingPath sibling   = 3;
-}
-
-//one operation branch
-message OperationMetaBranch {
-  AccountWitness accountWitness       = 1;
-  TokenWitness   tokenWitness         = 2;
-}
-
-// before and after operation data
-message OperationPairBranch {
-  OperationMetaBranch before = 1;
-  OperationMetaBranch after  = 2;
-}
-
-message OperationInfo {
-  uint64    blockHeight   = 1;
-  uint32    txIndex       = 2;
-
-  uint32    txType        = 3;
-  uint64    accountID     = 4;
-  uint64    tokenID       = 5;
-  string    amount        = 6;
-
-  ZkSignature sigData       = 7;
-
-  repeated string  roots  = 8; //每个操作后的root
-
-  //每个operation data由一对 操作前后数据组成，不同操作可以有多个操作数据，deposit:1,transfer:2
-  repeated OperationPairBranch operationBranches = 9;
-
-  //操作特殊数据,像订单数据
-  OperationSpecialInfo specialInfo = 10;
-}
-
-message OperationSpecialInfo {
-  repeated OperationSpecialData specialDatas = 1;
-}
-
-message OrderPricePair {
-  uint64 sell = 1;
-  uint64 buy  = 2;
-}
-
-message OperationSpecialData {
-  uint64 accountID           = 1;
-  uint64 recipientID         = 2; //accountID侧设置的recipientID
-  string recipientAddr       = 3; //accountID侧设置的recipientAddr
-  repeated string amount     = 4;  //accountID侧最初设置的amount
-  repeated uint32 chainID    = 5;
-  repeated uint64 tokenID    = 6;
-  repeated OrderPricePair pricePair  = 7;
-  ZkSignature sigData         = 8;
-
-}
-
 
 service zksync{}

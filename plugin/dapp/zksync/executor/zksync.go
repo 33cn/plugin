@@ -65,7 +65,7 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		return err
 	}
 	var signature *zt.ZkSignature
-	var msg *zt.Msg
+	var msg *zt.ZkMsg
 	switch action.GetTy() {
 	case zt.TyDepositAction:
 		signature = action.GetDeposit().GetSignature()
@@ -86,8 +86,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetTransferToNew().GetSignature()
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
 	case zt.TyForceExitAction:
-		signature = action.GetForceQuit().GetSignature()
-		msg = wallet.GetForceQuitMsg(action.GetForceQuit())
+		signature = action.GetForceExit().GetSignature()
+		msg = wallet.GetForceQuitMsg(action.GetForceExit())
 	case zt.TySetPubKeyAction:
 		signature = action.GetSetPubKey().GetSignature()
 		msg = wallet.GetSetPubKeyMsg(action.GetSetPubKey())

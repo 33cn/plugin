@@ -1,6 +1,8 @@
 package types
 
 import (
+	"encoding/json"
+	tlog "github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"reflect"
 )
@@ -79,7 +81,7 @@ var (
 
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameNoopAction:           TyNoopAction,
+		//NameNoopAction:           TyNoopAction,
 		NameDepositAction:        TyDepositAction,
 		NameWithdrawAction:       TyWithdrawAction,
 		NameContractToLeafAction: TyContractToLeafAction,
@@ -91,15 +93,15 @@ var (
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
-		TyNoopLog:           {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:        {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyDepositLog"},
-		TyWithdrawLog:       {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyWithdrawLog"},
-		TyContractToLeafLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyContractToLeafLog"},
-		TyLeafToContractLog: {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyLeafToContractLog"},
-		TyTransferLog:       {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:  {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:      {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TyForceExitLog"},
-		TySetPubKeyLog:      {Ty: reflect.TypeOf(ReceiptLeaf{}), Name: "TySetPubKeyLog"},
+		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
+		TyDepositLog:        {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyDepositLog"},
+		TyWithdrawLog:       {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyWithdrawLog"},
+		TyContractToLeafLog: {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyContractToLeafLog"},
+		TyLeafToContractLog: {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyLeafToContractLog"},
+		TyTransferLog:       {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:  {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyTransferToNewLog"},
+		TyForceExitLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TySetPubKeyLog"},
 	}
 )
 
@@ -147,4 +149,20 @@ func (e *ZksyncType) GetTypeMap() map[string]int32 {
 // GetLogMap 获取合约log相关信息
 func (e *ZksyncType) GetLogMap() map[int64]*types.LogInfo {
 	return logMap
+}
+
+// CreateTx paracross create tx by different action
+func (e *ZksyncType) CreateTx(action string, msg json.RawMessage) (*types.Transaction, error) {
+	data := new(ZksyncAction)
+	b, err := msg.MarshalJSON()
+	if err != nil {
+		tlog.Error(action + " MarshalJSON  error")
+		return nil, err
+	}
+	err = types.JSONToPB(b, data)
+	if err != nil {
+		tlog.Error(action + " jsontopb  error")
+		return nil, err
+	}
+	return e.CreateTransaction(action, data)
 }

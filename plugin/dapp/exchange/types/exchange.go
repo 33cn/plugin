@@ -14,12 +14,11 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyNoopAction = iota + 200
+	TyUnknowAction = iota + 200
 	TyLimitOrderAction
 	TyMarketOrderAction
 	TyRevokeOrderAction
 
-	NameNoopAction        = "Noop"
 	NameLimitOrderAction  = "LimitOrder"
 	NameMarketOrderAction = "MarketOrder"
 	NameRevokeOrderAction = "RevokeOrder"
@@ -32,7 +31,7 @@ const (
 
 // log类型id值
 const (
-	TyNoopLog = iota + 200
+	TyUnknowLog = iota + 200
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
@@ -70,7 +69,6 @@ var (
 	ExchangeX = "exchange"
 	//定义actionMap
 	actionMap = map[string]int32{
-		NameNoopAction:        TyNoopAction,
 		NameLimitOrderAction:  TyLimitOrderAction,
 		NameMarketOrderAction: TyMarketOrderAction,
 		NameRevokeOrderAction: TyRevokeOrderAction,

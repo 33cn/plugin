@@ -52,7 +52,7 @@ func (a *Action) GetIndex() int64 {
 	return a.height*types.MaxTxsPerBlock + int64(a.index)
 }
 
-func (a *Action) Deposit(payload *zt.Deposit) (*types.Receipt, error) {
+func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var err error
@@ -178,7 +178,7 @@ func (a *Action) checkOperateAddress(address string) bool {
 	return address == "operator"
 }
 
-func getBranchByReceipt(receipt *zt.ReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.PubKey, balance string) *zt.OperationMetaBranch {
+func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.ZkPubKey, balance string) *zt.OperationMetaBranch {
 	info.Roots = append(info.Roots, receipt.TreeProof.RootHash)
 
 	treePath := &zt.SiblingPath{
@@ -234,7 +234,7 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 	return &TreeUpdateInfo{updateMap: updateMap}, nil
 }
 
-func (a *Action) Withdraw(payload *zt.Withdraw) (*types.Receipt, error) {
+func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -329,7 +329,7 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 	return errors.New("balance not enough")
 }
 
-func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, error) {
+func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -410,7 +410,7 @@ func (a *Action) ContractToLeaf(payload *zt.ContractToLeaf) (*types.Receipt, err
 	return receipts, nil
 }
 
-func (a *Action) LeafToContract(payload *zt.LeafToContract) (*types.Receipt, error) {
+func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -512,7 +512,7 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	return nil
 }
 
-func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
+func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -632,7 +632,7 @@ func (a *Action) Transfer(payload *zt.Transfer) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-func (a *Action) TransferToNew(payload *zt.TransferToNew) (*types.Receipt, error) {
+func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -754,7 +754,7 @@ func (a *Action) TransferToNew(payload *zt.TransferToNew) (*types.Receipt, error
 	return receipts, nil
 }
 
-func (a *Action) ForceQuit(payload *zt.ForceQuit) (*types.Receipt, error) {
+func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -837,8 +837,8 @@ func (a *Action) ForceQuit(payload *zt.ForceQuit) (*types.Receipt, error) {
 
 }
 
-func calProof(statedb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64) (*zt.ReceiptLeaf, error) {
-	receipt := &zt.ReceiptLeaf{}
+func calProof(statedb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64) (*zt.ZkReceiptLeaf, error) {
+	receipt := &zt.ZkReceiptLeaf{}
 
 	leaf, err := GetLeafByAccountId(statedb, accountId, info)
 	if err != nil {
@@ -867,7 +867,7 @@ func calProof(statedb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId ui
 	return receipt, nil
 }
 
-func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
+func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -946,7 +946,7 @@ func (a *Action) SetPubKey(payload *zt.SetPubKey) (*types.Receipt, error) {
 }
 
 //验证身份
-func authVerification(signPubKey *zt.PubKey, leafPubKey *zt.PubKey) error {
+func authVerification(signPubKey *zt.ZkPubKey, leafPubKey *zt.ZkPubKey) error {
 	if signPubKey == nil || leafPubKey == nil {
 		return errors.New("set your pubKey")
 	}

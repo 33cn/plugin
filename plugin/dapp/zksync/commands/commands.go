@@ -5,7 +5,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	commandtypes "github.com/33cn/chain33/system/dapp/commands/types"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
@@ -70,17 +71,19 @@ func deposit(cmd *cobra.Command, args []string) {
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0)
+	fmt.Print(string(payload))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "Deposit",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func withdrawCmd() *cobra.Command {
@@ -98,7 +101,7 @@ func withdrawFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "withdraw amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "ac", 0, "withdraw accountId")
+	cmd.Flags().Uint64P("accountId", "c", 0, "withdraw accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -109,17 +112,18 @@ func withdraw(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "Withdraw",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func leafToContractCmd() *cobra.Command {
@@ -137,7 +141,7 @@ func leafToContractFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "leafToContract amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "ac", 0, "leafToContract accountId")
+	cmd.Flags().Uint64P("accountId", "c", 0, "leafToContract accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -148,17 +152,18 @@ func leafToContract(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyLeafToContractAction, tokenId, amount, "", "", "", accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyLeafToContractAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "LeafToContract",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func contractToLeafCmd() *cobra.Command {
@@ -176,7 +181,7 @@ func contractToLeafFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "contractToLeaf amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "ac", 0, "contractToLeaf accountId")
+	cmd.Flags().Uint64P("accountId", "c", 0, "contractToLeaf accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -187,17 +192,18 @@ func contractToLeaf(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyContractToLeafAction, tokenId, amount, "", "", "", accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyContractToLeafAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "ContractToLeaf",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func transferCmd() *cobra.Command {
@@ -215,9 +221,9 @@ func transferFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transfer amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "fa", 0, "transfer fromAccountId")
+	cmd.Flags().Uint64P("accountId", "f", 0, "transfer fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("toAccountId", "ta", 0, "transfer toAccountId")
+	cmd.Flags().Uint64P("toAccountId", "c", 0, "transfer toAccountId")
 	cmd.MarkFlagRequired("toAccountId")
 
 }
@@ -229,17 +235,18 @@ func transfer(cmd *cobra.Command, args []string) {
 	toAccountId, _ := cmd.Flags().GetUint64("toAccountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "Transfer",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func transferToNewCmd() *cobra.Command {
@@ -257,9 +264,9 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transferToNew amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().StringP("accountId", "ac", "", "transferToNew fromAccountId")
+	cmd.Flags().StringP("accountId", "f", "", "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().StringP("toEthAddress", "te", "", "transferToNew toEthAddress")
+	cmd.Flags().StringP("toEthAddress", "e", "", "transferToNew toEthAddress")
 	cmd.MarkFlagRequired("toEthAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "transferToNew toChain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
@@ -273,17 +280,18 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "TransferToNew",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func forceExitCmd() *cobra.Command {
@@ -299,7 +307,7 @@ func forceExitCmd() *cobra.Command {
 func forceExitFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("tokenId", "t", 1, "forceExit tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("accountId", "ac", 0, "forceExit accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "forceExit accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -309,17 +317,18 @@ func forceExit(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "ForceExit",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func setPubKeyCmd() *cobra.Command {
@@ -342,17 +351,18 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	cfg, err := commandtypes.GetChainConfig(rpcLaddr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "GetChainConfig"))
-		return
-	}
-	txHex, err := wallet.CreateRawTx(zt.TyForceExitAction, 0, "0", "", "", "", accountId, 0, cfg)
+	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, 0, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
 	}
-	fmt.Println(txHex)
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "SetPubKey",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
 
 func getChain33AddrCmd() *cobra.Command {
