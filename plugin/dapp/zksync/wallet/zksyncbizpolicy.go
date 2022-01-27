@@ -100,6 +100,7 @@ func (policy *zksyncPolicy) Call(funName string, in types.Message) (ret types.Me
 
 // SignTransaction 对zksync交易进行签名
 func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtxhex string, err error) {
+	bizlog.Info("zksync SignTransaction")
 	needSysSign = true
 	bytesVal, err := common.FromHex(req.GetTxHex())
 	if err != nil {

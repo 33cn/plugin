@@ -87,7 +87,7 @@ func createConfigVerify(cmd *cobra.Command, args []string) {
 	circuit, _ := cmd.Flags().GetUint32("circuit")
 	key, _ := cmd.Flags().GetString("zkey")
 
-	var zkVk mixTy.ZkVerifyKey
+	var zkVk mixTy.MixZkVerifyKey
 	zkVk.Value = key
 	zkVk.Type = mixTy.VerifyType(circuit)
 

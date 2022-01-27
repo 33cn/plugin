@@ -40,6 +40,12 @@ func ZksyncCmd() *cobra.Command {
 		forceExitCmd(),
 		setPubKeyCmd(),
 		getChain33AddrCmd(),
+		getAccountTreeCmd(),
+		getTxProofCmd(),
+		getTxProofByHeightCmd(),
+		getAccountByIdCmd(),
+		getAccountByEthCmd(),
+		getAccountByChain33Cmd(),
 	)
 	return cmd
 }
@@ -561,8 +567,8 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 
 func getAccountByChain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "account",
-		Short: "get zksync account by id",
+		Use:   "accountC",
+		Short: "get zksync account by chain33Addr",
 		Run:   getAccountByChain33,
 	}
 	getAccountByChain33Flag(cmd)
