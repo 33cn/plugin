@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "witness.proto";
+import "common.proto";
 
 package types;
 option go_package = "../types";
@@ -181,6 +182,11 @@ message ZkQueryReq {
 message ZkQueryResp {
   repeated OperationInfo operationInfos = 1;
   repeated Leaf leaves = 2;
+}
+
+message ZkReceiptLog {
+  OperationInfo operationInfo = 1;
+  repeated KeyValue localKvs = 2;
 }
 
 service zksync{}

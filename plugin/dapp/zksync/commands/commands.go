@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/types"
 	"os"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -392,4 +393,201 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
 	hash.Write(privateKey.PublicKey.Bytes())
 	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+}
+
+func getAccountTreeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tree",
+		Short: "get current accountTree",
+		Run:   getAccountTree,
+	}
+	getAccountTreeFlag(cmd)
+	return cmd
+}
+
+func getAccountTreeFlag(cmd *cobra.Command) {
+}
+
+func getAccountTree(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := new(types.ReqNil)
+
+	params.FuncName = "GetAccountTree"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getTxProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proof",
+		Short: "get tx proof",
+		Run:   getTxProof,
+	}
+	getTxProofFlag(cmd)
+	return cmd
+}
+
+func getTxProofFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("height", "h", 0, "tx height")
+	cmd.Flags().Uint32P("index", "i", 0, "tx index")
+}
+
+func getTxProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetUint64("height")
+	index, _ := cmd.Flags().GetUint32("index")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		BlockHeight: height,
+		TxIndex: index,
+	}
+
+	params.FuncName = "GetTxProof"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getTxProofByHeightCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proofs",
+		Short: "get block proofs",
+		Run:   getTxProofByHeight,
+	}
+	getTxProofByHeightFlag(cmd)
+	return cmd
+}
+
+func getTxProofByHeightFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("height", "h", 0, "tx height")
+}
+
+func getTxProofByHeight(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetUint64("height")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		BlockHeight: height,
+	}
+
+	params.FuncName = "GetTxProofByHeight"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getAccountByIdCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account",
+		Short: "get zksync account by id",
+		Run:   getAccountById,
+	}
+	getAccountByIdFlag(cmd)
+	return cmd
+}
+
+func getAccountByIdFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("accountId", "a", 0, "zksync accountId")
+}
+
+func getAccountById(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	accountId, _ := cmd.Flags().GetUint64("accountId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		AccountId: accountId,
+	}
+
+	params.FuncName = "GetAccountById"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getAccountByEthCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "accountE",
+		Short: "get zksync account by ethAddress",
+		Run:   getAccountByEth,
+	}
+	getAccountByEthFlag(cmd)
+	return cmd
+}
+
+func getAccountByEthFlag(cmd *cobra.Command) {
+	cmd.Flags().StringP("ethAddress", "e", " ", "zksync account ethAddress")
+}
+
+func getAccountByEth(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethAddress, _ := cmd.Flags().GetString("ethAddress")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		EthAddress: ethAddress,
+	}
+
+	params.FuncName = "GetAccountByEth"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getAccountByChain33Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account",
+		Short: "get zksync account by id",
+		Run:   getAccountByChain33,
+	}
+	getAccountByChain33Flag(cmd)
+	return cmd
+}
+
+func getAccountByChain33Flag(cmd *cobra.Command) {
+	cmd.Flags().StringP("chain33Addr", "c", "", "zksync account chain33Addr")
+}
+
+func getAccountByChain33(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		Chain33Addr: chain33Addr,
+	}
+
+	params.FuncName = "GetAccountByChain33"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.AccountTree
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }

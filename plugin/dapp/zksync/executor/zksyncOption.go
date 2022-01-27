@@ -56,6 +56,7 @@ func (a *Action) GetIndex() int64 {
 func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	var err error
 
 	//只有管理员能操作
@@ -101,7 +102,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, "0")
 
-		kvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
+		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.AddNewLeaf")
 		}
@@ -126,7 +127,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			After:  after,
 		}
 		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(operationInfo)}
+		zklog := &zt.ZkReceiptLog{
+			OperationInfo: operationInfo,
+			LocalKvs:      localKvs,
+		}
+		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(zklog)}
 		logs = append(logs, receiptLog)
 	} else {
 		operationInfo.AccountID = leaf.GetAccountId()
@@ -144,7 +149,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		}
 		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, balance)
 
-		kvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 		if err != nil {
 			return nil, errors.Wrapf(err, "db.UpdateLeaf")
 		}
@@ -168,7 +173,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			After:  after,
 		}
 		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(operationInfo)}
+		zklog := &zt.ZkReceiptLog{
+			OperationInfo: operationInfo,
+			LocalKvs:      localKvs,
+		}
+		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(zklog)}
 		logs = append(logs, receiptLog)
 	}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -227,7 +236,7 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 	if err != nil {
 		//没查到就先初始化
 		if err == types.ErrNotFound {
-			tree =  NewAccountTree(db)
+			tree = NewAccountTree(db)
 		} else {
 			return nil, err
 		}
@@ -243,6 +252,7 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -287,7 +297,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 
-	kvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -313,8 +323,11 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-
-	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyWithdrawLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
@@ -338,6 +351,7 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -379,7 +393,7 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, balance)
 
-	kvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -410,7 +424,11 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToLeafLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToLeafLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
@@ -419,6 +437,7 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -462,7 +481,7 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 
-	kvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -493,7 +512,11 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	receiptLog := &types.ReceiptLog{Ty: zt.TyLeafToContractLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyLeafToContractLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
@@ -521,6 +544,7 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -564,11 +588,12 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance)
 
 	//更新fromLeaf
-	fromKvs, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	kvs = append(kvs, fromKvs...)
+	localKvs = append(localKvs, fromLocal...)
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.FromAccountId, payload.TokenId)
 	if err != nil {
@@ -605,11 +630,12 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance)
 
 	//更新toLeaf
-	tokvs, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	kvs = append(kvs, tokvs...)
+	localKvs = append(localKvs, toLocal...)
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.GetToAccountId(), payload.GetTokenId())
 	if err != nil {
@@ -631,7 +657,11 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -641,6 +671,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -692,12 +723,12 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance)
 
 	//更新fromLeaf
-	fromkvs, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	kvs = append(kvs, fromkvs...)
-
+	localKvs = append(localKvs, fromLocal...)
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.GetFromAccountId(), payload.GetTokenId())
 	if err != nil {
@@ -726,11 +757,12 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	before = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, "0")
 
 	//新增toLeaf
-	tokvs, err := AddNewLeaf(a.statedb, a.localDB, info, payload.GetToEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetToChain33Address())
+	tokvs, toLocal, err := AddNewLeaf(a.statedb, a.localDB, info, payload.GetToEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetToChain33Address())
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.AddNewLeaf")
 	}
 	kvs = append(kvs, tokvs...)
+	localKvs = append(localKvs, toLocal...)
 	//新增之后计算证明
 	receipt, err = calProof(a.statedb, info, accountId, payload.GetTokenId())
 	if err != nil {
@@ -753,7 +785,11 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferToNewLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
@@ -763,6 +799,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -809,7 +846,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 
 	//更新fromLeaf
-	kvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), token.Balance, zt.Sub)
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), token.Balance, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -835,8 +872,11 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-
-	receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
@@ -876,6 +916,7 @@ func calProof(statedb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId ui
 func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -920,7 +961,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, nil, receipt.Token.Balance)
 
-	kvs, err = UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKey(), payload.AccountId)
+	kvs, localKvs, err = UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKey(), payload.AccountId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -945,7 +986,11 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(operationInfo)}
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil

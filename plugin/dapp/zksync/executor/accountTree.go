@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -34,15 +33,16 @@ func NewAccountTree(db dbm.KV) *zt.AccountTree {
 	return tree
 }
 
-func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, error) {
+func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 
 	if tokenId == 0 || amount == "0" {
-		return kvs, errors.New("balance is zero")
+		return kvs, localKvs, errors.New("balance is zero")
 	}
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getAccountTree")
+		return kvs, localKvs, errors.Wrapf(err, "db.getAccountTree")
 	}
 
 	currentTree := getNewTree()
@@ -51,7 +51,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	for _, subTree := range tree.GetSubTrees() {
 		err := currentTree.PushSubTree(int(subTree.GetHeight()), subTree.GetRootHash())
 		if err != nil {
-			return kvs, errors.Wrapf(err, "pushSubTree")
+			return kvs, localKvs, errors.Wrapf(err, "pushSubTree")
 		}
 	}
 
@@ -80,7 +80,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 
 	leaf.TokenHash, err = getTokenRootHash(statedb, leaf.AccountId, leaf.TokenIds, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getTokenRootHash")
+		return kvs, localKvs, errors.Wrapf(err, "db.getTokenRootHash")
 	}
 
 	kv = &types.KeyValue{
@@ -130,12 +130,12 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	accountTable := NewAccountTreeTable(localdb)
 	err = accountTable.Add(leaf)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "accountTable.Add")
+		return kvs, localKvs, errors.Wrapf(err, "accountTable.Add")
 	}
 	//localdb存入叶子，用于查询
-	err = SaveAccountTreeTable(localdb, accountTable)
+	localKvs, err = accountTable.Save()
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
+		return kvs, localKvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
 	}
 
 	kv = &types.KeyValue{
@@ -145,7 +145,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 
 	kvs = append(kvs, kv)
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
-	return kvs, nil
+	return kvs, localKvs, nil
 }
 
 func getNewTree() *merkletree.Tree {
@@ -172,20 +172,6 @@ func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
 		return nil, err
 	}
 	return &tree, nil
-}
-
-func SaveAccountTreeTable(db dbm.KV, table *table.Table) error {
-	kvs, err := table.Save()
-	if err != nil {
-		return err
-	}
-	for _, kv := range kvs {
-		err = db.Set(kv.GetKey(), kv.GetValue())
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func GetLeafByAccountId(db dbm.KV, accountId uint64, info *TreeUpdateInfo) (*zt.Leaf, error) {
@@ -357,23 +343,24 @@ func GetTokenByAccountIdAndTokenId(db dbm.KV, accountId uint64, tokenId uint64, 
 }
 
 // UpdateLeaf 更新叶子结点：1、如果在当前树的叶子中，直接更新  2、如果在归档的树中，需要找到归档的root，重新生成root
-func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64, amount string, option int32) ([]*types.KeyValue, error) {
+func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64, amount string, option int32) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	leaf, err := GetLeafByAccountId(statedb, accountId, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.GetLeafByAccountId")
+		return kvs, localKvs, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getAccountTree")
+		return kvs, localKvs, errors.Wrapf(err, "db.getAccountTree")
 	}
 	token, err := GetTokenByAccountIdAndTokenId(statedb, accountId, tokenId, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getAccountTree")
+		return kvs, localKvs, errors.Wrapf(err, "db.getAccountTree")
 	}
 	if token == nil {
 		if option == zt.Sub {
-			return kvs, errors.New("token not exist")
+			return kvs, localKvs, errors.New("token not exist")
 		} else {
 			token = &zt.TokenBalance{
 				TokenId: tokenId,
@@ -389,7 +376,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		} else if option == zt.Sub {
 			token.Balance = new(big.Int).Sub(balance, change).String()
 		} else {
-			return kvs, types.ErrNotSupport
+			return kvs, localKvs, types.ErrNotSupport
 		}
 	}
 
@@ -403,7 +390,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 
 	leaf.TokenHash, err = getTokenRootHash(statedb, accountId, leaf.TokenIds, info)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.getTokenRootHash")
+		return kvs, localKvs, errors.Wrapf(err, "db.getTokenRootHash")
 	}
 
 	kv = &types.KeyValue{
@@ -427,7 +414,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		currentTree := getNewTree()
 		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()+1, tree.GetTotalIndex(), info)
 		if err != nil {
-			return kvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
 		for _, leafVal := range leaves {
 			currentTree.Push(getLeafHash(leafVal))
@@ -452,11 +439,11 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		//找到对应的根
 		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/1024*1024+1, info)
 		if err != nil {
-			return kvs, errors.Wrapf(err, "db.GetRootByStartIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
 		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+1023, info)
 		if err != nil {
-			return kvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
 		currentTree := getNewTree()
 		for _, leafVal := range leaves {
@@ -476,12 +463,12 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	accountTable := NewAccountTreeTable(localdb)
 	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "accountTable.Update")
+		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
 	}
 	//localdb更新叶子，用于查询
-	err = SaveAccountTreeTable(localdb, accountTable)
+	localKvs, err = accountTable.Save()
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
+		return kvs, localKvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
 	}
 
 	kv = &types.KeyValue{
@@ -491,7 +478,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 
 	kvs = append(kvs, kv)
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
-	return kvs, nil
+	return kvs, localKvs, nil
 }
 
 func getLeafHash(leaf *zt.Leaf) []byte {
@@ -704,15 +691,16 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree")
+		return kvs, localKvs, errors.Wrapf(err, "db.getAccountTree")
 	}
 	leaf, err := GetLeafByAccountId(statedb, accountId, info)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+		return kvs, localKvs, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
 	leaf.PubKey = pubKey
 
@@ -735,7 +723,7 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 	if accountId > tree.GetTotalIndex()-tree.GetIndex() {
 		leaves, err := GetLeavesByStartAndEndIndex(statedb, tree.GetTotalIndex()-tree.GetIndex()+1, tree.GetTotalIndex(), info)
 		if err != nil {
-			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
 		currentTree := getNewTree()
 		for _, v := range leaves {
@@ -761,11 +749,11 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 		//找到对应的根
 		rootInfo, err := GetRootByStartIndex(statedb, (accountId-1)/1024*1024+1, info)
 		if err != nil {
-			return kvs, errors.Wrapf(err, "db.GetRootByStartIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetRootByStartIndex")
 		}
 		leaves, err := GetLeavesByStartAndEndIndex(statedb, rootInfo.StartIndex, rootInfo.StartIndex+1023, info)
 		if err != nil {
-			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
+			return kvs, localKvs, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
 		currentTree := getNewTree()
 		for _, leafVal := range leaves {
@@ -782,13 +770,13 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 	accountTable := NewAccountTreeTable(localdb)
 	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
 	if err != nil {
-		return kvs, errors.Wrapf(err, "accountTable.Update")
+		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
 	}
 
 	//localdb更新叶子，用于查询
-	err = SaveAccountTreeTable(localdb, accountTable)
+	localKvs, err = accountTable.Save()
 	if err != nil {
-		return kvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
+		return kvs, localKvs, errors.Wrapf(err, "db.SaveAccountTreeTable")
 	}
-	return kvs, nil
+	return kvs, localKvs, nil
 }
