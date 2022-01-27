@@ -50,6 +50,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		TransferEthCmd(),
 		CfgWithdrawCmd(),
 		ResendEthLockEventCmd(),
+		RegetEthLockEventCmd(),
 	)
 
 	return cmd
@@ -1096,5 +1097,39 @@ func resendLockEvent(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendEthereumLockEvent", resendEthereumEventReq, &res)
+	ctx.Run()
+}
+
+func RegetEthLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "regetLockEvent",
+		Short: "reget lock Event to chain33 process goroutine",
+		Run:   reGetEthereumEvent,
+	}
+	addRegetEventFlags(cmd)
+	return cmd
+}
+
+func addRegetEventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "height begin")
+	_ = cmd.MarkFlagRequired("start")
+	cmd.Flags().Int64P("end", "e", 0, "stop height")
+	_ = cmd.MarkFlagRequired("end")
+}
+
+func reGetEthereumEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetInt64("start")
+	stop, _ := cmd.Flags().GetInt64("end")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	regetEthereumEventReq := &ebTypes.RegetEthereumEventReq{
+		Start:     start,
+		Stop:      stop,
+		ChainName: ethChainName,
+	}
+	fmt.Println("start", regetEthereumEventReq.Start, "stop", regetEthereumEventReq.Stop)
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ReGetEthereumEvent", regetEthereumEventReq, &res)
 	ctx.Run()
 }

@@ -352,6 +352,29 @@ func (manager *Manager) ResendEthereumLockEvent(param *relayerTypes.ResendEthere
 	return nil
 }
 
+func (manager *Manager) ReGetEthereumEvent(param *relayerTypes.RegetEthereumEventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	ethInt, ok := manager.ethRelayer[param.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	info, err := ethInt.ReGetEvent(param.Start, param.Stop)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  info,
+	}
+	return nil
+}
+
 func (manager *Manager) SetupOwner4Chain33(setupMulSign *relayerTypes.SetupMulSign, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()

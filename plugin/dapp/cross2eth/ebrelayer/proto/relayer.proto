@@ -261,6 +261,12 @@ message ResendEthereumEventReq  {
     string chainName  = 3;
 }
 
+message RegetEthereumEventReq  {
+    int64 start      = 1;
+    int64 stop      = 2;
+    string chainName  = 3;
+}
+
 message CfgWithdrawReq  {
     string symbol       = 1;
     string feeAmount    = 2;

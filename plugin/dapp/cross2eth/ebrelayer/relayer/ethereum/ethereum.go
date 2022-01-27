@@ -778,6 +778,70 @@ func (ethRelayer *Relayer4Ethereum) procNewHeight4Withdraw(ctx context.Context) 
 	relayerLog.Info("procNewHeight4Withdraw", "currentHeight", currentHeight)
 }
 
+func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error) {
+	if end < start {
+		return "", errors.New("ErrStartEndHeight")
+	}
+
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{ethRelayer.bridgeBankAddr},
+	}
+
+	batchCount := int64(10)
+	info := ""
+	for {
+		if batchCount < (end - start + 1) {
+			stopHeight := start + batchCount - 1
+			query.FromBlock = big.NewInt(start)
+			query.ToBlock = big.NewInt(stopHeight)
+		} else {
+			query.FromBlock = big.NewInt(start)
+			query.ToBlock = big.NewInt(end)
+		}
+
+		// Filter by contract and event, write results to logs
+		logs, err := ethRelayer.clientSpec.FilterLogs(context.Background(), query)
+		if err != nil {
+			errinfo := fmt.Sprintf("Failed to filterLogEvents due to:%s", err.Error())
+			return "", errors.New(errinfo)
+		}
+
+		relayerLog.Info("ReGetEvent", "received logs with number", len(logs),
+			"start height", query.FromBlock.String(), "stop height", query.ToBlock.String())
+		for _, logv := range logs {
+			relayerLog.Info("ReGetEvent", "received log with topics", logv.Topics[0].Hex(), "BlockNumber", logv.BlockNumber)
+			if ethRelayer.bridgeBankEventLockSig != logv.Topics[0].Hex() {
+				continue
+			}
+
+			receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), logv.TxHash)
+			if nil != err {
+				relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", logv.TxHash.String())
+				return "", err
+			}
+
+			//检查当前的交易是否成功执行
+			if receipt.Status != types.ReceiptStatusSuccessful {
+				relayerLog.Error("procBridgeBankLogs", "tx not successful with status", receipt.Status)
+				return "", errors.New("Tx not successful")
+			}
+
+			eventName := events.LogLockFromETH.String()
+			err = ethRelayer.handleLogLockEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, logv)
+			info += fmt.Sprintf("Ethereum tx with hash = %s is relayed\n", logv.TxHash.String())
+
+		}
+
+		if query.ToBlock.Int64() >= end {
+			relayerLog.Info("ReGetEvent", "Finished FilterLogs to height", end)
+			break
+		}
+		start = query.ToBlock.Int64() + 1
+	}
+
+	return info, nil
+}
+
 func (ethRelayer *Relayer4Ethereum) ResendLockEvent(height uint64, index uint32) (string, error) {
 	relayerLog.Info("Relayer4Ethereum::ResendEvent", "height", height, "index", index)
 
