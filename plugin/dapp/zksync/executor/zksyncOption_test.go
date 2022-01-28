@@ -2,6 +2,7 @@ package executor
 
 import (
 	"bytes"
+	"github.com/33cn/chain33/types"
 	"strings"
 	"testing"
 
@@ -16,7 +17,6 @@ import (
 func TestZksyncOption(t *testing.T) {
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
-	NewAccountTree(localdb)
 	/*************************deposit*************************/
 	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
@@ -31,6 +31,12 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	var zklog zt.ZkReceiptLog
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
 
 	assert.Equal(t, nil, err)
@@ -58,6 +64,11 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 
 	/*************************withdraw*************************/
 	info, err = generateTreeUpdateInfo(statedb)
@@ -80,6 +91,11 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
+	}
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
 
 	tree, err := getAccountTree(statedb, info)
@@ -116,6 +132,11 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "4500", token.Balance)
@@ -143,6 +164,11 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "4000", token.Balance)
@@ -167,9 +193,18 @@ func TestZksyncOption(t *testing.T) {
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())
 	}
+	err = types.Decode(receipt.Logs[0].GetLog(), &zklog)
+	assert.Equal(t, nil, err)
+	for _, kv := range zklog.LocalKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
+	}
 	token, err = GetTokenByAccountIdAndTokenId(statedb, 1, 1, info)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "0", token.Balance)
+
+	tree, err = getAccountTree(statedb, info)
+	assert.Equal(t, nil, err)
+	t.Log(tree)
 }
 
 func TestEddsa(t *testing.T) {

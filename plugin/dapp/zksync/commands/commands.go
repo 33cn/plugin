@@ -80,7 +80,6 @@ func deposit(cmd *cobra.Command, args []string) {
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	payload, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0)
-	fmt.Print(string(payload))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -441,8 +440,10 @@ func getTxProofCmd() *cobra.Command {
 }
 
 func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "h", 0, "tx height")
+	cmd.Flags().Uint64P("height", "e", 0, "zksync proof height")
+	cmd.MarkFlagRequired("height")
 	cmd.Flags().Uint32P("index", "i", 0, "tx index")
+	cmd.MarkFlagRequired("index")
 }
 
 func getTxProof(cmd *cobra.Command, args []string) {
@@ -461,7 +462,7 @@ func getTxProof(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetTxProof"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.AccountTree
+	var resp zt.OperationInfo
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -477,7 +478,8 @@ func getTxProofByHeightCmd() *cobra.Command {
 }
 
 func getTxProofByHeightFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "h", 0, "tx height")
+	cmd.Flags().Uint64P("height", "e", 0, "zksync proof height")
+	cmd.MarkFlagRequired("height")
 }
 
 func getTxProofByHeight(cmd *cobra.Command, args []string) {
@@ -494,7 +496,7 @@ func getTxProofByHeight(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetTxProofByHeight"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.AccountTree
+	var resp zt.ZkQueryResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -511,6 +513,7 @@ func getAccountByIdCmd() *cobra.Command {
 
 func getAccountByIdFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("accountId", "a", 0, "zksync accountId")
+	cmd.MarkFlagRequired("accountId")
 }
 
 func getAccountById(cmd *cobra.Command, args []string) {
@@ -527,7 +530,7 @@ func getAccountById(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetAccountById"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.AccountTree
+	var resp zt.Leaf
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -544,6 +547,7 @@ func getAccountByEthCmd() *cobra.Command {
 
 func getAccountByEthFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("ethAddress", "e", " ", "zksync account ethAddress")
+	cmd.MarkFlagRequired("ethAddress")
 }
 
 func getAccountByEth(cmd *cobra.Command, args []string) {
@@ -560,7 +564,7 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetAccountByEth"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.AccountTree
+	var resp zt.ZkQueryResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
@@ -577,6 +581,7 @@ func getAccountByChain33Cmd() *cobra.Command {
 
 func getAccountByChain33Flag(cmd *cobra.Command) {
 	cmd.Flags().StringP("chain33Addr", "c", "", "zksync account chain33Addr")
+	cmd.MarkFlagRequired("chain33Addr")
 }
 
 func getAccountByChain33(cmd *cobra.Command, args []string) {
@@ -593,7 +598,7 @@ func getAccountByChain33(cmd *cobra.Command, args []string) {
 	params.FuncName = "GetAccountByChain33"
 	params.Payload = types.MustPBToJSON(req)
 
-	var resp zt.AccountTree
+	var resp zt.ZkQueryResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }

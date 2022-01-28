@@ -21,8 +21,8 @@ func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.R
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
 
-	var zklog *zt.ZkReceiptLog
-	err := types.Decode(receiptData.Logs[0].GetLog(), zklog)
+	var zklog zt.ZkReceiptLog
+	err := types.Decode(receiptData.Logs[0].GetLog(), &zklog)
 	if err != nil {
 		return nil, err
 	}

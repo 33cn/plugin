@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"strconv"
 
@@ -16,6 +17,10 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
+)
+
+var (
+	zklog = log15.New("module", "exec.zksync")
 )
 
 // Action action struct
@@ -59,13 +64,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 	var err error
 
+	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
-	if !a.checkOperateAddress(a.fromaddr) {
-		return nil, errors.New("address cannot deposit")
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree")
-	}
+	//if !a.checkOperateAddress(a.fromaddr) {
+	//	return nil, errors.New("address cannot deposit")
+	//}
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -81,6 +84,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getAccountTree")
 	}
+	zklog.Info("zksync deposit", "tree", tree)
 
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -93,6 +97,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	//leaf不存在就添加
 	if leaf == nil {
+		zklog.Info("zksync deposit add leaf")
 		operationInfo.AccountID = tree.GetTotalIndex() + 1
 		//添加之前先计算证明
 		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
@@ -230,22 +235,24 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 }
 
 func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
-	var tree *zt.AccountTree
 	updateMap := make(map[string][]byte)
 	val, err := db.Get(GetAccountTreeKey())
 	if err != nil {
 		//没查到就先初始化
 		if err == types.ErrNotFound {
-			tree = NewAccountTree(db)
+			tree := NewAccountTree(db)
+			updateMap[string(GetAccountTreeKey())] = types.Encode(tree)
+			return &TreeUpdateInfo{updateMap: updateMap}, nil
 		} else {
 			return nil, err
 		}
 	}
-	err = types.Decode(val, tree)
+	var tree zt.AccountTree
+	err = types.Decode(val, &tree)
 	if err != nil {
 		return nil, err
 	}
-	updateMap[string(GetAccountTreeKey())] = types.Encode(tree)
+	updateMap[string(GetAccountTreeKey())] = types.Encode(&tree)
 	return &TreeUpdateInfo{updateMap: updateMap}, nil
 }
 

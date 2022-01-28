@@ -702,6 +702,9 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
+	if leaf == nil {
+		return kvs, localKvs, errors.New("account not exist")
+	}
 	leaf.PubKey = pubKey
 
 	kv := &types.KeyValue{
