@@ -64,7 +64,7 @@ type TransferInputCircuit struct {
 }
 
 // Define declares the circuit's constraints
-func (circuit *TransferInputCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *TransferInputCircuit) Define(curveID ecc.ID, cs frontend.API) error {
 	cs.AssertIsBoolean(circuit.SpendFlag)
 	cs.AssertIsBoolean(circuit.AuthorizeFlag)
 
