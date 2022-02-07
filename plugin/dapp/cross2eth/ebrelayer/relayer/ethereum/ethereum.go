@@ -426,7 +426,7 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 	if ethRelayer.GetName() == BinanceChain {
 		ethName = "BSC"
 	}
-	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链地址:%s,token:%s 金额不足"]}`, ethName, ethName, addr, symbol)
+	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链地址:%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
 	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
 	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
 	if err != nil {
@@ -438,8 +438,8 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 		relayerLog.Error("SendToServer", "NewJson error:", err.Error())
 		return
 	}
-	result := js.Get("result").MustString()
-	if result == "false" {
+	result := js.Get("result").MustBool()
+	if result == false {
 		reErr := js.Get("error").MustString()
 		relayerLog.Error("SendToServer", "send error:", reErr)
 		return
