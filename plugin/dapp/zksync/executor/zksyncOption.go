@@ -5,6 +5,7 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"strconv"
+	"strings"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -63,6 +64,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 	var err error
+
+	err = checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
@@ -260,6 +266,10 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -360,6 +370,10 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -405,10 +419,11 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新合约账户
-	err = a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
+	accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
+	kvs = append(kvs, accountKvs...)
 	//存款到叶子之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
 	if err != nil {
@@ -446,6 +461,10 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -493,10 +512,11 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新合约账户
-	err = a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Add)
+	accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
 	}
+	kvs = append(kvs, accountKvs...)
 	//从叶子取款之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
 	if err != nil {
@@ -529,7 +549,7 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 	return receipts, nil
 }
 
-func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) error {
+func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue ,error) {
 	execAddr := address.ExecAddress(zt.Zksync)
 
 	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
@@ -539,19 +559,27 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	shortChange := new(big.Int).Div(change, big.NewInt(100000000)).Int64()
 	if option == zt.Sub {
 		if contractAccount.Balance < shortChange {
-			return errors.New("balance not enough")
+			return nil, errors.New("balance not enough")
 		}
 		contractAccount.Balance -= shortChange
 	} else {
 		contractAccount.Balance += shortChange
 	}
-	return nil
+
+	kvs := accountdb.GetExecKVSet(execAddr, contractAccount)
+	zlog.Info("zksync UpdateContractAccount", "key", string(kvs[0].GetKey()), "account", contractAccount)
+	return kvs, nil
 }
 
 func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -679,6 +707,10 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -1010,6 +1042,14 @@ func authVerification(signPubKey *zt.ZkPubKey, leafPubKey *zt.ZkPubKey) error {
 	}
 	if signPubKey.GetX() != leafPubKey.GetX() || signPubKey.GetY() != leafPubKey.GetY() {
 		return errors.New("not your account")
+	}
+	return nil
+}
+
+//检查参数
+func checkParam(amount string) error {
+	if amount == "" || amount == "0" || strings.HasPrefix(amount, "-") {
+		return types.ErrAmount
 	}
 	return nil
 }

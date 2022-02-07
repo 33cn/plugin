@@ -271,7 +271,7 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transferToNew amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().StringP("accountId", "f", "", "transferToNew fromAccountId")
+	cmd.Flags().Uint64P("accountId", "f", 0, "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
 	cmd.Flags().StringP("toEthAddress", "e", "", "transferToNew toEthAddress")
 	cmd.MarkFlagRequired("toEthAddress")
@@ -358,7 +358,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, 0, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return

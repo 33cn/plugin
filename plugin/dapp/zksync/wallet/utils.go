@@ -137,7 +137,7 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -158,7 +158,7 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -179,7 +179,7 @@ func GetLeafToContractMsg(payload *zt.ZkLeafToContract) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -200,7 +200,7 @@ func GetContractToLeafMsg(payload *zt.ZkContractToLeaf) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -223,7 +223,7 @@ func GetTransferMsg(payload *zt.ZkTransfer) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -252,7 +252,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
@@ -271,7 +271,7 @@ func GetForceQuitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
 	return &zt.ZkMsg{
 		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
 		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-		Third:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
 	}
 
 }
