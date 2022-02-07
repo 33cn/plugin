@@ -427,7 +427,7 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 		ethName = "BSC"
 	}
 	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链地址:%s,token:%s 金额不足"]}`, ethName, ethName, addr, symbol)
-	relayerLog.Debug("SendToServer", "postData:", postData)
+	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
 	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
 	if err != nil {
 		relayerLog.Error("SendToServer", "error:", err.Error())

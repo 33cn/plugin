@@ -90,6 +90,10 @@ func Test_All(t *testing.T) {
 	test_setWithdrawFee(t)
 }
 
+func Test_remindBalanceNotEnough(t *testing.T) {
+	ethRelayer.remindBalanceNotEnough(ethAccountAddr, "YCC")
+}
+
 func test_GetValidatorAddr(t *testing.T) {
 	_, _, err := NewAccount()
 	require.Nil(t, err)
@@ -458,6 +462,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		ethBridgeClaimChan:      ethBridgeClaimchan,
 		chain33MsgChan:          chain33Msgchan,
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
+		remindUrl:               cfg.RemindUrl,
 	}
 
 	relayer.eventLogIndex = relayer.getLastBridgeBankProcessedHeight()
