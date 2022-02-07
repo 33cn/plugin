@@ -14,6 +14,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/bitly/go-simplejson"
 	"math"
 	"math/big"
 	"regexp"
@@ -79,6 +80,7 @@ type Relayer4Ethereum struct {
 	mulSignAddr             string
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
+	remindUrl               string // 代理打币地址金额不够时发生提醒短信的 url
 }
 
 var (
@@ -103,6 +105,7 @@ type EthereumStartPara struct {
 	Chain33MsgChan     <-chan *events.Chain33Msg
 	ProcessWithDraw    bool
 	Name               string
+	RemindUrl          string
 }
 
 type WithdrawFeeAndQuota struct {
@@ -131,6 +134,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		symbol2Addr:             make(map[string]common.Address),
 		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
+		remindUrl:               startPara.RemindUrl,
 	}
 
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
@@ -417,6 +421,32 @@ func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTy
 	return withdrawPara.Fee, nil
 }
 
+func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
+	ethName := "以太坊"
+	if ethRelayer.GetName() == BinanceChain {
+		ethName = "BSC"
+	}
+	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链地址:%s,token:%s 金额不足"]}`, ethName, ethName, addr, symbol)
+	relayerLog.Debug("SendToServer", "postData:", postData)
+	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
+	if err != nil {
+		relayerLog.Error("SendToServer", "error:", err.Error())
+		return
+	}
+	js, err := simplejson.NewJson(res)
+	if err != nil {
+		relayerLog.Error("SendToServer", "NewJson error:", err.Error())
+		return
+	}
+	result := js.Get("result").MustString()
+	if result == "false" {
+		reErr := js.Get("error").MustString()
+		relayerLog.Error("SendToServer", "send error:", reErr)
+		return
+	}
+	relayerLog.Debug("SendToServer ok")
+}
+
 func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
 	//只有通过代理人登录的中继器，才处理提币事件
 	var err error
@@ -532,6 +562,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
 		err = errors.New("ErrBalanceNotEnough")
+		ethRelayer.remindBalanceNotEnough(toAddr.String(), chain33Msg.Symbol)
 		return
 	}
 	//param: from,to,evm-packdata,amount

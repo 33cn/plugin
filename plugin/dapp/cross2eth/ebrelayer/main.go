@@ -91,6 +91,7 @@ func main() {
 			Chain33MsgChan:     chain33MsgChan,
 			ProcessWithDraw:    cfg.ProcessWithDraw,
 			Name:               cfg.EthRelayerCfg[i].EthChainName,
+			RemindUrl:          cfg.RemindUrl,
 		}
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
 		ethRelayerServices[ethStartPara.Name] = ethRelayerService
