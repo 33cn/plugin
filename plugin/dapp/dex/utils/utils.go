@@ -216,7 +216,7 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 				time.Sleep(1)
 			}
 			if result != chain33Types.ExecOk {
-				fmt.Println("Failed to send txhash: ", txhash)
+				fmt.Println("Failed to send txhash: ", txhash, "result: ", result)
 				return
 			} else {
 				break
