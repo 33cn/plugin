@@ -298,8 +298,8 @@ function get_evm_cli() {
 }
 
 function test_xgo() {
-        TestETH2Chain33Assets
-        TestETH2Chain33USDT
+    TestETH2Chain33Assets
+    TestETH2Chain33USDT
 
     TestETH2EVMToChain33 "$1"
     Testethereum2EVMToChain33_usdt "$2"
