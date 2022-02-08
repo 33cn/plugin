@@ -136,6 +136,7 @@ function DeployEvmxgo() {
         check_tx "${Chain33Cli}" "${hash}"
     done
     XgoBridgeRegistryOnChain33=$(echo "${result}" | jq -r ".[6].ContractAddr")
+    XgoChain33Oracle=$(echo "${result}" | jq -r ".[2].ContractAddr")
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
     cp XgoBridgeRegistryOnChain33.abi "${XgoBridgeRegistryOnChain33}.abi"
@@ -275,8 +276,8 @@ function get_evm_cli() {
 }
 
 function test_xgo() {
-    TestETH2Chain33Assets
-    TestETH2Chain33USDT
+#    TestETH2Chain33Assets
+#    TestETH2Chain33USDT
 
     TestETH2EVMToChain33
     Testethereum2EVMToChain33_usdt
@@ -295,15 +296,15 @@ function test_evm_all() {
     set_config_ethereum
     test_xgo
 
-    Boss4xCLI=${Boss4xCLIbsc}
-    CLIA=${CLIAbsc}
-    ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
-    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
-    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
-    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
-    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
-    set_config_bsc
-    test_xgo
+#    Boss4xCLI=${Boss4xCLIbsc}
+#    CLIA=${CLIAbsc}
+#    ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+#    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
+#    ethereumBtyBridgeTokenAddr="${ethereumBtyBridgeTokenAddrOnBSC}"
+#    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+#    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
+#    set_config_bsc
+#    test_xgo
 }
 
 function AllRelayerMainTest() {
@@ -335,5 +336,6 @@ function AllRelayerMainTest() {
     test_evm_all
 
     echo_addrs
+    echo -e "${GRE}XgoChain33Oracle: ${XgoChain33Oracle} ${NOC}"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
