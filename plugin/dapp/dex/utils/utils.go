@@ -214,6 +214,7 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 			//等待交易执行
 			if ebTypes.Invalid_Chain33Tx_Status == result {
 				time.Sleep(1)
+				continue
 			}
 			if result != chain33Types.ExecOk {
 				fmt.Println("Failed to send txhash: ", txhash, "result: ", result)
