@@ -105,8 +105,6 @@ func NewOracleClaim(cmd *cobra.Command, args []string) {
 		claimID.String(),
 		common.ToHex(signature))
 
-	fmt.Println("relayLockBurnToChain33", "parameter", parameter)
-
 	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%s",
 		events.ClaimType(1).String(), receiver, fromAddr, symbol, amount)
 	_, packData, err := evmAbi.Pack(parameter, generated.OracleABI, false)
@@ -127,10 +125,9 @@ func NewOracleClaim(cmd *cobra.Command, args []string) {
 		Data:  data,
 	}
 	var txhash string
-
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.SendTransaction", params, &txhash)
 	_, err = ctx.RunResult()
-	fmt.Println("txhash:", txhash, "err:", err)
+	fmt.Println(txhash)
 }
 
 func getExecerName(name string) string {
