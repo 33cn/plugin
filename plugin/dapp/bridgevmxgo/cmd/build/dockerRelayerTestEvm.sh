@@ -207,7 +207,7 @@ function TestETH2EVMToChain33() {
     is_equal "${result}" "500000000"
 
     let nonce=nonce+1
-    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33MainBridgeTokenAddr}" -k "${chain33Validatora}")
+    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33MainBridgeTokenAddr}" -k "${chain33ValidatorKeya}")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
@@ -255,7 +255,7 @@ function Testethereum2EVMToChain33_usdt() {
     is_equal "${result}" "500000000"
 
     let nonce=nonce+1
-    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33USDTBridgeTokenAddr}" -k "${chain33Validatora}")
+    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33USDTBridgeTokenAddr}" -k "${chain33ValidatorKeya}")
     check_tx "${Chain33Cli}" "${hash}"
 
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
