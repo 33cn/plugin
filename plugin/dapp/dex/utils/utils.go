@@ -7,19 +7,21 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
-
-	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-
-	"github.com/33cn/chain33/system/crypto/secp256k1"
-	"github.com/33cn/chain33/types"
-	"github.com/golang/protobuf/proto"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/system/crypto/secp256k1"
+	"github.com/33cn/chain33/types"
+	chain33Types "github.com/33cn/chain33/types"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/golang/protobuf/proto"
 )
 
 type TxCreateInfo struct {
@@ -158,6 +160,36 @@ func WriteToFileInJson(fileName string, content interface{}) {
 	fmt.Println("Txs are written to file", fileName)
 }
 
+func queryTxsByHashesRes(arg interface{}) (interface{}, error) {
+	var receipt *rpctypes.ReceiptDataResult
+	for _, v := range arg.(*rpctypes.TransactionDetails).Txs {
+		if v == nil {
+			continue
+		}
+		receipt = v.Receipt
+		if nil != receipt {
+			return receipt.Ty, nil
+		}
+	}
+	return nil, nil
+}
+
+func getTxStatusByHashesRpc(txhex, rpcLaddr string) int32 {
+	hashesArr := strings.Split(txhex, " ")
+	params2 := rpctypes.ReqHashes{
+		Hashes: hashesArr,
+	}
+
+	var res rpctypes.TransactionDetails
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetTxByHashes", params2, &res)
+	ctx.SetResultCb(queryTxsByHashesRes)
+	result, err := ctx.RunResult()
+	if err != nil || result == nil {
+		return ebrelayerTypes.Invalid_Chain33Tx_Status
+	}
+	return result.(int32)
+}
+
 func SendSignTxs2Chain33(filePath, rpcUrl string) {
 	var rdata []*Chain33OfflineTx
 	var retData []*Chain33OfflineTx
@@ -176,6 +208,21 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 		if deployInfo.Interval != 0 {
 			time.Sleep(deployInfo.Interval)
 		}
+
+		for {
+			result := getTxStatusByHashesRpc(txhash, rpcUrl)
+			//等待交易执行
+			if ebTypes.Invalid_Chain33Tx_Status == result {
+				time.Sleep(1)
+			}
+			if result != chain33Types.ExecOk {
+				fmt.Println("Failed to send txhash: ", txhash)
+				return
+			} else {
+				break
+			}
+		}
+
 		retData = append(retData, &Chain33OfflineTx{TxHash: txhash, ContractAddr: deployInfo.ContractAddr, OperationName: deployInfo.OperationName})
 	}
 
