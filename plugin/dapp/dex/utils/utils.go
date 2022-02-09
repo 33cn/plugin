@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/33cn/chain33/common"
@@ -17,8 +16,8 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/chain33/types"
 	chain33Types "github.com/33cn/chain33/types"
+	ebrelayerChain33 "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
 	"github.com/golang/protobuf/proto"
@@ -160,36 +159,6 @@ func WriteToFileInJson(fileName string, content interface{}) {
 	fmt.Println("Txs are written to file", fileName)
 }
 
-func queryTxsByHashesRes(arg interface{}) (interface{}, error) {
-	var receipt *rpctypes.ReceiptDataResult
-	for _, v := range arg.(*rpctypes.TransactionDetails).Txs {
-		if v == nil {
-			continue
-		}
-		receipt = v.Receipt
-		if nil != receipt {
-			return receipt.Ty, nil
-		}
-	}
-	return nil, nil
-}
-
-func getTxStatusByHashesRpc(txhex, rpcLaddr string) int32 {
-	hashesArr := strings.Split(txhex, " ")
-	params2 := rpctypes.ReqHashes{
-		Hashes: hashesArr,
-	}
-
-	var res rpctypes.TransactionDetails
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetTxByHashes", params2, &res)
-	ctx.SetResultCb(queryTxsByHashesRes)
-	result, err := ctx.RunResult()
-	if err != nil || result == nil {
-		return ebrelayerTypes.Invalid_Chain33Tx_Status
-	}
-	return result.(int32)
-}
-
 func SendSignTxs2Chain33(filePath, rpcUrl string) {
 	var rdata []*Chain33OfflineTx
 	var retData []*Chain33OfflineTx
@@ -210,7 +179,7 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 		}
 
 		for {
-			result := getTxStatusByHashesRpc(txhash, rpcUrl)
+			result := ebrelayerChain33.GetTxStatusByHashesRpc(txhash, rpcUrl)
 			//等待交易执行
 			if ebTypes.Invalid_Chain33Tx_Status == result {
 				time.Sleep(1)
