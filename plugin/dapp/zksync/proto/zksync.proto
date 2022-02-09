@@ -189,4 +189,14 @@ message ZkReceiptLog {
   repeated KeyValue localKvs = 2;
 }
 
+message ZkQueryProofReq {
+  bool needDetail = 1;
+  uint64 startBlockHeight = 2;
+  uint64 endBlockHeight = 3;
+}
+
+message ZkQueryProofResp {
+  repeated OperationInfo operationInfos = 1;
+}
+
 service zksync{}

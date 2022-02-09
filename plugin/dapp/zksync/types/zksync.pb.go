@@ -1855,6 +1855,116 @@ func (x *ZkReceiptLog) GetLocalKvs() []*types.KeyValue {
 	return nil
 }
 
+type ZkQueryProofReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	NeedDetail       bool   `protobuf:"varint,1,opt,name=needDetail,proto3" json:"needDetail,omitempty"`
+	StartBlockHeight uint64 `protobuf:"varint,2,opt,name=startBlockHeight,proto3" json:"startBlockHeight,omitempty"`
+	EndBlockHeight   uint64 `protobuf:"varint,3,opt,name=endBlockHeight,proto3" json:"endBlockHeight,omitempty"`
+}
+
+func (x *ZkQueryProofReq) Reset() {
+	*x = ZkQueryProofReq{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zksync_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ZkQueryProofReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZkQueryProofReq) ProtoMessage() {}
+
+func (x *ZkQueryProofReq) ProtoReflect() protoreflect.Message {
+	mi := &file_zksync_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZkQueryProofReq.ProtoReflect.Descriptor instead.
+func (*ZkQueryProofReq) Descriptor() ([]byte, []int) {
+	return file_zksync_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ZkQueryProofReq) GetNeedDetail() bool {
+	if x != nil {
+		return x.NeedDetail
+	}
+	return false
+}
+
+func (x *ZkQueryProofReq) GetStartBlockHeight() uint64 {
+	if x != nil {
+		return x.StartBlockHeight
+	}
+	return 0
+}
+
+func (x *ZkQueryProofReq) GetEndBlockHeight() uint64 {
+	if x != nil {
+		return x.EndBlockHeight
+	}
+	return 0
+}
+
+type ZkQueryProofResp struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	OperationInfos []*OperationInfo `protobuf:"bytes,1,rep,name=operationInfos,proto3" json:"operationInfos,omitempty"`
+}
+
+func (x *ZkQueryProofResp) Reset() {
+	*x = ZkQueryProofResp{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_zksync_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ZkQueryProofResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ZkQueryProofResp) ProtoMessage() {}
+
+func (x *ZkQueryProofResp) ProtoReflect() protoreflect.Message {
+	mi := &file_zksync_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ZkQueryProofResp.ProtoReflect.Descriptor instead.
+func (*ZkQueryProofResp) Descriptor() ([]byte, []int) {
+	return file_zksync_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ZkQueryProofResp) GetOperationInfos() []*OperationInfo {
+	if x != nil {
+		return x.OperationInfos
+	}
+	return nil
+}
+
 var File_zksync_proto protoreflect.FileDescriptor
 
 var file_zksync_proto_rawDesc = []byte{
@@ -2108,9 +2218,22 @@ var file_zksync_proto_rawDesc = []byte{
 	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x2b, 0x0a, 0x08, 0x6c, 0x6f,
 	0x63, 0x61, 0x6c, 0x4b, 0x76, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x74,
 	0x79, 0x70, 0x65, 0x73, 0x2e, 0x4b, 0x65, 0x79, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x08, 0x6c,
-	0x6f, 0x63, 0x61, 0x6c, 0x4b, 0x76, 0x73, 0x32, 0x08, 0x0a, 0x06, 0x7a, 0x6b, 0x73, 0x79, 0x6e,
-	0x63, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6f, 0x63, 0x61, 0x6c, 0x4b, 0x76, 0x73, 0x22, 0x85, 0x01, 0x0a, 0x0f, 0x5a, 0x6b, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x6f, 0x66, 0x52, 0x65, 0x71, 0x12, 0x1e, 0x0a, 0x0a, 0x6e,
+	0x65, 0x65, 0x64, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x0a, 0x6e, 0x65, 0x65, 0x64, 0x44, 0x65, 0x74, 0x61, 0x69, 0x6c, 0x12, 0x2a, 0x0a, 0x10, 0x73,
+	0x74, 0x61, 0x72, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x10, 0x73, 0x74, 0x61, 0x72, 0x74, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x26, 0x0a, 0x0e, 0x65, 0x6e, 0x64, 0x42, 0x6c,
+	0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52,
+	0x0e, 0x65, 0x6e, 0x64, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22,
+	0x50, 0x0a, 0x10, 0x5a, 0x6b, 0x51, 0x75, 0x65, 0x72, 0x79, 0x50, 0x72, 0x6f, 0x6f, 0x66, 0x52,
+	0x65, 0x73, 0x70, 0x12, 0x3c, 0x0a, 0x0e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x49, 0x6e, 0x66, 0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x74, 0x79,
+	0x70, 0x65, 0x73, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66,
+	0x6f, 0x52, 0x0e, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x49, 0x6e, 0x66, 0x6f,
+	0x73, 0x32, 0x08, 0x0a, 0x06, 0x7a, 0x6b, 0x73, 0x79, 0x6e, 0x63, 0x42, 0x0a, 0x5a, 0x08, 0x2e,
+	0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2125,7 +2248,7 @@ func file_zksync_proto_rawDescGZIP() []byte {
 	return file_zksync_proto_rawDescData
 }
 
-var file_zksync_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_zksync_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_zksync_proto_goTypes = []interface{}{
 	(*ZksyncAction)(nil),        // 0: types.ZksyncAction
 	(*TokenBalance)(nil),        // 1: types.TokenBalance
@@ -2152,10 +2275,12 @@ var file_zksync_proto_goTypes = []interface{}{
 	(*ZkQueryReq)(nil),          // 22: types.ZkQueryReq
 	(*ZkQueryResp)(nil),         // 23: types.ZkQueryResp
 	(*ZkReceiptLog)(nil),        // 24: types.ZkReceiptLog
-	(*ZkPubKey)(nil),            // 25: types.ZkPubKey
-	(*ZkSignature)(nil),         // 26: types.ZkSignature
-	(*OperationInfo)(nil),       // 27: types.OperationInfo
-	(*types.KeyValue)(nil),      // 28: types.KeyValue
+	(*ZkQueryProofReq)(nil),     // 25: types.ZkQueryProofReq
+	(*ZkQueryProofResp)(nil),    // 26: types.ZkQueryProofResp
+	(*ZkPubKey)(nil),            // 27: types.ZkPubKey
+	(*ZkSignature)(nil),         // 28: types.ZkSignature
+	(*OperationInfo)(nil),       // 29: types.OperationInfo
+	(*types.KeyValue)(nil),      // 30: types.KeyValue
 }
 var file_zksync_proto_depIdxs = []int32{
 	7,  // 0: types.ZksyncAction.deposit:type_name -> types.ZkDeposit
@@ -2169,16 +2294,16 @@ var file_zksync_proto_depIdxs = []int32{
 	15, // 8: types.ZksyncAction.setVerifyKey:type_name -> types.ZkVerifyKey
 	17, // 9: types.ZksyncAction.commitProof:type_name -> types.ZkCommitProof
 	5,  // 10: types.AccountTree.subTrees:type_name -> types.SubTree
-	25, // 11: types.Leaf.pubKey:type_name -> types.ZkPubKey
-	26, // 12: types.ZkDeposit.signature:type_name -> types.ZkSignature
-	26, // 13: types.ZkWithdraw.signature:type_name -> types.ZkSignature
-	26, // 14: types.ZkContractToLeaf.signature:type_name -> types.ZkSignature
-	26, // 15: types.ZkLeafToContract.signature:type_name -> types.ZkSignature
-	26, // 16: types.ZkTransfer.signature:type_name -> types.ZkSignature
-	26, // 17: types.ZkTransferToNew.signature:type_name -> types.ZkSignature
-	26, // 18: types.ZkForceExit.signature:type_name -> types.ZkSignature
-	25, // 19: types.ZkSetPubKey.pubKey:type_name -> types.ZkPubKey
-	26, // 20: types.ZkSetPubKey.signature:type_name -> types.ZkSignature
+	27, // 11: types.Leaf.pubKey:type_name -> types.ZkPubKey
+	28, // 12: types.ZkDeposit.signature:type_name -> types.ZkSignature
+	28, // 13: types.ZkWithdraw.signature:type_name -> types.ZkSignature
+	28, // 14: types.ZkContractToLeaf.signature:type_name -> types.ZkSignature
+	28, // 15: types.ZkLeafToContract.signature:type_name -> types.ZkSignature
+	28, // 16: types.ZkTransfer.signature:type_name -> types.ZkSignature
+	28, // 17: types.ZkTransferToNew.signature:type_name -> types.ZkSignature
+	28, // 18: types.ZkForceExit.signature:type_name -> types.ZkSignature
+	27, // 19: types.ZkSetPubKey.pubKey:type_name -> types.ZkPubKey
+	28, // 20: types.ZkSetPubKey.signature:type_name -> types.ZkSignature
 	15, // 21: types.ReceiptSetVerifyKey.prev:type_name -> types.ZkVerifyKey
 	15, // 22: types.ReceiptSetVerifyKey.current:type_name -> types.ZkVerifyKey
 	18, // 23: types.ReceiptCommitProof.prev:type_name -> types.CommitProofState
@@ -2187,15 +2312,16 @@ var file_zksync_proto_depIdxs = []int32{
 	1,  // 26: types.ZkReceiptLeaf.token:type_name -> types.TokenBalance
 	6,  // 27: types.ZkReceiptLeaf.treeProof:type_name -> types.MerkleTreeProof
 	6,  // 28: types.ZkReceiptLeaf.tokenProof:type_name -> types.MerkleTreeProof
-	27, // 29: types.ZkQueryResp.operationInfos:type_name -> types.OperationInfo
+	29, // 29: types.ZkQueryResp.operationInfos:type_name -> types.OperationInfo
 	3,  // 30: types.ZkQueryResp.leaves:type_name -> types.Leaf
-	27, // 31: types.ZkReceiptLog.operationInfo:type_name -> types.OperationInfo
-	28, // 32: types.ZkReceiptLog.localKvs:type_name -> types.KeyValue
-	33, // [33:33] is the sub-list for method output_type
-	33, // [33:33] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	29, // 31: types.ZkReceiptLog.operationInfo:type_name -> types.OperationInfo
+	30, // 32: types.ZkReceiptLog.localKvs:type_name -> types.KeyValue
+	29, // 33: types.ZkQueryProofResp.operationInfos:type_name -> types.OperationInfo
+	34, // [34:34] is the sub-list for method output_type
+	34, // [34:34] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_zksync_proto_init() }
@@ -2505,6 +2631,30 @@ func file_zksync_proto_init() {
 				return nil
 			}
 		}
+		file_zksync_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ZkQueryProofReq); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_zksync_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ZkQueryProofResp); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_zksync_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*ZksyncAction_Deposit)(nil),
@@ -2524,7 +2674,7 @@ func file_zksync_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_zksync_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

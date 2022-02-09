@@ -98,3 +98,32 @@ func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
 	return getLastCommitProofData(z.GetStateDB())
 }
+
+// Query_GetTxProof 批量获取交易证明
+func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	res := new(zt.ZkQueryProofResp)
+	datas := make([]*zt.OperationInfo, 0)
+	table := NewZksyncInfoTable(z.GetLocalDB())
+	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight() ; i++ {
+		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), nil, 1000, zt.ListASC)
+		if err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			data := row.Data.(*zt.OperationInfo)
+			if in.GetNeedDetail() {
+				datas = append(datas, data)
+			} else {
+				info := new(zt.OperationInfo)
+				info.BlockHeight = i
+				info.TxType = data.TxType
+				datas = append(datas, info)
+			}
+		}
+	}
+	res.OperationInfos = datas
+	return res, nil
+}
