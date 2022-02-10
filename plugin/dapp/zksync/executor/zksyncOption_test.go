@@ -2,7 +2,9 @@ package executor
 
 import (
 	"bytes"
+	"encoding/hex"
 	"github.com/33cn/chain33/types"
+	"math/big"
 	"strings"
 	"testing"
 
@@ -215,4 +217,14 @@ func TestEddsa(t *testing.T) {
 	t.Log(privateKey.PublicKey.A.Y)
 	t.Log(ans)
 	t.Log(len(ans))
+}
+
+func TestBigInt(t *testing.T) {
+	byteVal :=  big.NewInt(0).Bytes()
+	stringVal := hex.EncodeToString(byteVal)
+	t.Log("bigInt 0 byteVal", byteVal)
+	t.Log("bigInt 0 stringVal", stringVal)
+	t.Log("0 stringVal", "0")
+	t.Log("0 byteVal", []byte("0"))
+	t.Log("is equal", stringVal == "0")
 }

@@ -6,7 +6,6 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
@@ -99,7 +98,7 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	pubKey := eddsa.PublicKey{}
 	pubKey.A.X.SetString(signature.PubKey.X)
 	pubKey.A.Y.SetString(signature.PubKey.Y)
-	success, err := pubKey.Verify(signature.GetSignInfo(), wallet.GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
+	success, err := pubKey.Verify(signature.GetSignInfo(), wallet.GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
 	if err != nil {
 		return err
 	}

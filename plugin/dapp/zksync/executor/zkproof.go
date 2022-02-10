@@ -31,7 +31,7 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 			{Key: key, Value: types.Encode(new)},
 		},
 		Logs: []*types.ReceiptLog{
-			{Ty: zt.TySetVerifyKey, Log: types.Encode(log)},
+			{Ty: zt.TySetVerifyKeyLog, Log: types.Encode(log)},
 		},
 	}
 
@@ -51,7 +51,7 @@ func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
 			{Key: heightKey, Value: types.Encode(new)},
 		},
 		Logs: []*types.ReceiptLog{
-			{Ty: zt.TyCommitProof, Log: types.Encode(log)},
+			{Ty: zt.TyCommitProofLog, Log: types.Encode(log)},
 		},
 	}
 
@@ -109,6 +109,7 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	newKey := &zt.ZkVerifyKey{Key: payload.Key}
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
+
 
 func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	key := getLastCommitProofKey()
@@ -263,5 +264,57 @@ func calcPubDataCommitHash(blockStart, blockEnd uint64, oldRoot, newRoot string,
 	var f fr.Element
 	f.SetBytes(ret)
 	return f.String()
+
+}
+
+//合约管理员或管理员设置在链上的管理员才可设置
+func (a *Action) setVerifier(payload *zt.ZkVerifier) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
+	}
+
+	oldKey, err := getVerifierData(a.statedb)
+	if isNotFound(errors.Cause(err)) {
+		key := &zt.ZkVerifier{Verifiers: payload.Verifiers}
+		return makeSetVerifierReceipt(nil, key), nil
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "setVerifyKey.getVerifyKeyData")
+	}
+	newKey := &zt.ZkVerifier{Verifiers: payload.Verifiers}
+	return makeSetVerifierReceipt(oldKey, newKey), nil
+}
+
+func getVerifierData(db dbm.KV) (*zt.ZkVerifier, error) {
+	key := getVerifier()
+	v, err := db.Get(key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get db verify key")
+	}
+	var data zt.ZkVerifier
+	err = types.Decode(v, &data)
+	if err != nil {
+		return nil, errors.Wrapf(err, "decode db verify key")
+	}
+
+	return &data, nil
+}
+
+func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
+	key := getVerifier()
+	log := &zt.ReceiptSetVerifier{
+		Prev:    old,
+		Current: new,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(new)},
+		},
+		Logs: []*types.ReceiptLog{
+			{Ty: zt.TySetVerifierLog, Log: types.Encode(log)},
+		},
+	}
 
 }

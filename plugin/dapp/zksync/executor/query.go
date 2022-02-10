@@ -2,6 +2,8 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -99,7 +101,7 @@ func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, erro
 	return getLastCommitProofData(z.GetStateDB())
 }
 
-// Query_GetTxProof 批量获取交易证明
+// Query_GetTxProofByHeights 根据多个高度批量获取交易证明
 func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -108,7 +110,7 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	datas := make([]*zt.OperationInfo, 0)
 	table := NewZksyncInfoTable(z.GetLocalDB())
 	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight() ; i++ {
-		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), nil, 1000, zt.ListASC)
+		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), nil, types.MaxTxsPerBlock, zt.ListASC)
 		if err != nil {
 			return nil, err
 		}
@@ -126,4 +128,15 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	}
 	res.OperationInfos = datas
 	return res, nil
+}
+
+// Query_GetZkContractAccount Query_GetTxProof 批量获取交易证明
+func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	execAddr := address.ExecAddress(zt.Zksync)
+	accountdb, _ := account.NewAccountDB(z.GetAPI().GetConfig(), zt.Zksync, in.TokenSymbol, z.GetStateDB())
+	contractAccount := accountdb.LoadExecAccount(in.Chain33WalletAddr, execAddr)
+	return contractAccount, nil
 }

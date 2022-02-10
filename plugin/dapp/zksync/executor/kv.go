@@ -1,6 +1,9 @@
 package executor
 
-import "fmt"
+import (
+	"fmt"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+)
 
 func GetAccountIdPrimaryKey(accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"accountId-", accountId))
@@ -32,6 +35,10 @@ func getHeightKey(height int64) []byte {
 
 func getVerifyKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"verifyKey"))
+}
+
+func getVerifier() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
 }
 
 func getLastCommitProofKey() []byte {

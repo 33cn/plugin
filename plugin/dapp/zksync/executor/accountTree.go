@@ -241,7 +241,7 @@ func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) 
 
 func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string, info *TreeUpdateInfo) (*zt.Leaf, error) {
 	if chain33Addr == "" || ethAddress == "" {
-		return nil, nil
+		return nil, types.ErrInvalidParam
 	}
 
 	var leaf zt.Leaf
@@ -482,7 +482,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 }
 
 func getLeafHash(leaf *zt.Leaf) []byte {
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(new(big.Int).SetUint64(leaf.GetAccountId()).Bytes())
 	hash.Write([]byte(leaf.GetEthAddress()))
 	hash.Write([]byte(leaf.GetChain33Addr()))
@@ -557,6 +557,10 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			RootHash: hex.EncodeToString(currentTree.Root()),
 			ProofSet: proofSet,
 			Helpers:  helpers,
+		}
+		//如果还没有产生第一个叶子，RootHash需要特殊设置
+		if tree.TotalIndex == 0 {
+			proof.RootHash = "1"
 		}
 		return proof, nil
 	}

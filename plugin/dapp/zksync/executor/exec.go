@@ -54,3 +54,8 @@ func (z *zksync) Exec_CommitProof(payload *zt.ZkCommitProof, tx *types.Transacti
 	action := NewAction(z, tx, index)
 	return action.commitProof(payload)
 }
+
+func (z *zksync) Exec_SetVerifier(payload *zt.ZkVerifier, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setVerifier(payload)
+}

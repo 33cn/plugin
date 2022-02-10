@@ -17,6 +17,7 @@ message ZksyncAction {
     ZkSetPubKey setPubKey = 8;
     ZkVerifyKey         setVerifyKey = 10;
     ZkCommitProof         commitProof  = 11;
+    ZkVerifier  setVerifier = 12;
   }
 
   int32 ty = 9;
@@ -81,7 +82,9 @@ message ZkContractToLeaf {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  ZkSignature signature = 4;
+  string ethAddress = 4;
+  string chain33Addr = 5;
+  ZkSignature signature = 6;
 }
 
 message ZkLeafToContract {
@@ -158,6 +161,16 @@ message ReceiptCommitProof {
   CommitProofState current = 2;
 }
 
+//电路验证者名单
+message ZkVerifier {
+  repeated string verifiers = 1;
+}
+
+message ReceiptSetVerifier {
+  ZkVerifier prev = 1;
+  ZkVerifier current = 2;
+}
+
 //zk relayer operators
 message RelayerOperators {
   repeated string operators   = 1;
@@ -177,6 +190,8 @@ message ZkQueryReq {
   uint32 txIndex = 3;
   string ethAddress = 4;
   string chain33Addr = 5;
+  string tokenSymbol = 6;
+  string chain33WalletAddr = 7;
 }
 
 message ZkQueryResp {

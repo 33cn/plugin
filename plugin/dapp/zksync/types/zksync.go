@@ -14,17 +14,19 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyNoopAction           = iota + 200
-	TyDepositAction        //eth存款
-	TyWithdrawAction       //eth取款
-	TyContractToLeafAction //合约账户转入叶子
-	TyLeafToContractAction //叶子账户转入合约
-	TyTransferAction       //转账
-	TyTransferToNewAction  //向新地址转账
-	TyForceExitAction      //强制退出
-	TySetPubKeyAction      //设置公钥
-	TySetVerifyKeyAction   //设置电路验证key
-	TyCommitProofAction    //提交zk proof
+	TyNoopAction           = 0
+	TyDepositAction        = 1//eth存款
+	TyWithdrawAction       = 2//eth取款
+	TyContractToLeafAction = 3//合约账户转入叶子
+	TyLeafToContractAction = 4//叶子账户转入合约
+	TyTransferAction       = 5//转账
+	TyTransferToNewAction  = 6//向新地址转账
+	TyForceExitAction      = 7//强制退出
+	TySetPubKeyAction      = 8//设置公钥
+
+	TySetVerifyKeyAction   = 102//设置电路验证key
+	TyCommitProofAction    = 103//提交zk proof
+	TySetVerifierAction    = 104//设置验证者
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -35,23 +37,27 @@ const (
 	NameTransferToNewAction  = "TransferToNew"
 	NameForceExitAction      = "ForceExit"
 	NameSetPubKeyAction      = "SetPubKey"
+
 	NameSetVerifyKeyAction   = "SetVerifyKey"
 	NameCommitProofAction    = "CommitProof"
+	NameSetVerifierAction    = "SetVerifier"
 )
 
 // log类型id值
 const (
-	TyNoopLog           = iota + 200
-	TyDepositLog        //存款
-	TyWithdrawLog       //取款
-	TyContractToLeafLog //合约账户转入叶子
-	TyLeafToContractLog //叶子账户转入合约
-	TyTransferLog       //转账
-	TyTransferToNewLog  //向新地址转账
-	TyForceExitLog      //强制退出
-	TySetPubKeyLog      //设置公钥
-	TySetVerifyKey      //设置验证key
-	TyCommitProof       //提交证明
+	TyNoopLog           = 0
+	TyDepositLog        = 1//存款
+	TyWithdrawLog       = 2//取款
+	TyContractToLeafLog = 3//合约账户转入叶子
+	TyLeafToContractLog = 4//叶子账户转入合约
+	TyTransferLog       = 5//转账
+	TyTransferToNewLog  = 6//向新地址转账
+	TyForceExitLog      = 7//强制退出
+	TySetPubKeyLog      = 8//设置公钥
+
+	TySetVerifyKeyLog   = 102//设置电路验证key
+	TyCommitProofLog    = 103//提交zk proof
+	TySetVerifierLog    = 104//设置验证者
 )
 
 const (
@@ -67,6 +73,7 @@ const (
 const Zksync = "zksync"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
+const ZkVerifierKey = "verifier"
 
 //msg宽度
 const (
@@ -99,6 +106,7 @@ var (
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
+		NameSetVerifierAction:    TySetVerifierAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -111,8 +119,9 @@ var (
 		TyTransferToNewLog:  {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyTransferToNewLog"},
 		TyForceExitLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyForceExitLog"},
 		TySetPubKeyLog:      {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TySetPubKeyLog"},
-		TySetVerifyKey:      {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProof:       {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifyKeyLog:      {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:       {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifierLog:       {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 	}
 )
 
