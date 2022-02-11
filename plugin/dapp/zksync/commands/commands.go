@@ -109,7 +109,7 @@ func withdrawFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "withdraw amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "c", 0, "withdraw accountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "withdraw accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -149,7 +149,7 @@ func leafToContractFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "leafToContract amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "c", 0, "leafToContract accountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "leafToContract accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -189,8 +189,12 @@ func contractToLeafFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "contractToLeaf amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "c", 0, "contractToLeaf accountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "contractToLeaf accountId")
 	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().StringP("ethAddress", "e", "", "deposit ethaddress")
+	cmd.MarkFlagRequired("ethAddress")
+	cmd.Flags().StringP("chain33Addr", "c", "", "deposit chain33Addr")
+	cmd.MarkFlagRequired("chain33Addr")
 
 }
 
@@ -198,9 +202,11 @@ func contractToLeaf(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	ethAddress, _ := cmd.Flags().GetString("ethAddress")
+	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToLeafAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyContractToLeafAction, tokenId, amount, ethAddress, "", chain33Addr, accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -229,9 +235,9 @@ func transferFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transfer amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "f", 0, "transfer fromAccountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "transfer fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("toAccountId", "c", 0, "transfer toAccountId")
+	cmd.Flags().Uint64P("toAccountId", "", 0, "transfer toAccountId")
 	cmd.MarkFlagRequired("toAccountId")
 
 }
@@ -272,9 +278,9 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "transferToNew amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "f", 0, "transferToNew fromAccountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().StringP("toEthAddress", "e", "", "transferToNew toEthAddress")
+	cmd.Flags().StringP("toEthAddress", "", "", "transferToNew toEthAddress")
 	cmd.MarkFlagRequired("toEthAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "transferToNew toChain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
@@ -384,7 +390,7 @@ func getChain33AddrCmd() *cobra.Command {
 }
 
 func getChain33AddrFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("private", "p", "", "transferToNew tokenId")
+	cmd.Flags().StringP("private", "k", "", "private key")
 }
 
 func getChain33Addr(cmd *cobra.Command, args []string) {
@@ -441,7 +447,7 @@ func getTxProofCmd() *cobra.Command {
 }
 
 func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "e", 0, "zksync proof height")
+	cmd.Flags().Uint64P("height", "", 0, "zksync proof height")
 	cmd.MarkFlagRequired("height")
 	cmd.Flags().Uint32P("index", "i", 0, "tx index")
 	cmd.MarkFlagRequired("index")
@@ -479,7 +485,7 @@ func getTxProofByHeightCmd() *cobra.Command {
 }
 
 func getTxProofByHeightFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "e", 0, "zksync proof height")
+	cmd.Flags().Uint64P("height", "", 0, "zksync proof height")
 	cmd.MarkFlagRequired("height")
 }
 

@@ -36,6 +36,8 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
+			EthAddress: ethAddress,
+			Chain33Addr: chain33Addr,
 		}
 		payload = types.MustPBToJSON(contractToLeaf)
 	case zt.TyLeafToContractAction:
