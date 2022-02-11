@@ -1194,6 +1194,51 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	return nil
 }
 
+func (ethRelayer *Relayer4Ethereum) CreateLockEventManually(event *events.LockEvent) error {
+	var decimal uint8
+	tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
+	if nil == tokenLocked {
+		//如果在本地没有找到该币种，则进行信息的收集和保存
+		if event.Token.String() == "" || event.Token.String() == "0x0000000000000000000000000000000000000000" {
+			decimal = 18
+		} else {
+			opts := &bind.CallOpts{
+				Pending: true,
+				From:    common.HexToAddress(event.Token.String()),
+				Context: context.Background(),
+			}
+			bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
+			decimal, err = bridgeToken.Decimals(opts)
+			if err != nil {
+				return err
+			}
+		}
+
+		token2set := ebTypes.TokenAddress{
+			Address:   event.Token.String(),
+			Symbol:    event.Symbol,
+			ChainName: ebTypes.EthereumBlockChainName,
+			Decimal:   int32(decimal),
+		}
+		err = ethRelayer.SetLockedTokenAddress(token2set)
+		if nil != err {
+			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
+			return errors.New("Failed ")
+		}
+	} else {
+		decimal = uint8(tokenLocked.Decimal)
+	}
+
+	prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, ethRelayer.clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), "0x1111111111111111111111111111111111111111111111111111111111111111", int64(decimal))
+	if err != nil {
+		return err
+	}
+	prophecyClaim.ChainName = ethRelayer.name
+	ethRelayer.ethBridgeClaimChan <- prophecyClaim
+
+	return nil
+}
+
 // handleLogBurnEvent : unpacks a burn event, converts it to a ProphecyClaim, and relays a tx to chain33
 func (ethRelayer *Relayer4Ethereum) handleLogBurnEvent(clientChainID *big.Int, contractABI abi.ABI, eventName string, log types.Log) error {
 	if ethRelayer.processWithDraw {

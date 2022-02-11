@@ -330,6 +330,12 @@ message Symbol2EthChain  {
     map<string, string> symbol2name = 1;
 }
 
-
-
-
+message CreateLockEventReq  {
+    string from      = 1;
+    string to        = 2;
+    string token     = 3;
+    string symbol    = 4;
+    string value     = 5;
+    string nonce     = 6;
+    string chainName = 7;
+}

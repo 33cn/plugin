@@ -51,6 +51,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		CfgWithdrawCmd(),
 		ResendEthLockEventCmd(),
 		RegetEthLockEventCmd(),
+		CreateLockEventCmd(),
 	)
 
 	return cmd
@@ -1131,5 +1132,56 @@ func reGetEthereumEvent(cmd *cobra.Command, args []string) {
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ReGetEthereumEvent", regetEthereumEventReq, &res)
+	ctx.Run()
+}
+
+func CreateLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "createLockEvent",
+		Short: "create lock Event as emitted from ethereum contract",
+		Run:   createLockEvent,
+	}
+	addcreateLockEventFlags(cmd)
+	return cmd
+}
+
+func addcreateLockEventFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("from", "f", "", "Ethereum from address")
+	_ = cmd.MarkFlagRequired("from")
+	cmd.Flags().StringP("receiver", "r", "", "chain33 receiver address")
+	_ = cmd.MarkFlagRequired("receiver")
+
+	cmd.Flags().StringP("token", "t", "", "Ethereum token address")
+	_ = cmd.MarkFlagRequired("token")
+	cmd.Flags().StringP("symbol", "s", "", "Ethereum token symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("value", "v", "", "value")
+	_ = cmd.MarkFlagRequired("value")
+	cmd.Flags().StringP("nonce", "n", "", "nonce")
+	_ = cmd.MarkFlagRequired("nonce")
+}
+
+func createLockEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	from, _ := cmd.Flags().GetString("from")
+	to, _ := cmd.Flags().GetString("receiver")
+	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	value, _ := cmd.Flags().GetString("value")
+	nonce, _ := cmd.Flags().GetString("nonce")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	createLockEventReq := &ebTypes.CreateLockEventReq{
+		From:      from,
+		To:        to,
+		Token:     token,
+		Symbol:    symbol,
+		Value:     value,
+		Nonce:     nonce,
+		ChainName: ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateLockEventManually", createLockEventReq, &res)
 	ctx.Run()
 }

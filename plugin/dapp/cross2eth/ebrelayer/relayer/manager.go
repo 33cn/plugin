@@ -3,9 +3,13 @@ package relayer
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"sync"
 	"sync/atomic"
+
+	chain33Address "github.com/33cn/chain33/common/address"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
@@ -13,6 +17,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	lru "github.com/hashicorp/golang-lru"
@@ -909,6 +914,41 @@ func (manager *Manager) TransferEth(transfer *relayerTypes.TransferToken, result
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  txhash,
+	}
+	return nil
+}
+
+func (manager *Manager) CreateLockEventManually(createLockEventReq *relayerTypes.CreateLockEventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	ethInt, ok := manager.ethRelayer[createLockEventReq.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	chain33AddressTo, err := chain33Address.NewAddrFromString(createLockEventReq.To)
+	if nil != err {
+		return err
+	}
+
+	value, _ := big.NewInt(0).SetString(createLockEventReq.Value, 0)
+	nonce, _ := big.NewInt(0).SetString(createLockEventReq.Nonce, 0)
+
+	event := &events.LockEvent{
+		From:   ethCommon.HexToAddress(createLockEventReq.From),
+		To:     chain33AddressTo.Hash160[:],
+		Token:  ethCommon.HexToAddress(createLockEventReq.Token),
+		Symbol: createLockEventReq.Symbol,
+		Value:  value,
+		Nonce:  nonce,
+	}
+	err = ethInt.CreateLockEventManually(event)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Succeed to create lock event",
 	}
 	return nil
 }
