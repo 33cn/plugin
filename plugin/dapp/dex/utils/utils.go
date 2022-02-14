@@ -178,11 +178,19 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 			time.Sleep(deployInfo.Interval)
 		}
 
+		countTime := 0
 		for {
 			result := ebrelayerChain33.GetTxStatusByHashesRpc(txhash, rpcUrl)
 			//等待交易执行
 			if ebTypes.Invalid_Chain33Tx_Status == result {
-				time.Sleep(1)
+				time.Sleep(10 * time.Second)
+
+				countTime++
+				// 超过2分钟 超时退出
+				if countTime > 120 {
+					fmt.Println("time out txhash: ", txhash)
+					return
+				}
 				continue
 			}
 			if result != chain33Types.ExecOk {
