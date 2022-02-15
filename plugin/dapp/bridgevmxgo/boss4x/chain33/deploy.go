@@ -12,6 +12,7 @@ func Chain33Cmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		offline.Boss4xOfflineCmd(),
+		NewOracleClaimCmd(),
 	)
 	return cmd
 

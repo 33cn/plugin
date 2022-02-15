@@ -160,7 +160,7 @@ func GetDecimalsFromNode(addr string, nodeAddr string) (int64, error) {
 
 	retryTimes := 0
 RETRY:
-	res, err := sendToServer(nodeAddr, strings.NewReader(postData))
+	res, err := SendToServer(nodeAddr, strings.NewReader(postData))
 	if err != nil {
 		log.Error("GetDecimals", "error:", err.Error())
 		if retryTimes > 3 {
@@ -191,7 +191,7 @@ RETRY:
 	return decimals, nil
 }
 
-func sendToServer(url string, req io.Reader) ([]byte, error) {
+func SendToServer(url string, req io.Reader) ([]byte, error) {
 	client := http.Client{
 		Transport: &http.Transport{
 			Dial: func(netw, addr string) (net.Conn, error) {

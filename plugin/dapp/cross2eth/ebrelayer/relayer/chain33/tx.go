@@ -132,7 +132,7 @@ func queryTxsByHashesRes(arg interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-func getTxStatusByHashesRpc(txhex, rpcLaddr string) int32 {
+func GetTxStatusByHashesRpc(txhex, rpcLaddr string) int32 {
 	hashesArr := strings.Split(txhex, " ")
 	params2 := rpctypes.ReqHashes{
 		Hashes: hashesArr,

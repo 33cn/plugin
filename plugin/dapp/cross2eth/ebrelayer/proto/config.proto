@@ -54,6 +54,7 @@ message RelayerConfig {
   string dbPath                       = 7;   //数据库存储目录
   int32 dbCache                       = 8;   //数据库缓存大小
   bool processWithDraw                = 9;
+  string remindUrl                    = 10;   // 代理打币地址金额不够时发生提醒短信的 url
 }
 
 message SyncTxReceiptConfig {
