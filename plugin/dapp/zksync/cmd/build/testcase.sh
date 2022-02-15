@@ -60,10 +60,8 @@ function zksync_transfer() {
 
 function zksync_deposit() {
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 10000000000
-    rawData=$(${CLI} send zksync deposit -t 1 -a 10000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 1ac911ce06f25973cb33f7dbadf5ba2eda083fa02962371a070069000a96e4eb)
+    rawData=$(${CLI} zksync deposit -t 1 -a 10000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 1ac911ce06f25973cb33f7dbadf5ba2eda083fa02962371a070069000a96e4eb)
     echo "${rawData}"
-
-    query_proof "${MIX_CLI31}" 1
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
