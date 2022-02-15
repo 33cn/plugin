@@ -46,17 +46,7 @@ function zksync_import_wallet() {
     ${1} wallet status
 }
 
-function mix_import_key() {
-    local lable=$3
-    echo "=========== # import private key ============="
-    echo "key: ${2}"
-    result=$(${1} account import_key -k "${2}" -l "$lable" | jq ".label")
-    if [ -z "${result}" ]; then
-        exit 1
-    fi
-}
-
-function mix_transfer() {
+function zksync_transfer() {
     echo "=========== # zksync chain transfer ============="
 
     #account1
@@ -73,14 +63,14 @@ function zksync_deposit() {
     rawData=$(${CLI} send zksync deposit -t 1 -a 10000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 1ac911ce06f25973cb33f7dbadf5ba2eda083fa02962371a070069000a96e4eb)
     echo "${rawData}"
 
-    query_note "${MIX_CLI31}" 1
+    query_proof "${MIX_CLI31}" 1
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
 
-    query_proof "${MIX_CLI31}" 1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 1
+    query_proof "${MIX_CLI31}" 1
 }
 
 function query_proof() {
@@ -113,21 +103,19 @@ function query_tx() {
     done
 }
 
-function mix_test() {
+function zksync_test() {
     echo "=========== # mix chain test ============="
-    mix_deposit
-    mix_token_test
+    zksync_deposit
 }
 
-function mix() {
+function zksync() {
     if [ "${2}" == "init" ]; then
-        echo "mix init"
+        echo "zksync init"
     elif [ "${2}" == "config" ]; then
-        mix_set_wallet
-        mix_transfer
-
+        zksync_set_wallet
+        zksync_transfer
     elif [ "${2}" == "test" ]; then
-        mix_test "${1}"
+        zksync_test "${1}"
     fi
 
 }
