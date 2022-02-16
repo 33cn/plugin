@@ -75,6 +75,23 @@ func isSuperManager(cfg *types.Chain33Config, addr string) bool {
 	return false
 }
 
+func isVerifier(statedb dbm.KV, addr string) bool {
+	verifier, err := getVerifierData(statedb)
+	if err != nil {
+		if isNotFound(errors.Cause(err)) {
+			return false
+		} else {
+			panic(err)
+		}
+	}
+	for _, v := range verifier.Verifiers {
+		if addr == v {
+			return true
+		}
+	}
+	return false
+}
+
 func getVerifyKeyData(db dbm.KV) (*zt.ZkVerifyKey, error) {
 	key := getVerifyKey()
 	v, err := db.Get(key)

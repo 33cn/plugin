@@ -341,6 +341,26 @@ func GetTokenByAccountIdAndTokenId(db dbm.KV, accountId uint64, tokenId uint64, 
 	return &token, nil
 }
 
+func GetTokenByAccountIdAndTokenIdInDB(db dbm.KV, accountId uint64, tokenId uint64) (*zt.TokenBalance, error) {
+
+	var token zt.TokenBalance
+
+	val, err := db.Get(GetTokenPrimaryKey(accountId, tokenId))
+	if err != nil {
+		if err.Error() == types.ErrNotFound.Error() {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	err = types.Decode(val, &token)
+	if err != nil {
+		return nil, err
+	}
+	return &token, nil
+}
+
 // UpdateLeaf 更新叶子结点：1、如果在当前树的叶子中，直接更新  2、如果在归档的树中，需要找到归档的root，重新生成root
 func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64, amount string, option int32) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue

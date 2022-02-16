@@ -130,7 +130,7 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	return res, nil
 }
 
-// Query_GetZkContractAccount Query_GetTxProof 批量获取交易证明
+// Query_GetZkContractAccount 批量获取交易证明
 func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
@@ -139,4 +139,18 @@ func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, e
 	accountdb, _ := account.NewAccountDB(z.GetAPI().GetConfig(), zt.Zksync, in.TokenSymbol, z.GetStateDB())
 	contractAccount := accountdb.LoadExecAccount(in.Chain33WalletAddr, execAddr)
 	return contractAccount, nil
+}
+
+// Query_GetTokenBalance 根据token和account获取balance
+func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	res := new(zt.ZkQueryResp)
+	token, err := GetTokenByAccountIdAndTokenIdInDB(z.GetStateDB(), in.AccountId, in.TokenId)
+	if err != nil {
+		return nil, err
+	}
+	res.TokenBalances = append(res.TokenBalances, token)
+	return res, nil
 }

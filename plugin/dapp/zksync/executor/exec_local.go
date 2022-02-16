@@ -16,12 +16,12 @@ func (z *zksync) ExecLocal_Withdraw(payload *zt.ZkWithdraw, tx *types.Transactio
 }
 
 // ExecLocal_Transfer asset transfer local db process
-func (z *zksync) ExecLocal_ContractToLeaf(payload *zt.ZkContractToLeaf, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecLocal_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
 //ExecLocal_Authorize asset withdraw local db process
-func (z *zksync) ExecLocal_LeafToContract(payload *zt.ZkLeafToContract, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecLocal_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
@@ -38,5 +38,9 @@ func (z *zksync) ExecLocal_ForceExit(payload *zt.ZkForceExit, tx *types.Transact
 }
 
 func (z *zksync) ExecLocal_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+
+func (z *zksync) ExecLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }

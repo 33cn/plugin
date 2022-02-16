@@ -351,3 +351,9 @@ coins = [
 	{ name = "ETH", rate = 100000, minFee = 0 },
 	{ name = "USDT", rate = 100000, minFee = 0 },
 ]
+
+[exec.sub.zksync]
+manager=[
+    "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt",
+    "12qyocayNF7Lv6C9qW4avxs2E7U41fKSfv"
+]

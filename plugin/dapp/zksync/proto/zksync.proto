@@ -9,18 +9,20 @@ message ZksyncAction {
   oneof value {
     ZkDeposit  deposit = 1;
     ZkWithdraw withdraw = 2;
-    ZkContractToLeaf contractToLeaf = 3;
-    ZkLeafToContract leafToContract = 4;
+    ZkContractToTree contractToTree = 3;
+    ZkTreeToContract treeToContract = 4;
     ZkTransfer transfer = 5;
     ZkTransferToNew transferToNew = 6;
     ZkForceExit forceExit = 7;
     ZkSetPubKey setPubKey = 8;
-    ZkVerifyKey         setVerifyKey = 10;
-    ZkCommitProof         commitProof  = 11;
-    ZkVerifier  setVerifier = 12;
+    ZkFullExit  fullExit = 9;
+    ZkSwap  swap = 10;
+    ZkVerifyKey         setVerifyKey = 11;
+    ZkCommitProof         commitProof  = 12;
+    ZkVerifier  setVerifier = 13;
   }
 
-  int32 ty = 9;
+  int32 ty = 14;
 }
 
 
@@ -78,7 +80,7 @@ message ZkWithdraw {
   ZkSignature signature = 4;
 }
 
-message ZkContractToLeaf {
+message ZkContractToTree {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
@@ -87,7 +89,7 @@ message ZkContractToLeaf {
   ZkSignature signature = 6;
 }
 
-message ZkLeafToContract {
+message ZkTreeToContract {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
@@ -121,6 +123,16 @@ message ZkSetPubKey {
   uint64 accountId = 1;
   ZkPubKey  pubKey = 2;
   ZkSignature signature = 3;
+}
+
+message ZkFullExit {
+  uint64 tokenId = 1;
+  uint64 accountId = 2;
+  ZkSignature signature = 3;
+}
+
+message ZkSwap {
+  ZkSignature signature = 1;
 }
 
 //电路验证key
@@ -192,11 +204,13 @@ message ZkQueryReq {
   string chain33Addr = 5;
   string tokenSymbol = 6;
   string chain33WalletAddr = 7;
+  uint64 tokenId = 8;
 }
 
 message ZkQueryResp {
   repeated OperationInfo operationInfos = 1;
   repeated Leaf leaves = 2;
+  repeated TokenBalance tokenBalances = 3;
 }
 
 message ZkReceiptLog {

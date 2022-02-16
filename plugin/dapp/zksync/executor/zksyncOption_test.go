@@ -185,7 +185,7 @@ func TestZksyncOption(t *testing.T) {
 		AccountId: 1,
 		TokenId:   1,
 	}
-	msg = wallet.GetForceQuitMsg(forceQuit)
+	msg = wallet.GetForceExitMsg(forceQuit)
 	signInfo, err = wallet.SignTx(msg, privateKey)
 	assert.Equal(t, nil, err)
 	forceQuit.Signature = signInfo

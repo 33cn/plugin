@@ -73,12 +73,12 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyWithdrawAction:
 		signature = action.GetWithdraw().GetSignature()
 		msg = wallet.GetWithdrawMsg(action.GetWithdraw())
-	case zt.TyContractToLeafAction:
-		signature = action.GetContractToLeaf().GetSignature()
-		msg = wallet.GetContractToLeafMsg(action.GetContractToLeaf())
-	case zt.TyLeafToContractAction:
-		signature = action.GetLeafToContract().GetSignature()
-		msg = wallet.GetLeafToContractMsg(action.GetLeafToContract())
+	case zt.TyContractToTreeAction:
+		signature = action.GetContractToTree().GetSignature()
+		msg = wallet.GetContractToTreeMsg(action.GetContractToTree())
+	case zt.TyTreeToContractAction:
+		signature = action.GetTreeToContract().GetSignature()
+		msg = wallet.GetTreeToContractMsg(action.GetTreeToContract())
 	case zt.TyTransferAction:
 		signature = action.GetTransfer().GetSignature()
 		msg = wallet.GetTransferMsg(action.GetTransfer())
@@ -87,10 +87,16 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
 	case zt.TyForceExitAction:
 		signature = action.GetForceExit().GetSignature()
-		msg = wallet.GetForceQuitMsg(action.GetForceExit())
+		msg = wallet.GetForceExitMsg(action.GetForceExit())
 	case zt.TySetPubKeyAction:
 		signature = action.GetSetPubKey().GetSignature()
 		msg = wallet.GetSetPubKeyMsg(action.GetSetPubKey())
+	case zt.TyFullExitAction:
+		signature = action.GetFullExit().GetSignature()
+		msg = wallet.GetFullExitMsg(action.GetFullExit())
+	case zt.TySetVerifierAction:
+		//非电路交易不用check
+		return nil
 	default:
 		return types.ErrNotSupport
 	}

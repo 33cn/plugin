@@ -72,7 +72,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
@@ -361,7 +361,7 @@ func checkAmount(token *zt.TokenBalance, amount string) error {
 	return errors.New("balance not enough")
 }
 
-func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, error) {
+func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -382,7 +382,7 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
-		TxType:      zt.TyContractToLeafAction,
+		TxType:      zt.TyContractToTreeAction,
 		TokenID:     payload.TokenId,
 		Amount:      payload.Amount,
 		SigData:     payload.Signature,
@@ -495,13 +495,13 @@ func (a *Action) ContractToLeaf(payload *zt.ZkContractToLeaf) (*types.Receipt, e
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
 	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToLeafLog, Log: types.Encode(zksynclog)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(zksynclog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
 
-func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, error) {
+func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -538,7 +538,7 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
-		TxType:      zt.TyLeafToContractAction,
+		TxType:      zt.TyTreeToContractAction,
 		TokenID:     payload.TokenId,
 		Amount:      payload.Amount,
 		SigData:     payload.Signature,
@@ -588,7 +588,7 @@ func (a *Action) LeafToContract(payload *zt.ZkLeafToContract) (*types.Receipt, e
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
 	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyLeafToContractLog, Log: types.Encode(zklog)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyTreeToContractLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
@@ -1073,6 +1073,96 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
+}
+
+
+func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
+
+	//只有管理员能操作
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
+	}
+
+	info, err := generateTreeUpdateInfo(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+	}
+	leaf, err := GetLeafByAccountId(a.statedb, payload.AccountId, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	if leaf == nil {
+		return nil, errors.New("account not exist")
+	}
+
+	token, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.AccountId, payload.TokenId, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+	}
+
+	//token不存在时，不需要取
+	if token == nil {
+		return nil, errors.New("token not find")
+	}
+
+	operationInfo := &zt.OperationInfo{
+		BlockHeight: uint64(a.height),
+		TxIndex:     uint32(a.index),
+		TxType:      zt.TyForceExitAction,
+		TokenID:     payload.TokenId,
+		Amount:      token.Balance,
+		SigData:     payload.Signature,
+		AccountID:   payload.AccountId,
+	}
+
+	//更新之前先计算证明
+	receipt, err := calProof(a.statedb, info, payload.GetAccountId(), payload.GetTokenId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+
+	//更新fromLeaf
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), token.Balance, zt.Sub)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, info, payload.GetAccountId(), payload.GetTokenId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "hex.DecodeString")
+	}
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(zklog)}
+	logs = append(logs, receiptLog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+
 }
 
 //验证身份

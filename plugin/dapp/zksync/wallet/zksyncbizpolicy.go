@@ -144,18 +144,18 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		withDraw.Signature = signInfo
-	case zt.TyContractToLeafAction:
-		contractToLeaf := action.GetContractToLeaf()
-		msg = GetContractToLeafMsg(contractToLeaf)
+	case zt.TyContractToTreeAction:
+		contractToLeaf := action.GetContractToTree()
+		msg = GetContractToTreeMsg(contractToLeaf)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
 			return
 		}
 		contractToLeaf.Signature = signInfo
-	case zt.TyLeafToContractAction:
-		leafToContract := action.GetLeafToContract()
-		msg = GetLeafToContractMsg(leafToContract)
+	case zt.TyTreeToContractAction:
+		leafToContract := action.GetTreeToContract()
+		msg = GetTreeToContractMsg(leafToContract)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
@@ -182,7 +182,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		transferToNew.Signature = signInfo
 	case zt.TyForceExitAction:
 		forceQuit := action.GetForceExit()
-		msg = GetForceQuitMsg(forceQuit)
+		msg = GetForceExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
 			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
@@ -204,6 +204,17 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		setPubKey.Signature = signInfo
+	case zt.TyFullExitAction:
+		forceQuit := action.GetFullExit()
+		msg = GetFullExitMsg(forceQuit)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		forceQuit.Signature = signInfo
+	case zt.TySetVerifierAction:
+		//非电路操作，不用mimc签名
 	default:
 		err = types.ErrNotSupport
 	}

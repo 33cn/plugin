@@ -15,14 +15,14 @@ func (z *zksync) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	return action.Withdraw(payload)
 }
 
-func (z *zksync) Exec_ContractToLeaf(payload *zt.ZkContractToLeaf, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (z *zksync) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.ContractToLeaf(payload)
+	return action.ContractToTree(payload)
 }
 
-func (z *zksync) Exec_LeafToContract(payload *zt.ZkLeafToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (z *zksync) Exec_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.LeafToContract(payload)
+	return action.TreeToContract(payload)
 }
 
 func (z *zksync) Exec_Transfer(payload *zt.ZkTransfer, tx *types.Transaction, index int) (*types.Receipt, error) {
@@ -43,6 +43,16 @@ func (z *zksync) Exec_ForceExit(payload *zt.ZkForceExit, tx *types.Transaction, 
 func (z *zksync) Exec_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.SetPubKey(payload)
+}
+
+func (z *zksync) Exec_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.FullExit(payload)
+}
+
+func (z *zksync) Exec_Swap(payload *zt.ZkSwap, tx *types.Transaction, index int) (*types.Receipt, error) {
+	//todo swap stub
+	return nil, nil
 }
 
 func (z *zksync) Exec_SetVerifyKey(payload *zt.ZkVerifyKey, tx *types.Transaction, index int) (*types.Receipt, error) {

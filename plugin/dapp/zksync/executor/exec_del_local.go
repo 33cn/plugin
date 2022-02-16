@@ -13,11 +13,11 @@ func (z *zksync) ExecDelLocal_Withdraw(payload *zt.ZkWithdraw, tx *types.Transac
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_ContractToLeaf(payload *zt.ZkContractToLeaf, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecDelLocal_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_LeafToContract(payload *zt.ZkLeafToContract, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zksync) ExecDelLocal_TreeToContract(payload *zt.ZkTreeToContract, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
@@ -34,5 +34,9 @@ func (z *zksync) ExecDelLocal_ForceExit(payload *zt.ZkForceExit, tx *types.Trans
 }
 
 func (z *zksync) ExecDelLocal_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+
+func (z *zksync) ExecDelLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }

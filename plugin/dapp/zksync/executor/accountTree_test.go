@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/util"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -67,7 +66,7 @@ func getChain33Addr(privateKeyString string) string {
 	}
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
 
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(privateKey.PublicKey.Bytes())
 	return hex.EncodeToString(hash.Sum(nil))
 }
