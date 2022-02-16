@@ -9,7 +9,7 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
-	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/pkg/errors"
 )
 
@@ -54,9 +54,9 @@ func (a *action) withdrawVerify(exec, symbol string, proof *mixTy.ZkProofInfo) (
 		return nil, errors.Wrapf(err, "setCircuitPubInput")
 	}
 
-	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
-	nullifierHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
-	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+	treeRootHash := input.TreeRootHash.GetWitnessValue(ecc.BN254)
+	nullifierHash := input.NullifierHash.GetWitnessValue(ecc.BN254)
+	authSpendHash := input.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
 
 	err = spendVerify(a.db, exec, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
@@ -87,9 +87,9 @@ func (a *action) Withdraw(withdraw *mixTy.MixWithdrawAction) (*types.Receipt, er
 		if err != nil {
 			return nil, err
 		}
-		v := frontend.FromInterface(frontend.GetAssignedValue(input.Amount))
+		v := input.Amount.GetWitnessValue(ecc.BN254)
 		sumValue += v.Uint64()
-		nullHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
+		nullHash := input.NullifierHash.GetWitnessValue(ecc.BN254)
 		nulliferSet = append(nulliferSet, nullHash.String())
 	}
 

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -109,7 +109,7 @@ func (p *mixPolicy) createWithdrawTx(req *mixTy.CreateRawTxReq) (*types.Transact
 			return nil, errors.Wrapf(err, "verifyProof fail for note=%s", note)
 		}
 
-		v := frontend.FromInterface(frontend.GetAssignedValue(input.Amount))
+		v := input.Amount.GetWitnessValue(ecc.BN254)
 		sum += v.Uint64()
 		proofs = append(proofs, proofInfo)
 	}
