@@ -7,7 +7,7 @@ package wallet
 import (
 	"path/filepath"
 
-	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"strconv"
 	"strings"
@@ -243,7 +243,7 @@ func (p *mixPolicy) createTransferTx(req *mixTy.CreateRawTxReq) (*types.Transact
 	var inputAmounts []uint64
 	var sumInput uint64
 	for _, i := range inputParts {
-		amount := frontend.FromInterface(frontend.GetAssignedValue(i.Amount))
+		amount := i.Amount.GetWitnessValue(ecc.BN254)
 		inputAmounts = append(inputAmounts, amount.Uint64())
 		sumInput += amount.Uint64()
 	}

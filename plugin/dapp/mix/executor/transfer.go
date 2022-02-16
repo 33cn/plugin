@@ -5,9 +5,8 @@
 package executor
 
 import (
-	"github.com/consensys/gnark/frontend"
-
 	"github.com/33cn/chain33/common/address"
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/33cn/chain33/types"
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
@@ -29,9 +28,9 @@ func transferInput(cfg *types.Chain33Config, db dbm.KV, execer, symbol string, p
 		return nil, errors.Wrapf(err, "decode string=%s", proof.PublicInput)
 	}
 
-	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
-	nullifierHash := frontend.FromInterface(frontend.GetAssignedValue(input.NullifierHash))
-	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+	treeRootHash := input.TreeRootHash.GetWitnessValue(ecc.BN254)
+	nullifierHash := input.NullifierHash.GetWitnessValue(ecc.BN254)
+	authSpendHash := input.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
 	err = spendVerify(db, execer, symbol, treeRootHash.String(), nullifierHash.String(), authSpendHash.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "transferInput verify spendVerify")
@@ -41,8 +40,8 @@ func transferInput(cfg *types.Chain33Config, db dbm.KV, execer, symbol string, p
 	conf := types.ConfSub(cfg, mixTy.MixX)
 	pointHX := conf.GStr("pointHX")
 	pointHY := conf.GStr("pointHY")
-	inputHX := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHX))
-	inputHY := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHY))
+	inputHX := input.ShieldPointHX.GetWitnessValue(ecc.BN254)
+	inputHY := input.ShieldPointHY.GetWitnessValue(ecc.BN254)
 	if pointHX != inputHX.String() || pointHY != inputHY.String() {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "input circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
 	}
@@ -72,8 +71,8 @@ func transferOutputVerify(cfg *types.Chain33Config, db dbm.KV, proof *mixTy.ZkPr
 	conf := types.ConfSub(cfg, mixTy.MixX)
 	pointHX := conf.GStr("pointHX")
 	pointHY := conf.GStr("pointHY")
-	inputHX := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHX))
-	inputHY := frontend.FromInterface(frontend.GetAssignedValue(input.ShieldPointHY))
+	inputHX := input.ShieldPointHX.GetWitnessValue(ecc.BN254)
+	inputHY := input.ShieldPointHY.GetWitnessValue(ecc.BN254)
 	if pointHX != inputHX.String() || pointHY != inputHY.String() {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "output circuit H point=%s-%s not match config", inputHX.String(), inputHY.String())
 	}
@@ -91,15 +90,15 @@ func VerifyCommitValues(inputs []*mixTy.TransferInputCircuit, outputs []*mixTy.T
 	var inputPoints, outputPoints []*twistededwards.PointAffine
 	for _, in := range inputs {
 		var p twistededwards.PointAffine
-		p.X.SetInterface(frontend.GetAssignedValue(in.ShieldAmountX))
-		p.Y.SetInterface(frontend.GetAssignedValue(in.ShieldAmountY))
+		p.X.SetInterface(in.ShieldAmountX.GetWitnessValue(ecc.BN254))
+		p.Y.SetInterface(in.ShieldAmountY.GetWitnessValue(ecc.BN254))
 		inputPoints = append(inputPoints, &p)
 	}
 
 	for _, out := range outputs {
 		var p twistededwards.PointAffine
-		p.X.SetInterface(frontend.GetAssignedValue(out.ShieldAmountX))
-		p.Y.SetInterface(frontend.GetAssignedValue(out.ShieldAmountY))
+		p.X.SetInterface(out.ShieldAmountX.GetWitnessValue(ecc.BN254))
+		p.Y.SetInterface(out.ShieldAmountY.GetWitnessValue(ecc.BN254))
 		outputPoints = append(outputPoints, &p)
 	}
 	//out value add fee
@@ -211,7 +210,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	mergeReceipt(receipt, rTxFee)
 
 	for _, k := range inputs {
-		nullHash := frontend.FromInterface(frontend.GetAssignedValue(k.NullifierHash))
+		nullHash := k.NullifierHash.GetWitnessValue(ecc.BN254)
 		r := makeNullifierSetReceipt(nullHash.String(), &mixTy.ExistValue{Nullifier: nullHash.String(), Exist: true})
 		mergeReceipt(receipt, r)
 	}
@@ -219,7 +218,7 @@ func (a *action) Transfer(transfer *mixTy.MixTransferAction) (*types.Receipt, er
 	//push new commit to merkle tree
 	var leaves [][]byte
 	for _, h := range outputs {
-		noteHash := frontend.FromInterface(frontend.GetAssignedValue(h.NoteHash))
+		noteHash := h.NoteHash.GetWitnessValue(ecc.BN254)
 		leaves = append(leaves, mixTy.Str2Byte(noteHash.String()))
 	}
 

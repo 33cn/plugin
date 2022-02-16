@@ -535,7 +535,7 @@ func (chain33Relayer *Relayer4Chain33) updateSingleTxStatus(claimType events.Cla
 	for _, data := range datas {
 		var statics ebTypes.Ethereum2Chain33Statics
 		_ = chain33Types.Decode(data, &statics)
-		result := getTxStatusByHashesRpc(statics.Chain33Txhash, chain33Relayer.rpcLaddr)
+		result := GetTxStatusByHashesRpc(statics.Chain33Txhash, chain33Relayer.rpcLaddr)
 		//当前处理机制比较简单，如果发现该笔交易未执行，就不再产寻后续交易的回执
 		if ebTypes.Invalid_Chain33Tx_Status == result {
 			relayerLog.Debug("chain33Relayer::updateSingleTxStatus", "no receipt for tx index", statics.TxIndex)

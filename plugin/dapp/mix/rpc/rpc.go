@@ -145,6 +145,6 @@ func (c *Jrpc) CreateZkKeyFile(in *mixTy.CreateZkKeyFileReq, result *interface{}
 	if err != nil {
 		return err
 	}
-	*result, err = types.PBToJSON(reply)
+	*result = reply
 	return err
 }
