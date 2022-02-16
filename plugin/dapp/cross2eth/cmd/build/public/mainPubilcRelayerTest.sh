@@ -572,6 +572,7 @@ function StartDockerRelayerDeploy() {
     Chain33Cli=${Para8901Cli}
 
     docker cp "./relayer.toml" "${dockerNamePrefix}_ebrelayera_1":/root/relayer.toml
+    restart_ebrelayerA
     InitRelayerA
 
     # 设置 token 地址
