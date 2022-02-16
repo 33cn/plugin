@@ -10,7 +10,6 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
@@ -402,7 +401,7 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	}
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
 
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(privateKey.PublicKey.Bytes())
 	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
 }

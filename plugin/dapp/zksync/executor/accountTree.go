@@ -8,7 +8,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
@@ -149,7 +148,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 }
 
 func getNewTree() *merkletree.Tree {
-	return merkletree.New(mimc.NewMiMC(mixTy.MimcHashSeed))
+	return merkletree.New(mimc.NewMiMC(zt.ZkMimcHashSeed))
 }
 
 func getAccountTree(db dbm.KV, info *TreeUpdateInfo) (*zt.AccountTree, error) {
@@ -511,7 +510,7 @@ func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64, info *Tree
 }
 
 func getTokenBalanceHash(token *zt.TokenBalance) []byte {
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(new(big.Int).SetUint64(token.GetTokenId()).Bytes())
 	hash.Write([]byte(token.Balance))
 	return hash.Sum(nil)

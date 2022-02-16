@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/types"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
@@ -302,7 +301,7 @@ func GetSetPubKeyMsg(payload *zt.ZkSetPubKey) *zt.ZkMsg {
 }
 
 func GetMsgHash(msg *zt.ZkMsg) []byte {
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(stringToByte(msg.GetFirst()))
 	hash.Write(stringToByte(msg.GetSecond()))
 	hash.Write(stringToByte(msg.GetThird()))

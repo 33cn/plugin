@@ -13,7 +13,6 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -1014,7 +1013,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	pubKey := &eddsa.PublicKey{}
 	pubKey.A.X.SetString(payload.PubKey.X)
 	pubKey.A.Y.SetString(payload.PubKey.Y)
-	hash := mimc.NewMiMC(mixTy.MimcHashSeed)
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(pubKey.Bytes())
 	if hex.EncodeToString(hash.Sum(nil)) != leaf.Chain33Addr {
 		return nil, errors.New("not your account")

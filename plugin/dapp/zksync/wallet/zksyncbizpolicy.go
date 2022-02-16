@@ -12,7 +12,6 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
-	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -216,7 +215,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 }
 
 func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error) {
-	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(mixTy.MimcHashSeed))
+	signInfo, err := privateKey.Sign(GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
 	if err != nil {
 		bizlog.Error("SignTransaction", "privateKey.Sign error", err)
 		return nil, err
