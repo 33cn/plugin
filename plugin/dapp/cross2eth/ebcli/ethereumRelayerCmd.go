@@ -1066,3 +1066,33 @@ func CfgWithdraw(cmd *cobra.Command, _ []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CfgWithdraw", req, &res)
 	ctx.Run()
 }
+
+func GetCfgWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "getCfgWithdraw",
+		Short: "get cfg withdraw fee",
+		Run:   GetCfgWithdraw,
+	}
+	addGetCfgWithdrawFlags(cmd)
+	return cmd
+}
+
+func addGetCfgWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+func GetCfgWithdraw(cmd *cobra.Command, _ []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	req := &ebTypes.CfgWithdrawReq{
+		Symbol:    symbol,
+		ChainName: ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetCfgWithdraw", req, &res)
+	ctx.Run()
+}

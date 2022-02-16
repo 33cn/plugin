@@ -1239,7 +1239,7 @@ func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {
 	ethRelayer.setMultiSignAddress(address)
 }
 
-func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amountPerDay string) error {
+func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol, feeAmount, amountPerDay string) error {
 	fee, _ := big.NewInt(0).SetString(feeAmount, 10)
 	amountPerDayInt, _ := big.NewInt(0).SetString(amountPerDay, 10)
 	withdrawPara := &WithdrawFeeAndQuota{
@@ -1257,6 +1257,11 @@ func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol string, feeAmount, amount
 	}
 
 	return ethRelayer.setWithdrawFee(WithdrawPara)
+}
+
+func (ethRelayer *Relayer4Ethereum) GetCfgWithdraw(symbol string) *ebTypes.WithdrawPara {
+	WithdrawPara := ethRelayer.restoreWithdrawFee()
+	return WithdrawPara[symbol]
 }
 
 func (ethRelayer *Relayer4Ethereum) GetName() string {

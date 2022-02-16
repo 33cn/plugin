@@ -137,8 +137,6 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 }
 
 func (chain33Relayer *Relayer4Chain33) syncProc() {
-	_, _ = fmt.Fprintln(os.Stdout, "Pls unlock or import private key for Chain33 relayer")
-
 	_, _ = fmt.Fprintln(os.Stdout, "Chain33 relayer starts to run...")
 	if err := chain33Relayer.RestoreTokenAddress(); nil != err {
 		relayerLog.Info("Failed to RestoreTokenAddress")
@@ -163,6 +161,8 @@ func (chain33Relayer *Relayer4Chain33) syncProc() {
 	}
 
 	chain33Relayer.syncCfg.Contracts = append(chain33Relayer.syncCfg.Contracts, chain33Relayer.bridgeBankAddr)
+
+	_, _ = fmt.Fprintln(os.Stdout, "Pls unlock or import private key for Chain33 relayer")
 	<-chain33Relayer.unlockChan
 	chain33Relayer.lastHeight4Tx = chain33Relayer.loadLastSyncHeight()
 	chain33Relayer.mulSignAddr = chain33Relayer.getMultiSignAddress()

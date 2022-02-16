@@ -918,6 +918,20 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	}
 	return nil
 }
+func (manager *Manager) GetCfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[cfgWithdrawReq.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	*result = ethInt.GetCfgWithdraw(cfgWithdrawReq.Symbol)
+	return nil
+}
 
 func (manager *Manager) WithdrawFromChain33(burn *relayerTypes.BurnFromChain33, result *interface{}) error {
 	manager.mtx.Lock()
