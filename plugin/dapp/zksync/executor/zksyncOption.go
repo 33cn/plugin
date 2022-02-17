@@ -159,7 +159,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		} else {
 			balance = receipt.Token.Balance
 		}
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, balance)
+		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, balance)
 
 		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 		if err != nil {
@@ -169,7 +169,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
+		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
@@ -384,6 +384,10 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
+	tree, err := getAccountTree(a.statedb, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.getAccountTree")
+	}
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
@@ -404,13 +408,14 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		if leaf != nil {
 			return nil, errors.New("account already exist")
 		}
+		operationInfo.AccountID = tree.GetTotalIndex() + 1
 		//更新之前先计算证明
-		receipt, err := calProof(a.statedb, info, payload.AccountId, payload.TokenId)
+		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 
-		before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, "0")
+		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, "0")
 
 		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
 		if err != nil {
@@ -423,12 +428,12 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		}
 		kvs = append(kvs, accountKvs...)
 		//存款到叶子之后计算证明
-		receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
+		receipt, err = calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 
-		after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
+		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
 		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
