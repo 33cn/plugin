@@ -7,14 +7,15 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ethereum/go-ethereum"
-
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	eoff "github.com/33cn/plugin/plugin/dapp/dex/boss/deploy/ethereum/offline"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
@@ -303,4 +304,86 @@ func buildSigs(data []byte, privateKeys []string) ([]byte, error) {
 	}
 
 	return sigs, nil
+}
+
+// SendMultisignTransferTxCmd 创建多签转帐交易
+func SendMultisignTransferTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "send_multisign_tx",
+		Short: "send multisign transfer tx",
+		Run:   SendMultisignTransferTx,
+	}
+	addSendMultisignTransferTxFlags(cmd)
+	return cmd
+}
+
+func addSendMultisignTransferTxFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("file", "f", "sign_multisign_tx.txt", "tx file, default: sign_multisign_tx.txt")
+	cmd.Flags().StringP("key", "k", "", "private key ")
+	_ = cmd.MarkFlagRequired("key")
+}
+
+func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
+	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
+	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
+	txFilePath, _ := cmd.Flags().GetString("file")
+	privatekey, _ := cmd.Flags().GetString("key")
+	deployPrivateKey, err := crypto.ToECDSA(common.FromHex(privatekey))
+	if err != nil {
+		panic(err)
+	}
+
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		fmt.Println("Dial Err:", err)
+		return
+	}
+
+	var txinfo safeTxData
+	err = paraseFile(txFilePath, &txinfo)
+	if err != nil {
+		fmt.Println("paraseFile Err:", err)
+		return
+	}
+
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		fmt.Println("SuggestGasPrice Err:", err)
+		return
+	}
+
+	gnoAbi, err := abi.JSON(strings.NewReader(gnosis.GnosisSafeABI))
+	if err != nil {
+		fmt.Println("JSON Err:", err)
+		return
+	}
+	zeroAddr := common.HexToAddress(ebTypes.EthNilAddr)
+	safeTxGas := big.NewInt(10 * 10000)
+
+	gnoData, err := gnoAbi.Pack("execTransaction", txinfo.To, txinfo.Value, txinfo.TransferData, uint8(0),
+		safeTxGas, big.NewInt(0), gasPrice, zeroAddr, zeroAddr, txinfo.Content)
+	if err != nil {
+		fmt.Println("Pack execTransaction Err:", err)
+		return
+	}
+
+	info := CreateTxInfo(gnoData, txinfo.SendAddr, txinfo.CrontractAddr, "create_multisign_tx", url, chainEthId)
+	if info == nil {
+		return
+	}
+
+	deployTxInfo := DeployInfo{}
+	var tx types.Transaction
+	err = tx.UnmarshalBinary(common.FromHex(info.RawTx))
+	if err != nil {
+		panic(err)
+	}
+	signedTx, txHash, err := eoff.SignEIP155Tx(deployPrivateKey, &tx, chainEthId)
+	if err != nil {
+		panic(err)
+	}
+	deployTxInfo.RawTx = signedTx
+	deployTxInfo.TxHash = txHash
+
+	// send
 }
