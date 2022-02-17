@@ -580,7 +580,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 		}
 		//如果还没有产生第一个叶子，RootHash需要特殊设置
 		if tree.TotalIndex == 0 {
-			proof.RootHash = "1"
+			proof.RootHash = "0"
 		}
 		return proof, nil
 	}

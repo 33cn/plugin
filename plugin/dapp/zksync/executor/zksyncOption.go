@@ -211,11 +211,15 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 		Sibling:     treePath,
 	}
 
-	//token不存在不用生成TokenWitness
+	//token不存在生成默认TokenWitness
 	if receipt.GetTokenProof() == nil {
-		accountW.TokenTreeRoot = ""
+		accountW.TokenTreeRoot = "0"
 		return &zt.OperationMetaBranch{
 			AccountWitness: accountW,
+			TokenWitness: &zt.TokenWitness{
+				ID: info.TokenID,
+				Balance: "0",
+			},
 		}
 	}
 	accountW.TokenTreeRoot = receipt.GetTokenProof().RootHash
