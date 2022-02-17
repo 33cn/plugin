@@ -3,6 +3,7 @@ package chain33
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
@@ -69,6 +70,7 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 	chain33Relayer.privateKey4Chain33_ecdsa = temp.ToECDSA()
 	chain33Relayer.rwLock.Unlock()
 	chain33Relayer.syncEvmTxLogs, err = syncTx.StartSyncEvmTxLogs(chain33Relayer.syncCfg, chain33Relayer.db)
+	_, _ = fmt.Fprintln(os.Stdout, "ImportPrivateKey chain33Relayer.syncEvmTxLogs", chain33Relayer.syncEvmTxLogs)
 	if nil != err {
 		return err
 	}
