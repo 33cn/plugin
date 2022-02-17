@@ -33,8 +33,8 @@ func ZksyncCmd() *cobra.Command {
 	cmd.AddCommand(
 		depositCmd(),
 		withdrawCmd(),
-		contractToLeafCmd(),
-		leafToContractCmd(),
+		contractToTreeCmd(),
+		treeToContractCmd(),
 		transferCmd(),
 		transferToNewCmd(),
 		forceExitCmd(),
@@ -135,27 +135,27 @@ func withdraw(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-func leafToContractCmd() *cobra.Command {
+func treeToContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "leafToContract",
-		Short: "get leafToContract tx",
-		Run:   leafToContract,
+		Use:   "treeToContract",
+		Short: "get treeToContract tx",
+		Run:   treeToContract,
 	}
-	leafToContractFlag(cmd)
+	treeToContractFlag(cmd)
 	return cmd
 }
 
-func leafToContractFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "leafToContract tokenId")
+func treeToContractFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 1, "treeToContract tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().StringP("amount", "a", "0", "leafToContract amount")
+	cmd.Flags().StringP("amount", "a", "0", "treeToContract amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "leafToContract accountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "treeToContract accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
 
-func leafToContract(cmd *cobra.Command, args []string) {
+func treeToContract(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
@@ -168,38 +168,38 @@ func leafToContract(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
-		ActionName: "LeafToContract",
+		ActionName: "TreeToContract",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
 
-func contractToLeafCmd() *cobra.Command {
+func contractToTreeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contractToLeaf",
-		Short: "get contractToLeaf tx",
-		Run:   contractToLeaf,
+		Use:   "contractToTree",
+		Short: "get contractToTree tx",
+		Run:   contractToTree,
 	}
-	contractToLeafFlag(cmd)
+	contractToTreeFlag(cmd)
 	return cmd
 }
 
-func contractToLeafFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "contractToLeaf tokenId")
+func contractToTreeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 1, "contractToTree tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().StringP("amount", "a", "0", "contractToLeaf amount")
+	cmd.Flags().StringP("amount", "a", "0", "contractToTree amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "contractToLeaf accountId")
+	cmd.Flags().Uint64P("accountId", "", 0, "contractToTree accountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().StringP("ethAddress", "e", "", "deposit ethaddress")
+	cmd.Flags().StringP("ethAddress", "e", "", "contractToTree ethaddress")
 	cmd.MarkFlagRequired("ethAddress")
-	cmd.Flags().StringP("chain33Addr", "c", "", "deposit chain33Addr")
+	cmd.Flags().StringP("chain33Addr", "c", "", "contractToTree chain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
 
 }
 
-func contractToLeaf(cmd *cobra.Command, args []string) {
+func contractToTree(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
@@ -214,7 +214,7 @@ func contractToLeaf(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
-		ActionName: "ContractToLeaf",
+		ActionName: "ContractToTree",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
@@ -281,8 +281,8 @@ func transferToNewFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "", 0, "transferToNew fromAccountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().StringP("toEthAddress", "", "", "transferToNew toEthAddress")
-	cmd.MarkFlagRequired("toEthAddress")
+	cmd.Flags().StringP("ethAddress", "e", "", "transferToNew toEthAddress")
+	cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "transferToNew toChain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
 }
@@ -291,7 +291,7 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
-	toEthAddress, _ := cmd.Flags().GetString("toEthAddress")
+	toEthAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
