@@ -208,7 +208,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 		relayerLog.Info("onNewHeightProc", "currHeight", currentHeight, "lastHeight4Tx", chain33Relayer.lastHeight4Tx)
 
 		lastHeight4Tx := chain33Relayer.lastHeight4Tx
-		_, _ = fmt.Fprintln(os.Stdout, "onNewHeightProc chain33Relayer.syncEvmTxLogs", chain33Relayer.syncEvmTxLogs)
+		relayerLog.Debug("onNewHeightProc", " chain33Relayer.syncEvmTxLogs", chain33Relayer.syncEvmTxLogs)
 		txLogs, err := chain33Relayer.syncEvmTxLogs.GetNextValidEvmTxLogs(lastHeight4Tx)
 		if nil == txLogs || nil != err {
 			if err != nil {
