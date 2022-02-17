@@ -6,7 +6,7 @@ option go_package = "../types";
 
 message ZkSignature {
   ZkPubKey pubKey = 1;
-  bytes signInfo = 2;
+  string signInfo = 2;
   ZkMsg msg = 3;
 }
 

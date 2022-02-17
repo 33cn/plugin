@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+	"math/big"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -104,7 +105,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	pubKey := eddsa.PublicKey{}
 	pubKey.A.X.SetString(signature.PubKey.X)
 	pubKey.A.Y.SetString(signature.PubKey.Y)
-	success, err := pubKey.Verify(signature.GetSignInfo(), wallet.GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
+	signInfoInt, _ := new(big.Int).SetString(signature.GetSignInfo(), 10)
+	success, err := pubKey.Verify(signInfoInt.Bytes(), wallet.GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
 	if err != nil {
 		return err
 	}
