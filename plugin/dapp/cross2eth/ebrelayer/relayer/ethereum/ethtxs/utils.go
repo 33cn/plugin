@@ -27,7 +27,11 @@ type NonceMutex struct {
 	RWLock *sync.RWMutex
 }
 
-var addr2Nonce = make(map[common.Address]NonceMutex)
+var (
+	addr2Nonce            = make(map[common.Address]NonceMutex)
+	ErrGetSuggestGasPrice = errors.New("ErrGetSuggestGasPrice")
+	ErrNodeNetwork        = errors.New("ErrNodeNetwork")
+)
 
 //String ...
 func (ethTxStatus EthTxStatus) String() string {
@@ -171,6 +175,35 @@ func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ec
 	_, isSim := client.(*ethinterface.SimExtend)
 	if isSim {
 		chainID = big.NewInt(1337)
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		txslog.Error("PrepareAuth NewKeyedTransactorWithChainID", "err", err, "chainID", chainID)
+		return nil, err
+	}
+	auth.Value = big.NewInt(0) // in wei
+	auth.GasLimit = GasLimit4Deploy
+	auth.GasPrice = gasPrice
+
+	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce); err != nil {
+		return nil, err
+	}
+
+	return auth, nil
+}
+
+func PrepareAuth4MultiEthereumOpt(client ethinterface.EthClientSpec, privateKey *ecdsa.PrivateKey, transactor common.Address, addr2TxNonce map[common.Address]*NonceMutex, chainID *big.Int) (*bind.TransactOpts, error) {
+	if nil == privateKey || nil == client {
+		txslog.Error("PrepareAuth", "nil input parameter", "client", client, "privateKey", privateKey)
+		return nil, errors.New("nil input parameter")
+	}
+
+	ctx := context.Background()
+	gasPrice, err := client.SuggestGasPrice(ctx)
+	if err != nil {
+		txslog.Error("PrepareAuth", "Failed to SuggestGasPrice due to:", err.Error())
+		return nil, ErrGetSuggestGasPrice
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)

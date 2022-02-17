@@ -30,8 +30,8 @@ message Log {
 
 message EthRelayerCfg {
   string ethChainName            = 1;
-  string ethProvider             = 2;
-  string ethProviderCli          = 3;
+  repeated string ethProvider    = 2;
+  repeated string ethProviderCli = 3;
   string bridgeRegistry          = 4;
   int32 ethMaturityDegree        = 5;
   int32 ethBlockFetchPeriod      = 6;

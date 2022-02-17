@@ -44,8 +44,8 @@ import (
 //Relayer4Ethereum ...
 type Relayer4Ethereum struct {
 	name               string //链的名字，用于区分不同的链
-	provider           string
-	providerHttp       string
+	provider           []string
+	providerHttp       []string
 	clientChainID      *big.Int
 	bridgeRegistryAddr common.Address
 	db                 dbm.DB
@@ -94,8 +94,8 @@ const (
 
 type EthereumStartPara struct {
 	DbHandle           dbm.DB
-	EthProvider        string
-	EthProviderHttp    string
+	EthProvider        []string
+	EthProviderHttp    []string
 	BridgeRegistryAddr string
 	Degree             int32
 	BlockInterval      int32
@@ -117,8 +117,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	}
 	ethRelayer := &Relayer4Ethereum{
 		name:                    startPara.Name,
-		provider:                startPara.EthProvider,
-		providerHttp:            startPara.EthProviderHttp,
+		provider:                make([]string, len(startPara.EthProvider)),
+		providerHttp:            make([]string, len(startPara.EthProviderHttp)),
 		db:                      startPara.DbHandle,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      common.HexToAddress(startPara.BridgeRegistryAddr),
@@ -132,6 +132,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 	}
+	copy(ethRelayer.provider, startPara.EthProvider)
+	copy(ethRelayer.providerHttp, startPara.EthProviderHttp)
 
 	registrAddrInDB, err := ethRelayer.getBridgeRegistryAddr()
 	//如果输入的registry地址非空，且和数据库保存地址不一致，则直接使用输入注册地址
@@ -148,14 +150,15 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
 	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with provider:", ethRelayer.provider, "processWithDraw", ethRelayer.processWithDraw)
-	client, err := ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
+	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0],
+		"http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
+	client, err := ethtxs.SetupEthClient(ethRelayer.providerHttp)
 	if err != nil {
 		panic(err)
 	}
 	ethRelayer.clientSpec = client
 
-	ethRelayer.clientWss, err = ethtxs.SetupWebsocketEthClient(ethRelayer.provider)
+	ethRelayer.clientWss, err = ethtxs.SetupEthClient(ethRelayer.provider)
 	if err != nil {
 		panic(err)
 	}
@@ -271,7 +274,7 @@ func (ethRelayer *Relayer4Ethereum) Burn(ownerPrivateKey, tokenAddr, chain33Rece
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	return ethtxs.Burn(ownerPrivateKey, tokenAddr, chain33Receiver, ethRelayer.x2EthDeployInfo.BridgeBank.Address, bn,
-		ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp)
+		ethRelayer.x2EthContracts.BridgeBank, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp[0])
 }
 
 //BurnAsync ...
@@ -285,14 +288,14 @@ func (ethRelayer *Relayer4Ethereum) BurnAsync(ownerPrivateKey, tokenAddr, chain3
 func (ethRelayer *Relayer4Ethereum) TransferToken(tokenAddr, fromKey, toAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.TransferToken(tokenAddr, fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp)
+	return ethtxs.TransferToken(tokenAddr, fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp[0])
 }
 
 //TransferEth ...
 func (ethRelayer *Relayer4Ethereum) TransferEth(fromKey, toAddr, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.TransferEth(fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp)
+	return ethtxs.TransferEth(fromKey, toAddr, bn, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp[0])
 }
 
 //GetDecimals ...
@@ -310,7 +313,7 @@ func (ethRelayer *Relayer4Ethereum) GetDecimals(tokenAddr string) (uint8, error)
 func (ethRelayer *Relayer4Ethereum) LockEthErc20Asset(ownerPrivateKey, tokenAddr, amount string, chain33Receiver string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
-	return ethtxs.LockEthErc20Asset(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.x2EthDeployInfo.BridgeBank.Address, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp)
+	return ethtxs.LockEthErc20Asset(ownerPrivateKey, tokenAddr, chain33Receiver, bn, ethRelayer.clientSpec, ethRelayer.x2EthContracts.BridgeBank, ethRelayer.x2EthDeployInfo.BridgeBank.Address, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp[0])
 }
 
 //LockEthErc20AssetAsync ...
@@ -707,9 +710,34 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		}
 	}
 
+	burnOrLockParameter := &ethtxs.BurnOrLockParameter{
+		OracleInstance: ethRelayer.x2EthContracts.Oracle,
+		Client:         ethRelayer.clientSpec,
+		Sender:         ethRelayer.ethSender,
+		TokenOnEth:     tokenAddr,
+		Claim:          prophecyClaim,
+		PrivateKey:     ethRelayer.privateKey4Ethereum,
+		Addr2TxNonce:   ethRelayer.Addr2TxNonce,
+		ChainId:        ethRelayer.clientChainID,
+	}
+
 	// Relay the Chain33Msg to the Ethereum network
-	txhash, err := ethtxs.RelayOracleClaimToEthereum(ethRelayer.x2EthContracts.Oracle, ethRelayer.clientSpec, ethRelayer.ethSender, tokenAddr, prophecyClaim, ethRelayer.privateKey4Ethereum, ethRelayer.Addr2TxNonce)
-	if nil != err {
+	txhash, err := ethtxs.RelayOracleClaimToEthereum(burnOrLockParameter)
+	if nil != err && err == ethtxs.ErrNodeNetwork {
+		//如果是网络原因错误，则尝试重连
+		for {
+			ethRelayer.clientSpec, err = ethtxs.SetupEthClient(ethRelayer.providerHttp)
+			if err != nil {
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			break
+		}
+		txhash, err = ethtxs.RelayOracleClaimToEthereum(burnOrLockParameter)
+	}
+	if err != nil {
+		//此处收集更多的错误信息
+		relayerLog.Error("handleLogLockBurn", "RelayOracleClaimToEthereum failed due to", err.Error())
 		panic("RelayOracleClaimToEthereum failed due to" + err.Error())
 	}
 	relayerLog.Info("handleLogLockBurn", "RelayOracleClaimToEthereum with tx hash", txhash)
@@ -755,10 +783,9 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 		return head.Number.Uint64(), nil
 	}
 
-	//TODO: 需要在下面添加报警处理
 	for {
 		time.Sleep(5 * time.Second)
-		ethRelayer.clientSpec, err = ethtxs.SetupWebsocketEthClient(ethRelayer.providerHttp)
+		ethRelayer.clientSpec, err = ethtxs.SetupEthClient(ethRelayer.providerHttp)
 		if err != nil {
 			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
 			continue
@@ -1007,8 +1034,10 @@ func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
 	relayerLog.Info("filterLogEvents", "curHeight:", curHeight)
 
 	bridgeBankSig := make(map[string]bool)
+	ethRelayer.rwLock.RLock()
 	bridgeBankSig[ethRelayer.bridgeBankEventLockSig] = true
 	bridgeBankSig[ethRelayer.bridgeBankEventBurnSig] = true
+	ethRelayer.rwLock.RUnlock()
 	bridgeBankLog := make(chan types.Log)
 	done := make(chan int)
 
@@ -1084,16 +1113,20 @@ func (ethRelayer *Relayer4Ethereum) prePareSubscribeEvent() {
 	var eventName string
 	//bridgeBank处理
 	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
+	ethRelayer.rwLock.Lock()
 	ethRelayer.bridgeBankAbi = contactAbi
 	eventName = events.LogLockFromETH.String()
 	ethRelayer.bridgeBankEventLockSig = contactAbi.Events[eventName].ID.Hex()
 	eventName = events.LogBurnFromETH.String()
 	ethRelayer.bridgeBankEventBurnSig = contactAbi.Events[eventName].ID.Hex()
 	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
+	ethRelayer.rwLock.Unlock()
 }
 
 func (ethRelayer *Relayer4Ethereum) subscribeEvent() {
+	ethRelayer.rwLock.RLock()
 	targetAddress := ethRelayer.bridgeBankAddr
+	ethRelayer.rwLock.RUnlock()
 
 	// We need the target address in bytes[] for the query
 	//因为订阅事件的功能只会推送在订阅生效的高度之后的事件，所以FromBlock只需要填写１就可以了
@@ -1338,7 +1371,7 @@ func (ethRelayer *Relayer4Ethereum) SafeTransfer(para *ebTypes.SafeTransfer) (st
 		return "", ebTypes.ErrMulSignNotDeployed
 	}
 
-	return ethtxs.SafeTransfer(para.OperatorPrivateKey, ethRelayer.mulSignAddr, para.To, para.Token, para.OwnerPrivateKeys, para.Amount, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp)
+	return ethtxs.SafeTransfer(para.OperatorPrivateKey, ethRelayer.mulSignAddr, para.To, para.Token, para.OwnerPrivateKeys, para.Amount, ethRelayer.clientSpec, ethRelayer.Addr2TxNonce, ethRelayer.providerHttp[0])
 }
 
 func (ethRelayer *Relayer4Ethereum) SetMultiSignAddr(address string) {

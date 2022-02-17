@@ -447,6 +447,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer := &Relayer4Ethereum{
 		name:                    cfg.EthRelayerCfg[0].EthChainName,
 		provider:                cfg.EthRelayerCfg[0].EthProvider,
+		providerHttp:            cfg.EthRelayerCfg[0].EthProviderCli,
 		db:                      db,
 		unlockchan:              make(chan int, 2),
 		bridgeRegistryAddr:      x2EthDeployInfo.BridgeRegistry.Address,
