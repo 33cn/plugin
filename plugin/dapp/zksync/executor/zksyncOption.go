@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
@@ -1015,7 +1016,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	pubKey.A.Y.SetString(payload.PubKey.Y)
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(pubKey.Bytes())
-	if common.ToHex(hash.Sum(nil)) != leaf.Chain33Addr {
+	if hex.EncodeToString(hash.Sum(nil)) != leaf.Chain33Addr {
 		return nil, errors.New("not your account")
 	}
 

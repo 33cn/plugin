@@ -3,6 +3,7 @@ package commands
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
@@ -404,7 +405,7 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(privateKey.PublicKey.Bytes())
-	fmt.Println(common.ToHex(hash.Sum(nil)))
+	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
 }
 
 func getAccountTreeCmd() *cobra.Command {

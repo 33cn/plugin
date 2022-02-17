@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -221,7 +222,7 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 
 	tx.Payload = types.Encode(action)
 	tx.Sign(int32(policy.getWalletOperate().GetSignType()), key)
-	signtxhex = common.ToHex(types.Encode(tx))
+	signtxhex = hex.EncodeToString(types.Encode(tx))
 	return
 }
 
@@ -237,7 +238,7 @@ func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error)
 	}
 	sign := &zt.ZkSignature{
 		PubKey:   pubKey,
-		SignInfo: common.ToHex(signInfo),
+		SignInfo: hex.EncodeToString(signInfo),
 		Msg:      msg,
 	}
 	return sign, nil
