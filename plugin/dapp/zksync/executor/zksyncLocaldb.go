@@ -29,6 +29,10 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			return nil, err
 		}
 
+		if zklog.OperationInfo == nil || zklog.OperationInfo.AccountID == 0 {
+			continue
+		}
+
 		err = infoTable.Replace(zklog.OperationInfo)
 		if err != nil {
 			return nil, err

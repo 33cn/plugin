@@ -3,7 +3,6 @@ package wallet
 import (
 	"bytes"
 	"fmt"
-	"math/big"
 	"sync"
 
 	"github.com/33cn/chain33/common"
@@ -238,7 +237,7 @@ func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error)
 	}
 	sign := &zt.ZkSignature{
 		PubKey:   pubKey,
-		SignInfo: new(big.Int).SetBytes(signInfo).String(),
+		SignInfo: common.ToHex(signInfo),
 		Msg:      msg,
 	}
 	return sign, nil

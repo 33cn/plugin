@@ -1,8 +1,8 @@
 package executor
 
 import (
-	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/common"
 	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -113,7 +113,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 		root := &zt.RootInfo{
 			Height:     10,
 			StartIndex: tree.GetTotalIndex() - tree.GetIndex() + 1,
-			RootHash:   hex.EncodeToString(currentTree.Root()),
+			RootHash:   common.ToHex(currentTree.Root()),
 		}
 		tree.Index = 0
 		tree.SubTrees = make([]*zt.SubTree, 0)
@@ -470,7 +470,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		}
 
 		//生成新root
-		rootInfo.RootHash = hex.EncodeToString(currentTree.Root())
+		rootInfo.RootHash = common.ToHex(currentTree.Root())
 		kv = &types.KeyValue{
 			Key:   GetRootIndexPrimaryKey(rootInfo.StartIndex),
 			Value: types.Encode(rootInfo),
@@ -509,7 +509,7 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 		hash.Write([]byte(leaf.GetPubKey().X))
 		hash.Write([]byte(leaf.GetPubKey().Y))
 	}
-	token, err := hex.DecodeString(leaf.GetTokenHash())
+	token, err := common.FromHex(leaf.GetTokenHash())
 	if err != nil { //数据损坏
 		panic(err)
 	}
@@ -526,7 +526,7 @@ func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64, info *Tree
 		}
 		tree.Push(getTokenBalanceHash(token))
 	}
-	return hex.EncodeToString(tree.Root()), nil
+	return common.ToHex(tree.Root()), nil
 }
 
 func getTokenBalanceHash(token *zt.TokenBalance) []byte {
@@ -550,7 +550,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			return nil, errors.Wrapf(err, "db.GetAllRoots")
 		}
 		for _, root := range roots {
-			rootHash, err := hex.DecodeString(root.GetRootHash())
+			rootHash, err := common.FromHex(root.GetRootHash())
 			if err != nil { //数据损坏
 				panic(err)
 			}
@@ -569,11 +569,11 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 		proofSet := make([]string, len(subTrees)+1)
 		helpers := make([]string, len(subTrees)+1)
 		for i := len(subTrees); i > 0; i-- {
-			proofSet[i] = hex.EncodeToString(subTrees[i-1].GetSum())
+			proofSet[i] = common.ToHex(subTrees[i-1].GetSum())
 			helpers[i] = big.NewInt(1).String()
 		}
 		proof := &zt.MerkleTreeProof{
-			RootHash: hex.EncodeToString(currentTree.Root()),
+			RootHash: common.ToHex(currentTree.Root()),
 			ProofSet: proofSet,
 			Helpers:  helpers,
 		}
@@ -599,7 +599,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			return nil, errors.Wrapf(err, "db.GetLeavesByStartAndEndIndex")
 		}
 		for _, root := range roots {
-			rootHash, err := hex.DecodeString(root.GetRootHash())
+			rootHash, err := common.FromHex(root.GetRootHash())
 			if err != nil { //数据损坏
 				panic(err)
 			}
@@ -624,7 +624,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 					currentTree.Push(getLeafHash(v))
 				}
 			} else {
-				rootHash, err := hex.DecodeString(root.GetRootHash())
+				rootHash, err := common.FromHex(root.GetRootHash())
 				if err != nil { //数据损坏
 					panic(err)
 				}
@@ -649,10 +649,10 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 		helpers = append(helpers, big.NewInt(int64(v)).String())
 	}
 	for _, v := range proofSet {
-		proofStringSet = append(proofStringSet, hex.EncodeToString(v))
+		proofStringSet = append(proofStringSet, common.ToHex(v))
 	}
 
-	return &zt.MerkleTreeProof{RootHash: hex.EncodeToString(rootHash), ProofSet: proofStringSet, Helpers: helpers}, nil
+	return &zt.MerkleTreeProof{RootHash: common.ToHex(rootHash), ProofSet: proofStringSet, Helpers: helpers}, nil
 }
 
 func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *TreeUpdateInfo) (*zt.MerkleTreeProof, error) {
@@ -688,9 +688,9 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 			helpers = append(helpers, big.NewInt(int64(v)).String())
 		}
 		for _, v := range proofSet {
-			proofStringSet = append(proofStringSet, hex.EncodeToString(v))
+			proofStringSet = append(proofStringSet, common.ToHex(v))
 		}
-		return &zt.MerkleTreeProof{RootHash: hex.EncodeToString(rootHash), ProofSet: proofStringSet, Helpers: helpers}, nil
+		return &zt.MerkleTreeProof{RootHash: common.ToHex(rootHash), ProofSet: proofStringSet, Helpers: helpers}, nil
 	} else {
 		//如果不存在token，仅返回子树
 		tree := getNewTree()
@@ -701,11 +701,11 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 		proofSet := make([]string, len(subTrees)+1)
 		helpers := make([]string, len(subTrees)+1)
 		for i := len(subTrees); i > 0; i-- {
-			proofSet[i] = hex.EncodeToString(subTrees[i-1].GetSum())
+			proofSet[i] = common.ToHex(subTrees[i-1].GetSum())
 			helpers[i] = big.NewInt(1).String()
 		}
 		proof := &zt.MerkleTreeProof{
-			RootHash: hex.EncodeToString(tree.Root()),
+			RootHash: common.ToHex(tree.Root()),
 			ProofSet: proofSet,
 			Helpers:  helpers,
 		}
@@ -785,7 +785,7 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 		for _, leafVal := range leaves {
 			currentTree.Push(getLeafHash(leafVal))
 		}
-		rootInfo.RootHash = hex.EncodeToString(currentTree.Root())
+		rootInfo.RootHash = common.ToHex(currentTree.Root())
 		kv = &types.KeyValue{
 			Key:   GetRootIndexPrimaryKey(rootInfo.StartIndex),
 			Value: types.Encode(rootInfo),

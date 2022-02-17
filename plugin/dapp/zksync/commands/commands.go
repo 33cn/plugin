@@ -3,8 +3,8 @@ package commands
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"
 	"os"
 
@@ -395,7 +395,7 @@ func getChain33AddrFlag(cmd *cobra.Command) {
 
 func getChain33Addr(cmd *cobra.Command, args []string) {
 	privateKeyString, _ := cmd.Flags().GetString("private")
-	privateKeyBytes, err := hex.DecodeString(privateKeyString)
+	privateKeyBytes, err := common.FromHex(privateKeyString)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "hex.DecodeString"))
 		return
@@ -404,7 +404,7 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(privateKey.PublicKey.Bytes())
-	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+	fmt.Println(common.ToHex(hash.Sum(nil)))
 }
 
 func getAccountTreeCmd() *cobra.Command {

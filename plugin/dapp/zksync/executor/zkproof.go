@@ -2,7 +2,7 @@ package executor
 
 import (
 	"bytes"
-	"encoding/hex"
+	"github.com/33cn/chain33/common"
 	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -163,7 +163,7 @@ func (circuit *commitProofCircuit) Define(curveID ecc.ID, api frontend.API) erro
 
 func getByteBuff(input string) (*bytes.Buffer, error) {
 	var buffInput bytes.Buffer
-	res, err := hex.DecodeString(input)
+	res, err := common.FromHex(input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getByteBuff to %s", input)
 	}

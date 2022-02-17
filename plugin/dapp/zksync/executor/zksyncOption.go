@@ -1,7 +1,7 @@
 package executor
 
 import (
-	"encoding/hex"
+	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"strconv"
@@ -123,7 +123,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
-		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
 		}
@@ -169,7 +169,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance)
-		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
 		}
@@ -321,7 +321,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
 
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -424,7 +424,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
-		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
 		}
@@ -474,7 +474,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
-		rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+		rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 		if err != nil {
 			return nil, errors.Wrapf(err, "hex.DecodeString")
 		}
@@ -569,7 +569,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -722,7 +722,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -854,7 +854,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	}
 
 	after = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -936,7 +936,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -1015,7 +1015,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	pubKey.A.Y.SetString(payload.PubKey.Y)
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(pubKey.Bytes())
-	if hex.EncodeToString(hash.Sum(nil)) != leaf.Chain33Addr {
+	if common.ToHex(hash.Sum(nil)) != leaf.Chain33Addr {
 		return nil, errors.New("not your account")
 	}
 
@@ -1050,7 +1050,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
@@ -1139,7 +1139,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	}
 
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance)
-	rootHash, err := hex.DecodeString(receipt.TreeProof.RootHash)
+	rootHash, err := common.FromHex(receipt.TreeProof.RootHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "hex.DecodeString")
 	}
