@@ -46,6 +46,7 @@ func ZksyncCmd() *cobra.Command {
 		getAccountByEthCmd(),
 		getAccountByChain33Cmd(),
 		getContractAccountCmd(),
+		getTokenBalanceCmd(),
 	)
 	return cmd
 }
@@ -644,6 +645,46 @@ func getContractAccount(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp types.Account
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+
+
+func getTokenBalanceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "token",
+		Short: "get zksync tokenBalance by accountId and tokenId",
+		Run:   getTokenBalance,
+	}
+	getTokenBalanceFlag(cmd)
+	return cmd
+}
+
+func getTokenBalanceFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("accountId", "a", 0, "zksync account id")
+	cmd.MarkFlagRequired("accountId")
+	cmd.Flags().Uint64P("token", "t", 1, "zksync token id")
+	cmd.MarkFlagRequired("token")
+}
+
+func getTokenBalance(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	accountId, _ := cmd.Flags().GetUint64("accountId")
+	token, _ := cmd.Flags().GetUint64("token")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq {
+		TokenId: token,
+		AccountId: accountId,
+	}
+
+	params.FuncName = "GetTokenBalance"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkQueryResp
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
