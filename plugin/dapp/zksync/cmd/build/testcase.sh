@@ -134,8 +134,7 @@ function query_tx() {
 function zksync_test() {
     echo "=========== # zksync chain test ============="
     zksync_deposit
-
-
+    zksync_setPubKey
 }
 
 function zksync() {
