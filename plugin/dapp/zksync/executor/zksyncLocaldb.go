@@ -21,24 +21,26 @@ func (z *zksync) execAutoLocalZksync(tx *types.Transaction, receiptData *types.R
 func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
 
-	var zklog zt.ZkReceiptLog
-	err := types.Decode(receiptData.Logs[0].GetLog(), &zklog)
-	if err != nil {
-		return nil, err
-	}
+	dbSet := &types.LocalDBSet{}
+	for _, log := range receiptData.Logs {
+		var zklog zt.ZkReceiptLog
+		err := types.Decode(log.GetLog(), &zklog)
+		if err != nil {
+			return nil, err
+		}
 
-	err = infoTable.Add(zklog.OperationInfo)
-	if err != nil {
-		return nil, err
-	}
+		err = infoTable.Replace(zklog.OperationInfo)
+		if err != nil {
+			return nil, err
+		}
 
+		dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
+	}
 	kvs, err := infoTable.Save()
 	if err != nil {
 		return nil, err
 	}
-	dbSet := &types.LocalDBSet{}
 	dbSet.KV = append(dbSet.KV, kvs...)
-	dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
 	return dbSet, nil
 }
 
