@@ -110,18 +110,58 @@ func createConfigVerify(cmd *cobra.Command, args []string) {
 // CreateParamsCmd create raw asset transfer tx
 func CreateParamsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "create parameters",
+		Use:   "zk",
+		Short: "zk knowledge related parameters",
 	}
 	cmd.AddCommand(mixCreateZkKeyCmd())
+	cmd.AddCommand(mixReadZkKeyCmd())
 
 	return cmd
+}
+
+func mixReadZkKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "read",
+		Short: "read pk or vk file of circuit",
+		Run:   readZkKeys,
+	}
+	addReadKeyFlags(cmd)
+
+	return cmd
+}
+
+func addReadKeyFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("file", "f", "", "file to read")
+	cmd.MarkFlagRequired("file")
+
+}
+
+func readZkKeys(cmd *cobra.Command, args []string) {
+	//rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	file, _ := cmd.Flags().GetString("file")
+
+	readFile(file)
+
+}
+
+func readFile(file string) {
+	// open file
+	f, err := os.Open(file)
+	if err != nil {
+		fmt.Println("err", err)
+	}
+	defer f.Close()
+
+	//文件内容在写的时候已经编码，直接读取，不需要编码成字符串
+	var buff bytes.Buffer
+	buff.ReadFrom(f)
+	fmt.Println(buff.String())
 }
 
 func mixCreateZkKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keys",
-		Short: "create pk and vk for circuit",
+		Short: "create pk and vk for circuit, print vk data",
 		Run:   createZkKeys,
 	}
 	addCreateKeyFlags(cmd)
@@ -148,9 +188,8 @@ func createZkKeys(cmd *cobra.Command, args []string) {
 	params.SavePath = path
 
 	var req types.ReplyString
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateZkKeyFile", &params, &req)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.CreateZkKeyFile", params, &req)
 	ctx.Run()
-
 }
 
 func mixConfigAuthPubKeyParaCmd() *cobra.Command {
@@ -904,21 +943,6 @@ func decryptSecret(cmd *cobra.Command, args []string) {
 	var res mixTy.SecretData
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "mix.DecryptSecretData", req, &res)
 	ctx.Run()
-}
-
-func readFile(file string) string {
-	// open file
-	f, err := os.Open(file)
-	if err != nil {
-		fmt.Println("err", err)
-	}
-	defer f.Close()
-
-	var buff bytes.Buffer
-	buff.ReadFrom(f)
-	ret := hex.EncodeToString(buff.Bytes())
-	fmt.Println("file", ret)
-	return ret
 }
 
 // CreateDepositRawTxCmd get para chain status by height

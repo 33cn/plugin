@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
+# shellcheck disable=SC2219
 # shellcheck source=/dev/null
 set -x
 set +e
@@ -10,6 +11,7 @@ source "./mainPubilcRelayerTest.sh"
 
 # shellcheck disable=SC2034
 {
+    nonce=0
     chain33BridgeBank=""
     chain33BridgeRegistry=""
     chain33MultisignAddr=""
@@ -136,6 +138,7 @@ function DeployEvmxgo() {
         check_tx "${Chain33Cli}" "${hash}"
     done
     XgoBridgeRegistryOnChain33=$(echo "${result}" | jq -r ".[6].ContractAddr")
+    XgoChain33Oracle=$(echo "${result}" | jq -r ".[2].ContractAddr")
 
     # 拷贝 BridgeRegistry.abi 和 BridgeBank.abi
     cp XgoBridgeRegistryOnChain33.abi "${XgoBridgeRegistryOnChain33}.abi"
@@ -203,6 +206,16 @@ function TestETH2EVMToChain33() {
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
     is_equal "${result}" "500000000"
 
+    let nonce=nonce+1
+    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33MainBridgeTokenAddr}" -k "${chain33ValidatorKeya}")
+    check_tx "${Chain33Cli}" "${hash}"
+
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
+    is_equal "${result}" "200000000"
+
+    result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33TestAddr2})")
+    is_equal "${result}" "300000000"
+
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -241,6 +254,16 @@ function Testethereum2EVMToChain33_usdt() {
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
     is_equal "${result}" "500000000"
 
+    let nonce=nonce+1
+    hash=$(${EvmxgoBoss4xCLI} chain33 burn_xgo -m "300000000" -f "${chain33TestAddr2}" -r "${chain33TestAddr2}" -o "${XgoChain33Oracle}" -n "${nonce}" -s "$1" -t "${chain33USDTBridgeTokenAddr}" -k "${chain33ValidatorKeya}")
+    check_tx "${Chain33Cli}" "${hash}"
+
+    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${XgoChain33BridgeBank})")
+    is_equal "${result}" "200000000"
+
+    result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33TestAddr2})")
+    is_equal "${result}" "300000000"
+
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }
 
@@ -278,8 +301,8 @@ function test_xgo() {
     TestETH2Chain33Assets
     TestETH2Chain33USDT
 
-    TestETH2EVMToChain33
-    Testethereum2EVMToChain33_usdt
+    TestETH2EVMToChain33 "$1"
+    Testethereum2EVMToChain33_usdt "$2"
 }
 
 # shellcheck disable=SC2034
@@ -293,7 +316,7 @@ function test_evm_all() {
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
     chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
     set_config_ethereum
-    test_xgo
+    test_xgo "ETH" "USDT"
 
     Boss4xCLI=${Boss4xCLIbsc}
     CLIA=${CLIAbsc}
@@ -303,7 +326,7 @@ function test_evm_all() {
     ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
     chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
     set_config_bsc
-    test_xgo
+    test_xgo "BNB" "BUSDT"
 }
 
 function AllRelayerMainTest() {
@@ -335,5 +358,6 @@ function AllRelayerMainTest() {
     test_evm_all
 
     echo_addrs
+    echo -e "${GRE}XgoChain33Oracle: ${XgoChain33Oracle} ${NOC}"
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
 }

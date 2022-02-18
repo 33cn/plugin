@@ -2,6 +2,7 @@ package ethtxs
 
 import (
 	"crypto/ecdsa"
+	"math/big"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
@@ -26,15 +27,35 @@ const (
 	GasLimit4Deploy  = uint64(0) //此处需要设置为0,让交易自行估计,否则将会导致部署失败,TODO:其他解决途径后续调研解决
 )
 
+type BurnOrLockParameter struct {
+	OracleInstance *generated.Oracle
+	Client         ethinterface.EthClientSpec
+	Sender         common.Address
+	TokenOnEth     common.Address
+	Claim          ProphecyClaim
+	PrivateKey     *ecdsa.PrivateKey
+	Addr2TxNonce   map[common.Address]*NonceMutex
+	ChainId        *big.Int
+}
+
 // RelayOracleClaimToEthereum : relays the provided burn or lock to Chain33Bridge contract on the Ethereum network
-func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client ethinterface.EthClientSpec, sender, tokenOnEth common.Address, claim ProphecyClaim, privateKey *ecdsa.PrivateKey, addr2TxNonce map[common.Address]*NonceMutex) (txhash string, err error) {
+func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (txhash string, err error) {
+	oracleInstance := burnOrLockParameter.OracleInstance
+	client := burnOrLockParameter.Client
+	sender := burnOrLockParameter.Sender
+	tokenOnEth := burnOrLockParameter.TokenOnEth
+	claim := burnOrLockParameter.Claim
+	privateKey := burnOrLockParameter.PrivateKey
+	addr2TxNonce := burnOrLockParameter.Addr2TxNonce
+	chainId := burnOrLockParameter.ChainId
+
 	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "chain33Sender", hexutil.Encode(claim.Chain33Sender), "ethereumReceiver", claim.EthereumReceiver.String(),
 		"TokenAddress", claim.TokenContractAddress.String(), "symbol", claim.Symbol, "Amount", claim.Amount.String(), "claimType", claim.ClaimType, "tokenOnEth", tokenOnEth.String())
 
-	auth, err := PrepareAuth4MultiEthereum(client, privateKey, sender, addr2TxNonce)
+	auth, err := PrepareAuth4MultiEthereumOpt(client, privateKey, sender, addr2TxNonce, chainId)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "PrepareAuth err", err.Error())
-		return "", err
+		return "", ErrNodeNetwork
 	}
 	defer func() {
 		if nil != err {
@@ -57,7 +78,7 @@ func RelayOracleClaimToEthereum(oracleInstance *generated.Oracle, client ethinte
 	tx, err := oracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 	if nil != err {
 		txslog.Error("RelayProphecyClaimToEthereum", "NewOracleClaim failed due to:", err.Error())
-		return "", err
+		return "", ErrNodeNetwork
 	}
 
 	txhash = tx.Hash().Hex()

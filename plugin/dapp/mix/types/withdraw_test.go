@@ -3,19 +3,19 @@ package types
 import (
 	"testing"
 
+	"github.com/consensys/gnark/test"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/backend/groth16"
-	"github.com/consensys/gnark/frontend"
 )
 
 func TestWithdraw(t *testing.T) {
-	assert := groth16.NewAssert(t)
+	circuitAssert := test.NewAssert(t)
 	var withdrawCircuit WithdrawCircuit
 
 	// compiles our circuit into a R1CS
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &withdrawCircuit)
-	assert.NoError(err)
+	//r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &withdrawCircuit)
+	//assert.NoError(err)
 	{
 		withdrawCircuit.TreeRootHash.Assign("457812157273975068180144939194931372467682914013265626991402231230450012330")
 		withdrawCircuit.AuthorizeSpendHash.Assign("14463129595522277797353018005538222902035087589748809554960616199173731919802")
@@ -64,7 +64,10 @@ func TestWithdraw(t *testing.T) {
 		withdrawCircuit.Valid8.Assign("0")
 		withdrawCircuit.Valid9.Assign("0")
 
-		assert.ProverSucceeded(r1cs, &withdrawCircuit)
+		var circuit WithdrawCircuit
+		circuitAssert.ProverSucceeded(&circuit, &withdrawCircuit,
+			test.WithCurves(ecc.BN254), test.WithCompileOpts(), test.WithBackends(backend.GROTH16))
+
 	}
 
 }

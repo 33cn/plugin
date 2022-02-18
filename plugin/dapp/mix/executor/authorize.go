@@ -5,18 +5,16 @@
 package executor
 
 import (
-	"github.com/consensys/gnark/frontend"
-
 	"github.com/33cn/chain33/types"
-
 	mixTy "github.com/33cn/plugin/plugin/dapp/mix/types"
+	"github.com/consensys/gnark-crypto/ecc"
 
 	"github.com/pkg/errors"
 )
 
 func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizeCircuit) error {
 	//check tree rootHash exist
-	treeRootHash := frontend.FromInterface(frontend.GetAssignedValue(input.TreeRootHash))
+	treeRootHash := input.TreeRootHash.GetWitnessValue(ecc.BN254)
 	exist, err := checkTreeRootHashExist(a.db, exec, symbol, mixTy.Str2Byte(treeRootHash.String()))
 	if err != nil {
 		return errors.Wrapf(err, "roothash=%s not found,exec=%s,symbol=%s", treeRootHash.String(), exec, symbol)
@@ -26,7 +24,7 @@ func (a *action) authParamCheck(exec, symbol string, input *mixTy.AuthorizeCircu
 	}
 
 	//authorize key should not exist
-	authHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeHash))
+	authHash := input.AuthorizeHash.GetWitnessValue(ecc.BN254)
 	authKey := calcAuthorizeHashKey(authHash.String())
 	_, err = a.db.Get(authKey)
 	if err == nil {
@@ -77,10 +75,10 @@ func (a *action) Authorize(authorize *mixTy.MixAuthorizeAction) (*types.Receipt,
 	}
 
 	receipt := &types.Receipt{Ty: types.ExecOk}
-	authNullHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeHash))
+	authNullHash := input.AuthorizeHash.GetWitnessValue(ecc.BN254)
 	r := makeReceipt(calcAuthorizeHashKey(authNullHash.String()), mixTy.TyLogAuthorizeSet, &mixTy.ExistValue{Nullifier: authNullHash.String(), Exist: true})
 	mergeReceipt(receipt, r)
-	authSpendHash := frontend.FromInterface(frontend.GetAssignedValue(input.AuthorizeSpendHash))
+	authSpendHash := input.AuthorizeSpendHash.GetWitnessValue(ecc.BN254)
 	r = makeReceipt(calcAuthorizeSpendHashKey(authSpendHash.String()), mixTy.TyLogAuthorizeSpendSet, &mixTy.ExistValue{Nullifier: authSpendHash.String(), Exist: true})
 	mergeReceipt(receipt, r)
 
