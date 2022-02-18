@@ -106,6 +106,7 @@ done
 |pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="x2ethProxy"/g' relayer.toml`|
 |ProcessWithDraw|改为 true|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801, 选任意一个 chain33 平行链地址就可以|
+|pushHost|relayer 的 host 地址, 默认: http://localhost:20000, chain33Host 和本地IP 不同时要换成本地 IP|
 |RemindUrl|代理打币地址不够时, 提醒打币发送短信的URL|
 
 #### 首次启动 relayer 进行设置
