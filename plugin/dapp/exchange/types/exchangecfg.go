@@ -269,8 +269,8 @@ coins = [
 ]
 #现货交易配置
 #symbol 币种对；priceDigits 价格最小位数；amountDigits 数量最小位数； minFee  最小手续费
-#taker  吃单手续费率,配置时需*1e8(如：收取每笔交易百分之一的手续费，maker=1000000)
-#maker  挂单手续费,配置时需*1e8(如：收取每笔交易千分之一的手续费，taker=100000)
+#taker  吃单手续费率,配置时需*1e8(如：收取每笔交易百分之一的手续费，maker=1000000)未配置交易对默认为100000
+#maker  挂单手续费,配置时需*1e8(如：收取每笔交易千分之一的手续费，taker=100000)未配置交易对默认为100000
 exchanges = [
     {symbol = "BTY_CCNY", priceDigits = 4, amountDigits = 1, taker = 1000000, maker = 100000,  minFee = 0},
 
@@ -282,10 +282,6 @@ exchanges = [
 
 [fork.sub.exchange]
 Enable=0
-ForkFix1=0
-ForkFix2=0
-ForkFix3=0
-ForkFix4=0
 
 `
 

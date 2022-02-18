@@ -95,10 +95,7 @@ var (
 	//tlog = log.New("module", "exchange.types")
 
 	//ForkFix Forks
-	ForkFix1 = "ForkFix1"
-	ForkFix2 = "ForkFix2"
-	ForkFix3 = "ForkFix3"
-	ForkFix4 = "ForkFix4"
+	//ForkFix1 = "ForkFix1"
 )
 
 // init defines a register function
@@ -112,10 +109,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix2, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix3, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix4, 0)
+	//cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
 }
 
 // InitExecutor defines register executor
@@ -217,14 +211,14 @@ func (t *Trade) GetAmountDigits() int32 {
 
 func (t *Trade) GetTaker() int32 {
 	if t == nil {
-		return 0
+		return 100000
 	}
 	return t.Taker
 }
 
 func (t *Trade) GetMaker() int32 {
 	if t == nil {
-		return 0
+		return 100000
 	}
 	return t.Maker
 }
