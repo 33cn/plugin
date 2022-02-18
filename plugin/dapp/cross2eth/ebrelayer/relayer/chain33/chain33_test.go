@@ -156,8 +156,7 @@ func newChain33Relayer(x2EthDeployInfo *ethtxs.X2EthDeployInfo, pushBind string)
 		StartSyncSequence: startPara.SyncTxConfig.StartSyncSequence,
 		StartSyncHash:     startPara.SyncTxConfig.StartSyncHash,
 	}
-	relayer.syncCfg = syncCfg
-	go relayer.syncProc()
+	go relayer.syncProc(syncCfg)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM)

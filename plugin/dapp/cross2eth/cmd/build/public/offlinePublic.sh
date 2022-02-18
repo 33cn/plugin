@@ -386,9 +386,7 @@ function offline_transfer_multisign_Eth_test() {
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 3 -r "${ethereumBridgeBank}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}"
     # shellcheck disable=SC2154
     ${Boss4xCLI} ethereum offline sign_multisign_tx -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
-    ${Boss4xCLI} ethereum offline create_multisign_tx
-    # shellcheck disable=SC2154
-    ethereum_offline_sign_send create_multisign_tx.txt "${ethTestAddrKey1}"
+    ${Boss4xCLI} ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
     sleep 10
 
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
@@ -400,9 +398,7 @@ function offline_transfer_multisign_Eth_test() {
     # shellcheck disable=SC2154
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 5 -r "${ethMultisignA}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}"
     ${Boss4xCLI} ethereum offline sign_multisign_tx -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
-    ${Boss4xCLI} ethereum offline create_multisign_tx
-    ethereum_offline_sign_send create_multisign_tx.txt "${ethTestAddrKey1}"
-    sleep 10
+    ${Boss4xCLI} ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
 
     result=$(${CLIA} ethereum balance -o "${ethMultisignA}")
     cli_ret "${result}" "balance" ".balance" "1005"
@@ -417,9 +413,7 @@ function offline_transfer_multisign_EthUSDT() {
     # transfer
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 8 -r "${ethereumBridgeBank}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}" -t "${ethereumUSDTERC20TokenAddr}"
     ${Boss4xCLI} ethereum offline sign_multisign_tx -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
-    ${Boss4xCLI} ethereum offline create_multisign_tx
-    ethereum_offline_sign_send create_multisign_tx.txt "${ethTestAddrKey1}"
-    sleep 10
+    ${Boss4xCLI} ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
 
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "80"
@@ -429,9 +423,7 @@ function offline_transfer_multisign_EthUSDT() {
     # transfer
     ${Boss4xCLI} ethereum offline multisign_transfer_prepare -a 10 -r "${ethMultisignA}" -c "${ethereumMultisignAddr}" -d "${ethTestAddr1}" -t "${ethereumUSDTERC20TokenAddr}"
     ${Boss4xCLI} ethereum offline sign_multisign_tx -k "${ethMultisignKeyA},${ethMultisignKeyB},${ethMultisignKeyC},${ethMultisignKeyD}"
-    ${Boss4xCLI} ethereum offline create_multisign_tx
-    ethereum_offline_sign_send create_multisign_tx.txt "${ethTestAddrKey1}"
-    sleep 10
+    ${Boss4xCLI} ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
 
     result=$(${CLIA} ethereum balance -o "${ethMultisignA}" -t "${ethereumUSDTERC20TokenAddr}")
     cli_ret "${result}" "balance" ".balance" "10"

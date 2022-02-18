@@ -41,6 +41,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateBridgeTokenTxCmd(),
 		PrepareCreateMultisignTransferTxCmd(),   // 预备创建一个多签转帐交易 在线
 		PreliminarySignMultisignTransferTxCmd(), // 多签转帐交易 多签多个地址签名 离线
+		SendMultisignTransferTxCmd(),            // 创建并发送多签转帐交易
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
 		SendTxsCmd(),

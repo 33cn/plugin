@@ -49,6 +49,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		MultiSignEthCmd(),
 		TransferEthCmd(),
 		CfgWithdrawCmd(),
+		GetCfgWithdrawCmd(),
 	)
 
 	return cmd

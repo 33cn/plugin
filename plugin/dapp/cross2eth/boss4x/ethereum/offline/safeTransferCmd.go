@@ -2,9 +2,11 @@ package offline
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"strings"
 
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
@@ -372,6 +374,7 @@ func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
+	// sign
 	deployTxInfo := DeployInfo{}
 	var tx types.Transaction
 	err = tx.UnmarshalBinary(common.FromHex(info.RawTx))
@@ -386,4 +389,23 @@ func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	deployTxInfo.TxHash = txHash
 
 	// send
+	txSend := new(types.Transaction)
+	err = txSend.UnmarshalBinary(common.FromHex(deployTxInfo.RawTx))
+	if err != nil {
+		panic(err)
+	}
+	err = client.SendTransaction(context.Background(), txSend)
+	if err != nil {
+		fmt.Println("err:", err)
+		panic(err)
+	}
+	ret := &DeployContractRet{ContractAddr: deployTxInfo.ContractorAddr.String(), TxHash: txSend.Hash().String(), ContractName: deployTxInfo.Name}
+	checkTxStatus(client, tx.Hash().String(), deployTxInfo.Name)
+
+	data, err := json.MarshalIndent(ret, "", "\t")
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		return
+	}
+	fmt.Println(string(data))
 }
