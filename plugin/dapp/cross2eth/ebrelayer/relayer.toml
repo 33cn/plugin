@@ -9,16 +9,16 @@ RemindUrl="http://183.129.226.77:9988/alert/send"
 #以太坊链1的配置
 [[EthRelayerCfg]]
 EthChainName="Ethereum"
-ethProvider="ws://172.18.0.2:8545/"
-EthProviderCli="http://172.18.0.2:8545"
+ethProvider=["ws://172.18.0.2:8545/", "ws://172.18.0.2:8545/"]
+EthProviderCli=["http://172.18.0.2:8545", "http://172.18.0.2:8545"]
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
 #以太坊链2的配置
 [[EthRelayerCfg]]
 EthChainName="Binance"
-ethProvider="ws://172.18.0.2:8545/"
-EthProviderCli="http://172.18.0.2:8545"
+ethProvider=["ws://172.18.0.2:8545/", "ws://172.18.0.2:8545/"]
+EthProviderCli=["http://172.18.0.2:8545", "http://172.18.0.2:8545"]
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000

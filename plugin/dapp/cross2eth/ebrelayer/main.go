@@ -93,6 +93,7 @@ func main() {
 			Name:               cfg.EthRelayerCfg[i].EthChainName,
 			RemindUrl:          cfg.RemindUrl,
 		}
+		mainlog.Info("ethStartPara", " ethStartPara.EthProvider =", ethStartPara.EthProvider, "ethStartPara.EthProviderHttp", ethStartPara.EthProviderHttp)
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
 		ethRelayerServices[ethStartPara.Name] = ethRelayerService
 	}

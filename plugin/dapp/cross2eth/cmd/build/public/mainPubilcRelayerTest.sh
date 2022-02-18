@@ -533,10 +533,10 @@ function up_relayer_toml() {
     sed -i 's/^pushName=.*/pushName="x2ethA"/g' "${relaye_file}"
 
     # 替换7到15行
-    sed -i '7,15s/ethProvider=.*/ethProvider="ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"/g' "${relaye_file}"
-    sed -i '17,24s/ethProvider=.*/ethProvider="ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"/g' "${relaye_file}"
-    sed -i '7,15s/EthProviderCli=.*/EthProviderCli="http:\/\/'"${docker_ganachetesteth_ip}"':8545\/"/g' "${relaye_file}"
-    sed -i '17,24s/EthProviderCli=.*/EthProviderCli="http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"/g' "${relaye_file}"
+    sed -i '7,15s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/","ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '17,24s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/","ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '7,15s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetesteth_ip}"':8545\/", "http:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '17,24s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/", "http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
     sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^pushBind=.*/pushBind="'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^chain33Host=.*/chain33Host="http:\/\/'"${docker_chain33_ip}"':8901"/' "${relaye_file}"
