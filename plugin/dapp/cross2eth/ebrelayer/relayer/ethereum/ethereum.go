@@ -875,18 +875,22 @@ func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error)
 
 			receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), logv.TxHash)
 			if nil != err {
-				relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", logv.TxHash.String())
+				relayerLog.Error("ReGetEvent", "Failed to get tx receipt with hash", logv.TxHash.String())
 				return "", err
 			}
 
 			//检查当前的交易是否成功执行
 			if receipt.Status != types.ReceiptStatusSuccessful {
-				relayerLog.Error("procBridgeBankLogs", "tx not successful with status", receipt.Status)
+				relayerLog.Error("ReGetEvent", "tx not successful with status", receipt.Status)
 				return "", errors.New("Tx not successful")
 			}
 
 			eventName := events.LogLockFromETH.String()
 			err = ethRelayer.handleLogLockEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, logv)
+			if nil != err {
+				relayerLog.Error("ReGetEvent", "Failed to handleLogLockEvent for tx", logv.TxHash.String())
+				return "", err
+			}
 			info += fmt.Sprintf("Ethereum tx with hash = %s is relayed\n", logv.TxHash.String())
 
 		}
