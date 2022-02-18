@@ -400,7 +400,7 @@ func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		panic(err)
 	}
 	ret := &DeployContractRet{ContractAddr: deployTxInfo.ContractorAddr.String(), TxHash: txSend.Hash().String(), ContractName: deployTxInfo.Name}
-	checkTxStatus(client, tx.Hash().String(), deployTxInfo.Name)
+	checkTxStatus(client, txSend.Hash().String(), deployTxInfo.Name)
 
 	data, err := json.MarshalIndent(ret, "", "\t")
 	if err != nil {
