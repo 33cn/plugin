@@ -897,6 +897,23 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr *relayerTypes.CfgMulti
 	return nil
 }
 
+func (manager *Manager) GetEthMultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+	ethInt.GetMultiSignAddr()
+	*result = rpctypes.Reply{
+		IsOk: true,
+	}
+	return nil
+}
+
 func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()

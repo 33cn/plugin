@@ -757,6 +757,7 @@ func MultiSignEthCmd() *cobra.Command {
 		ConfigLockedTokenOfflineSaveCmd(),
 		GetSelfBalanceCmd(),
 		SetEthMultiSignAddrCmd(),
+		GetEthMultiSignAddrCmd(),
 	)
 	return cmd
 }
@@ -1024,6 +1025,23 @@ func SetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.SetEthMultiSignAddr", para, &res)
+	ctx.Run()
+}
+
+func GetEthMultiSignAddrCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_multiSign",
+		Short: "get multiSign address",
+		Run:   GetEthMultiSignAddr,
+	}
+	return cmd
+}
+
+func GetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetEthMultiSignAddr", ethChainName, &res)
 	ctx.Run()
 }
 
