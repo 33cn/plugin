@@ -214,10 +214,6 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		forceQuit.Signature = signInfo
-	case zt.TySetVerifierAction:
-		//非电路操作，不用mimc签名
-	default:
-		err = types.ErrNotSupport
 	}
 
 	tx.Payload = types.Encode(action)
