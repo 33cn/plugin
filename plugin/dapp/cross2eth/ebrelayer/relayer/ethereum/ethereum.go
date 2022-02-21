@@ -1444,6 +1444,7 @@ func (ethRelayer *Relayer4Ethereum) CfgWithdraw(symbol, feeAmount, amountPerDay 
 
 func (ethRelayer *Relayer4Ethereum) GetCfgWithdraw(symbol string) *ebTypes.WithdrawPara {
 	WithdrawPara := ethRelayer.restoreWithdrawFee()
+	fmt.Println("***", symbol, WithdrawPara[symbol])
 	return WithdrawPara[symbol]
 }
 

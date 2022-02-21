@@ -993,9 +993,24 @@ func (manager *Manager) GetEthMultiSignAddr(chainName string, result *interface{
 	if !ok {
 		return errors.New("no Ethereum chain named as you configured")
 	}
-	ethInt.GetMultiSignAddr()
+
 	*result = rpctypes.Reply{
 		IsOk: true,
+		Msg:  ethInt.GetMultiSignAddr(),
+	}
+	return nil
+}
+
+func (manager *Manager) GetChain33MultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  manager.chain33Relayer.GetMultiSignAddr(),
 	}
 	return nil
 }

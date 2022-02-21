@@ -579,6 +579,10 @@ func (chain33Relayer *Relayer4Chain33) SetMultiSignAddr(address string) {
 	chain33Relayer.setMultiSignAddress(address)
 }
 
+func (chain33Relayer *Relayer4Chain33) GetMultiSignAddr() string {
+	return chain33Relayer.getMultiSignAddress()
+}
+
 func (chain33Relayer *Relayer4Chain33) WithdrawFromChain33(ownerPrivateKey, tokenAddr, ethereumReceiver, amount string) (string, error) {
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
