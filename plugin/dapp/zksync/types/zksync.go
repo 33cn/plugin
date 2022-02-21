@@ -50,21 +50,21 @@ const (
 
 // log类型id值
 const (
-	TyNoopLog           = 0
-	TyDepositLog        = 1  //存款
-	TyWithdrawLog       = 2  //取款
-	TyContractToTreeLog = 3  //合约账户转入叶子
-	TyTreeToContractLog = 4  //叶子账户转入合约
-	TyTransferLog       = 5  //转账
-	TyTransferToNewLog  = 6  //向新地址转账
-	TyForceExitLog      = 7  //强制退出
-	TySetPubKeyLog      = 8  //设置公钥
-	TyFullExitLog       = 9  //从L1完全退出
-	TySwapLog           = 10 //交换
+	TyNoopLog           = 100
+	TyDepositLog        = 101 //存款
+	TyWithdrawLog       = 102 //取款
+	TyContractToTreeLog = 103 //合约账户转入叶子
+	TyTreeToContractLog = 104 //叶子账户转入合约
+	TyTransferLog       = 105 //转账
+	TyTransferToNewLog  = 106 //向新地址转账
+	TyForceExitLog      = 107 //强制退出
+	TySetPubKeyLog      = 108 //设置公钥
+	TyFullExitLog       = 109 //从L1完全退出
+	TySwapLog           = 110 //交换
 
-	TySetVerifyKeyLog = 102 //设置电路验证key
-	TyCommitProofLog  = 103 //提交zk proof
-	TySetVerifierLog  = 104 //设置验证者
+	TySetVerifyKeyLog = 202 //设置电路验证key
+	TyCommitProofLog  = 203 //提交zk proof
+	TySetVerifierLog  = 204 //设置验证者
 )
 
 const (
@@ -84,12 +84,13 @@ const ZkVerifierKey = "verifier"
 
 //msg宽度
 const (
-	TxTypeBitWidth  = 8   //1byte
-	AccountBitWidth = 32  //4byte
-	TokenBitWidth   = 16  //2byte
-	AmountBitWidth  = 128 //16byte
-	AddrBitWidth    = 160 //20byte
-	PubKeyBitWidth  = 256 //32byte
+	TxTypeBitWidth      = 8   //1byte
+	AccountBitWidth     = 32  //4byte
+	TokenBitWidth       = 16  //2byte
+	AmountBitWidth      = 128 //16byte
+	AddrBitWidth        = 160 //20byte
+	Chain33AddrBitWidth = 256 //20byte
+	PubKeyBitWidth      = 256 //32byte
 )
 
 const (

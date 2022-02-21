@@ -14,6 +14,8 @@ import (
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
 	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
 	var payload []byte
+	chain33AddrInt, _ := new(big.Int).SetString(chain33Addr, 16)
+	chain33Addr = chain33AddrInt.String()
 	switch actionTy {
 	case zt.TyDepositAction:
 		deposit := &zt.ZkDeposit{
@@ -141,8 +143,8 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr[:40], 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.AddrBitWidth)...)
+	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -256,8 +258,8 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address[:40], 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.AddrBitWidth)...)
+	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
 
 	copy(binaryData, pubData)
 
