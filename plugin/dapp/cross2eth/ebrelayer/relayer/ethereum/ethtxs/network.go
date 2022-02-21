@@ -5,33 +5,48 @@ package ethtxs
 // ------------------------------------------------------------
 
 import (
+	"errors"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	log "github.com/golang/glog"
 )
 
-// IsWebsocketURL : returns true if the given URL is a websocket URL
-func isWebsocketURL(rawurl string) bool {
-	u, err := url.Parse(rawurl)
-	if err != nil {
-		log.Infof("Error while parsing URL: %v", err)
-		return false
+// SelectAndRoundEthURL: 获取配置列表中的第一个配置项，同时将其调整配置配置项
+func SelectAndRoundEthURL(ethURL []string) (string, error) {
+	if 0 == len(ethURL) {
+		return "", errors.New("NullEthURlCofigured")
 	}
-	return u.Scheme == "ws" || u.Scheme == "wss"
+
+	result := ethURL[0]
+
+	if len(ethURL) > 0 {
+		ethURL = append(ethURL[1:], result)
+	}
+	return result, nil
 }
 
-// SetupWebsocketEthClient : returns boolean indicating if a URL is valid websocket ethclient
-func SetupWebsocketEthClient(ethURL string) (*ethclient.Client, error) {
+func SetupEthClient(ethURL []string) (*ethclient.Client, error) {
+	for i := 0; i < len(ethURL); i++ {
+		urlSelected, err := SelectAndRoundEthURL(ethURL)
+		if nil != err {
+			txslog.Error("SetupEthClient", "SelectAndRoundEthURL err", err.Error())
+			return nil, err
+		}
+		client, err := Dial2MakeEthClient(urlSelected)
+		if nil != err {
+			continue
+		}
+		return client, nil
+	}
+	return nil, errors.New("FailedToSetupEthClient")
+}
+
+// Dial2MakeEthClient : returns boolean indicating if a URL is valid websocket ethclient
+func Dial2MakeEthClient(ethURL string) (*ethclient.Client, error) {
 	if strings.TrimSpace(ethURL) == "" {
 		return nil, nil
 	}
-
-	//if !isWebsocketURL(ethURL) {
-	//	return nil, fmt.Errorf("invalid websocket eth client URL: %v", ethURL)
-	//}
 
 	client, err := ethclient.Dial(ethURL)
 	if err != nil {

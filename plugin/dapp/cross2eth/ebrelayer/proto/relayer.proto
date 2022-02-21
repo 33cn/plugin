@@ -255,6 +255,18 @@ message ResendChain33EventReq  {
     int64 height = 1;
 }
 
+message ResendEthereumEventReq  {
+    int64 height      = 1;
+    int32 txIndex     = 2;
+    string chainName  = 3;
+}
+
+message RegetEthereumEventReq  {
+    int64 start      = 1;
+    int64 stop      = 2;
+    string chainName  = 3;
+}
+
 message CfgWithdrawReq  {
     string symbol       = 1;
     string feeAmount    = 2;
@@ -318,6 +330,12 @@ message Symbol2EthChain  {
     map<string, string> symbol2name = 1;
 }
 
-
-
-
+message CreateLockEventReq  {
+    string from      = 1;
+    string to        = 2;
+    string token     = 3;
+    string symbol    = 4;
+    string value     = 5;
+    string nonce     = 6;
+    string chainName = 7;
+}
