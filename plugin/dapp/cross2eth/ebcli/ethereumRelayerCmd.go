@@ -1114,7 +1114,7 @@ func GetCfgWithdraw(cmd *cobra.Command, _ []string) {
 		ChainName: ethChainName,
 	}
 
-	var res rpctypes.Reply
+	var res ebTypes.WithdrawPara
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetCfgWithdraw", req, &res)
 	ctx.Run()
 }
