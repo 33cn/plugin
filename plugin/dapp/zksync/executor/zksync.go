@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+
 	"github.com/33cn/chain33/common"
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -94,11 +95,8 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
-	case zt.TySetVerifierAction:
-		//非电路交易不用check
-		return nil
 	default:
-		return types.ErrNotSupport
+		return nil
 	}
 
 	pubKey := eddsa.PublicKey{}

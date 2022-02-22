@@ -3,7 +3,6 @@ package executor
 import (
 	"bytes"
 	"github.com/33cn/chain33/common"
-	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -38,7 +37,7 @@ func makeSetVerifyKeyReceipt(old, new *zt.ZkVerifyKey) *types.Receipt {
 }
 
 func makeCommitProofReceipt(old, new *zt.CommitProofState) *types.Receipt {
-	key := getVerifyKey()
+	key := getLastCommitProofKey()
 	heightKey := getHeightCommitProofKey(new.BlockStart)
 	log := &zt.ReceiptCommitProof{
 		Prev:    old,
@@ -127,7 +126,6 @@ func (a *Action) setVerifyKey(payload *zt.ZkVerifyKey) (*types.Receipt, error) {
 	return makeSetVerifyKeyReceipt(oldKey, newKey), nil
 }
 
-
 func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	key := getLastCommitProofKey()
 	v, err := db.Get(key)
@@ -143,16 +141,9 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	return &data, nil
 }
 
-//manager 设置validator
-func isValidator(cfg *types.Chain33Config, addr string) bool {
-	return true //TODO
-
-}
-
 type commitProofCircuit struct {
-	NewTreeRoot frontend.Variable `gnark:",public"`
 	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, deposit, partialExit... pubData[...]
-	OnChainPubDataCommitment frontend.Variable `gnark:",public"`
+	PriorityPubDataCommitment frontend.Variable `gnark:",public"`
 	//SeqNum, blockStart,blockEnd, oldTreeRoot, newRootHash, full pubData[...]
 	PubDataCommitment frontend.Variable `gnark:",public"`
 }
@@ -178,11 +169,9 @@ func getByteBuff(input string) (*bytes.Buffer, error) {
 //
 func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	if !isValidator(cfg, a.fromaddr) {
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
 	}
-
-	//按高度索引 proof的 oldTreeRoot和newTreeRoot需要和链上的一致  //TODO
 
 	lastProof, err := getLastCommitProofData(a.statedb)
 	if err != nil && !isNotFound(errors.Cause(err)) {
@@ -191,8 +180,18 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 
 	//高度需要连续
 	if lastProof != nil && lastProof.BlockEnd+1 != payload.BlockStart {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof block end=%d, new proof=%d",
+		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof block end=%d, new proof start=%d",
 			lastProof.BlockEnd, payload.BlockStart)
+	}
+
+	lastTreeRoot := "0"
+	if lastProof != nil {
+		lastTreeRoot = lastProof.NewTreeRoot
+	}
+	//tree root 需要衔接
+	if lastTreeRoot != payload.OldTreeRoot {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof treeRoot=%s, commit oldTreeRoot=%s",
+			lastTreeRoot, payload.OldTreeRoot)
 	}
 
 	//get verify key
@@ -231,17 +230,11 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 		return errors.Wrapf(err, "read public input")
 	}
 
-	//newTreeRoot， public 和 提交信息一致
-	commitNewTreeRoot := proofCircuit.NewTreeRoot.GetWitnessValue(ecc.BN254)
-	if proof.NewTreeRoot != commitNewTreeRoot.String() {
-		return errors.Wrapf(types.ErrInvalidParam, "PI.newTreeRoot PI=%s", commitNewTreeRoot.String())
-	}
-
 	//计算pubData hash 需要和commit的一致
 	commitPubDataHash := proofCircuit.PubDataCommitment.GetWitnessValue(ecc.BN254)
 	calcPubDataHash := calcPubDataCommitHash(proof.BlockStart, proof.BlockEnd, proof.OldTreeRoot, proof.NewTreeRoot, proof.PubDatas)
 	if commitPubDataHash.String() != calcPubDataHash {
-		return errors.Wrapf(types.ErrInvalidParam, "PI.pubData PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
+		return errors.Wrapf(types.ErrInvalidParam, "pubData hash not match, PI=%s,calc=%s", commitPubDataHash.String(), calcPubDataHash)
 	}
 
 	//验证证明
@@ -259,29 +252,28 @@ func verifyProof(verifyKey string, proof *zt.ZkCommitProof) error {
 func calcPubDataCommitHash(blockStart, blockEnd uint64, oldRoot, newRoot string, pubDatas []string) string {
 	mimcHash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 
-	var v big.Int
-	v.SetUint64(blockStart)
-	mimcHash.Write(v.Bytes())
+	mimcHash.Reset()
 
-	v.SetUint64(blockEnd)
-	mimcHash.Write(v.Bytes())
+	var f fr.Element
+	t := f.SetUint64(blockStart).Bytes()
+	mimcHash.Write(t[:])
 
-	v.SetString(oldRoot, 10)
-	mimcHash.Write(v.Bytes())
+	t = f.SetUint64(blockEnd).Bytes()
+	mimcHash.Write(t[:])
 
-	v.SetString(newRoot, 10)
-	mimcHash.Write(v.Bytes())
+	t = f.SetString(oldRoot).Bytes()
+	mimcHash.Write(t[:])
+
+	t = f.SetString(newRoot).Bytes()
+	mimcHash.Write(t[:])
 
 	for _, r := range pubDatas {
-		v.SetString(r, 10)
-		mimcHash.Write(v.Bytes())
+		t = f.SetString(r).Bytes()
+		mimcHash.Write(t[:])
 	}
 	ret := mimcHash.Sum(nil)
 
-	var f fr.Element
-	f.SetBytes(ret)
-	return f.String()
-
+	return f.SetBytes(ret).String()
 }
 
 //合约管理员或管理员设置在链上的管理员才可设置
