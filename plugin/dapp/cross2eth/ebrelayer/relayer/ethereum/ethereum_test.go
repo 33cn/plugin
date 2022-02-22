@@ -70,13 +70,8 @@ func init() {
 		panic(err)
 	}
 	ethRelayer = newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	ethRelayer.rwLock.Lock()
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	ethRelayer.rwLock.Unlock()
-	if err != nil {
-		panic(err)
-	}
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	time.Sleep(time.Duration(5000) * time.Millisecond)
 	simCommit()
 }
 
@@ -488,6 +483,13 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.rwLock.Unlock()
 
 	relayer.totalTxRelayFromChain33 = relayer.getTotalTxAmount2Eth()
+
+	relayer.rwLock.Lock()
+	_, err := relayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
+	relayer.rwLock.Unlock()
+	if err != nil {
+		panic(err)
+	}
 	go relayer.proc()
 	return relayer
 }
