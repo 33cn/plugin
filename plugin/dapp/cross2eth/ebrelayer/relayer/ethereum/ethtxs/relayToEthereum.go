@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"math/big"
 
+	chain33Common "github.com/33cn/chain33/common"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
@@ -73,7 +75,7 @@ func RelayOracleClaimToEthereum(burnOrLockParameter *BurnOrLockParameter) (txhas
 		return "", err
 	}
 
-	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "nonce", auth.Nonce, "claim.chain33TxHash", common.Bytes2Hex(claim.chain33TxHash))
+	txslog.Info("RelayProphecyClaimToEthereum", "sender", sender.String(), "nonce", auth.Nonce, "claim.chain33TxHash", chain33Common.ToHex(claim.chain33TxHash))
 
 	tx, err := oracleInstance.NewOracleClaim(auth, uint8(claim.ClaimType), claim.Chain33Sender, claim.EthereumReceiver, tokenOnEth, claim.Symbol, claim.Amount, claimID, signature)
 	if nil != err {
