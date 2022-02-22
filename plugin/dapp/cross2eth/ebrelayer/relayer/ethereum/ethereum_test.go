@@ -70,7 +70,9 @@ func init() {
 		panic(err)
 	}
 	ethRelayer = newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
+	ethRelayer.rwLock.Lock()
 	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
+	ethRelayer.rwLock.Unlock()
 	if err != nil {
 		panic(err)
 	}
@@ -154,6 +156,9 @@ func test_IsValidatorActive(t *testing.T) {
 
 func test_ShowAddr(t *testing.T) {
 	ethRelayer.prePareSubscribeEvent()
+	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
+	ethRelayer.bridgeBankAbi = contactAbi
+	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
 
 	addr, err := ethRelayer.ShowBridgeBankAddr()
 	require.Nil(t, err)
