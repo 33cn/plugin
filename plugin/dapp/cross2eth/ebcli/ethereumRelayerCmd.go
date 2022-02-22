@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/33cn/chain33/common"
@@ -53,6 +55,7 @@ func EthereumRelayerCmd() *cobra.Command {
 		ResendEthLockEventCmd(),
 		RegetEthLockEventCmd(),
 		CreateLockEventCmd(),
+		QueryCmd(),
 	)
 
 	return cmd
@@ -1235,4 +1238,68 @@ func createLockEvent(cmd *cobra.Command, args []string) {
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateLockEventManually", createLockEventReq, &res)
 	ctx.Run()
+}
+
+func QueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query call",
+		Run:   queryCall,
+	}
+
+	cmd.Flags().StringP("address", "a", "", "contract address")
+	cmd.MarkFlagRequired("address")
+	cmd.Flags().StringP("input", "b", "", "call params (abi format) like foobar(param1,param2)")
+	cmd.MarkFlagRequired("input")
+	cmd.Flags().StringP("caller", "c", "", "the owner address")
+	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
+
+	return cmd
+}
+
+func queryCall(cmd *cobra.Command, args []string) {
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("address")
+	input, _ := cmd.Flags().GetString("input")
+	caller, _ := cmd.Flags().GetString("caller")
+	path, _ := cmd.Flags().GetString("path")
+
+	if caller == "" {
+		caller = addr
+	}
+
+	abiFileName := path + addr + ".abi"
+	abiStr, err := readFile(abiFileName)
+	if nil != err {
+		_, _ = fmt.Fprintln(os.Stderr, "Can't read abi info, Pls set correct abi path and provide abi file as", abiFileName)
+		return
+	}
+
+	queryReq := &ebTypes.QueryReq{
+		Param:        input,
+		AbiData:      abiStr,
+		ContractAddr: addr,
+		Owner:        caller,
+		ChainName:    ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
+	ctx.Run()
+}
+
+func readFile(fileName string) (string, error) {
+	f, err := os.Open(fileName)
+	defer f.Close()
+	if err != nil {
+		return "", err
+	}
+
+	fileContent, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	return string(fileContent), nil
 }

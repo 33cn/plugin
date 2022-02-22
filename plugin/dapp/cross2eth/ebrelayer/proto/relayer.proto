@@ -339,3 +339,11 @@ message CreateLockEventReq  {
     string nonce     = 6;
     string chainName = 7;
 }
+
+message QueryReq  {
+    string param        = 1;
+    string abiData      = 2;
+    string contractAddr = 3;
+    string owner        = 4;
+    string chainName    = 5;
+}

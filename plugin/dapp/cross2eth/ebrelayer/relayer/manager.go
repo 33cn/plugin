@@ -1101,3 +1101,24 @@ func (manager *Manager) ShowEthRelayerValidator(chainName string, result *interf
 	}
 	return nil
 }
+
+func (manager *Manager) EthGeneralQuery(query *relayerTypes.QueryReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[query.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+	ret, err := ethInt.GeneralQuery(query.Param, query.AbiData, query.ContractAddr, query.Owner)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  ret,
+	}
+	return nil
+}
