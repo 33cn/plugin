@@ -181,13 +181,14 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 	txslog.Info("QueryResult", "param", param, "contract", contract, "owner", owner)
 	// 首先解析参数字符串，分析出方法名以及个参数取值
 	methodName, params, err := chain33Abi.ProcFuncCall(param)
+	txslog.Info("QueryResult ProcFuncCall")
 	if err != nil {
-		txslog.Info("QueryResult", "ProcFuncCall fail", err)
 		return methodName + " ProcFuncCall fail", err
 	}
 
 	// 解析ABI数据结构，获取本次调用的方法对象
 	abi_, err := chain33Abi.JSON(strings.NewReader(abiData))
+	txslog.Info("QueryResult JSON")
 	if err != nil {
 		txslog.Info("QueryResult", "JSON fail", err)
 		return methodName + " JSON fail", err
@@ -196,6 +197,7 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 	var method chain33Abi.Method
 	var ok bool
 	if method, ok = abi_.Methods[methodName]; !ok {
+		txslog.Info("QueryResult Methods")
 		err = fmt.Errorf("function %v not exists", methodName)
 		txslog.Info("QueryResult", "Methods fail", err)
 		return methodName, err
@@ -220,6 +222,7 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 
 		for i, v := range method.Inputs.NonIndexed() {
 			paramVal, err := chain33Abi.Str2GoValue(v.Type, params[i])
+			txslog.Info("QueryResult Str2GoValue")
 			if err != nil {
 				txslog.Info("QueryResult", "Str2GoValue fail", err)
 				return methodName + " Str2GoValue fail", err
@@ -237,6 +240,7 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 	var out []interface{}
 	contactAbi := LoadABI(abiData)
 	boundContract := bind.NewBoundContract(common.HexToAddress(contract), contactAbi, client, nil, nil)
+	txslog.Info("QueryResult Call", "methodName", methodName, "paramVals", paramVals)
 	err = boundContract.Call(opts, &out, methodName, paramVals...)
 	if err != nil {
 		txslog.Info("QueryResult", "call fail", err)
