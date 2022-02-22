@@ -75,6 +75,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
+	//转换10进制
+	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
+	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
+
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -364,6 +368,11 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
+
+	//转换10进制
+	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
+	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
+
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -743,6 +752,11 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
+
+	//转换10进制
+	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
+	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
+
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")

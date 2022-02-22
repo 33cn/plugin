@@ -44,3 +44,7 @@ func (z *zksync) ExecLocal_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transact
 func (z *zksync) ExecLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
+
+func (z *zksync) ExecLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}

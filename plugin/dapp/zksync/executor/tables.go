@@ -117,3 +117,55 @@ func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 	}
 	return nil, types.ErrNotFound
 }
+
+
+
+var opt_commit_proof = &table.Option{
+	Prefix:  KeyPrefixLocalDB,
+	Name:    "proof",
+	Primary: "root",
+	Index:   []string{"height"},
+}
+
+// NewZksyncInfoTable ...
+func NewCommitProofTable(kvdb db.KV) *table.Table {
+	rowmeta := NewCommitProofRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_commit_proof)
+	if err != nil {
+		panic(err)
+	}
+	return table
+}
+
+// AccountTreeRow table meta 结构
+type CommitProofRow struct {
+	*zt.CommitProofState
+}
+
+func NewCommitProofRow() *CommitProofRow {
+	return &CommitProofRow{CommitProofState: &zt.CommitProofState{}}
+}
+
+//CreateRow 新建数据行
+func (r *CommitProofRow) CreateRow() *table.Row {
+	return &table.Row{Data: &zt.CommitProofState{}}
+}
+
+//SetPayload 设置数据
+func (r *CommitProofRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*zt.CommitProofState); ok {
+		r.CommitProofState = txdata
+		return nil
+	}
+	return types.ErrTypeAsset
+}
+
+//Get 按照indexName 查询 indexValue
+func (r *CommitProofRow) Get(key string) ([]byte, error) {
+	if key == "root" {
+		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
+	} else if key == "height" {
+		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
+	}
+	return nil, types.ErrNotFound
+}
