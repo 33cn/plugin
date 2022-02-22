@@ -23,22 +23,32 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 
 	dbSet := &types.LocalDBSet{}
 	for _, log := range receiptData.Logs {
-		var zklog zt.ZkReceiptLog
-		err := types.Decode(log.GetLog(), &zklog)
-		if err != nil {
-			return nil, err
+		switch log.Ty {
+		case
+			zt.TyDepositLog,
+			zt.TyWithdrawLog,
+			zt.TyTreeToContractLog,
+			zt.TyContractToTreeLog,
+			zt.TyTransferLog,
+			zt.TyTransferToNewLog,
+			zt.TySetPubKeyLog,
+			zt.TyForceExitLog,
+			zt.TyFullExitLog,
+			zt.TySwapLog:
+			var zklog zt.ZkReceiptLog
+			err := types.Decode(log.GetLog(), &zklog)
+			if err != nil {
+				return nil, err
+			}
+			if zklog.OperationInfo == nil || zklog.OperationInfo.AccountID == 0 {
+				continue
+			}
+			err = infoTable.Replace(zklog.OperationInfo)
+			if err != nil {
+				return nil, err
+			}
+			dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
 		}
-
-		if zklog.OperationInfo == nil || zklog.OperationInfo.AccountID == 0 {
-			continue
-		}
-
-		err = infoTable.Replace(zklog.OperationInfo)
-		if err != nil {
-			return nil, err
-		}
-
-		dbSet.KV = append(dbSet.KV, zklog.LocalKvs...)
 	}
 	kvs, err := infoTable.Save()
 	if err != nil {
