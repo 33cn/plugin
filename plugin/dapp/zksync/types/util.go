@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
 	"strings"
@@ -23,4 +24,9 @@ func Byte2Str(v []byte) string {
 func HexAddr2Decimal(addr string) string {
 	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 16)
 	return addrInt.String()
+}
+
+// DecimalAddr2Hex 10进制地址转16进制
+func DecimalAddr2Hex(addr string) string {
+	return hex.EncodeToString(Str2Byte(addr))
 }

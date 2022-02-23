@@ -61,7 +61,8 @@ function zksync_init() {
 function zksync_deposit() {
   echo "=========== # zksync deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
-    rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 078d01a973f61a567adddefa694b10bf6c9d5c33bf6dd2976eb35542fc5be3e2)
+    chain33Addr=$(${CLI} zksync getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -118,7 +119,8 @@ function zksync_treeToContract() {
 function zksync_contractToTree() {
     echo "=========== # zksync contractToTree test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 contractToTree to self amount 100000000
-    rawData=$(${CLI} zksync contractToTree -t 1 -a 100000000 --accountId 1 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 078d01a973f61a567adddefa694b10bf6c9d5c33bf6dd2976eb35542fc5be3e2)
+    chain33Addr=$(${CLI} zksync getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    rawData=$(${CLI} zksync contractToTree -t 1 -a 100000000 --accountId 1 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -129,7 +131,8 @@ function zksync_contractToTree() {
     query_account "${CLI}" 1
 
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 contractToTree to 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR amount 100000000
-    rawData=$(${CLI} zksync contractToTree -t 1 -a 100000000 --accountId 0 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c 2bed9057cffec06acef91f397250df59196ef7077af8d79180d9755507506828)
+    chain33Addr=$(${CLI} zksync getChain33Addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
+    rawData=$(${CLI} zksync contractToTree -t 1 -a 100000000 --accountId 0 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -158,7 +161,8 @@ function zksync_transfer() {
 function zksync_transferToNew() {
     echo "=========== # zksync transferToNew test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transferToNew to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k amount 100000000
-    rawData=$(${CLI} zksync transferToNew -t 1 -a 100000000 --accountId 1 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c 0f454d36820ce7343199bc117a044ece3c106de23dc81a3ffcd41323793b52f2)
+    chain33Addr=$(${CLI} zksync getChain33Addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    rawData=$(${CLI} zksync transferToNew -t 1 -a 100000000 --accountId 1 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -170,9 +174,20 @@ function zksync_transferToNew() {
 }
 
 function zksync_forceExit() {
-    echo "=========== # zksync withdraw test ============="
-    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 withdraw amount 100000000
-    rawData=$(${CLI} zksync withdraw -t 1 -a 100000000 --accountId 1)
+    echo "=========== # zksync forceExit test ============="
+    #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR setPubKey
+    rawData=$(${CLI} zksync setPubKey -a 2)
+    echo "${rawData}"
+
+    signData=$(${CLI} wallet sign -d "$rawData" -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
+    echo "${signData}"
+    hash=$(${CLI} wallet send -d "$signData")
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    query_account "${CLI}" 2
+
+    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR forceExit
+    rawData=$(${CLI} zksync forceExit -t 1 --accountId 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -180,16 +195,27 @@ function zksync_forceExit() {
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
-    query_account "${CLI}" 1
+    query_account "${CLI}" 2
 }
 
 function zksync_fullExit() {
-    echo "=========== # zksync withdraw test ============="
-    #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 withdraw amount 100000000
-    rawData=$(${CLI} zksync withdraw -t 1 -a 100000000 --accountId 1)
+    echo "=========== # zksync fullExit test ============="
+    #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k setPubKey
+    rawData=$(${CLI} zksync setPubKey -a 3)
     echo "${rawData}"
 
-    signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    echo "${signData}"
+    hash=$(${CLI} wallet send -d "$signData")
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+    query_account "${CLI}" 3
+
+    #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
+    rawData=$(${CLI} zksync fullExit -t 1 --accountId 3)
+    echo "${rawData}"
+
+    signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
     echo "${signData}"
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
@@ -236,6 +262,8 @@ function zksync_test() {
     zksync_contractToTree
     zksync_transfer
     zksync_transferToNew
+    zksync_forceExit
+    zksync_fullExit
 }
 
 function zksync() {

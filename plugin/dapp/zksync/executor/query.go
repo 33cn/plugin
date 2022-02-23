@@ -71,12 +71,15 @@ func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 	if err != nil {
 		return nil, err
 	}
+	leaf.EthAddress = zt.DecimalAddr2Hex(leaf.GetEthAddress())
+	leaf.Chain33Addr = zt.DecimalAddr2Hex(leaf.GetChain33Addr())
 	return &leaf, nil
 }
 
 // Query_GetAccountByEth  通过eth地址查询account
 func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
+	in.EthAddress = zt.HexAddr2Decimal(in.EthAddress)
 	leaves, err := GetLeafByEthAddress(z.GetLocalDB(), in.EthAddress)
 	if err != nil {
 		return nil, err
@@ -88,6 +91,7 @@ func (z *zksync) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error)
 // Query_GetAccountByChain33  通过chain33地址查询account
 func (z *zksync) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
+	in.Chain33Addr = zt.HexAddr2Decimal(in.Chain33Addr)
 	leaves, err := GetLeafByChain33Address(z.GetLocalDB(), in.Chain33Addr)
 	if err != nil {
 		return nil, err

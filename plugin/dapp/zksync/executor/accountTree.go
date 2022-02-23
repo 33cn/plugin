@@ -206,36 +206,42 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
 	rows, err := accountTable.ListIndex("eth_address", []byte(fmt.Sprintf("%s", ethAddress)), nil, 1, dbm.ListASC)
 
-	data := make([]*zt.Leaf, 0)
+	datas := make([]*zt.Leaf, 0)
 	if err != nil {
 		if err.Error() == types.ErrNotFound.Error() {
-			return data, nil
+			return datas, nil
 		} else {
 			return nil, err
 		}
 	}
 	for _, row := range rows {
-		data = append(data, row.Data.(*zt.Leaf))
+		data := row.Data.(*zt.Leaf)
+		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
+		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		datas = append(datas, data)
 	}
-	return data, nil
+	return datas, nil
 }
 
 func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) {
 	accountTable := NewAccountTreeTable(db)
 	rows, err := accountTable.ListIndex("chain33_address", []byte(fmt.Sprintf("%s", chain33Addr)), nil, 1, dbm.ListASC)
 
-	data := make([]*zt.Leaf, 0)
+	datas := make([]*zt.Leaf, 0)
 	if err != nil {
 		if err.Error() == types.ErrNotFound.Error() {
-			return data, nil
+			return datas, nil
 		} else {
 			return nil, err
 		}
 	}
 	for _, row := range rows {
-		data = append(data, row.Data.(*zt.Leaf))
+		data := row.Data.(*zt.Leaf)
+		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
+		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		datas = append(datas, data)
 	}
-	return data, nil
+	return datas, nil
 }
 
 func GetLeafByChain33AndEthAddress(db dbm.KV, chain33Addr, ethAddress string, info *TreeUpdateInfo) (*zt.Leaf, error) {

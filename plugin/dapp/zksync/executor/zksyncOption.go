@@ -14,7 +14,6 @@ import (
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
 )
 
@@ -1005,11 +1004,9 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	}
 
 	//校验预存的地址是否和公钥匹配
-	pubKey := &eddsa.PublicKey{}
-	pubKey.A.X.SetString(payload.PubKey.X)
-	pubKey.A.Y.SetString(payload.PubKey.Y)
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	hash.Write(pubKey.Bytes())
+	hash.Write(zt.Str2Byte(payload.PubKey.X))
+	hash.Write(zt.Str2Byte(payload.PubKey.Y))
 	if zt.Byte2Str(hash.Sum(nil)) != leaf.Chain33Addr {
 		return nil, errors.New("not your account")
 	}
