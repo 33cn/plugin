@@ -504,11 +504,14 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
 	hash.Write(accountIdBytes[:])
-	hash.Write([]byte(leaf.GetEthAddress()))
-	hash.Write([]byte(leaf.GetChain33Addr()))
+	hash.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	hash.Write(zt.Str2Byte(leaf.GetChain33Addr()))
 	if leaf.GetPubKey() != nil {
-		hash.Write([]byte(leaf.GetPubKey().X))
-		hash.Write([]byte(leaf.GetPubKey().Y))
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
+	} else {
+		hash.Write(zt.Str2Byte("0")) //X
+		hash.Write(zt.Str2Byte("0")) //Y
 	}
 	token := zt.Str2Byte(leaf.GetTokenHash())
 	hash.Write(token)
@@ -531,7 +534,7 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
 	hash.Write(tokenIdBytes[:])
-	hash.Write([]byte(token.Balance))
+	hash.Write(zt.Str2Byte(token.Balance))
 	return hash.Sum(nil)
 }
 
