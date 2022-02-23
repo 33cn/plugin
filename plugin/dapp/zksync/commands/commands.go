@@ -548,7 +548,8 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	hash.Write(privateKey.PublicKey.Bytes())
+	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
+	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
 	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
 }
 
