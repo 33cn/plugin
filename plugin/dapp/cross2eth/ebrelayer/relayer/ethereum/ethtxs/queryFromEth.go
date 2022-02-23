@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	chain33Abi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"strings"
 
 	bep20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/bep20/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
