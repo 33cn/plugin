@@ -189,16 +189,14 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 	// 解析ABI数据结构，获取本次调用的方法对象
 	abi_, err := chain33Abi.JSON(strings.NewReader(abiData))
 	if err != nil {
-		txslog.Info("QueryResult", "JSON fail", err)
+		txslog.Error("QueryResult", "JSON fail", err)
 		return methodName + " JSON fail", err
 	}
 
 	var method chain33Abi.Method
 	var ok bool
-	txslog.Info("QueryResult Methods")
 	if method, ok = abi_.Methods[methodName]; !ok {
 		err = fmt.Errorf("function %v not exists", methodName)
-		txslog.Info("QueryResult", "Methods fail", err)
 		return methodName, err
 	}
 
@@ -221,9 +219,8 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 
 		for i, v := range method.Inputs.NonIndexed() {
 			paramVal, err := chain33Abi.Str2GoValue(v.Type, params[i])
-			txslog.Info("QueryResult Str2GoValue")
 			if err != nil {
-				txslog.Info("QueryResult", "Str2GoValue fail", err)
+				txslog.Error("QueryResult", "Str2GoValue fail", err)
 				return methodName + " Str2GoValue fail", err
 			}
 			paramVals = append(paramVals, paramVal)
@@ -237,19 +234,15 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 		Context: context.Background(),
 	}
 	var out []interface{}
-	txslog.Info("QueryResult LoadABI", "abiData", abiData)
-	//contactAbi := LoadABI(abiData)
 	// Convert the raw abi into a usable format
 	contractABI, err := abi.JSON(strings.NewReader(abiData))
 	if err != nil {
 		panic(err)
 	}
-	txslog.Info("QueryResult LoadABI", "abiData", abiData)
 	boundContract := bind.NewBoundContract(common.HexToAddress(contract), contractABI, client, nil, nil)
-	txslog.Info("QueryResult Call", "methodName", methodName, "paramVals", paramVals)
 	err = boundContract.Call(opts, &out, methodName, paramVals...)
 	if err != nil {
-		txslog.Info("QueryResult", "call fail", err)
+		txslog.Error("QueryResult", "call fail", err)
 		return "call err", err
 	}
 	fmt.Println("QueryBridgeBankResult ret=", out[0])
