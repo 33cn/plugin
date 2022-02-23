@@ -220,7 +220,7 @@ function zksync_fullExit() {
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
     query_tx "${CLI}" "${hash}"
-    query_account "${CLI}" 1
+    query_account "${CLI}" 3
 }
 
 function query_account() {

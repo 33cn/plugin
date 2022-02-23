@@ -28,5 +28,6 @@ func HexAddr2Decimal(addr string) string {
 
 // DecimalAddr2Hex 10进制地址转16进制
 func DecimalAddr2Hex(addr string) string {
-	return hex.EncodeToString(Str2Byte(addr))
+	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 10)
+	return hex.EncodeToString(addrInt.Bytes())
 }
