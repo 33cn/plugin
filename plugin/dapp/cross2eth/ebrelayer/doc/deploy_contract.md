@@ -220,23 +220,10 @@ tx is written to file:  multisign_transfer_prepare.txt
 tx is written to file:  sign_multisign_tx.txt
 ```
 
-* 创建转帐交易--在线操作,需要重新获取 nonce 等信息
+* 发送交易--在线操作,需要一个地址扣手续费
 ```
 命令：
-./boss4x ethereum offline create_multisign_tx
-
-输出
-tx is written to file:  create_multisign_tx.txt
-```
-
-* 离线签名交易
-```
-./boss4x ethereum offline sign -f create_multisign_tx.txt -k ...
-```
-
-* 发送签名后文件
-```
-./boss4x ethereum offline send -f deploysigntxs.txt
+./boss4x ethereum offline send_multisign_tx -f sign_multisign_tx.txt -k "${ethTestAddrKey1}"
 ```
 
 ###  离线部署 chain33 跨链合约及各操作

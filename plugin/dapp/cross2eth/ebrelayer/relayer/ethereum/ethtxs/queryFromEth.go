@@ -238,7 +238,7 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 	// Convert the raw abi into a usable format
 	contractABI, err := abi.JSON(strings.NewReader(abiData))
 	if err != nil {
-		panic(err)
+		return "JSON err", err
 	}
 	boundContract := bind.NewBoundContract(common.HexToAddress(contract), contractABI, client, nil, nil)
 	err = boundContract.Call(opts, &out, methodName, paramVals...)
