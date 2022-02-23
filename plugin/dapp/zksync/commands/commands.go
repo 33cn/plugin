@@ -42,6 +42,7 @@ func ZksyncCmd() *cobra.Command {
 		transferToNewCmd(),
 		forceExitCmd(),
 		setPubKeyCmd(),
+		fullExitCmd(),
 		setVerifyKeyCmd(),
 		setOperatorCmd(),
 		commitProofCmd(),
@@ -381,6 +382,44 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
 		ActionName: "SetPubKey",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+
+func fullExitCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "fullExit",
+		Short: "get fullExit tx",
+		Run:   fullExit,
+	}
+	fullExitFlag(cmd)
+	return cmd
+}
+
+func fullExitFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 1, "fullExit tokenId")
+	cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "fullExit accountId")
+	cmd.MarkFlagRequired("accountId")
+
+}
+
+func fullExit(cmd *cobra.Command, args []string) {
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	accountId, _ := cmd.Flags().GetUint64("accountId")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payload, err := wallet.CreateRawTx(zt.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "FullExit",
 		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
