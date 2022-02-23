@@ -183,7 +183,7 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 			result := ebrelayerChain33.GetTxStatusByHashesRpc(txhash, rpcUrl)
 			//等待交易执行
 			if ebTypes.Invalid_Chain33Tx_Status == result {
-				time.Sleep(10 * time.Second)
+				time.Sleep(time.Second)
 
 				countTime++
 				// 超过2分钟 超时退出

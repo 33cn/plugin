@@ -5,6 +5,14 @@
 #### 完成 ethererum 和 chain33 相关合约的部署
 得到 BridgeRegistryOnChain33, BridgeRegistryOnEth, multisignChain33Addr, multisignEthAddr 4个合约地址。
 
+拼凑 ebcli_A 命令
+
+./ebcli_A --node_addr http://182.160.7.143:8545 --eth_chain_name Binance
+```
+--eth_chain_name string   eth chain name (default "Ethereum") 根据 relayer.toml 配置文件中的 EthChainName 字段区分, 目前支持两条链的配置
+--node_addr string        eth node url (default "http://182.160.7.143:8545")
+```
+
 #### 修改 relayer.toml 配置文件
 |字段|说明|
 |----|----|
@@ -95,9 +103,10 @@ done
 
 |字段|说明|
 |----|----|
-|pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
+|pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="x2ethProxy"/g' relayer.toml`|
 |ProcessWithDraw|改为 true|
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801, 选任意一个 chain33 平行链地址就可以|
+|pushHost|relayer 的 host 地址, 默认: http://localhost:20000, chain33Host 和本地IP 不同时要换成本地 IP|
 |RemindUrl|代理打币地址不够时, 提醒打币发送短信的URL|
 
 #### 首次启动 relayer 进行设置
@@ -105,8 +114,14 @@ done
 
 #### 设置 chain33 代理地址, 及手续费设置
 ```shell
-# 设置 withdraw 的手续费及每日转帐最大值, 实时变动, 价格波动大的时候重新设置
-./ebcli_A ethereum cfgWithdraw -f 0.2 -s ETH -a 100 -d 18
+# 设置 withdraw 的手续费及每日转帐最大值, 实时变动, 价格波动大的时候重新设置, 需要跟前端底层都商量一下
+./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.003 -s ETH -a 1 -d 18
+./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
+./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
+例如:(根据需求配置, 修改手续费后要通知前端同步修改)
+./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 2 -d 18
+./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
+./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
 
 Flags:
   -a, --amount float    每日最大值
@@ -132,4 +147,8 @@ root      3661 21631  0 17:58 pts/0    00:00:00 grep --color=auto ebrelayer
 root      4066  4057  0 15:47 pts/0    00:00:05 ./ebrelayer
 kill 4066
 ```
-如果是用持续启动方式`nohup ./startRelyer.sh 2>&1 &`, 要先 kill startRelyer.sh, 再 kill ebrelayer
+如果是用持续启动方式`nohup ./startRelyer.sh 2>&1 &`, 要先 kill startRelyer.sh, 再 kill ebrelayer, 重启后解锁才能使用
+```shell
+# 解锁
+./ebcli_A unlock -p 密码
+```

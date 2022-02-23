@@ -14,7 +14,7 @@ contract EthereumBank {
     using SafeMath for uint256;
 
     uint256 public bridgeTokenCount;
-    address payable proxyReceiver;
+    address payable public proxyReceiver;
     mapping(address => bool) public bridgeTokenWhitelist;
     mapping(bytes32 => bool) public bridgeTokenCreated;
     mapping(bytes32 => EthereumDeposit) ethereumDeposits;
