@@ -70,11 +70,8 @@ func init() {
 		panic(err)
 	}
 	ethRelayer = newEthRelayer(para, sim, x2EthContracts, x2EthDeployInfo)
-	_, err = ethRelayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
-	if err != nil {
-		panic(err)
-	}
-	time.Sleep(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
+
+	time.Sleep(time.Duration(5000) * time.Millisecond)
 	simCommit()
 }
 
@@ -154,6 +151,9 @@ func test_IsValidatorActive(t *testing.T) {
 
 func test_ShowAddr(t *testing.T) {
 	ethRelayer.prePareSubscribeEvent()
+	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
+	ethRelayer.bridgeBankAbi = contactAbi
+	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
 
 	addr, err := ethRelayer.ShowBridgeBankAddr()
 	require.Nil(t, err)
@@ -483,6 +483,13 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 	relayer.rwLock.Unlock()
 
 	relayer.totalTxRelayFromChain33 = relayer.getTotalTxAmount2Eth()
+
+	relayer.rwLock.Lock()
+	_, err := relayer.ImportPrivateKey(passphrase, ethPrivateKeyStr)
+	relayer.rwLock.Unlock()
+	if err != nil {
+		panic(err)
+	}
 	go relayer.proc()
 	return relayer
 }
