@@ -215,7 +215,7 @@ function zksync_fullExit() {
     rawData=$(${CLI} zksync fullExit -t 1 --accountId 3)
     echo "${rawData}"
 
-    signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
     echo "${signData}"
     hash=$(${CLI} wallet send -d "$signData")
     echo "${hash}"
