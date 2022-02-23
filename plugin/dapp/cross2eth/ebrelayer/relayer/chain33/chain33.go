@@ -26,7 +26,6 @@ import (
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -262,7 +261,7 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 
 // handleBurnLockMsg : parse event data as a Chain33Msg, package it into a ProphecyClaim, then relay tx to the Ethereum Network
 func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) error {
-	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", ethCommon.Bytes2Hex(chain33TxHash))
+	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", common.ToHex(chain33TxHash))
 
 	// Parse the witnessed event's data into a new Chain33Msg
 	chain33Msg, err := events.ParseBurnLock4chain33(evmEventType, data, chain33Relayer.bridgeBankAbi, chain33TxHash)

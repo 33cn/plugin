@@ -9,8 +9,8 @@ import (
 )
 
 /*
- * 实现交易相关数据本地执行，数据不上链
- * 非关键数据，本地存储(localDB), 用于辅助查询，效率高
+* Local execution of transaction related data, data is not on the chain
+* Non-critical data, local storage (localDB), used for auxiliary query, high efficiency
  */
 
 func (e *exchange) ExecLocal_LimitOrder(payload *ety.LimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -47,11 +47,10 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 					return nil, err
 				}
 				e.updateIndex(marketTable, orderTable, historyTable, receipt)
-				//dbSet.KV = append(dbSet.KV, kv...)
 			}
 		}
 	}
-	//刷新KV
+
 	var kvs []*types.KeyValue
 	kv, err := marketTable.Save()
 	if err != nil {
@@ -86,7 +85,7 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 	return dbSet, nil
 }
 
-//设置自动回滚
+// Set automatic rollback
 func (e *exchange) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 	dbSet := &types.LocalDBSet{}
 	dbSet.KV = e.AddRollbackKV(tx, tx.Execer, kv)
@@ -145,68 +144,54 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 			markDepth.Op = op
 			markDepth.Amount = depth.Amount + order.Balance
 		}
-		//marketDepth
 		err = marketTable.Replace(&markDepth)
 		if err != nil {
 			elog.Error("updateIndex", "marketTable.Replace", err.Error())
-			return err
 		}
 		err = orderTable.Replace(order)
 		if err != nil {
 			elog.Error("updateIndex", "orderTable.Replace", err.Error())
-			return err
 		}
 
 	case ety.Completed:
 		err := historyTable.Replace(order)
 		if err != nil {
 			elog.Error("updateIndex", "historyTable.Replace", err.Error())
-			return err
 		}
 	case ety.Revoked:
-		//只有状态时ordered状态的订单才能被撤回
 		var marketDepth ety.MarketDepth
 		depth, err := queryMarketDepth(marketTable, left, right, op, price)
-		if err != nil {
-			elog.Error("updateIndex", "ety.Revoked queryMarketDepth", err.Error())
-			return err
-		}
-		//marketDepth
-		marketDepth.Price = price
-		marketDepth.LeftAsset = left
-		marketDepth.RightAsset = right
-		marketDepth.Op = op
-		marketDepth.Amount = depth.Amount - order.Balance
+		if err == nil {
+			marketDepth.Price = price
+			marketDepth.LeftAsset = left
+			marketDepth.RightAsset = right
+			marketDepth.Op = op
+			marketDepth.Amount = depth.Amount - order.Balance
 
-		if marketDepth.Amount > 0 {
-			err = marketTable.Replace(&marketDepth)
-			if err != nil {
-				elog.Error("updateIndex", "marketTable.Replace", err.Error())
-				return err
+			if marketDepth.Amount > 0 {
+				err = marketTable.Replace(&marketDepth)
+				if err != nil {
+					elog.Error("updateIndex", "marketTable.Replace", err.Error())
+				}
+			}
+			if marketDepth.Amount <= 0 {
+				err = marketTable.DelRow(&marketDepth)
+				if err != nil {
+					elog.Error("updateIndex", "marketTable.DelRow", err.Error())
+				}
 			}
 		}
-		if marketDepth.Amount <= 0 {
-			//删除
-			err = marketTable.DelRow(&marketDepth)
-			if err != nil {
-				elog.Error("updateIndex", "marketTable.DelRow", err.Error())
-				return err
-			}
-		}
-		//删除原有状态orderID
+
 		primaryKey := []byte(fmt.Sprintf("%022d", order.OrderID))
 		err = orderTable.Del(primaryKey)
 		if err != nil {
 			elog.Error("updateIndex", "orderTable.Del", err.Error())
-			return err
 		}
 		order.Status = ety.Revoked
 		order.Index = index
-		//添加撤销的订单
 		err = historyTable.Replace(order)
 		if err != nil {
 			elog.Error("updateIndex", "historyTable.Replace", err.Error())
-			return err
 		}
 	}
 	return nil
@@ -216,7 +201,6 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 	right := order.GetLimitOrder().GetRightAsset()
 	op := order.GetLimitOrder().GetOp()
 	if len(matchOrders) > 0 {
-		//撮合交易更新
 		cache := make(map[int64]int64)
 		for i, matchOrder := range matchOrders {
 			if matchOrder.Balance == 0 && matchOrder.Executed == 0 {
@@ -229,30 +213,23 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 				err := marketTable.DelRow(&matchDepth)
 				if err != nil && err != types.ErrNotFound {
 					elog.Error("updateIndex", "marketTable.DelRow", err.Error())
-					return err
 				}
 				continue
 			}
 			if matchOrder.Status == ety.Completed {
-				// 删除原有状态orderID
 				err := orderTable.DelRow(matchOrder)
 				if err != nil {
 					elog.Error("updateIndex", "orderTable.DelRow", err.Error())
-					return err
 				}
-				//索引index,改为当前的index
 				matchOrder.Index = index + int64(i+1)
 				err = historyTable.Replace(matchOrder)
 				if err != nil {
 					elog.Error("updateIndex", "historyTable.Replace", err.Error())
-					return err
 				}
 			} else if matchOrder.Status == ety.Ordered {
-				//更新数据
 				err := orderTable.Replace(matchOrder)
 				if err != nil {
 					elog.Error("updateIndex", "orderTable.Replace", err.Error())
-					return err
 				}
 			}
 			executed := cache[matchOrder.GetLimitOrder().Price]
@@ -260,11 +237,10 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 			cache[matchOrder.GetLimitOrder().Price] = executed
 		}
 
-		//更改匹配市场深度
 		for pr, executed := range cache {
 			var matchDepth ety.MarketDepth
 			depth, err := queryMarketDepth(marketTable, left, right, OpSwap(op), pr)
-			if err == types.ErrNotFound {
+			if err != nil {
 				continue
 			} else {
 				matchDepth.Price = pr
@@ -273,20 +249,16 @@ func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *tabl
 				matchDepth.Op = OpSwap(op)
 				matchDepth.Amount = depth.Amount - executed
 			}
-			//marketDepth
 			if matchDepth.Amount > 0 {
 				err = marketTable.Replace(&matchDepth)
 				if err != nil {
 					elog.Error("updateIndex", "marketTable.Replace", err.Error())
-					return err
 				}
 			}
 			if matchDepth.Amount <= 0 {
-				//删除
 				err = marketTable.DelRow(&matchDepth)
 				if err != nil {
 					elog.Error("updateIndex", "marketTable.DelRow", err.Error())
-					return err
 				}
 			}
 		}

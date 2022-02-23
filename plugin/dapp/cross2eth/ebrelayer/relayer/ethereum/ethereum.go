@@ -22,6 +22,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	chain33Common "github.com/33cn/chain33/common"
+
 	"github.com/bitly/go-simplejson"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
@@ -490,7 +492,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		}
 	}()
 
-	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", chain33Common.ToHex(chain33Msg.TxHash))
 	withdrawFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[chain33Msg.Symbol]
 	if !exist {
 		//因为是withdraw操作，必须从允许lock的token地址中进行查询
@@ -685,7 +687,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		relayerLog.Info("handleLogLockBurn", "Needn't process lock and burn for this withdraw process specified validator", ethRelayer.ethSender)
 		return
 	}
-	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", common.Bytes2Hex(chain33Msg.TxHash))
+	relayerLog.Info("handleLogLockBurn", "Received chain33Msg", chain33Msg, "tx hash string", chain33Common.ToHex(chain33Msg.TxHash))
 
 	// Parse the Chain33Msg into a ProphecyClaim for relay to Ethereum
 	prophecyClaim := ethtxs.Chain33MsgToProphecyClaim(*chain33Msg)
@@ -782,7 +784,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	}
 	statics := &ebTypes.Chain33ToEthereumStatics{
 		EthTxstatus:      ebTypes.Tx_Status_Pending,
-		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
+		Chain33Txhash:    chain33Common.ToHex(chain33Msg.TxHash),
 		EthereumTxhash:   txhash,
 		BurnLockWithdraw: int32(chain33Msg.ClaimType),
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
@@ -1227,6 +1229,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 			bridgeToken, _ := generated.NewBridgeToken(common.HexToAddress(event.Token.String()), ethRelayer.clientSpec)
 			decimal, err = bridgeToken.Decimals(opts)
 			if err != nil {
+				relayerLog.Error("handleLogLockEvent", "Failed to get Decimals due to", err.Error())
 				return err
 			}
 		}
@@ -1239,7 +1242,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 		}
 		err = ethRelayer.SetLockedTokenAddress(token2set)
 		if nil != err {
-			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
+			relayerLog.Error("handleLogLockEvent", "Failed to SetLockedTokenAddress due to", err.Error())
 			return errors.New("Failed ")
 		}
 	} else {
@@ -1291,7 +1294,7 @@ func (ethRelayer *Relayer4Ethereum) CreateLockEventManually(event *events.LockEv
 		}
 		err = ethRelayer.SetLockedTokenAddress(token2set)
 		if nil != err {
-			relayerLog.Error("handleChain33Msg", "Failed to SetLockedTokenAddress due to", err.Error())
+			relayerLog.Error("CreateLockEventManually", "Failed to SetLockedTokenAddress due to", err.Error())
 			return errors.New("Failed ")
 		}
 	} else {
