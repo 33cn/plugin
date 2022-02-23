@@ -448,7 +448,7 @@ func Test_GoValue(t *testing.T) {
 			t.Fatalf("%v failed. Unexpected new type error: %v", i, err)
 		}
 
-		value, err := str2GoValue(typ, test.input)
+		value, err := Str2GoValue(typ, test.input)
 		if err != nil {
 			t.Fatalf("%v failed. Unexpected parse go Value error: %v", i, err)
 		}
