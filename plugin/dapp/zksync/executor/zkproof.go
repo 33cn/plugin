@@ -327,3 +327,8 @@ func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
 	}
 
 }
+
+//根据proofId重建merkleTree
+func rebuildAccountTree(db dbm.KV, proofId uint64)  {
+
+}

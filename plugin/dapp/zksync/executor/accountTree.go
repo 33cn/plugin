@@ -572,10 +572,11 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 		}
 		subTrees := currentTree.GetAllSubTrees()
 		proofSet := make([]string, len(subTrees)+1)
-		helpers := make([]string, len(subTrees)+1)
+		helpers := make([]string, len(subTrees))
+		proofSet[0] = "0"
 		for i := len(subTrees); i > 0; i-- {
 			proofSet[i] = zt.Byte2Str(subTrees[i-1].GetSum())
-			helpers[i] = big.NewInt(1).String()
+			helpers[i-1] = big.NewInt(0).String()
 		}
 		proof := &zt.MerkleTreeProof{
 			RootHash: zt.Byte2Str(currentTree.Root()),
@@ -698,10 +699,11 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 		}
 		subTrees := tree.GetAllSubTrees()
 		proofSet := make([]string, len(subTrees)+1)
-		helpers := make([]string, len(subTrees)+1)
+		helpers := make([]string, len(subTrees))
+		proofSet[0] = "0"
 		for i := len(subTrees); i > 0; i-- {
 			proofSet[i] = zt.Byte2Str(subTrees[i-1].GetSum())
-			helpers[i] = big.NewInt(1).String()
+			helpers[i-1] = big.NewInt(0).String()
 		}
 		proof := &zt.MerkleTreeProof{
 			RootHash: zt.Byte2Str(tree.Root()),
