@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"sync/atomic"
 
+	chain33Common "github.com/33cn/chain33/common"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,7 +36,12 @@ var (
 	withdrawParaKey                = "eth-withdrawPara"
 	withdrawTokenPrefix            = "eth-withdrawToken"
 	withdrawTokenListPrefix        = "eth-withdrawTokenList"
+	txRelayAlreadyPrefix           = "eth-txRelayAlready"
 )
+
+func ethTxRelayAlreadyKey(txhash string) []byte {
+	return []byte(fmt.Sprintf("%s-%s", txRelayAlreadyPrefix, txhash))
+}
 
 func ethTokenSymbol2AddrKey(chainName, symbol string) []byte {
 	return []byte(fmt.Sprintf("%s-%s-symbol-%s", chainName, ethTokenSymbol2AddrPrefix, symbol))
@@ -54,6 +61,23 @@ func calcRelayFromChain33Key(chainName string, claimType int32, txindex int64) [
 
 func calcRelayFromChain33ListPrefix(chainName string, claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%d-", chainName, chain33ToEthStaticsPrefix, claimType))
+}
+
+func (ethRelayer *Relayer4Ethereum) setEthTxRelayAlreadyInfo(chain33Txhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := ethTxRelayAlreadyKey(chain33Txhash)
+	data := chain33Types.Encode(relayTxDetail)
+	return ethRelayer.db.Set(key, data)
+}
+
+func (ethRelayer *Relayer4Ethereum) getEthTxRelayAlreadyInfo(chain33Txhash string) (*ebTypes.RelayTxDetail, error) {
+	key := ethTxRelayAlreadyKey(chain33Txhash)
+	data, err := ethRelayer.db.Get(key)
+	if nil != err {
+		return nil, err
+	}
+	var relayTxDetail ebTypes.RelayTxDetail
+	err = chain33Types.Decode(data, &relayTxDetail)
+	return &relayTxDetail, err
 }
 
 func (ethRelayer *Relayer4Ethereum) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
@@ -116,7 +140,7 @@ func (ethRelayer *Relayer4Ethereum) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2chain33(totalIndex int64) error {
+func (ethRelayer *Relayer4Ethereum) updateTotalTxAmountFromchain33(totalIndex int64) error {
 	totalTx := &chain33Types.Int64{
 		Data: totalIndex,
 	}
@@ -481,9 +505,10 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.WithdrawTx, chain33Msg *events.Chain33Msg) error {
 	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
 	operationType := chain33Msg.ClaimType.String()
+	chain33TxHash := chain33Common.ToHex(chain33Msg.TxHash)
 	statics := &ebTypes.Chain33ToEthereumStatics{
 		EthTxstatus:      ebTypes.Tx_Status_Pending,
-		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
+		Chain33Txhash:    chain33TxHash,
 		EthereumTxhash:   withdrawTx.TxHashOnEthereum,
 		BurnLockWithdraw: int32(chain33Msg.ClaimType),
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
@@ -499,6 +524,17 @@ func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.Withd
 	}
 	relayerLog.Info("setWithdrawStatics::successful", "txIndex", txIndex, "Chain33Txhash", statics.Chain33Txhash, "EthereumTxhash", statics.EthereumTxhash, "type", operationType,
 		"Symbol", chain33Msg.Symbol, "Amount", chain33Msg.Amount, "EthereumReceiver", statics.EthereumReceiver, "Chain33Sender", statics.Chain33Sender)
+
+	relayTxDetail := &ebTypes.RelayTxDetail{
+		ClaimType:      int32(chain33Msg.ClaimType),
+		TxIndexRelayed: txIndex,
+		EthTxhash:      withdrawTx.TxHashOnEthereum,
+	}
+
+	if err := ethRelayer.setEthTxRelayAlreadyInfo(chain33TxHash, relayTxDetail); nil != err {
+		relayerLog.Error("setWithdrawStatics", "Failed to setEthTxRelayAlreadyInfo due to:", err.Error())
+		return err
+	}
 
 	data := chain33Types.Encode(statics)
 	return ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data)

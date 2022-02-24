@@ -184,6 +184,12 @@ message Ethereum2Chain33Statics {
     string operationType = 11;
 }
 
+message relayTxDetail {
+    int32 claimType        = 1;
+    int64 txIndexRelayed   = 2; //已经发送的中继交易的index
+    string ethTxhash          = 3;
+}
+
 message TokenAddress {
     string address = 1;
     string symbol  = 2;
@@ -338,4 +344,23 @@ message CreateLockEventReq  {
     string value     = 5;
     string nonce     = 6;
     string chainName = 7;
+}
+
+message TxRelayConfirm4Chain33  {
+    int32 eventType      = 1;
+    bytes data           = 2;
+    int32 fdTimes        = 3;
+    int64 index          = 4;
+    string chainName     = 5;
+    bytes txHash         = 6;
+}
+
+message TxRelayConfirm4Ethereum  {
+    int32 eventType      = 1;
+    bytes data           = 2;
+}
+
+message TxRelayAck  {
+    string txHash         = 1;
+    int64 fdIndex         = 2;
 }

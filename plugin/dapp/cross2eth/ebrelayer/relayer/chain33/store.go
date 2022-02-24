@@ -23,7 +23,18 @@ var (
 	tokenSymbol2AddrPrefix             = []byte("chain33-chain33TokenSymbol2AddrPrefix")
 	multiSignAddressPrefix             = []byte("chain33-multiSignAddress")
 	symbol2Ethchain                    = []byte("chain33-symbol2Ethchain")
+	txIsRelayedconfirm                 = []byte("chain33-txIsRelayedconfirm")
+	txRelayedAlready                   = []byte("chain33-txRelayedAlready")
+	fdTx2EthTotalAmount                = []byte("chain33-fdTx2EthTotalAmount")
 )
+
+func txIsRelayedconfirmKey(txHash string, index int64) []byte {
+	return append(txIsRelayedconfirm, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+}
+
+func txRelayedAlreadyKey(txHash string, index int64) []byte {
+	return append(txRelayedAlready, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+}
 
 func tokenSymbol2AddrKey(symbol string) []byte {
 	return append(tokenSymbol2AddrPrefix, []byte(fmt.Sprintf("-symbol-%s", symbol))...)
@@ -44,6 +55,60 @@ func calcFromEthFinishedStaticsKey(txindex int64, claimType int32) []byte {
 
 func calcFromEthFinishedStaticsList(claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-", eth2Chain33BurnLockTxFinished, claimType))
+}
+
+func (chain33Relayer *Relayer4Chain33) updateFdTx2EthTotalAmount(index int64) error {
+	totalTx := &chain33Types.Int64{
+		Data: index,
+	}
+	//更新成功见证的交易数
+	return chain33Relayer.db.Set(fdTx2EthTotalAmount, chain33Types.Encode(totalTx))
+}
+
+func (chain33Relayer *Relayer4Chain33) getFdTx2EthTotalAmount() int64 {
+	totalTx, _ := utils.LoadInt64FromDB(fdTx2EthTotalAmount, chain33Relayer.db)
+	return totalTx
+}
+
+func (chain33Relayer *Relayer4Chain33) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Chain33, err error) {
+	helper := dbm.NewListHelper(chain33Relayer.db)
+	datas := helper.List(txIsRelayedconfirm, nil, 0, dbm.ListASC)
+	cnt := len(datas)
+	if 0 == cnt {
+		return nil, nil
+	}
+
+	txInfos = make([]*ebTypes.TxRelayConfirm4Chain33, cnt)
+	for i, data := range datas {
+		txInfo := &ebTypes.TxRelayConfirm4Chain33{}
+		if err := chain33Types.Decode(data, txInfo); nil != err {
+			return nil, err
+		}
+
+		txInfos[i] = txInfo
+	}
+	return
+}
+
+func (chain33Relayer *Relayer4Chain33) resetKeyTxRelayedAlready(txHash string, index int64) error {
+	key := txIsRelayedconfirmKey(txHash, index)
+	relayerLog.Info("resetKeyTxRelayedAlready", "TxHash", txHash)
+	data, err := chain33Relayer.db.Get(key)
+	if nil != err {
+		relayerLog.Info("resetKeyTxRelayedAlready", "No data for tx", txHash)
+		return err
+	}
+	_ = chain33Relayer.db.Set(key, nil)
+	setkey := txRelayedAlreadyKey(txHash, index)
+
+	return chain33Relayer.db.Set(setkey, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) SetTxIsRelayedconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
+	key := txIsRelayedconfirmKey(txHash, index)
+	data := chain33Types.Encode(txRelayConfirm4Chain33)
+	relayerLog.Info("SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
+	return chain33Relayer.db.Set(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(txIndex int64) error {
