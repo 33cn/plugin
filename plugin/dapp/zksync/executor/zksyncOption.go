@@ -1101,7 +1101,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
-		TxType:      zt.TyForceExitAction,
+		TxType:      zt.TyFullExitAction,
 		TokenID:     payload.TokenId,
 		Amount:      token.Balance,
 		SigData:     payload.Signature,
@@ -1143,7 +1143,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
 	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(zklog)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyFullExitLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
