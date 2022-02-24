@@ -3690,6 +3690,85 @@ func (x *RelayTxDetail) GetTxhash() string {
 	return ""
 }
 
+type QueryReq struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Param        string `protobuf:"bytes,1,opt,name=param,proto3" json:"param,omitempty"`
+	AbiData      string `protobuf:"bytes,2,opt,name=abiData,proto3" json:"abiData,omitempty"`
+	ContractAddr string `protobuf:"bytes,3,opt,name=contractAddr,proto3" json:"contractAddr,omitempty"`
+	Owner        string `protobuf:"bytes,4,opt,name=owner,proto3" json:"owner,omitempty"`
+	ChainName    string `protobuf:"bytes,5,opt,name=chainName,proto3" json:"chainName,omitempty"`
+}
+
+func (x *QueryReq) Reset() {
+	*x = QueryReq{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_relayer_proto_msgTypes[53]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueryReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueryReq) ProtoMessage() {}
+
+func (x *QueryReq) ProtoReflect() protoreflect.Message {
+	mi := &file_relayer_proto_msgTypes[53]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueryReq.ProtoReflect.Descriptor instead.
+func (*QueryReq) Descriptor() ([]byte, []int) {
+	return file_relayer_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *QueryReq) GetParam() string {
+	if x != nil {
+		return x.Param
+	}
+	return ""
+}
+
+func (x *QueryReq) GetAbiData() string {
+	if x != nil {
+		return x.AbiData
+	}
+	return ""
+}
+
+func (x *QueryReq) GetContractAddr() string {
+	if x != nil {
+		return x.ContractAddr
+	}
+	return ""
+}
+
+func (x *QueryReq) GetOwner() string {
+	if x != nil {
+		return x.Owner
+	}
+	return ""
+}
+
+func (x *QueryReq) GetChainName() string {
+	if x != nil {
+		return x.ChainName
+	}
+	return ""
+}
+
 var File_relayer_proto protoreflect.FileDescriptor
 
 var file_relayer_proto_rawDesc = []byte{
@@ -4140,8 +4219,17 @@ var file_relayer_proto_rawDesc = []byte{
 	0x65, 0x6c, 0x61, 0x79, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0e, 0x74, 0x78,
 	0x49, 0x6e, 0x64, 0x65, 0x78, 0x52, 0x65, 0x6c, 0x61, 0x79, 0x65, 0x64, 0x12, 0x16, 0x0a, 0x06,
 	0x74, 0x78, 0x68, 0x61, 0x73, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x74, 0x78,
-	0x68, 0x61, 0x73, 0x68, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x73,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x68, 0x61, 0x73, 0x68, 0x22, 0x92, 0x01, 0x0a, 0x08, 0x51, 0x75, 0x65, 0x72, 0x79, 0x52, 0x65,
+	0x71, 0x12, 0x14, 0x0a, 0x05, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x05, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x62, 0x69, 0x44, 0x61,
+	0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x62, 0x69, 0x44, 0x61, 0x74,
+	0x61, 0x12, 0x22, 0x0a, 0x0c, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63, 0x74, 0x41, 0x64, 0x64,
+	0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x61, 0x63,
+	0x74, 0x41, 0x64, 0x64, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x12, 0x1c, 0x0a, 0x09, 0x63,
+	0x68, 0x61, 0x69, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
+	0x63, 0x68, 0x61, 0x69, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f,
+	0x74, 0x79, 0x70, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4156,7 +4244,7 @@ func file_relayer_proto_rawDescGZIP() []byte {
 	return file_relayer_proto_rawDescData
 }
 
-var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
+var file_relayer_proto_msgTypes = make([]protoimpl.MessageInfo, 56)
 var file_relayer_proto_goTypes = []interface{}{
 	(*Account4Relayer)(nil),             // 0: types.Account4Relayer
 	(*ValidatorAddr4EthRelayer)(nil),    // 1: types.ValidatorAddr4EthRelayer
@@ -4211,15 +4299,16 @@ var file_relayer_proto_goTypes = []interface{}{
 	(*TxRelayConfirm4Ethereum)(nil),     // 50: types.TxRelayConfirm4Ethereum
 	(*TxRelayAck)(nil),                  // 51: types.TxRelayAck
 	(*RelayTxDetail)(nil),               // 52: types.relayTxDetail
-	nil,                                 // 53: types.WithdrawSymbol2Para.Symbol2ParaEntry
-	nil,                                 // 54: types.Symbol2EthChain.Symbol2nameEntry
+	(*QueryReq)(nil),                    // 53: types.QueryReq
+	nil,                                 // 54: types.WithdrawSymbol2Para.Symbol2ParaEntry
+	nil,                                 // 55: types.Symbol2EthChain.Symbol2nameEntry
 }
 var file_relayer_proto_depIdxs = []int32{
 	25, // 0: types.TokenAddressArray.tokenAddress:type_name -> types.TokenAddress
 	24, // 1: types.TokenStaticsResponse.e2Cstatics:type_name -> types.Ethereum2Chain33Statics
 	23, // 2: types.TokenStaticsResponse.c2Estatics:type_name -> types.Chain33ToEthereumStatics
-	53, // 3: types.WithdrawSymbol2Para.symbol2Para:type_name -> types.WithdrawSymbol2Para.Symbol2ParaEntry
-	54, // 4: types.Symbol2EthChain.symbol2name:type_name -> types.Symbol2EthChain.Symbol2nameEntry
+	54, // 3: types.WithdrawSymbol2Para.symbol2Para:type_name -> types.WithdrawSymbol2Para.Symbol2ParaEntry
+	55, // 4: types.Symbol2EthChain.symbol2name:type_name -> types.Symbol2EthChain.Symbol2nameEntry
 	39, // 5: types.WithdrawSymbol2Para.Symbol2ParaEntry.value:type_name -> types.withdrawPara
 	6,  // [6:6] is the sub-list for method output_type
 	6,  // [6:6] is the sub-list for method input_type
@@ -4870,6 +4959,18 @@ func file_relayer_proto_init() {
 				return nil
 			}
 		}
+		file_relayer_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueryReq); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -4877,7 +4978,7 @@ func file_relayer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_relayer_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   55,
+			NumMessages:   56,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

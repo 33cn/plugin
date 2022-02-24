@@ -372,3 +372,12 @@ message relayTxDetail {
     //中继交易，不是源交易
     string txhash          = 3;
 }
+
+message QueryReq  {
+    string param        = 1;
+    string abiData      = 2;
+    string contractAddr = 3;
+    string owner        = 4;
+    string chainName    = 5;
+}
+

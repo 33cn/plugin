@@ -550,7 +550,10 @@ func (client *Client) BuildBlock(height int64) *types.Block {
 	newblock.Difficulty = cfg.GetP(0).PowLimitBits
 	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
-		newblock.BlockTime = lastBlock.BlockTime + 1
+		// 1秒内产生的多个区块使用相同时间戳
+		if timeoutTxAvail.Load().(int32) >= 1000 || lastBlock.BlockTime > newblock.BlockTime {
+			newblock.BlockTime = lastBlock.BlockTime + 1
+		}
 	}
 	return &newblock
 }

@@ -70,8 +70,8 @@ func run(RPCAddr, NodeAddr string) {
 	pluginmgr.AddCmd(rootCmd)
 	log.SetLogLevel("error")
 	rootCmd.PersistentFlags().String("rpc_laddr", RPCAddr, "http url")
-	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "eth node url")
-	rootCmd.PersistentFlags().String("eth_chain_name", "Ethereum", "eth chain name")
+	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "bsc node url")
+	rootCmd.PersistentFlags().String("eth_chain_name", "Binance", "bsc chain name")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
