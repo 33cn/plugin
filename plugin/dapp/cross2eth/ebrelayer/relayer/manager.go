@@ -983,6 +983,38 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr *relayerTypes.CfgMulti
 	return nil
 }
 
+func (manager *Manager) GetEthMultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  ethInt.GetMultiSignAddr(),
+	}
+	return nil
+}
+
+func (manager *Manager) GetChain33MultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  manager.chain33Relayer.GetMultiSignAddr(),
+	}
+	return nil
+}
+
 func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -1002,6 +1034,20 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	*result = rpctypes.Reply{
 		IsOk: resultCfg,
 	}
+	return nil
+}
+func (manager *Manager) GetCfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[cfgWithdrawReq.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	*result = ethInt.GetCfgWithdraw(cfgWithdrawReq.Symbol)
 	return nil
 }
 
@@ -1035,6 +1081,44 @@ func (manager *Manager) BurnWithIncreaseAsyncFromChain33(burn *relayerTypes.Burn
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  txhash,
+	}
+	return nil
+}
+
+//ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
+func (manager *Manager) ShowEthRelayerValidator(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	ethINt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	var err error
+	*result, err = ethINt.GetValidatorAddr()
+	if nil != err {
+		return err
+	}
+	return nil
+}
+
+func (manager *Manager) EthGeneralQuery(query *relayerTypes.QueryReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[query.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+	ret, err := ethInt.GeneralQuery(query.Param, query.AbiData, query.ContractAddr, query.Owner)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  ret,
 	}
 	return nil
 }

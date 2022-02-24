@@ -7,12 +7,11 @@ import (
 	chain33Common "github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
-	"github.com/ethereum/go-ethereum/crypto"
-
 	chain33Types "github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 	x2ethTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	btcec_secp256k1 "github.com/btcsuite/btcd/btcec"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (

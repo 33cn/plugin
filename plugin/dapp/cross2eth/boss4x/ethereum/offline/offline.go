@@ -41,6 +41,7 @@ func DeployOfflineContractsCmd() *cobra.Command {
 		CreateBridgeTokenTxCmd(),
 		PrepareCreateMultisignTransferTxCmd(),   // 预备创建一个多签转帐交易 在线
 		PreliminarySignMultisignTransferTxCmd(), // 多签转帐交易 多签多个地址签名 离线
+		SendMultisignTransferTxCmd(),            // 创建并发送多签转帐交易
 		CreateMultisignTransferTxCmd(),          // 创建多签转帐交易
 		SignCmd(),                               // 签名交易 sign deploy contract tx
 		SendTxsCmd(),
@@ -69,22 +70,22 @@ type DeployConfigInfo struct {
 	MultisignAddrs []string `toml:"multisignAddrs"`
 }
 
-func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string, chainEthId int64) {
+func CreateTxInfo(abiData []byte, deployAddr, contract, name, url string, chainEthId int64) *DeployInfo {
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		fmt.Println("Dial Err:", err)
-		return
+		return nil
 	}
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
 		fmt.Println("SuggestGasPrice Err:", err)
-		return
+		return nil
 	}
 
 	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(deployAddr), nil)
 	if err != nil {
 		fmt.Println("NonceAt Err:", err)
-		return
+		return nil
 	}
 
 	contracAddr := common.HexToAddress(contract)
@@ -102,7 +103,7 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 		gasLimit, err = client.EstimateGas(context.Background(), msg)
 		if err != nil {
 			fmt.Println("EstimateGas Err:", err)
-			return
+			return nil
 		}
 		gasLimit = uint64(1.2 * float64(gasLimit))
 		if gasLimit < 100*10000 {
@@ -121,7 +122,7 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	txBytes, err := ntx.MarshalBinary()
 	if err != nil {
 		fmt.Println("MarshalBinary Err:", err)
-		return
+		return nil
 	}
 	var info DeployInfo
 	info.RawTx = common.Bytes2Hex(txBytes)
@@ -131,8 +132,17 @@ func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string
 	info.Gas = gasLimit
 	info.Name = name
 
+	return &info
+}
+
+func CreateTxInfoAndWrite(abiData []byte, deployAddr, contract, name, url string, chainEthId int64) {
+	info := CreateTxInfo(abiData, deployAddr, contract, name, url, chainEthId)
+	if info == nil {
+		return
+	}
+
 	var infos []*DeployInfo
-	infos = append(infos, &info)
+	infos = append(infos, info)
 	writeToFile(info.Name+".txt", infos)
 }
 

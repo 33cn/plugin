@@ -21,7 +21,7 @@ import (
 // 调用方式： foo(param1,param2)
 func Pack(param, abiData string, readOnly bool) (methodName string, packData []byte, err error) {
 	// 首先解析参数字符串，分析出方法名以及个参数取值
-	methodName, params, err := procFuncCall(param)
+	methodName, params, err := ProcFuncCall(param)
 
 	if err != nil {
 		return methodName, packData, err
@@ -57,7 +57,7 @@ func Pack(param, abiData string, readOnly bool) (methodName string, packData []b
 		}
 
 		for i, v := range method.Inputs.NonIndexed() {
-			paramVal, err := str2GoValue(v.Type, params[i])
+			paramVal, err := Str2GoValue(v.Type, params[i])
 			if err != nil {
 				return methodName, packData, err
 			}
@@ -71,7 +71,7 @@ func Pack(param, abiData string, readOnly bool) (methodName string, packData []b
 }
 
 func PackContructorPara(param, abiStr string) (packData []byte, err error) {
-	_, params, err := procFuncCall(param)
+	_, params, err := ProcFuncCall(param)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func PackContructorPara(param, abiStr string) (packData []byte, err error) {
 		}
 
 		for i, v := range method.Inputs.NonIndexed() {
-			paramVal, err := str2GoValue(v.Type, params[i])
+			paramVal, err := Str2GoValue(v.Type, params[i])
 			if err != nil {
 				return nil, err
 			}
@@ -253,7 +253,7 @@ func convertInt(val int64, kind reflect.Kind) interface{} {
 }
 
 // 从字符串格式的输入参数取值（单个），获取Go类型的
-func str2GoValue(typ Type, val string) (res interface{}, err error) {
+func Str2GoValue(typ Type, val string) (res interface{}, err error) {
 	switch typ.T {
 	case IntTy:
 		if typ.Size < 256 {
@@ -292,7 +292,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 		}
 		rval := reflect.MakeSlice(typ.GetType(), len(subs), len(subs))
 		for idx, sub := range subs {
-			subVal, er := str2GoValue(*typ.Elem, sub)
+			subVal, er := Str2GoValue(*typ.Elem, sub)
 			if er != nil {
 				//return res, er
 				subparams, err := procArrayItem(sub) //解析复合类型中的多个元素
@@ -312,7 +312,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 						continue
 					}
 					fmt.Println("tp", tp.stringKind, "types", tp.T)
-					subVal, err = str2GoValue(tp, subparams[i]) //处理对应的元素
+					subVal, err = Str2GoValue(tp, subparams[i]) //处理对应的元素
 					if err != nil {
 						fmt.Println("str2GoValue err ", err.Error())
 						continue
@@ -336,7 +336,7 @@ func str2GoValue(typ Type, val string) (res interface{}, err error) {
 			return res, err
 		}
 		for idx, sub := range subs {
-			subVal, er := str2GoValue(*typ.Elem, sub)
+			subVal, er := Str2GoValue(*typ.Elem, sub)
 			if er != nil {
 				return res, er
 			}
@@ -448,7 +448,7 @@ func peekRune(ss *stack.Stack) rune {
 
 // 解析方法调用字符串，返回方法名以及方法参数
 // 例如：foo(param1,param2) -> [foo,param1,param2]
-func procFuncCall(param string) (funcName string, res []string, err error) {
+func ProcFuncCall(param string) (funcName string, res []string, err error) {
 	lidx := strings.Index(param, "(")
 	ridx := strings.LastIndex(param, ")")
 

@@ -48,8 +48,6 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
-github.com/33cn/chain33 v1.66.4 h1:gHcde8fwc2X0xDujDD9UvGJu7PkW9YbzEoSWEY6soMw=
-github.com/33cn/chain33 v1.66.4/go.mod h1:27Z1b54wJ6EhE1IGA3S5AxSQ/t8dktFVgPnkLNbMFoE=
 github.com/33cn/chain33 v1.66.5 h1:2MaqzIhTLHfnka9N5QwaQm4R7quVKsqKYlJiRQCLSNw=
 github.com/33cn/chain33 v1.66.5/go.mod h1:27Z1b54wJ6EhE1IGA3S5AxSQ/t8dktFVgPnkLNbMFoE=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
