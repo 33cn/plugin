@@ -26,7 +26,12 @@ var (
 	txIsRelayedconfirm                 = []byte("chain33-txIsRelayedconfirm")
 	txRelayedAlready                   = []byte("chain33-txRelayedAlready")
 	fdTx2EthTotalAmount                = []byte("chain33-fdTx2EthTotalAmount")
+	txRelayAlreadyPrefix               = []byte("chain33-txRelayAlready")
 )
+
+func txRelayAlreadyKey(chain33Txhash string) []byte {
+	return append(txRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
+}
 
 func txIsRelayedconfirmKey(txHash string, index int64) []byte {
 	return append(txIsRelayedconfirm, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
@@ -104,11 +109,28 @@ func (chain33Relayer *Relayer4Chain33) resetKeyTxRelayedAlready(txHash string, i
 	return chain33Relayer.db.Set(setkey, data)
 }
 
-func (chain33Relayer *Relayer4Chain33) SetTxIsRelayedconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
+func (chain33Relayer *Relayer4Chain33) setTxIsRelayedconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
 	key := txIsRelayedconfirmKey(txHash, index)
 	data := chain33Types.Encode(txRelayConfirm4Chain33)
 	relayerLog.Info("SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
 	return chain33Relayer.db.Set(key, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) setTxRelayAlreadyInfo(ethTxhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := txRelayAlreadyKey(ethTxhash)
+	data := chain33Types.Encode(relayTxDetail)
+	return chain33Relayer.db.Set(key, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) getTxRelayAlreadyInfo(ethTxhash string) (*ebTypes.RelayTxDetail, error) {
+	key := txRelayAlreadyKey(ethTxhash)
+	data, err := chain33Relayer.db.Get(key)
+	if nil != err {
+		return nil, err
+	}
+	var relayTxDetail ebTypes.RelayTxDetail
+	err = chain33Types.Decode(data, &relayTxDetail)
+	return &relayTxDetail, err
 }
 
 func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(txIndex int64) error {
@@ -200,8 +222,8 @@ func (chain33Relayer *Relayer4Chain33) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (chain33Relayer *Relayer4Chain33) SetTokenAddress(token2set ebTypes.TokenAddress) error {
-	bytes := chain33Types.Encode(&token2set)
+func (chain33Relayer *Relayer4Chain33) SetTokenAddress(token2set *ebTypes.TokenAddress) error {
+	bytes := chain33Types.Encode(token2set)
 	chain33Relayer.rwLock.Lock()
 	chain33Relayer.symbol2Addr[token2set.Symbol] = token2set.Address
 	chain33Relayer.rwLock.Unlock()

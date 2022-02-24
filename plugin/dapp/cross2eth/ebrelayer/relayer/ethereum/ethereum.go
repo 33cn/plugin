@@ -76,11 +76,12 @@ type Relayer4Ethereum struct {
 	operatorInfo            *ethtxs.OperatorInfo
 	x2EthContracts          *ethtxs.X2EthContracts
 	ethBridgeClaimChan      chan<- *ebTypes.EthBridgeClaim
-	txRelayAckChan          chan<- *ebTypes.TxRelayAck
+	txRelayAckSendChan      chan<- *ebTypes.TxRelayAck
+	txRelayAckRecvChan      <-chan *ebTypes.TxRelayAck
 	chain33MsgChan          <-chan *events.Chain33Msg
 	totalTxRelayFromChain33 int64
 	symbol2Addr             map[string]common.Address
-	symbol2LockAddr         map[string]ebTypes.TokenAddress
+	symbol2LockAddr         map[string]*ebTypes.TokenAddress
 	mulSignAddr             string
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
@@ -106,7 +107,8 @@ type EthereumStartPara struct {
 	Degree             int32
 	BlockInterval      int32
 	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
-	TxRelayAckChan     chan<- *ebTypes.TxRelayAck
+	TxRelayAckSendChan chan<- *ebTypes.TxRelayAck
+	TxRelayAckRecvChan <-chan *ebTypes.TxRelayAck
 	Chain33MsgChan     <-chan *events.Chain33Msg
 	ProcessWithDraw    bool
 	Name               string
@@ -134,11 +136,12 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		maturityDegree:          startPara.Degree,
 		fetchHeightPeriodMs:     startPara.BlockInterval,
 		ethBridgeClaimChan:      startPara.EthBridgeClaimChan,
-		txRelayAckChan:          startPara.TxRelayAckChan,
+		txRelayAckSendChan:      startPara.TxRelayAckSendChan,
+		txRelayAckRecvChan:      startPara.TxRelayAckRecvChan,
 		chain33MsgChan:          startPara.Chain33MsgChan,
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
-		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
+		symbol2LockAddr:         make(map[string]*ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 		remindUrl:               startPara.RemindUrl,
 	}
@@ -394,8 +397,18 @@ burnLockWithdrawProc:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
 			ethRelayer.handleChain33Msg(chain33Msg)
+		case txRelayAck := <-ethRelayer.txRelayAckRecvChan:
+			ethRelayer.procTxRelayAck(txRelayAck)
 		}
 	}
+}
+
+func (ethRelayer *Relayer4Ethereum) procTxRelayAck(ack *ebTypes.TxRelayAck) {
+	//reset with another key to exclude from the check list to resend the same message
+	if err := ethRelayer.resetKeyTxRelayedAlready(ack.TxHash, ack.FdIndex); nil != err {
+		relayerLog.Error("ethRelayer::procTxRelayAck", "Failed to resetKeyTxRelayedAlready due to:", err.Error())
+	}
+	relayerLog.Info("ethRelayer::procTxRelayAck succeed", "txhash", ack.TxHash, "fd index", ack.FdIndex)
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
@@ -603,7 +616,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	ethTxhash := signedTx.Hash().Hex()
 	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", ethTxhash)
-	ethRelayer.txRelayAckChan <- &ebTypes.TxRelayAck{
+	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
 		TxHash:  chain33TxHash,
 		FdIndex: chain33Msg.ForwardIndex,
 	}
@@ -705,11 +718,11 @@ func (ethRelayer *Relayer4Ethereum) checkIsResendChain33Msg(chain33Msg *events.C
 		return false
 	}
 
-	ethRelayer.txRelayAckChan <- &ebTypes.TxRelayAck{
+	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
 		TxHash:  chain33TxHash,
 		FdIndex: chain33Msg.ForwardIndex,
 	}
-	relayerLog.Info("checkIsResendChain33Msg", "have relay already with tx hash:", relayTxDetail.EthTxhash)
+	relayerLog.Info("checkIsResendChain33Msg", "have relay already with tx hash:", relayTxDetail.Txhash)
 	return true
 }
 
@@ -812,7 +825,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	}
 	relayerLog.Info("handleLogLockBurn", "RelayOracleClaimToEthereum with tx hash", ethTxhash)
 
-	ethRelayer.txRelayAckChan <- &ebTypes.TxRelayAck{
+	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
 		TxHash:  chain33TxHash,
 		FdIndex: chain33Msg.ForwardIndex,
 	}
@@ -845,7 +858,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	relayTxDetail := &ebTypes.RelayTxDetail{
 		ClaimType:      int32(chain33Msg.ClaimType),
 		TxIndexRelayed: txIndex,
-		EthTxhash:      ethTxhash,
+		Txhash:         ethTxhash,
 	}
 
 	if err = ethRelayer.setEthTxRelayAlreadyInfo(chain33TxHash, relayTxDetail); nil != err {
@@ -885,11 +898,6 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 		relayerLog.Debug("getCurrentHeight", "clientSpec SetupWebsocketEthClient:", ethRelayer.providerHttp)
 		return head.Number.Uint64(), nil
 	}
-}
-
-func (ethRelayer *Relayer4Ethereum) procNewHeight4Withdraw(ctx context.Context) {
-	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
-	relayerLog.Info("procNewHeight4Withdraw", "currentHeight", currentHeight)
 }
 
 func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error) {
@@ -993,10 +1001,66 @@ func (ethRelayer *Relayer4Ethereum) ResendLockEvent(height uint64, index uint32)
 	return info, err
 }
 
+func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
+	txInfos, err := ethRelayer.getAllTxsUnconfirm()
+	if err != nil {
+		relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to getAllTxsUnconfirm due to", err.Error())
+		return
+	}
+	if 0 == len(txInfos) {
+		return
+	}
+	for _, txInfo := range txInfos {
+		txHashStr := txInfo.TxHash
+
+		if !txInfo.Resend {
+			//为了防止转发出去的消息之后，下一个区块时间马上到来，首次转发的消息需要至少等一个区块间隔之后才会进行转发
+			txInfo.Resend = true
+			err = ethRelayer.setTxIsRelayedconfirm(txHashStr, txInfo.FdIndex, txInfo)
+			if nil != err {
+				relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to SetTxIsRelayedconfirm due to", err.Error())
+				return
+			}
+			continue
+		}
+
+		event, err := events.UnpackLogLock(ethRelayer.bridgeBankAbi, events.LogLockFromETH.String(), txInfo.Data)
+		if nil != err {
+			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to UnpackLogLock due to", err.Error())
+			return
+		}
+
+		tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
+		if nil != err {
+			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to GetLockedTokenAddress due to", err.Error())
+			return
+		}
+
+		decimal := tokenLocked.Decimal
+		prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, ethRelayer.clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), txHashStr, int64(decimal))
+		if err != nil {
+			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to LogLockToEthBridgeClaim due to", err.Error())
+			return
+		}
+		prophecyClaim.ChainName = ethRelayer.name
+		prophecyClaim.ForwardIndex = txInfo.FdIndex
+		txInfo.FdTimes += 1
+		prophecyClaim.ForwardTimes = txInfo.FdTimes
+		ethRelayer.ethBridgeClaimChan <- prophecyClaim
+
+		relayerLog.Info("ethRelayer::checkTxRelay2Chain33", "forward tx with Hash", txHashStr, "ForwardTimes", txInfo.FdTimes)
+		err = ethRelayer.setTxIsRelayedconfirm(txHashStr, txInfo.FdIndex, txInfo)
+		if nil != err {
+			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to setTxIsRelayedconfirm due to", err.Error())
+			return
+		}
+	}
+}
+
 func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context) {
 	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
 	ethRelayer.updateTxStatus()
-	//currentHeight := head.Number.Uint64()
+	ethRelayer.checkTxRelay2Chain33()
 	relayerLog.Info("procNewHeight", "currentHeight", currentHeight, "ethRelayer.eventLogIndex.Height", ethRelayer.eventLogIndex.Height, "uint64(ethRelayer.maturityDegree)", uint64(ethRelayer.maturityDegree))
 
 	//一次最大只获取10个logEvent进行处理
@@ -1287,7 +1351,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 			}
 		}
 
-		token2set := ebTypes.TokenAddress{
+		token2set := &ebTypes.TokenAddress{
 			Address:   event.Token.String(),
 			Symbol:    event.Symbol,
 			ChainName: ebTypes.EthereumBlockChainName,
@@ -1303,20 +1367,27 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	}
 
 	// Parse the LogLock event's payload into a struct
-	prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), log.TxHash.String(), int64(decimal))
+	ethTxhash := log.TxHash.String()
+	prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), ethTxhash, int64(decimal))
 	if err != nil {
 		return err
 	}
 	prophecyClaim.ChainName = ethRelayer.name
-	//如果不是以太坊的USDT,则需要将其铸币为XUSD,如Binance的USDT，则铸币为BUSD
-	//if prophecyClaim.Symbol == "USDT" && EthereumChain != ethRelayer.name {
-	//	prophecyClaim.Symbol = ethRelayer.name[0:1] + "USDT"
-	//	prophecyClaim.Symbol = strings.ToUpper(prophecyClaim.Symbol)
-	//}
-
+	fdIndex := ethRelayer.getFdTx2Chain33TotalAmount() + 1
+	prophecyClaim.ForwardIndex = fdIndex
+	prophecyClaim.ForwardTimes = 1
 	ethRelayer.ethBridgeClaimChan <- prophecyClaim
 
-	return nil
+	_ = ethRelayer.updateFdTx2EthTotalAmount(fdIndex)
+	txRelayConfirm4Chain33 := &ebTypes.TxRelayConfirm4Ethereum{
+		EventType: int32(events.LogLockFromETH),
+		Data:      log.Data,
+		FdTimes:   1,
+		FdIndex:   fdIndex,
+		TxHash:    ethTxhash,
+		Resend:    false,
+	}
+	return ethRelayer.setTxIsRelayedconfirm(ethTxhash, fdIndex, txRelayConfirm4Chain33)
 }
 
 func (ethRelayer *Relayer4Ethereum) CreateLockEventManually(event *events.LockEvent) error {
@@ -1339,7 +1410,7 @@ func (ethRelayer *Relayer4Ethereum) CreateLockEventManually(event *events.LockEv
 			}
 		}
 
-		token2set := ebTypes.TokenAddress{
+		token2set := &ebTypes.TokenAddress{
 			Address:   event.Token.String(),
 			Symbol:    event.Symbol,
 			ChainName: ebTypes.EthereumBlockChainName,
