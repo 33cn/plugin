@@ -103,6 +103,7 @@ func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 		StartSyncHeight:   startPara.SyncTxConfig.StartSyncHeight,
 		StartSyncSequence: startPara.SyncTxConfig.StartSyncSequence,
 		StartSyncHash:     startPara.SyncTxConfig.StartSyncHash,
+		KeepAliveDuration: startPara.SyncTxConfig.KeepAliveDuration,
 	}
 
 	registrAddrInDB, err := chain33Relayer.getBridgeRegistryAddr()

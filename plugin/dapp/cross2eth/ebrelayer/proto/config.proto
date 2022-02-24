@@ -13,6 +13,7 @@ message SyncTxConfig {
   int64 startSyncHeight     = 10;
   int64 startSyncSequence   = 11;
   string startSyncHash      = 12;
+  int64 keepAliveDuration  = 13;
 }
 
 message Log {
@@ -66,4 +67,5 @@ message SyncTxReceiptConfig {
   int64 startSyncSequence   = 6;
   string startSyncHash      = 7;
   repeated string contracts = 8;
+  int64 keepAliveDuration   = 9;
 }
