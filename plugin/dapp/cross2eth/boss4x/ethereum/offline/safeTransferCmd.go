@@ -94,6 +94,7 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	toAddr := common.HexToAddress(receiver)
 	sendData := []byte{'0', 'x'}
 	baseGas := big.NewInt(0)
+	gasPrice := big.NewInt(0)
 	value := big.NewInt(0)
 	safeTxGas := big.NewInt(10 * 10000)
 
@@ -107,13 +108,6 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		fmt.Println("NonceAt Err:", err)
 		return
 	}
-
-	gasPrice := big.NewInt(0)
-	//gasPrice, err := client.SuggestGasPrice(context.Background())
-	//if err != nil {
-	//	fmt.Println("SuggestGasPrice Err:", err)
-	//	return
-	//}
 
 	bn := big.NewInt(1)
 	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
