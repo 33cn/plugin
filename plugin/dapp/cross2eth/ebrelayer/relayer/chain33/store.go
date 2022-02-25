@@ -23,22 +23,22 @@ var (
 	tokenSymbol2AddrPrefix             = []byte("chain33-chain33TokenSymbol2AddrPrefix")
 	multiSignAddressPrefix             = []byte("chain33-multiSignAddress")
 	symbol2Ethchain                    = []byte("chain33-symbol2Ethchain")
-	txIsRelayedconfirm                 = []byte("chain33-txIsRelayedconfirm")
-	txRelayedAlready                   = []byte("chain33-txRelayedAlready")
+	txIsRelayedUnconfirm               = []byte("chain33-txIsRelayedUnconfirm")
+	chain33TxRelayedAlready            = []byte("chain33-txRelayedAlready")
 	fdTx2EthTotalAmount                = []byte("chain33-fdTx2EthTotalAmount")
-	txRelayAlreadyPrefix               = []byte("chain33-txRelayAlready")
+	ethTxRelayAlreadyPrefix            = []byte("chain33-ethTxRelayAlready")
 )
 
-func txRelayAlreadyKey(chain33Txhash string) []byte {
-	return append(txRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
+func ethTxRelayAlreadyKey(chain33Txhash string) []byte {
+	return append(ethTxRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
 }
 
-func txIsRelayedconfirmKey(txHash string, index int64) []byte {
-	return append(txIsRelayedconfirm, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+func chain33TxIsRelayedUnconfirmKey(txHash string, index int64) []byte {
+	return append(txIsRelayedUnconfirm, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
 }
 
-func txRelayedAlreadyKey(txHash string, index int64) []byte {
-	return append(txRelayedAlready, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+func chain33TxRelayedAlreadyKey(txHash string, index int64) []byte {
+	return append(chain33TxRelayedAlready, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
 }
 
 func tokenSymbol2AddrKey(symbol string) []byte {
@@ -77,7 +77,7 @@ func (chain33Relayer *Relayer4Chain33) getFdTx2EthTotalAmount() int64 {
 
 func (chain33Relayer *Relayer4Chain33) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Chain33, err error) {
 	helper := dbm.NewListHelper(chain33Relayer.db)
-	datas := helper.List(txIsRelayedconfirm, nil, 0, dbm.ListASC)
+	datas := helper.List(txIsRelayedUnconfirm, nil, 0, dbm.ListASC)
 	cnt := len(datas)
 	if 0 == cnt {
 		return nil, nil
@@ -95,35 +95,34 @@ func (chain33Relayer *Relayer4Chain33) getAllTxsUnconfirm() (txInfos []*ebTypes.
 	return
 }
 
-func (chain33Relayer *Relayer4Chain33) resetKeyTxRelayedAlready(txHash string, index int64) error {
-	key := txIsRelayedconfirmKey(txHash, index)
-	relayerLog.Info("resetKeyTxRelayedAlready", "TxHash", txHash)
+func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash string, index int64) error {
+	key := chain33TxIsRelayedUnconfirmKey(txHash, index)
 	data, err := chain33Relayer.db.Get(key)
 	if nil != err {
 		relayerLog.Info("resetKeyTxRelayedAlready", "No data for tx", txHash)
 		return err
 	}
 	_ = chain33Relayer.db.Set(key, nil)
-	setkey := txRelayedAlreadyKey(txHash, index)
+	setkey := chain33TxRelayedAlreadyKey(txHash, index)
 
 	return chain33Relayer.db.Set(setkey, data)
 }
 
-func (chain33Relayer *Relayer4Chain33) setTxIsRelayedconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
-	key := txIsRelayedconfirmKey(txHash, index)
+func (chain33Relayer *Relayer4Chain33) setChain33TxIsRelayedUnconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
+	key := chain33TxIsRelayedUnconfirmKey(txHash, index)
 	data := chain33Types.Encode(txRelayConfirm4Chain33)
 	relayerLog.Info("SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
 	return chain33Relayer.db.Set(key, data)
 }
 
-func (chain33Relayer *Relayer4Chain33) setTxRelayAlreadyInfo(ethTxhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
-	key := txRelayAlreadyKey(ethTxhash)
+func (chain33Relayer *Relayer4Chain33) setEthTxRelayAlreadyInfo(ethTxhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := ethTxRelayAlreadyKey(ethTxhash)
 	data := chain33Types.Encode(relayTxDetail)
 	return chain33Relayer.db.Set(key, data)
 }
 
-func (chain33Relayer *Relayer4Chain33) getTxRelayAlreadyInfo(ethTxhash string) (*ebTypes.RelayTxDetail, error) {
-	key := txRelayAlreadyKey(ethTxhash)
+func (chain33Relayer *Relayer4Chain33) getEthTxRelayAlreadyInfo(ethTxhash string) (*ebTypes.RelayTxDetail, error) {
+	key := ethTxRelayAlreadyKey(ethTxhash)
 	data, err := chain33Relayer.db.Get(key)
 	if nil != err {
 		return nil, err

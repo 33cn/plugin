@@ -310,7 +310,9 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		TxHash:      chain33TxHash,
 		Resend:      false,
 	}
-	return chain33Relayer.setTxIsRelayedconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
+	//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
+	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
+	return chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
 }
 
 func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {
@@ -368,29 +370,30 @@ func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err err
 	return nil
 }
 
-func (chain33Relayer *Relayer4Chain33) checkIsResendChain33Msg(claim *ebTypes.EthBridgeClaim) bool {
+func (chain33Relayer *Relayer4Chain33) checkIsResendEthClaim(claim *ebTypes.EthBridgeClaim) bool {
 	if claim.ForwardTimes <= 1 {
 		return false
 	}
 	ethTxHash := claim.EthTxHash
-	relayerLog.Info("checkIsResendChain33Msg", "Received the same EthBridgeClaim more than once with times", claim.ForwardTimes, "tx hash string", ethTxHash)
-	relayTxDetail, _ := chain33Relayer.getTxRelayAlreadyInfo(ethTxHash)
+	relayerLog.Info("checkIsResendEthClaim", "Received the same EthBridgeClaim more than once with times", claim.ForwardTimes, "tx hash string", ethTxHash)
+	relayTxDetail, _ := chain33Relayer.getEthTxRelayAlreadyInfo(ethTxHash)
 	if nil == relayTxDetail {
-		relayerLog.Info("checkIsResendChain33Msg::haven't relay yet")
+		relayerLog.Info("checkIsResendEthClaim::haven't relay yet")
 		return false
 	}
 
+	//if relay already, just ack it
 	chain33Relayer.txRelayAckSendChan[claim.ChainName] <- &ebTypes.TxRelayAck{
 		TxHash:  ethTxHash,
 		FdIndex: claim.ForwardIndex,
 	}
-	relayerLog.Info("checkIsResendChain33Msg", "have relay already with tx hash:", relayTxDetail.Txhash)
+	relayerLog.Info("checkIsResendEthClaim", "have relay already with tx hash:", relayTxDetail.Txhash)
 	return true
 }
 
 func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.EthBridgeClaim) {
 	relayerLog.Debug("relayLockBurnToChain33", "new EthBridgeClaim received", claim)
-	if chain33Relayer.checkIsResendChain33Msg(claim) {
+	if chain33Relayer.checkIsResendEthClaim(claim) {
 		return
 	}
 
@@ -495,6 +498,8 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		TxHash:  claim.EthTxHash,
 		FdIndex: claim.ForwardIndex,
 	}
+	//relayEthereum2chain33CheckPonit 2:send ack
+	relayerLog.Info("relayLockBurnToChain33::relayEthereum2chain33CheckPonit_2::sendAck", "ethTxhash", claim.EthTxHash, "ForwardIndex", claim.ForwardIndex, "FdTimes", claim.ForwardTimes)
 
 	relayTxDetail := &ebTypes.RelayTxDetail{
 		ClaimType:      claim.ClaimType,
@@ -502,10 +507,13 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		Txhash:         txhash,
 	}
 
-	if err = chain33Relayer.setTxRelayAlreadyInfo(claim.EthTxHash, relayTxDetail); nil != err {
+	//set flag to indicate that the eth tx has been relayed to chain33
+	if err = chain33Relayer.setEthTxRelayAlreadyInfo(claim.EthTxHash, relayTxDetail); nil != err {
 		relayerLog.Error("relayLockBurnToChain33", "Failed to setTxRelayAlreadyInfo due to:", err.Error())
 		return
 	}
+	//relayEthereum2chain33CheckPonit 3:setFalgRelayFinish
+	relayerLog.Info("relayLockBurnToChain33::relayEthereum2chain33CheckPonit_3::setFalgRelayFinish", "ethTxhash", claim.EthTxHash, "ForwardIndex", claim.ForwardIndex, "FdTimes", claim.ForwardTimes)
 
 	//第一个有效的index从１开始，方便list
 	txIndex := atomic.AddInt64(&chain33Relayer.totalTx4RelayEth2chai33, 1)
@@ -607,7 +615,7 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 		if !txInfo.Resend {
 			//为了防止转发出去的消息之后，下一个区块时间马上到来，首次转发的消息需要至少等一个区块间隔之后才会进行转发
 			txInfo.Resend = true
-			err = chain33Relayer.setTxIsRelayedconfirm(txHashStr, txInfo.FdIndex, txInfo)
+			err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, txInfo.FdIndex, txInfo)
 			if nil != err {
 				relayerLog.Error("chain33Relayer::checkTxRelay2Ethereum", "Failed to SetTxIsRelayedconfirm due to", err.Error())
 				return
@@ -629,8 +637,9 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 		}
 		channel <- chain33Msg
 
-		relayerLog.Info("chain33Relayer::checkTxRelay2Ethereum", "forward tx with Hash", txHashStr, "ForwardTimes", chain33Msg.ForwardTimes)
-		err = chain33Relayer.setTxIsRelayedconfirm(txHashStr, txInfo.FdIndex, txInfo)
+		//relaychain33ToEthereumCheckPonit 5: checkTxRelay2Ethereum
+		relayerLog.Info("checkTxRelay2Ethereum::relaychain33ToEthereumCheckPonit_5::checkTxRelay2Ethereum", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+		err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, txInfo.FdIndex, txInfo)
 		if nil != err {
 			relayerLog.Error("chain33Relayer::checkTxRelay2Ethereum", "Failed to SetTxIsRelayedconfirm due to", err.Error())
 			return
@@ -638,12 +647,15 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 	}
 }
 
+//用于chain33的事件信息被中继之后的ack信息，重置标志位
 func (chain33Relayer *Relayer4Chain33) procTxRelayAck(ack *ebTypes.TxRelayAck) {
 	//reset with another key to exclude from the check list to resend the same message
-	if err := chain33Relayer.resetKeyTxRelayedAlready(ack.TxHash, ack.FdIndex); nil != err {
+	if err := chain33Relayer.resetKeyChain33TxRelayedAlready(ack.TxHash, ack.FdIndex); nil != err {
 		relayerLog.Error("chain33Relayer::procTxRelayAck", "Failed to resetKeyTxRelayedAlready due to:", err.Error())
+		return
 	}
-	relayerLog.Info("chain33Relayer::procTxRelayAck succeed", "txhash", ack.TxHash, "fd index", ack.FdIndex)
+	//relaychain33ToEthereumCheckPonit 4: recv ack from ethereum relay service
+	relayerLog.Info("chain33Relayer::procTxRelayAck::relaychain33ToEthereumCheckPonit_4", "chain33TxHash", ack.TxHash, "ForwardIndex", ack.FdIndex)
 }
 
 func (chain33Relayer *Relayer4Chain33) updateSingleTxStatus(claimType events.ClaimType) {

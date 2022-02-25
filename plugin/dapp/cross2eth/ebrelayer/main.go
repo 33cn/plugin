@@ -82,8 +82,8 @@ func main() {
 		chain33MsgChan := make(chan *events.Chain33Msg, 100)
 		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
 
-		txRelayAckChan := make(chan *ebrelayerTypes.TxRelayAck, 100)
-		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckChan
+		txRelayAckRecvChan := make(chan *ebrelayerTypes.TxRelayAck, 100)
+		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckRecvChan
 
 		ethStartPara := &ethRelayer.EthereumStartPara{
 			DbHandle:           db,
@@ -94,7 +94,7 @@ func main() {
 			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
 			EthBridgeClaimChan: ethBridgeClaimChan,
 			TxRelayAckSendChan: txRelayAckChan2Chain33,
-			TxRelayAckRecvChan: txRelayAckChan,
+			TxRelayAckRecvChan: txRelayAckRecvChan,
 			Chain33MsgChan:     chain33MsgChan,
 			ProcessWithDraw:    cfg.ProcessWithDraw,
 			Name:               cfg.EthRelayerCfg[i].EthChainName,

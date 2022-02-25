@@ -390,7 +390,7 @@ burnLockWithdrawProc:
 		case <-timer.C:
 			ethRelayer.procNewHeight(ctx)
 		case err := <-ethRelayer.bridgeBankSub.Err():
-			relayerLog.Error("proc", "bridgeBankSub err", err.Error())
+			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
 			ethRelayer.filterLogEvents()
 		case vLog := <-ethRelayer.bridgeBankLog:
@@ -408,7 +408,8 @@ func (ethRelayer *Relayer4Ethereum) procTxRelayAck(ack *ebTypes.TxRelayAck) {
 	if err := ethRelayer.resetKeyTxRelayedAlready(ack.TxHash, ack.FdIndex); nil != err {
 		relayerLog.Error("ethRelayer::procTxRelayAck", "Failed to resetKeyTxRelayedAlready due to:", err.Error())
 	}
-	relayerLog.Info("ethRelayer::procTxRelayAck succeed", "txhash", ack.TxHash, "fd index", ack.FdIndex)
+	//relayEthereum2chain33CheckPonit 4:procTxRelayAck
+	relayerLog.Info("relayLockBurnToChain33::relayEthereum2chain33CheckPonit_4::procTxRelayAck", "ethTxhash", ack.TxHash, "ForwardIndex", ack.FdIndex)
 }
 
 func (ethRelayer *Relayer4Ethereum) handleChain33Msg(chain33Msg *events.Chain33Msg) {
@@ -621,6 +622,9 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		FdIndex: chain33Msg.ForwardIndex,
 	}
 
+	//relaychain33ToEthereumCheckPonit 2: send ack to chain33 relay service
+	relayerLog.Info("handleLogWithdraw::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+
 	withdrawTx.Status = int32(ethtxs.WDPending)
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = ethTxhash
@@ -712,7 +716,7 @@ func (ethRelayer *Relayer4Ethereum) checkIsResendChain33Msg(chain33Msg *events.C
 	}
 	chain33TxHash := chain33Common.ToHex(chain33Msg.TxHash)
 	relayerLog.Info("checkIsResendChain33Msg", "Received the same chain33Msg more than once with times", chain33Msg.ForwardTimes, "tx hash string", chain33TxHash)
-	relayTxDetail, _ := ethRelayer.getEthTxRelayAlreadyInfo(chain33TxHash)
+	relayTxDetail, _ := ethRelayer.getChain33TxRelayAlreadyInfo(chain33TxHash)
 	if nil == relayTxDetail {
 		relayerLog.Info("checkIsResendChain33Msg::haven't relay yet")
 		return false
@@ -722,6 +726,9 @@ func (ethRelayer *Relayer4Ethereum) checkIsResendChain33Msg(chain33Msg *events.C
 		TxHash:  chain33TxHash,
 		FdIndex: chain33Msg.ForwardIndex,
 	}
+	//relaychain33ToEthereumCheckPonit 2: send ack
+	relayerLog.Info("checkIsResendChain33Msg::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+
 	relayerLog.Info("checkIsResendChain33Msg", "have relay already with tx hash:", relayTxDetail.Txhash)
 	return true
 }
@@ -829,6 +836,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		TxHash:  chain33TxHash,
 		FdIndex: chain33Msg.ForwardIndex,
 	}
+	//relaychain33ToEthereumCheckPonit 2: send ack to chain33 relay service
+	relayerLog.Info("handleLogLockBurn::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
 
 	//保存交易hash，方便查询
 	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
@@ -861,10 +870,12 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		Txhash:         ethTxhash,
 	}
 
-	if err = ethRelayer.setEthTxRelayAlreadyInfo(chain33TxHash, relayTxDetail); nil != err {
+	if err = ethRelayer.setChain33TxRelayAlreadyInfo(chain33TxHash, relayTxDetail); nil != err {
 		relayerLog.Error("handleLogLockBurn", "Failed to setEthTxRelayAlreadyInfo due to:", err.Error())
 		return
 	}
+	//relaychain33ToEthereumCheckPonit 3: set flag to send relay tx to ethereum node
+	relayerLog.Info("handleLogLockBurn::relaychain33ToEthereumCheckPonit_3::setRelayFinishFlag", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
 
 	relayerLog.Info("RelayOracleClaimToEthereum::successful",
 		"txIndex", txIndex,
@@ -1048,7 +1059,8 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 		prophecyClaim.ForwardTimes = txInfo.FdTimes
 		ethRelayer.ethBridgeClaimChan <- prophecyClaim
 
-		relayerLog.Info("ethRelayer::checkTxRelay2Chain33", "forward tx with Hash", txHashStr, "ForwardTimes", txInfo.FdTimes)
+		//relayEthereum2chain33CheckPonit 5:resendClaim
+		relayerLog.Info("checkTxRelay2Chain33::relayEthereum2chain33CheckPonit_5::resendClaim", "ethTxhash", txInfo.TxHash, "ForwardIndex", txInfo.FdIndex, "FdTimes", txInfo.FdTimes)
 		err = ethRelayer.setTxIsRelayedconfirm(txHashStr, txInfo.FdIndex, txInfo)
 		if nil != err {
 			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to setTxIsRelayedconfirm due to", err.Error())
@@ -1378,6 +1390,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 	prophecyClaim.ForwardTimes = 1
 	ethRelayer.ethBridgeClaimChan <- prophecyClaim
 
+	//relayEthereum2chain33CheckPonit 1:send prophecyClaim to chain33 relay service
+	relayerLog.Info("handleLogLockEvent::relayEthereum2chain33CheckPonit_1::sendClaim2Chain33", "ethTxhash", ethTxhash, "ForwardIndex", prophecyClaim.ForwardIndex, "FdTimes", prophecyClaim.ForwardTimes)
 	_ = ethRelayer.updateFdTx2EthTotalAmount(fdIndex)
 	txRelayConfirm4Chain33 := &ebTypes.TxRelayConfirm4Ethereum{
 		EventType: int32(events.LogLockFromETH),
