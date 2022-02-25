@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"math/big"
 	"os"
 	"strings"
+
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
