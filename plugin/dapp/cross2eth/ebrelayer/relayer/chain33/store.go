@@ -111,7 +111,7 @@ func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash st
 func (chain33Relayer *Relayer4Chain33) setChain33TxIsRelayedUnconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
 	key := chain33TxIsRelayedUnconfirmKey(txHash, index)
 	data := chain33Types.Encode(txRelayConfirm4Chain33)
-	relayerLog.Info("SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
+	relayerLog.Info("setChain33TxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
 	return chain33Relayer.db.Set(key, data)
 }
 

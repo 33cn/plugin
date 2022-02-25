@@ -45,16 +45,16 @@ var (
 	fdTx2Chain33TotalAmount = "eth-fdTx2Chain33TotalAmount"
 )
 
-func ethTxIsRelayedUnconfirmKey(txHash string, index int64) []byte {
-	return []byte(fmt.Sprintf("%s-index-%d-txHash-%s", ethTxIsRelayedUnconfirm, index, txHash))
+func ethTxIsRelayedUnconfirmKey(chainName, txHash string, index int64) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-index-%d-txHash-%s", ethTxIsRelayedUnconfirm, chainName, index, txHash))
 }
 
-func ethTxRelayedAlreadyKey(txHash string, index int64) []byte {
-	return []byte(fmt.Sprintf("%s-index-%d-txHash-%s", ethTxRelayedAlready, index, txHash))
+func ethTxRelayedAlreadyKey(chainName, txHash string, index int64) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-index-%d-txHash-%s", ethTxRelayedAlready, chainName, index, txHash))
 }
 
-func chain33TxRelayAlreadyKey(chain33Txhash string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", chain33TxRelayAlreadyPrefix, chain33Txhash))
+func chain33TxRelayAlreadyKey(chainName, chain33Txhash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-%s", chain33TxRelayAlreadyPrefix, chainName, chain33Txhash))
 }
 
 func ethTokenSymbol2AddrKey(chainName, symbol string) []byte {
@@ -77,14 +77,14 @@ func calcRelayFromChain33ListPrefix(chainName string, claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%d-", chainName, chain33ToEthStaticsPrefix, claimType))
 }
 
-func (ethRelayer *Relayer4Ethereum) setChain33TxRelayAlreadyInfo(chain33Txhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
-	key := chain33TxRelayAlreadyKey(chain33Txhash)
+func (ethRelayer *Relayer4Ethereum) setChain33TxRelayAlreadyInfo(chainName, chain33Txhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := chain33TxRelayAlreadyKey(chainName, chain33Txhash)
 	data := chain33Types.Encode(relayTxDetail)
 	return ethRelayer.db.Set(key, data)
 }
 
-func (ethRelayer *Relayer4Ethereum) getChain33TxRelayAlreadyInfo(chain33Txhash string) (*ebTypes.RelayTxDetail, error) {
-	key := chain33TxRelayAlreadyKey(chain33Txhash)
+func (ethRelayer *Relayer4Ethereum) getChain33TxRelayAlreadyInfo(chainName, chain33Txhash string) (*ebTypes.RelayTxDetail, error) {
+	key := chain33TxRelayAlreadyKey(chainName, chain33Txhash)
 	data, err := ethRelayer.db.Get(key)
 	if nil != err {
 		return nil, err
@@ -301,6 +301,8 @@ func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.Tok
 	ethRelayer.rwLock.Lock()
 	ethRelayer.symbol2LockAddr[token2set.Symbol] = token2set
 	ethRelayer.rwLock.Unlock()
+	relayerLog.Info("SetLockedTokenAddress", "symbol", token2set.Symbol, "decimal", token2set.Decimal, "address", token2set.Address,
+		"chain name", token2set.ChainName)
 	return ethRelayer.db.Set(ethTokenSymbol2LockAddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
@@ -545,7 +547,7 @@ func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.Withd
 		Txhash:         withdrawTx.TxHashOnEthereum,
 	}
 
-	if err := ethRelayer.setChain33TxRelayAlreadyInfo(chain33TxHash, relayTxDetail); nil != err {
+	if err := ethRelayer.setChain33TxRelayAlreadyInfo(ethRelayer.name, chain33TxHash, relayTxDetail); nil != err {
 		relayerLog.Error("setWithdrawStatics", "Failed to setEthTxRelayAlreadyInfo due to:", err.Error())
 		return err
 	}
@@ -596,8 +598,8 @@ func (ethRelayer *Relayer4Ethereum) getFdTx2Chain33TotalAmount() int64 {
 	return totalTx
 }
 
-func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(txHash string, index int64) error {
-	key := ethTxIsRelayedUnconfirmKey(txHash, index)
+func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash string, index int64) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash, index)
 	relayerLog.Info("Relayer4Ethereum::resetKeyTxRelayedAlready", "TxHash", txHash)
 	data, err := ethRelayer.db.Get(key)
 	if nil != err {
@@ -605,13 +607,13 @@ func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(txHash string, inde
 		return err
 	}
 	_ = ethRelayer.db.Set(key, nil)
-	setkey := ethTxRelayedAlreadyKey(txHash, index)
+	setkey := ethTxRelayedAlreadyKey(chainName, txHash, index)
 
 	return ethRelayer.db.Set(setkey, data)
 }
 
-func (ethRelayer *Relayer4Ethereum) setTxIsRelayedconfirm(txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
-	key := ethTxIsRelayedUnconfirmKey(txHash, index)
+func (ethRelayer *Relayer4Ethereum) setTxIsRelayedconfirm(chainName, txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash, index)
 	data := chain33Types.Encode(txRelayConfirm)
 	relayerLog.Info("Relayer4Ethereum::SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm.FdTimes)
 	return ethRelayer.db.Set(key, data)
@@ -619,7 +621,8 @@ func (ethRelayer *Relayer4Ethereum) setTxIsRelayedconfirm(txHash string, index i
 
 func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Ethereum, err error) {
 	helper := dbm.NewListHelper(ethRelayer.db)
-	datas := helper.List([]byte(ethTxIsRelayedUnconfirm), nil, 0, dbm.ListASC)
+	prefix := []byte(fmt.Sprintf("%s-chainName-%s-index", ethTxIsRelayedUnconfirm, ethRelayer.name))
+	datas := helper.List(prefix, nil, 0, dbm.ListASC)
 	cnt := len(datas)
 	if 0 == cnt {
 		return nil, nil

@@ -262,6 +262,15 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 					continue
 				}
 
+				if evmEventType == events.Chain33EventLogWithdraw && !chain33Relayer.processWithDraw {
+					//代理提币消息只由代理提币节点处理
+					continue
+				}
+				if evmEventType != events.Chain33EventLogWithdraw && chain33Relayer.processWithDraw {
+					//lock和burn消息消息只由普通中继节点处理
+					continue
+				}
+
 				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
 					relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 				}
@@ -311,7 +320,7 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		Resend:      false,
 	}
 	//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
-	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
+	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
 	return chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
 }
 
@@ -487,14 +496,13 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		common.ToHex(signature))
 	relayerLog.Info("relayLockBurnToChain33", "parameter", parameter)
 
-	claim.ChainName = chain33Relayer.chainName
-	txhash, err := relayEvmTx2Chain33(chain33Relayer.privateKey4Chain33, claim, parameter, chain33Relayer.rpcLaddr, chain33Relayer.oracleAddr)
+	txhash, err := relayEvmTx2Chain33(chain33Relayer.privateKey4Chain33, claim, parameter, chain33Relayer.rpcLaddr, chain33Relayer.oracleAddr, chain33Relayer.chainName)
 	if err != nil {
 		relayerLog.Error("relayLockBurnToChain33", "Failed to RelayEvmTx2Chain33 due to:", err.Error(), "EthereumTxhash", claim.EthTxHash)
 		return
 	}
 
-	chain33Relayer.txRelayAckSendChan[chain33Relayer.chainName] <- &ebTypes.TxRelayAck{
+	chain33Relayer.txRelayAckSendChan[claim.ChainName] <- &ebTypes.TxRelayAck{
 		TxHash:  claim.EthTxHash,
 		FdIndex: claim.ForwardIndex,
 	}
@@ -638,7 +646,7 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 		channel <- chain33Msg
 
 		//relaychain33ToEthereumCheckPonit 5: checkTxRelay2Ethereum
-		relayerLog.Info("checkTxRelay2Ethereum::relaychain33ToEthereumCheckPonit_5::checkTxRelay2Ethereum", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+		relayerLog.Info("chain33Relayer::relaychain33ToEthereumCheckPonit_5::checkTxRelay2Ethereum", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
 		err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, txInfo.FdIndex, txInfo)
 		if nil != err {
 			relayerLog.Error("chain33Relayer::checkTxRelay2Ethereum", "Failed to SetTxIsRelayedconfirm due to", err.Error())
