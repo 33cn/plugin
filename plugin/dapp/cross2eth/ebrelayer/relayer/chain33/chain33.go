@@ -637,6 +637,7 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 		}
 		txInfo.FdTimes = txInfo.FdTimes + 1
 		chain33Msg.ForwardTimes = txInfo.FdTimes
+		chain33Msg.ForwardIndex = txInfo.FdIndex
 
 		channel, ok := chain33Relayer.chain33MsgChan[txInfo.ToChainName]
 		if !ok {

@@ -617,13 +617,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	ethTxhash := signedTx.Hash().Hex()
 	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", ethTxhash)
-	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
-		TxHash:  chain33TxHash,
-		FdIndex: chain33Msg.ForwardIndex,
-	}
-
-	//relaychain33ToEthereumCheckPonit 2: send ack to chain33 relay service
-	relayerLog.Info("handleLogWithdraw::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
 
 	withdrawTx.Status = int32(ethtxs.WDPending)
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()

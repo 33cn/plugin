@@ -541,6 +541,13 @@ func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.Withd
 	relayerLog.Info("setWithdrawStatics::successful", "txIndex", txIndex, "Chain33Txhash", statics.Chain33Txhash, "EthereumTxhash", statics.EthereumTxhash, "type", operationType,
 		"Symbol", chain33Msg.Symbol, "Amount", chain33Msg.Amount, "EthereumReceiver", statics.EthereumReceiver, "Chain33Sender", statics.Chain33Sender)
 
+	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
+		TxHash:  chain33TxHash,
+		FdIndex: chain33Msg.ForwardIndex,
+	}
+	//relaychain33ToEthereumCheckPonit 2: send ack to chain33 relay service
+	relayerLog.Info("setWithdrawStatics::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+
 	relayTxDetail := &ebTypes.RelayTxDetail{
 		ClaimType:      int32(chain33Msg.ClaimType),
 		TxIndexRelayed: txIndex,
