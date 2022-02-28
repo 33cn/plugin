@@ -16,6 +16,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -173,7 +174,16 @@ func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, er
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
-	ctx.Run()
+	result, err := ctx.RunResult()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 0, err
+	}
+	_, err = json.MarshalIndent(result, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 0, err
+	}
 
 	decimals, err := strconv.ParseInt(res.Msg, 0, 64)
 	if err != nil {
