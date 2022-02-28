@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"io"
 	"io/ioutil"
 	"math"
@@ -21,6 +20,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
