@@ -16,7 +16,6 @@ import (
 	"math/big"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -26,8 +25,6 @@ import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-
-	simplejson "github.com/bitly/go-simplejson"
 
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
@@ -172,25 +169,9 @@ func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, er
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
-	result, err := ctx.RunResult()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 0, err
-	}
-	data, err := json.MarshalIndent(result, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 0, err
-	}
+	ctx.Run()
 
-	js, err := simplejson.NewJson(data)
-	if err != nil {
-		log.Error("GetDecimals", "NewJson error:", err.Error())
-		return 0, err
-	}
-	ret := js.Get("msg").MustString()
-
-	decimals, err := strconv.ParseInt(ret, 0, 64)
+	decimals, err := strconv.ParseInt(res.Msg, 0, 64)
 	if err != nil {
 		log.Error("GetDecimals", "ParseInt error:", err.Error())
 		return 0, err
