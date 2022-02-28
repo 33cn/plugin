@@ -302,7 +302,7 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 
 	relayerLog.Info("handleBurnLockWithdrawEvent", "Going to send chain33Msg.ClaimType", chain33Msg.ClaimType.String())
 
-	chainName := ebTypes.BinanceChainName
+	var chainName string
 	//specical process: withdraw YCC　only to bsc
 	if events.Chain33EventLogWithdraw == evmEventType && "YCC" == chain33Msg.Symbol {
 		chainName = ebTypes.BinanceChainName
