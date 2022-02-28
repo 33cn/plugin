@@ -301,10 +301,18 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 	chain33Msg.ForwardIndex = fdIndex
 
 	relayerLog.Info("handleBurnLockWithdrawEvent", "Going to send chain33Msg.ClaimType", chain33Msg.ClaimType.String())
-	chainName, ok := chain33Relayer.bridgeSymbol2EthChainName[chain33Msg.Symbol]
-	if !ok {
-		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chain33Msg.Symbol)
-		return errors.New("ErrNoEthChainName4BridgeSymbol")
+
+	chainName := ebTypes.BinanceChainName
+	//specical process: withdraw YCC　only to bsc
+	if events.Chain33EventLogWithdraw == evmEventType && "YCC" == chain33Msg.Symbol {
+		chainName = ebTypes.BinanceChainName
+	} else {
+		ok := false
+		chainName, ok = chain33Relayer.bridgeSymbol2EthChainName[chain33Msg.Symbol]
+		if !ok {
+			relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chain33Msg.Symbol)
+			return errors.New("ErrNoEthChainName4BridgeSymbol")
+		}
 	}
 
 	channel, ok := chain33Relayer.chain33MsgChan[chainName]

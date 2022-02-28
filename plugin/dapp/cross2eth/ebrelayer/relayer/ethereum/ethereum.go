@@ -380,11 +380,10 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			ethRelayer.filterLogEvents()
 			relayerLog.Info("Ethereum relayer starts to process online log event...")
 			timer = time.NewTicker(time.Duration(ethRelayer.fetchHeightPeriodMs) * time.Millisecond)
-			goto burnLockWithdrawProc
+			break
 		}
 	}
 
-burnLockWithdrawProc:
 	for {
 		select {
 		case <-timer.C:
