@@ -45,12 +45,12 @@ var (
 	fdTx2Chain33TotalAmount = "eth-fdTx2Chain33TotalAmount"
 )
 
-func ethTxIsRelayedUnconfirmKey(chainName, txHash string, index int64) []byte {
-	return []byte(fmt.Sprintf("%s-chainName-%s-index-%d-txHash-%s", ethTxIsRelayedUnconfirm, chainName, index, txHash))
+func ethTxIsRelayedUnconfirmKey(chainName, txHash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-txHash-%s", ethTxIsRelayedUnconfirm, chainName, txHash))
 }
 
-func ethTxRelayedAlreadyKey(chainName, txHash string, index int64) []byte {
-	return []byte(fmt.Sprintf("%s-chainName-%s-index-%d-txHash-%s", ethTxRelayedAlready, chainName, index, txHash))
+func ethTxRelayedAlreadyKey(chainName, txHash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-txHash-%s", ethTxRelayedAlready, chainName, txHash))
 }
 
 func chain33TxRelayAlreadyKey(chainName, chain33Txhash string) []byte {
@@ -202,17 +202,6 @@ func (ethRelayer *Relayer4Ethereum) getLogProcHeight(key []byte) uint64 {
 		return 0
 	}
 	return height.Data
-}
-
-//保存处理过的交易
-func (ethRelayer *Relayer4Ethereum) setTxProcessed(txhash []byte) error {
-	return ethRelayer.db.Set(txhash, []byte("1"))
-}
-
-//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
-func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash []byte) bool {
-	_, err := ethRelayer.db.Get(txhash)
-	return nil == err
 }
 
 func (ethRelayer *Relayer4Ethereum) setEthTxEvent(vLog types.Log) error {
@@ -605,8 +594,8 @@ func (ethRelayer *Relayer4Ethereum) getFdTx2Chain33TotalAmount() int64 {
 	return totalTx
 }
 
-func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash string, index int64) error {
-	key := ethTxIsRelayedUnconfirmKey(chainName, txHash, index)
+func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash string) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash)
 	relayerLog.Info("Relayer4Ethereum::resetKeyTxRelayedAlready", "TxHash", txHash)
 	data, err := ethRelayer.db.Get(key)
 	if nil != err {
@@ -614,21 +603,21 @@ func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash s
 		return err
 	}
 	_ = ethRelayer.db.Set(key, nil)
-	setkey := ethTxRelayedAlreadyKey(chainName, txHash, index)
+	setkey := ethTxRelayedAlreadyKey(chainName, txHash)
 
 	return ethRelayer.db.Set(setkey, data)
 }
 
-func (ethRelayer *Relayer4Ethereum) setTxIsRelayedconfirm(chainName, txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
-	key := ethTxIsRelayedUnconfirmKey(chainName, txHash, index)
+func (ethRelayer *Relayer4Ethereum) setTxIsRelayedUnconfirm(chainName, txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash)
 	data := chain33Types.Encode(txRelayConfirm)
-	relayerLog.Info("Relayer4Ethereum::SetTxIsRelayedconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm.FdTimes)
+	relayerLog.Info("Relayer4Ethereum::setTxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm.FdTimes)
 	return ethRelayer.db.Set(key, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Ethereum, err error) {
 	helper := dbm.NewListHelper(ethRelayer.db)
-	prefix := []byte(fmt.Sprintf("%s-chainName-%s-index", ethTxIsRelayedUnconfirm, ethRelayer.name))
+	prefix := []byte(fmt.Sprintf("%s-chainName-%s", ethTxIsRelayedUnconfirm, ethRelayer.name))
 	datas := helper.List(prefix, nil, 0, dbm.ListASC)
 	cnt := len(datas)
 	if 0 == cnt {
@@ -645,4 +634,21 @@ func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxR
 		txInfos[i] = txInfo
 	}
 	return
+}
+
+//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash string) bool {
+	key1 := ethTxIsRelayedUnconfirmKey(ethRelayer.name, txhash)
+	data, err := ethRelayer.db.Get(key1)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	key2 := ethTxRelayedAlreadyKey(ethRelayer.name, txhash)
+	data, err = ethRelayer.db.Get(key2)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	return false
 }

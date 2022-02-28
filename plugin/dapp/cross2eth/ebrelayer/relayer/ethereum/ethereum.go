@@ -405,7 +405,7 @@ burnLockWithdrawProc:
 
 func (ethRelayer *Relayer4Ethereum) procTxRelayAck(ack *ebTypes.TxRelayAck) {
 	//reset with another key to exclude from the check list to resend the same message
-	if err := ethRelayer.resetKeyTxRelayedAlready(ethRelayer.name, ack.TxHash, ack.FdIndex); nil != err {
+	if err := ethRelayer.resetKeyTxRelayedAlready(ethRelayer.name, ack.TxHash); nil != err {
 		relayerLog.Error("ethRelayer::procTxRelayAck", "Failed to resetKeyTxRelayedAlready due to:", err.Error())
 	}
 	//relayEthereum2chain33CheckPonit 4:procTxRelayAck
@@ -1020,7 +1020,7 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 		if !txInfo.Resend {
 			//为了防止转发出去的消息之后，下一个区块时间马上到来，首次转发的消息需要至少等一个区块间隔之后才会进行转发
 			txInfo.Resend = true
-			err = ethRelayer.setTxIsRelayedconfirm(ethRelayer.name, txHashStr, txInfo.FdIndex, txInfo)
+			err = ethRelayer.setTxIsRelayedUnconfirm(ethRelayer.name, txHashStr, txInfo.FdIndex, txInfo)
 			if nil != err {
 				relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to SetTxIsRelayedconfirm due to", err.Error())
 				return
@@ -1055,7 +1055,7 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 
 		//relayEthereum2chain33CheckPonit 5:resendClaim
 		relayerLog.Info("checkTxRelay2Chain33::relayEthereum2chain33CheckPonit_5::resendClaim", "ethTxhash", txInfo.TxHash, "ForwardIndex", txInfo.FdIndex, "FdTimes", txInfo.FdTimes)
-		err = ethRelayer.setTxIsRelayedconfirm(ethRelayer.name, txHashStr, txInfo.FdIndex, txInfo)
+		err = ethRelayer.setTxIsRelayedUnconfirm(ethRelayer.name, txHashStr, txInfo.FdIndex, txInfo)
 		if nil != err {
 			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to setTxIsRelayedconfirm due to", err.Error())
 			return
@@ -1131,22 +1131,17 @@ func (ethRelayer *Relayer4Ethereum) storeBridgeBankLogs(vLog types.Log, setBlock
 }
 
 func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
-	if ethRelayer.checkTxProcessed(vLog.TxHash.Bytes()) {
-		relayerLog.Info("procBridgeBankLogs", "Tx has been already Processed with hash:", vLog.TxHash.Hex(),
+	txHashStr := vLog.TxHash.String()
+	if ethRelayer.checkTxProcessed(txHashStr) {
+		relayerLog.Info("procBridgeBankLogs", "Tx has been already Processed with hash:", txHashStr,
 			"height", vLog.BlockNumber, "index", vLog.Index)
 		return
 	}
 
-	defer func() {
-		if err := ethRelayer.setTxProcessed(vLog.TxHash.Bytes()); nil != err {
-			panic(err.Error())
-		}
-	}()
-
 	//检查当前交易是否因为区块回退而导致交易丢失
 	receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), vLog.TxHash)
 	if nil != err {
-		relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", vLog.TxHash.String())
+		relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", txHashStr)
 		return
 	}
 
@@ -1407,7 +1402,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockEvent(clientChainID *big.Int, c
 		TxHash:    ethTxhash,
 		Resend:    false,
 	}
-	return ethRelayer.setTxIsRelayedconfirm(ethRelayer.name, ethTxhash, fdIndex, txRelayConfirm4Chain33)
+	return ethRelayer.setTxIsRelayedUnconfirm(ethRelayer.name, ethTxhash, fdIndex, txRelayConfirm4Chain33)
 }
 
 func (ethRelayer *Relayer4Ethereum) CreateLockEventManually(event *events.LockEvent) error {

@@ -33,12 +33,12 @@ func ethTxRelayAlreadyKey(chain33Txhash string) []byte {
 	return append(ethTxRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
 }
 
-func chain33TxIsRelayedUnconfirmKey(txHash string, index int64) []byte {
-	return append(txIsRelayedUnconfirm, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+func chain33TxIsRelayedUnconfirmKey(txHash string) []byte {
+	return append(txIsRelayedUnconfirm, []byte(fmt.Sprintf("-txHash-%s", txHash))...)
 }
 
-func chain33TxRelayedAlreadyKey(txHash string, index int64) []byte {
-	return append(chain33TxRelayedAlready, []byte(fmt.Sprintf("-%d-txHash-%s", index, txHash))...)
+func chain33TxRelayedAlreadyKey(txHash string) []byte {
+	return append(chain33TxRelayedAlready, []byte(fmt.Sprintf("-txHash-%s", txHash))...)
 }
 
 func tokenSymbol2AddrKey(symbol string) []byte {
@@ -95,21 +95,21 @@ func (chain33Relayer *Relayer4Chain33) getAllTxsUnconfirm() (txInfos []*ebTypes.
 	return
 }
 
-func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash string, index int64) error {
-	key := chain33TxIsRelayedUnconfirmKey(txHash, index)
+func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash string) error {
+	key := chain33TxIsRelayedUnconfirmKey(txHash)
 	data, err := chain33Relayer.db.Get(key)
 	if nil != err {
 		relayerLog.Info("resetKeyTxRelayedAlready", "No data for tx", txHash)
 		return err
 	}
 	_ = chain33Relayer.db.Set(key, nil)
-	setkey := chain33TxRelayedAlreadyKey(txHash, index)
+	setkey := chain33TxRelayedAlreadyKey(txHash)
 
 	return chain33Relayer.db.Set(setkey, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) setChain33TxIsRelayedUnconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
-	key := chain33TxIsRelayedUnconfirmKey(txHash, index)
+	key := chain33TxIsRelayedUnconfirmKey(txHash)
 	data := chain33Types.Encode(txRelayConfirm4Chain33)
 	relayerLog.Info("setChain33TxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
 	return chain33Relayer.db.Set(key, data)
@@ -319,4 +319,21 @@ func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]stri
 		return make(map[string]string)
 	}
 	return symbol2EthChain.Symbol2Name
+}
+
+//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+func (chain33Relayer *Relayer4Chain33) checkTxProcessed(txhash string) bool {
+	key1 := chain33TxIsRelayedUnconfirmKey(txhash)
+	data, err := chain33Relayer.db.Get(key1)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	key2 := chain33TxRelayedAlreadyKey(txhash)
+	data, err = chain33Relayer.db.Get(key2)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	return false
 }

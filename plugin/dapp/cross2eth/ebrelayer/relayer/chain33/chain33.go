@@ -286,6 +286,11 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 	txHashStr := common.ToHex(chain33TxHash)
 	relayerLog.Info("handleBurnLockWithdrawEvent", "Received tx with hash", txHashStr)
 
+	if chain33Relayer.checkTxProcessed(txHashStr) {
+		relayerLog.Info("handleBurnLockWithdrawEvent", "Tx has been already Processed with hash:", txHashStr)
+		return nil
+	}
+
 	// Parse the witnessed event's data into a new Chain33Msg
 	chain33Msg, err := events.ParseBurnLock4chain33(evmEventType, data, chain33Relayer.bridgeBankAbi, chain33TxHash)
 	if nil != err {
@@ -367,6 +372,15 @@ func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err err
 			} else if chain33Relayer.bridgeBankEventWithdrawSig == common.ToHex(evmlog.Topic[0]) {
 				evmEventType = events.Chain33EventLogWithdraw
 			} else {
+				continue
+			}
+
+			if evmEventType == events.Chain33EventLogWithdraw && !chain33Relayer.processWithDraw {
+				//代理提币消息只由代理提币节点处理
+				continue
+			}
+			if evmEventType != events.Chain33EventLogWithdraw && chain33Relayer.processWithDraw {
+				//lock和burn消息消息只由普通中继节点处理
 				continue
 			}
 
@@ -659,7 +673,7 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 //用于chain33的事件信息被中继之后的ack信息，重置标志位
 func (chain33Relayer *Relayer4Chain33) procTxRelayAck(ack *ebTypes.TxRelayAck) {
 	//reset with another key to exclude from the check list to resend the same message
-	if err := chain33Relayer.resetKeyChain33TxRelayedAlready(ack.TxHash, ack.FdIndex); nil != err {
+	if err := chain33Relayer.resetKeyChain33TxRelayedAlready(ack.TxHash); nil != err {
 		relayerLog.Error("chain33Relayer::procTxRelayAck", "Failed to resetKeyTxRelayedAlready due to:", err.Error())
 		return
 	}
