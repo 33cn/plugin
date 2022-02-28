@@ -10,27 +10,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"io"
 	"io/ioutil"
 	"math"
 	"math/big"
 	"net"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
-	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
-
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -164,28 +160,16 @@ func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, er
 		abiStr = generated.ERC20ABI
 	}
 
-	queryReq := &ebTypes.QueryReq{
-		Param:        "decimals()",
-		AbiData:      abiStr,
-		ContractAddr: addr,
-		Owner:        addr,
-		ChainName:    ethChainName,
-	}
-
-	var res rpctypes.Reply
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
-	result, err := ctx.RunResult()
+	providerHttp := make([]string, 1)
+	providerHttp = append(providerHttp, rpcLaddr)
+	client, err := ethtxs.SetupEthClient(providerHttp)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 0, err
-	}
-	_, err = json.MarshalIndent(result, "", "    ")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		log.Error("GetDecimals", "SetupEthClient error:", err.Error())
 		return 0, err
 	}
 
-	decimals, err := strconv.ParseInt(res.Msg, 0, 64)
+	msg, err := ethtxs.QueryResult("decimals()", abiStr, addr, addr, client)
+	decimals, err := strconv.ParseInt(msg, 0, 64)
 	if err != nil {
 		log.Error("GetDecimals", "ParseInt error:", err.Error())
 		return 0, err
