@@ -2,10 +2,11 @@ package offline
 
 import (
 	"fmt"
-	"github.com/bitly/go-simplejson"
 	"math/big"
 	"strconv"
 	"strings"
+
+	"github.com/bitly/go-simplejson"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
