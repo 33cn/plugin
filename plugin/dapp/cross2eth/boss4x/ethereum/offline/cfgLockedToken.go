@@ -2,7 +2,9 @@ package offline
 
 import (
 	"fmt"
+	"github.com/bitly/go-simplejson"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4eth/generated"
@@ -45,6 +47,44 @@ func ConfigLockedTokenOfflineSaveFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("contract")
 }
 
+func GetDecimalsFromNode(addr string, nodeAddr string) (int64, error) {
+	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
+		return 18, nil
+	}
+	Hashprefix := "0x313ce567"
+	postData := fmt.Sprintf(`{"id":1,"jsonrpc":"2.0","method":"eth_call","params":[{"to":"%s", "data":"%s"},"latest"]}`, addr, Hashprefix)
+
+	retryTimes := 0
+RETRY:
+	res, err := utils.SendToServer(nodeAddr, strings.NewReader(postData))
+	if err != nil {
+		if retryTimes > 3 {
+			return 0, err
+		}
+		retryTimes++
+		goto RETRY
+	}
+	js, err := simplejson.NewJson(res)
+	if err != nil {
+		if retryTimes > 3 {
+			return 0, err
+		}
+		retryTimes++
+		goto RETRY
+	}
+	result := js.Get("result").MustString()
+
+	decimals, err := strconv.ParseInt(result, 0, 64)
+	if err != nil {
+		if retryTimes > 3 {
+			return 0, err
+		}
+		retryTimes++
+		goto RETRY
+	}
+	return decimals, nil
+}
+
 func ConfigLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	symbol, _ := cmd.Flags().GetString("symbol")
@@ -54,9 +94,8 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
 	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
-	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	d, err := utils.GetDecimalsFromNode(token, url, ethChainName, "")
+	d, err := GetDecimalsFromNode(token, url)
 	if err != nil {
 		fmt.Println("get decimals error", err.Error())
 		return
