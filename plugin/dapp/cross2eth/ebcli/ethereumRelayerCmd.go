@@ -395,8 +395,9 @@ func ApproveAllowance(cmd *cobra.Command, args []string) {
 	tokenAddr, _ := cmd.Flags().GetString("token")
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals error")
 		return
@@ -457,7 +458,7 @@ func Burn(cmd *cobra.Command, args []string) {
 	receiver, _ := cmd.Flags().GetString("receiver")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals err")
 		return
@@ -482,8 +483,9 @@ func BurnAsync(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals err")
 		return
@@ -542,7 +544,7 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	receiver, _ := cmd.Flags().GetString("receiver")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals err")
 		return
@@ -570,8 +572,9 @@ func LockEthErc20AssetAsync(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals err")
 		return
@@ -730,7 +733,7 @@ func TransferToken(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetFloat64("amount")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
 
-	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(tokenAddr, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals error", err.Error())
 		return
@@ -946,7 +949,7 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, args []string) {
 	percents, _ := cmd.Flags().GetUint32("percents")
 	nodeAddr, _ := cmd.Flags().GetString("node_addr")
 
-	d, err := utils.GetDecimalsFromNode(token, nodeAddr)
+	d, err := utils.GetDecimalsFromNode(token, nodeAddr, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals error", err.Error())
 		return

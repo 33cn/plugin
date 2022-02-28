@@ -54,8 +54,9 @@ func ConfigLockedTokenOfflineSave(cmd *cobra.Command, _ []string) {
 	deployAddr, _ := cmd.Flags().GetString("deployAddr")
 	contract, _ := cmd.Flags().GetString("contract")
 	chainEthId, _ := cmd.Flags().GetInt64("chainEthId")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
 
-	d, err := utils.GetDecimalsFromNode(token, url)
+	d, err := utils.GetDecimalsFromNode(token, url, ethChainName, "")
 	if err != nil {
 		fmt.Println("get decimals error", err.Error())
 		return

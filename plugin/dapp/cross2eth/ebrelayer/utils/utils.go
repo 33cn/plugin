@@ -10,12 +10,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"io"
 	"io/ioutil"
 	"math"
 	"math/big"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -151,42 +156,43 @@ func SimpleGetDecimals(addr string) (int64, error) {
 }
 
 //GetDecimalsFromNode ...
-func GetDecimalsFromNode(addr string, nodeAddr string) (int64, error) {
-	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
-		return 18, nil
+func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, error) {
+	if abiStr == "" {
+		abiStr = generated.ERC20ABI
 	}
-	Hashprefix := "0x313ce567"
-	postData := fmt.Sprintf(`{"id":1,"jsonrpc":"2.0","method":"eth_call","params":[{"to":"%s", "data":"%s"},"latest"]}`, addr, Hashprefix)
 
-	retryTimes := 0
-RETRY:
-	res, err := SendToServer(nodeAddr, strings.NewReader(postData))
-	if err != nil {
-		log.Error("GetDecimals", "error:", err.Error())
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
+	queryReq := &ebTypes.QueryReq{
+		Param:        "decimals()",
+		AbiData:      abiStr,
+		ContractAddr: addr,
+		Owner:        addr,
+		ChainName:    ethChainName,
 	}
-	js, err := simplejson.NewJson(res)
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
+	result, err := ctx.RunResult()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 0, err
+	}
+	data, err := json.MarshalIndent(result, "", "    ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 0, err
+	}
+
+	js, err := simplejson.NewJson(data)
 	if err != nil {
 		log.Error("GetDecimals", "NewJson error:", err.Error())
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
+		return 0, err
 	}
-	result := js.Get("result").MustString()
+	ret := js.Get("msg").MustString()
 
-	decimals, err := strconv.ParseInt(result, 0, 64)
+	decimals, err := strconv.ParseInt(ret, 0, 64)
 	if err != nil {
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
+		log.Error("GetDecimals", "ParseInt error:", err.Error())
+		return 0, err
 	}
 	return decimals, nil
 }
