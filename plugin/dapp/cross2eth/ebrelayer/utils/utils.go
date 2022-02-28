@@ -7,10 +7,11 @@ package utils
 // --------------------------------------------------------
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"io"
 	"io/ioutil"
 	"math"
@@ -27,6 +28,10 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
+	chain33Abi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -160,21 +165,90 @@ func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, er
 		abiStr = generated.ERC20ABI
 	}
 
-	providerHttp := make([]string, 1)
-	providerHttp = append(providerHttp, rpcLaddr)
-	client, err := ethtxs.SetupEthClient(providerHttp)
+	client, err := ethclient.Dial(rpcLaddr)
 	if err != nil {
 		log.Error("GetDecimals", "SetupEthClient error:", err.Error())
 		return 0, err
 	}
 
-	msg, err := ethtxs.QueryResult("decimals()", abiStr, addr, addr, client)
+	msg, err := QueryResult("decimals()", abiStr, addr, addr, client)
 	decimals, err := strconv.ParseInt(msg, 0, 64)
 	if err != nil {
 		log.Error("GetDecimals", "ParseInt error:", err.Error())
 		return 0, err
 	}
 	return decimals, nil
+}
+
+func QueryResult(param, abiData, contract, owner string, client ethinterface.EthClientSpec) (string, error) {
+	log.Info("QueryResult", "param", param, "contract", contract, "owner", owner)
+	// 首先解析参数字符串，分析出方法名以及个参数取值
+	methodName, params, err := chain33Abi.ProcFuncCall(param)
+	if err != nil {
+		return methodName + " ProcFuncCall fail", err
+	}
+
+	// 解析ABI数据结构，获取本次调用的方法对象
+	abi_, err := chain33Abi.JSON(strings.NewReader(abiData))
+	if err != nil {
+		log.Error("QueryResult", "JSON fail", err)
+		return methodName + " JSON fail", err
+	}
+
+	var method chain33Abi.Method
+	var ok bool
+	if method, ok = abi_.Methods[methodName]; !ok {
+		err = fmt.Errorf("function %v not exists", methodName)
+		return methodName, err
+	}
+
+	if !method.IsConstant() {
+		return methodName, errors.New("method is not readonly")
+	}
+	if len(params) != method.Inputs.LengthNonIndexed() {
+		err = fmt.Errorf("function params error:%v", params)
+		return methodName, err
+	}
+
+	// 获取方法参数对象，遍历解析各参数，获得参数的Go取值
+	paramVals := []interface{}{}
+	if len(params) != 0 {
+		// 首先检查参数个数和ABI中定义的是否一致
+		if method.Inputs.LengthNonIndexed() != len(params) {
+			err = fmt.Errorf("function Params count error: %v", param)
+			return methodName, err
+		}
+
+		for i, v := range method.Inputs.NonIndexed() {
+			paramVal, err := chain33Abi.Str2GoValue(v.Type, params[i])
+			if err != nil {
+				log.Error("QueryResult", "Str2GoValue fail", err)
+				return methodName + " Str2GoValue fail", err
+			}
+			paramVals = append(paramVals, paramVal)
+		}
+	}
+
+	ownerAddr := common.HexToAddress(owner)
+	opts := &bind.CallOpts{
+		Pending: true,
+		From:    ownerAddr,
+		Context: context.Background(),
+	}
+	var out []interface{}
+	// Convert the raw abi into a usable format
+	contractABI, err := abi.JSON(strings.NewReader(abiData))
+	if err != nil {
+		return "JSON err", err
+	}
+	boundContract := bind.NewBoundContract(common.HexToAddress(contract), contractABI, client, nil, nil)
+	err = boundContract.Call(opts, &out, methodName, paramVals...)
+	if err != nil {
+		log.Error("QueryResult", "call fail", err)
+		return "call err", err
+	}
+	fmt.Println("QueryBridgeBankResult ret=", out[0])
+	return fmt.Sprint(out[0]), err
 }
 
 func SendToServer(url string, req io.Reader) ([]byte, error) {

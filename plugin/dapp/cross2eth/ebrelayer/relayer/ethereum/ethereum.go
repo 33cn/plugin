@@ -1455,5 +1455,5 @@ func (ethRelayer *Relayer4Ethereum) GetName() string {
 }
 
 func (ethRelayer *Relayer4Ethereum) GeneralQuery(param, abiData, contract, owner string) (string, error) {
-	return ethtxs.QueryResult(param, abiData, contract, owner, ethRelayer.clientSpec)
+	return utils.QueryResult(param, abiData, contract, owner, ethRelayer.clientSpec)
 }
