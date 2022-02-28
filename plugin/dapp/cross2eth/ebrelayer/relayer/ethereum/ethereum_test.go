@@ -152,8 +152,10 @@ func test_IsValidatorActive(t *testing.T) {
 func test_ShowAddr(t *testing.T) {
 	ethRelayer.prePareSubscribeEvent()
 	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
+	ethRelayer.rwLock.Lock()
 	ethRelayer.bridgeBankAbi = contactAbi
 	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
+	ethRelayer.rwLock.Unlock()
 
 	addr, err := ethRelayer.ShowBridgeBankAddr()
 	require.Nil(t, err)

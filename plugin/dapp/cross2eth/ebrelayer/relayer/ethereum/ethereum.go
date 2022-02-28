@@ -1027,11 +1027,14 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 			continue
 		}
 
+		ethRelayer.rwLock.RLock()
 		event, err := events.UnpackLogLock(ethRelayer.bridgeBankAbi, events.LogLockFromETH.String(), txInfo.Data)
 		if nil != err {
 			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to UnpackLogLock due to", err.Error())
+			ethRelayer.rwLock.RUnlock()
 			return
 		}
+		ethRelayer.rwLock.RUnlock()
 
 		tokenLocked, err := ethRelayer.GetLockedTokenAddress(event.Symbol)
 		if nil != err {
@@ -1041,11 +1044,14 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 		}
 
 		decimal := tokenLocked.Decimal
+		ethRelayer.rwLock.RLock()
 		prophecyClaim, err := ethtxs.LogLockToEthBridgeClaim(event, ethRelayer.clientChainID.Int64(), ethRelayer.bridgeBankAddr.String(), txHashStr, int64(decimal))
 		if err != nil {
+			ethRelayer.rwLock.RUnlock()
 			relayerLog.Error("ethRelayer::checkTxRelay2Chain33", "Failed to LogLockToEthBridgeClaim due to", err.Error())
 			return
 		}
+		ethRelayer.rwLock.RUnlock()
 		prophecyClaim.ChainName = ethRelayer.name
 		prophecyClaim.ForwardIndex = txInfo.FdIndex
 		txInfo.FdTimes += 1
