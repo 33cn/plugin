@@ -10,10 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
-	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"io"
 	"io/ioutil"
 	"math"
@@ -25,6 +21,11 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 
 	simplejson "github.com/bitly/go-simplejson"
 
