@@ -130,7 +130,11 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	key := getLastCommitProofKey()
 	v, err := db.Get(key)
 	if err != nil {
-		return nil, errors.Wrapf(err, "get db")
+		if isNotFound(err) {
+			return nil, nil
+		} else {
+			return nil, errors.Wrapf(err, "get db")
+		}
 	}
 	var data zt.CommitProofState
 	err = types.Decode(v, &data)
