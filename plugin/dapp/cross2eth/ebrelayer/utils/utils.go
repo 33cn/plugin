@@ -247,7 +247,6 @@ func QueryResult(param, abiData, contract, owner string, client ethinterface.Eth
 		log.Error("QueryResult", "call fail", err)
 		return "call err", err
 	}
-	fmt.Println("QueryBridgeBankResult ret=", out[0])
 	return fmt.Sprint(out[0]), err
 }
 
