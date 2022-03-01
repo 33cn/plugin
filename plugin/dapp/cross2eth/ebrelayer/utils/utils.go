@@ -156,7 +156,7 @@ func SimpleGetDecimals(addr string) (int64, error) {
 }
 
 //GetDecimalsFromNode ...
-func GetDecimalsFromNode(addr, rpcLaddr, ethChainName, abiStr string) (int64, error) {
+func GetDecimalsFromNode(addr, rpcLaddr, abiStr string) (int64, error) {
 	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
 		return 18, nil
 	}

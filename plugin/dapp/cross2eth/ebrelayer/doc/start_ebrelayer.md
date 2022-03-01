@@ -123,6 +123,7 @@ done
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 2 -d 18
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
+./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 1 -s BTY -a 100000000 -d 8
 
 Flags:
   -a, --amount float    每日最大值
