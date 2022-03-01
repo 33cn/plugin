@@ -114,7 +114,13 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	datas := make([]*zt.OperationInfo, 0)
 	table := NewZksyncInfoTable(z.GetLocalDB())
 	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight() ; i++ {
-		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), nil, types.MaxTxsPerBlock, zt.ListASC)
+		var primaryKey []byte
+		if i == in.GetStartBlockHeight() {
+			primaryKey = []byte(fmt.Sprintf("%016d.%016d", i, in.GetStartIndex()))
+		} else {
+			primaryKey = nil
+		}
+		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
 		if err != nil {
 			return nil, err
 		}
@@ -156,5 +162,25 @@ func (z *zksync) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 		return nil, err
 	}
 	res.TokenBalances = append(res.TokenBalances, token)
+	return res, nil
+}
+
+// Query_GetProofByTxHash 根据txhash获取proof信息
+func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	res := new(zt.ZkQueryResp)
+	datas := make([]*zt.OperationInfo, 0)
+	table := NewZksyncInfoTable(z.GetLocalDB())
+	rows, err := table.ListIndex("txHash", []byte(fmt.Sprintf("%s", in.GetTxHash())), nil, 1, zt.ListASC)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		data := row.Data.(*zt.OperationInfo)
+		datas = append(datas, data)
+	}
+	res.OperationInfos = datas
 	return res, nil
 }

@@ -72,7 +72,7 @@ var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
 	Primary: "height_index",
-	Index:   []string{"height"},
+	Index:   []string{"height", "txHash"},
 }
 
 // NewZksyncInfoTable ...
@@ -114,6 +114,8 @@ func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 		return []byte(fmt.Sprintf("%016d.%016d", r.GetBlockHeight(), r.GetTxIndex())), nil
 	} else if key == "height" {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockHeight())), nil
+	} else if key == "txHash" {
+		return []byte(fmt.Sprintf("%s", r.GetTxHash())), nil
 	}
 	return nil, types.ErrNotFound
 }

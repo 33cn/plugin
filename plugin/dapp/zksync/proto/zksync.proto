@@ -148,24 +148,33 @@ message ReceiptSetVerifyKey {
 //commit proof tx data
 message ZkCommitProof {
   uint64 blockStart  = 1;
-  uint64 blockEnd    = 2;
-  string oldTreeRoot = 3;
-  string newTreeRoot = 4;
+  uint64 indexStart  = 2;
+  uint64 blockEnd    = 3;
+  uint64 indexEnd  = 4;
+  string oldTreeRoot = 5;
+  string newTreeRoot = 6;
   //proof serialized public input
-  string publicInput = 5;
-  string proof       = 6;
+  string publicInput = 7;
+  string proof       = 8;
   //all tx pub datas
-  repeated string pubDatas = 7;
+  repeated string pubDatas = 9;
+
+  uint64 proofId = 10;
 }
 
 //commit proof stat, pubdata保存到localdb
 message CommitProofState {
   uint64 blockStart  = 1;
-  uint64 blockEnd    = 2;
-  string oldTreeRoot = 3;
-  string newTreeRoot = 4;
-  string publicInput = 5;   //proof serialized public input
-  string proof       = 6;
+  uint64 indexStart  = 2;
+  uint64 blockEnd    = 3;
+  uint64 indexEnd  = 4;
+  string oldTreeRoot = 5;
+  string newTreeRoot = 6;
+  //proof serialized public input
+  string publicInput = 7;
+  string proof       = 8;
+
+  uint64 proofId = 9;
 }
 
 message ReceiptCommitProof {
@@ -205,6 +214,7 @@ message ZkQueryReq {
   string tokenSymbol = 6;
   string chain33WalletAddr = 7;
   uint64 tokenId = 8;
+  string txHash = 9;
 }
 
 message ZkQueryResp {
@@ -222,6 +232,7 @@ message ZkQueryProofReq {
   bool needDetail = 1;
   uint64 startBlockHeight = 2;
   uint64 endBlockHeight = 3;
+  uint64 startIndex = 4;
 }
 
 message ZkQueryProofResp {

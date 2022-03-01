@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"encoding/hex"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -41,6 +42,7 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			if err != nil {
 				return nil, err
 			}
+			zklog.OperationInfo.TxHash = hex.EncodeToString(tx.Hash())
 			err = infoTable.Replace(zklog.OperationInfo)
 			if err != nil {
 				return nil, err
