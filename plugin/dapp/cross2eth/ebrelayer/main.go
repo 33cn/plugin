@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	_ "net/http/pprof" //
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
@@ -125,6 +126,14 @@ func main() {
 
 	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)
+
+	//set pprof
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		if err != nil {
+			mainlog.Info("ListenAndServe", "listen addr 0.0.0.0:6060 err", err)
+		}
+	}()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM)
