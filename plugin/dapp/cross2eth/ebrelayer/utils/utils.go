@@ -156,13 +156,9 @@ func SimpleGetDecimals(addr string) (int64, error) {
 }
 
 //GetDecimalsFromNode ...
-func GetDecimalsFromNode(addr, rpcLaddr, abiStr string) (int64, error) {
+func GetDecimalsFromNode(addr, rpcLaddr string) (int64, error) {
 	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
 		return 18, nil
-	}
-
-	if abiStr == "" {
-		abiStr = generated.ERC20ABI
 	}
 
 	client, err := ethclient.Dial(rpcLaddr)
@@ -171,7 +167,7 @@ func GetDecimalsFromNode(addr, rpcLaddr, abiStr string) (int64, error) {
 		return 0, err
 	}
 
-	msg, err := QueryResult("decimals()", abiStr, addr, addr, client)
+	msg, err := QueryResult("decimals()", generated.ERC20ABI, addr, addr, client)
 	decimals, err := strconv.ParseInt(msg, 0, 64)
 	if err != nil {
 		log.Error("GetDecimals", "ParseInt error:", err.Error())
