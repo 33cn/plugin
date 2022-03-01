@@ -36,7 +36,7 @@ pushName="x2eth"
 pushBind="0.0.0.0:20000"
 maturityDegree=10
 fetchHeightPeriodMs=5000
-keepAliveDuration=600000 #10分钟之内未收到信息，通过重新订阅，确保订阅可用
+keepAliveDuration=180000 #3分钟之内未收到信息，通过重新订阅，确保订阅可用
 #如果需要配置起始的块的信息，则为了保持一致性，三项缺一不可，或者都不配置
 startSyncHeight=0
 startSyncSequence=0

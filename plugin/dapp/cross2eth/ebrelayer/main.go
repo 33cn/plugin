@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
 	"syscall"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -75,7 +74,6 @@ func main() {
 	logf.SetFileLog(convertLogCfg(cfg.Log))
 
 	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
 	mainlog.Info("db info:", " Dbdriver = ", cfg.Dbdriver, ", DbPath = ", cfg.DbPath, ", DbCache = ", cfg.DbCache)
 
 	db := dbm.NewDB("relayer_db_service", cfg.Dbdriver, cfg.DbPath, cfg.DbCache)
@@ -133,17 +131,23 @@ func main() {
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerServices, db)
 
-	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
-	startRPCServer(cfg.JrpcBindAddr, relayerManager)
-
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM)
 	go func() {
-		<-ch
-		cancel()
-		wg.Wait()
-		os.Exit(0)
+		mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
+		startRPCServer(cfg.JrpcBindAddr, relayerManager)
 	}()
+
+	procSig(cancel)
+}
+
+func procSig(cancel context.CancelFunc) {
+	sigChannle := make(chan os.Signal, 1)
+	signal.Notify(sigChannle, syscall.SIGTERM)
+
+	select {
+	case <-sigChannle:
+		cancel()
+		os.Exit(0)
+	}
 }
 
 func convertLogCfg(log *relayerTypes.Log) *chain33Types.Log {
