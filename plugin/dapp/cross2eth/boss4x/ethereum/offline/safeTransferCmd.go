@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
+
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	gnosis "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/gnosis/generated"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
@@ -63,7 +65,7 @@ func addPrepareCreateMultisignTransferTxFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("contract")
 	cmd.Flags().StringP("receiver", "r", "", "receive address")
 	_ = cmd.MarkFlagRequired("receiver")
-	cmd.Flags().Float64P("amount", "a", 0, "amount to transfer")
+	cmd.Flags().StringP("amount", "a", "0", "amount to transfer")
 	_ = cmd.MarkFlagRequired("amount")
 	cmd.Flags().StringP("token", "t", "", "erc20 address,not need to set for ETH(optional)")
 }
@@ -72,7 +74,7 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	url, _ := cmd.Flags().GetString("rpc_laddr_ethereum")
 	receiver, _ := cmd.Flags().GetString("receiver")
 	tokenAddr, _ := cmd.Flags().GetString("token")
-	amount, _ := cmd.Flags().GetFloat64("amount")
+	amount, _ := cmd.Flags().GetString("amount")
 	sendAddr, _ := cmd.Flags().GetString("sendAddr")
 	multiSignAddrstr, _ := cmd.Flags().GetString("contract")
 
@@ -107,14 +109,17 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		fmt.Println("SuggestGasPrice Err:", err)
-		return
-	}
+	gasPrice := big.NewInt(0)
+	//gasPrice, err := client.SuggestGasPrice(context.Background())
+	//if err != nil {
+	//	fmt.Println("SuggestGasPrice Err:", err)
+	//	return
+	//}
 
+	bn := big.NewInt(1)
+	bn, _ = bn.SetString(utils.TrimZeroAndDot(amount), 10)
 	if tokenAddr == "" {
-		value.Mul(big.NewInt(int64(amount)), big.NewInt(int64(1e18)))
+		value.Mul(bn, big.NewInt(int64(1e18)))
 	} else {
 		toAddr = common.HexToAddress(tokenAddr)
 		erc20Abi, err := abi.JSON(strings.NewReader(erc20.ERC20ABI))
@@ -133,13 +138,14 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 			fmt.Println("Decimals Err:", err)
 			return
 		}
+
 		dec, ok := ebTypes.DecimalsPrefix[decimals]
 		if !ok {
 			fmt.Println("dec Err:")
 			return
 		}
 
-		value.Mul(big.NewInt(int64(amount)), big.NewInt(dec))
+		value.Mul(bn, big.NewInt(dec))
 
 		sendData, err = erc20Abi.Pack("transfer", common.HexToAddress(receiver), value)
 		if err != nil {
@@ -348,12 +354,6 @@ func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	gasPrice, err := client.SuggestGasPrice(context.Background())
-	if err != nil {
-		fmt.Println("SuggestGasPrice Err:", err)
-		return
-	}
-
 	gnoAbi, err := abi.JSON(strings.NewReader(gnosis.GnosisSafeABI))
 	if err != nil {
 		fmt.Println("JSON Err:", err)
@@ -363,7 +363,7 @@ func SendMultisignTransferTx(cmd *cobra.Command, _ []string) {
 	safeTxGas := big.NewInt(10 * 10000)
 
 	gnoData, err := gnoAbi.Pack("execTransaction", txinfo.To, txinfo.Value, txinfo.TransferData, uint8(0),
-		safeTxGas, big.NewInt(0), gasPrice, zeroAddr, zeroAddr, txinfo.Content)
+		safeTxGas, big.NewInt(0), big.NewInt(0), zeroAddr, zeroAddr, txinfo.Content)
 	if err != nil {
 		fmt.Println("Pack execTransaction Err:", err)
 		return

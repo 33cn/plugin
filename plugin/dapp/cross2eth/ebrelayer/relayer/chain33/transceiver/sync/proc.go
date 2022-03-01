@@ -133,6 +133,7 @@ func (syncTx *EVMTxLogs) dealEVMTxLogs(evmTxLogsInBlks *types.EVMTxLogsInBlks) {
 	}
 	//发送回复，确认接收成功
 	resultCh <- nil
+	resetTimer2KeepAlive()
 	log.Debug("dealEVMTxLogs", "seqStart", start, "count", count, "maxBlockHeight", height, "syncTx.seqNum", syncTx.seqNum)
 }
 

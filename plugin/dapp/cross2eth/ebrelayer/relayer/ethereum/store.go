@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"sync/atomic"
 
+	chain33Common "github.com/33cn/chain33/common"
+
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -34,7 +36,26 @@ var (
 	withdrawParaKey                = "eth-withdrawPara"
 	withdrawTokenPrefix            = "eth-withdrawToken"
 	withdrawTokenListPrefix        = "eth-withdrawTokenList"
+	//Below for relay ack
+	chain33TxRelayAlreadyPrefix = "eth-chain33TxRelayAlready"
+	//有待确认
+	ethTxIsRelayedUnconfirm = "eth-ethTxIsRelayedUnconfirm"
+	//已经中继发送
+	ethTxRelayedAlready     = "eth-ethTxRelayedAlready"
+	fdTx2Chain33TotalAmount = "eth-fdTx2Chain33TotalAmount"
 )
+
+func ethTxIsRelayedUnconfirmKey(chainName, txHash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-txHash-%s", ethTxIsRelayedUnconfirm, chainName, txHash))
+}
+
+func ethTxRelayedAlreadyKey(chainName, txHash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-txHash-%s", ethTxRelayedAlready, chainName, txHash))
+}
+
+func chain33TxRelayAlreadyKey(chainName, chain33Txhash string) []byte {
+	return []byte(fmt.Sprintf("%s-chainName-%s-%s", chain33TxRelayAlreadyPrefix, chainName, chain33Txhash))
+}
 
 func ethTokenSymbol2AddrKey(chainName, symbol string) []byte {
 	return []byte(fmt.Sprintf("%s-%s-symbol-%s", chainName, ethTokenSymbol2AddrPrefix, symbol))
@@ -54,6 +75,23 @@ func calcRelayFromChain33Key(chainName string, claimType int32, txindex int64) [
 
 func calcRelayFromChain33ListPrefix(chainName string, claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%s-%d-", chainName, chain33ToEthStaticsPrefix, claimType))
+}
+
+func (ethRelayer *Relayer4Ethereum) setChain33TxRelayAlreadyInfo(chainName, chain33Txhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := chain33TxRelayAlreadyKey(chainName, chain33Txhash)
+	data := chain33Types.Encode(relayTxDetail)
+	return ethRelayer.db.Set(key, data)
+}
+
+func (ethRelayer *Relayer4Ethereum) getChain33TxRelayAlreadyInfo(chainName, chain33Txhash string) (*ebTypes.RelayTxDetail, error) {
+	key := chain33TxRelayAlreadyKey(chainName, chain33Txhash)
+	data, err := ethRelayer.db.Get(key)
+	if nil != err {
+		return nil, err
+	}
+	var relayTxDetail ebTypes.RelayTxDetail
+	err = chain33Types.Decode(data, &relayTxDetail)
+	return &relayTxDetail, err
 }
 
 func (ethRelayer *Relayer4Ethereum) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
@@ -116,7 +154,7 @@ func (ethRelayer *Relayer4Ethereum) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (ethRelayer *Relayer4Ethereum) updateTotalTxAmount2chain33(totalIndex int64) error {
+func (ethRelayer *Relayer4Ethereum) updateTotalTxAmountFromchain33(totalIndex int64) error {
 	totalTx := &chain33Types.Int64{
 		Data: totalIndex,
 	}
@@ -164,17 +202,6 @@ func (ethRelayer *Relayer4Ethereum) getLogProcHeight(key []byte) uint64 {
 		return 0
 	}
 	return height.Data
-}
-
-//保存处理过的交易
-func (ethRelayer *Relayer4Ethereum) setTxProcessed(txhash []byte) error {
-	return ethRelayer.db.Set(txhash, []byte("1"))
-}
-
-//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
-func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash []byte) bool {
-	_, err := ethRelayer.db.Get(txhash)
-	return nil == err
 }
 
 func (ethRelayer *Relayer4Ethereum) setEthTxEvent(vLog types.Log) error {
@@ -258,11 +285,13 @@ func (ethRelayer *Relayer4Ethereum) SetTokenAddress(token2set *ebTypes.TokenAddr
 	return ethRelayer.db.Set(ethTokenSymbol2AddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
-func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set ebTypes.TokenAddress) error {
-	bytes := chain33Types.Encode(&token2set)
+func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.TokenAddress) error {
+	bytes := chain33Types.Encode(token2set)
 	ethRelayer.rwLock.Lock()
 	ethRelayer.symbol2LockAddr[token2set.Symbol] = token2set
 	ethRelayer.rwLock.Unlock()
+	relayerLog.Info("SetLockedTokenAddress", "symbol", token2set.Symbol, "decimal", token2set.Decimal, "address", token2set.Address,
+		"chain name", token2set.ChainName)
 	return ethRelayer.db.Set(ethTokenSymbol2LockAddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
@@ -307,7 +336,7 @@ func (ethRelayer *Relayer4Ethereum) RestoreTokenAddress() error {
 			return err
 		}
 		relayerLog.Info("RestoreTokenAddress", "symbol", tokenLocked.Symbol, "address", tokenLocked.Address)
-		ethRelayer.symbol2LockAddr[tokenLocked.Symbol] = tokenLocked
+		ethRelayer.symbol2LockAddr[tokenLocked.Symbol] = &tokenLocked
 	}
 	return nil
 }
@@ -481,9 +510,10 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.WithdrawTx, chain33Msg *events.Chain33Msg) error {
 	txIndex := atomic.AddInt64(&ethRelayer.totalTxRelayFromChain33, 1)
 	operationType := chain33Msg.ClaimType.String()
+	chain33TxHash := chain33Common.ToHex(chain33Msg.TxHash)
 	statics := &ebTypes.Chain33ToEthereumStatics{
 		EthTxstatus:      ebTypes.Tx_Status_Pending,
-		Chain33Txhash:    common.Bytes2Hex(chain33Msg.TxHash),
+		Chain33Txhash:    chain33TxHash,
 		EthereumTxhash:   withdrawTx.TxHashOnEthereum,
 		BurnLockWithdraw: int32(chain33Msg.ClaimType),
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
@@ -499,6 +529,26 @@ func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.Withd
 	}
 	relayerLog.Info("setWithdrawStatics::successful", "txIndex", txIndex, "Chain33Txhash", statics.Chain33Txhash, "EthereumTxhash", statics.EthereumTxhash, "type", operationType,
 		"Symbol", chain33Msg.Symbol, "Amount", chain33Msg.Amount, "EthereumReceiver", statics.EthereumReceiver, "Chain33Sender", statics.Chain33Sender)
+
+	ethRelayer.txRelayAckSendChan <- &ebTypes.TxRelayAck{
+		TxHash:  chain33TxHash,
+		FdIndex: chain33Msg.ForwardIndex,
+	}
+	//relaychain33ToEthereumCheckPonit 2: send ack to chain33 relay service
+	relayerLog.Info("setWithdrawStatics::relaychain33ToEthereumCheckPonit_2::sendBackAck", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
+
+	relayTxDetail := &ebTypes.RelayTxDetail{
+		ClaimType:      int32(chain33Msg.ClaimType),
+		TxIndexRelayed: txIndex,
+		Txhash:         withdrawTx.TxHashOnEthereum,
+	}
+
+	if err := ethRelayer.setChain33TxRelayAlreadyInfo(ethRelayer.name, chain33TxHash, relayTxDetail); nil != err {
+		relayerLog.Error("setWithdrawStatics", "Failed to setEthTxRelayAlreadyInfo due to:", err.Error())
+		return err
+	}
+	//relaychain33ToEthereumCheckPonit 3: set flag to send relay tx to ethereum node
+	relayerLog.Info("setWithdrawStatics::relaychain33ToEthereumCheckPonit_3::setRelayFinishFlag", "chain33TxHash", chain33TxHash, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", chain33Msg.ForwardTimes)
 
 	data := chain33Types.Encode(statics)
 	return ethRelayer.setLastestStatics(int32(chain33Msg.ClaimType), txIndex, data)
@@ -529,4 +579,76 @@ func (ethRelayer *Relayer4Ethereum) getWithdrawsWithinSameDay(withdrawTx *ebType
 		withdrawTotal.Add(withdrawTotal, AmountInt)
 	}
 	return withdrawTotal, nil
+}
+
+func (ethRelayer *Relayer4Ethereum) updateFdTx2EthTotalAmount(index int64) error {
+	totalTx := &chain33Types.Int64{
+		Data: index,
+	}
+	//更新成功见证的交易数
+	return ethRelayer.db.Set([]byte(fdTx2Chain33TotalAmount), chain33Types.Encode(totalTx))
+}
+
+func (ethRelayer *Relayer4Ethereum) getFdTx2Chain33TotalAmount() int64 {
+	totalTx, _ := utils.LoadInt64FromDB([]byte(fdTx2Chain33TotalAmount), ethRelayer.db)
+	return totalTx
+}
+
+func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash string) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash)
+	relayerLog.Info("Relayer4Ethereum::resetKeyTxRelayedAlready", "TxHash", txHash)
+	data, err := ethRelayer.db.Get(key)
+	if nil != err {
+		relayerLog.Info("Relayer4Ethereum::resetKeyTxRelayedAlready", "No data for tx", txHash)
+		return err
+	}
+	_ = ethRelayer.db.Set(key, nil)
+	setkey := ethTxRelayedAlreadyKey(chainName, txHash)
+
+	return ethRelayer.db.Set(setkey, data)
+}
+
+func (ethRelayer *Relayer4Ethereum) setTxIsRelayedUnconfirm(chainName, txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
+	key := ethTxIsRelayedUnconfirmKey(chainName, txHash)
+	data := chain33Types.Encode(txRelayConfirm)
+	relayerLog.Info("Relayer4Ethereum::setTxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm.FdTimes)
+	return ethRelayer.db.Set(key, data)
+}
+
+func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Ethereum, err error) {
+	helper := dbm.NewListHelper(ethRelayer.db)
+	prefix := []byte(fmt.Sprintf("%s-chainName-%s", ethTxIsRelayedUnconfirm, ethRelayer.name))
+	datas := helper.List(prefix, nil, 0, dbm.ListASC)
+	cnt := len(datas)
+	if 0 == cnt {
+		return nil, nil
+	}
+
+	txInfos = make([]*ebTypes.TxRelayConfirm4Ethereum, cnt)
+	for i, data := range datas {
+		txInfo := &ebTypes.TxRelayConfirm4Ethereum{}
+		if err := chain33Types.Decode(data, txInfo); nil != err {
+			return nil, err
+		}
+
+		txInfos[i] = txInfo
+	}
+	return
+}
+
+//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+func (ethRelayer *Relayer4Ethereum) checkTxProcessed(txhash string) bool {
+	key1 := ethTxIsRelayedUnconfirmKey(ethRelayer.name, txhash)
+	data, err := ethRelayer.db.Get(key1)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	key2 := ethTxRelayedAlreadyKey(ethRelayer.name, txhash)
+	data, err = ethRelayer.db.Get(key2)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	return false
 }
