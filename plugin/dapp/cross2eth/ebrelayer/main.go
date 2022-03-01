@@ -48,6 +48,15 @@ func main() {
 		*configPath = "relayer.toml"
 	}
 
+	//set pprof
+	go func() {
+		mainlog.Info("pprof", "start listen to:", "0.0.0.0:6060")
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		if err != nil {
+			mainlog.Error("ListenAndServe", "listen addr 0.0.0.0:6060 err", err)
+		}
+	}()
+
 	err := os.Chdir(pwd())
 	if err != nil {
 		panic(err)
@@ -126,14 +135,6 @@ func main() {
 
 	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
 	startRPCServer(cfg.JrpcBindAddr, relayerManager)
-
-	//set pprof
-	go func() {
-		err := http.ListenAndServe("0.0.0.0:6060", nil)
-		if err != nil {
-			mainlog.Info("ListenAndServe", "listen addr 0.0.0.0:6060 err", err)
-		}
-	}()
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM)
