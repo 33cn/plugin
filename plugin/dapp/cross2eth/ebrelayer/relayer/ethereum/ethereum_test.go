@@ -76,14 +76,23 @@ func init() {
 }
 
 func Test_All(t *testing.T) {
-	test_GetValidatorAddr(t)
-	test_Lock(t)
-	test_IsValidatorActive(t)
+	fmt.Println("============= test_ShowAddr begin =============")
 	test_ShowAddr(t)
+	fmt.Println("============= test_GetValidatorAddr begin =============")
+	test_GetValidatorAddr(t)
+	fmt.Println("============= test_Lock begin =============")
+	test_Lock(t)
+	fmt.Println("============= test_IsValidatorActive begin =============")
+	test_IsValidatorActive(t)
+	fmt.Println("============= test_SetBridgeRegistryAddr begin =============")
 	test_SetBridgeRegistryAddr(t)
+	fmt.Println("============= test_CreateBridgeToken begin =============")
 	test_CreateBridgeToken(t)
+	fmt.Println("============= test_BurnBty begin =============")
 	test_BurnBty(t)
+	fmt.Println("============= test_RestorePrivateKeys begin =============")
 	test_RestorePrivateKeys(t)
+	fmt.Println("============= test_setWithdrawFee begin =============")
 	test_setWithdrawFee(t)
 }
 
@@ -150,11 +159,7 @@ func test_IsValidatorActive(t *testing.T) {
 }
 
 func test_ShowAddr(t *testing.T) {
-	ethRelayer.prePareSubscribeEvent()
-	contactAbi := ethtxs.LoadABI(ethtxs.BridgeBankABI)
-	ethRelayer.bridgeBankAbi = contactAbi
-	ethRelayer.bridgeBankAddr = ethRelayer.x2EthDeployInfo.BridgeBank.Address
-
+	//ethRelayer.prePareSubscribeEvent()
 	addr, err := ethRelayer.ShowBridgeBankAddr()
 	require.Nil(t, err)
 	assert.Equal(t, addr, ethRelayer.x2EthDeployInfo.BridgeBank.Address.String())
@@ -459,7 +464,7 @@ func newEthRelayer(para *ethtxs.DeployPara, sim *ethinterface.SimExtend, x2EthCo
 		fetchHeightPeriodMs:     1,
 		totalTxRelayFromChain33: 0,
 		symbol2Addr:             make(map[string]common.Address),
-		symbol2LockAddr:         make(map[string]ebTypes.TokenAddress),
+		symbol2LockAddr:         make(map[string]*ebTypes.TokenAddress),
 		ethBridgeClaimChan:      ethBridgeClaimchan,
 		chain33MsgChan:          chain33Msgchan,
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),

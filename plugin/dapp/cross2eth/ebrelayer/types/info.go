@@ -6,6 +6,8 @@ const Version4Relayer = "0.1.4"
 const (
 	Chain33BlockChainName    = "Chain33-mainchain"
 	EthereumBlockChainName   = "Ethereum-mainchain"
+	BinanceChainName         = "Binance"
+	EthereumChainName        = "Ethereum"
 	BTYAddrChain33           = "1111111111111111111114oLvT2"
 	NilAddrChain33           = "1111111111111111111114oLvT2"
 	EthNilAddr               = "0x0000000000000000000000000000000000000000"

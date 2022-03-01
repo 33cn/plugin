@@ -134,7 +134,6 @@ func prepareCreateMultisignTransferTx(cmd *cobra.Command, _ []string) {
 
 		realAmount := utils.ToWei(amount, int64(decimals))
 		value, _ = value.SetString(utils.TrimZeroAndDot(realAmount.String()), 10)
-
 		sendData, err = erc20Abi.Pack("transfer", common.HexToAddress(receiver), value)
 		if err != nil {
 			fmt.Println("Pack Err:", err)

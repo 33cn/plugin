@@ -73,12 +73,17 @@ func main() {
 	ethRelayerCnt := len(cfg.EthRelayerCfg)
 	chain33MsgChan2Eths := make(map[string]chan<- *events.Chain33Msg)
 	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 100)
+	txRelayAckChan2Chain33 := make(chan *ebrelayerTypes.TxRelayAck, 100)
+	txRelayAckChan2Eth := make(map[string]chan<- *ebrelayerTypes.TxRelayAck)
 
 	//启动多个以太坊系中继器
 	ethRelayerServices := make(map[string]*ethRelayer.Relayer4Ethereum)
 	for i := 0; i < ethRelayerCnt; i++ {
 		chain33MsgChan := make(chan *events.Chain33Msg, 100)
 		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
+
+		txRelayAckRecvChan := make(chan *ebrelayerTypes.TxRelayAck, 100)
+		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckRecvChan
 
 		ethStartPara := &ethRelayer.EthereumStartPara{
 			DbHandle:           db,
@@ -88,6 +93,8 @@ func main() {
 			Degree:             cfg.EthRelayerCfg[i].EthMaturityDegree,
 			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
 			EthBridgeClaimChan: ethBridgeClaimChan,
+			TxRelayAckSendChan: txRelayAckChan2Chain33,
+			TxRelayAckRecvChan: txRelayAckRecvChan,
 			Chain33MsgChan:     chain33MsgChan,
 			ProcessWithDraw:    cfg.ProcessWithDraw,
 			Name:               cfg.EthRelayerCfg[i].EthChainName,
@@ -106,6 +113,8 @@ func main() {
 		BridgeRegistryAddr: cfg.Chain33RelayerCfg.BridgeRegistryOnChain33,
 		DBHandle:           db,
 		EthBridgeClaimChan: ethBridgeClaimChan,
+		TxRelayAckRecvChan: txRelayAckChan2Chain33,
+		TxRelayAckSendChan: txRelayAckChan2Eth,
 		Chain33MsgChan:     chain33MsgChan2Eths,
 		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
 		ProcessWithDraw:    cfg.ProcessWithDraw,
