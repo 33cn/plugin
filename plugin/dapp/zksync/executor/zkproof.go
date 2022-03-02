@@ -220,6 +220,9 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	newProof := &zt.CommitProofState{
 		BlockStart:  payload.BlockStart,
 		BlockEnd:    payload.BlockEnd,
+		IndexStart: payload.IndexStart,
+		IndexEnd: payload.IndexEnd,
+		ProofId: payload.ProofId,
 		OldTreeRoot: payload.OldTreeRoot,
 		NewTreeRoot: payload.NewTreeRoot,
 		PublicInput: payload.PublicInput,
