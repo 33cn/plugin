@@ -368,10 +368,6 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	//转换10进制
-	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
-	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
-
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -381,10 +377,15 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
-	tree, err := getAccountTree(a.statedb, info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree")
+	if leaf == nil {
+		return nil, errors.New("account:" + strconv.FormatUint(payload.AccountId, 10) + " not exist")
 	}
+
+	err = authVerification(payload.GetSignature().PubKey, leaf.GetPubKey())
+	if err != nil {
+		return nil, errors.Wrapf(err, "authVerification")
+	}
+
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
@@ -395,103 +396,49 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		AccountID:   payload.AccountId,
 	}
 
-	//leaf不存在，需要新增
-	if leaf == nil {
-		leaf, err = GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress(), info)
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress")
-		}
-		//如果通过accountId没找到，但是通过给的地址找到了，说明参数出错了
-		if leaf != nil {
-			return nil, errors.New("account already exist")
-		}
-		operationInfo.AccountID = tree.GetTotalIndex() + 1
-		//更新之前先计算证明
-		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, "0", operationInfo.AccountID)
-
-		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateLeaf")
-		}
-		//更新合约账户
-		accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateContractAccount")
-		}
-		kvs = append(kvs, accountKvs...)
-		//存款到叶子之后计算证明
-		receipt, err = calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, receipt.Token.Balance, operationInfo.AccountID)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-		kv := &types.KeyValue{
-			Key:   getHeightKey(a.height),
-			Value: rootHash,
-		}
-		kvs = append(kvs, kv)
-
-		branch := &zt.OperationPairBranch{
-			Before: before,
-			After:  after,
-		}
-		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	} else {
-		//如果叶子存在，校验地址和accountId是否一致，防止提错账户
-		if payload.GetEthAddress() != leaf.EthAddress || payload.GetEthAddress() != leaf.EthAddress {
-			return nil, errors.New("check address failed")
-		}
-		//更新之前先计算证明
-		receipt, err := calProof(a.statedb, info, payload.AccountId, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-		var balance string
-		if receipt.Token == nil {
-			balance = "0"
-		} else {
-			balance = receipt.Token.Balance
-		}
-		before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, balance, operationInfo.AccountID)
-
-		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateLeaf")
-		}
-		//更新合约账户
-		accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
-		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateContractAccount")
-		}
-		kvs = append(kvs, accountKvs...)
-		//存款到叶子之后计算证明
-		receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
-		if err != nil {
-			return nil, errors.Wrapf(err, "calProof")
-		}
-
-		after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance, operationInfo.AccountID)
-		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
-		kv := &types.KeyValue{
-			Key:   getHeightKey(a.height),
-			Value: rootHash,
-		}
-		kvs = append(kvs, kv)
-
-		branch := &zt.OperationPairBranch{
-			Before: before,
-			After:  after,
-		}
-		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-
+	//更新之前先计算证明
+	receipt, err := calProof(a.statedb, info, payload.AccountId, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
 	}
+	var balance string
+	if receipt.Token == nil {
+		balance = "0"
+	} else {
+		balance = receipt.Token.Balance
+	}
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, balance, operationInfo.AccountID)
+
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	//更新合约账户
+	accountKvs, err := a.UpdateContractAccount(a.fromaddr, payload.GetAmount(), payload.GetTokenId(), zt.Sub)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateContractAccount")
+	}
+	kvs = append(kvs, accountKvs...)
+	//存款到叶子之后计算证明
+	receipt, err = calProof(a.statedb, info, payload.AccountId, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance, operationInfo.AccountID)
+	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+
 	zksynclog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,

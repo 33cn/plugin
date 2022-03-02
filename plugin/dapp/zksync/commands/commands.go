@@ -200,10 +200,6 @@ func contractToTreeFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("amount")
 	cmd.Flags().Uint64P("accountId", "", 0, "contractToTree accountId")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().StringP("ethAddress", "e", "", "contractToTree ethaddress")
-	cmd.MarkFlagRequired("ethAddress")
-	cmd.Flags().StringP("chain33Addr", "c", "", "contractToTree chain33Addr")
-	cmd.MarkFlagRequired("chain33Addr")
 
 }
 
@@ -211,11 +207,9 @@ func contractToTree(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	amount, _ := cmd.Flags().GetString("amount")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
-	ethAddress, _ := cmd.Flags().GetString("ethAddress")
-	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, ethAddress, "", chain33Addr, accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
