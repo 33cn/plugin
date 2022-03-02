@@ -64,7 +64,6 @@ func keepSubscriptionAlive(cfg *relayerTypes.SyncTxReceiptConfig) {
 			now := time.Now()
 			_, month, day := now.Date()
 			log.Debug("keepSubscriptionAlive", "time stamp month", month, "day", day, "hour", now.Hour(), "minute", now.Minute())
-		default:
 		}
 	}
 }

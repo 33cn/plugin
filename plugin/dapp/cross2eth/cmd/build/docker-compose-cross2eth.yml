@@ -13,26 +13,37 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-cross2eth
+    ports:
+#     - host port : container port
+      - 6064:6060
 
   ebrelayera:
     build:
       context: .
       dockerfile: Dockerfile-cross2eth
+    ports:
+      - 6060:6060
 
   ebrelayerb:
     build:
       context: .
       dockerfile: Dockerfile-cross2eth
+    ports:
+      - 6061:6060
 
   ebrelayerc:
     build:
       context: .
       dockerfile: Dockerfile-cross2eth
+    ports:
+      - 6062:6060
 
   ebrelayerd:
     build:
       context: .
       dockerfile: Dockerfile-cross2eth
+    ports:
+      - 6063:6060
 
   chain33:
     entrypoint: /root/entrypoint.sh
