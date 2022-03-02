@@ -7,12 +7,12 @@ import (
 	"io"
 	"net"
 	"net/http"
+	_ "net/http/pprof" //
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sync"
 	"syscall"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -47,6 +47,15 @@ func main() {
 		*configPath = "relayer.toml"
 	}
 
+	//set pprof
+	go func() {
+		mainlog.Info("pprof", "start listen to:", "0.0.0.0:6060")
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		if err != nil {
+			mainlog.Error("ListenAndServe", "listen addr 0.0.0.0:6060 err", err)
+		}
+	}()
+
 	err := os.Chdir(pwd())
 	if err != nil {
 		panic(err)
@@ -65,7 +74,6 @@ func main() {
 	logf.SetFileLog(convertLogCfg(cfg.Log))
 
 	ctx, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
 	mainlog.Info("db info:", " Dbdriver = ", cfg.Dbdriver, ", DbPath = ", cfg.DbPath, ", DbCache = ", cfg.DbCache)
 
 	db := dbm.NewDB("relayer_db_service", cfg.Dbdriver, cfg.DbPath, cfg.DbCache)
@@ -73,12 +81,17 @@ func main() {
 	ethRelayerCnt := len(cfg.EthRelayerCfg)
 	chain33MsgChan2Eths := make(map[string]chan<- *events.Chain33Msg)
 	ethBridgeClaimChan := make(chan *ebrelayerTypes.EthBridgeClaim, 100)
+	txRelayAckChan2Chain33 := make(chan *ebrelayerTypes.TxRelayAck, 100)
+	txRelayAckChan2Eth := make(map[string]chan<- *ebrelayerTypes.TxRelayAck)
 
 	//启动多个以太坊系中继器
 	ethRelayerServices := make(map[string]*ethRelayer.Relayer4Ethereum)
 	for i := 0; i < ethRelayerCnt; i++ {
 		chain33MsgChan := make(chan *events.Chain33Msg, 100)
 		chain33MsgChan2Eths[cfg.EthRelayerCfg[i].EthChainName] = chain33MsgChan
+
+		txRelayAckRecvChan := make(chan *ebrelayerTypes.TxRelayAck, 100)
+		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckRecvChan
 
 		ethStartPara := &ethRelayer.EthereumStartPara{
 			DbHandle:           db,
@@ -88,6 +101,8 @@ func main() {
 			Degree:             cfg.EthRelayerCfg[i].EthMaturityDegree,
 			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
 			EthBridgeClaimChan: ethBridgeClaimChan,
+			TxRelayAckSendChan: txRelayAckChan2Chain33,
+			TxRelayAckRecvChan: txRelayAckRecvChan,
 			Chain33MsgChan:     chain33MsgChan,
 			ProcessWithDraw:    cfg.ProcessWithDraw,
 			Name:               cfg.EthRelayerCfg[i].EthChainName,
@@ -106,6 +121,8 @@ func main() {
 		BridgeRegistryAddr: cfg.Chain33RelayerCfg.BridgeRegistryOnChain33,
 		DBHandle:           db,
 		EthBridgeClaimChan: ethBridgeClaimChan,
+		TxRelayAckRecvChan: txRelayAckChan2Chain33,
+		TxRelayAckSendChan: txRelayAckChan2Eth,
 		Chain33MsgChan:     chain33MsgChan2Eths,
 		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
 		ProcessWithDraw:    cfg.ProcessWithDraw,
@@ -114,17 +131,23 @@ func main() {
 
 	relayerManager := relayer.NewRelayerManager(chain33RelayerService, ethRelayerServices, db)
 
-	mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
-	startRPCServer(cfg.JrpcBindAddr, relayerManager)
-
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM)
 	go func() {
-		<-ch
-		cancel()
-		wg.Wait()
-		os.Exit(0)
+		mainlog.Info("ebrelayer", "cfg.JrpcBindAddr = ", cfg.JrpcBindAddr)
+		startRPCServer(cfg.JrpcBindAddr, relayerManager)
 	}()
+
+	procSig(cancel)
+}
+
+func procSig(cancel context.CancelFunc) {
+	sigChannle := make(chan os.Signal, 1)
+	signal.Notify(sigChannle, syscall.SIGTERM)
+
+	select {
+	case <-sigChannle:
+		cancel()
+		os.Exit(0)
+	}
 }
 
 func convertLogCfg(log *relayerTypes.Log) *chain33Types.Log {

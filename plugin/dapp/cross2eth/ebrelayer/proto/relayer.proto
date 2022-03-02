@@ -53,6 +53,8 @@ message EthBridgeClaim {
     string chainName = 11;
     int64 decimal = 12;
     string ethTxHash = 13;
+    int32 forwardTimes = 14;
+    int64 forwardIndex = 15;
 }
 
 message ImportKeyReq {
@@ -340,6 +342,37 @@ message CreateLockEventReq  {
     string chainName = 7;
 }
 
+message TxRelayConfirm4Chain33  {
+    int32 eventType      = 1;
+    bytes data           = 2;
+    int32 fdTimes        = 3;
+    int64 fdIndex          = 4;
+    string toChainName     = 5;
+    bytes txHash         = 6;
+    bool resend          = 7;
+}
+
+message TxRelayConfirm4Ethereum  {
+    int32 eventType      = 1;
+    bytes data           = 2;
+    int32 fdTimes        = 3;
+    int64 fdIndex        = 4;
+    string txHash        = 5;
+    bool resend          = 6;
+}
+
+message TxRelayAck  {
+    string txHash         = 1;
+    int64 fdIndex         = 2;
+}
+
+message relayTxDetail {
+    int32 claimType        = 1;
+    int64 txIndexRelayed   = 2; //已经发送的中继交易的index
+    //中继交易，不是源交易
+    string txhash          = 3;
+}
+
 message QueryReq  {
     string param        = 1;
     string abiData      = 2;
@@ -347,3 +380,4 @@ message QueryReq  {
     string owner        = 4;
     string chainName    = 5;
 }
+

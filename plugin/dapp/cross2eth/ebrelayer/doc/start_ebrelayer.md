@@ -9,7 +9,7 @@
 
 ./ebcli_A --node_addr http://182.160.7.143:8545 --eth_chain_name Binance
 ```
---eth_chain_name string   eth chain name (default "Ethereum") 根据 relayer.toml 配置文件中的 EthChainName 字段区分, 目前支持两条链的配置
+--eth_chain_name string   eth chain name (default "Binance") 根据 relayer.toml 配置文件中的 EthChainName 字段区分, 目前支持两条链的配置
 --node_addr string        eth node url (default "http://182.160.7.143:8545")
 ```
 
@@ -17,8 +17,8 @@
 |字段|说明|
 |----|----|
 |pushName|4 个 relayer 不同相同, `sed -i 's/^pushName=.*/pushName="XXX"/g' relayer.toml`|
-|ethProvider|ethereum 的 socket 通信地址, 例如: wss://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270, 如果有多个就根据 EthChainName 分别配置|
-|EthProviderCli|ethereum 的 http url 地址, 例如: https://rinkeby.infura.io/ws/v3/404eb4acc421426ebeb6e92c7ce9a270, 如果有多个就根据 EthChainName 分别配置|
+|ethProvider|ethereum 的 socket 通信地址, 例如: ["ws://43.130.113.145:9545/","ws://43.130.113.145:9545/"], 如果有多个就根据 EthChainName 分别配置, 提高通信的稳定性, 支持多个配置, 用逗号分隔|
+|EthProviderCli|ethereum 的 http url 地址, 例如: ["http://43.130.113.145:9545","http://43.130.113.145:9545"], 如果有多个就根据 EthChainName 分别配置, 提高通信的稳定性, 支持多个配置, 用逗号分隔|
 |BridgeRegistry|部署在 ethereum 的 BridgeRegistry 地址, 如果有多个就根据 EthChainName 分别配置|
 |chain33BridgeRegistry|部署在 chain33 的 BridgeRegistry 地址|
 |ChainID4Chain33|chain33 链的 ID, 默认为 0|
@@ -26,6 +26,7 @@
 |chain33Host|平行链的 host 地址, 默认: http://localhost:8801|
 |pushHost|relayer 的 host 地址, 默认: http://localhost:20000|
 |pushBind|relayer 的 bind 端口, 默认: 0.0.0.0:20000|
+|keepAliveDuration|单位毫秒, 默认 600000, 表示 10 分钟之内未收到信息, 通过重新订阅, 确保订阅可用, 提高稳定性|
 
 #### 首次启动 relayer 进行设置
 ```shell
@@ -122,6 +123,7 @@ done
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 2 -d 18
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
 ./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
+./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 1 -s BTY -a 100000000 -d 8
 
 Flags:
   -a, --amount float    每日最大值

@@ -78,7 +78,7 @@ func createEvmTx(privateKey chain33Crypto.PrivKey, action proto.Message, execer,
 	return dataStr
 }
 
-func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, rpcURL, oracleAddr string) (string, error) {
+func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, rpcURL, oracleAddr, chainName string) (string, error) {
 	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%s, ethTxHash:%s",
 		events.ClaimType(claim.ClaimType).String(), claim.Chain33Receiver, claim.EthereumSender, claim.Symbol, claim.Amount, claim.EthTxHash)
 	_, packData, err := evmAbi.Pack(parameter, generated.OracleABI, false)
@@ -91,7 +91,7 @@ func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 
 	//TODO: 交易费超大问题需要调查，hezhengjun on 20210420
 	feeInt64 := int64(1 * 1e6)
-	wholeEvm := getExecerName(claim.ChainName)
+	wholeEvm := getExecerName(chainName)
 	toAddr := address.ExecAddress(wholeEvm)
 	//name表示发给哪个执行器
 	data := createEvmTx(privateKey, &action, wholeEvm, toAddr, feeInt64)

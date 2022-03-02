@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/33cn/chain33/blockchain"
 	dbm "github.com/33cn/chain33/common/db"
@@ -23,8 +24,11 @@ import (
 )
 
 var (
-	log            = l.New("module", "sync.tx_receipts")
-	syncTxReceipts *EVMTxLogs
+	log                   = l.New("module", "sync.tx_receipts")
+	syncTxReceipts        *EVMTxLogs
+	timer2KeepAlive       *time.Ticker //用于监控订阅是否正常
+	duration2KeepAlive    time.Duration
+	minDuration2KeepAlive = time.Duration(180*1000) * time.Millisecond //三分钟
 )
 
 //StartSyncTxReceipt ...
@@ -36,7 +40,32 @@ func StartSyncEvmTxLogs(cfg *relayerTypes.SyncTxReceiptConfig, db dbm.DB) *EVMTx
 	syncTxReceipts = NewSyncTxReceipts(db)
 	go syncTxReceipts.SaveAndSyncTxs2Relayer()
 	go startHTTPService(cfg.PushBind, "*")
+	go keepSubscriptionAlive(cfg)
+
 	return syncTxReceipts
+}
+
+func resetTimer2KeepAlive() {
+	timer2KeepAlive.Reset(duration2KeepAlive)
+}
+
+func keepSubscriptionAlive(cfg *relayerTypes.SyncTxReceiptConfig) {
+	duration2KeepAlive = time.Duration(cfg.KeepAliveDuration) * time.Millisecond
+	if duration2KeepAlive < minDuration2KeepAlive {
+		duration2KeepAlive = minDuration2KeepAlive
+	}
+	timer2KeepAlive = time.NewTicker(duration2KeepAlive)
+	log.Debug("keepSubscriptionAlive", "duration2KeepAlive", duration2KeepAlive)
+
+	for {
+		select {
+		case <-timer2KeepAlive.C:
+			bindOrResumePush(cfg)
+			now := time.Now()
+			_, month, day := now.Date()
+			log.Debug("keepSubscriptionAlive", "time stamp month", month, "day", day, "hour", now.Hour(), "minute", now.Minute())
+		}
+	}
 }
 
 func startHTTPService(url string, clientHost string) {
