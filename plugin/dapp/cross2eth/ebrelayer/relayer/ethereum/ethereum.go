@@ -448,7 +448,7 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 	if ethRelayer.GetName() == BinanceChain {
 		ethName = "BSC"
 	}
-	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链地址:%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
+	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
 	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
 	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
 	if err != nil {
@@ -588,7 +588,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
 		err = errors.New("ErrBalanceNotEnough")
-		ethRelayer.remindBalanceNotEnough(toAddr.String(), chain33Msg.Symbol)
+		ethRelayer.remindBalanceNotEnough(ethRelayer.ethSender.String(), chain33Msg.Symbol)
 		return
 	}
 	//param: from,to,evm-packdata,amount
