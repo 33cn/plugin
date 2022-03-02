@@ -18,11 +18,11 @@ func (h *Hashlock) Exec_Hlock(hlock *pty.HashlockLock, tx *types.Transaction, in
 		clog.Warn("hashlock amount <=0")
 		return nil, pty.ErrHashlockAmount
 	}
-	if err := address.CheckAddress(hlock.ToAddress); err != nil {
+	if err := address.CheckAddress(hlock.ToAddress, h.GetHeight()); err != nil {
 		clog.Warn("hashlock checkaddress")
 		return nil, err
 	}
-	if err := address.CheckAddress(hlock.ReturnAddress); err != nil {
+	if err := address.CheckAddress(hlock.ReturnAddress, h.GetHeight()); err != nil {
 		clog.Warn("hashlock checkaddress")
 		return nil, err
 	}

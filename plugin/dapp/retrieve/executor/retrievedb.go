@@ -120,11 +120,11 @@ func (action *Action) RetrieveBackup(backupRet *rt.BackupRetrieve) (*types.Recei
 	var newRetrieve = false
 	cfg := action.api.GetConfig()
 	if cfg.IsDappFork(action.height, rt.RetrieveX, rt.ForkRetriveX) {
-		if err := address.CheckAddress(backupRet.BackupAddress); err != nil {
+		if err := address.CheckAddress(backupRet.BackupAddress, action.height); err != nil {
 			rlog.Debug("retrieve checkaddress")
 			return nil, err
 		}
-		if err := address.CheckAddress(backupRet.DefaultAddress); err != nil {
+		if err := address.CheckAddress(backupRet.DefaultAddress, action.height); err != nil {
 			rlog.Debug("retrieve checkaddress")
 			return nil, err
 		}

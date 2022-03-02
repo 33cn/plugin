@@ -31,7 +31,7 @@ func TestEcrecoverSignTypedMessage(t *testing.T) {
 
 	//fmt.Println("ecrecover", "pubkey", common.Bytes2Hex(pubKey))
 	//fmt.Println("recoverd address", address.PubKeyToAddress(pubKey).String())
-	addr := address.PubKeyToAddress(pubKey)
+	addr := address.BytesToBtcAddress(address.NormalVer, pubKey)
 	hash160Str := common.Bytes2Hex(common.LeftPadBytes(addr.Hash160[:], 32))
 	assert.Equal(t, hash160Str, "0x000000000000000000000000245afbf176934ccdd7ca291a8dddaa13c8184822")
 	assert.Equal(t, addr.String(), "14KEKbYtKKQm4wMthSK9J4La4nAiidGozt")

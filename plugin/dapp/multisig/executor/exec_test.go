@@ -5,6 +5,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/system/address/btc"
 	"testing"
 
 	"github.com/33cn/chain33/account"
@@ -175,7 +176,7 @@ func testMultiSigAccCreate(t *testing.T, driver drivers.Driver, env execEnv, loc
 	tx, _ := multiSigAccCreate(param)
 	tx, _ = signTx(tx, PrivKeyA)
 
-	addr := address.MultiSignAddress(tx.Hash())
+	addr := btc.FormatBtcAddr(address.MultiSignVer, tx.Hash())
 	localDB.On("Get", calcMultiSigAcc(addr)).Return(nil, types.ErrNotFound)
 
 	receipt, err := driver.Exec(tx, env.index)

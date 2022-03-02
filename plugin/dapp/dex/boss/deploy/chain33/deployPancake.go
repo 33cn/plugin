@@ -201,7 +201,7 @@ deployPancakeRouter:
 }
 
 func getContractAddr(caller, txhex string) string {
-	return address.GetExecAddress(caller + ethereumcommon.Bytes2Hex(common.HexToHash(txhex).Bytes())).String()
+	return address.GetExecAddress(caller + ethereumcommon.Bytes2Hex(common.HexToHash(txhex).Bytes()))
 }
 
 func deployContract(cmd *cobra.Command, code, abi, parameter, contractName string) (string, error) {

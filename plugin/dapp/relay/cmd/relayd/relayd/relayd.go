@@ -122,8 +122,8 @@ func NewRelayd(config *Config) *Relayd {
 
 	pubkey := priKey.PubKey()
 	fmt.Println(pubkey.KeyString())
-	address := address.PubKeyToAddress(pubkey.Bytes())
-	fmt.Println(address.String())
+	address := address.PubKeyToAddr(address.DefaultID, pubkey.Bytes())
+	fmt.Println(address)
 
 	return &Relayd{
 		config:            config,

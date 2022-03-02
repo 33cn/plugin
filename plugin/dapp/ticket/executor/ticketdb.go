@@ -215,7 +215,7 @@ func (action *Action) TicketBind(tbind *ty.TicketBind) (*types.Receipt, error) {
 	}
 	//"" 表示设置为空
 	if len(tbind.MinerAddress) > 0 {
-		if err := address.CheckAddress(tbind.MinerAddress); err != nil {
+		if err := address.CheckAddress(tbind.MinerAddress, action.height); err != nil {
 			return nil, err
 		}
 	}

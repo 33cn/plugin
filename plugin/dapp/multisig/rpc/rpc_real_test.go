@@ -900,7 +900,7 @@ func testAbnormal(t *testing.T, mocker *testnode.Chain33Mock, jrpcClient *jsoncl
 	testAbnormalCreateTx(t, mocker, jrpcClient, req, mty.ErrOwnerExist)
 
 	// owner addr 错误
-	owmer5 := &mty.Owner{OwnerAddr: "34W6mMVYquzGAwY62TwrqnhnhM82VtbGDJ", Weight: 30}
+	owmer5 := &mty.Owner{OwnerAddr: common.ToHex(common.Sha256(mocker.GetGenesisKey().PubKey().Bytes())), Weight: 30}
 	owners[2] = owmer5
 	req = &mty.MultiSigAccCreate{
 		Owners:         owners,

@@ -341,7 +341,7 @@ func testOneKey(priv, pub, addr string, t *testing.T) {
 	bPub, _ := PubKeyFromString(pub)
 	assert.True(t, bytes.Equal(bPub.Bytes(), bPriv.PubKey().Bytes()))
 
-	bAddr := address.PubKeyToAddress(bPub.Bytes()).Hash160[:]
+	bAddr := address.BytesToBtcAddress(address.NormalVer, bPub.Bytes()).Hash160[:]
 	fmt.Println("addr:", addr)
 	fmt.Println(fmt.Sprintf("%x", bAddr))
 	assert.True(t, addr == fmt.Sprintf("%X", bAddr))

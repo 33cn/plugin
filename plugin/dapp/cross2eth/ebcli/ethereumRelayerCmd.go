@@ -838,7 +838,7 @@ func ShowEthAddrCmdFlags(cmd *cobra.Command) {
 func ShowEthAddr(cmd *cobra.Command, args []string) {
 	addressstr, _ := cmd.Flags().GetString("address")
 
-	addr, err := address.NewAddrFromString(addressstr)
+	addr, err := address.NewBtcAddress(addressstr)
 	if nil != err {
 		fmt.Println("Wrong address")
 		return

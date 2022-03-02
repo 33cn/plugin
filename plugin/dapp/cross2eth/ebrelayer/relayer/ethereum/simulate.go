@@ -18,7 +18,7 @@ func (ethRelayer *Relayer4Ethereum) SimLockFromEth(lock *ebTypes.LockEthErc20) e
 	amount := big.NewInt(1)
 	amount, _ = amount.SetString(utils.TrimZeroAndDot(lock.Amount), 10)
 
-	addr, err := address.NewAddrFromString(lock.Chain33Receiver)
+	addr, err := address.NewBtcAddress(lock.Chain33Receiver)
 	if nil != err {
 		return err
 	}
@@ -46,7 +46,7 @@ func (ethRelayer *Relayer4Ethereum) SimBurnFromEth(burn *ebTypes.Burn) error {
 	amount := big.NewInt(1)
 	amount, _ = amount.SetString(utils.TrimZeroAndDot(burn.Amount), 10)
 
-	addr, err := address.NewAddrFromString(burn.Chain33Receiver)
+	addr, err := address.NewBtcAddress(burn.Chain33Receiver)
 	if nil != err {
 		return err
 	}

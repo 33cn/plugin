@@ -105,7 +105,7 @@ func (vote *Vote) String() string {
 
 // Verify ...
 func (vote *Vote) Verify(chainID string, pubKey crypto.PubKey) error {
-	addr := address.PubKeyToAddress(pubKey.Bytes()).Hash160[:]
+	addr :=  address.BytesToBtcAddress(address.NormalVer, pubKey.Bytes()).Hash160[:]
 	if !bytes.Equal(addr, vote.VoterNodeAddress) {
 		return ErrVoteInvalidValidatorAddress
 	}
@@ -192,7 +192,7 @@ func (notify *Notify) String() string {
 
 // Verify ...
 func (notify *Notify) Verify(chainID string, pubKey crypto.PubKey) error {
-	addr := address.PubKeyToAddress(pubKey.Bytes()).Hash160[:]
+	addr :=  address.BytesToBtcAddress(address.NormalVer, pubKey.Bytes()).Hash160[:]
 	if !bytes.Equal(addr, notify.NotifyNodeAddress) {
 		return ErrNotifyInvalidValidatorAddress
 	}
