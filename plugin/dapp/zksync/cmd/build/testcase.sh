@@ -223,6 +223,19 @@ function zksync_fullExit() {
     query_account "${CLI}" 3
 }
 
+function zksync_setVerifyKey() {
+    echo "=========== # zksync setVerifyKey test ============="
+    #set verify key
+    rawData=$(${CLI} zksync vkey -v e793f2c53d7c6880722c1902cc8c582c582843fb58acfa0cf16483ab6e324705a49d1a0e604ab22a0421b442aefcfa790e34902d0f7aa37676e6e71aff5e8ab0ec6396a99eaba0f3e6d41ebe5d5146871107461d14432d09d70fc7117e38f1992b81373cc779af2d826b2938cfafb65f5bf4068ec352aa3b5c5ce80752df9083d9a2c1781128d7c31ebd5c7a6c205987d2e19c77725e34870044907cd18d3a3c268be12a7805ee3622356f1f85f5bd7d140d1e2a0328155959c299aa6eef9a828dd3b14a6743281d1d3ba54b1590522f5f505cf3544ca49bf1ff28b456e6b2b5d0b10d6f9d4ae1a06e118e2f59db1cf4fd041581ace0d8bbcd2184e6587e001c1d304c69fa59bf583f91897a5bea5a3b059cbef7d554822bfbf6dac4cd64438100000003817edbbf30d409be1aaa7d13ecf6b90b3e981bc69fdae6dd61d55926ad04776aaf6bf1362a21ac4d30efed12a0657a91852d807fad7f34f15d634d03334ee8eb86cd48ae958b07063a449f55163c90791a85f9ec563b2e4fb7512089c2f87e10)
+    echo "${rawData}"
+
+    signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${signData}"
+    hash=$(${CLI} wallet send -d "$signData")
+    echo "${hash}"
+    query_tx "${CLI}" "${hash}"
+}
+
 function query_account() {
     block_wait "${1}" 1
 
@@ -264,6 +277,7 @@ function zksync_test() {
     zksync_transferToNew
     zksync_forceExit
     zksync_fullExit
+    zksync_setVerifyKey
 }
 
 function zksync() {
