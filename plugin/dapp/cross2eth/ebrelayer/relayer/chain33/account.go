@@ -68,7 +68,7 @@ func (chain33Relayer *Relayer4Chain33) ImportPrivateKey(passphrase, privateKeySt
 	chain33Relayer.privateKey4Chain33_ecdsa = temp.ToECDSA()
 	chain33Relayer.rwLock.Unlock()
 	chain33Relayer.unlockChan <- start
-	addr := address.PubKeyToAddr(priKey.PubKey().Bytes())
+	addr := address.PubKeyToAddr(address.DefaultID, priKey.PubKey().Bytes())
 
 	encryptered := wcom.CBCEncrypterPrivkey([]byte(passphrase), privateKeySli)
 	account := &x2ethTypes.Account4Relayer{

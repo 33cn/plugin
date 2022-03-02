@@ -217,7 +217,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	if len(voteProb.OriginAddr) > 0 {
 		for _, board := range voteProb.OriginAddr {
-			if err := address.CheckAddress(board); err != nil {
+			if err := address.CheckAddress(board, a.height); err != nil {
 				alog.Error("votePropRule ", "addr", board, "check toAddr error", err)
 				return nil, types.ErrInvalidAddress
 			}

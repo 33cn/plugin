@@ -338,7 +338,7 @@ OuterLoop:
 			for i, val := range topN.FinalCands {
 				// Make validator
 				validators[i] = &ttypes.Validator{
-					Address: address.PubKeyToAddress(val.Pubkey).Hash160[:],
+					Address: address.BytesToBtcAddress(address.NormalVer, val.Pubkey).Hash160[:],
 					PubKey:  val.Pubkey,
 				}
 				nodes[i] = val.IP + ":" + dposPort

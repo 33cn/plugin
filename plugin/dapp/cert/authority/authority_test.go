@@ -50,7 +50,7 @@ var (
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
 		Fee:     1000000,
 		Expire:  2,
-		To:      address.PubKeyToAddress(privKey.PubKey().Bytes()).String(),
+		To:      address.PubKeyToAddr(address.DefaultID, privKey.PubKey().Bytes()),
 	}
 )
 
@@ -193,7 +193,7 @@ func TestChckSignWithSm2(t *testing.T) {
 	privKeysm2, _ := sm2.PrivKeyFromBytes(privRaw)
 	tx15 := &types.Transaction{Execer: []byte("coins"),
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
-		Fee:     1000000, Expire: 2, To: address.PubKeyToAddress(privKeysm2.PubKey().Bytes()).String()}
+		Fee:     1000000, Expire: 2, To: address.PubKeyToAddr(address.DefaultID, privKeysm2.PubKey().Bytes())}
 
 	cfg, err := initEnv()
 	if err != nil {
@@ -217,7 +217,7 @@ func TestChckSignWithEcdsa(t *testing.T) {
 	privKeyecdsa, _ := ecdsacrypto.PrivKeyFromBytes(privRaw)
 	tx16 := &types.Transaction{Execer: []byte("coins"),
 		Payload: types.Encode(&cty.CoinsAction{Value: tr, Ty: cty.CoinsActionTransfer}),
-		Fee:     1000000, Expire: 2, To: address.PubKeyToAddress(privKeyecdsa.PubKey().Bytes()).String()}
+		Fee:     1000000, Expire: 2, To: address.PubKeyToAddr(address.DefaultID, privKeyecdsa.PubKey().Bytes())}
 
 	cfg, err := initEnv()
 	if err != nil {

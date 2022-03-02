@@ -107,7 +107,7 @@ func (c *channelClient) CreateTransferOnlyTx(ctx context.Context, in evmtypes.Ev
 	exec := in.ParaName + evmtypes.ExecutorName
 	toAddr := address.ExecAddress(exec)
 
-	r_addr, err := address.NewAddrFromString(in.To)
+	r_addr, err := address.NewBtcAddress(in.To)
 	if nil != err {
 		return nil, err
 	}

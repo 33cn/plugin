@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
@@ -177,10 +176,8 @@ func (policy *ParaPolicy) proceWalletTxDetail(block *types.BlockDetail, tx *type
 		Payload:    nil,
 	}
 	if len(wtxdetail.Fromaddr) <= 0 {
-		pubkey := tx.Signature.GetPubkey()
-		address := address.PubKeyToAddress(pubkey)
 		//from addr
-		fromaddress := address.String()
+		fromaddress := tx.From()
 		if len(fromaddress) != 0 && policy.walletOperate.AddrInWallet(fromaddress) {
 			wtxdetail.Fromaddr = fromaddress
 		}

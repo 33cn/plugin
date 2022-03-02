@@ -1,9 +1,9 @@
 package executor
 
 import (
+	"encoding/hex"
 	"testing"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 
@@ -75,7 +75,7 @@ func TestVote_CheckTx_UpdateGroup(t *testing.T) {
 		expectCheckErr: types.ErrInvalidAddress,
 	}, {
 		index:          6,
-		payload:        &vty.UpdateGroup{GroupID: groupID, AddAdmins: []string{address.MultiSignAddress(privKeys[0].PubKey().Bytes())}},
+		payload:        &vty.UpdateGroup{GroupID: groupID, AddAdmins: []string{hex.EncodeToString(privKeys[0].PubKey().Bytes())}},
 		expectCheckErr: types.ErrInvalidAddress,
 	}, {
 		index:   7,

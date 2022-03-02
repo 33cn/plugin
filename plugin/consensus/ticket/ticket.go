@@ -240,7 +240,7 @@ func (client *Client) flushTicket() error {
 func getPrivMap(privs []crypto.PrivKey) map[string]crypto.PrivKey {
 	list := make(map[string]crypto.PrivKey)
 	for _, priv := range privs {
-		addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+		addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 		list[addr] = priv
 	}
 	return list

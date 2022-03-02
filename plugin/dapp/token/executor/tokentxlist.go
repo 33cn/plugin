@@ -7,7 +7,6 @@ package executor
 import (
 	"fmt"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	tp "github.com/33cn/plugin/plugin/dapp/token/types"
@@ -22,7 +21,7 @@ const (
 func tokenTxKvs(tx *types.Transaction, symbol string, height, index int64, isDel bool) ([]*types.KeyValue, error) {
 	var kv []*types.KeyValue
 
-	from := address.PubKeyToAddress(tx.GetSignature().GetPubkey()).String()
+	from := tx.From()
 	to := tx.GetRealToAddr()
 	keys := tokenTxkeys(symbol, from, to, height, index)
 

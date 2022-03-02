@@ -6,6 +6,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/system/address/btc"
 	"github.com/33cn/chain33/types"
 	mty "github.com/33cn/plugin/plugin/dapp/multisig/types"
 )
@@ -57,6 +58,15 @@ func (m *MultiSig) Query_MultiSigAccounts(in *mty.ReqMultiSigAccs) (types.Messag
 	return accountAddrs, nil
 }
 
+func (m *MultiSig) validateMultiSignAddr(addr string) error {
+	multiSignDriver, err := address.LoadDriver(btc.MultiSignAddressID, m.GetHeight())
+	if err != nil {
+		multisiglog.Error("validateMultiSignAddr", "LoadDriver err", err)
+		return err
+	}
+	return multiSignDriver.ValidateAddr(addr)
+}
+
 //Query_MultiSigAccountInfo 获取指定多重签名账号的状态信息
 //输入：
 //message ReqMultiSigAccountInfo {
@@ -76,7 +86,7 @@ func (m *MultiSig) Query_MultiSigAccountInfo(in *mty.ReqMultiSigAccInfo) (types.
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -102,7 +112,7 @@ func (m *MultiSig) Query_MultiSigAccTxCount(in *mty.ReqMultiSigAccInfo) (types.M
 	db := m.GetLocalDB()
 	addr := in.MultiSigAccAddr
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -136,7 +146,7 @@ func (m *MultiSig) Query_MultiSigTxids(in *mty.ReqMultiSigTxids) (types.Message,
 	db := m.GetLocalDB()
 	addr := in.MultiSigAddr
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -182,7 +192,7 @@ func (m *MultiSig) Query_MultiSigTxInfo(in *mty.ReqMultiSigTxInfo) (types.Messag
 	addr := in.MultiSigAddr
 	txid := in.TxId
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -213,7 +223,7 @@ func (m *MultiSig) Query_MultiSigTxConfirmedWeight(in *mty.ReqMultiSigTxInfo) (t
 	addr := in.MultiSigAddr
 	txid := in.TxId
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 
@@ -249,7 +259,7 @@ func (m *MultiSig) Query_MultiSigAccUnSpentToday(in *mty.ReqAccAssets) (types.Me
 	addr := in.MultiSigAddr
 	isAll := in.IsAll
 
-	if err := address.CheckMultiSignAddress(addr); err != nil {
+	if err := m.validateMultiSignAddr(addr); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	multiSigAcc, err := getMultiSigAccount(db, addr)
@@ -319,8 +329,8 @@ func (m *MultiSig) Query_MultiSigAccAssets(in *mty.ReqAccAssets) (types.Message,
 		return nil, types.ErrInvalidParam
 	}
 	//多重签名地址或者普通地址
-	if err := address.CheckMultiSignAddress(in.MultiSigAddr); err != nil {
-		if err = address.CheckAddress(in.MultiSigAddr); err != nil {
+	if err := m.validateMultiSignAddr(in.MultiSigAddr); err != nil {
+		if err = address.CheckAddress(in.MultiSigAddr, m.GetHeight()); err != nil {
 			return nil, types.ErrInvalidAddress
 		}
 	}
@@ -386,7 +396,7 @@ func (m *MultiSig) Query_MultiSigAccAllAddress(in *mty.ReqMultiSigAccInfo) (type
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	if err := address.CheckAddress(in.MultiSigAccAddr); err != nil {
+	if err := address.CheckAddress(in.MultiSigAccAddr, m.GetHeight()); err != nil {
 		return nil, types.ErrInvalidAddress
 	}
 	return getMultiSigAccAllAddress(m.GetLocalDB(), in.MultiSigAccAddr)

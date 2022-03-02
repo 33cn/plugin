@@ -6,7 +6,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	manTy "github.com/33cn/chain33/system/dapp/manage/types"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	x2eTy "github.com/33cn/plugin/plugin/dapp/x2ethereum/types"
 )
@@ -25,7 +24,7 @@ func (x *x2ethereum) Exec_Eth2Chain33Lock(payload *x2eTy.Eth2Chain33, tx *types.
 		return nil, errors.New("Create Action Error")
 	}
 
-	payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
+	payload.ValidatorAddress = tx.From()
 
 	return action.procEth2Chain33_lock(payload)
 }
@@ -48,7 +47,7 @@ func (x *x2ethereum) Exec_Eth2Chain33Burn(payload *x2eTy.Eth2Chain33, tx *types.
 		return nil, errors.New("Create Action Error")
 	}
 
-	payload.ValidatorAddress = address.PubKeyToAddr(tx.Signature.Pubkey)
+	payload.ValidatorAddress = tx.From()
 
 	return action.procEth2Chain33_burn(payload)
 }
@@ -153,7 +152,7 @@ func (x *x2ethereum) Exec_SetConsensusThreshold(payload *x2eTy.MsgConsensusThres
 }
 
 func checkTxSignBySpecificAddr(tx *types.Transaction, addrs []string) error {
-	signAddr := address.PubKeyToAddr(tx.Signature.Pubkey)
+	signAddr := tx.From()
 	var exist bool
 	for _, addr := range addrs {
 		if signAddr == addr {

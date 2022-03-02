@@ -96,18 +96,21 @@ func (h Hash160Address) ToAddress() Address {
 
 // NewAddress xHash生成EVM合约地址
 func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
-	execAddr := address.GetExecAddress(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
+	execPub := address.ExecPubKey(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
+	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
 	return Address{Addr: execAddr}
 }
 
 func NewContractAddress(b Address, txHash []byte) Address {
-	execAddr := address.GetExecAddress(b.String() + common.Bytes2Hex(txHash))
+	execPub := address.ExecPubKey(b.String() + common.Bytes2Hex(txHash))
+	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
 	return Address{Addr: execAddr}
 }
 
 // ExecAddress 返回合约地址
 func ExecAddress(execName string) Address {
-	execAddr := address.GetExecAddress(execName)
+	execPub := address.ExecPubKey(execName)
+	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
 	return Address{Addr: execAddr}
 }
 
@@ -128,7 +131,7 @@ func BytesToHash160Address(b []byte) Hash160Address {
 
 // StringToAddress 字符串转换为地址
 func StringToAddress(s string) *Address {
-	addr, err := address.NewAddrFromString(s)
+	addr, err := address.NewBtcAddress(s)
 	if err != nil {
 		//检查是否是十六进制地址数据
 		hbytes, err := hex.DecodeString(strings.TrimPrefix(s, "0x"))
