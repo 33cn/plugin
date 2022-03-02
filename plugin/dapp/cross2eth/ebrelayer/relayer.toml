@@ -27,7 +27,7 @@ EthBlockFetchPeriod=5000
 ChainID4Chain33=0
 #链的名称，用来区分主链和平行链,如user.p.xxx.,必须包含最后一个点
 ChainName=""
-BridgeRegistryOnChain33=""
+BridgeRegistryOnChain33="xxx"
 
 [Chain33RelayerCfg.SyncTxConfig]
 chain33Host="http://localhost:8801"
