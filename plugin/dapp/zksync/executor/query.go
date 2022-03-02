@@ -122,7 +122,11 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 		}
 		rows, err := table.ListIndex("height", []byte(fmt.Sprintf("%016d", i)), primaryKey, types.MaxTxsPerBlock, zt.ListASC)
 		if err != nil {
-			return nil, err
+			if isNotFound(err) {
+				continue
+			} else {
+				return nil, err
+			}
 		}
 		for _, row := range rows {
 			data := row.Data.(*zt.OperationInfo)
