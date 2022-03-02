@@ -563,10 +563,11 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	for i := 0; i < 3; i++ {
 		result, err := ctx.RunResult()
 		if err != nil {
-			if i == 2 {
-				fmt.Fprintln(os.Stderr, err)
+			if strings.Index(err.Error(), "EOF") != -1 && strings.Index(err.Error(), "Post") != -1 {
+				continue
 			}
-			continue
+			fmt.Fprintln(os.Stderr, err)
+			return
 		}
 		data, err := json.MarshalIndent(result, "", "    ")
 		if err != nil {
