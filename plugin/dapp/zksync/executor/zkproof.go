@@ -190,10 +190,10 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		return nil, errors.Wrap(err, "get last commit Proof")
 	}
 
-	//高度需要连续
-	if lastProof != nil && lastProof.BlockEnd+1 != payload.BlockStart {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof block end=%d, new proof start=%d",
-			lastProof.BlockEnd, payload.BlockStart)
+	//proofId需要连续,高度需要衔接
+	if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId || lastProof.BlockEnd != payload.BlockStart) {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id end=%d, new id start=%d",
+			lastProof.ProofId, payload.ProofId)
 	}
 
 	lastTreeRoot := "0"
