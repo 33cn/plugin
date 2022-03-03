@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
-	_ "net/http/pprof" //
+	_ "net/http/pprof"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
@@ -25,6 +25,8 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version"
+	pluginVersion "github.com/33cn/plugin/version"
 	tml "github.com/BurntSushi/toml"
 	"github.com/btcsuite/btcd/limits"
 )
@@ -46,6 +48,9 @@ func main() {
 	if *configPath == "" {
 		*configPath = "relayer.toml"
 	}
+
+	mainlog.Info("plugin version:" + pluginVersion.GetVersion() + " relayer version:" + version.GetVersion() + " commit:" + version.GitCommit +
+		" buildTime:" + version.BuildTime + " goVersion:" + version.GoVersion + " platform:" + version.Platform)
 
 	//set pprof
 	go func() {

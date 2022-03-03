@@ -12,19 +12,40 @@ CLI_B := build/ebcli_B
 CLI_C := build/ebcli_C
 CLI_D := build/ebcli_D
 EBRELAER := build/ebrelayer   ##通过配置文件启动不同的ebrelayer
+LDFLAGS := ' -w -s'
+BUILDTIME:=$(shell date +"%Y-%m-%d %H:%M:%S %A")
+VERSION=$(shell git describe --tags || git rev-parse --short=8 HEAD)
+GitCommit=$(shell git rev-parse HEAD)
+BUILD_FLAGS := -ldflags '-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime=$(BUILDTIME)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" '
 
-LDFLAGS := -ldflags "-w -s"
+BUILD_FLAGSB := -ldflags '-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime=$(BUILDTIME)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" \
+                         -X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" '
+
+BUILD_FLAGSC := -ldflags '-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime=$(BUILDTIME)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" \
+                         -X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" '
+
+BUILD_FLAGSD := -ldflags '-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit=$(GitCommit)" \
+                         -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime=$(BUILDTIME)" \
+                         -X "github.com/33cn/plugin/version.Version=$(VERSION)" \
+                         -X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" '
+
 proj := "build"
 .PHONY: default dep all build release cli linter race test fmt vet bench msan coverage coverhtml docker docker-compose protobuf clean help autotest
 
 default: build
 
 build:
-	@go build -v -i -o $(EBRELAER) $(SRC_EBRELAYER)
-	@go build -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
+	@go build $(BUILD_FLAGS) -v -i -o $(EBRELAER) $(SRC_EBRELAYER)
+	@go build $(BUILD_FLAGS) -v -i -o $(CLI_A) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSB) -v -i -o $(CLI_B) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSC) -v -i -o $(CLI_C) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSD) -v -i -o $(CLI_D) $(SRC_EBCLI)
 	@cp ebrelayer/relayer.toml build/
 
 rebuild:
@@ -32,10 +53,10 @@ rebuild:
 	make build
 
 cli:
-	@go build -v -i -o $(CLI_A) $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_B) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9902" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_C) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9903" $(SRC_EBCLI)
-	@go build -v -i -o $(CLI_D) -ldflags "-X $(SRC_EBCLI)/buildflags.RPCAddr=http://localhost:9904" $(SRC_EBCLI)
+	@go build $(BUILD_FLAGS) -v -i -o $(CLI_A) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSB) -v -i -o $(CLI_B) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSC) -v -i -o $(CLI_C) $(SRC_EBCLI)
+	@go build $(BUILD_FLAGSD) -v -i -o $(CLI_D) $(SRC_EBCLI)
 
 build_ci: depends ## Build the binary file for CI
 	@go build -v -i -o $(CLI) $(SRC_EBCLI)
@@ -91,7 +112,7 @@ clean: ## remove all the bins
 	@rm -rf $(CLI_C)
 	@rm -rf $(CLI_D)
 	@rm -rf $(EBRELAER)
-	@rm -rf build/*
+	@rm -rf ./build
 
 
 proto:protobuf

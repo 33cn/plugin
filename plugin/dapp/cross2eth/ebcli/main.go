@@ -15,6 +15,8 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebcli/buildflags"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version"
+	pluginVersion "github.com/33cn/plugin/version"
 	tml "github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +38,7 @@ func init() {
 		Chain33RelayerCmd(),
 		EthereumRelayerCmd(),
 		StaticsCmd(),
+		VersionCmd(),
 	)
 }
 
@@ -102,4 +105,23 @@ func main() {
 	}
 
 	run(buildflags.RPCAddr, buildflags.NodeAddr)
+}
+
+func VersionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "show version",
+		Run:   showVersion,
+	}
+	return cmd
+}
+
+func showVersion(_ *cobra.Command, _ []string) {
+	fmt.Println("plugin version  :", pluginVersion.GetVersion())
+	fmt.Println("relayer version :", version.GetVersion())
+	fmt.Println("commit          :", version.GitCommit)
+	fmt.Println("buildTime       :", version.BuildTime)
+	fmt.Println("goVersion       :", version.GoVersion)
+	fmt.Println("platform        :", version.Platform)
+
 }
