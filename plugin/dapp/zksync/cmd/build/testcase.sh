@@ -269,11 +269,13 @@ function query_tx() {
 function create_tx() {
     block_wait "${CLI}" 10
 
-    local key=4
+    local accountId=4
     while true; do
          #loop deposit amount 1000000000000
          echo "=========== # zksync setVerifyKey test ============="
-         chain33Addr=$(${CLI} zksync getChain33Addr -k key)
+         privateKey=$(${CLI} account rand -l 1 | jq ".privateKey")
+         echo "${privateKey}"
+         chain33Addr=$(${CLI} zksync getChain33Addr -k privateKey)
 
          rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
          echo "${rawData}"
@@ -283,8 +285,8 @@ function create_tx() {
          hash=$(${CLI} wallet send -d "$signData")
          echo "${hash}"
          query_tx "${CLI}" "${hash}"
-         query_account "${CLI}" key
-         key=$((key + 1))
+         query_account "${CLI}" accountId
+         accountId=$((accountId + 1))
     done
 }
 
