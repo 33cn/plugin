@@ -275,7 +275,7 @@ function create_tx() {
          echo "=========== # zksync setVerifyKey test ============="
          privateKey=$(${CLI} account rand -l 1 | jq ".privateKey")
          echo "${privateKey}"
-         chain33Addr=$(${CLI} zksync getChain33Addr -k privateKey)
+         chain33Addr=$(${CLI} zksync getChain33Addr -k "$privateKey")
 
          rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
          echo "${rawData}"
