@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2086,1072
 
 # 官方ci集成脚本
 strpwd=$(pwd)
@@ -12,11 +13,13 @@ SRC_BOSS4XCLI=github.com/33cn/plugin/plugin/dapp/cross2eth/boss4x
 OUT_DIR="${1}/$strapp"
 FLAG=$2
 
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
-# shellcheck disable=SC2086,1072
-go build -i ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
-# shellcheck disable=SC2086,1072
+BuildTime=$(date +"%Y-%m-%d %H:%M:%S %A")
+VERSION=$(git describe --tags || git rev-parse --short=8 HEAD)
+GitCommit=$(git rev-parse HEAD)
+BUILD_FLAGS='-X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.GitCommit='${GitCommit}'" -X "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version.BuildTime='${BuildTime}'" -X "github.com/33cn/plugin/version.Version='${VERSION}'"'
+
+go build -ldflags "${BUILD_FLAGS}" -i ${FLAG} -v -o "${OUT_DIR}/ebrelayer" "${SRC_EBRELAYER}"
+go build -ldflags "${BUILD_FLAGS}" -i ${FLAG} -v -o "${OUT_DIR}/ebcli_A" "${SRC_EBCLI}"
 go build -i ${FLAG} -v -o "${OUT_DIR}/boss4x" "${SRC_BOSS4XCLI}"
 
 cp ../../../../chain33.para.toml "${OUT_DIR}"
