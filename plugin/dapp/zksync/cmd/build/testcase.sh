@@ -273,7 +273,7 @@ function create_tx() {
     while true; do
          #loop deposit amount 1000000000000
          echo "=========== # zksync setVerifyKey test ============="
-         privateKey=$(${CLI} account rand -l 1 | jq ".privateKey")
+         privateKey=$(${CLI} account rand -l 1 | jq -r ".privateKey")
          echo "${privateKey}"
          chain33Addr=$(${CLI} zksync getChain33Addr -k "$privateKey")
 
