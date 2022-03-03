@@ -266,6 +266,28 @@ function query_tx() {
     done
 }
 
+function create_tx() {
+    block_wait "${CLI}" 10
+
+    local key=4
+    while true; do
+         #loop deposit amount 1000000000000
+         echo "=========== # zksync setVerifyKey test ============="
+         chain33Addr=$(${CLI} zksync getChain33Addr -k key)
+
+         rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
+         echo "${rawData}"
+
+         signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+         echo "${signData}"
+         hash=$(${CLI} wallet send -d "$signData")
+         echo "${hash}"
+         query_tx "${CLI}" "${hash}"
+         query_account "${CLI}" key
+         key=$((key + 1))
+    done
+}
+
 function zksync_test() {
     echo "=========== # zksync chain test ============="
     zksync_deposit
@@ -278,6 +300,7 @@ function zksync_test() {
     zksync_forceExit
     zksync_fullExit
     zksync_setVerifyKey
+    create_tx
 }
 
 function zksync() {
