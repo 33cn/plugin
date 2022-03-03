@@ -285,7 +285,7 @@ function create_tx() {
          hash=$(${CLI} wallet send -d "$signData")
          echo "${hash}"
          query_tx "${CLI}" "${hash}"
-         query_account "${CLI}" accountId
+         query_account "${CLI}" $accountId
          accountId=$((accountId + 1))
     done
 }
