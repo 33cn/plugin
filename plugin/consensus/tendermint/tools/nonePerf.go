@@ -168,7 +168,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 					//构造存证交易
 					tx := txPool.Get().(*types.Transaction)
 					tx.To = execAddr
-					tx.Fee = rand.Int63()
+					tx.Fee = 1e6
 					tx.Nonce = time.Now().UnixNano()
 					tx.Expire = height + types.TxHeightFlag + types.LowAllowPackHeight
 					tx.Payload = RandStringBytes(sizeInt)
