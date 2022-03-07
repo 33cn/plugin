@@ -367,3 +367,13 @@ func DeployAndInit(client ethinterface.EthClientSpec, para *DeployPara) (*X2EthC
 
 	return x2EthContracts, deployInfo, nil
 }
+
+func Test_SelectAndRoundEthURL(t *testing.T) {
+	urls := []string{"url1", "url2"}
+	decision, err := SelectAndRoundEthURL(&urls)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "url1", decision)
+	assert.Equal(t, "url2", urls[0])
+	assert.Equal(t, "url1", urls[1])
+
+}

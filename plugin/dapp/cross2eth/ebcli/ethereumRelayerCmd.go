@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/33cn/chain33/common"
 	chain33Common "github.com/33cn/chain33/common"
@@ -559,7 +561,21 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20Asset", para, &res)
-	ctx.Run()
+	//ctx.Run
+	for try := 0; try < 3; try++ {
+		result, err := ctx.RunResult()
+		if err != nil {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+		data, err := json.MarshalIndent(result, "", "    ")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		fmt.Println(string(data))
+		return
+	}
 }
 
 //LockEthErc20AssetAsync ...
