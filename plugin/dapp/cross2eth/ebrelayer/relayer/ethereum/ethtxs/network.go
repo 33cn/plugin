@@ -13,21 +13,21 @@ import (
 )
 
 // SelectAndRoundEthURL: 获取配置列表中的第一个配置项，同时将其调整配置配置项
-func SelectAndRoundEthURL(ethURL []string) (string, error) {
-	if 0 == len(ethURL) {
+func SelectAndRoundEthURL(ethURL *[]string) (string, error) {
+	if 0 == len(*ethURL) {
 		return "", errors.New("NullEthURlCofigured")
 	}
 
-	result := ethURL[0]
+	result := (*ethURL)[0]
 
-	if len(ethURL) > 0 {
-		ethURL = append(ethURL[1:], result)
+	if len(*ethURL) > 0 {
+		*ethURL = append((*ethURL)[1:], result)
 	}
 	return result, nil
 }
 
-func SetupEthClient(ethURL []string) (*ethclient.Client, error) {
-	for i := 0; i < len(ethURL); i++ {
+func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
+	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
 			txslog.Error("SetupEthClient", "SelectAndRoundEthURL err", err.Error())

@@ -4,6 +4,8 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +19,7 @@ type EthClientSpec interface {
 	NetworkID(ctx context.Context) (*big.Int, error)
 	BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	SyncProgress(ctx context.Context) (*ethereum.SyncProgress, error)
 }
 
 //SimExtend ...
@@ -34,11 +37,6 @@ func (sim *SimExtend) NetworkID(ctx context.Context) (*big.Int, error) {
 	return nil, nil
 }
 
-//func (sim *SimExtend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-//	receipt, err := sim.SimulatedBackend.TransactionReceipt(ctx, txHash)
-//	if receipt == nil {
-//		err = errors.New("not found")
-//	}
-//
-//	return receipt, err
-//}
+func (sim *SimExtend) SyncProgress(ctx context.Context) (*ethereum.SyncProgress, error) {
+	return nil, nil
+}
