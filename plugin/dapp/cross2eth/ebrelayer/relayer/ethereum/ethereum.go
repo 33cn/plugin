@@ -165,13 +165,13 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0],
 		"http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
-	client, err := ethtxs.SetupEthClient(ethRelayer.providerHttp)
+	client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 	if err != nil {
 		panic(err)
 	}
 	ethRelayer.clientSpec = client
 
-	ethRelayer.clientWss, err = ethtxs.SetupEthClient(ethRelayer.provider)
+	ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
 	if err != nil {
 		panic(err)
 	}
@@ -583,6 +583,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		value = amount2transfer
 	}
 
+	ethRelayer.getAvailableClient()
 	//校验余额是否充足
 	err = ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData)
 	if err != nil {
@@ -792,6 +793,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		}
 	}
 
+	ethRelayer.getAvailableClient()
 	burnOrLockParameter := &ethtxs.BurnOrLockParameter{
 		OracleInstance: ethRelayer.x2EthContracts.Oracle,
 		Client:         ethRelayer.clientSpec,
@@ -805,18 +807,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 
 	// Relay the Chain33Msg to the Ethereum network
 	ethTxhash, err := ethtxs.RelayOracleClaimToEthereum(burnOrLockParameter)
-	if nil != err && err == ethtxs.ErrNodeNetwork {
-		//如果是网络原因错误，则尝试重连
-		for {
-			ethRelayer.clientSpec, err = ethtxs.SetupEthClient(ethRelayer.providerHttp)
-			if err != nil {
-				time.Sleep(5 * time.Second)
-				continue
-			}
-			break
-		}
-		ethTxhash, err = ethtxs.RelayOracleClaimToEthereum(burnOrLockParameter)
-	}
 	if err != nil {
 		//此处收集更多的错误信息
 		relayerLog.Error("handleLogLockBurn", "RelayOracleClaimToEthereum failed due to", err.Error())
@@ -880,6 +870,27 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		"Chain33Sender", statics.Chain33Sender)
 }
 
+func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
+	if syncProc, err := ethRelayer.clientSpec.SyncProgress(context.Background()); nil != syncProc || nil != err {
+		relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
+		for {
+			ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
+			if err != nil {
+				relayerLog.Error("getAvailableClient", "Failed to SetupEthClient due to", err.Error())
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			if syncProc, err := ethRelayer.clientSpec.SyncProgress(context.Background()); nil != syncProc || nil != err {
+				relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			break
+		}
+	}
+	return
+}
+
 func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint64, error) {
 	head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
 	if nil == err {
@@ -888,7 +899,7 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 
 	for {
 		time.Sleep(5 * time.Second)
-		ethRelayer.clientSpec, err = ethtxs.SetupEthClient(ethRelayer.providerHttp)
+		ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 		if err != nil {
 			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
 			continue
