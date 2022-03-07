@@ -1068,7 +1068,7 @@ func addCfgWithdrawFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("fee")
 	cmd.Flags().Float64P("amount", "a", 0, "accumulative amount allowed to be withdrew per day")
 	_ = cmd.MarkFlagRequired("amount")
-	cmd.Flags().Int8P("decimal", "d", 0, "token decimal")
+	cmd.Flags().Uint8P("decimal", "d", 0, "token decimal")
 	_ = cmd.MarkFlagRequired("decimal")
 }
 
@@ -1078,12 +1078,12 @@ func CfgWithdraw(cmd *cobra.Command, _ []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	amount, _ := cmd.Flags().GetFloat64("amount")
-	decimal, _ := cmd.Flags().GetInt8("decimal")
+	decimal, _ := cmd.Flags().GetUint8("decimal")
 
 	req := &ebTypes.CfgWithdrawReq{
 		Symbol:       symbol,
-		FeeAmount:    utils.ToWei(fee, int64(decimal)).String(),
-		AmountPerDay: utils.ToWei(amount, int64(decimal)).String(),
+		FeeAmount:    utils.SmalToBig(fee, decimal).String(),
+		AmountPerDay: utils.SmalToBig(amount, decimal).String(),
 		ChainName:    ethChainName,
 	}
 

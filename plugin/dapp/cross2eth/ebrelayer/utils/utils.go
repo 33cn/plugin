@@ -28,6 +28,7 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	chain33Abi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -307,7 +308,6 @@ func Toeth(amount string, decimal int64) float64 {
 
 //ToWei 将eth单位的金额转为wei单位
 func ToWei(amount float64, decimal int64) *big.Int {
-
 	var ok bool
 	bn := big.NewInt(1)
 	if decimal > 4 {
@@ -320,6 +320,13 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	}
 
 	return nil
+}
+
+func SmalToBig(amount float64, decimals uint8) *big.Int {
+	bfa := big.NewFloat(amount)
+	bfa = bfa.Mul(bfa, big.NewFloat(1).SetInt64(ebTypes.DecimalsPrefix[decimals]))
+	bn, _ := bfa.Int(nil)
+	return bn
 }
 
 //TrimZeroAndDot ...
