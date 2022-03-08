@@ -170,7 +170,7 @@ func getTxByHashesRpc(txhex, rpcLaddr string) (string, error) {
 
 func getContractAddr(caller, txhex string) address.Address {
 	return *address.BytesToBtcAddress(address.NormalVer,
-		address.ExecPubKey(caller + ethcommon.Bytes2Hex(common.HexToHash(txhex).Bytes())))
+		address.ExecPubKey(caller+ethcommon.Bytes2Hex(common.HexToHash(txhex).Bytes())))
 }
 
 func deploySingleContract(code []byte, abi, constructorPara, contractName, paraChainName, deployer, rpcLaddr string) (string, error) {

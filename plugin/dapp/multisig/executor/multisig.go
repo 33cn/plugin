@@ -17,6 +17,7 @@ multiSig合约主要实现如下功能：
 import (
 	"bytes"
 	"encoding/hex"
+
 	"github.com/33cn/chain33/system/address/btc"
 
 	"github.com/33cn/chain33/account"

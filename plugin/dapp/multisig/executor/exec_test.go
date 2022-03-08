@@ -5,8 +5,9 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/system/address/btc"
 	"testing"
+
+	"github.com/33cn/chain33/system/address/btc"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common"

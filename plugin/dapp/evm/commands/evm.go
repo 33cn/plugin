@@ -214,7 +214,7 @@ func calcNewContractAddrCmd() *cobra.Command {
 func calcNewContractAddr(cmd *cobra.Command, args []string) {
 	deployer, _ := cmd.Flags().GetString("deployer")
 	hash, _ := cmd.Flags().GetString("hash")
-	newContractAddr := address.BytesToBtcAddress(address.NormalVer, address.ExecPubKey(deployer + hash))
+	newContractAddr := address.BytesToBtcAddress(address.NormalVer, address.ExecPubKey(deployer+hash))
 	fmt.Println(newContractAddr.String())
 }
 
