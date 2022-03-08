@@ -96,6 +96,16 @@ var (
 
 	//ForkFix Forks
 	//ForkFix1 = "ForkFix1"
+
+	ForkParamV1 = "ForkParamV1"
+	ForkParamV2 = "ForkParamV2"
+	ForkParamV3 = "ForkParamV3"
+	ForkParamV4 = "ForkParamV4"
+	ForkParamV5 = "ForkParamV5"
+	ForkParamV6 = "ForkParamV6"
+	ForkParamV7 = "ForkParamV7"
+	ForkParamV8 = "ForkParamV8"
+	ForkParamV9 = "ForkParamV9"
 )
 
 // init defines a register function
@@ -110,6 +120,15 @@ func init() {
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
 	//cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV2, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV3, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV4, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV5, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV6, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV7, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV8, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV9, 0)
 }
 
 // InitExecutor defines register executor
