@@ -6,6 +6,7 @@ package executor
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/chain33/system/address/btc"
 
 	"github.com/33cn/chain33/account"
