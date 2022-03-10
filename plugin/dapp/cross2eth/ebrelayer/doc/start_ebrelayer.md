@@ -116,14 +116,12 @@ done
 #### 设置 chain33 代理地址, 及手续费设置
 ```shell
 # 设置 withdraw 的手续费及每日转帐最大值, 实时变动, 价格波动大的时候重新设置, 需要跟前端底层都商量一下
-./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.003 -s ETH -a 1 -d 18
-./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
-./ebcli_A --node_addr http://43.130.113.145:9545 --eth_chain_name Ethereum ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
+./ebcli_A --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.003 -s ETH -a 0.2 -d 18
 例如:(根据需求配置, 修改手续费后要通知前端同步修改)
-./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 2 -d 18
-./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
-./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 1000000 -d 8
-./ebcli_A --node_addr http://43.130.113.145:8545 --eth_chain_name Binance ethereum cfgWithdraw -f 1 -s BTY -a 100000000 -d 8
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 1.5 -d 18
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 80000 -d 8
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 3 -s BTY -a 6000 -d 8
 
 Flags:
   -a, --amount float    每日最大值

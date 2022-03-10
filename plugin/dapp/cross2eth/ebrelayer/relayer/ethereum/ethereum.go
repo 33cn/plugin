@@ -609,9 +609,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 	//交易发送
-	err = ethRelayer.clientSpec.SendTransaction(timeout, signedTx)
+	err = ethRelayer.sendEthereumTx(timeout, signedTx)
 	if err != nil {
-		relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
 		err = errors.New("ErrSendTransaction")
 		return
 	}
@@ -623,6 +622,29 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	withdrawTx.TxHashOnEthereum = ethTxhash
 
 	return
+}
+
+func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, signedTx *types.Transaction) error {
+	bSuccess := false
+	for i := 0; i < len(ethRelayer.providerHttp); i++ {
+		client, err := ethtxs.SetupEthClient(ethRelayer.providerHttp)
+		if err == nil {
+			err = client.SendTransaction(timeout, signedTx)
+			if err == nil {
+				bSuccess = true
+			} else {
+				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err, "providerHttp", i)
+			}
+		} else {
+			relayerLog.Error("handleLogWithdraw", "SetupEthClient err", err, "providerHttp", i)
+		}
+	}
+
+	if bSuccess == false {
+		return errors.New("ErrSendTransaction")
+	} else {
+		return nil
+	}
 }
 
 func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) error {
