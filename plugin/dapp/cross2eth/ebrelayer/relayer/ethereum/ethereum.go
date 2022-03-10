@@ -627,7 +627,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, signedTx *types.Transaction) error {
 	bSuccess := false
 	for i := 0; i < len(ethRelayer.providerHttp); i++ {
-		client, err := ethtxs.SetupEthClient(ethRelayer.providerHttp)
+		client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 		if err == nil {
 			err = client.SendTransaction(timeout, signedTx)
 			if err == nil {
