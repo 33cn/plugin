@@ -125,11 +125,11 @@ func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 var opt_commit_proof = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "proof",
-	Primary: "root",
-	Index:   []string{"height"},
+	Primary: "proofId",
+	Index:   []string{"height", "root"},
 }
 
-// NewZksyncInfoTable ...
+// NewCommitProofTable ...
 func NewCommitProofTable(kvdb db.KV) *table.Table {
 	rowmeta := NewCommitProofRow()
 	table, err := table.NewTable(rowmeta, kvdb, opt_commit_proof)
@@ -139,7 +139,7 @@ func NewCommitProofTable(kvdb db.KV) *table.Table {
 	return table
 }
 
-// AccountTreeRow table meta 结构
+// CommitProofRow table meta 结构
 type CommitProofRow struct {
 	*zt.CommitProofState
 }
@@ -164,10 +164,65 @@ func (r *CommitProofRow) SetPayload(data types.Message) error {
 
 //Get 按照indexName 查询 indexValue
 func (r *CommitProofRow) Get(key string) ([]byte, error) {
-	if key == "root" {
+	if key == "proofId" {
+		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
+	} else if key == "root" {
 		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
 	} else if key == "height" {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
 	}
 	return nil, types.ErrNotFound
 }
+
+
+var opt_history_account_tree = &table.Option{
+	Prefix:  KeyPrefixLocalDB,
+	Name:    "historyTree",
+	Primary: "proofId_accountId",
+	Index:   []string{"proofId"},
+}
+
+// NewHistoryAccountTreeTable ...
+func NewHistoryAccountTreeTable(kvdb db.KV) *table.Table {
+	rowmeta := NewHistoryAccountTreeRow()
+	table, err := table.NewTable(rowmeta, kvdb, opt_history_account_tree)
+	if err != nil {
+		panic(err)
+	}
+	return table
+}
+
+// HistoryAccountTreeRow table meta 结构
+type HistoryAccountTreeRow struct {
+	*zt.HistoryLeaf
+}
+
+func NewHistoryAccountTreeRow() *HistoryAccountTreeRow {
+	return &HistoryAccountTreeRow{HistoryLeaf: &zt.HistoryLeaf{}}
+}
+
+//CreateRow 新建数据行
+func (r *HistoryAccountTreeRow) CreateRow() *table.Row {
+	return &table.Row{Data: &zt.HistoryLeaf{}}
+}
+
+//SetPayload 设置数据
+func (r *HistoryAccountTreeRow) SetPayload(data types.Message) error {
+	if txdata, ok := data.(*zt.HistoryLeaf); ok {
+		r.HistoryLeaf = txdata
+		return nil
+	}
+	return types.ErrTypeAsset
+}
+
+//Get 按照indexName 查询 indexValue
+func (r *HistoryAccountTreeRow) Get(key string) ([]byte, error) {
+	if key == "proofId_accountId" {
+		return []byte(fmt.Sprintf("%016d.%16d", r.GetProofId(), r.GetAccountId())), nil
+	} else if key == "proofId" {
+		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
+	}
+	return nil, types.ErrNotFound
+}
+
+

@@ -121,7 +121,7 @@ func setBeBitsToVal(bits []uint) string {
 	return new(fr.Element).SetBigInt(a).String()
 }
 
-func stringToByte(s string) []byte {
+func StringToByte(s string) []byte {
 	byteArray := new(fr.Element).SetString(s).Bytes()
 	return byteArray[:]
 }
@@ -330,8 +330,8 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 
 func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	hash.Write(stringToByte(msg.GetFirst()))
-	hash.Write(stringToByte(msg.GetSecond()))
-	hash.Write(stringToByte(msg.GetThird()))
+	hash.Write(StringToByte(msg.GetFirst()))
+	hash.Write(StringToByte(msg.GetSecond()))
+	hash.Write(StringToByte(msg.GetThird()))
 	return hash.Sum(nil)
 }

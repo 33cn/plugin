@@ -17,14 +17,14 @@ const (
 	TyNoopAction           = 0
 	TyDepositAction        = 1  //eth存款
 	TyWithdrawAction       = 2  //eth取款
-	TyContractToTreeAction = 3  //合约账户转入叶子
-	TyTreeToContractAction = 4  //叶子账户转入合约
-	TyTransferAction       = 5  //转账
-	TyTransferToNewAction  = 6  //向新地址转账
-	TyForceExitAction      = 7  //强制退出
-	TySetPubKeyAction      = 8  //设置公钥
-	TyFullExitAction       = 9  //从L1完全退出
-	TySwapAction           = 10 //交换
+	TyTransferAction       = 3 //转账
+	TyTransferToNewAction  = 4  //向新地址转账
+	TyForceExitAction      = 5  //强制退出
+	TySetPubKeyAction      = 6  //设置公钥
+	TyFullExitAction       = 7  //从L1完全退出
+	TySwapAction           = 8 //交换
+	TyContractToTreeAction = 9  //合约账户转入叶子
+	TyTreeToContractAction = 10  //叶子账户转入合约
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
@@ -53,14 +53,14 @@ const (
 	TyNoopLog           = 100
 	TyDepositLog        = 101 //存款
 	TyWithdrawLog       = 102 //取款
-	TyContractToTreeLog = 103 //合约账户转入叶子
-	TyTreeToContractLog = 104 //叶子账户转入合约
-	TyTransferLog       = 105 //转账
-	TyTransferToNewLog  = 106 //向新地址转账
-	TyForceExitLog      = 107 //强制退出
-	TySetPubKeyLog      = 108 //设置公钥
-	TyFullExitLog       = 109 //从L1完全退出
-	TySwapLog           = 110 //交换
+	TyTransferLog       = 103 //转账
+	TyTransferToNewLog  = 104 //向新地址转账
+	TyForceExitLog      = 105 //强制退出
+	TySetPubKeyLog      = 106 //设置公钥
+	TyFullExitLog       = 107 //从L1完全退出
+	TySwapLog           = 108 //交换
+	TyContractToTreeLog = 109 //合约账户转入叶子
+	TyTreeToContractLog = 110 //叶子账户转入合约
 
 	TySetVerifyKeyLog = 202 //设置电路验证key
 	TyCommitProofLog  = 203 //提交zk proof
@@ -98,6 +98,23 @@ const (
 	MsgSecondWidth = 252
 	MsgThirdWidth  = 248
 	MsgWidth       = 752 //32byte
+
+
+)
+
+//不同type chunk数量
+const (
+	DepositChunks       = 8
+	Contract2TreeChunks = 3
+	Tree2ContractChunks = 3
+	TransferChunks      = 3
+	Transfer2NewChunks  = 8
+	WithdrawChunks      = 5
+	ForceExitChunks     = 5
+	FullExitChunks      = 5
+	SwapChunks          = 4
+	NoopChunks          = 1
+	ChangePubKeyChunks  = 7
 )
 
 var (

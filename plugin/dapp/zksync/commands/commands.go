@@ -583,7 +583,7 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
-	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+	fmt.Println(zt.HexAddr2Decimal(hex.EncodeToString(hash.Sum(nil))))
 }
 
 func getAccountTreeCmd() *cobra.Command {

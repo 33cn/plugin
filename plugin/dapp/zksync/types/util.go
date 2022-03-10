@@ -20,6 +20,10 @@ func Byte2Str(v []byte) string {
 	return f.String()
 }
 
+func Byte2Uint64(v []byte) uint64 {
+	return new(big.Int).SetBytes(v).Uint64()
+}
+
 // HexAddr2Decimal 16进制地址转10进制
 func HexAddr2Decimal(addr string) string {
 	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 16)

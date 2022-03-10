@@ -2,7 +2,11 @@ package executor
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/common/db/table"
+	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
+	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -343,7 +347,591 @@ func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
 
 }
 
-//根据proofId重建merkleTree
-func rebuildAccountTree(db dbm.KV, proofId uint64)  {
+//根据rootHash获取account在该root下的证明
+//func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string) error {
+//	proofTable := NewCommitProofTable(localdb)
+//	historyTable := NewHistoryAccountTreeTable(localdb)
+//	row, err := proofTable.GetData(getRootCommitProofKey(rootHash))
+//	if err != nil {
+//		return errors.Wrapf(err, "proofTable.GetData")
+//	}
+//	proof := row.Data.(*zt.CommitProofState)
+//
+//
+//	for i := uint64(1); i <= proof.ProofId ; i++ {
+//
+//
+//	}
+//	tree := getNewTree()
+//
+//}
 
+func transferPubDatasToOption(pubDatas []string) []*zt.ZkOperation {
+	operations := make([]*zt.ZkOperation, 0)
+	start := 0
+	for start < len(pubDatas) {
+		chunk := wallet.StringToByte(pubDatas[start])[22:]
+		operationTy := getTyByChunk(chunk)
+		chunkNum := getChunkNum(operationTy)
+		if operationTy != zt.TyNoopAction {
+			operation := getOperationByChunk(pubDatas[start:start+chunkNum], operationTy)
+			operations = append(operations, operation)
+		}
+		start = start + chunkNum
+	}
+	return operations
+}
+
+func getTyByChunk(chunk []byte) uint64 {
+	return new(big.Int).SetBytes(chunk[:1]).Uint64()
+}
+
+func getChunkNum(opType uint64) int {
+	switch opType {
+	case zt.TyDepositAction:
+		return zt.DepositChunks
+	case zt.TyWithdrawAction:
+		return zt.WithdrawChunks
+	case zt.TyContractToTreeAction:
+		return zt.Contract2TreeChunks
+	case zt.TyTreeToContractAction:
+		return zt.Tree2ContractChunks
+	case zt.TyTransferAction:
+		return zt.TransferChunks
+	case zt.TyTransferToNewAction:
+		return zt.Transfer2NewChunks
+	case zt.TyForceExitAction:
+		return zt.ForceExitChunks
+	case zt.TyFullExitAction:
+		return zt.FullExitChunks
+	case zt.TySetPubKeyAction:
+		return zt.ChangePubKeyChunks
+	case zt.TyNoopAction:
+		return zt.NoopChunks
+	default:
+		panic(fmt.Sprintf("operation tx type=%d not support", opType))
+	}
+
+}
+
+func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
+	totalChunk := make([]byte, 0)
+	for _, chunk := range chunks {
+		totalChunk = append(totalChunk, wallet.StringToByte(chunk)[22:]...)
+	}
+	switch optionTy {
+	case zt.TyDepositAction:
+		return getDepositOperationByChunk(totalChunk)
+	case zt.TyWithdrawAction:
+		return getWithDrawOperationByChunk(totalChunk)
+	case zt.TyTreeToContractAction:
+		return getTree2ContractOperationByChunk(totalChunk)
+	case zt.TyContractToTreeAction:
+		return getContract2TreeOptionByChunk(totalChunk)
+	case zt.TyTransferAction:
+		return getTransferOperationByChunk(totalChunk)
+	case zt.TyTransferToNewAction:
+		return getTransfer2NewOperationByChunk(totalChunk)
+	case zt.TySetPubKeyAction:
+		return getSetPubKeyOperationByChunk(totalChunk)
+	case zt.TyForceExitAction:
+		return getForceExitOperationByChunk(totalChunk)
+	case zt.TyFullExitAction:
+		return getFullExitOperationByChunk(totalChunk)
+	default:
+		panic("operationTy not support")
+	}
+}
+
+
+//根据proofId重建merkleTree
+func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValue,error) {
+	var localKvs []*types.KeyValue
+	proofTable := NewCommitProofTable(localdb)
+	historyTable := NewHistoryAccountTreeTable(localdb)
+	//todo 多少ID归档一次实现可配置化
+	historyId := (endProofId / 10 - 1) * 10
+	for i := historyId + 1; i <= endProofId ; i++ {
+		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
+		if err != nil {
+			return localKvs, err
+		}
+		data :=  row.Data.(*zt.ZkCommitProof)
+		operations :=  transferPubDatasToOption(data.PubDatas)
+		for _, operation := range operations {
+			fromLeaf, err := getAccountByProofIdAndHistoryId(historyTable, endProofId, historyId, operation.GetAccountId())
+			if err != nil {
+				return localKvs, errors.Wrapf(err, "getAccountByProofIdAndHistoryId")
+			}
+			switch operation.Ty {
+			case zt.TyDepositAction:
+				if fromLeaf == nil {
+					fromLeaf = &zt.HistoryLeaf{
+						AccountId: operation.GetAccountId(),
+						EthAddress: operation.GetEthAddress(),
+						Chain33Addr: operation.GetChain33Addr(),
+						ProofId: endProofId,
+						Tokens: []*zt.TokenBalance{
+							{
+								TokenId: operation.TokenId,
+								Balance: operation.GetAmount(),
+							},
+						},
+					}
+				} else {
+					fromLeaf.ProofId = endProofId
+					var tokenBalance *zt.TokenBalance
+					//找到token
+					for _, token := range fromLeaf.Tokens {
+						if token.TokenId == operation.TokenId {
+							tokenBalance = token
+						}
+					}
+					if tokenBalance == nil {
+						tokenBalance = &zt.TokenBalance{
+							TokenId: operation.TokenId,
+							Balance: operation.Amount,
+						}
+						fromLeaf.Tokens = append(fromLeaf.Tokens, tokenBalance)
+					} else {
+						balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+						change, _ := new(big.Int).SetString(operation.Amount, 10)
+						tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+					}
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyWithdrawAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return localKvs, errors.New("balance not enough")
+					}
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyTreeToContractAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return localKvs, errors.New("balance not enough")
+					}
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyContractToTreeAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					tokenBalance = &zt.TokenBalance{
+						TokenId: operation.TokenId,
+						Balance: operation.Amount,
+					}
+					fromLeaf.Tokens = append(fromLeaf.Tokens, tokenBalance)
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyTransferAction:
+				toLeaf, err := getAccountByProofIdAndHistoryId(historyTable, endProofId, historyId, operation.GetAccountId())
+				if err != nil {
+					return localKvs, errors.Wrapf(err, "getAccountByProofIdAndHistoryId")
+				}
+				if fromLeaf == nil || toLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+
+				fromLeaf.ProofId = endProofId
+				toLeaf.ProofId = endProofId
+
+				var fromTokenBalance, toTokenBalance *zt.TokenBalance
+				//找到fromToken
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						fromTokenBalance = token
+					}
+				}
+				if fromTokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return localKvs, errors.New("balance not enough")
+					}
+					fromTokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+
+				//找到toToken
+				for _, token := range toLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						toTokenBalance = token
+					}
+				}
+				if toTokenBalance == nil {
+					toTokenBalance = &zt.TokenBalance{
+						TokenId: operation.TokenId,
+						Balance: operation.Amount,
+					}
+					toLeaf.Tokens = append(toLeaf.Tokens, toTokenBalance)
+				} else {
+					balance, _ := new(big.Int).SetString(toTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					toTokenBalance.Balance = new(big.Int).Add(balance, change).String()
+				}
+
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+				err = historyTable.Replace(toLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyTransferToNewAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+
+				fromLeaf.ProofId = endProofId
+
+				var fromTokenBalance *zt.TokenBalance
+				//找到fromToken
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						fromTokenBalance = token
+					}
+				}
+				if fromTokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return localKvs, errors.New("balance not enough")
+					}
+					fromTokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+
+				toLeaf := &zt.HistoryLeaf{
+					AccountId: operation.GetToAccountId(),
+					EthAddress: operation.GetEthAddress(),
+					Chain33Addr: operation.GetChain33Addr(),
+					ProofId: endProofId,
+					Tokens: []*zt.TokenBalance{
+						{
+							TokenId: operation.TokenId,
+							Balance: operation.GetAmount(),
+						},
+					},
+				}
+
+
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+				err = historyTable.Replace(toLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TySetPubKeyAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				fromLeaf.PubKey = &zt.ZkPubKey{
+					X: operation.PubKey.X,
+					Y: operation.PubKey.Y,
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyForceExitAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					tokenBalance.Balance = "0"
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			case zt.TyFullExitAction:
+				if fromLeaf == nil {
+					return localKvs, errors.New("account not exist")
+				}
+				fromLeaf.ProofId = endProofId
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return localKvs, errors.New("token not exist")
+				} else {
+					tokenBalance.Balance = "0"
+				}
+				err = historyTable.Replace(fromLeaf)
+				if err != nil {
+					return localKvs, err
+				}
+			}
+		}
+	}
+	localKvs, err := historyTable.Save()
+	if err != nil {
+		return localKvs, err
+	}
+	return localKvs, nil
+}
+
+//首先通过当前proofId去拿，如果没拿到，使用历史id去拿，因为同一个accountId会被多次更新
+func getAccountByProofIdAndHistoryId(historyTable *table.Table, currentId, historyId, accountId uint64) (*zt.HistoryLeaf, error)  {
+	row, err := historyTable.GetData(getHistoryAccountTreeKey(currentId, accountId))
+	if err != nil {
+		if isNotFound(err) {
+			row, err = historyTable.GetData(getHistoryAccountTreeKey(historyId, accountId))
+			if err != nil {
+				if isNotFound(err) {
+				    return nil, nil
+				} else {
+					return nil, err
+				}
+			}
+			data := row.Data.(*zt.HistoryLeaf)
+			return data, nil
+		} else {
+			return nil, err
+		}
+	}
+	data := row.Data.(*zt.HistoryLeaf)
+	return data, nil
+}
+
+func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyDepositAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.Chain33AddrBitWidth/8
+	operation.Chain33Addr = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyWithdrawAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyContractToTreeAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyTreeToContractAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyTransferAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.ToAccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyTransferToNewAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AccountBitWidth/8
+	operation.ToAccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.Chain33AddrBitWidth/8
+	operation.Chain33Addr = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TySetPubKeyAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	pubkey := &zt.ZkPubKey{}
+	start = end
+	end = start + zt.Chain33AddrBitWidth/8
+	pubkey.X = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.Chain33AddrBitWidth/8
+	pubkey.Y = zt.Byte2Str(chunk[start : end])
+	operation.PubKey = pubkey
+	return operation
+}
+
+
+func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	return operation
+}
+
+
+func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
+	operation := &zt.ZkOperation{Ty: zt.TyFullExitAction}
+	start := zt.TxTypeBitWidth/8
+	end := start + zt.AccountBitWidth/8
+	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.TokenBitWidth/8
+	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	start = end
+	end = start + zt.AmountBitWidth/8
+	operation.Amount = zt.Byte2Str(chunk[start : end])
+	start = end
+	end = start + zt.AddrBitWidth/8
+	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	return operation
 }

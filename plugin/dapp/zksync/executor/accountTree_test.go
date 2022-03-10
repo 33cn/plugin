@@ -19,10 +19,12 @@ func TestAccountTree(t *testing.T) {
 	defer util.CloseTestDB(dir, statedb)
 	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	for i := 0; i < 3000; i++ {
-		ethAddress := "0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b" + strconv.Itoa(i)
-		chain33Addr := getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")
+	for i := 0; i < 2000; i++ {
+		ethAddress := "12345678901012345" + strconv.Itoa(i)
+		chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
 		_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
+		tree, err := getAccountTree(statedb, info)
+		t.Log("treeIndex", tree)
 		assert.Equal(t, nil, err)
 		for _, kv := range localKvs {
 			localdb.Set(kv.GetKey(), kv.GetValue())
@@ -30,7 +32,7 @@ func TestAccountTree(t *testing.T) {
 	}
 	tree, err := getAccountTree(statedb, info)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(3000), tree.GetTotalIndex())
+	assert.Equal(t, uint64(2000), tree.GetTotalIndex())
 	root, err := GetRootByStartIndex(statedb, 1, info)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, nil, root)

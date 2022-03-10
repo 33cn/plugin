@@ -48,6 +48,16 @@ message Leaf {
   repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
 }
 
+message HistoryLeaf {
+  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
+  string ethAddress = 5; //账户对应的以太坊地址
+  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
+  string chain33Addr = 7; //chain33地址
+  string tokenHash = 8; //叶子下token的hash
+  repeated TokenBalance tokens = 9; //叶子下拥有的token
+  uint64 proofId = 10; //账户状态所在的proofId
+}
+
 message RootInfo {
   string rootHash = 1; //归档Merkle Tree的根hash
   int32 height = 2; //归档的高度
@@ -235,6 +245,19 @@ message ZkQueryProofReq {
 
 message ZkQueryProofResp {
   repeated OperationInfo operationInfos = 1;
+}
+
+message ZkOperation {
+
+  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
+  uint64 tokenId = 2;
+  string amount = 3;
+  string ethAddress = 5; //账户对应的以太坊地址
+  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
+  string chain33Addr = 7; //chain33地址
+  uint64 toAccountId = 4;
+
+  int32 ty = 8;
 }
 
 service zksync{}

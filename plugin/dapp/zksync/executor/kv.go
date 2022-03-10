@@ -52,3 +52,15 @@ func getHeightCommitProofKey(blockHeight uint64) []byte {
 func getValidatorsKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
 }
+
+func getProofIdCommitProofKey(proofId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d", proofId))
+}
+
+func getRootCommitProofKey(root string) []byte {
+	return []byte(fmt.Sprintf("%s", root))
+}
+
+func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d.%16d", proofId, accountId))
+}
