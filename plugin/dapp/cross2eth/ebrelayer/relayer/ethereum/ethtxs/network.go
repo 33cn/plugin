@@ -37,6 +37,7 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 		if nil != err {
 			continue
 		}
+		txslog.Debug("SetupEthClient", "SelectAndRoundEthURL:", urlSelected)
 		return client, nil
 	}
 	return nil, errors.New("FailedToSetupEthClient")
