@@ -150,7 +150,7 @@ func NewCommitProofRow() *CommitProofRow {
 
 //CreateRow 新建数据行
 func (r *CommitProofRow) CreateRow() *table.Row {
-	return &table.Row{Data: &zt.CommitProofState{}}
+	return &table.Row{Data: &zt.ZkCommitProof{}}
 }
 
 //SetPayload 设置数据
