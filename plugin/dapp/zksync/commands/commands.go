@@ -56,6 +56,7 @@ func ZksyncCmd() *cobra.Command {
 		getAccountByChain33Cmd(),
 		getContractAccountCmd(),
 		getTokenBalanceCmd(),
+		getZkCommitProofCmd(),
 	)
 	return cmd
 }
