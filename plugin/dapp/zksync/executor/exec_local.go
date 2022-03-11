@@ -46,5 +46,5 @@ func (z *zksync) ExecLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transactio
 }
 
 func (z *zksync) ExecLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return z.execAutoLocalZksync(tx, receiptData, index)
+	return z.execCommitProofLocal(payload, tx, receiptData, index)
 }

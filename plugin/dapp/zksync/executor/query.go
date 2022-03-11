@@ -64,7 +64,7 @@ func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 	var leaf zt.Leaf
 	val, err := z.GetStateDB().Get(GetAccountIdPrimaryKey(in.AccountId))
 	if err != nil {
-			return nil, err
+		return nil, err
 	}
 
 	err = types.Decode(val, &leaf)
@@ -113,7 +113,7 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	res := new(zt.ZkQueryProofResp)
 	datas := make([]*zt.OperationInfo, 0)
 	table := NewZksyncInfoTable(z.GetLocalDB())
-	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight() ; i++ {
+	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight(); i++ {
 		var primaryKey []byte
 		if i == in.GetStartBlockHeight() && in.GetStartIndex() != 0 {
 			primaryKey = []byte(fmt.Sprintf("%016d.%016d", i, in.GetStartIndex()))
@@ -187,4 +187,20 @@ func (z *zksync) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error
 	}
 	res.OperationInfos = datas
 	return res, nil
+}
+
+// Query_GetCommitProodByProofId 根据proofId获取commitProof信息
+func (z *zksync) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	table := NewCommitProofTable(z.GetLocalDB())
+	row, err := table.GetData(getProofIdCommitProofKey(in.ProofId))
+	if err != nil {
+		return nil, err
+	}
+	data := row.Data.(*zt.ZkCommitProof)
+
+	return data, nil
 }

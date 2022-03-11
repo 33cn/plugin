@@ -82,3 +82,28 @@ func (z *zksync) execAutoDelLocal(tx *types.Transaction, receiptData *types.Rece
 	dbSet.KV = append(dbSet.KV, kvs...)
 	return dbSet, nil
 }
+
+func (z *zksync) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	if receiptData.Ty != types.ExecOk {
+		return nil, types.ErrInvalidParam
+	}
+
+	proofTable := NewCommitProofTable(z.GetLocalDB())
+
+	set := &types.LocalDBSet{}
+
+	err := proofTable.Replace(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	kvs, err := proofTable.Save()
+	if err != nil {
+		return nil, err
+	}
+	set.KV = append(set.KV, kvs...)
+
+	dbSet := &types.LocalDBSet{}
+	dbSet.KV = z.AddRollbackKV(tx, tx.Execer, set.KV)
+	return dbSet, nil
+}

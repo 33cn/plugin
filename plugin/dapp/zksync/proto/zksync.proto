@@ -223,6 +223,7 @@ message ZkQueryReq {
   string chain33WalletAddr = 7;
   uint64 tokenId = 8;
   string txHash = 9;
+  uint64 proofId = 10;
 }
 
 message ZkQueryResp {

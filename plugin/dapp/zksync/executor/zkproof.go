@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db/table"
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
 	"math/big"
 
@@ -348,23 +349,302 @@ func makeSetVerifierReceipt(old, new *zt.ZkVerifier) *types.Receipt {
 }
 
 //根据rootHash获取account在该root下的证明
-//func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string) error {
-//	proofTable := NewCommitProofTable(localdb)
-//	historyTable := NewHistoryAccountTreeTable(localdb)
-//	row, err := proofTable.GetData(getRootCommitProofKey(rootHash))
-//	if err != nil {
-//		return errors.Wrapf(err, "proofTable.GetData")
-//	}
-//	proof := row.Data.(*zt.CommitProofState)
-//
-//
-//	for i := uint64(1); i <= proof.ProofId ; i++ {
-//
-//
-//	}
-//	tree := getNewTree()
-//
-//}
+func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string) (*zt.MerkleTreeProof, error) {
+	proofTable := NewCommitProofTable(localdb)
+	accountMap := make(map[uint64]*zt.HistoryLeaf)
+	maxAccountId := uint64(0)
+	row, err := proofTable.GetData(getRootCommitProofKey(rootHash))
+	if err != nil {
+		return nil, errors.Wrapf(err, "proofTable.GetData")
+	}
+	proof := row.Data.(*zt.ZkCommitProof)
+	if proof == nil {
+		return nil, errors.New("proof not exist")
+	}
+
+
+	for i := uint64(1); i <= proof.ProofId ; i++ {
+		row, err = proofTable.GetData(getProofIdCommitProofKey(i))
+		if err != nil {
+			return nil, err
+		}
+		data :=  row.Data.(*zt.ZkCommitProof)
+		operations :=  transferPubDatasToOption(data.PubDatas)
+		for _, operation := range operations {
+			switch operation.Ty {
+			case zt.TyDepositAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					fromLeaf = &zt.HistoryLeaf{
+						AccountId: operation.GetAccountId(),
+						EthAddress: operation.GetEthAddress(),
+						Chain33Addr: operation.GetChain33Addr(),
+						Tokens: []*zt.TokenBalance{
+							{
+								TokenId: operation.TokenId,
+								Balance: operation.GetAmount(),
+							},
+						},
+					}
+				} else {
+					var tokenBalance *zt.TokenBalance
+					//找到token
+					for _, token := range fromLeaf.Tokens {
+						if token.TokenId == operation.TokenId {
+							tokenBalance = token
+						}
+					}
+					if tokenBalance == nil {
+						tokenBalance = &zt.TokenBalance{
+							TokenId: operation.TokenId,
+							Balance: operation.Amount,
+						}
+						fromLeaf.Tokens = append(fromLeaf.Tokens, tokenBalance)
+					} else {
+						balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+						change, _ := new(big.Int).SetString(operation.Amount, 10)
+						tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+					}
+				}
+				accountMap[operation.AccountId] = fromLeaf
+				if operation.AccountId > maxAccountId {
+					maxAccountId = operation.AccountId
+				}
+			case zt.TyWithdrawAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return nil, errors.New("balance not enough")
+					}
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			case zt.TyTreeToContractAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return nil, errors.New("balance not enough")
+					}
+					tokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			case zt.TyContractToTreeAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					tokenBalance = &zt.TokenBalance{
+						TokenId: operation.TokenId,
+						Balance: operation.Amount,
+					}
+					fromLeaf.Tokens = append(fromLeaf.Tokens, tokenBalance)
+				} else {
+					balance, _ := new(big.Int).SetString(tokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					tokenBalance.Balance = new(big.Int).Add(balance, change).String()
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			case zt.TyTransferAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				toLeaf, ok :=  accountMap[operation.ToAccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+
+				var fromTokenBalance, toTokenBalance *zt.TokenBalance
+				//找到fromToken
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						fromTokenBalance = token
+					}
+				}
+				if fromTokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return nil, errors.New("balance not enough")
+					}
+					fromTokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+
+				//找到toToken
+				for _, token := range toLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						toTokenBalance = token
+					}
+				}
+				if toTokenBalance == nil {
+					toTokenBalance = &zt.TokenBalance{
+						TokenId: operation.TokenId,
+						Balance: operation.Amount,
+					}
+					toLeaf.Tokens = append(toLeaf.Tokens, toTokenBalance)
+				} else {
+					balance, _ := new(big.Int).SetString(toTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					toTokenBalance.Balance = new(big.Int).Add(balance, change).String()
+				}
+				accountMap[operation.AccountId] = fromLeaf
+				accountMap[operation.ToAccountId] = toLeaf
+			case zt.TyTransferToNewAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+
+				var fromTokenBalance *zt.TokenBalance
+				//找到fromToken
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						fromTokenBalance = token
+					}
+				}
+				if fromTokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					balance, _ := new(big.Int).SetString(fromTokenBalance.GetBalance(), 10)
+					change, _ := new(big.Int).SetString(operation.Amount, 10)
+					if change.Cmp(balance) > 0 {
+						return nil, errors.New("balance not enough")
+					}
+					fromTokenBalance.Balance = new(big.Int).Sub(balance, change).String()
+				}
+
+				toLeaf := &zt.HistoryLeaf{
+					AccountId: operation.GetToAccountId(),
+					EthAddress: operation.GetEthAddress(),
+					Chain33Addr: operation.GetChain33Addr(),
+					Tokens: []*zt.TokenBalance{
+						{
+							TokenId: operation.TokenId,
+							Balance: operation.GetAmount(),
+						},
+					},
+				}
+
+				accountMap[operation.AccountId] = fromLeaf
+				accountMap[operation.ToAccountId] = toLeaf
+				if operation.ToAccountId > maxAccountId {
+					maxAccountId = operation.ToAccountId
+				}
+			case zt.TySetPubKeyAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				fromLeaf.PubKey = &zt.ZkPubKey{
+					X: operation.PubKey.X,
+					Y: operation.PubKey.Y,
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			case zt.TyForceExitAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					tokenBalance.Balance = "0"
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			case zt.TyFullExitAction:
+				fromLeaf, ok := accountMap[operation.AccountId]
+				if !ok {
+					return nil, errors.New("account not exist")
+				}
+				var tokenBalance *zt.TokenBalance
+				//找到token
+				for _, token := range fromLeaf.Tokens {
+					if token.TokenId == operation.TokenId {
+						tokenBalance = token
+					}
+				}
+				if tokenBalance == nil {
+					return nil, errors.New("token not exist")
+				} else {
+					tokenBalance.Balance = "0"
+				}
+				accountMap[operation.AccountId] = fromLeaf
+			}
+		}
+	}
+
+
+	tree := getNewTree()
+	err = tree.SetIndex(accountId - 1)
+	if err != nil {
+		return nil, errors.Wrapf(err, "tree.SetIndex")
+	}
+	for i:= uint64(0); i <= maxAccountId ;i++ {
+		tree.Push(getHistoryLeafHash(accountMap[i]))
+	}
+
+	merkleRoot, proofSet, proofIndex, numLeaves := tree.Prove()
+	helpers := make([]string, 0)
+	proofStringSet := make([]string, 0)
+	for _, v := range merkletree.GenerateProofHelper(proofSet, proofIndex, numLeaves) {
+		helpers = append(helpers, big.NewInt(int64(v)).String())
+	}
+	for _, v := range proofSet {
+		proofStringSet = append(proofStringSet, zt.Byte2Str(v))
+	}
+	merkleProof := &zt.MerkleTreeProof{
+		RootHash: zt.Byte2Str(merkleRoot),
+		ProofSet: proofStringSet,
+		Helpers: helpers,
+	}
+	return merkleProof, nil
+}
 
 func transferPubDatasToOption(pubDatas []string) []*zt.ZkOperation {
 	operations := make([]*zt.ZkOperation, 0)

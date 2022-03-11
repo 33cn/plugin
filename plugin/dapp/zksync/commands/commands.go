@@ -889,3 +889,39 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
+
+
+
+func getZkCommitProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "zkCommit",
+		Short: "get zkcommit proof by proofId",
+		Run:   getZkCommitProof,
+	}
+	getZkCommitProofFlag(cmd)
+	return cmd
+}
+
+func getZkCommitProofFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("proofId", "p", 0, "commit proof id")
+	cmd.MarkFlagRequired("proofId")
+}
+
+func getZkCommitProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proofId, _ := cmd.Flags().GetUint64("proofId")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		ProofId:   proofId,
+	}
+
+	params.FuncName = "GetCommitProodByProofId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkCommitProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}

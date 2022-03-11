@@ -141,11 +141,11 @@ func NewCommitProofTable(kvdb db.KV) *table.Table {
 
 // CommitProofRow table meta 结构
 type CommitProofRow struct {
-	*zt.CommitProofState
+	*zt.ZkCommitProof
 }
 
 func NewCommitProofRow() *CommitProofRow {
-	return &CommitProofRow{CommitProofState: &zt.CommitProofState{}}
+	return &CommitProofRow{ZkCommitProof: &zt.ZkCommitProof{}}
 }
 
 //CreateRow 新建数据行
@@ -155,8 +155,8 @@ func (r *CommitProofRow) CreateRow() *table.Row {
 
 //SetPayload 设置数据
 func (r *CommitProofRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*zt.CommitProofState); ok {
-		r.CommitProofState = txdata
+	if txdata, ok := data.(*zt.ZkCommitProof); ok {
+		r.ZkCommitProof = txdata
 		return nil
 	}
 	return types.ErrTypeAsset

@@ -544,6 +544,29 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 	return hash.Sum(nil)
 }
 
+
+func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
+	hash.Write(accountIdBytes[:])
+	hash.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	hash.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+	if leaf.GetPubKey() != nil {
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
+	} else {
+		hash.Write(zt.Str2Byte("0")) //X
+		hash.Write(zt.Str2Byte("0")) //Y
+	}
+
+	tokenTree := getNewTree()
+	for _, token := range leaf.Tokens {
+		tokenTree.Push(getTokenBalanceHash(token))
+	}
+	hash.Write(tokenTree.Root())
+	return hash.Sum(nil)
+}
+
 func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.MerkleTreeProof, error) {
 	tree, err := getAccountTree(statedb, info)
 	if err != nil {
