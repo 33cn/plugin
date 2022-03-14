@@ -139,7 +139,7 @@ func GenPrivValidatorImp(filePath string) *PrivValidatorImp {
 	}
 	return &PrivValidatorImp{
 		//Address:  GenAddressByPubKey(privKey.PubKey()),
-		Address:  address.PubKeyToAddress(privKey.PubKey().Bytes()).Hash160[:],
+		Address:  address.BytesToBtcAddress(address.NormalVer, privKey.PubKey().Bytes()).Hash160[:],
 		PubKey:   privKey.PubKey(),
 		PrivKey:  privKey,
 		Signer:   NewDefaultSigner(privKey),

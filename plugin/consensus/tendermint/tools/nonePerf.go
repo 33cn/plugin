@@ -561,9 +561,9 @@ func genaddress() (string, crypto.PrivKey) {
 	if err != nil {
 		panic(err)
 	}
-	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
-	fmt.Println("addr:", addrto.String())
-	return addrto.String(), privto
+	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
+	fmt.Println("addr:", addrto)
+	return addrto, privto
 }
 
 // RandStringBytes ...

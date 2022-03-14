@@ -61,7 +61,8 @@ func (c *Jrpc) CalcNewContractAddr(parm *evm.EvmCalcNewContractAddrReq, result *
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-	newContractAddr := address.GetExecAddress(parm.Caller + parm.Txhash)
+	newContractAddr := address.BytesToBtcAddress(address.NormalVer,
+		address.ExecPubKey(parm.Caller+parm.Txhash))
 	*result = newContractAddr.String()
 	return nil
 }

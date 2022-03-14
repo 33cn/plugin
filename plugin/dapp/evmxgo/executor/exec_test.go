@@ -157,11 +157,11 @@ func genaddress() (string, crypto.PrivKey) {
 	if err != nil {
 		panic(err)
 	}
-	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
-	fmt.Println("addr:", addrto.String())
+	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
+	fmt.Println("addr:", addrto)
 
 	fmt.Println(bridgevmxgo.BridgeBankBin)
-	return addrto.String(), privto
+	return addrto, privto
 }
 
 func waitTx(hash []byte) bool {

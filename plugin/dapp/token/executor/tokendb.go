@@ -161,7 +161,7 @@ func (action *tokenAction) preCreate(token *pty.TokenPreCreate) (*types.Receipt,
 		return nil, pty.ErrTokenTotalOverflow
 	}
 	if cfg.IsDappFork(action.height, pty.TokenX, pty.ForkTokenCheckX) {
-		if err := address.CheckAddress(token.Owner); err != nil {
+		if err := address.CheckAddress(token.Owner, action.height); err != nil {
 			return nil, err
 		}
 	}

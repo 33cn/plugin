@@ -394,7 +394,7 @@ func (a *action) replaceBoard(act *auty.ActiveBoard, change []*auty.Change) (*au
 		return nil, errors.Wrapf(types.ErrInvalidParam, "cancel=false not allow to addr=%s", change[0].Addr)
 	}
 
-	if err := address.CheckAddress(change[0].Addr); err != nil {
+	if err := address.CheckAddress(change[0].Addr, a.height); err != nil {
 		return nil, err
 	}
 

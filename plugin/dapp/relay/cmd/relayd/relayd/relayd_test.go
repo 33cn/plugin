@@ -29,7 +29,7 @@ func TestGeneratePrivateKey(t *testing.T) {
 
 	t.Log("private key: ", common.ToHex(key.Bytes()))
 	t.Log("publick key: ", common.ToHex(key.PubKey().Bytes()))
-	t.Log("    address: ", address.PubKeyToAddress(key.PubKey().Bytes()))
+	t.Log("    address: ", address.PubKeyToAddr(address.DefaultID, key.PubKey().Bytes()))
 }
 
 func TestDealOrder(t *testing.T) {

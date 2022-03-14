@@ -164,9 +164,8 @@ func (policy *ticketPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 	}
 	if len(wtxdetail.Fromaddr) <= 0 {
 		pubkey := tx.Signature.GetPubkey()
-		address := address.PubKeyToAddress(pubkey)
 		//from addr
-		fromaddress := address.String()
+		fromaddress := address.PubKeyToAddr(address.DefaultID, pubkey)
 		if len(fromaddress) != 0 && policy.walletOperate.AddrInWallet(fromaddress) {
 			wtxdetail.Fromaddr = fromaddress
 		}
@@ -199,10 +198,8 @@ func (policy *ticketPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.
 		Payload:    nil,
 	}
 	if len(wtxdetail.Fromaddr) <= 0 {
-		pubkey := tx.Signature.GetPubkey()
-		address := address.PubKeyToAddress(pubkey)
 		//from addr
-		fromaddress := address.String()
+		fromaddress := tx.From()
 		if len(fromaddress) != 0 && policy.walletOperate.AddrInWallet(fromaddress) {
 			wtxdetail.Fromaddr = fromaddress
 		}
@@ -294,9 +291,7 @@ func FlushTicket(api client.QueueProtocolAPI) {
 }
 
 func (policy *ticketPolicy) needFlushTicket(tx *types.Transaction, receipt *types.ReceiptData) bool {
-	pubkey := tx.Signature.GetPubkey()
-	addr := address.PubKeyToAddress(pubkey)
-	return policy.store.checkAddrIsInWallet(addr.String())
+	return policy.store.checkAddrIsInWallet(tx.From())
 }
 
 func (policy *ticketPolicy) checkNeedFlushTicket(tx *types.Transaction, receipt *types.ReceiptData) bool {
@@ -332,7 +327,7 @@ func (policy *ticketPolicy) forceCloseTicketByReturnAddr(height int64, minerAddr
 
 	var hashes types.ReplyHashes
 	for _, key := range keys {
-		returnAddr := address.PubKeyToAddress(key.PubKey().Bytes()).String()
+		returnAddr := address.PubKeyToAddr(address.DefaultID, key.PubKey().Bytes())
 		if len(tListMap[returnAddr]) == 0 {
 			continue
 		}
@@ -359,7 +354,7 @@ func (policy *ticketPolicy) forceCloseAllTicket(height int64) (*types.ReplyHashe
 
 	var hashes types.ReplyHashes
 	for _, key := range keys {
-		addr := address.PubKeyToAddress(key.PubKey().Bytes()).String()
+		addr := address.PubKeyToAddr(address.DefaultID, key.PubKey().Bytes())
 		tlist, err := policy.getForceCloseTickets(addr)
 		if err != nil {
 			bizlog.Error("forceCloseAllTicket getTickets", "error", err, "addr", addr)
@@ -500,7 +495,7 @@ func (policy *ticketPolicy) isAutoMining() bool {
 }
 
 func (policy *ticketPolicy) closeTicketsByAddr(height int64, priv crypto.PrivKey) ([]byte, error) {
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	tlist, err := policy.getTickets(addr, 2)
 	if err != nil && err != types.ErrNotFound {
 		return nil, err
@@ -560,7 +555,7 @@ func (policy *ticketPolicy) closeTicket(height int64) (int, error) {
 }
 
 func (policy *ticketPolicy) processFee(priv crypto.PrivKey) error {
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	cfg := policy.getWalletOperate().GetAPI().GetConfig()
 	acc1, err := operater.GetBalance(addr, cfg.GetCoinExec())
@@ -599,7 +594,7 @@ func (policy *ticketPolicy) processFees() error {
 }
 
 func (policy *ticketPolicy) withdrawFromTicketOne(priv crypto.PrivKey) ([]byte, error) {
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	acc, err := operater.GetBalance(addr, ty.TicketX)
 	if err != nil {
@@ -638,7 +633,7 @@ func (policy *ticketPolicy) openticket(mineraddr, returnaddr string, priv crypto
 
 func (policy *ticketPolicy) buyTicketOne(height int64, priv crypto.PrivKey) ([]byte, int, error) {
 	//ticket balance and coins balance
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	operater := policy.getWalletOperate()
 	acc1, err := operater.GetBalance(addr, policy.getWalletOperate().GetAPI().GetConfig().GetCoinExec())
 	if err != nil {
@@ -704,7 +699,7 @@ func (policy *ticketPolicy) buyTicket(height int64) ([][]byte, int, error) {
 		if hash != nil {
 			hashes = append(hashes, hash)
 		}
-		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "txhash", hex.EncodeToString(hash), "n", n)
+		bizlog.Debug("ticketPolicy buyTicket", "Address", address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes()), "txhash", hex.EncodeToString(hash), "n", n)
 	}
 	bizlog.Debug("ticketPolicy buyTicket end")
 	return hashes, count, nil
@@ -748,7 +743,7 @@ func checkMinerWhiteList(addr string) bool {
 }
 
 func (policy *ticketPolicy) buyMinerAddrTicketOne(height int64, priv crypto.PrivKey) ([][]byte, int, error) {
-	addr := address.PubKeyToAddress(priv.PubKey().Bytes()).String()
+	addr := address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes())
 	//判断是否绑定了coldaddr
 	addrs, err := policy.getMinerColdAddr(addr)
 	if err != nil {
@@ -805,7 +800,7 @@ func (policy *ticketPolicy) buyMinerAddrTicket(height int64) ([][]byte, int, err
 		if hashlist != nil {
 			hashes = append(hashes, hashlist...)
 		}
-		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddress(priv.PubKey().Bytes()).String(), "n", n)
+		bizlog.Debug("ticketPolicy buyMinerAddrTicket", "Address", address.PubKeyToAddr(address.DefaultID, priv.PubKey().Bytes()), "n", n)
 	}
 	bizlog.Debug("ticketPolicy buyMinerAddrTicket end")
 	return hashes, count, nil

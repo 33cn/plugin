@@ -926,7 +926,7 @@ func (manager *Manager) CreateLockEventManually(createLockEventReq *relayerTypes
 		return errors.New("no Ethereum chain named as you configured")
 	}
 
-	chain33AddressTo, err := chain33Address.NewAddrFromString(createLockEventReq.To)
+	chain33AddressTo, err := chain33Address.NewBtcAddress(createLockEventReq.To)
 	if nil != err {
 		return err
 	}

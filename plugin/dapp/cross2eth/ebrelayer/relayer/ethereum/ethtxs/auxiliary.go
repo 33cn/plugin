@@ -78,7 +78,7 @@ func Burn(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, bridgeBank c
 
 	prepareDone = true
 
-	receAddr, err := chain33Address.NewAddrFromString(chain33Receiver)
+	receAddr, err := chain33Address.NewBtcAddress(chain33Receiver)
 	if nil != err {
 		txslog.Info("Burn", "Failed to decode chain33 address due to", err.Error())
 		return "", err
@@ -120,7 +120,7 @@ func BurnAsync(ownerPrivateKeyStr, tokenAddrstr, chain33Receiver string, amount 
 	prepareDone = true
 
 	tokenAddr := common.HexToAddress(tokenAddrstr)
-	receAddr, err := chain33Address.NewAddrFromString(chain33Receiver)
+	receAddr, err := chain33Address.NewBtcAddress(chain33Receiver)
 	if nil != err {
 		txslog.Info("BurnAsync", "Failed to decode chain33 address due to", err.Error())
 		return "", err
@@ -297,7 +297,7 @@ func LockEthErc20Asset(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver string,
 		auth.Value = amount
 	}
 
-	recvAddr, err := chain33Address.NewAddrFromString(chain33Receiver)
+	recvAddr, err := chain33Address.NewBtcAddress(chain33Receiver)
 	if nil != err {
 		txslog.Info("LockEthErc20Asset", "Failed to decode chain33 address due to", err.Error())
 		return "", err
@@ -350,7 +350,7 @@ func LockEthErc20AssetAsync(ownerPrivateKeyStr, tokenAddrStr, chain33Receiver st
 	if "" != tokenAddrStr {
 		tokenAddr = common.HexToAddress(tokenAddrStr)
 	}
-	recvAddr, err := chain33Address.NewAddrFromString(chain33Receiver)
+	recvAddr, err := chain33Address.NewBtcAddress(chain33Receiver)
 	if nil != err {
 		txslog.Info("LockEthErc20AssetAsync", "Failed to decode chain33 address due to", err.Error())
 		return "", err

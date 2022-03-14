@@ -163,7 +163,7 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	//log15.Info("ecrecover::pubkey", "pubkey", common.Bytes2Hex(pubKey))
 	//log15.Info("ecrecover::address", "address", address.PubKeyToAddress(pubKey).String())
 	// the first byte of pubkey is bitcoin heritage
-	return common.LeftPadBytes(address.PubKeyToAddress(pubKey).Hash160[:], 32), nil
+	return common.LeftPadBytes(address.BytesToBtcAddress(address.NormalVer, pubKey).Hash160[:], 32), nil
 }
 
 // SHA256 implemented as a native contract.

@@ -17,7 +17,7 @@ func (a *Action) ExchangeBind(payload *et.ExchangeBind) (*types.Receipt, error) 
 	}
 	// If the value is null, the binding is unbound. If the value is not null, the address format is verified
 	if len(payload.GetEntrustAddress()) > 0 {
-		if err := address.CheckAddress(payload.GetEntrustAddress()); err != nil {
+		if err := address.CheckAddress(payload.GetEntrustAddress(), a.height); err != nil {
 			return nil, err
 		}
 	}

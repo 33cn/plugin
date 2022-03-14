@@ -127,7 +127,7 @@ func MakeGenesisValidatorMgr(genDoc *ttypes.GenesisDoc) (ValidatorMgr, error) {
 
 		// Make validator
 		validators[i] = &ttypes.Validator{
-			Address: address.PubKeyToAddress(pubKey.Bytes()).Hash160[:],
+			Address: address.BytesToBtcAddress(address.NormalVer, pubKey.Bytes()).Hash160[:],
 			PubKey:  pubKey.Bytes(),
 		}
 	}
@@ -150,15 +150,15 @@ func (s *ValidatorMgr) GetValidatorByIndex(index int) (addr []byte, val *ttypes.
 		return val.Address, val.Copy()
 	} else if s.ShuffleType == ShuffleTypeVrf {
 		val = s.VrfValidators.Validators[index]
-		return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+		return address.BytesToBtcAddress(address.NormalVer, val.PubKey).Hash160[:], val.Copy()
 	} else if s.ShuffleType == ShuffleTypePartVrf {
 		if index < len(s.VrfValidators.Validators) {
 			val = s.VrfValidators.Validators[index]
-			return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+			return address.BytesToBtcAddress(address.NormalVer, val.PubKey).Hash160[:], val.Copy()
 		}
 
 		val = s.NoVrfValidators.Validators[index-len(s.VrfValidators.Validators)]
-		return address.PubKeyToAddress(val.PubKey).Hash160[:], val.Copy()
+		return address.BytesToBtcAddress(address.NormalVer, val.PubKey).Hash160[:], val.Copy()
 	}
 
 	return nil, nil
