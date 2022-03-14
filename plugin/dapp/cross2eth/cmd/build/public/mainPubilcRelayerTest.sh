@@ -116,7 +116,7 @@ source "./offlinePublic.sh"
     chain33ValidatorKeysp="0x1dadb7cbad8ea3f968cfad40ac32981def6215690618e62c48e816e7c732a8c2"
 
     chain33ID=0
-    maturityDegree=10
+    maturityDegree=20
     validatorPwd="123456fzm"
 }
 
