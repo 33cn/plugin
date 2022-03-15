@@ -450,14 +450,8 @@ func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTy
 	return withdrawPara.Fee, nil
 }
 
-func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
-	ethName := "以太坊"
-	if ethRelayer.GetName() == BinanceChain {
-		ethName = "BSC"
-	}
-	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
-	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
-	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
+func (ethRelayer *Relayer4Ethereum) SendRemind(url, postData string) {
+	res, err := utils.SendToServer(url, strings.NewReader(postData))
 	if err != nil {
 		relayerLog.Error("SendToServer", "error:", err.Error())
 		return
@@ -474,6 +468,16 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 		return
 	}
 	relayerLog.Debug("SendToServer ok")
+}
+
+func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
+	ethName := "以太坊"
+	if ethRelayer.GetName() == BinanceChain {
+		ethName = "BSC"
+	}
+	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
+	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
+	ethRelayer.SendRemind(ethRelayer.remindUrl, postData)
 }
 
 func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
@@ -1641,7 +1645,7 @@ func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 	for i := 0; i < len(ethRelayer.providerHttp); i++ {
 		client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 		if err != nil {
-			relayerLog.Error("getFilterLogs", "SetupEthClient err", err)
+			relayerLog.Error("regainClient", "SetupEthClient err", err)
 			continue
 		}
 		ethRelayer.clientSpecs = append(ethRelayer.clientSpecs, client)
@@ -1668,7 +1672,6 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 				relayerLog.Error("getFilterLogs", "FilterLogs err", err)
 			}
 		}
-
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1677,19 +1680,16 @@ func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*
 	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
-	isSendEmail := false
-	for {
-		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			receipt, err := ethRelayer.clientSpec.TransactionReceipt(timeout, txHash)
-			if err == nil {
-				return receipt, nil
-			} else {
-				relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err)
-			}
+	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+		receipt, err := ethRelayer.clientSpecs[i].TransactionReceipt(timeout, txHash)
+		if err == nil {
+			return receipt, nil
+		} else {
+			relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err)
 		}
-
-		ethRelayer.regainClient(&isSendEmail)
 	}
+
+	return nil, errors.New("TransactionReceipt err")
 }
 
 func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
@@ -1699,14 +1699,13 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 	isSendEmail := false
 	for {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			head, err := ethRelayer.clientSpec.HeaderByNumber(timeout, nil)
+			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
 			if err == nil {
 				return head, nil
 			} else {
 				relayerLog.Error("getHeaderByNumber", "getHeaderByNumber err", err)
 			}
 		}
-
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1716,18 +1715,19 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 	defer cancel()
 
 	isSendEmail := false
-	for {
+	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			balance, err := ethRelayer.clientSpec.BalanceAt(timeout, addr, nil)
+			balance, err := ethRelayer.clientSpecs[i].BalanceAt(timeout, addr, nil)
 			if err == nil {
 				return balance, nil
 			} else {
 				relayerLog.Error("getBalanceAt", "getBalanceAt err", err)
 			}
 		}
-
 		ethRelayer.regainClient(&isSendEmail)
 	}
+
+	return nil, errors.New("getBalanceAt err")
 }
 
 func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]byte, error) {
@@ -1735,16 +1735,16 @@ func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]by
 	defer cancel()
 
 	isSendEmail := false
-	for {
+	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			result, err := ethRelayer.clientSpec.CallContract(timeout, call, nil)
+			result, err := ethRelayer.clientSpecs[i].CallContract(timeout, call, nil)
 			if err == nil {
 				return result, nil
 			} else {
 				relayerLog.Error("getCallContract", "getCallContract err", err)
 			}
 		}
-
 		ethRelayer.regainClient(&isSendEmail)
 	}
+	return nil, errors.New("getCallContract err")
 }
