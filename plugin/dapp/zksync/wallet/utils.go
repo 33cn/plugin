@@ -126,6 +126,40 @@ func StringToByte(s string) []byte {
 	return byteArray[:]
 }
 
+
+func ChunkStringToByte(s string) []byte {
+	f := new(fr.Element).SetString(s)
+	chunk := f.Bytes()
+	bits := Byte2Bit(chunk[22:])
+	for i := 0; i < len(bits)/2; i++ {
+		bits[i], bits[len(bits) - 1 - i] = bits[len(bits) - 1 - i], bits[i]
+	}
+
+	return Bit2Byte(bits)
+}
+
+func Byte2Bit(data []byte) []uint {
+	bits := make([]uint, 0)
+	for _, v := range data {
+		for i := 0; i < 8; i++ {
+			bits = append(bits, uint(v>>(7-i)&1))
+		}
+	}
+	return bits
+}
+
+func Bit2Byte(bits []uint) []byte {
+	data := make([]byte, 0)
+	for i := 0; i < len(bits) / 8; i++ {
+		num := uint(0)
+		for j, v := range bits[8*i : 8*(i+1)] {
+			num = num + (v << uint(7-j))
+		}
+		data = append(data, byte(num))
+	}
+	return data
+}
+
 func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	var pubData []uint
 

@@ -91,6 +91,8 @@ const (
 	AddrBitWidth        = 160 //20byte
 	Chain33AddrBitWidth = 256 //20byte
 	PubKeyBitWidth      = 256 //32byte
+
+	ChunkBitWidth      = 80 //10byte
 )
 
 const (

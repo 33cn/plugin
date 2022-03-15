@@ -353,18 +353,18 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 	proofTable := NewCommitProofTable(localdb)
 	accountMap := make(map[uint64]*zt.HistoryLeaf)
 	maxAccountId := uint64(0)
-	row, err := proofTable.GetData(getRootCommitProofKey(rootHash))
+	rows, err := proofTable.ListIndex("root", getRootCommitProofKey(rootHash), nil, 1, zt.ListASC)
 	if err != nil {
-		return nil, errors.Wrapf(err, "proofTable.GetData")
+		return nil, errors.Wrapf(err, "proofTable.ListIndex")
 	}
-	proof := row.Data.(*zt.ZkCommitProof)
+	proof := rows[0].Data.(*zt.ZkCommitProof)
 	if proof == nil {
 		return nil, errors.New("proof not exist")
 	}
 
 
 	for i := uint64(1); i <= proof.ProofId ; i++ {
-		row, err = proofTable.GetData(getProofIdCommitProofKey(i))
+		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
 		if err != nil {
 			return nil, err
 		}
@@ -625,7 +625,7 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 	if err != nil {
 		return nil, errors.Wrapf(err, "tree.SetIndex")
 	}
-	for i:= uint64(0); i <= maxAccountId ;i++ {
+	for i:= uint64(1); i <= maxAccountId ;i++ {
 		tree.Push(getHistoryLeafHash(accountMap[i]))
 	}
 
@@ -650,11 +650,12 @@ func transferPubDatasToOption(pubDatas []string) []*zt.ZkOperation {
 	operations := make([]*zt.ZkOperation, 0)
 	start := 0
 	for start < len(pubDatas) {
-		chunk := wallet.StringToByte(pubDatas[start])[22:]
+		chunk := wallet.ChunkStringToByte(pubDatas[start])
 		operationTy := getTyByChunk(chunk)
 		chunkNum := getChunkNum(operationTy)
 		if operationTy != zt.TyNoopAction {
 			operation := getOperationByChunk(pubDatas[start:start+chunkNum], operationTy)
+			fmt.Print(operation, "\n")
 			operations = append(operations, operation)
 		}
 		start = start + chunkNum
@@ -697,7 +698,7 @@ func getChunkNum(opType uint64) int {
 func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
 	totalChunk := make([]byte, 0)
 	for _, chunk := range chunks {
-		totalChunk = append(totalChunk, wallet.StringToByte(chunk)[22:]...)
+		totalChunk = append(totalChunk, wallet.ChunkStringToByte(chunk)...)
 	}
 	switch optionTy {
 	case zt.TyDepositAction:

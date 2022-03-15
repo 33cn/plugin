@@ -546,6 +546,7 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 
 
 func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
+
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
 	hash.Write(accountIdBytes[:])
