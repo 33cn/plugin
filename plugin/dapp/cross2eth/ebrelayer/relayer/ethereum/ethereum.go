@@ -87,6 +87,8 @@ type Relayer4Ethereum struct {
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
 	remindUrl               string // 代理打币地址金额不够时发生提醒短信的 url
+	remindClientErrorUrl    string // BSC or ethereum 节点出错时邮件提醒的 url
+	remindEmail             string // 提醒的邮箱
 }
 
 var (
@@ -101,19 +103,21 @@ const (
 )
 
 type EthereumStartPara struct {
-	DbHandle           dbm.DB
-	EthProvider        []string
-	EthProviderHttp    []string
-	BridgeRegistryAddr string
-	Degree             int32
-	BlockInterval      int32
-	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
-	TxRelayAckSendChan chan<- *ebTypes.TxRelayAck
-	TxRelayAckRecvChan <-chan *ebTypes.TxRelayAck
-	Chain33MsgChan     <-chan *events.Chain33Msg
-	ProcessWithDraw    bool
-	Name               string
-	RemindUrl          string
+	DbHandle             dbm.DB
+	EthProvider          []string
+	EthProviderHttp      []string
+	BridgeRegistryAddr   string
+	Degree               int32
+	BlockInterval        int32
+	EthBridgeClaimChan   chan<- *ebTypes.EthBridgeClaim
+	TxRelayAckSendChan   chan<- *ebTypes.TxRelayAck
+	TxRelayAckRecvChan   <-chan *ebTypes.TxRelayAck
+	Chain33MsgChan       <-chan *events.Chain33Msg
+	ProcessWithDraw      bool
+	Name                 string
+	RemindUrl            string
+	RemindClientErrorUrl string
+	RemindEmail          string
 }
 
 type WithdrawFeeAndQuota struct {
@@ -145,6 +149,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		symbol2LockAddr:         make(map[string]*ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 		remindUrl:               startPara.RemindUrl,
+		remindClientErrorUrl:    startPara.RemindClientErrorUrl,
+		remindEmail:             startPara.RemindEmail,
 	}
 	copy(ethRelayer.provider, startPara.EthProvider)
 	copy(ethRelayer.providerHttp, startPara.EthProviderHttp)
@@ -476,7 +482,7 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 		ethName = "BSC"
 	}
 	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
-	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
+	relayerLog.Debug("SendRemind", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
 	ethRelayer.SendRemind(ethRelayer.remindUrl, postData)
 }
 
@@ -484,7 +490,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	//只有通过代理人登录的中继器，才处理提币事件
 	var err error
 	now := time.Now()
-	year, month, day := now.Date()
+	cstTime := now.UTC().Add(8 * time.Hour)
+	year, month, day := cstTime.Date()
 	withdrawTx := &ebTypes.WithdrawTx{
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
@@ -1639,6 +1646,17 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, sign
 		return nil
 	}
 }
+
+func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
+	ethName := "以太坊"
+	if ethRelayer.GetName() == BinanceChain {
+		ethName = "BSC"
+	}
+	postData := fmt.Sprintf(`{"subject":"%s节点出错","receiver":"[%s]","content":"节点 %s 连接失败"}`, ethName, ethRelayer.remindEmail, ethRelayer.providerHttp)
+	relayerLog.Debug("SendRemind", "remindClientErrorUrl", ethRelayer.remindClientErrorUrl, "postData:", postData)
+	ethRelayer.SendRemind(ethRelayer.remindClientErrorUrl, postData)
+}
+
 func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 	// 清空重新获取 client
 	ethRelayer.clientSpecs = nil
@@ -1654,6 +1672,7 @@ func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 
 	if len(ethRelayer.clientSpecs) == 0 && *isSendEmail == false {
 		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		*isSendEmail = true
 	}
 }

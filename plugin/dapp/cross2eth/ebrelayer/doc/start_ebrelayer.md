@@ -27,6 +27,8 @@
 |pushHost|relayer 的 host 地址, 默认: http://localhost:20000|
 |pushBind|relayer 的 bind 端口, 默认: 0.0.0.0:20000|
 |keepAliveDuration|单位毫秒, 默认 600000, 表示 10 分钟之内未收到信息, 通过重新订阅, 确保订阅可用, 提高稳定性|
+|RemindClientErrorUrl|BSC or ethereum 节点出错时邮件提醒的 url|
+|RemindEmail|提醒的邮箱|
 
 #### 首次启动 relayer 进行设置
 ```shell

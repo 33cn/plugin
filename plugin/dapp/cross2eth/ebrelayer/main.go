@@ -99,19 +99,21 @@ func main() {
 		txRelayAckChan2Eth[cfg.EthRelayerCfg[i].EthChainName] = txRelayAckRecvChan
 
 		ethStartPara := &ethRelayer.EthereumStartPara{
-			DbHandle:           db,
-			EthProvider:        cfg.EthRelayerCfg[i].EthProvider,
-			EthProviderHttp:    cfg.EthRelayerCfg[i].EthProviderCli,
-			BridgeRegistryAddr: cfg.EthRelayerCfg[i].BridgeRegistry,
-			Degree:             cfg.EthRelayerCfg[i].EthMaturityDegree,
-			BlockInterval:      cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
-			EthBridgeClaimChan: ethBridgeClaimChan,
-			TxRelayAckSendChan: txRelayAckChan2Chain33,
-			TxRelayAckRecvChan: txRelayAckRecvChan,
-			Chain33MsgChan:     chain33MsgChan,
-			ProcessWithDraw:    cfg.ProcessWithDraw,
-			Name:               cfg.EthRelayerCfg[i].EthChainName,
-			RemindUrl:          cfg.RemindUrl,
+			DbHandle:             db,
+			EthProvider:          cfg.EthRelayerCfg[i].EthProvider,
+			EthProviderHttp:      cfg.EthRelayerCfg[i].EthProviderCli,
+			BridgeRegistryAddr:   cfg.EthRelayerCfg[i].BridgeRegistry,
+			Degree:               cfg.EthRelayerCfg[i].EthMaturityDegree,
+			BlockInterval:        cfg.EthRelayerCfg[i].EthBlockFetchPeriod,
+			EthBridgeClaimChan:   ethBridgeClaimChan,
+			TxRelayAckSendChan:   txRelayAckChan2Chain33,
+			TxRelayAckRecvChan:   txRelayAckRecvChan,
+			Chain33MsgChan:       chain33MsgChan,
+			ProcessWithDraw:      cfg.ProcessWithDraw,
+			Name:                 cfg.EthRelayerCfg[i].EthChainName,
+			RemindUrl:            cfg.RemindUrl,
+			RemindClientErrorUrl: cfg.RemindClientErrorUrl,
+			RemindEmail:          cfg.RemindEmail,
 		}
 		mainlog.Info("ethStartPara", " ethStartPara.EthProvider =", ethStartPara.EthProvider, "ethStartPara.EthProviderHttp", ethStartPara.EthProviderHttp)
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
