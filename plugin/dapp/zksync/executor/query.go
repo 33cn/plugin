@@ -3,7 +3,6 @@ package executor
 import (
 	"fmt"
 	"github.com/33cn/chain33/account"
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -149,9 +148,8 @@ func (z *zksync) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, e
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
-	execAddr := address.ExecAddress(zt.Zksync)
 	accountdb, _ := account.NewAccountDB(z.GetAPI().GetConfig(), zt.Zksync, in.TokenSymbol, z.GetStateDB())
-	contractAccount := accountdb.LoadExecAccount(in.Chain33WalletAddr, execAddr)
+	contractAccount := accountdb.LoadAccount(in.Chain33WalletAddr)
 	return contractAccount, nil
 }
 

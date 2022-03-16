@@ -8,7 +8,6 @@ import (
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
-	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
@@ -539,10 +538,8 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 }
 
 func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint64, option int32) ([]*types.KeyValue, error) {
-	execAddr := address.ExecAddress(zt.Zksync)
-
 	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
-	contractAccount := accountdb.LoadExecAccount(addr, execAddr)
+	contractAccount := accountdb.LoadAccount(addr)
 	change, _ := new(big.Int).SetString(amount, 10)
 	//accountdb去除末尾8位小数
 	shortChange := new(big.Int).Div(change, big.NewInt(100000000)).Int64()
@@ -555,7 +552,7 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 		contractAccount.Balance += shortChange
 	}
 
-	kvs := accountdb.GetExecKVSet(execAddr, contractAccount)
+	kvs := accountdb.GetKVSet(contractAccount)
 	zlog.Info("zksync UpdateContractAccount", "key", string(kvs[0].GetKey()), "account", contractAccount)
 	return kvs, nil
 }
