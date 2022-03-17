@@ -62,7 +62,7 @@ func (e *evmxgo) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *ty
 }
 
 func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newEvmxgoAction(e, "", tx)
+	action := newEvmxgoAction(e, tx)
 	txGroup, err := e.GetTxGroup(index)
 	if nil != err {
 		return nil, err
@@ -74,7 +74,62 @@ func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transactio
 	return action.mint(payload, txs[index-1])
 }
 
+func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, index int) (*types.Receipt, error) {
+	if payload == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if payload.GetAmount() < 0 || payload.GetAmount() > types.MaxTokenBalance || payload.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+	bridgevmxgoConfig, err := loadBridgevmxgoAddr(e.GetStateDB())
+	//确认合约地址的正确性
+	if tx.From() != bridgevmxgoConfig.Address {
+		elog.Error("Not consistent bridgevmxgo address configured by manager", "GetSymbol:", payload.GetSymbol(), "from:", tx.From(), "bridgevmxgoConfig.Address: ", bridgevmxgoConfig.Address)
+		return nil, errors.New("Not consistent bridgevmxgo address configured by manager")
+	}
+	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
+	//configSymbol, err := loadEvmxgoMintConfig(e.GetStateDB(), payload.GetSymbol())
+	//if err != nil || configSymbol == nil {
+	//	elog.Error("evmxgo mint ", "not config symbol", payload.GetSymbol(), "error", err)
+	//	return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+	//}
+	//if tx.From() != configSymbol.Address {
+	//	elog.Error("evmxgo mint address error", "GetSymbol:", payload.GetSymbol(), "from:", tx.From(), "configSymbol.Address: ", configSymbol.Address)
+	//	return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+	//}
+
+	action := newEvmxgoAction(e, tx)
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, payload.GetSymbol())
+	if err != nil {
+		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
+			return nil, err
+		}
+		evmxgodb = newEvmxgoDB(payload)
+	}
+
+	kvs, logs, err := evmxgodb.mint(payload.Amount)
+	if err != nil {
+		elog.Error("evmxgo mint ", "symbol", payload.GetSymbol(), "error", err, "from", action.fromaddr)
+		return nil, err
+	}
+	cfg := action.api.GetConfig()
+	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", payload.GetSymbol(), action.stateDB)
+	if err != nil {
+		return nil, err
+	}
+	elog.Debug("mint", "evmxgo.Symbol", payload.Symbol, "evmxgo.Amount", payload.Amount)
+	receipt, err := evmxgoAccount.Mint(payload.Recipient, payload.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
 func (e *evmxgo) Exec_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newEvmxgoAction(e, "", tx)
+	action := newEvmxgoAction(e, tx)
 	return action.burn(payload)
 }

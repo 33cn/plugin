@@ -17,6 +17,8 @@ const (
 	EvmxgoActionMint = 12
 	// EvmxgoActionBurn for evmxgo burn
 	EvmxgoActionBurn = 13
+	// EvmxgoActionMint for evmxgo mint map
+	EvmxgoActionMintMap = 14
 )
 
 const (
