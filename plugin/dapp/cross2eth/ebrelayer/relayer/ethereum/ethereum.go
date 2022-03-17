@@ -65,6 +65,7 @@ type Relayer4Ethereum struct {
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
 	clientSpecs             []ethinterface.EthClientSpec
+	clientBSCRecommendSpecs []ethinterface.EthClientSpec
 	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
@@ -86,13 +87,14 @@ type Relayer4Ethereum struct {
 	mulSignAddr             string
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
-	remindUrl               string // 代理打币地址金额不够时发生提醒短信的 url
-	remindClientErrorUrl    string // BSC or ethereum 节点出错时邮件提醒的 url
-	remindEmail             string // 提醒的邮箱
+	remindUrl               string   // 代理打币地址金额不够时发生提醒短信的 url
+	remindClientErrorUrl    string   // BSC or ethereum 节点出错时邮件提醒的 url
+	remindEmail             []string // 提醒的邮箱
 }
 
 var (
-	relayerLog = log.New("module", "ethereum_relayer")
+	relayerLog       = log.New("module", "ethereum_relayer")
+	BSCRecommendHttp = []string{"https://bsc-dataseed.binance.org/", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed1.ninicoin.io/"}
 )
 
 const (
@@ -117,7 +119,7 @@ type EthereumStartPara struct {
 	Name                 string
 	RemindUrl            string
 	RemindClientErrorUrl string
-	RemindEmail          string
+	RemindEmail          []string
 }
 
 type WithdrawFeeAndQuota struct {
@@ -173,6 +175,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	if err != nil {
 		panic(err)
 	}
+	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupEthClients(&BSCRecommendHttp)
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
@@ -1637,6 +1640,17 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, sign
 		}
 	}
 
+	if ethRelayer.GetName() == BinanceChain {
+		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
+			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
+			if err == nil {
+				bSuccess = true
+			} else {
+				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+			}
+		}
+	}
+
 	if bSuccess == false {
 		return errors.New("ErrSendTransaction")
 	} else {
@@ -1649,22 +1663,25 @@ func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
 	if ethRelayer.GetName() == BinanceChain {
 		ethName = "BSC"
 	}
-	postData := fmt.Sprintf(`{"subject":"%s节点出错","receiver":"[%s]","content":"节点 %s 连接失败"}`, ethName, ethRelayer.remindEmail, ethRelayer.providerHttp)
-	relayerLog.Debug("SendRemind", "remindClientErrorUrl", ethRelayer.remindClientErrorUrl, "postData:", postData)
+
+	var remindEmail string
+	for i := 0; i < len(ethRelayer.remindEmail); i++ {
+		remindEmail += "\"" + ethRelayer.remindEmail[i] + "\""
+		if i < len(ethRelayer.remindEmail)-1 {
+			remindEmail += ","
+		}
+	}
+	postData := fmt.Sprintf(`{"subject":"%s节点出错","receiver":[%s],"content":"节点 %s 连接失败"}`, ethName, remindEmail, ethRelayer.providerHttp)
+	relayerLog.Info("SendRemind", "remindClientErrorUrl", ethRelayer.remindClientErrorUrl, "remindEmail", ethRelayer.remindEmail, "postData:", postData)
 	ethRelayer.SendRemind(ethRelayer.remindClientErrorUrl, postData)
 }
 
 func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
-	// 清空重新获取 client
-	ethRelayer.clientSpecs = nil
-	for i := 0; i < len(ethRelayer.providerHttp); i++ {
-		client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
-		if err != nil {
-			relayerLog.Error("regainClient", "SetupEthClient err", err)
-			continue
-		}
-		ethRelayer.clientSpecs = append(ethRelayer.clientSpecs, client)
-		time.Sleep(2 * time.Second)
+	// 重新获取 client
+	var err error
+	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	if err != nil {
+		relayerLog.Error("regainClient", "SetupEthClient err", err)
 	}
 
 	if len(ethRelayer.clientSpecs) == 0 && *isSendEmail == false {

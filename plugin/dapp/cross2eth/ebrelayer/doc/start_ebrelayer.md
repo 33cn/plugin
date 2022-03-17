@@ -121,9 +121,9 @@ done
 ./ebcli_A --eth_chain_name Ethereum ethereum cfgWithdraw -f 0.003 -s ETH -a 0.2 -d 18
 例如:(根据需求配置, 修改手续费后要通知前端同步修改)
 ./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 1.5 -d 18
-./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 500 -d 18
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 10000 -d 18
 ./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 80000 -d 8
-./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 3 -s BTY -a 6000 -d 8
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 3 -s BTY -a 100000 -d 8
 
 Flags:
   -a, --amount float    每日最大值
