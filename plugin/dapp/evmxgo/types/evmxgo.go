@@ -27,6 +27,7 @@ const (
 	NameTransferToExecAction = "TransferToExec"
 	NameMintAction           = "Mint"
 	NameBurnAction           = "Burn"
+	NameMintMapAction        = "MintMap"
 )
 
 // log类型id值

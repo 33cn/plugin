@@ -14,8 +14,16 @@ message EvmxgoAction {
         AssetsTransferToExec transferToExec = 3;
         EvmxgoMint                 mint     = 4;
         EvmxgoBurn                 burn     = 5;
+        EvmxgoMintMap              mintMap  = 7;
     }
     int32 Ty = 6;
+}
+
+message EvmxgoMintMap {
+    string symbol        = 1;
+    int64  amount        = 2;
+    string bridgeToken   = 3;
+    string recipient     = 4;
 }
 
 message EvmxgoMint {
