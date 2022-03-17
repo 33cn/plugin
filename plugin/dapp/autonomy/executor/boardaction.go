@@ -515,11 +515,22 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	return int32(voteAccount.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
+// bindKey bind key
+func bindKey(id string) (key []byte) {
+	if subcfg.BindKey != "" {
+		key = append(key, []byte(subcfg.BindKey)...)
+		key = append(key, []byte(id)...)
+		return key
+	} else {
+		return ticket.BindKey(id)
+	}
+}
+
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
 	// 验证绑定关系与重复地址
 	mp := make(map[string]struct{})
 	for _, addr := range addrs {
-		value, err := a.db.Get(ticket.BindKey(addr))
+		value, err := a.db.Get(bindKey(addr))
 		if err != nil {
 			return addr, auty.ErrMinerAddr
 		}

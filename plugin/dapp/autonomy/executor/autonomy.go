@@ -16,6 +16,7 @@ type subConfig struct {
 	Total      string `json:"total"`
 	UseBalance bool   `json:"useBalance"`
 	Execer     string `json:"execer"`
+	BindKey    string `json:"bindKey"`
 }
 
 var (
