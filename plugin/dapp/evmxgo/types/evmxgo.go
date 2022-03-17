@@ -99,6 +99,7 @@ func (e *evmxgoType) GetTypeMap() map[string]int32 {
 		"TransferToExec": EvmxgoActionTransferToExec,
 		"Mint":           EvmxgoActionMint,
 		"Burn":           EvmxgoActionBurn,
+		"MintMap":        EvmxgoActionMintMap,
 	}
 }
 
