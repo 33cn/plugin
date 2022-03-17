@@ -104,6 +104,14 @@ func (z *zksync) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, erro
 	return getLastCommitProofData(z.GetStateDB())
 }
 
+// Query_GetLastPriorityQueueId 获取最后的eth priority queue id
+func (z *zksync) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	return getLastEthPriorityQueueID(z.GetStateDB(), uint32(in.Data))
+}
+
 // Query_GetTxProofByHeights 根据多个高度批量获取交易证明
 func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
 	if in == nil {

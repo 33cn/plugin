@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"strconv"
@@ -73,7 +74,21 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
+	//TODO set chainID
+	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get eth last priority queue id")
+	}
+	lastPriorityId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
+	}
+	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
+	}
+
 	//转换10进制
+	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
 	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
 
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -186,7 +201,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		logs = append(logs, receiptLog)
 	}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+	//add priority part
+	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
+	return mergeReceipt(receipts, r), nil
 }
 
 func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.ZkPubKey, balance string, accountId uint64) *zt.OperationMetaBranch {
@@ -696,6 +713,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	}
 
 	//转换10进制
+	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
 	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
 
 	info, err := generateTreeUpdateInfo(a.statedb)
@@ -1017,6 +1035,20 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
 	}
 
+	//fullexit last priority id 不能为空
+	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get eth last priority queue id")
+	}
+	lastId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
+	if !ok {
+		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
+	}
+
+	if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
+	}
+
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -1088,7 +1120,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{Ty: zt.TyFullExitLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+	//add priority part
+	r := makeSetEthPriorityIdReceipt(0, lastId.Int64(), payload.EthPriorityQueueId)
+	return mergeReceipt(receipts, r), nil
 
 }
 
@@ -1109,4 +1143,53 @@ func checkParam(amount string) error {
 		return types.ErrAmount
 	}
 	return nil
+}
+
+func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueID, error) {
+	key := getEthPriorityQueueKey(chainID)
+	v, err := db.Get(key)
+	//未找到返回-1
+	if isNotFound(err) {
+		return &zt.EthPriorityQueueID{ID: "-1"}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var id zt.EthPriorityQueueID
+	err = types.Decode(v, &id)
+	if err != nil {
+		zklog.Error("getLastEthPriorityQueueID.decode", "err", err)
+		return nil, err
+	}
+
+	return &id, nil
+}
+
+func makeSetEthPriorityIdReceipt(chainId uint32, prev, current int64) *types.Receipt {
+	key := getEthPriorityQueueKey(chainId)
+	log := &zt.ReceiptEthPriorityQueueID{
+		Prev:    prev,
+		Current: current,
+	}
+	return &types.Receipt{
+		Ty: types.ExecOk,
+		KV: []*types.KeyValue{
+			{Key: key, Value: types.Encode(&zt.EthPriorityQueueID{ID: big.NewInt(current).String()})},
+		},
+		Logs: []*types.ReceiptLog{
+			{
+				Ty:  zt.TySetEthPriorityQueueId,
+				Log: types.Encode(log),
+			},
+		},
+	}
+}
+
+func mergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
+	if receipt2 != nil {
+		receipt1.KV = append(receipt1.KV, receipt2.KV...)
+		receipt1.Logs = append(receipt1.Logs, receipt2.Logs...)
+	}
+
+	return receipt1
 }

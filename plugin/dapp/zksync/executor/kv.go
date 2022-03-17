@@ -53,6 +53,10 @@ func getValidatorsKey() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"validators"))
 }
 
+func getEthPriorityQueueKey(chainID uint32) []byte {
+	return []byte(fmt.Sprintf("%s-%d", KeyPrefixStateDB+"priorityQueue", chainID))
+}
+
 func getProofIdCommitProofKey(proofId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d", proofId))
 }
