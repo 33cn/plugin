@@ -173,7 +173,7 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 10)
+	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
 
 	copy(binaryData, pubData)
@@ -288,7 +288,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
-	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 10)
+	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.Chain33AddrBitWidth)...)
 
 	copy(binaryData, pubData)
