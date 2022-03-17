@@ -36,7 +36,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if tokenId == 0 || amount == "0" {
+	if amount == "0" {
 		return kvs, localKvs, errors.New("balance is zero")
 	}
 	tree, err := getAccountTree(statedb, info)
@@ -544,7 +544,6 @@ func getTokenBalanceHash(token *zt.TokenBalance) []byte {
 	return hash.Sum(nil)
 }
 
-
 func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
@@ -599,7 +598,7 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 		helpers := make([]string, len(subTrees))
 		proofSet[0] = "0"
 		for i := 1; i <= len(subTrees); i++ {
-			proofSet[i] = zt.Byte2Str(subTrees[len(subTrees) - i].GetSum())
+			proofSet[i] = zt.Byte2Str(subTrees[len(subTrees)-i].GetSum())
 			helpers[i-1] = big.NewInt(0).String()
 		}
 		proof := &zt.MerkleTreeProof{
@@ -726,7 +725,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 		helpers := make([]string, len(subTrees))
 		proofSet[0] = "0"
 		for i := 1; i <= len(subTrees); i++ {
-			proofSet[i] = zt.Byte2Str(subTrees[len(subTrees) - i].GetSum())
+			proofSet[i] = zt.Byte2Str(subTrees[len(subTrees)-i].GetSum())
 			helpers[i-1] = big.NewInt(0).String()
 		}
 		proof := &zt.MerkleTreeProof{

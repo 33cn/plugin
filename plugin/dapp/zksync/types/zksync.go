@@ -17,14 +17,14 @@ const (
 	TyNoopAction           = 0
 	TyDepositAction        = 1  //eth存款
 	TyWithdrawAction       = 2  //eth取款
-	TyTransferAction       = 3 //转账
+	TyTransferAction       = 3  //转账
 	TyTransferToNewAction  = 4  //向新地址转账
 	TyForceExitAction      = 5  //强制退出
 	TySetPubKeyAction      = 6  //设置公钥
 	TyFullExitAction       = 7  //从L1完全退出
-	TySwapAction           = 8 //交换
+	TySwapAction           = 8  //交换
 	TyContractToTreeAction = 9  //合约账户转入叶子
-	TyTreeToContractAction = 10  //叶子账户转入合约
+	TyTreeToContractAction = 10 //叶子账户转入合约
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
@@ -62,9 +62,10 @@ const (
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 
-	TySetVerifyKeyLog = 202 //设置电路验证key
-	TyCommitProofLog  = 203 //提交zk proof
-	TySetVerifierLog  = 204 //设置验证者
+	TySetVerifyKeyLog       = 202 //设置电路验证key
+	TyCommitProofLog        = 203 //提交zk proof
+	TySetVerifierLog        = 204 //设置验证者
+	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
 )
 
 const (
@@ -92,7 +93,7 @@ const (
 	Chain33AddrBitWidth = 256 //20byte
 	PubKeyBitWidth      = 256 //32byte
 
-	ChunkBitWidth      = 80 //10byte
+	ChunkBitWidth = 80 //10byte
 )
 
 const (
@@ -100,7 +101,6 @@ const (
 	MsgSecondWidth = 252
 	MsgThirdWidth  = 248
 	MsgWidth       = 752 //32byte
-
 
 )
 
@@ -141,19 +141,20 @@ var (
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
-		TyWithdrawLog:       {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog: {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog: {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:       {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:  {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyForceExitLog"},
-		TySetPubKeyLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:       {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
-		TySwapLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
-		TySetVerifyKeyLog:   {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:    {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TySetVerifierLog:    {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TyDepositLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
+		TyWithdrawLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
+		TyContractToTreeLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
+		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
+		TyForceExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
+		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
+		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
+		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 	}
 )
 
