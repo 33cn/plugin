@@ -361,6 +361,10 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	//因为合约balance需要/1e10，因此要先去掉精度
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
+
 	err := checkParam(payload.Amount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
@@ -451,6 +455,9 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+	//因为合约balance需要/1e10，因此要先去掉精度
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	payload.Amount = new(big.Int).Mul(new(big.Int).Div(amountInt, big.NewInt(1e10)), big.NewInt(1e10)).String()
 
 	err := checkParam(payload.Amount)
 	if err != nil {
@@ -541,8 +548,8 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	accountdb, _ := account.NewAccountDB(a.api.GetConfig(), zt.Zksync, strconv.Itoa(int(tokenId)), a.statedb)
 	contractAccount := accountdb.LoadAccount(addr)
 	change, _ := new(big.Int).SetString(amount, 10)
-	//accountdb去除末尾8位小数
-	shortChange := new(big.Int).Div(change, big.NewInt(100000000)).Int64()
+	//accountdb去除末尾10位小数
+	shortChange := new(big.Int).Div(change, big.NewInt(1e10)).Int64()
 	if option == zt.Sub {
 		if contractAccount.Balance < shortChange {
 			return nil, errors.New("balance not enough")
