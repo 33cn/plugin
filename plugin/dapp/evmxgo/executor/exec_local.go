@@ -117,6 +117,10 @@ func setBurn(t *evmxgotypes.LocalEvmxgo, height, time, amount int64) *evmxgotype
 	return t
 }
 
+func (e *evmxgo) ExecLocal_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return nil, nil
+}
+
 func (e *evmxgo) ExecLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	localToken, err := loadLocalToken(payload.Symbol, e.GetLocalDB())
 

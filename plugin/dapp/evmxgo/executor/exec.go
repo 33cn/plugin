@@ -74,7 +74,7 @@ func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transactio
 	return action.mint(payload, txs[index-1])
 }
 
-func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, index int) (*types.Receipt, error) {
 	if payload == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -104,7 +104,12 @@ func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMint, tx *types.Transac
 		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
 			return nil, err
 		}
-		evmxgodb = newEvmxgoDB(payload)
+		evmxgodb = newEvmxgoDB(&evmxgotypes.EvmxgoMint{
+			Symbol:      payload.Symbol,
+			Amount:      payload.Amount,
+			BridgeToken: payload.BridgeToken,
+			Recipient:   payload.Recipient,
+		})
 	}
 
 	kvs, logs, err := evmxgodb.mint(payload.Amount)
