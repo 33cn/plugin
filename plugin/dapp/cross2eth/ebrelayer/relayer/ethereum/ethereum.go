@@ -169,12 +169,9 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
 	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
-	for i := 0; i < len(ethRelayer.providerHttp); i++ {
-		client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
-		if err != nil {
-			panic(err)
-		}
-		ethRelayer.clientSpecs = append(ethRelayer.clientSpecs, client)
+	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	if err != nil {
+		panic(err)
 	}
 
 	// Start clientSpec with infura ropsten provider
