@@ -101,6 +101,7 @@ func (e *evmxgoType) GetTypeMap() map[string]int32 {
 		"Mint":           EvmxgoActionMint,
 		"Burn":           EvmxgoActionBurn,
 		"MintMap":        EvmxgoActionMintMap,
+		"BurnMap":        EvmxgoActionBurnMap,
 	}
 }
 
@@ -118,6 +119,8 @@ func (e *evmxgoType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogEvmxgoGenesisDeposit:  {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenGenesisDeposit"},
 		TyLogEvmxgoMint:            {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintToken"},
 		TyLogEvmxgoBurn:            {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnToken"},
+		TyLogEvmxgoMintMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintMapToken"},
+		TyLogEvmxgoBurnMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnMapToken"},
 	}
 
 }

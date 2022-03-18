@@ -112,7 +112,7 @@ func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Tran
 		})
 	}
 
-	kvs, logs, err := evmxgodb.mint(payload.Amount)
+	kvs, logs, err := evmxgodb.mintMap(payload.Amount)
 	if err != nil {
 		elog.Error("evmxgo mint ", "symbol", payload.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
@@ -137,4 +137,9 @@ func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Tran
 func (e *evmxgo) Exec_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := newEvmxgoAction(e, tx)
 	return action.burn(payload)
+}
+
+func (e *evmxgo) Exec_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newEvmxgoAction(e, tx)
+	return action.burnMap(payload)
 }

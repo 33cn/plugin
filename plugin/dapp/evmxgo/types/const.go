@@ -19,6 +19,7 @@ const (
 	EvmxgoActionBurn = 13
 	// EvmxgoActionMint for evmxgo mint map
 	EvmxgoActionMintMap = 14
+	EvmxgoActionBurnMap = 15
 )
 
 const (
@@ -44,4 +45,8 @@ const (
 	TyLogEvmxgoMint = 323
 	// TyLogEvmxgoBurn log for evmxgo burn
 	TyLogEvmxgoBurn = 324
+	// TyLogEvmxgoMint log for evmxgo mint
+	TyLogEvmxgoMintMap = 325
+	// TyLogEvmxgoBurn log for evmxgo burn
+	TyLogEvmxgoBurnMap = 326
 )

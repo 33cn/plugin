@@ -95,29 +95,9 @@ func resetBurn(e *evmxgotypes.LocalEvmxgo, height, time, amount int64) *evmxgoty
 }
 
 func (e *evmxgo) ExecDelLocal_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	localToken, err := loadLocalToken(payload.Symbol, e.GetLocalDB())
-	if err != nil {
-		return nil, err
-	}
-	localToken = resetMint(localToken, e.GetHeight(), e.GetBlockTime(), payload.Amount)
-	key := calcEvmxgoStatusKeyLocal(payload.Symbol)
-	var set []*types.KeyValue
-	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
-
-	table := NewLogsTable(e.GetLocalDB())
-	txIndex := dapp.HeightIndexStr(e.GetHeight(), int64(index))
-	err = table.Del([]byte(txIndex))
-	if err != nil {
-		return nil, err
-	}
-	kv, err := table.Save()
-	if err != nil {
-		return nil, err
-	}
-	set = append(set, kv...)
-
-	return &types.LocalDBSet{KV: set}, nil
+	return nil, nil
 }
+
 func (e *evmxgo) ExecDelLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	localToken, err := loadLocalToken(payload.Symbol, e.GetLocalDB())
 	if err != nil {
@@ -141,6 +121,14 @@ func (e *evmxgo) ExecDelLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Tr
 	set = append(set, kv...)
 
 	return &types.LocalDBSet{KV: set}, nil
+}
+
+func (e *evmxgo) ExecLocal_BurntMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return nil, nil
+}
+
+func (e *evmxgo) ExecDelLocal_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return nil, nil
 }
 
 func (e *evmxgo) ExecDelLocal_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
