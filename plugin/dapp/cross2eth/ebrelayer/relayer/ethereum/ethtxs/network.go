@@ -40,6 +40,7 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
+			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
 		_, err = client.NetworkID(timeout)
@@ -65,6 +66,7 @@ func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
+			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
 		_, err = client.NetworkID(timeout)
@@ -92,6 +94,7 @@ func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, erro
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
 		if nil != err {
+			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
 		txslog.Debug("SetupRecommendClients", "SelectAndRoundEthURL:", urlSelected, "client", client)
@@ -112,7 +115,7 @@ func Dial2MakeEthClient(ethURL string) (*ethclient.Client, error) {
 
 	client, err := ethclient.Dial(ethURL)
 	if err != nil {
-		return nil, fmt.Errorf("error dialing websocket client %w", err)
+		return nil, fmt.Errorf("url %s error dialing websocket client %w", ethURL, err)
 	}
 
 	return client, nil
