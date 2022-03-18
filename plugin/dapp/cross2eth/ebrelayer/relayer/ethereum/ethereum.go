@@ -93,7 +93,8 @@ type Relayer4Ethereum struct {
 }
 
 var (
-	relayerLog       = log.New("module", "ethereum_relayer")
+	relayerLog = log.New("module", "ethereum_relayer")
+	// BSC 官方节点
 	BSCRecommendHttp = []string{"https://bsc-dataseed.binance.org/", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed1.ninicoin.io/"}
 )
 
@@ -175,7 +176,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	if err != nil {
 		panic(err)
 	}
-	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupEthClients(&BSCRecommendHttp)
+	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
 
 	// Start clientSpec with infura ropsten provider
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
@@ -573,8 +574,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	value := big.NewInt(0)
 
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
-	ctx := context.Background()
-	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	var intputData []byte // ERC20 or BEP20 token transfer pack data
 	var toAddr common.Address
@@ -1641,8 +1641,12 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, sign
 	}
 
 	if ethRelayer.GetName() == BinanceChain {
+		// 官方节点 发送时间比较久
+		timeout2, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
 		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
-			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
+			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout2, signedTx)
 			if err == nil {
 				bSuccess = true
 			} else {

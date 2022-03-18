@@ -54,13 +54,13 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 }
 
 func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	var Clients []ethinterface.EthClientSpec
 	for i := 0; i < len(*ethURL); i++ {
 		urlSelected, err := SelectAndRoundEthURL(ethURL)
 		if nil != err {
-			txslog.Error("SetupEthClient", "SelectAndRoundEthURL err", err.Error())
+			txslog.Error("SetupEthClients", "SelectAndRoundEthURL err", err.Error())
 			return nil, err
 		}
 		client, err := Dial2MakeEthClient(urlSelected)
@@ -69,17 +69,39 @@ func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
 		}
 		_, err = client.NetworkID(timeout)
 		if err != nil {
-			txslog.Error("SetupEthClient", "Failed to get NetworkID due to:%s", err.Error())
+			txslog.Error("SetupEthClients", "Failed to get NetworkID due to:%s", err.Error())
 			continue
 		}
-		txslog.Debug("SetupEthClient", "SelectAndRoundEthURL:", urlSelected, "client", client)
+		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected, "client", client)
 		Clients = append(Clients, client)
 	}
 
 	if len(Clients) > 0 {
 		return Clients, nil
 	}
-	return nil, errors.New("FailedToSetupEthClient")
+	return nil, errors.New("FailedToSetupEthClients")
+}
+
+func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
+	var Clients []ethinterface.EthClientSpec
+	for i := 0; i < len(*ethURL); i++ {
+		urlSelected, err := SelectAndRoundEthURL(ethURL)
+		if nil != err {
+			txslog.Error("SetupRecommendClients", "SelectAndRoundEthURL err", err.Error())
+			return nil, err
+		}
+		client, err := Dial2MakeEthClient(urlSelected)
+		if nil != err {
+			continue
+		}
+		txslog.Debug("SetupRecommendClients", "SelectAndRoundEthURL:", urlSelected, "client", client)
+		Clients = append(Clients, client)
+	}
+
+	if len(Clients) > 0 {
+		return Clients, nil
+	}
+	return nil, errors.New("FailedToSetupRecommendClients")
 }
 
 // Dial2MakeEthClient : returns boolean indicating if a URL is valid websocket ethclient
