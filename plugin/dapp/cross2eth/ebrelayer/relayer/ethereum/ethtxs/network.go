@@ -54,7 +54,7 @@ func SetupEthClient(ethURL *[]string) (*ethclient.Client, error) {
 }
 
 func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	var Clients []ethinterface.EthClientSpec
 	for i := 0; i < len(*ethURL); i++ {

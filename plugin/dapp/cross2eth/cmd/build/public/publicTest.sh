@@ -97,14 +97,14 @@ function start_docker_ebrelayer() {
 
     # 后台启动程序
     docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
-    sleep 10
+    sleep 20
 
     # shellcheck disable=SC2009
     pid=$(docker exec "$1" ps -ef | grep "$2" | grep -v 'grep' | awk '{print $2}' | xargs)
     local count=0
     while [ "${pid}" == "" ]; do
         docker exec "$1" nohup "${2}" >"${3}" 2>&1 &
-        sleep 10
+        sleep 20
 
         count=$((count + 1))
         if [[ ${count} -ge 20 ]]; then
