@@ -86,6 +86,7 @@ type Relayer4Ethereum struct {
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
 	remindUrl               string // 代理打币地址金额不够时发生提醒短信的 url
+	startListenHeight       int64
 }
 
 var (
@@ -113,6 +114,7 @@ type EthereumStartPara struct {
 	ProcessWithDraw    bool
 	Name               string
 	RemindUrl          string
+	StartListenHeight  int64
 }
 
 type WithdrawFeeAndQuota struct {
@@ -144,6 +146,7 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		symbol2LockAddr:         make(map[string]*ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 		remindUrl:               startPara.RemindUrl,
+		startListenHeight:       startPara.StartListenHeight,
 	}
 	copy(ethRelayer.provider, startPara.EthProvider)
 	copy(ethRelayer.providerHttp, startPara.EthProviderHttp)
@@ -1198,16 +1201,28 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 
 //因为订阅事件的功能只会推送在订阅生效的高度之后的事件，之前订阅停止～当前订阅生效高度的这一段只能通过FilterLogs来获取事件信息，否则就会遗漏
 func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
-	deployHeight, _ := ethtxs.GetDeployHeight(ethRelayer.clientSpec, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address)
-	height4BridgeBankLogAt := int64(ethRelayer.getHeight4BridgeBankLogAt())
-
-	if height4BridgeBankLogAt < deployHeight {
-		height4BridgeBankLogAt = deployHeight
-	}
-
 	curHeightUint64, _ := ethRelayer.getCurrentHeight(context.Background())
 	curHeight := int64(curHeightUint64)
 	relayerLog.Info("filterLogEvents", "curHeight:", curHeight)
+
+	//获取部署高度
+	deployHeight, _ := ethtxs.GetDeployHeight(ethRelayer.clientSpec, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address, ethRelayer.x2EthDeployInfo.BridgeRegistry.Address)
+	//获取上次处理过的高度
+	height4BridgeBankLogAt := int64(ethRelayer.getHeight4BridgeBankLogAt())
+
+	//2者取其大，以为处理高度开始为０
+	if height4BridgeBankLogAt < deployHeight {
+		height4BridgeBankLogAt = deployHeight
+	}
+	//确认配置信息是否配置了起始侦听高度，如果是，且大于保存的起始高度，则直接使用较大的高度
+	if height4BridgeBankLogAt < ethRelayer.startListenHeight {
+		height4BridgeBankLogAt = ethRelayer.startListenHeight
+	}
+
+	if height4BridgeBankLogAt >= curHeight {
+		relayerLog.Error("filterLogEvents height4BridgeBankLogAt > curHeight", "height4BridgeBankLogAt", height4BridgeBankLogAt, "curHeight:", curHeight)
+		return
+	}
 
 	bridgeBankSig := make(map[string]bool)
 	ethRelayer.rwLock.RLock()

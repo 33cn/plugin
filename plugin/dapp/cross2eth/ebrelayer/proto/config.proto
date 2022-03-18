@@ -36,6 +36,7 @@ message EthRelayerCfg {
   string bridgeRegistry          = 4;
   int32 ethMaturityDegree        = 5;
   int32 ethBlockFetchPeriod      = 6;
+  int64 startListenHeight        = 7;
 }
 
 message Chain33RelayerCfg {
