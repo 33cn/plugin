@@ -83,6 +83,20 @@ func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, e
 	return kvs, logs, nil
 }
 
+func (e *evmxgoDB) mintMap(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	newTotal, err := safeAdd(e.evmxgo.Total, amount)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	prevEvmxgo := e.evmxgo
+	e.evmxgo.Total = newTotal
+
+	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
+	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMintMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
+	return kvs, logs, nil
+}
+
 func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
 	if e.evmxgo.Total < amount {
 		return nil, nil, types.ErrNoBalance
@@ -92,6 +106,18 @@ func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.Re
 
 	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
 	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurn, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
+	return kvs, logs, nil
+}
+
+func (e *evmxgoDB) burnMap(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	if e.evmxgo.Total < amount {
+		return nil, nil, types.ErrNoBalance
+	}
+	prevToken := e.evmxgo
+	e.evmxgo.Total -= amount
+
+	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
+	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurnMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
 	return kvs, logs, nil
 }
 
@@ -316,6 +342,41 @@ func (action *evmxgoAction) burn(burn *evmxgotypes.EvmxgoBurn) (*types.Receipt, 
 	}
 
 	kvs, logs, err := evmxgodb.burn(action.stateDB, burn.Amount)
+	if err != nil {
+		elog.Error("evmxgo burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr)
+		return nil, err
+	}
+	chain33cfg := action.api.GetConfig()
+	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", burn.GetSymbol(), action.stateDB)
+	if err != nil {
+		return nil, err
+	}
+	elog.Debug("evmxgo burn", "burn.Symbol", burn.Symbol, "burn.Amount", burn.Amount)
+	receipt, err := evmxgoAccount.Burn(action.fromaddr, burn.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
+func (action *evmxgoAction) burnMap(burn *evmxgotypes.EvmxgoBurnMap) (*types.Receipt, error) {
+	if burn == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if burn.GetAmount() < 0 || burn.GetAmount() > types.MaxTokenBalance || burn.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, burn.GetSymbol())
+	if err != nil {
+		return nil, err
+	}
+
+	kvs, logs, err := evmxgodb.burnMap(action.stateDB, burn.Amount)
 	if err != nil {
 		elog.Error("evmxgo burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
