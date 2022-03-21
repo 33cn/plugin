@@ -26,6 +26,7 @@ require (
 	github.com/holiman/uint256 v1.2.0
 	github.com/huin/goupnp v1.0.2
 	github.com/jackpal/go-nat-pmp v1.0.2
+	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
@@ -37,9 +38,9 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tjfoc/gmsm v1.3.2
-	github.com/valyala/fasthttp v1.5.0
+	github.com/valyala/fasthttp v1.34.0
 	golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
