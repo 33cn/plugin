@@ -111,6 +111,7 @@ func main() {
 			Chain33MsgChan:       chain33MsgChan,
 			ProcessWithDraw:      cfg.ProcessWithDraw,
 			Name:                 cfg.EthRelayerCfg[i].EthChainName,
+			StartListenHeight:    cfg.EthRelayerCfg[i].StartListenHeight,
 			RemindUrl:            cfg.RemindUrl,
 			RemindClientErrorUrl: cfg.RemindClientErrorUrl,
 			RemindEmail:          cfg.RemindEmail,
