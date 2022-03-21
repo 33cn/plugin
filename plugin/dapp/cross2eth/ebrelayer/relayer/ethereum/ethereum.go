@@ -174,6 +174,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 
 	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
 	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(err)
 	}
 	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
@@ -182,12 +184,16 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
 	client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(err)
 	}
 	ethRelayer.clientSpec = client
 
 	ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
 	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(err)
 	}
 
@@ -195,6 +201,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	clientChainID, err := client.NetworkID(ctx)
 	if err != nil {
 		errinfo := fmt.Sprintf("Failed to get NetworkID due to:%s", err.Error())
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(errinfo)
 	}
 	ethRelayer.clientChainID = clientChainID
@@ -1707,8 +1715,12 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 				return logs, nil
 			} else {
 				relayerLog.Error("getFilterLogs", "FilterLogs err", err)
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
 			}
 		}
+
+		time.Sleep(time.Second * 10)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1722,6 +1734,8 @@ func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*
 		if err == nil {
 			return receipt, nil
 		} else {
+			ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+			i--
 			relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err)
 		}
 	}
@@ -1740,9 +1754,13 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 			if err == nil {
 				return head, nil
 			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
 				relayerLog.Error("getHeaderByNumber", "getHeaderByNumber err", err)
 			}
 		}
+
+		time.Sleep(time.Second * 10)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1758,9 +1776,13 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 			if err == nil {
 				return balance, nil
 			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
 				relayerLog.Error("getBalanceAt", "getBalanceAt err", err)
 			}
 		}
+
+		time.Sleep(time.Second * 10)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 
@@ -1778,9 +1800,13 @@ func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]by
 			if err == nil {
 				return result, nil
 			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
 				relayerLog.Error("getCallContract", "getCallContract err", err)
 			}
 		}
+
+		time.Sleep(time.Second * 10)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 	return nil, errors.New("getCallContract err")

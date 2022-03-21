@@ -23,7 +23,7 @@ func SelectAndRoundEthURL(ethURL *[]string) (string, error) {
 
 	result := (*ethURL)[0]
 
-	if len(*ethURL) > 0 {
+	if len(*ethURL) > 1 {
 		*ethURL = append((*ethURL)[1:], result)
 	}
 	return result, nil
