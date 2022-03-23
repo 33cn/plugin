@@ -1735,7 +1735,7 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 			}
 		}
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1775,7 +1775,7 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 			}
 		}
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 }
@@ -1797,7 +1797,7 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 			}
 		}
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 
@@ -1821,7 +1821,7 @@ func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]by
 			}
 		}
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second)
 		ethRelayer.regainClient(&isSendEmail)
 	}
 	return nil, errors.New("getCallContract err")
