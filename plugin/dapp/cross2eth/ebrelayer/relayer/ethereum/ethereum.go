@@ -914,6 +914,29 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 	return
 }
 
+func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
+	head, err := ethRelayer.getHeaderByNumber()
+	if nil == err {
+		return head.Number.Uint64(), nil
+	}
+
+	for {
+		time.Sleep(5 * time.Second)
+		ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
+		if err != nil {
+			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
+			continue
+		}
+		head, err := ethRelayer.getHeaderByNumber()
+		if nil != err {
+			relayerLog.Error("getCurrentHeight", "Failed to HeaderByNumber due to:", err.Error())
+			continue
+		}
+		relayerLog.Debug("getCurrentHeight", "clientSpec SetupWebsocketEthClient:", ethRelayer.providerHttp)
+		return head.Number.Uint64(), nil
+	}
+}
+
 func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error) {
 	if end < start {
 		return "", errors.New("ErrStartEndHeight")
@@ -1735,7 +1758,7 @@ func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*
 	return nil, errors.New("TransactionReceipt err")
 }
 
-func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
+func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
@@ -1744,11 +1767,11 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
 			if err == nil {
-				return head.Number.Uint64(), nil
+				return head, nil
 			} else {
 				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
 				i--
-				relayerLog.Error("getCurrentHeight", "getCurrentHeight err", err)
+				relayerLog.Error("getHeaderByNumber", "getHeaderByNumber err", err)
 			}
 		}
 
