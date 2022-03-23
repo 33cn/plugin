@@ -8,6 +8,8 @@ import (
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/contracts4chain33/generated"
 	erc20 "github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	localUtils "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	"github.com/33cn/plugin/plugin/dapp/dex/utils"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -243,4 +245,92 @@ func SetWithdrawProxy(cmd *cobra.Command, _ []string) {
 		return
 	}
 	callContractAndSignWrite(cmd, packData, contract, "set_withdraw_proxy")
+}
+
+func withdrawFromEvmCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "withdraw asset from chain33 evm, including approve and burn txs",
+		Run:   withdrawFromEvm,
+	}
+	addWithdrawFromEvmFlags(cmd)
+	return cmd
+}
+
+func addWithdrawFromEvmFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("contract", "c", "", "contract address of bridgeBank")
+	_ = cmd.MarkFlagRequired("contract")
+	cmd.Flags().StringP("key", "k", "", "owner private key for chain33")
+	_ = cmd.MarkFlagRequired("key")
+	cmd.Flags().StringP("token", "t", "", "token address")
+	_ = cmd.MarkFlagRequired("token")
+	cmd.Flags().StringP("receiver", "r", "", "receiver address on Ethereum")
+	_ = cmd.MarkFlagRequired("receiver")
+	cmd.Flags().Float64P("amount", "m", float64(0), "amount")
+	_ = cmd.MarkFlagRequired("amount")
+}
+
+func withdrawFromEvm(cmd *cobra.Command, _ []string) {
+	key, _ := cmd.Flags().GetString("key")
+	tokenAddr, _ := cmd.Flags().GetString("token")
+	amount, _ := cmd.Flags().GetFloat64("amount")
+	receiver, _ := cmd.Flags().GetString("receiver")
+	contract, _ := cmd.Flags().GetString("contract")
+
+	para := ebTypes.BurnFromChain33{
+		OwnerKey:         key,
+		TokenAddr:        tokenAddr,
+		Amount:           localUtils.ToWei(amount, 8).String(),
+		EthereumReceiver: receiver,
+	}
+
+	//1构建approve tx
+	parameter := fmt.Sprintf("approve(%s, %d)", contract, para.Amount)
+	_, packData, err := evmAbi.Pack(parameter, generated.BridgeTokenABI, false)
+	if nil != err {
+		fmt.Println("approve", "Failed to do abi.Pack due to:", err.Error())
+		return
+	}
+
+	tx := callContractAndSign(cmd, packData, tokenAddr, "approve")
+	if nil == tx {
+		fmt.Println("approve", "Failed to callContractAndSign")
+		return
+	}
+	var txs []*utils.Chain33OfflineTx
+	txs = append(txs, tx)
+
+	//2构建withdraw Tx
+	parameter = fmt.Sprintf("burnBridgeTokens(%s, %s, %d)", receiver, tokenAddr, para.Amount)
+	_, packData, err = evmAbi.Pack(parameter, generated.BridgeBankABI, false)
+	if nil != err {
+		fmt.Println("burn", "Failed to do abi.Pack due to:", err.Error())
+		return
+	}
+	tx = callContractAndSign(cmd, packData, tokenAddr, "burnBridgeTokens")
+	if nil == tx {
+		fmt.Println("burnBridgeTokens", "Failed to allContractAndSign")
+		return
+	}
+	txs = append(txs, tx)
+
+	fileName := fmt.Sprintf("approve_and_withdraw" + ".txt")
+	fmt.Printf("Write all the txs to file:   %s \n", fileName)
+	utils.WriteToFileInJson(fileName, txs)
+}
+
+func callContractAndSign(cmd *cobra.Command, para []byte, contractAddr, name string) *utils.Chain33OfflineTx {
+	Tx, err := createOfflineTx(getTxInfo(cmd), para, contractAddr, name, 0)
+	if nil != err {
+		fmt.Println("CallContractAndSign", "Failed", err.Error(), "name", name)
+		return nil
+	}
+
+	_, err = json.MarshalIndent(Tx, "", "    ")
+	if err != nil {
+		fmt.Println("MarshalIndent error", err.Error())
+		return nil
+	}
+
+	return Tx
 }
