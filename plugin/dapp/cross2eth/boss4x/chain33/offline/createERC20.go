@@ -285,7 +285,7 @@ func withdrawFromEvm(cmd *cobra.Command, _ []string) {
 	}
 
 	//1构建approve tx
-	parameter := fmt.Sprintf("approve(%s, %d)", contract, para.Amount)
+	parameter := fmt.Sprintf("approve(%s, %s)", contract, para.Amount)
 	_, packData, err := evmAbi.Pack(parameter, generated.BridgeTokenABI, false)
 	if nil != err {
 		fmt.Println("approve", "Failed to do abi.Pack due to:", err.Error())
@@ -301,7 +301,7 @@ func withdrawFromEvm(cmd *cobra.Command, _ []string) {
 	txs = append(txs, tx)
 
 	//2构建withdraw Tx
-	parameter = fmt.Sprintf("burnBridgeTokens(%s, %s, %d)", receiver, tokenAddr, para.Amount)
+	parameter = fmt.Sprintf("burnBridgeTokens(%s, %s, %s)", receiver, tokenAddr, para.Amount)
 	_, packData, err = evmAbi.Pack(parameter, generated.BridgeBankABI, false)
 	if nil != err {
 		fmt.Println("burn", "Failed to do abi.Pack due to:", err.Error())
