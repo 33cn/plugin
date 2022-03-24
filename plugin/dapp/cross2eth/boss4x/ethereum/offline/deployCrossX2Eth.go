@@ -486,7 +486,7 @@ func multisignSetup(multisigns []common.Address) ([]byte, error) {
 		return nil, err
 	}
 
-	abiData, err := gnoAbi.Pack("setup", multisigns, big.NewInt(int64(len(multisigns))), AddressZero, []byte{'0', 'x'},
+	abiData, err := gnoAbi.Pack("setup", multisigns, big.NewInt(int64(len(multisigns)/2+1)), AddressZero, []byte{'0', 'x'},
 		AddressZero, AddressZero, big.NewInt(int64(0)), AddressZero)
 	if err != nil {
 		return nil, err
