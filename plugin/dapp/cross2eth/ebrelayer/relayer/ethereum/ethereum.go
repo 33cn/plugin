@@ -1727,9 +1727,12 @@ func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*
 		if err == nil {
 			return receipt, nil
 		} else {
+			if err.Error() == "not found" {
+				return nil, err
+			}
 			ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
 			i--
-			relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err)
+			relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err, "txhash", txHash.String())
 		}
 	}
 
