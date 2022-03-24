@@ -102,6 +102,7 @@ var (
 const (
 	DefaultBlockPeriod = 5000
 	BinanceChain       = "Binance"
+	waitTime           = time.Second * 30
 	//EthereumChain      = "Ethereum"
 	//USDT               = "USDT"
 )
@@ -585,8 +586,6 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	value := big.NewInt(0)
 
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
 	var intputData []byte // ERC20 or BEP20 token transfer pack data
 	var toAddr common.Address
 	var balanceOfData []byte // ERC20 or BEP20 token balanceof pack data
@@ -638,7 +637,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 	//交易发送
-	err = ethRelayer.sendEthereumTx(timeout, signedTx)
+	err = ethRelayer.sendEthereumTx(signedTx)
 	if err != nil {
 		err = errors.New("ErrSendTransaction")
 		return
@@ -891,7 +890,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 }
 
 func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout); nil != syncProc || nil != err {
@@ -915,26 +914,7 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 }
 
 func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
-	head, err := ethRelayer.getHeaderByNumber()
-	if nil == err {
-		return head.Number.Uint64(), nil
-	}
-
-	for {
-		time.Sleep(5 * time.Second)
-		ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
-		if err != nil {
-			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
-			continue
-		}
-		head, err := ethRelayer.getHeaderByNumber()
-		if nil != err {
-			relayerLog.Error("getCurrentHeight", "Failed to HeaderByNumber due to:", err.Error())
-			continue
-		}
-		relayerLog.Debug("getCurrentHeight", "clientSpec SetupWebsocketEthClient:", ethRelayer.providerHttp)
-		return head.Number.Uint64(), nil
-	}
+	return ethRelayer.getHeaderByNumber()
 }
 
 func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error) {
@@ -1652,7 +1632,9 @@ func (ethRelayer *Relayer4Ethereum) GeneralQuery(param, abiData, contract, owner
 	return utils.QueryResult(param, abiData, contract, owner, ethRelayer.clientSpec)
 }
 
-func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, signedTx *types.Transaction) error {
+func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) error {
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
+	defer cancel()
 	bSuccess := false
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 		err := ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
@@ -1664,12 +1646,8 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, sign
 	}
 
 	if ethRelayer.GetName() == BinanceChain {
-		// 官方节点 发送时间比较久
-		timeout2, cancel := context.WithTimeout(context.Background(), time.Second*10)
-		defer cancel()
-
 		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
-			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout2, signedTx)
+			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
 			if err == nil {
 				bSuccess = true
 			} else {
@@ -1719,7 +1697,7 @@ func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
 }
 
 func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([]types.Log, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	isSendEmail := false
@@ -1741,7 +1719,7 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 }
 
 func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*types.Receipt, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
@@ -1758,8 +1736,8 @@ func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*
 	return nil, errors.New("TransactionReceipt err")
 }
 
-func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (uint64, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	isSendEmail := false
@@ -1767,7 +1745,7 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
 			if err == nil {
-				return head, nil
+				return head.Number.Uint64(), nil
 			} else {
 				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
 				i--
@@ -1781,7 +1759,7 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
 }
 
 func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	isSendEmail := false
@@ -1805,7 +1783,7 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 }
 
 func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]byte, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 	defer cancel()
 
 	isSendEmail := false
