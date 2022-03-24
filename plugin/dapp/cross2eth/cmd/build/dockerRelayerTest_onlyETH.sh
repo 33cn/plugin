@@ -40,7 +40,7 @@ function StartDockerRelayerDeploy_onlyETH() {
         ethereumBridgeRegistryOnETH="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnETH="${ethereumMultisignAddr}"
 
-        sed -i '7,15s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
+        sed -i '12,18s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
     }
 
     # 向离线多签地址打点手续费

@@ -250,7 +250,7 @@ function OfflineDeploy() {
         ethereumBridgeRegistryOnETH="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnETH="${ethereumMultisignAddr}"
 
-        sed -i '7,15s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
+        sed -i '12,18s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
 
         Boss4xCLI=${Boss4xCLIbsc}
         CLIA=${CLIAbsc}
@@ -262,7 +262,7 @@ function OfflineDeploy() {
         ethereumBridgeRegistryOnBSC="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnBSC="${ethereumMultisignAddr}"
 
-        sed -i '17,24s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnBSC}"'"/g' "./relayer.toml"
+        sed -i '20,26s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnBSC}"'"/g' "./relayer.toml"
     }
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"
