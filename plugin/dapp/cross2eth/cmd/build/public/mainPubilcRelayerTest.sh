@@ -116,7 +116,7 @@ source "./offlinePublic.sh"
     chain33ValidatorKeysp="0x1dadb7cbad8ea3f968cfad40ac32981def6215690618e62c48e816e7c732a8c2"
 
     chain33ID=0
-    maturityDegree=10
+    maturityDegree=20
     validatorPwd="123456fzm"
 }
 
@@ -533,10 +533,10 @@ function up_relayer_toml() {
     sed -i 's/^pushName=.*/pushName="x2ethA"/g' "${relaye_file}"
 
     # 替换7到15行
-    sed -i '7,15s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/","ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
-    sed -i '17,24s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/","ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
-    sed -i '7,15s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetesteth_ip}"':8545\/", "http:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
-    sed -i '17,24s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/", "http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '12,18s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/","ws:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '20,26s/ethProvider=.*/ethProvider=["ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/","ws:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '12,18s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetesteth_ip}"':8545\/", "http:\/\/'"${docker_ganachetesteth_ip}"':8545\/"]/g' "${relaye_file}"
+    sed -i '20,26s/EthProviderCli=.*/EthProviderCli=["http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/", "http:\/\/'"${docker_ganachetestbsc_ip}"':8545\/"]/g' "${relaye_file}"
     sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^pushBind=.*/pushBind="'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^chain33Host=.*/chain33Host="http:\/\/'"${docker_chain33_ip}"':8901"/' "${relaye_file}"

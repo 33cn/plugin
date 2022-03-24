@@ -64,6 +64,8 @@ type Relayer4Ethereum struct {
 	fetchHeightPeriodMs     int32
 	eventLogIndex           ebTypes.EventLogIndex
 	clientSpec              ethinterface.EthClientSpec
+	clientSpecs             []ethinterface.EthClientSpec
+	clientBSCRecommendSpecs []ethinterface.EthClientSpec
 	clientWss               ethinterface.EthClientSpec
 	bridgeBankAddr          common.Address
 	bridgeBankSub           ethereum.Subscription
@@ -85,36 +87,42 @@ type Relayer4Ethereum struct {
 	mulSignAddr             string
 	withdrawFee             map[string]*WithdrawFeeAndQuota
 	Addr2TxNonce            map[common.Address]*ethtxs.NonceMutex
-	remindUrl               string // 代理打币地址金额不够时发生提醒短信的 url
 	startListenHeight       int64
+	remindUrl               string   // 代理打币地址金额不够时发生提醒短信的 url
+	remindClientErrorUrl    string   // BSC or ethereum 节点出错时邮件提醒的 url
+	remindEmail             []string // 提醒的邮箱
 }
 
 var (
 	relayerLog = log.New("module", "ethereum_relayer")
+	// BSCRecommendHttp BSC 官方节点
+	BSCRecommendHttp = []string{"https://bsc-dataseed.binance.org/", "https://bsc-dataseed1.defibit.io/", "https://bsc-dataseed1.ninicoin.io/"}
 )
 
 const (
 	DefaultBlockPeriod = 5000
-	EthereumChain      = "Ethereum"
 	BinanceChain       = "Binance"
-	USDT               = "USDT"
+	//EthereumChain      = "Ethereum"
+	//USDT               = "USDT"
 )
 
 type EthereumStartPara struct {
-	DbHandle           dbm.DB
-	EthProvider        []string
-	EthProviderHttp    []string
-	BridgeRegistryAddr string
-	Degree             int32
-	BlockInterval      int32
-	EthBridgeClaimChan chan<- *ebTypes.EthBridgeClaim
-	TxRelayAckSendChan chan<- *ebTypes.TxRelayAck
-	TxRelayAckRecvChan <-chan *ebTypes.TxRelayAck
-	Chain33MsgChan     <-chan *events.Chain33Msg
-	ProcessWithDraw    bool
-	Name               string
-	RemindUrl          string
-	StartListenHeight  int64
+	DbHandle             dbm.DB
+	EthProvider          []string
+	EthProviderHttp      []string
+	BridgeRegistryAddr   string
+	Degree               int32
+	BlockInterval        int32
+	EthBridgeClaimChan   chan<- *ebTypes.EthBridgeClaim
+	TxRelayAckSendChan   chan<- *ebTypes.TxRelayAck
+	TxRelayAckRecvChan   <-chan *ebTypes.TxRelayAck
+	Chain33MsgChan       <-chan *events.Chain33Msg
+	ProcessWithDraw      bool
+	Name                 string
+	StartListenHeight    int64
+	RemindUrl            string
+	RemindClientErrorUrl string
+	RemindEmail          []string
 }
 
 type WithdrawFeeAndQuota struct {
@@ -146,6 +154,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 		symbol2LockAddr:         make(map[string]*ebTypes.TokenAddress),
 		Addr2TxNonce:            make(map[common.Address]*ethtxs.NonceMutex),
 		remindUrl:               startPara.RemindUrl,
+		remindClientErrorUrl:    startPara.RemindClientErrorUrl,
+		remindEmail:             startPara.RemindEmail,
 		startListenHeight:       startPara.StartListenHeight,
 	}
 	copy(ethRelayer.provider, startPara.EthProvider)
@@ -165,17 +175,28 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	ethRelayer.mulSignAddr = ethRelayer.getMultiSignAddress()
 	ethRelayer.withdrawFee = ethRelayer.restoreWithdrawFeeInINt()
 
+	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
+		panic(err)
+	}
+	ethRelayer.clientBSCRecommendSpecs, _ = ethtxs.SetupRecommendClients(&BSCRecommendHttp)
+
 	// Start clientSpec with infura ropsten provider
-	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0],
-		"http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
+	relayerLog.Info("Relayer4Ethereum proc", "Started Ethereum websocket with ws provider:", ethRelayer.provider[0], "http provider:", ethRelayer.providerHttp[0], "processWithDraw", ethRelayer.processWithDraw)
 	client, err := ethtxs.SetupEthClient(&ethRelayer.providerHttp)
 	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(err)
 	}
 	ethRelayer.clientSpec = client
 
 	ethRelayer.clientWss, err = ethtxs.SetupEthClient(&ethRelayer.provider)
 	if err != nil {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(err)
 	}
 
@@ -183,6 +204,8 @@ func StartEthereumRelayer(startPara *EthereumStartPara) *Relayer4Ethereum {
 	clientChainID, err := client.NetworkID(ctx)
 	if err != nil {
 		errinfo := fmt.Sprintf("Failed to get NetworkID due to:%s", err.Error())
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
 		panic(errinfo)
 	}
 	ethRelayer.clientChainID = clientChainID
@@ -342,7 +365,7 @@ func (ethRelayer *Relayer4Ethereum) LockEthErc20AssetAsync(ownerPrivateKey, toke
 //ShowTxReceipt ...
 func (ethRelayer *Relayer4Ethereum) ShowTxReceipt(hash string) (*types.Receipt, error) {
 	txhash := common.HexToHash(hash)
-	return ethRelayer.clientSpec.TransactionReceipt(context.Background(), txhash)
+	return ethRelayer.getTransactionReceipt(txhash)
 }
 
 func (ethRelayer *Relayer4Ethereum) proc() {
@@ -369,7 +392,6 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	}
 
 	var timer *time.Ticker
-	ctx := context.Background()
 	for range ethRelayer.unlockchan {
 		relayerLog.Info("Received ethRelayer.unlockchan")
 		ethRelayer.rwLock.RLock()
@@ -390,7 +412,7 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 	for {
 		select {
 		case <-timer.C:
-			ethRelayer.procNewHeight(ctx)
+			ethRelayer.procNewHeight()
 		case err := <-ethRelayer.bridgeBankSub.Err():
 			relayerLog.Error("proc", "Need to subscribeEvent again due to bridgeBankSub err", err.Error())
 			ethRelayer.subscribeEvent()
@@ -446,14 +468,8 @@ func (ethRelayer *Relayer4Ethereum) checkPermissionWithinOneDay(withdrawTx *ebTy
 	return withdrawPara.Fee, nil
 }
 
-func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
-	ethName := "以太坊"
-	if ethRelayer.GetName() == BinanceChain {
-		ethName = "BSC"
-	}
-	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
-	relayerLog.Debug("SendToServer", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
-	res, err := utils.SendToServer(ethRelayer.remindUrl, strings.NewReader(postData))
+func (ethRelayer *Relayer4Ethereum) SendRemind(url, postData string) {
+	res, err := utils.SendToServer(url, strings.NewReader(postData))
 	if err != nil {
 		relayerLog.Error("SendToServer", "error:", err.Error())
 		return
@@ -472,11 +488,22 @@ func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) 
 	relayerLog.Debug("SendToServer ok")
 }
 
+func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
+	ethName := "以太坊"
+	if ethRelayer.GetName() == BinanceChain {
+		ethName = "BSC"
+	}
+	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
+	relayerLog.Debug("SendRemind", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
+	ethRelayer.SendRemind(ethRelayer.remindUrl, postData)
+}
+
 func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33Msg) {
 	//只有通过代理人登录的中继器，才处理提币事件
 	var err error
 	now := time.Now()
-	year, month, day := now.Date()
+	cstTime := now.UTC().Add(8 * time.Hour)
+	year, month, day := cstTime.Date()
 	withdrawTx := &ebTypes.WithdrawTx{
 		Chain33Sender:    chain33Msg.Chain33Sender.String(),
 		EthereumReceiver: chain33Msg.EthereumReceiver.String(),
@@ -558,8 +585,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	value := big.NewInt(0)
 
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
-	ctx := context.Background()
-	timeout, cancel := context.WithTimeout(ctx, time.Second*2)
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	var intputData []byte // ERC20 or BEP20 token transfer pack data
 	var toAddr common.Address
@@ -612,9 +638,8 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		return
 	}
 	//交易发送
-	err = ethRelayer.clientSpec.SendTransaction(timeout, signedTx)
+	err = ethRelayer.sendEthereumTx(timeout, signedTx)
 	if err != nil {
-		relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
 		err = errors.New("ErrSendTransaction")
 		return
 	}
@@ -633,25 +658,17 @@ func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amou
 	var balance *big.Int
 	var err error
 	if inputdata == nil {
-		balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
+		balance, err = ethRelayer.getBalanceAt(addr)
 		if err != nil {
-			//retry
-			balance, err = ethRelayer.clientSpec.BalanceAt(context.Background(), addr, nil)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	} else {
 		var msg ethereum.CallMsg
 		msg.To = &addr //合约地址
 		msg.Data = inputdata
-		result, err := ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
+		result, err := ethRelayer.getCallContract(msg)
 		if err != nil {
-			//retry
-			result, err = ethRelayer.clientSpec.CallContract(context.Background(), msg, nil)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 		var ok bool
 		balance, ok = big.NewInt(1).SetString(common.Bytes2Hex(result), 16)
@@ -874,7 +891,10 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 }
 
 func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
-	if syncProc, err := ethRelayer.clientSpec.SyncProgress(context.Background()); nil != syncProc || nil != err {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout); nil != syncProc || nil != err {
 		relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
 		for {
 			ethRelayer.clientSpec, err = ethtxs.SetupEthClient(&ethRelayer.providerHttp)
@@ -883,7 +903,7 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 				time.Sleep(5 * time.Second)
 				continue
 			}
-			if syncProc, err := ethRelayer.clientSpec.SyncProgress(context.Background()); nil != syncProc || nil != err {
+			if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout); nil != syncProc || nil != err {
 				relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
 				time.Sleep(5 * time.Second)
 				continue
@@ -894,8 +914,8 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 	return
 }
 
-func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint64, error) {
-	head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
+func (ethRelayer *Relayer4Ethereum) getCurrentHeight() (uint64, error) {
+	head, err := ethRelayer.getHeaderByNumber()
 	if nil == err {
 		return head.Number.Uint64(), nil
 	}
@@ -907,7 +927,7 @@ func (ethRelayer *Relayer4Ethereum) getCurrentHeight(ctx context.Context) (uint6
 			relayerLog.Error("getCurrentHeight", "Failed to SetupWebsocketEthClient due to:", err.Error())
 			continue
 		}
-		head, err := ethRelayer.clientSpec.HeaderByNumber(ctx, nil)
+		head, err := ethRelayer.getHeaderByNumber()
 		if nil != err {
 			relayerLog.Error("getCurrentHeight", "Failed to HeaderByNumber due to:", err.Error())
 			continue
@@ -939,7 +959,7 @@ func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error)
 		}
 
 		// Filter by contract and event, write results to logs
-		logs, err := ethRelayer.clientSpec.FilterLogs(context.Background(), query)
+		logs, err := ethRelayer.getFilterLogs(query)
 		if err != nil {
 			errinfo := fmt.Sprintf("Failed to filterLogEvents due to:%s", err.Error())
 			return "", errors.New(errinfo)
@@ -953,7 +973,7 @@ func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error)
 				continue
 			}
 
-			receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), logv.TxHash)
+			receipt, err := ethRelayer.getTransactionReceipt(logv.TxHash)
 			if nil != err {
 				relayerLog.Error("ReGetEvent", "Failed to get tx receipt with hash", logv.TxHash.String())
 				return "", err
@@ -962,7 +982,7 @@ func (ethRelayer *Relayer4Ethereum) ReGetEvent(start, end int64) (string, error)
 			//检查当前的交易是否成功执行
 			if receipt.Status != types.ReceiptStatusSuccessful {
 				relayerLog.Error("ReGetEvent", "tx not successful with status", receipt.Status)
-				return "", errors.New("Tx not successful")
+				return "", errors.New("tx not successful")
 			}
 
 			eventName := events.LogLockFromETH.String()
@@ -1000,7 +1020,7 @@ func (ethRelayer *Relayer4Ethereum) ResendLockEvent(height uint64, index uint32)
 	}
 	vLog := *logs[0]
 
-	receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), vLog.TxHash)
+	receipt, err := ethRelayer.getTransactionReceipt(vLog.TxHash)
 	if nil != err {
 		relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", vLog.TxHash.String())
 		return "", err
@@ -1009,7 +1029,7 @@ func (ethRelayer *Relayer4Ethereum) ResendLockEvent(height uint64, index uint32)
 	//检查当前的交易是否成功执行
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		relayerLog.Error("procBridgeBankLogs", "tx not successful with status", receipt.Status)
-		return "", errors.New("Tx not successful")
+		return "", errors.New("tx not successful")
 	}
 
 	eventName := events.LogLockFromETH.String()
@@ -1082,8 +1102,8 @@ func (ethRelayer *Relayer4Ethereum) checkTxRelay2Chain33() {
 	}
 }
 
-func (ethRelayer *Relayer4Ethereum) procNewHeight(ctx context.Context) {
-	currentHeight, _ := ethRelayer.getCurrentHeight(ctx)
+func (ethRelayer *Relayer4Ethereum) procNewHeight() {
+	currentHeight, _ := ethRelayer.getCurrentHeight()
 	ethRelayer.updateTxStatus()
 	ethRelayer.checkTxRelay2Chain33()
 	relayerLog.Info("procNewHeight", "currentHeight", currentHeight, "ethRelayer.eventLogIndex.Height", ethRelayer.eventLogIndex.Height, "uint64(ethRelayer.maturityDegree)", uint64(ethRelayer.maturityDegree))
@@ -1158,7 +1178,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 	}
 
 	//检查当前交易是否因为区块回退而导致交易丢失
-	receipt, err := ethRelayer.clientSpec.TransactionReceipt(context.Background(), vLog.TxHash)
+	receipt, err := ethRelayer.getTransactionReceipt(vLog.TxHash)
 	if nil != err {
 		relayerLog.Error("procBridgeBankLogs", "Failed to get tx receipt with hash", txHashStr)
 		return
@@ -1201,7 +1221,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 
 //因为订阅事件的功能只会推送在订阅生效的高度之后的事件，之前订阅停止～当前订阅生效高度的这一段只能通过FilterLogs来获取事件信息，否则就会遗漏
 func (ethRelayer *Relayer4Ethereum) filterLogEvents() {
-	curHeightUint64, _ := ethRelayer.getCurrentHeight(context.Background())
+	curHeightUint64, _ := ethRelayer.getCurrentHeight()
 	curHeight := int64(curHeightUint64)
 	relayerLog.Info("filterLogEvents", "curHeight:", curHeight)
 
@@ -1269,7 +1289,7 @@ func (ethRelayer *Relayer4Ethereum) filterLogEventsProc(logchan chan<- types.Log
 		}
 
 		// Filter by contract and event, write results to logs
-		logs, err := ethRelayer.clientSpec.FilterLogs(context.Background(), query)
+		logs, err := ethRelayer.getFilterLogs(query)
 		if err != nil {
 			errinfo := fmt.Sprintf("Failed to filterLogEvents due to:%s", err.Error())
 			panic(errinfo)
@@ -1562,7 +1582,7 @@ func (ethRelayer *Relayer4Ethereum) updateSingleTxStatus(claimType events.ClaimT
 	for _, data := range datas {
 		var statics ebTypes.Chain33ToEthereumStatics
 		_ = chain33Types.Decode(data, &statics)
-		receipt, _ := ethRelayer.clientSpec.TransactionReceipt(context.Background(), common.HexToHash(statics.EthereumTxhash))
+		receipt, _ := ethRelayer.getTransactionReceipt(common.HexToHash(statics.EthereumTxhash))
 		//当前处理机制比较简单，如果发现该笔交易未执行，就不再产寻后续交易的回执
 		if nil == receipt {
 			break
@@ -1630,4 +1650,179 @@ func (ethRelayer *Relayer4Ethereum) GetName() string {
 
 func (ethRelayer *Relayer4Ethereum) GeneralQuery(param, abiData, contract, owner string) (string, error) {
 	return utils.QueryResult(param, abiData, contract, owner, ethRelayer.clientSpec)
+}
+
+func (ethRelayer *Relayer4Ethereum) sendEthereumTx(timeout context.Context, signedTx *types.Transaction) error {
+	bSuccess := false
+	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+		err := ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
+		if err == nil {
+			bSuccess = true
+		} else {
+			relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+		}
+	}
+
+	if ethRelayer.GetName() == BinanceChain {
+		// 官方节点 发送时间比较久
+		timeout2, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
+			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout2, signedTx)
+			if err == nil {
+				bSuccess = true
+			} else {
+				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+			}
+		}
+	}
+
+	if bSuccess == false {
+		return errors.New("ErrSendTransaction")
+	} else {
+		return nil
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
+	ethName := "以太坊"
+	if ethRelayer.GetName() == BinanceChain {
+		ethName = "BSC"
+	}
+
+	var remindEmail string
+	for i := 0; i < len(ethRelayer.remindEmail); i++ {
+		remindEmail += "\"" + ethRelayer.remindEmail[i] + "\""
+		if i < len(ethRelayer.remindEmail)-1 {
+			remindEmail += ","
+		}
+	}
+	postData := fmt.Sprintf(`{"subject":"%s节点出错","receiver":[%s],"content":"节点 %s 连接失败"}`, ethName, remindEmail, ethRelayer.providerHttp)
+	relayerLog.Info("SendRemind", "remindClientErrorUrl", ethRelayer.remindClientErrorUrl, "remindEmail", ethRelayer.remindEmail, "postData:", postData)
+	ethRelayer.SendRemind(ethRelayer.remindClientErrorUrl, postData)
+}
+
+func (ethRelayer *Relayer4Ethereum) regainClient(isSendEmail *bool) {
+	// 重新获取 client
+	var err error
+	ethRelayer.clientSpecs, err = ethtxs.SetupEthClients(&ethRelayer.providerHttp)
+	if err != nil {
+		relayerLog.Error("regainClient", "SetupEthClient err", err)
+	}
+
+	if len(ethRelayer.clientSpecs) == 0 && *isSendEmail == false {
+		// 节点都不可用 发送邮件
+		ethRelayer.remindSetupEthClientError()
+		*isSendEmail = true
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([]types.Log, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	isSendEmail := false
+	for {
+		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+			logs, err := ethRelayer.clientSpecs[i].FilterLogs(timeout, query)
+			if err == nil {
+				return logs, nil
+			} else {
+				relayerLog.Error("getFilterLogs", "FilterLogs err", err)
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
+			}
+		}
+
+		time.Sleep(time.Second)
+		ethRelayer.regainClient(&isSendEmail)
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*types.Receipt, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+		receipt, err := ethRelayer.clientSpecs[i].TransactionReceipt(timeout, txHash)
+		if err == nil {
+			return receipt, nil
+		} else {
+			ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+			i--
+			relayerLog.Error("getTransactionReceipt", "TransactionReceipt err", err)
+		}
+	}
+
+	return nil, errors.New("TransactionReceipt err")
+}
+
+func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (*types.Header, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	isSendEmail := false
+	for {
+		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
+			if err == nil {
+				return head, nil
+			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
+				relayerLog.Error("getHeaderByNumber", "getHeaderByNumber err", err)
+			}
+		}
+
+		time.Sleep(time.Second)
+		ethRelayer.regainClient(&isSendEmail)
+	}
+}
+
+func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	isSendEmail := false
+	for j := 0; j < 2; j++ {
+		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+			balance, err := ethRelayer.clientSpecs[i].BalanceAt(timeout, addr, nil)
+			if err == nil {
+				return balance, nil
+			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
+				relayerLog.Error("getBalanceAt", "getBalanceAt err", err)
+			}
+		}
+
+		time.Sleep(time.Second)
+		ethRelayer.regainClient(&isSendEmail)
+	}
+
+	return nil, errors.New("getBalanceAt err")
+}
+
+func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]byte, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	isSendEmail := false
+	for j := 0; j < 2; j++ {
+		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
+			result, err := ethRelayer.clientSpecs[i].CallContract(timeout, call, nil)
+			if err == nil {
+				return result, nil
+			} else {
+				ethRelayer.clientSpecs = append(ethRelayer.clientSpecs[:0], ethRelayer.clientSpecs[1:]...)
+				i--
+				relayerLog.Error("getCallContract", "getCallContract err", err)
+			}
+		}
+
+		time.Sleep(time.Second)
+		ethRelayer.regainClient(&isSendEmail)
+	}
+	return nil, errors.New("getCallContract err")
 }
