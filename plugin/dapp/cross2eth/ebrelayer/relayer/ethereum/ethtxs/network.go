@@ -74,7 +74,7 @@ func SetupEthClients(ethURL *[]string) ([]ethinterface.EthClientSpec, error) {
 			txslog.Error("SetupEthClients", "Failed to get NetworkID due to:%s", err.Error())
 			continue
 		}
-		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected, "client", client)
+		txslog.Debug("SetupEthClients", "SelectAndRoundEthURL:", urlSelected)
 		Clients = append(Clients, client)
 	}
 
