@@ -67,7 +67,7 @@ func (chain33Relayer *Relayer4Chain33) updateFdTx2EthTotalAmount(index int64) er
 		Data: index,
 	}
 	//更新成功见证的交易数
-	return chain33Relayer.db.Set(fdTx2EthTotalAmount, chain33Types.Encode(totalTx))
+	return chain33Relayer.db.SetSync(fdTx2EthTotalAmount, chain33Types.Encode(totalTx))
 }
 
 func (chain33Relayer *Relayer4Chain33) getFdTx2EthTotalAmount() int64 {
@@ -102,23 +102,23 @@ func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash st
 		relayerLog.Info("resetKeyTxRelayedAlready", "No data for tx", txHash)
 		return err
 	}
-	_ = chain33Relayer.db.Set(key, nil)
+	_ = chain33Relayer.db.DeleteSync(key)
 	setkey := chain33TxRelayedAlreadyKey(txHash)
 
-	return chain33Relayer.db.Set(setkey, data)
+	return chain33Relayer.db.SetSync(setkey, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) setChain33TxIsRelayedUnconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
 	key := chain33TxIsRelayedUnconfirmKey(txHash)
 	data := chain33Types.Encode(txRelayConfirm4Chain33)
 	relayerLog.Info("setChain33TxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
-	return chain33Relayer.db.Set(key, data)
+	return chain33Relayer.db.SetSync(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) setEthTxRelayAlreadyInfo(ethTxhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
 	key := ethTxRelayAlreadyKey(ethTxhash)
 	data := chain33Types.Encode(relayTxDetail)
-	return chain33Relayer.db.Set(key, data)
+	return chain33Relayer.db.SetSync(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) getEthTxRelayAlreadyInfo(ethTxhash string) (*ebTypes.RelayTxDetail, error) {
@@ -137,7 +137,7 @@ func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(txIndex int64) er
 		Data: txIndex,
 	}
 	//更新成功见证的交易数
-	return chain33Relayer.db.Set(relayEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
+	return chain33Relayer.db.SetSync(relayEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
 }
 
 func (chain33Relayer *Relayer4Chain33) getTotalTxAmount() int64 {
@@ -147,7 +147,7 @@ func (chain33Relayer *Relayer4Chain33) getTotalTxAmount() int64 {
 
 func (chain33Relayer *Relayer4Chain33) setLastestRelay2Chain33TxStatics(txIndex int64, claimType int32, data []byte) error {
 	key := calcRelayFromEthStaticsKey(txIndex, claimType)
-	return chain33Relayer.db.Set(key, data)
+	return chain33Relayer.db.SetSync(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
@@ -169,9 +169,9 @@ func (chain33Relayer *Relayer4Chain33) setChain33UpdateTxIndex(txindex int64, cl
 	}
 
 	if events.ClaimTypeBurn == claimType {
-		return chain33Relayer.db.Set(chain33BurnTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
+		return chain33Relayer.db.SetSync(chain33BurnTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
 	}
-	return chain33Relayer.db.Set(chain33LockTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
+	return chain33Relayer.db.SetSync(chain33LockTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
 }
 
 func (chain33Relayer *Relayer4Chain33) getChain33UpdateTxIndex(claimType events.ClaimType) int64 {
@@ -206,11 +206,11 @@ func (chain33Relayer *Relayer4Chain33) loadLastSyncHeight() int64 {
 
 func (chain33Relayer *Relayer4Chain33) setLastSyncHeight(syncHeight int64) {
 	bytes := chain33Types.Encode(&chain33Types.Int64{Data: syncHeight})
-	_ = chain33Relayer.db.Set(lastSyncHeightPrefix, bytes)
+	_ = chain33Relayer.db.SetSync(lastSyncHeightPrefix, bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
-	return chain33Relayer.db.Set(bridgeRegistryAddrOnChain33, []byte(bridgeRegistryAddr))
+	return chain33Relayer.db.SetSync(bridgeRegistryAddrOnChain33, []byte(bridgeRegistryAddr))
 }
 
 func (chain33Relayer *Relayer4Chain33) getBridgeRegistryAddr() (string, error) {
@@ -226,7 +226,7 @@ func (chain33Relayer *Relayer4Chain33) SetTokenAddress(token2set *ebTypes.TokenA
 	chain33Relayer.rwLock.Lock()
 	chain33Relayer.symbol2Addr[token2set.Symbol] = token2set.Address
 	chain33Relayer.rwLock.Unlock()
-	return chain33Relayer.db.Set(tokenSymbol2AddrKey(token2set.Symbol), bytes)
+	return chain33Relayer.db.SetSync(tokenSymbol2AddrKey(token2set.Symbol), bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) RestoreTokenAddress() error {
@@ -289,7 +289,7 @@ func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show *ebTypes.Toke
 
 func (chain33Relayer *Relayer4Chain33) setMultiSignAddress(address string) {
 	bytes := []byte(address)
-	_ = chain33Relayer.db.Set(multiSignAddressPrefix, bytes)
+	_ = chain33Relayer.db.SetSync(multiSignAddressPrefix, bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) getMultiSignAddress() string {
@@ -305,7 +305,7 @@ func (chain33Relayer *Relayer4Chain33) storeSymbol2chainName(symbol2Name map[str
 		Symbol2Name: symbol2Name,
 	}
 	data := chain33Types.Encode(Symbol2EthChain)
-	_ = chain33Relayer.db.Set(symbol2Ethchain, data)
+	_ = chain33Relayer.db.SetSync(symbol2Ethchain, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]string {
