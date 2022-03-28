@@ -80,7 +80,7 @@ func calcRelayFromChain33ListPrefix(chainName string, claimType int32) []byte {
 func (ethRelayer *Relayer4Ethereum) setChain33TxRelayAlreadyInfo(chainName, chain33Txhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
 	key := chain33TxRelayAlreadyKey(chainName, chain33Txhash)
 	data := chain33Types.Encode(relayTxDetail)
-	return ethRelayer.db.Set(key, data)
+	return ethRelayer.db.SetSync(key, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) getChain33TxRelayAlreadyInfo(chainName, chain33Txhash string) (*ebTypes.RelayTxDetail, error) {
@@ -114,10 +114,10 @@ func (ethRelayer *Relayer4Ethereum) setEthLockTxUpdateTxIndex(txindex int64, cla
 
 	if events.ClaimTypeBurn == claimType {
 		key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, ethBurnTxUpdateTxIndex))
-		return ethRelayer.db.Set(key, chain33Types.Encode(txIndexWrapper))
+		return ethRelayer.db.SetSync(key, chain33Types.Encode(txIndexWrapper))
 	}
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, ethLockTxUpdateTxIndex))
-	return ethRelayer.db.Set(key, chain33Types.Encode(txIndexWrapper))
+	return ethRelayer.db.SetSync(key, chain33Types.Encode(txIndexWrapper))
 }
 
 func (ethRelayer *Relayer4Ethereum) getEthLockTxUpdateTxIndex(claimType events.ClaimType) int64 {
@@ -142,7 +142,7 @@ func (ethRelayer *Relayer4Ethereum) getEthLockTxUpdateTxIndex(claimType events.C
 
 func (ethRelayer *Relayer4Ethereum) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, bridgeRegistryAddrPrefix))
-	return ethRelayer.db.Set(key, []byte(bridgeRegistryAddr))
+	return ethRelayer.db.SetSync(key, []byte(bridgeRegistryAddr))
 }
 
 func (ethRelayer *Relayer4Ethereum) getBridgeRegistryAddr() (string, error) {
@@ -160,7 +160,7 @@ func (ethRelayer *Relayer4Ethereum) updateTotalTxAmountFromchain33(totalIndex in
 	}
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, chain33ToEthTxTotalAmount))
 	//更新成功见证的交易数
-	return ethRelayer.db.Set(key, chain33Types.Encode(totalTx))
+	return ethRelayer.db.SetSync(key, chain33Types.Encode(totalTx))
 }
 
 func (ethRelayer *Relayer4Ethereum) getTotalTxAmount2Eth() int64 {
@@ -171,7 +171,7 @@ func (ethRelayer *Relayer4Ethereum) getTotalTxAmount2Eth() int64 {
 
 func (ethRelayer *Relayer4Ethereum) setLastestStatics(claimType int32, txIndex int64, data []byte) error {
 	key := calcRelayFromChain33Key(ethRelayer.name, claimType, txIndex)
-	return ethRelayer.db.Set(key, data)
+	return ethRelayer.db.SetSync(key, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) setHeight4BridgeBankLogAt(height uint64) error {
@@ -188,7 +188,7 @@ func (ethRelayer *Relayer4Ethereum) setLogProcHeight(key []byte, height uint64) 
 	data := &ebTypes.Uint64{
 		Data: height,
 	}
-	return ethRelayer.db.Set(key, chain33Types.Encode(data))
+	return ethRelayer.db.SetSync(key, chain33Types.Encode(data))
 }
 
 func (ethRelayer *Relayer4Ethereum) getLogProcHeight(key []byte) uint64 {
@@ -210,7 +210,7 @@ func (ethRelayer *Relayer4Ethereum) setEthTxEvent(vLog types.Log) error {
 	if nil != err {
 		return err
 	}
-	return ethRelayer.db.Set(key, value)
+	return ethRelayer.db.SetSync(key, value)
 }
 
 func (ethRelayer *Relayer4Ethereum) getEthTxEvent(blockNumber uint64, txIndex uint32) (*types.Log, error) {
@@ -253,7 +253,7 @@ func (ethRelayer *Relayer4Ethereum) setBridgeBankProcessedHeight(height uint64, 
 		Height: height,
 		Index:  index})
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, lastBridgeBankHeightProcPrefix))
-	_ = ethRelayer.db.Set(key, bytes)
+	_ = ethRelayer.db.SetSync(key, bytes)
 }
 
 func (ethRelayer *Relayer4Ethereum) getLastBridgeBankProcessedHeight() ebTypes.EventLogIndex {
@@ -282,7 +282,7 @@ func (ethRelayer *Relayer4Ethereum) SetTokenAddress(token2set *ebTypes.TokenAddr
 	ethRelayer.rwLock.Lock()
 	ethRelayer.symbol2Addr[token2set.Symbol] = addr
 	ethRelayer.rwLock.Unlock()
-	return ethRelayer.db.Set(ethTokenSymbol2AddrKey(ethRelayer.name, token2set.Symbol), bytes)
+	return ethRelayer.db.SetSync(ethTokenSymbol2AddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
 func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.TokenAddress) error {
@@ -292,7 +292,7 @@ func (ethRelayer *Relayer4Ethereum) SetLockedTokenAddress(token2set *ebTypes.Tok
 	ethRelayer.rwLock.Unlock()
 	relayerLog.Info("SetLockedTokenAddress", "symbol", token2set.Symbol, "decimal", token2set.Decimal, "address", token2set.Address,
 		"chain name", token2set.ChainName)
-	return ethRelayer.db.Set(ethTokenSymbol2LockAddrKey(ethRelayer.name, token2set.Symbol), bytes)
+	return ethRelayer.db.SetSync(ethTokenSymbol2LockAddrKey(ethRelayer.name, token2set.Symbol), bytes)
 }
 
 func (ethRelayer *Relayer4Ethereum) GetLockedTokenAddress(symbol string) (*ebTypes.TokenAddress, error) {
@@ -421,7 +421,7 @@ func (ethRelayer *Relayer4Ethereum) ShowETHLockTokenAddress(token2show *ebTypes.
 func (ethRelayer *Relayer4Ethereum) setMultiSignAddress(address string) {
 	bytes := []byte(address)
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, multiSignAddressPrefix))
-	_ = ethRelayer.db.Set(key, bytes)
+	_ = ethRelayer.db.SetSync(key, bytes)
 }
 
 func (ethRelayer *Relayer4Ethereum) getMultiSignAddress() string {
@@ -440,7 +440,7 @@ func (ethRelayer *Relayer4Ethereum) setWithdrawFee(symbol2Para map[string]*ebTyp
 
 	bytes := chain33Types.Encode(withdrawSymbol2Fee)
 	key := []byte(fmt.Sprintf("%s-%s", ethRelayer.name, withdrawParaKey))
-	return ethRelayer.db.Set(key, bytes)
+	return ethRelayer.db.SetSync(key, bytes)
 }
 
 func (ethRelayer *Relayer4Ethereum) restoreWithdrawFee() map[string]*ebTypes.WithdrawPara {
@@ -496,7 +496,7 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	key := calcWithdrawKey(ethRelayer.name, chain33Sender, symbol, int(year), int(month), int(day), withdrawTx.Nonce)
 	bytes := chain33Types.Encode(withdrawTx)
 
-	if err := ethRelayer.db.Set(key, bytes); nil != err {
+	if err := ethRelayer.db.SetSync(key, bytes); nil != err {
 		return err
 	}
 
@@ -504,7 +504,7 @@ func (ethRelayer *Relayer4Ethereum) setWithdraw(withdrawTx *ebTypes.WithdrawTx) 
 	listKey := calcWithdrawListKey(ethRelayer.name, withdrawTx.Nonce)
 	listData := key
 
-	return ethRelayer.db.Set(listKey, listData)
+	return ethRelayer.db.SetSync(listKey, listData)
 }
 
 func (ethRelayer *Relayer4Ethereum) setWithdrawStatics(withdrawTx *ebTypes.WithdrawTx, chain33Msg *events.Chain33Msg) error {
@@ -586,7 +586,7 @@ func (ethRelayer *Relayer4Ethereum) updateFdTx2EthTotalAmount(index int64) error
 		Data: index,
 	}
 	//更新成功见证的交易数
-	return ethRelayer.db.Set([]byte(fdTx2Chain33TotalAmount), chain33Types.Encode(totalTx))
+	return ethRelayer.db.SetSync([]byte(fdTx2Chain33TotalAmount), chain33Types.Encode(totalTx))
 }
 
 func (ethRelayer *Relayer4Ethereum) getFdTx2Chain33TotalAmount() int64 {
@@ -602,17 +602,17 @@ func (ethRelayer *Relayer4Ethereum) resetKeyTxRelayedAlready(chainName, txHash s
 		relayerLog.Info("Relayer4Ethereum::resetKeyTxRelayedAlready", "No data for tx", txHash)
 		return err
 	}
-	_ = ethRelayer.db.Set(key, nil)
+	_ = ethRelayer.db.DeleteSync(key)
 	setkey := ethTxRelayedAlreadyKey(chainName, txHash)
 
-	return ethRelayer.db.Set(setkey, data)
+	return ethRelayer.db.SetSync(setkey, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) setTxIsRelayedUnconfirm(chainName, txHash string, index int64, txRelayConfirm *ebTypes.TxRelayConfirm4Ethereum) error {
 	key := ethTxIsRelayedUnconfirmKey(chainName, txHash)
 	data := chain33Types.Encode(txRelayConfirm)
 	relayerLog.Info("Relayer4Ethereum::setTxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm.FdTimes)
-	return ethRelayer.db.Set(key, data)
+	return ethRelayer.db.SetSync(key, data)
 }
 
 func (ethRelayer *Relayer4Ethereum) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Ethereum, err error) {
