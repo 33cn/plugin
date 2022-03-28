@@ -3,7 +3,7 @@ module github.com/33cn/plugin
 go 1.15
 
 require (
-	github.com/33cn/chain33 v1.67.1-0.20220324060650-339a5a648bea
+	github.com/33cn/chain33 v1.67.1
 	github.com/BurntSushi/toml v0.3.1
 	github.com/NebulousLabs/Sia v1.3.7
 	github.com/NebulousLabs/errors v0.0.0-20181203160057-9f787ce8f69e // indirect
@@ -26,7 +26,6 @@ require (
 	github.com/holiman/uint256 v1.2.0
 	github.com/huin/goupnp v1.0.2
 	github.com/jackpal/go-nat-pmp v1.0.2
-	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
