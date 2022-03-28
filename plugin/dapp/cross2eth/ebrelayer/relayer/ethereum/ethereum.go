@@ -902,12 +902,15 @@ func (ethRelayer *Relayer4Ethereum) getAvailableClient() {
 				time.Sleep(5 * time.Second)
 				continue
 			}
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
-			if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout); nil != syncProc || nil != err {
+
+			timeout2, cancel2 := context.WithTimeout(context.Background(), waitTime)
+			if syncProc, err := ethRelayer.clientSpec.SyncProgress(timeout2); nil != syncProc || nil != err {
+				cancel2()
 				relayerLog.Error("getAvailableClient", "Eth node is syncing for address", ethRelayer.providerHttp[0])
 				time.Sleep(5 * time.Second)
 				continue
 			}
+			cancel2()
 			break
 		}
 	}
@@ -1636,8 +1639,9 @@ func (ethRelayer *Relayer4Ethereum) GeneralQuery(param, abiData, contract, owner
 func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) error {
 	bSuccess := false
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-		timeout, _ := context.WithTimeout(context.Background(), waitTime)
+		timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 		err := ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
+		cancel()
 		if err == nil {
 			bSuccess = true
 		} else {
@@ -1647,8 +1651,9 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 
 	if ethRelayer.GetName() == BinanceChain {
 		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
+			cancel()
 			if err == nil {
 				bSuccess = true
 			} else {
@@ -1701,8 +1706,9 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 	isSendEmail := false
 	for {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			logs, err := ethRelayer.clientSpecs[i].FilterLogs(timeout, query)
+			cancel()
 			if err == nil {
 				return logs, nil
 			} else {
@@ -1719,8 +1725,9 @@ func (ethRelayer *Relayer4Ethereum) getFilterLogs(query ethereum.FilterQuery) ([
 
 func (ethRelayer *Relayer4Ethereum) getTransactionReceipt(txHash common.Hash) (*types.Receipt, error) {
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-		timeout, _ := context.WithTimeout(context.Background(), waitTime)
+		timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 		receipt, err := ethRelayer.clientSpecs[i].TransactionReceipt(timeout, txHash)
+		cancel()
 		if err == nil {
 			return receipt, nil
 		} else {
@@ -1740,8 +1747,9 @@ func (ethRelayer *Relayer4Ethereum) getHeaderByNumber() (uint64, error) {
 	isSendEmail := false
 	for {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			head, err := ethRelayer.clientSpecs[i].HeaderByNumber(timeout, nil)
+			cancel()
 			if err == nil {
 				return head.Number.Uint64(), nil
 			} else {
@@ -1760,8 +1768,9 @@ func (ethRelayer *Relayer4Ethereum) getBalanceAt(addr common.Address) (*big.Int,
 	isSendEmail := false
 	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			balance, err := ethRelayer.clientSpecs[i].BalanceAt(timeout, addr, nil)
+			cancel()
 			if err == nil {
 				return balance, nil
 			} else {
@@ -1782,8 +1791,9 @@ func (ethRelayer *Relayer4Ethereum) getCallContract(call ethereum.CallMsg) ([]by
 	isSendEmail := false
 	for j := 0; j < 2; j++ {
 		for i := 0; i < len(ethRelayer.clientSpecs); i++ {
-			timeout, _ := context.WithTimeout(context.Background(), waitTime)
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
 			result, err := ethRelayer.clientSpecs[i].CallContract(timeout, call, nil)
+			cancel()
 			if err == nil {
 				return result, nil
 			} else {
