@@ -42,21 +42,24 @@ const (
 	EthTxPending                = EthTxStatus(2)
 )
 
-func getNonce4MultiEth(sender common.Address, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex) (*big.Int, error) {
-	if nonceMutex, exist := addr2TxNonce[sender]; exist {
-		nonceMutex.RWLock.Lock()
-		defer nonceMutex.RWLock.Unlock()
-		nonceMutex.Nonce++
-		addr2TxNonce[sender] = nonceMutex
-		txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.Nonce)
-		return big.NewInt(nonceMutex.Nonce), nil
+// fromChain 是否从链上获取
+func getNonce4MultiEth(sender common.Address, client ethinterface.EthClientSpec, addr2TxNonce map[common.Address]*NonceMutex, fromChain bool) (*big.Int, error) {
+	if fromChain == false {
+		if nonceMutex, exist := addr2TxNonce[sender]; exist {
+			nonceMutex.RWLock.Lock()
+			defer nonceMutex.RWLock.Unlock()
+			nonceMutex.Nonce++
+			addr2TxNonce[sender] = nonceMutex
+			txslog.Debug("getNonce from cache", "address", sender.String(), "nonce", nonceMutex.Nonce)
+			return big.NewInt(nonceMutex.Nonce), nil
+		}
 	}
 
 	nonce, err := client.PendingNonceAt(context.Background(), sender)
 	if nil != err {
 		return nil, err
 	}
-	txslog.Debug("getNonce", "address", sender.String(), "nonce", nonce)
+	txslog.Debug("getNonce", "address", sender.String(), "nonce", nonce, "fromChain", fromChain)
 	n := new(NonceMutex)
 	n.Nonce = int64(nonce)
 	n.RWLock = new(sync.RWMutex)
@@ -184,7 +187,7 @@ func PrepareAuth4MultiEthereum(client ethinterface.EthClientSpec, privateKey *ec
 	auth.GasLimit = GasLimit4Deploy
 	auth.GasPrice = gasPrice
 
-	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce); err != nil {
+	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce, false); err != nil {
 		return nil, err
 	}
 
@@ -213,7 +216,7 @@ func PrepareAuth4MultiEthereumOpt(client ethinterface.EthClientSpec, privateKey 
 	auth.GasLimit = GasLimit4Deploy
 	auth.GasPrice = gasPrice
 
-	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce); err != nil {
+	if auth.Nonce, err = getNonce4MultiEth(transactor, client, addr2TxNonce, false); err != nil {
 		return nil, err
 	}
 
@@ -273,13 +276,13 @@ func GetEthTxStatus(client ethinterface.EthClientSpec, txhash common.Hash) strin
 	return status
 }
 
-func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int, addr2TxNonce map[common.Address]*NonceMutex) (*types.Transaction, error) {
+func NewTransferTx(clientSpec ethinterface.EthClientSpec, from, to common.Address, input []byte, value *big.Int, addr2TxNonce map[common.Address]*NonceMutex, fromChain bool) (*types.Transaction, error) {
 	price, err := clientSpec.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	nonce, err := getNonce4MultiEth(from, clientSpec, addr2TxNonce)
+	nonce, err := getNonce4MultiEth(from, clientSpec, addr2TxNonce, fromChain)
 	if err != nil {
 		return nil, err
 	}

@@ -97,7 +97,7 @@ func Test_All(t *testing.T) {
 }
 
 func Test_remindBalanceNotEnough(t *testing.T) {
-	ethRelayer.remindBalanceNotEnough(ethAccountAddr, "YCC")
+	ethRelayer.remindBalanceNotEnough(ethAccountAddr, "YCC", "0x....")
 }
 
 func test_GetValidatorAddr(t *testing.T) {
