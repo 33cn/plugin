@@ -71,7 +71,7 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 var opt_zksync_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "zksync",
-	Primary: "height_index",
+	Primary: "height_index_opIndex",
 	Index:   []string{"height", "txHash"},
 }
 
@@ -110,8 +110,8 @@ func (r *ZksyncInfoRow) SetPayload(data types.Message) error {
 
 //Get 按照indexName 查询 indexValue
 func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
-	if key == "height_index" {
-		return []byte(fmt.Sprintf("%016d.%016d", r.GetBlockHeight(), r.GetTxIndex())), nil
+	if key == "height_index_opIndex" {
+		return []byte(fmt.Sprintf("%016d.%016d.%016d", r.GetBlockHeight(), r.GetTxIndex(), r.GetOpIndex())), nil
 	} else if key == "height" {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockHeight())), nil
 	} else if key == "txHash" {

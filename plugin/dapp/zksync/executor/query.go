@@ -123,7 +123,7 @@ func (z *zksync) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 	for i := in.GetStartBlockHeight(); i <= in.GetEndBlockHeight(); i++ {
 		var primaryKey []byte
 		if i == in.GetStartBlockHeight() && in.GetStartIndex() != 0 {
-			primaryKey = []byte(fmt.Sprintf("%016d.%016d", i, in.GetStartIndex()))
+			primaryKey = []byte(fmt.Sprintf("%016d.%016d.%016d", i, in.GetStartIndex(), 0))
 		} else {
 			primaryKey = nil
 		}

@@ -3,7 +3,7 @@ import "witness.proto";
 import "common.proto";
 
 package types;
-option go_package = "../types";
+option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
 
 message ZksyncAction {
   oneof value {

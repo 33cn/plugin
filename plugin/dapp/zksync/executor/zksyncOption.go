@@ -83,9 +83,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
 	}
-	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
-	}
+	//if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
+	//}
 
 	//转换10进制
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
@@ -277,7 +277,12 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
-	err := checkParam(payload.Amount)
+	fee := zt.FeeMap[zt.TyWithdrawAction]
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	feeInt, _ := new(big.Int).SetString(fee, 10)
+	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
+	err := checkParam(totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
@@ -314,6 +319,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		TxType:      zt.TyWithdrawAction,
 		TokenID:     payload.TokenId,
 		Amount:      payload.Amount,
+		FeeAmount:   fee,
 		SigData:     payload.Signature,
 		AccountID:   payload.AccountId,
 	}
@@ -325,7 +331,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance, operationInfo.AccountID)
 
-	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -356,6 +362,8 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
+	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
 
@@ -586,7 +594,13 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	err := checkParam(payload.Amount)
+	fee := zt.FeeMap[zt.TyTransferAction]
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	feeInt, _ := new(big.Int).SetString(fee, 10)
+	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
+
+	err := checkParam(totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
@@ -620,6 +634,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		TxType:      zt.TyTransferAction,
 		TokenID:     payload.TokenId,
 		Amount:      payload.Amount,
+		FeeAmount:   fee,
 		SigData:     payload.Signature,
 		AccountID:   payload.FromAccountId,
 	}
@@ -633,7 +648,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
 
 	//更新fromLeaf
-	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -707,6 +722,9 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
+	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
 
@@ -714,7 +732,14 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
-	err := checkParam(payload.Amount)
+
+	fee := zt.FeeMap[zt.TyTransferToNewAction]
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	feeInt, _ := new(big.Int).SetString(fee, 10)
+	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
+
+	err := checkParam(totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
@@ -754,6 +779,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		TxType:      zt.TyTransferToNewAction,
 		TokenID:     payload.TokenId,
 		Amount:      payload.Amount,
+		FeeAmount:   fee,
 		SigData:     payload.Signature,
 		AccountID:   payload.FromAccountId,
 	}
@@ -774,7 +800,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
 
 	//更新fromLeaf
-	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
+	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -841,6 +867,9 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	logs = append(logs, receiptLog)
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+
+	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
 
@@ -848,6 +877,9 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+
+	fee := zt.FeeMap[zt.TyForceExitAction]
+
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -856,7 +888,6 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-
 	if leaf == nil {
 		return nil, errors.New("account not exist")
 	}
@@ -865,18 +896,27 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-
 	//token不存在时，不需要取
 	if token == nil {
 		return nil, errors.New("token not find")
 	}
+
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(token.Balance, 10)
+	feeInt, _ := new(big.Int).SetString(fee, 10)
+	//存量不够手续费时，不能取
+	if amountInt.Cmp(feeInt) <= 0 {
+		return nil, errors.New("no enough fee")
+	}
+	exitAmount := new(big.Int).Sub(amountInt, feeInt).String()
 
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyForceExitAction,
 		TokenID:     payload.TokenId,
-		Amount:      token.Balance,
+		Amount:      exitAmount,
+		FeeAmount:   fee,
 		SigData:     payload.Signature,
 		AccountID:   payload.AccountId,
 	}
@@ -919,8 +959,10 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	receiptLog := &types.ReceiptLog{Ty: zt.TyForceExitLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
 
+	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	receipts = mergeReceipt(receipts, feeReceipt)
+	return receipts, nil
 }
 
 func calProof(statedb dbm.KV, info *TreeUpdateInfo, accountId uint64, tokenId uint64) (*zt.ZkReceiptLeaf, error) {
@@ -1036,6 +1078,8 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	fee := zt.FeeMap[zt.TyFullExitAction]
+
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
@@ -1052,9 +1096,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
 	}
 
-	if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
-	}
+	//if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
+	//}
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -1079,12 +1123,22 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.New("token not find")
 	}
 
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(token.Balance, 10)
+	feeInt, _ := new(big.Int).SetString(fee, 10)
+	//存量不够手续费时，不能取
+	if amountInt.Cmp(feeInt) <= 0 {
+		return nil, errors.New("no enough fee")
+	}
+	exitAmount := new(big.Int).Sub(amountInt, feeInt).String()
+
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyFullExitAction,
 		TokenID:     payload.TokenId,
-		Amount:      token.Balance,
+		Amount:      exitAmount,
+		FeeAmount:   fee,
 		SigData:     payload.Signature,
 		AccountID:   payload.AccountId,
 	}
@@ -1129,8 +1183,10 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
 	r := makeSetEthPriorityIdReceipt(0, lastId.Int64(), payload.EthPriorityQueueId)
-	return mergeReceipt(receipts, r), nil
 
+	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	receipts = mergeReceipt(receipts, feeReceipt)
+	return mergeReceipt(receipts, r), nil
 }
 
 //验证身份
@@ -1199,4 +1255,78 @@ func mergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
 	}
 
 	return receipt1
+}
+
+func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64, sign *zt.ZkSignature) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
+	var err error
+
+	//todo 手续费收款方accountId可配置
+	leaf, err := GetLeafByAccountId(a.statedb, 1, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+
+	if leaf == nil {
+		return nil, errors.New("account not exist")
+	}
+
+	operationInfo := &zt.OperationInfo{
+		BlockHeight: uint64(a.height),
+		TxIndex:     uint32(a.index),
+		OpIndex:     1,
+		TxType:      zt.TyFeeAction,
+		TokenID:     tokenId,
+		Amount:      amount,
+		SigData:     sign,
+		AccountID:   leaf.GetAccountId(),
+	}
+
+	//leaf不存在就添加
+
+	receipt, err := calProof(a.statedb, info, leaf.AccountId, tokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	var balance string
+	if receipt.Token == nil {
+		balance = "0"
+	} else {
+		balance = receipt.Token.Balance
+	}
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, balance, leaf.GetAccountId())
+
+	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), tokenId, amount, zt.Add)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	receipt, err = calProof(a.statedb, info, leaf.AccountId, tokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Token.Balance, operationInfo.AccountID)
+	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+	feelog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyFeeLog, Log: types.Encode(feelog)}
+	logs = append(logs, receiptLog)
+
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
 }

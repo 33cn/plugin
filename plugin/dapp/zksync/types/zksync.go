@@ -25,6 +25,7 @@ const (
 	TySwapAction           = 8  //交换
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
+	TyFeeAction = 11 //手续费
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
@@ -42,6 +43,7 @@ const (
 	NameSetPubKeyAction      = "SetPubKey"
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
+	NameFeeAction            = "Fee"
 
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
@@ -61,6 +63,7 @@ const (
 	TySwapLog           = 108 //交换
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
+	TyFeeLog            = 111 //手续费
 
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof
@@ -134,6 +137,7 @@ var (
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameFullExitAction:       TyFullExitAction,
 		NameSwapAction:           TySwapAction,
+		NameFeeAction:            TyFeeAction,
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
@@ -151,10 +155,21 @@ var (
 		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
+		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+	}
+
+
+	FeeMap = map[int64]string{
+		TyWithdrawAction:           "1000000",
+		TyTransferAction:           "100000",
+		TyTransferToNewAction:      "100000",
+		TyForceExitAction:          "1000000",
+		TyFullExitAction:           "1000000",
+		TySwapAction:               "100000",
 	}
 )
 
