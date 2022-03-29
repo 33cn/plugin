@@ -137,7 +137,6 @@ var (
 		NameSetPubKeyAction:      TySetPubKeyAction,
 		NameFullExitAction:       TyFullExitAction,
 		NameSwapAction:           TySwapAction,
-		NameFeeAction:            TyFeeAction,
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
