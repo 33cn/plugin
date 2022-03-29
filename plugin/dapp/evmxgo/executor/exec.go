@@ -109,6 +109,7 @@ func (e *evmxgo) Exec_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Tran
 			Amount:      payload.Amount,
 			BridgeToken: payload.BridgeToken,
 			Recipient:   payload.Recipient,
+			Extra:       payload.Extra,
 		})
 	}
 

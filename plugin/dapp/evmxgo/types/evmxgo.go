@@ -28,6 +28,7 @@ const (
 	NameMintAction           = "Mint"
 	NameBurnAction           = "Burn"
 	NameMintMapAction        = "MintMap"
+	NameBurnMapAction        = "BurnMap"
 )
 
 // log类型id值
@@ -95,13 +96,13 @@ func (e *evmxgoType) GetPayload() types.Message {
 // GetTypeMap 获取合约action的id和name信息
 func (e *evmxgoType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Transfer":       ActionTransfer,
-		"Withdraw":       ActionWithdraw,
-		"TransferToExec": EvmxgoActionTransferToExec,
-		"Mint":           EvmxgoActionMint,
-		"Burn":           EvmxgoActionBurn,
-		"MintMap":        EvmxgoActionMintMap,
-		"BurnMap":        EvmxgoActionBurnMap,
+		"Transfer":        ActionTransfer,
+		"Withdraw":        ActionWithdraw,
+		"TransferToExec":  EvmxgoActionTransferToExec,
+		"Mint":            EvmxgoActionMint,
+		"Burn":            EvmxgoActionBurn,
+		NameMintMapAction: EvmxgoActionMintMap,
+		NameBurnMapAction: EvmxgoActionBurnMap,
 	}
 }
 
