@@ -489,13 +489,13 @@ func (ethRelayer *Relayer4Ethereum) SendRemind(url, postData string) {
 	relayerLog.Debug("SendToServer ok")
 }
 
-func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol string) {
+func (ethRelayer *Relayer4Ethereum) remindBalanceNotEnough(addr, symbol, chain33TxHash string) {
 	ethName := "以太坊"
 	if ethRelayer.GetName() == BinanceChain {
 		ethName = "BSC"
 	}
 	postData := fmt.Sprintf(`{"from":"%s relayer","content":"%s链代理打币地址%s,token:%s 金额不足"}`, ethName, ethName, addr, symbol)
-	relayerLog.Debug("SendRemind", "remindUrl", ethRelayer.remindUrl, "postData:", postData)
+	relayerLog.Debug("SendRemind", "remindUrl", ethRelayer.remindUrl, "postData:", postData, "chain33Txhash", chain33TxHash)
 	ethRelayer.SendRemind(ethRelayer.remindUrl, postData)
 }
 
@@ -523,31 +523,32 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	if ethRelayer.checkIsResendChain33Msg(chain33Msg) {
 		return
 	}
+	chain33TxHash := chain33Common.ToHex(chain33Msg.TxHash)
+
 	defer func() {
 		if err != nil {
 			withdrawTx.Status = int32(ethtxs.WDError)
 			withdrawTx.StatusDescription = ethtxs.WDError.String()
 			withdrawTx.ErrorDescription = err.Error()
-			relayerLog.Error("handleLogWithdraw", "Failed to withdraw due to:", err.Error())
+			relayerLog.Error("handleLogWithdraw", "Failed to withdraw due to:", err.Error(), "chain33Txhash", chain33TxHash)
 		}
 
 		err := ethRelayer.setWithdraw(withdrawTx)
 		if nil != err {
-			relayerLog.Error("handleLogWithdraw", "Failed to setWithdraw due to:", err.Error())
+			relayerLog.Error("handleLogWithdraw", "Failed to setWithdraw due to:", err.Error(), "chain33Txhash", chain33TxHash)
 		}
 
 		err = ethRelayer.setWithdrawStatics(withdrawTx, chain33Msg)
 		if nil != err {
-			relayerLog.Error("handleLogWithdraw", "Failed to setWithdrawStatics due to:", err.Error())
+			relayerLog.Error("handleLogWithdraw", "Failed to setWithdrawStatics due to:", err.Error(), "chain33Txhash", chain33TxHash)
 		}
 	}()
 
-	chain33TxHash := chain33Common.ToHex(chain33Msg.TxHash)
 	relayerLog.Info("handleLogWithdraw", "Received chain33Msg", chain33Msg, "tx hash string", chain33TxHash)
 	withdrawFromChain33TokenInfo, exist := ethRelayer.symbol2LockAddr[chain33Msg.Symbol]
 	if !exist {
 		//因为是withdraw操作，必须从允许lock的token地址中进行查询
-		relayerLog.Error("handleLogWithdraw", "Failed to fetch locked Token Info for symbol", chain33Msg.Symbol)
+		relayerLog.Error("handleLogWithdraw", "Failed to fetch locked Token Info for symbol", chain33Msg.Symbol, "chain33Txhash", chain33TxHash)
 		err = errors.New("ErrFetchLockedTokenInfo")
 		return
 	}
@@ -558,7 +559,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		dist := math.Abs(float64(withdrawFromChain33TokenInfo.Decimal - 8))
 		value, exist := utils.Decimal2value[int(dist)]
 		if !exist {
-			relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal)
+			relayerLog.Error("handleLogWithdraw", "does support for decimal, %d", withdrawFromChain33TokenInfo.Decimal, "chain33Txhash", chain33TxHash)
 			err = errors.New("ErrDecimalNotSupport")
 			return
 		}
@@ -571,14 +572,14 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	}
 	withdrawTx.Amount = chain33Msg.Amount.String()
 	relayerLog.Info("handleLogWithdraw", "token address", tokenAddr.String(), "amount", withdrawTx.Amount,
-		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String())
+		"Receiver on Ethereum", chain33Msg.EthereumReceiver.String(), "chain33Txhash", chain33TxHash)
 	//检查用户提币权限是否得到满足：比如是否超过累计提币额度
 	var feeAmount *big.Int
 	if feeAmount, err = ethRelayer.checkPermissionWithinOneDay(withdrawTx); nil != err {
 		return
 	}
 	if chain33Msg.Amount.Cmp(feeAmount) < 0 {
-		relayerLog.Error("handleLogWithdraw", "ErrWithdrawAmountLessThanFee feeAmount", feeAmount.String(), "Withdraw Amount", chain33Msg.Amount.String())
+		relayerLog.Error("handleLogWithdraw", "ErrWithdrawAmountLessThanFee feeAmount", feeAmount.String(), "Withdraw Amount", chain33Msg.Amount.String(), "chain33Txhash", chain33TxHash)
 		err = errors.New("ErrWithdrawAmountCan'tPay4Fee")
 		return
 	}
@@ -594,14 +595,14 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 		toAddr = tokenAddr
 		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, amount2transfer)
 		if err != nil {
-			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err)
+			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err, "chain33Txhash", chain33TxHash)
 			err = errors.New("ErrPackTransferData")
 			return
 		}
 		//用签名的账户地址作为pack参数，toAddr作为合约地址
 		balanceOfData, err = ethRelayer.packBalanceOfData(ethRelayer.ethSender)
 		if err != nil {
-			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err)
+			relayerLog.Error("handleLogWithdraw", "callEvmBalanceData err", err, "chain33Txhash", chain33TxHash)
 			err = errors.New("ErrPackBalanceOfData")
 			return
 		}
@@ -615,41 +616,64 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	//校验余额是否充足
 	err = ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData)
 	if err != nil {
-		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error())
+		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error(), "chain33Txhash", chain33TxHash)
 		err = errors.New("ErrBalanceNotEnough")
-		ethRelayer.remindBalanceNotEnough(ethRelayer.ethSender.String(), chain33Msg.Symbol)
-		return
-	}
-	//param: from,to,evm-packdata,amount
-	//交易构造
-	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value, ethRelayer.Addr2TxNonce)
-	if err != nil {
-		relayerLog.Error("handleLogWithdraw", "newTx err", err)
-		err = errors.New("ErrNewTx")
+		ethRelayer.remindBalanceNotEnough(ethRelayer.ethSender.String(), chain33Msg.Symbol, chain33TxHash)
 		return
 	}
 
-	//交易签名
-	signedTx, err := ethRelayer.signTx(tx, ethRelayer.privateKey4Ethereum)
+	// 构建交易并签名
+	signedTx, err := ethRelayer.NewTransferSignTx(toAddr, intputData, value, false)
 	if err != nil {
-		relayerLog.Error("handleLogWithdraw", "SignTx err", err)
-		err = errors.New("ErrSignTx")
+		relayerLog.Error("handleLogWithdraw", "NewTransferSignTx err", err, "chain33Txhash", chain33TxHash)
 		return
 	}
 	//交易发送
 	err = ethRelayer.sendEthereumTx(signedTx)
 	if err != nil {
-		err = errors.New("ErrSendTransaction")
-		return
+		// 如果是 nonce 出错导致的错误 再次构建交易发送
+		if err.Error() == "nonce too low" || err.Error() == "nonce too high" {
+			signedTx, err = ethRelayer.NewTransferSignTx(toAddr, intputData, value, true)
+			if err != nil {
+				relayerLog.Error("handleLogWithdraw", "NewTransferSignTx err", err, "chain33Txhash", chain33TxHash)
+				return
+			}
+
+			err = ethRelayer.sendEthereumTx(signedTx)
+			if err != nil {
+				err = errors.New("ErrSendTransaction")
+				return
+			}
+		} else {
+			err = errors.New("ErrSendTransaction")
+			return
+		}
 	}
 	ethTxhash := signedTx.Hash().Hex()
-	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", ethTxhash)
+	relayerLog.Info("handleLogWithdraw", "SendTransaction Hash", ethTxhash, "chain33Txhash", chain33TxHash)
 
 	withdrawTx.Status = int32(ethtxs.WDPending)
 	withdrawTx.StatusDescription = ethtxs.WDPending.String()
 	withdrawTx.TxHashOnEthereum = ethTxhash
 
 	return
+}
+
+func (ethRelayer *Relayer4Ethereum) NewTransferSignTx(toAddr common.Address, intputData []byte, value *big.Int, fromChain bool) (*types.Transaction, error) {
+	tx, err := ethtxs.NewTransferTx(ethRelayer.clientSpec, ethRelayer.ethSender, toAddr, intputData, value, ethRelayer.Addr2TxNonce, fromChain)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "newTx err", err)
+		return nil, errors.New("ErrNewTx")
+	}
+
+	//交易签名
+	signedTx, err := ethRelayer.signTx(tx, ethRelayer.privateKey4Ethereum)
+	if err != nil {
+		relayerLog.Error("handleLogWithdraw", "SignTx err", err)
+		return nil, errors.New("ErrSignTx")
+	}
+
+	return signedTx, nil
 }
 
 func (ethRelayer *Relayer4Ethereum) checkBalanceEnough(addr common.Address, amount *big.Int, inputdata []byte) error {
@@ -698,6 +722,7 @@ func (ethRelayer *Relayer4Ethereum) signTx(tx *types.Transaction, key *ecdsa.Pri
 
 	return tx, nil
 }
+
 func (ethRelayer *Relayer4Ethereum) packTransferData(_to common.Address, _value *big.Int) ([]byte, error) {
 	parsed, err := abi.JSON(strings.NewReader(generated.ERC20ABI))
 	if err != nil {
@@ -1638,32 +1663,22 @@ func (ethRelayer *Relayer4Ethereum) GeneralQuery(param, abiData, contract, owner
 
 func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) error {
 	bSuccess := false
+	var err error
 	for i := 0; i < len(ethRelayer.clientSpecs); i++ {
 		timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-		err := ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
+		err = ethRelayer.clientSpecs[i].SendTransaction(timeout, signedTx)
 		cancel()
 		if err == nil {
 			bSuccess = true
 		} else {
-			relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
-		}
-	}
-
-	if ethRelayer.GetName() == BinanceChain {
-		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
-			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
-			err := ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
-			cancel()
-			if err == nil {
-				bSuccess = true
-			} else {
+			if err.Error() != "already known" {
 				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
 			}
 		}
 	}
 
 	if bSuccess == false {
-		return errors.New("ErrSendTransaction")
+		return err
 	} else {
 		return nil
 	}
