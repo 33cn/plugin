@@ -589,10 +589,12 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	//此处需要完成在以太坊发送以太或者ERC20数字资产的操作
 	var intputData []byte // ERC20 or BEP20 token transfer pack data
 	var toAddr common.Address
+	var senderAddr common.Address
 	var balanceOfData []byte // ERC20 or BEP20 token balanceof pack data
 
 	if tokenAddr.String() != ethtxs.EthNullAddr { //判断是否要Pack EVM数据
 		toAddr = tokenAddr
+		senderAddr = tokenAddr
 		intputData, err = ethRelayer.packTransferData(chain33Msg.EthereumReceiver, amount2transfer)
 		if err != nil {
 			relayerLog.Error("handleLogWithdraw", "CallEvmData err", err, "chain33Txhash", chain33TxHash)
@@ -609,12 +611,13 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	} else {
 		//如果tokenAddr为空，则把toAddr设置为用户指定的地址
 		toAddr = chain33Msg.EthereumReceiver
+		senderAddr = ethRelayer.ethSender
 		value = amount2transfer
 	}
 
 	ethRelayer.getAvailableClient()
 	//校验余额是否充足
-	err = ethRelayer.checkBalanceEnough(toAddr, amount2transfer, balanceOfData)
+	err = ethRelayer.checkBalanceEnough(senderAddr, amount2transfer, balanceOfData)
 	if err != nil {
 		relayerLog.Error("handleLogWithdraw", "Failed to checkBalanceEnough:", err.Error(), "chain33Txhash", chain33TxHash)
 		err = errors.New("ErrBalanceNotEnough")
