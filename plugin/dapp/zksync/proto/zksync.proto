@@ -162,16 +162,17 @@ message ZkCommitProof {
   uint64 indexStart  = 2;
   uint64 blockEnd    = 3;
   uint64 indexEnd  = 4;
-  string oldTreeRoot = 5;
-  string newTreeRoot = 6;
+  uint32 opIndex  = 5;
+  string oldTreeRoot = 6;
+  string newTreeRoot = 7;
   //proof serialized public input
-  string publicInput = 7;
-  string proof       = 8;
+  string publicInput = 8;
+  string proof       = 9;
   //all tx pub datas
-  repeated string pubDatas = 9;
-  repeated string priorityPubDatas = 10;
+  repeated string pubDatas = 10;
+  repeated string priorityPubDatas = 11;
 
-  uint64 proofId = 11;
+  uint64 proofId = 12;
 }
 
 //commit proof stat, pubdata保存到localdb
@@ -180,13 +181,14 @@ message CommitProofState {
   uint64 indexStart  = 2;
   uint64 blockEnd    = 3;
   uint64 indexEnd  = 4;
-  string oldTreeRoot = 5;
-  string newTreeRoot = 6;
+  uint32 opIndex  = 5;
+  string oldTreeRoot = 6;
+  string newTreeRoot = 7;
   //proof serialized public input
-  string publicInput = 7;
-  string proof       = 8;
+  string publicInput = 8;
+  string proof       = 9;
 
-  uint64 proofId = 9;
+  uint64 proofId = 10;
 }
 
 message ReceiptCommitProof {
@@ -246,6 +248,7 @@ message ZkQueryProofReq {
   uint64 startBlockHeight = 2;
   uint64 endBlockHeight = 3;
   uint64 startIndex = 4;
+  uint32 opIndex = 5;
 }
 
 message ZkQueryProofResp {

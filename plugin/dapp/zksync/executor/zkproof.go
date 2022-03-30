@@ -227,6 +227,7 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 		BlockEnd:    payload.BlockEnd,
 		IndexStart: payload.IndexStart,
 		IndexEnd: payload.IndexEnd,
+		OpIndex:  payload.OpIndex,
 		ProofId: payload.ProofId,
 		OldTreeRoot: payload.OldTreeRoot,
 		NewTreeRoot: payload.NewTreeRoot,
