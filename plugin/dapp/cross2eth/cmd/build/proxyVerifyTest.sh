@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2128
 # shellcheck disable=SC2086
+# shellcheck disable=SC2154
+# shellcheck disable=SC2034
+# shellcheck disable=SC2219
 # shellcheck source=/dev/null
 set -x
 set +e
@@ -16,7 +19,6 @@ function start_docker_ebrelayerProxy() {
 
     sed -i 's/^pushName=.*/pushName="x2ethproxy"/g' "./relayerproxy.toml"
 
-    # shellcheck disable=SC2154
     pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayerproxy_1")
     sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "./relayerproxy.toml"
     sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "./relayerproxy.toml"
@@ -24,12 +26,10 @@ function start_docker_ebrelayerProxy() {
     # 代理转账中继器中的标志位ProcessWithDraw设置为true
     sed -i 's/^ProcessWithDraw=.*/ProcessWithDraw=true/' "./relayerproxy.toml"
 
-    # shellcheck disable=SC2154
     docker cp "./relayerproxy.toml" "${dockerNamePrefix}_ebrelayerproxy_1":/root/relayer.toml
     start_docker_ebrelayer "${dockerNamePrefix}_ebrelayerproxy_1" "/root/ebrelayer" "./ebrelayerproxy.log"
     sleep 1
 
-    # shellcheck disable=SC2154
     init_validator_relayer "${CLIP}" "${validatorPwd}" "${chain33ValidatorKeyp}" "${ethValidatorAddrKeyp}"
 }
 
@@ -40,7 +40,6 @@ function setWithdraw_ethereum() {
     cli_ret "${result}" "cfgWithdraw"
 
     # 在chain33上的bridgeBank合约中设置proxyReceiver
-    # shellcheck disable=SC2154
     ${Boss4xCLI} chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
     chain33_offline_send "set_withdraw_proxy.txt"
 }
@@ -52,7 +51,6 @@ function setWithdraw_bsc() {
     cli_ret "${result}" "cfgWithdraw"
 
     # 在chain33上的bridgeBank合约中设置proxyReceiver
-    # shellcheck disable=SC2154
     ${Boss4xCLI} chain33 offline set_withdraw_proxy -c "${chain33BridgeBank}" -a "${chain33Validatorsp}" -k "${chain33DeployKey}" -n "set_withdraw_proxy:${chain33Validatorsp}"
     chain33_offline_send "set_withdraw_proxy.txt"
 }
@@ -66,18 +64,15 @@ function TestETH2Chain33Assets_proxy() {
     local lockAmount1=$1
 
     echo -e "${IYellow} ethereumBridgeBank 初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethBridgeBankBalancebf=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" | jq -r ".balance")
 
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     chain33RBalancebf=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址初始金额 ${NOC}"
     chain33VspBalancebf=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
 
     echo -e "${IYellow} lock ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
@@ -86,18 +81,16 @@ function TestETH2Chain33Assets_proxy() {
 
     echo -e "${IYellow} ethereumBridgeBank lock 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
-    # shellcheck disable=SC2219
+
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
 
-    # shellcheck disable=SC2154
     sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # shellcheck disable=SC2219
+
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
     is_equal "${result}" "${chain33RBalancelock}"
 
@@ -106,15 +99,12 @@ function TestETH2Chain33Assets_proxy() {
     is_equal "${result}" "${chain33VspBalancebf}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethT2Balancebf=$(${CLIP} ethereum balance -o "${ethTestAddr2}" | jq -r ".balance")
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethPBalancebf=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" | jq -r ".balance")
 
     echo -e "${IYellow} withdraw ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
@@ -130,7 +120,6 @@ function TestETH2Chain33Assets_proxy() {
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
-    # shellcheck disable=SC2219
     let chain33VspBalancewithdraw=lockAmount1*le8+chain33VspBalancebf
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
@@ -159,18 +148,15 @@ function TestETH2Chain33Assets_proxy_excess() {
     local lockAmount1=$1
 
     echo -e "${IYellow} ethereumBridgeBank 初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethBridgeBankBalancebf=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" | jq -r ".balance")
 
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     chain33RBalancebf=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址初始金额 ${NOC}"
     chain33VspBalancebf=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
 
     echo -e "${IYellow} lock ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${CLIP} ethereum lock -m "${lockAmount1}" -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}")
     cli_ret "${result}" "lock"
 
@@ -179,18 +165,14 @@ function TestETH2Chain33Assets_proxy_excess() {
 
     echo -e "${IYellow} ethereumBridgeBank lock 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}")
-    # shellcheck disable=SC2219
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
 
-    # shellcheck disable=SC2086
     sleep "${maturityDegree}"
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33ReceiverAddr})")
-    # shellcheck disable=SC2219
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
     is_equal "${result}" "${chain33RBalancelock}"
 
@@ -199,15 +181,12 @@ function TestETH2Chain33Assets_proxy_excess() {
     is_equal "${result}" "${chain33VspBalancebf}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethT2Balancebf=$(${CLIP} ethereum balance -o "${ethTestAddr2}" | jq -r ".balance")
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethPBalancebf=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" | jq -r ".balance")
 
     echo -e "${IYellow} withdraw ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${CLIP} chain33 withdraw -m "${lockAmount1}" -k "${chain33ReceiverAddrKey}" -r "${ethTestAddr2}" -t "${chain33MainBridgeTokenAddr}")
     cli_ret "${result}" "withdraw"
 
@@ -223,7 +202,6 @@ function TestETH2Chain33Assets_proxy_excess() {
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33MainBridgeTokenAddr}" -c "${chain33DeployAddr}" -b "balanceOf(${chain33Validatorsp})")
-    # shellcheck disable=SC2219
     let chain33VspBalancewithdraw=lockAmount1*le8+chain33VspBalancebf
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
@@ -246,11 +224,9 @@ function TestETH2Chain33USDT_proxy() {
     local lockAmount1=$1
 
     echo -e "${IYellow} ethereumBridgeBank 初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethBridgeBankBalancebf=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     chain33RBalancebf=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址初始金额 ${NOC}"
@@ -265,7 +241,7 @@ function TestETH2Chain33USDT_proxy() {
 
     echo -e "${IYellow} 查询 ETH 这端 ethereumBridgeBank lock 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-    # shellcheck disable=SC2219
+
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
 
@@ -273,9 +249,8 @@ function TestETH2Chain33USDT_proxy() {
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-    # shellcheck disable=SC2219
+
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
     is_equal "${result}" "${chain33RBalancelock}"
 
@@ -284,11 +259,9 @@ function TestETH2Chain33USDT_proxy() {
     is_equal "${result}" "${chain33VspBalancebf}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethT2Balancebf=$(${CLIP} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethPBalancebf=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} withdraw ${NOC}"
@@ -307,7 +280,7 @@ function TestETH2Chain33USDT_proxy() {
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")
-    # shellcheck disable=SC2219
+
     let chain33VspBalancewithdraw=lockAmount1*le8+chain33VspBalancebf
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
@@ -318,7 +291,7 @@ function TestETH2Chain33USDT_proxy() {
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址 withdraw 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
-    # shellcheck disable=SC2219
+
     let ethPBalanceEnd=ethPBalancebf-lockAmount1+1
     is_equal "${result}" "${ethPBalanceEnd}"
 
@@ -333,11 +306,9 @@ function TestETH2Chain33USDT_proxy_excess() {
     local lockAmount1=$1
 
     echo -e "${IYellow} ethereumBridgeBank 初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethBridgeBankBalancebf=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     chain33RBalancebf=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址初始金额 ${NOC}"
@@ -352,7 +323,7 @@ function TestETH2Chain33USDT_proxy_excess() {
 
     echo -e "${IYellow} 查询 ETH 这端 ethereumBridgeBank lock 后金额 ${NOC}"
     result=$(${CLIP} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
-    # shellcheck disable=SC2219
+
     let ethBridgeBankBalanceEnd=ethBridgeBankBalancebf+lockAmount1
     cli_ret "${result}" "balance" ".balance" "${ethBridgeBankBalanceEnd}"
 
@@ -360,9 +331,8 @@ function TestETH2Chain33USDT_proxy_excess() {
 
     # chain33 chain33MainBridgeTokenAddr（ETH合约中）查询 lock 金额
     echo -e "${IYellow} chain33ReceiverAddr chain33 端 lock 后接收地址 lock 后金额 ${NOC}"
-    # shellcheck disable=SC2154
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33ReceiverAddr})")
-    # shellcheck disable=SC2219
+
     let chain33RBalancelock=lockAmount1*le8+chain33RBalancebf
     is_equal "${result}" "${chain33RBalancelock}"
 
@@ -371,11 +341,9 @@ function TestETH2Chain33USDT_proxy_excess() {
     is_equal "${result}" "${chain33VspBalancebf}"
 
     echo -e "${IYellow} ethTestAddr2 ethereum withdraw 接收地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethT2Balancebf=$(${CLIP} ethereum balance -o "${ethReceiverAddr1}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} ethValidatorAddrp ethereum 代理地址初始金额 ${NOC}"
-    # shellcheck disable=SC2154
     ethPBalancebf=$(${CLIP} ethereum balance -o "${ethValidatorAddrp}" -t "${ethereumUSDTERC20TokenAddr}" | jq -r ".balance")
 
     echo -e "${IYellow} withdraw ${NOC}"
@@ -394,7 +362,7 @@ function TestETH2Chain33USDT_proxy_excess() {
 
     echo -e "${IYellow} chain33Validatorsp chain33 代理地址 withdraw 后金额 ${NOC}"
     result=$(${Chain33Cli} evm query -a "${chain33USDTBridgeTokenAddr}" -c "${chain33TestAddr1}" -b "balanceOf(${chain33Validatorsp})")
-    # shellcheck disable=SC2219
+
     let chain33VspBalancewithdraw=lockAmount1*le8+chain33VspBalancebf
     is_equal "${result}" "${chain33VspBalancewithdraw}"
 
@@ -410,11 +378,12 @@ function TestETH2Chain33USDT_proxy_excess() {
 }
 
 function TestProxy() {
+    # 增加一笔转帐交易测试 nonce 不一致结果是否成功
+    ${CLIP} ethereum transfer -k "${ethValidatorAddrKeyp}" -m 10 -r "${ethereumMultisignAddr}"
     TestETH2Chain33Assets_proxy 20
     TestETH2Chain33Assets_proxy 30
     TestETH2Chain33Assets_proxy_excess 100
 
-    # shellcheck disable=SC2154
     ${CLIP} ethereum token token_transfer -k "${ethTestAddrKey1}" -m 500 -r "${ethValidatorAddrp}" -t "${ethereumUSDTERC20TokenAddr}"
     TestETH2Chain33USDT_proxy 20
     TestETH2Chain33USDT_proxy 40
@@ -424,8 +393,6 @@ function TestProxy() {
 function TestRelayerProxy() {
     start_docker_ebrelayerProxy
 
-    # shellcheck disable=SC2154
-    {
         Boss4xCLI=${Boss4xCLIeth}
         CLIP=${CLIPeth}
         ethereumBridgeBank="${ethereumBridgeBankOnETH}"
@@ -443,11 +410,8 @@ function TestRelayerProxy() {
         chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
         setWithdraw_bsc
         TestProxy
-    }
 }
 
-# shellcheck disable=SC2154
-# shellcheck disable=SC2034
 function parallel_test() {
     Boss4xCLI=${Boss4xCLIeth}
     CLIA=${CLIAeth}
