@@ -635,7 +635,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	err = ethRelayer.sendEthereumTx(signedTx)
 	if err != nil {
 		// 如果是 nonce 出错导致的错误 再次构建交易发送
-		if err.Error() == "nonce too low" || err.Error() == "nonce too high" {
+		if err.Error() == "nonce too low" || err.Error() == "nonce too high" || strings.Index(err.Error(), "tx doesn't have the correct nonce") >= 0 {
 			relayerLog.Error("handleLogWithdraw", "sendEthereumTx err", err, "出现 nonce 错误重新构建并发送交易, chain33Txhash", chain33TxHash)
 			signedTx, err = ethRelayer.NewTransferSignTx(toAddr, intputData, value, true)
 			if err != nil {
