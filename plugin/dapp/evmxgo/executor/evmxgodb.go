@@ -7,7 +7,6 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 )
@@ -122,22 +121,17 @@ func (e *evmxgoDB) burnMap(db dbm.KV, amount int64) ([]*types.KeyValue, []*types
 }
 
 type evmxgoAction struct {
-	coinsAccount *account.DB
-	stateDB      dbm.KV
-	txhash       []byte
-	fromaddr     string
-	//toaddr       string
+	stateDB   dbm.KV
+	txhash    []byte
+	fromaddr  string
 	blocktime int64
 	height    int64
-	execaddr  string
 	api       client.QueueProtocolAPI
 }
 
 func newEvmxgoAction(e *evmxgo, tx *types.Transaction) *evmxgoAction {
-	hash := tx.Hash()
-	fromaddr := tx.From()
-	return &evmxgoAction{e.GetCoinsAccount(), e.GetStateDB(), hash, fromaddr,
-		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetAPI()}
+	return &evmxgoAction{e.GetStateDB(), tx.Hash(),
+		tx.From(), e.GetBlockTime(), e.GetHeight(), e.GetAPI()}
 }
 
 func getManageKey(key string, db dbm.KV) ([]byte, error) {

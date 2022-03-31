@@ -4,6 +4,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
+	"github.com/jinzhu/copier"
 )
 
 /*
@@ -95,7 +96,9 @@ func resetBurn(e *evmxgotypes.LocalEvmxgo, height, time, amount int64) *evmxgoty
 }
 
 func (e *evmxgo) ExecDelLocal_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	pay := &evmxgotypes.EvmxgoMint{}
+	_ = copier.Copy(pay, payload)
+	return e.ExecDelLocal_Mint(pay, tx, receiptData, index)
 }
 
 func (e *evmxgo) ExecDelLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -123,12 +126,10 @@ func (e *evmxgo) ExecDelLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Tr
 	return &types.LocalDBSet{KV: set}, nil
 }
 
-func (e *evmxgo) ExecLocal_BurntMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
-}
-
 func (e *evmxgo) ExecDelLocal_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return nil, nil
+	pay := &evmxgotypes.EvmxgoBurn{}
+	_ = copier.Copy(pay, payload)
+	return e.ExecDelLocal_Burn(pay, tx, receiptData, index)
 }
 
 func (e *evmxgo) ExecDelLocal_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {

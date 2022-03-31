@@ -2,6 +2,7 @@ package executor
 
 import (
 	"errors"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
@@ -81,7 +82,12 @@ func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transac
 	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxTokenBalance || mint.GetSymbol() == "" {
 		return nil, types.ErrInvalidParam
 	}
-	//check address
+
+	if len(mint.Recipient) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+
+	//TODO check address
 	err := address.CheckAddress(mint.Recipient, -1)
 	if err != nil {
 		return nil, err

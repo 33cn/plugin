@@ -26,6 +26,7 @@ require (
 	github.com/holiman/uint256 v1.2.0
 	github.com/huin/goupnp v1.0.2
 	github.com/jackpal/go-nat-pmp v1.0.2
+	github.com/jinzhu/copier v0.3.6-0.20220210061904-7948fe2be217 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/pborman/uuid v1.2.0
 	github.com/perlin-network/life v0.0.0-20191203030451-05c0e0f7eaea
