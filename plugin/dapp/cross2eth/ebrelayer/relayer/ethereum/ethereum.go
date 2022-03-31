@@ -23,11 +23,6 @@ import (
 	"time"
 
 	chain33Common "github.com/33cn/chain33/common"
-
-	"github.com/bitly/go-simplejson"
-
-	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
-
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
 	chain33Types "github.com/33cn/chain33/types"
@@ -37,10 +32,13 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethtxs"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
+	"github.com/bitly/go-simplejson"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -635,7 +633,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	err = ethRelayer.sendEthereumTx(signedTx)
 	if err != nil {
 		// 如果是 nonce 出错导致的错误 再次构建交易发送
-		if err.Error() == "nonce too low" || err.Error() == "nonce too high" || strings.Index(err.Error(), "tx doesn't have the correct nonce") >= 0 {
+		if err == core.ErrNonceTooLow || err == core.ErrNonceTooHigh {
 			relayerLog.Error("handleLogWithdraw", "sendEthereumTx err", err, "出现 nonce 错误重新构建并发送交易, chain33Txhash", chain33TxHash)
 			signedTx, err = ethRelayer.NewTransferSignTx(toAddr, intputData, value, true)
 			if err != nil {
