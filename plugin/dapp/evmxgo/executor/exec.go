@@ -2,8 +2,8 @@ package executor
 
 import (
 	"errors"
-
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 )
@@ -81,25 +81,20 @@ func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transac
 	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxTokenBalance || mint.GetSymbol() == "" {
 		return nil, types.ErrInvalidParam
 	}
+	//check address
+	err := address.CheckAddress(mint.Recipient, -1)
+	if err != nil {
+		return nil, err
+	}
 	mintConfig, err := loadEvmxgoMintConfig(e.GetStateDB(), mint.GetSymbol())
 	if err != nil {
 		return nil, err
 	}
-	//确认合约地址的正确性
-	if tx.From() != mintConfig.Address {
-		elog.Error("Not consistent bridgevmxgo address configured by manager", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "mintConfig.Address: ", mintConfig.Address)
-		return nil, errors.New("Not consistent bridgevmxgo address configured by manager")
-	}
 	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
-	//configSymbol, err := loadEvmxgoMintConfig(e.GetStateDB(), mint.GetSymbol())
-	//if err != nil || configSymbol == nil {
-	//	elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
-	//	return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
-	//}
-	//if tx.From() != configSymbol.Address {
-	//	elog.Error("evmxgo mint address error", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "configSymbol.Address: ", configSymbol.Address)
-	//	return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
-	//}
+	if tx.From() != mintConfig.Address {
+		elog.Error("evmxgo mint address error", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "configSymbol.Address: ", mintConfig.Address)
+		return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+	}
 
 	action := newEvmxgoAction(e, tx)
 	return action.mintMap(mint, tx)
