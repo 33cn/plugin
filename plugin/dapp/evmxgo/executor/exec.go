@@ -81,13 +81,13 @@ func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transac
 	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxTokenBalance || mint.GetSymbol() == "" {
 		return nil, types.ErrInvalidParam
 	}
-	bridgevmxgoConfig, err := loadBridgevmxgoAddr(e.GetStateDB())
+	mintConfig, err := loadEvmxgoMintConfig(e.GetStateDB(), mint.GetSymbol())
 	if err != nil {
 		return nil, err
 	}
 	//确认合约地址的正确性
-	if tx.From() != bridgevmxgoConfig.Address {
-		elog.Error("Not consistent bridgevmxgo address configured by manager", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "bridgevmxgoConfig.Address: ", bridgevmxgoConfig.Address)
+	if tx.From() != mintConfig.Address {
+		elog.Error("Not consistent bridgevmxgo address configured by manager", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "mintConfig.Address: ", mintConfig.Address)
 		return nil, errors.New("Not consistent bridgevmxgo address configured by manager")
 	}
 	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
