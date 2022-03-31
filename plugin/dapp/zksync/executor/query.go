@@ -210,3 +210,35 @@ func (z *zksync) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message
 
 	return data, nil
 }
+
+// Query_GetProofList 根据proofId fetch 后续证明
+func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+
+	table := NewCommitProofTable(z.GetLocalDB())
+	primaryKey := []byte(fmt.Sprintf("%016d", in.StartProofId))
+	if in.StartProofId == 0 {
+		primaryKey = nil
+	}
+	//获取onChain数据
+	if in.GetOnChainPubDataOnly() {
+		rows, err := table.ListIndex("onChain", []byte(fmt.Sprintf("%02d", 1)), primaryKey, 1, zt.ListASC)
+		if err != nil {
+			zklog.Error("Query_GetProofList.onChainOnly", "StartProofId", in.StartProofId, "err", err.Error())
+			return nil, err
+		}
+		return rows[0].Data.(*zt.ZkCommitProof), nil
+
+	}
+
+	//非OnChainData, 按序获取下一个proofId
+	rows, err := table.GetData(getProofIdCommitProofKey(in.StartProofId + 1))
+	if err != nil {
+		zklog.Error("Query_GetProofList", "StartProofId", in.StartProofId, "err", err.Error())
+		return nil, err
+	}
+
+	return rows.Data.(*zt.ZkCommitProof), nil
+}

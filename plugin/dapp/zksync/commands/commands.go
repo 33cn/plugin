@@ -61,6 +61,7 @@ func ZksyncCmd() *cobra.Command {
 		getZkCommitProofCmd(),
 		setTokenFeeCmd(),
 		getFirstRootHashCmd(),
+		getZkCommitProofListCmd(),
 	)
 	return cmd
 }
@@ -910,7 +911,7 @@ func getZkCommitProofCmd() *cobra.Command {
 }
 
 func getZkCommitProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("proofId", "p", 0, "commit proof id")
+	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
 	cmd.MarkFlagRequired("proofId")
 }
 
@@ -1020,4 +1021,42 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	token := zt.Str2Byte(leaf.GetTokenHash())
 	hash.Write(token)
 	return hash.Sum(nil)
+}
+
+func getZkCommitProofListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proofList",
+		Short: "get committed proof list",
+		Run:   getZkCommitProofList,
+	}
+	getZkCommitProofListFlag(cmd)
+	return cmd
+}
+
+func getZkCommitProofListFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
+	cmd.MarkFlagRequired("proofId")
+
+	cmd.Flags().BoolP("onChainOnly", "o", true, "only fetch on chain pubdatas proof")
+}
+
+func getZkCommitProofList(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proofId, _ := cmd.Flags().GetUint64("proofId")
+	onChainOnly, _ := cmd.Flags().GetBool("onChainOnly")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkFetchProofList{
+		StartProofId:       proofId,
+		OnChainPubDataOnly: onChainOnly,
+	}
+
+	params.FuncName = "GetProofList"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkCommitProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
 }

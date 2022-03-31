@@ -171,7 +171,7 @@ message ZkCommitProof {
   string proof       = 9;
   //all tx pub datas
   repeated string pubDatas = 10;
-  repeated string priorityPubDatas = 11;
+  repeated string onChainPubDatas = 11;
 
   uint64 proofId = 12;
 }
@@ -269,6 +269,12 @@ message ZkQueryProofReq {
 
 message ZkQueryProofResp {
   repeated OperationInfo operationInfos = 1;
+}
+
+//query committed proof info
+message ZkFetchProofList {
+  uint64 startProofId = 1;
+  bool onChainPubDataOnly = 2; //是否全部pubdata的proof 还是只需要onChain pubdatas
 }
 
 message ZkOperation {
