@@ -37,6 +37,7 @@ var relayerLog = log.New("module", "chain33_relayer")
 type Relayer4Chain33 struct {
 	syncEvmTxLogs       *syncTx.EVMTxLogs
 	rpcLaddr            string //用户向指定的blockchain节点进行rpc调用
+	chain33RpcUrls      []string
 	chainName           string //用来区别主链中继还是平行链，主链为空，平行链则是user.p.xxx.
 	chainID             int32
 	fetchHeightPeriodMs int64
@@ -87,6 +88,7 @@ type Chain33StartPara struct {
 func StartChain33Relayer(startPara *Chain33StartPara) *Relayer4Chain33 {
 	chain33Relayer := &Relayer4Chain33{
 		rpcLaddr:                startPara.SyncTxConfig.Chain33Host,
+		chain33RpcUrls:          startPara.SyncTxConfig.Chain33RpcUrls,
 		chainName:               startPara.ChainName,
 		chainID:                 startPara.ChainID,
 		fetchHeightPeriodMs:     startPara.SyncTxConfig.FetchHeightPeriodMs,
@@ -518,7 +520,7 @@ func (chain33Relayer *Relayer4Chain33) relayLockBurnToChain33(claim *ebTypes.Eth
 		common.ToHex(signature))
 	relayerLog.Info("relayLockBurnToChain33", "parameter", parameter)
 
-	txhash, err := relayEvmTx2Chain33(chain33Relayer.privateKey4Chain33, claim, parameter, chain33Relayer.rpcLaddr, chain33Relayer.oracleAddr, chain33Relayer.chainName)
+	txhash, err := relayEvmTx2Chain33(chain33Relayer.privateKey4Chain33, claim, parameter, chain33Relayer.oracleAddr, chain33Relayer.chainName, chain33Relayer.chain33RpcUrls)
 	if err != nil {
 		relayerLog.Error("relayLockBurnToChain33", "Failed to RelayEvmTx2Chain33 due to:", err.Error(), "EthereumTxhash", claim.EthTxHash)
 		return

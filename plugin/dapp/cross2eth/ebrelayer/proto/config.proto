@@ -14,6 +14,7 @@ message SyncTxConfig {
   int64 startSyncSequence   = 11;
   string startSyncHash      = 12;
   int64 keepAliveDuration  = 13;
+  repeated string chain33RpcUrls = 14;
 }
 
 message Log {
