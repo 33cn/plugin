@@ -101,12 +101,12 @@ func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 	}
 
 	var txHash string
-	for i, rpcURL := range rpcURLs {
+	for _, rpcURL := range rpcURLs {
 		var txhash string
 		ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", params, &txhash)
 		_, err = ctx.RunResult()
 
-		if i == 0 {
+		if err == nil {
 			txHash = txhash
 		}
 	}
