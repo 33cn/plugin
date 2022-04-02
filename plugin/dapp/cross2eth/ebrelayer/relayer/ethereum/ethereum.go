@@ -1673,7 +1673,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 		if err == nil {
 			bSuccess = true
 		} else {
-			if err.Error() != "already known" {
+			if err != core.ErrAlreadyKnown {
 				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
 			}
 		}

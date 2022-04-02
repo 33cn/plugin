@@ -78,7 +78,7 @@ func createEvmTx(privateKey chain33Crypto.PrivKey, action proto.Message, execer,
 	return dataStr
 }
 
-func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, rpcURL, oracleAddr, chainName string) (string, error) {
+func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.EthBridgeClaim, parameter, oracleAddr, chainName string, rpcURLs []string) (string, error) {
 	note := fmt.Sprintf("relay with type:%s, chain33-receiver:%s, ethereum-sender:%s, symbol:%s, amout:%s, ethTxHash:%s",
 		events.ClaimType(claim.ClaimType).String(), claim.Chain33Receiver, claim.EthereumSender, claim.Symbol, claim.Amount, claim.EthTxHash)
 	_, packData, err := evmAbi.Pack(parameter, generated.OracleABI, false)
@@ -99,11 +99,18 @@ func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 		Token: "BTY",
 		Data:  data,
 	}
-	var txhash string
 
-	ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", params, &txhash)
-	_, err = ctx.RunResult()
-	return txhash, err
+	var txHash string
+	for i, rpcURL := range rpcURLs {
+		var txhash string
+		ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", params, &txhash)
+		_, err = ctx.RunResult()
+
+		if i == 0 {
+			txHash = txhash
+		}
+	}
+	return txHash, err
 }
 
 func getExecerName(name string) string {
