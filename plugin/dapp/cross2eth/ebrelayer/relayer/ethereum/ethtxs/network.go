@@ -97,7 +97,7 @@ func SetupRecommendClients(ethURL *[]string) ([]ethinterface.EthClientSpec, erro
 			txslog.Error("SetupEthClient", "Dial2MakeEthClient err", err.Error())
 			continue
 		}
-		txslog.Debug("SetupRecommendClients", "SelectAndRoundEthURL:", urlSelected, "client", client)
+		txslog.Debug("SetupRecommendClients", "SelectAndRoundEthURL:", urlSelected)
 		Clients = append(Clients, client)
 	}
 
