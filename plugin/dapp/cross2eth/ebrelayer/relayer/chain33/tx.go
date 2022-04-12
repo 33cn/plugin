@@ -100,23 +100,24 @@ func relayEvmTx2Chain33(privateKey chain33Crypto.PrivKey, claim *ebrelayerTypes.
 		Data:  data,
 	}
 
+	// 存在发送交易成功, 但是由于chain33节点崩溃, 导致交易没有打包, 所以向多个节点发送交易, 提高可靠性
 	var txHash string
-	returnErr := errors.New("not executed")
+	bExecuted := false
 	for _, rpcURL := range rpcURLs {
 		var txhash string
 		ctx := jsonclient.NewRPCCtx(rpcURL, "Chain33.SendTransaction", params, &txhash)
 		_, err = ctx.RunResult()
 
+		// 如果成功 记录这笔哈希
 		if err == nil {
-			returnErr = nil
+			bExecuted = true
 			txHash = txhash
 		}
 	}
-	if returnErr == nil {
-		return txHash, nil
-	} else {
+	if !bExecuted {
 		return txHash, err
 	}
+	return txHash, nil
 }
 
 func getExecerName(name string) string {
