@@ -194,7 +194,7 @@ function TestChain33ToEthAssets() {
     result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "5.0000"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否增加了 5
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -204,7 +204,7 @@ function TestChain33ToEthAssets() {
     result=$(${CLIA} ethereum burn -m 3 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否减少了 3
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -224,7 +224,7 @@ function TestChain33ToEthAssets() {
     result=$(${CLIA} ethereum burn -m 2 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否减少了
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -253,7 +253,7 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
-    sleep 4
+    sleep 10
 
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
@@ -318,7 +318,7 @@ function TestETH2Chain33USDT() {
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
-    sleep 4
+    sleep 10
 
     # 查询 ETH 这端 bridgeBank 地址 12 USDT
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
