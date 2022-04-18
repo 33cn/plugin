@@ -130,12 +130,11 @@ func StringToByte(s string) []byte {
 func ChunkStringToByte(s string) []byte {
 	f := new(fr.Element).SetString(s)
 	chunk := f.Bytes()
-	bits := Byte2Bit(chunk[22:])
-	for i := 0; i < len(bits)/2; i++ {
-		bits[i], bits[len(bits) - 1 - i] = bits[len(bits) - 1 - i], bits[i]
-	}
-
-	return Bit2Byte(bits)
+	//bits := Byte2Bit(chunk[22:])
+	//for i := 0; i < len(bits)/2; i++ {
+	//	bits[i], bits[len(bits) - 1 - i] = bits[len(bits) - 1 - i], bits[i]
+	//}
+	return chunk[32-zt.ChunkBytes:]
 }
 
 func Byte2Bit(data []byte) []uint {

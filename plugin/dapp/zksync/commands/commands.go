@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"os"
 	"strings"
 
@@ -57,6 +59,8 @@ func ZksyncCmd() *cobra.Command {
 		getContractAccountCmd(),
 		getTokenBalanceCmd(),
 		getZkCommitProofCmd(),
+		setTokenFeeCmd(),
+		getFirstRootHashCmd(),
 	)
 	return cmd
 }
@@ -925,4 +929,95 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 	var resp zt.ZkCommitProof
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
+}
+
+
+
+func setTokenFeeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "fee",
+		Short: "set zkoption fee",
+		Run:   setTokenFee,
+	}
+	setTokenFeeFlag(cmd)
+	return cmd
+}
+
+func setTokenFeeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 0, "token id")
+	cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("fee", "f", "10000", "fee")
+	cmd.MarkFlagRequired("fee")
+	cmd.Flags().Int32P("action", "a", 0, "action ty")
+	cmd.MarkFlagRequired("action")
+}
+
+func setTokenFee(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	fee, _ := cmd.Flags().GetString("fee")
+	action, _ := cmd.Flags().GetInt32("action")
+
+	payload := &zt.ZkSetFee{
+		TokenId: tokenId,
+		Amount: fee,
+		ActionTy: action,
+	}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "SetFee",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func getFirstRootHashCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "firstRoot",
+		Short: "get firstRoot",
+		Run:   getFirstRootHash,
+	}
+	getFirstRootHashFlag(cmd)
+	return cmd
+}
+
+func getFirstRootHashFlag(cmd *cobra.Command) {
+}
+
+func getFirstRootHash(cmd *cobra.Command, args []string) {
+	leaf := &zt.Leaf{
+		EthAddress: "980818135352849559554652468538757099471386586455",
+		AccountId: 1,
+		Chain33Addr: "20033148478649779061292402960935477249437023394422514689332944628159941947226",
+		TokenHash: "0",
+		PubKey: &zt.ZkPubKey{
+			X: 14100288826287343691225102305171330918997717795915902072008127148547196365751,
+			Y: 13575378421883862534829584367244516767645518094963505752293596385949094459968,
+		},
+	}
+
+	tree := merkletree.New(mimc.NewMiMC(zt.ZkMimcHashSeed))
+	tree.Push(getLeafHash(leaf))
+	fmt.Print(zt.Byte2Str(tree.Root()))
+}
+
+func getLeafHash(leaf *zt.Leaf) []byte {
+	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
+	hash.Write(accountIdBytes[:])
+	hash.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	hash.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+	if leaf.GetPubKey() != nil {
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
+		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
+	} else {
+		hash.Write(zt.Str2Byte("0")) //X
+		hash.Write(zt.Str2Byte("0")) //Y
+	}
+	token := zt.Str2Byte(leaf.GetTokenHash())
+	hash.Write(token)
+	return hash.Sum(nil)
 }

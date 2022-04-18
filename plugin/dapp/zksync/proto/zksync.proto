@@ -20,9 +20,10 @@ message ZksyncAction {
     ZkVerifyKey         setVerifyKey = 11;
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
+    ZkSetFee    setFee = 14;
   }
 
-  int32 ty = 14;
+  int32 ty = 15;
 }
 
 
@@ -204,6 +205,21 @@ message ZkVerifier {
 message ReceiptSetVerifier {
   ZkVerifier prev = 1;
   ZkVerifier current = 2;
+}
+
+
+
+message ZkSetFee {
+  uint64 tokenId = 1;
+  string amount = 2;
+  int32 actionTy = 3;
+}
+
+message ReceiptSetFee {
+  uint64 tokenId = 1;
+  int32 actionTy = 2;
+  string prevAmount = 3;
+  string currentAmount = 4;
 }
 
 //zk relayer operators

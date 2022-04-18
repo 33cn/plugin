@@ -68,3 +68,7 @@ func getRootCommitProofKey(root string) []byte {
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", proofId, accountId))
 }
+
+func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
+}

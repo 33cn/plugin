@@ -18,14 +18,47 @@ type TreeUpdateInfo struct {
 	updateMap map[string][]byte
 }
 
+// NewAccountTree 生成账户树，同时生成1号账户
 func NewAccountTree(db dbm.KV) *zt.AccountTree {
+	//todo 从配置文件读取
+	leaf := &zt.Leaf{
+		EthAddress: "980818135352849559554652468538757099471386586455",
+		AccountId: 1,
+		Chain33Addr: "20033148478649779061292402960935477249437023394422514689332944628159941947226",
+		TokenHash: "0",
+		PubKey: &zt.ZkPubKey{
+			X: 14100288826287343691225102305171330918997717795915902072008127148547196365751,
+			Y: 13575378421883862534829584367244516767645518094963505752293596385949094459968,
+		},
+	}
+	err := db.Set(GetAccountIdPrimaryKey(leaf.AccountId), types.Encode(leaf))
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.Set(GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress), types.Encode(leaf))
+	if err != nil {
+		panic(err)
+	}
+
+	merkleTree := getNewTree()
+	merkleTree.Push(getLeafHash(leaf))
+
 	tree := &zt.AccountTree{
-		Index:           0,
-		TotalIndex:      0,
+		Index:           1,
+		TotalIndex:      1,
 		MaxCurrentIndex: 1024,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}
-	err := db.Set(GetAccountTreeKey(), types.Encode(tree))
+
+	for _, subtree := range merkleTree.GetAllSubTrees() {
+		tree.SubTrees = append(tree.SubTrees, &zt.SubTree{
+			RootHash: subtree.GetSum(),
+			Height:   int32(subtree.GetHeight()),
+		})
+	}
+
+	err = db.Set(GetAccountTreeKey(), types.Encode(tree))
 	if err != nil {
 		panic(err)
 	}
@@ -605,10 +638,6 @@ func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.Merk
 			RootHash: zt.Byte2Str(currentTree.Root()),
 			ProofSet: proofSet,
 			Helpers:  helpers,
-		}
-		//如果还没有产生第一个叶子，RootHash需要特殊设置
-		if tree.TotalIndex == 0 {
-			proof.RootHash = "0"
 		}
 		return proof, nil
 	}

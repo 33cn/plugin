@@ -69,3 +69,8 @@ func (z *zksync) Exec_SetVerifier(payload *zt.ZkVerifier, tx *types.Transaction,
 	action := NewAction(z, tx, index)
 	return action.setVerifier(payload)
 }
+
+func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.setFee(payload)
+}

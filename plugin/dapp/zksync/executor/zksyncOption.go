@@ -1330,3 +1330,48 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
+
+
+func (a *Action) setFee(payload *zt.ZkSetFee) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not validator")
+	}
+
+	lastFee, err := getFeeData(a.statedb, payload.ActionTy, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "getFeeData err")
+	}
+	kv := &types.KeyValue {
+		Key: getZkFeeKey(payload.ActionTy, payload.TokenId),
+		Value: []byte(payload.Amount),
+	}
+	kvs = append(kvs, kv)
+	setFeelog := &zt.ReceiptSetFee{
+		TokenId: payload.TokenId,
+		ActionTy: payload.ActionTy,
+		PrevAmount: lastFee,
+		CurrentAmount: payload.Amount,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TySetFeeLog, Log: types.Encode(setFeelog)}
+	logs = append(logs, receiptLog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+
+
+func getFeeData(db dbm.KV, actionTy int32, tokenId uint64) (string, error) {
+	key := getZkFeeKey(actionTy, tokenId)
+	v, err := db.Get(key)
+	if err != nil {
+		if isNotFound(err) {
+			return "0", nil
+		} else {
+			return "", errors.Wrapf(err, "get db")
+		}
+	}
+
+	return string(v), nil
+}

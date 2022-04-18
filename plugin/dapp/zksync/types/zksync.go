@@ -31,6 +31,7 @@ const (
 	TySetVerifyKeyAction = 102 //设置电路验证key
 	TyCommitProofAction  = 103 //提交zk proof
 	TySetVerifierAction  = 104 //设置验证者
+	TySetFeeAction       = 105 //设置手续费
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -48,6 +49,7 @@ const (
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
 	NameSetVerifierAction  = "SetVerifier"
+	NameSetFeeAction       = "SetFee"
 )
 
 // log类型id值
@@ -69,6 +71,7 @@ const (
 	TyCommitProofLog        = 203 //提交zk proof
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
+	TySetFeeLog       = 206
 )
 
 const (
@@ -150,6 +153,7 @@ var (
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
+		NameSetFeeAction:         TySetFeeAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -169,6 +173,7 @@ var (
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
 	}
 
 	FeeMap = map[int64]string{
