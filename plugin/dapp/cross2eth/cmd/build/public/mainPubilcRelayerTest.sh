@@ -194,7 +194,7 @@ function TestChain33ToEthAssets() {
     result=$(${Chain33Cli} asset balance -a "${chain33BridgeBank}" --asset_exec paracross --asset_symbol coins.bty -e "${paraName}evm" | jq -r .balance)
     is_equal "${result}" "5.0000"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否增加了 5
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -204,7 +204,7 @@ function TestChain33ToEthAssets() {
     result=$(${CLIA} ethereum burn -m 3 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否减少了 3
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -224,7 +224,7 @@ function TestChain33ToEthAssets() {
     result=$(${CLIA} ethereum burn -m 2 -k "${ethTestAddrKey1}" -r "${chain33ReceiverAddr}" -t "${ethereumBtyBridgeTokenAddr}") #--node_addr https://ropsten.infura.io/v3/9e83f296716142ffbaeaafc05790f26c)
     cli_ret "${result}" "burn"
 
-    sleep 4
+    sleep 10
 
     # eth 这端 金额是否减少了
     result=$(${CLIA} ethereum balance -o "${ethTestAddr1}" -t "${ethereumBtyBridgeTokenAddr}")
@@ -253,7 +253,7 @@ function TestETH2Chain33Assets() {
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
-    sleep 4
+    sleep 10
 
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
     cli_ret "${result}" "balance" ".balance" "0.002"
@@ -318,7 +318,7 @@ function TestETH2Chain33USDT() {
     cli_ret "${result}" "lock"
 
     # eth 等待 2 个区块
-    sleep 4
+    sleep 10
 
     # 查询 ETH 这端 bridgeBank 地址 12 USDT
     result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
@@ -540,6 +540,7 @@ function up_relayer_toml() {
     sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^pushBind=.*/pushBind="'"${docker_ebrelayera_ip}"':20000"/' "${relaye_file}"
     sed -i 's/^chain33Host=.*/chain33Host="http:\/\/'"${docker_chain33_ip}"':8901"/' "${relaye_file}"
+    sed -i 's/^chain33RpcUrls=.*/chain33RpcUrls=["http:\/\/'"${docker_chain33_ip}"':8901","http:\/\/'"${docker_chain30_ip}"':8901","http:\/\/'"${docker_chain31_ip}"':8901","http:\/\/'"${docker_chain32_ip}"':8901"]/' "${relaye_file}"
 
     sed -i 's/^EthBlockFetchPeriod=.*/EthBlockFetchPeriod=500/g' "${relaye_file}"
     sed -i 's/^fetchHeightPeriodMs=.*/fetchHeightPeriodMs=500/g' "${relaye_file}"
@@ -665,13 +666,14 @@ function echo_addrs() {
 }
 
 function get_cli() {
-
-    {
         paraName="user.p.para."
         docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
         MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
         Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
         Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
+        docker_chain31_ip=$(get_docker_addr "${dockerNamePrefix}_chain31_1")
+        docker_chain32_ip=$(get_docker_addr "${dockerNamePrefix}_chain32_1")
+        docker_chain30_ip=$(get_docker_addr "${dockerNamePrefix}_chain30_1")
 
         docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
         CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
@@ -692,7 +694,6 @@ function get_cli() {
 
         CLIPeth="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
         CLIPbsc="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
-    }
 }
 
 function test_lock_and_burn() {

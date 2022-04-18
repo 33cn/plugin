@@ -45,6 +45,7 @@ keepAliveDuration=180000 #3分钟之内未收到信息，通过重新订阅，�
 startSyncHeight=0
 startSyncSequence=0
 startSyncHash=""
+chain33RpcUrls=["http://localhost:8801", "http://172.18.0.2:8801"]
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit

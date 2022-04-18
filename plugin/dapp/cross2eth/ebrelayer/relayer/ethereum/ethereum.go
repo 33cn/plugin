@@ -633,7 +633,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogWithdraw(chain33Msg *events.Chain33
 	err = ethRelayer.sendEthereumTx(signedTx)
 	if err != nil {
 		// 如果是 nonce 出错导致的错误 再次构建交易发送
-		if err == core.ErrNonceTooLow || err == core.ErrNonceTooHigh {
+		if err.Error() == core.ErrNonceTooLow.Error() || err.Error() == core.ErrNonceTooHigh.Error() {
 			relayerLog.Error("handleLogWithdraw", "sendEthereumTx err", err, "出现 nonce 错误重新构建并发送交易, chain33Txhash", chain33TxHash)
 			signedTx, err = ethRelayer.NewTransferSignTx(toAddr, intputData, value, true)
 			if err != nil {
@@ -1673,8 +1673,24 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 		if err == nil {
 			bSuccess = true
 		} else {
-			if err.Error() != "already known" {
+			if err.Error() != core.ErrAlreadyKnown.Error() {
 				relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+			}
+		}
+	}
+
+	// 交易同时发送到 BSC 官方节点
+	if ethRelayer.name == BinanceChain {
+		for i := 0; i < len(ethRelayer.clientBSCRecommendSpecs); i++ {
+			timeout, cancel := context.WithTimeout(context.Background(), waitTime)
+			err = ethRelayer.clientBSCRecommendSpecs[i].SendTransaction(timeout, signedTx)
+			cancel()
+			if err == nil {
+				bSuccess = true
+			} else {
+				if err.Error() != core.ErrAlreadyKnown.Error() {
+					relayerLog.Error("handleLogWithdraw", "SendTransaction err", err)
+				}
 			}
 		}
 	}
@@ -1688,7 +1704,7 @@ func (ethRelayer *Relayer4Ethereum) sendEthereumTx(signedTx *types.Transaction) 
 
 func (ethRelayer *Relayer4Ethereum) remindSetupEthClientError() {
 	ethName := "以太坊"
-	if ethRelayer.GetName() == BinanceChain {
+	if ethRelayer.name == BinanceChain {
 		ethName = "BSC"
 	}
 

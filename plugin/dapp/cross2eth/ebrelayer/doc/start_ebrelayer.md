@@ -123,7 +123,7 @@ done
 ./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.00022 -s BNB -a 1.5 -d 18
 ./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0.2 -s USDT -a 10000 -d 18
 ./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 40 -s YCC -a 80000 -d 8
-./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 3 -s BTY -a 100000 -d 8
+./ebcli_A --eth_chain_name Binance ethereum cfgWithdraw -f 0 -s BTY -a 100000 -d 8
 
 Flags:
   -a, --amount float    每日最大值
