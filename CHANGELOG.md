@@ -1,5 +1,13 @@
 changelog
 
+<a name="1.67.2"></a>
+## [1.67.2](https://github.com/33cn/plugin/compare/v1.67.1...v1.67.2) (2022-04-18)
+
+
+### Bug Fixes
+
+* sync chain33 patch version 1.67.2 ([0a0d7ec](https://github.com/33cn/plugin/commit/0a0d7ec))
+
 <a name="1.67.1"></a>
 ## [1.67.1](https://github.com/33cn/plugin/compare/v1.67.0...v1.67.1) (2022-03-29)
 
