@@ -269,7 +269,7 @@ function query_tx() {
 function create_tx() {
     block_wait "${CLI}" 10
 
-    local accountId=4
+    local accountId=5
     while true; do
          #loop deposit amount 1000000000000
          echo "=========== # zksync add new account test ============="
