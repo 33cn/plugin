@@ -17,11 +17,10 @@ import (
 )
 
 func TestZksyncOption(t *testing.T) {
-	var kvs []*types.KeyValue
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
 	/*************************deposit*************************/
-	info, err := generateTreeUpdateInfo(statedb, kvs)
+	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "operator"}
 	deposit := &zt.ZkDeposit{
@@ -49,7 +48,7 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	info, err = generateTreeUpdateInfo(statedb, kvs)
+	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
@@ -74,7 +73,7 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	/*************************withdraw*************************/
-	info, err = generateTreeUpdateInfo(statedb, kvs)
+	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
 		AccountId: 1,
@@ -115,7 +114,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "5000", token.Balance)
 
 	/*************************transferToNew*************************/
-	info, err = generateTreeUpdateInfo(statedb, kvs)
+	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
 		FromAccountId:    1,
@@ -148,7 +147,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "500", token.Balance)
 
 	/*************************transfer*************************/
-	info, err = generateTreeUpdateInfo(statedb, kvs)
+	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
 		FromAccountId: 1,
@@ -180,7 +179,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "1000", token.Balance)
 
 	/*************************forceQuit*************************/
-	info, err = generateTreeUpdateInfo(statedb, kvs)
+	info, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	forceQuit := &zt.ZkForceExit{
 		AccountId: 1,

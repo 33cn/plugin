@@ -16,6 +16,7 @@ import (
 // TreeUpdateInfo 更新信息，用于查询
 type TreeUpdateInfo struct {
 	updateMap map[string][]byte
+	kvs []*types.KeyValue
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户

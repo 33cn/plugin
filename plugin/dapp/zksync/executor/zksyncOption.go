@@ -69,10 +69,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
-	cfg := a.api.GetConfig()
-	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
-	}
+	//cfg := a.api.GetConfig()
+	//if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
+	//}
 
 	//TODO set chainID
 	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
@@ -91,7 +91,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
 	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -200,6 +200,12 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		receiptLog := &types.ReceiptLog{Ty: zt.TyDepositLog, Log: types.Encode(zklog)}
 		logs = append(logs, receiptLog)
 	}
+	//存入1号账户的kv
+	for _, kv := range info.kvs {
+		if string(kv.GetKey()) != string(GetAccountTreeKey()) {
+			kvs = append(kvs, kv)
+		}
+	}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
 	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
@@ -251,7 +257,7 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 	return branch
 }
 
-func generateTreeUpdateInfo(db dbm.KV, totalKvs []*types.KeyValue) (*TreeUpdateInfo, error) {
+func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 	updateMap := make(map[string][]byte)
 	val, err := db.Get(GetAccountTreeKey())
 	if err != nil {
@@ -259,12 +265,9 @@ func generateTreeUpdateInfo(db dbm.KV, totalKvs []*types.KeyValue) (*TreeUpdateI
 		if err == types.ErrNotFound {
 			kvs := NewAccountTree()
 			for _, kv := range kvs {
-				if string(kv.GetKey()) != string(GetAccountTreeKey()) {
-					totalKvs = append(totalKvs, kv)
-				}
 				updateMap[string(kv.GetKey())] = kv.GetValue()
 			}
-			return &TreeUpdateInfo{updateMap: updateMap}, nil
+			return &TreeUpdateInfo{updateMap: updateMap, kvs: kvs}, nil
 		} else {
 			return nil, err
 		}
@@ -275,7 +278,7 @@ func generateTreeUpdateInfo(db dbm.KV, totalKvs []*types.KeyValue) (*TreeUpdateI
 		return nil, err
 	}
 	updateMap[string(GetAccountTreeKey())] = types.Encode(&tree)
-	return &TreeUpdateInfo{updateMap: updateMap}, nil
+	return &TreeUpdateInfo{updateMap: updateMap, kvs: make([]*types.KeyValue, 0)}, nil
 }
 
 func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
@@ -292,7 +295,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -400,7 +403,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -493,7 +496,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -609,7 +612,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -753,7 +756,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
 	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -885,7 +888,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 
 	fee := zt.FeeMap[zt.TyForceExitAction]
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -1004,7 +1007,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -1105,7 +1108,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
 	//}
 
-	info, err := generateTreeUpdateInfo(a.statedb, kvs)
+	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}

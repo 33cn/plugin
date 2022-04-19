@@ -3,7 +3,6 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"strconv"
 	"testing"
@@ -16,10 +15,9 @@ import (
 )
 
 func TestAccountTree(t *testing.T) {
-	var kvs []*types.KeyValue
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
-	info, err := generateTreeUpdateInfo(statedb, kvs)
+	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 2000; i++ {
 		ethAddress := "12345678901012345" + strconv.Itoa(i)
