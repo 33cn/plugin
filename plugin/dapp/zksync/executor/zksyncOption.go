@@ -69,10 +69,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
-	//cfg := a.api.GetConfig()
-	//if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
-	//	return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
-	//}
+	cfg := a.api.GetConfig()
+	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager")
+	}
 
 	//TODO set chainID
 	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
