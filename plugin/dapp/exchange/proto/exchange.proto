@@ -135,6 +135,8 @@ message QueryMarketDepth {
   string primaryKey = 4;
   //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
   int32 count = 5;
+  //档位、精度
+  int32 depth = 6;
 }
 //市场深度
 message MarketDepth {
@@ -153,6 +155,13 @@ message MarketDepth {
 message MarketDepthList {
   repeated MarketDepth list = 1;
   string               primaryKey = 2;
+}
+//查询接口返回的市场买卖深度
+message MarketAllDepth {
+  //买
+  repeated MarketDepth bids = 1;
+  //卖
+  repeated MarketDepth asks = 2;
 }
 
 //查询最新得成交信息,外部接口
