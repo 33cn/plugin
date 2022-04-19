@@ -258,8 +258,7 @@ func (policy *zksyncPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 	txdetail.Txhash = tx.Hash()
 
 	pubkey := block.Block.Txs[index].Signature.GetPubkey()
-	addr := address.PubKeyToAddress(pubkey)
-	txdetail.Fromaddr = addr.String()
+	txdetail.Fromaddr = address.PubKeyToAddr(address.DefaultID, pubkey)
 
 	txdetailbyte := types.Encode(txdetail)
 	dbbatch.Set(key, txdetailbyte)
