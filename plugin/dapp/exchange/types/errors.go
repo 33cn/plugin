@@ -12,6 +12,8 @@ var (
 	ErrAddr         = fmt.Errorf("%s", "Wrong Addr!")
 	ErrAsset        = fmt.Errorf("%s", "The asset's execer or symbol can't be nil,The same assets cannot be exchanged!")
 	ErrCount        = fmt.Errorf("%s", "The param count can't large  20")
+	Err5Count       = fmt.Errorf("%s", "The param count can't large  50")
+	ErrAssetDepth   = fmt.Errorf("%s", "The param only in  [1,priceDigits+3]")
 	ErrDirection    = fmt.Errorf("%s", "The direction only 0 or 1!")
 	ErrStatus       = fmt.Errorf("%s", "The status only in  0 , 1, 2!")
 	ErrOrderID      = fmt.Errorf("%s", "Wrong OrderID!")

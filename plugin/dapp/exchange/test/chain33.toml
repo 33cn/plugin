@@ -267,6 +267,7 @@ namespace=""
 #exchange合约相关配置
 [mver.exec.sub.exchange]
 banks = []
+robots = []
 coins = []
 exchanges = []
 
@@ -274,6 +275,10 @@ exchanges = []
 #银行帐户列表（现第一个地址用来收取手续费）
 banks = [
     "1PTGVR7TUm1MJUH7M1UNcKBGMvfJ7nCrnN"
+]
+#机器人帐户列表
+robots = [
+    "1Nq8MDDVqSsS2zQeEZZa7bH53b9vBuUmEW"
 ]
 #币种配置，
 #coin   转入exchange合约的币种名称
