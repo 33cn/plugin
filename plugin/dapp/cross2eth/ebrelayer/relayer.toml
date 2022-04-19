@@ -5,22 +5,27 @@ dbdriver="leveldb"
 dbPath="datadir"
 dbCache=64
 ProcessWithDraw=false
+RemindUrl="http://183.129.226.77:9988/alert/send"
+RemindClientErrorUrl="http://116.63.171.186:9988/alert/send/email"
+RemindEmail=["236200000@126.com","ceshi@163.com"]
 #以太坊链1的配置
 [[EthRelayerCfg]]
 EthChainName="Ethereum"
-ethProvider="ws://172.18.0.2:8545/"
-EthProviderCli="http://172.18.0.2:8545"
+ethProvider=["ws://172.18.0.2:8545/", "ws://172.18.0.2:8545/"]
+EthProviderCli=["http://172.18.0.2:8545", "http://172.18.0.2:8545"]
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
+StartListenHeight=0
 #以太坊链2的配置
 [[EthRelayerCfg]]
 EthChainName="Binance"
-ethProvider="ws://172.18.0.2:8545/"
-EthProviderCli="http://172.18.0.2:8545"
+ethProvider=["ws://172.18.0.2:8545/", "ws://172.18.0.2:8545/"]
+EthProviderCli=["http://172.18.0.2:8545", "http://172.18.0.2:8545"]
 BridgeRegistry=""
 EthMaturityDegree=10
 EthBlockFetchPeriod=5000
+StartListenHeight=0
 #chain33的配置
 [Chain33RelayerCfg]
 ChainID4Chain33=0
@@ -35,10 +40,12 @@ pushName="x2eth"
 pushBind="0.0.0.0:20000"
 maturityDegree=10
 fetchHeightPeriodMs=5000
+keepAliveDuration=180000 #3分钟之内未收到信息，通过重新订阅，确保订阅可用
 #如果需要配置起始的块的信息，则为了保持一致性，三项缺一不可，或者都不配置
 startSyncHeight=0
 startSyncSequence=0
 startSyncHash=""
+chain33RpcUrls=["http://localhost:8801", "http://172.18.0.2:8801"]
 
 [log]
 # 日志级别，支持debug(dbug)/info/warn/error(eror)/crit

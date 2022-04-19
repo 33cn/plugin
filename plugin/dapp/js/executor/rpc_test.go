@@ -297,7 +297,7 @@ func TestJsGame(t *testing.T) {
 
 func configCreator(mocker *testnode.Chain33Mock, t *testing.T) {
 	// 需要配置
-	addr := address.PubKeyToAddress(mocker.GetHotKey().PubKey().Bytes()).String()
+	addr := address.BytesToBtcAddress(address.NormalVer, mocker.GetHotKey().PubKey().Bytes()).String()
 	creator := &types.ModifyConfig{
 		Key:   "js-creator",
 		Op:    "add",

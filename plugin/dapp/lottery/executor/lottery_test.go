@@ -144,8 +144,8 @@ func genaddress() (string, crypto.PrivKey) {
 	if err != nil {
 		panic(err)
 	}
-	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
-	return addrto.String(), privto
+	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
+	return addrto, privto
 }
 
 func ConstructCreateTx() *types.Transaction {

@@ -83,7 +83,7 @@ func (u *js) genesisInitExecFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -108,7 +108,7 @@ func (u *js) genesisInitFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(2).ToInteger()
@@ -133,7 +133,7 @@ func (u *js) loadAccountFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		account := acc.LoadAccount(addr)
@@ -155,7 +155,7 @@ func (u *js) getBalanceFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		account, err := acc.GetBalance(u.GetAPI(), &types.ReqBalance{
@@ -182,14 +182,14 @@ func (u *js) transferFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(from); err != nil {
+		if err := address.CheckAddress(from, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		to, err := call.Argument(2).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(to); err != nil {
+		if err := address.CheckAddress(to, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -218,7 +218,7 @@ func (u *js) transferToExecFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(from); err != nil {
+		if err := address.CheckAddress(from, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -247,7 +247,7 @@ func (u *js) withdrawFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -276,7 +276,7 @@ func (u *js) execFrozenFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -305,7 +305,7 @@ func (u *js) execActiveFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -334,7 +334,7 @@ func (u *js) execDepositFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -363,7 +363,7 @@ func (u *js) execWithdrawFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(addr); err != nil {
+		if err := address.CheckAddress(addr, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(3).ToInteger()
@@ -392,14 +392,14 @@ func (u *js) execTransferFunc(vm *otto.Otto) {
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(from); err != nil {
+		if err := address.CheckAddress(from, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		to, err := call.Argument(3).ToString()
 		if err != nil {
 			return errReturn(vm, err)
 		}
-		if err := address.CheckAddress(to); err != nil {
+		if err := address.CheckAddress(to, u.GetHeight()); err != nil {
 			return errReturn(vm, err)
 		}
 		amount, err := call.Argument(4).ToInteger()

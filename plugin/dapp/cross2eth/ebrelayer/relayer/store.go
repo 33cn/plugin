@@ -69,7 +69,7 @@ func (store *Store) Get(key []byte) ([]byte, error) {
 
 // Set 设置值
 func (store *Store) Set(key []byte, value []byte) (err error) {
-	return store.db.Set(key, value)
+	return store.db.SetSync(key, value)
 }
 
 // NewListHelper 新建列表复制操作对象

@@ -19,7 +19,7 @@ const (
 )
 
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
-	if err := address.CheckAddress(prob.ToAddr); err != nil {
+	if err := address.CheckAddress(prob.ToAddr, a.height); err != nil {
 		alog.Error("propProject ", "addr", prob.ToAddr, "check toAddr error", err)
 		return nil, types.ErrInvalidAddress
 	}
@@ -347,7 +347,7 @@ func (a *action) pubVotePropProject(voteProb *auty.PubVoteProposalProject) (*typ
 
 	if len(voteProb.OriginAddr) > 0 {
 		for _, board := range voteProb.OriginAddr {
-			if err := address.CheckAddress(board); err != nil {
+			if err := address.CheckAddress(board, a.height); err != nil {
 				alog.Error("pubVotePropProject ", "addr", board, "check toAddr error", err)
 				return nil, types.ErrInvalidAddress
 			}

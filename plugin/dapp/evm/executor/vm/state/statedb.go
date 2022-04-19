@@ -74,20 +74,21 @@ type MemoryStateDB struct {
 // 开始执行下一个区块时（执行器框架调用setEnv设置的区块高度发生变更时），会重新创建此DB对象
 func NewMemoryStateDB(StateDB db.KV, LocalDB db.KVDB, CoinsAccount *account.DB, blockHeight int64, api client.QueueProtocolAPI) *MemoryStateDB {
 	mdb := &MemoryStateDB{
-		StateDB:         StateDB,
-		LocalDB:         LocalDB,
-		CoinsAccount:    CoinsAccount,
-		evmPlatformAddr: address.GetExecAddress(api.GetConfig().ExecName("evm")).String(),
-		accounts:        make(map[string]*ContractAccount),
-		logs:            make(map[common.Hash][]*model.ContractLog),
-		logSize:         0,
-		preimages:       make(map[common.Hash][]byte),
-		stateDirty:      make(map[string]interface{}),
-		dataDirty:       make(map[string]interface{}),
-		blockHeight:     blockHeight,
-		refund:          0,
-		txIndex:         0,
-		api:             api,
+		StateDB:      StateDB,
+		LocalDB:      LocalDB,
+		CoinsAccount: CoinsAccount,
+		evmPlatformAddr: address.BytesToBtcAddress(address.NormalVer,
+			address.ExecPubKey(api.GetConfig().ExecName("evm"))).String(),
+		accounts:    make(map[string]*ContractAccount),
+		logs:        make(map[common.Hash][]*model.ContractLog),
+		logSize:     0,
+		preimages:   make(map[common.Hash][]byte),
+		stateDirty:  make(map[string]interface{}),
+		dataDirty:   make(map[string]interface{}),
+		blockHeight: blockHeight,
+		refund:      0,
+		txIndex:     0,
+		api:         api,
 	}
 	return mdb
 }

@@ -60,6 +60,7 @@ var (
 	multiBlocks           atomic.Value // 1
 	gossipVotes           atomic.Value
 	detachExec            atomic.Value // false
+	sameBlocktime         atomic.Value // false
 
 	zeroHash                    [32]byte
 	random                      *rand.Rand
@@ -114,6 +115,7 @@ type subConfig struct {
 	MultiBlocks           int64    `json:"multiBlocks"`
 	MessageInterval       int32    `json:"messageInterval"`
 	DetachExecution       bool     `json:"detachExecution"`
+	SameBlocktime         bool     `json:"sameBlocktime"`
 }
 
 func applyConfig(cfg *types.Consensus, sub []byte) {
@@ -169,6 +171,7 @@ func applyConfig(cfg *types.Consensus, sub []byte) {
 		peerGossipSleepDuration.Store(subcfg.MessageInterval)
 	}
 	detachExec.Store(subcfg.DetachExecution)
+	sameBlocktime.Store(subcfg.SameBlocktime)
 
 	gossipVotes.Store(true)
 }
@@ -550,7 +553,10 @@ func (client *Client) BuildBlock(height int64) *types.Block {
 	newblock.Difficulty = cfg.GetP(0).PowLimitBits
 	newblock.BlockTime = types.Now().Unix()
 	if lastBlock.BlockTime >= newblock.BlockTime {
-		newblock.BlockTime = lastBlock.BlockTime + 1
+		// 1秒内产生的多个区块使用相同时间戳
+		if !sameBlocktime.Load().(bool) || lastBlock.BlockTime > newblock.BlockTime {
+			newblock.BlockTime = lastBlock.BlockTime + 1
+		}
 	}
 	return &newblock
 }

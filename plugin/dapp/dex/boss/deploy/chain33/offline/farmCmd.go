@@ -177,7 +177,7 @@ func createMasterChef(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.PubKeyToAddress(privateKey.PubKey().Bytes())
+	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
 	from := common.Address{
 		Addr: fromAddr,
 	}
@@ -310,7 +310,7 @@ func addPool(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.PubKeyToAddress(privateKey.PubKey().Bytes())
+	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
 	from := common.Address{
 		Addr: fromAddr,
 	}
@@ -395,7 +395,7 @@ func updateAllocPoint(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.PubKeyToAddress(privateKey.PubKey().Bytes())
+	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
 	from := common.Address{
 		Addr: fromAddr,
 	}

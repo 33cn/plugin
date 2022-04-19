@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/33cn/chain33/common"
 	chain33Common "github.com/33cn/chain33/common"
@@ -49,6 +53,11 @@ func EthereumRelayerCmd() *cobra.Command {
 		MultiSignEthCmd(),
 		TransferEthCmd(),
 		CfgWithdrawCmd(),
+		GetCfgWithdrawCmd(),
+		ResendEthLockEventCmd(),
+		RegetEthLockEventCmd(),
+		CreateLockEventCmd(),
+		QueryCmd(),
 	)
 
 	return cmd
@@ -191,7 +200,7 @@ func generateEthereumPrivateKey(cmd *cobra.Command, args []string) {
 //ShowValidatorsAddrCmd ...
 func ShowValidatorsAddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show_validators",
+		Use:   "show_validator",
 		Short: "show me the validators including ethereum and chain33",
 		Run:   showValidatorsAddr,
 	}
@@ -200,8 +209,10 @@ func ShowValidatorsAddrCmd() *cobra.Command {
 
 func showValidatorsAddr(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+
 	var res ebTypes.ValidatorAddr4EthRelayer
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerValidator", nil, &res)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ShowEthRelayerValidator", ethChainName, &res)
 	ctx.Run()
 }
 
@@ -550,7 +561,21 @@ func LockEthErc20Asset(cmd *cobra.Command, args []string) {
 	}
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.LockEthErc20Asset", para, &res)
-	ctx.Run()
+	//ctx.Run
+	for try := 0; try < 3; try++ {
+		result, err := ctx.RunResult()
+		if err != nil {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+		data, err := json.MarshalIndent(result, "", "    ")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return
+		}
+		fmt.Println(string(data))
+		return
+	}
 }
 
 //LockEthErc20AssetAsync ...
@@ -754,6 +779,7 @@ func MultiSignEthCmd() *cobra.Command {
 		ConfigLockedTokenOfflineSaveCmd(),
 		GetSelfBalanceCmd(),
 		SetEthMultiSignAddrCmd(),
+		GetEthMultiSignAddrCmd(),
 	)
 	return cmd
 }
@@ -812,7 +838,7 @@ func ShowEthAddrCmdFlags(cmd *cobra.Command) {
 func ShowEthAddr(cmd *cobra.Command, args []string) {
 	addressstr, _ := cmd.Flags().GetString("address")
 
-	addr, err := address.NewAddrFromString(addressstr)
+	addr, err := address.NewBtcAddress(addressstr)
 	if nil != err {
 		fmt.Println("Wrong address")
 		return
@@ -1024,6 +1050,23 @@ func SetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
 	ctx.Run()
 }
 
+func GetEthMultiSignAddrCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get_multiSign",
+		Short: "get multiSign address",
+		Run:   GetEthMultiSignAddr,
+	}
+	return cmd
+}
+
+func GetEthMultiSignAddr(cmd *cobra.Command, _ []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetEthMultiSignAddr", ethChainName, &res)
+	ctx.Run()
+}
+
 func CfgWithdrawCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cfgWithdraw",
@@ -1041,7 +1084,7 @@ func addCfgWithdrawFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("fee")
 	cmd.Flags().Float64P("amount", "a", 0, "accumulative amount allowed to be withdrew per day")
 	_ = cmd.MarkFlagRequired("amount")
-	cmd.Flags().Int8P("decimal", "d", 0, "token decimal")
+	cmd.Flags().Uint8P("decimal", "d", 0, "token decimal")
 	_ = cmd.MarkFlagRequired("decimal")
 }
 
@@ -1051,16 +1094,228 @@ func CfgWithdraw(cmd *cobra.Command, _ []string) {
 	symbol, _ := cmd.Flags().GetString("symbol")
 	fee, _ := cmd.Flags().GetFloat64("fee")
 	amount, _ := cmd.Flags().GetFloat64("amount")
-	decimal, _ := cmd.Flags().GetInt8("decimal")
+	decimal, _ := cmd.Flags().GetUint8("decimal")
 
 	req := &ebTypes.CfgWithdrawReq{
 		Symbol:       symbol,
-		FeeAmount:    utils.ToWei(fee, int64(decimal)).String(),
-		AmountPerDay: utils.ToWei(amount, int64(decimal)).String(),
+		FeeAmount:    utils.SmalToBig(fee, decimal).String(),
+		AmountPerDay: utils.SmalToBig(amount, decimal).String(),
 		ChainName:    ethChainName,
 	}
 
 	var res rpctypes.Reply
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CfgWithdraw", req, &res)
 	ctx.Run()
+}
+
+func GetCfgWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "getCfgWithdraw",
+		Short: "get cfg withdraw fee",
+		Run:   GetCfgWithdraw,
+	}
+	addGetCfgWithdrawFlags(cmd)
+	return cmd
+}
+
+func addGetCfgWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+}
+
+func GetCfgWithdraw(cmd *cobra.Command, _ []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	symbol, _ := cmd.Flags().GetString("symbol")
+
+	req := &ebTypes.CfgWithdrawReq{
+		Symbol:    symbol,
+		ChainName: ethChainName,
+	}
+
+	var res ebTypes.WithdrawPara
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.GetCfgWithdraw", req, &res)
+	ctx.Run()
+}
+
+func ResendEthLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resendLockEvent",
+		Short: "resend lock Event to chain33 process goroutine",
+		Run:   resendLockEvent,
+	}
+	addResendLockEventFlags(cmd)
+	return cmd
+}
+
+func addResendLockEventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("height", "g", 0, "height begin to resend chain33 event ")
+	_ = cmd.MarkFlagRequired("height")
+	cmd.Flags().Int32P("index", "i", 0, "tx index")
+	_ = cmd.MarkFlagRequired("index")
+}
+
+func resendLockEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetInt64("height")
+	txIndex, _ := cmd.Flags().GetInt32("index")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	resendEthereumEventReq := &ebTypes.ResendEthereumEventReq{
+		Height:    height,
+		TxIndex:   txIndex,
+		ChainName: ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ResendEthereumLockEvent", resendEthereumEventReq, &res)
+	ctx.Run()
+}
+
+func RegetEthLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "regetLockEvent",
+		Short: "reget lock Event to chain33 process goroutine",
+		Run:   reGetEthereumEvent,
+	}
+	addRegetEventFlags(cmd)
+	return cmd
+}
+
+func addRegetEventFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64P("start", "s", 0, "height begin")
+	_ = cmd.MarkFlagRequired("start")
+	cmd.Flags().Int64P("end", "e", 0, "stop height")
+	_ = cmd.MarkFlagRequired("end")
+}
+
+func reGetEthereumEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetInt64("start")
+	stop, _ := cmd.Flags().GetInt64("end")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	regetEthereumEventReq := &ebTypes.RegetEthereumEventReq{
+		Start:     start,
+		Stop:      stop,
+		ChainName: ethChainName,
+	}
+	fmt.Println("start", regetEthereumEventReq.Start, "stop", regetEthereumEventReq.Stop)
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.ReGetEthereumEvent", regetEthereumEventReq, &res)
+	ctx.Run()
+}
+
+func CreateLockEventCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "createLockEvent",
+		Short: "create lock Event as emitted from ethereum contract",
+		Run:   createLockEvent,
+	}
+	addcreateLockEventFlags(cmd)
+	return cmd
+}
+
+func addcreateLockEventFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("from", "f", "", "Ethereum from address")
+	_ = cmd.MarkFlagRequired("from")
+	cmd.Flags().StringP("receiver", "r", "", "chain33 receiver address")
+	_ = cmd.MarkFlagRequired("receiver")
+
+	cmd.Flags().StringP("token", "t", "", "Ethereum token address")
+	_ = cmd.MarkFlagRequired("token")
+	cmd.Flags().StringP("symbol", "s", "", "Ethereum token symbol")
+	_ = cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().StringP("value", "v", "", "value")
+	_ = cmd.MarkFlagRequired("value")
+	cmd.Flags().StringP("nonce", "n", "", "nonce")
+	_ = cmd.MarkFlagRequired("nonce")
+}
+
+func createLockEvent(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	from, _ := cmd.Flags().GetString("from")
+	to, _ := cmd.Flags().GetString("receiver")
+	token, _ := cmd.Flags().GetString("token")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	value, _ := cmd.Flags().GetString("value")
+	nonce, _ := cmd.Flags().GetString("nonce")
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	createLockEventReq := &ebTypes.CreateLockEventReq{
+		From:      from,
+		To:        to,
+		Token:     token,
+		Symbol:    symbol,
+		Value:     value,
+		Nonce:     nonce,
+		ChainName: ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.CreateLockEventManually", createLockEventReq, &res)
+	ctx.Run()
+}
+
+func QueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query call",
+		Run:   queryCall,
+	}
+
+	cmd.Flags().StringP("address", "a", "", "contract address")
+	cmd.MarkFlagRequired("address")
+	cmd.Flags().StringP("input", "b", "", "call params (abi format) like foobar(param1,param2)")
+	cmd.MarkFlagRequired("input")
+	cmd.Flags().StringP("caller", "c", "", "the owner address")
+	cmd.Flags().StringP("path", "t", "./", "abi path(optional), default to .(current directory)")
+
+	return cmd
+}
+
+func queryCall(cmd *cobra.Command, args []string) {
+	ethChainName, _ := cmd.Flags().GetString("eth_chain_name")
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	addr, _ := cmd.Flags().GetString("address")
+	input, _ := cmd.Flags().GetString("input")
+	caller, _ := cmd.Flags().GetString("caller")
+	path, _ := cmd.Flags().GetString("path")
+
+	if caller == "" {
+		caller = addr
+	}
+
+	abiFileName := path + addr + ".abi"
+	abiStr, err := readFile(abiFileName)
+	if nil != err {
+		_, _ = fmt.Fprintln(os.Stderr, "Can't read abi info, Pls set correct abi path and provide abi file as", abiFileName)
+		return
+	}
+
+	queryReq := &ebTypes.QueryReq{
+		Param:        input,
+		AbiData:      abiStr,
+		ContractAddr: addr,
+		Owner:        caller,
+		ChainName:    ethChainName,
+	}
+
+	var res rpctypes.Reply
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Manager.EthGeneralQuery", queryReq, &res)
+	ctx.Run()
+}
+
+func readFile(fileName string) (string, error) {
+	f, err := os.Open(fileName)
+	defer f.Close()
+	if err != nil {
+		return "", err
+	}
+
+	fileContent, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	return string(fileContent), nil
 }

@@ -9,17 +9,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/33cn/chain33/rpc/jsonclient"
-	rpctypes "github.com/33cn/chain33/rpc/types"
-
-	"github.com/33cn/chain33/system/crypto/secp256k1"
-	"github.com/33cn/chain33/types"
-	"github.com/golang/protobuf/proto"
-
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
+	"github.com/33cn/chain33/rpc/jsonclient"
+	rpctypes "github.com/33cn/chain33/rpc/types"
+	"github.com/33cn/chain33/system/crypto/secp256k1"
+	"github.com/33cn/chain33/types"
+	chain33Types "github.com/33cn/chain33/types"
+	ebrelayerChain33 "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	evmAbi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	evmtypes "github.com/33cn/plugin/plugin/dapp/evm/types"
+	"github.com/golang/protobuf/proto"
 )
 
 type TxCreateInfo struct {
@@ -176,6 +177,30 @@ func SendSignTxs2Chain33(filePath, rpcUrl string) {
 		if deployInfo.Interval != 0 {
 			time.Sleep(deployInfo.Interval)
 		}
+
+		countTime := 0
+		for {
+			result := ebrelayerChain33.GetTxStatusByHashesRpc(txhash, rpcUrl)
+			//等待交易执行
+			if ebTypes.Invalid_Chain33Tx_Status == result {
+				time.Sleep(time.Second)
+
+				countTime++
+				// 超过2分钟 超时退出
+				if countTime > 120 {
+					fmt.Println("time out txhash: ", txhash)
+					return
+				}
+				continue
+			}
+			if result != chain33Types.ExecOk {
+				fmt.Println("Failed to send txhash: ", txhash, "result: ", result)
+				return
+			} else {
+				break
+			}
+		}
+
 		retData = append(retData, &Chain33OfflineTx{TxHash: txhash, ContractAddr: deployInfo.ContractAddr, OperationName: deployInfo.OperationName})
 	}
 

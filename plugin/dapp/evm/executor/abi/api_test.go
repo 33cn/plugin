@@ -107,7 +107,7 @@ func TestProcFuncCall(t *testing.T) {
 			[]string{"a", "1", "[1,2,3]"},
 		},
 	} {
-		fn, res, err := procFuncCall(test.input)
+		fn, res, err := ProcFuncCall(test.input)
 		assert.NoError(t, err, "process array string error")
 		assert.EqualValues(t, test.funcName, fn, "parse array string error")
 		assert.EqualValues(t, test.params, res, "parse array string error")
@@ -448,7 +448,7 @@ func Test_GoValue(t *testing.T) {
 			t.Fatalf("%v failed. Unexpected new type error: %v", i, err)
 		}
 
-		value, err := str2GoValue(typ, test.input)
+		value, err := Str2GoValue(typ, test.input)
 		if err != nil {
 			t.Fatalf("%v failed. Unexpected parse go Value error: %v", i, err)
 		}

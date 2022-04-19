@@ -30,14 +30,6 @@ func Test_LoadABI(t *testing.T) {
 	assert.NotEmpty(t, abi1, abi2, abi3)
 }
 
-func Test_isWebsocketURL(t *testing.T) {
-	bret := isWebsocketURL("ws://127.0.0.1:7545/")
-	assert.Equal(t, bret, true)
-
-	bret = isWebsocketURL("https://127.0.0.1:7545/")
-	assert.Equal(t, bret, false)
-}
-
 func TestContractRegistry_String(t *testing.T) {
 	assert.Equal(t, Valset.String(), "valset")
 	assert.Equal(t, Oracle.String(), "oracle")
@@ -83,7 +75,17 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 	}
 
 	Addr2TxNonce := make(map[common.Address]*NonceMutex)
-	_, err = RelayOracleClaimToEthereum(x2EthContracts.Oracle, sim, para.InitValidators[0], common.HexToAddress("0x0000000000000000000000000000000000000000"), prophecyClaim, privateKey, Addr2TxNonce)
+	burnOrLockParameter := &BurnOrLockParameter{
+		OracleInstance: x2EthContracts.Oracle,
+		Client:         sim,
+		Sender:         para.InitValidators[0],
+		TokenOnEth:     common.HexToAddress("0x0000000000000000000000000000000000000000"),
+		Claim:          prophecyClaim,
+		PrivateKey:     privateKey,
+		Addr2TxNonce:   Addr2TxNonce,
+		ChainId:        big.NewInt(1337),
+	}
+	_, err = RelayOracleClaimToEthereum(burnOrLockParameter)
 	require.Nil(t, err)
 
 	_, err = revokeNonce(para.Operator)
@@ -364,4 +366,14 @@ func DeployAndInit(client ethinterface.EthClientSpec, para *DeployPara) (*X2EthC
 	}
 
 	return x2EthContracts, deployInfo, nil
+}
+
+func Test_SelectAndRoundEthURL(t *testing.T) {
+	urls := []string{"url1", "url2"}
+	decision, err := SelectAndRoundEthURL(&urls)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "url1", decision)
+	assert.Equal(t, "url2", urls[0])
+	assert.Equal(t, "url1", urls[1])
+
 }

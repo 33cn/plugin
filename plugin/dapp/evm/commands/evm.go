@@ -146,7 +146,7 @@ func evmBalance(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	addr, _ := cmd.Flags().GetString("addr")
 	execer, _ := cmd.Flags().GetString("exec")
-	err := address.CheckAddress(addr)
+	err := address.CheckAddress(addr, -1)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, types.ErrInvalidAddress)
 		return
@@ -214,7 +214,7 @@ func calcNewContractAddrCmd() *cobra.Command {
 func calcNewContractAddr(cmd *cobra.Command, args []string) {
 	deployer, _ := cmd.Flags().GetString("deployer")
 	hash, _ := cmd.Flags().GetString("hash")
-	newContractAddr := address.GetExecAddress(deployer + hash)
+	newContractAddr := address.BytesToBtcAddress(address.NormalVer, address.ExecPubKey(deployer+hash))
 	fmt.Println(newContractAddr.String())
 }
 
@@ -674,7 +674,7 @@ func evmTransfer(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	r_addr, err := address.NewAddrFromString(receiver)
+	r_addr, err := address.NewBtcAddress(receiver)
 	if nil != err {
 		_, _ = fmt.Println("Pls input correct address")
 		return

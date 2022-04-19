@@ -187,7 +187,7 @@ func InitMinerAddr(stateDB dbm.KV, addrs []string, bind string) {
 			MinerAddress:  bind,
 			ReturnAddress: addr,
 		}
-		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
+		stateDB.Set(bindKey(addr), types.Encode(tkBind))
 	}
 }
 
@@ -734,7 +734,7 @@ func TestVerifyMinerAddr(t *testing.T) {
 			MinerAddress:  AddrD,
 			ReturnAddress: addr,
 		}
-		stateDB.Set(ticket.BindKey(addr), types.Encode(tkBind))
+		stateDB.Set(bindKey(addr), types.Encode(tkBind))
 	}
 	_, err := action.verifyMinerAddr(addrs, AddrD)
 	assert.NoError(t, err)
@@ -762,7 +762,7 @@ func TestVerifyMinerAddr(t *testing.T) {
 		MinerAddress:  AddrA,
 		ReturnAddress: testf,
 	}
-	stateDB.Set(ticket.BindKey(testf), types.Encode(tkBind))
+	stateDB.Set(bindKey(testf), types.Encode(tkBind))
 	addrs = []string{testf}
 	addr, err = action.verifyMinerAddr(addrs, AddrD)
 	assert.Equal(t, auty.ErrBindAddr, err)
@@ -788,4 +788,25 @@ func signTx(tx *types.Transaction, hexPrivKey string) (*types.Transaction, error
 
 	tx.Sign(int32(signType), privKey)
 	return tx, nil
+}
+
+func TestBindKey(t *testing.T) {
+	ids := []string{
+		"1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4",
+		"1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k",
+		"1MCftFynyvG2F4ED5mdHYgziDxx6vDrScs",
+		"1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR",
+	}
+	for _, id := range ids {
+		subcfg.BindKey = ""
+		assert.Equal(t, bindKey(id), ticket.BindKey(id))
+
+		subcfg.BindKey = "mavl-ticket-tbind-"
+		assert.NotNil(t, bindKey(id))
+		assert.Equal(t, bindKey(id), ticket.BindKey(id))
+
+		subcfg.BindKey = "mavl-pos33-bind-"
+		assert.NotNil(t, bindKey(id))
+		assert.False(t, string(bindKey(id)) == string(ticket.BindKey(id)))
+	}
 }

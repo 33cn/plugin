@@ -707,7 +707,7 @@ type Order struct {
 	UpdateTime int64 `protobuf:"varint,10,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
 	//索引
 	Index int64 `protobuf:"varint,11,opt,name=index,proto3" json:"index,omitempty"`
-	//手续费率
+	//手续费率 (挂单)
 	Rate int32 `protobuf:"varint,12,opt,name=rate,proto3" json:"rate,omitempty"`
 	//手续费
 	DigestedFee int64 `protobuf:"varint,13,opt,name=digestedFee,proto3" json:"digestedFee,omitempty"`

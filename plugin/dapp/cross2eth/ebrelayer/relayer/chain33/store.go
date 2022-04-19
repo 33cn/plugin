@@ -23,7 +23,23 @@ var (
 	tokenSymbol2AddrPrefix             = []byte("chain33-chain33TokenSymbol2AddrPrefix")
 	multiSignAddressPrefix             = []byte("chain33-multiSignAddress")
 	symbol2Ethchain                    = []byte("chain33-symbol2Ethchain")
+	txIsRelayedUnconfirm               = []byte("chain33-txIsRelayedUnconfirm")
+	chain33TxRelayedAlready            = []byte("chain33-txRelayedAlready")
+	fdTx2EthTotalAmount                = []byte("chain33-fdTx2EthTotalAmount")
+	ethTxRelayAlreadyPrefix            = []byte("chain33-ethTxRelayAlready")
 )
+
+func ethTxRelayAlreadyKey(chain33Txhash string) []byte {
+	return append(ethTxRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
+}
+
+func chain33TxIsRelayedUnconfirmKey(txHash string) []byte {
+	return append(txIsRelayedUnconfirm, []byte(fmt.Sprintf("-txHash-%s", txHash))...)
+}
+
+func chain33TxRelayedAlreadyKey(txHash string) []byte {
+	return append(chain33TxRelayedAlready, []byte(fmt.Sprintf("-txHash-%s", txHash))...)
+}
 
 func tokenSymbol2AddrKey(symbol string) []byte {
 	return append(tokenSymbol2AddrPrefix, []byte(fmt.Sprintf("-symbol-%s", symbol))...)
@@ -46,12 +62,82 @@ func calcFromEthFinishedStaticsList(claimType int32) []byte {
 	return []byte(fmt.Sprintf("%s-%d-", eth2Chain33BurnLockTxFinished, claimType))
 }
 
+func (chain33Relayer *Relayer4Chain33) updateFdTx2EthTotalAmount(index int64) error {
+	totalTx := &chain33Types.Int64{
+		Data: index,
+	}
+	//更新成功见证的交易数
+	return chain33Relayer.db.SetSync(fdTx2EthTotalAmount, chain33Types.Encode(totalTx))
+}
+
+func (chain33Relayer *Relayer4Chain33) getFdTx2EthTotalAmount() int64 {
+	totalTx, _ := utils.LoadInt64FromDB(fdTx2EthTotalAmount, chain33Relayer.db)
+	return totalTx
+}
+
+func (chain33Relayer *Relayer4Chain33) getAllTxsUnconfirm() (txInfos []*ebTypes.TxRelayConfirm4Chain33, err error) {
+	helper := dbm.NewListHelper(chain33Relayer.db)
+	datas := helper.List(txIsRelayedUnconfirm, nil, 0, dbm.ListASC)
+	cnt := len(datas)
+	if 0 == cnt {
+		return nil, nil
+	}
+
+	txInfos = make([]*ebTypes.TxRelayConfirm4Chain33, cnt)
+	for i, data := range datas {
+		txInfo := &ebTypes.TxRelayConfirm4Chain33{}
+		if err := chain33Types.Decode(data, txInfo); nil != err {
+			return nil, err
+		}
+
+		txInfos[i] = txInfo
+	}
+	return
+}
+
+func (chain33Relayer *Relayer4Chain33) resetKeyChain33TxRelayedAlready(txHash string) error {
+	key := chain33TxIsRelayedUnconfirmKey(txHash)
+	data, err := chain33Relayer.db.Get(key)
+	if nil != err {
+		relayerLog.Info("resetKeyTxRelayedAlready", "No data for tx", txHash)
+		return err
+	}
+	_ = chain33Relayer.db.DeleteSync(key)
+	setkey := chain33TxRelayedAlreadyKey(txHash)
+
+	return chain33Relayer.db.SetSync(setkey, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) setChain33TxIsRelayedUnconfirm(txHash string, index int64, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) error {
+	key := chain33TxIsRelayedUnconfirmKey(txHash)
+	data := chain33Types.Encode(txRelayConfirm4Chain33)
+	relayerLog.Info("setChain33TxIsRelayedUnconfirm", "TxHash", txHash, "index", index, "ForwardTimes", txRelayConfirm4Chain33.FdTimes)
+	return chain33Relayer.db.SetSync(key, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) setEthTxRelayAlreadyInfo(ethTxhash string, relayTxDetail *ebTypes.RelayTxDetail) error {
+	key := ethTxRelayAlreadyKey(ethTxhash)
+	data := chain33Types.Encode(relayTxDetail)
+	return chain33Relayer.db.SetSync(key, data)
+}
+
+func (chain33Relayer *Relayer4Chain33) getEthTxRelayAlreadyInfo(ethTxhash string) (*ebTypes.RelayTxDetail, error) {
+	key := ethTxRelayAlreadyKey(ethTxhash)
+	data, err := chain33Relayer.db.Get(key)
+	if nil != err {
+		return nil, err
+	}
+	var relayTxDetail ebTypes.RelayTxDetail
+	err = chain33Types.Decode(data, &relayTxDetail)
+	return &relayTxDetail, err
+}
+
 func (chain33Relayer *Relayer4Chain33) updateTotalTxAmount2Eth(txIndex int64) error {
 	totalTx := &chain33Types.Int64{
 		Data: txIndex,
 	}
 	//更新成功见证的交易数
-	return chain33Relayer.db.Set(relayEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
+	return chain33Relayer.db.SetSync(relayEthBurnLockTxTotalAmount, chain33Types.Encode(totalTx))
 }
 
 func (chain33Relayer *Relayer4Chain33) getTotalTxAmount() int64 {
@@ -61,7 +147,7 @@ func (chain33Relayer *Relayer4Chain33) getTotalTxAmount() int64 {
 
 func (chain33Relayer *Relayer4Chain33) setLastestRelay2Chain33TxStatics(txIndex int64, claimType int32, data []byte) error {
 	key := calcRelayFromEthStaticsKey(txIndex, claimType)
-	return chain33Relayer.db.Set(key, data)
+	return chain33Relayer.db.SetSync(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) getStatics(claimType int32, txIndex int64, count int32) ([][]byte, error) {
@@ -83,9 +169,9 @@ func (chain33Relayer *Relayer4Chain33) setChain33UpdateTxIndex(txindex int64, cl
 	}
 
 	if events.ClaimTypeBurn == claimType {
-		return chain33Relayer.db.Set(chain33BurnTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
+		return chain33Relayer.db.SetSync(chain33BurnTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
 	}
-	return chain33Relayer.db.Set(chain33LockTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
+	return chain33Relayer.db.SetSync(chain33LockTxUpdateTxIndex, chain33Types.Encode(txIndexWrapper))
 }
 
 func (chain33Relayer *Relayer4Chain33) getChain33UpdateTxIndex(claimType events.ClaimType) int64 {
@@ -120,11 +206,11 @@ func (chain33Relayer *Relayer4Chain33) loadLastSyncHeight() int64 {
 
 func (chain33Relayer *Relayer4Chain33) setLastSyncHeight(syncHeight int64) {
 	bytes := chain33Types.Encode(&chain33Types.Int64{Data: syncHeight})
-	_ = chain33Relayer.db.Set(lastSyncHeightPrefix, bytes)
+	_ = chain33Relayer.db.SetSync(lastSyncHeightPrefix, bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) setBridgeRegistryAddr(bridgeRegistryAddr string) error {
-	return chain33Relayer.db.Set(bridgeRegistryAddrOnChain33, []byte(bridgeRegistryAddr))
+	return chain33Relayer.db.SetSync(bridgeRegistryAddrOnChain33, []byte(bridgeRegistryAddr))
 }
 
 func (chain33Relayer *Relayer4Chain33) getBridgeRegistryAddr() (string, error) {
@@ -135,12 +221,12 @@ func (chain33Relayer *Relayer4Chain33) getBridgeRegistryAddr() (string, error) {
 	return string(addr), nil
 }
 
-func (chain33Relayer *Relayer4Chain33) SetTokenAddress(token2set ebTypes.TokenAddress) error {
-	bytes := chain33Types.Encode(&token2set)
+func (chain33Relayer *Relayer4Chain33) SetTokenAddress(token2set *ebTypes.TokenAddress) error {
+	bytes := chain33Types.Encode(token2set)
 	chain33Relayer.rwLock.Lock()
 	chain33Relayer.symbol2Addr[token2set.Symbol] = token2set.Address
 	chain33Relayer.rwLock.Unlock()
-	return chain33Relayer.db.Set(tokenSymbol2AddrKey(token2set.Symbol), bytes)
+	return chain33Relayer.db.SetSync(tokenSymbol2AddrKey(token2set.Symbol), bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) RestoreTokenAddress() error {
@@ -203,7 +289,7 @@ func (chain33Relayer *Relayer4Chain33) ShowTokenAddress(token2show *ebTypes.Toke
 
 func (chain33Relayer *Relayer4Chain33) setMultiSignAddress(address string) {
 	bytes := []byte(address)
-	_ = chain33Relayer.db.Set(multiSignAddressPrefix, bytes)
+	_ = chain33Relayer.db.SetSync(multiSignAddressPrefix, bytes)
 }
 
 func (chain33Relayer *Relayer4Chain33) getMultiSignAddress() string {
@@ -219,7 +305,7 @@ func (chain33Relayer *Relayer4Chain33) storeSymbol2chainName(symbol2Name map[str
 		Symbol2Name: symbol2Name,
 	}
 	data := chain33Types.Encode(Symbol2EthChain)
-	_ = chain33Relayer.db.Set(symbol2Ethchain, data)
+	_ = chain33Relayer.db.SetSync(symbol2Ethchain, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]string {
@@ -233,4 +319,21 @@ func (chain33Relayer *Relayer4Chain33) restoreSymbol2chainName() map[string]stri
 		return make(map[string]string)
 	}
 	return symbol2EthChain.Symbol2Name
+}
+
+//判断是否已经被处理，如果能够在数据库中找到该笔交易，则认为已经被处理
+func (chain33Relayer *Relayer4Chain33) checkTxProcessed(txhash string) bool {
+	key1 := chain33TxIsRelayedUnconfirmKey(txhash)
+	data, err := chain33Relayer.db.Get(key1)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	key2 := chain33TxRelayedAlreadyKey(txhash)
+	data, err = chain33Relayer.db.Get(key2)
+	if 0 != len(data) && nil == err {
+		return true
+	}
+
+	return false
 }

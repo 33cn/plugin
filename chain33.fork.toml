@@ -78,10 +78,15 @@ Enable=0
 
 [fork.sub.exchange]
 Enable=0
-ForkFix1=0
-ForkFix2=0
-ForkFix3=0
-ForkFix4=0
+ForkParamV1 = 0
+ForkParamV2 = 0
+ForkParamV3 = 0
+ForkParamV4 = 0
+ForkParamV5 = 0
+ForkParamV6 = 0
+ForkParamV7 = 0
+ForkParamV8 = 0
+ForkParamV9 = 0
 
 [fork.sub.game]
 Enable=0

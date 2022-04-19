@@ -24,7 +24,7 @@ var (
 	hex        = "CC38546E9E659D15E6B4893F0AB32A06D103931A8230B0BDE71459D2B27D6944"
 	a, _       = common.FromHex(hex)
 	privKey, _ = c.PrivKeyFromBytes(a)
-	toAddr     = address.PubKeyToAddress(privKey.PubKey().Bytes()).String()
+	toAddr     = address.PubKeyToAddr(address.DefaultID, privKey.PubKey().Bytes())
 	amount     = int64(1e8)
 	v          = &cty.CoinsAction_Transfer{Transfer: &types.AssetsTransfer{Amount: amount}}
 	transfer   = &cty.CoinsAction{Value: v, Ty: cty.CoinsActionTransfer}

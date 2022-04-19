@@ -37,6 +37,8 @@ type Chain33Msg struct {
 	Amount               *big.Int
 	TxHash               []byte
 	Nonce                int64
+	ForwardTimes         int32
+	ForwardIndex         int64
 }
 
 // 发生在chain33evm上的lock事件，当bty跨链转移到eth时会发生该种事件

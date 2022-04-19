@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"encoding/hex"
 
+	"github.com/33cn/chain33/system/address/btc"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -87,20 +89,27 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 
 	//MultiSigAccCreate 交易校验
 	if ato, ok := payload.(*mty.MultiSigAccCreate); ok {
-		return checkAccountCreateTx(ato)
+		return checkAccountCreateTx(ato, m.GetHeight())
+	}
+
+	multiSignDriver, err := address.LoadDriver(btc.MultiSignAddressID, m.GetHeight())
+	if err != nil {
+		multisiglog.Error("CheckTx", "LoadDriver err", err)
+		return err
 	}
 
 	//MultiSigOwnerOperate 交易的检测
 	if ato, ok := payload.(*mty.MultiSigOwnerOperate); ok {
-		return checkOwnerOperateTx(ato)
+		return checkOwnerOperateTx(ato, m.GetHeight(), multiSignDriver)
 	}
 	//MultiSigAccOperate 交易的检测
 	if ato, ok := payload.(*mty.MultiSigAccOperate); ok {
-		return checkAccountOperateTx(ato)
+		return checkAccountOperateTx(ato, multiSignDriver)
 	}
+
 	//MultiSigConfirmTx  交易的检测
 	if ato, ok := payload.(*mty.MultiSigConfirmTx); ok {
-		if err := address.CheckMultiSignAddress(ato.GetMultiSigAccAddr()); err != nil {
+		if err := multiSignDriver.ValidateAddr(ato.GetMultiSigAccAddr()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		return nil
@@ -108,7 +117,7 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 
 	//MultiSigExecTransferTo 交易的检测
 	if ato, ok := payload.(*mty.MultiSigExecTransferTo); ok {
-		if err := address.CheckMultiSignAddress(ato.GetTo()); err != nil {
+		if err := multiSignDriver.ValidateAddr(ato.GetTo()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//assets check
@@ -117,11 +126,11 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 	//MultiSigExecTransferFrom 交易的检测
 	if ato, ok := payload.(*mty.MultiSigExecTransferFrom); ok {
 		//from addr check
-		if err := address.CheckMultiSignAddress(ato.GetFrom()); err != nil {
+		if err := multiSignDriver.ValidateAddr(ato.GetFrom()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//to addr check
-		if err := address.CheckAddress(ato.GetTo()); err != nil {
+		if err := address.CheckAddress(ato.GetTo(), m.GetHeight()); err != nil {
 			return types.ErrInvalidAddress
 		}
 		//assets check
@@ -130,7 +139,7 @@ func (m *MultiSig) CheckTx(tx *types.Transaction, index int) error {
 
 	return nil
 }
-func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
+func checkAccountCreateTx(ato *mty.MultiSigAccCreate, blockHeight int64) error {
 	var totalweight uint64
 	var ownerCount int
 
@@ -144,7 +153,7 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 	//创建时requiredweight权重的值不能大于所有owner权重之和
 	for _, owner := range owners {
 		if owner != nil {
-			if err := address.CheckAddress(owner.OwnerAddr); err != nil {
+			if err := address.CheckAddress(owner.OwnerAddr, blockHeight); err != nil {
 				return types.ErrInvalidAddress
 			}
 			if owner.Weight == 0 {
@@ -177,17 +186,17 @@ func checkAccountCreateTx(ato *mty.MultiSigAccCreate) error {
 	return mty.IsAssetsInvalid(dailyLimit.GetExecer(), dailyLimit.GetSymbol())
 }
 
-func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
+func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate, blockHeight int64, multiSignDriver address.Driver) error {
 	OldOwner := ato.GetOldOwner()
 	NewOwner := ato.GetNewOwner()
 	NewWeight := ato.GetNewWeight()
 	MultiSigAccAddr := ato.GetMultiSigAccAddr()
-	if err := address.CheckMultiSignAddress(MultiSigAccAddr); err != nil {
+	if err := multiSignDriver.ValidateAddr(MultiSigAccAddr); err != nil {
 		return types.ErrInvalidAddress
 	}
 
 	if ato.OperateFlag == mty.OwnerAdd {
-		if err := address.CheckAddress(NewOwner); err != nil {
+		if err := address.CheckAddress(NewOwner, blockHeight); err != nil {
 			return types.ErrInvalidAddress
 		}
 		if NewWeight <= 0 {
@@ -195,12 +204,12 @@ func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
 		}
 	}
 	if ato.OperateFlag == mty.OwnerDel {
-		if err := address.CheckAddress(OldOwner); err != nil {
+		if err := address.CheckAddress(OldOwner, blockHeight); err != nil {
 			return types.ErrInvalidAddress
 		}
 	}
 	if ato.OperateFlag == mty.OwnerModify {
-		if err := address.CheckAddress(OldOwner); err != nil {
+		if err := address.CheckAddress(OldOwner, blockHeight); err != nil {
 			return types.ErrInvalidAddress
 		}
 		if NewWeight <= 0 {
@@ -208,19 +217,19 @@ func checkOwnerOperateTx(ato *mty.MultiSigOwnerOperate) error {
 		}
 	}
 	if ato.OperateFlag == mty.OwnerReplace {
-		if err := address.CheckAddress(OldOwner); err != nil {
+		if err := address.CheckAddress(OldOwner, blockHeight); err != nil {
 			return types.ErrInvalidAddress
 		}
-		if err := address.CheckAddress(NewOwner); err != nil {
+		if err := address.CheckAddress(NewOwner, blockHeight); err != nil {
 			return types.ErrInvalidAddress
 		}
 	}
 	return nil
 }
-func checkAccountOperateTx(ato *mty.MultiSigAccOperate) error {
+func checkAccountOperateTx(ato *mty.MultiSigAccOperate, multiSignDriver address.Driver) error {
 	//MultiSigAccOperate MultiSigAccAddr 地址检测
 	MultiSigAccAddr := ato.GetMultiSigAccAddr()
-	if err := address.CheckMultiSignAddress(MultiSigAccAddr); err != nil {
+	if err := multiSignDriver.ValidateAddr(MultiSigAccAddr); err != nil {
 		return types.ErrInvalidAddress
 	}
 

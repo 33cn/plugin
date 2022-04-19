@@ -187,7 +187,7 @@ func TestCert(t *testing.T) {
 	assert.NotNil(t, set)
 	util.SaveKVList(env.ldb, set.KV)
 
-	addr := address.PubKeyToAddr(env.user.Key.PubKey().Bytes())
+	addr := address.PubKeyToAddr(address.DefaultID, env.user.Key.PubKey().Bytes())
 	res, err := exec.Query("CertValidSNByAddr", types.Encode(&ct.ReqQueryValidCertSN{Addr: addr}))
 	assert.Nil(t, err)
 	assert.NotNil(t, res)

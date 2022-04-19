@@ -73,7 +73,7 @@ func createContractsWithFile(cmd *cobra.Command, _ []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.PubKeyToAddress(privateKey.PubKey().Bytes())
+	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
 	from := common.Address{
 		Addr: fromAddr,
 	}
@@ -119,7 +119,7 @@ func createCrossBridge(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.PubKeyToAddress(privateKey.PubKey().Bytes())
+	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
 	from := common.Address{
 		Addr: fromAddr,
 	}

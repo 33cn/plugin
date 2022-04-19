@@ -8,6 +8,8 @@ package events
 import (
 	"math/big"
 
+	chain33Address "github.com/33cn/chain33/common/address"
+
 	ebrelayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -81,9 +83,12 @@ func UnpackLogLock(contractAbi abi.ABI, eventName string, eventData []byte) (loc
 		return nil, ebrelayerTypes.ErrUnpack
 	}
 
+	chain33Receiver := chain33Address.Address{}
+	chain33Receiver.SetBytes(event.To)
+
 	eventsLog.Info("UnpackLogLock", "value", event.Value.String(), "symbol", event.Symbol,
 		"token addr", event.Token.Hex(), "sender", event.From.Hex(),
-		"recipient", string(event.To), "nonce", event.Nonce.String())
+		"recipient", chain33Receiver.String(), "nonce", event.Nonce.String())
 
 	return event, nil
 }

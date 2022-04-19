@@ -133,6 +133,7 @@ func (syncTx *EVMTxLogs) dealEVMTxLogs(evmTxLogsInBlks *types.EVMTxLogsInBlks) {
 	}
 	//发送回复，确认接收成功
 	resultCh <- nil
+	resetTimer2KeepAlive()
 	log.Debug("dealEVMTxLogs", "seqStart", start, "count", count, "maxBlockHeight", height, "syncTx.seqNum", syncTx.seqNum)
 }
 
@@ -147,7 +148,7 @@ func (syncTx *EVMTxLogs) LoadLastBlockHeight() (int64, error) {
 
 func (syncTx *EVMTxLogs) setBlockLastSequence(newSequence int64) {
 	Sequencebytes := types.Encode(&types.Int64{Data: newSequence})
-	if err := syncTx.db.Set(lastSequences, Sequencebytes); nil != err {
+	if err := syncTx.db.SetSync(lastSequences, Sequencebytes); nil != err {
 		panic("setBlockLastSequence failed due to cause:" + err.Error())
 	}
 	//同时更新内存中的seq
@@ -156,7 +157,7 @@ func (syncTx *EVMTxLogs) setBlockLastSequence(newSequence int64) {
 
 func (syncTx *EVMTxLogs) setBlockHeight(height int64) {
 	bytes := types.Encode(&types.Int64{Data: height})
-	_ = syncTx.db.Set(syncLastHeight, bytes)
+	_ = syncTx.db.SetSync(syncLastHeight, bytes)
 	atomic.StoreInt64(&syncTx.height, height)
 }
 
@@ -167,7 +168,7 @@ func (syncTx *EVMTxLogs) updateSequence(newSequence int64) {
 func (syncTx *EVMTxLogs) setTxLogsPerBlock(txLogs *types.EVMTxLogPerBlk) {
 	key := evmTxLogKey4Height(txLogs.Height)
 	value := types.Encode(txLogs)
-	if err := syncTx.db.Set(key, value); nil != err {
+	if err := syncTx.db.SetSync(key, value); nil != err {
 		panic("setTxLogsPerBlock failed due to:" + err.Error())
 	}
 }
@@ -205,7 +206,7 @@ func (syncTx *EVMTxLogs) GetNextValidEvmTxLogs(height int64) (*types.EVMTxLogPer
 
 func (syncTx *EVMTxLogs) delTxReceipts(height int64) {
 	key := evmTxLogKey4Height(height)
-	_ = syncTx.db.Set(key, nil)
+	_ = syncTx.db.DeleteSync(key)
 }
 
 // 检查输入是否有问题, 并解析输入

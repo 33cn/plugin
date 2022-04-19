@@ -7,6 +7,8 @@ package executor
 import (
 	"encoding/hex"
 
+	"github.com/33cn/chain33/system/address/btc"
+
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	"github.com/33cn/chain33/common/address"
@@ -92,7 +94,7 @@ func (a *action) MultiSigAccCreate(accountCreate *mty.MultiSigAccCreate) (*types
 		multiSigAccount.DailyLimits = append(multiSigAccount.DailyLimits, &dailyLimit)
 	}
 	//通过创建交易的txhash生成一个唯一的多重签名合约 NewAddrFromString
-	addr := address.MultiSignAddress(a.txhash)
+	addr := btc.FormatBtcAddr(address.MultiSignVer, a.txhash)
 	//账户去重校验
 	multiSig, err := getMultiSigAccFromDb(a.db, addr)
 	if err == nil && multiSig != nil {

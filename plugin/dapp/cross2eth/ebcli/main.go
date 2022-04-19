@@ -15,6 +15,8 @@ import (
 	"github.com/33cn/chain33/pluginmgr"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebcli/buildflags"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/version"
+	pluginVersion "github.com/33cn/plugin/version"
 	tml "github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +38,7 @@ func init() {
 		Chain33RelayerCmd(),
 		EthereumRelayerCmd(),
 		StaticsCmd(),
+		VersionCmd(),
 	)
 }
 
@@ -70,8 +73,8 @@ func run(RPCAddr, NodeAddr string) {
 	pluginmgr.AddCmd(rootCmd)
 	log.SetLogLevel("error")
 	rootCmd.PersistentFlags().String("rpc_laddr", RPCAddr, "http url")
-	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "eth node url")
-	rootCmd.PersistentFlags().String("eth_chain_name", "Ethereum", "eth chain name")
+	rootCmd.PersistentFlags().String("node_addr", NodeAddr, "bsc node url")
+	rootCmd.PersistentFlags().String("eth_chain_name", "Binance", "bsc chain name")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -98,8 +101,27 @@ func main() {
 		buildflags.RPCAddr = "http://localhost:9901"
 	}
 	if buildflags.NodeAddr == "" {
-		buildflags.NodeAddr = cfg.EthRelayerCfg[0].EthProviderCli
+		buildflags.NodeAddr = cfg.EthRelayerCfg[0].EthProviderCli[0]
 	}
 
 	run(buildflags.RPCAddr, buildflags.NodeAddr)
+}
+
+func VersionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "show version",
+		Run:   showVersion,
+	}
+	return cmd
+}
+
+func showVersion(_ *cobra.Command, _ []string) {
+	fmt.Println("plugin version  :", pluginVersion.GetVersion())
+	fmt.Println("relayer version :", version.GetVersion())
+	fmt.Println("commit          :", version.GitCommit)
+	fmt.Println("buildTime       :", version.BuildTime)
+	fmt.Println("goVersion       :", version.GoVersion)
+	fmt.Println("platform        :", version.Platform)
+
 }

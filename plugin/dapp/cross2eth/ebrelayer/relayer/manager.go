@@ -3,9 +3,13 @@ package relayer
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"sync"
 	"sync/atomic"
+
+	chain33Address "github.com/33cn/chain33/common/address"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
@@ -13,6 +17,7 @@ import (
 	chain33Types "github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/chain33"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/events"
 	relayerTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
 	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/utils"
 	lru "github.com/hashicorp/golang-lru"
@@ -325,6 +330,52 @@ func (manager *Manager) ResendChain33Event(param *relayerTypes.ResendChain33Even
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  "Successful to ResendChain33Event",
+	}
+	return nil
+}
+
+func (manager *Manager) ResendEthereumLockEvent(param *relayerTypes.ResendEthereumEventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	ethInt, ok := manager.ethRelayer[param.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	info, err := ethInt.ResendLockEvent(uint64(param.Height), uint32(param.TxIndex))
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  info,
+	}
+	return nil
+}
+
+func (manager *Manager) ReGetEthereumEvent(param *relayerTypes.RegetEthereumEventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	ethInt, ok := manager.ethRelayer[param.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	info, err := ethInt.ReGetEvent(param.Start, param.Stop)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  info,
 	}
 	return nil
 }
@@ -867,6 +918,41 @@ func (manager *Manager) TransferEth(transfer *relayerTypes.TransferToken, result
 	return nil
 }
 
+func (manager *Manager) CreateLockEventManually(createLockEventReq *relayerTypes.CreateLockEventReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	ethInt, ok := manager.ethRelayer[createLockEventReq.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	chain33AddressTo, err := chain33Address.NewBtcAddress(createLockEventReq.To)
+	if nil != err {
+		return err
+	}
+
+	value, _ := big.NewInt(0).SetString(createLockEventReq.Value, 0)
+	nonce, _ := big.NewInt(0).SetString(createLockEventReq.Nonce, 0)
+
+	event := &events.LockEvent{
+		From:   ethCommon.HexToAddress(createLockEventReq.From),
+		To:     chain33AddressTo.Hash160[:],
+		Token:  ethCommon.HexToAddress(createLockEventReq.Token),
+		Symbol: createLockEventReq.Symbol,
+		Value:  value,
+		Nonce:  nonce,
+	}
+	err = ethInt.CreateLockEventManually(event)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  "Succeed to create lock event",
+	}
+	return nil
+}
+
 func (manager *Manager) SetChain33MultiSignAddr(multiSignAddr string, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -897,6 +983,38 @@ func (manager *Manager) SetEthMultiSignAddr(multiSignAddr *relayerTypes.CfgMulti
 	return nil
 }
 
+func (manager *Manager) GetEthMultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  ethInt.GetMultiSignAddr(),
+	}
+	return nil
+}
+
+func (manager *Manager) GetChain33MultiSignAddr(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  manager.chain33Relayer.GetMultiSignAddr(),
+	}
+	return nil
+}
+
 func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
 	manager.mtx.Lock()
 	defer manager.mtx.Unlock()
@@ -916,6 +1034,20 @@ func (manager *Manager) CfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq,
 	*result = rpctypes.Reply{
 		IsOk: resultCfg,
 	}
+	return nil
+}
+func (manager *Manager) GetCfgWithdraw(cfgWithdrawReq *relayerTypes.CfgWithdrawReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[cfgWithdrawReq.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	*result = ethInt.GetCfgWithdraw(cfgWithdrawReq.Symbol)
 	return nil
 }
 
@@ -949,6 +1081,44 @@ func (manager *Manager) BurnWithIncreaseAsyncFromChain33(burn *relayerTypes.Burn
 	*result = rpctypes.Reply{
 		IsOk: true,
 		Msg:  txhash,
+	}
+	return nil
+}
+
+//ShowEthRelayerValidator 显示在Ethereum中以验证人validator身份进行登录的地址
+func (manager *Manager) ShowEthRelayerValidator(chainName string, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	ethINt, ok := manager.ethRelayer[chainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+
+	var err error
+	*result, err = ethINt.GetValidatorAddr()
+	if nil != err {
+		return err
+	}
+	return nil
+}
+
+func (manager *Manager) EthGeneralQuery(query *relayerTypes.QueryReq, result *interface{}) error {
+	manager.mtx.Lock()
+	defer manager.mtx.Unlock()
+	if err := manager.checkPermission(); nil != err {
+		return err
+	}
+	ethInt, ok := manager.ethRelayer[query.ChainName]
+	if !ok {
+		return errors.New("no Ethereum chain named as you configured")
+	}
+	ret, err := ethInt.GeneralQuery(query.Param, query.AbiData, query.ContractAddr, query.Owner)
+	if nil != err {
+		return err
+	}
+	*result = rpctypes.Reply{
+		IsOk: true,
+		Msg:  ret,
 	}
 	return nil
 }

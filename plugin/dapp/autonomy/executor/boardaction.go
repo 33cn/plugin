@@ -54,7 +54,7 @@ func newAction(a *Autonomy, tx *types.Transaction, index int32) *action {
 }
 
 func (a *action) getPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, error) {
-	mpBd, err := filterPropBoard(prob.Boards)
+	mpBd, err := filterPropBoard(prob.Boards, a.height)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (a *action) getPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, erro
 }
 
 func (a *action) getOldPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, error) {
-	mpBd, err := filterPropBoard(prob.Boards)
+	mpBd, err := filterPropBoard(prob.Boards, a.height)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +89,10 @@ func (a *action) getOldPropBoard(prob *auty.ProposalBoard) (*auty.ActiveBoard, e
 	return a.addPropBoard(prob, mpBd)
 }
 
-func filterPropBoard(boards []string) (map[string]struct{}, error) {
+func filterPropBoard(boards []string, blockHeight int64) (map[string]struct{}, error) {
 	mpBd := make(map[string]struct{})
 	for _, board := range boards {
-		if err := address.CheckAddress(board); err != nil {
+		if err := address.CheckAddress(board, blockHeight); err != nil {
 			return nil, errors.Wrapf(types.ErrInvalidAddress, "addr=%s", board)
 		}
 		// 提案board重复地址去重复
@@ -263,7 +263,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	if len(voteProb.OriginAddr) > 0 {
 		for _, board := range voteProb.OriginAddr {
-			if err := address.CheckAddress(board); err != nil {
+			if err := address.CheckAddress(board, a.height); err != nil {
 				alog.Error("votePropBoard ", "addr", board, "check toAddr error", err)
 				return nil, types.ErrInvalidAddress
 			}
@@ -515,11 +515,22 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	return int32(voteAccount.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
+// bindKey bind key
+func bindKey(id string) (key []byte) {
+	if subcfg.BindKey != "" {
+		key = append(key, []byte(subcfg.BindKey)...)
+		key = append(key, []byte(id)...)
+		return key
+	} else {
+		return ticket.BindKey(id)
+	}
+}
+
 func (a *action) verifyMinerAddr(addrs []string, bindAddr string) (string, error) {
 	// 验证绑定关系与重复地址
 	mp := make(map[string]struct{})
 	for _, addr := range addrs {
-		value, err := a.db.Get(ticket.BindKey(addr))
+		value, err := a.db.Get(bindKey(addr))
 		if err != nil {
 			return addr, auty.ErrMinerAddr
 		}

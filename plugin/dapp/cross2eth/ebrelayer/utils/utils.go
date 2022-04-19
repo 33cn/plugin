@@ -7,6 +7,7 @@ package utils
 // --------------------------------------------------------
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,13 +22,18 @@ import (
 	"time"
 	"unicode"
 
-	simplejson "github.com/bitly/go-simplejson"
-
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/contracts/erc20/generated"
+	"github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/relayer/ethereum/ethinterface"
+	ebTypes "github.com/33cn/plugin/plugin/dapp/cross2eth/ebrelayer/types"
+	chain33Abi "github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const (
@@ -151,47 +157,97 @@ func SimpleGetDecimals(addr string) (int64, error) {
 }
 
 //GetDecimalsFromNode ...
-func GetDecimalsFromNode(addr string, nodeAddr string) (int64, error) {
+func GetDecimalsFromNode(addr, rpcLaddr string) (int64, error) {
 	if addr == "0x0000000000000000000000000000000000000000" || addr == "" {
 		return 18, nil
 	}
-	Hashprefix := "0x313ce567"
-	postData := fmt.Sprintf(`{"id":1,"jsonrpc":"2.0","method":"eth_call","params":[{"to":"%s", "data":"%s"},"latest"]}`, addr, Hashprefix)
 
-	retryTimes := 0
-RETRY:
-	res, err := sendToServer(nodeAddr, strings.NewReader(postData))
+	client, err := ethclient.Dial(rpcLaddr)
 	if err != nil {
-		log.Error("GetDecimals", "error:", err.Error())
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
+		log.Error("GetDecimals", "SetupEthClient error:", err.Error())
+		return 0, err
 	}
-	js, err := simplejson.NewJson(res)
-	if err != nil {
-		log.Error("GetDecimals", "NewJson error:", err.Error())
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
-	}
-	result := js.Get("result").MustString()
 
-	decimals, err := strconv.ParseInt(result, 0, 64)
+	msg, err := QueryResult("decimals()", generated.ERC20ABI, addr, addr, client)
+	decimals, err := strconv.ParseInt(msg, 0, 64)
 	if err != nil {
-		if retryTimes > 3 {
-			return 0, err
-		}
-		retryTimes++
-		goto RETRY
+		log.Error("GetDecimals", "ParseInt error:", err.Error())
+		return 0, err
 	}
 	return decimals, nil
 }
 
-func sendToServer(url string, req io.Reader) ([]byte, error) {
+func QueryResult(param, abiData, contract, owner string, client ethinterface.EthClientSpec) (string, error) {
+	log.Info("QueryResult", "param", param, "contract", contract, "owner", owner)
+	// 首先解析参数字符串，分析出方法名以及个参数取值
+	methodName, params, err := chain33Abi.ProcFuncCall(param)
+	if err != nil {
+		return methodName + " ProcFuncCall fail", err
+	}
+
+	// 解析ABI数据结构，获取本次调用的方法对象
+	abi_, err := chain33Abi.JSON(strings.NewReader(abiData))
+	if err != nil {
+		log.Error("QueryResult", "JSON fail", err)
+		return methodName + " JSON fail", err
+	}
+
+	var method chain33Abi.Method
+	var ok bool
+	if method, ok = abi_.Methods[methodName]; !ok {
+		err = fmt.Errorf("function %v not exists", methodName)
+		return methodName, err
+	}
+
+	if !method.IsConstant() {
+		return methodName, errors.New("method is not readonly")
+	}
+	if len(params) != method.Inputs.LengthNonIndexed() {
+		err = fmt.Errorf("function params error:%v", params)
+		return methodName, err
+	}
+
+	// 获取方法参数对象，遍历解析各参数，获得参数的Go取值
+	paramVals := []interface{}{}
+	if len(params) != 0 {
+		// 首先检查参数个数和ABI中定义的是否一致
+		if method.Inputs.LengthNonIndexed() != len(params) {
+			err = fmt.Errorf("function Params count error: %v", param)
+			return methodName, err
+		}
+
+		for i, v := range method.Inputs.NonIndexed() {
+			paramVal, err := chain33Abi.Str2GoValue(v.Type, params[i])
+			if err != nil {
+				log.Error("QueryResult", "Str2GoValue fail", err)
+				return methodName + " Str2GoValue fail", err
+			}
+			paramVals = append(paramVals, paramVal)
+		}
+	}
+
+	ownerAddr := common.HexToAddress(owner)
+	opts := &bind.CallOpts{
+		Pending: true,
+		From:    ownerAddr,
+		Context: context.Background(),
+	}
+	var out []interface{}
+	// Convert the raw abi into a usable format
+	contractABI, err := abi.JSON(strings.NewReader(abiData))
+	if err != nil {
+		return "JSON err", err
+	}
+	boundContract := bind.NewBoundContract(common.HexToAddress(contract), contractABI, client, nil, nil)
+	err = boundContract.Call(opts, &out, methodName, paramVals...)
+	if err != nil {
+		log.Error("QueryResult", "call fail", err)
+		return "call err", err
+	}
+	return fmt.Sprint(out[0]), err
+}
+
+func SendToServer(url string, req io.Reader) ([]byte, error) {
 	client := http.Client{
 		Transport: &http.Transport{
 			Dial: func(netw, addr string) (net.Conn, error) {
@@ -252,7 +308,6 @@ func Toeth(amount string, decimal int64) float64 {
 
 //ToWei 将eth单位的金额转为wei单位
 func ToWei(amount float64, decimal int64) *big.Int {
-
 	var ok bool
 	bn := big.NewInt(1)
 	if decimal > 4 {
@@ -265,6 +320,13 @@ func ToWei(amount float64, decimal int64) *big.Int {
 	}
 
 	return nil
+}
+
+func SmalToBig(amount float64, decimals uint8) *big.Int {
+	bfa := big.NewFloat(amount)
+	bfa = bfa.Mul(bfa, big.NewFloat(1).SetInt64(ebTypes.DecimalsPrefix[decimals]))
+	bn, _ := bfa.Int(nil)
+	return bn
 }
 
 //TrimZeroAndDot ...

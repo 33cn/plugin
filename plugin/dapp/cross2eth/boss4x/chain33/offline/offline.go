@@ -34,6 +34,7 @@ func Boss4xOfflineCmd() *cobra.Command {
 		CreateMultisignTransferCmd(),
 		MultisignTransferCmd(),
 		SetWithdrawProxyCmd(),
+		withdrawFromEvmCmd(),
 	)
 	return cmd
 }

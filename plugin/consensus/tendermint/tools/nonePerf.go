@@ -168,7 +168,7 @@ func Perf(host, txsize, num, sleepinterval, totalduration string) {
 					//构造存证交易
 					tx := txPool.Get().(*types.Transaction)
 					tx.To = execAddr
-					tx.Fee = rand.Int63()
+					tx.Fee = 1e6
 					tx.Nonce = time.Now().UnixNano()
 					tx.Expire = height + types.TxHeightFlag + types.LowAllowPackHeight
 					tx.Payload = RandStringBytes(sizeInt)
@@ -561,9 +561,9 @@ func genaddress() (string, crypto.PrivKey) {
 	if err != nil {
 		panic(err)
 	}
-	addrto := address.PubKeyToAddress(privto.PubKey().Bytes())
-	fmt.Println("addr:", addrto.String())
-	return addrto.String(), privto
+	addrto := address.PubKeyToAddr(address.DefaultID, privto.PubKey().Bytes())
+	fmt.Println("addr:", addrto)
+	return addrto, privto
 }
 
 // RandStringBytes ...

@@ -13,6 +13,8 @@ message SyncTxConfig {
   int64 startSyncHeight     = 10;
   int64 startSyncSequence   = 11;
   string startSyncHash      = 12;
+  int64 keepAliveDuration  = 13;
+  repeated string chain33RpcUrls = 14;
 }
 
 message Log {
@@ -30,11 +32,12 @@ message Log {
 
 message EthRelayerCfg {
   string ethChainName            = 1;
-  string ethProvider             = 2;
-  string ethProviderCli          = 3;
+  repeated string ethProvider    = 2;
+  repeated string ethProviderCli = 3;
   string bridgeRegistry          = 4;
   int32 ethMaturityDegree        = 5;
   int32 ethBlockFetchPeriod      = 6;
+  int64 startListenHeight        = 7;
 }
 
 message Chain33RelayerCfg {
@@ -54,6 +57,9 @@ message RelayerConfig {
   string dbPath                       = 7;   //数据库存储目录
   int32 dbCache                       = 8;   //数据库缓存大小
   bool processWithDraw                = 9;
+  string remindUrl                    = 10;   // 代理打币地址金额不够时发生提醒短信的 url
+  string remindClientErrorUrl         = 11;
+  repeated string remindEmail         = 12;
 }
 
 message SyncTxReceiptConfig {
@@ -65,4 +71,5 @@ message SyncTxReceiptConfig {
   int64 startSyncSequence   = 6;
   string startSyncHash      = 7;
   repeated string contracts = 8;
+  int64 keepAliveDuration   = 9;
 }

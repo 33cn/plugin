@@ -77,7 +77,7 @@ func checkTxStatus(client *ethclient.Client, txhash, txName string) bool {
 	for {
 		select {
 		case <-timeout.C:
-			panic("Deploy timeout")
+			panic("Deploy timeout " + txhash)
 		case <-checkticket.C:
 			receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(txhash))
 			if err == ethereum.NotFound {

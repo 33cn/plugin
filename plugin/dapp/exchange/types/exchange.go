@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/33cn/chain33/types"
@@ -94,10 +95,17 @@ var (
 	//tlog = log.New("module", "exchange.types")
 
 	//ForkFix Forks
-	ForkFix1 = "ForkFix1"
-	ForkFix2 = "ForkFix2"
-	ForkFix3 = "ForkFix3"
-	ForkFix4 = "ForkFix4"
+	//ForkFix1 = "ForkFix1"
+
+	ForkParamV1 = "ForkParamV1"
+	ForkParamV2 = "ForkParamV2"
+	ForkParamV3 = "ForkParamV3"
+	ForkParamV4 = "ForkParamV4"
+	ForkParamV5 = "ForkParamV5"
+	ForkParamV6 = "ForkParamV6"
+	ForkParamV7 = "ForkParamV7"
+	ForkParamV8 = "ForkParamV8"
+	ForkParamV9 = "ForkParamV9"
 )
 
 // init defines a register function
@@ -111,10 +119,16 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix2, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix3, 0)
-	cfg.RegisterDappFork(ExchangeX, ForkFix4, 0)
+	//cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV2, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV3, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV4, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV5, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV6, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV7, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV8, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkParamV9, 0)
 }
 
 // InitExecutor defines register executor
@@ -152,48 +166,85 @@ func (e *ExchangeType) GetLogMap() map[int64]*types.LogInfo {
 
 var MverPrefix = "mver.exec.sub." + ExchangeX // [mver.exec.sub.exchange]
 
-type TradeConfig struct {
-	Banks []string
-	Coins map[string]Coin
+type Econfig struct {
+	Banks     []string
+	Coins     []CoinCfg
+	Exchanges map[string]*Trade // 现货交易、杠杠交易
+}
+
+type CoinCfg struct {
+	Coin   string
+	Execer string
+	Name   string
 }
 
 // 交易对配置
-type Coin struct {
-	Name   string
-	Rate   int32
-	MinFee int64
+type Trade struct {
+	Symbol       string
+	PriceDigits  int32
+	AmountDigits int32
+	Taker        int32
+	Maker        int32
+	MinFee       int64
 }
 
-func (f *TradeConfig) GetFeeAddr() string {
+func (f *Econfig) GetFeeAddr() string {
 	return f.Banks[0]
 }
 
-func (f *TradeConfig) GetRate(or *LimitOrder) int32 {
-	var symbol = or.GetRightAsset().GetSymbol()
-
-	if or.GetOp() == OpBuy {
-		symbol = or.GetLeftAsset().GetSymbol()
+func (f *Econfig) GetCoinName(asset *Asset) string {
+	for _, v := range f.Coins {
+		if v.Coin == asset.GetSymbol() && v.Execer == asset.GetExecer() {
+			return v.Name
+		}
 	}
-
-	c, ok := f.Coins[symbol]
-	if !ok {
-		return 0
-	}
-
-	return c.Rate
+	return asset.Symbol
 }
 
-func (f *TradeConfig) GetMinFee(or *LimitOrder) int64 {
-	var symbol = or.GetRightAsset().GetSymbol()
+func (f *Econfig) GetSymbol(left, right *Asset) string {
+	return fmt.Sprintf("%v_%v", f.GetCoinName(left), f.GetCoinName(right))
+}
 
-	if or.GetOp() == OpBuy {
-		symbol = or.GetLeftAsset().GetSymbol()
-	}
-
-	c, ok := f.Coins[symbol]
+func (f *Econfig) GetTrade(or *LimitOrder) *Trade {
+	symbol := f.GetSymbol(or.LeftAsset, or.RightAsset)
+	c, ok := f.Exchanges[symbol]
 	if !ok {
+		return nil
+	}
+	return c
+}
+
+func (t *Trade) GetPriceDigits() int32 {
+	if t == nil {
 		return 0
 	}
+	return t.PriceDigits
+}
 
-	return c.MinFee
+func (t *Trade) GetAmountDigits() int32 {
+	if t == nil {
+		return 0
+	}
+	return t.AmountDigits
+}
+
+func (t *Trade) GetTaker() int32 {
+	if t == nil {
+		return 100000
+	}
+	return t.Taker
+}
+
+func (t *Trade) GetMaker() int32 {
+	if t == nil {
+		return 100000
+	}
+	return t.Maker
+}
+
+func (t *Trade) GetMinFee() int64 {
+	if t == nil {
+		return 0
+	}
+	return t.MinFee
 }
