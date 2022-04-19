@@ -257,8 +257,10 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 	if err != nil {
 		//没查到就先初始化
 		if err == types.ErrNotFound {
-			tree := NewAccountTree(db)
-			updateMap[string(GetAccountTreeKey())] = types.Encode(tree)
+			kvs := NewAccountTree(db)
+			for _, kv := range kvs {
+				updateMap[string(kv.GetKey())] = kv.GetValue()
+			}
 			return &TreeUpdateInfo{updateMap: updateMap}, nil
 		} else {
 			return nil, err

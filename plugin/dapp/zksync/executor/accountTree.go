@@ -19,7 +19,8 @@ type TreeUpdateInfo struct {
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
-func NewAccountTree(db dbm.KV) *zt.AccountTree {
+func NewAccountTree(db dbm.KV) []*types.KeyValue {
+	var kvs []*types.KeyValue
 	//todo 从配置文件读取
 	leaf := &zt.Leaf{
 		EthAddress: "980818135352849559554652468538757099471386586455",
@@ -31,15 +32,17 @@ func NewAccountTree(db dbm.KV) *zt.AccountTree {
 			Y: "13575378421883862534829584367244516767645518094963505752293596385949094459968",
 		},
 	}
-	err := db.Set(GetAccountIdPrimaryKey(leaf.AccountId), types.Encode(leaf))
-	if err != nil {
-		panic(err)
+	kv := &types.KeyValue{
+		Key: GetAccountIdPrimaryKey(leaf.AccountId),
+		Value: types.Encode(leaf),
 	}
+	kvs = append(kvs, kv)
 
-	err = db.Set(GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress), types.Encode(leaf))
-	if err != nil {
-		panic(err)
+	kv = &types.KeyValue{
+		Key: GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
+		Value: types.Encode(leaf),
 	}
+	kvs = append(kvs, kv)
 
 	merkleTree := getNewTree()
 	merkleTree.Push(getLeafHash(leaf))
@@ -58,11 +61,13 @@ func NewAccountTree(db dbm.KV) *zt.AccountTree {
 		})
 	}
 
-	err = db.Set(GetAccountTreeKey(), types.Encode(tree))
-	if err != nil {
-		panic(err)
+	kv = &types.KeyValue{
+		Key: GetAccountTreeKey(),
+		Value: types.Encode(tree),
 	}
-	return tree
+	kvs = append(kvs, kv)
+
+	return kvs
 }
 
 func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, []*types.KeyValue, error) {
