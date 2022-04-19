@@ -20,7 +20,6 @@ type Action struct {
 	statedb   dbm.KV
 	txhash    []byte
 	fromaddr  string
-	toaddr    string
 	blocktime int64
 	height    int64
 	execaddr  string
@@ -33,12 +32,10 @@ type Action struct {
 func NewAction(e *exchange, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
-	toaddr := tx.GetTo()
 	return &Action{
 		statedb:   e.GetStateDB(),
 		txhash:    hash,
 		fromaddr:  fromaddr,
-		toaddr:    toaddr,
 		blocktime: e.GetBlockTime(),
 		height:    e.GetHeight(),
 		execaddr:  dapp.ExecAddress(string(tx.Execer)),
