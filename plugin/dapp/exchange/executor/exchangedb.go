@@ -3,6 +3,7 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
+	"math"
 	"math/big"
 	"reflect"
 
@@ -94,6 +95,10 @@ func CheckCount(count int32) bool {
 	return count <= 20 && count >= 0
 }
 
+func Check5Count(count int32) bool {
+	return count <= 50 && count >= 0
+}
+
 //CheckAmount 最小交易 1coin
 func CheckAmount(amount, coinPrecision int64) bool {
 	if amount < 1 || amount >= types.MaxCoin*coinPrecision {
@@ -127,6 +132,11 @@ func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
 		return false
 	}
 	return true
+}
+
+//CheckDepth 1:价格精度；priceDigits+3：精度为百位
+func CheckDepth(depth, priceDigits int32) bool {
+	return depth <= priceDigits+3 && depth >= 1
 }
 
 //LimitOrder ...
@@ -259,10 +269,15 @@ func (a *Action) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
 func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var priceKey string
-	var count int
+	var (
+		logs     []*types.ReceiptLog
+		kvs      []*types.KeyValue
+		priceKey string
+		count    int
+		taker    int32
+		maker    int32
+		minFee   int64
+	)
 
 	cfg := a.api.GetConfig()
 	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
@@ -270,7 +285,12 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
-	trade := tCfg.GetTrade(payload)
+	if !tCfg.IsFeeFreeAddr(a.fromaddr) {
+		trade := tCfg.GetTrade(payload.GetLeftAsset(), payload.GetRightAsset())
+		taker = trade.GetTaker()
+		maker = trade.GetMaker()
+		minFee = trade.GetMinFee()
+	}
 
 	or := &et.Order{
 		OrderID:     a.GetIndex(),
@@ -284,8 +304,8 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		Addr:        a.fromaddr,
 		UpdateTime:  a.blocktime,
 		Index:       a.GetIndex(),
-		Rate:        trade.GetMaker(),
-		MinFee:      trade.GetMinFee(),
+		Rate:        maker,
+		MinFee:      minFee,
 		Hash:        hex.EncodeToString(a.txhash),
 		CreateTime:  a.blocktime,
 	}
@@ -355,7 +375,7 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 						}
 						continue
 					}
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), trade.GetTaker()) // payload, or redundant
+					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), taker) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
 							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
@@ -668,7 +688,6 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
 	}
 	if err != nil {
-		elog.Error("QueryMarketDepth.", "left", left, "right", right, "err", err.Error())
 		return nil, err
 	}
 
@@ -680,6 +699,156 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 		list.PrimaryKey = string(rows[len(rows)-1].Primary)
 	}
 	return &list, nil
+}
+
+//QueryMarketDepth 查询市场深度(买卖一起返回,不做聚合)
+func QueryAllMarketDepth(localdb dbm.KV, left, right *et.Asset, count int32) (*et.MarketAllDepth, error) {
+	var list et.MarketAllDepth
+
+	bid, err := QueryMarketDepth(localdb, left, right, et.OpBuy, "", count)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
+	if bid != nil {
+		list.Bids = bid.List
+	}
+
+	ask, err := QueryMarketDepth(localdb, left, right, et.OpSell, "", count)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
+	if ask != nil {
+		list.Asks = ask.List
+	}
+
+	return &list, nil
+}
+
+func QueryAllDept(localdb dbm.KV, left, right *et.Asset, op, count int32, depth int64) (*et.MarketAllDepth, error) {
+	var list et.MarketAllDepth
+
+	bid, err := QueryBidDepth(localdb, left, right, count, depth)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
+	if bid != nil && op != et.OpSell {
+		list.Bids = bid.List
+	}
+
+	ask, err := QueryAskDepth(localdb, left, right, count, depth)
+	if err != nil && err != types.ErrNotFound {
+		return nil, err
+	}
+	if ask != nil && op != et.OpBuy {
+		list.Asks = ask.List
+	}
+	return &list, nil
+}
+func QueryBidDepth(localdb dbm.KV, left, right *et.Asset, count int32, depth int64) (*et.MarketDepthList, error) {
+	table := NewMarketDepthTable(localdb)
+	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), et.OpBuy))
+	var rows []*tab.Row
+	var err error
+
+	rows, err = table.ListIndex("price", prefix, nil, 20, Direction(et.OpBuy))
+	if err != nil {
+		return nil, err
+	}
+
+	var list et.MarketDepthList
+	first := (rows[0].Data.(*et.MarketDepth).Price) / depth
+	for index := 0; index < int(count); index++ {
+		if (first - int64(index)) < 0 {
+			break
+		}
+		marketDepth := &et.MarketDepth{
+			LeftAsset:  left,
+			RightAsset: right,
+			Price:      (first - int64(index)) * depth,
+			Amount:     0,
+			Op:         et.OpBuy,
+		}
+		list.List = append(list.List, marketDepth)
+	}
+
+	var amount, price, nPrice, temp int64
+	for {
+		for _, row := range rows {
+			amount = row.Data.(*et.MarketDepth).Amount
+			price = row.Data.(*et.MarketDepth).Price
+			if len(list.List) > 0 {
+				nPrice = list.List[len(list.List)-1].Price
+			}
+			if price < nPrice {
+				return &list, nil
+			}
+			for {
+				if price >= list.List[temp].Price {
+					list.List[temp].Amount += amount
+					list.PrimaryKey = string(row.Primary)
+					break
+				}
+				temp++
+			}
+		}
+		rows, err = table.ListIndex("price", prefix, []byte(list.PrimaryKey), 20, Direction(et.OpBuy))
+		if err == types.ErrNotFound {
+			return &list, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+}
+func QueryAskDepth(localdb dbm.KV, left, right *et.Asset, count int32, depth int64) (*et.MarketDepthList, error) {
+	table := NewMarketDepthTable(localdb)
+	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), et.OpSell))
+	var rows []*tab.Row
+	var err error
+
+	rows, err = table.ListIndex("price", prefix, nil, 20, Direction(et.OpSell))
+	if err != nil {
+		return nil, err
+	}
+
+	var list et.MarketDepthList
+	first := math.Ceil(float64(rows[0].Data.(*et.MarketDepth).Price) / float64(depth))
+	for index := 0; index < int(count); index++ {
+		marketDepth := &et.MarketDepth{
+			LeftAsset:  left,
+			RightAsset: right,
+			Price:      (int64(first) + int64(index)) * depth,
+			Amount:     0,
+			Op:         et.OpSell,
+		}
+		list.List = append(list.List, marketDepth)
+	}
+
+	var amount, price, temp int64
+	for {
+		for _, row := range rows {
+			amount = row.Data.(*et.MarketDepth).Amount
+			price = row.Data.(*et.MarketDepth).Price
+			if price > list.List[len(list.List)-1].Price {
+				return &list, nil
+			}
+			for {
+				if price <= list.List[temp].Price {
+					list.List[temp].Amount += amount
+					list.PrimaryKey = string(row.Primary)
+					break
+				}
+				temp++
+			}
+		}
+		rows, err = table.ListIndex("price", prefix, []byte(list.PrimaryKey), 20, Direction(et.OpSell))
+		if err == types.ErrNotFound {
+			return &list, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
 }
 
 //QueryHistoryOrderList Only the order information is returned
@@ -805,6 +974,16 @@ func ParseConfig(cfg *types.Chain33Config, height int64) (*et.Econfig, error) {
 	if err != nil || len(banks) == 0 {
 		return nil, err
 	}
+
+	robots, err := ParseStrings(cfg, "robots", height)
+	if err != nil || len(banks) == 0 {
+		return nil, err
+	}
+	robotMap := make(map[string]bool)
+	for _, v := range robots {
+		robotMap[v] = true
+	}
+
 	coins, err := ParseCoins(cfg, "coins", height)
 	if err != nil {
 		return nil, err
@@ -815,6 +994,7 @@ func ParseConfig(cfg *types.Chain33Config, height int64) (*et.Econfig, error) {
 	}
 	return &et.Econfig{
 		Banks:     banks,
+		RobotMap:  robotMap,
 		Coins:     coins,
 		Exchanges: exchanges,
 	}, nil
