@@ -15,7 +15,7 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyUnknownAction = iota + 200
+	TyUnknowAction = iota + 200
 	TyLimitOrderAction
 	TyMarketOrderAction
 	TyRevokeOrderAction
@@ -38,7 +38,7 @@ const (
 
 // log类型id值
 const (
-	TyUnknowLog = iota + 200
+	TyUnknownLog = iota + 200
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
