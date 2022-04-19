@@ -3,6 +3,7 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"strconv"
 	"testing"
@@ -15,9 +16,10 @@ import (
 )
 
 func TestAccountTree(t *testing.T) {
+	var kvs []*types.KeyValue
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
-	info, err := generateTreeUpdateInfo(statedb)
+	info, err := generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 2000; i++ {
 		ethAddress := "12345678901012345" + strconv.Itoa(i)
@@ -70,7 +72,8 @@ func getChain33Addr(privateKeyString string) string {
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	hash.Write(privateKey.PublicKey.Bytes())
+	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
+	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
 	return hex.EncodeToString(hash.Sum(nil))
 }
 

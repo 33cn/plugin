@@ -17,16 +17,17 @@ import (
 )
 
 func TestZksyncOption(t *testing.T) {
+	var kvs []*types.KeyValue
 	dir, statedb, localdb := util.CreateTestDB()
 	defer util.CloseTestDB(dir, statedb)
 	/*************************deposit*************************/
-	info, err := generateTreeUpdateInfo(statedb)
+	info, err := generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	action := &Action{localDB: localdb, statedb: statedb, height: 1, index: 0, fromaddr: "operator"}
 	deposit := &zt.ZkDeposit{
 		TokenId:     1,
 		Amount:      "10000",
-		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d57",
+		EthAddress:  "abcd68033A72978C1084E2d44D1Fa06DdC4A2d58",
 		Chain33Addr: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"),
 	}
 	receipt, err := action.Deposit(deposit)
@@ -42,18 +43,18 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	assert.Equal(t, nil, err)
-	leaf, err := GetLeafByAccountId(statedb, 1, info)
+	leaf, err := GetLeafByAccountId(statedb, 2, info)
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, nil, leaf)
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
 	setPubKey := &zt.ZkSetPubKey{
-		AccountId: 1,
+		AccountId: 2,
 		PubKey: &zt.ZkPubKey{
 			X: privateKey.PublicKey.A.X.String(),
 			Y: privateKey.PublicKey.A.Y.String(),
@@ -73,7 +74,7 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	/*************************withdraw*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
 		AccountId: 1,
@@ -114,7 +115,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "5000", token.Balance)
 
 	/*************************transferToNew*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
 		FromAccountId:    1,
@@ -147,7 +148,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "500", token.Balance)
 
 	/*************************transfer*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
 		FromAccountId: 1,
@@ -179,7 +180,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "1000", token.Balance)
 
 	/*************************forceQuit*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, kvs)
 	assert.Equal(t, nil, err)
 	forceQuit := &zt.ZkForceExit{
 		AccountId: 1,

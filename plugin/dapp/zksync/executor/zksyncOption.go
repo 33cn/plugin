@@ -91,7 +91,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
 	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -251,14 +251,17 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 	return branch
 }
 
-func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
+func generateTreeUpdateInfo(db dbm.KV, totalKvs []*types.KeyValue) (*TreeUpdateInfo, error) {
 	updateMap := make(map[string][]byte)
 	val, err := db.Get(GetAccountTreeKey())
 	if err != nil {
 		//没查到就先初始化
 		if err == types.ErrNotFound {
-			kvs := NewAccountTree(db)
+			kvs := NewAccountTree()
 			for _, kv := range kvs {
+				if string(kv.GetKey()) != string(GetAccountTreeKey()) {
+					totalKvs = append(totalKvs, kv)
+				}
 				updateMap[string(kv.GetKey())] = kv.GetValue()
 			}
 			return &TreeUpdateInfo{updateMap: updateMap}, nil
@@ -289,7 +292,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -397,7 +400,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -490,7 +493,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -606,7 +609,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -750,7 +753,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
 	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -882,7 +885,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 
 	fee := zt.FeeMap[zt.TyForceExitAction]
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -1001,7 +1004,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -1102,7 +1105,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
 	//}
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := generateTreeUpdateInfo(a.statedb, kvs)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}

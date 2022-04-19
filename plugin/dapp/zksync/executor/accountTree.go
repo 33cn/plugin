@@ -19,7 +19,7 @@ type TreeUpdateInfo struct {
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
-func NewAccountTree(db dbm.KV) []*types.KeyValue {
+func NewAccountTree() []*types.KeyValue {
 	var kvs []*types.KeyValue
 	//todo 从配置文件读取
 	leaf := &zt.Leaf{
