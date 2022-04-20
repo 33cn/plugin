@@ -27,6 +27,8 @@ const (
 	NameTransferToExecAction = "TransferToExec"
 	NameMintAction           = "Mint"
 	NameBurnAction           = "Burn"
+	NameMintMapAction        = "MintMap"
+	NameBurnMapAction        = "BurnMap"
 )
 
 // log类型id值
@@ -94,11 +96,13 @@ func (e *evmxgoType) GetPayload() types.Message {
 // GetTypeMap 获取合约action的id和name信息
 func (e *evmxgoType) GetTypeMap() map[string]int32 {
 	return map[string]int32{
-		"Transfer":       ActionTransfer,
-		"Withdraw":       ActionWithdraw,
-		"TransferToExec": EvmxgoActionTransferToExec,
-		"Mint":           EvmxgoActionMint,
-		"Burn":           EvmxgoActionBurn,
+		"Transfer":        ActionTransfer,
+		"Withdraw":        ActionWithdraw,
+		"TransferToExec":  EvmxgoActionTransferToExec,
+		"Mint":            EvmxgoActionMint,
+		"Burn":            EvmxgoActionBurn,
+		NameMintMapAction: EvmxgoActionMintMap,
+		NameBurnMapAction: EvmxgoActionBurnMap,
 	}
 }
 
@@ -116,6 +120,8 @@ func (e *evmxgoType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogEvmxgoGenesisDeposit:  {Ty: reflect.TypeOf(types.ReceiptExecAccountTransfer{}), Name: "LogTokenGenesisDeposit"},
 		TyLogEvmxgoMint:            {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintToken"},
 		TyLogEvmxgoBurn:            {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnToken"},
+		TyLogEvmxgoMintMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintMapToken"},
+		TyLogEvmxgoBurnMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnMapToken"},
 	}
 
 }

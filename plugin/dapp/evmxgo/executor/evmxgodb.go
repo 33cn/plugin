@@ -7,7 +7,6 @@ import (
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 )
@@ -83,6 +82,20 @@ func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, e
 	return kvs, logs, nil
 }
 
+func (e *evmxgoDB) mintMap(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	newTotal, err := safeAdd(e.evmxgo.Total, amount)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	prevEvmxgo := e.evmxgo
+	e.evmxgo.Total = newTotal
+
+	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
+	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMintMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
+	return kvs, logs, nil
+}
+
 func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
 	if e.evmxgo.Total < amount {
 		return nil, nil, types.ErrNoBalance
@@ -95,30 +108,37 @@ func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.Re
 	return kvs, logs, nil
 }
 
-type evmxgoAction struct {
-	coinsAccount *account.DB
-	db           dbm.KV
-	txhash       []byte
-	fromaddr     string
-	toaddr       string
-	blocktime    int64
-	height       int64
-	execaddr     string
-	api          client.QueueProtocolAPI
+func (e *evmxgoDB) burnMap(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	if e.evmxgo.Total < amount {
+		return nil, nil, types.ErrNoBalance
+	}
+	prevToken := e.evmxgo
+	e.evmxgo.Total -= amount
+
+	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
+	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurnMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
+	return kvs, logs, nil
 }
 
-func newEvmxgoAction(e *evmxgo, toaddr string, tx *types.Transaction) *evmxgoAction {
-	hash := tx.Hash()
-	fromaddr := tx.From()
-	return &evmxgoAction{e.GetCoinsAccount(), e.GetStateDB(), hash, fromaddr, toaddr,
-		e.GetBlockTime(), e.GetHeight(), dapp.ExecAddress(string(tx.Execer)), e.GetAPI()}
+type evmxgoAction struct {
+	stateDB   dbm.KV
+	txhash    []byte
+	fromaddr  string
+	blocktime int64
+	height    int64
+	api       client.QueueProtocolAPI
+}
+
+func newEvmxgoAction(e *evmxgo, tx *types.Transaction) *evmxgoAction {
+	return &evmxgoAction{e.GetStateDB(), tx.Hash(),
+		tx.From(), e.GetBlockTime(), e.GetHeight(), e.GetAPI()}
 }
 
 func getManageKey(key string, db dbm.KV) ([]byte, error) {
 	manageKey := types.ManageKey(key)
 	value, err := db.Get([]byte(manageKey))
 	if err != nil {
-		elog.Info("evmxgodb", "get db key", "not found manageKey", "key", manageKey)
+		elog.Info("evmxgodb", "get stateDB key", "not found manageKey", "key", manageKey)
 		return getConfigKey(key, db)
 	}
 	return value, nil
@@ -256,12 +276,12 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 		return nil, types.ErrInvalidParam
 	}
 	cfg := action.api.GetConfig()
-	if err := checkMintPara(mint, tx2lock, action.db); nil != err {
+	if err := checkMintPara(mint, tx2lock, action.stateDB); nil != err {
 		return nil, err
 	}
 
 	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
-	configSymbol, err := loadEvmxgoMintConfig(action.db, mint.GetSymbol())
+	configSymbol, err := loadEvmxgoMintConfig(action.stateDB, mint.GetSymbol())
 	if err != nil || configSymbol == nil {
 		elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
 		return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
@@ -272,7 +292,7 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 		return nil, evmxgotypes.ErrNotCorrectBridgeTokenAddress
 	}
 
-	evmxgodb, err := loadEvmxgoDB(action.db, mint.GetSymbol())
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, mint.GetSymbol())
 	if err != nil {
 		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
 			return nil, err
@@ -286,8 +306,7 @@ func (action *evmxgoAction) mint(mint *evmxgotypes.EvmxgoMint, tx2lock *types.Tr
 		elog.Error("evmxgo mint ", "symbol", mint.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
 	}
-
-	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", mint.GetSymbol(), action.db)
+	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", mint.GetSymbol(), action.stateDB)
 	if err != nil {
 		return nil, err
 	}
@@ -311,18 +330,89 @@ func (action *evmxgoAction) burn(burn *evmxgotypes.EvmxgoBurn) (*types.Receipt, 
 		return nil, types.ErrInvalidParam
 	}
 
-	evmxgodb, err := loadEvmxgoDB(action.db, burn.GetSymbol())
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, burn.GetSymbol())
 	if err != nil {
 		return nil, err
 	}
 
-	kvs, logs, err := evmxgodb.burn(action.db, burn.Amount)
+	kvs, logs, err := evmxgodb.burn(action.stateDB, burn.Amount)
 	if err != nil {
 		elog.Error("evmxgo burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
 	}
 	chain33cfg := action.api.GetConfig()
-	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", burn.GetSymbol(), action.db)
+	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", burn.GetSymbol(), action.stateDB)
+	if err != nil {
+		return nil, err
+	}
+	elog.Debug("evmxgo burn", "burn.Symbol", burn.Symbol, "burn.Amount", burn.Amount)
+	receipt, err := evmxgoAccount.Burn(action.fromaddr, burn.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+
+func (action *evmxgoAction) mintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transaction) (*types.Receipt, error) {
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, mint.GetSymbol())
+	if err != nil {
+		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
+			return nil, err
+		}
+		evmxgodb = newEvmxgoDB(&evmxgotypes.EvmxgoMint{
+			Symbol:      mint.Symbol,
+			Amount:      mint.Amount,
+			BridgeToken: mint.BridgeToken,
+			Recipient:   mint.Recipient,
+			Extra:       mint.Extra,
+		})
+	}
+
+	kvs, logs, err := evmxgodb.mintMap(mint.Amount)
+	if err != nil {
+		elog.Error("evmxgo mint ", "symbol", mint.GetSymbol(), "error", err, "from", action.fromaddr)
+		return nil, err
+	}
+	cfg := action.api.GetConfig()
+	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", mint.GetSymbol(), action.stateDB)
+	if err != nil {
+		return nil, err
+	}
+	elog.Debug("mint", "evmxgo.Symbol", mint.Symbol, "evmxgo.Amount", mint.Amount)
+	receipt, err := evmxgoAccount.Mint(mint.Recipient, mint.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
+
+	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
+}
+func (action *evmxgoAction) burnMap(burn *evmxgotypes.EvmxgoBurnMap) (*types.Receipt, error) {
+	if burn == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if burn.GetAmount() < 0 || burn.GetAmount() > types.MaxTokenBalance || burn.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	evmxgodb, err := loadEvmxgoDB(action.stateDB, burn.GetSymbol())
+	if err != nil {
+		return nil, err
+	}
+
+	kvs, logs, err := evmxgodb.burnMap(action.stateDB, burn.Amount)
+	if err != nil {
+		elog.Error("evmxgo burn ", "symbol", burn.GetSymbol(), "error", err, "from", action.fromaddr)
+		return nil, err
+	}
+	chain33cfg := action.api.GetConfig()
+	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", burn.GetSymbol(), action.stateDB)
 	if err != nil {
 		return nil, err
 	}

@@ -288,7 +288,7 @@ func tokenMint(cmd *cobra.Command, args []string) {
 		Amount: amountInt64,
 	}
 
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "evmxgo.CreateRawTokenMintTx", params, nil)
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "token.CreateRawTokenMintTx", params, nil)
 	ctx.RunWithoutMarshal()
 }
 

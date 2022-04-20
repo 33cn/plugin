@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/33cn/chain33/account"
+	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/types"
 	evmxgotypes "github.com/33cn/plugin/plugin/dapp/evmxgo/types"
 )
@@ -62,7 +63,7 @@ func (e *evmxgo) Exec_TransferToExec(payload *types.AssetsTransferToExec, tx *ty
 }
 
 func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newEvmxgoAction(e, "", tx)
+	action := newEvmxgoAction(e, tx)
 	txGroup, err := e.GetTxGroup(index)
 	if nil != err {
 		return nil, err
@@ -74,7 +75,43 @@ func (e *evmxgo) Exec_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transactio
 	return action.mint(payload, txs[index-1])
 }
 
+func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, index int) (*types.Receipt, error) {
+	if mint == nil {
+		return nil, types.ErrInvalidParam
+	}
+	if mint.GetAmount() < 0 || mint.GetAmount() > types.MaxTokenBalance || mint.GetSymbol() == "" {
+		return nil, types.ErrInvalidParam
+	}
+
+	if len(mint.Recipient) == 0 {
+		return nil, types.ErrInvalidParam
+	}
+
+	//TODO check address
+	err := address.CheckAddress(mint.Recipient, -1)
+	if err != nil {
+		return nil, err
+	}
+	mintConfig, err := loadEvmxgoMintConfig(e.GetStateDB(), mint.GetSymbol())
+	if err != nil {
+		return nil, err
+	}
+	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
+	if tx.From() != mintConfig.Address {
+		elog.Error("evmxgo mint address error", "GetSymbol:", mint.GetSymbol(), "from:", tx.From(), "configSymbol.Address: ", mintConfig.Address)
+		return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+	}
+
+	action := newEvmxgoAction(e, tx)
+	return action.mintMap(mint, tx)
+}
+
 func (e *evmxgo) Exec_Burn(payload *evmxgotypes.EvmxgoBurn, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := newEvmxgoAction(e, "", tx)
+	action := newEvmxgoAction(e, tx)
 	return action.burn(payload)
+}
+
+func (e *evmxgo) Exec_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newEvmxgoAction(e, tx)
+	return action.burnMap(payload)
 }
