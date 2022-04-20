@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 strpwd=$(pwd)
 strcmd=${strpwd##*dapp/}
 strapp=${strcmd%/cmd*}
