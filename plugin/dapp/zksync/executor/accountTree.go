@@ -17,10 +17,11 @@ import (
 type TreeUpdateInfo struct {
 	updateMap map[string][]byte
 	kvs []*types.KeyValue
+	localKvs []*types.KeyValue
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
-func NewAccountTree() []*types.KeyValue {
+func NewAccountTree(localdb dbm.KV) ([]*types.KeyValue, []*types.KeyValue) {
 	var kvs []*types.KeyValue
 	//todo 从配置文件读取
 	leaf := &zt.Leaf{
@@ -45,6 +46,18 @@ func NewAccountTree() []*types.KeyValue {
 	}
 	kvs = append(kvs, kv)
 
+
+	accountTable := NewAccountTreeTable(localdb)
+	err := accountTable.Add(leaf)
+	if err != nil {
+		panic(err)
+	}
+	//localdb存入叶子，用于查询
+	localKvs, err := accountTable.Save()
+	if err != nil {
+		panic(err)
+	}
+
 	merkleTree := getNewTree()
 	merkleTree.Push(getLeafHash(leaf))
 
@@ -68,7 +81,7 @@ func NewAccountTree() []*types.KeyValue {
 	}
 	kvs = append(kvs, kv)
 
-	return kvs
+	return kvs, localKvs
 }
 
 func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, []*types.KeyValue, error) {

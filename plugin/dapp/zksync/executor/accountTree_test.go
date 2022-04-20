@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"strconv"
 	"testing"
 
 	"github.com/33cn/chain33/util"
@@ -19,47 +18,26 @@ func TestAccountTree(t *testing.T) {
 	defer util.CloseTestDB(dir, statedb)
 	info, err := generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
-	for i := 0; i < 2000; i++ {
-		ethAddress := "12345678901012345" + strconv.Itoa(i)
-		chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
-		_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
-		tree, err := getAccountTree(statedb, info)
-		t.Log("treeIndex", tree)
-		assert.Equal(t, nil, err)
-		for _, kv := range localKvs {
-			localdb.Set(kv.GetKey(), kv.GetValue())
-		}
-	}
+	ethAddress := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
+	chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
+	_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
 	tree, err := getAccountTree(statedb, info)
+	t.Log("treeIndex", tree)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, uint64(2000), tree.GetTotalIndex())
-	root, err := GetRootByStartIndex(statedb, 1, info)
-	assert.Equal(t, nil, err)
-	assert.NotEqual(t, nil, root)
-	t.Log(root)
-	for i := 0; i < 10; i++ {
-		_, localKvs, err := UpdateLeaf(statedb, localdb, info, uint64(i+1), 2, "1000", zt.Add)
-		assert.Equal(t, nil, err)
-		for _, kv := range localKvs {
-			localdb.Set(kv.GetKey(), kv.GetValue())
-		}
-		root, err = GetRootByStartIndex(statedb, 1, info)
-		assert.Equal(t, nil, err)
-		assert.NotEqual(t, nil, root)
-		t.Log(root)
+	for _, kv := range localKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
 
-	for i := 0; i < 10; i++ {
-		_, localKvs, err := UpdateLeaf(statedb, localdb, info, uint64(i+2000), 1, "1000", zt.Sub)
-		assert.Equal(t, nil, err)
-		for _, kv := range localKvs {
-			localdb.Set(kv.GetKey(), kv.GetValue())
-		}
-		root, err = GetRootByStartIndex(statedb, 1, info)
-		assert.Equal(t, nil, err)
-		assert.NotEqual(t, nil, root)
-		t.Log(root)
+	tree, err = getAccountTree(statedb, info)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, uint64(2), tree.GetTotalIndex())
+
+	_, localKvs, err = UpdateLeaf(statedb, localdb, info, 2, 2, "1000", zt.Add)
+	assert.Equal(t, nil, err)
+	for _, kv := range localKvs {
+		localdb.Set(kv.GetKey(), kv.GetValue())
 	}
+
 }
 
 func getChain33Addr(privateKeyString string) string {

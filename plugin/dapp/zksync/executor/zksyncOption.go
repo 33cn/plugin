@@ -150,6 +150,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			After:  after,
 		}
 		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+		localKvs = append(localKvs, info.localKvs...)
 		zklog := &zt.ZkReceiptLog{
 			OperationInfo: operationInfo,
 			LocalKvs:      localKvs,
@@ -206,6 +207,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			kvs = append(kvs, kv)
 		}
 	}
+
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
 	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
@@ -263,11 +265,11 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 	if err != nil {
 		//没查到就先初始化
 		if err == types.ErrNotFound {
-			kvs := NewAccountTree()
+			kvs, localkvs := NewAccountTree(db)
 			for _, kv := range kvs {
 				updateMap[string(kv.GetKey())] = kv.GetValue()
 			}
-			return &TreeUpdateInfo{updateMap: updateMap, kvs: kvs}, nil
+			return &TreeUpdateInfo{updateMap: updateMap, kvs: kvs, localKvs: localkvs}, nil
 		} else {
 			return nil, err
 		}
@@ -278,22 +280,23 @@ func generateTreeUpdateInfo(db dbm.KV) (*TreeUpdateInfo, error) {
 		return nil, err
 	}
 	updateMap[string(GetAccountTreeKey())] = types.Encode(&tree)
-	return &TreeUpdateInfo{updateMap: updateMap, kvs: make([]*types.KeyValue, 0)}, nil
+	return &TreeUpdateInfo{updateMap: updateMap, kvs: make([]*types.KeyValue, 0), localKvs: make([]*types.KeyValue, 0)}, nil
 }
 
 func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	fee := zt.FeeMap[zt.TyWithdrawAction]
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
-	err := checkParam(totalAmount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam")
-	}
+
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
@@ -316,7 +319,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(token, payload.GetAmount())
+	err = checkAmount(token, totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
@@ -605,16 +608,16 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	fee := zt.FeeMap[zt.TyTransferAction]
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
-	err := checkParam(totalAmount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam")
-	}
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
@@ -634,7 +637,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(fromToken, payload.GetAmount())
+	err = checkAmount(fromToken, totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
@@ -747,16 +750,15 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	err := checkParam(payload.Amount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
 	fee := zt.FeeMap[zt.TyTransferToNewAction]
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
 	feeInt, _ := new(big.Int).SetString(fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
-
-	err := checkParam(totalAmount)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam")
-	}
 
 	//转换10进制
 	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
@@ -782,7 +784,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(fromToken, payload.GetAmount())
+	err = checkAmount(fromToken, totalAmount)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
@@ -883,6 +885,9 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	if err != nil {
+		return nil, errors.Wrapf(err, "MakeFeeLog")
+	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
@@ -975,6 +980,9 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	if err != nil {
+		return nil, errors.Wrapf(err, "MakeFeeLog")
+	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
@@ -1199,6 +1207,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	r := makeSetEthPriorityIdReceipt(0, lastId.Int64(), payload.EthPriorityQueueId)
 
 	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	if err != nil {
+		return nil, errors.Wrapf(err, "MakeFeeLog")
+	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return mergeReceipt(receipts, r), nil
 }
