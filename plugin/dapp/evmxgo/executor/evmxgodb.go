@@ -183,6 +183,15 @@ func hasConfiged(v1, key string, db dbm.KV) (bool, error) {
 
 func loadEvmxgoMintConfig(db dbm.KV, symbol string) (*evmxgotypes.EvmxgoMintConfig, error) {
 	key := fmt.Sprintf(mintPrefix+"%s", symbol)
+	return loadEvmxgoConfig(db, key)
+}
+
+func loadEvmxgoMintMapConfig(db dbm.KV, symbol string) (*evmxgotypes.EvmxgoMintConfig, error) {
+	key := fmt.Sprintf(mintMapPrefix+"%s", symbol)
+	return loadEvmxgoConfig(db, key)
+}
+
+func loadEvmxgoConfig(db dbm.KV, key string) (*evmxgotypes.EvmxgoMintConfig, error) {
 	value, err := getManageKey(key, db)
 	if err != nil {
 		elog.Info("evmxgodb", "get db key", "not found", "key", key)
@@ -197,7 +206,7 @@ func loadEvmxgoMintConfig(db dbm.KV, symbol string) (*evmxgotypes.EvmxgoMintConf
 	var item types.ConfigItem
 	err = types.Decode(value, &item)
 	if err != nil {
-		elog.Error("evmxgodb load loadEvmxgoMintConfig", "Can't decode ConfigItem", symbol)
+		elog.Error("evmxgodb load loadEvmxgoMintConfig", "Can't decode ConfigItem", key)
 		return nil, err // types.ErrBadConfigValue
 	}
 
@@ -210,7 +219,7 @@ func loadEvmxgoMintConfig(db dbm.KV, symbol string) (*evmxgotypes.EvmxgoMintConf
 	err = json.Unmarshal([]byte(configValue[0]), &e)
 
 	if err != nil {
-		elog.Error("evmxgodb load", "Can't decode token info", symbol)
+		elog.Error("evmxgodb load", "Can't decode token info", key)
 		return nil, err
 	}
 	return &e, nil

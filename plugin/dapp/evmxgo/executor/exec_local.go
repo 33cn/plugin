@@ -121,7 +121,42 @@ func setBurn(t *evmxgotypes.LocalEvmxgo, height, time, amount int64) *evmxgotype
 func (e *evmxgo) ExecLocal_MintMap(payload *evmxgotypes.EvmxgoMintMap, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	pay := &evmxgotypes.EvmxgoMint{}
 	_ = copier.Copy(pay, payload)
-	return e.ExecLocal_Mint(pay, tx, receiptData, index)
+	//return e.ExecLocal_Mint(pay, tx, receiptData, index)
+	localToken, err := loadLocalToken(payload.Symbol, e.GetLocalDB())
+	if err != nil && err != evmxgotypes.ErrEvmxgoSymbolNotExist {
+		return nil, err
+	}
+	// evmxgo合约，只要配置了就可以铸币
+	if err == evmxgotypes.ErrEvmxgoSymbolNotExist {
+		configSynbol, err := loadEvmxgoMintMapConfig(e.GetStateDB(), payload.GetSymbol())
+		if err != nil || configSynbol == nil {
+			elog.Error("evmxgo mint ", "not config symbol", payload.GetSymbol(), "error", err)
+			return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+		}
+
+		localToken = newLocalEvmxgo(pay)
+		localToken.Introduction = configSynbol.Introduction
+		localToken.Precision = configSynbol.Precision
+	}
+
+	localToken = setMint(localToken, e.GetHeight(), e.GetBlockTime(), payload.Amount)
+	var set []*types.KeyValue
+	key := calcEvmxgoStatusKeyLocal(payload.Symbol)
+	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
+
+	table := NewLogsTable(e.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(e.GetHeight(), int64(index))
+	err = table.Add(&evmxgotypes.LocalEvmxgoLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: evmxgotypes.EvmxgoActionMint, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
+	if err != nil {
+		return nil, err
+	}
+	kv, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
+	return &types.LocalDBSet{KV: set}, nil
 }
 
 func (e *evmxgo) ExecLocal_Mint(payload *evmxgotypes.EvmxgoMint, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
