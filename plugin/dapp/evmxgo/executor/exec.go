@@ -92,7 +92,7 @@ func (e *evmxgo) Exec_MintMap(mint *evmxgotypes.EvmxgoMintMap, tx *types.Transac
 	if err != nil {
 		return nil, err
 	}
-	mintConfig, err := loadEvmxgoMintConfig(e.GetStateDB(), mint.GetSymbol())
+	mintConfig, err := loadEvmxgoMintMapConfig(e.GetStateDB(), mint.GetSymbol())
 	if err != nil {
 		return nil, err
 	}

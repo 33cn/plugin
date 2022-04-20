@@ -16,6 +16,7 @@ import (
 
 const (
 	mintPrefix            = "evmxgo-mint-"
+	mintMapPrefix         = "evmxgo-mint-map-"
 	evmxgoAssetsPrefix    = "LODB-evmxgo-assets:"
 	bridgevmxgoAddrPrefix = "bridgevmxgo-contract-addr"
 )
