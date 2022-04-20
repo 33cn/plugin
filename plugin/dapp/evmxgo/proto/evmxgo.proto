@@ -14,8 +14,18 @@ message EvmxgoAction {
         AssetsTransferToExec transferToExec = 3;
         EvmxgoMint                 mint     = 4;
         EvmxgoBurn                 burn     = 5;
+        EvmxgoMintMap              mintMap  = 7;
+        EvmxgoBurnMap              burnMap  = 8;
     }
     int32 Ty = 6;
+}
+
+message EvmxgoMintMap {
+    string symbol        = 1;
+    int64  amount        = 2;
+    string bridgeToken   = 3;
+    string recipient     = 4;
+    bytes extra          = 5;
 }
 
 message EvmxgoMint {
@@ -23,12 +33,21 @@ message EvmxgoMint {
     int64  amount        = 2;
     string bridgeToken   = 3;
     string recipient     = 4;
+    bytes extra          = 5;
 }
 
 message EvmxgoBurn {
     string symbol = 1;
     int64  amount = 2;
+    bytes extra   = 3;
 }
+
+message EvmxgoBurnMap {
+    string symbol = 1;
+    int64  amount = 2;
+    bytes extra   = 3;
+}
+
 
 // state db
 message Evmxgo {
