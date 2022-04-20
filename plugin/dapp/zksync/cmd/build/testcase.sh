@@ -302,7 +302,7 @@ function zksync_test() {
     zksync_forceExit
     zksync_fullExit
     zksync_setVerifyKey
-    create_tx
+#    create_tx
 }
 
 function zksync() {

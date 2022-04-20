@@ -387,7 +387,6 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	ctx.RunWithoutMarshal()
 }
 
-
 func fullExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fullExit",
@@ -584,6 +583,11 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 		return
 	}
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GenerateKey"))
+		return
+	}
 
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
@@ -895,8 +899,6 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-
-
 func getZkCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "zkCommit",
@@ -920,7 +922,7 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 
 	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
-		ProofId:   proofId,
+		ProofId: proofId,
 	}
 
 	params.FuncName = "GetCommitProodByProofId"
@@ -930,8 +932,6 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
-
-
 
 func setTokenFeeCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -959,8 +959,8 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 	action, _ := cmd.Flags().GetInt32("action")
 
 	payload := &zt.ZkSetFee{
-		TokenId: tokenId,
-		Amount: fee,
+		TokenId:  tokenId,
+		Amount:   fee,
 		ActionTy: action,
 	}
 
@@ -989,10 +989,10 @@ func getFirstRootHashFlag(cmd *cobra.Command) {
 
 func getFirstRootHash(cmd *cobra.Command, args []string) {
 	leaf := &zt.Leaf{
-		EthAddress: "980818135352849559554652468538757099471386586455",
-		AccountId: 1,
+		EthAddress:  "980818135352849559554652468538757099471386586455",
+		AccountId:   1,
 		Chain33Addr: "20033148478649779061292402960935477249437023394422514689332944628159941947226",
-		TokenHash: "0",
+		TokenHash:   "0",
 		PubKey: &zt.ZkPubKey{
 			X: "14100288826287343691225102305171330918997717795915902072008127148547196365751",
 			Y: "13575378421883862534829584367244516767645518094963505752293596385949094459968",

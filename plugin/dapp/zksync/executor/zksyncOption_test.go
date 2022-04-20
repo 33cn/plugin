@@ -48,7 +48,7 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	_, err = generateTreeUpdateInfo(statedb)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)

@@ -83,9 +83,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
 	}
-	//if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
-	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
-	//}
+	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId())
+	}
 
 	//转换10进制
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
@@ -371,6 +371,9 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	if err != nil {
+		return nil, errors.Wrapf(err, "MakeFeeLog")
+	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
@@ -732,6 +735,9 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 
 	feeReceipt, err := a.MakeFeeLog(fee, info, payload.TokenId, payload.Signature)
+	if err != nil {
+		return nil, errors.Wrapf(err, "MakeFeeLog")
+	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
 }
@@ -1104,9 +1110,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
 	}
 
-	//if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
-	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
-	//}
+	if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
+		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
+	}
 
 	info, err := generateTreeUpdateInfo(a.statedb)
 	if err != nil {
