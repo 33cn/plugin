@@ -35,6 +35,7 @@ func TestZksyncOption(t *testing.T) {
 		Chain33Addr: getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"),
 	}
 	receipt, err := action.Deposit(deposit)
+	assert.Equal(t, nil, err)
 	t.Log(receipt)
 	for _, kv := range receipt.GetKV() {
 		statedb.Set(kv.GetKey(), kv.GetValue())

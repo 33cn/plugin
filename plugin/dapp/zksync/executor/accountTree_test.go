@@ -21,6 +21,7 @@ func TestAccountTree(t *testing.T) {
 	ethAddress := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
 	chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
 	_, localKvs, err := AddNewLeaf(statedb, localdb, info, ethAddress, 1, "1000", chain33Addr)
+	assert.Equal(t, nil, err)
 	tree, err := getAccountTree(statedb, info)
 	t.Log("treeIndex", tree)
 	assert.Equal(t, nil, err)
@@ -46,7 +47,9 @@ func getChain33Addr(privateKeyString string) string {
 		panic(err)
 	}
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
-
+	if err != nil {
+		panic(err)
+	}
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
