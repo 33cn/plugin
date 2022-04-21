@@ -220,6 +220,10 @@ maxTreeLeaves=1024
 #管理员列表
 mixApprs=[]
 
+[exec.sub.zksync]
+#管理员列表
+managers=[]
+
 #系统中所有的fork,默认用chain33的测试网络的
 #但是我们可以替换
 [fork.system]
@@ -403,6 +407,10 @@ ForkCollateralizePrecision=0
 #对已有的平行链如果不是从0开始同步数据，需要设置这个kvmvccmavl的对应平行链高度的fork，如果从0开始同步，statehash会跟以前mavl的不同
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=0
+
+[fork.sub.zksync]
+Enable=0
+
 
 [pprof]
 listenAddr = "localhost:6061"

@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package types;
+option go_package = "github.com/33cn/plugin/plugin/dapp/zksync/types";
+
+
+message ZkSignature {
+  ZkPubKey pubKey = 1;
+  string signInfo = 2;
+  ZkMsg msg = 3;
+}
+
+message ZkMsg {
+  string first = 1;
+  string second = 2;
+  string third = 3;
+}
+
+message ZkPubKey {
+  string  x = 1;
+  string  y = 2;
+}
+
+message SiblingPath {
+  repeated string path    = 1;
+  repeated string helper  = 2;
+}
+
+message AccountWitness {
+  uint64 ID             = 1;
+  string ethAddr        = 2;
+  string chain33Addr    = 3;
+  string tokenTreeRoot  = 4; //sub chain token tree root
+  ZkPubKey pubKey         = 5;
+  SiblingPath sibling   = 6;
+
+}
+
+message TokenWitness {
+  uint64 ID     = 1; //eth contract define token ID
+  string balance        = 2; //eth balance u128
+  SiblingPath sibling   = 3;
+}
+
+//one operation branch
+message OperationMetaBranch {
+  AccountWitness accountWitness       = 1;
+  TokenWitness   tokenWitness         = 2;
+}
+
+// before and after operation data
+message OperationPairBranch {
+  OperationMetaBranch before = 1;
+  OperationMetaBranch after  = 2;
+}
+
+message OperationInfo {
+  uint64    blockHeight   = 1;
+  uint32    txIndex       = 2;
+  uint32    opIndex       = 3;
+
+  uint32    txType        = 4;
+  string    txHash        = 5;
+  uint64    accountID     = 6;
+  uint64    tokenID       = 7;
+  string    amount        = 8;
+  string    feeAmount        = 9;
+
+  ZkSignature sigData       = 10;
+
+  repeated string  roots  = 11; //每个操作后的root
+
+  //每个operation data由一对 操作前后数据组成，不同操作可以有多个操作数据，deposit:1,transfer:2
+  repeated OperationPairBranch operationBranches = 12;
+
+  //操作特殊数据,像订单数据
+  OperationSpecialInfo specialInfo = 13;
+}
+
+message OperationSpecialInfo {
+  repeated OperationSpecialData specialDatas = 1;
+}
+
+message OrderPricePair {
+  uint64 sell = 1;
+  uint64 buy  = 2;
+}
+
+message OperationSpecialData {
+  uint64 accountID           = 1;
+  uint64 recipientID         = 2; //accountID侧设置的recipientID
+  string recipientAddr       = 3; //accountID侧设置的recipientAddr
+  repeated string amount     = 4;  //accountID侧最初设置的amount
+  repeated uint32 chainID    = 5;
+  repeated uint64 tokenID    = 6;
+  repeated OrderPricePair pricePair  = 7;
+  ZkSignature sigData         = 8;
+
+}

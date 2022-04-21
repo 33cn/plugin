@@ -79,7 +79,7 @@ func getVerifyKeys(db dbm.KV, ty int32) (*mixTy.ZkVerifyKeys, error) {
 	return &keys, nil
 }
 
-func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, error) {
+func (a *action) ConfigAddVerifyKey(newKey *mixTy.MixZkVerifyKey) (*types.Receipt, error) {
 	keys, err := getVerifyKeys(a.db, int32(newKey.Type))
 	if isNotFound(errors.Cause(err)) {
 		keys := &mixTy.ZkVerifyKeys{}
@@ -90,7 +90,7 @@ func (a *action) ConfigAddVerifyKey(newKey *mixTy.ZkVerifyKey) (*types.Receipt, 
 		return nil, errors.Wrapf(err, "AddVerifyKey,ty=%d", newKey.Type)
 	}
 	//逆序保存keys,保证新的key先遍历到
-	keys.Data = []*mixTy.ZkVerifyKey{newKey, keys.Data[0]}
+	keys.Data = []*mixTy.MixZkVerifyKey{newKey, keys.Data[0]}
 	return makeConfigVerifyKeyReceipt(keys, int32(newKey.Type)), nil
 
 }

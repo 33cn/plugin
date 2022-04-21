@@ -438,4 +438,7 @@ Enable=0
 [fork.sub.store-kvmvccmavl]
 ForkKvmvccmavl=1
 
+[fork.sub.zksync]
+Enable=0
+
 `
