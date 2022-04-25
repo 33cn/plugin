@@ -285,6 +285,11 @@ func (a *Action) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAcc
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
+
+	if cfg.IsDappFork(a.height, et.ExchangeX, et.ForkFix1) && tCfg.IsBankAddr(a.fromaddr) {
+		return nil, et.ErrAddrIsBank
+	}
+
 	if !tCfg.IsFeeFreeAddr(a.fromaddr) {
 		trade := tCfg.GetTrade(payload.GetLeftAsset(), payload.GetRightAsset())
 		taker = trade.GetTaker()
