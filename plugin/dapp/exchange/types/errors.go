@@ -18,6 +18,7 @@ var (
 	ErrStatus       = fmt.Errorf("%s", "The status only in  0 , 1, 2!")
 	ErrOrderID      = fmt.Errorf("%s", "Wrong OrderID!")
 
-	ErrCfgFmt   = fmt.Errorf("%s", "ErrCfgFmt")
-	ErrBindAddr = fmt.Errorf("%s", "The address is not bound")
+	ErrCfgFmt     = fmt.Errorf("%s", "ErrCfgFmt")
+	ErrBindAddr   = fmt.Errorf("%s", "The address is not bound")
+	ErrAddrIsBank = fmt.Errorf("%s", "The address cannot be banks")
 )

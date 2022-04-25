@@ -95,7 +95,7 @@ var (
 	//tlog = log.New("module", "exchange.types")
 
 	//ForkFix Forks
-	//ForkFix1 = "ForkFix1"
+	ForkFix1 = "ForkFix1"
 
 	ForkParamV1 = "ForkParamV1"
 	ForkParamV2 = "ForkParamV2"
@@ -119,7 +119,7 @@ func init() {
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ExchangeX, "Enable", 0)
-	//cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
+	cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV1, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV2, 0)
 	cfg.RegisterDappFork(ExchangeX, ForkParamV3, 0)
@@ -195,6 +195,20 @@ func (f *Econfig) GetFeeAddr() string {
 	}
 
 	return f.Banks[0]
+}
+
+func (f *Econfig) IsBankAddr(addr string) bool {
+	if f == nil {
+		return false
+	}
+
+	for _, b := range f.Banks {
+		if b == addr {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (f *Econfig) IsFeeFreeAddr(addr string) bool {
