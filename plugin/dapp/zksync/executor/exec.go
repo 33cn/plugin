@@ -74,3 +74,8 @@ func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index 
 	action := NewAction(z, tx, index)
 	return action.setFee(payload)
 }
+
+func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.MintNFT(payload)
+}

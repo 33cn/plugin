@@ -5,10 +5,11 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"os"
 	"strings"
+
+	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/types"

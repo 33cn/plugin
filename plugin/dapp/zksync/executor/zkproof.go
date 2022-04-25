@@ -3,11 +3,12 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"math/big"
+
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	"github.com/33cn/plugin/plugin/dapp/zksync/wallet"
-	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -137,11 +138,11 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 	if err != nil {
 		if isNotFound(err) {
 			return &zt.CommitProofState{
-				ProofId: 0,
-				BlockStart: 0,
-				BlockEnd: 0,
-				IndexStart: 0,
-				IndexEnd: 0,
+				ProofId:     0,
+				BlockStart:  0,
+				BlockEnd:    0,
+				IndexStart:  0,
+				IndexEnd:    0,
 				OldTreeRoot: "0",
 				NewTreeRoot: "0",
 			}, nil
@@ -225,10 +226,10 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	newProof := &zt.CommitProofState{
 		BlockStart:  payload.BlockStart,
 		BlockEnd:    payload.BlockEnd,
-		IndexStart: payload.IndexStart,
-		IndexEnd: payload.IndexEnd,
-		OpIndex:  payload.OpIndex,
-		ProofId: payload.ProofId,
+		IndexStart:  payload.IndexStart,
+		IndexEnd:    payload.IndexEnd,
+		OpIndex:     payload.OpIndex,
+		ProofId:     payload.ProofId,
 		OldTreeRoot: payload.OldTreeRoot,
 		NewTreeRoot: payload.NewTreeRoot,
 		PublicInput: payload.PublicInput,
@@ -363,22 +364,21 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 		return nil, errors.New("proof not exist")
 	}
 
-
-	for i := uint64(1); i <= proof.ProofId ; i++ {
+	for i := uint64(1); i <= proof.ProofId; i++ {
 		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
 		if err != nil {
 			return nil, err
 		}
-		data :=  row.Data.(*zt.ZkCommitProof)
-		operations :=  transferPubDatasToOption(data.PubDatas)
+		data := row.Data.(*zt.ZkCommitProof)
+		operations := transferPubDatasToOption(data.PubDatas)
 		for _, operation := range operations {
 			switch operation.Ty {
 			case zt.TyDepositAction:
 				fromLeaf, ok := accountMap[operation.AccountId]
 				if !ok {
 					fromLeaf = &zt.HistoryLeaf{
-						AccountId: operation.GetAccountId(),
-						EthAddress: operation.GetEthAddress(),
+						AccountId:   operation.GetAccountId(),
+						EthAddress:  operation.GetEthAddress(),
 						Chain33Addr: operation.GetChain33Addr(),
 						Tokens: []*zt.TokenBalance{
 							{
@@ -486,7 +486,7 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 				if !ok {
 					return nil, errors.New("account not exist")
 				}
-				toLeaf, ok :=  accountMap[operation.ToAccountId]
+				toLeaf, ok := accountMap[operation.ToAccountId]
 				if !ok {
 					return nil, errors.New("account not exist")
 				}
@@ -553,8 +553,8 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 				}
 
 				toLeaf := &zt.HistoryLeaf{
-					AccountId: operation.GetToAccountId(),
-					EthAddress: operation.GetEthAddress(),
+					AccountId:   operation.GetToAccountId(),
+					EthAddress:  operation.GetEthAddress(),
 					Chain33Addr: operation.GetChain33Addr(),
 					Tokens: []*zt.TokenBalance{
 						{
@@ -620,13 +620,12 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 		}
 	}
 
-
 	tree := getNewTree()
 	err = tree.SetIndex(accountId - 1)
 	if err != nil {
 		return nil, errors.Wrapf(err, "tree.SetIndex")
 	}
-	for i:= uint64(1); i <= maxAccountId ;i++ {
+	for i := uint64(1); i <= maxAccountId; i++ {
 		tree.Push(getHistoryLeafHash(accountMap[i]))
 	}
 
@@ -642,7 +641,7 @@ func getAccountProofInHistory(localdb dbm.KV, accountId uint64, rootHash string)
 	merkleProof := &zt.MerkleTreeProof{
 		RootHash: zt.Byte2Str(merkleRoot),
 		ProofSet: proofStringSet,
-		Helpers: helpers,
+		Helpers:  helpers,
 	}
 	return merkleProof, nil
 }
@@ -725,21 +724,20 @@ func getOperationByChunk(chunks []string, optionTy uint64) *zt.ZkOperation {
 	}
 }
 
-
 //根据proofId重建merkleTree
-func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValue,error) {
+func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValue, error) {
 	var localKvs []*types.KeyValue
 	proofTable := NewCommitProofTable(localdb)
 	historyTable := NewHistoryAccountTreeTable(localdb)
 	//todo 多少ID归档一次实现可配置化
-	historyId := (endProofId / 10 - 1) * 10
-	for i := historyId + 1; i <= endProofId ; i++ {
+	historyId := (endProofId/10 - 1) * 10
+	for i := historyId + 1; i <= endProofId; i++ {
 		row, err := proofTable.GetData(getProofIdCommitProofKey(i))
 		if err != nil {
 			return localKvs, err
 		}
-		data :=  row.Data.(*zt.ZkCommitProof)
-		operations :=  transferPubDatasToOption(data.PubDatas)
+		data := row.Data.(*zt.ZkCommitProof)
+		operations := transferPubDatasToOption(data.PubDatas)
 		for _, operation := range operations {
 			fromLeaf, err := getAccountByProofIdAndHistoryId(historyTable, endProofId, historyId, operation.GetAccountId())
 			if err != nil {
@@ -749,10 +747,10 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValu
 			case zt.TyDepositAction:
 				if fromLeaf == nil {
 					fromLeaf = &zt.HistoryLeaf{
-						AccountId: operation.GetAccountId(),
-						EthAddress: operation.GetEthAddress(),
+						AccountId:   operation.GetAccountId(),
+						EthAddress:  operation.GetEthAddress(),
 						Chain33Addr: operation.GetChain33Addr(),
-						ProofId: endProofId,
+						ProofId:     endProofId,
 						Tokens: []*zt.TokenBalance{
 							{
 								TokenId: operation.TokenId,
@@ -946,10 +944,10 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValu
 				}
 
 				toLeaf := &zt.HistoryLeaf{
-					AccountId: operation.GetToAccountId(),
-					EthAddress: operation.GetEthAddress(),
+					AccountId:   operation.GetToAccountId(),
+					EthAddress:  operation.GetEthAddress(),
 					Chain33Addr: operation.GetChain33Addr(),
-					ProofId: endProofId,
+					ProofId:     endProofId,
 					Tokens: []*zt.TokenBalance{
 						{
 							TokenId: operation.TokenId,
@@ -957,7 +955,6 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValu
 						},
 					},
 				}
-
 
 				err = historyTable.Replace(fromLeaf)
 				if err != nil {
@@ -1033,14 +1030,14 @@ func saveHistoryAccountTree(localdb dbm.KV, endProofId uint64) ([]*types.KeyValu
 }
 
 //首先通过当前proofId去拿，如果没拿到，使用历史id去拿，因为同一个accountId会被多次更新
-func getAccountByProofIdAndHistoryId(historyTable *table.Table, currentId, historyId, accountId uint64) (*zt.HistoryLeaf, error)  {
+func getAccountByProofIdAndHistoryId(historyTable *table.Table, currentId, historyId, accountId uint64) (*zt.HistoryLeaf, error) {
 	row, err := historyTable.GetData(getHistoryAccountTreeKey(currentId, accountId))
 	if err != nil {
 		if isNotFound(err) {
 			row, err = historyTable.GetData(getHistoryAccountTreeKey(historyId, accountId))
 			if err != nil {
 				if isNotFound(err) {
-				    return nil, nil
+					return nil, nil
 				} else {
 					return nil, err
 				}
@@ -1057,163 +1054,155 @@ func getAccountByProofIdAndHistoryId(historyTable *table.Table, currentId, histo
 
 func getDepositOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyDepositAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + zt.AddrBitWidth/8
-	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + zt.Chain33AddrBitWidth/8
-	operation.Chain33Addr = zt.Byte2Str(chunk[start : end])
+	end = start + zt.HashBitWidth/8
+	operation.Chain33Addr = zt.Byte2Str(chunk[start:end])
 	return operation
 }
-
 
 func getWithDrawOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyWithdrawAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + zt.AddrBitWidth/8
-	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	return operation
 }
-
 
 func getContract2TreeOptionByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyContractToTreeAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	return operation
 }
-
 
 func getTree2ContractOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyTreeToContractAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	return operation
 }
-
 
 func getTransferOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyTransferAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AccountBitWidth/8
-	operation.ToAccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.ToAccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	return operation
 }
-
 
 func getTransfer2NewOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyTransferToNewAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AccountBitWidth/8
-	operation.ToAccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.ToAccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + zt.AddrBitWidth/8
-	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + zt.Chain33AddrBitWidth/8
-	operation.Chain33Addr = zt.Byte2Str(chunk[start : end])
+	end = start + zt.HashBitWidth/8
+	operation.Chain33Addr = zt.Byte2Str(chunk[start:end])
 	return operation
 }
 
-
 func getSetPubKeyOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TySetPubKeyAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	pubkey := &zt.ZkPubKey{}
 	start = end
-	end = start + zt.Chain33AddrBitWidth/8
-	pubkey.X = zt.Byte2Str(chunk[start : end])
+	end = start + zt.HashBitWidth/8
+	pubkey.X = zt.Byte2Str(chunk[start:end])
 	start = end
-	end = start + zt.Chain33AddrBitWidth/8
-	pubkey.Y = zt.Byte2Str(chunk[start : end])
+	end = start + zt.HashBitWidth/8
+	pubkey.Y = zt.Byte2Str(chunk[start:end])
 	operation.PubKey = pubkey
 	return operation
 }
 
-
 func getForceExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyForceExitAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + zt.AddrBitWidth/8
-	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	return operation
 }
 
-
 func getFullExitOperationByChunk(chunk []byte) *zt.ZkOperation {
 	operation := &zt.ZkOperation{Ty: zt.TyFullExitAction}
-	start := zt.TxTypeBitWidth/8
+	start := zt.TxTypeBitWidth / 8
 	end := start + zt.AccountBitWidth/8
-	operation.AccountId = zt.Byte2Uint64(chunk[start : end])
+	operation.AccountId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.TokenBitWidth/8
-	operation.TokenId = zt.Byte2Uint64(chunk[start : end])
+	operation.TokenId = zt.Byte2Uint64(chunk[start:end])
 	start = end
 	end = start + zt.AmountBitWidth/8
-	operation.Amount = zt.Byte2Str(chunk[start : end])
+	operation.Amount = zt.Byte2Str(chunk[start:end])
 	start = end
 	end = start + zt.AddrBitWidth/8
-	operation.EthAddress = zt.Byte2Str(chunk[start : end])
+	operation.EthAddress = zt.Byte2Str(chunk[start:end])
 	return operation
 }

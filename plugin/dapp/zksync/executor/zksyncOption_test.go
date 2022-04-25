@@ -3,12 +3,13 @@ package executor
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/33cn/chain33/client/mocks"
-	"github.com/33cn/chain33/types"
-	"github.com/stretchr/testify/mock"
 	"math/big"
 	"strings"
 	"testing"
+
+	"github.com/33cn/chain33/client/mocks"
+	"github.com/33cn/chain33/types"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/33cn/chain33/util"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -48,7 +49,8 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	assert.Equal(t, nil, err)
-	info, err := generateTreeUpdateInfo(statedb)
+	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
+	info, err := generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	leaf, err := GetLeafByAccountId(statedb, 2, info)
 	assert.Equal(t, nil, err)
@@ -56,7 +58,7 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	_, err = generateTreeUpdateInfo(statedb)
+	_, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
@@ -81,7 +83,7 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	/*************************withdraw*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
 		AccountId: 2,
@@ -122,7 +124,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "98995000", token.Balance)
 
 	/*************************transferToNew*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
 		FromAccountId:    2,
@@ -155,7 +157,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "5000", token.Balance)
 
 	/*************************transfer*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
 		FromAccountId: 2,
@@ -187,7 +189,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "10000", token.Balance)
 
 	/*************************forceQuit*************************/
-	info, err = generateTreeUpdateInfo(statedb)
+	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	forceQuit := &zt.ZkForceExit{
 		AccountId: 2,
@@ -228,7 +230,7 @@ func TestEddsa(t *testing.T) {
 }
 
 func TestBigInt(t *testing.T) {
-	byteVal :=  big.NewInt(0).Bytes()
+	byteVal := big.NewInt(0).Bytes()
 	stringVal := hex.EncodeToString(byteVal)
 	t.Log("bigInt 0 byteVal", byteVal)
 	t.Log("bigInt 0 stringVal", stringVal)
@@ -236,8 +238,6 @@ func TestBigInt(t *testing.T) {
 	t.Log("0 byteVal", []byte("0"))
 	t.Log("is equal", stringVal == "0")
 }
-
-
 
 var cfgstring = `
 Title="chain33"
