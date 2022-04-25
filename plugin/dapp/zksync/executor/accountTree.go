@@ -2,8 +2,9 @@ package executor
 
 import (
 	"fmt"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -16,39 +17,60 @@ import (
 // TreeUpdateInfo 更新信息，用于查询
 type TreeUpdateInfo struct {
 	updateMap map[string][]byte
-	kvs []*types.KeyValue
-	localKvs []*types.KeyValue
+	kvs       []*types.KeyValue
+	localKvs  []*types.KeyValue
+}
+
+func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
+	confManager := types.ConfSub(cfg, zt.Zksync)
+	return confManager.GStr("ethFeeAddr"), confManager.GStr("zkChain33FeeAddr")
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
-func NewAccountTree(localdb dbm.KV) ([]*types.KeyValue, []*types.KeyValue) {
+func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, []*types.KeyValue) {
+	if len(ethFeeAddr) <= 0 || len(chain33FeeAddr) <= 0 {
+		panic(fmt.Sprintf("zksync default fee addr(ethFeeAddr,zkChain33FeeAddr) is nil"))
+	}
 	var kvs []*types.KeyValue
+	//default FeeAccount
 	//todo 从配置文件读取
-	leaf := &zt.Leaf{
-		EthAddress: "980818135352849559554652468538757099471386586455",
-		AccountId: 1,
-		Chain33Addr: "20033148478649779061292402960935477249437023394422514689332944628159941947226",
-		TokenHash: "0",
-		PubKey: &zt.ZkPubKey{
-			X: "14100288826287343691225102305171330918997717795915902072008127148547196365751",
-			Y: "13575378421883862534829584367244516767645518094963505752293596385949094459968",
-		},
+	leafFeeAccount := &zt.Leaf{
+		EthAddress:  ethFeeAddr,
+		AccountId:   zt.FeeAccountId,
+		Chain33Addr: chain33FeeAddr,
+		TokenHash:   "0",
 	}
 	kv := &types.KeyValue{
-		Key: GetAccountIdPrimaryKey(leaf.AccountId),
-		Value: types.Encode(leaf),
+		Key:   GetAccountIdPrimaryKey(leafFeeAccount.AccountId),
+		Value: types.Encode(leafFeeAccount),
 	}
 	kvs = append(kvs, kv)
 
 	kv = &types.KeyValue{
-		Key: GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
-		Value: types.Encode(leaf),
+		Key:   GetChain33EthPrimaryKey(leafFeeAccount.Chain33Addr, leafFeeAccount.EthAddress),
+		Value: types.Encode(leafFeeAccount),
 	}
 	kvs = append(kvs, kv)
 
+	//NFT account
+	leafNFTAccount := &zt.Leaf{
+		EthAddress:  "0",
+		AccountId:   zt.NFTAccountId,
+		Chain33Addr: "0",
+		TokenHash:   "0",
+	}
+	kv = &types.KeyValue{
+		Key:   GetAccountIdPrimaryKey(leafNFTAccount.AccountId),
+		Value: types.Encode(leafNFTAccount),
+	}
+	kvs = append(kvs, kv)
 
 	accountTable := NewAccountTreeTable(localdb)
-	err := accountTable.Add(leaf)
+	err := accountTable.Add(leafFeeAccount)
+	if err != nil {
+		panic(err)
+	}
+	err = accountTable.Add(leafNFTAccount)
 	if err != nil {
 		panic(err)
 	}
@@ -59,11 +81,12 @@ func NewAccountTree(localdb dbm.KV) ([]*types.KeyValue, []*types.KeyValue) {
 	}
 
 	merkleTree := getNewTree()
-	merkleTree.Push(getLeafHash(leaf))
+	merkleTree.Push(getLeafHash(leafFeeAccount))
+	merkleTree.Push(getLeafHash(leafNFTAccount))
 
 	tree := &zt.AccountTree{
-		Index:           1,
-		TotalIndex:      1,
+		Index:           2,
+		TotalIndex:      2,
 		MaxCurrentIndex: 1024,
 		SubTrees:        make([]*zt.SubTree, 0),
 	}
@@ -76,7 +99,7 @@ func NewAccountTree(localdb dbm.KV) ([]*types.KeyValue, []*types.KeyValue) {
 	}
 
 	kv = &types.KeyValue{
-		Key: GetAccountTreeKey(),
+		Key:   GetAccountTreeKey(),
 		Value: types.Encode(tree),
 	}
 	kvs = append(kvs, kv)
@@ -437,11 +460,15 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	}
 	if token == nil {
 		if option == zt.Sub {
-			return kvs, localKvs, errors.New("token not exist")
+			return kvs, localKvs, errors.New(fmt.Sprintf("token not exist,tokenId=%d", tokenId))
 		} else {
 			token = &zt.TokenBalance{
 				TokenId: tokenId,
 				Balance: amount,
+			}
+			//如果NFTAccountId第一次初始化token，需要设置特殊balance作为新NFT token ID
+			if accountId == zt.NFTAccountId && tokenId == zt.NFTTokenId {
+				token.Balance = new(big.Int).SetUint64(zt.NFTTokenId + 1).String()
 			}
 			leaf.TokenIds = append(leaf.TokenIds, tokenId)
 		}

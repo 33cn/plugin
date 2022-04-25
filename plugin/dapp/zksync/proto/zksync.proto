@@ -21,6 +21,9 @@ message ZksyncAction {
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
     ZkSetFee    setFee = 14;
+    ZkSetProxyAddr setProxyAddr = 16;
+    ZkMintNFT     mintNFT = 17;
+    ZkWithdrawNFT withdrawNFT = 18;
   }
 
   int32 ty = 15;
@@ -37,26 +40,27 @@ message AccountTree {
   uint64 index = 1;//当前的叶子索引
   uint64 totalIndex = 2;  //总计叶子索引
   uint64 maxCurrentIndex = 3;  //当前索引最大值，超过最大值会进行归档
-  repeated SubTree subTrees = 8; //当前未归档的子树
+  repeated SubTree subTrees = 4; //当前未归档的子树
 }
 
 message Leaf {
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  string tokenHash = 8; //叶子下token的hash
-  repeated uint64 tokenIds = 9; //叶子下拥有的tokenId
+  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
+  string ethAddress = 2; //账户对应的以太坊地址
+  ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
+  string chain33Addr = 4; //chain33地址
+  string tokenHash = 5; //叶子下token的hash
+  repeated uint64 tokenIds = 6; //叶子下拥有的tokenId
+  repeated ZkPubKey proxyPubKey = 7; //eddsa代理公钥，用于验证代理者的身份
 }
 
 message HistoryLeaf {
-  uint64 accountId = 2; //accountId其实就是叶子的totalIndex
-  string ethAddress = 5; //账户对应的以太坊地址
-  ZkPubKey pubKey = 6; //eddsa公钥，用于验证身份
-  string chain33Addr = 7; //chain33地址
-  string tokenHash = 8; //叶子下token的hash
-  repeated TokenBalance tokens = 9; //叶子下拥有的token
-  uint64 proofId = 10; //账户状态所在的proofId
+  uint64 accountId = 1; //accountId其实就是叶子的totalIndex
+  string ethAddress = 2; //账户对应的以太坊地址
+  ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
+  string chain33Addr = 4; //chain33地址
+  string tokenHash = 5; //叶子下token的hash
+  repeated TokenBalance tokens = 6; //叶子下拥有的token
+  uint64 proofId = 7; //账户状态所在的proofId
 }
 
 message RootInfo {
@@ -97,7 +101,7 @@ message ZkContractToTree {
   uint64 tokenId = 1;
   string amount = 2;
   uint64 accountId = 3;
-  ZkSignature signature = 6;
+  ZkSignature signature = 4;
 }
 
 message ZkTreeToContract {
@@ -145,6 +149,49 @@ message ZkFullExit {
 
 message ZkSwap {
   ZkSignature signature = 1;
+}
+
+message ZkSetProxyAddr {
+  uint64 fromAccountId = 1;
+  uint64 proxyAddrTy = 2;
+  ZkPubKey proxyAddrPubKey = 3;
+  ZkSignature signature = 4;
+}
+
+message ZkMintNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  uint64 feeTokenId = 3;
+  string feeAmount = 4;
+  string contentHash = 5;
+  ZkSignature signature = 6;
+}
+
+message ZkWithdrawNFT {
+  uint64 fromAccountId = 1;
+  uint64 NFTTokenId = 2;
+  uint64 feeTokenId = 3;
+  string feeAmount = 4;
+  ZkSignature signature = 5;
+}
+
+message ZkTransferNFT {
+  uint64 fromAccountId = 1;
+  uint64 recipientId = 2;
+  uint64 NFTTokenId = 3;
+  uint64 feeTokenId = 4;
+  string feeAmount = 5;
+  ZkSignature signature = 6;
+}
+
+message ZkNFTTokenStatus {
+  uint64 Id = 1;
+  uint64 creatorId = 2;
+  string creatorEthAddr = 3;
+  uint64 creatorSerialId = 4;
+  string contentHash = 5;
+  uint64 ownerId = 6;
+  bool   burned = 7; //是否提取到了L1
 }
 
 //电路验证key

@@ -95,5 +95,6 @@ message OperationSpecialData {
   repeated uint64 tokenID    = 6;
   repeated OrderPricePair pricePair  = 7;
   ZkSignature sigData         = 8;
+  string contentHash          = 9;
 
 }

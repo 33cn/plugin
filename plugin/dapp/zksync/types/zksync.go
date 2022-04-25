@@ -26,6 +26,10 @@ const (
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
+	TySetProxyAddrAction   = 12 //设置代理地址
+	TyMintNFTAction        = 13
+	TyWithdrawNFTAction    = 14
+	TyTransferNFTAction    = 15
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
@@ -45,6 +49,7 @@ const (
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
 	NameFeeAction            = "Fee"
+	NameSetProxyAddrAction   = "ProxyAddr"
 
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
@@ -66,12 +71,16 @@ const (
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 	TyFeeLog            = 111 //手续费
+	TySetProxyAddrLog   = 112 //代理地址
+	TyMintNFTLog        = 113 //铸造NFT
+	TyWithdrawNFTLog    = 114 //L2提款NFT到L1
+	TyTransferNFTLog    = 115 //L2提款NFT到L1
 
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
-	TySetFeeLog       = 206
+	TySetFeeLog             = 206
 )
 
 const (
@@ -91,14 +100,15 @@ const ZkVerifierKey = "verifier"
 
 //msg宽度
 const (
-	TxTypeBitWidth      = 8   //1byte
-	AccountBitWidth     = 32  //4byte
-	TokenBitWidth       = 16  //2byte
-	AmountBitWidth      = 128 //16byte
-	AddrBitWidth        = 160 //20byte
-	Chain33AddrBitWidth = 256 //20byte
-	PubKeyBitWidth      = 256 //32byte
-	FeeAmountBitWidth   = 72  //fee op凑满one chunk=128bit，最大10byte
+	TxTypeBitWidth    = 8   //1byte
+	AccountBitWidth   = 32  //4byte
+	TokenBitWidth     = 8   //1byte 256 tokens
+	NFTTokenBitWidth  = 32  //4byte
+	AmountBitWidth    = 128 //16byte
+	AddrBitWidth      = 160 //20byte
+	HashBitWidth      = 256 //32byte
+	PubKeyBitWidth    = 256 //32byte
+	FeeAmountBitWidth = 72  //fee op凑满one chunk=128bit，最大10byte
 
 	PacAmountManBitWidth = 35 //amount mantissa part, 比如12340000,只取1234部分，0000用exponent表示
 	PacAmountExpBitWidth = 5  //amount exponent part
@@ -133,6 +143,18 @@ const (
 	NoopChunks          = 1
 	ChangePubKeyChunks  = 5
 	FeeChunks           = 1
+	SetProxyAddrChunks  = 5
+	MintNFTChunks       = 5
+	WithdrawNFTChunks   = 6
+)
+
+const (
+	//FeeAccountId 此账户作为缺省收费账户
+	FeeAccountId = 1
+	//NFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
+	NFTAccountId = 2
+	//NFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
+	NFTTokenId = 256 //2^8,
 )
 
 var (
@@ -169,6 +191,10 @@ var (
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
+		TySetProxyAddrLog:       {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetProxyAddrLog"},
+		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},

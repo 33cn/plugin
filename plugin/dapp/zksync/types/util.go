@@ -2,9 +2,10 @@ package types
 
 import (
 	"encoding/hex"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
 	"strings"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
 func Str2Byte(v string) []byte {
