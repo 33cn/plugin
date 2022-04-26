@@ -45,6 +45,11 @@ func (z *zksync) Exec_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, 
 	return action.SetPubKey(payload)
 }
 
+func (z *zksync) Exec_SetProxyPubKey(payload *zt.ZkSetProxyPubKey, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.SetProxyPubKey(payload)
+}
+
 func (z *zksync) Exec_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.FullExit(payload)
@@ -78,4 +83,14 @@ func (z *zksync) Exec_SetFee(payload *zt.ZkSetFee, tx *types.Transaction, index 
 func (z *zksync) Exec_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.MintNFT(payload)
+}
+
+func (z *zksync) Exec_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.withdrawNFT(payload)
+}
+
+func (z *zksync) Exec_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewAction(z, tx, index)
+	return action.transferNFT(payload)
 }

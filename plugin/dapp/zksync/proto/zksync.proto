@@ -21,9 +21,10 @@ message ZksyncAction {
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
     ZkSetFee    setFee = 14;
-    ZkSetProxyAddr setProxyAddr = 16;
+    ZkSetProxyPubKey setProxyPubKey = 16;
     ZkMintNFT     mintNFT = 17;
     ZkWithdrawNFT withdrawNFT = 18;
+    ZkTransferNFT transferNFT = 19;
   }
 
   int32 ty = 15;
@@ -50,7 +51,7 @@ message Leaf {
   string chain33Addr = 4; //chain33地址
   string tokenHash = 5; //叶子下token的hash
   repeated uint64 tokenIds = 6; //叶子下拥有的tokenId
-  repeated ZkPubKey proxyPubKey = 7; //eddsa代理公钥，用于验证代理者的身份
+  AccountProxyPubKeys proxyPubKeys = 7; //eddsa代理公钥，用于验证代理者的身份
 }
 
 message HistoryLeaf {
@@ -61,6 +62,7 @@ message HistoryLeaf {
   string tokenHash = 5; //叶子下token的hash
   repeated TokenBalance tokens = 6; //叶子下拥有的token
   uint64 proofId = 7; //账户状态所在的proofId
+  AccountProxyPubKeys proxyPubKeys = 8; //eddsa代理公钥，用于验证代理者的身份
 }
 
 message RootInfo {
@@ -151,27 +153,24 @@ message ZkSwap {
   ZkSignature signature = 1;
 }
 
-message ZkSetProxyAddr {
-  uint64 fromAccountId = 1;
-  uint64 proxyAddrTy = 2;
-  ZkPubKey proxyAddrPubKey = 3;
+message ZkSetProxyPubKey {
+  uint64 accountId = 1;
+  uint64 proxyTy = 2;
+  ZkPubKey proxyPubKey = 3;
   ZkSignature signature = 4;
 }
 
 message ZkMintNFT {
   uint64 fromAccountId = 1;
   uint64 recipientId = 2;
-  uint64 feeTokenId = 3;
-  string feeAmount = 4;
-  string contentHash = 5;
+  string contentHash = 3;
   ZkSignature signature = 6;
 }
 
 message ZkWithdrawNFT {
   uint64 fromAccountId = 1;
   uint64 NFTTokenId = 2;
-  uint64 feeTokenId = 3;
-  string feeAmount = 4;
+
   ZkSignature signature = 5;
 }
 
@@ -179,8 +178,7 @@ message ZkTransferNFT {
   uint64 fromAccountId = 1;
   uint64 recipientId = 2;
   uint64 NFTTokenId = 3;
-  uint64 feeTokenId = 4;
-  string feeAmount = 5;
+
   ZkSignature signature = 6;
 }
 

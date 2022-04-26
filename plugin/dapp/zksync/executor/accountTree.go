@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"hash"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -133,10 +134,11 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	tree.TotalIndex++
 
 	leaf := &zt.Leaf{
-		EthAddress:  ethAddress,
-		AccountId:   tree.GetTotalIndex(),
-		Chain33Addr: chain33Addr,
-		TokenIds:    make([]uint64, 0),
+		EthAddress:   ethAddress,
+		AccountId:    tree.GetTotalIndex(),
+		Chain33Addr:  chain33Addr,
+		TokenIds:     make([]uint64, 0),
+		ProxyPubKeys: new(zt.AccountProxyPubKeys),
 	}
 
 	leaf.TokenIds = append(leaf.TokenIds, tokenId)
@@ -478,6 +480,10 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 		if option == zt.Add {
 			token.Balance = new(big.Int).Add(balance, change).String()
 		} else if option == zt.Sub {
+			if balance.Cmp(change) < 0 {
+				return nil, nil, errors.Wrapf(types.ErrNotAllow, "amount=%d,tokenId=%d,balance=%s less sub amoumt=%s",
+					accountId, tokenId, balance, amount)
+			}
 			token.Balance = new(big.Int).Sub(balance, change).String()
 		} else {
 			return kvs, localKvs, types.ErrNotSupport
@@ -586,21 +592,31 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 }
 
 func getLeafHash(leaf *zt.Leaf) []byte {
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
-	hash.Write(accountIdBytes[:])
-	hash.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	hash.Write(zt.Str2Byte(leaf.GetChain33Addr()))
-	if leaf.GetPubKey() != nil {
-		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
-		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
-	} else {
-		hash.Write(zt.Str2Byte("0")) //X
-		hash.Write(zt.Str2Byte("0")) //Y
+	h.Write(accountIdBytes[:])
+	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+	getLeafPubKeyHash(h, leaf.GetPubKey())
+	if leaf.GetProxyPubKeys() != nil {
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 	}
 	token := zt.Str2Byte(leaf.GetTokenHash())
-	hash.Write(token)
-	return hash.Sum(nil)
+	h.Write(token)
+	return h.Sum(nil)
+}
+
+func getLeafPubKeyHash(h hash.Hash, pubKey *zt.ZkPubKey) {
+	if pubKey != nil {
+		h.Write(zt.Str2Byte(pubKey.GetX()))
+		h.Write(zt.Str2Byte(pubKey.GetY()))
+		return
+	}
+
+	h.Write(zt.Str2Byte("0")) //X
+	h.Write(zt.Str2Byte("0")) //Y
 }
 
 func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64, info *TreeUpdateInfo) (string, error) {
@@ -616,34 +632,40 @@ func getTokenRootHash(db dbm.KV, accountId uint64, tokenIds []uint64, info *Tree
 }
 
 func getTokenBalanceHash(token *zt.TokenBalance) []byte {
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	tokenIdBytes := new(fr.Element).SetUint64(token.GetTokenId()).Bytes()
-	hash.Write(tokenIdBytes[:])
-	hash.Write(zt.Str2Byte(token.Balance))
-	return hash.Sum(nil)
+	h.Write(tokenIdBytes[:])
+	h.Write(zt.Str2Byte(token.Balance))
+	return h.Sum(nil)
 }
 
 func getHistoryLeafHash(leaf *zt.HistoryLeaf) []byte {
 
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+	h := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
-	hash.Write(accountIdBytes[:])
-	hash.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	hash.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+	h.Write(accountIdBytes[:])
+	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
+	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
 	if leaf.GetPubKey() != nil {
-		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
-		hash.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
+		h.Write(zt.Str2Byte(leaf.GetPubKey().GetX()))
+		h.Write(zt.Str2Byte(leaf.GetPubKey().GetY()))
 	} else {
-		hash.Write(zt.Str2Byte("0")) //X
-		hash.Write(zt.Str2Byte("0")) //Y
+		h.Write(zt.Str2Byte("0")) //X
+		h.Write(zt.Str2Byte("0")) //Y
+	}
+	getLeafPubKeyHash(h, leaf.GetPubKey())
+	if leaf.GetProxyPubKeys() != nil {
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
+		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
 	}
 
 	tokenTree := getNewTree()
 	for _, token := range leaf.Tokens {
 		tokenTree.Push(getTokenBalanceHash(token))
 	}
-	hash.Write(tokenTree.Root())
-	return hash.Sum(nil)
+	h.Write(tokenTree.Root())
+	return h.Sum(nil)
 }
 
 func CalLeafProof(statedb dbm.KV, leaf *zt.Leaf, info *TreeUpdateInfo) (*zt.MerkleTreeProof, error) {
@@ -813,7 +835,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
@@ -827,7 +849,21 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKey *
 	if leaf == nil {
 		return kvs, localKvs, errors.New("account not exist")
 	}
-	leaf.PubKey = pubKey
+	if nil == leaf.ProxyPubKeys {
+		leaf.ProxyPubKeys = &zt.AccountProxyPubKeys{}
+	}
+	switch pubKeyTy {
+	case 0:
+		leaf.PubKey = pubKey
+	case zt.NormalProxyPubKey:
+		leaf.ProxyPubKeys.Normal = pubKey
+	case zt.SystemProxyPubKey:
+		leaf.ProxyPubKeys.System = pubKey
+	case zt.SuperProxyPubKey:
+		leaf.ProxyPubKeys.Super = pubKey
+	default:
+		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "wrong pubkey ty=%d", pubKeyTy)
+	}
 
 	kv := &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leaf.AccountId),
