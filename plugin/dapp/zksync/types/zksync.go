@@ -26,7 +26,7 @@ const (
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
-	TySetProxyAddrAction   = 12 //设置代理地址
+	TySetProxyPubKeyAction = 12 //设置代理地址
 	TyMintNFTAction        = 13
 	TyWithdrawNFTAction    = 14
 	TyTransferNFTAction    = 15
@@ -49,7 +49,10 @@ const (
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
 	NameFeeAction            = "Fee"
-	NameSetProxyAddrAction   = "ProxyAddr"
+	NameSetProxyPubKeyAction = "SetProxyPubKey"
+	NameMintNFTAction        = "MintNFT"
+	NameWithdrawNFTACTION    = "WithdrawNFT"
+	NameTransferNFTAction    = "TransferNFT"
 
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
@@ -71,7 +74,7 @@ const (
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 	TyFeeLog            = 111 //手续费
-	TySetProxyAddrLog   = 112 //代理地址
+	TySetProxyPubKeyLog = 112 //代理地址
 	TyMintNFTLog        = 113 //铸造NFT
 	TyWithdrawNFTLog    = 114 //L2提款NFT到L1
 	TyTransferNFTLog    = 115 //L2提款NFT到L1
@@ -155,6 +158,13 @@ const (
 	NFTAccountId = 2
 	//NFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
 	NFTTokenId = 256 //2^8,
+
+)
+
+const (
+	NormalProxyPubKey = 1
+	SystemProxyPubKey = 2
+	SuperProxyPubKey  = 3
 )
 
 var (
@@ -191,7 +201,7 @@ var (
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
-		TySetProxyAddrLog:       {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetProxyAddrLog"},
+		TySetProxyPubKeyLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetProxyPubKeyLog"},
 		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
 		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
 		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
@@ -209,6 +219,9 @@ var (
 		TyForceExitAction:     "1000000",
 		TyFullExitAction:      "1000000",
 		TySwapAction:          "100000",
+		TyMintNFTAction:       "100",
+		TyWithdrawNFTAction:   "100",
+		TyTransferNFTAction:   "100",
 	}
 )
 

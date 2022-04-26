@@ -12,7 +12,7 @@ import (
 )
 
 func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress string, toEthAddress string,
-	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
+	chain33Addr string, accountId uint64, toAccountId uint64, NFTContentHash string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
 	case zt.TyDepositAction:
@@ -79,15 +79,48 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 		payload = types.MustPBToJSON(fullExit)
 	case zt.TySetVerifierAction:
-		fullExit := &zt.ZkVerifier{
+		verifier := &zt.ZkVerifier{
 			Verifiers: strings.Split(chain33Addr, ","),
 		}
-		payload = types.MustPBToJSON(fullExit)
+		payload = types.MustPBToJSON(verifier)
+	case zt.TyMintNFTAction:
+		nft := &zt.ZkMintNFT{
+			FromAccountId: accountId,
+			RecipientId:   toAccountId,
+			ContentHash:   NFTContentHash,
+		}
+		payload = types.MustPBToJSON(nft)
+	case zt.TyTransferNFTAction:
+		nft := &zt.ZkTransferNFT{
+			FromAccountId: accountId,
+			RecipientId:   toAccountId,
+			NFTTokenId:    tokenId,
+		}
+		payload = types.MustPBToJSON(nft)
+	case zt.TyWithdrawNFTAction:
+		nft := &zt.ZkWithdrawNFT{
+			FromAccountId: accountId,
+			NFTTokenId:    tokenId,
+		}
+		payload = types.MustPBToJSON(nft)
 	default:
 		return nil, types.ErrNotSupport
 	}
 
 	return payload, nil
+}
+
+func CreateRawProxyPubKeyTx(accountId uint64, pubKeyType uint64, pubKeyX, pubKeyY string) ([]byte, error) {
+	proxy := &zt.ZkSetProxyPubKey{
+		AccountId: accountId,
+		ProxyTy:   pubKeyType,
+		ProxyPubKey: &zt.ZkPubKey{
+			X: pubKeyX,
+			Y: pubKeyY,
+		},
+	}
+	return types.MustPBToJSON(proxy), nil
+
 }
 
 //11 => 00001011, 数组index0值为0，大端表示

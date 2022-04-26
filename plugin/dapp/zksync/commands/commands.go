@@ -45,6 +45,7 @@ func ZksyncCmd() *cobra.Command {
 		transferToNewCmd(),
 		forceExitCmd(),
 		setPubKeyCmd(),
+		setProxyPubKeyCmd(),
 		fullExitCmd(),
 		setVerifyKeyCmd(),
 		setOperatorCmd(),
@@ -63,6 +64,7 @@ func ZksyncCmd() *cobra.Command {
 		setTokenFeeCmd(),
 		getFirstRootHashCmd(),
 		getZkCommitProofListCmd(),
+		nftCmd(),
 	)
 	return cmd
 }
@@ -96,7 +98,7 @@ func deposit(cmd *cobra.Command, args []string) {
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0)
+	payload, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -136,7 +138,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -176,7 +178,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -216,7 +218,7 @@ func contractToTree(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -259,7 +261,7 @@ func transfer(cmd *cobra.Command, args []string) {
 	toAccountId, _ := cmd.Flags().GetUint64("toAccountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
+	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -304,7 +306,7 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -341,7 +343,7 @@ func forceExit(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -375,7 +377,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -384,6 +386,60 @@ func setPubKey(cmd *cobra.Command, args []string) {
 		Execer:     zt.Zksync,
 		ActionName: "SetPubKey",
 		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func setProxyPubKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "setProxyPk",
+		Short: "get setProxyPubKey tx",
+		Run:   setProxyPubKey,
+	}
+	setProxyPubKeyFlag(cmd)
+	return cmd
+}
+
+func setProxyPubKeyFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("accountId", "a", 0, "setPubKeyFlag accountId")
+	cmd.MarkFlagRequired("accountId")
+
+	cmd.Flags().Uint64P("pubkeyT", "t", 0, "pubkey type,1:normal,2:system,3:super")
+	cmd.MarkFlagRequired("pubkeyT")
+
+	cmd.Flags().StringP("pubkeyX", "x", "", "pubkey x value")
+	cmd.MarkFlagRequired("pubkeyX")
+
+	cmd.Flags().StringP("pubkeyY", "y", "", "pubkey y value")
+	cmd.MarkFlagRequired("pubkeyY")
+}
+
+func setProxyPubKey(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("accountId")
+	pubkeyT, _ := cmd.Flags().GetUint64("pubkeyT")
+	pubkeyX, _ := cmd.Flags().GetString("pubkeyX")
+	pubkeyY, _ := cmd.Flags().GetString("pubkeyY")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	if pubkeyT <= 0 || pubkeyT > zt.SuperProxyPubKey {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("wrong pubkey type=%d", pubkeyT))
+		return
+	}
+
+	proxy := &zt.ZkSetProxyPubKey{
+		AccountId: accountId,
+		ProxyTy:   pubkeyT,
+		ProxyPubKey: &zt.ZkPubKey{
+			X: pubkeyX,
+			Y: pubkeyY,
+		},
+	}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "SetProxyPubKey",
+		Payload:    types.MustPBToJSON(proxy),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -412,7 +468,7 @@ func fullExit(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(zt.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0, "")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -1058,6 +1114,175 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp zt.ZkCommitProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func nftCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nft",
+		Short: "nft related cmd",
+	}
+	cmd.AddCommand(mintNFTCmd())
+	cmd.AddCommand(transferNFTCmd())
+	cmd.AddCommand(withdrawNFTCmd())
+	cmd.AddCommand(getNftByIdCmd())
+
+	return cmd
+}
+
+func mintNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint",
+		Short: "mint nft command",
+		Run:   setMintNFT,
+	}
+	mintNFTFlag(cmd)
+	return cmd
+}
+
+func mintNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("creatorId", "a", 0, "NFT creator id")
+	cmd.MarkFlagRequired("creatorId")
+
+	cmd.Flags().Uint64P("recipientId", "t", 0, "NFT recipient id")
+	cmd.MarkFlagRequired("recipientId")
+
+	cmd.Flags().StringP("contentHash", "c", "", "NFT content hash,must 64 hex char")
+	cmd.MarkFlagRequired("contentHash")
+
+}
+
+func setMintNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("creatorId")
+	toId, _ := cmd.Flags().GetUint64("recipientId")
+	contentHash, _ := cmd.Flags().GetString("contentHash")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payload, err := wallet.CreateRawTx(zt.TyMintNFTAction, 0, "0", "", "", "", accountId, toId, contentHash)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "MintNFT",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func transferNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer",
+		Short: "transfer nft command",
+		Run:   transferNFT,
+	}
+	transferNFTFlag(cmd)
+	return cmd
+}
+
+func transferNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.MarkFlagRequired("fromId")
+
+	cmd.Flags().Uint64P("toId", "t", 0, "NFT to id")
+	cmd.MarkFlagRequired("toId")
+
+	cmd.Flags().StringP("tokenId", "o", "", "NFT token id")
+	cmd.MarkFlagRequired("tokenId")
+
+}
+
+func transferNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("fromId")
+	toId, _ := cmd.Flags().GetUint64("toId")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payload, err := wallet.CreateRawTx(zt.TyTransferNFTAction, tokenId, "0", "", "", "", accountId, toId, "")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "TransferNFT",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func withdrawNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "withdraw to L1",
+		Run:   withdrawNFT,
+	}
+	withdrawNFTFlag(cmd)
+	return cmd
+}
+
+func withdrawNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.MarkFlagRequired("fromId")
+
+	cmd.Flags().StringP("tokenId", "o", "", "NFT token id")
+	cmd.MarkFlagRequired("tokenId")
+
+}
+
+func withdrawNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("fromId")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	payload, err := wallet.CreateRawTx(zt.TyWithdrawNFTAction, tokenId, "0", "", "", "", accountId, 0, "")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+		return
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "WithdrawNFT",
+		Payload:    payload,
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func getNftByIdCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "id",
+		Short: "get nft by id",
+		Run:   getNftId,
+	}
+	getNftByIdFlag(cmd)
+	return cmd
+}
+
+func getNftByIdFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("id", "i", 0, "nft token Id")
+	cmd.MarkFlagRequired("id")
+}
+
+func getNftId(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	id, _ := cmd.Flags().GetUint64("id")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		TokenId: id,
+	}
+
+	params.FuncName = "GetNFTStatus"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkNFTTokenStatus
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
