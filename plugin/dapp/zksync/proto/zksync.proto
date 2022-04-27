@@ -21,10 +21,9 @@ message ZksyncAction {
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
     ZkSetFee    setFee = 14;
-    ZkSetProxyPubKey setProxyPubKey = 16;
-    ZkMintNFT     mintNFT = 17;
-    ZkWithdrawNFT withdrawNFT = 18;
-    ZkTransferNFT transferNFT = 19;
+    ZkMintNFT     mintNFT = 16;
+    ZkWithdrawNFT withdrawNFT = 17;
+    ZkTransferNFT transferNFT = 18;
   }
 
   int32 ty = 15;
@@ -139,7 +138,8 @@ message ZkForceExit {
 message ZkSetPubKey {
   uint64 accountId = 1;
   ZkPubKey  pubKey = 2;
-  ZkSignature signature = 3;
+  uint64    pubKeyTy = 3;
+  ZkSignature signature = 4;
 }
 
 message ZkFullExit {
@@ -153,12 +153,6 @@ message ZkSwap {
   ZkSignature signature = 1;
 }
 
-message ZkSetProxyPubKey {
-  uint64 accountId = 1;
-  uint64 proxyTy = 2;
-  ZkPubKey proxyPubKey = 3;
-  ZkSignature signature = 4;
-}
 
 message ZkMintNFT {
   uint64 fromAccountId = 1;

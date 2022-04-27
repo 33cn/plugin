@@ -1043,17 +1043,27 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	if leaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	//已经设置过缺省公钥，不允许再设置
-	if leaf.PubKey != nil {
-		return nil, errors.Wrapf(types.ErrNotAllow, "pubKey exited already")
+
+	if payload.GetPubKey() == nil || len(payload.GetPubKey().X) <= 0 || len(payload.GetPubKey().Y) <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "pubkey invalid")
 	}
 
-	//校验预存的地址是否和公钥匹配
-	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
-	hash.Write(zt.Str2Byte(payload.PubKey.X))
-	hash.Write(zt.Str2Byte(payload.PubKey.Y))
-	if zt.Byte2Str(hash.Sum(nil)) != leaf.Chain33Addr {
-		return nil, errors.New("not your account")
+	if payload.PubKeyTy == 0 {
+		//已经设置过缺省公钥，不允许再设置
+		if leaf.PubKey != nil {
+			return nil, errors.Wrapf(types.ErrNotAllow, "pubKey exited already")
+		}
+
+		//校验预存的地址是否和公钥匹配
+		hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
+		hash.Write(zt.Str2Byte(payload.PubKey.X))
+		hash.Write(zt.Str2Byte(payload.PubKey.Y))
+		if zt.Byte2Str(hash.Sum(nil)) != leaf.Chain33Addr {
+			return nil, errors.New("not your account")
+		}
+	}
+	if payload.PubKeyTy > zt.SuperProxyPubKey {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong proxy ty=%d", payload.PubKeyTy)
 	}
 
 	operationInfo := &zt.OperationInfo{
@@ -1066,21 +1076,45 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		AccountID:   payload.AccountId,
 	}
 
+	if payload.PubKeyTy == 0 {
+		kvs, localKvs, err = a.SetDefultPubKey(payload, info, leaf, operationInfo)
+		if err != nil {
+			return nil, errors.Wrapf(err, "setDefultPubKey")
+		}
+	} else {
+		kvs, localKvs, err = a.SetProxyPubKey(payload, info, leaf, operationInfo)
+		if err != nil {
+			return nil, errors.Wrapf(err, "setDefultPubKey")
+		}
+	}
+
+	zklog := &zt.ZkReceiptLog{
+		OperationInfo: operationInfo,
+		LocalKvs:      localKvs,
+	}
+	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(zklog)}
+	logs = append(logs, receiptLog)
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
+}
+
+func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, leaf *zt.Leaf, operationInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
+
 	//更新之前先计算证明
 	receipt, err := calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, nil, nil, receipt.Token.Balance, operationInfo.AccountID)
 
-	kvs, localKvs, err = UpdatePubKey(a.statedb, a.localDB, info, 0, payload.GetPubKey(), payload.AccountId)
+	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKeyTy(), payload.GetPubKey(), payload.AccountId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, nil, receipt.Token.Balance, operationInfo.AccountID)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
@@ -1095,74 +1129,39 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
-	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TySetPubKeyLog, Log: types.Encode(zklog)}
-	logs = append(logs, receiptLog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+
+	return kvs, localKvs, nil
 }
 
 //设置代理地址的公钥
-func (a *Action) SetProxyPubKey(payload *zt.ZkSetProxyPubKey) (*types.Receipt, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-	var localKvs []*types.KeyValue
+func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, leaf *zt.Leaf, operationInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
 
-	if payload.ProxyTy <= 0 || payload.ProxyTy > zt.SuperProxyPubKey {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong ty=%d", payload.ProxyTy)
-	}
-
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	err := authVerification(payload.Signature.PubKey, leaf.PubKey)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, nil, errors.Wrapf(err, "authVerification")
 	}
 
-	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
-	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByEthAddress")
-	}
-	if leaf == nil {
-		return nil, errors.New("account not exist")
-	}
-	err = authVerification(payload.Signature.PubKey, leaf.PubKey)
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
-	}
-
-	operationInfo := &zt.OperationInfo{
-		BlockHeight: uint64(a.height),
-		TxIndex:     uint32(a.index),
-		TxType:      zt.TySetProxyPubKeyAction,
-		TokenID:     0,
-		Amount:      "0",
-		SigData:     payload.Signature,
-		AccountID:   payload.AccountId,
-		SpecialInfo: &zt.OperationSpecialInfo{},
-	}
+	operationInfo.SpecialInfo = new(zt.OperationSpecialInfo)
 	speciaData := &zt.OperationSpecialData{
-		PubKeyType: payload.ProxyTy,
-		PubKey:     payload.ProxyPubKey,
+		PubKeyType: payload.PubKeyTy,
+		PubKey:     payload.PubKey,
 	}
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 	//更新之前先计算证明
 	receipt, err := calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
 
-	kvs, localKvs, err = UpdatePubKey(a.statedb, a.localDB, info, payload.ProxyTy, payload.ProxyPubKey, payload.AccountId)
+	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.PubKeyTy, payload.GetPubKey(), payload.AccountId)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
 	if err != nil {
-		return nil, errors.Wrapf(err, "calProof")
+		return nil, nil, errors.Wrapf(err, "calProof")
 	}
 	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
@@ -1177,14 +1176,8 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetProxyPubKey) (*types.Receipt, e
 		After:  after,
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-	zklog := &zt.ZkReceiptLog{
-		OperationInfo: operationInfo,
-		LocalKvs:      localKvs,
-	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TySetProxyPubKeyLog, Log: types.Encode(zklog)}
-	logs = append(logs, receiptLog)
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-	return receipts, nil
+
+	return kvs, localKvs, nil
 }
 
 func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
@@ -1517,14 +1510,9 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		AccountID:   payload.GetFromAccountId(),
 		SpecialInfo: &zt.OperationSpecialInfo{},
 	}
-	hexContentHash := strings.ToLower(payload.ContentHash)
-	if hexContentHash[0:2] == "0x" {
-		hexContentHash = hexContentHash[2:]
-	}
 	speciaData := &zt.OperationSpecialData{
 		AccountID:   payload.GetFromAccountId(),
 		RecipientID: payload.RecipientId,
-		ContentHash: hexContentHash,
 		TokenID:     []uint64{feeTokenId},
 	}
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
@@ -1616,10 +1604,16 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		return nil, errors.New("account not exist")
 	}
 
-	newNFTTokenBalance, err := getNewNFTTokenBalance(payload.GetFromAccountId(), creatorSerialId, hexContentHash)
+	part1, part2, err := zt.SplitNFTContent(payload.ContentHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "split content hash=%s", payload.ContentHash)
+	}
+
+	newNFTTokenBalance, err := getNewNFTTokenBalance(payload.GetFromAccountId(), creatorSerialId, part1.String(), part2.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTToken balance")
 	}
+	operationInfo.SpecialInfo.SpecialDatas[0].ContentHash = []string{part1.String(), part2.String()}
 
 	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, newNFTTokenId.Uint64(), newNFTTokenBalance, zt.Add)
 	if err != nil {
@@ -1656,7 +1650,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		CreatorId:       payload.GetFromAccountId(),
 		CreatorEthAddr:  creatorEthAddr,
 		CreatorSerialId: serialId.Uint64(),
-		ContentHash:     hexContentHash,
+		ContentHash:     payload.ContentHash,
 		OwnerId:         payload.GetRecipientId(),
 	}
 	kv := &types.KeyValue{
@@ -1713,25 +1707,13 @@ func (a *Action) updateLeafRst(info *TreeUpdateInfo, opInfo *zt.OperationInfo, f
 
 }
 
-func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, hexContent string) (string, error) {
-	if len(hexContent) != 64 {
-		return "", errors.Wrapf(types.ErrInvalidParam, "contentHash not 64 len, %s", hexContent)
-	}
-	contentPart1, ok := big.NewInt(0).SetString(hexContent[:16], 16)
-	if !ok {
-		return "", errors.Wrapf(types.ErrInvalidParam, "contentHash.preHalf hex err, %s", hexContent[:16])
-	}
-	contentPart2, ok := big.NewInt(0).SetString(hexContent[16:], 16)
-	if !ok {
-		return "nil", errors.Wrapf(types.ErrInvalidParam, "contentHash.postHalf hex err, %s", hexContent[16:])
-	}
-
+func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, contentHashPart1, contentHashPart2 string) (string, error) {
 	hashFn := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hashFn.Reset()
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(creatorId).String()))
 	hashFn.Write(zt.Str2Byte(creatorSerialId))
-	hashFn.Write(zt.Str2Byte(contentPart1.String()))
-	hashFn.Write(zt.Str2Byte(contentPart2.String()))
+	hashFn.Write(zt.Str2Byte(contentHashPart1))
+	hashFn.Write(zt.Str2Byte(contentHashPart2))
 	return zt.Byte2Str(hashFn.Sum(nil)), nil
 }
 
@@ -1769,9 +1751,14 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrNotAllow, "NFT token owner=%d,not=%d", nftStatus.OwnerId, payload.FromAccountId)
 	}
 
+	contentHashPart1, contentHashPart2, err := zt.SplitNFTContent(nftStatus.ContentHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "split content hash=%s", nftStatus.ContentHash)
+	}
+
 	speciaData := &zt.OperationSpecialData{
 		AccountID:   nftStatus.CreatorId,
-		ContentHash: nftStatus.ContentHash,
+		ContentHash: []string{contentHashPart1.String(), contentHashPart2.String()},
 		TokenID:     []uint64{feeTokenId, nftStatus.Id, nftStatus.CreatorSerialId},
 	}
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
@@ -1838,7 +1825,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	tokenBalance, err := getNewNFTTokenBalance(nftStatus.CreatorId, big.NewInt(0).SetUint64(nftStatus.CreatorSerialId).String(), nftStatus.ContentHash)
+	tokenBalance, err := getNewNFTTokenBalance(nftStatus.CreatorId, big.NewInt(0).SetUint64(nftStatus.CreatorSerialId).String(), contentHashPart1.String(), contentHashPart2.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTTokenBalance tokenId=%d", nftStatus.Id)
 	}

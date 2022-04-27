@@ -26,10 +26,9 @@ const (
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
-	TySetProxyPubKeyAction = 12 //设置代理地址
-	TyMintNFTAction        = 13
-	TyWithdrawNFTAction    = 14
-	TyTransferNFTAction    = 15
+	TyMintNFTAction        = 12
+	TyWithdrawNFTAction    = 13
+	TyTransferNFTAction    = 14
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
@@ -49,7 +48,6 @@ const (
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
 	NameFeeAction            = "Fee"
-	NameSetProxyPubKeyAction = "SetProxyPubKey"
 	NameMintNFTAction        = "MintNFT"
 	NameWithdrawNFTACTION    = "WithdrawNFT"
 	NameTransferNFTAction    = "TransferNFT"
@@ -74,10 +72,9 @@ const (
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 	TyFeeLog            = 111 //手续费
-	TySetProxyPubKeyLog = 112 //代理地址
-	TyMintNFTLog        = 113 //铸造NFT
-	TyWithdrawNFTLog    = 114 //L2提款NFT到L1
-	TyTransferNFTLog    = 115 //L2提款NFT到L1
+	TyMintNFTLog        = 112 //铸造NFT
+	TyWithdrawNFTLog    = 113 //L2提款NFT到L1
+	TyTransferNFTLog    = 114 //L2提款NFT到L1
 
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof
@@ -144,11 +141,12 @@ const (
 	FullExitChunks      = 3
 	SwapChunks          = 4
 	NoopChunks          = 1
-	ChangePubKeyChunks  = 5
+	SetPubKeyChunks     = 5
 	FeeChunks           = 1
 	SetProxyAddrChunks  = 5
 	MintNFTChunks       = 5
 	WithdrawNFTChunks   = 6
+	TransferNFTChunks   = 3
 )
 
 const (
@@ -201,7 +199,6 @@ var (
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
-		TySetProxyPubKeyLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetProxyPubKeyLog"},
 		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
 		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
 		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},

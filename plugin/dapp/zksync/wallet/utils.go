@@ -67,11 +67,11 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(forceExit)
-	case zt.TySetPubKeyAction:
-		setPubKey := &zt.ZkSetPubKey{
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(setPubKey)
+	//case zt.TySetPubKeyAction:
+	//	setPubKey := &zt.ZkSetPubKey{
+	//		AccountId: accountId,
+	//	}
+	//	payload = types.MustPBToJSON(setPubKey)
 	case zt.TyFullExitAction:
 		fullExit := &zt.ZkFullExit{
 			TokenId:   tokenId,
@@ -108,19 +108,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 	}
 
 	return payload, nil
-}
-
-func CreateRawProxyPubKeyTx(accountId uint64, pubKeyType uint64, pubKeyX, pubKeyY string) ([]byte, error) {
-	proxy := &zt.ZkSetProxyPubKey{
-		AccountId: accountId,
-		ProxyTy:   pubKeyType,
-		ProxyPubKey: &zt.ZkPubKey{
-			X: pubKeyX,
-			Y: pubKeyY,
-		},
-	}
-	return types.MustPBToJSON(proxy), nil
-
 }
 
 //11 => 00001011, 数组index0值为0，大端表示
@@ -358,6 +345,7 @@ func GetSetPubKeyMsg(payload *zt.ZkSetPubKey) *zt.ZkMsg {
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TySetPubKeyAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.PubKeyTy), zt.TxTypeBitWidth)...)
 
 	pubKeyX, _ := new(big.Int).SetString(payload.PubKey.X, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(pubKeyX, zt.PubKeyBitWidth)...)
@@ -383,6 +371,69 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+func GetMintNFTMsg(payload *zt.ZkMintNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	part1, part2, err := zt.SplitNFTContent(payload.ContentHash)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("split content hash=%s wrong", payload.ContentHash))
+		panic(err)
+	}
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyMintNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part1, zt.HashBitWidth/2)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part2, zt.HashBitWidth/2)...)
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+func GetTransferNFTMsg(payload *zt.ZkTransferNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.NFTTokenBitWidth)...)
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+func GetWithdrawNFTMsg(payload *zt.ZkWithdrawNFT) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.NFTTokenBitWidth)...)
 	copy(binaryData, pubData)
 
 	return &zt.ZkMsg{

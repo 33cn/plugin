@@ -45,7 +45,6 @@ func ZksyncCmd() *cobra.Command {
 		transferToNewCmd(),
 		forceExitCmd(),
 		setPubKeyCmd(),
-		setProxyPubKeyCmd(),
 		fullExitCmd(),
 		setVerifyKeyCmd(),
 		setOperatorCmd(),
@@ -371,75 +370,39 @@ func setPubKeyFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("accountId", "a", 0, "setPubKeyFlag accountId")
 	cmd.MarkFlagRequired("accountId")
 
+	cmd.Flags().Uint64P("pubkeyT", "t", 0, "0:self,proxy pubkey ty: 1: normal,2:system,3:super")
+	cmd.MarkFlagRequired("pubkeyT")
+
+	cmd.Flags().StringP("pubkeyX", "x", "", "proxy pubkey x value")
+	cmd.Flags().StringP("pubkeyY", "y", "", "proxy pubkey y value")
+
 }
 
 func setPubKey(cmd *cobra.Command, args []string) {
-	accountId, _ := cmd.Flags().GetUint64("accountId")
-
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0, "")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
-	}
-	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
-		ActionName: "SetPubKey",
-		Payload:    payload,
-	}
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
-	ctx.RunWithoutMarshal()
-}
-
-func setProxyPubKeyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "setProxyPk",
-		Short: "get setProxyPubKey tx",
-		Run:   setProxyPubKey,
-	}
-	setProxyPubKeyFlag(cmd)
-	return cmd
-}
-
-func setProxyPubKeyFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "setPubKeyFlag accountId")
-	cmd.MarkFlagRequired("accountId")
-
-	cmd.Flags().Uint64P("pubkeyT", "t", 0, "pubkey type,1:normal,2:system,3:super")
-	cmd.MarkFlagRequired("pubkeyT")
-
-	cmd.Flags().StringP("pubkeyX", "x", "", "pubkey x value")
-	cmd.MarkFlagRequired("pubkeyX")
-
-	cmd.Flags().StringP("pubkeyY", "y", "", "pubkey y value")
-	cmd.MarkFlagRequired("pubkeyY")
-}
-
-func setProxyPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 	pubkeyT, _ := cmd.Flags().GetUint64("pubkeyT")
 	pubkeyX, _ := cmd.Flags().GetString("pubkeyX")
 	pubkeyY, _ := cmd.Flags().GetString("pubkeyY")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	if pubkeyT <= 0 || pubkeyT > zt.SuperProxyPubKey {
-		fmt.Fprintln(os.Stderr, fmt.Sprintf("wrong pubkey type=%d", pubkeyT))
+	if pubkeyT > 0 && (len(pubkeyX) == 0 || len(pubkeyY) == 0) {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set pubkeyX pubkeyY"))
 		return
 	}
 
-	proxy := &zt.ZkSetProxyPubKey{
+	pubkey := &zt.ZkSetPubKey{
 		AccountId: accountId,
-		ProxyTy:   pubkeyT,
-		ProxyPubKey: &zt.ZkPubKey{
+		PubKeyTy:  pubkeyT,
+		PubKey: &zt.ZkPubKey{
 			X: pubkeyX,
 			Y: pubkeyY,
 		},
 	}
-
+	payload := types.MustPBToJSON(pubkey)
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
-		ActionName: "SetProxyPubKey",
-		Payload:    types.MustPBToJSON(proxy),
+		ActionName: "SetPubKey",
+		Payload:    payload,
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()

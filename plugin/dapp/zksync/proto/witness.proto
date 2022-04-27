@@ -103,7 +103,7 @@ message OperationSpecialData {
   repeated uint64 tokenID    = 6;
   repeated OrderPricePair pricePair  = 7;
   ZkSignature sigData         = 8;
-  string contentHash          = 9;
+  repeated string contentHash = 9;
   uint64   pubKeyType         = 10;
   ZkPubKey pubKey             = 11;
 

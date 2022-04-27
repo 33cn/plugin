@@ -95,6 +95,15 @@ func (z *zksync) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
+	case zt.TyMintNFTAction:
+		signature = action.GetMintNFT().GetSignature()
+		msg = wallet.GetMintNFTMsg(action.GetMintNFT())
+	case zt.TyWithdrawNFTAction:
+		signature = action.GetWithdrawNFT().GetSignature()
+		msg = wallet.GetWithdrawNFTMsg(action.GetWithdrawNFT())
+	case zt.TyTransferNFTAction:
+		signature = action.GetTransferNFT().GetSignature()
+		msg = wallet.GetTransferNFTMsg(action.GetTransferNFT())
 	default:
 		return nil
 	}

@@ -686,7 +686,7 @@ func getChunkNum(opType uint64) int {
 	case zt.TyFullExitAction:
 		return zt.FullExitChunks
 	case zt.TySetPubKeyAction:
-		return zt.ChangePubKeyChunks
+		return zt.SetPubKeyChunks
 	case zt.TyNoopAction:
 		return zt.NoopChunks
 	default:
