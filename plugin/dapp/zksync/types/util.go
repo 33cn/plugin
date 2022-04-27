@@ -2,9 +2,11 @@ package types
 
 import (
 	"encoding/hex"
+	"github.com/pkg/errors"
 	"math/big"
 	"strings"
 
+	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
@@ -35,4 +37,24 @@ func HexAddr2Decimal(addr string) string {
 func DecimalAddr2Hex(addr string) string {
 	addrInt, _ := new(big.Int).SetString(strings.ToLower(addr), 10)
 	return hex.EncodeToString(addrInt.Bytes())
+}
+
+func SplitNFTContent(contentHash string) (*big.Int, *big.Int, error) {
+	hexContent := strings.ToLower(contentHash)
+	if hexContent[0:2] == "0x" || hexContent[0:2] == "0X" {
+		hexContent = hexContent[2:]
+	}
+
+	if len(hexContent) != 64 {
+		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash not 64 len, %s", hexContent)
+	}
+	part1, ok := big.NewInt(0).SetString(hexContent[:16], 16)
+	if !ok {
+		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash.preHalf hex err, %s", hexContent[:16])
+	}
+	part2, ok := big.NewInt(0).SetString(hexContent[16:], 16)
+	if !ok {
+		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash.postHalf hex err, %s", hexContent[16:])
+	}
+	return part1, part2, nil
 }

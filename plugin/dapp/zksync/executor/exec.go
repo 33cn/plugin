@@ -45,11 +45,6 @@ func (z *zksync) Exec_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Transaction, 
 	return action.SetPubKey(payload)
 }
 
-func (z *zksync) Exec_SetProxyPubKey(payload *zt.ZkSetProxyPubKey, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewAction(z, tx, index)
-	return action.SetProxyPubKey(payload)
-}
-
 func (z *zksync) Exec_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.FullExit(payload)

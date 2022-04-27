@@ -192,12 +192,15 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		forceQuit.Signature = signInfo
 	case zt.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
-		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
-		pubKey := &zt.ZkPubKey{
-			X: privateKey.PublicKey.A.X.String(),
-			Y: privateKey.PublicKey.A.Y.String(),
+		//如果是添加公钥的操作，则默认设置这里生成的公钥
+		if setPubKey.PubKeyTy == 0 {
+			pubKey := &zt.ZkPubKey{
+				X: privateKey.PublicKey.A.X.String(),
+				Y: privateKey.PublicKey.A.Y.String(),
+			}
+			setPubKey.PubKey = pubKey
 		}
-		setPubKey.PubKey = pubKey
+
 		msg = GetSetPubKeyMsg(setPubKey)
 		signInfo, err = SignTx(msg, privateKey)
 		if err != nil {
@@ -214,6 +217,33 @@ func (policy *zksyncPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		forceQuit.Signature = signInfo
+	case zt.TyMintNFTAction:
+		nft := action.GetMintNFT()
+		msg := GetMintNFTMsg(nft)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nft.Signature = signInfo
+	case zt.TyTransferNFTAction:
+		nft := action.GetTransferNFT()
+		msg := GetTransferNFTMsg(nft)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nft.Signature = signInfo
+	case zt.TyWithdrawNFTAction:
+		nft := action.GetWithdrawNFT()
+		msg := GetWithdrawNFTMsg(nft)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nft.Signature = signInfo
 	}
 
 	tx.Payload = types.Encode(action)
