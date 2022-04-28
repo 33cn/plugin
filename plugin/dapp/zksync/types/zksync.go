@@ -108,7 +108,7 @@ const (
 	AddrBitWidth      = 160 //20byte
 	HashBitWidth      = 256 //32byte
 	PubKeyBitWidth    = 256 //32byte
-	FeeAmountBitWidth = 72  //fee op凑满one chunk=128bit，最大10byte
+	FeeAmountBitWidth = 80  //fee op凑满one chunk=128bit，最大10byte
 
 	PacAmountManBitWidth = 35 //amount mantissa part, 比如12340000,只取1234部分，0000用exponent表示
 	PacAmountExpBitWidth = 5  //amount exponent part

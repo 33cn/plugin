@@ -90,8 +90,8 @@ message OperationSpecialInfo {
 }
 
 message OrderPricePair {
-  uint64 sell = 1;
-  uint64 buy  = 2;
+  string sell = 1;
+  string buy  = 2;
 }
 
 message OperationSpecialData {
