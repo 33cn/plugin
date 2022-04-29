@@ -24,3 +24,17 @@ func TestAddressBytes(t *testing.T) {
 	addr := BytesToAddress([]byte{1})
 	assert.Equal(t, addr.String(), "11111111111111111111BZbvjr")
 }
+
+func TestEvmAddress(t *testing.T) {
+
+	addr := &Hash160Address{}
+
+	addr.SetBytes([]byte{13})
+	addr1 := addr.String()
+
+	addr.SetBytes(LeftPadBytes([]byte{13}, 20))
+	addr2 := addr.String()
+
+	assert.Equal(t, addr1, addr2)
+	println(addr2)
+}
