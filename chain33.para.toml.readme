@@ -74,7 +74,7 @@ grpcFuncWhitelist=["*"]
 
 #兼容支持ETH 部分RPC接口
 [rpc.sub.eth]
-enable=true
+enable=false
 # json rpc 监听地址
 httpAddr="localhost:8545"
 httpApi=["eth","web3","personal","admin","net"]

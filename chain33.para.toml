@@ -69,7 +69,7 @@ jrpcFuncWhitelist=["*"]
 grpcFuncWhitelist=["*"]
 
 [rpc.sub.eth]
-enable=true
+enable=false
 httpAddr="localhost:8545"
 httpApi=["eth","web3","personal","admin","net"]
 # websocket 绑定地址
