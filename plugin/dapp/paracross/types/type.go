@@ -32,6 +32,8 @@ var (
 	ForkParaSupervision = "ForkParaSupervision"
 	//ForkParaAutonomySuperGroup 分叉之后autonomy授权共识账户组，之前是配置超级管理员授权
 	ForkParaAutonomySuperGroup = "ForkParaAutonomySuperGroup"
+	//ForkParaFreeRegister 分叉之后平行链自由注册
+	ForkParaFreeRegister = "ForkParaFreeRegister"
 
 	//只在平行链开启的分叉
 	// ForkParaSelfConsStages 平行链自共识分阶段共识
@@ -70,6 +72,7 @@ func InitFork(cfg *types.Chain33Config) {
 	cfg.RegisterDappFork(ParaX, ForkParaAssetTransferRbk, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaSupervision, 0)
 	cfg.RegisterDappFork(ParaX, ForkParaAutonomySuperGroup, 0)
+	cfg.RegisterDappFork(ParaX, ForkParaFreeRegister, 0)
 
 	//只在平行链启用
 	cfg.RegisterDappFork(ParaX, ForkParaSelfConsStages, types.MaxHeight)
