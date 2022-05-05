@@ -199,81 +199,81 @@ func TestPropBoard(t *testing.T) {
 			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrRepeatAddr
 			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
 			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // 正常
 			BoardUpdate:      auty.BoardUpdate_ADDBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 
 		{ // ErrRepeatAddr
 			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
 			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6", AddrA},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // 正常
 			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           boards,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 
 		{ // ErrNotFound
 			BoardUpdate:      auty.BoardUpdate_DELBoard,
 			Boards:           []string{"18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrNotFound
 			BoardUpdate:      auty.BoardUpdate_DELBoard,
 			Boards:           []string{Addr17, "18e1nfiux7aVSfN2zYUZhbidMRokbBSPA6"},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrBoardNumber
 			BoardUpdate:      auty.BoardUpdate_DELBoard,
 			Boards:           []string{Addr16, Addr17},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrRepeatAddr
 			BoardUpdate:      auty.BoardUpdate_DELBoard,
 			Boards:           []string{Addr17, Addr17},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // 正常
 			BoardUpdate:      auty.BoardUpdate_DELBoard,
 			Boards:           []string{Addr17},
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 
 		{ // ErrSetBlockHeight
 			BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 			Boards:           boards,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + propEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.PropEndBlockPeriod + 10,
 		},
 	}
 	result := []error{
@@ -346,7 +346,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 		Boards:           boards,
 		BoardUpdate:      auty.BoardUpdate_REPLACEALL,
 		StartBlockHeight: env.blockHeight + 5,
-		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 	}
 	pbtx, err := propBoardTx(opt1)
 	assert.NoError(t, err)
@@ -384,7 +384,7 @@ func testPropBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB dbm.
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Frozen)
+	assert.Equal(t, autoCfg.ProposalAmount*types.DefaultCoinPrecision, account.Frozen)
 }
 
 func propBoardTx(parm *auty.ProposalBoard) (*types.Transaction, error) {
@@ -543,7 +543,7 @@ func voteProposalBoard(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB 
 	account := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), account.Frozen)
 	account = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, account.Balance)
+	assert.Equal(t, autoCfg.ProposalAmount*types.DefaultCoinPrecision, account.Balance)
 	// status
 	value, err := stateDB.Get(propBoardID(proposalID))
 	assert.NoError(t, err)

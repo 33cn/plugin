@@ -14,43 +14,6 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 )
 
-const (
-	// 最小董事会赞成率
-	minBoardApproveRatio = 50
-	// 最大董事会赞成率
-	maxBoardApproveRatio = 66
-
-	// 最小全体持票人否决率
-	minPubOpposeRatio = 33
-	// 最大全体持票人否决率
-	maxPubOpposeRatio = 50
-
-	// 可以调整，但是可能需要进行范围的限制：参与率最低设置为 50%， 最高设置为 80%，赞成率，最低 50.1%，最高80%
-	//不能设置太低和太高，太低就容易作弊，太高则有可能很难达到
-	// 最小全体持票人参与率
-	minPubAttendRatio = 50
-	// 最大全体持票人参与率
-	maxPubAttendRatio = 80
-
-	// 最小全体持票人赞成率
-	minPubApproveRatio = 50
-	// 最大全体持票人赞成率
-	maxPubApproveRatio = 80
-
-	// 最小公示周期
-	minPublicPeriod int32 = 17280 * 7
-	// 最大公示周期
-	maxPublicPeriod int32 = 17280 * 14
-	// 最小重大项目阈值(coin)
-	minLargeProjectAmount = 100 * 10000
-	// 最大重大项目阈值(coin)
-	maxLargeProjectAmount = 300 * 10000
-	// 最小提案金(coin)
-	minProposalAmount = 20
-	// 最大提案金(coin)
-	maxProposalAmount = 2000
-)
-
 func checkParaInvalid(param, min, max int64) bool {
 	if param > max || param < min {
 		return true
@@ -60,35 +23,36 @@ func checkParaInvalid(param, min, max int64) bool {
 
 func (a *action) propRule(prob *auty.ProposalRule) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
+	autoCfg := GetAutonomyParam(cfg, a.height)
 	//如果全小于等于0,则说明该提案规则参数不正确
 	if prob.RuleCfg == nil {
 		alog.Error("propRule ", "ProposalRule RuleCfg invaild or have no modify param", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
-	if checkParaInvalid(int64(prob.RuleCfg.BoardApproveRatio), minBoardApproveRatio, maxBoardApproveRatio) ||
-		checkParaInvalid(int64(prob.RuleCfg.PubOpposeRatio), minPubOpposeRatio, maxPubOpposeRatio) ||
-		checkParaInvalid(int64(prob.RuleCfg.PublicPeriod), int64(minPublicPeriod), int64(maxPublicPeriod)) ||
-		checkParaInvalid(prob.RuleCfg.LargeProjectAmount, minLargeProjectAmount*cfg.GetCoinPrecision(), maxLargeProjectAmount*cfg.GetCoinPrecision()) ||
-		checkParaInvalid(prob.RuleCfg.ProposalAmount, minProposalAmount*cfg.GetCoinPrecision(), maxProposalAmount*cfg.GetCoinPrecision()) {
+	if checkParaInvalid(int64(prob.RuleCfg.BoardApproveRatio), autoCfg.MinBoardApproveRatio, autoCfg.MaxBoardApproveRatio) ||
+		checkParaInvalid(int64(prob.RuleCfg.PubOpposeRatio), autoCfg.MinPubOpposeRatio, autoCfg.MaxPubOpposeRatio) ||
+		checkParaInvalid(int64(prob.RuleCfg.PublicPeriod), int64(autoCfg.MinPublicPeriod), int64(autoCfg.MaxPublicPeriod)) ||
+		checkParaInvalid(prob.RuleCfg.LargeProjectAmount, autoCfg.MinLargeProjectAmount*cfg.GetCoinPrecision(), autoCfg.MaxLargeProjectAmount*cfg.GetCoinPrecision()) ||
+		checkParaInvalid(prob.RuleCfg.ProposalAmount, autoCfg.MinProposalAmount*cfg.GetCoinPrecision(), autoCfg.MaxProposalAmount*cfg.GetCoinPrecision()) {
 		alog.Error("propRule RuleCfg invaild", "ruleCfg", prob.RuleCfg)
 		return nil, types.ErrInvalidParam
 	}
 
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if checkParaInvalid(int64(prob.RuleCfg.PubAttendRatio), minPubAttendRatio, maxPubAttendRatio) ||
-			checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), minPubApproveRatio, maxPubApproveRatio) {
+		if checkParaInvalid(int64(prob.RuleCfg.PubAttendRatio), autoCfg.MinPubAttendRatio, autoCfg.MaxPubAttendRatio) ||
+			checkParaInvalid(int64(prob.RuleCfg.PubApproveRatio), autoCfg.MinPubApproveRatio, autoCfg.MaxPubApproveRatio) {
 			alog.Error("propRule RuleCfg invaild", "PubAttendRatio", prob.RuleCfg.PubAttendRatio, "PubApproveRatio", prob.RuleCfg.PubApproveRatio)
 			return nil, types.ErrInvalidParam
 		}
 
-		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+		if prob.EndBlockHeight > a.height+autoCfg.PropEndBlockPeriod {
 			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
 			return nil, auty.ErrSetBlockHeight
 		}
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
-		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
+		prob.StartBlockHeight+autoCfg.StartEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propRule height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
@@ -265,6 +229,7 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 		return nil, err
 	}
 	cfg := a.api.GetConfig()
+	autoCfg := GetAutonomyParam(cfg, a.height)
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.Vote {
 		case auty.AutonomyVoteOption_APPROVE:
@@ -300,15 +265,15 @@ func (a *action) votePropRule(voteProb *auty.VoteProposalRule) (*types.Receipt, 
 
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		if isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
-			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio) {
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio, autoCfg) {
 			cur.VoteResult.Pass = true
 			cur.PropRule.RealEndBlockHeight = a.height
 		}
 	} else {
 		if cur.VoteResult.TotalVotes != 0 &&
 			cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(autoCfg.PubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(autoCfg.PubApproveRatio)/100.0 {
 			cur.VoteResult.Pass = true
 			cur.PropRule.RealEndBlockHeight = a.height
 		}
@@ -375,13 +340,13 @@ func (a *action) tmintPropRule(tmintProb *auty.TerminateProposalRule) (*types.Re
 		}
 		cur.VoteResult.TotalVotes = vtCouts
 	}
-
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		cur.VoteResult.Pass = isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
-			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio)
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio, autoCfg)
 	} else {
-		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(autoCfg.PubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(autoCfg.PubApproveRatio)/100.0 {
 			cur.VoteResult.Pass = true
 		} else {
 			cur.VoteResult.Pass = false
