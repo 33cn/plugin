@@ -258,5 +258,7 @@ ForkParaSupervision=0
 ForkParaRootHash=0
 #nodegroup approve需要经过autonomy board成员审批,平行链不开启
 ForkParaAutonomySuperGroup=-1
+#平行链支持自由注册，平行链默认开启
+ForkParaFreeRegister=0
 [fork.sub.qbftNode]
 Enable=0
