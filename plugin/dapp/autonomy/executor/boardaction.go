@@ -19,20 +19,73 @@ import (
 	ticketTy "github.com/33cn/plugin/plugin/dapp/ticket/types"
 )
 
-const (
-	minBoards                 = 20
-	maxBoards                 = 40
-	publicPeriod        int32 = 17280 * 7   // 公示一周时间，以区块高度计算
-	ticketPrice               = 3000        // 单张票价
-	largeProjectAmount        = 100 * 10000 // 重大项目公示金额阈值
-	proposalAmount            = 500         // 创建者消耗金额
-	boardApproveRatio   int32 = 51          // 董事会成员赞成率，以%计，可修改
-	pubAttendRatio      int32 = 75          // 全体持票人参与率，以%计
-	pubApproveRatio     int32 = 66          // 全体持票人赞成率，以%计
-	pubOpposeRatio      int32 = 33          // 全体持票人否决率，以%计
-	startEndBlockPeriod       = 720         // 提案开始结束最小周期
-	propEndBlockPeriod        = 1000000     // 提案高度 结束高度最大周期 100W
-)
+type AutonomyParam struct {
+	MinBoards             int64
+	MaxBoards             int64
+	PublicPeriod          int32 // 公示一周时间，以区块高度计算
+	TicketPrice           int64 // 单张票价
+	LargeProjectAmount    int64 // 重大项目公示金额阈值
+	ProposalAmount        int64 // 创建者消耗金额
+	BoardApproveRatio     int32 // 董事会成员赞成率，以%计，可修改
+	PubAttendRatio        int32 // 全体持票人参与率，以%计
+	PubApproveRatio       int32 // 全体持票人赞成率，以%计
+	PubOpposeRatio        int32 // 全体持票人否决率，以%计
+	StartEndBlockPeriod   int64 // 提案开始结束最小周期
+	PropEndBlockPeriod    int64 // 提案高度 结束高度最大周期 100W
+	MinBoardApproveRatio  int64 // 最小董事会赞成率
+	MaxBoardApproveRatio  int64 // 最大董事会赞成率
+	MinPubOpposeRatio     int64 // 最小全体持票人否决率
+	MaxPubOpposeRatio     int64 // 最大全体持票人否决率
+	MinPubAttendRatio     int64 // 最小全体持票人参与率
+	MaxPubAttendRatio     int64 // 最大全体持票人参与率
+	MinPubApproveRatio    int64 // 最小全体持票人赞成率
+	MaxPubApproveRatio    int64 // 最大全体持票人赞成率
+	MinPublicPeriod       int32 // 最小公示周期
+	MaxPublicPeriod       int32 // 最大公示周期
+	MinLargeProjectAmount int64 // 最小重大项目阈值(coin)
+	MaxLargeProjectAmount int64 // 最大重大项目阈值(coin)
+	MinProposalAmount     int64 // 最小提案金(coin)
+	MaxProposalAmount     int64 // 最大提案金(coin)
+	ItemWaitBlockNumber   int64 //4w高度，大概2天
+	MaxBoardPeriodAmount  int64 // 每个时期董事会审批最大额度300万
+	BoardPeriod           int64 // 时期为一个月
+}
+
+// GetAutonomyParam 获取autonomy config params
+func GetAutonomyParam(cfg *types.Chain33Config, height int64) *AutonomyParam {
+	conf := types.Conf(cfg, "mver.autonomy")
+	c := &AutonomyParam{}
+	c.MinBoards = conf.MGInt("minBoards", height)
+	c.MaxBoards = conf.MGInt("maxBoards", height)
+	c.PublicPeriod = int32(conf.MGInt("publicPeriod", height))
+	c.TicketPrice = conf.MGInt("ticketPrice", height)
+	c.LargeProjectAmount = conf.MGInt("largeProjectAmount", height)
+	c.ProposalAmount = conf.MGInt("proposalAmount", height)
+	c.BoardApproveRatio = int32(conf.MGInt("boardApproveRatio", height))
+	c.PubAttendRatio = int32(conf.MGInt("pubAttendRatio", height))
+	c.PubApproveRatio = int32(conf.MGInt("pubApproveRatio", height))
+	c.PubOpposeRatio = int32(conf.MGInt("pubOpposeRatio", height))
+	c.StartEndBlockPeriod = conf.MGInt("startEndBlockPeriod", height)
+	c.PropEndBlockPeriod = conf.MGInt("propEndBlockPeriod", height)
+	c.MinBoardApproveRatio = conf.MGInt("minBoardApproveRatio", height)
+	c.MaxBoardApproveRatio = conf.MGInt("maxBoardApproveRatio", height)
+	c.MinPubOpposeRatio = conf.MGInt("minPubOpposeRatio", height)
+	c.MaxPubOpposeRatio = conf.MGInt("maxPubOpposeRatio", height)
+	c.MinPubAttendRatio = conf.MGInt("minPubAttendRatio", height)
+	c.MaxPubAttendRatio = conf.MGInt("maxPubAttendRatio", height)
+	c.MinPubApproveRatio = conf.MGInt("minPubApproveRatio", height)
+	c.MaxPubApproveRatio = conf.MGInt("maxPubApproveRatio", height)
+	c.MinPublicPeriod = int32(conf.MGInt("minPublicPeriod", height))
+	c.MaxPublicPeriod = int32(conf.MGInt("maxPublicPeriod", height))
+	c.MinLargeProjectAmount = conf.MGInt("minLargeProjectAmount", height)
+	c.MaxLargeProjectAmount = conf.MGInt("maxLargeProjectAmount", height)
+	c.MinProposalAmount = conf.MGInt("minProposalAmount", height)
+	c.MaxProposalAmount = conf.MGInt("maxProposalAmount", height)
+	c.ItemWaitBlockNumber = conf.MGInt("itemWaitBlockNumber", height)
+	c.MaxBoardPeriodAmount = conf.MGInt("maxBoardPeriodAmount", height)
+	c.BoardPeriod = conf.MGInt("boardPeriod", height)
+	return c
+}
 
 type action struct {
 	api          client.QueueProtocolAPI
@@ -105,15 +158,17 @@ func filterPropBoard(boards []string, blockHeight int64) (map[string]struct{}, e
 }
 
 func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	autoCfg := GetAutonomyParam(cfg, a.height)
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
-		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
+		prob.StartBlockHeight+autoCfg.StartEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propBoard height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
 	}
 
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+		if prob.EndBlockHeight > a.height+autoCfg.PropEndBlockPeriod {
 			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
 			return nil, auty.ErrSetBlockHeight
 		}
@@ -126,7 +181,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 
 	var act *auty.ActiveBoard
 	var err error
-	cfg := a.api.GetConfig()
+
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		act, err = a.getPropBoard(prob)
 	} else {
@@ -136,7 +191,7 @@ func (a *action) propBoard(prob *auty.ProposalBoard) (*types.Receipt, error) {
 		return nil, errors.Wrap(err, "getPropBoard")
 	}
 
-	if len(act.Boards) > maxBoards || len(act.Boards) < minBoards {
+	if int64(len(act.Boards)) > autoCfg.MaxBoards || int64(len(act.Boards)) < autoCfg.MinBoards {
 		alog.Error("propBoard ", "proposal boards number is invaild", len(prob.Boards))
 		return nil, auty.ErrBoardNumber
 	}
@@ -311,6 +366,7 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 	}
 
 	cfg := a.api.GetConfig()
+	autoCfg := GetAutonomyParam(cfg, a.height)
 	//fork之后增加了弃权选项
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		switch voteProb.VoteOption {
@@ -348,15 +404,15 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 
 	if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		if isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
-			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio) {
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio, autoCfg) {
 			cur.VoteResult.Pass = true
 			cur.PropBoard.RealEndBlockHeight = a.height
 		}
 	} else {
 		if cur.VoteResult.TotalVotes != 0 &&
 			cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes != 0 &&
-			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+			float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(autoCfg.PubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(autoCfg.PubApproveRatio)/100.0 {
 			cur.VoteResult.Pass = true
 			cur.PropBoard.RealEndBlockHeight = a.height
 		}
@@ -397,12 +453,12 @@ func (a *action) votePropBoard(voteProb *auty.VoteProposalBoard) (*types.Receipt
 }
 
 //统计参与率的时候，计算弃权票，但是统计赞成率的时候，忽略弃权票。比如10票，4票赞成，3票反对，2票弃权，那么参与率是 90%， 赞成 4/7 反对 3/7
-func isApproved(totalVotes, approveVotes, opposeVotes, quitVotes, attendRation, approveRatio int32) bool {
+func isApproved(totalVotes, approveVotes, opposeVotes, quitVotes, attendRation, approveRatio int32, autoCfg *AutonomyParam) bool {
 	if attendRation <= 0 {
-		attendRation = pubAttendRatio
+		attendRation = autoCfg.PubAttendRatio
 	}
 	if approveRatio <= 0 {
-		approveRatio = pubApproveRatio
+		approveRatio = autoCfg.PubApproveRatio
 	}
 	//参与率计算弃权票
 	attendVotes := approveVotes + opposeVotes + quitVotes
@@ -450,13 +506,13 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 		}
 		cur.VoteResult.TotalVotes = vtCouts
 	}
-
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 		cur.VoteResult.Pass = isApproved(cur.VoteResult.TotalVotes, cur.VoteResult.ApproveVotes, cur.VoteResult.OpposeVotes, cur.VoteResult.QuitVotes,
-			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio)
+			cur.CurRule.PubAttendRatio, cur.CurRule.PubApproveRatio, autoCfg)
 	} else {
-		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(pubAttendRatio)/100.0 &&
-			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(pubApproveRatio)/100.0 {
+		if float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes)/float32(cur.VoteResult.TotalVotes) > float32(autoCfg.PubAttendRatio)/100.0 &&
+			float32(cur.VoteResult.ApproveVotes)/float32(cur.VoteResult.ApproveVotes+cur.VoteResult.OpposeVotes) > float32(autoCfg.PubApproveRatio)/100.0 {
 			cur.VoteResult.Pass = true
 		} else {
 			cur.VoteResult.Pass = false
@@ -503,6 +559,7 @@ func (a *action) tmintPropBoard(tmintProb *auty.TerminateProposalBoard) (*types.
 }
 
 func (a *action) getTotalVotes(height int64) (int32, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	addr := "16htvcBNSEA7fZhAdLJphDwQRQJaHpyHTp"
 	if subcfg.Total != "" {
 		addr = subcfg.Total
@@ -512,7 +569,7 @@ func (a *action) getTotalVotes(height int64) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return int32(voteAccount.Balance / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
+	return int32(voteAccount.Balance / (autoCfg.TicketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
 // bindKey bind key
@@ -560,6 +617,7 @@ func (a *action) batchGetAddressVotes(addrs []string, height int64) (int32, erro
 }
 
 func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	execer := ticketName
 	if subcfg.Execer != "" {
 		execer = subcfg.Execer
@@ -572,7 +630,7 @@ func (a *action) getAddressVotes(addr string, height int64) (int32, error) {
 	if subcfg.UseBalance {
 		amount = voteAccount.Balance
 	}
-	return int32(amount / (ticketPrice * a.api.GetConfig().GetCoinPrecision())), nil
+	return int32(amount / (autoCfg.TicketPrice * a.api.GetConfig().GetCoinPrecision())), nil
 }
 
 func (a *action) getStartHeightVoteAccount(addr, execer string, height int64) (*types.Account, error) {
@@ -618,6 +676,7 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 	// 获取当前生效提案规则,并且将不修改的规则补齐
 	rule := &auty.RuleConfig{}
 	value, err := a.db.Get(activeRuleID())
+	autoCfg := GetAutonomyParam(cfg, a.height)
 	if err == nil {
 		err = types.Decode(value, rule)
 		if err != nil {
@@ -626,23 +685,24 @@ func (a *action) getActiveRule() (*auty.RuleConfig, error) {
 		//在fork之前可能有修改了规则，但是这两个值没有修改到
 		if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
 			if rule.PubApproveRatio <= 0 {
-				rule.PubApproveRatio = pubApproveRatio
+				rule.PubApproveRatio = autoCfg.PubApproveRatio
 			}
 			if rule.PubAttendRatio <= 0 {
-				rule.PubAttendRatio = pubAttendRatio
+				rule.PubAttendRatio = autoCfg.PubAttendRatio
 			}
 		}
 
 	} else { // 载入系统默认值
-		rule.BoardApproveRatio = boardApproveRatio
-		rule.PubOpposeRatio = pubOpposeRatio
-		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
-		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
-		rule.PublicPeriod = publicPeriod
+
+		rule.BoardApproveRatio = autoCfg.BoardApproveRatio
+		rule.PubOpposeRatio = autoCfg.PubOpposeRatio
+		rule.ProposalAmount = autoCfg.ProposalAmount * cfg.GetCoinPrecision()
+		rule.LargeProjectAmount = autoCfg.LargeProjectAmount * cfg.GetCoinPrecision()
+		rule.PublicPeriod = autoCfg.PublicPeriod
 
 		if cfg.IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-			rule.PubAttendRatio = pubAttendRatio
-			rule.PubApproveRatio = pubApproveRatio
+			rule.PubAttendRatio = autoCfg.PubAttendRatio
+			rule.PubApproveRatio = autoCfg.PubApproveRatio
 		}
 
 	}

@@ -11,15 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	itemWaitBlockNumber = 40 * 1000 //4w高度，大概2天
-)
-
 func (a *action) propItem(prob *auty.ProposalItem) (*types.Receipt, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	//start和end之间不能小于720高度，end不能超过当前高度+100w
 	if prob.StartBlockHeight < a.height || prob.StartBlockHeight >= prob.EndBlockHeight ||
-		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight ||
-		prob.EndBlockHeight > a.height+propEndBlockPeriod ||
+		prob.StartBlockHeight+autoCfg.StartEndBlockPeriod > prob.EndBlockHeight ||
+		prob.EndBlockHeight > a.height+autoCfg.PropEndBlockPeriod ||
 		prob.RealEndBlockHeight != 0 {
 		return nil, errors.Wrapf(auty.ErrSetBlockHeight, "propItem exe height=%d,start=%d,end=%d,realEnd=%d",
 			a.height, prob.StartBlockHeight, prob.EndBlockHeight, prob.RealEndBlockHeight)

@@ -18,6 +18,7 @@ import (
 )
 
 var chainTestCfg = types.NewChain33Config(types.GetDefaultCfgstring())
+var autoCfg = GetAutonomyParam(chainTestCfg, 0)
 
 func newTestAutonomy() *Autonomy {
 	au := &Autonomy{
