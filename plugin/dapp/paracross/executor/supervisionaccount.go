@@ -272,13 +272,6 @@ func (a *action) supervisionNodeApply(config *pt.ParaNodeGroupConfig) (*types.Re
 
 func (a *action) supervisionNodeApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
-	if !cfg.IsPara() {
-		err := a.checkApproveOp(config)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	apply, err := getSupervisionNodeID(a.db, calcParaSupervisionNodeIDKey(config.Title, config.Id))
 	if err != nil {
@@ -289,6 +282,14 @@ func (a *action) supervisionNodeApprove(config *pt.ParaNodeGroupConfig) (*types.
 	}
 	if apply.CoinsFrozen < config.CoinsFrozen {
 		return nil, errors.Wrapf(pt.ErrParaNodeGroupFrozenCoinsNotEnough, "id not enough coins apply:%d,config:%d", apply.CoinsFrozen, config.CoinsFrozen)
+	}
+
+	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
+	if !cfg.IsPara() {
+		err := a.checkApproveOp(config, apply)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 判断监督账户组是否已经存在

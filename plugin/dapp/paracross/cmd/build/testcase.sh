@@ -544,7 +544,7 @@ function para_create_nodegroup_gamechain() {
 
     echo "=========== # game para chain approve node group ============="
     ##approve
-    txhash=$(${CLI} --paraName user.p.game. send para nodegroup approve -i "$id" -a "" -c 5 -k "${SUPER_KEY}")
+    txhash=$(${CLI} --paraName user.p.game. send para nodegroup approve -i "$id" -a "" -c 5 -k "${ADDR_1KA_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI5}" "${txhash}"
 
@@ -718,7 +718,7 @@ function para_create_nodegroup() {
 
     echo "=========== # para chain approve node group ============="
     ##approve
-    txhash=$(${PARA_CLI} send para nodegroup approve -i "$id" -a "" -c 6 -k "${SUPER_KEY}")
+    txhash=$(${PARA_CLI} send para nodegroup approve -i "$id" -a "" -c 6 -k "${ADDR_1KA_KEY}")
     echo "tx=$txhash"
     query_tx "${PARA_CLI}" "${txhash}"
 
