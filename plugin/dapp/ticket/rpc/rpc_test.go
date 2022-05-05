@@ -326,6 +326,7 @@ ForkParaFullMinerHeight=0
 ForkParaSupervision=0
 ForkParaRootHash=0
 ForkParaAutonomySuperGroup=-1
+ForkParaFreeRegister=0
 
 [fork.sub.evm]
 Enable=0
