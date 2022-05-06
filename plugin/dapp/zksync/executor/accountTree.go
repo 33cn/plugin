@@ -24,7 +24,9 @@ type TreeUpdateInfo struct {
 
 func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 	confManager := types.ConfSub(cfg, zt.Zksync)
-	return confManager.GStr("ethFeeAddr"), confManager.GStr("zkChain33FeeAddr")
+	ethAddr := confManager.GStr("ethFeeAddr")
+	chain33Addr := confManager.GStr("zkChain33FeeAddr")
+	return zt.HexAddr2Decimal(ethAddr), zt.HexAddr2Decimal(chain33Addr)
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
@@ -34,7 +36,6 @@ func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types
 	}
 	var kvs []*types.KeyValue
 	//default FeeAccount
-	//todo 从配置文件读取
 	leafFeeAccount := &zt.Leaf{
 		EthAddress:  ethFeeAddr,
 		AccountId:   zt.FeeAccountId,
@@ -62,6 +63,12 @@ func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types
 	}
 	kv = &types.KeyValue{
 		Key:   GetAccountIdPrimaryKey(leafNFTAccount.AccountId),
+		Value: types.Encode(leafNFTAccount),
+	}
+	kvs = append(kvs, kv)
+
+	kv = &types.KeyValue{
+		Key:   GetChain33EthPrimaryKey(leafNFTAccount.Chain33Addr, leafNFTAccount.EthAddress),
 		Value: types.Encode(leafNFTAccount),
 	}
 	kvs = append(kvs, kv)
