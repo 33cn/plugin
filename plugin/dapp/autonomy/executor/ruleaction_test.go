@@ -24,9 +24,9 @@ const (
 	testPubOpposeRatio     int32 = 35
 	testProposalAmount           = 20 * types.DefaultCoinPrecision * 2
 	testLargeProjectAmount       = 1000000 * 2 * types.DefaultCoinPrecision
-	testPublicPeriod             = 720
+	testPublicPeriod       int32 = 17280 * 7
 	testPubAttendRatio     int32 = 80
-	testPubApproveRatio    int32 = 33
+	testPubApproveRatio    int32 = 50
 )
 
 func TestPropRule(t *testing.T) {
