@@ -370,8 +370,7 @@ func setPubKeyFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("accountId", "a", 0, "setPubKeyFlag accountId")
 	cmd.MarkFlagRequired("accountId")
 
-	cmd.Flags().Uint64P("pubkeyT", "t", 0, "0:self,proxy pubkey ty: 1: normal,2:system,3:super")
-	cmd.MarkFlagRequired("pubkeyT")
+	cmd.Flags().Uint64P("pubkeyT", "t", 0, "self default:0, proxy pubkey ty: 1: normal,2:system,3:super")
 
 	cmd.Flags().StringP("pubkeyX", "x", "", "proxy pubkey x value")
 	cmd.Flags().StringP("pubkeyY", "y", "", "proxy pubkey y value")
