@@ -50,7 +50,7 @@ func TestZksyncOption(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
-	info, err := generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	leaf, err := GetLeafByAccountId(statedb, 2, info)
 	assert.Equal(t, nil, err)
@@ -58,7 +58,7 @@ func TestZksyncOption(t *testing.T) {
 	t.Log(leaf)
 
 	/*************************setPubKey*************************/
-	_, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	_, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(common.FromHex("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec")))
 	assert.Equal(t, nil, err)
@@ -83,7 +83,7 @@ func TestZksyncOption(t *testing.T) {
 	}
 
 	/*************************withdraw*************************/
-	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	withdraw := &zt.ZkWithdraw{
 		AccountId: 2,
@@ -124,7 +124,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "98995000", token.Balance)
 
 	/*************************transferToNew*************************/
-	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transferToNew := &zt.ZkTransferToNew{
 		FromAccountId:    2,
@@ -157,7 +157,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "5000", token.Balance)
 
 	/*************************transfer*************************/
-	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	transfer := &zt.ZkTransfer{
 		FromAccountId: 2,
@@ -189,7 +189,7 @@ func TestZksyncOption(t *testing.T) {
 	assert.Equal(t, "10000", token.Balance)
 
 	/*************************forceQuit*************************/
-	info, err = generateTreeUpdateInfo(statedb, ethFeeAddr, chain33FeeAddr)
+	info, err = generateTreeUpdateInfo(statedb, localdb, ethFeeAddr, chain33FeeAddr)
 	assert.Equal(t, nil, err)
 	forceQuit := &zt.ZkForceExit{
 		AccountId: 2,

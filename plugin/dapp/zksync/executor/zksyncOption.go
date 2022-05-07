@@ -93,7 +93,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	payload.EthAddress = zt.HexAddr2Decimal(payload.EthAddress)
 
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -128,7 +128,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, "0", operationInfo.AccountID)
+		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, "0")
 
 		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
 		if err != nil {
@@ -139,7 +139,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			return nil, errors.Wrapf(err, "calProof")
 		}
 
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, receipt.Token.Balance, operationInfo.AccountID)
+		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 		kv := &types.KeyValue{
 			Key:   getHeightKey(a.height),
@@ -152,7 +152,6 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 			After:  after,
 		}
 		operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
-		localKvs = append(localKvs, info.localKvs...)
 		zklog := &zt.ZkReceiptLog{
 			OperationInfo: operationInfo,
 			LocalKvs:      localKvs,
@@ -173,7 +172,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		} else {
 			balance = receipt.Token.Balance
 		}
-		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, balance, operationInfo.AccountID)
+		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, balance)
 
 		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 		if err != nil {
@@ -183,7 +182,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		if err != nil {
 			return nil, errors.Wrapf(err, "calProof")
 		}
-		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 		kv := &types.KeyValue{
 			Key:   getHeightKey(a.height),
@@ -216,10 +215,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return mergeReceipt(receipts, r), nil
 }
 
-func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string,
-	pubKey *zt.ZkPubKey, proxyPubKeys *zt.AccountProxyPubKeys, balance string, accountId uint64) *zt.OperationMetaBranch {
-	info.Roots = append(info.Roots, receipt.TreeProof.RootHash)
-
+func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, opInfo *zt.OperationInfo, ethAddr string, chain33Addr string,
+	pubKey *zt.ZkPubKey, proxyPubKeys *zt.AccountProxyPubKeys, accountId, tokenId uint64, balance string) *zt.OperationMetaBranch {
+	opInfo.Roots = append(opInfo.Roots, receipt.TreeProof.RootHash)
 	treePath := &zt.SiblingPath{
 		Path:   receipt.TreeProof.ProofSet,
 		Helper: receipt.TreeProof.GetHelpers(),
@@ -232,26 +230,28 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 		ProxyPubKeys: proxyPubKeys,
 		Sibling:      treePath,
 	}
-
 	//token不存在生成默认TokenWitness
 	if receipt.GetTokenProof() == nil {
 		accountW.TokenTreeRoot = "0"
 		return &zt.OperationMetaBranch{
 			AccountWitness: accountW,
 			TokenWitness: &zt.TokenWitness{
-				ID:      info.TokenID,
+				ID:      tokenId,
 				Balance: "0",
 			},
 		}
 	}
 	accountW.TokenTreeRoot = receipt.GetTokenProof().RootHash
-
 	tokenPath := &zt.SiblingPath{
 		Path:   receipt.TokenProof.ProofSet,
 		Helper: receipt.TokenProof.GetHelpers(),
 	}
+	//如果设置balance为nil，则设为缺省0
+	if len(balance) == 0 {
+		balance = "0"
+	}
 	tokenW := &zt.TokenWitness{
-		ID:      info.TokenID,
+		ID:      tokenId,
 		Balance: balance,
 		Sibling: tokenPath,
 	}
@@ -263,20 +263,32 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 	return branch
 }
 
-func generateTreeUpdateInfo(db dbm.KV, cfgEthFeeAddr, cfgChain33FeeAddr string) (*TreeUpdateInfo, error) {
-	updateMap := make(map[string][]byte)
-	val, err := db.Get(GetAccountTreeKey())
-	if err != nil {
-		//没查到就先初始化
-		if err == types.ErrNotFound {
-			kvs, localkvs := NewAccountTree(db, cfgEthFeeAddr, cfgChain33FeeAddr)
-			for _, kv := range kvs {
-				updateMap[string(kv.GetKey())] = kv.GetValue()
-			}
-			return &TreeUpdateInfo{updateMap: updateMap, kvs: kvs, localKvs: localkvs}, nil
-		} else {
-			return nil, err
+//涉及可能初始化的操作调用
+func generateTreeUpdateInfo(stateDb dbm.KV, localDb dbm.KVDB, cfgEthFeeAddr, cfgChain33FeeAddr string) (*TreeUpdateInfo, error) {
+	info, err := getTreeUpdateInfo(stateDb)
+	if info != nil {
+		return info, nil
+	}
+	//没查到就先初始化
+	if err == types.ErrNotFound {
+		updateMap := make(map[string][]byte)
+		kvs, accountTable := NewAccountTree(localDb, cfgEthFeeAddr, cfgChain33FeeAddr)
+		for _, kv := range kvs {
+			updateMap[string(kv.GetKey())] = kv.GetValue()
 		}
+		return &TreeUpdateInfo{updateMap: updateMap, kvs: kvs, localKvs: make([]*types.KeyValue, 0), accountTable: accountTable}, nil
+	} else {
+		return nil, err
+	}
+
+}
+
+func getTreeUpdateInfo(stateDb dbm.KV) (*TreeUpdateInfo, error) {
+	updateMap := make(map[string][]byte)
+	val, err := stateDb.Get(GetAccountTreeKey())
+	//系统一定从deposit开始，在deposit里面初始化，非deposit操作如果获取不到返回错误
+	if err != nil {
+		return nil, err
 	}
 	var tree zt.AccountTree
 	err = types.Decode(val, &tree)
@@ -301,10 +313,9 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	feeInt, _ := new(big.Int).SetString(fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
@@ -344,7 +355,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
 	if err != nil {
@@ -355,7 +366,7 @@ func (a *Action) Withdraw(payload *zt.ZkWithdraw) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
@@ -412,10 +423,9 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
@@ -452,7 +462,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, balance)
 
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 	if err != nil {
@@ -470,7 +480,7 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -506,10 +516,9 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
 	if err != nil {
@@ -547,7 +556,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Sub)
 	if err != nil {
@@ -565,7 +574,7 @@ func (a *Action) TreeToContract(payload *zt.ZkTreeToContract) (*types.Receipt, e
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -623,10 +632,9 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	feeInt, _ := new(big.Int).SetString(fee, 10)
 	totalAmount := new(big.Int).Add(amountInt, feeInt).String()
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
 	if err != nil {
@@ -665,7 +673,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, payload.FromAccountId)
+	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 
 	//更新fromLeaf
 	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
@@ -680,7 +688,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, payload.FromAccountId)
+	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -707,7 +715,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, balance, payload.ToAccountId)
+	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payload.ToAccountId, payload.TokenId, balance)
 
 	//更新toLeaf
 	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
@@ -721,7 +729,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, receipt.Token.Balance, payload.ToAccountId)
+	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payload.ToAccountId, payload.TokenId, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -770,10 +778,9 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 	payload.ToChain33Address = zt.HexAddr2Decimal(payload.ToChain33Address)
 	payload.ToEthAddress = zt.HexAddr2Decimal(payload.ToEthAddress)
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
 	if err != nil {
@@ -820,7 +827,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, payload.FromAccountId)
+	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 
 	//更新fromLeaf
 	fromkvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
@@ -835,7 +842,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, payload.FromAccountId)
+	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -854,7 +861,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	before = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, "0", accountId)
+	before = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, accountId, payload.TokenId, "0")
 
 	//新增toLeaf
 	tokvs, toLocal, err := AddNewLeaf(a.statedb, a.localDB, info, payload.GetToEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetToChain33Address())
@@ -869,7 +876,7 @@ func (a *Action) TransferToNew(payload *zt.ZkTransferToNew) (*types.Receipt, err
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, receipt.Token.Balance, accountId)
+	after = getBranchByReceipt(receipt, operationInfo, payload.ToEthAddress, payload.ToChain33Address, nil, nil, accountId, payload.TokenId, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -906,10 +913,9 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 
 	fee := zt.FeeMap[zt.TyForceExitAction]
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	leaf, err := GetLeafByAccountId(a.statedb, payload.AccountId, info)
 	if err != nil {
@@ -953,7 +959,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	//更新fromLeaf
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), token.Balance, zt.Sub)
@@ -966,7 +972,7 @@ func (a *Action) ForceExit(payload *zt.ZkForceExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1030,10 +1036,9 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 
 	leaf, err := GetLeafByAccountId(a.statedb, payload.GetAccountId(), info)
@@ -1105,7 +1110,7 @@ func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, 
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, nil, nil, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKeyTy(), payload.GetPubKey(), payload.AccountId)
 	if err != nil {
@@ -1116,7 +1121,7 @@ func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, 
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, nil, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, payload.PubKey, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1152,7 +1157,7 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.PubKeyTy, payload.GetPubKey(), payload.AccountId)
 	if err != nil {
@@ -1163,7 +1168,7 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1207,10 +1212,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
 	}
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	leaf, err := GetLeafByAccountId(a.statedb, payload.AccountId, info)
 	if err != nil {
@@ -1256,7 +1260,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
 	//更新fromLeaf
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), token.Balance, zt.Sub)
@@ -1269,7 +1273,7 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1408,7 +1412,7 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, balance, leaf.GetAccountId())
+	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, leaf.GetAccountId(), tokenId, balance)
 
 	kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), tokenId, amount, zt.Add)
 	if err != nil {
@@ -1418,7 +1422,7 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, receipt.Token.Balance, operationInfo.AccountID)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, leaf.GetAccountId(), tokenId, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1491,7 +1495,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	var localKvs []*types.KeyValue
 
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
 	}
@@ -1503,8 +1507,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyMintNFTAction,
-		TokenID:     0,
-		Amount:      "0",
+		TokenID:     zt.NFTTokenId,
+		Amount:      "1",
 		FeeAmount:   feeAmount,
 		SigData:     payload.Signature,
 		AccountID:   payload.GetFromAccountId(),
@@ -1683,23 +1687,18 @@ func (a *Action) updateLeafRst(info *TreeUpdateInfo, opInfo *zt.OperationInfo, f
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "calProof")
 	}
-
-	before := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, fromLeaf.GetAccountId())
-
+	before := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromLeaf.GetAccountId(), tokenId, receipt.GetToken().GetBalance())
 	//更新fromLeaf
 	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), tokenId, amount, option)
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
-
 	//更新之后计算证明
 	receipt, err = calProof(a.statedb, info, fromLeaf.GetAccountId(), tokenId)
 	if err != nil {
 		return nil, nil, nil, errors.Wrapf(err, "calProof")
 	}
-
-	after := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, receipt.Token.Balance, fromLeaf.GetAccountId())
-
+	after := getBranchByReceipt(receipt, opInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, fromLeaf.GetAccountId(), tokenId, receipt.GetToken().GetBalance())
 	return &zt.OperationPairBranch{
 		Before: before,
 		After:  after,
@@ -1722,10 +1721,9 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
@@ -1904,13 +1902,12 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	var localKvs []*types.KeyValue
 
 	if payload.NFTTokenId <= zt.NFTTokenId {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d should big than %d", payload.NFTTokenId, zt.NFTTokenId)
+		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.NFTTokenId)
 	}
 
-	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
-	info, err := generateTreeUpdateInfo(a.statedb, ethFeeAddr, chain33FeeAddr)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	//暂定0 后面从数据库读取 TODO
 	feeTokenId := uint64(0)
@@ -1920,7 +1917,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyTransferNFTAction,
-		TokenID:     feeTokenId,
+		TokenID:     payload.NFTTokenId,
 		Amount:      "0",
 		FeeAmount:   feeAmount,
 		SigData:     payload.Signature,

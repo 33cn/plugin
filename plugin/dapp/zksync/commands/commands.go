@@ -63,6 +63,8 @@ func ZksyncCmd() *cobra.Command {
 		setTokenFeeCmd(),
 		getFirstRootHashCmd(),
 		getZkCommitProofListCmd(),
+
+		//NFT
 		nftCmd(),
 	)
 	return cmd
@@ -87,6 +89,8 @@ func depositFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "deposit chain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
+	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
+	cmd.MarkFlagRequired("queueId")
 
 }
 
@@ -95,17 +99,21 @@ func deposit(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetString("amount")
 	ethAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
+	queueId, _ := cmd.Flags().GetUint64("queueId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0, "")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	deposit := &zt.ZkDeposit{
+		TokenId:            tokenId,
+		Amount:             amount,
+		EthAddress:         ethAddress,
+		Chain33Addr:        chain33Addr,
+		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
 		ActionName: "Deposit",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(deposit),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -126,7 +134,7 @@ func withdrawFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "withdraw amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "withdraw accountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "withdraw accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -422,23 +430,26 @@ func fullExitFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().Uint64P("accountId", "a", 0, "fullExit accountId")
 	cmd.MarkFlagRequired("accountId")
-
+	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
+	cmd.MarkFlagRequired("queueId")
 }
 
 func fullExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	queueId, _ := cmd.Flags().GetUint64("queueId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0, "")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	fullExit := &zt.ZkFullExit{
+		TokenId:            tokenId,
+		AccountId:          accountId,
+		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     zt.Zksync,
 		ActionName: "FullExit",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(fullExit),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -655,7 +666,7 @@ func getTxProofCmd() *cobra.Command {
 }
 
 func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zksync proof height")
+	cmd.Flags().Uint64P("height", "g", 0, "zksync proof height")
 	cmd.MarkFlagRequired("height")
 	cmd.Flags().Uint32P("index", "i", 0, "tx index")
 	cmd.MarkFlagRequired("index")
@@ -693,7 +704,7 @@ func getTxProofByHeightCmd() *cobra.Command {
 }
 
 func getTxProofByHeightFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zksync proof height")
+	cmd.Flags().Uint64P("height", "g", 0, "zksync proof height")
 	cmd.MarkFlagRequired("height")
 }
 
@@ -1152,7 +1163,7 @@ func transferNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("toId", "t", 0, "NFT to id")
 	cmd.MarkFlagRequired("toId")
 
-	cmd.Flags().StringP("tokenId", "o", "", "NFT token id")
+	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
 	cmd.MarkFlagRequired("tokenId")
 
 }
@@ -1191,7 +1202,7 @@ func withdrawNFTFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
 	cmd.MarkFlagRequired("fromId")
 
-	cmd.Flags().StringP("tokenId", "o", "", "NFT token id")
+	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
 	cmd.MarkFlagRequired("tokenId")
 
 }
