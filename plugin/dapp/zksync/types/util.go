@@ -48,11 +48,11 @@ func SplitNFTContent(contentHash string) (*big.Int, *big.Int, error) {
 	if len(hexContent) != 64 {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash not 64 len, %s", hexContent)
 	}
-	part1, ok := big.NewInt(0).SetString(hexContent[:16], 16)
+	part1, ok := big.NewInt(0).SetString(hexContent[:32], 16)
 	if !ok {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash.preHalf hex err, %s", hexContent[:16])
 	}
-	part2, ok := big.NewInt(0).SetString(hexContent[16:], 16)
+	part2, ok := big.NewInt(0).SetString(hexContent[32:], 16)
 	if !ok {
 		return nil, nil, errors.Wrapf(types.ErrInvalidParam, "contentHash.postHalf hex err, %s", hexContent[16:])
 	}

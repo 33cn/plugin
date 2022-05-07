@@ -8,6 +8,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
@@ -17,9 +18,10 @@ import (
 
 // TreeUpdateInfo 更新信息，用于查询
 type TreeUpdateInfo struct {
-	updateMap map[string][]byte
-	kvs       []*types.KeyValue
-	localKvs  []*types.KeyValue
+	updateMap    map[string][]byte
+	kvs          []*types.KeyValue
+	localKvs     []*types.KeyValue
+	accountTable *table.Table
 }
 
 func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
@@ -30,7 +32,7 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 }
 
 // NewAccountTree 生成账户树，同时生成1号账户
-func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, []*types.KeyValue) {
+func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*types.KeyValue, *table.Table) {
 	if len(ethFeeAddr) <= 0 || len(chain33FeeAddr) <= 0 {
 		panic(fmt.Sprintf("zksync default fee addr(ethFeeAddr,zkChain33FeeAddr) is nil"))
 	}
@@ -73,17 +75,12 @@ func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types
 	}
 	kvs = append(kvs, kv)
 
-	accountTable := NewAccountTreeTable(localdb)
+	accountTable := NewAccountTreeTable(localDb)
 	err := accountTable.Add(leafFeeAccount)
 	if err != nil {
 		panic(err)
 	}
 	err = accountTable.Add(leafNFTAccount)
-	if err != nil {
-		panic(err)
-	}
-	//localdb存入叶子，用于查询
-	localKvs, err := accountTable.Save()
 	if err != nil {
 		panic(err)
 	}
@@ -112,7 +109,7 @@ func NewAccountTree(localdb dbm.KV, ethFeeAddr, chain33FeeAddr string) ([]*types
 	}
 	kvs = append(kvs, kv)
 
-	return kvs, localKvs
+	return kvs, accountTable
 }
 
 func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress string, tokenId uint64, amount string, chain33Addr string) ([]*types.KeyValue, []*types.KeyValue, error) {
@@ -211,6 +208,9 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	}
 
 	accountTable := NewAccountTreeTable(localdb)
+	if info.accountTable != nil {
+		accountTable = info.accountTable
+	}
 	err = accountTable.Add(leaf)
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "accountTable.Add")
@@ -578,6 +578,9 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	}
 
 	accountTable := NewAccountTreeTable(localdb)
+	if info.accountTable != nil {
+		accountTable = info.accountTable
+	}
 	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
@@ -604,12 +607,12 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	h.Write(accountIdBytes[:])
 	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
 	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+
 	getLeafPubKeyHash(h, leaf.GetPubKey())
-	if leaf.GetProxyPubKeys() != nil {
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
-		getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
-	}
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSystem())
+	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetSuper())
+
 	token := zt.Str2Byte(leaf.GetTokenHash())
 	h.Write(token)
 	return h.Sum(nil)

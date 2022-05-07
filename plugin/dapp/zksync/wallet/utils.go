@@ -15,14 +15,6 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 	chain33Addr string, accountId uint64, toAccountId uint64, NFTContentHash string) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
-	case zt.TyDepositAction:
-		deposit := &zt.ZkDeposit{
-			TokenId:     tokenId,
-			Amount:      amount,
-			EthAddress:  ethAddress,
-			Chain33Addr: chain33Addr,
-		}
-		payload = types.MustPBToJSON(deposit)
 	case zt.TyWithdrawAction:
 		withdraw := &zt.ZkWithdraw{
 			TokenId:   tokenId,
@@ -72,12 +64,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 	//		AccountId: accountId,
 	//	}
 	//	payload = types.MustPBToJSON(setPubKey)
-	case zt.TyFullExitAction:
-		fullExit := &zt.ZkFullExit{
-			TokenId:   tokenId,
-			AccountId: accountId,
-		}
-		payload = types.MustPBToJSON(fullExit)
+
 	case zt.TySetVerifierAction:
 		verifier := &zt.ZkVerifier{
 			Verifiers: strings.Split(chain33Addr, ","),
