@@ -55,7 +55,7 @@ func init() {
 }
 func TestTendermintPerf(t *testing.T) {
 	TendermintPerf(t)
-	fmt.Println("=======start clear test data!=======")
+	fmt.Println("=======start clear test data=======")
 	clearTestData()
 }
 
@@ -169,9 +169,9 @@ func prepareTxList(chainid int32) *types.Transaction {
 func clearTestData() {
 	err := os.RemoveAll("datadir")
 	if err != nil {
-		fmt.Println("delete datadir have a err:", err.Error())
+		fmt.Println("delete datadir err:", err.Error())
 	}
-	fmt.Println("test data clear successfully!")
+	fmt.Println("clear test data successfully!")
 }
 
 func NormPut(chainid int32) {
@@ -272,9 +272,11 @@ func CheckState(t *testing.T, client *Client) {
 	csdb := client.csState.blockExec.db
 	assert.NotEmpty(t, csdb)
 	assert.NotEmpty(t, csdb.LoadState())
-	valset, err := csdb.LoadValidators(storeHeight - 1)
-	assert.Nil(t, err)
-	assert.NotEmpty(t, valset)
+	if storeHeight > 1 {
+		valset, err := csdb.LoadValidators(storeHeight - 1)
+		assert.Nil(t, err)
+		assert.NotEmpty(t, valset)
+	}
 
 	genState, err := MakeGenesisStateFromFile("genesis.json")
 	assert.Nil(t, err)
