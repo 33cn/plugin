@@ -7,6 +7,8 @@ package common
 import (
 	"testing"
 
+	"github.com/holiman/uint256"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,16 +27,15 @@ func TestAddressBytes(t *testing.T) {
 	assert.Equal(t, addr.String(), "11111111111111111111BZbvjr")
 }
 
-func TestEvmAddress(t *testing.T) {
+func TestEvmPrecompileAddress(t *testing.T) {
 
-	addr := &Hash160Address{}
-
-	addr.SetBytes([]byte{13})
-	addr1 := addr.String()
-
-	addr.SetBytes(LeftPadBytes([]byte{13}, 20))
-	addr2 := addr.String()
-
-	assert.Equal(t, addr1, addr2)
-	println(addr2)
+	b := make([]byte, 1)
+	var z uint256.Int
+	for i := 0; i < 200; i++ {
+		b[0] = byte(i)
+		addr1 := BytesToHash160Address(b).String()
+		z.SetBytes(b)
+		addr2 := Uint256ToAddress(&z).ToHash160().String()
+		assert.Equal(t, addr1, addr2)
+	}
 }

@@ -19,10 +19,11 @@ import (
 	"github.com/holiman/uint256"
 )
 
-// Address 封装地址结构体，并提供各种常用操作封装
-// 这里封装的操作主要是为了提供Address<->big.Int， Address<->[]byte 之间的互相转换
-// 并且转换的核心是使用地址对象中的Hash160元素，因为在EVM中地址固定为[20]byte，超出此范围的地址无法正确解释执行
-// Address represents the 20 byte address of an Ethereum account.
+// Address 封装evm内部地址对象
+// raw为地址原始数据
+// formatAddr为chain33框架中格式化地址, 相关转换格式由默认地址插件指定
+// chain33 => evm, 即将formatAddr转换为raw数据, [20]byte
+// evm => chain33, 即将原始数据raw格式化为formatAddr
 type Address struct {
 	raw        [AddressLength]byte
 	formatAddr string
@@ -122,10 +123,11 @@ func NewContractAddress(b Address, txHash []byte) Address {
 }
 
 func pubKey2Address(pub []byte) Address {
-	execAddr := address.GetDefaultAddressDriver().PubKeyToAddr(pub)
+	defaultDriver := address.GetDefaultAddressDriver()
+	execAddr := defaultDriver.PubKeyToAddr(pub)
 	var a Address
 	a.formatAddr = execAddr
-	raw, _ := address.GetDefaultAddressDriver().Str2Bytes(execAddr)
+	raw, _ := defaultDriver.Str2Bytes(execAddr)
 	a.SetBytes(raw)
 	return a
 }
@@ -195,10 +197,8 @@ func HexToAddress(s string) Hash160Address { return BytesToHash160Address(FromHe
 // Uint256ToAddress 大数字转换为地址
 func Uint256ToAddress(b *uint256.Int) Address {
 	var a Address
-	out := make([]byte, 20)
-
-	copy(out[:], b.Bytes())
-	a.SetBytes(out)
+	raw := b.Bytes20()
+	a.SetBytes(raw[:])
 	return a
 }
 

@@ -40,66 +40,66 @@ type PrecompiledContract interface {
 // 后面如果有硬分叉，需要在此处考虑分叉逻辑，根据区块高度分别处理；
 // 下面的8个预编译指令，直接引用go-ethereum中的EVM实现
 var PrecompiledContractsByzantium = map[common.Hash160Address]PrecompiledContract{
-	common.BytesToAddress(common.RightPadBytes([]byte{1}, 20)).ToHash160(): &ecrecover{},
-	common.BytesToAddress(common.RightPadBytes([]byte{2}, 20)).ToHash160(): &sha256hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{3}, 20)).ToHash160(): &ripemd160hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{4}, 20)).ToHash160(): &dataCopy{},
-	common.BytesToAddress(common.RightPadBytes([]byte{5}, 20)).ToHash160(): &bigModExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{6}, 20)).ToHash160(): &bn256AddByzantium{},
-	common.BytesToAddress(common.RightPadBytes([]byte{7}, 20)).ToHash160(): &bn256ScalarMulByzantium{},
-	common.BytesToAddress(common.RightPadBytes([]byte{8}, 20)).ToHash160(): &bn256PairingByzantium{},
+	common.BytesToHash160Address([]byte{1}): &ecrecover{},
+	common.BytesToHash160Address([]byte{2}): &sha256hash{},
+	common.BytesToHash160Address([]byte{3}): &ripemd160hash{},
+	common.BytesToHash160Address([]byte{4}): &dataCopy{},
+	common.BytesToHash160Address([]byte{5}): &bigModExp{},
+	common.BytesToHash160Address([]byte{6}): &bn256AddByzantium{},
+	common.BytesToHash160Address([]byte{7}): &bn256ScalarMulByzantium{},
+	common.BytesToHash160Address([]byte{8}): &bn256PairingByzantium{},
 }
 
 // PrecompiledContractsIstanbul contains the default set of pre-compiled Ethereum
 // contracts used in the Istanbul release.
 var PrecompiledContractsIstanbul = map[common.Hash160Address]PrecompiledContract{
-	common.BytesToAddress(common.RightPadBytes([]byte{1}, 20)).ToHash160():  &ecrecover{},
-	common.BytesToAddress(common.RightPadBytes([]byte{2}, 20)).ToHash160():  &sha256hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{3}, 20)).ToHash160():  &ripemd160hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{4}, 20)).ToHash160():  &dataCopy{},
-	common.BytesToAddress(common.RightPadBytes([]byte{5}, 20)).ToHash160():  &bigModExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{6}, 20)).ToHash160():  &bn256AddIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{7}, 20)).ToHash160():  &bn256ScalarMulIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{8}, 20)).ToHash160():  &bn256PairingIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{19}, 20)).ToHash160(): &blake2F{},
+	common.BytesToHash160Address([]byte{1}):  &ecrecover{},
+	common.BytesToHash160Address([]byte{2}):  &sha256hash{},
+	common.BytesToHash160Address([]byte{3}):  &ripemd160hash{},
+	common.BytesToHash160Address([]byte{4}):  &dataCopy{},
+	common.BytesToHash160Address([]byte{5}):  &bigModExp{},
+	common.BytesToHash160Address([]byte{6}):  &bn256AddIstanbul{},
+	common.BytesToHash160Address([]byte{7}):  &bn256ScalarMulIstanbul{},
+	common.BytesToHash160Address([]byte{8}):  &bn256PairingIstanbul{},
+	common.BytesToHash160Address([]byte{19}): &blake2F{},
 }
 
 // PrecompiledContractsYoloV1 黄皮书v1版本兼容伊斯坦布尔版本
 // PrecompiledContractsYoloV1 contains the default set of pre-compiled Ethereum
 var PrecompiledContractsYoloV1 = map[common.Hash160Address]PrecompiledContract{
-	common.BytesToAddress(common.RightPadBytes([]byte{1}, 20)).ToHash160():  &ecrecover{},
-	common.BytesToAddress(common.RightPadBytes([]byte{2}, 20)).ToHash160():  &sha256hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{3}, 20)).ToHash160():  &ripemd160hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{4}, 20)).ToHash160():  &dataCopy{},
-	common.BytesToAddress(common.RightPadBytes([]byte{5}, 20)).ToHash160():  &bigModExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{6}, 20)).ToHash160():  &bn256AddIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{7}, 20)).ToHash160():  &bn256ScalarMulIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{8}, 20)).ToHash160():  &bn256PairingIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{9}, 20)).ToHash160():  &blake2F{},
-	common.BytesToAddress(common.RightPadBytes([]byte{10}, 20)).ToHash160(): &bls12381G1Add{},
-	common.BytesToAddress(common.RightPadBytes([]byte{11}, 20)).ToHash160(): &bls12381G1Mul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{12}, 20)).ToHash160(): &bls12381G1MultiExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{13}, 20)).ToHash160(): &bls12381G2Add{},
-	common.BytesToAddress(common.RightPadBytes([]byte{14}, 20)).ToHash160(): &bls12381G2Mul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{15}, 20)).ToHash160(): &bls12381G2MultiExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{16}, 20)).ToHash160(): &bls12381Pairing{},
-	common.BytesToAddress(common.RightPadBytes([]byte{17}, 20)).ToHash160(): &bls12381MapG1{},
-	common.BytesToAddress(common.RightPadBytes([]byte{18}, 20)).ToHash160(): &bls12381MapG2{},
+	common.BytesToHash160Address([]byte{1}):  &ecrecover{},
+	common.BytesToHash160Address([]byte{2}):  &sha256hash{},
+	common.BytesToHash160Address([]byte{3}):  &ripemd160hash{},
+	common.BytesToHash160Address([]byte{4}):  &dataCopy{},
+	common.BytesToHash160Address([]byte{5}):  &bigModExp{},
+	common.BytesToHash160Address([]byte{6}):  &bn256AddIstanbul{},
+	common.BytesToHash160Address([]byte{7}):  &bn256ScalarMulIstanbul{},
+	common.BytesToHash160Address([]byte{8}):  &bn256PairingIstanbul{},
+	common.BytesToHash160Address([]byte{9}):  &blake2F{},
+	common.BytesToHash160Address([]byte{10}): &bls12381G1Add{},
+	common.BytesToHash160Address([]byte{11}): &bls12381G1Mul{},
+	common.BytesToHash160Address([]byte{12}): &bls12381G1MultiExp{},
+	common.BytesToHash160Address([]byte{13}): &bls12381G2Add{},
+	common.BytesToHash160Address([]byte{14}): &bls12381G2Mul{},
+	common.BytesToHash160Address([]byte{15}): &bls12381G2MultiExp{},
+	common.BytesToHash160Address([]byte{16}): &bls12381Pairing{},
+	common.BytesToHash160Address([]byte{17}): &bls12381MapG1{},
+	common.BytesToHash160Address([]byte{18}): &bls12381MapG2{},
 }
 
 //因为common.Address结构体中定义的是指针，map中的key值不能使用address作为key值来使用，于是使用Hash160Address作为key来进行索引
 // PrecompiledContractsBerlin contains the default set of pre-compiled Ethereum
 // contracts used in the Berlin release.
 var PrecompiledContractsBerlin = map[common.Hash160Address]PrecompiledContract{
-	common.BytesToAddress(common.RightPadBytes([]byte{1}, 20)).ToHash160(): &ecrecover{},
-	common.BytesToAddress(common.RightPadBytes([]byte{2}, 20)).ToHash160(): &sha256hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{3}, 20)).ToHash160(): &ripemd160hash{},
-	common.BytesToAddress(common.RightPadBytes([]byte{4}, 20)).ToHash160(): &dataCopy{},
-	common.BytesToAddress(common.RightPadBytes([]byte{5}, 20)).ToHash160(): &bigModExp{},
-	common.BytesToAddress(common.RightPadBytes([]byte{6}, 20)).ToHash160(): &bn256AddIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{7}, 20)).ToHash160(): &bn256ScalarMulIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{8}, 20)).ToHash160(): &bn256PairingIstanbul{},
-	common.BytesToAddress(common.RightPadBytes([]byte{9}, 20)).ToHash160(): &blake2F{},
+	common.BytesToHash160Address([]byte{1}): &ecrecover{},
+	common.BytesToHash160Address([]byte{2}): &sha256hash{},
+	common.BytesToHash160Address([]byte{3}): &ripemd160hash{},
+	common.BytesToHash160Address([]byte{4}): &dataCopy{},
+	common.BytesToHash160Address([]byte{5}): &bigModExp{},
+	common.BytesToHash160Address([]byte{6}): &bn256AddIstanbul{},
+	common.BytesToHash160Address([]byte{7}): &bn256ScalarMulIstanbul{},
+	common.BytesToHash160Address([]byte{8}): &bn256PairingIstanbul{},
+	common.BytesToHash160Address([]byte{9}): &blake2F{},
 }
 
 // RunPrecompiledContract 调用预编译的合约逻辑并返回结果
