@@ -40,7 +40,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	//default FeeAccount
 	leafFeeAccount := &zt.Leaf{
 		EthAddress:  ethFeeAddr,
-		AccountId:   zt.FeeAccountId,
+		AccountId:   zt.SystemFeeAccountId,
 		Chain33Addr: chain33FeeAddr,
 		TokenHash:   "0",
 	}
@@ -59,7 +59,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	//NFT account
 	leafNFTAccount := &zt.Leaf{
 		EthAddress:  "0",
-		AccountId:   zt.NFTAccountId,
+		AccountId:   zt.SystemNFTAccountId,
 		Chain33Addr: "0",
 		TokenHash:   "0",
 	}
@@ -476,8 +476,8 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 				Balance: amount,
 			}
 			//如果NFTAccountId第一次初始化token，需要设置特殊balance作为新NFT token ID
-			if accountId == zt.NFTAccountId && tokenId == zt.NFTTokenId {
-				token.Balance = new(big.Int).SetUint64(zt.NFTTokenId + 1).String()
+			if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
+				token.Balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 1).String()
 			}
 			leaf.TokenIds = append(leaf.TokenIds, tokenId)
 		}

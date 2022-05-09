@@ -158,12 +158,15 @@ message ZkMintNFT {
   uint64 fromAccountId = 1;
   uint64 recipientId = 2;
   string contentHash = 3;
+  uint64 ercProtocol = 4;
+  uint64 amount      = 5;
   ZkSignature signature = 6;
 }
 
 message ZkWithdrawNFT {
   uint64 fromAccountId = 1;
   uint64 NFTTokenId = 2;
+  uint64 amount     = 3;
 
   ZkSignature signature = 5;
 }
@@ -172,6 +175,7 @@ message ZkTransferNFT {
   uint64 fromAccountId = 1;
   uint64 recipientId = 2;
   uint64 NFTTokenId = 3;
+  uint64 amount     = 4;
 
   ZkSignature signature = 6;
 }
@@ -181,9 +185,10 @@ message ZkNFTTokenStatus {
   uint64 creatorId = 2;
   string creatorEthAddr = 3;
   uint64 creatorSerialId = 4;
-  string contentHash = 5;
-  uint64 ownerId = 6;
-  bool   burned = 7; //是否提取到了L1
+  uint64 ercProtocol = 5;
+  uint64 mintAmount = 6;
+  string contentHash = 7;
+  uint64 burnedAmount = 8; //是否提取到了L1
 }
 
 //电路验证key

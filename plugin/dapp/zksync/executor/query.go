@@ -25,13 +25,13 @@ func (z *zksync) Query_GetAccountTree(in *types.ReqNil) (types.Message, error) {
 	return &tree, nil
 }
 
-// Query_GetAccountTree 获取当前的树
+// Query_GetNFTStatus 获取nft by id
 func (z *zksync) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
 	var status zt.ZkNFTTokenStatus
-	val, err := z.GetStateDB().Get(GetNFTIdPrimaryKey(uint64(in.TokenId)))
+	val, err := z.GetStateDB().Get(GetNFTIdPrimaryKey(in.TokenId))
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +40,23 @@ func (z *zksync) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
 		return nil, err
 	}
 	return &status, nil
+}
+
+//Query_GetNFTId get nft id by content hash
+func (z *zksync) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
+	if in == nil {
+		return nil, types.ErrInvalidParam
+	}
+	var id types.Int64
+	val, err := z.GetStateDB().Get(GetNFTHashPrimaryKey(in.Data))
+	if err != nil {
+		return nil, err
+	}
+	err = types.Decode(val, &id)
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
 }
 
 // Query_GetTxProof 获取交易证明
