@@ -613,7 +613,6 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	}
 
 	kvs := accountdb.GetKVSet(contractAccount)
-	zlog.Info("zksync UpdateContractAccount", "key", string(kvs[0].GetKey()), "account", contractAccount)
 	return kvs, nil
 }
 
@@ -1379,7 +1378,7 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	var err error
 
 	//todo 手续费收款方accountId可配置
-	leaf, err := GetLeafByAccountId(a.statedb, zt.FeeAccountId, info)
+	leaf, err := GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
@@ -1494,6 +1493,30 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	if payload.Amount <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "amount=%d", payload.Amount)
+	}
+	if payload.ErcProtocol != zt.ZKERC721 && payload.ErcProtocol != zt.ZKERC1155 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong erc protocol=%d", payload.ErcProtocol)
+	}
+
+	if payload.ErcProtocol == zt.ZKERC721 && payload.Amount != 1 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "erc721 only allow 1 nft,got=%d", payload.Amount)
+	}
+
+	contentPart1, contentPart2, fullContent, err := zt.SplitNFTContent(payload.ContentHash)
+	if err != nil {
+		return nil, errors.Wrapf(err, "split content hash=%s", payload.ContentHash)
+	}
+
+	id, err := getNFTIdByHash(a.statedb, fullContent)
+	if err != nil && !isNotFound(err) {
+		return nil, errors.Wrapf(err, "getNFTIdByHash")
+	}
+	if id != nil {
+		return nil, errors.Wrapf(types.ErrNotAllow, "contenthash existed in nft id=%d", id.Data)
+	}
+
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(a.api.GetConfig())
 	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
 	if err != nil {
@@ -1507,8 +1530,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyMintNFTAction,
-		TokenID:     zt.NFTTokenId,
-		Amount:      "1",
+		TokenID:     zt.SystemNFTTokenId,
+		Amount:      big.NewInt(0).SetUint64(payload.GetAmount()).String(),
 		FeeAmount:   feeAmount,
 		SigData:     payload.Signature,
 		AccountID:   payload.GetFromAccountId(),
@@ -1518,6 +1541,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		AccountID:   payload.GetFromAccountId(),
 		RecipientID: payload.RecipientId,
 		TokenID:     []uint64{feeTokenId},
+		Amount:      []string{big.NewInt(0).SetUint64(payload.ErcProtocol).String()},
 	}
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 
@@ -1550,7 +1574,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//2. creator NFT_TOKEN_ID+1
+	//2. creator SystemNFTTokenId balance+1 产生serialId
 	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
@@ -1558,7 +1582,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.NFTTokenId, "1", zt.Add)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.SystemNFTTokenId, "1", zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.creator.nftToken")
 	}
@@ -1568,8 +1592,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	creatorSerialId := newBranch.After.TokenWitness.Balance
 	creatorEthAddr := fromLeaf.EthAddress
 
-	//3. NFT_ACCOUNT_ID's NFT_TOKEN_ID+1
-	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.NFTAccountId, info)
+	//3. SystemNFTAccountId's SystemNFTTokenId+1, 产生新的NFT的id
+	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId")
 	}
@@ -1577,7 +1601,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		return nil, errors.New("account not exist")
 	}
 
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.NFTTokenId, "1", zt.Add)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.SystemNFTTokenId, "1", zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.NFTAccountId.nftToken")
 	}
@@ -1589,8 +1613,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "new NFT token balance=%s nok", newBranch.After.TokenWitness.Balance)
 	}
-	if newNFTTokenId.Uint64() <= zt.NFTTokenId {
-		return nil, errors.Wrapf(types.ErrNotAllow, "newNFTTokenId=%d should big than default %d", newNFTTokenId.Uint64(), zt.NFTTokenId)
+	if newNFTTokenId.Uint64() <= zt.SystemNFTTokenId {
+		return nil, errors.Wrapf(types.ErrNotAllow, "newNFTTokenId=%d should big than default %d", newNFTTokenId.Uint64(), zt.SystemNFTTokenId)
 	}
 	operationInfo.SpecialInfo.SpecialDatas[0].TokenID = append(operationInfo.SpecialInfo.SpecialDatas[0].TokenID, newNFTTokenId.Uint64())
 	serialId, ok := big.NewInt(0).SetString(creatorSerialId, 10)
@@ -1599,8 +1623,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	}
 	operationInfo.SpecialInfo.SpecialDatas[0].TokenID = append(operationInfo.SpecialInfo.SpecialDatas[0].TokenID, serialId.Uint64())
 
-	//4. NFT_ACCOUNT_ID set new NFT TOKEN to balance by NFT contentHash
-	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.NFTAccountId, info)
+	//4. SystemNFTAccountId set new NFT id to balance by NFT contentHash
+	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId.NewNFT")
 	}
@@ -1608,16 +1632,11 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		return nil, errors.New("account not exist")
 	}
 
-	part1, part2, err := zt.SplitNFTContent(payload.ContentHash)
-	if err != nil {
-		return nil, errors.Wrapf(err, "split content hash=%s", payload.ContentHash)
-	}
-
-	newNFTTokenBalance, err := getNewNFTTokenBalance(payload.GetFromAccountId(), creatorSerialId, part1.String(), part2.String())
+	newNFTTokenBalance, err := getNewNFTTokenBalance(payload.GetFromAccountId(), creatorSerialId, payload.ErcProtocol, payload.Amount, contentPart1.String(), contentPart2.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTToken balance")
 	}
-	operationInfo.SpecialInfo.SpecialDatas[0].ContentHash = []string{part1.String(), part2.String()}
+	operationInfo.SpecialInfo.SpecialDatas[0].ContentHash = []string{contentPart1.String(), contentPart2.String()}
 
 	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, newNFTTokenId.Uint64(), newNFTTokenBalance, zt.Add)
 	if err != nil {
@@ -1627,7 +1646,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//5. recipientAddr new NFT token +1
+	//5. recipientAddr new NFT id balance+amount
 	toLeaf, err := GetLeafByAccountId(a.statedb, payload.GetRecipientId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.recipientId")
@@ -1640,7 +1659,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 			return nil, errors.Wrapf(types.ErrNotAllow, "recipient has the newNFTTokenId=%d", newNFTTokenId.Uint64())
 		}
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, toLeaf, newNFTTokenId.Uint64(), "1", zt.Add)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, toLeaf, newNFTTokenId.Uint64(), big.NewInt(0).SetUint64(payload.Amount).String(), zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.NFTAccountId.nftToken")
 	}
@@ -1654,14 +1673,22 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 		CreatorId:       payload.GetFromAccountId(),
 		CreatorEthAddr:  creatorEthAddr,
 		CreatorSerialId: serialId.Uint64(),
-		ContentHash:     payload.ContentHash,
-		OwnerId:         payload.GetRecipientId(),
+		ErcProtocol:     payload.ErcProtocol,
+		MintAmount:      payload.Amount,
+		ContentHash:     fullContent,
 	}
 	kv := &types.KeyValue{
 		Key:   GetNFTIdPrimaryKey(nftStatus.Id),
 		Value: types.Encode(nftStatus),
 	}
 	kvs = append(kvs, kv)
+
+	// content hash -> nft id
+	kvId := &types.KeyValue{
+		Key:   GetNFTHashPrimaryKey(nftStatus.ContentHash),
+		Value: types.Encode(&types.Int64{Data: int64(nftStatus.Id)}),
+	}
+	kvs = append(kvs, kvId)
 
 	//end
 	zklog := &zt.ZkReceiptLog{
@@ -1706,11 +1733,14 @@ func (a *Action) updateLeafRst(info *TreeUpdateInfo, opInfo *zt.OperationInfo, f
 
 }
 
-func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, contentHashPart1, contentHashPart2 string) (string, error) {
+//计数新NFT Id的balance 参数hash作为其balance，不可变
+func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, amount uint64, contentHashPart1, contentHashPart2 string) (string, error) {
 	hashFn := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hashFn.Reset()
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(creatorId).String()))
 	hashFn.Write(zt.Str2Byte(creatorSerialId))
+	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(protocol).String()))
+	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(amount).String()))
 	hashFn.Write(zt.Str2Byte(contentHashPart1))
 	hashFn.Write(zt.Str2Byte(contentHashPart2))
 	return zt.Byte2Str(hashFn.Sum(nil)), nil
@@ -1721,6 +1751,13 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
+	if payload.NFTTokenId <= zt.SystemNFTTokenId {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
+	}
+	if payload.Amount <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)
+	}
+
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
@@ -1729,12 +1766,13 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyWithdrawNFTAction]
 
+	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyWithdrawNFTAction,
-		TokenID:     feeTokenId,
-		Amount:      "0",
+		TokenID:     payload.NFTTokenId,
+		Amount:      amountStr,
 		FeeAmount:   feeAmount,
 		SigData:     payload.Signature,
 		AccountID:   payload.FromAccountId,
@@ -1745,11 +1783,8 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNFTById=%d", payload.NFTTokenId)
 	}
-	if nftStatus.OwnerId != payload.FromAccountId {
-		return nil, errors.Wrapf(types.ErrNotAllow, "NFT token owner=%d,not=%d", nftStatus.OwnerId, payload.FromAccountId)
-	}
 
-	contentHashPart1, contentHashPart2, err := zt.SplitNFTContent(nftStatus.ContentHash)
+	contentHashPart1, contentHashPart2, _, err := zt.SplitNFTContent(nftStatus.ContentHash)
 	if err != nil {
 		return nil, errors.Wrapf(err, "split content hash=%s", nftStatus.ContentHash)
 	}
@@ -1758,6 +1793,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		AccountID:   nftStatus.CreatorId,
 		ContentHash: []string{contentHashPart1.String(), contentHashPart2.String()},
 		TokenID:     []uint64{feeTokenId, nftStatus.Id, nftStatus.CreatorSerialId},
+		Amount:      []string{big.NewInt(0).SetUint64(nftStatus.ErcProtocol).String(), big.NewInt(0).SetUint64(nftStatus.MintAmount).String()},
 	}
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 
@@ -1790,7 +1826,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//2. creator NFT_TOKEN_ID-1
+	//2. from NFT id -amount
 	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
@@ -1798,7 +1834,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, "1", zt.Sub)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
 	}
@@ -1806,8 +1842,8 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//3.  NFTAccountId's TokenId's balance same
-	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.NFTAccountId, info)
+	//3.  校验SystemNFTAccountId's TokenId's balance same
+	fromLeaf, err = GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId")
 	}
@@ -1823,7 +1859,10 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	tokenBalance, err := getNewNFTTokenBalance(nftStatus.CreatorId, big.NewInt(0).SetUint64(nftStatus.CreatorSerialId).String(), contentHashPart1.String(), contentHashPart2.String())
+	tokenBalance, err := getNewNFTTokenBalance(nftStatus.CreatorId,
+		big.NewInt(0).SetUint64(nftStatus.CreatorSerialId).String(),
+		nftStatus.ErcProtocol, nftStatus.MintAmount,
+		contentHashPart1.String(), contentHashPart2.String())
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNewNFTTokenBalance tokenId=%d", nftStatus.Id)
 	}
@@ -1831,7 +1870,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrInvalidParam, "tokenId=%d,NFTAccount.balance=%s,calcBalance=%s", nftStatus.Id, newBranch.After.TokenWitness.Balance, tokenBalance)
 	}
 
-	//3.  creator's eth addr same
+	//3.  校验NFT creator's eth addr same
 	fromLeaf, err = GetLeafByAccountId(a.statedb, nftStatus.GetCreatorId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.NFTAccountId")
@@ -1840,7 +1879,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.New("account not exist")
 	}
 	//amount=0, just get proof
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.NFTTokenId, "0", zt.Add)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, zt.SystemNFTTokenId, "0", zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
 	}
@@ -1851,9 +1890,8 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 		return nil, errors.Wrapf(types.ErrNotAllow, "creator eth Addr=%s, nft=%s", fromLeaf.EthAddress, nftStatus.CreatorEthAddr)
 	}
 
-	//set NFT token status
-	nftStatus.OwnerId = 0
-	nftStatus.Burned = true
+	//accumulate NFT id burned amount
+	nftStatus.BurnedAmount += payload.Amount
 	kv := &types.KeyValue{
 		Key:   GetNFTIdPrimaryKey(nftStatus.Id),
 		Value: types.Encode(nftStatus),
@@ -1879,8 +1917,8 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 }
 
 func getNFTById(db dbm.KV, id uint64) (*zt.ZkNFTTokenStatus, error) {
-	if id <= zt.NFTTokenId {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "nft id =%d should big than default %d", id, zt.NFTTokenId)
+	if id <= zt.SystemNFTTokenId {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "nft id =%d should big than default %d", id, zt.SystemNFTTokenId)
 	}
 
 	var nft zt.ZkNFTTokenStatus
@@ -1896,13 +1934,31 @@ func getNFTById(db dbm.KV, id uint64) (*zt.ZkNFTTokenStatus, error) {
 	return &nft, nil
 }
 
+func getNFTIdByHash(db dbm.KV, hash string) (*types.Int64, error) {
+
+	var id types.Int64
+	val, err := db.Get(GetNFTHashPrimaryKey(hash))
+	if err != nil {
+		return nil, err
+	}
+
+	err = types.Decode(val, &id)
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
+}
+
 func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if payload.NFTTokenId <= zt.NFTTokenId {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.NFTTokenId)
+	if payload.NFTTokenId <= zt.SystemNFTTokenId {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
+	}
+	if payload.Amount <= 0 {
+		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)
 	}
 
 	info, err := getTreeUpdateInfo(a.statedb)
@@ -1913,12 +1969,13 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	feeTokenId := uint64(0)
 	feeAmount := zt.FeeMap[zt.TyTransferNFTAction]
 
+	amountStr := big.NewInt(0).SetUint64(payload.Amount).String()
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TyTransferNFTAction,
 		TokenID:     payload.NFTTokenId,
-		Amount:      "0",
+		Amount:      amountStr,
 		FeeAmount:   feeAmount,
 		SigData:     payload.Signature,
 		AccountID:   payload.FromAccountId,
@@ -1928,9 +1985,6 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	nftStatus, err := getNFTById(a.statedb, payload.NFTTokenId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "getNFTById=%d", payload.NFTTokenId)
-	}
-	if nftStatus.OwnerId != payload.FromAccountId {
-		return nil, errors.Wrapf(types.ErrNotAllow, "NFT token owner=%d,not=%d", nftStatus.OwnerId, payload.FromAccountId)
 	}
 
 	speciaData := &zt.OperationSpecialData{
@@ -1968,7 +2022,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//2. creator NFT_TOKEN_ID-1
+	//2. from NFT id balance-amount
 	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
@@ -1976,7 +2030,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, "1", zt.Sub)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
 	}
@@ -1984,7 +2038,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	//2. recipient NFT_TOKEN_ID+1
+	//2. recipient NFT id balance+amount
 	fromLeaf, err = GetLeafByAccountId(a.statedb, payload.GetRecipientId(), info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId.2")
@@ -1992,24 +2046,14 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, "1", zt.Add)
+	newBranch, fromKvs, fromLocal, err = a.updateLeafRst(info, operationInfo, fromLeaf, payload.NFTTokenId, amountStr, zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "updateLeafRst.from.nftToken")
 	}
-	if newBranch.After.TokenWitness.Balance != "1" {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "recipient token=%d after balance=%s", payload.NFTTokenId, newBranch.After.TokenWitness.Balance)
-	}
+
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
-
-	//set NFT token status
-	nftStatus.OwnerId = payload.GetRecipientId()
-	kv := &types.KeyValue{
-		Key:   GetNFTIdPrimaryKey(nftStatus.Id),
-		Value: types.Encode(nftStatus),
-	}
-	kvs = append(kvs, kv)
 
 	//end
 	zklog := &zt.ZkReceiptLog{

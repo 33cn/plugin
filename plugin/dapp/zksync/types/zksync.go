@@ -104,6 +104,7 @@ const (
 	AccountBitWidth   = 32  //4byte
 	TokenBitWidth     = 8   //1byte 256 tokens
 	NFTTokenBitWidth  = 32  //4byte
+	NFTAmountBitWidth = 16  //2byte 最多铸造65535个相同id的NFT
 	AmountBitWidth    = 128 //16byte
 	AddrBitWidth      = 160 //20byte
 	HashBitWidth      = 256 //32byte
@@ -150,13 +151,19 @@ const (
 )
 
 const (
-	//FeeAccountId 此账户作为缺省收费账户
-	FeeAccountId = 1
-	//NFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
-	NFTAccountId = 2
-	//NFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
-	NFTTokenId = 256 //2^8,
+	//SystemFeeAccountId 此账户作为缺省收费账户
+	SystemFeeAccountId = 1
+	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
+	SystemNFTAccountId = 2
+	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
+	SystemNFTTokenId = 256 //2^8,
 
+)
+
+//ERC protocol
+const (
+	ZKERC1155 = 1
+	ZKERC721  = 2
 )
 
 const (

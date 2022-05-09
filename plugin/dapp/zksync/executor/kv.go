@@ -27,6 +27,10 @@ func GetNFTIdPrimaryKey(nftTokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"nftTokenId-", nftTokenId))
 }
 
+func GetNFTHashPrimaryKey(nftHash string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"nftHash-"+nftHash))
+}
+
 func GetRootIndexPrimaryKey(rootIndex uint64) []byte {
 	return []byte(fmt.Sprintf("%s%016d", KeyPrefixStateDB+"rootIndex-", rootIndex))
 }
