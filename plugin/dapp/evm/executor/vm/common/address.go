@@ -7,6 +7,7 @@ package common
 import (
 	"math/big"
 	"strings"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -18,6 +19,19 @@ import (
 	"github.com/33cn/chain33/types"
 	"github.com/holiman/uint256"
 )
+
+var (
+	// 地址驱动, 适配chain33和evm间的地址格式差异
+	evmAddressDriver address.Driver
+	once             sync.Once
+)
+
+// InitEvmAddressType init address type
+func InitEvmAddressTypeOnce(driver address.Driver) {
+	once.Do(func() {
+		evmAddressDriver = driver
+	})
+}
 
 // Address 封装evm内部地址对象
 // raw为地址原始数据
@@ -44,7 +58,7 @@ func (a *Address) SetBytes(b []byte) {
 // String 字符串结构
 func (a Address) String() string {
 	if a.formatAddr == "" {
-		a.formatAddr = address.GetDefaultAddressDriver().Bytes2Str(a.raw[:])
+		a.formatAddr = evmAddressDriver.ToString(a.raw[:])
 	}
 	return a.formatAddr
 }
@@ -123,11 +137,11 @@ func NewContractAddress(b Address, txHash []byte) Address {
 }
 
 func pubKey2Address(pub []byte) Address {
-	defaultDriver := address.GetDefaultAddressDriver()
-	execAddr := defaultDriver.PubKeyToAddr(pub)
+
+	execAddr := evmAddressDriver.PubKeyToAddr(pub)
 	var a Address
 	a.formatAddr = execAddr
-	raw, _ := defaultDriver.Str2Bytes(execAddr)
+	raw, _ := evmAddressDriver.FromString(execAddr)
 	a.SetBytes(raw)
 	return a
 }
@@ -154,7 +168,7 @@ func BytesToHash160Address(b []byte) Hash160Address {
 
 // StringToAddress 字符串转换为地址
 func StringToAddress(s string) *Address {
-	raw, err := address.GetDefaultAddressDriver().Str2Bytes(s)
+	raw, err := evmAddressDriver.FromString(s)
 	if err != nil {
 		//检查是否是十六进制地址数据
 		raw, err = hex.DecodeString(strings.TrimPrefix(s, "0x"))
