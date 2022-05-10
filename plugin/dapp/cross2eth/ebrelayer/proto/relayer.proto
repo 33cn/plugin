@@ -381,3 +381,9 @@ message QueryReq  {
     string chainName    = 5;
 }
 
+message ProphecyProcessed {
+    string claimID  = 1;
+    bool valid      = 2;
+    string txhash   = 3;
+}
+

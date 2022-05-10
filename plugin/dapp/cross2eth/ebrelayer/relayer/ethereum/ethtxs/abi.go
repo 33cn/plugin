@@ -13,6 +13,7 @@ const (
 	Chain33BankABI   = "Chain33BankABI"
 	Chain33BridgeABI = "Chain33BridgeABI"
 	EthereumBankABI  = "EthereumBankABI"
+	OracleABI        = "OracleABI"
 )
 
 //LoadABI ...
@@ -27,6 +28,8 @@ func LoadABI(contractName string) abi.ABI {
 		abiJSON = generated.Chain33BridgeABI
 	case EthereumBankABI:
 		abiJSON = generated.EthereumBankABI
+	case OracleABI:
+		abiJSON = generated.OracleABI
 	default:
 		panic("No abi matched")
 	}

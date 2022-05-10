@@ -137,6 +137,9 @@ function updata_toml_start_bcd() {
         pushHost=$(get_docker_addr "${dockerNamePrefix}_ebrelayer${name}_1")
         sed -i 's/^pushHost=.*/pushHost="http:\/\/'"${pushHost}"':20000"/' "${file}"
         sed -i 's/^pushBind=.*/pushBind="'"${pushHost}"':20000"/' "${file}"
+        if [[ "${name}" == "d" ]] ; then
+            sed -i 's/^DelayedSend=.*/DelayedSend=true/' "${file}"
+        fi
 
         docker cp "${file}" "${dockerNamePrefix}_ebrelayer${name}_1":/root/relayer.toml
         start_docker_ebrelayer "${dockerNamePrefix}_ebrelayer${name}_1" "/root/ebrelayer" "./ebrelayer${name}.log"
