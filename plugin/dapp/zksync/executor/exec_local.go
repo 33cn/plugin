@@ -45,6 +45,18 @@ func (z *zksync) ExecLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transactio
 	return z.execAutoLocalZksync(tx, receiptData, index)
 }
 
+func (z *zksync) ExecLocal_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+
+func (z *zksync) ExecLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+
+func (z *zksync) ExecLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoLocalZksync(tx, receiptData, index)
+}
+
 func (z *zksync) ExecLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execCommitProofLocal(payload, tx, receiptData, index)
 }

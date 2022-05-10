@@ -144,7 +144,7 @@ func getLastCommitProofData(db dbm.KV) (*zt.CommitProofState, error) {
 				IndexStart:  0,
 				IndexEnd:    0,
 				OldTreeRoot: "0",
-				NewTreeRoot: "0",
+				NewTreeRoot: "18617692155653794411600229951838919630651308402001068372178576330275141191583",
 			}, nil
 		} else {
 			return nil, errors.Wrapf(err, "get db")
@@ -197,7 +197,11 @@ func (a *Action) commitProof(payload *zt.ZkCommitProof) (*types.Receipt, error) 
 	}
 
 	//proofId需要连续,高度需要衔接
-	if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId || lastProof.BlockEnd != payload.BlockStart) {
+	//if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId || lastProof.BlockEnd != payload.BlockStart) {
+	//	return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id end=%d, new id start=%d",
+	//		lastProof.ProofId, payload.ProofId)
+	//}
+	if lastProof != nil && (lastProof.ProofId+1 != payload.ProofId) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "last proof id end=%d, new id start=%d",
 			lastProof.ProofId, payload.ProofId)
 	}
