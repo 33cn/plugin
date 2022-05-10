@@ -477,7 +477,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 			}
 			//如果NFTAccountId第一次初始化token，需要设置特殊balance作为新NFT token ID
 			if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
-				token.Balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 1).String()
+				token.Balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 2).String()
 			}
 			leaf.TokenIds = append(leaf.TokenIds, tokenId)
 		}

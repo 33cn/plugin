@@ -68,6 +68,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
+	if !checkIsNormalToken(payload.TokenId) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
+	}
+
 	zklog.Info("start zksync deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
@@ -249,6 +253,10 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, opInfo *zt.OperationInfo, eth
 	//如果设置balance为nil，则设为缺省0
 	if len(balance) == 0 {
 		balance = "0"
+
+		if accountId == zt.SystemNFTAccountId && tokenId == zt.SystemNFTTokenId {
+			balance = new(big.Int).SetUint64(zt.SystemNFTTokenId + 1).String()
+		}
 	}
 	tokenW := &zt.TokenWitness{
 		ID:      tokenId,
@@ -625,6 +633,10 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
+	if !checkIsNormalToken(payload.TokenId) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
+	}
+
 	fee := zt.FeeMap[zt.TyTransferAction]
 	//加上手续费
 	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
@@ -1078,7 +1090,17 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 		Amount:      "0",
 		SigData:     payload.Signature,
 		AccountID:   payload.AccountId,
+		SpecialInfo: new(zt.OperationSpecialInfo),
 	}
+
+	specialData := &zt.OperationSpecialData{
+		PubKeyType: payload.PubKeyTy,
+		PubKey:     payload.PubKey,
+	}
+	if payload.PubKeyTy == 0 {
+		specialData.PubKey = payload.Signature.PubKey
+	}
+	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, specialData)
 
 	if payload.PubKeyTy == 0 {
 		kvs, localKvs, err = a.SetDefultPubKey(payload, info, leaf, operationInfo)
@@ -1322,6 +1344,15 @@ func checkParam(amount string) error {
 	return nil
 }
 
+//not NFT token
+func checkIsNormalToken(id uint64) bool {
+	return id < zt.SystemNFTTokenId
+}
+
+func checkIsNFTToken(id uint64) bool {
+	return id > zt.SystemNFTTokenId
+}
+
 func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueID, error) {
 	key := getEthPriorityQueueKey(chainID)
 	v, err := db.Get(key)
@@ -1378,7 +1409,7 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 	var err error
 
 	//todo 手续费收款方accountId可配置
-	leaf, err := GetLeafByAccountId(a.statedb, zt.SystemNFTAccountId, info)
+	leaf, err := GetLeafByAccountId(a.statedb, zt.SystemFeeAccountId, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
@@ -1589,7 +1620,8 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), newBranch)
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
-	creatorSerialId := newBranch.After.TokenWitness.Balance
+	//serialId表示createor创建了多少nft,这里使用before的id
+	creatorSerialId := newBranch.Before.TokenWitness.Balance
 	creatorEthAddr := fromLeaf.EthAddress
 
 	//3. SystemNFTAccountId's SystemNFTTokenId+1, 产生新的NFT的id
@@ -1609,7 +1641,7 @@ func (a *Action) MintNFT(payload *zt.ZkMintNFT) (*types.Receipt, error) {
 	kvs = append(kvs, fromKvs...)
 	localKvs = append(localKvs, fromLocal...)
 
-	newNFTTokenId, ok := big.NewInt(0).SetString(newBranch.After.TokenWitness.Balance, 10)
+	newNFTTokenId, ok := big.NewInt(0).SetString(newBranch.Before.TokenWitness.Balance, 10)
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "new NFT token balance=%s nok", newBranch.After.TokenWitness.Balance)
 	}
@@ -1743,7 +1775,8 @@ func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, a
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(amount).String()))
 	hashFn.Write(zt.Str2Byte(contentHashPart1))
 	hashFn.Write(zt.Str2Byte(contentHashPart2))
-	return zt.Byte2Str(hashFn.Sum(nil)), nil
+	//只取后面16byte，和balance可表示的最大字节数一致
+	return zt.Byte2Str(hashFn.Sum(nil)[16:]), nil
 }
 
 func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) {
@@ -1751,8 +1784,8 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if payload.NFTTokenId <= zt.SystemNFTTokenId {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
+	if !checkIsNFTToken(payload.NFTTokenId) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
 	}
 	if payload.Amount <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)
@@ -1954,8 +1987,8 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if payload.NFTTokenId <= zt.SystemNFTTokenId {
-		return nil, errors.Wrapf(types.ErrInvalidParam, "NFT tokenId=%d less than NFT start id=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
+	if !checkIsNFTToken(payload.NFTTokenId) {
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
 	}
 	if payload.Amount <= 0 {
 		return nil, errors.Wrapf(types.ErrInvalidParam, "wrong amount=%d", payload.Amount)

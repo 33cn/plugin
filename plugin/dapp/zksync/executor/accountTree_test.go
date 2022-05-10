@@ -20,7 +20,7 @@ func TestAccountTree(t *testing.T) {
 
 	ethAddress1 := zt.HexAddr2Decimal("bbcd68033A72978C1084E2d44D1Fa06DdC4A2d5")
 	chain33Addr1 := zt.HexAddr2Decimal(getChain33Addr("1266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))
-	info, err := generateTreeUpdateInfo(statedb, ethAddress1, chain33Addr1)
+	info, err := generateTreeUpdateInfo(statedb, localdb, ethAddress1, chain33Addr1)
 	assert.Equal(t, nil, err)
 	ethAddress := zt.HexAddr2Decimal("abcd68033A72978C1084E2d44D1Fa06DdC4A2d58")
 	chain33Addr := zt.HexAddr2Decimal(getChain33Addr("7266444b7e6408a9ee603de7b73cc8fc168ebf570c7fd482f7fa6b968b6a5aec"))

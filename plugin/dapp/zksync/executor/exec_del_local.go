@@ -40,3 +40,19 @@ func (z *zksync) ExecDelLocal_SetPubKey(payload *zt.ZkSetPubKey, tx *types.Trans
 func (z *zksync) ExecDelLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
+
+func (z *zksync) ExecDelLocal_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+
+func (z *zksync) ExecDelLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+
+func (z *zksync) ExecDelLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}
+
+func (z *zksync) ExecDelLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return z.execAutoDelLocal(tx, receiptData)
+}

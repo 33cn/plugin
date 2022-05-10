@@ -38,6 +38,9 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyForceExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
+			zt.TyMintNFTLog,
+			zt.TyTransferNFTLog,
+			zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
 			var zklog zt.ZkReceiptLog
 			err := types.Decode(log.GetLog(), &zklog)
