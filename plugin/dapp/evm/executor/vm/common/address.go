@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/33cn/chain33/system/address/btc"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"encoding/hex"
@@ -26,11 +28,21 @@ var (
 	once             sync.Once
 )
 
-// InitEvmAddressType init address type
+// 设置默认值, btc地址格式
+func init() {
+	evmAddressDriver, _ = address.LoadDriver(btc.NormalAddressID, -1)
+}
+
+// InitEvmAddressType 基于配置初始化
 func InitEvmAddressTypeOnce(driver address.Driver) {
 	once.Do(func() {
 		evmAddressDriver = driver
 	})
+}
+
+// GetEvmAddressDriver get driver
+func GetEvmAddressDriver() address.Driver {
+	return evmAddressDriver
 }
 
 // Address 封装evm内部地址对象

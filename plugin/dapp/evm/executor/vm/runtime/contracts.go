@@ -10,9 +10,10 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/33cn/chain33/system/address/eth"
+
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/math"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common/crypto"
@@ -163,7 +164,13 @@ func (c *ecrecover) Run(input []byte) ([]byte, error) {
 	//log15.Info("ecrecover::pubkey", "pubkey", common.Bytes2Hex(pubKey))
 	//log15.Info("ecrecover::address", "address", address.PubKeyToAddress(pubKey).String())
 	// the first byte of pubkey is bitcoin heritage
-	return common.LeftPadBytes(address.BytesToBtcAddress(address.NormalVer, pubKey).Hash160[:], 32), nil
+	driver := common.GetEvmAddressDriver()
+	// 以太坊保持兼容, 直接用原生代码更高效
+	if driver.GetName() == eth.Name {
+		return common.LeftPadBytes(crypto.Keccak256(pubKey[1:])[12:], 32), nil
+	}
+	addrBytes, _ := driver.FromString(driver.PubKeyToAddr(pubKey))
+	return common.LeftPadBytes(addrBytes, 32), nil
 }
 
 // SHA256 implemented as a native contract.
