@@ -957,7 +957,7 @@ func (a *action) nodeGroupApproveApply(config *pt.ParaNodeGroupConfig, apply *pt
 	return receipt, nil
 }
 
-func (a *action) checkApproveOp(config *pt.ParaNodeGroupConfig) error {
+func (a *action) checkApproveOpOld(config *pt.ParaNodeGroupConfig) error {
 	cfg := a.api.GetConfig()
 	//fork之后采用 autonomy 检查模式
 	confManager := types.ConfSub(cfg, manager.ManageX)
@@ -983,17 +983,50 @@ func (a *action) checkApproveOp(config *pt.ParaNodeGroupConfig) error {
 	return nil
 }
 
+func (a *action) checkApproveOpNew(config *pt.ParaNodeGroupConfig, status *pt.ParaNodeGroupStatus) error {
+	cfg := a.api.GetConfig()
+
+	//from地址和apply的相同，ok
+	if status.FromAddr == a.fromaddr {
+		return nil
+	}
+	//from superManager
+	if isSuperManager(cfg, a.fromaddr) {
+		return nil
+	}
+
+	confManager := types.ConfSub(cfg, manager.ManageX)
+	autonomyExec := confManager.GStr(types.AutonomyCfgKey)
+	if len(autonomyExec) > 0 {
+		//去autonomy 合约检验是否id approved, 成功 err返回nil
+		_, err := a.api.QueryChain(&types.ChainExecutor{
+			Driver:   autonomyExec,
+			FuncName: "IsAutonomyApprovedItem",
+			Param:    types.Encode(&types.ReqMultiStrings{Datas: []string{config.AutonomyItemID, config.Id}}),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "query autonomy,approveid=%s,hashId=%s", config.AutonomyItemID, config.Id)
+		}
+		return nil
+	}
+
+	return errors.Wrapf(types.ErrNotAllow, "from Addr=%s not applier=%s or manager", a.fromaddr, status.FromAddr)
+}
+
+func (a *action) checkApproveOp(config *pt.ParaNodeGroupConfig, status *pt.ParaNodeGroupStatus) error {
+	cfg := a.api.GetConfig()
+	//开启自由注册的检查
+	if cfg.IsDappFork(a.height, pt.ParaX, pt.ForkParaFreeRegister) {
+		return a.checkApproveOpNew(config, status)
+	}
+	//自由注册之前的检查
+	return a.checkApproveOpOld(config)
+
+}
+
 // NodeGroupApprove super addr approve the node group apply
 func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-
-	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
-	if !cfg.IsPara() {
-		err := a.checkApproveOp(config)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	id, err := getNodeGroupID(cfg, a.db, config.Title, a.exec.GetMainHeight(), config.Id)
 	if err != nil {
@@ -1002,6 +1035,14 @@ func (a *action) nodeGroupApprove(config *pt.ParaNodeGroupConfig) (*types.Receip
 
 	if config.Title != id.Title {
 		return nil, errors.Wrapf(pt.ErrNodeNotForTheTitle, "config title:%s,id title:%s", config.Title, id.Title)
+	}
+
+	//只在主链检查， 主链检查失败不会同步到平行链，主链成功，平行链默认成功
+	if !cfg.IsPara() {
+		err := a.checkApproveOp(config, id)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if id.Status == pt.ParacrossNodeGroupModify {

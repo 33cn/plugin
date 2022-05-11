@@ -35,11 +35,11 @@ func InitBoard(stateDB dbm.KV) {
 func InitRule(stateDB dbm.KV) {
 	// add active rule
 	rule := &auty.RuleConfig{
-		BoardApproveRatio:  boardApproveRatio,
-		PubOpposeRatio:     pubOpposeRatio,
-		ProposalAmount:     proposalAmount * types.DefaultCoinPrecision,
+		BoardApproveRatio:  autoCfg.BoardApproveRatio,
+		PubOpposeRatio:     autoCfg.PubOpposeRatio,
+		ProposalAmount:     autoCfg.ProposalAmount * types.DefaultCoinPrecision,
 		LargeProjectAmount: 100 * types.DefaultCoinPrecision,
-		PublicPeriod:       publicPeriod,
+		PublicPeriod:       autoCfg.PublicPeriod,
 	}
 	_ = stateDB.Set(activeRuleID(), types.Encode(rule))
 }
@@ -63,13 +63,13 @@ func TestPropProject(t *testing.T) {
 		{ // check toaddr
 			ToAddr:           "1111111111",
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // check amount
 			Amount:           0,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // check StartBlockHeight EndBlockHeight
 			Amount:           10,
@@ -81,19 +81,19 @@ func TestPropProject(t *testing.T) {
 			Amount:           100,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // checkPeriodAmount
 			Amount:           100,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 		},
 		{ // ErrSetBlockHeight
 			Amount:           100,
 			ToAddr:           AddrA,
 			StartBlockHeight: env.blockHeight + 5,
-			EndBlockHeight:   env.blockHeight + propEndBlockPeriod + 10,
+			EndBlockHeight:   env.blockHeight + autoCfg.PropEndBlockPeriod + 10,
 		},
 	}
 
@@ -116,7 +116,7 @@ func TestPropProject(t *testing.T) {
 		if i == 4 {
 			act := &auty.ActiveBoard{
 				Boards: boards,
-				Amount: maxBoardPeriodAmount * types.DefaultCoinPrecision,
+				Amount: autoCfg.MaxBoardPeriodAmount * types.DefaultCoinPrecision,
 			}
 			err := stateDB.Set(activeBoardID(), types.Encode(act))
 			assert.NoError(t, err)
@@ -179,7 +179,7 @@ func TestBoardPeriodAmount(t *testing.T) {
 	InitFund(stateDB, testProjectAmount)
 	act := &auty.ActiveBoard{
 		Boards:      boards,
-		Amount:      maxBoardPeriodAmount*types.DefaultCoinPrecision - 100,
+		Amount:      autoCfg.MaxBoardPeriodAmount*types.DefaultCoinPrecision - 100,
 		StartHeight: 10,
 	}
 	_ = stateDB.Set(activeBoardID(), types.Encode(act))
@@ -190,15 +190,15 @@ func TestBoardPeriodAmount(t *testing.T) {
 		Day:              10,
 		Amount:           testProjectAmount,
 		ToAddr:           AddrD,
-		StartBlockHeight: env.blockHeight + boardPeriod + 5,
-		EndBlockHeight:   env.blockHeight + boardPeriod + startEndBlockPeriod + 10,
+		StartBlockHeight: env.blockHeight + autoCfg.BoardPeriod + 5,
+		EndBlockHeight:   env.blockHeight + autoCfg.BoardPeriod + autoCfg.StartEndBlockPeriod + 10,
 	}
 	pbtx, err := propProjectTx(opt1)
 	assert.NoError(t, err)
 	pbtx, err = signTx(pbtx, PrivKeyA)
 	assert.NoError(t, err)
 
-	exec.SetEnv(env.blockHeight+boardPeriod+1, env.blockTime, env.difficulty)
+	exec.SetEnv(env.blockHeight+autoCfg.BoardPeriod+1, env.blockTime, env.difficulty)
 	receipt, err := exec.Exec(pbtx, 1)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
@@ -224,7 +224,7 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 		Amount:           testProjectAmount,
 		ToAddr:           AddrD,
 		StartBlockHeight: env.blockHeight + 5,
-		EndBlockHeight:   env.blockHeight + startEndBlockPeriod + 10,
+		EndBlockHeight:   env.blockHeight + autoCfg.StartEndBlockPeriod + 10,
 	}
 	pbtx, err := propProjectTx(opt1)
 	assert.NoError(t, err)
@@ -261,7 +261,7 @@ func testPropProject(t *testing.T, env *ExecEnv, exec drivers.Driver, stateDB db
 	accCoin := account.NewCoinsAccount(chainTestCfg)
 	accCoin.SetDB(stateDB)
 	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Frozen)
+	assert.Equal(t, autoCfg.ProposalAmount*types.DefaultCoinPrecision, accountAddr.Frozen)
 }
 
 func propProjectTx(parm *auty.ProposalProject) (*types.Transaction, error) {
@@ -453,7 +453,7 @@ func checkVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID str
 	accountAddr := accCoin.LoadExecAccount(AddrA, autonomyAddr)
 	assert.Equal(t, int64(0), accountAddr.Frozen)
 	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
+	assert.Equal(t, autoCfg.ProposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 	accountAddr = accCoin.LoadExecAccount(AddrD, autonomyAddr)
 	assert.Equal(t, testProjectAmount, accountAddr.Balance)
 	// 更新董事会累计审批金
@@ -573,7 +573,7 @@ func checkPubVoteProposalProjectResult(t *testing.T, stateDB dbm.KV, proposalID 
 	accountAddr = accCoin.LoadExecAccount(AddrD, autonomyAddr)
 	assert.Equal(t, int64(0), accountAddr.Balance)
 	accountAddr = accCoin.LoadExecAccount(autonomyAddr, autonomyAddr)
-	assert.Equal(t, proposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
+	assert.Equal(t, autoCfg.ProposalAmount*types.DefaultCoinPrecision, accountAddr.Balance)
 
 	// 更新董事会累计审批金
 	value, err = stateDB.Get(activeBoardID())

@@ -13,26 +13,22 @@ import (
 	"github.com/33cn/chain33/common/address"
 )
 
-const (
-	maxBoardPeriodAmount = 10000 * 300    // 每个时期董事会审批最大额度300万
-	boardPeriod          = 17280 * 30 * 1 // 时期为一个月
-)
-
 func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	if err := address.CheckAddress(prob.ToAddr, a.height); err != nil {
 		alog.Error("propProject ", "addr", prob.ToAddr, "check toAddr error", err)
 		return nil, types.ErrInvalidAddress
 	}
 
 	if prob.StartBlockHeight < a.height || prob.EndBlockHeight < a.height ||
-		prob.StartBlockHeight+startEndBlockPeriod > prob.EndBlockHeight {
+		prob.StartBlockHeight+autoCfg.StartEndBlockPeriod > prob.EndBlockHeight {
 		alog.Error("propProject height invaild", "StartBlockHeight", prob.StartBlockHeight, "EndBlockHeight",
 			prob.EndBlockHeight, "height", a.height)
 		return nil, auty.ErrSetBlockHeight
 	}
 
 	if a.api.GetConfig().IsDappFork(a.height, auty.AutonomyX, auty.ForkAutonomyDelRule) {
-		if prob.EndBlockHeight > a.height+propEndBlockPeriod {
+		if prob.EndBlockHeight > a.height+autoCfg.PropEndBlockPeriod {
 			alog.Error("propBoard height invaild", "EndBlockHeight", prob.EndBlockHeight, "height", a.height)
 			return nil, auty.ErrSetBlockHeight
 		}
@@ -52,7 +48,7 @@ func (a *action) propProject(prob *auty.ProposalProject) (*types.Receipt, error)
 	}
 	// 检查是否可以对已审批额度归0,如果可以则设置kv
 	var kva *types.KeyValue
-	if a.height > pboard.StartHeight+boardPeriod {
+	if a.height > pboard.StartHeight+autoCfg.BoardPeriod {
 		pboard.StartHeight = a.height
 		pboard.Amount = 0
 		kva = &types.KeyValue{Key: activeBoardID(), Value: types.Encode(pboard)}
@@ -552,6 +548,7 @@ func (a *action) getProposalProject(ID string) (*auty.AutonomyProposalProject, e
 }
 
 func (a *action) getActiveBoard() (*auty.ActiveBoard, error) {
+	cfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	value, err := a.db.Get(activeBoardID())
 	if err != nil {
 		return nil, err
@@ -561,7 +558,7 @@ func (a *action) getActiveBoard() (*auty.ActiveBoard, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(pboard.Boards) > maxBoards || len(pboard.Boards) < minBoards {
+	if int64(len(pboard.Boards)) > cfg.MaxBoards || int64(len(pboard.Boards)) < cfg.MinBoards {
 		err = auty.ErrNoActiveBoard
 		return nil, err
 	}
@@ -607,21 +604,23 @@ func copyAutonomyProposalProject(cur *auty.AutonomyProposalProject) *auty.Autono
 }
 
 func (a *action) checkPeriodAmount(act *auty.ActiveBoard, amount int64) bool {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	if act == nil {
 		return false
 	}
-	if act.Amount+amount > maxBoardPeriodAmount*a.api.GetConfig().GetCoinPrecision() {
+	if act.Amount+amount > autoCfg.MaxBoardPeriodAmount*a.api.GetConfig().GetCoinPrecision() {
 		return false
 	}
 	return true
 }
 
 func (a *action) updatePeriodAmount(amount int64) (*types.KeyValue, error) {
+	autoCfg := GetAutonomyParam(a.api.GetConfig(), a.height)
 	act, err := a.getActiveBoard()
 	if err != nil {
 		return nil, err
 	}
-	if a.height > act.StartHeight+boardPeriod {
+	if a.height > act.StartHeight+autoCfg.BoardPeriod {
 		act.StartHeight = a.height
 		act.Amount = 0
 	}

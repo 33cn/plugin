@@ -393,23 +393,23 @@ function TestProxy() {
 function TestRelayerProxy() {
     start_docker_ebrelayerProxy
 
-        Boss4xCLI=${Boss4xCLIeth}
-        CLIP=${CLIPeth}
-        ethereumBridgeBank="${ethereumBridgeBankOnETH}"
-        chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
-        ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
-        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
-        setWithdraw_ethereum
-        TestProxy
+    Boss4xCLI=${Boss4xCLIeth}
+    CLIP=${CLIPeth}
+    ethereumBridgeBank="${ethereumBridgeBankOnETH}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrETH}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnETH}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnETH}"
+    setWithdraw_ethereum
+    TestProxy
 
-        Boss4xCLI=${Boss4xCLIbsc}
-        CLIP=${CLIPbsc}
-        ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
-        chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
-        ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
-        chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
-        setWithdraw_bsc
-        TestProxy
+    Boss4xCLI=${Boss4xCLIbsc}
+    CLIP=${CLIPbsc}
+    ethereumBridgeBank="${ethereumBridgeBankOnBSC}"
+    chain33MainBridgeTokenAddr="${chain33MainBridgeTokenAddrBNB}"
+    ethereumUSDTERC20TokenAddr="${ethereumUSDTERC20TokenAddrOnBSC}"
+    chain33USDTBridgeTokenAddr="${chain33USDTBridgeTokenAddrOnBSC}"
+    setWithdraw_bsc
+    TestProxy
 }
 
 function parallel_test() {

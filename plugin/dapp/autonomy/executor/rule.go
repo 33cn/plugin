@@ -128,19 +128,27 @@ func (a *Autonomy) getActiveRule() (types.Message, error) {
 	rule := &auty.RuleConfig{}
 	value, err := a.GetStateDB().Get(activeRuleID())
 	cfg := a.GetAPI().GetConfig()
+	autoCfg := GetAutonomyParam(cfg, 0)
 	if err == nil {
 		err = types.Decode(value, rule)
 		if err != nil {
 			return nil, err
 		}
+		if rule.PubApproveRatio <= 0 {
+			rule.PubApproveRatio = autoCfg.PubApproveRatio
+		}
+		if rule.PubAttendRatio <= 0 {
+			rule.PubAttendRatio = autoCfg.PubAttendRatio
+		}
 	} else { // 载入系统默认值
-		rule.BoardApproveRatio = boardApproveRatio
-		rule.PubOpposeRatio = pubOpposeRatio
-		rule.ProposalAmount = proposalAmount * cfg.GetCoinPrecision()
-		rule.LargeProjectAmount = largeProjectAmount * cfg.GetCoinPrecision()
-		rule.PublicPeriod = publicPeriod
-		rule.PubAttendRatio = pubAttendRatio
-		rule.PubApproveRatio = pubApproveRatio
+
+		rule.BoardApproveRatio = autoCfg.BoardApproveRatio
+		rule.PubOpposeRatio = autoCfg.PubOpposeRatio
+		rule.ProposalAmount = autoCfg.ProposalAmount * cfg.GetCoinPrecision()
+		rule.LargeProjectAmount = autoCfg.LargeProjectAmount * cfg.GetCoinPrecision()
+		rule.PublicPeriod = autoCfg.PublicPeriod
+		rule.PubAttendRatio = autoCfg.PubAttendRatio
+		rule.PubApproveRatio = autoCfg.PubApproveRatio
 	}
 	return rule, nil
 }
