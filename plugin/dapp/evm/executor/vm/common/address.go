@@ -140,15 +140,16 @@ func (h Hash160Address) ToAddress() Address {
 // NewAddress xHash生成EVM合约地址
 func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
 	execPub := address.ExecPubKey(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
-	return pubKey2Address(execPub)
+	return PubKey2Address(execPub)
 }
 
 func NewContractAddress(b Address, txHash []byte) Address {
 	execPub := address.ExecPubKey(b.String() + common.Bytes2Hex(txHash))
-	return pubKey2Address(execPub)
+	return PubKey2Address(execPub)
 }
 
-func pubKey2Address(pub []byte) Address {
+// PubKey2Address pub key to address
+func PubKey2Address(pub []byte) Address {
 
 	execAddr := evmAddressDriver.PubKeyToAddr(pub)
 	var a Address
@@ -161,7 +162,7 @@ func pubKey2Address(pub []byte) Address {
 // ExecAddress 返回合约地址
 func ExecAddress(execName string) Address {
 	execPub := address.ExecPubKey(execName)
-	return pubKey2Address(execPub)
+	return PubKey2Address(execPub)
 }
 
 // BytesToAddress 字节向地址转换

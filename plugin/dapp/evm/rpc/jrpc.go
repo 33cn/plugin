@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/hex"
 
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
+
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/types"
@@ -61,8 +63,6 @@ func (c *Jrpc) CalcNewContractAddr(parm *evm.EvmCalcNewContractAddrReq, result *
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-	newContractAddr := address.BytesToBtcAddress(address.NormalVer,
-		address.ExecPubKey(parm.Caller+parm.Txhash))
-	*result = newContractAddr.String()
+	*result = common.GetEvmAddressDriver().PubKeyToAddr(address.ExecPubKey(parm.Caller + parm.Txhash))
 	return nil
 }

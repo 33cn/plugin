@@ -214,8 +214,15 @@ func calcNewContractAddrCmd() *cobra.Command {
 func calcNewContractAddr(cmd *cobra.Command, args []string) {
 	deployer, _ := cmd.Flags().GetString("deployer")
 	hash, _ := cmd.Flags().GetString("hash")
-	newContractAddr := address.BytesToBtcAddress(address.NormalVer, address.ExecPubKey(deployer+hash))
-	fmt.Println(newContractAddr.String())
+	params := &evmtypes.EvmCalcNewContractAddrReq{
+		Caller: deployer,
+		Txhash: hash,
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	var res string
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "evm.CalcNewContractAddr", params, &res)
+	ctx.Run()
 }
 
 func addCalcNewContractAddrFlags(cmd *cobra.Command) {
