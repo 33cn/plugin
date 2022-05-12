@@ -45,7 +45,6 @@ var (
 	fdTx2Chain33TotalAmount = "eth-fdTx2Chain33TotalAmount"
 	// ethereum burn 已经执行
 	ethClaimIDExecuteAlready = "eth-ethClaimIDExecuteAlready"
-	// 延迟发送 等待次数
 )
 
 func ethTxClaimIDExecuteAlready(claimID string) []byte {
