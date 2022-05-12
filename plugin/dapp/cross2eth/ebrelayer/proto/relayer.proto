@@ -387,3 +387,6 @@ message ProphecyProcessed {
     string txhash   = 3;
 }
 
+message IsWaitingForSend {
+    bool waiting = 1;
+}

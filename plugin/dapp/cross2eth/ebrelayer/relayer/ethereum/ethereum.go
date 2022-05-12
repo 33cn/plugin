@@ -872,7 +872,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 	var err error
 	isClaimIDValid := false
 	if ethRelayer.delayedSend {
-		claimID := crypto.Keccak256Hash(burnOrLockParameter.Claim.chain33TxHash, burnOrLockParameter.Claim.Chain33Sender, burnOrLockParameter.Claim.EthereumReceiver.Bytes(), []byte(burnOrLockParameter.Claim.Symbol), burnOrLockParameter.Claim.Amount.Bytes())
+		claimID := crypto.Keccak256Hash(burnOrLockParameter.Claim.Chain33TxHash, burnOrLockParameter.Claim.Chain33Sender, burnOrLockParameter.Claim.EthereumReceiver.Bytes(), []byte(burnOrLockParameter.Claim.Symbol), burnOrLockParameter.Claim.Amount.Bytes())
 		prophecyProcessed, err := ethRelayer.getClaimIDExecuteAlready(claimID.String())
 		if nil != err {
 			relayerLog.Error("handleLogLockBurn", "Failed to getClaimIDExecuteAlready due to", err.Error())
