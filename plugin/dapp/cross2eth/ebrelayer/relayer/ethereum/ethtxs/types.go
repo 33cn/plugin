@@ -27,7 +27,7 @@ type ProphecyClaim struct {
 	TokenContractAddress common.Address
 	Symbol               string
 	Amount               *big.Int
-	chain33TxHash        []byte
+	Chain33TxHash        []byte
 }
 
 type WithdrawStatus int32

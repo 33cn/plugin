@@ -85,7 +85,7 @@ func Chain33MsgToProphecyClaim(msg events.Chain33Msg) ProphecyClaim {
 		//TokenContractAddress: tokenContractAddress,
 		Symbol:        symbol,
 		Amount:        amount,
-		chain33TxHash: msg.TxHash,
+		Chain33TxHash: msg.TxHash,
 	}
 
 	return prophecyClaim
