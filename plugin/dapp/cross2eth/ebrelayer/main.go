@@ -115,6 +115,7 @@ func main() {
 			RemindUrl:            cfg.RemindUrl,
 			RemindClientErrorUrl: cfg.RemindClientErrorUrl,
 			RemindEmail:          cfg.RemindEmail,
+			DelayedSend:          cfg.DelayedSend,
 		}
 		mainlog.Info("ethStartPara", " ethStartPara.EthProvider =", ethStartPara.EthProvider, "ethStartPara.EthProviderHttp", ethStartPara.EthProviderHttp)
 		ethRelayerService := ethRelayer.StartEthereumRelayer(ethStartPara)
@@ -134,6 +135,8 @@ func main() {
 		Chain33MsgChan:     chain33MsgChan2Eths,
 		ChainID:            cfg.Chain33RelayerCfg.ChainID4Chain33,
 		ProcessWithDraw:    cfg.ProcessWithDraw,
+		DelayedSend:        cfg.DelayedSend,
+		DelayedSendTime:    cfg.DelayedSendTime,
 	}
 	chain33RelayerService := chain33Relayer.StartChain33Relayer(chain33StartPara)
 
