@@ -65,7 +65,7 @@ function zksync_init() {
 function zksync_deposit() {
     echo "=========== # zksync deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
-    chain33Addr=$(${CLI} zksync getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    chain33Addr=$(${CLI} zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     rawData=$(${CLI} zksync deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0)
     echo "${rawData}"
 
@@ -80,7 +80,7 @@ function zksync_deposit() {
 function zksync_setPubKey() {
     echo "=========== # zksync setPubKey test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
-    rawData=$(${CLI} zksync setPubKey -a "${ZKSYNC_ACCOUNT_3}")
+    rawData=$(${CLI} zksync pubkey -a "${ZKSYNC_ACCOUNT_3}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -109,7 +109,7 @@ function zksync_withdraw() {
 function zksync_treeToContract() {
     echo "=========== # zksync treeToContract test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 treeToContract amount 1000000000
-    rawData=$(${CLI} zksync treeToContract -t "${TOKENID_0}" -a 10000000000000000000 --accountId "${ZKSYNC_ACCOUNT_3}")
+    rawData=$(${CLI} zksync tree2contract -t "${TOKENID_0}" -a 10000000000000000000 --accountId "${ZKSYNC_ACCOUNT_3}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -123,7 +123,7 @@ function zksync_treeToContract() {
 function zksync_contractToTree() {
     echo "=========== # zksync contractToTree test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 contractToTree to self amount 100000000
-    chain33Addr=$(${CLI} zksync getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    chain33Addr=$(${CLI} zksync l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     rawData=$(${CLI} zksync contractToTree -t "${TOKENID_0}" -a 1000000000000000000 --accountId "${ZKSYNC_ACCOUNT_3}")
     echo "${rawData}"
 
@@ -135,7 +135,7 @@ function zksync_contractToTree() {
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_3}"
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
-    chain33Addr=$(${CLI} zksync getChain33Addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
+    chain33Addr=$(${CLI} zksync l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
     rawData=$(${CLI} zksync deposit -t "${TOKENID_1}" -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 1)
     echo "${rawData}"
 
@@ -165,8 +165,8 @@ function zksync_transfer() {
 function zksync_transferToNew() {
     echo "=========== # zksync transferToNew test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transferToNew to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k amount 100000000
-    chain33Addr=$(${CLI} zksync getChain33Addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    rawData=$(${CLI} zksync transferToNew -t "${TOKENID_0}" -a 100000000 --accountId "${ZKSYNC_ACCOUNT_3}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr")
+    chain33Addr=$(${CLI} zksync l2addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    rawData=$(${CLI} zksync transfer2new -t "${TOKENID_0}" -a 100000000 --accountId "${ZKSYNC_ACCOUNT_3}" -e 12a0E25E62C1dBD32E505446062B26AECB65F027 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -180,7 +180,7 @@ function zksync_transferToNew() {
 function zksync_forceExit() {
     echo "=========== # zksync forceExit test ============="
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR setPubKey
-    rawData=$(${CLI} zksync setPubKey -a "${ZKSYNC_ACCOUNT_4}")
+    rawData=$(${CLI} zksync pubkey -a "${ZKSYNC_ACCOUNT_4}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
@@ -191,7 +191,7 @@ function zksync_forceExit() {
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_4}"
 
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR forceExit
-    rawData=$(${CLI} zksync forceExit -t "${TOKENID_0}" --accountId "${ZKSYNC_ACCOUNT_4}")
+    rawData=$(${CLI} zksync forceexit -t "${TOKENID_0}" --accountId "${ZKSYNC_ACCOUNT_4}")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -205,7 +205,7 @@ function zksync_forceExit() {
 function zksync_fullExit() {
     echo "=========== # zksync fullExit test ============="
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k setPubKey
-    rawData=$(${CLI} zksync setPubKey -a 4)
+    rawData=$(${CLI} zksync pubkey -a 4)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
@@ -216,7 +216,7 @@ function zksync_fullExit() {
     query_account "${CLI}" 4
 
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
-    rawData=$(${CLI} zksync fullExit -t "${TOKENID_0}" -a 4 -i 2)
+    rawData=$(${CLI} zksync fullexit -t "${TOKENID_0}" -a 4 -i 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -279,7 +279,7 @@ function create_tx() {
         echo "=========== # zksync add new account test ============="
         privateKey=$(${CLI} account rand -l 1 | jq -r ".privateKey")
         echo "${privateKey}"
-        chain33Addr=$(${CLI} zksync getChain33Addr -k "$privateKey")
+        chain33Addr=$(${CLI} zksync l2addr -k "$privateKey")
 
         rawData=$(${CLI} zksync deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
         echo "${rawData}"
