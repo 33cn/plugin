@@ -161,7 +161,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 
 func treeToContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "treeToContract",
+		Use:   "tree2contract",
 		Short: "get treeToContract tx",
 		Run:   treeToContract,
 	}
@@ -201,7 +201,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 
 func contractToTreeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contractToTree",
+		Use:   "contract2tree",
 		Short: "get contractToTree tx",
 		Run:   contractToTree,
 	}
@@ -284,7 +284,7 @@ func transfer(cmd *cobra.Command, args []string) {
 
 func transferToNewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "transferToNew",
+		Use:   "transfer2new",
 		Short: "get transferToNew tx",
 		Run:   transferToNew,
 	}
@@ -329,8 +329,8 @@ func transferToNew(cmd *cobra.Command, args []string) {
 
 func forceExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "forceExit",
-		Short: "get forceExit tx",
+		Use:   "forceexit",
+		Short: "withdraw by other addr",
 		Run:   forceExit,
 	}
 	forceExitFlag(cmd)
@@ -338,9 +338,9 @@ func forceExitCmd() *cobra.Command {
 }
 
 func forceExitFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "forceExit tokenId")
+	cmd.Flags().Uint64P("tokenId", "i", 1, "target tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("accountId", "a", 0, "forceExit accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "target accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -366,8 +366,8 @@ func forceExit(cmd *cobra.Command, args []string) {
 
 func setPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "setPubKey",
-		Short: "get setPubKey tx",
+		Use:   "pubkey",
+		Short: "set pubkey",
 		Run:   setPubKey,
 	}
 	setPubKeyFlag(cmd)
@@ -417,7 +417,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 
 func fullExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fullExit",
+		Use:   "fullexit",
 		Short: "get fullExit tx",
 		Run:   fullExit,
 	}
@@ -594,8 +594,8 @@ func commitProof(cmd *cobra.Command, args []string) {
 
 func getChain33AddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "getChain33Addr",
-		Short: "get chain33 address by privateKey",
+		Use:   "l2Addr",
+		Short: "get chain33 l2 address by privateKey",
 		Run:   getChain33Addr,
 	}
 	getChain33AddrFlag(cmd)
@@ -623,7 +623,9 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
-	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+	fmt.Println("addr:", hex.EncodeToString(hash.Sum(nil)))
+	fmt.Println("pubKey.X:", privateKey.PublicKey.A.X.String())
+	fmt.Println("pubKey.Y:", privateKey.PublicKey.A.Y.String())
 }
 
 func getAccountTreeCmd() *cobra.Command {
@@ -932,7 +934,7 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 
 func getZkCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "zkCommit",
+		Use:   "zkcommit",
 		Short: "get zkcommit proof by proofId",
 		Run:   getZkCommitProof,
 	}
@@ -1007,7 +1009,7 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 
 func getFirstRootHashCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "firstRoot",
+		Use:   "firstroot",
 		Short: "get firstRoot",
 		Run:   getFirstRootHash,
 	}
@@ -1055,7 +1057,7 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 
 func getZkCommitProofListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "proofList",
+		Use:   "prooflist",
 		Short: "get committed proof list",
 		Run:   getZkCommitProofList,
 	}

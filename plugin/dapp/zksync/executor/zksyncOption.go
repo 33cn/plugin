@@ -111,7 +111,6 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getAccountTree")
 	}
-	zklog.Info("zksync deposit", "tree", tree)
 
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -1167,12 +1166,6 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 		return nil, nil, errors.Wrapf(err, "authVerification")
 	}
 
-	operationInfo.SpecialInfo = new(zt.OperationSpecialInfo)
-	speciaData := &zt.OperationSpecialData{
-		PubKeyType: payload.PubKeyTy,
-		PubKey:     payload.PubKey,
-	}
-	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, speciaData)
 	//更新之前先计算证明
 	receipt, err := calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
 	if err != nil {
@@ -1189,7 +1182,7 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "calProof")
 	}
-	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
+	after := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.Chain33Addr, leaf.PubKey, receipt.Leaf.GetProxyPubKeys(), operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1771,7 +1764,9 @@ func getNewNFTTokenBalance(creatorId uint64, creatorSerialId string, protocol, a
 	hashFn.Reset()
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(creatorId).String()))
 	hashFn.Write(zt.Str2Byte(creatorSerialId))
+	//nft protocol
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(protocol).String()))
+	//mint amount
 	hashFn.Write(zt.Str2Byte(big.NewInt(0).SetUint64(amount).String()))
 	hashFn.Write(zt.Str2Byte(contentHashPart1))
 	hashFn.Write(zt.Str2Byte(contentHashPart2))
