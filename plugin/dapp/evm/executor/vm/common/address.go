@@ -11,8 +11,6 @@ import (
 
 	"github.com/33cn/chain33/system/address/btc"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"encoding/hex"
 
 	"github.com/33cn/chain33/common/address"
@@ -139,12 +137,12 @@ func (h Hash160Address) ToAddress() Address {
 
 // NewAddress xHash生成EVM合约地址
 func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
-	execPub := address.ExecPubKey(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
+	execPub := address.ExecPubKey(ToHash(append(txHash, []byte(cfg.ExecName("user.evm."))...)).Str())
 	return PubKey2Address(execPub)
 }
 
 func NewContractAddress(b Address, txHash []byte) Address {
-	execPub := address.ExecPubKey(b.String() + common.Bytes2Hex(txHash))
+	execPub := address.ExecPubKey(ToHash(append(txHash, b.Bytes()...)).Str())
 	return PubKey2Address(execPub)
 }
 

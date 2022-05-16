@@ -5,7 +5,10 @@
 package common
 
 import (
+	"encoding/hex"
 	"testing"
+
+	"github.com/33cn/chain33/types"
 
 	"github.com/holiman/uint256"
 
@@ -38,4 +41,22 @@ func TestEvmPrecompileAddress(t *testing.T) {
 		addr2 := Uint256ToAddress(&z).ToHash160().String()
 		assert.Equal(t, addr1, addr2)
 	}
+}
+
+func TestNewContractAddress(t *testing.T) {
+
+	tx := types.Transaction{}
+	hash := tx.Hash()
+	hexHash := hex.EncodeToString(hash)
+	addr := BytesToAddress([]byte{1})
+
+	addr1 := NewContractAddress(addr, hash)
+	assert.Equal(t, hexHash, hex.EncodeToString(hash))
+	assert.Equal(t, "1DgSnASfaE2J4xcD9ghDs6zptXPq68SwAf", addr1.String())
+
+	cfg := types.NewChain33Config(types.GetDefaultCfgstring())
+
+	addr2 := NewAddress(cfg, hash)
+	assert.Equal(t, hexHash, hex.EncodeToString(hash))
+	assert.Equal(t, "17ZDZhQrFRnwQgBxZdLWvqh8dqfLXBRzyj", addr2.String())
 }
