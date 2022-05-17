@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/33cn/chain33/common/address"
 	"github.com/33cn/chain33/system/crypto/secp256k1"
 
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -177,10 +176,7 @@ func createMasterChef(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	var txs []*utils.Chain33OfflineTx
 	i := 1
@@ -310,10 +306,7 @@ func addPool(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 	info := &utils.TxCreateInfo{
 		PrivateKey: privateKeyStr,
 		Expire:     expire,
@@ -395,10 +388,7 @@ func updateAllocPoint(cmd *cobra.Command, args []string) {
 		fmt.Println("Failed to do PrivKeyFromBytes")
 		return
 	}
-	fromAddr := address.BytesToBtcAddress(address.NormalVer, privateKey.PubKey().Bytes())
-	from := common.Address{
-		Addr: fromAddr,
-	}
+	from := common.PubKey2Address(privateKey.PubKey().Bytes())
 
 	info := &utils.TxCreateInfo{
 		PrivateKey: privateKeyStr,

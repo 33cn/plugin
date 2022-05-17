@@ -7,8 +7,10 @@ package rpc
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 
-	"github.com/33cn/chain33/common/address"
+	chain33Comm "github.com/33cn/chain33/common"
+	"github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
 
 	"github.com/33cn/chain33/types"
 	evm "github.com/33cn/plugin/plugin/dapp/evm/types"
@@ -61,8 +63,14 @@ func (c *Jrpc) CalcNewContractAddr(parm *evm.EvmCalcNewContractAddrReq, result *
 	if parm == nil {
 		return types.ErrInvalidParam
 	}
-	newContractAddr := address.BytesToBtcAddress(address.NormalVer,
-		address.ExecPubKey(parm.Caller+parm.Txhash))
-	*result = newContractAddr.String()
+	callerAddr := common.StringToAddress(parm.Caller)
+	if callerAddr == nil {
+		return errors.New("InvalidCallerAddress")
+	}
+	hashByte, err := chain33Comm.FromHex(parm.Txhash)
+	if err != nil {
+		return errors.New("InvalidHexTxHash")
+	}
+	*result = common.NewContractAddress(*callerAddr, hashByte).String()
 	return nil
 }

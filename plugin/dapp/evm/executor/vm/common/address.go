@@ -7,8 +7,9 @@ package common
 import (
 	"math/big"
 	"strings"
+	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/33cn/chain33/system/address/btc"
 
 	"encoding/hex"
 
@@ -19,22 +20,62 @@ import (
 	"github.com/holiman/uint256"
 )
 
-// Address 封装地址结构体，并提供各种常用操作封装
-// 这里封装的操作主要是为了提供Address<->big.Int， Address<->[]byte 之间的互相转换
-// 并且转换的核心是使用地址对象中的Hash160元素，因为在EVM中地址固定为[20]byte，超出此范围的地址无法正确解释执行
+var (
+	// 地址驱动, 适配chain33和evm间的地址格式差异
+	evmAddressDriver address.Driver
+	once             sync.Once
+)
+
+// 设置默认值, btc地址格式
+func init() {
+	evmAddressDriver, _ = address.LoadDriver(btc.NormalAddressID, -1)
+}
+
+// InitEvmAddressType 基于配置初始化
+func InitEvmAddressTypeOnce(driver address.Driver) {
+	once.Do(func() {
+		evmAddressDriver = driver
+	})
+}
+
+// GetEvmAddressDriver get driver
+func GetEvmAddressDriver() address.Driver {
+	return evmAddressDriver
+}
+
+// Address 封装evm内部地址对象
+// raw为地址原始数据
+// formatAddr为chain33框架中格式化地址, 相关转换格式由默认地址插件指定
+// chain33 => evm, 即将formatAddr转换为raw数据, [20]byte
+// evm => chain33, 即将原始数据raw格式化为formatAddr
 type Address struct {
-	Addr *address.Address
+	raw        [AddressLength]byte
+	formatAddr string
 }
 
 // Hash160Address EVM中使用的地址格式
 type Hash160Address [Hash160Length]byte
 
+// SetBytes sets the address to the value of b.
+// If b is larger than len(a), b will be cropped from the left.
+func (a *Address) SetBytes(b []byte) {
+	if len(b) > len(a.raw) {
+		b = b[len(b)-AddressLength:]
+	}
+	copy(a.raw[AddressLength-len(b):], b)
+}
+
 // String 字符串结构
-func (a Address) String() string { return a.Addr.String() }
+func (a Address) String() string {
+	if a.formatAddr == "" {
+		a.formatAddr = evmAddressDriver.ToString(a.raw[:])
+	}
+	return a.formatAddr
+}
 
 // Bytes 字节数组
 func (a Address) Bytes() []byte {
-	return a.Addr.Hash160[:]
+	return a.raw[:]
 }
 
 // Big 大数字
@@ -96,30 +137,37 @@ func (h Hash160Address) ToAddress() Address {
 
 // NewAddress xHash生成EVM合约地址
 func NewAddress(cfg *types.Chain33Config, txHash []byte) Address {
-	execPub := address.ExecPubKey(cfg.ExecName("user.evm.") + BytesToHash(txHash).Hex())
-	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
-	return Address{Addr: execAddr}
+	execPub := address.ExecPubKey(ToHash(append(txHash, []byte(cfg.ExecName("user.evm."))...)).Str())
+	return PubKey2Address(execPub)
 }
 
 func NewContractAddress(b Address, txHash []byte) Address {
-	execPub := address.ExecPubKey(b.String() + common.Bytes2Hex(txHash))
-	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
-	return Address{Addr: execAddr}
+	execPub := address.ExecPubKey(ToHash(append(txHash, b.Bytes()...)).Str())
+	return PubKey2Address(execPub)
+}
+
+// PubKey2Address pub key to address
+func PubKey2Address(pub []byte) Address {
+
+	execAddr := evmAddressDriver.PubKeyToAddr(pub)
+	var a Address
+	a.formatAddr = execAddr
+	raw, _ := evmAddressDriver.FromString(execAddr)
+	a.SetBytes(raw)
+	return a
 }
 
 // ExecAddress 返回合约地址
 func ExecAddress(execName string) Address {
 	execPub := address.ExecPubKey(execName)
-	execAddr := address.BytesToBtcAddress(address.NormalVer, execPub)
-	return Address{Addr: execAddr}
+	return PubKey2Address(execPub)
 }
 
 // BytesToAddress 字节向地址转换
 func BytesToAddress(b []byte) Address {
-	a := new(address.Address)
-	a.Version = 0
-	a.SetBytes(copyBytes(LeftPadBytes(b, 20)))
-	return Address{Addr: a}
+	var a Address
+	a.SetBytes(b)
+	return a
 }
 
 // BytesToHash160Address 字节向地址转换
@@ -131,21 +179,18 @@ func BytesToHash160Address(b []byte) Hash160Address {
 
 // StringToAddress 字符串转换为地址
 func StringToAddress(s string) *Address {
-	addr, err := address.NewBtcAddress(s)
+	raw, err := evmAddressDriver.FromString(s)
 	if err != nil {
 		//检查是否是十六进制地址数据
-		hbytes, err := hex.DecodeString(strings.TrimPrefix(s, "0x"))
-		if err == nil {
-			if len(hbytes) == 20 {
-				var addr address.Address
-				addr.SetBytes(hbytes)
-				return &Address{Addr: &addr}
-			}
+		raw, err = hex.DecodeString(strings.TrimPrefix(s, "0x"))
+		if err != nil {
+			log15.Error("create address form string error", "string:", s)
+			return nil
 		}
-		log15.Error("create address form string error", "string:", s)
-		return nil
 	}
-	return &Address{Addr: addr}
+	a := &Address{}
+	a.SetBytes(raw)
+	return a
 }
 
 func copyBytes(data []byte) (out []byte) {
@@ -162,10 +207,9 @@ func bigBytes(b *big.Int) (out []byte) {
 
 // BigToAddress 大数字转换为地址
 func BigToAddress(b *big.Int) Address {
-	a := new(address.Address)
-	a.Version = 0
+	var a Address
 	a.SetBytes(bigBytes(b))
-	return Address{Addr: a}
+	return a
 }
 
 // EmptyAddress 返回空地址
@@ -177,21 +221,17 @@ func HexToAddress(s string) Hash160Address { return BytesToHash160Address(FromHe
 
 // Uint256ToAddress 大数字转换为地址
 func Uint256ToAddress(b *uint256.Int) Address {
-	a := new(address.Address)
-	a.Version = 0
-	out := make([]byte, 20)
-
-	copy(out[:], b.Bytes())
-	a.SetBytes(out)
-	return Address{Addr: a}
+	var a Address
+	raw := b.Bytes20()
+	a.SetBytes(raw[:])
+	return a
 }
 
 // HexToAddr 十六进制转换为虚拟机中的地址
 func HexToAddr(s string) Address {
-	a := new(address.Address)
-	a.Version = 0
+	var a Address
 	out := make([]byte, 20)
 	copy(out[:], FromHex(s))
 	a.SetBytes(out)
-	return Address{Addr: a}
+	return a
 }
