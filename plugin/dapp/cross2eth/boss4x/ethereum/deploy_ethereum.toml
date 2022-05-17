@@ -1,7 +1,7 @@
 # 合约部署人
 operatorAddr="0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a"
 # 验证人地址，至少配置３个以上，即大于等于３个
-validatorsAddr=["0x8afdadfc88a1087c9a1d6c0f5dd04634b87f303a", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
+validatorsAddr=["0x92C8b16aFD6d423652559C6E266cBE1c29Bfd84f", "0x0df9a824699bc5878232c9e612fe1a5346a5a368", "0xcb074cb21cdddf3ce9c3c0a7ac4497d633c9d9f1", "0xd9dab021e74ecf475788ed7b61356056b2095830"]
 # 验证人权重
 initPowers=[25, 25, 25, 25]
 # 主链symbol

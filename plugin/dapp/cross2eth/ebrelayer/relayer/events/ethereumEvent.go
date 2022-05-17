@@ -76,9 +76,9 @@ type LogNewBridgeToken struct {
 // NewProphecyProcessed struct which represents a LogProphecyProcessed
 type NewProphecyProcessed struct {
 	ClaimID             [32]byte
-	weightedSignedPower *big.Int
-	weightedTotalPower  *big.Int
-	submitter           common.Address
+	WeightedSignedPower *big.Int
+	WeightedTotalPower  *big.Int
+	Submitter           common.Address
 }
 
 // UnpackLogLock : Handles new LogLock events
@@ -125,8 +125,5 @@ func UnpackLogProphecyProcessed(contractAbi abi.ABI, eventName string, eventData
 		eventsLog.Error("UnpackLogProphecyProcessed", "Failed to unpack abi due to:", err.Error())
 		return nil, ebrelayerTypes.ErrUnpack
 	}
-
-	claimID := event.ClaimID[:]
-	eventsLog.Info("UnpackLogProphecyProcessed", "claimID", string(claimID))
 	return event, nil
 }
