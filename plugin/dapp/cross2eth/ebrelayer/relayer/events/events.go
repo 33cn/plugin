@@ -23,7 +23,7 @@ const (
 	LogLockFromETH
 	// LogBurnFromETH : Ethereum event 'LogChain33TokenBurn'
 	LogBurnFromETH
-	// LogProphecyProcessed : LogProphecyProcessed
+	// LogProphecyProcessed : Ethereum event LogProphecyProcessed
 	LogProphecyProcessed
 )
 

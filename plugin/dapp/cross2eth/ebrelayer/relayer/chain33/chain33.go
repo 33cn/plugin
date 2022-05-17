@@ -279,13 +279,11 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 					continue
 				}
 
-				if chain33Relayer.delayedSend {
-					go chain33Relayer.delayedSendTxs(evmEventType, evmlog.Data, tx.Hash())
-				} else {
+
 					if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
 						relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
 					}
-				}
+
 			}
 		}
 		chain33Relayer.lastHeight4Tx = txLogs.Height
@@ -332,7 +330,6 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chainName)
 		return errors.New("ErrNoChain33MsgChan4EthChainName")
 	}
-	channel <- chain33Msg
 
 	_ = chain33Relayer.updateFdTx2EthTotalAmount(fdIndex)
 	txRelayConfirm4Chain33 := &ebTypes.TxRelayConfirm4Chain33{
@@ -346,19 +343,30 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 	}
 	//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
 	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
-	return chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
+	err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
+
+	if chain33Relayer.delayedSend {
+		go chain33Relayer.delayedSendTxs(chainName, chain33Msg, chain33TxHash)
+	} else {
+		channel <- chain33Msg
+	}
+
+	return err
 }
 
-func (chain33Relayer *Relayer4Chain33) delayedSendTxs(evmEventType events.Chain33EvmEvent, data []byte, chain33TxHash []byte) {
+func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33Msg *events.Chain33Msg, chain33TxHash []byte) {
 	delayedSendTime := time.Duration(chain33Relayer.delayedSendTime) * time.Millisecond
 	_ = chain33Relayer.setEthTxWaitingForSend(common.ToHex(chain33TxHash), &ebTypes.IsWaitingForSend{Waiting: true})
 
 	relayerLog.Debug("delayedSendTxs", "setEthTxWaitingForSend chain33TxHash", common.ToHex(chain33TxHash))
 	time.Sleep(delayedSendTime)
-	if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, data, chain33TxHash); nil != err {
-		relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
+	channel, ok := chain33Relayer.chain33MsgChan[chainName]
+	if !ok {
+		relayerLog.Error("handleBurnLockWithdrawEvent", "No bridgeSymbol2EthChainName", chainName)
+		return
 	}
 
+	channel <- chain33Msg
 	_ = chain33Relayer.setEthTxWaitingForSend(common.ToHex(chain33TxHash), &ebTypes.IsWaitingForSend{Waiting: false})
 
 	//timerdelayedSendTime := time.NewTicker(delayedSendTime)

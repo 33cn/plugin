@@ -14,6 +14,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math"
 	"math/big"
 	"regexp"
@@ -434,6 +435,8 @@ func (ethRelayer *Relayer4Ethereum) proc() {
 			}
 		case vLog := <-ethRelayer.bridgeBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, true)
+		case vLog := <-ethRelayer.oracleLog:
+			ethRelayer.storeBridgeBankLogs(vLog, false)
 		case chain33Msg := <-ethRelayer.chain33MsgChan:
 			ethRelayer.handleChain33Msg(chain33Msg)
 		case txRelayAck := <-ethRelayer.txRelayAckRecvChan:
@@ -875,7 +878,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		claimID := crypto.Keccak256Hash(burnOrLockParameter.Claim.Chain33TxHash, burnOrLockParameter.Claim.Chain33Sender, burnOrLockParameter.Claim.EthereumReceiver.Bytes(), []byte(burnOrLockParameter.Claim.Symbol), burnOrLockParameter.Claim.Amount.Bytes())
 		prophecyProcessed, err := ethRelayer.getClaimIDExecuteAlready(claimID.String())
 		if nil != err {
-			relayerLog.Error("handleLogLockBurn", "Failed to getClaimIDExecuteAlready due to", err.Error())
+			relayerLog.Error("handleLogLockBurn", "Failed to getClaimIDExecuteAlready due to", err.Error(), "claimID", claimID.String())
 		} else {
 			if prophecyProcessed.Valid {
 				isClaimIDValid = true
@@ -1251,7 +1254,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 		err := ethRelayer.handleLogLockEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, vLog)
 		if err != nil {
 			errinfo := fmt.Sprintf("Failed to handleLogLockEvent due to:%s", err.Error())
-			relayerLog.Info("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
+			relayerLog.Error("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
 			panic(errinfo)
 		}
 	} else if vLog.Topics[0].Hex() == ethRelayer.bridgeBankEventBurnSig {
@@ -1266,7 +1269,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 		err := ethRelayer.handleLogBurnEvent(ethRelayer.clientChainID, ethRelayer.bridgeBankAbi, eventName, vLog)
 		if err != nil {
 			errinfo := fmt.Sprintf("Failed to handleLogBurnEvent due to:%s", err.Error())
-			relayerLog.Info("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
+			relayerLog.Error("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
 			panic(errinfo)
 		}
 	} else if vLog.Topics[0].Hex() == ethRelayer.oracleEventSig {
@@ -1274,11 +1277,12 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 		event, err := events.UnpackLogProphecyProcessed(ethRelayer.oracleAbi, eventName, vLog.Data)
 		if nil != err {
 			errinfo := fmt.Sprintf("Failed to LogProphecyProcessed due to:%s", err.Error())
-			relayerLog.Info("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
-			//panic(errinfo)
+			relayerLog.Error("Relayer4Ethereum procBridgeBankLogs", "errinfo", errinfo)
+			panic(errinfo)
 		}
 
-		claimID := string(event.ClaimID[:])
+		//claimID := crypto.Keccak256Hash(event.ClaimID[:])
+		claimID :=hexutil.Encode(event.ClaimID[:])
 		relayerLog.Info("Relayer4Ethereum ProphecyProcessedLogs", "claimID", claimID)
 
 		info := &ebTypes.ProphecyProcessed{
@@ -1353,20 +1357,20 @@ func (ethRelayer *Relayer4Ethereum) filterOracleLogEvents() {
 		return
 	}
 
-	bridgeBankSig := make(map[string]bool)
+	oracleBankSig := make(map[string]bool)
 	ethRelayer.rwLock.RLock()
-	bridgeBankSig[ethRelayer.oracleEventSig] = true
+	oracleBankSig[ethRelayer.oracleEventSig] = true
 	ethRelayer.rwLock.RUnlock()
-	bridgeBankLog := make(chan types.Log)
+	oracleBankLog := make(chan types.Log)
 	done := make(chan int)
 
-	go ethRelayer.filterLogEventsProc(bridgeBankLog, done, "oracle", curHeight, height4BridgeBankLogAt, ethRelayer.oracleAddr, bridgeBankSig)
+	go ethRelayer.filterLogEventsProc(oracleBankLog, done, "oracle", curHeight, height4BridgeBankLogAt, ethRelayer.oracleAddr, oracleBankSig)
 
 	for {
 		select {
-		case vLog := <-bridgeBankLog:
+		case vLog := <-oracleBankLog:
 			ethRelayer.storeBridgeBankLogs(vLog, false)
-		case vLog := <-ethRelayer.bridgeBankLog:
+		case vLog := <-ethRelayer.oracleLog:
 			//因为此处是同步保存信息，防止未同步完成出现panic时，直接将其设置为最新高度，中间出现部分信息不同步的情况
 			ethRelayer.storeBridgeBankLogs(vLog, false)
 		case <-done:
