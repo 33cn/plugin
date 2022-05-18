@@ -27,12 +27,7 @@ var (
 	chain33TxRelayedAlready            = []byte("chain33-txRelayedAlready")
 	fdTx2EthTotalAmount                = []byte("chain33-fdTx2EthTotalAmount")
 	ethTxRelayAlreadyPrefix            = []byte("chain33-ethTxRelayAlready")
-	ethTxWaitingForSend                = []byte("chain33-txWaitingForSend")
 )
-
-func ethTxWaitingForSendKey(chain33Txhash string) []byte {
-	return append(ethTxWaitingForSend, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
-}
 
 func ethTxRelayAlreadyKey(chain33Txhash string) []byte {
 	return append(ethTxRelayAlreadyPrefix, []byte(fmt.Sprintf("-txHash-%s", chain33Txhash))...)
@@ -341,21 +336,4 @@ func (chain33Relayer *Relayer4Chain33) checkTxProcessed(txhash string) bool {
 	}
 
 	return false
-}
-
-func (chain33Relayer *Relayer4Chain33) setEthTxWaitingForSend(chain33Txhash string, waitiInfo *ebTypes.IsWaitingForSend) error {
-	key := ethTxWaitingForSendKey(chain33Txhash)
-	data := chain33Types.Encode(waitiInfo)
-	return chain33Relayer.db.SetSync(key, data)
-}
-
-func (chain33Relayer *Relayer4Chain33) getEthTxWaitingForSend(chain33Txhash string) (*ebTypes.IsWaitingForSend, error) {
-	key := ethTxWaitingForSendKey(chain33Txhash)
-	data, err := chain33Relayer.db.Get(key)
-	if nil != err {
-		return nil, err
-	}
-	var waitiInfo ebTypes.IsWaitingForSend
-	err = chain33Types.Decode(data, &waitiInfo)
-	return &waitiInfo, err
 }

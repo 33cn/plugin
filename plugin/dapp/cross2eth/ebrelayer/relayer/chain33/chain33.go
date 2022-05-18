@@ -279,10 +279,9 @@ func (chain33Relayer *Relayer4Chain33) onNewHeightProc(currentHeight int64) {
 					continue
 				}
 
-
-					if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
-						relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
-					}
+				if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, evmlog.Data, tx.Hash()); nil != err {
+					relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
+				}
 
 			}
 		}
@@ -356,8 +355,6 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 
 func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33Msg *events.Chain33Msg, chain33TxHash []byte) {
 	delayedSendTime := time.Duration(chain33Relayer.delayedSendTime) * time.Millisecond
-	_ = chain33Relayer.setEthTxWaitingForSend(common.ToHex(chain33TxHash), &ebTypes.IsWaitingForSend{Waiting: true})
-
 	relayerLog.Debug("delayedSendTxs", "setEthTxWaitingForSend chain33TxHash", common.ToHex(chain33TxHash))
 	time.Sleep(delayedSendTime)
 	channel, ok := chain33Relayer.chain33MsgChan[chainName]
@@ -367,19 +364,6 @@ func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33M
 	}
 
 	channel <- chain33Msg
-	_ = chain33Relayer.setEthTxWaitingForSend(common.ToHex(chain33TxHash), &ebTypes.IsWaitingForSend{Waiting: false})
-
-	//timerdelayedSendTime := time.NewTicker(delayedSendTime)
-	//log.Debug("delayedSendTxs", "timerdelayedSendTime", timerdelayedSendTime)
-	//
-	//for {
-	//	select {
-	//	case <-timerdelayedSendTime.C:
-	//		if err := chain33Relayer.handleBurnLockWithdrawEvent(evmEventType, data, chain33TxHash); nil != err {
-	//			relayerLog.Error("onNewHeightProc", "Failed to handleBurnLockWithdrawEvent due to:%s", err.Error())
-	//		}
-	//	}
-	//}
 }
 
 func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {
@@ -696,18 +680,6 @@ func (chain33Relayer *Relayer4Chain33) checkTxRelay2Ethereum() {
 				return
 			}
 			continue
-		}
-
-		if chain33Relayer.delayedSend {
-			waitiInfo, err := chain33Relayer.getEthTxWaitingForSend(txHashStr)
-			relayerLog.Debug("chain33Relayer::checkTxRelay2Ethereum", "getEthTxWaitingForSend TxHash", "waitiInfo", waitiInfo, "err", err)
-			if nil != err {
-				relayerLog.Error("chain33Relayer::checkTxRelay2Ethereum", "Failed to getEthTxWaitingForSend due to", err.Error(), "txHashStr", txHashStr)
-			}
-
-			if waitiInfo.Waiting {
-				continue
-			}
 		}
 
 		chain33Msg, err := events.ParseBurnLock4chain33(events.Chain33EvmEvent(txInfo.EventType), txInfo.Data, chain33Relayer.bridgeBankAbi, txInfo.TxHash)
