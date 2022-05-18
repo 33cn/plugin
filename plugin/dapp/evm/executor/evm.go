@@ -6,6 +6,7 @@ package executor
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"os"
 
@@ -27,10 +28,41 @@ var (
 	driverName = evmtypes.ExecutorName
 )
 
+type subConfig struct {
+	// AddressDriver address driver name, support btc/eth
+	AddressDriver string `json:"addressDriver"`
+}
+
+func initEvmSubConfig(sub []byte, evmEnableHeight int64) {
+	var subCfg subConfig
+	if sub != nil {
+		types.MustDecode(sub, &subCfg)
+	}
+	addressType, err := address.GetDriverType(subCfg.AddressDriver)
+
+	if err != nil && subCfg.AddressDriver != "" {
+		panic("GetDriverType:" + err.Error())
+	}
+
+	// get default if not config
+	if subCfg.AddressDriver == "" {
+		addressType = address.GetDefaultAddressID()
+	}
+	// 加载, 确保在evm使能高度前, eth地址驱动已使能
+	driver, err := address.LoadDriver(addressType, evmEnableHeight)
+	if err != nil {
+		panic(fmt.Sprintf("address driver must enable before %d", evmEnableHeight))
+	}
+	common.InitEvmAddressTypeOnce(driver)
+}
+
 // Init 初始化本合约对象
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
+
+	enableHeight := cfg.GetDappFork(driverName, evmtypes.EVMEnable)
+	initEvmSubConfig(sub, enableHeight)
 	driverName = name
-	drivers.Register(cfg, driverName, newEVMDriver, cfg.GetDappFork(driverName, evmtypes.EVMEnable))
+	drivers.Register(cfg, driverName, newEVMDriver, enableHeight)
 	EvmAddress = address.ExecAddress(cfg.ExecName(name))
 	// 初始化硬分叉数据
 	state.InitForkData()

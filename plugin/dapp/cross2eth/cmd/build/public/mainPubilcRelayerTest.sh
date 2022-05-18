@@ -669,34 +669,34 @@ function echo_addrs() {
 }
 
 function get_cli() {
-        paraName="user.p.para."
-        docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
-        MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
-        Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
-        Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
-        docker_chain31_ip=$(get_docker_addr "${dockerNamePrefix}_chain31_1")
-        docker_chain32_ip=$(get_docker_addr "${dockerNamePrefix}_chain32_1")
-        docker_chain30_ip=$(get_docker_addr "${dockerNamePrefix}_chain30_1")
+    paraName="user.p.para."
+    docker_chain33_ip=$(get_docker_addr "${dockerNamePrefix}_chain33_1")
+    MainCli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8801"
+    Para8801Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
+    Para8901Cli="./chain33-cli --rpc_laddr http://${docker_chain33_ip}:8901 --paraName ${paraName}"
+    docker_chain31_ip=$(get_docker_addr "${dockerNamePrefix}_chain31_1")
+    docker_chain32_ip=$(get_docker_addr "${dockerNamePrefix}_chain32_1")
+    docker_chain30_ip=$(get_docker_addr "${dockerNamePrefix}_chain30_1")
 
-        docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
-        CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
-        CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
-        CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
-        CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
-        CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
+    docker_ebrelayera_ip=$(get_docker_addr "${dockerNamePrefix}_ebrelayera_1")
+    CLIP="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A"
+    CLIA="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A"
+    CLIB="docker exec ${dockerNamePrefix}_ebrelayerb_1 /root/ebcli_A"
+    CLIC="docker exec ${dockerNamePrefix}_ebrelayerc_1 /root/ebcli_A"
+    CLID="docker exec ${dockerNamePrefix}_ebrelayerd_1 /root/ebcli_A"
 
-        docker_ganachetesteth_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetesteth_1")
-        docker_ganachetestbsc_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetestbsc_1")
-        Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    docker_ganachetesteth_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetesteth_1")
+    docker_ganachetestbsc_ip=$(get_docker_addr "${dockerNamePrefix}_ganachetestbsc_1")
+    Boss4xCLI="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
 
-        Boss4xCLIeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
-        Boss4xCLIbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    Boss4xCLIeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetesteth_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
+    Boss4xCLIbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/boss4x --rpc_laddr http://${docker_chain33_ip}:8901 --rpc_laddr_ethereum http://${docker_ganachetestbsc_ip}:8545 --paraName ${paraName} --chainID ${chain33ID} --chainEthId 1337"
 
-        CLIAeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
-        CLIAbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
+    CLIAeth="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
+    CLIAbsc="docker exec ${dockerNamePrefix}_ebrelayera_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
 
-        CLIPeth="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
-        CLIPbsc="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
+    CLIPeth="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetesteth_ip}:8545 --eth_chain_name Ethereum"
+    CLIPbsc="docker exec ${dockerNamePrefix}_ebrelayerproxy_1 /root/ebcli_A --node_addr http://${docker_ganachetestbsc_ip}:8545 --eth_chain_name Binance"
 }
 
 function test_lock_and_burn() {
