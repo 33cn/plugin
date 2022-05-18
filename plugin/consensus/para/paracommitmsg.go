@@ -7,6 +7,7 @@ package para
 import (
 	"context"
 	"encoding/hex"
+	"github.com/33cn/chain33/common/address"
 	"time"
 
 	"strings"
@@ -488,7 +489,7 @@ func (client *commitMsgClient) createCommitMsgTxs(notifications []*pt.ParacrossC
 func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.Transaction, error) {
 	if len(txsArr.Txs) < 2 {
 		tx := txsArr.Txs[0]
-		tx.Sign(types.SECP256K1, client.privateKey)
+		tx.Sign(types.EncodeSignID(types.SECP256K1, address.GetDefaultAddressID()), client.privateKey)
 		return tx, nil
 	}
 	cfg := client.paraClient.GetAPI().GetConfig()
@@ -503,7 +504,7 @@ func (client *commitMsgClient) getTxsGroup(txsArr *types.Transactions) (*types.T
 		return nil, err
 	}
 	for i := range group.Txs {
-		group.SignN(i, int32(types.SECP256K1), client.privateKey)
+		group.SignN(i, types.EncodeSignID(types.SECP256K1, address.GetDefaultAddressID()), client.privateKey)
 	}
 
 	newtx := group.Tx()
@@ -559,7 +560,7 @@ func (client *commitMsgClient) singleCalcTx(notify *pt.ParacrossCommitAction, fe
 		plog.Error("para get commit tx", "block height", notify.Status.Height)
 		return nil, err
 	}
-	tx.Sign(types.SECP256K1, client.privateKey)
+	tx.Sign(types.EncodeSignID(types.SECP256K1, address.GetDefaultAddressID()), client.privateKey)
 	return tx, nil
 
 }

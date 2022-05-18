@@ -14,7 +14,7 @@ MAIN_CLI="docker exec ${NODE3} /root/chain33-cli"
 PARANAME="para"
 PARANAME_GAME="game"
 PARA_COIN_FROZEN="5.0000"
-MainLoopCheckForkHeight="60"
+MainLoopCheckForkHeight="1"
 
 BLSPUB_E5="8920442cf306fccd11e7bde3cfffe183a138a941f471df0818edff5580b3ad7df42850a5cec15e09aef0fdd4489f7c12"
 BLSPUB_KS="a3d97d4186c80268fe6d3689dd574599e25df2dffdcff03f7d8ef64a3bd483241b7d0985958990de2d373d5604caf805"
@@ -69,7 +69,7 @@ function para_set_toml() {
     sed -i $xsedfix 's/^startHeight=.*/startHeight=1/g' "${1}"
     sed -i $xsedfix 's/^emptyBlockInterval=.*/emptyBlockInterval=["0:4"]/g' "${1}"
 
-    sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=10/g' "${1}"
+    sed -i $xsedfix 's/^mainForkParacrossCommitTx=.*/mainForkParacrossCommitTx=1/g' "${1}"
     sed -i $xsedfix 's/^mainLoopCheckCommitTxDoneForkHeight=.*/mainLoopCheckCommitTxDoneForkHeight='''$MainLoopCheckForkHeight'''/g' "${1}"
 
     sed -i $xsedfix 's/^mainBlockHashForkHeight=.*/mainBlockHashForkHeight=1/g' "${1}"
