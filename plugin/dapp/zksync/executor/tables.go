@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -61,9 +62,9 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	if key == "address" {
 		return GetLocalChain33EthPrimaryKey(r.GetChain33Addr(), r.GetEthAddress()), nil
 	} else if key == "chain33_address" {
-		return []byte(fmt.Sprintf("%s", r.GetChain33Addr())), nil
+		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetChain33Addr()))), nil
 	} else if key == "eth_address" {
-		return []byte(fmt.Sprintf("%s", r.GetEthAddress())), nil
+		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetEthAddress()))), nil
 	}
 	return nil, types.ErrNotFound
 }

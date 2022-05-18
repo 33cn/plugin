@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"strings"
 
@@ -48,25 +49,25 @@ func calcBtcHeaderKeyHeightList(height int64) []byte {
 
 func calcOrderKeyStatus(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderSCAIH+"%d:%s:%s:%s:%d",
-		status, order.XCoin, order.CreaterAddr, order.Id, order.Height)
+		status, order.XCoin, address.FormatAddrKey(order.CreaterAddr), order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyCoin(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderCSAIH+"%s:%d:%s:%s:%d",
-		order.XCoin, status, order.CreaterAddr, order.Id, order.Height)
+		order.XCoin, status, address.FormatAddrKey(order.CreaterAddr), order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyAddrStatus(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderASCIH+"%s:%d:%s:%s:%d",
-		order.CreaterAddr, status, order.XCoin, order.Id, order.Height)
+		address.FormatAddrKey(order.CreaterAddr), status, order.XCoin, order.Id, order.Height)
 	return []byte(key)
 }
 
 func calcOrderKeyAddrCoin(order *ty.RelayOrder, status int32) []byte {
 	key := fmt.Sprintf(relayOrderACSIH+"%s:%s:%d:%s:%d",
-		order.CreaterAddr, order.XCoin, status, order.Id, order.Height)
+		address.FormatAddrKey(order.CreaterAddr), order.XCoin, status, order.Id, order.Height)
 	return []byte(key)
 }
 
@@ -81,29 +82,29 @@ func calcOrderPrefixCoinStatus(coin string, status int32) []byte {
 }
 
 func calcOrderPrefixAddrCoin(addr string, coin string) []byte {
-	key := fmt.Sprintf(relayOrderACSIH+"%s:%s", addr, coin)
+	key := fmt.Sprintf(relayOrderACSIH+"%s:%s", address.FormatAddrKey(addr), coin)
 	return []byte(key)
 }
 
 func calcOrderPrefixAddr(addr string) []byte {
-	return []byte(fmt.Sprintf(relayOrderACSIH+"%s", addr))
+	return []byte(fmt.Sprintf(relayOrderACSIH+"%s", address.FormatAddrKey(addr)))
 }
 
 func calcAcceptKeyAddr(order *ty.RelayOrder, status int32) []byte {
 	if order.AcceptAddr != "" {
 		return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s:%s:%d:%s:%d",
-			order.AcceptAddr, order.XCoin, status, order.Id, order.Height))
+			address.FormatAddrKey(order.AcceptAddr), order.XCoin, status, order.Id, order.Height))
 	}
 	return nil
 
 }
 
 func calcAcceptPrefixAddr(addr string) []byte {
-	return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s", addr))
+	return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s", address.FormatAddrKey(addr)))
 }
 
 func calcAcceptPrefixAddrCoin(addr, coin string) []byte {
-	return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s:%s", addr, coin))
+	return []byte(fmt.Sprintf(relayBuyOrderACSIH+"%s:%s", address.FormatAddrKey(addr), coin))
 }
 
 func calcRelayOrderID(hash string) string {

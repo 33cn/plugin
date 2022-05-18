@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
@@ -52,12 +53,12 @@ func (g *PokerBull) GetDriverName() string {
 }
 
 func calcPBGameAddrPrefix(addr string) []byte {
-	key := fmt.Sprintf("LODB-pokerbull-addr:%s:", addr)
+	key := fmt.Sprintf("LODB-pokerbull-addr:%s:", address.FormatAddrKey(addr))
 	return []byte(key)
 }
 
 func calcPBGameAddrKey(addr string, index int64) []byte {
-	key := fmt.Sprintf("LODB-pokerbull-addr:%s:%018d", addr, index)
+	key := fmt.Sprintf("LODB-pokerbull-addr:%s:%018d", address.FormatAddrKey(addr), index)
 	return []byte(key)
 }
 

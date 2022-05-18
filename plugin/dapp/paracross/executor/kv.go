@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"strings"
 
@@ -99,7 +100,7 @@ func calcParaNodeGroupAddrsKey(title string) []byte {
 }
 
 func calcParaNodeAddrKey(title string, addr string) []byte {
-	return []byte(fmt.Sprintf(paraConfigNodeAddr+"%s-%s", title, addr))
+	return []byte(fmt.Sprintf(paraConfigNodeAddr+"%s-%s", title, address.FormatAddrKey(addr)))
 }
 
 func calcParaNodeGroupStatusKey(title string) []byte {
@@ -152,7 +153,7 @@ func getRealTxHashID(id string) (bool, string, []string) {
 }
 
 func calcLocalTxKey(title string, height int64, addr string) []byte {
-	return []byte(fmt.Sprintf(localTx+"%s-%012-%s", title, height, addr))
+	return []byte(fmt.Sprintf(localTx+"%s-%012-%s", title, height, address.FormatAddrKey(addr)))
 }
 
 func calcLocalTitleKey(title string) []byte {
@@ -180,7 +181,7 @@ func calcLocalNodeTitlePrefix(title string) []byte {
 }
 
 func calcLocalNodeTitleDone(title, addr string) []byte {
-	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, addr))
+	return []byte(fmt.Sprintf(localNodeTitleDone+"%s-%s", title, address.FormatAddrKey(addr)))
 }
 
 func calcLocalNodeGroupStatusTitle(status int32, title, id string) []byte {
@@ -212,12 +213,12 @@ func calcParaNodeBindMinerIndex(node string, index int64) []byte {
 //记录node和miner bind详细信息
 //key: prefix-nodeAddr-miner  val:miner detail info
 func calcParaBindMinerAddr(node, miner string) []byte {
-	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%s", node, miner))
+	return []byte(fmt.Sprintf(paraBindMinderNode+"%s-%s", node, address.FormatAddrKey(miner)))
 }
 
 //key: prefix-minerAddr  val: node list
 func calcParaMinerBindNodeList(miner string) []byte {
-	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s", miner))
+	return []byte(fmt.Sprintf(paraBindMinderAddr+"%s", address.FormatAddrKey(miner)))
 }
 
 /////supervision
@@ -230,7 +231,7 @@ func calcParaSupervisionNodeIDKey(title, hash string) string {
 }
 
 func calcLocalSupervisionNodeStatusTitle(title string, status int32, addr, id string) []byte {
-	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s-%s", title, status, addr, id))
+	return []byte(fmt.Sprintf(localSupervisionNodeStatusTitle+"%s-%02d-%s-%s-%s", title, status, address.FormatAddrKey(addr), id))
 }
 
 func calcLocalSupervisionNodeStatusTitlePrefix(title string, status int32) []byte {

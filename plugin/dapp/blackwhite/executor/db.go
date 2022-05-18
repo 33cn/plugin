@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	gt "github.com/33cn/plugin/plugin/dapp/blackwhite/types"
 )
@@ -20,12 +21,12 @@ func calcMavlRoundKey(ID string) []byte {
 }
 
 func calcRoundKey4AddrHeight(addr, heightindex string) []byte {
-	key := fmt.Sprintf(loopResultPrefix+"%s-"+"%s", addr, heightindex)
+	key := fmt.Sprintf(loopResultPrefix+"%s-"+"%s", address.FormatAddrKey(addr), heightindex)
 	return []byte(key)
 }
 
 func calcRoundKey4StatusAddrHeight(status int32, addr, heightindex string) []byte {
-	key := fmt.Sprintf(loopResultPrefix+"%d-"+"%s-"+"%s", status, addr, heightindex)
+	key := fmt.Sprintf(loopResultPrefix+"%d-"+"%s-"+"%s", status, address.FormatAddrKey(addr), heightindex)
 	return []byte(key)
 }
 

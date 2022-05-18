@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 )
 
 var (
@@ -52,7 +53,7 @@ func getAuthPubKeysKey() []byte {
 }
 
 func calcReceivingKey(addr string) []byte {
-	return []byte(fmt.Sprintf(receivingKey+"%s", addr))
+	return []byte(fmt.Sprintf(receivingKey+"%s", address.FormatAddrKey(addr)))
 }
 
 func calcCommitTreeCurrentStatusKey(exec, symbol string) []byte {

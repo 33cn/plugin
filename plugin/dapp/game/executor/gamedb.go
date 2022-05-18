@@ -8,6 +8,7 @@ package executor
 import (
 	"bytes"
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	"math"
 	"strconv"
 
@@ -145,7 +146,7 @@ func (action *Action) saveStateDB(game *gt.Game) {
 
 func calcCountKey(status int32, addr string) (key []byte) {
 	key = append(key, []byte("mavl-"+gt.GameX+"-")...)
-	key = append(key, []byte(fmt.Sprintf("%s:%d:%s", GameCount, status, addr))...)
+	key = append(key, []byte(fmt.Sprintf("%s:%d:%s", GameCount, status, address.FormatAddrKey(addr)))...)
 	return key
 }
 
