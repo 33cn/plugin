@@ -1008,7 +1008,6 @@ func addNodeGroupApproveCmdFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("id")
 
 	cmd.Flags().StringP("autonomyId", "a", "", "autonomy approved id ")
-	_ = cmd.MarkFlagRequired("autonomyId")
 
 	cmd.Flags().Float64P("coins", "c", 0, "coins amount to frozen, not less config")
 

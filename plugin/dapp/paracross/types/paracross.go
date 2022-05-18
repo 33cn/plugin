@@ -360,6 +360,8 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 		forkHeight = types.Conf(cfg, ParaPrefixConsSubConf).GInt(key)
 		if forkHeight <= 0 {
 			forkHeight = types.MaxHeight
+			tlog.Error("para toml config should >0", "key", key)
+			panic(fmt.Sprintf("para toml config should >0, key=%s", key))
 		}
 
 	} else {
@@ -369,9 +371,9 @@ func GetDappForkHeight(cfg *types.Chain33Config, forkKey string) int64 {
 		if cfg.IsLocal() {
 			switch forkKey {
 			case ForkCommitTx:
-				forkHeight = 10
+				forkHeight = 1
 			case ForkLoopCheckCommitTxDone:
-				forkHeight = 60
+				forkHeight = 1
 			}
 		}
 	}
