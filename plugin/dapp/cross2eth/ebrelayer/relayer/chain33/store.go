@@ -344,13 +344,13 @@ func (chain33Relayer *Relayer4Chain33) checkTxProcessed(txhash string) bool {
 }
 
 func (chain33Relayer *Relayer4Chain33) setEthTxWaitingForSend(chain33Txhash string, waitiInfo *ebTypes.IsWaitingForSend) error {
-	key := ethTxRelayAlreadyKey(chain33Txhash)
+	key := ethTxWaitingForSendKey(chain33Txhash)
 	data := chain33Types.Encode(waitiInfo)
 	return chain33Relayer.db.SetSync(key, data)
 }
 
 func (chain33Relayer *Relayer4Chain33) getEthTxWaitingForSend(chain33Txhash string) (*ebTypes.IsWaitingForSend, error) {
-	key := ethTxRelayAlreadyKey(chain33Txhash)
+	key := ethTxWaitingForSendKey(chain33Txhash)
 	data, err := chain33Relayer.db.Get(key)
 	if nil != err {
 		return nil, err
