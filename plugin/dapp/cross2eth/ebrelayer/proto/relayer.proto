@@ -384,7 +384,6 @@ message QueryReq  {
 message ProphecyProcessed {
     string claimID  = 1;
     bool valid      = 2;
-    string txhash   = 3;
 }
 
 message IsWaitingForSend {

@@ -340,20 +340,20 @@ func (chain33Relayer *Relayer4Chain33) handleBurnLockWithdrawEvent(evmEventType 
 		TxHash:      chain33TxHash,
 		Resend:      false,
 	}
-	//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
-	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
-	err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
 
 	if chain33Relayer.delayedSend {
-		go chain33Relayer.delayedSendTxs(chainName, chain33Msg, chain33TxHash)
+		go chain33Relayer.delayedSendTxs(chainName, chain33Msg, chain33TxHash, txRelayConfirm4Chain33)
 	} else {
 		channel <- chain33Msg
+		//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
+		relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", txHashStr, "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
+		err = chain33Relayer.setChain33TxIsRelayedUnconfirm(txHashStr, fdIndex, txRelayConfirm4Chain33)
 	}
 
 	return err
 }
 
-func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33Msg *events.Chain33Msg, chain33TxHash []byte) {
+func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33Msg *events.Chain33Msg, chain33TxHash []byte, txRelayConfirm4Chain33 *ebTypes.TxRelayConfirm4Chain33) {
 	delayedSendTime := time.Duration(chain33Relayer.delayedSendTime) * time.Millisecond
 	relayerLog.Debug("delayedSendTxs", "setEthTxWaitingForSend chain33TxHash", common.ToHex(chain33TxHash))
 	time.Sleep(delayedSendTime)
@@ -364,6 +364,10 @@ func (chain33Relayer *Relayer4Chain33) delayedSendTxs(chainName string, chain33M
 	}
 
 	channel <- chain33Msg
+
+	//relaychain33ToEthereumCheckPonit 1:send chain33Msg to ethereum relay service
+	relayerLog.Info("handleBurnLockWithdrawEvent::relaychain33ToEthereumCheckPonit_1", "chain33TxHash", common.ToHex(chain33TxHash), "ForwardIndex", chain33Msg.ForwardIndex, "FdTimes", 1)
+	_ = chain33Relayer.setChain33TxIsRelayedUnconfirm(common.ToHex(chain33TxHash), txRelayConfirm4Chain33.FdIndex, txRelayConfirm4Chain33)
 }
 
 func (chain33Relayer *Relayer4Chain33) ResendChain33Event(height int64) (err error) {

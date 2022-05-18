@@ -60,8 +60,7 @@ message RelayerConfig {
   string remindUrl                    = 10;   // 代理打币地址金额不够时发生提醒短信的 url
   string remindClientErrorUrl         = 11;
   repeated string remindEmail         = 12;
-  bool delayedSend                    = 13;
-  int64 delayedSendTime               = 14;
+  int64 delayedSendTime               = 13;
 }
 
 message SyncTxReceiptConfig {

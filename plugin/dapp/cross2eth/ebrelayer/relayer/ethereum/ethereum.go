@@ -870,8 +870,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		} else {
 			if prophecyProcessed.Valid {
 				isClaimIDProcessed = true
-				ethTxhash = prophecyProcessed.Txhash
-				relayerLog.Info("handleLogLockBurn", "prophecyProcessed Valid with tx hash", ethTxhash, "tx hash string", chain33TxHash)
+				relayerLog.Info("handleLogLockBurn", "prophecyProcessed Valid with tx hash", chain33TxHash)
 			}
 		}
 	}
