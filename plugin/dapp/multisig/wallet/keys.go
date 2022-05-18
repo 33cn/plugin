@@ -4,7 +4,10 @@
 
 package wallet
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/33cn/chain33/common/address"
+)
 
 const (
 	// MultisigAddr 记录本钱包owner地址拥有的多重签名地址，key:"multisig-addr-owneraddr, value [](multisigaddr,owneraddr,weight)
@@ -12,7 +15,7 @@ const (
 )
 
 func calcMultisigAddr(ownerAddr string) []byte {
-	return []byte(fmt.Sprintf("%s%s", MultisigAddr, ownerAddr))
+	return []byte(fmt.Sprintf("%s%s", MultisigAddr, address.FormatAddrKey(ownerAddr)))
 }
 
 func calcPrefixMultisigAddr() []byte {

@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/cert/authority"
@@ -8,8 +9,7 @@ import (
 )
 
 func CertUserStoreKey(addr string) (key []byte) {
-	key = append(key, []byte("mavl-"+ct.CertX+"-"+addr)...)
-	return key
+	return append([]byte("mavl-"+ct.CertX+"-"), address.FormatAddrKey(addr)...)
 }
 
 func isAdminAddr(addr string, db dbm.KV) bool {

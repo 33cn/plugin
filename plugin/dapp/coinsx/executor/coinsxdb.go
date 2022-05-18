@@ -17,6 +17,7 @@ EventTransfer -> 转移资产
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -24,7 +25,7 @@ import (
 
 // calcAddrKey store information on the receiving address
 func calcAddrKey(addr string) []byte {
-	return []byte(fmt.Sprintf("LODB-coinsx-Addr:%s", addr))
+	return []byte(fmt.Sprintf("LODB-coinsx-Addr:%s", address.FormatAddrKey(addr)))
 }
 
 func geAddrReciverKV(addr string, reciverAmount int64) *types.KeyValue {

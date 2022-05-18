@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
@@ -107,27 +108,27 @@ func (r *OrderV2Row) Get(key string) ([]byte, error) {
 	case "asset_isSell_status":
 		return []byte(fmt.Sprintf("%s_%d_%s", r.asset(), r.isSell(), r.status())), nil
 	case "owner":
-		return []byte(r.Owner), nil
+		return []byte(address.FormatAddrKey(r.Owner)), nil
 	case "owner_asset":
-		return []byte(fmt.Sprintf("%s_%s", r.Owner, r.asset())), nil
+		return []byte(fmt.Sprintf("%s_%s", address.FormatAddrKey(r.Owner), r.asset())), nil
 	case "owner_asset_isSell":
-		return []byte(fmt.Sprintf("%s_%s_%d", r.Owner, r.asset(), r.isSell())), nil
+		return []byte(fmt.Sprintf("%s_%s_%d", address.FormatAddrKey(r.Owner), r.asset(), r.isSell())), nil
 	case "owner_asset_status":
-		return []byte(fmt.Sprintf("%s_%s_%s", r.Owner, r.asset(), r.status())), nil
+		return []byte(fmt.Sprintf("%s_%s_%s", address.FormatAddrKey(r.Owner), r.asset(), r.status())), nil
 	case "owner_isSell":
-		return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isSell())), nil
+		return []byte(fmt.Sprintf("%s_%d", address.FormatAddrKey(r.Owner), r.isSell())), nil
 	case "owner_isSell_status":
-		return []byte(fmt.Sprintf("%s_%d_%s", r.Owner, r.isSell(), r.status())), nil
+		return []byte(fmt.Sprintf("%s_%d_%s", address.FormatAddrKey(r.Owner), r.isSell(), r.status())), nil
 	case "owner_status":
-		return []byte(fmt.Sprintf("%s_%s", r.Owner, r.status())), nil
+		return []byte(fmt.Sprintf("%s_%s", address.FormatAddrKey(r.Owner), r.status())), nil
 	//case "owner_statusPrefix":
 	//	return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isSell())), nil
 	case "assset_isSell_isFinished":
-		return []byte(fmt.Sprintf("%s_%d_%d", r.Owner, r.isSell(), r.isFinished())), nil
+		return []byte(fmt.Sprintf("%s_%d_%d", address.FormatAddrKey(r.Owner), r.isSell(), r.isFinished())), nil
 	case "owner_asset_isFinished":
-		return []byte(fmt.Sprintf("%s_%s_%d", r.Owner, r.asset(), r.isFinished())), nil
+		return []byte(fmt.Sprintf("%s_%s_%d", address.FormatAddrKey(r.Owner), r.asset(), r.isFinished())), nil
 	case "owner_isFinished":
-		return []byte(fmt.Sprintf("%s_%d", r.Owner, r.isFinished())), nil
+		return []byte(fmt.Sprintf("%s_%d", address.FormatAddrKey(r.Owner), r.isFinished())), nil
 	case "asset_isSell_status_price":
 		return []byte(fmt.Sprintf("%s_%d_%s_%s", r.asset(), r.isSell(), r.status(), r.price())), nil
 	default:

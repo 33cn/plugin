@@ -4,7 +4,10 @@
 
 package wallet
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/33cn/chain33/common/address"
+)
 
 const (
 	prefix = "MixCoin-"
@@ -24,7 +27,7 @@ const (
 
 // calcPrivacyAddrKey 获取隐私账户私钥对保存在钱包中的索引串
 func calcMixAddrKey(addr string) []byte {
-	return []byte(fmt.Sprintf("%s-%s", Mix4Addr, addr))
+	return []byte(fmt.Sprintf("%s-%s", Mix4Addr, address.FormatAddrKey(addr)))
 }
 
 func calcMixPrivacyEnable() []byte {

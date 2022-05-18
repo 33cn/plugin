@@ -6,6 +6,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	dbm "github.com/33cn/chain33/common/db"
 	log "github.com/33cn/chain33/common/log/log15"
@@ -67,12 +68,14 @@ func (r *Retrieve) CheckTx(tx *types.Transaction, index int) error {
 }
 
 func calcRetrieveKey(backupAddr string, defaultAddr string) []byte {
-	key := fmt.Sprintf("LODB-retrieve-backup:%s:%s", backupAddr, defaultAddr)
+	key := fmt.Sprintf("LODB-retrieve-backup:%s:%s", address.FormatAddrKey(backupAddr),
+		address.FormatAddrKey(defaultAddr))
 	return []byte(key)
 }
 
 func calcRetrieveAssetKey(backupAddr, defaultAddr, assetExec, assetSymbol string) []byte {
-	key := fmt.Sprintf("LODB-retrieve-backup-asset:%s:%s:%s:%s", backupAddr, defaultAddr, assetExec, assetSymbol)
+	key := fmt.Sprintf("LODB-retrieve-backup-asset:%s:%s:%s:%s", address.FormatAddrKey(backupAddr),
+		address.FormatAddrKey(defaultAddr), assetExec, assetSymbol)
 	return []byte(key)
 }
 
