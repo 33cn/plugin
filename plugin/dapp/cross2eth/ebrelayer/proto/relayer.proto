@@ -385,7 +385,3 @@ message ProphecyProcessed {
     string claimID  = 1;
     bool valid      = 2;
 }
-
-message IsWaitingForSend {
-    bool waiting = 1;
-}
