@@ -376,6 +376,7 @@ func createCloseTicket(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, ty.ErrTicketClosed)
 		return
 	}
+
 	var params rpctypes.Query4Jrpc
 
 	params.Execer = ty.TicketX
@@ -397,15 +398,15 @@ func createCloseTicket(cmd *cobra.Command, args []string) {
 
 	signList := make([]string, 0)
 	for _, v := range res.Tickets {
-		if len(signList) == 1000 {
+		if len(signList) == 200 {
 			break
 		}
 		if v.Status == ty.TicketOpened {
-			if v.CreateTime+int64(3600*24) < now {
+			if v.CreateTime+int64(3600*48) < now {
 				signList = append(signList, v.TicketId)
 			}
 		} else if v.Status == ty.TicketMined {
-			if v.CreateTime+int64(3600*24) < now && v.MinerTime+int64(7200) < now {
+			if v.CreateTime+int64(3600*48) < now && v.MinerTime+int64(7200) < now {
 				signList = append(signList, v.TicketId)
 			}
 		}
