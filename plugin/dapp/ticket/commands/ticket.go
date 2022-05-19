@@ -219,13 +219,17 @@ func listTicket(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	returnTickets := make([]ty.Ticket, 0)
-	for _, v := range res {
-		if v.ReturnAddress == returnAddr {
-			returnTickets = append(returnTickets, v)
+	if returnAddr != "" {
+		returnTickets := make([]ty.Ticket, 0)
+		for _, v := range res {
+			if v.ReturnAddress == returnAddr {
+				returnTickets = append(returnTickets, v)
+			}
 		}
+		res = returnTickets
 	}
-	data, err := json.MarshalIndent(returnTickets, "", "    ")
+
+	data, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
