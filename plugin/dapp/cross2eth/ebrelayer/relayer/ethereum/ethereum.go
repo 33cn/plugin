@@ -870,6 +870,7 @@ func (ethRelayer *Relayer4Ethereum) handleLogLockBurn(chain33Msg *events.Chain33
 		} else {
 			if prophecyProcessed.Valid {
 				isClaimIDProcessed = true
+				ethTxhash = prophecyProcessed.Txhash
 				relayerLog.Info("handleLogLockBurn", "prophecyProcessed Valid with tx hash", chain33TxHash)
 			}
 		}
@@ -1275,6 +1276,7 @@ func (ethRelayer *Relayer4Ethereum) procBridgeBankLogs(vLog types.Log) {
 		info := &ebTypes.ProphecyProcessed{
 			ClaimID: claimID,
 			Valid:   true,
+			Txhash:  vLog.TxHash.String(),
 		}
 		err = ethRelayer.setClaimIDExecuteAlready(claimID, info)
 		if nil != err {
