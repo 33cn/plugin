@@ -47,8 +47,6 @@ dmitri.shuralyov.com/html/belt v0.0.0-20180602232347-f7d459c86be0/go.mod h1:JLBr
 dmitri.shuralyov.com/service/change v0.0.0-20181023043359-a85b471d5412/go.mod h1:a1inKt/atXimZ4Mv927x+r7UpyzRUf4emIoiiSC2TN4=
 dmitri.shuralyov.com/state v0.0.0-20180228185332-28bcc343414c/go.mod h1:0PRwlb0D6DFvNNtx+9ybjezNCa8XF0xaYcETyp6rHWU=
 git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
-github.com/33cn/chain33 v1.67.3-0.20220426094841-49abaf7e556c h1:QYcb9Y1K3PRtBbFadYnbSGJkhc0b234VNekU2jxABbs=
-github.com/33cn/chain33 v1.67.3-0.20220426094841-49abaf7e556c/go.mod h1:rOabIpP0KWiehXmX6ShOrAveTUvdoQvjUkUePdwk/oQ=
 github.com/33cn/chain33 v1.67.3-0.20220429040542-b673a0ec0b30 h1:G1cDiYaUkaczg9U2/83cHTdVuVQE+fykaSseKyAbEcA=
 github.com/33cn/chain33 v1.67.3-0.20220429040542-b673a0ec0b30/go.mod h1:rOabIpP0KWiehXmX6ShOrAveTUvdoQvjUkUePdwk/oQ=
 github.com/AndreasBriese/bbloom v0.0.0-20180913140656-343706a395b7/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
