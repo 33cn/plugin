@@ -397,7 +397,7 @@ func (a *action) supervisionNodeCancel(config *pt.ParaNodeGroupConfig) (*types.R
 	cfg := a.api.GetConfig()
 	status, err := getSupervisionNodeID(a.db, calcParaSupervisionNodeIDKey(config.Title, config.Id))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "getSupervisionNodeID=%s", config.Id)
 	}
 
 	//只能提案发起人可以撤销

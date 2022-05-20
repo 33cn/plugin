@@ -98,6 +98,7 @@ func (suite *NodeManageTestSuite) SetupSuite() {
 	enableParacrossTransfer = false
 
 	chain33TestCfg.S("config.consensus.sub.para.MainForkParacrossCommitTx", int64(1))
+	chain33TestCfg.S("config.consensus.sub.para.MainLoopCheckCommitTxDoneForkHeight", int64(1))
 	chain33TestCfg.S("config.exec.sub.manage.superManager", []interface{}{Account12Q})
 
 	// TODO, more fields

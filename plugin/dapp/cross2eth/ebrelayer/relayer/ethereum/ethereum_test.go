@@ -506,3 +506,13 @@ func initCfg(path string) *relayerTypes.RelayerConfig {
 	}
 	return &cfg
 }
+
+func Test_UnpackLogProphecyProcessed(t *testing.T) {
+	eventData := []byte{121, 110, 255, 239, 36, 105, 91, 194, 159, 116, 120, 172, 247, 183, 65, 84, 137, 248, 222, 154, 153, 21, 31, 44, 217, 190, 53, 63, 120, 15, 86, 234, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 225, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217, 218, 176, 33, 231, 78, 207, 71, 87, 136, 237, 123, 97, 53, 96, 86, 178, 9, 88, 48}
+
+	log, err := events.UnpackLogProphecyProcessed(ethtxs.LoadABI(ethtxs.OracleABI), events.LogProphecyProcessed.String(), eventData)
+	require.Nil(t, err)
+
+	claimID := hexutil.Encode(log.ClaimID[:])
+	require.NotEmpty(t, claimID)
+}

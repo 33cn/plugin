@@ -29,6 +29,7 @@
 |keepAliveDuration|单位毫秒, 默认 600000, 表示 10 分钟之内未收到信息, 通过重新订阅, 确保订阅可用, 提高稳定性|
 |RemindClientErrorUrl|BSC or ethereum 节点出错时邮件提醒的 url|
 |RemindEmail|提醒的邮箱|
+|DelayedSendTime|是否延迟发送ethereum交易, 默认0不延迟, 单位毫秒一般设置为180000(3分钟), 4个中继器中设置3个为false, 1个为true, 延迟发送burn交易, 过3分钟查看ethereum是否已经执行, 如果已经执行, 就不再发送burn交易, 节约手续费|
 
 #### 首次启动 relayer 进行设置
 ```shell

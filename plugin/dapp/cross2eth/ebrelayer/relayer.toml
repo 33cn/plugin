@@ -5,6 +5,7 @@ dbdriver="leveldb"
 dbPath="datadir"
 dbCache=64
 ProcessWithDraw=false
+DelayedSendTime=0 #180000 # chain33延迟 3分钟后再发送
 RemindUrl="http://183.129.226.77:9988/alert/send"
 RemindClientErrorUrl="http://116.63.171.186:9988/alert/send/email"
 RemindEmail=["236200000@126.com","ceshi@163.com"]

@@ -71,7 +71,7 @@ func Test_RelayOracleClaimToEthereum(t *testing.T) {
 		TokenContractAddress: common.HexToAddress("0x0000000000000000000000000000000000000000"),
 		Symbol:               "eth",
 		Amount:               big.NewInt(100000000000000000),
-		chain33TxHash:        common.Hex2Bytes("fd5747c43d1460bb6f8a7a26c66b4ccab5500d05668278efe5c0fd5951dfd909"),
+		Chain33TxHash:        common.Hex2Bytes("fd5747c43d1460bb6f8a7a26c66b4ccab5500d05668278efe5c0fd5951dfd909"),
 	}
 
 	Addr2TxNonce := make(map[common.Address]*NonceMutex)

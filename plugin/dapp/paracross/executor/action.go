@@ -110,6 +110,7 @@ func checkCommitInfo(cfg *types.Chain33Config, commit *pt.ParacrossNodeStatus) e
 
 	if commit.Height == 0 {
 		if len(commit.Title) == 0 || len(commit.BlockHash) == 0 {
+			clog.Error("checkCommitInfo invalid param", "title", commit.Title, "blochHash", common.ToHex(commit.BlockHash))
 			return types.ErrInvalidParam
 		}
 		return nil
@@ -119,6 +120,7 @@ func checkCommitInfo(cfg *types.Chain33Config, commit *pt.ParacrossNodeStatus) e
 		if len(commit.MainBlockHash) == 0 || len(commit.Title) == 0 || commit.Height < 0 ||
 			len(commit.PreBlockHash) == 0 || len(commit.BlockHash) == 0 ||
 			len(commit.StateHash) == 0 || len(commit.PreStateHash) == 0 {
+			clog.Error("checkCommitInfo invalid param 2", "title", commit.Title, "blochHash", common.ToHex(commit.BlockHash))
 			return types.ErrInvalidParam
 		}
 		return nil
@@ -126,10 +128,12 @@ func checkCommitInfo(cfg *types.Chain33Config, commit *pt.ParacrossNodeStatus) e
 
 	if len(commit.MainBlockHash) == 0 || len(commit.BlockHash) == 0 ||
 		commit.MainBlockHeight < 0 || commit.Height < 0 {
+		clog.Error("checkCommitInfo invalid param check", "title", commit.Title, "blochHash", common.ToHex(commit.BlockHash), "height", commit.Height)
 		return types.ErrInvalidParam
 	}
 
 	if !validTitle(cfg, commit.Title) {
+		clog.Error("checkCommitInfo invalid title", "title", commit.Title)
 		return pt.ErrInvalidTitle
 	}
 	return nil
@@ -836,7 +840,7 @@ func isHaveCrossTxs(cfg *types.Chain33Config, status *pt.ParacrossNodeStatus) bo
 func (a *action) procCrossTxs(status *pt.ParacrossNodeStatus) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	if enableParacrossTransfer && status.Height > 0 && isHaveCrossTxs(cfg, status) {
-		clog.Info("paracross.Commit commitDone do cross", "height", status.Height)
+		clog.Debug("paracross.Commit commitDone do cross", "height", status.Height)
 		crossTxReceipt, err := a.execCrossTxs(status)
 		if err != nil {
 			return nil, err

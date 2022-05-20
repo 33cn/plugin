@@ -43,7 +43,30 @@ var (
 	//已经中继发送
 	ethTxRelayedAlready     = "eth-ethTxRelayedAlready"
 	fdTx2Chain33TotalAmount = "eth-fdTx2Chain33TotalAmount"
+	// ethereum burn 已经执行
+	ethClaimIDExecuteAlready = "eth-ethClaimIDExecuteAlready"
 )
+
+func ethTxClaimIDExecuteAlready(claimID string) []byte {
+	return []byte(fmt.Sprintf("%s-claimID-%s", ethClaimIDExecuteAlready, claimID))
+}
+
+func (ethRelayer *Relayer4Ethereum) setClaimIDExecuteAlready(claimID string, txRelayConfirm *ebTypes.ProphecyProcessed) error {
+	key := ethTxClaimIDExecuteAlready(claimID)
+	data := chain33Types.Encode(txRelayConfirm)
+	return ethRelayer.db.SetSync(key, data)
+}
+
+func (ethRelayer *Relayer4Ethereum) getClaimIDExecuteAlready(claimID string) (*ebTypes.ProphecyProcessed, error) {
+	key := ethTxClaimIDExecuteAlready(claimID)
+	data, err := ethRelayer.db.Get(key)
+	if nil != err {
+		return nil, err
+	}
+	var prophecyProcessed ebTypes.ProphecyProcessed
+	err = chain33Types.Decode(data, &prophecyProcessed)
+	return &prophecyProcessed, err
+}
 
 func ethTxIsRelayedUnconfirmKey(chainName, txHash string) []byte {
 	return []byte(fmt.Sprintf("%s-chainName-%s-txHash-%s", ethTxIsRelayedUnconfirm, chainName, txHash))
